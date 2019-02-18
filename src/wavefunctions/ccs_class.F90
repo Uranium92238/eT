@@ -190,7 +190,10 @@ module ccs_class
 !
       procedure :: construct_etaX                              => construct_etaX_ccs
       procedure :: construct_csiX                              => construct_csiX_ccs
+      procedure :: get_eom_contribution                        => get_eom_contribution_ccs
       procedure :: prepare_operator_pq                         => prepare_operator_pq_ccs
+      procedure :: get_left_right_vectors                      => get_left_right_vectors_ccs
+      procedure :: scale_left_excitation_vector                => scale_left_excitation_vector_ccs
       procedure :: calculate_transition_strength               => calculate_transition_strength_ccs
 !
    end type ccs
@@ -4681,6 +4684,35 @@ contains
    end subroutine construct_csiX_ccs
 !
 !
+   subroutine get_eom_contribution_ccs(wf, etaX, csiX)
+!!
+!!    Add EOM contribution to csiX vector
+!!    Written by Josefine H. Andersen
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in)    :: csiX
+      real(dp), dimension(:,:), allocatable                  :: multipliers
+!
+      real(dp) :: X_cc
+      real(dp) :: ddot
+!
+      call mem%alloc(multipliers, wf%n_amplitudes, 1)
+!
+      call wf%get_multipliers(multipliers)
+!
+      X_cc = ddot(wf%n_amplitudes, multipliers, 1, csiX, 1)
+!
+      call daxpy(wf%n_amplitudes, -X_cc, multipliers, 1, etaX, 1)
+!
+      call mem%dealloc(multipliers, wf%n_amplitudes, 1)
+!
+   end subroutine get_eom_contribution_ccs
+!
+!
    subroutine prepare_operator_pq_ccs(wf, operator_type)
 !!
 !!    Prepare operator X_pq.
@@ -4699,7 +4731,7 @@ contains
 !
       character(len=1), dimension(3) :: cartesian_coordinate = ['X', 'Y', 'Z']
      ! character(len=31) :: line
-      character(len=15) :: keyword, Xoperator
+      character(len=15) :: Xoperator
 !
       integer :: i = 0, ioerror = 0
 !
@@ -4779,7 +4811,31 @@ contains
    end subroutine get_left_right_vectors_ccs
 !
 !
-   subroutine calculate_transition_strength_ccs(wf, S, etaX, csiX)
+   subroutine scale_left_excitation_vector_ccs(wf, L, R)
+!!
+!!    Make left and right excitation vectors biorthogonal by scaling left vector
+!!    Written by Josefine H. Andersen, February 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: L
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in)    :: R
+!
+      real(dp) :: norm, scalar 
+      real(dp) :: ddot, one = 1.0
+!
+      norm = ddot(wf%n_amplitudes, L, 1, R, 1)
+!
+      scalar = one / norm
+!
+      L = scalar*L
+!
+   end subroutine scale_left_excitation_vector_ccs
+!
+!
+   subroutine calculate_transition_strength_ccs(wf, S, etaX, csiX, L, R)
 !!
 !!    Calculate transition strength for spectra
 !!    Written by Josefine H. Andersen, February 2019
@@ -4792,26 +4848,19 @@ contains
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: etaX
       real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: csiX
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: L, R
 !
-      real(dp) :: T_l, T_r
+      real(dp) :: T_l = zero, T_r = zero
       real(dp) :: ddot
 !
-      real(dp), dimension(:,:), allocatable :: right_j      
-      real(dp), dimension(:,:), allocatable :: left_j 
+!      calc dotproducts btwn exc. vectors and csiX/etaX
 !
-      integer :: state
+      T_l = ddot(wf%n_amplitudes, etaX, 1, R, 1)
+      T_r = ddot(wf%n_amplitudes, L, 1, csiX, 1)
 !
-      call mem%alloc(right_j, wf%n_amplitudes, 1)
-      call mem%alloc(left_j, wf%n_amplitudes, 1)
+!     sum S over three components
 !
-      ! get right and left excitation vector
-      !
-      ! calc dotproducts btwn exc. vectors and csiX/etaX
-      ! T_left = ddot(wf%n_parameters, etaX, 1, right_j, 1)
-      ! T_right = ddot(wf%n_parameters, left_j, 1, csiX, 1)
-      !
-      ! sum S over three components
-      ! solver%S += T_left * T_right
+      S  = S + T_l * T_r
 !
    end subroutine calculate_transition_strength_ccs
 !

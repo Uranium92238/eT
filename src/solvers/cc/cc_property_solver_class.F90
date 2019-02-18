@@ -20,7 +20,13 @@ module cc_property_solver_class
       character(len=500) :: description1 = 'A solver that calculates spectral intensities from coupled &
                                            &cluster excited state calculations'
 !
-      character(len=40)   :: X_operator
+      character(len=40)   :: operator_type
+!
+      logical    :: eom
+      logical    :: linear_response
+!      character(len=40)   :: X
+!
+      character(len=1), dimension(3) :: component = ['X', 'Y', 'Z']
 !
       real(dp) :: S
 !
@@ -36,6 +42,8 @@ module cc_property_solver_class
       procedure, non_overridable :: cleanup          => cleanup_cc_property_solver
 !
       procedure :: read_settings                     => read_settings_cc_property_solver
+!
+      procedure :: reset                             => reset_property_solver
 !
       procedure :: print_banner                      => print_banner_cc_property_solver
       procedure :: print_summary                     => print_summary_cc_property_solver
@@ -57,6 +65,11 @@ contains
 !
       call solver%print_banner()
 !
+!     Set default
+!
+      solver%eom             = .false.
+      solver%linear_response = .false.
+!
       call solver%read_settings()
 !
       solver%S = zero
@@ -73,18 +86,60 @@ contains
 !
       class(cc_property_solver) :: solver
 !
-      class(ccs) :: wf
+      class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: etaX
-      real(dp), dimension(:,:), allocatable :: csiX
+      character(len=40)   :: X
 !
-      call mem%alloc(etaX, wf%n_amplitudes, 1)
-      call mem%alloc(csiX, wf%n_amplitudes, 1)
+      integer :: i, n
 !
-      ! call wf%construct_etaX(wf, etaX, Xoperator)      
-      ! call wf%construct_csiX(wf, csiX, Xoperator)      
+      real(dp), dimension(:,:), allocatable :: l_vec_n
+      real(dp), dimension(:,:), allocatable :: r_vec_n
 !
-      call solver%print_summary(wf)
+      call mem%alloc(solver%etaX, wf%n_amplitudes, 1)
+      call mem%alloc(solver%csiX, wf%n_amplitudes, 1)
+!
+!     Do EOM or LR
+!
+      if (solver%eom) then
+!
+         call wf%get_eom_contribution(solver%etaX, solver%csiX)
+!
+      elseif (solver%linear_response) then
+!
+         write(output%unit, '(t6,a)') 'Linear response has been selected but is not implemented &
+                                      & csiX will be calculated with no contribution '
+!
+      endif
+!
+      call mem%alloc(l_vec_n, wf%n_amplitudes, 1)
+      call mem%alloc(r_vec_n, wf%n_amplitudes, 1)
+!
+!     Loop over components of X
+!
+      do i = 1, 3
+!
+         X = solver%component(i) //'_'// trim(solver%operator_type) 
+!
+         call solver%reset()
+!
+         call wf%construct_etaX(solver%etaX, X)      
+         call wf%construct_csiX(solver%csiX, X)      
+!
+!        Loop over excited states
+!  
+         do n = 1, solver%n_singlet_states
+!
+            call wf%get_left_right_vectors(l_vec_n, r_vec_n, n)
+!
+            call wf%scale_left_excitation_vector(l_vec_n, r_vec_n)
+!
+            call wf%calculate_transition_strength(solver%S, solver%etaX, solver%csiX, l_vec_n, r_vec_n)
+!
+         enddo
+!
+      enddo
+!
+      call solver%print_summary()
 !
    end subroutine run_cc_property_solver
 !
@@ -153,22 +208,53 @@ contains
 !
       call move_to_section('cc properties', n_ops)
 !
-      if (n_ops .gt. 1) then
+!      if (n_ops .gt. 1) then
 !
-         call output%error_msg('More than one operator specified')
+!         call output%error_msg('More than one operator specified')
 !
-      endif
+!      endif
 !      
-      read(input%unit, '(a100)') line
-      line = remove_preceding_blanks(line)
+      do i = 1, n_ops
 !
-      if (line(1:13) == 'dipole length') then
+         read(input%unit, '(a100)') line
+         line = remove_preceding_blanks(line)
 !
-         solver%X_operator = 'dipole_length'
-!         
-      endif
+         if (line(1:13) == 'dipole length') then
+!
+            solver%operator_type = 'dipole_length'
+!        
+         elseif (line(1:3) == 'eom') then
+!
+            solver%eom = .true.
+!
+         elseif (line(1:15) == 'linear response') then
+!
+            solver%linear_response = .true.
+!
+            call output%error_msg('Linear response not implemented for spectra calculations')
+!
+         endif
+!
+      enddo
 !
    end subroutine read_settings_cc_property_solver
+!
+!
+   subroutine reset_property_solver(solver)
+!!
+!!    Reset solver variables
+!!    Written by Josefine H. Andersen, February 2019
+!!
+      implicit none
+!
+      class(cc_property_solver) :: solver
+!
+      solver%S = zero
+!
+      solver%etaX = zero
+      solver%csiX = zero
+!
+   end subroutine reset_property_solver
 !
 !
    subroutine cleanup_cc_property_solver(solver) 
@@ -201,7 +287,7 @@ contains
    end subroutine print_banner_cc_property_solver
 !
 !
-   subroutine print_summary_cc_property_solver(solver, wf)
+   subroutine print_summary_cc_property_solver(solver)
 !!
 !!    Print summary
 !!    Written by Josefine H. Andersen
@@ -209,8 +295,6 @@ contains
       implicit  none
 !
       class(cc_property_solver), intent(in) :: solver
-!
-      class(ccs), intent(in) :: wf
 !
       integer :: state
 !
