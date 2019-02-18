@@ -29,12 +29,14 @@ contains
 !
       real(dp), dimension(wf%n_amplitudes, 1) :: c_i
 !
+      real(dp), intent(in) :: omega
+!
       call wf%jacobian_cc3_transformation(c_i)
 !
    end subroutine jacobian_transform_trial_vector_cc3
 !
 !
-   module subroutine jacobian_cc3_transformation_cc3(wf, c)
+   module subroutine jacobian_cc3_transformation_cc3(wf, omega, c)
 !!
 !!    Jacobian transformation (CC3)
 !!    Written by Rolf H. Myhre and Alexander Paul
@@ -56,7 +58,8 @@ contains
 !
       class(cc3) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: c
+      real(dp), intent(in) :: omega
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_ai
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij
@@ -279,7 +282,7 @@ contains
    end subroutine jacobian_cc3_transformation_cc3
 !
 !
-   module subroutine jacobian_cc3_A_cc3(wf, c_abji, rho_ai, rho_aibj)
+   module subroutine jacobian_cc3_A_cc3(wf, omega, c_abji, rho_ai, rho_aibj)
 !!
 !!    CC3 jacobian terms
 !!    Alex C. Paul and Rolf H. Myhre, Feb 2019
@@ -287,6 +290,8 @@ contains
       implicit none
 !
       class(cc3) :: wf
+!
+      real(dp), intent(in) :: omega
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abji
 !
@@ -768,24 +773,24 @@ contains
 !                       Construct C^{abc}_{ijk} for given i, j, k (t_abc)
 !                       and calculate contributions to rho1 and rho2
 !
-                        call wf%jacobian_cc3_c3_calc(i, j, k, t_abc, u_abc, t_abji, c_abji   &
-                                                      g_bdci_p(:,:,:,i_rel),                 &
-                                                      g_bdcj_p(:,:,:,j_rel),                 &
-                                                      g_bdck_p(:,:,:,k_rel),                 &
-                                                      g_ljci_p(:,:,j_rel,i_rel),             &
-                                                      g_lkci_p(:,:,k_rel,i_rel),             &
-                                                      g_lkcj_p(:,:,k_rel,j_rel),             &
-                                                      g_licj_p(:,:,i_rel,j_rel),             &
-                                                      g_lick_p(:,:,i_rel,k_rel),             &
-                                                      g_ljck_p(:,:,j_rel,k_rel),             &
-                                                      g_bdci_c1_p(:,:,:,i_rel),              &
-                                                      g_bdcj_c1_p(:,:,:,j_rel),              &
-                                                      g_bdck_c1_p(:,:,:,k_rel),              &
-                                                      g_ljci_c1_p(:,:,j_rel,i_rel),          &
-                                                      g_lkci_c1_p(:,:,k_rel,i_rel),          &
-                                                      g_lkcj_c1_p(:,:,k_rel,j_rel),          &
-                                                      g_licj_c1_p(:,:,i_rel,j_rel),          &
-                                                      g_lick_c1_p(:,:,i_rel,k_rel),          &
+                        call wf%jacobian_cc3_c3_calc(omega, i, j, k, t_abc, u_abc, t_abji, c_abji  &
+                                                      g_bdci_p(:,:,:,i_rel),                       &
+                                                      g_bdcj_p(:,:,:,j_rel),                       &
+                                                      g_bdck_p(:,:,:,k_rel),                       &
+                                                      g_ljci_p(:,:,j_rel,i_rel),                   &
+                                                      g_lkci_p(:,:,k_rel,i_rel),                   &
+                                                      g_lkcj_p(:,:,k_rel,j_rel),                   &
+                                                      g_licj_p(:,:,i_rel,j_rel),                   &
+                                                      g_lick_p(:,:,i_rel,k_rel),                   &
+                                                      g_ljck_p(:,:,j_rel,k_rel),                   &
+                                                      g_bdci_c1_p(:,:,:,i_rel),                    &
+                                                      g_bdcj_c1_p(:,:,:,j_rel),                    &
+                                                      g_bdck_c1_p(:,:,:,k_rel),                    &
+                                                      g_ljci_c1_p(:,:,j_rel,i_rel),                &
+                                                      g_lkci_c1_p(:,:,k_rel,i_rel),                &
+                                                      g_lkcj_c1_p(:,:,k_rel,j_rel),                &
+                                                      g_licj_c1_p(:,:,i_rel,j_rel),                &
+                                                      g_lick_c1_p(:,:,i_rel,k_rel),                &
                                                       g_ljck_c1_p(:,:,j_rel,k_rel))
 !
       !                  call wf%jacobian_cc3_eps(i, j, k, t_abc)
@@ -812,15 +817,15 @@ contains
 !                       Construct t^{abc}_{ijk} for given i, j, k (t_abc)
 !                       and calculate contributions to rho1 and rho2
 !
-                        call wf%jacobian_cc3_t3_calc(i, j, k, t_abc, u_abc, t_abji, &
-                                                      g_bdci_p(:,:,:,i_rel),        &
-                                                      g_bdcj_p(:,:,:,j_rel),        &
-                                                      g_bdck_p(:,:,:,k_rel),        &
-                                                      g_ljci_p(:,:,j_rel,i_rel),    &
-                                                      g_lkci_p(:,:,k_rel,i_rel),    &
-                                                      g_lkcj_p(:,:,k_rel,j_rel),    &
-                                                      g_licj_p(:,:,i_rel,j_rel),    &
-                                                      g_lick_p(:,:,i_rel,k_rel),    &
+                        call wf%jacobian_cc3_t3_calc(omega, i, j, k, t_abc, u_abc, t_abji,   &
+                                                      g_bdci_p(:,:,:,i_rel),                 &
+                                                      g_bdcj_p(:,:,:,j_rel),                 &
+                                                      g_bdck_p(:,:,:,k_rel),                 &
+                                                      g_ljci_p(:,:,j_rel,i_rel),             &
+                                                      g_lkci_p(:,:,k_rel,i_rel),             &
+                                                      g_lkcj_p(:,:,k_rel,j_rel),             &
+                                                      g_licj_p(:,:,i_rel,j_rel),             &
+                                                      g_lick_p(:,:,i_rel,k_rel),             &
                                                       g_ljck_p(:,:,j_rel,k_rel))
 !
       !                  call wf%jacobian_cc3_eps(i, j, k, t_abc)
@@ -1895,7 +1900,7 @@ contains
             read(wf%g_jlkc_c1%unit,rec=record, iostat=ioerror) g_ylxc_c1(:,:,y,x)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a)') 'Failed to read jlkc file'
+               write(output%unit,'(t3,a)') 'Failed to read jlkc_c1 file'
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                call output%error_msg('Failed to read file')
             endif
@@ -1904,8 +1909,722 @@ contains
 !
       enddo
 !
-!
    end subroutine jacobian_cc3_ov_vv_reader_cc3
+!
+!
+   module subroutine jacobian_cc3_c3_calc_cc3(omega, i, j, k, c_abc, u_abc, t_abji, c_abji      &
+                                          g_bdci_p, g_bdcj_p, g_bdck_p, g_ljci_p, g_lkci_p,     &
+                                          g_lkcj_p, g_licj_p, g_lick_p, g_ljck_p, g_bdci_c1_p,  &
+                                          g_bdcj_c1_p, g_bdck_c1_p, g_ljci_c1_p, g_lkci_c1_p,   &
+                                          g_lkcj_c1_p, g_licj_c1_p, g_lick_c1_p, g_ljck_c1_p)
+!!
+!!    Construct c^abc_ijk amplitudes for the fixed indices i, j, k
+!!
+!!    c^abc = (omega - ε^abc_ijk)^-1 * P^abc_ijk (sum_d c^ad_ij g_ckbd - sum_l c^ab_il g_cklj
+!!             + sum_d t^ad_ij g'_bdck - sum_l t^ab_il g'_cklj
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), intent(in) :: omega
+!
+      integer, intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: u_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o) intent(in) :: t_abji
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o) intent(in) :: c_abji
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdci
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdcj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdck
+!
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_ljci
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_lkci
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_lkcj
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_licj
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_lick
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_ljck
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdci_c1
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdcj_c1
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdck_c1
+!
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_ljci_c1
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_lkci_c1
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_lkcj_c1
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_licj_c1
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_lick_c1
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_ljck_c1
+!
+      integer :: a, b, c
+!
+      real(dp) :: epsilon_c, epsilon_cb, epsilon_ijk
+!
+!     c^ad_ij*(bd|ck)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 c_abji(:,:,j,i),   & ! c^ad_ij
+                 wf%n_v,            &
+                 g_bdck,            & ! g_dbck
+                 wf%n_v,            &
+                 zero,              &
+                 c_abc,             & ! c^abc_ijk
+                 wf%n_v)
+!
+!     t^ad_ij*g'_bdck
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 t_abji(:,:,j,i),   & ! t^ad_ij
+                 wf%n_v,            &
+                 g_bdck_c1,         & ! g'_dbck
+                 wf%n_v,            &
+                 one,               &
+                 c_abc,             & ! c^abc_ijk
+                 wf%n_v)
+!
+!     - c^ab_il*(lj|ck)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 c_abji(:,:,:,i),   & ! c^ab_il
+                 wf%n_v**2,         &
+                 g_ljck,            & ! g_lcjk
+                 wf%n_o,            &
+                 one,               & ! c^abc_ijk
+                 c_abc,             &
+                 wf%n_v**2)
+!
+!     - t^ab_il*g'_ljck
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 t_abji(:,:,:,i),   & ! t^ab_il
+                 wf%n_v**2,         &
+                 g_ljck_c1,         & ! g'_lcjk
+                 wf%n_o,            &
+                 one,               & ! c^abc_ijk
+                 c_abc,             &
+                 wf%n_v**2)
+!
+!     c^bd_ji*(ad|ck)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 c_abji(:,:,i,j),   & ! c^bd_ji
+                 wf%n_v,            &
+                 g_bdck,            & ! g_dack
+                 wf%n_v,            &
+                 zero,              &
+                 u_abc,             & ! u_bac_ijk
+                 wf%n_v)
+!
+!     t^bd_ji*g'_adck
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 t_abji(:,:,i,j),   & ! t^bd_ij
+                 wf%n_v,            &
+                 g_bdck_c1,         & ! g_dack
+                 wf%n_v,            &
+                 one,               &
+                 u_abc,             & ! u_bac_jik
+                 wf%n_v)
+!
+!     - c^ba_jl*(li|ck)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 c_abji(:,:,:,j),   & ! c^ba_jl
+                 wf%n_v**2,         &
+                 g_lick,            & ! g_lcik
+                 wf%n_o,            &
+                 one,               &
+                 u_abc,             & ! u_bac_jik
+                 wf%n_v**2)
+!
+!     - t^ba_jl*g'_lick
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 t_abji(:,:,:,j),   & ! t^ba_jl
+                 wf%n_v**2,         &
+                 g_lick_c1,         & ! g'_lcik
+                 wf%n_o,            &
+                 one,               &
+                 u_abc,             & ! u_bac_jik
+                 wf%n_v**2)
+!
+      call sort_123_to_213_and_add(u_abc, c_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     c^ad_ik*(cd|bj)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 c_abji(:,:,k,i),   & ! c^ad_ik
+                 wf%n_v,            &
+                 g_bdcj,            & ! g_dcbj
+                 wf%n_v,            &
+                 zero,              &
+                 u_abc,             & ! u^acb_ikj
+                 wf%n_v)
+!
+!     t^ad_ik*g'_cdbj
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 t_abji(:,:,k,i),   & ! t^ad_ik
+                 wf%n_v,            &
+                 g_bdcj_c1,         & ! g'_dcbj
+                 wf%n_v,            &
+                 one,               &
+                 u_abc,             & ! u^acb_ikj
+                 wf%n_v)
+!
+!     - c^ac_il*(lk|bj)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 c_abji(:,:,:,i),   & ! c^ac_il
+                 wf%n_v**2,         &
+                 g_lkcj,            & ! g_lbkj
+                 wf%n_o,            &
+                 one,               &
+                 u_abc,             & ! u^acb_ikj
+                 wf%n_v**2)
+!
+!     - t^ac_il*g'_lkbj
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 t_abji(:,:,:,i),   & ! t^ac_il
+                 wf%n_v**2,         &
+                 g_lkcj_c1,         & ! g'_lbkj
+                 wf%n_o,            &
+                 one,               &
+                 u_abc,             & ! u^acb_ikj
+                 wf%n_v**2)
+!
+      call sort_123_to_132_and_add(u_abc, c_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     c^cd_ki*(ad|bj)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 c_abji(:,:,i,k),   & ! c^cd_ki
+                 wf%n_v,            &
+                 g_bdcj,            & ! g_dabj
+                 wf%n_v,            &
+                 zero,              &
+                 u_abc,             & ! u_cab_kij
+                 wf%n_v)
+!
+!     t^cd_ki*g'_adbj
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 t_abji(:,:,i,k),   & ! t^cd_ki
+                 wf%n_v,            &
+                 g_bdcj_c1,         & ! g'_dabj
+                 wf%n_v,            &
+                 one,               &
+                 u_abc,             & ! u_cab_kij
+                 wf%n_v)
+!
+!     - c^ca_kl*(li|bj)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 c_abji(:,:,:,k),   & ! c^ca_kl
+                 wf%n_v**2,         &
+                 g_licj,            & ! g_lbij
+                 wf%n_o,            &
+                 one,               &
+                 u_abc,             & ! u^cab_kij
+                 wf%n_v**2)
+!
+!     - t^ca_kl*g'_libj
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 t_abji(:,:,:,k),   & ! t^ca_kl
+                 wf%n_v**2,         &
+                 g_licj_c1,         & ! g'_lbij
+                 wf%n_o,            &
+                 one,               &
+                 u_abc,             & ! u^cab_kij
+                 wf%n_v**2)
+!
+      call sort_123_to_231_and_add(u_abc, c_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     c^bd_jk*(cd|ai)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 c_abji(:,:,k,j),   & ! c^bd_jk
+                 wf%n_v,            &
+                 g_bdci,            & ! g_dcai
+                 wf%n_v,            &
+                 zero,              &
+                 u_abc,             & ! u^bca_jki
+                 wf%n_v)
+!
+!     t^bd_jk*g'_cd|ai)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 t_abji(:,:,k,j),   & ! t^bd_jk
+                 wf%n_v,            &
+                 g_bdci_c1,         & ! g'_dcai
+                 wf%n_v,            &
+                 one,               &
+                 u_abc,             & ! u^bca_jki
+                 wf%n_v)
+!
+!     - c^bc_jl*(lk|ai)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 c_abji(:,:,:,j),   & ! c^bc_jl
+                 wf%n_v**2,         &
+                 g_lkci,            & ! g_laki
+                 wf%n_o,            &
+                 one,               &
+                 u_abc,             & ! u^bca_jki
+                 wf%n_v**2)
+!
+!     - t^bc_jl*g_lkai
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 t_abji(:,:,:,j),   & ! t^bc_jl
+                 wf%n_v**2,         &
+                 g_lkci_c1,         & ! g'_laki
+                 wf%n_o,            &
+                 one,               &
+                 u_abc,             & ! u^bca_jki
+                 wf%n_v**2)
+!
+      call sort_123_to_312_and_add(u_abc, c_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     c^cd_kj*(bd|ai)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 c_abji(:,:,j,k),   & ! c^cd_kj
+                 wf%n_v,            &
+                 g_bdci,            & ! g_dbai
+                 wf%n_v,            &
+                 zero,              &
+                 u_abc,             & ! u^cba_kji
+                 wf%n_v)
+!
+!     t^cd_kj*g'_bdai
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 t_abji(:,:,j,k),   & ! t^cd_kj
+                 wf%n_v,            &
+                 g_bdci_c1,         & ! g'_dbai
+                 wf%n_v,            &
+                 one,               &
+                 u_abc,             & ! u^cba_kji
+                 wf%n_v)
+!
+!     - c^cb_kl*(lj|ai)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 c_abji(:,:,:,k),   & ! c^cb_kl
+                 wf%n_v**2,         &
+                 g_ljci,            & ! g_laji
+                 wf%n_o,            &
+                 one,               & ! u^cba_kji
+                 u_abc,             &
+                 wf%n_v**2)
+!
+!     - t^cb_kl*g'_ljai
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 t_abji(:,:,:,k),   & ! t^cb_kl
+                 wf%n_v**2,         &
+                 g_ljci_c1,         & ! g_laji
+                 wf%n_o,            &
+                 one,               & ! u^cba_kji
+                 u_abc,             &
+                 wf%n_v**2)
+!
+      call sort_123_to_321_and_add(u_abc, c_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     Scale by (omega - ε^abc_ijk)^-1
+!
+      epsilon_ijk = omega + wf%fock_diagonal(i,1) + wf%fock_diagonal(j,1) + wf%fock_diagonal(k,1)
+!
+!$omp parallel do schedule(static) private(a)
+      do a = 1,wf%n_v
+!
+         c_abc(a,a,a) = zero
+!
+      enddo
+!$omp end parallel do
+!
+!$omp parallel do schedule(static) private(c,b,a,epsilon_c,epsilon_cb)
+      do c = 1,wf%n_v
+!
+         epsilon_c = epsilon_ijk - wf%fock_diagonal(wf%n_o + c, 1)
+!
+         do b = 1,wf%n_v
+!
+            epsilon_cb = epsilon_c - wf%fock_diagonal(wf%n_o + b, 1)
+!
+            do a = 1,wf%n_v
+!
+               c_abc(a,b,c) = c_abc(a,b,c)*one/(epsilon_cb - wf%fock_diagonal(wf%n_o + a, 1))
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine jacobian_cc3_c3_calc_cc3
+!
+!
+   module subroutine jacobian_cc3_t3_calc_cc3(omega, i, j, k, t_abc, u_abc, t_abji              &
+                                             g_bdci_p, g_bdcj_p, g_bdck_p, g_ljci_p, g_lkci_p,  &
+                                             g_lkcj_p, g_licj_p, g_lick_p, g_ljck_p
+!!
+!!    Construct t^abc_ijk amplitudes for the fixed indices i, j, k
+!!
+!!    t^abc = (omega - ε^abc_ijk)^-1 * P^abc_ijk (sum_d t^ad_ij (bd|ck) - sum_l t^ab_il (ck|lj))
+!!
+!!    Alexander Paul and Rolf H. Myhre, Feb 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), intent(in) :: omega
+!
+      integer, intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: t_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: u_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o) intent(in) :: t_abji
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdci
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdcj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_bdck
+!
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_ljci
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_lkci
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_lkcj
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_licj
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_lick
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_ljck
+!
+      integer :: a, b, c
+!
+      real(dp) :: epsilon_c, epsilon_cb, epsilon_ijk
+!
+!     t^ad_ij*(bd|ck)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 t_abji(:,:,j,i),   & ! t^ad_ij
+                 wf%n_v,            &
+                 g_bdck,            & ! g_dbck
+                 wf%n_v,            &
+                 zero,              &
+                 t_abc,             & ! t^abc_ijk
+                 wf%n_v)
+!
+!     - t^ab_il*(lj|ck)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 t_abji(:,:,:,i),   & ! t^ab_il
+                 wf%n_v**2,         &
+                 g_ljck,            & ! g_lcjk
+                 wf%n_o,            &
+                 one,               & ! t^abc_ijk
+                 t_abc,             &
+                 wf%n_v**2)
+!
+!     t^bd_ji*(ad|ck)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 t_abji(:,:,i,j),   & ! t^bd_ji
+                 wf%n_v,            &
+                 g_bdck,            & ! g_dack
+                 wf%n_v,            &
+                 zero,              &
+                 u_abc,             & ! u_bac_ijk
+                 wf%n_v)
+!
+!     - t^ba_jl*(li|ck)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 t_abji(:,:,:,j),   & ! t^ba_jl
+                 wf%n_v**2,         &
+                 g_lick,            & ! g_lcik
+                 wf%n_o,            &
+                 one,               &
+                 u_abc,             & ! u_bac_jik
+                 wf%n_v**2)
+!
+      call sort_123_to_213_and_add(u_abc, t_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     t^ad_ik*(cd|bj)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 t_abji(:,:,k,i),   & ! t^ad_ik
+                 wf%n_v,            &
+                 g_bdcj,            & ! g_dcbj
+                 wf%n_v,            &
+                 zero,              &
+                 u_abc,             & ! u^acb_ikj
+                 wf%n_v)
+!
+!     - t^ac_il*(lk|bj)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 t_abji(:,:,:,i),   & ! t^ac_il
+                 wf%n_v**2,         &
+                 g_lkcj,            & ! g_lbkj
+                 wf%n_o,            &
+                 one,               &
+                 u_abc,             & ! u^acb_ikj
+                 wf%n_v**2)
+!
+      call sort_123_to_132_and_add(u_abc, t_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     t^cd_ki*(ad|bj)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 t_abji(:,:,i,k),   & ! t^cd_ki
+                 wf%n_v,            &
+                 g_bdcj,            & ! g_dabj
+                 wf%n_v,            &
+                 zero,              &
+                 u_abc,             & ! u_cab_kij
+                 wf%n_v)
+!
+!     - t^ca_kl*(li|bj)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 t_abji(:,:,:,k),   & ! t^ca_kl
+                 wf%n_v**2,         &
+                 g_licj_c1,         & ! g_lbij
+                 wf%n_o,            &
+                 one,               &
+                 u_abc,             & ! u^cab_kij
+                 wf%n_v**2)
+!
+      call sort_123_to_231_and_add(u_abc, t_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     t^bd_jk*(cd|ai)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 t_abji(:,:,k,j),   & ! t^bd_jk
+                 wf%n_v,            &
+                 g_bdci,            & ! g_dcai
+                 wf%n_v,            &
+                 zero,              &
+                 u_abc,             & ! u^bca_jki
+                 wf%n_v)
+!
+!     - t^bc_jl*(lk|ai)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 t_abji(:,:,:,j),   & ! t^bc_jl
+                 wf%n_v**2,         &
+                 g_lkci,            & ! g_laki
+                 wf%n_o,            &
+                 one,               &
+                 u_abc,             & ! u^bca_jki
+                 wf%n_v**2)
+!
+      call sort_123_to_312_and_add(u_abc, t_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     t^cd_kj*(bd|ai)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v,            &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 one,               &
+                 t_abji(:,:,j,k),   & ! t^cd_kj
+                 wf%n_v,            &
+                 g_bdci,            & ! g_dbai
+                 wf%n_v,            &
+                 zero,              &
+                 u_abc,             & ! u^cba_kji
+                 wf%n_v)
+!
+!     - t^cb_kl*(lj|ai)
+!
+      call dgemm('N', 'N',          &
+                 wf%n_v**2,         &
+                 wf%n_v,            &
+                 wf%n_o,            &
+                 -one,              &
+                 t_abji(:,:,:,k),   & ! t^cb_kl
+                 wf%n_v**2,         &
+                 g_ljci,            & ! g_laji
+                 wf%n_o,            &
+                 one,               & ! u^cba_kji
+                 u_abc,             &
+                 wf%n_v**2)
+!
+      call sort_123_to_321_and_add(u_abc, t_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     Scale by (omega - ε^abc_ijk)^-1
+!
+      epsilon_ijk = omega + wf%fock_diagonal(i,1) + wf%fock_diagonal(j,1) + wf%fock_diagonal(k,1)
+!
+!$omp parallel do schedule(static) private(a)
+      do a = 1,wf%n_v
+!
+         t_abc(a,a,a) = zero
+!
+      enddo
+!$omp end parallel do
+!
+!$omp parallel do schedule(static) private(c, b, a, epsilon_c, epsilon_cb)
+      do c = 1,wf%n_v
+!
+         epsilon_c = epsilon_ijk - wf%fock_diagonal(wf%n_o + c, 1)
+!
+         do b = 1,wf%n_v
+!
+            epsilon_cb = epsilon_c - wf%fock_diagonal(wf%n_o + b, 1)
+!
+            do a = 1,wf%n_v
+!
+               t_abc(a,b,c) = t_abc(a,b,c)*one/(epsilon_cb - wf%fock_diagonal(wf%n_o + a, 1))
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine jacobian_cc3_t3_calc_cc3
 !
 !
 end submodule jacobian_cc3

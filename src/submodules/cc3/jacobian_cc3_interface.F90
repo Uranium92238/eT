@@ -120,16 +120,74 @@
    end subroutine jacobian_cc3_ov_vv_reader_cc3
 !
 !
-   module subroutine jacobian_cc3_W_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abji,  &
-                                                g_bdci, g_bdcj, g_bdck,          &
-                                                g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck)
+   module subroutine jacobian_cc3_c3_calc_cc3(omega, i, j, k, c_abc, u_abc, t_abji, c_abji      &
+                                          g_bdci_p, g_bdcj_p, g_bdck_p, g_ljci_p, g_lkci_p,     &
+                                          g_lkcj_p, g_licj_p, g_lick_p, g_ljck_p, g_bdci_c1_p,  &
+                                          g_bdcj_c1_p, g_bdck_c1_p, g_ljci_c1_p, g_lkci_c1_p,   &
+                                          g_lkcj_c1_p, g_licj_c1_p, g_lick_c1_p, g_ljck_c1_p)
 !!
-!!    Calculate intermediates W^abc_ijk needed for the T^abc_ijk and C^abc_ijk amplitudes
+!!    Construct c^abc_ijk amplitudes
+!!
+!!    c^abc = (omega - ε^abc_ijk)^-1 * P^abc_ijk (sum_d c^ad_ij g_ckbd - sum_l c^ab_il g_cklj
+!!             + sum_d t^ad_ij g'_bdck - sum_l t^ab_il g'_cklj
+!!
 !!    Alexander Paul and Rolf H. Myhre Feb 2019
 !!
       implicit none
 !
       class(cc3) :: wf
+!
+      real(dp), intent(in) :: omega
+!
+      integer(i15), intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abji
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: c_abji
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljci
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkci
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkcj
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_licj
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lick
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci_c1
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj_c1
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck_c1
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljci_c1
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkci_c1
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkcj_c1
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_licj_c1
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lick_c1
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck_c1
+!
+!
+   end subroutine jacobian_cc3_c3_calc_cc3
+!
+!
+   module subroutine jacobian_cc3_t3_calc_cc3(wf, omega, i, j, k, t_abc, u_abc, t_abji,   &
+                                                g_bdci, g_bdcj, g_bdck,                   &
+                                                g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck)
+!!
+!!    Construct t^abc_ijk amplitudes
+!!
+!!    t^abc = (omega - ε^abc_ijk)^-1 * P^abc_ijk (sum_d t^ad_ij (bd|ck) - sum_l t^ab_il (ck|lj))
+!!
+!!    Alexander Paul and Rolf H. Myhre Feb 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), intent(in) :: omega
 !
       integer(i15), intent(in) :: i, j, k
 !
@@ -150,7 +208,7 @@
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck
 !
 !
-   end subroutine jacobian_cc3_W_calc_cc3
+   end subroutine jacobian_cc3_t3_calc_cc3
 !
 !
    module subroutine jacobian_cc3_eps_cc3(wf, i, j, k, t_abc)
@@ -170,7 +228,7 @@
    end subroutine jacobian_cc3_eps_cc3
 !
 !
-   module subroutine jacobian_cc3_rho1_cc3(wf, i, j, k, t_abc, u_abc, rho1, rho2, F_kc, &
+   module subroutine jacobian_cc3_rho1_cc3(wf, i, j, k, t_abc, u_abc, rho1,               &
                                           L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
 !!
 !!    Calculate the triples contribution to rho1 and
@@ -201,8 +259,8 @@
    end subroutine jacobian_cc3_rho1_cc3
 !
 !
-   module subroutine jacobian_cc3_rho2_cc3(wf, i, j, k, t_abc, u_abc, v_abc, rho2, &
-                                          g_dbic, g_dbjc, g_dbkc, &
+   module subroutine jacobian_cc3_rho2_cc3(wf, i, j, k, t_abc, u_abc, v_abc, rho2,        &
+                                          F_kc, g_dbic, g_dbjc, g_dbkc,                   &
                                           g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
 !!
 !!    Calculate the triples contribution to rho1 and
@@ -220,6 +278,8 @@
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: v_abc
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: rho2
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_kc
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbic
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbjc
