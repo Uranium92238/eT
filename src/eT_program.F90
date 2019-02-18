@@ -75,6 +75,9 @@ program eT_program
 !
    integer :: n_methods, i
 !
+   integer :: n_threads
+   integer :: omp_get_max_threads
+!
    character(len=40) :: cc_engine  
    character(len=40), dimension(:), allocatable :: cc_methods
 !
@@ -110,6 +113,14 @@ program eT_program
    call disk%prepare()
 !
    call initialize_libint()
+!
+   n_threads = omp_get_max_threads()
+!
+   if (n_threads .eq. 1) then
+      write(output%unit,'(t3,a,i0,a)')   'Running on ',n_threads, ' OMP thread'
+   else
+      write(output%unit,'(t3,a,i0,a)')   'Running on ',n_threads, ' OMP threads'
+   end if
 !
    n_methods = get_n_methods()
 !
