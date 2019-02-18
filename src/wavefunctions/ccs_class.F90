@@ -4742,6 +4742,43 @@ contains
    end subroutine prepare_operator_pq_ccs
 !
 !
+   subroutine get_left_right_vectors_ccs(wf, L, R, state)
+!!
+!!    Get left and right excitation vectors
+!!
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: L, R
+      integer :: state, ioerror
+!
+      type(file) :: left, right
+!      
+      left%name = wf%name_ // 'es_davidson_left'
+      right%name = wf%name_ // 'es_davidson_right'
+!
+      call disk%open_file(left, 'read')
+      call left%prepare_to_read_line(state)
+!
+      call disk%open_file(right, 'read')
+      call right%prepare_to_read_line(state)
+!
+      ioerror = 0
+      read(left%unit, iostat=ioerror) L
+      if (ioerror .ne. 0) call output%error_msg('could not read davidson left solution.')
+!      
+      ioerror = 0
+      read(right%unit, iostat=ioerror) R
+      if (ioerror .ne. 0) call output%error_msg('could not read davidson right solution.')
+!
+      call disk%close_file(left)
+      call disk%close_file(right)
+!      
+   end subroutine get_left_right_vectors_ccs
+!
+!
    subroutine calculate_transition_strength_ccs(wf, S, etaX, csiX)
 !!
 !!    Calculate transition strength for spectra

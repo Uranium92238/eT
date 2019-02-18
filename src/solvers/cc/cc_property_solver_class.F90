@@ -22,7 +22,7 @@ module cc_property_solver_class
 !
       character(len=40)   :: X_operator
 !
-      real(dp), allocatable :: S
+      real(dp) :: S
 !
       real(dp), dimension(:,:), allocatable :: etaX
       real(dp), dimension(:,:), allocatable :: csiX
@@ -77,17 +77,10 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: etaX
       real(dp), dimension(:,:), allocatable :: csiX
-      real(dp), dimension(:,:), allocatable :: X
-      real(dp), dimension(:,:), allocatable :: Y
-      real(dp), dimension(:,:), allocatable :: Z
 !
       call mem%alloc(etaX, wf%n_amplitudes, 1)
       call mem%alloc(csiX, wf%n_amplitudes, 1)
-      call mem%alloc(X, wf%n_amplitudes, 1)
-      call mem%alloc(Y, wf%n_amplitudes, 1)
-      call mem%alloc(Z, wf%n_amplitudes, 1)
 !
-!      call wf%get_transformed_dipole_operator(X, Y, Z)
       ! call wf%construct_etaX(wf, etaX, Xoperator)      
       ! call wf%construct_csiX(wf, csiX, Xoperator)      
 !

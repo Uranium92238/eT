@@ -313,8 +313,8 @@ contains
 !
       iteration = 1
 !
-     call davidson%prepare(wf%name_ // '_es_davidson', wf%n_amplitudes, solver%n_singlet_states, &
-                               solver%residual_threshold, solver%eigenvalue_threshold)
+     call davidson%prepare(wf%name_ // '_es_davidson_' // solver%transformation, wf%n_amplitudes, &
+                           solver%n_singlet_states, solver%residual_threshold, solver%eigenvalue_threshold)
 !
 !     Construct first trial vectors
 !
