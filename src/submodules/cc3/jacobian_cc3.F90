@@ -440,8 +440,8 @@ contains
       v_abc = zero
 !
       req_0 = 0
-      req_1 = 0
-      req_2 = 0
+      req_1 = 4*(wf%n_v)**3
+      req_2 = 4*(wf%n_o)*(wf%n_v) + 2*(wf%n_v)**2
       req_3 = 0
 !
       call batch_i%init(wf%n_o)
@@ -477,56 +477,58 @@ contains
 !
          call batch_i%determine_limits(1)
 !
-         call mem%alloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
-         call mem%alloc(g_bdcj,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
-         call mem%alloc(g_bdck,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+!        Ordered such that batching indices at the end
 !
-         call mem%alloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
-         call mem%alloc(g_dbjc,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
-         call mem%alloc(g_dbkc,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_bdcj, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_bdck, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
-         call mem%alloc(g_ljci,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(g_lkci,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(g_lkcj,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(g_licj,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(g_lick,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(g_ljck,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_dbjc, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_dbkc, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
-         call mem%alloc(g_jlic,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
-         call mem%alloc(g_klic,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
-         call mem%alloc(g_kljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
-         call mem%alloc(g_iljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
-         call mem%alloc(g_ilkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
-         call mem%alloc(g_jlkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
+         call mem%alloc(g_ljci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_lkci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_lkcj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_licj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_lick, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_ljck, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
 !
-         call mem%alloc(L_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(L_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(L_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(L_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(L_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(L_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_jlic, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_klic, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_kljc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_iljc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_ilkc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_jlkc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
 !
-         call mem%alloc(g_bdci_c1,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
-         call mem%alloc(g_bdcj_c1,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
-         call mem%alloc(g_bdck_c1,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%alloc(L_jbic, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(L_kbic, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(L_kbjc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(L_ibjc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(L_ibkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(L_jbkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
 !
-         call mem%alloc(g_dbic_c1,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
-         call mem%alloc(g_dbjc_c1,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
-         call mem%alloc(g_dbkc_c1,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%alloc(g_bdci_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_bdcj_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_bdck_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
-         call mem%alloc(g_ljci_c1,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(g_lkci_c1,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(g_lkcj_c1,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(g_licj_c1,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(g_lick_c1,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
-         call mem%alloc(g_ljck_c1,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_dbic_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_dbjc_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_dbkc_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
-         call mem%alloc(g_jlic,wf_c1%n_v,wf%n_o,batch_i%length,batch_i%length)
-         call mem%alloc(g_klic,wf_c1%n_v,wf%n_o,batch_i%length,batch_i%length)
-         call mem%alloc(g_kljc,wf_c1%n_v,wf%n_o,batch_i%length,batch_i%length)
-         call mem%alloc(g_iljc,wf_c1%n_v,wf%n_o,batch_i%length,batch_i%length)
-         call mem%alloc(g_ilkc,wf_c1%n_v,wf%n_o,batch_i%length,batch_i%length)
-         call mem%alloc(g_jlkc,wf_c1%n_v,wf%n_o,batch_i%length,batch_i%length)
+         call mem%alloc(g_ljci_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_lkci_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_lkcj_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_licj_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_lick_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_ljck_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+!
+         call mem%alloc(g_jlic_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_klic_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_kljc_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_iljc_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_ilkc_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_jlkc_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
 !
       endif
 !
@@ -2625,6 +2627,190 @@ contains
 !$omp end parallel do
 !
    end subroutine jacobian_cc3_t3_calc_cc3
+!
+!
+   module subroutine jacobian_cc3_rho1_cc3(wf, i, j, k, c_abc, u_abc, rho1,               &
+                                          L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
+!!
+!!    Calculate the triples contribution to rho1 for fixed i,j and k
+!!
+!!    rho_1 =+ P^abc_ijk sum_bc (C^abc_ijk - C^cba_ijk) L_jbkc
+!!
+!!    Alexander Paul and Rolf H. Myhre, Feb 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      integer, intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                   :: rho1
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbjc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_ibjc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_ibkc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbkc
+!
+!     Construct u_abc = c_abc - c_cba
+!
+      call construct_123_minus_321(c_abc, u_abc, wf%n_v)
+!
+!     rho_ai += sum_bc (c^abc - c^cba)*L_jbkc
+!
+      call dgemv('N',         &
+                 wf%n_v,      &
+                 wf%n_v**2,   &
+                 one,         &
+                 u_abc,       & ! u^abc
+                 wf%n_v,      &
+                 L_jbkc,      & ! L_bcjk
+                 1,           &
+                 one,         &
+                 rho1(:,i),   & ! rho_ai
+                 1)
+!
+!     rho_ak += sum_cb (t^cba - t^abc)*L_jbic
+!     Same as above if i == k, but this is never true
+!
+      call dgemv('N',         &
+                 wf%n_v,      &
+                 wf%n_v**2,   &
+                 -one,        &
+                 u_abc,       & ! u^cba = - u^abc
+                 wf%n_v,      &
+                 L_jbic,      & ! L_bcji
+                 1,           &
+                 one,         & ! rho_ak
+                 rho1(:,k),   &
+                 1)
+!
+!
+      if (j .ne. k) then
+!
+!        Construct u_abc = c_acb - c_cab
+!
+         call construct_132_minus_312(c_abc, u_abc, wf%n_v)
+!
+!        omega_ai += sum_cb (c^acb - c^cab)*L_kbjc
+!
+         call dgemv('N',         &
+                    wf%n_v,      &
+                    wf%n_v**2,   &
+                    one,         &
+                    u_abc,       & ! u^acb
+                    wf%n_v,      &
+                    L_kbjc,      & ! L_bckj
+                    1,           &
+                    one,         &
+                    rho1(:,i),   & ! rho_ai
+                    1)
+!
+!
+         if (i .ne. j) then
+!
+!           rho_aj += sum_cb (c^cab - c^acb)*L_kbic
+!
+            call dgemv('N',         &
+                       wf%n_v,      &
+                       wf%n_v**2,   &
+                       -one,        &
+                       u_abc,       & ! u^cab = -u^acb
+                       wf%n_v,      &
+                       L_kbic,      & ! L_bcki
+                       1,           &
+                       one,         &
+                       rho1(:,j),   & ! rho_aj
+                       1)
+!
+         end if
+!
+      end if
+!
+      if (i .ne. j .and. j .ne. k) then
+!
+!        Construct u_abc = c_bac - c_bca
+!        This is zero if j == k
+!
+         call construct_213_minus_231(c_abc, u_abc, wf%n_v)
+!
+!        rho_aj += sum_cb (c^bac - c^bca)*L_ibkc
+!
+         call dgemv('N',         &
+                    wf%n_v,      &
+                    wf%n_v**2,   &
+                    one,         &
+                    u_abc,       & ! u^bac
+                    wf%n_v,      &
+                    L_ibkc,      & ! L_bcik
+                    1,           &
+                    one,         &
+                    rho1(:,j),   & ! rho_aj
+                    1)
+!
+!        rho_ak += sum_cb (c^bca - c^bac)*L_ibjc
+!
+         call dgemv('N',         &
+                    wf%n_v,      &
+                    wf%n_v**2,   &
+                    -one,        &
+                    u_abc,       & ! u^bca = - u^bac
+                    wf%n_v,      &
+                    L_ibjc,      & ! L_bcij
+                    1,           &
+                    one,         &
+                    rho1(:,k),   & ! rho_ak
+                    1)
+!
+      end if
+!
+   end subroutine jacobian_cc3_rho1_cc3
+!
+!
+   module subroutine jacobian_cc3_rho2_cc3(wf, i, j, k, t_abc, u_abc, v_abc, rho2,        &
+                                          F_kc, g_dbic, g_dbjc, g_dbkc,                   &
+                                          g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
+!!
+!!    Calculate the triples contribution to rho2 for fixed i,j and k
+!!
+!!    C^abc_ijk contributions:
+!!    rho2 =+ P^abc_ijk (2 C^abc_ijk - C^acb_ijk - C^cba_ijk) (F_kc + (db|kc) - (jl|kc))
+!!
+!!    t^abc_ijk contributions:
+!!    rho2 =+ P^abc_ijk (2 t^abc_ijk - t^acb_ijk - t^cba_ijk) (F'_kc + g'_dbkc - g'_jlkc)
+!!
+!!    Alexander Paul and Rolf H. Myhre Feb 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      integer, intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: v_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: rho2
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_kc
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbic
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbjc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbkc
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_klic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_kljc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_iljc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_ilkc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlkc
+!
+   end subroutine jacobian_cc3_rho2_cc3
 !
 !
 end submodule jacobian_cc3

@@ -139,7 +139,7 @@
 !
       real(dp), intent(in) :: omega
 !
-      integer(i15), intent(in) :: i, j, k
+      integer, intent(in) :: i, j, k
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: c_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
@@ -189,7 +189,7 @@
 !
       real(dp), intent(in) :: omega
 !
-      integer(i15), intent(in) :: i, j, k
+      integer, intent(in) :: i, j, k
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
@@ -220,7 +220,7 @@
 !
       class(cc3) :: wf
 !
-      integer(i15), intent(in) :: i, j, k
+      integer, intent(in) :: i, j, k
 !
       real(dp), dimension(wf%n_v,wf%n_v,wf%n_v), intent(inout) :: t_abc
 !
@@ -228,26 +228,25 @@
    end subroutine jacobian_cc3_eps_cc3
 !
 !
-   module subroutine jacobian_cc3_rho1_cc3(wf, i, j, k, t_abc, u_abc, rho1,               &
+   module subroutine jacobian_cc3_rho1_cc3(wf, i, j, k, c_abc, u_abc, rho1,               &
                                           L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
 !!
-!!    Calculate the triples contribution to rho1 and
-!!    the Fock contribution to rho2
-!!    Alexander Paul and Rolf H. Myhre Feb 2019
+!!    Calculate the triples contribution to rho1 for fixed i,j and k
+!!
+!!    rho_1 =+ P^abc_ijk sum_bc (C^abc_ijk - C^cba_ijk) L_jbkc
+!!
+!!    Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
 !
       class(cc3) :: wf
 !
-      integer(i15), intent(in) :: i, j, k
+      integer, intent(in) :: i, j, k
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: c_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                   :: rho1
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: rho2
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_kc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                   :: omega1
 !
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbic
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbic
@@ -263,15 +262,21 @@
                                           F_kc, g_dbic, g_dbjc, g_dbkc,                   &
                                           g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
 !!
-!!    Calculate the triples contribution to rho1 and
-!!    the Fock contribution to rho2
+!!    Calculate the triples contribution to rho2 for fixed i,j and k
+!!
+!!    C^abc_ijk contributions:
+!!    rho2 =+ P^abc_ijk (2 C^abc_ijk - C^acb_ijk - C^cba_ijk) (F_kc + (db|kc) - (jl|kc))
+!!
+!!    t^abc_ijk contributions:
+!!    rho2 =+ P^abc_ijk (2 t^abc_ijk - t^acb_ijk - t^cba_ijk) (F'_kc + g'_dbkc - g'_jlkc)
+!!
 !!    Alexander Paul and Rolf H. Myhre Feb 2019
 !!
       implicit none
 !
       class(cc3) :: wf
 !
-      integer(i15), intent(in) :: i, j, k
+      integer, intent(in) :: i, j, k
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
