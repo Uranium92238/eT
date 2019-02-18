@@ -19,8 +19,8 @@ module cc3_class
    type(file)  :: L_jbkc_t
    type(file)  :: g_bdck_c
    type(file)  :: g_ljck_c
-   type(file)  :: g_bdkc_c
-   type(file)  :: g_ljkc_c
+   type(file)  :: g_dbkc_c
+   type(file)  :: g_jlkc_c
 !
    contains
 !

@@ -39,7 +39,7 @@
    end subroutine jacobian_cc3_integrals_cc3
 !
 !
-   module subroutine jacobian_cc3_c1_integrals_cc3(wf)
+   module subroutine jacobian_cc3_c1_integrals_cc3(wf, c_ai)
 !!
 !!    Construct c1 transformed integrals needed in CC3 Jacobian
 !!    Alexander Paul and Rolf H. Myhre February 2019
@@ -48,7 +48,24 @@
 !
       class(cc3) :: wf
 !
-end subroutine jacobian_cc3_c1_integrals_cc3
+   end subroutine jacobian_cc3_c1_integrals_cc3
+!
+!
+   subroutine construct_fock_ia_c1_cc3(wf, c_ai, F_ia_c1)
+!!
+!!    Calculates C1 transformed elements of the Fock matrix required for the CC3 jacobian
+!!    Rolf H. Myhre and Alexander Paul, February 2019
+!!
+!!    F_ia_c1 = sum_j L_iajj' = sum_j 2 g_iajj' - g_ij'ja
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+      real(dp), dimension(wf%n_o, wf%n_v), intent(out) :: F_ia_c1
+!
+   end subroutine construct_fock_ia_c1_cc3
 !
 !
    module subroutine jacobian_cc3_vvv_reader_cc3(wf,batch_x,g_bdcx,g_dbxc)
