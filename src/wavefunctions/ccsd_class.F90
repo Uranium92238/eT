@@ -119,6 +119,21 @@ module ccsd_class
 !
       procedure :: get_cvs_projector                           => get_cvs_projector_ccsd
 !
+!     Routines related to property calculations
+!
+      procedure :: construct_etaX                              => construct_etaX_ccsd
+      procedure :: construct_etaX_singles_q1                   => construct_etaX_singles_q1_ccsd
+      procedure :: construct_etaX_singles_q2                   => construct_etaX_singles_q2_ccsd
+      procedure :: construct_etaX_doubles_q1                   => construct_etaX_doubles_q1_ccsd
+      procedure :: construct_etaX_doubles_q2                   => construct_etaX_doubles_q2_ccsd
+     
+      procedure :: construct_csiX                              => construct_csiX_ccsd
+      procedure :: construct_csiX_singles                      => construct_csiX_singles_ccsd
+      procedure :: construct_csiX_doubles                      => construct_csiX_doubles_ccsd
+!
+      procedure :: get_eom_constribution                       => get_eom_contribution_ccsd
+
+!      
    end type ccsd
 !
 !

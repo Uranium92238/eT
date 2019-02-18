@@ -88,7 +88,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      character(len=40)   :: X
+      character(len=40)      :: X
 !
       integer :: i, n
 !
@@ -106,7 +106,7 @@ contains
 !
       elseif (solver%linear_response) then
 !
-         write(output%unit, '(t6,a)') 'Linear response has been selected but is not implemented &
+         write(output%unit, '(t6,a)') 'Linear response has been selected but is not implemented. &
                                       & csiX will be calculated with no contribution '
 !
       endif
