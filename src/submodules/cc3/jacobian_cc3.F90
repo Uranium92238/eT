@@ -2810,6 +2810,345 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_ilkc
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlkc
 !
+      real(dp) :: alpha
+!
+      if (i .ne. j) then
+         alpha = one
+      else
+         alpha = half
+      end if
+!
+!     construct u_abc = 2*t_abc - t_acb - t_cba
+!
+      call construct_123_min_132_min_321(t_abc, u_abc, wf%n_v)
+!
+!     rho_adij += sum_bc (2*t_abc - t_acb - t_cba)*g_dbkc
+!
+      call dgemm('N','N',        &
+                 wf%n_v,         &
+                 wf%n_v,         &
+                 wf%n_v**2,      &
+                 alpha,          &
+                 u_abc,          & ! u^abc
+                 wf%n_v,         &
+                 g_dbkc,         & ! g_bc_dk
+                 wf%n_v**2,      &
+                 one,            &
+                 rho2(:,:,i,j),  & ! rho^ad_ij
+                 wf%n_v)
+!
+      if (i .ne. j) then
+!
+!        rho_ablj += sum_c (2*t_abc - t_acb - t_cba)*g_ilkc
+!
+         call dgemm('N','N',        &
+                    wf%n_v**2,      &
+                    wf%n_o,         &
+                    wf%n_v,         &
+                    -one,           &
+                    u_abc,          & ! u^abc
+                    wf%n_v**2,      &
+                    g_ilkc,         & ! g_c_ljk
+                    wf%n_v,         &
+                    one,            &
+                    rho2(:,:,:,j),  & ! rho^ab_lj
+                    wf%n_v**2)
+!
+!        rho_abij += sum_c (2*t_abc - t_acb - t_cba)*F_kc
+!
+         call dgemv('N',            &
+                    wf%n_v**2,      &
+                    wf%n_v,         &
+                    one,            &
+                    u_abc,          & ! u^abc
+                    wf%n_v**2,      &
+                    F_kc(:,k),      & ! F_ck
+                    1,              &
+                    one,            &
+                    rho2(:,:,i,j),  & ! rho^ab_lj
+                    wf%n_v**2)
+!
+      end if
+!
+!     resort to u_abc = 2*t_bac - t_cab - t_bca
+!
+      call sort_123_to_213(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     rho_adji += sum_bc (2*t_bac - t_cab - t_bca)*g_dbkc
+!
+      call dgemm('N','N',        &
+                 wf%n_v,         &
+                 wf%n_v,         &
+                 wf%n_v**2,      &
+                 alpha,          &
+                 v_abc,          & ! v^abc
+                 wf%n_v,         &
+                 g_dbkc,         & ! g_bc_dk
+                 wf%n_v**2,      &
+                 one,            &
+                 rho2(:,:,j,i),  & ! rho^ad_ji
+                 wf%n_v)
+!
+!     rho_abli += sum_c (2*t_bac - t_cab - t_bca)*g_jlkc
+!
+      call dgemm('N','N',        &
+                 wf%n_v**2,      &
+                 wf%n_o,         &
+                 wf%n_v,         &
+                 -one,           &
+                 v_abc,          & ! v^bac
+                 wf%n_v**2,      &
+                 g_jlkc,         & ! g_c_ljk
+                 wf%n_v,         &
+                 one,            &
+                 rho2(:,:,:,i),  & ! rho^ab_li
+                 wf%n_v**2)
+!
+!        rho_abij += sum_c (2*t_bac - t_cab - t_bca)*F_kc
+!
+         call dgemv('N',            &
+                    wf%n_v**2,      &
+                    wf%n_v,         &
+                    one,            &
+                    u_abc,          & ! u^bac
+                    wf%n_v**2,      &
+                    F_kc(:,k),      & ! F_ck
+                    1,              &
+                    one,            &
+                    rho2(:,:,j,i),  & ! rho^ba_ji
+                    wf%n_v**2)
+!
+!
+      if (j .ne. k) then
+!
+!        construct u_abc = 2*t_acb - t_abc - t_cab
+!
+         call construct_132_min_123_min_312(t_abc, u_abc, wf%n_v)
+!
+         if (i .ne. k) then
+            alpha = one
+         else
+            alpha = half
+         end if
+!
+!        rho_adik += sum_bc (2*t_acb - t_abc - t_cab)*g_dbjc
+!
+         call dgemm('N','N',        &
+                    wf%n_v,         &
+                    wf%n_v,         &
+                    wf%n_v**2,      &
+                    alpha,          &
+                    u_abc,          & ! u^acb
+                    wf%n_v,         &
+                    g_dbjc,         & ! g_bc_dj
+                    wf%n_v**2,      &
+                    one,            &
+                    rho2(:,:,i,k),  & ! rho^ad_ik
+                    wf%n_v)
+!
+         if (i .ne. k .and. i .ne. j) then
+!
+!           rho_ablk += sum_c (2*t_acb - t_abc - t_cab)*g_iljc
+!
+            call dgemm('N','N',        &
+                       wf%n_v**2,      &
+                       wf%n_o,         &
+                       wf%n_v,         &
+                       -one,           &
+                       u_abc,          & ! u^acb
+                       wf%n_v**2,      &
+                       g_iljc,         & ! g_c_lij
+                       wf%n_v,         &
+                       one,            &
+                       rho2(:,:,:,k),  &
+                       wf%n_v**2)
+!
+!        rho_abik += sum_c (2*t_acb - t_abc - t_cab)*F_jc
+!
+         call dgemv('N',            &
+                    wf%n_v**2,      &
+                    wf%n_v,         &
+                    one,            &
+                    u_abc,          & ! u^acb
+                    wf%n_v**2,      &
+                    F_kc(:,j),      & ! F_cj
+                    1,              &
+                    one,            &
+                    rho2(:,:,i,k),  & ! rho^ab_ik
+                    wf%n_v**2)
+!
+         end if
+!
+!        resort to u_abc = 2*t_cab - t_bac - t_cba
+!
+         call sort_123_to_213(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!        rho_adjk += sum_bc (2*t_cab - t_bac - t_cba)*g_dbic
+!
+         call dgemm('N','N',        &
+                    wf%n_v,         &
+                    wf%n_v,         &
+                    wf%n_v**2,      &
+                    alpha,          &
+                    v_abc,          & ! v^cab
+                    wf%n_v,         &
+                    g_dbic,         & ! g_bc_di
+                    wf%n_v**2,      &
+                    one,            &
+                    rho2(:,:,j,k),  & ! rho^ad_jk
+                    wf%n_v)
+!
+!        rho_ablk += sum_c (2*t_cab - t_bac - t_cba)*g_jlic
+!
+         call dgemm('N','N',        &
+                    wf%n_v**2,      &
+                    wf%n_o,         &
+                    wf%n_v,         &
+                    -one,           &
+                    v_abc,          & ! v^cab
+                    wf%n_v**2,      &
+                    g_jlic,         & ! g_c_lji
+                    wf%n_v,         &
+                    one,            &
+                    rho2(:,:,:,i),  & ! rho^ab_lk
+                    wf%n_v**2)
+!
+!        rho_abjk += sum_c (2*t_cab - t_bac - t_cba)*F_ic
+!
+         call dgemv('N',            &
+                    wf%n_v**2,      &
+                    wf%n_v,         &
+                    one,            &
+                    u_abc,          & ! u^cab
+                    wf%n_v**2,      &
+                    F_kc(:,i),      & ! F_ci
+                    1,              &
+                    one,            &
+                    rho2(:,:,j,k),  & ! rho^ab_jk
+                    wf%n_v**2)
+!
+      end if
+!
+!
+      if(i .ne. k .and. (j .ne. k .or. i .ne. j)) then
+!
+!        construct u_abc = 2*t_cba - t_bca - t_abc
+!
+         call construct_321_min_231_min_123(t_abc, u_abc, wf%n_v)
+!
+         if (i .ne. j) then
+!
+            if (k .ne. j) then
+               alpha = one
+            else
+               alpha = half
+            end if
+!
+!           rho_adkj += sum_bc (2*t_cba - t_bca - t_abc)*g_dbic
+!
+            call dgemm('N','N',        &
+                       wf%n_v,         &
+                       wf%n_v,         &
+                       wf%n_v**2,      &
+                       alpha,          &
+                       u_abc,          & ! u^cba
+                       wf%n_v,         &
+                       g_dbic,         & ! g_cb_di
+                       wf%n_v**2,      &
+                       one,            &
+                       rho2(:,:,k,j),  & ! rho^ad_kj
+                       wf%n_v)
+!
+!           omega_ablj += sum_c (2*t_cba - t_bca - t_abc)*g_klic
+!
+            call dgemm('N','N',        &
+                       wf%n_v**2,      &
+                       wf%n_o,         &
+                       wf%n_v,         &
+                       -one,           &
+                       u_abc,          & ! u^cba
+                       wf%n_v**2,      &
+                       g_klic,         & ! g_c_lki
+                       wf%n_v,         &
+                       one,            &
+                       rho2(:,:,:,j),  & ! rho^ab_lj
+                       wf%n_v**2)
+!
+!        rho_abjk += sum_c (2*t_cab - t_bac - t_cba)*F_ic
+!
+         call dgemv('N',            &
+                    wf%n_v**2,      &
+                    wf%n_v,         &
+                    one,            &
+                    u_abc,          & ! u^cab
+                    wf%n_v**2,      &
+                    F_kc(:,i),      & ! F_ci
+                    1,              &
+                    one,            &
+                    rho2(:,:,k,j),  & ! rho^ba_kj
+                    wf%n_v**2)
+!
+         end if
+!
+!        resort to u_abc = 2*t_bca - t_cba - t_bac
+!
+         call sort_123_to_213(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+         if (i .ne. j) then
+!
+!           rho_adki += sum_bc (2*t_bca - t_cba - t_bac)*g_dbjc
+!
+            call dgemm('N','N',        &
+                       wf%n_v,         &
+                       wf%n_v,         &
+                       wf%n_v**2,      &
+                       alpha,          &
+                       v_abc,          & ! v^bca
+                       wf%n_v,         &
+                       g_dbjc,         & ! g_bc_dj
+                       wf%n_v**2,      &
+                       one,            &
+                       rho2(:,:,k,i),  & ! rho^ad_ki
+                       wf%n_v)
+!
+         end if
+!
+         if (j .ne. k) then
+!
+!           rho_abli += sum_c (2*t_bca - t_cba - t_bac)*g_kljc
+!
+            call dgemm('N','N',        &
+                       wf%n_v**2,      &
+                       wf%n_o,         &
+                       wf%n_v,         &
+                       -one,           &
+                       v_abc,          & ! v^bca
+                       wf%n_v**2,      &
+                       g_kljc,         & ! g_c_lkj
+                       wf%n_v,         &
+                       one,            &
+                       rho2(:,:,:,i),  & ! rho^ab_li
+                       wf%n_v**2)
+!
+!        rho_abik += sum_c (2*t_bca - t_cba - t_bac)*F_jc
+!
+         call dgemv('N',            &
+                    wf%n_v**2,      &
+                    wf%n_v,         &
+                    one,            &
+                    u_abc,          & ! u^bca
+                    wf%n_v**2,      &
+                    F_kc(:,j),      & ! F_cj
+                    1,              &
+                    one,            &
+                    rho2(:,:,k,i),  & ! rho^ba_ki
+                    wf%n_v**2)
+!
+         end if
+!
+      end if
+!
+!
    end subroutine jacobian_cc3_rho2_cc3
 !
 !
