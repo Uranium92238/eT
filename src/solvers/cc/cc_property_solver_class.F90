@@ -20,11 +20,11 @@ module cc_property_solver_class
       character(len=500) :: description1 = 'A solver that calculates spectral intensities from coupled &
                                            &cluster excited state calculations'
 !
-      character(len=40)   :: operator_type
+      character(len=10)  :: es_type
+      character(len=40)  :: operator_type
 !
       logical    :: eom
       logical    :: linear_response
-!      character(len=40)   :: X
 !
       character(len=1), dimension(3) :: component = ['X', 'Y', 'Z']
 !
@@ -69,6 +69,7 @@ contains
 !
       solver%eom             = .false.
       solver%linear_response = .false.
+      solver%es_type         = 'valence'
 !
       call solver%read_settings()
 !
@@ -114,16 +115,20 @@ contains
       call mem%alloc(l_vec_n, wf%n_amplitudes, 1)
       call mem%alloc(r_vec_n, wf%n_amplitudes, 1)
 !
+      call solver%print_summary('header')
+!      
 !     Loop over components of X
 !
       do i = 1, 3
 !
+         call solver%print_summary('top', i)
+!         
          X = solver%component(i) //'_'// trim(solver%operator_type) 
 !
          call solver%reset()
 !
-         call wf%construct_etaX(solver%etaX, X)      
-         call wf%construct_csiX(solver%csiX, X)      
+         call wf%construct_etaX(X, solver%etaX)      
+         call wf%construct_csiX(X, solver%csiX)      
 !
 !        Loop over excited states
 !  
@@ -135,11 +140,15 @@ contains
 !
             call wf%calculate_transition_strength(solver%S, solver%etaX, solver%csiX, l_vec_n, r_vec_n)
 !
+            call solver%print_summary('results', n)
+!            
          enddo
+!         
+         call solver%print_summary('bottom')
 !
       enddo
 !
-      call solver%print_summary()
+!      call solver%print_summary()
 !
    end subroutine run_cc_property_solver
 !
@@ -175,6 +184,14 @@ contains
 !
             read(line(16:100), *) solver%n_singlet_states
 !
+         elseif (line(1:15) == 'core excitation' ) then
+!                 
+            solver%es_type = 'core'
+!            
+         elseif (line(1:10) == 'valence excitation' ) then
+!                 
+            solver%es_type = 'valence'
+!            
          endif
 !
       enddo
@@ -279,7 +296,7 @@ contains
       implicit none
 !
       class(cc_property_solver) :: solver
-!
+!              
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
       call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
@@ -287,33 +304,44 @@ contains
    end subroutine print_banner_cc_property_solver
 !
 !
-   subroutine print_summary_cc_property_solver(solver)
+   subroutine print_summary_cc_property_solver(solver, output_type, i)
 !!
 !!    Print summary
 !!    Written by Josefine H. Andersen
 !!
+!!    The routine takes input, as the results are written out in the loops in run()
+!!
       implicit  none
 !
       class(cc_property_solver), intent(in) :: solver
+!              
+      character(len=*), intent(in) :: output_type
 !
-      integer :: state
+      integer, optional :: i
 !
-!     Would be nice to have access to excitation energies as to not only
-!     assign an intensity to electronic state number
+      if (output_type == 'header') then 
+!              
+         write(output%unit, '(/t3,a)') '- Summary of property calculation:'
+         write(output%unit, '(/t3,a)') 'Type of excitation: ', solver%es_type
+         write(output%unit, '(/t3,a)') 'Type of operator: ', solver%operator_type
 !
-      write(output%unit, '(/t3,a)') '- Summary of spectra calculation:'
+      elseif (output_type == 'top') then
+!              
+         write(output%unit, '(/t6,a)') '                                    '
+         write(output%unit, '(/t6,a)') 'Operator component: ', solver%component(i)
+         write(output%unit, '(/t6,a)') '                                    '
+         write(output%unit, '(t6,a)')  'State                                             Strength     '
+         write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
 !
-      write(output%unit, '(/t6,a)') '                                    '
-      write(output%unit, '(t6,a)')  'State        Excitation energy(Hartree)           Strength     '
-      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+      elseif (output_type == 'results') then
 !
-      do state = 1, solver%n_singlet_states
+         write(output%unit, '(t6,i2,14x,f19.12,4x,f19.12)') i, 'energy', solver%S
 !
-         write(output%unit, '(t6,i2,14x,f19.12,4x,f19.12)') state, 'energy', solver%S
+      elseif (output_type == 'bottom') then
 !
-      enddo
+         write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
 !
-      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+      endif
 !
    end subroutine print_summary_cc_property_solver
 !

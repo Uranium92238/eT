@@ -131,7 +131,7 @@ module ccsd_class
       procedure :: construct_csiX_singles                      => construct_csiX_singles_ccsd
       procedure :: construct_csiX_doubles                      => construct_csiX_doubles_ccsd
 !
-      procedure :: get_eom_constribution                       => get_eom_contribution_ccsd
+!      procedure :: get_eom_constribution                       => get_eom_contribution_ccsd
 
 !      
    end type ccsd
@@ -142,6 +142,7 @@ module ccsd_class
       include "../submodules/ccsd/omega_ccsd_interface.F90"
       include "../submodules/ccsd/jacobian_ccsd_interface.F90"
       include "../submodules/ccsd/jacobian_transpose_ccsd_interface.F90"
+      include "../submodules/ccsd/properties_ccsd_interface.F90"
 !
    end interface 
 !

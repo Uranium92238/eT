@@ -189,6 +189,7 @@ module ccs_class
 !     Routines related to property calculations
 !
       procedure :: construct_etaX                              => construct_etaX_ccs
+      procedure :: construct_etaX_transpose                    => construct_etaX_transpose_ccs
       procedure :: construct_csiX                              => construct_csiX_ccs
       procedure :: get_eom_contribution                        => get_eom_contribution_ccs
       procedure :: prepare_operator_pq                         => prepare_operator_pq_ccs
@@ -4636,7 +4637,7 @@ contains
    end subroutine get_operator_vv_ccs
 !
 !
-   subroutine construct_etaX_ccs(wf, etaX, Xoperator)
+   subroutine construct_etaX_ccs(wf, Xoperator, etaX)
 !!
 !!    Construct left-hand-side vector etaX 
 !!    Written by Josefine H. Andersen, 2019
@@ -4645,27 +4646,46 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
       real(dp), dimension(:,:), allocatable              :: eta_temp
 !
       character(len=*), intent(in) :: Xoperator
 !
       real(dp), parameter :: two = 2.0
 !
-      call mem%alloc(eta_temp, wf%n_o, wf%n_v)
+      call mem%alloc(eta_temp, wf%n_amplitudes, 1)
 !
 !     etaX_ai = 2*X_ia
 !
       call  wf%get_operator_ov(Xoperator, eta_temp)
 !
-      etaX = two * transpose(eta_temp)
+      eta_temp = two * eta_temp
 !
-      call mem%dealloc(eta_temp, wf%n_o, wf%n_v)
+      call wf%construct_etaX_transpose(etaX, eta_temp)
+!
+      call mem%dealloc(eta_temp, wf%n_amplitudes, 1)
 !
    end subroutine construct_etaX_ccs
 !
 !
-   subroutine construct_csiX_ccs(wf, csiX, Xoperator)
+   subroutine construct_etaX_transpose_ccs(wf, etaX, etaT)
+!!
+!!    Transposes X_ia to X_ai in matrix form for etaX singles
+!!    Written by Josefine H. Andersen, February 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)    :: etaT
+!      
+      etaX = transpose(etaT)
+!
+   end subroutine
+!
+!
+   subroutine construct_csiX_ccs(wf, Xoperator, csiX)
 !!
 !!    Construct right-hand-side vector csiX 
 !!    Written by Josefine H. Andersen, 2019
@@ -4674,7 +4694,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: csiX
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: csiX
       character(len=*), intent(in) :: Xoperator
 !
 !     CCS: csiX = X_ai
