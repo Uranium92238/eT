@@ -2922,9 +2922,9 @@ contains
 !
       real(dp):: s_invert_time, e_invert_time
 !
-      real(dp), dimension(:,:), allocatable :: cholesky, cholesky_inverse
+      real(dp), dimension(:,:), allocatable :: cholesky_inverse
 !
-      integer :: I
+      integer :: I, info
 !
       call cpu_time(s_invert_time)
 !
@@ -2933,21 +2933,20 @@ contains
       call disk%open_file(solver%cholesky_aux, 'read')
       rewind(solver%cholesky_aux%unit)
 !
-      call mem%alloc(cholesky, solver%n_cholesky, solver%n_cholesky)
+      call mem%alloc(cholesky_inverse, solver%n_cholesky, solver%n_cholesky)
 !
-      read(solver%cholesky_aux%unit) cholesky
+      read(solver%cholesky_aux%unit) cholesky_inverse
 !
       call disk%close_file(solver%cholesky_aux, 'delete')
 !
 !     Invert cholesky vectors
 !
-      call mem%alloc(cholesky_inverse, solver%n_cholesky, solver%n_cholesky)
+      call DTRTRI('l','n', solver%n_cholesky, cholesky_inverse, solver%n_cholesky, info)
 !
-      call inv_lower_tri(cholesky_inverse, cholesky, solver%n_cholesky)
+      if (info /= 0) call output%error_msg('Error: matrix inversion failed!', info)
+!
       write(output%unit, '(/t6, a)') 'Done inverting L_JK!'
       flush(output%unit)
-!
-      call mem%dealloc(cholesky, solver%n_cholesky, solver%n_cholesky)
 !
 !     Write inverse Cholesky vectors of auxiliary basis overlap
 !
