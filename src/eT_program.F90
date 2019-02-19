@@ -17,10 +17,11 @@ program eT_program
    use uhf_class
    use mlhf_class
 !
-   use ccs_class
-   use cc2_class
-   use ccsd_class
-   use mp2_class
+  use ccs_class
+  use cc2_class
+  use ccsd_class
+  use cc3_class
+  use mp2_class
 !
    use io_eT_program
 !
@@ -47,6 +48,7 @@ program eT_program
    type(ccs), allocatable, target   :: ccs_wf
    type(cc2), allocatable, target   :: cc2_wf
    type(ccsd), allocatable, target  :: ccsd_wf
+   type(cc3), allocatable, target   :: cc3_wf
    type(mp2), allocatable, target   :: mp2_wf
 !
 !  Wavefunction pointers
@@ -72,6 +74,9 @@ program eT_program
 !  Other variables
 !
    integer :: n_methods, i
+!
+   integer :: n_threads
+   integer :: omp_get_max_threads
 !
    character(len=40) :: cc_engine  
    character(len=40), dimension(:), allocatable :: cc_methods
@@ -108,6 +113,14 @@ program eT_program
    call disk%prepare()
 !
    call initialize_libint()
+!
+   n_threads = omp_get_max_threads()
+!
+   if (n_threads .eq. 1) then
+      write(output%unit,'(t3,a,i0,a)')   'Running on ',n_threads, ' OMP thread'
+   else
+      write(output%unit,'(t3,a,i0,a)')   'Running on ',n_threads, ' OMP threads'
+   end if
 !
    n_methods = get_n_methods()
 !
@@ -212,6 +225,11 @@ program eT_program
             allocate(ccsd_wf)
             cc_wf => ccsd_wf
 !
+         elseif (cc_methods(i) == 'cc3') then
+!
+            allocate(cc3_wf)
+            cc_wf => cc3_wf
+!
          endif
 !
 !        Determine engine
@@ -290,6 +308,10 @@ program eT_program
          elseif (cc_methods(i) == 'ccsd') then
 !
             deallocate(ccsd_wf)
+!
+         elseif (cc_methods(i) == 'cc3') then
+!
+            deallocate(cc3_wf)
 !
          endif
 !
