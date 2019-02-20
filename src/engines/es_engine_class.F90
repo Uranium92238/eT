@@ -11,7 +11,6 @@ module es_engine_class
    use davidson_cvs_cc_es_solver_class
    use diis_cc_gs_solver_class
    use diis_cc_es_solver_class
-   use diis_cc_multipliers_solver_class
 !
    type, extends(abstract_engine) :: es_engine 
 !
@@ -111,7 +110,7 @@ contains
 !
 !     Prepare for excited state
 !
-      if (engine%algorithm == 'diis') then 
+      if (engine%algorithm == 'diis' .or. wf%name_ == 'low memory cc2') then 
 !
          allocate(cc_es_solver_diis)
 !

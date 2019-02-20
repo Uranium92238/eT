@@ -19,7 +19,7 @@ program eT_program
 !
   use ccs_class
   use cc2_class
-  use ccsd_class
+  use lowmem_cc2_class
   use cc3_class
   use mp2_class
 !
@@ -41,15 +41,16 @@ program eT_program
 !
 !  Wavefunction allocatables and pointers  
 !
-   type(hf), allocatable, target    :: hf_wf
-   type(uhf), allocatable, target   :: uhf_wf
-   type(mlhf), allocatable, target  :: mlhf_wf 
-!
-   type(ccs), allocatable, target   :: ccs_wf
-   type(cc2), allocatable, target   :: cc2_wf
-   type(ccsd), allocatable, target  :: ccsd_wf
-   type(cc3), allocatable, target   :: cc3_wf
-   type(mp2), allocatable, target   :: mp2_wf
+   type(hf), allocatable, target          :: hf_wf
+   type(uhf), allocatable, target         :: uhf_wf
+   type(mlhf), allocatable, target        :: mlhf_wf 
+!  
+   type(ccs), allocatable, target         :: ccs_wf
+   type(cc2), allocatable, target         :: cc2_wf
+   type(lowmem_cc2), allocatable, target  :: lowmem_cc2_wf
+   type(ccsd), allocatable, target        :: ccsd_wf
+   type(cc3), allocatable, target         :: cc3_wf
+   type(mp2), allocatable, target         :: mp2_wf
 !
 !  Wavefunction pointers
 !
@@ -58,18 +59,18 @@ program eT_program
 !
 !  Cholesky decomposition solver 
 !
-   type(eri_cd_solver), allocatable     :: chol_solver
+   type(eri_cd_solver), allocatable :: chol_solver
 !
 !  Engines
 !
-   type(hf_engine), allocatable         :: gs_hf_engine
-   type(gs_engine), allocatable, target :: gs_cc_engine
-   type(es_engine), allocatable, target :: es_cc_engine
+   type(hf_engine), allocatable                  :: gs_hf_engine
+   type(gs_engine), allocatable, target          :: gs_cc_engine
+   type(es_engine), allocatable, target          :: es_cc_engine
    type(multipliers_engine), allocatable, target :: multipliers_cc_engine
 !
 !  Engine pointer
 !
-   class(abstract_engine), pointer      :: engine => null()
+   class(abstract_engine), pointer :: engine => null()
 !
 !  Other variables
 !
@@ -230,6 +231,11 @@ program eT_program
 !
             allocate(cc2_wf)
             cc_wf => cc2_wf
+!
+         elseif (cc_methods(i) == 'lowmem-cc2') then
+!
+            allocate(lowmem_cc2_wf)
+            cc_wf => lowmem_cc2_wf
 !
          elseif (cc_methods(i) == 'ccsd') then
 !
