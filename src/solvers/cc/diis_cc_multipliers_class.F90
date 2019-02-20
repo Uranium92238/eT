@@ -1,4 +1,4 @@
-module diis_cc_multipliers_solver_class
+module diis_cc_multipliers_class
 !
 !!
 !!		DIIS coupled cluster multipliers solver class module
@@ -12,9 +12,9 @@ module diis_cc_multipliers_solver_class
 !
    implicit none
 !
-   type :: diis_cc_multipliers_solver
+   type :: diis_cc_multipliers
 !
-      character(len=100) :: tag = 'Davidson multipliers solver'
+      character(len=100) :: tag = 'Diis multipliers solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       character(len=500) :: description1 = 'A DIIS CC multiplier equations solver. It combines a quasi-Newton &
@@ -25,40 +25,43 @@ module diis_cc_multipliers_solver_class
       character(len=500) :: description2 = 'See Helgaker et al., Molecular Electronic Structure Theory, &
                                            &Chapter 13, for the more details on this algorithm.'
 !
-      integer :: diis_dimension = 8
+      integer :: diis_dimension
 !
-      integer :: max_iterations = 50
+      integer :: max_iterations
 !
-      real(dp) :: residual_threshold  = 1.0d-6
+      real(dp) :: residual_threshold
 !
-      logical :: restart = .false.
+      logical :: restart
 !
    contains
 !     
-      procedure, nopass :: cleanup          => cleanup_diis_cc_multipliers_solver
-      procedure, nopass :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_multipliers_solver
+      procedure, nopass :: cleanup          => cleanup_diis_cc_multipliers
+      procedure, nopass :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_multipliers
 !
-      procedure :: prepare                  => prepare_diis_cc_multipliers_solver
-      procedure :: run                      => run_diis_cc_multipliers_solver
+      procedure :: prepare                  => prepare_diis_cc_multipliers
+      procedure :: run                      => run_diis_cc_multipliers
 !
-      procedure :: print_banner             => print_banner_diis_cc_multipliers_solver
+      procedure :: read_settings            => read_settings_diis_cc_multipliers
 !
-      procedure :: print_settings           => print_settings_diis_cc_multipliers_solver
+      procedure :: print_banner             => print_banner_diis_cc_multipliers
+      procedure, nopass :: print_summary    => print_summary_diis_cc_multipliers
 !
-   end type diis_cc_multipliers_solver
+      procedure :: print_settings           => print_settings_diis_cc_multipliers
+!
+   end type diis_cc_multipliers
 !
 !
 contains
 !
 !
-   subroutine prepare_diis_cc_multipliers_solver(solver, wf)
+   subroutine prepare_diis_cc_multipliers(solver, wf)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(diis_cc_multipliers_solver) :: solver
+      class(diis_cc_multipliers) :: solver
 !
       class(ccs) :: wf
 !
@@ -75,23 +78,25 @@ contains
 !
       solver%restart = .false.
 !
+      call solver%read_settings()
+!
       call solver%print_settings()
 !
       call wf%construct_fock()
 !
       call wf%initialize_multipliers()
 !
-   end subroutine prepare_diis_cc_multipliers_solver
+   end subroutine prepare_diis_cc_multipliers
 !
 !
-   subroutine print_settings_diis_cc_multipliers_solver(solver)
+   subroutine print_settings_diis_cc_multipliers(solver)
 !!
 !!    Print settings    
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
       implicit none 
 !
-      class(diis_cc_multipliers_solver) :: solver 
+      class(diis_cc_multipliers) :: solver 
 !
       write(output%unit, '(/t3,a)')      '- DIIS CC multipliers solver settings:'
 !
@@ -100,10 +105,10 @@ contains
       write(output%unit, '(/t6,a26,i9)')   'DIIS dimension:           ', solver%diis_dimension
       write(output%unit, '(t6,a26,i9)')    'Max number of iterations: ', solver%max_iterations
 !
-   end subroutine print_settings_diis_cc_multipliers_solver
+   end subroutine print_settings_diis_cc_multipliers
 !
 !
-   subroutine do_diagonal_precondition_diis_cc_multipliers_solver(alpha, preconditioner, vector, n)
+   subroutine do_diagonal_precondition_diis_cc_multipliers(alpha, preconditioner, vector, n)
 !!
 !!    Do diagonal precondition 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
@@ -135,17 +140,17 @@ contains
       enddo 
 !$omp end parallel do
 !
-   end subroutine do_diagonal_precondition_diis_cc_multipliers_solver
+   end subroutine do_diagonal_precondition_diis_cc_multipliers
 !
 !
-   subroutine run_diis_cc_multipliers_solver(solver, wf)
+   subroutine run_diis_cc_multipliers(solver, wf)
 !!
 !!    Run 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(diis_cc_multipliers_solver) :: solver
+      class(diis_cc_multipliers) :: solver
 !
       class(ccs) :: wf
 !
@@ -156,16 +161,18 @@ contains
       real(dp) :: residual_norm
 !
       real(dp), dimension(:,:), allocatable :: residual  
-      real(dp), dimension(:,:), allocatable :: multipliers  
+      real(dp), dimension(:,:), allocatable :: multipliers
       real(dp), dimension(:,:), allocatable :: epsilon  
 !
       integer :: iteration
 !
-      call diis_manager%init('cc_multipliers_diis', wf%n_amplitudes, wf%n_amplitudes, solver%diis_dimension)
+      call diis_manager%init('cc_multipliers_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
-      call mem%alloc(residual, wf%n_amplitudes, 1)
-      call mem%alloc(multipliers, wf%n_amplitudes, 1)
-      call mem%alloc(epsilon, wf%n_amplitudes, 1)
+      call mem%alloc(residual, wf%n_gs_amplitudes, 1)
+      call mem%alloc(multipliers, wf%n_gs_amplitudes, 1)
+      call mem%alloc(epsilon, wf%n_gs_amplitudes, 1)
+!
+      call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
 !
       if (solver%restart) then 
 !
@@ -192,7 +199,7 @@ contains
 !        Construct the multiplier equations 
 !
          call wf%construct_multiplier_equation(residual)
-         residual_norm = get_l2_norm(residual, wf%n_amplitudes)
+         residual_norm = get_l2_norm(residual, wf%n_gs_amplitudes)
 !
          write(output%unit, '(t3,i3,10x,e11.4)') iteration, residual_norm
          flush(output%unit)
@@ -211,8 +218,7 @@ contains
 !           Precondition residual, shift multipliers by preconditioned residual, 
 !           then ask for the DIIS update of the multipliers 
 !
-            call wf%get_orbital_differences(epsilon)
-            call solver%do_diagonal_precondition(-one, epsilon, residual, wf%n_amplitudes)
+            call solver%do_diagonal_precondition(-one, epsilon, residual, wf%n_gs_amplitudes)
 !
             call wf%get_multipliers(multipliers)
             multipliers = multipliers + residual 
@@ -226,10 +232,6 @@ contains
 !
       enddo
 !
-      call mem%dealloc(residual, wf%n_amplitudes, 1)
-      call mem%dealloc(multipliers, wf%n_amplitudes, 1)
-      call mem%dealloc(epsilon, wf%n_amplitudes, 1)
-!
       call diis_manager%finalize()
 !
       if (.not. converged_residual) then 
@@ -238,14 +240,22 @@ contains
          write(output%unit, '(/t3,a)')  'Warning: was not able to converge the equations in the given'
          write(output%unit, '(t3,a/)')  'number of maximum iterations.'
 !
+      else
+!
+         call solver%print_summary(wf, multipliers)
+!
       endif 
 !
       flush(output%unit)
 !
-   end subroutine run_diis_cc_multipliers_solver
+      call mem%dealloc(residual, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(multipliers, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(epsilon, wf%n_gs_amplitudes, 1)
+!
+   end subroutine run_diis_cc_multipliers
 !
 !
-   subroutine cleanup_diis_cc_multipliers_solver(wf)
+   subroutine cleanup_diis_cc_multipliers(wf)
 !!
 !! 	Cleanup 
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -257,24 +267,95 @@ contains
       call wf%save_multipliers()  
       call wf%destruct_multipliers()
 !
-   end subroutine cleanup_diis_cc_multipliers_solver
+   end subroutine cleanup_diis_cc_multipliers
 !
 !
-   subroutine print_banner_diis_cc_multipliers_solver(solver)
+   subroutine print_banner_diis_cc_multipliers(solver)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none 
 !
-      class(diis_cc_multipliers_solver) :: solver 
+      class(diis_cc_multipliers) :: solver 
 !
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
       call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
       call long_string_print(solver%description2)
 !
-   end subroutine print_banner_diis_cc_multipliers_solver
+   end subroutine print_banner_diis_cc_multipliers
 !
 !
-end module diis_cc_multipliers_solver_class
+   subroutine print_summary_diis_cc_multipliers(wf, X)
+!!
+!!    Print summary 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: X
+!
+      write(output%unit, '(/t3,a)') '- Multipliers vector amplitudes:'
+      flush(output%unit)      
+!
+      call wf%print_dominant_x_amplitudes(X, 'r')
+!
+   end subroutine print_summary_diis_cc_multipliers
+!
+!
+   subroutine read_settings_diis_cc_multipliers(solver)
+!!
+!!    Read settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(diis_cc_multipliers) :: solver 
+!
+      integer :: n_specs, i
+!
+      character(len=100) :: line
+!
+      if (.not. requested_section('multipliers')) return
+!
+      call move_to_section('multipliers', n_specs)
+!
+      do i = 1, n_specs
+!
+         read(input%unit, '(a100)') line
+         line = remove_preceding_blanks(line)
+!
+         if (line(1:10) == 'threshold:' ) then
+!
+            read(line(11:100), *) solver%residual_threshold
+!
+         elseif (line(1:15) == 'max iterations:' ) then
+!
+            read(line(16:100), *) solver%max_iterations
+!
+         endif
+!
+      enddo
+!
+   end subroutine read_settings_diis_cc_multipliers
+!
+!
+end module diis_cc_multipliers_class
+!
+!  Testing multipliers against dalton:
+!
+!  Run Dalton, requesting transition moments (*CCOPA)
+!
+!  Copy the file CCL0_1__1 to the eT scratch folder
+!
+!  This file is sequential and unformatted and contains the following records:
+!
+!     1. Some integer and a string containing the CC-method used 
+!
+!     2. Multipliers singles-vector
+!
+!     3. Multipliers doubles-vector (for CCSD/CC2)
+!  

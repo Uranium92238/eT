@@ -234,6 +234,11 @@ contains
 !
       call wf%save_orbital_coefficients()
 !
+!     Do a final Roothan-Hall step to transform the Fock matrix in the canonical MO basis 
+!
+      do_mo_transformation = .true.
+      call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies, do_mo_transformation)
+!
 !     Save AO density (or densities) to disk 
 !
       call wf%save_ao_density()

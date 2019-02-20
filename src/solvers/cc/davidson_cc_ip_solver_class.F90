@@ -105,7 +105,7 @@ contains
 !
 !        Initial trial vectors given on input
 !
-         call mem%alloc(c_i, wf%n_amplitudes, 1)
+         call mem%alloc(c_i, wf%n_es_amplitudes, 1)
 !
          c_i = zero
          c_i(solver%start_vectors(1, 1), 1) = one
@@ -121,13 +121,13 @@ contains
 !
          enddo
 !
-         call mem%dealloc(c_i, wf%n_amplitudes, 1)
+         call mem%dealloc(c_i, wf%n_es_amplitudes, 1)
 !
       else
 !
 !        Initial trial vectors given by Koopman
 !
-         call mem%alloc(c_i, wf%n_amplitudes, 1)
+         call mem%alloc(c_i, wf%n_es_amplitudes, 1)
 !
          count_start_vecs = 0
          a = wf%n_v
@@ -155,7 +155,7 @@ contains
 !
          enddo
 !
-         call mem%dealloc(c_i, wf%n_amplitudes, 1)
+         call mem%dealloc(c_i, wf%n_es_amplitudes, 1)
 !
       endif
 !
@@ -179,12 +179,14 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: projector
 !
-      call mem%alloc(projector, wf%n_amplitudes, 1)
+      call mem%alloc(projector, wf%n_es_amplitudes, 1)
 !
       call wf%get_ip_projector(projector)
 !
       call davidson%set_projector(projector)
-      call mem%dealloc(projector, wf%n_amplitudes, 1)
+      call mem%dealloc(projector, wf%n_es_amplitudes, 1)
+!
+      if (.false.) write(output%unit, *) solver%tag ! Hack to suppress unavoidable compiler warnings
 !
    end subroutine set_projection_vector_davidson_cc_ip_solver
 !

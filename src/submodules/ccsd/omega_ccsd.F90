@@ -1,13 +1,15 @@
 submodule (ccsd_class) omega_ccsd
 !
 !!
-!!    Omega submodule (ccsd)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    and Andreas Skeidsvoll, 2018
+!!    Omega submodule (CCSD)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Routines to construct 
 !!
 !!    Ω =  < mu | exp(-T) H exp(T) | R >
+!!
+!!    Transfered to the current eT program from the first version 
+!!    of eT by Andreas Skeidsvoll and Sarai D. Folkestad, 2018.
 !!
 !
    implicit none
@@ -19,17 +21,16 @@ contains
    module subroutine construct_omega_ccsd(wf, omega)
 !!
 !!    Construct omega (CCSD)
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
 !!    for the current amplitudes of the object wfn
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(ccsd), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
 !
       real(dp), dimension(:,:), allocatable :: omega1, omega2
 !
@@ -69,8 +70,7 @@ contains
    module subroutine omega_ccsd_a1_ccsd(wf, omega1)
 !!
 !!    Omega A1 term
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the A1 term,
 !!
@@ -167,8 +167,7 @@ contains
    module subroutine omega_ccsd_b1_ccsd(wf, omega1)
 !!
 !!    Omega B1
-!!    Written by Sarai D. Fokestad, Eirik F. Kjønstad,
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the B1 term,
 !!
@@ -239,8 +238,7 @@ contains
    module subroutine omega_ccsd_c1_ccsd(wf, omega1)
 !!
 !!    Omega C1
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the C1 term of omega,
 !!
@@ -311,8 +309,7 @@ contains
    module subroutine omega_ccsd_a2_ccsd(wf, omega2)
 !!
 !!    Omega A2 term
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!      
 !!    A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
 !!
@@ -767,8 +764,7 @@ contains
    module subroutine omega_ccsd_b2_ccsd(wf, omega2)
 !!
 !!    Omega B2
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Omega B2 = sum_(kl) t_ak_bl*(g_kilj + sum_(cd) t_ci_dj * g_kc_ld)
 !!
@@ -890,8 +886,7 @@ contains
    module subroutine omega_ccsd_c2_ccsd(wf, omega2)
 !!
 !!    Omega C2
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Omega C2 = -1/2 * sum_(ck) t_bk_cj*(g_ki_ac -1/2 sum_(dl)t_al_di * g_kd_lc)
 !!                    - sum_(ck) t_bk_ci*(g_kj_ac - sum_(dl)t_al_dj * g_kd_lc)
@@ -1201,8 +1196,7 @@ contains
    module subroutine omega_ccsd_d2_ccsd(wf, omega2)
 !!
 !!    Omega D2
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the D2 term,
 !!
@@ -1357,26 +1351,25 @@ contains
 !
 !
    module subroutine omega_ccsd_e2_ccsd(wf, omega2)
-!
-!     Omega E2
-!     Written by Sarai D. Folkestad, Eirik F. Kjønstad,
-!     and Andreas Skeidsvoll, 2018
-!
-!     Calculates the E2 term,
-!
-!      E2: sum_c t_ij^ac (F_bc - sum_dkl g_ldkc u_kl^bd)
-!        - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc),
-!
-!     where
-!
-!        u_kl^bc = 2 * t_kl^bc - t_lk^bc.
-!
-!     The first term is referred to as the E2.1 term, and comes out ordered as (b,jai).
-!     The second term is referred to as the E2.2 term, and comes out ordered as (aib,j).
-!
-!     Both are permuted added to the projection vector element omega2(ai,bj) of
-!     the wavefunction object wf.
-!
+!!
+!!    Omega E2
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
+!!
+!!    Calculates the E2 term,
+!!
+!!      E2: sum_c t_ij^ac (F_bc - sum_dkl g_ldkc u_kl^bd)
+!!        - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc),
+!!
+!!    where
+!!
+!!        u_kl^bc = 2 * t_kl^bc - t_lk^bc.
+!!
+!!    The first term is referred to as the E2.1 term, and comes out ordered as (b,jai).
+!!    The second term is referred to as the E2.2 term, and comes out ordered as (aib,j).
+!!
+!!    Both are permuted added to the projection vector element omega2(ai,bj) of
+!!    the wavefunction object wf.
+!!
       implicit none
 !
       class(ccsd) :: wf
