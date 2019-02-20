@@ -22,6 +22,7 @@ module cc_property_solver_class
 !
       character(len=10)  :: es_type
       character(len=40)  :: operator_type
+      character(len=40)  :: X
 !
       logical    :: eom
       logical    :: linear_response
@@ -44,6 +45,7 @@ module cc_property_solver_class
       procedure :: read_settings                     => read_settings_cc_property_solver
 !
       procedure :: reset                             => reset_property_solver
+      procedure :: do_eom_or_lr                      => do_eom_or_lr_property_solver
 !
       procedure :: print_banner                      => print_banner_cc_property_solver
       procedure :: print_summary                     => print_summary_cc_property_solver
@@ -89,7 +91,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      character(len=40)      :: X
+!      character(len=40)      :: X
 !
       integer :: i, n
 !
@@ -98,19 +100,6 @@ contains
 !
       call mem%alloc(solver%etaX, wf%n_amplitudes, 1)
       call mem%alloc(solver%csiX, wf%n_amplitudes, 1)
-!
-!     Do EOM or LR
-!
-      if (solver%eom) then
-!
-         call wf%get_eom_contribution(solver%etaX, solver%csiX)
-!
-      elseif (solver%linear_response) then
-!
-         write(output%unit, '(t6,a)') 'Linear response has been selected but is not implemented. &
-                                      & csiX will be calculated with no contribution '
-!
-      endif
 !
       call mem%alloc(l_vec_n, wf%n_amplitudes, 1)
       call mem%alloc(r_vec_n, wf%n_amplitudes, 1)
@@ -123,12 +112,12 @@ contains
 !
          call solver%print_summary('top', i)
 !         
-         X = solver%component(i) //'_'// trim(solver%operator_type) 
+         solver%X = solver%component(i) //'_'// trim(solver%operator_type) 
 !
          call solver%reset()
 !
-         call wf%construct_etaX(X, solver%etaX)      
-         call wf%construct_csiX(X, solver%csiX)      
+         call wf%construct_etaX(solver%X, solver%etaX)      
+         call wf%construct_csiX(solver%X, solver%csiX)      
 !
 !        Loop over excited states
 !  
@@ -344,6 +333,42 @@ contains
       endif
 !
    end subroutine print_summary_cc_property_solver
+!
+!
+   subroutine do_eom_or_lr_property_solver(solver, wf)
+!!
+!!    Calls construction of EOM or LR contribution.
+!!    Based on wf, gives the correct input to wf%get_eom_contribution
+!!    Written by Josefine H. Andersen, February 2019
+!!
+      implicit none
+!
+      class(cc_property_solver), intent(inout) :: solver
+!
+      class(ccs), intent(in) :: wf
+!
+!     Do EOM or LR
+!
+      if (solver%eom) then
+!
+         if (wf%name_ .eq. 'ccs') then
+!
+            call wf%get_eom_contribution(solver%etaX, solver%csiX)
+!      
+         elseif (wf%name_ .eq. 'ccsd') then
+! 
+            call wf%get_eom_contribution(solver%etaX, solver%csiX, solver%X)
+!         
+         endif
+!
+      elseif (solver%linear_response) then
+!
+         write(output%unit, '(t6,a)') 'Linear response has been selected but is not implemented. &
+                                      & csiX will be calculated with no contribution '
+!
+      endif
+!
+   end subroutine do_eom_or_lr_property_solver
 !
 !
 end module cc_property_solver_class

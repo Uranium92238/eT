@@ -28,6 +28,7 @@ contains
 !
 !      call wf%construct_etaX_ccs(Xoperator, etaX)
 !
+      call wf%construct_etaX_ccs_singles(Xoperator, etaX)
       call wf%construct_etaX_singles_q1(Xoperator, etaX)
       call wf%construct_etaX_singles_q2(Xoperator, etaX)
 !
@@ -35,6 +36,44 @@ contains
       call wf%construct_etaX_doubles_q2(Xoperator, etaX)
 !
    end subroutine construct_etaX_ccsd
+!
+!
+   module subroutine construct_etaX_ccs_singles_ccsd(wf, Xoperator, etaX)
+!!
+!!    Construct CCS term of CCSD etaX singles
+!!    Written by Josefine H. Andersen, February 2019
+!!
+!!    = 2*X_ia
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      character(len=*), intent(in) :: Xoperator
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
+!
+      real(dp), dimension(:,:), allocatable :: X_ia
+      real(dp), dimension(:,:), allocatable :: X_ai
+!
+      real(dp), parameter :: two = 2.0
+!
+      call mem%alloc(X_ia, wf%n_t1, 1)
+      call mem%alloc(X_ai, wf%n_t1, 1)
+!
+!     Get operator and transpose
+!
+      call  wf%get_operator_ov(Xoperator, X_ia)
+      call sort_12_to_21(X_ia, X_ai, wf%n_o, wf%n_v)
+!
+!     etaX = 2*X_ia
+!
+      call daxpy(wf%n_t1, two, X_ai, 1, etaX, 1)
+!
+      call mem%dealloc(X_ia, wf%n_t1, 1)
+      call mem%dealloc(X_ai, wf%n_t1, 1)
+!
+   end subroutine construct_etaX_ccs_singles_ccsd
 !
 !
    module subroutine construct_etaX_singles_q1_ccsd(wf, Xoperator, etaX)
@@ -339,7 +378,6 @@ contains
       real(dp), dimension(:,:), allocatable :: etaX_aij_b
 !
       real(dp), dimension(:,:), allocatable :: tb_ai_bj
-      real(dp), dimension(:,:), allocatable :: tb_aibj
       real(dp), dimension(:,:), allocatable :: tb_aij_c
 !
       real(dp), dimension(:,:), allocatable :: X_cb
@@ -347,8 +385,6 @@ contains
 !
       real(dp), parameter :: one = 1.0
       real(dp)            :: ddot
-!
-      integer :: c, j, b, jk, k, ck
 !
       call mem%alloc(tb_ai_bj, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
       call squareup(wf%t2bar, tb_ai_bj, (wf%n_v)*(wf%n_o))
@@ -623,5 +659,153 @@ contains
 
 !
    end subroutine construct_csiX_doubles_ccsd
-
+!
+!
+   module subroutine get_eom_contribution_ccsd(wf, etaX, csiX, Xoperator)
+!!
+!!    Add EOM contribution to csiX vector, CCSD
+!!    Written by Josefine H. Andersen
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      character(len=*), intent(inout), optional :: Xoperator
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in)    :: csiX
+!
+      call wf%get_eom_xcc_contribution(etaX, csiX)
+      call wf%get_eom_doubles_contribution(Xoperator, etaX)
+!
+   end subroutine get_eom_contribution_ccsd
+!
+!
+   module subroutine get_eom_doubles_contribution_ccsd(wf, Xoperator, etaX)
+!!
+!!    Build EOM contribution to etaX in CCSD
+!!    Written by Josefine H. Andersen, February 2019
+!!
+!!    = sum_ck tb_aick X_ck + sum_ckdl tb_aick u_ckdl X_ld
+!!
+!!    where u_ckdl = 2*t_ckdl - t_cldk
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      character(len=*), intent(in) :: Xoperator
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
+!
+      real(dp), dimension(:,:), allocatable :: etaX_temp
+!
+      real(dp), dimension(:,:), allocatable :: tb_ai_bj
+      real(dp), dimension(:,:), allocatable :: t_ck_dl
+      real(dp), dimension(:,:), allocatable :: u_ck_dl
+!
+      real(dp), dimension(:,:), allocatable :: I_ai_dl
+!
+      real(dp), dimension(:,:), allocatable :: X_ck
+      real(dp), dimension(:,:), allocatable :: X_ld
+      real(dp), dimension(:,:), allocatable :: X_dl
+!
+      real(dp), parameter :: one = 1.0, two = 2.0
+      real(dp)            :: ddot
+!
+!     :: First term: sum_ck tb_aick X_ck
+!
+      call mem%alloc(tb_ai_bj, wf%n_v*wf%n_o,  wf%n_v*wf%n_o)
+      call squareup(wf%t2bar, tb_ai_bj, wf%n_v*wf%n_o)
+!
+      call mem%alloc(X_ck, wf%n_v*wf%n_o, 1)
+      call wf%get_operator_vo(Xoperator, X_ck)
+!
+      call mem%alloc(etaX_temp, wf%n_v*wf%n_o, 1)
+!      
+      call dgemm('N','N',           &
+                 (wf%n_v)*(wf%n_o), &
+                 1,                 &
+                 (wf%n_v)*(wf%n_o), &
+                 one,               &
+                 tb_ai_bj,          &
+                 (wf%n_v)*(wf%n_o), &
+                 X_ck,              &
+                 (wf%n_v)*(wf%n_o), &
+                 zero,              &
+                 etaX_temp,         &
+                 (wf%n_v)*(wf%n_o))
+!
+      call mem%dealloc(X_ck, wf%n_v*wf%n_o, 1)
+!
+!     :: Second term: sum_ckdl tb_aick u_ckdl X_ld
+!
+      call mem%alloc(X_ld, wf%n_o, wf%n_v)
+      call wf%get_operator_ov(Xoperator, X_ld)
+!      
+      call mem%alloc(X_dl, wf%n_v, wf%n_o)
+      call sort_12_to_21(X_ld, X_dl, wf%n_o, wf%n_v)
+!
+      call mem%dealloc(X_ld, wf%n_o, wf%n_v)
+!
+!     Form u_ai_ck
+!
+      call mem%alloc(t_ck_dl, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
+      call squareup(wf%t2, t_ck_dl, wf%n_v*wf%n_o)
+!
+      call mem%alloc(u_ck_dl, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
+      u_ck_dl = zero
+!
+      call add_1432_to_1234(-one, t_ck_dl, u_ck_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ck_dl, 1, u_ck_dl, 1)
+!
+      call mem%dealloc(t_ck_dl, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
+!
+!     Form the intermediate I_ai_dl = sum_ck tb_ai_ck u_ck_dl
+!
+      call mem%alloc(I_ai_dl, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
+!      
+      call dgemm('N','N',           &
+                 (wf%n_v)*(wf%n_o), &
+                 (wf%n_v)*(wf%n_o), &
+                 (wf%n_v)*(wf%n_o), &
+                 one,               &
+                 tb_ai_bj,          &
+                 (wf%n_v)*(wf%n_o), &
+                 u_ck_dl,           &
+                 (wf%n_v)*(wf%n_o), &
+                 zero,              &
+                 I_ai_dl,           &
+                 (wf%n_v)*(wf%n_o))
+!
+      call mem%dealloc(tb_ai_bj, wf%n_v*wf%n_o,  wf%n_v*wf%n_o)
+      call mem%dealloc(u_ck_dl, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
+!
+!     Form sum_dl I_ai_dl X_ld^T
+!
+      call dgemm('N','N',           &
+                 (wf%n_v)*(wf%n_o), &
+                 1,                 &
+                 (wf%n_v)*(wf%n_o), &
+                 one,               &
+                 I_ai_dl,           &
+                 (wf%n_v)*(wf%n_o), &
+                 X_dl,              &
+                 (wf%n_v)*(wf%n_o), &
+                 one,               &
+                 etaX_temp,         &
+                 (wf%n_v)*(wf%n_o))
+!
+            call mem%dealloc(I_ai_dl, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
+            call mem%dealloc(X_dl, wf%n_v, wf%n_o)
+!
+!     Add EOM contribution to etaX
+!
+      call daxpy(wf%n_t1, one, etaX_temp, 1, etaX, 1)
+!
+      call mem%dealloc(etaX_temp, wf%n_v*wf%n_o, 1)
+!
+   end subroutine get_eom_doubles_contribution_ccsd
+!
+!
 end submodule properties_ccsd

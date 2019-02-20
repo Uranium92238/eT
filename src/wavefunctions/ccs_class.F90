@@ -192,6 +192,7 @@ module ccs_class
       procedure :: construct_etaX_transpose                    => construct_etaX_transpose_ccs
       procedure :: construct_csiX                              => construct_csiX_ccs
       procedure :: get_eom_contribution                        => get_eom_contribution_ccs
+      procedure :: get_eom_xcc_contribution                    => get_eom_xcc_contribution_ccs
       procedure :: prepare_operator_pq                         => prepare_operator_pq_ccs
       procedure :: get_left_right_vectors                      => get_left_right_vectors_ccs
       procedure :: scale_left_excitation_vector                => scale_left_excitation_vector_ccs
@@ -4646,24 +4647,25 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
-      real(dp), dimension(:,:), allocatable              :: eta_temp
-!
       character(len=*), intent(in) :: Xoperator
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
+
+      real(dp), dimension(:,:), allocatable :: etaX_temp
 !
       real(dp), parameter :: two = 2.0
 !
-      call mem%alloc(eta_temp, wf%n_amplitudes, 1)
+      call mem%alloc(etaX_temp, wf%n_amplitudes, 1)
 !
 !     etaX_ai = 2*X_ia
 !
-      call  wf%get_operator_ov(Xoperator, eta_temp)
+      call  wf%get_operator_ov(Xoperator, etaX_temp)
 !
-      eta_temp = two * eta_temp
+      etaX_temp = two * etaX_temp
 !
-      call wf%construct_etaX_transpose(etaX, eta_temp)
+      call wf%construct_etaX_transpose(etaX, etaX_temp)
 !
-      call mem%dealloc(eta_temp, wf%n_amplitudes, 1)
+      call mem%dealloc(etaX_temp, wf%n_amplitudes, 1)
 !
    end subroutine construct_etaX_ccs
 !
@@ -4694,8 +4696,9 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: csiX
       character(len=*), intent(in) :: Xoperator
+!      
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: csiX
 !
 !     CCS: csiX = X_ai
 !
@@ -4704,7 +4707,26 @@ contains
    end subroutine construct_csiX_ccs
 !
 !
-   subroutine get_eom_contribution_ccs(wf, etaX, csiX)
+   subroutine get_eom_contribution_ccs(wf, etaX, csiX, Xoperator)
+!!
+!!    Add EOM contribution to csiX vector
+!!    Written by Josefine H. Andersen
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      character(len=*), intent(inout), optional :: Xoperator
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in)    :: csiX
+!
+      call wf%get_eom_xcc_contribution(etaX, csiX)
+!
+   end subroutine get_eom_contribution_ccs
+!
+!
+   subroutine get_eom_xcc_contribution_ccs(wf, etaX, csiX)
 !!
 !!    Add EOM contribution to csiX vector
 !!    Written by Josefine H. Andersen
@@ -4730,7 +4752,7 @@ contains
 !
       call mem%dealloc(multipliers, wf%n_amplitudes, 1)
 !
-   end subroutine get_eom_contribution_ccs
+   end subroutine get_eom_xcc_contribution_ccs
 !
 !
    subroutine prepare_operator_pq_ccs(wf, operator_type)
