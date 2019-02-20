@@ -1,18 +1,20 @@
-   module subroutine jacobian_transform_trial_vector_cc3(wf, c_i)
+   !module subroutine jacobian_transform_trial_vector_cc3(wf, omega, c_i)
+!!!
+!! !   Jacobian transform trail vector (CC3)
+!! !   Alexander Paul and Rolf H. Myhre February 2019
+!!!
+   !   implicit none
 !!
-!!   Jacobian transform trail vector (CC3)
-!!   Alexander Paul and Rolf H. Myhre February 2019
+   !   class(cc3), intent(in) :: wf
 !!
-     implicit none
-!
-     class(cc3), intent(in) :: wf
-!
-     real(dp), dimension(wf%n_amplitudes, 1) :: c_i
-!
-   end subroutine jacobian_transform_trial_vector_cc3
+   !   real(dp), intent(in) :: omega
+!!
+   !   real(dp), dimension(wf%n_amplitudes, 1) :: c_i
+!!
+   !end subroutine jacobian_transform_trial_vector_cc3
 !
 !
-   module subroutine jacobian_cc3_transformation_cc3(wf, c)
+   module subroutine jacobian_cc3_transformation_cc3(wf, omega, c)
 !!
 !!    Jacobian transformation (CC3)
 !!    Alexander Paul and Rolf H. Myhre Feb 2019
@@ -21,12 +23,14 @@
 !
       class(cc3) :: wf
 !
+      real(dp), intent(in) :: omega
+!
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c
 !
    end subroutine jacobian_cc3_transformation_cc3
 !
 !
-   module subroutine jacobian_cc3_A_cc3(wf, c_abji, rho_ai, rho_aibj)
+   module subroutine jacobian_cc3_A_cc3(wf, omega, c_abji, rho_ai, rho_aibj)
 !!
 !!    CC3 jacobian terms
 !!    Alex C. Paul and Rolf H. Myhre, Feb 2019
@@ -34,6 +38,8 @@
       implicit none
 !
       class(cc3) :: wf
+!
+      real(dp), intent(in) :: omega
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abji
 !
@@ -64,10 +70,12 @@
 !
       class(cc3) :: wf
 !
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+!
    end subroutine jacobian_cc3_c1_integrals_cc3
 !
 !
-   subroutine construct_fock_ia_c1_cc3(wf, c_ai, F_ia_c1)
+   module subroutine jacobian_cc3_construct_fock_ia_c1_cc3(wf, c_ai, F_ia_c1)
 !!
 !!    Calculates C1 transformed elements of the Fock matrix required for the CC3 jacobian
 !!    Rolf H. Myhre and Alexander Paul, February 2019
@@ -81,7 +89,7 @@
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
       real(dp), dimension(wf%n_o, wf%n_v), intent(out) :: F_ia_c1
 !
-   end subroutine construct_fock_ia_c1_cc3
+   end subroutine jacobian_cc3_construct_fock_ia_c1_cc3
 !
 !
    module subroutine jacobian_cc3_vvv_reader_cc3(wf, batch_x, g_bdcx, g_dbxc, g_bdcx_c1, g_dbxc_c1)
@@ -97,6 +105,8 @@
 !
       real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_bdcx
       real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_dbxc
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_bdcx_c1
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_dbxc_c1
 !
    end subroutine jacobian_cc3_vvv_reader_cc3
 !
@@ -116,15 +126,17 @@
       real(dp), dimension(wf%n_o,wf%n_v,batch_y%length,batch_x%length), intent(out) :: g_lycx
       real(dp), dimension(wf%n_v,wf%n_o,batch_y%length,batch_x%length), intent(out) :: g_ylxc
       real(dp), dimension(wf%n_v,wf%n_v,batch_y%length,batch_x%length), intent(out) :: L_ybxc
+      real(dp), dimension(wf%n_o,wf%n_v,batch_y%length,batch_x%length), intent(out) :: g_lycx_c1
+      real(dp), dimension(wf%n_v,wf%n_o,batch_y%length,batch_x%length), intent(out) :: g_ylxc_c1
 !
    end subroutine jacobian_cc3_ov_vv_reader_cc3
 !
 !
-   module subroutine jacobian_cc3_c3_calc_cc3(omega, i, j, k, c_abc, u_abc, t_abji, c_abji      &
-                                          g_bdci_p, g_bdcj_p, g_bdck_p, g_ljci_p, g_lkci_p,     &
-                                          g_lkcj_p, g_licj_p, g_lick_p, g_ljck_p, g_bdci_c1_p,  &
-                                          g_bdcj_c1_p, g_bdck_c1_p, g_ljci_c1_p, g_lkci_c1_p,   &
-                                          g_lkcj_c1_p, g_licj_c1_p, g_lick_c1_p, g_ljck_c1_p)
+   module subroutine jacobian_cc3_c3_calc_cc3(wf, omega, i, j, k, c_abc, u_abc, t_abji, c_abji,    &
+                                                g_bdci, g_bdcj, g_bdck, g_ljci, g_lkci,            &
+                                                g_lkcj, g_licj, g_lick, g_ljck,                    &
+                                                g_bdci_c1, g_bdcj_c1, g_bdck_c1, g_ljci_c1,        &
+                                                g_lkci_c1, g_lkcj_c1, g_licj_c1, g_lick_c1, g_ljck_c1)
 !!
 !!    Construct c^abc_ijk amplitudes
 !!
@@ -211,21 +223,21 @@
    end subroutine jacobian_cc3_t3_calc_cc3
 !
 !
-   module subroutine jacobian_cc3_eps_cc3(wf, i, j, k, t_abc)
+   !module subroutine jacobian_cc3_eps_cc3(wf, i, j, k, t_abc)
+!!!
+!! !   Divide W^abc_ijk with -epsilon^abc_ijk to obtain T^abc_ijk
+!! !   Alexander Paul and Rolf H. Myhre Feb 2019
+!!!
+   !   implicit none
 !!
-!!    Divide W^abc_ijk with -epsilon^abc_ijk to obtain T^abc_ijk
-!!    Alexander Paul and Rolf H. Myhre Feb 2019
+   !   class(cc3) :: wf
 !!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      integer, intent(in) :: i, j, k
-!
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v), intent(inout) :: t_abc
-!
-!
-   end subroutine jacobian_cc3_eps_cc3
+   !   integer, intent(in) :: i, j, k
+!!
+   !   real(dp), dimension(wf%n_v,wf%n_v,wf%n_v), intent(inout) :: t_abc
+!!
+!!
+   !end subroutine jacobian_cc3_eps_cc3
 !
 !
    module subroutine jacobian_cc3_rho1_cc3(wf, i, j, k, c_abc, u_abc, rho1,               &
@@ -246,7 +258,7 @@
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: c_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                   :: omega1
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                   :: rho1
 !
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbic
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbic

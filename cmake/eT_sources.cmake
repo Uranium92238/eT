@@ -65,4 +65,5 @@ set(eT_fortran_sources
    src/submodules/ccsd/jacobian_transpose_ccsd.F90
    src/submodules/cc2/omega_cc2.F90
    src/submodules/cc3/omega_cc3.F90
+   src/submodules/cc3/jacobian_cc3.F90
 )

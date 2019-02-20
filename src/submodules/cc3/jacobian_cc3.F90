@@ -20,20 +20,20 @@ submodule (cc3_class) jacobian_cc3
 contains
 !
 !
-   module subroutine jacobian_transform_trial_vector_cc3(wf, c_i)
+   !module subroutine jacobian_transform_trial_vector_cc3(wf, omega, c_i)
+!!!
+!! !   Jacobian transform trial vector
+!! !   Written by Rolf H. Myhre and Alexander Paul
+!!!
+   !   class(cc3), intent(in) :: wf
 !!
-!!    Jacobian transform trial vector
-!!    Written by Rolf H. Myhre and Alexander Paul
+   !   real(dp), intent(in) :: omega
 !!
-      class(cc3), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_amplitudes, 1) :: c_i
-!
-      real(dp), intent(in) :: omega
-!
-      call wf%jacobian_cc3_transformation(c_i)
-!
-   end subroutine jacobian_transform_trial_vector_cc3
+   !   real(dp), dimension(wf%n_amplitudes, 1) :: c_i
+!!
+   !   call wf%jacobian_cc3_transformation(omega, c_i)
+!!
+   !end subroutine jacobian_transform_trial_vector_cc3
 !
 !
    module subroutine jacobian_cc3_transformation_cc3(wf, omega, c)
@@ -68,8 +68,6 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj, rho_abij
 !
       integer :: i, j, a, b, ai, bj, aibj ! Index
-!
-      logical, private :: eri_c1_mem = .false.
 !
       type(timings) :: cc3_timer
       type(timings) :: ccsd_timer
@@ -428,7 +426,7 @@ contains
 !     C1 transformed Fock matrix
 !
       call mem%alloc(F_kc_c1, wf%n_v, wf%n_o)
-      call wf%construct_fock_ia_c1_cc3(wf, c_ai, F_kc_c1)
+      call wf%jacobian_cc3_construct_fock_ia_c1_cc3(c_ai, F_kc_c1)
 !
       call mem%alloc(t_abji,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
       call squareup_and_sort_1234_to_1342(wf%t2,t_abji,wf%n_v,wf%n_o,wf%n_v,wf%n_o)
@@ -1225,7 +1223,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: h_pqrs ! Array for sorted integrals
 !
       real(dp), dimension(:,:), allocatable :: L_bd_J_c1, L_ck_J_c1, L_lj_J_c1 ! c1 transformed Cholesky vectors
-      real(dp), dimension(:,:), allocatable :: L_db_J_c1, L_lj_J_c1
+      real(dp), dimension(:,:), allocatable :: L_db_J_c1
       real(dp), dimension(:,:), allocatable :: L_ck_J, L_bd_J, L_kc_J, L_lj_J ! Cholesky vectors
 !
       integer :: k, j, record
@@ -1267,7 +1265,7 @@ contains
          call dgemm('N', 'T',                   &
                      (wf%n_v)**2,               &
                      (wf%n_v)*(batch_k%length), &
-                     integrals%n_J,             &
+                     wf%integrals%n_J,          &
                      one,                       &
                      L_bd_J_c1,                 & ! L_bd_J  b is c1-transformed
                      (wf%n_v)**2,               &
@@ -1293,7 +1291,7 @@ contains
          call dgemm('N', 'T',                   &
                      (wf%n_v)**2,               &
                      (wf%n_v)*(batch_k%length), &
-                     integrals%n_J,             &
+                     wf%integrals%n_J,          &
                      one,                       &
                      L_bd_J,                    & ! L_bd_J
                      (wf%n_v)**2,               &
@@ -1311,7 +1309,7 @@ contains
          call dgemm('N', 'T',                   &
                      (wf%n_v)**2,               &
                      (wf%n_v)*(batch_k%length), &
-                     integrals%n_J,             &
+                     wf%integrals%n_J,          &
                      -one,                      &
                      L_bd_J,                    & ! L_bd_J
                      (wf%n_v)**2,               &
@@ -1376,7 +1374,7 @@ contains
          call dgemm('N', 'T',                   &
                      (wf%n_v)**2,               &
                      (wf%n_v)*(batch_k%length), &
-                     integrals%n_J,             &
+                     wf%integrals%n_J,          &
                      one,                       &
                      L_db_J_c1,                 & ! L_db_J  d is c1-transformed
                      (wf%n_v)**2,               &
@@ -1446,7 +1444,7 @@ contains
          call dgemm('N', 'T',                   &
                      (wf%n_o)**2,               &
                      (wf%n_v)*(batch_k%length), &
-                     integrals%n_J,             &
+                     wf%integrals%n_J,          &
                      one,                       &
                      L_lj_J_c1,                 & ! L_lj_J  j is c1-transformed
                      (wf%n_o)**2,               &
@@ -1472,7 +1470,7 @@ contains
          call dgemm('N', 'T',                   &
                      (wf%n_o)**2,               &
                      (wf%n_v)*(batch_k%length), &
-                     integrals%n_J,             &
+                     wf%integrals%n_J,          &
                      one,                       &
                      L_lj_J,                    & ! L_lj_J
                      (wf%n_o)**2,               &
@@ -1490,7 +1488,7 @@ contains
          call dgemm('N', 'T',                   &
                      (wf%n_o)**2,               &
                      (wf%n_v)*(batch_k%length), &
-                     integrals%n_J,             &
+                     wf%integrals%n_J,          &
                      -one,                      &
                      L_lj_J,                    & ! L_lj_J
                      (wf%n_o)**2,               &
@@ -1554,7 +1552,7 @@ contains
          call dgemm('N', 'T',                   &
                      (wf%n_o)**2,               &
                      (wf%n_v)*(batch_k%length), &
-                     integrals%n_J,             &
+                     wf%integrals%n_J,          &
                      one,                       &
                      L_jl_J_c1,                 & ! L_jl_J  l is c1-transformed
                      (wf%n_o)**2,               &
@@ -1635,7 +1633,7 @@ contains
       call dgemm('N', 'T',             &
                   (wf%n_v)*(wf%n_o),   &
                   (wf%n_o)**2,         &
-                  integrals%n_J,       &
+                  wf%integrals%n_J,    &
                   one,                 &
                   L_ia_J,              & ! L_ia_J
                   (wf%n_v)*(wf%n_o),   &
@@ -1650,7 +1648,7 @@ contains
       call dgemm('N', 'T',             &
                   (wf%n_o)**2,         &
                   (wf%n_v)*(wf%n_o),   &
-                  integrals%n_J,       &
+                  wf%integrals%n_J,    &
                   one,                 &
                   L_ij_J_c1,           & ! L_ij'_J
                   (wf%n_o)**2,         &
@@ -1914,11 +1912,11 @@ contains
    end subroutine jacobian_cc3_ov_vv_reader_cc3
 !
 !
-   module subroutine jacobian_cc3_c3_calc_cc3(omega, i, j, k, c_abc, u_abc, t_abji, c_abji      &
-                                          g_bdci_p, g_bdcj_p, g_bdck_p, g_ljci_p, g_lkci_p,     &
-                                          g_lkcj_p, g_licj_p, g_lick_p, g_ljck_p, g_bdci_c1_p,  &
-                                          g_bdcj_c1_p, g_bdck_c1_p, g_ljci_c1_p, g_lkci_c1_p,   &
-                                          g_lkcj_c1_p, g_licj_c1_p, g_lick_c1_p, g_ljck_c1_p)
+   module subroutine jacobian_cc3_c3_calc_cc3(wf, omega, i, j, k, c_abc, u_abc, t_abji, c_abji, &
+                                                g_bdci, g_bdcj, g_bdck, g_ljci, g_lkci,         &
+                                                g_lkcj, g_licj, g_lick, g_ljck,                 &
+                                                g_bdci_c1, g_bdcj_c1, g_bdck_c1, g_ljci_c1,     &
+                                                g_lkci_c1, g_lkcj_c1, g_licj_c1, g_lick_c1, g_ljck_c1)
 !!
 !!    Construct c^abc_ijk amplitudes for the fixed indices i, j, k
 !!

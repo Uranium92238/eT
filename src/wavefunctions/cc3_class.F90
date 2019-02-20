@@ -42,12 +42,26 @@ module cc3_class
       procedure :: omega_cc3_omega1       => omega_cc3_omega1_cc3
       procedure :: omega_cc3_omega2       => omega_cc3_omega2_cc3
 !
+!      procedure :: jacobian_transform_trial_vector    => jacobian_transform_trial_vector_cc3
+      procedure :: jacobian_cc3_transformation        => jacobian_cc3_transformation_cc3
+      procedure :: jacobian_cc3_A                     => jacobian_cc3_A_cc3
+      procedure :: jacobian_cc3_integrals             => jacobian_cc3_integrals_cc3
+      procedure :: jacobian_cc3_c1_integrals          => jacobian_cc3_c1_integrals_cc3
+      procedure :: jacobian_cc3_construct_fock_ia_c1  => jacobian_cc3_construct_fock_ia_c1_cc3
+      procedure :: jacobian_cc3_vvv_reader            => jacobian_cc3_vvv_reader_cc3
+      procedure :: jacobian_cc3_ov_vv_reader          => jacobian_cc3_ov_vv_reader_cc3
+      procedure :: jacobian_cc3_c3_calc               => jacobian_cc3_c3_calc_cc3
+      procedure :: jacobian_cc3_t3_calc               => jacobian_cc3_t3_calc_cc3
+      procedure :: jacobian_cc3_rho1                  => jacobian_cc3_rho1_cc3
+      procedure :: jacobian_cc3_rho2                  => jacobian_cc3_rho2_cc3
+!
    end type cc3
 !
 !
    interface
 !
       include "../submodules/cc3/omega_cc3_interface.F90"
+      include "../submodules/cc3/jacobian_cc3_interface.F90"
 !
    end interface
 !
