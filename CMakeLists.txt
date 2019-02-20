@@ -56,7 +56,9 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest)
    file(COPY ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest DESTINATION ${CMAKE_BINARY_DIR}/tests)
 endif()
 
+configure_file(${CMAKE_SOURCE_DIR}/eT_launch.in ${CMAKE_SOURCE_DIR}/eT_launch)
 file(COPY ${CMAKE_SOURCE_DIR}/eT_launch 
      DESTINATION ${CMAKE_BINARY_DIR} 
      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ WORLD_READ)
+file(REMOVE  ${CMAKE_SOURCE_DIR}/eT_launch)
 

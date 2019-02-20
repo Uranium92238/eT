@@ -2,8 +2,7 @@ submodule (ccsd_class) jacobian_transpose_ccsd
 !
 !!
 !!    Jacobian transpose submodule (CCSD)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the transpose of the Jacobian matrix 
@@ -14,6 +13,8 @@ submodule (ccsd_class) jacobian_transpose_ccsd
 !!   
 !!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | ν >.
 !! 
+!!    Transfered to the current eT program from the first version 
+!!    of eT by Andreas Skeidsvoll and Sarai D. Folkestad, 2018.
 !! 
 !
    implicit none 
@@ -39,8 +40,7 @@ contains
    module subroutine jacobian_transpose_ccsd_transformation_ccsd(wf, b)
 !!
 !!    Jacobian transpose transformation (CCSD)
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the transpose Jacobian transformation, i.e., the transformation 
 !!    by the transpose of the Jacobian matrix
@@ -228,8 +228,7 @@ contains
    module subroutine jacobian_transpose_ccsd_a1_ccsd(wf, sigma_a_i, b_a_i)
 !!
 !!    Jacobian transpose CCSD A1 
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the A1 term,
 !!
@@ -326,8 +325,7 @@ contains
    module subroutine jacobian_transpose_ccsd_b1_ccsd(wf, sigma_a_i, b_a_i)
 !!
 !!    Jacobian transpose CCSD B1 
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the B1 term,
 !!
@@ -476,8 +474,7 @@ contains
    module subroutine jacobian_transpose_ccsd_c1_ccsd(wf, sigma_a_i, b_ai_bj)
 !!
 !!    Jacobian transpose CCSD C1 
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the C1 term,
 !!
@@ -581,8 +578,7 @@ contains
    module subroutine jacobian_transpose_ccsd_d1_ccsd(wf, sigma_a_i, b_ai_bj)
 !!
 !!    Jacobian transpose CCSD D1 
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the D1 term,
 !!
@@ -696,8 +692,7 @@ contains
    module subroutine jacobian_transpose_ccsd_e1_ccsd(wf, sigma_a_i, b_ai_bj)
 !!
 !!    Jacobian transpose CCSD E1 
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the E1 term,
 !!
@@ -1047,8 +1042,7 @@ contains
    module subroutine jacobian_transpose_ccsd_f1_ccsd(wf, sigma_a_i, b_ai_bj)
 !!
 !!    Jacobian transpose CCSD F1 
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the F1 term,
 !!
@@ -1300,8 +1294,7 @@ contains
    module subroutine jacobian_transpose_ccsd_g1_ccsd(wf, sigma_a_i, b_ai_bj)
 !!
 !!    Jacobian transpose CCSD G1 
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the G1 term,
 !!
@@ -1653,8 +1646,7 @@ contains
    module subroutine jacobian_transpose_ccsd_a2_ccsd(wf, sigma_ai_bj, b_a_i)
 !!
 !!    Jacobian transpose CCSD A2 
-!!    Written by Sarai D. Folkestad Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the A2 term,
 !!
@@ -1907,8 +1899,7 @@ contains
    module subroutine jacobian_transpose_ccsd_b2_ccsd(wf, sigma_ai_bj, b_ai_bj)
 !!
 !!    Jacobian transpose CCSD B2 
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the B2 term,
 !!
@@ -2111,8 +2102,7 @@ contains
    module subroutine jacobian_transpose_ccsd_c2_ccsd(wf, sigma_ai_bj, b_ai_bj)
 !!
 !!    Jacobian transpose CCSD C2 
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the C2 term,
 !!
@@ -2277,8 +2267,7 @@ contains
    module subroutine jacobian_transpose_ccsd_d2_ccsd(wf, sigma_ai_bj, b_ai_bj)
 !!
 !!    Jacobian transpose CCSD D2 
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the D2 term,
 !!
@@ -2371,7 +2360,7 @@ contains
    module subroutine jacobian_transpose_ccsd_e2_ccsd(wf, sigma_ai_bj, b_ai_bj)
 !!
 !!    Jacobian transpose CCSD E2 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the E2 term,
 !!
@@ -2601,8 +2590,7 @@ contains
    module subroutine jacobian_transpose_ccsd_f2_ccsd(wf, sigma_ai_bj, b_ai_bj)
 !!
 !!    Jacobian transpose CCSD F2 
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the F2 term,
 !!
@@ -2819,8 +2807,7 @@ contains
    module subroutine jacobian_transpose_ccsd_g2_ccsd(wf, sigma_ai_bj, b_ai_bj)
 !!
 !!    Jacobian transpose CCSD G2 
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the G2 term,
 !!
@@ -2994,8 +2981,7 @@ contains
    module subroutine jacobian_transpose_ccsd_h2_ccsd(wf, sigma_ab_ij, b_ab_ij)
 !!
 !!    Jacobian transpose CCSD H2 
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the H2 term,
 !!
@@ -3200,8 +3186,7 @@ contains
    module subroutine jacobian_transpose_ccsd_i2_ccsd(wf, sigma_ab_ij, b_ab_ij)
 !!
 !!    Jacobian transpose CCSD I2 
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the I2 term,
 !!

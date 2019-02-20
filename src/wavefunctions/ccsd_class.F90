@@ -1,9 +1,8 @@
 module ccsd_class
 !
 !!
-!!    Coupled cluster singles and doubles (ccsd) class module
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad and
-!!    Andreas Skeidsvoll, 2018
+!!    Coupled cluster singles and doubles (CCSD) class module
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
 !!
 !
    use ccs_class
