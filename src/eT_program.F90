@@ -94,18 +94,37 @@ program eT_program
 !
 !  Print program banner
 !
-   write(output%unit,'(///t26,a)') 'eT - a coupled cluster program '
-   write(output%unit,'(/t12,a)')   'S. D. Folkestad, E. F. Kjønstad, H. Koch and A. Skeidsvoll'
+   write(output%unit,'(///t22,a)')                 'eT - a coupled cluster program '
+   write(output%unit,'(/t10,a)')         'S. D. Folkestad, E. F. Kjønstad, Rolf H. Myhre, A. Skeidsvoll'
+   write(output%unit,'(t19,a)')                   'A. Paul, L. Golletto, and H. Koch'
    flush(output%unit)
 
-   write(output%unit,'(//t3,a)')    '--------------------------------------------------------------------------------------------'
-   write(output%unit,'(/t3,a, a/)')'Contributor:       ','Contributions:'
-   write(output%unit,'(t3,a, a)')   'E. F. Kjønstad     ','HF, UHF, CCS, CCSD, MP2, Cholesky decomposition, DIIS-tool,'
-   write(output%unit,'(t3,a, a)')   '                   ','Davidson-tool'
-   write(output%unit,'(t3,a, a)')   'S. D. Folkestad    ','HF, CCS, CCSD, Cholesky decomposition, Davidson-tool, CVS'
-   write(output%unit,'(t3,a, a)')   'A. Skeidsvoll      ','MP2, CCSD'
-   write(output%unit,'(/t3,a//)')'-------------------------------------------------------------------------------------------'
+   write(output%unit,'(/t3, a)')     '--------------------------------------------------------------------------'
+   write(output%unit,'(t4, a, a)')    'Author:            ','Contribution(s):'
+   write(output%unit,'(t3, a)')      '--------------------------------------------------------------------------'
+!
+   write(output%unit,'(t4, a, a)')    'E. F. Kjønstad     ','HF, UHF, CCS, CC2, CCSD, Cholesky decomposition,'
+   write(output%unit,'(t4, a, a)')    '                   ','DIIS-tool, Davidson-tool'
+   write(output%unit,'(t4, a, a)')    'S. D. Folkestad    ','HF, CCS, CC2, CCSD, Cholesky decomposition,'
+   write(output%unit,'(t4, a, a)')    '                   ','Davidson-tool, CVS'
+   write(output%unit,'(t4, a, a)')    'R. H. Myhre        ','CC3'
+   write(output%unit,'(t4, a, a)')    'A. Paul            ','CC2'
+   write(output%unit,'(t4, a, a)')    'L. Golletto        ','CC2'
+   write(output%unit,'(t4, a, a)')    'A. Skeidsvoll      ','MP2'
+   write(output%unit,'(t3,a/)')      '--------------------------------------------------------------------------'
    flush(output%unit)
+!
+   n_threads = omp_get_max_threads()
+!
+   if (n_threads .eq. 1) then
+!
+      write(output%unit,'(t3,a,i0,a/)')   'Running on ',n_threads, ' OMP thread'
+!
+   else
+!
+      write(output%unit,'(t3,a,i0,a/)')   'Running on ',n_threads, ' OMP threads'
+!
+   endif
 !
 !  Prepare memory manager and disk manager
 !
@@ -113,14 +132,6 @@ program eT_program
    call disk%prepare()
 !
    call initialize_libint()
-!
-   n_threads = omp_get_max_threads()
-!
-   if (n_threads .eq. 1) then
-      write(output%unit,'(t3,a,i0,a)')   'Running on ',n_threads, ' OMP thread'
-   else
-      write(output%unit,'(t3,a,i0,a)')   'Running on ',n_threads, ' OMP threads'
-   end if
 !
    n_methods = get_n_methods()
 !
