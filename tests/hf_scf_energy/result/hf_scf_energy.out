@@ -1,0 +1,114 @@
+
+
+
+                         eT - a coupled cluster program 
+
+           S. D. Folkestad, E. F. Kjønstad, H. Koch and A. Skeidsvoll
+
+
+  --------------------------------------------------------------------------------------------
+
+  Contributor:       Contributions:
+
+  E. F. Kjønstad     HF, UHF, CCS, CCSD, MP2, Cholesky decomposition, DIIS-tool,
+                     Davidson-tool
+  S. D. Folkestad    HF, CCS, CCSD, Cholesky decomposition, Davidson-tool, CVS
+  A. Skeidsvoll      MP2, CCSD
+
+  -------------------------------------------------------------------------------------------
+
+
+  Memory available for calculation:         8 GB
+ disk%total          30000000000
+  Disk space available for calculation:    30 GB
+
+  - Molecular system specifications:
+
+     Charge:       0
+     Multiplicity: 1
+
+     Nuclear repulsion energy (a.u.):             48.518317619727
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+     H    0.866810000000   0.601440000000   5.000000000000   cc-pVDZ    
+     F   -0.866810000000   0.601440000000   5.000000000000   cc-pVDZ    
+     O    0.000000000000  -0.075790000000   5.000000000000   cc-pVDZ    
+     He   0.000000000000   0.000000000000   7.500000000000   cc-pVDZ    
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         28
+     Number of molecular orbitals:       38
+     Number of atomic orbitals:          38
+
+
+  :: Self-consistent field solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  Warning: We recommend to use the SCF-DIIS algorithm instead, which supports 
+  a gradient threshold and typically converges much faster. Use only when 
+  absolutely necessary!
+
+  A Roothan-Hall self-consistent field solver. In each iteration, the Roothan-Hall 
+  equation (or equations for unrestricted HF theory) are solved to provide 
+  the next orbital coefficients. From the new orbitals, a new density provides 
+  the next Fock matrix. The cycle repeats until the solution is self-consistent 
+  (as measured by the energy change).
+
+     Coulomb screening threshold:   0.1000E-12
+     Exchange screening threshold:  0.1000E-12
+     ERI integral precision:        0.1000E-25
+
+  - Setting initial AO density to SAD:
+
+     Energy of initial guess:      -178.316362478865
+     Number of electrons in guess:   20.000000000000
+
+  Iteration    Energy (a.u.)        Delta E (a.u.)
+  ------------------------------------------------
+    1          -177.452442675110     0.1775E+03
+    2          -177.479038696848     0.2660E-01
+    3          -177.480053459139     0.1015E-02
+    4          -177.480155950427     0.1025E-03
+    5          -177.480172175533     0.1623E-04
+    6          -177.480175378192     0.3203E-05
+    7          -177.480176112305     0.7341E-06
+    8          -177.480176300950     0.1886E-06
+    9          -177.480176353899     0.5295E-07
+   10          -177.480176369775     0.1588E-07
+   11          -177.480176374768     0.4993E-08
+   12          -177.480176376392     0.1624E-08
+   13          -177.480176376932     0.5406E-09
+   14          -177.480176377115     0.1827E-09
+   15          -177.480176377177     0.6250E-10
+  ------------------------------------------------
+
+  Converged criterion met in  15 iterations!
+
+  - Summary of HF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                 0.600134191315
+     Nuclear repulsion energy:     48.518317619727
+     Electronic energy:          -225.998493996905
+     Total energy:               -177.480176377177
+
+  - Molecular orbital energies:
+
+    1  -26.334221397613      2  -20.644662302501      3   -1.894512851142
+    4   -1.204321813131      5   -0.910581171126      6   -0.866359178390
+    7   -0.832530315469      8   -0.790123471167      9   -0.497920241043
+   10   -0.439633546305     11    0.160500645010     12    0.548526589048
+   13    0.716124037167     14    1.106565037604     15    1.130682516231
+   16    1.195128728161     17    1.332304607021     18    1.423089038914
+   19    1.453320100448     20    1.486905925805     21    1.561381976651
+   22    1.686299836755     23    1.771734240611     24    2.108009514042
+   25    2.501253783399     26    2.530943619698     27    2.531186223173
+   28    2.601426661247     29    2.725835840513     30    2.888296534896
+   31    3.061119433051     32    3.534202722081     33    3.762921330758
+   34    3.962287440667     35    4.000546320952     36    4.553974134768
+   37    4.580623967331     38    5.083709675567
+
+  - Cleaning up Self-consistent field solver
+
+  eT terminated successfully!

@@ -183,7 +183,6 @@ contains
       integer, intent(in) :: M ! Dimension of array that is being allocated
 !
       integer :: size_array ! Total size of array (M)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M
@@ -192,7 +191,7 @@ contains
 !
       allocate(array(M), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not allocate array with #elements =', size_array)
 !
@@ -234,7 +233,6 @@ contains
       integer, intent(in) :: M, N ! First and second dimension of array that is being allocated
 !
       integer :: size_array ! Total size of array (M*N)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M*N
@@ -243,7 +241,7 @@ contains
 !
       allocate(array(M,N), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not allocate array with #elements =', size_array)
 !
@@ -285,7 +283,6 @@ contains
       integer, intent(in) :: M, N, O ! First, second and third dimension of array 
 !
       integer :: size_array ! Total size of array (M*N*O)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M*N*O
@@ -294,7 +291,7 @@ contains
 !
       allocate(array(M,N,O), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not allocate array with #elements =', size_array)
 !
@@ -336,7 +333,6 @@ contains
       integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array 
 !
       integer :: size_array ! Total size of array (M*N*O*P)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M*N*O*P
@@ -345,7 +341,7 @@ contains
 !
       allocate(array(M,N,O,P), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not allocate array with #elements =', size_array)
 !
@@ -387,7 +383,6 @@ contains
       integer, intent(in) :: M ! Dimension of array 
 !
       integer :: size_array ! Total size of array (M)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M
@@ -396,7 +391,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -429,7 +424,6 @@ contains
       integer, intent(in) :: M, N ! First and second dimension of array 
 !
       integer :: size_array ! Total size of array (M*N)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M*N
@@ -438,7 +432,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -471,7 +465,6 @@ contains
       integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M*N*O
@@ -480,7 +473,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -513,7 +506,6 @@ contains
       integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O*P)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M*N*O*P
@@ -522,7 +514,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -555,7 +547,6 @@ contains
       integer, intent(in) :: M ! Dimension of array 
 !
       integer :: size_array ! Total size of array (M)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -565,7 +556,7 @@ contains
 !
       allocate(array(M), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('Error: could not allocate array with #elements =', size_array)
 !
@@ -608,7 +599,6 @@ contains
       integer, intent(in) :: M, N ! First and second dimension of array 
 !
       integer :: size_array ! Total size of array (M*N)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -618,7 +608,7 @@ contains
 !
       allocate(array(M,N), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('Error: could not allocate array with #elements =', size_array)
 !
@@ -661,7 +651,6 @@ contains
       integer, intent(in) :: M, N, O ! First, second and third dimension of array 
 !
       integer :: size_array ! Total size of array (M*N*O)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -671,7 +660,7 @@ contains
 !
       allocate(array(M,N,O), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('Error: could not allocate array with #elements =', size_array)
 !
@@ -714,7 +703,6 @@ contains
       integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array 
 !
       integer :: size_array ! Total size of array (M*N*O*P)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -724,7 +712,7 @@ contains
 !
       allocate(array(M,N,O,P), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('Error: could not allocate array with #elements =', size_array)
 !
@@ -767,7 +755,6 @@ contains
       integer, intent(in) :: M ! Dimension of array 
 !
       integer :: size_array ! Total size of array (M*N)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -777,7 +764,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -811,7 +798,6 @@ contains
       integer, intent(in) :: M, N ! First and second dimension of array 
 !
       integer :: size_array ! Total size of array (M*N)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -821,7 +807,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -855,7 +841,6 @@ contains
       integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -865,7 +850,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -899,7 +884,6 @@ contains
       integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O*P)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -909,7 +893,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -1175,7 +1159,6 @@ contains
 !        Number of full batches
 !
          batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
-         write(output%unit, *)'BATCHING: ', batch_p%num_batches
 !
       endif
 !
