@@ -3944,6 +3944,7 @@ contains
 !
       integer :: i, a, ai
 !
+!$omp parallel do private(a, i, ai)
       do i = 1, wf%n_o 
          do a = 1, wf%n_v 
 !
@@ -3952,6 +3953,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine construct_eta_ccs
 !

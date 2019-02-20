@@ -351,7 +351,7 @@ contains
 !!
 !!    Solves analytically for tbar_aibj
 !!
-!!       tbar_aibj = (η_aibj - sum_ai tbar_ai A_ai,aibj)/ε_aibj
+!!       tbar_aibj = - (η_aibj + sum_ai tbar_ai A_ai,aibj)/ε_aibj
 !!
 !!    where
 !!
@@ -378,44 +378,56 @@ contains
       call mem%alloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       t2bar = zero
 !
+!     t2bar = sum_ai tbar_ai A_ai,aibj
+!
+      call wf%jacobian_transpose_cc2_a2(t2bar, wf%t1bar)
+!
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%get_ovov(g_iajb)
+!
+!     t2bar += η_aibj
 !
       call add_2143_to_1234(four, g_iajb, t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2341_to_1234(-two, g_iajb, t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%jacobian_transpose_cc2_a2(t2bar, wf%t1bar)
+!     t2bar = t2bar/(-ε_aibj)
 !
+!$omp parallel do private(a, b, i, j)
       do b = 1, wf%n_v
          do j = 1, wf%n_o
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
-                  t2bar(a, i, b, j) = t2bar(a, i, b, j)/( wf%fock_diagonal(a + wf%n_o, 1) &
-                                                        + wf%fock_diagonal(b + wf%n_o, 1) &
-                                                        - wf%fock_diagonal(i, 1) &
-                                                        - wf%fock_diagonal(j, 1))
+                  t2bar(a, i, b, j) = t2bar(a, i, b, j)/(- wf%fock_diagonal(a + wf%n_o, 1) &
+                                                        -  wf%fock_diagonal(b + wf%n_o, 1) &
+                                                        +  wf%fock_diagonal(i, 1) &
+                                                        +  wf%fock_diagonal(j, 1))
 !
                enddo
             enddo
          enddo
       enddo
+!$omp end parallel do
 !
 !     Set up the multipliers equation
 !
       equation = zero
 !
+!     equation += sum_bjck tbar_bjck A_{bjck,ai}
+!
       call wf%jacobian_transpose_cc2_b1(equation, t2bar)
 !
       call mem%dealloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+!     equation += sum_bj tbar_bj A_bj,ai
+!  
       call wf%jacobian_transpose_ccs_a1(equation, wf%t1bar)
       call wf%jacobian_transpose_ccs_b1(equation, wf%t1bar)
       call wf%jacobian_transpose_cc2_a1(equation, wf%t1bar)
 !
-!     Add eta, eq. = t-bar^T A + eta 
+!     Add eta, equation = t-bar^T A + eta 
 !
       call mem%alloc(eta, wf%n_gs_amplitudes, 1)
       call wf%construct_eta(eta)

@@ -71,7 +71,7 @@ contains
       solver%diis_dimension = 8
       solver%max_iterations = 50
 !
-      solver%residual_threshold  = 1.0d-6
+      solver%residual_threshold  = 1.0d-12
 !
       solver%restart = .false.
 !
@@ -156,16 +156,19 @@ contains
       real(dp) :: residual_norm
 !
       real(dp), dimension(:,:), allocatable :: residual  
-      real(dp), dimension(:,:), allocatable :: multipliers  
+      real(dp), dimension(:,:), allocatable :: multipliers, mult_dalton  
       real(dp), dimension(:,:), allocatable :: epsilon  
 !
-      integer :: iteration
+      integer :: iteration, dmult = 0, test_int = 0, I
+      character :: method*(10)
 !
       call diis_manager%init('cc_multipliers_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
       call mem%alloc(residual, wf%n_gs_amplitudes, 1)
       call mem%alloc(multipliers, wf%n_gs_amplitudes, 1)
       call mem%alloc(epsilon, wf%n_gs_amplitudes, 1)
+!
+      call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
 !
       if (solver%restart) then 
 !
@@ -211,7 +214,6 @@ contains
 !           Precondition residual, shift multipliers by preconditioned residual, 
 !           then ask for the DIIS update of the multipliers 
 !
-            call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
             call solver%do_diagonal_precondition(-one, epsilon, residual, wf%n_gs_amplitudes)
 !
             call wf%get_multipliers(multipliers)
@@ -225,6 +227,20 @@ contains
          iteration = iteration + 1
 !
       enddo
+!
+      call mem%alloc(mult_dalton, wf%n_gs_amplitudes, 1)
+      mult_dalton = zero
+!
+      open(dmult, file='cc2_dalton_mult', access='sequential', form='unformatted')
+      rewind(dmult)
+      read(dmult) test_int, method
+      write(*,*) test_int, method
+      read(dmult) test_int
+      read(dmult)(mult_dalton(I, 1), I = 1, wf%n_o*wf%n_v)
+      !read(dmult)(mult_dalton(wf%n_o*wf%n_v+I, 1), I = 1, wf%n_es_amplitudes - wf%n_o*wf%n_v)
+      write(*,*) get_l2_norm(mult_dalton, wf%n_gs_amplitudes)
+      write(*,*) get_l2_norm(multipliers, wf%n_gs_amplitudes)
+      close(dmult)
 !
       call mem%dealloc(residual, wf%n_gs_amplitudes, 1)
       call mem%dealloc(multipliers, wf%n_gs_amplitudes, 1)

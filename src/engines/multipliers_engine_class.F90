@@ -89,7 +89,7 @@ contains
 !
 !     Multiplier equation
 !
-      if (wf%name_ == 'cc2') then
+      if (wf%name_ == 'cc2' .or. wf%name_ == 'ccsd') then
 !
 !        If cc2 wavefunction -> use diis
 !
