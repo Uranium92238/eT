@@ -1,8 +1,8 @@
 module mp2_class
 !
 !!
-!!    Second order Møller-Plesset pertubation theory MP2/CCPT2 class module
-!!    Written by Andreas Skeidsvoll and Eirik F. Kjønstad, 2018
+!!    Second order Møller-Plesset pertubation theory (MP2/CCPT2) class module
+!!    Written by Andreas Skeidsvoll, 2018
 !!
 !
    use wavefunction_class
@@ -31,7 +31,7 @@ contains
    subroutine prepare_mp2(wf, ref_wf)
 !!
 !!    Prepare
-!!    Written by Andreas Skeidsvoll and Eirik F. Kjønstad, 2018, based on prepare_ccs
+!!    Written by Andreas Skeidsvoll, 2018
 !!
       implicit none
 !
@@ -61,7 +61,7 @@ contains
    subroutine calculate_energy_mp2(wf)
 !!
 !!    Calculate energy
-!!    Written by Andreas Skeidsvoll and Eirik Kjønstad, 2018
+!!    Written by Andreas Skeidsvoll, 2018
 !!
 !!    Calculates the MP2 energy from HF energy, E_HF, vovo integrals, g_aibj, 
 !!    and the orbital energies, eps. The total MP2 energy is calculated as
@@ -83,8 +83,8 @@ contains
       real(dp), dimension(:,:), allocatable :: L_ai_bj
       real(dp), dimension(:,:), allocatable :: eps
 !
-      real(dp)     :: e2_neg
-      integer :: a, i, b, j, ai, bj 
+      real(dp) :: e2_neg
+      integer  :: a, i, b, j, ai, bj 
 !
       call mem%alloc(eps, wf%n_mo, 1)
       eps = wf%orbital_energies
@@ -126,7 +126,7 @@ contains
    subroutine print_wavefunction_summary_mp2(wf)
 !!
 !!    Print wavefunction summary 
-!!    Written by Andreas Skeidsvoll, 2018, based on print_wavefunction_summary_hf
+!!    Written by Andreas Skeidsvoll, 2018
 !!
 !!    Prints information related to the wavefunction,
 !!    most of which is meaningful only for a properly 
@@ -144,7 +144,7 @@ contains
       write(output%unit, '(t3,a26,f19.12)')  'MP2 correction:           ', (wf%energy)-(wf%hf_energy)
       write(output%unit, '(t3,a26,f19.12)')  'MP2 energy:               ', wf%energy
 !
-      end subroutine print_wavefunction_summary_mp2
+   end subroutine print_wavefunction_summary_mp2
 !
 !
 end module mp2_class
