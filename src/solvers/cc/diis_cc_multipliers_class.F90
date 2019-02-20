@@ -14,7 +14,7 @@ module diis_cc_multipliers_class
 !
    type :: diis_cc_multipliers
 !
-      character(len=100) :: tag = 'Davidson multipliers solver'
+      character(len=100) :: tag = 'Diis multipliers solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       character(len=500) :: description1 = 'A DIIS CC multiplier equations solver. It combines a quasi-Newton &
@@ -25,13 +25,13 @@ module diis_cc_multipliers_class
       character(len=500) :: description2 = 'See Helgaker et al., Molecular Electronic Structure Theory, &
                                            &Chapter 13, for the more details on this algorithm.'
 !
-      integer :: diis_dimension = 8
+      integer :: diis_dimension
 !
-      integer :: max_iterations = 50
+      integer :: max_iterations
 !
-      real(dp) :: residual_threshold  = 1.0d-6
+      real(dp) :: residual_threshold
 !
-      logical :: restart = .false.
+      logical :: restart
 !
    contains
 !     
@@ -41,7 +41,10 @@ module diis_cc_multipliers_class
       procedure :: prepare                  => prepare_diis_cc_multipliers
       procedure :: run                      => run_diis_cc_multipliers
 !
+      procedure :: read_settings            => read_settings_diis_cc_multipliers
+!
       procedure :: print_banner             => print_banner_diis_cc_multipliers
+      procedure, nopass :: print_summary    => print_summary_diis_cc_multipliers
 !
       procedure :: print_settings           => print_settings_diis_cc_multipliers
 !
@@ -71,9 +74,11 @@ contains
       solver%diis_dimension = 8
       solver%max_iterations = 50
 !
-      solver%residual_threshold  = 1.0d-12
+      solver%residual_threshold  = 1.0d-6
 !
       solver%restart = .false.
+!
+      call solver%read_settings()
 !
       call solver%print_settings()
 !
@@ -156,11 +161,10 @@ contains
       real(dp) :: residual_norm
 !
       real(dp), dimension(:,:), allocatable :: residual  
-      real(dp), dimension(:,:), allocatable :: multipliers, mult_dalton  
+      real(dp), dimension(:,:), allocatable :: multipliers
       real(dp), dimension(:,:), allocatable :: epsilon  
 !
-      integer :: iteration, dmult = 0, test_int = 0, I
-      character :: method*(10)
+      integer :: iteration
 !
       call diis_manager%init('cc_multipliers_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
@@ -228,24 +232,6 @@ contains
 !
       enddo
 !
-      call mem%alloc(mult_dalton, wf%n_gs_amplitudes, 1)
-      mult_dalton = zero
-!
-      open(dmult, file='cc2_dalton_mult', access='sequential', form='unformatted')
-      rewind(dmult)
-      read(dmult) test_int, method
-      write(*,*) test_int, method
-      read(dmult) test_int
-      read(dmult)(mult_dalton(I, 1), I = 1, wf%n_o*wf%n_v)
-      !read(dmult)(mult_dalton(wf%n_o*wf%n_v+I, 1), I = 1, wf%n_es_amplitudes - wf%n_o*wf%n_v)
-      write(*,*) get_l2_norm(mult_dalton, wf%n_gs_amplitudes)
-      write(*,*) get_l2_norm(multipliers, wf%n_gs_amplitudes)
-      close(dmult)
-!
-      call mem%dealloc(residual, wf%n_gs_amplitudes, 1)
-      call mem%dealloc(multipliers, wf%n_gs_amplitudes, 1)
-      call mem%dealloc(epsilon, wf%n_gs_amplitudes, 1)
-!
       call diis_manager%finalize()
 !
       if (.not. converged_residual) then 
@@ -254,9 +240,17 @@ contains
          write(output%unit, '(/t3,a)')  'Warning: was not able to converge the equations in the given'
          write(output%unit, '(t3,a/)')  'number of maximum iterations.'
 !
+      else
+!
+         call solver%print_summary(wf, multipliers)
+!
       endif 
 !
       flush(output%unit)
+!
+      call mem%dealloc(residual, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(multipliers, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(epsilon, wf%n_gs_amplitudes, 1)
 !
    end subroutine run_diis_cc_multipliers
 !
@@ -293,4 +287,75 @@ contains
    end subroutine print_banner_diis_cc_multipliers
 !
 !
+   subroutine print_summary_diis_cc_multipliers(wf, X)
+!!
+!!    Print summary 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: X
+!
+      write(output%unit, '(/t3,a)') '- Multipliers vector amplitudes:'
+      flush(output%unit)      
+!
+      call wf%print_dominant_x_amplitudes(X, 'r')
+!
+   end subroutine print_summary_diis_cc_multipliers
+!
+!
+   subroutine read_settings_diis_cc_multipliers(solver)
+!!
+!!    Read settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(diis_cc_multipliers) :: solver 
+!
+      integer :: n_specs, i
+!
+      character(len=100) :: line
+!
+      if (.not. requested_section('multipliers')) return
+!
+      call move_to_section('multipliers', n_specs)
+!
+      do i = 1, n_specs
+!
+         read(input%unit, '(a100)') line
+         line = remove_preceding_blanks(line)
+!
+         if (line(1:10) == 'threshold:' ) then
+!
+            read(line(11:100), *) solver%residual_threshold
+!
+         elseif (line(1:15) == 'max iterations:' ) then
+!
+            read(line(16:100), *) solver%max_iterations
+!
+         endif
+!
+      enddo
+!
+   end subroutine read_settings_diis_cc_multipliers
+!
+!
 end module diis_cc_multipliers_class
+!
+!  Testing multipliers against dalton:
+!
+!  Run Dalton, requesting transition moments (*CCOPA)
+!
+!  Copy the file CCL0_1__1 to the eT scratch folder
+!
+!  This file is sequential and unformatted and contains the following records:
+!
+!     1. Some integer and a string containing the CC-method used 
+!
+!     2. Multipliers singles-vector
+!
+!     3. Multipliers doubles-vector (for CCSD/CC2)
+!  

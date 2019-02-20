@@ -15,11 +15,14 @@ module multipliers_engine_class
 !
    type, extends(abstract_engine) :: multipliers_engine 
 !
+      character(len=100) :: algorithm
+!
    contains 
 !
-      procedure :: prepare => prepare_multipliers_engine
-      procedure :: run     => run_multipliers_engine
-      procedure :: cleanup => cleanup_multipliers_engine
+      procedure :: prepare          => prepare_multipliers_engine
+      procedure :: run              => run_multipliers_engine
+      procedure :: cleanup          => cleanup_multipliers_engine
+      procedure :: read_algorithm   => read_algorithm_multipliers_engine
 !
    end type multipliers_engine 
 !
@@ -35,6 +38,9 @@ contains
       class(multipliers_engine) :: engine 
 !
       engine%name_ = 'Multipliers engine'
+      engine%algorithm = 'davidson'
+!
+      call engine%read_algorithm()
 !
    end subroutine prepare_multipliers_engine
 !
@@ -89,9 +95,11 @@ contains
 !
 !     Multiplier equation
 !
-      if (wf%name_ == 'cc2' .or. wf%name_ == 'ccsd') then
+      if (engine%algorithm .ne. 'davidson' .and. engine%algorithm .ne. 'diis') then
 !
-!        If cc2 wavefunction -> use diis
+         call output%error_msg('Could not recognize algorithm for multiplier equation.')
+!
+      elseif (wf%name_ == 'cc2' .or. engine%algorithm == 'diis') then
 !
          allocate(cc_multipliers_diis)
 !
@@ -101,7 +109,7 @@ contains
 !
          deallocate(cc_multipliers_diis)
 !
-      else
+      elseif (engine%algorithm == 'davidson') then
 !
          allocate(cc_multipliers_davidson)
 !
@@ -112,6 +120,7 @@ contains
          deallocate(cc_multipliers_davidson)
 !
       endif
+!
    end subroutine run_multipliers_engine
 !
 !
@@ -127,6 +136,41 @@ contains
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%name_)
 !
    end subroutine cleanup_multipliers_engine
+!
+!
+   subroutine read_algorithm_multipliers_engine(engine)
+!!
+!!    Read algorithm
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!
+      implicit none
+!
+      class(multipliers_engine), intent(inout) :: engine 
+!
+      character(len=100) :: line
+!
+      integer :: i, n_records
+!
+      if (requested_section('multipliers')) then
+         call move_to_section('multipliers', n_records)
+!
+         do i = 1, n_records
+!
+            read(input%unit, '(a100)') line
+            line = remove_preceding_blanks(line)
+!
+            if (line(1:10) == 'algorithm:') then
+!
+               engine%algorithm = line(11:100)
+               engine%algorithm = remove_preceding_blanks(engine%algorithm)
+               return
+!
+            endif
+!
+         enddo
+      endif
+!
+   end subroutine read_algorithm_multipliers_engine
 !
 !
 end module multipliers_engine_class
