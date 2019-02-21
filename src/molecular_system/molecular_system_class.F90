@@ -9,12 +9,13 @@ module molecular_system_class
    use atomic_class
    use io_utilities
    use interval_class
-   use atom_init
    use libint_initialization
    use ao_integral_tool_class
    use active_atoms_info_class
 !
    implicit none
+!
+   include "../libint/atom_init_cdef.F90"
 !
    type :: molecular_system
 !
@@ -87,7 +88,9 @@ contains
 !
       character(len=100) :: temp_name
 !
-      integer :: s, n_s, i, j
+      integer :: s 
+!
+      integer(i6) :: n_s, i, j
 !
       integer(i6), dimension(:,:), allocatable :: n_shells_on_atoms
       integer(i6), dimension(:,:), allocatable :: n_basis_in_shells
@@ -121,7 +124,7 @@ contains
 !
       do i = 1, molecule%n_basis_sets ! Loop over atoms  
 !
-         write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i
+         write(temp_name, '(a, a1, i4.4)') trim(molecule%name), '_', i
 !
          call initialize_basis(molecule%basis_sets(i), temp_name)
 !
@@ -129,7 +132,7 @@ contains
 !
 !     Initialize atoms and shells for eT
 !
-      call get_n_shells_on_atoms(n_shells_on_atoms)
+      call get_n_shells_on_atoms_c(n_shells_on_atoms)
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
 !
@@ -141,10 +144,10 @@ contains
          call molecule%atoms(i)%initialize_shells()
 !
 !        Then determine the number of basis functions in each shell
-!        and save number of aos per atom
+!        and save number of AOs per atom
 !
          allocate(n_basis_in_shells(n_shells_on_atoms(i,1), 1))
-         call get_n_basis_in_shells(i, n_basis_in_shells)
+         call get_n_basis_in_shells_c(i, n_basis_in_shells)
 !
          molecule%atoms(i)%n_ao = 0
 !
@@ -161,7 +164,7 @@ contains
 !        Get shell numbers
 !
          allocate(shell_numbers(n_shells_on_atoms(i,1), 1))
-         call get_shell_numbers(i, shell_numbers)
+         call get_shell_numbers_c(i, shell_numbers)
 !
          do j = 1, n_shells_on_atoms(i,1)
 !
@@ -174,7 +177,7 @@ contains
 !        And the first AO index in each shell
 !
          allocate(first_ao_in_shells(n_shells_on_atoms(i,1), 1))
-         call get_first_ao_in_shells(i, first_ao_in_shells)
+         call get_first_ao_in_shells_c(i, first_ao_in_shells)
 !
          do j = 1, n_shells_on_atoms(i,1)
 

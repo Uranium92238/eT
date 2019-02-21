@@ -12,6 +12,7 @@ module hf_class
    use array_utilities
    use array_analysis
    use interval_class
+   use libint_initialization
    use index
 !
    implicit none
@@ -160,10 +161,10 @@ contains
       wf%n_ao        = wf%system%get_n_aos()
       wf%n_densities = 1
 !
-      call initialize_coulomb()
-      call initialize_kinetic()
-      call initialize_nuclear()
-      call initialize_overlap()
+      call initialize_coulomb_c()
+      call initialize_kinetic_c()
+      call initialize_nuclear_c()
+      call initialize_overlap_c()
 !
       call wf%set_n_mo()
 !
@@ -177,11 +178,9 @@ contains
 !!    Print wavefunction summary 
 !!    Written by Eirik F. Kjønstad, Sep 2018 
 !!
-!!    Prints information related to the wavefunction,
-!!    most of which is meaningful only for a properly 
-!!    converged wavefunction. Should be overwritten in 
-!!    descendants if more or less or other information 
-!!    is present. 
+!!    Prints information related to the wavefunction, most of which is meaningful 
+!!    only for a properly  converged wavefunction. Should be overwritten in descendants
+!!    if more or less or other information is present. 
 !!
       implicit none 
 !
@@ -932,7 +931,7 @@ contains
 !
 !     Set the maximum element in each shell pair 
 !
-      call set_coulomb_precision(1.0d-50)
+      call set_coulomb_precision_c(1.0d-50)
 !
 !$omp parallel do private(s1, s2, s1s2, A_interval, B_interval, g, maximum) schedule(dynamic)
       do s1 = 1, n_s
@@ -1710,7 +1709,7 @@ contains
 !
       call mem%dealloc(g, max_shell_size**4, 1)
 !
-      call set_coulomb_precision(wf%libint_epsilon)
+      call set_coulomb_precision_c(wf%libint_epsilon)
 !
    end subroutine ao_fock_construction_loop_hf
 !
