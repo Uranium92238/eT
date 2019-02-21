@@ -9,12 +9,13 @@ module molecular_system_class
    use atomic_class
    use io_utilities
    use interval_class
-   use atom_init
    use libint_initialization
    use ao_integral_tool_class
    use active_atoms_info_class
 !
    implicit none
+!
+   include "../libint/atom_init_cdef.F90"
 !
    type :: molecular_system
 !
@@ -131,7 +132,7 @@ contains
 !
 !     Initialize atoms and shells for eT
 !
-      call get_n_shells_on_atoms(n_shells_on_atoms)
+      call get_n_shells_on_atoms_c(n_shells_on_atoms)
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
 !
