@@ -32,6 +32,10 @@ module davidson_cc_multipliers_class
       procedure :: print_banner                    => print_banner_davidson_cc_multipliers
       procedure :: print_settings                  => print_settings_davidson_cc_multipliers
 !
+      procedure, nopass :: print_summary           => print_summary_davidson_cc_multipliers
+!
+      procedure :: read_settings                   => read_settings_davidson_cc_multipliers
+!
       procedure :: run                             => run_davidson_cc_multipliers
 !
       procedure, nopass :: set_precondition_vector => set_precondition_vector_davidson_cc_multipliers     
@@ -66,6 +70,8 @@ contains
       solver%residual_threshold  = 1.0d-6
 !
       solver%restart = .false.
+!
+      call solver%read_settings()
 !
       call solver%print_settings()
 !
@@ -117,13 +123,13 @@ contains
 !
 !     Set eta
 !
-      call mem%alloc(eta, wf%n_amplitudes, 1)
+      call mem%alloc(eta, wf%n_gs_amplitudes, 1)
       call wf%construct_eta(eta)
-      call dscal(wf%n_amplitudes, -one, eta, 1)
+      call dscal(wf%n_gs_amplitudes, -one, eta, 1)
 !
 !     Initialize solver tool
 !
-      call davidson%prepare('multipliers', wf%n_amplitudes, solver%residual_threshold, eta)
+      call davidson%prepare('multipliers', wf%n_gs_amplitudes, solver%residual_threshold, eta)
 !
 !     Set start vector
 !
@@ -132,12 +138,12 @@ contains
       call solver%set_precondition_vector(wf, davidson)
       call davidson%precondition(eta)
 !
-      norm_trial = sqrt(ddot(wf%n_amplitudes, eta, 1, eta, 1))
-      call dscal(wf%n_amplitudes, one/norm_trial, eta, 1)
+      norm_trial = sqrt(ddot(wf%n_gs_amplitudes, eta, 1, eta, 1))
+      call dscal(wf%n_gs_amplitudes, one/norm_trial, eta, 1)
 !
       call davidson%write_trial(eta, 'rewind')
 !
-      call mem%dealloc(eta, wf%n_amplitudes, 1)
+      call mem%dealloc(eta, wf%n_gs_amplitudes, 1)
 !
 !     Enter iterative loop
 !
@@ -206,13 +212,25 @@ contains
       write(output%unit,'(t3,a)') '---------------------------'
       flush(output%unit)
 !
-      call mem%alloc(multipliers, wf%n_amplitudes, 1)
+      if (converged_residual) then
+!
+         call solver%print_summary(davidson, wf)
+!
+      else
+!
+         write(output%unit, '(/t3,a)')  'Warning: was not able to converge the equations in the given'
+         write(output%unit, '(t3,a/)')  'number of maximum iterations.'
+         flush(output%unit)
+!
+      endif
+!
+      call mem%alloc(multipliers, wf%n_gs_amplitudes, 1)
 !
       call davidson%construct_X(multipliers, 1)
 !
       call wf%set_multipliers(multipliers)
 !
-      call mem%dealloc(multipliers, wf%n_amplitudes, 1)
+      call mem%dealloc(multipliers, wf%n_gs_amplitudes, 1)
 !
    end subroutine run_davidson_cc_multipliers
 !
@@ -257,7 +275,7 @@ contains
 !!
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c_i
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: c_i
 !
       call wf%jacobian_transpose_transform_trial_vector(c_i) 
 !
@@ -279,11 +297,72 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: preconditioner
 !
-      call mem%alloc(preconditioner, wf%n_amplitudes, 1)
-      call wf%get_orbital_differences(preconditioner)
+      call mem%alloc(preconditioner, wf%n_gs_amplitudes, 1)
+      call wf%get_gs_orbital_differences(preconditioner, wf%n_gs_amplitudes)
       call davidson%set_preconditioner(preconditioner)
-      call mem%dealloc(preconditioner, wf%n_amplitudes, 1)
+      call mem%dealloc(preconditioner, wf%n_gs_amplitudes, 1)
 !
    end subroutine set_precondition_vector_davidson_cc_multipliers
+!
+!
+   subroutine print_summary_davidson_cc_multipliers(davidson, wf)
+!!
+!!    Print summary 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(linear_davidson_tool) :: davidson
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(:,:), allocatable :: X
+!
+      write(output%unit, '(/t3,a)') '- Multipliers vector amplitudes:'
+!
+      call mem%alloc(X, wf%n_gs_amplitudes, 1)
+!
+      call davidson%construct_X(X, 1)         
+!
+      call wf%print_dominant_x_amplitudes(X, 'r')
+!
+   end subroutine print_summary_davidson_cc_multipliers
+!
+!
+   subroutine read_settings_davidson_cc_multipliers(solver)
+!!
+!!    Read settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(davidson_cc_multipliers) :: solver 
+!
+      integer :: n_specs, i
+      character(len=100) :: line
+!
+      if (.not. requested_section('multipliers')) return
+!
+      call move_to_section('multipliers', n_specs)
+!
+      do i = 1, n_specs
+!
+         read(input%unit, '(a100)') line
+         line = remove_preceding_blanks(line)
+!
+         if (line(1:10) == 'threshold:' ) then
+!
+            read(line(11:100), *) solver%residual_threshold
+!
+         elseif (line(1:15) == 'max iterations:' ) then
+!
+            read(line(16:100), *) solver%max_iterations
+!
+         endif
+!
+      enddo
+!
+   end subroutine read_settings_davidson_cc_multipliers
+!
 !
 end module davidson_cc_multipliers_class

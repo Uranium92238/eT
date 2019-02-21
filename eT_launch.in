@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+
+import os
+import tempfile
+import shutil
+import argparse
+import time
+
+# Kill if given negative number of OMP threads
+class OMPaction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        if value < 1:
+            parser.error("{0} must be greater than 0".format(option_string))
+        setattr(namespace, self.dest, value)
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('input_file', help="eT input file", nargs='?', default="eT.inp")
+parser.add_argument('output_file', help="eT output file", nargs='?', default=None)
+parser.add_argument('--scratch', help="Specify scratch directory", type=str)
+parser.add_argument('-ks', '--keep_scratch', help="Do not delete scratch", action="store_true")
+parser.add_argument("--omp", help="Number of OpenMP threads", action=OMPaction, type=int)
+parser.add_argument('-nt', "--no_timing", help="Do not copy timing.out from scratch", action='store_true')
+parser.add_argument('-v', "--verbose", help="Run some print statements", action='store_true')
+parser.add_argument('-bd', "--binary_dir", help="Specify location of eT executable", type=str)
+parser.add_argument('-sd', "--SAD_dir", help="Specify location of SAD data dir", type=str)
+args = parser.parse_args()
+
+cwd = os.getcwd() # Get current directory
+
+#Set the binary directory
+if (args.binary_dir):
+    eT_dir = os.path.abspath(args.binary_dir)
+else:
+    eT_dir = '${CMAKE_BINARY_DIR}' # Find location of eT_launch. Assume eT is here
+eT_dir = os.path.abspath(eT_dir) # Use absolute path
+
+#Set the SAD data directory
+if (args.SAD_dir):
+    sad_dir = os.path.abspath(args.SAD_dir)
+else:
+    sad_dir = os.path.join('${CMAKE_SOURCE_DIR}','src','molecular_system','sad')
+os.environ['SAD_ET_DIR'] = sad_dir
+
+executable = os.path.join(eT_dir,'eT')
+
+if (not os.path.isfile(executable)):
+    print(executable, 'is not a file')
+    raise FileNotFoundError
+
+if (args.verbose):
+    print("Will use executable from", eT_dir)
+
+# Make a scratch dir. Either specified by user or wherever os dumps temporary file
+if args.scratch:
+    scratch = os.path.abspath(args.scratch)
+    os.makedirs(scratch, exist_ok=True)
+else:
+    tmpscratch = os.getenv('eT_SCRATCH')
+    scratch = tempfile.mkdtemp(dir=tmpscratch)
+
+# Set OMP_NUM_THREADS in environment
+if args.omp:
+    os.environ['OMP_NUM_THREADS'] = str(args.omp)
+    os.environ['MKL_NUM_THREADS'] = str(args.omp)
+
+omps = os.getenv('OMP_NUM_THREADS')
+if (not omps):
+    omps = 'dynamic number of'
+mkls = os.getenv('MKL_NUM_THREADS')
+
+# Set up name for output files
+if args.output_file:
+    output_file = args.output_file
+    out_name = os.path.splitext(args.output_file)[0]
+    time_file = '{0}{1}{2}'.format(out_name,'.timing','.out')
+else:
+    inp_name = os.path.splitext(args.input_file)[0]
+    output_file = '{0}{1}'.format(inp_name,'.out')
+    time_file = '{0}{1}{2}'.format(inp_name,'.timing','.out')
+
+# Set up paths for copying files back and forth
+inp_src = os.path.abspath(args.input_file)
+out_dest = os.path.join(cwd,output_file)
+time_dest = os.path.join(cwd,time_file)
+inp_dest = os.path.join(scratch,'eT.inp')
+out_src = os.path.join(scratch,'eT.out')
+time_src = os.path.join(scratch,'timing.out')
+
+# Copy files
+shutil.copyfile(inp_src,inp_dest)
+os.chdir(scratch)
+
+if (args.verbose):
+    print("Ready to run eT in", scratch, "with", omps, "threads")
+
+# Run eT
+wstart = time.time()
+os.system(executable)
+wstop = time.time()
+
+if (args.verbose):
+    print("eT used %.4g seconds" %(wstop - wstart))
+    print("Copying output to", out_dest)
+
+# Copy files back
+shutil.copyfile(out_src,out_dest)
+if not args.no_timing:
+    shutil.copyfile(time_src,time_dest)
+os.chdir(cwd)
+
+# Delete scratch
+if not args.keep_scratch:
+    if (args.verbose):
+        print("and deleting scratch")
+    shutil.rmtree(scratch)

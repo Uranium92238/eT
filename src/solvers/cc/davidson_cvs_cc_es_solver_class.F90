@@ -143,7 +143,7 @@ contains
 !
 !        Initial trial vectors given on input
 !
-         call mem%alloc(c_i, wf%n_amplitudes)
+         call mem%alloc(c_i, wf%n_es_amplitudes)
 !
          c_i = zero
          c_i(solver%start_vectors(1, 1)) = one
@@ -159,7 +159,7 @@ contains
 !
          enddo
 !
-         call mem%dealloc(c_i, wf%n_amplitudes)
+         call mem%dealloc(c_i, wf%n_es_amplitudes)
 !
       else
 !
@@ -225,7 +225,7 @@ contains
 !
          call wf%set_cvs_start_indices(solver%n_cores, solver%core_MOs, solver%n_singlet_states, start_indices)
 !
-         call mem%alloc(c_i, wf%n_amplitudes)
+         call mem%alloc(c_i, wf%n_es_amplitudes)
 !
          c_i = zero
 !
@@ -243,8 +243,7 @@ contains
 !
          enddo
 !
-         call mem%dealloc(c_i, wf%n_amplitudes)
-!
+         call mem%dealloc(c_i, wf%n_es_amplitudes)
          call mem%dealloc(start_indices, solver%n_singlet_states)
 !
       endif
@@ -269,14 +268,13 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: projector
 !
+      call mem%alloc(projector, wf%n_es_amplitudes, 1)
       davidson%do_projection = .true.
-!
-      call mem%alloc(projector, wf%n_amplitudes, 1)
 !
       call wf%get_cvs_projector(projector, solver%n_cores, solver%core_MOs)
 !
       call davidson%set_projector(projector)
-      call mem%dealloc(projector, wf%n_amplitudes, 1)
+      call mem%dealloc(projector, wf%n_es_amplitudes, 1)
 !
    end subroutine set_projection_vector_davidson_cvs_cc_es_solver
 !

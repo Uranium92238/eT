@@ -119,7 +119,7 @@ contains
       call disk%open_file(solver%restart_file, 'write', 'rewind')
 !
       write(solver%restart_file%unit, *) 'n_amplitudes'
-      write(solver%restart_file%unit, *) wf%n_amplitudes
+      write(solver%restart_file%unit, *) wf%n_gs_amplitudes
 !
       call disk%close_file(solver%restart_file)       
 !
@@ -137,7 +137,7 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      integer :: n_amplitudes
+      integer :: n_gs_amplitudes
 !
       write(output%unit, '(/t6,a)') 'Requested restart. Reading amplitudes from file.'
 !
@@ -147,11 +147,11 @@ contains
 !
       read(solver%restart_file%unit, *) ! Empty read to skip banner 
 !
-      read(solver%restart_file%unit, *) n_amplitudes 
+      read(solver%restart_file%unit, *) n_gs_amplitudes 
 !
       call disk%close_file(solver%restart_file)
 !
-      if (n_amplitudes .ne. wf%n_amplitudes) call output%error_msg('Inconsistent dimensions on restart in DIIS-CC-GS.')
+      if (n_gs_amplitudes .ne. wf%n_gs_amplitudes) call output%error_msg('Inconsistent dimensions on restart in DIIS-CC-GS.')
 !
       call wf%read_amplitudes()
 !
@@ -237,11 +237,11 @@ contains
 !
       integer :: iteration
 !
-      call diis_manager%init('cc_gs_diis', wf%n_amplitudes, wf%n_amplitudes, solver%diis_dimension)
+      call diis_manager%init('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
-      call mem%alloc(omega, wf%n_amplitudes, 1)
-      call mem%alloc(amplitudes, wf%n_amplitudes, 1)
-      call mem%alloc(epsilon, wf%n_amplitudes, 1)
+      call mem%alloc(omega, wf%n_gs_amplitudes, 1)
+      call mem%alloc(amplitudes, wf%n_gs_amplitudes, 1)
+      call mem%alloc(epsilon, wf%n_gs_amplitudes, 1)
 !
       converged          = .false.
       converged_energy   = .false.
@@ -268,7 +268,7 @@ contains
 !
          call wf%construct_omega(omega)
 !
-         omega_norm = get_l2_norm(omega, wf%n_amplitudes)
+         omega_norm = get_l2_norm(omega, wf%n_gs_amplitudes)
 !
          write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
                                           omega_norm, abs(wf%energy-prev_energy)
@@ -300,8 +300,8 @@ contains
 !           Precondition omega, shift amplitudes by preconditioned omega, 
 !           then ask for the DIIS update of the amplitudes 
 !
-            call wf%get_orbital_differences(epsilon)
-            call solver%do_diagonal_precondition(-one, epsilon, omega, wf%n_amplitudes)
+            call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
+            call solver%do_diagonal_precondition(-one, epsilon, omega, wf%n_gs_amplitudes)
 !
             call wf%get_amplitudes(amplitudes)
             amplitudes = amplitudes + omega 
@@ -317,9 +317,9 @@ contains
 !
       enddo
 !
-      call mem%dealloc(omega, wf%n_amplitudes, 1)
-      call mem%dealloc(amplitudes, wf%n_amplitudes, 1)
-      call mem%dealloc(epsilon, wf%n_amplitudes, 1)
+      call mem%dealloc(omega, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(amplitudes, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(epsilon, wf%n_gs_amplitudes, 1)
 !
       call diis_manager%finalize()
 !

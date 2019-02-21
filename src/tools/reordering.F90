@@ -42,13 +42,15 @@ contains
 !
       integer :: p, q
 !
-      do q = 1, dim_q
-         do p = 1, dim_p
+!$omp parallel do schedule(static) private(p,q)
+      do p = 1, dim_p
+         do q = 1, dim_q
 !
             x_q_p(q, p) = x_p_q(p, q)
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine sort_12_to_21
 !
@@ -175,6 +177,72 @@ contains
    end subroutine sort_123_to_312
 !
 !
+   subroutine sort_123_to_312_and_add(x_pqr, x_rpq, dim_p, dim_q, dim_r)
+!!
+!!    Sort 123 to 312 and add
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
+!!
+!!    Performs:
+!!
+!!       x_rpq(r,p,q) = x_rpq(r,p,q) + x_pqr(p,q,r)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(dim_p, dim_q, dim_r), intent(in)    :: x_pqr
+      real(dp), dimension(dim_r, dim_p, dim_q), intent(inout) :: x_rpq
+!
+      integer :: r, q, p
+!
+!$omp parallel do schedule(static) private(r,q,p)
+      do q = 1, dim_q
+         do p = 1, dim_p
+            do r = 1, dim_r
+!
+               x_rpq(r,p,q) = x_rpq(r,p,q) + x_pqr(p,q,r)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_123_to_312_and_add
+!
+!
+   subroutine sort_123_to_231_and_add(x_pqr, x_qrp, dim_p, dim_q, dim_r)
+!!
+!!    Sort 123 to 231 and add
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
+!!
+!!    Performs:
+!!
+!!       x_qrp(q,r,p) = x_qrp(q,r,p) + x_pqr(p,q,r)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(dim_p, dim_q, dim_r), intent(in)    :: x_pqr
+      real(dp), dimension(dim_q, dim_r, dim_p), intent(inout) :: x_qrp
+!
+      integer :: r, q, p
+!
+!$omp parallel do schedule(static) private(r,q,p)
+      do p = 1, dim_p
+         do r = 1, dim_r
+            do q = 1, dim_q
+!
+               x_qrp(q,r,p) = x_qrp(q,r,p) + x_pqr(p,q,r)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_123_to_231_and_add
+!
+!
   subroutine sort_123_to_321(x_pqr, x_rqp, dim_p, dim_q, dim_r)
 !!
 !!    Sort 123 to 321
@@ -209,6 +277,237 @@ contains
 !$omp end parallel do
 !
   end subroutine sort_123_to_321
+!
+!
+  subroutine construct_123_minus_321(x_pqr, y_pqr, dim_)
+!!
+!!    Construct 123 minus 321
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
+!!
+!!    Performs:
+!!
+!!       y_pqr(p,q,r) = x_pqr(p,q,r) - x_pqr(r,q,p)
+!!
+     implicit none
+!
+     integer, intent(in) :: dim_
+!
+     real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
+     real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
+!
+     integer :: p,q,r
+!
+!$omp parallel do schedule(static) private(p,q,r)
+     do r = 1, dim_
+        do q = 1, dim_
+           do p = 1, dim_
+!
+              y_pqr(p,q,r) = x_pqr(p,q,r) - x_pqr(r,q,p)
+!
+           enddo
+        enddo
+     enddo
+!$omp end parallel do
+!
+  end subroutine construct_123_minus_321
+!
+!
+  subroutine construct_123_min_132_min_321(x_pqr, y_pqr, dim_)
+!!
+!!    Construct 123 minus 132 minus 321
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
+!!
+!!    Performs:
+!!
+!!       y_pqr(p,q,r) = 2*x_pqr(p,q,r) - x_pqr(p,r,q) - x_pqr(r,q,p)
+!!
+     implicit none
+!
+     integer, intent(in) :: dim_
+!
+     real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
+     real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
+!
+     integer :: p,q,r
+!
+!$omp parallel do schedule(static) private(p,q,r)
+     do r = 1, dim_
+        do q = 1, dim_
+           do p = 1, dim_
+!
+              y_pqr(p,q,r) = 2*x_pqr(p,q,r) - x_pqr(p,r,q) - x_pqr(r,q,p)
+!
+           enddo
+        enddo
+     enddo
+!$omp end parallel do
+!
+  end subroutine construct_123_min_132_min_321
+!
+!
+  subroutine construct_132_minus_312(x_pqr, y_pqr, dim_)
+!!
+!!    Construct 132 minus 312
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
+!!
+!!    Performs:
+!!
+!!       y_pqr(p,q,r) = x_pqr(p,r,q) - x_pqr(r,p,q)
+!!
+     implicit none
+!
+     integer, intent(in) :: dim_
+!
+     real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
+     real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
+!
+     integer :: p,q,r
+!
+!$omp parallel do schedule(static) private(p,q,r)
+     do r = 1, dim_
+        do q = 1, dim_
+           do p = 1, dim_
+!
+              y_pqr(p,q,r) = x_pqr(p,r,q) - x_pqr(r,p,q)
+!
+           enddo
+        enddo
+     enddo
+!$omp end parallel do
+!
+  end subroutine construct_132_minus_312
+!
+!
+  subroutine construct_132_min_123_min_312(x_pqr, y_pqr, dim_)
+!!
+!!    Construct 132 minus 123 minus 312
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
+!!
+!!    Performs:
+!!
+!!       y_pqr(p,q,r) = 2*x_pqr(p,r,q)  - x_pqr(p,q,r) - x_pqr(r,p,q)
+!!
+     implicit none
+!
+     integer, intent(in) :: dim_
+!
+     real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
+     real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
+!
+     integer :: p,q,r
+!
+!$omp parallel do schedule(static) private(p,q,r)
+     do r = 1, dim_
+        do q = 1, dim_
+           do p = 1, dim_
+!
+              y_pqr(p,q,r) = 2*x_pqr(p,r,q) - x_pqr(p,q,r) - x_pqr(r,p,q)
+!
+           enddo
+        enddo
+     enddo
+!$omp end parallel do
+!
+  end subroutine construct_132_min_123_min_312
+!
+!
+  subroutine construct_321_min_231_min_123(x_pqr, y_pqr, dim_)
+!!
+!!    Construct 321 minus 232 minus 123
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
+!!
+!!    Performs:
+!!
+!!       y_pqr(p,q,r) = 2*x_pqr(r,q,p)  - x_pqr(q,r,p) - x_pqr(p,q,r)
+!!
+     implicit none
+!
+     integer, intent(in) :: dim_
+!
+     real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
+     real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
+!
+     integer :: p,q,r
+!
+!$omp parallel do schedule(static) private(p,q,r)
+     do r = 1, dim_
+        do q = 1, dim_
+           do p = 1, dim_
+!
+              y_pqr(p,q,r) = 2*x_pqr(r,q,p) - x_pqr(q,r,p) - x_pqr(p,q,r)
+!
+           enddo
+        enddo
+     enddo
+!$omp end parallel do
+!
+  end subroutine construct_321_min_231_min_123
+!
+!
+  subroutine construct_213_minus_231(x_pqr, y_pqr, dim_)
+!!
+!!    Construct 132 minus 312
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
+!!
+!!    Performs:
+!!
+!!       y_pqr(p,q,r) = x_pqr(p,q,r) - x_pqr(r,q,p)
+!!
+     implicit none
+!
+     integer, intent(in) :: dim_
+!
+     real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
+     real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
+!
+     integer :: p,q,r
+!
+!$omp parallel do schedule(static) private(p,q,r)
+     do r = 1, dim_
+        do q = 1, dim_
+           do p = 1, dim_
+!
+              y_pqr(p,q,r) = x_pqr(q,p,r) - x_pqr(q,r,p)
+!
+           enddo
+        enddo
+     enddo
+!$omp end parallel do
+!
+  end subroutine construct_213_minus_231
+!
+!
+  subroutine sort_123_to_321_and_add(x_pqr, x_rqp, dim_p, dim_q, dim_r)
+!!
+!!    Sort 123 to 321 and add
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
+!!
+!!    Performs:
+!!
+!!       x_rqp(r,q,p) = x_rqp(r,q,p) + x_pqr(p,q,r)
+!!
+     implicit none
+!
+     integer, intent(in) :: dim_p, dim_q, dim_r
+!
+     real(dp), dimension(dim_p, dim_q, dim_r), intent(in)    :: x_pqr
+     real(dp), dimension(dim_r, dim_q, dim_p), intent(inout) :: x_rqp
+!
+     integer :: r, q, p
+!
+!$omp parallel do schedule(static) private(r, q, p)
+      do p = 1, dim_p
+         do q = 1, dim_q
+            do r = 1, dim_r
+!
+              x_rqp(r,q,p) = x_rqp(r,q,p) + x_pqr(p,q,r)
+!
+           enddo
+        enddo
+     enddo
+!$omp end parallel do
+!
+  end subroutine sort_123_to_321_and_add
 !
 !
    subroutine sort_123_to_132(x_pqr, x_prq, dim_p, dim_q, dim_r)
@@ -247,6 +546,39 @@ contains
    end subroutine sort_123_to_132
 !
 !
+   subroutine sort_123_to_132_and_add(x_pqr, x_prq, dim_p, dim_q, dim_r)
+!!
+!!    Sort 123 to 132 and add
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
+!!
+!!    Performs:
+!!
+!!       x_prq(p,r,q) = x_prq(p,r,q) + x_pqr(p,q,r)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(dim_p, dim_q, dim_r), intent(in)    :: x_pqr
+      real(dp), dimension(dim_p, dim_r, dim_q), intent(inout) :: x_prq
+!
+      integer :: r, q, p
+!
+!$omp parallel do schedule(static) private(r,q,p)
+      do q = 1, dim_q
+         do r = 1, dim_r
+            do p = 1, dim_p
+!
+               x_prq(p,r,q) = x_prq(p,r,q) + x_pqr(p,q,r)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_123_to_132_and_add
+!
+!
    subroutine sort_123_to_213(x_pqr, x_qpr, dim_p, dim_q, dim_r)
 !!
 !!    Sort 123 to 132
@@ -254,26 +586,23 @@ contains
 !!
 !!    Performs:
 !!
-!!       x_qpr(qpr, 1) = x_pqr(pqr, 1)
+!!       x_qpr(q,p,r) = x_pqr(p,q,r)
 !!
       implicit none
 !
       integer, intent(in) :: dim_p, dim_q, dim_r
 !
-      real(dp), dimension(:, :), intent(in)    :: x_pqr
-      real(dp), dimension(:, :), intent(inout) :: x_qpr
+      real(dp), dimension(dim_p, dim_q, dim_r), intent(in)  :: x_pqr
+      real(dp), dimension(dim_q, dim_p, dim_r), intent(out) :: x_qpr
 !
-      integer :: pqr, qpr, r, q, p
+      integer :: p, q, r
 !
-!$omp parallel do schedule(static) private(r,q,p,pqr,qpr)
+!$omp parallel do schedule(static) private(p, q, r)
       do r = 1, dim_r
-         do q = 1, dim_q
-            do p = 1, dim_p
+         do p = 1, dim_p
+            do q = 1, dim_q
 !
-               pqr = dim_p*(dim_q*(r-1)+q-1)+p
-               qpr = dim_q*(dim_p*(r-1)+p-1)+q
-!
-               x_qpr(qpr, 1) = x_pqr(pqr, 1)
+               x_qpr(q,p,r) = x_pqr(p,q,r)
 !
             enddo
          enddo
@@ -281,6 +610,39 @@ contains
 !$omp end parallel do
 !
    end subroutine sort_123_to_213
+!
+!
+   subroutine sort_123_to_213_and_add(x_pqr, x_qpr, dim_p, dim_q, dim_r)
+!!
+!!    Sort 123 to 132 and add
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, January 2019
+!!
+!!    Performs:
+!!
+!!       x_qpr(q,p,r) = x_qpr(q,p,r) + x_pqr(p,q,r)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(dim_p,dim_q,dim_r), intent(in)    :: x_pqr
+      real(dp), dimension(dim_q,dim_p,dim_r), intent(inout) :: x_qpr
+!
+      integer :: r, q, p
+!
+!$omp parallel do schedule(static) private(r,q,p)
+      do r = 1, dim_r
+         do p = 1, dim_p
+            do q = 1, dim_q
+!
+               x_qpr(q,p,r) = x_qpr(q,p,r) +  x_pqr(p,q,r)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_123_to_213_and_add
 !
 !
    subroutine add_321_to_123(gamma, x, y_pqr, dim_p, dim_q, dim_r)
@@ -859,7 +1221,7 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
       real(dp), dimension(dim_q*dim_s, dim_p*dim_r) :: x_qs_pr
 !
       integer :: p, q, r, s, rs, pq, pqrs, qs, pr
@@ -880,7 +1242,7 @@ contains
                   pr = dim_p*(r-1) + p
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
-                  x_qs_pr(qs, pr) = x_pqrs(pqrs, 1)
+                  x_qs_pr(qs, pr) = x_pqrs(pqrs)
 !
                enddo
             enddo
@@ -894,7 +1256,7 @@ contains
    subroutine squareup_and_sort_1234_to_2341(x_pqrs, x_qr_sp, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Squareup and sort 1234 to 2341
-!!    Written by Sarai D. Folkestad, 
+!!    Written by Sarai D. Folkestad,
 !!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
 !!
 !!    Reorders the array x_pq_rs to x_qr_sp (i.e., 1234 to 2413).
@@ -983,7 +1345,7 @@ contains
    subroutine sort_1234_to_2134(x_pq_rs, x_qp_rs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 2134
-!!    Written by Sarai D. Folkestad, 
+!!    Written by Sarai D. Folkestad,
 !!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
 !!
 !!    Reorders the array x_pq_rs to x_qp_rs (i.e., 1234 to 2314).
@@ -995,24 +1357,18 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
-      real(dp), dimension(dim_q*dim_p, dim_r*dim_s) :: x_qp_rs
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in) :: x_pq_rs
+      real(dp), dimension(dim_q, dim_p, dim_r, dim_s) :: x_qp_rs
 !
-      integer :: p, q, r, s, rs, pq, qp
+      integer :: p, q, r, s
 !
-!$omp parallel do schedule(static) private(s,r,rs,q,qp,p,pq)
+!$omp parallel do schedule(static) private(s,r,q,p)
       do s = 1, dim_s
          do r = 1, dim_r
+            do p = 1, dim_p
+               do q = 1, dim_q
 !
-            rs = dim_r*(s-1) + r
-!
-            do q = 1, dim_q
-               do p = 1, dim_p
-!
-                  pq = dim_p*(q-1) + p
-                  qp = dim_q*(p-1) + q
-!
-                  x_qp_rs(qp, rs) = x_pq_rs(pq, rs)
+                  x_qp_rs(q, p, r, s) = x_pq_rs(p, q, r, s)
 !
                enddo
             enddo
@@ -1026,7 +1382,7 @@ contains
    subroutine sort_1234_to_2413(x_pq_rs, x_qs_pr, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 2413
-!!    Written by Sarai D. Folkestad, 
+!!    Written by Sarai D. Folkestad,
 !!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
 !!
 !!    Reorders the array x_pq_rs to x_qs_pr (i.e., 1234 to 2314).
@@ -1038,27 +1394,18 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
-      real(dp), dimension(dim_q*dim_s, dim_p*dim_r) :: x_qs_pr
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in) :: x_pq_rs
+      real(dp), dimension(dim_q, dim_s, dim_p, dim_r) :: x_qs_pr
 !
-      integer :: p, q, r, s, rs, pq, qs, pr
+      integer :: p, q, r, s
 !
-!$omp parallel do schedule(static) private(s,r,rs,q,qs,p,pq,pr)
-      do s = 1, dim_s
-         do r = 1, dim_r
+!$omp parallel do schedule(static) private(s,r,q,p)
+      do r = 1, dim_r
+         do p = 1, dim_p
+            do s = 1, dim_s
+               do q = 1, dim_q
 !
-            rs = dim_r*(s-1) + r
-!
-            do q = 1, dim_q
-!
-               qs = dim_q*(s-1) + q
-!
-               do p = 1, dim_p
-!
-                  pq = dim_p*(q-1) + p
-                  pr = dim_p*(r-1) + p
-!
-                  x_qs_pr(qs, pr) = x_pq_rs(pq, rs)
+                  x_qs_pr(q, s, p, r) = x_pq_rs(p, q, r, s)
 !
                enddo
             enddo
@@ -1083,27 +1430,18 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
-      real(dp), dimension(dim_p*dim_r, dim_q*dim_s) :: x_pr_qs
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in) :: x_pq_rs
+      real(dp), dimension(dim_p, dim_r, dim_q, dim_s) :: x_pr_qs
 !
-      integer :: p, q, r, s, rs, qs, pq, pr
+      integer :: p, q, r, s
 !
-!$omp parallel do schedule(static) private(s,r,rs,q,qs,p,pq,pr)
+!$omp parallel do schedule(static) private(s,r,q,p)
       do s = 1, dim_s
-         do r = 1, dim_r
-!
-            rs = dim_r*(s-1) + r
-!
-            do q = 1, dim_q
-!
-               qs = dim_q*(s-1) + q
-!
+         do q = 1, dim_q
+            do r = 1, dim_r
                do p = 1, dim_p
 !
-                  pq = dim_p*(q-1) + p
-                  pr = dim_p*(r-1) + p
-!
-                  x_pr_qs(pr, qs) = x_pq_rs(pq, rs)
+                  x_pr_qs(p, r, q, s) = x_pq_rs(p, q, r, s)
 !
                enddo
             enddo
@@ -1248,6 +1586,46 @@ contains
 !$omp end parallel do
 !
    end subroutine sort_1234_to_1342
+!
+!
+   subroutine squareup_and_sort_1234_to_1342(x_pqrs, x_p_r_s_q, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Squareup and sort 1234 to 1342
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Reorders the array x_pqrs to x_p_r_s_q (i.e., 1234 to 1342).
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
+      real(dp), dimension(dim_p, dim_r, dim_s, dim_q) :: x_p_r_s_q
+!
+      integer :: p, q, r, s, rs, pq, pqrs
+!
+!$omp parallel do schedule(static) private(s,r,rs,q,p,pq,pqrs)
+      do q = 1, dim_q
+         do s = 1, dim_s
+            do r = 1, dim_r
+!
+               rs = dim_r*(s-1) + r
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+!
+                  pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
+!
+                  x_p_r_s_q(p,r,s,q) = x_pqrs(pqrs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine squareup_and_sort_1234_to_1342
 !
 !
    subroutine sort_1234_to_1432(x_pq_rs, x_ps_rq, dim_p, dim_q, dim_r, dim_s)
@@ -1780,7 +2158,7 @@ contains
    subroutine add_2134_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Add 2143 to 1234
-!!    Written by Sarai D. Folkestad, 
+!!    Written by Sarai D. Folkestad,
 !!    Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
 !!
 !!    Performs:
@@ -1921,6 +2299,56 @@ contains
 !$omp end parallel do
 !
    end subroutine add_4231_to_1234
+!
+!
+subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 2431 to 1234
+!!    Written by Sarai D. Folkestad,
+!!    Eirik F. Kjønstad and Alexander Paul, Jan 2019
+!!
+!!    Performs:
+!!
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(qs, pr)
+!!
+!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
+!!    and x accordingly.
+!!
+      implicit none
+!
+      real(dp), intent(in) :: gamma
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
+      real(dp), dimension(dim_q*dim_s, dim_p*dim_r), intent(in) :: x
+!
+      integer :: p, q, r, s, pq, rs, qs, pr
+!
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,pr,qs)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               qs = dim_q*(s-1) + q
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  pr = dim_p*(r-1) + p
+!
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(qs, pr)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_2413_to_1234
 !
 !
    subroutine add_2431_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
@@ -2254,7 +2682,7 @@ contains
 !$omp end parallel do
 !
    end subroutine add_4132_to_1234
-!   
+!
 !
    subroutine squareup_and_sort_1234_to_1432(x_pqrs, x_ps_rq, dim_p, dim_q, dim_r, dim_s)
 !!
@@ -2502,27 +2930,18 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
-      real(dp), dimension(dim_s*dim_q, dim_r*dim_p) :: x_sq_pr
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in) :: x_pq_rs
+      real(dp), dimension(dim_s, dim_q, dim_r, dim_p) :: x_sq_pr
 !
-      integer :: p, q, r, s, pq, rs, sq, pr
+      integer :: p, q, r, s
 !
-!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,sq,pr)
-      do s = 1, dim_s
-         do r = 1, dim_r
-!
-            rs = dim_r*(s-1) + r
-!
+!$omp parallel do schedule(static) private(s,r,q,p)
+      do r = 1, dim_r
+         do p = 1, dim_p
             do q = 1, dim_q
+               do s = 1, dim_s
 !
-               sq = dim_s*(q-1) + s
-!
-               do p = 1, dim_p
-!
-                  pq = dim_p*(q-1) + p
-                  pr = dim_p*(r-1) + p
-!
-                  x_sq_pr(sq, pr) = x_pq_rs(pq, rs)
+                  x_sq_pr(s, q, p, r) = x_pq_rs(p, q, r, s)
 !
                enddo
             enddo
@@ -2548,7 +2967,7 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
       real(dp), dimension(dim_s*dim_q, dim_r*dim_p) :: x_sq_pr
 !
       integer :: p, q, r, s, pq, rs, sq, pr, pqrs
@@ -2569,7 +2988,7 @@ contains
                   pr = dim_p*(r-1) + p
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
-                  x_sq_pr(sq, pr) = x_pqrs(pqrs,1)
+                  x_sq_pr(sq, pr) = x_pqrs(pqrs)
 !
                enddo
             enddo

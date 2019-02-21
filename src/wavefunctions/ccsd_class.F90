@@ -1,9 +1,8 @@
 module ccsd_class
 !
 !!
-!!    Coupled cluster singles and doubles (ccsd) class module
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad and
-!!    Andreas Skeidsvoll, 2018
+!!    Coupled cluster singles and doubles (CCSD) class module
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
 !!
 !
    use ccs_class
@@ -100,7 +99,8 @@ module ccsd_class
       procedure :: jacobian_transpose_ccsd_h2                  => jacobian_transpose_ccsd_h2_ccsd
       procedure :: jacobian_transpose_ccsd_i2                  => jacobian_transpose_ccsd_i2_ccsd
 !
-      procedure :: get_orbital_differences                     => get_orbital_differences_ccsd
+      procedure :: get_gs_orbital_differences                  => get_gs_orbital_differences_ccsd
+      procedure :: get_es_orbital_differences                  => get_gs_orbital_differences_ccsd
       procedure :: calculate_energy                            => calculate_energy_ccsd
 !
       procedure :: construct_eta                               => construct_eta_ccsd
@@ -179,7 +179,8 @@ contains
       wf%n_t1 = (wf%n_o)*(wf%n_v) 
       wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
 !
-      wf%n_amplitudes = wf%n_t1 + wf%n_t2 
+      wf%n_gs_amplitudes = wf%n_t1 + wf%n_t2 
+      wf%n_es_amplitudes = wf%n_t1 + wf%n_t2 
 !
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()
@@ -280,7 +281,7 @@ contains
 !
       class(ccsd) :: wf  
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: amplitudes
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: amplitudes
 !
       call dcopy(wf%n_t1, amplitudes, 1, wf%t1, 1)
       call dcopy(wf%n_t2, amplitudes(wf%n_t1 + 1, 1), 1, wf%t2, 1)
@@ -297,7 +298,7 @@ contains
 !
       class(ccsd), intent(in) :: wf  
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: amplitudes
+      real(dp), dimension(wf%n_gs_amplitudes, 1) :: amplitudes
 !
       call dcopy(wf%n_t1, wf%t1, 1, amplitudes, 1)
       call dcopy(wf%n_t2, wf%t2, 1,  amplitudes(wf%n_t1 + 1, 1), 1)
@@ -438,7 +439,7 @@ contains
    end subroutine calculate_energy_ccsd
 !
 !
-   subroutine get_orbital_differences_ccsd(wf, orbital_differences)
+   subroutine get_gs_orbital_differences_ccsd(wf, orbital_differences, N)
 !!
 !!    Get orbital differences 
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
@@ -448,7 +449,8 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: orbital_differences
+      integer, intent(in) :: N 
+      real(dp), dimension(N), intent(inout) :: orbital_differences
 !
       integer :: a, i, ai, b, j, bj, aibj
 !
@@ -458,7 +460,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            orbital_differences(ai, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
 !
             do j = 1, wf%n_o 
                do b = 1, wf%n_v
@@ -469,7 +471,7 @@ contains
 !
                      aibj = (ai*(ai-3)/2) + ai + bj
 !
-                     orbital_differences(aibj + (wf%n_o)*(wf%n_v), 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1) &
+                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1) &
                                                                       +  wf%fock_diagonal(b + wf%n_o, 1) - wf%fock_diagonal(j, 1)
 !
                   endif
@@ -481,7 +483,7 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine get_orbital_differences_ccsd
+   end subroutine get_gs_orbital_differences_ccsd
 !
 !
    subroutine read_amplitudes_ccsd(wf)
@@ -569,7 +571,7 @@ contains
 !
       class(ccsd), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: eta 
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: eta 
 !
       real(dp), dimension(:,:), allocatable :: g_ia_jb
       real(dp), dimension(:,:), allocatable :: eta_ai_bj
@@ -655,7 +657,7 @@ contains
 !
       class(ccsd) :: wf  
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: multipliers
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: multipliers
 !
       call dcopy(wf%n_t1, multipliers, 1, wf%t1bar, 1)
       call dcopy(wf%n_t2, multipliers(wf%n_t1 + 1, 1), 1, wf%t2bar, 1)
@@ -672,7 +674,7 @@ contains
 !
       class(ccsd), intent(in) :: wf  
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: multipliers
+      real(dp), dimension(wf%n_gs_amplitudes, 1) :: multipliers
 !
       call dcopy(wf%n_t1, wf%t1bar, 1, multipliers, 1)
       call dcopy(wf%n_t2, wf%t2bar, 1, multipliers(wf%n_t1 + 1, 1), 1)
@@ -709,7 +711,7 @@ contains
 !
       class(ccsd), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: equation 
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: equation 
 !
       real(dp), dimension(:,:), allocatable :: eta 
 !
@@ -724,12 +726,12 @@ contains
 !
 !     Add eta, eq. = t-bar^T A + eta 
 !
-      call mem%alloc(eta, wf%n_amplitudes, 1)
+      call mem%alloc(eta, wf%n_gs_amplitudes, 1)
       call wf%construct_eta(eta)
 !
-      call daxpy(wf%n_amplitudes, one, eta, 1, equation, 1)
+      call daxpy(wf%n_gs_amplitudes, one, eta, 1, equation, 1)
 !
-      call mem%dealloc(eta, wf%n_amplitudes, 1)
+      call mem%dealloc(eta, wf%n_gs_amplitudes, 1)
 !
    end subroutine construct_multiplier_equation_ccsd
 !
@@ -835,7 +837,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_amplitudes, 1)
+      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_gs_amplitudes, 1)
 !
    end subroutine destruct_t2bar_ccsd
 !
@@ -864,12 +866,12 @@ contains
 !
       class(ccsd), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: x 
+      real(dp), dimension(wf%n_gs_amplitudes, 1) :: x 
 !
       character(len=1) :: tag
 !
       call wf%print_dominant_x1(x(1:wf%n_t1,1),tag)
-      call wf%print_dominant_x2(x(wf%n_t1 + 1:wf%n_amplitudes,1),tag)
+      call wf%print_dominant_x2(x(wf%n_t1 + 1:wf%n_gs_amplitudes,1),tag)
 !
    end subroutine print_dominant_x_amplitudes_ccsd
 !
@@ -946,7 +948,7 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
 !
       integer, intent(in) :: n_cores
 !
@@ -960,6 +962,7 @@ contains
 !
         i = core_MOs(core, 1)
 !
+!$omp parallel do private (a, ai, j, b, bj, aibj)
         do a = 1, wf%n_v
 !
            ai = wf%n_v*(i - 1) + a
@@ -976,6 +979,8 @@ contains
                enddo
             enddo
         enddo
+!$omp end parallel do
+!
      enddo
 !
    end subroutine get_cvs_projector_ccsd

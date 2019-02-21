@@ -17,10 +17,11 @@ program eT_program
    use uhf_class
    use mlhf_class
 !
-   use ccs_class
-   use cc2_class
-   use ccsd_class
-   use mp2_class
+  use ccs_class
+  use cc2_class
+  use lowmem_cc2_class
+  use cc3_class
+  use mp2_class
 !
    use io_eT_program
 !
@@ -41,14 +42,16 @@ program eT_program
 !
 !  Wavefunction allocatables and pointers  
 !
-   type(hf), allocatable, target    :: hf_wf
-   type(uhf), allocatable, target   :: uhf_wf
-   type(mlhf), allocatable, target  :: mlhf_wf 
-!
-   type(ccs), allocatable, target   :: ccs_wf
-   type(cc2), allocatable, target   :: cc2_wf
-   type(ccsd), allocatable, target  :: ccsd_wf
-   type(mp2), allocatable, target   :: mp2_wf
+   type(hf), allocatable, target          :: hf_wf
+   type(uhf), allocatable, target         :: uhf_wf
+   type(mlhf), allocatable, target        :: mlhf_wf 
+!  
+   type(ccs), allocatable, target         :: ccs_wf
+   type(cc2), allocatable, target         :: cc2_wf
+   type(lowmem_cc2), allocatable, target  :: lowmem_cc2_wf
+   type(ccsd), allocatable, target        :: ccsd_wf
+   type(cc3), allocatable, target         :: cc3_wf
+   type(mp2), allocatable, target         :: mp2_wf
 !
 !  Wavefunction pointers
 !
@@ -57,23 +60,26 @@ program eT_program
 !
 !  Cholesky decomposition solver 
 !
-   type(eri_cd_solver), allocatable     :: chol_solver
+   type(eri_cd_solver), allocatable :: chol_solver
 !
 !  Engines
 !
-   type(hf_engine), allocatable         :: gs_hf_engine
-   type(gs_engine), allocatable, target :: gs_cc_engine
-   type(es_engine), allocatable, target :: es_cc_engine
+   type(hf_engine), allocatable                  :: gs_hf_engine
+   type(gs_engine), allocatable, target          :: gs_cc_engine
+   type(es_engine), allocatable, target          :: es_cc_engine
    type(multipliers_engine), allocatable, target :: multipliers_cc_engine
    type(property_engine), allocatable, target :: property_cc_engine
 !
 !  Engine pointer
 !
-   class(abstract_engine), pointer      :: engine => null()
+   class(abstract_engine), pointer :: engine => null()
 !
 !  Other variables
 !
    integer :: n_methods, i
+!
+   integer :: n_threads
+   integer :: omp_get_max_threads
 !
    character(len=40) :: cc_engine  
    character(len=40), dimension(:), allocatable :: cc_methods
@@ -91,19 +97,35 @@ program eT_program
 !
 !  Print program banner
 !
-   write(output%unit,'(///t26,a)') 'eT - a coupled cluster program '
-   write(output%unit,'(/t12,a)')   'S. D. Folkestad, E. F. Kjønstad, H. Koch and A. Skeidsvoll'
+   write(output%unit,'(///t24,a)')                 'eT - a coupled cluster program '
+   write(output%unit,'(t8,a)')         'Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch'
    flush(output%unit)
-
-   write(output%unit,'(//t3,a)')    '--------------------------------------------------------------------------------------------'
-   write(output%unit,'(/t3,a, a/)')'Contributor:       ','Contributions:'
-   write(output%unit,'(t3,a, a)')   'E. F. Kjønstad     ','HF, UHF, CCS, CCSD, MP2, Cholesky decomposition, DIIS-tool,'
-   write(output%unit,'(t3,a, a)')   '                   ','Davidson-tool'
-   write(output%unit,'(t3,a, a)')   'S. D. Folkestad    ','HF, CCS, CCSD, Cholesky decomposition, Davidson-tool, CVS'
-   write(output%unit,'(t3,a, a)')   'A. Skeidsvoll      ','MP2, CCSD'
-   write(output%unit,'(t3,a, a)')   'J. H. Andersen     ','Property calculations'
-   write(output%unit,'(/t3,a//)')'-------------------------------------------------------------------------------------------'
+!
+   write(output%unit,'(/t3, a)')     '----------------------------------------------------------------------------------'
+   write(output%unit,'(t4, a, a)')    'Author:                ','Contribution(s):'
+   write(output%unit,'(t3, a)')      '----------------------------------------------------------------------------------'
+   write(output%unit,'(t4, a, a)')    'Sarai. D. Folkestad    ','Program design, HF, CCS, CC2, CCSD, Libint-interface,'
+   write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS'
+   write(output%unit,'(t4, a, a)')    'Linda Golletto         ','CC2'
+   write(output%unit,'(t4, a, a)')    'Eirik. F. Kjønstad     ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
+   write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
+   write(output%unit,'(t4, a, a)')    'Rolf. H. Myhre         ','CC3, Runtest-interface, Launch script'
+   write(output%unit,'(t4, a, a)')    'Alex Paul              ','CC2'
+   write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
+   write(output%unit,'(t3,a/)')      '----------------------------------------------------------------------------------'
    flush(output%unit)
+!
+   n_threads = omp_get_max_threads()
+!
+   if (n_threads .eq. 1) then
+!
+      write(output%unit,'(t3,a,i0,a/)')   'Running on ',n_threads, ' OMP thread'
+!
+   else
+!
+      write(output%unit,'(t3,a,i0,a/)')   'Running on ',n_threads, ' OMP threads'
+!
+   endif
 !
 !  Prepare memory manager and disk manager
 !
@@ -210,10 +232,20 @@ program eT_program
             allocate(cc2_wf)
             cc_wf => cc2_wf
 !
+         elseif (cc_methods(i) == 'lowmem-cc2') then
+!
+            allocate(lowmem_cc2_wf)
+            cc_wf => lowmem_cc2_wf
+!
          elseif (cc_methods(i) == 'ccsd') then
 !
             allocate(ccsd_wf)
             cc_wf => ccsd_wf
+!
+         elseif (cc_methods(i) == 'cc3') then
+!
+            allocate(cc3_wf)
+            cc_wf => cc3_wf
 !
          endif
 !
@@ -302,6 +334,10 @@ program eT_program
          elseif (cc_methods(i) == 'ccsd') then
 !
             deallocate(ccsd_wf)
+!
+         elseif (cc_methods(i) == 'cc3') then
+!
+            deallocate(cc3_wf)
 !
          endif
 !

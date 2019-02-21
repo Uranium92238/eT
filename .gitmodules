@@ -1,0 +1,3 @@
+[submodule "submodules/runtest"]
+	path = submodules/runtest
+	url = https://github.com/bast/runtest.git

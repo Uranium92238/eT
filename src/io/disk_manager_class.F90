@@ -512,7 +512,6 @@ contains
 !  
       class(disk_manager) :: disk
 !
-      write(output%unit,*) "disk%total", disk%total
       write(output%unit, '(t3, a38, i5, a)') 'Disk space available for calculation: ',&
                                                  disk%total/1000000000, ' GB'
 !
