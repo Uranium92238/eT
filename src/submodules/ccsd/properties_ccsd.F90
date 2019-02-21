@@ -24,7 +24,7 @@ contains
 !
       character(len=*), intent(in)            :: Xoperator
 !      
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
 !
 !      call wf%construct_etaX_ccs(Xoperator, etaX)
 !
@@ -51,7 +51,7 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
 !
       real(dp), dimension(:,:), allocatable :: X_ia
       real(dp), dimension(:,:), allocatable :: X_ai
@@ -300,7 +300,7 @@ contains
 !
       character(len=*), intent(in)            :: Xoperator
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
 !
       real(dp), dimension(:,:), allocatable :: etaX_ai_bj
       real(dp), dimension(:,:), allocatable :: etaX_temp
@@ -351,7 +351,7 @@ contains
 !
 !     add temporary etaX to etaX
 !
-      call daxpy(wf%n_t2, one, etaX_temp, 1, etaX(wf%n_t1+1:wf%n_amplitudes, 1), 1)
+      call daxpy(wf%n_t2, one, etaX_temp, 1, etaX(wf%n_t1+1:wf%n_es_amplitudes, 1), 1)
 !
       call mem%dealloc(etaX_temp, wf%n_t2, 1)
 !
@@ -371,7 +371,7 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
 !
       real(dp), dimension(:,:), allocatable :: etaX_temp
       real(dp), dimension(:,:), allocatable :: etaX_ai_bj
@@ -452,7 +452,7 @@ contains
 !
 !     add temporary etaX to etaX vector
 !
-      call daxpy(wf%n_t2, one, etaX_temp, 1, etaX(wf%n_t1+1:wf%n_amplitudes, 1), 1)
+      call daxpy(wf%n_t2, one, etaX_temp, 1, etaX(wf%n_t1+1:wf%n_es_amplitudes, 1), 1)
 !      
       call mem%dealloc(etaX_temp, wf%n_t2, 1)
 !      
@@ -470,7 +470,7 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
 !      
       call wf%construct_csiX_singles(Xoperator, csiX)
 !      
@@ -494,7 +494,7 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
 !      
       real(dp), dimension(:,:), allocatable   :: csiX_temp
 !      
@@ -576,7 +576,7 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
 !
       real(dp), dimension(:,:), allocatable :: csiX_temp
       real(dp), dimension(:,:), allocatable :: csiX_bj_ai
@@ -653,7 +653,7 @@ contains
 !
 !     Add doubles contribution to csiX
 !
-      call daxpy(wf%n_t2, one, csiX_temp, 1, csiX(wf%n_t1+1:wf%n_amplitudes, 1), 1)
+      call daxpy(wf%n_t2, one, csiX_temp, 1, csiX(wf%n_t1+1:wf%n_es_amplitudes, 1), 1)
 !
       call mem%dealloc(csiX_temp, wf%n_t2, 1)
 
@@ -672,8 +672,8 @@ contains
 !
       character(len=*), intent(inout), optional :: Xoperator
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
-      real(dp), dimension(wf%n_amplitudes, 1), intent(in)    :: csiX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: csiX
 !
       call wf%get_eom_xcc_contribution(etaX, csiX)
       call wf%get_eom_doubles_contribution(Xoperator, etaX)
@@ -696,7 +696,7 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
 !
       real(dp), dimension(:,:), allocatable :: etaX_temp
 !

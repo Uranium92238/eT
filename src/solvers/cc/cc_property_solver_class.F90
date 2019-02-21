@@ -98,11 +98,11 @@ contains
       real(dp), dimension(:,:), allocatable :: l_vec_n
       real(dp), dimension(:,:), allocatable :: r_vec_n
 !
-      call mem%alloc(solver%etaX, wf%n_amplitudes, 1)
-      call mem%alloc(solver%csiX, wf%n_amplitudes, 1)
+      call mem%alloc(solver%etaX, wf%n_es_amplitudes, 1)
+      call mem%alloc(solver%csiX, wf%n_es_amplitudes, 1)
 !
-      call mem%alloc(l_vec_n, wf%n_amplitudes, 1)
-      call mem%alloc(r_vec_n, wf%n_amplitudes, 1)
+      call mem%alloc(l_vec_n, wf%n_es_amplitudes, 1)
+      call mem%alloc(r_vec_n, wf%n_es_amplitudes, 1)
 !
       call solver%print_summary('header')
 !      

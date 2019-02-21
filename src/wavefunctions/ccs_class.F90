@@ -4489,13 +4489,13 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
 
       real(dp), dimension(:,:), allocatable :: etaX_temp
 !
       real(dp), parameter :: two = 2.0
 !
-      call mem%alloc(etaX_temp, wf%n_amplitudes, 1)
+      call mem%alloc(etaX_temp, wf%n_es_amplitudes, 1)
 !
 !     etaX_ai = 2*X_ia
 !
@@ -4505,7 +4505,7 @@ contains
 !
       call wf%construct_etaX_transpose(etaX, etaX_temp)
 !
-      call mem%dealloc(etaX_temp, wf%n_amplitudes, 1)
+      call mem%dealloc(etaX_temp, wf%n_es_amplitudes, 1)
 !
    end subroutine construct_etaX_ccs
 !
@@ -4538,7 +4538,7 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
 !
 !     CCS: csiX = X_ai
 !
@@ -4558,8 +4558,8 @@ contains
 !
       character(len=*), intent(inout), optional :: Xoperator
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
-      real(dp), dimension(wf%n_amplitudes, 1), intent(in)    :: csiX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: csiX
 !
       call wf%get_eom_xcc_contribution(etaX, csiX)
 !
@@ -4575,22 +4575,22 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: etaX
-      real(dp), dimension(wf%n_amplitudes, 1), intent(in)    :: csiX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: csiX
       real(dp), dimension(:,:), allocatable                  :: multipliers
 !
       real(dp) :: X_cc
       real(dp) :: ddot
 !
-      call mem%alloc(multipliers, wf%n_amplitudes, 1)
+      call mem%alloc(multipliers, wf%n_es_amplitudes, 1)
 !
       call wf%get_multipliers(multipliers)
 !
-      X_cc = ddot(wf%n_amplitudes, multipliers, 1, csiX, 1)
+      X_cc = ddot(wf%n_es_amplitudes, multipliers, 1, csiX, 1)
 !
-      call daxpy(wf%n_amplitudes, -X_cc, multipliers, 1, etaX, 1)
+      call daxpy(wf%n_es_amplitudes, -X_cc, multipliers, 1, etaX, 1)
 !
-      call mem%dealloc(multipliers, wf%n_amplitudes, 1)
+      call mem%dealloc(multipliers, wf%n_es_amplitudes, 1)
 !
    end subroutine get_eom_xcc_contribution_ccs
 !
@@ -4665,7 +4665,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: L, R
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: L, R
       integer :: state, ioerror
 !
       type(file) :: left, right
@@ -4702,13 +4702,13 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: L
-      real(dp), dimension(wf%n_amplitudes, 1), intent(in)    :: R
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: L
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: R
 !
       real(dp) :: norm, scalar 
       real(dp) :: ddot, one = 1.0
 !
-      norm = ddot(wf%n_amplitudes, L, 1, R, 1)
+      norm = ddot(wf%n_es_amplitudes, L, 1, R, 1)
 !
       scalar = one / norm
 !
@@ -4728,17 +4728,17 @@ contains
 !
       real(dp), intent(inout) :: S
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: etaX
-      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: csiX
-      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: L, R
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in) :: L, R
 !
       real(dp) :: T_l = zero, T_r = zero
       real(dp) :: ddot
 !
 !      calc dotproducts btwn exc. vectors and csiX/etaX
 !
-      T_l = ddot(wf%n_amplitudes, etaX, 1, R, 1)
-      T_r = ddot(wf%n_amplitudes, L, 1, csiX, 1)
+      T_l = ddot(wf%n_es_amplitudes, etaX, 1, R, 1)
+      T_r = ddot(wf%n_es_amplitudes, L, 1, csiX, 1)
 !
 !     sum S over three components
 !
