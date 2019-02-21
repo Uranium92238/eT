@@ -22,7 +22,7 @@ submodule (lowmem_cc2_class) jacobian
 contains
 !
 !
-   subroutine effective_jacobian_transformation_lowmem_cc2(wf, omega, c)
+   module subroutine effective_jacobian_transformation_lowmem_cc2(wf, omega, c)
 !!
 !!    Effective jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
