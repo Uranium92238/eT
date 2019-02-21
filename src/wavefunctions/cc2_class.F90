@@ -131,7 +131,7 @@ contains
    end subroutine prepare_cc2
 !
 !
-   module subroutine calculate_energy_cc2(wf)
+   subroutine calculate_energy_cc2(wf)
 !!
 !!    Calculate energy 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
