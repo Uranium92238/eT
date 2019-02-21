@@ -51,12 +51,6 @@ module memory_manager_class
 !
       integer(i15) :: available
 !
-!     Buffer for handling batches (standard: 10%). This means in practice that 'required
-!     memory' estimates are increased by 10% in case they miss they slightly underestimate
-!     the correct memory requirements
-!
-      integer :: buffer = 10 ! 10%
-!
    contains
 !
 !     Initialization routine (used if user specifies a memory different from standard)
@@ -133,7 +127,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
 !!    Prepares the memory manager object by setting the
-!!    total and initial available memory. 
+!!    total and initial available memory.
 !!
       implicit none
 !
@@ -145,7 +139,7 @@ contains
 !
       else
 !
-!        Set default value 
+!        Set default value
 !
          mem%total = 8000000000_i15
 !
@@ -189,7 +183,6 @@ contains
       integer, intent(in) :: M ! Dimension of array that is being allocated
 !
       integer :: size_array ! Total size of array (M)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M
@@ -198,7 +191,7 @@ contains
 !
       allocate(array(M), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not allocate array with #elements =', size_array)
 !
@@ -240,7 +233,6 @@ contains
       integer, intent(in) :: M, N ! First and second dimension of array that is being allocated
 !
       integer :: size_array ! Total size of array (M*N)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M*N
@@ -249,7 +241,7 @@ contains
 !
       allocate(array(M,N), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not allocate array with #elements =', size_array)
 !
@@ -291,7 +283,6 @@ contains
       integer, intent(in) :: M, N, O ! First, second and third dimension of array 
 !
       integer :: size_array ! Total size of array (M*N*O)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M*N*O
@@ -300,7 +291,7 @@ contains
 !
       allocate(array(M,N,O), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not allocate array with #elements =', size_array)
 !
@@ -342,7 +333,6 @@ contains
       integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array 
 !
       integer :: size_array ! Total size of array (M*N*O*P)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M*N*O*P
@@ -351,7 +341,7 @@ contains
 !
       allocate(array(M,N,O,P), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not allocate array with #elements =', size_array)
 !
@@ -393,7 +383,6 @@ contains
       integer, intent(in) :: M ! Dimension of array 
 !
       integer :: size_array ! Total size of array (M)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M
@@ -402,7 +391,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -435,7 +424,6 @@ contains
       integer, intent(in) :: M, N ! First and second dimension of array 
 !
       integer :: size_array ! Total size of array (M*N)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M*N
@@ -444,7 +432,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -477,7 +465,6 @@ contains
       integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M*N*O
@@ -486,7 +473,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -519,7 +506,6 @@ contains
       integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O*P)
-      integer :: stat = 0
       integer :: error = 0
 !
       size_array = M*N*O*P
@@ -528,7 +514,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -561,7 +547,6 @@ contains
       integer, intent(in) :: M ! Dimension of array 
 !
       integer :: size_array ! Total size of array (M)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -571,7 +556,7 @@ contains
 !
       allocate(array(M), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('Error: could not allocate array with #elements =', size_array)
 !
@@ -614,7 +599,6 @@ contains
       integer, intent(in) :: M, N ! First and second dimension of array 
 !
       integer :: size_array ! Total size of array (M*N)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -624,7 +608,7 @@ contains
 !
       allocate(array(M,N), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('Error: could not allocate array with #elements =', size_array)
 !
@@ -667,7 +651,6 @@ contains
       integer, intent(in) :: M, N, O ! First, second and third dimension of array 
 !
       integer :: size_array ! Total size of array (M*N*O)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -677,7 +660,7 @@ contains
 !
       allocate(array(M,N,O), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('Error: could not allocate array with #elements =', size_array)
 !
@@ -720,7 +703,6 @@ contains
       integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array 
 !
       integer :: size_array ! Total size of array (M*N*O*P)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -730,7 +712,7 @@ contains
 !
       allocate(array(M,N,O,P), stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('Error: could not allocate array with #elements =', size_array)
 !
@@ -773,7 +755,6 @@ contains
       integer, intent(in) :: M ! Dimension of array 
 !
       integer :: size_array ! Total size of array (M*N)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -783,7 +764,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -817,7 +798,6 @@ contains
       integer, intent(in) :: M, N ! First and second dimension of array 
 !
       integer :: size_array ! Total size of array (M*N)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -827,7 +807,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -861,7 +841,6 @@ contains
       integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -871,7 +850,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -905,7 +884,6 @@ contains
       integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
 !
       integer :: size_array ! Total size of array (M*N*O*P)
-      integer :: stat = 0
       integer :: error = 0
       integer :: int_size
 !
@@ -915,7 +893,7 @@ contains
 !
       deallocate(array, stat = error)
 !
-      if (stat .ne. 0) then
+      if (error .ne. 0) then
 !
          call output%error_msg('could not deallocate array with #elements =', size_array)
 !
@@ -948,9 +926,6 @@ contains
 !
       integer :: required
 !
-!     Add buffer to required estimate
-!
-      required = required + required/(mem%buffer)
 !
       if (required .lt. mem%available) then
 !
@@ -1004,7 +979,6 @@ contains
 !
       integer :: i = 0
 !
-      required = required + required/(mem%buffer)
 !
       batch_p%num_batches = 1
       batch_q%num_batches = 1
@@ -1070,7 +1044,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
       implicit none
-!  
+!
       class(memory_manager) :: mem
 !
       integer :: n_specs, i
@@ -1105,7 +1079,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
       implicit none
-!  
+!
       class(memory_manager) :: mem
 !
       write(output%unit, '(t3, a38, i5, a)') 'Memory available for calculation:     ', mem%total/1000000000, ' GB'
@@ -1115,7 +1089,7 @@ contains
 !
    subroutine batch_setup_1_memory_manager(mem, batch_p, req0, req1, element_size)
 !!
-!!    Setup batching 
+!!    Setup batching
 !!    Written by Rolf H. Myhre and Eirik F. Kjønstad, December 2018
 !!
 !!    Batching setup for a single index.
@@ -1123,11 +1097,11 @@ contains
 !!    batch_p:  Initialized batching object.
 !!
 !!    req0:     Memory required that does not change with the index dimension.
-!!              E.g., n_o**2*n_v**2 for (vo|vo) if none of the indices 
+!!              E.g., n_o**2*n_v**2 for (vo|vo) if none of the indices
 !!              in the integral is batched over.
 !!
-!!    req1:     Memory required per batching index (linear with batch size). 
-!!              E.g., n_v**3 for (vv|vo) when batching over the 
+!!    req1:     Memory required per batching index (linear with batch size).
+!!              E.g., n_v**3 for (vv|vo) when batching over the
 !!              occupied index.
 !!
       implicit none
@@ -1154,10 +1128,10 @@ contains
          e_size = element_size
       endif
 !
-      req0_tot = (req0 + req0/(mem%buffer))*e_size
-      req1_min = (req1 + req1/(mem%buffer))*e_size 
+      req0_tot = req0*e_size
+      req1_min = req1*e_size
 !
-      req_min = req0_tot + req1_min 
+      req_min = req0_tot + req1_min
       req_tot = req0_tot + req1_min*batch_p%index_dimension
 !
       if (req_tot .lt. mem%available) then
@@ -1193,7 +1167,7 @@ contains
 !
    subroutine batch_setup_2_memory_manager(mem, batch_p, batch_q, req0, req1_p, req1_q, req2, element_size)
 !!
-!!    Setup batching 
+!!    Setup batching
 !!    Written by Rolf H. Myhre and Eirik F. Kjønstad, Dec 2018
 !!
 !!    Batching setup for two batching indices.
@@ -1201,8 +1175,8 @@ contains
 !!    batch_p: Initialized batching object
 !!    batch_q: Initialized batching object
 !!
-!!    req0: required memory that does not scale with batch size 
-!! 
+!!    req0: required memory that does not scale with batch size
+!!
 !!    req1: required memory that scales linearly with p batch size
 !!    req1: required memory that scales linearly with q batch size
 !!
@@ -1210,8 +1184,8 @@ contains
 !!
 !!    element_size: memory per element, default is double precision
 !!
-!!    If you are batching over i and j and need to keep g_abij, g_abci and g_abcj in memory, 
-!!    req1 = 2*n_v**3 (both for i and j) and req2 = n_v**2. Memory per batch is then 
+!!    If you are batching over i and j and need to keep g_abij, g_abci and g_abcj in memory,
+!!    req1 = 2*n_v**3 (both for i and j) and req2 = n_v**2. Memory per batch is then
 !!    batch_size*req1 + batch_size**2*req2
 !!
 !!    If you are batching over a and j and need to keep g_abij, g_abci and g_abcj in memory,
@@ -1252,18 +1226,16 @@ contains
          e_size = element_size
       endif
 !
-      req0_tot   = req0*e_size 
+      req0_tot   = req0*e_size
       req1_p_min = req1_p*e_size
       req1_q_min = req1_q*e_size
       req2_min = req2*e_size
 !
-      req_min = req0_tot + req1_p_min + req1_q_min + req2_min 
+      req_min = req0_tot + req1_p_min + req1_q_min + req2_min
 !
       req_tot = req0_tot + req1_p_min*(batch_p%index_dimension) &
                          + req1_q_min*(batch_q%index_dimension) &
                          + req2_min*(batch_p%index_dimension)*(batch_q%index_dimension)
-!
-      req_tot = req_tot + req_tot/(mem%buffer)
 !
       if (req_tot .lt. mem%available) then
 !
@@ -1301,29 +1273,29 @@ contains
             if (((p_elements+1)*(q_elements+1)*req2_min &
                   + (p_elements+1)*req1_p_min          &
                   + (q_elements+1)*req1_q_min          &
-                  + req0) .lt. mem%available) then 
+                  + req0) .lt. mem%available) then
 !
-               p_elements = p_elements + 1 ! can hold +1 batch size 
+               p_elements = p_elements + 1 ! can hold +1 batch size
                q_elements = q_elements + 1
 !
             else
 !
-               figgered_out = .true.       ! cannot hold +1 batch size 
+               figgered_out = .true.       ! cannot hold +1 batch size
 !
             endif
 !
          enddo
 !
 !        II. If simultaneous incrementation was not sufficient,
-!            then try to increment the largest index further. This is 
+!            then try to increment the largest index further. This is
 !            guaranteed to work, so let's just go ahead and increment
 !            with no safeguards in place.
-! 
-         if (.not. figgered_out) then 
 !
-            if (batch_p%index_dimension .gt. batch_q%index_dimension) then 
+         if (.not. figgered_out) then
 !
-!              Increment p 
+            if (batch_p%index_dimension .gt. batch_q%index_dimension) then
+!
+!              Increment p
 !
                do while (((p_elements+1)*q_elements*req2_min &
                            + (p_elements+1)*req1_p_min       &
@@ -1334,9 +1306,9 @@ contains
 !
                enddo
 !
-            elseif (batch_p%index_dimension .lt. batch_q%index_dimension) then 
+            elseif (batch_p%index_dimension .lt. batch_q%index_dimension) then
 !
-!              Increment q 
+!              Increment q
 !
                do while ((p_elements*(q_elements+1)*req2_min &
                            + p_elements*req1_p_min           &
@@ -1345,7 +1317,7 @@ contains
 !
                   q_elements = q_elements + 1
 !
-               enddo               
+               enddo
 !
             else
 !
@@ -1354,17 +1326,18 @@ contains
 !
             endif
 !
-            figgered_out = .true. 
+            figgered_out = .true.
 !
          endif
 !
-         batch_p%max_length = p_elements         
+         batch_p%max_length = p_elements
          batch_q%max_length = q_elements
 !
 !        Figure out how many batches
 !
          batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
          batch_q%num_batches = (batch_q%index_dimension-1)/(batch_q%max_length)+1
+!
 !
       endif
 !
@@ -1374,7 +1347,7 @@ contains
    subroutine batch_setup_3_memory_manager(mem, batch_p, batch_q, batch_r, req0, req1_p, req1_q, &
                                        req1_r, req2_pq, req2_pr, req2_qr, req3, element_size)
 !!
-!!    Setup batching 
+!!    Setup batching
 !!    This is setup for two batch indices
 !!    Written by Rolf H. Myhre December 2018
 !!
@@ -1384,8 +1357,8 @@ contains
 !!    batch_q: Initialized batching object
 !!    batch_r: Initialized batching object
 !!
-!!    req0: required memory that does not scale with batch size 
-!! 
+!!    req0: required memory that does not scale with batch size
+!!
 !!    req1_p: required memory that scales linearly with p batch size
 !!    req1_q: required memory that scales linearly with q batch size
 !!    req1_r: required memory that scales linearly with r batch size
@@ -1448,20 +1421,20 @@ contains
          e_size = element_size
       endif
 !
-      req0_tot   = (req0 + req0/(mem%buffer))*e_size
-! 
-      req1_p_min = (req1_p + req1_p/(mem%buffer))*e_size
-      req1_q_min = (req1_q + req1_q/(mem%buffer))*e_size
-      req1_r_min = (req1_r + req1_r/(mem%buffer))*e_size
+      req0_tot   = req0*e_size
 !
-      req2_pq_min = (req2_pq + req2_pq/(mem%buffer))*e_size
-      req2_pr_min = (req2_pr + req2_pr/(mem%buffer))*e_size
-      req2_qr_min = (req2_qr + req2_qr/(mem%buffer))*e_size
+      req1_p_min = req1_p*e_size
+      req1_q_min = req1_q*e_size
+      req1_r_min = req1_r*e_size
 !
-      req3_min = (req3 + req3/(mem%buffer))*e_size
+      req2_pq_min = req2_pq*e_size
+      req2_pr_min = req2_pr*e_size
+      req2_qr_min = req2_qr*e_size
+!
+      req3_min = req3*e_size
 !
       req_min = req0_tot + req1_p_min + req1_q_min + req1_r_min &
-                           + req2_pq_min + req2_pr_min + req2_qr_min + req3_min  
+                           + req2_pq_min + req2_pr_min + req2_qr_min + req3_min
 !
       req_tot = req0_tot + req1_p_min*(batch_p%index_dimension) &
                          + req1_q_min*(batch_q%index_dimension) &
@@ -1530,15 +1503,15 @@ contains
             endif
 !
             if ( (p_elements)*(q_elements)*(r_elements)*req3_min &
-                  + (p_elements)*(q_elements)*req2_pq &
-                  + (p_elements)*(r_elements)*req2_pr &
-                  + (q_elements)*(r_elements)*req2_qr &
+                  + (p_elements)*(q_elements)*req2_pq_min &
+                  + (p_elements)*(r_elements)*req2_pr_min &
+                  + (q_elements)*(r_elements)*req2_qr_min &
                   + (p_elements)*req1_p_min          &
                   + (q_elements)*req1_q_min          &
                   + (r_elements)*req1_r_min          &
-                  + req0 .ge. mem%available) then 
+                  + req0 .ge. mem%available) then
 !
-                  found_batch_size = .true.       ! cannot hold +1 batch size 
+                  found_batch_size = .true.       ! cannot hold +1 batch size
                   if (p_incremented) p_elements = p_elements - 1
                   if (q_incremented) q_elements = q_elements - 1
                   if (r_incremented) r_elements = r_elements - 1
@@ -1547,9 +1520,9 @@ contains
 !
          enddo
 !
-         batch_p%max_length = p_elements         
-         batch_q%max_length = q_elements        
-         batch_r%max_length = r_elements         
+         batch_p%max_length = p_elements
+         batch_q%max_length = q_elements
+         batch_r%max_length = r_elements
 !
 !        Figure out how many batches
 !
@@ -1624,7 +1597,7 @@ contains
          e_size = element_size
       endif
 !
-      buff = one/mem%buffer
+      buff = zero
       if(present(buffer_size)) then
          buff = buffer_size
       endif

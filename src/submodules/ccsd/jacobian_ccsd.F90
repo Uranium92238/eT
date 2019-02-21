@@ -1,9 +1,8 @@
 submodule (ccsd_class) jacobian_ccsd
 !
 !!
-!!    Jacobian submodule (ccsd)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    and Andreas Skeidsvoll, 2018
+!!    Jacobian submodule (CCSD)
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2017-2018
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian matrix 
@@ -14,6 +13,9 @@ submodule (ccsd_class) jacobian_ccsd
 !!   
 !!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | ν >.
 !!  
+!!    Transfered to the current eT program from the first version 
+!!    of eT by Andreas Skeidsvoll and Sarai D. Folkestad, 2018.
+!!
 ! 
    implicit none
 !
@@ -28,7 +30,7 @@ contains
 !!
       class(ccsd), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
 !
       call wf%jacobian_ccsd_transformation(c_i)
 !
@@ -38,8 +40,7 @@ contains
    module subroutine jacobian_ccsd_transformation_ccsd(wf, c)
 !!
 !!    Jacobian transformation (CCSD)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !!    Directs the transformation by the CCSD Jacobi matrix,
 !!
@@ -58,7 +59,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: c
+      real(dp), dimension(wf%n_es_amplitudes, 1) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_a_i
       real(dp), dimension(:,:), allocatable :: c_ai_bj, c_ab_ij 
@@ -262,8 +263,7 @@ contains
   module subroutine jacobian_ccsd_a1_ccsd(wf, rho_a_i, c_a_i)
 !!
 !!    Jacobian CCSD A1
-!!    Written by Sarai D. Folkestad Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
 !!    rho_ai^A1 = sum_ckdl L_lckd (u_li^ca c_dk  - t_li^cd c_ak - t_lk^ad c_ci)
 !!
@@ -478,8 +478,7 @@ contains
    module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !!
 !!    Jacobian CCSD B1
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !!    rho_ai^B1 = sum_bj F_jb (2*c_ai_bj  -  c_aj_bi)
 !!              = sum_bj F_jb v_ai_jb
@@ -534,8 +533,7 @@ contains
    module subroutine jacobian_ccsd_c1_ccsd(wf, rho_a_i, c_ai_bj)
 !!
 !!    Jacobian CCSD C1
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
 !!    rho_ai^C1 = - sum_bjk L_jikb c_ajbk
 !!              = - sum_bjk (2*g_jikb - g_kijb) c_ajbk
@@ -596,8 +594,7 @@ contains
    module subroutine jacobian_ccsd_d1_ccsd(wf, rho_a_i, c_bi_cj)
 !!
 !!    Jacobian CCSD D1
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
 !!    rho_ai^D1 =  sum_bcj L_abjc c_bicj
 !!
@@ -693,7 +690,7 @@ contains
    module subroutine jacobian_ccsd_a2_ccsd(wf, rho_ai_bj, c_a_i)
 !!
 !!    Jacobian CCSD A2
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
 !!    rho_ai_bj^A2 = sum_c g_aibc c_cj - sum_k g_aikj c_bk
 !!
@@ -816,8 +813,7 @@ contains
    module subroutine jacobian_ccsd_b2_ccsd(wf, rho_ai_bj, c_a_i)
 !!
 !!    Jacobian CCSD B2
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
 !!    rho_ai_bj^B2 = - sum_kc (F_kc t_ij^ac c_bk + F_kc t_ik^ab c_cj)
 !!
@@ -947,8 +943,7 @@ contains
    module subroutine jacobian_ccsd_c2_ccsd(wf, rho_ai_bj, c_a_i)
 !!
 !!    Jacobian CCSD C2
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
 !!    rho_ai_bj^C2 = sum_kcl g_ljkc (t_ki^ac c_bl + t_li^bc c_ak + t_lk^ba c_ci)
 !!                 - sum_kcl L_ljkc (t_il^ab c_ck + t_ik^ac c_bl)
@@ -1311,8 +1306,7 @@ contains
   module subroutine jacobian_ccsd_d2_ccsd(wf, rho_ai_bj, c_a_i)
 !!
 !!    Jacobian CCSD D2
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
 !!    rho_ai_bj^D2 = - sum_kcd g_kcbd (t_ij^cd c_ak + t_kj^ad c_ci + t_ik^ca c_dj)
 !!                       + sum_kcd L_kcbd (t_ik^ac c_dj + t_ij^ad c_ck)
@@ -1847,8 +1841,7 @@ contains
     module subroutine jacobian_ccsd_e2_ccsd(wf, rho_ai_bj, c_ai_ck)
 !!
 !!    Jacobian CCSD E2
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
 !!    rho_ai_bj^E2 = 2 sum_dlck t_bj,dl * L_kc,ld * c_ai,ck
 !!
@@ -1941,8 +1934,7 @@ contains
    module subroutine jacobian_ccsd_f2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
 !!    Jacobian CCSD F2
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
 !!       rho_ai_bj^F2 =   - sum_ckld t_ai,ck * L_kc,ld * c_bl,dj
 !!                        - sum_ckdl t_ai,dj * L_kc,ld * c_bl,ck
@@ -2210,8 +2202,7 @@ contains
    module subroutine jacobian_ccsd_g2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
 !!    Jacobian CCSD G2
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
 !!    rho_ai_bj^G2 =  - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck
 !!                       - sum_ckdl t_ck_bl * L_kc,ld * c_ai,dj
@@ -2452,8 +2443,7 @@ contains
    module subroutine jacobian_ccsd_h2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
 !!    Jacobian CCSD H2
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    and Andreas Skeidsvoll
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
 !!       rho_ai_bj^H2 =  sum_ckdl t_ci,ak * g_kc,ld * c_bl,dj
 !!                     + sum_ckdl t_cj,al * g_kc,ld * c_bk,di
@@ -2626,8 +2616,7 @@ contains
    module subroutine jacobian_ccsd_i2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
 !!    Jacobian CCSD I2
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
 !!    rho_ai_bj^I2 =  sum_c F_bc * c_ai,cj - sum_k F_jk * c_ai,bk
 !!                   + sum_ck L_bj,kc * c_ai,ck
@@ -2656,7 +2645,6 @@ contains
 !
       integer :: b, bc, bj, c, ck, j, k, kj
 !
-      integer :: required
       integer :: current_c_batch 
 !
       type(batching_index) :: batch_c
@@ -2780,8 +2768,6 @@ contains
 !
 !     Start batching over c
 !
-      required = wf%integrals%get_required_vvoo()
-!
       rec0 = wf%n_o**2*wf%integrals%n_J
 !
       rec1 = wf%integrals%n_J*wf%n_v
@@ -2896,9 +2882,8 @@ contains
 !
    module subroutine jacobian_ccsd_j2_ccsd(wf, rho_ab_ij, c_ab_ij)
 !!
-!!     Jacobian CCSD J2
-!!     Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!     and Andreas Skeidsvoll, 2018
+!!    Jacobian CCSD J2
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
 !!       rho_ab_ij^J2 =    sum_ckld t_ci,dj * g_kc,ld * c_ak,bl
 !!                       + sum_ckdl t_ak,bl * g_kc,ld * c_ci,dj
@@ -3020,8 +3005,7 @@ contains
    module subroutine jacobian_ccsd_k2_ccsd(wf, rho_ab_ij, c_ab_ij)
 !!
 !!    Jacobian CCSD K2
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    and Andreas Skeidsvoll, 2018
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
 !!    rho_ab_ij^K2 =    sum_kl g_ki,lj * c_ak,bl
 !!                       + sum_cd g_ac,bd * c_ci,dj

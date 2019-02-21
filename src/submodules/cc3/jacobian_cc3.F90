@@ -59,7 +59,7 @@ contains
       class(cc3) :: wf
 !
       real(dp), intent(in) :: omega
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_ai
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij

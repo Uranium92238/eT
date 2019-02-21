@@ -1,0 +1,190 @@
+
+
+
+                         eT - a coupled cluster program 
+
+           S. D. Folkestad, E. F. Kjønstad, H. Koch and A. Skeidsvoll
+
+
+  --------------------------------------------------------------------------------------------
+
+  Contributor:       Contributions:
+
+  E. F. Kjønstad     HF, UHF, CCS, CCSD, MP2, Cholesky decomposition, DIIS-tool,
+                     Davidson-tool
+  S. D. Folkestad    HF, CCS, CCSD, Cholesky decomposition, Davidson-tool, CVS
+  A. Skeidsvoll      MP2, CCSD
+
+  -------------------------------------------------------------------------------------------
+
+
+  Memory available for calculation:         8 GB
+ disk%total          30000000000
+  Disk space available for calculation:    30 GB
+
+  - Molecular system specifications:
+
+     Charge:       0
+     Multiplicity: 1
+
+     Nuclear repulsion energy (a.u.):             12.116100574587
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+     H    0.866810000000   0.601440000000   5.000000000000   cc-pVDZ    
+     H   -0.866810000000   0.601440000000   5.000000000000   cc-pVDZ    
+     O    0.000000000000  -0.075790000000   5.000000000000   cc-pVDZ    
+     He   0.100000000000  -0.020000000000   7.530000000000   cc-pVDZ    
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:         23
+     Number of molecular orbitals:       29
+     Number of atomic orbitals:          29
+
+
+  :: Self-consistent field DIIS Hartree-Fock solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock matrix 
+  is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:               8
+     Energy threshold:              0.1000E-11
+     Gradient threshold:            0.1000E-11
+
+     Coulomb screening threshold:   0.1000E-14
+     Exchange screening threshold:  0.1000E-14
+     ERI integral precision:        0.1000E-29
+
+  - Setting initial AO density to SAD:
+
+     Energy of initial guess:       -78.492022922278
+     Number of electrons in guess:   12.000000000000
+
+  Iteration    Energy (a.u.)        Max(grad.)    Delta E (a.u.)
+  --------------------------------------------------------------
+    1           -78.796606526463     0.9053E-01     0.7880E+02
+    2           -78.828675823330     0.7128E-01     0.3207E-01
+    3           -78.843428154400     0.8290E-02     0.1475E-01
+    4           -78.843809541666     0.2414E-02     0.3814E-03
+    5           -78.843850846799     0.3301E-03     0.4131E-04
+    6           -78.843851669326     0.5527E-04     0.8225E-06
+    7           -78.843851692851     0.5865E-05     0.2353E-07
+    8           -78.843851693557     0.2356E-05     0.7054E-09
+    9           -78.843851693612     0.9680E-06     0.5534E-10
+   10           -78.843851693630     0.3834E-06     0.1822E-10
+   11           -78.843851693631     0.9230E-07     0.6111E-12
+   12           -78.843851693631     0.1426E-07     0.1421E-13
+   13           -78.843851693631     0.2213E-08     0.1421E-13
+   14           -78.843851693631     0.2763E-09     0.4263E-13
+   15           -78.843851693631     0.1292E-09     0.2842E-13
+   16           -78.843851693631     0.7464E-10     0.4263E-13
+   17           -78.843851693631     0.2251E-11     0.5684E-13
+   18           -78.843851693631     0.6136E-12     0.1421E-13
+  --------------------------------------------------------------
+
+  Convergence criterion met in  18 iterations!
+
+  - Summary of HF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                 0.645629080251
+     Nuclear repulsion energy:     12.116100574587
+     Electronic energy:           -90.959952268218
+     Total energy:                -78.843851693631
+
+  - Molecular orbital energies:
+
+    1  -20.574269195143      2   -1.277667044968      3   -0.898849406811
+    4   -0.629870222688      5   -0.541641772852      6   -0.485872762834
+    7    0.159756317417      8    0.229311906284      9    0.704416610867
+   10    0.746260122915     11    1.155862024381     12    1.170770887076
+   13    1.267961746552     14    1.449847537220     15    1.463234913437
+   16    1.474444394527     17    1.682695299877     18    1.804186820052
+   19    1.902641648743     20    2.148883457169     21    2.200395756970
+   22    2.540321860021     23    2.541517310547     24    2.559338707349
+   25    3.175416260659     26    3.209661156313     27    3.328173215200
+   28    3.721936473470     29    3.985492632585
+
+  - Cleaning up Self-consistent field DIIS Hartree-Fock solver
+
+  - Running Ground state engine
+
+
+  :: Cholesky decomposition of electronic repulsion integrals solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations.
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-11
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+     Total number of AOs:                    29
+     Total number of shell pairs:           120
+     Total number of AO pairs:              435
+
+  - Preparing diagonal for decomposition
+
+     Significant shell pairs:                   118
+     Significant AO pairs:                      431
+
+     Construct shell pairs:                     120
+     Construct AO pairs:                        435
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1              406 /      108       0.47383E+01     147             42                17052
+     2              319 /       93       0.47165E-01     234            111                35409
+     3              250 /       76       0.46944E-03     178            183                45750
+     4              187 /       55       0.38270E-05     145            265                49555
+     5               87 /       25       0.38106E-07      78            324                28188
+     6               21 /        3       0.37202E-09      43            349                 7329
+     7                0 /        0       0.36652E-11       7            354                    0
+  -------------------------------------------------------------------------------------------------------
+
+     Done decomposing (J|K)!
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals: 
+
+     Final number of Cholesky vectors:        354
+
+     Done inverting L_JK!
+
+  - Timings for Cholesky decomposition of electronic repulsion integrals:
+
+     Wall time to determine auxiliary basis:                     0.03
+     Wall time to construct (J|K), decompose, and invert:        0.02
+     Wall time to build L_ab^J and test:                         0.02
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.7161E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.8882E-15
+
+  - Cleaning up Cholesky decomposition of electronic repulsion integrals solver
+
+  :: Summary of MP2 wavefunction energetics (a.u.)
+
+  HF energy:                   -78.843851693631
+  MP2 correction:               -0.240390237977
+  MP2 energy:                  -79.084241931608
+
+  - Cleaning up Ground state engine
+
+  - Cleaning up MP2 wavefunction
+
+  eT terminated successfully!
