@@ -14,7 +14,7 @@
    !end subroutine jacobian_transform_trial_vector_cc3
 !
 !
-   module subroutine jacobian_cc3_transformation_cc3(wf, omega, c)
+   module subroutine effective_jacobian_transformation_cc3(wf, omega, c)
 !!
 !!    Jacobian transformation (CC3)
 !!    Alexander Paul and Rolf H. Myhre Feb 2019
@@ -27,7 +27,7 @@
 !
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: c
 !
-   end subroutine jacobian_cc3_transformation_cc3
+   end subroutine effective_jacobian_transformation_cc3
 !
 !
    module subroutine jacobian_cc3_A_cc3(wf, omega, c_ai, c_abji, rho_ai, rho_abij)

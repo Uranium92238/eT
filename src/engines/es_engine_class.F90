@@ -1,7 +1,7 @@
 module es_engine_class
 !!
-!!    Coupled cluster ground state engine class module 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    Coupled cluster ground state engine class module
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
    use abstract_engine_class
    use ccs_class
@@ -12,12 +12,12 @@ module es_engine_class
    use diis_cc_gs_solver_class
    use diis_cc_es_solver_class
 !
-   type, extends(abstract_engine) :: es_engine 
+   type, extends(abstract_engine) :: es_engine
 !
-      character(len=100) :: algorithm 
-      character(len=100) :: es_type 
+      character(len=100) :: algorithm
+      character(len=100) :: es_type
 !
-   contains 
+   contains
 !
       procedure :: prepare                   => prepare_es_engine
       procedure :: run                       => run_es_engine
@@ -26,18 +26,18 @@ module es_engine_class
       procedure :: determine_es_type         => determine_es_type_es_engine
       procedure :: read_algorithm            => read_algorithm_es_engine
 !
-   end type es_engine 
+   end type es_engine
 !
 contains
 !
    subroutine prepare_es_engine(engine)
 !!
-!!    Prepare 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    Prepare
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(es_engine) :: engine 
+      class(es_engine) :: engine
 !
       engine%name_       = 'Excited state engine'
 !
@@ -54,19 +54,19 @@ contains
 !
    subroutine run_es_engine(engine, wf)
 !!
-!!    Run 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    Run
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(es_engine) :: engine 
+      class(es_engine) :: engine
 !
       class(ccs) :: wf
 !
       type(eri_cd_solver), allocatable              :: eri_chol_solver
       type(diis_cc_gs_solver), allocatable          :: cc_gs_solver
-      type(diis_cc_es_solver), allocatable          :: cc_es_solver_diis 
-! 
+      type(diis_cc_es_solver), allocatable          :: cc_es_solver_diis
+!
       type(davidson_cc_es_solver), allocatable, target      ::  cc_valence_es
       type(davidson_cvs_cc_es_solver), allocatable, target  ::  cc_core_es
       type(davidson_cc_ip_solver), allocatable, target      ::  cc_valence_ip
@@ -75,7 +75,7 @@ contains
 !
       write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
 !
-!     Cholesky decomposition 
+!     Cholesky decomposition
 !
       allocate(eri_chol_solver)
 !
@@ -91,7 +91,7 @@ contains
       call eri_chol_solver%cleanup()
       deallocate(eri_chol_solver)
 !
-!     Ground state solution 
+!     Ground state solution
 !
       allocate(cc_gs_solver)
 !
@@ -101,7 +101,7 @@ contains
 !
       deallocate(cc_gs_solver)
 !
-      if (wf%name_ .ne. 'CCS') then 
+      if (wf%name_ .ne. 'CCS') then
 !
          call wf%integrals%write_t1_cholesky(wf%t1)
          call wf%integrals%can_we_keep_g_pqrs()
@@ -110,7 +110,7 @@ contains
 !
 !     Prepare for excited state
 !
-      if (engine%algorithm == 'diis' .or. wf%name_ == 'low memory cc2') then 
+      if (engine%algorithm == 'diis' .or. wf%name_ == 'low memory cc2' .or. wf%name_ == 'cc3') then 
 !
          allocate(cc_es_solver_diis)
 !
@@ -120,7 +120,7 @@ contains
 !
          deallocate(cc_es_solver_diis)
 !
-      elseif (engine%algorithm == 'davidson') then 
+      elseif (engine%algorithm == 'davidson') then
 !
          if (engine%es_type == 'core') then
 !
@@ -171,12 +171,12 @@ contains
 !
    subroutine cleanup_es_engine(engine)
 !!
-!!    Cleanup 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    Cleanup
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(es_engine) :: engine 
+      class(es_engine) :: engine
 !
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%name_)
 !
@@ -185,12 +185,12 @@ contains
 !
    subroutine determine_es_type_es_engine(engine)
 !!
-!!    Determine excited state type 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    Determine excited state type
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(es_engine), intent(inout) :: engine 
+      class(es_engine), intent(inout) :: engine
 !
       character(len=100) :: line
 !
@@ -234,11 +234,11 @@ contains
    subroutine read_algorithm_es_engine(engine)
 !!
 !!    Read algorithm
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(es_engine), intent(inout) :: engine 
+      class(es_engine), intent(inout) :: engine
 !
       character(len=100) :: line
 !

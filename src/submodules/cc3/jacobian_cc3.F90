@@ -1,4 +1,4 @@
-submodule (cc3_class) jacobian_cc3
+submodule (cc3_class) jacobian
 !
 !!
 !!    Jacobian submodule (cc3)
@@ -20,23 +20,7 @@ submodule (cc3_class) jacobian_cc3
 contains
 !
 !
-   !module subroutine jacobian_transform_trial_vector_cc3(wf, omega, c_i)
-!!!
-!! !   Jacobian transform trial vector
-!! !   Written by Rolf H. Myhre and Alexander Paul
-!!!
-   !   class(cc3), intent(in) :: wf
-!!
-   !   real(dp), intent(in) :: omega
-!!
-   !   real(dp), dimension(wf%n_amplitudes, 1) :: c_i
-!!
-   !   call wf%jacobian_cc3_transformation(omega, c_i)
-!!
-   !end subroutine jacobian_transform_trial_vector_cc3
-!
-!
-   module subroutine jacobian_cc3_transformation_cc3(wf, omega, c)
+   module subroutine effective_jacobian_transformation_cc3(wf, omega, c)
 !!
 !!    Jacobian transformation (CC3)
 !!    Written by Rolf H. Myhre and Alexander Paul
@@ -51,8 +35,8 @@ contains
 !!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck
 !!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl)
 !!
-!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
-!!    and c_aibj = rho_aibj.
+!!    On exit, c is overwritten by rho. That is, c(ai) = rho_a_i,
+!!    and c(aibj) = rho_aibj.
 !!
       implicit none
 !
@@ -167,7 +151,7 @@ contains
       call wf%jacobian_ccsd_c2(rho_aibj, c_ai)
       call wf%jacobian_ccsd_d2(rho_aibj, c_ai)
 !
-      call mem%dealloc(c_ai, wf%n_v, wf%n_o)
+   !   call mem%dealloc(c_ai, wf%n_v, wf%n_o)
 !
 !     Contributions from doubles vector c
 !
@@ -301,7 +285,7 @@ contains
 !
       call mem%dealloc(rho_abij,wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-   end subroutine jacobian_cc3_transformation_cc3
+   end subroutine effective_jacobian_transformation_cc3
 !
 !
    module subroutine jacobian_cc3_A_cc3(wf, omega, c_ai, c_abji, rho_ai, rho_abij)
@@ -438,7 +422,12 @@ contains
       real(dp)     :: batch_buff = 0.0
 !
 !     Set up required integrals
+      write(output%unit, *) "Call jacobian_cc3_integrals"
+      flush(output%unit)
+!
       call wf%jacobian_cc3_integrals()
+      write(output%unit, *) "Call jacobian_cc3_c1_integrals"
+      flush(output%unit)
       call wf%jacobian_cc3_c1_integrals(c_ai)
 !
       call mem%alloc(t_abc,wf%n_v,wf%n_v,wf%n_v)
@@ -451,6 +440,8 @@ contains
 !     C1 transformed Fock matrix
 !
       call mem%alloc(F_kc_c1, wf%n_v, wf%n_o)
+      write(output%unit, *) "Call jacobian_cc3_cconstruct_fock_ia_c1"
+      flush(output%unit)
       call wf%jacobian_cc3_construct_fock_ia_c1(c_ai, F_kc_c1)
 !
       call mem%alloc(t_abji,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
@@ -571,6 +562,8 @@ contains
 !
          call batch_i%determine_limits(current_i_batch)
 !
+         write(output%unit, *) "Call jacobian_cc3_vvv_reader 1"
+         flush(output%unit)
          call wf%jacobian_cc3_vvv_reader(batch_i, g_bdci, g_dbic, g_bdci_c1, g_dbic_c1)
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
@@ -582,6 +575,8 @@ contains
 !
             call batch_j%determine_limits(current_j_batch)
 !
+            write(output%unit, *) "Call jacobian_cc3_ov_vv_reader 1"
+            flush(output%unit)
             call wf%jacobian_cc3_ov_vv_reader(batch_j, batch_i, g_ljci, g_jlic, L_jbic, g_ljci_c1, g_jlic_c1)
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
@@ -592,6 +587,8 @@ contains
 !
             if (current_j_batch .ne. current_i_batch) then
 !
+               write(output%unit, *) "Call jacobian_cc3_vvv_reader 2"
+               flush(output%unit)
                call wf%jacobian_cc3_vvv_reader(batch_j, g_bdcj, g_dbjc, g_bdcj_c1, g_dbjc_c1)
                g_bdcj_p => g_bdcj
                g_dbjc_p => g_dbjc
@@ -599,6 +596,8 @@ contains
                g_bdcj_c1_p => g_bdcj_c1
                g_dbjc_c1_p => g_dbjc_c1
 !
+               write(output%unit, *) "Call jacobian_cc3_ov_vv_reader 2"
+               flush(output%unit)
                call wf%jacobian_cc3_ov_vv_reader(batch_i, batch_j, g_licj, g_iljc, L_ibjc, g_licj_c1, g_iljc_c1)
                g_licj_p => g_licj
                g_iljc_p => g_iljc
@@ -630,6 +629,8 @@ contains
 !
                if (current_k_batch .ne. current_i_batch .and. current_k_batch .ne. current_j_batch) then
 !
+               write(output%unit, *) "Call jacobian_cc3_vvv_reader 3"
+               flush(output%unit)
                   call wf%jacobian_cc3_vvv_reader(batch_k, g_bdck, g_dbkc, g_bdck_c1, g_dbkc_c1)
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
@@ -637,6 +638,8 @@ contains
                   g_bdck_c1_p => g_bdck_c1
                   g_dbkc_c1_p => g_dbkc_c1
 !
+               write(output%unit, *) "Call jacobian_cc3_ov_vv_reader 3"
+               flush(output%unit)
                   call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_klic, L_kbic, g_lkci_c1, g_klic_c1)
                   g_lkci_p => g_lkci
                   g_klic_p => g_klic
@@ -798,6 +801,8 @@ contains
 !                       Construct C^{abc}_{ijk} for given i, j, k (t_abc)
 !                       and calculate contributions to rho1 and rho2
 !
+                        write(output%unit, *) "Call jacobian_cc3_c3_calc"
+                        flush(output%unit)
                         call wf%jacobian_cc3_c3_calc(omega, i, j, k, t_abc, u_abc, t_abji, c_abji, &
                                                       g_bdci_p(:,:,:,i_rel),                       &
                                                       g_bdcj_p(:,:,:,j_rel),                       &
@@ -820,6 +825,8 @@ contains
 !
       !                  call wf%jacobian_cc3_eps(i, j, k, t_abc)
 !
+                        write(output%unit, *) "Call jacobian_cc3_rho1"
+                        flush(output%unit)
                         call wf%jacobian_cc3_rho1(i, j, k, t_abc, u_abc, rho_ai, &
                                                    L_jbic_p(:,:,j_rel,i_rel),    &
                                                    L_kbic_p(:,:,k_rel,i_rel),    &
@@ -828,6 +835,8 @@ contains
                                                    L_ibkc_p(:,:,i_rel,k_rel),    &
                                                    L_jbkc_p(:,:,j_rel,k_rel))
 !
+                        write(output%unit, *) "Call jacobian_cc3_rho2"
+                        flush(output%unit)
                         call wf%jacobian_cc3_rho2(i, j, k, t_abc, u_abc, v_abc, rho_abij, F_kc, &
                                                    g_dbic_p(:,:,:,i_rel),                       &
                                                    g_dbjc_p(:,:,:,j_rel),                       &
@@ -842,6 +851,8 @@ contains
 !                       Construct t^{abc}_{ijk} for given i, j, k (t_abc)
 !                       and calculate contributions to rho1 and rho2
 !
+                        write(output%unit, *) "Call jacobian_cc3_t3_calc"
+                        flush(output%unit)
                         call wf%jacobian_cc3_t3_calc(omega, i, j, k, t_abc, u_abc, t_abji,   &
                                                       g_bdci_p(:,:,:,i_rel),                 &
                                                       g_bdcj_p(:,:,:,j_rel),                 &
@@ -1271,19 +1282,31 @@ contains
       call wf%g_bdck_c1%init('g_bdck_c1','direct','unformatted',dp*wf%n_v**3)
       call disk%open_file(wf%g_bdck_c1,'write')
 !
+         call mem%alloc(L_bd_J_c1, (wf%n_v)**2, wf%integrals%n_J)
+!
+         write(output%unit, *) "Call construct_cholesky_ab_c1"
+         flush(output%unit)
+!
+         call wf%integrals%construct_cholesky_ab_c1(L_bd_J_c1, c_ai, 1, wf%n_v, 1, wf%n_v)
+!
+         write(output%unit, *) "Return from construct_cholesky_ab_c1"
+         flush(output%unit)
+!
       do current_k_batch = 1,batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
 !
 !        :: Term 1: g_b'dck = sum_J L_bd_J_c1 L_ck_J ::
 !
-         call mem%alloc(L_bd_J_c1, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
-!
-         call wf%integrals%construct_cholesky_ab_c1(L_bd_J_c1, c_ai, 1, wf%n_v, 1, wf%n_v)
-!
          call mem%alloc(L_ck_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
 !
+         write(output%unit, *) "Call read_cholesky_ai_c1"
+         flush(output%unit)
+!
          call wf%integrals%read_cholesky_ai_t1(L_ck_J, 1, wf%n_v, batch_k%first, batch_k%last)
+!
+         write(output%unit, *) "Return from read_cholesky_ai_c1"
+         flush(output%unit)
 !
          call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
@@ -1300,7 +1323,6 @@ contains
                      g_pqrs,                    & ! (b'd|ck)
                      (wf%n_v)**2)
 !
-         call mem%dealloc(L_bd_J_c1, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
          call mem%dealloc(L_ck_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
 !
 !        :: Term 2: g_bdc'k = sum_J L_bd_J L_ck_J_c1 ::
@@ -1347,7 +1369,7 @@ contains
          call mem%dealloc(L_ck_J_c1, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
          call mem%dealloc(L_bd_J, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
 !
-!        Sort from g_pqrs = (b'd|ck) + (bd|c'k) - (bd|ck') to h_pqrs sorted as dbck
+!        Sort from g_pqrs = (b'd|ck) + (bd|c'k) - (bd|ck') to h_pqrs ordered as dbck
 !
          call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length) ! order dbck
 !
@@ -1371,7 +1393,9 @@ contains
 !
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
-      enddo
+      enddo ! batch_k
+!
+      call mem%dealloc(L_bd_J_c1, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
 !
       call disk%close_file(wf%g_bdck_c1,'keep')
 !
@@ -3175,4 +3199,4 @@ contains
    end subroutine jacobian_cc3_rho2_cc3
 !
 !
-end submodule jacobian_cc3
+end submodule jacobian
