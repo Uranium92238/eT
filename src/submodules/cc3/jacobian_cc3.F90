@@ -422,12 +422,8 @@ contains
       real(dp)     :: batch_buff = 0.0
 !
 !     Set up required integrals
-      write(output%unit, *) "Call jacobian_cc3_integrals"
-      flush(output%unit)
 !
       call wf%jacobian_cc3_integrals()
-      write(output%unit, *) "Call jacobian_cc3_c1_integrals"
-      flush(output%unit)
       call wf%jacobian_cc3_c1_integrals(c_ai)
 !
       call mem%alloc(t_abc,wf%n_v,wf%n_v,wf%n_v)
@@ -440,8 +436,6 @@ contains
 !     C1 transformed Fock matrix
 !
       call mem%alloc(F_kc_c1, wf%n_v, wf%n_o)
-      write(output%unit, *) "Call jacobian_cc3_cconstruct_fock_ia_c1"
-      flush(output%unit)
       call wf%jacobian_cc3_construct_fock_ia_c1(c_ai, F_kc_c1)
 !
       call mem%alloc(t_abji,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
@@ -562,8 +556,6 @@ contains
 !
          call batch_i%determine_limits(current_i_batch)
 !
-         write(output%unit, *) "Call jacobian_cc3_vvv_reader 1"
-         flush(output%unit)
          call wf%jacobian_cc3_vvv_reader(batch_i, g_bdci, g_dbic, g_bdci_c1, g_dbic_c1)
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
@@ -575,8 +567,6 @@ contains
 !
             call batch_j%determine_limits(current_j_batch)
 !
-            write(output%unit, *) "Call jacobian_cc3_ov_vv_reader 1"
-            flush(output%unit)
             call wf%jacobian_cc3_ov_vv_reader(batch_j, batch_i, g_ljci, g_jlic, L_jbic, g_ljci_c1, g_jlic_c1)
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
@@ -587,8 +577,6 @@ contains
 !
             if (current_j_batch .ne. current_i_batch) then
 !
-               write(output%unit, *) "Call jacobian_cc3_vvv_reader 2"
-               flush(output%unit)
                call wf%jacobian_cc3_vvv_reader(batch_j, g_bdcj, g_dbjc, g_bdcj_c1, g_dbjc_c1)
                g_bdcj_p => g_bdcj
                g_dbjc_p => g_dbjc
@@ -596,8 +584,6 @@ contains
                g_bdcj_c1_p => g_bdcj_c1
                g_dbjc_c1_p => g_dbjc_c1
 !
-               write(output%unit, *) "Call jacobian_cc3_ov_vv_reader 2"
-               flush(output%unit)
                call wf%jacobian_cc3_ov_vv_reader(batch_i, batch_j, g_licj, g_iljc, L_ibjc, g_licj_c1, g_iljc_c1)
                g_licj_p => g_licj
                g_iljc_p => g_iljc
@@ -629,8 +615,6 @@ contains
 !
                if (current_k_batch .ne. current_i_batch .and. current_k_batch .ne. current_j_batch) then
 !
-               write(output%unit, *) "Call jacobian_cc3_vvv_reader 3"
-               flush(output%unit)
                   call wf%jacobian_cc3_vvv_reader(batch_k, g_bdck, g_dbkc, g_bdck_c1, g_dbkc_c1)
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
@@ -638,8 +622,6 @@ contains
                   g_bdck_c1_p => g_bdck_c1
                   g_dbkc_c1_p => g_dbkc_c1
 !
-               write(output%unit, *) "Call jacobian_cc3_ov_vv_reader 3"
-               flush(output%unit)
                   call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_klic, L_kbic, g_lkci_c1, g_klic_c1)
                   g_lkci_p => g_lkci
                   g_klic_p => g_klic
@@ -801,8 +783,6 @@ contains
 !                       Construct C^{abc}_{ijk} for given i, j, k (t_abc)
 !                       and calculate contributions to rho1 and rho2
 !
-                        write(output%unit, *) "Call jacobian_cc3_c3_calc"
-                        flush(output%unit)
                         call wf%jacobian_cc3_c3_calc(omega, i, j, k, t_abc, u_abc, t_abji, c_abji, &
                                                       g_bdci_p(:,:,:,i_rel),                       &
                                                       g_bdcj_p(:,:,:,j_rel),                       &
@@ -823,10 +803,6 @@ contains
                                                       g_lick_c1_p(:,:,i_rel,k_rel),                &
                                                       g_ljck_c1_p(:,:,j_rel,k_rel))
 !
-      !                  call wf%jacobian_cc3_eps(i, j, k, t_abc)
-!
-                        write(output%unit, *) "Call jacobian_cc3_rho1"
-                        flush(output%unit)
                         call wf%jacobian_cc3_rho1(i, j, k, t_abc, u_abc, rho_ai, &
                                                    L_jbic_p(:,:,j_rel,i_rel),    &
                                                    L_kbic_p(:,:,k_rel,i_rel),    &
@@ -835,8 +811,6 @@ contains
                                                    L_ibkc_p(:,:,i_rel,k_rel),    &
                                                    L_jbkc_p(:,:,j_rel,k_rel))
 !
-                        write(output%unit, *) "Call jacobian_cc3_rho2"
-                        flush(output%unit)
                         call wf%jacobian_cc3_rho2(i, j, k, t_abc, u_abc, v_abc, rho_abij, F_kc, &
                                                    g_dbic_p(:,:,:,i_rel),                       &
                                                    g_dbjc_p(:,:,:,j_rel),                       &
@@ -851,8 +825,6 @@ contains
 !                       Construct t^{abc}_{ijk} for given i, j, k (t_abc)
 !                       and calculate contributions to rho1 and rho2
 !
-                        write(output%unit, *) "Call jacobian_cc3_t3_calc"
-                        flush(output%unit)
                         call wf%jacobian_cc3_t3_calc(omega, i, j, k, t_abc, u_abc, t_abji,   &
                                                       g_bdci_p(:,:,:,i_rel),                 &
                                                       g_bdcj_p(:,:,:,j_rel),                 &
@@ -1151,13 +1123,13 @@ contains
          call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
          call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !
-         call wf%get_ooov(g_pqrs, &
-                           1,wf%n_o, &
-                           1,wf%n_o, &
-                           batch_k%first,batch_k%last, &
+         call wf%get_ooov(g_pqrs,                        &
+                           1,wf%n_o,                     &
+                           1,wf%n_o,                     &
+                           batch_k%first,batch_k%last,   &
                            1,wf%n_v)
 !
-         call sort_1234_to_4213(g_pqrs,h_pqrs,wf%n_o,wf%n_o,batch_k%length,wf%n_v)
+         call sort_1234_to_4213(g_pqrs, h_pqrs, wf%n_o,wf%n_o, batch_k%length, wf%n_v)
 !
          do k = 1,batch_k%length
             do j = 1,wf%n_o
@@ -1568,7 +1540,7 @@ contains
          enddo
 !
          if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write ljck_c file')
+            call output%error_msg('Failed to write ljck_c1 file')
          endif
 !
          call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
@@ -1616,7 +1588,7 @@ contains
 !
          call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length) ! order cl,jk
 !
-         call sort_1234_to_2413(g_pqrs, h_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
+         call sort_1234_to_4213(g_pqrs, h_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
 !
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
 !
@@ -1624,14 +1596,16 @@ contains
 !        Should implement possibility to have them in mem if possible
 !
          do k = 1,batch_k%length
+            do j = 1,wf%n_o
 !
-            record = batch_k%first + k -1
-            write(wf%g_jlkc_c1%unit, rec=record, iostat=ioerror) h_pqrs(:,:,:,k)
+               record  = (batch_k%first + k - 2)*wf%n_o + j
+               write(wf%g_jlkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
 !
+            enddo
          enddo
 !
          if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write jlkc_c file')
+            call output%error_msg('Failed to write jlkc_c1 file')
          endif
 !
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
@@ -1752,17 +1726,20 @@ contains
       integer :: ioerror
       integer :: x, x_abs
 !
+      character(len=100) :: iom
+!
 !     t1-transformed integrals
 !
       do x = 1,batch_x%length
 !
          x_abs = batch_x%first + x - 1
 !
-         read(wf%g_bdck_t%unit,rec=x_abs, iostat=ioerror) g_bdcx(:,:,:,x)
+         read(wf%g_bdck_t%unit, rec=x_abs, iostat=ioerror, iomsg=iom) g_bdcx(:,:,:,x)
 !
          if(ioerror .ne. 0) then
             write(output%unit,'(t3,a)') 'Failed to read bdck_t file'
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
          endif
 !
@@ -1773,11 +1750,12 @@ contains
 !
          x_abs = batch_x%first + x - 1
 !
-         read(wf%g_dbkc_t%unit,rec=x_abs, iostat=ioerror) g_dbxc(:,:,:,x)
+         read(wf%g_dbkc_t%unit, rec=x_abs, iostat=ioerror, iomsg=iom) g_dbxc(:,:,:,x)
 !
          if(ioerror .ne. 0) then
             write(output%unit,'(t3,a)') 'Failed to read dbkc_t file'
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
          endif
 !
@@ -1789,11 +1767,12 @@ contains
 !
          x_abs = batch_x%first + x - 1
 !
-         read(wf%g_bdck_c1%unit,rec=x_abs, iostat=ioerror) g_bdcx_c1(:,:,:,x)
+         read(wf%g_bdck_c1%unit, rec=x_abs, iostat=ioerror, iomsg=iom) g_bdcx_c1(:,:,:,x)
 !
          if(ioerror .ne. 0) then
             write(output%unit,'(t3,a)') 'Failed to read bdck_c file'
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
          endif
 !
@@ -1804,11 +1783,12 @@ contains
 !
          x_abs = batch_x%first + x - 1
 !
-         read(wf%g_dbkc_c1%unit,rec=x_abs, iostat=ioerror) g_dbxc_c1(:,:,:,x)
+         read(wf%g_dbkc_c1%unit, rec=x_abs, iostat=ioerror, iomsg=iom) g_dbxc_c1(:,:,:,x)
 !
          if(ioerror .ne. 0) then
             write(output%unit,'(t3,a)') 'Failed to read dbkc_c file'
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
          endif
 !
@@ -1841,6 +1821,8 @@ contains
       integer :: ioerror, record
       integer :: x, y, x_abs, y_abs
 !
+      character(len=100) :: iom
+!
 !     t1-transformed integrals
 !
       do x = 1,batch_x%length
@@ -1853,11 +1835,12 @@ contains
 !
             record = wf%n_o*(x_abs - 1) + y_abs
 !
-            read(wf%g_ljck_t%unit,rec=record, iostat=ioerror) g_lycx(:,:,y,x)
+            read(wf%g_ljck_t%unit, rec=record, iostat=ioerror, iomsg=iom) g_lycx(:,:,y,x)
 !
             if(ioerror .ne. 0) then
                write(output%unit,'(t3,a)') 'Failed to read ljck_t file'
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
             endif
 !
@@ -1876,11 +1859,12 @@ contains
 !
             record = wf%n_o*(x_abs - 1) + y_abs
 !
-            read(wf%g_jlkc_t%unit,rec=record, iostat=ioerror) g_ylxc(:,:,y,x)
+            read(wf%g_jlkc_t%unit, rec=record, iostat=ioerror, iomsg=iom) g_ylxc(:,:,y,x)
 !
             if(ioerror .ne. 0) then
                write(output%unit,'(t3,a)') 'Failed to read jlkc file'
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
             endif
 !
@@ -1899,11 +1883,12 @@ contains
 !
             record = wf%n_o*(x_abs - 1) + y_abs
 !
-            read(wf%L_jbkc_t%unit,rec=record, iostat=ioerror) L_ybxc(:,:,y,x)
+            read(wf%L_jbkc_t%unit, rec=record, iostat=ioerror, iomsg=iom) L_ybxc(:,:,y,x)
 !
             if(ioerror .ne. 0) then
                write(output%unit,'(t3,a)') 'Failed to read jbkc file'
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
             endif
 !
@@ -1923,11 +1908,12 @@ contains
 !
             record = wf%n_o*(x_abs - 1) + y_abs
 !
-            read(wf%g_ljck_c1%unit,rec=record, iostat=ioerror) g_lycx_c1(:,:,y,x)
+            read(wf%g_ljck_c1%unit, rec=record, iostat=ioerror, iomsg=iom) g_lycx_c1(:,:,y,x)
 !
             if(ioerror .ne. 0) then
                write(output%unit,'(t3,a)') 'Failed to read ljck_c1 file'
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
             endif
 !
@@ -1946,11 +1932,12 @@ contains
 !
             record = wf%n_o*(x_abs - 1) + y_abs
 !
-            read(wf%g_jlkc_c1%unit,rec=record, iostat=ioerror) g_ylxc_c1(:,:,y,x)
+            read(wf%g_jlkc_c1%unit, rec=record, iostat=ioerror, iomsg=iom) g_ylxc_c1(:,:,y,x)
 !
             if(ioerror .ne. 0) then
                write(output%unit,'(t3,a)') 'Failed to read jlkc_c1 file'
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
             endif
 !
