@@ -1256,13 +1256,7 @@ contains
 !
          call mem%alloc(L_bd_J_c1, (wf%n_v)**2, wf%integrals%n_J)
 !
-         write(output%unit, *) "Call construct_cholesky_ab_c1"
-         flush(output%unit)
-!
          call wf%integrals%construct_cholesky_ab_c1(L_bd_J_c1, c_ai, 1, wf%n_v, 1, wf%n_v)
-!
-         write(output%unit, *) "Return from construct_cholesky_ab_c1"
-         flush(output%unit)
 !
       do current_k_batch = 1,batch_k%num_batches
 !
@@ -1272,13 +1266,7 @@ contains
 !
          call mem%alloc(L_ck_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
 !
-         write(output%unit, *) "Call read_cholesky_ai_c1"
-         flush(output%unit)
-!
          call wf%integrals%read_cholesky_ai_t1(L_ck_J, 1, wf%n_v, batch_k%first, batch_k%last)
-!
-         write(output%unit, *) "Return from read_cholesky_ai_c1"
-         flush(output%unit)
 !
          call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
