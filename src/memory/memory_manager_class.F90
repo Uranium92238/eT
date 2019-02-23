@@ -12,22 +12,23 @@ module memory_manager_class
 !!
 !!       real(dp), dimension(:,:), allocatable :: array -> declares an allocatable array
 !!
-!!       call wf%mem%alloc(array, M, N)   -> allocates the array of dimension M x N
+!!       call mem%alloc(array, M, N)   -> allocates the array of dimension M x N
 !!
 !!       ... Do stuff with the array
 !!
-!!       call wf%mem%dealloc(array, M, N) -> deallocates the array of dimension M x N
+!!       call mem%dealloc(array, M, N) -> deallocates the array of dimension M x N
 !!
+!!    Analogous calls are made to make one, three and four dimensional tensors as well,
+!!    e.g. call mem%alloc(X, M, N, K) for an M x N x K tensor.
 !!
-!!    NB! Large arrays MUST always be allocated using the memory manager object. Small arrays,
-!!    integers, strings, etc., which use a negligible amount of memory, do not need to pass through
-!!    the memory manager.
-!!
+!!    Note: Large arrays MUST always be allocated using the memory manager object. Small arrays,
+!!    integers, strings, etc., which use a negligible amount of memory, do not have to pass 
+!!    through the memory manager.
 !!
 !!    The 'alloc' and 'dealloc' routines allow the memory manager keep track of the
 !!    the memory available at a given time. From the specified total memory, the class
-!!    can then set the batching information in a batching index (see the batching
-!!    index class). See the num_batch and num_two_batches procedures for more details.
+!!    can then set the batching information for a batching index (see the batching
+!!    index class) or set of such indices (see the batch_setup routines below).
 !!
 !
    use kinds
@@ -36,9 +37,7 @@ module memory_manager_class
    use batching_index_class
    use io_utilities
 !
-!  ::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Definition of the memory_manager class -::-
-!  ::::::::::::::::::::::::::::::::::::::::::::::::
+!  Class definition 
 !
    type :: memory_manager
 !
