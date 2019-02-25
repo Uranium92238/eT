@@ -365,7 +365,7 @@ contains
 !
       class(cc2), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: equation 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation 
 !
       real(dp), dimension(:,:), allocatable :: eta 
       real(dp), dimension(:,:,:,:), allocatable :: t2bar
@@ -442,17 +442,17 @@ contains
    subroutine get_cvs_projector_cc2(wf, projector, n_cores, core_MOs)
 !!
 !!    Get CVS projector
-!!    Written by Sarai D. Folekstad, Oct 2018
+!!    Written by Sarai D. Folkestad, Oct 2018
 !!
       implicit none
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
 !
       integer, intent(in) :: n_cores
 !
-      integer, dimension(n_cores, 1), intent(in) :: core_MOs
+      integer, dimension(n_cores), intent(in) :: core_MOs
 !
       integer :: core, i, a, ai, j, b, bj, aibj
 !
@@ -460,13 +460,13 @@ contains
 !
       do core = 1, n_cores
 !
-        i = core_MOs(core, 1)
+        i = core_MOs(core)
 !
 !$omp parallel do private (a, ai, j, b, bj, aibj)
         do a = 1, wf%n_v
 !
            ai = wf%n_v*(i - 1) + a
-           projector(ai, 1) = one
+           projector(ai) = one
 !
             do j = 1, wf%n_o 
                do b = 1, wf%n_v
@@ -474,7 +474,7 @@ contains
                   bj = wf%n_v*(j - 1) + b
                   aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
 !                  
-                  projector(aibj + (wf%n_o)*(wf%n_v), 1) = one
+                  projector(aibj + (wf%n_o)*(wf%n_v)) = one
 !
                enddo
             enddo

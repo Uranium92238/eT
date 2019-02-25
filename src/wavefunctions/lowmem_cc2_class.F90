@@ -225,8 +225,8 @@ contains
 !
       class(lowmem_cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: X
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: R
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: R
 !
       real(dp), intent(inout) :: w
 !

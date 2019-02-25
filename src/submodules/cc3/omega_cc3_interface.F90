@@ -8,7 +8,7 @@
 !
      class(cc3), intent(inout) :: wf
 !
-     real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+     real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
    end subroutine construct_omega_cc3
 !

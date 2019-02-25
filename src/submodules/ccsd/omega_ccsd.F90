@@ -30,7 +30,7 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
       real(dp), dimension(:,:), allocatable :: omega1, omega2
 !
@@ -59,7 +59,7 @@ contains
       call wf%omega_ccsd_e2(omega2)
 !
       call dcopy((wf%n_o)*(wf%n_v), omega1, 1, omega, 1)
-      call dcopy((wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v)+1)/2, omega2, 1, omega((wf%n_o)*(wf%n_v)+1, 1), 1)
+      call dcopy((wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v)+1)/2, omega2, 1, omega((wf%n_o)*(wf%n_v)+1), 1)
 !
       call mem%dealloc(omega1, wf%n_v, wf%n_o)
       call mem%dealloc(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2, 1)

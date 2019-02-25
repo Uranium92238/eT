@@ -300,7 +300,7 @@ contains
 !
       class(ccs) :: wf  
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: amplitudes
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: amplitudes
 !
       call dcopy(wf%n_gs_amplitudes, amplitudes, 1, wf%t1, 1)
 !
@@ -316,7 +316,7 @@ contains
 !
       class(ccs), intent(in) :: wf  
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1) :: amplitudes
+      real(dp), dimension(wf%n_gs_amplitudes) :: amplitudes
 !
       call dcopy(wf%n_gs_amplitudes, wf%t1, 1, amplitudes, 1)
 !
@@ -524,7 +524,7 @@ contains
 !
       class(ccs) :: wf  
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: multipliers
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: multipliers
 !
       call dcopy(wf%n_gs_amplitudes, multipliers, 1, wf%t1bar, 1)
 !
@@ -540,7 +540,7 @@ contains
 !
       class(ccs), intent(in) :: wf  
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1) :: multipliers
+      real(dp), dimension(wf%n_gs_amplitudes) :: multipliers
 !
       call dcopy(wf%n_gs_amplitudes, wf%t1bar, 1, multipliers, 1)
 !
@@ -601,7 +601,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes) :: omega
 !
       type(timings) :: omega_ccs_a1_timer
 !
@@ -625,7 +625,7 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
       omega = zero
       call wf%omega_ccs_a1(omega)
@@ -3443,7 +3443,7 @@ contains
 !!
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes) :: c_i
 !
       call wf%jacobian_ccs_transformation(c_i)
 !
@@ -3457,7 +3457,7 @@ contains
 !!
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes) :: c_i
 !
       call wf%jacobian_transpose_ccs_transformation(c_i)
 !
@@ -3490,8 +3490,8 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: X 
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: R
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: X 
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: R
 !
       real(dp), intent(inout) :: w 
 !
@@ -3608,7 +3608,7 @@ contains
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_v*wf%n_o, 1), intent(in)    :: c1
+      real(dp), dimension(wf%n_v*wf%n_o), intent(in)    :: c1
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1
 !
 !     sum_b F_a_b c_b_i
@@ -3902,7 +3902,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: eta 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: eta 
 !
       integer :: i, a, ai
 !
@@ -3911,7 +3911,7 @@ contains
          do a = 1, wf%n_v 
 !
             ai = (wf%n_v)*(i - 1) + a
-            eta(ai, 1) = two*(wf%fock_ia(i, a))
+            eta(ai) = two*(wf%fock_ia(i, a))
 !
          enddo
       enddo
@@ -3935,7 +3935,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: equation 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation 
 !
       real(dp), dimension(:), allocatable :: eta 
 !
@@ -4053,17 +4053,17 @@ contains
    subroutine get_cvs_projector_ccs(wf, projector, n_cores, core_MOs)
 !!
 !!    Get CVS projector
-!!    Written by Sarai D. Folekstad, Oct 2018
+!!    Written by Sarai D. Folkestad, Oct 2018
 !!
       implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
 !
       integer, intent(in) :: n_cores
 !
-      integer, dimension(n_cores, 1), intent(in) :: core_MOs
+      integer, dimension(n_cores), intent(in) :: core_MOs
 !
       integer :: core, i, a, ai
 !
@@ -4071,12 +4071,12 @@ contains
 !
       do core = 1, n_cores
 !
-        i = core_MOs(core, 1)
+        i = core_MOs(core)
 !
         do a = 1, wf%n_v
 !
            ai = wf%n_v*(i - 1) + a
-           projector(ai, 1) = one
+           projector(ai) = one
 !
         enddo
      enddo
@@ -4093,7 +4093,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
 !
       integer :: i, a, ai
 !
@@ -4104,7 +4104,7 @@ contains
       do i = 1, wf%n_o
 !
          ai = wf%n_v*(i - 1) + a
-         projector(ai, 1) = one
+         projector(ai) = one
 !
      enddo
 !
@@ -4134,11 +4134,11 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1) :: x 
+      real(dp), dimension(wf%n_gs_amplitudes) :: x 
 !
       character(len=1) :: tag 
 !
-      call wf%print_dominant_x1(x(1:wf%n_t1,1),tag)
+      call wf%print_dominant_x1(x(1:wf%n_t1),tag)
 !
    end subroutine print_dominant_x_amplitudes_ccs
 !
@@ -4155,26 +4155,26 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_t1, 1), intent(in) :: x1 
+      real(dp), dimension(wf%n_t1), intent(in) :: x1 
       character(len=1), intent(in)                :: tag 
 !
       real(dp), dimension(:), allocatable :: abs_x1
 !
-      integer, dimension(:,:), allocatable :: dominant_indices
-      real(dp), dimension(:,:), allocatable     :: dominant_values
+      integer, dimension(:), allocatable :: dominant_indices
+      real(dp), dimension(:), allocatable     :: dominant_values
 !
       integer :: n_elements, elm, i, a 
 !
 !     Sort according to largest contributions
 !
       call mem%alloc(abs_x1, wf%n_t1)
-      abs_x1 = abs(x1(:,1))
+      abs_x1 = abs(x1)
 !
       n_elements = 20
       if (n_elements .gt. wf%n_t1) n_elements = wf%n_t1 
 !
-      call mem%alloc(dominant_indices, n_elements, 1)
-      call mem%alloc(dominant_values, n_elements, 1)
+      call mem%alloc(dominant_indices, n_elements)
+      call mem%alloc(dominant_values, n_elements)
 !
       dominant_indices = 0
       dominant_values  = zero 
@@ -4189,16 +4189,16 @@ contains
 !
       do elm = 1, n_elements
 !
-         call invert_compound_index(dominant_indices(elm,1), a, i, wf%n_v, wf%n_o)
+         call invert_compound_index(dominant_indices(elm), a, i, wf%n_v, wf%n_o)
 !
-         write(output%unit, '(t6,i3,7x,i3,5x,f19.12)') a, i, x1(dominant_indices(elm,1), 1)
+         write(output%unit, '(t6,i3,7x,i3,5x,f19.12)') a, i, x1(dominant_indices(elm))
 !
       enddo
 !
       write(output%unit, '(t6,a)')  '-----------------------------------------'
 !
-      call mem%dealloc(dominant_indices, n_elements, 1)
-      call mem%dealloc(dominant_values, n_elements, 1)
+      call mem%dealloc(dominant_indices, n_elements)
+      call mem%dealloc(dominant_values, n_elements)
       call mem%dealloc(abs_x1, wf%n_t1)
 !
    end subroutine print_dominant_x1_ccs

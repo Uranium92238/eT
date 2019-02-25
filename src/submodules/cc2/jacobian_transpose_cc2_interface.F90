@@ -19,7 +19,7 @@
 !!
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes) :: c_i
 !
    end subroutine jacobian_transpose_transform_trial_vector_cc2
 !

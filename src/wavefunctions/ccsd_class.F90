@@ -261,10 +261,10 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: amplitudes
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: amplitudes
 !
       call dcopy(wf%n_t1, amplitudes, 1, wf%t1, 1)
-      call dcopy(wf%n_t2, amplitudes(wf%n_t1 + 1, 1), 1, wf%t2, 1)
+      call dcopy(wf%n_t2, amplitudes(wf%n_t1 + 1), 1, wf%t2, 1)
 !
    end subroutine set_amplitudes_ccsd
 !
@@ -278,10 +278,10 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1) :: amplitudes
+      real(dp), dimension(wf%n_gs_amplitudes) :: amplitudes
 !
       call dcopy(wf%n_t1, wf%t1, 1, amplitudes, 1)
-      call dcopy(wf%n_t2, wf%t2, 1,  amplitudes(wf%n_t1 + 1, 1), 1)
+      call dcopy(wf%n_t2, wf%t2, 1,  amplitudes(wf%n_t1 + 1), 1)
 !
    end subroutine get_amplitudes_ccsd
 !
@@ -547,7 +547,7 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: eta
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: eta
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_iajb
       real(dp), dimension(:,:), allocatable :: eta_ai_bj
@@ -561,7 +561,7 @@ contains
          do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
-            eta(ai, 1) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia
+            eta(ai) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia
 !
          enddo
       enddo
@@ -594,7 +594,7 @@ contains
 !
                   aibj = max(ai, bj)*(max(ai,bj)-3)/2 + ai + bj
 !
-                  eta(wf%n_t1 + aibj, 1) = eta_ai_bj(ai, bj)
+                  eta(wf%n_t1 + aibj) = eta_ai_bj(ai, bj)
 !
                enddo
             enddo
@@ -633,10 +633,10 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: multipliers
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: multipliers
 !
       call dcopy(wf%n_t1, multipliers, 1, wf%t1bar, 1)
-      call dcopy(wf%n_t2, multipliers(wf%n_t1 + 1, 1), 1, wf%t2bar, 1)
+      call dcopy(wf%n_t2, multipliers(wf%n_t1 + 1), 1, wf%t2bar, 1)
 !
    end subroutine set_multipliers_ccsd
 !
@@ -650,10 +650,10 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1) :: multipliers
+      real(dp), dimension(wf%n_gs_amplitudes) :: multipliers
 !
       call dcopy(wf%n_t1, wf%t1bar, 1, multipliers, 1)
-      call dcopy(wf%n_t2, wf%t2bar, 1, multipliers(wf%n_t1 + 1, 1), 1)
+      call dcopy(wf%n_t2, wf%t2bar, 1, multipliers(wf%n_t1 + 1), 1)
 !
    end subroutine get_multipliers_ccsd
 !
@@ -687,14 +687,14 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: equation
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
 !
       real(dp), dimension(:,:), allocatable :: eta
 !
 !     Copy the multipliers, eq. = t-bar
 !
       call dcopy(wf%n_t1, wf%t1bar, 1, equation, 1)
-      call dcopy(wf%n_t2, wf%t2bar, 1, equation(wf%n_t1 + 1, 1), 1)
+      call dcopy(wf%n_t2, wf%t2bar, 1, equation(wf%n_t1 + 1), 1)
 !
 !     Transform the multipliers by A^T, eq. = t-bar^T A
 !
@@ -842,12 +842,12 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1) :: x
+      real(dp), dimension(wf%n_gs_amplitudes) :: x
 !
       character(len=1) :: tag
 !
-      call wf%print_dominant_x1(x(1:wf%n_t1,1),tag)
-      call wf%print_dominant_x2(x(wf%n_t1 + 1:wf%n_gs_amplitudes,1),tag)
+      call wf%print_dominant_x1(x(1:wf%n_t1),tag)
+      call wf%print_dominant_x2(x(wf%n_t1 + 1:wf%n_gs_amplitudes),tag)
 !
    end subroutine print_dominant_x_amplitudes_ccsd
 !
@@ -924,11 +924,11 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
 !
       integer, intent(in) :: n_cores
 !
-      integer, dimension(n_cores, 1), intent(in) :: core_MOs
+      integer, dimension(n_cores), intent(in) :: core_MOs
 !
       integer :: core, i, a, ai, j, b, bj, aibj
 !
@@ -936,13 +936,13 @@ contains
 !
       do core = 1, n_cores
 !
-        i = core_MOs(core, 1)
+        i = core_MOs(core)
 !
 !$omp parallel do private (a, ai, j, b, bj, aibj)
         do a = 1, wf%n_v
 !
            ai = wf%n_v*(i - 1) + a
-           projector(ai, 1) = one
+           projector(ai) = one
 !
             do j = 1, wf%n_o
                do b = 1, wf%n_v
@@ -950,7 +950,7 @@ contains
                   bj = wf%n_v*(j - 1) + b
                   aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
 !
-                  projector(aibj + (wf%n_o)*(wf%n_v), 1) = one
+                  projector(aibj + (wf%n_o)*(wf%n_v)) = one
 !
                enddo
             enddo

@@ -27,7 +27,7 @@ contains
 !
       class(cc3), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
       real(dp), dimension(:,:), allocatable     :: omega1
       real(dp), dimension(:), allocatable       :: omega2
@@ -67,7 +67,7 @@ contains
       call wf%omega_ccsd_d2(omega2)
       call wf%omega_ccsd_e2(omega2)
 !
-      call dcopy(wf%n_t2, omega2, 1, omega(wf%n_t1+1, 1), 1)
+      call dcopy(wf%n_t2, omega2, 1, omega(wf%n_t1+1), 1)
 !
       call ccsd_timer%freeze()
       call ccsd_timer%switch_off()
@@ -100,7 +100,7 @@ contains
 !
                   aibj = aibj + 1
 !
-                  omega(wf%n_t1+aibj,1) = omega(wf%n_t1+aibj,1) + omega_abij(a,b,i,j) + omega_abij(b,a,j,i)
+                  omega(wf%n_t1+aibj) = omega(wf%n_t1+aibj) + omega_abij(a,b,i,j) + omega_abij(b,a,j,i)
 !
                end do
             end do
