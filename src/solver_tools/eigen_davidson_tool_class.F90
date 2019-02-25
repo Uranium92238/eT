@@ -209,8 +209,8 @@ contains
 !
       real(dp), dimension(:), allocatable :: work
 !
-      real(dp), dimension(:,:), allocatable :: omega_re
-      real(dp), dimension(:,:), allocatable :: omega_im
+      real(dp), dimension(:), allocatable :: omega_re
+      real(dp), dimension(:), allocatable :: omega_im
 !
       integer, dimension(:), allocatable :: index_list
 !
@@ -230,8 +230,8 @@ contains
       X_red = zero
       A_red = davidson%A_red 
 !
-      call mem%alloc(omega_re, davidson%dim_red, 1)
-      call mem%alloc(omega_im, davidson%dim_red, 1)
+      call mem%alloc(omega_re, davidson%dim_red)
+      call mem%alloc(omega_im, davidson%dim_red)
 !
       omega_re = zero
       omega_im = zero
@@ -305,13 +305,13 @@ contains
 !
          enddo
 !
-         davidson%omega_im(j, 1) = omega_im(index_list(j), 1)
+         davidson%omega_im(j, 1) = omega_im(index_list(j))
 !
       enddo
 !
       call mem%dealloc(X_red, davidson%dim_red, davidson%dim_red)
-      call mem%dealloc(omega_re, davidson%dim_red, 1)
-      call mem%dealloc(omega_im, davidson%dim_red, 1)
+      call mem%dealloc(omega_re, davidson%dim_red)
+      call mem%dealloc(omega_im, davidson%dim_red)
       call mem%dealloc(index_list, davidson%n_solutions)
 !
    end subroutine solve_reduced_problem_eigen_davidson_tool
@@ -336,11 +336,11 @@ contains
 !
       class(eigen_davidson_tool), intent(in) :: davidson 
 !
-      real(dp), dimension(davidson%n_parameters, 1)             :: R 
+      real(dp), dimension(davidson%n_parameters)                :: R 
       real(dp), dimension(davidson%n_parameters, 1), intent(in) :: X 
 !
-      integer, intent(in) :: n
-      real(dp), intent(in)     :: norm_X 
+      integer, intent(in)  :: n
+      real(dp), intent(in) :: norm_X 
 !
       if (davidson%omega_im(n, 1) .eq. zero) then  ! standard case: the nth root is not part of a complex pair
 !
@@ -417,17 +417,17 @@ contains
 !
       class(eigen_davidson_tool), intent(in) :: davidson 
 !
-      real(dp), dimension(davidson%n_parameters, 1)             :: R 
-      real(dp), dimension(davidson%n_parameters, 1), intent(in) :: X_re  
+      real(dp), dimension(davidson%n_parameters)             :: R 
+      real(dp), dimension(davidson%n_parameters), intent(in) :: X_re  
 !
-      integer, intent(in) :: n 
-      real(dp), intent(in)     :: norm_X_re
+      integer, intent(in)  :: n 
+      real(dp), intent(in) :: norm_X_re
 !
-      real(dp), dimension(:,:), allocatable :: X_im 
+      real(dp), dimension(:), allocatable :: X_im 
 !
       real(dp) :: norm_X_im
 !
-      call mem%alloc(X_im, davidson%n_parameters, 1)  
+      call mem%alloc(X_im, davidson%n_parameters)  
 !
       call davidson%construct_X(X_im, n + 1) ! set X_im
       call davidson%construct_AX(R, n)       ! set R = A X_re 
@@ -437,9 +437,9 @@ contains
 !
       norm_X_im = get_l2_norm(X_im, davidson%n_parameters)
 !
-     call dscal(davidson%n_parameters, one/(sqrt(norm_X_re**2 + norm_X_im**2)), R, 1)
+      call dscal(davidson%n_parameters, one/(sqrt(norm_X_re**2 + norm_X_im**2)), R, 1)
 !
-      call mem%dealloc(X_im, davidson%n_parameters, 1) 
+      call mem%dealloc(X_im, davidson%n_parameters) 
 !
    end subroutine construct_re_residual_eigen_davidson_tool
 !
@@ -473,17 +473,17 @@ contains
 !
       class(eigen_davidson_tool), intent(in) :: davidson 
 !
-      real(dp), dimension(davidson%n_parameters, 1)             :: R 
-      real(dp), dimension(davidson%n_parameters, 1), intent(in) :: X_im  
+      real(dp), dimension(davidson%n_parameters)             :: R 
+      real(dp), dimension(davidson%n_parameters), intent(in) :: X_im  
 !
-      integer, intent(in) :: n 
-      real(dp), intent(in)     :: norm_X_im
+      integer, intent(in)  :: n 
+      real(dp), intent(in) :: norm_X_im
 !
-      real(dp), dimension(:,:), allocatable :: X_re  
+      real(dp), dimension(:), allocatable :: X_re  
 !
       real(dp) :: norm_X_re
 !
-      call mem%alloc(X_re, davidson%n_parameters, 1)  
+      call mem%alloc(X_re, davidson%n_parameters)  
 !
       call davidson%construct_X(X_re, n - 1) ! set X_re 
       call davidson%construct_AX(R, n)       ! set R = A X_im 
@@ -495,7 +495,7 @@ contains
 !
       call dscal(davidson%n_parameters, one/(sqrt(norm_X_re**2 + norm_X_im**2)), R, 1)
 !
-      call mem%dealloc(X_re, davidson%n_parameters, 1)  
+      call mem%dealloc(X_re, davidson%n_parameters)  
 !
    end subroutine construct_im_residual_eigen_davidson_tool
 !
@@ -527,7 +527,7 @@ contains
 !
       real(dp) :: norm_X, norm_new_trial, norm_residual, norm_precond_residual
 !
-      real(dp), dimension(:,:), allocatable :: R, X 
+      real(dp), dimension(:), allocatable :: R, X 
 !
       if (present(n)) then
 ! 
@@ -542,8 +542,8 @@ contains
 !     Construct full space solution vector X, 
 !     and the associated residual R 
 !
-      call mem%alloc(X, davidson%n_parameters, 1)
-      call mem%alloc(R, davidson%n_parameters, 1)
+      call mem%alloc(X, davidson%n_parameters)
+      call mem%alloc(R, davidson%n_parameters)
 !
       call davidson%construct_X(X, k) 
       norm_X = get_l2_norm(X, davidson%n_parameters) 
@@ -569,7 +569,7 @@ contains
 !
       call disk%close_file(davidson%X)
 !
-      call mem%dealloc(X, davidson%n_parameters, 1)
+      call mem%dealloc(X, davidson%n_parameters)
 !
 !     Calculate the norm of the residual and test for convergence. If not
 !     converged, the residual is preconditioned & we remove components already 
@@ -606,7 +606,7 @@ contains
 !
       endif 
 !
-      call mem%dealloc(R, davidson%n_parameters, 1)
+      call mem%dealloc(R, davidson%n_parameters)
 !
    end subroutine construct_next_trial_vec_eigen_davidson_tool
 !

@@ -226,7 +226,8 @@ contains
 !
       real(dp) :: norm_X
 !
-      real(dp), dimension(:,:), allocatable :: X, R, eps
+      real(dp), dimension(:), allocatable   :: eps
+      real(dp), dimension(:,:), allocatable :: X, R
 !
 !     Initialize energies, residual norms, and convergence arrays 
 !
@@ -259,7 +260,7 @@ contains
 !
 !     Make initial guess on the eigenvectors X = [X1 X2 X3 ...]
 !
-      call mem%alloc(eps, wf%n_es_amplitudes, 1)
+      call mem%alloc(eps, wf%n_es_amplitudes)
       call wf%get_es_orbital_differences(eps, wf%n_es_amplitudes)
 !
       call mem%alloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
@@ -292,7 +293,7 @@ contains
 !$omp parallel do private(amplitude)
                do amplitude = 1, wf%n_es_amplitudes
 !
-                  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude, 1))
+                  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude))
 !
                enddo
 !$omp end parallel do 
@@ -345,7 +346,7 @@ contains
       deallocate(converged_residual)
       deallocate(converged_eigenvalue)
 !
-      call mem%dealloc(eps, wf%n_es_amplitudes, 1)
+      call mem%dealloc(eps, wf%n_es_amplitudes)
       call mem%dealloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
       call mem%dealloc(R, wf%n_es_amplitudes, solver%n_singlet_states)
 !
@@ -366,14 +367,14 @@ contains
       real(dp), dimension(wf%n_es_amplitudes, solver%n_singlet_states), intent(inout) :: R 
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)                          :: orbital_differences 
 !
-      real(dp), dimension(:,:), allocatable :: lowest_orbital_differences
+      real(dp), dimension(:), allocatable :: lowest_orbital_differences
 !
-      integer, dimension(:,:), allocatable :: lowest_orbital_differences_index
+      integer, dimension(:), allocatable :: lowest_orbital_differences_index
 !
       integer :: state
 !
-      call mem%alloc(lowest_orbital_differences, solver%n_singlet_states, 1)
-      call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)
+      call mem%alloc(lowest_orbital_differences, solver%n_singlet_states)
+      call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states)
 !
       call get_n_lowest(solver%n_singlet_states, wf%n_es_amplitudes, orbital_differences, &
                            lowest_orbital_differences, lowest_orbital_differences_index)
@@ -381,12 +382,12 @@ contains
       do state = 1, solver%n_singlet_states
 !
          R(:,state) = zero
-         R(lowest_orbital_differences_index(state, 1), state) = one
+         R(lowest_orbital_differences_index(state), state) = one
 !
       enddo 
 !
-      call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states, 1)
-      call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)      
+      call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states)
+      call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states)      
 !
    end subroutine set_start_vectors_diis_cc_es_solver
 !

@@ -25,8 +25,8 @@ module linear_davidson_tool_class
 !
    type, extends(davidson_tool) :: linear_davidson_tool 
 !
-      real(dp), dimension(:,:), allocatable :: F_red
-      real(dp), dimension(:,:), allocatable :: F
+      real(dp), dimension(:), allocatable :: F_red
+      real(dp), dimension(:), allocatable :: F
 !
    contains 
 !
@@ -58,11 +58,11 @@ contains
 !
       integer, intent(in) :: n_parameters 
 !
-      real(dp), dimension(n_parameters, 1) :: F 
+      real(dp), dimension(n_parameters) :: F 
 !
       real(dp), intent(in)     :: residual_threshold
 !
-      call mem%alloc(davidson%F, n_parameters, 1)
+      call mem%alloc(davidson%F, n_parameters)
       davidson%F = F
 !
       davidson%n_parameters = n_parameters
@@ -108,7 +108,7 @@ contains
 !
       class(linear_davidson_tool) :: davidson
 !
-      real(dp), dimension(:,:), allocatable :: c_i
+      real(dp), dimension(:), allocatable :: c_i
 !
       integer :: i
 !
@@ -116,10 +116,10 @@ contains
 !
 !     Construct reduced vector
 !
-      if (allocated(davidson%F_red)) call mem%dealloc(davidson%F_red, davidson%dim_red - 1, 1) 
+      if (allocated(davidson%F_red)) call mem%dealloc(davidson%F_red, davidson%dim_red - 1) 
 !
-      call mem%alloc(davidson%F_red, davidson%dim_red, 1)
-      call mem%alloc(c_i, davidson%n_parameters, 1)
+      call mem%alloc(davidson%F_red, davidson%dim_red)
+      call mem%alloc(c_i, davidson%n_parameters)
 !
       call disk%open_file(davidson%trials, 'read')
       rewind(davidson%trials%unit)
@@ -128,13 +128,13 @@ contains
 !
          read(davidson%trials%unit)c_i
 !
-         davidson%F_red(i, 1) = ddot(davidson%n_parameters, c_i, 1, davidson%F, 1)
+         davidson%F_red(i) = ddot(davidson%n_parameters, c_i, 1, davidson%F, 1)
 !
       enddo
 !
       call disk%close_file(davidson%trials)
 !
-      call mem%dealloc(c_i, davidson%n_parameters, 1)
+      call mem%dealloc(c_i, davidson%n_parameters)
 !
    end subroutine construct_reduced_gradient_linear_davidson_tool
 !
@@ -154,7 +154,7 @@ contains
 !
       class(linear_davidson_tool) :: davidson 
 !
-      integer, dimension(:,:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
+      integer, dimension(:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
 !
       real(dp), dimension(:,:), allocatable :: A_red_copy
 !
@@ -162,17 +162,17 @@ contains
 !
 !     Solve the linear problem
 !
-      call mem%alloc(ipiv, davidson%dim_red, 1)
+      call mem%alloc(ipiv, davidson%dim_red)
       ipiv = 0
       info = 0
 !
-      if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red - 1, 1 )
+      if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red - 1, 1)
 !
-      call mem%alloc(davidson%X_red, davidson%dim_red, 1 )
+      call mem%alloc(davidson%X_red, davidson%dim_red, 1)
 !
-      davidson%X_red = davidson%F_red
+      davidson%X_red(:,1) = davidson%F_red
 !
-      call mem%alloc(A_red_copy, davidson%dim_red, 1 )
+      call mem%alloc(A_red_copy, davidson%dim_red, davidson%dim_red)
       A_red_copy = davidson%A_red
 !
       call dgesv(davidson%dim_red,  &
@@ -184,8 +184,8 @@ contains
                   davidson%dim_red, &
                   info)
 !
-      call mem%dealloc(A_red_copy, davidson%dim_red, 1 )
-      call mem%dealloc(ipiv, davidson%dim_red, 1)
+      call mem%dealloc(A_red_copy, davidson%dim_red, davidson%dim_red)
+      call mem%dealloc(ipiv, davidson%dim_red)
 !
       if (info .ne. 0) then 
 !
@@ -209,7 +209,7 @@ contains
 !
       class(linear_davidson_tool), intent(in) :: davidson 
 !
-      real(dp), dimension(davidson%n_parameters, 1) :: R 
+      real(dp), dimension(davidson%n_parameters) :: R 
 !
       integer, intent(in) :: n
 !
@@ -248,13 +248,13 @@ contains
 !
       real(dp) :: norm_X, norm_new_trial, norm_residual, norm_precond_residual
 !
-      real(dp), dimension(:,:), allocatable :: R, X 
+      real(dp), dimension(:), allocatable :: R, X 
 !
 !     Construct full space solution vector X, 
 !     and the associated residual R 
 !
-      call mem%alloc(X, davidson%n_parameters, 1)
-      call mem%alloc(R, davidson%n_parameters, 1)
+      call mem%alloc(X, davidson%n_parameters)
+      call mem%alloc(R, davidson%n_parameters)
 !
       call davidson%construct_X(X, 1) 
       norm_X = get_l2_norm(X, davidson%n_parameters) 
@@ -269,7 +269,7 @@ contains
 !
       call disk%close_file(davidson%X)
 !
-      call mem%dealloc(X, davidson%n_parameters, 1)
+      call mem%dealloc(X, davidson%n_parameters)
 !
 !     Calculate the norm of the residual and test for convergence. If not
 !     converged, the residual is preconditioned & we remove components already 
@@ -306,7 +306,7 @@ contains
 !
       endif 
 !
-      call mem%dealloc(R, davidson%n_parameters, 1)
+      call mem%dealloc(R, davidson%n_parameters)
 !
    end subroutine construct_next_trial_vec_linear_davidson_tool
 !
