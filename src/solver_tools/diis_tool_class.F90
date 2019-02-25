@@ -53,8 +53,6 @@ module diis_tool_class
       procedure :: update   => update_diis_tool   ! Called to perform a DIIS step
       procedure :: finalize => finalize_diis_tool
 !
-      procedure :: get_current_index => get_current_index_diis_tool
-!
    end type diis_tool
 !
 !
@@ -129,22 +127,20 @@ contains
       real(dp), dimension(solver%n_equations, 1)  :: dx
       real(dp), dimension(solver%n_parameters, 1) :: x_dx
 !
-      real(dp), dimension(:,:), allocatable :: dx_i   ! To hold previous Δ x_i temporarily
-      real(dp), dimension(:,:), allocatable :: x_dx_i ! To hold previous x_dx_i temporarily
+      real(dp), dimension(:), allocatable :: dx_i   ! To hold previous Δ x_i temporarily
+      real(dp), dimension(:), allocatable :: x_dx_i ! To hold previous x_dx_i temporarily
 !
       real(dp) :: ddot
 !
-      integer :: i = 0, j = 0
+      integer :: i, j, dummy
 !
-      integer      :: info = -1         ! Error integer for dgesv routine (LU factorization)
+      integer :: info = -1         ! Error integer for dgesv routine (LU factorization)
       integer :: current_index = 0 ! Progressing as follows: 1,2,...,7,8,1,2,...
 !
-      integer :: dummy = 0
-!
-      real(dp), dimension(:,:), allocatable :: diis_vector
+      real(dp), dimension(:), allocatable   :: diis_vector
       real(dp), dimension(:,:), allocatable :: diis_matrix
 !
-      integer, dimension(:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
+      integer, dimension(:), allocatable  :: ipiv ! Pivot integers (see dgesv routine)
 !
 !     :: Open DIIS files
 !
@@ -192,12 +188,12 @@ contains
 !
 !     First set the DIIS vector to one
 !
-      call mem%alloc(diis_vector,current_index+1,1)
+      call mem%alloc(diis_vector, current_index + 1)
       diis_vector = zero
 !
 !     Allocate the DIIS matrix and read in previous matrix elements
 !
-      call mem%alloc(diis_matrix, current_index+1, current_index+1)
+      call mem%alloc(diis_matrix, current_index + 1, current_index + 1)
       diis_matrix = zero
 !
       if (current_index .gt. 1) then
@@ -207,7 +203,7 @@ contains
          do j = 1, current_index - 1
             do i = 1, current_index - 1
 !
-               read(solver%diis_matrix%unit) diis_matrix(i,j)
+               read(solver%diis_matrix%unit) diis_matrix(i, j)
 !
             enddo
          enddo
@@ -217,24 +213,24 @@ contains
 !     Get the parts of the DIIS matrix G not constructed in
 !     the previous iterations
 !
-      call mem%alloc(dx_i, solver%n_equations, 1) ! Allocate temporary holder of quasi-Newton estimates
+      call mem%alloc(dx_i, solver%n_equations) ! Allocate temporary holder of quasi-Newton estimates
       dx_i = zero
 !
       rewind(solver%dx%unit)
 !
       do i = 1, current_index
 !
-         read(solver%dx%unit) (dx_i(j,1), j = 1, solver%n_equations)
+         read(solver%dx%unit) (dx_i(j), j = 1, solver%n_equations)
 !
-         diis_matrix(current_index,i) = ddot(solver%n_equations, dx, 1, dx_i, 1)
-         diis_matrix(i,current_index) = diis_matrix(current_index,i)
+         diis_matrix(current_index, i) = ddot(solver%n_equations, dx, 1, dx_i, 1)
+         diis_matrix(i, current_index) = diis_matrix(current_index,i)
 !
-         diis_matrix(current_index+1,i) = -one
-         diis_matrix(i,current_index+1) = -one
+         diis_matrix(current_index + 1, i) = -one
+         diis_matrix(i, current_index + 1) = -one
 !
       enddo
 !
-      diis_vector(current_index+1,1) = -one
+      diis_vector(current_index + 1) = -one
 !
 !     Write the current DIIS matrix to file
 !
@@ -243,7 +239,7 @@ contains
       do j = 1, current_index
          do i = 1, current_index
 !
-            write(solver%diis_matrix%unit) diis_matrix(i,j)
+            write(solver%diis_matrix%unit) diis_matrix(i, j)
 !
          enddo
       enddo
@@ -256,13 +252,13 @@ contains
 !     Note: on exit, the solution is in the diis_vector,
 !     provided info = 0 (see LAPACK documentation for more)
 !
-      call dgesv(current_index+1,  &
-                  1,               &
-                  diis_matrix,     &
-                  current_index+1, &
-                  ipiv,            &
-                  diis_vector,     &
-                  current_index+1, &
+      call dgesv(current_index + 1,  &
+                  1,                 &
+                  diis_matrix,       &
+                  current_index + 1, & 
+                  ipiv,              &
+                  diis_vector,       &
+                  current_index + 1, &
                   info)
 !
       call mem%dealloc(ipiv, solver%diis_dimension)
@@ -271,7 +267,7 @@ contains
 !
       x_dx = zero 
 !
-      call mem%alloc(x_dx_i, solver%n_parameters, 1)
+      call mem%alloc(x_dx_i, solver%n_parameters)
 !
       rewind(solver%x_dx%unit)
 !
@@ -280,23 +276,19 @@ contains
 !        Read the x_i + Δ x_i vector
 !
          x_dx_i = zero
-         read(solver%x_dx%unit) (x_dx_i(j, 1), j = 1, solver%n_parameters)
+         read(solver%x_dx%unit) (x_dx_i(j), j = 1, solver%n_parameters)
 !
 !        Add w_i (x_i + Δ x_i) to the amplitudes
 !
-         call daxpy(solver%n_parameters, diis_vector(i, 1), x_dx_i, 1, x_dx, 1)
+         call daxpy(solver%n_parameters, diis_vector(i), x_dx_i, 1, x_dx, 1)
 !
       enddo
 !
-      call mem%dealloc(x_dx_i, solver%n_parameters, 1)
+      call mem%dealloc(x_dx_i, solver%n_parameters)
 !
-!     Deallocations
-!
-      call mem%dealloc(dx_i, solver%n_equations, 1)
-      call mem%dealloc(diis_vector, current_index + 1, 1)
+      call mem%dealloc(dx_i, solver%n_equations)
+      call mem%dealloc(diis_vector, current_index + 1)
       call mem%dealloc(diis_matrix, current_index + 1, current_index+1)
-!
-!     Close files
 !
       call disk%close_file(solver%dx)
       call disk%close_file(solver%x_dx)
@@ -305,20 +297,6 @@ contains
       solver%iteration = solver%iteration + 1
 !
    end subroutine update_diis_tool
-!
-!
-   function get_current_index_diis_tool(solver)
-!
-      implicit none
-!
-      class(diis_tool) :: solver
-!
-      integer :: get_current_index_diis_tool
-!
-      get_current_index_diis_tool = solver%iteration - &
-               ((solver%diis_dimension)-1)*((solver%iteration-1)/((solver%diis_dimension)-1))
-!
-   end function get_current_index_diis_tool
 !
 !
 end module diis_tool_class
