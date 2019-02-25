@@ -4,7 +4,7 @@ import os
 import tempfile
 import shutil
 import argparse
-import time
+import sys
 
 # Kill if given negative number of OMP threads
 class OMPaction(argparse.Action):
@@ -13,10 +13,17 @@ class OMPaction(argparse.Action):
             parser.error("{0} must be greater than 0".format(option_string))
         setattr(namespace, self.dest, value)
 
+class ofileaction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        print(namespace.input_file)
+        if (len(value) != len(namespace.input_file)):
+            parser.error("{0} must be greater than 0".format(option_string))
+        setattr(namespace, self.dest, value)
+
 
 parser = argparse.ArgumentParser()
-parser.add_argument('input_file', help="eT input file", nargs='?', default="eT.inp")
-parser.add_argument('output_file', help="eT output file", nargs='?', default=None)
+parser.add_argument('input_file', help="eT input file", nargs='*', default=['eT.inp'])
+parser.add_argument('-of', '--output_file', help="eT output file", action=ofileaction, nargs='*', default=None)
 parser.add_argument('--scratch', help="Specify scratch directory", type=str)
 parser.add_argument('-ks', '--keep_scratch', help="Do not delete scratch", action="store_true")
 parser.add_argument("--omp", help="Number of OpenMP threads", action=OMPaction, type=int)
@@ -25,6 +32,13 @@ parser.add_argument('-v', "--verbose", help="Run some print statements", action=
 parser.add_argument('-bd', "--binary_dir", help="Specify location of eT executable", type=str)
 parser.add_argument('-sd', "--SAD_dir", help="Specify location of SAD data dir", type=str)
 args = parser.parse_args()
+
+#print(args.input_file)
+print(args.output_file)
+for arg in args.input_file:
+    print(arg)
+
+sys.exit()
 
 cwd = os.getcwd() # Get current directory
 
@@ -95,12 +109,9 @@ if (args.verbose):
     print("Ready to run eT in", scratch, "with", omps, "threads")
 
 # Run eT
-wstart = time.time()
 os.system(executable)
-wstop = time.time()
 
 if (args.verbose):
-    print("eT used %.4g seconds" %(wstop - wstart))
     print("Copying output to", out_dest)
 
 # Copy files back
