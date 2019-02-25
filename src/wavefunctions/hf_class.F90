@@ -1111,7 +1111,7 @@ contains
       real(dp), dimension(:,:), allocatable :: D_yz
 !
       integer, dimension(:,:), allocatable :: shells_on_atoms
-!!
+!
 !     Set thresholds to ignore Coulomb and exchange terms,
 !     as well as the desired Libint integral precision  
 !
@@ -2300,20 +2300,17 @@ contains
 !
       class(hf) :: wf
 !
-      integer, dimension(:, :), allocatable :: used_diag
+      integer, dimension(:), allocatable :: used_diag
 !
       real(dp), dimension(:,:), allocatable :: perm_matrix
 !
-      real(dp), dimension(:,:), allocatable :: tmp
+      integer :: rank, j
 !
-      integer :: rank
-      integer :: j
-!
-      allocate(used_diag(wf%n_ao, 1))
+      call mem%alloc(used_diag, wf%n_ao)
 !
       wf%ao_density = half*wf%ao_density
-      call full_cholesky_decomposition_system(wf%ao_density, wf%orbital_coefficients, wf%n_ao, rank,&
-                                                      1.0D-12, used_diag)
+      call full_cholesky_decomposition_system(wf%ao_density, wf%orbital_coefficients, wf%n_ao, rank, &
+                                                      1.0d-12, used_diag)
       wf%ao_density = two*wf%ao_density
 !
 !     Make permutation matrix P
@@ -2324,32 +2321,11 @@ contains
 !
       do j = 1, wf%n_ao
 !
-         perm_matrix(used_diag(j,1), j) = one
+         perm_matrix(used_diag(j), j) = one
 !
       enddo
 !
-      deallocate(used_diag)
-!
-!     Sanity check
-!
-      call mem%alloc(tmp, wf%n_ao, wf%n_ao)
-!
-      call dgemm('N','N', &
-                  wf%n_ao, &
-                  wf%n_ao, &
-                  wf%n_ao, &
-                  one, &
-                  perm_matrix, &
-                  wf%n_ao, &
-                  wf%orbital_coefficients, &
-                  wf%n_ao, &
-                  zero, &
-                  tmp, &
-                  wf%n_ao)
-!
-      wf%orbital_coefficients = tmp
-!
-      call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
+      call mem%dealloc(used_diag, wf%n_ao)
 !
    end subroutine decompose_ao_density_hf
 !
@@ -2374,13 +2350,13 @@ contains
 !
       class(hf) :: wf
 !
-      integer, dimension(:, :), allocatable :: used_diag
+      integer, dimension(:), allocatable :: used_diag
 !
       real(dp), dimension(:, :), allocatable :: L
 !
       integer :: j
 !
-      allocate(used_diag(wf%n_ao, 1))
+      call mem%alloc(used_diag, wf%n_ao)
       used_diag = 0
 !
       call mem%alloc(L, wf%n_ao, wf%n_ao) ! Full Cholesky vector
@@ -2403,11 +2379,11 @@ contains
 !
       do j = 1, wf%n_mo
 !
-         wf%pivot_matrix_ao_overlap(used_diag(j, 1), j) = one
+         wf%pivot_matrix_ao_overlap(used_diag(j), j) = one
 !
       enddo
 !
-      deallocate(used_diag)
+      call mem%dealloc(used_diag, wf%n_ao)
 !
    end subroutine decompose_ao_overlap_hf
 !
@@ -2934,7 +2910,7 @@ contains
 !
       logical, optional, intent(in) :: do_mo_transformation
 !
-      real(dp), dimension(:,:), allocatable :: work
+      real(dp), dimension(:), allocatable   :: work
       real(dp), dimension(:,:), allocatable :: metric 
       real(dp), dimension(:,:), allocatable :: ao_fock 
       real(dp), dimension(:,:), allocatable :: FP 
@@ -3012,7 +2988,7 @@ contains
 !
       info = 0
 !
-      call mem%alloc(work, 4*wf%n_mo, 1)
+      call mem%alloc(work, 4*wf%n_mo)
       work = zero
 !
       call dsygv(1, 'V', 'L',       &
@@ -3027,14 +3003,9 @@ contains
                   info)
 !
       call mem%dealloc(metric, wf%n_mo, wf%n_mo)
-      call mem%dealloc(work, 4*wf%n_mo, 1)
+      call mem%dealloc(work, 4*wf%n_mo)
 !
-      if (info .ne. 0) then 
-!
-         write(output%unit, '(/t3,a/)') 'Error: could not solve Roothan-Hall equations.'
-         stop
-!
-      endif
+      if (info .ne. 0)  call output%error_msg('Error: could not solve Roothan-Hall equations.')
 !
 !     If requested MO transformation of Fock matrix, do it 
 !

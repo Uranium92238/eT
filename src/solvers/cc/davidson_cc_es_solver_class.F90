@@ -24,7 +24,7 @@ module davidson_cc_es_solver_class
                                            &expanded until the convergence criteria are met.'
 !
       character(len=500) :: description2 = 'A complete description of the algorithm can be found in &
-                                           &E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
+                                             &E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
       integer :: max_iterations
 !
