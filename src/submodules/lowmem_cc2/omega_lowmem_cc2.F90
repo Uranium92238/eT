@@ -69,9 +69,9 @@ contains
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
-      real(dp), dimension(:,:), allocatable :: g_bi_cj
-      real(dp), dimension(:,:), allocatable :: L_bj_ci
-      real(dp), dimension(:,:), allocatable :: g_ab_jc
+      real(dp), dimension(:,:,:,:), allocatable :: g_bicj
+      real(dp), dimension(:,:,:,:), allocatable :: L_bjci
+      real(dp), dimension(:,:,:,:), allocatable :: g_abjc
 !
       integer :: b, j, c, i
       integer :: bj, ci, bi, cj
@@ -102,10 +102,10 @@ contains
 !
             call batch_c%determine_limits(current_c_batch)
 !
-            call mem%alloc(g_bi_cj, (batch_b%length)*(wf%n_o), (batch_c%length)*(wf%n_o))
-            call mem%alloc(L_bj_ci, (batch_b%length)*(wf%n_o), (batch_c%length)*(wf%n_o))
+            call mem%alloc(g_bicj, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
+            call mem%alloc(L_bjci, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
 !
-            call wf%get_vovo(g_bi_cj,                      &
+            call wf%get_vovo(g_bicj,                      &
                               batch_b%first, batch_b%last, &
                               1, wf%n_o,                   &
                               batch_c%first, batch_c%last, &
@@ -122,7 +122,7 @@ contains
                          bi = batch_b%length*(i-1) + b
                          cj = batch_c%length*(j-1) + c
 !                        
-                         L_bj_ci(bj,ci) = -(two*g_bi_cj(bi,cj) - g_bi_cj(bj,ci))&
+                         L_bjci(b,j,c,i) = -(two*g_bicj(b,i,c,j) - g_bicj(b,j,c,i))&
                                                                 /(eps_v(b + batch_b%first - 1)&
                                                                 + eps_v(c + batch_c%first - 1) &
                                                                 - eps_o(i) - eps_o(j))
@@ -132,11 +132,11 @@ contains
             enddo
 !$omp end parallel do
 !
-            call mem%dealloc(g_bi_cj, (batch_b%length)*(wf%n_o), (batch_c%length)*(wf%n_o))
+            call mem%dealloc(g_bicj, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
 !
-            call mem%alloc(g_ab_jc, (batch_b%length)*(wf%n_v), (batch_c%length)*(wf%n_o))
+            call mem%alloc(g_abjc, batch_b%length,wf%n_v, batch_c%length,wf%n_o)
 !
-            call wf%get_vvov(g_ab_jc,                       &
+            call wf%get_vvov(g_abjc,                       &
                               1, wf%n_v,                    &
                               batch_b%first, batch_b%last,  &
                               1, wf%n_o,                    &
@@ -147,16 +147,16 @@ contains
                         wf%n_o,                                   &
                         (batch_b%length)*(batch_c%length)*wf%n_o, &
                         one,                                      &
-                        g_ab_jc,                                  &
+                        g_abjc,                                  &
                         wf%n_v,                                   &
-                        L_bj_ci,                                  &
+                        L_bjci,                                   &
                         (batch_b%length)*(batch_c%length)*wf%n_o, &
                         one,                                      &
                         omega,                                    &
                         wf%n_v)
 !
-            call mem%dealloc(g_ab_jc, (batch_b%length)*(wf%n_v), (batch_c%length)*(wf%n_o))
-            call mem%dealloc(L_bj_ci, (batch_b%length)*(wf%n_o), (batch_c%length)*(wf%n_o))
+            call mem%dealloc(g_abjc, batch_b%length, wf%n_v, batch_c%length, wf%n_o)
+            call mem%dealloc(L_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
          enddo
       enddo
@@ -189,9 +189,9 @@ contains
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
-      real(dp), dimension(:,:), allocatable :: g_aj_bk
-      real(dp), dimension(:,:), allocatable :: g_jb_ki
-      real(dp), dimension(:,:), allocatable :: g_kb_ji
+      real(dp), dimension(:,:,:,:), allocatable :: g_ajbk
+      real(dp), dimension(:,:,:,:), allocatable :: g_jbki
+      real(dp), dimension(:,:,:,:), allocatable :: g_kbji
 !
       integer :: a, b, j, k
       integer :: aj, bk
@@ -233,10 +233,10 @@ contains
 !
                call batch_k%determine_limits(current_k_batch)
 !
-               call mem%alloc(g_aj_bk, (wf%n_v)*(batch_j%length),&
-                             (batch_b%length)*(batch_k%length))
+               call mem%alloc(g_ajbk, wf%n_v, batch_j%length,&
+                              batch_b%length, batch_k%length)
 !
-               call wf%get_vovo(g_aj_bk,                    &
+               call wf%get_vovo(g_ajbk,                    &
                                1, wf%n_v,                   &
                                batch_j%first, batch_j%last, &
                                batch_b%first, batch_b%last, &
@@ -251,7 +251,7 @@ contains
                            aj = wf%n_v*(j-1) + a
                            bk = (batch_b%length)*(k-1) + b
 !
-                           g_aj_bk(aj,bk) = - g_aj_bk(aj,bk)/(eps_v(a) &
+                           g_ajbk(a,j,b,k) = - g_ajbk(a,j,b,k)/(eps_v(a) &
                                                    + eps_v(b + batch_b%first - 1)&
                                                    - eps_o(j + batch_j%first - 1) &
                                                    - eps_o(k + batch_k%first - 1))
@@ -262,10 +262,10 @@ contains
                enddo
 !$omp end parallel do
 !
-               call mem%alloc(g_jb_ki, (batch_b%length)*(batch_j%length), &
-                              (wf%n_o)*(batch_k%length))
+               call mem%alloc(g_jbki, batch_j%length, batch_b%length, &
+                              batch_k%length, wf%n_o)
 !
-               call wf%get_ovoo(g_jb_ki,                      &
+               call wf%get_ovoo(g_jbki,                      &
                                  batch_j%first, batch_j%last, &
                                  batch_b%first, batch_b%last, &
                                  batch_k%first, batch_k%last, & 
@@ -276,53 +276,53 @@ contains
                            wf%n_o,                                             &
                            (batch_j%length)*(batch_k%length)*(batch_b%length), &
                            one,                                                &
-                           g_aj_bk,                                            &
+                           g_ajbk,                                             &
                            wf%n_v,                                             &
-                           g_jb_ki,                                            &
+                           g_jbki,                                             &
                            (batch_j%length)*(batch_k%length)*(batch_b%length), &
                            one,                                                &
                            omega,                                              &
                            wf%n_v)
 !
-               call mem%dealloc(g_jb_ki, (batch_b%length)*(batch_j%length), &
-                              (wf%n_o)*(batch_k%length))
+               call mem%dealloc(g_jbki, batch_j%length, batch_b%length, &
+                                batch_k%length, wf%n_o)
 !
 !
-               call mem%alloc(g_kb_ji, (batch_b%length)*(batch_k%length), &
-                              (wf%n_o)*(batch_j%length))
+               call mem%alloc(g_kbji, batch_k%length, batch_b%length, &
+                                      batch_j%length, wf%n_o)
 !
-               call wf%get_ovoo(g_kb_ji,                     &
+               call wf%get_ovoo(g_kbji,                     &
                                 batch_k%first, batch_k%last, &
                                 batch_b%first, batch_b%last, &
                                 batch_j%first, batch_j%last, & 
                                 1, wf%n_o)
 !
-               call mem%alloc(g_jb_ki, (batch_b%length)*(batch_j%length), &
-                              (wf%n_o)*(batch_k%length))
+               call mem%alloc(g_jbki, batch_j%length, batch_b%length, &
+                              batch_k%length, wf%n_o)
 !
-               call sort_1234_to_3214(g_kb_ji, g_jb_ki, (batch_k%length), &
+               call sort_1234_to_3214(g_kbji, g_jbki, (batch_k%length), &
                      (batch_b%length), (batch_j%length), wf%n_o)
 !
-               call mem%dealloc(g_kb_ji, (batch_b%length)*(batch_k%length), &
-                              (wf%n_o)*(batch_j%length))
+               call mem%dealloc(g_kbji, batch_k%length, batch_b%length, &
+                                        batch_j%length, wf%n_o)
 !
                call dgemm('N','N',                                             &
                            wf%n_v,                                             &
                            wf%n_o,                                             &
                            (batch_j%length)*(batch_k%length)*(batch_b%length), &
                            -two,                                               &
-                           g_aj_bk,                                            &
+                           g_ajbk,                                             &
                            wf%n_v,                                             &
-                           g_jb_ki,                                            &
+                           g_jbki,                                             &
                            (batch_j%length)*(batch_k%length)*(batch_b%length), &
                            one,                                                &
                            omega,                                              &
                            wf%n_v)
 !
-               call mem%dealloc(g_jb_ki, (batch_b%length)*(batch_j%length), &
-                                       (wf%n_o)*(batch_k%length))
-               call mem%dealloc(g_aj_bk, (wf%n_v)*(batch_j%length),&
-                                      (batch_b%length)*(batch_k%length))
+               call mem%dealloc(g_jbki, batch_j%length, batch_b%length, &
+                                        batch_k%length, wf%n_o)
+               call mem%dealloc(g_ajbk, wf%n_v, batch_j%length,&
+                                      batch_b%length, batch_k%length)
 !
             enddo
          enddo
@@ -360,8 +360,8 @@ contains
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
-      real(dp), dimension(:,:), allocatable :: g_aibj
-      real(dp), dimension(:,:), allocatable :: u_aibj
+      real(dp), dimension(:,:,:,:), allocatable :: g_aibj
+      real(dp), dimension(:,:,:,:), allocatable :: u_aibj
       real(dp), dimension(:,:), allocatable :: F_bj
 !
       integer :: i, j, a, b
@@ -393,7 +393,7 @@ contains
 !
             call batch_j%determine_limits(current_j_batch)
 !
-            call mem%alloc(g_aibj, (batch_i%length)*wf%n_v, wf%n_v*(batch_j%length))
+            call mem%alloc(g_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
 !
             call wf%get_vovo(g_aibj,                        &
                               1, wf%n_v,                    &
@@ -401,7 +401,7 @@ contains
                               1, wf%n_v,                    &
                               batch_j%first, batch_j%last)
 !
-            call mem%alloc(u_aibj, (batch_i%length)*wf%n_v, wf%n_v*(batch_j%length))
+            call mem%alloc(u_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
 !
 !           Construct u_aibj
 !
@@ -409,18 +409,11 @@ contains
             do b = 1, wf%n_v 
                do j = 1, batch_j%length
 !
-                  bj = wf%n_v*(j-1) + b
-!
                   do i = 1, batch_i%length 
-!
-                     bi = wf%n_v*(i-1) + b
 !
                      do a = 1, wf%n_v
 !
-                        ai = wf%n_v*(i-1) + a
-                        aj = wf%n_v*(j-1) + a
-!
-                        u_aibj(ai, bj) = (-two*g_aibj(ai, bj)+g_aibj(bi, aj))/(eps_v(a) &
+                        u_aibj(a,i,b,j) = (-two*g_aibj(a,i,b,j)+g_aibj(b,i,a,j))/(eps_v(a) &
                                                              + eps_v(b) &
                                                              - eps_o(i + batch_i%first - 1) &
                                                              - eps_o(j + batch_j%first - 1)) 
@@ -431,7 +424,7 @@ contains
             enddo
 !$omp end parallel do
 !
-            call mem%dealloc(g_aibj, (batch_i%length)*wf%n_v, wf%n_v*(batch_j%length))
+            call mem%dealloc(g_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
 !
             call mem%alloc(F_bj, wf%n_v, batch_j%length)
 !
@@ -460,7 +453,7 @@ contains
                        omega(omega_offset, 1),       &
                        wf%n_v*wf%n_o)
 !        
-            call mem%dealloc(u_aibj, (batch_i%length)*wf%n_v, wf%n_v*(batch_j%length))
+            call mem%dealloc(u_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
             call mem%dealloc(F_bj, wf%n_v, batch_j%length)
 !
          enddo
