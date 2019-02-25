@@ -68,7 +68,7 @@ program eT_program
    type(gs_engine), allocatable, target          :: gs_cc_engine
    type(es_engine), allocatable, target          :: es_cc_engine
    type(multipliers_engine), allocatable, target :: multipliers_cc_engine
-   type(property_engine), allocatable, target :: property_cc_engine
+   type(property_engine), allocatable, target    :: property_cc_engine
 !
 !  Engine pointer
 !
@@ -275,7 +275,13 @@ program eT_program
 !
 !        Solve cc problem
 !
+! ------- DEBUG
+      flush(output%unit)
+      write(output%unit,*) 'in eT_program, next: cc prep'
          call cc_wf%prepare(ref_wf)
+! ------- DEBUG
+      flush(output%unit)
+      write(output%unit,*) 'in eT_program, before: cc prep'
          call ref_wf%cleanup()
 !
          nullify(ref_wf)

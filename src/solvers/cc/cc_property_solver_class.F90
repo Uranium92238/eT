@@ -364,7 +364,7 @@ contains
       elseif (solver%linear_response) then
 !
          write(output%unit, '(t6,a)') 'Linear response has been selected but is not implemented. &
-                                      & csiX will be calculated with no contribution '
+                                      & etaX will be calculated with no contribution '
 !
       endif
 !
