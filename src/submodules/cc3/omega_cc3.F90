@@ -1211,7 +1211,7 @@ contains
       real(dp) :: epsilon_ijk, epsilon_c, epsilon_cb
 !
 !
-      epsilon_ijk = wf%fock_diagonal(i,1) + wf%fock_diagonal(j,1) + wf%fock_diagonal(k,1)
+      epsilon_ijk = wf%fock_diagonal(i) + wf%fock_diagonal(j) + wf%fock_diagonal(k)
 !
 !$omp parallel do schedule(static) private(a)
       do a = 1,wf%n_v
@@ -1224,15 +1224,15 @@ contains
 !$omp parallel do schedule(static) private(c,b,a,epsilon_c,epsilon_cb)
       do c = 1,wf%n_v
 !
-         epsilon_c = epsilon_ijk - wf%fock_diagonal(wf%n_o + c, 1) 
+         epsilon_c = epsilon_ijk - wf%fock_diagonal(wf%n_o + c) 
 !
          do b = 1,wf%n_v
 !
-            epsilon_cb = epsilon_c - wf%fock_diagonal(wf%n_o + b, 1) 
+            epsilon_cb = epsilon_c - wf%fock_diagonal(wf%n_o + b) 
 !
             do a = 1,wf%n_v
 !
-               t_abc(a,b,c) = t_abc(a,b,c)*one/(epsilon_cb - wf%fock_diagonal(wf%n_o + a, 1))
+               t_abc(a,b,c) = t_abc(a,b,c)*one/(epsilon_cb - wf%fock_diagonal(wf%n_o + a))
 !
             enddo
          enddo

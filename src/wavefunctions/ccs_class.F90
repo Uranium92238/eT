@@ -36,7 +36,7 @@ module ccs_class
       real(dp), dimension(:,:), allocatable  :: fock_ai
       real(dp), dimension(:,:), allocatable  :: fock_ab
 !
-      real(dp), dimension(:,:), allocatable  :: fock_diagonal
+      real(dp), dimension(:), allocatable  :: fock_diagonal
 !
       type(mo_integral_tool) :: integrals
 !
@@ -231,7 +231,7 @@ contains
 !
       do p = 1, wf%n_mo
 !
-         wf%fock_diagonal(p, 1) = ref_wf%mo_fock(p, p)
+         wf%fock_diagonal(p) = ref_wf%mo_fock(p, p)
 !
       enddo
 !
@@ -900,7 +900,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o) - wf%fock_diagonal(i)
 !
          enddo
       enddo
@@ -973,7 +973,7 @@ contains
 !
       class(ccs) :: wf
 !
-      if (.not. allocated(wf%fock_diagonal)) call mem%alloc(wf%fock_diagonal, wf%n_mo, 1)
+      if (.not. allocated(wf%fock_diagonal)) call mem%alloc(wf%fock_diagonal, wf%n_mo)
 !
    end subroutine initialize_fock_diagonal_ccs
 !
@@ -1071,7 +1071,7 @@ contains
 !
       class(ccs) :: wf
 !
-      if (allocated(wf%fock_diagonal)) call mem%dealloc(wf%fock_diagonal, wf%n_mo, 1)
+      if (allocated(wf%fock_diagonal)) call mem%dealloc(wf%fock_diagonal, wf%n_mo)
 !
    end subroutine destruct_fock_diagonal_ccs
 !

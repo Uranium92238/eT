@@ -119,7 +119,7 @@ contains
 !
       do p = 1, wf%n_mo
 !
-         wf%fock_diagonal(p, 1) = ref_wf%mo_fock(p, p)
+         wf%fock_diagonal(p) = ref_wf%mo_fock(p, p)
 !
       enddo
 !
@@ -162,10 +162,10 @@ contains
 !
                   correlation_energy = correlation_energy +                                &
                                        (wf%t1(a, i)*wf%t1(b, j) -                          &
-                                       (g_aibj(a,i,b,j))/(wf%fock_diagonal(wf%n_o + a, 1)  &
-                                                         + wf%fock_diagonal(wf%n_o + b, 1) &
-                                                         - wf%fock_diagonal(i,1)           &
-                                                         - wf%fock_diagonal(j,1)))         &
+                                       (g_aibj(a,i,b,j))/(wf%fock_diagonal(wf%n_o + a)  &
+                                                         + wf%fock_diagonal(wf%n_o + b) &
+                                                         - wf%fock_diagonal(i)           &
+                                                         - wf%fock_diagonal(j)))         &
                                        *(two*g_iajb(i,a,j,b)-g_iajb(i,b,j,a))
 !
                enddo
@@ -219,9 +219,9 @@ contains
                do a = 1, wf%n_v
 !
                   wf%u(a, i, b, j) = (two*g_aibj(a, i, b, j) - g_aibj(a, j, b, i))/ &
-                                          (wf%fock_diagonal(i, 1) + wf%fock_diagonal(j, 1) &
-                                        - wf%fock_diagonal(wf%n_o + a, 1) &
-                                        - wf%fock_diagonal(wf%n_o + b, 1) )
+                                          (wf%fock_diagonal(i) + wf%fock_diagonal(j) &
+                                        - wf%fock_diagonal(wf%n_o + a) &
+                                        - wf%fock_diagonal(wf%n_o + b) )
 !
                enddo
             enddo
@@ -312,7 +312,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o) - wf%fock_diagonal(i)
 !
             do j = 1, wf%n_o 
                do b = 1, wf%n_v
@@ -323,8 +323,8 @@ contains
 !
                      aibj = (ai*(ai-3)/2) + ai + bj
 !
-                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1) &
-                                                                      +  wf%fock_diagonal(b + wf%n_o, 1) - wf%fock_diagonal(j, 1)
+                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%fock_diagonal(a + wf%n_o) - wf%fock_diagonal(i) &
+                                                                      +  wf%fock_diagonal(b + wf%n_o) - wf%fock_diagonal(j)
 !
                   endif
 !
@@ -400,10 +400,10 @@ contains
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
-                  t2bar(a, i, b, j) = t2bar(a, i, b, j)/(- wf%fock_diagonal(a + wf%n_o, 1) &
-                                                        -  wf%fock_diagonal(b + wf%n_o, 1) &
-                                                        +  wf%fock_diagonal(i, 1) &
-                                                        +  wf%fock_diagonal(j, 1))
+                  t2bar(a, i, b, j) = t2bar(a, i, b, j)/(- wf%fock_diagonal(a + wf%n_o) &
+                                                        -  wf%fock_diagonal(b + wf%n_o) &
+                                                        +  wf%fock_diagonal(i) &
+                                                        +  wf%fock_diagonal(j))
 !
                enddo
             enddo

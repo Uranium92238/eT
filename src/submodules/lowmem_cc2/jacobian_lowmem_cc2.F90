@@ -72,8 +72,8 @@ contains
       call mem%alloc(eps_o, wf%n_o)
       call mem%alloc(eps_v, wf%n_v)
 !
-      eps_o = wf%fock_diagonal(1:wf%n_o,1)
-      eps_v = wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1)
+      eps_o = wf%fock_diagonal(1:wf%n_o)
+      eps_v = wf%fock_diagonal(wf%n_o + 1 : wf%n_mo)
 !
       call wf%jacobian_cc2_a1(rho_a_i, c_a_i)
       call wf%jacobian_cc2_b1(rho_a_i, c_a_i, eps_o, eps_v)

@@ -626,10 +626,10 @@ contains
                do a = 1, wf%n_v
 !
                   sigma_aibj(a, i, b, j) = sigma_aibj(a, i, b, j) + c_aibj(a,i,b,j) &
-                                          * (wf%fock_diagonal(a + wf%n_o, 1) &
-                                          + wf%fock_diagonal(b + wf%n_o, 1) &
-                                          - wf%fock_diagonal(i, 1) &
-                                          - wf%fock_diagonal(j, 1))
+                                          * (wf%fock_diagonal(a + wf%n_o) &
+                                          + wf%fock_diagonal(b + wf%n_o) &
+                                          - wf%fock_diagonal(i) &
+                                          - wf%fock_diagonal(j))
 !
                enddo
             enddo

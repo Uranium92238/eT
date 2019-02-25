@@ -650,10 +650,10 @@ contains
                do a = 1, wf%n_v
 !
                   rho_aibj(a,i,b,j) = rho_aibj(a,i,b,j) + c_aibj(a,i,b,j)*&
-                                          (- wf%fock_diagonal(i, 1) &
-                                           - wf%fock_diagonal(j, 1) &
-                                           + wf%fock_diagonal(wf%n_o + a, 1) &
-                                           + wf%fock_diagonal(wf%n_o + b, 1) )
+                                          (- wf%fock_diagonal(i) &
+                                           - wf%fock_diagonal(j) &
+                                           + wf%fock_diagonal(wf%n_o + a) &
+                                           + wf%fock_diagonal(wf%n_o + b) )
 !
                enddo
             enddo
