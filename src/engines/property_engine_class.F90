@@ -12,7 +12,7 @@ module property_engine_class
    use davidson_cc_multipliers_class
    use diis_cc_gs_solver_class
    use diis_cc_es_solver_class
-   use diis_cc_multipliers_solver_class
+!   use diis_cc_multipliers_solver_class
    use cc_property_solver_class
 !
    type, extends(abstract_engine) :: property_engine
@@ -168,7 +168,10 @@ contains
       allocate(cc_property_solver)
 !
       call cc_property_solver%prepare()
-      call cc_property_solver%run(wf)
+! ----------  DEBUG
+      !write(output%unit, '(/t3,a)') '- Reached run property solver '
+! ..........
+      !call cc_property_solver%run(wf)
       call cc_property_solver%cleanup()
 !
       deallocate(cc_property_solver)

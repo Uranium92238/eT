@@ -223,6 +223,7 @@ contains
       write(output%unit,'(t6,a20,e9.2)')  'Residual threshold: ', solver%residual_threshold
       write(output%unit,'(/t6,a,i3,a)')   'Number of singlet states: ', solver%n_singlet_states
       write(output%unit, '(t6,a26,i3)')   'Max number of iterations: ', solver%max_iterations
+      write(output%unit, '(t6,a20,a)')   'Transformation: ', solver%transformation
       flush(output%unit)
 !
    end subroutine print_settings_davidson_cc_es_solver
@@ -315,8 +316,8 @@ contains
 !
       iteration = 1
 !
-      call davidson%prepare(wf%name_ // '_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
-                               solver%residual_threshold, solver%eigenvalue_threshold)
+      call davidson%prepare(trim(wf%name_)//'_es_davidson_'//trim(solver%transformation), wf%n_es_amplitudes, &
+                            solver%n_singlet_states, solver%residual_threshold, solver%eigenvalue_threshold)
 !
 !     Construct first trial vectors
 !
