@@ -12,7 +12,7 @@ module property_engine_class
    use davidson_cc_multipliers_class
    use diis_cc_gs_solver_class
    use diis_cc_es_solver_class
-   use diis_cc_multipliers_solver_class
+   !use diis_cc_multipliers_solver_class
    use cc_property_solver_class
 !
    type, extends(abstract_engine) :: property_engine
