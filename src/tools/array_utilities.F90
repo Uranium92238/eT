@@ -26,19 +26,19 @@ contains
       implicit none
 !
       integer, intent(in) :: dim
-      real(dp), dimension(dim,1), intent(in) :: x
+      real(dp), dimension(dim), intent(in) :: x
 !
       integer :: I
       real(dp)     :: maxval
 !
       get_max_index = 1
-      maxval = x(1,1)
+      maxval = x(1)
       do I = 2, dim
 !
-         if (x(I,1) .gt. maxval) then
+         if (x(I) .gt. maxval) then
 !
             get_max_index = I
-            maxval = x(I,1)
+            maxval = x(I)
 !
          endif
 !
@@ -103,8 +103,8 @@ contains
 !
       integer, intent(in) :: dim
 !
-      real(dp), dimension(dim,1), intent(in)  :: vec
-      real(dp), dimension(dim,1), intent(in), optional  :: screening
+      real(dp), dimension(dim), intent(in)  :: vec
+      real(dp), dimension(dim), intent(in), optional  :: screening
 !
       real(dp), intent(in)  :: threshold
 !
@@ -115,7 +115,7 @@ contains
       if (present(screening)) then
          do i = 1, dim
 !
-            if (abs(vec(i, 1)*screening(i, 1)) .gt. threshold) then
+            if (abs(vec(i)*screening(i)) .gt. threshold) then
 !
                is_significant = .true.
                return
@@ -127,7 +127,7 @@ contains
 !
          do i = 1, dim
 !
-            if (abs(vec(i, 1)) .gt. threshold) then
+            if (abs(vec(i)) .gt. threshold) then
 !
                is_significant = .true.
                return
@@ -151,7 +151,7 @@ contains
 !
       integer, intent(in) :: dim
 !
-      real(dp), dimension(dim,1), intent(in)  :: vec
+      real(dp), dimension(dim), intent(in)  :: vec
 !
       real(dp), intent(in)  :: threshold
 !
@@ -161,7 +161,7 @@ contains
 !
       do i = 1, dim
 !
-         if (abs(vec(i, 1)) .gt. threshold) then
+         if (abs(vec(i)) .gt. threshold) then
 !
             n_significant = n_significant + 1
 !
@@ -184,11 +184,11 @@ contains
 !
       integer :: dim, dim_reduced, n_blocks
 !
-      logical, dimension(n_blocks, 1) :: block_significant
-      integer, dimension(n_blocks + 1, 1) :: block_firsts
+      logical, dimension(n_blocks) :: block_significant
+      integer, dimension(n_blocks + 1) :: block_firsts
 !
-      real(dp), dimension(dim, 1) :: vec
-      real(dp), dimension(dim_reduced, 1) :: vec_reduced
+      real(dp), dimension(dim) :: vec
+      real(dp), dimension(dim_reduced) :: vec_reduced
 !
       integer :: block, current_pos, first, last, size
 !
@@ -196,13 +196,13 @@ contains
 !
       do block = 1, n_blocks
 !
-         if (block_significant(block, 1)) then
+         if (block_significant(block)) then
 !
-            first = block_firsts(block, 1)
-            last  = block_firsts(block + 1, 1) - 1
+            first = block_firsts(block)
+            last  = block_firsts(block + 1) - 1
             size  = last - first + 1
 !
-            vec_reduced(current_pos : current_pos + size - 1, 1) = vec(first : last, 1)
+            vec_reduced(current_pos : current_pos + size - 1) = vec(first : last)
             current_pos = current_pos + size
 !
          endif
@@ -224,11 +224,11 @@ contains
 !
       integer :: dim, dim_reduced, n_blocks
 !
-      logical, dimension(n_blocks, 1) :: block_significant
-      integer, dimension(n_blocks + 1, 1) :: block_firsts
+      logical, dimension(n_blocks) :: block_significant
+      integer, dimension(n_blocks + 1) :: block_firsts
 !
-      integer, dimension(dim, 1) :: vec
-      integer, dimension(dim_reduced, 1) :: vec_reduced
+      integer, dimension(dim) :: vec
+      integer, dimension(dim_reduced) :: vec_reduced
 !
       integer :: block, current_pos, first, last, size
 !
@@ -236,13 +236,13 @@ contains
 !
       do block = 1, n_blocks
 !
-         if (block_significant(block, 1)) then
+         if (block_significant(block)) then
 !
-            first = block_firsts(block, 1)
-            last  = block_firsts(block + 1, 1) - 1
+            first = block_firsts(block)
+            last  = block_firsts(block + 1) - 1
             size  = last - first + 1
 !
-            vec_reduced(current_pos : current_pos + size - 1, 1) = vec(first : last, 1)
+            vec_reduced(current_pos : current_pos + size - 1) = vec(first : last)
             current_pos = current_pos + size
 !
          endif
@@ -264,8 +264,8 @@ contains
 !
       integer :: dim, dim_reduced, n_blocks, columns
 !
-      logical, dimension(n_blocks, 1) :: block_significant
-      integer, dimension(n_blocks + 1, 1) :: block_firsts
+      logical, dimension(n_blocks) :: block_significant
+      integer, dimension(n_blocks + 1) :: block_firsts
 !
       real(dp), dimension(dim, columns) :: array
       real(dp), dimension(dim_reduced, columns) :: array_reduced
@@ -279,10 +279,10 @@ contains
 !
          do block = 1, n_blocks
 !
-            if (block_significant(block, 1)) then
+            if (block_significant(block)) then
 !
-               first = block_firsts(block, 1)
-               last  = block_firsts(block + 1, 1) - 1
+               first = block_firsts(block)
+               last  = block_firsts(block + 1) - 1
                size  = last - first + 1
 !
                array_reduced(current_pos : current_pos + size - 1, I) = array(first : last, I)
@@ -309,8 +309,8 @@ contains
 !
       integer :: dim, dim_reduced, n_blocks, rows
 !
-      logical, dimension(n_blocks, 1) :: block_significant
-      integer, dimension(n_blocks + 1, 1) :: block_firsts
+      logical, dimension(n_blocks) :: block_significant
+      integer, dimension(n_blocks + 1) :: block_firsts
 !
       real(dp), dimension(rows, dim) :: array
       real(dp), dimension(rows, dim_reduced) :: array_reduced
@@ -321,10 +321,10 @@ contains
 !
       do block = 1, n_blocks
 !
-         if (block_significant(block, 1)) then
+         if (block_significant(block)) then
 !
-            first = block_firsts(block, 1)
-            last  = block_firsts(block + 1, 1) - 1
+            first = block_firsts(block)
+            last  = block_firsts(block + 1) - 1
             size  = last - first + 1
 !
             array_reduced(:, current_pos : current_pos + size - 1) = array(:, first : last)
@@ -351,8 +351,8 @@ contains
 !
       integer :: dim, dim_reduced, n_blocks, columns
 !
-      logical, dimension(n_blocks, 1) :: block_significant
-      integer, dimension(n_blocks + 1, 1) :: block_firsts
+      logical, dimension(n_blocks) :: block_significant
+      integer, dimension(n_blocks + 1) :: block_firsts
 !
       integer, dimension(dim, columns) :: array
       integer, dimension(dim_reduced, columns) :: array_reduced
@@ -363,10 +363,10 @@ contains
 !
       do block = 1, n_blocks
 !
-         if (block_significant(block, 1)) then
+         if (block_significant(block)) then
 !
-            first = block_firsts(block, 1)
-            last  = block_firsts(block + 1, 1) - 1
+            first = block_firsts(block)
+            last  = block_firsts(block + 1) - 1
             size  = last - first + 1
 !
             array_reduced(current_pos : (current_pos + size - 1), :) = array(first : last, :)
@@ -665,7 +665,7 @@ contains
       real(dp), dimension(dim, dim), intent(inout) :: matrix
       real(dp), dimension(dim, n_included_diagonals), intent(out) :: cholesky_vectors
 !
-      integer, dimension(n_included_diagonals, 1), intent(in) :: included_diagonals
+      integer, dimension(n_included_diagonals), intent(in) :: included_diagonals
 !
       integer, dimension(:), allocatable :: used_diag
 !
@@ -705,10 +705,10 @@ contains
 !
          do j = 1, n_included_diagonals
 !
-            if (abs(diagonal(included_diagonals(j, 1))) .gt. abs(max_diagonal)) then
+            if (abs(diagonal(included_diagonals(j))) .gt. abs(max_diagonal)) then
 !
-               max_diagonal = diagonal(included_diagonals(j, 1))
-               index_max    = included_diagonals(j, 1)
+               max_diagonal = diagonal(included_diagonals(j))
+               index_max    = included_diagonals(j)
 !
             endif
 !
@@ -1027,7 +1027,7 @@ contains
 !
       integer, intent(in) :: n
 !
-      real(dp), dimension(n, 1), intent(in) :: X
+      real(dp), dimension(n), intent(in) :: X
 !
       integer :: i
 !
@@ -1035,7 +1035,7 @@ contains
 !
       do i = 1, n
 !
-         if (abs(X(i, 1)) .gt. get_abs_max) get_abs_max = abs(X(i, 1))
+         if (abs(X(i)) .gt. get_abs_max) get_abs_max = abs(X(i))
 !
       enddo
 !
@@ -1282,10 +1282,10 @@ contains
 !
       integer, intent(in) :: n 
 !
-      real(dp), dimension(n,n), intent(in) :: A 
-      real(dp), dimension(n,n), intent(in) :: B
+      real(dp), dimension(n, n), intent(in) :: A 
+      real(dp), dimension(n, n), intent(in) :: B
 !
-      real(dp), dimension(n,n) :: AcB ! [A, B] = AB - BA on exit 
+      real(dp), dimension(n, n) :: AcB ! [A, B] = AB - BA on exit 
 !
       call dgemm('N', 'N', &
                   n,       &
@@ -1349,7 +1349,7 @@ contains
 !
       integer, intent(in) :: n
 !
-      real(dp), dimension(n, 1), intent(in) :: A 
+      real(dp), dimension(n), intent(in) :: A 
 !
       integer :: I 
 !
@@ -1364,7 +1364,7 @@ contains
       do I = 1, n 
 !
          fmt = '(t' // trim(sep) // ', i3, f18.12)'
-         write(output%unit, fmt, advance=trim(adv)) I, A(I,1) 
+         write(output%unit, fmt, advance=trim(adv)) I, A(I) 
 !
          if (mod(I, 3) .eq. 2) then 
 !
