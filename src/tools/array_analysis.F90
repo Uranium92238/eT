@@ -636,8 +636,8 @@ contains
       implicit none
 !
       integer, intent(in) :: dim
-      real(dp), dimension(dim,1), intent(inout) :: vec
-      integer, dimension(dim,1), intent(inout) :: index_list
+      real(dp), dimension(dim), intent(inout) :: vec
+      integer, dimension(dim), intent(inout) :: index_list
 !
       call dscal(dim, -one, vec, 1)
 !
