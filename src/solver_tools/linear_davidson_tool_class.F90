@@ -172,7 +172,8 @@ contains
 !
       davidson%X_red = davidson%F_red
 !
-      call mem%alloc(A_red_copy, davidson%dim_red, 1 )
+      call mem%alloc(A_red_copy, davidson%dim_red, davidson%dim_red)
+!
       A_red_copy = davidson%A_red
 !
       call dgesv(davidson%dim_red,  &
@@ -184,8 +185,8 @@ contains
                   davidson%dim_red, &
                   info)
 !
-      call mem%dealloc(A_red_copy, davidson%dim_red, 1 )
-      call mem%dealloc(ipiv, davidson%dim_red, 1)
+      call mem%dealloc(A_red_copy, davidson%dim_red, davidson%dim_red)
+      call mem%dealloc(ipiv, davidson%dim_red, davidson%dim_red)
 !
       if (info .ne. 0) then 
 !
