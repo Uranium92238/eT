@@ -256,11 +256,7 @@ contains
 !
       call ref_wf%mo_transform_and_save_h()
 !
-! ------- DEBUG
-      flush(output%unit)
-      write(output%unit, '(/t3,a)') 'next call is mu'
       call ref_wf%mo_transform_and_save_mu()
-      flush(output%unit)
 !
       call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
@@ -4366,13 +4362,12 @@ contains
 !
       type(file) :: integral
 !
-      integral%name = integral_type
-!
-      call disk%open_file(integral, 'formatted', 'read')
+      call integral%init(integral_type, 'sequential', 'unformatted')
+      call disk%open_file(integral, 'read', 'rewind')
 !
       call mem%alloc(X_pq, wf%n_mo, wf%n_mo)
 !
-      read(integral%unit, *) X_pq
+      read(integral%unit) X_pq
 !
       X_vo(:,:) = X_pq(wf%n_o + 1 : wf%n_mo, 1 : wf%n_o)
 !
@@ -4399,13 +4394,12 @@ contains
 !
       type(file) :: integral
 !
-      integral%name = integral_type
-!
-      call disk%open_file(integral, 'formatted', 'read')
+      call integral%init(integral_type, 'sequential', 'unformatted')
+      call disk%open_file(integral, 'read', 'rewind')
 !
       call mem%alloc(X_pq, wf%n_mo, wf%n_mo)
 !
-      read(integral%unit, *) X_pq
+      read(integral%unit) X_pq
 !
       X_ov(:,:) = X_pq(1 : wf%n_o, wf%n_o + 1 : wf%n_mo)
 !
@@ -4432,9 +4426,8 @@ contains
 !
       type(file) :: integral
 !
-      integral%name = integral_type
-!
-      call disk%open_file(integral, 'formatted', 'read')
+      call integral%init(integral_type, 'sequential', 'unformatted')
+      call disk%open_file(integral, 'read', 'rewind')
 !
       call mem%alloc(X_pq, wf%n_mo, wf%n_mo)
 !
@@ -4467,11 +4460,12 @@ contains
 !
       integral%name = integral_type
 !
-      call disk%open_file(integral, 'formatted', 'read')
+      call integral%init(integral_type, 'sequential', 'unformatted')
+      call disk%open_file(integral, 'read', 'rewind')
 !
       call mem%alloc(X_pq, wf%n_mo, wf%n_mo)
 !
-      read(integral%unit, *) X_pq 
+      read(integral%unit) X_pq 
 !
       X_vv(:,:) = X_pq(wf%n_o + 1 : wf%n_mo, wf%n_o + 1 : wf%n_mo)
 !
@@ -4498,6 +4492,7 @@ contains
       real(dp), dimension(:,:), allocatable :: etaX_temp
 !
       real(dp), parameter :: two = 2.0
+      real(dp) :: ddot
 !
       call mem%alloc(etaX_temp, wf%n_es_amplitudes, 1)
 !
@@ -4508,7 +4503,10 @@ contains
       etaX_temp = two * etaX_temp
 !
 !      call wf%construct_etaX_transpose(etaX, etaX_temp)
+!
       call sort_12_to_21(etaX_temp, etaX, wf%n_o, wf%n_v)
+! ------ DEBUG
+      write(output%unit, *) 'etaX = ', ddot(wf%n_es_amplitudes, etaX, 1, etaX, 1)
 !
       call mem%dealloc(etaX_temp, wf%n_es_amplitudes, 1)
 !
@@ -4617,7 +4615,6 @@ contains
       type(file) :: mo_operator, operator_output
 !
       character(len=1), dimension(3) :: cartesian_coordinate = ['X', 'Y', 'Z']
-     ! character(len=31) :: line
       character(len=15) :: Xoperator
 !
       integer :: i = 0, ioerror = 0
@@ -4634,11 +4631,10 @@ contains
 !
       do i = 1, 3
 !
-         mo_operator%name  = Xoperator // '_' // cartesian_coordinate(i)
-!
          call mem%alloc(X_pq, wf%n_mo, wf%n_mo)
 !
-         call disk%open_file(mo_operator, 'unformatted', 'read')
+         call mo_operator%init(trim(Xoperator) // '_' // cartesian_coordinate(i), 'sequential', 'unformatted')       
+         call disk%open_file(mo_operator, 'read', 'rewind')
 !
          read(mo_operator%unit, iostat = ioerror) X_pq         
 !         
@@ -4646,11 +4642,10 @@ contains
 !
          call wf%t1_transform(X_pq)
 !
-         operator_output%name = cartesian_coordinate(i) // '_' // operator_type
+         call operator_output%init(cartesian_coordinate(i) // '_' // trim(operator_type), 'sequential', 'unformatted')       
+         call disk%open_file(operator_output, 'write', 'rewind')
 !
-         call disk%open_file(operator_output, 'formatted', 'write')
-!
-         write(operator_output%unit, *) X_pq
+         write(operator_output%unit) X_pq
 !
          call mem%dealloc(X_pq, wf%n_mo, wf%n_mo)
 !
@@ -4713,15 +4708,10 @@ contains
       real(dp) :: ddot, one = 1.0
 !
       norm = ddot(wf%n_es_amplitudes, L, 1, R, 1)
-! ----- DEBUG
-      write(output%unit,'(/t6,a,f19.12)') 'norm L and R before scaling = ', norm
 !
       scalar = one / norm
 !
       L = scalar*L
-! ----- DEBUG
-      write(output%unit,'(t6,a,f19.12)') 'norm L and R after scaling = ', ddot(wf%n_es_amplitudes, L, 1, R, 1)
-
 !
    end subroutine scale_left_excitation_vector_ccs
 !

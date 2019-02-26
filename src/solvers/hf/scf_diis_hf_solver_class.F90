@@ -360,8 +360,6 @@ contains
 !
       call wf%save_orbital_coefficients()
       call solver%write_restart_file(wf)
-! ------- DEBUG
-     flush(output%unit)
 !
    end subroutine cleanup_scf_diis_hf_solver
 !

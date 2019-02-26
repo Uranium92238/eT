@@ -72,6 +72,7 @@ contains
       solver%eom             = .false.
       solver%linear_response = .false.
       solver%es_type         = 'valence'
+      solver%operator_type   = 'dipole_length'
 !
       call solver%read_settings()
 !
@@ -91,15 +92,18 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-!      character(len=40)      :: X
-!
       integer :: i, n
 !
       real(dp), dimension(:,:), allocatable :: l_vec_n
       real(dp), dimension(:,:), allocatable :: r_vec_n
 !
+      call wf%prepare_operator_pq(solver%operator_type)
+!
       call mem%alloc(solver%etaX, wf%n_es_amplitudes, 1)
+      solver%etaX = zero
+!
       call mem%alloc(solver%csiX, wf%n_es_amplitudes, 1)
+      solver%csiX = zero
 !
       call mem%alloc(l_vec_n, wf%n_es_amplitudes, 1)
       call mem%alloc(r_vec_n, wf%n_es_amplitudes, 1)
@@ -116,8 +120,8 @@ contains
 !
          call solver%reset()
 !
-         !call wf%construct_etaX(solver%X, solver%etaX)      
-         !call wf%construct_csiX(solver%X, solver%csiX)      
+         call wf%construct_etaX(solver%X, solver%etaX)      
+         call wf%construct_csiX(solver%X, solver%csiX)      
 !
 !        Loop over excited states
 !  
@@ -125,11 +129,11 @@ contains
 !
             call wf%get_left_right_vectors(l_vec_n, r_vec_n, n)
 !
-            call wf%scale_left_excitation_vector(l_vec_n, r_vec_n)
+            !call wf%scale_left_excitation_vector(l_vec_n, r_vec_n)
 !
-            !call wf%calculate_transition_strength(solver%S, solver%etaX, solver%csiX, l_vec_n, r_vec_n)
+            call wf%calculate_transition_strength(solver%S, solver%etaX, solver%csiX, l_vec_n, r_vec_n)
 !
-            !call solver%print_summary('results', n)
+            call solver%print_summary('results', n)
 !            
          enddo
 !         
@@ -181,27 +185,6 @@ contains
 !                 
             solver%es_type = 'valence'
 !            
-         endif
-!
-      enddo
-!     
-      if (.not. requested_section('cc properties')) then
-!
-      call output%error_msg('Operator type must be specified for property calculations.')
-!
-      endif
-!
-      call move_to_section('cc excited state', n_specs)
-!
-      do i = 1, n_specs
-!
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (line(1:15) == 'singlet states:' ) then
-!
-            read(line(16:100), *) solver%n_singlet_states
-!
          endif
 !
       enddo
@@ -319,12 +302,12 @@ contains
         ! write(output%unit, '(t6,a)') '                                    '
          write(output%unit, '(/t6,a,a)') 'Operator component: ', solver%component(i)
         ! write(output%unit, '(/t6,a)') '                                    '
-        ! write(output%unit, '(/t6,a)')  'State                                             Strength     '
+         write(output%unit, '(/t6,a)')  'State                                             Strength     '
          write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
 !
       elseif (output_type == 'results') then
 !
-         write(output%unit, '(t6,i2,14x,f19.12,4x,f19.12)') i, 'energy', solver%S
+         write(output%unit, '(t6,i2,14x,a,f19.12,4x,f19.12)') i, 'energy', solver%S
 !
       elseif (output_type == 'bottom') then
 !

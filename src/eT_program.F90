@@ -275,13 +275,8 @@ program eT_program
 !
 !        Solve cc problem
 !
-! ------- DEBUG
-      flush(output%unit)
-      write(output%unit,*) 'in eT_program, next: cc prep'
          call cc_wf%prepare(ref_wf)
-! ------- DEBUG
-      flush(output%unit)
-      write(output%unit,*) 'in eT_program, before: cc prep'
+!
          call ref_wf%cleanup()
 !
          nullify(ref_wf)
