@@ -284,7 +284,7 @@ contains
 !
 !     Intermediates
 !
-      real(dp), dimension(:,:), allocatable :: X_lc
+      real(dp), dimension(:), allocatable :: X_lc
       real(dp), dimension(:,:), allocatable :: X_ik
       real(dp), dimension(:,:), allocatable :: X_ac
 !
@@ -322,7 +322,7 @@ contains
 !
 !     X_lc = sum_kd L_lckd c_dk = sum_kd L_lc_dk c_dk
 !
-      call mem%alloc(X_lc, (wf%n_o)*(wf%n_v), 1)
+      call mem%alloc(X_lc, (wf%n_o)*(wf%n_v))
 !
       call dgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
@@ -337,7 +337,7 @@ contains
                   X_lc,              &
                   (wf%n_o)*(wf%n_v))
 !
-!     Form u_ai_lc = u_li^ca = 2 * t_li^ca - t_il^ca = 2 * t2(clai,1) - t2(cial,1)
+!     Form u_ai_lc = u_li^ca = 2 * t_li^ca - t_il^ca = 2 * t2(clai) - t2(cial)
 !
       call mem%alloc(t_clai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_clai, (wf%n_o)*(wf%n_v))
@@ -368,7 +368,7 @@ contains
                   (wf%n_v)*(wf%n_o))
 !
       call mem%dealloc(u_ailc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
-      call mem%dealloc(X_lc, (wf%n_v)*(wf%n_o), 1)
+      call mem%dealloc(X_lc, (wf%n_v)*(wf%n_o))
 !
 !     :: Term 2. - sum_ckdl L_lckd t_li^cd c_ak ::
 !
@@ -797,7 +797,7 @@ contains
                      c_a_i,                              & ! c_c,j 
                      wf%n_v,                             &
                      one,                                &
-                     rho_ai_bj(aib_offset,1),            &
+                     rho_ai_bj(aib_offset, 1),           &
                      (wf%n_o)*(wf%n_v)**2)
 !
          call mem%dealloc(g_aibc, wf%n_v, wf%n_o, wf%n_v, batch_b%length)
@@ -963,7 +963,7 @@ contains
       real(dp), dimension(:,:), allocatable :: X_kj_bi ! An intermediate, term 2
       real(dp), dimension(:,:), allocatable :: X_kj_li ! An intermediate, term 3
       real(dp), dimension(:,:), allocatable :: X_kl_ij ! X_kj_li reordered
-      real(dp), dimension(:,:), allocatable :: X_lj    ! An intermediate, term 4
+      real(dp), dimension(:), allocatable   :: X_lj    ! An intermediate, term 4
       real(dp), dimension(:,:), allocatable :: Y_lj_ai ! An intermediate, term 5
 !
       real(dp), dimension(:,:), allocatable :: t_ak_ci ! t_ki^ac
@@ -1199,7 +1199,7 @@ contains
 !
 !     Calculate the intermediate X_lj = sum_ck L_lj_ck c_ck
 !
-      call mem%alloc(X_lj, (wf%n_o)**2, 1)
+      call mem%alloc(X_lj, (wf%n_o)**2)
 !
       call dgemm('N', 'N',           &
                   (wf%n_o)**2,       &
@@ -1243,7 +1243,7 @@ contains
                   rho_ai_bj,            & ! rho_aib_j
                   (wf%n_o)*(wf%n_v)**2)
 !
-      call mem%dealloc(X_lj, (wf%n_o)**2, 1)
+      call mem%dealloc(X_lj, (wf%n_o)**2)
 !
 !     :: Term 5. - sum_kcl L_ljkc t_ik^ac c_bl ::
 !

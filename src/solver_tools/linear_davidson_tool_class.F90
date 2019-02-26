@@ -170,7 +170,7 @@ contains
 !
       call mem%alloc(davidson%X_red, davidson%dim_red, 1)
 !
-      davidson%X_red(:,1) = davidson%F_red
+      davidson%X_red(:, 1) = davidson%F_red
 !
       call mem%alloc(A_red_copy, davidson%dim_red, davidson%dim_red)
       A_red_copy = davidson%A_red

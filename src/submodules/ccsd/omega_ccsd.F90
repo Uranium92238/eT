@@ -150,7 +150,7 @@ contains
                      u_dkci,                     & ! u_dkc_i
                      (wf%n_o)*(wf%n_v)**2,       &
                      one,                        &
-                     omega1(batch_a%first,1),    &
+                     omega1(batch_a%first, 1),   &
                      wf%n_v)
 !
          call mem%dealloc(g_adkc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)

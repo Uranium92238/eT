@@ -212,7 +212,7 @@ contains
 !!
 !!    If dim_x < n_to_sort, all elements of X are sorted. Remember to zero
 !!    the index_list array before sending it to the routine. If  dim_x < n_to_sort,
-!!    index_list(K,1) will remain 0 for K > dim_x.
+!!    index_list(K) will remain 0 for K > dim_x.
 !!
 !!    Note, EFK June 2018. There is a bug in this routine if two elements
 !!    are identical. Use get_n_lowest routine instead, if possible.

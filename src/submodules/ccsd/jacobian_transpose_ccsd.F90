@@ -534,17 +534,17 @@ contains
 !
 !        Add sum_dlc g_dlc_a^T b_dlc_i
 !
-         call dgemm('T','N',                     &
-                     batch_a%length,             &
-                     wf%n_o,                     &
-                     (wf%n_o)*(wf%n_v)**2,       &
-                     one,                        &
-                     g_dl_ca,                    & ! g_dlc_a
-                     (wf%n_o)*(wf%n_v)**2,       &
-                     b_ai_bj,                    & ! b_dlc_i
-                     (wf%n_o)*(wf%n_v)**2,       &
-                     one,                        &
-                     sigma_a_i(batch_a%first,1), &
+         call dgemm('T','N',                      &
+                     batch_a%length,              &
+                     wf%n_o,                      &
+                     (wf%n_o)*(wf%n_v)**2,        &
+                     one,                         &
+                     g_dl_ca,                     & ! g_dlc_a
+                     (wf%n_o)*(wf%n_v)**2,        &
+                     b_ai_bj,                     & ! b_dlc_i
+                     (wf%n_o)*(wf%n_v)**2,        &
+                     one,                         &
+                     sigma_a_i(batch_a%first, 1), &
                      wf%n_v)
 !
          call mem%dealloc(g_dl_ca, (wf%n_v)*(wf%n_o), (wf%n_v)*(batch_a%length))
@@ -1456,7 +1456,7 @@ contains
                      -one,                               &
                      g_a_kde,                            &
                      wf%n_v,                             &
-                     X_kde_i(offset_kde,1),              & 
+                     X_kde_i(offset_kde, 1),             & 
                      (wf%n_o)*(wf%n_v)**2,               & 
                      one,                                &
                      sigma_a_i,                          &
@@ -1530,17 +1530,17 @@ contains
                            batch_a%first, &
                            batch_a%last)
 !
-         call dgemm('T','N',                     &
-                     batch_a%length,             &
-                     wf%n_o,                     &
-                     (wf%n_o)*(wf%n_v)**2,       &
-                     -one,                       &
-                     g_ke_da,                    & ! g_ked_a
-                     (wf%n_o)*(wf%n_v)**2,       &
-                     X_ked_i,                    &
-                     (wf%n_o)*(wf%n_v)**2,       &
-                     one,                        &
-                     sigma_a_i(batch_a%first,1), &
+         call dgemm('T','N',                      &
+                     batch_a%length,              &
+                     wf%n_o,                      &
+                     (wf%n_o)*(wf%n_v)**2,        &
+                     -one,                        &
+                     g_ke_da,                     & ! g_ked_a
+                     (wf%n_o)*(wf%n_v)**2,        &
+                     X_ked_i,                     &
+                     (wf%n_o)*(wf%n_v)**2,        &
+                     one,                         &
+                     sigma_a_i(batch_a%first, 1), &
                      wf%n_v)
 !
          call mem%dealloc(g_ke_da, (wf%n_o)*(wf%n_v), (wf%n_v)*(batch_a%length))
@@ -1607,7 +1607,7 @@ contains
                      t_ce_kl,                   &
                      (wf%n_v)**2,               &
                      one,                       &
-                     X_id_kl(offset_id,1),      &
+                     X_id_kl(offset_id, 1),     &
                      (wf%n_o)*(wf%n_v))
 !
          call mem%dealloc(g_id_ce, (wf%n_o)*(batch_d%length), (wf%n_v)**2)

@@ -777,7 +777,7 @@ contains
 !
                call sort_12_to_21(h_pqrs(:,:,j,k), v2_help, wf%n_v, wf%n_v)
 !
-               call dscal(wf%n_v**2, two, h_pqrs(:,:,j,k),1)
+               call dscal(wf%n_v**2, two, h_pqrs(:,:,j,k), 1)
 !
                call daxpy(wf%n_v**2, -one, v2_help, 1, h_pqrs(:,:,j,k), 1)
 !

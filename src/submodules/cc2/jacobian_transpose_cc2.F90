@@ -419,17 +419,17 @@ contains
 !
 !        sigma_ai =+ sum_bjc g_abjc * c_bjci
 !
-         call dgemm('T', 'N',                   & ! transposed g_bjca
-                     wf%n_v,                    &
-                     wf%n_o,                    &
-                     (wf%n_o)*(wf%n_v)**2,      &
-                     one,                       &
-                     g_bjca,                    & ! g_a_bjc
-                     (wf%n_o)*(wf%n_v)**2,      &
-                     c_bjck,                    & ! c_bjc_i
-                     (wf%n_o)*(wf%n_v)**2,      &
-                     one,                       &
-                     sigma_ai(batch_a%first,1), &
+         call dgemm('T', 'N',                    & ! transposed g_bjca
+                     wf%n_v,                     &
+                     wf%n_o,                     &
+                     (wf%n_o)*(wf%n_v)**2,       &
+                     one,                        &
+                     g_bjca,                     & ! g_a_bjc
+                     (wf%n_o)*(wf%n_v)**2,       &
+                     c_bjck,                     & ! c_bjc_i
+                     (wf%n_o)*(wf%n_v)**2,       &
+                     one,                        &
+                     sigma_ai(batch_a%first, 1), &
                      wf%n_v)
 !
          call mem%dealloc(g_bjca, wf%n_v, wf%n_o, wf%n_v, batch_a%length)

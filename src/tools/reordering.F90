@@ -643,7 +643,7 @@ contains
 !!
 !!    Performs:
 !!
-!!       y_pqr(pqr,1) = y_pqr(pqr,1) + scalar*x(qpr,1)
+!!       y_pqr(pqr) = y_pqr(pqr) + scalar*x(qpr)
 !!
 !!
       implicit none
