@@ -65,7 +65,7 @@ contains
 !
       class(lowmem_cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
@@ -185,7 +185,7 @@ contains
 !
       class(lowmem_cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
@@ -356,7 +356,7 @@ contains
 !
       class(lowmem_cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
@@ -450,7 +450,7 @@ contains
                        F_bj,                         &
                        wf%n_v*(batch_j%length),      &
                        one,                          &
-                       omega(omega_offset, 1),       &
+                       omega(omega_offset),       &
                        wf%n_v*wf%n_o)
 !        
             call mem%dealloc(u_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)

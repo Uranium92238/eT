@@ -42,7 +42,7 @@
 !
       class(cc2) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c
+      real(dp), dimension(wf%n_es_amplitudes) :: c
 !
 !
    end subroutine jacobian_transpose_cc2_transformation_cc2

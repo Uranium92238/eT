@@ -38,7 +38,7 @@
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
    end subroutine omega_cc2_b1_cc2
 !
@@ -53,6 +53,6 @@
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
    end subroutine omega_cc2_c1_cc2

@@ -3823,7 +3823,7 @@ contains
       integer         :: required, current_a_batch
       type(batching_index) :: batch_a 
 !
-!     :: Construct L_ai_ck = L_ckia
+!     :: Construct L_aick = L_ckia
 !
       call mem%alloc(g_ckia, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call wf%get_voov(g_ckia)
@@ -3839,7 +3839,7 @@ contains
 !
       do current_a_batch = 1, batch_a%num_batches 
 !
-!        Set part of L_ai_ck = L_ckia = 2 * g_ckia - g_caik for current a batch 
+!        Set part of L_aick = L_ckia = 2 * g_ckia - g_caik for current a batch 
 !
          call batch_a%determine_limits(current_a_batch)
 !
@@ -3873,7 +3873,7 @@ contains
 !
       call mem%dealloc(g_ckia, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-!     :: Add sum_ck L_ckia b_ck = sum_ck L_ai_ck b_ck to sigma 
+!     :: Add sum_ck L_ckia b_ck = sum_ck L_aick b_ck to sigma 
 !
       call dgemm('N','N',            &
                   (wf%n_v)*(wf%n_o), &

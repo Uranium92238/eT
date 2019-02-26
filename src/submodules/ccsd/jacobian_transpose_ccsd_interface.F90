@@ -19,7 +19,7 @@
       implicit none 
 !
       class(ccsd) :: wf 
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: b
+      real(dp), dimension(wf%n_es_amplitudes) :: b
 !
    end subroutine jacobian_transpose_ccsd_transformation_ccsd
 !

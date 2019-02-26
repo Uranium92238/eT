@@ -148,7 +148,7 @@ contains
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_kbji
       real(dp), dimension(:,:,:,:), allocatable :: g_jbki
@@ -203,7 +203,7 @@ contains
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
       real(dp), dimension(:,:), allocatable :: F_bj
 !

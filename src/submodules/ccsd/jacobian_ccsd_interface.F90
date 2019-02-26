@@ -20,7 +20,7 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c
+      real(dp), dimension(wf%n_es_amplitudes) :: c
 !
    end subroutine jacobian_ccsd_transformation_ccsd
 !
