@@ -3205,8 +3205,8 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !
       integer, intent(in) :: N
 !
-      real(dp), dimension(:,:), intent(in) :: packed
-      real(dp), dimension(:,:)             :: unpacked
+      real(dp), dimension(N*(N+1)/2), intent(in) :: packed
+      real(dp), dimension(N,N)             :: unpacked
 !
       integer :: i = 0, j = 0
 !
@@ -3223,7 +3223,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
       do i = 2, N
          do j = 1, i - 1
 !
-            unpacked(i, j) = packed(index_packed(i - 1, j), 1)
+            unpacked(i, j) = packed(index_packed(i - 1, j))
             unpacked(j, i) = -unpacked(i, j)
 !
          enddo
@@ -3243,7 +3243,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !
       integer, intent(in) :: N
 !
-      real(dp), dimension(N*(N+1)/2,1), intent(in) :: packed
+      real(dp), dimension(N*(N+1)/2), intent(in) :: packed
       real(dp), dimension(N,N)                     :: unpacked
 !
       integer :: i = 0, j = 0
@@ -3251,7 +3251,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !$omp parallel do schedule(static) private(i,j)
       do i = 1, N
          do j = 1, N
-            unpacked(i, j) = packed(index_packed(i,j), 1)
+            unpacked(i, j) = packed(index_packed(i,j))
          enddo
       enddo
 !$omp end parallel do
@@ -3297,8 +3297,8 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !
       integer, intent(in) :: N
 !
-      real(dp), dimension(:,:) :: packed
-      real(dp), dimension(:,:),intent(in) :: unpacked
+      real(dp), dimension(N*(N+1)/2) :: packed
+      real(dp), dimension(N,N),intent(in) :: unpacked
 !
       integer :: i = 0, j = 0
 !
@@ -3306,7 +3306,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
       do i = 1, N
          do j = 1, i
 !
-            packed(index_packed(i, j), 1) = unpacked(i, j)
+            packed(index_packed(i, j)) = unpacked(i, j)
 !
          enddo
       enddo
@@ -3328,15 +3328,15 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !
       integer, intent(in) :: N
 !
-      real(dp), dimension(:,:) :: packed
-      real(dp), dimension(:,:), intent(in) :: unpacked
+      real(dp), dimension(N*(N+1)/2) :: packed
+      real(dp), dimension(N,N), intent(in) :: unpacked
 !
       integer :: i = 0, j = 0
 !
       do i = 2, N
          do j = 1, i - 1
 !
-            packed(index_packed(i - 1, j), 1) = unpacked(i, j)
+            packed(index_packed(i - 1, j)) = unpacked(i, j)
 !
          enddo
       enddo
