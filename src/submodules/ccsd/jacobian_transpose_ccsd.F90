@@ -1924,8 +1924,8 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_cbjk_restricted ! g_cbjk, batch over b
 !
-      integer :: c = 0, j = 0, b = 0
-      integer :: jk = 0, k = 0, ck = 0!, cb_restricted = 0, bj_full = 0
+      integer :: c = 0, j = 0, b = 0, k = 0
+!      integer :: jk = 0,  ck = 0, cb_restricted = 0, bj_full = 0
 !
 !     Batching variables
 !
@@ -2055,14 +2055,14 @@ contains
 !
 !        Place in reordered full space vector and deallocate restricted vector
 !
-!$omp parallel do schedule(static) private(k,j,b,c,ck,jk)
+!$omp parallel do schedule(static) private(k,j,b,c)
          do k = 1, wf%n_o
             do j = 1, wf%n_o
                do b = batch_b%first, batch_b%last
                   do c = 1, wf%n_v
 !
-                     ck = wf%n_v*(k - 1) + c
-                     jk = wf%n_o*(k - 1) + j
+!                     ck = wf%n_v*(k - 1) + c
+!                     jk = wf%n_o*(k - 1) + j
 !
 !                     cb_restricted = wf%n_v*(b - batch_b%first) + c
 !
