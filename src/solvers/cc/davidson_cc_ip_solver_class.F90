@@ -106,14 +106,14 @@ contains
          call mem%alloc(c_i, wf%n_es_amplitudes)
 !
          c_i = zero
-         c_i(solver%start_vectors(1, 1)) = one
+         c_i(solver%start_vectors(1)) = one
 !
          call davidson%write_trial(c_i, 'rewind')
 !
          do trial = 2, solver%n_singlet_states
 !
             c_i = zero
-            c_i(solver%start_vectors(trial, 1)) = one
+            c_i(solver%start_vectors(trial)) = one
 !
             call davidson%write_trial(c_i)
 !

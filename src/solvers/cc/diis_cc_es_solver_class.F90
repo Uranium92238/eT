@@ -365,7 +365,7 @@ contains
       class(ccs), intent(in) :: wf 
 !
       real(dp), dimension(wf%n_es_amplitudes, solver%n_singlet_states), intent(inout) :: R 
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)                          :: orbital_differences 
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)                             :: orbital_differences 
 !
       real(dp), dimension(:), allocatable :: lowest_orbital_differences
 !

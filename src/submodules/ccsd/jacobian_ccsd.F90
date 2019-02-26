@@ -30,7 +30,7 @@ contains
 !!
       class(ccsd), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes) :: c_i
 !
       call wf%jacobian_ccsd_transformation(c_i)
 !
@@ -59,7 +59,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c
+      real(dp), dimension(wf%n_es_amplitudes) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_a_i
       real(dp), dimension(:,:), allocatable :: c_ai_bj, c_ab_ij 
@@ -82,7 +82,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            c_a_i(a, i) = c(ai, 1)
+            c_a_i(a, i) = c(ai)
 !
          enddo
       enddo
@@ -116,8 +116,8 @@ contains
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     c_ai_bj(ai, bj) = c(wf%n_o*wf%n_v + aibj, 1)
-                     c_ai_bj(bj, ai) = c(wf%n_o*wf%n_v + aibj, 1)
+                     c_ai_bj(ai, bj) = c(wf%n_o*wf%n_v + aibj)
+                     c_ai_bj(bj, ai) = c(wf%n_o*wf%n_v + aibj)
 !
                   endif
 !
@@ -152,7 +152,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            c(ai, 1) = rho_a_i(a, i)
+            c(ai) = rho_a_i(a, i)
 !
          enddo
       enddo
@@ -243,7 +243,7 @@ contains
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     c((wf%n_o)*(wf%n_v) + aibj, 1) = rho_ai_bj(ai, bj)
+                     c((wf%n_o)*(wf%n_v) + aibj) = rho_ai_bj(ai, bj)
 !
                   endif
 !

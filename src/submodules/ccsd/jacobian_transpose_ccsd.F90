@@ -30,7 +30,7 @@ contains
 !!
       class(ccsd), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes) :: c_i
 !
       call wf%jacobian_transpose_ccsd_transformation(c_i)
 !
@@ -57,7 +57,7 @@ contains
 !
 !     Incoming vector b 
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: b
+      real(dp), dimension(wf%n_es_amplitudes) :: b
 !
       real(dp), dimension(:,:), allocatable :: b_a_i
 !
@@ -86,7 +86,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            b_a_i(a, i) = b(ai, 1)
+            b_a_i(a, i) = b(ai)
 !
          enddo
       enddo     
@@ -120,8 +120,8 @@ contains
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     b_ai_bj(ai, bj) = b(aibj + (wf%n_o)*(wf%n_v), 1)
-                     b_ai_bj(bj, ai) = b(aibj + (wf%n_o)*(wf%n_v), 1)
+                     b_ai_bj(ai, bj) = b(aibj + (wf%n_o)*(wf%n_v))
+                     b_ai_bj(bj, ai) = b(aibj + (wf%n_o)*(wf%n_v))
 !
                   endif 
                enddo
@@ -142,7 +142,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            b(ai, 1) = sigma_a_i(a, i)
+            b(ai) = sigma_a_i(a, i)
 !
          enddo
       enddo
@@ -210,7 +210,7 @@ contains
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     b((wf%n_o)*(wf%n_v) + aibj, 1) = sigma_ab_ij(ab, ij)
+                     b((wf%n_o)*(wf%n_v) + aibj) = sigma_ab_ij(ab, ij)
 !
                   endif
 !

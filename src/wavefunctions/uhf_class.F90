@@ -31,8 +31,8 @@ module uhf_class
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_a
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_b      
 !
-      real(dp), dimension(:,:), allocatable :: orbital_energies_a
-      real(dp), dimension(:,:), allocatable :: orbital_energies_b
+      real(dp), dimension(:), allocatable :: orbital_energies_a
+      real(dp), dimension(:), allocatable :: orbital_energies_b
 !
       logical :: fractional_uniform_valence = .false. 
 !
@@ -281,12 +281,13 @@ contains
 !
       real(dp), dimension(wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities), intent(inout) :: G 
 !
-      real(dp), dimension(:,:), allocatable :: G_sq, G_pck 
+      real(dp), dimension(:,:), allocatable :: G_sq
+      real(dp), dimension(:), allocatable :: G_pck 
       real(dp), dimension(:,:), allocatable :: Po, Pv 
 !
       call mem%alloc(Po, wf%n_ao, wf%n_ao)
       call mem%alloc(Pv, wf%n_ao, wf%n_ao)
-      call mem%alloc(G_pck, wf%n_ao*(wf%n_ao - 1)/2, 1)
+      call mem%alloc(G_pck, wf%n_ao*(wf%n_ao - 1)/2)
       call mem%alloc(G_sq, wf%n_ao, wf%n_ao) 
 !
 !     Alpha gradient 
@@ -305,7 +306,7 @@ contains
 !
       call mem%dealloc(Po, wf%n_ao, wf%n_ao)
       call mem%dealloc(Pv, wf%n_ao, wf%n_ao)
-      call mem%dealloc(G_pck, wf%n_ao*(wf%n_ao - 1)/2, 1)
+      call mem%dealloc(G_pck, wf%n_ao*(wf%n_ao - 1)/2)
       call mem%dealloc(G_sq, wf%n_ao, wf%n_ao) 
 !
    end subroutine get_packed_roothan_hall_gradient_uhf
@@ -528,9 +529,9 @@ contains
 !
       real(dp), dimension(wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities), intent(in) :: F ! Packed
 !
-      real(dp), dimension(:,:), allocatable :: F_sigma
+      real(dp), dimension(:), allocatable :: F_sigma
 !
-      call mem%alloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2, 1)
+      call mem%alloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2)
 !
 !     Alpha Fock 
 !
@@ -542,7 +543,7 @@ contains
       call dcopy(wf%n_ao*(wf%n_ao + 1)/2, F(1, 2), 1, F_sigma, 1)
       call squareup(F_sigma, wf%ao_fock_b, wf%n_ao)      
 !
-      call mem%dealloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2, 1)
+      call mem%dealloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2)
 !
    end subroutine set_ao_fock_uhf
 !
@@ -560,9 +561,9 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: F ! Packed
 !
-      real(dp), dimension(:,:), allocatable :: F_sigma
+      real(dp), dimension(:), allocatable :: F_sigma
 !
-      call mem%alloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2, 1)
+      call mem%alloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2)
 !
 !     Alpha Fock 
 !
@@ -574,7 +575,7 @@ contains
       call packin(F_sigma, wf%ao_fock_b, wf%n_ao)
       call dcopy(wf%n_ao*(wf%n_ao + 1)/2, F_sigma, 1, F(wf%n_ao*(wf%n_ao + 1)/2 + 1, 1), 1)   
 !
-      call mem%dealloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2, 1)
+      call mem%dealloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2)
 !
    end subroutine get_ao_fock_uhf
 !
@@ -624,8 +625,8 @@ contains
 !
       write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name_), ' wavefunction energetics (a.u.):'
 !
-      homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1, 1) - wf%orbital_energies_a(wf%n_alpha, 1)
-      homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1, 1) - wf%orbital_energies_b(wf%n_beta, 1)
+      homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
+      homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
 !
       write(output%unit, '(/t6,a26,f19.12)') 'HOMO-LUMO gap (alpha):    ', homo_lumo_gap_a
       write(output%unit, '(t6,a26,f19.12)')  'HOMO-LUMO gap (beta):     ', homo_lumo_gap_b
@@ -939,7 +940,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      real(dp), dimension(wf%n_mo, 1), intent(in) :: energies
+      real(dp), dimension(wf%n_mo), intent(in) :: energies
 !
       integer, intent(inout) :: n_homo_orbitals, n_homo_electrons, homo_first, homo_last
 !
@@ -959,13 +960,13 @@ contains
 !
       if (n_electrons .eq. 0) return
 !
-      if (abs(energies(homo, 1) - energies(homo + 1, 1)) .le. threshold .or. &
-          abs(energies(homo, 1) - energies(homo - 1, 1)) .le. threshold) then ! HOMO is degenerate 
+      if (abs(energies(homo) - energies(homo + 1)) .le. threshold .or. &
+          abs(energies(homo) - energies(homo - 1)) .le. threshold) then ! HOMO is degenerate 
 !
          n_below = 0
          do I = 1, homo - 1
 !
-            if (abs(energies(homo, 1) - energies(I, 1)) .le. threshold) then 
+            if (abs(energies(homo) - energies(I)) .le. threshold) then 
 !
                n_below = n_below + 1
 !
@@ -976,7 +977,7 @@ contains
          n_above = 0
          do I = homo + 1, wf%n_mo
 !
-            if (abs(energies(homo, 1) - energies(I, 1)) .le. threshold) then 
+            if (abs(energies(homo) - energies(I)) .le. threshold) then 
 !
                n_above = n_above + 1
 !
@@ -1430,7 +1431,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      if (.not. allocated(wf%orbital_energies_a)) call mem%alloc(wf%orbital_energies_a, wf%n_mo, 1)
+      if (.not. allocated(wf%orbital_energies_a)) call mem%alloc(wf%orbital_energies_a, wf%n_mo)
 !
    end subroutine initialize_orbital_energies_a_uhf
 !
@@ -1444,7 +1445,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      if (allocated(wf%orbital_energies_a)) call mem%dealloc(wf%orbital_energies_a, wf%n_mo, 1)
+      if (allocated(wf%orbital_energies_a)) call mem%dealloc(wf%orbital_energies_a, wf%n_mo)
 !
    end subroutine destruct_orbital_energies_a_uhf
 !
@@ -1458,7 +1459,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      if (.not. allocated(wf%orbital_energies_b)) call mem%alloc(wf%orbital_energies_b, wf%n_mo, 1)
+      if (.not. allocated(wf%orbital_energies_b)) call mem%alloc(wf%orbital_energies_b, wf%n_mo)
 !
    end subroutine initialize_orbital_energies_b_uhf
 !
@@ -1472,7 +1473,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      if (allocated(wf%orbital_energies_b)) call mem%dealloc(wf%orbital_energies_b, wf%n_mo, 1)
+      if (allocated(wf%orbital_energies_b)) call mem%dealloc(wf%orbital_energies_b, wf%n_mo)
 !
    end subroutine destruct_orbital_energies_b_uhf
 !

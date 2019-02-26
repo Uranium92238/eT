@@ -296,7 +296,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: X
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: X
 !
       write(output%unit, '(/t3,a)') '- Multipliers vector amplitudes:'
       flush(output%unit)      

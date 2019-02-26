@@ -195,15 +195,15 @@ contains
 !
       real(dp), intent(in) :: alpha 
 !
-      real(dp), dimension(n, 1), intent(in)    :: preconditioner
-      real(dp), dimension(n, 1), intent(inout) :: vector  
+      real(dp), dimension(n), intent(in)    :: preconditioner
+      real(dp), dimension(n), intent(inout) :: vector  
 !
       integer :: I 
 !
 !$omp parallel do private(I)
       do I = 1, n 
 !
-         vector(I, 1) = alpha*vector(I, 1)/preconditioner(I, 1)
+         vector(I) = alpha*vector(I)/preconditioner(I)
 !
       enddo 
 !$omp end parallel do

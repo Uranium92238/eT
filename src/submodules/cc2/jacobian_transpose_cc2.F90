@@ -44,7 +44,7 @@ contains
 !!
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes) :: c_i
 !
       call wf%jacobian_transpose_cc2_transformation(c_i)
 !
@@ -69,7 +69,7 @@ contains
 !
       class(cc2) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c
+      real(dp), dimension(wf%n_es_amplitudes) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_ai
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj
@@ -92,7 +92,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            c_ai(a, i) = c(ai, 1)
+            c_ai(a, i) = c(ai)
 !
          enddo
       enddo
@@ -126,8 +126,8 @@ contains
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     c_aibj(a, i, b, j) = c(wf%n_o*wf%n_v + aibj, 1)
-                     c_aibj(b, j, a, i) = c(wf%n_o*wf%n_v + aibj, 1)
+                     c_aibj(a, i, b, j) = c(wf%n_o*wf%n_v + aibj)
+                     c_aibj(b, j, a, i) = c(wf%n_o*wf%n_v + aibj)
 !
                   endif
 !
@@ -148,7 +148,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            c(ai, 1) = sigma_ai(a, i)
+            c(ai) = sigma_ai(a, i)
 !
          enddo
       enddo
@@ -192,7 +192,7 @@ contains
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     c((wf%n_o)*(wf%n_v) + aibj, 1) = sigma_aibj(a, i, b, j)
+                     c((wf%n_o)*(wf%n_v) + aibj) = sigma_aibj(a, i, b, j)
 !
                   endif
 !
@@ -626,10 +626,10 @@ contains
                do a = 1, wf%n_v
 !
                   sigma_aibj(a, i, b, j) = sigma_aibj(a, i, b, j) + c_aibj(a,i,b,j) &
-                                          * (wf%fock_diagonal(a + wf%n_o, 1) &
-                                          + wf%fock_diagonal(b + wf%n_o, 1) &
-                                          - wf%fock_diagonal(i, 1) &
-                                          - wf%fock_diagonal(j, 1))
+                                          * (wf%fock_diagonal(a + wf%n_o) &
+                                          + wf%fock_diagonal(b + wf%n_o) &
+                                          - wf%fock_diagonal(i) &
+                                          - wf%fock_diagonal(j))
 !
                enddo
             enddo

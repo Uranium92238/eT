@@ -124,8 +124,8 @@ contains
 !
       class(diis_tool) :: solver
 !
-      real(dp), dimension(solver%n_equations, 1)  :: dx
-      real(dp), dimension(solver%n_parameters, 1) :: x_dx
+      real(dp), dimension(solver%n_equations)  :: dx
+      real(dp), dimension(solver%n_parameters) :: x_dx
 !
       real(dp), dimension(:), allocatable :: dx_i   ! To hold previous Δ x_i temporarily
       real(dp), dimension(:), allocatable :: x_dx_i ! To hold previous x_dx_i temporarily
@@ -174,8 +174,8 @@ contains
 !
       endif
 !
-      write(solver%dx%unit)   (dx(i,1), i = 1, solver%n_equations)
-      write(solver%x_dx%unit) (x_dx(i,1), i = 1, solver%n_parameters)
+      write(solver%dx%unit)   (dx(i), i = 1, solver%n_equations)
+      write(solver%x_dx%unit) (x_dx(i), i = 1, solver%n_parameters)
 !
 !     :: Solve the least squares problem, G * w = H
 !

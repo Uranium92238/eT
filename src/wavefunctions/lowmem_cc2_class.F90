@@ -93,7 +93,7 @@ contains
 !
       do p = 1, wf%n_mo
 !
-         wf%fock_diagonal(p, 1) = ref_wf%mo_fock(p, p)
+         wf%fock_diagonal(p) = ref_wf%mo_fock(p, p)
 !
       enddo
 !
@@ -176,10 +176,10 @@ contains
 !
                         correlation_energy = correlation_energy + &
                                              (wf%t1(a, i + batch_i%first - 1)*wf%t1(b, j + batch_j%first - 1) &
-                                             - (g_aibj(a, i, b, j))/(wf%fock_diagonal(wf%n_o + a, 1) &
-                                                               + wf%fock_diagonal(wf%n_o + b, 1) &
-                                                               - wf%fock_diagonal(i + batch_i%first - 1,1) &
-                                                               - wf%fock_diagonal(j + batch_j%first - 1,1)))&
+                                             - (g_aibj(a, i, b, j))/(wf%fock_diagonal(wf%n_o + a) &
+                                                               + wf%fock_diagonal(wf%n_o + b) &
+                                                               - wf%fock_diagonal(i + batch_i%first - 1) &
+                                                               - wf%fock_diagonal(j + batch_j%first - 1)))&
                                              *(two*g_iajb(i, a, j, b)-g_iajb(i, b, j, a))
 !
                      enddo
@@ -225,8 +225,8 @@ contains
 !
       class(lowmem_cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: X
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: R
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: R
 !
       real(dp), intent(inout) :: w
 !
