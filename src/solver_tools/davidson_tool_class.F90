@@ -185,7 +185,7 @@ contains
 !
       class(davidson_tool) :: davidson 
 !
-      real(dp), dimension(davidson%n_parameters, 1) :: c 
+      real(dp), dimension(davidson%n_parameters) :: c 
 !
       real(dp), dimension(:), allocatable :: c_i 
 !
@@ -328,7 +328,7 @@ contains
 !
       class(davidson_tool) :: davidson
 !
-      real(dp), dimension(davidson%n_parameters, 1) :: rho_i
+      real(dp), dimension(davidson%n_parameters) :: rho_i
 !
       integer :: n
 !
@@ -540,7 +540,7 @@ contains
 !
       integer :: n
 !
-      real(dp), dimension(davidson%n_parameters, 1) :: X
+      real(dp), dimension(davidson%n_parameters) :: X
 !
       real(dp), dimension(:), allocatable :: c_i
 !
@@ -677,16 +677,16 @@ contains
 !
       class(davidson_tool) :: davidson
 !
-      real(dp), dimension(davidson%n_parameters, 1), intent(inout) :: R
+      real(dp), dimension(davidson%n_parameters), intent(inout) :: R
 !
-      real(dp), dimension(:,:), allocatable :: preconditioner
+      real(dp), dimension(:), allocatable :: preconditioner
 !
-      integer :: i 
+      integer :: i
 !
 !
       if (davidson%do_precondition) then 
 !
-         call mem%alloc(preconditioner, davidson%n_parameters, 1)
+         call mem%alloc(preconditioner, davidson%n_parameters)
 !
          call disk%open_file(davidson%preconditioner, 'read')
          rewind(davidson%preconditioner%unit)
@@ -695,11 +695,11 @@ contains
 !
          do i = 1, davidson%n_parameters
 !
-            R(i, 1) = R(i, 1)/preconditioner(i, 1)
+            R(i) = R(i)/preconditioner(i)
 !
          enddo 
 !
-         call mem%dealloc(preconditioner, davidson%n_parameters, 1)
+         call mem%dealloc(preconditioner, davidson%n_parameters)
 !
       endif 
 !

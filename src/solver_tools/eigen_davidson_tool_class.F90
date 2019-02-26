@@ -27,8 +27,8 @@ module eigen_davidson_tool_class
 !
       real(dp) :: eigenvalue_threshold
 !
-      real(dp), dimension(:,:), allocatable :: omega_re 
-      real(dp), dimension(:,:), allocatable :: omega_im
+      real(dp), dimension(:), allocatable :: omega_re 
+      real(dp), dimension(:), allocatable :: omega_im
 !
    contains 
 !
@@ -131,7 +131,7 @@ contains
 !
       class(eigen_davidson_tool) :: davidson 
 !
-      if (.not. allocated(davidson%omega_im)) call mem%alloc(davidson%omega_im, davidson%n_solutions, 1)
+      if (.not. allocated(davidson%omega_im)) call mem%alloc(davidson%omega_im, davidson%n_solutions)
 !
    end subroutine initialize_omega_im_eigen_davidson_tool
 !  
@@ -143,7 +143,7 @@ contains
 !
       class(eigen_davidson_tool) :: davidson 
 !
-      if (.not. allocated(davidson%omega_re)) call mem%alloc(davidson%omega_re, davidson%n_solutions, 1)
+      if (.not. allocated(davidson%omega_re)) call mem%alloc(davidson%omega_re, davidson%n_solutions)
 !
    end subroutine initialize_omega_re_eigen_davidson_tool
 !  
@@ -155,7 +155,7 @@ contains
 !
       class(eigen_davidson_tool) :: davidson 
 !
-      if ( allocated(davidson%omega_im)) call mem%dealloc(davidson%omega_im, davidson%n_solutions, 1)
+      if ( allocated(davidson%omega_im)) call mem%dealloc(davidson%omega_im, davidson%n_solutions)
 !
    end subroutine destruct_omega_im_eigen_davidson_tool
 !  
@@ -167,7 +167,7 @@ contains
 !
       class(eigen_davidson_tool) :: davidson 
 !
-      if ( allocated(davidson%omega_re)) call mem%dealloc(davidson%omega_re, davidson%n_solutions, 1)
+      if ( allocated(davidson%omega_re)) call mem%dealloc(davidson%omega_re, davidson%n_solutions)
 !
    end subroutine destruct_omega_re_eigen_davidson_tool
 !
@@ -185,7 +185,7 @@ contains
 !
       integer, intent(in) :: n 
 !
-      get_eigenvalue_eigen_davidson_tool = davidson%omega_re(n, 1)
+      get_eigenvalue_eigen_davidson_tool = davidson%omega_re(n)
 !
    end function get_eigenvalue_eigen_davidson_tool
 !
@@ -305,7 +305,7 @@ contains
 !
          enddo
 !
-         davidson%omega_im(j, 1) = omega_im(index_list(j))
+         davidson%omega_im(j) = omega_im(index_list(j))
 !
       enddo
 !
@@ -337,16 +337,16 @@ contains
       class(eigen_davidson_tool), intent(in) :: davidson 
 !
       real(dp), dimension(davidson%n_parameters)                :: R 
-      real(dp), dimension(davidson%n_parameters, 1), intent(in) :: X 
+      real(dp), dimension(davidson%n_parameters), intent(in) :: X 
 !
       integer, intent(in)  :: n
       real(dp), intent(in) :: norm_X 
 !
-      if (davidson%omega_im(n, 1) .eq. zero) then  ! standard case: the nth root is not part of a complex pair
+      if (davidson%omega_im(n) .eq. zero) then  ! standard case: the nth root is not part of a complex pair
 !
          call davidson%construct_AX(R, n) ! set R = AX 
 !
-        call daxpy(davidson%n_parameters, - davidson%omega_re(n, 1), X, 1,  R, 1)
+        call daxpy(davidson%n_parameters, - davidson%omega_re(n), X, 1,  R, 1)
         call dscal(davidson%n_parameters, one/norm_X, R, 1)
 !
       else
@@ -362,18 +362,18 @@ contains
 !
          elseif (n .eq. davidson%n_solutions) then 
 !
-            if (davidson%omega_re(n-1, 1) .ne. davidson%omega_re(n, 1)) &
+            if (davidson%omega_re(n-1) .ne. davidson%omega_re(n)) &
                         call output%error_msg('add one more root to treat the complex pair.')
 !
             call davidson%construct_im_residual(R, X, norm_X, n)
 !
          else ! neither first or last, so it's safe to look at n + 1 and n - 1 
 !
-            if (davidson%omega_re(n, 1) .eq. davidson%omega_re(n - 1, 1)) then
+            if (davidson%omega_re(n) .eq. davidson%omega_re(n - 1)) then
 !
                call davidson%construct_im_residual(R, X, norm_X, n)
 !
-            elseif (davidson%omega_re(n, 1) .eq. davidson%omega_re(n + 1, 1) ) then 
+            elseif (davidson%omega_re(n) .eq. davidson%omega_re(n + 1) ) then 
 !
                call davidson%construct_re_residual(R, X, norm_X, n)
 !
@@ -432,8 +432,8 @@ contains
       call davidson%construct_X(X_im, n + 1) ! set X_im
       call davidson%construct_AX(R, n)       ! set R = A X_re 
 !
-      call daxpy(davidson%n_parameters, - davidson%omega_re(n, 1), X_re, 1, R, 1) 
-      call daxpy(davidson%n_parameters, davidson%omega_im(n, 1), X_im, 1, R, 1) 
+      call daxpy(davidson%n_parameters, - davidson%omega_re(n), X_re, 1, R, 1) 
+      call daxpy(davidson%n_parameters, davidson%omega_im(n), X_im, 1, R, 1) 
 !
       norm_X_im = get_l2_norm(X_im, davidson%n_parameters)
 !
@@ -488,8 +488,8 @@ contains
       call davidson%construct_X(X_re, n - 1) ! set X_re 
       call davidson%construct_AX(R, n)       ! set R = A X_im 
 !
-      call daxpy(davidson%n_parameters, - davidson%omega_re(n, 1), X_im, 1, R, 1) 
-      call daxpy(davidson%n_parameters, - davidson%omega_im(n - 1, 1), X_re, 1, R, 1) 
+      call daxpy(davidson%n_parameters, - davidson%omega_re(n), X_im, 1, R, 1) 
+      call daxpy(davidson%n_parameters, - davidson%omega_im(n - 1), X_re, 1, R, 1) 
 !
       norm_X_re = get_l2_norm(X_re, davidson%n_parameters)
 !

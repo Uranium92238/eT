@@ -37,9 +37,9 @@ module davidson_cc_es_solver_class
 !
       character(len=40) :: transformation 
 !
-      real(dp), dimension(:,:), allocatable :: energies
+      real(dp), dimension(:), allocatable :: energies
 !
-      integer, dimension(:,:), allocatable :: start_vectors
+      integer, dimension(:), allocatable :: start_vectors
 !
       type(file) :: restart_file
 !
@@ -183,7 +183,7 @@ contains
       class(davidson_cc_es_solver) :: solver
 !
       if (.not. allocated(solver%energies)) &
-            call mem%alloc(solver%energies, solver%n_singlet_states, 1)
+            call mem%alloc(solver%energies, solver%n_singlet_states)
 !
    end subroutine initialize_energies_davidson_cc_es_solver
 !
@@ -200,7 +200,7 @@ contains
       class(davidson_cc_es_solver) :: solver
 !
       if (allocated(solver%energies)) &
-            call mem%dealloc(solver%energies, solver%n_singlet_states, 1)
+            call mem%dealloc(solver%energies, solver%n_singlet_states)
 !
    end subroutine destruct_energies_davidson_cc_es_solver
 !
@@ -378,7 +378,7 @@ contains
             call davidson%construct_next_trial_vec(residual_norm, solution)
 !
             write(output%unit,'(t3,i2,5x,f16.12,7x,f16.12,11x,e11.4)') &
-            solution, davidson%omega_re(solution, 1), davidson%omega_im(solution, 1), residual_norm
+            solution, davidson%omega_re(solution), davidson%omega_im(solution), residual_norm
             flush(output%unit)
 !
             if (residual_norm .gt. solver%residual_threshold) converged_residual = .false.
@@ -393,7 +393,7 @@ contains
 !
          do solution = 1, solver%n_singlet_states
 !
-            if (abs(davidson%omega_re(solution, 1) - solver%energies(solution, 1)) &
+            if (abs(davidson%omega_re(solution) - solver%energies(solution)) &
                .gt. solver%eigenvalue_threshold) converged_eigenvalue = .false.
 !
          enddo
@@ -465,7 +465,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c_i
 !
       if (trim(solver%transformation) == 'right') then 
 !
@@ -514,7 +514,7 @@ contains
          do trial = 1, solver%n_singlet_states
 !
             c_i = zero
-            c_i(solver%start_vectors(trial, 1)) = one
+            c_i(solver%start_vectors(trial)) = one
 !
             call davidson%write_trial(c_i)
 !
@@ -681,7 +681,7 @@ contains
 !
             enddo
 !
-            call mem%alloc(solver%start_vectors, n_start_vecs, 1)
+            call mem%alloc(solver%start_vectors, n_start_vecs)
             read(line, *) solver%start_vectors
 !
          endif

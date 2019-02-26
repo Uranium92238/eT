@@ -275,7 +275,7 @@ contains
 !!
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: c_i
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: c_i
 !
       call wf%jacobian_transpose_transform_trial_vector(c_i) 
 !
