@@ -916,8 +916,8 @@ contains
 !
       integer, dimension(n_s*(n_s + 1)/2, 3) :: sp_eri_schwarz_list
 !
-      integer, dimension(:,:),  allocatable :: sp_eri_schwarz_index_list
-      real(dp), dimension(:,:), allocatable :: sorted_sp_eri_schwarz
+      integer, dimension(:),  allocatable :: sp_eri_schwarz_index_list
+      real(dp), dimension(:), allocatable :: sorted_sp_eri_schwarz
 !
 !     Local variables
 !
@@ -964,20 +964,20 @@ contains
 !     Sort the sp_eri_schwarz vector and use the resulting index list 
 !     to resort the sp_eri_schwarz_list matrix 
 !
-      call mem%alloc(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2, 1)
+      call mem%alloc(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2)
       sp_eri_schwarz_index_list = 0
 !
-      call mem%alloc(sorted_sp_eri_schwarz, n_s*(n_s + 1)/2, 1)
-      sorted_sp_eri_schwarz = sp_eri_schwarz
+      call mem%alloc(sorted_sp_eri_schwarz, n_s*(n_s + 1)/2)
+      sorted_sp_eri_schwarz = sp_eri_schwarz(:, 1)
 !
       call get_n_highest(n_s*(n_s + 1)/2, n_s*(n_s + 1)/2, sp_eri_schwarz, sorted_sp_eri_schwarz, sp_eri_schwarz_index_list)
 !
-      sp_eri_schwarz(:,2) = sp_eri_schwarz(:,1)
-      sp_eri_schwarz(:,1) = sorted_sp_eri_schwarz(:,1)
-      call mem%dealloc(sorted_sp_eri_schwarz, n_s*(n_s + 1)/2, 1)
+      sp_eri_schwarz(:, 2) = sp_eri_schwarz(:, 1)
+      sp_eri_schwarz(:, 1) = sorted_sp_eri_schwarz
+      call mem%dealloc(sorted_sp_eri_schwarz, n_s*(n_s + 1)/2)
 !
-      sp_eri_schwarz_list(:,3) = sp_eri_schwarz_index_list(:,1)
-      call mem%dealloc(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2, 1)
+      sp_eri_schwarz_list(:,3) = sp_eri_schwarz_index_list
+      call mem%dealloc(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2)
 !
    end subroutine construct_sp_eri_schwarz_hf
 !
@@ -1581,7 +1581,7 @@ contains
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
-      real(dp), dimension(:,:), allocatable :: g 
+      real(dp), dimension(:), allocatable :: g 
 !
       integer :: max_shell_size, thread, skip
 !
@@ -1589,7 +1589,7 @@ contains
 !     ERI integrals, then enter the construction loop 
 !
       call wf%system%get_max_shell_size(max_shell_size)
-      call mem%alloc(g, max_shell_size**4, 1)
+      call mem%alloc(g, max_shell_size**4)
 !
 !$omp parallel do                                                                             &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34,     &
@@ -1652,7 +1652,7 @@ contains
 !
                tot_dim = (shells(s1)%size)*(shells(s2)%size)*(shells(s3)%size)*(shells(s4)%size)
 !
-               g(1:tot_dim,1) = deg*g(1:tot_dim,1)
+               g(1:tot_dim) = deg*g(1:tot_dim)
 !
 !              Add Fock matrix contributions
 !
@@ -1683,7 +1683,7 @@ contains
 !
                            wxyz = shells(s1)%size*(shells(s2)%size*(shells(s3)%size*(z_red-1)+y_red-1)+x_red-1)+w_red
 !
-                           temp = g(wxyz, 1)
+                           temp = g(wxyz)
 !
                            temp1 = half*temp*d1
                            temp2 = half*temp*d2
@@ -1712,7 +1712,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g, max_shell_size**4, 1)
+      call mem%dealloc(g, max_shell_size**4)
 !
       call set_coulomb_precision_c(wf%libint_epsilon)
 !
@@ -1758,7 +1758,7 @@ contains
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
-      real(dp), dimension(:,:), allocatable :: g 
+      real(dp), dimension(:), allocatable :: g 
 !
       integer :: max_shell_size, thread, skip
 !
@@ -1766,7 +1766,7 @@ contains
 !     ERI integrals, then enter the construction loop 
 !
       call wf%system%get_max_shell_size(max_shell_size)
-      call mem%alloc(g, max_shell_size**4, 1)
+      call mem%alloc(g, max_shell_size**4)
 !
 !$omp parallel do                                                                         &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34, &
@@ -1823,7 +1823,7 @@ contains
 !
                tot_dim = (shells(s1)%size)*(shells(s2)%size)*(shells(s3)%size)*(shells(s4)%size)
 !
-               g(1:tot_dim,1) = deg*g(1:tot_dim,1)
+               g(1:tot_dim) = deg*g(1:tot_dim)
 !
 !              Add Fock matrix contributions
 !
@@ -1849,7 +1849,7 @@ contains
 !
                            wxyz = shells(s1)%size*(shells(s2)%size*(shells(s3)%size*(z_red-1)+y_red-1)+x_red-1)+w_red
 !
-                           temp = g(wxyz, 1)
+                           temp = g(wxyz)
 !
                            temp1 = half*temp*d1
                            temp2 = half*temp*d2
@@ -1867,7 +1867,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g, max_shell_size**4, 1)
+      call mem%dealloc(g, max_shell_size**4)
 !
    end subroutine ao_fock_coulomb_construction_loop_hf
 !
@@ -1911,7 +1911,7 @@ contains
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
-      real(dp), dimension(:,:), allocatable :: g 
+      real(dp), dimension(:), allocatable :: g 
 !
       integer :: max_shell_size, thread, skip
 !
@@ -1919,7 +1919,7 @@ contains
 !     ERI integrals, then enter the construction loop 
 !
       call wf%system%get_max_shell_size(max_shell_size)
-      call mem%alloc(g, max_shell_size**4, 1)
+      call mem%alloc(g, max_shell_size**4)
 !
 !$omp parallel do                                                                         &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34, &
@@ -1979,7 +1979,7 @@ contains
 !
                tot_dim = (shells(s1)%size)*(shells(s2)%size)*(shells(s3)%size)*(shells(s4)%size)
 !
-               g(1:tot_dim,1) = deg*g(1:tot_dim,1)
+               g(1:tot_dim) = deg*g(1:tot_dim)
 !
 !              Add Fock matrix contributions
 !
@@ -2007,7 +2007,7 @@ contains
 !
                            wxyz = shells(s1)%size*(shells(s2)%size*(shells(s3)%size*(z_red-1)+y_red-1)+x_red-1)+w_red
 !
-                           temp = g(wxyz, 1)
+                           temp = g(wxyz)
 !
                            temp3 = one_over_eight*temp*d3
                            temp4 = one_over_eight*temp*d4
@@ -2029,7 +2029,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g, max_shell_size**4, 1)
+      call mem%dealloc(g, max_shell_size**4)
 !
    end subroutine ao_fock_exchange_construction_loop_hf
 !
@@ -2821,7 +2821,7 @@ contains
       G = zero
       call packin_anti(G, G_sq, wf%n_ao)
 !
-      call mem%dealloc(G_sq, wf%n_ao**2, 1)
+      call mem%dealloc(G_sq, wf%n_ao, wf%n_ao)
 !
    end subroutine get_packed_roothan_hall_gradient_hf
 !
@@ -2906,7 +2906,7 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: F 
       real(dp), dimension(wf%n_ao, wf%n_mo), intent(inout) :: C 
-      real(dp), dimension(wf%n_mo, 1),       intent(inout) :: e  
+      real(dp), dimension(wf%n_mo),       intent(inout) :: e  
 !
       logical, optional, intent(in) :: do_mo_transformation
 !
