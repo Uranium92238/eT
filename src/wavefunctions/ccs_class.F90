@@ -256,7 +256,11 @@ contains
 !
       call ref_wf%mo_transform_and_save_h()
 !
+! ------- DEBUG
+      flush(output%unit)
+      write(output%unit, '(/t3,a)') 'next call is mu'
       call ref_wf%mo_transform_and_save_mu()
+      flush(output%unit)
 !
       call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
@@ -4503,7 +4507,8 @@ contains
 !
       etaX_temp = two * etaX_temp
 !
-      call wf%construct_etaX_transpose(etaX, etaX_temp)
+!      call wf%construct_etaX_transpose(etaX, etaX_temp)
+      call sort_12_to_21(etaX_temp, etaX, wf%n_o, wf%n_v)
 !
       call mem%dealloc(etaX_temp, wf%n_es_amplitudes, 1)
 !
@@ -4668,27 +4673,26 @@ contains
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: L, R
       integer :: state, ioerror
 !
-      type(file) :: left, right
+      type(file) :: left_file, right_file
 !      
-      left%name = wf%name_ // 'es_davidson_left'
-      right%name = wf%name_ // 'es_davidson_right'
+      call left_file%init(trim(wf%name_) //'_es_davidson_left_X', 'sequential', 'unformatted')
+      call disk%open_file(left_file, 'read')
+      call left_file%prepare_to_read_line(state)
 !
-      call disk%open_file(left, 'read')
-      call left%prepare_to_read_line(state)
-!
-      call disk%open_file(right, 'read')
-      call right%prepare_to_read_line(state)
+      call right_file%init(trim(wf%name_) //'_es_davidson_right_X', 'sequential', 'unformatted')
+      call disk%open_file(right_file, 'read')
+      call right_file%prepare_to_read_line(state)
 !
       ioerror = 0
-      read(left%unit, iostat=ioerror) L
+      read(left_file%unit, iostat=ioerror) L
       if (ioerror .ne. 0) call output%error_msg('could not read davidson left solution.')
 !      
       ioerror = 0
-      read(right%unit, iostat=ioerror) R
+      read(right_file%unit, iostat=ioerror) R
       if (ioerror .ne. 0) call output%error_msg('could not read davidson right solution.')
 !
-      call disk%close_file(left)
-      call disk%close_file(right)
+      call disk%close_file(left_file)
+      call disk%close_file(right_file)
 !      
    end subroutine get_left_right_vectors_ccs
 !
@@ -4709,10 +4713,15 @@ contains
       real(dp) :: ddot, one = 1.0
 !
       norm = ddot(wf%n_es_amplitudes, L, 1, R, 1)
+! ----- DEBUG
+      write(output%unit,'(/t6,a,f19.12)') 'norm L and R before scaling = ', norm
 !
       scalar = one / norm
 !
       L = scalar*L
+! ----- DEBUG
+      write(output%unit,'(t6,a,f19.12)') 'norm L and R after scaling = ', ddot(wf%n_es_amplitudes, L, 1, R, 1)
+
 !
    end subroutine scale_left_excitation_vector_ccs
 !

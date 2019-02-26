@@ -398,6 +398,10 @@ contains
       type(file) :: mu_Y_pq_file
       type(file) :: mu_Z_pq_file
 !
+! -------- DEBUG
+      flush(output%unit)
+      write(output%unit,*) 'in mo_transform_and_save_mu_vectors_hf'
+      flush(output%unit)
       call mem%alloc(mu_X_wx, wf%n_ao, wf%n_ao)
       call mem%alloc(mu_Y_wx, wf%n_ao, wf%n_ao)
       call mem%alloc(mu_Z_wx, wf%n_ao, wf%n_ao)
@@ -406,6 +410,8 @@ contains
       call mem%alloc(mu_Y_pq, wf%n_mo, wf%n_mo)
       call mem%alloc(mu_Z_pq, wf%n_mo, wf%n_mo)
 !
+! -------- DEBUG
+      flush(output%unit)
       call wf%get_ao_mu_wx(mu_X_wx, mu_Y_wx, mu_Z_wx)
 !      
       call wf%mo_transform(mu_X_wx, mu_X_pq)
@@ -436,6 +442,10 @@ contains
       call disk%close_file(mu_Y_pq_file)
       call disk%close_file(mu_Z_pq_file)
 !
+! -------- DEBUG
+      flush(output%unit)
+      write(output%unit,*) 'end og mo_transform_and_save_mu_vectors_hf'
+      flush(output%unit)
    end subroutine mo_transform_and_save_mu_vectors_hf
 !
 !
@@ -3407,7 +3417,17 @@ contains
       real(dp), dimension(:,:), allocatable :: mu_AB_Y 
       real(dp), dimension(:,:), allocatable :: mu_AB_Z 
 !
+! -------- DEBUG
+      flush(output%unit)
+      write(output%unit,*) 'in get_ao_mu_wx_hf'
+      flush(output%unit)
+!
       do A = 1, wf%system%n_s
+!
+! -------DEBUG
+      flush(output%unit)
+      write(output%unit,*) 'A = ', A
+      flush(output%unit)
 !
          A_interval = wf%system%shell_limits(A)
 !
@@ -3418,6 +3438,11 @@ contains
             call mem%alloc(mu_AB_X, A_interval%size, B_interval%size)
             call mem%alloc(mu_AB_Y, A_interval%size, B_interval%size)
             call mem%alloc(mu_AB_Z, A_interval%size, B_interval%size)
+! -------DEBUG
+      flush(output%unit)
+      write(output%unit,*) 'A_interval%size = ',  A_interval%size
+      write(output%unit,*) 'B_interval%size = ',  B_interval%size
+      flush(output%unit)
 !
             call wf%system%ao_integrals%construct_ao_mu_wx(mu_AB_X, mu_AB_Y, mu_AB_Z, A, B)
 !
@@ -3442,6 +3467,9 @@ contains
 !
          enddo
       enddo
+! -------- DEBUG
+      flush(output%unit)
+
 !
    end subroutine get_ao_mu_wx_hf
 !

@@ -4,3 +4,5 @@ build/
 *.swo
 .DS_Store
 __pycache__
+CMakeLists.txt
+cmake/CXX_flags.cmake

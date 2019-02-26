@@ -168,10 +168,7 @@ contains
       allocate(cc_property_solver)
 !
       call cc_property_solver%prepare()
-! ----------  DEBUG
-      !write(output%unit, '(/t3,a)') '- Reached run property solver '
-! ..........
-      !call cc_property_solver%run(wf)
+      call cc_property_solver%run(wf)
       call cc_property_solver%cleanup()
 !
       deallocate(cc_property_solver)

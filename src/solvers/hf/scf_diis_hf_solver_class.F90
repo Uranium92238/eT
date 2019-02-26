@@ -125,7 +125,7 @@ contains
 !
       class(scf_diis_hf_solver) :: solver 
 !
-      write(output%unit, '(t6,a29,i2)') 'DIIS dimension:              ', solver%diis_dimension
+      write(output%unit, '(t6,a29,i2)') 'DIIS dimension:               ', solver%diis_dimension
 !
    end subroutine print_scf_diis_settings_scf_diis_hf_solver
 !
@@ -360,6 +360,8 @@ contains
 !
       call wf%save_orbital_coefficients()
       call solver%write_restart_file(wf)
+! ------- DEBUG
+     flush(output%unit)
 !
    end subroutine cleanup_scf_diis_hf_solver
 !

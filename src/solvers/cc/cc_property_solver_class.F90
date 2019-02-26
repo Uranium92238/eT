@@ -116,8 +116,8 @@ contains
 !
          call solver%reset()
 !
-         call wf%construct_etaX(solver%X, solver%etaX)      
-         call wf%construct_csiX(solver%X, solver%csiX)      
+         !call wf%construct_etaX(solver%X, solver%etaX)      
+         !call wf%construct_csiX(solver%X, solver%csiX)      
 !
 !        Loop over excited states
 !  
@@ -127,9 +127,9 @@ contains
 !
             call wf%scale_left_excitation_vector(l_vec_n, r_vec_n)
 !
-            call wf%calculate_transition_strength(solver%S, solver%etaX, solver%csiX, l_vec_n, r_vec_n)
+            !call wf%calculate_transition_strength(solver%S, solver%etaX, solver%csiX, l_vec_n, r_vec_n)
 !
-            call solver%print_summary('results', n)
+            !call solver%print_summary('results', n)
 !            
          enddo
 !         
@@ -310,16 +310,16 @@ contains
 !
       if (output_type == 'header') then 
 !              
-         write(output%unit, '(/t3,a)') '- Summary of property calculation:'
-         write(output%unit, '(/t3,a)') 'Type of excitation: ', solver%es_type
-         write(output%unit, '(/t3,a)') 'Type of operator: ', solver%operator_type
+         write(output%unit, '(t3,a,a)') 'Type of excitation: ', solver%es_type
+         write(output%unit, '(t3,a,a)') 'Type of operator: ', solver%operator_type
+         write(output%unit, '(/t3,a)') '- Property calculation results:'
 !
       elseif (output_type == 'top') then
 !              
-         write(output%unit, '(/t6,a)') '                                    '
-         write(output%unit, '(/t6,a)') 'Operator component: ', solver%component(i)
-         write(output%unit, '(/t6,a)') '                                    '
-         write(output%unit, '(t6,a)')  'State                                             Strength     '
+        ! write(output%unit, '(t6,a)') '                                    '
+         write(output%unit, '(/t6,a,a)') 'Operator component: ', solver%component(i)
+        ! write(output%unit, '(/t6,a)') '                                    '
+        ! write(output%unit, '(/t6,a)')  'State                                             Strength     '
          write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
 !
       elseif (output_type == 'results') then

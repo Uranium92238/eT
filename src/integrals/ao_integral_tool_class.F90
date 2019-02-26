@@ -202,8 +202,16 @@ contains
       integer, intent(in) :: s1, s2
       integer(i6) :: s1_4, s2_4
 !
+! -------DEBUG
+      flush(output%unit)
+      write(output%unit,*) 'in construct_ao_mu_wx_ao_integral_tool'
+      flush(output%unit)
       s1_4 = int(s1,i6)
       s2_4 = int(s2,i6)
+      flush(output%unit)
+      write(output%unit,*) 's1_4 = ', s1_4
+      write(output%unit,*) 's2_4 = ', s2_4
+      flush(output%unit)
 !
       call construct_ao_mu_wx(mu_X, mu_Y, mu_Z, s1_4, s2_4)
 !
