@@ -31,8 +31,8 @@ module uhf_class
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_a
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_b      
 !
-      real(dp), dimension(:,:), allocatable :: orbital_energies_a
-      real(dp), dimension(:,:), allocatable :: orbital_energies_b
+      real(dp), dimension(:), allocatable :: orbital_energies_a
+      real(dp), dimension(:), allocatable :: orbital_energies_b
 !
       logical :: fractional_uniform_valence = .false. 
 !
@@ -624,8 +624,8 @@ contains
 !
       write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name_), ' wavefunction energetics (a.u.):'
 !
-      homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1, 1) - wf%orbital_energies_a(wf%n_alpha, 1)
-      homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1, 1) - wf%orbital_energies_b(wf%n_beta, 1)
+      homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
+      homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
 !
       write(output%unit, '(/t6,a26,f19.12)') 'HOMO-LUMO gap (alpha):    ', homo_lumo_gap_a
       write(output%unit, '(t6,a26,f19.12)')  'HOMO-LUMO gap (beta):     ', homo_lumo_gap_b
@@ -1430,7 +1430,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      if (.not. allocated(wf%orbital_energies_a)) call mem%alloc(wf%orbital_energies_a, wf%n_mo, 1)
+      if (.not. allocated(wf%orbital_energies_a)) call mem%alloc(wf%orbital_energies_a, wf%n_mo)
 !
    end subroutine initialize_orbital_energies_a_uhf
 !
@@ -1444,7 +1444,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      if (allocated(wf%orbital_energies_a)) call mem%dealloc(wf%orbital_energies_a, wf%n_mo, 1)
+      if (allocated(wf%orbital_energies_a)) call mem%dealloc(wf%orbital_energies_a, wf%n_mo)
 !
    end subroutine destruct_orbital_energies_a_uhf
 !
@@ -1458,7 +1458,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      if (.not. allocated(wf%orbital_energies_b)) call mem%alloc(wf%orbital_energies_b, wf%n_mo, 1)
+      if (.not. allocated(wf%orbital_energies_b)) call mem%alloc(wf%orbital_energies_b, wf%n_mo)
 !
    end subroutine initialize_orbital_energies_b_uhf
 !
@@ -1472,7 +1472,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      if (allocated(wf%orbital_energies_b)) call mem%dealloc(wf%orbital_energies_b, wf%n_mo, 1)
+      if (allocated(wf%orbital_energies_b)) call mem%dealloc(wf%orbital_energies_b, wf%n_mo)
 !
    end subroutine destruct_orbital_energies_b_uhf
 !

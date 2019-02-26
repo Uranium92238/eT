@@ -84,12 +84,12 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_aibj
       real(dp), dimension(:,:,:,:), allocatable :: L_aibj
-      real(dp), dimension(:,:), allocatable :: eps
+      real(dp), dimension(:), allocatable :: eps
 !
       real(dp) :: e2_neg
       integer  :: a, i, b, j
 !
-      call mem%alloc(eps, wf%n_mo, 1)
+      call mem%alloc(eps, wf%n_mo)
       eps = wf%orbital_energies
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -108,7 +108,7 @@ contains
             do i = 1, wf%n_o 
                do a = 1, wf%n_v
 !
-                  e2_neg = e2_neg + g_aibj(a, i, b, j)*L_aibj(a, i, b, j)/(eps(wf%n_o+a,1)+eps(wf%n_o+b,1)-eps(i,1)-eps(j,1))
+                  e2_neg = e2_neg + g_aibj(a, i, b, j)*L_aibj(a, i, b, j)/(eps(wf%n_o+a)+eps(wf%n_o+b)-eps(i)-eps(j))
 !
                enddo
             enddo
