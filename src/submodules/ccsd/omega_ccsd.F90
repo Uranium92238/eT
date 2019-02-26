@@ -32,10 +32,11 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
-      real(dp), dimension(:,:), allocatable :: omega1, omega2
+      real(dp), dimension(:,:), allocatable :: omega1
+      real(dp), dimension(:), allocatable :: omega2
 !
       call mem%alloc(omega1, wf%n_v, wf%n_o)
-      call mem%alloc(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2, 1)
+      call mem%alloc(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2)
 !
 !     Set the omega vector to zero
 !
@@ -62,7 +63,7 @@ contains
       call dcopy((wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v)+1)/2, omega2, 1, omega((wf%n_o)*(wf%n_v)+1), 1)
 !
       call mem%dealloc(omega1, wf%n_v, wf%n_o)
-      call mem%dealloc(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2, 1)
+      call mem%dealloc(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2)
 !
    end subroutine construct_omega_ccsd
 !
@@ -324,7 +325,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
 !
 !     Integrals
 !
@@ -487,8 +488,8 @@ contains
                            cidj = index_packed(ci, dj)
                            dicj = index_packed(cj, di)
 !
-                           t_p_cdij(cd, ij) = wf%t2(cidj, 1) + wf%t2(dicj, 1)
-                           t_m_cdij(cd, ij) = wf%t2(cidj, 1) - wf%t2(dicj, 1)
+                           t_p_cdij(cd, ij) = wf%t2(cidj) + wf%t2(dicj)
+                           t_m_cdij(cd, ij) = wf%t2(cidj) - wf%t2(dicj)
 !
                        enddo
                     enddo
@@ -565,12 +566,12 @@ contains
 !
 !                            Reorder into omega2_aibj
 !
-                             omega2(aibj,1) = omega2(aibj, 1) &
+                             omega2(aibj) = omega2(aibj) &
                                                    + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
 !
                              if (aibj .ne. biaj) then
 !
-                                omega2(biaj,1) = omega2(biaj, 1) &
+                                omega2(biaj) = omega2(biaj) &
                                                    + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
 !
                              endif
@@ -645,8 +646,8 @@ contains
                            cidj = index_packed(ci, dj)
                            dicj = index_packed(cj, di)
 !
-                           t_p_cdij(cd, ij) = wf%t2(cidj, 1) + wf%t2(dicj, 1)
-                           t_m_cdij(cd, ij) = wf%t2(cidj, 1) - wf%t2(dicj, 1)
+                           t_p_cdij(cd, ij) = wf%t2(cidj) + wf%t2(dicj)
+                           t_m_cdij(cd, ij) = wf%t2(cidj) - wf%t2(dicj)
 !
                        enddo
                     enddo
@@ -723,12 +724,12 @@ contains
 !
 !                             Reorder into omega2_aibj
 !
-                              omega2(aibj,1) = omega2(aibj, 1) &
+                              omega2(aibj) = omega2(aibj) &
                                           + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
 !
                               if (aibj .ne. biaj) then
 !
-                                 omega2(biaj,1) = omega2(biaj, 1) &
+                                 omega2(biaj) = omega2(biaj) &
                                           + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
 !
                               endif
@@ -774,7 +775,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
 !
 !     Integrals
 !
@@ -894,7 +895,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
 !
 !     Integrals
 !
@@ -1156,7 +1157,7 @@ contains
 !
                      aibj = max(ai, bj)*(max(ai, bj)-3)/2 + ai + bj
 !
-                     omega2(aibj, 1) = omega2(aibj, 1) + half*Y_aibj(a, i, b, j) + Y_aibj(a, j, b, i) &
+                     omega2(aibj) = omega2(aibj) + half*Y_aibj(a, i, b, j) + Y_aibj(a, j, b, i) &
                                                         + half*Y_aibj(b, j, a, i) + Y_aibj(b, i, a, j)
 !
                   endif
@@ -1199,7 +1200,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
 !
       real(dp), dimension(:,:), allocatable :: omega2_aibj ! For storing D2.2 & D2.1
 !
@@ -1356,7 +1357,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
 !
 !     Vectors for E2.1 term
 !

@@ -367,7 +367,7 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation 
 !
-      real(dp), dimension(:,:), allocatable :: eta 
+      real(dp), dimension(:), allocatable :: eta 
       real(dp), dimension(:,:,:,:), allocatable :: t2bar
       real(dp), dimension(:,:,:,:), allocatable :: g_iajb
 !
@@ -429,12 +429,12 @@ contains
 !
 !     Add eta, equation = t-bar^T A + eta 
 !
-      call mem%alloc(eta, wf%n_gs_amplitudes, 1)
+      call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
 !
       call daxpy(wf%n_gs_amplitudes, one, eta, 1, equation, 1)
 !
-      call mem%dealloc(eta, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(eta, wf%n_gs_amplitudes)
 !
    end subroutine construct_multiplier_equation_cc2
 !

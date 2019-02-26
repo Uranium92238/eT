@@ -11,8 +11,8 @@ module ccsd_class
 !
    type, extends(ccs) :: ccsd
 !
-      real(dp), dimension(:,:), allocatable :: t2
-      real(dp), dimension(:,:), allocatable :: t2bar
+      real(dp), dimension(:), allocatable :: t2
+      real(dp), dimension(:), allocatable :: t2bar
 !
       integer :: n_t2
 !
@@ -232,7 +232,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      if (.not. allocated(wf%t2)) call mem%alloc(wf%t2, wf%n_t2, 1)
+      if (.not. allocated(wf%t2)) call mem%alloc(wf%t2, wf%n_t2)
 !
    end subroutine initialize_t2_ccsd
 !
@@ -247,7 +247,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      if (allocated(wf%t2)) call mem%dealloc(wf%t2, wf%n_t2, 1)
+      if (allocated(wf%t2)) call mem%dealloc(wf%t2, wf%n_t2)
 !
    end subroutine destruct_t2_ccsd
 !
@@ -335,10 +335,10 @@ contains
 !
                      aibj = (ai*(ai-3)/2) + ai + bj
 !
-                     wf%t2(aibj, 1) = g_aibj(a,i,b,j)/(wf%fock_diagonal(i) + &
-                                                      wf%fock_diagonal(j) - &
-                                                      wf%fock_diagonal(a + wf%n_o) - &
-                                                      wf%fock_diagonal(b + wf%n_o))
+                     wf%t2(aibj) = g_aibj(a,i,b,j)/(wf%fock_diagonal(i) + &
+                                                    wf%fock_diagonal(j) - &
+                                                    wf%fock_diagonal(a + wf%n_o) - &
+                                                    wf%fock_diagonal(b + wf%n_o))
 !
                   endif
 !
@@ -402,7 +402,7 @@ contains
 !                 Add the correlation energy
 !
                   wf%energy = wf%energy +                                     &
-                                 (wf%t2(aibj,1) + (wf%t1(a,i))*(wf%t1(b,j)))* &
+                                 (wf%t2(aibj) + (wf%t1(a,i))*(wf%t1(b,j)))* &
                                  (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
 !
                enddo
@@ -667,7 +667,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      if (.not. allocated(wf%t2bar)) call mem%alloc(wf%t2bar, wf%n_t2, 1)
+      if (.not. allocated(wf%t2bar)) call mem%alloc(wf%t2bar, wf%n_t2)
 !
    end subroutine initialize_t2bar_ccsd
 !
@@ -689,7 +689,7 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
 !
-      real(dp), dimension(:,:), allocatable :: eta
+      real(dp), dimension(:), allocatable :: eta
 !
 !     Copy the multipliers, eq. = t-bar
 !
@@ -702,12 +702,12 @@ contains
 !
 !     Add eta, eq. = t-bar^T A + eta
 !
-      call mem%alloc(eta, wf%n_gs_amplitudes, 1)
+      call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
 !
       call daxpy(wf%n_gs_amplitudes, one, eta, 1, equation, 1)
 !
-      call mem%dealloc(eta, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(eta, wf%n_gs_amplitudes)
 !
    end subroutine construct_multiplier_equation_ccsd
 !
@@ -813,7 +813,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_gs_amplitudes, 1)
+      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_gs_amplitudes)
 !
    end subroutine destruct_t2bar_ccsd
 !
@@ -864,26 +864,26 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_t2, 1) :: x2
+      real(dp), dimension(wf%n_t2) :: x2
       character(len=1), intent(in)    :: tag
 !
-      real(dp), dimension(:,:), allocatable :: abs_x2
+      real(dp), dimension(:), allocatable :: abs_x2
 !
-      integer, dimension(:,:), allocatable :: dominant_indices
-      real(dp), dimension(:,:), allocatable     :: dominant_values
+      integer, dimension(:), allocatable :: dominant_indices
+      real(dp), dimension(:), allocatable     :: dominant_values
 !
       integer :: n_elements, elm, i, a, j, b, ai, bj
 !
 !     Sort according to largest contributions
 !
-      call mem%alloc(abs_x2, wf%n_t2, 1)
+      call mem%alloc(abs_x2, wf%n_t2)
       abs_x2 = abs(x2)
 !
       n_elements = 20
       if (n_elements .gt. wf%n_t2) n_elements = wf%n_t2
 !
-      call mem%alloc(dominant_indices, n_elements, 1)
-      call mem%alloc(dominant_values, n_elements, 1)
+      call mem%alloc(dominant_indices, n_elements)
+      call mem%alloc(dominant_values, n_elements)
 !
       dominant_indices = 0
       dominant_values  = zero
@@ -898,19 +898,19 @@ contains
 !
       do elm = 1, n_elements
 !
-         call invert_packed_index(dominant_indices(elm,1), ai, bj, (wf%n_o)*(wf%n_v))
+         call invert_packed_index(dominant_indices(elm), ai, bj, (wf%n_o)*(wf%n_v))
          call invert_compound_index(ai, a, i, wf%n_v, wf%n_o)
          call invert_compound_index(bj, b, j, wf%n_v, wf%n_o)
 !
-         write(output%unit, '(t6,i3,7x,i3,7x,i3,7x,i3,5x,f19.12)') a, i, b, j, x2(dominant_indices(elm,1), 1)
+         write(output%unit, '(t6,i3,7x,i3,7x,i3,7x,i3,5x,f19.12)') a, i, b, j, x2(dominant_indices(elm))
 !
       enddo
 !
       write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
 !
-      call mem%dealloc(dominant_indices, n_elements, 1)
-      call mem%dealloc(dominant_values, n_elements, 1)
-      call mem%dealloc(abs_x2, wf%n_t2, 1)
+      call mem%dealloc(dominant_indices, n_elements)
+      call mem%dealloc(dominant_values, n_elements)
+      call mem%dealloc(abs_x2, wf%n_t2)
 !
    end subroutine print_dominant_x2_ccsd
 !

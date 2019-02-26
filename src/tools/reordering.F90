@@ -950,7 +950,7 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
       real(dp), dimension(dim_s*dim_p, dim_r*dim_q), intent(inout) :: x_sp_rq
 !
       integer :: p, q, r, s, rs, pq, sp, rq, pqrs
@@ -971,7 +971,7 @@ contains
                   sp = dim_s*(p-1) + s
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
-                  x_sp_rq(sp, rq) = x_pqrs(pqrs, 1)
+                  x_sp_rq(sp, rq) = x_pqrs(pqrs)
 !
                enddo
             enddo
@@ -1041,7 +1041,7 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
       real(dp), dimension(dim_s*dim_p, dim_r*dim_q), intent(inout) :: x_sp_qr
 !
       integer :: p, q, r, s, rs, pq, sp, qr, pqrs
@@ -1062,7 +1062,7 @@ contains
                   sp = dim_s*(p-1) + s
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
-                  x_sp_qr(sp, qr) = x_pqrs(pqrs, 1)
+                  x_sp_qr(sp, qr) = x_pqrs(pqrs)
 !
                enddo
             enddo
@@ -1178,7 +1178,7 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
       real(dp), dimension(dim_r*dim_p, dim_q*dim_s) :: x_rp_qs
 !
       integer :: p, q, r, s, rs, pq, pqrs, rp, qs
@@ -1199,7 +1199,7 @@ contains
                   rp = dim_r*(p-1) + r
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
-                  x_rp_qs(rp, qs) = x_pqrs(pqrs, 1)
+                  x_rp_qs(rp, qs) = x_pqrs(pqrs)
 !
                enddo
             enddo
@@ -1265,7 +1265,7 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
       real(dp), dimension(dim_q*dim_r, dim_p*dim_s) :: x_qr_sp
 !
       integer :: p, q, r, s, rs, pq, pqrs, qr, sp
@@ -1286,7 +1286,7 @@ contains
                   sp = dim_s*(p-1) + s
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
-                  x_qr_sp(qr, sp) = x_pqrs(pqrs, 1)
+                  x_qr_sp(qr, sp) = x_pqrs(pqrs)
 !
                enddo
             enddo
@@ -1466,7 +1466,7 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
       real(dp), dimension(dim_p*dim_r, dim_q*dim_s) :: x_pr_qs
 !
       integer :: p, q, r, s, rs, qs, pq, pr, pqrs
@@ -1487,7 +1487,7 @@ contains
                   pr = dim_p*(r-1) + p
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
-                  x_pr_qs(pr, qs) = x_pqrs(pqrs, 1)
+                  x_pr_qs(pr, qs) = x_pqrs(pqrs)
 !
                enddo
             enddo
@@ -1688,7 +1688,7 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
       real(dp), dimension(dim_s*dim_r, dim_p*dim_q), intent(inout) :: x_sr_pq
 !
       integer :: p, q, r, s, pq, rs, sr, pqrs
@@ -1706,7 +1706,7 @@ contains
                      pq = dim_p*(q-1) + p
                      pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
    !
-                     x_sr_pq(sr, pq) = x_pqrs(pqrs, 1)
+                     x_sr_pq(sr, pq) = x_pqrs(pqrs)
    !
                   enddo
                enddo
@@ -2700,7 +2700,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
       real(dp), dimension(dim_p*dim_s, dim_r*dim_q) :: x_ps_rq
 !
       integer :: p, q, r, s, pq, rs, pqrs, ps, rq
@@ -2721,7 +2721,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
                   ps = dim_p*(s-1) + p
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
-                  x_ps_rq(ps, rq) = x_pqrs(pqrs, 1)
+                  x_ps_rq(ps, rq) = x_pqrs(pqrs)
 !
                enddo
             enddo
@@ -2748,7 +2748,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
       real(dp), dimension(dim_p*dim_q, dim_s*dim_r) :: x_pq_sr
 !
       integer :: p, q, r, s, pq, rs, pqrs, sr
@@ -2767,7 +2767,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
                   pq = dim_p*(q-1) + p
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
-                  x_pq_sr(pq, sr) = x_pqrs(pqrs, 1)
+                  x_pq_sr(pq, sr) = x_pqrs(pqrs)
 !
                enddo
             enddo
@@ -2794,7 +2794,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
       real(dp), dimension(dim_p*dim_s, dim_r*dim_q) :: x_ps_qr
 !
       integer :: p, q, r, s, pq, rs, pqrs, ps, qr
@@ -2815,7 +2815,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
                   ps = dim_p*(s-1) + p
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
-                  x_ps_qr(ps, qr) = x_pqrs(pqrs, 1)
+                  x_ps_qr(ps, qr) = x_pqrs(pqrs)
 !
                enddo
             enddo
@@ -3015,7 +3015,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(:, :), intent(in) :: x_pqrs
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
       real(dp), dimension(dim_r*dim_q, dim_p*dim_s) :: x_rq_ps
 !
       integer :: p, q, r, s, pq, rs, pqrs, rq, ps
@@ -3036,7 +3036,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
                   ps = dim_p*(s-1) + p
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
-                  x_rq_ps(rq, ps) = x_pqrs(pqrs, 1)
+                  x_rq_ps(rq, ps) = x_pqrs(pqrs)
 !
                enddo
             enddo
@@ -3146,7 +3146,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !
       integer, intent(in) :: N
 !
-      real(dp), dimension(N*(N+1)/2, 1), intent(inout) :: packed
+      real(dp), dimension(N*(N+1)/2), intent(inout) :: packed
       real(dp), dimension(N, N), intent(in) :: unpacked
 !
       integer :: i, j, ij
@@ -3155,7 +3155,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
       do i = 1, N
          do j = i, N
             ij = (max(i,j)*(max(i,j)-3)/2) + i + j
-            packed(ij, 1) = packed(ij, 1) + unpacked(i,j)
+            packed(ij) = packed(ij) + unpacked(i,j)
          enddo
       enddo
 !$omp end parallel do
@@ -3175,8 +3175,8 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !
       integer, intent(in) :: N
 !
-      real(dp), dimension(:,:) :: packed
-      real(dp), dimension(:,:), intent(in) :: unpacked
+      real(dp), dimension(N*(N+1)/2) :: packed
+      real(dp), dimension(N,N), intent(in) :: unpacked
 !
       integer :: i, j, ij
 !
@@ -3184,7 +3184,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
       do i = 1, N
          do j = i, N
             ij = (max(i,j)*(max(i,j)-3)/2) + i + j
-            packed(ij, 1) = packed(ij, 1) + unpacked(i,j) + unpacked(j,i)
+            packed(ij) = packed(ij) + unpacked(i,j) + unpacked(j,i)
          enddo
       enddo
 !$omp end parallel do
