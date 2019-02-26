@@ -154,8 +154,8 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r
 !
-      real(dp), dimension(:, :), intent(in)    :: x_pqr
-      real(dp), dimension(:, :), intent(inout) :: x_rpq
+      real(dp), dimension(dim_p, dim_q, dim_r), intent(in)    :: x_pqr
+      real(dp), dimension(dim_r, dim_p, dim_q), intent(inout) :: x_rpq
 !
       integer :: pqr, rpq, r, q, p
 !
@@ -164,10 +164,7 @@ contains
          do q = 1, dim_q
             do p = 1, dim_p
 !
-               pqr = dim_p*(dim_q*(r-1)+q-1)+p
-               rpq = dim_r*(dim_p*(q-1)+p-1)+r
-!
-               x_rpq(rpq, 1) = x_pqr(pqr, 1)
+               x_rpq(r,p,q) = x_pqr(p,q,r)
 !
             enddo
          enddo
@@ -256,8 +253,8 @@ contains
 !
      integer, intent(in) :: dim_p, dim_q, dim_r
 !
-     real(dp), dimension(:, :), intent(in)    :: x_pqr
-     real(dp), dimension(:, :), intent(inout) :: x_rqp
+     real(dp), dimension(dim_p, dim_q, dim_r), intent(in)    :: x_pqr
+     real(dp), dimension(dim_r, dim_q, dim_p), intent(inout) :: x_rqp
 !
      integer :: pqr, rqp, r, q, p
 !
@@ -266,10 +263,7 @@ contains
         do q = 1, dim_q
            do p = 1, dim_p
 !
-              pqr = dim_p*(dim_q*(r-1)+q-1)+p
-              rqp = dim_r*(dim_q*(p-1)+q-1)+r
-!
-              x_rqp(rqp, 1) = x_pqr(pqr, 1)
+              x_rqp(r,q,p) = x_pqr(p,q,r)
 !
            enddo
         enddo
@@ -523,8 +517,8 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r
 !
-      real(dp), dimension(:, :), intent(in)    :: x_pqr
-      real(dp), dimension(:, :), intent(inout) :: x_prq
+      real(dp), dimension(dim_p, dim_q, dim_r), intent(in)    :: x_pqr
+      real(dp), dimension(dim_p, dim_r, dim_q), intent(inout) :: x_prq
 !
       integer :: pqr, prq, r, q, p
 !
@@ -533,10 +527,7 @@ contains
          do q = 1, dim_q
             do p = 1, dim_p
 !
-               pqr = dim_p*(dim_q*(r-1)+q-1)+p
-               prq = dim_p*(dim_r*(q-1)+r-1)+p
-!
-               x_prq(prq, 1) = x_pqr(pqr, 1)
+               x_prq(p,r,q) = x_pqr(p,q,r)
 !
             enddo
          enddo
@@ -652,7 +643,7 @@ contains
 !!
 !!    Performs:
 !!
-!!       y_pqr(pqr,1) = y_pqr(pqr,1) + gamma*x(rqp,1)
+!!       y_pqr(pqr,1) = y_pqr(p,q,r) + gamma*x(r,q,p)
 !!
 !!
       implicit none
@@ -661,8 +652,8 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r
 !
-      real(dp), dimension(:, :) :: y_pqr
-      real(dp), dimension(:, :), intent(in) :: x
+      real(dp), dimension(dim_p, dim_q, dim_r) :: y_pqr
+      real(dp), dimension(dim_r, dim_q, dim_p), intent(in) :: x
 !
       integer :: pqr, rqp, r, q, p
 !
@@ -671,10 +662,7 @@ contains
          do q = 1, dim_q
             do p = 1, dim_p
 !
-               pqr = dim_p*(dim_q*(r-1)+q-1)+p
-               rqp = dim_r*(dim_q*(p-1)+q-1)+r
-!
-               y_pqr(pqr, 1) = y_pqr(pqr, 1) + gamma*x(rqp, 1)
+               y_pqr(p,q,r) = y_pqr(p,q,r) + gamma*x(r,q,p)
 !
             enddo
          enddo
@@ -691,7 +679,7 @@ contains
 !!
 !!    Performs:
 !!
-!!       y_pqr(pqr,1) = y_pqr(pqr,1) + gamma*x(qpr,1)
+!!       y_pqr(p,q,r) = y_pqr(p,q,r) + gamma*x(q,p,r)
 !!
 !!
       implicit none
@@ -700,8 +688,8 @@ contains
 !
       integer, intent(in) :: dim_p, dim_q, dim_r
 !
-      real(dp), dimension(:, :) :: y_pqr
-      real(dp), dimension(:, :), intent(in) :: x
+      real(dp), dimension(dim_p, dim_q, dim_r) :: y_pqr
+      real(dp), dimension(dim_q, dim_p, dim_r), intent(in) :: x
 !
       integer :: pqr, qpr, r, q, p
 !
@@ -713,7 +701,7 @@ contains
                pqr = dim_p*(dim_q*(r-1)+q-1)+p
                qpr = dim_q*(dim_p*(r-1)+p-1)+q
 !
-               y_pqr(pqr, 1) = y_pqr(pqr, 1) + gamma*x(qpr, 1)
+               y_pqr(p,q,r) = y_pqr(p,q,r) + gamma*x(q,p,r)
 !
             enddo
          enddo
