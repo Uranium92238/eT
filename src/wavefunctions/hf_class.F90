@@ -165,6 +165,7 @@ contains
       call initialize_kinetic()
       call initialize_nuclear()
       call initialize_overlap()
+      call initialize_dipole()
 !
       call wf%set_n_mo()
 !
