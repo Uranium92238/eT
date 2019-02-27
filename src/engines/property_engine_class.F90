@@ -169,7 +169,7 @@ contains
 !
       call cc_property_solver%prepare()
       call cc_property_solver%run(wf)
-      call cc_property_solver%cleanup()
+      call cc_property_solver%cleanup(wf)
 !
       deallocate(cc_property_solver)
 !

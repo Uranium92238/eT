@@ -4431,7 +4431,7 @@ contains
 !
       call mem%alloc(X_pq, wf%n_mo, wf%n_mo)
 !
-      read(integral%unit, *) X_pq
+      read(integral%unit) X_pq
 !
       X_oo(:,:) = X_pq(1 : wf%n_o, 1 : wf%n_o)
 !
@@ -4505,8 +4505,9 @@ contains
 !      call wf%construct_etaX_transpose(etaX, etaX_temp)
 !
       call sort_12_to_21(etaX_temp, etaX, wf%n_o, wf%n_v)
+!
 ! ------ DEBUG
-      write(output%unit, *) 'etaX = ', ddot(wf%n_es_amplitudes, etaX, 1, etaX, 1)
+      write(output%unit, '(/t6,a,3x,f19.10)') 'etaX = ', ddot(wf%n_es_amplitudes, etaX, 1, etaX, 1)
 !
       call mem%dealloc(etaX_temp, wf%n_es_amplitudes, 1)
 !
@@ -4543,9 +4544,14 @@ contains
 !      
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
 !
+      real(dp) :: ddot ! DEBUG
+!
 !     CCS: csiX = X_ai
 !
       call wf%get_operator_vo(Xoperator, csiX)
+!
+! ------ DEBUG
+      write(output%unit, '(/t6,a,3x,f19.10)') 'csiX = ', ddot(wf%n_es_amplitudes, csiX, 1, csiX, 1)
 !
    end subroutine construct_csiX_ccs
 !
@@ -4555,7 +4561,6 @@ contains
 !!    Add EOM contribution to csiX vector
 !!    Written by Josefine H. Andersen
 !!
-      implicit none
 !
       class(ccs), intent(in) :: wf
 !
@@ -4580,7 +4585,7 @@ contains
 !
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: csiX
-      real(dp), dimension(:,:), allocatable                  :: multipliers
+      real(dp), dimension(:,:), allocatable                     :: multipliers
 !
       real(dp) :: X_cc
       real(dp) :: ddot
@@ -4591,7 +4596,13 @@ contains
 !
       X_cc = ddot(wf%n_es_amplitudes, multipliers, 1, csiX, 1)
 !
+! -------- DEBUG
+      write(output%unit,'(/t6,a,3x,e9.2)') 'Xcc  = ', X_cc
+!
       call daxpy(wf%n_es_amplitudes, -X_cc, multipliers, 1, etaX, 1)
+!
+! -------- DEBUG
+      !write(output%unit,'(t6,a,f19.10)') 'etaX - Xcc =', ddot(wf%n_es_amplitudes, etaX, 1, etaX, 1)
 !
       call mem%dealloc(multipliers, wf%n_es_amplitudes, 1)
 !

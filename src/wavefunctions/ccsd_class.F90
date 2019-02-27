@@ -202,6 +202,9 @@ contains
 !
       call ref_wf%mo_transform_and_save_h()
 !
+      flush(output%unit)
+      write(output%unit,*) 'ccsd prepare'
+      flush(output%unit)
       call ref_wf%mo_transform_and_save_mu()
 !
       call wf%initialize_orbital_coefficients()

@@ -90,12 +90,18 @@ contains
 !
       class(cc_property_solver) :: solver
 !
-      class(ccs), intent(in) :: wf
+      !class(ccs), intent(in) :: wf
+      class(ccs) :: wf
 !
       integer :: i, n
 !
       real(dp), dimension(:,:), allocatable :: l_vec_n
       real(dp), dimension(:,:), allocatable :: r_vec_n
+!
+!     Read multipliers and prepare operator
+!
+      call wf%initialize_multipliers()
+      call wf%read_multipliers()
 !
       call wf%prepare_operator_pq(solver%operator_type)
 !
@@ -114,14 +120,20 @@ contains
 !
       do i = 1, 3
 !
-         call solver%print_summary('top', i)
+      !   call solver%print_summary('top', i)
 !         
          solver%X = solver%component(i) //'_'// trim(solver%operator_type) 
 !
          call solver%reset()
 !
          call wf%construct_etaX(solver%X, solver%etaX)      
-         call wf%construct_csiX(solver%X, solver%csiX)      
+         !call wf%construct_csiX(solver%X, solver%csiX)      
+!
+!        Do EOM or linear response
+!
+         call solver%do_eom_or_lr(wf)
+!
+         call solver%print_summary('top', i)
 !
 !        Loop over excited states
 !  
@@ -246,7 +258,7 @@ contains
    end subroutine reset_property_solver
 !
 !
-   subroutine cleanup_cc_property_solver(solver) 
+   subroutine cleanup_cc_property_solver(solver, wf) 
 !!
 !!    Cleanup
 !!    Written by Josefine H. Andersen, 2019
@@ -255,7 +267,10 @@ contains
 !
       class(cc_property_solver) :: solver
 !
+      class(ccs) :: wf
+!
 !     What to clean up?
+      call wf%destruct_multipliers()
 !
    end subroutine cleanup_cc_property_solver
 !
@@ -307,7 +322,7 @@ contains
 !
       elseif (output_type == 'results') then
 !
-         write(output%unit, '(t6,i2,14x,a,f19.12,4x,f19.12)') i, 'energy', solver%S
+         write(output%unit, '(t6,i2,14x,f19.12,4x,f19.12)') i, solver%S
 !
       elseif (output_type == 'bottom') then
 !
@@ -331,24 +346,20 @@ contains
       class(ccs), intent(in) :: wf
 !
 !     Do EOM or LR
-!
+!      
       if (solver%eom) then
 !
-         if (wf%name_ .eq. 'ccs') then
-!
-            call wf%get_eom_contribution(solver%etaX, solver%csiX)
-!      
-         elseif (wf%name_ .eq. 'ccsd') then
-! 
             call wf%get_eom_contribution(solver%etaX, solver%csiX, solver%X)
 !         
-         endif
-!
       elseif (solver%linear_response) then
 !
          write(output%unit, '(t6,a)') 'Linear response has been selected but is not implemented. &
                                       & etaX will be calculated with no contribution '
 !
+      else
+!
+         write(output%unit, '(t6,a)') 'You have not specifiec EOM or LR. etaX &
+                                      & will be calculated with no contrubutions'
       endif
 !
    end subroutine do_eom_or_lr_property_solver
