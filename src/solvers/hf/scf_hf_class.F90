@@ -1,4 +1,4 @@
-module scf_hf_solver_class
+module scf_hf_class
 !
 !!
 !!		Self-consistent field solver HF solver class module
@@ -22,32 +22,32 @@ module scf_hf_solver_class
 !
    implicit none
 !
-   type, extends(abstract_hf_solver) :: scf_hf_solver
+   type, extends(abstract_hf_solver) :: scf_hf
 !
       character(len=400) :: warning
 !
    contains
 !
-      procedure :: prepare       => prepare_scf_hf_solver
-      procedure :: run           => run_scf_hf_solver
-      procedure :: cleanup       => cleanup_scf_hf_solver
+      procedure :: prepare       => prepare_scf_hf
+      procedure :: run           => run_scf_hf
+      procedure :: cleanup       => cleanup_scf_hf
 !
-      procedure :: print_banner  => print_banner_scf_hf_solver
+      procedure :: print_banner  => print_banner_scf_hf
 !
-   end type scf_hf_solver
+   end type scf_hf
 !
 !
 contains
 !
 !
-   subroutine prepare_scf_hf_solver(solver, wf)
+   subroutine prepare_scf_hf(solver, wf)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(scf_hf_solver) :: solver
+      class(scf_hf) :: solver
 !
       class(hf) :: wf
 !
@@ -87,17 +87,17 @@ contains
       write(output%unit, '(/t3,a,a,a)') '- Setting initial AO density to ', trim(solver%ao_density_guess), ':'
       call wf%set_initial_ao_density_guess(solver%ao_density_guess)
 !
-   end subroutine prepare_scf_hf_solver
+   end subroutine prepare_scf_hf
 !
 !
-   subroutine run_scf_hf_solver(solver, wf)
+   subroutine run_scf_hf(solver, wf)
 !!
 !!    Run 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(scf_hf_solver) :: solver
+      class(scf_hf) :: solver
 !
       class(hf) :: wf
 !
@@ -206,17 +206,17 @@ contains
 !
       endif 
 !
-   end subroutine run_scf_hf_solver
+   end subroutine run_scf_hf
 !
 !
-   subroutine cleanup_scf_hf_solver(solver, wf)
+   subroutine cleanup_scf_hf(solver, wf)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(scf_hf_solver) :: solver
+      class(scf_hf) :: solver
 !
       class(hf) :: wf
 !
@@ -249,24 +249,24 @@ contains
       call wf%destruct_ao_overlap()
       call wf%destruct_fock()
 !
-   end subroutine cleanup_scf_hf_solver
+   end subroutine cleanup_scf_hf
 !
 !
-   subroutine print_banner_scf_hf_solver(solver)
+   subroutine print_banner_scf_hf(solver)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none 
 !
-      class(scf_hf_solver) :: solver 
+      class(scf_hf) :: solver 
 !
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
       call long_string_print(solver%warning,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
       call long_string_print(solver%description)
 !
-   end subroutine print_banner_scf_hf_solver
+   end subroutine print_banner_scf_hf
 !
 !
-end module scf_hf_solver_class
+end module scf_hf_class

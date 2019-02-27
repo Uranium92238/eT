@@ -1,4 +1,4 @@
-module scf_diis_hf_solver_class
+module scf_diis_hf_class
 !
 !!
 !!		Self-consistent field DIIS HF solver class module
@@ -21,7 +21,7 @@ module scf_diis_hf_solver_class
 !
    implicit none
 !
-   type, extends(abstract_hf_solver) :: scf_diis_hf_solver
+   type, extends(abstract_hf_solver) :: scf_diis_hf
 !
       integer :: diis_dimension
 !
@@ -32,32 +32,32 @@ module scf_diis_hf_solver_class
 !
    contains
 !     
-      procedure :: prepare                => prepare_scf_diis_hf_solver
-      procedure :: run                    => run_scf_diis_hf_solver
-      procedure :: cleanup                => cleanup_scf_diis_hf_solver
+      procedure :: prepare                => prepare_scf_diis_hf
+      procedure :: run                    => run_scf_diis_hf
+      procedure :: cleanup                => cleanup_scf_diis_hf
 !
-      procedure :: read_settings           => read_settings_scf_diis_hf_solver 
-      procedure :: read_scf_diis_settings  => read_scf_diis_settings_scf_diis_hf_solver
+      procedure :: read_settings           => read_settings_scf_diis_hf 
+      procedure :: read_scf_diis_settings  => read_scf_diis_settings_scf_diis_hf
 !
-      procedure :: print_scf_diis_settings => print_scf_diis_settings_scf_diis_hf_solver
-      procedure :: write_restart_file      => write_restart_file_scf_diis_hf_solver
+      procedure :: print_scf_diis_settings => print_scf_diis_settings_scf_diis_hf
+      procedure :: write_restart_file      => write_restart_file_scf_diis_hf
 !
-      procedure :: restart                 => restart_scf_diis_hf_solver 
+      procedure :: restart                 => restart_scf_diis_hf 
 !
-   end type scf_diis_hf_solver
+   end type scf_diis_hf
 !
 !
 contains
 !
 !
-   subroutine prepare_scf_diis_hf_solver(solver, wf)
+   subroutine prepare_scf_diis_hf(solver, wf)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(scf_diis_hf_solver) :: solver
+      class(scf_diis_hf) :: solver
 !
       class(hf) :: wf
 !
@@ -113,31 +113,31 @@ contains
 !
       endif
 !
-   end subroutine prepare_scf_diis_hf_solver
+   end subroutine prepare_scf_diis_hf
 !
 !
-   subroutine print_scf_diis_settings_scf_diis_hf_solver(solver)
+   subroutine print_scf_diis_settings_scf_diis_hf(solver)
 !!
 !!    Print SCF-DIIS settings    
 !!    Written by Eirik F. Kjønstad, Sep 2018 
 !!
       implicit none 
 !
-      class(scf_diis_hf_solver) :: solver 
+      class(scf_diis_hf) :: solver 
 !
       write(output%unit, '(t6,a29,i2)') 'DIIS dimension:              ', solver%diis_dimension
 !
-   end subroutine print_scf_diis_settings_scf_diis_hf_solver
+   end subroutine print_scf_diis_settings_scf_diis_hf
 !
 !
-   subroutine run_scf_diis_hf_solver(solver, wf)
+   subroutine run_scf_diis_hf(solver, wf)
 !!
 !!    Run 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(scf_diis_hf_solver) :: solver
+      class(scf_diis_hf) :: solver
 !
       class(hf) :: wf
 !
@@ -333,17 +333,17 @@ contains
       call solver_timer%freeze()
       call solver_timer%switch_off()
 !
-   end subroutine run_scf_diis_hf_solver
+   end subroutine run_scf_diis_hf
 !
 !
-   subroutine cleanup_scf_diis_hf_solver(solver, wf)
+   subroutine cleanup_scf_diis_hf(solver, wf)
 !!
 !! 	Cleanup 
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(scf_diis_hf_solver) :: solver
+      class(scf_diis_hf) :: solver
 !
       class(hf) :: wf
 !
@@ -361,10 +361,10 @@ contains
       call wf%save_orbital_coefficients()
       call solver%write_restart_file(wf)
 !
-   end subroutine cleanup_scf_diis_hf_solver
+   end subroutine cleanup_scf_diis_hf
 !
 !
-   subroutine write_restart_file_scf_diis_hf_solver(solver, wf)
+   subroutine write_restart_file_scf_diis_hf(solver, wf)
 !!
 !!    Write restart file 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018     
@@ -375,7 +375,7 @@ contains
 !!
       implicit none 
 !
-      class(scf_diis_hf_solver), intent(inout) :: solver 
+      class(scf_diis_hf), intent(inout) :: solver 
 !
       class(hf), intent(in) :: wf 
 !
@@ -387,17 +387,17 @@ contains
 !
       call disk%close_file(solver%restart_file) 
 !
-   end subroutine write_restart_file_scf_diis_hf_solver
+   end subroutine write_restart_file_scf_diis_hf
 !
 !
-   subroutine restart_scf_diis_hf_solver(solver, wf)
+   subroutine restart_scf_diis_hf(solver, wf)
 !!
 !!    Restart 
 !!    Written by Eirik F. Kjønstad, Oct 2018 
 !!
       implicit none 
 !
-      class(scf_diis_hf_solver), intent(in) :: solver 
+      class(scf_diis_hf), intent(in) :: solver 
 !
       class(hf), intent(inout) :: wf 
 !
@@ -423,25 +423,25 @@ contains
       call wf%read_orbital_coefficients()
       call wf%update_ao_density()
 !
-   end subroutine restart_scf_diis_hf_solver
+   end subroutine restart_scf_diis_hf
 !
 !
-   subroutine read_settings_scf_diis_hf_solver(solver)
+   subroutine read_settings_scf_diis_hf(solver)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
 !
-      class(scf_diis_hf_solver) :: solver 
+      class(scf_diis_hf) :: solver 
 !
       call solver%read_hf_solver_settings()
       call solver%read_scf_diis_settings()
 !
-   end subroutine read_settings_scf_diis_hf_solver
+   end subroutine read_settings_scf_diis_hf
 !
 !
-   subroutine read_scf_diis_settings_scf_diis_hf_solver(solver)
+   subroutine read_scf_diis_settings_scf_diis_hf(solver)
 !!
 !!    Read SCF DIIS settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -450,7 +450,7 @@ contains
 !!
       implicit none 
 !
-      class(scf_diis_hf_solver) :: solver 
+      class(scf_diis_hf) :: solver 
 !
       integer :: n_records, i 
 !
@@ -483,7 +483,7 @@ contains
 !
       endif 
 !
-   end subroutine read_scf_diis_settings_scf_diis_hf_solver
+   end subroutine read_scf_diis_settings_scf_diis_hf
 !
 !
-end module scf_diis_hf_solver_class
+end module scf_diis_hf_class

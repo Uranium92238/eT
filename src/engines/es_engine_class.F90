@@ -5,7 +5,7 @@ module es_engine_class
 !!
    use abstract_engine_class
    use ccs_class
-   use eri_cd_solver_class
+   use eri_cd_class
 !
    use davidson_cc_es_class
    use davidson_cc_ip_class
@@ -64,7 +64,7 @@ contains
 !
       class(ccs) :: wf
 !
-      type(eri_cd_solver), allocatable               :: eri_chol_solver
+      type(eri_cd), allocatable                      :: eri_chol_solver
       type(diis_cc_gs), allocatable                  :: cc_gs_solver
       type(diis_cc_es), allocatable                  :: cc_es_solver_diis 
 ! 
