@@ -1,4 +1,4 @@
-module diis_cc_es_solver_class
+module diis_cc_es_class
 !
 !!
 !!    DIIS coupled cluster excited state solver class module
@@ -12,7 +12,7 @@ module diis_cc_es_solver_class
 !
    implicit none
 !
-   type :: diis_cc_es_solver
+   type :: diis_cc_es
 !
       character(len=100) :: tag = 'DIIS coupled cluster excited state solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
@@ -38,32 +38,32 @@ module diis_cc_es_solver_class
 !
    contains
 !     
-      procedure, non_overridable :: prepare        => prepare_diis_cc_es_solver
-      procedure, non_overridable :: run            => run_diis_cc_es_solver
-      procedure, non_overridable :: cleanup        => cleanup_diis_cc_es_solver
+      procedure, non_overridable :: prepare        => prepare_diis_cc_es
+      procedure, non_overridable :: run            => run_diis_cc_es
+      procedure, non_overridable :: cleanup        => cleanup_diis_cc_es
 !
-      procedure :: set_start_vectors               => set_start_vectors_diis_cc_es_solver
+      procedure :: set_start_vectors               => set_start_vectors_diis_cc_es
 !
-      procedure :: print_banner                    => print_banner_diis_cc_es_solver
-      procedure :: print_summary                   => print_summary_diis_cc_es_solver
+      procedure :: print_banner                    => print_banner_diis_cc_es
+      procedure :: print_summary                   => print_summary_diis_cc_es
 !
-      procedure :: read_settings                   => read_settings_diis_cc_es_solver
-      procedure :: print_settings                  => print_settings_diis_cc_es_solver
+      procedure :: read_settings                   => read_settings_diis_cc_es
+      procedure :: print_settings                  => print_settings_diis_cc_es
 !
-   end type diis_cc_es_solver
+   end type diis_cc_es
 !
 !
 contains
 !
 !
-   subroutine prepare_diis_cc_es_solver(solver)
+   subroutine prepare_diis_cc_es(solver)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(diis_cc_es_solver) :: solver
+      class(diis_cc_es) :: solver
 !
       call solver%print_banner()
 !
@@ -81,17 +81,17 @@ contains
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
-   end subroutine prepare_diis_cc_es_solver
+   end subroutine prepare_diis_cc_es
 !
 !
-   subroutine print_settings_diis_cc_es_solver(solver)
+   subroutine print_settings_diis_cc_es(solver)
 !!
 !!    Print settings    
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
       implicit none 
 !
-      class(diis_cc_es_solver) :: solver 
+      class(diis_cc_es) :: solver 
 !
       write(output%unit, '(/t3,a)') '- DIIS CC excited state solver settings:'
 !
@@ -101,17 +101,17 @@ contains
       write(output%unit, '(t6,a26,i3)')   'Max number of iterations: ', solver%max_iterations
       flush(output%unit)
 !
-   end subroutine print_settings_diis_cc_es_solver
+   end subroutine print_settings_diis_cc_es
 !
 !
-   subroutine read_settings_diis_cc_es_solver(solver)
+   subroutine read_settings_diis_cc_es(solver)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
 !
-      class(diis_cc_es_solver) :: solver 
+      class(diis_cc_es) :: solver 
 !
       integer :: n_specs, i
 !
@@ -162,49 +162,49 @@ contains
 !
       enddo
 !
-   end subroutine read_settings_diis_cc_es_solver
+   end subroutine read_settings_diis_cc_es
 !
 !
-   subroutine cleanup_diis_cc_es_solver(solver)
+   subroutine cleanup_diis_cc_es(solver)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(diis_cc_es_solver) :: solver
+      class(diis_cc_es) :: solver
 !
 !     Nothing here yet...
 !
       if (.false.) write(output%unit, *) solver%tag ! Hack to suppress unavoidable compiler warnings
 !
-   end subroutine cleanup_diis_cc_es_solver
+   end subroutine cleanup_diis_cc_es
 !
 !
-   subroutine print_banner_diis_cc_es_solver(solver)
+   subroutine print_banner_diis_cc_es(solver)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none 
 !
-      class(diis_cc_es_solver) :: solver 
+      class(diis_cc_es) :: solver 
 !
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
       call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
-   end subroutine print_banner_diis_cc_es_solver
+   end subroutine print_banner_diis_cc_es
 !
 !
-   subroutine run_diis_cc_es_solver(solver, wf)
+   subroutine run_diis_cc_es(solver, wf)
 !!
 !!    Run 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(diis_cc_es_solver) :: solver
+      class(diis_cc_es) :: solver
 !
       class(ccs) :: wf
 !
@@ -253,7 +253,7 @@ contains
       do state = 1, solver%n_singlet_states
 !  
          write(string_state, '(i3.3)') state
-         call diis(state)%init('diis_cc_es_solver_' // string_state, wf%n_es_amplitudes, wf%n_es_amplitudes, solver%diis_dimension)
+         call diis(state)%init('diis_cc_es_' // string_state, wf%n_es_amplitudes, wf%n_es_amplitudes, solver%diis_dimension)
 !
       enddo 
 !
@@ -349,17 +349,17 @@ contains
       call mem%dealloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
       call mem%dealloc(R, wf%n_es_amplitudes, solver%n_singlet_states)
 !
-   end subroutine run_diis_cc_es_solver
+   end subroutine run_diis_cc_es
 !
 !
-   subroutine set_start_vectors_diis_cc_es_solver(solver, wf, R, orbital_differences)
+   subroutine set_start_vectors_diis_cc_es(solver, wf, R, orbital_differences)
 !!
 !!    Set start vectors 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2018 
 !!
       implicit none 
 !
-      class(diis_cc_es_solver), intent(in) :: solver 
+      class(diis_cc_es), intent(in) :: solver 
 !
       class(ccs), intent(in) :: wf 
 !
@@ -388,17 +388,17 @@ contains
       call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states, 1)
       call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)      
 !
-   end subroutine set_start_vectors_diis_cc_es_solver
+   end subroutine set_start_vectors_diis_cc_es
 !
 !
-   subroutine print_summary_diis_cc_es_solver(solver, wf, X)
+   subroutine print_summary_diis_cc_es(solver, wf, X)
 !!
 !!    Print summary 
 !!    Written by Eirik F. Kjønstad, Dec 2018 
 !!
       implicit none 
 !
-      class(diis_cc_es_solver), intent(in) :: solver 
+      class(diis_cc_es), intent(in) :: solver 
 !
       class(ccs), intent(in) :: wf 
 !
@@ -441,7 +441,7 @@ contains
       write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
       write(output%unit, '(t6,a26,f11.8)') 'eV/Hartree (CODATA 2014): ', Hartree_to_eV
 !
-   end subroutine print_summary_diis_cc_es_solver
+   end subroutine print_summary_diis_cc_es
 !
 !
-end module diis_cc_es_solver_class
+end module diis_cc_es_class

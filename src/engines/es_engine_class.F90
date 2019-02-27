@@ -6,11 +6,12 @@ module es_engine_class
    use abstract_engine_class
    use ccs_class
    use eri_cd_solver_class
-   use davidson_cc_es_solver_class
-   use davidson_cc_ip_solver_class
-   use davidson_cvs_cc_es_solver_class
-   use diis_cc_gs_solver_class
-   use diis_cc_es_solver_class
+!
+   use davidson_cc_es_class
+   use davidson_cc_ip_class
+   use davidson_cvs_cc_es_class
+   use diis_cc_gs_class
+   use diis_cc_es_class
 !
    type, extends(abstract_engine) :: es_engine 
 !
@@ -63,15 +64,15 @@ contains
 !
       class(ccs) :: wf
 !
-      type(eri_cd_solver), allocatable              :: eri_chol_solver
-      type(diis_cc_gs_solver), allocatable          :: cc_gs_solver
-      type(diis_cc_es_solver), allocatable          :: cc_es_solver_diis 
+      type(eri_cd_solver), allocatable               :: eri_chol_solver
+      type(diis_cc_gs), allocatable                  :: cc_gs_solver
+      type(diis_cc_es), allocatable                  :: cc_es_solver_diis 
 ! 
-      type(davidson_cc_es_solver), allocatable, target      ::  cc_valence_es
-      type(davidson_cvs_cc_es_solver), allocatable, target  ::  cc_core_es
-      type(davidson_cc_ip_solver), allocatable, target      ::  cc_valence_ip
+      type(davidson_cc_es), allocatable, target      ::  cc_valence_es
+      type(davidson_cvs_cc_es), allocatable, target  ::  cc_core_es
+      type(davidson_cc_ip), allocatable, target      ::  cc_valence_ip
 !
-      class(davidson_cc_es_solver), pointer :: cc_es_solver
+      class(davidson_cc_es), pointer :: cc_es_solver
 !
       write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
 !

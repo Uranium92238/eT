@@ -1,4 +1,4 @@
-module davidson_cvs_cc_es_solver_class
+module davidson_cvs_cc_es_class
 !
 !!
 !!    Davidson CVS coupled cluster excited state solver class module
@@ -6,11 +6,11 @@ module davidson_cvs_cc_es_solver_class
 !!
 !!    
 !
-   use davidson_cc_es_solver_class
+   use davidson_cc_es_class
 !
    implicit none
 !
-   type, extends(davidson_cc_es_solver) :: davidson_cvs_cc_es_solver
+   type, extends(davidson_cc_es) :: davidson_cvs_cc_es
 !
       integer :: n_cores
 !
@@ -19,31 +19,31 @@ module davidson_cvs_cc_es_solver_class
 !
    contains
 !
-      procedure :: read_settings          => read_settings_davidson_cvs_cc_es_solver
+      procedure :: read_settings          => read_settings_davidson_cvs_cc_es
 !
-      procedure :: set_start_vectors      => set_start_vectors_davidson_cvs_cc_es_solver
-      procedure :: set_projection_vector  => set_projection_vector_davidson_cvs_cc_es_solver
+      procedure :: set_start_vectors      => set_start_vectors_davidson_cvs_cc_es
+      procedure :: set_projection_vector  => set_projection_vector_davidson_cvs_cc_es
 !
-      procedure :: initialize_core_MOs    => initialize_core_MOs_davidson_cvs_cc_es_solver
-      procedure :: initialize_cores       => initialize_cores_davidson_cvs_cc_es_solver
+      procedure :: initialize_core_MOs    => initialize_core_MOs_davidson_cvs_cc_es
+      procedure :: initialize_cores       => initialize_cores_davidson_cvs_cc_es
 !
-      procedure :: destruct_core_MOs      => destruct_core_MOs_davidson_cvs_cc_es_solver
-      procedure :: destruct_cores         => destruct_cores_davidson_cvs_cc_es_solver
+      procedure :: destruct_core_MOs      => destruct_core_MOs_davidson_cvs_cc_es
+      procedure :: destruct_cores         => destruct_cores_davidson_cvs_cc_es
 !
-   end type davidson_cvs_cc_es_solver
+   end type davidson_cvs_cc_es
 !
 !
 contains
 !
 !
-   subroutine read_settings_davidson_cvs_cc_es_solver(solver)
+   subroutine read_settings_davidson_cvs_cc_es(solver)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
 !
-      class(davidson_cvs_cc_es_solver) :: solver 
+      class(davidson_cvs_cc_es) :: solver 
 !
       integer :: n_specs, i, j
 !
@@ -107,10 +107,10 @@ contains
 !
       enddo
 !
-   end subroutine read_settings_davidson_cvs_cc_es_solver
+   end subroutine read_settings_davidson_cvs_cc_es
 !
 !
-   subroutine set_start_vectors_davidson_cvs_cc_es_solver(solver, wf, davidson)
+   subroutine set_start_vectors_davidson_cvs_cc_es(solver, wf, davidson)
 !!
 !!    Set start vectors 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
@@ -119,7 +119,7 @@ contains
 !!
       implicit none
 !
-      class(davidson_cvs_cc_es_solver) :: solver
+      class(davidson_cvs_cc_es) :: solver
 !
       class(ccs) :: wf
 !
@@ -248,10 +248,10 @@ contains
 !
       endif
 !
-   end subroutine set_start_vectors_davidson_cvs_cc_es_solver
+   end subroutine set_start_vectors_davidson_cvs_cc_es
 !
 !
-   subroutine set_projection_vector_davidson_cvs_cc_es_solver(solver, wf, davidson)
+   subroutine set_projection_vector_davidson_cvs_cc_es(solver, wf, davidson)
 !!
 !!    Set projection vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
@@ -260,7 +260,7 @@ contains
 !!
       implicit none
 !
-      class(davidson_cvs_cc_es_solver) :: solver
+      class(davidson_cvs_cc_es) :: solver
 !
       class(ccs) :: wf
 !
@@ -276,63 +276,63 @@ contains
       call davidson%set_projector(projector)
       call mem%dealloc(projector, wf%n_es_amplitudes, 1)
 !
-   end subroutine set_projection_vector_davidson_cvs_cc_es_solver
+   end subroutine set_projection_vector_davidson_cvs_cc_es
 !
 !
-   subroutine initialize_core_MOs_davidson_cvs_cc_es_solver(solver)
+   subroutine initialize_core_MOs_davidson_cvs_cc_es(solver)
 !!
 !!    Initialize core MOs
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
 !!
       implicit none
 !
-      class(davidson_cvs_cc_es_solver) :: solver
+      class(davidson_cvs_cc_es) :: solver
 !
       if (.not. allocated(solver%core_MOs)) call mem%alloc(solver%core_MOs, solver%n_cores)
 !
-   end subroutine initialize_core_MOs_davidson_cvs_cc_es_solver
+   end subroutine initialize_core_MOs_davidson_cvs_cc_es
 !
 !
-   subroutine destruct_core_MOs_davidson_cvs_cc_es_solver(solver)
+   subroutine destruct_core_MOs_davidson_cvs_cc_es(solver)
 !!
 !!    Destruct core MOs
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
 !!
       implicit none
 !
-      class(davidson_cvs_cc_es_solver) :: solver
+      class(davidson_cvs_cc_es) :: solver
 !
       if (allocated(solver%core_MOs)) call mem%dealloc(solver%core_MOs, solver%n_cores)
 !
-   end subroutine destruct_core_MOs_davidson_cvs_cc_es_solver
+   end subroutine destruct_core_MOs_davidson_cvs_cc_es
 !
 !
-   subroutine initialize_cores_davidson_cvs_cc_es_solver(solver)
+   subroutine initialize_cores_davidson_cvs_cc_es(solver)
 !!
 !!    Initialize cores
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
 !!
       implicit none
 !
-      class(davidson_cvs_cc_es_solver) :: solver
+      class(davidson_cvs_cc_es) :: solver
 !
       if (.not. allocated(solver%cores)) call mem%alloc(solver%cores, solver%n_cores)
 !
-   end subroutine initialize_cores_davidson_cvs_cc_es_solver
+   end subroutine initialize_cores_davidson_cvs_cc_es
 !
 !
-   subroutine destruct_cores_davidson_cvs_cc_es_solver(solver)
+   subroutine destruct_cores_davidson_cvs_cc_es(solver)
 !!
 !!    Destruct cores
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
 !!
       implicit none
 !
-      class(davidson_cvs_cc_es_solver) :: solver
+      class(davidson_cvs_cc_es) :: solver
 !
       if (allocated(solver%cores)) call mem%dealloc(solver%cores, solver%n_cores)
 !
-   end subroutine destruct_cores_davidson_cvs_cc_es_solver
+   end subroutine destruct_cores_davidson_cvs_cc_es
 !
 !
-end module davidson_cvs_cc_es_solver_class
+end module davidson_cvs_cc_es_class

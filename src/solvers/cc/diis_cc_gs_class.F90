@@ -1,4 +1,4 @@
-module diis_cc_gs_solver_class
+module diis_cc_gs_class
 !
 !!
 !!		DIIS coupled cluster ground state solver class module
@@ -12,7 +12,7 @@ module diis_cc_gs_solver_class
 !
    implicit none
 !
-   type :: diis_cc_gs_solver
+   type :: diis_cc_gs
 !
       character(len=100) :: tag = 'DIIS CC ground solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
@@ -34,35 +34,35 @@ module diis_cc_gs_solver_class
 !
    contains
 !     
-      procedure, nopass :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_gs_solver
+      procedure, nopass :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_gs
 !
-      procedure :: prepare                  => prepare_diis_cc_gs_solver
-      procedure :: run                      => run_diis_cc_gs_solver
-      procedure :: cleanup                  => cleanup_diis_cc_gs_solver
+      procedure :: prepare                  => prepare_diis_cc_gs
+      procedure :: run                      => run_diis_cc_gs
+      procedure :: cleanup                  => cleanup_diis_cc_gs
 !
-      procedure :: print_banner             => print_banner_diis_cc_gs_solver
-      procedure :: read_settings            => read_settings_diis_cc_gs_solver
+      procedure :: print_banner             => print_banner_diis_cc_gs
+      procedure :: read_settings            => read_settings_diis_cc_gs
 !
-      procedure :: print_settings           => print_settings_diis_cc_gs_solver
-      procedure, nopass :: print_summary    => print_summary_diis_cc_gs_solver
+      procedure :: print_settings           => print_settings_diis_cc_gs
+      procedure, nopass :: print_summary    => print_summary_diis_cc_gs
 !
-      procedure :: restart                  => restart_diis_cc_gs_solver
-      procedure :: write_restart_file       => write_restart_file_diis_cc_gs_solver
+      procedure :: restart                  => restart_diis_cc_gs
+      procedure :: write_restart_file       => write_restart_file_diis_cc_gs
 !
-   end type diis_cc_gs_solver
+   end type diis_cc_gs
 !
 !
 contains
 !
 !
-   subroutine prepare_diis_cc_gs_solver(solver, wf)
+   subroutine prepare_diis_cc_gs(solver, wf)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(diis_cc_gs_solver) :: solver
+      class(diis_cc_gs) :: solver
 !
       class(ccs) :: wf
 !
@@ -102,17 +102,17 @@ contains
 !
       endif
 !
-   end subroutine prepare_diis_cc_gs_solver
+   end subroutine prepare_diis_cc_gs
 !
 !
-   subroutine write_restart_file_diis_cc_gs_solver(solver, wf)
+   subroutine write_restart_file_diis_cc_gs(solver, wf)
 !!
 !!    Write restart file 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018
 !!
       implicit none 
 !
-      class(diis_cc_gs_solver), intent(inout) :: solver
+      class(diis_cc_gs), intent(inout) :: solver
 !
       class(ccs), intent(in) :: wf 
 !
@@ -123,17 +123,17 @@ contains
 !
       call disk%close_file(solver%restart_file)       
 !
-   end subroutine write_restart_file_diis_cc_gs_solver
+   end subroutine write_restart_file_diis_cc_gs
 !
 !
-   subroutine restart_diis_cc_gs_solver(solver, wf)
+   subroutine restart_diis_cc_gs(solver, wf)
 !!
 !!    Restart 
 !!    Written by Eirik F. Kjønstad, Oct 2018 
 !!
       implicit none 
 !
-      class(diis_cc_gs_solver), intent(inout) :: solver 
+      class(diis_cc_gs), intent(inout) :: solver 
 !
       class(ccs), intent(inout) :: wf 
 !
@@ -155,17 +155,17 @@ contains
 !
       call wf%read_amplitudes()
 !
-   end subroutine restart_diis_cc_gs_solver
+   end subroutine restart_diis_cc_gs
 !
 !
-   subroutine print_settings_diis_cc_gs_solver(solver)
+   subroutine print_settings_diis_cc_gs(solver)
 !!
 !!    Print settings    
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
       implicit none 
 !
-      class(diis_cc_gs_solver) :: solver 
+      class(diis_cc_gs) :: solver 
 !
       write(output%unit, '(/t3,a)')      '- DIIS CC ground state solver settings:'
 !
@@ -177,10 +177,10 @@ contains
 !
       flush(output%unit)
 !
-   end subroutine print_settings_diis_cc_gs_solver
+   end subroutine print_settings_diis_cc_gs
 !
 !
-   subroutine do_diagonal_precondition_diis_cc_gs_solver(alpha, preconditioner, vector, n)
+   subroutine do_diagonal_precondition_diis_cc_gs(alpha, preconditioner, vector, n)
 !!
 !!    Do diagonal precondition 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
@@ -208,17 +208,17 @@ contains
       enddo 
 !$omp end parallel do
 !
-   end subroutine do_diagonal_precondition_diis_cc_gs_solver
+   end subroutine do_diagonal_precondition_diis_cc_gs
 !
 !
-   subroutine run_diis_cc_gs_solver(solver, wf)
+   subroutine run_diis_cc_gs(solver, wf)
 !!
 !!    Run 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(diis_cc_gs_solver) :: solver
+      class(diis_cc_gs) :: solver
 !
       class(ccs) :: wf
 !
@@ -335,17 +335,17 @@ contains
 !
       endif 
 !
-   end subroutine run_diis_cc_gs_solver
+   end subroutine run_diis_cc_gs
 !
 !
-   subroutine cleanup_diis_cc_gs_solver(solver, wf)
+   subroutine cleanup_diis_cc_gs(solver, wf)
 !!
 !! 	Cleanup 
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(diis_cc_gs_solver) :: solver
+      class(diis_cc_gs) :: solver
 !
       class(ccs) :: wf
 !
@@ -355,33 +355,33 @@ contains
 !
       call wf%save_amplitudes()
 !
-   end subroutine cleanup_diis_cc_gs_solver
+   end subroutine cleanup_diis_cc_gs
 !
 !
-   subroutine print_banner_diis_cc_gs_solver(solver)
+   subroutine print_banner_diis_cc_gs(solver)
 !!
 !!    Print banner
 !!    Written by Rolf H. Myhre, 2018
 !!
       implicit none 
 !
-      class(diis_cc_gs_solver) :: solver 
+      class(diis_cc_gs) :: solver 
 !
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
       call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
-   end subroutine print_banner_diis_cc_gs_solver
+   end subroutine print_banner_diis_cc_gs
 !
 !
-   subroutine read_settings_diis_cc_gs_solver(solver)
+   subroutine read_settings_diis_cc_gs(solver)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
 !
-      class(diis_cc_gs_solver) :: solver 
+      class(diis_cc_gs) :: solver 
 !
       integer :: n_specs, i
 !
@@ -418,10 +418,10 @@ contains
 !
       enddo
 !
-   end subroutine read_settings_diis_cc_gs_solver
+   end subroutine read_settings_diis_cc_gs
 !
 !
-   subroutine print_summary_diis_cc_gs_solver(wf)
+   subroutine print_summary_diis_cc_gs(wf)
 !!
 !!    Print summary 
 !!    Written by Eirik F. Kjønstad, Dec 2018 
@@ -440,7 +440,7 @@ contains
       t1_diagnostic = wf%get_t1_diagnostic() 
       write(output%unit, '(/t6,a32,f14.12)') 'T1 diagnostic (|T1|/sqrt(N_e)): ', t1_diagnostic
 !
-   end subroutine print_summary_diis_cc_gs_solver
+   end subroutine print_summary_diis_cc_gs
 !
 !
-end module diis_cc_gs_solver_class
+end module diis_cc_gs_class
