@@ -5,7 +5,7 @@ set(eT_fortran_sources
    src/solvers/hf/scf_hf_solver_class.F90
    src/solvers/cc/diis_cc_gs_solver_class.F90
    src/solvers/cc/diis_cc_es_solver_class.F90
-   src/solvers/cc/diis_cc_multipliers_solver_class.F90
+   src/solvers/cc/diis_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_es_solver_class.F90
    src/solvers/cc/davidson_cc_ip_solver_class.F90
@@ -23,11 +23,6 @@ set(eT_fortran_sources
    src/integrals/ao_integral_tool_class.F90
    src/integrals/mo_integral_tool_class.F90
    src/solver_tools/cholesky_array_list_class.F90
-   src/libint/h_wx.F90
-   src/libint/s_wx.F90
-   src/libint/mu_wx.F90
-   src/libint/g_wxyz.F90
-   src/libint/libint_initialization.F90
    src/memory/batching_index_class.F90
    src/memory/memory_manager_class.F90
    src/various/kinds.F90
@@ -46,6 +41,7 @@ set(eT_fortran_sources
    src/wavefunctions/mlhf_class.F90
    src/wavefunctions/ccs_class.F90
    src/wavefunctions/cc2_class.F90
+   src/wavefunctions/lowmem_cc2_class.F90
    src/wavefunctions/ccsd_class.F90
    src/wavefunctions/cc3_class.F90
    src/wavefunctions/mp2_class.F90
@@ -54,7 +50,7 @@ set(eT_fortran_sources
    src/molecular_system/periodic_table.F90
    src/molecular_system/shell_class.F90
    src/molecular_system/basis_set_info.F90
-   src/libint/atom_init.F90
+   src/libint/libint_initialization.F90
    src/molecular_system/active_atoms_info_class.F90
    src/solver_tools/diis_tool_class.F90
    src/solver_tools/davidson_tool_class.F90
@@ -64,5 +60,9 @@ set(eT_fortran_sources
    src/submodules/ccsd/jacobian_ccsd.F90
    src/submodules/ccsd/jacobian_transpose_ccsd.F90
    src/submodules/cc2/omega_cc2.F90
+   src/submodules/cc2/jacobian_cc2.F90
+   src/submodules/cc2/jacobian_transpose_cc2.F90
+   src/submodules/lowmem_cc2/omega_lowmem_cc2.F90
+   src/submodules/lowmem_cc2/jacobian_lowmem_cc2.F90
    src/submodules/cc3/omega_cc3.F90
 )

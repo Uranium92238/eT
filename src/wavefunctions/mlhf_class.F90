@@ -57,10 +57,10 @@ contains
 !
       wf%n_ao = wf%system%get_n_aos()
 !
-      call initialize_coulomb()
-      call initialize_kinetic()
-      call initialize_nuclear()
-      call initialize_overlap()
+      call initialize_coulomb_c()
+      call initialize_kinetic_c()
+      call initialize_nuclear_c()
+      call initialize_overlap_c()
 !
       call wf%set_n_mo()
 !

@@ -2811,21 +2811,18 @@ contains
 !
       call cpu_time(e_decomp_time)
 !
-      do I = 1, solver%n_cholesky ! Zero upper unreferenced triangle
-         do J = 1, I - 1
-!
-            integrals_auxiliary(J, I) = zero
-!
-         enddo
-      enddo
+      write(output%unit, '(/t6, a)') 'Done decomposing (J|K)!'
+      flush(output%unit)
 !
       call mem%alloc(cholesky_basis_updated, n_vectors, 3)
 !
+!$omp parallel do private(I)
       do I = 1, n_vectors
 !
          cholesky_basis_updated(I, :) = cholesky_basis(keep_vectors(I), :)
 !
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(cholesky_basis, solver%n_cholesky, 3)
       deallocate(keep_vectors)
@@ -2925,7 +2922,9 @@ contains
 !
       real(dp):: s_invert_time, e_invert_time
 !
-      real(dp), dimension(:,:), allocatable :: cholesky, cholesky_inverse
+      real(dp), dimension(:,:), allocatable :: cholesky_inverse
+!
+      integer :: I, info
 !
       call cpu_time(s_invert_time)
 !
@@ -2934,19 +2933,20 @@ contains
       call disk%open_file(solver%cholesky_aux, 'read')
       rewind(solver%cholesky_aux%unit)
 !
-      call mem%alloc(cholesky, solver%n_cholesky, solver%n_cholesky)
+      call mem%alloc(cholesky_inverse, solver%n_cholesky, solver%n_cholesky)
 !
-      read(solver%cholesky_aux%unit) cholesky
+      read(solver%cholesky_aux%unit) cholesky_inverse
 !
-      call disk%close_file(solver%cholesky_aux)
+      call disk%close_file(solver%cholesky_aux, 'delete')
 !
 !     Invert cholesky vectors
 !
-      call mem%alloc(cholesky_inverse, solver%n_cholesky, solver%n_cholesky)
+      call DTRTRI('l','n', solver%n_cholesky, cholesky_inverse, solver%n_cholesky, info)
 !
-      call inv_lower_tri(cholesky_inverse, cholesky, solver%n_cholesky)
+      if (info /= 0) call output%error_msg('Error: matrix inversion failed!', info)
 !
-      call mem%dealloc(cholesky, solver%n_cholesky, solver%n_cholesky)
+      write(output%unit, '(/t6, a)') 'Done inverting L_JK!'
+      flush(output%unit)
 !
 !     Write inverse Cholesky vectors of auxiliary basis overlap
 !
@@ -2955,7 +2955,13 @@ contains
 !
       call disk%open_file(solver%cholesky_aux_inverse, 'write', 'rewind')
 !
-      write(solver%cholesky_aux_inverse%unit) cholesky_inverse
+!     Write out columns, but only the parts that are not rubbish left over from dpstrf
+!
+      do I = 1, solver%n_cholesky
+!
+         write(solver%cholesky_aux_inverse%unit) cholesky_inverse(1 + (I - 1) : solver%n_cholesky, I)
+!
+      enddo
 !
       call disk%close_file(solver%cholesky_aux_inverse)
 !
@@ -3046,8 +3052,13 @@ contains
       rewind(solver%cholesky_aux_inverse%unit)
 !
       call mem%alloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
+      aux_chol_inverse = zero
 !
-      read(solver%cholesky_aux_inverse%unit) aux_chol_inverse
+      do I = 1, solver%n_cholesky
+!
+         read(solver%cholesky_aux_inverse%unit) aux_chol_inverse(1 + (I - 1) : solver%n_cholesky, I)
+!
+      enddo
 !
       call disk%close_file(solver%cholesky_aux_inverse)
 !
@@ -3057,7 +3068,7 @@ contains
 !
       call trans(aux_chol_inverse, aux_chol_inverse_transpose, solver%n_cholesky)
 !
-      call mem%alloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
+      call mem%dealloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
 !
 !     Prepare file for AO Cholesky vectors
 !
@@ -4016,11 +4027,11 @@ contains
       logical, dimension(:), allocatable :: construct_sp
 !
       integer :: n_construct_sp, n_construct_aop, size_AB, A, B, I, J, AB_offset, AB_offset_full
-      integer :: current_q_batch, required, throw_away_index, x, y, p, q, xy, xy_packed, sp, pq
+      integer :: x, y, p, q, xy, xy_packed, sp, pq
 !
       type(interval) :: A_interval, B_interval
 !
-      real(dp), dimension(:,:), allocatable :: L_xy, L_xy_full, L_J_pq, temp, L_pq_J
+      real(dp), dimension(:,:), allocatable :: L_xy, L_xy_full, L_J_pq, temp, L_pq_J, L_pq
 !
       type(file) :: cholesky_mo_vectors_seq
 !
@@ -4028,7 +4039,7 @@ contains
 !
       type(batching_index) :: batch_q
 !
-      real(dp) :: throw_away
+      integer ::  current_q_batch, req0, req1, pq_rec
 !
       call cholesky_mo_vectors_seq%init('cholesky_mo_temp', 'sequential', 'unformatted')
       call solver%cholesky_mo_vectors%init('cholesky_mo_vectors', 'direct', 'unformatted', dp*solver%n_cholesky)
@@ -4186,7 +4197,7 @@ contains
 !
          call mem%dealloc(temp, solver%n_ao, n_mo)
 !
-        write(cholesky_mo_vectors_seq%unit) ((L_J_pq(p,q), q = 1, p), p = 1, n_mo)
+        write(cholesky_mo_vectors_seq%unit) L_J_pq
 !
         call mem%dealloc(L_J_pq, n_mo, n_mo)
 !
@@ -4194,73 +4205,60 @@ contains
 !
 !     Read L_pq_J in batches over q
 !
-      required = ((n_mo)**2)*(solver%n_cholesky)
+      req0 = n_mo**2
+      req1 = (n_mo)*(solver%n_cholesky)
 !
 !     Initialize batching variable
 !
       call batch_q%init(n_mo)
-      call mem%num_batch(batch_q, required)
-!
-      rewind(cholesky_mo_vectors_seq%unit)
+      call mem%batch_setup(batch_q, req0, req1)
 !
 !     Loop over the q-batches
 !
       do current_q_batch = 1, batch_q%num_batches
 !
+         rewind(cholesky_mo_vectors_seq%unit)
+!
 !        Determine limits of the q-batch
 !
          call batch_q%determine_limits(current_q_batch)
 !
-         call mem%alloc(L_pq_J,                                            &
-            (((batch_q%length )*(batch_q%length + 1)/2) +                  &
-            (n_mo - batch_q%length - batch_q%first + 1)*(batch_q%length)), &
-            solver%n_cholesky)
+         call mem%alloc(L_pq_J, (batch_q%length)*(n_mo), solver%n_cholesky)
+!    
+         call mem%alloc(L_pq, n_mo, n_mo)
 !
-         if (batch_q%first .ne. 1) then
+         do J = 1, solver%n_cholesky
 !
-!           Calculate index of last element to throw away
+            read(cholesky_mo_vectors_seq%unit) L_pq
 !
-            throw_away_index = index_packed(n_mo, batch_q%first - 1)
+            do q = 1, batch_q%length
+               do p = 1, n_mo
 !
-!           Throw away all elements from 1 to throw_away_index, then read from batch start
+                  pq = n_mo*(q - 1) + p
 !
-            do j = 1, solver%n_cholesky
+                  L_pq_J(pq, J) = L_pq(p, q + batch_q%first - 1)
 !
-              read(cholesky_mo_vectors_seq%unit) (throw_away, i = 1, throw_away_index), &
-                  (L_pq_J(p,j), p = 1, (((batch_q%length + 1)*(batch_q%length)/2) + &
-                                       (n_mo - batch_q%length - batch_q%first + 1)*(batch_q%length)))
-!
+               enddo
             enddo
 !
-         else
+         enddo
 !
-!           Read from the start of each entry
-!
-            do j = 1, solver%n_cholesky
-!
-              read(cholesky_mo_vectors_seq%unit) (L_pq_J(p,j), p = 1, (((batch_q%length + 1)*(batch_q%length)/2) + &
-                                    (n_mo - batch_q%length - batch_q%first + 1)*(batch_q%length)))
-!
-            enddo
-!
-         endif
+         call mem%dealloc(L_pq, n_mo, n_mo)
 !
          do p = 1, n_mo
             do q = batch_q%first, batch_q%last
 !
-               pq = (max(p, q)*(max(p, q)-3)/2) + p + q
-               write(solver%cholesky_mo_vectors%unit, rec=pq) (L_pq_J(pq, J), J = 1, solver%n_cholesky)
+               pq_rec = (max(p, q)*(max(p, q)-3)/2) + p + q
+               pq = n_mo*(q - batch_q%first) + p
+               write(solver%cholesky_mo_vectors%unit, rec=pq_rec) (L_pq_J(pq, J), J = 1, solver%n_cholesky)
 !
             enddo
          enddo
 !
-         call mem%dealloc(L_pq_J,                                          &
-            (((batch_q%length + 1)*(batch_q%length)/2) +                   &
-            (n_mo - batch_q%length - batch_q%first + 1)*(batch_q%length)), &
-            solver%n_cholesky)
+         call mem%dealloc(L_pq_J, (batch_q%length)*(n_mo), solver%n_cholesky)
 !
-      enddo
-
+      enddo ! batch_q
+!
       call disk%close_file(solver%cholesky_ao_vectors, 'delete')
       call disk%close_file(solver%cholesky_mo_vectors)
       call disk%close_file(cholesky_mo_vectors_seq)

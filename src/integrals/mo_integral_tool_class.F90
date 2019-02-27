@@ -1088,7 +1088,7 @@ contains
 !
 !
    subroutine construct_ooov_2_mo_integral_tool(integrals, g_ijka, first_i, last_i, first_j, last_j, &
-                                                first_k, last_k, first_a, last_a, index_restrictions, t1)
+                                                first_k, last_k, first_a, last_a, t1)
 !!
 !!    Construct ooov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1107,8 +1107,6 @@ contains
       integer, intent(in) :: first_a, last_a
 !
       integer :: length_i, length_k, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ij_J 
       real(dp), dimension(:,:), allocatable :: L_ka_J 
@@ -1157,7 +1155,7 @@ contains
 !
 !
    subroutine construct_ooov_4_mo_integral_tool(integrals, g_ijka, first_i, last_i, first_j, last_j, &
-                                                first_k, last_k, first_a, last_a, index_restrictions, t1)
+                                                first_k, last_k, first_a, last_a, t1)
 !!
 !!    Construct ooov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1176,8 +1174,6 @@ contains
       real(dp), dimension(last_i-first_i+1,last_j-first_j+1,last_k-first_k+1,last_a-first_a+1), intent(inout) :: g_ijka
 !
       integer :: length_i, length_k, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ij_J 
       real(dp), dimension(:,:), allocatable :: L_ka_J 
@@ -1237,7 +1233,7 @@ contains
 !
 !
    subroutine construct_oovo_2_mo_integral_tool(integrals, g_ijak, first_i, last_i, first_j, last_j, &
-                                                first_a, last_a, first_k, last_k, index_restrictions, t1)
+                                                first_a, last_a, first_k, last_k, t1)
 !!
 !!    Construct oovo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1256,8 +1252,6 @@ contains
       integer, intent(in) :: first_a, last_a
 !
       integer :: length_i, length_k, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ij_J 
       real(dp), dimension(:,:), allocatable :: L_ak_J 
@@ -1305,7 +1299,7 @@ contains
 !
 !
    subroutine construct_oovo_4_mo_integral_tool(integrals, g_ijak, first_i, last_i, first_j, last_j, &
-                                                first_a, last_a, first_k, last_k, index_restrictions, t1)
+                                                first_a, last_a, first_k, last_k, t1)
 !!
 !!    Construct oovo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1324,8 +1318,6 @@ contains
       real(dp), dimension(last_i-first_i+1,last_j-first_j+1,last_a-first_a+1,last_k-first_k+1), intent(inout) :: g_ijak
 !
       integer :: length_i, length_k, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ij_J 
       real(dp), dimension(:,:), allocatable :: L_ak_J 
@@ -1385,7 +1377,7 @@ contains
 !
 !
    subroutine construct_ovoo_2_mo_integral_tool(integrals, g_iajk, first_i, last_i, first_a, last_a, &
-                                                first_j, last_j, first_k, last_k, index_restrictions, t1)
+                                                first_j, last_j, first_k, last_k, t1)
 !!
 !!    Construct ovoo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1404,8 +1396,6 @@ contains
       integer, intent(in) :: first_a, last_a
 !
       integer :: length_i, length_k, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J 
       real(dp), dimension(:,:), allocatable :: L_jk_J 
@@ -1453,7 +1443,7 @@ contains
 !
 !
    subroutine construct_ovoo_4_mo_integral_tool(integrals, g_iajk, first_i, last_i, first_a, last_a, &
-                                                first_j, last_j, first_k, last_k, index_restrictions, t1)
+                                                first_j, last_j, first_k, last_k, t1)
 !!
 !!    Construct ovoo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1472,8 +1462,6 @@ contains
       real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_j-first_j+1,last_k-first_k+1), intent(inout) :: g_iajk
 !
       integer :: length_i, length_k, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J 
       real(dp), dimension(:,:), allocatable :: L_jk_J 
@@ -1533,7 +1521,7 @@ contains
 !
 !
    subroutine construct_vooo_2_mo_integral_tool(integrals, g_aijk, first_a, last_a, first_i, last_i, &
-                                                first_j, last_j, first_k, last_k, index_restrictions, t1)
+                                                first_j, last_j, first_k, last_k, t1)
 !!
 !!    Construct ovoo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1552,8 +1540,6 @@ contains
       integer, intent(in) :: first_a, last_a
 !
       integer :: length_i, length_k, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ai_J 
       real(dp), dimension(:,:), allocatable :: L_jk_J 
@@ -1601,7 +1587,7 @@ contains
 !
 !
    subroutine construct_vooo_4_mo_integral_tool(integrals, g_aijk, first_a, last_a, first_i, last_i, &
-                                                first_j, last_j, first_k, last_k, index_restrictions, t1)
+                                                first_j, last_j, first_k, last_k, t1)
 !!
 !!    Construct ovoo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1620,8 +1606,6 @@ contains
       real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_j-first_j+1,last_k-first_k+1), intent(inout) :: g_aijk
 !
       integer :: length_i, length_k, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ai_J 
       real(dp), dimension(:,:), allocatable :: L_jk_J 
@@ -1681,7 +1665,7 @@ contains
 !
 !
    subroutine construct_vvoo_2_mo_integral_tool(integrals, g_abij, first_a, last_a, first_b, last_b, &
-                                              first_i, last_i, first_j, last_j, index_restrictions, t1)
+                                              first_i, last_i, first_j, last_j, t1)
 !!
 !!    Construct vvoo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1700,8 +1684,6 @@ contains
       integer, intent(in) :: first_a, last_a
 !
       integer :: length_i, length_b, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ab_J 
       real(dp), dimension(:,:), allocatable :: L_ij_J 
@@ -1749,7 +1731,7 @@ contains
 !
 !
    subroutine construct_vvoo_4_mo_integral_tool(integrals, g_abij, first_a, last_a, first_b, last_b, &
-                                              first_i, last_i, first_j, last_j, index_restrictions, t1)
+                                              first_i, last_i, first_j, last_j, t1)
 !!
 !!    Construct vvoo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1768,8 +1750,6 @@ contains
       real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_i-first_i+1,last_j-first_j+1), intent(inout) :: g_abij
 !
       integer :: length_i, length_b, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ab_J 
       real(dp), dimension(:,:), allocatable :: L_ij_J 
@@ -1829,7 +1809,7 @@ contains
 !
 !
    subroutine construct_oovv_2_mo_integral_tool(integrals, g_ijab, first_i, last_i, first_j, last_j, &
-                                                first_a, last_a, first_b, last_b, index_restrictions, t1)
+                                                first_a, last_a, first_b, last_b, t1)
 !!
 !!    Construct oovv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1848,8 +1828,6 @@ contains
       integer, intent(in) :: first_a, last_a
 !
       integer :: length_i, length_b, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ab_J 
       real(dp), dimension(:,:), allocatable :: L_ij_J 
@@ -1897,7 +1875,7 @@ contains
 !
 !
    subroutine construct_oovv_4_mo_integral_tool(integrals, g_ijab, first_i, last_i, first_j, last_j, &
-                                                first_a, last_a, first_b, last_b, index_restrictions, t1)
+                                                first_a, last_a, first_b, last_b, t1)
 !!
 !!    Construct oovv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1916,8 +1894,6 @@ contains
       real(dp), dimension(last_i-first_i+1,last_j-first_j+1,last_a-first_a+1,last_b-first_b+1), intent(inout) :: g_ijab
 !
       integer :: length_i, length_b, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ab_J 
       real(dp), dimension(:,:), allocatable :: L_ij_J 
@@ -1977,7 +1953,7 @@ contains
 !
 !
    subroutine construct_voov_2_mo_integral_tool(integrals, g_aijb, first_a, last_a, first_i, last_i, &
-                                                first_j, last_j, first_b, last_b, index_restrictions, t1)
+                                                first_j, last_j, first_b, last_b, t1)
 !!
 !!    Construct voov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1996,8 +1972,6 @@ contains
       integer, intent(in) :: first_a, last_a
 !
       integer :: length_i, length_b, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ai_J 
       real(dp), dimension(:,:), allocatable :: L_jb_J 
@@ -2044,7 +2018,7 @@ contains
 !
 !
    subroutine construct_voov_4_mo_integral_tool(integrals, g_aijb, first_a, last_a, first_i, last_i, &
-                                                first_j, last_j, first_b, last_b, index_restrictions, t1)
+                                                first_j, last_j, first_b, last_b, t1)
 !!
 !!    Construct voov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -2063,8 +2037,6 @@ contains
       real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_j-first_j+1,last_b-first_b+1), intent(inout) :: g_aijb
 !
       integer :: length_i, length_b, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ai_J 
       real(dp), dimension(:,:), allocatable :: L_jb_J 
@@ -2124,7 +2096,7 @@ contains
 !
 !
    subroutine construct_ovvo_2_mo_integral_tool(integrals, g_iabj, first_i, last_i, first_a, last_a, &
-                                                first_b, last_b, first_j, last_j, index_restrictions, t1)
+                                                first_b, last_b, first_j, last_j, t1)
 !!
 !!    Construct ovvo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -2143,8 +2115,6 @@ contains
       integer, intent(in) :: first_a, last_a
 !
       integer :: length_i, length_b, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J 
       real(dp), dimension(:,:), allocatable :: L_bj_J 
@@ -2192,7 +2162,7 @@ contains
 !
 !
    subroutine construct_ovvo_4_mo_integral_tool(integrals, g_iabj, first_i, last_i, first_a, last_a, &
-                                                first_b, last_b, first_j, last_j, index_restrictions, t1)
+                                                first_b, last_b, first_j, last_j, t1)
 !!
 !!    Construct ovvo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -2211,8 +2181,6 @@ contains
       real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_b-first_b+1,last_j-first_j+1), intent(inout) :: g_iabj
 !
       integer :: length_i, length_b, length_j, length_a
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J 
       real(dp), dimension(:,:), allocatable :: L_bj_J 
@@ -2661,7 +2629,7 @@ contains
 !
 !
    subroutine construct_vvvo_mo_integral_tool(integrals, g_abci, first_a, last_a, first_b, last_b, &
-                                              first_c, last_c, first_i, last_i, index_restrictions, t1)
+                                              first_c, last_c, first_i, last_i, t1)
 !!
 !!    Construct vvvo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -2680,8 +2648,6 @@ contains
       integer, intent(in) :: first_c, last_c
 !
       integer :: length_i, length_a, length_b, length_c
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ab_J 
       real(dp), dimension(:,:), allocatable :: L_ci_J 
@@ -2729,7 +2695,7 @@ contains
 !
 !
    subroutine construct_vvov_2_mo_integral_tool(integrals, g_abic, first_a, last_a, first_b, last_b, &
-                                                first_i, last_i, first_c, last_c, index_restrictions, t1)
+                                                first_i, last_i, first_c, last_c, t1)
 !!
 !!    Construct vvov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -2748,8 +2714,6 @@ contains
       integer, intent(in) :: first_c, last_c
 !
       integer :: length_i, length_a, length_b, length_c
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ab_J 
       real(dp), dimension(:,:), allocatable :: L_ic_J 
@@ -2797,7 +2761,7 @@ contains
 !
 !
    subroutine construct_vvov_4_mo_integral_tool(integrals, g_abic, first_a, last_a, first_b, last_b, &
-                                                first_i, last_i, first_c, last_c, index_restrictions, t1)
+                                                first_i, last_i, first_c, last_c, t1)
 !!
 !!    Construct vvov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -2816,8 +2780,6 @@ contains
       real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_i-first_i+1,last_c-first_c+1), intent(inout) :: g_abic
 !
       integer :: length_i, length_a, length_b, length_c
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ab_J 
       real(dp), dimension(:,:), allocatable :: L_ic_J 
@@ -2877,7 +2839,7 @@ contains
 !
 !
    subroutine construct_vovv_2_mo_integral_tool(integrals, g_aibc, first_a, last_a, first_i, last_i, &
-                                                first_b, last_b, first_c, last_c, index_restrictions, t1)
+                                                first_b, last_b, first_c, last_c, t1)
 !!
 !!    Construct vovv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -2896,8 +2858,6 @@ contains
       integer, intent(in) :: first_c, last_c
 !
       integer :: length_i, length_a, length_b, length_c
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ai_J 
       real(dp), dimension(:,:), allocatable :: L_bc_J 
@@ -2945,7 +2905,7 @@ contains
 !
 !
    subroutine construct_vovv_4_mo_integral_tool(integrals, g_aibc, first_a, last_a, first_i, last_i, &
-                                                first_b, last_b, first_c, last_c, index_restrictions, t1)
+                                                first_b, last_b, first_c, last_c, t1)
 !!
 !!    Construct vovv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -2964,8 +2924,6 @@ contains
       real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_b-first_b+1,last_c-first_c+1), intent(inout) :: g_aibc
 !
       integer :: length_i, length_a, length_b, length_c
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ai_J 
       real(dp), dimension(:,:), allocatable :: L_bc_J 
@@ -3025,7 +2983,7 @@ contains
 !
 !
    subroutine construct_ovvv_2_mo_integral_tool(integrals, g_iabc, first_i, last_i, first_a, last_a, &
-                                                first_b, last_b, first_c, last_c, index_restrictions, t1)
+                                                first_b, last_b, first_c, last_c, t1)
 !!
 !!    Construct ovvv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -3044,8 +3002,6 @@ contains
       integer, intent(in) :: first_c, last_c
 !
       integer :: length_i, length_a, length_b, length_c
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J 
       real(dp), dimension(:,:), allocatable :: L_bc_J 
@@ -3092,7 +3048,7 @@ contains
 !
 !
    subroutine construct_ovvv_4_mo_integral_tool(integrals, g_iabc, first_i, last_i, first_a, last_a, &
-                                                first_b, last_b, first_c, last_c, index_restrictions, t1)
+                                                first_b, last_b, first_c, last_c, t1)
 !!
 !!    Construct ovvv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -3111,8 +3067,6 @@ contains
       real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_b-first_b+1,last_c-first_c+1), intent(inout) :: g_iabc
 !
       integer :: length_i, length_a, length_b, length_c
-!
-      logical, intent(in) :: index_restrictions
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J 
       real(dp), dimension(:,:), allocatable :: L_bc_J 

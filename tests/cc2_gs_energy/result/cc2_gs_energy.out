@@ -1,0 +1,246 @@
+
+
+
+                         eT - a coupled cluster program 
+
+           S. D. Folkestad, E. F. Kjønstad, H. Koch and A. Skeidsvoll
+
+
+  --------------------------------------------------------------------------------------------
+
+  Contributor:       Contributions:
+
+  E. F. Kjønstad     HF, UHF, CCS, CCSD, MP2, Cholesky decomposition, DIIS-tool,
+                     Davidson-tool
+  S. D. Folkestad    HF, CCS, CCSD, Cholesky decomposition, Davidson-tool, CVS
+  A. Skeidsvoll      MP2, CCSD
+
+  -------------------------------------------------------------------------------------------
+
+
+  Memory available for calculation:         8 GB
+  Disk space available for calculation:    30 GB
+
+  - Molecular system specifications:
+
+     Charge:       0
+     Multiplicity: 1
+
+     Nuclear repulsion energy (a.u.):             12.116100574587
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+     H    0.866810000000   0.601440000000   5.000000000000   cc-pVDZ    
+     H   -0.866810000000   0.601440000000   5.000000000000   cc-pVDZ    
+     O    0.000000000000  -0.075790000000   5.000000000000   cc-pVDZ    
+     He   0.100000000000  -0.020000000000   7.530000000000   cc-pVDZ    
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:         23
+     Number of molecular orbitals:       29
+     Number of atomic orbitals:          29
+
+
+  :: Self-consistent field DIIS Hartree-Fock solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock matrix 
+  is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:               8
+     Energy threshold:              0.1000E-09
+     Gradient threshold:            0.1000E-09
+
+     Coulomb screening threshold:   0.1000E-12
+     Exchange screening threshold:  0.1000E-12
+     ERI integral precision:        0.1000E-25
+
+  - Setting initial AO density to SAD:
+
+     Energy of initial guess:       -78.492022922278
+     Number of electrons in guess:   12.000000000000
+
+  Iteration    Energy (a.u.)        Max(grad.)    Delta E (a.u.)
+  --------------------------------------------------------------
+    1           -78.796606526463     0.9053E-01     0.7880E+02
+    2           -78.828675823330     0.7128E-01     0.3207E-01
+    3           -78.843428154401     0.8290E-02     0.1475E-01
+    4           -78.843809541666     0.2414E-02     0.3814E-03
+    5           -78.843850846799     0.3301E-03     0.4131E-04
+    6           -78.843851669326     0.5527E-04     0.8225E-06
+    7           -78.843851692851     0.5865E-05     0.2353E-07
+    8           -78.843851693556     0.2356E-05     0.7053E-09
+    9           -78.843851693612     0.9680E-06     0.5518E-10
+   10           -78.843851693630     0.3834E-06     0.1819E-10
+   11           -78.843851693630     0.9230E-07     0.5542E-12
+   12           -78.843851693630     0.1426E-07     0.7105E-13
+   13           -78.843851693630     0.2213E-08     0.7105E-13
+   14           -78.843851693630     0.2763E-09     0.1421E-13
+   15           -78.843851693630     0.1292E-09     0.7105E-13
+   16           -78.843851693630     0.7464E-10     0.1421E-13
+  --------------------------------------------------------------
+
+  Convergence criterion met in  16 iterations!
+
+  - Summary of HF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                 0.645629080255
+     Nuclear repulsion energy:     12.116100574587
+     Electronic energy:           -90.959952268217
+     Total energy:                -78.843851693630
+
+  - Molecular orbital energies:
+
+    1  -20.574269195144      2   -1.277667044970      3   -0.898849406832
+    4   -0.629870222684      5   -0.541641772859      6   -0.485872762839
+    7    0.159756317416      8    0.229311906288      9    0.704416610869
+   10    0.746260122914     11    1.155862024376     12    1.170770887070
+   13    1.267961746552     14    1.449847537221     15    1.463234913424
+   16    1.474444394525     17    1.682695299879     18    1.804186820054
+   19    1.902641648740     20    2.148883457170     21    2.200395756972
+   22    2.540321859998     23    2.541517310524     24    2.559338707327
+   25    3.175416260657     26    3.209661156310     27    3.328173215198
+   28    3.721936473469     29    3.985492632583
+
+  - Cleaning up Self-consistent field DIIS Hartree-Fock solver
+
+  - Running Ground state engine
+
+
+  :: Cholesky decomposition of electronic repulsion integrals solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations.
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-11
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+     Total number of AOs:                    29
+     Total number of shell pairs:           120
+     Total number of AO pairs:              435
+
+  - Preparing diagonal for decomposition
+
+     Significant shell pairs:                   118
+     Significant AO pairs:                      431
+
+     Construct shell pairs:                     120
+     Construct AO pairs:                        435
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1              406 /      108       0.47383E+01     147             42                17052
+     2              319 /       93       0.47165E-01     234            111                35409
+     3              250 /       76       0.46944E-03     178            183                45750
+     4              187 /       55       0.38270E-05     145            265                49555
+     5               87 /       25       0.38106E-07      78            324                28188
+     6               21 /        3       0.37202E-09      43            349                 7329
+     7                0 /        0       0.36652E-11       7            354                    0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals: 
+
+     Final number of Cholesky vectors:        354
+
+  - Timings for Cholesky decomposition of electronic repulsion integrals:
+
+     Wall time to determine auxiliary basis:                     0.03
+     Wall time to construct (J|K), decompose, and invert:        0.02
+     Wall time to build L_ab^J and test:                         0.02
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.7161E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.8882E-15
+
+  - Cleaning up Cholesky decomposition of electronic repulsion integrals solver
+
+
+  :: DIIS CC ground solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
+  of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 13. 
+  
+
+  - DIIS CC ground state solver settings:
+
+     Omega threshold:           0.10E-09
+     Energy threshold:          0.10E-09
+
+     DIIS dimension:                   8
+     Max number of iterations:       100
+
+  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) 
+  ---------------------------------------------------------------
+    1           -79.084241931608     0.3734E-01     0.7908E+02
+    2           -79.085431671928     0.7567E-02     0.1190E-02
+    3           -79.085759807020     0.9940E-03     0.3281E-03
+    4           -79.085768585649     0.1833E-03     0.8779E-05
+    5           -79.085769937826     0.3615E-04     0.1352E-05
+    6           -79.085769725742     0.6004E-05     0.2121E-06
+    7           -79.085769729164     0.2063E-05     0.3422E-08
+    8           -79.085769729229     0.3646E-06     0.6526E-10
+    9           -79.085769729522     0.7189E-07     0.2925E-09
+   10           -79.085769729632     0.1859E-07     0.1103E-09
+   11           -79.085769729579     0.5201E-08     0.5302E-10
+   12           -79.085769729568     0.8873E-09     0.1080E-10
+   13           -79.085769729572     0.1945E-09     0.3936E-11
+   14           -79.085769729575     0.3028E-10     0.2586E-11
+  --------------------------------------------------------------
+
+  Convergence criterion met in  14 iterations!
+
+  - DIIS CC ground state solver summary:
+
+     Final ground state energy (a.u.):  -79.085769729575
+
+     Largest single amplitudes:
+     -----------------------------------------
+       a         i         t(a,i)             
+     -----------------------------------------
+       1         5          0.015071367747
+      14         4          0.009516336775
+       7         4          0.008547796573
+      15         5         -0.006232215147
+       5         6          0.005875107058
+       6         2          0.005220429231
+      13         5          0.005212699581
+       2         4         -0.005071084637
+      11         6         -0.003616248564
+       4         5         -0.003233309222
+      10         5         -0.002922325387
+      13         2          0.002753003922
+      12         4          0.002249460954
+      15         2         -0.001865082664
+       6         5          0.001792035850
+       4         2          0.001718718315
+       9         6         -0.001682265441
+       9         5          0.001570574444
+       1         6          0.001050043102
+       5         3          0.000740404034
+     -----------------------------------------
+
+     T1 diagnostic (|T1|/sqrt(N_e)): 0.007125912541
+
+  - Cleaning up Ground state engine
+
+  - Cleaning up cc2 wavefunction
+
+  eT terminated successfully!

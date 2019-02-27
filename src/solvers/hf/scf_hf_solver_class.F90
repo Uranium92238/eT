@@ -176,6 +176,7 @@ contains
             write(output%unit, '(/t3,a27,i3,a12)') 'Converged criterion met in ', iteration, ' iterations!'
 !
             call wf%print_wavefunction_summary()
+            flush(output%unit)
 !
          else
 !
@@ -192,7 +193,7 @@ contains
       enddo
 !
       call mem%dealloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%alloc(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      call mem%dealloc(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
@@ -222,6 +223,16 @@ contains
       logical :: do_mo_transformation
 !
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
+      flush(output%unit)
+!
+!     Do a final Roothan-Hall step to transform the Fock matrix in the canonical MO basis 
+!
+      do_mo_transformation = .true.
+      call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies, do_mo_transformation)
+!
+!     Save the orbitals to file & store restart information 
+!
+      call wf%save_orbital_coefficients()
 !
 !     Do a final Roothan-Hall step to transform the Fock matrix in the canonical MO basis 
 !
