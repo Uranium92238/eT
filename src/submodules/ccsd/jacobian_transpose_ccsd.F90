@@ -1423,7 +1423,7 @@ contains
 !
          call mem%alloc(g_akde, wf%n_v, wf%n_o, wf%n_v, batch_e%length)
 !
-!$omp parallel do private(e, d, de, k, kde, a, ka)
+!$omp parallel do private(e, d, de, k, a
          do e = 1, batch_e%length
             do d = 1, wf%n_v
 !
