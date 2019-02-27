@@ -870,7 +870,7 @@ contains
 
       real(dp), dimension(n) :: work  ! work array for LAPACK
       integer, dimension(n) :: ipiv   ! pivot indices
-      integer(kind=4) :: info
+      integer :: info
 !
 !     Store A in Ainv to prevent it from being overwritten by LAPACK
 !
@@ -908,7 +908,7 @@ contains
       real(dp), dimension(n, n), intent(in) :: A
       real(dp), dimension(n, n), intent(out) :: Ainv
 !
-      integer(kind=4) :: info
+      integer :: info
 !
 !     Store A in Ainv to prevent it from being overwritten by LAPACK
 !
