@@ -1,7 +1,8 @@
-module eri_cd_solver_class
+module eri_cd_class
 !
 !!
-!!    Cholesky decomposition (CD) of electronic repulsion integrals (ERI) solver class
+!!    Cholesky decomposition (CD) of electronic 
+!!    repulsion integrals (ERI) solver class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
@@ -27,7 +28,7 @@ module eri_cd_solver_class
 !
 !  Definition of the ERI-CD class 
 !
-   type :: eri_cd_solver
+   type :: eri_cd
 !
       character(len=100) :: tag = 'Cholesky decomposition of electronic repulsion integrals solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
@@ -64,44 +65,44 @@ module eri_cd_solver_class
 !
    contains
 !
-      procedure :: prepare                                => prepare_eri_cd_solver
-      procedure :: run                                    => run_eri_cd_solver
-      procedure :: cleanup                                => cleanup_eri_cd_solver
+      procedure :: prepare                                => prepare_eri_cd
+      procedure :: run                                    => run_eri_cd
+      procedure :: cleanup                                => cleanup_eri_cd
 !
-      procedure :: invert_overlap_cholesky_vecs           => invert_overlap_cholesky_vecs_eri_cd_solver
-      procedure :: cholesky_vecs_diagonal_test            => cholesky_vecs_diagonal_test_eri_cd_solver
-      procedure :: diagonal_test                          => diagonal_test_eri_cd_solver
+      procedure :: invert_overlap_cholesky_vecs           => invert_overlap_cholesky_vecs_eri_cd
+      procedure :: cholesky_vecs_diagonal_test            => cholesky_vecs_diagonal_test_eri_cd
+      procedure :: diagonal_test                          => diagonal_test_eri_cd
       procedure :: full_test_cholesky_vecs                => full_test_cholesky_vecs_cd_eri_solver
-      procedure :: construct_significant_diagonal         => construct_significant_diagonal_eri_cd_solver
-      procedure :: construct_significant_diagonal_atomic  => construct_significant_diagonal_atomic_eri_cd_solver
-      procedure :: determine_auxilliary_cholesky_basis    => determine_auxilliary_cholesky_basis_eri_cd_solver
-      procedure :: construct_overlap_cholesky_vecs        => construct_overlap_cholesky_vecs_eri_cd_solver
-      procedure :: construct_cholesky_vectors             => construct_cholesky_vectors_eri_cd_solver
+      procedure :: construct_significant_diagonal         => construct_significant_diagonal_eri_cd
+      procedure :: construct_significant_diagonal_atomic  => construct_significant_diagonal_atomic_eri_cd
+      procedure :: determine_auxilliary_cholesky_basis    => determine_auxilliary_cholesky_basis_eri_cd
+      procedure :: construct_overlap_cholesky_vecs        => construct_overlap_cholesky_vecs_eri_cd
+      procedure :: construct_cholesky_vectors             => construct_cholesky_vectors_eri_cd
 !
       procedure :: construct_mo_cholesky_vecs             => construct_mo_cholesky_vecs_cd_eri_solver
 !
-      procedure :: read_info                              => read_info_eri_cd_solver
-      procedure :: print_banner                           => print_banner_eri_cd_solver
-      procedure :: print_settings                         => print_settings_eri_cd_solver
+      procedure :: read_info                              => read_info_eri_cd
+      procedure :: print_banner                           => print_banner_eri_cd
+      procedure :: print_settings                         => print_settings_eri_cd
 !
-      procedure :: construct_diagonal_batches             => construct_diagonal_batches_eri_cd_solver
-      procedure :: construct_diagonal_from_batch_bases    => construct_diagonal_from_batch_bases_eri_cd_solver
-      procedure :: append_bases                           => append_bases_eri_cd_solver
+      procedure :: construct_diagonal_batches             => construct_diagonal_batches_eri_cd
+      procedure :: construct_diagonal_from_batch_bases    => construct_diagonal_from_batch_bases_eri_cd
+      procedure :: append_bases                           => append_bases_eri_cd
 !
-   end type eri_cd_solver
+   end type eri_cd
 !
 !
 contains
 !
 !
-   subroutine prepare_eri_cd_solver(solver, system)
+   subroutine prepare_eri_cd(solver, system)
 !!
 !!    Prepare ERI
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
       type(molecular_system) :: system
 !
       solver%n_batches = 1
@@ -130,17 +131,17 @@ contains
 !
       endif
 !
-   end subroutine prepare_eri_cd_solver
+   end subroutine prepare_eri_cd
 !
 !
-   subroutine run_eri_cd_solver(solver, system, screening_vector)
+   subroutine run_eri_cd(solver, system, screening_vector)
 !!
 !!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
 !
       type(molecular_system) :: system
 !
@@ -273,24 +274,24 @@ contains
 !
       flush(output%unit)
 !
-   end subroutine run_eri_cd_solver
+   end subroutine run_eri_cd
 !
 !
-   subroutine cleanup_eri_cd_solver(solver)
+   subroutine cleanup_eri_cd(solver)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
 !
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
 !
-   end subroutine cleanup_eri_cd_solver
+   end subroutine cleanup_eri_cd
 !
 !
-   subroutine construct_significant_diagonal_eri_cd_solver(solver, system, screening_vector)
+   subroutine construct_significant_diagonal_eri_cd(solver, system, screening_vector)
 !!
 !!    Construct significant diagonal
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -306,7 +307,7 @@ contains
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
       class(molecular_system) :: system
 !
       real(dp), dimension(solver%n_ao,1), optional :: screening_vector
@@ -668,10 +669,10 @@ contains
       call mem%dealloc(D_xy, n_sig_aop, 1)
       call mem%dealloc(screening_vector_reduced, n_sig_aop, 1)
 !
-   end subroutine construct_significant_diagonal_eri_cd_solver
+   end subroutine construct_significant_diagonal_eri_cd
 !
 !
-   subroutine construct_significant_diagonal_atomic_eri_cd_solver(solver, system, screening_vector)
+   subroutine construct_significant_diagonal_atomic_eri_cd(solver, system, screening_vector)
 !!
 !!    Construct significant diagonal atomic
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -682,7 +683,7 @@ contains
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
       class(molecular_system) :: system
 !
       real(dp), dimension(solver%n_ao,1), optional :: screening_vector
@@ -1046,10 +1047,10 @@ contains
       call mem%dealloc(D_xy, n_sig_aop, 1)
       call mem%dealloc(screening_vector_reduced, n_sig_aop, 1)
 !
-   end subroutine construct_significant_diagonal_atomic_eri_cd_solver
+   end subroutine construct_significant_diagonal_atomic_eri_cd
 !
 !
-   subroutine construct_diagonal_batches_eri_cd_solver(solver, system)
+   subroutine construct_diagonal_batches_eri_cd(solver, system)
 !!
 !!    Construct diagonal batches
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1059,7 +1060,7 @@ contains
 !!
       implicit none
 !  
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
 !
       type(molecular_system) :: system
 !
@@ -1208,10 +1209,10 @@ contains
       call mem%dealloc(D_xy, n_sig_aop, 1)
       call mem%dealloc(screening_vector, n_sig_aop, 1)
 !
-   end subroutine construct_diagonal_batches_eri_cd_solver
+   end subroutine construct_diagonal_batches_eri_cd
 !
 !
-   subroutine construct_diagonal_from_batch_bases_eri_cd_solver(solver, system, n_cholesky_batches, n_sp_in_basis_batches)
+   subroutine construct_diagonal_from_batch_bases_eri_cd(solver, system, n_cholesky_batches, n_sp_in_basis_batches)
 !!
 !!    Construct diagonal from batch bases
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
@@ -1221,7 +1222,7 @@ contains
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
 !
       type(molecular_system) :: system
 !
@@ -1559,10 +1560,10 @@ contains
       call mem%dealloc(D, n_sig_aop, 1)
       call mem%dealloc(screening_vector, n_sig_aop, 1)
 !
-   end subroutine construct_diagonal_from_batch_bases_eri_cd_solver
+   end subroutine construct_diagonal_from_batch_bases_eri_cd
 !
 !
-   subroutine append_bases_eri_cd_solver(solver, n_cholesky_batches, n_sp_in_basis_batches)
+   subroutine append_bases_eri_cd(solver, n_cholesky_batches, n_sp_in_basis_batches)
 !!
 !!    Append bases
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1572,7 +1573,7 @@ contains
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
 !
       integer, dimension(solver%n_batches, 1), intent(in) :: n_cholesky_batches
       integer, dimension(solver%n_batches, 1), intent(in) :: n_sp_in_basis_batches
@@ -1661,10 +1662,10 @@ contains
       call mem%dealloc(cholesky_full, n_cholesky_total, 3)
       call mem%dealloc(basis_shell_info_full, n_sp_in_basis_total, 4)
 !
-   end subroutine append_bases_eri_cd_solver
+   end subroutine append_bases_eri_cd
 !
 !
-   subroutine determine_auxilliary_cholesky_basis_eri_cd_solver(solver, system, diagonal_info, basis_info)
+   subroutine determine_auxilliary_cholesky_basis_eri_cd(solver, system, diagonal_info, basis_info)
 !!
 !!    Determine auxiliary cholesky basis
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1675,7 +1676,7 @@ contains
 !!
       implicit none
 !
-      class(eri_cd_solver), intent(inout) :: solver
+      class(eri_cd), intent(inout) :: solver
 !
       class(molecular_system), intent(in) :: system
 !
@@ -2602,10 +2603,10 @@ contains
       call mem%dealloc(basis_shell_info, n_sp_in_basis, 4)
       call mem%dealloc(cholesky_basis_new, solver%n_cholesky, 3)
 !
-   end subroutine determine_auxilliary_cholesky_basis_eri_cd_solver
+   end subroutine determine_auxilliary_cholesky_basis_eri_cd
 !
 !
-   subroutine construct_overlap_cholesky_vecs_eri_cd_solver(solver, system)
+   subroutine construct_overlap_cholesky_vecs_eri_cd(solver, system)
 !!
 !!    Construct overlap cholesky vectors
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2616,7 +2617,7 @@ contains
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
 !
       type(molecular_system) :: system
 !
@@ -2908,17 +2909,17 @@ contains
 !
       call cpu_time(e_build_basis_time)
 !
-   end subroutine construct_overlap_cholesky_vecs_eri_cd_solver
+   end subroutine construct_overlap_cholesky_vecs_eri_cd
 !
 !
-   subroutine invert_overlap_cholesky_vecs_eri_cd_solver(solver)
+   subroutine invert_overlap_cholesky_vecs_eri_cd(solver)
 !!
 !!    Invert cholesky vectors of auxiliary basis overlap
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, July 2018
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
 !
       real(dp):: s_invert_time, e_invert_time
 !
@@ -2972,10 +2973,10 @@ contains
       call cpu_time(e_invert_time)
 !
 !
-   end subroutine invert_overlap_cholesky_vecs_eri_cd_solver
+   end subroutine invert_overlap_cholesky_vecs_eri_cd
 !
 !
-   subroutine construct_cholesky_vectors_eri_cd_solver(solver, system)
+   subroutine construct_cholesky_vectors_eri_cd(solver, system)
 !!
 !!    Construct Cholesky vectors
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2985,7 +2986,7 @@ contains
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
       type(molecular_system) :: system
 !
 !     Local variables
@@ -3348,16 +3349,16 @@ contains
       call mem%dealloc(basis_shell_info, n_sp_in_basis, 4)
       deallocate(construct_sp)
 !
-   end subroutine construct_cholesky_vectors_eri_cd_solver
+   end subroutine construct_cholesky_vectors_eri_cd
 !
 !
-   subroutine diagonal_test_eri_cd_solver(solver, system)
+   subroutine diagonal_test_eri_cd(solver, system)
 !!
 !!
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
       type(molecular_system) :: system
 !
       real(dp), dimension(:,:), allocatable :: D_red, D, g_AB_AB
@@ -3463,10 +3464,10 @@ contains
       write(output%unit, '(/t6, a, e12.4)')'Maximal difference between screened and actual diagonal: ', max_diff
       flush(output%unit)
 !
-   end subroutine diagonal_test_eri_cd_solver
+   end subroutine diagonal_test_eri_cd
 !
 !
-   subroutine cholesky_vecs_diagonal_test_eri_cd_solver(solver, system)
+   subroutine cholesky_vecs_diagonal_test_eri_cd(solver, system)
 !!
 !!    Cholesky vectors diagonal test
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -3478,7 +3479,7 @@ contains
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
 !
       type(molecular_system), intent(in) :: system
 !
@@ -3667,7 +3668,7 @@ contains
       write(output%unit, '(t6, a71, e12.4)')'Minimal element of difference between approximate and actual diagonal: ', min_diff
       flush(output%unit)
 !
-   end subroutine cholesky_vecs_diagonal_test_eri_cd_solver
+   end subroutine cholesky_vecs_diagonal_test_eri_cd
 !
 !
    subroutine full_test_cholesky_vecs_cd_eri_solver(solver, system)
@@ -3675,7 +3676,7 @@ contains
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
 !
       type(molecular_system), intent(in) :: system
 !
@@ -3930,7 +3931,7 @@ contains
    end function get_sp_from_shells
 !
 !
- subroutine read_info_eri_cd_solver(solver)
+ subroutine read_info_eri_cd(solver)
 !!
 !!    Read information
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -3947,7 +3948,7 @@ contains
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
 !
       character(len=100) :: line
 !
@@ -4003,7 +4004,7 @@ contains
       enddo
       backspace(input%unit)
 !
-   end subroutine read_info_eri_cd_solver
+   end subroutine read_info_eri_cd
 !
 !
    subroutine construct_mo_cholesky_vecs_cd_eri_solver(solver, system, n_mo, orbital_coefficients)
@@ -4016,7 +4017,7 @@ contains
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
 !
       type(molecular_system), intent(in) :: system
 !
@@ -4270,14 +4271,14 @@ contains
    end subroutine  construct_mo_cholesky_vecs_cd_eri_solver
 !
 !
-   subroutine print_banner_eri_cd_solver(solver)
+   subroutine print_banner_eri_cd(solver)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
 !
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
@@ -4285,17 +4286,17 @@ contains
       call long_string_print(solver%description2,'(/t3,a/)')
       call long_string_print(solver%description3)
 !
-   end subroutine print_banner_eri_cd_solver
+   end subroutine print_banner_eri_cd
 !
 !
-   subroutine print_settings_eri_cd_solver(solver)
+   subroutine print_settings_eri_cd(solver)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(eri_cd_solver) :: solver
+      class(eri_cd) :: solver
 !
       write(output%unit, '(/t3, a)')      '- Cholesky decomposition settings:'
 !
@@ -4304,7 +4305,7 @@ contains
       write(output%unit, '( t6, a21, 4x, i6)')'Max qual:            ', solver%max_qual
       flush(output%unit)
 !
-   end subroutine print_settings_eri_cd_solver
+   end subroutine print_settings_eri_cd
 !
 !
-end module eri_cd_solver_class
+end module eri_cd_class

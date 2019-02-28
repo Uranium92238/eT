@@ -1,4 +1,4 @@
-module davidson_cc_ip_solver_class
+module davidson_cc_ip_class
 !
 !!
 !!    Davidson coupled cluster ionized state solver class module
@@ -6,35 +6,33 @@ module davidson_cc_ip_solver_class
 !!
 !!    
 !
-   use davidson_cc_es_solver_class
+   use davidson_cc_es_class
 !
    implicit none
 !
-   type, extends(davidson_cc_es_solver) :: davidson_cc_ip_solver
-!
-
+   type, extends(davidson_cc_es) :: davidson_cc_ip
 !
    contains
 !
-      procedure :: read_settings          => read_settings_davidson_cc_ip_solver
+      procedure :: read_settings          => read_settings_davidson_cc_ip
 !
-      procedure :: set_start_vectors      => set_start_vectors_davidson_cc_ip_solver
-      procedure :: set_projection_vector  => set_projection_vector_davidson_cc_ip_solver
+      procedure :: set_start_vectors      => set_start_vectors_davidson_cc_ip
+      procedure :: set_projection_vector  => set_projection_vector_davidson_cc_ip
 !
-   end type davidson_cc_ip_solver
+   end type davidson_cc_ip
 !
 !
 contains
 !
 !
-   subroutine read_settings_davidson_cc_ip_solver(solver)
+   subroutine read_settings_davidson_cc_ip(solver)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
 !
-      class(davidson_cc_ip_solver) :: solver 
+      class(davidson_cc_ip) :: solver 
 !
       integer :: n_specs, i
 !
@@ -79,10 +77,10 @@ contains
 !
       enddo
 !
-   end subroutine read_settings_davidson_cc_ip_solver
+   end subroutine read_settings_davidson_cc_ip
 !
 !
-   subroutine set_start_vectors_davidson_cc_ip_solver(solver, wf, davidson)
+   subroutine set_start_vectors_davidson_cc_ip(solver, wf, davidson)
 !!
 !!    Set start vectors 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
@@ -91,7 +89,7 @@ contains
 !!
       implicit none
 !
-      class(davidson_cc_ip_solver) :: solver
+      class(davidson_cc_ip) :: solver
 !
       class(ccs) :: wf
 !
@@ -159,10 +157,10 @@ contains
 !
       endif
 !
-   end subroutine set_start_vectors_davidson_cc_ip_solver
+   end subroutine set_start_vectors_davidson_cc_ip
 !
 !
-   subroutine set_projection_vector_davidson_cc_ip_solver(solver, wf, davidson)
+   subroutine set_projection_vector_davidson_cc_ip(solver, wf, davidson)
 !!
 !!    Set projection vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
@@ -171,7 +169,7 @@ contains
 !!
       implicit none
 !
-      class(davidson_cc_ip_solver) :: solver
+      class(davidson_cc_ip) :: solver
 !
       class(ccs) :: wf
 !
@@ -188,7 +186,7 @@ contains
 !
       if (.false.) write(output%unit, *) solver%tag ! Hack to suppress unavoidable compiler warnings
 !
-   end subroutine set_projection_vector_davidson_cc_ip_solver
+   end subroutine set_projection_vector_davidson_cc_ip
 !
 !
-end module davidson_cc_ip_solver_class
+end module davidson_cc_ip_class

@@ -1,4 +1,4 @@
-module davidson_cc_es_solver_class
+module davidson_cc_es_class
 !
 !!
 !!    Davidson coupled cluster excited state solver class module
@@ -13,7 +13,7 @@ module davidson_cc_es_solver_class
 !
    implicit none
 !
-   type :: davidson_cc_es_solver
+   type :: davidson_cc_es
 !
       character(len=100) :: tag = 'Davidson coupled cluster excited state solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
@@ -45,43 +45,43 @@ module davidson_cc_es_solver_class
 !
    contains
 !     
-      procedure, non_overridable :: prepare          => prepare_davidson_cc_es_solver
-      procedure, non_overridable :: run              => run_davidson_cc_es_solver
-      procedure, non_overridable :: cleanup          => cleanup_davidson_cc_es_solver
+      procedure, non_overridable :: prepare          => prepare_davidson_cc_es
+      procedure, non_overridable :: run              => run_davidson_cc_es
+      procedure, non_overridable :: cleanup          => cleanup_davidson_cc_es
 !
-      procedure, nopass :: set_precondition_vector   => set_precondition_vector_davidson_cc_es_solver
-      procedure :: set_projection_vector             => set_projection_vector_davidson_cc_es_solver
+      procedure, nopass :: set_precondition_vector   => set_precondition_vector_davidson_cc_es
+      procedure :: set_projection_vector             => set_projection_vector_davidson_cc_es
 !
-      procedure :: print_banner                      => print_banner_davidson_cc_es_solver
+      procedure :: print_banner                      => print_banner_davidson_cc_es
 !
-      procedure :: read_settings                     => read_settings_davidson_cc_es_solver
+      procedure :: read_settings                     => read_settings_davidson_cc_es
 !
-      procedure :: print_settings                    => print_settings_davidson_cc_es_solver
-      procedure :: print_summary                     => print_summary_davidson_cc_es_solver
+      procedure :: print_settings                    => print_settings_davidson_cc_es
+      procedure :: print_summary                     => print_summary_davidson_cc_es
 !
-      procedure :: set_start_vectors                 => set_start_vectors_davidson_cc_es_solver
-      procedure :: transform_trial_vector            => transform_trial_vector_davidson_cc_es_solver
+      procedure :: set_start_vectors                 => set_start_vectors_davidson_cc_es
+      procedure :: transform_trial_vector            => transform_trial_vector_davidson_cc_es
 !       
-      procedure :: initialize_energies               => initialize_energies_davidson_cc_es_solver
-      procedure :: destruct_energies                 => destruct_energies_davidson_cc_es_solver   
+      procedure :: initialize_energies               => initialize_energies_davidson_cc_es
+      procedure :: destruct_energies                 => destruct_energies_davidson_cc_es   
 !
-      procedure :: restart                           => restart_davidson_cc_es_solver 
-      procedure :: write_restart_file                => write_restart_file_cc_es_solver
+      procedure :: restart                           => restart_davidson_cc_es 
+      procedure :: write_restart_file                => write_restart_file_davidson_cc_es 
 !
-   end type davidson_cc_es_solver
+   end type davidson_cc_es
 !
 !
 contains
 !
 !
-   subroutine prepare_davidson_cc_es_solver(solver)
+   subroutine prepare_davidson_cc_es(solver)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(davidson_cc_es_solver) :: solver
+      class(davidson_cc_es) :: solver
 !
       call solver%print_banner()
 !
@@ -105,17 +105,17 @@ contains
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
-   end subroutine prepare_davidson_cc_es_solver
+   end subroutine prepare_davidson_cc_es
 !
 !
-   subroutine write_restart_file_cc_es_solver(solver)
+   subroutine write_restart_file_davidson_cc_es(solver)
 !!
 !!    Write restart 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018
 !!
       implicit none 
 !
-      class(davidson_cc_es_solver) :: solver 
+      class(davidson_cc_es) :: solver 
 !
       call disk%open_file(solver%restart_file, 'write', 'rewind')
 !
@@ -124,17 +124,17 @@ contains
 !
       call disk%close_file(solver%restart_file) 
 !
-   end subroutine write_restart_file_cc_es_solver
+   end subroutine write_restart_file_davidson_cc_es
 !
 !
-   subroutine restart_davidson_cc_es_solver(solver, davidson)
+   subroutine restart_davidson_cc_es(solver, davidson)
 !!
 !!    Restart 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018
 !!
       implicit none 
 !
-      class(davidson_cc_es_solver) :: solver 
+      class(davidson_cc_es) :: solver 
 !
       class(eigen_davidson_tool) :: davidson
 !
@@ -168,10 +168,10 @@ contains
 !
 !     Todo... 
 !
-   end subroutine restart_davidson_cc_es_solver
+   end subroutine restart_davidson_cc_es
 !
 !
-   subroutine initialize_energies_davidson_cc_es_solver(solver)
+   subroutine initialize_energies_davidson_cc_es(solver)
 !!
 !!    Initialize energies
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -180,15 +180,15 @@ contains
 !!
       implicit none
 !
-      class(davidson_cc_es_solver) :: solver
+      class(davidson_cc_es) :: solver
 !
       if (.not. allocated(solver%energies)) &
             call mem%alloc(solver%energies, solver%n_singlet_states, 1)
 !
-   end subroutine initialize_energies_davidson_cc_es_solver
+   end subroutine initialize_energies_davidson_cc_es
 !
 !
-   subroutine destruct_energies_davidson_cc_es_solver(solver)
+   subroutine destruct_energies_davidson_cc_es(solver)
 !!
 !!    Destruct energies
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -197,22 +197,22 @@ contains
 !!
       implicit none
 !
-      class(davidson_cc_es_solver) :: solver
+      class(davidson_cc_es) :: solver
 !
       if (allocated(solver%energies)) &
             call mem%dealloc(solver%energies, solver%n_singlet_states, 1)
 !
-   end subroutine destruct_energies_davidson_cc_es_solver
+   end subroutine destruct_energies_davidson_cc_es
 !
 !
-   subroutine print_settings_davidson_cc_es_solver(solver)
+   subroutine print_settings_davidson_cc_es(solver)
 !!
 !!    Print settings    
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
       implicit none 
 !
-      class(davidson_cc_es_solver) :: solver 
+      class(davidson_cc_es) :: solver 
 !
       write(output%unit, '(/t3,a)') '- Davidson CC excited state solver settings:'
 !
@@ -222,17 +222,17 @@ contains
       write(output%unit, '(t6,a26,i3)')   'Max number of iterations: ', solver%max_iterations
       flush(output%unit)
 !
-   end subroutine print_settings_davidson_cc_es_solver
+   end subroutine print_settings_davidson_cc_es
 !
 !
-   subroutine print_summary_davidson_cc_es_solver(solver, davidson, wf)
+   subroutine print_summary_davidson_cc_es(solver, davidson, wf)
 !!
 !!    Print summary 
 !!    Written by Eirik F. Kjønstad, Dec 2018 
 !!
       implicit none 
 !
-      class(davidson_cc_es_solver), intent(in) :: solver 
+      class(davidson_cc_es), intent(in) :: solver 
       class(eigen_davidson_tool) :: davidson
 !
       class(ccs), intent(in) :: wf 
@@ -278,17 +278,17 @@ contains
       write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
       write(output%unit, '(t6,a26,f11.8)') 'eV/Hartree (CODATA 2014): ', Hartree_to_eV
 !
-   end subroutine print_summary_davidson_cc_es_solver
+   end subroutine print_summary_davidson_cc_es
 !
 !
-   subroutine run_davidson_cc_es_solver(solver, wf)
+   subroutine run_davidson_cc_es(solver, wf)
 !!
 !!    Run 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(davidson_cc_es_solver) :: solver
+      class(davidson_cc_es) :: solver
 !
       class(ccs) :: wf
 !
@@ -450,17 +450,17 @@ contains
 !
       call davidson%cleanup()
 !
-   end subroutine run_davidson_cc_es_solver
+   end subroutine run_davidson_cc_es
 !
 !
-   subroutine transform_trial_vector_davidson_cc_es_solver(solver, wf, c_i)
+   subroutine transform_trial_vector_davidson_cc_es(solver, wf, c_i)
 !!
 !!    Transform trial vector 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
 !!    Transforms the trial vector according to specified transformation routine.
 !!
-      class(davidson_cc_es_solver), intent(in) :: solver 
+      class(davidson_cc_es), intent(in) :: solver 
 !
       class(ccs), intent(in) :: wf 
 !
@@ -476,10 +476,10 @@ contains
 !
       endif 
 !
-   end subroutine transform_trial_vector_davidson_cc_es_solver
+   end subroutine transform_trial_vector_davidson_cc_es
 !
 !
-   subroutine set_start_vectors_davidson_cc_es_solver(solver, wf, davidson)
+   subroutine set_start_vectors_davidson_cc_es(solver, wf, davidson)
 !!
 !!    Set start vectors 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
@@ -488,7 +488,7 @@ contains
 !!
       implicit none
 !
-      class(davidson_cc_es_solver) :: solver
+      class(davidson_cc_es) :: solver
 !
       class(ccs) :: wf
 !
@@ -555,10 +555,10 @@ contains
 !
       endif
 !
-   end subroutine set_start_vectors_davidson_cc_es_solver
+   end subroutine set_start_vectors_davidson_cc_es
 !
 !
-   subroutine set_precondition_vector_davidson_cc_es_solver(wf, davidson)
+   subroutine set_precondition_vector_davidson_cc_es(wf, davidson)
 !!
 !!    Set precondition vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
@@ -567,7 +567,7 @@ contains
 !!
       implicit none
 !
-!      class(davidson_cc_es_solver) :: solver
+!      class(davidson_cc_es) :: solver
 !
       class(ccs) :: wf
 !
@@ -580,48 +580,48 @@ contains
       call davidson%set_preconditioner(preconditioner)
       call mem%dealloc(preconditioner, wf%n_es_amplitudes, 1)
 !
-   end subroutine set_precondition_vector_davidson_cc_es_solver
+   end subroutine set_precondition_vector_davidson_cc_es
 !
 !
-   subroutine cleanup_davidson_cc_es_solver(solver)
+   subroutine cleanup_davidson_cc_es(solver)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(davidson_cc_es_solver) :: solver
+      class(davidson_cc_es) :: solver
 !
       call solver%write_restart_file()
 !
-   end subroutine cleanup_davidson_cc_es_solver
+   end subroutine cleanup_davidson_cc_es
 !
 !
-   subroutine print_banner_davidson_cc_es_solver(solver)
+   subroutine print_banner_davidson_cc_es(solver)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none 
 !
-      class(davidson_cc_es_solver) :: solver 
+      class(davidson_cc_es) :: solver 
 !
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
       call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
       call long_string_print(solver%description2)
 !
-   end subroutine print_banner_davidson_cc_es_solver
+   end subroutine print_banner_davidson_cc_es
 !
 !
-   subroutine read_settings_davidson_cc_es_solver(solver)
+   subroutine read_settings_davidson_cc_es(solver)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
 !
-      class(davidson_cc_es_solver) :: solver 
+      class(davidson_cc_es) :: solver 
 !
       integer :: n_specs, i, j, n_start_vecs
 !
@@ -697,10 +697,10 @@ contains
 !
       endif
 !
-   end subroutine read_settings_davidson_cc_es_solver
+   end subroutine read_settings_davidson_cc_es
 !
 !
-   subroutine set_projection_vector_davidson_cc_es_solver(solver, wf, davidson)
+   subroutine set_projection_vector_davidson_cc_es(solver, wf, davidson)
 !!
 !!    Set projection vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
@@ -709,7 +709,7 @@ contains
 !!
       implicit none
 !
-      class(davidson_cc_es_solver) :: solver
+      class(davidson_cc_es) :: solver
 !
       class(ccs) :: wf
 !
@@ -722,7 +722,7 @@ contains
 !
       if (.false.) write(output%unit, *) wf%name_, solver%tag ! Hack to suppress unavoidable compiler warnings
 !
-   end subroutine set_projection_vector_davidson_cc_es_solver
+   end subroutine set_projection_vector_davidson_cc_es
 !
 !
-end module davidson_cc_es_solver_class
+end module davidson_cc_es_class
