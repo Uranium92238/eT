@@ -30,7 +30,7 @@ contains
 !!
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes) :: c_i
 !
       call wf%jacobian_transpose_ccsd_transformation(c_i)
 !
@@ -57,7 +57,7 @@ contains
 !
 !     Incoming vector b
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: b
+      real(dp), dimension(wf%n_es_amplitudes) :: b
 !
       real(dp), dimension(:,:), allocatable :: b_a_i
 !
@@ -86,7 +86,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            b_a_i(a, i) = b(ai, 1)
+            b_a_i(a, i) = b(ai)
 !
          enddo
       enddo
@@ -120,8 +120,8 @@ contains
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     b_ai_bj(ai, bj) = b(aibj + (wf%n_o)*(wf%n_v), 1)
-                     b_ai_bj(bj, ai) = b(aibj + (wf%n_o)*(wf%n_v), 1)
+                     b_ai_bj(ai, bj) = b(aibj + (wf%n_o)*(wf%n_v))
+                     b_ai_bj(bj, ai) = b(aibj + (wf%n_o)*(wf%n_v))
 !
                   endif
                enddo
@@ -142,7 +142,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            b(ai, 1) = sigma_a_i(a, i)
+            b(ai) = sigma_a_i(a, i)
 !
          enddo
       enddo
@@ -210,7 +210,7 @@ contains
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     b((wf%n_o)*(wf%n_v) + aibj, 1) = sigma_ab_ij(ab, ij)
+                     b((wf%n_o)*(wf%n_v) + aibj) = sigma_ab_ij(ab, ij)
 !
                   endif
 !
@@ -247,7 +247,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_ldck
 !
-      real(dp), dimension(:,:), allocatable :: X_ld ! An intermediate, see below
+      real(dp), dimension(:), allocatable :: X_ld ! An intermediate, see below
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_iald ! g_iald
       real(dp), dimension(:,:,:,:), allocatable :: L_aild
@@ -268,7 +268,7 @@ contains
 !
 !     Form the intermediate X_ld = sum_ck u_ld_ck b_ck
 !
-      call mem%alloc(X_ld, (wf%n_v)*(wf%n_o), 1)
+      call mem%alloc(X_ld, (wf%n_v)*(wf%n_o))
 !
       call dgemm('N','N',            &
                   (wf%n_v)*(wf%n_o), &
@@ -317,7 +317,7 @@ contains
                   (wf%n_o)*(wf%n_v))
 !
       call mem%dealloc(L_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call mem%dealloc(X_ld, (wf%n_o)*(wf%n_v), 1)
+      call mem%dealloc(X_ld, (wf%n_o)*(wf%n_v))
 !
    end subroutine jacobian_transpose_ccsd_a1_ccsd
 !

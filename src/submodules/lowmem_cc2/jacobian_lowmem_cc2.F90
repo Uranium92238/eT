@@ -33,7 +33,7 @@ contains
       class(lowmem_cc2) :: wf
 !
       real(dp), intent(in) :: omega
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_a_i
 !
@@ -57,7 +57,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            c_a_i(a, i) = c(ai, 1)
+            c_a_i(a, i) = c(ai)
 !
          enddo
       enddo
@@ -72,8 +72,8 @@ contains
       call mem%alloc(eps_o, wf%n_o)
       call mem%alloc(eps_v, wf%n_v)
 !
-      eps_o = wf%fock_diagonal(1:wf%n_o,1)
-      eps_v = wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1)
+      eps_o = wf%fock_diagonal(1:wf%n_o)
+      eps_v = wf%fock_diagonal(wf%n_o + 1 : wf%n_mo)
 !
       call wf%jacobian_cc2_a1(rho_a_i, c_a_i)
       call wf%jacobian_cc2_b1(rho_a_i, c_a_i, eps_o, eps_v)

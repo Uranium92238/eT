@@ -92,10 +92,10 @@ contains
 !
       integer(i6) :: n_s, i, j
 !
-      integer(i6), dimension(:,:), allocatable :: n_shells_on_atoms
-      integer(i6), dimension(:,:), allocatable :: n_basis_in_shells
-      integer(i6), dimension(:,:), allocatable :: first_ao_in_shells
-      integer(i6), dimension(:,:), allocatable :: shell_numbers
+      integer(i6), dimension(:), allocatable :: n_shells_on_atoms
+      integer(i6), dimension(:), allocatable :: n_basis_in_shells
+      integer(i6), dimension(:), allocatable :: first_ao_in_shells
+      integer(i6), dimension(:), allocatable :: shell_numbers
 !
 !     Read eT.inp and write files for Libint
 !
@@ -103,7 +103,7 @@ contains
 !
       allocate(molecule%atoms(molecule%n_atoms))
 !
-      allocate(n_shells_on_atoms(molecule%n_atoms, 1))
+      allocate(n_shells_on_atoms(molecule%n_atoms))
       n_shells_on_atoms = 0
 !
       call molecule%read_geometry()
@@ -140,22 +140,22 @@ contains
 !
 !        Allocate and initialize the corresponding shells
 !
-         molecule%atoms(i)%n_shells = n_shells_on_atoms(i, 1)
+         molecule%atoms(i)%n_shells = n_shells_on_atoms(i)
          call molecule%atoms(i)%initialize_shells()
 !
 !        Then determine the number of basis functions in each shell
 !        and save number of AOs per atom
 !
-         allocate(n_basis_in_shells(n_shells_on_atoms(i,1), 1))
+         allocate(n_basis_in_shells(n_shells_on_atoms(i)))
          call get_n_basis_in_shells_c(i, n_basis_in_shells)
 !
          molecule%atoms(i)%n_ao = 0
 !
-         do j = 1, n_shells_on_atoms(i, 1)
+         do j = 1, n_shells_on_atoms(i)
 
-            molecule%atoms(i)%shells(j)%size = n_basis_in_shells(j,1)
+            molecule%atoms(i)%shells(j)%size = n_basis_in_shells(j)
 !
-            molecule%atoms(i)%n_ao = molecule%atoms(i)%n_ao + n_basis_in_shells(j,1)
+            molecule%atoms(i)%n_ao = molecule%atoms(i)%n_ao + n_basis_in_shells(j)
 
          enddo
 !
@@ -163,12 +163,12 @@ contains
 !
 !        Get shell numbers
 !
-         allocate(shell_numbers(n_shells_on_atoms(i,1), 1))
+         allocate(shell_numbers(n_shells_on_atoms(i)))
          call get_shell_numbers_c(i, shell_numbers)
 !
-         do j = 1, n_shells_on_atoms(i,1)
+         do j = 1, n_shells_on_atoms(i)
 !
-            molecule%atoms(i)%shells(j)%number_ = shell_numbers(j, 1)
+            molecule%atoms(i)%shells(j)%number_ = shell_numbers(j)
 !
          enddo
 !
@@ -176,12 +176,12 @@ contains
 !
 !        And the first AO index in each shell
 !
-         allocate(first_ao_in_shells(n_shells_on_atoms(i,1), 1))
+         allocate(first_ao_in_shells(n_shells_on_atoms(i)))
          call get_first_ao_in_shells_c(i, first_ao_in_shells)
 !
-         do j = 1, n_shells_on_atoms(i,1)
+         do j = 1, n_shells_on_atoms(i)
 
-            molecule%atoms(i)%shells(j)%first = first_ao_in_shells(j,1)
+            molecule%atoms(i)%shells(j)%first = first_ao_in_shells(j)
 !
          enddo
 !
@@ -189,7 +189,7 @@ contains
 !
 !        Then determine the angular momentum of shells & the last AO index
 !
-         do j = 1, n_shells_on_atoms(i,1)
+         do j = 1, n_shells_on_atoms(i)
 !
             call molecule%atoms(i)%shells(j)%determine_angular_momentum()
             call molecule%atoms(i)%shells(j)%determine_last_ao_index()
@@ -478,7 +478,7 @@ contains
 !
       integer :: basis_set_counter, atom_offset, current_basis_nbr, i
 !
-      integer, dimension(:,:), allocatable :: n_atoms_in_basis
+      integer, dimension(:), allocatable :: n_atoms_in_basis
 !
 !     Write atom file
 !
@@ -517,7 +517,7 @@ contains
 !
       call molecule%initialize_basis_sets()
 !
-      call mem%alloc(n_atoms_in_basis, molecule%n_basis_sets, 1)
+      call mem%alloc(n_atoms_in_basis, molecule%n_basis_sets)
 !
       n_atoms_in_basis = 1
       basis_set_counter = 1
@@ -534,7 +534,7 @@ contains
 !
          else
 !
-            n_atoms_in_basis(basis_set_counter, 1) = n_atoms_in_basis(basis_set_counter, 1) + 1
+            n_atoms_in_basis(basis_set_counter) = n_atoms_in_basis(basis_set_counter) + 1
 !
          endif
 !
@@ -549,9 +549,9 @@ contains
          call basis_file%init(trim(temp_name), 'sequential', 'formatted')
          call disk%open_file(basis_file, 'write', 'rewind')
 !
-         write(basis_file%unit, '(i5/)') n_atoms_in_basis(current_basis_nbr, 1)
+         write(basis_file%unit, '(i5/)') n_atoms_in_basis(current_basis_nbr)
 !
-         do i = 1, n_atoms_in_basis(current_basis_nbr, 1)
+         do i = 1, n_atoms_in_basis(current_basis_nbr)
 !
             atom = i + atom_offset
 !
@@ -565,11 +565,11 @@ contains
 !
          call disk%close_file(basis_file)
 !
-         atom_offset = atom_offset + n_atoms_in_basis(current_basis_nbr, 1)
+         atom_offset = atom_offset + n_atoms_in_basis(current_basis_nbr)
 !
       enddo
 !
-      call mem%dealloc(n_atoms_in_basis, molecule%n_basis_sets, 1)
+      call mem%dealloc(n_atoms_in_basis, molecule%n_basis_sets)
 !
    end subroutine write_molecular_system
 !
@@ -592,7 +592,7 @@ contains
       integer :: i, j, active_atom_counter, ioerror = 0, first, last, atom_counter
       integer :: central_atom
 !
-      integer, dimension(:,:), allocatable :: active_atoms
+      integer, dimension(:), allocatable :: active_atoms
 !
       type(atomic), dimension(:), allocatable :: atoms_copy
 !
@@ -628,7 +628,7 @@ contains
 !
                   enddo
 !
-                  call mem%alloc(active_atoms, molecule%n_active_atoms, 1)
+                  call mem%alloc(active_atoms, molecule%n_active_atoms)
                   read(line, *) active_atoms
 !
                   exit
@@ -658,11 +658,11 @@ contains
 !
                      molecule%n_active_atoms = last - first + 1
 !
-                     call mem%alloc(active_atoms, molecule%n_active_atoms, 1)
+                     call mem%alloc(active_atoms, molecule%n_active_atoms)
 !
                      do i = first, last
 !
-                        active_atoms(i - first + 1, 1) = i
+                        active_atoms(i - first + 1) = i
 !
                      enddo
 !
@@ -705,7 +705,7 @@ contains
 !
                   enddo
 !
-                  call mem%alloc(active_atoms, molecule%n_active_atoms, 1)
+                  call mem%alloc(active_atoms, molecule%n_active_atoms)
 !
                   active_atom_counter = 0
 !
@@ -719,7 +719,7 @@ contains
 !
                        active_atom_counter = active_atom_counter + 1
 !
-                       active_atoms(active_atom_counter, 1) = i
+                       active_atoms(active_atom_counter) = i
 !
                     endif
 !
@@ -778,7 +778,7 @@ contains
 !
          do i = 1, molecule%n_active_atoms
 !
-            molecule%atoms(active_atoms(i, 1))%basis = trim(active_basis)
+            molecule%atoms(active_atoms(i))%basis = trim(active_basis)
 !
          enddo
 !
@@ -790,7 +790,7 @@ contains
       write(output%unit, '(t6, a18)')'------------------'
       do i = 1, molecule%n_active_atoms
 !
-         write(output%unit, '(t6, i5, 11x, a2)') active_atoms(i, 1), molecule%atoms(active_atoms(i, 1))%symbol
+         write(output%unit, '(t6, i5, 11x, a2)') active_atoms(i), molecule%atoms(active_atoms(i))%symbol
 !
       enddo
       write(output%unit, '(t6, a18)')'------------------'
@@ -804,7 +804,7 @@ contains
 !
       do i = 1, molecule%n_active_atoms
 !
-         molecule%atoms(i) = atoms_copy(active_atoms(i, 1))
+         molecule%atoms(i) = atoms_copy(active_atoms(i))
 !
       enddo
 !
@@ -816,7 +816,7 @@ contains
 !
          do j = 1, molecule%n_active_atoms
 !
-            if (i == active_atoms(j, 1)) then
+            if (i == active_atoms(j)) then
 !
                found = .true.
                exit
