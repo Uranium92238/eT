@@ -1,5 +1,5 @@
-# Fortran submodules are fully supported >= 3.12
-cmake_minimum_required(VERSION 3.12)
+# Fortran submodules are fully supported >= 3.12, but 3.7 is fine
+cmake_minimum_required(VERSION 3.7)
 
 # set project name and languanges that are involved
 project(eT Fortran CXX)
