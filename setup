@@ -1,9 +1,15 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # vim:ft=python
+#
+# Simple setup script to create build directory and run CMake
+# Inspired by Dalton setup script by Radovan Bast and Jonas Juselius
+# (c) Rolf H. Myhre <rolf.h.myhre at ntnu.no>
+# licensed under the GNU Lesser General Public License
 #
 import os
 import sys
 import subprocess
+import shutil
 from argparse import ArgumentParser
 
 if sys.version < '3.5':
@@ -24,15 +30,35 @@ def input_parser():
     parser.add_argument('-clean', '--clean-dir',
                          help="Delete contents of build dir (if any) before running CMake",
                          action='store_true')
+    parser.add_argument('--clean-CMake',
+                         help="Delete CMakeCache.txt (if it exists) before running CMake",
+                         action='store_true')
 
     return parser.parse_args()
+
+def build_maker(args):
+    #Save path to build directory
+    build_path = os.path.abspath(args.build_dir)
+
+    build_exists = os.path.isdir(build_path) #Check if it exists
+    Cachename = os.path.join(build_path,"CMakeCache.txt") #Path to CMakeCache.txt
+
+    if (build_exists): #Does build already exist
+        if args.clean_dir: #Delete if clean-dir
+            shutil.rmtree(build_path)
+        elif (args.clean_CMake): #Delete CMakeCache.txt if clean_CMake and it exists
+            if (os.path.exists(Cachename)):
+                os.remove(Cachename)
+
+    #Make directory if it does not exist
+    os.makedirs(build_path,exist_ok=True)
+
 
 def main(argv):
     print(argv)
     args = input_parser()
+    build_maker(args)
     
-    build = os.path.abspath(args.build_dir)
-    os.makedirs(build)
 
 if __name__ == '__main__':
     main(sys.argv)
