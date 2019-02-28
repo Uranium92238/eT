@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.6)
+# Fortran submodules are fully supported >= 3.12
+cmake_minimum_required(VERSION 3.12)
 
 # set project name and languanges that are involved
 project(eT Fortran CXX)
@@ -26,6 +27,13 @@ else()
   set(LIBINT_LIB /usr/local/libint)
 endif()
 
+# check for EIGEN_LIB environment variable 
+# otherwise, set to standard path 
+if(DEFINED ENV{EIGEN_LIB})
+  set(EIGEN_LIB $ENV{EIGEN_LIB})
+else()
+  set(EIGEN_LIB /usr/local/include/eigen3)
+endif()
 
 # Including the source files
 include(eT_sources)
