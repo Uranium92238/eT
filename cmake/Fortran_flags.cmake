@@ -70,3 +70,7 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
     endif()
 # 
 endif()
+
+if(DEFINED EXTRA_Fortran_FLAGS)
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${EXTRA_Fortran_FLAGS}")
+endif()
