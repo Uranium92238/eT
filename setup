@@ -28,7 +28,7 @@ def input_parser():
                          action='store',
                          nargs='?')
     parser.add_argument('-clean', '--clean-dir',
-                         help="Delete contents of build dir (if any) before running CMake",
+                         help="Delete build dir and create new (if it exists) before running CMake",
                          action='store_true')
     parser.add_argument('--clean-CMake',
                          help="Delete CMakeCache.txt (if it exists) before running CMake",
@@ -40,6 +40,15 @@ def build_maker(args):
     #Save path to build directory
     build_path = os.path.abspath(args.build_dir)
 
+    #Check if user is trying to do something stupid
+    eT_dirs = {os.path.join(root_dir,'documentation'),
+               os.path.join(root_dir,'cmake'),
+               os.path.join(root_dir,'submodules'),
+               os.path.join(root_dir,'tests'),
+               os.path.join(root_dir,'src')}
+    if build_path in eT_dirs:
+        print(build_path, 'is an eT directory')
+        sys.exit(1)
 
 
     build_exists = os.path.isdir(build_path) #Check if it exists
@@ -57,7 +66,6 @@ def build_maker(args):
 
 
 def main(argv):
-    print(argv)
     args = input_parser()
     build_maker(args)
     
