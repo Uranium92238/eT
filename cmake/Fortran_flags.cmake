@@ -1,60 +1,72 @@
-#
-# Testing for Fortran compiler and setting compiler flags
-#
-## Intel iFort ##
-#
+# 
+#   :: Tests for Fortran compiler and setting of compiler flags accordingly
+# 
+#   1. Intel ifort
+# 
 if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
-    add_definitions(-DVAR_IFORT)
-    set(CMAKE_Fortran_FLAGS         "-fpp -assume byterecl -qopenmp -O3 -warn all")
-    set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -traceback -check all -fp-stack-check")
-    set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -ip -diag-disable 8290 -diag-disable 8291")
-    set(CMAKE_Fortran_FLAGS_PROFILE "${CMAKE_Fortran_FLAGS_RELEASE} -g -pg")
-#
-#   If ENABLE_64BIT_INTEGERS ON
-#
+# 
+#   Set standard flags 
+# 
+    set(CMAKE_Fortran_FLAGS "-fpp -O3 -warn all -xHost")
+# 
+#   Enable 64 bit flag if requested (default)
+# 
     if(ENABLE_64BIT_INTEGERS)
         set(CMAKE_Fortran_FLAGS
             "${CMAKE_Fortran_FLAGS} -i8"
             )
-    endif()
-#
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        message("--Switch off warnings due to incompatibility XCode 4 and Intel 11 on OsX 10.6")
+    else()
         set(CMAKE_Fortran_FLAGS
-            "${CMAKE_Fortran_FLAGS} -Qoption,ld,-w"
+            "${CMAKE_Fortran_FLAGS} -i4"
+            )        
+    endif()
+# 
+#   Enable openmp if requested (default) 
+# 
+    if(ENABLE_OMP)
+        set(CMAKE_Fortran_FLAGS
+            "${CMAKE_Fortran_FLAGS} -qopenmp -parallel"
             )
     endif()
-    set(reorder_definitions " --nocollapse ${reorder_definitions}")
+# 
 endif()
-#
-## GNU ##
+# 
+#   2. GNU gfortran
+# 
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
-    add_definitions(-DVAR_GFORTRAN)
-    set(CMAKE_Fortran_FLAGS "-std=f2008 -DVAR_GFORTRAN -O3 -funroll-loops -fopenmp -Wall")
-
-#
+# 
+#   Set standard flags 
+# 
+    set(CMAKE_Fortran_FLAGS "-std=f2008 -O3 -Wall -march=native")
+# 
 #   Testing processor 32-bit or 64-bit
-#
+# 
     if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "i386")
         set(CMAKE_Fortran_FLAGS
             "${CMAKE_Fortran_FLAGS} -m32"
             )
     endif()
-#
+# 
     if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "x86_64")
         set(CMAKE_Fortran_FLAGS
             "${CMAKE_Fortran_FLAGS} -m64"
             )
     endif()
-    set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fbacktrace -fcray-pointer -Wuninitialized")
-    set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -ffast-math -funroll-loops -ftree-vectorize")
-    set(CMAKE_Fortran_FLAGS_PROFILE "${CMAKE_Fortran_FLAGS_RELEASE} -g -pg -fbounds-check -o0")
-#
-#   If ENABLE_64BIT_INTEGERS ON
-#
+# 
+#   Enable 64 bit flag if requested (default)
+# 
     if(ENABLE_64BIT_INTEGERS)
         set(CMAKE_Fortran_FLAGS
             "${CMAKE_Fortran_FLAGS} -fdefault-integer-8"
             )
     endif()
+# 
+#   Enable openmp if requested (default) 
+# 
+    if(ENABLE_OMP)
+        set(CMAKE_Fortran_FLAGS
+            "${CMAKE_Fortran_FLAGS} -fopenmp"
+            )
+    endif()
+# 
 endif()

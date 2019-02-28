@@ -11,11 +11,21 @@ set(CMAKE_MODULE_PATH
     /usr/local/share/cmake/Modules
     )
 
+# set options with standard values 
 option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"       			        ON)
 option(ENABLE_AUTO_BLAS      "Enable CMake to autodetect BLAS"                  ON)
 option(ENABLE_AUTO_LAPACK    "Enable CMake to autodetect LAPACK"                ON)
 option(ENABLE_OMP            "Enable OpenMP parallelization"                    ON)
 option(ENABLE_THREADED_MKL   "Enable OpenMP parallelization"                    ON)
+
+# check for LIBINT_LIB environment variable 
+# otherwise, set to standard path 
+if(DEFINED ENV{LIBINT_LIB})
+  set(LIBINT_LIB $ENV{LIBINT_LIB})
+else()
+  set(LIBINT_LIB /usr/local/libint)
+endif()
+
 
 # Including the source files
 include(eT_sources)
@@ -34,7 +44,7 @@ if(LAPACK_FOUND AND BLAS_FOUND)
   set(lapackblas_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 endif()
 
-set(libint_libraries "/usr/local/libint/2.4.2/lib/libint2.a")
+set(libint_libraries "${LIBINT_LIB}/2.4.2/lib/libint2.a")
 
 set(eT_fortran_sources
         ${eT_fortran_sources}
