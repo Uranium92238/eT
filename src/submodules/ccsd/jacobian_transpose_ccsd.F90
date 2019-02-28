@@ -275,7 +275,7 @@ contains
                   1,                 &
                   (wf%n_v)*(wf%n_o), &
                   one,               &
-                  u_ldck,            &
+                  u_ldck,            & ! u_ld_ck
                   (wf%n_v)*(wf%n_o), &
                   b_a_i,             & ! "b_ck"
                   (wf%n_v)*(wf%n_o), &
@@ -1342,7 +1342,7 @@ contains
       type(batching_index) :: batch_d
       type(batching_index) :: batch_e
 !
-      integer :: a, d, e, k, de, ka, kde
+      integer :: a, d, e, k
       integer :: rec1, rec0
 !
 !     :: Term 2. - sum_ckdle b_cidl t_kl^ce g_kade ::
@@ -1423,19 +1423,13 @@ contains
 !
          call mem%alloc(g_akde, wf%n_v, wf%n_o, wf%n_v, batch_e%length)
 !
-!$omp parallel do private(e, d, de, k, a
+!$omp parallel do private(e, d, k, a)
          do e = 1, batch_e%length
             do d = 1, wf%n_v
 !
-!               de = wf%n_v*(e - 1) + d
-!
                do k = 1, wf%n_o
 !
-!                  kde = wf%n_o*(wf%n_v*(e - 1) + d - 1) + k
-!
                   do a = 1, wf%n_v
-!
-!                     ka = wf%n_o*(a - 1) + k
 !
                      g_akde(a,k,d,e) = g_kade(k,a,d,e)
 !
@@ -1481,7 +1475,7 @@ contains
                   one,               &
                   b_ai_bj,           & ! b_cl_di
                   (wf%n_o)*(wf%n_v), &
-                  t_clek,            &
+                  t_clek,            & ! t_cl_ek
                   (wf%n_o)*(wf%n_v), &
                   zero,              &
                   X_diek,            &
@@ -1516,7 +1510,7 @@ contains
 !
          call batch_a%determine_limits(current_a_batch)
 !
-!        Form g_ke_da = g_keda
+!        Form g_keda
 !
          call mem%alloc(g_keda, wf%n_o, wf%n_v, wf%n_v, batch_a%length)
 !
@@ -1595,8 +1589,6 @@ contains
 !
          call mem%dealloc(g_icde, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
 !
-!         offset_id = index_two(1, batch_d%first, wf%n_o)
-!
          call dgemm('N','N',                       &
                      (wf%n_o)*(batch_d%length),    &
                      (wf%n_o)**2,                  &
@@ -1670,7 +1662,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: sigma_iajb ! sigma_aibj contribution
       real(dp), dimension(:,:,:,:), allocatable :: sigma_ibja ! sigma_aibj contribution
 !
-      integer :: i, a, j, b, ai, bj!, ajb, bja
+      integer :: i, a, j, b, ai, bj
 !
 !     Batching variables
 !
@@ -1925,7 +1917,6 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_cbjk_restricted ! g_cbjk, batch over b
 !
       integer :: c = 0, j = 0, b = 0, k = 0
-!      integer :: jk = 0,  ck = 0, cb_restricted = 0, bj_full = 0
 !
 !     Batching variables
 !
@@ -1964,7 +1955,7 @@ contains
 !
       call add_1243_to_1234(one, sigma_aijb, sigma_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%alloc(sigma_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(sigma_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
 !     :: Term 2. - sum_k b_aibk F_jk ::
 !
@@ -2014,14 +2005,11 @@ contains
                   sigma_ai_bj,       &
                   (wf%n_o)*(wf%n_v))
 !
-      call mem%dealloc(g_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
 !     - sum_ck b_aick g_cbjk
 !
 !     Prepare to batch over b to make g_cb_jk = g_cbjk successively
 !
-      call mem%alloc(g_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o) ! g_cbjk reordered
-      g_ckbj = zero
+      g_ckbj = zero ! g_cbjk reordered
 !
       rec0 = wf%n_o**2*wf%integrals%n_J
       rec1 = wf%n_v*wf%integrals%n_J  + (wf%n_o**2)*(wf%n_v)
@@ -2099,6 +2087,7 @@ contains
 !
    end subroutine jacobian_transpose_ccsd_b2_ccsd
 !
+
 !
    module subroutine jacobian_transpose_ccsd_c2_ccsd(wf, sigma_ai_bj, b_ai_bj)
 !!
@@ -2127,8 +2116,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: b_ajck ! b_akcj
 !
-      integer :: k, i, c
-      integer :: b
+      integer :: k, i, c, b
 !
 !     Batching variables
 !
@@ -2275,7 +2263,7 @@ contains
 !!
 !!    and adds it to the transformed vector sigma_aibj.
 !!
-      implicit none
+   implicit none
 !
       class(ccsd) :: wf
 !
@@ -2308,14 +2296,14 @@ contains
 !
 !     Form t_ckdl = t_kl^cd
 !
-      !call wf%read_double_amplitudes
+   !call wf%read_double_amplitudes
 !
       call mem%alloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       t_ckdl = zero
 !
       call squareup(wf%t2, t_ckdl, (wf%n_o)*(wf%n_v))
 !
-      !call wf%destruct_double_amplitudes
+   !call wf%destruct_double_amplitudes
 !
 !     Form the intermediate X_ckbj = sum_dl t_ck_dl L_dl_bj
 !
@@ -2404,7 +2392,7 @@ contains
 !                          = 2 * g_kcjd(k,c,j,d) - g_kcjd(k,d,j,c)
 !
       call mem%alloc(L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      L_jckd = zero
+         L_jckd = zero
 !
       call add_3214_to_1234(two, g_kcjd, L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call add_3412_to_1234(-one, g_kcjd, L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -2413,13 +2401,13 @@ contains
 !
 !     Form t_ckdl = t_kl^cd
 !
-      !call wf%read_double_amplitudes
+   !call wf%read_double_amplitudes
 !
       call mem%alloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call squareup(wf%t2, t_ckdl, (wf%n_o)*(wf%n_v))
 !
-      !call wf%destruct_double_amplitudes
+   !call wf%destruct_double_amplitudes
 !
 !     Form the intermediate X_j_l = sum_kcd L_kcjd t_kl^cd
 !                                 = sum_kcd L_j_ckd t_ckd_l
@@ -2625,13 +2613,13 @@ contains
 !
 !     Form t_lckd = t_kl^cd
 !
-      !call wf%read_double_amplitudes
+   !call wf%read_double_amplitudes
 !
       call mem%alloc(t_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call squareup_and_sort_1234_to_4123(wf%t2, t_lckd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      !call wf%destruct_double_amplitudes
+   !call wf%destruct_double_amplitudes
 !
 !     Form the intermediate X_a_d = sum_lck b_a_lck t_lck_d
 !
@@ -2652,7 +2640,7 @@ contains
 !
 !     Form g_jbid
 !
-      call mem%alloc(g_jbid, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call mem%alloc(g_jbid, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_jbid)
 !
@@ -2665,7 +2653,7 @@ contains
       call add_4321_to_1234(two, g_jbid, L_dibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_4123_to_1234(-one, g_jbid, L_dibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(g_jbid, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(g_jbid, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     Add - sum_ckdl b_alck t_kl^cd L_jbid
 !         = - sum_d X_a_d L_d_ibj
@@ -2829,7 +2817,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_kbid
       real(dp), dimension(:,:,:,:), allocatable :: g_dkbi ! g_kbid
       real(dp), dimension(:,:,:,:), allocatable :: g_kdib
-!
+   !
       real(dp), dimension(:,:,:,:), allocatable :: b_ajcl     ! b_alcj
       real(dp), dimension(:,:,:,:), allocatable :: sigma_ajbi ! sigma_aibj contribution
       real(dp), dimension(:,:,:,:), allocatable :: sigma_ajib ! sigma_aibj contribution
@@ -2841,17 +2829,17 @@ contains
 !
 !     Form t_cldk = t_kl^cd
 !
-      !call wf%read_double_amplitudes
+   !call wf%read_double_amplitudes
 !
-      call mem%alloc(t_cldk, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+      call mem%alloc(t_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call squareup_and_sort_1234_to_1432(wf%t2, t_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      !call wf%destruct_double_amplitudes
+   !call wf%destruct_double_amplitudes
 !
 !     Form g_kbid
 !
-      call mem%alloc(g_kbid, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call mem%alloc(g_kbid, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_kbid)
 !
@@ -2861,7 +2849,7 @@ contains
 !
       call sort_1234_to_4123(g_kbid, g_dkbi, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(g_kbid, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(g_kbid, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     Form the intermediate X_clbi = sum_dk t_cl_dk g_dk_bi
 !
@@ -2880,7 +2868,7 @@ contains
                   X_clbi,            &
                   (wf%n_v)*(wf%n_o))
 !
-      call mem%dealloc(t_cldk, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+      call mem%dealloc(t_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(g_dkbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Reorder to b_ajcl = b_alcj
@@ -2918,13 +2906,13 @@ contains
 !
 !     Form t_clkd = t_kl^cd
 !
-      !call wf%read_double_amplitudes
+   !call wf%read_double_amplitudes
 !
       call mem%alloc(t_clkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
       call squareup_and_sort_1234_to_1423(wf%t2, t_clkd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      !call wf%destruct_double_amplitudes
+   !call wf%destruct_double_amplitudes
 !
 !     Form the intermediate X_ajkd = sum_cl b_aj_cl t_cl_kd
 !
@@ -3002,7 +2990,7 @@ contains
       real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: b_ab_ij
       real(dp), dimension((wf%n_v)*(wf%n_v), (wf%n_o)*(wf%n_o)) :: sigma_ab_ij
 !
-      real(dp), dimension(:,:), allocatable :: sigma_ab_ij_batch
+      real(dp), dimension(:,:,:,:), allocatable :: sigma_abij_batch
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_cadb
       real(dp), dimension(:,:,:,:), allocatable :: g_abcd ! g_cadb
@@ -3022,7 +3010,7 @@ contains
       type(batching_index) :: batch_a
       type(batching_index) :: batch_b
 !
-      integer :: ab = 0, ab_full = 0
+      integer :: ab = 0
 !
 !     :: Term 1. sum_kl b_akbl g_ikjl ::
 !
@@ -3135,10 +3123,10 @@ contains
 !
             call mem%dealloc(g_cadb, wf%n_v, batch_a%length, wf%n_v, batch_b%length)
 !
-!           Calculate sigma_ab_ij_batch = sum_cd g_abcd b_cd_ij
+!           Calculate sigma_abij_batch = sum_cd g_abcd b_cd_ij
 !           and add it to the full space sigma vector
 !
-            call mem%alloc(sigma_ab_ij_batch, (batch_a%length)*(batch_b%length), (wf%n_o)**2)
+            call mem%alloc(sigma_abij_batch, batch_a%length, batch_b%length, wf%n_o, wf%n_o)
 !
             call dgemm('N','N',                            &
                         (batch_a%length)*(batch_b%length), &
@@ -3150,7 +3138,7 @@ contains
                         b_ab_ij,                           & ! "b_cd_ij"
                         (wf%n_v)**2,                       &
                         zero,                              &
-                        sigma_ab_ij_batch,                 &
+                        sigma_abij_batch,                  &
                         (batch_a%length)*(batch_b%length))
 !
             call mem%dealloc(g_abcd, batch_a%length, batch_b%length, wf%n_v, wf%n_v)
@@ -3163,20 +3151,18 @@ contains
                   do b = 1, batch_b%length
                      do a = 1, batch_a%length
 !
-                        ab = index_two(a, b, batch_a%length)
+                        ab = index_two(a + batch_a%first - 1, b + batch_b%first - 1, wf%n_v)
 !
-                        ab_full = index_two(a + batch_a%first - 1, b + batch_b%first - 1, wf%n_v)
-!
-                        sigma_ab_ij(ab_full, ij) = &
-                                 sigma_ab_ij(ab_full, ij) &
-                               + sigma_ab_ij_batch(ab, ij)
+                        sigma_ab_ij(ab, ij) = &
+                                 sigma_ab_ij(ab, ij) &
+                               + sigma_abij_batch(a,b,i,j)
 !
                      enddo
                   enddo
                enddo
             enddo
 !
-            call mem%dealloc(sigma_ab_ij_batch, (batch_a%length)*(batch_b%length), (wf%n_o)**2)
+            call mem%dealloc(sigma_abij_batch, batch_a%length, batch_b%length, wf%n_o, wf%n_o)
 !
          enddo ! End of batches over b
       enddo ! End of batches over a
