@@ -19,17 +19,31 @@ option(ENABLE_AUTO_LAPACK    "Enable CMake to autodetect LAPACK"                
 option(ENABLE_OMP            "Enable OpenMP parallelization"                    ON)
 option(ENABLE_THREADED_MKL   "Enable OpenMP parallelization"                    ON)
 
-message(${LIBINT_LIB})
-
 # check for LIBINT_LIB environment variable 
 # otherwise, set to standard path 
-if(DEFINED ENV{LIBINT_LIB})
-  set(LIBINT_LIB $ENV{LIBINT_LIB})
+set(HAKA /usr/local/libint)
+file(GLOB_RECURSE trololo ${HAKA}/*libint2.h)
+message(${trololo})
+get_filename_component(trolodir ${trololo} PATH)
+message(${trolodir})
+find_path(LIBLAB
+          NAMES libint2.h
+          PATHS ${trolodir} )
+
+if(NOT LIBLAB)
+    message("DOOOM")
 else()
-  set(LIBINT_LIB /usr/local/libint)
+    message("GREAT SUCCESS")
+    message(${LIBLAB})
 endif()
 
-message(${LIBINT_LIB})
+find_package(Libint)
+
+#if(DEFINED ENV{LIBINT_LIB})
+#  set(LIBINT_LIB $ENV{LIBINT_LIB})
+#else()
+#  set(LIBINT_LIB /usr/local/libint)
+#endif()
 
 # check for EIGEN_LIB environment variable 
 # otherwise, set to standard path 
