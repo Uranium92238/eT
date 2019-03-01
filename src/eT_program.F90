@@ -17,11 +17,11 @@ program eT_program
    use uhf_class
    use mlhf_class
 !
-  use ccs_class
-  use cc2_class
-  use lowmem_cc2_class
-  use cc3_class
-  use mp2_class
+   use ccs_class
+   use cc2_class
+   use lowmem_cc2_class
+   use cc3_class
+   use mp2_class
 !
    use io_eT_program
 !
@@ -31,7 +31,7 @@ program eT_program
    use multipliers_engine_class
    use abstract_engine_class
 !
-   use eri_cd_solver_class
+   use eri_cd_class
 !
    implicit none
 !
@@ -59,7 +59,7 @@ program eT_program
 !
 !  Cholesky decomposition solver 
 !
-   type(eri_cd_solver), allocatable :: chol_solver
+   type(eri_cd), allocatable :: chol_solver
 !
 !  Engines
 !
