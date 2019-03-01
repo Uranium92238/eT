@@ -44,6 +44,9 @@ def input_parser():
                           action='store_true',
                           default=False)
 
+    parser.add_argument('-ll', '--libint-lib',
+                         help="Path to libint library")
+
     args = parser.parse_args()
 
     if (args.int32):
@@ -91,6 +94,9 @@ def construct_command(args):
     command = "cmake "
 
     command += " -DENABLE_64BIT_INTEGERS=" + cmake_translator(args.int64)
+
+    if (args.libint_lib):
+        command += " -DLIBINT_LIB=" + args.libint_lib   
 
     command += " %s" % root_dir
     return command
