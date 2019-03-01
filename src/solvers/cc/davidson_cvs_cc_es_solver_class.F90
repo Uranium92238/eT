@@ -146,14 +146,14 @@ contains
          call mem%alloc(c_i, wf%n_es_amplitudes)
 !
          c_i = zero
-         c_i(solver%start_vectors(1, 1)) = one
+         c_i(solver%start_vectors(1)) = one
 !
          call davidson%write_trial(c_i, 'rewind')
 !
          do trial = 2, solver%n_singlet_states
 !
             c_i = zero
-            c_i(solver%start_vectors(trial, 1)) = one
+            c_i(solver%start_vectors(trial)) = one
 !
             call davidson%write_trial(c_i)
 !
@@ -266,15 +266,15 @@ contains
 !
       type(eigen_davidson_tool) :: davidson
 !
-      real(dp), dimension(:,:), allocatable :: projector
+      real(dp), dimension(:), allocatable :: projector
 !
-      call mem%alloc(projector, wf%n_es_amplitudes, 1)
+      call mem%alloc(projector, wf%n_es_amplitudes)
       davidson%do_projection = .true.
 !
       call wf%get_cvs_projector(projector, solver%n_cores, solver%core_MOs)
 !
       call davidson%set_projector(projector)
-      call mem%dealloc(projector, wf%n_es_amplitudes, 1)
+      call mem%dealloc(projector, wf%n_es_amplitudes)
 !
    end subroutine set_projection_vector_davidson_cvs_cc_es_solver
 !

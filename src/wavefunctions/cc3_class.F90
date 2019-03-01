@@ -94,7 +94,7 @@ contains
 !
       do p = 1, wf%n_mo
 !
-         wf%fock_diagonal(p, 1) = ref_wf%mo_fock(p, p)
+         wf%fock_diagonal(p) = ref_wf%mo_fock(p, p)
 !
       enddo
 !

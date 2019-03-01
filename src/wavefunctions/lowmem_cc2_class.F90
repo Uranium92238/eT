@@ -2,7 +2,7 @@ module lowmem_cc2_class
 !
 !!
 !!    Low-memory coupled cluster singles and perturbative doubles (CC2) class module
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto and Alexander Paul, 2018
 !!
 !
@@ -93,7 +93,7 @@ contains
 !
       do p = 1, wf%n_mo
 !
-         wf%fock_diagonal(p, 1) = ref_wf%mo_fock(p, p)
+         wf%fock_diagonal(p) = ref_wf%mo_fock(p, p)
 !
       enddo
 !
@@ -118,12 +118,12 @@ contains
 !
       class(lowmem_cc2), intent(inout) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: g_aibj
-      real(dp), dimension(:,:), allocatable :: g_iajb
+      real(dp), dimension(:,:,:,:), allocatable :: g_aibj
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajb
 !
       real(dp) :: correlation_energy
 !
-      integer :: i, j, a, b, ai, bj, ia, jb, ib, ja
+      integer :: i, j, a, b
 !
       integer :: req0, req1_i, req1_j, req2
 !
@@ -153,8 +153,8 @@ contains
 !
             call batch_j%determine_limits(current_j_batch)
 !
-            call mem%alloc(g_aibj, wf%n_v*(batch_i%length), wf%n_v*(batch_j%length))
-            call mem%alloc(g_iajb, wf%n_v*(batch_i%length), wf%n_v*(batch_j%length))
+            call mem%alloc(g_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
+            call mem%alloc(g_iajb, batch_i%length, wf%n_v, batch_j%length, wf%n_v)
 !
             call wf%get_vovo(g_aibj, &
                               1, wf%n_v, &
@@ -168,26 +168,19 @@ contains
                               batch_j%first, batch_j%last, &
                               1, wf%n_v)
 !
-!$omp parallel do private(b,i,j,a,ai,ia,bj,jb,ib,ja) reduction(+:correlation_energy)
+!$omp parallel do private(b,i,j,a) reduction(+:correlation_energy)
             do b = 1, wf%n_v
                do i = 1, batch_i%length
                   do j = 1, batch_j%length
                      do a = 1, wf%n_v
 !
-                        ai = index_two(a, i, wf%n_v)
-                        ia = index_two(i, a, batch_i%length)
-                        bj = index_two(b, j, wf%n_v)
-                        jb = index_two(j, b, batch_j%length)
-                        ib = index_two(i, b, batch_i%length)
-                        ja = index_two(j, a, batch_j%length)
-!
                         correlation_energy = correlation_energy + &
                                              (wf%t1(a, i + batch_i%first - 1)*wf%t1(b, j + batch_j%first - 1) &
-                                             - (g_aibj(ai, bj))/(wf%fock_diagonal(wf%n_o + a, 1) &
-                                                               + wf%fock_diagonal(wf%n_o + b, 1) &
-                                                               - wf%fock_diagonal(i + batch_i%first - 1,1) &
-                                                               - wf%fock_diagonal(j + batch_j%first - 1,1)))&
-                                             *(two*g_iajb(ia,jb)-g_iajb(ib,ja))
+                                             - (g_aibj(a, i, b, j))/(wf%fock_diagonal(wf%n_o + a) &
+                                                               + wf%fock_diagonal(wf%n_o + b) &
+                                                               - wf%fock_diagonal(i + batch_i%first - 1) &
+                                                               - wf%fock_diagonal(j + batch_j%first - 1)))&
+                                             *(two*g_iajb(i, a, j, b)-g_iajb(i, b, j, a))
 !
                      enddo
                   enddo
@@ -195,8 +188,8 @@ contains
             enddo
 !$omp end parallel do
 !
-            call mem%dealloc(g_aibj, wf%n_v*(batch_i%length), wf%n_v*(batch_j%length))
-            call mem%dealloc(g_iajb, wf%n_v*(batch_i%length), wf%n_v*(batch_j%length))
+            call mem%dealloc(g_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
+            call mem%dealloc(g_iajb, batch_i%length, wf%n_v, batch_j%length, wf%n_v)
 !
          enddo
       enddo
@@ -232,27 +225,28 @@ contains
 !
       class(lowmem_cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: X
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: R
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: R
 !
       real(dp), intent(inout) :: w
 !
-      real(dp), dimension(:,:), allocatable :: X_copy
+      real(dp), dimension(:), allocatable :: X_copy
 !
       real(dp) :: ddot
 !
 !     Construct residual based on previous excitation energy w
 !
-      call mem%alloc(X_copy, wf%n_es_amplitudes, 1)
-      X_copy = X
+      call mem%alloc(X_copy, wf%n_es_amplitudes)
+      call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
       call wf%effective_jacobian_transformation(w, X_copy) ! X_copy <- AX
-      R = X_copy - w*X
+      call dcopy(wf%n_es_amplitudes, X_copy, 1, R, 1)
+      call daxpy(wf%n_es_amplitudes, -w, X, 1, R, 1)
 !
 !     Update excitation energy w
 !
       w = ddot(wf%n_es_amplitudes, X, 1, X_copy, 1)
-      call mem%dealloc(X_copy, wf%n_es_amplitudes, 1)
+      call mem%dealloc(X_copy, wf%n_es_amplitudes)
 !
    end subroutine construct_excited_state_equation_lowmem_cc2
 !

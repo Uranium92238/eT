@@ -36,7 +36,7 @@ module ccs_class
       real(dp), dimension(:,:), allocatable  :: fock_ai
       real(dp), dimension(:,:), allocatable  :: fock_ab
 !
-      real(dp), dimension(:,:), allocatable  :: fock_diagonal
+      real(dp), dimension(:), allocatable  :: fock_diagonal
 !
       type(mo_integral_tool) :: integrals
 !
@@ -231,7 +231,7 @@ contains
 !
       do p = 1, wf%n_mo
 !
-         wf%fock_diagonal(p, 1) = ref_wf%mo_fock(p, p)
+         wf%fock_diagonal(p) = ref_wf%mo_fock(p, p)
 !
       enddo
 !
@@ -300,7 +300,7 @@ contains
 !
       class(ccs) :: wf  
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: amplitudes
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: amplitudes
 !
       call dcopy(wf%n_gs_amplitudes, amplitudes, 1, wf%t1, 1)
 !
@@ -316,7 +316,7 @@ contains
 !
       class(ccs), intent(in) :: wf  
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1) :: amplitudes
+      real(dp), dimension(wf%n_gs_amplitudes) :: amplitudes
 !
       call dcopy(wf%n_gs_amplitudes, wf%t1, 1, amplitudes, 1)
 !
@@ -524,7 +524,7 @@ contains
 !
       class(ccs) :: wf  
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: multipliers
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: multipliers
 !
       call dcopy(wf%n_gs_amplitudes, multipliers, 1, wf%t1bar, 1)
 !
@@ -540,7 +540,7 @@ contains
 !
       class(ccs), intent(in) :: wf  
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1) :: multipliers
+      real(dp), dimension(wf%n_gs_amplitudes) :: multipliers
 !
       call dcopy(wf%n_gs_amplitudes, wf%t1bar, 1, multipliers, 1)
 !
@@ -601,7 +601,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes) :: omega
 !
       type(timings) :: omega_ccs_a1_timer
 !
@@ -625,7 +625,7 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
       omega = zero
       call wf%omega_ccs_a1(omega)
@@ -657,14 +657,13 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: F_pq 
 !
-      integer :: i, j, k, a, b, kj, ii, ij, kk, ik, jj, ji, ai, ib, bi
-      integer :: aj, ja, ab, ia
+      integer :: i, j, k, a, b
 !
-      real(dp), dimension(:,:), allocatable :: g_ij_kl
-      real(dp), dimension(:,:), allocatable :: g_ab_ij
-      real(dp), dimension(:,:), allocatable :: g_ai_jb
-      real(dp), dimension(:,:), allocatable :: g_ia_jk
-      real(dp), dimension(:,:), allocatable :: g_ai_jk
+      real(dp), dimension(:,:,:,:), allocatable :: g_ijkl
+      real(dp), dimension(:,:,:,:), allocatable :: g_abij
+      real(dp), dimension(:,:,:,:), allocatable :: g_aijb
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajk
+      real(dp), dimension(:,:,:,:), allocatable :: g_aijk
 !
 !     Read MO-transformed h integrals into the  
 !
@@ -682,93 +681,65 @@ contains
 !
 !     Occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
-      call mem%alloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
-      call wf%get_oooo(g_ij_kl)
+      call mem%alloc(g_ijkl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+      call wf%get_oooo(g_ijkl)
 !
       do i = 1, wf%n_o
          do j = 1, wf%n_o 
-!
-            ij = wf%n_o*(j - 1) + i
-!
             do k = 1, wf%n_o
 !
-               ik = wf%n_o*(k - 1) + i
-               kj = wf%n_o*(j - 1) + k
-               kk = wf%n_o*(k - 1) + k
-!
-               F_pq(i, j) = F_pq(i, j) + two*g_ij_kl(ij, kk) - g_ij_kl(ik, kj)
+               F_pq(i, j) = F_pq(i, j) + two*g_ijkl(i,j,k,k) - g_ijkl(i,k,k,j)
 ! 
             enddo
-!
          enddo
       enddo
 !
-      call mem%dealloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
+      call mem%dealloc(g_ijkl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
 !     Occupied-virtual contributions: F_ia = F_ia + sum_j (2*g_iajj - g_ijja)
 !                                     F_ai = F_ai + sum_j (2*g_aijj - g_ajji)
 !
-      call mem%alloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
-      call wf%get_ovoo(g_ia_jk)
+      call mem%alloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call wf%get_ovoo(g_iajk)
 !
-      call mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
-      call wf%get_vooo(g_ai_jk)
+      call mem%alloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call wf%get_vooo(g_aijk)
 !
       do i = 1, wf%n_o
          do a = 1, wf%n_v
-!
-            ia = wf%n_o*(a - 1) + i
-            ai = wf%n_v*(i - 1) + a
-!
             do j = 1, wf%n_o
 !
-               ja = wf%n_o*(a - 1) + j
-               aj = wf%n_v*(j - 1) + a
-               jj = wf%n_o*(j - 1) + j
-               ji = wf%n_o*(i - 1) + j
-               ij = wf%n_o*(j - 1) + i
-!
-               F_pq(i, a + wf%n_o) = F_pq(i, a + wf%n_o) + two*g_ia_jk(ia, jj) - g_ia_jk(ja, ij)
-               F_pq(a + wf%n_o, i) = F_pq(a + wf%n_o, i) + two*g_ai_jk(ai, jj) - g_ai_jk(aj, ji)
+               F_pq(i, a + wf%n_o) = F_pq(i, a + wf%n_o) + two*g_iajk(i,a,j,j) - g_iajk(j,a,i,j)
+               F_pq(a + wf%n_o, i) = F_pq(a + wf%n_o, i) + two*g_aijk(a,i,j,j) - g_aijk(a,j,j,i)
 !
             enddo
 !
          enddo
       enddo
 !
-      call mem%dealloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
-      call mem%dealloc(g_ai_jk, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
+      call mem%dealloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
 !     Virtual-virtual contributions: F_ab = h_ab + sum_i (2*g_abii - g_aiib) ::
 !
-      call mem%alloc(g_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
-      call wf%get_vvoo(g_ab_ij)
+      call mem%alloc(g_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call wf%get_vvoo(g_abij)
 !
-      call mem%alloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call wf%get_voov(g_ai_jb)
+      call mem%alloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call wf%get_voov(g_aijb)
 !
       do a = 1, wf%n_v
          do b = 1, wf%n_v
-!
-            ab = wf%n_v*(b - 1) + a 
-!
             do i = 1, wf%n_o
 !
-               ii = wf%n_o*(i - 1) + i
-               ai = wf%n_v*(i - 1) + a
-               bi = wf%n_v*(i - 1) + b 
-               ia = wf%n_o*(a - 1) + i
-               ib = wf%n_o*(b - 1) + i
-!
-               F_pq(wf%n_o + a, wf%n_o + b) = F_pq(wf%n_o + a, wf%n_o + b) + two*g_ab_ij(ab, ii) - g_ai_jb(ai, ib)
+               F_pq(wf%n_o + a, wf%n_o + b) = F_pq(wf%n_o + a, wf%n_o + b) + two*g_abij(a,b,i,i) - g_aijb(a,i,i,b)
 !
             enddo
-!
          enddo
       enddo
 !
-      call mem%dealloc(g_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
-      call mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
       call wf%set_fock(F_pq)
       call mem%dealloc(F_pq, wf%n_mo, wf%n_mo)
@@ -929,7 +900,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o) - wf%fock_diagonal(i)
 !
          enddo
       enddo
@@ -1002,7 +973,7 @@ contains
 !
       class(ccs) :: wf
 !
-      if (.not. allocated(wf%fock_diagonal)) call mem%alloc(wf%fock_diagonal, wf%n_mo, 1)
+      if (.not. allocated(wf%fock_diagonal)) call mem%alloc(wf%fock_diagonal, wf%n_mo)
 !
    end subroutine initialize_fock_diagonal_ccs
 !
@@ -1100,7 +1071,7 @@ contains
 !
       class(ccs) :: wf
 !
-      if (allocated(wf%fock_diagonal)) call mem%dealloc(wf%fock_diagonal, wf%n_mo, 1)
+      if (allocated(wf%fock_diagonal)) call mem%dealloc(wf%fock_diagonal, wf%n_mo)
 !
    end subroutine destruct_fock_diagonal_ccs
 !
@@ -3472,7 +3443,7 @@ contains
 !!
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes) :: c_i
 !
       call wf%jacobian_ccs_transformation(c_i)
 !
@@ -3486,7 +3457,7 @@ contains
 !!
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes) :: c_i
 !
       call wf%jacobian_transpose_ccs_transformation(c_i)
 !
@@ -3519,30 +3490,31 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: X 
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: R
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: X 
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: R
 !
       real(dp), intent(inout) :: w 
 !
-      real(dp), dimension(:,:), allocatable :: X_copy
+      real(dp), dimension(:), allocatable :: X_copy
 !
       real(dp) :: ddot  
 !
-      call mem%alloc(X_copy, wf%n_es_amplitudes, 1)
-      X_copy = X
+      call mem%alloc(X_copy, wf%n_es_amplitudes)
+      call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
       call wf%jacobian_transform_trial_vector(X_copy) ! X_copy <- AX 
 !
       w = ddot(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
-      R = X_copy - w*X
+      call dcopy(wf%n_es_amplitudes, X_copy, 1, R, 1)
+      call daxpy(wf%n_es_amplitudes, -w, X, 1, R, 1)
 !
-      call mem%dealloc(X_copy, wf%n_es_amplitudes, 1)
+      call mem%dealloc(X_copy, wf%n_es_amplitudes)
 !
    end subroutine construct_excited_state_equation_ccs
 !
 !
-   subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
+   subroutine jacobian_ccs_transformation_ccs(wf, c_ai)
 !!
 !!    Jacobian CCS transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -3561,27 +3533,27 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: c_a_i       
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: c_ai       
 !
-      real(dp), dimension(:,:), allocatable :: rho_a_i
+      real(dp), dimension(:,:), allocatable :: rho_ai
 !
 !     Allocate the transformed vector & add the terms to it 
 !
-      call mem%alloc(rho_a_i, wf%n_v, wf%n_o)
-      rho_a_i = zero
+      call mem%alloc(rho_ai, wf%n_v, wf%n_o)
+      rho_ai = zero
 !
-      call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
-      call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
+      call wf%jacobian_ccs_a1(rho_ai, c_ai)
+      call wf%jacobian_ccs_b1(rho_ai, c_ai)
 !
 !     Then overwrite the c vector with the transformed vector 
 !
-      call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
-      call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
+      call dcopy((wf%n_o)*(wf%n_v), rho_ai, 1, c_ai, 1)
+      call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_ccs_transformation_ccs
 !
 !
-   subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_a_i)
+   subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_ai)
 !!
 !!    Jacobian transpose transformation (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
@@ -3601,22 +3573,22 @@ contains
 !
       class(ccs) :: wf 
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: b_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: b_ai 
 !
-      real(dp), dimension(:,:), allocatable :: sigma_a_i
+      real(dp), dimension(:,:), allocatable :: sigma_ai
 !
 !     Allocate the transformed vector & add the terms to it
 !
-      call mem%alloc(sigma_a_i, wf%n_v, wf%n_o)
-      sigma_a_i = zero 
+      call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
+      sigma_ai = zero 
 !
-      call wf%jacobian_transpose_ccs_a1(sigma_a_i, b_a_i)
-      call wf%jacobian_transpose_ccs_b1(sigma_a_i, b_a_i)
+      call wf%jacobian_transpose_ccs_a1(sigma_ai, b_ai)
+      call wf%jacobian_transpose_ccs_b1(sigma_ai, b_ai)
 !
 !     Then overwrite the b vector with the transformed vector 
 !
-      call dcopy((wf%n_o)*(wf%n_v), sigma_a_i, 1, b_a_i, 1)
-      call mem%dealloc(sigma_a_i, wf%n_v, wf%n_o)
+      call dcopy((wf%n_o)*(wf%n_v), sigma_ai, 1, b_ai, 1)
+      call mem%dealloc(sigma_ai, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_transpose_ccs_transformation_ccs
 !
@@ -3636,7 +3608,7 @@ contains
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_v*wf%n_o, 1), intent(in)    :: c1
+      real(dp), dimension(wf%n_v*wf%n_o), intent(in)    :: c1
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1
 !
 !     sum_b F_a_b c_b_i
@@ -3690,8 +3662,8 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c1
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1      
 !
-      real(dp), dimension(:,:), allocatable :: g_ab_ji
-      real(dp), dimension(:,:), allocatable :: L_ai_jb
+      real(dp), dimension(:,:,:,:), allocatable :: g_abji
+      real(dp), dimension(:,:,:,:), allocatable :: L_aijb
 !
       real(dp), dimension(:,:), allocatable :: c_jb
 !
@@ -3710,33 +3682,33 @@ contains
 !
          call batch_b%determine_limits(current_b_batch)
 !
-!        Construct L_ai_jb = 2 g_ai_jb - g_ab_ji
+!        Construct L_aijb = 2 g_aijb - g_abji
 !
-         call mem%alloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%length))
+         call mem%alloc(L_aijb, wf%n_v, wf%n_o, wf%n_o, batch_b%length)
 !
-         call wf%get_voov(L_ai_jb,     &
+         call wf%get_voov(L_aijb,     &
                            1, wf%n_v,  &
                            1, wf%n_o,  &
                            1, wf%n_o,  &
                            batch_b%first, batch_b%last)   
 !
-         call dscal(((wf%n_o)**2)*(wf%n_v)*(batch_b%length), two, L_ai_jb, 1)
+         call dscal(((wf%n_o)**2)*(wf%n_v)*(batch_b%length), two, L_aijb, 1)
 !
-!        Construct L_ai_jb = 2 g_ai_jb - g_ab_ji
+!        Construct L_aijb = 2 g_aijb - g_abji
 !
-         call mem%alloc(g_ab_ji, (wf%n_v)*(batch_b%length), (wf%n_o)**2)
+         call mem%alloc(g_abji, wf%n_v, batch_b%length, wf%n_o, wf%n_o)
 !
-         call wf%get_vvoo(g_ab_ji,                       &
+         call wf%get_vvoo(g_abji,                        &
                            1, wf%n_v,                    &
                            batch_b%first, batch_b%last,  &
                            1, wf%n_o,                    &
                            1, wf%n_o)   
 !
-         call add_1432_to_1234(-one, g_ab_ji, L_ai_jb, wf%n_v, wf%n_o, wf%n_o, batch_b%length)
+         call add_1432_to_1234(-one, g_abji, L_aijb, wf%n_v, wf%n_o, wf%n_o, batch_b%length)
 !
-         call mem%dealloc(g_ab_ji, (wf%n_v)*(batch_b%length), (wf%n_o)**2)
+         call mem%dealloc(g_abji, wf%n_v, batch_b%length, wf%n_o, wf%n_o)
 !
-!        Reorder c1 to do multiply with L_ai_jb
+!        Reorder c1 to do multiply with L_aijb
 !
          call mem%alloc(c_jb, (wf%n_o), batch_b%length)
 !
@@ -3756,7 +3728,7 @@ contains
                      1,                         &
                      (wf%n_o)*(batch_b%length), &
                      one,                       &
-                     L_ai_jb,                   &
+                     L_aijb,                   &
                      (wf%n_v)*(wf%n_o),         &
                      c_jb,                      &
                      (wf%n_o)*batch_b%length,   &
@@ -3764,7 +3736,7 @@ contains
                      rho1,                      &
                      (wf%n_v)*(wf%n_o))      
 !
-         call mem%dealloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%length))
+         call mem%dealloc(L_aijb, wf%n_v, wf%n_o, wf%n_o, batch_b%length)
          call mem%dealloc(c_jb, (wf%n_o), (batch_b%length))
 !
       enddo
@@ -3772,7 +3744,7 @@ contains
    end subroutine jacobian_ccs_b1_ccs
 !
 !
-   subroutine jacobian_transpose_ccs_a1_ccs(wf, sigma_a_i, b_a_i)
+   subroutine jacobian_transpose_ccs_a1_ccs(wf, sigma_ai, b_ai)
 !!
 !!    Jacobian transpose A1 (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
@@ -3787,8 +3759,8 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_a_i 
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_ai
 !
 !     Add sum_c F_ca b_ci = sum_c F_ac^T b_ci     
 !
@@ -3799,10 +3771,10 @@ contains
                   one,        &
                   wf%fock_ab, &
                   wf%n_v,     &
-                  b_a_i,      &
+                  b_ai,       &
                   wf%n_v,     &
                   one,        &
-                  sigma_a_i,  &
+                  sigma_ai,   &
                   wf%n_v)
 !
 !     Add - sum_k b_ak F_ik = - sum_k b_ak F_ki^T 
@@ -3812,18 +3784,18 @@ contains
                   wf%n_o,     &
                   wf%n_o,     &
                   -one,       &
-                  b_a_i,      &
+                  b_ai,       &
                   wf%n_v,     &
                   wf%fock_ij, &
                   wf%n_o,     &
                   one,        &
-                  sigma_a_i,  &
+                  sigma_ai,   &
                   wf%n_v)
 !
    end subroutine jacobian_transpose_ccs_a1_ccs
 ! 
 ! 
-   subroutine jacobian_transpose_ccs_b1_ccs(wf, sigma_a_i, b_a_i)
+   subroutine jacobian_transpose_ccs_b1_ccs(wf, sigma_ai, b_ai)
 !!
 !!    Jacobian transpose B1 (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
@@ -3838,42 +3810,42 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_a_i 
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_ai
 !
-      real(dp), dimension(:,:), allocatable :: g_ck_ia ! g_ckia 
-      real(dp), dimension(:,:), allocatable :: g_ca_ik ! g_caik 
+      real(dp), dimension(:,:,:,:), allocatable :: g_ckia ! g_ckia 
+      real(dp), dimension(:,:,:,:), allocatable :: g_caik ! g_caik 
 !
-      real(dp), dimension(:,:), allocatable :: L_ai_ck ! L_ckia = 2 * g_ckia - g_caik
+      real(dp), dimension(:,:,:,:), allocatable :: L_aick ! L_ckia = 2 * g_ckia - g_caik
 !
-      integer :: k, c, ck, i, a, Ai, iA, ca, ik
+      integer :: k, c, i, a
 !
-      integer         :: required, current_a_batch 
+      integer         :: required, current_a_batch
       type(batching_index) :: batch_a 
 !
-!     :: Construct L_ai_ck = L_ckia
+!     :: Construct L_aick = L_ckia
 !
-      call mem%alloc(g_ck_ia, (wf%n_v)*(wf%n_o), (wf%n_o)*(wf%n_v))
-      call wf%get_voov(g_ck_ia)
+      call mem%alloc(g_ckia, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call wf%get_voov(g_ckia)
 !
-      call mem%alloc(L_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
-      L_ai_ck = zero
+      call mem%alloc(L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      L_aick = zero
+!
+      required = wf%integrals%get_required_vvoo()
 !
       call batch_a%init(wf%n_v)
-
-      required = wf%integrals%get_required_vvoo()
 !
       call mem%num_batch(batch_a, required)
 !
       do current_a_batch = 1, batch_a%num_batches 
 !
-!        Set part of L_ai_ck = L_ckia = 2 * g_ckia - g_caik for current a batch 
+!        Set part of L_aick = L_ckia = 2 * g_ckia - g_caik for current a batch 
 !
          call batch_a%determine_limits(current_a_batch)
 !
-         call mem%alloc(g_ca_ik, (wf%n_v)*(batch_a%length), (wf%n_o)**2)
+         call mem%alloc(g_caik, wf%n_v, batch_a%length, wf%n_o, wf%n_o)
 !
-         call wf%get_vvoo(g_ca_ik,        &
+         call wf%get_vvoo(g_caik,         &
                            1,             &
                            wf%n_v,        &
                            batch_a%first, &
@@ -3885,48 +3857,38 @@ contains
 !
          do k = 1, wf%n_o
             do c = 1, wf%n_v
-!
-               ck = index_two(c, k, wf%n_v)
-!
                do i = 1, wf%n_o
-!
-                  ik = index_two(i, k, wf%n_o)
-!
                   do a = 1, batch_a%length
 !
-                     Ai = index_two(a + batch_a%first - 1, i, wf%n_v) ! Full space a 
-                     iA = index_two(i, a + batch_a%first - 1, wf%n_o) ! Full space a 
-                     ca = index_two(c, a, wf%n_v)
-!
-                     L_ai_ck(Ai, ck) = two*g_ck_ia(ck, iA) - g_ca_ik(ca, ik)
+                     L_aick(a + batch_a%first - 1,i,c,k) = two*g_ckia(c,k,i,a + batch_a%first - 1) - g_caik(c,a,i,k)
 !
                   enddo
                enddo
             enddo
          enddo
 !
-         call mem%dealloc(g_ca_ik, (wf%n_v)*(batch_a%length), (wf%n_o)**2)
+         call mem%dealloc(g_caik, wf%n_v, batch_a%length, wf%n_o, wf%n_o)
 !
-      enddo ! End of batches over a 
+      enddo ! End of batches over a
 !
-      call mem%dealloc(g_ck_ia, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_ckia, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-!     :: Add sum_ck L_ckia b_ck = sum_ck L_ai_ck b_ck to sigma 
+!     :: Add sum_ck L_ckia b_ck = sum_ck L_aick b_ck to sigma 
 !
       call dgemm('N','N',            &
                   (wf%n_v)*(wf%n_o), &
                   1,                 &
                   (wf%n_v)*(wf%n_o), &
                   one,               &
-                  L_ai_ck,           &
+                  L_aick,            &
                   (wf%n_v)*(wf%n_o), &
-                  b_a_i,             & ! "b_ai"
+                  b_ai,              & ! "b_ai"
                   (wf%n_v)*(wf%n_o), &
                   one,               &
-                  sigma_a_i,         & ! "sigma_ai"
+                  sigma_ai,          & ! "sigma_ai"
                   (wf%n_v)*(wf%n_o))
 !
-      call mem%dealloc(L_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_transpose_ccs_b1_ccs
 !
@@ -3940,7 +3902,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: eta 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: eta 
 !
       integer :: i, a, ai
 !
@@ -3949,7 +3911,7 @@ contains
          do a = 1, wf%n_v 
 !
             ai = (wf%n_v)*(i - 1) + a
-            eta(ai, 1) = two*(wf%fock_ia(i, a))
+            eta(ai) = two*(wf%fock_ia(i, a))
 !
          enddo
       enddo
@@ -3973,9 +3935,9 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: equation 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation 
 !
-      real(dp), dimension(:,:), allocatable :: eta 
+      real(dp), dimension(:), allocatable :: eta 
 !
 !     Copy the multipliers, eq. = t-bar 
 !
@@ -3987,12 +3949,12 @@ contains
 !
 !     Add eta, eq. = t-bar^T A + eta 
 !
-      call mem%alloc(eta, wf%n_t1, 1)
+      call mem%alloc(eta, wf%n_t1)
       call wf%construct_eta(eta)
 !
       call daxpy(wf%n_t1, one, eta, 1, equation, 1)
 !
-      call mem%dealloc(eta, wf%n_t1, 1)
+      call mem%dealloc(eta, wf%n_t1)
 !
    end subroutine construct_multiplier_equation_ccs
 !
@@ -4091,17 +4053,17 @@ contains
    subroutine get_cvs_projector_ccs(wf, projector, n_cores, core_MOs)
 !!
 !!    Get CVS projector
-!!    Written by Sarai D. Folekstad, Oct 2018
+!!    Written by Sarai D. Folkestad, Oct 2018
 !!
       implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
 !
       integer, intent(in) :: n_cores
 !
-      integer, dimension(n_cores, 1), intent(in) :: core_MOs
+      integer, dimension(n_cores), intent(in) :: core_MOs
 !
       integer :: core, i, a, ai
 !
@@ -4109,12 +4071,12 @@ contains
 !
       do core = 1, n_cores
 !
-        i = core_MOs(core, 1)
+        i = core_MOs(core)
 !
         do a = 1, wf%n_v
 !
            ai = wf%n_v*(i - 1) + a
-           projector(ai, 1) = one
+           projector(ai) = one
 !
         enddo
      enddo
@@ -4131,7 +4093,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
 !
       integer :: i, a, ai
 !
@@ -4142,7 +4104,7 @@ contains
       do i = 1, wf%n_o
 !
          ai = wf%n_v*(i - 1) + a
-         projector(ai, 1) = one
+         projector(ai) = one
 !
      enddo
 !
@@ -4172,11 +4134,11 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1) :: x 
+      real(dp), dimension(wf%n_gs_amplitudes) :: x 
 !
       character(len=1) :: tag 
 !
-      call wf%print_dominant_x1(x(1:wf%n_t1,1),tag)
+      call wf%print_dominant_x1(x(1:wf%n_t1),tag)
 !
    end subroutine print_dominant_x_amplitudes_ccs
 !
@@ -4193,26 +4155,26 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_t1, 1), intent(in) :: x1 
+      real(dp), dimension(wf%n_t1), intent(in) :: x1 
       character(len=1), intent(in)                :: tag 
 !
-      real(dp), dimension(:,:), allocatable :: abs_x1
+      real(dp), dimension(:), allocatable :: abs_x1
 !
-      integer, dimension(:,:), allocatable :: dominant_indices
-      real(dp), dimension(:,:), allocatable     :: dominant_values
+      integer, dimension(:), allocatable :: dominant_indices
+      real(dp), dimension(:), allocatable     :: dominant_values
 !
       integer :: n_elements, elm, i, a 
 !
 !     Sort according to largest contributions
 !
-      call mem%alloc(abs_x1, wf%n_t1, 1)
+      call mem%alloc(abs_x1, wf%n_t1)
       abs_x1 = abs(x1)
 !
       n_elements = 20
       if (n_elements .gt. wf%n_t1) n_elements = wf%n_t1 
 !
-      call mem%alloc(dominant_indices, n_elements, 1)
-      call mem%alloc(dominant_values, n_elements, 1)
+      call mem%alloc(dominant_indices, n_elements)
+      call mem%alloc(dominant_values, n_elements)
 !
       dominant_indices = 0
       dominant_values  = zero 
@@ -4227,17 +4189,17 @@ contains
 !
       do elm = 1, n_elements
 !
-         call invert_compound_index(dominant_indices(elm,1), a, i, wf%n_v, wf%n_o)
+         call invert_compound_index(dominant_indices(elm), a, i, wf%n_v, wf%n_o)
 !
-         write(output%unit, '(t6,i3,7x,i3,5x,f19.12)') a, i, x1(dominant_indices(elm,1), 1)
+         write(output%unit, '(t6,i3,7x,i3,5x,f19.12)') a, i, x1(dominant_indices(elm))
 !
       enddo
 !
       write(output%unit, '(t6,a)')  '-----------------------------------------'
 !
-      call mem%dealloc(dominant_indices, n_elements, 1)
-      call mem%dealloc(dominant_values, n_elements, 1)
-      call mem%dealloc(abs_x1, wf%n_t1, 1)
+      call mem%dealloc(dominant_indices, n_elements)
+      call mem%dealloc(dominant_values, n_elements)
+      call mem%dealloc(abs_x1, wf%n_t1)
 !
    end subroutine print_dominant_x1_ccs
 !

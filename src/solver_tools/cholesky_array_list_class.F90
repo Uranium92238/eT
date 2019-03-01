@@ -40,8 +40,8 @@ contains
 !
       integer :: n_blocks
 !
-      integer, dimension(n_blocks + 1, 1) :: block_firsts
-      logical, dimension(n_blocks, 1)          :: block_significant
+      integer, dimension(n_blocks + 1) :: block_firsts
+      logical, dimension(n_blocks)          :: block_significant
 !
       integer :: dim_reduced
 !

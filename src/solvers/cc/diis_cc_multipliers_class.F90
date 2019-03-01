@@ -127,15 +127,15 @@ contains
 !
       real(dp), intent(in) :: alpha 
 !
-      real(dp), dimension(n, 1), intent(in)    :: preconditioner
-      real(dp), dimension(n, 1), intent(inout) :: vector  
+      real(dp), dimension(n), intent(in)    :: preconditioner
+      real(dp), dimension(n), intent(inout) :: vector  
 !
       integer :: I 
 !
 !$omp parallel do private(I)
       do I = 1, n 
 !
-         vector(I, 1) = alpha*vector(I, 1)/preconditioner(I, 1)
+         vector(I) = alpha*vector(I)/preconditioner(I)
 !
       enddo 
 !$omp end parallel do
@@ -160,17 +160,17 @@ contains
 !
       real(dp) :: residual_norm
 !
-      real(dp), dimension(:,:), allocatable :: residual  
-      real(dp), dimension(:,:), allocatable :: multipliers
-      real(dp), dimension(:,:), allocatable :: epsilon  
+      real(dp), dimension(:), allocatable :: residual  
+      real(dp), dimension(:), allocatable :: multipliers
+      real(dp), dimension(:), allocatable :: epsilon  
 !
       integer :: iteration
 !
       call diis_manager%init('cc_multipliers_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
-      call mem%alloc(residual, wf%n_gs_amplitudes, 1)
-      call mem%alloc(multipliers, wf%n_gs_amplitudes, 1)
-      call mem%alloc(epsilon, wf%n_gs_amplitudes, 1)
+      call mem%alloc(residual, wf%n_gs_amplitudes)
+      call mem%alloc(multipliers, wf%n_gs_amplitudes)
+      call mem%alloc(epsilon, wf%n_gs_amplitudes)
 !
       call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
 !
@@ -248,9 +248,9 @@ contains
 !
       flush(output%unit)
 !
-      call mem%dealloc(residual, wf%n_gs_amplitudes, 1)
-      call mem%dealloc(multipliers, wf%n_gs_amplitudes, 1)
-      call mem%dealloc(epsilon, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(residual, wf%n_gs_amplitudes)
+      call mem%dealloc(multipliers, wf%n_gs_amplitudes)
+      call mem%dealloc(epsilon, wf%n_gs_amplitudes)
 !
    end subroutine run_diis_cc_multipliers
 !
@@ -296,7 +296,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: X
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: X
 !
       write(output%unit, '(/t3,a)') '- Multipliers vector amplitudes:'
       flush(output%unit)      
