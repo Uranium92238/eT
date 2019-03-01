@@ -34,6 +34,9 @@ module cc_property_solver_class
       real(dp), dimension(:,:), allocatable :: etaX
       real(dp), dimension(:,:), allocatable :: csiX
 !
+      real(dp), dimension(:,:), allocatable :: l_vec_n
+      real(dp), dimension(:,:), allocatable :: r_vec_n
+!
       integer :: n_singlet_states = 0
 !
    contains
@@ -42,6 +45,7 @@ module cc_property_solver_class
       procedure, non_overridable :: run              => run_cc_property_solver
       procedure, non_overridable :: cleanup          => cleanup_cc_property_solver
 !
+      procedure :: intialize_variables               => intialize_variables_cc_property_sover
       procedure :: read_settings                     => read_settings_cc_property_solver
 !
       procedure :: reset                             => reset_property_solver
@@ -56,7 +60,7 @@ module cc_property_solver_class
 contains
 !
 !
-   subroutine prepare_cc_property_solver(solver)
+   subroutine prepare_cc_property_solver(solver, wf)
 !!
 !!    Prepare 
 !!    Written by Josefine H. Andersen, 2019
@@ -64,6 +68,8 @@ contains
       implicit none
 !
       class(cc_property_solver) :: solver
+!
+      class(ccs) :: wf
 !
       call solver%print_banner()
 !
@@ -76,7 +82,7 @@ contains
 !
       call solver%read_settings()
 !
-      solver%S = zero
+      call solver%intialize_variables(wf)
 !
    end subroutine prepare_cc_property_solver
 !
@@ -95,8 +101,8 @@ contains
 !
       integer :: i, n
 !
-      real(dp), dimension(:,:), allocatable :: l_vec_n
-      real(dp), dimension(:,:), allocatable :: r_vec_n
+      !real(dp), dimension(:,:), allocatable :: l_vec_n
+      !real(dp), dimension(:,:), allocatable :: r_vec_n
 !
 !     Read multipliers and prepare operator
 !
@@ -105,16 +111,10 @@ contains
 !
       call wf%prepare_operator_pq(solver%operator_type)
 !
-      call mem%alloc(solver%etaX, wf%n_es_amplitudes, 1)
-      solver%etaX = zero
+      !call mem%alloc(l_vec_n, wf%n_es_amplitudes, 1)
+      !call mem%alloc(r_vec_n, wf%n_es_amplitudes, 1)
 !
-      call mem%alloc(solver%csiX, wf%n_es_amplitudes, 1)
-      solver%csiX = zero
-!
-      call mem%alloc(l_vec_n, wf%n_es_amplitudes, 1)
-      call mem%alloc(r_vec_n, wf%n_es_amplitudes, 1)
-!
-      call solver%print_summary('header')
+      call solver%print_summary(wf, 'header')
 !      
 !     Loop over components of X
 !
@@ -127,29 +127,31 @@ contains
          call solver%reset()
 !
          call wf%construct_etaX(solver%X, solver%etaX)      
-         !call wf%construct_csiX(solver%X, solver%csiX)      
+!
+         call wf%construct_csiX(solver%X, solver%csiX)      
 !
 !        Do EOM or linear response
 !
          call solver%do_eom_or_lr(wf)
 !
-         call solver%print_summary('top', i)
+         call solver%print_summary(wf, 'top', i)
 !
 !        Loop over excited states
 !  
          do n = 1, solver%n_singlet_states
 !
-            call wf%get_left_right_vectors(l_vec_n, r_vec_n, n)
+            call wf%get_left_right_vectors(solver%l_vec_n, solver%r_vec_n, n)
 !
-            !call wf%scale_left_excitation_vector(l_vec_n, r_vec_n)
+            call wf%scale_left_excitation_vector(solver%l_vec_n, solver%r_vec_n)
 !
-            call wf%calculate_transition_strength(solver%S, solver%etaX, solver%csiX, l_vec_n, r_vec_n)
+            call wf%calculate_transition_strength(solver%S, solver%etaX, &
+                               solver%csiX, solver%l_vec_n, solver%r_vec_n)
 !
-            call solver%print_summary('results', n)
+            call solver%print_summary(wf, 'results', n)
 !            
          enddo
 !         
-         call solver%print_summary('bottom')
+         call solver%print_summary(wf, 'bottom')
 !
       enddo
 !
@@ -272,7 +274,45 @@ contains
 !     What to clean up?
       call wf%destruct_multipliers()
 !
+      if (allocated(solver%etaX)) &
+         call mem%dealloc(solver%etaX, wf%n_es_amplitudes, 1)
+!
+      if (allocated(solver%csiX)) &
+         call mem%dealloc(solver%csiX, wf%n_es_amplitudes, 1)
+!
+      if (allocated(solver%l_vec_n)) &
+         call mem%dealloc(solver%l_vec_n, wf%n_es_amplitudes, 1)
+!
+      if (allocated(solver%r_vec_n)) &
+         call mem%dealloc(solver%r_vec_n, wf%n_es_amplitudes, 1)
+!
    end subroutine cleanup_cc_property_solver
+!
+!
+   subroutine intialize_variables_cc_property_sover(solver, wf)
+!!
+!!    Allocate global variables
+!!    Written by Josefine H. Andersen, 2019
+!!
+      implicit none
+!
+      class(cc_property_solver) :: solver
+!
+      class(ccs) :: wf
+!
+      if (.not. allocated(solver%etaX)) &
+         call mem%alloc(solver%etaX, wf%n_es_amplitudes, 1)
+!
+      if (.not. allocated(solver%csiX)) &
+         call mem%alloc(solver%csiX, wf%n_es_amplitudes, 1)
+!
+      if (.not. allocated(solver%l_vec_n)) &
+         call mem%alloc(solver%l_vec_n, wf%n_es_amplitudes, 1)
+!
+      if (.not. allocated(solver%r_vec_n)) &
+         call mem%alloc(solver%r_vec_n, wf%n_es_amplitudes, 1) 
+!
+   end subroutine intialize_variables_cc_property_sover
 !
 !
    subroutine print_banner_cc_property_solver(solver)
@@ -291,7 +331,7 @@ contains
    end subroutine print_banner_cc_property_solver
 !
 !
-   subroutine print_summary_cc_property_solver(solver, output_type, i)
+   subroutine print_summary_cc_property_solver(solver, wf, output_type, i)
 !!
 !!    Print summary
 !!    Written by Josefine H. Andersen
@@ -301,10 +341,14 @@ contains
       implicit  none
 !
       class(cc_property_solver), intent(in) :: solver
+!
+      class(ccs), intent(in) :: wf
 !              
       character(len=*), intent(in) :: output_type
 !
       integer, optional :: i
+!
+      real(dp) :: ddot
 !
       if (output_type == 'header') then 
 !              
@@ -317,12 +361,15 @@ contains
         ! write(output%unit, '(t6,a)') '                                    '
          write(output%unit, '(/t6,a,a)') 'Operator component: ', solver%component(i)
         ! write(output%unit, '(/t6,a)') '                                    '
-         write(output%unit, '(/t6,a)')  'State                                             Strength     '
-         write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+         write(output%unit, '(/t6,a)')  'State         etaX*R             L*csiX              Strength  '
+         write(output%unit, '(t6,a)')   '---------------------------------------------------------------'
 !
       elseif (output_type == 'results') then
 !
-         write(output%unit, '(t6,i2,14x,f19.12,4x,f19.12)') i, solver%S
+         write(output%unit, '(t6,i2,1x,f19.10,1x,f19.10,1x,f19.10)') i, &
+         ddot(wf%n_es_amplitudes, solver%etaX, 1, solver%r_vec_n, 1), &
+         ddot(wf%n_es_amplitudes, solver%l_vec_n, 1, solver%csiX, 1), &
+         solver%S
 !
       elseif (output_type == 'bottom') then
 !
@@ -358,7 +405,7 @@ contains
 !
       else
 !
-         write(output%unit, '(t6,a)') 'You have not specifiec EOM or LR. etaX &
+         write(output%unit, '(t6,a)') 'You have not specified EOM or LR. etaX &
                                       & will be calculated with no contrubutions'
       endif
 !

@@ -394,24 +394,36 @@ contains
       class(hf), intent(in) :: wf
 !
       real(dp), dimension(:,:), allocatable :: mu_X_wx, mu_Y_wx, mu_Z_wx
+      !real(dp), dimension(:,:), allocatable :: mu_X_wx_packed, mu_Y_wx_packed, mu_Z_wx_packed
       real(dp), dimension(:,:), allocatable :: mu_X_pq, mu_Y_pq, mu_Z_pq
 !
       type(file) :: mu_X_pq_file
       type(file) :: mu_Y_pq_file
       type(file) :: mu_Z_pq_file
 !
-      real(dp) :: ddot ! DEBUG
-!
       call mem%alloc(mu_X_wx, wf%n_ao, wf%n_ao)
       call mem%alloc(mu_Y_wx, wf%n_ao, wf%n_ao)
       call mem%alloc(mu_Z_wx, wf%n_ao, wf%n_ao)
 !     
+      !call mem%alloc(mu_X_wx_packed, wf%n_ao*(wf%n_ao + 1)/2, 1)
+      !call mem%alloc(mu_Y_wx_packed, wf%n_ao*(wf%n_ao + 1)/2, 1)
+      !call mem%alloc(mu_Z_wx_packed, wf%n_ao*(wf%n_ao + 1)/2, 1)
+!     
       call mem%alloc(mu_X_pq, wf%n_mo, wf%n_mo)
       call mem%alloc(mu_Y_pq, wf%n_mo, wf%n_mo)
-      call mem%alloc(mu_Z_pq, wf%n_mo, wf%n_mo)
+      call mem%alloc(mu_Z_pq, wf%n_mo, wf%n_mo) 
 !
+      !call wf%get_ao_mu_wx(mu_X_wx_packed, mu_Y_wx_packed, mu_Z_wx_packed)
       call wf%get_ao_mu_wx(mu_X_wx, mu_Y_wx, mu_Z_wx)
+!
+      !call squareup(mu_X_wx_packed, mu_X_wx, wf%n_ao)
+      !call squareup(mu_Y_wx_packed, mu_Y_wx, wf%n_ao)
+      !call squareup(mu_Z_wx_packed, mu_Z_wx, wf%n_ao)
 !      
+      !call mem%dealloc(mu_X_wx_packed, wf%n_ao*(wf%n_ao + 1)/2, 1)
+      !call mem%dealloc(mu_Y_wx_packed, wf%n_ao*(wf%n_ao + 1)/2, 1)
+      !call mem%dealloc(mu_Z_wx_packed, wf%n_ao*(wf%n_ao + 1)/2, 1)
+!     
       call wf%mo_transform(mu_X_wx, mu_X_pq)
       call wf%mo_transform(mu_Y_wx, mu_Y_pq)
       call wf%mo_transform(mu_Z_wx, mu_Z_pq)
@@ -419,9 +431,6 @@ contains
       call mu_X_pq_file%init('mu_X', 'sequential', 'unformatted')
       call disk%open_file(mu_X_pq_file, 'write', 'rewind')
       write(mu_X_pq_file%unit) mu_X_pq
-!
-! --------- DEBUG
-      write(output%unit, *) 'mo_tr_save mu_X_pq norm = ', ddot(wf%n_mo, mu_X_pq, wf%n_mo, mu_X_pq, wf%n_mo)
 !
       call mu_Y_pq_file%init('mu_Y', 'sequential', 'unformatted')
       call disk%open_file(mu_Y_pq_file, 'write', 'rewind')

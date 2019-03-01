@@ -33,12 +33,12 @@ contains
       call wf%construct_etaX_singles_q1(Xoperator, etaX)
       call wf%construct_etaX_singles_q2(Xoperator, etaX)
 !
-      !call wf%construct_etaX_doubles_q1(Xoperator, etaX)
-      !call wf%construct_etaX_doubles_q2(Xoperator, etaX)
+      call wf%construct_etaX_doubles_q1(Xoperator, etaX)
+      call wf%construct_etaX_doubles_q2(Xoperator, etaX)
 !
 ! ------ DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') 'Full etaX = ', &
-            ddot(wf%n_v*wf%n_o, etaX, wf%n_v*wf%n_o, etaX, wf%n_v*wf%n_o)
+      write(output%unit,'(/t6,a,3x,f19.10)') 'Final etaX w/o EOM = ', &
+            ddot(wf%n_es_amplitudes, etaX, 1, etaX, 1)
 !
    end subroutine construct_etaX_ccsd
 !
@@ -56,7 +56,7 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_t1, 1), intent(inout) :: etaX
 !
       real(dp), dimension(:,:), allocatable :: X_ia
       real(dp), dimension(:,:), allocatable :: X_ai
@@ -79,10 +79,6 @@ contains
 !
       call mem%dealloc(X_ia, wf%n_t1, 1)
       call mem%dealloc(X_ai, wf%n_t1, 1)
-!
-! ------ DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') 'First etaX singles = ', &
-            ddot(wf%n_v, etaX, wf%n_o, etaX, wf%n_o)
 !
    end subroutine construct_etaX_ccs_singles_ccsd
 !
@@ -111,8 +107,9 @@ contains
       real(dp)            :: ddot ! DEBUG
 !
       call mem%alloc(eta_temp, wf%n_v, wf%n_o)
+      eta_temp = zero
 !
-!     First term
+!     :: First term  sum_c tb_ci X_ca
 !
       call mem%alloc(X_ca, wf%n_v*wf%n_v, 1)
 !
@@ -133,7 +130,11 @@ contains
 !         
       call mem%dealloc(X_ca, wf%n_v*wf%n_v, 1)
 !      
-!     Second term
+! ------ DEBUG
+      !write(output%unit,'(/t6,a,3x,f19.10)') '1st term Q1 singles etaX_temp = ', &
+      !      ddot(wf%n_t1, eta_temp, 1, eta_temp, 1)
+!
+!     :: Second term  - sum_k tb_ak X_ik
 !
       call mem%alloc(X_ik, wf%n_o*wf%n_o, 1)
 !
@@ -155,16 +156,16 @@ contains
       call mem%dealloc(X_ik, wf%n_o*wf%n_o, 1)
 !
 ! ------ DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') 'Q1 singles etaX_temp = ', &
-            ddot(wf%n_v, eta_temp, wf%n_o, eta_temp, wf%n_o)
+      !write(output%unit,'(t6,a,3x,f19.10)') '1st+2nd term Q1 singles etaX_temp = ', &
+      !      ddot(wf%n_t1, eta_temp, 1, eta_temp, 1)
 !
 !     Add eta_temp to etaX
 !
       call daxpy(wf%n_t1, one, eta_temp, 1, etaX, 1)
 !
 ! ------ DEBUG
-      write(output%unit,'(t6,a,3x,f19.10)') 'etaX_ai after singles Q1 = ', &
-            ddot(wf%n_v, etaX, wf%n_o, etaX, wf%n_o)
+      !write(output%unit,'(t6,a,3x,f19.10)') 'etaX singles after singles Q1 = ', &
+      !      ddot(wf%n_t1, etaX, 1, etaX, 1)
 !      
       call mem%dealloc(eta_temp, wf%n_v, wf%n_o)
 !
@@ -235,7 +236,7 @@ contains
                   zero,                 &
                   I_a_d,                &
                   wf%n_v)
-!          
+!
 !     Add - sum_ckdl tb_ckal X_id t_kl^cd
 !           = - sum_d I_a_d X_id 
 !           = - sum_d I_a_d X_i_a^T(d,i)
@@ -255,10 +256,6 @@ contains
 !
       call mem%dealloc(I_a_d, wf%n_v, wf%n_v)
 !
-! ------ DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') 'singles Q2 first sum eta_temp = ', &
-            ddot(wf%n_v, eta_temp, wf%n_o, eta_temp, wf%n_o)
-!      
 !     :: Second term: sum_ckdl tb_ckdi X_la t_ckdl
 !
 !     Form the intermediate X_l_i = sum_ckd t_l_ckd b_ckd_i  = sum_ckd b_ckdi t_kl^cd
@@ -297,16 +294,13 @@ contains
 !
       call mem%dealloc(I_l_i, wf%n_o, wf%n_o)
 !
-! ------ DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') 'singles total Q2 eta_temp = ', &
-            ddot(wf%n_v, eta_temp, wf%n_o, eta_temp, wf%n_o)
 !     Add eta_temp to etaX
 !
       call daxpy(wf%n_t1, one, eta_temp, 1, etaX, 1)
 !
 ! ------ DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') 'etaX after singles Q2 = ', &
-            ddot(wf%n_v, etaX, wf%n_o, etaX, wf%n_o)
+      !write(output%unit,'(/t6,a,3x,f19.10)') 'etaX singles after Q2 = ', &
+      !      ddot(wf%n_t1, etaX, 1, etaX, 1)
 !
       call mem%dealloc(eta_temp, wf%n_v, wf%n_o)
 !
@@ -346,6 +340,7 @@ contains
       call dcopy(wf%n_t1, wf%t1bar, 1, tb_ai, 1) ! Remove
 !
       call mem%alloc(etaX_ai_bj, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
+      etaX_ai_bj = zero
 !      
 !     :: First and second term
 !
@@ -371,11 +366,13 @@ contains
       call mem%dealloc(X_ai, wf%n_o, wf%n_v)
 !
       call mem%alloc(etaX_temp, wf%n_t2, 1)
+      etaX_temp = zero
+!
       call symmetrize_and_add_to_packed(etaX_temp, etaX_ai_bj, (wf%n_v*wf%n_o))
 !
 ! ------ DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') 'doubles Q1 etaX_temp = ', &
-            ddot(wf%n_t2, etaX_temp, 1, etaX_temp, 1)
+!      write(output%unit,'(/t6,a,3x,f19.10)') 'doubles Q1 etaX_temp = ', &
+!            ddot(wf%n_t2, etaX_temp, 1, etaX_temp, 1)
 !
       call mem%dealloc(etaX_ai_bj, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
 !
@@ -384,8 +381,8 @@ contains
       call daxpy(wf%n_t2, one, etaX_temp, 1, etaX(wf%n_t1+1:wf%n_es_amplitudes, 1), 1)
 !
 ! ------ DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') 'etaX_aibj after doubles Q1 = ', &
-            ddot(wf%n_t2, etaX(wf%n_t1+1:,1), 1, etaX(wf%n_t1+1:,1), 1)
+!      write(output%unit,'(t6,a,3x,f19.10)') 'etaX doubles after doubles Q1 = ', &
+!            ddot(wf%n_t2, etaX(wf%n_t1+1:,1), 1, etaX(wf%n_t1+1:,1), 1)
 !
       call mem%dealloc(etaX_temp, wf%n_t2, 1)
 !
@@ -421,19 +418,22 @@ contains
       real(dp)            :: ddot
 !
       call mem%alloc(tb_ai_bj, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
+      tb_ai_bj = zero
       call squareup(wf%t2bar, tb_ai_bj, (wf%n_v)*(wf%n_o))
 !
 !     Reorder multipiers to tb_aij_c
 !
       call mem%alloc(tb_aij_c, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+      tb_aij_c = zero
       call sort_1234_to_1243(tb_ai_bj, tb_aij_c, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!      
+!
 !     :: First term: sum_c b_aicj X_cb 
 !
       call mem%alloc(X_cb, wf%n_v, wf%n_v) 
       call wf%get_operator_vv(Xoperator, X_cb)
 !
       call mem%alloc(etaX_aij_b, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+      etaX_aij_b = zero
 !
       call dgemm('N','N',               &
                   (wf%n_v)*(wf%n_o)**2, &
@@ -454,6 +454,7 @@ contains
 !     Add etaX_aij_b to temporary etaX
 !
       call mem%alloc(etaX_ai_bj, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
+      etaX_ai_bj = zero
       call add_1243_to_1234(one, etaX_aij_b, etaX_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(etaX_aij_b, (wf%n_v)*(wf%n_o)**2, wf%n_v)
@@ -480,21 +481,22 @@ contains
       call mem%dealloc(X_jk, wf%n_o, wf%n_o)
 !
       call mem%alloc(etaX_temp, wf%n_t2, 1)
+      etaX_temp = zero
       call symmetrize_and_add_to_packed(etaX_temp, etaX_ai_bj, wf%n_o*wf%n_v)      
 !
 ! ------ DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') 'doubles Q2 etaX_temp = ', &
-            ddot(wf%n_t2, etaX_temp, 1, etaX_temp, 1)
+      !write(output%unit,'(/t6,a,3x,f19.10)') 'doubles Q2 etaX_temp = ', &
+      !      ddot(wf%n_t2, etaX_temp, 1, etaX_temp, 1)
 !      
       call mem%dealloc(etaX_ai_bj, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
 !
 !     add temporary etaX to etaX vector
 !
-      call daxpy(wf%n_t2, one, etaX_temp, 1, etaX(wf%n_t1+1:wf%n_es_amplitudes, 1), 1)
+      call daxpy(wf%n_t2, one, etaX_temp, 1, etaX(wf%n_t1+1:, 1), 1)
 !
 ! ------ DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') 'etaX after doubles Q2 = ', &
-            ddot(wf%n_t2, etaX(wf%n_t1+1:,1), 1, etaX(wf%n_t1+1:,1), 1)
+      !write(output%unit,'(t6,a,3x,f19.10)') 'etaX doubles after doubles Q2 = ', &
+      !      ddot(wf%n_t2, etaX(wf%n_t1+1:,1), 1, etaX(wf%n_t1+1:,1), 1)
 !      
       call mem%dealloc(etaX_temp, wf%n_t2, 1)
 !      
@@ -521,7 +523,7 @@ contains
       call wf%construct_csiX_doubles(Xoperator, csiX)
 !
 ! ------ DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') 'Full csiX = ', &
+      write(output%unit,'(t6,a,3x,f19.10)') 'Final csiX norm = ', &
             ddot(wf%n_es_amplitudes, csiX, 1, csiX, 1)      
 !
    end subroutine construct_csiX_ccsd
@@ -556,14 +558,11 @@ contains
       real(dp)            :: ddot
 !
       call mem%alloc(csiX_temp, wf%n_t1, 1)
+      csiX_temp = zero
 !
 !     :: First term: X_ai
 !
       call wf%get_operator_vo(Xoperator, csiX_temp)     
-!
-!------------ DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') '1st singles csiX = ', ddot(wf%n_t1, csiX_temp, &
-                                             1, csiX_temp, 1)
 !
 !     :: Second term: u_aick X_kc
 !
@@ -571,7 +570,7 @@ contains
       call mem%alloc(X_ck, wf%n_v*wf%n_o, 1)
 !      
       call wf%get_operator_ov(Xoperator, X_kc)
-      call wf%construct_etaX_transpose(X_kc, X_ck)
+      call sort_12_to_21(X_kc, X_ck, wf%n_o, wf%n_v)
 !
       call mem%dealloc(X_kc, wf%n_o*wf%n_v, 1)
 !
@@ -584,7 +583,7 @@ contains
       u_ai_ck = zero
 !
       call add_1432_to_1234(-one, t_ai_ck, u_ai_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o) 
-      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ai_ck, 1, u_ai_ck, 1)
+      call daxpy((wf%n_o)**2 * (wf%n_v)**2, two, t_ai_ck, 1, u_ai_ck, 1)
 !
       call mem%dealloc(t_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
@@ -604,16 +603,19 @@ contains
                   (wf%n_o)*(wf%n_v))
 !
       call mem%dealloc(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call mem%dealloc(X_ck, wf%n_v, wf%n_o)
+      call mem%dealloc(X_ck, wf%n_v*wf%n_o, 1)
 !
 !     Add temporary csiX to csiX
 !
       call daxpy(wf%n_t1, one, csiX_temp, 1, csiX(1:wf%n_t1, 1), 1)
 !
 ! ---------- DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') 'Full singles csiX = ', ddot(wf%n_t1, csiX_temp, &
-                                             1, csiX_temp, 1)
-
+!      write(output%unit,'(t6,a,3x,f19.10)') 'singles csiX_temp = ', ddot(wf%n_t1, csiX_temp, &
+!                                             1, csiX_temp, 1)
+!
+! ---------- DEBUG
+      !write(output%unit,'(t6,a,3x,f19.10)') 'singles csiX = ', &
+      !     ddot(wf%n_t1, csiX, 1, csiX, 1)
 !      
       call mem%dealloc(csiX_temp, wf%n_t1, 1)
 !
@@ -648,14 +650,18 @@ contains
       real(dp)            :: ddot
 !
       call mem%alloc(t_cj_ai, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
-      call squareup(wf%t2bar, t_cj_ai, wf%n_v*wf%n_o)
+      call squareup(wf%t2, t_cj_ai, wf%n_v*wf%n_o)
 !
 !     :: First term: sum_c t_aicj X_bc
 !
       call mem%alloc(X_bc, wf%n_v, wf%n_v)
       call wf%get_operator_vv(Xoperator, X_bc)
 !
+!      write(output%unit,'(/t6,a,3x,f19.10)') 'doubles csiX, X_bc norm = ',&
+!           ddot(wf%n_t1, X_bc, 1, X_bc, 1)
+!
       call mem%alloc(csiX_bj_ai, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
+      csiX_bj_ai = zero
 !
       call dgemm('N','N',            &
                  wf%n_v,             &
@@ -675,28 +681,34 @@ contains
 !     Add csiX_bj_ai to temporary csiX vector
 !
       call mem%alloc(csiX_temp, wf%n_t2, 1)
+      csiX_temp = zero
       call symmetrize_and_add_to_packed(csiX_temp, csiX_bj_ai, wf%n_v*wf%n_o)
 !      
+! ------ DEBUG 
+!      write(output%unit,'(t6,a,3x,f19.10)') 'Doubles 1st term csiX_temp = ', &
+!            ddot(wf%n_t2, csiX_temp, 1, csiX_temp, 1)
+!
       call mem%dealloc(csiX_bj_ai, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
 !      
 !     :: Second term: -sum_k t_ai_bk X_kj
 !
       call mem%alloc(X_kj, wf%n_o, wf%n_o)
       call wf%get_operator_oo(Xoperator, X_kj) 
-!      
+!
       call mem%alloc(csiX_ai_bj, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
+      csiX_ai_bj = zero
 !      
-      call dgemm('N','N',            &
-                 wf%n_o*(wf%n_v)**2, &
-                 wf%n_o,             &
-                 wf%n_o,             &
-                 -one,               &
-                 t_cj_ai,            &
-                 wf%n_o*(wf%n_v)**2, &
-                 X_kj,               &
-                 wf%n_o,             &
-                 zero,               &
-                 csiX_ai_bj,         &
+      call dgemm('N','N',              &
+                 (wf%n_o)*(wf%n_v)**2, &
+                 wf%n_o,               &
+                 wf%n_o,               &
+                 -one,                 &
+                 t_cj_ai,              &
+                 wf%n_o*(wf%n_v)**2,   &
+                 X_kj,                 &
+                 wf%n_o,               &
+                 zero,                 &
+                 csiX_ai_bj,           &
                  wf%n_o*(wf%n_v)**2)
 !
       call mem%dealloc(X_kj, wf%n_o, wf%n_o)
@@ -708,6 +720,10 @@ contains
 !
       call mem%dealloc(csiX_ai_bj, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
 !
+! ------ DEBUG 
+!      write(output%unit,'(t6,a,3x,f19.10)') 'Doubles 1st+2nd term csiX_temp = ', &
+!            ddot(wf%n_t2, csiX_temp, 1, csiX_temp, 1)
+!
 !     Add doubles contribution to csiX
 !
       call daxpy(wf%n_t2, one, csiX_temp, 1, csiX(wf%n_t1+1:wf%n_es_amplitudes, 1), 1)
@@ -715,8 +731,8 @@ contains
       call mem%dealloc(csiX_temp, wf%n_t2, 1)
 !
 ! ------ DEBUG 
-      write(output%unit,'(/t6,a,3x,f19.10)') 'Doubles csiX = ', &
-            ddot(wf%n_t2, csiX(wf%n_t1+1:, 1), 1, csiX(wf%n_t1+1:, 1), 1)
+      !write(output%unit,'(t6,a,3x,f19.10)') 'Doubles csiX = ', &
+      !      ddot(wf%n_t2, csiX(wf%n_t1+1:, 1), 1, csiX(wf%n_t1+1:, 1), 1)
 !
 !
    end subroutine construct_csiX_doubles_ccsd
@@ -799,6 +815,10 @@ contains
 !
       call mem%dealloc(X_ck, wf%n_v*wf%n_o, 1)
 !
+! ------ DEBUG
+      !write(output%unit,'(t6,a,3x,f19.10)') '1st term EOM etaX_temp = ', &
+      !ddot(wf%n_t1, etaX_temp, 1, etaX_temp, 1)
+!
 !     :: Second term: sum_ckdl tb_aick u_ckdl X_ld
 !
       call mem%alloc(X_ld, wf%n_o, wf%n_v)
@@ -861,16 +881,16 @@ contains
             call mem%dealloc(X_dl, wf%n_v, wf%n_o)
 !
 ! ------ DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') 'EOM etaX_temp = ', &
-            ddot(wf%n_v, etaX_temp, wf%n_o, etaX_temp, wf%n_o)
+      !write(output%unit,'(/t6,a,3x,f19.10)') '1st+2nd term EOM etaX_temp = ', &
+      !      ddot(wf%n_t1, etaX_temp, 1, etaX_temp, 1)
 !
 !     Add EOM contribution to etaX
 !
       call daxpy(wf%n_t1, one, etaX_temp, 1, etaX, 1)
 !
 ! ------ DEBUG
-      write(output%unit,'(/t6,a,3x,f19.10)') 'etaX_ai after EOM = ', &
-            ddot(wf%n_v, etaX, wf%n_o, etaX, wf%n_o)
+      write(output%unit,'(t6,a,3x,f19.10)') 'Final etaX with EOM = ', &
+            ddot(wf%n_es_amplitudes, etaX, 1, etaX, 1)
 !
       call mem%dealloc(etaX_temp, wf%n_v*wf%n_o, 1)
 !

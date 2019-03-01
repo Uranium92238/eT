@@ -167,7 +167,7 @@ contains
 !
       allocate(cc_property_solver)
 !
-      call cc_property_solver%prepare()
+      call cc_property_solver%prepare(wf)
       call cc_property_solver%run(wf)
       call cc_property_solver%cleanup(wf)
 !
@@ -215,6 +215,7 @@ contains
             if (line(1:15) == 'core excitation' ) then
 !
                write(output%unit, '(/t3,a,a)') 'Spectra for core excitations not implemented'
+               stop
 !
                engine%es_type = 'core'
                return

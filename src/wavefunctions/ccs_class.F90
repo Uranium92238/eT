@@ -4507,7 +4507,8 @@ contains
       call sort_12_to_21(etaX_temp, etaX, wf%n_o, wf%n_v)
 !
 ! ------ DEBUG
-      write(output%unit, '(/t6,a,3x,f19.10)') 'etaX = ', ddot(wf%n_es_amplitudes, etaX, 1, etaX, 1)
+      write(output%unit, '(/t6,a,3x,f19.10)') 'etaX matrix norm =', ddot(wf%n_v, etaX, wf%n_o, etaX, wf%n_o)
+      write(output%unit, '(/t6,a,3x,f19.10)') 'etaX vector norm =', ddot(wf%n_es_amplitudes, etaX, 1, etaX, 1)
 !
       call mem%dealloc(etaX_temp, wf%n_es_amplitudes, 1)
 !
@@ -4551,7 +4552,8 @@ contains
       call wf%get_operator_vo(Xoperator, csiX)
 !
 ! ------ DEBUG
-      write(output%unit, '(/t6,a,3x,f19.10)') 'csiX = ', ddot(wf%n_es_amplitudes, csiX, 1, csiX, 1)
+      write(output%unit, '(/t6,a,3x,f19.10)') 'csiX matrix norm =', ddot(wf%n_v, csiX, wf%n_o, csiX, wf%n_o)
+      write(output%unit, '(/t6,a,3x,f19.10)') 'csiX vector norm =', ddot(wf%n_es_amplitudes, csiX, 1, csiX, 1)
 !
    end subroutine construct_csiX_ccs
 !
@@ -4742,7 +4744,7 @@ contains
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(in) :: csiX
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(in) :: L, R
 !
-      real(dp) :: T_l = zero, T_r = zero
+      real(dp) :: T_l = 0.0, T_r =0.0
       real(dp) :: ddot
 !
 !      calc dotproducts btwn exc. vectors and csiX/etaX
@@ -4753,6 +4755,9 @@ contains
 !     sum S over three components
 !
       S  = S + T_l * T_r
+!
+      T_l = 0.0
+      T_r = 0.0
 !
    end subroutine calculate_transition_strength_ccs
 !
