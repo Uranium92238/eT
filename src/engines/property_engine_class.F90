@@ -139,8 +139,12 @@ contains
 !
             allocate(cc_core_es_solver)
 !
-            call cc_core_es_solver%prepare()
+            call cc_core_es_solver%prepare('right')
             call cc_core_es_solver%run(wf)
+!
+            call cc_core_es_solver%prepare('left')
+            call cc_core_es_solver%run(wf)
+!
             call cc_core_es_solver%cleanup()
 !
             deallocate(cc_core_es_solver)
@@ -214,8 +218,8 @@ contains
 !
             if (line(1:15) == 'core excitation' ) then
 !
-               write(output%unit, '(/t3,a,a)') 'Spectra for core excitations not implemented'
-               stop
+               !write(output%unit, '(/t3,a,a)') 'Spectra for core excitations not implemented'
+               !stop
 !
                engine%es_type = 'core'
                return

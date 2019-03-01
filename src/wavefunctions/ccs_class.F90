@@ -193,7 +193,6 @@ module ccs_class
 !     Routines related to property calculations
 !
       procedure :: construct_etaX                              => construct_etaX_ccs
-      procedure :: construct_etaX_transpose                    => construct_etaX_transpose_ccs
       procedure :: construct_csiX                              => construct_csiX_ccs
       procedure :: get_eom_contribution                        => get_eom_contribution_ccs
       procedure :: get_eom_xcc_contribution                    => get_eom_xcc_contribution_ccs
@@ -4492,7 +4491,6 @@ contains
       real(dp), dimension(:,:), allocatable :: etaX_temp
 !
       real(dp), parameter :: two = 2.0
-      real(dp) :: ddot
 !
       call mem%alloc(etaX_temp, wf%n_es_amplitudes, 1)
 !
@@ -4502,34 +4500,11 @@ contains
 !
       etaX_temp = two * etaX_temp
 !
-!      call wf%construct_etaX_transpose(etaX, etaX_temp)
-!
       call sort_12_to_21(etaX_temp, etaX, wf%n_o, wf%n_v)
-!
-! ------ DEBUG
-      write(output%unit, '(/t6,a,3x,f19.10)') 'etaX matrix norm =', ddot(wf%n_v, etaX, wf%n_o, etaX, wf%n_o)
-      write(output%unit, '(/t6,a,3x,f19.10)') 'etaX vector norm =', ddot(wf%n_es_amplitudes, etaX, 1, etaX, 1)
 !
       call mem%dealloc(etaX_temp, wf%n_es_amplitudes, 1)
 !
    end subroutine construct_etaX_ccs
-!
-!
-   subroutine construct_etaX_transpose_ccs(wf, etaX, etaT)
-!!
-!!    Transposes X_ia to X_ai in matrix form for etaX singles
-!!    Written by Josefine H. Andersen, February 2019
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)    :: etaT
-!      
-      etaX = transpose(etaT)
-!
-   end subroutine
 !
 !
    subroutine construct_csiX_ccs(wf, Xoperator, csiX)
@@ -4545,15 +4520,9 @@ contains
 !      
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
 !
-      real(dp) :: ddot ! DEBUG
-!
 !     CCS: csiX = X_ai
 !
       call wf%get_operator_vo(Xoperator, csiX)
-!
-! ------ DEBUG
-      write(output%unit, '(/t6,a,3x,f19.10)') 'csiX matrix norm =', ddot(wf%n_v, csiX, wf%n_o, csiX, wf%n_o)
-      write(output%unit, '(/t6,a,3x,f19.10)') 'csiX vector norm =', ddot(wf%n_es_amplitudes, csiX, 1, csiX, 1)
 !
    end subroutine construct_csiX_ccs
 !
@@ -4589,7 +4558,7 @@ contains
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: csiX
       real(dp), dimension(:,:), allocatable                     :: multipliers
 !
-      real(dp) :: X_cc
+      real(dp) :: X_cc = 0
       real(dp) :: ddot
 !
       call mem%alloc(multipliers, wf%n_es_amplitudes, 1)
@@ -4598,13 +4567,10 @@ contains
 !
       X_cc = ddot(wf%n_es_amplitudes, multipliers, 1, csiX, 1)
 !
-! -------- DEBUG
-      write(output%unit,'(/t6,a,3x,e9.2)') 'Xcc  = ', X_cc
+! --- DEBUG
+      ! write(output%unit,'(/t6,a,3x,e9.2)') 'Xcc  = ', X_cc
 !
       call daxpy(wf%n_es_amplitudes, -X_cc, multipliers, 1, etaX, 1)
-!
-! -------- DEBUG
-      !write(output%unit,'(t6,a,f19.10)') 'etaX - Xcc =', ddot(wf%n_es_amplitudes, etaX, 1, etaX, 1)
 !
       call mem%dealloc(multipliers, wf%n_es_amplitudes, 1)
 !
@@ -4754,7 +4720,8 @@ contains
 !
 !     sum S over three components
 !
-      S  = S + T_l * T_r
+      !S  = S + T_l * T_r
+      S  = T_l * T_r
 !
       T_l = 0.0
       T_r = 0.0
