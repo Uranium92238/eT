@@ -104,7 +104,7 @@ program eT_program
    write(output%unit,'(t3, a)')      '----------------------------------------------------------------------------------'
    write(output%unit,'(t4, a, a)')    'Sarai. D. Folkestad    ','Program design, HF, CCS, CC2, CCSD, Libint-interface,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS'
-   write(output%unit,'(t4, a, a)')    'Linda Golletto         ','CC2'
+   write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
    write(output%unit,'(t4, a, a)')    'Eirik. F. Kjønstad     ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
    write(output%unit,'(t4, a, a)')    'Rolf. H. Myhre         ','CC3, Runtest-interface, Launch script'
