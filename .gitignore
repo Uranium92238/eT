@@ -1,5 +1,6 @@
 #Making a gitignore
 build/
+*sublime*
 *.swp
 *.swo
 .DS_Store
