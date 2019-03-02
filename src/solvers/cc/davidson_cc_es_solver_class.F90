@@ -22,8 +22,7 @@ module davidson_cc_es_solver_class
 !!
 !!    Davidson coupled cluster excited state solver class module
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!
-!!    
+!!   
 !
    use kinds
    use file_class

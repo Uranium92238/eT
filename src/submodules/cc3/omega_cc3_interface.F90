@@ -20,7 +20,7 @@
    module subroutine construct_omega_cc3(wf, omega)
 !!
 !!   Construct omega (CC3)
-!!   Alex C. Paul and Rolf H. Myhre 2018
+!!   Rolf H. Myhre 2018
 !!
      implicit none
 !
@@ -34,7 +34,7 @@
    module subroutine omega_cc3_a_cc3(wf, omega1, omega2)
 !!
 !!    CC3 Omega terms
-!!    Alex C. Paul and Rolf H. Myhre 2018
+!!    Rolf H. Myhre 2018
 !!
       implicit none
 !

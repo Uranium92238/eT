@@ -22,7 +22,6 @@ module davidson_cc_ip_solver_class
 !!
 !!    Davidson coupled cluster ionized state solver class module
 !!    Written by Sarai D. Folkestad, 2018
-!!
 !!    
 !
    use davidson_cc_es_solver_class
