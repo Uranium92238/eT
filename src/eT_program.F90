@@ -36,11 +36,11 @@ program eT_program
    use uhf_class
    use mlhf_class
 !
-  use ccs_class
-  use cc2_class
-  use lowmem_cc2_class
-  use cc3_class
-  use mp2_class
+   use ccs_class
+   use cc2_class
+   use lowmem_cc2_class
+   use cc3_class
+   use mp2_class
 !
    use io_eT_program
 !
@@ -50,7 +50,7 @@ program eT_program
    use multipliers_engine_class
    use abstract_engine_class
 !
-   use eri_cd_solver_class
+   use eri_cd_class
 !
    implicit none
 !
@@ -78,7 +78,7 @@ program eT_program
 !
 !  Cholesky decomposition solver 
 !
-   type(eri_cd_solver), allocatable :: chol_solver
+   type(eri_cd), allocatable :: chol_solver
 !
 !  Engines
 !
@@ -123,11 +123,11 @@ program eT_program
    write(output%unit,'(t3, a)')      '----------------------------------------------------------------------------------'
    write(output%unit,'(t4, a, a)')    'Sarai D. Folkestad     ','Program design, HF, CCS, CC2, CCSD, Libint-interface,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS'
-   write(output%unit,'(t4, a, a)')    'Linda Golletto         ','CC2'
-   write(output%unit,'(t4, a, a)')    'Eirik F. Kjønstad      ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
+   write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
+   write(output%unit,'(t4, a, a)')    'Eirik. F. Kjønstad     ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
-   write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, Launch script'
-   write(output%unit,'(t4, a, a)')    'Alex Paul              ','CC2'
+   write(output%unit,'(t4, a, a)')    'Rolf. H. Myhre         ','CC3, Runtest-interface, Launch script'
+   write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2'
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
    write(output%unit,'(t3,a/)')      '----------------------------------------------------------------------------------'
    flush(output%unit)

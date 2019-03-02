@@ -24,8 +24,9 @@ module gs_engine_class
 !!
    use abstract_engine_class
    use ccs_class
-   use eri_cd_solver_class
-   use diis_cc_gs_solver_class
+   use eri_cd_class
+!
+   use diis_cc_gs_class
 !
    type, extends(abstract_engine) :: gs_engine 
 !
@@ -65,8 +66,8 @@ contains
 !
       class(ccs) :: wf
 !
-      type(eri_cd_solver), allocatable     :: eri_chol_solver
-      type(diis_cc_gs_solver), allocatable :: cc_gs_solver 
+      type(eri_cd), allocatable     :: eri_chol_solver
+      type(diis_cc_gs), allocatable :: cc_gs_solver 
 !
       write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
 !

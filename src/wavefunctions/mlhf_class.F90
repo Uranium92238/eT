@@ -31,7 +31,7 @@ module mlhf_class
    use index
    use active_atoms_info_class
 !
-   use eri_cd_solver_class
+   use eri_cd_class
 !
    use array_utilities
 !
@@ -116,7 +116,7 @@ contains
 !
       integer :: n_active_occ, n_active_vir, n_s
 !
-      type(eri_cd_solver)  :: chol_solver
+      type(eri_cd)  :: chol_solver
 !
       type(file) :: CMO_file
 !

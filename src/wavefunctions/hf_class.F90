@@ -113,8 +113,6 @@ module hf_class
       procedure :: initialize_orbitals                      => initialize_orbitals_hf
       procedure :: roothan_hall_update_orbitals             => roothan_hall_update_orbitals_hf
       procedure :: print_orbital_energies                   => print_orbital_energies_hf
-      procedure :: mo_transform                             => mo_transform_hf
-      procedure :: mo_transform_and_save_h                  => mo_transform_and_save_h_hf
       procedure :: save_orbital_coefficients                => save_orbital_coefficients_hf
       procedure :: read_orbital_coefficients                => read_orbital_coefficients_hf
 !
@@ -147,9 +145,6 @@ module hf_class
 !
       procedure :: construct_sp_eri_schwarz                 => construct_sp_eri_schwarz_hf
       procedure :: get_n_sig_eri_sp                         => get_n_sig_eri_sp_hf
-      procedure :: get_ao_h_wx                              => get_ao_h_wx_hf
-      procedure :: get_ao_s_wx                              => get_ao_s_wx_hf
-      procedure :: get_ao_mu_wx                             => get_ao_mu_wx_hf
 !
       procedure :: set_n_mo                                 => set_n_mo_hf
 !
@@ -314,89 +309,6 @@ contains
       call print_vector(wf%orbital_energies, wf%n_ao, indent)
 !
    end subroutine print_orbital_energies_hf
-!
-!
-   subroutine mo_transform_and_save_h_hf(wf)
-!!
-!!    MO transform and save h 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-      implicit none 
-!
-      class(hf) :: wf 
-!
-      real(dp), dimension(:,:), allocatable :: h_wx, h_pq 
-!
-      type(file) :: h_pq_file
-!
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
-!
-      call wf%get_ao_h_wx(h_wx)
-      call wf%mo_transform(h_wx, h_pq)
-!
-      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
-      call disk%open_file(h_pq_file, 'write', 'rewind')
-!
-      write(h_pq_file%unit) h_pq 
-!
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
-      call mem%dealloc(h_pq, wf%n_mo, wf%n_mo)     
-!
-      call disk%close_file(h_pq_file)
-!
-   end subroutine mo_transform_and_save_h_hf
-!
-!
-   subroutine mo_transform_hf(wf, X_wx, Y_pq)
-!!
-!!    MO transform 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
-!!
-!!    Performs MO transformation of X and saves the result in Y:
-!!
-!!       Y_pq = sum_wx C_wp X_wx C_xq
-!!
-      implicit none 
-!
-      class(hf), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: X_wx 
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Y_pq  
-!
-      real(dp), dimension(:,:), allocatable :: Z_wq ! = sum_x X_wx C_xq
-!
-      call mem%alloc(Z_wq, wf%n_ao, wf%n_mo)
-!
-      call dgemm('N', 'N',                 &
-                  wf%n_ao,                 &
-                  wf%n_mo,                 &
-                  wf%n_ao,                 &
-                  one,                     &
-                  X_wx,                    &
-                  wf%n_ao,                 &
-                  wf%orbital_coefficients, & ! C_xq
-                  wf%n_ao,                 &
-                  zero,                    &
-                  Z_wq,                    &
-                  wf%n_ao)
-!
-      call dgemm('T', 'N',                 &
-                  wf%n_mo,                 &
-                  wf%n_mo,                 &
-                  wf%n_ao,                 &
-                  one,                     &
-                  wf%orbital_coefficients, & ! C_wp 
-                  wf%n_ao,                 &
-                  Z_wq,                    &
-                  wf%n_ao,                 &
-                  zero,                    &
-                  Y_pq,                    &
-                  wf%n_mo)
-!
-      call mem%dealloc(Z_wq, wf%n_ao, wf%n_mo)
-!
-   end subroutine mo_transform_hf
 !
 !
    subroutine set_initial_ao_density_guess_hf(wf, guess)
@@ -3244,166 +3156,6 @@ contains
       call wf%construct_ao_density()
 !
    end subroutine set_ao_density_to_core_guess_hf
-!
-!
-   subroutine get_ao_h_wx_hf(wf, h)
-!!
-!!    Get AO h 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
-!!
-!!    Uses the integral tool to construct the full one-electron h matrix.
-!!
-      implicit none 
-!
-      class(hf), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: h 
-!
-      type(interval) :: A_interval, B_interval
-!
-      integer :: x, y, A, B
-!
-      real(dp), dimension(:,:), allocatable :: h_AB 
-!
-!$omp parallel do &
-!$omp private(A, B, h_AB, A_interval, B_interval, x, y) schedule(static)
-      do A = 1, wf%system%n_s
-!
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, A
-!
-            B_interval = wf%system%shell_limits(B)
-!
-            call mem%alloc(h_AB, A_interval%size, B_interval%size)
-            call wf%system%ao_integrals%construct_ao_h_wx(h_AB, A, B)
-!
-             do x = 1, A_interval%size
-                do y = 1, B_interval%size
-!
-                   h(A_interval%first - 1 + x, B_interval%first - 1 + y) = h_AB(x, y)
-                   h(B_interval%first - 1 + y, A_interval%first - 1 + x) = h_AB(x, y)
-!
-                enddo
-             enddo
-!
-            call mem%dealloc(h_AB, A_interval%size, B_interval%size)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine get_ao_h_wx_hf
-!
-!
-   subroutine get_ao_s_wx_hf(wf, s)
-!!
-!!    Get AO s 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
-!!
-!!    Uses the integral tool to construct the full one-electron h matrix.
-!!
-      implicit none 
-!
-      class(hf), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: s 
-!
-      type(interval) :: A_interval, B_interval
-!
-      integer :: x, y, A, B
-!
-      real(dp), dimension(:,:), allocatable :: s_AB 
-!
-      do A = 1, wf%system%n_s
-!
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, A
-!
-            B_interval = wf%system%shell_limits(B)
-!
-            call mem%alloc(s_AB, A_interval%size, B_interval%size)
-            call wf%system%ao_integrals%construct_ao_s_wx(s_AB, A, B)
-!
-             do x = 1, A_interval%size
-                do y = 1, B_interval%size
-!
-                   s(A_interval%first - 1 + x, B_interval%first - 1 + y) = s_AB(x, y)
-                   s(B_interval%first - 1 + y, A_interval%first - 1 + x) = s_AB(x, y)
-!
-                enddo
-             enddo
-!
-            call mem%dealloc(s_AB, A_interval%size, B_interval%size)
-!
-         enddo
-      enddo
-!
-   end subroutine get_ao_s_wx_hf
-!
-!
-   subroutine get_ao_mu_wx_hf(wf, mu_X, mu_Y, mu_Z)
-!!
-!!    Get AO mu
-!!    Written by Eirik F. Kjønstad, Sep 2018 
-!!
-!!    Uses the integral tool to construct the full dipole integrals
-!!    for the X, Y, and Z components.
-!!
-      implicit none 
-!
-      class(hf), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: mu_X
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: mu_Y
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: mu_Z
-!
-      type(interval) :: A_interval, B_interval
-!
-      integer :: x, y, A, B
-!
-      real(dp), dimension(:,:), allocatable :: mu_AB_X 
-      real(dp), dimension(:,:), allocatable :: mu_AB_Y 
-      real(dp), dimension(:,:), allocatable :: mu_AB_Z 
-!
-      do A = 1, wf%system%n_s
-!
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, A
-!
-            B_interval = wf%system%shell_limits(B)
-!
-            call mem%alloc(mu_AB_X, A_interval%size, B_interval%size)
-            call mem%alloc(mu_AB_Y, A_interval%size, B_interval%size)
-            call mem%alloc(mu_AB_Z, A_interval%size, B_interval%size)
-!
-            call wf%system%ao_integrals%construct_ao_mu_wx(mu_AB_X, mu_AB_Y, mu_AB_Z, A, B)
-!
-             do x = 1, A_interval%size
-                do y = 1, B_interval%size
-!
-                   mu_X(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_X(x, y)
-                   mu_X(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_X(x, y)
-!
-                   mu_Y(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_Y(x, y)
-                   mu_Y(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_Y(x, y)
-!
-                   mu_Z(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_Z(x, y)
-                   mu_Z(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_Z(x, y)
-!
-                enddo
-             enddo
-!
-            call mem%dealloc(mu_AB_X, A_interval%size, B_interval%size)
-            call mem%dealloc(mu_AB_Y, A_interval%size, B_interval%size)
-            call mem%dealloc(mu_AB_Z, A_interval%size, B_interval%size)
-!
-         enddo
-      enddo
-!
-   end subroutine get_ao_mu_wx_hf
 !
 !
    subroutine print_screening_settings_hf(wf)
