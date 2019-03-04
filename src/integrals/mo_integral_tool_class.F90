@@ -476,7 +476,6 @@ contains
       integer :: red_first_a 
 !
       real(dp), dimension(:,:), allocatable :: L_ib_J
-      real(dp), dimension(:,:), allocatable :: L_Jb_a
 !
       integer :: b_length, a_length
 !
@@ -499,8 +498,6 @@ contains
       call integrals%read_cholesky(L_ab_J, full_first_a, full_last_a, full_first_b, full_last_b)
 !
 !     Calculate and add t1-transformed term, - sum_i t_ai L_ib_J
-!
-      call mem%alloc(L_Jb_a, (integrals%n_J)*b_length, a_length)
 !
       call dgemm('N','N',                   &
                   a_length,                 &
