@@ -104,9 +104,9 @@ def construct_command(args):
     if (args.libint_lib):
         command += " -DLIBINT2_ROOT=" + args.libint_lib   
     if (args.Fortran_compiler):
-        command += " -FC=" + args.Fortran_compiler
+        command += " -DCMAKE_Fortran_COMPILER=" + args.Fortran_compiler
     if (args.CXX_compiler):
-        command += " -CXX=" + args.CXX_compiler   
+        command += " -DCMAKE_CXX_COMPILER=" + args.CXX_compiler   
 
     command += " %s" % root_dir
     return command
