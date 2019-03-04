@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 program eT_program
 !
 !!
@@ -102,13 +121,13 @@ program eT_program
    write(output%unit,'(/t3, a)')     '----------------------------------------------------------------------------------'
    write(output%unit,'(t4, a, a)')    'Author:                ','Contribution(s):'
    write(output%unit,'(t3, a)')      '----------------------------------------------------------------------------------'
-   write(output%unit,'(t4, a, a)')    'Sarai. D. Folkestad    ','Program design, HF, CCS, CC2, CCSD, Libint-interface,'
+   write(output%unit,'(t4, a, a)')    'Sarai D. Folkestad     ','Program design, HF, CCS, CC2, CCSD, Libint-interface,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS'
-   write(output%unit,'(t4, a, a)')    'Linda Golletto         ','CC2'
+   write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
    write(output%unit,'(t4, a, a)')    'Eirik. F. Kjønstad     ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
    write(output%unit,'(t4, a, a)')    'Rolf. H. Myhre         ','CC3, Runtest-interface, Launch script'
-   write(output%unit,'(t4, a, a)')    'Alex Paul              ','CC2'
+   write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2'
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
    write(output%unit,'(t3,a/)')      '----------------------------------------------------------------------------------'
    flush(output%unit)

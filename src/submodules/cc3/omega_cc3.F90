@@ -1,8 +1,27 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 submodule (cc3_class) omega_cc3
 !
 !!
-!!    Omega submodule (cc3)
-!!    Alex C. Paul and Rolf H. Myhre January 2019
+!!    Omega submodule (CC3)
+!!    Written by Rolf H. Myhre, January 2019
 !!
 !!    Routines to construct 
 !!
@@ -18,7 +37,7 @@ contains
    module subroutine construct_omega_cc3(wf, omega)
 !!
 !!    Construct omega (CC3)
-!!    Written by Alex C. Paul and Rolf H. Myhre 2018
+!!    Written by Rolf H. Myhre, January 2019
 !!
 !!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
 !!    for the current amplitudes of the object wfn
@@ -116,7 +135,7 @@ contains
    module subroutine omega_cc3_a_cc3(wf, omega1, omega2)
 !!
 !!    CC3 Omega terms
-!!    Alex C. Paul and Rolf H. Myhre 2018
+!!    Written by Rolf H. Myhre, January 2019
 !!
       implicit none
 !
@@ -553,7 +572,7 @@ contains
 !!    (jl|kc) ordered as cl,jk
 !!    (jb|kc) stored as L_jbkc = 2g_jbkc - g_jckb ordered as bc,jk
 !!
-!!    Rolf H. Myhre, January 2019
+!!    Written by Rolf H. Myhre, January 2019
 !!
       implicit none
 !
@@ -857,7 +876,7 @@ contains
 !!
 !!    Read the ljck, jlkc and jbkc integrals needed in the current batches
 !!
-!!    Rolf H. Myhre, January 2019
+!!    Written by Rolf H. Myhre, January 2019
 !!
       implicit none
 !
@@ -951,7 +970,7 @@ contains
 !!    Calculate the the contributions to the t_3 amplitudes 
 !!    for occupied indices i,j,k
 !!
-!!    Rolf H. Myhre, January 2019
+!!    Written by Rolf H. Myhre, January 2019
 !!
       implicit none
 !
@@ -1196,7 +1215,7 @@ contains
 !!
 !!    Divide W^abc_ijk with -epsilon^abc_ijk to obtain T^abc_ijk
 !!
-!!    Rolf H. Myhre, January 2019
+!!    Written by Rolf H. Myhre, January 2019
 !!
       implicit none
 !
@@ -1249,7 +1268,7 @@ contains
 !!    Calculate the triples contribution to omega1 and
 !!    the Fock contribution to omega2
 !!
-!!    Rolf H. Myhre, January 2019
+!!    Written by Rolf H. Myhre, January 2019
 !!
       implicit none
 !
@@ -1485,7 +1504,7 @@ contains
 !!    Calculate the triples contribution to omega1 and
 !!    the Fock contribution to omega2
 !!
-!!    Rolf H. Myhre, January 2019
+!!    Written by Rolf H. Myhre, January 2019
 !!
       implicit none
 !

@@ -1,8 +1,26 @@
-
-# Inspired by Dalton's test macro written by Radovan Bast 
-# This file contains all tests of the eT program 
-
-
+#
+#
+#   eT - a coupled cluster program
+#   Copyright (C) 2016-2019 the authors of eT
+#
+#   eT is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   eT is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+# 	Based on the cmake/DaltonTests.cmake file of the public 
+#   Dalton program (LGPL v2.1)
+#
+# 	Copied and modified for eT by Rolf H. Myhre, Feb 2019
+#
 macro(add_eT_runtest _name _labels)
     add_test(
         ${_name}
