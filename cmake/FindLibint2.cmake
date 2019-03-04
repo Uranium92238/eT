@@ -41,6 +41,7 @@ if(LIBINT2_GLOB_DIR)
    find_path(Libint2_INCLUDE_DIR
              NAMES libint2.h
              PATHS ${LIBINT2_GLOB_DIR} NO_DEFAULT_PATH)
+
    find_path(Libint2_H_DIR
              NAMES config.h
              PATHS ${Libint2_INCLUDE_DIR} NO_DEFAULT_PATH
@@ -52,6 +53,9 @@ if(LIBINT2_GLOB_DIR)
                 PATHS ${_BASE_PATH} NO_DEFAULT_PATH
                 PATH_SUFFIXES lib lib/.libs)
                 
+   file(GLOB_RECURSE _BASIS_DIR ${_BASE_PATH}/share/libint/*/basis/3-21g.g94)
+   get_filename_component(Libint2_BASIS_DIR ${_BASIS_DIR} PATH)
+
 endif()
 
 
@@ -60,5 +64,6 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(Libint2
       FOUND_VAR Libint2_FOUND
       REQUIRED_VARS Libint2_INCLUDE_DIR
                     Libint2_H_DIR
-                    Libint2_LIBRARY)
+                    Libint2_LIBRARY
+                    Libint2_BASIS_DIR)
 

@@ -28,6 +28,7 @@ parser.add_argument('-nt', "--no-timing", help="Do not copy timing.out from scra
 parser.add_argument('-v', "--verbose", help="Run some print statements", action='store_true')
 parser.add_argument('-bd', "--binary-dir", help="Specify location of eT executable", type=str)
 parser.add_argument('-sd', "--SAD-dir", help="Specify location of SAD data dir", type=str)
+parser.add_argument('-ldd', "--libint-data-dir", help="Specify location of Libint basis directory", type=str)
 args = parser.parse_args()
 
 #Check that output file makes sense and set default
@@ -50,9 +51,18 @@ eT_dir = os.path.abspath(eT_dir) # Use absolute path
 #Set the SAD data directory
 if (args.SAD_dir):
     sad_dir = os.path.abspath(args.SAD_dir)
-else:
+    os.environ['SAD_ET_DIR'] = sad_dir
+elif not 'SAD_ET_DIR' in os.environ:
     sad_dir = os.path.join('${CMAKE_SOURCE_DIR}','src','molecular_system','sad')
-os.environ['SAD_ET_DIR'] = sad_dir
+    os.environ['SAD_ET_DIR'] = sad_dir
+
+#Set the Libint basis directory
+if (args.libint_data_dir):
+    ldd_dir = os.path.abspath(args.libint_data_dir)
+    os.environ['LIBINT_DATA_PATH'] = ldd_dir
+elif not 'LIBINT_DATA_PATH' in os.environ:
+    ldd_dir = os.path.join('${Libint2_BASIS_DIR}')
+    os.environ['LIBINT_DATA_PATH'] = ldd_dir
 
 executable = os.path.join(eT_dir,'eT')
 
