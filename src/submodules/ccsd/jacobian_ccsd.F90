@@ -324,7 +324,7 @@ contains
 !
 !     X_lc = sum_kd L_lckd c_dk = sum_kd L_lc_dk c_dk
 !
-      call mem%alloc(X_lc, (wf%n_o)*(wf%n_v), 1)
+      call mem%alloc(X_lc, wf%n_o, wf%n_v)
 !
       call dgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
@@ -370,7 +370,7 @@ contains
                   (wf%n_v)*(wf%n_o))
 !
       call mem%dealloc(u_ailc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
-      call mem%dealloc(X_lc, (wf%n_v)*(wf%n_o), 1)
+      call mem%dealloc(X_lc, wf%n_o, wf%n_v)
 !
 !     :: Term 2. - sum_ckdl L_lckd t_li^cd c_ak ::
 !
@@ -1193,7 +1193,7 @@ contains
 !
 !     Calculate the intermediate X_lj = sum_ck L_ljck c_ck
 !
-      call mem%alloc(X_lj, (wf%n_o)**2, 1)
+      call mem%alloc(X_lj, wf%n_o, wf%n_o)
 !
       call dgemm('N', 'N',           &
                   (wf%n_o)**2,       &
@@ -1235,7 +1235,7 @@ contains
                   rho_aibj,             & ! rho_aib_j
                   (wf%n_o)*(wf%n_v)**2)
 !
-      call mem%dealloc(X_lj, (wf%n_o)**2, 1)
+      call mem%dealloc(X_lj, wf%n_o, wf%n_o)
 !
 !     :: Term 5. - sum_kcl L_ljkc t_ik^ac c_bl ::
 !
@@ -1656,7 +1656,7 @@ contains
                      Y_ckb_j,                            & ! Y_ckb_j
                      (wf%n_v)*(wf%n_o)*(batch_b%length))
 !
-!        Order amplitudes as t_ai_ck = t_ik^ac = t2(aick, 1)
+!        Order amplitudes as t_ai_ck = t_ik^ac = t2(aick)
 !
          call mem%alloc(t_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
          t_aick = zero
