@@ -186,7 +186,7 @@
    end subroutine jacobian_cc3_c3_calc_cc3
 !
 !
-   module subroutine jacobian_cc3_t3_calc_cc3(wf, omega, i, j, k, t_abc, u_abc, t_abji,   &
+   module subroutine jacobian_cc3_t3_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abji,   &
                                                 g_bdci, g_bdcj, g_bdck, g_ljci, g_lkci,   &
                                                 g_lkcj, g_licj, g_lick, g_ljck)
 !!
@@ -199,8 +199,6 @@
       implicit none
 !
       class(cc3) :: wf
-!
-      real(dp), intent(in) :: omega
 !
       integer, intent(in) :: i, j, k
 !
@@ -241,7 +239,7 @@
    !end subroutine jacobian_cc3_eps_cc3
 !
 !
-   module subroutine jacobian_cc3_rho1_cc3(wf, i, j, k, c_abc, u_abc, rho_ai,               &
+   module subroutine jacobian_cc3_rho1_cc3(wf, i, j, k, c_abc, u_abc, rho_ai, rho_abij, F_kc,   &
                                           L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
 !!
 !!    Calculate the triples contribution to rho1 for fixed i,j and k
@@ -260,13 +258,16 @@
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                   :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: rho_abij
 !
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbic
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbic
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbjc
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_ibjc
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_ibkc
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbkc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_kc
+!
+      real(dp), dimension(wf%n_v, wf%n_v), optional, intent(in)            :: L_jbic
+      real(dp), dimension(wf%n_v, wf%n_v), optional, intent(in)            :: L_kbic
+      real(dp), dimension(wf%n_v, wf%n_v), optional, intent(in)            :: L_kbjc
+      real(dp), dimension(wf%n_v, wf%n_v), optional, intent(in)            :: L_ibjc
+      real(dp), dimension(wf%n_v, wf%n_v), optional, intent(in)            :: L_ibkc
+      real(dp), dimension(wf%n_v, wf%n_v), optional, intent(in)            :: L_jbkc
 !
    end subroutine jacobian_cc3_rho1_cc3
 !

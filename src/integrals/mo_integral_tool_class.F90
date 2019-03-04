@@ -717,7 +717,7 @@ contains
 !
       call integrals%read_cholesky_t1(L_ia_J, full_first_i, full_last_i, integrals%n_o + 1, integrals%n_mo)
 !
-!     Compute c1-transformed term: L_iJ_j = sum_a c_aj L_ia_J
+!     L_i'J_j = sum_a c_aj L_ia_J
 !
       call mem%alloc(L_iJ_a, i_length*(integrals%n_J), integrals%n_v)
 !
@@ -737,7 +737,7 @@ contains
                   c_aj(1, first_j),         & ! c_a_j
                   integrals%n_v,            &
                   zero,                     &
-                  L_iJ_j_term,              &
+                  L_iJ_j_term,              & ! L_iJ_j
                   i_length*(integrals%n_J))
 !
      call mem%dealloc(L_iJ_a, i_length*(integrals%n_J), integrals%n_v)
@@ -798,7 +798,7 @@ contains
 !
       call integrals%read_cholesky_t1(L_ib_J, 1, integrals%n_o, full_first_b, full_last_b)
 !
-!     Calculate c1-transformed term, - sum_i c_ai L_ib_J
+!     L_a'b_J_c1 = - sum_i c_ai L_ib_J
 !
       call dgemm('N','N',                   &
                   a_length,                 &
@@ -866,7 +866,7 @@ contains
       call mem%alloc(L_ji_J, (integrals%n_o)*i_length, integrals%n_J)
       call integrals%read_cholesky_t1(L_ji_J, 1, integrals%n_o, full_first_i, full_last_i)
 !
-!     Calculate c1-transformed term, - sum_i c_aj L_ji_J
+!     L_a'i_J = - sum_i c_aj L_ji_J
 !
       call dgemm('N','N',                   &
                   a_length,                 &
@@ -900,7 +900,7 @@ contains
 !!
 !!    Computes
 !!
-!!       L_ai_J_c1= sum_b L_ab_J_T1 c_bi,
+!!       L_ai'_J_c1= sum_b L_ab_J_T1 c_bi,
 !!
 !!    and returns the result in L_ai_J.
 !!
@@ -942,7 +942,7 @@ contains
 !
       call mem%alloc(L_i_aJ, i_length, a_length*(integrals%n_J))
 !
-!     Calculate c1-transformed term, sum_b L_ab_J c_bi
+!     L_ai'_J = sum_b L_ab_J c_bi
 !
       call dgemm('T','N',                 &
                   i_length,               &
