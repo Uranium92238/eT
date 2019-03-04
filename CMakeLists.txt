@@ -20,14 +20,7 @@ option(ENABLE_OMP            "Enable OpenMP parallelization"                    
 option(ENABLE_THREADED_MKL   "Enable OpenMP parallelization"                    ON)
 
 find_package(Libint2 REQUIRED)
-
-# check for EIGEN_LIB environment variable 
-# otherwise, set to standard path 
-if(DEFINED ENV{EIGEN_LIB})
-  set(EIGEN_LIB $ENV{EIGEN_LIB})
-else()
-  set(EIGEN_LIB /usr/local/include/eigen3)
-endif()
+find_package(Eigen3 REQUIRED)
 
 # Including the source files
 include(eT_sources)
