@@ -30,7 +30,7 @@ def input_parser():
     parser.add_argument('-clean', '--clean-dir',
                          help="Delete build dir and create new (if it exists) before running CMake",
                          action='store_true')
-    parser.add_argument('--clean-CMake',
+    parser.add_argument('-cleanC', '--clean-CMake',
                          help="Delete CMakeCache.txt (if it exists) before running CMake",
                          action='store_true')
 
@@ -46,6 +46,12 @@ def input_parser():
 
     parser.add_argument('-ll', '--libint-lib',
                          help="Path to libint library")
+
+    parser.add_argument('-FC', '--Fortran-compiler',
+                         help="Fortran compiler")
+    parser.add_argument('-CXX', '--CXX-compiler',
+                         help="C++ compiler")
+
 
     args = parser.parse_args()
 
@@ -96,7 +102,11 @@ def construct_command(args):
     command += " -DENABLE_64BIT_INTEGERS=" + cmake_translator(args.int64)
 
     if (args.libint_lib):
-        command += " -DLIBINT_LIB=" + args.libint_lib   
+        command += " -DLIBINT2_ROOT=" + args.libint_lib   
+    if (args.Fortran_compiler):
+        command += " -FC=" + args.Fortran_compiler
+    if (args.CXX_compiler):
+        command += " -CXX=" + args.CXX_compiler   
 
     command += " %s" % root_dir
     return command

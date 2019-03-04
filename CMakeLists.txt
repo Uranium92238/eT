@@ -28,6 +28,7 @@ project(eT Fortran CXX)
 set(CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake
     ${CMAKE_SOURCE_DIR}/cmake/math
+    ${CMAKE_SOURCE_DIR}/cmake/findlibint
     /usr/local/share/cmake/Modules
     )
 
@@ -78,6 +79,14 @@ file(COPY ${CMAKE_SOURCE_DIR}/tests DESTINATION ${CMAKE_BINARY_DIR})
 if(EXISTS ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest)
    file(COPY ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest DESTINATION ${CMAKE_BINARY_DIR}/tests)
 endif()
+
+#Try to find the Libint data path
+get_filename_component(_BASE_PATH ${Libint2_INCLUDE_DIR} PATH)
+file(GLOB_RECURSE _BASIS_DIR ${_BASE_PATH}/share/libint/*/basis/3-21g.g94)
+if(_BASIS_DIR)
+   get_filename_component(Libint2_BASIS_DIR ${_BASIS_DIR} PATH)
+endif()
+
 
 configure_file(${CMAKE_SOURCE_DIR}/eT_launch.in ${CMAKE_SOURCE_DIR}/eT_launch)
 file(COPY ${CMAKE_SOURCE_DIR}/eT_launch 

@@ -1,14 +1,28 @@
+#  Try to find Libint2
 #
+#  If successful, will define
 #
+#  Libint2_FOUND - true if Libint2 was found
+#  Libint2_INCLUDE_DIR - Containing libint2.h
+#  Libint2_H_DIR - Directory with Libint2 header files
+#  Libint2_LIBRARY - Location of libint2.a
+#
+#  Copyright (c) 2019 Rolf Heilemann Myhre
+#  Distributed under the GNU Lesser General Public License.
 
-#Normal search
+
+#Where to look for Libint2
 set(_LIBINT_NORMAL_SEARCH
     /usr/local/libint 
     /usr/opt/local/libint)
 
+#Save location if set in environment
 set(LIBINT2_ENV $ENV{LIBINT2_ROOT})
 
 set(LIBINT2_GLOB_DIR)
+
+# Must use glob instead of find_path because path depends on version
+# First see if provided as command line argument
 if(LIBINT2_ROOT)
    message("-- Libint2 will be searched for based on LIBINT2_ROOT=" ${LIBINT2_ROOT})
    file(GLOB_RECURSE _GLOBFILE ${LIBINT2_ROOT}/*/libint2.h)
@@ -16,6 +30,8 @@ if(LIBINT2_ROOT)
       get_filename_component(_GLOBDIR ${_GLOBFILE} PATH)
       list(APPEND LIBINT2_GLOB_DIR ${_GLOBDIR})
    endif()
+
+# Else look in environment path
 elseif(LIBINT2_ENV)
    message("-- Libint2 will be searched for based on LIBINT2_ROOT=" ${LIBINT2_ENV})
    file(GLOB_RECURSE _GLOBFILE ${LIBINT2_ENV}/*/libint2.h)
@@ -23,6 +39,8 @@ elseif(LIBINT2_ENV)
       get_filename_component(_GLOBDIR ${_GLOBFILE} PATH)
       list(APPEND LIBINT2_GLOB_DIR ${_GLOBDIR})
    endif()
+
+# Else look in standard paths
 else()
    foreach(search ${_LIBINT_NORMAL_SEARCH})
       file(GLOB_RECURSE _GLOBFILE ${search}/*/libint2.h)
@@ -37,6 +55,7 @@ else()
 endif()
 
 
+# Store the actual variables
 if(LIBINT2_GLOB_DIR)
    find_path(Libint2_INCLUDE_DIR
              NAMES libint2.h
@@ -53,17 +72,13 @@ if(LIBINT2_GLOB_DIR)
                 PATHS ${_BASE_PATH} NO_DEFAULT_PATH
                 PATH_SUFFIXES lib lib/.libs)
                 
-   file(GLOB_RECURSE _BASIS_DIR ${_BASE_PATH}/share/libint/*/basis/3-21g.g94)
-   get_filename_component(Libint2_BASIS_DIR ${_BASIS_DIR} PATH)
-
 endif()
 
-
+# Let the module handle the variables
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(Libint2 
       FOUND_VAR Libint2_FOUND
       REQUIRED_VARS Libint2_INCLUDE_DIR
                     Libint2_H_DIR
-                    Libint2_LIBRARY
-                    Libint2_BASIS_DIR)
+                    Libint2_LIBRARY)
 
