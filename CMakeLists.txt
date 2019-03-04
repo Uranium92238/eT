@@ -19,31 +19,7 @@ option(ENABLE_AUTO_LAPACK    "Enable CMake to autodetect LAPACK"                
 option(ENABLE_OMP            "Enable OpenMP parallelization"                    ON)
 option(ENABLE_THREADED_MKL   "Enable OpenMP parallelization"                    ON)
 
-# check for LIBINT_LIB environment variable 
-# otherwise, set to standard path 
-set(HAKA /usr/local/libint)
-file(GLOB_RECURSE trololo ${HAKA}/*libint2.h)
-message(${trololo})
-get_filename_component(trolodir ${trololo} PATH)
-message(${trolodir})
-find_path(LIBLAB
-          NAMES libint2.h
-          PATHS ${trolodir} )
-
-if(NOT LIBLAB)
-    message("DOOOM")
-else()
-    message("GREAT SUCCESS")
-    message(${LIBLAB})
-endif()
-
-find_package(Libint)
-
-#if(DEFINED ENV{LIBINT_LIB})
-#  set(LIBINT_LIB $ENV{LIBINT_LIB})
-#else()
-#  set(LIBINT_LIB /usr/local/libint)
-#endif()
+find_package(Libint2 REQUIRED)
 
 # check for EIGEN_LIB environment variable 
 # otherwise, set to standard path 
@@ -70,8 +46,6 @@ if(LAPACK_FOUND AND BLAS_FOUND)
   set(lapackblas_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 endif()
 
-set(libint_libraries "${LIBINT_LIB}/2.4.2/lib/libint2.a")
-
 set(eT_fortran_sources
         ${eT_fortran_sources}
         )
@@ -82,7 +56,7 @@ set(eT_CXX_sources
 
 add_executable(eT ${eT_fortran_sources} ${eT_CXX_sources})
 
-target_link_libraries(eT ${lapackblas_libraries} ${libint_libraries})
+target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY})
 
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
 
