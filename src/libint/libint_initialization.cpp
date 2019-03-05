@@ -32,6 +32,7 @@
 #include <string>
 #include <vector>
 #include <ctime>
+#include <omp.h>
 
 using namespace libint2;
 using namespace std;

@@ -1,11 +1,13 @@
 #  Try to find Libint2
 #
-#  If successful, will define
-#
+#  If successful, will define the required variables
 #  Libint2_FOUND - true if Libint2 was found
 #  Libint2_INCLUDE_DIR - Containing libint2.h
 #  Libint2_H_DIR - Directory with Libint2 header files
 #  Libint2_LIBRARY - Location of libint2.a
+#
+#  And the extra variable
+#  Libint2_BASIS_DIR
 #
 #  Copyright (c) 2019 Rolf Heilemann Myhre
 #  Distributed under the GNU Lesser General Public License.
@@ -72,6 +74,12 @@ if(LIBINT2_GLOB_DIR)
                 PATHS ${_BASE_PATH} NO_DEFAULT_PATH
                 PATH_SUFFIXES lib lib/.libs)
                 
+   #Try to find the Libint data path
+   file(GLOB_RECURSE _BASIS_DIR ${_BASE_PATH}/*/3-21g.g94)
+   if(_BASIS_DIR)
+      get_filename_component(Libint2_BASIS_DIR ${_BASIS_DIR} PATH)
+   endif()
+
 endif()
 
 # Let the module handle the variables

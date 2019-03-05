@@ -52,11 +52,22 @@ def input_parser():
     parser.add_argument('-CXX', '--CXX-compiler',
                          help="C++ compiler")
 
+    ompgroup = parser.add_mutually_exclusive_group()
+    ompgroup.add_argument('--omp',
+                          help="enable OpenMP parallelization",
+                          action='store_true',
+                          default=True)
+    ompgroup.add_argument('--no-omp',
+                          help="disable OpenMP parallelization",
+                          action='store_true',
+                          default=False)
 
     args = parser.parse_args()
 
     if (args.int32):
         args.int64 = False
+    if (args.no_omp):
+        args.omp = False
 
     return args
 
@@ -100,6 +111,8 @@ def construct_command(args):
     command = "cmake "
 
     command += " -DENABLE_64BIT_INTEGERS=" + cmake_translator(args.int64)
+    command += " -DENABLE_OMP=" + cmake_translator(args.omp)
+    command += " -DENABLE_THREADED_MKL=" + cmake_translator(args.omp)
 
     if (args.libint_lib):
         command += " -DLIBINT2_ROOT=" + args.libint_lib   
