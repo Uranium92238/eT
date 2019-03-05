@@ -41,6 +41,8 @@ module diis_cc_es_class
                                            &problem is solved by DIIS extrapolation of residuals for each &
                                            &eigenvector until the convergence criteria are met.'
 !
+      logical :: restart 
+!
       integer :: max_iterations
 !
       real(dp) :: eigenvalue_threshold  
@@ -94,6 +96,7 @@ contains
       solver%residual_threshold   = 1.0d-6
       solver%transformation       = 'right'
       solver%diis_dimension       = 20
+      solver%restart              = .false.
 !
       call solver%read_settings()
       call solver%print_settings()
@@ -176,6 +179,10 @@ contains
          elseif (line(1:18) == 'left eigenvectors') then 
 !
             solver%transformation = 'left'
+!
+         elseif (line(1:7) == 'restart') then 
+!
+            solver%restart = .true.
 !
          endif
 !
@@ -282,7 +289,16 @@ contains
       call wf%get_es_orbital_differences(eps, wf%n_es_amplitudes)
 !
       call mem%alloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
-      call solver%set_start_vectors(wf, X, eps)
+!
+      if (solver%restart) then 
+!
+!        Perform restart by reading 
+!
+      else 
+!
+         call solver%set_start_vectors(wf, X, eps)
+!
+      endif 
 !
 !     Enter iterative loop
 !
