@@ -366,14 +366,12 @@ contains
 !
       class(hf) :: wf
 !
-      logical :: do_mo_transformation
-!
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
 !
-!     Do a final Roothan-Hall step to transform the Fock matrix in the canonical MO basis 
+!     MO transform the AO Fock matrix 
 !
-      do_mo_transformation = .true.
-      call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies, do_mo_transformation)
+      call wf%initialize_mo_fock()
+      call wf%construct_mo_fock(wf%mo_fock)
 !
 !     Save the orbitals to file & store restart information 
 !
