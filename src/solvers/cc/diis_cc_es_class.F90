@@ -51,7 +51,6 @@ module diis_cc_es_class
       integer :: n_singlet_states, diis_dimension
 !
       real(dp), dimension(:), allocatable :: energies
-      real(dp), dimension(:,:), allocatable :: residual_norms 
 !
       character(len=40) :: transformation 
 !
@@ -102,6 +101,9 @@ contains
       call solver%print_settings()
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
+!
+      call mem%alloc(solver%energies, solver%n_singlet_states)
+      solver%energies = zero
 !
    end subroutine prepare_diis_cc_es
 !
@@ -200,9 +202,7 @@ contains
 !
       class(diis_cc_es) :: solver
 !
-!     Nothing here yet...
-!
-      if (.false.) write(output%unit, *) solver%tag ! Hack to suppress unavoidable compiler warnings
+      call mem%dealloc(solver%energies, solver%n_singlet_states)
 !
    end subroutine cleanup_diis_cc_es
 !
@@ -239,9 +239,7 @@ contains
       logical, dimension(:), allocatable :: converged_eigenvalue
       logical, dimension(:), allocatable :: converged_residual
 !
-     ! real(dp), dimension(:), allocatable :: energies 
       real(dp), dimension(:), allocatable :: prev_energies 
-!
       real(dp), dimension(:), allocatable :: residual_norms
 !
       type(diis_tool), dimension(:), allocatable :: diis 
@@ -256,11 +254,9 @@ contains
 !
 !     Initialize energies, residual norms, and convergence arrays 
 !
-      allocate(solver%energies(solver%n_singlet_states))
-      allocate(prev_energies(solver%n_singlet_states))
-      allocate(residual_norms(solver%n_singlet_states))
+      call mem%alloc(prev_energies, solver%n_singlet_states)
+      call mem%alloc(residual_norms, solver%n_singlet_states)
 !
-      solver%energies   = zero 
       prev_energies     = zero 
       residual_norms    = zero 
 !
@@ -292,7 +288,11 @@ contains
 !
       if (solver%restart) then 
 !
-!        Perform restart by reading 
+         do state = 1, solver%n_singlet_states
+!
+            call wf%read_excited_state(X(:,state), state, solver%transformation)
+!
+         enddo
 !
       else 
 !
@@ -332,9 +332,10 @@ contains
                enddo
 !$omp end parallel do 
 !
-!              Update convergence logicals 
-!
                residual_norms(state) = get_l2_norm(R(:, state), wf%n_es_amplitudes)
+
+!
+!              Update convergence logicals 
 !
                converged_eigenvalue(state) = abs(solver%energies(state)-prev_energies(state)) &
                                                       .lt. solver%eigenvalue_threshold
@@ -345,12 +346,24 @@ contains
 !              Perform DIIS extrapolation to the optimal next guess for X,
 !              then normalize it to avoid accumulating norm in X
 !
-               X(:,state) = X(:,state) + R(:,state)
+               if (converged_residual(state) .and. iteration .eq. 1) then 
 !
-               call diis(state)%update(R(:,state), X(:,state))
+                  write(output%unit, '(/t3,a,i0,a)')  'Note: residual of state ', state, ' converged in first iteration.'
+                  write(output%unit, '(t3,a/)')       'Energy convergence has not been tested.'
+                  converged(state) = .true.
 !
-               norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
-               X(:,state) = X(:,state)/norm_X
+               endif
+!
+               if (.not. converged(state)) then
+!
+                  X(:,state) = X(:,state) + R(:,state)
+!
+                  call diis(state)%update(R(:,state), X(:,state))
+!
+                  norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
+                  X(:,state) = X(:,state)/norm_X
+!
+               endif 
 !
             endif 
 !
@@ -370,11 +383,18 @@ contains
          write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
          call solver%print_summary(wf, X) 
 !
+         write(output%unit, '(/t3,a)') 'Storing converged states to file.'       
+!
+         do state = 1, solver%n_singlet_states
+!
+            call wf%save_excited_state(X(:,state), state, solver%transformation)
+!
+         enddo 
+!
       endif 
 !
-      deallocate(solver%energies)
-      deallocate(prev_energies)
-      deallocate(residual_norms)
+      call mem%dealloc(prev_energies, solver%n_singlet_states)
+      call mem%dealloc(residual_norms, solver%n_singlet_states)
 !
       deallocate(converged)
       deallocate(converged_residual)
