@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+# vim:ft=python
+#
+# Simple setup script to create build directory and run CMake
+# Inspired by Dalton setup script by Radovan Bast and Jonas Juselius
+# (c) Rolf H. Myhre <rolf.h.myhre at ntnu.no>
+# licensed under the GNU Lesser General Public License
+#
+import os
+import sys
+import subprocess
+import shutil
+from argparse import ArgumentParser
+
+if sys.version < '3.5':
+    print('requires python version >= 3.5')
+    sys.exit(1)
+
+root_dir = os.path.dirname(os.path.realpath(__file__))
+default_path = os.path.join(root_dir, 'build')
+
+def input_parser():
+    parser = ArgumentParser()
+
+    parser.add_argument('build_dir',
+                         help="Build directory",
+                         default=default_path,
+                         action='store',
+                         nargs='?')
+    parser.add_argument('-clean', '--clean-dir',
+                         help="Delete build dir and create new (if it exists) before running CMake",
+                         action='store_true')
+    parser.add_argument('-cleanC', '--clean-CMake',
+                         help="Delete CMakeCache.txt (if it exists) before running CMake",
+                         action='store_true')
+
+    intgroup = parser.add_mutually_exclusive_group()
+    intgroup.add_argument('--int64',
+                          help="enable 64-bit integers",
+                          action='store_true',
+                          default=True)
+    intgroup.add_argument('--int32',
+                          help="enable 32-bit integers",
+                          action='store_true',
+                          default=False)
+
+    parser.add_argument('-ll', '--libint-lib',
+                         help="Path to libint library")
+
+    parser.add_argument('-FC', '--Fortran-compiler',
+                         help="Fortran compiler")
+    parser.add_argument('-CXX', '--CXX-compiler',
+                         help="C++ compiler")
+
+    ompgroup = parser.add_mutually_exclusive_group()
+    ompgroup.add_argument('--omp',
+                          help="enable OpenMP parallelization",
+                          action='store_true',
+                          default=True)
+    ompgroup.add_argument('--no-omp',
+                          help="disable OpenMP parallelization",
+                          action='store_true',
+                          default=False)
+
+    args = parser.parse_args()
+
+    if (args.int32):
+        args.int64 = False
+    if (args.no_omp):
+        args.omp = False
+
+    return args
+
+def build_maker(args):
+    #Save path to build directory
+    build_path = os.path.abspath(args.build_dir)
+
+    #Check if user is trying to do something stupid
+    eT_dirs = {os.path.join(root_dir,'documentation'),
+               os.path.join(root_dir,'cmake'),
+               os.path.join(root_dir,'submodules'),
+               os.path.join(root_dir,'tests'),
+               os.path.join(root_dir,'src')}
+    if build_path in eT_dirs:
+        print(build_path, 'is an eT directory')
+        sys.exit(1)
+
+
+    build_exists = os.path.isdir(build_path) #Check if it exists
+    Cachename = os.path.join(build_path,"CMakeCache.txt") #Path to CMakeCache.txt
+
+    if (build_exists): #Does build already exist
+        if args.clean_dir: #Delete if clean-dir
+            shutil.rmtree(build_path)
+        elif (args.clean_CMake): #Delete CMakeCache.txt if clean_CMake and it exists
+            if (os.path.exists(Cachename)):
+                os.remove(Cachename)
+
+    #Make directory if it does not exist
+    os.makedirs(build_path,exist_ok=True)
+
+    return build_path
+
+def cmake_translator(arg):
+    if arg:
+        return "ON"
+    else:
+        return "OFF"
+
+def construct_command(args):
+    command = "cmake "
+
+    command += " -DENABLE_64BIT_INTEGERS=" + cmake_translator(args.int64)
+    command += " -DENABLE_OMP=" + cmake_translator(args.omp)
+    command += " -DENABLE_THREADED_MKL=" + cmake_translator(args.omp)
+
+    if (args.libint_lib):
+        command += " -DLIBINT2_ROOT=" + args.libint_lib   
+    if (args.Fortran_compiler):
+        command += " -DCMAKE_Fortran_COMPILER=" + args.Fortran_compiler
+    if (args.CXX_compiler):
+        command += " -DCMAKE_CXX_COMPILER=" + args.CXX_compiler   
+
+    command += " %s" % root_dir
+    return command
+
+def run_CMake(command, build_path):
+    calldir = os.getcwd() #Get current directory
+    os.chdir(build_path) #Switch to build dir
+
+    p = subprocess.run(command, 
+                       shell=True,
+                       stdout=subprocess.PIPE, 
+                       stderr=subprocess.PIPE)
+
+    s = p.stderr.decode('utf8') 
+    s += p.stdout.decode('utf8')
+    print(s,end='')
+
+    f = open('setup_cmake_output', 'w')
+    f.write(s)
+    f.close()
+
+    os.chdir(calldir)
+    return s
+    
+
+def main(argv):
+    args = input_parser()
+    build_path = build_maker(args)
+    cmake_command = construct_command(args)
+    output = run_CMake(cmake_command, build_path)
+    
+
+if __name__ == '__main__':
+    main(sys.argv)

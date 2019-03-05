@@ -6,3 +6,4 @@ documentation/docs/
 *.swo
 .DS_Store
 __pycache__
+*sublime*

@@ -30,6 +30,7 @@ using namespace std;
 #include <fstream>
 #include <string>
 #include <ctime>
+#include <omp.h>
 
 #include "g_wxyz.h"
 

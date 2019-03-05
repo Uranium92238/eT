@@ -37,7 +37,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
 #   Flags needed for Libint package
 # 
     set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -fexceptions -I${LIBINT_LIB}/2.4.2/include -I${EIGEN_LIB} -I${LIBINT_LIB}/2.4.2/include/libint2/"
+        "${CMAKE_CXX_FLAGS} -fexceptions -I${Libint2_INCLUDE_DIR} -I${Libint2_H_DIR} -I${EIGEN3_INCLUDE_DIR}"
         )
 # 
 #   MKL flags 
@@ -79,7 +79,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
 #   Flags needed for Libint package
 # 
     set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -fexceptions -I${LIBINT_LIB}/2.4.2/include -I${LIBINT_LIB}/2.4.2/include/libint2/ -I${EIGEN_LIB}"
+        "${CMAKE_CXX_FLAGS} -fexceptions -I${Libint2_INCLUDE_DIR} -I${Libint2_H_DIR} -I${EIGEN3_INCLUDE_DIR}"
         )
 # 
 #   Enable openmp if requested (default) 
