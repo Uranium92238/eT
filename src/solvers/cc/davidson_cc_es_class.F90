@@ -157,7 +157,6 @@ contains
       class(eigen_davidson_tool) :: davidson
 !
       integer :: n_solutions_on_file 
-
 !
 !     Read in the number of solutions to restart from - according the restart file 
 !
@@ -181,10 +180,6 @@ contains
 !     Ask Davidson to restart - use the previous solutions as trial vectors 
 !
       call davidson%restart_from_solutions(n_solutions_on_file)
-!
-!     For the remaining states, use orbital differences 
-!
-!     Todo... 
 !
    end subroutine restart_davidson_cc_es
 !

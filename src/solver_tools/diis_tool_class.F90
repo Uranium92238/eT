@@ -58,13 +58,15 @@ module diis_tool_class
       type(file), private :: diis_matrix ! File containing the previously computed elements of the DIIS matrix
 !
       integer, private :: iteration = 1 ! Variable keeping track of the current DIIS iteration
-                                             ! Note: defined to increment by +1 each time 'update' is called.
+                                        ! Note: defined to increment by +1 each time 'update' is called.
 !
       integer, private :: diis_dimension = 8   ! Standard is 8, though it might be useful to change this value
 !
       integer, private :: n_parameters ! The length of the X vector
       integer, private :: n_equations  ! The length of the O vector
-
+!
+      logical :: accumulative = .true. ! Variable keeping track of wether we are cummulatively building the diis history or not
+!                                      ! Note: default is to accumulate
 !
    contains
 !
@@ -73,6 +75,9 @@ module diis_tool_class
       procedure :: finalize => finalize_diis_tool
 !
       procedure :: get_current_index => get_current_index_diis_tool
+!
+      procedure :: get_dx     => get_dx_diis_tool
+      procedure :: get_x_dx   => get_x_dx_diis_tool
 !
    end type diis_tool
 !
@@ -103,7 +108,7 @@ contains
    end subroutine finalize_diis_tool
 !
 !
-   subroutine init_diis_tool(solver, name, n_parameters, n_equations, diis_dimension)
+   subroutine init_diis_tool(solver, name, n_parameters, n_equations, diis_dimension, accumulate)
 !!
 !!    Init DIIS
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
@@ -117,9 +122,14 @@ contains
 !
       integer, intent(in), optional :: diis_dimension
 !
+      logical, intent(in), optional :: accumulate
+!
       solver%name = trim(name)
       solver%n_parameters = n_parameters
       solver%n_equations = n_equations
+!
+      solver%accumulative = .true. 
+      if (present(accumulate)) solver%accumulative = accumulate
 !
       if (present(diis_dimension)) solver%diis_dimension = diis_dimension
 !
@@ -339,5 +349,160 @@ contains
 !
    end function get_current_index_diis_tool
 !
+!
+   subroutine get_x_dx_diis_tool(solver, x_dx)
+!!
+!!    Get x_dx 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+!!    Gets the i'th x_dx from file
+!!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      real(dp), dimension(solver%n_parameters), intent(out) :: x_dx
+!
+      read(solver%x_dx%unit) x_dx
+!
+   end subroutine get_x_dx_diis_tool
+!
+!
+   subroutine get_dx_diis_tool(solver, dx)
+!!
+!!    Get dx 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      real(dp), dimension(solver%n_equations), intent(out) :: dx
+!
+      read(solver%dx%unit) dx
+!
+   end subroutine get_dx_diis_tool
+!
+!
+   subroutine prepare_to_set_x_dx_diis_tool(solver)
+!!
+!!    Prepare to set x_dx
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      if (solver%accumulative) call output%error_msg('can not set x_dx for acummulative diis.')
+!
+      call solver%x_dx%init_rewrite()
+      call disk%open_rewrite_file(solver%x_dx, 'write')
+!
+      rewind(solver%x_dx%unit)
+      rewind(solver%x_dx%rewrite_unit)
+!
+   end subroutine prepare_to_set_x_dx_diis_tool
+!
+!
+   subroutine finnish_to_set_x_dx_diis_tool(solver)
+!!
+!!    Finnish to set x_dx
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      if (solver%accumulative) call output%error_msg('can not set x_dx for acummulative diis.')
+!
+      call disk%close_rewrite_file(solver%x_dx)
+      call disk%overwrite_file(solver%x_dx)
+      call solver%x_dx%finalize_rewrite()
+!
+   end subroutine finnish_to_set_x_dx_diis_tool
+!
+!
+   subroutine set_x_dx_diis_tool(solver, x_dx)
+!!
+!!    Set x_dx
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      real(dp), dimension(solver%n_equations), intent(in) :: x_dx
+!
+!     Sanity checks
+!
+      if (solver%accumulative) call output%error_msg('can not set dx for acummulative diis.')
+      if (.not. solver%x_dx%rewrite_opened) call output%error_msg('rewrite file has not been initialized for x_dx.')
+!
+!     Write to rewrite file
+!
+      write(solver%x_dx%rewrite_unit) x_dx
+!
+   end subroutine set_x_dx_diis_tool
+!
+!
+   subroutine prepare_to_set_dx_diis_tool(solver)
+!!
+!!    Prepare to set dx
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      if (solver%accumulative) call output%error_msg('can not set dx for acummulative diis.')
+!
+      call solver%dx%init_rewrite()
+      call disk%open_rewrite_file(solver%dx, 'write')
+!
+      rewind(solver%dx%unit)
+      rewind(solver%dx%rewrite_unit)
+!
+   end subroutine prepare_to_set_dx_diis_tool
+!
+!
+   subroutine finnish_to_set_dx_diis_tool(solver)
+!!
+!!    Finnish to set dx
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      if (solver%accumulative) call output%error_msg('can not set dx for acummulative diis.')
+!
+      call disk%close_rewrite_file(solver%dx)
+      call disk%overwrite_file(solver%dx)
+      call solver%dx%finalize_rewrite()
+!
+   end subroutine finnish_to_set_dx_diis_tool
+!
+!
+   subroutine set_dx_diis_tool(solver, dx)
+!!
+!!    Set dx
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      real(dp), dimension(solver%n_equations), intent(in) :: dx
+!
+!     Sanity checks
+!
+      if (solver%accumulative) call output%error_msg('can not set dx for acummulative diis.')
+      if (.not. solver%dx%rewrite_opened) call output%error_msg('rewrite file has not been initialized for dx.')
+!
+!     Write to rewrite file
+!
+      write(solver%dx%rewrite_unit) dx
+!
+   end subroutine set_dx_diis_tool
 !
 end module diis_tool_class

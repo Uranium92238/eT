@@ -58,6 +58,10 @@ module disk_manager_class
 !
       procedure :: rewind_file                  => rewind_file_disk_manager
 !
+      procedure :: close_rewrite_file           => close_rewrite_file_disk_manager
+      procedure :: open_rewrite_file            => open_rewrite_file_disk_manager
+      procedure :: overwrite_file               => overwrite_file_disk_manager
+!
    end type disk_manager
 !
    type(disk_manager) :: disk
@@ -579,6 +583,188 @@ contains
       call disk%close_file(the_file)
 !
    end subroutine rewind_file_disk_manager
+!
+!
+   subroutine open_rewrite_file_disk_manager(disk, the_file, permissions)
+!!
+!!    Open rewrite file
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
+!!
+!!    Opens a sequential access rewrite file
+!!
+      implicit none
+!
+      class(disk_manager) :: disk
+!
+      class(file) :: the_file ! the file
+!
+      character(len=*) :: permissions
+!
+      integer :: io_error = -1
+!
+!     Sanity checks
+!
+      if (the_file%rewrite_name == 'unknown') then
+!
+         call output%error_msg('to open a rewrite file, it must be initialized.')
+!
+      endif
+!
+!     Open rewrite file
+!
+      io_error = -1
+!
+      open(newunit=the_file%rewrite_unit, file=the_file%rewrite_name, access='sequential', &
+            action=permissions, status='unknown', form=the_file%format, iostat=io_error)
+!
+!     Check whether file open was successful
+!
+      if (io_error .ne. 0) then
+!
+         call output%error_msg('could not open file: ' //  trim(the_file%name))
+!
+      endif
+!
+      the_file%rewrite_opened = .true.
+!
+      call the_file%determine_rewrite_file_size()
+!
+!     If the intent is 'write' or 'readwrite' and the disk is entirely filled
+!     (according to the specified available disk space), the calculation will stop:
+!
+      if (disk%available .lt. 0 .and. (permissions == 'write' .or. permissions == 'readwrite')) then
+!
+         call output%error_msg('the specified disk space is used up and' // &
+                                           'a file was opened with permission to write.')
+!
+      endif
+!
+   end subroutine open_rewrite_file_disk_manager
+!
+!
+   subroutine close_rewrite_file_disk_manager(disk, the_file, destiny)
+!!
+!!    Close rewrite file
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
+!!
+      implicit none
+!
+      class(disk_manager) :: disk
+!
+      class(file) :: the_file
+!
+      character(len=*), optional :: destiny ! i.e. 'status' after close, can be 'keep' or 'delete'
+!
+      integer :: file_size_when_opened
+      integer :: file_size_when_closed
+!
+      integer :: bytes_written_to_disk ! Negative if storage is freed up, via 'delete'
+!
+      bytes_written_to_disk = 0
+!
+!     Sanity check
+!
+      if (.not. the_file%rewrite_opened) then
+!
+         call output%error_msg('tried to close a rewrite file that has not been opened.')
+!
+      endif
+!
+!     Get the file size (both when opened & closed)
+!
+      file_size_when_opened = the_file%get_rewrite_file_size()
+!
+      call the_file%determine_rewrite_file_size()
+!
+      file_size_when_closed = the_file%get_rewrite_file_size()
+!
+!     Close file
+!
+      if (present(destiny)) then ! Either keep or delete
+!
+         if (.not. (destiny == 'keep' .or. destiny == 'delete')) then
+!
+            call output%error_msg('could not recognize status when closing file.')
+!
+         else
+!
+            if (destiny == 'keep') then
+!
+                  close(the_file%unit, status=destiny)
+                  bytes_written_to_disk = file_size_when_closed - file_size_when_opened
+!
+            else ! destiny == 'delete'
+!
+                  close(the_file%unit, status=destiny)
+                  bytes_written_to_disk = -file_size_when_closed
+!
+!                 Sanity check
+!
+                  if (file_size_when_opened .ne. file_size_when_closed) then
+!
+                     write(output%unit,'(t3,a)') 'Warning: deleting a file that has been written to since'
+                     write(output%unit,'(t3,a)') 'it was opened. To avoid an apparent accumulation of storage space,'
+                     write(output%unit,'(t3,a)') 'the estimated freed up space is taken to be the initial file size.'
+                     bytes_written_to_disk = -file_size_when_opened
+!
+                  endif
+!
+            endif
+!
+!
+         endif
+!
+      else ! Keep file
+!
+         close(the_file%unit)
+         bytes_written_to_disk = file_size_when_closed - file_size_when_opened
+!
+      endif
+!
+!     Update the available disk space
+!
+      disk%available = disk%available - bytes_written_to_disk
+!
+      if (disk%available .lt. 0) then
+!
+         call output%warning_msg('the specified disk space is now used up. If any ' //&
+                                           'more has to be stored, the calculation will stop.')
+!
+      endif
+!
+!     Set the status for the file to 'closed'
+!
+      the_file%rewrite_opened = .false.
+!
+   end subroutine close_rewrite_file_disk_manager
+!
+!
+   subroutine overwrite_file_disk_manager(disk, the_file)
+!!
+!!    Overwrite file
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
+!!
+      implicit none
+!
+      class(disk_manager) :: disk
+!
+      type(file) :: the_file
+!
+      if (the_file%rewrite_name == 'unknown') then
+!
+         call output%error_msg('to overwrite a file, a rewrite file must be made.')
+!
+      endif
+!
+      if (the_file%opened) call disk%close_file(the_file)
+      if (the_file%rewrite_opened) call disk%close_rewrite_file(the_file)
+!
+      call execute_command_line('mv ' // the_file%rewrite_name // ' ' // the_file%name) 
+!
+      call disk%open_rewrite_file(the_file, 'read')
+      call disk%close_rewrite_file(the_file, 'delete')
+!
+   end subroutine overwrite_file_disk_manager
 !
 !
 end module disk_manager_class
