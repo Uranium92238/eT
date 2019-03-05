@@ -690,12 +690,12 @@ contains
 !
             if (destiny == 'keep') then
 !
-                  close(the_file%unit, status=destiny)
+                  close(the_file%rewrite_unit, status=destiny)
                   bytes_written_to_disk = file_size_when_closed - file_size_when_opened
 !
             else ! destiny == 'delete'
 !
-                  close(the_file%unit, status=destiny)
+                  close(the_file%rewrite_unit, status=destiny)
                   bytes_written_to_disk = -file_size_when_closed
 !
 !                 Sanity check
@@ -716,7 +716,7 @@ contains
 !
       else ! Keep file
 !
-         close(the_file%unit)
+         close(the_file%rewrite_unit)
          bytes_written_to_disk = file_size_when_closed - file_size_when_opened
 !
       endif
@@ -756,10 +756,10 @@ contains
 !
       endif
 !
-      if (the_file%opened) call disk%close_file(the_file)
-      if (the_file%rewrite_opened) call disk%close_rewrite_file(the_file)
+      if (the_file%opened) call output%error_msg('to overwrite a file it must be closed.')
+      if (the_file%rewrite_opened) call output%error_msg('to overwrite a file its rewrite file must be closed.')
 !
-      call execute_command_line('mv ' // the_file%rewrite_name // ' ' // the_file%name) 
+      call execute_command_line('cp ' // the_file%rewrite_name // ' ' // the_file%name)
 !
       call disk%open_rewrite_file(the_file, 'read')
       call disk%close_rewrite_file(the_file, 'delete')

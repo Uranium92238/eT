@@ -355,7 +355,7 @@ contains
 !!    Get x_dx 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
 !!
-!!    Gets the i'th x_dx from file
+!!    Assumes the position in the file is the correct possition
 !!
       implicit none
 !
@@ -372,6 +372,8 @@ contains
 !!
 !!    Get dx 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+!!    Assumes the position in the file is the correct possition
 !!
       implicit none
 !
@@ -415,9 +417,20 @@ contains
 !
       if (solver%accumulative) call output%error_msg('can not set x_dx for acummulative diis.')
 !
+!     1. Close file and rewrite file
+!
       call disk%close_rewrite_file(solver%x_dx)
+      call disk%close_file(solver%x_dx)
+!
+!     2. Overwrite file
+!
       call disk%overwrite_file(solver%x_dx)
+!
+!     3. Finalize rewrite and open file
+!
       call solver%x_dx%finalize_rewrite()
+!
+      call disk%open_file(solver%x_dx, 'readwrite')
 !
    end subroutine finnish_to_set_x_dx_diis_tool
 !
@@ -426,6 +439,8 @@ contains
 !!
 !!    Set x_dx
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+!!    Assumes the position in the file is the correct possition
 !!
       implicit none
 !
@@ -476,9 +491,20 @@ contains
 !
       if (solver%accumulative) call output%error_msg('can not set dx for acummulative diis.')
 !
+!     1. Close file and rewrite file
+!
       call disk%close_rewrite_file(solver%dx)
+      call disk%close_file(solver%dx)
+!
+!     2. Overwrite file
+!
       call disk%overwrite_file(solver%dx)
+!
+!     3. Finalize rewrite and open file
+!
       call solver%dx%finalize_rewrite()
+!
+      call disk%open_file(solver%dx, 'readwrite')
 !
    end subroutine finnish_to_set_dx_diis_tool
 !
@@ -487,6 +513,8 @@ contains
 !!
 !!    Set dx
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+!!    Assumes the position in the file is the correct possition
 !!
       implicit none
 !
