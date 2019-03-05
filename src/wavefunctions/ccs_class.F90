@@ -466,7 +466,7 @@ contains
 !
       if (trim(side) == 'right') then 
 !
-         call disk%open_file(wf%r1_file, 'write')
+         call disk%open_file(wf%r1_file, 'write', 'append')
 !
          if (n .eq. 1) rewind(wf%r1_file%unit)
 !
@@ -476,7 +476,7 @@ contains
 !
       elseif (trim(side) == 'left') then 
 !
-         call disk%open_file(wf%l1_file, 'write')
+         call disk%open_file(wf%l1_file, 'write', 'append')
 !
          if (n .eq. 1) rewind(wf%l1_file%unit)
 !
