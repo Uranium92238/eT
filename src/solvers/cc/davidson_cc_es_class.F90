@@ -507,8 +507,8 @@ contains
 !
             call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
 !
-            write(output%unit, '(/t3,a,i0,a)') 'Requested restart. Reading ', n_solutions_on_file, &
-                                                ' solutions from file.'
+            write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
+                                                ' solutions on file.'
 !
             call mem%alloc(c_i, wf%n_es_amplitudes, 1)
 !
@@ -527,13 +527,7 @@ contains
 !
          endif 
 !
-         if (n_solutions_on_file .eq. solver%n_singlet_states) then 
-!
-!           Done setting trial vectors 
-!
-            return
-!
-         else  
+         if (n_solutions_on_file .lt. solver%n_singlet_states) then 
 !
 !           Compute the remaining start vectors using Koopman
 !
@@ -565,9 +559,9 @@ contains
 !
          endif
 !
-      endif
+         call davidson%orthonormalize_trial_vecs()
 !
-      call davidson%orthonormalize_trial_vecs()
+      endif
 !
    end subroutine set_start_vectors_davidson_cc_es
 !

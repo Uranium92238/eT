@@ -208,67 +208,50 @@ contains
 !
       class(davidson_tool) :: davidson 
 !
-      real(dp), dimension(:), allocatable :: c, g 
+      real(dp), dimension(:,:), allocatable :: c
+      real(dp), dimension(:), allocatable :: c_tmp
       real(dp) :: norm_c, norm_g, ddot, proj
+      integer :: i,j,n_done
 !
-      integer :: i, j, n_done 
-!
-      type(file) :: temp_trials
-!
-      call temp_trials%init('temp_trials', 'sequentual', 'unformatted')
-!
-      call disk%open_file(temp_trials, 'readwrite', 'rewind')
-!
-      write(output%unit, *) 'Orthonormalizing the trial vectors. There are ', davidson%dim_red, 'vectors.'
+      write(output%unit, '(/t3,a,i0,a)') 'Orthonormalizing the trial vectors.'
 !
 !     Write the first trial vector to file 
 !
-      call mem%alloc(c, davidson%n_parameters)
-      call mem%alloc(g, davidson%n_parameters)
+      call mem%alloc(c, davidson%n_parameters, davidson%dim_red)
+      call mem%alloc(c_tmp, davidson%n_parameters)
 !
-      call davidson%read_trial(c, 1)
-      norm_c = get_l2_norm(c, davidson%n_parameters)
+      n_done = 0 
 !
-      write(temp_trials%unit) c 
-      n_done = 1 
+      do i = 1, davidson%dim_red 
 !
-      do i = 2, davidson%dim_red 
+         call davidson%read_trial(c(:,i), i)
 !
-         call davidson%read_trial(g, i)
-!
-         rewind(temp_trials%unit)
-!
+         c_tmp = c(:,i)
          do j = 1, n_done 
 !
-            read(temp_trials%unit) c 
-            proj = ddot(davidson%n_parameters, c, 1, g, 1)
+            c(:,i) = c(:,i) - ddot(davidson%n_parameters, c_tmp, 1, c(1,j), 1)*c(:,j)
 !
-            g = g - proj*g 
+         enddo
 !
-         enddo 
+         norm_c = sqrt(ddot(davidson%n_parameters, c(1,j), 1, c(1,j), 1))
+         c(:,i) = c(:,i)/norm_c 
 !
-         norm_g = get_l2_norm(g, davidson%n_parameters)
-         g = g/norm_g
-!
-         write(temp_trials%unit) g
          n_done = n_done + 1
 !
       enddo
 !
-      rewind(temp_trials%unit)
-      call davidson%rewind_trials()
+      call disk%open_file(davidson%trials, 'readwrite')
+      rewind(davidson%trials%unit)
+      do i = 1, davidson%dim_red
 !
-      do i = 1, davidson%dim_red 
+         write(davidson%trials%unit) c(:,i)
 !
-         read(temp_trials%unit) g 
-         call davidson%write_trial(g)
+      enddo 
 !
-      enddo
+      call disk%close_file(davidson%trials)
 !
-      call disk%close_file(temp_trials, 'delete')
-!
-      call mem%dealloc(c, davidson%n_parameters)
-      call mem%dealloc(g, davidson%n_parameters)
+      call mem%dealloc(c, davidson%n_parameters, davidson%dim_red)
+      call mem%dealloc(c_tmp, davidson%n_parameters)
 !
    end subroutine orthonormalize_trial_vecs_davidson_tool
 !
