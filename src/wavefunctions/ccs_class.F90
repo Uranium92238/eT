@@ -90,6 +90,7 @@ module ccs_class
 !
       procedure :: save_excited_state                          => save_excited_state_ccs
       procedure :: read_excited_state                          => read_excited_state_ccs
+      procedure :: get_n_excited_states_on_file                => get_n_excited_states_on_file_ccs
 !
       procedure :: initialize_multipliers                      => initialize_multipliers_ccs
       procedure :: destruct_multipliers                        => destruct_multipliers_ccs
@@ -544,6 +545,40 @@ contains
 !
    end subroutine read_excited_state_ccs
 !
+!
+   subroutine get_n_excited_states_on_file_ccs(wf, side, n_states)
+!!
+!!    Get number of excited states on file 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Figures out the number of excited states on file, 
+!!    using the r1 and l1 files. This should be sufficient for 
+!!    all coupled cluster models (i.e., it is most likely  
+!!    unneccessary to overwrite this routine in descendants)
+!!
+      class(ccs) :: wf 
+!
+      character(len=*), intent(in) :: side 
+!
+      integer, intent(out) :: n_states 
+!
+      if (trim(side) == 'right') then 
+!
+         inquire(file=wf%r1_file%name, size=n_states)
+         n_states = n_states/(dp*wf%n_t1)
+!
+      elseif (trim(side) == 'left') then 
+!
+         inquire(file=wf%l1_file%name, size=n_states)
+         n_states = n_states/(dp*wf%n_t1)
+!
+      else
+!
+         call output%error_msg('Tried to compute number of excited states. Unrecognized _side_: ' // side)
+!
+      endif
+!
+   end subroutine get_n_excited_states_on_file_ccs
 !
    subroutine destruct_multipliers_ccs(wf)
 !!

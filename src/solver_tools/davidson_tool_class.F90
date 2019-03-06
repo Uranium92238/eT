@@ -79,17 +79,14 @@ module davidson_tool_class
       procedure :: precondition                     => precondition_davidson_tool
       procedure :: projection                       => projection_davidson_tool
       procedure :: orthogonalize_against_trial_vecs => orthogonalize_against_trial_vecs_davidson_tool
+      procedure :: orthonormalize_against_trial_vecs => orthonormalize_against_trial_vecs_davidson_tool
+      procedure :: orthonormalize_trial_vecs       => orthonormalize_trial_vecs_davidson_tool
 !
       procedure :: set_A_red => set_A_red_davidson_tool
       procedure :: get_A_red => get_A_red_davidson_tool
 !
-      procedure :: add_initial_trial_vec => add_initial_trial_vec_davidson_tool
-!
       procedure :: set_trials_to_solutions => set_trials_to_solutions_davidson_tool
-      procedure :: restart_from_solutions  => restart_from_solutions_davidson_tool
       procedure :: rewind_trials           => rewind_trials_davidson_tool
-!
-      procedure :: write_trial_with_GS => write_trial_with_GS_davidson_tool
 !
 !     Deferred routines  
 !
@@ -195,118 +192,85 @@ contains
    end subroutine write_trial_davidson_tool
 !
 !
-   subroutine write_trial_with_GS_davidson_tool(davidson, c)
+   subroutine orthonormalize_trial_vecs_davidson_tool(davidson)
 !!
-!!    Write trial with Gram-Schmidt orthogonalization 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018 
+!!    Orthogonalize trial vecs  
+!!    Written by Eirik F. Kjønstad, Mar 2019 
 !!
-      implicit none 
-!
-      class(davidson_tool) :: davidson 
-!
-      real(dp), dimension(davidson%n_parameters, 1) :: c 
-!
-      real(dp), dimension(:,:), allocatable :: c_i 
-!
-      real(dp) :: ddot, norm_c, projection_of_c_on_c_i
-!
-      integer :: i
-!
-!     Orthogonalize against current trial vectors 
-!
-      call mem%alloc(c_i, davidson%n_parameters, 1)
-!
-      call davidson%rewind_trials()
-!
-      do i = 1, davidson%current_n_trials
-!
-         call davidson%read_trial(c_i)  
-!
-         projection_of_c_on_c_i = ddot(davidson%n_parameters, c_i, 1, c, 1)
-         call daxpy(davidson%n_parameters, -projection_of_c_on_c_i, c_i, 1, c, 1)
-!
-      enddo 
-!
-!     Normalize the vector that results 
-!
-      norm_c = sqrt(ddot(davidson%n_parameters, c, 1, c, 1))
-      call dscal(davidson%n_parameters, one/norm_c, c, 1)
-!
-!     Write trial vector to file 
-!
-      if (davidson%current_n_trials .eq. 0) then 
-!
-         call davidson%write_trial(c, 'rewind')
-!
-      else
-!
-         call davidson%write_trial(c, 'append')
-!
-      endif
-!
-      davidson%current_n_trials = davidson%current_n_trials + 1
-!
-   end subroutine write_trial_with_GS_davidson_tool
-!
-!
-   subroutine add_initial_trial_vec_davidson_tool(davidson, c)
-!!
-!!    Add initial trial vector 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
-!!
-!!    Adds a trial vector to the search space, though it is not
-!!    assumed to be orthogonal to existing trial vectors on entry.
-!!    Components along existing vectors are removed before the 
-!!    vector is stored to file.
+!!    Orthonormalizes trial vectors to make sure that the 
+!!    metric in the reduced problem, c_i^T c_j = delta_ij,
+!!    which is always assumed. This is needed after adding 
+!!    an initial set of trial vectors, upon restart from 
+!!    previous solutions and when resetting the reduced 
+!!    space using the last set of solutions.
 !!
       implicit none 
 !
       class(davidson_tool) :: davidson 
 !
-      real(dp), dimension(davidson%n_parameters, 1) :: c 
+      real(dp), dimension(:), allocatable :: c, g 
+      real(dp) :: norm_c, norm_g, ddot, proj
 !
-      real(dp) :: ddot, projection_of_c_on_c_i, norm_c
+      integer :: i, j, n_done 
 !
-      integer :: i 
+      type(file) :: temp_trials
 !
-      real(dp), dimension(:,:), allocatable :: c_i
+      call temp_trials%init('temp_trials', 'sequentual', 'unformatted')
 !
-      if (davidson%dim_red .eq. 0) then 
+      call disk%open_file(temp_trials, 'readwrite', 'rewind')
 !
-         norm_c = get_l2_norm(c, davidson%n_parameters)
-         call dscal(davidson%n_parameters, one/norm_c, c, 1)
+      write(output%unit, *) 'Orthonormalizing the trial vectors. There are ', davidson%dim_red, 'vectors.'
 !
-         call disk%open_file(davidson%trials, 'write', 'rewind')
-         write(davidson%trials%unit) c 
-         call disk%close_file(davidson%trials)
+!     Write the first trial vector to file 
 !
-      else 
+      call mem%alloc(c, davidson%n_parameters)
+      call mem%alloc(g, davidson%n_parameters)
 !
-         call mem%alloc(c_i, davidson%n_parameters, 1)
+      call davidson%read_trial(c, 1)
+      norm_c = get_l2_norm(c, davidson%n_parameters)
 !
-         do i = 1, davidson%dim_red
+      write(temp_trials%unit) c 
+      n_done = 1 
 !
-            call davidson%read_trial(c_i, i)
-            projection_of_c_on_c_i = ddot(davidson%n_parameters, c_i, 1, c, 1)
+      do i = 2, davidson%dim_red 
 !
-            call daxpy(davidson%n_parameters, -projection_of_c_on_c_i, c_i, 1, c, 1)
+         call davidson%read_trial(g, i)
+!
+         rewind(temp_trials%unit)
+!
+         do j = 1, n_done 
+!
+            read(temp_trials%unit) c 
+            proj = ddot(davidson%n_parameters, c, 1, g, 1)
+!
+            g = g - proj*g 
 !
          enddo 
 !
-         norm_c = get_l2_norm(c, davidson%n_parameters)
-         call dscal(davidson%n_parameters, one/norm_c, c, 1)
+         norm_g = get_l2_norm(g, davidson%n_parameters)
+         g = g/norm_g
 !
-         call disk%open_file(davidson%trials, 'write', 'append')
-         write(davidson%trials%unit) c 
-         call disk%close_file(davidson%trials)
+         write(temp_trials%unit) g
+         n_done = n_done + 1
 !
-         call mem%dealloc(c_i, davidson%n_parameters, 1)
+      enddo
 !
-      endif
+      rewind(temp_trials%unit)
+      call davidson%rewind_trials()
 !
-      davidson%dim_red = davidson%dim_red + 1
+      do i = 1, davidson%dim_red 
 !
-   end subroutine add_initial_trial_vec_davidson_tool
+         read(temp_trials%unit) g 
+         call davidson%write_trial(g)
+!
+      enddo
+!
+      call disk%close_file(temp_trials, 'delete')
+!
+      call mem%dealloc(c, davidson%n_parameters)
+      call mem%dealloc(g, davidson%n_parameters)
+!
+   end subroutine orthonormalize_trial_vecs_davidson_tool
 !
 !
    subroutine read_solution_davidson_tool(davidson, solution, n)
@@ -807,6 +771,49 @@ contains
    end subroutine orthogonalize_against_trial_vecs_davidson_tool
 !
 !
+   subroutine orthonormalize_against_trial_vecs_davidson_tool(davidson, R)
+!!
+!!    Orthonormalize against trial vectors 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    Orthonormalize R against the existing trial vectors. Note 
+!!    that this is usually done residual after residual, where 
+!!    each new residual is orthonormalize against the previous 
+!!    (where the number of previous changes with 'n_new_trials').
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson 
+!
+      real(dp), dimension(davidson%n_parameters, 1) :: R 
+!
+      real(dp) :: ddot, projection_of_R_on_c_i, norm_R
+!
+      integer :: i 
+!
+      real(dp), dimension(:,:), allocatable :: c_i
+!
+      call mem%alloc(c_i, davidson%n_parameters, 1)
+!
+      do i = 1, davidson%dim_red + davidson%n_new_trials
+!
+         call davidson%read_trial(c_i, i)
+         projection_of_R_on_c_i = ddot(davidson%n_parameters, c_i, 1, R, 1)
+!
+         call daxpy(davidson%n_parameters, - projection_of_R_on_c_i, c_i, 1, R, 1)
+!
+      enddo 
+!
+      call mem%dealloc(c_i, davidson%n_parameters, 1)
+!
+!
+      norm_R = get_l2_norm(R, davidson%n_parameters)
+      R = R/norm_R
+      write(output%unit, *) 'norm R:', norm_R
+!
+   end subroutine orthonormalize_against_trial_vecs_davidson_tool
+!
+!
    subroutine set_A_red_davidson_tool(davidson, A_red)
 !!
 !!    Set A reduced 
@@ -955,57 +962,6 @@ contains
       enddo
 !
    end subroutine read_max_dim_red_davidson_tool
-!
-!
-   subroutine restart_from_solutions_davidson_tool(davidson, n_solutions)
-!!
-!!    Restart from solutions
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!!
-!!    Set first trials equal to solution on file.
-!!    This should be used for restarts.
-!!
-      implicit none
-!
-      class(davidson_tool) :: davidson 
-!
-      integer, intent(in) :: n_solutions
-!
-      real(dp), dimension(:,:), allocatable :: X
-!
-      integer :: solution
-!
-!     Is file on disk?
-!
-      if (davidson%X%file_exists()) then
-!
-         call disk%open_file(davidson%X, 'read')
-         rewind(davidson%X%unit)
-!
-         call mem%alloc(X, davidson%n_parameters, 1)
-!
-         do solution = 1, n_solutions
-!
-            X = zero
-            read(davidson%X%unit) X
-!
-            write(output%unit, *)(davidson%current_n_trials)
-!
-            call davidson%write_trial_with_GS(X)
-!
-         enddo
-!
-         call mem%dealloc(X, davidson%n_parameters, 1)
-!
-         call disk%close_file(davidson%X)
-!
-      else ! File is not on disk 
-!  
-         call output%error_msg('requested restart but solution file not on disk.')
-!
-      endif
-!
-   end subroutine restart_from_solutions_davidson_tool
 !
 !
    subroutine rewind_trials_davidson_tool(davidson)

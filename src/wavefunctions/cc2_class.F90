@@ -34,6 +34,8 @@ module cc2_class
 !
       real(dp), dimension(:,:,:,:), allocatable :: u
 !
+      type(file) :: r2_file, l2_file
+!
    contains
 !
       procedure :: prepare                                     => prepare_cc2
@@ -79,6 +81,11 @@ module cc2_class
       procedure :: construct_multiplier_equation               => construct_multiplier_equation_cc2
 !
       procedure :: get_cvs_projector                           => get_cvs_projector_cc2
+!
+      procedure :: initialize_files                            => initialize_files_cc2
+!
+      procedure :: read_excited_state                          => read_excited_state_cc2
+      procedure :: save_excited_state                          => save_excited_state_cc2
 !
    end type cc2
 !
@@ -504,6 +511,160 @@ contains
      enddo
 !
    end subroutine get_cvs_projector_cc2
+!
+!
+   subroutine save_excited_state_cc2(wf, X, n, side)
+!!
+!!    Save excited state 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Saves an excited state to disk. Since the solvers 
+!!    keep these vectors in full length, we receive a vector 
+!!    in full length (n_es_amplitudes), and then distribute 
+!!    the different parts of that vector to singles, doubles, etc.,
+!!    files (if there are doubles, etc.).
+!!
+!!    NB! If n = 1, then the routine WILL REWIND the files before writing,
+!!    thus DELETING every record in the file. For n >=2, we just append to
+!!    the file. The purpose of this setup is that the files should be saved in 
+!!    the correct order, from n = 1 to n = # states. 
+!!
+      implicit none 
+!
+      class(cc2), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      if (trim(side) == 'right') then 
+!
+         call disk%open_file(wf%r1_file, 'write', 'append')
+         call disk%open_file(wf%r2_file, 'write', 'append')
+!
+         if (n .eq. 1) then 
+!
+            rewind(wf%r1_file%unit)
+            rewind(wf%r2_file%unit)
+!
+         endif 
+!
+         write(wf%r1_file%unit) X(1 : wf%n_t1)
+         write(wf%r2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
+!
+         call disk%close_file(wf%r1_file)
+         call disk%close_file(wf%r2_file)
+!
+      elseif (trim(side) == 'left') then 
+!
+         call disk%open_file(wf%l1_file, 'write', 'append')
+         call disk%open_file(wf%l2_file, 'write', 'append')
+!
+         if (n .eq. 1) then 
+!
+            rewind(wf%l1_file%unit)
+            rewind(wf%l2_file%unit)
+!
+         endif 
+!
+         write(wf%l1_file%unit) X(1 : wf%n_t1)
+         write(wf%l2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
+!
+         call disk%close_file(wf%l1_file)
+         call disk%close_file(wf%l2_file)
+!
+      else
+!
+         call output%error_msg('Tried to save an excited state, but argument side not recognized: ' // side)
+!
+      endif
+!
+   end subroutine save_excited_state_cc2
+!
+!
+   subroutine read_excited_state_cc2(wf, X, n, side)
+!!
+!!    Read excited state 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Reads an excited state to disk. Since this routine is used by 
+!!    solvers, it returns the vector in the full space. Thus, we open 
+!!    files for singles, doubles, etc., paste them together, and return 
+!!    the result in X.
+!!
+!!    NB! This will place the cursor of the file at position n + 1.
+!!    Be cautious when using this in combination with writing to the files.
+!!    We recommend to separate these tasks---write all states or read all
+!!    states; don't mix if you can avoid it.
+!!
+      implicit none 
+!
+      class(cc2), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      if (trim(side) == 'right') then 
+!
+         call disk%open_file(wf%r1_file, 'read')
+         call disk%open_file(wf%r2_file, 'read')
+!
+         call wf%r1_file%prepare_to_read_line(n)
+         call wf%r2_file%prepare_to_read_line(n)
+!
+         read(wf%r1_file%unit) X(1 : wf%n_t1)
+         read(wf%r2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
+!
+         call disk%close_file(wf%r1_file)
+         call disk%close_file(wf%r2_file)
+!
+      elseif (trim(side) == 'left') then 
+!
+         call disk%open_file(wf%l1_file, 'read')
+         call disk%open_file(wf%l2_file, 'read')
+!
+         call wf%l1_file%prepare_to_read_line(n)
+         call wf%l2_file%prepare_to_read_line(n)
+!
+         read(wf%l1_file%unit) X(1 : wf%n_t1)
+         read(wf%l2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes) 
+!
+         call disk%close_file(wf%l1_file)
+         call disk%close_file(wf%l2_file)
+!
+      else
+!
+         call output%error_msg('Tried to read an excited state, but argument side not recognized: ' // side)
+!
+      endif
+!
+   end subroutine read_excited_state_cc2
+!
+!
+   subroutine initialize_files_cc2(wf)
+!!
+!!    Initialize files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Initializes the wavefucntion files for wavefunction parameters.
+!!
+      class(cc2) :: wf 
+!
+      call wf%t1_file%init('t1', 'sequential', 'unformatted')
+      call wf%t1bar_file%init('t1bar', 'sequential', 'unformatted')
+!
+      call wf%l1_file%init('l1', 'sequential', 'unformatted')
+      call wf%l2_file%init('l2', 'sequential', 'unformatted')
+!
+      call wf%r1_file%init('r1', 'sequential', 'unformatted')
+      call wf%r2_file%init('r2', 'sequential', 'unformatted')
+!
+   end subroutine initialize_files_cc2
 !
 !
 end module cc2_class
