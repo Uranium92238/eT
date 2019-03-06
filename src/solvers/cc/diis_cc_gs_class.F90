@@ -48,7 +48,6 @@ module diis_cc_gs_class
       real(dp) :: energy_threshold
       real(dp) :: omega_threshold 
 !
-      type(file) :: restart_file
       logical    :: do_restart
 !
    contains
@@ -64,9 +63,6 @@ module diis_cc_gs_class
 !
       procedure :: print_settings           => print_settings_diis_cc_gs
       procedure, nopass :: print_summary    => print_summary_diis_cc_gs
-!
-      procedure :: restart                  => restart_diis_cc_gs
-      procedure :: write_restart_file       => write_restart_file_diis_cc_gs
 !
    end type diis_cc_gs
 !
@@ -109,11 +105,9 @@ contains
 !
 !     Prepare restart information file 
 !
-      call solver%restart_file%init('diis_cc_gs_restart_info', 'sequential', 'formatted')
-!
       if (solver%do_restart) then
 !
-         call solver%restart(wf)
+         call wf%read_amplitudes()
 ! 
       else
 !
@@ -122,59 +116,6 @@ contains
       endif
 !
    end subroutine prepare_diis_cc_gs
-!
-!
-   subroutine write_restart_file_diis_cc_gs(solver, wf)
-!!
-!!    Write restart file 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018
-!!
-      implicit none 
-!
-      class(diis_cc_gs), intent(inout) :: solver
-!
-      class(ccs), intent(in) :: wf 
-!
-      call disk%open_file(solver%restart_file, 'write', 'rewind')
-!
-      write(solver%restart_file%unit, *) 'n_amplitudes'
-      write(solver%restart_file%unit, *) wf%n_gs_amplitudes
-!
-      call disk%close_file(solver%restart_file)       
-!
-   end subroutine write_restart_file_diis_cc_gs
-!
-!
-   subroutine restart_diis_cc_gs(solver, wf)
-!!
-!!    Restart 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
-!!
-      implicit none 
-!
-      class(diis_cc_gs), intent(inout) :: solver 
-!
-      class(ccs), intent(inout) :: wf 
-!
-      integer :: n_gs_amplitudes
-!
-      write(output%unit, '(/t6,a)') 'Requested restart. Reading amplitudes from file.'
-!
-!     Sanity checks 
-!
-      call disk%open_file(solver%restart_file, 'read', 'rewind')
-!
-      read(solver%restart_file%unit, *) ! Empty read to skip banner 
-!
-      read(solver%restart_file%unit, *) n_gs_amplitudes 
-!
-      call disk%close_file(solver%restart_file)
-!
-      if (n_gs_amplitudes .ne. wf%n_gs_amplitudes) call output%error_msg('Inconsistent dimensions on restart in DIIS-CC-GS.')
-!
-      call wf%read_amplitudes()
-!
-   end subroutine restart_diis_cc_gs
 !
 !
    subroutine print_settings_diis_cc_gs(solver)
@@ -368,9 +309,7 @@ contains
 !
       class(ccs) :: wf
 !
-!     Write restart file & save amplitudes 
-!
-      call solver%write_restart_file(wf)
+!     Save amplitudes 
 !
       call wf%save_amplitudes()
 !

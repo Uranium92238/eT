@@ -52,6 +52,7 @@ module ccs_class
 !
       type(file) :: t1_file, t1bar_file 
       type(file) :: r1_file, l1_file
+      type(file) :: restart_file
 !
       real(dp), dimension(:,:), allocatable  :: fock_ij
       real(dp), dimension(:,:), allocatable  :: fock_ia
@@ -98,6 +99,7 @@ module ccs_class
       procedure :: get_multipliers                             => get_multipliers_ccs
       procedure :: save_multipliers                            => save_multipliers_ccs
       procedure :: read_multipliers                            => read_multipliers_ccs
+      procedure :: is_restart_safe                             => is_restart_safe_ccs
 !
 !     Routines related to the Fock matrix 
 ! 
@@ -280,6 +282,17 @@ contains
 !
       write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
 !
+!     Write information to restart file 
+!
+      call disk%open_file(wf%restart_file, 'write', 'rewind')
+!
+      write(wf%restart_file%unit) wf%n_o 
+      write(wf%restart_file%unit) wf%n_v 
+      write(wf%restart_file%unit) wf%n_gs_amplitudes 
+      write(wf%restart_file%unit) wf%n_es_amplitudes 
+!
+      call disk%close_file(wf%restart_file)
+!
    end subroutine cleanup_ccs
 !
 !
@@ -297,6 +310,7 @@ contains
 !
       call wf%r1_file%init('r1', 'sequential', 'unformatted')
       call wf%l1_file%init('l1', 'sequential', 'unformatted')
+      call wf%restart_file%init('cc_restart_file', 'sequential', 'unformatted')
 !
    end subroutine initialize_files_ccs
 !
@@ -394,6 +408,8 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
+      call wf%is_restart_safe('ground state')
+!
       call disk%open_file(wf%t1_file, 'read', 'rewind')
 !
       read(wf%t1_file%unit) wf%t1 
@@ -430,6 +446,8 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
+      call wf%is_restart_safe('ground state')
+!
       call disk%open_file(wf%t1bar_file, 'read', 'rewind')
 !
       read(wf%t1bar_file%unit) wf%t1bar
@@ -437,6 +455,53 @@ contains
       call disk%close_file(wf%t1bar_file)
 !
    end subroutine read_multipliers_ccs
+!
+!
+   subroutine is_restart_safe_ccs(wf, task)
+!!
+!!    Is restart safe?
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      character(len=*), intent(in) :: task 
+!
+      integer :: n_o, n_v, n_gs_amplitudes, n_es_amplitudes
+!
+      call disk%open_file(wf%restart_file, 'read', 'rewind')
+!
+      read(wf%restart_file%unit) n_o
+      read(wf%restart_file%unit) n_v
+      read(wf%restart_file%unit) n_gs_amplitudes
+      read(wf%restart_file%unit) n_es_amplitudes
+!
+      if (n_o .ne. wf%n_o) call output%error_msg('attempted to restart from inconsistent number ' // &
+                                                   'of occupied orbitals.')
+!
+      if (n_v .ne. wf%n_v) call output%error_msg('attempted to restart from inconsistent number ' // &
+                                                   'of virtual orbitals.')
+!
+      if (trim(task) == 'ground state') then 
+!
+         if (n_gs_amplitudes .ne. wf%n_gs_amplitudes) &
+            call output%error_msg('attempted to restart from inconsistent number ' // &
+                                    'of ground state amplitudes.')    
+!
+      elseif (trim(task) == 'excited state') then    
+!
+         if (n_es_amplitudes .ne. wf%n_es_amplitudes) &
+            call output%error_msg('attempted to restart from inconsistent number ' // &
+                                    'of excited state amplitudes.')     
+!
+      else
+!
+         call output%error_msg('attempted to restart, but the task was not recognized: ' // task)
+!
+      endif   
+!
+   end subroutine is_restart_safe_ccs
 !
 !
    subroutine save_excited_state_ccs(wf, X, n, side)
@@ -518,6 +583,8 @@ contains
       integer, intent(in) :: n ! state number 
 !
       character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      call wf%is_restart_safe('excited state')
 !
       if (trim(side) == 'right') then 
 !

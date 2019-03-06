@@ -59,8 +59,6 @@ module davidson_cc_es_class
 !
       integer, dimension(:,:), allocatable :: start_vectors
 !
-      type(file) :: restart_file
-!
    contains
 !     
       procedure, non_overridable :: prepare          => prepare_davidson_cc_es
@@ -82,8 +80,6 @@ module davidson_cc_es_class
 !       
       procedure :: initialize_energies               => initialize_energies_davidson_cc_es
       procedure :: destruct_energies                 => destruct_energies_davidson_cc_es   
-!
-      procedure :: write_restart_file                => write_restart_file_davidson_cc_es 
 !
    end type davidson_cc_es
 !
@@ -118,30 +114,9 @@ contains
       call solver%initialize_energies()
       solver%energies = zero
 !
-      call solver%restart_file%init('davidson_cc_es_restart_info', 'sequential', 'formatted')
-!
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
    end subroutine prepare_davidson_cc_es
-!
-!
-   subroutine write_restart_file_davidson_cc_es(solver)
-!!
-!!    Write restart 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018
-!!
-      implicit none 
-!
-      class(davidson_cc_es) :: solver 
-!
-      call disk%open_file(solver%restart_file, 'write', 'rewind')
-!
-      write(solver%restart_file%unit, *) 'n_singlet_states'
-      write(solver%restart_file%unit, *) solver%n_singlet_states
-!
-      call disk%close_file(solver%restart_file) 
-!
-   end subroutine write_restart_file_davidson_cc_es
 !
 !
    subroutine initialize_energies_davidson_cc_es(solver)
@@ -479,14 +454,13 @@ contains
 !
       integer :: trial, n_solutions_on_file
 !
-      call davidson%rewind_trials()
+      rewind(davidson%trials%unit)
 !
       if (allocated(solver%start_vectors)) then
 !
 !        Initial trial vectors given on input
 !
          call mem%alloc(c_i, wf%n_es_amplitudes, 1)
-!
 !
          do trial = 1, solver%n_singlet_states
 !
@@ -599,8 +573,6 @@ contains
       implicit none
 !
       class(davidson_cc_es) :: solver
-!
-      call solver%write_restart_file()
 !
    end subroutine cleanup_davidson_cc_es
 !

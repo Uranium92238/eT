@@ -43,7 +43,6 @@ module ccsd_class
 !     Preparation and cleanup routines 
 !
       procedure :: prepare                                     => prepare_ccsd
-      procedure :: cleanup                                     => cleanup_ccsd
 !
       procedure :: initialize_files                            => initialize_files_ccsd
 !
@@ -212,20 +211,6 @@ contains
       call wf%initialize_files()
 !
    end subroutine prepare_ccsd
-!
-!
-   subroutine cleanup_ccsd(wf)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
-!
-   end subroutine cleanup_ccsd
 !
 !
    subroutine initialize_amplitudes_ccsd(wf)
@@ -499,6 +484,8 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
+      call wf%is_restart_safe('ground state')
+!
       call disk%open_file(wf%t1_file, 'read', 'rewind')
       call disk%open_file(wf%t2_file, 'read', 'rewind')
 !
@@ -628,6 +615,8 @@ contains
 !
       character(len=*), intent(in) :: side ! 'left' or 'right' 
 !
+      call wf%is_restart_safe('excited state')
+!
       if (trim(side) == 'right') then 
 !
          call disk%open_file(wf%r1_file, 'read')
@@ -685,6 +674,8 @@ contains
 !
       call wf%r1_file%init('r1', 'sequential', 'unformatted')
       call wf%r2_file%init('r2', 'sequential', 'unformatted')
+!
+      call wf%restart_file%init('cc_restart_file', 'sequential', 'unformatted')
 !
    end subroutine initialize_files_ccsd
 !
@@ -895,6 +886,8 @@ contains
       implicit none 
 !
       class(ccsd), intent(inout) :: wf 
+!
+      call wf%is_restart_safe('ground state')
 !
       call disk%open_file(wf%t1bar_file, 'read', 'rewind')
       call disk%open_file(wf%t2bar_file, 'read', 'rewind')

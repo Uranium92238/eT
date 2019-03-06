@@ -664,6 +664,8 @@ contains
       call wf%r1_file%init('r1', 'sequential', 'unformatted')
       call wf%r2_file%init('r2', 'sequential', 'unformatted')
 !
+      call wf%restart_file%init('cc_restart_file', 'sequential', 'unformatted')
+!
    end subroutine initialize_files_cc2
 !
 !
