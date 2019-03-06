@@ -124,7 +124,7 @@ contains
 !
 !$omp parallel do schedule(static) private(a,i)
       do a = 1, wf%n_v
-         do i = 1, wf%n_v
+         do i = 1, wf%n_o
 !
          c_aibj(a,i,a,i) = two*c_aibj(a,i,a,i)
 !
@@ -167,22 +167,21 @@ contains
 !     In preparation for last two terms, reorder
 !     rho_aibj to rho_abij, and c_aibj to c_abij
 !
-      call mem%alloc(rho_abij,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
-      call mem%alloc(c_abij,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
+      call mem%alloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%alloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call sort_1234_to_1324(c_aibj, c_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call sort_1234_to_1324(rho_aibj, rho_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call wf%jacobian_ccsd_j2(rho_abij, c_abij)
       call wf%jacobian_ccsd_k2(rho_abij, c_abij)
 !
-      call mem%dealloc(c_abij,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
-!
 !     divide by the biorthonormal factor 1 + delta_ai,bj
 !
-!$omp parallel do schedule(static) private(ai)
+!$omp parallel do schedule(static) private(a,i)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
@@ -227,7 +226,9 @@ contains
       rho_abij = zero
       call mem%alloc(c_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call sort_1234_to_1342(c_aibj, c_abji, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1243(c_abij, c_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call cc3_timer%start()
       call wf%jacobian_cc3_A(omega, c_ai, c_abji, rho_ai, rho_abij)
@@ -420,19 +421,19 @@ contains
       call wf%jacobian_cc3_integrals()
       call wf%jacobian_cc3_c1_integrals(c_ai)
 !
-      call mem%alloc(t_abc,wf%n_v,wf%n_v,wf%n_v)
-      call mem%alloc(u_abc,wf%n_v,wf%n_v,wf%n_v)
-      call mem%alloc(v_abc,wf%n_v,wf%n_v,wf%n_v)
+      call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%alloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call mem%alloc(F_kc,wf%n_v,wf%n_o)
-      call sort_12_to_21(wf%fock_ia,F_kc,wf%n_o,wf%n_v)
+      call mem%alloc(F_kc, wf%n_v, wf%n_o)
+      call sort_12_to_21(wf%fock_ia, F_kc, wf%n_o, wf%n_v)
 !
 !     C1 transformed Fock matrix
 !
       call mem%alloc(F_kc_c1, wf%n_v, wf%n_o)
       call wf%jacobian_cc3_construct_fock_ia_c1(c_ai, F_kc_c1)
 !
-      call mem%alloc(t_abji,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
+      call mem%alloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1342(wf%t2, t_abji, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Arrays for the amplitudes and intermediates
@@ -850,6 +851,12 @@ contains
          enddo ! batch_j
       enddo ! batch_i
 !
+      write(output%unit,*) 'Print some integrals'
+      write(output%unit,*) 'g_bdci_c1: 1,1,1,1',   g_bdci_c1_p(1,1,1,1)
+      write(output%unit,*) 'g_bdci_c1: 10,7,3,2',  g_bdci_c1_p(10,7,3,2)
+      write(output%unit,*) 'g_bdci_c1: 3,4,2,5',   g_bdci_c1_p(3,4,2,5)
+      write(output%unit,*) 'g_bdci_c1: 2,5,3,4',   g_bdci_c1_p(2,5,3,4)
+!
 !     Close files
 !
       call disk%close_file(wf%g_bdck_t)
@@ -947,9 +954,9 @@ contains
 !!
 !!    Construct integrals need in CC3 Jacobian and store on disk
 !!    (bd|ck) ordered as dbc,k
-!!    (bd|kc) ordered as dcb,k
+!!    (db|kc) ordered as bcd,k
 !!    (lj|ck) ordered as lc,jk
-!!    (lj|kc) ordered as cj,lk
+!!    (jl|kc) ordered as cj,lk
 !!    (jb|kc) stored as L_jbkc = 2g_jbkc - g_jckb ordered as bc,jk
 !!
 !!    Rolf H. Myhre and Alexander Paul, Feb 2019
@@ -970,7 +977,7 @@ contains
 !
       integer :: ioerror=-1
 !
-      call mem%alloc(v2_help,wf%n_v,wf%n_v)
+      call mem%alloc(v2_help, wf%n_v, wf%n_v)
 !
       call batch_k%init(wf%n_o)
 !
@@ -979,12 +986,12 @@ contains
       req_0 = wf%integrals%n_J*wf%n_v**2
       req_k = 2*wf%n_v**3 + wf%integrals%n_J*wf%n_v
 !
-      call mem%batch_setup(batch_k,req_0,req_k)
+      call mem%batch_setup(batch_k, req_0, req_k)
 !
       call wf%g_bdck_t%init('g_bdck_t','direct','unformatted',dp*wf%n_v**3)
       call disk%open_file(wf%g_bdck_t,'write')
 !
-      do current_k_batch = 1,batch_k%num_batches
+      do current_k_batch = 1, batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
 !
@@ -997,7 +1004,7 @@ contains
                            1,wf%n_v,   &
                            batch_k%first,batch_k%last)
 !
-         call sort_1234_to_2134(g_pqrs,h_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_k%length)
+         call sort_1234_to_2134(g_pqrs, h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
          do k = 1,batch_k%length
 !
@@ -1031,10 +1038,10 @@ contains
          call mem%alloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
          call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
-         call wf%get_vvov(g_pqrs, &
-                           1,wf%n_v, &
-                           1,wf%n_v, &
-                           batch_k%first,batch_k%last, &
+         call wf%get_vvov(g_pqrs,                        &
+                           1,wf%n_v,                     &
+                           1,wf%n_v,                     &
+                           batch_k%first,batch_k%last,   &
                            1,wf%n_v)
 !
          call sort_1234_to_2413(g_pqrs, h_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
@@ -1065,7 +1072,7 @@ contains
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      call wf%g_ljck_t%init('g_ljck_t','direct','unformatted',dp*wf%n_v*wf%n_o)
+      call wf%g_ljck_t%init('g_ljck_t','direct','unformatted', dp*wf%n_v*wf%n_o)
       call disk%open_file(wf%g_ljck_t,'write')
 !
       do current_k_batch = 1,batch_k%num_batches
@@ -1075,13 +1082,13 @@ contains
          call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
          call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o ,batch_k%length)
 !
-         call wf%get_oovo(g_pqrs, &
-                           1,wf%n_o, &
-                           1,wf%n_o, &
-                           1,wf%n_v, &
+         call wf%get_oovo(g_pqrs,                        &
+                           1,wf%n_o,                     &
+                           1,wf%n_o,                     &
+                           1,wf%n_v,                     &
                            batch_k%first,batch_k%last)
 !
-         call sort_1234_to_1324(g_pqrs,h_pqrs,wf%n_o,wf%n_o,wf%n_v,batch_k%length)
+         call sort_1234_to_1324(g_pqrs, h_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
 !
          do k = 1,batch_k%length
             do j = 1,wf%n_o
@@ -1107,10 +1114,10 @@ contains
 !     (jl|kc)
 !     Same batching
 !
-      call wf%g_jlkc_t%init('g_jlkc_t','direct','unformatted',dp*wf%n_v*wf%n_o)
+      call wf%g_jlkc_t%init('g_jlkc_t','direct','unformatted', dp*wf%n_v*wf%n_o)
       call disk%open_file(wf%g_jlkc_t,'write')
 !
-      do current_k_batch = 1,batch_k%num_batches
+      do current_k_batch = 1, batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
 !
@@ -1163,13 +1170,13 @@ contains
          call mem%alloc(g_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
          call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
 !
-         call wf%get_ovov(g_pqrs, &
-                           1,wf%n_o, &
-                           1,wf%n_v, &
-                           batch_k%first,batch_k%last, &
+         call wf%get_ovov(g_pqrs,                        &
+                           1,wf%n_o,                     &
+                           1,wf%n_v,                     &
+                           batch_k%first,batch_k%last,   &
                            1,wf%n_v)
 !
-         call sort_1234_to_2413(g_pqrs,h_pqrs,wf%n_o,wf%n_v,batch_k%length,wf%n_v)
+         call sort_1234_to_2413(g_pqrs, h_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
 !
          do k = 1,batch_k%length
             do j = 1,wf%n_o
@@ -1243,14 +1250,14 @@ contains
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      call wf%g_bdck_c1%init('g_bdck_c1','direct','unformatted',dp*wf%n_v**3)
+      call wf%g_bdck_c1%init('g_bdck_c1','direct','unformatted', dp*wf%n_v**3)
       call disk%open_file(wf%g_bdck_c1,'write')
 !
          call mem%alloc(L_bd_J_c1, (wf%n_v)**2, wf%integrals%n_J)
 !
          call wf%integrals%construct_cholesky_ab_c1(L_bd_J_c1, c_ai, 1, wf%n_v, 1, wf%n_v)
 !
-      do current_k_batch = 1,batch_k%num_batches
+      do current_k_batch = 1, batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
 !
@@ -1294,7 +1301,7 @@ contains
                      one,                       &
                      L_bd_J,                    & ! L_bd_J
                      (wf%n_v)**2,               &
-                     L_ck_J_c1,                 & ! L_ck_J  c is c1_transformed
+                     L_ck_J_c1,                 & ! L_ck_J  c is c1-transformed
                      (wf%n_v)*(batch_k%length), &
                      one,                       &
                      g_pqrs,                    & ! (bd|c'k)
@@ -1312,7 +1319,7 @@ contains
                      -one,                      &
                      L_bd_J,                    & ! L_bd_J
                      (wf%n_v)**2,               &
-                     L_ck_J_c1,                 & ! L_ck_J  k is c1_transformed
+                     L_ck_J_c1,                 & ! L_ck_J  k is c1-transformed
                      (wf%n_v)*(batch_k%length), &
                      one,                       &
                      g_pqrs,                    & ! (bd|ck')
@@ -1390,7 +1397,7 @@ contains
 !
          call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length) ! order bcd,k
 !
-         call sort_1234_to_2413(g_pqrs,h_pqrs,wf%n_v,wf%n_v,batch_k%length,wf%n_v)
+         call sort_1234_to_2413(g_pqrs, h_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
 !
          call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
 !
@@ -1423,7 +1430,7 @@ contains
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      call wf%g_ljck_c1%init('g_ljck_c1','direct','unformatted',dp*wf%n_v*wf%n_o)
+      call wf%g_ljck_c1%init('g_ljck_c1','direct','unformatted', dp*wf%n_v*wf%n_o)
       call disk%open_file(wf%g_ljck_c1,'write')
 !
       do current_k_batch = 1,batch_k%num_batches
@@ -1514,7 +1521,7 @@ contains
             do j = 1,wf%n_o
 !
                record  = (batch_k%first + k - 2)*wf%n_o + j
-               write(wf%g_ljck_c1%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+               write(wf%g_ljck_c1%unit, rec=record, iostat=ioerror) h_pqrs(:,:,j,k)
 !
             enddo
          enddo
@@ -1525,7 +1532,7 @@ contains
 !
          call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
 !
-      enddo
+      enddo ! batch_k
 !
       call disk%close_file(wf%g_ljck_c1,'keep')
 !
@@ -1533,7 +1540,7 @@ contains
 !     (jl'|kc) same batching (req0 and req_k)
 !
 !
-      call wf%g_jlkc_c1%init('g_jlkc_c1','direct','unformatted',dp*wf%n_v**3)
+      call wf%g_jlkc_c1%init('g_jlkc_c1','direct','unformatted', dp*(wf%n_v)*(wf%n_o))
       call disk%open_file(wf%g_jlkc_c1,'write')
 !
       do current_k_batch = 1, batch_k%num_batches
@@ -1575,11 +1582,11 @@ contains
 !        Write to file
 !        Should implement possibility to have them in mem if possible
 !
-         do k = 1,batch_k%length
-            do j = 1,wf%n_o
+         do k = 1, batch_k%length
+            do j = 1, wf%n_o
 !
                record  = (batch_k%first + k - 2)*wf%n_o + j
-               write(wf%g_jlkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+               write(wf%g_jlkc_c1%unit, rec=record, iostat=ioerror) h_pqrs(:,:,j,k)
 !
             enddo
          enddo
@@ -1590,7 +1597,7 @@ contains
 !
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !
-      enddo
+      enddo ! batch_k
 !
       call disk%close_file(wf%g_jlkc_c1, 'keep')
 !
@@ -1699,10 +1706,10 @@ contains
 !
       type(batching_index), intent(in) :: batch_x
 !
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_bdcx
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_dbxc
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_bdcx_c1
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_dbxc_c1
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_x%length), intent(out) :: g_bdcx
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_x%length), intent(out) :: g_dbxc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_x%length), intent(out) :: g_bdcx_c1
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_x%length), intent(out) :: g_dbxc_c1
 !
       integer :: ioerror
       integer :: x, x_abs
@@ -2924,12 +2931,12 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbjc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbkc
 !
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlic
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_klic
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_kljc
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_iljc
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_ilkc
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlkc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_jlic
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_klic
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_kljc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_iljc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_ilkc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_jlkc
 !
       real(dp) :: alpha
 !

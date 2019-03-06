@@ -4,7 +4,7 @@ submodule (cc3_class) omega_cc3
 !!    Omega submodule (cc3)
 !!    Alex C. Paul and Rolf H. Myhre January 2019
 !!
-!!    Routines to construct 
+!!    Routines to construct
 !!
 !!    Ω =  < mu | exp(-T) H exp(T) | R >
 !!
@@ -126,9 +126,9 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: omega2
 !
 !     Arrays for triples amplitudes
-      real(dp), dimension(:,:,:), allocatable :: t_abc 
-      real(dp), dimension(:,:,:), allocatable :: u_abc 
-      real(dp), dimension(:,:,:), allocatable :: v_abc 
+      real(dp), dimension(:,:,:), allocatable :: t_abc
+      real(dp), dimension(:,:,:), allocatable :: u_abc
+      real(dp), dimension(:,:,:), allocatable :: v_abc
 !
 !     Unpacked doubles amplitudes
       real(dp), dimension(:,:,:,:), allocatable :: t_abji
@@ -161,7 +161,7 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_licj_p => null()
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_lick_p => null()
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ljck_p => null()
-!                                             
+!
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_jlic
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_klic
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_kljc
@@ -176,7 +176,7 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_jlkc_p => null()
 !
 !     L_kbjc and L_jbkc each other's transpose,
-!     but utilising this makes the code more complicated and 
+!     but utilising this makes the code more complicated and
 !     error prone without any huge advantages
 !
       real(dp), dimension(:,:,:,:), allocatable, target  :: L_jbic
@@ -199,7 +199,7 @@ contains
       real(dp)     :: batch_buff = 0.0
 !
 !     Set up required integrals on disk
-      call wf%omega_cc3_integrals() 
+      call wf%omega_cc3_integrals()
 !
       call mem%alloc(t_abc,wf%n_v,wf%n_v,wf%n_v)
       call mem%alloc(u_abc,wf%n_v,wf%n_v,wf%n_v)
@@ -229,55 +229,55 @@ contains
 !
 !
 !     Allocate integral arrays and assign pointers.
-!     Without pointers we'll have to use three times as much 
+!     Without pointers we'll have to use three times as much
 !     memory for the non-batching case
 !
       if (batch_i%num_batches .eq. 1) then !no batching
 !
-         call mem%alloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,wf%n_o) 
+         call mem%alloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,wf%n_o)
 !
-         call mem%alloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,wf%n_o) 
+         call mem%alloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,wf%n_o)
 !
-         call mem%alloc(g_ljci,wf%n_o,wf%n_v,wf%n_o,wf%n_o) 
+         call mem%alloc(g_ljci,wf%n_o,wf%n_v,wf%n_o,wf%n_o)
 !
-         call mem%alloc(g_jlic,wf%n_v,wf%n_o,wf%n_o,wf%n_o) 
+         call mem%alloc(g_jlic,wf%n_v,wf%n_o,wf%n_o,wf%n_o)
 !
-         call mem%alloc(L_jbic,wf%n_v,wf%n_v,wf%n_o,wf%n_o) 
+         call mem%alloc(L_jbic,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
 !
       else !batching
 !
          call batch_i%determine_limits(1)
 !
-         call mem%alloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
-         call mem%alloc(g_bdcj,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
-         call mem%alloc(g_bdck,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+         call mem%alloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%alloc(g_bdcj,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%alloc(g_bdck,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
 !
-         call mem%alloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
-         call mem%alloc(g_dbjc,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
-         call mem%alloc(g_dbkc,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+         call mem%alloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%alloc(g_dbjc,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%alloc(g_dbkc,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
 !
-         call mem%alloc(g_ljci,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(g_lkci,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(g_lkcj,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(g_licj,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(g_lick,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(g_ljck,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(g_ljci,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_lkci,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_lkcj,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_licj,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_lick,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_ljck,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
 !
-         call mem%alloc(g_jlic,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
-         call mem%alloc(g_klic,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
-         call mem%alloc(g_kljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
-         call mem%alloc(g_iljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
-         call mem%alloc(g_ilkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
-         call mem%alloc(g_jlkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
+         call mem%alloc(g_jlic,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
+         call mem%alloc(g_klic,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
+         call mem%alloc(g_kljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
+         call mem%alloc(g_iljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
+         call mem%alloc(g_ilkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
+         call mem%alloc(g_jlkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
 !
-         call mem%alloc(L_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(L_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(L_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(L_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(L_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(L_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(L_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(L_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(L_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(L_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(L_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(L_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
 !
-      endif 
+      endif
 !
 !
       call disk%open_file(wf%g_bdck_t,'read')
@@ -435,7 +435,7 @@ contains
 !
                         if (i .eq. j .and. i .eq. k) then
                            cycle
-                        end if 
+                        end if
 !
                         k_rel = k - batch_k%first + 1
 !
@@ -491,45 +491,45 @@ contains
 !
       if (batch_i%num_batches .eq. 1) then
 !
-         call mem%dealloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,wf%n_o) 
-         call mem%dealloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,wf%n_o) 
-         call mem%dealloc(g_ljci,wf%n_o,wf%n_v,wf%n_o,wf%n_o) 
-         call mem%dealloc(g_jlic,wf%n_v,wf%n_o,wf%n_o,wf%n_o) 
-         call mem%dealloc(L_jbic,wf%n_v,wf%n_v,wf%n_o,wf%n_o) 
+         call mem%dealloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,wf%n_o)
+         call mem%dealloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,wf%n_o)
+         call mem%dealloc(g_ljci,wf%n_o,wf%n_v,wf%n_o,wf%n_o)
+         call mem%dealloc(g_jlic,wf%n_v,wf%n_o,wf%n_o,wf%n_o)
+         call mem%dealloc(L_jbic,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
 !
       else
          call batch_i%determine_limits(1)
 !
-         call mem%dealloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
-         call mem%dealloc(g_bdcj,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
-         call mem%dealloc(g_bdck,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+         call mem%dealloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%dealloc(g_bdcj,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%dealloc(g_bdck,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
 !
-         call mem%dealloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
-         call mem%dealloc(g_dbjc,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
-         call mem%dealloc(g_dbkc,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+         call mem%dealloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%dealloc(g_dbjc,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%dealloc(g_dbkc,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
 !
-         call mem%dealloc(g_ljci,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_lkci,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_lkcj,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_licj,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_lick,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_ljck,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_ljci,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_lkci,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_lkcj,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_licj,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_lick,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_ljck,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
 !
-         call mem%dealloc(g_jlic,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_klic,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_kljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_iljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_ilkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_jlkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_jlic,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
+         call mem%dealloc(g_klic,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
+         call mem%dealloc(g_kljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
+         call mem%dealloc(g_iljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
+         call mem%dealloc(g_ilkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
+         call mem%dealloc(g_jlkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
 !
-         call mem%dealloc(L_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(L_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(L_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(L_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(L_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(L_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(L_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(L_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(L_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(L_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(L_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(L_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
 !
-      endif 
+      endif
 !
       call mem%dealloc(F_kc,wf%n_v,wf%n_o)
 !
@@ -563,7 +563,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: h_pqrs !Array for sorted integrals
       real(dp), dimension(:,:), allocatable     :: v2_help !Help array for constructing L_jbkc
 !
-      integer :: k, j, record 
+      integer :: k, j, record
       type(batching_index) :: batch_k
 !
       integer :: req_0, req_k
@@ -715,7 +715,8 @@ contains
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
+         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
+   !      call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
          call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !
          call wf%get_ooov(g_pqrs, &
@@ -948,7 +949,7 @@ contains
                                           g_bdci, g_bdcj, g_bdck, &
                                           g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck)
 !!
-!!    Calculate the the contributions to the t_3 amplitudes 
+!!    Calculate the the contributions to the t_3 amplitudes
 !!    for occupied indices i,j,k
 !!
 !!    Rolf H. Myhre, January 2019
@@ -964,16 +965,16 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abji
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci 
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj 
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck 
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck
 !
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljci 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkci 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkcj 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_licj 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lick 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljci
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkci
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkcj
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_licj
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lick
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck
 !
 !
 !     Contributions to W
@@ -1224,11 +1225,11 @@ contains
 !$omp parallel do schedule(static) private(c,b,a,epsilon_c,epsilon_cb)
       do c = 1,wf%n_v
 !
-         epsilon_c = epsilon_ijk - wf%fock_diagonal(wf%n_o + c, 1) 
+         epsilon_c = epsilon_ijk - wf%fock_diagonal(wf%n_o + c, 1)
 !
          do b = 1,wf%n_v
 !
-            epsilon_cb = epsilon_c - wf%fock_diagonal(wf%n_o + b, 1) 
+            epsilon_cb = epsilon_c - wf%fock_diagonal(wf%n_o + b, 1)
 !
             do a = 1,wf%n_v
 !
@@ -1499,16 +1500,16 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: omega2
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbic 
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbjc 
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbkc 
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbic
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbjc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbkc
 !
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlic 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_klic 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_kljc 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_iljc 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_ilkc 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlkc 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_jlic
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_klic
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_kljc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_iljc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_ilkc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_jlkc
 !
       real(dp) :: alpha
 !

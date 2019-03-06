@@ -17,6 +17,7 @@ module cc3_class
    type(file)  :: g_dbkc_t
    type(file)  :: g_jlkc_t
    type(file)  :: L_jbkc_t
+!
    type(file)  :: g_bdck_c1
    type(file)  :: g_ljck_c1
    type(file)  :: g_dbkc_c1
@@ -45,6 +46,7 @@ module cc3_class
 !     Routines related to the jacobian
 !
       procedure :: construct_excited_state_equation   => construct_excited_state_equation_cc3
+!
       procedure :: effective_jacobian_transformation  => effective_jacobian_transformation_cc3
 !
       procedure :: jacobian_cc3_A                     => jacobian_cc3_A_cc3
