@@ -50,14 +50,6 @@ module file_class
 !
       integer :: record_length = 0
 !
-      logical :: rewrite_opened = .false.
-!
-      integer :: rewrite_unit = -1
-!
-      character(len=255) :: rewrite_name = 'no_name'
-!
-      integer, private :: rewrite_file_size = -1
-!
    contains
 !
       procedure :: init                   => init_file
@@ -71,12 +63,6 @@ module file_class
 !
       procedure :: get_file_size          => get_file_size_file
       procedure :: file_exists            => file_exists_file
-!
-      procedure :: init_rewrite           => init_rewrite_file
-      procedure :: finalize_rewrite       => finalize_rewrite_file
-!
-      procedure :: get_rewrite_file_size        => get_rewrite_file_size_file
-      procedure :: determine_rewrite_file_size  => determine_rewrite_file_size_file
 !
    end type file
 !
@@ -316,87 +302,6 @@ contains
       inquire(file=the_file%name, exist=file_exists_file)
 !
    end function file_exists_file
-!
-!
-   subroutine init_rewrite_file(the_file)
-!!
-!!    Init rewrite
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!  
-      class(file), intent(inout) :: the_file
-!
-      if (the_file%access == 'direct') call output%error_msg('no rewrite file for direct access file.')
-!
-      the_file%rewrite_name = trim(the_file%name) // '_temporary'
-!
-   end subroutine init_rewrite_file
-!
-!
-   subroutine finalize_rewrite_file(the_file)
-!!
-!!    Finalize rewrite
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!  
-      class(file), intent(inout) :: the_file
-!
-      if (the_file%access == 'direct') call output%error_msg('no rewrite file for direct access file.')
-!
-      the_file%rewrite_unit   = -1
-!
-      the_file%rewrite_opened = .false.
-!
-      the_file%rewrite_name   = 'unknown'
-!
-   end subroutine finalize_rewrite_file
-!
-!
-   subroutine determine_rewrite_file_size_file(the_file)
-!!
-!!    Determine rewrite file size
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
-!!    Moved to file by Rolf H. Myhre Nov. 2018
-!!
-!!    The disk manager handles files. This routine is called by it
-!!    and should never be called by the user (because it can lead to
-!!    errors in the disk space estimates).
-!!
-      implicit none
-!
-      class(file) :: the_file
-!
-!     Inquire about the file size
-!
-      inquire(file=the_file%rewrite_name, size=the_file%rewrite_file_size)
-!
-!     Check whether the file size could be calculated
-!
-      if (the_file%rewrite_file_size .eq. -1) then
-!
-         call output%error_msg('could not calculate file size of the file ' // trim(the_file%rewrite_name))
-!
-      endif
-!
-   end subroutine determine_rewrite_file_size_file
-!
-!
-   function get_rewrite_file_size_file(the_file)
-!!
-!!    Return private variable rewrite_file_size
-!!    Written by Rolf H. Myhre, 2018
-!!    
-      implicit none
-!  
-      class(file), intent(in) :: the_file
-!
-      integer :: get_rewrite_file_size_file
-!
-      get_rewrite_file_size_file = the_file%rewrite_file_size
-!
-   end function get_rewrite_file_size_file
 !
 !  
 end module file_class
