@@ -535,6 +535,7 @@ contains
 !     Prepare for construction of diagonal and screening vector
 !     
       call mem%alloc(ao_offsets, n_sig_sp)
+      ao_offsets = 0
 !
       current_sig_sp = 0
 !
