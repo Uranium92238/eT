@@ -211,7 +211,7 @@ program eT_program
          call gs_hf_engine%run(ref_wf)     
          call gs_hf_engine%cleanup()     
 !
-         deallocate(gs_hf_engine)   
+         deallocate(gs_hf_engine)  
 !
       endif
 !
@@ -222,6 +222,8 @@ program eT_program
    if (requested_method('mlhf')) n_methods = n_methods - 1
    if (requested_method('hf'))   n_methods = n_methods - 1
    if (requested_method('uhf'))  n_methods = n_methods - 1
+!
+   if (n_methods .eq. 0) call ref_wf%cleanup()
 !
    if (n_methods .gt. 0) then
 !
