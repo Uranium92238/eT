@@ -15,7 +15,6 @@ using namespace std;
 
 #include <libint2.hpp>
 
-#include "utils.h"
 #include "h_wx.h"
 
 #include "globals.h"

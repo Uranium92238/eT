@@ -7,7 +7,6 @@ module eri_cd_solver_class
 !
    use kinds
 !
-   use index
    use reordering
    use array_utilities
    use array_analysis

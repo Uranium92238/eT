@@ -9,7 +9,6 @@ module mlhf_class
 !
    use reordering
    use interval_class
-   use index
    use active_atoms_info_class
 !
    use eri_cd_solver_class

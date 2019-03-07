@@ -928,8 +928,6 @@ contains
 !           Add sum_ckdle b_ckdi L_dale t_kl^ce
 !               = sum_eld L_a_eld X_eld_i
 !
-!            offset_eld = index_three(1, 1, batch_d%first, wf%n_v, wf%n_o)
-!
             call dgemm('N','N',                             &
                         wf%n_v,                             &
                         wf%n_o,                             &
@@ -1440,8 +1438,6 @@ contains
 !$omp end parallel do
 !
          call mem%dealloc(g_kade, wf%n_o, wf%n_v, wf%n_v, batch_e%length)
-!
-!         offset_kde = index_three(1, 1, batch_e%first, wf%n_o, wf%n_v)
 !
          call dgemm('N','N',                             &
                      wf%n_v,                             &
@@ -3146,12 +3142,12 @@ contains
             do j = 1, wf%n_o
                do i = 1, wf%n_o
 !
-                  ij = index_two(i, j, wf%n_o)
+                  ij = (j-1)*wf%n_o + i
 !
                   do b = 1, batch_b%length
                      do a = 1, batch_a%length
 !
-                        ab = index_two(a + batch_a%first - 1, b + batch_b%first - 1, wf%n_v)
+                        ab = (b + batch_b%first - 2)* wf%n_v + a + batch_a%first - 1
 !
                         sigma_ab_ij(ab, ij) = &
                                  sigma_ab_ij(ab, ij) &
