@@ -116,6 +116,8 @@ contains
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
+      write(output%unit, '(/t3,a,a,a)') 'Solving for the ', trim(solver%transformation), ' eigenvectors.'
+!
    end subroutine prepare_davidson_cc_es
 !
 !

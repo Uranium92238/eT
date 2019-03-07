@@ -86,6 +86,7 @@ module cc2_class
 !
       procedure :: read_excited_state                          => read_excited_state_cc2
       procedure :: save_excited_state                          => save_excited_state_cc2
+      procedure :: is_restart_safe                             => is_restart_safe_cc2
 !
    end type cc2
 !
@@ -599,6 +600,11 @@ contains
 !!    We recommend to separate these tasks---write all states or read all
 !!    states; don't mix if you can avoid it.
 !!
+!!    Note: for CC2 (highmem), we implement an exception to restart. 
+!!    We will allow restart from excited state CCS and CC2 (lowmem), 
+!!    even though these have fewer excited state amplitudes. Only the 
+!!    singles part of the excited states are then read upon restart. 
+!!
       implicit none 
 !
       class(cc2), intent(inout) :: wf 
@@ -614,30 +620,42 @@ contains
       if (trim(side) == 'right') then 
 !
          call disk%open_file(wf%r1_file, 'read')
-         call disk%open_file(wf%r2_file, 'read')
-!
          call wf%r1_file%prepare_to_read_line(n)
-         call wf%r2_file%prepare_to_read_line(n)
-!
          read(wf%r1_file%unit) X(1 : wf%n_t1)
-         read(wf%r2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
-!
          call disk%close_file(wf%r1_file)
-         call disk%close_file(wf%r2_file)
+!
+         if (wf%r2_file%file_exists()) then
+!
+            call disk%open_file(wf%r2_file, 'read')
+            call wf%r2_file%prepare_to_read_line(n)
+            read(wf%r2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
+            call disk%close_file(wf%r2_file)
+!
+         else
+!
+            X(wf%n_t1 + 1 : wf%n_es_amplitudes) = zero
+!
+         endif
 !
       elseif (trim(side) == 'left') then 
 !
          call disk%open_file(wf%l1_file, 'read')
-         call disk%open_file(wf%l2_file, 'read')
-!
          call wf%l1_file%prepare_to_read_line(n)
-         call wf%l2_file%prepare_to_read_line(n)
-!
          read(wf%l1_file%unit) X(1 : wf%n_t1)
-         read(wf%l2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes) 
-!
          call disk%close_file(wf%l1_file)
-         call disk%close_file(wf%l2_file)
+!
+         if (wf%l2_file%file_exists()) then
+!
+            call disk%open_file(wf%l2_file, 'read')
+            call wf%l2_file%prepare_to_read_line(n)
+            read(wf%l2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
+            call disk%close_file(wf%l2_file)
+!
+         else
+!
+            X(wf%n_t1 + 1 : wf%n_es_amplitudes) = zero
+!
+         endif
 !
       else
 !
@@ -646,6 +664,60 @@ contains
       endif
 !
    end subroutine read_excited_state_cc2
+!
+!
+   subroutine is_restart_safe_cc2(wf, task)
+!!
+!!    Is restart safe?
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(cc2) :: wf 
+!
+      character(len=*), intent(in) :: task 
+!
+      integer :: n_o, n_v, n_gs_amplitudes, n_es_amplitudes
+!
+      call disk%open_file(wf%restart_file, 'read', 'rewind')
+!
+      read(wf%restart_file%unit) n_o
+      read(wf%restart_file%unit) n_v
+      read(wf%restart_file%unit) n_gs_amplitudes
+      read(wf%restart_file%unit) n_es_amplitudes
+!
+      if (n_o .ne. wf%n_o) call output%error_msg('attempted to restart from inconsistent number ' // &
+                                                   'of occupied orbitals.')
+!
+      if (n_v .ne. wf%n_v) call output%error_msg('attempted to restart from inconsistent number ' // &
+                                                   'of virtual orbitals.')
+!
+      if (trim(task) == 'ground state') then 
+!
+         if (n_gs_amplitudes .ne. wf%n_gs_amplitudes) &
+            call output%error_msg('attempted to restart from inconsistent number ' // &
+                                    'of ground state amplitudes.')    
+!
+      elseif (trim(task) == 'excited state') then    
+!
+         if (n_es_amplitudes .eq. wf%n_t1) then 
+!
+!           OK! We allow restart from CCS-like models (e.g. CC2 lowmem or CCS itself) in (highmem) CC2.
+!           
+         elseif (n_es_amplitudes .ne. wf%n_es_amplitudes) then
+!
+            call output%error_msg('attempted to restart from inconsistent number ' // &
+                                    'of excited state amplitudes.')     
+!
+         endif
+!
+      else
+!
+         call output%error_msg('attempted to restart, but the task was not recognized: ' // task)
+!
+      endif   
+!
+   end subroutine is_restart_safe_cc2
 !
 !
    subroutine initialize_files_cc2(wf)
