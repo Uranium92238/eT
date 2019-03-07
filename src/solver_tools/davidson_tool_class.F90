@@ -209,7 +209,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: c
       real(dp), dimension(:), allocatable :: c_tmp
-      real(dp) :: norm_c, norm_g, ddot, proj
+      real(dp) :: norm_c, ddot
       integer :: i,j,n_done
 !
       write(output%unit, '(/t3,a,i0,a)') 'Orthonormalizing the trial vectors.'

@@ -117,6 +117,7 @@ contains
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
       write(output%unit, '(/t3,a,a,a)') 'Solving for the ', trim(solver%transformation), ' eigenvectors.'
+      flush(output%unit)
 !
    end subroutine prepare_davidson_cc_es
 !
@@ -456,8 +457,6 @@ contains
 !
       integer :: trial, n_solutions_on_file
 !
-      rewind(davidson%trials%unit)
-!
       if (allocated(solver%start_vectors)) then
 !
 !        Initial trial vectors given on input
@@ -575,6 +574,8 @@ contains
       implicit none
 !
       class(davidson_cc_es) :: solver
+!
+      write(output%unit, '(/t3,a,a,a)') 'Cleaning up ', trim(solver%tag), '.'
 !
    end subroutine cleanup_davidson_cc_es
 !

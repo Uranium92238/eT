@@ -158,8 +158,6 @@ contains
       if (solver%n_cores .gt. solver%n_singlet_states) &
          call output%error_msg('number of roots requested should be equal or greater than the number of cores.')
 !
-      rewind(davidson%trials%unit)
-!
       if (allocated(solver%start_vectors)) then
 !
 !        Initial trial vectors given on input

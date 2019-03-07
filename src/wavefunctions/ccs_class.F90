@@ -65,6 +65,9 @@ module ccs_class
 !
       integer :: n_bath ! Number of bath orbitals (always the last ao/mo indices)
 !
+      integer :: n_excited_states 
+      real(dp), dimension(:), allocatable :: excitation_energies 
+!  
    contains
 !
 !     Preparation and cleanup routines 
