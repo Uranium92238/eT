@@ -244,7 +244,7 @@ contains
 !
       type(diis_tool), dimension(:), allocatable :: diis 
 !
-      integer :: iteration, state, amplitude
+      integer :: iteration, state, amplitude, n_solutions_on_file
 !
       character(len=3) :: string_state
 !
@@ -286,19 +286,22 @@ contains
 !
       call mem%alloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
 !
-      if (solver%restart) then 
+      call solver%set_start_vectors(wf, X, eps) ! Use orbital differences (Koopman)
 !
-         do state = 1, solver%n_singlet_states
+      if (solver%restart) then ! Overwrite all or some of the orbital differences 
+!
+         call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
+!
+         write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
+                                                ' solutions on file.'
+!
+         do state = 1, n_solutions_on_file
 !
             call wf%read_excited_state(X(:,state), state, solver%transformation)
 !
          enddo
 !
-      else 
-!
-         call solver%set_start_vectors(wf, X, eps)
-!
-      endif 
+      endif
 !
 !     Enter iterative loop
 !

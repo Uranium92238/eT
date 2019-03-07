@@ -609,6 +609,8 @@ contains
 !
       character(len=*), intent(in) :: side ! 'left' or 'right' 
 !
+      call wf%is_restart_safe('excited state')
+!
       if (trim(side) == 'right') then 
 !
          call disk%open_file(wf%r1_file, 'read')
