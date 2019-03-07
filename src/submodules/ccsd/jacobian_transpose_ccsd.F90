@@ -486,8 +486,8 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o)                 :: sigma_a_i
-      real(dp), dimension(wf%n_v*wf%n_o, wf%n_v*wf%n_o)   :: b_ai_bj
+      real(dp), dimension(wf%n_v, wf%n_o)                   :: sigma_a_i
+      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_dlca
 !
@@ -2988,7 +2988,7 @@ contains
       class(ccsd) :: wf
 !
       real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: b_ab_ij
-      real(dp), dimension((wf%n_v)*(wf%n_v), (wf%n_o)*(wf%n_o)) :: sigma_ab_ij
+      real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: sigma_ab_ij
 !
       real(dp), dimension(:,:,:,:), allocatable :: sigma_abij_batch
 !
@@ -3191,7 +3191,7 @@ contains
       class(ccsd) :: wf
 !
       real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: b_ab_ij
-      real(dp), dimension((wf%n_v)*(wf%n_v), (wf%n_o)*(wf%n_o)) :: sigma_ab_ij
+      real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: sigma_ab_ij
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_klcd ! t_kl^cd
 !
