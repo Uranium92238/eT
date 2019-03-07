@@ -477,8 +477,6 @@ contains
       integer :: full_first_a, full_last_a
       integer :: full_first_b, full_last_b
 !
-      integer :: red_first_a
-!
       real(dp), dimension(:,:), allocatable :: L_ib_J
 !
       integer :: b_length, a_length
@@ -488,8 +486,6 @@ contains
 !
       call integrals%set_full_index(full_last_a, 'l', 'v', last_a)
       call integrals%set_full_index(full_last_b, 'l', 'v', last_b)
-!
-      red_first_a = full_first_a - integrals%n_o
 !
       a_length = full_last_a - full_first_a + 1
       b_length = full_last_b - full_first_b + 1
@@ -502,8 +498,6 @@ contains
       call integrals%read_cholesky(L_ab_J, full_first_a, full_last_a, full_first_b, full_last_b)
 !
 !     Calculate and add t1-transformed term, - sum_i t_ai L_ib_J
-!
-   !   call mem%alloc(L_Jb_a, (integrals%n_J)*b_length, a_length)set_full_index_mo (not Needed?????)
 !
       call dgemm('N','N',                   &
                   a_length,                 &

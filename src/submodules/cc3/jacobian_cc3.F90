@@ -259,6 +259,9 @@ contains
 !
       do j = 1, wf%n_o
          do b = 1, wf%n_v
+!
+            rho_abij(b,b,j,j) = half * rho_abij(b,b,j,j)
+!
             do i = 1, j
 !
                if(i .ne. j) then
@@ -280,7 +283,7 @@ contains
 !
       call mem%dealloc(rho_abij,wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-   end subroutine effective_jacobian_transformation_cc3
+end subroutine effective_jacobian_transformation_cc3
 !
 !
    module subroutine jacobian_cc3_A_cc3(wf, omega, c_ai, c_abji, rho_ai, rho_abij)
@@ -410,11 +413,13 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ilkc_c1_p => null()
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_jlkc_c1_p => null()
 !
-      integer :: i, j, k, i_rel, j_rel, k_rel
+      integer :: i, j, k, i_rel, j_rel, k_rel, c, b, d, l, a
       type(batching_index) :: batch_i, batch_j, batch_k
       integer :: current_i_batch, current_j_batch, current_k_batch
       integer :: req_0, req_1, req_2, req_3
       real(dp)     :: batch_buff = 0.0
+!
+      real(dp) :: ddot, t3_norm
 !
 !     Set up required integrals
 !
@@ -806,15 +811,15 @@ contains
                                                    L_ibkc_p(:,:,i_rel,k_rel),                      &
                                                    L_jbkc_p(:,:,j_rel,k_rel))
 !
-                        call wf%jacobian_cc3_rho2(i, j, k, t_abc, u_abc, v_abc, rho_abij, F_kc, &
-                                                   g_dbic_p(:,:,:,i_rel),                       &
-                                                   g_dbjc_p(:,:,:,j_rel),                       &
-                                                   g_dbkc_p(:,:,:,k_rel),                       &
-                                                   g_jlic_p(:,:,j_rel,i_rel),                   &
-                                                   g_klic_p(:,:,k_rel,i_rel),                   &
-                                                   g_kljc_p(:,:,k_rel,j_rel),                   &
-                                                   g_iljc_p(:,:,i_rel,j_rel),                   &
-                                                   g_ilkc_p(:,:,i_rel,k_rel),                   &
+                        call wf%jacobian_cc3_rho2(i, j, k, t_abc, u_abc, v_abc, rho_abij, &
+                                                   g_dbic_p(:,:,:,i_rel),                 &
+                                                   g_dbjc_p(:,:,:,j_rel),                 &
+                                                   g_dbkc_p(:,:,:,k_rel),                 &
+                                                   g_jlic_p(:,:,j_rel,i_rel),             &
+                                                   g_klic_p(:,:,k_rel,i_rel),             &
+                                                   g_kljc_p(:,:,k_rel,j_rel),             &
+                                                   g_iljc_p(:,:,i_rel,j_rel),             &
+                                                   g_ilkc_p(:,:,i_rel,k_rel),             &
                                                    g_jlkc_p(:,:,j_rel,k_rel))
 !
 !                       Construct t^{abc}_{ijk} for given i, j, k
@@ -833,15 +838,15 @@ contains
 !
                         call wf%jacobian_cc3_rho1(i, j, k, t_abc, u_abc, rho_ai, rho_abij, F_kc_c1)
 !
-                        call wf%jacobian_cc3_rho2(i, j, k, t_abc, u_abc, v_abc, rho_abij, F_kc_c1, &
-                                                   g_dbic_c1_p(:,:,:,i_rel),                       &
-                                                   g_dbjc_c1_p(:,:,:,j_rel),                       &
-                                                   g_dbkc_c1_p(:,:,:,k_rel),                       &
-                                                   g_jlic_c1_p(:,:,j_rel,i_rel),                   &
-                                                   g_klic_c1_p(:,:,k_rel,i_rel),                   &
-                                                   g_kljc_c1_p(:,:,k_rel,j_rel),                   &
-                                                   g_iljc_c1_p(:,:,i_rel,j_rel),                   &
-                                                   g_ilkc_c1_p(:,:,i_rel,k_rel),                   &
+                        call wf%jacobian_cc3_rho2(i, j, k, t_abc, u_abc, v_abc, rho_abij, &
+                                                   g_dbic_c1_p(:,:,:,i_rel),              &
+                                                   g_dbjc_c1_p(:,:,:,j_rel),              &
+                                                   g_dbkc_c1_p(:,:,:,k_rel),              &
+                                                   g_jlic_c1_p(:,:,j_rel,i_rel),          &
+                                                   g_klic_c1_p(:,:,k_rel,i_rel),          &
+                                                   g_kljc_c1_p(:,:,k_rel,j_rel),          &
+                                                   g_iljc_c1_p(:,:,i_rel,j_rel),          &
+                                                   g_ilkc_c1_p(:,:,i_rel,k_rel),          &
                                                    g_jlkc_c1_p(:,:,j_rel,k_rel))
 !
                      enddo ! loopg over k
@@ -850,12 +855,6 @@ contains
             enddo ! batch_k
          enddo ! batch_j
       enddo ! batch_i
-!
-      write(output%unit,*) 'Print some integrals'
-      write(output%unit,*) 'g_bdci_c1: 1,1,1,1',   g_bdci_c1_p(1,1,1,1)
-      write(output%unit,*) 'g_bdci_c1: 10,7,3,2',  g_bdci_c1_p(10,7,3,2)
-      write(output%unit,*) 'g_bdci_c1: 3,4,2,5',   g_bdci_c1_p(3,4,2,5)
-      write(output%unit,*) 'g_bdci_c1: 2,5,3,4',   g_bdci_c1_p(2,5,3,4)
 !
 !     Close files
 !
@@ -1213,10 +1212,10 @@ contains
 !!    Construct c1-transformed integrals needed in CC3 jacobian
 !!    from the c1-transformed Cholesky Vectors
 !!
-!!    g'_bdck = (b'd|ck) + (bd|c'k) - (bd|ck')   ordered as dbc,k
-!!    g'_ljck = (lj'|ck) + (lj|ck') - (lj|c'k)   ordered as lc,jk
+!!    g'_bdck = (b'd|ck) + (bd|c'k) + (bd|ck')   ordered as dbc,k
+!!    g'_ljck = (lj'|ck) + (lj|ck') + (lj|c'k)   ordered as lc,jk
 !!
-!!    NB: the indices d and l are contained in rho_2 while j and k are summation indices
+!!    NB: the indices d and l are contained in rho_2 while b, c and j,k are summation indices
 !!    (d'b|kc) ordered as bcd,k
 !!    (jl'|kc) orderd as cljk
 !!
@@ -1229,8 +1228,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_pqrs ! Array for constructed integrals
       real(dp), dimension(:,:,:,:), allocatable :: h_pqrs ! Array for sorted integrals
 !
-      real(dp), dimension(:,:), allocatable :: L_bd_J_c1, L_ck_J_c1, L_lj_J_c1 ! c1 transformed Cholesky vectors
-      real(dp), dimension(:,:), allocatable :: L_db_J_c1, L_jl_J_c1
+      real(dp), dimension(:,:), allocatable :: L_ck_J_c1, L_db_J_c1, L_jl_J_c1 ! c1 transformed Cholesky vectors
       real(dp), dimension(:,:), allocatable :: L_ck_J, L_bd_J, L_kc_J, L_lj_J ! Cholesky vectors
 !
       integer :: k, j, record
@@ -1243,19 +1241,18 @@ contains
 !
       call batch_k%init(wf%n_o)
 !
-!     g'_bdck = (b'd|ck) + (bd|c'k) - (bd|ck')
+!     g'_bdck = (b'd|ck) + (bd|c'k) + (bd|ck')
 !
-      req_0 = (wf%integrals%n_J)*(wf%n_v)**2 + (wf%integrals%n_J)*(wf%n_o)*(wf%n_v)
+      call mem%alloc(L_bd_J, (wf%n_v)**2, wf%integrals%n_J)
+      call wf%integrals%construct_cholesky_ab_c1(L_bd_J, c_ai, 1, wf%n_v, 1, wf%n_v)
+!
+      req_0 = 0
       req_k = max((wf%integrals%n_J)*(wf%n_v) + (wf%n_v)**3, 2*(wf%n_v)**3)
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
       call wf%g_bdck_c1%init('g_bdck_c1','direct','unformatted', dp*wf%n_v**3)
       call disk%open_file(wf%g_bdck_c1,'write')
-!
-         call mem%alloc(L_bd_J_c1, (wf%n_v)**2, wf%integrals%n_J)
-!
-         call wf%integrals%construct_cholesky_ab_c1(L_bd_J_c1, c_ai, 1, wf%n_v, 1, wf%n_v)
 !
       do current_k_batch = 1, batch_k%num_batches
 !
@@ -1274,7 +1271,7 @@ contains
                      (wf%n_v)*(batch_k%length), &
                      wf%integrals%n_J,          &
                      one,                       &
-                     L_bd_J_c1,                 & ! L_bd_J  b is c1-transformed
+                     L_bd_J,                    & ! L_bd_J  b is c1-transformed
                      (wf%n_v)**2,               &
                      L_ck_J,                    & ! L_ck_J
                      (wf%n_v)*(batch_k%length), &
@@ -1284,13 +1281,11 @@ contains
 !
          call mem%dealloc(L_ck_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
 !
-!        :: Term 2: g_bdc'k = - sum_J L_bd_J L_ck_J_c1 ::
+!        :: Term 2: g_bdc'k = sum_J L_bd_J L_ck_J_c1 ::
 !
          call mem%alloc(L_ck_J_c1, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
 !
          call wf%integrals%construct_cholesky_ai_a_c1(L_ck_J_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
-!
-         call mem%alloc(L_bd_J, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
 !
          call wf%integrals%read_cholesky_ab_t1(L_bd_J, 1, wf%n_v, 1, wf%n_v)
 !
@@ -1307,7 +1302,7 @@ contains
                      g_pqrs,                    & ! (bd|c'k)
                      (wf%n_v)**2)
 !
-!        :: Term 3: g_bdck' = - sum_J L_bd_J L_ck_J_c1 ::
+!        :: Term 3: g_bdck' = sum_J L_bd_J L_ck_J_c1 ::
 !
 !
          call wf%integrals%construct_cholesky_ai_i_c1(L_ck_J_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
@@ -1316,7 +1311,7 @@ contains
                      (wf%n_v)**2,               &
                      (wf%n_v)*(batch_k%length), &
                      wf%integrals%n_J,          &
-                     -one,                      &
+                     one,                      &
                      L_bd_J,                    & ! L_bd_J
                      (wf%n_v)**2,               &
                      L_ck_J_c1,                 & ! L_ck_J  k is c1-transformed
@@ -1326,9 +1321,8 @@ contains
                      (wf%n_v)**2)
 !
          call mem%dealloc(L_ck_J_c1, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
-         call mem%dealloc(L_bd_J, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
 !
-!        Sort from g_pqrs = (b'd|ck) + (bd|c'k) - (bd|ck') to h_pqrs ordered as dbck
+!        Sort from g_pqrs = (b'd|ck) + (bd|c'k) + (bd|ck') to h_pqrs ordered as dbck
 !
          call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length) ! order dbck
 !
@@ -1354,7 +1348,7 @@ contains
 !
       enddo ! batch_k
 !
-      call mem%dealloc(L_bd_J_c1, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
+      call mem%dealloc(L_bd_J, (wf%n_v)**2, wf%integrals%n_J)
 !
       call disk%close_file(wf%g_bdck_c1,'keep')
 !
@@ -1365,13 +1359,12 @@ contains
       call wf%g_dbkc_c1%init('g_dbkc_c1','direct','unformatted',dp*wf%n_v**3)
       call disk%open_file(wf%g_dbkc_c1,'write')
 !
+      call mem%alloc(L_db_J_c1, (wf%n_v)**2, wf%integrals%n_J)
+      call wf%integrals%construct_cholesky_ab_c1(L_db_J_c1, c_ai, 1, wf%n_v, 1, wf%n_v)
+!
       do current_k_batch = 1, batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
-!
-         call mem%alloc(L_db_J_c1, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
-!
-         call wf%integrals%construct_cholesky_ab_c1(L_db_J_c1, c_ai, 1, wf%n_v, 1, wf%n_v)
 !
          call mem%alloc(L_kc_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
 !
@@ -1383,7 +1376,7 @@ contains
                      (wf%n_v)**2,               &
                      (wf%n_v)*(batch_k%length), &
                      wf%integrals%n_J,          &
-                     one,                       &
+                     -one,                       &
                      L_db_J_c1,                 & ! L_db_J  d is c1-transformed
                      (wf%n_v)**2,               &
                      L_kc_J,                    & ! L_kc_J
@@ -1392,7 +1385,6 @@ contains
                      g_pqrs,                    & ! (d'b|kc)
                      (wf%n_v)**2)
 !
-         call mem%dealloc(L_db_J_c1, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
          call mem%dealloc(L_kc_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
 !
          call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length) ! order bcd,k
@@ -1417,7 +1409,9 @@ contains
 !
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
-      enddo
+      enddo ! batch_k
+!
+      call mem%dealloc(L_db_J_c1, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
 !
       call disk%close_file(wf%g_dbkc_c1,'keep')
 !
@@ -1425,7 +1419,10 @@ contains
 !     g'_ljck = (lj'|ck) + (lj|ck') - (lj|c'k) ordered as lc,jk
 !
 !
-      req_0 = wf%integrals%n_J*wf%n_o**2 + 2*(wf%integrals%n_J)*(wf%n_o)*(wf%n_v)
+      call mem%alloc(L_lj_J, (wf%n_o)**2, wf%integrals%n_J)
+      call wf%integrals%construct_cholesky_ij_c1(L_lj_J, c_ai, 1, wf%n_o, 1, wf%n_o)
+!
+      req_0 = 0
       req_k = max(2*(wf%n_v)*(wf%n_o)**2, (wf%n_v)*(wf%n_o)**2 + wf%integrals%n_J*wf%n_v)
 !
       call mem%batch_setup(batch_k,req_0,req_k)
@@ -1439,10 +1436,6 @@ contains
 !
 !        :: Term 1: g_lj'ck = sum_J L_jl_J_c1 L_ck_J ::
 !
-         call mem%alloc(L_lj_J_c1, (wf%n_o)*(wf%n_o), wf%integrals%n_J)
-!
-         call wf%integrals%construct_cholesky_ij_c1(L_lj_J_c1, c_ai, 1, wf%n_o, 1, wf%n_o)
-!
          call mem%alloc(L_ck_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
 !
          call wf%integrals%read_cholesky_ai_t1(L_ck_J, 1, wf%n_v, batch_k%first, batch_k%last)
@@ -1454,7 +1447,7 @@ contains
                      (wf%n_v)*(batch_k%length), &
                      wf%integrals%n_J,          &
                      one,                       &
-                     L_lj_J_c1,                 & ! L_lj_J  j is c1-transformed
+                     L_lj_J,                    & ! L_lj_J  j is c1-transformed
                      (wf%n_o)**2,               &
                      L_ck_J,                    & ! L_ck_J
                      (wf%n_v)*(batch_k%length), &
@@ -1462,7 +1455,6 @@ contains
                      g_pqrs,                    & ! (lj'|ck)
                      (wf%n_o)**2)
 !
-         call mem%dealloc(L_lj_J_c1, (wf%n_o)*(wf%n_o), wf%integrals%n_J)
          call mem%dealloc(L_ck_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
 !
 !        :: Term 2: g_ljck' = sum_J L_lj_J L_ck_J_c1 ::
@@ -1470,8 +1462,6 @@ contains
          call mem%alloc(L_ck_J_c1, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
 !
          call wf%integrals%construct_cholesky_ai_i_c1(L_ck_J_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
-!
-         call mem%alloc(L_lj_J, (wf%n_o)*(wf%n_o), wf%integrals%n_J)
 !
          call wf%integrals%read_cholesky_ij_t1(L_lj_J, 1, wf%n_o, 1, wf%n_o)
 !
@@ -1497,7 +1487,7 @@ contains
                      (wf%n_o)**2,               &
                      (wf%n_v)*(batch_k%length), &
                      wf%integrals%n_J,          &
-                     -one,                      &
+                     one,                      &
                      L_lj_J,                    & ! L_lj_J
                      (wf%n_o)**2,               &
                      L_ck_J_c1,                 & ! L_ck_J  c is c1_transformed
@@ -1507,7 +1497,6 @@ contains
                      (wf%n_o)**2)
 !
          call mem%dealloc(L_ck_J_c1, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
-         call mem%dealloc(L_lj_J, (wf%n_o)*(wf%n_o), wf%integrals%n_J)
 !
 !        Sort from g_pqrs = (lj'|ck) + (lj|ck') - (lj|c'k) to h_pqrs
 !
@@ -1534,6 +1523,8 @@ contains
 !
       enddo ! batch_k
 !
+      call mem%dealloc(L_lj_J, (wf%n_o)**2, wf%integrals%n_J)
+!
       call disk%close_file(wf%g_ljck_c1,'keep')
 !
 !
@@ -1543,13 +1534,12 @@ contains
       call wf%g_jlkc_c1%init('g_jlkc_c1','direct','unformatted', dp*(wf%n_v)*(wf%n_o))
       call disk%open_file(wf%g_jlkc_c1,'write')
 !
+      call mem%alloc(L_jl_J_c1, (wf%n_o)**2, wf%integrals%n_J)
+      call wf%integrals%construct_cholesky_ij_c1(L_jl_J_c1, c_ai, 1, wf%n_o, 1, wf%n_o)
+!
       do current_k_batch = 1, batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
-!
-         call mem%alloc(L_jl_J_c1, (wf%n_o)*(wf%n_o), wf%integrals%n_J)
-!
-         call wf%integrals%construct_cholesky_ij_c1(L_jl_J_c1, c_ai, 1, wf%n_o, 1, wf%n_o)
 !
          call mem%alloc(L_kc_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
 !
@@ -1570,7 +1560,6 @@ contains
                      g_pqrs,                    & ! (jl'|kc)
                      (wf%n_o)**2)
 !
-         call mem%dealloc(L_jl_J_c1, (wf%n_o)*(wf%n_o), wf%integrals%n_J)
          call mem%dealloc(L_kc_J, (wf%n_o)*(batch_k%length), wf%integrals%n_J)
 !
          call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length) ! order cl,jk
@@ -1599,8 +1588,9 @@ contains
 !
       enddo ! batch_k
 !
-      call disk%close_file(wf%g_jlkc_c1, 'keep')
+      call mem%dealloc(L_jl_J_c1, (wf%n_o)**2, wf%integrals%n_J)
 !
+      call disk%close_file(wf%g_jlkc_c1, 'keep')
 !
    end subroutine jacobian_cc3_c1_integrals_cc3
 !
@@ -1622,9 +1612,9 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(out) :: F_ia_c1
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J
-      real(dp), dimension(:,:), allocatable :: L_ij_J_c1
+      real(dp), dimension(:,:), allocatable :: L_jk_J_c1
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_iajj, g_ijja
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajk
 !
       integer :: i, a, j
 !
@@ -1634,11 +1624,11 @@ contains
 !
       call wf%integrals%read_cholesky_ia_t1(L_ia_J, 1, wf%n_o, 1, wf%n_v)
 !
-      call mem%alloc(L_ij_J_c1, (wf%n_o)**2, wf%integrals%n_J)
+      call mem%alloc(L_jk_J_c1, (wf%n_o)**2, wf%integrals%n_J)
 !
-      call wf%integrals%construct_cholesky_ij_c1(L_ij_J_c1, c_ai, 1, wf%n_o, 1, wf%n_o)
+      call wf%integrals%construct_cholesky_ij_c1(L_jk_J_c1, c_ai, 1, wf%n_o, 1, wf%n_o)
 !
-      call mem%alloc(g_iajj, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call mem%alloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call dgemm('N', 'T',             &
                   (wf%n_v)*(wf%n_o),   &
@@ -1647,30 +1637,14 @@ contains
                   one,                 &
                   L_ia_J,              & ! L_ia_J
                   (wf%n_v)*(wf%n_o),   &
-                  L_ij_J_c1,           & ! L_jj'_J
+                  L_jk_J_c1,           & ! L_jk'_J
                   (wf%n_o)**2,         &
                   zero,                &
-                  g_iajj,              & ! (ia|jj')
+                  g_iajk,              & ! (ia|jk')
                   (wf%n_v)*(wf%n_o))
 !
-      call mem%alloc(g_ijja, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-!
-      call dgemm('N', 'T',             &
-                  (wf%n_o)**2,         &
-                  (wf%n_v)*(wf%n_o),   &
-                  wf%integrals%n_J,    &
-                  one,                 &
-                  L_ij_J_c1,           & ! L_ij'_J
-                  (wf%n_o)**2,         &
-                  L_ia_J,              & ! L_ja_J
-                  (wf%n_v)*(wf%n_o),   &
-                  zero,                &
-                  g_ijja,              & ! (ia|jj')
-                  (wf%n_o)**2)
-!
-      call mem%dealloc(L_ij_J_c1, (wf%n_o)**2, wf%integrals%n_J)
+      call mem%dealloc(L_jk_J_c1, (wf%n_o)**2, wf%integrals%n_J)
       call mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%integrals%n_J)
-!
 !
 !     Add contributions and resort to F_ia_c1(a,i)
 !
@@ -1679,16 +1653,14 @@ contains
          do j = 1, wf%n_o
             do i = 1, wf%n_o
 !
-               F_ia_c1(a,i) = two*g_iajj(i,a,j,j) - g_ijja(i,j,j,a)
+               F_ia_c1(a,i) = two*g_iajk(i,a,j,j) - g_iajk(j,a,i,j)
 !
             enddo
          enddo
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g_ijja, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-      call mem%dealloc(g_iajj, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!
+      call mem%dealloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
    end subroutine jacobian_cc3_construct_fock_ia_c1_cc3
 !
@@ -2900,16 +2872,16 @@ contains
 !
 !
    module subroutine jacobian_cc3_rho2_cc3(wf, i, j, k, t_abc, u_abc, v_abc, rho_abij,    &
-                                          F_kc, g_dbic, g_dbjc, g_dbkc,                   &
+                                          g_dbic, g_dbjc, g_dbkc,                         &
                                           g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
 !!
 !!    Calculate the triples contribution to rho2 for fixed i,j and k
 !!
 !!    C^abc_ijk contributions:
-!!    rho2 =+ P^abc_ijk (2 C^abc_ijk - C^acb_ijk - C^cba_ijk) (F_kc + (db|kc) - (jl|kc))
+!!    rho2 =+ P^abc_ijk (2 C^abc_ijk - C^acb_ijk - C^cba_ijk) ((db|kc) - (jl|kc))
 !!
 !!    t^abc_ijk contributions:
-!!    rho2 =+ P^abc_ijk (2 t^abc_ijk - t^acb_ijk - t^cba_ijk) (F'_kc + g'_dbkc - g'_jlkc)
+!!    rho2 =+ P^abc_ijk (2 t^abc_ijk - t^acb_ijk - t^cba_ijk) (g'_dbkc - g'_jlkc)
 !!
 !!    Alexander Paul and Rolf H. Myhre Feb 2019
 !!
@@ -2924,8 +2896,6 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: v_abc
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: rho_abij
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_kc
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbic
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbjc
@@ -2965,21 +2935,6 @@ contains
                  rho_abij(:,:,i,j), & ! rho^ad_ij
                  wf%n_v)
 !
-!     rho_abij += sum_c (2*t_abc - t_acb - t_cba)*F_kc
-!
-   !   call dgemm('N','N',           &
-   !              wf%n_v**2,         &
-   !              1,                 &
-   !              wf%n_v,            &
-   !              alpha,             &
-   !              u_abc,             & ! u^abc
-   !              wf%n_v**2,         &
-   !              F_kc(:,k),         & ! F_ck
-   !              wf%n_v,            &
-   !              one,               &
-   !              rho_abij(:,:,i,j), & ! rho^ab_ij
-   !              wf%n_v**2)
-!
       if (i .ne. j) then
 !
 !        rho_ablj += sum_c (2*t_abc - t_acb - t_cba)*g_ilkc
@@ -3018,21 +2973,6 @@ contains
                  one,               &
                  rho_abij(:,:,j,i), & ! rho^ad_ji
                  wf%n_v)
-!
-!     rho_abji += sum_c (2*t_bac - t_cab - t_bca)*F_kc
-!
-   !   call dgemm('N','N',           &
-   !              wf%n_v**2,         &
-   !              1,                 &
-   !              wf%n_v,            &
-   !              alpha,             &
-   !              v_abc,             & ! v^bac
-   !              wf%n_v**2,         &
-   !              F_kc(:,k),         & ! F_ck
-   !              wf%n_v,            &
-   !              one,               &
-   !              rho_abij(:,:,j,i), & ! rho^ab_ji
-   !              wf%n_v**2)
 !
 !     rho_abli += sum_c (2*t_bac - t_cab - t_bca)*g_jlkc
 !
@@ -3077,21 +3017,6 @@ contains
                     rho_abij(:,:,i,k), & ! rho^ad_ik
                     wf%n_v)
 !
-!        rho_adik += sum_c (2*t_acb - t_abc - t_cab)*F_jc
-!
-   !      call dgemm('N','N',           &
-   !                 wf%n_v**2,         &
-   !                 1,                 &
-   !                 wf%n_v,            &
-   !                 alpha,             &
-   !                 u_abc,             & ! u^acb
-   !                 wf%n_v**2,         &
-   !                 F_kc(:,j),         & ! F_cj
-   !                 wf%n_v,            &
-   !                 one,               &
-   !                 rho_abij(:,:,i,k), & ! rho^ac_ik
-   !                 wf%n_v**2)
-!
          if (i .ne. k .and. i .ne. j) then
 !
 !           rho_ablk += sum_c (2*t_acb - t_abc - t_cab)*g_iljc
@@ -3129,21 +3054,6 @@ contains
                     one,               &
                     rho_abij(:,:,j,k), & ! rho^ad_jk
                     wf%n_v)
-!
-!        rho_abjk += sum_c (2*t_cab - t_bac - t_cba)*F_ic
-!
-   !      call dgemm('N','N',           &
-   !                 wf%n_v**2,         &
-   !                 1,                 &
-   !                 wf%n_v,            &
-   !                 alpha,             &
-   !                 v_abc,             & ! v^cab
-   !                 wf%n_v**2,         &
-   !                 F_kc(:,i),         & ! F_ci
-   !                 wf%n_v,            &
-   !                 one,               &
-   !                 rho_abij(:,:,j,k), & ! rho^ab_jk
-   !                 wf%n_v**2)
 !
 !        rho_ablk += sum_c (2*t_cab - t_bac - t_cba)*g_jlic
 !
@@ -3192,21 +3102,6 @@ contains
                        rho_abij(:,:,k,j), & ! rho^ad_kj
                        wf%n_v)
 !
-!           rho_abkj += sum_c (2*t_cba - t_bca - t_abc)*g_dbic
-!
-   !         call dgemm('N','N',           &
-   !                    wf%n_v**2,         &
-   !                    1,                 &
-   !                    wf%n_v,            &
-   !                    alpha,             &
-   !                    u_abc,             & ! u^cba
-   !                    wf%n_v**2,         &
-   !                    F_kc(:,i),         & ! F_ci
-   !                    wf%n_v,            &
-   !                    one,               &
-   !                    rho_abij(:,:,k,j), & ! rho^ab_kj
-   !                    wf%n_v**2)
-!
 !           rho_ablj += sum_c (2*t_cba - t_bca - t_abc)*g_klic
 !
             call dgemm('N','N',           &
@@ -3244,21 +3139,6 @@ contains
                        one,               &
                        rho_abij(:,:,k,i), & ! rho^ad_ki
                        wf%n_v)
-!
-!           rho_abki += sum_c (2*t_bca - t_cba - t_bac)*F_jc
-!
-   !         call dgemm('N','N',           &
-   !                    wf%n_v**2,         &
-   !                    1,                 &
-   !                    wf%n_v,            &
-   !                    alpha,             &
-   !                    v_abc,             & ! v^bca
-   !                    wf%n_v**2,         &
-   !                    F_kc(:,j),         & ! F_cj
-   !                    wf%n_v,            &
-   !                    one,               &
-   !                    rho_abij(:,:,k,i), & ! rho^ab_ki
-   !                    wf%n_v**2)
 !
          end if
 !

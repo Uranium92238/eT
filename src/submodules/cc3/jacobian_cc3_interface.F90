@@ -272,17 +272,17 @@
    end subroutine jacobian_cc3_rho1_cc3
 !
 !
-   module subroutine jacobian_cc3_rho2_cc3(wf, i, j, k, t_abc, u_abc, v_abc, rho_abij,        &
-                                          F_kc, g_dbic, g_dbjc, g_dbkc,                   &
+   module subroutine jacobian_cc3_rho2_cc3(wf, i, j, k, t_abc, u_abc, v_abc, rho_abij,       &
+                                          g_dbic, g_dbjc, g_dbkc,                            &
                                           g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
 !!
 !!    Calculate the triples contribution to rho2 for fixed i,j and k
 !!
 !!    C^abc_ijk contributions:
-!!    rho2 =+ P^abc_ijk (2 C^abc_ijk - C^acb_ijk - C^cba_ijk) (F_kc + (db|kc) - (jl|kc))
+!!    rho2 =+ P^abc_ijk (2 C^abc_ijk - C^acb_ijk - C^cba_ijk) ((db|kc) - (jl|kc))
 !!
 !!    t^abc_ijk contributions:
-!!    rho2 =+ P^abc_ijk (2 t^abc_ijk - t^acb_ijk - t^cba_ijk) (F'_kc + g'_dbkc - g'_jlkc)
+!!    rho2 =+ P^abc_ijk (2 t^abc_ijk - t^acb_ijk - t^cba_ijk) (g'_dbkc - g'_jlkc)
 !!
 !!    Alexander Paul and Rolf H. Myhre Feb 2019
 !!
@@ -297,8 +297,6 @@
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: v_abc
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: rho_abij
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_kc
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbic
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbjc
