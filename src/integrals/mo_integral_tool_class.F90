@@ -40,6 +40,8 @@ module mo_integral_tool_class
 !
       procedure :: read_cholesky          => read_cholesky_mo_integral_tool
       procedure :: read_cholesky_t1       => read_cholesky_t1_mo_integral_tool
+      procedure :: read_cholesky_t1_var       => read_cholesky_t1_var_mo_integral_tool
+      procedure :: construct_pqrs_t1         => construct_pqrs_t1_mo_integral_tool
 !
       procedure :: read_cholesky_ia       => read_cholesky_ia_mo_integral_tool
 !
@@ -195,7 +197,8 @@ contains
 !
       class(mo_integral_tool) :: integrals 
 !
-      real(dp), dimension(:,:,:), allocatable :: L_pq_J 
+   !   real(dp), dimension(:,:,:), allocatable :: L_pq_J 
+      real(dp), dimension(:,:,:), allocatable :: L_J_pq 
 !
       integer :: required_mem 
 !
@@ -216,24 +219,27 @@ contains
 !
 !        Then construct it from the T1-Cholesky vectors 
 !
-         call mem%alloc(L_pq_J, integrals%n_mo, integrals%n_mo, integrals%n_J)
+      !   call mem%alloc(L_pq_J, integrals%n_mo, integrals%n_mo, integrals%n_J)
+         call mem%alloc(L_J_pq, integrals%n_J, integrals%n_mo, integrals%n_mo)
 !
-         call integrals%read_cholesky_t1(L_pq_J, 1, integrals%n_mo, 1, integrals%n_mo)
+        ! call integrals%read_cholesky_t1(L_pq_J, 1, integrals%n_mo, 1, integrals%n_mo)
+         call integrals%read_cholesky_t1_var(L_J_pq, 1, integrals%n_mo, 1, integrals%n_mo)
 !
-         call dgemm('N','T',            &
+         call dgemm('T','N',            &
                      integrals%n_mo**2, &
                      integrals%n_mo**2, &
                      integrals%n_J,     &
                      one,               &
-                     L_pq_J,            &
-                     integrals%n_mo**2, &
-                     L_pq_J,            &
-                     integrals%n_mo**2, &
+                     L_J_pq,            &
+                     integrals%n_J,    &
+                     L_J_pq,            &
+                     integrals%n_J,    &
                      zero,              &
                      integrals%g_pqrs,  &
                      integrals%n_mo**2)
 !
-         call mem%dealloc(L_pq_J, integrals%n_mo, integrals%n_mo, integrals%n_J)
+       !  call mem%dealloc(L_pq_J, integrals%n_mo, integrals%n_mo, integrals%n_J)
+         call mem%dealloc(L_J_pq, integrals%n_J, integrals%n_mo, integrals%n_mo)
 !
       else
 !
@@ -292,7 +298,6 @@ contains
 !
          enddo
       enddo
-
 !
       call disk%close_file(integrals%cholesky_mo)
 !
@@ -333,6 +338,107 @@ contains
       call disk%close_file(integrals%cholesky_mo_t1)
 !
    end subroutine read_cholesky_t1_mo_integral_tool
+!
+!
+   subroutine read_cholesky_t1_var_mo_integral_tool(integrals, L_J_pq, first_p, last_p, first_q, last_q)
+!!
+!!    Read mo t1 cholesky vectors
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+!!    Reads T1-transformed cholesky vectors L_pq_J for mo indices 
+!!    [first_p, last_p] and [first_q, last_q]
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!
+      integer, intent(in) :: first_p, last_p
+      integer, intent(in) :: first_q, last_q
+!
+      real(dp), dimension(integrals%n_J, last_p - first_p + 1, last_q - first_q + 1), intent(out) :: L_J_pq
+!
+      integer :: p, q, pq_rec
+!
+      call disk%open_file(integrals%cholesky_mo_t1, 'read')
+!
+      do q = 1, last_q - first_q + 1
+         do p = 1, last_p - first_p + 1 
+!
+            pq_rec = integrals%n_mo*(q + first_q - 2) + p + first_p - 1
+!
+            read(integrals%cholesky_mo_t1%unit, rec=pq_rec) L_J_pq(:, p, q)
+!
+         enddo
+      enddo
+!
+      call disk%close_file(integrals%cholesky_mo_t1)
+!
+   end subroutine read_cholesky_t1_var_mo_integral_tool
+!
+!
+   subroutine construct_pqrs_t1_mo_integral_tool(integrals, g_pqrs, first_p, last_p, first_q, last_q, &
+                                                                     first_r, last_r, first_s, last_s)
+!!
+!!    Construct g_pqrs T1 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Assumes that the integrals are in memory or that the Cholesky vectors 
+!!    are stored in the T1 transformed basis. 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!
+      integer, intent(in) :: first_p, last_p 
+      integer, intent(in) :: first_q, last_q 
+      integer, intent(in) :: first_r, last_r 
+      integer, intent(in) :: first_s, last_s 
+!
+      real(dp), dimension(last_p-first_p+1,last_q-first_q+1,last_r-first_r+1,last_s-first_s+1), intent(out) :: g_pqrs 
+!
+      integer :: dim_p, dim_q, dim_r, dim_s 
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_pq, L_J_rs
+!
+      if (integrals%eri_t1_mem) then 
+!
+         g_pqrs(:,:,:,:) = integrals%g_pqrs(first_p : last_p,  &
+                                             first_q : last_q, &
+                                             first_r : last_r, &
+                                             first_s : last_s)
+!
+      else 
+!
+         dim_p = last_p - first_p + 1
+         dim_q = last_q - first_q + 1
+         dim_r = last_r - first_r + 1
+         dim_s = last_s - first_s + 1
+!
+         call mem%alloc(L_J_pq, integrals%n_J, dim_p, dim_q)
+         call mem%alloc(L_J_rs, integrals%n_J, dim_r, dim_s)
+!
+         call integrals%read_cholesky_t1_var(L_J_pq, first_p, last_p, first_q, last_q)
+         call integrals%read_cholesky_t1_var(L_J_rs, first_r, last_r, first_s, last_s)
+!
+         call dgemm('T', 'N', &
+                     dim_p*dim_q, &
+                     dim_r*dim_s, &
+                     integrals%n_J, &
+                     one, &
+                     L_J_pq, &
+                     integrals%n_J, &
+                     L_J_rs, &
+                     integrals%n_J, &
+                     zero, &
+                     g_pqrs, &
+                     dim_p*dim_q)
+!
+         call mem%dealloc(L_J_pq, integrals%n_J, dim_p, dim_q)
+         call mem%dealloc(L_J_rs, integrals%n_J, dim_r, dim_s)
+!
+      endif
+!
+   end subroutine construct_pqrs_t1_mo_integral_tool
 !
 !
    subroutine read_cholesky_ia_mo_integral_tool(integrals, L_ia_J, first_i, last_i, first_a, last_a)
@@ -455,12 +561,12 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:) :: L_ab_J
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: t1 
 !
       integer, intent(in) :: first_a, last_a
       integer, intent(in) :: first_b, last_b
+!
+      real(dp), dimension(last_a - first_a + 1, last_b - first_b + 1, integrals%n_J) :: L_ab_J
 !
       integer :: full_first_a, full_last_a 
       integer :: full_first_b, full_last_b
@@ -758,7 +864,7 @@ contains
       integer, intent(in) :: first_a, last_a
       integer, intent(in) :: first_b, last_b
 !
-      real(dp), dimension(last_a - first_a + 1, last_b - first_b + 1), intent(out) :: L_ab_J
+      real(dp), dimension(last_a - first_a + 1, last_b - first_b + 1, integrals%n_J), intent(out) :: L_ab_J
 !
       integer :: full_first_b, full_last_b 
       integer :: full_first_a, full_last_a
@@ -1446,7 +1552,7 @@ contains
       integer, intent(in) :: first_j, last_j
       integer, intent(in) :: first_a, last_a
 !
-      real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_j-first_j+1,last_k-first_k+1), intent(inout) :: g_iajk
+      real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_j-first_j+1,last_k-first_k+1), intent(out) :: g_iajk
 !
       integer :: length_i, length_k, length_j, length_a
 !
@@ -1590,17 +1696,12 @@ contains
       integer, intent(in) :: first_j, last_j
       integer, intent(in) :: first_a, last_a
 !
-      real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_j-first_j+1,last_k-first_k+1), intent(inout) :: g_aijk
+      real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_j-first_j+1,last_k-first_k+1), intent(out) :: g_aijk
 !
       integer :: length_i, length_k, length_j, length_a
 !
-      real(dp), dimension(:,:), allocatable :: L_ai_J 
-      real(dp), dimension(:,:), allocatable :: L_jk_J 
-!
-      length_i = last_i - first_i + 1
-      length_j = last_j - first_j + 1
-      length_k = last_k - first_k + 1
-      length_a = last_a - first_a + 1
+      real(dp), dimension(:,:,:), allocatable :: L_ai_J 
+      real(dp), dimension(:,:,:), allocatable :: L_jk_J 
 !
       if (integrals%eri_t1_mem) then 
 !
@@ -1615,8 +1716,13 @@ contains
 !
 !        Construct g_aijk
 !
-         call mem%alloc(L_ai_J, length_i*length_a, integrals%n_J)
-         call mem%alloc(L_jk_J, length_k*length_j, integrals%n_J)
+         length_i = last_i - first_i + 1
+         length_j = last_j - first_j + 1
+         length_k = last_k - first_k + 1
+         length_a = last_a - first_a + 1
+!
+         call mem%alloc(L_ai_J, length_a, length_i, integrals%n_J)
+         call mem%alloc(L_jk_J, length_j, length_k, integrals%n_J)
 !
          if (present(t1)) then
 !
@@ -1643,8 +1749,8 @@ contains
                      g_aijk,            &
                      length_i*length_a)
 !
-         call mem%dealloc(L_ai_J, length_i*length_a, integrals%n_J)
-         call mem%dealloc(L_jk_J, length_k*length_j, integrals%n_J)
+         call mem%dealloc(L_ai_J, length_a, length_i, integrals%n_J)
+         call mem%dealloc(L_jk_J, length_j, length_k, integrals%n_J)
 !
       endif
 !
@@ -1734,17 +1840,12 @@ contains
       integer, intent(in) :: first_j, last_j
       integer, intent(in) :: first_a, last_a
 !
-      real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_i-first_i+1,last_j-first_j+1), intent(inout) :: g_abij
+      real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_i-first_i+1,last_j-first_j+1), intent(out) :: g_abij
 !
       integer :: length_i, length_b, length_j, length_a
 !
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
-      real(dp), dimension(:,:), allocatable :: L_ij_J 
-!
-      length_i = last_i - first_i + 1
-      length_j = last_j - first_j + 1
-      length_b = last_b - first_b + 1
-      length_a = last_a - first_a + 1
+      real(dp), dimension(:,:,:), allocatable :: L_ab_J 
+      real(dp), dimension(:,:,:), allocatable :: L_ij_J 
 !
       if (integrals%eri_t1_mem) then 
 !
@@ -1759,8 +1860,13 @@ contains
 !
 !        Construct g_abij
 !
-         call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
-         call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
+         length_i = last_i - first_i + 1
+         length_j = last_j - first_j + 1
+         length_b = last_b - first_b + 1
+         length_a = last_a - first_a + 1
+!
+         call mem%alloc(L_ab_J, length_a, length_b, integrals%n_J)
+         call mem%alloc(L_ij_J, length_i, length_j, integrals%n_J)
 !
          if (present(t1)) then
 !
@@ -1787,8 +1893,8 @@ contains
                      g_abij,            &
                      length_a*length_b)
 !
-         call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
-         call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
+         call mem%dealloc(L_ab_J, length_a, length_b, integrals%n_J)
+         call mem%dealloc(L_ij_J, length_i, length_j, integrals%n_J)
 !
       endif 
 !
@@ -1878,17 +1984,12 @@ contains
       integer, intent(in) :: first_j, last_j
       integer, intent(in) :: first_a, last_a
 !
-      real(dp), dimension(last_i-first_i+1,last_j-first_j+1,last_a-first_a+1,last_b-first_b+1), intent(inout) :: g_ijab
+      real(dp), dimension(last_i-first_i+1,last_j-first_j+1,last_a-first_a+1,last_b-first_b+1), intent(out) :: g_ijab
 !
       integer :: length_i, length_b, length_j, length_a
 !
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
-      real(dp), dimension(:,:), allocatable :: L_ij_J 
-!
-      length_i = last_i - first_i + 1
-      length_j = last_j - first_j + 1
-      length_b = last_b - first_b + 1
-      length_a = last_a - first_a + 1
+      real(dp), dimension(:,:,:), allocatable :: L_ab_J 
+      real(dp), dimension(:,:,:), allocatable :: L_ij_J 
 !
       if (integrals%eri_t1_mem) then 
 !
@@ -1903,8 +2004,13 @@ contains
 !
 !        Construct g_ijab
 !
-         call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
-         call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
+         length_i = last_i - first_i + 1
+         length_j = last_j - first_j + 1
+         length_b = last_b - first_b + 1
+         length_a = last_a - first_a + 1
+!
+         call mem%alloc(L_ab_J, length_a, length_b, integrals%n_J)
+         call mem%alloc(L_ij_J, length_i, length_j, integrals%n_J)
 !
          if (present(t1)) then
 !
@@ -1931,8 +2037,8 @@ contains
                      g_ijab,            &
                      length_i*length_j)
 !
-         call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
-         call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
+         call mem%dealloc(L_ab_J, length_a, length_b, integrals%n_J)
+         call mem%dealloc(L_ij_J, length_i, length_j, integrals%n_J)
 !
       endif 
 !
@@ -2021,17 +2127,12 @@ contains
       integer, intent(in) :: first_j, last_j
       integer, intent(in) :: first_a, last_a
 !
-      real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_j-first_j+1,last_b-first_b+1), intent(inout) :: g_aijb
+      real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_j-first_j+1,last_b-first_b+1), intent(out) :: g_aijb
 !
       integer :: length_i, length_b, length_j, length_a
 !
-      real(dp), dimension(:,:), allocatable :: L_ai_J 
-      real(dp), dimension(:,:), allocatable :: L_jb_J 
-!
-      length_i = last_i - first_i + 1
-      length_j = last_j - first_j + 1
-      length_b = last_b - first_b + 1
-      length_a = last_a - first_a + 1
+      real(dp), dimension(:,:,:), allocatable :: L_ai_J 
+      real(dp), dimension(:,:,:), allocatable :: L_jb_J 
 !
       if (integrals%eri_t1_mem) then 
 !
@@ -2046,8 +2147,13 @@ contains
 !
 !        Construct g_aijb
 !
-         call mem%alloc(L_ai_J, length_a*length_i, integrals%n_J)
-         call mem%alloc(L_jb_J, length_b*length_j, integrals%n_J)
+         length_i = last_i - first_i + 1
+         length_j = last_j - first_j + 1
+         length_b = last_b - first_b + 1
+         length_a = last_a - first_a + 1
+!
+         call mem%alloc(L_ai_J, length_a, length_i, integrals%n_J)
+         call mem%alloc(L_jb_J, length_j, length_b, integrals%n_J)
 !
          if (present(t1)) then
 !
@@ -2074,8 +2180,8 @@ contains
                      g_aijb,            &
                      length_a*length_i)
 !
-         call mem%dealloc(L_ai_J, length_a*length_i, integrals%n_J)
-         call mem%dealloc(L_jb_J, length_b*length_j, integrals%n_J)
+         call mem%dealloc(L_ai_J, length_a, length_i, integrals%n_J)
+         call mem%dealloc(L_jb_J, length_j, length_b, integrals%n_J)
 !
       endif 
 !
@@ -2165,17 +2271,12 @@ contains
       integer, intent(in) :: first_j, last_j
       integer, intent(in) :: first_a, last_a
 !
-      real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_b-first_b+1,last_j-first_j+1), intent(inout) :: g_iabj
+      real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_b-first_b+1,last_j-first_j+1), intent(out) :: g_iabj
 !
       integer :: length_i, length_b, length_j, length_a
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
-      real(dp), dimension(:,:), allocatable :: L_bj_J 
-!
-      length_i = last_i - first_i + 1
-      length_j = last_j - first_j + 1
-      length_b = last_b - first_b + 1
-      length_a = last_a - first_a + 1
+      real(dp), dimension(:,:,:), allocatable :: L_ia_J 
+      real(dp), dimension(:,:,:), allocatable :: L_bj_J 
 !
       if (integrals%eri_t1_mem) then 
 !
@@ -2190,8 +2291,13 @@ contains
 !
 !        Construct g_iabj
 !
-         call mem%alloc(L_ia_J, length_a*length_i, integrals%n_J)
-         call mem%alloc(L_bj_J, length_b*length_j, integrals%n_J)
+         length_i = last_i - first_i + 1
+         length_j = last_j - first_j + 1
+         length_b = last_b - first_b + 1
+         length_a = last_a - first_a + 1
+!
+         call mem%alloc(L_ia_J, length_i, length_a, integrals%n_J)
+         call mem%alloc(L_bj_J, length_b, length_j, integrals%n_J)
 !
          if (present(t1)) then
 !
@@ -2218,8 +2324,8 @@ contains
                      g_iabj,            &
                      length_a*length_i)
 !
-         call mem%dealloc(L_ia_J, length_a*length_i, integrals%n_J)
-         call mem%dealloc(L_bj_J, length_b*length_j, integrals%n_J)
+         call mem%dealloc(L_ia_J, length_i, length_a, integrals%n_J)
+         call mem%dealloc(L_bj_J, length_b, length_j, integrals%n_J)
 !
       endif 
 !
@@ -2323,19 +2429,14 @@ contains
       integer, intent(in) :: first_j, last_j
       integer, intent(in) :: first_b, last_b
 !
-      real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_j-first_j+1,last_b-first_b+1), intent(inout) :: g_iajb
+      real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_j-first_j+1,last_b-first_b+1), intent(out) :: g_iajb
 !
       integer :: length_i, length_a, length_j, length_b
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
-      real(dp), dimension(:,:), allocatable :: L_jb_J 
-!
-      length_i = last_i - first_i + 1
-      length_a = last_a - first_a + 1
-      length_j = last_j - first_j + 1
-      length_b = last_b - first_b + 1
+      real(dp), dimension(:,:,:), allocatable :: L_ia_J 
+      real(dp), dimension(:,:,:), allocatable :: L_jb_J 
 !
       if (integrals%eri_t1_mem) then 
 !
@@ -2350,10 +2451,15 @@ contains
 !
 !        Construct g_iajb from Cholesky vectors (occ-vir, so not necessary to consider t1)
 !
+         length_i = last_i - first_i + 1
+         length_a = last_a - first_a + 1
+         length_j = last_j - first_j + 1
+         length_b = last_b - first_b + 1
+!
          if (index_restrictions) then ! dim_ia ≠ dim_jb in general
 !
-            call mem%alloc(L_ia_J, length_i*length_a, integrals%n_J)
-            call mem%alloc(L_jb_J, length_j*length_b, integrals%n_J)
+            call mem%alloc(L_ia_J, length_i, length_a, integrals%n_J)
+            call mem%alloc(L_jb_J, length_j, length_b, integrals%n_J)
 !
             call integrals%read_cholesky_ia(L_ia_J, first_i, last_i, first_a, last_a)
             call integrals%read_cholesky_ia(L_jb_J, first_j, last_j, first_b, last_b)
@@ -2371,12 +2477,12 @@ contains
                         g_iajb,            &
                         length_i*length_a)
 !
-            call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
-            call mem%dealloc(L_jb_J, length_j*length_b, integrals%n_J)
+            call mem%dealloc(L_ia_J, length_i, length_a, integrals%n_J)
+            call mem%dealloc(L_jb_J, length_j, length_b, integrals%n_J)
 !
          else ! dim_ia = dim_jb 
 !
-            call mem%alloc(L_ia_J, length_i*length_a, integrals%n_J)
+            call mem%alloc(L_ia_J, length_i, length_a, integrals%n_J)
 !
             call integrals%read_cholesky_ia(L_ia_J, first_i, last_i, first_a, last_a)
 !
@@ -2393,7 +2499,7 @@ contains
                         g_iajb,            &
                         length_i*length_a)
 !
-            call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
+            call mem%dealloc(L_ia_J, length_i, length_a, integrals%n_J)
 !
          endif 
 !
@@ -2519,19 +2625,14 @@ contains
       integer, intent(in) :: first_j, last_j
       integer, intent(in) :: first_b, last_b
 !
-      real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_b-first_b+1,last_j-first_j+1), intent(inout) :: g_aibj
+      real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_b-first_b+1,last_j-first_j+1), intent(out) :: g_aibj
 !
       integer :: length_i, length_a, length_j, length_b
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ai_J 
-      real(dp), dimension(:,:), allocatable :: L_bj_J 
-!
-      length_i = last_i - first_i + 1
-      length_j = last_j - first_j + 1
-      length_a = last_a - first_a + 1
-      length_b = last_b - first_b + 1
+      real(dp), dimension(:,:,:), allocatable :: L_ai_J 
+      real(dp), dimension(:,:,:), allocatable :: L_bj_J 
 !
       if (integrals%eri_t1_mem) then 
 !
@@ -2546,10 +2647,15 @@ contains
 !
 !        Construct g_aibj from Cholesky vectors
 !
+         length_i = last_i - first_i + 1
+         length_j = last_j - first_j + 1
+         length_a = last_a - first_a + 1
+         length_b = last_b - first_b + 1
+!
          if (index_restrictions) then ! dim_ia ≠ dim_jb in general
 !
-            call mem%alloc(L_ai_J, length_a*length_i, integrals%n_J)
-            call mem%alloc(L_bj_J, length_b*length_j, integrals%n_J)
+            call mem%alloc(L_ai_J, length_a, length_i, integrals%n_J)
+            call mem%alloc(L_bj_J, length_b, length_j, integrals%n_J)
 !
             if (present(t1)) then
 !
@@ -2576,12 +2682,12 @@ contains
                         g_aibj,            &
                         length_a*length_i)
 !
-            call mem%dealloc(L_ai_J, length_a*length_i, integrals%n_J)
-            call mem%dealloc(L_bj_J, length_b*length_j, integrals%n_J)
+            call mem%dealloc(L_ai_J, length_a, length_i, integrals%n_J)
+            call mem%dealloc(L_bj_J, length_b, length_j, integrals%n_J)
 !
          else ! dim_ai = dim_bj
 !
-            call mem%alloc(L_ai_J, length_a*length_i, integrals%n_J)
+            call mem%alloc(L_ai_J, length_a, length_i, integrals%n_J)
 !
             if (present(t1)) then
 !      
@@ -2606,7 +2712,7 @@ contains
                         g_aibj,            &
                         length_i*length_a)
 !
-            call mem%dealloc(L_ai_J, length_i*length_a, integrals%n_J)
+            call mem%dealloc(L_ai_J, length_a, length_i, integrals%n_J)
 !
          endif 
 !
@@ -2625,8 +2731,6 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_abci
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer, intent(in) :: first_i, last_i
@@ -2634,33 +2738,34 @@ contains
       integer, intent(in) :: first_b, last_b
       integer, intent(in) :: first_c, last_c
 !
+      real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_c-first_c+1,last_i-first_i+1), intent(inout) :: g_abci
+!
       integer :: length_i, length_a, length_b, length_c
 !
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
-      real(dp), dimension(:,:), allocatable :: L_ci_J 
+      real(dp), dimension(:,:,:), allocatable :: L_ab_J 
+      real(dp), dimension(:,:,:), allocatable :: L_ci_J 
 !
       length_i = last_i - first_i + 1
       length_a = last_a - first_a + 1
       length_b = last_b - first_b + 1
       length_c = last_c - first_c + 1
 !
+!     Construct g_abci
 !
-!        Construct g_abci
+      call mem%alloc(L_ab_J, length_a, length_b, integrals%n_J)
+      call mem%alloc(L_ci_J, length_c, length_i, integrals%n_J)
 !
-         call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
-         call mem%alloc(L_ci_J, length_c*length_i, integrals%n_J)
+      if (present(t1)) then
 !
-         if (present(t1)) then
+         call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+         call integrals%construct_cholesky_ai(L_ci_J, t1, first_c, last_c, first_i, last_i)
 !
-            call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
-            call integrals%construct_cholesky_ai(L_ci_J, t1, first_c, last_c, first_i, last_i)
+      else
 !
-         else
+         call integrals%read_cholesky_ab_t1(L_ab_J, first_a, last_a, first_b, last_b)
+         call integrals%read_cholesky_ai_t1(L_ci_J, first_c, last_c, first_i, last_i)
 !
-            call integrals%read_cholesky_ab_t1(L_ab_J, first_a, last_a, first_b, last_b)
-            call integrals%read_cholesky_ai_t1(L_ci_J, first_c, last_c, first_i, last_i)
-!
-         endif
+      endif
 !
          call dgemm('N', 'T',           &
                      length_a*length_b, &
@@ -2675,8 +2780,8 @@ contains
                      g_abci,            &
                      length_a*length_b)
 !
-         call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
-         call mem%dealloc(L_ci_J, length_c*length_i, integrals%n_J) 
+         call mem%dealloc(L_ab_J, length_a, length_b, integrals%n_J)
+         call mem%dealloc(L_ci_J, length_c, length_i, integrals%n_J) 
 !
    end subroutine construct_vvvo_mo_integral_tool
 !
@@ -2764,17 +2869,12 @@ contains
       integer, intent(in) :: first_b, last_b
       integer, intent(in) :: first_c, last_c
 !
-      real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_i-first_i+1,last_c-first_c+1), intent(inout) :: g_abic
+      real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_i-first_i+1,last_c-first_c+1), intent(out) :: g_abic
 !
       integer :: length_i, length_a, length_b, length_c
 !
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
-      real(dp), dimension(:,:), allocatable :: L_ic_J 
-!
-      length_i = last_i - first_i + 1
-      length_a = last_a - first_a + 1
-      length_b = last_b - first_b + 1
-      length_c = last_c - first_c + 1
+      real(dp), dimension(:,:,:), allocatable :: L_ab_J 
+      real(dp), dimension(:,:,:), allocatable :: L_ic_J 
 !
       if (integrals%eri_t1_mem) then 
 !
@@ -2789,8 +2889,13 @@ contains
 !
 !        Construct g_abic
 !
-         call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
-         call mem%alloc(L_ic_J, length_c*length_i, integrals%n_J)
+         length_i = last_i - first_i + 1
+         length_a = last_a - first_a + 1
+         length_b = last_b - first_b + 1
+         length_c = last_c - first_c + 1
+!
+         call mem%alloc(L_ab_J, length_a, length_b, integrals%n_J)
+         call mem%alloc(L_ic_J, length_i, length_c, integrals%n_J)
 !
          if (present(t1)) then
 !
@@ -2817,8 +2922,8 @@ contains
                      g_abic,            &
                      length_a*length_b)
 !
-         call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
-         call mem%dealloc(L_ic_J, length_c*length_i, integrals%n_J)
+         call mem%dealloc(L_ab_J, length_a, length_b, integrals%n_J)
+         call mem%dealloc(L_ic_J, length_i, length_c, integrals%n_J)
 !
       endif 
 !
@@ -2908,17 +3013,12 @@ contains
       integer, intent(in) :: first_b, last_b
       integer, intent(in) :: first_c, last_c
 !
-      real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_b-first_b+1,last_c-first_c+1), intent(inout) :: g_aibc
+      real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_b-first_b+1,last_c-first_c+1), intent(out) :: g_aibc
 !
       integer :: length_i, length_a, length_b, length_c
 !
-      real(dp), dimension(:,:), allocatable :: L_ai_J 
-      real(dp), dimension(:,:), allocatable :: L_bc_J 
-!
-      length_i = last_i - first_i + 1
-      length_a = last_a - first_a + 1
-      length_b = last_b - first_b + 1
-      length_c = last_c - first_c + 1
+      real(dp), dimension(:,:,:), allocatable :: L_ai_J 
+      real(dp), dimension(:,:,:), allocatable :: L_bc_J 
 !
       if (integrals%eri_t1_mem) then 
 !
@@ -2933,8 +3033,13 @@ contains
 !
 !        Construct g_aibc
 !
-         call mem%alloc(L_ai_J, length_a*length_i, integrals%n_J)
-         call mem%alloc(L_bc_J, length_c*length_b, integrals%n_J)
+         length_i = last_i - first_i + 1
+         length_a = last_a - first_a + 1
+         length_b = last_b - first_b + 1
+         length_c = last_c - first_c + 1
+!
+         call mem%alloc(L_ai_J, length_a, length_i, integrals%n_J)
+         call mem%alloc(L_bc_J, length_b, length_c, integrals%n_J)
 !
          if (present(t1)) then
 !
@@ -2961,8 +3066,8 @@ contains
                      g_aibc,            &
                      length_a*length_i)
 !
-         call mem%dealloc(L_ai_J, length_a*length_i, integrals%n_J)
-         call mem%dealloc(L_bc_J, length_c*length_b, integrals%n_J)
+         call mem%dealloc(L_ai_J, length_a, length_i, integrals%n_J)
+         call mem%dealloc(L_bc_J, length_b, length_c, integrals%n_J)
 !
       endif 
 !
@@ -3051,17 +3156,12 @@ contains
       integer, intent(in) :: first_b, last_b
       integer, intent(in) :: first_c, last_c
 !
-      real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_b-first_b+1,last_c-first_c+1), intent(inout) :: g_iabc
+      real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_b-first_b+1,last_c-first_c+1), intent(out) :: g_iabc
 !
       integer :: length_i, length_a, length_b, length_c
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
-      real(dp), dimension(:,:), allocatable :: L_bc_J 
-!
-      length_i = last_i - first_i + 1
-      length_a = last_a - first_a + 1
-      length_b = last_b - first_b + 1
-      length_c = last_c - first_c + 1
+      real(dp), dimension(:,:,:), allocatable :: L_ia_J 
+      real(dp), dimension(:,:,:), allocatable :: L_bc_J 
 !
       if (integrals%eri_t1_mem) then 
 !
@@ -3076,8 +3176,13 @@ contains
 !
 !        Construct g_aibc
 !
-         call mem%alloc(L_ia_J, length_a*length_i, integrals%n_J)
-         call mem%alloc(L_bc_J, length_c*length_b, integrals%n_J)
+         length_i = last_i - first_i + 1
+         length_a = last_a - first_a + 1
+         length_b = last_b - first_b + 1
+         length_c = last_c - first_c + 1
+!
+         call mem%alloc(L_ia_J, length_i, length_a, integrals%n_J)
+         call mem%alloc(L_bc_J, length_b, length_c, integrals%n_J)
 !
          call integrals%read_cholesky_ia(L_ia_J, first_i, last_i, first_a, last_a)
 !
@@ -3104,8 +3209,8 @@ contains
                      g_iabc,            &
                      length_a*length_i)
 !
-         call mem%dealloc(L_ia_J, length_a*length_i, integrals%n_J)
-         call mem%dealloc(L_bc_J, length_c*length_b, integrals%n_J)
+         call mem%dealloc(L_ia_J, length_i, length_a, integrals%n_J)
+         call mem%dealloc(L_bc_J, length_b, length_c, integrals%n_J)
 !
       endif 
 !
@@ -3231,19 +3336,14 @@ contains
       integer, intent(in) :: first_c, last_c
       integer, intent(in) :: first_d, last_d
 !
-      real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_c-first_c+1,last_d-first_d+1), intent(inout) :: g_abcd
+      real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_c-first_c+1,last_d-first_d+1), intent(out) :: g_abcd
 !
       integer :: length_a, length_b, length_c, length_d
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
-      real(dp), dimension(:,:), allocatable :: L_cd_J 
-!
-      length_a = last_a - first_a + 1
-      length_b = last_b - first_b + 1
-      length_c = last_c - first_c + 1
-      length_d = last_d - first_d + 1
+      real(dp), dimension(:,:,:), allocatable :: L_ab_J 
+      real(dp), dimension(:,:,:), allocatable :: L_cd_J 
 !
       if (integrals%eri_t1_mem) then 
 !
@@ -3258,10 +3358,15 @@ contains
 !
 !        Construct g_abcd from Cholesky vectors
 !
+         length_a = last_a - first_a + 1
+         length_b = last_b - first_b + 1
+         length_c = last_c - first_c + 1
+         length_d = last_d - first_d + 1
+!
          if (index_restrictions) then ! dim_ab ≠ dim_cd in general
 !
-            call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
-            call mem%alloc(L_cd_J, length_c*length_d, integrals%n_J)
+            call mem%alloc(L_ab_J, length_a, length_b, integrals%n_J)
+            call mem%alloc(L_cd_J, length_c, length_d, integrals%n_J)
 !
             if (present(t1)) then
 !
@@ -3288,12 +3393,12 @@ contains
                         g_abcd,            &
                         length_a*length_b)
 !
-            call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
-            call mem%dealloc(L_cd_J, length_c*length_d, integrals%n_J)
+            call mem%dealloc(L_ab_J, length_a, length_b, integrals%n_J)
+            call mem%dealloc(L_cd_J, length_c, length_d, integrals%n_J)
 !
          else ! dim_ab = dim_cd
 !
-            call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
+            call mem%alloc(L_ab_J, length_a, length_b, integrals%n_J)
 !
             if (present(t1)) then
 !
@@ -3318,7 +3423,7 @@ contains
                         g_abcd,            &
                         length_a*length_b)
 !
-            call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
+            call mem%dealloc(L_ab_J, length_a, length_b, integrals%n_J)
 !
          endif 
 !
