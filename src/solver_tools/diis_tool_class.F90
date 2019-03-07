@@ -76,6 +76,12 @@ module diis_tool_class
 !
       procedure :: get_current_index => get_current_index_diis_tool
 !
+      procedure :: get_x_dx   => get_x_dx_diis_tool
+      procedure :: get_dx     => get_dx_diis_tool
+!
+      procedure :: set_x_dx   => set_x_dx_diis_tool
+      procedure :: set_dx     => set_dx_diis_tool
+!
       procedure, private :: construct_diis_matrix => construct_diis_matrix_diis_tool
 !
    end type diis_tool
@@ -473,7 +479,7 @@ contains
       call disk%open_file(solver%dx(i), 'read')
       rewind(solver%dx(i)%unit)
 !
-      read(solver%x_dx(i)%unit) dx_i
+      read(solver%dx(i)%unit) dx_i
 !
       call disk%close_file(solver%dx(i))
 !
@@ -533,7 +539,7 @@ contains
       call disk%open_file(solver%dx(i), 'write')
       rewind(solver%dx(i)%unit)
 !
-      write(solver%x_dx(i)%unit) dx_i
+      write(solver%dx(i)%unit) dx_i
 !
       call disk%close_file(solver%dx(i))
 !

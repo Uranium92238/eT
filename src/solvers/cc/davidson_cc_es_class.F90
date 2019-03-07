@@ -122,65 +122,6 @@ contains
    end subroutine prepare_davidson_cc_es
 !
 !
-   subroutine write_restart_file_davidson_cc_es(solver)
-!!
-!!    Write restart 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018
-!!
-      implicit none 
-!
-      class(davidson_cc_es) :: solver 
-!
-      call disk%open_file(solver%restart_file, 'write', 'rewind')
-!
-      write(solver%restart_file%unit, *) 'n_singlet_states'
-      write(solver%restart_file%unit, *) solver%n_singlet_states
-!
-      call disk%close_file(solver%restart_file) 
-!
-   end subroutine write_restart_file_davidson_cc_es
-!
-!
-   subroutine restart_davidson_cc_es(solver, davidson)
-!!
-!!    Restart 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018
-!!
-      implicit none 
-!
-      class(davidson_cc_es) :: solver 
-!
-      class(eigen_davidson_tool) :: davidson
-!
-      integer :: n_solutions_on_file 
-!
-!     Read in the number of solutions to restart from - according the restart file 
-!
-      call disk%open_file(solver%restart_file, 'read')
-      rewind(solver%restart_file%unit)
-!
-      n_solutions_on_file = 0
-      read(solver%restart_file%unit, *) ! Empty read to skip banner
-      read(solver%restart_file%unit, *) n_solutions_on_file
-!
-      call disk%close_file(solver%restart_file) 
-!
-!     Avoid reading too many solutions if fewer are requested than previously converged 
-!
-      if (n_solutions_on_file .gt. solver%n_singlet_states) then 
-!
-         n_solutions_on_file = solver%n_singlet_states
-!
-      endif 
-!
-!     Ask Davidson to restart - use the previous solutions as trial vectors 
-!
-      call davidson%restart_from_solutions(n_solutions_on_file)
-!
-   end subroutine restart_davidson_cc_es
->>>>>>> 6e754448f845f4d47ce6f228e930bef8aa1fafd9
-!
-!
    subroutine initialize_energies_davidson_cc_es(solver)
 !!
 !!    Initialize energies

@@ -79,8 +79,7 @@ module davidson_tool_class
       procedure :: precondition                     => precondition_davidson_tool
       procedure :: projection                       => projection_davidson_tool
       procedure :: orthogonalize_against_trial_vecs => orthogonalize_against_trial_vecs_davidson_tool
-      procedure :: orthonormalize_against_trial_vecs => orthonormalize_against_trial_vecs_davidson_tool
-      procedure :: orthonormalize_trial_vecs       => orthonormalize_trial_vecs_davidson_tool
+      procedure :: orthonormalize_trial_vecs        => orthonormalize_trial_vecs_davidson_tool
 !
       procedure :: set_A_red => set_A_red_davidson_tool
       procedure :: get_A_red => get_A_red_davidson_tool
@@ -751,49 +750,6 @@ contains
       call mem%dealloc(c_i, davidson%n_parameters, 1)
 !
    end subroutine orthogonalize_against_trial_vecs_davidson_tool
-!
-!
-   subroutine orthonormalize_against_trial_vecs_davidson_tool(davidson, R)
-!!
-!!    Orthonormalize against trial vectors 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
-!!
-!!    Orthonormalize R against the existing trial vectors. Note 
-!!    that this is usually done residual after residual, where 
-!!    each new residual is orthonormalize against the previous 
-!!    (where the number of previous changes with 'n_new_trials').
-!!
-      implicit none 
-!
-      class(davidson_tool) :: davidson 
-!
-      real(dp), dimension(davidson%n_parameters, 1) :: R 
-!
-      real(dp) :: ddot, projection_of_R_on_c_i, norm_R
-!
-      integer :: i 
-!
-      real(dp), dimension(:,:), allocatable :: c_i
-!
-      call mem%alloc(c_i, davidson%n_parameters, 1)
-!
-      do i = 1, davidson%dim_red + davidson%n_new_trials
-!
-         call davidson%read_trial(c_i, i)
-         projection_of_R_on_c_i = ddot(davidson%n_parameters, c_i, 1, R, 1)
-!
-         call daxpy(davidson%n_parameters, - projection_of_R_on_c_i, c_i, 1, R, 1)
-!
-      enddo 
-!
-      call mem%dealloc(c_i, davidson%n_parameters, 1)
-!
-!
-      norm_R = get_l2_norm(R, davidson%n_parameters)
-      R = R/norm_R
-      write(output%unit, *) 'norm R:', norm_R
-!
-   end subroutine orthonormalize_against_trial_vecs_davidson_tool
 !
 !
    subroutine set_A_red_davidson_tool(davidson, A_red)
