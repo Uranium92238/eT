@@ -26,12 +26,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
 #   Set standard flags 
 #  
     set(CMAKE_CXX_FLAGS "-std=c++11 -xHost -O3")
-    if(DEVELOPMENT_CODE)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-    else()
-        # suppress warnings in exported code
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
-    endif()
+# 
     set (CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -shared-intel")
 # 
 #   Flags needed for Libint package

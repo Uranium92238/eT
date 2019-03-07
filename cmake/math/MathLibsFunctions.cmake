@@ -206,7 +206,14 @@ macro(config_math_service _SERVICE)
                 endif()
             endif()
             if(HAVE_MKL_${_SERVICE})
-                set(${_SERVICE}_LIBRARIES -Wl,--start-group ${${_SERVICE}_LIBRARIES} ${_omp_flag} -Wl,--end-group)
+                if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin") 
+                    # Hack for mac, where ld does not support --start-group and --end-group 
+                    # Eirik F. Kjønstad, Mar 2019
+                    set(${_SERVICE}_LIBRARIES -Wl ${${_SERVICE}_LIBRARIES} ${_omp_flag} -Wl)
+                else()
+                    # This is the standard command, as written in the original file 
+                    set(${_SERVICE}_LIBRARIES -Wl,--start-group ${${_SERVICE}_LIBRARIES} ${_omp_flag} -Wl,--end-group)
+                endif()
             endif()
             unset(_omp_flag)
         endif()
