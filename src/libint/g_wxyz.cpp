@@ -12,7 +12,6 @@ using namespace std;
 #include <string>
 #include <ctime>
 
-#include "utils.h"
 #include "g_wxyz.h"
 
 #include <libint2.hpp>

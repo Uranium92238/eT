@@ -384,8 +384,8 @@ contains
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
-            ai = index_two(a, i, wf%n_v)
-            ia = index_two(i, a, wf%n_o)
+            ai = (i-1)*wf%n_v + a
+            ia = (a-1)*wf%n_o + i
 !
             do j = 1, wf%n_o
 !
@@ -918,7 +918,7 @@ contains
    subroutine get_cvs_projector_ccsd(wf, projector, n_cores, core_MOs)
 !!
 !!    Get CVS projector
-!!    Written by Sarai D. Folekstad, Oct 2018
+!!    Written by Sarai D. Folkestad, Oct 2018
 !!
       implicit none
 !

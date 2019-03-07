@@ -9,7 +9,6 @@ module array_utilities
 !!    where all such routines are gathered for convenience).
 !!
 !
-   use index
    use kinds
    use memory_manager_class
 !

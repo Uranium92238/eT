@@ -13,7 +13,6 @@ module reordering
 !
    use kinds
    use parameters
-   use index
    use file_class
 !
    implicit none

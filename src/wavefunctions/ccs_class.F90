@@ -14,7 +14,7 @@ module ccs_class
    use array_utilities
    use array_analysis
    use interval_class
-   use index
+   use index_invert
    use batching_index_class
    use timings_class
 !

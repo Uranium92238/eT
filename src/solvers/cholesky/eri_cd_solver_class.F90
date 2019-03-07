@@ -7,7 +7,6 @@ module eri_cd_solver_class
 !
    use kinds
 !
-   use index
    use reordering
    use array_utilities
    use array_analysis
@@ -535,6 +534,7 @@ contains
 !     Prepare for construction of diagonal and screening vector
 !     
       call mem%alloc(ao_offsets, n_sig_sp)
+      ao_offsets = 0
 !
       current_sig_sp = 0
 !

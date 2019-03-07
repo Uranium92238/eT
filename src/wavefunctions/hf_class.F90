@@ -13,7 +13,6 @@ module hf_class
    use array_analysis
    use interval_class
    use libint_initialization
-   use index
 !
    implicit none
 !

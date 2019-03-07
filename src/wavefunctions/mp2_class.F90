@@ -9,8 +9,6 @@ module mp2_class
    use hf_class
    use ccs_class
 !
-   use index
-!
    implicit none
 !
    type, extends(ccs) :: mp2

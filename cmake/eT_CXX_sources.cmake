@@ -1,5 +1,4 @@
 set(eT_CXX_sources
-   src/libint/utils.cpp
    src/libint/h_wx.cpp
    src/libint/s_wx.cpp
    src/libint/mu_wx.cpp
