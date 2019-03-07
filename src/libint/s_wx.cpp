@@ -11,7 +11,6 @@ using namespace std;
 #include <fstream>
 #include <string>
 #include <vector>
-#include "utils.h"
 #include "s_wx.h"
 
 #include <libint2.hpp>
