@@ -1047,7 +1047,7 @@ contains
                do i = 1, wf%n_o
                   do a = 1, batch_a%length
 !
-                     X_aick(a, i, c, k) = X_aick(a, i, c, k) + g_kiac(k, i, a, c)
+                     X_aick(a+batch_a%first-1, i, c, k) = X_aick(a+batch_a%first-1, i, c, k) + g_kiac(k, i, a, c)
 !
                   enddo
                enddo
