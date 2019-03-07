@@ -28,31 +28,21 @@ project(eT Fortran CXX)
 set(CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake
     ${CMAKE_SOURCE_DIR}/cmake/math
+    ${CMAKE_SOURCE_DIR}/cmake/findlibint
     /usr/local/share/cmake/Modules
     )
 
-# Options and their standard values 
-option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"       			              ON)
+# set options with standard values 
+option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"      	                    ON)
 option(ENABLE_AUTO_BLAS      "Enable CMake to autodetect BLAS"                  ON)
 option(ENABLE_AUTO_LAPACK    "Enable CMake to autodetect LAPACK"                ON)
 option(ENABLE_OMP            "Enable OpenMP parallelization"                    ON)
 option(ENABLE_THREADED_MKL   "Enable OpenMP parallelization"                    ON)
 
-# Check for LIBINT_LIB environment variable 
-if(DEFINED ENV{LIBINT_LIB})
-  set(LIBINT_LIB $ENV{LIBINT_LIB})
-else()
-  set(LIBINT_LIB /usr/local/libint)
-endif()
+find_package(Libint2 REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-# Check for EIGEN_LIB environment variable 
-if(DEFINED ENV{EIGEN_LIB})
-  set(EIGEN_LIB $ENV{EIGEN_LIB})
-else()
-  set(EIGEN_LIB /usr/local/include/eigen3)
-endif()
-
-# Include source files
+# Including the source files
 include(eT_sources)
 include(Fortran_flags)
 include(eT_CXX_sources)
@@ -70,9 +60,6 @@ if(LAPACK_FOUND AND BLAS_FOUND)
   set(lapackblas_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 endif()
 
-# Set Libint library 
-set(libint_libraries "${LIBINT_LIB}/2.4.2/lib/libint2.a")
-
 set(eT_fortran_sources
         ${eT_fortran_sources}
         )
@@ -83,7 +70,7 @@ set(eT_CXX_sources
 
 add_executable(eT ${eT_fortran_sources} ${eT_CXX_sources})
 
-target_link_libraries(eT ${lapackblas_libraries} ${libint_libraries})
+target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY})
 
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
 

@@ -25,7 +25,7 @@ module file_class
 !!
 !!
 !
-   use kinds      
+   use kinds          
 !
    type :: file
 !
@@ -281,6 +281,7 @@ contains
       class(file), intent(in) :: the_file
 !
       integer :: get_file_size_file
+!
       get_file_size_file = the_file%file_size
 !
    end function get_file_size_file
@@ -292,7 +293,6 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!    Moved to file by Rolf H. Myhre Nov. 2018
 !!    
-!
       implicit none
 !  
       class(file), intent(in) :: the_file

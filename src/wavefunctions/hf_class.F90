@@ -32,7 +32,6 @@ module hf_class
    use array_analysis
    use interval_class
    use libint_initialization
-   use index
 !
    implicit none
 !
@@ -1590,8 +1589,8 @@ contains
       real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, deg, deg_12, deg_34, deg_12_34
 !
-      integer :: w, x, y, omp_get_thread_num, z, wx, yz, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
-      integer :: s3s4, s3s4_sorted, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
+      integer :: w, x, y, omp_get_thread_num, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: s3s4, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
@@ -1607,9 +1606,9 @@ contains
 !
 !$omp parallel do                                                                             &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34,     &
-!$omp w, x, y, z, wx, yz, temp1, temp2, temp3, d1, d2, d3, d4, d5, d6, thread, thread_offset, &
+!$omp w, x, y, z, temp1, temp2, temp3, d1, d2, d3, d4, d5, d6, thread, thread_offset,         &
 !$omp temp4, temp5, temp6, temp7, temp8, w_red, x_red, tot_dim, y_red, z_red, wxyz, g,        &
-!$omp sp_eri_schwarz_s1s2, sp_density_schwarz_s1s2, s3s4_sorted, deg_12_34,                   &
+!$omp sp_eri_schwarz_s1s2, sp_density_schwarz_s1s2, deg_12_34,                                &
 !$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1, skip) schedule(dynamic)
       do s1s2 = 1, n_sig_sp
 !
@@ -1767,8 +1766,8 @@ contains
       real(dp) :: d1, d2, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp7, deg, deg_12, deg_34, deg_12_34
 !
-      integer :: w, x, y, omp_get_thread_num, z, wx, yz, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
-      integer :: s3s4, s3s4_sorted, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
+      integer :: w, x, y, omp_get_thread_num, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: s3s4, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
@@ -1784,9 +1783,9 @@ contains
 !
 !$omp parallel do                                                                         &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34, &
-!$omp w, x, y, z, wx, yz, temp1, temp2, d1, d2, thread, thread_offset,                    &
+!$omp w, x, y, z, temp1, temp2, d1, d2, thread, thread_offset,                            &
 !$omp temp7, w_red, x_red, tot_dim, y_red, z_red, wxyz, g,                                &
-!$omp sp_eri_schwarz_s1s2, sp_density_schwarz_s1s2, s3s4_sorted, deg_12_34,               &
+!$omp sp_eri_schwarz_s1s2, sp_density_schwarz_s1s2, deg_12_34,                            &
 !$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1, skip) schedule(dynamic)
       do s1s2 = 1, n_sig_sp
 !
@@ -1917,11 +1916,11 @@ contains
       integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
       real(dp), dimension(n_s, n_s), intent(in)               :: sp_density_schwarz
 !
-      real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
+      real(dp) :: d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp3, temp4, temp5, temp6, temp8, deg, deg_12, deg_34, deg_12_34
 !
-      integer :: w, x, y, omp_get_thread_num, z, wx, yz, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
-      integer :: s3s4, s3s4_sorted, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
+      integer :: w, x, y, omp_get_thread_num, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: s3s4, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
@@ -1937,9 +1936,9 @@ contains
 !
 !$omp parallel do                                                                         &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34, &
-!$omp w, x, y, z, wx, yz, temp3, d1, d2, d3, d4, d5, d6, thread, thread_offset,           &
+!$omp w, x, y, z, temp3, d3, d4, d5, d6, thread, thread_offset,                           &
 !$omp temp4, temp5, temp6, temp8, w_red, x_red, tot_dim, y_red, z_red, wxyz, g,           &
-!$omp sp_eri_schwarz_s1s2, sp_density_schwarz_s1s2, s3s4_sorted, deg_12_34,               &
+!$omp sp_eri_schwarz_s1s2, sp_density_schwarz_s1s2, deg_12_34,                            &
 !$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1, skip) schedule(dynamic)
       do s1s2 = 1, n_sig_sp
 !

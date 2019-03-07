@@ -25,6 +25,10 @@ import shutil
 import argparse
 import sys
 
+if sys.version < '3.5':
+    print('requires python version >= 3.5')
+    sys.exit(1)
+
 # Kill if given negative number of OMP threads
 class OMPaction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
@@ -34,15 +38,16 @@ class OMPaction(argparse.Action):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('input_file', help="eT input file", nargs='*', default=['eT.inp'])
-parser.add_argument('-of', '--output_file', help="eT output file", nargs='*', default=[None])
+parser.add_argument('input_file', help="eT input file(s)", nargs='*', default=['eT.inp'], metavar="input file")
+parser.add_argument('-of', '--output-file', help="eT output file(s)", nargs='*', default=[None])
 parser.add_argument('--scratch', help="Specify scratch directory", type=str)
-parser.add_argument('-ks', '--keep_scratch', help="Do not delete scratch", action="store_true")
+parser.add_argument('-ks', '--keep-scratch', help="Do not delete scratch", action="store_true")
 parser.add_argument("--omp", help="Number of OpenMP threads", action=OMPaction, type=int)
-parser.add_argument('-nt', "--no_timing", help="Do not copy timing.out from scratch", action='store_true')
+parser.add_argument('-nt', "--no-timing", help="Do not copy timing.out from scratch", action='store_true')
 parser.add_argument('-v', "--verbose", help="Run some print statements", action='store_true')
-parser.add_argument('-bd', "--binary_dir", help="Specify location of eT executable", type=str)
-parser.add_argument('-sd', "--SAD_dir", help="Specify location of SAD data dir", type=str)
+parser.add_argument('-bd', "--binary-dir", help="Specify location of eT executable", type=str)
+parser.add_argument('-sd', "--SAD-dir", help="Specify location of SAD data dir", type=str)
+parser.add_argument('-ldd', "--libint-data-dir", help="Specify location of Libint basis directory", type=str)
 args = parser.parse_args()
 
 #Check that output file makes sense and set default
@@ -59,15 +64,24 @@ cwd = os.getcwd() # Get current directory
 if (args.binary_dir):
     eT_dir = os.path.abspath(args.binary_dir)
 else:
-    eT_dir = '${CMAKE_BINARY_DIR}' # Find location of eT_launch. Assume eT is here
+    eT_dir = '${CMAKE_BINARY_DIR}' # Default binary directory set by CMake
 eT_dir = os.path.abspath(eT_dir) # Use absolute path
 
 #Set the SAD data directory
 if (args.SAD_dir):
     sad_dir = os.path.abspath(args.SAD_dir)
-else:
+    os.environ['SAD_ET_DIR'] = sad_dir
+elif not 'SAD_ET_DIR' in os.environ:
     sad_dir = os.path.join('${CMAKE_SOURCE_DIR}','src','molecular_system','sad')
-os.environ['SAD_ET_DIR'] = sad_dir
+    os.environ['SAD_ET_DIR'] = sad_dir
+
+#Set the Libint basis directory
+if (args.libint_data_dir):
+    ldd_dir = os.path.abspath(args.libint_data_dir)
+    os.environ['LIBINT_DATA_PATH'] = ldd_dir
+elif not 'LIBINT_DATA_PATH' in os.environ:
+    ldd_dir = os.path.join('${Libint2_BASIS_DIR}')
+    os.environ['LIBINT_DATA_PATH'] = ldd_dir
 
 executable = os.path.join(eT_dir,'eT')
 

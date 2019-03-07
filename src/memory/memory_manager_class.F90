@@ -128,7 +128,8 @@ module memory_manager_class
       procedure :: read_settings  => read_settings_memory_manager
       procedure :: print_settings => print_settings_memory_manager
 !
-      procedure :: get_available  => get_available_memory_manager
+      procedure :: get_available   => get_available_memory_manager
+      procedure :: print_available => print_available_memory_manager
 !
    end type memory_manager
 !
@@ -182,6 +183,21 @@ contains
       get_available_memory_manager = mem%available
 !
    end function get_available_memory_manager
+!
+!
+   subroutine print_available_memory_manager(mem)
+!!
+!!    Get available  
+!!    Written by Eirik F. Kjønstad, Jan 2019 
+!!
+      implicit none 
+!
+      class(memory_manager), intent(in) :: mem 
+!
+      write(output%unit, '(t3, a38, i5, a)') 'Currently available memory:     ', &
+                         mem%available/1000000, ' MB'
+!
+   end subroutine print_available_memory_manager
 !
 !
    subroutine alloc_1_memory_manager(mem, array, M)
@@ -1100,7 +1116,8 @@ contains
 !
       class(memory_manager) :: mem
 !
-      write(output%unit, '(t3, a38, i5, a)') 'Memory available for calculation:     ', mem%total/1000000000, ' GB'
+      write(output%unit, '(t3, a38, i5, a)') 'Memory available for calculation:     ', &
+                         mem%total/1000000000, ' GB'
 !
    end subroutine print_settings_memory_manager
 !

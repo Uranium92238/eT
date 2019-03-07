@@ -2648,7 +2648,7 @@ contains
       integer :: n_vectors
       integer :: current_aop_in_sp
       integer :: A, B, C, D, AB, AB_sp, CD_sp
-      integer :: I, J, K, L, KL
+      integer :: I, J, K, L
       integer :: w, x, y, z, wx, yz
 !
 !     Integer allocatable arrays
@@ -2706,7 +2706,7 @@ contains
 !
 !$omp parallel do &
 !$omp private(AB_sp, CD_sp, A, B, A_interval, B_interval, C, D, C_interval, D_interval, &
-!$omp w, x, y, z, wx, yz, g_AB_CD, I, J, K, L, KL,&
+!$omp w, x, y, z, wx, yz, g_AB_CD, I, J, K, L, &
 !$omp current_aop_in_sp, basis_aops_in_CD_sp, basis_aops_in_AB_sp) &
 !$omp shared(integrals_auxiliary, cholesky_basis, basis_shell_info) &
 !$omp schedule(guided)
