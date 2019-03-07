@@ -367,7 +367,7 @@ contains
             elseif (iteration .eq. 1) then
 !
                converged = .true.
-               write(output%unit,'(/t3,a,/t3,a)') 'Note: residual converged in first iteration.', &
+               write(output%unit,'(/t3,a,/t3,a)') 'Note: residual(s) converged in first iteration.', &
                                                    'Energy convergence therefore not tested in this calculation.'
 !
             endif

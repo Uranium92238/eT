@@ -149,7 +149,7 @@ contains
       integer, dimension(:), allocatable :: start_indices
 !
       integer :: trial, i, j, k, l, first_ao_on_atom, last_ao_on_atom
-      integer :: n_MOs_found
+      integer :: n_MOs_found, n_solutions_on_file
 !
       real(dp) :: mix_factor
 !
@@ -157,6 +157,8 @@ contains
 !
       if (solver%n_cores .gt. solver%n_singlet_states) &
          call output%error_msg('number of roots requested should be equal or greater than the number of cores.')
+!
+      rewind(davidson%trials%unit)
 !
       if (allocated(solver%start_vectors)) then
 !
@@ -182,88 +184,111 @@ contains
 !
       else
 !
-!        Initial trial vectors given by Koopman
+         if (solver%restart) then 
 !
-!        Calculate the mixing factor of equal mix 
+!           Read the solutions from file & set as initial trial vectors 
 !
-         mix_factor = 1.0d0/(sqrt(real(solver%n_cores, kind=dp)))*0.9
+            call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
 !
-!        Loop through the occupied MOs and determine if they are core mos
+            write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
+                                                ' solutions on file.'
+            flush(output%unit)
 !
-         n_MOs_found = 0
+            call mem%alloc(c_i, wf%n_es_amplitudes)
 !
-         call solver%initialize_core_MOs()
-         solver%core_MOs = 0
+            do trial = 1, n_solutions_on_file
 !
-         do j = 1, solver%n_cores
+               call wf%read_excited_state(c_i, trial, solver%transformation)
+               call davidson%write_trial(c_i)
 !
-            first_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(1)%first
-            last_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(wf%system%atoms(solver%cores(j))%n_shells)%last
+            enddo 
 !
-            do k = first_ao_on_atom, last_ao_on_atom
+            call mem%dealloc(c_i, wf%n_es_amplitudes)
+!
+         else
+!
+            n_solutions_on_file = 0
+!
+         endif 
+!
+!           Calculate the mixing factor of equal mix 
+!
+            mix_factor = 1.0d0/(sqrt(real(solver%n_cores, kind=dp)))*0.9
+!
+!           Loop through the occupied MOs and determine if they are core mos
+!
+            n_MOs_found = 0
+!
+            call solver%initialize_core_MOs()
+            solver%core_MOs = 0
+!
+            do j = 1, solver%n_cores
+!
+               first_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(1)%first
+               last_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(wf%system%atoms(solver%cores(j))%n_shells)%last
+!
+               do k = first_ao_on_atom, last_ao_on_atom
 
-               do i = 1, wf%n_o
+                  do i = 1, wf%n_o
 !
-                  if (abs(wf%orbital_coefficients(k, i)) .ge. mix_factor) then
+                     if (abs(wf%orbital_coefficients(k, i)) .ge. mix_factor) then
 !
-                     used =  .false.
+                        used =  .false.
 !
-                     do l = 1, n_MOs_found
+                        do l = 1, n_MOs_found
 !
-                        if (solver%core_MOs(l) == i) used = .true.
+                           if (solver%core_MOs(l) == i) used = .true.
 !
-                     enddo
+                        enddo
 !
-                     if (.not. used) then
+                        if (.not. used) then
 !
-                        n_MOs_found = n_MOs_found + 1
+                           n_MOs_found = n_MOs_found + 1
 !
-                        if (n_MOs_found .gt. solver%n_cores) &
+                           if (n_MOs_found .gt. solver%n_cores) &
                               call output%error_msg('something went wrong in the selection of core MOs.')
 !
 
 !
-                        solver%core_MOs(n_MOs_found) = i
-                        exit
+                           solver%core_MOs(n_MOs_found) = i
+                           exit
 !
-                     else
+                        else
 !
-                        cycle
+                           cycle
+!
+                        endif
 !
                      endif
 !
-                  endif
+                  enddo
 !
                enddo
 !
             enddo
 !
-         enddo
+         if (n_solutions_on_file .lt. solver%n_singlet_states) then ! Koopman for the rest
+
+            call mem%alloc(start_indices, solver%n_singlet_states)
 !
-         call mem%alloc(start_indices, solver%n_singlet_states)
+            call wf%set_cvs_start_indices(solver%n_cores, solver%core_MOs, solver%n_singlet_states, start_indices)
 !
-         call wf%set_cvs_start_indices(solver%n_cores, solver%core_MOs, solver%n_singlet_states, start_indices)
+            call mem%alloc(c_i, wf%n_es_amplitudes)
 !
-         call mem%alloc(c_i, wf%n_es_amplitudes)
+            do trial = n_solutions_on_file + 1, solver%n_singlet_states
 !
-         c_i = zero
+               c_i = zero
+               c_i(start_indices(trial)) = one
+               call davidson%write_trial(c_i)
 !
-         c_i(start_indices(1)) = one
+            enddo
 !
-         call davidson%write_trial(c_i, 'rewind')
+            call mem%dealloc(c_i, wf%n_es_amplitudes)
+            call mem%dealloc(start_indices, solver%n_singlet_states)
 !
-         do trial = 2, solver%n_singlet_states
+         endif
 !
-            c_i = zero
-!
-            c_i(start_indices(trial)) = one
-!
-            call davidson%write_trial(c_i)
-!
-         enddo
-!
-         call mem%dealloc(c_i, wf%n_es_amplitudes)
-         call mem%dealloc(start_indices, solver%n_singlet_states)
+         call davidson%orthonormalize_trial_vecs()
 !
       endif
 !

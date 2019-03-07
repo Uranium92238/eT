@@ -686,6 +686,8 @@ contains
       read(wf%restart_file%unit) n_gs_amplitudes
       read(wf%restart_file%unit) n_es_amplitudes
 !
+      call disk%close_file(wf%restart_file)
+!
       if (n_o .ne. wf%n_o) call output%error_msg('attempted to restart from inconsistent number ' // &
                                                    'of occupied orbitals.')
 !
