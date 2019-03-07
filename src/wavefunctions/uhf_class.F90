@@ -11,7 +11,6 @@ module uhf_class
    use array_utilities
    use array_analysis
    use interval_class
-   use index
 !
    implicit none
 !
