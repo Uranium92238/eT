@@ -456,13 +456,13 @@ contains
                do c = 1, wf%n_v
                   do d = 1, c
 !
-                     cd = (max(c,d)*(max(c,d)-3)/2) + c + d
+                     cd = (c*(c-3)/2) + c + d
 !
                      do a = 1, batch_a%length
 !
                         do  b = 1, a
 !
-                           ab = (max(a,b)*(max(a,b)-3)/2) + a + b
+                           ab = (a*(a-3)/2) + a + b
 !
                            g_p_abcd(ab, cd) = g_acbd(a, c, b, d) + g_acbd(a, d, b, c)
                            g_m_abcd(ab, cd) = g_acbd(a, c, b, d) - g_acbd(a, d, b, c)
