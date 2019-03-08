@@ -260,7 +260,7 @@ contains
 !        Calculate the energy and error vector omega 
 !
          call wf%integrals%write_t1_cholesky(wf%t1)
-         call wf%integrals%can_we_keep_g_pqrs()
+         if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs()
 !
          call wf%construct_fock()
 !
