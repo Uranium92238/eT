@@ -8,6 +8,7 @@ module mo_integral_tool_class
    use file_class
    use disk_manager_class
    use memory_manager_class
+   use timings_class
    use reordering
 !
    implicit none
@@ -39,6 +40,7 @@ module mo_integral_tool_class
       procedure :: need_t1                => need_t1_mo_integral_tool
 !
       procedure :: read_cholesky          => read_cholesky_mo_integral_tool
+      procedure :: read_cholesky_var          => read_cholesky_var_mo_integral_tool
      ! procedure :: read_cholesky_t1       => read_cholesky_t1_mo_integral_tool
       procedure :: read_cholesky_t1_var       => read_cholesky_t1_var_mo_integral_tool
       procedure :: construct_pqrs_t1         => construct_pqrs_t1_mo_integral_tool
@@ -234,6 +236,43 @@ contains
       call disk%close_file(integrals%cholesky_mo)
 !
    end subroutine read_cholesky_mo_integral_tool
+!
+!
+   subroutine read_cholesky_var_mo_integral_tool(integrals, L_J_pq, first_p, last_p, first_q, last_q)
+!!
+!!    Read mo cholesky vectors
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+!!    Reads cholesky vectors L_pq_J for mo indices 
+!!    [first_p, first_p + dim_p - 1] and [first_q, first_q + dim_q - 1]
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!
+      integer, intent(in) :: first_p, last_p
+      integer, intent(in) :: first_q, last_q
+!
+      real(dp), dimension(integrals%n_J, last_p - first_p + 1, last_q - first_q + 1), intent(out) :: L_J_pq
+!
+      integer :: p, q, pq_rec
+!
+      call disk%open_file(integrals%cholesky_mo, 'read')
+!
+      do q = 1, last_q - first_q + 1
+         do p = 1, last_p - first_p + 1
+!
+            pq_rec = (max(p + first_p - 1, q + first_q - 1)*(max(p + first_p - 1, q + first_q - 1)-3)/2) &
+                         + (p + first_p - 1) + (q + first_q - 1)
+!
+            read(integrals%cholesky_mo%unit, rec=pq_rec) L_J_pq(:, p, q)
+!
+         enddo
+      enddo
+!
+      call disk%close_file(integrals%cholesky_mo)
+!
+   end subroutine read_cholesky_var_mo_integral_tool
 !
 !
    subroutine read_cholesky_t1_mo_integral_tool(integrals, L_pq_J, first_p, last_p, first_q, last_q)
@@ -1038,19 +1077,27 @@ contains
 !!    Write T1-transformed Cholesky vectors to file
 !!    Written by Sarai D. Folkestad, 2018
 !!
+!!    Eirik F. Kjønstad, Mar 2019: Modifications to write consequtively to file.
+!!
       implicit none 
 !
       class(mo_integral_tool), intent(inout) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) ::t1
 !
-      real(dp), dimension(:,:), allocatable :: L_ij_J, L_ia_J, L_ai_J, L_ab_J
+      real(dp), dimension(:,:,:), allocatable :: L_ij_J, L_ai_J, L_ab_J
+      real(dp), dimension(:,:,:), allocatable :: L_J_ia, L_J_ab, L_J_ij, L_J_ai
 !
-      integer :: ij, ij_rec, i, j, k, ai, ai_rec, ia, ia_rec, ab, ab_rec, a, b
+      integer :: ij_rec, i, j, ai_rec, ia_rec, ab_rec, a, b
 !
       integer :: req0, req1, req1_a, req1_i, req2, current_i_batch, current_a_batch, current_b_batch
 !
       type(batching_index) :: batch_i, batch_a, batch_b
+!
+      type(timings) :: write_t1_cholesky_timer 
+!
+      call write_t1_cholesky_timer%init('transform and write t1 cholesky to file')
+      call write_t1_cholesky_timer%start()
 !
       call integrals%cholesky_mo_t1%init('cholesky_mo_t1_vectors', 'direct', 'unformatted', dp*(integrals%n_J))
       call disk%open_file(integrals%cholesky_mo_t1, 'write') 
@@ -1061,7 +1108,7 @@ contains
 !
       req0 = 0
 !
-      req1 = (integrals%n_o)*(integrals%n_J)  & ! L_ij^J 
+      req1 = 2*(integrals%n_o)*(integrals%n_J)  & ! 2 x L_ij^J 
             + (integrals%n_v)*(integrals%n_J) & ! L_ia^J 
             + (integrals%n_J)*(integrals%n_v)   ! L_iJ_a = L_ia^J 
 !
@@ -1071,22 +1118,24 @@ contains
 !
          call batch_i%determine_limits(current_i_batch)
 !
-         call mem%alloc(L_ij_J, (batch_i%length)*(integrals%n_o), integrals%n_J)
-!
+         call mem%alloc(L_ij_J, batch_i%length, integrals%n_o, integrals%n_J)
          call integrals%construct_cholesky_ij(L_ij_J, t1, batch_i%first, batch_i%last, 1, integrals%n_o)
 !
-         do i = batch_i%first, batch_i%last
-            do j = 1, integrals%n_o
+         call mem%alloc(L_J_ij, integrals%n_J, batch_i%length, integrals%n_o)
+         call sort_12_to_21(L_ij_J, L_J_ij, integrals%n_o*batch_i%length, integrals%n_J)
+         call mem%dealloc(L_ij_J, batch_i%length, integrals%n_o, integrals%n_J)
 !
-               ij = (batch_i%length)*(j - 1) + (i - batch_i%first + 1)
-               ij_rec = integrals%n_mo*(j - 1) + i
+         do j = 1, integrals%n_o
+            do i = 1, batch_i%length 
 !
-               write(integrals%cholesky_mo_t1%unit, rec=ij_rec) (L_ij_J(ij, k), k = 1, integrals%n_J)
+               ij_rec = integrals%n_mo*(j - 1) + i + batch_i%first - 1
+!
+               write(integrals%cholesky_mo_t1%unit, rec=ij_rec) L_J_ij(:, i, j)
 !
             enddo
          enddo
 !
-         call mem%dealloc(L_ij_J, (batch_i%length)*(integrals%n_o), integrals%n_J)
+         call mem%dealloc(L_J_ij, integrals%n_J, batch_i%length, integrals%n_o)
 !
       enddo
 !
@@ -1104,22 +1153,21 @@ contains
 !
          call batch_a%determine_limits(current_a_batch)
 !
-         call mem%alloc(L_ia_J, (integrals%n_o)*(batch_a%length), integrals%n_J)
+         call mem%alloc(L_J_ia, integrals%n_J, integrals%n_o, batch_a%length)
 !
-         call integrals%read_cholesky(L_ia_J, 1, integrals%n_o, integrals%n_o + batch_a%first, integrals%n_o + batch_a%last)
+         call integrals%read_cholesky_var(L_J_ia, 1, integrals%n_o, integrals%n_o + batch_a%first, integrals%n_o + batch_a%last)
 !
-         do a = batch_a%first, batch_a%last 
+         do a = 1, batch_a%length  
             do i = 1, integrals%n_o
 !
-               ia = integrals%n_o*(a - batch_a%first) + i
-               ia_rec = integrals%n_mo*(a + integrals%n_o - 1) + i
+               ia_rec = integrals%n_mo*(a + batch_a%first + integrals%n_o - 2) + i
 !
-               write(integrals%cholesky_mo_t1%unit, rec=ia_rec) (L_ia_J(ia, j), j = 1, integrals%n_J)
+               write(integrals%cholesky_mo_t1%unit, rec=ia_rec) L_J_ia(:, i, a)
 !
             enddo
          enddo
 !
-         call mem%dealloc(L_ia_J, (integrals%n_o)*(batch_a%length), integrals%n_J)
+         call mem%dealloc(L_J_ia, integrals%n_J, integrals%n_o, batch_a%length)
 !
       enddo
 !
@@ -1130,7 +1178,7 @@ contains
       req1_a = (integrals%n_v)*(integrals%n_J) ! L_ab^J 
       req1_i = (integrals%n_o)*(integrals%n_J) ! L_ji^J
 !
-      req2 = (integrals%n_J) ! L_ai^J  
+      req2 = 2*(integrals%n_J) ! 2 x L_ai^J  
 !
       call batch_i%init(integrals%n_o)
       call batch_a%init(integrals%n_v)
@@ -1145,22 +1193,25 @@ contains
 !
             call batch_i%determine_limits(current_i_batch)
 !
-            call mem%alloc(L_ai_J, (batch_a%length)*(batch_i%length), integrals%n_J)
+            call mem%alloc(L_ai_J, batch_a%length, batch_i%length, integrals%n_J)
 !
             call integrals%construct_cholesky_ai(L_ai_J, t1, batch_a%first, batch_a%last, batch_i%first, batch_i%last)
 !
-            do i = batch_i%first, batch_i%last 
-               do a = batch_a%first, batch_a%last 
+            call mem%alloc(L_J_ai, integrals%n_J, batch_a%length, batch_i%length)
+            call sort_12_to_21(L_ai_J, L_J_ai, batch_a%length*batch_i%length, integrals%n_J)
+            call mem%dealloc(L_ai_J, batch_a%length, batch_i%length, integrals%n_J)
 !
-                  ai = (batch_a%length)*(i - batch_i%first) + a - batch_a%first + 1
-                  ai_rec = integrals%n_mo*(i - 1) + a + integrals%n_o
+            do i = 1, batch_i%length 
+               do a = 1, batch_a%length 
 !
-                  write(integrals%cholesky_mo_t1%unit, rec=ai_rec) (L_ai_J(ai, j), j = 1, integrals%n_J)
+                  ai_rec = integrals%n_mo*(i + batch_i%first - 2) + a + batch_a%first - 1 + integrals%n_o
+!
+                  write(integrals%cholesky_mo_t1%unit, rec=ai_rec) L_J_ai(:, a, i)
 !
                enddo
             enddo
 !
-            call mem%dealloc(L_ai_J, (batch_a%length)*(batch_i%length), integrals%n_J)
+            call mem%dealloc(L_J_ai, integrals%n_J, batch_a%length, batch_i%length)
 !
          enddo
       enddo
@@ -1171,8 +1222,8 @@ contains
 !
       req0 = 0
 !
-      req1 = (integrals%n_v)*(integrals%n_J) & ! L_ab^J 
-            + (integrals%n_o)*(integrals%n_J)  ! L_ib^J 
+      req1 = 2*(integrals%n_v)*(integrals%n_J) &   ! 2 x L_ab^J 
+            + (integrals%n_o)*(integrals%n_J)      ! L_ib^J 
 !
       call mem%batch_setup(batch_b, req0, req1)
 !
@@ -1180,28 +1231,34 @@ contains
 !
          call batch_b%determine_limits(current_b_batch)
 !
-         call mem%alloc(L_ab_J, (integrals%n_v)*(batch_b%length), integrals%n_J)
+         call mem%alloc(L_ab_J, integrals%n_v, batch_b%length, integrals%n_J)
 !
          call integrals%construct_cholesky_ab(L_ab_J, t1, 1, integrals%n_v, batch_b%first, batch_b%last)
 !
-         do a = 1, integrals%n_v
-            do b = batch_b%first, batch_b%last 
+         call mem%alloc(L_J_ab, integrals%n_J, integrals%n_v, batch_b%length)
+         call sort_12_to_21(L_ab_J, L_J_ab, integrals%n_v*batch_b%length, integrals%n_J)
+         call mem%dealloc(L_ab_J, integrals%n_v, batch_b%length, integrals%n_J)
 !
-               ab_rec = integrals%n_mo*((integrals%n_o + b) - 1) + (a + integrals%n_o)
-               ab = integrals%n_v*(b - batch_b%first) + a
+         do b = 1, batch_b%length  
+            do a = 1, integrals%n_v
 !
-               write(integrals%cholesky_mo_t1%unit, rec=ab_rec) (L_ab_J(ab, j), j = 1, integrals%n_J)
+               ab_rec = integrals%n_mo*((integrals%n_o + b + batch_b%first) - 2) + (a + integrals%n_o)
+!
+               write(integrals%cholesky_mo_t1%unit, rec=ab_rec) L_J_ab(:, a, b)
 !
             enddo
          enddo  
 !
-         call mem%dealloc(L_ab_J, (integrals%n_v)*(batch_b%length), integrals%n_J)  
+         call mem%dealloc(L_J_ab, integrals%n_J, integrals%n_v, batch_b%length)
 !
       enddo
 !
       integrals%cholesky_t1_file   = .true.
 !
       call disk%close_file(integrals%cholesky_mo_t1)    
+!
+      call write_t1_cholesky_timer%freeze()
+      call write_t1_cholesky_timer%switch_off()
 !
    end subroutine write_t1_cholesky_mo_integral_tool
 !
