@@ -349,7 +349,7 @@ contains
       integer :: a, b, c, d
       integer :: i, j
 !
-      integer :: ab, bc, cd, ad, ac, bd
+      integer :: ab, cd
       integer :: ai, aj, bj, bi, ci, cj, dj, di
       integer :: ij
 !
@@ -452,7 +452,7 @@ contains
 !
 !              Reorder g_ca_db to g_abcd and t_cidj to t_cdij
 !
-!$omp parallel do schedule(static) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
+!$omp parallel do private(a,b,c,d,ab,cd)
                do c = 1, wf%n_v
                   do d = 1, c
 !
@@ -460,40 +460,41 @@ contains
 !
                      do a = 1, batch_a%length
 !
-                        ac = batch_a%length*(c - 1) + a
-                        ad = batch_a%length*(d - 1) + a 
+                        do  b = 1, a
 !
-                        do  b = 1, batch_b%length
-                           if ((a+batch_a%first-1) .ge. (b+batch_b%first-1)) then
+                           ab = (max(a,b)*(max(a,b)-3)/2) + a + b
 !
-                              bd = batch_b%length*(d - 1) + b 
-                              bc = batch_b%length*(c - 1) + b
+                           g_p_abcd(ab, cd) = g_acbd(a, c, b, d) + g_acbd(a, d, b, c)
+                           g_m_abcd(ab, cd) = g_acbd(a, c, b, d) - g_acbd(a, d, b, c)
 !
-                              ab = (max(a,b)*(max(a,b)-3)/2) + a + b
-!
-                              g_p_abcd(ab, cd) = g_acbd(a, c, b, d) + g_acbd(a, d, b, c)
-                              g_m_abcd(ab, cd) = g_acbd(a, c, b, d) - g_acbd(a, d, b, c)
-!
-                             if(c .ne. d) then
-                               g_p_abcd(ab, cd) = two*g_p_abcd(ab, cd)
-                               g_m_abcd(ab, cd) = two*g_m_abcd(ab, cd)
-                             endif
-!
+                           if(c .ne. d) then
+                              g_p_abcd(ab, cd) = two*g_p_abcd(ab, cd)
+                              g_m_abcd(ab, cd) = two*g_m_abcd(ab, cd)
                            endif
+!
                         enddo
                      enddo
+                  enddo
+               enddo
+!$omp end parallel do
+!
+!$omp parallel do private(c,d,i,j,ij,cd,ci,cj,di,dj,cidj,dicj)
+               do c = 1, wf%n_v
+                  do d = 1, c
+!
+                     cd = (c*(c-3)/2) + c + d
 !
                     do i = 1, wf%n_o
                        do j = 1, i
 !
-                          ij = (max(i,j)*(max(i,j)-3)/2) + i + j 
+                           ij = (i*(i-3)/2) + i + j 
 !
                            ci = (i-1)*wf%n_v + c
                            dj = (j-1)*wf%n_v + d
                            cj = (j-1)*wf%n_v + c
                            di = (i-1)*wf%n_v + d
 !
-                           cidj = (max(ci,dj)*(max(ci,dj)-3)/2) + ci + dj
+                           cidj = (ci*(ci-3)/2) + ci + dj
                            dicj = (max(cj,di)*(max(cj,di)-3)/2) + cj + di 
 !
                            t_p_cdij(cd, ij) = wf%t2(cidj) + wf%t2(dicj)
@@ -553,36 +554,34 @@ contains
                do i = 1, wf%n_o
                   do j = 1, i
 !
-                     ij = (max(i,j)*(max(i,j)-3)/2) + i + j
+                     ij = (i*(i-3)/2) + i + j
 !
                      do a = 1, batch_a%length
 !
                         ai = (i-1)*wf%n_v + (a + batch_a%first - 1)
                         aj = (j-1)*wf%n_v + (a + batch_a%first - 1)
 !
-                        do b = 1, batch_b%length
+                        do b = 1, a
 !
-                           if ((a+batch_a%first-1) .ge. (b+batch_b%first-1)) then
 !
-                              bi = (i-1)*wf%n_v + (b + batch_b%first - 1)
-                              bj = (j-1)*wf%n_v + (b + batch_b%first - 1)
+                           bi = (i-1)*wf%n_v + (b + batch_b%first - 1)
+                           bj = (j-1)*wf%n_v + (b + batch_b%first - 1)
 !
-                              ab = (max(a,b)*(max(a,b)-3)/2) + a + b 
+                           ab = (a*(a-3)/2) + a + b 
 !
-                              aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
+                           aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
+!
+!                          Reorder into omega2_aibj
+!
+                           omega2(aibj) = omega2(aibj) &
+                                                + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
+!
+                           if (a .ne. b .and. i .ne. j) then
+!
                               biaj = (max(bi,aj)*(max(bi,aj)-3)/2) + bi + aj 
+                              omega2(biaj) = omega2(biaj) &
+                                           + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
 !
-!                             Reorder into omega2_aibj
-!
-                              omega2(aibj) = omega2(aibj) &
-                                                   + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
-!
-                              if (aibj .ne. biaj) then
-!
-                                 omega2(biaj) = omega2(biaj) &
-                                              + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
-!
-                              endif
                            endif
 !
                         enddo
@@ -610,21 +609,15 @@ contains
                t_p_cdij = zero
                t_m_cdij = zero
 !
-!$omp parallel do schedule(static) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
+!$omp parallel do private(a,b,c,d,ab,cd)
                do c = 1, wf%n_v
                   do d = 1, c
 !
-                     cd = (max(c,d)*(max(c,d)-3)/2) + c + d
+                     cd = (c*(c-3)/2) + c + d
 !
                      do a = 1, batch_a%length
 !
-                        ac =  batch_a%length*(c - 1) + a
-                        ad =  batch_a%length*(d - 1) + a
-!
                         do  b = 1, batch_b%length
-!
-                           bd = batch_b%length*(d - 1) + b
-                           bc = batch_b%length*(c - 1) + b
 !
                            ab = (b-1)*batch_a%length + a
 !
@@ -640,11 +633,20 @@ contains
 !
                         enddo
                      enddo
+                  enddo
+               enddo
+!$omp end parallel do
+!
+!$omp parallel do schedule(static) private(c,d,i,j,cd,ij,ci,cj,di,dj,cidj,dicj)
+               do c = 1, wf%n_v
+                  do d = 1, c
+!
+                     cd = (c*(c-3)/2) + c + d
 !
                      do i = 1, wf%n_o
                         do j = 1, i
 !
-                           ij = (max(i,j)*(max(i,j)-3)/2) + i + j 
+                           ij = (i*(i-3)/2) + i + j 
 !
                            ci = (i-1)*wf%n_v + c
                            dj = (j-1)*wf%n_v + d
@@ -657,10 +659,10 @@ contains
                            t_p_cdij(cd, ij) = wf%t2(cidj) + wf%t2(dicj)
                            t_m_cdij(cd, ij) = wf%t2(cidj) - wf%t2(dicj)
 !
-                       enddo
-                    enddo
-                 enddo
-              enddo
+                        enddo
+                     enddo
+                  enddo
+               enddo
 !$omp end parallel do
 !
 !              Dellocate g_acbd
@@ -672,33 +674,33 @@ contains
                call mem%alloc(omega2_p_abij, (batch_a%length)*(batch_b%length), n_o_packed)
                call mem%alloc(omega2_m_abij, (batch_a%length)*(batch_b%length), n_o_packed)
 !
-!               omega2_ab_ij = sum_(cd) g_abcd*t_cdij
+!              omega2_ab_ij = sum_(cd) g_abcd*t_cdij
 !
-              call dgemm('N','N',                            &
-                          (batch_a%length)*(batch_b%length), &
-                          n_o_packed,                        &
-                          n_v_packed,                        &
-                          one/four,                          &
-                          g_p_abcd,                          &
-                          (batch_a%length)*(batch_b%length), &
-                          t_p_cdij,                          &
-                          n_v_packed,                        &
-                          zero,                              &
-                          omega2_p_abij,                     &
-                          (batch_a%length)*(batch_b%length))
+               call dgemm('N','N',                            &
+                           (batch_a%length)*(batch_b%length), &
+                           n_o_packed,                        &
+                           n_v_packed,                        &
+                           one/four,                          &
+                           g_p_abcd,                          &
+                           (batch_a%length)*(batch_b%length), &
+                           t_p_cdij,                          &
+                           n_v_packed,                        &
+                           zero,                              &
+                           omega2_p_abij,                     &
+                           (batch_a%length)*(batch_b%length))
 !
-              call dgemm('N','N',                            &
-                          (batch_a%length)*(batch_b%length), &
-                          n_o_packed,                        &
-                          n_v_packed,                        &
-                          one/four,                          &
-                          g_m_abcd,                          &
-                          (batch_a%length)*(batch_b%length), &
-                          t_m_cdij,                          &
-                          n_v_packed,                        &
-                          zero,                              &
-                          omega2_m_abij,                     &
-                          (batch_a%length)*(batch_b%length))
+               call dgemm('N','N',                            &
+                           (batch_a%length)*(batch_b%length), &
+                           n_o_packed,                        &
+                           n_v_packed,                        &
+                           one/four,                          &
+                           g_m_abcd,                          &
+                           (batch_a%length)*(batch_b%length), &
+                           t_m_cdij,                          &
+                           n_v_packed,                        &
+                           zero,                              &
+                           omega2_m_abij,                     &
+                           (batch_a%length)*(batch_b%length))
 !
 !              Deallocate +-g, +-t
 !
@@ -711,7 +713,7 @@ contains
                do i = 1, wf%n_o
                   do j = 1, i
 !
-                     ij = (max(i,j)*(max(i,j)-3)/2) + i + j
+                     ij = (i*(i-3)/2) + i + j
 !
                      do a = 1, batch_a%length
 !
@@ -728,15 +730,15 @@ contains
                               ab = batch_a%length*(b - 1) + a
 !
                               aibj = max(ai, bj)*(max(ai, bj)-3)/2 + ai + bj
-                              biaj = max(bi, aj)*(max(bi, aj)-3)/2 + bi + aj
 !
 !                             Reorder into omega2_aibj
 !
                               omega2(aibj) = omega2(aibj) &
                                           + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
 !
-                              if (aibj .ne. biaj) then
+                              if (a .ne. b .and. i .ne. j) then
 !
+                                 biaj = max(bi, aj)*(max(bi, aj)-3)/2 + bi + aj
                                  omega2(biaj) = omega2(biaj) &
                                           + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
 !
