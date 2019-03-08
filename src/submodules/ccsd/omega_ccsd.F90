@@ -478,16 +478,16 @@ contains
                enddo
 !$omp end parallel do
 !
-!$omp parallel do private(c,d,i,j,ij,cd,ci,cj,di,dj,cidj,dicj)
-               do c = 1, wf%n_v
-                  do d = 1, c
+!$omp parallel do private(i,j,c,d,ij,cd,ci,cj,di,dj,cidj,dicj)
+              do i = 1, wf%n_o
+                 do j = 1, i
 !
-                     cd = (c*(c-3)/2) + c + d
+                     ij = (i*(i-3)/2) + i + j 
 !
-                    do i = 1, wf%n_o
-                       do j = 1, i
+                     do c = 1, wf%n_v
+                        do d = 1, c
 !
-                           ij = (i*(i-3)/2) + i + j 
+                           cd = (c*(c-3)/2) + c + d
 !
                            ci = (i-1)*wf%n_v + c
                            dj = (j-1)*wf%n_v + d
@@ -638,15 +638,15 @@ contains
 !$omp end parallel do
 !
 !$omp parallel do schedule(static) private(c,d,i,j,cd,ij,ci,cj,di,dj,cidj,dicj)
-               do c = 1, wf%n_v
-                  do d = 1, c
+               do i = 1, wf%n_o
+                  do j = 1, i
 !
-                     cd = (c*(c-3)/2) + c + d
+                     ij = (i*(i-3)/2) + i + j 
 !
-                     do i = 1, wf%n_o
-                        do j = 1, i
+                     do c = 1, wf%n_v
+                        do d = 1, c
 !
-                           ij = (i*(i-3)/2) + i + j 
+                           cd = (c*(c-3)/2) + c + d
 !
                            ci = (i-1)*wf%n_v + c
                            dj = (j-1)*wf%n_v + d
