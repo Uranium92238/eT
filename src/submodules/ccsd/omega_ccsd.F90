@@ -454,7 +454,7 @@ contains
 !
 !              Reorder g_ca_db to g_abcd and t_cidj to t_cdij
 !
-!$omp parallel do private(a,b,c,d,ab,cd)
+!$omp parallel do private(a,b,c,d,ab,cd,diag_factor)
                do c = 1, wf%n_v
                   do d = 1, c
 !
@@ -611,7 +611,7 @@ contains
                t_p_cdij = zero
                t_m_cdij = zero
 !
-!$omp parallel do private(a,b,c,d,ab,cd)
+!$omp parallel do private(a,b,c,d,ab,cd,diag_factor)
                do c = 1, wf%n_v
                   do d = 1, c
 !
