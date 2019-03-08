@@ -114,56 +114,22 @@ module ccs_class
 !
 !     Routines to get electron repulsion integrals (ERIs)
 !
-      procedure :: get_ovov_2_ccs
-      procedure :: get_ovov_4_ccs
-      generic   :: get_ovov                                     => get_ovov_2_ccs, get_ovov_4_ccs
-      procedure :: get_vovo_2_ccs
-      procedure :: get_vovo_4_ccs
-      generic   :: get_vovo                                     => get_vovo_2_ccs, get_vovo_4_ccs
-!
-      procedure :: get_vvoo_2_ccs
-      procedure :: get_vvoo_4_ccs
-      generic   :: get_vvoo                                     => get_vvoo_2_ccs, get_vvoo_4_ccs
-      procedure :: get_voov_2_ccs
-      procedure :: get_voov_4_ccs
-      generic   :: get_voov                                     => get_voov_2_ccs, get_voov_4_ccs
-      procedure :: get_ovvo_2_ccs
-      procedure :: get_ovvo_4_ccs
-      generic   :: get_ovvo                                     => get_ovvo_2_ccs, get_ovvo_4_ccs
-      procedure :: get_oovv_2_ccs
-      procedure :: get_oovv_4_ccs
-      generic   :: get_oovv                                     => get_oovv_2_ccs, get_oovv_4_ccs
-!
-      procedure :: get_oooo_2_ccs
-      procedure :: get_oooo_4_ccs
-      generic   :: get_oooo                                     => get_oooo_2_ccs, get_oooo_4_ccs
-      procedure :: get_vvvv_2_ccs
-      procedure :: get_vvvv_4_ccs
-      generic   :: get_vvvv                                     => get_vvvv_2_ccs, get_vvvv_4_ccs
-!
-      procedure :: get_ooov_2_ccs
-      procedure :: get_ooov_4_ccs
-      generic   :: get_ooov                                     => get_ooov_2_ccs, get_ooov_4_ccs
-      procedure :: get_oovo_2_ccs
-      procedure :: get_oovo_4_ccs
-      generic   :: get_oovo                                     => get_oovo_2_ccs, get_oovo_4_ccs
-      procedure :: get_ovoo_2_ccs
-      procedure :: get_ovoo_4_ccs
-      generic   :: get_ovoo                                     => get_ovoo_2_ccs, get_ovoo_4_ccs
-      procedure :: get_vooo_2_ccs
-      procedure :: get_vooo_4_ccs
-      generic   :: get_vooo                                     => get_vooo_2_ccs, get_vooo_4_ccs
-!
+      procedure :: get_ovov                                     => get_ovov_ccs
+      procedure :: get_vovo                                     => get_vovo_ccs
+      procedure :: get_vvoo                                     => get_vvoo_ccs
+      procedure :: get_voov                                     => get_voov_ccs
+      procedure :: get_ovvo                                     => get_ovvo_ccs
+      procedure :: get_oovv                                     => get_oovv_ccs
+      procedure :: get_oooo                                     => get_oooo_ccs
+      procedure :: get_vvvv                                     => get_vvvv_ccs
+      procedure :: get_ooov                                     => get_ooov_ccs
+      procedure :: get_oovo                                     => get_oovo_ccs
+      procedure :: get_ovoo                                     => get_ovoo_ccs
+      procedure :: get_vooo                                     => get_vooo_ccs
       procedure :: get_vvvo                                     => get_vvvo_ccs
-      procedure :: get_vvov_2_ccs
-      procedure :: get_vvov_4_ccs
-      generic   :: get_vvov                                     => get_vvov_2_ccs, get_vvov_4_ccs
-      procedure :: get_vovv_2_ccs
-      procedure :: get_vovv_4_ccs
-      generic   :: get_vovv                                     => get_vovv_2_ccs, get_vovv_4_ccs
-      procedure :: get_ovvv_2_ccs
-      procedure :: get_ovvv_4_ccs
-      generic   :: get_ovvv                                     => get_ovvv_2_ccs, get_ovvv_4_ccs
+      procedure :: get_vvov                                     => get_vvov_ccs
+      procedure :: get_vovv                                     => get_vovv_ccs
+      procedure :: get_ovvv                                     => get_ovvv_ccs
 !
       procedure, nopass :: need_g_abcd                          => need_g_abcd_ccs
 !
@@ -1195,7 +1161,7 @@ contains
    end subroutine get_ovov_2_ccs
 !
 !
-   subroutine get_ovov_4_ccs(wf, g_iajb, first_i, last_i, first_a, last_a, &
+   subroutine get_ovov_ccs(wf, g_iajb, first_i, last_i, first_a, last_a, &
                                          first_j, last_j, first_b, last_b)
 !!
 !!    Get ovov 
@@ -1264,7 +1230,7 @@ contains
                                        local_first_j, local_last_j, local_first_b, local_last_b, &
                                        index_restrictions)
 !
-   end subroutine get_ovov_4_ccs
+   end subroutine get_ovov_ccs
 !
 !
    subroutine get_oooo_2_ccs(wf, g_ijkl, first_i, last_i, first_j, last_j, &
@@ -1347,7 +1313,7 @@ contains
    end subroutine get_oooo_2_ccs
 !
 !
-   subroutine get_oooo_4_ccs(wf, g_ijkl, first_i, last_i, first_j, last_j, &
+   subroutine get_oooo_ccs(wf, g_ijkl, first_i, last_i, first_j, last_j, &
                                          first_k, last_k, first_l, last_l)
 !!
 !!    Get oooo 
@@ -1432,7 +1398,7 @@ contains
 !
       endif
 !
-   end subroutine get_oooo_4_ccs
+   end subroutine get_oooo_ccs
 !
 !
    subroutine get_ooov_2_ccs(wf, g_ijka, first_i, last_i, first_j, last_j, &
@@ -1509,7 +1475,7 @@ contains
    end subroutine get_ooov_2_ccs
 !
 !
-   subroutine get_ooov_4_ccs(wf, g_ijka, first_i, last_i, first_j, last_j, &
+   subroutine get_ooov_ccs(wf, g_ijka, first_i, last_i, first_j, last_j, &
                                          first_k, last_k, first_a, last_a)
 !!
 !!    Get ooov 
@@ -1588,7 +1554,7 @@ contains
 !
       endif
 !
-   end subroutine get_ooov_4_ccs
+   end subroutine get_ooov_ccs
 !
 !
    subroutine get_oovo_2_ccs(wf, g_ijak, first_i, last_i, first_j, last_j, &
@@ -1665,7 +1631,7 @@ contains
    end subroutine get_oovo_2_ccs
 !
 !
-   subroutine get_oovo_4_ccs(wf, g_ijak, first_i, last_i, first_j, last_j, &
+   subroutine get_oovo_ccs(wf, g_ijak, first_i, last_i, first_j, last_j, &
                                          first_a, last_a, first_k, last_k)
 !!
 !!    Get oovo
@@ -1745,7 +1711,7 @@ contains
 !
       endif
 !
-   end subroutine get_oovo_4_ccs
+   end subroutine get_oovo_ccs
 !
 !
    subroutine get_ovoo_2_ccs(wf, g_iajk, first_i, last_i, first_a, last_a, &
@@ -1822,7 +1788,7 @@ contains
    end subroutine get_ovoo_2_ccs
 !
 !
-   subroutine get_ovoo_4_ccs(wf, g_iajk, first_i, last_i, first_a, last_a, &
+   subroutine get_ovoo_ccs(wf, g_iajk, first_i, last_i, first_a, last_a, &
                                          first_j, last_j, first_k, last_k)
 !!
 !!    Get ovoo
@@ -1901,7 +1867,7 @@ contains
 !
       endif
 !
-   end subroutine get_ovoo_4_ccs
+   end subroutine get_ovoo_ccs
 !
 !
    subroutine get_vooo_2_ccs(wf, g_aijk, first_a, last_a, first_i, last_i, &
@@ -1978,7 +1944,7 @@ contains
    end subroutine get_vooo_2_ccs
 !
 !
-   subroutine get_vooo_4_ccs(wf, g_aijk, first_a, last_a, first_i, last_i, &
+   subroutine get_vooo_ccs(wf, g_aijk, first_a, last_a, first_i, last_i, &
                                          first_j, last_j, first_k, last_k)
 !!
 !!    Get vooo
@@ -2057,7 +2023,7 @@ contains
 !
       endif
 !
-   end subroutine get_vooo_4_ccs
+   end subroutine get_vooo_ccs
 !
 !
    subroutine get_vvoo_2_ccs(wf, g_abij, first_a, last_a, first_b, last_b, &
@@ -2134,7 +2100,7 @@ contains
    end subroutine get_vvoo_2_ccs
 !
 !
-   subroutine get_vvoo_4_ccs(wf, g_abij, first_a, last_a, first_b, last_b, &
+   subroutine get_vvoo_ccs(wf, g_abij, first_a, last_a, first_b, last_b, &
                                          first_i, last_i, first_j, last_j)
 !!
 !!    Get vvoo
@@ -2213,7 +2179,7 @@ contains
 !
       endif
 !
-   end subroutine get_vvoo_4_ccs
+   end subroutine get_vvoo_ccs
 !
 !
    subroutine get_vovo_2_ccs(wf, g_aibj, first_a, last_a, first_i, last_i, &
@@ -2296,7 +2262,7 @@ contains
    end subroutine get_vovo_2_ccs
 !
 !
-   subroutine get_vovo_4_ccs(wf, g_aibj, first_a, last_a, first_i, last_i, &
+   subroutine get_vovo_ccs(wf, g_aibj, first_a, last_a, first_i, last_i, &
                                          first_b, last_b, first_j, last_j)
 !!
 !!    Get vovo
@@ -2383,7 +2349,7 @@ contains
 !
       endif
 !
-   end subroutine get_vovo_4_ccs
+   end subroutine get_vovo_ccs
 !
 !
    subroutine get_voov_2_ccs(wf, g_aijb, first_a, last_a, first_i, last_i, &
@@ -2460,7 +2426,7 @@ contains
    end subroutine get_voov_2_ccs
 !
 !
-   subroutine get_voov_4_ccs(wf, g_aijb, first_a, last_a, first_i, last_i, &
+   subroutine get_voov_ccs(wf, g_aijb, first_a, last_a, first_i, last_i, &
                                          first_j, last_j, first_b, last_b)
 !!
 !!    Get voov
@@ -2539,7 +2505,7 @@ contains
 !
       endif
 !
-   end subroutine get_voov_4_ccs
+   end subroutine get_voov_ccs
 !
 !
    subroutine get_ovvo_2_ccs(wf, g_iabj, first_i, last_i, first_a, last_a, &
@@ -2616,7 +2582,7 @@ contains
    end subroutine get_ovvo_2_ccs
 !
 !
-   subroutine get_ovvo_4_ccs(wf, g_iabj, first_i, last_i, first_a, last_a, &
+   subroutine get_ovvo_ccs(wf, g_iabj, first_i, last_i, first_a, last_a, &
                                          first_b, last_b, first_j, last_j)
 !!
 !!    Get ovvo
@@ -2695,10 +2661,10 @@ contains
 !
       endif
 !
-   end subroutine get_ovvo_4_ccs
+   end subroutine get_ovvo_ccs
 !
 !
-   subroutine get_oovv_4_ccs(wf, g_ijab, first_i, last_i, first_j, last_j, &
+   subroutine get_oovv_ccs(wf, g_ijab, first_i, last_i, first_j, last_j, &
                                          first_a, last_a, first_b, last_b)
 !!
 !!    Get oovv
@@ -2781,7 +2747,7 @@ contains
 !
       endif
 !
-   end subroutine get_oovv_4_ccs
+   end subroutine get_oovv_ccs
 !
 !
    subroutine get_oovv_2_ccs(wf, g_ijab, first_i, last_i, first_j, last_j, &
@@ -3018,7 +2984,7 @@ contains
    end subroutine get_vvov_2_ccs
 !
 !
-   subroutine get_vvov_4_ccs(wf, g_abic, first_a, last_a, first_b, last_b, &
+   subroutine get_vvov_ccs(wf, g_abic, first_a, last_a, first_b, last_b, &
                                          first_i, last_i, first_c, last_c)
 !!
 !!    Get vvov
@@ -3101,7 +3067,7 @@ contains
 !
       endif
 !
-   end subroutine get_vvov_4_ccs
+   end subroutine get_vvov_ccs
 !
 !
    subroutine get_vovv_2_ccs(wf, g_aibc, first_a, last_a, first_i, last_i, &
@@ -3178,7 +3144,7 @@ contains
    end subroutine get_vovv_2_ccs
 !
 !
-   subroutine get_vovv_4_ccs(wf, g_aibc, first_a, last_a, first_i, last_i, &
+   subroutine get_vovv_ccs(wf, g_aibc, first_a, last_a, first_i, last_i, &
                                          first_b, last_b, first_c, last_c)
 !!
 !!    Get vovv
@@ -3261,7 +3227,7 @@ contains
 !
       endif
 !
-   end subroutine get_vovv_4_ccs
+   end subroutine get_vovv_ccs
 !
 !
    subroutine get_ovvv_2_ccs(wf, g_iabc, first_i, last_i, first_a, last_a, &
@@ -3338,7 +3304,7 @@ contains
    end subroutine get_ovvv_2_ccs
 !
 !
-   subroutine get_ovvv_4_ccs(wf, g_iabc, first_i, last_i, first_a, last_a, &
+   subroutine get_ovvv_ccs(wf, g_iabc, first_i, last_i, first_a, last_a, &
                                          first_b, last_b, first_c, last_c)
 !!
 !!    Get ovvv
@@ -3421,7 +3387,7 @@ contains
 !
       endif
 !
-   end subroutine get_ovvv_4_ccs
+   end subroutine get_ovvv_ccs
 !
 !
    subroutine get_vvvv_2_ccs(wf, g_abcd, first_a, last_a, first_b, last_b, &
@@ -3506,7 +3472,7 @@ contains
    end subroutine get_vvvv_2_ccs
 !
 !
-   subroutine get_vvvv_4_ccs(wf, g_abcd, first_a, last_a, first_b, last_b, &
+   subroutine get_vvvv_ccs(wf, g_abcd, first_a, last_a, first_b, last_b, &
                                          first_c, last_c, first_d, last_d)
 !!
 !!    Get vvvv
@@ -3597,7 +3563,7 @@ contains
 !
       endif
 !
-   end subroutine get_vvvv_4_ccs
+   end subroutine get_vvvv_ccs
 !
 !
    subroutine jacobian_transform_trial_vector_ccs(wf, c_i)
