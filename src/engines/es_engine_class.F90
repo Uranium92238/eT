@@ -101,12 +101,8 @@ contains
 !
       deallocate(cc_gs_solver)
 !
-      if (wf%name_ .ne. 'CCS') then 
-!
-         call wf%integrals%write_t1_cholesky(wf%t1)
-         call wf%integrals%can_we_keep_g_pqrs()
-!
-      endif
+      call wf%integrals%write_t1_cholesky(wf%t1)
+      call wf%integrals%can_we_keep_g_pqrs_t1()
 !
 !     Prepare for excited state
 !

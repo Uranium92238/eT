@@ -27,7 +27,6 @@ module mo_integral_tool_class
 !
       integer, private :: n_o 
       integer, private :: n_v 
-!
       integer, private :: n_mo 
 !
       logical, private :: eri_t1_mem = .false.
@@ -37,36 +36,23 @@ module mo_integral_tool_class
 !
       procedure :: prepare                => prepare_mo_integral_tool
 !
-      procedure :: need_t1                => need_t1_mo_integral_tool
+!     Read MO Cholesky vectors 
 !
-      procedure :: read_cholesky          => read_cholesky_mo_integral_tool
-      procedure :: read_cholesky_var          => read_cholesky_var_mo_integral_tool
-     ! procedure :: read_cholesky_t1       => read_cholesky_t1_mo_integral_tool
-      procedure :: read_cholesky_t1_var       => read_cholesky_t1_var_mo_integral_tool
-      procedure :: construct_pqrs_t1         => construct_pqrs_t1_mo_integral_tool
+      procedure :: read_cholesky          => read_cholesky_mo_integral_tool 
 !
-   !   procedure :: read_cholesky_ia       => read_cholesky_ia_mo_integral_tool
+!     Read/write/construct T1-transformed Cholesky vectors as well as T1-ERI construction 
+!
+      procedure :: read_cholesky_t1       => read_cholesky_t1_mo_integral_tool
+      procedure :: write_t1_cholesky      => write_t1_cholesky_mo_integral_tool
+!
+      procedure :: construct_g_pqrs_t1    => construct_g_pqrs_t1_mo_integral_tool
 !
       procedure :: construct_cholesky_ij  => construct_cholesky_ij_mo_integral_tool
       procedure :: construct_cholesky_ab  => construct_cholesky_ab_mo_integral_tool
       procedure :: construct_cholesky_ai  => construct_cholesky_ai_mo_integral_tool
 !
-   !   procedure :: read_cholesky_ai_t1    => read_cholesky_ai_t1_mo_integral_tool
-   !   procedure :: read_cholesky_ia_t1    => read_cholesky_ia_t1_mo_integral_tool
-   !   procedure :: read_cholesky_ij_t1    => read_cholesky_ij_t1_mo_integral_tool
-   !   procedure :: read_cholesky_ab_t1    => read_cholesky_ab_t1_mo_integral_tool
-!
       procedure :: set_full_index         => set_full_index_mo_integral_tool
-!
-      procedure :: get_required_voov      => get_required_voov_mo_integral_tool
-      procedure :: get_required_vvoo      => get_required_vvoo_mo_integral_tool
-      procedure :: get_required_vvov      => get_required_vvov_mo_integral_tool
-      procedure :: get_required_vvvo      => get_required_vvvo_mo_integral_tool
-      procedure :: get_required_vvvv      => get_required_vvvv_mo_integral_tool
-!
-      procedure :: write_t1_cholesky      => write_t1_cholesky_mo_integral_tool
-!
-      procedure :: can_we_keep_g_pqrs     => can_we_keep_g_pqrs_mo_integral_tool
+      procedure :: can_we_keep_g_pqrs_t1  => can_we_keep_g_pqrs_t1_mo_integral_tool
 !
    end type mo_integral_tool
 !
@@ -95,13 +81,13 @@ contains
       integer, intent(in) :: n_o
       integer, intent(in) :: n_v
 !
-      integrals%n_J = n_J
-!
+      integrals%n_J  = n_J
       integrals%n_o  = n_o 
       integrals%n_v  = n_v
       integrals%n_mo = n_o + n_v
 !
-      call  integrals%cholesky_mo%init('cholesky_mo_vectors', 'direct', 'unformatted', dp*n_J)
+      call integrals%cholesky_mo%init('cholesky_mo_vectors', 'direct', 'unformatted', dp*n_J)
+      call integrals%cholesky_mo_t1%init('cholesky_mo_t1_vectors', 'direct', 'unformatted', dp*n_J)
 ! 
 !     Initially MO cholesky on file, and not T1-transformed cholesky
 !     nor full T1-ERI matrix
@@ -113,7 +99,7 @@ contains
    end subroutine prepare_mo_integral_tool
 !
 !
-   subroutine can_we_keep_g_pqrs_mo_integral_tool(integrals)
+   subroutine can_we_keep_g_pqrs_t1_mo_integral_tool(integrals)
 !!
 !!    Can we keep g_pqrs   
 !!    Written by Eirik F. Kjønstad, Jan 2019 
@@ -131,7 +117,6 @@ contains
 !
       class(mo_integral_tool) :: integrals 
 !
-   !   real(dp), dimension(:,:,:), allocatable :: L_pq_J 
       real(dp), dimension(:,:,:), allocatable :: L_J_pq 
 !
       integer :: required_mem 
@@ -153,26 +138,23 @@ contains
 !
 !        Then construct it from the T1-Cholesky vectors 
 !
-      !   call mem%alloc(L_pq_J, integrals%n_mo, integrals%n_mo, integrals%n_J)
          call mem%alloc(L_J_pq, integrals%n_J, integrals%n_mo, integrals%n_mo)
 !
-        ! call integrals%read_cholesky_t1(L_pq_J, 1, integrals%n_mo, 1, integrals%n_mo)
-         call integrals%read_cholesky_t1_var(L_J_pq, 1, integrals%n_mo, 1, integrals%n_mo)
+         call integrals%read_cholesky_t1(L_J_pq, 1, integrals%n_mo, 1, integrals%n_mo)
 !
-         call dgemm('T','N',            &
-                     integrals%n_mo**2, &
-                     integrals%n_mo**2, &
-                     integrals%n_J,     &
-                     one,               &
-                     L_J_pq,            &
-                     integrals%n_J,    &
-                     L_J_pq,            &
-                     integrals%n_J,    &
-                     zero,              &
-                     integrals%g_pqrs,  &
+         call dgemm('T','N',              &
+                     integrals%n_mo**2,   &
+                     integrals%n_mo**2,   &
+                     integrals%n_J,       &
+                     one,                 &
+                     L_J_pq,              &
+                     integrals%n_J,       &
+                     L_J_pq,              &
+                     integrals%n_J,       &
+                     zero,                &
+                     integrals%g_pqrs,    &
                      integrals%n_mo**2)
 !
-       !  call mem%dealloc(L_pq_J, integrals%n_mo, integrals%n_mo, integrals%n_J)
          call mem%dealloc(L_J_pq, integrals%n_J, integrals%n_mo, integrals%n_mo)
 !
       else
@@ -181,64 +163,10 @@ contains
 !
       endif 
 !
-   end subroutine can_we_keep_g_pqrs_mo_integral_tool
+   end subroutine can_we_keep_g_pqrs_t1_mo_integral_tool
 !
 !
-   logical function need_t1_mo_integral_tool(integrals)
-!!
-!!    Need t1
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!
-!!    Returns true if the t1-transformed Cholesky
-!!    vectors are not on file.
-!!
-      implicit none
-!
-      class(mo_integral_tool), intent(in) :: integrals 
-!
-      need_t1_mo_integral_tool = .not. integrals%cholesky_t1_file
-!
-   end function need_t1_mo_integral_tool
-!
-!
-   subroutine read_cholesky_mo_integral_tool(integrals, L_pq_J, first_p, last_p, first_q, last_q)
-!!
-!!    Read mo cholesky vectors
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!
-!!    Reads cholesky vectors L_pq_J for mo indices 
-!!    [first_p, first_p + dim_p - 1] and [first_q, first_q + dim_q - 1]
-!!
-      implicit none
-!
-      class(mo_integral_tool), intent(in) :: integrals
-!
-      integer, intent(in) :: first_p, last_p
-      integer, intent(in) :: first_q, last_q
-!
-      real(dp), dimension(last_p - first_p + 1, last_q - first_q + 1, integrals%n_J), intent(out) :: L_pq_J
-!
-      integer :: p, q, pq_rec
-!
-      call disk%open_file(integrals%cholesky_mo, 'read')
-!
-      do q = 1, last_q - first_q + 1
-         do p = 1, last_p - first_p + 1
-!
-            pq_rec = (max(p + first_p - 1, q + first_q - 1)*(max(p + first_p - 1, q + first_q - 1)-3)/2) &
-                         + (p + first_p - 1) + (q + first_q - 1)
-!
-            read(integrals%cholesky_mo%unit, rec=pq_rec) L_pq_J(p, q, :)
-!
-         enddo
-      enddo
-!
-      call disk%close_file(integrals%cholesky_mo)
-!
-   end subroutine read_cholesky_mo_integral_tool
-!
-!
-   subroutine read_cholesky_var_mo_integral_tool(integrals, L_J_pq, first_p, last_p, first_q, last_q)
+   subroutine read_cholesky_mo_integral_tool(integrals, L_J_pq, first_p, last_p, first_q, last_q)
 !!
 !!    Read mo cholesky vectors
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
@@ -272,46 +200,10 @@ contains
 !
       call disk%close_file(integrals%cholesky_mo)
 !
-   end subroutine read_cholesky_var_mo_integral_tool
+   end subroutine read_cholesky_mo_integral_tool
 !
 !
-   subroutine read_cholesky_t1_mo_integral_tool(integrals, L_pq_J, first_p, last_p, first_q, last_q)
-!!
-!!    Read mo t1 cholesky vectors
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!
-!!    Reads T1-transformed cholesky vectors L_pq_J for mo indices 
-!!    [first_p, last_p] and [first_q, last_q]
-!!
-      implicit none
-!
-      class(mo_integral_tool), intent(in) :: integrals
-!
-      integer, intent(in) :: first_p, last_p
-      integer, intent(in) :: first_q, last_q
-!
-      real(dp), dimension(last_p - first_p + 1, last_q - first_q + 1, integrals%n_J), intent(out) :: L_pq_J
-!
-      integer :: p, q, pq_rec
-!
-      call disk%open_file(integrals%cholesky_mo_t1, 'read')
-!
-      do q = 1, last_q - first_q + 1
-         do p = 1, last_p - first_p + 1 
-!
-            pq_rec = integrals%n_mo*(q + first_q - 2) + p + first_p - 1
-!
-            read(integrals%cholesky_mo_t1%unit, rec=pq_rec) L_pq_J(p, q, :)
-!
-         enddo
-      enddo
-!
-      call disk%close_file(integrals%cholesky_mo_t1)
-!
-   end subroutine read_cholesky_t1_mo_integral_tool
-!
-!
-   subroutine read_cholesky_t1_var_mo_integral_tool(integrals, L_J_pq, first_p, last_p, first_q, last_q)
+   subroutine read_cholesky_t1_mo_integral_tool(integrals, L_J_pq, first_p, last_p, first_q, last_q)
 !!
 !!    Read mo t1 cholesky vectors
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
@@ -344,10 +236,10 @@ contains
 !
       call disk%close_file(integrals%cholesky_mo_t1)
 !
-   end subroutine read_cholesky_t1_var_mo_integral_tool
+   end subroutine read_cholesky_t1_mo_integral_tool
 !
 !
-   subroutine construct_pqrs_t1_mo_integral_tool(integrals, g_pqrs, first_p, last_p, first_q, last_q, &
+   subroutine construct_g_pqrs_t1_mo_integral_tool(integrals, g_pqrs, first_p, last_p, first_q, last_q, &
                                                                      first_r, last_r, first_s, last_s)
 !!
 !!    Construct g_pqrs T1 
@@ -371,6 +263,9 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable :: L_J_pq, L_J_rs
 !
+      if (.not. integrals%cholesky_t1_file) call output%error_msg('tried to construct T1-tranformed g_pqrs, but ' &
+                                                         // 'the T1-transformed Cholesky vectors are not on file!')
+!
       if (integrals%eri_t1_mem) then 
 !
          g_pqrs(:,:,:,:) = integrals%g_pqrs(first_p : last_p,  &
@@ -388,8 +283,8 @@ contains
          call mem%alloc(L_J_pq, integrals%n_J, dim_p, dim_q)
          call mem%alloc(L_J_rs, integrals%n_J, dim_r, dim_s)
 !
-         call integrals%read_cholesky_t1_var(L_J_pq, first_p, last_p, first_q, last_q)
-         call integrals%read_cholesky_t1_var(L_J_rs, first_r, last_r, first_s, last_s)
+         call integrals%read_cholesky_t1(L_J_pq, first_p, last_p, first_q, last_q)
+         call integrals%read_cholesky_t1(L_J_rs, first_r, last_r, first_s, last_s)
 !
          call dgemm('T', 'N', &
                      dim_p*dim_q, &
@@ -409,7 +304,7 @@ contains
 !
       endif
 !
-   end subroutine construct_pqrs_t1_mo_integral_tool
+   end subroutine construct_g_pqrs_t1_mo_integral_tool
 !
 !
    subroutine construct_cholesky_ij_mo_integral_tool(integrals, L_ij_J, t1, first_i, last_i, first_j, last_j)
@@ -436,7 +331,7 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable :: L_iJ_j_term
       real(dp), dimension(:,:,:), allocatable :: L_iJ_a
-      real(dp), dimension(:,:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:,:), allocatable :: L_J_ia, L_J_ij
 !
       integer :: full_first_i, full_last_i 
       integer :: full_first_j, full_last_j 
@@ -452,18 +347,21 @@ contains
       i_length = full_last_i - full_first_i + 1
       j_length = full_last_j - full_first_j + 1
 !
-      call mem%alloc(L_ia_J, i_length, integrals%n_v, integrals%n_J)
-!
 !     Read the untransformed Cholesky vectors
 !
-      call integrals%read_cholesky(L_ij_J, full_first_i, full_last_i, full_first_j, full_last_j)
-      call integrals%read_cholesky(L_ia_J, full_first_i, full_last_i, integrals%n_o + 1, integrals%n_mo)
+      call mem%alloc(L_J_ij, integrals%n_J, i_length, j_length)
+      call integrals%read_cholesky(L_J_ij, full_first_i, full_last_i, full_first_j, full_last_j)
+      call sort_12_to_21(L_J_ij, L_ij_J, integrals%n_J, i_length*j_length)
+      call mem%dealloc(L_J_ij, integrals%n_J, i_length, j_length)
+!
+      call mem%alloc(L_J_ia, integrals%n_J, i_length, integrals%n_v)
+      call integrals%read_cholesky(L_J_ia, full_first_i, full_last_i, integrals%n_o + 1, integrals%n_mo)
 !
 !     Compute and add t1-transformed term, L_iJ_j sum_a t_aj L_ia_J 
 !
       call mem%alloc(L_iJ_a, i_length, integrals%n_J, integrals%n_v)
-      call sort_123_to_132(L_ia_J, L_iJ_a, i_length, integrals%n_v, integrals%n_J)
-      call mem%dealloc(L_ia_J, i_length, integrals%n_v, integrals%n_J)
+      call sort_123_to_213(L_J_ia, L_iJ_a, integrals%n_J, i_length, integrals%n_v)
+      call mem%dealloc(L_J_ia, integrals%n_J, i_length, integrals%n_v)
 !
       call mem%alloc(L_iJ_j_term, i_length, integrals%n_J, j_length)
 !
@@ -516,7 +414,7 @@ contains
 !
       integer :: red_first_a 
 !
-      real(dp), dimension(:,:,:), allocatable :: L_ib_J
+      real(dp), dimension(:,:,:), allocatable :: L_ib_J, L_J_ib, L_J_ab 
 !
       integer :: b_length, a_length
 !
@@ -533,10 +431,17 @@ contains
 !
 !     Set L_ib_J = L_ib^J and L_ab_J^T1 = L_ab_J 
 !
-      call mem%alloc(L_ib_J, integrals%n_o, b_length, integrals%n_J)
-      call integrals%read_cholesky(L_ib_J, 1, integrals%n_o, full_first_b, full_last_b)
+      call mem%alloc(L_J_ib, integrals%n_J, integrals%n_o, b_length)
+      call integrals%read_cholesky(L_J_ib, 1, integrals%n_o, full_first_b, full_last_b)
 !
-      call integrals%read_cholesky(L_ab_J, full_first_a, full_last_a, full_first_b, full_last_b)
+      call mem%alloc(L_ib_J, integrals%n_o, b_length, integrals%n_J)
+      call sort_12_to_21(L_J_ib, L_ib_J, integrals%n_J, integrals%n_o*b_length)
+      call mem%dealloc(L_J_ib, integrals%n_J, integrals%n_o, b_length)
+!
+      call mem%alloc(L_J_ab, integrals%n_J, a_length, b_length)
+      call integrals%read_cholesky(L_J_ab, full_first_a, full_last_a, full_first_b, full_last_b)
+      call sort_12_to_21(L_J_ab, L_ab_J, integrals%n_J, a_length*b_length)
+      call mem%dealloc(L_J_ab, integrals%n_J, a_length, b_length)
 !
 !     Calculate and add t1-transformed term, - sum_i t_ai L_ib_J
 !
@@ -577,8 +482,10 @@ contains
       integer, intent(in) :: first_a, last_a
 !
       real(dp), dimension(last_a - first_a + 1, last_i - first_i + 1, integrals%n_J) :: L_ai_J
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
-      real(dp), dimension(:, :, :), allocatable :: L_bj_J, L_ji_J, L_ba_J, X_j_iJ, X_i_jJ, X_i_aJ
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: t1
+!
+      real(dp), dimension(:, :, :), allocatable :: L_J_ji, L_ji_J, X_j_iJ, L_J_ab, X_J_ai, L_J_ai, X_Jj_i, L_J_jb
 !
       integer :: full_first_a, full_last_a, length_a 
       integer :: full_first_i, full_last_i, length_i
@@ -596,7 +503,10 @@ contains
       length_i = full_last_i - full_first_i + 1
       length_a = full_last_a - full_first_a + 1
 !
-      call integrals%read_cholesky(L_ai_J, full_first_a, full_last_a, full_first_i, full_last_i)
+      call mem%alloc(L_J_ai, integrals%n_J, length_a, length_i)
+      call integrals%read_cholesky(L_J_ai, full_first_a, full_last_a, full_first_i, full_last_i)
+      call sort_12_to_21(L_J_ai, L_ai_J, integrals%n_J, length_a*length_i)
+      call mem%dealloc(L_J_ai, integrals%n_J, length_a, length_i)
 !
       call batch_j%init(integrals%n_o)
 !
@@ -610,31 +520,31 @@ contains
 !
          call batch_j%determine_limits(current_j_batch)
 !
-         call mem%alloc(L_bj_J, integrals%n_v, batch_j%length, integrals%n_J)
-         call integrals%read_cholesky(L_bj_J, (integrals%n_o) + 1, (integrals%n_mo), batch_j%first, batch_j%last)
+         call mem%alloc(L_J_jb, integrals%n_J, batch_j%length, integrals%n_v)
+         call integrals%read_cholesky(L_J_jb, batch_j%first, batch_j%last, (integrals%n_o) + 1, (integrals%n_mo))
 !
-         call mem%alloc(X_i_jJ, length_i, batch_j%length, integrals%n_J)
+         call mem%alloc(X_Jj_i, integrals%n_J, batch_j%length, length_i)
 !
-         call dgemm('T', 'N',                               &
+         call dgemm('N', 'N',                               &
+                  (batch_j%length)*(integrals%n_J),         &
                   length_i,                                 &
-                  (batch_j%length)*(integrals%n_J),          &
                   integrals%n_v,                            &
                   one,                                      &
+                  L_J_jb,                                   &   ! L_Jj_b 
+                  (batch_j%length)*(integrals%n_J),         &
                   t1(1, first_i),                           &   ! t_b_i
                   integrals%n_v,                            &
-                  L_bj_J,                                   &   ! L_b_jJ
-                  integrals%n_v,                            &
                   zero,                                     &
-                  X_i_jJ,                                   &
-                  length_i)
+                  X_Jj_i,                                   &
+                  (batch_j%length)*(integrals%n_J))
 !
-         call mem%dealloc(L_bj_J, integrals%n_v, batch_j%length, integrals%n_J)
+         call mem%dealloc(L_J_jb, integrals%n_J, batch_j%length, integrals%n_v)
 !
          call mem%alloc(X_j_iJ, batch_j%length, length_i, integrals%n_J)
 !
-         call sort_123_to_213(X_i_jJ, X_j_iJ, length_i, (batch_j%length), (integrals%n_J))
+         call sort_12_to_21(X_Jj_i, X_j_iJ, (integrals%n_J), batch_j%length*length_i)
 !
-         call mem%dealloc(X_i_jJ, length_i, batch_j%length, integrals%n_J)
+         call mem%dealloc(X_Jj_i, integrals%n_J, batch_j%length, length_i)
 !
          call dgemm('N', 'N',                               &
                   length_a,                                 &
@@ -653,8 +563,11 @@ contains
 !
       enddo
 !
+      call mem%alloc(L_J_ji, integrals%n_J, integrals%n_o, length_i)
+      call integrals%read_cholesky(L_J_ji, 1, (integrals%n_o), full_first_i, full_last_i)
       call mem%alloc(L_ji_J, integrals%n_o, length_i, integrals%n_J)
-      call integrals%read_cholesky(L_ji_J, 1, (integrals%n_o), full_first_i, full_last_i)
+      call sort_12_to_21(L_J_ji, L_ji_J, integrals%n_J, integrals%n_o*length_i)
+      call mem%dealloc(L_J_ji, integrals%n_J, integrals%n_o, length_i)
 !
        call dgemm('N', 'N',                                  &
                    length_a,                                 &
@@ -671,42 +584,34 @@ contains
 !
       call mem%dealloc(L_ji_J, integrals%n_o, length_i, integrals%n_J)
 !
-      call mem%alloc(L_ba_J, integrals%n_v, length_a, integrals%n_J) 
+      call mem%alloc(L_J_ab, integrals%n_J, length_a, integrals%n_v)
 !
-      call integrals%read_cholesky(L_ba_J, (integrals%n_o) + 1, (integrals%n_mo), &
-                        first_a + (integrals%n_o), last_a + (integrals%n_o))
+      call integrals%read_cholesky(L_J_ab, &
+                                       first_a + integrals%n_o, last_a + (integrals%n_o), &
+                                       integrals%n_o + 1, integrals%n_mo)
 !
-      call mem%alloc(X_i_aJ, length_i, length_a, integrals%n_J) 
+!     X_Ja,i = L_Ja,b t_b,i
 !
-      call dgemm('T', 'N',                                  &
-                  length_i,                                 &
-                  (length_a)*(integrals%n_J),               &
-                  integrals%n_v,                            &
-                  one,                                      &
-                  t1,                                       & ! t_b_i
-                  integrals%n_v,                            &
-                  L_ba_J,                                   & ! L_b_aJ
-                  integrals%n_v,                            &
-                  zero,                                     &
-                  X_i_aJ,                                   & 
-                  length_i) 
- 
-!        
-      call mem%dealloc(L_ba_J, integrals%n_v, length_a, integrals%n_J) 
+      call mem%alloc(X_J_ai, integrals%n_J, length_a, length_i) 
 !
-      call add_213_to_123(one, X_i_aJ, L_ai_J, length_a, length_i, integrals%n_J)
+      call dgemm('N','N', &
+                  integrals%n_J*length_a, &
+                  length_i, &
+                  integrals%n_v, &
+                  one, &
+                  L_J_ab, & 
+                  integrals%n_J*length_a, &
+                  t1, &
+                  integrals%n_v, &
+                  zero, &
+                  X_J_ai, & 
+                  integrals%n_J*length_a)
 !
-      call mem%dealloc(X_i_aJ, length_i, length_a, integrals%n_J)
+      call add_21_to_12(one, X_J_ai, L_ai_J, length_a*length_i, integrals%n_J)
+!    
+      call mem%dealloc(X_J_ai, integrals%n_J, length_a, length_i) 
 !
    end subroutine construct_cholesky_ai_mo_integral_tool
-!
-!
-
-!
-!
-
-!
-
 !
 !
    subroutine set_full_index_mo_integral_tool(integrals, ind, pos, orb_space, red_ind)
@@ -791,287 +696,6 @@ contains
    end subroutine set_full_index_mo_integral_tool
 !
 !
-   function get_required_vvoo_mo_integral_tool(integrals, dim_1, dim_2, dim_3, dim_4)
-!!
-!!    Get vvvo required memory
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
-!!
-!!    Calculates and returns required memory to make vvvv electronic repulsion integral.
-!!
-!!    Here, dim_1, dim_2, dim_3, and dim_4 are the full dimension of indices 1-4.
-!!    They will typically be wf%n_v for dim_1 and dim_2 and wf%n_o for dim_3 and dim_4 and 
-!!    are therefore optionals. They will not necessarily have the standard values in multi-
-!!    level CC models.
-!!
-      implicit none
-!
-      class(mo_integral_tool), intent(in) :: integrals 
-!  
-      integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
-!
-      integer :: get_required_vvoo_mo_integral_tool
-!
-      get_required_vvoo_mo_integral_tool = 0
-!
-      if (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4)) then
-!
-         get_required_vvoo_mo_integral_tool = (dim_1*dim_2*dim_3*dim_4)
-!
-         get_required_vvoo_mo_integral_tool = get_required_vvoo_mo_integral_tool + &
-                                       (dim_1)*(dim_2)*(integrals%n_J) +                   &
-                                       (dim_3)*(dim_4)*(integrals%n_J)
-!
-         get_required_vvoo_mo_integral_tool = get_required_vvoo_mo_integral_tool + &
-                                       max(2*(dim_2)*(integrals%n_o)*(integrals%n_J),      &
-                                          (dim_2)*(integrals%n_o)*(integrals%n_J)+         & 
-                                          (dim_1)*(dim_2)*(integrals%n_J),                 &
-                                          2*(integrals%n_v)*(dim_3)*(integrals%n_J),       &
-                                          dim_3*(integrals%n_v)*(integrals%n_J) +          &
-                                          (dim_4)*(dim_3)*(integrals%n_J))
-           
-!
-      elseif (.not. (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4))) then
-!
-         get_required_vvoo_mo_integral_tool = (integrals%n_v**2)*(integrals%n_o**2)
-!
-         get_required_vvoo_mo_integral_tool = get_required_vvoo_mo_integral_tool + &
-                                                      (integrals%n_v**2)*(integrals%n_J) + & 
-                                                      (integrals%n_o**2)*(integrals%n_J)
-!
-         get_required_vvoo_mo_integral_tool = get_required_vvoo_mo_integral_tool +                &
-                  max(2*(integrals%n_v)*(integrals%n_o)*(integrals%n_J),                                  &
-                     (integrals%n_v)*(integrals%n_o)*(integrals%n_J)+ (integrals%n_v**2)*(integrals%n_J), &
-                     2*(integrals%n_v)*(integrals%n_o)*(integrals%n_J),                                   &
-                     (integrals%n_o)*(integrals%n_v)*(integrals%n_J) + (integrals%n_o**2)*(integrals%n_J))
-!
-      else
-!
-         call output%error_msg('call to get_vvoo_required_mem is missing some arguments.')
-!
-      endif
-!
-      get_required_vvoo_mo_integral_tool = get_required_vvoo_mo_integral_tool
-!
-   end function get_required_vvoo_mo_integral_tool
-!
-!
-   function get_required_voov_mo_integral_tool(integrals, dim_1, dim_2, dim_3, dim_4)
-!!
-!!    Get voov required memory
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!
-!!    Calculates and returns required memory to make voov electronic repulsion integral.
-!!
-!!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index dim_1-dim_4.
-!!    They will typically be  n_v/n_o and are therefore optionals, however will not be n_v/n_o for ML 
-!!
-      implicit none 
-!
-      class(mo_integral_tool), intent(in) :: integrals
-!  
-      integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
-!
-      integer :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
-!
-      integer :: get_required_voov_mo_integral_tool
-!
-      dim_1_local = integrals%n_v
-      if (present(dim_1)) dim_1_local = dim_1
-!
-      dim_2_local = integrals%n_o
-      if (present(dim_2)) dim_2_local = dim_2
-!
-      dim_3_local = integrals%n_o
-      if (present(dim_3)) dim_3_local = dim_3
-!
-      dim_4_local = integrals%n_v
-      if (present(dim_4)) dim_4_local = dim_4
-!
-      get_required_voov_mo_integral_tool = 0
-!
-      if (integrals%cholesky_t1_file) then
-!
-         get_required_voov_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
-                                              (dim_3_local)*(dim_4_local)*(integrals%n_J)
-!
-      else
-!
-         get_required_voov_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
-                                              (dim_3_local)*(dim_4_local)*(integrals%n_J)
-!
-         get_required_voov_mo_integral_tool = get_required_voov_mo_integral_tool + &
-                     max((dim_2_local)*(integrals%n_v)*(integrals%n_J) + (dim_2_local)*(integrals%n_o)*(integrals%n_J), &
-                         (dim_1_local)*(integrals%n_v)*(integrals%n_J) + (dim_1_local)*(integrals%n_o)*(integrals%n_J))
-!
-      endif
-!
-   end function get_required_voov_mo_integral_tool
-!
-!
-   function get_required_vvov_mo_integral_tool(integrals, dim_1, dim_2, dim_3, dim_4)
-!!
-!!    Get vvov required memory
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!
-!!    Calculates and returns required memory to make voov electronic repulsion integral.
-!!
-!!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index dim_1-dim_4.
-!!    They will typically be  n_v/n_o and are therefore optionals, however will not be n_v/n_o for ML 
-!!
-      implicit none 
-!
-      class(mo_integral_tool), intent(in) :: integrals
-!  
-      integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
-!
-      integer :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
-!
-      integer :: get_required_vvov_mo_integral_tool
-!
-      dim_1_local = integrals%n_v
-      if (present(dim_1)) dim_1_local = dim_1
-!
-      dim_2_local = integrals%n_v
-      if (present(dim_2)) dim_2_local = dim_2
-!
-      dim_3_local = integrals%n_o
-      if (present(dim_3)) dim_3_local = dim_3
-!
-      dim_4_local = integrals%n_v
-      if (present(dim_4)) dim_4_local = dim_4
-!
-      get_required_vvov_mo_integral_tool = 0
-!
-      if (integrals%cholesky_t1_file) then
-!
-         get_required_vvov_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
-                                              (dim_3_local)*(dim_4_local)*(integrals%n_J)
-!
-      else
-!
-         get_required_vvov_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
-                                              (dim_3_local)*(dim_4_local)*(integrals%n_J)
-!
-         get_required_vvov_mo_integral_tool = get_required_vvov_mo_integral_tool + &
-                     max(2*(integrals%n_o)*(dim_2_local)*(integrals%n_J), &
-                      (integrals%n_o)*(dim_2_local)*(integrals%n_J) &
-                      + (dim_1_local)*(dim_2_local)*(integrals%n_J))
-!
-      endif
-!
-   end function get_required_vvov_mo_integral_tool
-!
-!
-   function get_required_vvvo_mo_integral_tool(integrals, dim_1, dim_2, dim_3, dim_4)
-!!
-!!    Get vvvo required memory
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!
-!!    Calculates and returns required memory to make voov electronic repulsion integral.
-!!
-!!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index dim_1-dim_4.
-!!    They will typically be  n_v/n_o and are therefore optionals, however will not be n_v/n_o for ML 
-!!
-      implicit none 
-!
-      class(mo_integral_tool), intent(in) :: integrals
-!  
-      integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
-!
-      integer :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
-!
-      integer :: get_required_vvvo_mo_integral_tool
-!
-      dim_1_local = integrals%n_v
-      if (present(dim_1)) dim_1_local = dim_1
-!
-      dim_2_local = integrals%n_v
-      if (present(dim_2)) dim_2_local = dim_2
-!
-      dim_3_local = integrals%n_o
-      if (present(dim_3)) dim_3_local = dim_3
-!
-      dim_4_local = integrals%n_v
-      if (present(dim_4)) dim_4_local = dim_4
-!
-      get_required_vvvo_mo_integral_tool = 0
-!
-      if (integrals%cholesky_t1_file) then
-!
-         get_required_vvvo_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
-                                              (dim_3_local)*(dim_4_local)*(integrals%n_J)
-!
-      else
-!
-         get_required_vvvo_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
-                                              (dim_3_local)*(dim_4_local)*(integrals%n_J)
-!
-         get_required_vvvo_mo_integral_tool = get_required_vvvo_mo_integral_tool + &
-                     max(2*(integrals%n_o)*(dim_2_local)*(integrals%n_J), &
-                      (integrals%n_o)*(dim_2_local)*(integrals%n_J) &
-                      + (dim_1_local)*(dim_2_local)*(integrals%n_J), &
-                      (dim_2_local)*(integrals%n_v)*(integrals%n_J) + (dim_2_local)*(integrals%n_o)*(integrals%n_J), &
-                     (dim_1_local)*(integrals%n_v)*(integrals%n_J) + (dim_1_local)*(integrals%n_o)*(integrals%n_J))
-!
-      endif
-!
-   end function get_required_vvvo_mo_integral_tool
-!
-!
-   function get_required_vvvv_mo_integral_tool(integrals, dim_1, dim_2, dim_3, dim_4)
-!!
-!!    Get vvvv required memory
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!
-!!    Calculates and returns required memory to make voov electronic repulsion integral.
-!!
-!!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index dim_1-dim_4.
-!!    They will typically be  n_v/n_o and are therefore optionals, however will not be n_v/n_o for ML 
-!!
-      implicit none 
-!
-      class(mo_integral_tool), intent(in) :: integrals
-!  
-      integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
-!
-      integer :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
-!
-      integer :: get_required_vvvv_mo_integral_tool
-!
-      dim_1_local = integrals%n_v
-      if (present(dim_1)) dim_1_local = dim_1
-!
-      dim_2_local = integrals%n_v
-      if (present(dim_2)) dim_2_local = dim_2
-!
-      dim_3_local = integrals%n_o
-      if (present(dim_3)) dim_3_local = dim_3
-!
-      dim_4_local = integrals%n_v
-      if (present(dim_4)) dim_4_local = dim_4
-!
-      get_required_vvvv_mo_integral_tool = 0
-!
-      if (integrals%cholesky_t1_file) then
-!
-         get_required_vvvv_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
-                                              (dim_3_local)*(dim_4_local)*(integrals%n_J)
-!
-      else
-!
-         get_required_vvvv_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
-                                              (dim_3_local)*(dim_4_local)*(integrals%n_J)
-!
-         get_required_vvvv_mo_integral_tool = get_required_vvvv_mo_integral_tool + &
-                     max(2*(integrals%n_o)*(dim_2_local)*(integrals%n_J), &
-                      (integrals%n_o)*(dim_2_local)*(integrals%n_J) &
-                      + (dim_1_local)*(dim_2_local)*(integrals%n_J))
-!
-      endif
-!
-   end function get_required_vvvv_mo_integral_tool
-!
-!
    subroutine write_t1_cholesky_mo_integral_tool(integrals, t1)
 !!
 !!    Write T1-transformed Cholesky vectors to file
@@ -1099,7 +723,6 @@ contains
       call write_t1_cholesky_timer%init('transform and write t1 cholesky to file')
       call write_t1_cholesky_timer%start()
 !
-      call integrals%cholesky_mo_t1%init('cholesky_mo_t1_vectors', 'direct', 'unformatted', dp*(integrals%n_J))
       call disk%open_file(integrals%cholesky_mo_t1, 'write') 
 !
 !     occupied-occupied block
@@ -1108,9 +731,8 @@ contains
 !
       req0 = 0
 !
-      req1 = 2*(integrals%n_o)*(integrals%n_J)  & ! 2 x L_ij^J 
-            + (integrals%n_v)*(integrals%n_J) & ! L_ia^J 
-            + (integrals%n_J)*(integrals%n_v)   ! L_iJ_a = L_ia^J 
+      req1 = 2*(integrals%n_o)*(integrals%n_J)    &   ! 2 x L_ij^J 
+            + 2*(integrals%n_v)*(integrals%n_J)       ! 2 x L_ia^J 
 !
       call mem%batch_setup(batch_i, req0, req1)
 !
@@ -1155,7 +777,7 @@ contains
 !
          call mem%alloc(L_J_ia, integrals%n_J, integrals%n_o, batch_a%length)
 !
-         call integrals%read_cholesky_var(L_J_ia, 1, integrals%n_o, integrals%n_o + batch_a%first, integrals%n_o + batch_a%last)
+         call integrals%read_cholesky(L_J_ia, 1, integrals%n_o, integrals%n_o + batch_a%first, integrals%n_o + batch_a%last)
 !
          do a = 1, batch_a%length  
             do i = 1, integrals%n_o
@@ -1175,8 +797,8 @@ contains
 !
       req0 = (integrals%n_v)*(integrals%n_J)   ! Uncontrollable from outside (L_jb^J, batching over j inside) 
 !
-      req1_a = (integrals%n_v)*(integrals%n_J) ! L_ab^J 
-      req1_i = (integrals%n_o)*(integrals%n_J) ! L_ji^J
+      req1_a = (integrals%n_v)*(integrals%n_J)   ! L_ab^J
+      req1_i = 2*(integrals%n_o)*(integrals%n_J) ! L_ji^J
 !
       req2 = 2*(integrals%n_J) ! 2 x L_ai^J  
 !
@@ -1223,7 +845,7 @@ contains
       req0 = 0
 !
       req1 = 2*(integrals%n_v)*(integrals%n_J) &   ! 2 x L_ab^J 
-            + (integrals%n_o)*(integrals%n_J)      ! L_ib^J 
+            + 2*(integrals%n_o)*(integrals%n_J)      ! L_ib^J 
 !
       call mem%batch_setup(batch_b, req0, req1)
 !
@@ -1253,7 +875,7 @@ contains
 !
       enddo
 !
-      integrals%cholesky_t1_file   = .true.
+      integrals%cholesky_t1_file = .true.
 !
       call disk%close_file(integrals%cholesky_mo_t1)    
 !

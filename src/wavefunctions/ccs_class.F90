@@ -1154,7 +1154,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_iajb, &
+      call wf%integrals%construct_g_pqrs_t1(g_iajb, &
                                              local_first_i, local_last_i, &
                                              wf%n_o + local_first_a, wf%n_o + local_last_a, &
                                              local_first_j, local_last_j, &
@@ -1228,7 +1228,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_ijkl, &
+      call wf%integrals%construct_g_pqrs_t1(g_ijkl, &
                                              local_first_i, local_last_i, &
                                              local_first_j, local_last_j, &
                                              local_first_k, local_last_k, &
@@ -1296,7 +1296,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_ijka, &
+      call wf%integrals%construct_g_pqrs_t1(g_ijka, &
                                              local_first_i, local_last_i, &
                                              local_first_j, local_last_j, &
                                              local_first_k, local_last_k, &
@@ -1364,7 +1364,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_ijak, &
+      call wf%integrals%construct_g_pqrs_t1(g_ijak, &
                                              local_first_i, local_last_i, &
                                              local_first_j, local_last_j, &
                                              wf%n_o + local_first_a, wf%n_o + local_last_a, &
@@ -1432,7 +1432,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_iajk, &
+      call wf%integrals%construct_g_pqrs_t1(g_iajk, &
                                              local_first_i, local_last_i, &
                                              wf%n_o + local_first_a, wf%n_o + local_last_a, &
                                              local_first_j, local_last_j, &
@@ -1500,7 +1500,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_aijk, &
+      call wf%integrals%construct_g_pqrs_t1(g_aijk, &
                                              wf%n_o + local_first_a, wf%n_o + local_last_a, &
                                              local_first_i, local_last_i, &
                                              local_first_j, local_last_j, &
@@ -1568,7 +1568,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_abij, &
+      call wf%integrals%construct_g_pqrs_t1(g_abij, &
                                              wf%n_o + local_first_a, wf%n_o + local_last_a, &
                                              wf%n_o + local_first_b, wf%n_o + local_last_b, &
                                              local_first_i, local_last_i, &
@@ -1642,7 +1642,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_aibj, &
+      call wf%integrals%construct_g_pqrs_t1(g_aibj, &
                                              wf%n_o + local_first_a, wf%n_o + local_last_a, &
                                              local_first_i, local_last_i, &
                                              wf%n_o + local_first_b, wf%n_o + local_last_b, &
@@ -1710,7 +1710,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_aijb, &
+      call wf%integrals%construct_g_pqrs_t1(g_aijb, &
                                              wf%n_o + local_first_a, wf%n_o + local_last_a, &
                                              local_first_i, local_last_i, &
                                              local_first_j, local_last_j, &
@@ -1778,7 +1778,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_iabj, &
+      call wf%integrals%construct_g_pqrs_t1(g_iabj, &
                                              local_first_i, local_last_i, &
                                              wf%n_o + local_first_a, wf%n_o + local_last_a, &
                                              wf%n_o + local_first_b, wf%n_o + local_last_b, &
@@ -1846,7 +1846,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_ijab, &
+      call wf%integrals%construct_g_pqrs_t1(g_ijab, &
                                              local_first_i, &
                                              local_last_i, &
                                              local_first_j, &
@@ -1918,7 +1918,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_abci, &
+      call wf%integrals%construct_g_pqrs_t1(g_abci, &
                                              wf%n_o + local_first_a, &
                                              wf%n_o + local_last_a, &
                                              wf%n_o + local_first_b, &
@@ -1990,7 +1990,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_abic, &
+      call wf%integrals%construct_g_pqrs_t1(g_abic, &
                                              wf%n_o + local_first_a, &
                                              wf%n_o + local_last_a, &
                                              wf%n_o + local_first_b, &
@@ -2062,7 +2062,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_aibc, &
+      call wf%integrals%construct_g_pqrs_t1(g_aibc, &
                                              wf%n_o + local_first_a, &
                                              wf%n_o + local_last_a, &
                                              local_first_i, &
@@ -2134,7 +2134,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_iabc, &
+      call wf%integrals%construct_g_pqrs_t1(g_iabc, &
                                              local_first_i, &
                                              local_last_i, &
                                              wf%n_o + local_first_a, &
@@ -2212,7 +2212,7 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_pqrs_t1(g_abcd, &
+      call wf%integrals%construct_g_pqrs_t1(g_abcd, &
                                              wf%n_o + local_first_a, &
                                              wf%n_o + local_last_a, &
                                              wf%n_o + local_first_b, &
@@ -2458,14 +2458,16 @@ contains
 !
       type(batching_index) :: batch_b
 !
-      integer :: required, j, b, b_red, current_b_batch
+      integer :: req0, req1, j, b, b_red, current_b_batch
 !
       call batch_b%init(wf%n_v) 
 !
-      required = max((wf%n_o)*(wf%n_v)*(wf%n_o)*(batch_b%length) + wf%integrals%get_required_voov(), &
-                     (wf%n_o)*(wf%n_v)*(wf%n_o)*(batch_b%length)*2, + wf%integrals%get_required_vvoo())
+      req0 = wf%n_o*wf%n_v*wf%integrals%n_J ! L_ai^J 
+      req1 = 2*wf%n_v*wf%n_o**2 + & ! L_aijb and g_abji 
+               wf%n_v*wf%integrals%n_J + & ! L_ab^J 
+               wf%n_o ! c_jb 
 !
-      call mem%num_batch(batch_b, required)
+      call mem%batch_setup(batch_b, req0, req1)
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -2609,7 +2611,7 @@ contains
 !
       integer :: k, c, i, a
 !
-      integer         :: required, current_a_batch
+      integer              :: req0, req1, current_a_batch
       type(batching_index) :: batch_a 
 !
 !     :: Construct L_aick = L_ckia
@@ -2620,11 +2622,12 @@ contains
       call mem%alloc(L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       L_aick = zero
 !
-      required = wf%integrals%get_required_vvoo()
-!
       call batch_a%init(wf%n_v)
 !
-      call mem%num_batch(batch_a, required)
+      req0 = wf%integrals%n_J*wf%n_o**2 ! L_ik^J 
+      req1 = wf%n_v*wf%n_o**2 ! g_caik 
+!
+      call mem%batch_setup(batch_a, req0, req1)
 !
       do current_a_batch = 1, batch_a%num_batches 
 !
@@ -2644,6 +2647,7 @@ contains
                            1,             &
                            wf%n_o)
 !
+!$omp parallel do private(k,c,i,a)
          do k = 1, wf%n_o
             do c = 1, wf%n_v
                do i = 1, wf%n_o
@@ -2655,6 +2659,7 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
          call mem%dealloc(g_caik, wf%n_v, batch_a%length, wf%n_o, wf%n_o)
 !

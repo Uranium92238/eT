@@ -98,7 +98,7 @@ contains
 ! 
       else
 !
-         call wf%integrals%write_t1_cholesky(wf%t1) ! Hack, should expand construct routine to handle non-t1 as well
+         call wf%integrals%write_t1_cholesky(wf%t1) 
          call wf%set_initial_amplitudes_guess()
 !
       endif
@@ -259,9 +259,6 @@ contains
 !
 !        Calculate the energy and error vector omega 
 !
-         call wf%integrals%write_t1_cholesky(wf%t1)
-         if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs()
-!
          call wf%construct_fock()
 !
          call wf%calculate_energy()
@@ -311,6 +308,12 @@ contains
             call wf%set_amplitudes(amplitudes)
 !
             prev_energy = energy 
+!
+!           Compute the new T1 transformed Cholesky vectors,
+!           and store in memory the entire ERI-T1 matrix if possible and necessary 
+!
+            call wf%integrals%write_t1_cholesky(wf%t1)
+            if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
 !
          endif
 !
