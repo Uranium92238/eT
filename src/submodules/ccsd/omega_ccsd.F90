@@ -355,6 +355,8 @@ contains
 !
       integer :: aibj, biaj, cidj, dicj 
 !
+      real(dp) :: diag_factor
+!
 !     Batching and memory handling variables
 !
       integer :: rec0, rec1_a, rec1_b, rec2
@@ -458,19 +460,19 @@ contains
 !
                      cd = (c*(c-3)/2) + c + d
 !
-                     do a = 1, batch_a%length
+                     if (c .ne. d) then
+                        diag_factor = two
+                     else
+                        diag_factor = one
+                     endif
 !
-                        do  b = 1, a
+                     do  b = 1, batch_b%length
+                        do a = 1, b
 !
-                           ab = (a*(a-3)/2) + a + b
+                           ab = (b*(b-3)/2) + a + b
 !
-                           g_p_abcd(ab, cd) = g_acbd(a, c, b, d) + g_acbd(a, d, b, c)
-                           g_m_abcd(ab, cd) = g_acbd(a, c, b, d) - g_acbd(a, d, b, c)
-!
-                           if(c .ne. d) then
-                              g_p_abcd(ab, cd) = two*g_p_abcd(ab, cd)
-                              g_m_abcd(ab, cd) = two*g_m_abcd(ab, cd)
-                           endif
+                           g_p_abcd(ab, cd) = diag_factor*(g_acbd(a, c, b, d) + g_acbd(a, d, b, c))
+                           g_m_abcd(ab, cd) = diag_factor*(g_acbd(a, d, b, c) - g_acbd(a, c, b, d))
 !
                         enddo
                      enddo
@@ -615,21 +617,19 @@ contains
 !
                      cd = (c*(c-3)/2) + c + d
 !
-                     do a = 1, batch_a%length
+                     if (c .ne. d) then
+                        diag_factor = two
+                     else
+                        diag_factor = one
+                     endif
 !
-                        do  b = 1, batch_b%length
+                     do  b = 1, batch_b%length
+                        do a = 1, batch_a%length
 !
                            ab = (b-1)*batch_a%length + a
 !
-                           g_p_abcd(ab, cd) = g_acbd(a, c, b, d) + g_acbd(a, d, b, c)
-                           g_m_abcd(ab, cd) = g_acbd(a, c, b, d) - g_acbd(a, d, b, c)
-!
-                           if(c .ne. d) then
-!
-                              g_p_abcd(ab, cd) = two*g_p_abcd(ab, cd)
-                              g_m_abcd(ab, cd) = two*g_m_abcd(ab, cd)
-!
-                           endif
+                           g_p_abcd(ab, cd) = diag_factor*(g_acbd(a, c, b, d) + g_acbd(a, d, b, c))
+                           g_m_abcd(ab, cd) = diag_factor*(g_acbd(a, c, b, d) - g_acbd(a, d, b, c))
 !
                         enddo
                      enddo
