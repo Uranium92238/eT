@@ -119,6 +119,8 @@ module ccsd_class
 !
       procedure :: get_cvs_projector                           => get_cvs_projector_ccsd
 !
+      procedure, nopass :: need_g_abcd                         => need_g_abcd_ccsd
+!
    end type ccsd
 !
 !
@@ -204,6 +206,23 @@ contains
    end subroutine cleanup_ccsd
 !
 !
+   logical function need_g_abcd_ccsd()
+!!
+!!    Need g_abcd 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Returns whether the vvvv-part of the ERI matrix 
+!!    is used to calculate the ground and/or excited state 
+!!    equations. If not, there is no need to compute the
+!!    entire ERI matrix and store it in memory.
+!!
+      implicit none 
+!
+      need_g_abcd_ccsd = .true.
+!
+   end function need_g_abcd_ccsd
+!
+!
    subroutine initialize_amplitudes_ccsd(wf)
 !!
 !!    Initialize amplitudes
@@ -217,6 +236,7 @@ contains
       class(ccsd) :: wf
 !
       call wf%initialize_t1()
+      wf%t1 = zero ! Hack, fix later, for integrals
       call wf%initialize_t2()
 !
    end subroutine initialize_amplitudes_ccsd

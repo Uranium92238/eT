@@ -165,6 +165,8 @@ module ccs_class
       procedure :: get_ovvv_4_ccs
       generic   :: get_ovvv                                     => get_ovvv_2_ccs, get_ovvv_4_ccs
 !
+      procedure, nopass :: need_g_abcd                          => need_g_abcd_ccs
+!
 !     Routines to initialize and destruct arrays 
 !
       procedure :: initialize_fock_ij                           => initialize_fock_ij_ccs
@@ -272,6 +274,23 @@ contains
       call wf%initialize_t1()
 !
    end subroutine initialize_amplitudes_ccs
+!
+!
+   logical function need_g_abcd_ccs()
+!!
+!!    Need g_abcd 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Returns whether the vvvv-part of the ERI matrix 
+!!    is used to calculate the ground and/or excited state 
+!!    equations. If not, there is no need to compute the
+!!    entire ERI matrix and store it in memory.
+!!
+      implicit none 
+!
+      need_g_abcd_ccs = .false.
+!
+   end function need_g_abcd_ccs
 !
 !
    subroutine destruct_amplitudes_ccs(wf)
@@ -1393,6 +1412,14 @@ contains
 !
       endif
 !
+      call wf%integrals%construct_pqrs_t1(g_ijkl, &
+                                             local_first_i, local_last_i, &
+                                             local_first_j, local_last_j, &
+                                             local_first_k, local_last_k, &
+                                             local_first_l, local_last_l)
+!
+      return
+!
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_oooo(g_ijkl, local_first_i, local_last_i, local_first_j, local_last_j, &
@@ -1540,6 +1567,14 @@ contains
          local_last_a = wf%n_v
 !
       endif
+!
+      call wf%integrals%construct_pqrs_t1(g_ijka, &
+                                             local_first_i, local_last_i, &
+                                             local_first_j, local_last_j, &
+                                             local_first_k, local_last_k, &
+                                             wf%n_o + local_first_a, wf%n_o + local_last_a)
+!
+      return
 !
       if (wf%integrals%need_t1()) then
 !
@@ -1689,6 +1724,15 @@ contains
 !
       endif
 !
+      call wf%integrals%construct_pqrs_t1(g_ijak, &
+                                             local_first_i, local_last_i, &
+                                             local_first_j, local_last_j, &
+                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                                             local_first_k, local_last_k)
+!
+      return
+!
+!
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_oovo(g_ijak, local_first_i, local_last_i, local_first_j, local_last_j, &
@@ -1836,6 +1880,14 @@ contains
          local_last_a = wf%n_v
 !
       endif
+!
+      call wf%integrals%construct_pqrs_t1(g_iajk, &
+                                             local_first_i, local_last_i, &
+                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                                             local_first_j, local_last_j, &
+                                             local_first_k, local_last_k)
+!
+      return
 !
       if (wf%integrals%need_t1()) then
 !
@@ -1985,6 +2037,14 @@ contains
 !
       endif
 !
+      call wf%integrals%construct_pqrs_t1(g_aijk, &
+                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                                             local_first_i, local_last_i, &
+                                             local_first_j, local_last_j, &
+                                             local_first_k, local_last_k)
+!
+      return
+!
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vooo(g_aijk, local_first_a, local_last_a, local_first_i, local_last_i, &
@@ -2132,6 +2192,14 @@ contains
          local_last_a = wf%n_v
 !
       endif
+!
+      call wf%integrals%construct_pqrs_t1(g_abij, &
+                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                                             wf%n_o + local_first_b, wf%n_o + local_last_b, &
+                                             local_first_i, local_last_i, &
+                                             local_first_j, local_last_j)
+!
+      return
 !
       if (wf%integrals%need_t1()) then
 !
@@ -2293,6 +2361,14 @@ contains
 !
       endif
 !
+      call wf%integrals%construct_pqrs_t1(g_aibj, &
+                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                                             local_first_i, local_last_i, &
+                                             wf%n_o + local_first_b, wf%n_o + local_last_b, &
+                                             local_first_j, local_last_j)
+!
+      return
+!
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vovo(g_aibj, local_first_a, local_last_a, local_first_i, local_last_i, &
@@ -2443,6 +2519,14 @@ contains
 !
       endif
 !
+      call wf%integrals%construct_pqrs_t1(g_aijb, &
+                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                                             local_first_i, local_last_i, &
+                                             local_first_j, local_last_j, &
+                                             wf%n_o + local_first_b, wf%n_o + local_last_b)
+!
+      return
+!
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_voov(g_aijb, local_first_a, local_last_a, local_first_i, local_last_i, &
@@ -2590,6 +2674,14 @@ contains
          local_last_a = wf%n_v
 !
       endif
+!
+      call wf%integrals%construct_pqrs_t1(g_iabj, &
+                                             local_first_i, local_last_i, &
+                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                                             wf%n_o + local_first_b, wf%n_o + local_last_b, &
+                                             local_first_j, local_last_j)
+!
+      return
 !
       if (wf%integrals%need_t1()) then
 !

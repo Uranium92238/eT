@@ -98,6 +98,7 @@ contains
 ! 
       else
 !
+         call wf%integrals%write_t1_cholesky(wf%t1) ! Hack, should expand construct routine to handle non-t1 as well
          call wf%set_initial_amplitudes_guess()
 !
       endif
