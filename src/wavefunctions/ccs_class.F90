@@ -2665,6 +2665,18 @@ contains
 !
       endif
 !
+      call wf%integrals%construct_pqrs_t1(g_ijab, &
+                                             local_first_i, &
+                                             local_last_i, &
+                                             local_first_j, &
+                                             local_last_j, &
+                                             wf%n_o + local_first_a, &
+                                             wf%n_o + local_last_a, &
+                                             wf%n_o + local_first_b, &
+                                             wf%n_o + local_last_b)
+!
+      return
+!
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_oovv(g_ijab, local_first_i, local_last_i, local_first_j, local_last_j, &
@@ -2812,6 +2824,18 @@ contains
          local_last_a = wf%n_v
 !
       endif
+!
+      call wf%integrals%construct_pqrs_t1(g_abci, &
+                                             wf%n_o + local_first_a, &
+                                             wf%n_o + local_last_a, &
+                                             wf%n_o + local_first_b, &
+                                             wf%n_o + local_last_b, &
+                                             wf%n_o + local_first_c, &
+                                             wf%n_o + local_last_c,&
+                                             local_first_i, &
+                                             local_last_i)
+!
+      return
 !
       if (wf%integrals%need_t1()) then
 !
@@ -2961,6 +2985,18 @@ contains
 !
       endif
 !
+      call wf%integrals%construct_pqrs_t1(g_abic, &
+                                             wf%n_o + local_first_a, &
+                                             wf%n_o + local_last_a, &
+                                             wf%n_o + local_first_b, &
+                                             wf%n_o + local_last_b, &
+                                             local_first_i, &
+                                             local_last_i, &
+                                             wf%n_o + local_first_c, &
+                                             wf%n_o + local_last_c)
+!
+      return
+!
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vvov(g_abic, local_first_a, local_last_a, local_first_b, local_last_b, &
@@ -3108,6 +3144,18 @@ contains
          local_last_a = wf%n_v
 !
       endif
+!
+      call wf%integrals%construct_pqrs_t1(g_aibc, &
+                                             wf%n_o + local_first_a, &
+                                             wf%n_o + local_last_a, &
+                                             local_first_i, &
+                                             local_last_i, &
+                                             wf%n_o + local_first_b, &
+                                             wf%n_o + local_last_b, &
+                                             wf%n_o + local_first_c, &
+                                             wf%n_o + local_last_c)
+!
+      return
 !
       if (wf%integrals%need_t1()) then
 !
@@ -3257,6 +3305,18 @@ contains
 !
       endif
 !
+      call wf%integrals%construct_pqrs_t1(g_iabc, &
+                                             local_first_i, &
+                                             local_last_i, &
+                                             wf%n_o + local_first_a, &
+                                             wf%n_o + local_last_a, &
+                                             wf%n_o + local_first_b, &
+                                             wf%n_o + local_last_b, &
+                                             wf%n_o + local_first_c, &
+                                             wf%n_o + local_last_c)
+!
+      return
+!
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_ovvv(g_iabc, local_first_i, local_last_i, local_first_a, local_last_a, &
@@ -3372,7 +3432,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:) :: g_abcd
+      real(dp), dimension(:,:,:,:), intent(out) :: g_abcd
 !
       integer, optional, intent(in) :: first_d, last_d 
       integer, optional, intent(in) :: first_c, last_c
@@ -3418,6 +3478,18 @@ contains
          local_last_a = wf%n_v
 !
       endif
+!
+      call wf%integrals%construct_pqrs_t1(g_abcd, &
+                                             wf%n_o + local_first_a, &
+                                             wf%n_o + local_last_a, &
+                                             wf%n_o + local_first_b, &
+                                             wf%n_o + local_last_b, &
+                                             wf%n_o + local_first_c, &
+                                             wf%n_o + local_last_c, &
+                                             wf%n_o + local_first_d, &
+                                             wf%n_o + local_last_d)
+!
+      return
 !
       if (wf%integrals%need_t1()) then
 !
