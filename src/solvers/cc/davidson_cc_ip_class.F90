@@ -89,7 +89,7 @@ contains
 !
          elseif (trim(line) == 'restart') then
 !
-            solver%do_restart = .true.
+            solver%restart = .true.
 !
          endif
 !

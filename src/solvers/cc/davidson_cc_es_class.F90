@@ -49,7 +49,7 @@ module davidson_cc_es_class
       real(dp) :: eigenvalue_threshold  
       real(dp) :: residual_threshold  
 !
-      logical      :: do_restart = .false.
+      logical  :: restart = .false.
 !
       integer :: n_singlet_states = 0
 !
@@ -58,8 +58,6 @@ module davidson_cc_es_class
       real(dp), dimension(:,:), allocatable :: energies
 !
       integer, dimension(:,:), allocatable :: start_vectors
-!
-      type(file) :: restart_file
 !
    contains
 !     
@@ -82,9 +80,6 @@ module davidson_cc_es_class
 !       
       procedure :: initialize_energies               => initialize_energies_davidson_cc_es
       procedure :: destruct_energies                 => destruct_energies_davidson_cc_es   
-!
-      procedure :: restart                           => restart_davidson_cc_es 
-      procedure :: write_restart_file                => write_restart_file_davidson_cc_es 
 !
    end type davidson_cc_es
 !
@@ -110,7 +105,7 @@ contains
       solver%eigenvalue_threshold = 1.0d-6
       solver%residual_threshold   = 1.0d-6
       solver%transformation       = 'right'
-      solver%do_restart           = .false.
+      solver%restart              = .false.
 !
       call solver%read_settings()
 !
@@ -119,69 +114,12 @@ contains
       call solver%initialize_energies()
       solver%energies = zero
 !
-      call solver%restart_file%init('davidson_cc_es_restart_info', 'sequential', 'formatted')
-!
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
+      write(output%unit, '(/t3,a,a,a)') 'Solving for the ', trim(solver%transformation), ' eigenvectors.'
+      flush(output%unit)
+!
    end subroutine prepare_davidson_cc_es
-!
-!
-   subroutine write_restart_file_davidson_cc_es(solver)
-!!
-!!    Write restart 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018
-!!
-      implicit none 
-!
-      class(davidson_cc_es) :: solver 
-!
-      call disk%open_file(solver%restart_file, 'write', 'rewind')
-!
-      write(solver%restart_file%unit, *) 'n_singlet_states'
-      write(solver%restart_file%unit, *) solver%n_singlet_states
-!
-      call disk%close_file(solver%restart_file) 
-!
-   end subroutine write_restart_file_davidson_cc_es
-!
-!
-   subroutine restart_davidson_cc_es(solver, davidson)
-!!
-!!    Restart 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018
-!!
-      implicit none 
-!
-      class(davidson_cc_es) :: solver 
-!
-      class(eigen_davidson_tool) :: davidson
-!
-      integer :: n_solutions_on_file 
-!
-!     Read in the number of solutions to restart from - according the restart file 
-!
-      call disk%open_file(solver%restart_file, 'read')
-      rewind(solver%restart_file%unit)
-!
-      n_solutions_on_file = 0
-      read(solver%restart_file%unit, *) ! Empty read to skip banner
-      read(solver%restart_file%unit, *) n_solutions_on_file
-!
-      call disk%close_file(solver%restart_file) 
-!
-!     Avoid reading too many solutions if fewer are requested than previously converged 
-!
-      if (n_solutions_on_file .gt. solver%n_singlet_states) then 
-!
-         n_solutions_on_file = solver%n_singlet_states
-!
-      endif 
-!
-!     Ask Davidson to restart - use the previous solutions as trial vectors 
-!
-      call davidson%restart_from_solutions(n_solutions_on_file)
-!
-   end subroutine restart_davidson_cc_es
 !
 !
    subroutine initialize_energies_davidson_cc_es(solver)
@@ -316,6 +254,7 @@ contains
       real(dp) :: residual_norm
 !
       real(dp), dimension(:,:), allocatable :: c_i
+      real(dp), dimension(:), allocatable :: X
 !
       call wf%prepare_for_jacobian()
 !
@@ -330,15 +269,7 @@ contains
 !
 !     Construct first trial vectors
 !
-      if (solver%do_restart) then 
-!
-         call solver%restart(davidson)
-!
-      else
-!
-         call solver%set_start_vectors(wf, davidson)
-!
-      endif 
+      call solver%set_start_vectors(wf, davidson)
 !
       call solver%set_precondition_vector(wf, davidson)
       call solver%set_projection_vector(wf, davidson)
@@ -426,7 +357,7 @@ contains
 !
 !        Test for total convergence
 !
-         if (converged_residual) then ! Converged residual
+         if (converged_residual) then 
 !
 !           Tests for convergence of energy or restart
 !
@@ -434,11 +365,11 @@ contains
 !
               converged = .true.
 !
-            elseif (iteration .eq. 1 .and. wf%name_ .eq. 'ccs') then
+            elseif (iteration .eq. 1) then
 !
-                  converged = .true.
-                  write(output%unit,'(/t3,a,/t3,a)') 'Note: residual converged in first iteration.', &
-                                            'Energy convergence therefore not tested in this calculation.'
+               converged = .true.
+               write(output%unit,'(/t3,a,/t3,a)') 'Note: residual(s) converged in first iteration.', &
+                                                   'Energy convergence therefore not tested in this calculation.'
 !
             endif
 !
@@ -454,6 +385,17 @@ contains
 !
          write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration - 1, ' iterations!'
          call solver%print_summary(davidson, wf)
+!
+         write(output%unit,'(/t3,a)') 'Storing excited states to file.'
+!
+         call mem%alloc(X, wf%n_es_amplitudes)
+!
+         do solution = 1, solver%n_singlet_states
+!
+            call davidson%read_solution(X, solution)
+            call wf%save_excited_state(X, solution, solver%transformation)
+!
+         enddo
 !
       elseif (.not. converged ) then
 !
@@ -513,15 +455,13 @@ contains
 !
       integer, dimension(:,:), allocatable :: lowest_orbital_differences_index
 !
-      integer :: trial
+      integer :: trial, n_solutions_on_file
 !
       if (allocated(solver%start_vectors)) then
 !
 !        Initial trial vectors given on input
 !
          call mem%alloc(c_i, wf%n_es_amplitudes, 1)
-!
-         call davidson%rewind_trials()
 !
          do trial = 1, solver%n_singlet_states
 !
@@ -536,35 +476,65 @@ contains
 !
       else
 !
-!        Initial trial vectors given by Koopman
+         if (solver%restart) then 
 !
-         call mem%alloc(orbital_differences, wf%n_es_amplitudes, 1)
-         call wf%get_es_orbital_differences(orbital_differences, wf%n_es_amplitudes)
+!           Read the solutions from file & set as initial trial vectors 
 !
-         call mem%alloc(lowest_orbital_differences, solver%n_singlet_states, 1)
-         call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)
+            call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
 !
-         call get_n_lowest(solver%n_singlet_states, wf%n_es_amplitudes, orbital_differences, &
+            write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
+                                                ' solutions on file.'
+!
+            call mem%alloc(c_i, wf%n_es_amplitudes, 1)
+!
+            do trial = 1, n_solutions_on_file
+!
+               call wf%read_excited_state(c_i, trial, solver%transformation)
+               call davidson%write_trial(c_i)
+!
+            enddo 
+!
+            call mem%dealloc(c_i, wf%n_es_amplitudes, 1)
+!
+         else
+!
+            n_solutions_on_file = 0
+!
+         endif 
+!
+         if (n_solutions_on_file .lt. solver%n_singlet_states) then 
+!
+!           Compute the remaining start vectors using Koopman
+!
+            call mem%alloc(orbital_differences, wf%n_es_amplitudes, 1)
+            call wf%get_es_orbital_differences(orbital_differences, wf%n_es_amplitudes)
+!
+            call mem%alloc(lowest_orbital_differences, solver%n_singlet_states, 1)
+            call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)
+!
+            call get_n_lowest(solver%n_singlet_states, wf%n_es_amplitudes, orbital_differences, &
                            lowest_orbital_differences, lowest_orbital_differences_index)
 !
-         call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states, 1)
-         call mem%dealloc(orbital_differences, wf%n_es_amplitudes, 1)
+            call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states, 1)
+            call mem%dealloc(orbital_differences, wf%n_es_amplitudes, 1)
 !
-         call mem%alloc(c_i, wf%n_es_amplitudes, 1)
+            call mem%alloc(c_i, wf%n_es_amplitudes, 1)
 !
-         call davidson%rewind_trials()
+            do trial = n_solutions_on_file + 1, solver%n_singlet_states
 !
-         do trial = 1, solver%n_singlet_states
+               c_i = zero
+               c_i(lowest_orbital_differences_index(trial, 1), 1) = one
 !
-            c_i = zero
-            c_i(lowest_orbital_differences_index(trial, 1), 1) = one
+               call davidson%write_trial(c_i)
 !
-            call davidson%write_trial(c_i)
+            enddo 
 !
-         enddo 
+            call mem%dealloc(c_i, wf%n_es_amplitudes, 1)
+            call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)
 !
-         call mem%dealloc(c_i, wf%n_es_amplitudes, 1)
-         call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)
+         endif
+!
+         call davidson%orthonormalize_trial_vecs()
 !
       endif
 !
@@ -605,7 +575,7 @@ contains
 !
       class(davidson_cc_es) :: solver
 !
-      call solver%write_restart_file()
+      write(output%unit, '(/t3,a,a,a)') 'Cleaning up ', trim(solver%tag), '.'
 !
    end subroutine cleanup_davidson_cc_es
 !
@@ -679,7 +649,7 @@ contains
 !
          elseif (trim(line) == 'restart') then
 !
-            solver%do_restart = .true.
+            solver%restart = .true.
 !
          elseif (line(1:14) == 'start vectors:') then
 !

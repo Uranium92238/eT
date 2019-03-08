@@ -33,6 +33,9 @@ module ccsd_class
       real(dp), dimension(:,:), allocatable :: t2   
       real(dp), dimension(:,:), allocatable :: t2bar   
 !
+      type(file) :: t2_file, t2bar_file
+      type(file) :: r2_file, l2_file
+!
       integer :: n_t2  
 !
    contains
@@ -40,7 +43,8 @@ module ccsd_class
 !     Preparation and cleanup routines 
 !
       procedure :: prepare                                     => prepare_ccsd
-      procedure :: cleanup                                     => cleanup_ccsd
+!
+      procedure :: initialize_files                            => initialize_files_ccsd
 !
 !     Routines related to the amplitudes 
 !
@@ -53,11 +57,11 @@ module ccsd_class
       procedure :: get_amplitudes                              => get_amplitudes_ccsd 
       procedure :: read_amplitudes                             => read_amplitudes_ccsd
       procedure :: save_amplitudes                             => save_amplitudes_ccsd
-      procedure :: save_t2                                     => save_t2_ccsd
-      procedure :: read_t2                                     => read_t2_ccsd
       procedure :: print_dominant_x2                           => print_dominant_x2_ccsd
       procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccsd
       procedure :: print_dominant_x_amplitudes                 => print_dominant_x_amplitudes_ccsd
+      procedure :: read_excited_state                          => read_excited_state_ccsd 
+      procedure :: save_excited_state                          => save_excited_state_ccsd 
 !
 !     Routines related to omega
 !
@@ -133,8 +137,6 @@ module ccsd_class
       procedure :: read_multipliers                            => read_multipliers_ccsd
       procedure :: destruct_multipliers                        => destruct_multipliers_ccsd
       procedure :: destruct_t2bar                              => destruct_t2bar_ccsd
-      procedure :: read_t2bar                                  => read_t2bar_ccsd
-      procedure :: save_t2bar                                  => save_t2bar_ccsd
 !
       procedure :: get_cvs_projector                           => get_cvs_projector_ccsd
 !
@@ -206,21 +208,9 @@ contains
       call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
 !
+      call wf%initialize_files()
+!
    end subroutine prepare_ccsd
-!
-!
-   subroutine cleanup_ccsd(wf)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
-!
-   end subroutine cleanup_ccsd
 !
 !
    subroutine initialize_amplitudes_ccsd(wf)
@@ -494,8 +484,16 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      call wf%read_t1()  
-      call wf%read_t2()  
+      call wf%is_restart_safe('ground state')
+!
+      call disk%open_file(wf%t1_file, 'read', 'rewind')
+      call disk%open_file(wf%t2_file, 'read', 'rewind')
+!
+      read(wf%t1_file%unit) wf%t1  
+      read(wf%t2_file%unit) wf%t2
+!
+      call disk%close_file(wf%t1_file) 
+      call disk%close_file(wf%t2_file) 
 !
    end subroutine read_amplitudes_ccsd
 !
@@ -507,56 +505,180 @@ contains
 !!
       implicit none 
 !
-      class(ccsd), intent(in) :: wf
+      class(ccsd), intent(inout) :: wf
 !
-      call wf%save_t1()  
-      call wf%save_t2()  
+      call disk%open_file(wf%t1_file, 'write', 'rewind')
+      call disk%open_file(wf%t2_file, 'write', 'rewind')
+!
+      write(wf%t1_file%unit) wf%t1  
+      write(wf%t2_file%unit) wf%t2
+!
+      call disk%close_file(wf%t1_file) 
+      call disk%close_file(wf%t2_file) 
 !
    end subroutine save_amplitudes_ccsd
 !
 !
-   subroutine read_t2_ccsd(wf)
+   subroutine save_excited_state_ccsd(wf, X, n, side)
 !!
-!!    Read t2
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Save excited state 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Saves an excited state to disk. Since the solvers 
+!!    keep these vectors in full length, we receive a vector 
+!!    in full length (n_es_amplitudes), and then distribute 
+!!    the different parts of that vector to singles, doubles, etc.,
+!!    files (if there are doubles, etc.).
+!!
+!!    NB! If n = 1, then the routine WILL REWIND the files before writing,
+!!    thus DELETING every record in the file. For n >=2, we just append to
+!!    the file. The purpose of this setup is that the files should be saved in 
+!!    the correct order, from n = 1 to n = # states. 
 !!
       implicit none 
 !
-      class(ccsd), intent(inout) :: wf
+      class(ccsd), intent(inout) :: wf 
 !
-      type(file) :: t2_file 
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X 
 !
-      call t2_file%init('t2', 'sequential', 'unformatted')
+      integer, intent(in) :: n ! state number 
 !
-      call disk%open_file(t2_file, 'read', 'rewind')
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
 !
-      read(t2_file%unit) wf%t2
+      if (trim(side) == 'right') then 
 !
-      call disk%close_file(t2_file)      
+         call disk%open_file(wf%r1_file, 'write', 'append')
+         call disk%open_file(wf%r2_file, 'write', 'append')
 !
-   end subroutine read_t2_ccsd
+         if (n .eq. 1) then 
+!
+            rewind(wf%r1_file%unit)
+            rewind(wf%r2_file%unit)
+!
+         endif 
+!
+         write(wf%r1_file%unit) X(1 : wf%n_t1)
+         write(wf%r2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
+!
+         call disk%close_file(wf%r1_file)
+         call disk%close_file(wf%r2_file)
+!
+      elseif (trim(side) == 'left') then 
+!
+         call disk%open_file(wf%l1_file, 'write', 'append')
+         call disk%open_file(wf%l2_file, 'write', 'append')
+!
+         if (n .eq. 1) then 
+!
+            rewind(wf%l1_file%unit)
+            rewind(wf%l2_file%unit)
+!
+         endif 
+!
+         write(wf%l1_file%unit) X(1 : wf%n_t1)
+         write(wf%l2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
+!
+         call disk%close_file(wf%l1_file)
+         call disk%close_file(wf%l2_file)
+!
+      else
+!
+         call output%error_msg('Tried to save an excited state, but argument side not recognized: ' // side)
+!
+      endif
+!
+   end subroutine save_excited_state_ccsd
 !
 !
-   subroutine save_t2_ccsd(wf)
+   subroutine read_excited_state_ccsd(wf, X, n, side)
 !!
-!!    Save t2
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Read excited state 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
 !!
-      implicit none
+!!    Reads an excited state to disk. Since this routine is used by 
+!!    solvers, it returns the vector in the full space. Thus, we open 
+!!    files for singles, doubles, etc., paste them together, and return 
+!!    the result in X.
+!!
+!!    NB! This will place the cursor of the file at position n + 1.
+!!    Be cautious when using this in combination with writing to the files.
+!!    We recommend to separate these tasks---write all states or read all
+!!    states; don't mix if you can avoid it.
+!!
+      implicit none 
 !
-      class(ccsd), intent(in) :: wf 
+      class(ccsd), intent(inout) :: wf 
 !
-      type(file) :: t2_file 
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
 !
-      call t2_file%init('t2', 'sequential', 'unformatted')
+      integer, intent(in) :: n ! state number 
 !
-      call disk%open_file(t2_file, 'write', 'rewind')
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
 !
-      write(t2_file%unit) wf%t2
+      call wf%is_restart_safe('excited state')
 !
-      call disk%close_file(t2_file)
+      if (trim(side) == 'right') then 
 !
-   end subroutine save_t2_ccsd
+         call disk%open_file(wf%r1_file, 'read')
+         call disk%open_file(wf%r2_file, 'read')
+!
+         call wf%r1_file%prepare_to_read_line(n)
+         call wf%r2_file%prepare_to_read_line(n)
+!
+         read(wf%r1_file%unit) X(1 : wf%n_t1)
+         read(wf%r2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
+!
+         call disk%close_file(wf%r1_file)
+         call disk%close_file(wf%r2_file)
+!
+      elseif (trim(side) == 'left') then 
+!
+         call disk%open_file(wf%l1_file, 'read')
+         call disk%open_file(wf%l2_file, 'read')
+!
+         call wf%l1_file%prepare_to_read_line(n)
+         call wf%l2_file%prepare_to_read_line(n)
+!
+         read(wf%l1_file%unit) X(1 : wf%n_t1)
+         read(wf%l2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes) 
+!
+         call disk%close_file(wf%l1_file)
+         call disk%close_file(wf%l2_file)
+!
+      else
+!
+         call output%error_msg('Tried to read an excited state, but argument side not recognized: ' // side)
+!
+      endif
+!
+   end subroutine read_excited_state_ccsd
+!
+!
+   subroutine initialize_files_ccsd(wf)
+!!
+!!    Initialize files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Initializes the wavefucntion files for wavefunction parameters.
+!!
+      class(ccsd) :: wf 
+!
+      call wf%t1_file%init('t1', 'sequential', 'unformatted')
+      call wf%t2_file%init('t2', 'sequential', 'unformatted')
+!
+      call wf%t1bar_file%init('t1bar', 'sequential', 'unformatted')
+      call wf%t2bar_file%init('t2bar', 'sequential', 'unformatted')
+!
+      call wf%l1_file%init('l1', 'sequential', 'unformatted')
+      call wf%l2_file%init('l2', 'sequential', 'unformatted')
+!
+      call wf%r1_file%init('r1', 'sequential', 'unformatted')
+      call wf%r2_file%init('r2', 'sequential', 'unformatted')
+!
+      call wf%restart_file%init('cc_restart_file', 'sequential', 'unformatted')
+!
+   end subroutine initialize_files_ccsd
+!
 !
    subroutine construct_eta_ccsd(wf, eta)
 !!
@@ -742,10 +864,16 @@ contains
 !!
       implicit none 
 !
-      class(ccsd), intent(in) :: wf 
+      class(ccsd), intent(inout) :: wf 
 !
-      call wf%save_t1bar()
-      call wf%save_t2bar()
+      call disk%open_file(wf%t1bar_file, 'write', 'rewind')
+      call disk%open_file(wf%t2bar_file, 'write', 'rewind')
+!
+      read(wf%t1bar_file%unit) wf%t1bar  
+      read(wf%t2bar_file%unit) wf%t2bar
+!
+      call disk%close_file(wf%t1bar_file) 
+      call disk%close_file(wf%t2bar_file) 
 !
    end subroutine save_multipliers_ccsd
 !
@@ -759,8 +887,16 @@ contains
 !
       class(ccsd), intent(inout) :: wf 
 !
-      call wf%read_t1bar()
-      call wf%read_t2bar()
+      call wf%is_restart_safe('ground state')
+!
+      call disk%open_file(wf%t1bar_file, 'read', 'rewind')
+      call disk%open_file(wf%t2bar_file, 'read', 'rewind')
+!
+      read(wf%t1bar_file%unit) wf%t1bar  
+      read(wf%t2bar_file%unit) wf%t2bar
+!
+      call disk%close_file(wf%t1bar_file) 
+      call disk%close_file(wf%t2bar_file) 
 !
    end subroutine read_multipliers_ccsd
 !
@@ -781,50 +917,6 @@ contains
       call wf%destruct_t2bar()
 !
    end subroutine destruct_multipliers_ccsd
-!
-!
-   subroutine save_t2bar_ccsd(wf)
-!!
-!!    Save t2bar 
-!!    Written by Eirik F. Kjønstad, Nov 2018 
-!!
-      implicit none 
-!
-      class(ccsd), intent(in) :: wf 
-!
-      type(file) :: t2bar_file 
-!
-      call t2bar_file%init('t2bar', 'sequential', 'unformatted')
-!
-      call disk%open_file(t2bar_file, 'write', 'rewind')
-!
-      write(t2bar_file%unit) wf%t2bar
-!
-      call disk%close_file(t2bar_file)      
-!
-   end subroutine save_t2bar_ccsd
-!
-!
-   subroutine read_t2bar_ccsd(wf)
-!!
-!!    Save t2bar 
-!!    Written by Eirik F. Kjønstad, Nov 2018 
-!!
-      implicit none 
-!
-      class(ccsd), intent(inout) :: wf 
-!
-      type(file) :: t2bar_file 
-!
-      call t2bar_file%init('t2bar', 'sequential', 'unformatted')
-!
-      call disk%open_file(t2bar_file, 'read', 'rewind')
-!
-      read(t2bar_file%unit) wf%t2bar
-!
-      call disk%close_file(t2bar_file)      
-!
-   end subroutine read_t2bar_ccsd
 !
 !
    subroutine destruct_t2bar_ccsd(wf)

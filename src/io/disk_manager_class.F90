@@ -56,8 +56,6 @@ module disk_manager_class
 !
       procedure :: delete                       => delete_disk_manager
 !
-      procedure :: rewind_file                  => rewind_file_disk_manager
-!
    end type disk_manager
 !
    type(disk_manager) :: disk
@@ -561,24 +559,6 @@ contains
       endif
 !
    end subroutine delete_disk_manager
-!
-!
-   subroutine rewind_file_disk_manager(disk, the_file)
-!!
-!!    Rewind file 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(disk_manager), intent(in) :: disk 
-!
-      type(file) :: the_file
-!
-      call disk%open_file(the_file, 'readwrite', 'rewind')
-!
-      call disk%close_file(the_file)
-!
-   end subroutine rewind_file_disk_manager
 !
 !
 end module disk_manager_class

@@ -612,16 +612,9 @@ contains
 !
             davidson%n_new_trials = davidson%n_new_trials + 1
             call dscal(davidson%n_parameters, one/norm_new_trial, R, 1)
+            call davidson%write_trial(R)
 !
-            call disk%open_file(davidson%trials, 'write', 'append')
-            write(davidson%trials%unit) R
-            call disk%close_file(davidson%trials)
-! 
-         else
-!
-           ! call output%error_msg('new trial vector made in Davidson had no new significant components.')
-!
-         endif 
+         endif
 !
       endif 
 !

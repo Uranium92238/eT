@@ -244,6 +244,7 @@ contains
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
       flush(output%unit)
 !
+!     NB! This is weird - two times Roothan-Hall? Replace by MO transformation. -EFK, 2019
 !     Do a final Roothan-Hall step to transform the Fock matrix in the canonical MO basis 
 !
       do_mo_transformation = .true.
