@@ -418,7 +418,7 @@ contains
          call batch_a%determine_limits(current_a_batch)
          batch_a_packed = batch_a%length*(batch_a%length+1)/2
 !
-         do current_b_batch = 1, batch_b%num_batches
+         do current_b_batch = 1, current_a_batch
 !
             call batch_b%determine_limits(current_b_batch)
 !
@@ -472,7 +472,7 @@ contains
                            ab = (b*(b-3)/2) + a + b
 !
                            g_p_abcd(ab, cd) = diag_factor*(g_acbd(a, c, b, d) + g_acbd(a, d, b, c))
-                           g_m_abcd(ab, cd) = diag_factor*(g_acbd(a, d, b, c) - g_acbd(a, c, b, d))
+                           g_m_abcd(ab, cd) = diag_factor*(g_acbd(a, d, b, c) - g_acbd(a, c, b, d)) !a and b and c and d switched
 !
                         enddo
                      enddo
@@ -722,27 +722,23 @@ contains
 !
                         do b = 1, batch_b%length
 !
-                           if (a + batch_a%first - 1 .ge. b + batch_b%first - 1) then
+                           bj = wf%n_v*(j - 1) + b + batch_b%first - 1 ! B is full-space b index
+                           bi = wf%n_v*(i - 1) + b + batch_b%first - 1 ! B is full-space b index
 !
-                              bj = wf%n_v*(j - 1) + b + batch_b%first - 1 ! B is full-space b index
-                              bi = wf%n_v*(i - 1) + b + batch_b%first - 1 ! B is full-space b index
+                           ab = batch_a%length*(b - 1) + a
 !
-                              ab = batch_a%length*(b - 1) + a
+                           aibj = max(ai, bj)*(max(ai, bj)-3)/2 + ai + bj
 !
-                              aibj = max(ai, bj)*(max(ai, bj)-3)/2 + ai + bj
+!                          Reorder into omega2_aibj
 !
-!                             Reorder into omega2_aibj
+                           omega2(aibj) = omega2(aibj) &
+                                        + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
 !
-                              omega2(aibj) = omega2(aibj) &
-                                          + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
+                           if (i .ne. j) then
 !
-                              if (a .ne. b .and. i .ne. j) then
-!
-                                 biaj = max(bi, aj)*(max(bi, aj)-3)/2 + bi + aj
-                                 omega2(biaj) = omega2(biaj) &
-                                          + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
-!
-                              endif
+                              biaj = max(bi, aj)*(max(bi, aj)-3)/2 + bi + aj
+                              omega2(biaj) = omega2(biaj) &
+                                           + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
 !
                            endif
 !
