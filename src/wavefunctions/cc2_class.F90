@@ -687,7 +687,7 @@ contains
       integer :: a, i, b, j, ai, bj, aibj
       integer :: n_excited_states
 !
-      real(dp), dimension(:,:,:,:), allocatable :: r2_aibj
+      real(dp), dimension(:,:,:,:), allocatable :: r2_aibj, l2_aibj
 !
       real(dp), dimension(:), allocatable :: omega
 !
@@ -715,6 +715,7 @@ contains
 !
             call wf%read_excitation_energies(n_excited_states, omega)
 !
+!$omp parallel do private(a, i, b, j, aibj, ai, bj)
             do a = 1, wf%n_v
                do i = 1, wf%n_o 
 !
@@ -741,6 +742,7 @@ contains
                   enddo
                enddo
             enddo
+!$omp end parallel do
 !
             call mem%dealloc(omega, n_excited_states)
             call mem%dealloc(r2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -751,7 +753,52 @@ contains
 !
          if (.not. wf%l2_file%file_exists()) then
 !
-
+!           Construct l2 from l1
+!
+!           r2_aibj = (A^T_aibj,ck r1_ck)/(- ε_aibj + omega)
+!
+            call mem%alloc(l2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+            l2_aibj = zero
+!
+            call wf%jacobian_transpose_cc2_a2(l2_aibj, X(1:(wf%n_o)*(wf%n_v)))
+!
+            n_excited_states = wf%get_n_excitation_energies_on_file()
+!
+            call mem%alloc(omega, n_excited_states)
+!
+            call wf%read_excitation_energies(n_excited_states, omega)
+!
+!$omp parallel do private(a, i, b, j, aibj, ai, bj)
+            do b = 1, wf%n_v
+               do j = 1, wf%n_o 
+!
+                  bj = wf%n_v*(j - 1) + b
+!
+                  do i = 1, wf%n_o
+                     do a = 1, wf%n_v
+!
+                        ai = wf%n_v*(i - 1) + a
+!
+                        if (ai .ge. bj) then
+!
+                           aibj = ai*(ai - 3)/2 + ai + bj
+!
+                           X(aibj + (wf%n_v)*(wf%n_o)) = l2_aibj(a, i, b, j)&
+                                                     /(omega(n) - wf%fock_diagonal(a + wf%n_o, 1) &
+                                                                - wf%fock_diagonal(b + wf%n_o, 1) &
+                                                                + wf%fock_diagonal(i, 1) &
+                                                                + wf%fock_diagonal(j, 1) )
+!
+                        endif
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+            call mem%dealloc(omega, n_excited_states)
+            call mem%dealloc(l2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
          endif
 !
