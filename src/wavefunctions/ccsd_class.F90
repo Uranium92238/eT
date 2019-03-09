@@ -49,6 +49,7 @@ module ccsd_class
       procedure :: omega_ccsd_c1                               => omega_ccsd_c1_ccsd
 !
       procedure :: omega_ccsd_a2                               => omega_ccsd_a2_ccsd
+      procedure :: omega_ccsd_a2_ver2                          => omega_ccsd_a2_ver2_ccsd
       procedure :: omega_ccsd_b2                               => omega_ccsd_b2_ccsd
       procedure :: omega_ccsd_c2                               => omega_ccsd_c2_ccsd
       procedure :: omega_ccsd_d2                               => omega_ccsd_d2_ccsd
