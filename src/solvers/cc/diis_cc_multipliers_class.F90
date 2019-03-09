@@ -195,8 +195,8 @@ contains
 !
       if (solver%restart) then 
 !
-      !   call wf%read_multipliers()
-      !   call wf%get_multipliers(multipliers) ! write routines for this
+         call wf%read_multipliers()
+         call wf%get_multipliers(multipliers)
 !
       else
 !

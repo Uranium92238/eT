@@ -869,8 +869,8 @@ contains
       call disk%open_file(wf%t1bar_file, 'write', 'rewind')
       call disk%open_file(wf%t2bar_file, 'write', 'rewind')
 !
-      read(wf%t1bar_file%unit) wf%t1bar  
-      read(wf%t2bar_file%unit) wf%t2bar
+      write(wf%t1bar_file%unit) wf%t1bar  
+      write(wf%t2bar_file%unit) wf%t2bar
 !
       call disk%close_file(wf%t1bar_file) 
       call disk%close_file(wf%t2bar_file) 
