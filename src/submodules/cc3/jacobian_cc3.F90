@@ -250,7 +250,7 @@ contains
          enddo
       enddo
 !$omp end parallel do
-
+!
       call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
 !
 !     Add CC3 doubles contribution to the incoming vector
@@ -419,7 +419,7 @@ end subroutine effective_jacobian_transformation_cc3
       integer              :: req_0, req_1, req_2, req_3
       real(dp)             :: batch_buff = 0.0
 !
-   !   real(dp) :: ddot, t3_norm
+      real(dp) :: ddot, t3_norm
 !
 !     Set up required integrals
 !
@@ -803,6 +803,12 @@ end subroutine effective_jacobian_transformation_cc3
                                                       g_lick_c1_p(:,:,i_rel,k_rel),                &
                                                       g_ljck_c1_p(:,:,j_rel,k_rel))
 !
+!                       DEBUG
+                        t3_norm = ddot(wf%n_v**3, t_abc, 1, t_abc, 1)
+                        write(output%unit,*)
+                        write(output%unit,*) 'c3 norm: ', t3_norm
+                        write(output%unit,*)
+!
                         call wf%jacobian_cc3_rho1(i, j, k, t_abc, u_abc, rho_ai, rho_abij, F_kc,   &
                                                    L_jbic_p(:,:,j_rel,i_rel),                      &
                                                    L_kbic_p(:,:,k_rel,i_rel),                      &
@@ -835,6 +841,12 @@ end subroutine effective_jacobian_transformation_cc3
                                                       g_licj_p(:,:,i_rel,j_rel),    &
                                                       g_lick_p(:,:,i_rel,k_rel),    &
                                                       g_ljck_p(:,:,j_rel,k_rel))
+!
+!                       DEBUG
+                        t3_norm = ddot(wf%n_v**3, t_abc, 1, t_abc, 1)
+                        write(output%unit,*)
+                        write(output%unit,*) 't3 norm: ', t3_norm
+                        write(output%unit,*)
 !
                         call wf%jacobian_cc3_rho1(i, j, k, t_abc, u_abc, rho_ai, rho_abij, F_kc_c1)
 !
@@ -2636,7 +2648,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
       integer, intent(in) :: i, j, k
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: c_abc ! t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                   :: rho_ai
@@ -2676,6 +2688,7 @@ end subroutine effective_jacobian_transformation_cc3
 !        Same as above if i == k, but this is never true
 !
       if (present(L_jbic)) then
+!
          call dgemv('N',            &
                      wf%n_v,        &
                      wf%n_v**2,     &
@@ -2773,22 +2786,21 @@ end subroutine effective_jacobian_transformation_cc3
                            one,           &
                            rho_ai(:,j),   & ! rho_aj
                            1)
-!
-!              rho_abjk += sum_c (t^cab - t^acb)*F_ic
-!
-               call dgemv('N',                  &
-                           wf%n_v**2,           &
-                           wf%n_v,              &
-                           -one,                &
-                           u_abc,               &
-                           wf%n_v**2,           &
-                           F_kc(:,i),           &
-                           1,                   &
-                           one,                 &
-                           rho_abij(:,:,j,k),   &
-                           1)
-!
             end if
+!
+!           rho_abjk += sum_c (c^cab - c^acb)*F_ic
+!
+            call dgemv('N',                  &
+                        wf%n_v**2,           &
+                        wf%n_v,              &
+                        -one,                &
+                        u_abc,               &
+                        wf%n_v**2,           &
+                        F_kc(:,i),           &
+                        1,                   &
+                        one,                 &
+                        rho_abij(:,:,j,k),   &
+                        1)
 !
          end if
 !
@@ -2957,7 +2969,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
 !     resort to u_abc = 2*t_bac - t_bca - t_cab
 !
-      call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
+      call sort_123_to_213(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
 !     rho_adji += sum_bc (2*t_bac - t_cab - t_bca)*g_dbkc
 !
@@ -3039,7 +3051,7 @@ end subroutine effective_jacobian_transformation_cc3
 !        NB wrong commment
 !        resort to u_abc = 2*t_bca - t_bac - t_cba
 !
-         call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
+         call sort_123_to_213(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
 !        NB wrong commment
 !        rho_adki += sum_bc (2*t_bca - t_bac - t_cba)*g_dbjc
@@ -3128,7 +3140,7 @@ end subroutine effective_jacobian_transformation_cc3
 !        NB wrong commment
 !        resort to u_abc = 2*t_cab - t_acb - t_bac
 !
-         call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
+         call sort_123_to_213(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
          if (i .ne. j) then
 !
