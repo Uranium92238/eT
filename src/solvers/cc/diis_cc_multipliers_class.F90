@@ -91,7 +91,7 @@ contains
 !     Set default settings
 !
       solver%diis_dimension = 8
-      solver%max_iterations = 50
+      solver%max_iterations = 100
 !
       solver%residual_threshold  = 1.0d-6
 !
@@ -195,8 +195,10 @@ contains
 !
       if (solver%restart) then 
 !
-      !   call wf%read_multipliers()
-      !   call wf%get_multipliers(multipliers) ! write routines for this
+         write(output%unit, '(/t3,a)') 'Requested restart. Reading multipliers from file.'
+!
+         call wf%read_multipliers()
+         call wf%get_multipliers(multipliers) 
 !
       else
 !
@@ -350,6 +352,10 @@ contains
          if (line(1:10) == 'threshold:' ) then
 !
             read(line(11:100), *) solver%residual_threshold
+!
+         elseif (line(1:7) == 'restart' ) then
+!
+            solver%restart = .true.
 !
          elseif (line(1:15) == 'max iterations:' ) then
 !

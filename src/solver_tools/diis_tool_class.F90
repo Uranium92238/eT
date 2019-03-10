@@ -466,7 +466,7 @@ contains
 !
       class(diis_tool) :: solver
 !
-      real(dp), dimension(solver%n_parameters), intent(out) :: dx_i
+      real(dp), dimension(solver%n_equations), intent(out) :: dx_i
 !
       integer, intent(in) :: i
 !
@@ -525,7 +525,7 @@ contains
 !
       class(diis_tool) :: solver
 !
-      real(dp), dimension(solver%n_parameters), intent(in) :: dx_i
+      real(dp), dimension(solver%n_equations), intent(in) :: dx_i
 !
       integer, intent(in) :: i
 !
