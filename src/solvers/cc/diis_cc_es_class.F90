@@ -297,7 +297,7 @@ contains
 !
          do state = 1, n_solutions_on_file
 !
-            call wf%read_excited_state(X(:,state), state, solver%transformation)
+            call wf%restart_excited_state(X(:,state), state, solver%transformation)
 !
          enddo
 !
@@ -393,6 +393,8 @@ contains
             call wf%save_excited_state(X(:,state), state, solver%transformation)
 !
          enddo 
+!
+         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
 !
       endif 
 !

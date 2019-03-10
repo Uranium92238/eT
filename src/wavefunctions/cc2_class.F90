@@ -85,6 +85,7 @@ module cc2_class
       procedure :: initialize_files                            => initialize_files_cc2
 !
       procedure :: read_excited_state                          => read_excited_state_cc2
+      procedure :: restart_excited_state                       => restart_excited_state_cc2
       procedure :: save_excited_state                          => save_excited_state_cc2
       procedure :: is_restart_safe                             => is_restart_safe_cc2
 !
@@ -666,6 +667,146 @@ contains
    end subroutine read_excited_state_cc2
 !
 !
+   subroutine restart_excited_state_cc2(wf, X, n, side)
+!!
+!!    Restart excited state 
+!!    Written by Sarai D. Fokestad, Mar 2019 
+!!
+!!    Wrapper for setting trial vectors to excited states on file
+!!
+      implicit none 
+!
+      class(cc2), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      integer :: a, i, b, j, ai, bj, aibj
+      integer :: n_excited_states
+!
+      real(dp), dimension(:,:,:,:), allocatable :: r2_aibj, l2_aibj
+!
+      real(dp), dimension(:), allocatable :: omega
+!
+      call wf%read_excited_state(X, n, side)
+!
+!     Check if we have read doubles vectors.
+!     If not, set up doubles.
+!
+      if (trim(side) == 'right') then 
+!
+        if (.not. wf%r2_file%file_exists()) then
+!
+!           Construct r2 from r1
+!
+!           r2_aibj = (A_aibj,ck r1_ck)/(- ε_aibj + omega)
+!
+            call mem%alloc(r2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+            r2_aibj = zero
+!
+            call wf%jacobian_cc2_a2(r2_aibj, X(1:(wf%n_o)*(wf%n_v)))
+!
+            n_excited_states = wf%get_n_excitation_energies_on_file()
+!
+            call mem%alloc(omega, n_excited_states)
+!
+            call wf%read_excitation_energies(n_excited_states, omega)
+!
+!$omp parallel do private(a, i, b, j, aibj, ai, bj)
+            do a = 1, wf%n_v
+               do i = 1, wf%n_o 
+!
+                  ai = wf%n_v*(i - 1) + a
+!
+                  do b = 1, wf%n_v
+                     do j = 1, wf%n_o
+!
+                        bj = wf%n_v*(j - 1) + b
+!
+                        if (ai .ge. bj) then
+!
+                           aibj = ai*(ai - 3)/2 + ai + bj
+!
+                           X(aibj + (wf%n_v)*(wf%n_o)) = r2_aibj(a, i, b, j)&
+                                                     /(omega(n) - wf%fock_diagonal(a + wf%n_o, 1) &
+                                                                - wf%fock_diagonal(b + wf%n_o, 1) &
+                                                                + wf%fock_diagonal(i, 1) &
+                                                                + wf%fock_diagonal(j, 1) )
+!
+                        endif
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+            call mem%dealloc(omega, n_excited_states)
+            call mem%dealloc(r2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+         endif
+!
+      elseif (trim(side) == 'left') then
+!
+         if (.not. wf%l2_file%file_exists()) then
+!
+!           Construct l2 from l1
+!
+!           r2_aibj = (A^T_aibj,ck r1_ck)/(- ε_aibj + omega)
+!
+            call mem%alloc(l2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+            l2_aibj = zero
+!
+            call wf%jacobian_transpose_cc2_a2(l2_aibj, X(1:(wf%n_o)*(wf%n_v)))
+!
+            n_excited_states = wf%get_n_excitation_energies_on_file()
+!
+            call mem%alloc(omega, n_excited_states)
+!
+            call wf%read_excitation_energies(n_excited_states, omega)
+!
+!$omp parallel do private(a, i, b, j, aibj, ai, bj)
+            do b = 1, wf%n_v
+               do j = 1, wf%n_o 
+!
+                  bj = wf%n_v*(j - 1) + b
+!
+                  do i = 1, wf%n_o
+                     do a = 1, wf%n_v
+!
+                        ai = wf%n_v*(i - 1) + a
+!
+                        if (ai .ge. bj) then
+!
+                           aibj = ai*(ai - 3)/2 + ai + bj
+!
+                           X(aibj + (wf%n_v)*(wf%n_o)) = l2_aibj(a, i, b, j)&
+                                                     /(omega(n) - wf%fock_diagonal(a + wf%n_o, 1) &
+                                                                - wf%fock_diagonal(b + wf%n_o, 1) &
+                                                                + wf%fock_diagonal(i, 1) &
+                                                                + wf%fock_diagonal(j, 1) )
+!
+                        endif
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+            call mem%dealloc(omega, n_excited_states)
+            call mem%dealloc(l2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+         endif
+!
+      endif
+!
+   end subroutine restart_excited_state_cc2
+!
+!
    subroutine is_restart_safe_cc2(wf, task)
 !!
 !!    Is restart safe?
@@ -739,6 +880,8 @@ contains
 !
       call wf%r1_file%init('r1', 'sequential', 'unformatted')
       call wf%r2_file%init('r2', 'sequential', 'unformatted')
+!
+      call wf%excitation_energies_file%init('excitation_energies', 'sequential', 'unformatted')
 !
       call wf%restart_file%init('cc_restart_file', 'sequential', 'unformatted')
 !

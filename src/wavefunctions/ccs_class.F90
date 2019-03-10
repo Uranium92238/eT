@@ -52,6 +52,7 @@ module ccs_class
 !
       type(file) :: t1_file, t1bar_file 
       type(file) :: r1_file, l1_file
+      type(file) :: excitation_energies_file
       type(file) :: restart_file
 !
       real(dp), dimension(:,:), allocatable  :: fock_ij
@@ -91,7 +92,12 @@ module ccs_class
 !
       procedure :: save_excited_state                          => save_excited_state_ccs
       procedure :: read_excited_state                          => read_excited_state_ccs
+      procedure :: restart_excited_state                       => restart_excited_state_ccs
       procedure :: get_n_excited_states_on_file                => get_n_excited_states_on_file_ccs
+!
+      procedure :: save_excitation_energies                    => save_excitation_energies_ccs
+      procedure :: read_excitation_energies                    => read_excitation_energies_ccs
+      procedure :: get_n_excitation_energies_on_file           => get_n_excitation_energies_on_file_ccs
 !
       procedure :: initialize_multipliers                      => initialize_multipliers_ccs
       procedure :: destruct_multipliers                        => destruct_multipliers_ccs
@@ -310,6 +316,9 @@ contains
 !
       call wf%r1_file%init('r1', 'sequential', 'unformatted')
       call wf%l1_file%init('l1', 'sequential', 'unformatted')
+!
+      call wf%excitation_energies_file%init('excitation_energies', 'sequential', 'unformatted')
+!
       call wf%restart_file%init('cc_restart_file', 'sequential', 'unformatted')
 !
    end subroutine initialize_files_ccs
@@ -511,16 +520,17 @@ contains
 !!    Save excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019 
 !!
-!!    Saves an excited state to disk. Since the solvers 
-!!    keep these vectors in full length, we receive a vector 
-!!    in full length (n_es_amplitudes), and then distribute 
-!!    the different parts of that vector to singles, doubles, etc.,
-!!    files (if there are doubles, etc.).
+!!    Saves an excited state to disk. 
+!!    Since the solvers  keep these vectors in full length, 
+!!    we receive a vector in full length (n_es_amplitudes), 
+!!    and then distribute the different parts of that vector 
+!!    to singles, doubles, etc., files (if there are doubles, etc.).
 !!
 !!    NB! If n = 1, then the routine WILL REWIND the file before writing,
 !!    thus DELETING every record in the file. For n >=2, we just append to
 !!    the file. The purpose of this setup is that the files should be saved in 
-!!    the correct order, from n = 1 to n = # states. 
+!!    the correct order, from n = 1 to n = # states.
+!!
 !!
       implicit none 
 !
@@ -613,6 +623,118 @@ contains
       endif
 !
    end subroutine read_excited_state_ccs
+!
+!
+   subroutine restart_excited_state_ccs(wf, X, n, side)
+!!
+!!    Restart excited state 
+!!    Written by Sarai D. Fokestad, Mar 2019 
+!!
+!!    Wrapper for setting trial vectors to excited states on file
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      call wf%read_excited_state(X, n, side)
+!
+   end subroutine restart_excited_state_ccs
+!
+!
+   subroutine save_excitation_energies_ccs(wf, n_states, energies)
+!!
+!!    Save excitation energies 
+!!    Written by Sarai D. Folkestad, Mar 2019 
+!!
+!!    Saves 'n_states' excitation energies to disk. 
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      integer, intent(in) :: n_states ! number of states
+!
+      real(dp), dimension(n_states), intent(in) :: energies
+!
+      call disk%open_file(wf%excitation_energies_file, 'write', 'rewind')
+!
+      rewind(wf%excitation_energies_file%unit)
+!
+      write(wf%excitation_energies_file%unit) n_states
+      write(wf%excitation_energies_file%unit) energies
+!
+      call disk%close_file(wf%excitation_energies_file, 'keep')
+!     
+   end subroutine save_excitation_energies_ccs
+!
+!
+   integer function get_n_excitation_energies_on_file_ccs(wf)
+!!
+!!    Read n excitation energies 
+!!    Written by Sarai D. Folkestad, Mar 2019 
+!!
+!!    Reads and returns the number of excitation energies on file
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      call disk%open_file(wf%excitation_energies_file, 'read')
+      rewind(wf%excitation_energies_file%unit)
+!
+      read(wf%excitation_energies_file%unit) get_n_excitation_energies_on_file_ccs
+!
+      call disk%close_file(wf%excitation_energies_file, 'keep')
+!     
+   end function get_n_excitation_energies_on_file_ccs
+!
+!
+   subroutine read_excitation_energies_ccs(wf, n_states, energies)
+!!
+!!    Read excitation energies 
+!!    Written by Sarai D. Folkestad, Mar 2019 
+!!
+!!    Reads excitation energies from file
+!!
+!!    Note: "n_states" gives the dimension of the array "energies".
+!!          It should match the actual number of states on file,
+!!          given by the first record, "n_states" before the routine is called
+!!          by either reading the restart file or by calling the function 
+!!          read_n_excitation_energies
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf
+!
+      integer, intent(in) :: n_states ! Obtained by reading the restart file 
+!                                     ! or by calling read_n_excitation_energies 
+!
+      real(dp), dimension(n_states), intent(out) :: energies
+!
+      integer :: local_n_states
+!
+      call disk%open_file(wf%excitation_energies_file, 'read')
+      rewind(wf%excitation_energies_file%unit)
+!
+      read(wf%excitation_energies_file%unit) local_n_states
+!
+      if (local_n_states .ne. n_states) then
+!
+         call output%error_msg('Dimension of excited state array does not match what is on file.')
+!
+      endif
+!
+      read(wf%excitation_energies_file%unit) energies
+!
+      call disk%close_file(wf%excitation_energies_file, 'keep')
+!     
+   end subroutine read_excitation_energies_ccs
 !
 !
    subroutine get_n_excited_states_on_file_ccs(wf, side, n_states)

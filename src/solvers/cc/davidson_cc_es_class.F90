@@ -264,7 +264,7 @@ contains
 !
       iteration = 1
 !
-      call davidson%prepare(wf%name_ // '_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
+      call davidson%prepare('cc_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
                                solver%residual_threshold, solver%eigenvalue_threshold)
 !
 !     Construct first trial vectors
@@ -341,15 +341,15 @@ contains
 !
          enddo
 !
-        if (davidson%dim_red .ge. davidson%max_dim_red) then
+         if (davidson%dim_red .ge. davidson%max_dim_red) then
 !
-           call davidson%set_trials_to_solutions()
+            call davidson%set_trials_to_solutions()
 !
-        else
+         else
 !
             davidson%dim_red = davidson%dim_red + davidson%n_new_trials
 !
-        endif
+         endif
 !
 !        Update energies
 !
@@ -396,6 +396,8 @@ contains
             call wf%save_excited_state(X, solution, solver%transformation)
 !
          enddo
+!
+         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
 !
       elseif (.not. converged ) then
 !
@@ -489,7 +491,7 @@ contains
 !
             do trial = 1, n_solutions_on_file
 !
-               call wf%read_excited_state(c_i, trial, solver%transformation)
+               call wf%restart_excited_state(c_i, trial, solver%transformation)
                call davidson%write_trial(c_i)
 !
             enddo 
@@ -576,6 +578,9 @@ contains
       class(davidson_cc_es) :: solver
 !
       write(output%unit, '(/t3,a,a,a)') 'Cleaning up ', trim(solver%tag), '.'
+!
+      call solver%destruct_energies()
+      if (allocated(solver%start_vectors)) call mem%dealloc(solver%start_vectors, solver%n_singlet_states, 1)
 !
    end subroutine cleanup_davidson_cc_es
 !
