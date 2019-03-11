@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module memory_manager_class
 !
 !!
@@ -12,22 +31,23 @@ module memory_manager_class
 !!
 !!       real(dp), dimension(:,:), allocatable :: array -> declares an allocatable array
 !!
-!!       call wf%mem%alloc(array, M, N)   -> allocates the array of dimension M x N
+!!       call mem%alloc(array, M, N)   -> allocates the array of dimension M x N
 !!
 !!       ... Do stuff with the array
 !!
-!!       call wf%mem%dealloc(array, M, N) -> deallocates the array of dimension M x N
+!!       call mem%dealloc(array, M, N) -> deallocates the array of dimension M x N
 !!
+!!    Analogous calls are made to make one, three and four dimensional tensors as well,
+!!    e.g. call mem%alloc(X, M, N, K) for an M x N x K tensor.
 !!
-!!    NB! Large arrays MUST always be allocated using the memory manager object. Small arrays,
-!!    integers, strings, etc., which use a negligible amount of memory, do not need to pass through
-!!    the memory manager.
-!!
+!!    Note: Large arrays MUST always be allocated using the memory manager object. Small arrays,
+!!    integers, strings, etc., which use a negligible amount of memory, do not have to pass 
+!!    through the memory manager.
 !!
 !!    The 'alloc' and 'dealloc' routines allow the memory manager keep track of the
 !!    the memory available at a given time. From the specified total memory, the class
-!!    can then set the batching information in a batching index (see the batching
-!!    index class). See the num_batch and num_two_batches procedures for more details.
+!!    can then set the batching information for a batching index (see the batching
+!!    index class) or set of such indices (see the batch_setup routines below).
 !!
 !
    use kinds
@@ -36,9 +56,7 @@ module memory_manager_class
    use batching_index_class
    use io_utilities
 !
-!  ::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Definition of the memory_manager class -::-
-!  ::::::::::::::::::::::::::::::::::::::::::::::::
+!  Class definition 
 !
    type :: memory_manager
 !
@@ -110,7 +128,8 @@ module memory_manager_class
       procedure :: read_settings  => read_settings_memory_manager
       procedure :: print_settings => print_settings_memory_manager
 !
-      procedure :: get_available  => get_available_memory_manager
+      procedure :: get_available   => get_available_memory_manager
+      procedure :: print_available => print_available_memory_manager
 !
    end type memory_manager
 !
@@ -164,6 +183,21 @@ contains
       get_available_memory_manager = mem%available
 !
    end function get_available_memory_manager
+!
+!
+   subroutine print_available_memory_manager(mem)
+!!
+!!    Get available  
+!!    Written by Eirik F. Kjønstad, Jan 2019 
+!!
+      implicit none 
+!
+      class(memory_manager), intent(in) :: mem 
+!
+      write(output%unit, '(t3, a38, i5, a)') 'Currently available memory:     ', &
+                         mem%available/1000000, ' MB'
+!
+   end subroutine print_available_memory_manager
 !
 !
    subroutine alloc_1_memory_manager(mem, array, M)
@@ -1082,7 +1116,8 @@ contains
 !
       class(memory_manager) :: mem
 !
-      write(output%unit, '(t3, a38, i5, a)') 'Memory available for calculation:     ', mem%total/1000000000, ' GB'
+      write(output%unit, '(t3, a38, i5, a)') 'Memory available for calculation:     ', &
+                         mem%total/1000000000, ' GB'
 !
    end subroutine print_settings_memory_manager
 !

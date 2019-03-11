@@ -1,17 +1,36 @@
+#
+#
+#   eT - a coupled cluster program
+#   Copyright (C) 2016-2019 the authors of eT
+#
+#   eT is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   eT is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+#
 set(eT_fortran_sources
    src/eT_program.F90
    src/solvers/hf/abstract_hf_solver_class.F90
-   src/solvers/hf/scf_diis_hf_solver_class.F90
-   src/solvers/hf/scf_hf_solver_class.F90
-   src/solvers/cc/diis_cc_gs_solver_class.F90
-   src/solvers/cc/diis_cc_es_solver_class.F90
+   src/solvers/hf/scf_diis_hf_class.F90
+   src/solvers/hf/scf_hf_class.F90
+   src/solvers/cc/diis_cc_gs_class.F90
+   src/solvers/cc/diis_cc_es_class.F90
    src/solvers/cc/diis_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_multipliers_class.F90
-   src/solvers/cc/davidson_cc_es_solver_class.F90
-   src/solvers/cc/davidson_cc_ip_solver_class.F90
-   src/solvers/cc/davidson_cvs_cc_es_solver_class.F90
    src/solvers/cc/cc_property_solver_class.F90
-   src/solvers/cholesky/eri_cd_solver_class.F90
+   src/solvers/cc/davidson_cc_es_class.F90
+   src/solvers/cc/davidson_cc_ip_class.F90
+   src/solvers/cc/davidson_cvs_cc_es_class.F90
+   src/solvers/cholesky/eri_cd_class.F90
    src/engines/hf_engine_class.F90
    src/engines/abstract_engine_class.F90
    src/engines/gs_engine_class.F90
@@ -25,11 +44,6 @@ set(eT_fortran_sources
    src/integrals/ao_integral_tool_class.F90
    src/integrals/mo_integral_tool_class.F90
    src/solver_tools/cholesky_array_list_class.F90
-   src/libint/h_wx.F90
-   src/libint/s_wx.F90
-   src/libint/mu_wx.F90
-   src/libint/g_wxyz.F90
-   src/libint/libint_initialization.F90
    src/memory/batching_index_class.F90
    src/memory/memory_manager_class.F90
    src/various/kinds.F90
@@ -57,7 +71,7 @@ set(eT_fortran_sources
    src/molecular_system/periodic_table.F90
    src/molecular_system/shell_class.F90
    src/molecular_system/basis_set_info.F90
-   src/libint/atom_init.F90
+   src/libint/libint_initialization.F90
    src/molecular_system/active_atoms_info_class.F90
    src/solver_tools/diis_tool_class.F90
    src/solver_tools/davidson_tool_class.F90

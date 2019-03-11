@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module davidson_cc_multipliers_class
 !
 !!
@@ -65,11 +84,9 @@ contains
 !
 !     Set default settings
 !
-      solver%max_iterations = 20
-!
+      solver%max_iterations      = 100
       solver%residual_threshold  = 1.0d-6
-!
-      solver%restart = .false.
+      solver%restart             = .false.
 !
       call solver%read_settings()
 !
@@ -121,27 +138,46 @@ contains
 !
       real(dp) :: residual_norm, ddot, norm_trial
 !
-!     Set eta
+!     Initialize solver tool and set preconditioner 
 !
       call mem%alloc(eta, wf%n_gs_amplitudes, 1)
       call wf%construct_eta(eta)
-      call dscal(wf%n_gs_amplitudes, -one, eta, 1)
-!
-!     Initialize solver tool
 !
       call davidson%prepare('multipliers', wf%n_gs_amplitudes, solver%residual_threshold, eta)
 !
-!     Set start vector
-!
-!     Precondition eta and use as trial
-!
       call solver%set_precondition_vector(wf, davidson)
-      call davidson%precondition(eta)
 !
-      norm_trial = sqrt(ddot(wf%n_gs_amplitudes, eta, 1, eta, 1))
-      call dscal(wf%n_gs_amplitudes, one/norm_trial, eta, 1)
+!     Set start vector / initial guess 
 !
-      call davidson%write_trial(eta, 'rewind')
+      if (solver%restart) then 
+!
+!        Read multiplier vector from file and use it as first trial
+!
+         write(output%unit, '(/t3,a)') 'Requested restart. Reading multipliers from file.'
+!
+         call wf%read_multipliers()
+!
+         call mem%alloc(multipliers, wf%n_gs_amplitudes, 1)
+         call wf%get_multipliers(multipliers)
+!
+         norm_trial = sqrt(ddot(wf%n_gs_amplitudes, multipliers, 1, multipliers, 1))
+!
+         call davidson%write_trial(multipliers, 'rewind')
+         call mem%dealloc(multipliers, wf%n_gs_amplitudes, 1)
+!
+      else 
+!
+!        Use - eta_mu / eps_mu as first guess 
+!
+         call dscal(wf%n_gs_amplitudes, -one, eta, 1)
+         call davidson%precondition(eta)
+!
+         norm_trial = sqrt(ddot(wf%n_gs_amplitudes, eta, 1, eta, 1))
+         call dscal(wf%n_gs_amplitudes, one/norm_trial, eta, 1)
+!
+         call davidson%write_trial(eta, 'rewind')
+!
+      endif 
 !
       call mem%dealloc(eta, wf%n_gs_amplitudes, 1)
 !
@@ -353,6 +389,10 @@ contains
          if (line(1:10) == 'threshold:' ) then
 !
             read(line(11:100), *) solver%residual_threshold
+!
+         elseif (line(1:7) == 'restart' ) then
+!
+            solver%restart = .true.
 !
          elseif (line(1:15) == 'max iterations:' ) then
 !

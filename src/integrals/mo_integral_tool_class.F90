@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module mo_integral_tool_class
 !
 !!
@@ -476,7 +495,6 @@ contains
       integer :: red_first_a 
 !
       real(dp), dimension(:,:), allocatable :: L_ib_J
-      real(dp), dimension(:,:), allocatable :: L_Jb_a
 !
       integer :: b_length, a_length
 !
@@ -499,8 +517,6 @@ contains
       call integrals%read_cholesky(L_ab_J, full_first_a, full_last_a, full_first_b, full_last_b)
 !
 !     Calculate and add t1-transformed term, - sum_i t_ai L_ib_J
-!
-      call mem%alloc(L_Jb_a, (integrals%n_J)*b_length, a_length)
 !
       call dgemm('N','N',                   &
                   a_length,                 &

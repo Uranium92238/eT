@@ -1,25 +1,45 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module ao_integral_tool_class
 !
 !!
-!!    Integral_tool class module
+!!    AO integral tool class module
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!    C++ is not fond of 64-bit integers, so ints are explicitly 
-!!    translated to 32-bits here
 !!
-!
-!  Fortran interfaces to C++ routines
-!
-   use h_wx
-   use s_wx
-   use mu_wx
-   use g_wxyz
+!!    Note: C++ is not fond of 64-bit integers, so ints are explicitly 
+!!    translated to 32-bits here before calling Libint routines 
+!!
 !
 !  Disk & memory class modules
 !
    use file_class
    use memory_manager_class
 !
-   implicit none
+!  Fortran interfaces to C++ routines
+!
+   use iso_c_binding
+!
+   include "../libint/h_wx_cdef.F90"
+   include "../libint/s_wx_cdef.F90"
+   include "../libint/mu_wx_cdef.F90"
+   include "../libint/g_wxyz_cdef.F90"
 !
 !  Class definition
 !
@@ -59,7 +79,7 @@ contains
       s1_4 = int(s1,i6)
       s2_4 = int(s2,i6)
 !
-      call construct_ao_h_wx(h, s1_4, s2_4)
+      call construct_ao_h_wx_c(h, s1_4, s2_4)
 !
    end subroutine construct_ao_h_wx_ao_integral_tool
 !
@@ -82,7 +102,7 @@ contains
       s1_4 = int(s1,i6)
       s2_4 = int(s2,i6)
 !
-      call construct_ao_s_wx(s, s1_4, s2_4) 
+      call construct_ao_s_wx_c(s, s1_4, s2_4) 
 !
    end subroutine construct_ao_s_wx_ao_integral_tool
 !
@@ -108,7 +128,7 @@ contains
       s3_4 = int(s3,i6)
       s4_4 = int(s4,i6)
 !
-      call construct_ao_g_wxyz(g, s1_4, s2_4, s3_4, s4_4)
+      call construct_ao_g_wxyz_c(g, s1_4, s2_4, s3_4, s4_4)
 !
    end subroutine construct_ao_g_wxyz_ao_integral_tool
 !
@@ -172,7 +192,7 @@ contains
       thread_4 = int(thread,i6)
       skip_4 = int(skip,i6)
 !
-      call construct_ao_g_wxyz_epsilon(g, s1_4, s2_4, s3_4, s4_4, eps, & 
+      call construct_ao_g_wxyz_epsilon_c(g, s1_4, s2_4, s3_4, s4_4, eps, & 
                                        thread_4, skip_4, n1_4, n2_4, n3_4, n4_4)
 !
       skip = int(skip_4)
@@ -197,7 +217,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: mu_X ! x component
       real(dp), dimension(:,:), intent(inout) :: mu_Y ! y component 
-      real(dp), dimension(:,:), intent(inout) :: mu_Z ! z componen
+      real(dp), dimension(:,:), intent(inout) :: mu_Z ! z component
 !
       integer, intent(in) :: s1, s2
       integer(i6) :: s1_4, s2_4
@@ -205,7 +225,7 @@ contains
       s1_4 = int(s1,i6)
       s2_4 = int(s2,i6)
 !
-      call construct_ao_mu_wx(mu_X, mu_Y, mu_Z, s1_4, s2_4)
+      call construct_ao_mu_wx_c(mu_X, mu_Y, mu_Z, s1_4, s2_4)
 !
    end subroutine construct_ao_mu_wx_ao_integral_tool
 !

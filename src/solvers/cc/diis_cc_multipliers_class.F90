@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module diis_cc_multipliers_class
 !
 !!
@@ -72,7 +91,7 @@ contains
 !     Set default settings
 !
       solver%diis_dimension = 8
-      solver%max_iterations = 50
+      solver%max_iterations = 100
 !
       solver%residual_threshold  = 1.0d-6
 !
@@ -176,8 +195,10 @@ contains
 !
       if (solver%restart) then 
 !
-      !   call wf%read_multipliers()
-      !   call wf%get_multipliers(multipliers) ! write routines for this
+         write(output%unit, '(/t3,a)') 'Requested restart. Reading multipliers from file.'
+!
+         call wf%read_multipliers()
+         call wf%get_multipliers(multipliers) 
 !
       else
 !
@@ -331,6 +352,10 @@ contains
          if (line(1:10) == 'threshold:' ) then
 !
             read(line(11:100), *) solver%residual_threshold
+!
+         elseif (line(1:7) == 'restart' ) then
+!
+            solver%restart = .true.
 !
          elseif (line(1:15) == 'max iterations:' ) then
 !

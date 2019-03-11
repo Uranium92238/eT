@@ -1,8 +1,27 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module cc3_class
 !
 !!
 !!    Coupled cluster CC3 class module
-!!    Alex C. Paul and Rolf H. Myhre 2018
+!!    Written by Rolf H. Myhre, 2018
 !!
 !
    use ccsd_class
@@ -54,7 +73,7 @@ contains
    subroutine prepare_cc3(wf, ref_wf)
 !!
 !!    Prepare
-!!    Alex C. Paul and Rolf H. Myhre 2018
+!!    Written by Rolf H. Myhre, 2018
 !!
       implicit none
 !
@@ -103,13 +122,15 @@ contains
       call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
 !
+      call wf%initialize_files()
+!
    end subroutine prepare_cc3
 !
 !
    subroutine cleanup_cc3(wf)
 !!
 !!    Cleanup
-!!    Written by Alex C. Paul and Rolf H. Myhre 2018
+!!    Written by Rolf H. Myhre, 2018
 !!
       implicit none
 !
