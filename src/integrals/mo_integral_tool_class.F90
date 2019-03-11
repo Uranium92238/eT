@@ -607,6 +607,8 @@ contains
                   X_J_ai, & 
                   integrals%n_J*length_a)
 !
+      call mem%dealloc(L_J_ab, integrals%n_J, length_a, integrals%n_v)
+!
       call add_21_to_12(one, X_J_ai, L_ai_J, length_a*length_i, integrals%n_J)
 !    
       call mem%dealloc(X_J_ai, integrals%n_J, length_a, length_i) 
