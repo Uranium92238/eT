@@ -716,7 +716,6 @@ contains
          call batch_k%determine_limits(current_k_batch)
 !
          call mem%alloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
-   !      call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
          call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !
          call wf%get_ooov(g_pqrs, &

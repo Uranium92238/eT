@@ -2,7 +2,7 @@ submodule (cc3_class) jacobian
 !
 !!
 !!    Jacobian submodule (cc3)
-!!    Written by Rolf H. Myhre and Alexander Paul
+!!    Written by Rolf H. Myhre and Alexander Paul Feb 2019
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian matrix
@@ -23,7 +23,7 @@ contains
    module subroutine effective_jacobian_transformation_cc3(wf, omega, c)
 !!
 !!    Jacobian transformation (CC3)
-!!    Written by Rolf H. Myhre and Alexander Paul
+!!    Written by Rolf H. Myhre and Alexander Paul, Feb 2019
 !!
 !!    Directs the transformation by the CC3 Jacobi matrix,
 !!
@@ -1091,7 +1091,7 @@ end subroutine effective_jacobian_transformation_cc3
          call batch_k%determine_limits(current_k_batch)
 !
          call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
-         call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o ,batch_k%length)
+         call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
 !
          call wf%get_oovo(g_pqrs,                        &
                            1,wf%n_o,                     &
@@ -1132,7 +1132,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
+         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
          call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !
          call wf%get_ooov(g_pqrs,                        &
@@ -1141,7 +1141,7 @@ end subroutine effective_jacobian_transformation_cc3
                            batch_k%first,batch_k%last,   &
                            1,wf%n_v)
 !
-         call sort_1234_to_4213(g_pqrs, h_pqrs, wf%n_o,wf%n_o, batch_k%length, wf%n_v)
+         call sort_1234_to_4213(g_pqrs, h_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
 !
          do k = 1,batch_k%length
             do j = 1,wf%n_o

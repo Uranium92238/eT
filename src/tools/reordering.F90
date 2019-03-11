@@ -2931,7 +2931,7 @@ subroutine add_2413_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in) :: x_pq_rs
-      real(dp), dimension(dim_s, dim_q, dim_r, dim_p) :: x_sq_pr
+      real(dp), dimension(dim_s, dim_q, dim_p, dim_r) :: x_sq_pr
 !
       integer :: p, q, r, s
 !
