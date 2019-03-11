@@ -704,6 +704,7 @@ contains
 !
       call disk%close_file(wf%g_ljck_t,'keep')
 !
+      call mem%batch_setup(batch_k,req_0,req_k)
 !
 !     (jl|kc)
 !     Same batching
@@ -715,7 +716,7 @@ contains
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
+         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
          call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !
          call wf%get_ooov(g_pqrs, &
@@ -724,7 +725,7 @@ contains
                            batch_k%first,batch_k%last, &
                            1,wf%n_v)
 !
-         call sort_1234_to_4213(g_pqrs,h_pqrs,wf%n_o,wf%n_o,batch_k%length,wf%n_v)
+         call sort_1234_to_4213(g_pqrs, h_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
 !
          do k = 1,batch_k%length
             do j = 1,wf%n_o
