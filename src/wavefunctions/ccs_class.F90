@@ -973,6 +973,7 @@ contains
       class(ccs) :: wf
 !
       if (.not. allocated(wf%t1)) call mem%alloc(wf%t1, wf%n_v, wf%n_o)
+      wf%t1 = zero ! Hack, fix later, for integrals
 !
    end subroutine initialize_t1_ccs
 !

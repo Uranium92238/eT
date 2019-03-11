@@ -237,7 +237,6 @@ contains
       class(ccsd) :: wf
 !
       call wf%initialize_t1()
-      wf%t1 = zero ! Hack, fix later, for integrals
       call wf%initialize_t2()
 !
    end subroutine initialize_amplitudes_ccsd
