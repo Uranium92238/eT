@@ -2623,10 +2623,11 @@ contains
       call mem%alloc(L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       L_aick = zero
 !
-      call batch_a%init(wf%n_v)
+      req0 = wf%integrals%n_J*wf%n_o**2 ! L_ik^J
+      req1 = wf%n_v*wf%n_o**2 &         ! g_caik
+             + wf%integrals%n_J*wf%n_v  ! L_ab^J
 !
-      req0 = wf%integrals%n_J*wf%n_o**2 ! L_ik^J 
-      req1 = wf%n_v*wf%n_o**2 ! g_caik 
+      call batch_a%init(wf%n_v)
 !
       call mem%batch_setup(batch_a, req0, req1)
 !
