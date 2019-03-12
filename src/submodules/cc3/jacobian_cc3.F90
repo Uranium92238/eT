@@ -231,7 +231,7 @@ contains
       call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call cc3_timer%start()
-      !call wf%jacobian_cc3_A(omega, c_ai, c_abji, rho_ai, rho_abij)
+      call wf%jacobian_cc3_A(omega, c_ai, c_abji, rho_ai, rho_abij)
       call cc3_timer%freeze()
       call cc3_timer%switch_off()
 !
