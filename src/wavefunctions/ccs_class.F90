@@ -22,7 +22,7 @@ module ccs_class
 !
    type, extends(wavefunction) :: ccs
 !
-      real(dp) :: hf_energy 
+      real(dp) :: hf_energy
 !
       integer                                :: n_gs_amplitudes
       integer                                :: n_es_amplitudes
@@ -44,23 +44,23 @@ module ccs_class
 !
    contains
 !
-!     Preparation and cleanup routines 
+!     Preparation and cleanup routines
 !
       procedure :: prepare                                     => prepare_ccs
       procedure :: cleanup                                     => cleanup_ccs
 !
 !     Routines related to the amplitudes & multipliers
 !
-      procedure :: initialize_amplitudes                       => initialize_amplitudes_ccs 
-      procedure :: destruct_amplitudes                         => destruct_amplitudes_ccs 
+      procedure :: initialize_amplitudes                       => initialize_amplitudes_ccs
+      procedure :: destruct_amplitudes                         => destruct_amplitudes_ccs
       procedure :: set_initial_amplitudes_guess                => set_initial_amplitudes_guess_ccs
       procedure :: t1_transform                                => t1_transform_ccs
-      procedure :: set_amplitudes                              => set_amplitudes_ccs 
-      procedure :: get_amplitudes                              => get_amplitudes_ccs 
+      procedure :: set_amplitudes                              => set_amplitudes_ccs
+      procedure :: get_amplitudes                              => get_amplitudes_ccs
       procedure :: save_amplitudes                             => save_amplitudes_ccs
       procedure :: read_amplitudes                             => read_amplitudes_ccs
-      procedure :: save_t1                                     => save_t1_ccs 
-      procedure :: read_t1                                     => read_t1_ccs 
+      procedure :: save_t1                                     => save_t1_ccs
+      procedure :: read_t1                                     => read_t1_ccs
       procedure :: print_dominant_x_amplitudes                 => print_dominant_x_amplitudes_ccs
       procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccs
       procedure :: print_dominant_x1                           => print_dominant_x1_ccs
@@ -75,20 +75,20 @@ module ccs_class
       procedure :: save_t1bar                                  => save_t1bar_ccs
       procedure :: read_t1bar                                  => read_t1bar_ccs
 !
-!     Routines related to the Fock matrix 
-! 
+!     Routines related to the Fock matrix
+!
       procedure :: set_fock                                    => set_fock_ccs
       procedure :: construct_fock                              => construct_fock_ccs
       procedure :: get_gs_orbital_differences                  => get_gs_orbital_differences_ccs
       procedure :: get_es_orbital_differences                  => get_gs_orbital_differences_ccs
       procedure :: calculate_energy                            => calculate_energy_ccs
 !
-!     Routines related to the omega vector 
+!     Routines related to the omega vector
 !
       procedure :: construct_omega                             => construct_omega_ccs
       procedure :: omega_ccs_a1                                => omega_ccs_a1_ccs
 !
-!     Routines related to the Jacobian transformation 
+!     Routines related to the Jacobian transformation
 !
       procedure :: prepare_for_jacobian                        => prepare_for_jacobian_ccs
 !
@@ -96,8 +96,8 @@ module ccs_class
       procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_ccs
 !
       procedure :: jacobian_ccs_transformation                 => jacobian_ccs_transformation_ccs
-      procedure :: jacobian_ccs_a1                             => jacobian_ccs_a1_ccs 
-      procedure :: jacobian_ccs_b1                             => jacobian_ccs_b1_ccs 
+      procedure :: jacobian_ccs_a1                             => jacobian_ccs_a1_ccs
+      procedure :: jacobian_ccs_b1                             => jacobian_ccs_b1_ccs
 !
       procedure :: jacobian_transpose_ccs_transformation       => jacobian_transpose_ccs_transformation_ccs
       procedure :: jacobian_transpose_ccs_a1                   => jacobian_transpose_ccs_a1_ccs
@@ -133,7 +133,7 @@ module ccs_class
 !
       procedure, nopass :: need_g_abcd                          => need_g_abcd_ccs
 !
-!     Routines to initialize and destruct arrays 
+!     Routines to initialize and destruct arrays
 !
       procedure :: initialize_fock_ij                           => initialize_fock_ij_ccs
       procedure :: initialize_fock_ia                           => initialize_fock_ia_ccs
@@ -227,15 +227,15 @@ contains
 !
    subroutine initialize_amplitudes_ccs(wf)
 !!
-!!    Initialize amplitudes 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Initialize amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    Allocates the amplitudes. This routine must be overwritten in 
-!!    descendants which have more amplitudes. 
+!!    Allocates the amplitudes. This routine must be overwritten in
+!!    descendants which have more amplitudes.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       call wf%initialize_t1()
 !
@@ -244,15 +244,15 @@ contains
 !
    logical function need_g_abcd_ccs()
 !!
-!!    Need g_abcd 
-!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!    Need g_abcd
+!!    Written by Eirik F. Kjønstad, Mar 2019
 !!
-!!    Returns whether the vvvv-part of the ERI matrix 
-!!    is used to calculate the ground and/or excited state 
+!!    Returns whether the vvvv-part of the ERI matrix
+!!    is used to calculate the ground and/or excited state
 !!    equations. If not, there is no need to compute the
 !!    entire ERI matrix and store it in memory.
 !!
-      implicit none 
+      implicit none
 !
       need_g_abcd_ccs = .false.
 !
@@ -261,15 +261,15 @@ contains
 !
    subroutine destruct_amplitudes_ccs(wf)
 !!
-!!    Destruct amplitudes 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Destruct amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    Deallocates the amplitudes. This routine must be overwritten in 
-!!    descendants which have more amplitudes. 
+!!    Deallocates the amplitudes. This routine must be overwritten in
+!!    descendants which have more amplitudes.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       call wf%destruct_t1()
 !
@@ -278,12 +278,12 @@ contains
 !
    subroutine set_amplitudes_ccs(wf, amplitudes)
 !!
-!!    Set amplitudes 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Set amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf  
+      class(ccs) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: amplitudes
 !
@@ -294,12 +294,12 @@ contains
 !
    subroutine get_amplitudes_ccs(wf, amplitudes)
 !!
-!!    Get amplitudes 
+!!    Get amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf  
+      class(ccs), intent(in) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes) :: amplitudes
 !
@@ -310,12 +310,12 @@ contains
 !
    subroutine save_amplitudes_ccs(wf)
 !!
-!!    Save amplitudes 
+!!    Save amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
       call wf%save_t1()
 !
@@ -324,28 +324,28 @@ contains
 !
    subroutine read_amplitudes_ccs(wf)
 !!
-!!    Read amplitudes 
+!!    Read amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      call wf%read_t1()    
+      call wf%read_t1()
 !
    end subroutine read_amplitudes_ccs
 !
 !
    subroutine read_t1_ccs(wf)
 !!
-!!    Read t1 
+!!    Read t1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      type(file) :: t1_file 
+      type(file) :: t1_file
 !
       call t1_file%init('t1', 'sequential', 'unformatted')
 !
@@ -353,21 +353,21 @@ contains
 !
       read(t1_file%unit) wf%t1
 !
-      call disk%close_file(t1_file)      
+      call disk%close_file(t1_file)
 !
    end subroutine read_t1_ccs
 !
 !
    subroutine save_t1_ccs(wf)
 !!
-!!    Save t1 
+!!    Save t1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      type(file) :: t1_file 
+      type(file) :: t1_file
 !
       call t1_file%init('t1', 'sequential', 'unformatted')
 !
@@ -382,12 +382,12 @@ contains
 !
    subroutine save_multipliers_ccs(wf)
 !!
-!!    Save multipliers 
+!!    Save multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
       call wf%save_t1bar()
 !
@@ -396,12 +396,12 @@ contains
 !
    subroutine read_multipliers_ccs(wf)
 !!
-!!    Read multipliers 
+!!    Read multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
       call wf%read_t1bar()
 !
@@ -410,15 +410,15 @@ contains
 !
    subroutine destruct_multipliers_ccs(wf)
 !!
-!!    Destruct multipliers 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Destruct multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    Deallocates the multipliers. This routine must be overwritten in 
-!!    descendants which have more multipliers. 
+!!    Deallocates the multipliers. This routine must be overwritten in
+!!    descendants which have more multipliers.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       call wf%destruct_t1bar()
 !
@@ -427,14 +427,14 @@ contains
 !
    subroutine save_t1bar_ccs(wf)
 !!
-!!    Save t1bar 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!    Save t1bar
+!!    Written by Eirik F. Kjønstad, Oct 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      type(file) :: t1bar_file 
+      type(file) :: t1bar_file
 !
       call t1bar_file%init('t1bar', 'sequential', 'unformatted')
 !
@@ -442,21 +442,21 @@ contains
 !
       write(t1bar_file%unit) wf%t1bar
 !
-      call disk%close_file(t1bar_file)      
+      call disk%close_file(t1bar_file)
 !
    end subroutine save_t1bar_ccs
 !
 !
    subroutine read_t1bar_ccs(wf)
 !!
-!!    Save t1bar 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!    Save t1bar
+!!    Written by Eirik F. Kjønstad, Oct 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
-      type(file) :: t1bar_file 
+      type(file) :: t1bar_file
 !
       call t1bar_file%init('t1bar', 'sequential', 'unformatted')
 !
@@ -464,36 +464,36 @@ contains
 !
       read(t1bar_file%unit) wf%t1bar
 !
-      call disk%close_file(t1bar_file)      
+      call disk%close_file(t1bar_file)
 !
    end subroutine read_t1bar_ccs
 !
 !
    subroutine set_initial_amplitudes_guess_ccs(wf)
 !!
-!!    Set initial amplitudes guess 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Set initial amplitudes guess
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
-      wf%t1 = zero 
+      wf%t1 = zero
 !
    end subroutine set_initial_amplitudes_guess_ccs
 !
 !
    subroutine initialize_multipliers_ccs(wf)
 !!
-!!    Initialize multipliers 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Initialize multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    Allocates the multipliers. This routine must be overwritten in 
-!!    descendants which have more multipliers. 
+!!    Allocates the multipliers. This routine must be overwritten in
+!!    descendants which have more multipliers.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       call wf%initialize_t1bar()
 !
@@ -502,12 +502,12 @@ contains
 !
    subroutine set_multipliers_ccs(wf, multipliers)
 !!
-!!    Set multipliers 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Set multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf  
+      class(ccs) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: multipliers
 !
@@ -518,12 +518,12 @@ contains
 !
    subroutine get_multipliers_ccs(wf, multipliers)
 !!
-!!    Get multipliers 
+!!    Get multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf  
+      class(ccs), intent(in) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes) :: multipliers
 !
@@ -534,12 +534,12 @@ contains
 !
    subroutine calculate_energy_ccs(wf)
 !!
-!!    Calculate energy 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Calculate energy
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
       integer :: i = 0
 !
@@ -554,7 +554,7 @@ contains
       rewind(h_pq_file%unit)
 !
       call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
-      read(h_pq_file%unit) h_pq 
+      read(h_pq_file%unit) h_pq
 !
       call disk%close_file(h_pq_file)
 !
@@ -620,27 +620,27 @@ contains
 !
    subroutine construct_fock_ccs(wf)
 !!
-!!    Construct Fock 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 
+!!    Construct Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad,
 !!
-!!    Constructs the Fock matrix in the t1-transformed MO 
-!!    basis using the MO integrals and the current single 
+!!    Constructs the Fock matrix in the t1-transformed MO
+!!    basis using the MO integrals and the current single
 !!    amplitudes:
 !!
 !!       F_pq = h_pq + sum_k (2*g_pqkk - g_pkkq)
 !!
-!!    Since the two-electron ERIs are available already 
+!!    Since the two-electron ERIs are available already
 !!    t1-transformed, our task is to transform the one-
-!!    electron term, which we assume is on file in the 
+!!    electron term, which we assume is on file in the
 !!    MO basis.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       type(file) :: h_pq_file
 !
-      real(dp), dimension(:,:), allocatable :: F_pq 
+      real(dp), dimension(:,:), allocatable :: F_pq
 !
       integer :: i, j, k, a, b
 !
@@ -650,17 +650,17 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_iajk
       real(dp), dimension(:,:,:,:), allocatable :: g_aijk
 !
-!     Read MO-transformed h integrals into the  
+!     Read MO-transformed h integrals into the
 !
       call h_pq_file%init('h_pq', 'sequential', 'unformatted')
       call disk%open_file(h_pq_file, 'read', 'rewind')
 !
       call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
-      read(h_pq_file%unit) F_pq 
+      read(h_pq_file%unit) F_pq
 !
       call disk%close_file(h_pq_file)
 !
-!     Perform t1-transformation of F_pq = h_pq  
+!     Perform t1-transformation of F_pq = h_pq
 !
       call wf%t1_transform(F_pq)
 !
@@ -670,11 +670,11 @@ contains
       call wf%get_oooo(g_ijkl)
 !
       do i = 1, wf%n_o
-         do j = 1, wf%n_o 
+         do j = 1, wf%n_o
             do k = 1, wf%n_o
 !
                F_pq(i, j) = F_pq(i, j) + two*g_ijkl(i,j,k,k) - g_ijkl(i,k,k,j)
-! 
+!
             enddo
          enddo
       enddo
@@ -734,19 +734,19 @@ contains
 !
    subroutine set_fock_ccs(wf, F_pq)
 !!
-!!    Set Fock 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Set Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    Sets the different blocks of the Fock matrix based on the full 
+!!    Sets the different blocks of the Fock matrix based on the full
 !!    matrix sent to the routine.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_pq 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_pq
 !
-      integer :: i, j, a, b 
+      integer :: i, j, a, b
 !
       do i = 1, wf%n_o
          do j = 1, wf%n_o
@@ -771,41 +771,41 @@ contains
             wf%fock_ab(a,b) = F_pq(wf%n_o + a, wf%n_o + b)
 !
          enddo
-      enddo      
+      enddo
 !
    end subroutine set_fock_ccs
 !
 !
    subroutine t1_transform_ccs(wf, Z_pq)
 !!
-!!    T1 transform 
+!!    T1 transform
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
 !!    Assumes that Z is in the MO basis and performs the T1 transformation,
 !!
-!!       Z_pq <- sum_rs X_ps Z_sr Y_qr,    i.e.    Z <- X Z Y^T 
+!!       Z_pq <- sum_rs X_ps Z_sr Y_qr,    i.e.    Z <- X Z Y^T
 !!
 !!    where
 !!
-!!       X = I - t1 
-!!       Y = I + t1^T 
-!! 
-!!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ 
+!!       X = I - t1
+!!       Y = I + t1^T
+!!
+!!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ
 !!    part, where it is equal to t_i^a.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Z_pq 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Z_pq
 !
-      real(dp), dimension(:,:), allocatable :: X, Y 
+      real(dp), dimension(:,:), allocatable :: X, Y
 !
-      real(dp), dimension(:,:), allocatable :: W ! W_sq = sum_r Z_sr Y_rq^T, intermediate 
+      real(dp), dimension(:,:), allocatable :: W ! W_sq = sum_r Z_sr Y_rq^T, intermediate
 !
       integer :: p, i, a
 !
-!     Construct the X and Y arrays 
+!     Construct the X and Y arrays
 !
       call mem%alloc(X, wf%n_mo, wf%n_mo)
       call mem%alloc(Y, wf%n_mo, wf%n_mo)
@@ -813,23 +813,23 @@ contains
       X = zero
       Y = zero
 !
-      do p = 1, wf%n_mo 
+      do p = 1, wf%n_mo
 !
-         X(p, p) = one 
-         Y(p, p) = one 
+         X(p, p) = one
+         Y(p, p) = one
 !
-      enddo 
+      enddo
 !
-      do i = 1, wf%n_o 
-         do a = 1, wf%n_v 
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
             X(wf%n_o + a, i) = -wf%t1(a, i)
-            Y(i, wf%n_o + a) = wf%t1(a, i) 
+            Y(i, wf%n_o + a) = wf%t1(a, i)
 !
          enddo
       enddo
 !
-!     Construct intermediate W = Z Y^T and then use it to do transformation 
+!     Construct intermediate W = Z Y^T and then use it to do transformation
 !
       call mem%alloc(W, wf%n_mo, wf%n_mo)
 !
@@ -838,13 +838,13 @@ contains
                   wf%n_mo, &
                   wf%n_mo, &
                   one,     &
-                  Z_pq,    & ! Z_s_r 
+                  Z_pq,    & ! Z_s_r
                   wf%n_mo, &
-                  Y,       & ! Y_q_r 
+                  Y,       & ! Y_q_r
                   wf%n_mo, &
                   zero,    &
-                  W,       & ! W_sq = sum_r Z_sr Y_rq 
-                  wf%n_mo) 
+                  W,       & ! W_sq = sum_r Z_sr Y_rq
+                  wf%n_mo)
 !
       call dgemm('N', 'N', &
                   wf%n_mo, &
@@ -868,19 +868,19 @@ contains
 !
    subroutine get_gs_orbital_differences_ccs(wf, orbital_differences, N)
 !!
-!!    Get orbital differences 
+!!    Get orbital differences
 !!    Written by Sarai D. Folkestad, Sep 2018
 !!
       implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      integer, intent(in) :: N 
+      integer, intent(in) :: N
       real(dp), dimension(N), intent(inout) :: orbital_differences
 !
       integer :: a, i, ai
 !
-      do i = 1, wf%n_o 
+      do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
@@ -1093,29 +1093,29 @@ contains
    subroutine get_ovov_ccs(wf, g_iajb, first_i, last_i, first_a, last_a, &
                                          first_j, last_j, first_b, last_b)
 !!
-!!    Get ovov 
+!!    Get ovov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iajb 
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iajb
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_b, last_b
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_a, local_last_a
       integer :: local_first_j, local_last_j
       integer :: local_first_b, local_last_b
@@ -1129,12 +1129,12 @@ contains
 !
          index_restrictions = .true.
 !
-         local_first_i = first_i 
-         local_first_a = first_a 
-         local_first_j = first_j 
-         local_first_b = first_b 
+         local_first_i = first_i
+         local_first_a = first_a
+         local_first_j = first_j
+         local_first_b = first_b
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_a = last_a
          local_last_j = last_j
          local_last_b = last_b
@@ -1143,12 +1143,12 @@ contains
 !
          index_restrictions = .false.
 !
-         local_first_i = 1 
-         local_first_a = 1 
-         local_first_j = 1 
-         local_first_b = 1 
+         local_first_i = 1
+         local_first_a = 1
+         local_first_j = 1
+         local_first_b = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_a = wf%n_v
          local_last_j = wf%n_o
          local_last_b = wf%n_v
@@ -1167,29 +1167,29 @@ contains
    subroutine get_oooo_ccs(wf, g_ijkl, first_i, last_i, first_j, last_j, &
                                          first_k, last_k, first_l, last_l)
 !!
-!!    Get oooo 
+!!    Get oooo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijkl 
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijkl
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_k, last_k
       integer, optional, intent(in) :: first_l, last_l
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_j, local_last_j
       integer :: local_first_k, local_last_k
       integer :: local_first_l, local_last_l
@@ -1203,12 +1203,12 @@ contains
 !
          index_restrictions = .true.
 !
-         local_first_i = first_i 
-         local_first_j = first_j 
-         local_first_k = first_k 
-         local_first_l = first_l 
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_k = first_k
+         local_first_l = first_l
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_j = last_j
          local_last_k = last_k
          local_last_l = last_l
@@ -1217,12 +1217,12 @@ contains
 !
          index_restrictions = .false.
 !
-         local_first_i = 1 
-         local_first_j = 1 
-         local_first_k = 1 
-         local_first_l = 1 
+         local_first_i = 1
+         local_first_j = 1
+         local_first_k = 1
+         local_first_l = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_j = wf%n_o
          local_last_k = wf%n_o
          local_last_l = wf%n_o
@@ -1241,29 +1241,29 @@ contains
    subroutine get_ooov_ccs(wf, g_ijka, first_i, last_i, first_j, last_j, &
                                          first_k, last_k, first_a, last_a)
 !!
-!!    Get ooov 
+!!    Get ooov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijka 
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijka
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_k, last_k
       integer, optional, intent(in) :: first_a, last_a
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_j, local_last_j
       integer :: local_first_k, local_last_k
       integer :: local_first_a, local_last_a
@@ -1273,24 +1273,24 @@ contains
           present(first_k) .and. present(last_k) .and. &
           present(first_a) .and. present(last_a)) then
 !
-         local_first_i = first_i 
-         local_first_j = first_j 
-         local_first_k = first_k 
-         local_first_a = first_a 
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_k = first_k
+         local_first_a = first_a
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_j = last_j
          local_last_k = last_k
          local_last_a = last_a
 !
       else
 !
-         local_first_i = 1 
-         local_first_j = 1 
-         local_first_k = 1 
-         local_first_a = 1 
+         local_first_i = 1
+         local_first_j = 1
+         local_first_k = 1
+         local_first_a = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_j = wf%n_o
          local_last_k = wf%n_o
          local_last_a = wf%n_v
@@ -1313,25 +1313,25 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijak 
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijak
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_k, last_k
       integer, optional, intent(in) :: first_a, last_a
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_j, local_last_j
       integer :: local_first_k, local_last_k
       integer :: local_first_a, local_last_a
@@ -1341,24 +1341,24 @@ contains
           present(first_k) .and. present(last_k) .and. &
           present(first_a) .and. present(last_a)) then
 !
-         local_first_i = first_i 
-         local_first_j = first_j 
-         local_first_k = first_k 
-         local_first_a = first_a 
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_k = first_k
+         local_first_a = first_a
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_j = last_j
          local_last_k = last_k
          local_last_a = last_a
 !
       else
 !
-         local_first_i = 1 
-         local_first_j = 1 
-         local_first_k = 1 
-         local_first_a = 1 
+         local_first_i = 1
+         local_first_j = 1
+         local_first_k = 1
+         local_first_a = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_j = wf%n_o
          local_last_k = wf%n_o
          local_last_a = wf%n_v
@@ -1381,25 +1381,25 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iajk 
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iajk
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_k, last_k
       integer, optional, intent(in) :: first_a, last_a
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_j, local_last_j
       integer :: local_first_k, local_last_k
       integer :: local_first_a, local_last_a
@@ -1409,24 +1409,24 @@ contains
           present(first_k) .and. present(last_k) .and. &
           present(first_a) .and. present(last_a)) then
 !
-         local_first_i = first_i 
-         local_first_j = first_j 
-         local_first_k = first_k 
-         local_first_a = first_a 
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_k = first_k
+         local_first_a = first_a
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_j = last_j
          local_last_k = last_k
          local_last_a = last_a
 !
       else
 !
-         local_first_i = 1 
-         local_first_j = 1 
-         local_first_k = 1 
-         local_first_a = 1 
+         local_first_i = 1
+         local_first_j = 1
+         local_first_k = 1
+         local_first_a = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_j = wf%n_o
          local_last_k = wf%n_o
          local_last_a = wf%n_v
@@ -1449,25 +1449,25 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aijk 
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aijk
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_k, last_k
       integer, optional, intent(in) :: first_a, last_a
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_j, local_last_j
       integer :: local_first_k, local_last_k
       integer :: local_first_a, local_last_a
@@ -1477,24 +1477,24 @@ contains
           present(first_k) .and. present(last_k) .and. &
           present(first_a) .and. present(last_a)) then
 !
-         local_first_i = first_i 
-         local_first_j = first_j 
-         local_first_k = first_k 
-         local_first_a = first_a 
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_k = first_k
+         local_first_a = first_a
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_j = last_j
          local_last_k = last_k
          local_last_a = last_a
 !
       else
 !
-         local_first_i = 1 
-         local_first_j = 1 
-         local_first_k = 1 
-         local_first_a = 1 
+         local_first_i = 1
+         local_first_j = 1
+         local_first_k = 1
+         local_first_a = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_j = wf%n_o
          local_last_k = wf%n_o
          local_last_a = wf%n_v
@@ -1517,25 +1517,25 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abij 
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abij
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_j, local_last_j
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
@@ -1545,24 +1545,24 @@ contains
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
 !
-         local_first_i = first_i 
-         local_first_j = first_j 
-         local_first_b = first_b 
-         local_first_a = first_a 
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_b = first_b
+         local_first_a = first_a
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_j = last_j
          local_last_b = last_b
          local_last_a = last_a
 !
       else
 !
-         local_first_i = 1 
-         local_first_j = 1 
-         local_first_b = 1 
-         local_first_a = 1 
+         local_first_i = 1
+         local_first_j = 1
+         local_first_b = 1
+         local_first_a = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_j = wf%n_o
          local_last_b = wf%n_v
          local_last_a = wf%n_v
@@ -1585,25 +1585,25 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aibj 
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aibj
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_j, local_last_j
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
@@ -1617,12 +1617,12 @@ contains
 !
          index_restrictions = .true.
 !
-         local_first_i = first_i 
-         local_first_j = first_j 
-         local_first_b = first_b 
-         local_first_a = first_a 
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_b = first_b
+         local_first_a = first_a
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_j = last_j
          local_last_b = last_b
          local_last_a = last_a
@@ -1631,12 +1631,12 @@ contains
 !
          index_restrictions = .false.
 !
-         local_first_i = 1 
-         local_first_j = 1 
-         local_first_b = 1 
-         local_first_a = 1 
+         local_first_i = 1
+         local_first_j = 1
+         local_first_b = 1
+         local_first_a = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_j = wf%n_o
          local_last_b = wf%n_v
          local_last_a = wf%n_v
@@ -1659,25 +1659,25 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aijb 
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aijb
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_j, local_last_j
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
@@ -1687,24 +1687,24 @@ contains
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
 !
-         local_first_i = first_i 
-         local_first_j = first_j 
-         local_first_b = first_b 
-         local_first_a = first_a 
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_b = first_b
+         local_first_a = first_a
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_j = last_j
          local_last_b = last_b
          local_last_a = last_a
 !
       else
 !
-         local_first_i = 1 
-         local_first_j = 1 
-         local_first_b = 1 
-         local_first_a = 1 
+         local_first_i = 1
+         local_first_j = 1
+         local_first_b = 1
+         local_first_a = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_j = wf%n_o
          local_last_b = wf%n_v
          local_last_a = wf%n_v
@@ -1727,25 +1727,25 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iabj
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_j, local_last_j
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
@@ -1755,24 +1755,24 @@ contains
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
 !
-         local_first_i = first_i 
-         local_first_j = first_j 
-         local_first_b = first_b 
-         local_first_a = first_a 
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_b = first_b
+         local_first_a = first_a
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_j = last_j
          local_last_b = last_b
          local_last_a = last_a
 !
       else
 !
-         local_first_i = 1 
-         local_first_j = 1 
-         local_first_b = 1 
-         local_first_a = 1 
+         local_first_i = 1
+         local_first_j = 1
+         local_first_b = 1
+         local_first_a = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_j = wf%n_o
          local_last_b = wf%n_v
          local_last_a = wf%n_v
@@ -1795,25 +1795,25 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijab
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_j, local_last_j
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
@@ -1823,24 +1823,24 @@ contains
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
 !
-         local_first_i = first_i 
-         local_first_j = first_j 
-         local_first_b = first_b 
-         local_first_a = first_a 
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_b = first_b
+         local_first_a = first_a
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_j = last_j
          local_last_b = last_b
          local_last_a = last_a
 !
       else
 !
-         local_first_i = 1 
-         local_first_j = 1 
-         local_first_b = 1 
-         local_first_a = 1 
+         local_first_i = 1
+         local_first_j = 1
+         local_first_b = 1
+         local_first_a = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_j = wf%n_o
          local_last_b = wf%n_v
          local_last_a = wf%n_v
@@ -1867,25 +1867,25 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abci 
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abci
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_c, last_c
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_c, local_last_c
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
@@ -1895,24 +1895,24 @@ contains
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
 !
-         local_first_i = first_i 
-         local_first_c = first_c 
-         local_first_b = first_b 
-         local_first_a = first_a 
+         local_first_i = first_i
+         local_first_c = first_c
+         local_first_b = first_b
+         local_first_a = first_a
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_c = last_c
          local_last_b = last_b
          local_last_a = last_a
 !
       else
 !
-         local_first_i = 1 
-         local_first_c = 1 
-         local_first_b = 1 
-         local_first_a = 1 
+         local_first_i = 1
+         local_first_c = 1
+         local_first_b = 1
+         local_first_a = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_c = wf%n_v
          local_last_b = wf%n_v
          local_last_a = wf%n_v
@@ -1939,25 +1939,25 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abic 
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abic
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_c, last_c
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_c, local_last_c
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
@@ -1967,24 +1967,24 @@ contains
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
 !
-         local_first_i = first_i 
-         local_first_c = first_c 
-         local_first_b = first_b 
-         local_first_a = first_a 
+         local_first_i = first_i
+         local_first_c = first_c
+         local_first_b = first_b
+         local_first_a = first_a
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_c = last_c
          local_last_b = last_b
          local_last_a = last_a
 !
       else
 !
-         local_first_i = 1 
-         local_first_c = 1 
-         local_first_b = 1 
-         local_first_a = 1 
+         local_first_i = 1
+         local_first_c = 1
+         local_first_b = 1
+         local_first_a = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_c = wf%n_v
          local_last_b = wf%n_v
          local_last_a = wf%n_v
@@ -2011,25 +2011,25 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aibc 
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aibc
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_c, last_c
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_c, local_last_c
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
@@ -2039,24 +2039,24 @@ contains
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
 !
-         local_first_i = first_i 
-         local_first_c = first_c 
-         local_first_b = first_b 
-         local_first_a = first_a 
+         local_first_i = first_i
+         local_first_c = first_c
+         local_first_b = first_b
+         local_first_a = first_a
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_c = last_c
          local_last_b = last_b
          local_last_a = last_a
 !
       else
 !
-         local_first_i = 1 
-         local_first_c = 1 
-         local_first_b = 1 
-         local_first_a = 1 
+         local_first_i = 1
+         local_first_c = 1
+         local_first_b = 1
+         local_first_a = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_c = wf%n_v
          local_last_b = wf%n_v
          local_last_a = wf%n_v
@@ -2083,25 +2083,25 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iabc 
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iabc
 !
-      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_c, last_c
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-      integer :: local_first_i, local_last_i 
+      integer :: local_first_i, local_last_i
       integer :: local_first_c, local_last_c
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
@@ -2111,24 +2111,24 @@ contains
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
 !
-         local_first_i = first_i 
-         local_first_c = first_c 
-         local_first_b = first_b 
-         local_first_a = first_a 
+         local_first_i = first_i
+         local_first_c = first_c
+         local_first_b = first_b
+         local_first_a = first_a
 !
-         local_last_i = last_i 
+         local_last_i = last_i
          local_last_c = last_c
          local_last_b = last_b
          local_last_a = last_a
 !
       else
 !
-         local_first_i = 1 
-         local_first_c = 1 
-         local_first_b = 1 
-         local_first_a = 1 
+         local_first_i = 1
+         local_first_c = 1
+         local_first_b = 1
+         local_first_a = 1
 !
-         local_last_i = wf%n_o 
+         local_last_i = wf%n_o
          local_last_c = wf%n_v
          local_last_b = wf%n_v
          local_last_a = wf%n_v
@@ -2155,25 +2155,25 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
-!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!    The choice depends on logicals within the tool that knows whether t1-transformed
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abcd
 !
-      integer, optional, intent(in) :: first_d, last_d 
+      integer, optional, intent(in) :: first_d, last_d
       integer, optional, intent(in) :: first_c, last_c
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-      integer :: local_first_d, local_last_d 
+      integer :: local_first_d, local_last_d
       integer :: local_first_c, local_last_c
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
@@ -2187,12 +2187,12 @@ contains
 !
          index_restrictions = .true.
 !
-         local_first_d = first_d 
-         local_first_c = first_c 
-         local_first_b = first_b 
-         local_first_a = first_a 
+         local_first_d = first_d
+         local_first_c = first_c
+         local_first_b = first_b
+         local_first_a = first_a
 !
-         local_last_d = last_d 
+         local_last_d = last_d
          local_last_c = last_c
          local_last_b = last_b
          local_last_a = last_a
@@ -2201,12 +2201,12 @@ contains
 !
          index_restrictions = .false.
 !
-         local_first_d = 1 
-         local_first_c = 1 
-         local_first_b = 1 
-         local_first_a = 1 
+         local_first_d = 1
+         local_first_c = 1
+         local_first_b = 1
+         local_first_a = 1
 !
-         local_last_d = wf%n_v 
+         local_last_d = wf%n_v
          local_last_c = wf%n_v
          local_last_b = wf%n_v
          local_last_a = wf%n_v
@@ -2228,10 +2228,10 @@ contains
 !
    subroutine jacobian_transform_trial_vector_ccs(wf, c_i)
 !!
-!!    Jacobi transform trial vector 
+!!    Jacobi transform trial vector
 !!    Written by Sarai D. Folkestad, Sep 2018
 !!
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes) :: c_i
 !
@@ -2242,10 +2242,10 @@ contains
 !
    subroutine jacobian_transpose_transform_trial_vector_ccs(wf, c_i)
 !!
-!!    Jacobi transpose transform trial vector 
+!!    Jacobi transpose transform trial vector
 !!    Written by Sarai D. Folkestad, Sep 2018
 !!
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes) :: c_i
 !
@@ -2256,43 +2256,43 @@ contains
 !
    subroutine construct_excited_state_equation_ccs(wf, X, R, w)
 !!
-!!    Construct excited state equation 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!    Construct excited state equation
+!!    Written by Eirik F. Kjønstad, Dec 2018
 !!
 !!    Constructs R = AX - wX, where w = X^T A X and norm(X) = sqrt(X^T X) = 1
 !!
 !!    Note I: we assume that X is normalized. If it is not,
-!!    please normalize before calling the routine. 
+!!    please normalize before calling the routine.
 !!
 !!    Note II: this routine constructs the excited state equation
-!!    for standard CC models and the effective (!) excited state 
-!!    equation in perturbative models. In the CC2 routine, for 
-!!    instance, X and R will be n_o*n_v vectors and A(w) will 
-!!    depend on the excitation energy w. See, e.g., Weigend and 
-!!    Hättig's RI-CC2 paper for more on this topic. This means 
-!!    that w should be the previous w-value when entering the 
+!!    for standard CC models and the effective (!) excited state
+!!    equation in perturbative models. In the CC2 routine, for
+!!    instance, X and R will be n_o*n_v vectors and A(w) will
+!!    depend on the excitation energy w. See, e.g., Weigend and
+!!    Hättig's RI-CC2 paper for more on this topic. This means
+!!    that w should be the previous w-value when entering the
 !!    routine (so that A(w)X may be constructed approximately)
 !!    in perturbative models.
 !!
-!!    Note III: the routine is used by the DIIS excited state solver. 
+!!    Note III: the routine is used by the DIIS excited state solver.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: X 
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: X
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: R
 !
-      real(dp), intent(inout) :: w 
+      real(dp), intent(inout) :: w
 !
       real(dp), dimension(:), allocatable :: X_copy
 !
-      real(dp) :: ddot  
+      real(dp) :: ddot
 !
       call mem%alloc(X_copy, wf%n_es_amplitudes)
       call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
-      call wf%jacobian_transform_trial_vector(X_copy) ! X_copy <- AX 
+      call wf%jacobian_transform_trial_vector(X_copy) ! X_copy <- AX
 !
       w = ddot(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
@@ -2311,23 +2311,23 @@ contains
 !!
 !!    Directs the transformation by the CCSD Jacobi matrix,
 !!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >. 
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >.
 !!
 !!    In particular,
 !!
 !!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
-!! 
-!!    On exit, c is overwritten by rho. 
+!!
+!!    On exit, c is overwritten by rho.
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: c_ai       
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: c_ai
 !
       real(dp), dimension(:,:), allocatable :: rho_ai
 !
-!     Allocate the transformed vector & add the terms to it 
+!     Allocate the transformed vector & add the terms to it
 !
       call mem%alloc(rho_ai, wf%n_v, wf%n_o)
       rho_ai = zero
@@ -2335,7 +2335,7 @@ contains
       call wf%jacobian_ccs_a1(rho_ai, c_ai)
       call wf%jacobian_ccs_b1(rho_ai, c_ai)
 !
-!     Then overwrite the c vector with the transformed vector 
+!     Then overwrite the c vector with the transformed vector
 !
       call dcopy((wf%n_o)*(wf%n_v), rho_ai, 1, c_ai, 1)
       call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
@@ -2348,7 +2348,7 @@ contains
 !!    Jacobian transpose transformation (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-!!    Calculates the transpose Jacobian transformation, i.e., the transformation 
+!!    Calculates the transpose Jacobian transformation, i.e., the transformation
 !!    by the transpose of the Jacobian matrix
 !!
 !!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >.
@@ -2356,26 +2356,26 @@ contains
 !!    In particular,
 !!
 !!       sigma_mu = (b^T A)_mu = sum_ck b_ck A_ck,mu.
-!! 
-!!    On exit, b is overwritten by sigma. 
 !!
-      implicit none 
+!!    On exit, b is overwritten by sigma.
+!!
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: b_ai 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: b_ai
 !
       real(dp), dimension(:,:), allocatable :: sigma_ai
 !
 !     Allocate the transformed vector & add the terms to it
 !
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
-      sigma_ai = zero 
+      sigma_ai = zero
 !
       call wf%jacobian_transpose_ccs_a1(sigma_ai, b_ai)
       call wf%jacobian_transpose_ccs_b1(sigma_ai, b_ai)
 !
-!     Then overwrite the b vector with the transformed vector 
+!     Then overwrite the b vector with the transformed vector
 !
       call dcopy((wf%n_o)*(wf%n_v), sigma_ai, 1, b_ai, 1)
       call mem%dealloc(sigma_ai, wf%n_v, wf%n_o)
@@ -2436,7 +2436,7 @@ contains
 !
    subroutine jacobian_ccs_b1_ccs(wf, rho1, c1)
 !!
-!!    Jacobian CCS B1 
+!!    Jacobian CCS B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!    Calculates the B1 term,
@@ -2448,9 +2448,9 @@ contains
       implicit none
 !
       class(ccs) :: wf
-!   
+!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c1
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1      
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_abji
       real(dp), dimension(:,:,:,:), allocatable :: L_aijb
@@ -2461,12 +2461,11 @@ contains
 !
       integer :: req0, req1, j, b, b_red, current_b_batch
 !
-      call batch_b%init(wf%n_v) 
+      call batch_b%init(wf%n_v)
 !
-      req0 = wf%n_o*wf%n_v*wf%integrals%n_J ! L_ai^J 
-      req1 = 2*wf%n_v*wf%n_o**2 + & ! L_aijb and g_abji 
-               wf%n_v*wf%integrals%n_J + & ! L_ab^J 
-               wf%n_o ! c_jb 
+      req0 = wf%n_o*wf%n_v*wf%integrals%n_J ! L_ai^J
+      req1 = 2*wf%n_v*wf%n_o**2 + & ! L_aijb and g_abji
+               wf%n_v*wf%integrals%n_J ! L_ab^J
 !
       call mem%batch_setup(batch_b, req0, req1)
 !
@@ -2482,7 +2481,7 @@ contains
                            1, wf%n_v,  &
                            1, wf%n_o,  &
                            1, wf%n_o,  &
-                           batch_b%first, batch_b%last)   
+                           batch_b%first, batch_b%last)
 !
          call dscal(((wf%n_o)**2)*(wf%n_v)*(batch_b%length), two, L_aijb, 1)
 !
@@ -2494,7 +2493,7 @@ contains
                            1, wf%n_v,                    &
                            batch_b%first, batch_b%last,  &
                            1, wf%n_o,                    &
-                           1, wf%n_o)   
+                           1, wf%n_o)
 !
          call add_1432_to_1234(-one, g_abji, L_aijb, wf%n_v, wf%n_o, wf%n_o, batch_b%length)
 !
@@ -2508,30 +2507,30 @@ contains
             do j = 1, wf%n_o
 !
                b_red = b - batch_b%first + 1
-!  
+!
                c_jb(j, b_red) = c1(b, j)
 !
             enddo
          enddo
-    
+
 !
          call dgemm('N', 'N',                   &
                      (wf%n_v)*(wf%n_o),         &
                      1,                         &
                      (wf%n_o)*(batch_b%length), &
                      one,                       &
-                     L_aijb,                   &
+                     L_aijb,                    &
                      (wf%n_v)*(wf%n_o),         &
                      c_jb,                      &
                      (wf%n_o)*batch_b%length,   &
                      one,                       &
                      rho1,                      &
-                     (wf%n_v)*(wf%n_o))      
+                     (wf%n_v)*(wf%n_o))
 !
          call mem%dealloc(L_aijb, wf%n_v, wf%n_o, wf%n_o, batch_b%length)
          call mem%dealloc(c_jb, (wf%n_o), (batch_b%length))
 !
-      enddo
+   enddo ! batch_b
 !
    end subroutine jacobian_ccs_b1_ccs
 !
@@ -2547,14 +2546,14 @@ contains
 !!
 !!    and adds it to the sigma-vector (b^T -> sigma^T = b^T A).
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_ai
 !
-!     Add sum_c F_ca b_ci = sum_c F_ac^T b_ci     
+!     Add sum_c F_ca b_ci = sum_c F_ac^T b_ci
 !
       call dgemm('T','N',     &
                   wf%n_v,     &
@@ -2569,7 +2568,7 @@ contains
                   sigma_ai,   &
                   wf%n_v)
 !
-!     Add - sum_k b_ak F_ik = - sum_k b_ak F_ki^T 
+!     Add - sum_k b_ak F_ik = - sum_k b_ak F_ki^T
 !
       call dgemm('N','T',     &
                   wf%n_v,     &
@@ -2585,8 +2584,8 @@ contains
                   wf%n_v)
 !
    end subroutine jacobian_transpose_ccs_a1_ccs
-! 
-! 
+!
+!
    subroutine jacobian_transpose_ccs_b1_ccs(wf, sigma_ai, b_ai)
 !!
 !!    Jacobian transpose B1 (CCS)
@@ -2598,22 +2597,22 @@ contains
 !!
 !!    and adds it to the sigma-vector (b^T -> sigma^T = b^T A).
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_ai
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_ckia ! g_ckia 
-      real(dp), dimension(:,:,:,:), allocatable :: g_caik ! g_caik 
+      real(dp), dimension(:,:,:,:), allocatable :: g_ckia ! g_ckia
+      real(dp), dimension(:,:,:,:), allocatable :: g_caik ! g_caik
 !
       real(dp), dimension(:,:,:,:), allocatable :: L_aick ! L_ckia = 2 * g_ckia - g_caik
 !
       integer :: k, c, i, a
 !
       integer              :: req0, req1, current_a_batch
-      type(batching_index) :: batch_a 
+      type(batching_index) :: batch_a
 !
 !     :: Construct L_aick = L_ckia
 !
@@ -2623,17 +2622,16 @@ contains
       call mem%alloc(L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       L_aick = zero
 !
-      req0 = wf%integrals%n_J*wf%n_o**2 ! L_ik^J
-      req1 = wf%n_v*wf%n_o**2 &         ! g_caik
-             + wf%integrals%n_J*wf%n_v  ! L_ab^J
-!
       call batch_a%init(wf%n_v)
+!
+      req0 = wf%integrals%n_J*wf%n_o**2 ! L_ik^J
+      req1 = wf%n_v*wf%n_o**2 + wf%integrals%n_J*wf%n_v ! g_caik
 !
       call mem%batch_setup(batch_a, req0, req1)
 !
-      do current_a_batch = 1, batch_a%num_batches 
+      do current_a_batch = 1, batch_a%num_batches
 !
-!        Set part of L_aick = L_ckia = 2 * g_ckia - g_caik for current a batch 
+!        Set part of L_aick = L_ckia = 2 * g_ckia - g_caik for current a batch
 !
          call batch_a%determine_limits(current_a_batch)
 !
@@ -2669,7 +2667,7 @@ contains
 !
       call mem%dealloc(g_ckia, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-!     :: Add sum_ck L_ckia b_ck = sum_ck L_aick b_ck to sigma 
+!     :: Add sum_ck L_ckia b_ck = sum_ck L_aick b_ck to sigma
 !
       call dgemm('N','N',            &
                   (wf%n_v)*(wf%n_o), &
@@ -2691,20 +2689,20 @@ contains
 !
    subroutine construct_eta_ccs(wf, eta)
 !!
-!!    Construct eta 
+!!    Construct eta
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: eta 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: eta
 !
       integer :: i, a, ai
 !
 !$omp parallel do private(a, i, ai)
-      do i = 1, wf%n_o 
-         do a = 1, wf%n_v 
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
             ai = (wf%n_v)*(i - 1) + a
             eta(ai) = two*(wf%fock_ia(i, a))
@@ -2718,32 +2716,32 @@ contains
 !
    subroutine construct_multiplier_equation_ccs(wf, equation)
 !!
-!!    Construct multiplier equation 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!    Construct multiplier equation
+!!    Written by Eirik F. Kjønstad, Oct 2018
 !!
-!!    Constructs 
+!!    Constructs
 !!
 !!       t-bar^T A + eta,
 !!
 !!    and places the result in 'equation'.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
 !
-      real(dp), dimension(:), allocatable :: eta 
+      real(dp), dimension(:), allocatable :: eta
 !
-!     Copy the multipliers, eq. = t-bar 
+!     Copy the multipliers, eq. = t-bar
 !
       call dcopy(wf%n_t1, wf%t1bar, 1, equation, 1)
 !
-!     Transform the multipliers by A^T, eq. = t-bar^T A 
+!     Transform the multipliers by A^T, eq. = t-bar^T A
 !
       call wf%jacobian_transpose_ccs_transformation(equation)
 !
-!     Add eta, eq. = t-bar^T A + eta 
+!     Add eta, eq. = t-bar^T A + eta
 !
       call mem%alloc(eta, wf%n_t1)
       call wf%construct_eta(eta)
@@ -2758,7 +2756,7 @@ contains
    subroutine add_bath_orbitals_ccs(wf)
 !!
 !!    Add bath orbitals,
-!!    Written by Sarai D. Folkestad, Oct. 2018 
+!!    Written by Sarai D. Folkestad, Oct. 2018
 !!
       implicit none
 !
@@ -2774,7 +2772,7 @@ contains
 !
       wf%n_bath = 1
 !
-!     Add atom X to system (if necessary), with s-type orbitals 
+!     Add atom X to system (if necessary), with s-type orbitals
 !
       call mem%alloc(orbital_coeff_copy, wf%n_ao, wf%n_mo)
 !
@@ -2830,7 +2828,7 @@ contains
       L_J = zero
 !
       do p = wf%n_mo - wf%n_bath, wf%n_mo
-         do q = 1, p 
+         do q = 1, p
 !
             pq = p*(p-3)/2 + p + q
 !
@@ -2909,12 +2907,12 @@ contains
 !
    subroutine print_dominant_amplitudes_ccs(wf)
 !!
-!!    Print dominant amplitudes 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!    Print dominant amplitudes
+!!    Written by Eirik F. Kjønstad, Dec 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
       call wf%print_dominant_x1(wf%t1,'t')
 !
@@ -2924,15 +2922,15 @@ contains
    subroutine print_dominant_x_amplitudes_ccs(wf, x, tag)
 !!
 !!    Print dominant amplitudes
-!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!    Written by Eirik F. Kjønstad, Dec 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes) :: x 
+      real(dp), dimension(wf%n_gs_amplitudes) :: x
 !
-      character(len=1) :: tag 
+      character(len=1) :: tag
 !
       call wf%print_dominant_x1(x(1:wf%n_t1),tag)
 !
@@ -2941,25 +2939,25 @@ contains
 !
    subroutine print_dominant_x1_ccs(wf, x1, tag)
 !!
-!!    Print dominant x1    
-!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!    Print dominant x1
+!!    Written by Eirik F. Kjønstad, Dec 2018
 !!
 !!    Prints the 20 most dominant single amplitudes,
 !!    or sorts them if there are fewer than twenty of them.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_t1), intent(in) :: x1 
-      character(len=1), intent(in)                :: tag 
+      real(dp), dimension(wf%n_t1), intent(in) :: x1
+      character(len=1), intent(in)                :: tag
 !
       real(dp), dimension(:), allocatable :: abs_x1
 !
       integer, dimension(:), allocatable :: dominant_indices
       real(dp), dimension(:), allocatable     :: dominant_values
 !
-      integer :: n_elements, elm, i, a 
+      integer :: n_elements, elm, i, a
 !
 !     Sort according to largest contributions
 !
@@ -2967,13 +2965,13 @@ contains
       abs_x1 = abs(x1)
 !
       n_elements = 20
-      if (n_elements .gt. wf%n_t1) n_elements = wf%n_t1 
+      if (n_elements .gt. wf%n_t1) n_elements = wf%n_t1
 !
       call mem%alloc(dominant_indices, n_elements)
       call mem%alloc(dominant_values, n_elements)
 !
       dominant_indices = 0
-      dominant_values  = zero 
+      dominant_values  = zero
       call get_n_highest(n_elements, wf%n_t1, abs_x1, dominant_values, dominant_indices)
 !
 !     Print largest contributions
@@ -3002,12 +3000,12 @@ contains
 !
    real(dp) function get_t1_diagnostic_ccs(wf)
 !!
-!!    Get t1 diagnostic 
-!!    Written by Eirik F. Kjønstad 
+!!    Get t1 diagnostic
+!!    Written by Eirik F. Kjønstad
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
       get_t1_diagnostic_ccs = get_l2_norm(wf%t1, wf%n_t1)
       get_t1_diagnostic_ccs = get_t1_diagnostic_ccs/sqrt(real(wf%system%n_electrons,kind=dp))
@@ -3020,9 +3018,9 @@ contains
 !!    Prepare for jacobian
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(inout) :: wf 
+      class(ccs), intent(inout) :: wf
 !
 !     For now, do nothing.
 !
@@ -3035,9 +3033,9 @@ contains
    subroutine set_cvs_start_indices_ccs(wf, n_cores, core_MOs, n_start_indices, start_indices)
 !!
 !!    Set CVS start indices
-!!    Written by Sarai D. Folkestad 
+!!    Written by Sarai D. Folkestad
 !!
-      implicit none 
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
@@ -3055,7 +3053,7 @@ contains
 !     Calculate start indices using Koopman's
 !
       all_selected = .false.
-      a =  0 
+      a =  0
       current_root = 0
 !
       do while (.not. all_selected)
