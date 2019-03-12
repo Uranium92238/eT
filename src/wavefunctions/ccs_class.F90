@@ -229,7 +229,6 @@ module ccs_class
       procedure :: get_eom_contribution                        => get_eom_contribution_ccs
       procedure :: get_eom_xcc_contribution                    => get_eom_xcc_contribution_ccs
       procedure :: prepare_operator_pq                         => prepare_operator_pq_ccs
-      procedure :: get_left_right_vectors                      => get_left_right_vectors_ccs
       procedure :: scale_left_excitation_vector                => scale_left_excitation_vector_ccs
       procedure :: calculate_transition_strength               => calculate_transition_strength_ccs
 !
@@ -4886,9 +4885,6 @@ contains
 !
       X_cc = ddot(wf%n_es_amplitudes, multipliers, 1, csiX, 1)
 !
-! --- DEBUG
-       !write(output%unit,'(/t6,a,3x,e9.2)') 'Xcc  = ', X_cc
-!
       call daxpy(wf%n_es_amplitudes, X_cc, multipliers, 1, etaX, 1)
 !
       call mem%dealloc(multipliers, wf%n_es_amplitudes, 1)
@@ -4954,42 +4950,6 @@ contains
    end subroutine prepare_operator_pq_ccs
 !
 !
-   subroutine get_left_right_vectors_ccs(wf, L, R, state)
-!!
-!!    Get left and right excitation vectors
-!!
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: L, R
-      integer :: state, ioerror
-!
-      type(file) :: left_file, right_file
-!      
-      call left_file%init('cc_es_davidson_left_X', 'sequential', 'unformatted')
-      call disk%open_file(left_file, 'read')
-      call left_file%prepare_to_read_line(state)
-!
-      call right_file%init('cc_es_davidson_right_X', 'sequential', 'unformatted')
-      call disk%open_file(right_file, 'read')
-      call right_file%prepare_to_read_line(state)
-!
-      ioerror = 0
-      read(left_file%unit, iostat=ioerror) L
-      if (ioerror .ne. 0) call output%error_msg('could not read davidson left solution.')
-!      
-      ioerror = 0
-      read(right_file%unit, iostat=ioerror) R
-      if (ioerror .ne. 0) call output%error_msg('could not read davidson right solution.')
-!
-      call disk%close_file(left_file)
-      call disk%close_file(right_file)
-!      
-   end subroutine get_left_right_vectors_ccs
-!
-!
    subroutine scale_left_excitation_vector_ccs(wf, L, R)
 !!
 !!    Make left and right excitation vectors biorthogonal by scaling left vector
@@ -5032,22 +4992,13 @@ contains
       real(dp) :: T_l = 0.0, T_r =0.0
       real(dp) :: ddot
 !
-!      calc dotproducts btwn exc. vectors and csiX/etaX
-!
-! ----- DEBUG print singles/doubles T_right separately
-      !write(output%unit,'(t6,a,f19.10)') 'R_ai*etaX_ai = ', &
-      !ddot(wf%n_t1, etaX, 1, R, 1)
-      !write(output%unit,'(t6,a,f19.10)') 'R_aibj*etaX_aibj = ', &
-      !ddot(wf%n_es_amplitudes-wf%n_t1, etaX(wf%n_t1+1:, 1), 1, R(wf%n_t1+1:, 1), 1)
-!
 !     Left and right transition moments
 !
       T_r = ddot(wf%n_es_amplitudes, etaX, 1, R, 1)
       T_l = ddot(wf%n_es_amplitudes, L, 1, csiX, 1)
 !
-!     Calculate transition strength
+!     Transition strength
 !
-      !S  = S + T_l * T_r
       S  = T_l * T_r
 !
    end subroutine calculate_transition_strength_ccs

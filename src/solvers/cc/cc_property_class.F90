@@ -41,18 +41,18 @@ module cc_property_class
 !
    contains
 !
-      procedure, non_overridable :: prepare          => prepare_cc_property_solver
-      procedure, non_overridable :: run              => run_cc_property_solver
-      procedure, non_overridable :: cleanup          => cleanup_cc_property_solver
+      procedure, non_overridable :: prepare          => prepare_cc_property
+      procedure, non_overridable :: run              => run_cc_property
+      procedure, non_overridable :: cleanup          => cleanup_cc_property
 !
-      procedure :: intialize_variables               => intialize_variables_cc_property_sover
-      procedure :: read_settings                     => read_settings_cc_property_solver
+      procedure :: intialize_variables               => intialize_variables_cc_property
+      procedure :: read_settings                     => read_settings_cc_property
 !
-      procedure :: reset                             => reset_property_solver
-      procedure :: do_eom_or_lr                      => do_eom_or_lr_property_solver
+      procedure :: reset                             => reset_property
+      procedure :: do_eom_or_lr                      => do_eom_or_lr_property
 !
-      procedure :: print_banner                      => print_banner_cc_property_solver
-      procedure :: print_summary                     => print_summary_cc_property_solver
+      procedure :: print_banner                      => print_banner_cc_property
+      procedure :: print_summary                     => print_summary_cc_property
 !
    end type cc_property
 !
@@ -60,14 +60,13 @@ module cc_property_class
 contains
 !
 !
-   subroutine prepare_cc_property_solver(solver, wf)
+   subroutine prepare_cc_property(solver, wf)
 !!
 !!    Prepare 
 !!    Written by Josefine H. Andersen, 2019
 !!
       implicit none
 !
-      !class(cc_property_solver) :: solver
       class(cc_property) :: solver
 !
       class(ccs) :: wf
@@ -85,17 +84,16 @@ contains
 !
       call solver%intialize_variables(wf)
 !
-   end subroutine prepare_cc_property_solver
+   end subroutine prepare_cc_property
 !
 !
-   subroutine run_cc_property_solver(solver, wf) 
+   subroutine run_cc_property(solver, wf) 
 !!
 !!    Run
 !!    Written by Josefine H. Andersen, 2019
 !!
       implicit none
 !
-      !class(cc_property_solver) :: solver
       class(cc_property) :: solver
 !
       class(ccs) :: wf
@@ -154,10 +152,10 @@ contains
 !
       enddo
 !
-   end subroutine run_cc_property_solver
+   end subroutine run_cc_property
 !
 !
-   subroutine read_settings_cc_property_solver(solver)
+   subroutine read_settings_cc_property(solver)
 !!
 !!    Read cc excited state settings to find n_singlet_states
 !!    and cc properties settings to determine operator
@@ -165,7 +163,6 @@ contains
 !!
       implicit none
 !
-      !class(cc_property_solver) :: solver
       class(cc_property) :: solver
 !
       integer :: n_specs, n_ops, i
@@ -238,17 +235,16 @@ contains
 !
       enddo
 !
-   end subroutine read_settings_cc_property_solver
+   end subroutine read_settings_cc_property
 !
 !
-   subroutine reset_property_solver(solver)
+   subroutine reset_property(solver)
 !!
 !!    Reset solver variables
 !!    Written by Josefine H. Andersen, February 2019
 !!
       implicit none
 !
-      !class(cc_property_solver) :: solver
       class(cc_property) :: solver
 !
       solver%S = zero
@@ -256,17 +252,16 @@ contains
       solver%etaX = zero
       solver%csiX = zero
 !
-   end subroutine reset_property_solver
+   end subroutine reset_property
 !
 !
-   subroutine cleanup_cc_property_solver(solver, wf) 
+   subroutine cleanup_cc_property(solver, wf) 
 !!
 !!    Cleanup
 !!    Written by Josefine H. Andersen, 2019
 !!
       implicit none
 !
-      !class(cc_property_solver) :: solver
       class(cc_property) :: solver
 !
       class(ccs) :: wf
@@ -286,17 +281,16 @@ contains
       if (allocated(solver%r_vec_n)) &
          call mem%dealloc(solver%r_vec_n, wf%n_es_amplitudes, 1)
 !
-   end subroutine cleanup_cc_property_solver
+   end subroutine cleanup_cc_property
 !
 !
-   subroutine intialize_variables_cc_property_sover(solver, wf)
+   subroutine intialize_variables_cc_property(solver, wf)
 !!
 !!    Allocate global variables
 !!    Written by Josefine H. Andersen, 2019
 !!
       implicit none
 !
-      !class(cc_property_solver) :: solver
       class(cc_property) :: solver
 !
       class(ccs) :: wf
@@ -313,27 +307,26 @@ contains
       if (.not. allocated(solver%r_vec_n)) &
          call mem%alloc(solver%r_vec_n, wf%n_es_amplitudes, 1) 
 !
-   end subroutine intialize_variables_cc_property_sover
+   end subroutine intialize_variables_cc_property
 !
 !
-   subroutine print_banner_cc_property_solver(solver)
+   subroutine print_banner_cc_property(solver)
 !!
 !!    Print banner
 !!    Written by Josefine H. Andersen, 2019
 !!
       implicit none
 !
-      !class(cc_property_solver) :: solver
       class(cc_property) :: solver
 !              
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
       call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
 !
-   end subroutine print_banner_cc_property_solver
+   end subroutine print_banner_cc_property
 !
 !
-   subroutine print_summary_cc_property_solver(solver, wf, output_type, i)
+   subroutine print_summary_cc_property(solver, wf, output_type, i)
 !!
 !!    Print summary
 !!    Written by Josefine H. Andersen
@@ -342,7 +335,6 @@ contains
 !!
       implicit  none
 !
-      !class(cc_property_solver), intent(in) :: solver
       class(cc_property), intent(in) :: solver
 !
       class(ccs), intent(in) :: wf
@@ -380,10 +372,10 @@ contains
 !
       endif
 !
-   end subroutine print_summary_cc_property_solver
+   end subroutine print_summary_cc_property
 !
 !
-   subroutine do_eom_or_lr_property_solver(solver, wf)
+   subroutine do_eom_or_lr_property(solver, wf)
 !!
 !!    Calls construction of EOM or LR contribution.
 !!    Based on wf, gives the correct input to wf%get_eom_contribution
@@ -391,7 +383,6 @@ contains
 !!
       implicit none
 !
-      !class(cc_property_solver), intent(inout) :: solver
       class(cc_property), intent(inout) :: solver
 !
       class(ccs), intent(in) :: wf
@@ -413,7 +404,7 @@ contains
                                       & will be calculated with no contrubutions'
       endif
 !
-   end subroutine do_eom_or_lr_property_solver
+   end subroutine do_eom_or_lr_property
 !
 !
 end module cc_property_class

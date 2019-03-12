@@ -33,7 +33,7 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes), intent(inout) :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_ai
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij
