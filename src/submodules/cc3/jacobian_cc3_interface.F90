@@ -50,18 +50,6 @@
    end subroutine jacobian_cc3_A_cc3
 !
 !
-   module subroutine jacobian_cc3_integrals_cc3(wf)
-!!
-!!    Construct integrals needed in CC3 Jacobian and store on disk
-!!    Alexander Paul and Rolf H. Myhre February 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-   end subroutine jacobian_cc3_integrals_cc3
-!
-!
    module subroutine jacobian_cc3_c1_integrals_cc3(wf, c_ai)
 !!
 !!    Construct c1 transformed integrals needed in CC3 Jacobian
@@ -239,12 +227,11 @@
    !end subroutine jacobian_cc3_eps_cc3
 !
 !
-   module subroutine jacobian_cc3_rho1_cc3(wf, i, j, k, c_abc, u_abc, rho_ai, rho_abij, F_kc,   &
-                                          L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
+   module subroutine jacobian_cc3_fock_rho2_cc3(wf, i, j, k, c_abc, u_abc, rho_abij, F_kc)
 !!
-!!    Calculate the triples contribution to rho1 for fixed i,j and k
+!!    Calculate the Fock contribution to rho2 for fixed i,j and k
 !!
-!!    rho_1 =+ P^abc_ijk sum_bc (C^abc_ijk - C^cba_ijk) L_jbkc
+!!    rho_abji =+ sum_kc (C^abc_ijk - C^cba_ijk) F_kc
 !!
 !!    Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
@@ -254,22 +241,14 @@
 !
       integer, intent(in) :: i, j, k
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: c_abc ! t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                   :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: rho_abij
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_kc
 !
-      real(dp), dimension(wf%n_v, wf%n_v), optional, intent(in)            :: L_jbic
-      real(dp), dimension(wf%n_v, wf%n_v), optional, intent(in)            :: L_kbic
-      real(dp), dimension(wf%n_v, wf%n_v), optional, intent(in)            :: L_kbjc
-      real(dp), dimension(wf%n_v, wf%n_v), optional, intent(in)            :: L_ibjc
-      real(dp), dimension(wf%n_v, wf%n_v), optional, intent(in)            :: L_ibkc
-      real(dp), dimension(wf%n_v, wf%n_v), optional, intent(in)            :: L_jbkc
-!
-   end subroutine jacobian_cc3_rho1_cc3
+   end subroutine jacobian_cc3_fock_rho2_cc3
 !
 !
    module subroutine jacobian_cc3_rho2_cc3(wf, i, j, k, t_abc, u_abc, v_abc, rho_abij,       &
