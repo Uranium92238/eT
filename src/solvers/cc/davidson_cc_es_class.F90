@@ -87,23 +87,16 @@ module davidson_cc_es_class
 contains
 !
 !
-<<<<<<< HEAD:src/solvers/cc/davidson_cc_es_solver_class.F90
-   subroutine prepare_davidson_cc_es_solver(solver, transform)
-=======
-   subroutine prepare_davidson_cc_es(solver)
->>>>>>> feadc9e97efbaf4bd11d0ab9fa937d2aa6dd0263:src/solvers/cc/davidson_cc_es_class.F90
+   subroutine prepare_davidson_cc_es(solver, transform)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-<<<<<<< HEAD:src/solvers/cc/davidson_cc_es_solver_class.F90
-      class(davidson_cc_es_solver) :: solver
       character(len=*), optional :: transform
-=======
+!
       class(davidson_cc_es) :: solver
->>>>>>> feadc9e97efbaf4bd11d0ab9fa937d2aa6dd0263:src/solvers/cc/davidson_cc_es_class.F90
 !
       call solver%print_banner()
 !
@@ -276,13 +269,8 @@ contains
 !
       iteration = 1
 !
-<<<<<<< HEAD:src/solvers/cc/davidson_cc_es_solver_class.F90
-      call davidson%prepare(trim(wf%name_)//'_es_davidson_'//trim(solver%transformation), wf%n_es_amplitudes, &
-                            solver%n_singlet_states, solver%residual_threshold, solver%eigenvalue_threshold)
-=======
       call davidson%prepare('cc_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
                                solver%residual_threshold, solver%eigenvalue_threshold)
->>>>>>> feadc9e97efbaf4bd11d0ab9fa937d2aa6dd0263:src/solvers/cc/davidson_cc_es_class.F90
 !
 !     Construct first trial vectors
 !
@@ -414,7 +402,8 @@ contains
 !
          enddo
 !
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
+! --- DEBUG: remove call to save
+         !call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
 !
       elseif (.not. converged ) then
 !

@@ -40,7 +40,8 @@
       class(ccsd), intent(in) :: wf
 !
       character(len=*), intent(in) :: Xoperator
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX
+      !real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
 !
    end subroutine construct_etaX_singles_q1_ccsd
 !
@@ -55,7 +56,8 @@
       class(ccsd), intent(in) :: wf
 !
       character(len=*), intent(in) :: Xoperator
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX
+      !real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
 !
    end subroutine construct_etaX_singles_q2_ccsd
 !

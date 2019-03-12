@@ -1,4 +1,4 @@
-module cc_property_solver_class
+module cc_property_class
 !
 !!
 !!    Coupled cluster property solver class module
@@ -12,7 +12,7 @@ module cc_property_solver_class
 !
    implicit none
 !
-   type :: cc_property_solver 
+   type :: cc_property
 !
       character(len=100) :: tag = 'Coupled cluster property solver'
       character(len=100) :: author = 'Josefine H. Andersen, 2019'
@@ -54,7 +54,7 @@ module cc_property_solver_class
       procedure :: print_banner                      => print_banner_cc_property_solver
       procedure :: print_summary                     => print_summary_cc_property_solver
 !
-   end type cc_property_solver
+   end type cc_property
 !
 !
 contains
@@ -67,7 +67,8 @@ contains
 !!
       implicit none
 !
-      class(cc_property_solver) :: solver
+      !class(cc_property_solver) :: solver
+      class(cc_property) :: solver
 !
       class(ccs) :: wf
 !
@@ -94,9 +95,9 @@ contains
 !!
       implicit none
 !
-      class(cc_property_solver) :: solver
+      !class(cc_property_solver) :: solver
+      class(cc_property) :: solver
 !
-      !class(ccs), intent(in) :: wf
       class(ccs) :: wf
 !
       integer :: i, n
@@ -110,9 +111,6 @@ contains
       call wf%read_multipliers()
 !
       call wf%prepare_operator_pq(solver%operator_type)
-!
-      !call mem%alloc(l_vec_n, wf%n_es_amplitudes, 1)
-      !call mem%alloc(r_vec_n, wf%n_es_amplitudes, 1)
 !
       call solver%print_summary(wf, 'header')
 !      
@@ -140,7 +138,8 @@ contains
 !  
          do n = 1, solver%n_singlet_states
 !
-            call wf%get_left_right_vectors(solver%l_vec_n, solver%r_vec_n, n)
+            call wf%read_excited_state(solver%l_vec_n, n, 'left')
+            call wf%read_excited_state(solver%r_vec_n, n, 'right')
 !
             call wf%scale_left_excitation_vector(solver%l_vec_n, solver%r_vec_n)
 !
@@ -155,8 +154,6 @@ contains
 !
       enddo
 !
-!      call solver%print_summary()
-!
    end subroutine run_cc_property_solver
 !
 !
@@ -168,7 +165,8 @@ contains
 !!
       implicit none
 !
-      class(cc_property_solver) :: solver
+      !class(cc_property_solver) :: solver
+      class(cc_property) :: solver
 !
       integer :: n_specs, n_ops, i
 !
@@ -250,7 +248,8 @@ contains
 !!
       implicit none
 !
-      class(cc_property_solver) :: solver
+      !class(cc_property_solver) :: solver
+      class(cc_property) :: solver
 !
       solver%S = zero
 !
@@ -267,7 +266,8 @@ contains
 !!
       implicit none
 !
-      class(cc_property_solver) :: solver
+      !class(cc_property_solver) :: solver
+      class(cc_property) :: solver
 !
       class(ccs) :: wf
 !
@@ -296,7 +296,8 @@ contains
 !!
       implicit none
 !
-      class(cc_property_solver) :: solver
+      !class(cc_property_solver) :: solver
+      class(cc_property) :: solver
 !
       class(ccs) :: wf
 !
@@ -322,7 +323,8 @@ contains
 !!
       implicit none
 !
-      class(cc_property_solver) :: solver
+      !class(cc_property_solver) :: solver
+      class(cc_property) :: solver
 !              
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
@@ -340,7 +342,8 @@ contains
 !!
       implicit  none
 !
-      class(cc_property_solver), intent(in) :: solver
+      !class(cc_property_solver), intent(in) :: solver
+      class(cc_property), intent(in) :: solver
 !
       class(ccs), intent(in) :: wf
 !              
@@ -388,7 +391,8 @@ contains
 !!
       implicit none
 !
-      class(cc_property_solver), intent(inout) :: solver
+      !class(cc_property_solver), intent(inout) :: solver
+      class(cc_property), intent(inout) :: solver
 !
       class(ccs), intent(in) :: wf
 !
@@ -412,4 +416,4 @@ contains
    end subroutine do_eom_or_lr_property_solver
 !
 !
-end module cc_property_solver_class
+end module cc_property_class

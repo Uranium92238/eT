@@ -117,13 +117,13 @@ module hf_class
       procedure :: initialize_orbitals                      => initialize_orbitals_hf
       procedure :: roothan_hall_update_orbitals             => roothan_hall_update_orbitals_hf
       procedure :: print_orbital_energies                   => print_orbital_energies_hf
-<<<<<<< HEAD
-      procedure :: mo_transform                             => mo_transform_hf
-      procedure :: mo_transform_and_save_h                  => mo_transform_and_save_h_hf
+!<<<<<<< HEAD
+!      procedure :: mo_transform                             => mo_transform_hf
+!      procedure :: mo_transform_and_save_h                  => mo_transform_and_save_h_hf
       procedure :: mo_transform_and_save_mu                 => mo_transform_and_save_mu_vectors_hf
-      procedure :: save_orbital_coefficients                => save_orbital_coefficients_hf
-=======
->>>>>>> feadc9e97efbaf4bd11d0ab9fa937d2aa6dd0263
+!      procedure :: save_orbital_coefficients                => save_orbital_coefficients_hf
+!=======
+!>>>>>>> feadc9e97efbaf4bd11d0ab9fa937d2aa6dd0263
       procedure :: read_orbital_coefficients                => read_orbital_coefficients_hf
       procedure :: save_orbital_coefficients                => save_orbital_coefficients_hf
       procedure :: read_orbital_energies                    => read_orbital_energies_hf
@@ -188,18 +188,19 @@ contains
       wf%n_ao        = wf%system%get_n_aos()
       wf%n_densities = 1
 !
-<<<<<<< HEAD
-      call initialize_coulomb()
-      call initialize_kinetic()
-      call initialize_nuclear()
-      call initialize_overlap()
-      call initialize_dipole()
-=======
+!<<<<<<< HEAD
+!      call initialize_coulomb()
+!      call initialize_kinetic()
+!      call initialize_nuclear()
+!      call initialize_overlap()
+      !call initialize_dipole()
+!=======
       call initialize_coulomb_c()
       call initialize_kinetic_c()
       call initialize_nuclear_c()
       call initialize_overlap_c()
->>>>>>> feadc9e97efbaf4bd11d0ab9fa937d2aa6dd0263
+      call initialize_dipole()
+!>>>>>>> feadc9e97efbaf4bd11d0ab9fa937d2aa6dd0263
 !
       call wf%set_n_mo()
 !
@@ -365,38 +366,38 @@ contains
    end subroutine print_orbital_energies_hf
 !
 !
-<<<<<<< HEAD
-   subroutine mo_transform_and_save_h_hf(wf)
+!<<<<<<< HEAD
+  ! subroutine mo_transform_and_save_h_hf(wf)
 !!
 !!    MO transform and save h 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+  !    implicit none 
 !
-      class(hf) :: wf 
+  !    class(hf) :: wf 
 !
-      real(dp), dimension(:,:), allocatable :: h_wx, h_pq 
+  !    real(dp), dimension(:,:), allocatable :: h_wx, h_pq 
 !
-      type(file) :: h_pq_file
+  !    type(file) :: h_pq_file
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
+  !    call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+  !    call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
 !
-      call wf%get_ao_h_wx(h_wx)
-      call wf%mo_transform(h_wx, h_pq)
+  !    call wf%get_ao_h_wx(h_wx)
+  !    call wf%mo_transform(h_wx, h_pq)
 !
 !
-      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
-      call disk%open_file(h_pq_file, 'write', 'rewind')
+  !    call h_pq_file%init('h_pq', 'sequential', 'unformatted')
+  !    call disk%open_file(h_pq_file, 'write', 'rewind')
 !
-      write(h_pq_file%unit) h_pq 
+  !    write(h_pq_file%unit) h_pq 
 !
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
-      call mem%dealloc(h_pq, wf%n_mo, wf%n_mo)     
+  !    call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+  !    call mem%dealloc(h_pq, wf%n_mo, wf%n_mo)     
 !
-      call disk%close_file(h_pq_file)
+  !    call disk%close_file(h_pq_file)
 !
-   end subroutine mo_transform_and_save_h_hf
+  ! end subroutine mo_transform_and_save_h_hf
 !
 !
    subroutine mo_transform_hf(wf, X_wx, Y_pq)
@@ -460,7 +461,6 @@ contains
       class(hf), intent(in) :: wf
 !
       real(dp), dimension(:,:), allocatable :: mu_X_wx, mu_Y_wx, mu_Z_wx
-      !real(dp), dimension(:,:), allocatable :: mu_X_wx_packed, mu_Y_wx_packed, mu_Z_wx_packed
       real(dp), dimension(:,:), allocatable :: mu_X_pq, mu_Y_pq, mu_Z_pq
 !
       type(file) :: mu_X_pq_file
@@ -471,25 +471,12 @@ contains
       call mem%alloc(mu_Y_wx, wf%n_ao, wf%n_ao)
       call mem%alloc(mu_Z_wx, wf%n_ao, wf%n_ao)
 !     
-      !call mem%alloc(mu_X_wx_packed, wf%n_ao*(wf%n_ao + 1)/2, 1)
-      !call mem%alloc(mu_Y_wx_packed, wf%n_ao*(wf%n_ao + 1)/2, 1)
-      !call mem%alloc(mu_Z_wx_packed, wf%n_ao*(wf%n_ao + 1)/2, 1)
-!     
       call mem%alloc(mu_X_pq, wf%n_mo, wf%n_mo)
       call mem%alloc(mu_Y_pq, wf%n_mo, wf%n_mo)
       call mem%alloc(mu_Z_pq, wf%n_mo, wf%n_mo) 
 !
-      !call wf%get_ao_mu_wx(mu_X_wx_packed, mu_Y_wx_packed, mu_Z_wx_packed)
       call wf%get_ao_mu_wx(mu_X_wx, mu_Y_wx, mu_Z_wx)
 !
-      !call squareup(mu_X_wx_packed, mu_X_wx, wf%n_ao)
-      !call squareup(mu_Y_wx_packed, mu_Y_wx, wf%n_ao)
-      !call squareup(mu_Z_wx_packed, mu_Z_wx, wf%n_ao)
-!      
-      !call mem%dealloc(mu_X_wx_packed, wf%n_ao*(wf%n_ao + 1)/2, 1)
-      !call mem%dealloc(mu_Y_wx_packed, wf%n_ao*(wf%n_ao + 1)/2, 1)
-      !call mem%dealloc(mu_Z_wx_packed, wf%n_ao*(wf%n_ao + 1)/2, 1)
-!     
       call wf%mo_transform(mu_X_wx, mu_X_pq)
       call wf%mo_transform(mu_Y_wx, mu_Y_pq)
       call wf%mo_transform(mu_Z_wx, mu_Z_pq)
@@ -521,8 +508,8 @@ contains
    end subroutine mo_transform_and_save_mu_vectors_hf
 !
 !
-=======
->>>>>>> feadc9e97efbaf4bd11d0ab9fa937d2aa6dd0263
+!=======
+!>>>>>>> feadc9e97efbaf4bd11d0ab9fa937d2aa6dd0263
    subroutine set_initial_ao_density_guess_hf(wf, guess)
 !!
 !!    Set initial AO density

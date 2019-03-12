@@ -910,7 +910,7 @@ contains
 !
       class(ccsd), intent(inout) :: wf 
 !
-      call wf%is_restart_safe('ground state')
+      !call wf%is_restart_safe('ground state')
 !
       call disk%open_file(wf%t1bar_file, 'read', 'rewind')
       call disk%open_file(wf%t2bar_file, 'read', 'rewind')

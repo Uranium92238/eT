@@ -5,15 +5,14 @@ module property_engine_class
 !!
    use abstract_engine_class
    use ccs_class
-   use eri_cd_solver_class
-   use davidson_cc_es_solver_class
-   use davidson_cc_ip_solver_class
-   use davidson_cvs_cc_es_solver_class
+   use eri_cd_class
+   use davidson_cc_es_class
+   use davidson_cc_ip_class
+   use davidson_cvs_cc_es_class
    use davidson_cc_multipliers_class
-   use diis_cc_gs_solver_class
-   use diis_cc_es_solver_class
-!   use diis_cc_multipliers_solver_class
-   use cc_property_solver_class
+   use diis_cc_gs_class
+   use diis_cc_es_class
+   use cc_property_class
 !
    type, extends(abstract_engine) :: property_engine
 !
@@ -66,15 +65,15 @@ contains
 !
       class(ccs) :: wf
 !
-      type(eri_cd_solver), allocatable              :: eri_chol_solver
-      type(diis_cc_gs_solver), allocatable          :: cc_gs_solver
-      type(diis_cc_es_solver), allocatable          :: cc_es_solver_diis
+      type(eri_cd), allocatable              :: eri_chol_solver
+      type(diis_cc_gs), allocatable          :: cc_gs_solver
+      type(diis_cc_es), allocatable          :: cc_es_solver_diis
 ! 
-      type(davidson_cc_es_solver), allocatable, target      :: cc_valence_es_solver
-      type(davidson_cvs_cc_es_solver), allocatable, target  :: cc_core_es_solver
+      type(davidson_cc_es), allocatable, target      :: cc_valence_es_solver
+      type(davidson_cvs_cc_es), allocatable, target  :: cc_core_es_solver
       type(davidson_cc_multipliers), allocatable, target    :: cc_multipliers_davidson
 !
-      class(cc_property_solver), pointer :: cc_property_solver
+      class(cc_property), pointer :: cc_property_solver
 !
       write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)      
 !

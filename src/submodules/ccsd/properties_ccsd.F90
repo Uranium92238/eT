@@ -26,12 +26,19 @@ contains
 !      
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
 !
+      real(dp) :: ddot ! DEBUG
+!
       call wf%construct_etaX_ccs_singles(Xoperator, etaX)
-      call wf%construct_etaX_singles_q1(Xoperator, etaX)
+      !call wf%construct_etaX_singles_q1(Xoperator, etaX)
       call wf%construct_etaX_singles_q2(Xoperator, etaX)
+      call wf%construct_etaX_singles_q1(Xoperator, etaX)
 !
       call wf%construct_etaX_doubles_q1(Xoperator, etaX)
       call wf%construct_etaX_doubles_q2(Xoperator, etaX)
+!
+! ---- DEBUG
+      !write(output%unit,'(/t6,a,f19.10)') 'etaX doubles = ', &
+      !      ddot(wf%n_t2, etaX(wf%n_t1+1:,1), 1, etaX(wf%n_t1+1:,1), 1)
 !
    end subroutine construct_etaX_ccsd
 !
@@ -56,6 +63,8 @@ contains
 !
       real(dp), parameter :: two = 2.0
 !
+      real(dp) :: ddot ! DEBUG
+!
       call mem%alloc(X_ia, wf%n_t1, 1)
       call mem%alloc(X_ai, wf%n_t1, 1)
 !
@@ -70,6 +79,10 @@ contains
 !
       call mem%dealloc(X_ia, wf%n_t1, 1)
       call mem%dealloc(X_ai, wf%n_t1, 1)
+!
+! ----- DEBUG
+      !write(output%unit,'(t6,a,f19.10)') 'etaX ccs singles = ', &
+      !ddot(wf%n_t1, etaX, 1, etaX, 1)
 !
    end subroutine construct_etaX_ccs_singles_ccsd
 !
@@ -87,7 +100,9 @@ contains
 !
       character(len=*), intent(in)        :: Xoperator
 !      
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)   :: etaX
+      !real(dp), dimension(wf%n_v, wf%n_o), intent(inout)   :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout)   :: etaX
+      !real(dp), dimension(wf%n_t1, 1), intent(inout)   :: etaX
 !      
       real(dp), dimension(:,:), allocatable :: eta_temp
 !
@@ -95,6 +110,8 @@ contains
       real(dp), dimension(:,:), allocatable :: X_ik
 !      
       real(dp), parameter :: one = 1.0
+!
+      real(dp) :: ddot ! DEBUG
 !
       call mem%alloc(eta_temp, wf%n_v, wf%n_o)
       eta_temp = zero
@@ -120,6 +137,10 @@ contains
 !         
       call mem%dealloc(X_ca, wf%n_v*wf%n_v, 1)
 !      
+! ----- DEBUG
+      !write(output%unit, '(/t6,a,f19.10)') '1st term Q1 singles etaX_temp = ', &
+      !ddot(wf%n_v*wf%n_o, eta_temp, 1, eta_temp, 1)
+!
 !     :: Second term  - sum_k tb_ak X_ik
 !
       call mem%alloc(X_ik, wf%n_o*wf%n_o, 1)
@@ -141,11 +162,19 @@ contains
 !         
       call mem%dealloc(X_ik, wf%n_o*wf%n_o, 1)
 !
+! ----- DEBUG
+      !write(output%unit, '(t6,a,f19.10)') '1st+2nd term Q1 singles etaX_temp = ', &
+      !ddot(wf%n_v*wf%n_o, eta_temp, 1, eta_temp, 1)
+!
 !     Add eta_temp to etaX
 !
-      call daxpy(wf%n_t1, one, eta_temp, 1, etaX, 1)
+      call daxpy(wf%n_t1, -one, eta_temp, 1, etaX, 1)
 !
       call mem%dealloc(eta_temp, wf%n_v, wf%n_o)
+!
+! ----- DEBUG
+      !write(output%unit, '(t6,a,f19.10)') 'etaX singles after singles Q1 = ', &
+      !ddot(wf%n_v*wf%n_o, etaX, 1, etaX, 1)
 !
    end subroutine construct_etaX_singles_q1_ccsd
 !
@@ -163,7 +192,8 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX
+      !real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout)   :: etaX
 !
       real(dp), dimension(:,:), allocatable :: eta_temp
 !
@@ -177,6 +207,8 @@ contains
       real(dp), dimension(:,:), allocatable :: I_l_i    ! intermediate, second term
 !      
       real(dp), parameter :: one = 1.0
+!
+      real(dp) :: ddot ! DEBUG
 !
       call mem%alloc(eta_temp, wf%n_v, wf%n_o)
       eta_temp = zero
@@ -233,6 +265,10 @@ contains
 !
       call mem%dealloc(I_a_d, wf%n_v, wf%n_v)
 !
+! ----- DEBUG
+      !write(output%unit, '(t6,a,f19.10)') '1st term Q2 singles = ', &
+      !ddot(wf%n_t1, eta_temp, 1, eta_temp, 1)
+!
 !     :: Second term: sum_ckdl tb_ckdi X_la t_ckdl
 !
 !     Form the intermediate X_l_i = sum_ckd t_l_ckd b_ckd_i  = sum_ckd b_ckdi t_kl^cd
@@ -271,9 +307,17 @@ contains
 !
       call mem%dealloc(I_l_i, wf%n_o, wf%n_o)
 !
+! ----- DEBUG
+      !write(output%unit, '(t6,a,f19.10)') '1st+2nd term Q2 singles = ', &
+      !ddot(wf%n_t1, eta_temp, 1, eta_temp, 1)
+!
 !     Add eta_temp to etaX
 !
-      call daxpy(wf%n_t1, one, eta_temp, 1, etaX, 1)
+      call daxpy(wf%n_t1, -one, eta_temp, 1, etaX, 1)
+!
+! ----- DEBUG
+      !write(output%unit,'(t6,a,f19.10)') 'etaX singles after singles Q2', &
+      !ddot(wf%n_o*wf%n_v, etaX, 1, etaX, 1)
 !
       call mem%dealloc(eta_temp, wf%n_v, wf%n_o)
 !
@@ -282,7 +326,7 @@ contains
 !
    module subroutine construct_etaX_doubles_q1_ccsd(wf, Xoperator, etaX)
 !!
-!!    Construct Q1 therm of etaX doubles
+!!    Construct Q1 term of etaX doubles
 !!    Written by Josefine H. Andersen, February 2019
 !!    
 !!    Q1 = 2 X_jb tb_ai - X_ib tb_aj
@@ -346,7 +390,7 @@ contains
 !
 !     Add temporary etaX to etaX
 !
-      call daxpy(wf%n_t2, one, etaX_temp, 1, etaX(wf%n_t1+1:wf%n_es_amplitudes, 1), 1)
+      call daxpy(wf%n_t2, -one, etaX_temp, 1, etaX(wf%n_t1+1:wf%n_es_amplitudes, 1), 1)
 !
       call mem%dealloc(etaX_temp, wf%n_t2, 1)
 !
@@ -451,7 +495,7 @@ contains
 !
 !     add temporary etaX to etaX vector
 !
-      call daxpy(wf%n_t2, one, etaX_temp, 1, etaX(wf%n_t1+1:, 1), 1)
+      call daxpy(wf%n_t2, -one, etaX_temp, 1, etaX(wf%n_t1+1:, 1), 1)
 !
       call mem%dealloc(etaX_temp, wf%n_t2, 1)
 !      
@@ -470,6 +514,8 @@ contains
       character(len=*), intent(in) :: Xoperator
 !      
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
+!
+      real(dp) :: ddot !DEBUG
 !
       call wf%construct_csiX_singles(Xoperator, csiX)
 !      
@@ -675,8 +721,22 @@ contains
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: csiX
 !
-      call wf%get_eom_xcc_contribution(etaX, csiX)
+      real(dp) :: ddot ! DEBUG
+!
+      !call wf%get_eom_xcc_contribution(etaX, csiX)
       call wf%get_eom_doubles_contribution(Xoperator, etaX)
+!
+! ---- DEBUG 
+      !write(output%unit, '(t6,a,f19.10)') 'etaX singles after EOM = ', &
+      !                 ddot(wf%n_t1, etaX, 1, etaX, 1)
+! ---- DEBUG 
+      !write(output%unit, '(t6,a,f19.10)') 'Final etaX after EOM (no Xcc) = ', &
+      !                 ddot(wf%n_es_amplitudes, etaX, 1, etaX, 1)
+!
+      call wf%get_eom_xcc_contribution(etaX, csiX)
+!
+      !write(output%unit, '(t6,a,f19.10)') 'Final etaX after Xcc = ', &
+      !                 ddot(wf%n_es_amplitudes, etaX, 1, etaX, 1)
 !
    end subroutine get_eom_contribution_ccsd
 !
@@ -711,6 +771,8 @@ contains
       real(dp), dimension(:,:), allocatable :: X_dl
 !
       real(dp), parameter :: one = 1.0, two = 2.0
+!
+      real(dp) :: ddot ! DEBUG
 !
 !     :: First term: sum_ck tb_aick X_ck
 !
@@ -800,7 +862,12 @@ contains
 !
 !     Add EOM contribution to etaX
 !
-      call daxpy(wf%n_t1, one, etaX_temp, 1, etaX, 1)
+      call daxpy(wf%n_t1, -one, etaX_temp, 1, etaX, 1)
+!
+!
+! ----- DEBUG
+      !write(output%unit,'(/t6,a,f19.10)') '1st+2nd term EOM etaX_temp =', &
+      !ddot(wf%n_v*wf%n_o, etaX_temp, 1, etaX_temp, 1)
 !
       call mem%dealloc(etaX_temp, wf%n_v*wf%n_o, 1)
 !
