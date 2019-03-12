@@ -148,15 +148,35 @@ module ccsd_class
       procedure :: construct_etaX_singles_q2                   => construct_etaX_singles_q2_ccsd
       procedure :: construct_etaX_doubles_q1                   => construct_etaX_doubles_q1_ccsd
       procedure :: construct_etaX_doubles_q2                   => construct_etaX_doubles_q2_ccsd
-     
+!     
       procedure :: construct_csiX                              => construct_csiX_ccsd
       procedure :: construct_csiX_singles                      => construct_csiX_singles_ccsd
       procedure :: construct_csiX_doubles                      => construct_csiX_doubles_ccsd
 !
       procedure :: get_eom_contribution                        => get_eom_contribution_ccsd
       procedure :: get_eom_doubles_contribution                => get_eom_doubles_contribution_ccsd
-
 !      
+      procedure :: F_transform_vector                           => F_transform_vector_ccsd
+      procedure :: F_ccsd_a1_1                                  => F_ccsd_a1_1_ccsd
+      procedure :: F_ccsd_a2_1                                  => F_ccsd_a2_1_ccsd
+      procedure :: F_ccsd_a1_2                                  => F_ccsd_a1_2_ccsd
+      procedure :: F_ccsd_b1_2                                  => F_ccsd_b1_2_ccsd
+      procedure :: F_ccsd_c1_2                                  => F_ccsd_c1_2_ccsd
+      procedure :: F_ccsd_d1_2                                  => F_ccsd_d1_2_ccsd
+      procedure :: F_ccsd_e1_2                                  => F_ccsd_e1_2_ccsd
+      procedure :: F_ccsd_f1_2                                  => F_ccsd_f1_2_ccsd
+      procedure :: F_ccsd_g1_2                                  => F_ccsd_g1_2_ccsd
+      procedure :: F_ccsd_h1_2                                  => F_ccsd_h1_2_ccsd
+      procedure :: F_ccsd_i1_2                                  => F_ccsd_i1_2_ccsd
+      procedure :: F_ccsd_j1_2                                  => F_ccsd_j1_2_ccsd
+      procedure :: F_ccsd_a2_2                                  => F_ccsd_a2_2_ccsd
+      procedure :: F_ccsd_b2_2                                  => F_ccsd_b2_2_ccsd
+      procedure :: F_ccsd_c2_2                                  => F_ccsd_c2_2_ccsd
+      procedure :: F_ccsd_d2_2                                  => F_ccsd_d2_2_ccsd
+      procedure :: F_ccsd_e2_2                                  => F_ccsd_e2_2_ccsd
+      procedure :: F_ccsd_f2_2                                  => F_ccsd_f2_2_ccsd
+      procedure :: F_ccsd_g2_2                                  => F_ccsd_g2_2_ccsd
+!
    end type ccsd
 !
 !
@@ -166,6 +186,7 @@ module ccsd_class
       include "../submodules/ccsd/jacobian_ccsd_interface.F90"
       include "../submodules/ccsd/jacobian_transpose_ccsd_interface.F90"
       include "../submodules/ccsd/properties_ccsd_interface.F90"
+      include "../submodules/ccsd/F_ccsd_interface.F90"
 !
    end interface 
 !

@@ -87,4 +87,6 @@ set(eT_fortran_sources
    src/submodules/lowmem_cc2/omega_lowmem_cc2.F90
    src/submodules/lowmem_cc2/jacobian_lowmem_cc2.F90
    src/submodules/cc3/omega_cc3.F90
+   src/submodules/ccs/F_ccs.F90
+   src/submodules/ccsd/F_ccsd.F90
 )

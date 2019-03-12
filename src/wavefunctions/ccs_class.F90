@@ -233,7 +233,22 @@ module ccs_class
       procedure :: scale_left_excitation_vector                => scale_left_excitation_vector_ccs
       procedure :: calculate_transition_strength               => calculate_transition_strength_ccs
 !
+!     Routine for F-transformation
+!
+      procedure :: F_transform_vector                           => F_transform_vector_ccs
+      procedure :: F_ccs_a1_0                                   => F_ccs_a1_0_ccs
+      procedure :: F_ccs_a1_1                                   => F_ccs_a1_1_ccs
+      procedure :: F_ccs_b1_1                                   => F_ccs_b1_1_ccs
+      procedure :: F_ccs_c1_1                                   => F_ccs_c1_1_ccs
+!
    end type ccs
+!
+!
+   interface
+!
+      include "../submodules/ccs/F_ccs_interface.F90"
+!
+   end interface
 !
 !
 contains
