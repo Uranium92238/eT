@@ -227,7 +227,6 @@ contains
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                            req_0, req_1, req_2, req_3, batch_buff)
 !
-!
 !     Allocate integral arrays and assign pointers.
 !     Without pointers we'll have to use three times as much 
 !     memory for the non-batching case
@@ -423,15 +422,15 @@ contains
 !
                endif
 !
-               do i = batch_i%first,batch_i%last
+               do i = batch_i%first, batch_i%last
 !
                   i_rel = i - batch_i%first + 1
 !
-                  do j = batch_j%first,min(batch_j%last,i)
+                  do j = batch_j%first, min(batch_j%last, i)
 !
                      j_rel = j - batch_j%first + 1
 !
-                     do k = batch_k%first,min(batch_k%last,j)
+                     do k = batch_k%first, min(batch_k%last, j)
 !
                         if (i .eq. j .and. i .eq. k) then
                            cycle
@@ -704,8 +703,6 @@ contains
 !
       call disk%close_file(wf%g_ljck_t,'keep')
 !
-      call mem%batch_setup(batch_k,req_0,req_k)
-!
 !     (jl|kc)
 !     Same batching
 !
@@ -815,8 +812,8 @@ contains
 !
       type(batching_index), intent(in) :: batch_x
 !
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_bdcx
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_dbxc
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_bdcx
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_dbxc
 !
       integer :: ioerror
       integer :: x, x_abs
@@ -866,9 +863,9 @@ contains
 !
       type(batching_index), intent(in) :: batch_x, batch_y
 !
-      real(dp), dimension(wf%n_o,wf%n_v,batch_y%length,batch_x%length), intent(out) :: g_lycx
-      real(dp), dimension(wf%n_v,wf%n_o,batch_y%length,batch_x%length), intent(out) :: g_ylxc
-      real(dp), dimension(wf%n_v,wf%n_v,batch_y%length,batch_x%length), intent(out) :: L_ybxc
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_lycx
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: L_ybxc
 !
       integer :: ioerror, record
       integer :: x, y, x_abs, y_abs
