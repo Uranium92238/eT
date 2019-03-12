@@ -17,7 +17,7 @@ module cc_property_class
       character(len=100) :: tag = 'Coupled cluster property solver'
       character(len=100) :: author = 'Josefine H. Andersen, 2019'
 !
-      character(len=500) :: description1 = 'A solver that calculates spectral intensities from coupled &
+      character(len=500) :: description1 = 'A solver that calculates properties from coupled &
                                            &cluster excited state calculations'
 !
       character(len=10)  :: es_type
@@ -34,8 +34,10 @@ module cc_property_class
       real(dp), dimension(:,:), allocatable :: etaX
       real(dp), dimension(:,:), allocatable :: csiX
 !
-      real(dp), dimension(:,:), allocatable :: l_vec_n
-      real(dp), dimension(:,:), allocatable :: r_vec_n
+      !real(dp), dimension(:,:), allocatable :: l_vec_n
+      !real(dp), dimension(:,:), allocatable :: r_vec_n
+!
+      real(dp) :: T_r, T_l
 !
       integer :: n_singlet_states = 0
 !
@@ -84,6 +86,13 @@ contains
 !
       call solver%intialize_variables(wf)
 !
+!     Read multipliers and prepare operator
+!
+      call wf%initialize_multipliers()
+      call wf%read_multipliers()
+!
+      call wf%prepare_operator_pq(solver%operator_type)
+!
    end subroutine prepare_cc_property
 !
 !
@@ -100,23 +109,13 @@ contains
 !
       integer :: i, n
 !
-      !real(dp), dimension(:,:), allocatable :: l_vec_n
-      !real(dp), dimension(:,:), allocatable :: r_vec_n
-!
-!     Read multipliers and prepare operator
-!
-      call wf%initialize_multipliers()
-      call wf%read_multipliers()
-!
-      call wf%prepare_operator_pq(solver%operator_type)
-!
       call solver%print_summary(wf, 'header')
 !      
 !     Loop over components of X
 !
       do i = 1, 3
 !
-      !   call solver%print_summary('top', i)
+         call solver%print_summary(wf, 'top', i)
 !         
          solver%X = solver%component(i) //'_'// trim(solver%operator_type) 
 !
@@ -130,19 +129,20 @@ contains
 !
          call solver%do_eom_or_lr(wf)
 !
-         call solver%print_summary(wf, 'top', i)
-!
 !        Loop over excited states
 !  
          do n = 1, solver%n_singlet_states
 !
-            call wf%read_excited_state(solver%l_vec_n, n, 'left')
-            call wf%read_excited_state(solver%r_vec_n, n, 'right')
+            !call wf%read_excited_state(solver%l_vec_n, n, 'left')
+            !call wf%read_excited_state(solver%r_vec_n, n, 'right')
 !
-            call wf%scale_left_excitation_vector(solver%l_vec_n, solver%r_vec_n)
+            !call wf%scale_left_excitation_vector(solver%l_vec_n, solver%r_vec_n)
+!
+            !call wf%calculate_transition_strength(solver%S, solver%etaX, &
+            !                   solver%csiX, solver%l_vec_n, solver%r_vec_n)
 !
             call wf%calculate_transition_strength(solver%S, solver%etaX, &
-                               solver%csiX, solver%l_vec_n, solver%r_vec_n)
+                               solver%csiX, n, solver%T_l, solver%T_r)
 !
             call solver%print_summary(wf, 'results', n)
 !            
@@ -247,7 +247,9 @@ contains
 !
       class(cc_property) :: solver
 !
-      solver%S = zero
+      solver%S    = zero
+      solver%T_r  = zero
+      solver%T_l  = zero
 !
       solver%etaX = zero
       solver%csiX = zero
@@ -266,7 +268,6 @@ contains
 !
       class(ccs) :: wf
 !
-!     What to clean up?
       call wf%destruct_multipliers()
 !
       if (allocated(solver%etaX)) &
@@ -275,11 +276,11 @@ contains
       if (allocated(solver%csiX)) &
          call mem%dealloc(solver%csiX, wf%n_es_amplitudes, 1)
 !
-      if (allocated(solver%l_vec_n)) &
-         call mem%dealloc(solver%l_vec_n, wf%n_es_amplitudes, 1)
+      !if (allocated(solver%l_vec_n)) &
+      !   call mem%dealloc(solver%l_vec_n, wf%n_es_amplitudes, 1)
 !
-      if (allocated(solver%r_vec_n)) &
-         call mem%dealloc(solver%r_vec_n, wf%n_es_amplitudes, 1)
+      !if (allocated(solver%r_vec_n)) &
+      !   call mem%dealloc(solver%r_vec_n, wf%n_es_amplitudes, 1)
 !
    end subroutine cleanup_cc_property
 !
@@ -301,11 +302,11 @@ contains
       if (.not. allocated(solver%csiX)) &
          call mem%alloc(solver%csiX, wf%n_es_amplitudes, 1)
 !
-      if (.not. allocated(solver%l_vec_n)) &
-         call mem%alloc(solver%l_vec_n, wf%n_es_amplitudes, 1)
+      !if (.not. allocated(solver%l_vec_n)) &
+      !   call mem%alloc(solver%l_vec_n, wf%n_es_amplitudes, 1)
 !
-      if (.not. allocated(solver%r_vec_n)) &
-         call mem%alloc(solver%r_vec_n, wf%n_es_amplitudes, 1) 
+      !if (.not. allocated(solver%r_vec_n)) &
+      !   call mem%alloc(solver%r_vec_n, wf%n_es_amplitudes, 1) 
 !
    end subroutine intialize_variables_cc_property
 !
@@ -362,8 +363,8 @@ contains
       elseif (output_type == 'results') then
 !
          write(output%unit, '(t6,i2,1x,f19.10,1x,f19.10,1x,f19.10)') i, &
-         ddot(wf%n_es_amplitudes, solver%etaX, 1, solver%r_vec_n, 1), &
-         ddot(wf%n_es_amplitudes, solver%l_vec_n, 1, solver%csiX, 1), &
+         solver%T_r, & !ddot(wf%n_es_amplitudes, solver%etaX, 1, solver%r_vec_n, 1), &
+         solver%T_l, & !ddot(wf%n_es_amplitudes, solver%l_vec_n, 1, solver%csiX, 1), &
          solver%S
 !
       elseif (output_type == 'bottom') then

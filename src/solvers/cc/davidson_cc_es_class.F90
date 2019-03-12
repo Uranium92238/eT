@@ -94,9 +94,9 @@ contains
 !!
       implicit none
 !
-      character(len=*), optional :: transform
-!
       class(davidson_cc_es) :: solver
+!
+      character(len=*), optional :: transform
 !
       call solver%print_banner()
 !

@@ -12,6 +12,7 @@ module property_engine_class
    use davidson_cc_multipliers_class
    use diis_cc_gs_class
    use diis_cc_es_class
+   use diis_cc_multipliers_class
    use cc_property_class
 !
    type, extends(abstract_engine) :: property_engine
@@ -65,13 +66,14 @@ contains
 !
       class(ccs) :: wf
 !
-      type(eri_cd), allocatable              :: eri_chol_solver
-      type(diis_cc_gs), allocatable          :: cc_gs_solver
-      type(diis_cc_es), allocatable          :: cc_es_solver_diis
+      type(eri_cd), allocatable                    :: eri_chol_solver
+      type(diis_cc_gs), allocatable                :: cc_gs_solver
+      type(diis_cc_es), allocatable                :: cc_es_solver_diis
 ! 
-      type(davidson_cc_es), allocatable, target      :: cc_valence_es_solver
-      type(davidson_cvs_cc_es), allocatable, target  :: cc_core_es_solver
-      type(davidson_cc_multipliers), allocatable, target    :: cc_multipliers_davidson
+      type(davidson_cc_es), allocatable            :: cc_valence_es_solver
+      type(davidson_cvs_cc_es), allocatable        :: cc_core_es_solver
+      type(davidson_cc_multipliers), allocatable   :: cc_multipliers_davidson
+      type(diis_cc_multipliers), allocatable       :: cc_multipliers_diis
 !
       class(cc_property), pointer :: cc_property_solver
 !
@@ -112,13 +114,27 @@ contains
 !
 !     Multiplier equation
 !
-      allocate(cc_multipliers_davidson)
+      if (wf%name_ == 'cc2' .or. engine%algorithm == 'diis') then
 !
-      call cc_multipliers_davidson%prepare(wf)
-      call cc_multipliers_davidson%run(wf)
-      call cc_multipliers_davidson%cleanup(wf)
+         allocate(cc_multipliers_diis)
 !
-      deallocate(cc_multipliers_davidson)
+         call cc_multipliers_diis%prepare(wf)
+         call cc_multipliers_diis%run(wf)
+         call cc_multipliers_diis%cleanup(wf)
+!
+         deallocate(cc_multipliers_diis)
+!
+      elseif (engine%algorithm == 'davidson') then
+
+         allocate(cc_multipliers_davidson)
+!
+         call cc_multipliers_davidson%prepare(wf)
+         call cc_multipliers_davidson%run(wf)
+         call cc_multipliers_davidson%cleanup(wf)
+!
+         deallocate(cc_multipliers_davidson)
+!
+      endif
 !
 !     Prepare for excited state
 !
@@ -126,7 +142,11 @@ contains
 !
          allocate(cc_es_solver_diis)
 !
-         call cc_es_solver_diis%prepare()
+         call cc_es_solver_diis%prepare('right')
+         call cc_es_solver_diis%run(wf)
+         call cc_es_solver_diis%cleanup()
+!
+         call cc_es_solver_diis%prepare('left')
          call cc_es_solver_diis%run(wf)
          call cc_es_solver_diis%cleanup()
 !

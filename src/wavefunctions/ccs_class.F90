@@ -4974,32 +4974,46 @@ contains
    end subroutine scale_left_excitation_vector_ccs
 !
 !
-   subroutine calculate_transition_strength_ccs(wf, S, etaX, csiX, L, R)
+   subroutine calculate_transition_strength_ccs(wf, S, etaX, csiX, state, T_l, T_r)
 !!
 !!    Calculate transition strength for spectra
 !!    Written by Josefine H. Andersen, February 2019
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), intent(inout) :: S
 !
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(in) :: etaX
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(in) :: csiX
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in) :: L, R
 !
-      real(dp) :: T_l = 0.0, T_r =0.0
+      real(dp), intent(out) :: T_l, T_r
+      integer, intent(in)   :: state
+!
+      real(dp), dimension(:,:), allocatable :: L_n, R_n
+!
       real(dp) :: ddot
+!
+      call mem%alloc(L_n, wf%n_es_amplitudes, 1)
+      call mem%alloc(R_n, wf%n_es_amplitudes, 1)
+!
+      call wf%read_excited_state(L_n, state, 'left')
+      call wf%read_excited_state(R_n, state, 'right')
+!
+      call wf%scale_left_excitation_vector(L_n, R_n)
 !
 !     Left and right transition moments
 !
-      T_r = ddot(wf%n_es_amplitudes, etaX, 1, R, 1)
-      T_l = ddot(wf%n_es_amplitudes, L, 1, csiX, 1)
+      T_r = ddot(wf%n_es_amplitudes, etaX, 1, R_n, 1)
+      T_l = ddot(wf%n_es_amplitudes, L_n, 1, csiX, 1)
 !
 !     Transition strength
 !
       S  = T_l * T_r
+!
+      call mem%dealloc(L_n, wf%n_es_amplitudes, 1)
+      call mem%dealloc(R_n, wf%n_es_amplitudes, 1)
 !
    end subroutine calculate_transition_strength_ccs
 !
