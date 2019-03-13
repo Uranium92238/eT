@@ -268,8 +268,23 @@ contains
       x_dx = zero 
 !
       call mem%alloc(x_dx_i, solver%n_parameters)
+      call mem%alloc(x_dx_j, solver%n_parameters)
+      call mem%alloc(dx_j, solver%n_equations)
 !
       rewind(solver%x_dx%unit)
+!
+      do i = 1, current_index - 1
+!
+!        Read the x_i + Δ x_i vector
+!
+         x_dx_i = zero
+         read(solver%x_dx%unit) (x_dx_i(j), j = 1, solver%n_parameters)
+!
+!        Add w_i (x_i + Δ x_i) to the amplitudes
+!
+         call daxpy(solver%n_parameters, diis_vector(i), x_dx_i, 1, x_dx, 1)
+!
+      enddo
 !
       do i = 1, current_index
 !
@@ -285,8 +300,11 @@ contains
       enddo
 !
       call mem%dealloc(x_dx_i, solver%n_parameters)
+      call mem%dealloc(x_dx_j, solver%n_parameters)
 !
       call mem%dealloc(dx_i, solver%n_equations)
+      call mem%dealloc(dx_j, solver%n_equations)
+!
       call mem%dealloc(diis_vector, current_index + 1)
       call mem%dealloc(diis_matrix, current_index + 1, current_index+1)
 !
