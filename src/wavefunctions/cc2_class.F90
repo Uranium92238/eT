@@ -83,11 +83,11 @@ module cc2_class
       procedure :: get_cvs_projector                           => get_cvs_projector_cc2
 !
       procedure :: initialize_files                            => initialize_files_cc2
+      procedure :: initialize_doubles_files                    => initialize_doubles_files_cc2
 !
       procedure :: save_doubles_vector                         => save_doubles_vector_cc2
       procedure :: read_doubles_vector                         => read_doubles_vector_cc2
 !
-      !procedure :: read_excited_state                          => read_excited_state_cc2
       procedure :: restart_excited_state                       => restart_excited_state_cc2
       procedure :: save_excited_state                          => save_excited_state_cc2
       procedure :: is_restart_safe                             => is_restart_safe_cc2
@@ -667,13 +667,7 @@ contains
 !
          if (wf%r2_file%file_exists()) then
 !
-            write(output%unit, *)'hallais'
-            flush(output%unit)
-!
             call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
-!
-            write(output%unit, *)'hai'
-            flush(output%unit)
 !
          else
 !
@@ -859,20 +853,26 @@ contains
 !!
       class(cc2) :: wf 
 !
-      call wf%t1_file%init('t1', 'sequential', 'unformatted')
-      call wf%t1bar_file%init('t1bar', 'sequential', 'unformatted')
-!
-      call wf%l1_file%init('l1', 'sequential', 'unformatted')
-      call wf%l2_file%init('l2', 'sequential', 'unformatted')
-!
-      call wf%r1_file%init('r1', 'sequential', 'unformatted')
-      call wf%r2_file%init('r2', 'sequential', 'unformatted')
-!
-      call wf%excitation_energies_file%init('excitation_energies', 'sequential', 'unformatted')
-!
-      call wf%restart_file%init('cc_restart_file', 'sequential', 'unformatted')
+      call wf%initialize_cc_files()
+      call wf%initialize_singles_files()
+      call wf%initialize_doubles_files()
 !
    end subroutine initialize_files_cc2
+!
+!
+   subroutine initialize_doubles_files_cc2(wf)
+!!
+!!    Initialize doubles files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      class(cc2) :: wf 
+!
+      call wf%l2_file%init('l2', 'sequential', 'unformatted')
+!
+      call wf%r2_file%init('r2', 'sequential', 'unformatted')
+!
+   end subroutine initialize_doubles_files_cc2
+!
 !
 !
 end module cc2_class

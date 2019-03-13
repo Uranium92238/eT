@@ -96,7 +96,6 @@ module ccs_class
       procedure :: read_singles_vector                         => read_singles_vector_ccs
 !
       procedure :: save_excited_state                          => save_excited_state_ccs
-      !procedure :: read_excited_state                          => read_excited_state_ccs
       procedure :: restart_excited_state                       => restart_excited_state_ccs
       procedure :: get_n_excited_states_on_file                => get_n_excited_states_on_file_ccs
 !
