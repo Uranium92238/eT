@@ -609,8 +609,6 @@ contains
 !
       if (trim(side) == 'right') then 
 !
-         write(output%unit, *)'shallais'
-!
          call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
          call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
 !
