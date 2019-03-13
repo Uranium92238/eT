@@ -344,7 +344,7 @@ contains
 !
       integer, optional :: i
 !
-      real(dp) :: ddot
+      !real(dp) :: ddot
 !
       if (output_type == 'header') then 
 !              

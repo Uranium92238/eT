@@ -5012,6 +5012,11 @@ contains
 !
       S  = T_l * T_r
 !
+! --- DEBUG F-transformation
+      call wf%F_transform_vector(R_n)
+      !write(output%unit,'(t6,a,f19.10)') 'F-transformed R vector norm = ', &
+      !ddot(wf%n_es_amplitudes, R_n, 1, R_n, 1)
+!
       call mem%dealloc(L_n, wf%n_es_amplitudes, 1)
       call mem%dealloc(R_n, wf%n_es_amplitudes, 1)
 !

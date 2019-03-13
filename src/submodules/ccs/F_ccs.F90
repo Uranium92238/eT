@@ -62,6 +62,15 @@ contains
 !
       call mem%dealloc(rho, wf%n_v, wf%n_o)
 !
+! ----- DEBUG
+      !write(output%unit,'(/t6,a)') '---- F-transformed ----'
+      !do i = 1, wf%n_es_amplitudes
+!
+      !   write(output%unit,'(t6, i16, f19.10)') i, c(i)
+!
+      !enddo
+
+!
    end subroutine F_transform_vector_ccs
 !
 !
@@ -161,7 +170,7 @@ contains
                   -one,       &
                   wf%t1bar,   & !tbar_aj
                   wf%n_v,     &
-                  X_ji,       &
+                  X_ij,       &
                   wf%n_o,     &
                   one,        &
                   rho_ai,     &

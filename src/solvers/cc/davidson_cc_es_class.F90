@@ -173,9 +173,9 @@ contains
 !
       write(output%unit,'(/t6,a20,e9.2)') 'Energy threshold:   ', solver%eigenvalue_threshold
       write(output%unit,'(t6,a20,e9.2)')  'Residual threshold: ', solver%residual_threshold
+      write(output%unit, '(t6,a21,a)')    'Transformation:      ', solver%transformation
       write(output%unit,'(/t6,a,i3,a)')   'Number of singlet states: ', solver%n_singlet_states
       write(output%unit, '(t6,a26,i3)')   'Max number of iterations: ', solver%max_iterations
-      write(output%unit, '(t6,a20,a)')   'Transformation: ', solver%transformation
       flush(output%unit)
 !
    end subroutine print_settings_davidson_cc_es
