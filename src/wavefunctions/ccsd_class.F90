@@ -45,6 +45,7 @@ module ccsd_class
       procedure :: prepare                                     => prepare_ccsd
 !
       procedure :: initialize_files                            => initialize_files_ccsd
+      procedure :: initialize_doubles_files                    => initialize_doubles_files_ccsd
 !
 !     Routines related to the amplitudes 
 !
@@ -663,21 +664,29 @@ contains
 !!
       class(ccsd) :: wf 
 !
-      call wf%t1_file%init('t1', 'sequential', 'unformatted')
-      call wf%t2_file%init('t2', 'sequential', 'unformatted')
-!
-      call wf%t1bar_file%init('t1bar', 'sequential', 'unformatted')
-      call wf%t2bar_file%init('t2bar', 'sequential', 'unformatted')
-!
-      call wf%l1_file%init('l1', 'sequential', 'unformatted')
-      call wf%l2_file%init('l2', 'sequential', 'unformatted')
-!
-      call wf%r1_file%init('r1', 'sequential', 'unformatted')
-      call wf%r2_file%init('r2', 'sequential', 'unformatted')
-!
-      call wf%restart_file%init('cc_restart_file', 'sequential', 'unformatted')
+      call wf%initialize_cc_files()
+      call wf%initialize_singles_files()
+      call wf%initialize_doubles_files()
 !
    end subroutine initialize_files_ccsd
+!
+!
+   subroutine initialize_doubles_files_ccsd(wf)
+!!
+!!    Initialize doubles files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      class(ccsd) :: wf 
+!
+      call wf%t2_file%init('t2', 'sequential', 'unformatted')
+!
+      call wf%t2bar_file%init('t2bar', 'sequential', 'unformatted')
+!
+      call wf%l2_file%init('l2', 'sequential', 'unformatted')
+!
+      call wf%r2_file%init('r2', 'sequential', 'unformatted')
+!
+   end subroutine initialize_doubles_files_ccsd
 !
 !
    subroutine construct_eta_ccsd(wf, eta)

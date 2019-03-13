@@ -74,6 +74,8 @@ module ccs_class
       procedure :: cleanup                                     => cleanup_ccs
 !
       procedure :: initialize_files                            => initialize_files_ccs
+      procedure :: initialize_cc_files                         => initialize_cc_files_ccs
+      procedure :: initialize_singles_files                    => initialize_singles_files_ccs
 !
 !     Routines related to the amplitudes & multipliers
 !
@@ -311,6 +313,19 @@ contains
 !!
       class(ccs) :: wf 
 !
+      call wf%initialize_singles_files()
+      call wf%initialize_cc_files()
+!
+   end subroutine initialize_files_ccs
+!
+!
+   subroutine initialize_singles_files_ccs(wf)
+!!
+!!    Initialize singles files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      class(ccs) :: wf 
+!
       call wf%t1_file%init('t1', 'sequential', 'unformatted')
       call wf%t1bar_file%init('t1bar', 'sequential', 'unformatted')
 !
@@ -319,9 +334,21 @@ contains
 !
       call wf%excitation_energies_file%init('excitation_energies', 'sequential', 'unformatted')
 !
+   end subroutine initialize_singles_files_ccs
+!
+!
+   subroutine initialize_cc_files_ccs(wf)
+!!
+!!    Initialize singles files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      class(ccs) :: wf 
+!
       call wf%restart_file%init('cc_restart_file', 'sequential', 'unformatted')
 !
-   end subroutine initialize_files_ccs
+      call wf%excitation_energies_file%init('excitation_energies', 'sequential', 'unformatted')
+!
+   end subroutine initialize_cc_files_ccs
 !
 !
    subroutine initialize_amplitudes_ccs(wf)

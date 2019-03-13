@@ -513,6 +513,7 @@ contains
      enddo
 !
    end subroutine get_cvs_projector_cc2
+
 !
 !
    subroutine save_excited_state_cc2(wf, X, n, side)
