@@ -93,7 +93,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: u_dkci, t_dkci
       real(dp), dimension(:,:,:,:), allocatable :: g_adkc
 !
-      integer :: rec0, rec1
+      integer :: req0, req1
 !
       type(timings) :: ccsd_a1_timer
 !
@@ -107,30 +107,24 @@ contains
 !
       call mem%alloc(u_dkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      u_dkci = zero
-      call daxpy(((wf%n_v)*(wf%n_o))**2, -one, t_dkci, 1, u_dkci, 1)
-!
+      u_dkci = -t_dkci
       call add_1432_to_1234(two, t_dkci, u_dkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(t_dkci,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Prepare for batching
+!     Batch over a to hold g_adkc
 !
-      rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
+      req0 = wf%n_o*wf%integrals%n_J*wf%n_v
 !
-      rec1 = wf%n_v*wf%integrals%n_J + wf%n_v**2*(wf%n_o)
+      req1 = wf%n_v*wf%integrals%n_J + wf%n_v**2*(wf%n_o)
 !
       call batch_a%init(wf%n_v)
 !
-      call mem%batch_setup(batch_a, rec0, rec1)
-!
-!     Loop over the number of a batches
+      call mem%batch_setup(batch_a, req0, req1)
 !
       do current_a_batch = 1, batch_a%num_batches
 !
          call batch_a%determine_limits(current_a_batch)
-!
-!        Form g_adkc = g_adkc
 !
          call mem%alloc(g_adkc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
 !
@@ -305,6 +299,137 @@ contains
    end subroutine omega_ccsd_c1_ccsd
 !
 !
+   module subroutine omega_ccsd_a2_ver2_ccsd(wf, omega2)
+!!
+!!    Omega A2 term version 2
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019
+!!      
+!!    A2 = g_aibj + sum_(cd) g_acbd * t_cidj = A2.1 + A.2.2
+!!
+!!    Structure: Batching over both a and b for A2.2.
+!!
+!!    This version of the routine sacrifices the 1/4 saving in the 
+!!    v^4 o^2 term. The benefit is hopefully more efficient parallelization.
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout) :: omega2
+!
+      real(dp), dimension(:,:,:,:), allocatable :: omega_abij_f, g_aibj, t_cdij, g_acbd, g_abcd, omega_aibj, omega_abij
+!
+      integer :: a, i, b, j
+      integer :: req0, req1_a, req1_b, req2
+      integer :: current_a_batch, current_b_batch
+!
+      type(batching_index) :: batch_a, batch_b
+!
+      type(timings) :: ccsd_a2_ver2_timer
+!
+      call ccsd_a2_ver2_timer%init('omega ccsd a2 ver2')
+      call ccsd_a2_ver2_timer%start()
+!
+      call mem%alloc(omega_abij_f, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call wf%get_vovo(g_aibj)
+!
+      call sort_1234_to_1324(g_aibj, omega_abij_f, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(t_cdij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call squareup_and_sort_1234_to_1324(wf%t2, t_cdij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call batch_a%init(wf%n_v)
+      call batch_b%init(wf%n_v)
+!
+      req0   = 0 
+      req1_a = wf%n_v*wf%integrals%n_J ! L_ac^J 
+      req1_b = wf%n_v*wf%integrals%n_J ! L_bd^J 
+      req2   = 2*wf%n_v**2 + &   ! 2*g_acbd 
+                  wf%n_o**2      ! omega_abij 
+!
+      call mem%batch_setup(batch_a, batch_b, req0, req1_a, req1_b, req2)
+!
+      do current_a_batch = 1, batch_a%num_batches
+!
+         call batch_a%determine_limits(current_a_batch)
+!
+         do current_b_batch = 1, batch_b%num_batches
+!
+            call batch_b%determine_limits(current_b_batch)
+!
+            call mem%alloc(g_acbd, batch_a%length, wf%n_v, batch_b%length, wf%n_v)
+!
+            call wf%get_vvvv(g_acbd,                        &
+                              batch_a%first, batch_a%last,  &
+                              1, wf%n_v,                    &
+                              batch_b%first, batch_b%last,  &
+                              1, wf%n_v)
+!
+            call mem%alloc(g_abcd, batch_a%length, batch_b%length, wf%n_v, wf%n_v)
+!
+            call sort_1234_to_1324(g_acbd, g_abcd, batch_a%length, wf%n_v, batch_b%length, wf%n_v)
+!
+            call mem%dealloc(g_acbd, batch_a%length, wf%n_v, batch_b%length, wf%n_v)
+!
+            call mem%alloc(omega_abij, batch_a%length, batch_b%length, wf%n_o, wf%n_o)
+!
+            call dgemm('N','N', &
+                        batch_a%length*batch_b%length, &
+                        wf%n_o**2, &
+                        wf%n_v**2, &
+                        one, &
+                        g_abcd, &
+                        batch_a%length*batch_b%length, &
+                        t_cdij, &
+                        wf%n_v**2, &
+                        zero, &
+                        omega_abij, &
+                        batch_a%length*batch_b%length)
+!
+            call mem%dealloc(g_abcd, batch_a%length, batch_b%length, wf%n_v, wf%n_v)
+!
+!$omp parallel do private(j, i, b, a)
+            do j = 1, wf%n_o
+               do i = 1, wf%n_o
+                  do b = 1, batch_b%length 
+                     do a = 1, batch_a%length 
+!
+                        omega_abij_f(a + batch_a%first - 1, b + batch_b%first - 1, i, j) = &
+                                    omega_abij_f(a + batch_a%first - 1, b + batch_b%first - 1, i, j) + &
+                                       omega_abij(a, b, i, j)
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do 
+!
+            call mem%dealloc(omega_abij, batch_a%length, batch_b%length, wf%n_o, wf%n_o)
+!
+         enddo
+!
+      enddo
+!
+      call mem%dealloc(t_cdij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)   
+!
+      call mem%alloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1324(omega_abij_f, omega_aibj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(omega_abij_f, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call add_to_packed(omega2, omega_aibj, wf%n_t1)
+      call mem%dealloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call ccsd_a2_ver2_timer%freeze()
+      call ccsd_a2_ver2_timer%switch_off()
+!
+   end subroutine omega_ccsd_a2_ver2_ccsd
+!
+!
    module subroutine omega_ccsd_a2_ccsd(wf, omega2)
 !!
 !!    Omega A2 term
@@ -349,15 +474,17 @@ contains
       integer :: a, b, c, d
       integer :: i, j
 !
-      integer :: ab, bc, cd, ad, ac, bd
+      integer :: ab, cd
       integer :: ai, aj, bj, bi, ci, cj, dj, di
       integer :: ij
 !
       integer :: aibj, biaj, cidj, dicj 
 !
+      real(dp) :: diag_factor
+!
 !     Batching and memory handling variables
 !
-      integer :: rec0, rec1_a, rec1_b, rec2
+      integer :: req0, req1_a, req1_b, rec2
 !
       integer :: current_a_batch
       integer :: current_b_batch    
@@ -395,10 +522,10 @@ contains
 !
 !    ::  Calculate the A2.2 term  of omega ::
 !
-      rec0 = 2*(n_v_packed)*(n_o_packed)
+      req0 = 2*(n_v_packed)*(n_o_packed)
 !
-      rec1_a = wf%integrals%n_J*wf%n_v 
-      rec1_b = wf%integrals%n_J*wf%n_v 
+      req1_a = wf%integrals%n_J*wf%n_v 
+      req1_b = wf%integrals%n_J*wf%n_v 
 !
       rec2 = 2*wf%n_v**2 + 2*(n_o_packed)
 !
@@ -407,7 +534,7 @@ contains
       call batch_a%init(wf%n_v)
       call batch_b%init(wf%n_v)
 !
-      call mem%batch_setup(batch_a, batch_b, rec0, rec1_a, rec1_b, rec2)
+      call mem%batch_setup(batch_a, batch_b, req0, req1_a, req1_b, rec2)
 !
 !     Start looping over a-batches
 !
@@ -416,7 +543,7 @@ contains
          call batch_a%determine_limits(current_a_batch)
          batch_a_packed = batch_a%length*(batch_a%length+1)/2
 !
-         do current_b_batch = 1, batch_b%num_batches
+         do current_b_batch = 1, current_a_batch
 !
             call batch_b%determine_limits(current_b_batch)
 !
@@ -452,48 +579,49 @@ contains
 !
 !              Reorder g_ca_db to g_abcd and t_cidj to t_cdij
 !
-!$omp parallel do schedule(static) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
+!$omp parallel do private(a,b,c,d,ab,cd,diag_factor)
                do c = 1, wf%n_v
                   do d = 1, c
 !
-                     cd = (max(c,d)*(max(c,d)-3)/2) + c + d
+                     cd = (c*(c-3)/2) + c + d
 !
-                     do a = 1, batch_a%length
+                     if (c .ne. d) then
+                        diag_factor = two
+                     else
+                        diag_factor = one
+                     endif
 !
-                        ac = batch_a%length*(c - 1) + a
-                        ad = batch_a%length*(d - 1) + a 
+                     do  b = 1, batch_b%length
+                        do a = 1, b
 !
-                        do  b = 1, batch_b%length
-                           if ((a+batch_a%first-1) .ge. (b+batch_b%first-1)) then
+                           ab = (b*(b-3)/2) + a + b
 !
-                              bd = batch_b%length*(d - 1) + b 
-                              bc = batch_b%length*(c - 1) + b
+                           g_p_abcd(ab, cd) = diag_factor*(g_acbd(a, c, b, d) + g_acbd(a, d, b, c))
+                           g_m_abcd(ab, cd) = diag_factor*(g_acbd(a, d, b, c) - g_acbd(a, c, b, d)) !a and b and c and d switched
 !
-                              ab = (max(a,b)*(max(a,b)-3)/2) + a + b
-!
-                              g_p_abcd(ab, cd) = g_acbd(a, c, b, d) + g_acbd(a, d, b, c)
-                              g_m_abcd(ab, cd) = g_acbd(a, c, b, d) - g_acbd(a, d, b, c)
-!
-                             if(c .ne. d) then
-                               g_p_abcd(ab, cd) = two*g_p_abcd(ab, cd)
-                               g_m_abcd(ab, cd) = two*g_m_abcd(ab, cd)
-                             endif
-!
-                           endif
                         enddo
                      enddo
+                  enddo
+               enddo
+!$omp end parallel do
 !
-                    do i = 1, wf%n_o
-                       do j = 1, i
+!$omp parallel do private(i,j,c,d,ij,cd,ci,cj,di,dj,cidj,dicj)
+              do i = 1, wf%n_o
+                 do j = 1, i
 !
-                          ij = (max(i,j)*(max(i,j)-3)/2) + i + j 
+                     ij = (i*(i-3)/2) + i + j 
+!
+                     do c = 1, wf%n_v
+                        do d = 1, c
+!
+                           cd = (c*(c-3)/2) + c + d
 !
                            ci = (i-1)*wf%n_v + c
                            dj = (j-1)*wf%n_v + d
                            cj = (j-1)*wf%n_v + c
                            di = (i-1)*wf%n_v + d
 !
-                           cidj = (max(ci,dj)*(max(ci,dj)-3)/2) + ci + dj
+                           cidj = (ci*(ci-3)/2) + ci + dj
                            dicj = (max(cj,di)*(max(cj,di)-3)/2) + cj + di 
 !
                            t_p_cdij(cd, ij) = wf%t2(cidj) + wf%t2(dicj)
@@ -553,36 +681,34 @@ contains
                do i = 1, wf%n_o
                   do j = 1, i
 !
-                     ij = (max(i,j)*(max(i,j)-3)/2) + i + j
+                     ij = (i*(i-3)/2) + i + j
 !
                      do a = 1, batch_a%length
 !
                         ai = (i-1)*wf%n_v + (a + batch_a%first - 1)
                         aj = (j-1)*wf%n_v + (a + batch_a%first - 1)
 !
-                        do b = 1, batch_b%length
+                        do b = 1, a
 !
-                           if ((a+batch_a%first-1) .ge. (b+batch_b%first-1)) then
 !
-                              bi = (i-1)*wf%n_v + (b + batch_b%first - 1)
-                              bj = (j-1)*wf%n_v + (b + batch_b%first - 1)
+                           bi = (i-1)*wf%n_v + (b + batch_b%first - 1)
+                           bj = (j-1)*wf%n_v + (b + batch_b%first - 1)
 !
-                              ab = (max(a,b)*(max(a,b)-3)/2) + a + b 
+                           ab = (a*(a-3)/2) + a + b 
 !
-                              aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
+                           aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
+!
+!                          Reorder into omega2_aibj
+!
+                           omega2(aibj) = omega2(aibj) &
+                                                + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
+!
+                           if (a .ne. b .and. i .ne. j) then
+!
                               biaj = (max(bi,aj)*(max(bi,aj)-3)/2) + bi + aj 
+                              omega2(biaj) = omega2(biaj) &
+                                           + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
 !
-!                             Reorder into omega2_aibj
-!
-                              omega2(aibj) = omega2(aibj) &
-                                                   + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
-!
-                              if (aibj .ne. biaj) then
-!
-                                 omega2(biaj) = omega2(biaj) &
-                                              + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
-!
-                              endif
                            endif
 !
                         enddo
@@ -610,41 +736,42 @@ contains
                t_p_cdij = zero
                t_m_cdij = zero
 !
-!$omp parallel do schedule(static) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
+!$omp parallel do private(a,b,c,d,ab,cd,diag_factor)
                do c = 1, wf%n_v
                   do d = 1, c
 !
-                     cd = (max(c,d)*(max(c,d)-3)/2) + c + d
+                     cd = (c*(c-3)/2) + c + d
 !
-                     do a = 1, batch_a%length
+                     if (c .ne. d) then
+                        diag_factor = two
+                     else
+                        diag_factor = one
+                     endif
 !
-                        ac =  batch_a%length*(c - 1) + a
-                        ad =  batch_a%length*(d - 1) + a
-!
-                        do  b = 1, batch_b%length
-!
-                           bd = batch_b%length*(d - 1) + b
-                           bc = batch_b%length*(c - 1) + b
+                     do  b = 1, batch_b%length
+                        do a = 1, batch_a%length
 !
                            ab = (b-1)*batch_a%length + a
 !
-                           g_p_abcd(ab, cd) = g_acbd(a, c, b, d) + g_acbd(a, d, b, c)
-                           g_m_abcd(ab, cd) = g_acbd(a, c, b, d) - g_acbd(a, d, b, c)
-!
-                           if(c .ne. d) then
-!
-                              g_p_abcd(ab, cd) = two*g_p_abcd(ab, cd)
-                              g_m_abcd(ab, cd) = two*g_m_abcd(ab, cd)
-!
-                           endif
+                           g_p_abcd(ab, cd) = diag_factor*(g_acbd(a, c, b, d) + g_acbd(a, d, b, c))
+                           g_m_abcd(ab, cd) = diag_factor*(g_acbd(a, c, b, d) - g_acbd(a, d, b, c))
 !
                         enddo
                      enddo
+                  enddo
+               enddo
+!$omp end parallel do
 !
-                     do i = 1, wf%n_o
-                        do j = 1, i
+!$omp parallel do schedule(static) private(c,d,i,j,cd,ij,ci,cj,di,dj,cidj,dicj)
+               do i = 1, wf%n_o
+                  do j = 1, i
 !
-                           ij = (max(i,j)*(max(i,j)-3)/2) + i + j 
+                     ij = (i*(i-3)/2) + i + j 
+!
+                     do c = 1, wf%n_v
+                        do d = 1, c
+!
+                           cd = (c*(c-3)/2) + c + d
 !
                            ci = (i-1)*wf%n_v + c
                            dj = (j-1)*wf%n_v + d
@@ -657,10 +784,10 @@ contains
                            t_p_cdij(cd, ij) = wf%t2(cidj) + wf%t2(dicj)
                            t_m_cdij(cd, ij) = wf%t2(cidj) - wf%t2(dicj)
 !
-                       enddo
-                    enddo
-                 enddo
-              enddo
+                        enddo
+                     enddo
+                  enddo
+               enddo
 !$omp end parallel do
 !
 !              Dellocate g_acbd
@@ -672,33 +799,33 @@ contains
                call mem%alloc(omega2_p_abij, (batch_a%length)*(batch_b%length), n_o_packed)
                call mem%alloc(omega2_m_abij, (batch_a%length)*(batch_b%length), n_o_packed)
 !
-!               omega2_ab_ij = sum_(cd) g_abcd*t_cdij
+!              omega2_ab_ij = sum_(cd) g_abcd*t_cdij
 !
-              call dgemm('N','N',                            &
-                          (batch_a%length)*(batch_b%length), &
-                          n_o_packed,                        &
-                          n_v_packed,                        &
-                          one/four,                          &
-                          g_p_abcd,                          &
-                          (batch_a%length)*(batch_b%length), &
-                          t_p_cdij,                          &
-                          n_v_packed,                        &
-                          zero,                              &
-                          omega2_p_abij,                     &
-                          (batch_a%length)*(batch_b%length))
+               call dgemm('N','N',                            &
+                           (batch_a%length)*(batch_b%length), &
+                           n_o_packed,                        &
+                           n_v_packed,                        &
+                           one/four,                          &
+                           g_p_abcd,                          &
+                           (batch_a%length)*(batch_b%length), &
+                           t_p_cdij,                          &
+                           n_v_packed,                        &
+                           zero,                              &
+                           omega2_p_abij,                     &
+                           (batch_a%length)*(batch_b%length))
 !
-              call dgemm('N','N',                            &
-                          (batch_a%length)*(batch_b%length), &
-                          n_o_packed,                        &
-                          n_v_packed,                        &
-                          one/four,                          &
-                          g_m_abcd,                          &
-                          (batch_a%length)*(batch_b%length), &
-                          t_m_cdij,                          &
-                          n_v_packed,                        &
-                          zero,                              &
-                          omega2_m_abij,                     &
-                          (batch_a%length)*(batch_b%length))
+               call dgemm('N','N',                            &
+                           (batch_a%length)*(batch_b%length), &
+                           n_o_packed,                        &
+                           n_v_packed,                        &
+                           one/four,                          &
+                           g_m_abcd,                          &
+                           (batch_a%length)*(batch_b%length), &
+                           t_m_cdij,                          &
+                           n_v_packed,                        &
+                           zero,                              &
+                           omega2_m_abij,                     &
+                           (batch_a%length)*(batch_b%length))
 !
 !              Deallocate +-g, +-t
 !
@@ -711,7 +838,7 @@ contains
                do i = 1, wf%n_o
                   do j = 1, i
 !
-                     ij = (max(i,j)*(max(i,j)-3)/2) + i + j
+                     ij = (i*(i-3)/2) + i + j
 !
                      do a = 1, batch_a%length
 !
@@ -720,27 +847,23 @@ contains
 !
                         do b = 1, batch_b%length
 !
-                           if (a + batch_a%first - 1 .ge. b + batch_b%first - 1) then
+                           bj = wf%n_v*(j - 1) + b + batch_b%first - 1 ! B is full-space b index
+                           bi = wf%n_v*(i - 1) + b + batch_b%first - 1 ! B is full-space b index
 !
-                              bj = wf%n_v*(j - 1) + b + batch_b%first - 1 ! B is full-space b index
-                              bi = wf%n_v*(i - 1) + b + batch_b%first - 1 ! B is full-space b index
+                           ab = batch_a%length*(b - 1) + a
 !
-                              ab = batch_a%length*(b - 1) + a
+                           aibj = max(ai, bj)*(max(ai, bj)-3)/2 + ai + bj
 !
-                              aibj = max(ai, bj)*(max(ai, bj)-3)/2 + ai + bj
+!                          Reorder into omega2_aibj
+!
+                           omega2(aibj) = omega2(aibj) &
+                                        + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
+!
+                           if (i .ne. j) then
+!
                               biaj = max(bi, aj)*(max(bi, aj)-3)/2 + bi + aj
-!
-!                             Reorder into omega2_aibj
-!
-                              omega2(aibj) = omega2(aibj) &
-                                          + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
-!
-                              if (aibj .ne. biaj) then
-!
-                                 omega2(biaj) = omega2(biaj) &
-                                          + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
-!
-                              endif
+                              omega2(biaj) = omega2(biaj) &
+                                           + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
 !
                            endif
 !
@@ -940,7 +1063,7 @@ contains
 !
 !     Batching and memory handling
 !
-      integer :: rec0, rec1
+      integer :: req0, req1
       integer :: current_a_batch = 0
 !
       type(batching_index) :: batch_a
@@ -956,7 +1079,7 @@ contains
 !
       call squareup_and_sort_1234_to_1432(wf%t2, t_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Allocate and construct g_kdlc
+!     Get g_kdlc
 !
       call mem%alloc(g_kdlc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
@@ -1015,13 +1138,13 @@ contains
 !
 !     Prepare for batching
 !
-      rec0 = wf%n_o**2*wf%integrals%n_J
+      req0 = wf%n_o**2*wf%integrals%n_J
 !
-      rec1 = wf%n_v*wf%integrals%n_J + (wf%n_o)*(wf%n_v**2)
+      req1 = wf%n_v*wf%integrals%n_J + (wf%n_o)*(wf%n_v**2)
 !
       call batch_a%init(wf%n_v)
 !
-      call mem%batch_setup(batch_a, rec0, rec1)
+      call mem%batch_setup(batch_a, req0, req1)
 !
 !     Loop over the number of a batches
 !
@@ -1047,7 +1170,7 @@ contains
                do i = 1, wf%n_o
                   do a = 1, batch_a%length
 !
-                     X_aick(a, i, c, k) = X_aick(a, i, c, k) + g_kiac(k, i, a, c)
+                     X_aick(a+batch_a%first-1, i, c, k) = X_aick(a+batch_a%first-1, i, c, k) + g_kiac(k, i, a, c)
 !
                   enddo
                enddo

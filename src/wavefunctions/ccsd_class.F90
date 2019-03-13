@@ -49,6 +49,7 @@ module ccsd_class
       procedure :: omega_ccsd_c1                               => omega_ccsd_c1_ccsd
 !
       procedure :: omega_ccsd_a2                               => omega_ccsd_a2_ccsd
+      procedure :: omega_ccsd_a2_ver2                          => omega_ccsd_a2_ver2_ccsd
       procedure :: omega_ccsd_b2                               => omega_ccsd_b2_ccsd
       procedure :: omega_ccsd_c2                               => omega_ccsd_c2_ccsd
       procedure :: omega_ccsd_d2                               => omega_ccsd_d2_ccsd
@@ -118,6 +119,8 @@ module ccsd_class
       procedure :: save_t2bar                                  => save_t2bar_ccsd
 !
       procedure :: get_cvs_projector                           => get_cvs_projector_ccsd
+!
+      procedure, nopass :: need_g_abcd                         => need_g_abcd_ccsd
 !
    end type ccsd
 !
@@ -202,6 +205,23 @@ contains
       write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
 !
    end subroutine cleanup_ccsd
+!
+!
+   logical function need_g_abcd_ccsd()
+!!
+!!    Need g_abcd 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Returns whether the vvvv-part of the ERI matrix 
+!!    is used to calculate the ground and/or excited state 
+!!    equations. If not, there is no need to compute the
+!!    entire ERI matrix and store it in memory.
+!!
+      implicit none 
+!
+      need_g_abcd_ccsd = .true.
+!
+   end function need_g_abcd_ccsd
 !
 !
    subroutine initialize_amplitudes_ccsd(wf)

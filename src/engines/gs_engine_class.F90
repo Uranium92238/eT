@@ -71,6 +71,7 @@ contains
 !
       if (trim(wf%name_) == 'MP2') then 
 !
+         call wf%integrals%write_t1_cholesky(wf%t1)
          call wf%calculate_energy()
          call wf%print_wavefunction_summary()
 !

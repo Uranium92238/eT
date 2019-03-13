@@ -90,7 +90,8 @@ contains
 !
       integer :: s 
 !
-      integer(i6) :: n_s, i, j
+      integer :: n_s, i, j
+      integer(i6) :: k
 !
       integer(i6), dimension(:), allocatable :: n_shells_on_atoms
       integer(i6), dimension(:), allocatable :: n_basis_in_shells
@@ -134,28 +135,28 @@ contains
 !
       call get_n_shells_on_atoms_c(n_shells_on_atoms)
 !
-      do i = 1, molecule%n_atoms ! Loop over atoms
+      do k = 1, int(molecule%n_atoms,4) ! Loop over atoms
 !
-         call molecule%atoms(i)%set_number()
+         call molecule%atoms(k)%set_number()
 !
 !        Allocate and initialize the corresponding shells
 !
-         molecule%atoms(i)%n_shells = n_shells_on_atoms(i)
-         call molecule%atoms(i)%initialize_shells()
+         molecule%atoms(k)%n_shells = n_shells_on_atoms(k)
+         call molecule%atoms(k)%initialize_shells()
 !
 !        Then determine the number of basis functions in each shell
 !        and save number of AOs per atom
 !
-         allocate(n_basis_in_shells(n_shells_on_atoms(i)))
-         call get_n_basis_in_shells_c(i, n_basis_in_shells)
+         allocate(n_basis_in_shells(n_shells_on_atoms(k)))
+         call get_n_basis_in_shells_c(k, n_basis_in_shells)
 !
-         molecule%atoms(i)%n_ao = 0
+         molecule%atoms(k)%n_ao = 0
 !
-         do j = 1, n_shells_on_atoms(i)
+         do j = 1, n_shells_on_atoms(k)
 
-            molecule%atoms(i)%shells(j)%size = n_basis_in_shells(j)
+            molecule%atoms(k)%shells(j)%size = n_basis_in_shells(j)
 !
-            molecule%atoms(i)%n_ao = molecule%atoms(i)%n_ao + n_basis_in_shells(j)
+            molecule%atoms(k)%n_ao = molecule%atoms(k)%n_ao + n_basis_in_shells(j)
 
          enddo
 !
@@ -163,12 +164,12 @@ contains
 !
 !        Get shell numbers
 !
-         allocate(shell_numbers(n_shells_on_atoms(i)))
-         call get_shell_numbers_c(i, shell_numbers)
+         allocate(shell_numbers(n_shells_on_atoms(k)))
+         call get_shell_numbers_c(k, shell_numbers)
 !
-         do j = 1, n_shells_on_atoms(i)
+         do j = 1, n_shells_on_atoms(k)
 !
-            molecule%atoms(i)%shells(j)%number_ = shell_numbers(j)
+            molecule%atoms(k)%shells(j)%number_ = shell_numbers(j)
 !
          enddo
 !
@@ -176,12 +177,12 @@ contains
 !
 !        And the first AO index in each shell
 !
-         allocate(first_ao_in_shells(n_shells_on_atoms(i)))
-         call get_first_ao_in_shells_c(i, first_ao_in_shells)
+         allocate(first_ao_in_shells(n_shells_on_atoms(k)))
+         call get_first_ao_in_shells_c(k, first_ao_in_shells)
 !
-         do j = 1, n_shells_on_atoms(i)
+         do j = 1, n_shells_on_atoms(k)
 
-            molecule%atoms(i)%shells(j)%first = first_ao_in_shells(j)
+            molecule%atoms(k)%shells(j)%first = first_ao_in_shells(j)
 !
          enddo
 !
@@ -189,10 +190,10 @@ contains
 !
 !        Then determine the angular momentum of shells & the last AO index
 !
-         do j = 1, n_shells_on_atoms(i)
+         do j = 1, n_shells_on_atoms(k)
 !
-            call molecule%atoms(i)%shells(j)%determine_angular_momentum()
-            call molecule%atoms(i)%shells(j)%determine_last_ao_index()
+            call molecule%atoms(k)%shells(j)%determine_angular_momentum()
+            call molecule%atoms(k)%shells(j)%determine_last_ao_index()
 !
          enddo
 !
