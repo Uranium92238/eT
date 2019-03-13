@@ -82,6 +82,10 @@ program eT_program
    character(len=40) :: cc_engine  
    character(len=40), dimension(:), allocatable :: cc_methods
 !
+!  Timer object
+!
+   type(timings) :: eT_timer
+!
 !  Prepare input, output and timing file
 !
    call output%init('eT.out', 'sequential', 'formatted')
@@ -92,6 +96,9 @@ program eT_program
 !
    call timing%init('timing.out', 'sequential', 'formatted')
    call disk%open_file(timing, 'write', 'rewind')
+!
+   call eT_timer%init("Total time in eT")
+   call eT_timer%start()
 !
 !  Print program banner
 !
@@ -335,6 +342,9 @@ program eT_program
    endif
 !
    call finalize_libint()
+!
+   call eT_timer%freeze()
+   call eT_timer%switch_off()
 !
    write(output%unit, '(/t3,a)') 'eT terminated successfully!'
 !
