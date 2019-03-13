@@ -287,6 +287,7 @@ contains
       call mem%dealloc(x_dx_i, solver%n_parameters)
 !
       call mem%dealloc(dx_i, solver%n_equations)
+!
       call mem%dealloc(diis_vector, current_index + 1)
       call mem%dealloc(diis_matrix, current_index + 1, current_index+1)
 !
