@@ -92,8 +92,11 @@ module ccs_class
       procedure :: print_dominant_x1                           => print_dominant_x1_ccs
       procedure :: get_t1_diagnostic                           => get_t1_diagnostic_ccs
 !
+      procedure :: save_singles_vector                         => save_singles_vector_ccs
+      procedure :: read_singles_vector                         => read_singles_vector_ccs
+!
       procedure :: save_excited_state                          => save_excited_state_ccs
-      procedure :: read_excited_state                          => read_excited_state_ccs
+      !procedure :: read_excited_state                          => read_excited_state_ccs
       procedure :: restart_excited_state                       => restart_excited_state_ccs
       procedure :: get_n_excited_states_on_file                => get_n_excited_states_on_file_ccs
 !
@@ -542,6 +545,69 @@ contains
    end subroutine is_restart_safe_ccs
 !
 !
+   subroutine save_singles_vector_ccs(wf, X, n, file_)
+!!
+!!    Save singles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
+!!
+!!    Writes singles vector "X" to the sequential
+!!    and unformatted file "file_".
+!!    
+!!    NB! If n = 1, then the routine WILL REWIND the file before writing,
+!!    thus DELETING every record in the file. For n >=2, we just append to
+!!    the file. The purpose of this setup is that the files should be saved in 
+!!    the correct order, from n = 1 to n = # states.
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_t1), intent(in) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      type(file) :: file_
+!
+      call disk%open_file(file_, 'write', 'append')
+!
+      if (n .eq. 1) rewind(file_%unit)
+!
+      write(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine save_singles_vector_ccs
+!
+!
+   subroutine read_singles_vector_ccs(wf, X, n, file_)
+!!
+!!    Read singles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
+!!
+!!    Reads singles vector "X" from the "n"'th line
+!!    of the sequential and unformatted file "file_".
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_t1), intent(out) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      type(file) :: file_
+!
+      call disk%open_file(file_, 'read')
+!
+      call file_%prepare_to_read_line(n)
+!
+      read(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine read_singles_vector_ccs
+!
+!
    subroutine save_excited_state_ccs(wf, X, n, side)
 !!
 !!    Save excited state 
@@ -571,23 +637,11 @@ contains
 !
       if (trim(side) == 'right') then 
 !
-         call disk%open_file(wf%r1_file, 'write', 'append')
-!
-         if (n .eq. 1) rewind(wf%r1_file%unit)
-!
-         write(wf%r1_file%unit) X 
-!
-         call disk%close_file(wf%r1_file)
+         call wf%save_singles_vector(X, n, wf%r1_file)
 !
       elseif (trim(side) == 'left') then 
 !
-         call disk%open_file(wf%l1_file, 'write', 'append')
-!
-         if (n .eq. 1) rewind(wf%l1_file%unit)
-!
-         write(wf%l1_file%unit) X 
-!
-         call disk%close_file(wf%l1_file)
+         call wf%save_singles_vector(X, n, wf%l1_file)
 !
       else
 !
@@ -598,9 +652,9 @@ contains
    end subroutine save_excited_state_ccs
 !
 !
-   subroutine read_excited_state_ccs(wf, X, n, side)
+   subroutine restart_excited_state_ccs(wf, X, n, side)
 !!
-!!    Read excited state 
+!!    Restart excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019 
 !!
 !!    Reads an excited state to disk. Since this routine is used by 
@@ -627,49 +681,17 @@ contains
 !
       if (trim(side) == 'right') then 
 !
-         call disk%open_file(wf%r1_file, 'read')
-         call wf%r1_file%prepare_to_read_line(n)
-!
-         read(wf%r1_file%unit) X 
-!
-         call disk%close_file(wf%r1_file)
+         call wf%read_singles_vector(X, n, wf%r1_file)
 !
       elseif (trim(side) == 'left') then 
 !
-         call disk%open_file(wf%l1_file, 'read')
-         call wf%l1_file%prepare_to_read_line(n)
-!
-         read(wf%l1_file%unit) X 
-!
-         call disk%close_file(wf%l1_file)
+         call wf%read_singles_vector(X, n, wf%l1_file)
 !
       else
 !
          call output%error_msg('Tried to read an excited state, but argument side not recognized: ' // side)
 !
       endif
-!
-   end subroutine read_excited_state_ccs
-!
-!
-   subroutine restart_excited_state_ccs(wf, X, n, side)
-!!
-!!    Restart excited state 
-!!    Written by Sarai D. Fokestad, Mar 2019 
-!!
-!!    Wrapper for setting trial vectors to excited states on file
-!!
-      implicit none 
-!
-      class(ccs), intent(inout) :: wf 
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
-!
-      call wf%read_excited_state(X, n, side)
 !
    end subroutine restart_excited_state_ccs
 !
@@ -797,6 +819,7 @@ contains
       endif
 !
    end subroutine get_n_excited_states_on_file_ccs
+!
 !
    subroutine destruct_multipliers_ccs(wf)
 !!

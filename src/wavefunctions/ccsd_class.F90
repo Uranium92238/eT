@@ -61,7 +61,12 @@ module ccsd_class
       procedure :: print_dominant_x2                           => print_dominant_x2_ccsd
       procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccsd
       procedure :: print_dominant_x_amplitudes                 => print_dominant_x_amplitudes_ccsd
-      procedure :: read_excited_state                          => read_excited_state_ccsd 
+!
+      procedure :: save_doubles_vector                         => save_doubles_vector_ccsd
+      procedure :: read_doubles_vector                         => read_doubles_vector_ccsd
+!
+      procedure :: restart_excited_state                       => restart_excited_state_ccsd
+!
       procedure :: save_excited_state                          => save_excited_state_ccsd 
 !
 !     Routines related to omega
@@ -520,6 +525,69 @@ contains
    end subroutine save_amplitudes_ccsd
 !
 !
+   subroutine save_doubles_vector_ccsd(wf, X, n, file_)
+!!
+!!    Save doubles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
+!!
+!!    Writes doubles vector "X" to the sequential
+!!    and unformatted file "file_".
+!!    
+!!    NB! If n = 1, then the routine WILL REWIND the file before writing,
+!!    thus DELETING every record in the file. For n >=2, we just append to
+!!    the file. The purpose of this setup is that the files should be saved in 
+!!    the correct order, from n = 1 to n = # states.
+!!
+      implicit none 
+!
+      class(ccsd), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_t2), intent(in) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      type(file) :: file_
+!
+      call disk%open_file(file_, 'write', 'append')
+!
+      if (n .eq. 1) rewind(file_%unit)
+!
+      write(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine save_doubles_vector_ccsd
+!
+!
+   subroutine read_doubles_vector_ccsd(wf, X, n, file_)
+!!
+!!    Read doubles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
+!!
+!!    Reads doubles vector "X" from the "n"'th line
+!!    of the sequential and unformatted file "file_".
+!!
+      implicit none 
+!
+      class(ccsd), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_t2), intent(out) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      type(file) :: file_
+!
+      call disk%open_file(file_, 'read')
+!
+      call file_%prepare_to_read_line(n)
+!
+      read(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine read_doubles_vector_ccsd
+!
+!
    subroutine save_excited_state_ccsd(wf, X, n, side)
 !!
 !!    Save excited state 
@@ -548,39 +616,13 @@ contains
 !
       if (trim(side) == 'right') then 
 !
-         call disk%open_file(wf%r1_file, 'write', 'append')
-         call disk%open_file(wf%r2_file, 'write', 'append')
-!
-         if (n .eq. 1) then 
-!
-            rewind(wf%r1_file%unit)
-            rewind(wf%r2_file%unit)
-!
-         endif 
-!
-         write(wf%r1_file%unit) X(1 : wf%n_t1)
-         write(wf%r2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
-!
-         call disk%close_file(wf%r1_file)
-         call disk%close_file(wf%r2_file)
+         call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
+         call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
 !
       elseif (trim(side) == 'left') then 
 !
-         call disk%open_file(wf%l1_file, 'write', 'append')
-         call disk%open_file(wf%l2_file, 'write', 'append')
-!
-         if (n .eq. 1) then 
-!
-            rewind(wf%l1_file%unit)
-            rewind(wf%l2_file%unit)
-!
-         endif 
-!
-         write(wf%l1_file%unit) X(1 : wf%n_t1)
-         write(wf%l2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
-!
-         call disk%close_file(wf%l1_file)
-         call disk%close_file(wf%l2_file)
+         call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
+         call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
 !
       else
 !
@@ -591,20 +633,12 @@ contains
    end subroutine save_excited_state_ccsd
 !
 !
-   subroutine read_excited_state_ccsd(wf, X, n, side)
+   subroutine restart_excited_state_ccsd(wf, X, n, side)
 !!
-!!    Read excited state 
-!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!    Restart excited state 
+!!    Written by Sarai D. Fokestad, Mar 2019 
 !!
-!!    Reads an excited state to disk. Since this routine is used by 
-!!    solvers, it returns the vector in the full space. Thus, we open 
-!!    files for singles, doubles, etc., paste them together, and return 
-!!    the result in X.
-!!
-!!    NB! This will place the cursor of the file at position n + 1.
-!!    Be cautious when using this in combination with writing to the files.
-!!    We recommend to separate these tasks---write all states or read all
-!!    states; don't mix if you can avoid it.
+!!    Wrapper for setting trial vectors to excited states on file
 !!
       implicit none 
 !
@@ -618,41 +652,95 @@ contains
 !
       call wf%is_restart_safe('excited state')
 !
+!     Check if we have read doubles vectors.
+!     If not, set up doubles.
+!
       if (trim(side) == 'right') then 
 !
-         call disk%open_file(wf%r1_file, 'read')
-         call disk%open_file(wf%r2_file, 'read')
+!        Read singles vector
 !
-         call wf%r1_file%prepare_to_read_line(n)
-         call wf%r2_file%prepare_to_read_line(n)
+         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
 !
-         read(wf%r1_file%unit) X(1 : wf%n_t1)
-         read(wf%r2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
+!        Read doubles vector
 !
-         call disk%close_file(wf%r1_file)
-         call disk%close_file(wf%r2_file)
+         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
 !
-      elseif (trim(side) == 'left') then 
+      elseif (trim(side) == 'left') then
 !
-         call disk%open_file(wf%l1_file, 'read')
-         call disk%open_file(wf%l2_file, 'read')
+!        Read singles vector
 !
-         call wf%l1_file%prepare_to_read_line(n)
-         call wf%l2_file%prepare_to_read_line(n)
+         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
 !
-         read(wf%l1_file%unit) X(1 : wf%n_t1)
-         read(wf%l2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes) 
+!        Read doubles vector
 !
-         call disk%close_file(wf%l1_file)
-         call disk%close_file(wf%l2_file)
-!
-      else
-!
-         call output%error_msg('Tried to read an excited state, but argument side not recognized: ' // side)
+         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
 !
       endif
 !
-   end subroutine read_excited_state_ccsd
+   end subroutine restart_excited_state_ccsd
+!
+!   subroutine read_excited_state_ccsd(wf, X, n, side)
+!!!
+!!!    Read excited state 
+!!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!!
+!!!    Reads an excited state to disk. Since this routine is used by 
+!!!    solvers, it returns the vector in the full space. Thus, we open 
+!!!    files for singles, doubles, etc., paste them together, and return 
+!!!    the result in X.
+!!!
+!!!    NB! This will place the cursor of the file at position n + 1.
+!!!    Be cautious when using this in combination with writing to the files.
+!!!    We recommend to separate these tasks---write all states or read all
+!!!    states; don't mix if you can avoid it.
+!!!
+!      implicit none 
+!!
+!      class(ccsd), intent(inout) :: wf 
+!!
+!      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
+!!
+!      integer, intent(in) :: n ! state number 
+!!
+!      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!!
+!      call wf%is_restart_safe('excited state')
+!!
+!      if (trim(side) == 'right') then 
+!!
+!         call disk%open_file(wf%r1_file, 'read')
+!         call disk%open_file(wf%r2_file, 'read')
+!!
+!         call wf%r1_file%prepare_to_read_line(n)
+!         call wf%r2_file%prepare_to_read_line(n)
+!!
+!         read(wf%r1_file%unit) X(1 : wf%n_t1)
+!         read(wf%r2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
+!!
+!         call disk%close_file(wf%r1_file)
+!         call disk%close_file(wf%r2_file)
+!!
+!      elseif (trim(side) == 'left') then 
+!!
+!         call disk%open_file(wf%l1_file, 'read')
+!         call disk%open_file(wf%l2_file, 'read')
+!!
+!         call wf%l1_file%prepare_to_read_line(n)
+!         call wf%l2_file%prepare_to_read_line(n)
+!!
+!         read(wf%l1_file%unit) X(1 : wf%n_t1)
+!         read(wf%l2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes) 
+!!
+!         call disk%close_file(wf%l1_file)
+!         call disk%close_file(wf%l2_file)
+!!
+!      else
+!!
+!         call output%error_msg('Tried to read an excited state, but argument side not recognized: ' // side)
+!!
+!      endif
+!!
+!   end subroutine read_excited_state_ccsd
 !
 !
    subroutine initialize_files_ccsd(wf)
