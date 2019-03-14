@@ -20,7 +20,8 @@ module eri_cd_solver_class
 !
    use batching_index_class
    use molecular_system_class
-
+!
+   use timings_class
 !
    implicit none
 !
@@ -4018,12 +4019,13 @@ contains
       logical, dimension(:), allocatable :: construct_sp
 !
       integer :: n_construct_sp, n_construct_aop, size_AB, A, B, I, J, AB_offset, AB_offset_full
-      integer :: x, y, p, q, xy, xy_packed, sp, pq
+      integer :: x, y, p, q, xy, xy_packed, sp
 !
       type(interval) :: A_interval, B_interval
 !
       real(dp), dimension(:), allocatable :: L_xy
-      real(dp), dimension(:,:), allocatable :: L_xy_full, L_J_pq, temp, L_pq_J, L_pq
+      real(dp), dimension(:,:), allocatable :: L_xy_full, temp, L_pq, L_J_pq
+      real(dp), dimension(:,:,:), allocatable :: L_Jpq
 !
       type(file) :: cholesky_mo_vectors_seq
 !
@@ -4032,6 +4034,11 @@ contains
       type(batching_index) :: batch_q
 !
       integer ::  current_q_batch, req0, req1, pq_rec
+!
+      type(timings) :: cholesky_mo_timer
+!
+      call cholesky_mo_timer%init('MO transform and write Cholesky vectors')
+      call cholesky_mo_timer%start()
 !
       call cholesky_mo_vectors_seq%init('cholesky_mo_temp', 'sequential', 'unformatted')
       call solver%cholesky_mo_vectors%init('cholesky_mo_vectors', 'direct', 'unformatted', dp*solver%n_cholesky)
@@ -4215,7 +4222,7 @@ contains
 !
          call batch_q%determine_limits(current_q_batch)
 !
-         call mem%alloc(L_pq_J, (batch_q%length)*(n_mo), solver%n_cholesky)
+         call mem%alloc(L_Jpq, solver%n_cholesky, n_mo, batch_q%length)
 !    
          call mem%alloc(L_pq, n_mo, n_mo)
 !
@@ -4226,9 +4233,7 @@ contains
             do q = 1, batch_q%length
                do p = 1, n_mo
 !
-                  pq = n_mo*(q - 1) + p
-!
-                  L_pq_J(pq, J) = L_pq(p, q + batch_q%first - 1)
+                  L_Jpq(J, p, q) = L_pq(p, q + batch_q%first - 1)
 !
                enddo
             enddo
@@ -4237,17 +4242,16 @@ contains
 !
          call mem%dealloc(L_pq, n_mo, n_mo)
 !
-         do p = 1, n_mo
-            do q = batch_q%first, batch_q%last
+         do q = batch_q%first, batch_q%last
+            do p = 1, n_mo
 !
                pq_rec = (max(p, q)*(max(p, q)-3)/2) + p + q
-               pq = n_mo*(q - batch_q%first) + p
-               write(solver%cholesky_mo_vectors%unit, rec=pq_rec) (L_pq_J(pq, J), J = 1, solver%n_cholesky)
+               write(solver%cholesky_mo_vectors%unit, rec=pq_rec) L_Jpq(:, p, q - batch_q%first + 1)
 !
             enddo
          enddo
 !
-         call mem%dealloc(L_pq_J, (batch_q%length)*(n_mo), solver%n_cholesky)
+         call mem%dealloc(L_Jpq, solver%n_cholesky, n_mo, batch_q%length)
 !
       enddo ! batch_q
 !
@@ -4258,6 +4262,9 @@ contains
 !
       call disk%open_file(cholesky_mo_vectors_seq, 'read')
       call disk%close_file(cholesky_mo_vectors_seq, 'delete')
+!
+      call cholesky_mo_timer%freeze()
+      call cholesky_mo_timer%switch_off()
 !
    end subroutine  construct_mo_cholesky_vecs_cd_eri_solver
 !
