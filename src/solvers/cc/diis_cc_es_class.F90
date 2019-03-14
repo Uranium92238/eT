@@ -376,6 +376,15 @@ contains
 !
          enddo
 !
+!        Save excited states and excitation energies
+!
+         do state = 1, solver%n_singlet_states
+!
+            call wf%save_excited_state(X(:,state), state, solver%transformation)
+!
+         enddo 
+!
+         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
          prev_energies = solver%energies 
 !
          write(output%unit,'(t3,a)')  '----------------------------------------------'     

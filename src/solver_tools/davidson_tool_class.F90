@@ -815,7 +815,6 @@ contains
       call disk%open_file(davidson%trials, 'readwrite')
       call disk%open_file(davidson%X, 'read')
 !
-      rewind(davidson%X%unit)
       rewind(davidson%trials%unit)
 !
       call mem%alloc(X, davidson%n_parameters, 1)
@@ -823,7 +822,7 @@ contains
 !
       do solution = 1, davidson%n_solutions
 !
-         read(davidson%X%unit) X
+         call davidson%construct_X(X, solution)
 !
          rewind(davidson%trials%unit)
 !
