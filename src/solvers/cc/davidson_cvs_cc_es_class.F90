@@ -196,7 +196,7 @@ contains
 !
             do trial = 1, n_solutions_on_file
 !
-               call wf%read_excited_state(c_i, trial, solver%transformation)
+               call wf%restart_excited_state(c_i, trial, solver%transformation)
                call davidson%write_trial(c_i)
 !
             enddo 

@@ -584,8 +584,6 @@ contains
 !
       call dscal(davidson%n_parameters, one/norm_X, X, 1)
 !
-      write(davidson%X%unit) X
-!
       call disk%close_file(davidson%X)
 !
       call mem%dealloc(X, davidson%n_parameters, 1)

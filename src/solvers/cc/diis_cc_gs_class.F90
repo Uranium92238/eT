@@ -275,6 +275,10 @@ contains
 !
          iteration = iteration + 1
 !
+!        Save amplitudes
+!
+         call wf%save_amplitudes()
+!
       enddo
 !
       call mem%dealloc(omega, wf%n_gs_amplitudes, 1)
