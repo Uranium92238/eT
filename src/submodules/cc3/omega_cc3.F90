@@ -966,12 +966,12 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj 
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck 
 !
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljci 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkci 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkcj 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_licj 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lick 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck 
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljci 
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lkci 
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lkcj 
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_licj 
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lick 
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljck 
 !
 !
 !     Contributions to W
