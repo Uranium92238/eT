@@ -292,17 +292,6 @@ contains
 !
       write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
 !
-!     Write information to restart file 
-!
-      call disk%open_file(wf%restart_file, 'write', 'rewind')
-!
-      write(wf%restart_file%unit) wf%n_o 
-      write(wf%restart_file%unit) wf%n_v 
-      write(wf%restart_file%unit) wf%n_gs_amplitudes 
-      write(wf%restart_file%unit) wf%n_es_amplitudes 
-!
-      call disk%close_file(wf%restart_file)
-!
    end subroutine cleanup_ccs
 !
 !
@@ -347,6 +336,18 @@ contains
       class(ccs) :: wf 
 !
       call wf%restart_file%init('cc_restart_file', 'sequential', 'unformatted')
+!
+!     Write information to restart file 
+!
+      call disk%open_file(wf%restart_file, 'write', 'rewind')
+!
+      write(wf%restart_file%unit) wf%n_o 
+      write(wf%restart_file%unit) wf%n_v 
+      write(wf%restart_file%unit) wf%n_gs_amplitudes 
+      write(wf%restart_file%unit) wf%n_es_amplitudes 
+!
+      call disk%close_file(wf%restart_file)
+!
 !
       call wf%excitation_energies_file%init('excitation_energies', 'sequential', 'unformatted')
 !
@@ -428,7 +429,8 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      call disk%open_file(wf%t1_file, 'write', 'rewind')
+      call disk%open_file(wf%t1_file, 'write')
+      rewind(wf%t1_file%unit)
 !
       write(wf%t1_file%unit) wf%t1 
 !

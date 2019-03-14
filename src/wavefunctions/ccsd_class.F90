@@ -513,8 +513,11 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      call disk%open_file(wf%t1_file, 'write', 'rewind')
-      call disk%open_file(wf%t2_file, 'write', 'rewind')
+      call disk%open_file(wf%t1_file, 'write')
+      call disk%open_file(wf%t2_file, 'write')
+!
+      rewind(wf%t1_file%unit)
+      rewind(wf%t2_file%unit)
 !
       write(wf%t1_file%unit) wf%t1  
       write(wf%t2_file%unit) wf%t2
