@@ -734,11 +734,11 @@ contains
                   L_iJ_j_term,              & ! L_iJ_j
                   i_length*(integrals%n_J))
 !
-     call mem%dealloc(L_iJ_a, i_length*(integrals%n_J), integrals%n_v)
+      call mem%dealloc(L_iJ_a, i_length*(integrals%n_J), integrals%n_v)
 !
-     call sort_123_to_132(L_iJ_j_term, L_ij_J, i_length, integrals%n_J, j_length)
+      call sort_123_to_132(L_iJ_j_term, L_ij_J, i_length, integrals%n_J, j_length)
 !
-     call mem%dealloc(L_iJ_j_term, i_length*(integrals%n_J), j_length)
+      call mem%dealloc(L_iJ_j_term, i_length*(integrals%n_J), j_length)
 !
    end subroutine construct_cholesky_ij_c1_mo_integral_tool
 !

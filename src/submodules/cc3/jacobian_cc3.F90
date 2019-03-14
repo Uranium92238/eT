@@ -236,6 +236,7 @@ contains
       call cc3_timer%switch_off()
 !
       call mem%dealloc(c_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(c_ai, wf%n_v, wf%n_o)
 !
 !     Overwrite the incoming singles c vector for exit
 !
@@ -763,15 +764,15 @@ end subroutine effective_jacobian_transformation_cc3
 !
                endif
 !
-               do i = batch_i%first,batch_i%last
+               do i = batch_i%first, batch_i%last
 !
                   i_rel = i - batch_i%first + 1
 !
-                  do j = batch_j%first,min(batch_j%last,i)
+                  do j = batch_j%first, min(batch_j%last, i)
 !
                      j_rel = j - batch_j%first + 1
 !
-                     do k = batch_k%first,min(batch_k%last,j)
+                     do k = batch_k%first, min(batch_k%last, j)
 !
                         if (i .eq. j .and. i .eq. k) then
                            cycle
@@ -781,6 +782,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
 !                       Construct C^{abc}_{ijk} for given i, j, k (t_abc)
 !                       and calculate contributions to rho1 and rho2
+!                       The terms have the same form as the omega terms (where t_abc = c_abc)
 !
                         call wf%jacobian_cc3_c3_calc(omega, i, j, k, t_abc, u_abc, t_abji, c_abji, &
                                                       g_bdci_p(:,:,:,i_rel),                       &
@@ -803,12 +805,6 @@ end subroutine effective_jacobian_transformation_cc3
                                                       g_ljck_c1_p(:,:,j_rel,k_rel))
 !
 !
-!                    !   DEBUG
-                     !   t3_norm = ddot(wf%n_v**3, t_abc, 1, t_abc, 1)
-                     !   write(output%unit,*)
-                     !   write(output%unit,*) 'c3 norm: ', t3_norm
-                     !   write(output%unit,*)
-!
                         call wf%omega_cc3_omega1(i, j, k, t_abc, u_abc, rho_ai, rho_abij, F_kc, &
                                                    L_jbic_p(:,:,j_rel,i_rel),                   &
                                                    L_kbic_p(:,:,k_rel,i_rel),                   &
@@ -817,7 +813,6 @@ end subroutine effective_jacobian_transformation_cc3
                                                    L_ibkc_p(:,:,i_rel,k_rel),                   &
                                                    L_jbkc_p(:,:,j_rel,k_rel))
 !
-                        !call wf%jacobian_cc3_rho2(i, j, k, t_abc, u_abc, v_abc, rho_abij, &
                         call wf%omega_cc3_omega2(i, j, k, t_abc, u_abc, v_abc, rho_abij,  &
                                                    g_dbic_p(:,:,:,i_rel),                 &
                                                    g_dbjc_p(:,:,:,j_rel),                 &
@@ -830,30 +825,24 @@ end subroutine effective_jacobian_transformation_cc3
                                                    g_jlkc_p(:,:,j_rel,k_rel))
 !
 !                       Construct t^{abc}_{ijk} for given i, j, k
-!                       and calculate contributions to rho1 and rho2
+!                       and calculate contributions to rho2
+!                       Using c1-transformed integrals the terms have the same form as the omega terms
 !
-                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji, &
-                                                      g_bdci_p(:,:,:,i_rel),        &
-                                                      g_bdcj_p(:,:,:,j_rel),        &
-                                                      g_bdck_p(:,:,:,k_rel),        &
-                                                      g_ljci_p(:,:,j_rel,i_rel),    &
-                                                      g_lkci_p(:,:,k_rel,i_rel),    &
-                                                      g_lkcj_p(:,:,k_rel,j_rel),    &
-                                                      g_licj_p(:,:,i_rel,j_rel),    &
-                                                      g_lick_p(:,:,i_rel,k_rel),    &
-                                                      g_ljck_p(:,:,j_rel,k_rel))
+                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji,  &
+                                                   g_bdci_p(:,:,:,i_rel),        &
+                                                   g_bdcj_p(:,:,:,j_rel),        &
+                                                   g_bdck_p(:,:,:,k_rel),        &
+                                                   g_ljci_p(:,:,j_rel,i_rel),    &
+                                                   g_lkci_p(:,:,k_rel,i_rel),    &
+                                                   g_lkcj_p(:,:,k_rel,j_rel),    &
+                                                   g_licj_p(:,:,i_rel,j_rel),    &
+                                                   g_lick_p(:,:,i_rel,k_rel),    &
+                                                   g_ljck_p(:,:,j_rel,k_rel))
 !
                         call wf%omega_cc3_eps(i, j, k, t_abc)
 !
-!                    !   DEBUG
-                     !   t3_norm = ddot(wf%n_v**3, t_abc, 1, t_abc, 1)
-                     !   write(output%unit,*)
-                     !   write(output%unit,*) 't3 norm: ', t3_norm
-                     !   write(output%unit,*)
+                        !call wf%jacobian_cc3_fock_rho2(i, j, k, t_abc, u_abc, rho_abij, F_kc_c1)
 !
-                        call wf%jacobian_cc3_fock_rho2(i, j, k, t_abc, u_abc, rho_abij, F_kc_c1)
-!
-                        !call wf%jacobian_cc3_rho2(i, j, k, t_abc, u_abc, v_abc, rho_abij, &
                         call wf%omega_cc3_omega2(i, j, k, t_abc, u_abc, v_abc, rho_abij,  &
                                                    g_dbic_c1_p(:,:,:,i_rel),              &
                                                    g_dbjc_c1_p(:,:,:,j_rel),              &
@@ -865,7 +854,7 @@ end subroutine effective_jacobian_transformation_cc3
                                                    g_ilkc_c1_p(:,:,i_rel,k_rel),          &
                                                    g_jlkc_c1_p(:,:,j_rel,k_rel))
 !
-                     enddo ! loopg over k
+                     enddo ! loop over k
                   enddo ! loop over j
                enddo ! loop over i
             enddo ! batch_k
@@ -1001,7 +990,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
 !     g'_bdck = (b'd|ck) + (bd|c'k) + (bd|ck')
 !
-      call mem%alloc(L_bd_J, (wf%n_v)**2, wf%integrals%n_J)
+      call mem%alloc(L_bd_J, (wf%n_v)**2, wf%integrals%n_J) ! used c1-transformed in Term 1
       call wf%integrals%construct_cholesky_ab_c1(L_bd_J, c_ai, 1, wf%n_v, 1, wf%n_v)
 !
       req_0 = 0
@@ -1009,7 +998,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      call wf%g_bdck_c1%init('g_bdck_c1','direct','unformatted', dp*wf%n_v**3)
+      call wf%g_bdck_c1%init('g_bdck_c1','direct','unformatted', dp*(wf%n_v)**3)
       call disk%open_file(wf%g_bdck_c1,'write')
 !
       do current_k_batch = 1, batch_k%num_batches
@@ -1062,14 +1051,13 @@ end subroutine effective_jacobian_transformation_cc3
 !
 !        :: Term 3: g_bdck' = sum_J L_bd_J L_ck_J_c1 ::
 !
-!
          call wf%integrals%construct_cholesky_ai_i_c1(L_ck_J_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
 !
          call dgemm('N', 'T',                   &
                      (wf%n_v)**2,               &
                      (wf%n_v)*(batch_k%length), &
                      wf%integrals%n_J,          &
-                     one,                      &
+                     one,                       &
                      L_bd_J,                    & ! L_bd_J
                      (wf%n_v)**2,               &
                      L_ck_J_c1,                 & ! L_ck_J  k is c1-transformed
@@ -1114,7 +1102,7 @@ end subroutine effective_jacobian_transformation_cc3
 !     (d'b|kc) same batching (req0 and req_k)
 !
 !
-      call wf%g_dbkc_c1%init('g_dbkc_c1','direct','unformatted',dp*wf%n_v**3)
+      call wf%g_dbkc_c1%init('g_dbkc_c1','direct','unformatted',dp*(wf%n_v)**3)
       call disk%open_file(wf%g_dbkc_c1,'write')
 !
       call mem%alloc(L_db_J_c1, (wf%n_v)**2, wf%integrals%n_J)
@@ -1185,10 +1173,10 @@ end subroutine effective_jacobian_transformation_cc3
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      call wf%g_ljck_c1%init('g_ljck_c1','direct','unformatted', dp*wf%n_v*wf%n_o)
+      call wf%g_ljck_c1%init('g_ljck_c1','direct','unformatted', dp*(wf%n_v)*(wf%n_o))
       call disk%open_file(wf%g_ljck_c1,'write')
 !
-      do current_k_batch = 1,batch_k%num_batches
+      do current_k_batch = 1, batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
 !
@@ -1245,7 +1233,7 @@ end subroutine effective_jacobian_transformation_cc3
                      (wf%n_o)**2,               &
                      (wf%n_v)*(batch_k%length), &
                      wf%integrals%n_J,          &
-                     one,                      &
+                     one,                       &
                      L_lj_J,                    & ! L_lj_J
                      (wf%n_o)**2,               &
                      L_ck_J_c1,                 & ! L_ck_J  c is c1_transformed
@@ -1258,7 +1246,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
 !        Sort from g_pqrs = (lj'|ck) + (lj|ck') + (lj|c'k) to h_pqrs
 !
-         call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o ,batch_k%length) ! lcjk
+         call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length) ! lcjk
 !
          call sort_1234_to_1324(g_pqrs,h_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
 !
@@ -1318,7 +1306,7 @@ end subroutine effective_jacobian_transformation_cc3
                      g_pqrs,                    & ! (jl'|kc)
                      (wf%n_o)**2)
 !
-         call mem%dealloc(L_kc_J, (wf%n_o)*(batch_k%length), wf%integrals%n_J)
+         call mem%dealloc(L_kc_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
 !
          call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length) ! order cl,jk
 !
@@ -1372,9 +1360,59 @@ end subroutine effective_jacobian_transformation_cc3
       real(dp), dimension(:,:), allocatable :: L_ia_J
       real(dp), dimension(:,:), allocatable :: L_jk_J_c1
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_iajk
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajk, g_ikja, g_iajd, g_jdia, g_jdik
 !
       integer :: i, a, j
+!
+!     Construct c1 transformed integrals
+!     g_iajk' = sum_c g_iajd * c_dk
+!
+!
+   !   call mem%alloc(g_iajd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!!
+   !   call wf%get_ovov(g_iajd)
+!!
+   !   call mem%alloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!!
+   !   call dgemm('N', 'N',                &
+   !               (wf%n_v)*(wf%n_o)**2,   &
+   !               wf%n_o,                 &
+   !               wf%n_v,                 &
+   !               one,                    &
+   !               g_iajd,                 & ! g_iaj_d
+   !               (wf%n_v)*(wf%n_o)**2,   &
+   !               c_ai,                   & ! c_d_k
+   !               wf%n_v,                 &
+   !               zero,                   &
+   !               g_iajk,                 &
+   !               (wf%n_v)*(wf%n_o)**2)
+!!
+   !   call mem%alloc(g_jdia, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+   !   call sort_1234_to_3412(g_iajd, g_jdia, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!!
+   !   call mem%dealloc(g_iajd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!!
+   !   call mem%alloc(g_jdik, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!!
+   !   call dgemm('N', 'N',                &
+   !               (wf%n_v)*(wf%n_o)**2,   &
+   !               wf%n_o,                 &
+   !               wf%n_v,                 &
+   !               one,                    &
+   !               g_jdia,                 & ! g_jdi_a
+   !               (wf%n_v)*(wf%n_o)**2,   &
+   !               c_ai,                   & ! c_a_k
+   !               wf%n_v,                 &
+   !               zero,                   &
+   !               g_jdik,                 &
+   !               (wf%n_v)*(wf%n_o)**2)
+!!
+   !   call mem%alloc(g_ikja, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!!
+   !   call sort_1234_to_3412(g_jdik, g_ikja, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!!
+   !   call mem%dealloc(g_jdik, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
 !
 !     Construct the integrals from the Cholesky Vectors
 !
@@ -1401,17 +1439,33 @@ end subroutine effective_jacobian_transformation_cc3
                   g_iajk,              & ! (ia|jk')
                   (wf%n_v)*(wf%n_o))
 !
+      !call mem%alloc(g_ikja, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+      !call dgemm('N', 'T',             &
+      !            (wf%n_o)**2,         &
+      !            (wf%n_v)*(wf%n_o),   &
+      !            wf%integrals%n_J,    &
+      !            one,                 &
+      !            L_jk_J_c1,           & ! L_ik'_J
+      !            wf%n_o**2,           &
+      !            L_ia_J,              & ! L_ja_J
+      !            (wf%n_v)*(wf%n_o),   &
+      !            zero,                &
+      !            g_ikja,              & ! (ik'|ja)
+      !            (wf%n_o)**2)
+!
       call mem%dealloc(L_jk_J_c1, (wf%n_o)**2, wf%integrals%n_J)
       call mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%integrals%n_J)
 !
 !     Add contributions and resort to F_ia_c1(a,i)
 !
 !$omp parallel do private(a,i,j)
-      do a = 1, wf%n_v
-         do j = 1, wf%n_o
-            do i = 1, wf%n_o
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+            do j = 1, wf%n_o
 !
                F_ia_c1(a,i) = two*g_iajk(i,a,j,j) - g_iajk(j,a,i,j)
+               !F_ia_c1(a,i) = two*g_iajk(i,a,j,j) - g_ikja(i,j,j,a)
 !
             enddo
          enddo
@@ -1419,6 +1473,7 @@ end subroutine effective_jacobian_transformation_cc3
 !$omp end parallel do
 !
       call mem%dealloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      !call mem%dealloc(g_ikja, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
    end subroutine jacobian_cc3_construct_fock_ia_c1_cc3
 !
@@ -1436,10 +1491,10 @@ end subroutine effective_jacobian_transformation_cc3
 !
       type(batching_index), intent(in) :: batch_x
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_x%length), intent(out) :: g_bdcx
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_x%length), intent(out) :: g_dbxc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_x%length), intent(out) :: g_bdcx_c1
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_x%length), intent(out) :: g_dbxc_c1
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_bdcx
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_dbxc
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_bdcx_c1
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_dbxc_c1
 !
       integer :: ioerror
       integer :: x, x_abs
@@ -1530,11 +1585,11 @@ end subroutine effective_jacobian_transformation_cc3
 !
       type(batching_index), intent(in) :: batch_x, batch_y
 !
-      real(dp), dimension(wf%n_o,wf%n_v,batch_y%length,batch_x%length), intent(out) :: g_lycx
-      real(dp), dimension(wf%n_v,wf%n_o,batch_y%length,batch_x%length), intent(out) :: g_ylxc
-      real(dp), dimension(wf%n_v,wf%n_v,batch_y%length,batch_x%length), intent(out) :: L_ybxc
-      real(dp), dimension(wf%n_o,wf%n_v,batch_y%length,batch_x%length), intent(out) :: g_lycx_c1
-      real(dp), dimension(wf%n_v,wf%n_o,batch_y%length,batch_x%length), intent(out) :: g_ylxc_c1
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_lycx
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: L_ybxc
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_lycx_c1
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc_c1
 !
       integer :: ioerror, record
       integer :: x, y, x_abs, y_abs
@@ -2100,15 +2155,15 @@ end subroutine effective_jacobian_transformation_cc3
 !$omp end parallel do
 !
 !$omp parallel do schedule(static) private(c,b,a,epsilon_c,epsilon_cb)
-      do c = 1,wf%n_v
+      do c = 1, wf%n_v
 !
          epsilon_c = epsilon_ijk - wf%fock_diagonal(wf%n_o + c, 1)
 !
-         do b = 1,wf%n_v
+         do b = 1, wf%n_v
 !
             epsilon_cb = epsilon_c - wf%fock_diagonal(wf%n_o + b, 1)
 !
-            do a = 1,wf%n_v
+            do a = 1, wf%n_v
 !
                c_abc(a,b,c) = c_abc(a,b,c)*one/(epsilon_cb - wf%fock_diagonal(wf%n_o + a, 1))
 !
@@ -2120,11 +2175,11 @@ end subroutine effective_jacobian_transformation_cc3
    end subroutine jacobian_cc3_c3_calc_cc3
 !
 !
-   module subroutine jacobian_cc3_fock_rho2_cc3(wf, i, j, k, c_abc, u_abc, rho_abij, F_kc)
+   module subroutine jacobian_cc3_fock_rho2_cc3(wf, i, j, k, t_abc, u_abc, rho_abij, F_kc)
 !!
 !!    Calculate the triples contribution to rho1 for fixed i,j and k
 !!
-!!    rho_1 =+ sum_kc (C^abc_ijk - C^cba_ijk) F_kc
+!!    rho_1 =+ sum_kc (t^abc_ijk - t^cba_ijk) F_kc
 !!
 !!    Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
@@ -2134,18 +2189,19 @@ end subroutine effective_jacobian_transformation_cc3
 !
       integer, intent(in) :: i, j, k
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: c_abc ! t_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: rho_abij
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_kc
 !
-!     Construct u_abc = c_abc - c_cba
 !
-      call construct_123_minus_321(c_abc, u_abc, wf%n_v)
+!     Construct u_abc = t_abc - t_cba
 !
-!     rho_abij += sum_c (c^abc - c^cba)*F_kc
+      call construct_123_minus_321(t_abc, u_abc, wf%n_v)
+!
+!     rho_abij += sum_c (t^abc - t^cba)*F_kc
 !
       call dgemv('N',               &
                  wf%n_v**2,         &
@@ -2159,7 +2215,8 @@ end subroutine effective_jacobian_transformation_cc3
                  rho_abij(:,:,i,j), &
                  1)
 !
-!     rho_abkj += sum_c (c^cba - c^abc)*F_ic
+!     rho_abkj += sum_c (t^cba - t^abc)*F_ic
+!     if i == k, but this is never true
 !
       call dgemv('N',               &
                  wf%n_v**2,         &
@@ -2176,11 +2233,11 @@ end subroutine effective_jacobian_transformation_cc3
 !
       if (j .ne. k) then
 !
-!        Construct u_abc = c_acb - c_cab
+!        Construct u_abc = t_acb - t_cab
 !
-         call construct_132_minus_312(c_abc, u_abc, wf%n_v)
+         call construct_132_minus_312(t_abc, u_abc, wf%n_v)
 !
-!        rho_abji += sum_c (c^acb - c^cab)*F_jc
+!        rho_abik += sum_c (t^acb - t^cab)*F_jc
 !
          call dgemv('N',               &
                     wf%n_v**2,         &
@@ -2197,7 +2254,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
          if (i .ne. j) then
 !
-!           rho_abjk += sum_c (c^cab - c^acb)*F_ic
+!           rho_abjk += sum_c (t^cab - t^acb)*F_ic
 !
             call dgemv('N',                  &
                         wf%n_v**2,           &
@@ -2216,15 +2273,15 @@ end subroutine effective_jacobian_transformation_cc3
       end if
 !
 !
-      if (i .ne. j .and. j .ne. k) then
+      if (i .ne. j) then
 !
-!        Construct u_abc = c_bac - c_bca
+!        Construct u_abc = t_bac - t_bca
 !        This is zero if j == k
 !
-         call construct_213_minus_231(c_abc, u_abc, wf%n_v)
+         call construct_213_minus_231(t_abc, u_abc, wf%n_v)
 !
 !
-!        rho_abij += sum_c (c^bac - c^bca)*F_kc
+!        rho_abij += sum_c (t^bac - t^bca)*F_kc
 !
          call dgemv('N',               &
                     wf%n_v**2,         &
