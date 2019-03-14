@@ -565,6 +565,7 @@ contains
 !
       call mem%alloc(L_J_ji, integrals%n_J, integrals%n_o, length_i)
       call integrals%read_cholesky(L_J_ji, 1, (integrals%n_o), full_first_i, full_last_i)
+!
       call mem%alloc(L_ji_J, integrals%n_o, length_i, integrals%n_J)
       call sort_12_to_21(L_J_ji, L_ji_J, integrals%n_J, integrals%n_o*length_i)
       call mem%dealloc(L_J_ji, integrals%n_J, integrals%n_o, length_i)
@@ -601,7 +602,7 @@ contains
                   one, &
                   L_J_ab, & 
                   integrals%n_J*length_a, &
-                  t1, &
+                  t1(1,first_i), &
                   integrals%n_v, &
                   zero, &
                   X_J_ai, & 
