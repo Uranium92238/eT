@@ -52,8 +52,14 @@ module cc3_class
       procedure :: jacobian_cc3_A                     => jacobian_cc3_A_cc3
       procedure :: jacobian_cc3_c1_integrals          => jacobian_cc3_c1_integrals_cc3
       procedure :: jacobian_cc3_construct_fock_ia_c1  => jacobian_cc3_construct_fock_ia_c1_cc3
-      procedure :: jacobian_cc3_vvv_reader            => jacobian_cc3_vvv_reader_cc3
-      procedure :: jacobian_cc3_ov_vv_reader          => jacobian_cc3_ov_vv_reader_cc3
+      procedure :: jacobian_cc3_c3_vvv_reader_cc3
+      procedure :: jacobian_cc3_t3_vvv_reader_cc3
+      generic   :: jacobian_cc3_vvv_reader            => jacobian_cc3_c3_vvv_reader_cc3, &
+                                                         jacobian_cc3_t3_vvv_reader_cc3
+      procedure :: jacobian_cc3_c3_ov_vv_reader_cc3
+      procedure :: jacobian_cc3_t3_ov_vv_reader_cc3
+      generic   :: jacobian_cc3_ov_vv_reader          => jacobian_cc3_c3_ov_vv_reader_cc3, &
+                                                         jacobian_cc3_t3_ov_vv_reader_cc3
       procedure :: jacobian_cc3_c3_calc               => jacobian_cc3_c3_calc_cc3
       procedure :: jacobian_cc3_fock_rho2             => jacobian_cc3_fock_rho2_cc3
 !

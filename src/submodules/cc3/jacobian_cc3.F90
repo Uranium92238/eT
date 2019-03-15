@@ -305,6 +305,7 @@ end subroutine effective_jacobian_transformation_cc3
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_abij
 !
 !     Arrays for triples amplitudes
+      real(dp), dimension(:,:,:), allocatable :: c_abc
       real(dp), dimension(:,:,:), allocatable :: t_abc
       real(dp), dimension(:,:,:), allocatable :: u_abc
       real(dp), dimension(:,:,:), allocatable :: v_abc
@@ -312,7 +313,7 @@ end subroutine effective_jacobian_transformation_cc3
 !     Unpacked doubles amplitudes
       real(dp), dimension(:,:,:,:), allocatable :: t_abji
 !
-      real(dp), dimension(:,:), allocatable :: F_kc ! Transpose the fock matrix sub block
+      real(dp), dimension(:,:), allocatable :: F_kc
       real(dp), dimension(:,:), allocatable :: F_kc_c1
 !
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdci
@@ -426,66 +427,58 @@ end subroutine effective_jacobian_transformation_cc3
 !
       call wf%jacobian_cc3_c1_integrals(c_ai)
 !
-      call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
-      call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
-      call mem%alloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
-!
-      call mem%alloc(F_kc, wf%n_v, wf%n_o)
-      call sort_12_to_21(wf%fock_ia, F_kc, wf%n_o, wf%n_v)
-!
-!     C1 transformed Fock matrix
-!
-      call mem%alloc(F_kc_c1, wf%n_v, wf%n_o)
-      call wf%jacobian_cc3_construct_fock_ia_c1(c_ai, F_kc_c1)
+!     Set up arrays for amplitudes
 !
       call mem%alloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1342(wf%t2, t_abji, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+      call mem%alloc(c_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%alloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     Resorting for easier contractions later
+!
+      call mem%alloc(F_kc, wf%n_v, wf%n_o)
+      call sort_12_to_21(wf%fock_ia, F_kc, wf%n_o, wf%n_v)
+!
 !     Arrays for the amplitudes and intermediates
 !
-      t_abc = zero
-      u_abc = zero
-      v_abc = zero
-!
-      req_0 = 0
-      req_1 = 4*(wf%n_v)**3
-      req_2 = 4*(wf%n_o)*(wf%n_v) + 2*(wf%n_v)**2
-      req_3 = 0
+      !c_abc = zero
+      !u_abc = zero
+      !v_abc = zero
 !
       call batch_i%init(wf%n_o)
       call batch_j%init(wf%n_o)
       call batch_k%init(wf%n_o)
+!
+!     Setup and Batching loops for the C3-contributions to rho1 and rho2
+!
+      req_0 = 0
+      req_1 = 3*(wf%n_v)**3
+      req_2 = 3*(wf%n_o)*(wf%n_v) + (wf%n_v)**2
+      req_3 = 0
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                            req_0, req_1, req_2, req_3, batch_buff)
 !
 !     Allocate integral arrays and assign pointers.
 !
-      if (batch_i%num_batches .eq. 1) then ! no batching
+      if (batch_i%num_batches .eq. 1) then !no batching
 !
          call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-!
          call mem%alloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-!
          call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!
          call mem%alloc(g_jlic, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-!
          call mem%alloc(L_jbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
          call mem%alloc(g_bdci_c1, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-!
-         call mem%alloc(g_dbic_c1, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-!
          call mem%alloc(g_ljci_c1, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!
-         call mem%alloc(g_jlic_c1, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
       else ! batching
 !
          call batch_i%determine_limits(1)
 !
-!        Ordered such that batching indices at the end
+!        Ordered such that batching indices are at the end
 !
          call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
          call mem%alloc(g_bdcj, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
@@ -520,23 +513,12 @@ end subroutine effective_jacobian_transformation_cc3
          call mem%alloc(g_bdcj_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
          call mem%alloc(g_bdck_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
-         call mem%alloc(g_dbic_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%alloc(g_dbjc_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%alloc(g_dbkc_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-!
          call mem%alloc(g_ljci_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%alloc(g_lkci_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%alloc(g_lkcj_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%alloc(g_licj_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%alloc(g_lick_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%alloc(g_ljck_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-!
-         call mem%alloc(g_jlic_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%alloc(g_klic_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%alloc(g_kljc_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%alloc(g_iljc_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%alloc(g_ilkc_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
-         call mem%alloc(g_jlkc_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
 !
       endif
 !
@@ -549,48 +531,42 @@ end subroutine effective_jacobian_transformation_cc3
 !
       call disk%open_file(wf%g_bdck_c1,'read')
       call disk%open_file(wf%g_ljck_c1,'read')
-      call disk%open_file(wf%g_dbkc_c1,'read')
-      call disk%open_file(wf%g_jlkc_c1,'read')
 !
       do current_i_batch = 1, batch_i%num_batches
 !
          call batch_i%determine_limits(current_i_batch)
 !
-         call wf%jacobian_cc3_vvv_reader(batch_i, g_bdci, g_dbic, g_bdci_c1, g_dbic_c1)
+         call wf%jacobian_cc3_vvv_reader(batch_i, g_bdci, g_dbic, g_bdci_c1)
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
 !
          g_bdci_c1_p => g_bdci_c1
-         g_dbic_c1_p => g_dbic_c1
 !
          do current_j_batch = 1, current_i_batch
 !
             call batch_j%determine_limits(current_j_batch)
 !
-            call wf%jacobian_cc3_ov_vv_reader(batch_j, batch_i, g_ljci, g_jlic, L_jbic, g_ljci_c1, g_jlic_c1)
+            call wf%jacobian_cc3_ov_vv_reader(batch_j, batch_i, g_ljci, g_jlic, L_jbic, g_ljci_c1)
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
             L_jbic_p => L_jbic
 !
             g_ljci_c1_p => g_ljci_c1
-            g_jlic_c1_p => g_jlic_c1
 !
             if (current_j_batch .ne. current_i_batch) then
 !
-               call wf%jacobian_cc3_vvv_reader(batch_j, g_bdcj, g_dbjc, g_bdcj_c1, g_dbjc_c1)
+               call wf%jacobian_cc3_vvv_reader(batch_j, g_bdcj, g_dbjc, g_bdcj_c1)
                g_bdcj_p => g_bdcj
                g_dbjc_p => g_dbjc
 !
                g_bdcj_c1_p => g_bdcj_c1
-               g_dbjc_c1_p => g_dbjc_c1
 !
-               call wf%jacobian_cc3_ov_vv_reader(batch_i, batch_j, g_licj, g_iljc, L_ibjc, g_licj_c1, g_iljc_c1)
+               call wf%jacobian_cc3_ov_vv_reader(batch_i, batch_j, g_licj, g_iljc, L_ibjc, g_licj_c1)
                g_licj_p => g_licj
                g_iljc_p => g_iljc
                L_ibjc_p => L_ibjc
 !
                g_licj_c1_p => g_licj_c1
-               g_iljc_c1_p => g_iljc_c1
 !
             else
 !
@@ -602,10 +578,8 @@ end subroutine effective_jacobian_transformation_cc3
                L_ibjc_p => L_jbic
 !
                g_bdcj_c1_p => g_bdci_c1
-               g_dbjc_c1_p => g_dbic_c1
 !
                g_licj_c1_p => g_ljci_c1
-               g_iljc_c1_p => g_jlic_c1
 !
             endif
 !
@@ -615,44 +589,39 @@ end subroutine effective_jacobian_transformation_cc3
 !
                if (current_k_batch .ne. current_i_batch .and. current_k_batch .ne. current_j_batch) then
 !
-                  call wf%jacobian_cc3_vvv_reader(batch_k, g_bdck, g_dbkc, g_bdck_c1, g_dbkc_c1)
+                  call wf%jacobian_cc3_vvv_reader(batch_k, g_bdck, g_dbkc, g_bdck_c1)
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
 !
                   g_bdck_c1_p => g_bdck_c1
-                  g_dbkc_c1_p => g_dbkc_c1
 !
-                  call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_klic, L_kbic, g_lkci_c1, g_klic_c1)
+                  call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_klic, L_kbic, g_lkci_c1)
                   g_lkci_p => g_lkci
                   g_klic_p => g_klic
                   L_kbic_p => L_kbic
 !
                   g_lkci_c1_p => g_lkci_c1
-                  g_klic_c1_p => g_klic_c1
 !
-                  call wf%jacobian_cc3_ov_vv_reader(batch_i, batch_k, g_lick, g_ilkc, L_ibkc, g_lick_c1, g_ilkc_c1)
+                  call wf%jacobian_cc3_ov_vv_reader(batch_i, batch_k, g_lick, g_ilkc, L_ibkc, g_lick_c1)
                   g_lick_p => g_lick
                   g_ilkc_p => g_ilkc
                   L_ibkc_p => L_ibkc
 !
                   g_lick_c1_p => g_lick_c1
-                  g_ilkc_c1_p => g_ilkc_c1
 !
-                  call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_j, g_lkcj, g_kljc, L_kbjc, g_lkcj_c1, g_kljc_c1)
+                  call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_j, g_lkcj, g_kljc, L_kbjc, g_lkcj_c1)
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
                   L_kbjc_p => L_kbjc
 !
                   g_lkcj_c1_p => g_lkcj_c1
-                  g_kljc_c1_p => g_kljc_c1
 !
-                  call wf%jacobian_cc3_ov_vv_reader(batch_j, batch_k, g_ljck, g_jlkc, L_jbkc, g_ljck_c1, g_jlkc_c1)
+                  call wf%jacobian_cc3_ov_vv_reader(batch_j, batch_k, g_ljck, g_jlkc, L_jbkc, g_ljck_c1)
                   g_ljck_p => g_ljck
                   g_jlkc_p => g_jlkc
                   L_jbkc_p => L_jbkc
 !
                   g_ljck_c1_p => g_ljck_c1
-                  g_jlkc_c1_p => g_jlkc_c1
 !
                else if (current_k_batch .eq. current_i_batch) then
 !
@@ -660,7 +629,6 @@ end subroutine effective_jacobian_transformation_cc3
                   g_dbkc_p => g_dbic
 !
                   g_bdck_c1_p => g_bdci_c1
-                  g_dbkc_c1_p => g_dbic_c1
 !
                   if (current_j_batch .eq. current_i_batch) then
 !
@@ -669,59 +637,51 @@ end subroutine effective_jacobian_transformation_cc3
                      L_kbic_p => L_jbic
 !
                      g_lkci_c1_p => g_ljci_c1
-                     g_klic_c1_p => g_jlic_c1
 !
                      g_lick_p => g_ljci
                      g_ilkc_p => g_jlic
                      L_ibkc_p => L_jbic
 !
                      g_lick_c1_p => g_ljci_c1
-                     g_ilkc_c1_p => g_jlic_c1
 !
                      g_lkcj_p => g_ljci
                      g_kljc_p => g_jlic
                      L_kbjc_p => L_jbic
 !
                      g_lkcj_c1_p => g_ljci_c1
-                     g_kljc_c1_p => g_jlic_c1
 !
                      g_ljck_p => g_ljci
                      g_jlkc_p => g_jlic
                      L_jbkc_p => L_jbic
 !
                      g_ljck_c1_p => g_ljci_c1
-                     g_jlkc_c1_p => g_jlic_c1
 !
                   else
 !
-                     call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_klic, L_kbic, g_lkci_c1, g_klic_c1)
+                     call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_klic, L_kbic, g_lkci_c1)
                      g_lkci_p => g_lkci
                      g_klic_p => g_klic
                      L_kbic_p => L_kbic
 !
                      g_lkci_c1_p => g_lkci_c1
-                     g_klic_c1_p => g_klic_c1
 !
                      g_lick_p => g_lkci
                      g_ilkc_p => g_klic
                      L_ibkc_p => L_kbic
 !
                      g_lick_c1_p => g_lkci_c1
-                     g_ilkc_c1_p => g_klic_c1
 !
                      g_lkcj_p => g_licj
                      g_kljc_p => g_iljc
                      L_kbjc_p => L_ibjc
 !
                      g_lkcj_c1_p => g_licj_c1
-                     g_kljc_c1_p => g_iljc_c1
 !
                      g_ljck_p => g_ljci
                      g_jlkc_p => g_jlic
                      L_jbkc_p => L_jbic
 !
                      g_ljck_c1_p => g_ljci_c1
-                     g_jlkc_c1_p => g_jlic_c1
 !
                   endif
 !
@@ -731,36 +691,31 @@ end subroutine effective_jacobian_transformation_cc3
                   g_dbkc_p => g_dbjc
 !
                   g_bdck_c1_p => g_bdcj_c1
-                  g_dbkc_c1_p => g_dbjc_c1
 !
                   g_lkci_p => g_ljci
                   g_klic_p => g_jlic
                   L_kbic_p => L_jbic
 !
                   g_lkci_c1_p => g_ljci_c1
-                  g_klic_c1_p => g_jlic_c1
 !
                   g_lick_p => g_licj
                   g_ilkc_p => g_iljc
                   L_ibkc_p => L_ibjc
 !
                   g_lick_c1_p => g_licj_c1
-                  g_ilkc_c1_p => g_iljc_c1
 !
-                  call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_j, g_lkcj, g_kljc, L_kbjc, g_lkcj_c1, g_kljc_c1)
+                  call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_j, g_lkcj, g_kljc, L_kbjc, g_lkcj_c1)
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
                   L_kbjc_p => L_kbjc
 !
                   g_lkcj_c1_p => g_lkcj_c1
-                  g_kljc_c1_p => g_kljc_c1
 !
                   g_ljck_p => g_lkcj
                   g_jlkc_p => g_kljc
                   L_jbkc_p => L_kbjc
 !
                   g_ljck_c1_p => g_lkcj_c1
-                  g_jlkc_c1_p => g_kljc_c1
 !
                endif
 !
@@ -780,11 +735,11 @@ end subroutine effective_jacobian_transformation_cc3
 !
                         k_rel = k - batch_k%first + 1
 !
-!                       Construct C^{abc}_{ijk} for given i, j, k (t_abc)
+!                       Construct C^{abc}_{ijk} for given i, j, k
 !                       and calculate contributions to rho1 and rho2
 !                       The terms have the same form as the omega terms (where t_abc = c_abc)
 !
-                        call wf%jacobian_cc3_c3_calc(omega, i, j, k, t_abc, u_abc, t_abji, c_abji, &
+                        call wf%jacobian_cc3_c3_calc(omega, i, j, k, c_abc, u_abc, t_abji, c_abji, &
                                                       g_bdci_p(:,:,:,i_rel),                       &
                                                       g_bdcj_p(:,:,:,j_rel),                       &
                                                       g_bdck_p(:,:,:,k_rel),                       &
@@ -805,7 +760,7 @@ end subroutine effective_jacobian_transformation_cc3
                                                       g_ljck_c1_p(:,:,j_rel,k_rel))
 !
 !
-                        call wf%omega_cc3_omega1(i, j, k, t_abc, u_abc, rho_ai, rho_abij, F_kc, &
+                        call wf%omega_cc3_omega1(i, j, k, c_abc, u_abc, rho_ai, rho_abij, F_kc, &
                                                    L_jbic_p(:,:,j_rel,i_rel),                   &
                                                    L_kbic_p(:,:,k_rel,i_rel),                   &
                                                    L_kbjc_p(:,:,k_rel,j_rel),                   &
@@ -813,7 +768,7 @@ end subroutine effective_jacobian_transformation_cc3
                                                    L_ibkc_p(:,:,i_rel,k_rel),                   &
                                                    L_jbkc_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_omega2(i, j, k, t_abc, u_abc, v_abc, rho_abij,  &
+                        call wf%omega_cc3_omega2(i, j, k, c_abc, u_abc, v_abc, rho_abij,  &
                                                    g_dbic_p(:,:,:,i_rel),                 &
                                                    g_dbjc_p(:,:,:,j_rel),                 &
                                                    g_dbkc_p(:,:,:,k_rel),                 &
@@ -824,36 +779,6 @@ end subroutine effective_jacobian_transformation_cc3
                                                    g_ilkc_p(:,:,i_rel,k_rel),             &
                                                    g_jlkc_p(:,:,j_rel,k_rel))
 !
-!                       Construct t^{abc}_{ijk} for given i, j, k
-!                       and calculate contributions to rho2
-!                       Using c1-transformed integrals the terms have the same form as the omega terms
-!
-                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji,  &
-                                                   g_bdci_p(:,:,:,i_rel),        &
-                                                   g_bdcj_p(:,:,:,j_rel),        &
-                                                   g_bdck_p(:,:,:,k_rel),        &
-                                                   g_ljci_p(:,:,j_rel,i_rel),    &
-                                                   g_lkci_p(:,:,k_rel,i_rel),    &
-                                                   g_lkcj_p(:,:,k_rel,j_rel),    &
-                                                   g_licj_p(:,:,i_rel,j_rel),    &
-                                                   g_lick_p(:,:,i_rel,k_rel),    &
-                                                   g_ljck_p(:,:,j_rel,k_rel))
-!
-                        call wf%omega_cc3_eps(i, j, k, t_abc)
-!
-                        !call wf%jacobian_cc3_fock_rho2(i, j, k, t_abc, u_abc, rho_abij, F_kc_c1)
-!
-                        call wf%omega_cc3_omega2(i, j, k, t_abc, u_abc, v_abc, rho_abij,  &
-                                                   g_dbic_c1_p(:,:,:,i_rel),              &
-                                                   g_dbjc_c1_p(:,:,:,j_rel),              &
-                                                   g_dbkc_c1_p(:,:,:,k_rel),              &
-                                                   g_jlic_c1_p(:,:,j_rel,i_rel),          &
-                                                   g_klic_c1_p(:,:,k_rel,i_rel),          &
-                                                   g_kljc_c1_p(:,:,k_rel,j_rel),          &
-                                                   g_iljc_c1_p(:,:,i_rel,j_rel),          &
-                                                   g_ilkc_c1_p(:,:,i_rel,k_rel),          &
-                                                   g_jlkc_c1_p(:,:,j_rel,k_rel))
-!
                      enddo ! loop over k
                   enddo ! loop over j
                enddo ! loop over i
@@ -861,18 +786,14 @@ end subroutine effective_jacobian_transformation_cc3
          enddo ! batch_j
       enddo ! batch_i
 !
-!     Close files
+!     Close files: g_bdck_t, g_ljck_t still needed for T3 amplitudes
 !
-      call disk%close_file(wf%g_bdck_t)
-      call disk%close_file(wf%g_ljck_t)
       call disk%close_file(wf%g_dbkc_t)
       call disk%close_file(wf%g_jlkc_t)
       call disk%close_file(wf%L_jbkc_t)
 !
       call disk%close_file(wf%g_bdck_c1)
       call disk%close_file(wf%g_ljck_c1)
-      call disk%close_file(wf%g_dbkc_c1)
-      call disk%close_file(wf%g_jlkc_c1)
 !
 !     Deallocate the integral arrays
 !
@@ -883,6 +804,9 @@ end subroutine effective_jacobian_transformation_cc3
          call mem%dealloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
          call mem%dealloc(g_jlic, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
          call mem%dealloc(L_jbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+         call mem%dealloc(g_bdci_c1, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         call mem%dealloc(g_ljci_c1, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       else
          call batch_i%determine_limits(1)
@@ -920,16 +844,289 @@ end subroutine effective_jacobian_transformation_cc3
          call mem%dealloc(g_bdcj_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
          call mem%dealloc(g_bdck_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
-         call mem%dealloc(g_dbic_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%dealloc(g_dbjc_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%dealloc(g_dbkc_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-!
          call mem%dealloc(g_ljci_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%dealloc(g_lkci_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%dealloc(g_lkcj_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%dealloc(g_licj_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%dealloc(g_lick_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%dealloc(g_ljck_c1, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+!
+      endif
+!
+      call mem%dealloc(c_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%dealloc(F_kc, wf%n_v, wf%n_o)
+!
+!     Done with contribution of the C3-amplitudes
+!     Continue with contribution from the T3-amplitudes
+!
+      call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     C1 transformed Fock matrix
+!
+      call mem%alloc(F_kc_c1, wf%n_v, wf%n_o)
+      call wf%jacobian_cc3_construct_fock_ia_c1(c_ai, F_kc_c1)
+!
+!     Setup and Batching loops for the T3-contributions to rho2
+!
+      req_0 = 0
+      req_1 = 2*(wf%n_v)**3
+      req_2 = 2*(wf%n_o)*(wf%n_v)
+      req_3 = 0
+!
+      call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
+                           req_0, req_1, req_2, req_3, batch_buff)
+!
+!     Allocate integral arrays and assign pointers.
+!
+      if (batch_i%num_batches .eq. 1) then !no batching
+!
+         call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+         call mem%alloc(g_dbic_c1, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         call mem%alloc(g_jlic_c1, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      else ! batching
+!
+         call batch_i%determine_limits(1)
+!
+!        Ordered such that batching indices are at the end
+!
+         call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_bdcj, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_bdck, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+!
+         call mem%alloc(g_ljci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_lkci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_lkcj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_licj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_lick, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_ljck, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+!
+         call mem%alloc(g_dbic_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_dbjc_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_dbkc_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+!
+         call mem%alloc(g_jlic_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_klic_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_kljc_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_iljc_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_ilkc_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+         call mem%alloc(g_jlkc_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
+!
+      endif
+!
+!
+      call disk%open_file(wf%g_dbkc_c1,'read')
+      call disk%open_file(wf%g_jlkc_c1,'read')
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+         call wf%jacobian_cc3_vvv_reader(batch_i, g_bdci, g_dbic_c1)
+         g_bdci_p => g_bdci
+         g_dbic_c1_p => g_dbic_c1
+!
+         do current_j_batch = 1, current_i_batch
+!
+            call batch_j%determine_limits(current_j_batch)
+!
+            call wf%jacobian_cc3_ov_vv_reader(batch_j, batch_i, g_ljci, g_jlic_c1)
+            g_ljci_p => g_ljci
+            g_jlic_c1_p => g_jlic_c1
+!
+            if (current_j_batch .ne. current_i_batch) then
+!
+               call wf%jacobian_cc3_vvv_reader(batch_j, g_bdcj, g_dbjc_c1)
+               g_bdcj_p => g_bdcj
+               g_dbjc_c1_p => g_dbjc_c1
+!
+               call wf%jacobian_cc3_ov_vv_reader(batch_i, batch_j, g_licj, g_iljc_c1)
+               g_licj_p => g_licj
+               g_iljc_c1_p => g_iljc_c1
+!
+            else
+!
+               g_bdcj_p => g_bdci
+               g_dbjc_c1_p => g_dbic_c1
+!
+               g_licj_p => g_ljci
+               g_iljc_c1_p => g_jlic_c1
+!
+            endif
+!
+            do current_k_batch = 1, current_j_batch
+!
+               call batch_k%determine_limits(current_k_batch)
+!
+               if (current_k_batch .ne. current_i_batch .and. current_k_batch .ne. current_j_batch) then
+!
+                  call wf%jacobian_cc3_vvv_reader(batch_k, g_bdck, g_dbkc_c1)
+                  g_bdck_p => g_bdck
+                  g_dbkc_c1_p => g_dbkc_c1
+!
+                  call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_klic_c1)
+                  g_lkci_p => g_lkci
+                  g_klic_c1_p => g_klic_c1
+!
+                  call wf%jacobian_cc3_ov_vv_reader(batch_i, batch_k, g_lick, g_ilkc_c1)
+                  g_lick_p => g_lick
+                  g_ilkc_c1_p => g_ilkc_c1
+!
+                  call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_j, g_lkci, g_kljc_c1)
+                  g_lkcj_p => g_lkcj
+                  g_kljc_c1_p => g_kljc_c1
+!
+                  call wf%jacobian_cc3_ov_vv_reader(batch_j, batch_k, g_ljck, g_jlkc_c1)
+                  g_ljck_p => g_ljck
+                  g_jlkc_c1_p => g_jlkc_c1
+!
+               else if (current_k_batch .eq. current_i_batch) then
+!
+                  g_bdck_p => g_bdci
+                  g_dbkc_c1_p => g_dbic_c1
+!
+                  if (current_j_batch .eq. current_i_batch) then
+!
+                     g_lkci_p => g_ljci
+                     g_klic_c1_p => g_jlic_c1
+!
+                     g_lick_p => g_ljci
+                     g_ilkc_c1_p => g_jlic_c1
+!
+                     g_lkcj_p => g_ljci
+                     g_kljc_c1_p => g_jlic_c1
+!
+                     g_ljck_p => g_ljci
+                     g_jlkc_c1_p => g_jlic_c1
+!
+                  else
+!
+                     call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_klic_c1)
+                     g_lkci_p => g_lkci
+                     g_klic_c1_p => g_klic_c1
+!
+                     g_lick_p => g_lkci
+                     g_ilkc_c1_p => g_klic_c1
+!
+                     g_lkcj_p => g_licj
+                     g_kljc_c1_p => g_iljc_c1
+!
+                     g_ljck_p => g_ljci
+                     g_jlkc_c1_p => g_jlic_c1
+!
+                  endif
+!
+               else if (current_k_batch .eq. current_j_batch) then
+!
+                  g_bdck_p => g_bdcj
+                  g_dbkc_c1_p => g_dbjc_c1
+!
+                  g_lkci_p => g_ljci
+                  g_klic_c1_p => g_jlic_c1
+!
+                  g_lick_p => g_licj
+                  g_ilkc_c1_p => g_iljc_c1
+!
+                  call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_j, g_lkcj, g_kljc_c1)
+                  g_lkcj_p => g_lkcj
+                  g_kljc_c1_p => g_kljc_c1
+!
+                  g_ljck_p => g_lkcj
+                  g_jlkc_c1_p => g_kljc_c1
+!
+               endif
+!
+               do i = batch_i%first, batch_i%last
+!
+                  i_rel = i - batch_i%first + 1
+!
+                  do j = batch_j%first, min(batch_j%last, i)
+!
+                     j_rel = j - batch_j%first + 1
+!
+                     do k = batch_k%first, min(batch_k%last, j)
+!
+                        if (i .eq. j .and. i .eq. k) then
+                           cycle
+                        end if
+!
+                        k_rel = k - batch_k%first + 1
+!
+!                       Construct t^{abc}_{ijk} for given i, j, k
+!                       and calculate contributions to rho2
+!                       Using c1-transformed integrals the terms have the same form as the omega terms
+!
+                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji,  &
+                                                   g_bdci_p(:,:,:,i_rel),        &
+                                                   g_bdcj_p(:,:,:,j_rel),        &
+                                                   g_bdck_p(:,:,:,k_rel),        &
+                                                   g_ljci_p(:,:,j_rel,i_rel),    &
+                                                   g_lkci_p(:,:,k_rel,i_rel),    &
+                                                   g_lkcj_p(:,:,k_rel,j_rel),    &
+                                                   g_licj_p(:,:,i_rel,j_rel),    &
+                                                   g_lick_p(:,:,i_rel,k_rel),    &
+                                                   g_ljck_p(:,:,j_rel,k_rel))
+!
+                        call wf%omega_cc3_eps(i, j, k, t_abc)
+!
+                        call wf%jacobian_cc3_fock_rho2(i, j, k, t_abc, u_abc, rho_abij, F_kc_c1)
+!
+                        call wf%omega_cc3_omega2(i, j, k, t_abc, u_abc, v_abc, rho_abij,  &
+                                                   g_dbic_c1_p(:,:,:,i_rel),              &
+                                                   g_dbjc_c1_p(:,:,:,j_rel),              &
+                                                   g_dbkc_c1_p(:,:,:,k_rel),              &
+                                                   g_jlic_c1_p(:,:,j_rel,i_rel),          &
+                                                   g_klic_c1_p(:,:,k_rel,i_rel),          &
+                                                   g_kljc_c1_p(:,:,k_rel,j_rel),          &
+                                                   g_iljc_c1_p(:,:,i_rel,j_rel),          &
+                                                   g_ilkc_c1_p(:,:,i_rel,k_rel),          &
+                                                   g_jlkc_c1_p(:,:,j_rel,k_rel))
+!
+                     enddo ! loop over k
+                  enddo ! loop over j
+               enddo ! loop over i
+            enddo ! batch_k
+         enddo ! batch_j
+      enddo ! batch_i
+!
+!     Close files
+!
+      call disk%close_file(wf%g_bdck_t)
+      call disk%close_file(wf%g_ljck_t)
+!
+      call disk%close_file(wf%g_dbkc_c1)
+      call disk%close_file(wf%g_jlkc_c1)
+!
+!     Deallocate the integral arrays
+!
+      if (batch_i%num_batches .eq. 1) then
+!
+         call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         call mem%dealloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+         call mem%dealloc(g_dbic_c1, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         call mem%dealloc(g_jlic_c1, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      else
+         call batch_i%determine_limits(1)
+!
+         call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%dealloc(g_bdcj, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%dealloc(g_bdck, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+!
+!
+         call mem%dealloc(g_ljci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%dealloc(g_lkci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%dealloc(g_lkcj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%dealloc(g_licj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%dealloc(g_lick, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%dealloc(g_ljck, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+!
+         call mem%dealloc(g_dbic_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%dealloc(g_dbjc_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%dealloc(g_dbkc_c1, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
          call mem%dealloc(g_jlic_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
          call mem%dealloc(g_klic_c1, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
@@ -940,7 +1137,6 @@ end subroutine effective_jacobian_transformation_cc3
 !
       endif
 !
-      call mem%dealloc(F_kc, wf%n_v, wf%n_o)
       call mem%dealloc(F_kc_c1, wf%n_v, wf%n_o)
 !
 !     Deallocate amplitude arrays
@@ -1343,7 +1539,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
    subroutine jacobian_cc3_construct_fock_ia_c1_cc3(wf, c_ai, F_ia_c1)
 !!
-!!    Calculates C1 transformed elements of the Fock matrix required for the CC3 jacobian
+!!    Calculates C1-transformed elements of the Fock matrix required for the CC3 jacobian
 !!    and returns as n_v, n_o
 !!
 !!    F_ia_c1 = sum_j L_iajj' = sum_j 2 g_iajj' - g_ij'ja
@@ -1360,59 +1556,11 @@ end subroutine effective_jacobian_transformation_cc3
       real(dp), dimension(:,:), allocatable :: L_ia_J
       real(dp), dimension(:,:), allocatable :: L_jk_J_c1
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_iajk, g_ikja, g_iajd, g_jdia, g_jdik
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajk
 !
       integer :: i, a, j
 !
-!     Construct c1 transformed integrals
-!     g_iajk' = sum_c g_iajd * c_dk
-!
-!
-   !   call mem%alloc(g_iajd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!!
-   !   call wf%get_ovov(g_iajd)
-!!
-   !   call mem%alloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!!
-   !   call dgemm('N', 'N',                &
-   !               (wf%n_v)*(wf%n_o)**2,   &
-   !               wf%n_o,                 &
-   !               wf%n_v,                 &
-   !               one,                    &
-   !               g_iajd,                 & ! g_iaj_d
-   !               (wf%n_v)*(wf%n_o)**2,   &
-   !               c_ai,                   & ! c_d_k
-   !               wf%n_v,                 &
-   !               zero,                   &
-   !               g_iajk,                 &
-   !               (wf%n_v)*(wf%n_o)**2)
-!!
-   !   call mem%alloc(g_jdia, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-   !   call sort_1234_to_3412(g_iajd, g_jdia, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!!
-   !   call mem%dealloc(g_iajd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!!
-   !   call mem%alloc(g_jdik, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!!
-   !   call dgemm('N', 'N',                &
-   !               (wf%n_v)*(wf%n_o)**2,   &
-   !               wf%n_o,                 &
-   !               wf%n_v,                 &
-   !               one,                    &
-   !               g_jdia,                 & ! g_jdi_a
-   !               (wf%n_v)*(wf%n_o)**2,   &
-   !               c_ai,                   & ! c_a_k
-   !               wf%n_v,                 &
-   !               zero,                   &
-   !               g_jdik,                 &
-   !               (wf%n_v)*(wf%n_o)**2)
-!!
-   !   call mem%alloc(g_ikja, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-!!
-   !   call sort_1234_to_3412(g_jdik, g_ikja, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!!
-   !   call mem%dealloc(g_jdik, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!
+      F_ia_c1 = zero
 !
 !     Construct the integrals from the Cholesky Vectors
 !
@@ -1439,33 +1587,18 @@ end subroutine effective_jacobian_transformation_cc3
                   g_iajk,              & ! (ia|jk')
                   (wf%n_v)*(wf%n_o))
 !
-      !call mem%alloc(g_ikja, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-!
-      !call dgemm('N', 'T',             &
-      !            (wf%n_o)**2,         &
-      !            (wf%n_v)*(wf%n_o),   &
-      !            wf%integrals%n_J,    &
-      !            one,                 &
-      !            L_jk_J_c1,           & ! L_ik'_J
-      !            wf%n_o**2,           &
-      !            L_ia_J,              & ! L_ja_J
-      !            (wf%n_v)*(wf%n_o),   &
-      !            zero,                &
-      !            g_ikja,              & ! (ik'|ja)
-      !            (wf%n_o)**2)
-!
       call mem%dealloc(L_jk_J_c1, (wf%n_o)**2, wf%integrals%n_J)
       call mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%integrals%n_J)
 !
 !     Add contributions and resort to F_ia_c1(a,i)
 !
+write(output%unit,*) 'Print contributions to the Fock-matrix within the loop:'
 !$omp parallel do private(a,i,j)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
             do j = 1, wf%n_o
 !
-               F_ia_c1(a,i) = two*g_iajk(i,a,j,j) - g_iajk(j,a,i,j)
-               !F_ia_c1(a,i) = two*g_iajk(i,a,j,j) - g_ikja(i,j,j,a)
+               F_ia_c1(a,i) = F_ia_c1(a,i) + two*g_iajk(i,a,j,j) - g_iajk(j,a,i,j)
 !
             enddo
          enddo
@@ -1473,15 +1606,14 @@ end subroutine effective_jacobian_transformation_cc3
 !$omp end parallel do
 !
       call mem%dealloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      !call mem%dealloc(g_ikja, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
    end subroutine jacobian_cc3_construct_fock_ia_c1_cc3
 !
 !
-   module subroutine jacobian_cc3_vvv_reader_cc3(wf, batch_x, g_bdcx, g_dbxc, g_bdcx_c1, g_dbxc_c1)
+   module subroutine jacobian_cc3_c3_vvv_reader_cc3(wf, batch_x, g_bdcx, g_dbxc, g_bdcx_c1)
 !!
-!!    Read the bdck and dbkc integrals needed in the current batch
-!!    both c1- and t1-transformed integrals
+!!    Read the bdck, dbkc and c1-transformed bdck integrals in the current batch
+!!    needed for the c3-contributions
 !!
 !!    Rolf H. Myhre and Alexander Paul, Feb 2019
 !!
@@ -1494,7 +1626,6 @@ end subroutine effective_jacobian_transformation_cc3
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_bdcx
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_dbxc
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_bdcx_c1
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_dbxc_c1
 !
       integer :: ioerror
       integer :: x, x_abs
@@ -1552,6 +1683,49 @@ end subroutine effective_jacobian_transformation_cc3
       enddo
 !
 !
+   end subroutine jacobian_cc3_c3_vvv_reader_cc3
+!
+!
+   module subroutine jacobian_cc3_t3_vvv_reader_cc3(wf, batch_x, g_bdcx, g_dbxc_c1)
+!!
+!!    Read the bdck and c1-transformed dbkc integrals in the current batch
+!!    needed for the t3-contribution
+!!
+!!    Rolf H. Myhre and Alexander Paul, Feb 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      type(batching_index), intent(in) :: batch_x
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_bdcx
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_dbxc_c1
+!
+      integer :: ioerror
+      integer :: x, x_abs
+!
+      character(len=100) :: iom
+!
+!     t1-transformed integrals
+!
+      do x = 1,batch_x%length
+!
+         x_abs = batch_x%first + x - 1
+!
+         read(wf%g_bdck_t%unit, rec=x_abs, iostat=ioerror, iomsg=iom) g_bdcx(:,:,:,x)
+!
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a)') 'Failed to read bdck_t file'
+            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
+            call output%error_msg('Failed to read file')
+         endif
+!
+      enddo
+!
+!     c1-transformed integrals
+!
       do x = 1,batch_x%length
 !
          x_abs = batch_x%first + x - 1
@@ -1568,14 +1742,14 @@ end subroutine effective_jacobian_transformation_cc3
       enddo
 !
 !
-   end subroutine jacobian_cc3_vvv_reader_cc3
+   end subroutine jacobian_cc3_t3_vvv_reader_cc3
 !
 !
-   module subroutine jacobian_cc3_ov_vv_reader_cc3(wf, batch_y, batch_x, g_lycx, g_ylxc, L_ybxc, &
-                                                   g_lycx_c1, g_ylxc_c1)
+   module subroutine jacobian_cc3_c3_ov_vv_reader_cc3(wf, batch_y, batch_x, g_lycx, g_ylxc, L_ybxc, &
+                                                      g_lycx_c1)
 !!
-!!    Read the ljck, jlkc and jbkc integrals needed in the current batches
-!!    both c1- and t1-transformed integrals
+!!    Read the ljck, jlkc, jbkc and c1-transformed ljck integrals in the current batches
+!!    needed for the c3-contribution
 !!
 !!    Rolf H. Myhre and Alexander Paul, Feb 2019
 !!
@@ -1589,7 +1763,6 @@ end subroutine effective_jacobian_transformation_cc3
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: L_ybxc
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_lycx_c1
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc_c1
 !
       integer :: ioerror, record
       integer :: x, y, x_abs, y_abs
@@ -1695,6 +1868,57 @@ end subroutine effective_jacobian_transformation_cc3
       enddo
 !
 !
+   end subroutine jacobian_cc3_c3_ov_vv_reader_cc3
+!
+!
+   module subroutine jacobian_cc3_t3_ov_vv_reader_cc3(wf, batch_y, batch_x, g_lycx, g_ylxc_c1)
+!!
+!!    Read the ljck and c1-transformed jlkc integrals in the current batch
+!!    needed for the t3-contribution
+!!
+!!    Rolf H. Myhre and Alexander Paul, Feb 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      type(batching_index), intent(in) :: batch_x, batch_y
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_lycx
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc_c1
+!
+      integer :: ioerror, record
+      integer :: x, y, x_abs, y_abs
+!
+      character(len=100) :: iom
+!
+!     t1-transformed integrals
+!
+      do x = 1,batch_x%length
+!
+         x_abs = batch_x%first + x - 1
+!
+         do y = 1,batch_y%length
+!
+            y_abs = batch_y%first + y - 1
+!
+            record = wf%n_o*(x_abs - 1) + y_abs
+!
+            read(wf%g_ljck_t%unit, rec=record, iostat=ioerror, iomsg=iom) g_lycx(:,:,y,x)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a)') 'Failed to read ljck_t file'
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+!
+      enddo
+!
+!     c1-transformed integrals
+!
       do x = 1,batch_x%length
 !
          x_abs = batch_x%first + x - 1
@@ -1718,7 +1942,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
       enddo
 !
-   end subroutine jacobian_cc3_ov_vv_reader_cc3
+   end subroutine jacobian_cc3_t3_ov_vv_reader_cc3
 !
 !
    module subroutine jacobian_cc3_c3_calc_cc3(wf, omega, i, j, k, c_abc, u_abc, t_abji, c_abji, &
