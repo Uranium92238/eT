@@ -42,9 +42,8 @@ contains
 !!
       implicit none 
 !
-      class(gs_engine) :: engine 
-!
-      class(ccs) :: wf
+      class(gs_engine)  :: engine 
+      class(ccs)        :: wf
 !
       type(eri_cd_solver), allocatable     :: eri_chol_solver
       type(diis_cc_gs_solver), allocatable :: cc_gs_solver 

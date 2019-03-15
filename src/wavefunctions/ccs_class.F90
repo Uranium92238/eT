@@ -24,9 +24,9 @@ module ccs_class
 !
       real(dp) :: hf_energy
 !
-      integer                                :: n_gs_amplitudes
-      integer                                :: n_es_amplitudes
-      integer                                :: n_t1
+      integer  :: n_gs_amplitudes
+      integer  :: n_es_amplitudes
+      integer  :: n_t1
 !
       real(dp), dimension(:,:), allocatable  :: t1
       real(dp), dimension(:,:), allocatable  :: t1bar
@@ -2398,7 +2398,7 @@ contains
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_v*wf%n_o), intent(in)    :: c1
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c1
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1
 !
 !     sum_b F_a_b c_b_i

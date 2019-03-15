@@ -13,7 +13,7 @@ module hf_engine_class
    contains 
 !
       procedure, nopass :: prepare        => prepare_hf_engine
-      procedure :: run                    => run_hf_engine
+      procedure         :: run            => run_hf_engine
       procedure, nopass :: cleanup        => cleanup_hf_engine
 !
       procedure, nopass :: read_algorithm => read_algorithm_hf_engine
@@ -40,9 +40,8 @@ contains
 !!
       implicit none 
 !
-      class(hf_engine) :: engine 
-!
-      class(hf) :: wf 
+      class(hf_engine)  :: engine 
+      class(hf)         :: wf 
 !
       type(scf_diis_hf_solver), allocatable :: scf_diis
       type(scf_hf_solver), allocatable      :: scf

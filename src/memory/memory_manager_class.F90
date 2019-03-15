@@ -1159,9 +1159,6 @@ contains
 !
          batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
 !
-         write(output%unit, *) 'Batching:', batch_p%num_batches
-         flush(output%unit)
-!
       endif
 !
    end subroutine batch_setup_1_memory_manager
@@ -1339,11 +1336,6 @@ contains
 !
          batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
          batch_q%num_batches = (batch_q%index_dimension-1)/(batch_q%max_length)+1
-!
-         write(output%unit, *) 'Batching:', batch_p%num_batches
-         write(output%unit, *) 'Batching:', batch_q%num_batches
-         write(output%unit, *) '......'
-         flush(output%unit)
 !
 !
       endif
@@ -1536,12 +1528,6 @@ contains
          batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
          batch_q%num_batches = (batch_q%index_dimension-1)/(batch_q%max_length)+1
          batch_r%num_batches = (batch_r%index_dimension-1)/(batch_r%max_length)+1
-!
-         write(output%unit, *) 'Batching:', batch_p%num_batches
-         write(output%unit, *) 'Batching:', batch_q%num_batches
-         write(output%unit, *) 'Batching:', batch_r%num_batches
-         flush(output%unit)
-
 !
       endif
 !

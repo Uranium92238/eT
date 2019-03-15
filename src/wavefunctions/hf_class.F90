@@ -1231,13 +1231,8 @@ contains
 !
                         do w = A_interval%first, A_interval%last
                            do x = B_interval%first, B_interval%last
-!
-                            !  wx = A_interval%size*(x - B_interval%first) + w - A_interval%first + 1
-!
                               do y = C_interval%first, C_interval%last
                                  do z = D_interval%first, D_interval%last
-!
-                                 !   yz = C_interval%size*(z - D_interval%first) + y  - C_interval%first + 1
 !
                                     wf%ao_fock(w, x) = wf%ao_fock(w, x) + g_C(w, x, y, z)*wf%ao_density(y, z)
 !
@@ -1250,13 +1245,8 @@ contains
 !
                         do w = A_interval%first, A_interval%last
                            do x = A_interval%first, w
-!
-                            !  wx= A_interval%size*(x - A_interval%first) + w - A_interval%first + 1
-!
                               do y = C_interval%first, C_interval%last
                                  do z = D_interval%first, D_interval%last
-!
-                                 !   yz = C_interval%size*(z - D_interval%first) + y  - C_interval%first + 1
 !
                                     wf%ao_fock(w, x) = wf%ao_fock(w, x) + g_C(w, x, y, z)*wf%ao_density(y, z)
 !
@@ -1313,9 +1303,6 @@ contains
                               do y = C_interval%first, C_interval%last
                                  do z = D_interval%first, D_interval%last
 !
-                                !    yx = C_interval%size*(x - B_interval%first) + y  - C_interval%first + 1
-                                !    wz= A_interval%size*(z - D_interval%first) + w - A_interval%first + 1
-!
                                     wf%ao_fock(w, x) = wf%ao_fock(w, x) + & 
                                              (- half*g_K(w, z, y, x))*wf%ao_density(y, z)
 !
@@ -1331,9 +1318,6 @@ contains
                            do x = A_interval%first, w
                               do y = C_interval%first, C_interval%last
                                  do z = D_interval%first, D_interval%last
-!
-                                  !  yx = C_interval%size*(x - B_interval%first) + y  - C_interval%first + 1
-                                  !  wz= A_interval%size*(z - D_interval%first) + w - A_interval%first + 1
 !
                                     wf%ao_fock(w, x) = wf%ao_fock(w, x) + (- half*g_K(w, z, y, x))*wf%ao_density(y, z)
 !

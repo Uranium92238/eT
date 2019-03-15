@@ -389,7 +389,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_iajb ! g_iajb
 !
       integer :: a = 0, i = 0, b = 0, j = 0, ai = 0
-      integer :: bj = 0, aibj = 0, ia = 0, jb = 0, ib = 0, ja = 0
+      integer :: bj = 0, aibj = 0
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
@@ -405,23 +405,17 @@ contains
          do i = 1, wf%n_o
 !
             ai = (i-1)*wf%n_v + a
-            ia = (a-1)*wf%n_o + i
 !
             do j = 1, wf%n_o
-!
-               ja = wf%n_o*(a-1) + j
-!
                do b = 1, wf%n_v
 !
                   bj = wf%n_v*(j - 1) + b
-                  jb = wf%n_o*(b - 1) + j
-                  ib = wf%n_o*(b - 1) + i
 !
                   aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
 !
 !                 Add the correlation energy
 !
-                  wf%energy = wf%energy +                                     &
+                  wf%energy = wf%energy +                                   &
                                  (wf%t2(aibj) + (wf%t1(a,i))*(wf%t1(b,j)))* &
                                  (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
 !
@@ -467,8 +461,10 @@ contains
 !
                      aibj = (ai*(ai-3)/2) + ai + bj
 !
-                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%fock_diagonal(a + wf%n_o) - wf%fock_diagonal(i) &
-                                                                      +  wf%fock_diagonal(b + wf%n_o) - wf%fock_diagonal(j)
+                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%fock_diagonal(a + wf%n_o) &
+                                                                   - wf%fock_diagonal(i) &
+                                                                   +  wf%fock_diagonal(b + wf%n_o) &
+                                                                   - wf%fock_diagonal(j)
 !
                   endif
 !
@@ -570,7 +566,7 @@ contains
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: eta
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_iajb
-      real(dp), dimension(:,:), allocatable :: eta_ai_bj
+      real(dp), dimension(:,:,:,:), allocatable :: eta_aibj
 !
       integer :: i = 0, a = 0, j = 0, b = 0, aibj = 0
       integer :: bj = 0, ai = 0
@@ -592,11 +588,11 @@ contains
 !
       call wf%get_ovov(g_iajb)
 !
-      call mem%alloc(eta_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      eta_ai_bj = zero
+      call mem%alloc(eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      eta_aibj = zero
 !
-      call add_2143_to_1234(four, g_iajb, eta_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call add_2341_to_1234(-two, g_iajb, eta_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_2143_to_1234(four, g_iajb, eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_2341_to_1234(-two, g_iajb, eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
@@ -614,14 +610,14 @@ contains
 !
                   aibj = max(ai, bj)*(max(ai,bj)-3)/2 + ai + bj
 !
-                  eta(wf%n_t1 + aibj) = eta_ai_bj(ai, bj)
+                  eta(wf%n_t1 + aibj) = eta_aibj(a, i, b, j)
 !
                enddo
             enddo
          enddo
       enddo
 !
-      call mem%dealloc(eta_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine construct_eta_ccsd
 !

@@ -52,12 +52,11 @@ contains
 !!
       implicit none 
 !
-      class(multipliers_engine) :: engine 
+      class(multipliers_engine)  :: engine
+      class(ccs)                 :: wf
 !
-      class(ccs) :: wf
-!
-      type(eri_cd_solver), allocatable                   :: eri_chol_solver
-      type(diis_cc_gs_solver), allocatable               :: cc_gs_solver
+      type(eri_cd_solver), allocatable       :: eri_chol_solver
+      type(diis_cc_gs_solver), allocatable   :: cc_gs_solver
 !
       type(davidson_cc_multipliers), allocatable   :: cc_multipliers_davidson
       type(diis_cc_multipliers), allocatable       :: cc_multipliers_diis

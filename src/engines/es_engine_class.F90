@@ -59,13 +59,12 @@ contains
 !!
       implicit none 
 !
-      class(es_engine) :: engine 
+      class(es_engine)  :: engine 
+      class(ccs)        :: wf
 !
-      class(ccs) :: wf
-!
-      type(eri_cd_solver), allocatable              :: eri_chol_solver
-      type(diis_cc_gs_solver), allocatable          :: cc_gs_solver
-      type(diis_cc_es_solver), allocatable          :: cc_es_solver_diis 
+      type(eri_cd_solver), allocatable       :: eri_chol_solver
+      type(diis_cc_gs_solver), allocatable   :: cc_gs_solver
+      type(diis_cc_es_solver), allocatable   :: cc_es_solver_diis 
 ! 
       type(davidson_cc_es_solver), allocatable, target      ::  cc_valence_es
       type(davidson_cvs_cc_es_solver), allocatable, target  ::  cc_core_es

@@ -438,20 +438,6 @@ contains
 !
       endif
 !
-!     Let the user know how much has been written, or freed up, and to which file
-!
-!       if (bytes_written_to_disk .gt. 0) then
-! !
-!          write(output%unit,'(/t3,a,a,a,i14)') 'Number of bytes written to file ', &
-!                            trim(the_file%name), ': ', bytes_written_to_disk
-! !
-!       elseif (bytes_written_to_disk .lt. 0) then
-! !
-!          write(output%unit,'(/t3,a,a,a,i14)') 'File ', &
-!                         trim(the_file%name),  ' modified or deleted, with bytes freed up: ', bytes_written_to_disk
-! !
-!       endif
-!
 !     Update the available disk space
 !
       disk%available = disk%available - bytes_written_to_disk
