@@ -3991,10 +3991,11 @@ contains
    subroutine construct_mo_cholesky_vecs_2_cd_eri_solver(solver, system, n_mo, orbital_coefficients)
 !!
 !!    Construct MO Cholesky vectors
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
 !!
 !!    Reads AO Cholesky vectors, transforms them to MO basis and writes them to file.
-!!    MO Cholesky vectors L_pq_J are stored packed (q .le. p) on direct access file with record length n_cholesky
+!!    MO Cholesky vectors L_pq_J are stored packed (q .le. p) on direct access file 
+!!    with record pq and record length n_cholesky.
 !!
       implicit none
 !
@@ -4014,7 +4015,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: L_J, L_J_padded
 !
-      integer :: A, B, size_AB, J, sp, x, q, p, pq_rec, Jbatch_pq_rec
+      integer :: A, B, J, sp, x, q, p, pq_rec, Jbatch_pq_rec, K
       integer :: y, xy_packed, AB_offset, AB_offset_full, xy
 !
       character(len=40) :: line 
@@ -4024,7 +4025,7 @@ contains
       type(batching_index) :: batch_J 
       integer :: current_J_batch, req0, req1
 !     
-      integer :: max_shell_size
+      integer :: max_shell_size, size_AB, max_size_AB
 !
       type(file) :: mo_cholesky_tmp
 !
@@ -4032,7 +4033,8 @@ contains
 !
       logical, dimension(:), allocatable :: construct_sp 
 !
-!     Read significant sp info 
+!     Read information about for which shell pairs 
+!     the AO Cholesky vectors were constructed (the rest screened out)
 !
       call cholesky_mo_timer%init('transform and write mo cholesky to file')
       call cholesky_mo_timer%start()
@@ -4051,14 +4053,31 @@ contains
 !     We batch over J, MO transforming L_pq^J for as many Js as we can manage.
 !
 !     Once MO transformed, we store L_#J,pq to a temporary file,  
-!     which is later "rewritten" using the information from the original 
+!     which is later rewritten using the information from the original 
 !     batching procedure.
+!
+      call disk%open_file(solver%cholesky_ao_vectors_info, 'read')
+!
+      rewind(solver%cholesky_ao_vectors_info%unit)
+      read(solver%cholesky_ao_vectors_info%unit, '(a40)') line
+!
+      max_size_AB = 0 
+!
+      do while (trim(line) .ne. 'DONE')
+!
+         read(line, *) size_AB
+!
+         if (size_AB .gt. max_size_AB) max_size_AB = size_AB 
+!
+         read(solver%cholesky_ao_vectors_info%unit, *) line
+!
+      enddo
 !
       call batch_J%init(solver%n_cholesky)
 !
       call system%get_max_shell_size(max_shell_size)
 !
-      req0 = (solver%n_ao**2)*(solver%n_cholesky)  ! To be able to hold L_AB_J for all J 
+      req0 = (max_size_AB)*(solver%n_cholesky)        ! To be able to hold L_AB_J for all J 
       req1 = 2*n_mo*solver%n_ao + &                   ! E_pxJ, E_Jpx for given J
                n_mo**2 + max_shell_size + &           ! L_J_padded for given pq, L_Jp,q for given J batch 
                2*solver%n_ao**2 + 1                   ! Hold L_wx_J for given J batch
@@ -4073,12 +4092,13 @@ contains
       call disk%open_file(mo_cholesky_tmp, 'readwrite')
 !
       call disk%open_file(solver%cholesky_ao_vectors, 'read')
-      call disk%open_file(solver%cholesky_ao_vectors_info, 'read')
 !
       do current_J_batch = 1, batch_J%num_batches
 !
          call batch_J%determine_limits(current_J_batch)
 !
+!        1. Extract packed & screened AO vector L_wx^J for the given batch of J 
+!  
          rewind(solver%cholesky_ao_vectors_info%unit)
          rewind(solver%cholesky_ao_vectors%unit)
 !
@@ -4100,8 +4120,15 @@ contains
 !
 !           Set full vector for the relevant J  
 !  
-            L_wx_J(AB_offset + 1 : AB_offset + size_AB, 1 : batch_J%length) = &
-                                 L_AB_J(1 : size_AB, batch_J%first : batch_J%last)
+!$omp parallel do private(J, K)
+            do J = 1, batch_J%length 
+               do K = 1, size_AB 
+!
+                  L_wx_J(AB_offset + K, J) = L_AB_J(K, J + batch_J%first - 1)
+!
+               enddo
+            enddo
+!$omp end parallel do 
 !
             AB_offset = AB_offset + size_AB
 !
@@ -4111,7 +4138,7 @@ contains
 !
          enddo
 !
-!        Now make the full AO vector for the relevant J 
+!        2. Make the unpacked & full AO vector L_wx^J 
 !
          call mem%alloc(L_wx_J_full, solver%n_ao, solver%n_ao, batch_J%length)
          L_wx_J_full = zero 
@@ -4135,33 +4162,33 @@ contains
                   if (A .ne. B) then 
 !
 !$omp parallel do private(J,x,y,xy)
-                  do J = 1, batch_J%length 
-                     do x = 1, A_interval%size
-                        do y = 1, B_interval%size
+                     do J = 1, batch_J%length 
+                        do x = 1, A_interval%size
+                           do y = 1, B_interval%size
 !  
-                            xy = A_interval%size*(y-1) + x
-                            L_wx_J_full(x + A_interval%first - 1, y + B_interval%first - 1, J) = L_wx_J(xy + AB_offset, J)
-                            L_wx_J_full(y + B_interval%first - 1, x + A_interval%first - 1, J) = L_wx_J(xy + AB_offset, J)
+                              xy = A_interval%size*(y-1) + x
+                              L_wx_J_full(x + A_interval%first - 1, y + B_interval%first - 1, J) = L_wx_J(xy + AB_offset, J)
+                              L_wx_J_full(y + B_interval%first - 1, x + A_interval%first - 1, J) = L_wx_J(xy + AB_offset, J)
 !  
+                           enddo
                         enddo
                      enddo
-                  enddo
 !$omp end parallel do
 !
                   else
 !
 !$omp parallel do private(J,x,y,xy_packed)
-                  do J = 1, batch_J%length 
-                     do x = 1, A_interval%size
-                        do y = 1, B_interval%size
+                     do J = 1, batch_J%length 
+                        do x = 1, A_interval%size
+                           do y = 1, B_interval%size
 !  
-                            xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
-                            L_wx_J_full(x + A_interval%first - 1, y + B_interval%first - 1, J) = L_wx_J(xy_packed + AB_offset, J)
-                            L_wx_J_full(y + B_interval%first - 1, x + A_interval%first - 1, J) = L_wx_J(xy_packed + AB_offset, J)
+                              xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
+                              L_wx_J_full(x + A_interval%first - 1, y + B_interval%first - 1, J) = L_wx_J(xy_packed + AB_offset, J)
+                              L_wx_J_full(y + B_interval%first - 1, x + A_interval%first - 1, J) = L_wx_J(xy_packed + AB_offset, J)
 !  
+                           enddo
                         enddo
                      enddo
-                  enddo
 !$omp end parallel do
 !
                   endif
@@ -4174,6 +4201,8 @@ contains
          enddo
 !
          call mem%dealloc(L_wx_J, n_construct_aop, batch_J%length)
+!
+!        3. MO transform the AO Cholesky vector
 !
 !        E_p,xJ = C^T_p,w L_w,xJ 
 !
@@ -4217,16 +4246,22 @@ contains
 !
          call mem%dealloc(E_Jpx, batch_J%length, n_mo, solver%n_ao)
 !
-!        For the current batch of J's, write to file 
+!        4. Write the contribution to file for convenient reread once 
+!           all batches over J are done 
 !  
          L_J_padded = zero 
 !
          do q = 1, n_mo        
-            do p = 1, n_mo
+            do p = q, n_mo
 !
                Jbatch_pq_rec = batch_J%num_batches*((max(p, q)*(max(p, q)-3)/2) + p + q - 1) + current_J_batch
 !
-               L_J_padded(1 : batch_J%length) = L_Jpq(:, p, q)
+               do J = 1, batch_J%length
+!
+                  L_J_padded(J) = L_Jpq(J, p, q)
+!
+               enddo
+!
                write(mo_cholesky_tmp%unit, rec=Jbatch_pq_rec) L_J_padded(:)
 !
             enddo
@@ -4235,12 +4270,15 @@ contains
          call mem%dealloc(L_wx_J_full, solver%n_ao, solver%n_ao, batch_J%length)
          call mem%dealloc(L_Jpq, batch_J%length, n_mo, n_mo)
 !
-      enddo
+      enddo ! end of batches over J 
+!
+      deallocate(construct_sp)
 !
       call disk%close_file(solver%cholesky_ao_vectors)
       call disk%close_file(solver%cholesky_ao_vectors_info)
 !
-!     For a given pq, read all the Js, then store again 
+!     Finally, read in the transformed vectors and write them to 
+!     file using records most suited for eT MO integral handling
 !
       call solver%cholesky_mo_vectors%init('cholesky_mo_vectors', 'direct', &
                                              'unformatted', dp*solver%n_cholesky)
@@ -4250,9 +4288,9 @@ contains
       call mem%alloc(L_J, solver%n_cholesky)
 !
       do q = 1, n_mo
-         do p = 1, n_mo 
+         do p = q, n_mo 
 !
-!           Read all Js for given pq 
+!           - Read all Js for given pq 
 ! 
             do current_J_batch = 1, batch_J%num_batches
 !
@@ -4262,11 +4300,15 @@ contains
 !
                read(mo_cholesky_tmp%unit, rec=Jbatch_pq_rec) L_J_padded(:)
 !
-               L_J(batch_J%first : batch_J%last) = L_J_padded(1 : batch_J%length)
+               do J = 1, batch_J%length
+! 
+                  L_J(J + batch_J%first - 1) = L_J_padded(J)
+!
+               enddo
 !
             enddo
 !
-!           Write to pq record of MO Cholesky file  
+!           - Write to pq record of MO Cholesky file  
 !
             pq_rec = (max(p, q)*(max(p, q)-3)/2) + p + q
             write(solver%cholesky_mo_vectors%unit, rec=pq_rec) L_J(:)
@@ -4279,8 +4321,6 @@ contains
 !
       call mem%dealloc(L_J, solver%n_cholesky)
       call mem%dealloc(L_J_padded, batch_J%max_length)
-!
-      deallocate(construct_sp)
 !
       call cholesky_mo_timer%freeze()
       call cholesky_mo_timer%switch_off()
