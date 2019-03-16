@@ -141,12 +141,9 @@ contains
 !
       integer :: required_mem 
 !
-      return
       required_mem = (integrals%n_mo)**4 + (integrals%n_mo)**2*(integrals%n_J)
 !
       if ((required_mem .lt. mem%get_available()/(5*dp)) .or. allocated(integrals%g_pqrs)) then
-!
-         write(output%unit, *) 'constructing entire ERI!'
 !
          integrals%eri_t1_mem = .true.
 !

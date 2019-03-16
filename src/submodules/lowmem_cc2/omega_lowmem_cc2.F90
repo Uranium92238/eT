@@ -74,7 +74,6 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_abjc
 !
       integer :: b, j, c, i
-      integer :: bj, ci, bi, cj
 !
       integer :: req0, req1_b, req1_c, req2
 !
@@ -111,17 +110,12 @@ contains
                               batch_c%first, batch_c%last, &
                               1, wf%n_o)
 !
-!$omp parallel do schedule(static) private(i, j, c, b, bj, ci, bi, cj)
+!$omp parallel do schedule(static) private(i, j, c, b)
             do b = 1, (batch_b%length)
                do  j = 1, wf%n_o
                    do c = 1, (batch_c%length)
                       do i = 1, wf%n_o
-!
-                         bj = batch_b%length*(j-1) + b
-                         ci = batch_c%length*(i-1) + c
-                         bi = batch_b%length*(i-1) + b
-                         cj = batch_c%length*(j-1) + c
-!                        
+!                 
                          L_bjci(b,j,c,i) = -(two*g_bicj(b,i,c,j) - g_bicj(b,j,c,i))&
                                                                 /(eps_v(b + batch_b%first - 1)&
                                                                 + eps_v(c + batch_c%first - 1) &
@@ -136,7 +130,7 @@ contains
 !
             call mem%alloc(g_abjc, batch_b%length,wf%n_v, batch_c%length,wf%n_o)
 !
-            call wf%get_vvov(g_abjc,                       &
+            call wf%get_vvov(g_abjc,                        &
                               1, wf%n_v,                    &
                               batch_b%first, batch_b%last,  &
                               1, wf%n_o,                    &
@@ -147,7 +141,7 @@ contains
                         wf%n_o,                                   &
                         (batch_b%length)*(batch_c%length)*wf%n_o, &
                         one,                                      &
-                        g_abjc,                                  &
+                        g_abjc,                                   &
                         wf%n_v,                                   &
                         L_bjci,                                   &
                         (batch_b%length)*(batch_c%length)*wf%n_o, &
@@ -194,7 +188,6 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_kbji
 !
       integer :: a, b, j, k
-      integer :: aj, bk
 !
       integer :: req0, req1_b, req1_j, req1_k, req2_bj, req2_bk, req2_jk, req3
 !
@@ -242,14 +235,11 @@ contains
                                batch_b%first, batch_b%last, &
                                batch_k%first, batch_k%last)
 !
-!$omp parallel do schedule(static) private(k, j, a, b, aj, bk)
+!$omp parallel do schedule(static) private(k, j, a, b)
                do a = 1, wf%n_v
                   do j = 1, (batch_j%length)
                      do b = 1, (batch_b%length)
                         do k = 1, (batch_k%length)
-!
-                           aj = wf%n_v*(j-1) + a
-                           bk = (batch_b%length)*(k-1) + b
 !
                            g_ajbk(a,j,b,k) = - g_ajbk(a,j,b,k)/(eps_v(a) &
                                                    + eps_v(b + batch_b%first - 1)&
@@ -365,7 +355,6 @@ contains
       real(dp), dimension(:,:), allocatable :: F_bj
 !
       integer :: i, j, a, b
-      integer :: ai, aj, bi, bj
 !
       integer :: req0, req1_j, req1_i, req2, omega_offset
 !
@@ -405,12 +394,10 @@ contains
 !
 !           Construct u_aibj
 !
-!$omp parallel do schedule(static) private(i, j, a, b, ai, aj, bi, bj)
+!$omp parallel do schedule(static) private(i, j, a, b)
             do b = 1, wf%n_v 
                do j = 1, batch_j%length
-!
                   do i = 1, batch_i%length 
-!
                      do a = 1, wf%n_v
 !
                         u_aibj(a,i,b,j) = (-two*g_aibj(a,i,b,j)+g_aibj(b,i,a,j))/(eps_v(a) &
@@ -450,7 +437,7 @@ contains
                        F_bj,                         &
                        wf%n_v*(batch_j%length),      &
                        one,                          &
-                       omega(omega_offset),       &
+                       omega(omega_offset),          &
                        wf%n_v*wf%n_o)
 !        
             call mem%dealloc(u_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
