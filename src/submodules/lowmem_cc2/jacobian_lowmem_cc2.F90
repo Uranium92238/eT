@@ -42,8 +42,6 @@ contains
       real(dp), dimension(:), allocatable :: eps_o
       real(dp), dimension(:), allocatable :: eps_v
 !
-      integer :: i, a, ai ! Index
-!
 !     Allocate and zero the transformed vector (singles part)
 !
       call mem%alloc(rho_a_i, wf%n_v, wf%n_o)
