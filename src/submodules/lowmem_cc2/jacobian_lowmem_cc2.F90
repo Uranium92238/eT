@@ -50,18 +50,7 @@ contains
       rho_a_i = zero
 !
       call mem%alloc(c_a_i, wf%n_v, wf%n_o)
-!
-!$omp parallel do schedule(static) private(a, i, ai)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            c_a_i(a, i) = c(ai)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call dcopy(wf%n_t1, c, 1, c_a_i, 1)
 !
 !     :: CCS contributions to the singles c vector ::
 !
@@ -231,7 +220,7 @@ contains
             do j = 1, wf%n_o
                do b = 1, batch_b%length
 !
-                  c_jb(j, b) = c_bj( b + batch_b%first - 1, j)
+                  c_jb(j, b) = c_bj(b + batch_b%first - 1, j)
 !
                enddo
             enddo
@@ -473,7 +462,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
          enddo ! batch_c
       enddo ! batch_a
-!
 !
       call mem%dealloc(X_kc, wf%n_o, wf%n_v)
 !
@@ -1441,7 +1429,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
       implicit none
 !
       class(lowmem_cc2), intent(in) :: wf
-!
 !
       real(dp), intent(in) :: omega
 !
