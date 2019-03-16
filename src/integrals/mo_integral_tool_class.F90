@@ -35,6 +35,7 @@ module mo_integral_tool_class
    contains
 !
       procedure :: prepare                => prepare_mo_integral_tool
+      procedure :: cleanup                => cleanup_mo_integral_tool
 !
 !     Read MO Cholesky vectors 
 !
@@ -99,6 +100,25 @@ contains
    end subroutine prepare_mo_integral_tool
 !
 !
+   subroutine cleanup_mo_integral_tool(integrals)
+!!
+!!    Cleanup
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2019
+!!
+      implicit none 
+!
+      class(mo_integral_tool) :: integrals 
+!
+      if (allocated(integrals%g_pqrs)) then 
+!
+         call mem%dealloc(integrals%g_pqrs, integrals%n_mo, integrals%n_mo, &
+                                          integrals%n_mo, integrals%n_mo)
+!
+      endif
+!
+   end subroutine cleanup_mo_integral_tool
+!
+!
    subroutine can_we_keep_g_pqrs_t1_mo_integral_tool(integrals)
 !!
 !!    Can we keep g_pqrs   
@@ -121,9 +141,12 @@ contains
 !
       integer :: required_mem 
 !
+      return
       required_mem = (integrals%n_mo)**4 + (integrals%n_mo)**2*(integrals%n_J)
 !
       if ((required_mem .lt. mem%get_available()/(5*dp)) .or. allocated(integrals%g_pqrs)) then
+!
+         write(output%unit, *) 'constructing entire ERI!'
 !
          integrals%eri_t1_mem = .true.
 !
@@ -259,6 +282,7 @@ contains
 !
       real(dp), dimension(last_p-first_p+1,last_q-first_q+1,last_r-first_r+1,last_s-first_s+1), intent(out) :: g_pqrs 
 !
+      integer :: p, q, r, s
       integer :: dim_p, dim_q, dim_r, dim_s 
 !
       real(dp), dimension(:,:,:), allocatable :: L_J_pq, L_J_rs
@@ -266,19 +290,38 @@ contains
       if (.not. integrals%cholesky_t1_file) call output%error_msg('tried to construct T1-tranformed g_pqrs, but ' &
                                                          // 'the T1-transformed Cholesky vectors are not on file!')
 !
+      dim_p = last_p - first_p + 1
+      dim_q = last_q - first_q + 1
+      dim_r = last_r - first_r + 1
+      dim_s = last_s - first_s + 1
+!
       if (integrals%eri_t1_mem) then 
 !
-         g_pqrs(:,:,:,:) = integrals%g_pqrs(first_p : last_p,  &
-                                             first_q : last_q, &
-                                             first_r : last_r, &
-                                             first_s : last_s)
+!$omp parallel do private(s, r, q, p)
+         do s = 1, dim_s 
+            do r = 1, dim_r 
+               do q = 1, dim_q
+                  do p = 1, dim_p 
+!
+                     g_pqrs(p,q,r,s) = integrals%g_pqrs(p + first_p - 1,   &
+                                                         q + first_q - 1,  &
+                                                         r + first_r - 1,  &
+                                                         s + first_s - 1)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do 
+!
+   !      g_pqrs(:,:,:,:) = integrals%g_pqrs(first_p : last_p,  &
+   !                                          first_q : last_q, &
+   !                                          first_r : last_r, &
+   !                                          first_s : last_s)
 !
       else 
 !
-         dim_p = last_p - first_p + 1
-         dim_q = last_q - first_q + 1
-         dim_r = last_r - first_r + 1
-         dim_s = last_s - first_s + 1
+
 !
          call mem%alloc(L_J_pq, integrals%n_J, dim_p, dim_q)
          call mem%alloc(L_J_rs, integrals%n_J, dim_r, dim_s)
