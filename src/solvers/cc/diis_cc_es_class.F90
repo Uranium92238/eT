@@ -306,6 +306,9 @@ contains
 !
          enddo
 !
+         solver%energies = zero
+         call wf%read_excitation_energies(n_solutions_on_file, solver%energies(1:n_solutions_on_file))
+!
       endif
 !
 !     Enter iterative loop
@@ -356,8 +359,6 @@ contains
 !
                if (converged_residual(state) .and. iteration .eq. 1) then 
 !
-                  write(output%unit, '(/t3,a,i0,a)')  'Note: residual of state ', state, ' converged in first iteration.'
-                  write(output%unit, '(t3,a/)')       'Energy convergence has not been tested.'
                   converged(state) = .true.
 !
                endif
@@ -380,6 +381,15 @@ contains
 !
          enddo
 !
+!        Save excited states and excitation energies
+!
+         do state = 1, solver%n_singlet_states
+!
+            call wf%save_excited_state(X(:,state), state, solver%transformation)
+!
+         enddo 
+!
+         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
          prev_energies = solver%energies 
 !
          write(output%unit,'(t3,a)')  '----------------------------------------------'     
@@ -387,6 +397,13 @@ contains
       enddo 
 !
       if (all(converged)) then 
+!
+         if (iteration .eq. 1) then 
+!
+            write(output%unit, '(/t3,a,i0,a)')  'Note: residual of state ', state, ' converged in first iteration.'
+            write(output%unit, '(t3,a/)')       'Energy convergence has not been tested.'
+!
+         endif
 !
          write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
          call solver%print_summary(wf, X) 

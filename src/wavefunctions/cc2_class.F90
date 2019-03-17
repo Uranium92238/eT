@@ -83,8 +83,11 @@ module cc2_class
       procedure :: get_cvs_projector                           => get_cvs_projector_cc2
 !
       procedure :: initialize_files                            => initialize_files_cc2
+      procedure :: initialize_doubles_files                    => initialize_doubles_files_cc2
 !
-      procedure :: read_excited_state                          => read_excited_state_cc2
+      procedure :: save_doubles_vector                         => save_doubles_vector_cc2
+      procedure :: read_doubles_vector                         => read_doubles_vector_cc2
+!
       procedure :: restart_excited_state                       => restart_excited_state_cc2
       procedure :: save_excited_state                          => save_excited_state_cc2
       procedure :: is_restart_safe                             => is_restart_safe_cc2
@@ -515,6 +518,69 @@ contains
    end subroutine get_cvs_projector_cc2
 !
 !
+   subroutine save_doubles_vector_cc2(wf, X, n, file_)
+!!
+!!    Save doubles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
+!!
+!!    Writes doubles vector "X" to the sequential
+!!    and unformatted file "file_".
+!!    
+!!    NB! If n = 1, then the routine WILL REWIND the file before writing,
+!!    thus DELETING every record in the file. For n >=2, we just append to
+!!    the file. The purpose of this setup is that the files should be saved in 
+!!    the correct order, from n = 1 to n = # states.
+!!
+      implicit none 
+!
+      class(cc2), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_t2), intent(in) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      type(file) :: file_
+!
+      call disk%open_file(file_, 'write', 'append')
+!
+      if (n .eq. 1) rewind(file_%unit)
+!
+      write(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine save_doubles_vector_cc2
+!
+!
+   subroutine read_doubles_vector_cc2(wf, X, n, file_)
+!!
+!!    Read doubles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
+!!
+!!    Reads doubles vector "X" from the "n"'th line
+!!    of the sequential and unformatted file "file_".
+!!
+      implicit none 
+!
+      class(cc2), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_t2), intent(out) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      type(file) :: file_
+!
+      call disk%open_file(file_, 'read')
+!
+      call file_%prepare_to_read_line(n)
+!
+      read(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine read_doubles_vector_cc2
+!
+!
    subroutine save_excited_state_cc2(wf, X, n, side)
 !!
 !!    Save excited state 
@@ -543,39 +609,13 @@ contains
 !
       if (trim(side) == 'right') then 
 !
-         call disk%open_file(wf%r1_file, 'write', 'append')
-         call disk%open_file(wf%r2_file, 'write', 'append')
-!
-         if (n .eq. 1) then 
-!
-            rewind(wf%r1_file%unit)
-            rewind(wf%r2_file%unit)
-!
-         endif 
-!
-         write(wf%r1_file%unit) X(1 : wf%n_t1)
-         write(wf%r2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
-!
-         call disk%close_file(wf%r1_file)
-         call disk%close_file(wf%r2_file)
+         call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
+         call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
 !
       elseif (trim(side) == 'left') then 
 !
-         call disk%open_file(wf%l1_file, 'write', 'append')
-         call disk%open_file(wf%l2_file, 'write', 'append')
-!
-         if (n .eq. 1) then 
-!
-            rewind(wf%l1_file%unit)
-            rewind(wf%l2_file%unit)
-!
-         endif 
-!
-         write(wf%l1_file%unit) X(1 : wf%n_t1)
-         write(wf%l2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
-!
-         call disk%close_file(wf%l1_file)
-         call disk%close_file(wf%l2_file)
+         call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
+         call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
 !
       else
 !
@@ -584,87 +624,6 @@ contains
       endif
 !
    end subroutine save_excited_state_cc2
-!
-!
-   subroutine read_excited_state_cc2(wf, X, n, side)
-!!
-!!    Read excited state 
-!!    Written by Eirik F. Kjønstad, Mar 2019 
-!!
-!!    Reads an excited state to disk. Since this routine is used by 
-!!    solvers, it returns the vector in the full space. Thus, we open 
-!!    files for singles, doubles, etc., paste them together, and return 
-!!    the result in X.
-!!
-!!    NB! This will place the cursor of the file at position n + 1.
-!!    Be cautious when using this in combination with writing to the files.
-!!    We recommend to separate these tasks---write all states or read all
-!!    states; don't mix if you can avoid it.
-!!
-!!    Note: for CC2 (highmem), we implement an exception to restart. 
-!!    We will allow restart from excited state CCS and CC2 (lowmem), 
-!!    even though these have fewer excited state amplitudes. Only the 
-!!    singles part of the excited states are then read upon restart. 
-!!
-      implicit none 
-!
-      class(cc2), intent(inout) :: wf 
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
-!
-      call wf%is_restart_safe('excited state')
-!
-      if (trim(side) == 'right') then 
-!
-         call disk%open_file(wf%r1_file, 'read')
-         call wf%r1_file%prepare_to_read_line(n)
-         read(wf%r1_file%unit) X(1 : wf%n_t1)
-         call disk%close_file(wf%r1_file)
-!
-         if (wf%r2_file%file_exists()) then
-!
-            call disk%open_file(wf%r2_file, 'read')
-            call wf%r2_file%prepare_to_read_line(n)
-            read(wf%r2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
-            call disk%close_file(wf%r2_file)
-!
-         else
-!
-            X(wf%n_t1 + 1 : wf%n_es_amplitudes) = zero
-!
-         endif
-!
-      elseif (trim(side) == 'left') then 
-!
-         call disk%open_file(wf%l1_file, 'read')
-         call wf%l1_file%prepare_to_read_line(n)
-         read(wf%l1_file%unit) X(1 : wf%n_t1)
-         call disk%close_file(wf%l1_file)
-!
-         if (wf%l2_file%file_exists()) then
-!
-            call disk%open_file(wf%l2_file, 'read')
-            call wf%l2_file%prepare_to_read_line(n)
-            read(wf%l2_file%unit) X(wf%n_t1 + 1 : wf%n_es_amplitudes)
-            call disk%close_file(wf%l2_file)
-!
-         else
-!
-            X(wf%n_t1 + 1 : wf%n_es_amplitudes) = zero
-!
-         endif
-!
-      else
-!
-         call output%error_msg('Tried to read an excited state, but argument side not recognized: ' // side)
-!
-      endif
-!
-   end subroutine read_excited_state_cc2
 !
 !
    subroutine restart_excited_state_cc2(wf, X, n, side)
@@ -691,14 +650,24 @@ contains
 !
       real(dp), dimension(:), allocatable :: omega
 !
-      call wf%read_excited_state(X, n, side)
+      call wf%is_restart_safe('excited state')
 !
 !     Check if we have read doubles vectors.
 !     If not, set up doubles.
 !
       if (trim(side) == 'right') then 
 !
-        if (.not. wf%r2_file%file_exists()) then
+!        Read singles vector
+!
+         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
+!
+!        Read or construct doubles vector
+!
+         if (wf%r2_file%file_exists()) then
+!
+            call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
+!
+         else
 !
 !           Construct r2 from r1
 !
@@ -751,7 +720,17 @@ contains
 !
       elseif (trim(side) == 'left') then
 !
-         if (.not. wf%l2_file%file_exists()) then
+!        Read singles vector
+!
+         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
+!
+!        Read or construct doubles vector
+!
+         if (wf%l2_file%file_exists()) then
+!
+            call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
+!
+         else
 !
 !           Construct l2 from l1
 !
@@ -872,20 +851,26 @@ contains
 !!
       class(cc2) :: wf 
 !
-      call wf%t1_file%init('t1', 'sequential', 'unformatted')
-      call wf%t1bar_file%init('t1bar', 'sequential', 'unformatted')
-!
-      call wf%l1_file%init('l1', 'sequential', 'unformatted')
-      call wf%l2_file%init('l2', 'sequential', 'unformatted')
-!
-      call wf%r1_file%init('r1', 'sequential', 'unformatted')
-      call wf%r2_file%init('r2', 'sequential', 'unformatted')
-!
-      call wf%excitation_energies_file%init('excitation_energies', 'sequential', 'unformatted')
-!
-      call wf%restart_file%init('cc_restart_file', 'sequential', 'unformatted')
+      call wf%initialize_cc_files()
+      call wf%initialize_singles_files()
+      call wf%initialize_doubles_files()
 !
    end subroutine initialize_files_cc2
+!
+!
+   subroutine initialize_doubles_files_cc2(wf)
+!!
+!!    Initialize doubles files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      class(cc2) :: wf 
+!
+      call wf%l2_file%init('l2', 'sequential', 'unformatted')
+!
+      call wf%r2_file%init('r2', 'sequential', 'unformatted')
+!
+   end subroutine initialize_doubles_files_cc2
+!
 !
 !
 end module cc2_class

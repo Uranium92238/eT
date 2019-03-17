@@ -205,7 +205,7 @@ contains
 !
          write(output%unit, '(/t6,a21,i2)')    'Electronic state nr. ', state
 !
-         call davidson%read_solution(r, state)         
+         call davidson%construct_X(r, state)         
 !
          write(output%unit, '(/t6,a30,f15.12)')  'Energy (Hartree):             ', davidson%get_eigenvalue(state)
          write(output%unit, '(t6,a30,f15.12)') 'Fraction singles (|r1|/|r|):  ', &
@@ -321,9 +321,13 @@ contains
 !
          davidson%n_new_trials = 0
 !
+         call mem%alloc(X, wf%n_es_amplitudes)
+!
          do solution = 1, solver%n_singlet_states
 !
             call davidson%construct_next_trial_vec(residual_norm, solution)
+            call davidson%construct_X(X, solution)
+            call wf%save_excited_state(X, solution, solver%transformation)
 !
             write(output%unit,'(t3,i2,5x,f16.12,7x,f16.12,11x,e11.4)') &
             solution, davidson%omega_re(solution, 1), davidson%omega_im(solution, 1), residual_norm
@@ -332,6 +336,8 @@ contains
             if (residual_norm .gt. solver%residual_threshold) converged_residual = .false.
 !
          enddo
+!
+         call mem%dealloc(X, wf%n_es_amplitudes)
 !
          write(output%unit,'(t3,a)') '-------------------------------------------------------------------'
 !
@@ -356,9 +362,11 @@ contains
 !
          endif
 !
-!        Update energies
+!        Update energies and save them
 !
          solver%energies = davidson%omega_re
+!
+         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
 !
 !        Test for total convergence
 !
@@ -397,7 +405,7 @@ contains
 !
          do solution = 1, solver%n_singlet_states
 !
-            call davidson%read_solution(X, solution)
+            call davidson%construct_X(X, solution)
             call wf%save_excited_state(X, solution, solver%transformation)
 !
          enddo
