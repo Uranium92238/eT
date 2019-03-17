@@ -217,7 +217,11 @@ contains
          read(input%unit, '(a100)') line
          line = remove_preceding_blanks(line)
 !
-         if (line(1:13) == 'dipole length') then
+         if (line(1:9) == 'operator:') then
+!
+            read(line(10:100), *) solver%operator_type
+!
+         elseif (line(1:13) == 'dipole length') then
 !
             solver%operator_type = 'dipole_length'
 !        

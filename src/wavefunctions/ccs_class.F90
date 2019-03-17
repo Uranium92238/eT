@@ -698,7 +698,7 @@ contains
 !
       call disk%open_file(wf%excitation_energies_file, 'write', 'rewind')
 !
-      !rewind(wf%excitation_energies_file%unit) ! DEBUG 
+      rewind(wf%excitation_energies_file%unit) ! DEBUG 
 !
       write(wf%excitation_energies_file%unit) n_states
       write(wf%excitation_energies_file%unit) energies
@@ -5013,7 +5013,7 @@ contains
       S  = T_l * T_r
 !
 ! --- DEBUG F-transformation
-      call wf%F_transform_vector(R_n)
+      !call wf%F_transform_vector(R_n)
       !write(output%unit,'(t6,a,f19.10)') 'F-transformed R vector norm = ', &
       !ddot(wf%n_es_amplitudes, R_n, 1, R_n, 1)
 !

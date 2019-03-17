@@ -188,19 +188,11 @@ contains
       wf%n_ao        = wf%system%get_n_aos()
       wf%n_densities = 1
 !
-!<<<<<<< HEAD
-!      call initialize_coulomb()
-!      call initialize_kinetic()
-!      call initialize_nuclear()
-!      call initialize_overlap()
-      !call initialize_dipole()
-!=======
       call initialize_coulomb_c()
       call initialize_kinetic_c()
       call initialize_nuclear_c()
       call initialize_overlap_c()
       call initialize_dipole()
-!>>>>>>> feadc9e97efbaf4bd11d0ab9fa937d2aa6dd0263
 !
       call wf%set_n_mo()
 !

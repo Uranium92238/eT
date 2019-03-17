@@ -402,7 +402,7 @@ contains
 !
          enddo
 !
-         !call wf%save_excitation_energies(solver%n_singlet_states, solver%energies) ! DEBUG
+         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies) ! DEBUG
 !
       elseif (.not. converged ) then
 !
