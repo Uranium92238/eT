@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 submodule (ccsd_class) jacobian_transpose_ccsd
 !
 !!
@@ -2417,7 +2436,7 @@ contains
 !
 !     Reorder to t_cldk = t_kl^cd = t_ckdl
 !
-      call mem%alloc(t_cldk, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+      call mem%alloc(t_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call sort_1234_to_1432(t_ckdl, t_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -2492,7 +2511,7 @@ contains
                   X_c_b,                &
                   wf%n_v)
 !
-      call mem%dealloc(t_cldk, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+      call mem%dealloc(t_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(L_ldkb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     Reorder to b_aijc = b_aicj

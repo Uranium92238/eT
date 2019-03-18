@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 program eT_program
 !
 !!
@@ -17,11 +36,11 @@ program eT_program
    use uhf_class
    use mlhf_class
 !
-  use ccs_class
-  use cc2_class
-  use lowmem_cc2_class
-  use cc3_class
-  use mp2_class
+   use ccs_class
+   use cc2_class
+   use lowmem_cc2_class
+   use cc3_class
+   use mp2_class
 !
    use io_eT_program
 !
@@ -31,7 +50,7 @@ program eT_program
    use multipliers_engine_class
    use abstract_engine_class
 !
-   use eri_cd_solver_class
+   use eri_cd_class
 !
    implicit none
 !
@@ -59,7 +78,7 @@ program eT_program
 !
 !  Cholesky decomposition solver 
 !
-   type(eri_cd_solver), allocatable :: chol_solver
+   type(eri_cd), allocatable :: chol_solver
 !
 !  Engines
 !
@@ -109,13 +128,13 @@ program eT_program
    write(output%unit,'(/t3, a)')     '----------------------------------------------------------------------------------'
    write(output%unit,'(t4, a, a)')    'Author:                ','Contribution(s):'
    write(output%unit,'(t3, a)')      '----------------------------------------------------------------------------------'
-   write(output%unit,'(t4, a, a)')    'Sarai. D. Folkestad    ','Program design, HF, CCS, CC2, CCSD, Libint-interface,'
+   write(output%unit,'(t4, a, a)')    'Sarai D. Folkestad     ','Program design, HF, CCS, CC2, CCSD, Libint-interface,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS'
-   write(output%unit,'(t4, a, a)')    'Linda Golletto         ','CC2'
+   write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
    write(output%unit,'(t4, a, a)')    'Eirik. F. Kjønstad     ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
    write(output%unit,'(t4, a, a)')    'Rolf. H. Myhre         ','CC3, Runtest-interface, Launch script'
-   write(output%unit,'(t4, a, a)')    'Alex Paul              ','CC2'
+   write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2'
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
    write(output%unit,'(t3,a/)')      '----------------------------------------------------------------------------------'
    flush(output%unit)
@@ -199,7 +218,7 @@ program eT_program
          call gs_hf_engine%run(ref_wf)     
          call gs_hf_engine%cleanup()     
 !
-         deallocate(gs_hf_engine)   
+         deallocate(gs_hf_engine)  
 !
       endif
 !
@@ -210,6 +229,8 @@ program eT_program
    if (requested_method('mlhf')) n_methods = n_methods - 1
    if (requested_method('hf'))   n_methods = n_methods - 1
    if (requested_method('uhf'))  n_methods = n_methods - 1
+!
+   if (n_methods .eq. 0) call ref_wf%cleanup()
 !
    if (n_methods .gt. 0) then
 !

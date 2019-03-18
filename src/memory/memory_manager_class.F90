@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module memory_manager_class
 !
 !!
@@ -109,7 +128,8 @@ module memory_manager_class
       procedure :: read_settings  => read_settings_memory_manager
       procedure :: print_settings => print_settings_memory_manager
 !
-      procedure :: get_available  => get_available_memory_manager
+      procedure :: get_available   => get_available_memory_manager
+      procedure :: print_available => print_available_memory_manager
 !
    end type memory_manager
 !
@@ -163,6 +183,21 @@ contains
       get_available_memory_manager = mem%available
 !
    end function get_available_memory_manager
+!
+!
+   subroutine print_available_memory_manager(mem)
+!!
+!!    Get available  
+!!    Written by Eirik F. Kjønstad, Jan 2019 
+!!
+      implicit none 
+!
+      class(memory_manager), intent(in) :: mem 
+!
+      write(output%unit, '(t3, a38, i5, a)') 'Currently available memory:     ', &
+                         mem%available/1000000, ' MB'
+!
+   end subroutine print_available_memory_manager
 !
 !
    subroutine alloc_1_memory_manager(mem, array, M)
@@ -1081,7 +1116,8 @@ contains
 !
       class(memory_manager) :: mem
 !
-      write(output%unit, '(t3, a38, i5, a)') 'Memory available for calculation:     ', mem%total/1000000000, ' GB'
+      write(output%unit, '(t3, a38, i5, a)') 'Memory available for calculation:     ', &
+                         mem%total/1000000000, ' GB'
 !
    end subroutine print_settings_memory_manager
 !

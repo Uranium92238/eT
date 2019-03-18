@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module uhf_class
 !
 !!
@@ -40,6 +59,7 @@ module uhf_class
 !     Preparation routines 
 !
       procedure :: prepare                           => prepare_uhf
+!
       procedure :: determine_n_alpha_and_n_beta      => determine_n_alpha_and_n_beta_uhf
       procedure :: read_settings                     => read_settings_uhf
       procedure :: read_uhf_settings                 => read_uhf_settings_uhf
@@ -75,6 +95,8 @@ module uhf_class
       procedure :: print_orbital_energies            => print_orbital_energies_uhf
       procedure :: save_orbital_coefficients         => save_orbital_coefficients_uhf
       procedure :: read_orbital_coefficients         => read_orbital_coefficients_uhf
+      procedure :: save_orbital_energies             => save_orbital_energies_uhf
+      procedure :: read_orbital_energies             => read_orbital_energies_uhf
 !
 !     Gradients and Hessians (todo)
 !
@@ -151,6 +173,8 @@ contains
       endif
 !
       call wf%orbital_coefficients_file%init('orbital_coefficients', 'sequential', 'unformatted')
+      call wf%orbital_energies_file%init('orbital_energies', 'sequential', 'unformatted')
+      call wf%restart_file%init('hf_restart_file', 'sequential', 'unformatted')
 !
    end subroutine prepare_uhf
 !
@@ -254,6 +278,8 @@ contains
 !
       class(uhf), intent(inout) :: wf 
 !
+      call wf%is_restart_safe()
+!
       call disk%open_file(wf%orbital_coefficients_file, 'read', 'rewind')
 !
       read(wf%orbital_coefficients_file%unit) wf%orbital_coefficients_a 
@@ -262,6 +288,46 @@ contains
       call disk%close_file(wf%orbital_coefficients_file)
 !
    end subroutine read_orbital_coefficients_uhf
+!
+!
+   subroutine save_orbital_energies_uhf(wf)
+!!
+!!    Save orbital energies 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(uhf), intent(inout) :: wf 
+!
+      call disk%open_file(wf%orbital_energies_file, 'write', 'rewind')
+!
+      write(wf%orbital_energies_file%unit) wf%orbital_energies_a 
+      write(wf%orbital_energies_file%unit) wf%orbital_energies_b
+!
+      call disk%close_file(wf%orbital_energies_file)
+!
+   end subroutine save_orbital_energies_uhf
+!
+!
+   subroutine read_orbital_energies_uhf(wf)
+!!
+!!    Save orbital energies 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(uhf), intent(inout) :: wf 
+!
+      call wf%is_restart_safe()
+!
+      call disk%open_file(wf%orbital_energies_file, 'read', 'rewind')
+!
+      read(wf%orbital_energies_file%unit) wf%orbital_energies_a 
+      read(wf%orbital_energies_file%unit) wf%orbital_energies_b
+!
+      call disk%close_file(wf%orbital_energies_file)
+!
+   end subroutine read_orbital_energies_uhf
 !
 !
    subroutine get_packed_roothan_hall_gradient_uhf(wf, G)

@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module ccs_class
 !
 !!
@@ -31,6 +50,11 @@ module ccs_class
       real(dp), dimension(:,:), allocatable  :: t1
       real(dp), dimension(:,:), allocatable  :: t1bar
 !
+      type(file) :: t1_file, t1bar_file 
+      type(file) :: r1_file, l1_file
+      type(file) :: excitation_energies_file
+      type(file) :: restart_file
+!
       real(dp), dimension(:,:), allocatable  :: fock_ij
       real(dp), dimension(:,:), allocatable  :: fock_ia
       real(dp), dimension(:,:), allocatable  :: fock_ai
@@ -49,6 +73,10 @@ module ccs_class
       procedure :: prepare                                     => prepare_ccs
       procedure :: cleanup                                     => cleanup_ccs
 !
+      procedure :: initialize_files                            => initialize_files_ccs
+      procedure :: initialize_cc_files                         => initialize_cc_files_ccs
+      procedure :: initialize_singles_files                    => initialize_singles_files_ccs
+!
 !     Routines related to the amplitudes & multipliers
 !
       procedure :: initialize_amplitudes                       => initialize_amplitudes_ccs
@@ -59,12 +87,22 @@ module ccs_class
       procedure :: get_amplitudes                              => get_amplitudes_ccs
       procedure :: save_amplitudes                             => save_amplitudes_ccs
       procedure :: read_amplitudes                             => read_amplitudes_ccs
-      procedure :: save_t1                                     => save_t1_ccs
-      procedure :: read_t1                                     => read_t1_ccs
+!
       procedure :: print_dominant_x_amplitudes                 => print_dominant_x_amplitudes_ccs
       procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccs
       procedure :: print_dominant_x1                           => print_dominant_x1_ccs
       procedure :: get_t1_diagnostic                           => get_t1_diagnostic_ccs
+!
+      procedure :: save_singles_vector                         => save_singles_vector_ccs
+      procedure :: read_singles_vector                         => read_singles_vector_ccs
+!
+      procedure :: save_excited_state                          => save_excited_state_ccs
+      procedure :: restart_excited_state                       => restart_excited_state_ccs
+      procedure :: get_n_excited_states_on_file                => get_n_excited_states_on_file_ccs
+!
+      procedure :: save_excitation_energies                    => save_excitation_energies_ccs
+      procedure :: read_excitation_energies                    => read_excitation_energies_ccs
+      procedure :: get_n_excitation_energies_on_file           => get_n_excitation_energies_on_file_ccs
 !
       procedure :: initialize_multipliers                      => initialize_multipliers_ccs
       procedure :: destruct_multipliers                        => destruct_multipliers_ccs
@@ -72,8 +110,7 @@ module ccs_class
       procedure :: get_multipliers                             => get_multipliers_ccs
       procedure :: save_multipliers                            => save_multipliers_ccs
       procedure :: read_multipliers                            => read_multipliers_ccs
-      procedure :: save_t1bar                                  => save_t1bar_ccs
-      procedure :: read_t1bar                                  => read_t1bar_ccs
+      procedure :: is_restart_safe                             => is_restart_safe_ccs
 !
 !     Routines related to the Fock matrix
 !
@@ -208,6 +245,8 @@ contains
       call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
 !
+      call wf%initialize_files()
+!
    end subroutine prepare_ccs
 !
 !
@@ -223,6 +262,65 @@ contains
       write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
 !
    end subroutine cleanup_ccs
+!
+!
+   subroutine initialize_files_ccs(wf)
+!!
+!!    Initialize files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Initializes the wavefucntion files for wavefunction parameters.
+!!
+      class(ccs) :: wf 
+!
+      call wf%initialize_singles_files()
+      call wf%initialize_cc_files()
+!
+   end subroutine initialize_files_ccs
+!
+!
+   subroutine initialize_singles_files_ccs(wf)
+!!
+!!    Initialize singles files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      class(ccs) :: wf 
+!
+      call wf%t1_file%init('t1', 'sequential', 'unformatted')
+      call wf%t1bar_file%init('t1bar', 'sequential', 'unformatted')
+!
+      call wf%r1_file%init('r1', 'sequential', 'unformatted')
+      call wf%l1_file%init('l1', 'sequential', 'unformatted')
+!
+      call wf%excitation_energies_file%init('excitation_energies', 'sequential', 'unformatted')
+!
+   end subroutine initialize_singles_files_ccs
+!
+!
+   subroutine initialize_cc_files_ccs(wf)
+!!
+!!    Initialize singles files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      class(ccs) :: wf 
+!
+      call wf%restart_file%init('cc_restart_file', 'sequential', 'unformatted')
+!
+!     Write information to restart file 
+!
+      call disk%open_file(wf%restart_file, 'write', 'rewind')
+!
+      write(wf%restart_file%unit) wf%n_o 
+      write(wf%restart_file%unit) wf%n_v 
+      write(wf%restart_file%unit) wf%n_gs_amplitudes 
+      write(wf%restart_file%unit) wf%n_es_amplitudes 
+!
+      call disk%close_file(wf%restart_file)
+!
+!
+      call wf%excitation_energies_file%init('excitation_energies', 'sequential', 'unformatted')
+!
+   end subroutine initialize_cc_files_ccs
 !
 !
    subroutine initialize_amplitudes_ccs(wf)
@@ -315,9 +413,14 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf 
 !
-      call wf%save_t1()
+      call disk%open_file(wf%t1_file, 'write')
+      rewind(wf%t1_file%unit)
+!
+      write(wf%t1_file%unit) wf%t1 
+!
+      call disk%close_file(wf%t1_file)
 !
    end subroutine save_amplitudes_ccs
 !
@@ -331,142 +434,395 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      call wf%read_t1()
+      call wf%is_restart_safe('ground state')
+!
+      call disk%open_file(wf%t1_file, 'read', 'rewind')
+!
+      read(wf%t1_file%unit) wf%t1 
+!
+      call disk%close_file(wf%t1_file)
 !
    end subroutine read_amplitudes_ccs
 !
 !
-   subroutine read_t1_ccs(wf)
-!!
-!!    Read t1
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-      implicit none
-!
-      class(ccs), intent(inout) :: wf
-!
-      type(file) :: t1_file
-!
-      call t1_file%init('t1', 'sequential', 'unformatted')
-!
-      call disk%open_file(t1_file, 'read', 'rewind')
-!
-      read(t1_file%unit) wf%t1
-!
-      call disk%close_file(t1_file)
-!
-   end subroutine read_t1_ccs
-!
-!
-   subroutine save_t1_ccs(wf)
-!!
-!!    Save t1
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      type(file) :: t1_file
-!
-      call t1_file%init('t1', 'sequential', 'unformatted')
-!
-      call disk%open_file(t1_file, 'write', 'rewind')
-!
-      write(t1_file%unit) wf%t1
-!
-      call disk%close_file(t1_file)
-!
-   end subroutine save_t1_ccs
-!
-!
    subroutine save_multipliers_ccs(wf)
 !!
-!!    Save multipliers
+!!    Save multipliers 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf 
 !
-      call wf%save_t1bar()
+      call disk%open_file(wf%t1bar_file, 'write', 'rewind')
+!
+      write(wf%t1bar_file%unit) wf%t1bar 
+!
+      call disk%close_file(wf%t1bar_file)
 !
    end subroutine save_multipliers_ccs
 !
 !
    subroutine read_multipliers_ccs(wf)
 !!
-!!    Read multipliers
+!!    Read multipliers 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none
+      implicit none 
 !
-      class(ccs), intent(inout) :: wf
+      class(ccs), intent(inout) :: wf 
 !
-      call wf%read_t1bar()
+      call wf%is_restart_safe('ground state')
+!
+      call disk%open_file(wf%t1bar_file, 'read', 'rewind')
+!
+      read(wf%t1bar_file%unit) wf%t1bar
+!
+      call disk%close_file(wf%t1bar_file)
 !
    end subroutine read_multipliers_ccs
 !
 !
-   subroutine destruct_multipliers_ccs(wf)
+   subroutine is_restart_safe_ccs(wf, task)
 !!
-!!    Destruct multipliers
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!    Is restart safe?
+!!    Written by Eirik F. Kjønstad, Mar 2019 
 !!
-!!    Deallocates the multipliers. This routine must be overwritten in
-!!    descendants which have more multipliers.
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      character(len=*), intent(in) :: task 
+!
+      integer :: n_o, n_v, n_gs_amplitudes, n_es_amplitudes
+!
+      call disk%open_file(wf%restart_file, 'read', 'rewind')
+!
+      read(wf%restart_file%unit) n_o
+      read(wf%restart_file%unit) n_v
+      read(wf%restart_file%unit) n_gs_amplitudes
+      read(wf%restart_file%unit) n_es_amplitudes
+!
+      call disk%close_file(wf%restart_file)
+!
+      if (n_o .ne. wf%n_o) call output%error_msg('attempted to restart from inconsistent number ' // &
+                                                   'of occupied orbitals.')
+!
+      if (n_v .ne. wf%n_v) call output%error_msg('attempted to restart from inconsistent number ' // &
+                                                   'of virtual orbitals.')
+!
+      if (trim(task) == 'ground state') then 
+!
+         if (n_gs_amplitudes .ne. wf%n_gs_amplitudes) &
+            call output%error_msg('attempted to restart from inconsistent number ' // &
+                                    'of ground state amplitudes.')    
+!
+      elseif (trim(task) == 'excited state') then    
+!
+         if (n_es_amplitudes .ne. wf%n_es_amplitudes) &
+            call output%error_msg('attempted to restart from inconsistent number ' // &
+                                    'of excited state amplitudes.')     
+!
+      else
+!
+         call output%error_msg('attempted to restart, but the task was not recognized: ' // task)
+!
+      endif   
+!
+   end subroutine is_restart_safe_ccs
+!
+!
+   subroutine save_singles_vector_ccs(wf, X, n, file_)
+!!
+!!    Save singles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
+!!
+!!    Writes singles vector "X" to the sequential
+!!    and unformatted file "file_".
+!!    
+!!    NB! If n = 1, then the routine WILL REWIND the file before writing,
+!!    thus DELETING every record in the file. For n >=2, we just append to
+!!    the file. The purpose of this setup is that the files should be saved in 
+!!    the correct order, from n = 1 to n = # states.
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(inout) :: wf 
 !
-      call wf%destruct_t1bar()
+      real(dp), dimension(wf%n_t1), intent(in) :: X 
 !
-   end subroutine destruct_multipliers_ccs
+      integer, intent(in) :: n ! state number 
+!
+      type(file) :: file_
+!
+      call disk%open_file(file_, 'write', 'append')
+!
+      if (n .eq. 1) rewind(file_%unit)
+!
+      write(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine save_singles_vector_ccs
 !
 !
-   subroutine save_t1bar_ccs(wf)
+   subroutine read_singles_vector_ccs(wf, X, n, file_)
 !!
-!!    Save t1bar
-!!    Written by Eirik F. Kjønstad, Oct 2018
+!!    Read singles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
 !!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      type(file) :: t1bar_file
-!
-      call t1bar_file%init('t1bar', 'sequential', 'unformatted')
-!
-      call disk%open_file(t1bar_file, 'write', 'rewind')
-!
-      write(t1bar_file%unit) wf%t1bar
-!
-      call disk%close_file(t1bar_file)
-!
-   end subroutine save_t1bar_ccs
-!
-!
-   subroutine read_t1bar_ccs(wf)
-!!
-!!    Save t1bar
-!!    Written by Eirik F. Kjønstad, Oct 2018
+!!    Reads singles vector "X" from the "n"'th line
+!!    of the sequential and unformatted file "file_".
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      type(file) :: t1bar_file
+      real(dp), dimension(wf%n_t1), intent(out) :: X 
 !
-      call t1bar_file%init('t1bar', 'sequential', 'unformatted')
+      integer, intent(in) :: n ! state number 
 !
-      call disk%open_file(t1bar_file, 'read', 'rewind')
+      type(file) :: file_
 !
-      read(t1bar_file%unit) wf%t1bar
+      call disk%open_file(file_, 'read')
 !
-      call disk%close_file(t1bar_file)
+      call file_%prepare_to_read_line(n)
 !
-   end subroutine read_t1bar_ccs
+      read(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine read_singles_vector_ccs
+!
+!
+   subroutine save_excited_state_ccs(wf, X, n, side)
+!!
+!!    Save excited state 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Saves an excited state to disk. 
+!!    Since the solvers  keep these vectors in full length, 
+!!    we receive a vector in full length (n_es_amplitudes), 
+!!    and then distribute the different parts of that vector 
+!!    to singles, doubles, etc., files (if there are doubles, etc.).
+!!
+!!    NB! If n = 1, then the routine WILL REWIND the file before writing,
+!!    thus DELETING every record in the file. For n >=2, we just append to
+!!    the file. The purpose of this setup is that the files should be saved in 
+!!    the correct order, from n = 1 to n = # states.
+!!
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      if (trim(side) == 'right') then 
+!
+         call wf%save_singles_vector(X, n, wf%r1_file)
+!
+      elseif (trim(side) == 'left') then 
+!
+         call wf%save_singles_vector(X, n, wf%l1_file)
+!
+      else
+!
+         call output%error_msg('Tried to save an excited state, but argument side not recognized: ' // side)
+!
+      endif
+!
+   end subroutine save_excited_state_ccs
+!
+!
+   subroutine restart_excited_state_ccs(wf, X, n, side)
+!!
+!!    Restart excited state 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Reads an excited state to disk. Since this routine is used by 
+!!    solvers, it returns the vector in the full space. Thus, we open 
+!!    files for singles, doubles, etc., paste them together, and return 
+!!    the result in X.
+!!
+!!    NB! This will place the cursor of the file at position n + 1.
+!!    Be cautious when using this in combination with writing to the files.
+!!    We recommend to separate these tasks---write all states or read all
+!!    states; don't mix if you can avoid it.
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      call wf%is_restart_safe('excited state')
+!
+      if (trim(side) == 'right') then 
+!
+         call wf%read_singles_vector(X, n, wf%r1_file)
+!
+      elseif (trim(side) == 'left') then 
+!
+         call wf%read_singles_vector(X, n, wf%l1_file)
+!
+      else
+!
+         call output%error_msg('Tried to read an excited state, but argument side not recognized: ' // side)
+!
+      endif
+!
+   end subroutine restart_excited_state_ccs
+!
+!
+   subroutine save_excitation_energies_ccs(wf, n_states, energies)
+!!
+!!    Save excitation energies 
+!!    Written by Sarai D. Folkestad, Mar 2019 
+!!
+!!    Saves 'n_states' excitation energies to disk. 
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      integer, intent(in) :: n_states ! number of states
+!
+      real(dp), dimension(n_states), intent(in) :: energies
+!
+      call disk%open_file(wf%excitation_energies_file, 'write', 'rewind')
+!
+      rewind(wf%excitation_energies_file%unit)
+!
+      write(wf%excitation_energies_file%unit) n_states
+      write(wf%excitation_energies_file%unit) energies
+!
+      call disk%close_file(wf%excitation_energies_file, 'keep')
+!     
+   end subroutine save_excitation_energies_ccs
+!
+!
+   integer function get_n_excitation_energies_on_file_ccs(wf)
+!!
+!!    Read n excitation energies 
+!!    Written by Sarai D. Folkestad, Mar 2019 
+!!
+!!    Reads and returns the number of excitation energies on file
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      call disk%open_file(wf%excitation_energies_file, 'read')
+      rewind(wf%excitation_energies_file%unit)
+!
+      read(wf%excitation_energies_file%unit) get_n_excitation_energies_on_file_ccs
+!
+      call disk%close_file(wf%excitation_energies_file, 'keep')
+!     
+   end function get_n_excitation_energies_on_file_ccs
+!
+!
+   subroutine read_excitation_energies_ccs(wf, n_states, energies)
+!!
+!!    Read excitation energies 
+!!    Written by Sarai D. Folkestad, Mar 2019 
+!!
+!!    Reads excitation energies from file
+!!
+!!    Note: "n_states" gives the dimension of the array "energies".
+!!          It should match the actual number of states on file,
+!!          given by the first record, "n_states" before the routine is called
+!!          by either reading the restart file or by calling the function 
+!!          read_n_excitation_energies
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf
+!
+      integer, intent(in) :: n_states ! Obtained by reading the restart file 
+!                                     ! or by calling read_n_excitation_energies 
+!
+      real(dp), dimension(n_states), intent(out) :: energies
+!
+      integer :: local_n_states
+!
+      call disk%open_file(wf%excitation_energies_file, 'read')
+      rewind(wf%excitation_energies_file%unit)
+!
+      read(wf%excitation_energies_file%unit) local_n_states
+!
+      if (local_n_states .ne. n_states) then
+!
+         call output%error_msg('Dimension of excited state array does not match what is on file.')
+!
+      endif
+!
+      read(wf%excitation_energies_file%unit) energies
+!
+      call disk%close_file(wf%excitation_energies_file, 'keep')
+!     
+   end subroutine read_excitation_energies_ccs
+!
+!
+   subroutine get_n_excited_states_on_file_ccs(wf, side, n_states)
+!!
+!!    Get number of excited states on file 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Figures out the number of excited states on file, 
+!!    using the r1 and l1 files. This should be sufficient for 
+!!    all coupled cluster models (i.e., it is most likely  
+!!    unneccessary to overwrite this routine in descendants)
+!!
+      class(ccs) :: wf 
+!
+      character(len=*), intent(in) :: side 
+!
+      integer, intent(out) :: n_states 
+!
+      if (trim(side) == 'right') then 
+!
+         inquire(file=wf%r1_file%name, size=n_states)
+         n_states = n_states/(dp*wf%n_t1)
+!
+      elseif (trim(side) == 'left') then 
+!
+         inquire(file=wf%l1_file%name, size=n_states)
+         n_states = n_states/(dp*wf%n_t1)
+!
+      else
+!
+         call output%error_msg('Tried to compute number of excited states. Unrecognized _side_: ' // side)
+!
+      endif
+!
+   end subroutine get_n_excited_states_on_file_ccs
+!
+!
+   subroutine destruct_multipliers_ccs(wf)
+!!
+!!    Destruct multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Deallocates the multipliers. This routine must be overwritten in 
+!!    descendants which have more multipliers. 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      call wf%destruct_t1bar()
+!
+   end subroutine destruct_multipliers_ccs
 !
 !
    subroutine set_initial_amplitudes_guess_ccs(wf)

@@ -1,3 +1,26 @@
+#
+#
+#   eT - a coupled cluster program
+#   Copyright (C) 2016-2019 the authors of eT
+#
+#   eT is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   eT is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+# 	Based on the cmake/DaltonTests.cmake file of the public 
+#   Dalton program (LGPL v2.1)
+#
+# 	Copied and modified for eT by Rolf H. Myhre, Feb 2019
+#
 macro(add_eT_runtest _name _labels)
     add_test(
         ${_name}
@@ -7,38 +30,32 @@ macro(add_eT_runtest _name _labels)
     endif()
 endmacro()
 
-#shamelessly stolen from Dalton
+# All tests here should contain the label "eT"
 
-# all tests here should contain the label "eT"
+# Add a keyword for the length of the test: 
+# 
+# 	short < 30 seconds
+# 	medium > 30 seconds < 120 seconds
+# 	long > 120 seconds < 200 seconds
+# 	verylong > 200 seconds
+# 
+# NEVER comment out tests
 
-# all tests with label short should run in less than 30 seconds sequential on a 2GHz CPU
-# short < 30 seconds
-# medium > 30 seconds < 120 seconds
-# long > 120 seconds < 200 seconds
-# verylong > 200 seconds
-
-# NEVER comment out tests, this will bite you in future in a terrible way
-# also to minimize conflict release/master use the existing variables to distinguish
-# tests which are run only on master
-
-# "long" tests should placed apart on purpose to make it less likely that they
-# are run at the same time (then they can be significantly slower)
-
-add_eT_runtest(hf_energy                       "eT;hf;sad;diis")
-add_eT_runtest(hf_scf_energy                   "eT;hf;sad")
-add_eT_runtest(mp2_energy                      "eT;hf;mp2")
-add_eT_runtest(cc2_gs_energy                   "eT;cc2;gs;diis")
-add_eT_runtest(cc2_multipliers                 "eT;cc2;gs;multipliers;diis")
-add_eT_runtest(cc2_right_es_energies           "eT;cc2;es;davidson")
-add_eT_runtest(cc2_right_es_energies_diis      "eT;cc2;es;diis")
-add_eT_runtest(cc2_right_cvs_es_energies       "eT;cc2;es;cvs;davidson")
-add_eT_runtest(cc2_left_es_energies            "eT;cc2;es;davidson")
-add_eT_runtest(cc2_lowmem_gs_energy            "eT;lowmem-cc2;gs;diis")
-add_eT_runtest(cc2_lowmem_right_es_energies    "eT;lowmem-cc2;es;diis")
-add_eT_runtest(ccsd_gs_energy                  "eT;ccsd;gs;diis")
-add_eT_runtest(ccsd_right_es_energies          "eT;ccsd;es;davidson")
-add_eT_runtest(ccsd_left_es_energies           "eT;ccsd;es;davidson")
-add_eT_runtest(ccsd_right_cvs_es_energies      "eT;ccsd;es;cvs;davidson")
-add_eT_runtest(ccsd_multipliers                "eT;ccsd;gs;multipliers;davidson")
-add_eT_runtest(ccsd_multipliers_diis           "eT;ccsd;gs;multipliers;diis")
-add_eT_runtest(cc3_gs_energy                   "eT;cc3;gs;diis")
+add_eT_runtest(hf_energy                       "eT;short;hf;sad")
+add_eT_runtest(hf_scf_energy                   "eT;short;hf;sad")
+add_eT_runtest(mp2_energy                      "eT;short;hf;mp2")
+add_eT_runtest(cc2_gs_energy                   "eT;short;cc2;gs")
+add_eT_runtest(cc2_multipliers                 "eT;short;cc2;gs;multipliers")
+add_eT_runtest(cc2_right_es_energies           "eT;short;cc2;es")
+add_eT_runtest(cc2_right_es_energies_diis      "eT;short;cc2;es")
+add_eT_runtest(cc2_right_cvs_es_energies       "eT;short;cc2;es;cvs")
+add_eT_runtest(cc2_left_es_energies            "eT;short;cc2;es")
+add_eT_runtest(cc2_lowmem_gs_energy            "eT;short;lowmem-cc2;gs")
+add_eT_runtest(cc2_lowmem_right_es_energies    "eT;short;lowmem-cc2;es")
+add_eT_runtest(ccsd_gs_energy                  "eT;short;ccsd;gs")
+add_eT_runtest(ccsd_right_es_energies          "eT;short;ccsd;es")
+add_eT_runtest(ccsd_left_es_energies           "eT;short;ccsd;es")
+add_eT_runtest(ccsd_right_cvs_es_energies      "eT;short;ccsd;es;cvs")
+add_eT_runtest(ccsd_multipliers                "eT;short;ccsd;gs;multipliers")
+add_eT_runtest(ccsd_multipliers_diis           "eT;short;ccsd;gs;multipliers")
+add_eT_runtest(cc3_gs_energy                   "eT;short;cc3;gs")

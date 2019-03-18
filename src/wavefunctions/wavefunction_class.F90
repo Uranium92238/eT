@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module wavefunction_class
 !
 !!
@@ -37,6 +56,12 @@ module wavefunction_class
 !
       procedure :: destruct_orbital_coefficients   => destruct_orbital_coefficients_wavefunction
       procedure :: destruct_orbital_energies       => destruct_orbital_energies_wavefunction
+!
+      procedure :: get_ao_h_wx                     => get_ao_h_wx_wavefunction
+      procedure :: get_ao_s_wx                     => get_ao_s_wx_wavefunction
+      procedure :: get_ao_mu_wx                    => get_ao_mu_wx_wavefunction
+      procedure :: mo_transform                    => mo_transform_wavefunction
+      procedure :: mo_transform_and_save_h         => mo_transform_and_save_h_wavefunction
 !
    end type wavefunction
 !
@@ -118,6 +143,249 @@ contains
       if (allocated(wf%orbital_energies)) call mem%dealloc(wf%orbital_energies, wf%n_mo)
 !
    end subroutine destruct_orbital_energies_wavefunction
+!
+!
+   subroutine mo_transform_and_save_h_wavefunction(wf)
+!!
+!!    MO transform and save h 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none 
+!
+      class(wavefunction) :: wf 
+!
+      real(dp), dimension(:,:), allocatable :: h_wx, h_pq 
+!
+      type(file) :: h_pq_file
+!
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
+!
+      call wf%get_ao_h_wx(h_wx)
+      call wf%mo_transform(h_wx, h_pq)
+!
+      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
+      call disk%open_file(h_pq_file, 'write', 'rewind')
+!
+      write(h_pq_file%unit) h_pq 
+!
+      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(h_pq, wf%n_mo, wf%n_mo)     
+!
+      call disk%close_file(h_pq_file)
+!
+   end subroutine mo_transform_and_save_h_wavefunction
+!
+!
+   subroutine mo_transform_wavefunction(wf, X_wx, Y_pq)
+!!
+!!    MO transform 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Performs MO transformation of X and saves the result in Y:
+!!
+!!       Y_pq = sum_wx C_wp X_wx C_xq
+!!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: X_wx 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Y_pq  
+!
+      real(dp), dimension(:,:), allocatable :: Z_wq ! = sum_x X_wx C_xq
+!
+      call mem%alloc(Z_wq, wf%n_ao, wf%n_mo)
+!
+      call dgemm('N', 'N',                 &
+                  wf%n_ao,                 &
+                  wf%n_mo,                 &
+                  wf%n_ao,                 &
+                  one,                     &
+                  X_wx,                    &
+                  wf%n_ao,                 &
+                  wf%orbital_coefficients, & ! C_xq
+                  wf%n_ao,                 &
+                  zero,                    &
+                  Z_wq,                    &
+                  wf%n_ao)
+!
+      call dgemm('T', 'N',                 &
+                  wf%n_mo,                 &
+                  wf%n_mo,                 &
+                  wf%n_ao,                 &
+                  one,                     &
+                  wf%orbital_coefficients, & ! C_wp 
+                  wf%n_ao,                 &
+                  Z_wq,                    &
+                  wf%n_ao,                 &
+                  zero,                    &
+                  Y_pq,                    &
+                  wf%n_mo)
+!
+      call mem%dealloc(Z_wq, wf%n_ao, wf%n_mo)
+!
+   end subroutine mo_transform_wavefunction
+!
+!
+   subroutine get_ao_h_wx_wavefunction(wf, h)
+!!
+!!    Get AO h 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Uses the integral tool to construct the full one-electron h matrix.
+!!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: h 
+!
+      type(interval) :: A_interval, B_interval
+!
+      integer :: x, y, A, B
+!
+      real(dp), dimension(:,:), allocatable :: h_AB 
+!
+!$omp parallel do &
+!$omp private(A, B, h_AB, A_interval, B_interval, x, y) schedule(static)
+      do A = 1, wf%system%n_s
+!
+         A_interval = wf%system%shell_limits(A)
+!
+         do B = 1, A
+!
+            B_interval = wf%system%shell_limits(B)
+!
+            call mem%alloc(h_AB, A_interval%size, B_interval%size)
+            call wf%system%ao_integrals%construct_ao_h_wx(h_AB, A, B)
+!
+             do x = 1, A_interval%size
+                do y = 1, B_interval%size
+!
+                   h(A_interval%first - 1 + x, B_interval%first - 1 + y) = h_AB(x, y)
+                   h(B_interval%first - 1 + y, A_interval%first - 1 + x) = h_AB(x, y)
+!
+                enddo
+             enddo
+!
+            call mem%dealloc(h_AB, A_interval%size, B_interval%size)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine get_ao_h_wx_wavefunction
+!
+!
+   subroutine get_ao_s_wx_wavefunction(wf, s)
+!!
+!!    Get AO s 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Uses the integral tool to construct the full one-electron h matrix.
+!!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: s 
+!
+      type(interval) :: A_interval, B_interval
+!
+      integer :: x, y, A, B
+!
+      real(dp), dimension(:,:), allocatable :: s_AB 
+!
+      do A = 1, wf%system%n_s
+!
+         A_interval = wf%system%shell_limits(A)
+!
+         do B = 1, A
+!
+            B_interval = wf%system%shell_limits(B)
+!
+            call mem%alloc(s_AB, A_interval%size, B_interval%size)
+            call wf%system%ao_integrals%construct_ao_s_wx(s_AB, A, B)
+!
+             do x = 1, A_interval%size
+                do y = 1, B_interval%size
+!
+                   s(A_interval%first - 1 + x, B_interval%first - 1 + y) = s_AB(x, y)
+                   s(B_interval%first - 1 + y, A_interval%first - 1 + x) = s_AB(x, y)
+!
+                enddo
+             enddo
+!
+            call mem%dealloc(s_AB, A_interval%size, B_interval%size)
+!
+         enddo
+      enddo
+!
+   end subroutine get_ao_s_wx_wavefunction
+!
+!
+   subroutine get_ao_mu_wx_wavefunction(wf, mu_X, mu_Y, mu_Z)
+!!
+!!    Get AO mu
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Uses the integral tool to construct the full dipole integrals
+!!    for the X, Y, and Z components.
+!!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: mu_X
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: mu_Y
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: mu_Z
+!
+      type(interval) :: A_interval, B_interval
+!
+      integer :: x, y, A, B
+!
+      real(dp), dimension(:,:), allocatable :: mu_AB_X 
+      real(dp), dimension(:,:), allocatable :: mu_AB_Y 
+      real(dp), dimension(:,:), allocatable :: mu_AB_Z 
+!
+      do A = 1, wf%system%n_s
+!
+         A_interval = wf%system%shell_limits(A)
+!
+         do B = 1, A
+!
+            B_interval = wf%system%shell_limits(B)
+!
+            call mem%alloc(mu_AB_X, A_interval%size, B_interval%size)
+            call mem%alloc(mu_AB_Y, A_interval%size, B_interval%size)
+            call mem%alloc(mu_AB_Z, A_interval%size, B_interval%size)
+!
+            call wf%system%ao_integrals%construct_ao_mu_wx(mu_AB_X, mu_AB_Y, mu_AB_Z, A, B)
+!
+             do x = 1, A_interval%size
+                do y = 1, B_interval%size
+!
+                   mu_X(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_X(x, y)
+                   mu_X(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_X(x, y)
+!
+                   mu_Y(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_Y(x, y)
+                   mu_Y(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_Y(x, y)
+!
+                   mu_Z(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_Z(x, y)
+                   mu_Z(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_Z(x, y)
+!
+                enddo
+             enddo
+!
+            call mem%dealloc(mu_AB_X, A_interval%size, B_interval%size)
+            call mem%dealloc(mu_AB_Y, A_interval%size, B_interval%size)
+            call mem%dealloc(mu_AB_Z, A_interval%size, B_interval%size)
+!
+         enddo
+      enddo
+!
+   end subroutine get_ao_mu_wx_wavefunction
 !
 !
 end module wavefunction_class

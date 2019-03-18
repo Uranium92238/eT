@@ -1,9 +1,27 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module cc2_class
 !
 !!
 !!    Coupled cluster singles and perturbative doubles (CC2) class module
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    Linda Goletto and Alexander Paul, 2018
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
 !!
 !
    use ccs_class
@@ -15,6 +33,8 @@ module cc2_class
       integer :: n_t2
 !
       real(dp), dimension(:,:,:,:), allocatable :: u
+!
+      type(file) :: r2_file, l2_file
 !
    contains
 !
@@ -61,6 +81,16 @@ module cc2_class
       procedure :: construct_multiplier_equation               => construct_multiplier_equation_cc2
 !
       procedure :: get_cvs_projector                           => get_cvs_projector_cc2
+!
+      procedure :: initialize_files                            => initialize_files_cc2
+      procedure :: initialize_doubles_files                    => initialize_doubles_files_cc2
+!
+      procedure :: save_doubles_vector                         => save_doubles_vector_cc2
+      procedure :: read_doubles_vector                         => read_doubles_vector_cc2
+!
+      procedure :: restart_excited_state                       => restart_excited_state_cc2
+      procedure :: save_excited_state                          => save_excited_state_cc2
+      procedure :: is_restart_safe                             => is_restart_safe_cc2
 !
    end type cc2
 !
@@ -127,6 +157,8 @@ contains
 !
       call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
+!
+      call wf%initialize_files()
 !
    end subroutine prepare_cc2
 !
@@ -486,6 +518,361 @@ contains
      enddo
 !
    end subroutine get_cvs_projector_cc2
+!
+!
+   subroutine save_doubles_vector_cc2(wf, X, n, file_)
+!!
+!!    Save doubles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
+!!
+!!    Writes doubles vector "X" to the sequential
+!!    and unformatted file "file_".
+!!    
+!!    NB! If n = 1, then the routine WILL REWIND the file before writing,
+!!    thus DELETING every record in the file. For n >=2, we just append to
+!!    the file. The purpose of this setup is that the files should be saved in 
+!!    the correct order, from n = 1 to n = # states.
+!!
+      implicit none 
+!
+      class(cc2), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_t2), intent(in) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      type(file) :: file_
+!
+      call disk%open_file(file_, 'write', 'append')
+!
+      if (n .eq. 1) rewind(file_%unit)
+!
+      write(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine save_doubles_vector_cc2
+!
+!
+   subroutine read_doubles_vector_cc2(wf, X, n, file_)
+!!
+!!    Read doubles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
+!!
+!!    Reads doubles vector "X" from the "n"'th line
+!!    of the sequential and unformatted file "file_".
+!!
+      implicit none 
+!
+      class(cc2), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_t2), intent(out) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      type(file) :: file_
+!
+      call disk%open_file(file_, 'read')
+!
+      call file_%prepare_to_read_line(n)
+!
+      read(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine read_doubles_vector_cc2
+!
+!
+   subroutine save_excited_state_cc2(wf, X, n, side)
+!!
+!!    Save excited state 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Saves an excited state to disk. Since the solvers 
+!!    keep these vectors in full length, we receive a vector 
+!!    in full length (n_es_amplitudes), and then distribute 
+!!    the different parts of that vector to singles, doubles, etc.,
+!!    files (if there are doubles, etc.).
+!!
+!!    NB! If n = 1, then the routine WILL REWIND the files before writing,
+!!    thus DELETING every record in the file. For n >=2, we just append to
+!!    the file. The purpose of this setup is that the files should be saved in 
+!!    the correct order, from n = 1 to n = # states. 
+!!
+      implicit none 
+!
+      class(cc2), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      if (trim(side) == 'right') then 
+!
+         call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
+         call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
+!
+      elseif (trim(side) == 'left') then 
+!
+         call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
+         call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
+!
+      else
+!
+         call output%error_msg('Tried to save an excited state, but argument side not recognized: ' // side)
+!
+      endif
+!
+   end subroutine save_excited_state_cc2
+!
+!
+   subroutine restart_excited_state_cc2(wf, X, n, side)
+!!
+!!    Restart excited state 
+!!    Written by Sarai D. Fokestad, Mar 2019 
+!!
+!!    Wrapper for setting trial vectors to excited states on file
+!!
+      implicit none 
+!
+      class(cc2), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      integer :: a, i, b, j, ai, bj, aibj
+      integer :: n_excited_states
+!
+      real(dp), dimension(:,:,:,:), allocatable :: r2_aibj, l2_aibj
+!
+      real(dp), dimension(:), allocatable :: omega
+!
+      call wf%is_restart_safe('excited state')
+!
+!     Check if we have read doubles vectors.
+!     If not, set up doubles.
+!
+      if (trim(side) == 'right') then 
+!
+!        Read singles vector
+!
+         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
+!
+!        Read or construct doubles vector
+!
+         if (wf%r2_file%file_exists()) then
+!
+            call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
+!
+         else
+!
+!           Construct r2 from r1
+!
+!           r2_aibj = (A_aibj,ck r1_ck)/(- ε_aibj + omega)
+!
+            call mem%alloc(r2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+            r2_aibj = zero
+!
+            call wf%jacobian_cc2_a2(r2_aibj, X(1:(wf%n_o)*(wf%n_v)))
+!
+            n_excited_states = wf%get_n_excitation_energies_on_file()
+!
+            call mem%alloc(omega, n_excited_states)
+!
+            call wf%read_excitation_energies(n_excited_states, omega)
+!
+!$omp parallel do private(a, i, b, j, aibj, ai, bj)
+            do a = 1, wf%n_v
+               do i = 1, wf%n_o 
+!
+                  ai = wf%n_v*(i - 1) + a
+!
+                  do b = 1, wf%n_v
+                     do j = 1, wf%n_o
+!
+                        bj = wf%n_v*(j - 1) + b
+!
+                        if (ai .ge. bj) then
+!
+                           aibj = ai*(ai - 3)/2 + ai + bj
+!
+                           X(aibj + (wf%n_v)*(wf%n_o)) = r2_aibj(a, i, b, j)&
+                                                     /(omega(n) - wf%fock_diagonal(a + wf%n_o) &
+                                                                - wf%fock_diagonal(b + wf%n_o) &
+                                                                + wf%fock_diagonal(i) &
+                                                                + wf%fock_diagonal(j) )
+!
+                        endif
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+            call mem%dealloc(omega, n_excited_states)
+            call mem%dealloc(r2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+         endif
+!
+      elseif (trim(side) == 'left') then
+!
+!        Read singles vector
+!
+         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
+!
+!        Read or construct doubles vector
+!
+         if (wf%l2_file%file_exists()) then
+!
+            call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
+!
+         else
+!
+!           Construct l2 from l1
+!
+!           r2_aibj = (A^T_aibj,ck r1_ck)/(- ε_aibj + omega)
+!
+            call mem%alloc(l2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+            l2_aibj = zero
+!
+            call wf%jacobian_transpose_cc2_a2(l2_aibj, X(1:(wf%n_o)*(wf%n_v)))
+!
+            n_excited_states = wf%get_n_excitation_energies_on_file()
+!
+            call mem%alloc(omega, n_excited_states)
+!
+            call wf%read_excitation_energies(n_excited_states, omega)
+!
+!$omp parallel do private(a, i, b, j, aibj, ai, bj)
+            do b = 1, wf%n_v
+               do j = 1, wf%n_o 
+!
+                  bj = wf%n_v*(j - 1) + b
+!
+                  do i = 1, wf%n_o
+                     do a = 1, wf%n_v
+!
+                        ai = wf%n_v*(i - 1) + a
+!
+                        if (ai .ge. bj) then
+!
+                           aibj = ai*(ai - 3)/2 + ai + bj
+!
+                           X(aibj + (wf%n_v)*(wf%n_o)) = l2_aibj(a, i, b, j)&
+                                                     /(omega(n) - wf%fock_diagonal(a + wf%n_o) &
+                                                                - wf%fock_diagonal(b + wf%n_o) &
+                                                                + wf%fock_diagonal(i) &
+                                                                + wf%fock_diagonal(j) )
+!
+                        endif
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+            call mem%dealloc(omega, n_excited_states)
+            call mem%dealloc(l2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+         endif
+!
+      endif
+!
+   end subroutine restart_excited_state_cc2
+!
+!
+   subroutine is_restart_safe_cc2(wf, task)
+!!
+!!    Is restart safe?
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(cc2) :: wf 
+!
+      character(len=*), intent(in) :: task 
+!
+      integer :: n_o, n_v, n_gs_amplitudes, n_es_amplitudes
+!
+      call disk%open_file(wf%restart_file, 'read', 'rewind')
+!
+      read(wf%restart_file%unit) n_o
+      read(wf%restart_file%unit) n_v
+      read(wf%restart_file%unit) n_gs_amplitudes
+      read(wf%restart_file%unit) n_es_amplitudes
+!
+      call disk%close_file(wf%restart_file)
+!
+      if (n_o .ne. wf%n_o) call output%error_msg('attempted to restart from inconsistent number ' // &
+                                                   'of occupied orbitals.')
+!
+      if (n_v .ne. wf%n_v) call output%error_msg('attempted to restart from inconsistent number ' // &
+                                                   'of virtual orbitals.')
+!
+      if (trim(task) == 'ground state') then 
+!
+         if (n_gs_amplitudes .ne. wf%n_gs_amplitudes) &
+            call output%error_msg('attempted to restart from inconsistent number ' // &
+                                    'of ground state amplitudes.')    
+!
+      elseif (trim(task) == 'excited state') then    
+!
+         if (n_es_amplitudes .eq. wf%n_t1) then 
+!
+!           OK! We allow restart from CCS-like models (e.g. CC2 lowmem or CCS itself) in (highmem) CC2.
+!           
+         elseif (n_es_amplitudes .ne. wf%n_es_amplitudes) then
+!
+            call output%error_msg('attempted to restart from inconsistent number ' // &
+                                    'of excited state amplitudes.')     
+!
+         endif
+!
+      else
+!
+         call output%error_msg('attempted to restart, but the task was not recognized: ' // task)
+!
+      endif   
+!
+   end subroutine is_restart_safe_cc2
+!
+!
+   subroutine initialize_files_cc2(wf)
+!!
+!!    Initialize files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Initializes the wavefucntion files for wavefunction parameters.
+!!
+      class(cc2) :: wf 
+!
+      call wf%initialize_cc_files()
+      call wf%initialize_singles_files()
+      call wf%initialize_doubles_files()
+!
+   end subroutine initialize_files_cc2
+!
+!
+   subroutine initialize_doubles_files_cc2(wf)
+!!
+!!    Initialize doubles files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      class(cc2) :: wf 
+!
+      call wf%l2_file%init('l2', 'sequential', 'unformatted')
+!
+      call wf%r2_file%init('r2', 'sequential', 'unformatted')
+!
+   end subroutine initialize_doubles_files_cc2
+!
 !
 !
 end module cc2_class

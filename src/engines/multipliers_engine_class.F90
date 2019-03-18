@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module multipliers_engine_class
 !!
 !!    Coupled cluster multiplier engine class module 
@@ -5,11 +24,11 @@ module multipliers_engine_class
 !!
    use abstract_engine_class
    use ccs_class
-   use eri_cd_solver_class
-   use davidson_cc_es_solver_class
-   use davidson_cc_ip_solver_class
-   use davidson_cvs_cc_es_solver_class
-   use diis_cc_gs_solver_class
+   use eri_cd_class
+   use davidson_cc_es_class
+   use davidson_cc_ip_class
+   use davidson_cvs_cc_es_class
+   use diis_cc_gs_class
    use davidson_cc_multipliers_class
    use diis_cc_multipliers_class
 !
@@ -55,8 +74,8 @@ contains
       class(multipliers_engine)  :: engine
       class(ccs)                 :: wf
 !
-      type(eri_cd_solver), allocatable       :: eri_chol_solver
-      type(diis_cc_gs_solver), allocatable   :: cc_gs_solver
+      type(eri_cd), allocatable                    :: eri_chol_solver
+      type(diis_cc_gs), allocatable                :: cc_gs_solver
 !
       type(davidson_cc_multipliers), allocatable   :: cc_multipliers_davidson
       type(diis_cc_multipliers), allocatable       :: cc_multipliers_diis

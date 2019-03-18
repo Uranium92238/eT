@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module diis_tool_class
 !
 !!
@@ -33,25 +52,37 @@ module diis_tool_class
 !
       character(len=40) :: name ! Solver name; determines the prefix of all DIIS files
 !
-      type(file), private :: dx   ! File containing the O vector from previous iterations
-      type(file), private :: x_dx ! File containing the X vector from previous iterations
+      type(file), dimension(:), allocatable, private :: dx   ! File containing the O vector from previous iterations
+      type(file), dimension(:), allocatable, private :: x_dx ! File containing the X vector from previous iterations
 !
       type(file), private :: diis_matrix ! File containing the previously computed elements of the DIIS matrix
 !
       integer, private :: iteration = 1 ! Variable keeping track of the current DIIS iteration
-                                             ! Note: defined to increment by +1 each time 'update' is called.
+                                        ! Note: defined to increment by +1 each time 'update' is called.
 !
       integer, private :: diis_dimension = 8   ! Standard is 8, though it might be useful to change this value
 !
       integer, private :: n_parameters ! The length of the X vector
       integer, private :: n_equations  ! The length of the O vector
-
+!
+      logical :: accumulate = .true. ! Variable keeping track of wether we are cummulatively building the diis history or not
+!                                      ! Note: default is to accumulate
 !
    contains
 !
       procedure :: init     => init_diis_tool     ! Called to set up a DIIS solver
       procedure :: update   => update_diis_tool   ! Called to perform a DIIS step
       procedure :: finalize => finalize_diis_tool
+!
+      procedure :: get_current_index => get_current_index_diis_tool
+!
+      procedure :: get_x_dx   => get_x_dx_diis_tool
+      procedure :: get_dx     => get_dx_diis_tool
+!
+      procedure :: set_x_dx   => set_x_dx_diis_tool
+      procedure :: set_dx     => set_dx_diis_tool
+!
+      procedure, private :: construct_diis_matrix => construct_diis_matrix_diis_tool
 !
    end type diis_tool
 !
@@ -68,21 +99,28 @@ contains
 !
       class(diis_tool) :: solver
 !
-      solver%iteration = 1
-      solver%diis_dimension = 8
+      integer :: i
 !
-      call disk%open_file(solver%x_dx, 'readwrite')
-      call disk%open_file(solver%dx, 'readwrite')
+      do i = 1, solver%diis_dimension
+!
+         call disk%open_file(solver%x_dx(i), 'readwrite')
+         call disk%close_file(solver%x_dx(i), 'delete')
+!
+         call disk%open_file(solver%dx(i), 'readwrite')
+         call disk%close_file(solver%dx(i), 'delete')
+!
+      enddo
+!
       call disk%open_file(solver%diis_matrix, 'readwrite')
-!
-      call disk%close_file(solver%x_dx, 'delete')
-      call disk%close_file(solver%dx, 'delete')
       call disk%close_file(solver%diis_matrix, 'delete')
 !
+      solver%iteration = 1
+      solver%diis_dimension = 8
+
    end subroutine finalize_diis_tool
 !
 !
-   subroutine init_diis_tool(solver, name, n_parameters, n_equations, diis_dimension)
+   subroutine init_diis_tool(solver, name, n_parameters, n_equations, diis_dimension, accumulate)
 !!
 !!    Init DIIS
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
@@ -96,14 +134,36 @@ contains
 !
       integer, intent(in), optional :: diis_dimension
 !
+      logical, intent(in), optional :: accumulate
+!
+      integer :: I
+!
+      character(len=200) :: name_dx, name_x_dx
+!
       solver%name = trim(name)
       solver%n_parameters = n_parameters
       solver%n_equations = n_equations
 !
+      solver%accumulate = .true. 
+      if (present(accumulate)) solver%accumulate = accumulate
+!
       if (present(diis_dimension)) solver%diis_dimension = diis_dimension
 !
-      call solver%x_dx%init(trim(solver%name) // '_x_dx', 'sequential', 'unformatted')
-      call solver%dx%init(trim(solver%name) // '_dx', 'sequential', 'unformatted')
+!     File handling
+!
+      allocate(solver%x_dx(solver%diis_dimension))
+      allocate(solver%dx(solver%diis_dimension))
+!
+      do I = 1, solver%diis_dimension
+!
+         write(name_x_dx, '(a, a1, i3.3)') trim(solver%name) // '_x_dx', '_', I
+         write(name_dx, '(a, a1, i3.3)') trim(solver%name) // '_dx', '_', I
+!
+         call solver%x_dx(i)%init(trim(name_x_dx), 'sequential', 'unformatted')
+         call solver%dx(i)%init(trim(name_dx) // '_dx', 'sequential', 'unformatted')
+!
+      enddo
+!
       call solver%diis_matrix%init(trim(solver%name) // '_diis_matrix', 'sequential', 'unformatted')
 !
    end subroutine init_diis_tool
@@ -146,9 +206,12 @@ contains
 !
 !     Ask disk manager to open the files
 !
-      call disk%open_file(solver%dx, 'readwrite')
-      call disk%open_file(solver%x_dx, 'readwrite')
-      call disk%open_file(solver%diis_matrix, 'readwrite')
+      do i = 1, solver%diis_dimension
+!
+         call disk%open_file(solver%dx(i), 'readwrite')
+         call disk%open_file(solver%x_dx(i), 'readwrite')
+!
+      enddo
 !
 !     :: Compute the current index
 !     (1,2,...,7,8,1,2,...) for the standard diis_dimension = 8
@@ -156,26 +219,13 @@ contains
       current_index = solver%iteration - &
                ((solver%diis_dimension)-1)*((solver%iteration-1)/((solver%diis_dimension)-1))
 !
-!     :: Save (Δ x_i) and (x_i + Δ x_i) to files
+!     Write current x_dx and dx to file
 !
-      if (current_index .eq. 1) then
+      rewind(solver%dx(current_index)%unit)
+      rewind(solver%x_dx(current_index)%unit)
 !
-         rewind(solver%dx%unit)
-         rewind(solver%x_dx%unit)
-!
-      else
-!
-         do dummy = 1, current_index - 1 ! Get to the correct line in the file
-!
-            read(solver%dx%unit)
-            read(solver%x_dx%unit)
-!
-         enddo
-!
-      endif
-!
-      write(solver%dx%unit)   (dx(i), i = 1, solver%n_equations)
-      write(solver%x_dx%unit) (x_dx(i), i = 1, solver%n_parameters)
+      write(solver%dx(current_index)%unit)   (dx(i), i = 1, solver%n_equations)
+      write(solver%x_dx(current_index)%unit) (x_dx(i), i = 1, solver%n_parameters)
 !
 !     :: Solve the least squares problem, G * w = H
 !
@@ -186,63 +236,18 @@ contains
 !     of the solution, G is extended with a row & column of -1's
 !     and H with a -1 at the end.
 !
-!     First set the DIIS vector to one
+!     Set the DIIS vector
 !
       call mem%alloc(diis_vector, current_index + 1)
       diis_vector = zero
 !
-!     Allocate the DIIS matrix and read in previous matrix elements
-!
-      call mem%alloc(diis_matrix, current_index + 1, current_index + 1)
-      diis_matrix = zero
-!
-      if (current_index .gt. 1) then
-!
-         rewind(solver%diis_matrix%unit)
-!
-         do j = 1, current_index - 1
-            do i = 1, current_index - 1
-!
-               read(solver%diis_matrix%unit) diis_matrix(i, j)
-!
-            enddo
-         enddo
-!
-      endif
-!
-!     Get the parts of the DIIS matrix G not constructed in
-!     the previous iterations
-!
-      call mem%alloc(dx_i, solver%n_equations) ! Allocate temporary holder of quasi-Newton estimates
-      dx_i = zero
-!
-      rewind(solver%dx%unit)
-!
-      do i = 1, current_index
-!
-         read(solver%dx%unit) (dx_i(j), j = 1, solver%n_equations)
-!
-         diis_matrix(current_index, i) = ddot(solver%n_equations, dx, 1, dx_i, 1)
-         diis_matrix(i, current_index) = diis_matrix(current_index,i)
-!
-         diis_matrix(current_index + 1, i) = -one
-         diis_matrix(i, current_index + 1) = -one
-!
-      enddo
-!
       diis_vector(current_index + 1) = -one
 !
-!     Write the current DIIS matrix to file
+!     Allocate the DIIS matrix and construct it
 !
-      rewind(solver%diis_matrix%unit)
+      call mem%alloc(diis_matrix, current_index+1, current_index+1)
 !
-      do j = 1, current_index
-         do i = 1, current_index
-!
-            write(solver%diis_matrix%unit) diis_matrix(i, j)
-!
-         enddo
-      enddo
+      call solver%construct_diis_matrix(current_index, diis_matrix, dx)
 !
 !     Solve the DIIS equation
 !
@@ -269,14 +274,14 @@ contains
 !
       call mem%alloc(x_dx_i, solver%n_parameters)
 !
-      rewind(solver%x_dx%unit)
-!
       do i = 1, current_index
 !
 !        Read the x_i + Δ x_i vector
 !
          x_dx_i = zero
-         read(solver%x_dx%unit) (x_dx_i(j), j = 1, solver%n_parameters)
+!
+         rewind(solver%x_dx(i)%unit)
+         read(solver%x_dx(i)%unit) (x_dx_i(j), j = 1, solver%n_parameters)
 !
 !        Add w_i (x_i + Δ x_i) to the amplitudes
 !
@@ -291,13 +296,259 @@ contains
       call mem%dealloc(diis_vector, current_index + 1)
       call mem%dealloc(diis_matrix, current_index + 1, current_index+1)
 !
-      call disk%close_file(solver%dx)
-      call disk%close_file(solver%x_dx)
-      call disk%close_file(solver%diis_matrix)
+!     Close files
+!
+      do i = 1, solver%diis_dimension
+!
+         call disk%close_file(solver%dx(i))
+         call disk%close_file(solver%x_dx(i))
+!
+      enddo
 !
       solver%iteration = solver%iteration + 1
 !
    end subroutine update_diis_tool
+!
+!
+   function get_current_index_diis_tool(solver)
+!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      integer :: get_current_index_diis_tool
+!
+      get_current_index_diis_tool = solver%iteration - &
+               ((solver%diis_dimension)-1)*((solver%iteration-1)/((solver%diis_dimension)-1))
+!
+   end function get_current_index_diis_tool
+!
+!
+   subroutine construct_diis_matrix_diis_tool(solver, current_index, diis_matrix, dx)
+!!
+!!    Construct diis matrix
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      integer, intent(in) :: current_index
+!
+      real(dp), dimension(current_index + 1, current_index + 1), intent(out) :: diis_matrix
+!
+      real(dp), dimension(solver%n_equations), intent(in) :: dx
+!
+      real(dp), dimension(:), allocatable :: dx_i  ! To hold previous Δ x_i temporarily
+      real(dp), dimension(:), allocatable :: dx_j  ! To hold previous Δ x_j temporarily
+!
+      integer :: i, j
+!
+      real(dp) :: ddot
+!
+      diis_matrix = zero
+!
+      if (solver%accumulate) then
+!
+         call disk%open_file(solver%diis_matrix, 'readwrite')
+!
+         if (current_index .gt. 1) then
+!
+            rewind(solver%diis_matrix%unit)
+!
+            do j = 1, current_index - 1
+               do i = 1, current_index - 1
+!
+                  read(solver%diis_matrix%unit) diis_matrix(i,j)
+!
+               enddo
+            enddo
+!
+         endif
+!
+!        Get the parts of the DIIS matrix G not constructed in
+!        the previous iterations
+!
+         call mem%alloc(dx_i, solver%n_equations) ! Allocate temporary holder of quasi-Newton estimates
+!
+         do i = 1, current_index
+!
+            rewind(solver%dx(i)%unit)
+            read(solver%dx(i)%unit) (dx_i(j), j = 1, solver%n_equations)
+!
+            diis_matrix(current_index,i) = ddot(solver%n_equations, dx, 1, dx_i, 1)
+            diis_matrix(i,current_index) = diis_matrix(current_index,i)
+!
+            diis_matrix(current_index+1,i) = -one
+            diis_matrix(i,current_index+1) = -one
+!
+         enddo
+!
+         call mem%dealloc(dx_i, solver%n_equations)
+!
+!        Write the current DIIS matrix to file
+!
+         rewind(solver%diis_matrix%unit)
+!
+         do j = 1, current_index
+            do i = 1, current_index
+!
+               write(solver%diis_matrix%unit) diis_matrix(i,j)
+!
+            enddo
+         enddo
+!
+         call disk%close_file(solver%diis_matrix)
+!
+      else ! Non-cumulative diis -> build diis matrix from scratch
+!         
+         call mem%alloc(dx_i, solver%n_equations)
+         call mem%alloc(dx_j, solver%n_equations)
+!
+         do i = 1, current_index
+!
+            rewind(solver%dx(i)%unit)
+            read(solver%dx(i)%unit) dx_i
+!
+            do j = 1, i
+!
+               rewind(solver%dx(j)%unit)
+               read(solver%dx(j)%unit) dx_j
+!
+               diis_matrix(i, j) = ddot(solver%n_equations, dx_i, 1, dx_j, 1)
+               diis_matrix(j, i) = diis_matrix(i, j)
+!
+            enddo
+!
+            diis_matrix(current_index + 1, i) = -one
+            diis_matrix(i, current_index + 1) = -one
+!
+         enddo 
+!
+         call mem%dealloc(dx_i, solver%n_equations)
+         call mem%dealloc(dx_j, solver%n_equations)
+!
+      endif
+!
+   end subroutine construct_diis_matrix_diis_tool
+!
+!
+   subroutine get_x_dx_diis_tool(solver, x_dx_i, i)
+!!
+!!    Get x_dx_i 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      real(dp), dimension(solver%n_parameters), intent(out) :: x_dx_i
+!
+      integer, intent(in) :: i
+!
+      integer :: current_index
+!
+      current_index = solver%get_current_index()
+!
+      if (i .gt. current_index) call output%error_msg('Asked for an x_dx not in use.')
+!
+      call disk%open_file(solver%x_dx(i), 'read')
+      rewind(solver%x_dx(i)%unit)
+!
+      read(solver%x_dx(i)%unit) x_dx_i
+!
+      call disk%close_file(solver%x_dx(i))
+!
+   end subroutine get_x_dx_diis_tool
+!
+!
+   subroutine get_dx_diis_tool(solver, dx_i, i)
+!!
+!!    Get dx_i 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      real(dp), dimension(solver%n_equations), intent(out) :: dx_i
+!
+      integer, intent(in) :: i
+!
+      integer :: current_index
+!
+      current_index = solver%get_current_index()
+!
+      if (i .gt. current_index) call output%error_msg('Asked for an dx not in use.')
+!
+      call disk%open_file(solver%dx(i), 'read')
+      rewind(solver%dx(i)%unit)
+!
+      read(solver%dx(i)%unit) dx_i
+!
+      call disk%close_file(solver%dx(i))
+!
+   end subroutine get_dx_diis_tool
+!
+!
+   subroutine set_x_dx_diis_tool(solver, x_dx_i, i)
+!!
+!!    Set x_dx_i 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      real(dp), dimension(solver%n_parameters), intent(in) :: x_dx_i
+!
+      integer, intent(in) :: i
+!
+      integer :: current_index
+!
+      current_index = solver%get_current_index()
+!
+      if (solver%accumulate) call output%error_msg('Can not set x_dx for cumulative diis.')
+      if (i .gt. current_index) call output%error_msg('Asked for an x_dx not in use.')
+!
+      call disk%open_file(solver%x_dx(i), 'write')
+      rewind(solver%x_dx(i)%unit)
+!
+      write(solver%x_dx(i)%unit) x_dx_i
+!
+      call disk%close_file(solver%x_dx(i))
+!
+   end subroutine set_x_dx_diis_tool
+!
+!
+   subroutine set_dx_diis_tool(solver, dx_i, i)
+!!
+!!    Set dx_i 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
+!!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      real(dp), dimension(solver%n_equations), intent(in) :: dx_i
+!
+      integer, intent(in) :: i
+!
+      integer :: current_index
+!
+      current_index = solver%get_current_index()
+!
+      if (solver%accumulate) call output%error_msg('Can not set dx for cumulative diis.')
+      if (i .gt. current_index) call output%error_msg('Asked for an dx not in use.')
+!
+      call disk%open_file(solver%dx(i), 'write')
+      rewind(solver%dx(i)%unit)
+!
+      write(solver%dx(i)%unit) dx_i
+!
+      call disk%close_file(solver%dx(i))
+!
+   end subroutine set_dx_diis_tool
 !
 !
 end module diis_tool_class

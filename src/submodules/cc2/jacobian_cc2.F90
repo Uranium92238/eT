@@ -1,9 +1,27 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 submodule (cc2_class) jacobian_cc2
 !
 !!
-!!    Jacobian submodule (cc2)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    and Andreas Skeidsvoll, 2018
+!!    Jacobian submodule (CC2)
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian matrix 

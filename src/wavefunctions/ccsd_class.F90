@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module ccsd_class
 !
 !!
@@ -14,14 +33,19 @@ module ccsd_class
       real(dp), dimension(:), allocatable :: t2
       real(dp), dimension(:), allocatable :: t2bar
 !
-      integer :: n_t2
+      type(file) :: t2_file, t2bar_file
+      type(file) :: r2_file, l2_file
+!
+      integer :: n_t2  
 !
    contains
 !
 !     Preparation and cleanup routines
 !
       procedure :: prepare                                     => prepare_ccsd
-      procedure :: cleanup                                     => cleanup_ccsd
+!
+      procedure :: initialize_files                            => initialize_files_ccsd
+      procedure :: initialize_doubles_files                    => initialize_doubles_files_ccsd
 !
 !     Routines related to the amplitudes
 !
@@ -34,11 +58,16 @@ module ccsd_class
       procedure :: get_amplitudes                              => get_amplitudes_ccsd
       procedure :: read_amplitudes                             => read_amplitudes_ccsd
       procedure :: save_amplitudes                             => save_amplitudes_ccsd
-      procedure :: save_t2                                     => save_t2_ccsd
-      procedure :: read_t2                                     => read_t2_ccsd
       procedure :: print_dominant_x2                           => print_dominant_x2_ccsd
       procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccsd
       procedure :: print_dominant_x_amplitudes                 => print_dominant_x_amplitudes_ccsd
+!
+      procedure :: save_doubles_vector                         => save_doubles_vector_ccsd
+      procedure :: read_doubles_vector                         => read_doubles_vector_ccsd
+!
+      procedure :: restart_excited_state                       => restart_excited_state_ccsd
+!
+      procedure :: save_excited_state                          => save_excited_state_ccsd 
 !
 !     Routines related to omega
 !
@@ -115,8 +144,6 @@ module ccsd_class
       procedure :: read_multipliers                            => read_multipliers_ccsd
       procedure :: destruct_multipliers                        => destruct_multipliers_ccsd
       procedure :: destruct_t2bar                              => destruct_t2bar_ccsd
-      procedure :: read_t2bar                                  => read_t2bar_ccsd
-      procedure :: save_t2bar                                  => save_t2bar_ccsd
 !
       procedure :: get_cvs_projector                           => get_cvs_projector_ccsd
 !
@@ -190,21 +217,9 @@ contains
       call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
 !
+      call wf%initialize_files()
+!
    end subroutine prepare_ccsd
-!
-!
-   subroutine cleanup_ccsd(wf)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
-!
-   end subroutine cleanup_ccsd
 !
 !
    logical function need_g_abcd_ccsd()
@@ -487,8 +502,16 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      call wf%read_t1()
-      call wf%read_t2()
+      call wf%is_restart_safe('ground state')
+!
+      call disk%open_file(wf%t1_file, 'read', 'rewind')
+      call disk%open_file(wf%t2_file, 'read', 'rewind')
+!
+      read(wf%t1_file%unit) wf%t1  
+      read(wf%t2_file%unit) wf%t2
+!
+      call disk%close_file(wf%t1_file) 
+      call disk%close_file(wf%t2_file) 
 !
    end subroutine read_amplitudes_ccsd
 !
@@ -500,56 +523,211 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(ccsd), intent(inout) :: wf
 !
-      call wf%save_t1()
-      call wf%save_t2()
+      call disk%open_file(wf%t1_file, 'write')
+      call disk%open_file(wf%t2_file, 'write')
+!
+      rewind(wf%t1_file%unit)
+      rewind(wf%t2_file%unit)
+!
+      write(wf%t1_file%unit) wf%t1  
+      write(wf%t2_file%unit) wf%t2
+!
+      call disk%close_file(wf%t1_file) 
+      call disk%close_file(wf%t2_file) 
 !
    end subroutine save_amplitudes_ccsd
 !
 !
-   subroutine read_t2_ccsd(wf)
+   subroutine save_doubles_vector_ccsd(wf, X, n, file_)
 !!
-!!    Read t2
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Save doubles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
 !!
-      implicit none
-!
-      class(ccsd), intent(inout) :: wf
-!
-      type(file) :: t2_file
-!
-      call t2_file%init('t2', 'sequential', 'unformatted')
-!
-      call disk%open_file(t2_file, 'read', 'rewind')
-!
-      read(t2_file%unit) wf%t2
-!
-      call disk%close_file(t2_file)
-!
-   end subroutine read_t2_ccsd
-!
-!
-   subroutine save_t2_ccsd(wf)
-!!
-!!    Save t2
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Writes doubles vector "X" to the sequential
+!!    and unformatted file "file_".
+!!    
+!!    NB! If n = 1, then the routine WILL REWIND the file before writing,
+!!    thus DELETING every record in the file. For n >=2, we just append to
+!!    the file. The purpose of this setup is that the files should be saved in 
+!!    the correct order, from n = 1 to n = # states.
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(ccsd), intent(inout) :: wf 
 !
-      type(file) :: t2_file
+      real(dp), dimension(wf%n_t2), intent(in) :: X 
 !
-      call t2_file%init('t2', 'sequential', 'unformatted')
+      integer, intent(in) :: n ! state number 
 !
-      call disk%open_file(t2_file, 'write', 'rewind')
+      type(file) :: file_
 !
-      write(t2_file%unit) wf%t2
+      call disk%open_file(file_, 'write', 'append')
 !
-      call disk%close_file(t2_file)
+      if (n .eq. 1) rewind(file_%unit)
 !
-   end subroutine save_t2_ccsd
+      write(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine save_doubles_vector_ccsd
+!
+!
+   subroutine read_doubles_vector_ccsd(wf, X, n, file_)
+!!
+!!    Read doubles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
+!!
+!!    Reads doubles vector "X" from the "n"'th line
+!!    of the sequential and unformatted file "file_".
+!!
+      implicit none 
+!
+      class(ccsd), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_t2), intent(out) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      type(file) :: file_
+!
+      call disk%open_file(file_, 'read')
+!
+      call file_%prepare_to_read_line(n)
+!
+      read(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine read_doubles_vector_ccsd
+!
+!
+   subroutine save_excited_state_ccsd(wf, X, n, side)
+!!
+!!    Save excited state 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Saves an excited state to disk. Since the solvers 
+!!    keep these vectors in full length, we receive a vector 
+!!    in full length (n_es_amplitudes), and then distribute 
+!!    the different parts of that vector to singles, doubles, etc.,
+!!    files (if there are doubles, etc.).
+!!
+!!    NB! If n = 1, then the routine WILL REWIND the files before writing,
+!!    thus DELETING every record in the file. For n >=2, we just append to
+!!    the file. The purpose of this setup is that the files should be saved in 
+!!    the correct order, from n = 1 to n = # states. 
+!!
+      implicit none 
+!
+      class(ccsd), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      if (trim(side) == 'right') then 
+!
+         call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
+         call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
+!
+      elseif (trim(side) == 'left') then 
+!
+         call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
+         call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
+!
+      else
+!
+         call output%error_msg('Tried to save an excited state, but argument side not recognized: ' // side)
+!
+      endif
+!
+   end subroutine save_excited_state_ccsd
+!
+!
+   subroutine restart_excited_state_ccsd(wf, X, n, side)
+!!
+!!    Restart excited state 
+!!    Written by Sarai D. Fokestad, Mar 2019 
+!!
+!!    Wrapper for setting trial vectors to excited states on file
+!!
+      implicit none 
+!
+      class(ccsd), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      call wf%is_restart_safe('excited state')
+!
+!     Check if we have read doubles vectors.
+!     If not, set up doubles.
+!
+      if (trim(side) == 'right') then 
+!
+!        Read singles vector
+!
+         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
+!
+!        Read doubles vector
+!
+         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
+!
+      elseif (trim(side) == 'left') then
+!
+!        Read singles vector
+!
+         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
+!
+!        Read doubles vector
+!
+         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
+!
+      endif
+!
+   end subroutine restart_excited_state_ccsd
+!
+!
+   subroutine initialize_files_ccsd(wf)
+!!
+!!    Initialize files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Initializes the wavefucntion files for wavefunction parameters.
+!!
+      class(ccsd) :: wf 
+!
+      call wf%initialize_cc_files()
+      call wf%initialize_singles_files()
+      call wf%initialize_doubles_files()
+!
+   end subroutine initialize_files_ccsd
+!
+!
+   subroutine initialize_doubles_files_ccsd(wf)
+!!
+!!    Initialize doubles files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      class(ccsd) :: wf 
+!
+      call wf%t2_file%init('t2', 'sequential', 'unformatted')
+!
+      call wf%t2bar_file%init('t2bar', 'sequential', 'unformatted')
+!
+      call wf%l2_file%init('l2', 'sequential', 'unformatted')
+!
+      call wf%r2_file%init('r2', 'sequential', 'unformatted')
+!
+   end subroutine initialize_doubles_files_ccsd
+!
 !
    subroutine construct_eta_ccsd(wf, eta)
 !!
@@ -735,10 +913,16 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(ccsd), intent(inout) :: wf 
 !
-      call wf%save_t1bar()
-      call wf%save_t2bar()
+      call disk%open_file(wf%t1bar_file, 'write', 'rewind')
+      call disk%open_file(wf%t2bar_file, 'write', 'rewind')
+!
+      write(wf%t1bar_file%unit) wf%t1bar  
+      write(wf%t2bar_file%unit) wf%t2bar
+!
+      call disk%close_file(wf%t1bar_file) 
+      call disk%close_file(wf%t2bar_file) 
 !
    end subroutine save_multipliers_ccsd
 !
@@ -752,8 +936,16 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      call wf%read_t1bar()
-      call wf%read_t2bar()
+      call wf%is_restart_safe('ground state')
+!
+      call disk%open_file(wf%t1bar_file, 'read', 'rewind')
+      call disk%open_file(wf%t2bar_file, 'read', 'rewind')
+!
+      read(wf%t1bar_file%unit) wf%t1bar  
+      read(wf%t2bar_file%unit) wf%t2bar
+!
+      call disk%close_file(wf%t1bar_file) 
+      call disk%close_file(wf%t2bar_file) 
 !
    end subroutine read_multipliers_ccsd
 !
@@ -774,50 +966,6 @@ contains
       call wf%destruct_t2bar()
 !
    end subroutine destruct_multipliers_ccsd
-!
-!
-   subroutine save_t2bar_ccsd(wf)
-!!
-!!    Save t2bar
-!!    Written by Eirik F. Kjønstad, Nov 2018
-!!
-      implicit none
-!
-      class(ccsd), intent(in) :: wf
-!
-      type(file) :: t2bar_file
-!
-      call t2bar_file%init('t2bar', 'sequential', 'unformatted')
-!
-      call disk%open_file(t2bar_file, 'write', 'rewind')
-!
-      write(t2bar_file%unit) wf%t2bar
-!
-      call disk%close_file(t2bar_file)
-!
-   end subroutine save_t2bar_ccsd
-!
-!
-   subroutine read_t2bar_ccsd(wf)
-!!
-!!    Save t2bar
-!!    Written by Eirik F. Kjønstad, Nov 2018
-!!
-      implicit none
-!
-      class(ccsd), intent(inout) :: wf
-!
-      type(file) :: t2bar_file
-!
-      call t2bar_file%init('t2bar', 'sequential', 'unformatted')
-!
-      call disk%open_file(t2bar_file, 'read', 'rewind')
-!
-      read(t2bar_file%unit) wf%t2bar
-!
-      call disk%close_file(t2bar_file)
-!
-   end subroutine read_t2bar_ccsd
 !
 !
    subroutine destruct_t2bar_ccsd(wf)
