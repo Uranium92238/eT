@@ -187,20 +187,17 @@ contains
       real(dp), dimension(solver%n_equations)  :: dx
       real(dp), dimension(solver%n_parameters) :: x_dx
 !
-      real(dp), dimension(:), allocatable :: dx_i   ! To hold previous Δ x_i temporarily
       real(dp), dimension(:), allocatable :: x_dx_i ! To hold previous x_dx_i temporarily
 !
-      real(dp) :: ddot
+      integer :: i = 0, j = 0
 !
-      integer :: i, j, dummy
+      integer  :: info = -1         ! Error integer for dgesv routine (LU factorization)
+      integer  :: current_index = 0 ! Progressing as follows: 1,2,...,7,8,1,2,...
 !
-      integer :: info = -1         ! Error integer for dgesv routine (LU factorization)
-      integer :: current_index = 0 ! Progressing as follows: 1,2,...,7,8,1,2,...
-!
-      real(dp), dimension(:), allocatable   :: diis_vector
+      real(dp), dimension(:), allocatable :: diis_vector
       real(dp), dimension(:,:), allocatable :: diis_matrix
 !
-      integer, dimension(:), allocatable  :: ipiv ! Pivot integers (see dgesv routine)
+      integer, dimension(:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
 !
 !     :: Open DIIS files
 !
@@ -238,10 +235,9 @@ contains
 !
 !     Set the DIIS vector
 !
-      call mem%alloc(diis_vector, current_index + 1)
+      call mem%alloc(diis_vector,current_index+1)
       diis_vector = zero
-!
-      diis_vector(current_index + 1) = -one
+      diis_vector(current_index+1) = -one
 !
 !     Allocate the DIIS matrix and construct it
 !
@@ -257,13 +253,13 @@ contains
 !     Note: on exit, the solution is in the diis_vector,
 !     provided info = 0 (see LAPACK documentation for more)
 !
-      call dgesv(current_index + 1,  &
-                  1,                 &
-                  diis_matrix,       &
-                  current_index + 1, & 
-                  ipiv,              &
-                  diis_vector,       &
-                  current_index + 1, &
+      call dgesv(current_index+1,  &
+                  1,               &
+                  diis_matrix,     &
+                  current_index+1, &
+                  ipiv,            &
+                  diis_vector,     &
+                  current_index+1, &
                   info)
 !
       call mem%dealloc(ipiv, solver%diis_dimension)
@@ -279,7 +275,6 @@ contains
 !        Read the x_i + Δ x_i vector
 !
          x_dx_i = zero
-!
          rewind(solver%x_dx(i)%unit)
          read(solver%x_dx(i)%unit) (x_dx_i(j), j = 1, solver%n_parameters)
 !
@@ -291,7 +286,7 @@ contains
 !
       call mem%dealloc(x_dx_i, solver%n_parameters)
 !
-      call mem%dealloc(dx_i, solver%n_equations)
+!     Deallocations
 !
       call mem%dealloc(diis_vector, current_index + 1)
       call mem%dealloc(diis_matrix, current_index + 1, current_index+1)
@@ -549,6 +544,5 @@ contains
       call disk%close_file(solver%dx(i))
 !
    end subroutine set_dx_diis_tool
-!
 !
 end module diis_tool_class
