@@ -371,7 +371,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
          enddo ! batch_k
       enddo ! batch_j
 !
-!
       req0 = 0
 !
       req1_a = (wf%integrals%n_J)*(wf%n_o)
@@ -1631,7 +1630,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
       integer :: current_i_batch, current_k_batch, current_a_batch
       integer :: req0, req1_i, req1_k, req1_a, req2_ik, req2_ia, req2_ka, req3
 !
-!
       req0 = 0
 !
       req1_i = max((wf%integrals%n_J)*(wf%n_o), (wf%integrals%n_J)*(wf%n_v))
@@ -1772,7 +1770,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
                            (batch_a%length),                      &
                            Y_bcki,                                & ! Y_bck_i
                            (batch_k%length)*(wf%n_v)**2,          &
-                           one,                                  &
+                           one,                                   &
                            rho_ai(batch_a%first, batch_i%first),  & ! rho_ai
                            (wf%n_v))
 !
