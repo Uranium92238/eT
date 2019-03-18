@@ -330,14 +330,7 @@ contains
          enddo
 !$omp end parallel do 
 !
-   !      g_pqrs(:,:,:,:) = integrals%g_pqrs(first_p : last_p,  &
-   !                                          first_q : last_q, &
-   !                                          first_r : last_r, &
-   !                                          first_s : last_s)
-!
       else 
-!
-
 !
          call mem%alloc(L_J_pq, integrals%n_J, dim_p, dim_q)
          call mem%alloc(L_J_rs, integrals%n_J, dim_r, dim_s)
