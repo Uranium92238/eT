@@ -91,6 +91,7 @@ class eTBasis: public vector<BasisSet> {
                   return (*it)[ind];
                }
          }
+         throw std::invalid_argument("x too big");
       }
 
       vector<int> shell2bf() {
