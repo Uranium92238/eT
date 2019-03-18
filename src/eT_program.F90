@@ -121,7 +121,7 @@ program eT_program
 !
 !  Print program banner
 !
-   write(output%unit,'(///t24,a)')                 'eT - a coupled cluster program '
+   write(output%unit,'(///t24,a)')                       'eT - a coupled cluster program '
    write(output%unit,'(t8,a)')         'Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch'
    flush(output%unit)
 !
@@ -131,12 +131,13 @@ program eT_program
    write(output%unit,'(t4, a, a)')    'Sarai D. Folkestad     ','Program design, HF, CCS, CC2, CCSD, Libint-interface,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS'
    write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
-   write(output%unit,'(t4, a, a)')    'Eirik. F. Kjønstad     ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
+   write(output%unit,'(t4, a, a)')    'Eirik F. Kjønstad      ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
-   write(output%unit,'(t4, a, a)')    'Rolf. H. Myhre         ','CC3, Runtest-interface, Launch script'
+   write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, Launch script'
    write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2'
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
-   write(output%unit,'(t3,a/)')      '----------------------------------------------------------------------------------'
+   write(output%unit,'(t3,a)')       '----------------------------------------------------------------------------------'
+   write(output%unit,'(t4,a/)')       'Other contributors: A. Balbi, M. Scavino'
    flush(output%unit)
 !
    n_threads = omp_get_max_threads()
