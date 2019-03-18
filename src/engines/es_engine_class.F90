@@ -79,9 +79,8 @@ contains
 !!
       implicit none 
 !
-      class(es_engine) :: engine 
-!
-      class(ccs) :: wf
+      class(es_engine)  :: engine 
+      class(ccs)        :: wf
 !
       type(eri_cd), allocatable                      :: eri_chol_solver
       type(diis_cc_gs), allocatable                  :: cc_gs_solver
@@ -121,12 +120,8 @@ contains
 !
       deallocate(cc_gs_solver)
 !
-      if (wf%name_ .ne. 'CCS') then 
-!
-         call wf%integrals%write_t1_cholesky(wf%t1)
-         call wf%integrals%can_we_keep_g_pqrs()
-!
-      endif
+      call wf%integrals%write_t1_cholesky(wf%t1)
+      call wf%integrals%can_we_keep_g_pqrs_t1()
 !
 !     Prepare for excited state
 !

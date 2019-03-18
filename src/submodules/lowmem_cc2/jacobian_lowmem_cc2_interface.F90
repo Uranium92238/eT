@@ -28,7 +28,7 @@
       class(lowmem_cc2) :: wf
 !
       real(dp), intent(in) :: omega 
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
    end subroutine effective_jacobian_transformation_lowmem_cc2
 !

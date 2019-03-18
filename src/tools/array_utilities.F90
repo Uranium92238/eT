@@ -28,7 +28,6 @@ module array_utilities
 !!    where all such routines are gathered for convenience).
 !!
 !
-   use index
    use kinds
    use memory_manager_class
 !
@@ -37,27 +36,27 @@ module array_utilities
 contains
 !
 !
-   integer function get_max_index(x, dim)
+   integer function get_max_index(x, n)
 !!
 !!    Get max index
 !!    Written by Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      integer, intent(in) :: dim
-      real(dp), dimension(dim,1), intent(in) :: x
+      integer, intent(in) :: n
+      real(dp), dimension(n), intent(in) :: X
 !
       integer :: I
-      real(dp)     :: maxval
+      real(dp)     :: max_val
 !
       get_max_index = 1
-      maxval = x(1,1)
-      do I = 2, dim
+      max_val = X(1)
+      do I = 2, n
 !
-         if (x(I,1) .gt. maxval) then
+         if (X(I) .gt. max_val) then
 !
             get_max_index = I
-            maxval = x(I,1)
+            max_val = X(I)
 !
          endif
 !
@@ -90,28 +89,7 @@ contains
    end subroutine zero_array
 !
 !
-   real(dp) function dot_product_et(x, y, n)
-!!
-!!    Calculate dot product
-!!    Written by Eirik F. Kjønstad, June 2018
-!!
-!!    Returns the dot product of x and y, two vectors of length n
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-!
-      real(dp), dimension(:,:), intent(in) :: x
-      real(dp), dimension(:,:), intent(in) :: y
-!
-      real(dp) :: ddot
-!
-      dot_product_et = ddot(n, x, 1, y, 1)
-!
-   end function dot_product_et
-!
-!
-   logical function is_significant(vec, dim, threshold, screening)
+   logical function is_significant(vec, n, threshold, screening)
 !!
 !!    Is vector significant ?
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
@@ -120,10 +98,10 @@ contains
 !!
       implicit none
 !
-      integer, intent(in) :: dim
+      integer, intent(in) :: n
 !
-      real(dp), dimension(dim,1), intent(in)  :: vec
-      real(dp), dimension(dim,1), intent(in), optional  :: screening
+      real(dp), dimension(n), intent(in)  :: vec
+      real(dp), dimension(n), intent(in), optional  :: screening
 !
       real(dp), intent(in)  :: threshold
 !
@@ -132,9 +110,9 @@ contains
       is_significant = .false.
 !
       if (present(screening)) then
-         do i = 1, dim
+         do i = 1, n
 !
-            if (abs(vec(i, 1)*screening(i, 1)) .gt. threshold) then
+            if (abs(vec(i)*screening(i)) .gt. threshold) then
 !
                is_significant = .true.
                return
@@ -144,9 +122,9 @@ contains
          enddo
       else
 !
-         do i = 1, dim
+         do i = 1, n
 !
-            if (abs(vec(i, 1)) .gt. threshold) then
+            if (abs(vec(i)) .gt. threshold) then
 !
                is_significant = .true.
                return
@@ -159,7 +137,7 @@ contains
    end function is_significant
 !
 !
-   integer function n_significant(vec, dim, threshold)
+   integer function n_significant(vec, n, threshold)
 !!
 !!    Number of significant in vector
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
@@ -168,9 +146,9 @@ contains
 !!
       implicit none
 !
-      integer, intent(in) :: dim
+      integer, intent(in) :: n
 !
-      real(dp), dimension(dim,1), intent(in)  :: vec
+      real(dp), dimension(n), intent(in)  :: vec
 !
       real(dp), intent(in)  :: threshold
 !
@@ -178,9 +156,9 @@ contains
 !
       n_significant = 0
 !
-      do i = 1, dim
+      do i = 1, n
 !
-         if (abs(vec(i, 1)) .gt. threshold) then
+         if (abs(vec(i)) .gt. threshold) then
 !
             n_significant = n_significant + 1
 !
@@ -191,7 +169,7 @@ contains
    end function n_significant
 !
 !
-   subroutine reduce_vector(vec, vec_reduced, block_firsts, block_significant, n_blocks, dim, dim_reduced)
+   subroutine reduce_vector(vec, vec_reduced, block_firsts, block_significant, n_blocks, dim_, dim_reduced)
 !!
 !!    Reduce vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -201,28 +179,28 @@ contains
 !!
       implicit none
 !
-      integer :: dim, dim_reduced, n_blocks
+      integer, intent(in) :: dim_, dim_reduced, n_blocks
 !
-      logical, dimension(n_blocks, 1) :: block_significant
-      integer, dimension(n_blocks + 1, 1) :: block_firsts
+      logical, dimension(n_blocks), intent(in) :: block_significant
+      integer, dimension(n_blocks + 1), intent(in) :: block_firsts
 !
-      real(dp), dimension(dim, 1) :: vec
-      real(dp), dimension(dim_reduced, 1) :: vec_reduced
+      real(dp), dimension(dim_), intent(in) :: vec
+      real(dp), dimension(dim_reduced), intent(out) :: vec_reduced
 !
-      integer :: block, current_pos, first, last, size
+      integer :: block_, current_pos, first, last, size_
 !
       current_pos = 1
 !
-      do block = 1, n_blocks
+      do block_ = 1, n_blocks
 !
-         if (block_significant(block, 1)) then
+         if (block_significant(block_)) then
 !
-            first = block_firsts(block, 1)
-            last  = block_firsts(block + 1, 1) - 1
-            size  = last - first + 1
+            first = block_firsts(block_)
+            last  = block_firsts(block_ + 1) - 1
+            size_ = last - first + 1
 !
-            vec_reduced(current_pos : current_pos + size - 1, 1) = vec(first : last, 1)
-            current_pos = current_pos + size
+            vec_reduced(current_pos : current_pos + size_ - 1) = vec(first : last)
+            current_pos = current_pos + size_
 !
          endif
 !
@@ -231,7 +209,7 @@ contains
    end subroutine reduce_vector
 !
 !
-   subroutine reduce_vector_int(vec, vec_reduced, block_firsts, block_significant, n_blocks, dim, dim_reduced)
+   subroutine reduce_vector_int(vec, vec_reduced, block_firsts, block_significant, n_blocks, dim_, dim_reduced)
 !!
 !!    Reduce vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -241,28 +219,28 @@ contains
 !!
       implicit none
 !
-      integer :: dim, dim_reduced, n_blocks
+      integer, intent(in) :: dim_, dim_reduced, n_blocks
 !
-      logical, dimension(n_blocks, 1) :: block_significant
-      integer, dimension(n_blocks + 1, 1) :: block_firsts
+      logical, dimension(n_blocks), intent(in) :: block_significant
+      integer, dimension(n_blocks + 1), intent(in) :: block_firsts
 !
-      integer, dimension(dim, 1) :: vec
-      integer, dimension(dim_reduced, 1) :: vec_reduced
+      integer, dimension(dim_), intent(in) :: vec
+      integer, dimension(dim_reduced), intent(out) :: vec_reduced
 !
-      integer :: block, current_pos, first, last, size
+      integer :: block_, current_pos, first, last, size_
 !
       current_pos = 1
 !
-      do block = 1, n_blocks
+      do block_ = 1, n_blocks
 !
-         if (block_significant(block, 1)) then
+         if (block_significant(block_)) then
 !
-            first = block_firsts(block, 1)
-            last  = block_firsts(block + 1, 1) - 1
-            size  = last - first + 1
+            first = block_firsts(block_)
+            last  = block_firsts(block_ + 1) - 1
+            size_ = last - first + 1
 !
-            vec_reduced(current_pos : current_pos + size - 1, 1) = vec(first : last, 1)
-            current_pos = current_pos + size
+            vec_reduced(current_pos : current_pos + size_ - 1) = vec(first : last)
+            current_pos = current_pos + size_
 !
          endif
 !
@@ -271,7 +249,7 @@ contains
    end subroutine reduce_vector_int
 !
 !
-   subroutine reduce_array(array, array_reduced, block_firsts, block_significant, n_blocks, dim, dim_reduced, columns)
+   subroutine reduce_array(array, array_reduced, block_firsts, block_significant, n_blocks, dim_, dim_reduced, columns)
 !!
 !!    Reduce array
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -281,32 +259,32 @@ contains
 !!
       implicit none
 !
-      integer :: dim, dim_reduced, n_blocks, columns
+      integer, intent(in) :: dim_, dim_reduced, n_blocks, columns
 !
-      logical, dimension(n_blocks, 1) :: block_significant
-      integer, dimension(n_blocks + 1, 1) :: block_firsts
+      logical, dimension(n_blocks), intent(in) :: block_significant
+      integer, dimension(n_blocks + 1), intent(in) :: block_firsts
 !
-      real(dp), dimension(dim, columns) :: array
-      real(dp), dimension(dim_reduced, columns) :: array_reduced
+      real(dp), dimension(dim_, columns), intent(in) :: array
+      real(dp), dimension(dim_reduced, columns), intent(out) :: array_reduced
 !
-      integer :: block, current_pos, first, last, size, I
+      integer :: block_, current_pos, first, last, size_, I
 !
-!$omp parallel do schedule(static) private(I, current_pos, block, first, last, size)
+!$omp parallel do schedule(static) private(I, current_pos, block_, first, last, size_)
       do I = 1, columns
 !
          current_pos = 1
 !
-         do block = 1, n_blocks
+         do block_ = 1, n_blocks
 !
-            if (block_significant(block, 1)) then
+            if (block_significant(block_)) then
 !
-               first = block_firsts(block, 1)
-               last  = block_firsts(block + 1, 1) - 1
-               size  = last - first + 1
+               first = block_firsts(block_)
+               last  = block_firsts(block_ + 1) - 1
+               size_ = last - first + 1
 !
-               array_reduced(current_pos : current_pos + size - 1, I) = array(first : last, I)
+               array_reduced(current_pos : current_pos + size_ - 1, I) = array(first : last, I)
 !
-               current_pos = current_pos + size
+               current_pos = current_pos + size_
 !
             endif
 !
@@ -317,39 +295,38 @@ contains
    end subroutine reduce_array
 !
 !
-   subroutine reduce_array_column(array, array_reduced, block_firsts, block_significant, n_blocks, dim, dim_reduced, rows)
+   subroutine reduce_array_column(array, array_reduced, block_firsts, block_significant, n_blocks, dim_, dim_reduced, rows)
 !!
 !!    Reduce array column
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Cuts the significant column blocks out of a array and places them in a reduced size array
+!!    Cuts the significant column blocks out of an array and places them in a reduced size array
 !!
       implicit none
 !
-      integer :: dim, dim_reduced, n_blocks, rows
+      integer, intent(in) :: dim_, dim_reduced, n_blocks, rows
 !
-      logical, dimension(n_blocks, 1) :: block_significant
-      integer, dimension(n_blocks + 1, 1) :: block_firsts
+      logical, dimension(n_blocks), intent(in) :: block_significant
+      integer, dimension(n_blocks + 1), intent(in) :: block_firsts
 !
-      real(dp), dimension(rows, dim) :: array
-      real(dp), dimension(rows, dim_reduced) :: array_reduced
+      real(dp), dimension(rows, dim_), intent(in) :: array
+      real(dp), dimension(rows, dim_reduced), intent(out) :: array_reduced
 !
-      integer :: block, current_pos, first, last, size
+      integer :: block_, current_pos, first, last, size_
 !
       current_pos = 1
 !
-      do block = 1, n_blocks
+      do block_ = 1, n_blocks
 !
-         if (block_significant(block, 1)) then
+         if (block_significant(block_)) then
 !
-            first = block_firsts(block, 1)
-            last  = block_firsts(block + 1, 1) - 1
-            size  = last - first + 1
+            first = block_firsts(block_)
+            last  = block_firsts(block_ + 1) - 1
+            size_ = last - first + 1
 !
-            array_reduced(:, current_pos : current_pos + size - 1) = array(:, first : last)
-         !   array_reduced(current_pos : current_pos + size - 1, 1 : columns) = array(first : last, 1 : columns)
+            array_reduced(:, current_pos : current_pos + size_ - 1) = array(:, first : last)
 !
-            current_pos = current_pos + size
+            current_pos = current_pos + size_
 !
          endif
 !
@@ -358,7 +335,7 @@ contains
    end subroutine reduce_array_column
 !
 !
-   subroutine reduce_array_int(array, array_reduced, block_firsts, block_significant, n_blocks, dim, dim_reduced, columns)
+   subroutine reduce_array_int(array, array_reduced, block_firsts, block_significant, n_blocks, dim_, dim_reduced, columns)
 !!
 !!    Reduce array
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -368,29 +345,29 @@ contains
 !!
       implicit none
 !
-      integer :: dim, dim_reduced, n_blocks, columns
+      integer, intent(in) :: dim_, dim_reduced, n_blocks, columns
 !
-      logical, dimension(n_blocks, 1) :: block_significant
-      integer, dimension(n_blocks + 1, 1) :: block_firsts
+      logical, dimension(n_blocks), intent(in) :: block_significant
+      integer, dimension(n_blocks + 1), intent(in) :: block_firsts
 !
-      integer, dimension(dim, columns) :: array
-      integer, dimension(dim_reduced, columns) :: array_reduced
+      integer, dimension(dim_, columns), intent(in) :: array
+      integer, dimension(dim_reduced, columns), intent(out) :: array_reduced
 !
-      integer :: block, current_pos, first, last, size
+      integer :: block_, current_pos, first, last, size_
 !
       current_pos = 1
 !
-      do block = 1, n_blocks
+      do block_ = 1, n_blocks
 !
-         if (block_significant(block, 1)) then
+         if (block_significant(block_)) then
 !
-            first = block_firsts(block, 1)
-            last  = block_firsts(block + 1, 1) - 1
-            size  = last - first + 1
+            first = block_firsts(block_)
+            last  = block_firsts(block_ + 1) - 1
+            size_ = last - first + 1
 !
-            array_reduced(current_pos : (current_pos + size - 1), :) = array(first : last, :)
+            array_reduced(current_pos : (current_pos + size_ - 1), :) = array(first : last, :)
 !
-            current_pos = current_pos + size
+            current_pos = current_pos + size_
 !
          endif
 !
@@ -399,7 +376,7 @@ contains
    end subroutine reduce_array_int
 !
 !
-   subroutine full_cholesky_decomposition(matrix, cholesky_vectors, dim, n_vectors,&
+   subroutine full_cholesky_decomposition(matrix, cholesky_vectors, dim_, n_vectors,&
                                         threshold, used_diag)
 !!
 !!    Cholesky decomposition,
@@ -408,15 +385,15 @@ contains
 !!
       implicit none
 !
-      integer, intent(in) :: dim
+      integer, intent(in) :: dim_
       integer, intent(out) :: n_vectors
 !
       real(dp), intent(in) :: threshold
 !
-      real(dp), dimension(dim, dim), intent(inout) :: matrix
-      real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
+      real(dp), dimension(dim_, dim_), intent(inout) :: matrix
+      real(dp), dimension(dim_, dim_), intent(out) :: cholesky_vectors
 !
-      integer, dimension(dim), optional, intent(out) :: used_diag
+      integer, dimension(dim_), optional, intent(out) :: used_diag
 !
       integer :: i, j, k, index_max
       real(dp) :: max_diagonal
@@ -427,7 +404,7 @@ contains
 !
 !     Looping over the number of cholesky vectors
 !
-      do i = 1, dim
+      do i = 1, dim_
          n_vectors = i
 !
 !        Find the maximum diagonal
@@ -435,7 +412,7 @@ contains
          index_max = 0
          max_diagonal = 0.0d0
 !
-         do j = 1, dim
+         do j = 1, dim_
 !
             if (abs(matrix(j, j)) .gt. abs(max_diagonal)) then
 !
@@ -467,7 +444,7 @@ contains
 !
 !        Cholesky vectors
 !
-         do j = 1, dim
+         do j = 1, dim_
 !
             cholesky_vectors(j,i) = matrix(j, index_max)/sqrt(max_diagonal)
 !
@@ -475,15 +452,15 @@ contains
 !
 !        Subtract from matrix
 !
-         do j = 1, dim
-            do k = 1, dim
+         do j = 1, dim_
+            do k = 1, dim_
 !
                matrix(k,j) = matrix(k,j) - cholesky_vectors(k,i)*cholesky_vectors(j,i)
 !
             enddo
          enddo
 !
-         do j = 1, dim
+         do j = 1, dim_
             matrix(j,index_max) = 0.0D0
             matrix(index_max,j) = 0.0D0
          enddo
@@ -493,7 +470,7 @@ contains
    end subroutine full_cholesky_decomposition
 !
 !
-   subroutine full_cholesky_decomposition_effective(matrix, cholesky_vectors, dim, n_vectors,&
+   subroutine full_cholesky_decomposition_effective(matrix, cholesky_vectors, dim_, n_vectors,&
                                         threshold, used_diag)
 !!
 !!    Cholesky decomposition,
@@ -502,21 +479,21 @@ contains
 !!
       implicit none
 !
-      integer, intent(in) :: dim
+      integer, intent(in) :: dim_
       integer, intent(out) :: n_vectors
 !
       real(dp), intent(in) :: threshold
 !
-      real(dp), dimension(dim, dim), intent(inout) :: matrix
-      real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
+      real(dp), dimension(dim_, dim_), intent(inout) :: matrix
+      real(dp), dimension(dim_, dim_), intent(out) :: cholesky_vectors
 !
-      integer, dimension(dim), intent(out) :: used_diag
+      integer, dimension(dim_), intent(out) :: used_diag
 !
       integer :: i, j, index_max
       real(dp) :: max_diagonal, min_diagonal
 !
       real(dp), dimension(:), allocatable :: diagonal
-      real(dp), dimension(:,:), allocatable :: temp_cholesky_vector
+      real(dp), dimension(:), allocatable :: temp_cholesky_vector
 !
       real(dp), parameter :: tolerance = 1.0d-10
 !
@@ -524,15 +501,15 @@ contains
 !
 !     Looping over the number of cholesky vectors
 !
-      call mem%alloc(diagonal, dim)
+      call mem%alloc(diagonal, dim_)
 !
-      do i = 1, dim
+      do i = 1, dim_
 !
          diagonal(i) = matrix(i, i)
 !
       enddo
 !
-      do i = 1, dim
+      do i = 1, dim_
 !
          n_vectors = i
 !
@@ -541,7 +518,7 @@ contains
          index_max = 0
          max_diagonal = 0.0d0
 !
-         do j = 1, dim
+         do j = 1, dim_
 !
             if (abs(diagonal(j)) .gt. abs(max_diagonal)) then
 !
@@ -569,7 +546,7 @@ contains
 !
             min_diagonal = 1.0D10
 !
-            do j = 1, dim
+            do j = 1, dim_
 !
                if (diagonal(j) .lt. min_diagonal) min_diagonal = diagonal(j)
 
@@ -577,7 +554,7 @@ contains
             enddo
 !
             write(output%unit, '(t3, a46, e12.4)') 'The smallest diagonal after decomposition is: ', min_diagonal
-            call mem%dealloc(diagonal, dim)
+            call mem%dealloc(diagonal, dim_)
 !
             return
 !
@@ -593,23 +570,23 @@ contains
 !
          if (n_vectors .gt. 1) then
 !
-            call mem%alloc(temp_cholesky_vector, 1, n_vectors - 1)
-            temp_cholesky_vector(1, :) = cholesky_vectors(index_max, 1 : n_vectors - 1)
+            call mem%alloc(temp_cholesky_vector, n_vectors - 1)
+            temp_cholesky_vector(:) = cholesky_vectors(index_max, 1 : n_vectors - 1)
 !
             call dgemm('N', 'T',                         &
-                        dim,                             &
+                        dim_,                            &
                         1,                               &
                         n_vectors - 1,                   &
                         -one,                            &
                         cholesky_vectors,                &
-                        dim,                             &
+                        dim_,                            &
                         temp_cholesky_vector,            &
                         1,                               &
                         one,                             &
                         cholesky_vectors(1, n_vectors),  &
-                        dim)
+                        dim_)
 !
-            call mem%dealloc(temp_cholesky_vector, 1, n_vectors - 1)
+            call mem%dealloc(temp_cholesky_vector, n_vectors - 1)
 !
          endif
 !
@@ -619,9 +596,9 @@ contains
 !
          enddo
 !
-         call dscal(dim, one/sqrt(max_diagonal), cholesky_vectors(1, n_vectors), 1)
+         call dscal(dim_, one/sqrt(max_diagonal), cholesky_vectors(1, n_vectors), 1)
 !
-         do j = 1, dim
+         do j = 1, dim_
 !
             diagonal(j) = diagonal(j) - cholesky_vectors(j, n_vectors)**2
 !
@@ -629,7 +606,7 @@ contains
 !
          diagonal(index_max) = zero
 !
-         do j = 1, dim
+         do j = 1, dim_
 !
             matrix(j,index_max) = 0.0D0
             matrix(index_max,j) = 0.0D0
@@ -640,7 +617,7 @@ contains
 !
       min_diagonal = 1.0D10
 !
-      do j = 1, dim
+      do j = 1, dim_
 !
             if (diagonal(j) .lt. min_diagonal) min_diagonal = diagonal(j)
 
@@ -649,12 +626,12 @@ contains
 !
       write(output%unit, '(t3, a46, e12.4)') 'The smallest diagonal after decomposition is: ', min_diagonal
 !
-      call mem%dealloc(diagonal, dim)
+      call mem%dealloc(diagonal, dim_)
 !
    end subroutine full_cholesky_decomposition_effective
 !
 !
-   subroutine cholesky_decomposition_limited_diagonal(matrix, cholesky_vectors, dim, &
+   subroutine cholesky_decomposition_limited_diagonal(matrix, cholesky_vectors, dim_, &
                                                      n_vectors, threshold, n_included_diagonals, &
                                                      included_diagonals, n_vectors_requested)
 !!
@@ -674,17 +651,17 @@ contains
 !!
       implicit none
 !
-      integer, intent(in) :: dim, n_included_diagonals
+      integer, intent(in) :: dim_, n_included_diagonals
       integer, intent(out) :: n_vectors
 !
       real(dp), intent(in) :: threshold
 !
       integer, intent(in), optional :: n_vectors_requested
 !
-      real(dp), dimension(dim, dim), intent(inout) :: matrix
-      real(dp), dimension(dim, n_included_diagonals), intent(out) :: cholesky_vectors
+      real(dp), dimension(dim_, dim_), intent(inout) :: matrix
+      real(dp), dimension(dim_, n_included_diagonals), intent(out) :: cholesky_vectors
 !
-      integer, dimension(n_included_diagonals, 1), intent(in) :: included_diagonals
+      integer, dimension(n_included_diagonals), intent(in) :: included_diagonals
 !
       integer, dimension(:), allocatable :: used_diag
 !
@@ -692,7 +669,7 @@ contains
       real(dp) :: max_diagonal
 !
       real(dp), dimension(:), allocatable :: diagonal
-      real(dp), dimension(:,:), allocatable :: temp_cholesky_vector
+      real(dp), dimension(:), allocatable :: temp_cholesky_vector
 !
       real(dp), parameter :: tolerance = 1.0d-10
 !
@@ -700,9 +677,9 @@ contains
 !
       if (present(n_vectors_requested)) n_max_pivots = n_vectors_requested
 !
-      call mem%alloc(diagonal, dim)
+      call mem%alloc(diagonal, dim_)
 !
-      do i = 1, dim
+      do i = 1, dim_
 !
          diagonal(i) = matrix(i, i)
 !
@@ -710,7 +687,7 @@ contains
 !
       cholesky_vectors = zero
 !
-      call mem%alloc(used_diag, dim)
+      call mem%alloc(used_diag, dim_)
       used_diag = 0
 !
       do i = 1, n_max_pivots
@@ -724,10 +701,10 @@ contains
 !
          do j = 1, n_included_diagonals
 !
-            if (abs(diagonal(included_diagonals(j, 1))) .gt. abs(max_diagonal)) then
+            if (abs(diagonal(included_diagonals(j))) .gt. abs(max_diagonal)) then
 !
-               max_diagonal = diagonal(included_diagonals(j, 1))
-               index_max    = included_diagonals(j, 1)
+               max_diagonal = diagonal(included_diagonals(j))
+               index_max    = included_diagonals(j)
 !
             endif
 !
@@ -748,23 +725,23 @@ contains
 !
             n_vectors = n_vectors - 1
 !
-            call mem%dealloc(used_diag, dim)
-            call mem%dealloc(diagonal, dim)
+            call mem%dealloc(used_diag, dim_)
+            call mem%dealloc(diagonal, dim_)
 !
 !           On exit, cholesky vectors subtracted from matrix
 !
             call dgemm('N', 'T',          &
-                        dim,              &
-                        dim,              &
+                        dim_,             &
+                        dim_,             &
                         n_vectors,        &
                         one,              &
                         cholesky_vectors, &
-                        dim,              &
+                        dim_,             &
                         cholesky_vectors, &
-                        dim,              &
+                        dim_,             &
                         -one,             &
                         matrix,           &
-                        dim)
+                        dim_)
 !
             return
 !
@@ -780,23 +757,23 @@ contains
 !
          if (n_vectors .gt. 1) then
 !
-            call mem%alloc(temp_cholesky_vector, 1, n_vectors - 1)
-            temp_cholesky_vector(1, :) = cholesky_vectors(index_max, 1 : n_vectors - 1)
+            call mem%alloc(temp_cholesky_vector, n_vectors - 1)
+            temp_cholesky_vector(:) = cholesky_vectors(index_max, 1 : n_vectors - 1)
 !
             call dgemm('N', 'T',                         &
-                        dim,                             &
+                        dim_,                            &
                         1,                               &
                         n_vectors - 1,                   &
                         -one,                            &
                         cholesky_vectors,                &
-                        dim,                             &
+                        dim_,                            &
                         temp_cholesky_vector,            &
                         1,                               &
                         one,                             &
                         cholesky_vectors(1, n_vectors),  &
-                        dim)
+                        dim_)
 !
-            call mem%dealloc(temp_cholesky_vector, 1, n_vectors - 1)
+            call mem%dealloc(temp_cholesky_vector, n_vectors - 1)
 !
          endif
 !
@@ -806,9 +783,9 @@ contains
 !
          enddo
 !
-         call dscal(dim, one/sqrt(max_diagonal), cholesky_vectors(1, n_vectors), 1)
+         call dscal(dim_, one/sqrt(max_diagonal), cholesky_vectors(1, n_vectors), 1)
 !
-         do j = 1, dim
+         do j = 1, dim_
 !
             diagonal(j) = diagonal(j) - cholesky_vectors(j, n_vectors)**2
 !
@@ -818,28 +795,28 @@ contains
 !
       enddo
 !
-      call mem%dealloc(used_diag, dim)
-      call mem%dealloc(diagonal, dim)
+      call mem%dealloc(used_diag, dim_)
+      call mem%dealloc(diagonal, dim_)
 !
 !     On exit, cholesky vectors subtracted from matrix
 !
       call dgemm('N', 'T',          &
-                  dim,              &
-                  dim,              &
+                  dim_,             &
+                  dim_,             &
                   n_vectors,        &
                   -one,             &
                   cholesky_vectors, &
-                  dim,              &
+                  dim_,             &
                   cholesky_vectors, &
-                  dim,              &
+                  dim_,             &
                   one,              &
                   matrix,           &
-                  dim)
+                  dim_)
 !
    end subroutine cholesky_decomposition_limited_diagonal
 !
 !
- subroutine full_cholesky_decomposition_system(matrix, cholesky_vectors, dim, n_vectors, &
+ subroutine full_cholesky_decomposition_system(matrix, cholesky_vectors, dim_, n_vectors, &
                                                    threshold, used_diag)
 !!
 !!    Cholesky decomposition,
@@ -848,15 +825,15 @@ contains
 !!
       implicit none
 !
-      integer, intent(in) :: dim
+      integer, intent(in) :: dim_
       integer, intent(out) :: n_vectors
 !
       real(dp), intent(in) :: threshold
 !
-      real(dp), dimension(dim, dim), intent(in)  :: matrix
-      real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
+      real(dp), dimension(dim_, dim_), intent(in)  :: matrix
+      real(dp), dimension(dim_, dim_), intent(out) :: cholesky_vectors
 !
-      integer, dimension(dim) :: used_diag
+      integer, dimension(dim_) :: used_diag
 !
       real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
 !
@@ -865,15 +842,15 @@ contains
 !
       cholesky_vectors = matrix
 !
-      allocate(work(2*dim))
+      allocate(work(2*dim_))
 !
 !     DPSTRF computes the Cholesky factorization with complete pivoting
 !     of a real symmetric positive semidefinite matrix.
 !
       call dpstrf('L',      &
-            dim,              &
+            dim_,              &
             cholesky_vectors, &
-            dim,              &
+            dim_,              &
             used_diag,        &
             n_vectors,        &
             threshold,        &
@@ -882,7 +859,7 @@ contains
 !
       deallocate(work)
 !
-      do I = 1, dim ! Zero upper unreferenced triangle
+      do I = 1, dim_ ! Zero upper unreferenced triangle
          do J = 1, I - 1
 !
             cholesky_vectors(J, I) = zero
@@ -911,7 +888,7 @@ contains
 
       real(dp), dimension(n) :: work  ! work array for LAPACK
       integer, dimension(n) :: ipiv   ! pivot indices
-      integer(kind=4) :: info
+      integer :: info
 !
 !     Store A in Ainv to prevent it from being overwritten by LAPACK
 !
@@ -949,7 +926,7 @@ contains
       real(dp), dimension(n, n), intent(in) :: A
       real(dp), dimension(n, n), intent(out) :: Ainv
 !
-      integer(kind=4) :: info
+      integer :: info
 !
 !     Store A in Ainv to prevent it from being overwritten by LAPACK
 !
@@ -1046,7 +1023,7 @@ contains
 !
       integer, intent(in) :: n
 !
-      real(dp), dimension(n, 1), intent(in) :: X
+      real(dp), dimension(n), intent(in) :: X
 !
       integer :: i
 !
@@ -1054,7 +1031,7 @@ contains
 !
       do i = 1, n
 !
-         if (abs(X(i, 1)) .gt. get_abs_max) get_abs_max = abs(X(i, 1))
+         if (abs(X(i)) .gt. get_abs_max) get_abs_max = abs(X(i))
 !
       enddo
 !
@@ -1301,10 +1278,10 @@ contains
 !
       integer, intent(in) :: n 
 !
-      real(dp), dimension(n,n), intent(in) :: A 
-      real(dp), dimension(n,n), intent(in) :: B
+      real(dp), dimension(n, n), intent(in) :: A 
+      real(dp), dimension(n, n), intent(in) :: B
 !
-      real(dp), dimension(n,n) :: AcB ! [A, B] = AB - BA on exit 
+      real(dp), dimension(n, n) :: AcB ! [A, B] = AB - BA on exit 
 !
       call dgemm('N', 'N', &
                   n,       &
@@ -1368,13 +1345,13 @@ contains
 !
       integer, intent(in) :: n
 !
-      real(dp), dimension(n, 1), intent(in) :: A 
+      real(dp), dimension(n), intent(in) :: A 
 !
       integer :: I 
 !
       character(len=*)   :: indent ! indentation
       character(len=255) :: adv    ! advance
-      character(len=255) :: fmt    ! format
+      character(len=255) :: frmt   ! format
       character(len=255) :: sep    ! column separation
 !
       write(output%unit, *)
@@ -1382,8 +1359,8 @@ contains
       adv = 'no'
       do I = 1, n 
 !
-         fmt = '(t' // trim(sep) // ', i3, f18.12)'
-         write(output%unit, fmt, advance=trim(adv)) I, A(I,1) 
+         frmt = '(t' // trim(sep) // ', i3, f18.12)'
+         write(output%unit, frmt, advance=trim(adv)) I, A(I) 
 !
          if (mod(I, 3) .eq. 2) then 
 !
@@ -1408,98 +1385,21 @@ contains
    end subroutine print_vector
 !
 !
-   subroutine simple_dgemm(first, second, m, n, k, alpha, A, B, gamma, C)
-!!
-!!    Simple dgemm 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
-!!
-!!    A wrapper for dgemm in the special case where we do a full matrix multiplication,
-!!    rather than a restricted one (with offsets on beginning element or different 
-!!    leading dimensions, etc.):
-!!
-!!       C = gamma C + alpha AB
-!!
-!!    Here, C is m x n
-!!          A is either m x k or k x m
-!!          B is either k x n or n x k 
-!!
-!!    The characters 'first' and 'second' can either be 'N' or 'T' which denotes whether 
-!!    to  respectively not transpose or to transpose the first and second matrices, A and B. 
-!!
-!!    Simple dgemm is slightly more compact and might be useful to avoid making leading 
-!!    dimension bugs - if you worry about that kind of thing - whenever such functionality 
-!!    is not needed.  
-!!
-      implicit none 
-!
-      character(len=1), intent(in) :: first, second 
-!
-      integer, intent(in) :: m, n, k 
-!
-      real(dp), intent(in) :: alpha, gamma 
-!
-      real(dp), dimension(:, :), intent(in) :: A ! (m x k) if normal; (k x m) if transpose 
-      real(dp), dimension(:, :), intent(in) :: B ! (k x n) if normal; (n x k) if transpose 
-!
-      real(dp), dimension(m, n), intent(inout) :: C 
-!
-      integer :: lda, ldb
-!
-!     Determine leading dimensions 
-!
-      if (first == 'N') then 
-!
-         lda = m 
-!
-      else ! first == 'T'
-!
-         lda = k
-!
-      endif
-!
-      if (second == 'N') then 
-!
-         ldb = k 
-!
-      else ! second == 'T'
-!
-         ldb = n 
-!
-      endif
-!
-!     Do matrix multiplication 
-!
-      call dgemm(first, second, &
-                 m,             &
-                 n,             &
-                 k,             &
-                 alpha,         &
-                 A,             &
-                 lda,           &
-                 B,             &
-                 ldb,           &
-                 gamma,         &
-                 C,             &
-                 m)
-!
-   end subroutine simple_dgemm
-!
-!
-   subroutine trans(A, A_trans, dim)
+   subroutine trans(A, A_trans, dim_)
 !!
 !!    Transpose 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
       implicit none
 !
-      integer :: dim, n, m
+      integer :: dim_, n, m
 !
-      real(dp), dimension(dim, dim), intent(in) :: A
-      real(dp), dimension(dim, dim), intent(out) :: A_trans
+      real(dp), dimension(dim_, dim_), intent(in) :: A
+      real(dp), dimension(dim_, dim_), intent(out) :: A_trans
 !
 !$omp parallel do private(m, n) shared(A, A_trans)
-      do m = 1, dim 
-         do n = 1, dim 
+      do m = 1, dim_ 
+         do n = 1, dim_ 
 !
             A_trans(n, m) = A(m, n)
 !

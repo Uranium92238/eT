@@ -111,6 +111,7 @@ contains
 ! 
       else
 !
+         call wf%integrals%write_t1_cholesky(wf%t1) 
          call wf%set_initial_amplitudes_guess()
 !
       endif
@@ -155,15 +156,15 @@ contains
 !
       real(dp), intent(in) :: alpha 
 !
-      real(dp), dimension(n, 1), intent(in)    :: preconditioner
-      real(dp), dimension(n, 1), intent(inout) :: vector  
+      real(dp), dimension(n), intent(in)    :: preconditioner
+      real(dp), dimension(n), intent(inout) :: vector  
 !
       integer :: I 
 !
 !$omp parallel do private(I)
       do I = 1, n 
 !
-         vector(I, 1) = alpha*vector(I, 1)/preconditioner(I, 1)
+         vector(I) = alpha*vector(I)/preconditioner(I)
 !
       enddo 
 !$omp end parallel do
@@ -191,17 +192,17 @@ contains
       real(dp) :: energy, prev_energy
       real(dp) :: omega_norm
 !
-      real(dp), dimension(:,:), allocatable :: omega 
-      real(dp), dimension(:,:), allocatable :: amplitudes  
-      real(dp), dimension(:,:), allocatable :: epsilon  
+      real(dp), dimension(:), allocatable :: omega 
+      real(dp), dimension(:), allocatable :: amplitudes  
+      real(dp), dimension(:), allocatable :: epsilon  
 !
       integer :: iteration
 !
       call diis_manager%init('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
-      call mem%alloc(omega, wf%n_gs_amplitudes, 1)
-      call mem%alloc(amplitudes, wf%n_gs_amplitudes, 1)
-      call mem%alloc(epsilon, wf%n_gs_amplitudes, 1)
+      call mem%alloc(omega, wf%n_gs_amplitudes)
+      call mem%alloc(amplitudes, wf%n_gs_amplitudes)
+      call mem%alloc(epsilon, wf%n_gs_amplitudes)
 !
       converged          = .false.
       converged_energy   = .false.
@@ -217,9 +218,6 @@ contains
       do while (.not. converged .and. iteration .le. solver%max_iterations)         
 !
 !        Calculate the energy and error vector omega 
-!
-         call wf%integrals%write_t1_cholesky(wf%t1)
-         call wf%integrals%can_we_keep_g_pqrs()
 !
          call wf%construct_fock()
 !
@@ -271,6 +269,12 @@ contains
 !
             prev_energy = energy 
 !
+!           Compute the new T1 transformed Cholesky vectors,
+!           and store in memory the entire ERI-T1 matrix if possible and necessary 
+!
+            call wf%integrals%write_t1_cholesky(wf%t1)
+            if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
+!
          endif
 !
          iteration = iteration + 1
@@ -281,9 +285,9 @@ contains
 !
       enddo
 !
-      call mem%dealloc(omega, wf%n_gs_amplitudes, 1)
-      call mem%dealloc(amplitudes, wf%n_gs_amplitudes, 1)
-      call mem%dealloc(epsilon, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(omega, wf%n_gs_amplitudes)
+      call mem%dealloc(amplitudes, wf%n_gs_amplitudes)
+      call mem%dealloc(epsilon, wf%n_gs_amplitudes)
 !
       call diis_manager%finalize()
 !

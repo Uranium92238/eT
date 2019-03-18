@@ -62,9 +62,8 @@ contains
 !!
       implicit none 
 !
-      class(gs_engine) :: engine 
-!
-      class(ccs) :: wf
+      class(gs_engine)  :: engine 
+      class(ccs)        :: wf
 !
       type(eri_cd), allocatable     :: eri_chol_solver
       type(diis_cc_gs), allocatable :: cc_gs_solver 
@@ -91,6 +90,7 @@ contains
 !
       if (trim(wf%name_) == 'MP2') then 
 !
+         call wf%integrals%write_t1_cholesky(wf%t1)
          call wf%calculate_energy()
          call wf%print_wavefunction_summary()
 !

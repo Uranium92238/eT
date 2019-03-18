@@ -71,9 +71,8 @@ contains
 !!
       implicit none 
 !
-      class(multipliers_engine) :: engine 
-!
-      class(ccs) :: wf
+      class(multipliers_engine)  :: engine
+      class(ccs)                 :: wf
 !
       type(eri_cd), allocatable                    :: eri_chol_solver
       type(diis_cc_gs), allocatable                :: cc_gs_solver
@@ -91,7 +90,6 @@ contains
       call eri_chol_solver%run(wf%system)
 !
       call eri_chol_solver%cholesky_vecs_diagonal_test(wf%system)
-      call eri_chol_solver%full_test_cholesky_vecs(wf%system)
 !
       call eri_chol_solver%construct_mo_cholesky_vecs(wf%system, wf%n_mo, wf%orbital_coefficients)
 !

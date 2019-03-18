@@ -42,7 +42,7 @@ module davidson_cc_es_class
                                            &expanded until the convergence criteria are met.'
 !
       character(len=500) :: description2 = 'A complete description of the algorithm can be found in &
-                                           &E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
+                                             &E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
       integer :: max_iterations
 !
@@ -55,9 +55,9 @@ module davidson_cc_es_class
 !
       character(len=40) :: transformation 
 !
-      real(dp), dimension(:,:), allocatable :: energies
+      real(dp), dimension(:), allocatable :: energies
 !
-      integer, dimension(:,:), allocatable :: start_vectors
+      integer, dimension(:), allocatable :: start_vectors
 !
    contains
 !     
@@ -134,7 +134,7 @@ contains
       class(davidson_cc_es) :: solver
 !
       if (.not. allocated(solver%energies)) &
-            call mem%alloc(solver%energies, solver%n_singlet_states, 1)
+            call mem%alloc(solver%energies, solver%n_singlet_states)
 !
    end subroutine initialize_energies_davidson_cc_es
 !
@@ -151,7 +151,7 @@ contains
       class(davidson_cc_es) :: solver
 !
       if (allocated(solver%energies)) &
-            call mem%dealloc(solver%energies, solver%n_singlet_states, 1)
+            call mem%dealloc(solver%energies, solver%n_singlet_states)
 !
    end subroutine destruct_energies_davidson_cc_es
 !
@@ -190,11 +190,11 @@ contains
 !
       integer :: state 
 !
-      real(dp), dimension(:,:), allocatable :: r
+      real(dp), dimension(:), allocatable :: r
 !
       write(output%unit, '(/t3,a)') '- Excitation vector amplitudes:'
 !
-      call mem%alloc(r, wf%n_es_amplitudes, 1)
+      call mem%alloc(r, wf%n_es_amplitudes)
 !
       do state = 1, solver%n_singlet_states
 !
@@ -202,15 +202,16 @@ contains
 !
          call davidson%construct_X(r, state)         
 !
-         write(output%unit, '(/t6,a30,f15.12)')  'Energy (Hartree):             ', davidson%get_eigenvalue(state)
-         write(output%unit, '(t6,a30,f15.12)') 'Fraction singles (|r1|/|r|):  ', &
-                        get_l2_norm(r(1:wf%n_t1,1),wf%n_t1)/get_l2_norm(r,wf%n_es_amplitudes)   
+         write(output%unit, '(/t6,a30,f15.12)')  'Energy (Hartree):             ', &
+                        davidson%get_eigenvalue(state)
+         write(output%unit, '(t6,a30,f15.12)')   'Fraction singles (|r1|/|r|):  ', &
+                        get_l2_norm(r(1:wf%n_t1), wf%n_t1)/get_l2_norm(r,wf%n_es_amplitudes)   
 !
          call wf%print_dominant_x_amplitudes(r, 'r')
 !
       enddo 
 !
-      call mem%dealloc(r, wf%n_es_amplitudes, 1)
+      call mem%dealloc(r, wf%n_es_amplitudes)
 !
       write(output%unit, '(/t3,a)') '- Electronic excitation energies:'
 !
@@ -253,7 +254,7 @@ contains
 !
       real(dp) :: residual_norm
 !
-      real(dp), dimension(:,:), allocatable :: c_i
+      real(dp), dimension(:), allocatable :: c_i
       real(dp), dimension(:), allocatable :: X
 !
       call wf%prepare_for_jacobian()
@@ -289,7 +290,7 @@ contains
 !
 !        Transform new trial vectors and write to file
 !
-         call mem%alloc(c_i, wf%n_es_amplitudes, 1)
+         call mem%alloc(c_i, wf%n_es_amplitudes)
 !
          do trial = davidson%dim_red - davidson%n_new_trials + 1, davidson%dim_red
 !
@@ -303,7 +304,7 @@ contains
 !
          enddo
 !
-         call mem%dealloc(c_i, wf%n_es_amplitudes, 1)
+         call mem%dealloc(c_i, wf%n_es_amplitudes)
 !
 !        Solve problem in reduced space
 !
@@ -325,7 +326,7 @@ contains
             call wf%save_excited_state(X, solution, solver%transformation)
 !
             write(output%unit,'(t3,i2,5x,f16.12,7x,f16.12,11x,e11.4)') &
-            solution, davidson%omega_re(solution, 1), davidson%omega_im(solution, 1), residual_norm
+            solution, davidson%omega_re(solution), davidson%omega_im(solution), residual_norm
             flush(output%unit)
 !
             if (residual_norm .gt. solver%residual_threshold) converged_residual = .false.
@@ -342,7 +343,7 @@ contains
 !
          do solution = 1, solver%n_singlet_states
 !
-            if (abs(davidson%omega_re(solution, 1) - solver%energies(solution, 1)) &
+            if (abs(davidson%omega_re(solution) - solver%energies(solution)) &
                .gt. solver%eigenvalue_threshold) converged_eigenvalue = .false.
 !
          enddo
@@ -429,7 +430,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c_i
 !
       if (trim(solver%transformation) == 'right') then 
 !
@@ -459,11 +460,11 @@ contains
 !
       type(eigen_davidson_tool) :: davidson
 !
-      real(dp), dimension(:,:), allocatable :: c_i
-      real(dp), dimension(:,:), allocatable :: orbital_differences
-      real(dp), dimension(:,:), allocatable :: lowest_orbital_differences
+      real(dp), dimension(:), allocatable :: c_i
+      real(dp), dimension(:), allocatable :: orbital_differences
+      real(dp), dimension(:), allocatable :: lowest_orbital_differences
 !
-      integer, dimension(:,:), allocatable :: lowest_orbital_differences_index
+      integer, dimension(:), allocatable :: lowest_orbital_differences_index
 !
       integer :: trial, n_solutions_on_file
 !
@@ -471,18 +472,18 @@ contains
 !
 !        Initial trial vectors given on input
 !
-         call mem%alloc(c_i, wf%n_es_amplitudes, 1)
+         call mem%alloc(c_i, wf%n_es_amplitudes)
 !
          do trial = 1, solver%n_singlet_states
 !
             c_i = zero
-            c_i(solver%start_vectors(trial, 1), 1) = one
+            c_i(solver%start_vectors(trial)) = one
 !
             call davidson%write_trial(c_i)
 !
          enddo
 !
-         call mem%dealloc(c_i, wf%n_es_amplitudes, 1)
+         call mem%dealloc(c_i, wf%n_es_amplitudes)
 !
       else
 !
@@ -495,7 +496,7 @@ contains
             write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
                                                 ' solutions on file.'
 !
-            call mem%alloc(c_i, wf%n_es_amplitudes, 1)
+            call mem%alloc(c_i, wf%n_es_amplitudes)
 !
             do trial = 1, n_solutions_on_file
 !
@@ -504,7 +505,7 @@ contains
 !
             enddo 
 !
-            call mem%dealloc(c_i, wf%n_es_amplitudes, 1)
+            call mem%dealloc(c_i, wf%n_es_amplitudes)
 !
          else
 !
@@ -516,32 +517,32 @@ contains
 !
 !           Compute the remaining start vectors using Koopman
 !
-            call mem%alloc(orbital_differences, wf%n_es_amplitudes, 1)
+            call mem%alloc(orbital_differences, wf%n_es_amplitudes)
             call wf%get_es_orbital_differences(orbital_differences, wf%n_es_amplitudes)
 !
-            call mem%alloc(lowest_orbital_differences, solver%n_singlet_states, 1)
-            call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)
+            call mem%alloc(lowest_orbital_differences, solver%n_singlet_states)
+            call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states)
 !
             call get_n_lowest(solver%n_singlet_states, wf%n_es_amplitudes, orbital_differences, &
                            lowest_orbital_differences, lowest_orbital_differences_index)
 !
-            call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states, 1)
-            call mem%dealloc(orbital_differences, wf%n_es_amplitudes, 1)
+            call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states)
+            call mem%dealloc(orbital_differences, wf%n_es_amplitudes)
 !
-            call mem%alloc(c_i, wf%n_es_amplitudes, 1)
+            call mem%alloc(c_i, wf%n_es_amplitudes)
 !
             do trial = n_solutions_on_file + 1, solver%n_singlet_states
 !
                c_i = zero
-               c_i(lowest_orbital_differences_index(trial, 1), 1) = one
+               c_i(lowest_orbital_differences_index(trial)) = one
 !
                call davidson%write_trial(c_i)
 !
             enddo 
 !
-            call mem%dealloc(c_i, wf%n_es_amplitudes, 1)
-            call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)
-!
+            call mem%dealloc(c_i, wf%n_es_amplitudes)
+            call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states)
+!      
          endif
 !
          call davidson%orthonormalize_trial_vecs()
@@ -566,12 +567,12 @@ contains
 !
       type(eigen_davidson_tool) :: davidson
 !
-      real(dp), dimension(:,:), allocatable :: preconditioner
+      real(dp), dimension(:), allocatable :: preconditioner
 !
-      call mem%alloc(preconditioner, wf%n_es_amplitudes, 1)
+      call mem%alloc(preconditioner, wf%n_es_amplitudes)
       call wf%get_es_orbital_differences(preconditioner, wf%n_es_amplitudes)
       call davidson%set_preconditioner(preconditioner)
-      call mem%dealloc(preconditioner, wf%n_es_amplitudes, 1)
+      call mem%dealloc(preconditioner, wf%n_es_amplitudes)
 !
    end subroutine set_precondition_vector_davidson_cc_es
 !
@@ -588,7 +589,7 @@ contains
       write(output%unit, '(/t3,a,a,a)') 'Cleaning up ', trim(solver%tag), '.'
 !
       call solver%destruct_energies()
-      if (allocated(solver%start_vectors)) call mem%dealloc(solver%start_vectors, solver%n_singlet_states, 1)
+      if (allocated(solver%start_vectors)) call mem%dealloc(solver%start_vectors, solver%n_singlet_states)
 !
    end subroutine cleanup_davidson_cc_es
 !
@@ -676,7 +677,7 @@ contains
 !
             enddo
 !
-            call mem%alloc(solver%start_vectors, n_start_vecs, 1)
+            call mem%alloc(solver%start_vectors, n_start_vecs)
             read(line, *) solver%start_vectors
 !
          endif

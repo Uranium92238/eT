@@ -24,7 +24,7 @@
 !!
       class(ccsd), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes) :: c_i
 !
    end subroutine jacobian_transpose_transform_trial_vector_ccsd
 !
@@ -37,7 +37,7 @@
       implicit none 
 !
       class(ccsd) :: wf 
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: b
+      real(dp), dimension(wf%n_es_amplitudes) :: b
 !
    end subroutine jacobian_transpose_ccsd_transformation_ccsd
 !

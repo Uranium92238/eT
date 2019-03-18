@@ -26,7 +26,7 @@
 !
      class(cc3), intent(inout) :: wf
 !
-     real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+     real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
    end subroutine construct_omega_cc3
 !
@@ -70,8 +70,8 @@
 !
       type(batching_index), intent(in) :: batch_x
 !
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_bdcx
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_dbxc
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_bdcx
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_dbxc
 !
    end subroutine omega_cc3_vvv_reader_cc3
 !
@@ -88,9 +88,9 @@
 !
       type(batching_index), intent(in) :: batch_x, batch_y
 !
-      real(dp), dimension(wf%n_o,wf%n_v,batch_y%length,batch_x%length), intent(out) :: g_lycx
-      real(dp), dimension(wf%n_v,wf%n_o,batch_y%length,batch_x%length), intent(out) :: g_ylxc
-      real(dp), dimension(wf%n_v,wf%n_v,batch_y%length,batch_x%length), intent(out) :: L_ybxc
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_lycx
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: L_ybxc
 !
    end subroutine omega_cc3_ov_vv_reader_cc3
 !

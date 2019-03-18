@@ -46,7 +46,7 @@ contains
 !
       class(cc3), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
       real(dp), dimension(:,:), allocatable     :: omega1
       real(dp), dimension(:), allocatable       :: omega2
@@ -86,7 +86,7 @@ contains
       call wf%omega_ccsd_d2(omega2)
       call wf%omega_ccsd_e2(omega2)
 !
-      call dcopy(wf%n_t2, omega2, 1, omega(wf%n_t1+1, 1), 1)
+      call dcopy(wf%n_t2, omega2, 1, omega(wf%n_t1+1), 1)
 !
       call ccsd_timer%freeze()
       call ccsd_timer%switch_off()
@@ -119,7 +119,7 @@ contains
 !
                   aibj = aibj + 1
 !
-                  omega(wf%n_t1+aibj,1) = omega(wf%n_t1+aibj,1) + omega_abij(a,b,i,j) + omega_abij(b,a,j,i)
+                  omega(wf%n_t1+aibj) = omega(wf%n_t1+aibj) + omega_abij(a,b,i,j) + omega_abij(b,a,j,i)
 !
                end do
             end do
@@ -245,7 +245,6 @@ contains
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                            req_0, req_1, req_2, req_3, batch_buff)
-!
 !
 !     Allocate integral arrays and assign pointers.
 !     Without pointers we'll have to use three times as much 
@@ -442,15 +441,15 @@ contains
 !
                endif
 !
-               do i = batch_i%first,batch_i%last
+               do i = batch_i%first, batch_i%last
 !
                   i_rel = i - batch_i%first + 1
 !
-                  do j = batch_j%first,min(batch_j%last,i)
+                  do j = batch_j%first, min(batch_j%last, i)
 !
                      j_rel = j - batch_j%first + 1
 !
-                     do k = batch_k%first,min(batch_k%last,j)
+                     do k = batch_k%first, min(batch_k%last, j)
 !
                         if (i .eq. j .and. i .eq. k) then
                            cycle
@@ -723,7 +722,6 @@ contains
 !
       call disk%close_file(wf%g_ljck_t,'keep')
 !
-!
 !     (jl|kc)
 !     Same batching
 !
@@ -734,7 +732,7 @@ contains
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
+         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
          call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !
          call wf%get_ooov(g_pqrs, &
@@ -743,7 +741,7 @@ contains
                            batch_k%first,batch_k%last, &
                            1,wf%n_v)
 !
-         call sort_1234_to_4213(g_pqrs,h_pqrs,wf%n_o,wf%n_o,batch_k%length,wf%n_v)
+         call sort_1234_to_4213(g_pqrs, h_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
 !
          do k = 1,batch_k%length
             do j = 1,wf%n_o
@@ -796,7 +794,7 @@ contains
 !
                call sort_12_to_21(h_pqrs(:,:,j,k), v2_help, wf%n_v, wf%n_v)
 !
-               call dscal(wf%n_v**2, two, h_pqrs(:,:,j,k),1)
+               call dscal(wf%n_v**2, two, h_pqrs(:,:,j,k), 1)
 !
                call daxpy(wf%n_v**2, -one, v2_help, 1, h_pqrs(:,:,j,k), 1)
 !
@@ -833,8 +831,8 @@ contains
 !
       type(batching_index), intent(in) :: batch_x
 !
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_bdcx
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_dbxc
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_bdcx
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_dbxc
 !
       integer :: ioerror
       integer :: x, x_abs
@@ -884,9 +882,9 @@ contains
 !
       type(batching_index), intent(in) :: batch_x, batch_y
 !
-      real(dp), dimension(wf%n_o,wf%n_v,batch_y%length,batch_x%length), intent(out) :: g_lycx
-      real(dp), dimension(wf%n_v,wf%n_o,batch_y%length,batch_x%length), intent(out) :: g_ylxc
-      real(dp), dimension(wf%n_v,wf%n_v,batch_y%length,batch_x%length), intent(out) :: L_ybxc
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_lycx
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: L_ybxc
 !
       integer :: ioerror, record
       integer :: x, y, x_abs, y_abs
@@ -987,12 +985,12 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj 
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck 
 !
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljci 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkci 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkcj 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_licj 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lick 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck 
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljci 
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lkci 
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lkcj 
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_licj 
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lick 
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljck 
 !
 !
 !     Contributions to W
@@ -1230,7 +1228,7 @@ contains
       real(dp) :: epsilon_ijk, epsilon_c, epsilon_cb
 !
 !
-      epsilon_ijk = wf%fock_diagonal(i,1) + wf%fock_diagonal(j,1) + wf%fock_diagonal(k,1)
+      epsilon_ijk = wf%fock_diagonal(i) + wf%fock_diagonal(j) + wf%fock_diagonal(k)
 !
 !$omp parallel do schedule(static) private(a)
       do a = 1,wf%n_v
@@ -1243,15 +1241,15 @@ contains
 !$omp parallel do schedule(static) private(c,b,a,epsilon_c,epsilon_cb)
       do c = 1,wf%n_v
 !
-         epsilon_c = epsilon_ijk - wf%fock_diagonal(wf%n_o + c, 1) 
+         epsilon_c = epsilon_ijk - wf%fock_diagonal(wf%n_o + c) 
 !
          do b = 1,wf%n_v
 !
-            epsilon_cb = epsilon_c - wf%fock_diagonal(wf%n_o + b, 1) 
+            epsilon_cb = epsilon_c - wf%fock_diagonal(wf%n_o + b) 
 !
             do a = 1,wf%n_v
 !
-               t_abc(a,b,c) = t_abc(a,b,c)*one/(epsilon_cb - wf%fock_diagonal(wf%n_o + a, 1))
+               t_abc(a,b,c) = t_abc(a,b,c)*one/(epsilon_cb - wf%fock_diagonal(wf%n_o + a))
 !
             enddo
          enddo
