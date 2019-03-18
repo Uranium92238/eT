@@ -756,7 +756,6 @@ contains
 !
 !     We do the matrix multiplication as g_aib_c c_cj, batching over b.
 !
-!
       rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
 !
       rec1 = wf%n_v*wf%integrals%n_J + (wf%n_v**2)*(wf%n_o)
@@ -838,14 +837,12 @@ contains
 !     Order the amplitudes as t_ca_ij = t_ij^ac
 !
       call mem%alloc(t_aicj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      t_aicj = zero
 !
       call squareup(wf%t2, t_aicj, (wf%n_o)*(wf%n_v))
 !
 !     t_ai_cj to t_ca_ij
 !
       call mem%alloc(t_caij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      t_caij = zero
 !
       call sort_1234_to_3124(t_aicj, t_caij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1221,7 +1218,6 @@ contains
 !
 !     Form rho_aibj =+ - sum_l t_il^ab X_lj = - sum_l t_aib_l X_lj
 !
-!
       call dgemm('N','N',               &
                   (wf%n_o)*(wf%n_v)**2, &
                   wf%n_o,               &
@@ -1331,6 +1327,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: X_ib_dk ! The above intermediate, reordered
       real(dp), dimension(:,:,:,:), allocatable :: X_ckb_j ! An intermediate, term 3
       real(dp), dimension(:,:,:,:), allocatable :: Y_ckb_j ! An intermediate, term 4
+!      
       real(dp), dimension(:,:), allocatable :: X_bd    ! An intermediate, term 5
 !
       real(dp), dimension(:,:,:,:), allocatable :: rho_aijb ! rho_aibj, batching over b
@@ -1393,7 +1390,6 @@ contains
 !                              2413                1234
 !
          call mem%alloc(t_ijcd, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
-         t_ijcd = zero
 !
          call squareup_and_sort_1234_to_2413(wf%t2, t_ijcd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1500,7 +1496,6 @@ contains
 !        Order the amplitudes as t_dk_aj = t_kj^ad = t_jk^da (t_dj, ak)
 !
          call mem%alloc(t_dkaj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-         t_dkaj = zero
 !
          call squareup_and_sort_1234_to_1432(wf%t2, t_dkaj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1578,7 +1573,6 @@ contains
 !        Order amplitudes as t_ai_ck = t_ik^ca = t_ki^ac (t_ak,ci)
 !
          call mem%alloc(t_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-         t_aick = zero
 !
          call squareup_and_sort_1234_to_1432(wf%t2, t_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1659,7 +1653,6 @@ contains
 !        Order amplitudes as t_ai_ck = t_ik^ac = t2(aick)
 !
          call mem%alloc(t_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-         t_aick = zero
 !
          call squareup(wf%t2, t_aick, (wf%n_o)*(wf%n_v))
 !
@@ -1706,7 +1699,6 @@ contains
 !        Deallocations for term 4 (keep L_ckb_d = L_kcbd)
 !
          call mem%dealloc(rho_aib_j, wf%n_v, wf%n_o, batch_b%length, wf%n_o)
-!
 !
 !        :: Term 5.  sum_kcd L_kcbd t_ij^ad c_ck ::
 !
@@ -1813,7 +1805,6 @@ contains
       call jacobian_ccsd_e2_timer%start()
 !
       call mem%alloc(t_dlbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      t_dlbj = zero
 !
       call squareup(wf%t2, t_dlbj, (wf%n_o)*(wf%n_v))
 !
@@ -1946,7 +1937,6 @@ contains
 !     Reorder c_bl_dj as c_dl_bj
 !
       call mem%alloc(c_dlbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      c_dlbj = zero
 !
       call sort_1234_to_3214(c_aibj, c_dlbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1970,13 +1960,9 @@ contains
       call mem%dealloc(c_dlbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(L_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      !call wf%read_double_amplitudes
-!
       call mem%alloc(t_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      t_aick = zero
 !
       call squareup(wf%t2, t_aick, (wf%n_o)*(wf%n_v))
-      !call wf%destruct_double_amplitudes
 !
 !     rho_aibj = sum_ck t_ai_ck*X_ckbj
 !
@@ -2037,16 +2023,11 @@ contains
 !
       call mem%dealloc(L_dlck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      !call wf%read_double_amplitudes
-!
       call mem%alloc(t_aijd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      t_aijd = zero
 !
 !     Reorder T2 amplitudes
 !
       call squareup_and_sort_1234_to_1243(wf%t2, t_aijd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      !call wf%destruct_double_amplitudes
 !
       call mem%alloc(rho_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
@@ -2114,14 +2095,8 @@ contains
 !
       call mem%dealloc(L_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      !call wf%read_double_amplitudes
-!
       call mem%alloc(t_aibl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      t_aibl = zero
       call squareup(wf%t2, t_aibl, wf%n_o*(wf%n_v))
-
-!
-      !call wf%destruct_double_amplitudes
 !
 !     rho_aibj = sum_l t_aibl * Z_l_j
 !
@@ -2287,7 +2262,6 @@ contains
       call mem%dealloc(L_dclk, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%alloc(c_aijd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      c_aijd = zero
 !
 !     Reorder c_aidj to c_aijd
 !
@@ -2457,7 +2431,6 @@ contains
       call mem%dealloc(g_kcld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call mem%alloc(c_ldbj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-      c_ldbj = zero
 !
 !     Reorder c_bldj as c_ldbj
 !
@@ -2710,7 +2683,6 @@ contains
       call wf%get_vvoo(g_bckj)
 !
       call mem%alloc(g_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      g_ckbj = zero
 !
       call sort_1234_to_2314(g_bckj, g_ckbj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -2810,12 +2782,8 @@ contains
 !
 !     Reordered T2 amplitudes
 !
-      !call wf%read_double_amplitudes
-!
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      !call wf%destruct_double_amplitudes
 !
 !     X_kl_ij = g_kl_cd * t_cd_ij
 !

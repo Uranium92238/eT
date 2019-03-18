@@ -572,11 +572,6 @@ contains
                call mem%alloc(t_p_cdij, n_v_packed, n_o_packed)
                call mem%alloc(t_m_cdij, n_v_packed, n_o_packed)
 !
-               g_p_abcd = zero
-               g_m_abcd = zero
-               t_p_cdij = zero
-               t_m_cdij = zero
-!
 !              Reorder g_ca_db to g_abcd and t_cidj to t_cdij
 !
 !$omp parallel do private(a,b,c,d,ab,cd,diag_factor)
@@ -730,11 +725,6 @@ contains
                call mem%alloc(g_m_abcd, (batch_a%length)*(batch_b%length), n_v_packed)
                call mem%alloc(t_p_cdij, n_v_packed, n_o_packed)
                call mem%alloc(t_m_cdij, n_v_packed, n_o_packed)
-!
-               g_p_abcd = zero
-               g_m_abcd = zero
-               t_p_cdij = zero
-               t_m_cdij = zero
 !
 !$omp parallel do private(a,b,c,d,ab,cd,diag_factor)
                do c = 1, wf%n_v
