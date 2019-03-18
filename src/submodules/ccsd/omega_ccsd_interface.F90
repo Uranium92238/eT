@@ -73,27 +73,6 @@
    end subroutine omega_ccsd_a2_ccsd
 !
 !
-   module subroutine omega_ccsd_a2_ver2_ccsd(wf, omega2)
-!!
-!!    Omega A2 term version 2
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019
-!!      
-!!    A2 = g_aibj + sum_(cd) g_acbd * t_cidj = A2.1 + A.2.2
-!!
-!!    Structure: Batching over both a and b for A2.2.
-!!
-!!    This version of the routine sacrifices the 1/4 saving in the 
-!!    v^4 o^2 term. The benefit is hopefully more efficient parallelization.
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout) :: omega2
-!
-   end subroutine omega_ccsd_a2_ver2_ccsd
-!
-!
    module subroutine omega_ccsd_b2_ccsd(wf, omega2)
 !!
 !!    Omega B2 term
