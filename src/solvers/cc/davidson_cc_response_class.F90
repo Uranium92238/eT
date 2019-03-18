@@ -45,7 +45,7 @@ module davidson_cc_response_class
       logical :: restart
 !
       integer :: n_excited_states = 0
-      integer :: dim_rhs = 1, n_freq
+      integer :: dim_rhs = 1, n_freq = 0
 !
    contains
 !
@@ -120,6 +120,8 @@ contains
       write(output%unit, '(/t6,a26,e9.2)') 'Residual threshold:       ', solver%residual_threshold
 !
       write(output%unit, '(t6,a26,i9)')    'Max number of iterations: ', solver%max_iterations
+!
+      write(output%unit, '(t6,a26,i9)')    'Number of frequencies:    ', solver%n_freq
 !
    end subroutine print_settings_davidson_cc_response
 !
@@ -199,11 +201,12 @@ contains
 !
       if (solver%moments) then
 !
-         call wf%construct_csiX('dipole_length', rhs)
+         !call solver%build_fr_matrix(wf, rhs)
+         call wf%build_fr_matrix(rhs, solver%dim_rhs)
 !
       elseif (solver%polarizability) then
 !
-         call solver%build_fr_matrix(wf, rhs)
+         call wf%construct_csiX('dipole_length', rhs)
 !
       endif
 !
@@ -251,21 +254,35 @@ contains
 !
       real(dp), dimension(wf%n_es_amplitudes, solver%dim_rhs), intent(out) :: fr
 !
-      real(dp), dimension(:,:), allocatable :: r_n
+      !real(dp), dimension(:,:), allocatable :: r_n
+      real(dp), dimension(:,:), allocatable :: R_n
 !
-      integer :: i
+      real(dp) :: ddot
 !
-      call mem%alloc(r_n, wf%n_es_amplitudes, 1)
+      integer :: i = 1, state = 1
 !
-      do i = 1, solver%dim_rhs
+      call mem%alloc(R_n, wf%n_es_amplitudes, 1)
+      R_n = zero
+      !call mem%alloc(r_n, wf%n_es_amplitudes, 1)
+
+      call wf%read_excited_state(R_n, state, 'right')
 !
-         call wf%read_excited_state(r_n, i, 'right')
+      write(output%unit,'(t6,a,f19.10)') 'R vector norm = ', &
+      ddot(wf%n_es_amplitudes, R_n, 1, R_n, 1)
+      flush(output%unit)
 !
-         call wf%F_transform_vector(r_n)
+      call wf%F_transform_vector(R_n)
+
 !
-         call daxpy(wf%n_es_amplitudes, one, r_n, 1, fr(:,i), 1)
+      !do i = 1, solver%dim_rhs
 !
-      enddo
+         !call wf%read_excited_state(r_n, 1, 'right')
+!
+         !call wf%F_transform_vector(r_n)
+!
+         !call daxpy(wf%n_es_amplitudes, one, r_n, 1, fr(:,i), 1)
+!
+      !enddo
 !
       call mem%dealloc(r_n, wf%n_es_amplitudes, 1)
 !
@@ -346,13 +363,9 @@ contains
          read(input%unit, '(a100)') line
          line = remove_preceding_blanks(line)
 !
-         if (line(1:10) == 'threshold:' ) then
+         if (line(1:19) == 'residual threshold:' ) then
 !
-            read(line(11:100), *) solver%residual_threshold
-!
-         elseif (line(1:7) == 'restart' ) then
-!
-            solver%restart = .true.
+            read(line(20:100), *) solver%residual_threshold
 !
          elseif (line(1:15) == 'max iterations:' ) then
 !
@@ -377,18 +390,20 @@ contains
 !
             solver%moments = .true.
 !
-         elseif (line(1:7) == 'polarizability' ) then
+         elseif (line(1:14) == 'polarizability' ) then
 !
             solver%polarizability = .true.
-!
-         else 
-!
-            call output%error_msg('No RHS specified for linear response.')
 !
          endif
 !
       enddo
 !
+      if ( .not. solver%moments .and. .not. solver%polarizability) then
+!
+            call output%error_msg('No RHS specified for linear response.')
+!
+      endif
+! 
 !     Read excited state section to get n excited states 
 !     OBS: only necessary when 'moments' are true
 !
@@ -409,9 +424,9 @@ contains
 !
             if (line(1:15) == 'singlet states:' ) then
 !
-               read(line(16:100), *) solver%n_excited_states
+               read(line(16:100), *) solver%n_freq
 !
-               solver%dim_rhs = solver%n_excited_states
+               solver%dim_rhs = solver%n_freq
 !
             endif
 !

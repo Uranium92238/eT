@@ -237,6 +237,8 @@ module ccs_class
       procedure :: scale_left_excitation_vector                => scale_left_excitation_vector_ccs
       procedure :: calculate_transition_strength               => calculate_transition_strength_ccs
 !
+      procedure :: build_fr_matrix                             => build_fr_matrix_ccs
+!
 !     Routine for F-transformation
 !
       procedure :: F_transform_vector                           => F_transform_vector_ccs
@@ -5107,9 +5109,9 @@ contains
       S  = T_l * T_r
 !
 ! --- DEBUG F-transformation
-      !call wf%F_transform_vector(R_n)
-      !write(output%unit,'(t6,a,f19.10)') 'F-transformed R vector norm = ', &
-      !ddot(wf%n_es_amplitudes, R_n, 1, R_n, 1)
+      call wf%F_transform_vector(R_n)
+      write(output%unit,'(t6,a,f19.10)') 'F-transformed R vector norm = ', &
+      ddot(wf%n_es_amplitudes, R_n, 1, R_n, 1)
 !
       call mem%dealloc(L_n, wf%n_es_amplitudes, 1)
       call mem%dealloc(R_n, wf%n_es_amplitudes, 1)
@@ -5117,24 +5119,48 @@ contains
    end subroutine calculate_transition_strength_ccs
 !
 !
-   subroutine F_transform_right_vector_ccs(wf, n, R_n)
+   subroutine build_fr_matrix_ccs(wf, fr, dim_fr)
 !!
-!!    F-transform right excitation vector
-!!    Written by Josefine H. Andersen, March 2019
+!!    Build matrix with F-transformed right vectors i as columns
+!!    Written by Josefine H. Andersen
 !!
       implicit none
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: R_n
+      integer, intent(in) :: dim_fr
 !
-      integer, intent(in) :: n
+      real(dp), dimension(wf%n_es_amplitudes, dim_fr), intent(out) :: fr
 !
-         call wf%read_excited_state(R_n, n, 'right')
+      real(dp), dimension(:,:), allocatable :: R_n
 !
-         call wf%F_transform_vector(R_n)
+      real(dp) :: ddot
 !
-   end subroutine F_transform_right_vector_ccs
+      integer :: i = 1, state = 1
+!
+      call mem%alloc(R_n, wf%n_es_amplitudes, 1)
+
+      call wf%read_excited_state(R_n, state, 'right')
+!
+      write(output%unit,'(t6,a,f19.10)') 'R vector norm = ', &
+      ddot(wf%n_es_amplitudes, R_n, 1, R_n, 1)
+      flush(output%unit)
+!
+      call wf%F_transform_vector(R_n)
+!
+      !do i = 1, solver%dim_rhs
+!
+         !call wf%read_excited_state(r_n, 1, 'right')
+!
+         !call wf%F_transform_vector(r_n)
+!
+         !call daxpy(wf%n_es_amplitudes, one, r_n, 1, fr(:,i), 1)
+!
+      !enddo
+!
+      call mem%dealloc(R_n, wf%n_es_amplitudes, 1)
+!
+   end subroutine build_fr_matrix_ccs
 !
 !
 end module ccs_class
