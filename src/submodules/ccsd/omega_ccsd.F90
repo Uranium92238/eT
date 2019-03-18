@@ -1506,7 +1506,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: u_bldk      ! u_kl^bd
       real(dp), dimension(:,:,:,:), allocatable :: t_bkdl      ! t_kl^bd
       real(dp), dimension(:,:,:,:), allocatable :: u_bkdl      ! u_kl^bd
-      real(dp), dimension(:,:), allocatable :: X_b_c        ! An intermediate, see below for definition
+      real(dp), dimension(:,:), allocatable :: X_b_c           ! An intermediate, see below for definition
       real(dp), dimension(:,:,:,:), allocatable :: t_cjai      ! t_ij^ac
 !
 !     Vectors for E2.2 term
