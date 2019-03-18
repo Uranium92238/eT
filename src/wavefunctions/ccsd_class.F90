@@ -66,6 +66,7 @@ module ccsd_class
       procedure :: read_doubles_vector                         => read_doubles_vector_ccsd
 !
       procedure :: restart_excited_state                       => restart_excited_state_ccsd
+      procedure :: read_excited_state                          => read_excited_state_ccsd
 !
       procedure :: save_excited_state                          => save_excited_state_ccsd 
 !
@@ -725,6 +726,49 @@ contains
       endif
 !
    end subroutine restart_excited_state_ccsd
+!
+!
+   subroutine read_excited_state_ccsd(wf, X, n, side)
+!!
+!!    Read excited state 
+!!    Rewritten by Josefine H. Andersen
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+!     Check if we have read doubles vectors.
+!     If not, set up doubles.
+!
+      if (trim(side) == 'right') then
+!
+!        Read singles vector
+!
+         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
+!
+!        Read doubles vector
+!
+         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
+!
+      elseif (trim(side) == 'left') then
+!
+!        Read singles vector
+!
+         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
+!
+!        Read doubles vector
+!
+         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
+!
+      endif
+!
+   end subroutine read_excited_state_ccsd
 !
 !
    subroutine initialize_files_ccsd(wf)

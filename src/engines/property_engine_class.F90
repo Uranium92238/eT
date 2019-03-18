@@ -10,6 +10,7 @@ module property_engine_class
    use davidson_cc_ip_class
    use davidson_cvs_cc_es_class
    use davidson_cc_multipliers_class
+   use davidson_cc_response_class
    use diis_cc_gs_class
    use diis_cc_es_class
    use diis_cc_multipliers_class
@@ -74,6 +75,7 @@ contains
       type(davidson_cvs_cc_es), allocatable        :: cc_core_es_solver
       type(davidson_cc_multipliers), allocatable   :: cc_multipliers_davidson
       type(diis_cc_multipliers), allocatable       :: cc_multipliers_diis
+      type(davidson_cc_response), allocatable      :: cc_response_solver
 !
       class(cc_property), pointer :: cc_property_solver
 !
@@ -185,6 +187,16 @@ contains
          endif
 !
       endif
+!
+! -- TEST
+!
+      allocate(cc_response_solver)
+!
+      call cc_response_solver%prepare(wf)
+      call cc_response_solver%run(wf)
+      !call cc_response_solver%cleanup()
+!
+      deallocate(cc_response_solver)
 !
 !     Properties
 !

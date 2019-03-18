@@ -133,14 +133,6 @@ contains
 !  
          do n = 1, solver%n_singlet_states
 !
-            !call wf%read_excited_state(solver%l_vec_n, n, 'left')
-            !call wf%read_excited_state(solver%r_vec_n, n, 'right')
-!
-            !call wf%scale_left_excitation_vector(solver%l_vec_n, solver%r_vec_n)
-!
-            !call wf%calculate_transition_strength(solver%S, solver%etaX, &
-            !                   solver%csiX, solver%l_vec_n, solver%r_vec_n)
-!
             call wf%calculate_transition_strength(solver%S, solver%etaX, &
                                solver%csiX, n, solver%T_l, solver%T_r)
 !
@@ -233,7 +225,7 @@ contains
 !
             solver%linear_response = .true.
 !
-            call output%error_msg('Linear response not implemented for spectra calculations')
+            !call output%error_msg('Linear response not implemented for spectra calculations')
 !
          endif
 !

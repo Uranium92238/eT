@@ -41,15 +41,19 @@ module davidson_cc_response_class
 !
       real(dp) :: residual_threshold
 !
+      logical :: moments, polarizability
       logical :: restart
+!
+      integer :: n_excited_states = 0
+      integer :: dim_rhs = 1, n_freq
 !
    contains
 !
       procedure :: prepare                         => prepare_davidson_cc_response
       procedure, nopass :: cleanup                 => cleanup_davidson_cc_response
 !
-      !procedure :: print_banner                    => print_banner_davidson_cc_response
-      !procedure :: print_settings                  => print_settings_davidson_cc_response
+      procedure :: print_banner                    => print_banner_davidson_cc_response
+      procedure :: print_settings                  => print_settings_davidson_cc_response
 !
       !procedure, nopass :: print_summary           => print_summary_davidson_cc_response
 !
@@ -60,6 +64,11 @@ module davidson_cc_response_class
       procedure, nopass :: set_precondition_vector => set_precondition_vector_davidson_cc_response
 !
       !procedure, nopass :: transform_trial_vector  => transform_trial_vector_davidson_cc_response
+!
+      procedure :: construct_rhs                   => construct_rhs_davidson_cc_response
+      procedure :: build_fr_matrix                 => build_fr_matrix_davidson_cc_response
+!
+      procedure :: get_frequencies                 => get_frequencies_davidson_cc_response
 !
    end type davidson_cc_response
 !
@@ -80,19 +89,19 @@ contains
 !
 !     Print solver banner
 !
-      !call solver%print_banner()
+      call solver%print_banner()
 !
 !     Set default settings
 !
       solver%max_iterations      = 100
       solver%residual_threshold  = 1.0d-6
       solver%restart             = .false.
+      solver%moments             = .false.
+      solver%polarizability      = .false.
 !
-      !call solver%read_settings()
+      call solver%read_settings()
 !
-      !call solver%print_settings()
-!
-      !call wf%initialize_response()
+      call solver%print_settings()
 !
    end subroutine prepare_davidson_cc_response
 !
@@ -128,9 +137,16 @@ contains
 !
       type(linear_davidson_tool) :: davidson
 !
-      real(dp), dimension(:,:), allocatable :: RHS, c_i, Xn, frequencies
+      real(dp), dimension(:,:), allocatable :: rhs, c_i, Xn, frequencies
 !
-
+!     Get right-hand-side vector
+!
+      call mem%alloc(rhs, wf%n_es_amplitudes, solver%dim_rhs)
+      call solver%construct_rhs(wf, rhs)
+!
+      call davidson%prepare('response', wf%n_es_amplitudes, solver%residual_threshold, rhs)
+!
+      call mem%dealloc(rhs, wf%n_es_amplitudes, solver%dim_rhs)
 !
    end subroutine run_davidson_cc_response
 !
@@ -143,6 +159,8 @@ contains
       implicit none
 !
       class(davidson_cc_response) :: solver
+!
+      write(output%unit, '(/t3,a,a,a)') 'Cleaning up ', trim(solver%tag), '.'
 !
       ! save the produced vectors: t^x or M^f
       ! destruct the produced vectors: t^x or M^f
@@ -166,10 +184,97 @@ contains
    end subroutine print_banner_davidson_cc_response
 !
 !
+   subroutine construct_rhs_davidson_cc_response(solver, wf, rhs)
+!!
+!!    Construct right-hand-side vector.
+!!    Written by Josefine H. Andersen, March 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      class(davidson_cc_response) :: solver
+!
+      real(dp), dimension(wf%n_es_amplitudes, solver%dim_rhs), intent(inout) :: rhs
+!
+      if (solver%moments) then
+!
+         call wf%construct_csiX('dipole_length', rhs)
+!
+      elseif (solver%polarizability) then
+!
+         call solver%build_fr_matrix(wf, rhs)
+!
+      endif
+!
+   end subroutine construct_rhs_davidson_cc_response
+!
+!
+   subroutine get_frequencies_davidson_cc_response(solver, wf, freq)
+!!
+!!    Get frequencies
+!!    Written by Josefine H. Andersen, Mar 2019
+!!
+      implicit none
+!
+      class(davidson_cc_response) :: solver
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(solver%n_freq, 1), intent(out) :: freq
+!
+      if (solver%moments) then
+!
+         call wf%read_excitation_energies(solver%n_freq, freq)
+!
+         call dscal(wf%n_es_amplitudes, -one, freq, 1)
+!
+      elseif (solver%polarizability) then
+!
+         !call solver%read_freq_from_input(freq)
+!
+      endif
+!
+   end subroutine get_frequencies_davidson_cc_response
+!
+!
+   subroutine build_fr_matrix_davidson_cc_response(solver, wf, fr)
+!!
+!!    Build matrix with F-transformed right vectors i as columns
+!!    Written by Josefine H. Andersen
+!!
+      implicit none
+!
+      class(davidson_cc_response) :: solver
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes, solver%dim_rhs), intent(out) :: fr
+!
+      real(dp), dimension(:,:), allocatable :: r_n
+!
+      integer :: i
+!
+      call mem%alloc(r_n, wf%n_es_amplitudes, 1)
+!
+      do i = 1, solver%dim_rhs
+!
+         call wf%read_excited_state(r_n, i, 'right')
+!
+         call wf%F_transform_vector(r_n)
+!
+         call daxpy(wf%n_es_amplitudes, one, r_n, 1, fr(:,i), 1)
+!
+      enddo
+!
+      call mem%dealloc(r_n, wf%n_es_amplitudes, 1)
+!
+   end subroutine build_fr_matrix_davidson_cc_response
+!
+!
    subroutine transform_trial_vector_davidson_cc_response(wf, c_i)
 !!
 !!    Transform trial vector 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
 !!    Transforms the trial vector according to specified transformation routine.
 !!
@@ -182,7 +287,7 @@ contains
    end subroutine transform_trial_vector_davidson_cc_response
 !
 !
-   subroutine set_precondition_vector_davidson_cc_response(wf, davidson)
+   subroutine set_precondition_vector_davidson_cc_response(wf, davidson, freq_vec, n_freq)
 !!
 !!    Set precondition vector
 !!    Written by Josefine H. Andersen, 2019
@@ -193,12 +298,27 @@ contains
 !
       type(linear_davidson_tool) :: davidson
 !
+      integer, intent(in) :: n_freq
+!
+      real(dp), dimension(n_freq, 1), intent(in) :: freq_vec
+!
       real(dp), dimension(:,:), allocatable :: preconditioner
 !
-      call mem%alloc(preconditioner, wf%n_gs_amplitudes, 1)
+      integer :: i
+!
+      call mem%alloc(preconditioner, wf%n_gs_amplitudes, n_freq)
       call wf%get_gs_orbital_differences(preconditioner, wf%n_gs_amplitudes)
 !
-      ! call to a function that subtracts omegas
+!     Loop through frequencies to generate n_freq precondition vectors
+!
+      do i = 1, n_freq
+!
+         preconditioner(:,i) = preconditioner(:,i) - freq_vec(i, 1)
+!
+      enddo
+!
+      call davidson%set_preconditioner(preconditioner)
+      call mem%dealloc(preconditioner, wf%n_gs_amplitudes, n_freq)
 !
    end subroutine set_precondition_vector_davidson_cc_response
 !
@@ -214,6 +334,8 @@ contains
 !
       integer :: n_specs, i
       character(len=100) :: line
+!
+!     Read response section
 !
       if (.not. requested_section('cc response')) return
 !
@@ -239,6 +361,63 @@ contains
          endif
 !
       enddo
+!
+!     Read property section to get requested property
+!
+      if (.not. requested_section('cc properties')) return
+!
+      call move_to_section('cc properties', n_specs)
+!
+      do i = 1, n_specs
+!
+         read(input%unit, '(a100)') line
+         line = remove_preceding_blanks(line)
+!
+         if (line(1:18) == 'transition moments' ) then
+!
+            solver%moments = .true.
+!
+         elseif (line(1:7) == 'polarizability' ) then
+!
+            solver%polarizability = .true.
+!
+         else 
+!
+            call output%error_msg('No RHS specified for linear response.')
+!
+         endif
+!
+      enddo
+!
+!     Read excited state section to get n excited states 
+!     OBS: only necessary when 'moments' are true
+!
+      if (solver%moments) then
+!
+         if (.not. requested_section('cc excited state')) then
+!
+            call output%error_msg('number of excitations must be specified.')
+!
+         endif
+!
+         call move_to_section('cc excited state', n_specs)
+!
+         do i = 1, n_specs
+!
+            read(input%unit, '(a100)') line
+            line = remove_preceding_blanks(line)
+!
+            if (line(1:15) == 'singlet states:' ) then
+!
+               read(line(16:100), *) solver%n_excited_states
+!
+               solver%dim_rhs = solver%n_excited_states
+!
+            endif
+!
+         enddo
+!
+      endif
 !
    end subroutine read_settings_davidson_cc_response
 !

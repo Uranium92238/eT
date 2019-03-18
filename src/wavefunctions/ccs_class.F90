@@ -97,6 +97,7 @@ module ccs_class
 !
       procedure :: save_excited_state                          => save_excited_state_ccs
       procedure :: restart_excited_state                       => restart_excited_state_ccs
+      procedure :: read_excited_state                          => read_excited_state_ccs
       procedure :: get_n_excited_states_on_file                => get_n_excited_states_on_file_ccs
 !
       procedure :: save_excitation_energies                    => save_excitation_energies_ccs
@@ -520,7 +521,7 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-!      call wf%is_restart_safe('ground state')
+      call wf%is_restart_safe('ground state')
 !
       call disk%open_file(wf%t1bar_file, 'read', 'rewind')
 !
@@ -712,7 +713,7 @@ contains
 !
       character(len=*), intent(in) :: side ! 'left' or 'right' 
 !
-      !call wf%is_restart_safe('excited state')
+      call wf%is_restart_safe('excited state')
 !
       if (trim(side) == 'right') then 
 !
@@ -729,6 +730,48 @@ contains
       endif
 !
    end subroutine restart_excited_state_ccs
+!
+!
+   subroutine read_excited_state_ccs(wf, X, n, side)
+!!
+!!    Restart excited state 
+!!    Written by Eirik F. Kjønstad, Mar 2019
+!!
+!!    Reads an excited state to disk. Since this routine is used by 
+!!    solvers, it returns the vector in the full space. Thus, we open 
+!!    files for singles, doubles, etc., paste them together, and return 
+!!    the result in X.
+!!
+!!    NB! This will place the cursor of the file at position n + 1.
+!!    Be cautious when using this in combination with writing to the files.
+!!    We recommend to separate these tasks---write all states or read all
+!!    states; don't mix if you can avoid it.
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      if (trim(side) == 'right') then
+!
+         call wf%read_singles_vector(X, n, wf%r1_file)
+!
+      elseif (trim(side) == 'left') then
+!
+         call wf%read_singles_vector(X, n, wf%l1_file)
+!
+      else
+!
+         call output%error_msg('Tried to read an excited state, but argument side not recognized: ' // side)
+!
+      endif
+!
+   end subroutine read_excited_state_ccs
 !
 !
    subroutine save_excitation_energies_ccs(wf, n_states, energies)
@@ -5072,6 +5115,26 @@ contains
       call mem%dealloc(R_n, wf%n_es_amplitudes, 1)
 !
    end subroutine calculate_transition_strength_ccs
+!
+!
+   subroutine F_transform_right_vector_ccs(wf, n, R_n)
+!!
+!!    F-transform right excitation vector
+!!    Written by Josefine H. Andersen, March 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: R_n
+!
+      integer, intent(in) :: n
+!
+         call wf%read_excited_state(R_n, n, 'right')
+!
+         call wf%F_transform_vector(R_n)
+!
+   end subroutine F_transform_right_vector_ccs
 !
 !
 end module ccs_class
