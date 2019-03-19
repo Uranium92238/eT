@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module diis_cc_multipliers_class
 !
 !!
@@ -72,7 +91,7 @@ contains
 !     Set default settings
 !
       solver%diis_dimension = 8
-      solver%max_iterations = 50
+      solver%max_iterations = 100
 !
       solver%residual_threshold  = 1.0d-6
 !
@@ -127,15 +146,15 @@ contains
 !
       real(dp), intent(in) :: alpha 
 !
-      real(dp), dimension(n, 1), intent(in)    :: preconditioner
-      real(dp), dimension(n, 1), intent(inout) :: vector  
+      real(dp), dimension(n), intent(in)    :: preconditioner
+      real(dp), dimension(n), intent(inout) :: vector  
 !
       integer :: I 
 !
 !$omp parallel do private(I)
       do I = 1, n 
 !
-         vector(I, 1) = alpha*vector(I, 1)/preconditioner(I, 1)
+         vector(I) = alpha*vector(I)/preconditioner(I)
 !
       enddo 
 !$omp end parallel do
@@ -160,24 +179,26 @@ contains
 !
       real(dp) :: residual_norm
 !
-      real(dp), dimension(:,:), allocatable :: residual  
-      real(dp), dimension(:,:), allocatable :: multipliers
-      real(dp), dimension(:,:), allocatable :: epsilon  
+      real(dp), dimension(:), allocatable :: residual  
+      real(dp), dimension(:), allocatable :: multipliers
+      real(dp), dimension(:), allocatable :: epsilon  
 !
       integer :: iteration
 !
       call diis_manager%init('cc_multipliers_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
-      call mem%alloc(residual, wf%n_gs_amplitudes, 1)
-      call mem%alloc(multipliers, wf%n_gs_amplitudes, 1)
-      call mem%alloc(epsilon, wf%n_gs_amplitudes, 1)
+      call mem%alloc(residual, wf%n_gs_amplitudes)
+      call mem%alloc(multipliers, wf%n_gs_amplitudes)
+      call mem%alloc(epsilon, wf%n_gs_amplitudes)
 !
       call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
 !
       if (solver%restart) then 
 !
-      !   call wf%read_multipliers()
-      !   call wf%get_multipliers(multipliers) ! write routines for this
+         write(output%unit, '(/t3,a)') 'Requested restart. Reading multipliers from file.'
+!
+         call wf%read_multipliers()
+         call wf%get_multipliers(multipliers) 
 !
       else
 !
@@ -248,9 +269,9 @@ contains
 !
       flush(output%unit)
 !
-      call mem%dealloc(residual, wf%n_gs_amplitudes, 1)
-      call mem%dealloc(multipliers, wf%n_gs_amplitudes, 1)
-      call mem%dealloc(epsilon, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(residual, wf%n_gs_amplitudes)
+      call mem%dealloc(multipliers, wf%n_gs_amplitudes)
+      call mem%dealloc(epsilon, wf%n_gs_amplitudes)
 !
    end subroutine run_diis_cc_multipliers
 !
@@ -296,7 +317,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: X
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: X
 !
       write(output%unit, '(/t3,a)') '- Multipliers vector amplitudes:'
       flush(output%unit)      
@@ -331,6 +352,10 @@ contains
          if (line(1:10) == 'threshold:' ) then
 !
             read(line(11:100), *) solver%residual_threshold
+!
+         elseif (line(1:7) == 'restart' ) then
+!
+            solver%restart = .true.
 !
          elseif (line(1:15) == 'max iterations:' ) then
 !

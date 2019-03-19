@@ -1,9 +1,27 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 submodule (cc2_class) omega_cc2
 !
 !!
 !!    Omega submodule (CC2)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto and Alexander Paul, 2018
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
 !!
 !!    Routines to construct
 !!
@@ -27,7 +45,7 @@ contains
 !
       class(cc2), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
       omega = zero
 !
@@ -148,7 +166,7 @@ contains
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_kbji
       real(dp), dimension(:,:,:,:), allocatable :: g_jbki
@@ -188,7 +206,7 @@ contains
    module subroutine omega_cc2_c1_cc2(wf, omega)
 !!
 !!    Omega CC2 C1 term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
 !!
 !!    Calculates the C1 term,
 !!
@@ -203,7 +221,7 @@ contains
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
       real(dp), dimension(:,:), allocatable :: F_bj
 !

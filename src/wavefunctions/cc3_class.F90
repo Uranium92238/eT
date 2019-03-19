@@ -1,8 +1,27 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module cc3_class
 !
 !!
 !!    Coupled cluster CC3 class module
-!!    Alex C. Paul and Rolf H. Myhre 2018
+!!    Written by Rolf H. Myhre, 2018
 !!
 !
    use ccsd_class
@@ -54,12 +73,16 @@ module cc3_class
       procedure :: jacobian_cc3_construct_fock_ia_c1  => jacobian_cc3_construct_fock_ia_c1_cc3
       procedure :: jacobian_cc3_c3_vvv_reader_cc3
       procedure :: jacobian_cc3_t3_vvv_reader_cc3
+      procedure :: jacobian_cc3_dbic_reader_cc3
       generic   :: jacobian_cc3_vvv_reader            => jacobian_cc3_c3_vvv_reader_cc3, &
-                                                         jacobian_cc3_t3_vvv_reader_cc3
+                                                         jacobian_cc3_t3_vvv_reader_cc3, &
+                                                         jacobian_cc3_dbic_reader_cc3
       procedure :: jacobian_cc3_c3_ov_vv_reader_cc3
       procedure :: jacobian_cc3_t3_ov_vv_reader_cc3
+      procedure :: jacobian_cc3_jlkc_reader_cc3
       generic   :: jacobian_cc3_ov_vv_reader          => jacobian_cc3_c3_ov_vv_reader_cc3, &
-                                                         jacobian_cc3_t3_ov_vv_reader_cc3
+                                                         jacobian_cc3_t3_ov_vv_reader_cc3, &
+                                                         jacobian_cc3_jlkc_reader_cc3
       procedure :: jacobian_cc3_c3_calc               => jacobian_cc3_c3_calc_cc3
       procedure :: jacobian_cc3_fock_rho2             => jacobian_cc3_fock_rho2_cc3
 !
@@ -80,7 +103,7 @@ contains
    subroutine prepare_cc3(wf, ref_wf)
 !!
 !!    Prepare
-!!    Alex C. Paul and Rolf H. Myhre 2018
+!!    Written by Rolf H. Myhre, 2018
 !!
       implicit none
 !
@@ -121,7 +144,7 @@ contains
 !
       do p = 1, wf%n_mo
 !
-         wf%fock_diagonal(p, 1) = ref_wf%mo_fock(p, p)
+         wf%fock_diagonal(p) = ref_wf%mo_fock(p, p)
 !
       enddo
 !
@@ -130,13 +153,15 @@ contains
       call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
 !
+      call wf%initialize_files()
+!
    end subroutine prepare_cc3
 !
 !
    subroutine cleanup_cc3(wf)
 !!
 !!    Cleanup
-!!    Written by Alex C. Paul and Rolf H. Myhre 2018
+!!    Written by Rolf H. Myhre, 2018
 !!
       implicit none
 !
@@ -175,27 +200,28 @@ contains
 !
       class(cc3), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: X
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: R
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: X
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: R
 !
       real(dp), intent(inout) :: w
 !
-      real(dp), dimension(:,:), allocatable :: X_copy
+      real(dp), dimension(:), allocatable :: X_copy
 !
       real(dp) :: ddot
 !
 !     Construct residual based on previous excitation energy w
 !
-      call mem%alloc(X_copy, wf%n_es_amplitudes, 1)
-      X_copy = X
+      call mem%alloc(X_copy, wf%n_es_amplitudes)
+      call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
       call wf%effective_jacobian_transformation(w, X_copy) ! X_copy <- AX
-      R = X_copy - w*X
+      call dcopy(wf%n_es_amplitudes, X_copy, 1, R, 1)
+      call daxpy(wf%n_es_amplitudes, -w, X, 1, R, 1)
 !
 !     Update excitation energy w
 !
       w = ddot(wf%n_es_amplitudes, X, 1, X_copy, 1)
-      call mem%dealloc(X_copy, wf%n_es_amplitudes, 1)
+      call mem%dealloc(X_copy, wf%n_es_amplitudes)
 !
    end subroutine construct_excited_state_equation_cc3
 !

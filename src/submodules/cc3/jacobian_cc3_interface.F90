@@ -9,7 +9,7 @@
 !
       real(dp), intent(in) :: omega
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
    end subroutine effective_jacobian_transformation_cc3
 !
@@ -102,6 +102,21 @@
    end subroutine jacobian_cc3_t3_vvv_reader_cc3
 !
 !
+   module subroutine jacobian_cc3_dbic_reader_cc3(wf, g_dbxc_c1)
+!!
+!!    Read the c1-transformed dbkc integral needed for the t3-contribution (non batching)
+!!
+!!    Rolf H. Myhre and Alexander Paul, Feb 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_dbxc_c1
+!
+   end subroutine jacobian_cc3_dbic_reader_cc3
+!
+!
    module subroutine jacobian_cc3_c3_ov_vv_reader_cc3(wf, batch_y, batch_x, g_lycx, g_ylxc, L_ybxc, &
                                                       g_lycx_c1)
 !!
@@ -141,6 +156,21 @@
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc_c1
 !
    end subroutine jacobian_cc3_t3_ov_vv_reader_cc3
+!
+!
+   module subroutine jacobian_cc3_jlkc_reader_cc3(wf, g_ylxc_c1)
+!!
+!!    Read the c1-transformed jlkc  needed for the t3-contribution (non batching)
+!!
+!!    Rolf H. Myhre and Alexander Paul, Feb 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc_c1
+!
+   end subroutine jacobian_cc3_jlkc_reader_cc3
 !
 !
    module subroutine jacobian_cc3_c3_calc_cc3(wf, omega, i, j, k, c_abc, u_abc, t_abji, c_abji,    &

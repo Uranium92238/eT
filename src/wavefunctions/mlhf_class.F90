@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module mlhf_class
 !
 !!
@@ -9,10 +28,9 @@ module mlhf_class
 !
    use reordering
    use interval_class
-   use index
    use active_atoms_info_class
 !
-   use eri_cd_solver_class
+   use eri_cd_class
 !
    use array_utilities
 !
@@ -86,18 +104,19 @@ contains
 !
       class(mlhf) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: cholesky_vectors_occ, cholesky_vectors_virt, V, ao_density_v
+      real(dp), dimension(:,:), allocatable :: cholesky_vectors_occ, cholesky_vectors_virt, ao_density_v
+      real(dp), dimension(:), allocatable :: V
 !
       integer:: i, j, n_active_aos, n_vectors_occ, n_vectors_virt
       integer:: a
 !
       real(dp) :: max_val, e_construct_fock, s_construct_fock, omp_get_wtime, x, y, z
 !
-      integer, dimension(:,:), allocatable :: active_aos
+      integer, dimension(:), allocatable :: active_aos
 !
       integer :: n_active_occ, n_active_vir, n_s
 !
-      type(eri_cd_solver)  :: chol_solver
+      type(eri_cd)  :: chol_solver
 !
       type(file) :: CMO_file
 !
@@ -139,11 +158,11 @@ contains
 !
       enddo 
 !
-      call mem%alloc(active_aos, n_active_aos, 1)
+      call mem%alloc(active_aos, n_active_aos)
 !
       do i = 1, n_active_aos
 !
-           active_aos(i, 1) = i 
+           active_aos(i) = i 
 !
       enddo
 !
@@ -195,9 +214,9 @@ contains
       call cholesky_decomposition_limited_diagonal(ao_density_v, cholesky_vectors_virt, wf%n_ao, &
                                                      n_vectors_virt, 1.0d-2, n_active_aos, active_aos, n_active_vir)
 !
-      call mem%dealloc(active_aos, n_active_aos, 1)
+      call mem%dealloc(active_aos, n_active_aos)
 !
-      call mem%alloc(V, wf%n_ao, 1)
+      call mem%alloc(V, wf%n_ao)
 !
       do j = 1, wf%n_ao
 !
@@ -215,7 +234,7 @@ contains
 !
          enddo
 !
-         V(j, 1) = max_val
+         V(j) = max_val
 !
       enddo
 !
@@ -233,7 +252,7 @@ contains
 !
 !     Cholesky decomposition
 !
-      call mem%dealloc(V, wf%n_ao, 1)
+      call mem%dealloc(V, wf%n_ao)
 !
    end subroutine eri_decomp_test_w_active_dens_mlhf
 !

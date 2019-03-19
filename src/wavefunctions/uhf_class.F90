@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module uhf_class
 !
 !!
@@ -11,7 +30,6 @@ module uhf_class
    use array_utilities
    use array_analysis
    use interval_class
-   use index
 !
    implicit none
 !
@@ -31,8 +49,8 @@ module uhf_class
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_a
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_b      
 !
-      real(dp), dimension(:,:), allocatable :: orbital_energies_a
-      real(dp), dimension(:,:), allocatable :: orbital_energies_b
+      real(dp), dimension(:), allocatable :: orbital_energies_a
+      real(dp), dimension(:), allocatable :: orbital_energies_b
 !
       logical :: fractional_uniform_valence = .false. 
 !
@@ -41,6 +59,7 @@ module uhf_class
 !     Preparation routines 
 !
       procedure :: prepare                           => prepare_uhf
+!
       procedure :: determine_n_alpha_and_n_beta      => determine_n_alpha_and_n_beta_uhf
       procedure :: read_settings                     => read_settings_uhf
       procedure :: read_uhf_settings                 => read_uhf_settings_uhf
@@ -76,6 +95,8 @@ module uhf_class
       procedure :: print_orbital_energies            => print_orbital_energies_uhf
       procedure :: save_orbital_coefficients         => save_orbital_coefficients_uhf
       procedure :: read_orbital_coefficients         => read_orbital_coefficients_uhf
+      procedure :: save_orbital_energies             => save_orbital_energies_uhf
+      procedure :: read_orbital_energies             => read_orbital_energies_uhf
 !
 !     Gradients and Hessians (todo)
 !
@@ -152,6 +173,8 @@ contains
       endif
 !
       call wf%orbital_coefficients_file%init('orbital_coefficients', 'sequential', 'unformatted')
+      call wf%orbital_energies_file%init('orbital_energies', 'sequential', 'unformatted')
+      call wf%restart_file%init('hf_restart_file', 'sequential', 'unformatted')
 !
    end subroutine prepare_uhf
 !
@@ -255,6 +278,8 @@ contains
 !
       class(uhf), intent(inout) :: wf 
 !
+      call wf%is_restart_safe()
+!
       call disk%open_file(wf%orbital_coefficients_file, 'read', 'rewind')
 !
       read(wf%orbital_coefficients_file%unit) wf%orbital_coefficients_a 
@@ -263,6 +288,46 @@ contains
       call disk%close_file(wf%orbital_coefficients_file)
 !
    end subroutine read_orbital_coefficients_uhf
+!
+!
+   subroutine save_orbital_energies_uhf(wf)
+!!
+!!    Save orbital energies 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(uhf), intent(inout) :: wf 
+!
+      call disk%open_file(wf%orbital_energies_file, 'write', 'rewind')
+!
+      write(wf%orbital_energies_file%unit) wf%orbital_energies_a 
+      write(wf%orbital_energies_file%unit) wf%orbital_energies_b
+!
+      call disk%close_file(wf%orbital_energies_file)
+!
+   end subroutine save_orbital_energies_uhf
+!
+!
+   subroutine read_orbital_energies_uhf(wf)
+!!
+!!    Save orbital energies 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(uhf), intent(inout) :: wf 
+!
+      call wf%is_restart_safe()
+!
+      call disk%open_file(wf%orbital_energies_file, 'read', 'rewind')
+!
+      read(wf%orbital_energies_file%unit) wf%orbital_energies_a 
+      read(wf%orbital_energies_file%unit) wf%orbital_energies_b
+!
+      call disk%close_file(wf%orbital_energies_file)
+!
+   end subroutine read_orbital_energies_uhf
 !
 !
    subroutine get_packed_roothan_hall_gradient_uhf(wf, G)
@@ -281,12 +346,13 @@ contains
 !
       real(dp), dimension(wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities), intent(inout) :: G 
 !
-      real(dp), dimension(:,:), allocatable :: G_sq, G_pck 
+      real(dp), dimension(:,:), allocatable :: G_sq
+      real(dp), dimension(:), allocatable :: G_pck 
       real(dp), dimension(:,:), allocatable :: Po, Pv 
 !
       call mem%alloc(Po, wf%n_ao, wf%n_ao)
       call mem%alloc(Pv, wf%n_ao, wf%n_ao)
-      call mem%alloc(G_pck, wf%n_ao*(wf%n_ao - 1)/2, 1)
+      call mem%alloc(G_pck, wf%n_ao*(wf%n_ao - 1)/2)
       call mem%alloc(G_sq, wf%n_ao, wf%n_ao) 
 !
 !     Alpha gradient 
@@ -305,7 +371,7 @@ contains
 !
       call mem%dealloc(Po, wf%n_ao, wf%n_ao)
       call mem%dealloc(Pv, wf%n_ao, wf%n_ao)
-      call mem%dealloc(G_pck, wf%n_ao*(wf%n_ao - 1)/2, 1)
+      call mem%dealloc(G_pck, wf%n_ao*(wf%n_ao - 1)/2)
       call mem%dealloc(G_sq, wf%n_ao, wf%n_ao) 
 !
    end subroutine get_packed_roothan_hall_gradient_uhf
@@ -528,9 +594,9 @@ contains
 !
       real(dp), dimension(wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities), intent(in) :: F ! Packed
 !
-      real(dp), dimension(:,:), allocatable :: F_sigma
+      real(dp), dimension(:), allocatable :: F_sigma
 !
-      call mem%alloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2, 1)
+      call mem%alloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2)
 !
 !     Alpha Fock 
 !
@@ -542,7 +608,7 @@ contains
       call dcopy(wf%n_ao*(wf%n_ao + 1)/2, F(1, 2), 1, F_sigma, 1)
       call squareup(F_sigma, wf%ao_fock_b, wf%n_ao)      
 !
-      call mem%dealloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2, 1)
+      call mem%dealloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2)
 !
    end subroutine set_ao_fock_uhf
 !
@@ -560,9 +626,9 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: F ! Packed
 !
-      real(dp), dimension(:,:), allocatable :: F_sigma
+      real(dp), dimension(:), allocatable :: F_sigma
 !
-      call mem%alloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2, 1)
+      call mem%alloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2)
 !
 !     Alpha Fock 
 !
@@ -574,7 +640,7 @@ contains
       call packin(F_sigma, wf%ao_fock_b, wf%n_ao)
       call dcopy(wf%n_ao*(wf%n_ao + 1)/2, F_sigma, 1, F(wf%n_ao*(wf%n_ao + 1)/2 + 1, 1), 1)   
 !
-      call mem%dealloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2, 1)
+      call mem%dealloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2)
 !
    end subroutine get_ao_fock_uhf
 !
@@ -624,8 +690,8 @@ contains
 !
       write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name_), ' wavefunction energetics (a.u.):'
 !
-      homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1, 1) - wf%orbital_energies_a(wf%n_alpha, 1)
-      homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1, 1) - wf%orbital_energies_b(wf%n_beta, 1)
+      homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
+      homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
 !
       write(output%unit, '(/t6,a26,f19.12)') 'HOMO-LUMO gap (alpha):    ', homo_lumo_gap_a
       write(output%unit, '(t6,a26,f19.12)')  'HOMO-LUMO gap (beta):     ', homo_lumo_gap_b
@@ -939,7 +1005,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      real(dp), dimension(wf%n_mo, 1), intent(in) :: energies
+      real(dp), dimension(wf%n_mo), intent(in) :: energies
 !
       integer, intent(inout) :: n_homo_orbitals, n_homo_electrons, homo_first, homo_last
 !
@@ -959,13 +1025,13 @@ contains
 !
       if (n_electrons .eq. 0) return
 !
-      if (abs(energies(homo, 1) - energies(homo + 1, 1)) .le. threshold .or. &
-          abs(energies(homo, 1) - energies(homo - 1, 1)) .le. threshold) then ! HOMO is degenerate 
+      if (abs(energies(homo) - energies(homo + 1)) .le. threshold .or. &
+          abs(energies(homo) - energies(homo - 1)) .le. threshold) then ! HOMO is degenerate 
 !
          n_below = 0
          do I = 1, homo - 1
 !
-            if (abs(energies(homo, 1) - energies(I, 1)) .le. threshold) then 
+            if (abs(energies(homo) - energies(I)) .le. threshold) then 
 !
                n_below = n_below + 1
 !
@@ -976,7 +1042,7 @@ contains
          n_above = 0
          do I = homo + 1, wf%n_mo
 !
-            if (abs(energies(homo, 1) - energies(I, 1)) .le. threshold) then 
+            if (abs(energies(homo) - energies(I)) .le. threshold) then 
 !
                n_above = n_above + 1
 !
@@ -1430,7 +1496,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      if (.not. allocated(wf%orbital_energies_a)) call mem%alloc(wf%orbital_energies_a, wf%n_mo, 1)
+      if (.not. allocated(wf%orbital_energies_a)) call mem%alloc(wf%orbital_energies_a, wf%n_mo)
 !
    end subroutine initialize_orbital_energies_a_uhf
 !
@@ -1444,7 +1510,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      if (allocated(wf%orbital_energies_a)) call mem%dealloc(wf%orbital_energies_a, wf%n_mo, 1)
+      if (allocated(wf%orbital_energies_a)) call mem%dealloc(wf%orbital_energies_a, wf%n_mo)
 !
    end subroutine destruct_orbital_energies_a_uhf
 !
@@ -1458,7 +1524,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      if (.not. allocated(wf%orbital_energies_b)) call mem%alloc(wf%orbital_energies_b, wf%n_mo, 1)
+      if (.not. allocated(wf%orbital_energies_b)) call mem%alloc(wf%orbital_energies_b, wf%n_mo)
 !
    end subroutine initialize_orbital_energies_b_uhf
 !
@@ -1472,7 +1538,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      if (allocated(wf%orbital_energies_b)) call mem%dealloc(wf%orbital_energies_b, wf%n_mo, 1)
+      if (allocated(wf%orbital_energies_b)) call mem%dealloc(wf%orbital_energies_b, wf%n_mo)
 !
    end subroutine destruct_orbital_energies_b_uhf
 !

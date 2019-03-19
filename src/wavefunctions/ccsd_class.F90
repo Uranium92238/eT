@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module ccsd_class
 !
 !!
@@ -11,34 +30,44 @@ module ccsd_class
 !
    type, extends(ccs) :: ccsd
 !
-      real(dp), dimension(:,:), allocatable :: t2   
-      real(dp), dimension(:,:), allocatable :: t2bar   
+      real(dp), dimension(:), allocatable :: t2
+      real(dp), dimension(:), allocatable :: t2bar
+!
+      type(file) :: t2_file, t2bar_file
+      type(file) :: r2_file, l2_file
 !
       integer :: n_t2  
 !
    contains
 !
-!     Preparation and cleanup routines 
+!     Preparation and cleanup routines
 !
       procedure :: prepare                                     => prepare_ccsd
-      procedure :: cleanup                                     => cleanup_ccsd
 !
-!     Routines related to the amplitudes 
+      procedure :: initialize_files                            => initialize_files_ccsd
+      procedure :: initialize_doubles_files                    => initialize_doubles_files_ccsd
 !
-      procedure :: initialize_amplitudes                       => initialize_amplitudes_ccsd 
+!     Routines related to the amplitudes
+!
+      procedure :: initialize_amplitudes                       => initialize_amplitudes_ccsd
       procedure :: initialize_t2                               => initialize_t2_ccsd
       procedure :: destruct_t2                                 => destruct_t2_ccsd
       procedure :: set_initial_amplitudes_guess                => set_initial_amplitudes_guess_ccsd
       procedure :: set_t2_to_mp2_guess                         => set_t2_to_mp2_guess_ccsd
-      procedure :: set_amplitudes                              => set_amplitudes_ccsd 
-      procedure :: get_amplitudes                              => get_amplitudes_ccsd 
+      procedure :: set_amplitudes                              => set_amplitudes_ccsd
+      procedure :: get_amplitudes                              => get_amplitudes_ccsd
       procedure :: read_amplitudes                             => read_amplitudes_ccsd
       procedure :: save_amplitudes                             => save_amplitudes_ccsd
-      procedure :: save_t2                                     => save_t2_ccsd
-      procedure :: read_t2                                     => read_t2_ccsd
       procedure :: print_dominant_x2                           => print_dominant_x2_ccsd
       procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccsd
       procedure :: print_dominant_x_amplitudes                 => print_dominant_x_amplitudes_ccsd
+!
+      procedure :: save_doubles_vector                         => save_doubles_vector_ccsd
+      procedure :: read_doubles_vector                         => read_doubles_vector_ccsd
+!
+      procedure :: restart_excited_state                       => restart_excited_state_ccsd
+!
+      procedure :: save_excited_state                          => save_excited_state_ccsd 
 !
 !     Routines related to omega
 !
@@ -114,10 +143,10 @@ module ccsd_class
       procedure :: read_multipliers                            => read_multipliers_ccsd
       procedure :: destruct_multipliers                        => destruct_multipliers_ccsd
       procedure :: destruct_t2bar                              => destruct_t2bar_ccsd
-      procedure :: read_t2bar                                  => read_t2bar_ccsd
-      procedure :: save_t2bar                                  => save_t2bar_ccsd
 !
       procedure :: get_cvs_projector                           => get_cvs_projector_ccsd
+!
+      procedure, nopass :: need_g_abcd                         => need_g_abcd_ccsd
 !
    end type ccsd
 !
@@ -128,7 +157,7 @@ module ccsd_class
       include "../submodules/ccsd/jacobian_ccsd_interface.F90"
       include "../submodules/ccsd/jacobian_transpose_ccsd_interface.F90"
 !
-   end interface 
+   end interface
 !
 !
 contains
@@ -158,11 +187,11 @@ contains
 !
       wf%hf_energy = ref_wf%energy
 !
-      wf%n_t1 = (wf%n_o)*(wf%n_v) 
+      wf%n_t1 = (wf%n_o)*(wf%n_v)
       wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
 !
-      wf%n_gs_amplitudes = wf%n_t1 + wf%n_t2 
-      wf%n_es_amplitudes = wf%n_t1 + wf%n_t2 
+      wf%n_gs_amplitudes = wf%n_t1 + wf%n_t2
+      wf%n_es_amplitudes = wf%n_t1 + wf%n_t2
 !
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()
@@ -178,7 +207,7 @@ contains
 !
       do p = 1, wf%n_mo
 !
-         wf%fock_diagonal(p, 1) = ref_wf%mo_fock(p, p)
+         wf%fock_diagonal(p) = ref_wf%mo_fock(p, p)
 !
       enddo
 !
@@ -187,34 +216,39 @@ contains
       call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
 !
+      call wf%initialize_files()
+!
    end subroutine prepare_ccsd
 !
 !
-   subroutine cleanup_ccsd(wf)
+   logical function need_g_abcd_ccsd()
 !!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Need g_abcd 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
 !!
-      implicit none
+!!    Returns whether the vvvv-part of the ERI matrix 
+!!    is used to calculate the ground and/or excited state 
+!!    equations. If not, there is no need to compute the
+!!    entire ERI matrix and store it in memory.
+!!
+      implicit none 
 !
-      class(ccsd) :: wf
+      need_g_abcd_ccsd = .true.
 !
-      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
-!
-   end subroutine cleanup_ccsd
+   end function need_g_abcd_ccsd
 !
 !
    subroutine initialize_amplitudes_ccsd(wf)
 !!
-!!    Initialize amplitudes 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Initialize amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    Allocates the amplitudes. This routine must be overwritten in 
-!!    descendants which have more amplitudes. 
+!!    Allocates the amplitudes. This routine must be overwritten in
+!!    descendants which have more amplitudes.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
       call wf%initialize_t1()
       call wf%initialize_t2()
@@ -224,78 +258,78 @@ contains
 !
    subroutine initialize_t2_ccsd(wf)
 !!
-!!    Initialize t2 amplitudes 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Initialize t2 amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
-      if (.not. allocated(wf%t2)) call mem%alloc(wf%t2, wf%n_t2, 1)
+      if (.not. allocated(wf%t2)) call mem%alloc(wf%t2, wf%n_t2)
 !
    end subroutine initialize_t2_ccsd
 !
 !
    subroutine destruct_t2_ccsd(wf)
 !!
-!!    Destruct t2 amplitudes 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Destruct t2 amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
-      if (allocated(wf%t2)) call mem%dealloc(wf%t2, wf%n_t2, 1)
+      if (allocated(wf%t2)) call mem%dealloc(wf%t2, wf%n_t2)
 !
    end subroutine destruct_t2_ccsd
 !
 !
    subroutine set_amplitudes_ccsd(wf, amplitudes)
 !!
-!!    Set amplitudes 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Set amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf  
+      class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: amplitudes
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: amplitudes
 !
       call dcopy(wf%n_t1, amplitudes, 1, wf%t1, 1)
-      call dcopy(wf%n_t2, amplitudes(wf%n_t1 + 1, 1), 1, wf%t2, 1)
+      call dcopy(wf%n_t2, amplitudes(wf%n_t1 + 1), 1, wf%t2, 1)
 !
    end subroutine set_amplitudes_ccsd
 !
 !
    subroutine get_amplitudes_ccsd(wf, amplitudes)
 !!
-!!    Get amplitudes 
+!!    Get amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd), intent(in) :: wf  
+      class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1) :: amplitudes
+      real(dp), dimension(wf%n_gs_amplitudes) :: amplitudes
 !
       call dcopy(wf%n_t1, wf%t1, 1, amplitudes, 1)
-      call dcopy(wf%n_t2, wf%t2, 1,  amplitudes(wf%n_t1 + 1, 1), 1)
+      call dcopy(wf%n_t2, wf%t2, 1,  amplitudes(wf%n_t1 + 1), 1)
 !
    end subroutine get_amplitudes_ccsd
 !
 !
    subroutine set_initial_amplitudes_guess_ccsd(wf)
 !!
-!!    Set initial amplitudes guess 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Set initial amplitudes guess
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
-      wf%t1 = zero 
+      wf%t1 = zero
 !
       call wf%set_t2_to_mp2_guess()
 !
@@ -304,41 +338,41 @@ contains
 !
    subroutine set_t2_to_mp2_guess_ccsd(wf)
 !!
-!!    Set t2 amplitudes guess 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Set t2 amplitudes guess
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
 !!    t_aibj = - g_aibj/ε_aibj
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: g_ai_bj
+      real(dp), dimension(:,:,:,:), allocatable :: g_aibj
 !
       integer :: a, b, i, j, ai, bj, aibj
 !
-      call mem%alloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call wf%get_vovo(g_ai_bj)
+      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call wf%get_vovo(g_aibj)
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
       do a = 1, wf%n_v
-         do i = 1, wf%n_o 
+         do i = 1, wf%n_o
 !
             ai = wf%n_v*(i-1) + a
 !
             do j = 1, wf%n_o
                do b = 1, wf%n_v
 !
-                  bj = wf%n_v*(j-1) + b              
+                  bj = wf%n_v*(j-1) + b
 !
                   if (ai .ge. bj) then
 !
                      aibj = (ai*(ai-3)/2) + ai + bj
 !
-                     wf%t2(aibj, 1) = g_ai_bj(ai, bj)/(wf%fock_diagonal(i, 1) + &
-                                                       wf%fock_diagonal(j, 1) - &
-                                                       wf%fock_diagonal(a + wf%n_o, 1) - &
-                                                       wf%fock_diagonal(b + wf%n_o, 1))
+                     wf%t2(aibj) = g_aibj(a,i,b,j)/(wf%fock_diagonal(i) + &
+                                                    wf%fock_diagonal(j) - &
+                                                    wf%fock_diagonal(a + wf%n_o) - &
+                                                    wf%fock_diagonal(b + wf%n_o))
 !
                   endif
 !
@@ -348,7 +382,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine set_t2_to_mp2_guess_ccsd
 !
@@ -356,7 +390,7 @@ contains
    subroutine calculate_energy_ccsd(wf)
 !!
 !!     Calculate energy (CCSD)
-!!     Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
+!!     Written by Sarai D. Folkestad, Eirik F. Kjønstad,
 !!     Andreas Skeidsvoll, 2018
 !!
 !!     Calculates the CCSD energy. This is only equal to the actual
@@ -366,16 +400,14 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: g_ia_jb ! g_iajb
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajb ! g_iajb
 !
       integer :: a = 0, i = 0, b = 0, j = 0, ai = 0
-      integer :: bj = 0, aibj = 0, ia = 0, jb = 0, ib = 0, ja = 0
+      integer :: bj = 0, aibj = 0
 !
-!     Get g_ia_jb = g_iajb
+      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-      call wf%get_ovov(g_ia_jb)
+      call wf%get_ovov(g_iajb)
 !
 !     Set the initial value of the energy
 !
@@ -386,42 +418,34 @@ contains
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
-            ai = index_two(a, i, wf%n_v)
-            ia = index_two(i, a, wf%n_o)
+            ai = (i-1)*wf%n_v + a
 !
             do j = 1, wf%n_o
-!
-               ja = wf%n_o*(a-1) + j
-!
                do b = 1, wf%n_v
 !
                   bj = wf%n_v*(j - 1) + b
-                  jb = wf%n_o*(b - 1) + j
-                  ib = wf%n_o*(b - 1) + i
 !
                   aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
 !
 !                 Add the correlation energy
 !
-                  wf%energy = wf%energy +                                     &
-                                 (wf%t2(aibj,1) + (wf%t1(a,i))*(wf%t1(b,j)))* &
-                                 (two*g_ia_jb(ia,jb) - g_ia_jb(ib,ja))
+                  wf%energy = wf%energy +                                   &
+                                 (wf%t2(aibj) + (wf%t1(a,i))*(wf%t1(b,j)))* &
+                                 (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
 !
                enddo
             enddo
          enddo
       enddo
 !
-!     Deallocate g_ia_jb
-!
-      call mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
    end subroutine calculate_energy_ccsd
 !
 !
    subroutine get_gs_orbital_differences_ccsd(wf, orbital_differences, N)
 !!
-!!    Get orbital differences 
+!!    Get orbital differences
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    and Andreas Skeidsvoll, 2018
 !!
@@ -429,35 +453,37 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      integer, intent(in) :: N 
+      integer, intent(in) :: N
       real(dp), dimension(N), intent(inout) :: orbital_differences
 !
       integer :: a, i, ai, b, j, bj, aibj
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
             ai = wf%n_v*(i - 1) + a
 !
-            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o) - wf%fock_diagonal(i)
 !
-            do j = 1, wf%n_o 
+            do j = 1, wf%n_o
                do b = 1, wf%n_v
 !
-                  bj = wf%n_v*(j-1) + b 
+                  bj = wf%n_v*(j-1) + b
 !
                   if (ai .ge. bj) then
 !
                      aibj = (ai*(ai-3)/2) + ai + bj
 !
-                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1) &
-                                                                      +  wf%fock_diagonal(b + wf%n_o, 1) - wf%fock_diagonal(j, 1)
+                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%fock_diagonal(a + wf%n_o) &
+                                                                   - wf%fock_diagonal(i) &
+                                                                   +  wf%fock_diagonal(b + wf%n_o) &
+                                                                   - wf%fock_diagonal(j)
 !
                   endif
 !
                enddo
-            enddo  
+            enddo
 !
          enddo
       enddo
@@ -468,76 +494,239 @@ contains
 !
    subroutine read_amplitudes_ccsd(wf)
 !!
-!!    Read amplitudes 
+!!    Read amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+      implicit none
 !
       class(ccsd), intent(inout) :: wf
 !
-      call wf%read_t1()  
-      call wf%read_t2()  
+      call wf%is_restart_safe('ground state')
+!
+      call disk%open_file(wf%t1_file, 'read', 'rewind')
+      call disk%open_file(wf%t2_file, 'read', 'rewind')
+!
+      read(wf%t1_file%unit) wf%t1  
+      read(wf%t2_file%unit) wf%t2
+!
+      call disk%close_file(wf%t1_file) 
+      call disk%close_file(wf%t2_file) 
 !
    end subroutine read_amplitudes_ccsd
 !
 !
    subroutine save_amplitudes_ccsd(wf)
 !!
-!!    Read amplitudes 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-      implicit none 
-!
-      class(ccsd), intent(in) :: wf
-!
-      call wf%save_t1()  
-      call wf%save_t2()  
-!
-   end subroutine save_amplitudes_ccsd
-!
-!
-   subroutine read_t2_ccsd(wf)
-!!
-!!    Read t2
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-      implicit none 
-!
-      class(ccsd), intent(inout) :: wf
-!
-      type(file) :: t2_file 
-!
-      call t2_file%init('t2', 'sequential', 'unformatted')
-!
-      call disk%open_file(t2_file, 'read', 'rewind')
-!
-      read(t2_file%unit) wf%t2
-!
-      call disk%close_file(t2_file)      
-!
-   end subroutine read_t2_ccsd
-!
-!
-   subroutine save_t2_ccsd(wf)
-!!
-!!    Save t2
+!!    Read amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf 
+      class(ccsd), intent(inout) :: wf
 !
-      type(file) :: t2_file 
+      call disk%open_file(wf%t1_file, 'write')
+      call disk%open_file(wf%t2_file, 'write')
 !
-      call t2_file%init('t2', 'sequential', 'unformatted')
+      rewind(wf%t1_file%unit)
+      rewind(wf%t2_file%unit)
 !
-      call disk%open_file(t2_file, 'write', 'rewind')
+      write(wf%t1_file%unit) wf%t1  
+      write(wf%t2_file%unit) wf%t2
 !
-      write(t2_file%unit) wf%t2
+      call disk%close_file(wf%t1_file) 
+      call disk%close_file(wf%t2_file) 
 !
-      call disk%close_file(t2_file)
+   end subroutine save_amplitudes_ccsd
 !
-   end subroutine save_t2_ccsd
+!
+   subroutine save_doubles_vector_ccsd(wf, X, n, file_)
+!!
+!!    Save doubles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
+!!
+!!    Writes doubles vector "X" to the sequential
+!!    and unformatted file "file_".
+!!    
+!!    NB! If n = 1, then the routine WILL REWIND the file before writing,
+!!    thus DELETING every record in the file. For n >=2, we just append to
+!!    the file. The purpose of this setup is that the files should be saved in 
+!!    the correct order, from n = 1 to n = # states.
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_t2), intent(in) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      type(file) :: file_
+!
+      call disk%open_file(file_, 'write', 'append')
+!
+      if (n .eq. 1) rewind(file_%unit)
+!
+      write(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine save_doubles_vector_ccsd
+!
+!
+   subroutine read_doubles_vector_ccsd(wf, X, n, file_)
+!!
+!!    Read doubles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
+!!
+!!    Reads doubles vector "X" from the "n"'th line
+!!    of the sequential and unformatted file "file_".
+!!
+      implicit none 
+!
+      class(ccsd), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_t2), intent(out) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      type(file) :: file_
+!
+      call disk%open_file(file_, 'read')
+!
+      call file_%prepare_to_read_line(n)
+!
+      read(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine read_doubles_vector_ccsd
+!
+!
+   subroutine save_excited_state_ccsd(wf, X, n, side)
+!!
+!!    Save excited state 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Saves an excited state to disk. Since the solvers 
+!!    keep these vectors in full length, we receive a vector 
+!!    in full length (n_es_amplitudes), and then distribute 
+!!    the different parts of that vector to singles, doubles, etc.,
+!!    files (if there are doubles, etc.).
+!!
+!!    NB! If n = 1, then the routine WILL REWIND the files before writing,
+!!    thus DELETING every record in the file. For n >=2, we just append to
+!!    the file. The purpose of this setup is that the files should be saved in 
+!!    the correct order, from n = 1 to n = # states. 
+!!
+      implicit none 
+!
+      class(ccsd), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      if (trim(side) == 'right') then 
+!
+         call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
+         call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
+!
+      elseif (trim(side) == 'left') then 
+!
+         call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
+         call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
+!
+      else
+!
+         call output%error_msg('Tried to save an excited state, but argument side not recognized: ' // side)
+!
+      endif
+!
+   end subroutine save_excited_state_ccsd
+!
+!
+   subroutine restart_excited_state_ccsd(wf, X, n, side)
+!!
+!!    Restart excited state 
+!!    Written by Sarai D. Fokestad, Mar 2019 
+!!
+!!    Wrapper for setting trial vectors to excited states on file
+!!
+      implicit none 
+!
+      class(ccsd), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      call wf%is_restart_safe('excited state')
+!
+!     Check if we have read doubles vectors.
+!     If not, set up doubles.
+!
+      if (trim(side) == 'right') then 
+!
+!        Read singles vector
+!
+         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
+!
+!        Read doubles vector
+!
+         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
+!
+      elseif (trim(side) == 'left') then
+!
+!        Read singles vector
+!
+         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
+!
+!        Read doubles vector
+!
+         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
+!
+      endif
+!
+   end subroutine restart_excited_state_ccsd
+!
+!
+   subroutine initialize_files_ccsd(wf)
+!!
+!!    Initialize files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Initializes the wavefucntion files for wavefunction parameters.
+!!
+      class(ccsd) :: wf 
+!
+      call wf%initialize_cc_files()
+      call wf%initialize_singles_files()
+      call wf%initialize_doubles_files()
+!
+   end subroutine initialize_files_ccsd
+!
+!
+   subroutine initialize_doubles_files_ccsd(wf)
+!!
+!!    Initialize doubles files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      class(ccsd) :: wf 
+!
+      call wf%t2_file%init('t2', 'sequential', 'unformatted')
+!
+      call wf%t2bar_file%init('t2bar', 'sequential', 'unformatted')
+!
+      call wf%l2_file%init('l2', 'sequential', 'unformatted')
+!
+      call wf%r2_file%init('r2', 'sequential', 'unformatted')
+!
+   end subroutine initialize_doubles_files_ccsd
+!
 !
    subroutine construct_eta_ccsd(wf, eta)
 !!
@@ -549,12 +738,12 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf 
+      class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: eta 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: eta
 !
-      real(dp), dimension(:,:), allocatable :: g_ia_jb
-      real(dp), dimension(:,:), allocatable :: eta_ai_bj
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajb
+      real(dp), dimension(:,:,:,:), allocatable :: eta_aibj
 !
       integer :: i = 0, a = 0, j = 0, b = 0, aibj = 0
       integer :: bj = 0, ai = 0
@@ -565,24 +754,24 @@ contains
          do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
-            eta(ai, 1) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia
+            eta(ai) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia
 !
          enddo
       enddo
 !
-!     eta_ai_bj = 2* L_iajb = 4 * g_ia_jb(ia,jb) - 2 * g_ia_jb(ib,ja)
+!     eta_ai_bj = 2* L_iajb = 4 * g_iajb(i,a,j,b) - 2 * g_iajb(i,b,j,a)
 !
-      call mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%get_ovov(g_ia_jb)
+      call wf%get_ovov(g_iajb)
 !
-      call mem%alloc(eta_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      eta_ai_bj = zero
+      call mem%alloc(eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      eta_aibj = zero
 !
-      call add_2143_to_1234(four, g_ia_jb, eta_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call add_2341_to_1234(-two, g_ia_jb, eta_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_2143_to_1234(four, g_iajb, eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_2341_to_1234(-two, g_iajb, eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     Pack vector into doubles eta
 !
@@ -598,29 +787,29 @@ contains
 !
                   aibj = max(ai, bj)*(max(ai,bj)-3)/2 + ai + bj
 !
-                  eta(wf%n_t1 + aibj, 1) = eta_ai_bj(ai, bj)
+                  eta(wf%n_t1 + aibj) = eta_aibj(a, i, b, j)
 !
                enddo
             enddo
          enddo
       enddo
 !
-      call mem%dealloc(eta_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine construct_eta_ccsd
 !
 !
    subroutine initialize_multipliers_ccsd(wf)
 !!
-!!    Initialize multipliers 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Initialize multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    Allocates the multipliers. This routine must be overwritten in 
-!!    descendants which have more multipliers. 
+!!    Allocates the multipliers. This routine must be overwritten in
+!!    descendants which have more multipliers.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
       call wf%initialize_t1bar()
       call wf%initialize_t2bar()
@@ -630,34 +819,34 @@ contains
 !
    subroutine set_multipliers_ccsd(wf, multipliers)
 !!
-!!    Set multipliers 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018 
+!!    Set multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf  
+      class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: multipliers
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: multipliers
 !
       call dcopy(wf%n_t1, multipliers, 1, wf%t1bar, 1)
-      call dcopy(wf%n_t2, multipliers(wf%n_t1 + 1, 1), 1, wf%t2bar, 1)
+      call dcopy(wf%n_t2, multipliers(wf%n_t1 + 1), 1, wf%t2bar, 1)
 !
    end subroutine set_multipliers_ccsd
 !
 !
    subroutine get_multipliers_ccsd(wf, multipliers)
 !!
-!!    Get multipliers 
+!!    Get multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd), intent(in) :: wf  
+      class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1) :: multipliers
+      real(dp), dimension(wf%n_gs_amplitudes) :: multipliers
 !
       call dcopy(wf%n_t1, wf%t1bar, 1, multipliers, 1)
-      call dcopy(wf%n_t2, wf%t2bar, 1, multipliers(wf%n_t1 + 1, 1), 1)
+      call dcopy(wf%n_t2, wf%t2bar, 1, multipliers(wf%n_t1 + 1), 1)
 !
    end subroutine get_multipliers_ccsd
 !
@@ -671,141 +860,111 @@ contains
 !
       class(ccsd) :: wf
 !
-      if (.not. allocated(wf%t2bar)) call mem%alloc(wf%t2bar, wf%n_t2, 1)
+      if (.not. allocated(wf%t2bar)) call mem%alloc(wf%t2bar, wf%n_t2)
 !
    end subroutine initialize_t2bar_ccsd
 !
 !
    subroutine construct_multiplier_equation_ccsd(wf, equation)
 !!
-!!    Construct multiplier equation 
-!!    Written by Eirik F. Kjønstad, Nov 2018 
+!!    Construct multiplier equation
+!!    Written by Eirik F. Kjønstad, Nov 2018
 !!
-!!    Constructs 
+!!    Constructs
 !!
 !!       t-bar^T A + eta,
 !!
 !!    and places the result in 'equation'.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd), intent(in) :: wf 
+      class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: equation 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
 !
-      real(dp), dimension(:,:), allocatable :: eta 
+      real(dp), dimension(:), allocatable :: eta
 !
-!     Copy the multipliers, eq. = t-bar 
+!     Copy the multipliers, eq. = t-bar
 !
       call dcopy(wf%n_t1, wf%t1bar, 1, equation, 1)
-      call dcopy(wf%n_t2, wf%t2bar, 1, equation(wf%n_t1 + 1, 1), 1)
+      call dcopy(wf%n_t2, wf%t2bar, 1, equation(wf%n_t1 + 1), 1)
 !
-!     Transform the multipliers by A^T, eq. = t-bar^T A 
+!     Transform the multipliers by A^T, eq. = t-bar^T A
 !
       call wf%jacobian_transpose_ccsd_transformation(equation)
 !
-!     Add eta, eq. = t-bar^T A + eta 
+!     Add eta, eq. = t-bar^T A + eta
 !
-      call mem%alloc(eta, wf%n_gs_amplitudes, 1)
+      call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
 !
       call daxpy(wf%n_gs_amplitudes, one, eta, 1, equation, 1)
 !
-      call mem%dealloc(eta, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(eta, wf%n_gs_amplitudes)
 !
    end subroutine construct_multiplier_equation_ccsd
 !
 !
    subroutine save_multipliers_ccsd(wf)
 !!
-!!    Save multipliers 
+!!    Save multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd), intent(in) :: wf 
+      class(ccsd), intent(inout) :: wf 
 !
-      call wf%save_t1bar()
-      call wf%save_t2bar()
+      call disk%open_file(wf%t1bar_file, 'write', 'rewind')
+      call disk%open_file(wf%t2bar_file, 'write', 'rewind')
+!
+      write(wf%t1bar_file%unit) wf%t1bar  
+      write(wf%t2bar_file%unit) wf%t2bar
+!
+      call disk%close_file(wf%t1bar_file) 
+      call disk%close_file(wf%t2bar_file) 
 !
    end subroutine save_multipliers_ccsd
 !
 !
    subroutine read_multipliers_ccsd(wf)
 !!
-!!    Read multipliers 
+!!    Read multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd), intent(inout) :: wf 
+      class(ccsd), intent(inout) :: wf
 !
-      call wf%read_t1bar()
-      call wf%read_t2bar()
+      call wf%is_restart_safe('ground state')
+!
+      call disk%open_file(wf%t1bar_file, 'read', 'rewind')
+      call disk%open_file(wf%t2bar_file, 'read', 'rewind')
+!
+      read(wf%t1bar_file%unit) wf%t1bar  
+      read(wf%t2bar_file%unit) wf%t2bar
+!
+      call disk%close_file(wf%t1bar_file) 
+      call disk%close_file(wf%t2bar_file) 
 !
    end subroutine read_multipliers_ccsd
 !
 !
    subroutine destruct_multipliers_ccsd(wf)
 !!
-!!    Destruct multipliers 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018 
+!!    Destruct multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
 !!
-!!    Deallocates the multipliers. This routine must be overwritten in 
-!!    descendants which have more multipliers. 
+!!    Deallocates the multipliers. This routine must be overwritten in
+!!    descendants which have more multipliers.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
       call wf%destruct_t1bar()
       call wf%destruct_t2bar()
 !
    end subroutine destruct_multipliers_ccsd
-!
-!
-   subroutine save_t2bar_ccsd(wf)
-!!
-!!    Save t2bar 
-!!    Written by Eirik F. Kjønstad, Nov 2018 
-!!
-      implicit none 
-!
-      class(ccsd), intent(in) :: wf 
-!
-      type(file) :: t2bar_file 
-!
-      call t2bar_file%init('t2bar', 'sequential', 'unformatted')
-!
-      call disk%open_file(t2bar_file, 'write', 'rewind')
-!
-      write(t2bar_file%unit) wf%t2bar
-!
-      call disk%close_file(t2bar_file)      
-!
-   end subroutine save_t2bar_ccsd
-!
-!
-   subroutine read_t2bar_ccsd(wf)
-!!
-!!    Save t2bar 
-!!    Written by Eirik F. Kjønstad, Nov 2018 
-!!
-      implicit none 
-!
-      class(ccsd), intent(inout) :: wf 
-!
-      type(file) :: t2bar_file 
-!
-      call t2bar_file%init('t2bar', 'sequential', 'unformatted')
-!
-      call disk%open_file(t2bar_file, 'read', 'rewind')
-!
-      read(t2bar_file%unit) wf%t2bar
-!
-      call disk%close_file(t2bar_file)      
-!
-   end subroutine read_t2bar_ccsd
 !
 !
    subroutine destruct_t2bar_ccsd(wf)
@@ -817,19 +976,19 @@ contains
 !
       class(ccsd) :: wf
 !
-      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_gs_amplitudes, 1)
+      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_gs_amplitudes)
 !
    end subroutine destruct_t2bar_ccsd
 !
 !
    subroutine print_dominant_amplitudes_ccsd(wf)
 !!
-!!    Print dominant amplitudes 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!    Print dominant amplitudes
+!!    Written by Eirik F. Kjønstad, Dec 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd), intent(in) :: wf 
+      class(ccsd), intent(in) :: wf
 !
       call wf%print_dominant_x1(wf%t1,'t')
       call wf%print_dominant_x2(wf%t2,'t')
@@ -840,57 +999,57 @@ contains
    subroutine print_dominant_x_amplitudes_ccsd(wf, x, tag)
 !!
 !!    Print dominant amplitudes  (TODO)
-!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!    Written by Eirik F. Kjønstad, Dec 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd), intent(in) :: wf 
+      class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1) :: x 
+      real(dp), dimension(wf%n_gs_amplitudes) :: x
 !
       character(len=1) :: tag
 !
-      call wf%print_dominant_x1(x(1:wf%n_t1,1),tag)
-      call wf%print_dominant_x2(x(wf%n_t1 + 1:wf%n_gs_amplitudes,1),tag)
+      call wf%print_dominant_x1(x(1:wf%n_t1),tag)
+      call wf%print_dominant_x2(x(wf%n_t1 + 1:wf%n_gs_amplitudes),tag)
 !
    end subroutine print_dominant_x_amplitudes_ccsd
 !
 !
    subroutine print_dominant_x2_ccsd(wf, x2, tag)
 !!
-!!    Print dominant x2   
-!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!    Print dominant x2
+!!    Written by Eirik F. Kjønstad, Dec 2018
 !!
 !!    Prints the 20 most dominant double amplitudes,
 !!    or sorts them if there are fewer than twenty of them.
 !!
-      implicit none 
+      implicit none
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_t2, 1) :: x2 
-      character(len=1), intent(in)    :: tag 
+      real(dp), dimension(wf%n_t2) :: x2
+      character(len=1), intent(in)    :: tag
 !
-      real(dp), dimension(:,:), allocatable :: abs_x2
+      real(dp), dimension(:), allocatable :: abs_x2
 !
-      integer, dimension(:,:), allocatable :: dominant_indices
-      real(dp), dimension(:,:), allocatable     :: dominant_values
+      integer, dimension(:), allocatable :: dominant_indices
+      real(dp), dimension(:), allocatable     :: dominant_values
 !
       integer :: n_elements, elm, i, a, j, b, ai, bj
 !
 !     Sort according to largest contributions
 !
-      call mem%alloc(abs_x2, wf%n_t2, 1)
+      call mem%alloc(abs_x2, wf%n_t2)
       abs_x2 = abs(x2)
 !
       n_elements = 20
       if (n_elements .gt. wf%n_t2) n_elements = wf%n_t2
 !
-      call mem%alloc(dominant_indices, n_elements, 1)
-      call mem%alloc(dominant_values, n_elements, 1)
+      call mem%alloc(dominant_indices, n_elements)
+      call mem%alloc(dominant_values, n_elements)
 !
       dominant_indices = 0
-      dominant_values  = zero 
+      dominant_values  = zero
       call get_n_highest(n_elements, wf%n_t2, abs_x2, dominant_values, dominant_indices)
 !
 !     Print largest contributions
@@ -902,19 +1061,19 @@ contains
 !
       do elm = 1, n_elements
 !
-         call invert_packed_index(dominant_indices(elm,1), ai, bj, (wf%n_o)*(wf%n_v))
+         call invert_packed_index(dominant_indices(elm), ai, bj, (wf%n_o)*(wf%n_v))
          call invert_compound_index(ai, a, i, wf%n_v, wf%n_o)
          call invert_compound_index(bj, b, j, wf%n_v, wf%n_o)
 !
-         write(output%unit, '(t6,i3,7x,i3,7x,i3,7x,i3,5x,f19.12)') a, i, b, j, x2(dominant_indices(elm,1), 1)
+         write(output%unit, '(t6,i3,7x,i3,7x,i3,7x,i3,5x,f19.12)') a, i, b, j, x2(dominant_indices(elm))
 !
       enddo
 !
       write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
 !
-      call mem%dealloc(dominant_indices, n_elements, 1)
-      call mem%dealloc(dominant_values, n_elements, 1)
-      call mem%dealloc(abs_x2, wf%n_t2, 1)
+      call mem%dealloc(dominant_indices, n_elements)
+      call mem%dealloc(dominant_values, n_elements)
+      call mem%dealloc(abs_x2, wf%n_t2)
 !
    end subroutine print_dominant_x2_ccsd
 !
@@ -922,17 +1081,17 @@ contains
    subroutine get_cvs_projector_ccsd(wf, projector, n_cores, core_MOs)
 !!
 !!    Get CVS projector
-!!    Written by Sarai D. Folekstad, Oct 2018
+!!    Written by Sarai D. Folkestad, Oct 2018
 !!
       implicit none
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
 !
       integer, intent(in) :: n_cores
 !
-      integer, dimension(n_cores, 1), intent(in) :: core_MOs
+      integer, dimension(n_cores), intent(in) :: core_MOs
 !
       integer :: core, i, a, ai, j, b, bj, aibj
 !
@@ -940,21 +1099,21 @@ contains
 !
       do core = 1, n_cores
 !
-        i = core_MOs(core, 1)
+        i = core_MOs(core)
 !
 !$omp parallel do private (a, ai, j, b, bj, aibj)
         do a = 1, wf%n_v
 !
            ai = wf%n_v*(i - 1) + a
-           projector(ai, 1) = one
+           projector(ai) = one
 !
-            do j = 1, wf%n_o 
+            do j = 1, wf%n_o
                do b = 1, wf%n_v
 !
                   bj = wf%n_v*(j - 1) + b
                   aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
-!                  
-                  projector(aibj + (wf%n_o)*(wf%n_v), 1) = one
+!
+                  projector(aibj + (wf%n_o)*(wf%n_v)) = one
 !
                enddo
             enddo

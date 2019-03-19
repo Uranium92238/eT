@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module disk_manager_class
 !
 !!
@@ -36,8 +55,6 @@ module disk_manager_class
       procedure :: print_settings               => print_settings_disk_manager
 !
       procedure :: delete                       => delete_disk_manager
-!
-      procedure :: rewind_file                  => rewind_file_disk_manager
 !
    end type disk_manager
 !
@@ -438,20 +455,6 @@ contains
 !
       endif
 !
-!     Let the user know how much has been written, or freed up, and to which file
-!
-!       if (bytes_written_to_disk .gt. 0) then
-! !
-!          write(output%unit,'(/t3,a,a,a,i14)') 'Number of bytes written to file ', &
-!                            trim(the_file%name), ': ', bytes_written_to_disk
-! !
-!       elseif (bytes_written_to_disk .lt. 0) then
-! !
-!          write(output%unit,'(/t3,a,a,a,i14)') 'File ', &
-!                         trim(the_file%name),  ' modified or deleted, with bytes freed up: ', bytes_written_to_disk
-! !
-!       endif
-!
 !     Update the available disk space
 !
       disk%available = disk%available - bytes_written_to_disk
@@ -542,24 +545,6 @@ contains
       endif
 !
    end subroutine delete_disk_manager
-!
-!
-   subroutine rewind_file_disk_manager(disk, the_file)
-!!
-!!    Rewind file 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(disk_manager), intent(in) :: disk 
-!
-      type(file) :: the_file
-!
-      call disk%open_file(the_file, 'readwrite', 'rewind')
-!
-      call disk%close_file(the_file)
-!
-   end subroutine rewind_file_disk_manager
 !
 !
 end module disk_manager_class

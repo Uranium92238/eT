@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module mp2_class
 !
 !!
@@ -8,8 +27,6 @@ module mp2_class
    use wavefunction_class
    use hf_class
    use ccs_class
-!
-   use index
 !
    implicit none
 !
@@ -82,38 +99,33 @@ contains
 !
       class(mp2), intent(inout) :: wf 
 !
-      real(dp), dimension(:,:), allocatable :: g_ai_bj
-      real(dp), dimension(:,:), allocatable :: L_ai_bj
-      real(dp), dimension(:,:), allocatable :: eps
+      real(dp), dimension(:,:,:,:), allocatable :: g_aibj
+      real(dp), dimension(:,:,:,:), allocatable :: L_aibj
+      real(dp), dimension(:), allocatable :: eps
 !
       real(dp) :: e2_neg
-      integer  :: a, i, b, j, ai, bj 
+      integer  :: a, i, b, j
 !
-      call mem%alloc(eps, wf%n_mo, 1)
+      call mem%alloc(eps, wf%n_mo)
       eps = wf%orbital_energies
 !
-      call mem%alloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call wf%get_vovo(g_ai_bj)
+      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call wf%get_vovo(g_aibj)
 !
-      call mem%alloc(L_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      L_ai_bj = two*g_ai_bj
-      call add_1432_to_1234(-one, g_ai_bj, L_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      L_aibj = two*g_aibj
+      call add_1432_to_1234(-one, g_aibj, L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       e2_neg = zero 
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj) reduction(+:e2_neg)
+!$omp parallel do schedule(static) private(a, i, b, j) reduction(+:e2_neg)
       do j = 1, wf%n_o
          do b = 1, wf%n_v
-!
-            bj = (wf%n_v)*(j-1) + b
-!
             do i = 1, wf%n_o 
                do a = 1, wf%n_v
 !
-                  ai = (wf%n_v)*(i-1) + a
-!
-                  e2_neg = e2_neg + g_ai_bj(ai, bj)*L_ai_bj(ai, bj)/(eps(wf%n_o+a,1)+eps(wf%n_o+b,1)-eps(i,1)-eps(j,1))
+                  e2_neg = e2_neg + g_aibj(a, i, b, j)*L_aibj(a, i, b, j)/(eps(wf%n_o+a)+eps(wf%n_o+b)-eps(i)-eps(j))
 !
                enddo
             enddo

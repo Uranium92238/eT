@@ -1,9 +1,27 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 submodule (cc2_class) jacobian_cc2
 !
 !!
-!!    Jacobian submodule (cc2)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    and Andreas Skeidsvoll, 2018
+!!    Jacobian submodule (CC2)
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian matrix 
@@ -44,7 +62,7 @@ contains
 !!
       class(cc2), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes) :: c_i
 !
       call wf%jacobian_cc2_transformation(c_i)
 !
@@ -73,7 +91,7 @@ contains
 !
       class(cc2) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1)   :: c
+      real(dp), dimension(wf%n_es_amplitudes)   :: c
 !
       real(dp), dimension(:,:), allocatable     :: c_ai
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj
@@ -97,7 +115,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            c_ai(a, i) = c(ai, 1)
+            c_ai(a, i) = c(ai)
 !
          enddo
       enddo
@@ -131,8 +149,8 @@ contains
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     c_aibj(a, i, b, j) = c(wf%n_o*wf%n_v + aibj, 1)
-                     c_aibj(b, j, a, i) = c(wf%n_o*wf%n_v + aibj, 1)
+                     c_aibj(a, i, b, j) = c(wf%n_o*wf%n_v + aibj)
+                     c_aibj(b, j, a, i) = c(wf%n_o*wf%n_v + aibj)
 !
                   endif
 !
@@ -166,7 +184,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            c(ai, 1) = rho_ai(a, i)
+            c(ai) = rho_ai(a, i)
 !
          enddo
       enddo
@@ -210,7 +228,7 @@ contains
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     c((wf%n_o)*(wf%n_v) + aibj, 1) = rho_aibj(a, i, b, j)
+                     c((wf%n_o)*(wf%n_v) + aibj) = rho_aibj(a, i, b, j)
 !
                   endif
 !
@@ -650,10 +668,10 @@ contains
                do a = 1, wf%n_v
 !
                   rho_aibj(a,i,b,j) = rho_aibj(a,i,b,j) + c_aibj(a,i,b,j)*&
-                                          (- wf%fock_diagonal(i, 1) &
-                                           - wf%fock_diagonal(j, 1) &
-                                           + wf%fock_diagonal(wf%n_o + a, 1) &
-                                           + wf%fock_diagonal(wf%n_o + b, 1) )
+                                          (- wf%fock_diagonal(i) &
+                                           - wf%fock_diagonal(j) &
+                                           + wf%fock_diagonal(wf%n_o + a) &
+                                           + wf%fock_diagonal(wf%n_o + b) )
 !
                enddo
             enddo

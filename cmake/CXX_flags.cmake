@@ -1,9 +1,65 @@
-if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
-    set(CMAKE_CXX_FLAGS         "-O3 -funroll-loops -ftree-vectorize -Wno-unused")
-    if(NOT DEVELOPMENT_CODE)
-        # suppress warnings in exported code
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+#
+#
+#   eT - a coupled cluster program
+#   Copyright (C) 2016-2019 the authors of eT
+#
+#   eT is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   eT is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+#
+#   C++ flags for icpc and g++
+#
+#   1. Intel icpc 
+# 
+if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
+# 
+#   Set standard flags 
+#  
+    set(CMAKE_CXX_FLAGS "-std=c++11 -xHost -O3")
+# 
+    set (CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -shared-intel")
+# 
+#   Flags needed for Libint package
+# 
+    set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -fexceptions -I${Libint2_INCLUDE_DIR} -I${Libint2_H_DIR} -I${EIGEN3_INCLUDE_DIR}"
+        )
+# 
+#   MKL flags 
+# 
+    if(DEFINED MKL_FLAG)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MKL_FLAG}")
     endif()
+# 
+#   Enable openmp if requested (default) 
+# 
+    if(ENABLE_OMP)
+        set(CMAKE_CXX_FLAGS
+            "${CMAKE_CXX_FLAGS} -qopenmp -parallel"
+            )
+    endif()
+endif ()
+# 
+#   2. GCC g++
+# 
+if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
+# 
+#   Set standard flags 
+# 
+    set(CMAKE_CXX_FLAGS "-O3 -std=c++11")
+# 
+#   Testing processor 32-bit or 64-bit
+# 
     if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "i386")
         set(CMAKE_CXX_FLAGS
             "${CMAKE_CXX_FLAGS} -m32"
@@ -14,96 +70,23 @@ if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
             "${CMAKE_CXX_FLAGS} -m64"
             )
     endif()
-    set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g3")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -funroll-loops -ftree-vectorize -Wno-unused")
-    set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE} -g -pg")
-#
-#   Flags needed for libint package
-#
+# 
+#   Flags needed for Libint package
+# 
     set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -fexceptions -I/usr/local/libint/2.4.2/include -I/usr/local/include/eigen3 -I/usr/local/libint/2.4.2/include/libint2/ -lint2 -std=c++11 -DPREP_LIBINT2_SKIP_BOOST"
+        "${CMAKE_CXX_FLAGS} -fexceptions -I${Libint2_INCLUDE_DIR} -I${Libint2_H_DIR} -I${EIGEN3_INCLUDE_DIR}"
         )
-#
-    if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-        # radovan: vpotdamp code needs this
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-    endif()
-    if (ENABLE_CODE_COVERAGE)
-        set (CMAKE_CXX_FLAGS
-            "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
-        set (CMAKE_CXX_LINK_FLAGS "-fprofile-arcs -ftest-coverage")
-    endif()
+# 
+#   Enable openmp if requested (default) 
+#  
     if(ENABLE_OMP)
         set(CMAKE_CXX_FLAGS
             "${CMAKE_CXX_FLAGS} -fopenmp"
             )
     endif()
-    if(ENABLE_STATIC_LINKING)
-        set(CMAKE_CXX_FLAGS
-            "${CMAKE_CXX_FLAGS} -static -fpic"
-            )
-    endif()
 endif()
 
-if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
-    set(CMAKE_CXX_FLAGS         "-wd981 -wd279 -wd383 -vec-report0 -wd1572 -wd177 -fno-exceptions -std=c++11 -I/usr/local/include/c++/8.2.0 -gcc-version=8.2 -xHost -O3")
-    if(DEVELOPMENT_CODE)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-    else()
-        # suppress warnings in exported code
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
-    endif()
-    set(CMAKE_CXX_FLAGS_DEBUG   "-O0")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ip")
-    set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE} -g -pg")
-    set (CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -shared-intel")
-#
-#   Flags needed for libint package
-#
-    set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -fexceptions -I/usr/local/libint/2.4.2/include -I/usr/local/include/eigen3 -I/usr/local/libint/2.4.2/include/libint2/ -lint2 -std=c++11 -DPREP_LIBINT2_SKIP_BOOST"
-        )
-#
-
-    if(DEFINED MKL_FLAG)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MKL_FLAG}")
-    endif()
-
-    if(ENABLE_OMP)
-        set(CMAKE_CXX_FLAGS
-            "${CMAKE_CXX_FLAGS} -qopenmp"
-            )
-    endif()
-endif ()
-
-if(CMAKE_CXX_COMPILER_ID MATCHES PGI)
-    set(CMAKE_CXX_FLAGS         "-Mpreprocess")
-    set(CMAKE_CXX_FLAGS_DEBUG   "-g -O0 -c9x")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fast -Munroll -Mvect=idiom -c9x -DRESTRICT=restrict")
-    set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE} -g -pg")
-    if(ENABLE_OMP)
-        set(CMAKE_CXX_FLAGS
-            "${CMAKE_CXX_FLAGS} -mp"
-            )
-    endif()
-endif()
-
-if(CMAKE_CXX_COMPILER_ID MATCHES XL)
-    set(CMAKE_CXX_FLAGS         " ")
-    set(CMAKE_CXX_FLAGS_DEBUG   "-DVAR_DEBUG ")
-    set(CMAKE_CXX_FLAGS_RELEASE " ")
-    set(CMAKE_CXX_FLAGS_PROFILE " ")
-endif()
-
-if(CMAKE_CXX_COMPILER_ID MATCHES Cray)
-    set(CMAKE_CXX_FLAGS         "-DVAR_CRAY -eZ")
-    set(CMAKE_CXX_FLAGS_DEBUG   "-g -O0")
-    set(CMAKE_CXX_FLAGS_RELEASE " ")
-    set(CMAKE_CXX_FLAGS_PROFILE "-g")
-endif()
-
+# Needed on Dirac: -I/usr/local/include/c++/8.2.0 -gcc-version=8.2
 if(DEFINED EXTRA_CXX_FLAGS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EXTRA_CXX_FLAGS}")
 endif()
-
-#save_compiler_flags(CXX)

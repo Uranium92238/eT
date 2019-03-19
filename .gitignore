@@ -1,6 +1,9 @@
 #Making a gitignore
 build/
+documentation/docs/
+*sublime*
 *.swp
 *.swo
 .DS_Store
 __pycache__
+*sublime*

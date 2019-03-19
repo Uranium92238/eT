@@ -1,5 +1,23 @@
-submodule (lowmem_cc2_class) jacobian
 !
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
+submodule (lowmem_cc2_class) jacobian
 !
 !!
 !!    Jacobian submodule (CC2)
@@ -33,7 +51,7 @@ contains
       class(lowmem_cc2) :: wf
 !
       real(dp), intent(in) :: omega
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_a_i
 !
@@ -42,26 +60,13 @@ contains
       real(dp), dimension(:), allocatable :: eps_o
       real(dp), dimension(:), allocatable :: eps_v
 !
-      integer :: i, a, ai ! Index
-!
 !     Allocate and zero the transformed vector (singles part)
 !
       call mem%alloc(rho_a_i, wf%n_v, wf%n_o)
       rho_a_i = zero
 !
       call mem%alloc(c_a_i, wf%n_v, wf%n_o)
-!
-!$omp parallel do schedule(static) private(a, i, ai)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            c_a_i(a, i) = c(ai, 1)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call dcopy(wf%n_t1, c, 1, c_a_i, 1)
 !
 !     :: CCS contributions to the singles c vector ::
 !
@@ -72,8 +77,8 @@ contains
       call mem%alloc(eps_o, wf%n_o)
       call mem%alloc(eps_v, wf%n_v)
 !
-      eps_o = wf%fock_diagonal(1:wf%n_o,1)
-      eps_v = wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1)
+      eps_o = wf%fock_diagonal(1:wf%n_o)
+      eps_v = wf%fock_diagonal(wf%n_o + 1 : wf%n_mo)
 !
       call wf%jacobian_cc2_a1(rho_a_i, c_a_i)
       call wf%jacobian_cc2_b1(rho_a_i, c_a_i, eps_o, eps_v)
@@ -231,7 +236,7 @@ contains
             do j = 1, wf%n_o
                do b = 1, batch_b%length
 !
-                  c_jb(j, b) = c_bj( b + batch_b%first - 1, j)
+                  c_jb(j, b) = c_bj(b + batch_b%first - 1, j)
 !
                enddo
             enddo
@@ -384,7 +389,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
          enddo ! batch_k
       enddo ! batch_j
 !
-!
       req0 = 0
 !
       req1_a = (wf%integrals%n_J)*(wf%n_o)
@@ -473,7 +477,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
          enddo ! batch_c
       enddo ! batch_a
-!
 !
       call mem%dealloc(X_kc, wf%n_o, wf%n_v)
 !
@@ -1442,7 +1445,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
       class(lowmem_cc2), intent(in) :: wf
 !
-!
       real(dp), intent(in) :: omega
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
@@ -1646,7 +1648,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
       integer :: current_i_batch, current_k_batch, current_a_batch
       integer :: req0, req1_i, req1_k, req1_a, req2_ik, req2_ia, req2_ka, req3
 !
-!
       req0 = 0
 !
       req1_i = max((wf%integrals%n_J)*(wf%n_o), (wf%integrals%n_J)*(wf%n_v))
@@ -1787,7 +1788,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
                            (batch_a%length),                      &
                            Y_bcki,                                & ! Y_bck_i
                            (batch_k%length)*(wf%n_v)**2,          &
-                           one,                                  &
+                           one,                                   &
                            rho_ai(batch_a%first, batch_i%first),  & ! rho_ai
                            (wf%n_v))
 !

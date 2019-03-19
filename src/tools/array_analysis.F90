@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 module array_analysis
 !
 !!
@@ -11,7 +30,6 @@ module array_analysis
 !!
 !
    use file_class
-   use index
    use kinds
    use parameters
    use memory_manager_class
@@ -19,187 +37,6 @@ module array_analysis
    implicit none
 !
 contains
-!
-!
-   subroutine print_dominant_two_index(x_pq, dim_p, dim_q, label_p, label_q)
-!!
-!!    Print dominant elements of two index vector
-!!    Written by Eirik F. Kjønstad, May 2018
-!!
-      implicit none
-!
-      real(dp), dimension(:,:) :: x_pq
-!
-      integer :: dim_p
-      integer :: dim_q
-!
-      character(len=1), optional :: label_p
-      character(len=1), optional :: label_q
-!
-      integer, dimension(20, 1) :: index_list
-!
-      integer :: I = 0, p = 0, q = 0
-!
-!     Print banner
-!
-      write(output%unit,'(t6,a32)')'------------------------------------------------------'
-!
-      if (present(label_p) .and. present(label_q)) then
-!
-         write(output%unit,'(t6,a3, 8x, a3, 8x, a10)') label_p, label_q, 'amplitude'
-!
-      elseif (.not. present(label_p) .and. .not. present(label_q)) then
-!
-         write(output%unit,'(t6,a3, 8x, a3, 8x, a10)') 'p', 'q', 'amplitude'
-!
-      else
-!
-         write(output%unit,'(/t6,a)') 'Error: when printing vector, either specify all or no index labels (p, q)'
-         stop
-!
-      endif
-!
-      write(output%unit,'(t6,a32)')'------------------------------------------------------'
-!
-!     Determine the 20 largest elements of the vector
-!
-      index_list = 0
-      call determine_dominant_elements(x_pq, dim_p*dim_q, index_list, 20)
-!
-      do I = 1, 20
-!
-         if (index_list(I,1) .eq. 0) then ! The vector x has less than 20 elements. Ignore.
-!
-!           Do nothing
-!
-         else
-!
-!           Print vector element and index if above a certain threshold
-!
-            if (abs(x_pq(index_list(I, 1), 1)) .lt. 1.0D-03) then
-!
-               exit ! Never print very, very small amplitudes
-!
-            else
-!
-!              Invert the compound index
-!
-               call invert_compound_index(index_list(I,1), p, q, dim_p, dim_q)
-!
-!              Print record, i.e. the Ith largest element with indices
-!
-               write(output%unit,'(t6,i3, 8x,i3, 10x, f8.5)') p, q, x_pq(index_list(I,1), 1)
-!
-            endif
-!
-         endif
-!
-      enddo
-!
-      write(output%unit,'(t6,a32)')'------------------------------------------------------'
-!
-   end subroutine print_dominant_two_index
-!
-!
-   subroutine print_dominant_four_index(x_pqrs, dim_p, dim_q, dim_r, dim_s, &
-                                                label_p, label_q, label_r, label_s)
-!!
-!!    Print dominant elements of packed four index vector
-!!    Written by Eirik F. Kjønstad, May 2018
-!!
-      implicit none
-!
-      real(dp), dimension(:,:) :: x_pqrs
-!
-      integer :: dim_p
-      integer :: dim_q
-      integer :: dim_r
-      integer :: dim_s
-!
-      character(len=1), optional :: label_p
-      character(len=1), optional :: label_q
-      character(len=1), optional :: label_r
-      character(len=1), optional :: label_s
-!
-      integer, dimension(20, 1) :: index_list
-!
-      integer :: I = 0, p = 0, q = 0, r = 0, s = 0
-!
-      integer :: pq = 0, rs = 0
-!
-!     Sanity check
-!
-      if (dim_p*dim_q .ne. dim_r*dim_s) then
-!
-         write(output%unit,'(/t6, a)') 'Error: four-index printing of dominant elements only supports'
-         write(output%unit,'(t6, a)')  'square symmetric matrices'
-         stop
-!
-      endif
-!
-!     Print banner
-!
-      write(output%unit,'(t6,a54)')'------------------------------------------------------'
-!
-      if (present(label_p) .and. present(label_q) .and. present(label_r) .and. present(label_s)) then
-!
-         write(output%unit,'(t6, a3, 8x, a3, 8x, a3, 8x, a3, 8x, a10)')'a','i','b','j', 'amplitude'
-!
-      elseif (.not. present(label_p) .and. .not. present(label_q) .and. .not. present(label_r) .and. .not. present(label_s)) then
-!
-         write(output%unit,'(t6, a3, 8x, a3, 8x, a3, 8x, a3, 8x, a10)') label_p, label_q, label_r, label_s, 'amplitude'
-!
-      else
-!
-         write(output%unit,'(/t6,a)') 'Error: when printing vector, either specify all or no index labels (p, q, r, s)'
-         stop
-!
-      endif
-!
-      write(output%unit,'(t6,a54)')'------------------------------------------------------'
-!
-!     Determine the 20 largest elements of the vector
-!
-      index_list = 0
-      call determine_dominant_elements(x_pqrs, dim_p*dim_q*(dim_p*dim_q+1)/2, index_list, 20)
-!
-      do I = 1, 20
-!
-         if (index_list(I,1) .eq. 0) then ! The vector x has less than 20 elements. Ignore.
-!
-!           Do nothing
-!
-         else
-!
-!           Print vector element and index if above a certain threshold
-!
-            if (abs(x_pqrs(index_list(I, 1), 1)) .lt. 1.0D-03) then
-!
-               exit ! Never print very, very small amplitudes
-!
-            else
-!
-!              Invert the packed index
-!
-               call invert_packed_index(index_list(I,1), pq, rs, dim_p*dim_q)
-!
-               call invert_compound_index(pq, p, q, dim_p, dim_q)
-               call invert_compound_index(rs, r, s, dim_r, dim_s)
-!
-!              Print record, i.e. the Ith largest element with indices
-!
-                write(output%unit,'(t6,i3, 8x,i3, 8x,i3, 8x, i3, 10x, f8.5)') &
-                                    p, q, r, s, x_pqrs(index_list(I,1), 1)
-!
-            endif
-!
-         endif
-!
-      enddo
-!
-      write(output%unit,'(t6,a54)')'------------------------------------------------------'
-!
-   end subroutine print_dominant_four_index
 !
 !
    subroutine determine_dominant_elements(x, dim_x, index_list, n_to_sort)
@@ -212,46 +49,46 @@ contains
 !!
 !!    If dim_x < n_to_sort, all elements of X are sorted. Remember to zero
 !!    the index_list array before sending it to the routine. If  dim_x < n_to_sort,
-!!    index_list(K,1) will remain 0 for K > dim_x.
+!!    index_list(K) will remain 0 for K > dim_x.
 !!
 !!    Note, EFK June 2018. There is a bug in this routine if two elements
 !!    are identical. Use get_n_lowest routine instead, if possible.
 !!
       implicit none
 !
-      real(dp), dimension(:,:) :: x
+      real(dp), dimension(:) :: x
       integer             :: dim_x
 !
       integer :: n_to_sort ! Number of elements of x to sort
 !
-      integer, dimension(n_to_sort,1) :: index_list ! List of the sorted indices (p, q)
+      integer, dimension(n_to_sort) :: index_list ! List of the sorted indices (p, q)
 !
       integer :: counter = 0, I = 0
       real(dp)     :: largest
 !
       do counter = 1, min(n_to_sort, dim_x)
 !
-         largest = abs(x(1, 1))
+         largest = abs(x(1))
 !
          do I = counter + 1, dim_x
 !
             if (counter .eq. 1) then
 !
-                if (abs(x(I,1)) .gt. largest) then
+                if (abs(x(I)) .gt. largest) then
 !
-                   index_list(counter, 1) = I ! Set new maximum index
-                   largest = abs(x(I,1))      ! Set new maximum value
+                   index_list(counter) = I ! Set new maximum index
+                   largest = abs(x(I))      ! Set new maximum value
 !
                endif
 !
             else
 !
-                if (abs(x(I,1)) .gt. largest                            .and. &
-                    abs(x(I,1)) .le. abs(x(index_list(counter-1, 1),1)) .and. &
-                              I .ne. index_list(counter-1, 1)) then
+                if (abs(x(I)) .gt. largest                            .and. &
+                    abs(x(I)) .le. abs(x(index_list(counter-1))) .and. &
+                              I .ne. index_list(counter-1)) then
 !
-                   index_list(counter, 1) = I ! Set new maximum index
-                   largest = abs(x(I,1))      ! Set new maximum value
+                   index_list(counter) = I ! Set new maximum index
+                   largest = abs(x(I))      ! Set new maximum value
 !
                endif
 !
@@ -278,10 +115,10 @@ contains
       integer :: n    ! Number of elements wanted
       integer :: size ! Size of original vector
 !
-      real(dp), dimension(size, 1) :: vec
-      real(dp), dimension(n, 1)    :: sorted_short_vec
+      real(dp), dimension(size) :: vec
+      real(dp), dimension(n)    :: sorted_short_vec
 !
-      integer, dimension(n, 1) :: index_list
+      integer, dimension(n) :: index_list
 !
 !     Variables for sorting
 !
@@ -295,20 +132,20 @@ contains
 !
 !        Placing the n first elements of vec into sorted_short_vec
 !
-         sorted_short_vec(1,1) = vec(1,1)
-         index_list(1,1) = 1
+         sorted_short_vec(1) = vec(1)
+         index_list(1) = 1
 !
-         max = sorted_short_vec(1,1)
+         max = sorted_short_vec(1)
          max_pos = 1
 !
          do i = 2, n
 !
-            sorted_short_vec(i,1) = vec(i,1)
-            index_list(i,1) = i
+            sorted_short_vec(i) = vec(i)
+            index_list(i) = i
 !
-            if (sorted_short_vec(i,1) .ge. max) then
+            if (sorted_short_vec(i) .ge. max) then
 !
-               max = sorted_short_vec(i,1)
+               max = sorted_short_vec(i)
                max_pos = i
 !
             endif
@@ -317,16 +154,16 @@ contains
 !        Looping through the rest of vec to find lowest values
 !
          do i = n + 1, size
-            if (vec(i,1) .lt. max) then
+            if (vec(i) .lt. max) then
 !
-               sorted_short_vec(max_pos,1) = vec(i,1)
-               index_list(max_pos,1) = i
-               max = vec(i,1)
+               sorted_short_vec(max_pos) = vec(i)
+               index_list(max_pos) = i
+               max = vec(i)
 !
                do j = 1, n
-                  if (sorted_short_vec(j, 1) .gt. max) then
+                  if (sorted_short_vec(j) .gt. max) then
 !
-                     max = sorted_short_vec(j, 1)
+                     max = sorted_short_vec(j)
                      max_pos = j
 !
                   endif
@@ -338,15 +175,15 @@ contains
 !
          do i = 1, n
             do j = 1, n - 1
-               if (sorted_short_vec(j,1) .gt. sorted_short_vec(j+1, 1)) then
+               if (sorted_short_vec(j) .gt. sorted_short_vec(j+1)) then
 !
-                  swap = sorted_short_vec(j,1)
-                  sorted_short_vec(j,1) = sorted_short_vec(j+1, 1)
-                  sorted_short_vec(j+1, 1) = swap
+                  swap = sorted_short_vec(j)
+                  sorted_short_vec(j) = sorted_short_vec(j+1)
+                  sorted_short_vec(j+1) = swap
 !
-                  swap_int = index_list(j, 1)
-                  index_list(j,1) = index_list(j + 1,1)
-                  index_list(j + 1,1) = swap_int
+                  swap_int = index_list(j)
+                  index_list(j) = index_list(j + 1)
+                  index_list(j + 1) = swap_int
 !
                endif
             enddo
@@ -369,10 +206,10 @@ contains
       integer :: n    ! Number of elements wanted
       integer :: size ! Size of original vector
 !
-      real(dp), dimension(size, 1) :: vec
-      real(dp), dimension(n, 1)    :: sorted_short_vec
+      real(dp), dimension(size) :: vec
+      real(dp), dimension(n)    :: sorted_short_vec
 !
-      integer, dimension(n, 1) :: index_list
+      integer, dimension(n) :: index_list
 !
 !     Variables for sorting
 !
@@ -387,20 +224,20 @@ contains
 !        Placing the n first elements of vec into sorted_short_vec
 !
          sorted_short_vec = zero
-         sorted_short_vec(1,1) = vec(1,1)
-         index_list(1,1) = 1
+         sorted_short_vec(1) = vec(1)
+         index_list(1) = 1
 !
-         min = sorted_short_vec(1,1)
+         min = sorted_short_vec(1)
          min_pos = 1
 !
          do i = 2, n
 !
-            sorted_short_vec(i,1) = vec(i,1)
-            index_list(i,1) = i
+            sorted_short_vec(i) = vec(i)
+            index_list(i) = i
 !
-            if (sorted_short_vec(i,1) .le. min) then
+            if (sorted_short_vec(i) .le. min) then
 !
-               min = sorted_short_vec(i,1)
+               min = sorted_short_vec(i)
                min_pos = i
 !
             endif
@@ -409,16 +246,16 @@ contains
 !        Looping through the rest of vec to find lowest values
 !
          do i = n + 1, size
-            if (vec(i,1) .gt. min) then
+            if (vec(i) .gt. min) then
 !
-               sorted_short_vec(min_pos,1) = vec(i,1)
-               index_list(min_pos,1) = i
-               min = vec(i,1)
+               sorted_short_vec(min_pos) = vec(i)
+               index_list(min_pos) = i
+               min = vec(i)
 !
                do j = 1, n
-                  if (sorted_short_vec(j, 1) .lt. min) then
+                  if (sorted_short_vec(j) .lt. min) then
 !
-                     min = sorted_short_vec(j, 1)
+                     min = sorted_short_vec(j)
                      min_pos = j
 !
                   endif
@@ -430,15 +267,15 @@ contains
 !
          do i = 1, n
             do j = 1, n - 1
-               if (sorted_short_vec(j,1) .lt. sorted_short_vec(j+1, 1)) then
+               if (sorted_short_vec(j) .lt. sorted_short_vec(j+1)) then
 !
-                  swap = sorted_short_vec(j,1)
-                  sorted_short_vec(j,1) = sorted_short_vec(j+1, 1)
-                  sorted_short_vec(j+1, 1) = swap
+                  swap = sorted_short_vec(j)
+                  sorted_short_vec(j) = sorted_short_vec(j+1)
+                  sorted_short_vec(j+1) = swap
 !
-                  swap_int = index_list(j, 1)
-                  index_list(j,1) = index_list(j + 1,1)
-                  index_list(j + 1,1) = swap_int
+                  swap_int = index_list(j)
+                  index_list(j) = index_list(j + 1)
+                  index_list(j + 1) = swap_int
 !
                endif
             enddo
@@ -464,18 +301,18 @@ contains
       logical                  :: check_orthogonality
 !
       integer :: i = 0, j = 0
-      real(dp), dimension(:,:), allocatable :: a_i, a_j
+      real(dp), dimension(:), allocatable :: a_i, a_j
       real(dp) :: ddot
 !
       check_orthogonality = .true.
 !
-      call mem%alloc(a_i, M, 1)
-      call mem%alloc(a_j, M, 1)
+      call mem%alloc(a_i, M)
+      call mem%alloc(a_j, M)
 !
       do i = 1, N
-         a_i(:,1) = A(:,i)
+         a_i(:) = A(:,i)
          do j = 1, i-1
-            a_j(:,1) = A(:,j)
+            a_j(:) = A(:,j)
             if (abs(ddot(M,a_i, 1, a_j, 1)) .gt. 1.0d-07) then
                check_orthogonality = .false.
                return
@@ -483,8 +320,8 @@ contains
          enddo
       enddo
 !
-      call mem%dealloc(a_i, M, 1)
-      call mem%dealloc(a_j, M, 1)
+      call mem%dealloc(a_i, M)
+      call mem%dealloc(a_j, M)
 !
    end function check_orthogonality
 !
@@ -497,26 +334,26 @@ contains
 !!
       implicit none
 !
-      real(dp), dimension(:,:), intent(inout) :: vec
+      real(dp), dimension(:), intent(inout) :: vec
       integer, intent(in) :: first, last
 !
       real(dp) :: pivot, temp
       integer :: i, j
 
-      pivot = vec( (first+last) / 2, 1)
+      pivot = vec((first+last)/2)
 !
       i = first
       j = last
 !
       do
 !
-         do while (vec(i, 1) > pivot)
+         do while (vec(i) > pivot)
 !
             i = i + 1
 !
          end do
 !
-         do while (pivot > vec(j, 1))
+         do while (pivot > vec(j))
 !
             j = j - 1
 !
@@ -524,9 +361,9 @@ contains
 !
          if (i >= j) exit
 !
-         temp = vec(i, 1)
-         vec(i, 1) = vec(j, 1)
-         vec(j, 1) = temp
+         temp = vec(i)
+         vec(i) = vec(j)
+         vec(j) = temp
 !
          i = i + 1
          j = j - 1
@@ -548,28 +385,28 @@ contains
 !!
       implicit none
 !
-      real(dp), dimension(:,:), intent(inout) :: vec
-      integer, dimension(:,:), intent(inout) :: index_list
+      real(dp), dimension(:), intent(inout) :: vec
+      integer, dimension(:), intent(inout) :: index_list
       integer, intent(in) :: first, last
 !
       real(dp) :: pivot, temp
       integer :: temp_index
       integer :: i, j
 
-      pivot = vec( (first+last) / 2, 1)
+      pivot = vec((first+last)/2)
 !
       i = first
       j = last
 !
       do
 !
-         do while (vec(i, 1) > pivot)
+         do while (vec(i) > pivot)
 !
             i = i + 1
 !
          end do
 !
-         do while (pivot > vec(j, 1))
+         do while (pivot > vec(j))
 !
             j = j - 1
 !
@@ -577,14 +414,14 @@ contains
 !
          if (i >= j) exit
 !
-         temp = vec(i, 1)
-         temp_index = index_list(i, 1)
+         temp = vec(i)
+         temp_index = index_list(i)
 !
-         vec(i, 1) = vec(j, 1)
-         vec(j, 1) = temp
+         vec(i) = vec(j)
+         vec(j) = temp
 !
-         index_list(i, 1) = index_list(j, 1)
-         index_list(j, 1) = temp_index
+         index_list(i) = index_list(j)
+         index_list(j) = temp_index
 !
          i = i + 1
          j = j - 1
@@ -603,7 +440,7 @@ contains
       implicit none
 !
       integer, intent(in) :: dim
-      real(dp), dimension(dim,1), intent(inout) :: vec
+      real(dp), dimension(dim), intent(inout) :: vec
 !
       call quicksort_recursive(vec, 1, dim)
 !
@@ -616,13 +453,13 @@ contains
       implicit none
 !
       integer, intent(in) :: dim
-      real(dp), dimension(dim,1), intent(inout) :: vec
-      integer, dimension(dim,1), intent(inout) :: index_list
+      real(dp), dimension(dim), intent(inout) :: vec
+      integer, dimension(dim), intent(inout) :: index_list
 !
       integer :: i
 !
       do i = 1, dim
-         index_list(i, 1) = i
+         index_list(i) = i
       enddo
 !
       call quicksort_with_index_recursive(vec, index_list, 1, dim)
@@ -636,8 +473,8 @@ contains
       implicit none
 !
       integer, intent(in) :: dim
-      real(dp), dimension(dim,1), intent(inout) :: vec
-      integer, dimension(dim,1), intent(inout) :: index_list
+      real(dp), dimension(dim), intent(inout) :: vec
+      integer, dimension(dim), intent(inout) :: index_list
 !
       call dscal(dim, -one, vec, 1)
 !
@@ -656,26 +493,26 @@ contains
 !!
       implicit none
 !
-      integer, dimension(:,:), intent(inout) :: vec
+      integer, dimension(:), intent(inout) :: vec
       integer, intent(in) :: first, last
 !
       integer :: pivot, temp
       integer :: i, j
 
-      pivot = vec( (first+last) / 2, 1)
+      pivot = vec((first+last)/2)
 !
       i = first
       j = last
 !
       do
 !
-         do while (vec(i, 1) > pivot)
+         do while (vec(i) > pivot)
 !
             i = i + 1
 !
          end do
 !
-         do while (pivot > vec(j, 1))
+         do while (pivot > vec(j))
 !
             j = j - 1
 !
@@ -683,9 +520,9 @@ contains
 !
          if (i >= j) exit
 !
-         temp = vec(i, 1)
-         vec(i, 1) = vec(j, 1)
-         vec(j, 1) = temp
+         temp = vec(i)
+         vec(i) = vec(j)
+         vec(j) = temp
 !
          i = i + 1
          j = j - 1
@@ -707,28 +544,28 @@ contains
 !!
       implicit none
 !
-      integer, dimension(:,:), intent(inout) :: vec
-      integer, dimension(:,:), intent(inout) :: index_list
+      integer, dimension(:), intent(inout) :: vec
+      integer, dimension(:), intent(inout) :: index_list
       integer, intent(in) :: first, last
 !
       integer :: pivot, temp
       integer :: temp_index
       integer :: i, j
 
-      pivot = vec( (first+last) / 2, 1)
+      pivot = vec((first+last)/2)
 !
       i = first
       j = last
 !
       do
 !
-         do while (vec(i, 1) > pivot)
+         do while (vec(i) > pivot)
 !
             i = i + 1
 !
          end do
 !
-         do while (pivot > vec(j, 1))
+         do while (pivot > vec(j))
 !
             j = j - 1
 !
@@ -736,14 +573,14 @@ contains
 !
          if (i >= j) exit
 !
-         temp = vec(i, 1)
-         temp_index = index_list(i, 1)
+         temp = vec(i)
+         temp_index = index_list(i)
 !
-         vec(i, 1) = vec(j, 1)
-         vec(j, 1) = temp
+         vec(i) = vec(j)
+         vec(j) = temp
 !
-         index_list(i, 1) = index_list(j, 1)
-         index_list(j, 1) = temp_index
+         index_list(i) = index_list(j)
+         index_list(j) = temp_index
 !
          i = i + 1
          j = j - 1
@@ -762,7 +599,7 @@ contains
       implicit none
 !
       integer, intent(in) :: dim
-      integer, dimension(dim,1), intent(inout) :: vec
+      integer, dimension(dim), intent(inout) :: vec
 !
       call quicksort_recursive_int(vec, 1, dim)
 !
@@ -775,13 +612,13 @@ contains
       implicit none
 !
       integer, intent(in) :: dim
-      integer, dimension(dim,1), intent(inout) :: vec
-      integer, dimension(dim,1), intent(inout) :: index_list
+      integer, dimension(dim), intent(inout) :: vec
+      integer, dimension(dim), intent(inout) :: index_list
 !
       integer :: i
 !
       do i = 1, dim
-         index_list(i, 1) = i
+         index_list(i) = i
       enddo
 !
       call quicksort_with_index_recursive_int(vec, index_list, 1, dim)
@@ -795,8 +632,8 @@ contains
       implicit none
 !
       integer, intent(in) :: dim
-      integer, dimension(dim,1), intent(inout) :: vec
-      integer, dimension(dim,1), intent(inout) :: index_list
+      integer, dimension(dim), intent(inout) :: vec
+      integer, dimension(dim), intent(inout) :: index_list
 !
       vec = -1*vec
 !

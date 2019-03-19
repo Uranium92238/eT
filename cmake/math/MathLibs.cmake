@@ -170,10 +170,18 @@ set(MKL_BLAS_LIBS3 ${_scalapack_lib} ${_compiler_mkl_interface}${_lib_suffix} ${
 # ancient MKL BLAS
 set(MKL_BLAS_LIBS4 mkl guide m)
 
+# Added to locate mac MKL - not very elegantly
+# Eirik F. Kjønstad, Mar 2019
+set(MKL_BLAS_LIBS5 libmkl_blas95_ilp64.a)
+
 set(MKL_LAPACK_LIBS mkl_lapack95${_lib_suffix} ${_compiler_mkl_interface}${_lib_suffix})
 
 # older MKL LAPACK
 set(MKL_LAPACK_LIBS2 mkl_lapack)
+
+# Added to locate mac MKL - not very elegantly
+# Eirik F. Kjønstad, Mar 2019
+set(MKL_LAPACK_LIBS3 libmkl_lapack95_ilp64.a)
 
 unset(_lib_suffix)
 unset(_thread_lib)
