@@ -220,7 +220,7 @@ contains
    end subroutine calculate_energy_lowmem_cc2
 !
 !
-   subroutine construct_excited_state_equation_lowmem_cc2(wf, X, R, w)
+   subroutine construct_excited_state_equation_lowmem_cc2(wf, X, R, w, r_or_l)
 !!
 !!    Construct excited state equation
 !!    Written by Eirik F. Kjønstad, Dec 2018
@@ -249,6 +249,8 @@ contains
       real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: X
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: R
 !
+      character(len=*), intent(in) :: r_or_l
+!
       real(dp), intent(inout) :: w
 !
       real(dp), dimension(:), allocatable :: X_copy
@@ -257,10 +259,16 @@ contains
 !
 !     Construct residual based on previous excitation energy w
 !
-      call mem%alloc(X_copy, wf%n_es_amplitudes)
+      if (r_or_l .eq. "right") then
+         call mem%alloc(X_copy, wf%n_es_amplitudes)
+      else
+         call output%error_msg('Left hand side not yet implemented for CC2 lowmem')
+      endif
+!
       call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
       call wf%effective_jacobian_transformation(w, X_copy) ! X_copy <- AX
+!
       call dcopy(wf%n_es_amplitudes, X_copy, 1, R, 1)
       call daxpy(wf%n_es_amplitudes, -w, X, 1, R, 1)
 !

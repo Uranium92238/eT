@@ -2610,7 +2610,7 @@ contains
    end subroutine jacobian_transpose_transform_trial_vector_ccs
 !
 !
-   subroutine construct_excited_state_equation_ccs(wf, X, R, w)
+   subroutine construct_excited_state_equation_ccs(wf, X, R, w, r_or_l)
 !!
 !!    Construct excited state equation
 !!    Written by Eirik F. Kjønstad, Dec 2018
@@ -2639,6 +2639,8 @@ contains
       real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: X
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: R
 !
+      character(len=*), intent(in) :: r_or_l
+!
       real(dp), intent(inout) :: w
 !
       real(dp), dimension(:), allocatable :: X_copy
@@ -2648,7 +2650,13 @@ contains
       call mem%alloc(X_copy, wf%n_es_amplitudes)
       call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
-      call wf%jacobian_transform_trial_vector(X_copy) ! X_copy <- AX
+      if (r_or_l .eq. "right") then
+         call wf%jacobian_transform_trial_vector(X_copy) ! X_copy <- AX
+      elseif (r_or_l .eq. 'left') then
+         call wf%jacobian_transpose_transform_trial_vector(X_copy) ! X_copy <- XA
+      else
+         call output%error_msg('Neither left nor right in construct_excited_state')
+      endif
 !
       w = ddot(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
