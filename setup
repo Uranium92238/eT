@@ -52,6 +52,11 @@ def input_parser():
     parser.add_argument('-CXX', '--CXX-compiler',
                          help="C++ compiler")
 
+    parser.add_argument('--profiling',
+                         help="Add profiling flag to compilation",
+                         action='store_true',
+                         default=False)
+
     ompgroup = parser.add_mutually_exclusive_group()
     ompgroup.add_argument('--omp',
                           help="enable OpenMP parallelization",
@@ -113,6 +118,7 @@ def construct_command(args):
     command += " -DENABLE_64BIT_INTEGERS=" + cmake_translator(args.int64)
     command += " -DENABLE_OMP=" + cmake_translator(args.omp)
     command += " -DENABLE_THREADED_MKL=" + cmake_translator(args.omp)
+    command += " -DENABLE_PROFILING=" + cmake_translator(args.profiling)
 
     if (args.libint_lib):
         command += " -DLIBINT2_ROOT=" + args.libint_lib   
