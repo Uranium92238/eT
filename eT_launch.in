@@ -24,6 +24,7 @@ import tempfile
 import shutil
 import argparse
 import sys
+import glob
 
 if sys.version < '3.5':
     print('requires python version >= 3.5')
@@ -38,7 +39,7 @@ class OMPaction(argparse.Action):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('input_file', help="eT input file(s)", nargs='*', default=['eT.inp'], metavar="input file")
+parser.add_argument('input_file', help="eT input file(s)", nargs='*', default=glob.glob("*.inp"), metavar="input file")
 parser.add_argument('-of', '--output-file', help="eT output file(s)", nargs='*', default=[None])
 parser.add_argument('--scratch', help="Specify scratch directory", type=str)
 parser.add_argument('-ks', '--keep-scratch', help="Do not delete scratch", action="store_true")
@@ -48,6 +49,7 @@ parser.add_argument('-v', "--verbose", help="Run some print statements", action=
 parser.add_argument('-bd', "--binary-dir", help="Specify location of eT executable", type=str)
 parser.add_argument('-sd', "--SAD-dir", help="Specify location of SAD data dir", type=str)
 parser.add_argument('-ldd', "--libint-data-dir", help="Specify location of Libint basis directory", type=str)
+parser.add_argument("--profile", help="Copy gmon.out from scratch", action='store_true')
 args = parser.parse_args()
 
 #Check that output file makes sense and set default
@@ -117,10 +119,14 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
         output_file = outf
         out_name = os.path.splitext(outf)[0]
         time_file = '{0}{1}{2}'.format(out_name,'.timing','.out')
+        if(args.profile):
+            profile_file = '{0}{1}{2}'.format(out_name,'.profile','.out')
     else:
         inp_name = os.path.splitext(inpf)[0]
         output_file = '{0}{1}'.format(inp_name,'.out')
         time_file = '{0}{1}{2}'.format(inp_name,'.timing','.out')
+        if(args.profile):
+            profile_file = '{0}{1}{2}'.format(inp_name,'.profile','.out')
 
     if (args.verbose):
         print()
@@ -133,6 +139,9 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
     inp_dest = os.path.join(scratch,'eT.inp')
     out_src = os.path.join(scratch,'eT.out')
     time_src = os.path.join(scratch,'timing.out')
+    if(args.profile):
+        profile_src = os.path.join(scratch,'gmon.out')
+        profile_dest = os.path.join(cwd,profile_file)
 
     # Copy files
     shutil.copyfile(inp_src,inp_dest)
@@ -151,6 +160,9 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
     shutil.copyfile(out_src,out_dest)
     if not args.no_timing:
         shutil.copyfile(time_src,time_dest)
+    if(args.profile):
+        shutil.copyfile(profile_src,profile_dest)
+    
     os.chdir(cwd)
 
 # Delete scratch
