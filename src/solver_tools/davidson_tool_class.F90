@@ -97,6 +97,7 @@ module davidson_tool_class
       procedure :: set_response_preconditioner       => set_response_preconditioner_davidson_tool
       procedure :: write_preconditioner              => write_preconditioner_davidson_tool 
       procedure :: read_preconditioner               => read_preconditioner_davidson_tool
+      procedure :: precondition_response             => precondition_response_davidson_tool
 !
    end type davidson_tool
 !
@@ -1025,6 +1026,59 @@ contains
       call disk%close_file(davidson%preconditioner)
 !
    end subroutine read_preconditioner_davidson_tool
+!
+!
+   subroutine precondition_response_davidson_tool(davidson, R, dim_r, n_freq)
+!!
+!!    Precondition R: MxN where N .le. 1
+!!    Written by Josefine H. Andersen, March 2018
+!!
+!!    Preconditions the vector R, i.e. 
+!!
+!!       R(i) <- R(i)/preconditioner(i)
+!!
+!!    However, if the user has not set any preconditioner, 
+!!    this routine performs no action on R. 
+!!
+      implicit none
+!
+      class(davidson_tool) :: davidson
+!
+      integer, intent(in)  :: dim_r
+      integer, intent(in)  :: n_freq
+!
+      real(dp), dimension(davidson%n_parameters, dim_r), intent(inout) :: R
+!
+      real(dp), dimension(:,:), allocatable :: prec_vec_n
+!
+      integer :: n, m, i
+!
+!
+      if (davidson%do_precondition) then
+!
+         call mem%alloc(prec_vec_n, davidson%n_parameters, 1)
+!
+         do n = 1, n_freq ! loop over frequencies 
+!
+            call davidson%read_preconditioner(prec_vec_n, n)
+!
+            do m = 1, dim_r ! loop over rhs
+!
+               do i = 1, davidson%n_parameters ! loop through elements
+!
+                  R(i, n) = R(i, n)/prec_vec_n(i, 1)
+!
+               enddo
+!
+            enddo
+!
+         enddo
+!
+         call mem%dealloc(prec_vec_n, davidson%n_parameters, 1)
+!
+      endif
+!
+   end subroutine precondition_response_davidson_tool
 !
 !
 end module davidson_tool_class

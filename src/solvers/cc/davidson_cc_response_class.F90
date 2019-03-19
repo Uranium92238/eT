@@ -160,6 +160,12 @@ contains
 !
       call solver%set_precondition_matrix(wf, davidson, frequencies, solver%n_freq)
 !
+!     Set initial guess: RHS_mu / (eps_mu - omega)
+!
+      call davidson%precondition_response(rhs, solver%dim_rhs, solver%n_freq)
+!
+      !norm_trial = sqrt(ddot(wf%n_es_amplitudes, eta, 1, eta, 1)) 
+!
       call mem%dealloc(frequencies, solver%n_freq, 1)
       call mem%dealloc(rhs, wf%n_es_amplitudes, solver%dim_rhs)
 !
