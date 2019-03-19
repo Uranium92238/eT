@@ -329,7 +329,8 @@ contains
 !
 !              Construct residual and energy and precondition the former 
 !
-               call wf%construct_excited_state_equation(X(:,state), R(:,state), solver%energies(state))
+               call wf%construct_excited_state_equation(X(:,state), R(:,state), solver%energies(state), &
+                                                        solver%transformation)
 !
 !$omp parallel do private(amplitude)
                do amplitude = 1, wf%n_es_amplitudes
