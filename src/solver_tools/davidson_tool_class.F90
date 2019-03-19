@@ -92,6 +92,12 @@ module davidson_tool_class
 !
       procedure :: read_max_dim_red => read_max_dim_red_davidson_tool
 !
+!     Routines for response solver davidson object
+!
+      procedure :: set_response_preconditioner       => set_response_preconditioner_davidson_tool
+      procedure :: write_preconditioner              => write_preconditioner_davidson_tool 
+      procedure :: read_preconditioner               => read_preconditioner_davidson_tool
+!
    end type davidson_tool
 !
 !
@@ -899,6 +905,126 @@ contains
       enddo
 !
    end subroutine read_max_dim_red_davidson_tool
+!
+!  Response
+!
+   subroutine set_response_preconditioner_davidson_tool(davidson, preconditioner, dim_p)
+!!
+!!    Set preconditioner where second dimension may be > 1 
+!!    Written by Josefine H. Andersen, March 2019
+!!
+!!    This routine saves the diagonal preconditioner to file. The 
+!!    assumption being that 
+!!
+!!       preconditioner(i) ~ A(i,i) - omega_j,
+!!
+!!    where A is the coefficient matrix. The inverse of this diagonal 
+!!    matrix is a good approximation of A if A is diagonally dominant
+!!    to some extent.
+!!
+      implicit none
+!
+      class(davidson_tool) :: davidson
+!
+      integer, intent(in)  :: dim_p
+!
+      real(dp), dimension(davidson%n_parameters, dim_p), intent(in) :: preconditioner
+!
+      integer :: n
+!
+      do n = 1, dim_p
+!
+         if (n == 1) then
+!
+            call davidson%write_preconditioner(preconditioner(:, n), 'rewind')
+!
+         else
+!
+            call davidson%write_preconditioner(preconditioner(:, n), 'append')
+!
+         endif
+!
+      enddo
+!
+      davidson%do_precondition = .true.
+!
+   end subroutine set_response_preconditioner_davidson_tool
+!
+!
+   subroutine write_preconditioner_davidson_tool(davidson, prec_i, position)
+!!
+!!    Write preconditioner
+!!    Written by Josefine H. Andersen, March 2019
+!!
+!!    Write preconditioner to file
+!!
+!!    Optional argument position must be either 'rewind' or 'append'
+!!
+      implicit none
+!
+      class(davidson_tool) :: davidson
+!
+      real(dp), dimension(davidson%n_parameters, 1) :: prec_i
+!
+      character(len=*), optional :: position
+!
+      integer :: ioerror
+!
+!     Was position passed ?
+!
+      if (present(position)) then
+!
+!        Sanity check on position variable
+!
+         if ((trim(position) .ne. 'rewind') .and. (trim(position) .ne.  'append')) then
+!
+            call output%error_msg('Position specifier not recognized!')
+!
+         endif
+!
+         call disk%open_file(davidson%preconditioner, 'write', position)
+!
+      else
+!
+         call disk%open_file(davidson%preconditioner, 'write', 'append')
+!
+      endif
+!
+      write(davidson%preconditioner%unit, iostat = ioerror) prec_i
+      if (ioerror .ne. 0) call output%error_msg('writing precondition vectors file.')
+!
+      call disk%close_file(davidson%preconditioner)
+!
+   end subroutine write_preconditioner_davidson_tool
+!
+!
+   subroutine read_preconditioner_davidson_tool(davidson, prec_i, n)
+!!
+!!    Read preconditioner vector 
+!!    Written by Josefine H. Andersen, March 2019
+!!
+!!    Read n'th preconditioner vector from file
+!!
+      implicit none
+!
+      class(davidson_tool) :: davidson
+!
+      real(dp), dimension(davidson%n_parameters, 1) :: prec_i
+!
+      integer :: n
+!
+      integer :: ioerror
+!
+      call disk%open_file(davidson%preconditioner, 'read')
+!
+      call davidson%preconditioner%prepare_to_read_line(n)
+!
+      read(davidson%preconditioner%unit, iostat = ioerror) prec_i
+      if (ioerror .ne. 0) call output%error_msg('reading preconditioner vectors file 2.')
+!
+      call disk%close_file(davidson%preconditioner)
+!
+   end subroutine read_preconditioner_davidson_tool
 !
 !
 end module davidson_tool_class

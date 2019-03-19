@@ -59,6 +59,10 @@ module linear_davidson_tool_class
 !
       procedure :: construct_reduced_gradient   => construct_reduced_gradient_linear_davidson_tool
 !
+!     Routines for linear response solver
+!
+      procedure :: prepare_response              => prepare_response_linear_davidson_tool
+!
    end type linear_davidson_tool
 !
 contains
@@ -328,6 +332,60 @@ contains
       call mem%dealloc(R, davidson%n_parameters, 1)
 !
    end subroutine construct_next_trial_vec_linear_davidson_tool
+!
+!
+!  Routines below for linear response solver
+!
+   subroutine prepare_response_linear_davidson_tool(davidson, name, n_parameters, residual_threshold, F, dim_f)
+!!
+!!    Initialize for response solver davidson object 
+!!    Written by Josefine H. Andersen, March 2019
+!!
+      implicit none
+!
+      class(linear_davidson_tool) :: davidson
+!
+      character(len=*), intent(in) :: name
+!
+      integer, intent(in) :: n_parameters
+!
+      integer, intent(in) :: dim_f
+!
+      real(dp), dimension(n_parameters, dim_f) :: F
+!
+      real(dp), intent(in)     :: residual_threshold
+!
+      call mem%alloc(davidson%F, n_parameters, dim_f)
+      davidson%F = F
+!
+      davidson%n_parameters = n_parameters
+      davidson%n_solutions  = 1
+!
+      davidson%residual_threshold   = residual_threshold
+!
+      davidson%name = trim(name)
+!
+      call davidson%X%init(trim(davidson%name) // '_X', 'sequential', 'unformatted')
+      call davidson%trials%init(trim(davidson%name) // '_trials', 'sequential', 'unformatted')
+      call davidson%transforms%init(trim(davidson%name) // '_transforms', 'sequential', 'unformatted')
+      call davidson%preconditioner%init(trim(davidson%name) // '_preconditioner', 'sequential', 'unformatted')
+!
+!     For safety, delete old files if they are on disk
+!
+       call disk%delete(davidson%trials)
+       call disk%delete(davidson%transforms)
+       call disk%delete(davidson%X)
+!
+      davidson%do_precondition   = .false.         ! Switches to true if 'set_preconditioner' is called
+!
+      davidson%dim_red           = davidson%n_solutions     ! Initial dimension equal to number of solutions
+      davidson%n_new_trials      = davidson%n_solutions
+!
+      davidson%max_dim_red = 150
+!
+      davidson%current_n_trials = 0
+!
+   end subroutine prepare_response_linear_davidson_tool
 !
 !
 end module linear_davidson_tool_class

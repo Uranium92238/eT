@@ -282,6 +282,8 @@ contains
                   rho_ai,     &
                   wf%n_v) 
 !
+      call mem%dealloc(X_ki, wf%n_o, wf%n_o)
+!
 !     Term 2: - L_jkia tbar_bk c_bj
 !
 !     NOTE: We will now pretend that L_kibj(k, i, b, j) = L_ikjb is

@@ -44,13 +44,12 @@ module davidson_cc_response_class
       logical :: moments, polarizability
       logical :: restart
 !
-      integer :: n_excited_states = 0
       integer :: dim_rhs = 1, n_freq = 0
 !
    contains
 !
       procedure :: prepare                         => prepare_davidson_cc_response
-      procedure, nopass :: cleanup                 => cleanup_davidson_cc_response
+      procedure :: cleanup                         => cleanup_davidson_cc_response
 !
       procedure :: print_banner                    => print_banner_davidson_cc_response
       procedure :: print_settings                  => print_settings_davidson_cc_response
@@ -61,7 +60,7 @@ module davidson_cc_response_class
 !
       procedure :: run                             => run_davidson_cc_response
 !
-      procedure, nopass :: set_precondition_vector => set_precondition_vector_davidson_cc_response
+      procedure, nopass :: set_precondition_matrix => set_precondition_matrix_davidson_cc_response
 !
       !procedure, nopass :: transform_trial_vector  => transform_trial_vector_davidson_cc_response
 !
@@ -139,15 +138,29 @@ contains
 !
       type(linear_davidson_tool) :: davidson
 !
-      real(dp), dimension(:,:), allocatable :: rhs, c_i, Xn, frequencies
+      logical :: converged_residual
+!
+      real(dp), dimension(:,:), allocatable :: rhs, c_i, frequencies
+!
+      integer :: iteration
+!
+      real(dp) :: residual_norm, ddot, norm_trial
+!
+!     Get frequencies from file or input
+!
+      call mem%alloc(frequencies, solver%n_freq, 1)
+      call solver%get_frequencies(wf, frequencies)
 !
 !     Get right-hand-side vector
 !
       call mem%alloc(rhs, wf%n_es_amplitudes, solver%dim_rhs)
       call solver%construct_rhs(wf, rhs)
 !
-      call davidson%prepare('response', wf%n_es_amplitudes, solver%residual_threshold, rhs)
+      call davidson%prepare_response('response', wf%n_es_amplitudes, solver%residual_threshold, rhs, solver%dim_rhs)
 !
+      call solver%set_precondition_matrix(wf, davidson, frequencies, solver%n_freq)
+!
+      call mem%dealloc(frequencies, solver%n_freq, 1)
       call mem%dealloc(rhs, wf%n_es_amplitudes, solver%dim_rhs)
 !
    end subroutine run_davidson_cc_response
@@ -304,10 +317,14 @@ contains
    end subroutine transform_trial_vector_davidson_cc_response
 !
 !
-   subroutine set_precondition_vector_davidson_cc_response(wf, davidson, freq_vec, n_freq)
+   subroutine set_precondition_matrix_davidson_cc_response(wf, davidson, freq_vec, n_freq)
 !!
-!!    Set precondition vector
+!!    Set precondition matrix  
 !!    Written by Josefine H. Andersen, 2019
+!!    
+!!       preconditioner = (epsilon_a - epsilon_i) - omega_j
+!!
+!!    One column per frequency
 !!
       implicit none
 !
@@ -321,23 +338,29 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: preconditioner
 !
+      real(dp), dimension(:,:), allocatable :: orb_diff
+!
       integer :: i
 !
-      call mem%alloc(preconditioner, wf%n_gs_amplitudes, n_freq)
+      call mem%alloc(orb_diff, wf%n_gs_amplitudes, 1)
       call wf%get_gs_orbital_differences(preconditioner, wf%n_gs_amplitudes)
 !
 !     Loop through frequencies to generate n_freq precondition vectors
 !
+      call mem%alloc(preconditioner, wf%n_gs_amplitudes, n_freq)
+!
       do i = 1, n_freq
 !
-         preconditioner(:,i) = preconditioner(:,i) - freq_vec(i, 1)
+         call wf%get_gs_orbital_differences(preconditioner(:,i), wf%n_gs_amplitudes)
+!
+         preconditioner(:, i) = orb_diff(:, 1) - freq_vec(i, 1)
 !
       enddo
 !
-      call davidson%set_preconditioner(preconditioner)
+      call davidson%set_response_preconditioner(preconditioner, n_freq)
       call mem%dealloc(preconditioner, wf%n_gs_amplitudes, n_freq)
 !
-   end subroutine set_precondition_vector_davidson_cc_response
+   end subroutine set_precondition_matrix_davidson_cc_response
 !
 !
    subroutine read_settings_davidson_cc_response(solver)

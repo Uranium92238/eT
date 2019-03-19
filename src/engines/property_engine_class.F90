@@ -20,6 +20,7 @@ module property_engine_class
 !
       character(len=100) :: algorithm
       character(len=100) :: es_type
+      logical            :: response
 !
    contains
 !
@@ -29,6 +30,7 @@ module property_engine_class
 !
       procedure :: determine_es_type         => determine_es_type_property_engine
       procedure :: read_algorithm            => read_algorithm_property_engine
+      procedure :: determine_response        => determine_response_property_engine
 !
    end type property_engine
 !
@@ -52,6 +54,9 @@ contains
 !
       engine%es_type = 'valence'
       call engine%determine_es_type()
+!
+      engine%response = .false.
+      call engine%determine_response()
 !
    end subroutine prepare_property_engine
 !
@@ -188,15 +193,19 @@ contains
 !
       endif
 !
-! -- TEST
+!     Response (linear)
 !
-      allocate(cc_response_solver)
+      if (engine%response) then
 !
-      call cc_response_solver%prepare(wf)
-      call cc_response_solver%run(wf)
-      !call cc_response_solver%cleanup()
+         allocate(cc_response_solver)
 !
-      deallocate(cc_response_solver)
+         call cc_response_solver%prepare(wf)
+         call cc_response_solver%run(wf)
+         call cc_response_solver%cleanup()
+!
+         deallocate(cc_response_solver)
+!
+      endif
 !
 !     Properties
 !
@@ -302,6 +311,38 @@ contains
       enddo
 !
    end subroutine read_algorithm_property_engine
+!
+!
+   subroutine determine_response_property_engine(engine)
+!!
+!!    Determine if a response function is called
+!!    Written by josefine H. Andersen, March 2019
+!!
+      implicit none
+!
+      class(property_engine), intent(inout) :: engine
+!
+            character(len=100) :: line
+!
+      integer :: i, n_records
+!
+      call move_to_section('cc properties', n_records)
+!
+      do i = 1, n_records
+!
+         read(input%unit, '(a100)') line
+         line = remove_preceding_blanks(line)
+!
+         if (line(1:15) == 'linear response') then
+!
+            engine%response = .true.
+            return
+!
+         endif
+!
+      enddo
+!
+   end subroutine determine_response_property_engine
 !
 !
 end module property_engine_class
