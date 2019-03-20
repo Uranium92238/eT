@@ -457,10 +457,6 @@ end subroutine effective_jacobian_transformation_cc3
       req_1 = 3*(wf%n_v)**3
       req_2 = 3*(wf%n_o)*(wf%n_v) + (wf%n_v)**2
       req_3 = 0
-!DEBUG
-      !n_batches = 2
-      !prev_available = mem%available
-      !mem%available = 3*(req_1*n_batches + req_2*n_batches**2)*dp
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                            req_0, req_1, req_2, req_3, batch_buff)
@@ -792,12 +788,6 @@ end subroutine effective_jacobian_transformation_cc3
             enddo ! batch_k
          enddo ! batch_j
       enddo ! batch_i
-!
-!DEBUG
-   !mem%available = prev_available
-   !write(output%unit,*) 'i: num_batches:', batch_i%num_batches, 'max_length:', batch_i%max_length, 'length:', batch_i%length
-   !write(output%unit,*) 'j: num_batches:', batch_j%num_batches, 'max_length:', batch_j%max_length, 'length:', batch_j%length
-   !write(output%unit,*) 'k: num_batches:', batch_k%num_batches, 'max_length:', batch_k%max_length, 'length:', batch_k%length
 !
 !     Close files: g_bdck_t, g_ljck_t still needed for T3 amplitudes
 !
@@ -1224,10 +1214,6 @@ end subroutine effective_jacobian_transformation_cc3
       req_k = max((wf%integrals%n_J)*(wf%n_v) + (wf%n_v)**3, 2*(wf%n_v)**3)
 !
       call mem%alloc(L_J_bd, wf%integrals%n_J, wf%n_v, wf%n_v)
-!DEBUG
-      n_batches = 4
-      prev_available = mem%available
-      mem%available = (req_0 + req_k*n_batches)*dp
 !
       call mem%batch_setup(batch_k, req_0, req_k)
 !
@@ -1326,9 +1312,6 @@ end subroutine effective_jacobian_transformation_cc3
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
       enddo ! batch_k
-!DEBUG
-      mem%available = prev_available ! DEBUG
-      write(output%unit,*) 'k: num_batches:', batch_k%num_batches, 'max_length:', batch_k%max_length, 'length:', batch_k%length
 !
       call mem%dealloc(L_J_bd, wf%integrals%n_J, wf%n_v, wf%n_v)
 !
@@ -1343,12 +1326,6 @@ end subroutine effective_jacobian_transformation_cc3
 !
       req_0 = 0
       req_k = max((wf%integrals%n_J)*(wf%n_v) + (wf%n_v)**3, 2*(wf%n_v)**3)
-!
-!DEBUG
-write(output%unit,*) 'dbkc'
-      n_batches = 4
-      prev_available = mem%available
-      mem%available = (req_0 + req_k*n_batches)*dp
 !
       call mem%batch_setup(batch_k, req_0, req_k)
 !
@@ -1404,10 +1381,6 @@ write(output%unit,*) 'dbkc'
 !
       enddo ! batch_k
 !
-!DEBUG
-      mem%available = prev_available ! DEBUG
-      write(output%unit,*) 'k: num_batches:', batch_k%num_batches, 'max_length:', batch_k%max_length, 'length:', batch_k%length
-!
       call mem%dealloc(L_J_db_c1, wf%integrals%n_J, wf%n_v, wf%n_v)
 !
       call disk%close_file(wf%g_dbkc_c1,'keep')
@@ -1420,12 +1393,6 @@ write(output%unit,*) 'dbkc'
       req_k = max(2*(wf%n_v)*(wf%n_o)**2, (wf%n_v)*(wf%n_o)**2 + (wf%integrals%n_J)*(wf%n_v))
 !
       call mem%alloc(L_J_lj, wf%integrals%n_J, wf%n_o, wf%n_o)
-!
-!DEBUG
-write(output%unit,*) 'ljck'
-      n_batches = 4
-      prev_available = mem%available
-      mem%available = (req_0 + req_k*n_batches)*dp
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
@@ -1524,10 +1491,6 @@ write(output%unit,*) 'ljck'
 !
       enddo ! batch_k
 !
-!DEBUG
-      mem%available = prev_available ! DEBUG
-      write(output%unit,*) 'k: num_batches:', batch_k%num_batches, 'max_length:', batch_k%max_length, 'length:', batch_k%length
-!
       call mem%dealloc(L_J_lj, wf%integrals%n_J, wf%n_o, wf%n_o)
 !
       call disk%close_file(wf%g_ljck_c1,'keep')
@@ -1541,12 +1504,6 @@ write(output%unit,*) 'ljck'
 !
       req_0 = 0
       req_k = max(2*(wf%n_v)*(wf%n_o)**2, (wf%n_v)*(wf%n_o)**2 + wf%integrals%n_J*wf%n_v)
-!
-!DEBUG
-write(output%unit,*) 'jlkc'
-      n_batches = 4
-      prev_available = mem%available
-      mem%available = (req_0 + req_k*n_batches)*dp
 !
       call mem%batch_setup(batch_k, req_0, req_k)
 !
@@ -1603,10 +1560,6 @@ write(output%unit,*) 'jlkc'
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !
       enddo ! batch_k
-!
-!DEBUG
-      mem%available = prev_available ! DEBUG
-      write(output%unit,*) 'k: num_batches:', batch_k%num_batches, 'max_length:', batch_k%max_length, 'length:', batch_k%length
 !
       call mem%dealloc(L_J_jl_c1, wf%integrals%n_J, wf%n_o, wf%n_o)
 !
