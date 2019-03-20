@@ -423,6 +423,8 @@ end subroutine effective_jacobian_transformation_cc3
 !
       logical :: batching
 !
+      integer(i15) :: n_batches, prev_available
+!
 !      real(dp) :: ddot, t3_norm
 !
 !     Set up required c1-transformed integrals
@@ -455,6 +457,10 @@ end subroutine effective_jacobian_transformation_cc3
       req_1 = 3*(wf%n_v)**3
       req_2 = 3*(wf%n_o)*(wf%n_v) + (wf%n_v)**2
       req_3 = 0
+!DEBUG
+      !n_batches = 2
+      !prev_available = mem%available
+      !mem%available = 3*(req_1*n_batches + req_2*n_batches**2)*dp
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                            req_0, req_1, req_2, req_3, batch_buff)
@@ -786,6 +792,12 @@ end subroutine effective_jacobian_transformation_cc3
             enddo ! batch_k
          enddo ! batch_j
       enddo ! batch_i
+!
+!DEBUG
+   !mem%available = prev_available
+   !write(output%unit,*) 'i: num_batches:', batch_i%num_batches, 'max_length:', batch_i%max_length, 'length:', batch_i%length
+   !write(output%unit,*) 'j: num_batches:', batch_j%num_batches, 'max_length:', batch_j%max_length, 'length:', batch_j%length
+   !write(output%unit,*) 'k: num_batches:', batch_k%num_batches, 'max_length:', batch_k%max_length, 'length:', batch_k%length
 !
 !     Close files: g_bdck_t, g_ljck_t still needed for T3 amplitudes
 !
@@ -1136,7 +1148,6 @@ end subroutine effective_jacobian_transformation_cc3
          call mem%dealloc(g_bdcj, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
          call mem%dealloc(g_bdck, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
-!
          call mem%dealloc(g_ljci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%dealloc(g_lkci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%dealloc(g_lkcj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
@@ -1202,15 +1213,21 @@ end subroutine effective_jacobian_transformation_cc3
 !
       integer :: ioerror=-1
 !
+      integer(i15) :: prev_available, n_batches
+!
+!
       call batch_k%init(wf%n_o)
 !
 !     g'_bdck = (b'd|ck) + (bd|c'k) + (bd|ck')
 !
-      call mem%alloc(L_J_bd, wf%integrals%n_J, wf%n_v, wf%n_v) ! c1-transformed in Term 1
-      call wf%integrals%construct_cholesky_ab_c1(L_J_bd, c_ai, 1, wf%n_v, 1, wf%n_v)
-!
-      req_0 = 2*(wf%n_v)**2*(wf%integrals%n_J)
+      req_0 = 2*(wf%n_v)**2*(wf%integrals%n_J) + (wf%n_v)*(wf%n_o)*(wf%integrals%n_J)
       req_k = max((wf%integrals%n_J)*(wf%n_v) + (wf%n_v)**3, 2*(wf%n_v)**3)
+!
+      call mem%alloc(L_J_bd, wf%integrals%n_J, wf%n_v, wf%n_v)
+!DEBUG
+      n_batches = 4
+      prev_available = mem%available
+      mem%available = (req_0 + req_k*n_batches)*dp
 !
       call mem%batch_setup(batch_k, req_0, req_k)
 !
@@ -1221,11 +1238,12 @@ end subroutine effective_jacobian_transformation_cc3
 !
          call batch_k%determine_limits(current_k_batch)
 !
-!        :: Term 1: g_b'dck = - sum_J L_J_bd_c1 L_J_ck ::
+!        :: Term 1: g_b'dck = sum_J L_J_bd L_J_ck ::
 !
          call mem%alloc(L_J_ck, wf%integrals%n_J, wf%n_v, batch_k%length)
-!
          call wf%integrals%read_cholesky_t1(L_J_ck, wf%n_o + 1, wf%n_o + wf%n_v, batch_k%first, batch_k%last)
+!
+         call wf%integrals%construct_cholesky_ab_c1(L_J_bd, c_ai, 1, wf%n_v, 1, wf%n_v)
 !
          call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
@@ -1247,7 +1265,6 @@ end subroutine effective_jacobian_transformation_cc3
 !        :: Term 2: g_bdc'k = sum_J L_J_bd L_J_ck_c1 ::
 !
          call mem%alloc(L_J_ck_c1, wf%integrals%n_J, wf%n_v, batch_k%length)
-!
          call wf%integrals%construct_cholesky_ai_a_c1(L_J_ck_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
 !
          call wf%integrals%read_cholesky_t1(L_J_bd, wf%n_o + 1, wf%n_o + wf%n_v, wf%n_o + 1, wf%n_o + wf%n_v)
@@ -1309,20 +1326,34 @@ end subroutine effective_jacobian_transformation_cc3
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
       enddo ! batch_k
+!DEBUG
+      mem%available = prev_available ! DEBUG
+      write(output%unit,*) 'k: num_batches:', batch_k%num_batches, 'max_length:', batch_k%max_length, 'length:', batch_k%length
 !
       call mem%dealloc(L_J_bd, wf%integrals%n_J, wf%n_v, wf%n_v)
 !
       call disk%close_file(wf%g_bdck_c1,'keep')
 !
 !
-!     (d'b|kc) same batching (req0 and req_k)
+!     (d'b|kc)
 !
-!
-      call wf%g_dbkc_c1%init('g_dbkc_c1','direct','unformatted',dp*(wf%n_v)**3)
-      call disk%open_file(wf%g_dbkc_c1,'write')
 !
       call mem%alloc(L_J_db_c1, wf%integrals%n_J, wf%n_v, wf%n_v)
       call wf%integrals%construct_cholesky_ab_c1(L_J_db_c1, c_ai, 1, wf%n_v, 1, wf%n_v)
+!
+      req_0 = 0
+      req_k = max((wf%integrals%n_J)*(wf%n_v) + (wf%n_v)**3, 2*(wf%n_v)**3)
+!
+!DEBUG
+write(output%unit,*) 'dbkc'
+      n_batches = 4
+      prev_available = mem%available
+      mem%available = (req_0 + req_k*n_batches)*dp
+!
+      call mem%batch_setup(batch_k, req_0, req_k)
+!
+      call wf%g_dbkc_c1%init('g_dbkc_c1','direct','unformatted',dp*(wf%n_v)**3)
+      call disk%open_file(wf%g_dbkc_c1,'write')
 !
       do current_k_batch = 1, batch_k%num_batches
 !
@@ -1373,6 +1404,10 @@ end subroutine effective_jacobian_transformation_cc3
 !
       enddo ! batch_k
 !
+!DEBUG
+      mem%available = prev_available ! DEBUG
+      write(output%unit,*) 'k: num_batches:', batch_k%num_batches, 'max_length:', batch_k%max_length, 'length:', batch_k%length
+!
       call mem%dealloc(L_J_db_c1, wf%integrals%n_J, wf%n_v, wf%n_v)
 !
       call disk%close_file(wf%g_dbkc_c1,'keep')
@@ -1381,11 +1416,16 @@ end subroutine effective_jacobian_transformation_cc3
 !     g'_ljck = (lj'|ck) + (lj|ck') + (lj|c'k) ordered as lc,jk
 !
 !
-      call mem%alloc(L_J_lj, wf%integrals%n_J, wf%n_o, wf%n_o)
-      call wf%integrals%construct_cholesky_ij_c1(L_J_lj, c_ai, 1, wf%n_o, 1, wf%n_o)
+      req_0 = max((wf%integrals%n_J)*(wf%n_v)**2, 2*(wf%integrals%n_J)*(wf%n_o)**2 + (wf%integrals%n_J)*(wf%n_v)*(wf%n_o))
+      req_k = max(2*(wf%n_v)*(wf%n_o)**2, (wf%n_v)*(wf%n_o)**2 + (wf%integrals%n_J)*(wf%n_v))
 !
-      req_0 = 0
-      req_k = max(2*(wf%n_v)*(wf%n_o)**2, (wf%n_v)*(wf%n_o)**2 + wf%integrals%n_J*wf%n_v)
+      call mem%alloc(L_J_lj, wf%integrals%n_J, wf%n_o, wf%n_o)
+!
+!DEBUG
+write(output%unit,*) 'ljck'
+      n_batches = 4
+      prev_available = mem%available
+      mem%available = (req_0 + req_k*n_batches)*dp
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
@@ -1398,8 +1438,9 @@ end subroutine effective_jacobian_transformation_cc3
 !
 !        :: Term 1: g_lj'ck = sum_J L_J_jl_c1 L_J_ck ::
 !
-         call mem%alloc(L_J_ck, wf%integrals%n_J, wf%n_v, batch_k%length)
+         call wf%integrals%construct_cholesky_ij_c1(L_J_lj, c_ai, 1, wf%n_o, 1, wf%n_o)
 !
+         call mem%alloc(L_J_ck, wf%integrals%n_J, wf%n_v, batch_k%length)
          call wf%integrals%read_cholesky_t1(L_J_ck, wf%n_o + 1, wf%n_o + wf%n_v, batch_k%first, batch_k%last)
 !
          call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
@@ -1422,7 +1463,6 @@ end subroutine effective_jacobian_transformation_cc3
 !        :: Term 2: g_ljck' = sum_J L_J_lj L_J_ck_c1 ::
 !
          call mem%alloc(L_J_ck_c1, wf%integrals%n_J, wf%n_v, batch_k%length)
-!
          call wf%integrals%construct_cholesky_ai_i_c1(L_J_ck_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
 !
          call wf%integrals%read_cholesky_t1(L_J_lj, 1, wf%n_o, 1, wf%n_o)
@@ -1441,7 +1481,6 @@ end subroutine effective_jacobian_transformation_cc3
                      (wf%n_o)**2)
 !
 !        :: Term 3: g_bdck' = sum_J L_bd_J L_ck_J_c1 ::
-!
 !
          call wf%integrals%construct_cholesky_ai_a_c1(L_J_ck_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
 !
@@ -1485,19 +1524,34 @@ end subroutine effective_jacobian_transformation_cc3
 !
       enddo ! batch_k
 !
+!DEBUG
+      mem%available = prev_available ! DEBUG
+      write(output%unit,*) 'k: num_batches:', batch_k%num_batches, 'max_length:', batch_k%max_length, 'length:', batch_k%length
+!
       call mem%dealloc(L_J_lj, wf%integrals%n_J, wf%n_o, wf%n_o)
 !
       call disk%close_file(wf%g_ljck_c1,'keep')
 !
 !
-!     (jl'|kc) same batching (req0 and req_k)
+!     (jl'|kc)
 !
-!
-      call wf%g_jlkc_c1%init('g_jlkc_c1','direct','unformatted', dp*(wf%n_v)*(wf%n_o))
-      call disk%open_file(wf%g_jlkc_c1,'write')
 !
       call mem%alloc(L_J_jl_c1, wf%integrals%n_J, wf%n_o, wf%n_o)
       call wf%integrals%construct_cholesky_ij_c1(L_J_jl_c1, c_ai, 1, wf%n_o, 1, wf%n_o)
+!
+      req_0 = 0
+      req_k = max(2*(wf%n_v)*(wf%n_o)**2, (wf%n_v)*(wf%n_o)**2 + wf%integrals%n_J*wf%n_v)
+!
+!DEBUG
+write(output%unit,*) 'jlkc'
+      n_batches = 4
+      prev_available = mem%available
+      mem%available = (req_0 + req_k*n_batches)*dp
+!
+      call mem%batch_setup(batch_k, req_0, req_k)
+!
+      call wf%g_jlkc_c1%init('g_jlkc_c1','direct','unformatted', dp*(wf%n_v)*(wf%n_o))
+      call disk%open_file(wf%g_jlkc_c1,'write')
 !
       do current_k_batch = 1, batch_k%num_batches
 !
@@ -1549,6 +1603,10 @@ end subroutine effective_jacobian_transformation_cc3
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !
       enddo ! batch_k
+!
+!DEBUG
+      mem%available = prev_available ! DEBUG
+      write(output%unit,*) 'k: num_batches:', batch_k%num_batches, 'max_length:', batch_k%max_length, 'length:', batch_k%length
 !
       call mem%dealloc(L_J_jl_c1, wf%integrals%n_J, wf%n_o, wf%n_o)
 !
