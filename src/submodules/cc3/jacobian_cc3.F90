@@ -833,7 +833,7 @@ end subroutine effective_jacobian_transformation_cc3
       call mem%dealloc(c_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%dealloc(F_kc, wf%n_v, wf%n_o)
 !
-!     Done with contribution of the C3-amplitudes
+!     Done with the contributions from the C3-amplitudes
 !     Continue with contribution from the T3-amplitudes
 !
       call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -854,7 +854,8 @@ end subroutine effective_jacobian_transformation_cc3
                            req_0, req_1, req_2, req_3, batch_buff)
 !
 !     Allocate integral arrays and assign pointers.
-!     NB: Assume that the t3-part won't batch if the c3-part does not batch.
+!     NB: Assume that the t3-part won't batch if the c3-part does not batch
+!         because the c3-part needs more than 1.5 times the memory
 !
       if (batch_i%num_batches .eq. 1) then ! no batching in T3-part
 !
@@ -1552,8 +1553,8 @@ end subroutine effective_jacobian_transformation_cc3
 !
    subroutine jacobian_cc3_construct_fock_ia_c1_cc3(wf, c_ai, F_ia_c1)
 !!
-!!    Calculates C1-transformed elements of the Fock matrix required for the CC3 jacobian
-!!    and returns as n_v, n_o
+!!    Calculates C1-transformed occupied-virtual elements of the Fock matrix
+!!    required for the CC3 jacobian and returns it ordered as n_v, n_o
 !!
 !!    F_ia_c1 = sum_j L_iajj' = sum_j 2 g_iajj' - g_ij'ja
 !!
@@ -1762,7 +1763,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
    module subroutine jacobian_cc3_dbic_reader_cc3(wf, g_dbxc_c1)
 !!
-!!    Read the c1-transformed dbkc integral needed for the t3-contribution (non batching)
+!!    Read the c1-transformed dbkc integral needed for the t3-contribution (non batching case)
 !!
 !!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
 !!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
@@ -1998,7 +1999,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
    module subroutine jacobian_cc3_jlkc_reader_cc3(wf, g_ylxc_c1)
 !!
-!!    Read the c1-transformed jlkc  needed for the t3-contribution (non batching)
+!!    Read the c1-transformed jlkc  needed for the t3-contribution (non batching case)
 !!
 !!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
 !!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
