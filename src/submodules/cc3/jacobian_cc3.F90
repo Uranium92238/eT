@@ -51,7 +51,7 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_ai
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj, rho_abij
 !
-      integer :: i, j, a, b, ai, bj, aibj, a_end ! Index
+      integer :: i, j, a, b, ai, bj, aibj ! Index
 !
       type(timings) :: cc3_timer
       type(timings) :: ccsd_timer
@@ -67,8 +67,8 @@ contains
       call mem%alloc(c_ai, wf%n_v, wf%n_o)
 !
 !$omp parallel do schedule(static) private(a, i, ai)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
 !
@@ -108,8 +108,8 @@ contains
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     c_aibj(a,i,b,j) = c(wf%n_o*wf%n_v + aibj)
-                     c_aibj(b,j,a,i) = c(wf%n_o*wf%n_v + aibj)
+                     c_aibj(a,i,b,j) = c(wf%n_t1 + aibj)
+                     c_aibj(b,j,a,i) = c(wf%n_t1 + aibj)
 !
                   endif
 !
@@ -123,8 +123,8 @@ contains
 !     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
 !
 !$omp parallel do schedule(static) private(a,i)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
          c_aibj(a,i,a,i) = two*c_aibj(a,i,a,i)
 !
@@ -138,7 +138,6 @@ contains
       call wf%jacobian_ccsd_d1(rho_ai, c_aibj)
 !
 !     :: CCSD contributions to the transformed doubles vector ::
-!
 !     Allocate unpacked transformed vector
 !
       call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -159,45 +158,67 @@ contains
       call wf%jacobian_ccsd_h2(rho_aibj, c_aibj)
       call wf%jacobian_ccsd_i2(rho_aibj, c_aibj)
 !
-!     Last two terms are already symmetric (J2 and K2). Perform the symmetrization
-!     rho_ai_bj = P_ij^ab rho_ai_bj now, for convenience
+!     Compute CC3 contributions to rho_ai and rho_aibj and symmetrise rho_aibj
+!     CCSD J2 and K2 are already symmetric and will be computed afterwards
 !
-      call symmetric_sum(rho_aibj, (wf%n_v)*(wf%n_o))
-!
-!     In preparation for last two terms, reorder
-!     rho_aibj to rho_abij, and c_aibj to c_abij
+      call ccsd_timer%freeze()
 !
       call mem%alloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%alloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%alloc(c_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call sort_1234_to_1324(c_aibj, c_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1342(c_aibj, c_abji, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call sort_1234_to_1324(rho_aibj, rho_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+      call cc3_timer%start()
+      call wf%jacobian_cc3_A(omega, c_ai, c_abji, rho_ai, rho_abij)
+      call cc3_timer%freeze()
+      call cc3_timer%switch_off()
+!
+!     Done with singles vector c; Overwrite the incoming singles c vector for exit
+!
+      call ccsd_timer%start()
+!
+      call mem%dealloc(c_ai, wf%n_v, wf%n_o)
+!
+      call dcopy(wf%n_t1, rho_ai, 1, c, 1)
+!
+      call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
+!
+!     Last two CCSD-terms (J2, K2) are already symmetric.
+!     Perform the symmetrization rho_ai_bj = P_ij^ab rho_ai_bj
+!
+      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1324(rho_abij, rho_aibj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call symmetric_sum(rho_aibj, (wf%n_v)*(wf%n_o))
+!
+      call sort_1234_to_1324(rho_aibj, rho_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call sort_1234_to_1243(c_abji, c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(c_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+!     Compute CCSD J2 and K2 contributions
+!
       call wf%jacobian_ccsd_j2(rho_abij, c_abij)
       call wf%jacobian_ccsd_k2(rho_abij, c_abij)
 !
-!     divide by the biorthonormal factor 1 + delta_ai,bj
+      call ccsd_timer%freeze()
+      call ccsd_timer%switch_off()
 !
-!$omp parallel do schedule(static) private(a,i)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            rho_abij(a,a,i,i) = half*rho_abij(a,a,i,i)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-!     Overwrite incoming doubles vector and pack in
+!     divide by the biorthonormal factor 1 + delta_ai,bj and
+!     overwrite the incoming, packed doubles c vector for exit
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
+            rho_abij(a,a,i,i) = half * rho_abij(a,a,i,i)
 !
             do j = 1, wf%n_o
                do b = 1, wf%n_v
@@ -208,7 +229,7 @@ contains
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     c((wf%n_o)*(wf%n_v) + aibj) = rho_abij(a,b,i,j)
+                     c(wf%n_t1 + aibj) = rho_abij(a,b,i,j)
 !
                   endif
 !
@@ -217,70 +238,6 @@ contains
          enddo
       enddo
 !$omp end parallel do
-!
-      call ccsd_timer%freeze()
-      call ccsd_timer%switch_off()
-!
-!     :: CC3 contributions to the transformed singles and doubles vector ::
-!
-      rho_abij = zero
-      call mem%alloc(c_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call sort_1234_to_1243(c_abij, c_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call cc3_timer%start()
-      call wf%jacobian_cc3_A(omega, c_ai, c_abji, rho_ai, rho_abij)
-      call cc3_timer%freeze()
-      call cc3_timer%switch_off()
-!
-      call mem%dealloc(c_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%dealloc(c_ai, wf%n_v, wf%n_o)
-!
-!     Overwrite the incoming singles c vector for exit
-!
-!$omp parallel do schedule(static) private(a, i, ai)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            c(ai) = rho_ai(a, i)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
-!
-!     Add CC3 doubles contribution to the incoming vector
-!
-      aibj = 0
-!
-      do j = 1, wf%n_o
-         do b = 1, wf%n_v
-!
-            rho_abij(b,b,j,j) = half * rho_abij(b,b,j,j)
-!
-            do i = 1, j
-!
-               if(i .ne. j) then
-                  a_end = wf%n_v
-               else
-                  a_end = b
-               end if
-!
-               do a = 1, a_end
-!
-                  aibj = aibj + 1
-!
-                  c(wf%n_t1+aibj) = c(wf%n_t1+aibj) + rho_abij(a,b,i,j) + rho_abij(b,a,j,i)
-!
-               end do
-            end do
-         end do
-      end do
 !
       call mem%dealloc(rho_abij,wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -423,14 +380,10 @@ end subroutine effective_jacobian_transformation_cc3
 !
       logical :: batching_c3
 !
-      integer(i15) :: n_batches, prev_available
-!
 !      real(dp) :: ddot, t3_norm
 !
 !     Set up required c1-transformed integrals
 !
-write(output%unit,*) 'integrals'
-flush(output%unit)
       call wf%jacobian_cc3_c1_integrals(c_ai)
 !
 !     Set up arrays for amplitudes
@@ -880,10 +833,11 @@ flush(output%unit)
                            req_0, req_1, req_2, req_3, batch_buff)
 !
 !     Allocate integral arrays and assign pointers.
+!     NB: Assume that the t3-part won't batch if the c3-part does not batch.
 !
-      if (batch_i%num_batches .eq. 1) then ! no batching
+      if (batch_i%num_batches .eq. 1) then ! no batching in T3-part
 !
-         if (.not. batching_c3) then ! bdci and ljci still in memory
+         if (.not. batching_c3) then ! bdci and ljci still in memory from C3-part
 !
             call mem%alloc(g_dbic_c1, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
             call mem%alloc(g_jlic_c1, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
@@ -935,7 +889,7 @@ flush(output%unit)
 !
          call batch_i%determine_limits(current_i_batch)
 !
-         if (.not. batching_c3) then ! ! no batching in c3-part - g_bdci still in mem
+         if (.not. batching_c3) then ! no batching in c3-part - g_bdci still in mem
 !
             call wf%jacobian_cc3_vvv_reader(g_dbic_c1)
             g_bdci_p    => g_bdci
@@ -1303,7 +1257,6 @@ flush(output%unit)
          call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
 !        Write to file
-!        Should implement possibility to have them in mem if possible
 !
          do k = 1, batch_k%length
 !
@@ -1371,7 +1324,6 @@ flush(output%unit)
          call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
 !
 !        Write to file
-!        Should implement possibility to have them in mem if possible
 !
          do k = 1,batch_k%length
 !
@@ -1549,7 +1501,6 @@ flush(output%unit)
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
 !
 !        Write to file
-!        Should implement possibility to have them in mem if possible
 !
          do k = 1, batch_k%length
             do j = 1, wf%n_o
