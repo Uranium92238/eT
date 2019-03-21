@@ -421,7 +421,7 @@ end subroutine effective_jacobian_transformation_cc3
       integer              :: req_0, req_1, req_2, req_3
       real(dp)             :: batch_buff = 0.0
 !
-      logical :: batching
+      logical :: batching_c3
 !
       integer(i15) :: n_batches, prev_available
 !
@@ -429,6 +429,8 @@ end subroutine effective_jacobian_transformation_cc3
 !
 !     Set up required c1-transformed integrals
 !
+write(output%unit,*) 'integrals'
+flush(output%unit)
       call wf%jacobian_cc3_c1_integrals(c_ai)
 !
 !     Set up arrays for amplitudes
@@ -465,7 +467,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
       if (batch_i%num_batches .eq. 1) then !no batching
 !
-         batching = .false.
+         batching_c3 = .false.
 !
          call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
          call mem%alloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
@@ -478,7 +480,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
       else ! batching
 !
-         batching = .true.
+         batching_c3 = .true.
 !
          call batch_i%determine_limits(1)
 !
@@ -800,7 +802,7 @@ end subroutine effective_jacobian_transformation_cc3
 !
 !     Deallocate the integral arrays
 !
-      if (batch_i%num_batches .eq. 1) then
+      if (.not. batching_c3) then
 !
          call mem%dealloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
          call mem%dealloc(g_jlic, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
@@ -879,16 +881,23 @@ end subroutine effective_jacobian_transformation_cc3
 !
 !     Allocate integral arrays and assign pointers.
 !
-      if (batch_i%num_batches .eq. 1) then !no batching
+      if (batch_i%num_batches .eq. 1) then ! no batching
 !
-         batching = .false.
+         if (.not. batching_c3) then ! bdci and ljci still in memory
 !
-         call mem%alloc(g_dbic_c1, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%alloc(g_jlic_c1, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+            call mem%alloc(g_dbic_c1, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+            call mem%alloc(g_jlic_c1, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+         else
+!
+            call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+            call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+            call mem%alloc(g_dbic_c1, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+            call mem%alloc(g_jlic_c1, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+         end if
 !
       else ! batching
-!
-         batching = .true.
 !
          call batch_i%determine_limits(1)
 !
@@ -926,15 +935,15 @@ end subroutine effective_jacobian_transformation_cc3
 !
          call batch_i%determine_limits(current_i_batch)
 !
-         if (batching) then
+         if (.not. batching_c3) then ! ! no batching in c3-part - g_bdci still in mem
 !
-            call wf%jacobian_cc3_vvv_reader(batch_i, g_bdci, g_dbic_c1)
+            call wf%jacobian_cc3_vvv_reader(g_dbic_c1)
             g_bdci_p    => g_bdci
             g_dbic_c1_p => g_dbic_c1
 !
-         else ! g_bdci is still in mem if we don't have to batch
+         else ! batching in c3-part - need to read bdci as well
 !
-            call wf%jacobian_cc3_vvv_reader(g_dbic_c1)
+            call wf%jacobian_cc3_vvv_reader(batch_i, g_bdci, g_dbic_c1)
             g_bdci_p    => g_bdci
             g_dbic_c1_p => g_dbic_c1
 !
@@ -944,15 +953,15 @@ end subroutine effective_jacobian_transformation_cc3
 !
             call batch_j%determine_limits(current_j_batch)
 !
-            if (batching) then
+            if (.not. batching_c3) then ! no batching in c3-part - g_ljci still in mem
 !
-               call wf%jacobian_cc3_ov_vv_reader(batch_j, batch_i, g_ljci, g_jlic_c1)
+               call wf%jacobian_cc3_ov_vv_reader(g_jlic_c1)
                g_ljci_p    => g_ljci
                g_jlic_c1_p => g_jlic_c1
 !
-            else ! g_ljci is still in mem if we don't have to batch
+            else ! batching in c3-part - need to read ljci as well
 !
-               call wf%jacobian_cc3_ov_vv_reader(g_jlic_c1)
+               call wf%jacobian_cc3_ov_vv_reader(batch_j, batch_i, g_ljci, g_jlic_c1)
                g_ljci_p    => g_ljci
                g_jlic_c1_p => g_jlic_c1
 !
@@ -996,7 +1005,7 @@ end subroutine effective_jacobian_transformation_cc3
                      g_lick_p    => g_lick
                      g_ilkc_c1_p => g_ilkc_c1
 !
-                     call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_j, g_lkci, g_kljc_c1)
+                     call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_j, g_lkcj, g_kljc_c1)
                      g_lkcj_p    => g_lkcj
                      g_kljc_c1_p => g_kljc_c1
 !
@@ -1202,8 +1211,6 @@ end subroutine effective_jacobian_transformation_cc3
       integer :: current_k_batch
 !
       integer :: ioerror=-1
-!
-      integer(i15) :: prev_available, n_batches
 !
 !
       call batch_k%init(wf%n_o)
