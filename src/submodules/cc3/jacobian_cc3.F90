@@ -1,8 +1,27 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
 submodule (cc3_class) jacobian
 !
 !!
 !!    Jacobian submodule (cc3)
-!!    Written by Rolf H. Myhre and Alexander Paul Feb 2019
+!!    Written by Alexander Paul and Rolf H. Myhre Feb 2019
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian matrix
@@ -23,7 +42,7 @@ contains
    module subroutine effective_jacobian_transformation_cc3(wf, omega, c)
 !!
 !!    Effective Jacobian transformation (CC3)
-!!    Written by Rolf H. Myhre and Alexander Paul, Feb 2019
+!!    Written by Alexander Paul and Rolf H. Myhre Feb 2019
 !!
 !!    Directs the transformation by the CC3 Jacobi matrix,
 !!
@@ -247,7 +266,9 @@ end subroutine effective_jacobian_transformation_cc3
    module subroutine jacobian_cc3_A_cc3(wf, omega, c_ai, c_abji, rho_ai, rho_abij)
 !!
 !!    CC3 jacobian terms
-!!    Alex C. Paul and Rolf H. Myhre, Feb 2019
+!!
+!!    Based on omega_cc3_a_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
 !
@@ -1146,6 +1167,9 @@ end subroutine effective_jacobian_transformation_cc3
 !!    (d'b|kc) ordered as bcd,k
 !!    (jl'|kc) orderd as cljk
 !!
+!!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre
+!!
       implicit none
 !
       class(cc3) :: wf
@@ -1533,7 +1557,8 @@ end subroutine effective_jacobian_transformation_cc3
 !!
 !!    F_ia_c1 = sum_j L_iajj' = sum_j 2 g_iajj' - g_ij'ja
 !!
-!!    Rolf H. Myhre and Alexander Paul, Feb 2019
+!!    Based on construct_fock_ccs written by Sarai D. Folkestad and Eirik F. Kjønstad
+!!    Modified by Alexander Paul, Feb 2019
 !!
       implicit none
 !
@@ -1603,7 +1628,8 @@ end subroutine effective_jacobian_transformation_cc3
 !!    Read the bdck, dbkc and c1-transformed bdck integrals in the current batch
 !!    needed for the c3-contributions
 !!
-!!    Rolf H. Myhre and Alexander Paul, Feb 2019
+!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
 !
@@ -1679,7 +1705,8 @@ end subroutine effective_jacobian_transformation_cc3
 !!    Read the bdck and c1-transformed dbkc integrals in the current batch
 !!    needed for the t3-contribution
 !!
-!!    Rolf H. Myhre and Alexander Paul, Feb 2019
+!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
 !
@@ -1737,7 +1764,8 @@ end subroutine effective_jacobian_transformation_cc3
 !!
 !!    Read the c1-transformed dbkc integral needed for the t3-contribution (non batching)
 !!
-!!    Rolf H. Myhre and Alexander Paul, Feb 2019
+!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
 !
@@ -1772,7 +1800,8 @@ end subroutine effective_jacobian_transformation_cc3
 !!    Read the ljck, jlkc, jbkc and c1-transformed ljck integrals in the current batches
 !!    needed for the c3-contribution
 !!
-!!    Rolf H. Myhre and Alexander Paul, Feb 2019
+!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
 !
@@ -1897,7 +1926,8 @@ end subroutine effective_jacobian_transformation_cc3
 !!    Read the ljck and c1-transformed jlkc integrals in the current batch
 !!    needed for the t3-contribution
 !!
-!!    Rolf H. Myhre and Alexander Paul, Feb 2019
+!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
 !
@@ -1970,7 +2000,8 @@ end subroutine effective_jacobian_transformation_cc3
 !!
 !!    Read the c1-transformed jlkc  needed for the t3-contribution (non batching)
 !!
-!!    Rolf H. Myhre and Alexander Paul, Feb 2019
+!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
 !
@@ -2012,6 +2043,9 @@ end subroutine effective_jacobian_transformation_cc3
 !!
 !!    c^abc = (omega - ε^abc_ijk)^-1 * P^abc_ijk (sum_d c^ad_ij g_ckbd - sum_l c^ab_il g_cklj
 !!             + sum_d t^ad_ij g'_bdck - sum_l t^ab_il g'_cklj
+!!
+!!    Based on omega_cc3_W_calc_cc3 and omega_cc3_eps_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
 !
@@ -2458,11 +2492,12 @@ end subroutine effective_jacobian_transformation_cc3
 !
    module subroutine jacobian_cc3_fock_rho2_cc3(wf, i, j, k, t_abc, u_abc, rho_abij, F_kc)
 !!
-!!    Calculate the triples contribution to rho1 for fixed i,j and k
+!!    Calculate the triples contribution to rho2 for fixed i,j and k
 !!
-!!    rho_1 =+ sum_kc (t^abc_ijk - t^cba_ijk) F_kc
+!!    rho_2 =+ sum_kc (t^abc_ijk - t^cba_ijk) F_kc
 !!
-!!    Alexander Paul and Rolf H. Myhre, Feb 2019
+!!    Based on omega_cc3_omega1_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
 !

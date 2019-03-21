@@ -58,12 +58,12 @@ program eT_program
 !
    type(molecular_system), allocatable :: system
 !
-!  Wavefunction allocatables and pointers  
+!  Wavefunction allocatables and pointers
 !
    type(hf), allocatable, target          :: hf_wf
    type(uhf), allocatable, target         :: uhf_wf
-   type(mlhf), allocatable, target        :: mlhf_wf 
-!  
+   type(mlhf), allocatable, target        :: mlhf_wf
+!
    type(ccs), allocatable, target         :: ccs_wf
    type(cc2), allocatable, target         :: cc2_wf
    type(lowmem_cc2), allocatable, target  :: lowmem_cc2_wf
@@ -76,7 +76,7 @@ program eT_program
    class(hf), pointer  :: ref_wf    => null()
    class(ccs), pointer :: cc_wf     => null()
 !
-!  Cholesky decomposition solver 
+!  Cholesky decomposition solver
 !
    type(eri_cd), allocatable :: chol_solver
 !
@@ -98,7 +98,7 @@ program eT_program
    integer :: n_threads
    integer :: omp_get_max_threads
 !
-   character(len=40) :: cc_engine  
+   character(len=40) :: cc_engine
    character(len=40), dimension(:), allocatable :: cc_methods
 !
 !  Timer object
@@ -134,7 +134,7 @@ program eT_program
    write(output%unit,'(t4, a, a)')    'Eirik F. Kjønstad      ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
    write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, Launch script'
-   write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2'
+   write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2, CC3'
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
    write(output%unit,'(t3,a)')       '----------------------------------------------------------------------------------'
    write(output%unit,'(t4,a/)')       'Other contributors: A. Balbi, M. Scavino'
@@ -199,12 +199,12 @@ program eT_program
 !
       else
 !
-         if (requested_method('uhf')) then 
+         if (requested_method('uhf')) then
 !
             allocate(uhf_wf)
             ref_wf => uhf_wf
 !
-         else ! Assume standard RHF 
+         else ! Assume standard RHF
 !
             allocate(hf_wf)
             ref_wf => hf_wf
@@ -215,11 +215,11 @@ program eT_program
 !
          allocate(gs_hf_engine)
 !
-         call gs_hf_engine%prepare()     
-         call gs_hf_engine%run(ref_wf)     
-         call gs_hf_engine%cleanup()     
+         call gs_hf_engine%prepare()
+         call gs_hf_engine%run(ref_wf)
+         call gs_hf_engine%cleanup()
 !
-         deallocate(gs_hf_engine)  
+         deallocate(gs_hf_engine)
 !
       endif
 !
@@ -236,7 +236,7 @@ program eT_program
    if (n_methods .gt. 0) then
 !
       allocate(cc_methods(n_methods))
-! 
+!
       call read_cc_methods(n_methods, cc_methods)
       call select_engine(cc_engine)
 !
@@ -281,7 +281,7 @@ program eT_program
          if (cc_engine == 'ground state') then
 !
             allocate(gs_cc_engine)
-            engine => gs_cc_engine  
+            engine => gs_cc_engine
 !
          elseif (cc_engine == 'excited state') then
 !
@@ -291,7 +291,7 @@ program eT_program
          elseif (cc_engine == 'multipliers') then
 !
             allocate(multipliers_cc_engine)
-            engine => multipliers_cc_engine 
+            engine => multipliers_cc_engine
 !
          endif
 !
@@ -305,11 +305,11 @@ program eT_program
 !
             deallocate(mlhf_wf)
 !
-         else if (requested_method('uhf')) then 
+         else if (requested_method('uhf')) then
 !
             deallocate(uhf_wf)
 !
-         else ! Assume standard RHF 
+         else ! Assume standard RHF
 !
             deallocate(hf_wf)
 !

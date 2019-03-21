@@ -556,6 +556,8 @@ contains
       length_i = full_last_i - full_first_i + 1
       length_a = full_last_a - full_first_a + 1
 !
+!     :: Term 1: L_ai_J - sum_bj t_aj*t_bi*L_jb_J
+!
       call mem%alloc(L_J_ai, integrals%n_J, length_a, length_i)
       call integrals%read_cholesky(L_J_ai, full_first_a, full_last_a, full_first_i, full_last_i)
       call sort_12_to_21(L_J_ai, L_ai_J, integrals%n_J, length_a*length_i)
@@ -578,17 +580,17 @@ contains
 !
          call mem%alloc(X_Jj_i, integrals%n_J, batch_j%length, length_i)
 !
-         call dgemm('N', 'N',                               &
-                  (batch_j%length)*(integrals%n_J),         &
-                  length_i,                                 &
-                  integrals%n_v,                            &
-                  one,                                      &
-                  L_J_jb,                                   &   ! L_Jj_b
-                  (batch_j%length)*(integrals%n_J),         &
-                  t1(1, first_i),                           &   ! t_b_i
-                  integrals%n_v,                            &
-                  zero,                                     &
-                  X_Jj_i,                                   &
+         call dgemm('N', 'N',                         &
+                  (batch_j%length)*(integrals%n_J),   &
+                  length_i,                           &
+                  integrals%n_v,                      &
+                  one,                                &
+                  L_J_jb,                             &   ! L_Jj_b
+                  (batch_j%length)*(integrals%n_J),   &
+                  t1(1, first_i),                     &   ! t_b_i
+                  integrals%n_v,                      &
+                  zero,                               &
+                  X_Jj_i,                             &
                   (batch_j%length)*(integrals%n_J))
 !
          call mem%dealloc(L_J_jb, integrals%n_J, batch_j%length, integrals%n_v)
@@ -599,22 +601,24 @@ contains
 !
          call mem%dealloc(X_Jj_i, integrals%n_J, batch_j%length, length_i)
 !
-         call dgemm('N', 'N',                               &
-                  length_a,                                 &
-                  (length_i)*(integrals%n_J),               &
-                  batch_j%length,                           &
-                  -one,                                     &
-                  t1(first_a, batch_j%first),               & ! t_a_j
-                  integrals%n_v,                            &
-                  X_j_iJ,                                   &
-                  batch_j%length,                           &
-                  one,                                      &
-                  L_ai_J,                                   & ! L_a_iJ
+         call dgemm('N', 'N',                   &
+                  length_a,                     &
+                  (length_i)*(integrals%n_J),   &
+                  batch_j%length,               &
+                  -one,                         &
+                  t1(first_a, batch_j%first),   & ! t_a_j
+                  integrals%n_v,                &
+                  X_j_iJ,                       &
+                  batch_j%length,               &
+                  one,                          &
+                  L_ai_J,                       & ! L_a_iJ
                   length_a)
 !
          call mem%dealloc(X_j_iJ, batch_j%length, length_i, integrals%n_J)
 !
       enddo
+!
+!     :: Term 2: L_ai_J - sum_j t_aj*L_ji_J
 !
       call mem%alloc(L_J_ji, integrals%n_J, integrals%n_o, length_i)
       call integrals%read_cholesky(L_J_ji, 1, (integrals%n_o), full_first_i, full_last_i)
@@ -623,20 +627,22 @@ contains
       call sort_12_to_21(L_J_ji, L_ji_J, integrals%n_J, integrals%n_o*length_i)
       call mem%dealloc(L_J_ji, integrals%n_J, integrals%n_o, length_i)
 !
-       call dgemm('N', 'N',                                  &
-                   length_a,                                 &
-                   (length_i)*(integrals%n_J),               &
-                   integrals%n_o,                            &
-                   -one,                                     &
-                   t1(first_a, 1),                           & ! t_a_j
-                   integrals%n_v,                            &
-                   L_ji_J,                                   & ! L_j_iJ
-                   integrals%n_o,                            &
-                   one,                                      &
-                   L_ai_J,                                   & ! L_a_iJ
+       call dgemm('N', 'N',                     &
+                   length_a,                    &
+                   (length_i)*(integrals%n_J),  &
+                   integrals%n_o,               &
+                   -one,                        &
+                   t1(first_a, 1),              & ! t_a_j
+                   integrals%n_v,               &
+                   L_ji_J,                      & ! L_j_iJ
+                   integrals%n_o,               &
+                   one,                         &
+                   L_ai_J,                      & ! L_a_iJ
                    length_a)
 !
       call mem%dealloc(L_ji_J, integrals%n_o, length_i, integrals%n_J)
+!
+!     :: Term 3: L_ai_J + sum_b t_bi*L_ab_J
 !
       call mem%alloc(L_J_ab, integrals%n_J, length_a, integrals%n_v)
 !
@@ -673,7 +679,9 @@ contains
    subroutine construct_cholesky_ij_c1_mo_integral_tool(integrals, L_J_ij_c1, c_aj, first_i, last_i, first_j, last_j)
 !!
 !!    Construct the C1-transformed Cholesky Vector ij from the T1-transformed Cholesky Vector L_J_ia
-!!    Written by Alexander Paul, Feb 2019
+!!
+!!    Based on construct_cholesky_ij_mo_integral_tool written by Sarai D. Folkestad and Eirik F. Kjønstad
+!!    Modified for the c1-transformation by Alexander Paul, Feb 2019
 !!
 !!    j is the transformed index
 !!
@@ -740,6 +748,9 @@ contains
    subroutine construct_cholesky_ab_c1_mo_integral_tool(integrals, L_J_ab_c1, c_ai, first_a, last_a, first_b, last_b)
 !!
 !!    Construct the C1-transformed Cholesky Vector ab from the T1-transformed Cholesky Vector
+!!
+!!    Based on construct_cholesky_ab_mo_integral_tool written by Sarai D. Folkestad and Eirik F. Kjønstad
+!!    Modified for the c1-transformation by Alexander Paul, Feb 2019
 !!
 !!    a is the transformed index
 !!
@@ -816,7 +827,9 @@ contains
    subroutine construct_cholesky_ai_a_c1_mo_integral_tool(integrals, L_J_ai_c1, c_aj, first_a, last_a, first_i, last_i)
 !!
 !!    Construct the C1-transformed Cholesky Vector ai from the T1-transformed Cholesky Vector
-!!    Written by Alexander Paul, Feb 2019
+!!
+!!    Based on construct_cholesky_ai_mo_integral_tool (Term 3) written by Sarai D. Folkestad and Eirik F. Kjønstad
+!!    Modified for the c1-transformation by Alexander Paul, Feb 2019
 !!
 !!    a is the transformed index
 !!
@@ -890,7 +903,9 @@ contains
    subroutine construct_cholesky_ai_i_c1_mo_integral_tool(integrals, L_J_ai_c1, c_bi, first_a, last_a, first_i, last_i)
 !!
 !!    Construct the C1-transformed Cholesky Vector ai from the T1-transformed Cholesky Vector
-!!    Written by Alexander Paul, Feb 2019
+!!
+!!    Based on construct_cholesky_ai_mo_integral_tool (Term 2) written by Sarai D. Folkestad and Eirik F. Kjønstad
+!!    Modified for the c1-transformation by Alexander Paul, Feb 2019
 !!
 !!    i is the transformed index
 !!

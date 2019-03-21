@@ -1,3 +1,22 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
    module subroutine effective_jacobian_transformation_cc3(wf, omega, c)
 !!
 !!    Jacobian transformation (CC3)
@@ -37,7 +56,7 @@
    module subroutine jacobian_cc3_c1_integrals_cc3(wf, c_ai)
 !!
 !!    Construct c1 transformed integrals needed in CC3 Jacobian
-!!    Alexander Paul and Rolf H. Myhre February 2019
+!!    Alexander Paul and Rolf H. Myhre Feb 2019
 !!
       implicit none
 !
@@ -51,7 +70,7 @@
    module subroutine jacobian_cc3_construct_fock_ia_c1_cc3(wf, c_ai, F_ia_c1)
 !!
 !!    Calculates C1 transformed elements of the Fock matrix required for the CC3 jacobian
-!!    Rolf H. Myhre and Alexander Paul, February 2019
+!!    Rolf H. Myhre and Alexander Paul, Feb 2019
 !!
 !!    F_ia_c1 = sum_j L_iajj' = sum_j 2 g_iajj' - g_ij'ja
 !!
@@ -88,7 +107,7 @@
    module subroutine jacobian_cc3_t3_vvv_reader_cc3(wf, batch_x, g_bdcx, g_dbxc_c1)
 !!
 !!    Read in the intgrals needed in the current batches
-!!    Alexander Paul and Rolf H. Myhre February 2019
+!!    Alexander Paul and Rolf H. Myhre Feb 2019
 !!
       implicit none
 !
