@@ -30,7 +30,7 @@ submodule (cc3_class) jacobian
 !!
 !!    where
 !!
-!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | ν >.
+!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
 !!
 !
    implicit none
@@ -46,7 +46,7 @@ contains
 !!
 !!    Directs the transformation by the CC3 Jacobi matrix,
 !!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
+!!       A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >,
 !!
 !!    where the basis employed for the brackets is biorthonormal.
 !!    The transformation is rho = A c, i.e.,
@@ -422,8 +422,6 @@ contains
       real(dp)             :: batch_buff = 0.0
 !
       logical :: batching_c3
-!
-!      real(dp) :: ddot, t3_norm
 !
 !     Set up required c1-transformed integrals
 !

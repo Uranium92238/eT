@@ -2675,7 +2675,7 @@ contains
 !!
 !!    Directs the transformation by the CCSD Jacobi matrix,
 !!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >.
+!!       A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
 !!
 !!    In particular,
 !!

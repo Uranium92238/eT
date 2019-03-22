@@ -30,7 +30,7 @@ submodule (cc2_class) jacobian_transpose_cc2
 !!
 !!    where
 !!
-!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | ν >.
+!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
 !!
 !!
 !
