@@ -31,6 +31,8 @@ module uhf_class
    use array_analysis
    use interval_class
 !
+   use omp_lib
+!
    implicit none
 !
 !  Unrestricted Hartree-Fock wavefunction 
@@ -1171,7 +1173,7 @@ contains
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
       integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
 !
-      integer :: thread, n_threads, omp_get_max_threads
+      integer :: thread = 0, n_threads = 1 
       logical :: local_cumulative 
 !
       real(dp), dimension(:,:), allocatable :: F, sp_density_schwarz
@@ -1221,7 +1223,7 @@ contains
       call wf%construct_sp_density_schwarz(sp_density_schwarz, D)
       max_D_schwarz = get_abs_max(sp_density_schwarz, n_s**2)
 !
-      n_threads = omp_get_max_threads()
+!$      n_threads = omp_get_max_threads()
 !
       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
       F = zero 

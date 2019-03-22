@@ -166,9 +166,6 @@ contains
 !
       real(dp), dimension(solver%n_ao), optional :: screening_vector
 !
-      real(dp):: s_determine_basis, e_determine_basis, s_build_vectors = 0, e_build_vectors = 0
-      real(dp):: s_invert_time, e_invert_time, omp_get_wtime
-!
       integer :: batch
 !
       integer, dimension(:), allocatable :: n_cholesky_batches, n_sp_in_basis_batches
@@ -176,6 +173,11 @@ contains
       type(file) :: batch_file_diag, batch_file_basis
 !
       character(len=100) :: temp_name
+!
+      type(timings) :: det_basis_timer, invert_timer, build_timer
+!
+      call det_basis_timer%init("Cholesky; time to determine auxiliary basis")
+      call invert_timer%init("Cholesky; time to construct (J|K), decompose, and invert")
 !
       call solver%print_banner()
 !
@@ -187,7 +189,7 @@ contains
 !
       write(output%unit, '(/t3, a38)') '- Preparing diagonal for decomposition'
 !
-      s_determine_basis = omp_get_wtime()
+      call det_basis_timer%start()
 !
       if (solver%one_center) then
 !
@@ -260,39 +262,32 @@ contains
 !
       endif
 !
-      e_determine_basis = omp_get_wtime()
+      call det_basis_timer%freeze()
+      call det_basis_timer%switch_off()
       
       flush(output%unit)
 !
-      s_invert_time = omp_get_wtime()
+      call invert_timer%start()
 !
       call solver%construct_overlap_cholesky_vecs(system)
       call solver%invert_overlap_cholesky_vecs()
 !
-      e_invert_time = omp_get_wtime()
-               
+      call invert_timer%freeze()
+      call invert_timer%switch_off()
+!
       flush(output%unit)
 !
       if (solver%construct_vectors) then
 !
-         s_build_vectors = omp_get_wtime()
+         call build_timer%init("Cholesky; time to build L_ab^J and test")
+         call build_timer%start()
 !
          call solver%construct_cholesky_vectors(system)
 !
-         e_build_vectors = omp_get_wtime()
+         call build_timer%freeze()
+         call build_timer%switch_off()
 !
       endif
-!
-      write(output%unit, '(/t3, a)') '- Timings for Cholesky decomposition of electronic repulsion integrals:'
-!
-      write(output%unit, '(/t6, a53, f11.2)')'Wall time to determine auxiliary basis:              ', &
-                                  e_determine_basis - s_determine_basis
-      write(output%unit, '(t6, a53, f11.2)') 'Wall time to construct (J|K), decompose, and invert: ', &
-                                  e_invert_time - s_invert_time
-!
-      if (solver%construct_vectors) &
-         write(output%unit, '(t6, a53, f11.2)')'Wall time to build L_ab^J and test:                  ', &
-                                  e_build_vectors - s_build_vectors                 
 !
       flush(output%unit)
 !
@@ -1711,7 +1706,7 @@ contains
       integer :: C, D, CD_sp
       integer :: I, J
       integer :: w, x, y, z
-      integer :: xy, xy_packed, xy_max, wx, wx_packed, yz
+      integer :: xy, xy_packed, xy_max, wx, wx_packed
       integer :: sig_neg
       integer :: first, last
       integer :: first_x, first_y
@@ -2067,7 +2062,7 @@ contains
 !
 !$omp parallel do &
 !$omp private(AB_sp, CD_sp, A, B, A_interval, B_interval, C, D, C_interval, D_interval, &
-!$omp  aop, w, x, y, z, wx, yz, wx_packed, g_ABCD, n_qual_aop_in_sp) &
+!$omp  aop, w, x, y, z, wx, wx_packed, g_ABCD, n_qual_aop_in_sp) &
 !$omp shared(g_wxyz, n_qual_aop_in_prev_sps, qual_aop) &
 !$omp schedule(guided)
          do CD_sp = 1, n_qual_sp
@@ -3011,7 +3006,7 @@ contains
 !     Integers
 !
       integer :: A, B, AB_sp, C, D, CD_sp
-      integer :: w, x, y, z, wx, yz, wx_packed
+      integer :: w, x, y, z, wx, wx_packed
       integer :: L, J, I
       integer :: n_construct_sp, n_construct_aop
       integer :: n_sp_in_basis, last_sp_included, sp_counter
@@ -3211,7 +3206,7 @@ contains
 !$omp private(AB_sp, CD_sp, I, A, B, A_interval, &
 !$omp B_interval, C, D, C_interval, D_interval, &
 !$omp basis_aops_in_CD_sp, current_aop_in_sp, g_ABCD, &
-!$omp w, x, y, z, wx, yz, wx_packed, L, J) &
+!$omp w, x, y, z, wx, wx_packed, L, J) &
 !$omp shared(g_wx_L, AB_info, basis_shell_info, cholesky_basis) &
 !$omp schedule(guided)
          do AB_sp = 1, n_AB_included

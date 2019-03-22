@@ -134,11 +134,11 @@ contains
       implicit none 
 !
       class(timings) :: timer 
-!
-      real(dp) :: omp_get_wtime
+      integer :: counter, c_rate
 !
       call cpu_time(timer%cpu_time_start)
-      timer%wall_time_start = omp_get_wtime()
+      call system_clock(count=counter, count_rate=c_rate)
+      timer%wall_time_start = real(counter,dp)/c_rate
 !
    end subroutine start_timings
 !
@@ -154,11 +154,11 @@ contains
       implicit none 
 !
       class(timings) :: timer 
-!
-      real(dp) :: omp_get_wtime
+      integer :: counter, c_rate
 !
       call cpu_time(timer%cpu_time_end)
-      timer%wall_time_end = omp_get_wtime()
+      call system_clock(count=counter, count_rate=c_rate)
+      timer%wall_time_end = real(counter,dp)/c_rate
 !
       timer%elapsed_cpu_time  = timer%elapsed_cpu_time + (timer%cpu_time_end - timer%cpu_time_start)
       timer%elapsed_wall_time = timer%elapsed_wall_time + (timer%wall_time_end - timer%wall_time_start)
