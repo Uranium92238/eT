@@ -33,7 +33,7 @@ set(CMAKE_MODULE_PATH
     )
 
 # set options with standard values 
-option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"      	                    OFF)
+option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"      	                    ON)
 option(ENABLE_AUTO_BLAS      "Enable CMake to autodetect BLAS"                  ON)
 option(ENABLE_AUTO_LAPACK    "Enable CMake to autodetect LAPACK"                ON)
 option(ENABLE_OMP            "Enable OpenMP parallelization"                    ON)

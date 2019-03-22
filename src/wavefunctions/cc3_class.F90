@@ -21,7 +21,7 @@ module cc3_class
 !
 !!
 !!    Coupled cluster CC3 class module
-!!    Written by Rolf H. Myhre, 2018
+!!    Written by Rolf H. Myhre and Alexander Paul, 2018-2019
 !!
 !
    use ccsd_class
@@ -30,17 +30,18 @@ module cc3_class
 !
    type, extends(ccsd) :: cc3
 !
-!  Integral files
-   type(file)  :: g_bdck_t
-   type(file)  :: g_ljck_t
-   type(file)  :: g_dbkc_t
-   type(file)  :: g_jlkc_t
-   type(file)  :: L_jbkc_t
+!     Integral files
 !
-   type(file)  :: g_bdck_c1
-   type(file)  :: g_ljck_c1
-   type(file)  :: g_dbkc_c1
-   type(file)  :: g_jlkc_c1
+      type(file)  :: g_bdck_t
+      type(file)  :: g_ljck_t
+      type(file)  :: g_dbkc_t
+      type(file)  :: g_jlkc_t
+      type(file)  :: L_jbkc_t
+!
+      type(file)  :: g_bdck_c1
+      type(file)  :: g_ljck_c1
+      type(file)  :: g_dbkc_c1
+      type(file)  :: g_jlkc_c1
 !
    contains
 !
@@ -172,8 +173,6 @@ contains
    end subroutine cleanup_cc3
 !
 !
-!
-!
    subroutine construct_excited_state_equation_cc3(wf, X, R, w, r_or_l)
 !!
 !!    Construct excited state equation
@@ -216,7 +215,7 @@ contains
       if (r_or_l .eq. "right") then
          call mem%alloc(X_copy, wf%n_es_amplitudes)
       else
-         call output%error_msg('Left hand side not yet implemented for CC2 lowmem')
+         call output%error_msg('Left hand side not yet implemented for CC3')
       endif
 !
       call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
