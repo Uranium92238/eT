@@ -110,7 +110,7 @@ contains
       integer:: i, j, n_active_aos, n_vectors_occ, n_vectors_virt
       integer:: a
 !
-      real(dp) :: max_val, e_construct_fock, s_construct_fock, omp_get_wtime, x, y, z
+      real(dp) :: max_val, x, y, z
 !
       integer, dimension(:), allocatable :: active_aos
 !
@@ -120,17 +120,21 @@ contains
 !
       type(file) :: CMO_file
 !
+      type(timings) :: construct_fock_timer
+!
+      call construct_fock_timer%init("Time to construct AO fock from SAD density")
+!
       call wf%initialize_ao_fock()
 !
-      s_construct_fock = omp_get_wtime()
+      call construct_fock_timer%start()
 !
       n_s = wf%system%get_n_shells()
 !
       call wf%construct_ao_fock_SAD(wf%coulomb_threshold, wf%exchange_threshold)
 !
-      e_construct_fock = omp_get_wtime()
-      write(output%unit, '(/t6, a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &
-                                  e_construct_fock - s_construct_fock
+      call construct_fock_timer%freeze()
+      call construct_fock_timer%switch_off()
+!
       flush(output%unit)
 !
 !     Solve Roothan Hall once - using the SOAD guess - to get a decent AO density

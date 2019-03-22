@@ -33,6 +33,8 @@ module hf_class
    use interval_class
    use libint_initialization
 !
+   use omp_lib
+!
    implicit none
 !
 !  Hartree-Fock wavefunction 
@@ -1113,7 +1115,7 @@ contains
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz, sp_density_schwarz
 !
       real(dp), dimension(:,:), allocatable :: h_wx, h_AB
-      integer :: w, x, y, z, wx, yz, wz, yx
+      integer :: w, x, y, z 
 !
       integer :: A, B, C, D, atom
 !
@@ -1214,7 +1216,7 @@ contains
       max_eri     = get_abs_max(sp_eri_schwarz, n_s**2)
 !
 !$omp parallel do &
-!$omp private(A, B, C, D, A_interval, B_interval, C_interval, D_interval, w, x, y, z, wx, yz, &
+!$omp private(A, B, C, D, A_interval, B_interval, C_interval, D_interval, w, x, y, z, &
 !$omp g_C) schedule(dynamic)
       do A = 1, n_s
 !
@@ -1286,7 +1288,7 @@ contains
 !$omp end parallel do
 !
 !$omp parallel do &
-!$omp private(A, B, C, D, A_interval, B_interval, C_interval, D_interval, w, x, y, z, wz, yx, &
+!$omp private(A, B, C, D, A_interval, B_interval, C_interval, D_interval, w, x, y, z, &
 !$omp g_K) schedule(dynamic)
       do A = 1, n_s
 !
@@ -1457,7 +1459,7 @@ contains
 !
       real(dp) :: coulomb_thr, exchange_thr, precision_thr 
 !
-      integer :: thread, n_threads, omp_get_max_threads
+      integer :: thread = 0, n_threads = 1
 !
       logical :: local_cumulative
 !
@@ -1509,7 +1511,7 @@ contains
 !     Construct the two electron part of the Fock matrix, using the screening vectors 
 !     and parallellizing over available threads (each gets its own copy of the Fock matrix)
 !
-      n_threads = omp_get_max_threads()
+!$    n_threads = omp_get_max_threads()
 !
       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
       F = zero 
@@ -1578,14 +1580,14 @@ contains
       real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, deg, deg_12, deg_34, deg_12_34
 !
-      integer :: w, x, y, omp_get_thread_num, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: w, x, y, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
       integer :: s3s4, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
       real(dp), dimension(:), allocatable :: g 
 !
-      integer :: max_shell_size, thread, skip
+      integer :: max_shell_size, thread = 0, skip
 !
 !     Preallocate the vector that holds the shell quadruple 
 !     ERI integrals, then enter the construction loop 
@@ -1601,7 +1603,7 @@ contains
 !$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1, skip) schedule(dynamic)
       do s1s2 = 1, n_sig_sp
 !
-         thread = omp_get_thread_num()
+!$       thread = omp_get_thread_num()
          thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix 
 !
          sp_eri_schwarz_s1s2 = sp_eri_schwarz(s1s2, 1)
@@ -1755,14 +1757,14 @@ contains
       real(dp) :: d1, d2, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp7, deg, deg_12, deg_34, deg_12_34
 !
-      integer :: w, x, y, omp_get_thread_num, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: w, x, y, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
       integer :: s3s4, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
       real(dp), dimension(:), allocatable :: g 
 !
-      integer :: max_shell_size, thread, skip
+      integer :: max_shell_size, thread = 0, skip
 !
 !     Preallocate the vector that holds the shell quadruple 
 !     ERI integrals, then enter the construction loop 
@@ -1778,7 +1780,7 @@ contains
 !$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1, skip) schedule(dynamic)
       do s1s2 = 1, n_sig_sp
 !
-         thread = omp_get_thread_num()
+!$       thread = omp_get_thread_num()
          thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix 
 !
          sp_eri_schwarz_s1s2 = sp_eri_schwarz(s1s2, 1)
@@ -1908,14 +1910,14 @@ contains
       real(dp) :: d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp3, temp4, temp5, temp6, temp8, deg, deg_12, deg_34, deg_12_34
 !
-      integer :: w, x, y, omp_get_thread_num, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: w, x, y, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
       integer :: s3s4, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
       real(dp), dimension(:), allocatable :: g 
 !
-      integer :: max_shell_size, thread, skip
+      integer :: max_shell_size, thread = 0, skip
 !
 !     Preallocate the vector that holds the shell quadruple 
 !     ERI integrals, then enter the construction loop 
@@ -1931,7 +1933,7 @@ contains
 !$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1, skip) schedule(dynamic)
       do s1s2 = 1, n_sig_sp
 !
-         thread = omp_get_thread_num()
+!$       thread = omp_get_thread_num()
          thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix 
 !
          sp_eri_schwarz_s1s2 = sp_eri_schwarz(s1s2, 1)

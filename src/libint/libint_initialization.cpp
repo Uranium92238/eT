@@ -25,6 +25,7 @@
 */
 #include "libint_initialization.h"
 #include "eT_basis.h"
+#include "omp_control.h"
 
 #include <libint2.hpp>
 #include <iostream>
@@ -32,7 +33,6 @@
 #include <string>
 #include <vector>
 #include <ctime>
-#include <omp.h>
 
 using namespace libint2;
 using namespace std;
