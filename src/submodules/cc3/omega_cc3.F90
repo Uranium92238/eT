@@ -137,6 +137,12 @@ contains
 !!    CC3 Omega terms
 !!    Written by Rolf H. Myhre, January 2019
 !!
+!!    t_mu3 = -<mu3|{U,T2}|HF>/epsilon_mu3
+!!
+!!    omega_mu1 += <mu1|[H,T3]|HF>
+!!
+!!    omega_mu2 += <mu2|[H,T3]|HF>
+!!
       implicit none
 !
       class(cc3) :: wf
@@ -968,6 +974,9 @@ contains
 !!    Calculate the the contributions to the t_3 amplitudes
 !!    for occupied indices i,j,k
 !!
+!!     Contributions to W
+!!     W^abc_ijk = P^abc_ijk(\sum_d t^ad_ij(bd|ck) - \sum_l t^ab_il(lj|ck))
+!!
 !!    Written by Rolf H. Myhre, January 2019
 !!
       implicit none
@@ -992,9 +1001,6 @@ contains
       real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lick
       real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljck
 !
-!
-!     Contributions to W
-!     W^abc_ijk = P^abc_ijk(\sum_d t^ad_ij(bd|ck) - \sum_l t^ab_il(lj|ck))
 !
 !
 !     t^ad_ij*(bd|ck)
@@ -1213,6 +1219,8 @@ contains
 !!
 !!    Divide W^abc_ijk with -epsilon^abc_ijk to obtain T^abc_ijk
 !!
+!!    t^abv_ijk = -W^abc_ijk/epsilon^abc_ijk
+!!
 !!    Written by Rolf H. Myhre, January 2019
 !!
       implicit none
@@ -1265,6 +1273,10 @@ contains
 !!
 !!    Calculate the triples contribution to omega1 and
 !!    the Fock contribution to omega2
+!!
+!!    omega^a_i += sum_bcjk (t^abc_ijk - t^cba_ijk)*L_jbkc
+!!    
+!!    omega^ab_ij += P^{ab}_{ij}sum_ck (t^abc_ijk - t^cba_ijk)*F_kc
 !!
 !!    Written by Rolf H. Myhre, January 2019
 !!
@@ -1499,8 +1511,11 @@ contains
                                           g_dbic, g_dbjc, g_dbkc, &
                                           g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
 !!
-!!    Calculate the triples contribution to omega1 and
-!!    the Fock contribution to omega2
+!!    Calculate the triples contribution to omega2
+!!
+!!    omega_abli -= P^ab_li sum_cjk(2t^bac_ijk - t^bca_ijk - t^cab_ijk)*g_jlkc
+!!
+!!    omega_adij -= P^ad_ij sum_bck(2t^abc_ijk - t^cba_ijk - t^acb_ijk)*g_dbkc
 !!
 !!    Written by Rolf H. Myhre, January 2019
 !!
