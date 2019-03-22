@@ -70,7 +70,7 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_ai
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj, rho_abij
 !
-      integer :: i, j, a, b, ai, bj, aibj ! Index
+      integer :: i, j, a, b, ai, bj, aibj, b_end ! Index
 !
       type(timings) :: cc3_timer
       type(timings) :: ccsd_timer
@@ -112,25 +112,28 @@ contains
 !
       call mem%alloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj, b_end)
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
 !
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
+            do j = 1, i
+!
+               if (i .ne. j) then
+                  b_end = wf%n_v
+               else
+                  b_end = a
+               endif
+!
+               do b = 1,b_end
 !
                   bj = wf%n_v*(j - 1) + b
 !
-                  if (ai .ge. bj) then
+                  aibj = ai*(ai-3)/2 + ai + bj
 !
-                     aibj = ai*(ai-3)/2 + ai + bj
-!
-                     c_aibj(a,i,b,j) = c(wf%n_t1 + aibj)
-                     c_aibj(b,j,a,i) = c(wf%n_t1 + aibj)
-!
-                  endif
+                  c_aibj(a,i,b,j) = c(wf%n_t1 + aibj)
+                  c_aibj(b,j,a,i) = c(wf%n_t1 + aibj)
 !
                enddo
             enddo
@@ -232,25 +235,28 @@ contains
 !     divide by the biorthonormal factor 1 + delta_ai,bj and
 !     overwrite the incoming, packed doubles c vector for exit
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj, b_end)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
             rho_abij(a,a,i,i) = half * rho_abij(a,a,i,i)
 !
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
+            do j = 1, i
+!
+               if (j .ne. i) then
+                  b_end = wf%n_v
+               else
+                  b_end = a
+               endif
+!
+               do b = 1, b_end
 !
                   bj = wf%n_v*(j - 1) + b
 !
-                  if (ai .ge. bj) then
+                  aibj = ai*(ai-3)/2 + ai + bj
 !
-                     aibj = ai*(ai-3)/2 + ai + bj
-!
-                     c(wf%n_t1 + aibj) = rho_abij(a,b,i,j)
-!
-                  endif
+                  c(wf%n_t1 + aibj) = rho_abij(a,b,i,j)
 !
                enddo
             enddo
