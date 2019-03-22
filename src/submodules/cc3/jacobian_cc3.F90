@@ -229,6 +229,8 @@ contains
       call wf%jacobian_ccsd_j2(rho_abij, c_abij)
       call wf%jacobian_ccsd_k2(rho_abij, c_abij)
 !
+      call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
       call ccsd_timer%freeze()
       call ccsd_timer%switch_off()
 !
