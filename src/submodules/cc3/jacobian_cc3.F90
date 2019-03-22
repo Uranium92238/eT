@@ -180,10 +180,12 @@ contains
       call wf%jacobian_ccsd_h2(rho_aibj, c_aibj)
       call wf%jacobian_ccsd_i2(rho_aibj, c_aibj)
 !
+      call ccsd_timer%freeze()
+!
 !     Compute CC3 contributions to rho_ai and rho_aibj and symmetrise rho_aibj
 !     CCSD J2 and K2 are already symmetric and will be computed afterwards
 !
-      call ccsd_timer%freeze()
+      call cc3_timer%start()
 !
       call mem%alloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%alloc(c_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -194,14 +196,9 @@ contains
       call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call cc3_timer%start()
       call wf%jacobian_cc3_A(omega, c_ai, c_abji, rho_ai, rho_abij)
-      call cc3_timer%freeze()
-      call cc3_timer%switch_off()
 !
 !     Done with singles vector c; Overwrite the incoming singles c vector for exit
-!
-      call ccsd_timer%start()
 !
       call mem%dealloc(c_ai, wf%n_v, wf%n_o)
 !
@@ -209,8 +206,13 @@ contains
 !
       call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
 !
+      call cc3_timer%freeze()
+      call cc3_timer%switch_off()
+!
 !     Last two CCSD-terms (J2, K2) are already symmetric.
 !     Perform the symmetrization rho_ai_bj = P_ij^ab rho_ai_bj
+!
+      call ccsd_timer%start()
 !
       call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call sort_1234_to_1324(rho_abij, rho_aibj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
