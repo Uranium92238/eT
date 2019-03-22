@@ -86,6 +86,13 @@ module cc3_class
       procedure :: jacobian_cc3_c3_calc               => jacobian_cc3_c3_calc_cc3
       procedure :: jacobian_cc3_fock_rho2             => jacobian_cc3_fock_rho2_cc3
 !
+!     Routines related to the transpose of the jacobian
+!
+      procedure :: effective_jacobian_transpose_transformation  &
+                                                => effective_jacobian_transpose_transformation_cc3
+!
+      procedure :: jacobian_transpose_cc3_A     => jacobian_transpose_cc3_A_cc3
+!
    end type cc3
 !
 !
@@ -93,6 +100,7 @@ module cc3_class
 !
       include "../submodules/cc3/omega_cc3_interface.F90"
       include "../submodules/cc3/jacobian_cc3_interface.F90"
+      include "../submodules/cc3/jacobian_transpose_cc3_interface.F90"
 !
    end interface
 !
@@ -213,15 +221,15 @@ contains
 !
 !     Construct residual based on previous excitation energy w
 !
-      if (r_or_l .eq. "right") then
          call mem%alloc(X_copy, wf%n_es_amplitudes)
-      else
-         call output%error_msg('Left hand side not yet implemented for CC2 lowmem')
-      endif
 !
       call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
-      call wf%effective_jacobian_transformation(w, X_copy) ! X_copy <- AX
+      if (r_or_l .eq. "right") then
+         call wf%effective_jacobian_transformation(w, X_copy) ! X_copy <- AX
+      else
+         call wf%effective_jacobian_transpose_transformation(w, X_copy) ! X_copy <- AX
+      end if
 !
       call dcopy(wf%n_es_amplitudes, X_copy, 1, R, 1)
       call daxpy(wf%n_es_amplitudes, -w, X, 1, R, 1)

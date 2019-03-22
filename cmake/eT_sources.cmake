@@ -85,4 +85,5 @@ set(eT_fortran_sources
    src/submodules/lowmem_cc2/jacobian_lowmem_cc2.F90
    src/submodules/cc3/omega_cc3.F90
    src/submodules/cc3/jacobian_cc3.F90
+   src/submodules/cc3/jacobian_transpose_cc3.F90
 )
