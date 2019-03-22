@@ -270,12 +270,24 @@ contains
 !
       call mem%dealloc(rho_abij,wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-end subroutine effective_jacobian_transformation_cc3
+   end subroutine effective_jacobian_transformation_cc3
 !
 !
    module subroutine jacobian_cc3_A_cc3(wf, omega, c_ai, c_abji, rho_ai, rho_abij)
 !!
 !!    CC3 jacobian terms
+!!
+!!    The triples amplitudes are expressed in terms of doubles amplitudes:
+!!    C_3 = (omega - ε^abc_ijk)^-1 (< mu3 | [H,C_2] | HF > + < mu3 | [[H,C_1],T_2] | HF >)
+!!    T_3 = (omega - ε^abc_ijk)^-1 < mu3 | [H,T_2] | HF >
+!!
+!!    They are then used to compute the contributions 
+!!    to the singles and doubles part of the transformed vector
+!!
+!!    rho1 = rho1(CCSD) + < mu1 | [H,C_3] | HF >
+!!    rho2 = rho2(CCSD) + < mu2 | [H,C_3] | HF > + < mu2 | [[H,C_1],T_3] | HF >
+!!
+!!    The contributions are calculated separately for the C3-and the T3-part
 !!
 !!    Based on omega_cc3_a_cc3 written by Rolf H. Myhre
 !!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
@@ -2053,7 +2065,7 @@ end subroutine effective_jacobian_transformation_cc3
 !!    Construct c^abc_ijk amplitudes for the fixed indices i, j, k
 !!
 !!    c^abc = (omega - ε^abc_ijk)^-1 * P^abc_ijk (sum_d c^ad_ij g_ckbd - sum_l c^ab_il g_cklj
-!!             + sum_d t^ad_ij g'_bdck - sum_l t^ab_il g'_cklj
+!!             + sum_d t^ad_ij g'_bdck - sum_l t^ab_il g'_cklj)
 !!
 !!    Based on omega_cc3_W_calc_cc3 and omega_cc3_eps_cc3 written by Rolf H. Myhre
 !!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
@@ -2505,7 +2517,10 @@ end subroutine effective_jacobian_transformation_cc3
 !!
 !!    Calculate the triples contribution to rho2 for fixed i,j and k
 !!
-!!    rho_2 =+ sum_kc (t^abc_ijk - t^cba_ijk) F_kc
+!!    rho_2 =+ P^{ab}_{ij} sum_kc (t^abc_ijk - t^cba_ijk) F_kc
+!!
+!!    The permutations of i,j,k are necessary 
+!!    due to the index restrictions in the batching loops
 !!
 !!    Based on omega_cc3_omega1_cc3 written by Rolf H. Myhre
 !!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
