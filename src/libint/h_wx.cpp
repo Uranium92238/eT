@@ -31,13 +31,13 @@ using namespace std;
 #include <fstream>
 #include <string>
 #include <vector>
-#include <omp.h>
 
 #include <libint2.hpp>
 
 #include "h_wx.h"
 
 #include "globals.h"
+#include "omp_control.h"
 
 using namespace libint2;
 

@@ -30,7 +30,6 @@ using namespace std;
 #include <fstream>
 #include <string>
 #include <ctime>
-#include <omp.h>
 
 #include "g_wxyz.h"
 
@@ -38,6 +37,7 @@ using namespace std;
 #include <vector>
 
 #include "globals.h"
+#include "omp_control.h"
 
 using namespace libint2;
 

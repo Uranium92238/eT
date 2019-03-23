@@ -51,6 +51,7 @@ program eT_program
    use abstract_engine_class
 !
    use eri_cd_class
+   use omp_lib
 !
    implicit none
 !
@@ -95,8 +96,7 @@ program eT_program
 !
    integer :: n_methods, i
 !
-   integer :: n_threads
-   integer :: omp_get_max_threads
+   integer :: n_threads = 1
 !
    character(len=40) :: cc_engine  
    character(len=40), dimension(:), allocatable :: cc_methods
@@ -140,7 +140,7 @@ program eT_program
    write(output%unit,'(t4,a/)')       'Other contributors: A. Balbi, M. Scavino'
    flush(output%unit)
 !
-   n_threads = omp_get_max_threads()
+!$   n_threads = omp_get_max_threads()
 !
    if (n_threads .eq. 1) then
 !
