@@ -70,34 +70,19 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: temp_reduced_array
 !
-!
       do list_element = 1, cholesky_array%n_nodes
 !
 !        Get pointer to node associated with list element
 !
          call cholesky_array%get_node(node_ptr, list_element)
 !
-!        Insert new pointer at position 'list_element',
+!        Insert new reduced node at position 'list_element',
 !        then get the pointer to this new element 
 !
-         write(output%unit, *) 'inserting new node'
-         flush(output%unit)
-!
          call cholesky_array%insert(dim_reduced, node_ptr%n_columns, list_element)
-!
-         write(output%unit, *) 'getting new node'
-         flush(output%unit)
-!
          call cholesky_array%get_node(node_ptr_new, list_element)
 !
 !        Determine reduced array by cutting away insignificant blocks
-!
-      !   call mem%alloc(temp_reduced_array, dim_reduced, node_ptr%n_columns)
-!
-!
-         write(output%unit, *) 'reducing node'
-         flush(output%unit)
-!
 !
          call reduce_array(node_ptr%array,     &
                            node_ptr_new%array, &
@@ -108,25 +93,9 @@ contains
                            dim_reduced,        &
                            node_ptr%n_columns)
 !
-!        Remove old node from list 
+!        Remove old unreduced node from list 
 !
-         write(output%unit, *) 'removing old node'
-         flush(output%unit)
          call cholesky_array%remove(list_element + 1)
-!
-
-!
-!        Reallocate and set reduced node
-!
-      !   call mem%dealloc(node_ptr%array, node_ptr%n_rows, node_ptr%n_columns)
-!
-      !   node_ptr%n_rows = dim_reduced
-!
-      !   call mem%alloc(node_ptr%array, node_ptr%n_rows, node_ptr%n_columns)
-!
-      !   node_ptr%array = temp_reduced_array
-!
-      !   call mem%dealloc(temp_reduced_array, dim_reduced, node_ptr%n_columns)
 !
       enddo
 !
