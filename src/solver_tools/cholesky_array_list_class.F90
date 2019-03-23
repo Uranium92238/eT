@@ -60,15 +60,13 @@ contains
       integer :: n_blocks
 !
       integer, dimension(n_blocks + 1) :: block_firsts
-      logical, dimension(n_blocks)          :: block_significant
+      logical, dimension(n_blocks)     :: block_significant
 !
       integer :: dim_reduced
 !
       integer :: list_element
 !
       type(array_node), pointer :: node_ptr, node_ptr_new
-!
-      real(dp), dimension(:,:), allocatable :: temp_reduced_array
 !
       do list_element = 1, cholesky_array%n_nodes
 !
