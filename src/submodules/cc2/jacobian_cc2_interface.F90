@@ -48,7 +48,7 @@
 !!
 !!    Directs the transformation by the cc2 Jacobi matrix,
 !!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >,
 !!
 !!    where the basis employed for the brackets is biorthonormal.
 !!    The transformation is rho = A c, i.e.,

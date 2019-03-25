@@ -31,7 +31,7 @@ submodule (lowmem_cc2_class) jacobian
 !!
 !!    where
 !!
-!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | ν >.
+!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
 !!
 !
    implicit none
