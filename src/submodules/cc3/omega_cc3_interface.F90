@@ -114,16 +114,16 @@
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abji
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci 
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj 
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck 
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck
 !
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljci 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkci 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkcj 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_licj 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lick 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljci
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkci
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkcj
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_licj
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lick
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck
 !
 !
    end subroutine omega_cc3_W_calc_cc3
@@ -200,16 +200,16 @@
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: omega2
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbic 
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbjc 
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbkc 
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbic
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbjc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbkc
 !
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlic 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_klic 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_kljc 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_iljc 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_ilkc 
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlkc 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_klic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_kljc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_iljc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_ilkc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlkc
 !
    end subroutine omega_cc3_omega2_cc3
 !
