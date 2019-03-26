@@ -292,8 +292,6 @@ contains
       real(dp), dimension(:,:), allocatable :: tb_ai
       real(dp), dimension(:,:), allocatable :: X_ai
 !
-      real(dp), parameter :: two = 2.0
-!      
       integer :: i, a, j, b, ai, bj
 !
       call mem%alloc(X_ai, wf%n_o, wf%n_v)
@@ -317,11 +315,12 @@ contains
 !
                   ai = wf%n_v*(i - 1) + a
 !
-                  etaX_ai_bj(ai, bj) = etaX_ai_bj(ai, bj) - (X_ai(i, b))*tb_ai(a, j)& ! change tb_ai to wf%t1bar
+                  etaX_ai_bj(ai, bj) = etaX_ai_bj(ai, bj) - (X_ai(i, b))*tb_ai(a, j) &
                                     + two*(X_ai(j, b))*tb_ai(a, i)
 !
                enddo
             enddo
+!
          enddo
       enddo
 !
@@ -329,7 +328,7 @@ contains
       call mem%dealloc(X_ai, wf%n_o, wf%n_v)
 !
       call mem%alloc(etaX_temp, wf%n_t2, 1)
-      etaX_temp = zero
+      etaX_temp = zero ! necessary
 !
       call symmetrize_and_add_to_packed(etaX_temp, etaX_ai_bj, (wf%n_v*wf%n_o))
 !
@@ -346,8 +345,8 @@ contains
 !
    module subroutine construct_etaX_doubles_q2_ccsd(wf, Xoperator, etaX)
 !!
-!!    Construct Q2 therm of etaX doubles
-!!    Written by Josefine H. Andersen, February 2019
+!!    Construct Q2 term of etaX doubles
+!!    Written by Josefine H. Andersen, Feb 2019
 !!    
 !!    Q2 = sum_c tb_aicj X_cb - sum_k tb_aibk X_jk
 !!
