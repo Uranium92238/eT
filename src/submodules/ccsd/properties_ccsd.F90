@@ -447,7 +447,7 @@ contains
 !
    module subroutine construct_csiX_ccsd(wf, Xoperator, csiX)
 !!
-!!    Construct csiX
+!!    Construct csiX (CCSD)
 !!    Written by Josefine H. Andersen, February 2019
 !!
       implicit none
@@ -458,7 +458,11 @@ contains
 !      
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
 !
+!     csiX_ai
+!
       call wf%construct_csiX_singles(Xoperator, csiX)
+!
+!     ciX_aibj
 !      
       call wf%construct_csiX_doubles(Xoperator, csiX)
 !
@@ -490,10 +494,7 @@ contains
       real(dp), dimension(:,:), allocatable   :: X_kc
       real(dp), dimension(:,:), allocatable   :: X_ck
 !
-      real(dp), parameter :: one = 1.0, two = 2.0
-!
       call mem%alloc(csiX_temp, wf%n_t1, 1)
-      csiX_temp = zero
 !
 !     :: First term: X_ai
 !
