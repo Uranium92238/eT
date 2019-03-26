@@ -368,25 +368,22 @@ contains
       real(dp), dimension(:,:), allocatable :: X_cb
       real(dp), dimension(:,:), allocatable :: X_jk
 !
-      real(dp), parameter :: one = 1.0
+!     Get and squareup multipliers
 !
       call mem%alloc(tb_ai_bj, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
-      tb_ai_bj = zero
       call squareup(wf%t2bar, tb_ai_bj, (wf%n_v)*(wf%n_o))
 !
 !     Reorder multipiers to tb_aij_c
 !
       call mem%alloc(tb_aij_c, (wf%n_v)*(wf%n_o)**2, wf%n_v)
-      tb_aij_c = zero
       call sort_1234_to_1243(tb_ai_bj, tb_aij_c, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     :: First term: sum_c b_aicj X_cb 
+!     :: First term: sum_c tb_aicj X_cb 
 !
       call mem%alloc(X_cb, wf%n_v, wf%n_v) 
       call wf%get_operator_vv(Xoperator, X_cb)
 !
       call mem%alloc(etaX_aij_b, (wf%n_v)*(wf%n_o)**2, wf%n_v)
-      etaX_aij_b = zero
 !
       call dgemm('N','N',               &
                   (wf%n_v)*(wf%n_o)**2, &
@@ -407,7 +404,7 @@ contains
 !     Add etaX_aij_b to temporary etaX
 !
       call mem%alloc(etaX_ai_bj, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
-      etaX_ai_bj = zero
+      etaX_ai_bj = zero ! necessary
       call add_1243_to_1234(one, etaX_aij_b, etaX_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(etaX_aij_b, (wf%n_v)*(wf%n_o)**2, wf%n_v)
@@ -434,12 +431,12 @@ contains
       call mem%dealloc(X_jk, wf%n_o, wf%n_o)
 !
       call mem%alloc(etaX_temp, wf%n_t2, 1)
-      etaX_temp = zero
+      etaX_temp = zero ! necessary
       call symmetrize_and_add_to_packed(etaX_temp, etaX_ai_bj, wf%n_o*wf%n_v)      
 !
       call mem%dealloc(etaX_ai_bj, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
 !
-!     add temporary etaX to etaX vector
+!     Add temporary etaX to etaX vector
 !
       call daxpy(wf%n_t2, -one, etaX_temp, 1, etaX(wf%n_t1+1:, 1), 1)
 !
