@@ -58,7 +58,6 @@ contains
       real(dp), dimension(:,:), allocatable :: X_ia
 !
       call mem%alloc(X_ia, wf%n_t1, 1)
-!
       call  wf%get_operator_ov(Xoperator, X_ia)
 !
       call dscal(wf%n_t1, two, X_ia, 1)
@@ -90,15 +89,11 @@ contains
       real(dp), dimension(:,:), allocatable :: X_ca
       real(dp), dimension(:,:), allocatable :: X_ik
 !      
-      !real(dp), parameter :: one = 1.0
-!
       call mem%alloc(etaX_temp, wf%n_v, wf%n_o)
-      !eta_temp = zero
 !
 !     :: First term  sum_c tb_ci X_ca
 !
       call mem%alloc(X_ca, wf%n_v*wf%n_v, 1)
-!
       call wf%get_operator_vv(Xoperator, X_ca)
 !
       call dgemm('T','N',   &
@@ -119,7 +114,6 @@ contains
 !     :: Second term  - sum_k tb_ak X_ik
 !
       call mem%alloc(X_ik, wf%n_o*wf%n_o, 1)
-!
       call wf%get_operator_oo(Xoperator, X_ik)
 !      
       call dgemm('N','T',   &
@@ -150,7 +144,7 @@ contains
    module subroutine construct_etaX_singles_q2_ccsd(wf, Xoperator, etaX)
 !!
 !!    Construct Q2 term of etaX singles
-!!    Written by Josefine H. Andersen
+!!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Q2 = - sum_ckdl (tb_ckal X_id t_ckdl + tb_ckdi X_la t_ckdl)
 !!
@@ -175,7 +169,6 @@ contains
       real(dp), parameter :: one = 1.0
 !
       call mem%alloc(etaX_temp, wf%n_v, wf%n_o)
-      !etaX_temp = zero
 !
       call mem%alloc(X_id, wf%n_o, wf%n_v)
       call wf%get_operator_ov(Xoperator, X_id)
@@ -185,13 +178,13 @@ contains
       call mem%alloc(tb_ck_al, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
       call squareup(wf%t2bar, tb_ck_al, (wf%n_v)*(wf%n_o))
 !      
-!     :: First term: - sum_ckdl tb_ckal X_id t_ckdl
-!
 !     Read amplitudes and order as t_lck_d = t_kl^cd
 !
       call mem%alloc(t_lck_d, (wf%n_v)*(wf%n_o)**2, wf%n_v)
       call squareup_and_sort_1234_to_2341(wf%t2, t_lck_d, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
 !      
+!     :: First term: - sum_ckdl tb_ckal X_id t_ckdl
+!
 !     Form the intermediate I_a_d = sum_ckl tb_a_lck t_lck_d = sum_ckl tb_ckal t_kl^cd
 !  
       call mem%alloc(I_a_d, wf%n_v, wf%n_v)
@@ -270,7 +263,8 @@ contains
 !
 !     Add eta_temp to etaX
 !
-      call daxpy(wf%n_t1, -one, etaX_temp, 1, etaX, 1)
+      call daxpy(wf%n_t1, -one, etaX_temp, 1, etaX, 1) !OBS: negative sign due to
+                                                       !unsolved bug 
 !
       call mem%dealloc(etaX_temp, wf%n_v, wf%n_o)
 !
@@ -280,7 +274,7 @@ contains
    module subroutine construct_etaX_doubles_q1_ccsd(wf, Xoperator, etaX)
 !!
 !!    Construct Q1 term of etaX doubles
-!!    Written by Josefine H. Andersen, February 2019
+!!    Written by Josefine H. Andersen, Feb 2019
 !!    
 !!    Q1 = 2 X_jb tb_ai - X_ib tb_aj
 !!
@@ -288,7 +282,7 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      character(len=*), intent(in)            :: Xoperator
+      character(len=*), intent(in) :: Xoperator
 !
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
 !
