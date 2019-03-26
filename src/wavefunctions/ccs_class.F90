@@ -4892,6 +4892,8 @@ contains
 !!    Construct left-hand-side vector etaX 
 !!    Written by Josefine H. Andersen, 2019
 !!
+!!    etaX_ai = 2*X_ia
+!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -4903,8 +4905,6 @@ contains
       real(dp), dimension(:,:), allocatable :: X_ia
 !
       call mem%alloc(X_ia, wf%n_es_amplitudes, 1)
-!
-!     etaX_ai = 2*X_ia
 !
       call  wf%get_operator_ov(Xoperator, X_ia)
 !

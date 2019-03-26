@@ -1,11 +1,12 @@
 submodule (ccsd_class) properties_ccsd
 !
 !!
-!!    Properties submodule (ccsd)
+!!    Properties submodule (CCSD)
 !!    Written by Josefine H. Andersen, 2019
 !!
 !!    <insert description of actions>
 !!
+!
    implicit none
 !
 !
@@ -25,9 +26,13 @@ contains
 !      
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
 !
+!     etaX_ai:
+!
       call wf%construct_etaX_ccs_singles(Xoperator, etaX)
       call wf%construct_etaX_singles_q1(Xoperator, etaX)
       call wf%construct_etaX_singles_q2(Xoperator, etaX)
+!
+!     etaX_aibj:
 !
       call wf%construct_etaX_doubles_q1(Xoperator, etaX)
       call wf%construct_etaX_doubles_q2(Xoperator, etaX)
@@ -54,8 +59,6 @@ contains
 !
       call mem%alloc(X_ia, wf%n_t1, 1)
 !
-!     Get operator and transpose
-!
       call  wf%get_operator_ov(Xoperator, X_ia)
 !
       call dscal(wf%n_t1, two, X_ia, 1)
@@ -78,19 +81,19 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      character(len=*), intent(in)        :: Xoperator
+      character(len=*), intent(in) :: Xoperator
 !      
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout)   :: etaX
 !      
-      real(dp), dimension(:,:), allocatable :: eta_temp
+      real(dp), dimension(:,:), allocatable :: etaX_temp
 !
       real(dp), dimension(:,:), allocatable :: X_ca
       real(dp), dimension(:,:), allocatable :: X_ik
 !      
-      real(dp), parameter :: one = 1.0
+      !real(dp), parameter :: one = 1.0
 !
-      call mem%alloc(eta_temp, wf%n_v, wf%n_o)
-      eta_temp = zero
+      call mem%alloc(etaX_temp, wf%n_v, wf%n_o)
+      !eta_temp = zero
 !
 !     :: First term  sum_c tb_ci X_ca
 !
@@ -108,7 +111,7 @@ contains
                  wf%t1bar,  &
                  wf%n_v,    &
                  zero,      &
-                 eta_temp,  &
+                 etaX_temp, &
                  wf%n_v)
 !         
       call mem%dealloc(X_ca, wf%n_v*wf%n_v, 1)
@@ -129,16 +132,17 @@ contains
                  X_ik,      &
                  wf%n_o,    &
                  one,       &
-                 eta_temp,  &
+                 etaX_temp, &
                  wf%n_v)
 !         
       call mem%dealloc(X_ik, wf%n_o*wf%n_o, 1)
 !
 !     Add eta_temp to etaX
 !
-      call daxpy(wf%n_t1, -one, eta_temp, 1, etaX, 1)
+      call daxpy(wf%n_t1, -one, etaX_temp, 1, etaX, 1) !OBS negative sign due to
+                                                       !unsolved bug
 !
-      call mem%dealloc(eta_temp, wf%n_v, wf%n_o)
+      call mem%dealloc(etaX_temp, wf%n_v, wf%n_o)
 !
    end subroutine construct_etaX_singles_q1_ccsd
 !
@@ -156,14 +160,13 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout)   :: etaX
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
 !
-      real(dp), dimension(:,:), allocatable :: eta_temp
+      real(dp), dimension(:,:), allocatable :: etaX_temp
 !
       real(dp), dimension(:,:), allocatable :: X_id     ! X_la
 !
       real(dp), dimension(:,:), allocatable :: tb_ck_al ! tb_ckdi
-!      
       real(dp), dimension(:,:), allocatable :: t_lck_d
 !
       real(dp), dimension(:,:), allocatable :: I_a_d    ! intermediate, first term
@@ -171,11 +174,10 @@ contains
 !      
       real(dp), parameter :: one = 1.0
 !
-      call mem%alloc(eta_temp, wf%n_v, wf%n_o)
-      eta_temp = zero
+      call mem%alloc(etaX_temp, wf%n_v, wf%n_o)
+      !etaX_temp = zero
 !
       call mem%alloc(X_id, wf%n_o, wf%n_v)
-!      
       call wf%get_operator_ov(Xoperator, X_id)
 !
 !     Read multipliers and squareup
@@ -207,9 +209,9 @@ contains
                   I_a_d,                &
                   wf%n_v)
 !
-!     Add - sum_ckdl tb_ckal X_id t_kl^cd
-!           = - sum_d I_a_d X_id 
-!           = - sum_d I_a_d X_i_a^T(d,i)
+!     Add   - sum_ckdl tb_ckal X_id t_kl^cd
+!         = - sum_d I_a_d X_id 
+!         = - sum_d I_a_d X_i_a^T(d,i)
 !
       call dgemm('N','T',     &
                   wf%n_v,     &
@@ -221,7 +223,7 @@ contains
                   X_id,       &
                   wf%n_o,     &
                   zero,       &
-                  eta_temp,   &
+                  etaX_temp,   &
                   wf%n_v)          
 !
       call mem%dealloc(I_a_d, wf%n_v, wf%n_v)
@@ -246,6 +248,7 @@ contains
                   wf%n_o)
 !
       call mem%dealloc(t_lck_d, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+      call mem%dealloc(tb_ck_al, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
 !
 !     Add - sum_ckdl b_ckdi X_la t_kl^cd = - sum_l X_la I_l_i = - sum_l X_i_a^T(a,l) I_l_i(l,i)
 !
@@ -259,16 +262,17 @@ contains
                   I_l_i,      &
                   wf%n_o,     &
                   one,        &
-                  eta_temp,   &
+                  etaX_temp,  &
                   wf%n_v)
 !
       call mem%dealloc(I_l_i, wf%n_o, wf%n_o)
+      call mem%dealloc(X_id, wf%n_o, wf%n_v)
 !
 !     Add eta_temp to etaX
 !
-      call daxpy(wf%n_t1, -one, eta_temp, 1, etaX, 1)
+      call daxpy(wf%n_t1, -one, etaX_temp, 1, etaX, 1)
 !
-      call mem%dealloc(eta_temp, wf%n_v, wf%n_o)
+      call mem%dealloc(etaX_temp, wf%n_v, wf%n_o)
 !
    end subroutine construct_etaX_singles_q2_ccsd
 !
