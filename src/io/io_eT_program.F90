@@ -335,11 +335,11 @@ contains
 !
       endif 
 !
-!     Read for property
+!     Read for properties
 !
-      if (requested_task('property') .or. requested_task('Property')) then
+      if (requested_task('properties') .or. requested_task('Properties')) then
 !
-         engine = 'property'
+         engine = 'properties'
          return
 !
       endif 

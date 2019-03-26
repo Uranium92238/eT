@@ -2,7 +2,7 @@ name: H2O-He
 charge: 0
 
 do
-  property
+  properties
 end do
 
 memory

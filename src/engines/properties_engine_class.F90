@@ -1,6 +1,6 @@
-module property_engine_class 
+module properties_engine_class 
 !!
-!!    Coupled cluster property engine class module 
+!!    Coupled cluster properties engine class module 
 !!    Written by Josefine H. Andersen, February 2019
 !!
    use abstract_engine_class
@@ -13,36 +13,36 @@ module property_engine_class
    use diis_cc_gs_class
    use diis_cc_es_class
    use diis_cc_multipliers_class
-   use cc_property_class
+   use cc_properties_class
 !
-   type, extends(abstract_engine) :: property_engine
+   type, extends(abstract_engine) :: properties_engine
 !
       character(len=100) :: algorithm
       character(len=100) :: es_type
 !
    contains
 !
-      procedure :: prepare                   => prepare_property_engine
-      procedure :: run                       => run_property_engine
-      procedure :: cleanup                   => cleanup_property_engine
+      procedure :: prepare                   => prepare_properties_engine
+      procedure :: run                       => run_properties_engine
+      procedure :: cleanup                   => cleanup_properties_engine
 !
-      procedure :: determine_es_type         => determine_es_type_property_engine
-      procedure :: read_algorithm            => read_algorithm_property_engine
+      procedure :: determine_es_type         => determine_es_type_properties_engine
+      procedure :: read_algorithm            => read_algorithm_properties_engine
 !
-   end type property_engine
+   end type properties_engine
 !
 contains
 ! 
-   subroutine prepare_property_engine(engine)
+   subroutine prepare_properties_engine(engine)
 !!
 !!    Prepare 
 !!    Written by Josefine H. Andersen, February 2019
 !!
       implicit none
 !
-      class(property_engine) :: engine
+      class(properties_engine) :: engine
 !
-      engine%name_       = 'Property engine'
+      engine%name_       = 'Properties engine'
 !
 !     Set standards and then read if nonstandard
 !
@@ -52,17 +52,17 @@ contains
       engine%es_type = 'valence'
       call engine%determine_es_type()
 !
-   end subroutine prepare_property_engine
+   end subroutine prepare_properties_engine
 !
 !
-   subroutine run_property_engine(engine, wf)
+   subroutine run_properties_engine(engine, wf)
 !!
 !!    Run  
 !!    Written by Josefine H. Andersen, February 2019
 !!
       implicit none
 !
-      class(property_engine) :: engine
+      class(properties_engine) :: engine
 !
       class(ccs) :: wf
 !
@@ -75,7 +75,7 @@ contains
       type(davidson_cc_multipliers), allocatable   :: cc_multipliers_davidson
       type(diis_cc_multipliers), allocatable       :: cc_multipliers_diis
 !
-      class(cc_property), pointer :: cc_property_solver
+      class(cc_properties), pointer :: cc_properties_solver
 !
       write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)      
 !
@@ -188,39 +188,39 @@ contains
 !
 !     Properties
 !
-      allocate(cc_property_solver)
+      allocate(cc_properties_solver)
 !
-      call cc_property_solver%prepare(wf)
-      call cc_property_solver%run(wf)
-      call cc_property_solver%cleanup(wf)
+      call cc_properties_solver%prepare(wf)
+      call cc_properties_solver%run(wf)
+      call cc_properties_solver%cleanup(wf)
 !
-      deallocate(cc_property_solver)
+      deallocate(cc_properties_solver)
 !
-   end subroutine run_property_engine
+   end subroutine run_properties_engine
 !
 !
-   subroutine cleanup_property_engine(engine)
+   subroutine cleanup_properties_engine(engine)
 !!
 !!    Cleanup 
 !!    Written by Josefine H. Andersen
 !!
       implicit none
 !
-      class(property_engine) :: engine
+      class(properties_engine) :: engine
 !
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%name_)
 !
-   end subroutine cleanup_property_engine
+   end subroutine cleanup_properties_engine
 !
 !
-   subroutine  determine_es_type_property_engine(engine)
+   subroutine  determine_es_type_properties_engine(engine)
 !!
 !!    Determine excited state type 
 !!    Written by Josefine H. Andersen
 !!
       implicit none
 !
-      class(property_engine) :: engine
+      class(properties_engine) :: engine
 !
       character(len=100) :: line
 !
@@ -253,17 +253,17 @@ contains
 !
       engine%es_type = 'valence'
 !
-   end subroutine determine_es_type_property_engine
+   end subroutine determine_es_type_properties_engine
 !
 !
-   subroutine read_algorithm_property_engine(engine)
+   subroutine read_algorithm_properties_engine(engine)
 !!
 !!    Read algorithm
 !!    Written by Josefine H. Andersen
 !!
       implicit none
 !
-      class(property_engine), intent(inout) :: engine
+      class(properties_engine), intent(inout) :: engine
 !
       character(len=100) :: line
 !
@@ -286,7 +286,7 @@ contains
 !
       enddo
 !
-   end subroutine read_algorithm_property_engine
+   end subroutine read_algorithm_properties_engine
 !
 !
-end module property_engine_class
+end module properties_engine_class

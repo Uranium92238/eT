@@ -1,20 +1,19 @@
-module cc_property_class
+module cc_properties_class
 !
 !!
-!!    Coupled cluster property solver class module
+!!    Coupled cluster properties solver class module
 !!    Written by Josefine H. Andersen, 2019
 !!    
 !
    use kinds
    use file_class
    use ccs_class
-   use eigen_davidson_tool_class
 !
    implicit none
 !
-   type :: cc_property
+   type :: cc_properties
 !
-      character(len=100) :: tag = 'Coupled cluster property solver'
+      character(len=100) :: tag = 'Coupled cluster properties solver'
       character(len=100) :: author = 'Josefine H. Andersen, 2019'
 !
       character(len=500) :: description1 = 'A solver that calculates properties from coupled &
@@ -40,33 +39,33 @@ module cc_property_class
 !
    contains
 !
-      procedure, non_overridable :: prepare          => prepare_cc_property
-      procedure, non_overridable :: run              => run_cc_property
-      procedure, non_overridable :: cleanup          => cleanup_cc_property
+      procedure, non_overridable :: prepare          => prepare_cc_properties
+      procedure, non_overridable :: run              => run_cc_properties
+      procedure, non_overridable :: cleanup          => cleanup_cc_properties
 !
-      procedure :: intialize_variables               => intialize_variables_cc_property
-      procedure :: read_settings                     => read_settings_cc_property
+      procedure :: intialize_variables               => intialize_variables_cc_properties
+      procedure :: read_settings                     => read_settings_cc_properties
 !
-      procedure :: reset                             => reset_property
-      procedure :: do_eom_or_lr                      => do_eom_or_lr_property
+      procedure :: reset                             => reset_properties
+      procedure :: do_eom_or_lr                      => do_eom_or_lr_properties
 !
-      procedure :: print_banner                      => print_banner_cc_property
-      procedure :: print_summary                     => print_summary_cc_property
+      procedure :: print_banner                      => print_banner_cc_properties
+      procedure :: print_summary                     => print_summary_cc_properties
 !
-   end type cc_property
+   end type cc_properties
 !
 !
 contains
 !
 !
-   subroutine prepare_cc_property(solver, wf)
+   subroutine prepare_cc_properties(solver, wf)
 !!
 !!    Prepare 
 !!    Written by Josefine H. Andersen, 2019
 !!
       implicit none
 !
-      class(cc_property) :: solver
+      class(cc_properties) :: solver
 !
       class(ccs) :: wf
 !
@@ -90,17 +89,17 @@ contains
 !
       call wf%prepare_operator_pq(solver%operator_type)
 !
-   end subroutine prepare_cc_property
+   end subroutine prepare_cc_properties
 !
 !
-   subroutine run_cc_property(solver, wf) 
+   subroutine run_cc_properties(solver, wf) 
 !!
 !!    Run
 !!    Written by Josefine H. Andersen, 2019
 !!
       implicit none
 !
-      class(cc_property) :: solver
+      class(cc_properties) :: solver
 !
       class(ccs) :: wf
 !
@@ -141,10 +140,10 @@ contains
 !
       enddo
 !
-   end subroutine run_cc_property
+   end subroutine run_cc_properties
 !
 !
-   subroutine read_settings_cc_property(solver)
+   subroutine read_settings_cc_properties(solver)
 !!
 !!    Read cc excited state settings to find n_singlet_states
 !!    and cc properties settings to determine operator
@@ -152,7 +151,7 @@ contains
 !!
       implicit none
 !
-      class(cc_property) :: solver
+      class(cc_properties) :: solver
 !
       integer :: n_specs, n_ops, i
 !
@@ -189,7 +188,7 @@ contains
 !     
       if (.not. requested_section('cc properties')) then
 !
-         call output%error_msg('operator type must be specified for property calculations')
+         call output%error_msg('operator type must be specified for properties')
 !
       endif
 !
@@ -222,17 +221,17 @@ contains
 !
       enddo
 !
-   end subroutine read_settings_cc_property
+   end subroutine read_settings_cc_properties
 !
 !
-   subroutine reset_property(solver)
+   subroutine reset_properties(solver)
 !!
 !!    Reset solver variables
 !!    Written by Josefine H. Andersen, February 2019
 !!
       implicit none
 !
-      class(cc_property) :: solver
+      class(cc_properties) :: solver
 !
       solver%S    = zero
       solver%T_r  = zero
@@ -241,17 +240,17 @@ contains
       solver%etaX = zero
       solver%csiX = zero
 !
-   end subroutine reset_property
+   end subroutine reset_properties
 !
 !
-   subroutine cleanup_cc_property(solver, wf) 
+   subroutine cleanup_cc_properties(solver, wf) 
 !!
 !!    Cleanup
 !!    Written by Josefine H. Andersen, 2019
 !!
       implicit none
 !
-      class(cc_property) :: solver
+      class(cc_properties) :: solver
 !
       class(ccs) :: wf
 !
@@ -263,17 +262,17 @@ contains
       if (allocated(solver%csiX)) &
          call mem%dealloc(solver%csiX, wf%n_es_amplitudes, 1)
 !
-   end subroutine cleanup_cc_property
+   end subroutine cleanup_cc_properties
 !
 !
-   subroutine intialize_variables_cc_property(solver, wf)
+   subroutine intialize_variables_cc_properties(solver, wf)
 !!
 !!    Allocate global variables
 !!    Written by Josefine H. Andersen, 2019
 !!
       implicit none
 !
-      class(cc_property) :: solver
+      class(cc_properties) :: solver
 !
       class(ccs) :: wf
 !
@@ -283,33 +282,33 @@ contains
       if (.not. allocated(solver%csiX)) &
          call mem%alloc(solver%csiX, wf%n_es_amplitudes, 1)
 !
-   end subroutine intialize_variables_cc_property
+   end subroutine intialize_variables_cc_properties
 !
 !
-   subroutine print_banner_cc_property(solver)
+   subroutine print_banner_cc_properties(solver)
 !!
 !!    Print banner
 !!    Written by Josefine H. Andersen, 2019
 !!
       implicit none
 !
-      class(cc_property) :: solver
+      class(cc_properties) :: solver
 !              
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
       call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
 !
-   end subroutine print_banner_cc_property
+   end subroutine print_banner_cc_properties
 !
 !
-   subroutine print_summary_cc_property(solver, wf, output_type, i)
+   subroutine print_summary_cc_properties(solver, wf, output_type, i)
 !!
 !!    Print summary
 !!    Written by Josefine H. Andersen
 !!
       implicit  none
 !
-      class(cc_property), intent(in) :: solver
+      class(cc_properties), intent(in) :: solver
 !
       class(ccs), intent(in) :: wf
 !              
@@ -340,10 +339,10 @@ contains
 !
       endif
 !
-   end subroutine print_summary_cc_property
+   end subroutine print_summary_cc_properties
 !
 !
-   subroutine do_eom_or_lr_property(solver, wf)
+   subroutine do_eom_or_lr_properties(solver, wf)
 !!
 !!    Calls construction of EOM or LR contribution.
 !!    Based on wf, gives the correct input to wf%get_eom_contribution
@@ -351,7 +350,7 @@ contains
 !!
       implicit none
 !
-      class(cc_property), intent(inout) :: solver
+      class(cc_properties), intent(inout) :: solver
 !
       class(ccs), intent(in) :: wf
 !
@@ -372,7 +371,7 @@ contains
                                       & will be calculated with no contributions'
       endif
 !
-   end subroutine do_eom_or_lr_property
+   end subroutine do_eom_or_lr_properties
 !
 !
-end module cc_property_class
+end module cc_properties_class

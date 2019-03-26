@@ -48,7 +48,7 @@ program eT_program
    use gs_engine_class
    use es_engine_class
    use multipliers_engine_class
-   use property_engine_class
+   use properties_engine_class
    use abstract_engine_class
 !
    use eri_cd_class
@@ -87,7 +87,7 @@ program eT_program
    type(gs_engine), allocatable, target          :: gs_cc_engine
    type(es_engine), allocatable, target          :: es_cc_engine
    type(multipliers_engine), allocatable, target :: multipliers_cc_engine
-   type(property_engine), allocatable, target    :: property_cc_engine
+   type(properties_engine), allocatable, target    :: properties_cc_engine
 !
 !  Engine pointer
 !
@@ -287,10 +287,10 @@ program eT_program
             allocate(multipliers_cc_engine)
             engine => multipliers_cc_engine 
 !
-         elseif (cc_engine == 'property') then
+         elseif (cc_engine == 'properties') then
 !
-            allocate(property_cc_engine)
-            engine => property_cc_engine
+            allocate(properties_cc_engine)
+            engine => properties_cc_engine
 !
          endif
 !
@@ -332,9 +332,9 @@ program eT_program
 !
             deallocate(multipliers_cc_engine)
 !
-         elseif (cc_engine == 'property') then
+         elseif (cc_engine == 'properties') then
 !
-            deallocate(property_cc_engine)
+            deallocate(properties_cc_engine)
 !
          end if
 !

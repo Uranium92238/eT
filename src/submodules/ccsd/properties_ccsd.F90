@@ -648,8 +648,8 @@ contains
 !
    module subroutine get_eom_contribution_ccsd(wf, etaX, csiX, Xoperator)
 !!
-!!    Add EOM contribution to csiX vector, CCSD
-!!    Written by Josefine H. Andersen
+!!    Add EOM contribution to etaX vector (CCSD)
+!!    Written by Josefine H. Andersen, Feb 2019
 !!
       implicit none
 !
@@ -660,8 +660,6 @@ contains
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: csiX
 !
-!
-      !call wf%get_eom_xcc_contribution(etaX, csiX)
       call wf%get_eom_doubles_contribution(Xoperator, etaX)
 !
       call wf%get_eom_xcc_contribution(etaX, csiX)
@@ -672,7 +670,7 @@ contains
    module subroutine get_eom_doubles_contribution_ccsd(wf, Xoperator, etaX)
 !!
 !!    Build EOM contribution to etaX in CCSD
-!!    Written by Josefine H. Andersen, February 2019
+!!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    = sum_ck tb_aick X_ck + sum_ckdl tb_aick u_ckdl X_ld
 !!

@@ -4920,7 +4920,7 @@ contains
    subroutine construct_csiX_ccs(wf, Xoperator, csiX)
 !!
 !!    Construct right-hand-side vector csiX 
-!!    Written by Josefine H. Andersen, 2019
+!!    Written by Josefine H. Andersen, Feb 2019
 !!
       implicit none
 !
@@ -4940,7 +4940,7 @@ contains
    subroutine get_eom_contribution_ccs(wf, etaX, csiX, Xoperator)
 !!
 !!    Add EOM contribution to etaX vector
-!!    Written by Josefine H. Andersen
+!!    Written by Josefine H. Andersen, Feb 2019
 !!
       implicit none
 !
@@ -4959,7 +4959,7 @@ contains
    subroutine get_eom_xcc_contribution_ccs(wf, etaX, csiX)
 !!
 !!    Add EOM contribution to etaX vector
-!!    Written by Josefine H. Andersen
+!!    Written by Josefine H. Andersen, Feb 2019
 !!
       implicit none
 !
@@ -4967,9 +4967,10 @@ contains
 !
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: csiX
+!
       real(dp), dimension(:,:), allocatable                     :: multipliers
 !
-      real(dp) :: X_cc = 0
+      real(dp) :: X_cc! = 0
       real(dp) :: ddot
 !
       call mem%alloc(multipliers, wf%n_es_amplitudes, 1)
@@ -4990,7 +4991,7 @@ contains
 !!    Prepare operator X_pq.
 !!    Reads MO-based operator from disk, T1-transforms, and writes integrals to file.
 !!    In current version, only dipole operator is available.
-!!    Written by Josefine H. Andersen
+!!    Written by Josefine H. Andersen, Feb 2019
 !!
       implicit none
 !

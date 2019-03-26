@@ -26,7 +26,7 @@ set(eT_fortran_sources
    src/solvers/cc/diis_cc_es_class.F90
    src/solvers/cc/diis_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_multipliers_class.F90
-   src/solvers/cc/cc_property_class.F90
+   src/solvers/cc/cc_properties_class.F90
    src/solvers/cc/davidson_cc_es_class.F90
    src/solvers/cc/davidson_cc_ip_class.F90
    src/solvers/cc/davidson_cvs_cc_es_class.F90
@@ -36,7 +36,7 @@ set(eT_fortran_sources
    src/engines/gs_engine_class.F90
    src/engines/es_engine_class.F90
    src/engines/multipliers_engine_class.F90
-   src/engines/property_engine_class.F90
+   src/engines/properties_engine_class.F90
    src/io/disk_manager_class.F90
    src/io/file_class.F90
    src/io/io_utilities.F90
