@@ -4900,19 +4900,19 @@ contains
 !
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
 
-      real(dp), dimension(:,:), allocatable :: etaX_temp
+      real(dp), dimension(:,:), allocatable :: X_ia
 !
-      call mem%alloc(etaX_temp, wf%n_es_amplitudes, 1)
+      call mem%alloc(X_ia, wf%n_es_amplitudes, 1)
 !
 !     etaX_ai = 2*X_ia
 !
-      call  wf%get_operator_ov(Xoperator, etaX_temp)
+      call  wf%get_operator_ov(Xoperator, X_ia)
 !
-      call dscal(wf%n_es_amplitudes, two, etaX_temp, 1)
+      call dscal(wf%n_es_amplitudes, two, X_ia, 1)
 !
-      call sort_12_to_21(etaX_temp, etaX, wf%n_o, wf%n_v)
+      call sort_12_to_21(X_ia, etaX, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(etaX_temp, wf%n_es_amplitudes, 1)
+      call mem%dealloc(X_ia, wf%n_es_amplitudes, 1)
 !
    end subroutine construct_etaX_ccs
 !

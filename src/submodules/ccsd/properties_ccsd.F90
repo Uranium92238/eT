@@ -51,12 +51,8 @@ contains
       real(dp), dimension(wf%n_t1, 1), intent(inout) :: etaX
 !
       real(dp), dimension(:,:), allocatable :: X_ia
-      !real(dp), dimension(:,:), allocatable :: X_ai
-!
-      real(dp), parameter :: two = 2.0
 !
       call mem%alloc(X_ia, wf%n_t1, 1)
-      !call mem%alloc(X_ai, wf%n_t1, 1)
 !
 !     Get operator and transpose
 !
@@ -64,13 +60,9 @@ contains
 !
       call dscal(wf%n_t1, two, X_ia, 1)
       
-      !call sort_12_to_21(X_ia, X_ai, wf%n_o, wf%n_v)
       call sort_12_to_21(X_ia, etaX, wf%n_o, wf%n_v)
 !
-      !call daxpy(wf%n_t1, two, X_ai, 1, etaX, 1)
-!
       call mem%dealloc(X_ia, wf%n_t1, 1)
-      !call mem%dealloc(X_ai, wf%n_t1, 1)
 !
    end subroutine construct_etaX_ccs_singles_ccsd
 !
