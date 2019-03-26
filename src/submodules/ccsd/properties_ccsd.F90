@@ -471,10 +471,10 @@ contains
 !
    module subroutine construct_csiX_singles_ccsd(wf, Xoperator, csiX)
 !!
-!!    Construct csiX singles contribution
-!!    Written by Josefine H. Andersen, February 2019
+!!    Construct csiX singles contribution (CCSD)
+!!    Written by Josefine H. Andersen, Feb 2019
 !!
-!!    X_ai + sum_ck u_aick X_kc
+!!    csiX_ai = X_ai + sum_ck u_aick X_kc
 !!    
 !!    where u_aick = 2t_ck_ai - t_ci_ak
 !!
@@ -552,10 +552,10 @@ contains
 !
    module subroutine construct_csiX_doubles_ccsd(wf, Xoperator, csiX)
 !!
-!!    Construct csiX doubles contribution
-!!    Written by Josefine H. Andersen, February 2019
+!!    Construct csiX doubles contribution (CCSD)
+!!    Written by Josefine H. Andersen, Feb 2019
 !!
-!!    sum_c t_aicj X_bc - sum_k t_aibk X_kj
+!!    csiX_aibj = sum_c t_aicj X_bc - sum_k t_aibk X_kj
 !!
       implicit none
 !
@@ -574,8 +574,6 @@ contains
       real(dp), dimension(:,:), allocatable :: X_bc
       real(dp), dimension(:,:), allocatable :: X_kj
 !
-      real(dp), parameter :: one = 1.0
-!
       call mem%alloc(t_cj_ai, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
       call squareup(wf%t2, t_cj_ai, wf%n_v*wf%n_o)
 !
@@ -585,7 +583,6 @@ contains
       call wf%get_operator_vv(Xoperator, X_bc)
 !
       call mem%alloc(csiX_bj_ai, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
-      csiX_bj_ai = zero
 !
       call dgemm('N','N',            &
                  wf%n_v,             &
@@ -605,7 +602,7 @@ contains
 !     Add csiX_bj_ai to temporary csiX vector
 !
       call mem%alloc(csiX_temp, wf%n_t2, 1)
-      csiX_temp = zero
+      csiX_temp = zero ! necessary
       call symmetrize_and_add_to_packed(csiX_temp, csiX_bj_ai, wf%n_v*wf%n_o)
 !
       call mem%dealloc(csiX_bj_ai, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
