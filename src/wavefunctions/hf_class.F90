@@ -117,13 +117,7 @@ module hf_class
       procedure :: initialize_orbitals                      => initialize_orbitals_hf
       procedure :: roothan_hall_update_orbitals             => roothan_hall_update_orbitals_hf
       procedure :: print_orbital_energies                   => print_orbital_energies_hf
-!<<<<<<< HEAD
-!      procedure :: mo_transform                             => mo_transform_hf
-!      procedure :: mo_transform_and_save_h                  => mo_transform_and_save_h_hf
-      procedure :: mo_transform_and_save_mu                 => mo_transform_and_save_mu_vectors_hf
-!      procedure :: save_orbital_coefficients                => save_orbital_coefficients_hf
-!=======
-!>>>>>>> feadc9e97efbaf4bd11d0ab9fa937d2aa6dd0263
+!
       procedure :: read_orbital_coefficients                => read_orbital_coefficients_hf
       procedure :: save_orbital_coefficients                => save_orbital_coefficients_hf
       procedure :: read_orbital_energies                    => read_orbital_energies_hf
@@ -358,40 +352,6 @@ contains
    end subroutine print_orbital_energies_hf
 !
 !
-!<<<<<<< HEAD
-  ! subroutine mo_transform_and_save_h_hf(wf)
-!!
-!!    MO transform and save h 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-  !    implicit none 
-!
-  !    class(hf) :: wf 
-!
-  !    real(dp), dimension(:,:), allocatable :: h_wx, h_pq 
-!
-  !    type(file) :: h_pq_file
-!
-  !    call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-  !    call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
-!
-  !    call wf%get_ao_h_wx(h_wx)
-  !    call wf%mo_transform(h_wx, h_pq)
-!
-!
-  !    call h_pq_file%init('h_pq', 'sequential', 'unformatted')
-  !    call disk%open_file(h_pq_file, 'write', 'rewind')
-!
-  !    write(h_pq_file%unit) h_pq 
-!
-  !    call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
-  !    call mem%dealloc(h_pq, wf%n_mo, wf%n_mo)     
-!
-  !    call disk%close_file(h_pq_file)
-!
-  ! end subroutine mo_transform_and_save_h_hf
-!
-!
    subroutine mo_transform_hf(wf, X_wx, Y_pq)
 !!
 !!    MO transform 
@@ -443,65 +403,6 @@ contains
    end subroutine mo_transform_hf
 !
 !
-   subroutine mo_transform_and_save_mu_vectors_hf(wf)
-!!
-!!    MO transform and save mu_X, mu_Y, and mu_Z 
-!!    Written by Josefine H. Andersen, February 2019
-!!
-      implicit none
-!      
-      class(hf), intent(in) :: wf
-!
-      real(dp), dimension(:,:), allocatable :: mu_X_wx, mu_Y_wx, mu_Z_wx
-      real(dp), dimension(:,:), allocatable :: mu_X_pq, mu_Y_pq, mu_Z_pq
-!
-      type(file) :: mu_X_pq_file
-      type(file) :: mu_Y_pq_file
-      type(file) :: mu_Z_pq_file
-!
-      call mem%alloc(mu_X_wx, wf%n_ao, wf%n_ao)
-      call mem%alloc(mu_Y_wx, wf%n_ao, wf%n_ao)
-      call mem%alloc(mu_Z_wx, wf%n_ao, wf%n_ao)
-!     
-      call mem%alloc(mu_X_pq, wf%n_mo, wf%n_mo)
-      call mem%alloc(mu_Y_pq, wf%n_mo, wf%n_mo)
-      call mem%alloc(mu_Z_pq, wf%n_mo, wf%n_mo) 
-!
-      call wf%get_ao_mu_wx(mu_X_wx, mu_Y_wx, mu_Z_wx)
-!
-      call wf%mo_transform(mu_X_wx, mu_X_pq)
-      call wf%mo_transform(mu_Y_wx, mu_Y_pq)
-      call wf%mo_transform(mu_Z_wx, mu_Z_pq)
-!
-      call mu_X_pq_file%init('mu_X', 'sequential', 'unformatted')
-      call disk%open_file(mu_X_pq_file, 'write', 'rewind')
-      write(mu_X_pq_file%unit) mu_X_pq
-!
-      call mu_Y_pq_file%init('mu_Y', 'sequential', 'unformatted')
-      call disk%open_file(mu_Y_pq_file, 'write', 'rewind')
-      write(mu_Y_pq_file%unit) mu_Y_pq
-!
-      call mu_Z_pq_file%init('mu_Z', 'sequential', 'unformatted')
-      call disk%open_file(mu_Z_pq_file, 'write', 'rewind')
-      write(mu_Z_pq_file%unit) mu_Z_pq
-!
-      call mem%dealloc(mu_X_wx, wf%n_ao, wf%n_ao)
-      call mem%dealloc(mu_Y_wx, wf%n_ao, wf%n_ao)
-      call mem%dealloc(mu_Z_wx, wf%n_ao, wf%n_ao)
-!     
-      call mem%dealloc(mu_X_pq, wf%n_mo, wf%n_mo)
-      call mem%dealloc(mu_Y_pq, wf%n_mo, wf%n_mo)
-      call mem%dealloc(mu_Z_pq, wf%n_mo, wf%n_mo)
-!
-      call disk%close_file(mu_X_pq_file)
-      call disk%close_file(mu_Y_pq_file)
-      call disk%close_file(mu_Z_pq_file)
-!
-   end subroutine mo_transform_and_save_mu_vectors_hf
-!
-!
-!=======
-!>>>>>>> feadc9e97efbaf4bd11d0ab9fa937d2aa6dd0263
    subroutine set_initial_ao_density_guess_hf(wf, guess)
 !!
 !!    Set initial AO density
