@@ -6,7 +6,6 @@ submodule (ccsd_class) properties_ccsd
 !!
 !!    <insert description of actions>
 !!
-!
    implicit none
 !
 !
@@ -22,7 +21,7 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      character(len=*), intent(in)            :: Xoperator
+      character(len=*), intent(in) :: Xoperator
 !      
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
 !
@@ -39,9 +38,9 @@ contains
    module subroutine construct_etaX_ccs_singles_ccsd(wf, Xoperator, etaX)
 !!
 !!    Construct CCS term of CCSD etaX singles
-!!    Written by Josefine H. Andersen, February 2019
+!!    Written by Josefine H. Andersen, Feb 2019
 !!
-!!    = 2*X_ia
+!!    2*X_ia
 !!
       implicit none
 !
@@ -52,24 +51,26 @@ contains
       real(dp), dimension(wf%n_t1, 1), intent(inout) :: etaX
 !
       real(dp), dimension(:,:), allocatable :: X_ia
-      real(dp), dimension(:,:), allocatable :: X_ai
+      !real(dp), dimension(:,:), allocatable :: X_ai
 !
       real(dp), parameter :: two = 2.0
 !
       call mem%alloc(X_ia, wf%n_t1, 1)
-      call mem%alloc(X_ai, wf%n_t1, 1)
+      !call mem%alloc(X_ai, wf%n_t1, 1)
 !
 !     Get operator and transpose
 !
       call  wf%get_operator_ov(Xoperator, X_ia)
-      call sort_12_to_21(X_ia, X_ai, wf%n_o, wf%n_v)
 !
-!     etaX = 2*X_ia
+      call dscal(wf%n_t1, two, X_ia, 1)
+      
+      !call sort_12_to_21(X_ia, X_ai, wf%n_o, wf%n_v)
+      call sort_12_to_21(X_ia, etaX, wf%n_o, wf%n_v)
 !
-      call daxpy(wf%n_t1, two, X_ai, 1, etaX, 1)
+      !call daxpy(wf%n_t1, two, X_ai, 1, etaX, 1)
 !
       call mem%dealloc(X_ia, wf%n_t1, 1)
-      call mem%dealloc(X_ai, wf%n_t1, 1)
+      !call mem%dealloc(X_ai, wf%n_t1, 1)
 !
    end subroutine construct_etaX_ccs_singles_ccsd
 !

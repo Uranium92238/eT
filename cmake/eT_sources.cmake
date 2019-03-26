@@ -30,7 +30,6 @@ set(eT_fortran_sources
    src/solvers/cc/davidson_cc_es_class.F90
    src/solvers/cc/davidson_cc_ip_class.F90
    src/solvers/cc/davidson_cvs_cc_es_class.F90
-   src/solvers/cc/davidson_cc_response_class.F90
    src/solvers/cholesky/eri_cd_class.F90
    src/engines/hf_engine_class.F90
    src/engines/abstract_engine_class.F90

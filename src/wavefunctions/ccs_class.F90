@@ -222,6 +222,7 @@ module ccs_class
 !
 !     Routines to get operator integrals
 !
+      procedure :: prepare_operator_pq                         => prepare_operator_pq_ccs
       procedure :: get_operator_vo                             => get_operator_vo_ccs
       procedure :: get_operator_ov                             => get_operator_ov_ccs
       procedure :: get_operator_vv                             => get_operator_vv_ccs
@@ -233,19 +234,16 @@ module ccs_class
       procedure :: construct_csiX                              => construct_csiX_ccs
       procedure :: get_eom_contribution                        => get_eom_contribution_ccs
       procedure :: get_eom_xcc_contribution                    => get_eom_xcc_contribution_ccs
-      procedure :: prepare_operator_pq                         => prepare_operator_pq_ccs
       procedure :: scale_left_excitation_vector                => scale_left_excitation_vector_ccs
       procedure :: calculate_transition_strength               => calculate_transition_strength_ccs
 !
-      procedure :: build_fr_matrix                             => build_fr_matrix_ccs
-!
 !     Routine for F-transformation
 !
-      procedure :: F_transform_vector                           => F_transform_vector_ccs
-      procedure :: F_ccs_a1_0                                   => F_ccs_a1_0_ccs
-      procedure :: F_ccs_a1_1                                   => F_ccs_a1_1_ccs
-      procedure :: F_ccs_b1_1                                   => F_ccs_b1_1_ccs
-      procedure :: F_ccs_c1_1                                   => F_ccs_c1_1_ccs
+      procedure :: F_transform_vector                          => F_transform_vector_ccs
+      procedure :: F_ccs_a1_0                                  => F_ccs_a1_0_ccs
+      procedure :: F_ccs_a1_1                                  => F_ccs_a1_1_ccs
+      procedure :: F_ccs_b1_1                                  => F_ccs_b1_1_ccs
+      procedure :: F_ccs_c1_1                                  => F_ccs_c1_1_ccs
 !
    end type ccs
 !
@@ -4858,7 +4856,7 @@ contains
    subroutine get_operator_vv_ccs(wf, integral_type, X_vv)
 !!
 !!    Get operator ab
-!!    Written by Josefine H. Andersen, February 2019
+!!    Written by Josefine H. Andersen, 2019
 !!
       implicit none 
 !
@@ -4904,15 +4902,13 @@ contains
 
       real(dp), dimension(:,:), allocatable :: etaX_temp
 !
-      real(dp), parameter :: two = 2.0
-!
       call mem%alloc(etaX_temp, wf%n_es_amplitudes, 1)
 !
 !     etaX_ai = 2*X_ia
 !
       call  wf%get_operator_ov(Xoperator, etaX_temp)
 !
-      etaX_temp = two * etaX_temp
+      call dscal(wf%n_es_amplitudes, two, etaX_temp, 1)
 !
       call sort_12_to_21(etaX_temp, etaX, wf%n_o, wf%n_v)
 !
@@ -4934,7 +4930,7 @@ contains
 !      
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
 !
-!     CCS: csiX = X_ai
+!     csiX_ai = X_ai
 !
       call wf%get_operator_vo(Xoperator, csiX)
 !
@@ -4943,9 +4939,10 @@ contains
 !
    subroutine get_eom_contribution_ccs(wf, etaX, csiX, Xoperator)
 !!
-!!    Add EOM contribution to csiX vector
+!!    Add EOM contribution to etaX vector
 !!    Written by Josefine H. Andersen
 !!
+      implicit none
 !
       class(ccs), intent(in) :: wf
 !
@@ -4961,7 +4958,7 @@ contains
 !
    subroutine get_eom_xcc_contribution_ccs(wf, etaX, csiX)
 !!
-!!    Add EOM contribution to csiX vector
+!!    Add EOM contribution to etaX vector
 !!    Written by Josefine H. Andersen
 !!
       implicit none
@@ -4992,6 +4989,7 @@ contains
 !!
 !!    Prepare operator X_pq.
 !!    Reads MO-based operator from disk, T1-transforms, and writes integrals to file.
+!!    In current version, only dipole operator is available.
 !!    Written by Josefine H. Andersen
 !!
       implicit none
@@ -5012,10 +5010,6 @@ contains
       if (trim(operator_type) == 'dipole_length') then
 !
          Xoperator = 'mu'
-!
-      !else
-!
-         ! write error message
 !
       endif
 !
@@ -5049,7 +5043,7 @@ contains
    subroutine scale_left_excitation_vector_ccs(wf, L, R)
 !!
 !!    Make left and right excitation vectors biorthogonal by scaling left vector
-!!    Written by Josefine H. Andersen, February 2019
+!!    Written by Josefine H. Andersen, Feb 2019
 !!
       implicit none
 !
@@ -5058,14 +5052,11 @@ contains
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: L
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: R
 !
-      real(dp) :: norm, scalar 
-      real(dp) :: ddot, one = 1.0
+      real(dp) :: norm, ddot
 !
       norm = ddot(wf%n_es_amplitudes, L, 1, R, 1)
 !
-      scalar = one / norm
-!
-      L = scalar*L
+      call dscal(wf%n_es_amplitudes, one/norm, L, 1)
 !
    end subroutine scale_left_excitation_vector_ccs
 !
@@ -5108,59 +5099,10 @@ contains
 !
       S  = T_l * T_r
 !
-! --- DEBUG F-transformation
-      call wf%F_transform_vector(R_n)
-      write(output%unit,'(t6,a,f19.10)') 'F-transformed R vector norm = ', &
-      ddot(wf%n_es_amplitudes, R_n, 1, R_n, 1)
-!
       call mem%dealloc(L_n, wf%n_es_amplitudes, 1)
       call mem%dealloc(R_n, wf%n_es_amplitudes, 1)
 !
    end subroutine calculate_transition_strength_ccs
-!
-!
-   subroutine build_fr_matrix_ccs(wf, fr, dim_fr)
-!!
-!!    Build matrix with F-transformed right vectors i as columns
-!!    Written by Josefine H. Andersen
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      integer, intent(in) :: dim_fr
-!
-      real(dp), dimension(wf%n_es_amplitudes, dim_fr), intent(out) :: fr
-!
-      real(dp), dimension(:,:), allocatable :: R_n
-!
-      real(dp) :: ddot
-!
-      integer :: i = 1, state = 1
-!
-      call mem%alloc(R_n, wf%n_es_amplitudes, 1)
-
-      call wf%read_excited_state(R_n, state, 'right')
-!
-      write(output%unit,'(t6,a,f19.10)') 'R vector norm = ', &
-      ddot(wf%n_es_amplitudes, R_n, 1, R_n, 1)
-      flush(output%unit)
-!
-      call wf%F_transform_vector(R_n)
-!
-      !do i = 1, solver%dim_rhs
-!
-         !call wf%read_excited_state(r_n, 1, 'right')
-!
-         !call wf%F_transform_vector(r_n)
-!
-         !call daxpy(wf%n_es_amplitudes, one, r_n, 1, fr(:,i), 1)
-!
-      !enddo
-!
-      call mem%dealloc(R_n, wf%n_es_amplitudes, 1)
-!
-   end subroutine build_fr_matrix_ccs
 !
 !
 end module ccs_class

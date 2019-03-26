@@ -34,9 +34,6 @@ module cc_property_class
       real(dp), dimension(:,:), allocatable :: etaX
       real(dp), dimension(:,:), allocatable :: csiX
 !
-      !real(dp), dimension(:,:), allocatable :: l_vec_n
-      !real(dp), dimension(:,:), allocatable :: r_vec_n
-!
       real(dp) :: T_r, T_l
 !
       integer :: n_singlet_states = 0
@@ -111,7 +108,7 @@ contains
 !
       call solver%print_summary(wf, 'header')
 !      
-!     Loop over components of X
+!     Loop over components of X operator
 !
       do i = 1, 3
 !
@@ -129,7 +126,7 @@ contains
 !
          call solver%do_eom_or_lr(wf)
 !
-!        Loop over excited states
+!        Loop over excited states and calculate transition strength
 !  
          do n = 1, solver%n_singlet_states
 !
@@ -198,12 +195,6 @@ contains
 !
       call move_to_section('cc properties', n_ops)
 !
-!      if (n_ops .gt. 1) then
-!
-!         call output%error_msg('More than one operator specified')
-!
-!      endif
-!      
       do i = 1, n_ops
 !
          read(input%unit, '(a100)') line
@@ -225,7 +216,7 @@ contains
 !
             solver%linear_response = .true.
 !
-            !call output%error_msg('Linear response not implemented for spectra calculations')
+            call output%error_msg('Linear response not implemented for spectra calculations')
 !
          endif
 !
@@ -272,12 +263,6 @@ contains
       if (allocated(solver%csiX)) &
          call mem%dealloc(solver%csiX, wf%n_es_amplitudes, 1)
 !
-      !if (allocated(solver%l_vec_n)) &
-      !   call mem%dealloc(solver%l_vec_n, wf%n_es_amplitudes, 1)
-!
-      !if (allocated(solver%r_vec_n)) &
-      !   call mem%dealloc(solver%r_vec_n, wf%n_es_amplitudes, 1)
-!
    end subroutine cleanup_cc_property
 !
 !
@@ -297,12 +282,6 @@ contains
 !
       if (.not. allocated(solver%csiX)) &
          call mem%alloc(solver%csiX, wf%n_es_amplitudes, 1)
-!
-      !if (.not. allocated(solver%l_vec_n)) &
-      !   call mem%alloc(solver%l_vec_n, wf%n_es_amplitudes, 1)
-!
-      !if (.not. allocated(solver%r_vec_n)) &
-      !   call mem%alloc(solver%r_vec_n, wf%n_es_amplitudes, 1) 
 !
    end subroutine intialize_variables_cc_property
 !
@@ -328,8 +307,6 @@ contains
 !!    Print summary
 !!    Written by Josefine H. Andersen
 !!
-!!    The routine takes input, as the results are written out in the loops in run()
-!!
       implicit  none
 !
       class(cc_property), intent(in) :: solver
@@ -340,8 +317,6 @@ contains
 !
       integer, optional :: i
 !
-      !real(dp) :: ddot
-!
       if (output_type == 'header') then 
 !              
          write(output%unit, '(t3,a,a)') 'Type of excitation: ', solver%es_type
@@ -350,18 +325,14 @@ contains
 !
       elseif (output_type == 'top') then
 !              
-        ! write(output%unit, '(t6,a)') '                                    '
          write(output%unit, '(/t6,a,a)') 'Operator component: ', solver%component(i)
-        ! write(output%unit, '(/t6,a)') '                                    '
+!
          write(output%unit, '(/t6,a)')  'State         etaX*R             L*csiX              Strength  '
          write(output%unit, '(t6,a)')   '---------------------------------------------------------------'
 !
       elseif (output_type == 'results') then
 !
-         write(output%unit, '(t6,i2,1x,f19.10,1x,f19.10,1x,f19.10)') i, &
-         solver%T_r, & !ddot(wf%n_es_amplitudes, solver%etaX, 1, solver%r_vec_n, 1), &
-         solver%T_l, & !ddot(wf%n_es_amplitudes, solver%l_vec_n, 1, solver%csiX, 1), &
-         solver%S
+         write(output%unit, '(t6,i2,1x,f19.10,1x,f19.10,1x,f19.10)') i, solver%T_r, solver%T_l, solver%S
 !
       elseif (output_type == 'bottom') then
 !
@@ -398,7 +369,7 @@ contains
       else
 !
          write(output%unit, '(t6,a)') 'You have not specified EOM or LR. etaX &
-                                      & will be calculated with no contrubutions'
+                                      & will be calculated with no contributions'
       endif
 !
    end subroutine do_eom_or_lr_property
