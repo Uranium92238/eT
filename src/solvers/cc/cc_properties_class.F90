@@ -105,13 +105,13 @@ contains
 !
       integer :: i, n
 !
-      call solver%print_summary(wf, 'header')
+      call solver%print_summary('header')
 !      
 !     Loop over components of X operator
 !
       do i = 1, 3
 !
-         call solver%print_summary(wf, 'top', i)
+         call solver%print_summary('top', i)
 !         
          solver%X = solver%component(i) //'_'// trim(solver%operator_type) 
 !
@@ -132,11 +132,11 @@ contains
             call wf%calculate_transition_strength(solver%S, solver%etaX, &
                                solver%csiX, n, solver%T_l, solver%T_r)
 !
-            call solver%print_summary(wf, 'results', n)
+            call solver%print_summary('results', n)
 !            
          enddo
 !         
-         call solver%print_summary(wf, 'bottom')
+         call solver%print_summary('bottom')
 !
       enddo
 !
@@ -301,7 +301,7 @@ contains
    end subroutine print_banner_cc_properties
 !
 !
-   subroutine print_summary_cc_properties(solver, wf, output_type, i)
+   subroutine print_summary_cc_properties(solver, output_type, i)
 !!
 !!    Print summary
 !!    Written by Josefine H. Andersen
@@ -309,8 +309,6 @@ contains
       implicit  none
 !
       class(cc_properties), intent(in) :: solver
-!
-      class(ccs), intent(in) :: wf
 !              
       character(len=*), intent(in) :: output_type
 !
@@ -360,7 +358,7 @@ contains
 !
             call wf%get_eom_contribution(solver%etaX, solver%csiX, solver%X)
 !         
-      elseif (solver%linear_response) then
+      elseif (solver%linear_response) then !redundant feature, since program stops in read settings
 !
          write(output%unit, '(t6,a)') 'Linear response has been selected but is not implemented. &
                                       & etaX will be calculated with no contribution '

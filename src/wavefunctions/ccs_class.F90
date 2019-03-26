@@ -5008,7 +5008,7 @@ contains
 !
       integer :: i = 0, ioerror = 0
 !
-      if (trim(operator_type) == 'dipole_length') then
+      if (trim(operator_type) == 'dipole_length' .or. (trim(operator_type) == 'dipole')) then
 !
          Xoperator = 'mu'
 !
