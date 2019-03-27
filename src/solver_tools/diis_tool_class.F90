@@ -65,7 +65,7 @@ module diis_tool_class
       integer, private :: n_parameters ! The length of the X vector
       integer, private :: n_equations  ! The length of the O vector
 !
-      logical :: accumulate = .true. ! Variable keeping track of wether we are cummulatively building the diis history or not
+      logical :: accumulate = .false. ! Variable keeping track of wether we are cummulatively building the diis history or not
 !                                      ! Note: default is to accumulate
 !
    contains
@@ -83,6 +83,7 @@ module diis_tool_class
       procedure :: set_dx     => set_dx_diis_tool
 !
       procedure, private :: construct_diis_matrix => construct_diis_matrix_diis_tool
+      procedure, private :: write_current_vecs    => write_current_vecs_diis_tool
 !
    end type diis_tool
 !
@@ -213,16 +214,18 @@ contains
 !     :: Compute the current index
 !     (1,2,...,7,8,1,2,...) for the standard diis_dimension = 8
 !
-      current_index = solver%iteration - &
-               ((solver%diis_dimension)-1)*((solver%iteration-1)/((solver%diis_dimension)-1))
+      current_index = solver%get_current_index()
+    !  current_index = solver%iteration - &
+    !           ((solver%diis_dimension)-1)*((solver%iteration-1)/((solver%diis_dimension)-1))
 !
 !     Write current x_dx and dx to file
 !
-      rewind(solver%dx(current_index)%unit)
-      rewind(solver%x_dx(current_index)%unit)
+      call solver%write_current_vecs(dx, x_dx, current_index)
+   !   rewind(solver%dx(current_index)%unit)
+   !  rewind(solver%x_dx(current_index)%unit)
 !
-      write(solver%dx(current_index)%unit)   (dx(i), i = 1, solver%n_equations)
-      write(solver%x_dx(current_index)%unit) (x_dx(i), i = 1, solver%n_parameters)
+   !   write(solver%dx(current_index)%unit)   (dx(i), i = 1, solver%n_equations)
+   !   write(solver%x_dx(current_index)%unit) (x_dx(i), i = 1, solver%n_parameters)
 !
 !     :: Solve the least squares problem, G * w = H
 !
@@ -313,15 +316,97 @@ contains
 !
       integer :: get_current_index_diis_tool
 !
+   !   get_current_index_diis_tool = solver%iteration - &
+   !            ((solver%diis_dimension)-1)*((solver%iteration-1)/((solver%diis_dimension)-1))
+!
       get_current_index_diis_tool = solver%iteration - &
-               ((solver%diis_dimension)-1)*((solver%iteration-1)/((solver%diis_dimension)-1))
+               ((solver%diis_dimension))*((solver%iteration-1)/((solver%diis_dimension)))
 !
    end function get_current_index_diis_tool
 !
 !
+   subroutine write_current_vecs_diis_tool(solver, dx, x_dx, current_index)
+!!
+!!    Write current vectors 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Writes the current dx and x_dx to file. Each index 1, 2, ..., diis_dim
+!!    has its own file. If the iteration is diis_dim + 1, we want the first record 
+!!    to be deleted, the other ones to be moved one-up, and the current record to 
+!!    be the last. 
+!!
+      class(diis_tool) :: solver
+!
+      real(dp), dimension(solver%n_equations), intent(in)  :: dx
+      real(dp), dimension(solver%n_parameters), intent(in) :: x_dx
+!
+      integer, intent(inout) :: current_index
+!
+      real(dp), dimension(:), allocatable :: tmp_dx, tmp_x_dx 
+!
+      integer :: i
+!
+      if (solver%iteration .eq. current_index) then ! Still doing first set of vectors; just write to the correct file 
+!
+         write(output%unit, *) 'hello1!', current_index
+         flush(output%unit)
+!
+         rewind(solver%dx(current_index)%unit)
+         rewind(solver%x_dx(current_index)%unit)
+!
+         write(solver%dx(current_index)%unit)   (dx(i), i = 1, solver%n_equations)
+         write(solver%x_dx(current_index)%unit) (x_dx(i), i = 1, solver%n_parameters)
+!
+      else ! First out, last in 
+!
+         write(output%unit, *) 'hello2!', current_index
+         flush(output%unit)
+!
+         current_index = solver%diis_dimension
+!
+         call mem%alloc(tmp_dx, solver%n_equations)
+         call mem%alloc(tmp_x_dx, solver%n_parameters)
+!
+         do k = 2, solver%diis_dimension
+!
+!           Read kth entry, save in position k-1
+!
+            rewind(solver%dx(k)%unit)
+            read(solver%dx(k)%unit) tmp_dx 
+!
+            rewind(solver%dx(k-1)%unit)
+            write(solver%dx(k-1)%unit) tmp_dx  
+!
+            rewind(solver%x_dx(k)%unit)
+            read(solver%x_dx(k)%unit) tmp_x_dx 
+!
+            rewind(solver%x_dx(k-1)%unit)
+            write(solver%x_dx(k-1)%unit) tmp_x_dx  
+!
+         enddo
+!
+         call mem%dealloc(tmp_dx, solver%n_equations)
+         call mem%dealloc(tmp_x_dx, solver%n_parameters)
+!
+!        Now write the current entry 
+!
+         rewind(solver%dx(solver%diis_dimension)%unit)
+         write(solver%dx(solver%diis_dimension)%unit) dx 
+!
+         rewind(solver%x_dx(solver%diis_dimension)%unit)
+         write(solver%x_dx(solver%diis_dimension)%unit) x_dx 
+!
+         write(output%unit, *) 'hello3!'
+         flush(output%unit)
+!
+      endif
+!
+   end subroutine write_current_vecs_diis_tool
+!
+!
    subroutine construct_diis_matrix_diis_tool(solver, current_index, diis_matrix, dx)
 !!
-!!    Construct diis matrix
+!!    Construct DIIS matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
       implicit none
@@ -544,5 +629,6 @@ contains
       call disk%close_file(solver%dx(i))
 !
    end subroutine set_dx_diis_tool
+!
 !
 end module diis_tool_class
