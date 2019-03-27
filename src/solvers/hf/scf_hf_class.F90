@@ -239,25 +239,18 @@ contains
 !
       class(hf) :: wf
 !
-      logical :: do_mo_transformation
-!
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
       flush(output%unit)
-!
-!     NB! This is weird - two times Roothan-Hall? Replace by MO transformation. -EFK, 2019
-!     Do a final Roothan-Hall step to transform the Fock matrix in the canonical MO basis 
-!
-      do_mo_transformation = .true.
-      call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies, do_mo_transformation)
 !
 !     Save the orbitals to file & store restart information 
 !
       call wf%save_orbital_coefficients()
 !
-!     Do a final Roothan-Hall step to transform the Fock matrix in the canonical MO basis 
+!     MO transform the AO Fock matrix 
+!     [NB! This is bound to go wrong for UHF. We should generalize and overwrite. @todo]
 !
-      do_mo_transformation = .true.
-      call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies, do_mo_transformation)
+      call wf%initialize_mo_fock()
+      call wf%construct_mo_fock(wf%mo_fock)
 !
 !     Save AO density (or densities) to disk 
 !
