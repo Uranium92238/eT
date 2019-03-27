@@ -2,9 +2,10 @@ submodule (ccsd_class) properties_ccsd
 !
 !!
 !!    Properties submodule (CCSD)
-!!    Written by Josefine H. Andersen, 2019
+!!    Written by Josefine H. Andersen, Mar 2019
 !!
-!!    <insert description of actions>
+!!    Routine for construction of the right-hand-side and left-hand-side
+!!    vectors for transition moments.
 !!
 !
    implicit none
@@ -16,7 +17,14 @@ contains
    module subroutine construct_etaX_ccsd(wf, Xoperator, etaX)
 !!
 !!    Construct etaX
-!!    Written by Josefine H. Andersen, February 2019
+!!    Written by Josefine H. Andersen, Feb 2019
+!!
+!!    eta^X_ai   = 2*X_ia + sum_c tb_ci X_ca - sum_k tb_ak X_ik
+!!                 - sum_ckdl (tb_ckal X_id t_ckdl + tb_ckdi X_la t_ckdl)
+!!
+!!    eta^X_aibj = 2 X_jb tb_ai - X_ib tb_aj + sum_c tb_aicj X_cb - sum_k tb_aibk X_jk 
+!!    
+!!    The calculations of the terms ate split into five routines.
 !!
       implicit none
 !
@@ -448,7 +456,11 @@ contains
    module subroutine construct_csiX_ccsd(wf, Xoperator, csiX)
 !!
 !!    Construct csiX (CCSD)
-!!    Written by Josefine H. Andersen, February 2019
+!!    Written by Josefine H. Andersen, Feb 2019
+!!
+!!    csiX_ai   = X_ai + sum_ck u_aick X_kc 
+!!
+!!    csiX_aibj = sum_c t_aicj X_bc - sum_k t_aibk X_kj 
 !!
       implicit none
 !

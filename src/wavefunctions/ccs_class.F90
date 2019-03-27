@@ -791,7 +791,7 @@ contains
 !
       call disk%open_file(wf%excitation_energies_file, 'write', 'rewind')
 !
-      rewind(wf%excitation_energies_file%unit) ! DEBUG 
+      rewind(wf%excitation_energies_file%unit)
 !
       write(wf%excitation_energies_file%unit) n_states
       write(wf%excitation_energies_file%unit) energies

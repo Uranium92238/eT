@@ -69,6 +69,7 @@ module cc_properties_class
       procedure :: do_eom_or_lr                      => do_eom_or_lr_properties
 !
       procedure :: print_banner                      => print_banner_cc_properties
+      procedure :: print_settings                    => print_settings_cc_properties
       procedure :: print_summary                     => print_summary_cc_properties
 !
    end type cc_properties
@@ -98,6 +99,7 @@ contains
       solver%operator_type   = 'dipole_length'
 !
       call solver%read_settings()
+      call solver%print_settings()
 !
       call solver%intialize_variables(wf)
 !
@@ -178,7 +180,7 @@ contains
 !
       if (.not. requested_section('cc excited state')) then
 !
-         call output%error_msg('number of excitations must be specified.')
+         call output%error_msg('Number of excitations must be specified.')
 !
       endif
 !
@@ -207,7 +209,7 @@ contains
 !     
       if (.not. requested_section('cc properties')) then
 !
-         call output%error_msg('operator type must be specified for properties')
+         call output%error_msg('Operator type must be specified for properties')
 !
       endif
 !
@@ -220,12 +222,16 @@ contains
 !
          if (line(1:9) == 'operator:') then
 !
-            read(line(10:100), *) solver%operator_type
+            if (trim(line(11:100)) == 'dipole length') then
 !
-         elseif (line(1:13) == 'dipole length') then
+               solver%operator_type = 'dipole_length'
 !
-            solver%operator_type = 'dipole_length'
-!        
+            else
+!
+               call output%error_msg('Operator must be specified.')
+!
+            endif
+!
          elseif (line(1:3) == 'eom') then
 !
             solver%eom = .true.
@@ -234,7 +240,7 @@ contains
 !
             solver%linear_response = .true.
 !
-            call output%error_msg('Linear response not implemented for spectra calculations')
+            call output%error_msg('Linear response not implemented')
 !
          endif
 !
@@ -320,6 +326,24 @@ contains
    end subroutine print_banner_cc_properties
 !
 !
+   subroutine print_settings_cc_properties(solver)
+!!
+!!    Print settings
+!!    Written by Josefine H. Andersen, 2019
+!!
+      implicit none
+!
+      class(cc_properties) :: solver
+!
+      write(output%unit, '(/t3,a)') '- Davidson CC properties solver settings:'
+!
+      write(output%unit,'(/t6,a26,a)') 'Operator:                 ', solver%operator_type
+      write(output%unit,'(t6,a26,a)')  'Excitation:               ', solver%es_type 
+      write(output%unit,'(t6,a,i1)')   'Number of singlet states: ', solver%n_singlet_states
+!
+   end subroutine print_settings_cc_properties
+!
+!
    subroutine print_summary_cc_properties(solver, output_type, i)
 !!
 !!    Print summary
@@ -335,8 +359,6 @@ contains
 !
       if (output_type == 'header') then 
 !              
-         write(output%unit, '(t3,a,a)') 'Type of excitation: ', solver%es_type
-         write(output%unit, '(t3,a,a)') 'Type of operator: ', solver%operator_type
          write(output%unit, '(/t3,a)') '- Property calculation results:'
 !
       elseif (output_type == 'top') then
