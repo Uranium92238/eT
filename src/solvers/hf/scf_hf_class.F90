@@ -250,7 +250,7 @@ contains
 !     [NB! This is bound to go wrong for UHF. We should generalize and overwrite. @todo]
 !
       call wf%initialize_mo_fock()
-      call wf%construct_mo_fock(wf%mo_fock)
+      call wf%construct_mo_fock()
 !
 !     Save AO density (or densities) to disk 
 !

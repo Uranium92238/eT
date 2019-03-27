@@ -2174,7 +2174,7 @@ contains
    end subroutine construct_ao_overlap_hf
 !
 !
-   subroutine construct_mo_fock_hf(wf, F_pq)
+   subroutine construct_mo_fock_hf(wf)
 !!
 !!    Construct MO Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2184,9 +2184,7 @@ contains
 !!
       implicit none
 !
-      class(hf), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq
+      class(hf), intent(inout) :: wf
 !
       real(dp), dimension(:,:), allocatable :: X
 !
@@ -2215,7 +2213,7 @@ contains
                   X,                         &
                   wf%n_ao,                   &
                   zero,                      &
-                  F_pq,                      & ! F = C^T F^ao C
+                  wf%mo_fock,                & ! F = C^T F^ao C
                   wf%n_mo)
 !
       call mem%dealloc(X, wf%n_ao, wf%n_mo)

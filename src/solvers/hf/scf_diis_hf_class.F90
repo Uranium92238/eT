@@ -368,7 +368,7 @@ contains
 !     MO transform the AO Fock matrix 
 !
       call wf%initialize_mo_fock()
-      call wf%construct_mo_fock(wf%mo_fock)
+      call wf%construct_mo_fock()
 !
 !     Save the orbitals to file & store restart information 
 !
