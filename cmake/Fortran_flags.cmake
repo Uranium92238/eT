@@ -87,6 +87,14 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
             )
     endif()
 # 
+#   Enable profiling 
+# 
+    if(ENABLE_PROFILING)
+        set(CMAKE_Fortran_FLAGS
+            "${CMAKE_Fortran_FLAGS} -pg"
+            )
+    endif()
+# 
 endif()
 
 if(DEFINED EXTRA_Fortran_FLAGS)

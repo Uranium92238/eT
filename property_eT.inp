@@ -43,7 +43,7 @@ multipliers
 end multipliers
 
 cc properties
-  dipole length
+  operator: dipole length
   eom
 end cc properties
 

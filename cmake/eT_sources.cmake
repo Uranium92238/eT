@@ -49,7 +49,7 @@ set(eT_fortran_sources
    src/various/kinds.F90
    src/various/parameters.F90
    src/tools/interval_class.F90
-   src/tools/index.F90
+   src/tools/index_invert.F90
    src/tools/reordering.F90
    src/tools/timings_class.F90
    src/tools/array_utilities.F90
@@ -89,4 +89,5 @@ set(eT_fortran_sources
    src/submodules/cc3/omega_cc3.F90
    src/submodules/ccs/F_ccs.F90
    src/submodules/ccsd/F_ccsd.F90
+   src/submodules/cc3/jacobian_cc3.F90
 )

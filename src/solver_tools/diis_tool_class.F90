@@ -184,17 +184,17 @@ contains
 !
       class(diis_tool) :: solver
 !
-      real(dp), dimension(solver%n_equations, 1)  :: dx
-      real(dp), dimension(solver%n_parameters, 1) :: x_dx
+      real(dp), dimension(solver%n_equations)  :: dx
+      real(dp), dimension(solver%n_parameters) :: x_dx
 !
-      real(dp), dimension(:,:), allocatable :: x_dx_i ! To hold previous x_dx_i temporarily
+      real(dp), dimension(:), allocatable :: x_dx_i ! To hold previous x_dx_i temporarily
 !
       integer :: i = 0, j = 0
 !
       integer  :: info = -1         ! Error integer for dgesv routine (LU factorization)
       integer  :: current_index = 0 ! Progressing as follows: 1,2,...,7,8,1,2,...
 !
-      real(dp), dimension(:,:), allocatable :: diis_vector
+      real(dp), dimension(:), allocatable :: diis_vector
       real(dp), dimension(:,:), allocatable :: diis_matrix
 !
       integer, dimension(:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
@@ -221,8 +221,8 @@ contains
       rewind(solver%dx(current_index)%unit)
       rewind(solver%x_dx(current_index)%unit)
 !
-      write(solver%dx(current_index)%unit)   (dx(i,1), i = 1, solver%n_equations)
-      write(solver%x_dx(current_index)%unit) (x_dx(i,1), i = 1, solver%n_parameters)
+      write(solver%dx(current_index)%unit)   (dx(i), i = 1, solver%n_equations)
+      write(solver%x_dx(current_index)%unit) (x_dx(i), i = 1, solver%n_parameters)
 !
 !     :: Solve the least squares problem, G * w = H
 !
@@ -235,9 +235,9 @@ contains
 !
 !     Set the DIIS vector
 !
-      call mem%alloc(diis_vector,current_index+1,1)
+      call mem%alloc(diis_vector,current_index+1)
       diis_vector = zero
-      diis_vector(current_index+1,1) = -one
+      diis_vector(current_index+1) = -one
 !
 !     Allocate the DIIS matrix and construct it
 !
@@ -268,7 +268,7 @@ contains
 !
       x_dx = zero 
 !
-      call mem%alloc(x_dx_i, solver%n_parameters, 1)
+      call mem%alloc(x_dx_i, solver%n_parameters)
 !
       do i = 1, current_index
 !
@@ -276,19 +276,19 @@ contains
 !
          x_dx_i = zero
          rewind(solver%x_dx(i)%unit)
-         read(solver%x_dx(i)%unit) (x_dx_i(j, 1), j = 1, solver%n_parameters)
+         read(solver%x_dx(i)%unit) (x_dx_i(j), j = 1, solver%n_parameters)
 !
 !        Add w_i (x_i + Δ x_i) to the amplitudes
 !
-         call daxpy(solver%n_parameters, diis_vector(i, 1), x_dx_i, 1, x_dx, 1)
+         call daxpy(solver%n_parameters, diis_vector(i), x_dx_i, 1, x_dx, 1)
 !
       enddo
 !
-      call mem%dealloc(x_dx_i, solver%n_parameters, 1)
+      call mem%dealloc(x_dx_i, solver%n_parameters)
 !
 !     Deallocations
 !
-      call mem%dealloc(diis_vector, current_index + 1, 1)
+      call mem%dealloc(diis_vector, current_index + 1)
       call mem%dealloc(diis_matrix, current_index + 1, current_index+1)
 !
 !     Close files

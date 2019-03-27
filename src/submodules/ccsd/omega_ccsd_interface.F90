@@ -68,7 +68,7 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
 !
    end subroutine omega_ccsd_a2_ccsd
 !
@@ -82,7 +82,7 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
 !
    end subroutine omega_ccsd_b2_ccsd
 !
@@ -96,7 +96,7 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
 !
    end subroutine omega_ccsd_c2_ccsd
 !
@@ -110,7 +110,7 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
 !
    end subroutine omega_ccsd_d2_ccsd
 !
@@ -124,7 +124,7 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
 !
    end subroutine omega_ccsd_e2_ccsd
 !
@@ -138,7 +138,7 @@
 !
          class(ccsd), intent(inout) :: wf
 !
-         real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
+         real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
    end subroutine construct_omega_ccsd
 !

@@ -149,7 +149,7 @@ contains
 !
       do p = 1, wf%n_mo
 !
-         wf%fock_diagonal(p, 1) = ref_wf%mo_fock(p, p)
+         wf%fock_diagonal(p) = ref_wf%mo_fock(p, p)
 !
       enddo
 !
@@ -194,10 +194,10 @@ contains
 !
                   correlation_energy = correlation_energy +                                &
                                        (wf%t1(a, i)*wf%t1(b, j) -                          &
-                                       (g_aibj(a,i,b,j))/(wf%fock_diagonal(wf%n_o + a, 1)  &
-                                                         + wf%fock_diagonal(wf%n_o + b, 1) &
-                                                         - wf%fock_diagonal(i,1)           &
-                                                         - wf%fock_diagonal(j,1)))         &
+                                       (g_aibj(a,i,b,j))/(wf%fock_diagonal(wf%n_o + a)  &
+                                                         + wf%fock_diagonal(wf%n_o + b) &
+                                                         - wf%fock_diagonal(i)           &
+                                                         - wf%fock_diagonal(j)))         &
                                        *(two*g_iajb(i,a,j,b)-g_iajb(i,b,j,a))
 !
                enddo
@@ -251,9 +251,9 @@ contains
                do a = 1, wf%n_v
 !
                   wf%u(a, i, b, j) = (two*g_aibj(a, i, b, j) - g_aibj(a, j, b, i))/ &
-                                          (wf%fock_diagonal(i, 1) + wf%fock_diagonal(j, 1) &
-                                        - wf%fock_diagonal(wf%n_o + a, 1) &
-                                        - wf%fock_diagonal(wf%n_o + b, 1) )
+                                       (  wf%fock_diagonal(i) + wf%fock_diagonal(j) &
+                                        - wf%fock_diagonal(wf%n_o + a) &
+                                        - wf%fock_diagonal(wf%n_o + b))
 !
                enddo
             enddo
@@ -344,7 +344,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o) - wf%fock_diagonal(i)
 !
             do j = 1, wf%n_o 
                do b = 1, wf%n_v
@@ -355,8 +355,10 @@ contains
 !
                      aibj = (ai*(ai-3)/2) + ai + bj
 !
-                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1) &
-                                                                      +  wf%fock_diagonal(b + wf%n_o, 1) - wf%fock_diagonal(j, 1)
+                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%fock_diagonal(a + wf%n_o)     &
+                                                                     - wf%fock_diagonal(i) &
+                                                                     +  wf%fock_diagonal(b + wf%n_o)  &
+                                                                     - wf%fock_diagonal(j)
 !
                   endif
 !
@@ -397,9 +399,9 @@ contains
 !
       class(cc2), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: equation 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation 
 !
-      real(dp), dimension(:,:), allocatable :: eta 
+      real(dp), dimension(:), allocatable :: eta 
       real(dp), dimension(:,:,:,:), allocatable :: t2bar
       real(dp), dimension(:,:,:,:), allocatable :: g_iajb
 !
@@ -432,10 +434,10 @@ contains
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
-                  t2bar(a, i, b, j) = t2bar(a, i, b, j)/(- wf%fock_diagonal(a + wf%n_o, 1) &
-                                                        -  wf%fock_diagonal(b + wf%n_o, 1) &
-                                                        +  wf%fock_diagonal(i, 1) &
-                                                        +  wf%fock_diagonal(j, 1))
+                  t2bar(a, i, b, j) = t2bar(a, i, b, j)/(- wf%fock_diagonal(a + wf%n_o) &
+                                                         -  wf%fock_diagonal(b + wf%n_o) &
+                                                         +  wf%fock_diagonal(i) &
+                                                         +  wf%fock_diagonal(j))
 !
                enddo
             enddo
@@ -461,12 +463,12 @@ contains
 !
 !     Add eta, equation = t-bar^T A + eta 
 !
-      call mem%alloc(eta, wf%n_gs_amplitudes, 1)
+      call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
 !
       call daxpy(wf%n_gs_amplitudes, one, eta, 1, equation, 1)
 !
-      call mem%dealloc(eta, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(eta, wf%n_gs_amplitudes)
 !
    end subroutine construct_multiplier_equation_cc2
 !
@@ -474,17 +476,17 @@ contains
    subroutine get_cvs_projector_cc2(wf, projector, n_cores, core_MOs)
 !!
 !!    Get CVS projector
-!!    Written by Sarai D. Folekstad, Oct 2018
+!!    Written by Sarai D. Folkestad, Oct 2018
 !!
       implicit none
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
 !
       integer, intent(in) :: n_cores
 !
-      integer, dimension(n_cores, 1), intent(in) :: core_MOs
+      integer, dimension(n_cores), intent(in) :: core_MOs
 !
       integer :: core, i, a, ai, j, b, bj, aibj
 !
@@ -492,13 +494,13 @@ contains
 !
       do core = 1, n_cores
 !
-        i = core_MOs(core, 1)
+        i = core_MOs(core)
 !
 !$omp parallel do private (a, ai, j, b, bj, aibj)
         do a = 1, wf%n_v
 !
            ai = wf%n_v*(i - 1) + a
-           projector(ai, 1) = one
+           projector(ai) = one
 !
             do j = 1, wf%n_o 
                do b = 1, wf%n_v
@@ -506,7 +508,7 @@ contains
                   bj = wf%n_v*(j - 1) + b
                   aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
 !                  
-                  projector(aibj + (wf%n_o)*(wf%n_v), 1) = one
+                  projector(aibj + (wf%n_o)*(wf%n_v)) = one
 !
                enddo
             enddo
@@ -700,10 +702,10 @@ contains
                            aibj = ai*(ai - 3)/2 + ai + bj
 !
                            X(aibj + (wf%n_v)*(wf%n_o)) = r2_aibj(a, i, b, j)&
-                                                     /(omega(n) - wf%fock_diagonal(a + wf%n_o, 1) &
-                                                                - wf%fock_diagonal(b + wf%n_o, 1) &
-                                                                + wf%fock_diagonal(i, 1) &
-                                                                + wf%fock_diagonal(j, 1) )
+                                                     /(omega(n) - wf%fock_diagonal(a + wf%n_o) &
+                                                                - wf%fock_diagonal(b + wf%n_o) &
+                                                                + wf%fock_diagonal(i) &
+                                                                + wf%fock_diagonal(j) )
 !
                         endif
 !
@@ -763,10 +765,10 @@ contains
                            aibj = ai*(ai - 3)/2 + ai + bj
 !
                            X(aibj + (wf%n_v)*(wf%n_o)) = l2_aibj(a, i, b, j)&
-                                                     /(omega(n) - wf%fock_diagonal(a + wf%n_o, 1) &
-                                                                - wf%fock_diagonal(b + wf%n_o, 1) &
-                                                                + wf%fock_diagonal(i, 1) &
-                                                                + wf%fock_diagonal(j, 1) )
+                                                     /(omega(n) - wf%fock_diagonal(a + wf%n_o) &
+                                                                - wf%fock_diagonal(b + wf%n_o) &
+                                                                + wf%fock_diagonal(i) &
+                                                                + wf%fock_diagonal(j) )
 !
                         endif
 !

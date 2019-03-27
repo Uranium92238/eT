@@ -44,7 +44,9 @@ module array_list_class
 !
       procedure :: push_back  => push_back_array_list
       procedure :: pop_back   => pop_back_array_list
+      procedure :: push_front  => push_front_array_list
       procedure :: insert     => insert_array_list
+      procedure :: remove     => remove_array_list
 !
       procedure :: get_element => get_element_array_list
       procedure :: set_element => set_element_array_list
@@ -172,9 +174,49 @@ contains
    end subroutine push_back_array_list
 !
 !
+   subroutine push_front_array_list(list, n_rows, n_columns)
+!!
+!!    Insert at the beginning of the list
+!!
+      implicit none
+!
+      class(array_list) :: list
+      integer, intent(in) :: n_rows, n_columns
+!
+      if (associated(list%head)) then ! List has nodes already
+!
+         allocate(list%head%previous)
+         call mem%alloc(list%head%previous%array, n_rows, n_columns)
+         list%head%previous%n_rows = n_rows
+         list%head%previous%n_columns = n_columns
+!
+         list%head%previous%next => list%head
+         list%head => list%head%previous
+
+         list%head%previous => null()
+!
+      else ! List is empty
+!
+         allocate(list%head)
+         call mem%alloc(list%head%array, n_rows, n_columns)
+         list%head%n_rows = n_rows
+         list%head%n_columns = n_columns
+!
+         list%tail => list%head
+
+         list%head%next => null()
+         list%head%previous => null()
+!
+      endif
+!
+      list%n_nodes = list%n_nodes + 1
+!
+   end subroutine push_front_array_list
+!
+!
    subroutine pop_back_array_list(list)
 !!
-!!    Insert at the end of the list
+!!    Remove at the end of the list
 !!
       implicit none
 !
@@ -410,6 +452,11 @@ contains
             call list%push_back(n_rows, n_columns)
             return
 !
+         elseif (n == 1) then
+!
+            call list%push_front(n_rows, n_columns)
+            return
+! 
          else
 !
             nth_pointer => list%head
@@ -460,6 +507,60 @@ contains
       list%n_nodes = list%n_nodes + 1
 !
    end subroutine insert_array_list
+!
+!
+   subroutine remove_array_list(list, n)
+!!
+!!    Remove at position n
+!!
+      implicit none
+!
+      class(array_list) :: list
+      integer, intent(in) :: n
+!
+      type(array_node), pointer :: nth_pointer, nth_prev_pointer, nth_next_pointer
+!
+      integer :: element
+!
+       if (n .gt. (list%n_nodes + 1) .or. n .lt. 1) then
+!
+         write(output%unit, '(t3,a)') 'Error: attempted to remove an element not in the list.'
+         stop
+!
+      endif
+!
+      if (associated(list%head)) then ! List has nodes already
+!
+         if (n == list%n_nodes) then
+!
+            call list%pop_back()
+            return
+!
+         else
+!
+            nth_pointer => list%head
+!
+            do element = 1, n - 1
+!
+               nth_pointer => nth_pointer%next
+!
+            enddo
+!
+            nth_next_pointer => nth_pointer%next 
+            nth_prev_pointer => nth_pointer%previous
+!
+            nth_prev_pointer%next => nth_next_pointer
+            nth_next_pointer%previous => nth_prev_pointer
+               
+            call mem%dealloc(nth_pointer%array, nth_pointer%n_rows, nth_pointer%n_columns)
+
+         endif
+!
+      endif
+!
+      list%n_nodes = list%n_nodes - 1
+!
+   end subroutine remove_array_list
 !
 !
 end module array_list_class

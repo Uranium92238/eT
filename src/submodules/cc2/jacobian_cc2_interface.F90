@@ -36,7 +36,7 @@
 !!
       class(cc2), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes) :: c_i
 !
    end subroutine jacobian_transform_trial_vector_cc2
 !
@@ -48,7 +48,7 @@
 !!
 !!    Directs the transformation by the cc2 Jacobi matrix,
 !!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >,
 !!
 !!    where the basis employed for the brackets is biorthonormal.
 !!    The transformation is rho = A c, i.e.,
@@ -63,7 +63,7 @@
 !
       class(cc2) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1) :: c
+      real(dp), dimension(wf%n_es_amplitudes) :: c
 !
    end subroutine jacobian_cc2_transformation_cc2
 !

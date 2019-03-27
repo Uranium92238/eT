@@ -59,17 +59,14 @@ contains
 !
       integer :: n_blocks
 !
-      integer, dimension(n_blocks + 1, 1) :: block_firsts
-      logical, dimension(n_blocks, 1)          :: block_significant
+      integer, dimension(n_blocks + 1) :: block_firsts
+      logical, dimension(n_blocks)     :: block_significant
 !
       integer :: dim_reduced
 !
       integer :: list_element
 !
-      type(array_node), pointer :: node_ptr
-!
-      real(dp), dimension(:,:), allocatable :: temp_reduced_array
-!
+      type(array_node), pointer :: node_ptr, node_ptr_new
 !
       do list_element = 1, cholesky_array%n_nodes
 !
@@ -77,12 +74,16 @@ contains
 !
          call cholesky_array%get_node(node_ptr, list_element)
 !
+!        Insert new reduced node at position 'list_element',
+!        then get the pointer to this new element 
+!
+         call cholesky_array%insert(dim_reduced, node_ptr%n_columns, list_element)
+         call cholesky_array%get_node(node_ptr_new, list_element)
+!
 !        Determine reduced array by cutting away insignificant blocks
 !
-         call mem%alloc(temp_reduced_array, dim_reduced, node_ptr%n_columns)
-!
          call reduce_array(node_ptr%array,     &
-                           temp_reduced_array, &
+                           node_ptr_new%array, &
                            block_firsts,       &
                            block_significant,  &
                            n_blocks,           &
@@ -90,17 +91,9 @@ contains
                            dim_reduced,        &
                            node_ptr%n_columns)
 !
-!        Reallocate and set reduced node
+!        Remove old unreduced node from list 
 !
-         call mem%dealloc(node_ptr%array, node_ptr%n_rows, node_ptr%n_columns)
-!
-         node_ptr%n_rows = dim_reduced
-!
-         call mem%alloc(node_ptr%array, node_ptr%n_rows, node_ptr%n_columns)
-!
-         node_ptr%array = temp_reduced_array
-!
-         call mem%dealloc(temp_reduced_array, dim_reduced, node_ptr%n_columns)
+         call cholesky_array%remove(list_element + 1)
 !
       enddo
 !

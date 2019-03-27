@@ -132,7 +132,7 @@ contains
 !
       logical :: converged_residual
 !
-      real(dp), dimension(:,:), allocatable :: eta, c_i, multipliers
+      real(dp), dimension(:), allocatable :: eta, c_i, multipliers
 !
       integer :: iteration
 !
@@ -140,7 +140,7 @@ contains
 !
 !     Initialize solver tool and set preconditioner 
 !
-      call mem%alloc(eta, wf%n_gs_amplitudes, 1)
+      call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
 !
       call davidson%prepare('multipliers', wf%n_gs_amplitudes, solver%residual_threshold, eta)
@@ -157,13 +157,13 @@ contains
 !
          call wf%read_multipliers()
 !
-         call mem%alloc(multipliers, wf%n_gs_amplitudes, 1)
+         call mem%alloc(multipliers, wf%n_gs_amplitudes)
          call wf%get_multipliers(multipliers)
 !
          norm_trial = sqrt(ddot(wf%n_gs_amplitudes, multipliers, 1, multipliers, 1))
 !
          call davidson%write_trial(multipliers, 'rewind')
-         call mem%dealloc(multipliers, wf%n_gs_amplitudes, 1)
+         call mem%dealloc(multipliers, wf%n_gs_amplitudes)
 !
       else 
 !
@@ -179,14 +179,14 @@ contains
 !
       endif 
 !
-      call mem%dealloc(eta, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(eta, wf%n_gs_amplitudes)
 !
 !     Enter iterative loop
 !
       iteration = 1
 !
       write(output%unit,'(/t3,a)') 'Iteration     Residual norm'
-      write(output%unit,'(t3,a)') '---------------------------'
+      write(output%unit,'(t3,a)')  '---------------------------'
       flush(output%unit)
 !
       converged_residual = .false.
@@ -195,7 +195,7 @@ contains
 !
 !        Transform new trial vectors and write to file
 !
-         call mem%alloc(c_i, davidson%n_parameters, 1)
+         call mem%alloc(c_i, davidson%n_parameters)
 !
          call davidson%read_trial(c_i, davidson%dim_red)
          call solver%transform_trial_vector(wf, c_i)
@@ -210,7 +210,7 @@ contains
 !
          endif
 !
-         call mem%dealloc(c_i, davidson%n_parameters, 1)
+         call mem%dealloc(c_i, davidson%n_parameters)
 !
 !        Solve problem in reduced space
 !
@@ -260,13 +260,13 @@ contains
 !
       endif
 !
-      call mem%alloc(multipliers, wf%n_gs_amplitudes, 1)
+      call mem%alloc(multipliers, wf%n_gs_amplitudes)
 !
       call davidson%construct_X(multipliers, 1)
 !
       call wf%set_multipliers(multipliers)
 !
-      call mem%dealloc(multipliers, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(multipliers, wf%n_gs_amplitudes)
 !
    end subroutine run_davidson_cc_multipliers
 !
@@ -311,7 +311,7 @@ contains
 !!
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: c_i
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: c_i
 !
       call wf%jacobian_transpose_transform_trial_vector(c_i) 
 !
@@ -331,12 +331,12 @@ contains
 !
       type(linear_davidson_tool) :: davidson
 !
-      real(dp), dimension(:,:), allocatable :: preconditioner
+      real(dp), dimension(:), allocatable :: preconditioner
 !
-      call mem%alloc(preconditioner, wf%n_gs_amplitudes, 1)
+      call mem%alloc(preconditioner, wf%n_gs_amplitudes)
       call wf%get_gs_orbital_differences(preconditioner, wf%n_gs_amplitudes)
       call davidson%set_preconditioner(preconditioner)
-      call mem%dealloc(preconditioner, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(preconditioner, wf%n_gs_amplitudes)
 !
    end subroutine set_precondition_vector_davidson_cc_multipliers
 !
@@ -352,11 +352,11 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(:,:), allocatable :: X
+      real(dp), dimension(:), allocatable :: X
 !
       write(output%unit, '(/t3,a)') '- Multipliers vector amplitudes:'
 !
-      call mem%alloc(X, wf%n_gs_amplitudes, 1)
+      call mem%alloc(X, wf%n_gs_amplitudes)
 !
       call davidson%construct_X(X, 1)         
 !

@@ -45,7 +45,7 @@ module wavefunction_class
       type(molecular_system) :: system
 !
       real(dp), dimension(:,:), allocatable :: orbital_coefficients
-      real(dp), dimension(:,:), allocatable :: orbital_energies
+      real(dp), dimension(:), allocatable :: orbital_energies
 !
    contains
 !
@@ -127,7 +127,7 @@ contains
 !
       class(wavefunction) :: wf
 !
-      if (.not. allocated(wf%orbital_energies)) call mem%alloc(wf%orbital_energies, wf%n_mo, 1)
+      if (.not. allocated(wf%orbital_energies)) call mem%alloc(wf%orbital_energies, wf%n_mo)
 !
    end subroutine initialize_orbital_energies_wavefunction
 !
@@ -141,7 +141,7 @@ contains
 !
       class(wavefunction) :: wf
 !
-      if (allocated(wf%orbital_energies)) call mem%dealloc(wf%orbital_energies, wf%n_mo, 1)
+      if (allocated(wf%orbital_energies)) call mem%dealloc(wf%orbital_energies, wf%n_mo)
 !
    end subroutine destruct_orbital_energies_wavefunction
 !

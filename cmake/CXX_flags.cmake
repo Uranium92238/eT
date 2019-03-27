@@ -84,6 +84,14 @@ if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
             "${CMAKE_CXX_FLAGS} -fopenmp"
             )
     endif()
+# 
+#   Enable profiling 
+# 
+    if(ENABLE_PROFILING)
+        set(CMAKE_CXX_FLAGS
+            "${CMAKE_CXX_FLAGS} -pg"
+            )
+    endif()
 endif()
 
 # Needed on Dirac: -I/usr/local/include/c++/8.2.0 -gcc-version=8.2

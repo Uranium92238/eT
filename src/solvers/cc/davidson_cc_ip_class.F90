@@ -113,7 +113,7 @@ contains
 !
       type(eigen_davidson_tool) :: davidson
 !
-      real(dp), dimension(:,:), allocatable :: c_i
+      real(dp), dimension(:), allocatable :: c_i
 !
       integer :: trial, count_start_vecs, a, i, ai
 !
@@ -121,29 +121,29 @@ contains
 !
 !        Initial trial vectors given on input
 !
-         call mem%alloc(c_i, wf%n_es_amplitudes, 1)
+         call mem%alloc(c_i, wf%n_es_amplitudes)
 !
          c_i = zero
-         c_i(solver%start_vectors(1, 1), 1) = one
+         c_i(solver%start_vectors(1)) = one
 !
          call davidson%write_trial(c_i, 'rewind')
 !
          do trial = 2, solver%n_singlet_states
 !
             c_i = zero
-            c_i(solver%start_vectors(trial, 1), 1) = one
+            c_i(solver%start_vectors(trial)) = one
 !
             call davidson%write_trial(c_i)
 !
          enddo
 !
-         call mem%dealloc(c_i, wf%n_es_amplitudes, 1)
+         call mem%dealloc(c_i, wf%n_es_amplitudes)
 !
       else
 !
 !        Initial trial vectors given by Koopman
 !
-         call mem%alloc(c_i, wf%n_es_amplitudes, 1)
+         call mem%alloc(c_i, wf%n_es_amplitudes)
 !
          count_start_vecs = 0
          a = wf%n_v
@@ -156,7 +156,7 @@ contains
             if (count_start_vecs .gt. solver%n_singlet_states) exit 
 !
             c_i = zero
-            c_i(ai, 1) = one
+            c_i(ai) = one
 !
             if (count_start_vecs == 1) then
 !
@@ -171,7 +171,7 @@ contains
 !
          enddo
 !
-         call mem%dealloc(c_i, wf%n_es_amplitudes, 1)
+         call mem%dealloc(c_i, wf%n_es_amplitudes)
 !
       endif
 !
@@ -193,14 +193,15 @@ contains
 !
       type(eigen_davidson_tool) :: davidson
 !
-      real(dp), dimension(:,:), allocatable :: projector
+      real(dp), dimension(:), allocatable :: projector
 !
-      call mem%alloc(projector, wf%n_es_amplitudes, 1)
+      call mem%alloc(projector, wf%n_es_amplitudes)
 !
       call wf%get_ip_projector(projector)
 !
       call davidson%set_projector(projector)
-      call mem%dealloc(projector, wf%n_es_amplitudes, 1)
+!
+      call mem%dealloc(projector, wf%n_es_amplitudes)
 !
       if (.false.) write(output%unit, *) solver%tag ! Hack to suppress unavoidable compiler warnings
 !

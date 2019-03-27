@@ -52,6 +52,7 @@ program eT_program
    use abstract_engine_class
 !
    use eri_cd_class
+   use omp_lib
 !
    implicit none
 !
@@ -59,12 +60,12 @@ program eT_program
 !
    type(molecular_system), allocatable :: system
 !
-!  Wavefunction allocatables and pointers  
+!  Wavefunction allocatables and pointers
 !
    type(hf), allocatable, target          :: hf_wf
    type(uhf), allocatable, target         :: uhf_wf
-   type(mlhf), allocatable, target        :: mlhf_wf 
-!  
+   type(mlhf), allocatable, target        :: mlhf_wf
+!
    type(ccs), allocatable, target         :: ccs_wf
    type(cc2), allocatable, target         :: cc2_wf
    type(lowmem_cc2), allocatable, target  :: lowmem_cc2_wf
@@ -77,7 +78,7 @@ program eT_program
    class(hf), pointer  :: ref_wf    => null()
    class(ccs), pointer :: cc_wf     => null()
 !
-!  Cholesky decomposition solver 
+!  Cholesky decomposition solver
 !
    type(eri_cd), allocatable :: chol_solver
 !
@@ -97,11 +98,14 @@ program eT_program
 !
    integer :: n_methods, i
 !
-   integer :: n_threads
-   integer :: omp_get_max_threads
+   integer :: n_threads = 1
 !
-   character(len=40) :: cc_engine  
+   character(len=40) :: cc_engine
    character(len=40), dimension(:), allocatable :: cc_methods
+!
+!  Timer object
+!
+   type(timings) :: eT_timer
 !
 !  Prepare input, output and timing file
 !
@@ -114,9 +118,12 @@ program eT_program
    call timing%init('timing.out', 'sequential', 'formatted')
    call disk%open_file(timing, 'write', 'rewind')
 !
+   call eT_timer%init("Total time in eT")
+   call eT_timer%start()
+!
 !  Print program banner
 !
-   write(output%unit,'(///t24,a)')                 'eT - a coupled cluster program '
+   write(output%unit,'(///t24,a)')                       'eT - a coupled cluster program '
    write(output%unit,'(t8,a)')         'Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch'
    flush(output%unit)
 !
@@ -126,15 +133,16 @@ program eT_program
    write(output%unit,'(t4, a, a)')    'Sarai D. Folkestad     ','Program design, HF, CCS, CC2, CCSD, Libint-interface,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS'
    write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
-   write(output%unit,'(t4, a, a)')    'Eirik. F. Kjønstad     ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
+   write(output%unit,'(t4, a, a)')    'Eirik F. Kjønstad      ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
-   write(output%unit,'(t4, a, a)')    'Rolf. H. Myhre         ','CC3, Runtest-interface, Launch script'
-   write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2'
+   write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, Launch script'
+   write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2, CC3'
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
-   write(output%unit,'(t3,a/)')      '----------------------------------------------------------------------------------'
+   write(output%unit,'(t3,a)')       '----------------------------------------------------------------------------------'
+   write(output%unit,'(t4,a/)')       'Other contributors: A. Balbi, M. Scavino'
    flush(output%unit)
 !
-   n_threads = omp_get_max_threads()
+!$   n_threads = omp_get_max_threads()
 !
    if (n_threads .eq. 1) then
 !
@@ -193,12 +201,12 @@ program eT_program
 !
       else
 !
-         if (requested_method('uhf')) then 
+         if (requested_method('uhf')) then
 !
             allocate(uhf_wf)
             ref_wf => uhf_wf
 !
-         else ! Assume standard RHF 
+         else ! Assume standard RHF
 !
             allocate(hf_wf)
             ref_wf => hf_wf
@@ -209,11 +217,11 @@ program eT_program
 !
          allocate(gs_hf_engine)
 !
-         call gs_hf_engine%prepare()     
-         call gs_hf_engine%run(ref_wf)     
-         call gs_hf_engine%cleanup()     
+         call gs_hf_engine%prepare()
+         call gs_hf_engine%run(ref_wf)
+         call gs_hf_engine%cleanup()
 !
-         deallocate(gs_hf_engine)  
+         deallocate(gs_hf_engine)
 !
       endif
 !
@@ -230,7 +238,7 @@ program eT_program
    if (n_methods .gt. 0) then
 !
       allocate(cc_methods(n_methods))
-! 
+!
       call read_cc_methods(n_methods, cc_methods)
       call select_engine(cc_engine)
 !
@@ -275,7 +283,7 @@ program eT_program
          if (cc_engine == 'ground state') then
 !
             allocate(gs_cc_engine)
-            engine => gs_cc_engine  
+            engine => gs_cc_engine
 !
          elseif (cc_engine == 'excited state') then
 !
@@ -285,7 +293,7 @@ program eT_program
          elseif (cc_engine == 'multipliers') then
 !
             allocate(multipliers_cc_engine)
-            engine => multipliers_cc_engine 
+            engine => multipliers_cc_engine
 !
          elseif (cc_engine == 'properties') then
 !
@@ -305,11 +313,11 @@ program eT_program
 !
             deallocate(mlhf_wf)
 !
-         else if (requested_method('uhf')) then 
+         else if (requested_method('uhf')) then
 !
             deallocate(uhf_wf)
 !
-         else ! Assume standard RHF 
+         else ! Assume standard RHF
 !
             deallocate(hf_wf)
 !
@@ -368,6 +376,9 @@ program eT_program
    endif
 !
    call finalize_libint()
+!
+   call eT_timer%freeze()
+   call eT_timer%switch_off()
 !
    write(output%unit, '(/t3,a)') 'eT terminated successfully!'
 !
