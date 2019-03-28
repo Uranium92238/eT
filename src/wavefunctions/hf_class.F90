@@ -194,6 +194,14 @@ contains
       call wf%orbital_energies_file%init('orbital_energies', 'sequential', 'unformatted')
       call wf%restart_file%init('hf_restart_file', 'sequential', 'unformatted')
 !
+      call disk%open_file(wf%restart_file, 'readwrite', 'rewind')
+!
+      write(wf%restart_file%unit) wf%n_ao 
+      write(wf%restart_file%unit) wf%n_mo 
+      write(wf%restart_file%unit) wf%n_densities 
+!
+      call disk%close_file(wf%restart_file) 
+!
    end subroutine prepare_hf
 !
 !
@@ -700,14 +708,6 @@ contains
       implicit none
 !
       class(hf) :: wf
-!
-      call disk%open_file(wf%restart_file, 'readwrite', 'rewind')
-!
-      write(wf%restart_file%unit) wf%n_ao 
-      write(wf%restart_file%unit) wf%n_mo 
-      write(wf%restart_file%unit) wf%n_densities 
-!
-      call disk%close_file(wf%restart_file) 
 !
       call wf%destruct_orbital_energies()
       call wf%destruct_ao_overlap()
@@ -2174,7 +2174,7 @@ contains
    end subroutine construct_ao_overlap_hf
 !
 !
-   subroutine construct_mo_fock_hf(wf, F_pq)
+   subroutine construct_mo_fock_hf(wf)
 !!
 !!    Construct MO Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2184,9 +2184,7 @@ contains
 !!
       implicit none
 !
-      class(hf), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq
+      class(hf), intent(inout) :: wf
 !
       real(dp), dimension(:,:), allocatable :: X
 !
@@ -2215,7 +2213,7 @@ contains
                   X,                         &
                   wf%n_ao,                   &
                   zero,                      &
-                  F_pq,                      & ! F = C^T F^ao C
+                  wf%mo_fock,                & ! F = C^T F^ao C
                   wf%n_mo)
 !
       call mem%dealloc(X, wf%n_ao, wf%n_mo)
@@ -2875,7 +2873,7 @@ contains
    end subroutine construct_roothan_hall_gradient_hf
 !
 !
-   subroutine do_roothan_hall_hf(wf, F, C, e, do_mo_transformation)
+   subroutine do_roothan_hall_hf(wf, F, C, e)
 !!
 !!    Do Roothan-Hall
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2908,22 +2906,20 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: F 
-      real(dp), dimension(wf%n_ao, wf%n_mo), intent(inout) :: C 
-      real(dp), dimension(wf%n_mo),       intent(inout) :: e  
-!
-      logical, optional, intent(in) :: do_mo_transformation
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)     :: F 
+      real(dp), dimension(wf%n_ao, wf%n_mo), intent(inout)  :: C 
+      real(dp), dimension(wf%n_mo), intent(inout)           :: e  
 !
       real(dp), dimension(:), allocatable   :: work
       real(dp), dimension(:,:), allocatable :: metric 
       real(dp), dimension(:,:), allocatable :: ao_fock 
       real(dp), dimension(:,:), allocatable :: FP 
 !
-      real(dp), dimension(:,:), allocatable :: ao_fock_copy 
-      real(dp), dimension(:,:), allocatable :: red_orbital_coefficients  
-      real(dp), dimension(:,:), allocatable :: tmp  
+      real(dp), dimension(:,:), allocatable :: prev_C
 !
-      integer :: info
+      real(dp) :: ddot, orbital_dotprod
+!
+      integer :: info, p
 !
       call mem%alloc(metric, wf%n_mo, wf%n_mo)
 !
@@ -2977,17 +2973,6 @@ contains
 !
       call mem%dealloc(FP, wf%n_mo, wf%n_ao) 
 !
-      if (present(do_mo_transformation)) then 
-!
-         if (do_mo_transformation) then 
-!
-            call mem%alloc(ao_fock_copy, wf%n_mo, wf%n_mo)
-            ao_fock_copy = ao_fock 
-!
-         endif 
-!
-      endif 
-!  
 !     Solve F'C' = L L^T C' e
 !
       info = 0
@@ -3011,54 +2996,10 @@ contains
 !
       if (info .ne. 0)  call output%error_msg('Error: could not solve Roothan-Hall equations.')
 !
-!     If requested MO transformation of Fock matrix, do it 
-!
-      if (present(do_mo_transformation)) then 
-!
-         if (do_mo_transformation) then 
-!
-            call mem%alloc(red_orbital_coefficients, wf%n_mo, wf%n_mo)
-            red_orbital_coefficients = ao_fock 
-!
-            call mem%alloc(tmp, wf%n_mo, wf%n_mo)
-!
-            call dgemm('N', 'N', &
-                        wf%n_mo, &
-                        wf%n_mo, &
-                        wf%n_mo, &
-                        one, &
-                        ao_fock_copy, &
-                        wf%n_mo, &
-                        red_orbital_coefficients, &
-                        wf%n_mo, &
-                        zero, &
-                        tmp, & ! tmp = F' C'  
-                        wf%n_mo)
-!
-            call wf%initialize_mo_fock() ! Allocate if necessary
-!
-            call dgemm('T', 'N',                  &
-                        wf%n_mo,                  &
-                        wf%n_mo,                  &
-                        wf%n_mo,                  &
-                        one,                      &
-                        red_orbital_coefficients, &
-                        wf%n_mo,                  &
-                        tmp,                      &
-                        wf%n_mo,                  &
-                        zero,                     &
-                        wf%mo_fock,               & ! F = C'^T F' C'  
-                        wf%n_mo)
-!
-            call mem%dealloc(ao_fock_copy, wf%n_mo, wf%n_mo)
-            call mem%dealloc(red_orbital_coefficients, wf%n_mo, wf%n_mo)
-            call mem%dealloc(tmp, wf%n_mo, wf%n_mo)
-!
-         endif
-!
-      endif
-!
 !     Transform back the solutions to original basis, C = P (P^T C) = P C'
+!
+      call mem%alloc(prev_C, wf%n_ao, wf%n_mo)
+      prev_C = C 
 !
       call dgemm('N','N',                       &
                   wf%n_ao,                      &
@@ -3074,6 +3015,23 @@ contains
                   wf%n_ao)
 !
       call mem%dealloc(ao_fock, wf%n_mo, wf%n_mo)
+!
+!     Test for orbitals that were approximately sign-flipped by dsygv,
+!     resetting them if this is the case (this changes the orbitals 
+!     minimally, thus preserving the sweetness of whatever CC guess
+!     is on file).
+!
+      do p = 1, wf%n_mo 
+!
+         orbital_dotprod = ddot(wf%n_ao, prev_C(1, p), 1, C(1, p), 1)/ddot(wf%n_ao, C(1, p), 1, C(1, p), 1)
+!
+         if (orbital_dotprod .lt. zero) then 
+!
+            C(:,p) = -C(:,p)
+!
+         endif
+!
+      enddo
 !
    end subroutine do_roothan_hall_hf
 !
