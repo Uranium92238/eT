@@ -34,14 +34,14 @@ module multipliers_engine_class
 !
    type, extends(abstract_engine) :: multipliers_engine 
 !
-      character(len=100) :: algorithm
+      character(len=200) :: algorithm
 !
    contains 
 !
       procedure :: prepare          => prepare_multipliers_engine
       procedure :: run              => run_multipliers_engine
       procedure :: cleanup          => cleanup_multipliers_engine
-      procedure :: read_algorithm   => read_algorithm_multipliers_engine
+      procedure :: read_settings    => read_settings_multipliers_engine
 !
    end type multipliers_engine 
 !
@@ -56,10 +56,10 @@ contains
 !
       class(multipliers_engine) :: engine 
 !
-      engine%name_ = 'Multipliers engine'
+      engine%name_     = 'Multipliers engine'
       engine%algorithm = 'davidson'
 !
-      call engine%read_algorithm()
+      call engine%read_settings()
 !
    end subroutine prepare_multipliers_engine
 !
@@ -155,39 +155,22 @@ contains
    end subroutine cleanup_multipliers_engine
 !
 !
-   subroutine read_algorithm_multipliers_engine(engine)
+   subroutine read_settings_multipliers_engine(engine)
 !!
-!!    Read algorithm
+!!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none
 !
       class(multipliers_engine), intent(inout) :: engine 
 !
-      character(len=100) :: line
+      if (input%section_exists('multipliers')) then 
 !
-      integer :: i, n_records
+         call input%read_keyword_in_section('algorithm', 'multipliers', engine%algorithm)
 !
-      if (requested_section('multipliers')) then
-         call move_to_section('multipliers', n_records)
+      endif 
 !
-         do i = 1, n_records
-!
-            read(input%unit, '(a100)') line
-            line = remove_preceding_blanks(line)
-!
-            if (line(1:10) == 'algorithm:') then
-!
-               engine%algorithm = line(11:100)
-               engine%algorithm = remove_preceding_blanks(engine%algorithm)
-               return
-!
-            endif
-!
-         enddo
-      endif
-!
-   end subroutine read_algorithm_multipliers_engine
+   end subroutine read_settings_multipliers_engine
 !
 !
 end module multipliers_engine_class
