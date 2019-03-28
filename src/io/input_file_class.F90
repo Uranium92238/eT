@@ -26,26 +26,28 @@ module input_file_class
 !!
 !
    use kinds    
-   use output_file_class      
+   use output_file_class
+   use string_utilities  
 !
    type, extends(abstract_file) :: input_file 
 !
 !
    contains
 !
-      procedure :: init                      => init_input_file
+      procedure :: init => init_input_file
 !
-      procedure :: section_exists     => section_exists_input_file
-!
+      procedure :: section_exists        => section_exists_input_file
       procedure :: keyword_is_in_section => keyword_is_in_section_input_file
 !
       generic :: read_keyword_in_section => read_integer_keyword_in_section_input_file, &
-                                             read_string_keyword_in_section_input_file
+                                            read_string_keyword_in_section_input_file
 !
       procedure :: read_integer_keyword_in_section_input_file
       procedure :: read_string_keyword_in_section_input_file
 !
-      procedure :: move_to_section           => move_to_section_input_file
+      procedure :: move_to_section  => move_to_section_input_file
+!
+      procedure :: get_n_elements_for_keyword_in_section => get_n_elements_for_keyword_in_section_input_file
 !
    end type input_file
 !
@@ -357,6 +359,79 @@ contains
       enddo
 !
    end subroutine move_to_section_input_file
+!
+!
+   function get_n_elements_for_keyword_in_section_input_file(the_file, keyword, section) result(n_elements)
+!!
+!!    Get n elements for keyword in section 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Gets the number of elements of input variable array
+!!    for keyword which is specified on input by either an
+!!    integer range or list (of length n_elements).
+!!
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: keyword 
+      character(len=*), intent(in) :: section  
+!
+      integer :: n_elements
+!
+      character(len=200) :: keyword_value_string
+!
+!     Get the keyword value in string format 
+!
+      call the_file%read_keyword_in_section(keyword, section, keyword_value_string)
+!
+!     Use string utility functionality to get n_elements   
+!  
+      n_elements = get_n_elements_in_string(keyword_value_string)
+!
+   end function get_n_elements_for_keyword_in_section_input_file
+!
+!
+   subroutine get_array_for_keyword_in_section_input_file(the_file, keyword, section, n_elements, array_)
+!!
+!!    Set array for keyword in section 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Sets input variable array (array_) for keyword
+!!    which is specified on input by either an
+!!    integer range or list (of length n_elements).
+!!
+!!    Ranges should always be given as [a,b].
+!!
+!!    Lists should always be given as {a, b, c, d}
+!!    that is, in set notation.
+!!
+!!    Routine should be called after the 
+!!    get_n_elements_for_keyword_in_section is called.
+!!
+!!
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: keyword 
+      character(len=*), intent(in) :: section  
+!
+      integer, intent(in) :: n_elements
+!
+      integer, dimension(n_elements) :: array_
+!
+      character(len=200) :: keyword_value_string
+!
+!     Get the keyword value in string format 
+!
+      call the_file%read_keyword_in_section(keyword, section, keyword_value_string)
+!
+!     Use string utility functionality to get the array
+!  
+      call get_elements_in_string(keyword_value_string, n_elements, array_)
+!
+   end subroutine set_array_for_keyword_in_section_input_file
 !
 !
 end module input_file_class

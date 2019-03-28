@@ -30,9 +30,9 @@ module string_utilities
 contains
 !
 !
-   function get_n_elements(string) result(n_elements)
+   function get_n_elements_in_string(string) result(n_elements)
 !!
-!!    Get n elements
+!!    Get n elements in string
 !!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
 !!
 !!    Gets the number of elements in range or list,
@@ -106,10 +106,10 @@ contains
 !
       endif
 !
-   end function get_n_elements
+   end function get_n_elements_in_string
 !
 !
-   subroutine get_elements(string, n_elements, elements)
+   subroutine get_elements_in_string(string, n_elements, elements)
 !!
 !!    Get elements
 !!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
@@ -206,7 +206,7 @@ contains
 !
       endif
 !
-   end subroutine get_elements
+   end subroutine get_elements_in_string
 !
 !
 end module string_utilities
