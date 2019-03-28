@@ -40,10 +40,6 @@ module file_class
 !
    end type file
 !
-!  The 'global' eT files 
-!
-   type(file) :: input
-   type(file) :: timing 
 !
 contains
 !

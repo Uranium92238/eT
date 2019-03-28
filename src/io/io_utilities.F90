@@ -25,7 +25,7 @@ module io_utilities
 !!
 !
    use kinds
-   use file_class
+   use input_file_class
 !
 contains
 !

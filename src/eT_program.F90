@@ -110,10 +110,10 @@ program eT_program
    call output%init('eT.out')
    call disk%open_file(output, 'write', 'rewind')
 !
-   call input%init('eT.inp', 'sequential', 'formatted')
+   call input%init('eT.inp')
    call disk%open_file(input, 'read')
 !
-   call timing%init('timing.out', 'sequential', 'formatted')
+   call timing%init('timing.out')
    call disk%open_file(timing, 'write', 'rewind')
 !
    call eT_timer%init("Total time in eT")
