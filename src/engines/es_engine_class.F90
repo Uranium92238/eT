@@ -34,8 +34,8 @@ module es_engine_class
 !
    type, extends(abstract_engine) :: es_engine
 !
-      character(len=100) :: algorithm
-      character(len=100) :: es_type
+      character(len=200) :: algorithm
+      character(len=200) :: es_type
 !
    contains
 !
@@ -43,8 +43,7 @@ module es_engine_class
       procedure :: run                       => run_es_engine
       procedure :: cleanup                   => cleanup_es_engine
 !
-      procedure :: determine_es_type         => determine_es_type_es_engine
-      procedure :: read_algorithm            => read_algorithm_es_engine
+      procedure :: read_settings             => read_settings_es_engine
 !
    end type es_engine
 !
@@ -64,12 +63,33 @@ contains
 !     Set standards and then read if nonstandard
 !
       engine%algorithm = 'davidson'
-      call engine%read_algorithm()
-!
       engine%es_type = 'valence'
-      call engine%determine_es_type()
+!
+      call engine%read_settings()
 !
    end subroutine prepare_es_engine
+!
+!
+   subroutine read_settings_es_engine(engine)
+!!
+!!    Read settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(es_engine) :: engine 
+!
+      if (input%section_exists('cc excited state')) then 
+!
+         call input%read_keyword_in_section('algorithm', 'cc excited state', engine%algorithm)
+!
+         if (input%keyword_is_in_section('core excitation', 'cc excited state')) engine%es_type = 'core'
+         if (input%keyword_is_in_section('ionization', 'cc excited state')) engine%es_type = 'valence ionized'
+         if (input%keyword_is_in_section('core ionization', 'cc excited state')) engine%es_type = 'core ionized'
+!
+      endif
+!
+   end subroutine read_settings_es_engine
 !
 !
    subroutine run_es_engine(engine, wf)
@@ -196,87 +216,6 @@ contains
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%name_)
 !
    end subroutine cleanup_es_engine
-!
-!
-   subroutine determine_es_type_es_engine(engine)
-!!
-!!    Determine excited state type
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(es_engine), intent(inout) :: engine
-!
-      character(len=100) :: line
-!
-      integer :: i, n_keywords
-!
-      if (requested_section('cc excited state')) then
-!
-         call move_to_section('cc excited state', n_keywords)
-!
-         do i = 1, n_keywords
-!
-            read(input%unit, '(a100)') line
-            line = remove_preceding_blanks(line)
-!
-            if (line(1:15) == 'core excitation' ) then
-!
-               engine%es_type = 'core'
-               return
-!
-            elseif (line(1:10) == 'ionization' ) then
-!
-               engine%es_type = 'valence ionized'
-               return
-!
-            elseif (line(1:15) == 'core ionization' ) then
-!
-               engine%es_type = 'core ionized'
-               return
-!
-            endif
-!
-         enddo
-!
-      endif
-!
-      engine%es_type = 'valence'
-!
-   end subroutine determine_es_type_es_engine
-!
-!
-   subroutine read_algorithm_es_engine(engine)
-!!
-!!    Read algorithm
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(es_engine), intent(inout) :: engine
-!
-      character(len=100) :: line
-!
-      integer :: i, n_records
-!
-      call move_to_section('cc excited state', n_records)
-!
-      do i = 1, n_records
-!
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (line(1:10) == 'algorithm:') then
-!
-            engine%algorithm = line(11:100)
-            engine%algorithm = remove_preceding_blanks(engine%algorithm)
-            return
-!
-         endif
-!
-      enddo
-!
-   end subroutine read_algorithm_es_engine
 !
 !
 end module es_engine_class
