@@ -36,7 +36,9 @@ set(eT_fortran_sources
    src/engines/es_engine_class.F90
    src/engines/multipliers_engine_class.F90
    src/io/disk_manager_class.F90
+   src/io/abstract_file_class.F90
    src/io/file_class.F90
+   src/io/output_file_class.F90
    src/io/io_utilities.F90
    src/io/io_eT_program.F90
    src/integrals/ao_integral_tool_class.F90

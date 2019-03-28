@@ -107,7 +107,7 @@ program eT_program
 !
 !  Prepare input, output and timing file
 !
-   call output%init('eT.out', 'sequential', 'formatted')
+   call output%init('eT.out')
    call disk%open_file(output, 'write', 'rewind')
 !
    call input%init('eT.inp', 'sequential', 'formatted')

@@ -3342,6 +3342,9 @@ contains
             endif
          enddo
 !
+         call mem%dealloc(cholesky_basis, solver%n_cholesky, 3)
+         call mem%dealloc(basis_shell_info, n_sp_in_basis, 4)
+!
       enddo ! done
 !
       call disk%close_file(solver%cholesky_ao_vectors)
@@ -3351,8 +3354,6 @@ contains
       call disk%close_file(solver%cholesky_ao_vectors_info)
 !
       call mem%dealloc(aux_chol_inverse_transpose, solver%n_cholesky, solver%n_cholesky)
-      call mem%dealloc(cholesky_basis, solver%n_cholesky, 3)
-      call mem%dealloc(basis_shell_info, n_sp_in_basis, 4)
       deallocate(construct_sp)
 !
    end subroutine construct_cholesky_vectors_eri_cd
