@@ -40,9 +40,8 @@ module output_file_class
 !
    end type output_file
 !
-!  The 'global' eT files 
+   type(output_file) :: output, timing 
 !
-   type(output_file) :: output
 !
 contains
 !
