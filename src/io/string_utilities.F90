@@ -192,10 +192,9 @@ contains
 !
             n_elements_found = n_elements_found + 1
 !
-            i = i + 1
-            first = i
+            first = i + 1
 !
-            if (i == n_characters) exit
+            if (first == n_characters) exit
 !
          enddo
 !
