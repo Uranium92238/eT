@@ -90,17 +90,13 @@ contains
 !
          if (string(n_characters:n_characters) /= '}') call output%error_msg('found open set in input file.')
 !
-         i = 2
-!
          n_elements = 1 ! Assuming that the set contains at least one element (otherwize why give list?) 
 !
 !        Loop through and count commas
 !
-         do while (i < n_characters)
+         do i = 2, n_characters - 1
 !
             if (string(i:i) == ',') n_elements = n_elements + 1
-!
-            i = i + 1
 !
          enddo
 !
@@ -181,16 +177,14 @@ contains
 !
 !        Loop through and set the elements
 !
-         i = 2
-         first = 2
-!
+         first            = 2
          n_elements_found = 0
 !
          do j = 1, n_elements
 !
-            do while (string(i:i) /= ',' .and. i < n_characters)
+            do i = first, n_characters - 1
 !
-               i = i + 1
+               if (string(i:i) == ',') exit
 !
             enddo
 !
