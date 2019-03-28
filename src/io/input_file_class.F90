@@ -23,7 +23,6 @@ module input_file_class
 !!    Input file class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
-!!
 !
    use kinds    
    use output_file_class
@@ -92,6 +91,13 @@ contains
 !!    Read integer keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
+!!    If specified, reads keyword as an integer into keyword value.
+!!
+!!    Note: if the keyword is not present in the section, keyword_value will not be set,
+!!    and no error occurs. In typical usage, the standard value of the keyword is set before
+!!    this routine is called. Changes from standard are made only when the keyword is specified
+!!    - hence no errors when it does not find the keyword. 
+!!  
       implicit none 
 !
       class(input_file), intent(in) :: the_file
@@ -123,6 +129,13 @@ contains
 !!    Read double precision keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
+!!    If specified, reads keyword as a real double precision into keyword value.
+!!
+!!    Note: if the keyword is not present in the section, keyword_value will not be set,
+!!    and no error occurs. In typical usage, the standard value of the keyword is set before
+!!    this routine is called. Changes from standard are made only when the keyword is specified
+!!    - hence no errors when it does not find the keyword. 
+!!    
       implicit none 
 !
       class(input_file), intent(in) :: the_file
@@ -154,6 +167,13 @@ contains
 !!    Read string keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
+!!    If specified, reads keyword as a string into keyword value.
+!!
+!!    Note: if the keyword is not present in the section, keyword_value will not be set,
+!!    and no error occurs. In typical usage, the standard value of the keyword is set before
+!!    this routine is called. Changes from standard are made only when the keyword is specified
+!!    - hence no errors when it does not find the keyword. 
+!!    
       implicit none 
 !
       class(input_file), intent(in) :: the_file
@@ -243,6 +263,13 @@ contains
 !!    Is string keyword in section?
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
+!!    Returns true if the keyword is in the section. 
+!!
+!!    Note: stops inside "move to section" if the section is not present!
+!!    => this routine should only be called if you know the section in present.
+!!    In typical usage, it is called after we have made sure the section exists; 
+!!    see the "section exists" function.
+!!
       implicit none 
 !
       class(input_file), intent(in) :: the_file
@@ -301,6 +328,8 @@ contains
 !!
 !!    Does section exist? 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    Returns true if the section exists, false if it doesn't 
 !!
       implicit none 
 !
