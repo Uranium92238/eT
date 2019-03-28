@@ -100,7 +100,7 @@ module eri_cd_class
 !
       procedure :: construct_mo_cholesky_vecs             => construct_mo_cholesky_vecs_cd_eri_solver
 !
-      procedure :: read_info                              => read_info_eri_cd
+      procedure :: read_settings                              => read_settings_eri_cd
       procedure :: print_banner                           => print_banner_eri_cd
       procedure :: print_settings                         => print_settings_eri_cd
 !
@@ -128,7 +128,7 @@ contains
 !
       if (requested_section('cholesky')) then
 !
-         call solver%read_info()
+         call solver%read_settings()
 !
       endif
 !
@@ -3927,9 +3927,9 @@ contains
    end function get_sp_from_shells
 !
 !
- subroutine read_info_eri_cd(solver)
+ subroutine read_settings_eri_cd(solver)
 !!
-!!    Read information
+!!    Read settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!     Read input if it is present:
@@ -3946,61 +3946,19 @@ contains
 !
       class(eri_cd) :: solver
 !
-      character(len=100) :: line
+      if (input%section_exists('cholesky')) then 
 !
-      rewind(input%unit)
+         call input%read_keyword_in_section('threshold', 'cholesky', solver%threshold)
+         call input%read_keyword_in_section('span', 'cholesky', solver%span)
+         call input%read_keyword_in_section('batches', 'cholesky', solver%n_batches)
+         call input%read_keyword_in_section('qualified', 'cholesky', solver%max_qual)
 !
-      read(input%unit,'(a)') line
-      line = remove_preceding_blanks(line)
+         if (input%keyword_is_in_section('one center', 'cholesky')) solver%one_center = .true.
+         if (input%keyword_is_in_section('no vectors', 'cholesky')) solver%construct_vectors = .false.
 !
-      do while ((trim(line) .ne. 'end cholesky') .and. (line(1:2) .ne. 'geometry'))
+      endif
 !
-         read(input%unit,'(a)') line
-         line = remove_preceding_blanks(line)
-
-         if (trim(line) == 'cholesky') then ! found cholesky section in input
-!
-            do while (trim(line) .ne. 'end cholesky')
-!
-               read(input%unit,'(a)') line
-               line = remove_preceding_blanks(line)
-!
-               if (line(1:10) == 'threshold:') then
-!
-                  read(line(11:100), '(d16.5)') solver%threshold
-!
-               elseif (line(1:5) == 'span:') then
-!
-                  read(line(6:100), '(d16.5)') solver%span
-!
-               elseif (line(1:8) == 'batches:') then
-!
-                  read(line(9:100), '(i5)') solver%n_batches
-!
-               elseif (line(1:10) == 'qualified:') then
-!
-                  read(line(11:100), '(i5)') solver%max_qual
-!
-               elseif (trim(line) == 'one center') then
-!
-                  solver%one_center = .true.
-!
-               elseif (trim(line) == 'no vectors') then
-!
-                  solver%construct_vectors = .false.
-!
-               endif
-!
-            end do
-!
-            backspace(input%unit)
-!
-         endif
-!
-      enddo
-      backspace(input%unit)
-!
-   end subroutine read_info_eri_cd
+   end subroutine read_settings_eri_cd
 !
 !
    subroutine construct_mo_cholesky_vecs_cd_eri_solver(solver, system, n_mo, orbital_coefficients)
