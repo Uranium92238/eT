@@ -100,10 +100,6 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      integer :: n_records, i 
-!
-      character(len=100) :: line, value 
-!
       if (input%section_exists('hf')) then 
 !
          call input%read_keyword_in_section('energy threshold', 'hf', solver%energy_threshold)

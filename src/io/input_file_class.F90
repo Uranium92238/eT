@@ -50,6 +50,7 @@ module input_file_class
       procedure :: move_to_section  => move_to_section_input_file
 !
       procedure :: get_n_elements_for_keyword_in_section => get_n_elements_for_keyword_in_section_input_file
+      procedure :: get_array_for_keyword_in_section      => get_array_for_keyword_in_section_input_file
 !
    end type input_file
 !
@@ -494,7 +495,7 @@ contains
 !  
       call get_elements_in_string(keyword_value_string, n_elements, array_)
 !
-   end subroutine set_array_for_keyword_in_section_input_file
+   end subroutine get_array_for_keyword_in_section_input_file
 !
 !
 end module input_file_class

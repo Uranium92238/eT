@@ -250,6 +250,8 @@ contains
 !
       call molecule%print_system()
 !
+      stop
+!
    end subroutine prepare_molecular_system
 !
 !
@@ -601,213 +603,106 @@ contains
 !!
 !!    Reorder atoms in case of active atoms
 !!
-!!
       implicit none
 !
       class(molecular_system) :: molecule
 !
-      character(len=100) :: line
-      character(len=100) :: active_basis
+      character(len=200) :: active_basis, selection_type
 !
-      integer :: i, j, active_atom_counter, ioerror = 0, first, last, atom_counter
+      integer :: i, j, active_atom_counter, atom_counter !ioerror = 0, first, last
       integer :: central_atom
 !
       integer, dimension(:), allocatable :: active_atoms
 !
       type(atomic), dimension(:), allocatable :: atoms_copy
 !
-      logical :: found, set_active_basis
+      logical :: found
 !
       real(dp) :: hf_radius, x, y, z
 !
-      rewind(input%unit)
+      if (input%section_exists('active atoms')) then
 !
-      read(input%unit,'(a)', iostat=ioerror) line
-      line = remove_preceding_blanks(line)
+!        Find selection type
+! 
+         call input%read_keyword_in_section('selection type', 'active atoms', selection_type)
 !
-      set_active_basis = .false.
+!        For the given selection type get the active atoms
 !
-      do while (trim(line) .ne. 'geometry')
+         if (trim(selection_type) == 'range' .or. trim(selection_type) == 'list') then
 !
-         if (trim(line) == 'active atoms') then
+            molecule%n_active_atoms = input%get_n_elements_for_keyword_in_section('hf', 'active atoms')
 !
-            do while (trim(line) .ne. 'end active atoms')
+            call mem%alloc(active_atoms, molecule%n_active_atoms)
 !
-               read(input%unit,'(a)', iostat=ioerror) line
-               line = remove_preceding_blanks(line)
+            call input%get_array_for_keyword_in_section('hf', 'active atoms', &
+                                                         molecule%n_active_atoms, active_atoms)
 !
-               if (line(1:8) == 'hf list:') then
+         elseif (selection_type == 'central atom') then
 !
-                  line = line(9:100)
-                  line = remove_preceding_blanks(line)
-                  molecule%n_active_atoms = 0
+            call input%read_keyword_in_section('central atom', 'active atoms', central_atom)
+            call input%read_keyword_in_section('hf', 'active atoms', hf_radius)
 !
-                  do i = 1, 92
+!           Set active atoms
 !
-                     if (line(i:i) .ne. ' ') molecule%n_active_atoms = molecule%n_active_atoms + 1
+            molecule%n_active_atoms = 0
 !
-                  enddo
+            do i = 1, molecule%n_atoms 
 !
-                  call mem%alloc(active_atoms, molecule%n_active_atoms)
-                  read(line, *) active_atoms
+               x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
+               y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
+               z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
 !
-                  exit
+               if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) &
+                        molecule%n_active_atoms = molecule%n_active_atoms + 1
 !
-               elseif (line(1:9) == 'hf range:') then 
-!
-                  line = line(10:100)
-                  line = remove_preceding_blanks(line)
-!
-                  if (line(1:1)=='[') then ! range given
-!
-                     do i = 2, 100
-!
-                        if (line(i:i) == ',') exit
-!
-                     enddo
-!
-                     read(line(2:i-1), *) first
-!
-                     do j = i, 100
-!
-                        if (line(j:j) == ']') exit
-!
-                     enddo
-!
-                     read(line(i+1:j-1), *) last
-!
-                     molecule%n_active_atoms = last - first + 1
-!
-                     call mem%alloc(active_atoms, molecule%n_active_atoms)
-!
-                     do i = first, last
-!
-                        active_atoms(i - first + 1) = i
-!
-                     enddo
-!
-                     exit
-!
-                  else 
-!
-                     call output%error_msg('active atom range not detected.')
-!
-                  endif
-!
-               elseif (line(1:13) == 'central atom:') then
-!
-                  read(line(14:100), *) central_atom
-!
-                  do while (trim(line) .ne. 'end active atoms')
-!
-                     read(input%unit,'(a)') line
-                     line = remove_preceding_blanks(line)
-!
-                     if (line(1:10) == 'hf radius:') then
-!
-                        line = line(11:100)
-                        line = remove_preceding_blanks(line)
-                        read(line, '(f21.16)') hf_radius ! In Ångstom
-!
-                     endif
-!
-                  enddo
-!
-                  molecule%n_active_atoms = 0
-!
-                  do i = 1, molecule%n_atoms 
-!
-                     x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
-                     y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
-                     z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
-!
-                     if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) molecule%n_active_atoms = molecule%n_active_atoms + 1
-!
-                  enddo
-!
-                  call mem%alloc(active_atoms, molecule%n_active_atoms)
-!
-                  active_atom_counter = 0
-!
-                  do i = 1, molecule%n_atoms 
-!
-                    x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
-                    y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
-                    z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
-!
-                    if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) then 
-!
-                       active_atom_counter = active_atom_counter + 1
-!
-                       active_atoms(active_atom_counter) = i
-!
-                    endif
-!
-                  enddo
-!
-                  exit
-!
-               else
-!
-                  call output%error_msg('active atom input not recognized.')
-!
-               endif
             enddo
+!
+            call mem%alloc(active_atoms, molecule%n_active_atoms)
+!
+            active_atom_counter = 0
+!
+            do i = 1, molecule%n_atoms 
+!
+              x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
+              y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
+              z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
+!
+              if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) then 
+!
+                 active_atom_counter = active_atom_counter + 1
+!
+                 active_atoms(active_atom_counter) = i
+!
+              endif
+!
+            enddo
+!
+         else
+!
+            call output%error_msg('did not recognize selection type for active atoms.')
+!
          endif
 !
-         read(input%unit,'(a)') line
-         line = remove_preceding_blanks(line)
+!        Find and set active basis
 !
-      enddo
+         if (input%keyword_is_in_section('active basis', 'active atoms')) then
 !
-!     Find active basis
+            call input%read_keyword_in_section('active basis', 'active atoms', active_basis)
 !
-      rewind(input%unit)
+            do i = 1, molecule%n_active_atoms
 !
-      read(input%unit,'(a)') line
-      line = remove_preceding_blanks(line)
+               molecule%atoms(active_atoms(i))%basis = trim(active_basis)
 !
-      do while (trim(line) .ne. 'geometry')
-!
-         if (trim(line) == 'active atoms') then
-!
-            do while (trim(line) .ne. 'end active atoms')
-!
-               read(input%unit,'(a)', iostat=ioerror) line
-               line = remove_preceding_blanks(line)
-!
-               if (line(1:13) == 'active basis:') then
-!
-                  line = line(14:100)
-                  line = remove_preceding_blanks(line)
-                  read(line, '(a100)') active_basis
-                  set_active_basis = .true.
-!
-               endif
             enddo
+!
          endif
 !
-         read(input%unit,'(a)') line
-         line = remove_preceding_blanks(line)
+      endif 
 !
-      enddo
-!
-!     If active basis is given, set it for the active atoms
-!
-      if (set_active_basis) then
-!
-         do i = 1, molecule%n_active_atoms
-!
-            molecule%atoms(active_atoms(i))%basis = trim(active_basis)
-!
-         enddo
-!
-      endif
-!
-
       write(output%unit, '(t6, a18)')'------------------'
       write(output%unit, '(t6, a18)')' Atom      Symbol '
       write(output%unit, '(t6, a18)')'------------------'
+!
       do i = 1, molecule%n_active_atoms
 !
          write(output%unit, '(t6, i5, 11x, a2)') active_atoms(i), molecule%atoms(active_atoms(i))%symbol
