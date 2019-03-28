@@ -35,6 +35,10 @@ module input_file_class
 !
       procedure :: init                      => init_input_file
 !
+      procedure :: section_exists     => section_exists_input_file
+!
+      procedure :: keyword_is_in_section => keyword_is_in_section_input_file
+!
       generic :: read_keyword_in_section => read_integer_keyword_in_section_input_file, &
                                              read_string_keyword_in_section_input_file
 !
@@ -125,13 +129,15 @@ contains
 !
       call the_file%move_to_section(section, n_records)
 !
-!     Loop through records within the section to locate & get the keyword 
+!     Loop through records within the section to locate & get the keyword value 
 !
       do record = 1, n_records
 !
          read(the_file%unit, '(a200)') line 
 !
          line = adjustl(line) 
+!
+         if (line(1 : 1) == '!') cycle ! Comment
 !
          len_line_keyword = 0
          do while (line(len_line_keyword + 1 : len_line_keyword + 1) /= ':' .and. len_line_keyword < 199)
@@ -140,13 +146,13 @@ contains
 !
          enddo
 !
-         if (len_line_keyword == 0 .or. len_line_keyword >= 199) then 
+         if (len_line_keyword == 0) then 
 !
             call output%error_msg('Failed to read keyword ' // keyword // ' in section ' // section)
 !
          endif 
 !
-         if (line(1 : len_line_keyword) == keyword) then 
+         if (trim(line(1 : len_line_keyword)) == keyword) then 
 !
             keyword_value = line(len_line_keyword + 2 : 200)
             return
@@ -160,6 +166,106 @@ contains
       call output%error_msg('Failed to read keyword ' // keyword // ' in section ' // section)
 !
    end subroutine read_string_keyword_in_section_input_file
+!
+!
+   logical function keyword_is_in_section_input_file(the_file, keyword, section)
+!!
+!!    Is string keyword in section?
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: keyword 
+      character(len=*), intent(in) :: section  
+!
+      integer :: n_records, record, len_line_keyword
+!
+      character(len=200) :: line
+!
+!     Move to the requested section & get the number of records in that section 
+!
+      call the_file%move_to_section(section, n_records)
+!
+!     Loop through records within the section & try to locate the keyword 
+!
+      do record = 1, n_records
+!
+         read(the_file%unit, '(a200)') line 
+!
+         line = adjustl(line) 
+!
+         if (line(1 : 1) == '!') cycle ! Comment
+!
+         len_line_keyword = 0
+         do while (line(len_line_keyword + 1 : len_line_keyword + 1) /= ':' .and. len_line_keyword < 199)
+!
+            len_line_keyword = len_line_keyword + 1
+!
+         enddo
+!
+         if (len_line_keyword == 0) then 
+!
+            call output%error_msg('Failed to read keyword ' // keyword // ' in section ' // section)
+!
+         endif 
+!
+         if (trim(line(1 : len_line_keyword)) == keyword) then 
+!
+            keyword_is_in_section_input_file = .true.
+            return
+!
+         endif 
+!
+      enddo 
+!
+!     If you are here, you have not returned, so you have not found the keyword! 
+!
+      keyword_is_in_section_input_file = .false.
+!
+   end function keyword_is_in_section_input_file
+!
+!
+   logical function section_exists_input_file(the_file, section)
+!!
+!!    Does section exist? 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file 
+!
+      character(len=*), intent(in) :: section 
+!
+      character(len=200) :: line 
+!
+      section_exists_input_file = .false.
+!
+      rewind(the_file%unit)
+!
+      do 
+!
+         read(the_file%unit, '(a200)') line
+         line = adjustl(line)
+!
+         if (trim(line) == section) then 
+!
+            section_exists_input_file = .true.
+            return 
+!
+         endif 
+!
+         if (trim(line) == 'end geometry') then 
+!
+            section_exists_input_file = .false.
+            return 
+!
+         endif
+!
+      enddo 
+!
+   end function section_exists_input_file
 !
 !
    subroutine move_to_section_input_file(the_file, string, n_records)
