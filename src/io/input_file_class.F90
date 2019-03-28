@@ -39,13 +39,15 @@ module input_file_class
       procedure :: section_exists        => section_exists_input_file
       procedure :: keyword_is_in_section => keyword_is_in_section_input_file
 !
-      generic :: read_keyword_in_section => read_integer_keyword_in_section_input_file, &
-                                            read_string_keyword_in_section_input_file, &
+      generic :: read_keyword_in_section => read_integer_keyword_in_section_input_file,   &
+                                            read_string_keyword_in_section_input_file,    &
                                             read_dp_keyword_in_section_input_file
 !
       procedure :: read_integer_keyword_in_section_input_file
       procedure :: read_string_keyword_in_section_input_file
       procedure :: read_dp_keyword_in_section_input_file
+!
+      procedure :: read_string_keyword_in_section_wo_safety => read_string_keyword_in_section_wo_safety_input_file
 !
       procedure :: move_to_section  => move_to_section_input_file
 !
@@ -105,7 +107,7 @@ contains
 !
 !        Get the keyword value in string format 
 !
-         call the_file%read_keyword_in_section(keyword, section, keyword_value_string, .false.)
+         call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
 !
 !        Extract the integer from the string
 !
@@ -136,7 +138,7 @@ contains
 !
 !        Get the keyword value in string format 
 !
-         call the_file%read_keyword_in_section(keyword, section, keyword_value_string, .false.)
+         call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
 !
 !        Extract the integer from the string
 !
@@ -147,7 +149,7 @@ contains
    end subroutine read_dp_keyword_in_section_input_file
 !
 !
-   subroutine read_string_keyword_in_section_input_file(the_file, keyword, section, keyword_value, safeguard)
+   subroutine read_string_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
 !!
 !!    Read string keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
@@ -159,9 +161,33 @@ contains
       character(len=*), intent(in) :: keyword 
       character(len=*), intent(in) :: section  
 !
-      logical, optional, intent(in) :: safeguard
+      character(len=200) :: keyword_value 
 !
-      logical :: local_safeguard, look_for_keyword
+      if (the_file%keyword_is_in_section(keyword, section)) then 
+!
+!        Get the keyword value in string format 
+!
+         call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value)
+!
+      endif 
+!
+   end subroutine read_string_keyword_in_section_input_file
+!
+!
+   subroutine read_string_keyword_in_section_wo_safety_input_file(the_file, keyword, section, keyword_value)
+!!
+!!    Read string keyword in section without safety 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Reads keyword in section, placing the result in the string keyword_value. This 
+!!    routine gives an error if the keyword is not located. 
+!!
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: keyword 
+      character(len=*), intent(in) :: section  
 !
       character(len=200) :: keyword_value 
 !
@@ -169,69 +195,47 @@ contains
 !
       character(len=200) :: line
 !
-      local_safeguard = .true. 
+!     Move to the requested section & get the number of records in that section 
 !
-      if (present(safeguard)) then 
+      call the_file%move_to_section(section, n_records)
 !
-         if (.not. safeguard) local_safeguard = .false.
+!     Loop through records within the section to locate & get the keyword value 
 !
-      endif 
+      do record = 1, n_records
 !
-      if (local_safeguard) then 
+         read(the_file%unit, '(a200)') line 
 !
-         look_for_keyword = the_file%keyword_is_in_section(keyword, section)
+         line = adjustl(line) 
 !
-      else 
+         if (line(1 : 1) == '!') cycle ! Comment
 !
-         look_for_keyword = .true.
+         len_line_keyword = 0
+         do while (line(len_line_keyword + 1 : len_line_keyword + 1) /= ':' .and. len_line_keyword < 199)
 !
-      endif
+            len_line_keyword = len_line_keyword + 1
 !
-      if (look_for_keyword) then 
+         enddo
 !
-!        Move to the requested section & get the number of records in that section 
+         if (len_line_keyword == 0) then 
 !
-         call the_file%move_to_section(section, n_records)
+            call output%error_msg('Failed to read keyword ' // keyword // ' in section ' // section)
 !
-!        Loop through records within the section to locate & get the keyword value 
+         endif 
 !
-         do record = 1, n_records
+         if (trim(line(1 : len_line_keyword)) == keyword) then 
 !
-            read(the_file%unit, '(a200)') line 
+            keyword_value = adjustl(line(len_line_keyword + 2 : 200))
+            return
 !
-            line = adjustl(line) 
+         endif 
 !
-            if (line(1 : 1) == '!') cycle ! Comment
+      enddo 
 !
-            len_line_keyword = 0
-            do while (line(len_line_keyword + 1 : len_line_keyword + 1) /= ':' .and. len_line_keyword < 199)
+!     If you are here, you have not returned, so you have not found the keyword! 
 !
-               len_line_keyword = len_line_keyword + 1
+      call output%error_msg('Failed to read keyword ' // keyword // ' in section ' // section)
 !
-            enddo
-!
-            if (len_line_keyword == 0) then 
-!
-               call output%error_msg('Failed to read keyword ' // keyword // ' in section ' // section)
-!
-            endif 
-!
-            if (trim(line(1 : len_line_keyword)) == keyword) then 
-!
-               keyword_value = adjustl(line(len_line_keyword + 2 : 200))
-               return
-!
-            endif 
-!
-         enddo 
-!
-!        If you are here, you have not returned, so you have not found the keyword! 
-!
-         call output%error_msg('Failed to read keyword ' // keyword // ' in section ' // section)
-!
-      endif 
-!
-   end subroutine read_string_keyword_in_section_input_file
+   end subroutine read_string_keyword_in_section_wo_safety_input_file
 !
 !
    logical function keyword_is_in_section_input_file(the_file, keyword, section)

@@ -250,7 +250,7 @@ contains
 !
       call molecule%print_system()
 !
-      stop
+   !   stop
 !
    end subroutine prepare_molecular_system
 !
