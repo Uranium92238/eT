@@ -215,15 +215,7 @@ contains
 !     Compute the current dimensionality of the problem 
 !     (1, 2,..., 7, 8, 8, 8, 8,...) for the standard diis_dimension = 8
 !
-      if (solver%iteration .le. solver%diis_dimension) then 
-!
-         current_dim = solver%iteration 
-!
-      else
-!
-         current_dim = solver%diis_dimension
-!
-      endif 
+      current_dim = solver%get_current_dim()
 !
 !     Write current x_dx and dx to file
 !
@@ -286,6 +278,8 @@ contains
          rewind(solver%x_dx(i)%unit)
          read(solver%x_dx(i)%unit) x_dx_i
 !
+         write(output%unit, *) 'i x_dx_i', x_dx_i(1:5)
+!
 !        Add w_i (x_i + Δ x_i) to the amplitudes
 !
          call daxpy(solver%n_parameters, diis_vector(i), x_dx_i, 1, x_dx, 1)
@@ -318,11 +312,21 @@ contains
 !
       integer :: get_current_dim_diis_tool
 !
+      if (solver%iteration .gt. solver%diis_dimension) then 
+!
+         get_current_dim_diis_tool = solver%diis_dimension
+!
+      else
+!
+         get_current_dim_diis_tool = solver%iteration
+!
+      endif
+!
    !   get_current_dim_diis_tool = solver%iteration - &
    !            ((solver%diis_dimension)-1)*((solver%iteration-1)/((solver%diis_dimension)-1))
 !
-      get_current_dim_diis_tool = solver%iteration - &
-               ((solver%diis_dimension))*((solver%iteration-1)/((solver%diis_dimension)))
+   !   get_current_dim_diis_tool = solver%iteration - &
+   !            ((solver%diis_dimension))*((solver%iteration-1)/((solver%diis_dimension)))
 !
    end function get_current_dim_diis_tool
 !
@@ -347,9 +351,7 @@ contains
 !
       integer, intent(in) :: current_dim
 !
-      real(dp), dimension(:), allocatable :: tmp_dx, tmp_x_dx 
-!
-      integer :: k 
+      integer :: k, tmp_unit
 !
       if (current_dim .le. solver%diis_dimension) then 
 !
@@ -363,31 +365,29 @@ contains
 !
       else 
 !
-!        All the files are occupied - do a first-in/last-out replacement
+!        Redefine which file is which, to keep the right ordering:
+!        The 2nd should become the 1st; the 3rd the 2nd; and so on. 
+!        The 1st will become the last, then be overwritten.
 !
-         call mem%alloc(tmp_dx, solver%n_equations)
-         call mem%alloc(tmp_x_dx, solver%n_parameters)
+         tmp_unit = solver%dx(1)%unit
 !
          do k = 2, solver%diis_dimension
 !
-!           Read kth entry, save in position k-1
-!
-            rewind(solver%dx(k)%unit)
-            read(solver%dx(k)%unit) tmp_dx 
-!
-            rewind(solver%dx(k-1)%unit)
-            write(solver%dx(k-1)%unit) tmp_dx  
-!
-            rewind(solver%x_dx(k)%unit)
-            read(solver%x_dx(k)%unit) tmp_x_dx 
-!
-            rewind(solver%x_dx(k-1)%unit)
-            write(solver%x_dx(k-1)%unit) tmp_x_dx  
+            solver%dx(k - 1)%unit = solver%dx(k)%unit
 !
          enddo
 !
-         call mem%dealloc(tmp_dx, solver%n_equations)
-         call mem%dealloc(tmp_x_dx, solver%n_parameters)
+         solver%dx(solver%diis_dimension)%unit = tmp_unit
+!
+         tmp_unit = solver%x_dx(1)%unit
+!
+         do k = 2, solver%diis_dimension
+!
+            solver%x_dx(k - 1)%unit = solver%x_dx(k)%unit
+!
+         enddo
+!
+         solver%x_dx(solver%diis_dimension)%unit = tmp_unit
 !
 !        Now write the current entry to the last file 
 !
@@ -436,8 +436,6 @@ contains
 !
 !           First entry goes out, eliminating the (old) 1st row & column.
 !
-            write(output%unit, *) 'first in last out'
-!
             call mem%alloc(diis_matrix_tmp, current_dim, current_dim)
 !
             rewind(solver%diis_matrix%unit)
@@ -457,8 +455,6 @@ contains
          elseif (current_dim .gt. 1) then
 !
 !           Still doing the first set of vectors: just read the previous matrix 
-!
-            write(output%unit, *) 'first set of vectors'
 !
             rewind(solver%diis_matrix%unit)
 !
