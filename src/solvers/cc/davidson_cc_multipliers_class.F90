@@ -374,33 +374,14 @@ contains
 !
       class(davidson_cc_multipliers) :: solver 
 !
-      integer :: n_specs, i
-      character(len=100) :: line
+      if (input%section_exists('multipliers')) then 
 !
-      if (.not. requested_section('multipliers')) return
+         call input%read_keyword_in_section('threshold', 'multipliers', solver%residual_threshold)
+         call input%read_keyword_in_section('max iterations', 'multipliers', solver%max_iterations)
 !
-      call move_to_section('multipliers', n_specs)
+         if (input%keyword_is_in_section('restart', 'multipliers')) solver%restart = .true.    
 !
-      do i = 1, n_specs
-!
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (line(1:10) == 'threshold:' ) then
-!
-            read(line(11:100), *) solver%residual_threshold
-!
-         elseif (line(1:7) == 'restart' ) then
-!
-            solver%restart = .true.
-!
-         elseif (line(1:15) == 'max iterations:' ) then
-!
-            read(line(16:100), *) solver%max_iterations
-!
-         endif
-!
-      enddo
+      endif  
 !
    end subroutine read_settings_davidson_cc_multipliers
 !

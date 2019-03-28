@@ -36,7 +36,7 @@ cc excited state
    residual threshold: 1.0d-10
    energy threshold:   1.0d-10
    right eigenvectors
-   core excitation: 3
+   core excitation: {3}
 end cc excited state
 
 geometry
