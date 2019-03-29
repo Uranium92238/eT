@@ -24,7 +24,8 @@ module input_file_class
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
 !
-   use kinds    
+   use kinds   
+   use section_class 
    use output_file_class
    use string_utilities  
 !
