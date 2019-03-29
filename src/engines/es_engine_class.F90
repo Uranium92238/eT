@@ -79,13 +79,13 @@ contains
 !
       class(es_engine) :: engine 
 !
-      if (input%section_exists('cc excited state')) then 
+      if (input%requested_section('cc excited state')) then 
 !
          call input%read_keyword_in_section('algorithm', 'cc excited state', engine%algorithm)
 !
-         if (input%keyword_is_in_section('core excitation', 'cc excited state')) engine%es_type = 'core'
-         if (input%keyword_is_in_section('ionization', 'cc excited state')) engine%es_type = 'valence ionized'
-         if (input%keyword_is_in_section('core ionization', 'cc excited state')) engine%es_type = 'core ionized'
+         if (input%requested_keyword_in_section('core excitation', 'cc excited state')) engine%es_type = 'core'
+         if (input%requested_keyword_in_section('ionization', 'cc excited state')) engine%es_type = 'valence ionized'
+         if (input%requested_keyword_in_section('core ionization', 'cc excited state')) engine%es_type = 'core ionized'
 !
       endif
 !

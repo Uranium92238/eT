@@ -426,9 +426,9 @@ contains
 !
       class(uhf) :: wf 
 !
-      if (input%section_exists('hf')) then 
+      if (input%requested_section('hf')) then 
 !  
-         if (input%keyword_is_in_section('fractional uniform valence', 'hf')) wf%fractional_uniform_valence = .true.
+         if (input%requested_keyword_in_section('fractional uniform valence', 'hf')) wf%fractional_uniform_valence = .true.
 !
       endif
 !

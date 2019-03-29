@@ -100,7 +100,7 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      if (input%section_exists('hf')) then 
+      if (input%requested_section('hf')) then 
 !
          call input%read_keyword_in_section('energy threshold', 'hf', solver%energy_threshold)
          call input%read_keyword_in_section('gradient threshold', 'hf', solver%gradient_threshold)

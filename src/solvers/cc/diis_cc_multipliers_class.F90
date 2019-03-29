@@ -336,12 +336,12 @@ contains
 !
       class(diis_cc_multipliers) :: solver 
 !
-      if (input%section_exists('multipliers')) then 
+      if (input%requested_section('multipliers')) then 
 !
          call input%read_keyword_in_section('threshold', 'multipliers', solver%residual_threshold)
          call input%read_keyword_in_section('max iterations', 'multipliers', solver%max_iterations)
 !
-         if (input%keyword_is_in_section('restart', 'multipliers')) solver%restart = .true.    
+         if (input%requested_keyword_in_section('restart', 'multipliers')) solver%restart = .true.    
 !
       endif 
 !

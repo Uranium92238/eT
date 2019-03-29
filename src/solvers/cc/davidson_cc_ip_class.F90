@@ -62,14 +62,14 @@ contains
                             &are met. Bath orbitals and projection is used to obtain ionized &
                             &states.'
 !
-      if (input%section_exists('cc excited state')) then 
+      if (input%requested_section('cc excited state')) then 
 !
          call input%read_keyword_in_section('residual threshold', 'cc excited state', solver%residual_threshold)
          call input%read_keyword_in_section('energy threshold', 'cc excited state', solver%eigenvalue_threshold)
          call input%read_keyword_in_section('max iterations', 'cc excited state', solver%max_iterations)
          call input%read_keyword_in_section('singlet states', 'cc excited state', solver%n_singlet_states)
 !
-         if (input%keyword_is_in_section('restart', 'cc excited state')) solver%restart = .true.  
+         if (input%requested_keyword_in_section('restart', 'cc excited state')) solver%restart = .true.  
 !
       endif
 !

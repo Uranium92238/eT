@@ -352,14 +352,14 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      if (input%section_exists('cc ground state')) then 
+      if (input%requested_section('cc ground state')) then 
 !
          call input%read_keyword_in_section('omega threshold', 'cc ground state', solver%omega_threshold)
          call input%read_keyword_in_section('energy threshold', 'cc ground state', solver%energy_threshold)
          call input%read_keyword_in_section('diis dimension', 'cc ground state', solver%diis_dimension)
          call input%read_keyword_in_section('max iterations', 'cc ground state', solver%max_iterations)
 !
-         if (input%keyword_is_in_section('restart', 'cc ground state')) solver%restart = .true.
+         if (input%requested_keyword_in_section('restart', 'cc ground state')) solver%restart = .true.
 !
       endif 
 !

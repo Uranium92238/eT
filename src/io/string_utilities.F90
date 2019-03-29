@@ -40,7 +40,7 @@ contains
 !!
 !!    Ranges should always be given as [a,b].
 !!
-!!    Lists should always be given as {a, b, c, d}
+!!    Lists should always be given as {a, b, c, d},
 !!    that is, in set notation.
 !!
       implicit none
@@ -119,7 +119,7 @@ contains
 !!
 !!    Ranges should always be given as [a,b].
 !!
-!!    Lists should always be given as {a, b, c, d}
+!!    Lists should always be given as {a, b, c, d},
 !!    that is, in set notation.
 !!
       implicit none

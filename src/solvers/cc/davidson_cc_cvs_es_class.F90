@@ -77,16 +77,16 @@ contains
                             &A description of the CVS approximation can be found in &
                             &S. Coriani & H. Koch, J. Chem. Phys. 143, 181103 (2015).'
 !
-      if (input%section_exists('cc excited state')) then 
+      if (input%requested_section('cc excited state')) then 
 !
          call input%read_keyword_in_section('residual threshold', 'cc excited state', solver%residual_threshold)
          call input%read_keyword_in_section('energy threshold', 'cc excited state', solver%eigenvalue_threshold)
          call input%read_keyword_in_section('max iterations', 'cc excited state', solver%max_iterations)
          call input%read_keyword_in_section('singlet states', 'cc excited state', solver%n_singlet_states)
 !
-         if (input%keyword_is_in_section('restart', 'cc excited state')) solver%restart = .true.  
+         if (input%requested_keyword_in_section('restart', 'cc excited state')) solver%restart = .true.  
 !
-         if (input%keyword_is_in_section('core excitation', 'cc excited state')) then 
+         if (input%requested_keyword_in_section('core excitation', 'cc excited state')) then 
 !  
 !           Determine the number of cores 
 !

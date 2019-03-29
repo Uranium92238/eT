@@ -3946,15 +3946,15 @@ contains
 !
       class(eri_cd) :: solver
 !
-      if (input%section_exists('cholesky')) then 
+      if (input%requested_section('cholesky')) then 
 !
          call input%read_keyword_in_section('threshold', 'cholesky', solver%threshold)
          call input%read_keyword_in_section('span', 'cholesky', solver%span)
          call input%read_keyword_in_section('batches', 'cholesky', solver%n_batches)
          call input%read_keyword_in_section('qualified', 'cholesky', solver%max_qual)
 !
-         if (input%keyword_is_in_section('one center', 'cholesky')) solver%one_center = .true.
-         if (input%keyword_is_in_section('no vectors', 'cholesky')) solver%construct_vectors = .false.
+         if (input%requested_keyword_in_section('one center', 'cholesky')) solver%one_center = .true.
+         if (input%requested_keyword_in_section('no vectors', 'cholesky')) solver%construct_vectors = .false.
 !
       endif
 !
