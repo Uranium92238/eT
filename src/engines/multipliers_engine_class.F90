@@ -164,7 +164,7 @@ contains
 !
       class(multipliers_engine), intent(inout) :: engine 
 !
-      if (input%section_exists('multipliers')) then 
+      if (input%requested_section('multipliers')) then 
 !
          call input%read_keyword_in_section('algorithm', 'multipliers', engine%algorithm)
 !

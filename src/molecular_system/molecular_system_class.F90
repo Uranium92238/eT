@@ -142,7 +142,7 @@ contains
 !
       call initialize_atoms(molecule%name)
 !
-      do i = 1, molecule%n_basis_sets ! Loop over atoms  
+      do i = 1, molecule%n_basis_sets
 !
          write(temp_name, '(a, a1, i4.4)') trim(molecule%name), '_', i
 !
@@ -618,7 +618,7 @@ contains
 !
       real(dp) :: hf_radius, x, y, z
 !
-      if (input%section_exists('active atoms')) then
+      if (input%requested_section('active atoms')) then
 !
 !        Find selection type
 ! 
@@ -687,7 +687,7 @@ contains
 !
 !        Find and set active basis
 !
-         if (input%keyword_is_in_section('active basis', 'active atoms')) then
+         if (input%requested_keyword_in_section('active basis', 'active atoms')) then
 !
             call input%read_keyword_in_section('active basis', 'active atoms', active_basis)
 !

@@ -121,7 +121,7 @@ contains
 !
       class(hf_engine) :: engine 
 !
-      if (input%section_exists('hf')) then 
+      if (input%requested_section('hf')) then 
 !
          call input%read_keyword_in_section('algorithm', 'hf', engine%algorithm)
 !

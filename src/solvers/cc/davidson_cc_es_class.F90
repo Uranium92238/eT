@@ -622,18 +622,18 @@ contains
 !
       integer :: n_start_vecs
 !
-      if (input%section_exists('cc excited state')) then 
+      if (input%requested_section('cc excited state')) then 
 !
          call input%read_keyword_in_section('residual threshold', 'cc excited state', solver%residual_threshold)
          call input%read_keyword_in_section('energy threshold', 'cc excited state', solver%eigenvalue_threshold)
          call input%read_keyword_in_section('max iterations', 'cc excited state', solver%max_iterations)
          call input%read_keyword_in_section('singlet states', 'cc excited state', solver%n_singlet_states)
 !
-         if (input%keyword_is_in_section('restart', 'cc excited state')) solver%restart = .true.    
-         if (input%keyword_is_in_section('left eigenvectors', 'cc excited state')) solver%transformation = 'left'    
-         if (input%keyword_is_in_section('right eigenvectors', 'cc excited state')) solver%transformation = 'right'             
+         if (input%requested_keyword_in_section('restart', 'cc excited state')) solver%restart = .true.    
+         if (input%requested_keyword_in_section('left eigenvectors', 'cc excited state')) solver%transformation = 'left'    
+         if (input%requested_keyword_in_section('right eigenvectors', 'cc excited state')) solver%transformation = 'right'             
 !
-         if (input%keyword_is_in_section('start vectors', 'cc excited state')) then 
+         if (input%requested_keyword_in_section('start vectors', 'cc excited state')) then 
 !  
 !           Determine the number of start vectors & do consistency check 
 !

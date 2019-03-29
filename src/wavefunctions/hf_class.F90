@@ -291,7 +291,7 @@ contains
 !
       class(hf) :: wf 
 !
-      if (input%section_exists('hf')) then 
+      if (input%requested_section('hf')) then 
 !  
          call input%read_keyword_in_section('coulomb threshold', 'hf', wf%coulomb_threshold)
          call input%read_keyword_in_section('exchange threshold', 'hf', wf%exchange_threshold)

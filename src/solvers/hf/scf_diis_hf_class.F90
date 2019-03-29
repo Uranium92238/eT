@@ -408,11 +408,11 @@ contains
 !
       class(scf_diis_hf) :: solver 
 !
-      if (input%section_exists('hf')) then 
+      if (input%requested_section('hf')) then 
 !
          call input%read_keyword_in_section('diis dimension', 'hf', solver%diis_dimension)
 !
-         if (input%keyword_is_in_section('restart', 'hf')) solver%restart = .true.  
+         if (input%requested_keyword_in_section('restart', 'hf')) solver%restart = .true.  
 !
       endif 
 !

@@ -35,8 +35,8 @@ module input_file_class
 !
       procedure :: init => init_input_file
 !
-      procedure :: section_exists        => section_exists_input_file
-      procedure :: keyword_is_in_section => keyword_is_in_section_input_file
+      procedure :: requested_section        => requested_section_input_file
+      procedure :: requested_keyword_in_section => requested_keyword_in_section_input_file
 !
       generic :: read_keyword_in_section => read_integer_keyword_in_section_input_file,   &
                                             read_string_keyword_in_section_input_file,    &
@@ -45,8 +45,11 @@ module input_file_class
       procedure :: read_integer_keyword_in_section_input_file
       procedure :: read_string_keyword_in_section_input_file
       procedure :: read_dp_keyword_in_section_input_file
+      procedure :: read_requested_string_keyword_in_section_input_file
+      procedure :: read_requested_integer_keyword_in_section_input_file
+      procedure :: read_requested_dp_keyword_in_section_input_file
 !
-      procedure :: read_string_keyword_in_section_wo_safety => read_string_keyword_in_section_wo_safety_input_file
+      procedure, private :: read_string_keyword_in_section_wo_safety => read_string_keyword_in_section_wo_safety_input_file
 !
       procedure :: move_to_section  => move_to_section_input_file
 !
@@ -109,19 +112,61 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
-      if (the_file%keyword_is_in_section(keyword, section)) then 
+      if (the_file%requested_section(section)) then
 !
-!        Get the keyword value in string format 
+         if (the_file%requested_keyword_in_section(keyword, section)) then 
 !
-         call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+!           Get the keyword value in string format 
 !
-!        Extract the integer from the string
+            call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
 !
-         read(keyword_value_string, *) keyword_value
+!           Extract the integer from the string
 !
-      endif 
+            read(keyword_value_string, *) keyword_value
+!
+         endif
+!
+      endif
 !
    end subroutine read_integer_keyword_in_section_input_file
+!
+!
+   subroutine read_requested_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+!!
+!!    Read requested integer keyword in section 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    If keyword and section not specified
+!!    ends with error because required keyword 
+!!    not provided.
+!!
+!!  
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: keyword 
+      character(len=*), intent(in) :: section  
+!
+      integer, intent(out) :: keyword_value 
+!
+      character(len=200) :: keyword_value_string
+!
+      if (.not. the_file%requested_section(section)) & 
+         call output%error_msg('could not find the required section: '// trim(section) // '.')
+!
+      if (.not. the_file%requested_keyword_in_section(keyword, section)) & 
+         call output%error_msg('could not find the required keyword '// trim(keyword) // ' in section ' // trim(section))
+!
+!     Get the keyword value in string format 
+!
+      call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+!
+!     Extract the integer from the string
+!
+      read(keyword_value_string, *) keyword_value
+!
+   end subroutine read_requested_integer_keyword_in_section_input_file
 !
 !
    subroutine read_dp_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
@@ -147,19 +192,63 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
-      if (the_file%keyword_is_in_section(keyword, section)) then 
+      if (the_file%requested_section(section)) then
 !
-!        Get the keyword value in string format 
+         if (the_file%requested_keyword_in_section(keyword, section)) then 
 !
-         call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+!           Get the keyword value in string format 
 !
-!        Extract the integer from the string
+            call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
 !
-         read(keyword_value_string, *) keyword_value
+!           Extract the integer from the string
 !
-      endif 
+            read(keyword_value_string, *) keyword_value
+!
+         endif 
+!
+      endif
 !
    end subroutine read_dp_keyword_in_section_input_file
+!
+!
+   subroutine read_requested_dp_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+!!
+!!    Read requested double precision keyword in section 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    If specified, reads keyword as a real double precision into keyword value.
+!!
+!!    Note: if the keyword is not present in the section, keyword_value will not be set,
+!!    and no error occurs. In typical usage, the standard value of the keyword is set before
+!!    this routine is called. Changes from standard are made only when the keyword is specified
+!!    - hence no errors when it does not find the keyword. 
+!!    
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: keyword 
+      character(len=*), intent(in) :: section  
+!
+      real(dp), intent(out) :: keyword_value 
+!
+      character(len=200) :: keyword_value_string
+!
+      if (.not. the_file%requested_section(section)) & 
+         call output%error_msg('could not find the required section: '// trim(section) // '.')
+!
+      if (.not. the_file%requested_keyword_in_section(keyword, section)) & 
+         call output%error_msg('could not find the required keyword '// trim(keyword) // ' in section ' // trim(section))
+!
+!     Get the keyword value in string format 
+!
+      call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+!
+!     Extract the integer from the string
+!
+      read(keyword_value_string, *) keyword_value
+!
+   end subroutine read_requested_dp_keyword_in_section_input_file
 !
 !
    subroutine read_string_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
@@ -183,15 +272,53 @@ contains
 !
       character(len=200) :: keyword_value 
 !
-      if (the_file%keyword_is_in_section(keyword, section)) then 
+      if (the_file%requested_section(section)) then
 !
-!        Get the keyword value in string format 
+         if (the_file%requested_keyword_in_section(keyword, section)) then 
 !
-         call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value)
+!           Get the keyword value in string format 
+!
+            call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value)
+!
+         endif
 !
       endif 
 !
    end subroutine read_string_keyword_in_section_input_file
+!
+!
+   subroutine read_requested_string_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+!!
+!!    Read string keyword in section 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    If specified, reads keyword as a string into keyword value.
+!!
+!!    Note: if the keyword is not present in the section, keyword_value will not be set,
+!!    and no error occurs. In typical usage, the standard value of the keyword is set before
+!!    this routine is called. Changes from standard are made only when the keyword is specified
+!!    - hence no errors when it does not find the keyword. 
+!!    
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: keyword 
+      character(len=*), intent(in) :: section  
+!
+      character(len=200) :: keyword_value 
+!
+      if (.not. the_file%requested_section(section)) & 
+         call output%error_msg('could not find the required section: '// trim(section) // '.')
+!
+      if (.not. the_file%requested_keyword_in_section(keyword, section)) & 
+         call output%error_msg('could not find the required keyword '// trim(keyword) // ' in section ' // trim(section))
+!
+!     Get the keyword value in string format 
+!
+      call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value)
+!
+   end subroutine read_requested_string_keyword_in_section_input_file
 !
 !
    subroutine read_string_keyword_in_section_wo_safety_input_file(the_file, keyword, section, keyword_value)
@@ -258,7 +385,7 @@ contains
    end subroutine read_string_keyword_in_section_wo_safety_input_file
 !
 !
-   logical function keyword_is_in_section_input_file(the_file, keyword, section)
+   logical function requested_keyword_in_section_input_file(the_file, keyword, section)
 !!
 !!    Is string keyword in section?
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
@@ -310,7 +437,7 @@ contains
 !
          if (trim(line(1 : len_line_keyword)) == keyword) then 
 !
-            keyword_is_in_section_input_file = .true.
+            requested_keyword_in_section_input_file = .true.
             return
 !
          endif 
@@ -319,12 +446,12 @@ contains
 !
 !     If you are here, you have not returned, so you have not found the keyword! 
 !
-      keyword_is_in_section_input_file = .false.
+      requested_keyword_in_section_input_file = .false.
 !
-   end function keyword_is_in_section_input_file
+   end function requested_keyword_in_section_input_file
 !
 !
-   logical function section_exists_input_file(the_file, section)
+   logical function requested_section_input_file(the_file, section)
 !!
 !!    Does section exist? 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
@@ -339,7 +466,7 @@ contains
 !
       character(len=200) :: line 
 !
-      section_exists_input_file = .false.
+      requested_section_input_file = .false.
 !
       rewind(the_file%unit)
 !
@@ -350,21 +477,21 @@ contains
 !
          if (trim(line) == section) then 
 !
-            section_exists_input_file = .true.
+            requested_section_input_file = .true.
             return 
 !
          endif 
 !
          if (trim(line) == 'geometry') then 
 !
-            section_exists_input_file = .false.
+            requested_section_input_file = .false.
             return 
 !
          endif
 !
       enddo 
 !
-   end function section_exists_input_file
+   end function requested_section_input_file
 !
 !
    subroutine move_to_section_input_file(the_file, string, n_records)
