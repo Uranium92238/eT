@@ -3944,19 +3944,15 @@ contains
 !!
       implicit none
 !
-      class(eri_cd) :: solver
+      class(eri_cd) :: solver 
 !
-      if (input%requested_section('cholesky')) then 
+      call input%get_keyword_in_section('threshold', 'cholesky', solver%threshold)
+      call input%get_keyword_in_section('span', 'cholesky', solver%span)
+      call input%get_keyword_in_section('batches', 'cholesky', solver%n_batches)
+      call input%get_keyword_in_section('qualified', 'cholesky', solver%max_qual)
 !
-         call input%read_keyword_in_section('threshold', 'cholesky', solver%threshold)
-         call input%read_keyword_in_section('span', 'cholesky', solver%span)
-         call input%read_keyword_in_section('batches', 'cholesky', solver%n_batches)
-         call input%read_keyword_in_section('qualified', 'cholesky', solver%max_qual)
-!
-         if (input%requested_keyword_in_section('one center', 'cholesky')) solver%one_center = .true.
-         if (input%requested_keyword_in_section('no vectors', 'cholesky')) solver%construct_vectors = .false.
-!
-      endif
+      if (input%requested_keyword_in_section('one center', 'cholesky')) solver%one_center = .true.
+      if (input%requested_keyword_in_section('no vectors', 'cholesky')) solver%construct_vectors = .false.
 !
    end subroutine read_settings_eri_cd
 !

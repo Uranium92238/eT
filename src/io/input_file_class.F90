@@ -35,21 +35,25 @@ module input_file_class
 !
       procedure :: init => init_input_file
 !
-      procedure :: requested_section        => requested_section_input_file
+      procedure :: requested_section            => requested_section_input_file
       procedure :: requested_keyword_in_section => requested_keyword_in_section_input_file
 !
-      generic :: read_keyword_in_section => read_integer_keyword_in_section_input_file,   &
-                                            read_string_keyword_in_section_input_file,    &
-                                            read_dp_keyword_in_section_input_file
+      generic :: get_keyword_in_section => get_integer_keyword_in_section_input_file,   &
+                                            get_string_keyword_in_section_input_file,    &
+                                            get_dp_keyword_in_section_input_file
 !
-      procedure :: read_integer_keyword_in_section_input_file
-      procedure :: read_string_keyword_in_section_input_file
-      procedure :: read_dp_keyword_in_section_input_file
-      procedure :: read_requested_string_keyword_in_section_input_file
-      procedure :: read_requested_integer_keyword_in_section_input_file
-      procedure :: read_requested_dp_keyword_in_section_input_file
+      generic :: get_required_keyword_in_section => get_required_string_keyword_in_section_input_file, &
+                                                     get_required_integer_keyword_in_section_input_file, &
+                                                     get_required_dp_keyword_in_section_input_file
 !
-      procedure, private :: read_string_keyword_in_section_wo_safety => read_string_keyword_in_section_wo_safety_input_file
+      procedure :: get_integer_keyword_in_section_input_file
+      procedure :: get_string_keyword_in_section_input_file
+      procedure :: get_dp_keyword_in_section_input_file
+      procedure :: get_required_string_keyword_in_section_input_file
+      procedure :: get_required_integer_keyword_in_section_input_file
+      procedure :: get_required_dp_keyword_in_section_input_file
+!
+      procedure, private :: get_string_keyword_in_section_wo_safety => get_string_keyword_in_section_wo_safety_input_file
 !
       procedure :: move_to_section  => move_to_section_input_file
 !
@@ -89,7 +93,7 @@ contains
    end subroutine init_input_file
 !
 !
-   subroutine read_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
 !!
 !!    Read integer keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
@@ -118,7 +122,7 @@ contains
 !
 !           Get the keyword value in string format 
 !
-            call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+            call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
 !
 !           Extract the integer from the string
 !
@@ -128,10 +132,10 @@ contains
 !
       endif
 !
-   end subroutine read_integer_keyword_in_section_input_file
+   end subroutine get_integer_keyword_in_section_input_file
 !
 !
-   subroutine read_requested_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_required_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
 !!
 !!    Read requested integer keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
@@ -160,16 +164,16 @@ contains
 !
 !     Get the keyword value in string format 
 !
-      call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+      call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
 !
 !     Extract the integer from the string
 !
       read(keyword_value_string, *) keyword_value
 !
-   end subroutine read_requested_integer_keyword_in_section_input_file
+   end subroutine get_required_integer_keyword_in_section_input_file
 !
 !
-   subroutine read_dp_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_dp_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
 !!
 !!    Read double precision keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
@@ -198,7 +202,7 @@ contains
 !
 !           Get the keyword value in string format 
 !
-            call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+            call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
 !
 !           Extract the integer from the string
 !
@@ -208,10 +212,10 @@ contains
 !
       endif
 !
-   end subroutine read_dp_keyword_in_section_input_file
+   end subroutine get_dp_keyword_in_section_input_file
 !
 !
-   subroutine read_requested_dp_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_required_dp_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
 !!
 !!    Read requested double precision keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
@@ -242,16 +246,16 @@ contains
 !
 !     Get the keyword value in string format 
 !
-      call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+      call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
 !
 !     Extract the integer from the string
 !
       read(keyword_value_string, *) keyword_value
 !
-   end subroutine read_requested_dp_keyword_in_section_input_file
+   end subroutine get_required_dp_keyword_in_section_input_file
 !
 !
-   subroutine read_string_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_string_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
 !!
 !!    Read string keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
@@ -278,16 +282,16 @@ contains
 !
 !           Get the keyword value in string format 
 !
-            call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value)
+            call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value)
 !
          endif
 !
       endif 
 !
-   end subroutine read_string_keyword_in_section_input_file
+   end subroutine get_string_keyword_in_section_input_file
 !
 !
-   subroutine read_requested_string_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_required_string_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
 !!
 !!    Read string keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
@@ -316,12 +320,12 @@ contains
 !
 !     Get the keyword value in string format 
 !
-      call the_file%read_string_keyword_in_section_wo_safety(keyword, section, keyword_value)
+      call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value)
 !
-   end subroutine read_requested_string_keyword_in_section_input_file
+   end subroutine get_required_string_keyword_in_section_input_file
 !
 !
-   subroutine read_string_keyword_in_section_wo_safety_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_string_keyword_in_section_wo_safety_input_file(the_file, keyword, section, keyword_value)
 !!
 !!    Read string keyword in section without safety 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
@@ -382,7 +386,7 @@ contains
 !
       call output%error_msg('Failed to read keyword ' // keyword // ' in section ' // section)
 !
-   end subroutine read_string_keyword_in_section_wo_safety_input_file
+   end subroutine get_string_keyword_in_section_wo_safety_input_file
 !
 !
    logical function requested_keyword_in_section_input_file(the_file, keyword, section)
@@ -615,7 +619,7 @@ contains
 !
 !     Get the keyword value in string format 
 !
-      call the_file%read_keyword_in_section(keyword, section, keyword_value_string)
+      call the_file%get_keyword_in_section(keyword, section, keyword_value_string)
 !
 !     Use string utility functionality to get n_elements   
 !  
@@ -659,7 +663,7 @@ contains
 !
 !     Get the keyword value in string format 
 !
-      call the_file%read_keyword_in_section(keyword, section, keyword_value_string)
+      call the_file%get_keyword_in_section(keyword, section, keyword_value_string)
 !
 !     Use string utility functionality to get the array
 !  

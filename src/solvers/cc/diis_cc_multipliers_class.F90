@@ -336,14 +336,10 @@ contains
 !
       class(diis_cc_multipliers) :: solver 
 !
-      if (input%requested_section('multipliers')) then 
+      call input%get_keyword_in_section('threshold', 'multipliers', solver%residual_threshold)
+      call input%get_keyword_in_section('max iterations', 'multipliers', solver%max_iterations)
 !
-         call input%read_keyword_in_section('threshold', 'multipliers', solver%residual_threshold)
-         call input%read_keyword_in_section('max iterations', 'multipliers', solver%max_iterations)
-!
-         if (input%requested_keyword_in_section('restart', 'multipliers')) solver%restart = .true.    
-!
-      endif 
+      if (input%requested_keyword_in_section('restart', 'multipliers')) solver%restart = .true.    
 !
    end subroutine read_settings_diis_cc_multipliers
 !

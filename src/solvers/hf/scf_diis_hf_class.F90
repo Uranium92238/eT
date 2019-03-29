@@ -408,13 +408,9 @@ contains
 !
       class(scf_diis_hf) :: solver 
 !
-      if (input%requested_section('hf')) then 
+      call input%get_keyword_in_section('diis dimension', 'hf', solver%diis_dimension)
 !
-         call input%read_keyword_in_section('diis dimension', 'hf', solver%diis_dimension)
-!
-         if (input%requested_keyword_in_section('restart', 'hf')) solver%restart = .true.  
-!
-      endif 
+      if (input%requested_keyword_in_section('restart', 'hf')) solver%restart = .true.  
 !
    end subroutine read_scf_diis_settings_scf_diis_hf
 !

@@ -291,13 +291,9 @@ contains
 !
       class(hf) :: wf 
 !
-      if (input%requested_section('hf')) then 
-!  
-         call input%read_keyword_in_section('coulomb threshold', 'hf', wf%coulomb_threshold)
-         call input%read_keyword_in_section('exchange threshold', 'hf', wf%exchange_threshold)
-         call input%read_keyword_in_section('integral precision', 'hf', wf%libint_epsilon)
-!
-      endif
+      call input%get_keyword_in_section('coulomb threshold', 'hf', wf%coulomb_threshold)
+      call input%get_keyword_in_section('exchange threshold', 'hf', wf%exchange_threshold)
+      call input%get_keyword_in_section('integral precision', 'hf', wf%libint_epsilon)
 !
    end subroutine read_hf_settings_hf
 !

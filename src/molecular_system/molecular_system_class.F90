@@ -622,7 +622,7 @@ contains
 !
 !        Find selection type
 ! 
-         call input%read_keyword_in_section('selection type', 'active atoms', selection_type)
+         call input%get_keyword_in_section('selection type', 'active atoms', selection_type)
 !
 !        For the given selection type get the active atoms
 !
@@ -641,8 +641,8 @@ contains
 !
          elseif (selection_type == 'central atom') then
 !
-            call input%read_keyword_in_section('central atom', 'active atoms', central_atom)
-            call input%read_keyword_in_section('hf', 'active atoms', hf_radius)
+            call input%get_keyword_in_section('central atom', 'active atoms', central_atom)
+            call input%get_keyword_in_section('hf', 'active atoms', hf_radius)
 !
 !           Set active atoms
 !
@@ -689,7 +689,7 @@ contains
 !
          if (input%requested_keyword_in_section('active basis', 'active atoms')) then
 !
-            call input%read_keyword_in_section('active basis', 'active atoms', active_basis)
+            call input%get_keyword_in_section('active basis', 'active atoms', active_basis)
 !
             do i = 1, molecule%n_active_atoms
 !
