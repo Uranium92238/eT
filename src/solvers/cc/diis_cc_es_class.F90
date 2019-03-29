@@ -137,28 +137,16 @@ contains
 !
       class(diis_cc_es) :: solver 
 !
-      if (input%requested_section('cc excited state')) then 
+      call input%get_keyword_in_section('residual threshold', 'cc excited state', solver%residual_threshold)
+      call input%get_keyword_in_section('energy threshold', 'cc excited state', solver%eigenvalue_threshold)
+      call input%get_keyword_in_section('diis dimension', 'cc excited state', solver%diis_dimension)
+      call input%get_keyword_in_section('max iterations', 'cc excited state', solver%max_iterations)
+!               
+      call input%get_required_keyword_in_section('singlet states', 'cc excited state', solver%n_singlet_states)
 !
-         call input%read_keyword_in_section('residual threshold', 'cc excited state', solver%residual_threshold)
-         call input%read_keyword_in_section('energy threshold', 'cc excited state', solver%eigenvalue_threshold)
-         call input%read_keyword_in_section('diis dimension', 'cc excited state', solver%diis_dimension)
-         call input%read_keyword_in_section('max iterations', 'cc excited state', solver%max_iterations)
-!        
-!        Test for required sections
-!
-        ! if (.not. input%requested_keyword_in_section('singlet states', 'cc excited state')) call output%error_msg('...')
-            
-         call input%read_keyword_in_section('singlet states', 'cc excited state', solver%n_singlet_states)
-!
-         if (input%requested_keyword_in_section('restart', 'cc excited state')) solver%restart = .true.    
-         if (input%requested_keyword_in_section('left eigenvectors', 'cc excited state')) solver%transformation = 'left'    
-         if (input%requested_keyword_in_section('right eigenvectors', 'cc excited state')) solver%transformation = 'right'    
-!
-      else
-!
-         call output%error_msg('cc excited state section is missing.')
-!
-      endif
+      if (input%requested_keyword_in_section('restart', 'cc excited state')) solver%restart = .true.    
+      if (input%requested_keyword_in_section('left eigenvectors', 'cc excited state')) solver%transformation = 'left'    
+      if (input%requested_keyword_in_section('right eigenvectors', 'cc excited state')) solver%transformation = 'right'    
 !
    end subroutine read_settings_diis_cc_es
 !

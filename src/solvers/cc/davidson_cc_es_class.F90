@@ -622,42 +622,36 @@ contains
 !
       integer :: n_start_vecs
 !
-      if (input%requested_section('cc excited state')) then 
+      call input%get_keyword_in_section('residual threshold', 'cc excited state', solver%residual_threshold)
+      call input%get_keyword_in_section('energy threshold', 'cc excited state', solver%eigenvalue_threshold)
+      call input%get_keyword_in_section('max iterations', 'cc excited state', solver%max_iterations)
+!     
+      call input%get_required_keyword_in_section('singlet states', 'cc excited state', solver%n_singlet_states)
 !
-         call input%read_keyword_in_section('residual threshold', 'cc excited state', solver%residual_threshold)
-         call input%read_keyword_in_section('energy threshold', 'cc excited state', solver%eigenvalue_threshold)
-         call input%read_keyword_in_section('max iterations', 'cc excited state', solver%max_iterations)
-         call input%read_keyword_in_section('singlet states', 'cc excited state', solver%n_singlet_states)
+      if (input%requested_keyword_in_section('restart', 'cc excited state')) solver%restart = .true.    
+      if (input%requested_keyword_in_section('left eigenvectors', 'cc excited state')) solver%transformation = 'left'    
+      if (input%requested_keyword_in_section('right eigenvectors', 'cc excited state')) solver%transformation = 'right'             
 !
-         if (input%requested_keyword_in_section('restart', 'cc excited state')) solver%restart = .true.    
-         if (input%requested_keyword_in_section('left eigenvectors', 'cc excited state')) solver%transformation = 'left'    
-         if (input%requested_keyword_in_section('right eigenvectors', 'cc excited state')) solver%transformation = 'right'             
-!
-         if (input%requested_keyword_in_section('start vectors', 'cc excited state')) then 
+      if (input%requested_keyword_in_section('start vectors', 'cc excited state')) then 
 !  
-!           Determine the number of start vectors & do consistency check 
+!        Determine the number of start vectors & do consistency check 
 !
-            n_start_vecs = input%get_n_elements_for_keyword_in_section('start vectors', 'cc excited state')
+         n_start_vecs = input%get_n_elements_for_keyword_in_section('start vectors', 'cc excited state')
 !
-            if (n_start_vecs .ne. solver%n_singlet_states) then
+         if (n_start_vecs .ne. solver%n_singlet_states) then
 !
-               call output%error_msg('mismatch in number of start vectors and number of specified roots.')
+            call output%error_msg('mismatch in number of start vectors and number of specified roots.')
 !
-            endif
+         endif
 !
-!           Then read the start vectors into array 
+!        Then read the start vectors into array 
 !
-            call mem%alloc(solver%start_vectors, n_start_vecs)
+         call mem%alloc(solver%start_vectors, n_start_vecs)
 !
-            call input%get_array_for_keyword_in_section('start vectors', 'cc excited state', n_start_vecs, solver%start_vectors)
+         call input%get_array_for_keyword_in_section('start vectors', 'cc excited state', n_start_vecs, solver%start_vectors)
 !
-         endif 
+      endif 
 !
-      else
-!
-         call output%error_msg('cc excited state section is missing.')
-!
-      endif
 !
    end subroutine read_settings_davidson_cc_es
 !
