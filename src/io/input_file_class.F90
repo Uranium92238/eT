@@ -37,6 +37,13 @@ module input_file_class
 !
       procedure :: init => init_input_file
 !
+      procedure, nopass :: string_is_comment    => string_is_comment_input_file
+!
+      procedure :: check_for_illegal_keywords   => check_for_illegal_keywords_input_file
+      procedure :: check_section_for_illegal_keywords   => check_section_for_illegal_keywords_input_file
+!
+      procedure, nopass :: extract_keyword_from_string  => extract_keyword_from_string_input_file
+!
       procedure :: requested_section            => requested_section_input_file
       procedure :: requested_keyword_in_section => requested_keyword_in_section_input_file
 !
@@ -94,7 +101,7 @@ contains
 !
       input%cholesky_section%name_ = 'cholesky'
 !
-      input%cholesky_section%keywords = [ 'threshold           ',    &
+      input%cholesky_section%keywords = [ 'tasdhreshold        ',    &
                                           'span                ',    &
                                           'batches             ',    &
                                           'qualified           ',    &
@@ -102,6 +109,80 @@ contains
                                           'no vectors          '     ]
 !
    end subroutine init_input_file
+!
+!
+   subroutine check_for_illegal_keywords_input_file(the_file)
+!!
+!!    Check for illegal keywords 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Checks each section in turn, stopping with an error if it finds a keyword 
+!!    that is not recognized.
+!!
+      implicit none 
+!
+      class(input_file) :: the_file
+!
+      call the_file%check_section_for_illegal_keywords(the_file%cholesky_section)
+!
+   end subroutine check_for_illegal_keywords_input_file
+!
+!
+   subroutine check_section_for_illegal_keywords_input_file(the_file, the_section)
+!!
+!!    Checks a particular section for illegal keywords 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+      implicit none 
+!
+      class(input_file) :: the_file
+!
+      class(section) :: the_section
+!
+      character(len=200) :: string, keyword 
+!
+      logical :: recognized 
+!
+      integer :: n_records, record, k
+!
+      if (the_file%requested_section(the_section%name_)) then 
+!
+         call the_file%move_to_section(the_section%name_, n_records)
+!
+         do record = 1, n_records
+!
+            recognized = .false.
+!
+            read(the_file%unit, '(a200)') string 
+!
+            if (.not. input%string_is_comment(string)) then 
+!
+               call input%extract_keyword_from_string(string, keyword)
+!
+               do k = 1, size(the_section%keywords)
+!
+                  if (trim(the_section%keywords(k)) == trim(keyword)) recognized = .true. 
+!
+               enddo
+!
+               if (.not. recognized) then 
+!
+                  write(output%unit, '(/t3,a,a,a,a,a)') 'Could not recognize keyword "', trim(keyword), &
+                                                         '" in section "', trim(the_section%name_), '".'
+!
+                  call the_section%print_keywords()
+!
+                  call output%error_msg('Something is wrong in the input file. See above.')
+!
+               endif 
+!
+            endif 
+!
+         enddo
+!
+      endif 
+!
+   end subroutine check_section_for_illegal_keywords_input_file
 !
 !
    subroutine get_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
@@ -398,6 +479,76 @@ contains
       call output%error_msg('Failed to read keyword ' // keyword // ' in section ' // section)
 !
    end subroutine get_string_keyword_in_section_wo_safety_input_file
+!
+!
+   logical function string_is_comment_input_file(string)
+!!
+!!    Is the string a comment?
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      character(len=200), intent(in) :: string
+!
+      character(len=200) :: tmp_string 
+!
+      tmp_string = adjustl(string)
+!
+      if (string(1:1) == '!') then 
+!
+         string_is_comment_input_file = .true.
+!
+      else
+!
+         string_is_comment_input_file = .false.
+!
+      endif
+!
+   end function string_is_comment_input_file
+!
+!
+   subroutine extract_keyword_from_string_input_file(string, keyword)
+!!
+!!    Extract keyword from string 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!    
+!!    Note: assumes that the string is not a comment. This routine is therefore 
+!!    called after a call to "is comment" logical routine. 
+!!
+      implicit none 
+!
+      character(len=200), intent(in)   :: string 
+      character(len=200), intent(out)  :: keyword 
+!
+      integer :: k, colon_position
+!
+      keyword = adjustl(string)
+!
+!     If there is a ":", we have to remove the ":" as well as the value(s) that follow 
+!
+      colon_position = -1 
+!
+      do k = 1, 200
+!
+         if (keyword(k : k) == ':') then 
+!
+            colon_position = k 
+!
+         endif 
+!
+      enddo
+!
+      if (colon_position .ne. -1) then 
+!
+         do k = colon_position, 200
+!
+            keyword(k : k) = ' '
+!
+         enddo
+!
+      endif 
+!
+   end subroutine extract_keyword_from_string_input_file
 !
 !
    logical function requested_keyword_in_section_input_file(the_file, keyword, section)

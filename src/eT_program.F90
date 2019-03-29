@@ -113,6 +113,8 @@ program eT_program
    call input%init('eT.inp')
    call disk%open_file(input, 'read')
 !
+   call input%check_for_illegal_keywords()
+!
    call timing%init('timing.out')
    call disk%open_file(timing, 'write', 'rewind')
 !

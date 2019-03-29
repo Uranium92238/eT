@@ -89,11 +89,11 @@ contains
 !
          write(error_int_char, '(i12)') error_int   
 !
-         write(out_file%unit, '(a)') 'Error: ' // trim(error_specs) // ' ' // error_int_char
+         write(out_file%unit, '(/t3,a)') 'Error: ' // trim(error_specs) // ' ' // error_int_char
 !
       else
 !
-         write(out_file%unit, '(a)') 'Error: ' // trim(error_specs)
+         write(out_file%unit, '(/t3,a)') 'Error: ' // trim(error_specs)
 !
       endif
 !
@@ -113,7 +113,7 @@ contains
 !
       character(len=*) :: warning_specs
 !
-      write(out_file%unit, '(a)') 'Warning: ' // trim(warning_specs)
+      write(out_file%unit, '(/t3,a)') 'Warning: ' // trim(warning_specs)
 !
    end subroutine warning_msg_output_file
 !

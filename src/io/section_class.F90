@@ -35,6 +35,34 @@ module section_class
       character(len=21), dimension(:), allocatable :: keywords
 !
    contains
+!
+      procedure :: print_keywords 
+!
    end type section  
+!
+contains 
+!
+!
+   subroutine print_keywords(the_section)
+!!
+!!    Print keywords 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(section) :: the_section
+!
+      integer :: k 
+!
+      write(output%unit, '(/t3,a,a,a/)') 'The valid keywords in the section named "', trim(the_section%name_), '" are:'
+!
+      do k = 1, size(the_section%keywords)
+!
+         write(output%unit, '(t6,a)') the_section%keywords(k)
+!
+      enddo
+!
+   end subroutine print_keywords
+!
 !
 end module section_class
