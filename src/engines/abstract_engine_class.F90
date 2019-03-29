@@ -31,7 +31,7 @@ module abstract_engine_class
 !
    type, abstract :: abstract_engine
 !
-      character(len=100) :: name_
+      character(len=200) :: name_
 !
    contains
 !

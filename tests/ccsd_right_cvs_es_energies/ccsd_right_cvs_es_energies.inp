@@ -31,7 +31,7 @@ cc ground state
 end cc ground state
 
 cc excited state
-   core excitation:    3
+   core excitation:    {3}
    algorithm:          davidson
    singlet states:     2
    residual threshold: 1.0d-10

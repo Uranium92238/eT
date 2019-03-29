@@ -64,9 +64,7 @@ contains
 !
       class(davidson_cvs_cc_es) :: solver 
 !
-      integer :: n_specs, i, j
-!
-      character(len=100) :: line
+!     These three asignments shouldn't really be in this routine. - EFK, Mar 2019
 !
       solver%tag = 'Davidson coupled cluster core excited state solver'
       solver%description1 = 'A Davidson CVS solver that calculates core excitation energies and the &
@@ -79,52 +77,29 @@ contains
                             &A description of the CVS approximation can be found in &
                             &S. Coriani & H. Koch, J. Chem. Phys. 143, 181103 (2015).'
 !
-      call move_to_section('cc excited state', n_specs)
+      if (input%section_exists('cc excited state')) then 
 !
-      do i = 1, n_specs
+         call input%read_keyword_in_section('residual threshold', 'cc excited state', solver%residual_threshold)
+         call input%read_keyword_in_section('energy threshold', 'cc excited state', solver%eigenvalue_threshold)
+         call input%read_keyword_in_section('max iterations', 'cc excited state', solver%max_iterations)
+         call input%read_keyword_in_section('singlet states', 'cc excited state', solver%n_singlet_states)
 !
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
+         if (input%keyword_is_in_section('restart', 'cc excited state')) solver%restart = .true.  
 !
-         if (line(1:19) == 'residual threshold:' ) then
+         if (input%keyword_is_in_section('core excitation', 'cc excited state')) then 
+!  
+!           Determine the number of cores 
 !
-            read(line(20:100), *) solver%residual_threshold
+            solver%n_cores = input%get_n_elements_for_keyword_in_section('core excitation', 'cc excited state')
 !
-         elseif (line(1:17) == 'energy threshold:' ) then
-!
-            read(line(18:100), *) solver%eigenvalue_threshold
-!
-         elseif (line(1:15) == 'singlet states:' ) then
-!
-            read(line(16:100), *) solver%n_singlet_states
-!
-         elseif (line(1:16) == 'core excitation:' ) then
-!
-            line = line(17:100)
-            line = remove_preceding_blanks(line)
-            solver%n_cores = 0
-!
-            do j = 1, 83
-!
-               if (line(j:j) .ne. ' ') solver%n_cores = solver%n_cores + 1
-!
-            enddo
+!           Then read the core vector
 !
             call solver%initialize_cores()
+            call input%get_array_for_keyword_in_section('core excitation', 'cc excited state', solver%n_cores, solver%cores)
 !
-            read(line, *) solver%cores
+         endif 
 !
-         elseif (line(1:15) == 'max iterations:' ) then
-!
-            read(line(16:100), *) solver%max_iterations
-!
-         elseif (trim(line) == 'restart') then
-!
-            solver%restart = .true.
-!
-         endif
-!
-      enddo
+      endif
 !
    end subroutine read_settings_davidson_cvs_cc_es
 !

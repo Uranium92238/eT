@@ -620,77 +620,42 @@ contains
 !
       class(davidson_cc_es) :: solver 
 !
-      integer :: n_specs, i, j, n_start_vecs
+      integer :: n_start_vecs
 !
-      character(len=100) :: line
+      if (input%section_exists('cc excited state')) then 
 !
-      if (.not. requested_section('cc excited state')) then 
+         call input%read_keyword_in_section('residual threshold', 'cc excited state', solver%residual_threshold)
+         call input%read_keyword_in_section('energy threshold', 'cc excited state', solver%eigenvalue_threshold)
+         call input%read_keyword_in_section('max iterations', 'cc excited state', solver%max_iterations)
+         call input%read_keyword_in_section('singlet states', 'cc excited state', solver%n_singlet_states)
 !
-         call output%error_msg('number of excitations must be specified.')
+         if (input%keyword_is_in_section('restart', 'cc excited state')) solver%restart = .true.    
+         if (input%keyword_is_in_section('left eigenvectors', 'cc excited state')) solver%transformation = 'left'    
+         if (input%keyword_is_in_section('right eigenvectors', 'cc excited state')) solver%transformation = 'right'             
 !
-      endif
+         if (input%keyword_is_in_section('start vectors', 'cc excited state')) then 
+!  
+!           Determine the number of start vectors & do consistency check 
 !
-      call move_to_section('cc excited state', n_specs)
+            n_start_vecs = input%get_n_elements_for_keyword_in_section('start vectors', 'cc excited state')
 !
-      do i = 1, n_specs
+            if (n_start_vecs .ne. solver%n_singlet_states) then
 !
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
+               call output%error_msg('mismatch in number of start vectors and number of specified roots.')
 !
-         if (line(1:19) == 'residual threshold:' ) then
+            endif
 !
-            read(line(20:100), *) solver%residual_threshold
-!
-         elseif (line(1:17) == 'energy threshold:' ) then
-!
-            read(line(18:100), *) solver%eigenvalue_threshold
-!
-         elseif (line(1:15) == 'singlet states:' ) then
-!
-            read(line(16:100), *) solver%n_singlet_states
-!
-         elseif (line(1:15) == 'max iterations:' ) then
-!
-            read(line(16:100), *) solver%max_iterations
-!
-         elseif (line(1:18) == 'right eigenvectors') then 
-!
-            solver%transformation = 'right'
-!
-         elseif (line(1:18) == 'left eigenvectors') then 
-!
-            solver%transformation = 'left'
-!
-         elseif (trim(line) == 'restart') then
-!
-            solver%restart = .true.
-!
-         elseif (line(1:14) == 'start vectors:') then
-!
-            line = line(15:100)
-            line = remove_preceding_blanks(line)
-            n_start_vecs = 0
-!
-            do j = 1, 86
-!
-               if (line(j:j) .ne. ' ') n_start_vecs = n_start_vecs + 1
-!
-            enddo
+!           Then read the start vectors into array 
 !
             call mem%alloc(solver%start_vectors, n_start_vecs)
-            read(line, *) solver%start_vectors
 !
-         endif
+            call input%get_array_for_keyword_in_section('start vectors', 'cc excited state', n_start_vecs, solver%start_vectors)
 !
-      enddo
+         endif 
 !
-      if (allocated(solver%start_vectors)) then
+      else
 !
-         if (n_start_vecs .ne. solver%n_singlet_states) then
-!
-            call output%error_msg('mismatch in number of start vectors and number of specified roots.')
-!
-         endif
+         call output%error_msg('cc excited state section is missing.')
 !
       endif
 !

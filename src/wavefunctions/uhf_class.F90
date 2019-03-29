@@ -426,37 +426,11 @@ contains
 !
       class(uhf) :: wf 
 !
-      integer :: n_records, i 
+      if (input%section_exists('hf')) then 
+!  
+         if (input%keyword_is_in_section('fractional uniform valence', 'hf')) wf%fractional_uniform_valence = .true.
 !
-      character(len=100) :: line, value 
-!
-      if (requested_section('hf')) then ! User has requested something 
-!
-         call move_to_section('hf', n_records)
-!
-         do i = 1, n_records
-!
-            read(input%unit, '(a100)') line
-            line = remove_preceding_blanks(line)
-!
-            if (line(1:27) == 'fractional uniform valence:') then
-!
-               value = line(28:100)
-               value = remove_preceding_blanks(value)
-!
-               if (trim(value) == 'true') then 
-!
-                  wf%fractional_uniform_valence = .true.
-!
-               endif
-!
-               cycle
-!
-            endif
-!
-         enddo
-!
-      endif 
+      endif
 !
    end subroutine read_uhf_settings_uhf
 !

@@ -291,45 +291,13 @@ contains
 !
       class(hf) :: wf 
 !
-      integer :: n_records, i
+      if (input%section_exists('hf')) then 
+!  
+         call input%read_keyword_in_section('coulomb threshold', 'hf', wf%coulomb_threshold)
+         call input%read_keyword_in_section('exchange threshold', 'hf', wf%exchange_threshold)
+         call input%read_keyword_in_section('integral precision', 'hf', wf%libint_epsilon)
 !
-      character(len=100) :: line, value 
-!
-      if (requested_section('hf')) then ! User has requested something 
-!
-         call move_to_section('hf', n_records)
-!
-         do i = 1, n_records
-!
-            read(input%unit, '(a100)') line
-            line = remove_preceding_blanks(line)
-!
-            if (line(1:18) == 'coulomb threshold:') then 
-!
-               value = line(19:100)
-               value = remove_preceding_blanks(value)
-               read(value, *) wf%coulomb_threshold
-               cycle
-!
-            elseif (line(1:19) == 'exchange threshold:') then 
-!
-               value = line(20:100)
-               value = remove_preceding_blanks(value)
-               read(value, *) wf%exchange_threshold
-               cycle
-!
-            elseif (line(1:19) == 'integral precision:') then 
-!
-               value = line(20:100)
-               value = remove_preceding_blanks(value)
-               read(value, *) wf%libint_epsilon
-               cycle
-!
-            endif
-!
-         enddo
-!
-      endif 
+      endif
 !
    end subroutine read_hf_settings_hf
 !

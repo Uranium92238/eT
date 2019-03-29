@@ -48,7 +48,7 @@ module diis_cc_gs_class
       real(dp) :: energy_threshold
       real(dp) :: omega_threshold 
 !
-      logical    :: do_restart
+      logical    :: restart
 !
    contains
 !     
@@ -91,7 +91,7 @@ contains
       solver%max_iterations   = 100
       solver%energy_threshold = 1.0d-6
       solver%omega_threshold  = 1.0d-6
-      solver%do_restart       = .false.
+      solver%restart       = .false.
 !
 !     Read & print settings (thresholds, etc.)
 !
@@ -105,7 +105,7 @@ contains
 !
 !     Prepare restart information file 
 !
-      if (solver%do_restart) then
+      if (solver%restart) then
 !
          call wf%read_amplitudes()
          call wf%integrals%write_t1_cholesky(wf%t1) 
@@ -352,40 +352,16 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      integer :: n_specs, i
+      if (input%section_exists('cc ground state')) then 
 !
-      character(len=100) :: line
+         call input%read_keyword_in_section('omega threshold', 'cc ground state', solver%omega_threshold)
+         call input%read_keyword_in_section('energy threshold', 'cc ground state', solver%energy_threshold)
+         call input%read_keyword_in_section('diis dimension', 'cc ground state', solver%diis_dimension)
+         call input%read_keyword_in_section('max iterations', 'cc ground state', solver%max_iterations)
 !
-      call move_to_section('cc ground state', n_specs)
+         if (input%keyword_is_in_section('restart', 'cc ground state')) solver%restart = .true.
 !
-      do i = 1, n_specs
-!
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (line(1:16) == 'omega threshold:' ) then
-!
-            read(line(17:100), *) solver%omega_threshold
-!
-         elseif (line(1:17) == 'energy threshold:' ) then
-!
-            read(line(18:100), *) solver%energy_threshold
-!
-         elseif (line(1:15) == 'diis dimension:' ) then
-!
-            read(line(16:100), *) solver%diis_dimension
-!
-         elseif (line(1:15) == 'max iterations:' ) then
-!
-            read(line(16:100), *) solver%max_iterations
-!
-         elseif (trim(line) == 'restart') then
-!
-            solver%do_restart = .true.
-!
-         endif
-!
-      enddo
+      endif 
 !
    end subroutine read_settings_diis_cc_gs
 !
