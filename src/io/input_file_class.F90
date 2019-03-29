@@ -101,12 +101,16 @@ contains
 !
       input%cholesky_section%name_ = 'cholesky'
 !
-      input%cholesky_section%keywords = [ 'tasdhreshold        ',    &
+      input%cholesky_section%keywords = [ 'threshold           ',    &
                                           'span                ',    &
                                           'batches             ',    &
                                           'qualified           ',    &
                                           'one center          ',    &
                                           'no vectors          '     ]
+!
+   !   input%ccgs_section%name_ = 'cc ground state'
+!
+   !   input%ccgs_section%keywords = [ '',    &]
 !
    end subroutine init_input_file
 !
