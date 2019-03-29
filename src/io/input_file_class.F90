@@ -31,6 +31,7 @@ module input_file_class
 !
    type, extends(abstract_file) :: input_file 
 !
+      type(section) :: cholesky_section
 !
    contains
 !
@@ -86,6 +87,15 @@ contains
 !
       the_file%access = 'sequential'
       the_file%format = 'formatted'
+!
+      input%cholesky_section%name_ = 'cholesky'
+!
+      input%cholesky_section%keywords = [ 'threshold           ',    &
+                                          'span                ',    &
+                                          'batches             ',    &
+                                          'qualified           ',    &
+                                          'one center          ',    &
+                                          'no vectors          '     ]
 !
    end subroutine init_input_file
 !

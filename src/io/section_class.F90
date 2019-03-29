@@ -30,8 +30,11 @@ module section_class
 !
    type :: section
 !
-      character(len=200), allocatable(:) :: keywords
+      character(len=:), allocatable :: name_
 !
+      character(len=21), dimension(:), allocatable :: keywords
+!
+   contains
    end type section  
 !
 end module section_class
