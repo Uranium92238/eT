@@ -130,7 +130,7 @@ contains
 !
       if (requested_section('active atoms')) then
 !
-         write(output%unit, '(t6, a)')'Active atoms:'
+         write(output%unit, '(/t6, a)')'Active atoms:'
          call molecule%reorder_atoms()
          write(output%unit, '(t6, a/)')'OBS: Atoms will be reordered, active atoms first.'
 !
@@ -630,9 +630,13 @@ contains
 !
          if (trim(selection_type) == 'range' .or. trim(selection_type) == 'list') then
 !
+!           Get the nuumber of elements in the list/range
+!
             molecule%n_active_atoms = input%get_n_elements_for_keyword_in_section('hf', 'active atoms')
 !
             call mem%alloc(active_atoms, molecule%n_active_atoms)
+!
+!           Get the active atoms
 !
             call input%get_array_for_keyword_in_section('hf', 'active atoms', &
                                                          molecule%n_active_atoms, active_atoms)

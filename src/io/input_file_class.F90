@@ -322,7 +322,7 @@ contains
 !
          endif 
 !
-         if (trim(line) == 'end geometry') then 
+         if (trim(line) == 'geometry') then 
 !
             section_exists_input_file = .false.
             return 
@@ -434,6 +434,14 @@ contains
 !!    for keyword which is specified on input by either an
 !!    integer range or list (of length n_elements).
 !!
+!!    Ranges should always be given as [a,b].
+!!
+!!    Lists should always be given as {a, b, c, d},
+!!    that is, in set notation.
+!!
+!!    Function is called in preparation for
+!!    get_array_for_keyword_in_section
+!!
       implicit none 
 !
       class(input_file), intent(in) :: the_file
@@ -458,20 +466,22 @@ contains
 !
    subroutine get_array_for_keyword_in_section_input_file(the_file, keyword, section, n_elements, array_)
 !!
-!!    Set array for keyword in section 
+!!    Get array for keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
-!!    Sets input variable array (array_) for keyword
+!!    Gets input variable array (array_) for keyword
 !!    which is specified on input by either an
 !!    integer range or list (of length n_elements).
 !!
 !!    Ranges should always be given as [a,b].
 !!
-!!    Lists should always be given as {a, b, c, d}
+!!    Lists should always be given as {a, b, c, d},
 !!    that is, in set notation.
 !!
 !!    Routine should be called after the 
-!!    get_n_elements_for_keyword_in_section is called.
+!!    get_n_elements_for_keyword_in_section is called
+!!    in order to determine n_elements so that array_ 
+!!    can be allocated.
 !!
 !!
       implicit none 
