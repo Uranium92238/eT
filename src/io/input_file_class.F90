@@ -31,15 +31,7 @@ module input_file_class
 !
    type, extends(abstract_file) :: input_file 
 !
-      type(section) :: system 
-      type(section) :: memory 
-      type(section) :: disk 
-!
-      type(section) :: solver_cholesky
-      type(section) :: solver_hf
-      type(section) :: solver_cc_gs
-      type(section) :: solver_cc_es
-      type(section) :: solver_cc_multipliers ! cc zop later 
+      type(section), dimension(:), allocatable :: sections(:)
 !
    contains
 !
@@ -102,75 +94,93 @@ contains
 !
       character(len=*) :: name
 !
+      type(section) :: system 
+      type(section) :: memory 
+      type(section) :: disk 
+      type(section) :: solver_cholesky
+      type(section) :: solver_hf
+      type(section) :: solver_cc_gs
+      type(section) :: solver_cc_es
+      type(section) :: solver_cc_multipliers ! cc zop later 
+!
       the_file%name = name
 !
       the_file%access = 'sequential'
       the_file%format = 'formatted'
 !
-      the_file%system%name_ = 'system'
+      system%name_ = 'system'
 !
-      the_file%system%keywords = [  'name                 ',   &
-                                    'charge               ',   &
-                                    'multiplicity         '    ] 
+      system%keywords = [  'name                 ',   &
+                           'charge               ',   &
+                           'multiplicity         '    ] 
 !
-      the_file%memory%name_ = 'memory'
+      memory%name_ = 'memory'
 !
-      the_file%memory%keywords = ['available            ']
+      memory%keywords = ['available            ']
 !
-      the_file%disk%name_ = 'disk'
+      disk%name_ = 'disk'
 !
-      the_file%disk%keywords = ['available            ']
+      disk%keywords = ['available            ']
 !
-      the_file%solver_cholesky%name_ = 'solver cholesky'
+      solver_cholesky%name_ = 'solver cholesky'
 !
-      the_file%solver_cholesky%keywords = [  'threshold           ',    &
-                                             'span                ',    &
-                                             'batches             ',    &
-                                             'qualified           ',    &
-                                             'one center          ',    &
-                                             'no vectors          '     ]
+      solver_cholesky%keywords = [  'threshold           ',    &
+                                    'span                ',    &
+                                    'batches             ',    &
+                                    'qualified           ',    &
+                                    'one center          ',    &
+                                    'no vectors          '     ]
 !
-      the_file%solver_hf%name_ = 'solver hf'
+      solver_hf%name_ = 'solver hf'
 !
-      the_file%solver_hf%keywords = [  'algorithm            ',   &
-                                       'energy threshold     ',   &
-                                       'gradient threshold   ',   &
-                                       'max iterations       ',   &
-                                       'diis dimension       ',   &
-                                       'restart              ',   &
-                                       'ao density guess     '    ]
+      solver_hf%keywords = [  'algorithm            ',   &
+                              'energy threshold     ',   &
+                              'gradient threshold   ',   &
+                              'max iterations       ',   &
+                              'diis dimension       ',   &
+                              'restart              ',   &
+                              'ao density guess     '    ]
 !
-      the_file%solver_cc_gs%name_ = 'solver cc gs'
+      solver_cc_gs%name_ = 'solver cc gs'
 !
-      the_file%solver_cc_gs%keywords = [  'algorithm            ',   &
-                                          'energy threshold     ',   &
-                                          'omega threshold      ',   &
-                                          'max iterations       ',   &
-                                          'diis dimension       ',   &
-                                          'restart              '    ]
+      solver_cc_gs%keywords = [  'algorithm            ',   &
+                                 'energy threshold     ',   &
+                                 'omega threshold      ',   &
+                                 'max iterations       ',   &
+                                 'diis dimension       ',   &
+                                 'restart              '    ]
 !
-      the_file%solver_cc_es%name_ = 'solver cc es'
+      solver_cc_es%name_ = 'solver cc es'
 !
-      the_file%solver_cc_es%keywords = [  'algorithm            ',   &
-                                          'ionization           ',   &
-                                          'core ionization      ',   &
-                                          'core excitation      ',   &
-                                          'energy threshold     ',   &
-                                          'residual threshold   ',   &
-                                          'max iterations       ',   &
+      solver_cc_es%keywords = [  'algorithm            ',   &
+                                 'ionization           ',   &
+                                 'core ionization      ',   &
+                                 'core excitation      ',   &
+                                 'energy threshold     ',   &
+                                 'residual threshold   ',   &
+                                 'max iterations       ',   &
+                                 'restart              ',   &
+                                 'left eigenvectors    ',   &
+                                 'right eigenvectors   ',   &
+                                 'singlet states       ',   &
+                                 'start vectors        ',   &
+                                 'diis dimension       '    ]
+!
+      solver_cc_multipliers%name_ = 'solver cc multipliers'
+!
+      solver_cc_multipliers%keywords = [  'algorithm            ',   &
+                                          'threshold            ',   &
                                           'restart              ',   &
-                                          'left eigenvectors    ',   &
-                                          'right eigenvectors   ',   &
-                                          'singlet states       ',   &
-                                          'start vectors        ',   &
-                                          'diis dimension       '    ]
+                                          'max iterations       '    ]
 !
-      the_file%solver_cc_multipliers%name_ = 'solver cc multipliers'
-!
-      the_file%solver_cc_multipliers%keywords = [  'algorithm            ',   &
-                                                   'threshold            ',   &
-                                                   'restart              ',   &
-                                                   'max iterations       '    ]
+      the_file%sections = [system,              &
+                           memory,              &
+                           disk,                &
+                           solver_cholesky,     &
+                           solver_hf,           &
+                           solver_cc_gs,        &
+                           solver_cc_es,        &
+                           solver_cc_multipliers]
 !
    end subroutine init_input_file
 !
@@ -187,14 +197,13 @@ contains
 !
       class(input_file) :: the_file
 !
-      call the_file%check_section_for_illegal_keywords(the_file%system)
-      call the_file%check_section_for_illegal_keywords(the_file%memory)
-      call the_file%check_section_for_illegal_keywords(the_file%disk)
-      call the_file%check_section_for_illegal_keywords(the_file%solver_cholesky)
-      call the_file%check_section_for_illegal_keywords(the_file%solver_hf)
-      call the_file%check_section_for_illegal_keywords(the_file%solver_cc_gs)
-      call the_file%check_section_for_illegal_keywords(the_file%solver_cc_es)
-      call the_file%check_section_for_illegal_keywords(the_file%solver_cc_multipliers)
+      integer :: k 
+!
+      do k = 1, size(the_file%sections)
+!
+         call the_file%check_section_for_illegal_keywords(the_file%sections(k))
+!
+      enddo
 !
    end subroutine check_for_errors_input_file
 !
