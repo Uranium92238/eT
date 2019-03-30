@@ -31,7 +31,15 @@ module input_file_class
 !
    type, extends(abstract_file) :: input_file 
 !
-      type(section) :: cholesky_section
+      type(section) :: system 
+      type(section) :: memory 
+      type(section) :: disk 
+!
+      type(section) :: solver_cholesky
+      type(section) :: solver_hf
+      type(section) :: solver_cc_gs
+      type(section) :: solver_cc_es
+      type(section) :: solver_cc_multipliers ! cc zop later 
 !
    contains
 !
@@ -99,18 +107,70 @@ contains
       the_file%access = 'sequential'
       the_file%format = 'formatted'
 !
-      input%cholesky_section%name_ = 'cholesky'
+      input%system%name_ = 'system'
 !
-      input%cholesky_section%keywords = [ 'threshold           ',    &
+      input%system%keywords = [  'name                 ',   &
+                                 'charge               ',   &
+                                 'multiplicity         '    ] 
+!
+      input%memory%name_ = 'memory'
+!
+      input%memory%keywords = ['available            ']
+!
+      input%disk%name_ = 'disk'
+!
+      input%disk%keywords = ['available            ']
+!
+      input%solver_cholesky%name_ = 'solver cholesky'
+!
+      input%solver_cholesky%keywords = [  'threshold           ',    &
                                           'span                ',    &
                                           'batches             ',    &
                                           'qualified           ',    &
                                           'one center          ',    &
                                           'no vectors          '     ]
 !
-   !   input%ccgs_section%name_ = 'cc ground state'
+      input%solver_hf%name_ = 'solver hf'
 !
-   !   input%ccgs_section%keywords = [ '',    &]
+      input%solver_hf%keywords = [  'algorithm            ',   &
+                                    'energy threshold     ',   &
+                                    'gradient threshold   ',   &
+                                    'max iterations       ',   &
+                                    'diis dimension       ',   &
+                                    'restart              ',   &
+                                    'ao density guess     '    ]
+!
+      input%solver_cc_gs%name_ = 'solver cc gs'
+!
+      input%solver_cc_gs%keywords = [  'algorithm            ',   &
+                                       'energy threshold     ',   &
+                                       'omega threshold      ',   &
+                                       'max iterations       ',   &
+                                       'diis dimension       ',   &
+                                       'restart              '    ]
+!
+      input%solver_cc_es%name_ = 'solver cc es'
+!
+      input%solver_cc_es%keywords = [  'algorithm            ',   &
+                                       'ionization           ',   &
+                                       'core ionization      ',   &
+                                       'core excitation      ',   &
+                                       'energy threshold     ',   &
+                                       'residual threshold   ',   &
+                                       'max iterations       ',   &
+                                       'restart              ',   &
+                                       'left eigenvectors    ',   &
+                                       'right eigenvectors   ',   &
+                                       'singlet states       ',   &
+                                       'start vectors        ',   &
+                                       'diis dimension       '    ]
+!
+      input%solver_cc_multipliers%name_ = 'solver cc multipliers'
+!
+      input%solver_cc_multipliers%keywords = [  'algorithm            ',   &
+                                                'threshold            ',   &
+                                                'restart              ',   &
+                                                'max iterations       '    ]
 !
    end subroutine init_input_file
 !
@@ -127,7 +187,7 @@ contains
 !
       class(input_file) :: the_file
 !
-      call the_file%check_section_for_illegal_keywords(the_file%cholesky_section)
+      call the_file%check_section_for_illegal_keywords(the_file%solver_cholesky)
 !
    end subroutine check_for_illegal_keywords_input_file
 !
