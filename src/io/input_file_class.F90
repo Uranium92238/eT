@@ -47,7 +47,7 @@ module input_file_class
 !
       procedure, nopass :: string_is_comment    => string_is_comment_input_file
 !
-      procedure :: check_for_illegal_keywords   => check_for_illegal_keywords_input_file
+      procedure :: check_for_errors            => check_for_errors_input_file
       procedure :: check_section_for_illegal_keywords   => check_section_for_illegal_keywords_input_file
 !
       procedure, nopass :: extract_keyword_from_string  => extract_keyword_from_string_input_file
@@ -107,89 +107,96 @@ contains
       the_file%access = 'sequential'
       the_file%format = 'formatted'
 !
-      input%system%name_ = 'system'
+      the_file%system%name_ = 'system'
 !
-      input%system%keywords = [  'name                 ',   &
-                                 'charge               ',   &
-                                 'multiplicity         '    ] 
+      the_file%system%keywords = [  'name                 ',   &
+                                    'charge               ',   &
+                                    'multiplicity         '    ] 
 !
-      input%memory%name_ = 'memory'
+      the_file%memory%name_ = 'memory'
 !
-      input%memory%keywords = ['available            ']
+      the_file%memory%keywords = ['available            ']
 !
-      input%disk%name_ = 'disk'
+      the_file%disk%name_ = 'disk'
 !
-      input%disk%keywords = ['available            ']
+      the_file%disk%keywords = ['available            ']
 !
-      input%solver_cholesky%name_ = 'solver cholesky'
+      the_file%solver_cholesky%name_ = 'solver cholesky'
 !
-      input%solver_cholesky%keywords = [  'threshold           ',    &
-                                          'span                ',    &
-                                          'batches             ',    &
-                                          'qualified           ',    &
-                                          'one center          ',    &
-                                          'no vectors          '     ]
+      the_file%solver_cholesky%keywords = [  'threshold           ',    &
+                                             'span                ',    &
+                                             'batches             ',    &
+                                             'qualified           ',    &
+                                             'one center          ',    &
+                                             'no vectors          '     ]
 !
-      input%solver_hf%name_ = 'solver hf'
+      the_file%solver_hf%name_ = 'solver hf'
 !
-      input%solver_hf%keywords = [  'algorithm            ',   &
-                                    'energy threshold     ',   &
-                                    'gradient threshold   ',   &
-                                    'max iterations       ',   &
-                                    'diis dimension       ',   &
-                                    'restart              ',   &
-                                    'ao density guess     '    ]
-!
-      input%solver_cc_gs%name_ = 'solver cc gs'
-!
-      input%solver_cc_gs%keywords = [  'algorithm            ',   &
+      the_file%solver_hf%keywords = [  'algorithm            ',   &
                                        'energy threshold     ',   &
-                                       'omega threshold      ',   &
+                                       'gradient threshold   ',   &
                                        'max iterations       ',   &
                                        'diis dimension       ',   &
-                                       'restart              '    ]
-!
-      input%solver_cc_es%name_ = 'solver cc es'
-!
-      input%solver_cc_es%keywords = [  'algorithm            ',   &
-                                       'ionization           ',   &
-                                       'core ionization      ',   &
-                                       'core excitation      ',   &
-                                       'energy threshold     ',   &
-                                       'residual threshold   ',   &
-                                       'max iterations       ',   &
                                        'restart              ',   &
-                                       'left eigenvectors    ',   &
-                                       'right eigenvectors   ',   &
-                                       'singlet states       ',   &
-                                       'start vectors        ',   &
-                                       'diis dimension       '    ]
+                                       'ao density guess     '    ]
 !
-      input%solver_cc_multipliers%name_ = 'solver cc multipliers'
+      the_file%solver_cc_gs%name_ = 'solver cc gs'
 !
-      input%solver_cc_multipliers%keywords = [  'algorithm            ',   &
-                                                'threshold            ',   &
-                                                'restart              ',   &
-                                                'max iterations       '    ]
+      the_file%solver_cc_gs%keywords = [  'algorithm            ',   &
+                                          'energy threshold     ',   &
+                                          'omega threshold      ',   &
+                                          'max iterations       ',   &
+                                          'diis dimension       ',   &
+                                          'restart              '    ]
+!
+      the_file%solver_cc_es%name_ = 'solver cc es'
+!
+      the_file%solver_cc_es%keywords = [  'algorithm            ',   &
+                                          'ionization           ',   &
+                                          'core ionization      ',   &
+                                          'core excitation      ',   &
+                                          'energy threshold     ',   &
+                                          'residual threshold   ',   &
+                                          'max iterations       ',   &
+                                          'restart              ',   &
+                                          'left eigenvectors    ',   &
+                                          'right eigenvectors   ',   &
+                                          'singlet states       ',   &
+                                          'start vectors        ',   &
+                                          'diis dimension       '    ]
+!
+      the_file%solver_cc_multipliers%name_ = 'solver cc multipliers'
+!
+      the_file%solver_cc_multipliers%keywords = [  'algorithm            ',   &
+                                                   'threshold            ',   &
+                                                   'restart              ',   &
+                                                   'max iterations       '    ]
 !
    end subroutine init_input_file
 !
 !
-   subroutine check_for_illegal_keywords_input_file(the_file)
+   subroutine check_for_errors_input_file(the_file)
 !!
-!!    Check for illegal keywords 
+!!    Check for errors
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
-!!    Checks each section in turn, stopping with an error if it finds a keyword 
-!!    that is not recognized.
+!!    Does tests to control that the input file does not use illegal keywords 
+!!    or sections.
 !!
       implicit none 
 !
       class(input_file) :: the_file
 !
+      call the_file%check_section_for_illegal_keywords(the_file%system)
+      call the_file%check_section_for_illegal_keywords(the_file%memory)
+      call the_file%check_section_for_illegal_keywords(the_file%disk)
       call the_file%check_section_for_illegal_keywords(the_file%solver_cholesky)
+      call the_file%check_section_for_illegal_keywords(the_file%solver_hf)
+      call the_file%check_section_for_illegal_keywords(the_file%solver_cc_gs)
+      call the_file%check_section_for_illegal_keywords(the_file%solver_cc_es)
+      call the_file%check_section_for_illegal_keywords(the_file%solver_cc_multipliers)
 !
-   end subroutine check_for_illegal_keywords_input_file
+   end subroutine check_for_errors_input_file
 !
 !
    subroutine check_section_for_illegal_keywords_input_file(the_file, the_section)
@@ -219,9 +226,9 @@ contains
 !
             read(the_file%unit, '(a200)') string 
 !
-            if (.not. input%string_is_comment(string)) then 
+            if (.not. the_file%string_is_comment(string)) then 
 !
-               call input%extract_keyword_from_string(string, keyword)
+               call the_file%extract_keyword_from_string(string, keyword)
 !
                do k = 1, size(the_section%keywords)
 !
