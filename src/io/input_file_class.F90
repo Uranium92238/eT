@@ -103,75 +103,74 @@ contains
       type(section) :: solver_cc_es
       type(section) :: solver_cc_multipliers ! cc zop later 
 !
+!     Set input file name, access and format 
+!
       the_file%name = name
 !
       the_file%access = 'sequential'
       the_file%format = 'formatted'
 !
-      system%name_ = 'system'
+!     Define sections and valid keywords within each section  
 !
-      system%keywords = [  'name                 ',   &
-                           'charge               ',   &
-                           'multiplicity         '    ] 
+      system%name_    = 'system'
+      system%keywords = ['name                 ',   &
+                         'charge               ',   &
+                         'multiplicity         '    ] 
 !
-      memory%name_ = 'memory'
-!
+      memory%name_    = 'memory'
       memory%keywords = ['available            ']
 !
-      disk%name_ = 'disk'
-!
+      disk%name_    = 'disk'
       disk%keywords = ['available            ']
 !
-      solver_cholesky%name_ = 'solver cholesky'
+      solver_cholesky%name_    = 'solver cholesky'
+      solver_cholesky%keywords = ['threshold           ',    &
+                                  'span                ',    &
+                                  'batches             ',    &
+                                  'qualified           ',    &
+                                  'one center          ',    &
+                                  'no vectors          '     ]
 !
-      solver_cholesky%keywords = [  'threshold           ',    &
-                                    'span                ',    &
-                                    'batches             ',    &
-                                    'qualified           ',    &
-                                    'one center          ',    &
-                                    'no vectors          '     ]
+      solver_hf%name_    = 'solver hf'
+      solver_hf%keywords = ['algorithm            ',   &
+                            'energy threshold     ',   &
+                            'gradient threshold   ',   &
+                            'max iterations       ',   &
+                            'diis dimension       ',   &
+                            'restart              ',   &
+                            'ao density guess     '    ]
 !
-      solver_hf%name_ = 'solver hf'
+      solver_cc_gs%name_    = 'solver cc gs'
+      solver_cc_gs%keywords = ['algorithm            ',   &
+                               'energy threshold     ',   &
+                               'omega threshold      ',   &
+                               'max iterations       ',   &
+                               'diis dimension       ',   &
+                               'restart              '    ]
 !
-      solver_hf%keywords = [  'algorithm            ',   &
-                              'energy threshold     ',   &
-                              'gradient threshold   ',   &
-                              'max iterations       ',   &
-                              'diis dimension       ',   &
-                              'restart              ',   &
-                              'ao density guess     '    ]
-!
-      solver_cc_gs%name_ = 'solver cc gs'
-!
-      solver_cc_gs%keywords = [  'algorithm            ',   &
-                                 'energy threshold     ',   &
-                                 'omega threshold      ',   &
-                                 'max iterations       ',   &
-                                 'diis dimension       ',   &
-                                 'restart              '    ]
-!
-      solver_cc_es%name_ = 'solver cc es'
-!
-      solver_cc_es%keywords = [  'algorithm            ',   &
-                                 'ionization           ',   &
-                                 'core ionization      ',   &
-                                 'core excitation      ',   &
-                                 'energy threshold     ',   &
-                                 'residual threshold   ',   &
-                                 'max iterations       ',   &
-                                 'restart              ',   &
-                                 'left eigenvectors    ',   &
-                                 'right eigenvectors   ',   &
-                                 'singlet states       ',   &
-                                 'start vectors        ',   &
-                                 'diis dimension       '    ]
+      solver_cc_es%name_    = 'solver cc es'
+      solver_cc_es%keywords = ['algorithm            ',   &
+                               'ionization           ',   &
+                               'core ionization      ',   &
+                               'core excitation      ',   &
+                               'energy threshold     ',   &
+                               'residual threshold   ',   &
+                               'max iterations       ',   &
+                               'restart              ',   &
+                               'left eigenvectors    ',   &
+                               'right eigenvectors   ',   &
+                               'singlet states       ',   &
+                               'start vectors        ',   &
+                               'diis dimension       '    ]
 !
       solver_cc_multipliers%name_ = 'solver cc multipliers'
 !
-      solver_cc_multipliers%keywords = [  'algorithm            ',   &
-                                          'threshold            ',   &
-                                          'restart              ',   &
-                                          'max iterations       '    ]
+      solver_cc_multipliers%keywords = ['algorithm            ',   &
+                                        'threshold            ',   &
+                                        'restart              ',   &
+                                        'max iterations       '    ]
+!
+!     Gather all sections into the file's section array 
 !
       the_file%sections = [system,              &
                            memory,              &
