@@ -209,4 +209,45 @@ contains
    end subroutine get_elements_in_string
 !
 !
+   subroutine convert_to_lowercase(string)
+!!
+!!    Convert to lowercase 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Adapted from routines posted on the Stack-exchange.
+!!    
+!!    Assumes ASCII table for representing characters as integers, 
+!!    where the lowercase letter is +32 relative to the uppercase letters.
+!!
+!!    Note: uppercase (65-90) and lowercase (97-122).
+!!
+      implicit none 
+!
+      character(len=*), intent(inout) :: string 
+!
+      integer :: character, current_character
+!
+      do character = 1, len(string)
+!
+!        Represent character as integer 
+!  
+         current_character = ichar(string(character : character)) 
+!
+!        Convert if character is in the range of uppercase characters 
+!
+         if (current_character >= 65 .and. current_character <= 90) then ! Between A and Z
+!
+            current_character = current_character + 32 
+!
+         endif
+!
+!        Replace the character by the (possibly) lowercased letter 
+!
+         string(character : character) = char(current_character)
+!
+      enddo
+!
+   end subroutine convert_to_lowercase
+!
+!
 end module string_utilities
