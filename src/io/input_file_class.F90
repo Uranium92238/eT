@@ -31,15 +31,7 @@ module input_file_class
 !
    type, extends(abstract_file) :: input_file 
 !
-      type(section) :: system 
-      type(section) :: memory 
-      type(section) :: disk 
-!
-      type(section) :: solver_cholesky
-      type(section) :: solver_hf
-      type(section) :: solver_cc_gs
-      type(section) :: solver_cc_es
-      type(section) :: solver_cc_multipliers ! cc zop later 
+      type(section), dimension(:), allocatable :: sections
 !
    contains
 !
@@ -47,21 +39,24 @@ module input_file_class
 !
       procedure, nopass :: string_is_comment    => string_is_comment_input_file
 !
-      procedure :: check_for_illegal_keywords   => check_for_illegal_keywords_input_file
-      procedure :: check_section_for_illegal_keywords   => check_section_for_illegal_keywords_input_file
+      procedure :: check_for_errors                   => check_for_errors_input_file
+      procedure :: check_section_for_illegal_keywords => check_section_for_illegal_keywords_input_file
+      procedure :: check_for_illegal_sections         => check_for_illegal_sections_input_file
+      procedure :: print_sections                     => print_sections_input_file
 !
-      procedure, nopass :: extract_keyword_from_string  => extract_keyword_from_string_input_file
+      procedure, nopass :: extract_keyword_from_string         => extract_keyword_from_string_input_file
+      procedure, nopass :: extract_keyword_value_from_string   => extract_keyword_value_from_string_input_file
 !
       procedure :: requested_section            => requested_section_input_file
       procedure :: requested_keyword_in_section => requested_keyword_in_section_input_file
 !
-      generic :: get_keyword_in_section => get_integer_keyword_in_section_input_file,   &
-                                            get_string_keyword_in_section_input_file,    &
-                                            get_dp_keyword_in_section_input_file
+      generic :: get_keyword_in_section            => get_integer_keyword_in_section_input_file,   &
+                                                      get_string_keyword_in_section_input_file,    &
+                                                      get_dp_keyword_in_section_input_file
 !
-      generic :: get_required_keyword_in_section => get_required_string_keyword_in_section_input_file, &
-                                                     get_required_integer_keyword_in_section_input_file, &
-                                                     get_required_dp_keyword_in_section_input_file
+      generic :: get_required_keyword_in_section   => get_required_string_keyword_in_section_input_file,    &
+                                                      get_required_integer_keyword_in_section_input_file,   &
+                                                      get_required_dp_keyword_in_section_input_file
 !
       procedure :: get_integer_keyword_in_section_input_file
       procedure :: get_string_keyword_in_section_input_file
@@ -72,8 +67,7 @@ module input_file_class
 !
       procedure, private :: get_string_keyword_in_section_wo_safety => get_string_keyword_in_section_wo_safety_input_file
 !
-      procedure :: move_to_section           => move_to_section_input_file
-      procedure :: move_to_geometry_section  => move_to_geometry_section_input_file
+      procedure, private :: move_to_section => move_to_section_input_file
 !
       procedure :: get_n_elements_for_keyword_in_section => get_n_elements_for_keyword_in_section_input_file
       procedure :: get_array_for_keyword_in_section      => get_array_for_keyword_in_section_input_file
@@ -95,10 +89,8 @@ contains
 !!    Initialize input file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
 !!
-!!    Initializes an input file file object
-!!
-!!    Output file is formatted and sequantial file.
-!!    Routine sets these, and sets tha file name    
+!!    Initializes the input file for opening by the disk manager
+!!    and sets the valid sections and their keywords. 
 !!
       implicit none
 !
@@ -106,100 +98,254 @@ contains
 !
       character(len=*) :: name
 !
+      type(section) :: calculations
+      type(section) :: system 
+      type(section) :: memory 
+      type(section) :: disk 
+      type(section) :: method 
+      type(section) :: solver_cholesky
+      type(section) :: solver_hf
+      type(section) :: solver_cc_gs
+      type(section) :: solver_cc_es
+      type(section) :: solver_cc_multipliers ! cc zop later 
+      type(section) :: active_atoms
+!
+!     Set input file name, access and format 
+!
       the_file%name = name
 !
       the_file%access = 'sequential'
       the_file%format = 'formatted'
 !
-      input%system%name_ = 'system'
+!     Define sections and valid keywords within each section  
 !
-      input%system%keywords = [  'name                 ',   &
-                                 'charge               ',   &
-                                 'multiplicity         '    ] 
+      calculations%name_    = 'do'
+      calculations%keywords = ['ground state         ',  &
+                               'excited state        ',  &
+                               'cholesky eri         ',  &
+                               'multipliers          '   ]
 !
-      input%memory%name_ = 'memory'
+      system%name_    = 'system'
+      system%keywords = ['name                 ',   &
+                         'charge               ',   &
+                         'multiplicity         '    ] 
 !
-      input%memory%keywords = ['available            ']
+      memory%name_    = 'memory'
+      memory%keywords = ['available            ']
 !
-      input%disk%name_ = 'disk'
+      disk%name_    = 'disk'
+      disk%keywords = ['available            ']
 !
-      input%disk%keywords = ['available            ']
+      method%name_  = 'method'
+      method%keywords = ['hf                   ', &
+                         'ccs                  ', &
+                         'mp2                  ', &
+                         'cc2                  ', &
+                         'lowmem-cc2           ', &
+                         'ccsd                 ', &
+                         'cc3                  ']
 !
-      input%solver_cholesky%name_ = 'solver cholesky'
+      solver_cholesky%name_    = 'solver cholesky'
+      solver_cholesky%keywords = ['threshold           ',    &
+                                  'span                ',    &
+                                  'batches             ',    &
+                                  'qualified           ',    &
+                                  'one center          ',    &
+                                  'no vectors          '     ]
 !
-      input%solver_cholesky%keywords = [  'threshold           ',    &
-                                          'span                ',    &
-                                          'batches             ',    &
-                                          'qualified           ',    &
-                                          'one center          ',    &
-                                          'no vectors          '     ]
+      solver_hf%name_    = 'solver hf'
+      solver_hf%keywords = ['algorithm            ',   &
+                            'energy threshold     ',   &
+                            'gradient threshold   ',   &
+                            'max iterations       ',   &
+                            'diis dimension       ',   &
+                            'restart              ',   &
+                            'ao density guess     '    ]
 !
-      input%solver_hf%name_ = 'solver hf'
+      solver_cc_gs%name_    = 'solver cc gs'
+      solver_cc_gs%keywords = ['algorithm            ',   &
+                               'energy threshold     ',   &
+                               'omega threshold      ',   &
+                               'max iterations       ',   &
+                               'diis dimension       ',   &
+                               'restart              '    ]
 !
-      input%solver_hf%keywords = [  'algorithm            ',   &
-                                    'energy threshold     ',   &
-                                    'gradient threshold   ',   &
-                                    'max iterations       ',   &
-                                    'diis dimension       ',   &
-                                    'restart              ',   &
-                                    'ao density guess     '    ]
+      solver_cc_es%name_    = 'solver cc es'
+      solver_cc_es%keywords = ['algorithm            ',   &
+                               'ionization           ',   &
+                               'core ionization      ',   &
+                               'core excitation      ',   &
+                               'energy threshold     ',   &
+                               'residual threshold   ',   &
+                               'max iterations       ',   &
+                               'restart              ',   &
+                               'left eigenvectors    ',   &
+                               'right eigenvectors   ',   &
+                               'singlet states       ',   &
+                               'start vectors        ',   &
+                               'diis dimension       '    ]
 !
-      input%solver_cc_gs%name_ = 'solver cc gs'
+      solver_cc_multipliers%name_ = 'solver cc multipliers'
 !
-      input%solver_cc_gs%keywords = [  'algorithm            ',   &
-                                       'energy threshold     ',   &
-                                       'omega threshold      ',   &
-                                       'max iterations       ',   &
-                                       'diis dimension       ',   &
-                                       'restart              '    ]
+      solver_cc_multipliers%keywords = ['algorithm            ',   &
+                                        'threshold            ',   &
+                                        'restart              ',   &
+                                        'max iterations       '    ]
 !
-      input%solver_cc_es%name_ = 'solver cc es'
+      active_atoms%name_ = 'active atoms'
 !
-      input%solver_cc_es%keywords = [  'algorithm            ',   &
-                                       'ionization           ',   &
-                                       'core ionization      ',   &
-                                       'core excitation      ',   &
-                                       'energy threshold     ',   &
-                                       'residual threshold   ',   &
-                                       'max iterations       ',   &
-                                       'restart              ',   &
-                                       'left eigenvectors    ',   &
-                                       'right eigenvectors   ',   &
-                                       'singlet states       ',   &
-                                       'start vectors        ',   &
-                                       'diis dimension       '    ]
+      active_atoms%keywords = ['selection type       ', &
+                               'central atom         ', &
+                               'hf                   ', &
+                               'active basis         ']
 !
-      input%solver_cc_multipliers%name_ = 'solver cc multipliers'
+!     Gather all sections into the file's section array 
 !
-      input%solver_cc_multipliers%keywords = [  'algorithm            ',   &
-                                                'threshold            ',   &
-                                                'restart              ',   &
-                                                'max iterations       '    ]
+      the_file%sections = [calculations,           &
+                           system,                 &
+                           memory,                 &
+                           disk,                   &
+                           method,                 &
+                           solver_cholesky,        &
+                           solver_hf,              &
+                           solver_cc_gs,           &
+                           solver_cc_es,           &
+                           solver_cc_multipliers,  &
+                           active_atoms]
 !
    end subroutine init_input_file
 !
 !
-   subroutine check_for_illegal_keywords_input_file(the_file)
+   subroutine check_for_errors_input_file(the_file)
 !!
-!!    Check for illegal keywords 
+!!    Check for errors
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
-!!    Checks each section in turn, stopping with an error if it finds a keyword 
-!!    that is not recognized.
+!!    Looks for errors the user may have made when writing the input file.
 !!
       implicit none 
 !
       class(input_file) :: the_file
 !
-      call the_file%check_section_for_illegal_keywords(the_file%solver_cholesky)
+      integer :: k 
 !
-   end subroutine check_for_illegal_keywords_input_file
+!     Look for illegal sections 
+!
+      call the_file%check_for_illegal_sections()
+!
+!     For each legal section present, look for illegal keywords within that section 
+!
+      do k = 1, size(the_file%sections)
+!
+         call the_file%check_section_for_illegal_keywords(the_file%sections(k))
+!
+      enddo
+!
+   end subroutine check_for_errors_input_file
+!
+!
+   subroutine check_for_illegal_sections_input_file(the_file)
+!!
+!!    Check for illegal sections 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Finds the sections in the input file and controls whether they are among 
+!!    the valid sections in the program.
+!!
+!!    Tests only the end of each section. If the beginning of a section is incorrectly 
+!!    specified, an error will occur when it checks the section for illegal keywords. 
+!!
+      implicit none 
+!
+      class(input_file) :: the_file
+!
+      character(len=200) :: line
+!
+      integer :: n_elements, k
+!
+      logical :: recognized 
+!  
+      rewind(the_file%unit)
+!
+      read(the_file%unit, '(a200)') line 
+      line = adjustl(line)
+!
+      do while (trim(line) /= 'end geometry') 
+!
+         if (line(1 : 3) == 'end') then
+!
+!           Located the end of a section -
+!           attempt to move to the beginning of that section => fails if inconsistent beginning and end
+!
+            call the_file%move_to_section(trim(adjustl(line(4 : 200))), n_elements)
+!
+!           Check whether section name is valid 
+!
+            recognized = .false.
+!
+            do k = 1, size(the_file%sections)
+!
+               if (trim(the_file%sections(k)%name_) == trim(adjustl(line(4 : 200)))) recognized = .true. 
+!
+            enddo
+!
+            if (.not. recognized) then 
+!
+               write(output%unit, '(/t3,a,a,a)') 'Could not recognize section named "', trim(adjustl(line(4 : 200))), '".'
+!
+               call the_file%print_sections()
+!
+               call output%error_msg('Something is wrong in the input file. See above.')
+!
+            endif 
+!
+!           Move to the end of the section again 
+!
+            do k = 1, n_elements + 1
+!
+               read(the_file%unit, *) 
+!
+            enddo
+!
+         endif 
+!
+         read(the_file%unit, '(a200)') line 
+         line = adjustl(line)
+!
+      enddo
+!
+   end subroutine check_for_illegal_sections_input_file
+!
+!
+   subroutine print_sections_input_file(the_file)
+!!
+!!    Print sections 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      integer :: k
+!
+      write(output%unit, '(/t3,a/)') 'The valid input sections are:'
+!
+      do k = 1, size(the_file%sections)
+!
+         write(output%unit, '(t6,a)') the_file%sections(k)%name_
+!
+      enddo
+!
+   end subroutine print_sections_input_file
 !
 !
    subroutine check_section_for_illegal_keywords_input_file(the_file, the_section)
 !!
-!!    Checks a particular section for illegal keywords 
+!!    Checks a section for illegal keywords 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    If there is an illegal keyword in the section, it stops with an error. 
+!!    If a legal keyword is specified more than once, it stops with an error.
 !!
       implicit none 
 !
@@ -213,6 +359,11 @@ contains
 !
       integer :: n_records, record, k
 !
+      integer, dimension(:), allocatable :: keywords_instances
+!
+      allocate(keywords_instances(size(the_section%keywords)))
+      keywords_instances = 0
+!
       if (the_file%requested_section(the_section%name_)) then 
 !
          call the_file%move_to_section(the_section%name_, n_records)
@@ -223,13 +374,18 @@ contains
 !
             read(the_file%unit, '(a200)') string 
 !
-            if (.not. input%string_is_comment(string)) then 
+            if (.not. the_file%string_is_comment(string)) then 
 !
-               call input%extract_keyword_from_string(string, keyword)
+               call the_file%extract_keyword_from_string(string, keyword)
 !
                do k = 1, size(the_section%keywords)
 !
-                  if (trim(the_section%keywords(k)) == trim(keyword)) recognized = .true. 
+                  if (trim(the_section%keywords(k)) == trim(keyword)) then  
+!
+                     keywords_instances(k) = keywords_instances(k) + 1
+                     recognized = .true. 
+!
+                  endif 
 !
                enddo
 !
@@ -250,6 +406,21 @@ contains
 !
       endif 
 !
+      do k = 1, size(the_section%keywords)
+!
+         if (keywords_instances(k) .gt. 1) then 
+!
+            write(output%unit, '(/t3,a,i0,a,a,a,a,a)') 'Found ', keywords_instances(k), ' instances of the keyword "', &
+                              trim(the_section%keywords(k)), '" in the section "', the_section%name_, '".'
+!
+            call output%error_msg('Something is wrong in the input file. See above.')
+!
+         endif
+!
+      enddo
+!
+      deallocate(keywords_instances)
+!
    end subroutine check_section_for_illegal_keywords_input_file
 !
 !
@@ -259,11 +430,6 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
 !!    If specified, reads keyword as an integer into keyword value.
-!!
-!!    Note: if the keyword is not present in the section, keyword_value will not be set,
-!!    and no error occurs. In typical usage, the standard value of the keyword is set before
-!!    this routine is called. Changes from standard are made only when the keyword is specified
-!!    - hence no errors when it does not find the keyword. 
 !!  
       implicit none 
 !
@@ -276,19 +442,15 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
-      if (the_file%requested_section(section)) then
+      if (the_file%requested_keyword_in_section(keyword, section)) then 
 !
-         if (the_file%requested_keyword_in_section(keyword, section)) then 
+!        Get the keyword value in string format 
 !
-!           Get the keyword value in string format 
+         call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
 !
-            call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+!        Extract the integer from the string
 !
-!           Extract the integer from the string
-!
-            read(keyword_value_string, *) keyword_value
-!
-         endif
+         read(keyword_value_string, *) keyword_value
 !
       endif
 !
@@ -297,12 +459,11 @@ contains
 !
    subroutine get_required_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
 !!
-!!    Read requested integer keyword in section 
+!!    Read required integer keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
-!!    If keyword and section not specified
-!!    ends with error because required keyword 
-!!    not provided.
+!!    Reads keyword as an integer into keyword value. If the keyword or the 
+!!    section is not specified, an error occurs because the keyword is "required".
 !!
 !!  
       implicit none 
@@ -339,11 +500,6 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
 !!    If specified, reads keyword as a real double precision into keyword value.
-!!
-!!    Note: if the keyword is not present in the section, keyword_value will not be set,
-!!    and no error occurs. In typical usage, the standard value of the keyword is set before
-!!    this routine is called. Changes from standard are made only when the keyword is specified
-!!    - hence no errors when it does not find the keyword. 
 !!    
       implicit none 
 !
@@ -356,36 +512,28 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
-      if (the_file%requested_section(section)) then
+      if (the_file%requested_keyword_in_section(keyword, section)) then 
 !
-         if (the_file%requested_keyword_in_section(keyword, section)) then 
+!        Get the keyword value in string format 
 !
-!           Get the keyword value in string format 
+         call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
 !
-            call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+!        Extract the integer from the string
 !
-!           Extract the integer from the string
+         read(keyword_value_string, *) keyword_value
 !
-            read(keyword_value_string, *) keyword_value
-!
-         endif 
-!
-      endif
+      endif 
 !
    end subroutine get_dp_keyword_in_section_input_file
 !
 !
    subroutine get_required_dp_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
 !!
-!!    Read requested double precision keyword in section 
+!!    Read required double precision keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
-!!    If specified, reads keyword as a real double precision into keyword value.
-!!
-!!    Note: if the keyword is not present in the section, keyword_value will not be set,
-!!    and no error occurs. In typical usage, the standard value of the keyword is set before
-!!    this routine is called. Changes from standard are made only when the keyword is specified
-!!    - hence no errors when it does not find the keyword. 
+!!    Reads keyword as an double precision into keyword value. If the keyword or the 
+!!    section is not specified, an error occurs because the keyword is "required".
 !!    
       implicit none 
 !
@@ -421,12 +569,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
 !!    If specified, reads keyword as a string into keyword value.
-!!
-!!    Note: if the keyword is not present in the section, keyword_value will not be set,
-!!    and no error occurs. In typical usage, the standard value of the keyword is set before
-!!    this routine is called. Changes from standard are made only when the keyword is specified
-!!    - hence no errors when it does not find the keyword. 
-!!    
+!! 
       implicit none 
 !
       class(input_file), intent(in) :: the_file
@@ -436,17 +579,13 @@ contains
 !
       character(len=200) :: keyword_value 
 !
-      if (the_file%requested_section(section)) then
+      if (the_file%requested_keyword_in_section(keyword, section)) then 
 !
-         if (the_file%requested_keyword_in_section(keyword, section)) then 
+!        Get the keyword value in string format 
 !
-!           Get the keyword value in string format 
+         call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value)
 !
-            call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value)
-!
-         endif
-!
-      endif 
+      endif
 !
    end subroutine get_string_keyword_in_section_input_file
 !
@@ -457,12 +596,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
 !!    If specified, reads keyword as a string into keyword value.
-!!
-!!    Note: if the keyword is not present in the section, keyword_value will not be set,
-!!    and no error occurs. In typical usage, the standard value of the keyword is set before
-!!    this routine is called. Changes from standard are made only when the keyword is specified
-!!    - hence no errors when it does not find the keyword. 
-!!    
+!! 
       implicit none 
 !
       class(input_file), intent(in) :: the_file
@@ -502,9 +636,9 @@ contains
 !
       character(len=200) :: keyword_value 
 !
-      integer :: n_records, record, len_line_keyword
+      integer :: n_records, record
 !
-      character(len=200) :: line
+      character(len=200) :: line, local_keyword
 !
 !     Move to the requested section & get the number of records in that section 
 !
@@ -516,27 +650,20 @@ contains
 !
          read(the_file%unit, '(a200)') line 
 !
-         line = adjustl(line) 
+         if (the_file%string_is_comment(line)) then
 !
-         if (line(1 : 1) == '!') cycle ! Comment
+            cycle
 !
-         len_line_keyword = 0
-         do while (line(len_line_keyword + 1 : len_line_keyword + 1) /= ':' .and. len_line_keyword < 199)
+         else  
 !
-            len_line_keyword = len_line_keyword + 1
+            call the_file%extract_keyword_from_string(line, local_keyword)
 !
-         enddo
+            if (trim(local_keyword) == keyword) then 
 !
-         if (len_line_keyword == 0) then 
+               call the_file%extract_keyword_value_from_string(line, keyword_value)
+               return
 !
-            call output%error_msg('Failed to read keyword ' // keyword // ' in section ' // section)
-!
-         endif 
-!
-         if (trim(line(1 : len_line_keyword)) == keyword) then 
-!
-            keyword_value = adjustl(line(len_line_keyword + 2 : 200))
-            return
+            endif 
 !
          endif 
 !
@@ -580,8 +707,7 @@ contains
 !!    Extract keyword from string 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!    
-!!    Note: assumes that the string is not a comment. This routine is therefore 
-!!    called after a call to "is comment" logical routine. 
+!!    Note: assumes that the string is not a comment.
 !!
       implicit none 
 !
@@ -601,6 +727,7 @@ contains
          if (keyword(k : k) == ':') then 
 !
             colon_position = k 
+            exit 
 !
          endif 
 !
@@ -619,6 +746,53 @@ contains
    end subroutine extract_keyword_from_string_input_file
 !
 !
+   subroutine extract_keyword_value_from_string_input_file(string, keyword_value)
+!!
+!!    Extract keyword value from string 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!    
+!!    Note: assumes that the string is not a comment. This routine is therefore 
+!!    called after a call to "is comment" logical routine. 
+!!
+      implicit none 
+!
+      character(len=200), intent(in)   :: string 
+      character(len=200), intent(out)  :: keyword_value 
+!
+      integer :: k, colon_position
+!
+!     If there is a ":", we have to remove the ":" as well as the value(s) that follow 
+!
+      keyword_value = adjustl(string)
+!
+      colon_position = -1 
+!
+      do k = 1, 200
+!
+         if (keyword_value(k : k) == ':') then 
+!
+            colon_position = k 
+            exit 
+!
+         endif 
+!
+      enddo
+!
+      if (colon_position .ne. -1) then 
+!
+         do k = 1, colon_position
+!
+            keyword_value(k : k) = ' '
+!
+         enddo
+!
+      endif 
+!
+      keyword_value = adjustl(keyword_value)
+!
+   end subroutine extract_keyword_value_from_string_input_file
+!
+!
    logical function requested_keyword_in_section_input_file(the_file, keyword, section)
 !!
 !!    Is string keyword in section?
@@ -628,8 +802,6 @@ contains
 !!
 !!    Note: stops inside "move to section" if the section is not present!
 !!    => this routine should only be called if you know the section in present.
-!!    In typical usage, it is called after we have made sure the section exists; 
-!!    see the "section exists" function.
 !!
       implicit none 
 !
@@ -638,11 +810,18 @@ contains
       character(len=*), intent(in) :: keyword 
       character(len=*), intent(in) :: section  
 !
-      integer :: n_records, record, len_line_keyword
+      integer :: n_records, record
 !
-      character(len=200) :: line
+      character(len=200) :: line, local_keyword
 !
 !     Move to the requested section & get the number of records in that section 
+!
+      if (.not. the_file%requested_section(section)) then
+!
+         requested_keyword_in_section_input_file = .false.
+         return
+!
+      endif
 !
       call the_file%move_to_section(section, n_records)
 !
@@ -652,27 +831,20 @@ contains
 !
          read(the_file%unit, '(a200)') line 
 !
-         line = adjustl(line) 
+         if (the_file%string_is_comment(line)) then
 !
-         if (line(1 : 1) == '!') cycle ! Comment
+            cycle
 !
-         len_line_keyword = 0
-         do while (line(len_line_keyword + 1 : len_line_keyword + 1) /= ':' .and. len_line_keyword < 199)
+         else  
 !
-            len_line_keyword = len_line_keyword + 1
+            call the_file%extract_keyword_from_string(line, local_keyword)
 !
-         enddo
+            if (trim(local_keyword) == keyword) then 
 !
-         if (len_line_keyword == 0) then 
+               requested_keyword_in_section_input_file = .true.
+               return
 !
-            call output%error_msg('Failed to read keyword ' // keyword // ' in section ' // section)
-!
-         endif 
-!
-         if (trim(line(1 : len_line_keyword)) == keyword) then 
-!
-            requested_keyword_in_section_input_file = .true.
-            return
+            endif 
 !
          endif 
 !
@@ -687,10 +859,10 @@ contains
 !
    logical function requested_section_input_file(the_file, section)
 !!
-!!    Does section exist? 
+!!    Requested section?
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
-!!    Returns true if the section exists, false if it doesn't 
+!!    Returns true if the section exists, false if it doesn't.
 !!
       implicit none 
 !
@@ -742,79 +914,80 @@ contains
 !
       character(len=*), intent(in) :: string
 !
-      integer :: n_records
+      integer, intent(out) :: n_records
 !
-      character(len=200) :: line
+      character(len=200) :: line 
 !
-      integer :: n_start, count_start, count_rec_end, count_rec_start, i
+      integer :: start_record, end_record 
+!
+      integer :: n_beginnings, n_ends 
+!
+!     Find the number of instances of the section,
+!     stopping with an error if there are any inconsistencies 
 !
       rewind(the_file%unit)
 !
-      count_rec_end = 0
-      n_start = 0
+      line = repeat(' ', 200)
 !
-      count_start = 0
-      count_rec_start = 0
+      n_ends = 0
+      n_beginnings = 0
 !
-      do 
+      do while (trim(line) /= 'end geometry')
 !
-         read(the_file%unit, '(a200)') line
-         line = adjustl(line)
+         read(the_file%unit, '(a200)') line 
+         line = adjustl(line)   
 !
-         count_rec_end = count_rec_end + 1
+         if (trim(line) == 'end ' // string) n_ends = n_ends + 1
+         if (trim(line) == string) n_beginnings = n_beginnings + 1      
 !
-         if (trim(line) .eq. 'geometry') then
+      enddo    
 !
-            backspace(the_file%unit)
-            call output%error_msg('could not move to requested section: '// string)
+      if (n_beginnings > 1) call output%error_msg('Tried to move to section "' // string // '" with more than one starting clause.')
+      if (n_ends > 1) call output%error_msg('Tried to move to section "' // string // '" with more than one ending clause.')
+      if (n_ends == 0 .and. n_beginnings == 0) call output%error_msg('Tried to move to non-existent section "' // string // '".')
+      if (n_ends < 1) call output%error_msg('Tried to move to section "' // string // '" with no end.')
+      if (n_beginnings < 1) call output%error_msg('Tried to move to section "' // string // '" does not start.')
 !
-         endif
+!     Find the end of the section 
 !
-         if (trim(line) == 'end ' // string) then        
+      rewind(the_file%unit)
 !
-            rewind(the_file%unit)
+      read(the_file%unit, '(a200)') line 
+      line = adjustl(line)
 !
-            do i = 1, count_rec_end - 1
+      end_record = 1
 !
-               read(the_file%unit, '(a200)') line
-               line = adjustl(line) 
-!  
-               if (trim(line) == string) then
+      do while (trim(line) /= 'end geometry' .and. trim(line) /= 'end ' // string) 
 !
-                  n_start =  n_start + 1
+         end_record = end_record + 1
 !
-               endif
+         read(the_file%unit, '(a200)') line 
+         line = adjustl(line)         
 !
-            enddo 
+      enddo   
 !
-            rewind(the_file%unit)
+!     Find the beginning of the section;
+!     this also places the pointer in the correct position
 !
-            do i = 1, count_rec_end - 1
+      rewind(the_file%unit)
 !
-              read(the_file%unit, '(a200)') line
-              line = adjustl(line)
-!  
-              count_rec_start = count_rec_start + 1
-!  
-               if (trim(line) == string) then
+      read(the_file%unit, '(a200)') line 
+      line = adjustl(line)
 !
-                  count_start = count_start + 1
+      start_record = 1
 !
-                  if (count_start == n_start) then
+      do while (trim(line) /= 'end geometry' .and. trim(line) /= string) 
 !
-                     n_records = count_rec_end - count_rec_start - 1
+         start_record = start_record + 1
 !
-                     return
-!
-                  endif
-!
-               endif
-!
-            enddo    
-! 
-         endif
+         read(the_file%unit, '(a200)') line 
+         line = adjustl(line)         
 !
       enddo
+!
+!     Set the number of records inside the section 
+!
+      n_records = end_record - start_record - 1
 !
    end subroutine move_to_section_input_file
 !
@@ -877,7 +1050,6 @@ contains
 !!    in order to determine n_elements so that array_ 
 !!    can be allocated.
 !!
-!!
       implicit none 
 !
       class(input_file), intent(in) :: the_file
@@ -924,7 +1096,7 @@ contains
 !
       n_atoms = 0
 !
-      call the_file%move_to_geometry_section(n_records)
+      call the_file%move_to_section('geometry', n_records)
 !
       do record = 1, n_records
 !
@@ -968,7 +1140,7 @@ contains
       character(len=200) :: string, coordinate
       character(len=100) :: current_basis
 !
-      call the_file%move_to_geometry_section(n_records)
+      call the_file%move_to_section('geometry', n_records)
 !
 !     Set initial basis -> Error if not
 !
@@ -1022,68 +1194,6 @@ contains
       enddo
 !
    end subroutine get_geometry_input_file
-!
-!
-   subroutine move_to_geometry_section_input_file(the_file, n_records)
-!!
-!!    Move to geometry section
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 / Mar 2019
-!!
-!!    Moves cursor to geometry section and counts the number of records
-!!    between geometry and end geometry
-!!
-      implicit none
-!
-      class(input_file), intent(in) :: the_file
-!
-      integer :: n_records
-!
-      character(len=200) :: line
-!
-      rewind(the_file%unit)
-!
-      n_records = 0
-!
-      do 
-!
-         read(the_file%unit, '(a200)') line
-         line = adjustl(line)
-!
-         if (trim(line(1:8)) .eq. 'geometry') then
-!
-            read(the_file%unit, '(a200)') line
-            line = adjustl(line)
-!
-            do while ((line(1:12)) /= 'end geometry')
-!
-               n_records = n_records + 1
-!
-               read(the_file%unit, '(a200)') line
-               line = adjustl(line)
-!
-            enddo
-!
-            backspace(the_file%unit)
-!
-            exit
-!
-         endif
-!
-      enddo
-!
-      rewind(the_file%unit)
-!
-      read(the_file%unit, '(a200)') line
-      line = adjustl(line)
-!
-      do while ((line(1:8)) /= 'geometry')
-!
-         read(the_file%unit, '(a200)') line
-         line = adjustl(line)
-!
-      enddo
-!
-   end subroutine move_to_geometry_section_input_file
 !
 !
 end module input_file_class

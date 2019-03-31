@@ -374,10 +374,10 @@ contains
 !
       class(davidson_cc_multipliers) :: solver 
 !
-      call input%get_keyword_in_section('threshold', 'multipliers', solver%residual_threshold)
-      call input%get_keyword_in_section('max iterations', 'multipliers', solver%max_iterations)
+      call input%get_keyword_in_section('threshold', 'solver cc multipliers', solver%residual_threshold)
+      call input%get_keyword_in_section('max iterations', 'solver cc multipliers', solver%max_iterations)
 !
-      if (input%requested_keyword_in_section('restart', 'multipliers')) solver%restart = .true.    
+      if (input%requested_keyword_in_section('restart', 'solver cc multipliers')) solver%restart = .true.    
 !
    end subroutine read_settings_davidson_cc_multipliers
 !

@@ -95,8 +95,7 @@ contains
 !
 !     Read & print settings (thresholds, etc.)
 !
-      if (requested_section('cc ground state')) call solver%read_settings()
-!
+      call solver%read_settings()
       call solver%print_settings()
 !
 !     Set the amplitudes to the initial guess or read if restart
@@ -352,12 +351,12 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      call input%get_keyword_in_section('omega threshold', 'cc ground state', solver%omega_threshold)
-      call input%get_keyword_in_section('energy threshold', 'cc ground state', solver%energy_threshold)
-      call input%get_keyword_in_section('diis dimension', 'cc ground state', solver%diis_dimension)
-      call input%get_keyword_in_section('max iterations', 'cc ground state', solver%max_iterations)
+      call input%get_keyword_in_section('omega threshold', 'solver cc gs', solver%omega_threshold)
+      call input%get_keyword_in_section('energy threshold', 'solver cc gs', solver%energy_threshold)
+      call input%get_keyword_in_section('diis dimension', 'solver cc gs', solver%diis_dimension)
+      call input%get_keyword_in_section('max iterations', 'solver cc gs', solver%max_iterations)
 !
-      if (input%requested_keyword_in_section('restart', 'cc ground state')) solver%restart = .true.
+      if (input%requested_keyword_in_section('restart', 'solver cc gs')) solver%restart = .true.
 !
    end subroutine read_settings_diis_cc_gs
 !

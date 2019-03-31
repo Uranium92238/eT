@@ -121,7 +121,7 @@ contains
 !
       class(hf_engine) :: engine 
 !
-      call input%get_keyword_in_section('algorithm', 'hf', engine%algorithm)
+      call input%get_keyword_in_section('algorithm', 'solver hf', engine%algorithm)
 !
    end subroutine read_settings_hf_engine
 !

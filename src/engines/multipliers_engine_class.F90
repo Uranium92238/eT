@@ -164,7 +164,7 @@ contains
 !
       class(multipliers_engine), intent(inout) :: engine 
 !
-      call input%get_keyword_in_section('algorithm', 'multipliers', engine%algorithm) 
+      call input%get_keyword_in_section('algorithm', 'solver cc multipliers', engine%algorithm) 
 !
    end subroutine read_settings_multipliers_engine
 !

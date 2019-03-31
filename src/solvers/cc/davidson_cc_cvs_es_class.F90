@@ -77,24 +77,25 @@ contains
                             &A description of the CVS approximation can be found in &
                             &S. Coriani & H. Koch, J. Chem. Phys. 143, 181103 (2015).'
 !
-     call input%get_keyword_in_section('residual threshold', 'cc excited state', solver%residual_threshold)
-     call input%get_keyword_in_section('energy threshold', 'cc excited state', solver%eigenvalue_threshold)
-     call input%get_keyword_in_section('max iterations', 'cc excited state', solver%max_iterations)
+     call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
+     call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
+     call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
 !
-     call input%get_required_keyword_in_section('singlet states', 'cc excited state', solver%n_singlet_states)
+     call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
 !
-      if (input%requested_keyword_in_section('restart', 'cc excited state')) solver%restart = .true.  
+      if (input%requested_keyword_in_section('restart', 'solver cc es')) solver%restart = .true.  
 !
-      if (input%requested_keyword_in_section('core excitation', 'cc excited state')) then 
+      if (input%requested_keyword_in_section('core excitation', 'solver cc es')) then 
 !  
 !        Determine the number of cores 
 !
-         solver%n_cores = input%get_n_elements_for_keyword_in_section('core excitation', 'cc excited state')
+         solver%n_cores = input%get_n_elements_for_keyword_in_section('core excitation', 'solver cc es')
 !
 !        Then read the core vector
 !
          call solver%initialize_cores()
-         call input%get_array_for_keyword_in_section('core excitation', 'cc excited state', solver%n_cores, solver%cores)
+!
+         call input%get_array_for_keyword_in_section('core excitation', 'solver cc es', solver%n_cores, solver%cores)
 !
       else
 !
@@ -130,6 +131,8 @@ contains
       real(dp) :: mix_factor
 !
       logical :: used
+!
+      integer, dimension(:), allocatable :: cores
 !
       if (solver%n_cores .gt. solver%n_singlet_states) &
          call output%error_msg('number of roots requested should be equal or greater than the number of cores.')
@@ -195,6 +198,14 @@ contains
 !
             call solver%initialize_core_MOs()
             solver%core_MOs = 0
+!
+!           Translate cores to correct ordering (see molecular system for a description of eT ordering of atoms)
+!
+            call mem%alloc(cores, solver%n_cores)
+            cores = solver%cores
+!
+            call wf%system%translate_from_input_order_to_eT_order(solver%n_cores, cores, solver%cores)
+            call mem%dealloc(cores, solver%n_cores)
 !
             do j = 1, solver%n_cores
 !

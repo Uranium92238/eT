@@ -137,16 +137,16 @@ contains
 !
       class(diis_cc_es) :: solver 
 !
-      call input%get_keyword_in_section('residual threshold', 'cc excited state', solver%residual_threshold)
-      call input%get_keyword_in_section('energy threshold', 'cc excited state', solver%eigenvalue_threshold)
-      call input%get_keyword_in_section('diis dimension', 'cc excited state', solver%diis_dimension)
-      call input%get_keyword_in_section('max iterations', 'cc excited state', solver%max_iterations)
+      call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
+      call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
+      call input%get_keyword_in_section('diis dimension', 'solver cc es', solver%diis_dimension)
+      call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
 !               
-      call input%get_required_keyword_in_section('singlet states', 'cc excited state', solver%n_singlet_states)
+      call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
 !
-      if (input%requested_keyword_in_section('restart', 'cc excited state')) solver%restart = .true.    
-      if (input%requested_keyword_in_section('left eigenvectors', 'cc excited state')) solver%transformation = 'left'    
-      if (input%requested_keyword_in_section('right eigenvectors', 'cc excited state')) solver%transformation = 'right'    
+      if (input%requested_keyword_in_section('restart', 'solver cc es')) solver%restart = .true.    
+      if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) solver%transformation = 'left'    
+      if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) solver%transformation = 'right'    
 !
    end subroutine read_settings_diis_cc_es
 !

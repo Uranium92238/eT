@@ -1,29 +1,31 @@
-name: H2O
-charge: 0
+system
+   name: H2O
+   charge: 0
+end system
 
 method
-  hf
-  ccsd
+   hf
+   ccsd
 end method
 
 memory
    available: 8
 end memory
 
-cholesky
+solver cholesky
    threshold: 1.0d-12
-end cholesky
+end solver cholesky
 
-hf
-  algorithm:          scf-diis
-  energy threshold:   1.0d-10
-  gradient threshold: 1.0d-10
-end hf
+solver hf
+   algorithm:          scf-diis
+   energy threshold:   1.0d-10
+   gradient threshold: 1.0d-10
+end solver hf
 
-cc ground state
+solver cc gs
    omega threshold:  1.0d-10
    energy threshold: 1.0d-10
-end cc ground state
+end solver cc gs
 
 do
    ground state

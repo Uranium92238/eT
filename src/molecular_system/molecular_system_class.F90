@@ -93,6 +93,8 @@ module molecular_system_class
       procedure :: destruct_atoms          => destruct_atoms_molecular_system
       procedure :: destruct_shell_limits   => destruct_shell_limits_molecular_system
 !
+      procedure :: translate_from_input_order_to_eT_order => translate_from_input_order_to_eT_order_molecular_system
+!
    end type molecular_system
 !
 contains
@@ -307,6 +309,17 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Read atoms and their coordinates, assumed to be in units of Ångstrøm.
+!!
+!!    In eT, atoms are ordered after basis set, with the first basis
+!!    set specified on input first.
+!!
+!!    If there are active atoms, the active atoms are first in eT,
+!!    irrespective of basis set.
+!!
+!!    This routine handles reading of the geometry and from eT.inp 
+!!    and orders the atoms according to basis set.
+!!    If active atoms are specified, they will be read and 
+!!    reordered in read_active_atoms_molecular_system
 !!
       implicit none
 !
@@ -536,7 +549,15 @@ contains
 !!    Read_active_atoms
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad
 !!
-!!    Read active atoms and reorder them
+!!    In eT, atoms are ordered after basis set, with the first basis
+!!    set specified on input first.
+!!
+!!    If there are active atoms, the active atoms are first in eT,
+!!    irrespective of basis set.
+!!
+!!    This routine handles reading of the active atoms 
+!!    and their reordering to the begining of the atoms
+!!    array.
 !!
       implicit none
 !
@@ -578,12 +599,21 @@ contains
          call input%get_array_for_keyword_in_section('hf', 'active atoms', &
                                                       molecule%n_active_atoms, active_atoms)
 !
+!        Translate atom list to current eT ordering (based on basis set)
+!
+         call mem%alloc(active_atoms_copy, molecule%n_active_atoms)
+         active_atoms_copy = active_atoms
+!
+         call molecule%translate_from_input_order_to_eT_order(molecule%n_active_atoms, active_atoms_copy, active_atoms)
+!
+         call mem%dealloc(active_atoms_copy, molecule%n_active_atoms)
+!
       elseif (selection_type == 'central atom') then
 !
          call input%get_keyword_in_section('central atom', 'active atoms', central_atom)
          call input%get_keyword_in_section('hf', 'active atoms', hf_radius)
 !
-!        Central atom in current ordering:
+!        Central atom in current eT ordering:
 !
          do i = 1, molecule%n_atoms
 !
@@ -636,25 +666,6 @@ contains
          call output%error_msg('did not recognize selection type for active atoms.')
 !
       endif
-!
-!     Translate active atoms to new ordering (based on basis set)
-!
-      call mem%alloc(active_atoms_copy, molecule%n_active_atoms)
-      active_atoms_copy = active_atoms
-!
-      do i = 1, molecule%n_active_atoms
-         do j = 1, molecule%n_atoms
-!
-            if (active_atoms_copy(i) == molecule%atoms(j)%input_nbr) then
-!
-               active_atoms(i) = j
-! 
-            endif
-!
-         enddo
-      enddo
-!
-      call mem%dealloc(active_atoms_copy, molecule%n_active_atoms)
 !
 !     Find and set active basis
 !
@@ -1131,7 +1142,8 @@ contains
 !
       write(output%unit, '(/t3,a)')       '- Molecular system specifications:'
 !
-      write(output%unit, '(/t6,a14,i1)')     'Charge:       ', molecule%charge 
+      write(output%unit, '(/t6,a14,a)')      'Name:         ', trim(molecule%name)
+      write(output%unit, '(t6,a14,i1)')      'Charge:       ', molecule%charge 
       write(output%unit, '(t6,a14,i1)')      'Multiplicity: ', molecule%multiplicity 
 !
       write(output%unit, '(/t6,a35,f25.12)') 'Nuclear repulsion energy (a.u.):   ', molecule%get_nuclear_repulsion()
@@ -1142,6 +1154,52 @@ contains
       call molecule%print_geometry()
 !
    end subroutine print_system_molecular_system
+!
+!
+   subroutine translate_from_input_order_to_eT_order_molecular_system(molecule, n_elements,  &
+                                                         array_input_ordering, array_eT_ordering)
+!!
+!!    Translate from input order to eT order
+!!    Written by Sarai D. Folkestad, Mar 2019
+!!
+!!    In eT, atoms are ordered after basis set, with the first basis
+!!    set specified on input first.
+!!
+!!    If there are active atoms, the active atoms are first in eT,
+!!    irrespective of basis set.
+!!
+!!    This routine translates an array of input indices,
+!!    which corresponds to the order of the atoms in the
+!!    input file to an array of indices corresponding to atom 
+!!    order in eT.
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      integer, intent(in) :: n_elements
+!
+      integer, dimension(n_elements), intent(in) :: array_input_ordering
+      integer, dimension(n_elements), intent(out) :: array_eT_ordering
+!  
+!     Local variables
+!
+      integer :: i, j
+!
+      do i = 1, n_elements
+         do j = 1, molecule%n_atoms
+!
+            if (array_input_ordering(i) == molecule%atoms(j)%input_nbr) then
+!
+               array_eT_ordering(i) = j
+! 
+            endif
+!
+         enddo
+      enddo
+!
+   end subroutine translate_from_input_order_to_eT_order_molecular_system
+
 !
 !
 end module molecular_system_class

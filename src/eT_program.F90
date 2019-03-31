@@ -113,8 +113,6 @@ program eT_program
    call input%init('eT.inp')
    call disk%open_file(input, 'read')
 !
-   call input%check_for_illegal_keywords()
-!
    call timing%init('timing.out')
    call disk%open_file(timing, 'write', 'rewind')
 !
@@ -154,6 +152,8 @@ program eT_program
 !
    endif
 !
+   call input%check_for_errors()
+!
 !  Prepare memory manager and disk manager
 !
    call mem%prepare()
@@ -167,7 +167,7 @@ program eT_program
 !
    if (n_methods == 0) then
 !
-      if (requested_task('cholesky eri')) then
+      if (input%requested_keyword_in_section('cholesky eri', 'do')) then
 !
          allocate(system)
          call system%prepare()
@@ -192,7 +192,7 @@ program eT_program
 !
    else
 !
-      if (requested_method('mlhf')) then
+      if (input%requested_keyword_in_section('mlhf','method')) then
 !
          allocate(mlhf_wf)
          ref_wf => mlhf_wf
@@ -201,7 +201,7 @@ program eT_program
 !
       else
 !
-         if (requested_method('uhf')) then
+         if (input%requested_keyword_in_section('uhf','method')) then
 !
             allocate(uhf_wf)
             ref_wf => uhf_wf
@@ -229,9 +229,9 @@ program eT_program
 !
 !  :: Coupled cluster calculation
 !
-   if (requested_method('mlhf')) n_methods = n_methods - 1
-   if (requested_method('hf'))   n_methods = n_methods - 1
-   if (requested_method('uhf'))  n_methods = n_methods - 1
+   if (input%requested_keyword_in_section('mlhf','method')) n_methods = n_methods - 1
+   if (input%requested_keyword_in_section('hf','method'))   n_methods = n_methods - 1
+   if (input%requested_keyword_in_section('uhf','method'))   n_methods = n_methods - 1
 !
    if (n_methods .eq. 0) call ref_wf%cleanup()
 !
