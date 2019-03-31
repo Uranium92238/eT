@@ -259,7 +259,7 @@ contains
          if (line(1 : 3) == 'end') then
 !
 !           Located the end of a section -
-!           Attempt to move to the beginning of that section => fails if inconsistent beginning and end!
+!           attempt to move to the beginning of that section => fails if inconsistent beginning and end
 !
             call the_file%move_to_section(trim(adjustl(line(4 : 200))), n_elements)
 !
@@ -869,79 +869,79 @@ contains
 !
       character(len=*), intent(in) :: string
 !
-      integer :: n_records
+      integer, intent(out) :: n_records
 !
-      character(len=200) :: line
+      character(len=200) :: line 
 !
-      integer :: n_start, count_start, count_rec_end, count_rec_start, i
+      integer :: start_record, end_record 
+!
+      integer :: n_beginnings, n_ends 
+!
+!     Find the number of instances of the section
 !
       rewind(the_file%unit)
 !
-      count_rec_end = 0
-      n_start = 0
+      line = repeat(' ', 200)
 !
-      count_start = 0
-      count_rec_start = 0
+      n_ends = 0
+      n_beginnings = 0
 !
-      do 
+      do while (trim(line) /= 'end geometry')
 !
-         read(the_file%unit, '(a200)') line
-         line = adjustl(line)
+         read(the_file%unit, '(a200)') line 
+         line = adjustl(line)   
 !
-         count_rec_end = count_rec_end + 1
+         if (trim(line) == 'end ' // string) n_ends = n_ends + 1
+         if (trim(line) == string) n_beginnings = n_beginnings + 1      
 !
-         if (trim(line) .eq. 'geometry') then
+      enddo    
 !
-            backspace(the_file%unit)
-            call output%error_msg('could not move to requested section: '// string)
+      if (n_beginnings > 1) call output%error_msg('Tried to move to section "' // string // '" with more than one starting clause.')
+      if (n_ends > 1) call output%error_msg('Tried to move to section "' // string // '" with more than one ending clause.')
+      if (n_ends == 0 .and. n_beginnings == 0) call output%error_msg('Tried to move to non-existent section "' // string // '".')
+      if (n_ends < 1) call output%error_msg('Tried to move to section "' // string // '" with no end.')
+      if (n_beginnings < 1) call output%error_msg('Tried to move to section "' // string // '" does not start.')
 !
-         endif
+!     Find the end of the section 
 !
-         if (trim(line) == 'end ' // string) then        
+      rewind(the_file%unit)
 !
-            rewind(the_file%unit)
+      read(the_file%unit, '(a200)') line 
+      line = adjustl(line)
 !
-            do i = 1, count_rec_end - 1
+      end_record = 1
 !
-               read(the_file%unit, '(a200)') line
-               line = adjustl(line) 
-!  
-               if (trim(line) == string) then
+      do while (trim(line) /= 'end geometry' .and. trim(line) /= 'end ' // string) 
 !
-                  n_start =  n_start + 1
+         end_record = end_record + 1
 !
-               endif
+         read(the_file%unit, '(a200)') line 
+         line = adjustl(line)         
 !
-            enddo 
+      enddo   
 !
-            rewind(the_file%unit)
+!     Find the beginning of the section;
+!     this also places the pointer in the correct position
 !
-            do i = 1, count_rec_end - 1
+      rewind(the_file%unit)
 !
-              read(the_file%unit, '(a200)') line
-              line = adjustl(line)
-!  
-              count_rec_start = count_rec_start + 1
-!  
-               if (trim(line) == string) then
+      read(the_file%unit, '(a200)') line 
+      line = adjustl(line)
 !
-                  count_start = count_start + 1
+      start_record = 1
 !
-                  if (count_start == n_start) then
+      do while (trim(line) /= 'end geometry' .and. trim(line) /= string) 
 !
-                     n_records = count_rec_end - count_rec_start - 1
+         start_record = start_record + 1
 !
-                     return
-!
-                  endif
-!
-               endif
-!
-            enddo    
-! 
-         endif
+         read(the_file%unit, '(a200)') line 
+         line = adjustl(line)         
 !
       enddo
+!
+!     Set the number of records inside the section 
+!
+      n_records = end_record - start_record - 1
 !
    end subroutine move_to_section_input_file
 !
