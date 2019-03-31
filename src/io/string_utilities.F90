@@ -209,4 +209,33 @@ contains
    end subroutine get_elements_in_string
 !
 !
+   function set_cursor_to_whitespace(string) result(cursor)
+!!
+!!    Set cursor to whitespace
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    Sets the cursor to the first whitespace in the string
+!!
+      implicit none
+!
+      character(len=200), intent(inout) :: string
+!
+      integer :: cursor
+!
+      string = adjustl(string)
+!
+      cursor = 1
+!
+      do while (cursor .lt. 200)
+         if (string(cursor:cursor) .eq. ' ') then
+            exit
+         else
+            cursor = cursor + 1
+            cycle
+         endif
+      enddo
+!
+   end function set_cursor_to_whitespace
+!
+!
 end module string_utilities

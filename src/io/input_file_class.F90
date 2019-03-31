@@ -27,7 +27,7 @@ module input_file_class
    use kinds   
    use section_class 
    use output_file_class
-   use string_utilities  
+   use string_utilities 
 !
    type, extends(abstract_file) :: input_file 
 !
@@ -72,10 +72,14 @@ module input_file_class
 !
       procedure, private :: get_string_keyword_in_section_wo_safety => get_string_keyword_in_section_wo_safety_input_file
 !
-      procedure :: move_to_section  => move_to_section_input_file
+      procedure :: move_to_section           => move_to_section_input_file
+      procedure :: move_to_geometry_section  => move_to_geometry_section_input_file
 !
       procedure :: get_n_elements_for_keyword_in_section => get_n_elements_for_keyword_in_section_input_file
       procedure :: get_array_for_keyword_in_section      => get_array_for_keyword_in_section_input_file
+!
+      procedure :: get_n_atoms   => get_n_atoms_input_file
+      procedure :: get_geometry  => get_geometry_input_file
 !
    end type input_file
 !
@@ -896,6 +900,190 @@ contains
       call get_elements_in_string(keyword_value_string, n_elements, array_)
 !
    end subroutine get_array_for_keyword_in_section_input_file
+!
+!
+   function get_n_atoms_input_file(the_file) result(n_atoms)
+!!
+!!    Get n atoms 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    Reads the geometry section of the input and
+!!    counts the number of atoms
+!!
+      implicit none
+!
+      class(input_file), intent(in) :: the_file
+!
+      integer :: n_atoms
+!
+!     Local variables
+!
+      integer :: n_records, record
+!
+      character(len=200) :: string 
+!
+      n_atoms = 0
+!
+      call the_file%move_to_geometry_section(n_records)
+!
+      do record = 1, n_records
+!
+         read(the_file%unit, '(a200)') string
+         string = adjustl(string)
+!
+         if(string(1:6) /= 'basis:') n_atoms = n_atoms + 1
+!
+      enddo
+!
+   end function  get_n_atoms_input_file
+!
+!
+   subroutine get_geometry_input_file(the_file, n_atoms, symbols, positions, basis_sets)
+!!
+!!    Get geometry
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    Reads the geometry from the output file and sets it in the
+!!    list of atoms.
+!!
+!!    Note: This routine should be called after a call to the 
+!!    function get_n_atoms_input_file which finds the number of 
+!!    atoms in the system
+!!
+      implicit none
+!
+      class(input_file), intent(in) :: the_file
+!
+      integer, intent(in) :: n_atoms
+!
+      character(len=2), dimension(n_atoms), intent(out)   :: symbols
+      character(len=100), dimension(n_atoms), intent(out) :: basis_sets
+!
+      real(dp), dimension(n_atoms, 3), intent(out) :: positions ! x, y, z
+!
+!     Local variables
+!
+      integer :: n_records, record, cursor, current_atom
+!
+      character(len=200) :: string, coordinate
+      character(len=100) :: current_basis
+!
+      call the_file%move_to_geometry_section(n_records)
+!
+!     Set initial basis -> Error if not
+!
+      read(the_file%unit, '(a200)') string
+      string = adjustl(string)
+!
+      if(string(1:6) /= 'basis:') call output%error_msg('did not find basis in geometry section.')
+      current_basis = trim(adjustl(string(7:200)))
+!
+!     Loop through the rest of the geometry section to get atoms
+!
+      current_atom = 0
+!
+      do record = 1, n_records - 1
+!
+         read(the_file%unit, '(a200)') string
+         string = adjustl(string)
+!
+         if(string(1:6) == 'basis:') then
+!
+            current_basis = trim(adjustl(string(7:200)))
+!
+         else
+!
+            current_atom = current_atom + 1
+!
+            basis_sets(current_atom) = current_basis
+            symbols(current_atom)    = trim(string(1:2))
+!
+            string = string(3:200)
+!
+            cursor = set_cursor_to_whitespace(string)
+!
+            coordinate = string(1:cursor)
+            read(coordinate, '(f21.16)') positions(current_atom, 1)
+!
+            string = string(cursor + 1:200)
+!
+            cursor = set_cursor_to_whitespace(string)
+!
+            coordinate = string(1:cursor)
+            read(coordinate, '(f21.16)') positions(current_atom, 2)
+!
+            coordinate = string(cursor + 1:200)
+            coordinate = adjustl(coordinate)
+!
+            read(coordinate, '(f21.16)') positions(current_atom, 3)
+!
+         endif
+!
+      enddo
+!
+   end subroutine get_geometry_input_file
+!
+!
+   subroutine move_to_geometry_section_input_file(the_file, n_records)
+!!
+!!    Move to geometry section
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 / Mar 2019
+!!
+!!    Moves cursor to geometry section and counts the number of records
+!!    between geometry and end geometry
+!!
+      implicit none
+!
+      class(input_file), intent(in) :: the_file
+!
+      integer :: n_records
+!
+      character(len=200) :: line
+!
+      rewind(the_file%unit)
+!
+      n_records = 0
+!
+      do 
+!
+         read(the_file%unit, '(a200)') line
+         line = adjustl(line)
+!
+         if (trim(line(1:8)) .eq. 'geometry') then
+!
+            read(the_file%unit, '(a200)') line
+            line = adjustl(line)
+!
+            do while ((line(1:12)) /= 'end geometry')
+!
+               n_records = n_records + 1
+!
+               read(the_file%unit, '(a200)') line
+               line = adjustl(line)
+!
+            enddo
+!
+            backspace(the_file%unit)
+!
+            exit
+!
+         endif
+!
+      enddo
+!
+      rewind(the_file%unit)
+!
+      read(the_file%unit, '(a200)') line
+      line = adjustl(line)
+!
+      do while ((line(1:8)) /= 'geometry')
+!
+         read(the_file%unit, '(a200)') line
+         line = adjustl(line)
+!
+      enddo
+!
+   end subroutine move_to_geometry_section_input_file
 !
 !
 end module input_file_class
