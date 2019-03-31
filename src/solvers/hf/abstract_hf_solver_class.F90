@@ -100,10 +100,10 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      call input%get_keyword_in_section('energy threshold', 'hf', solver%energy_threshold)
-      call input%get_keyword_in_section('gradient threshold', 'hf', solver%gradient_threshold)
-      call input%get_keyword_in_section('max iterations', 'hf', solver%max_iterations)
-      call input%get_keyword_in_section('ao density guess', 'hf', solver%ao_density_guess)
+      call input%get_keyword_in_section('energy threshold', 'solver hf', solver%energy_threshold)
+      call input%get_keyword_in_section('gradient threshold', 'solver hf', solver%gradient_threshold)
+      call input%get_keyword_in_section('max iterations', 'solver hf', solver%max_iterations)
+      call input%get_keyword_in_section('ao density guess', 'solver hf', solver%ao_density_guess)
 !
    end subroutine read_hf_solver_settings_abstract_hf_solver
 !

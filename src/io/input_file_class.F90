@@ -41,6 +41,8 @@ module input_file_class
 !
       procedure :: check_for_errors            => check_for_errors_input_file
       procedure :: check_section_for_illegal_keywords   => check_section_for_illegal_keywords_input_file
+      procedure :: check_for_illegal_sections   => check_for_illegal_sections_input_file
+      procedure :: print_sections               => print_sections_input_file
 !
       procedure, nopass :: extract_keyword_from_string  => extract_keyword_from_string_input_file
 !
@@ -94,9 +96,11 @@ contains
 !
       character(len=*) :: name
 !
+      type(section) :: calculations
       type(section) :: system 
       type(section) :: memory 
       type(section) :: disk 
+      type(section) :: method 
       type(section) :: solver_cholesky
       type(section) :: solver_hf
       type(section) :: solver_cc_gs
@@ -112,6 +116,12 @@ contains
 !
 !     Define sections and valid keywords within each section  
 !
+      calculations%name_    = 'do'
+      calculations%keywords = ['ground state         ',  &
+                               'excited state        ',  &
+                               'cholesky eri         ',  &
+                               'multipliers          '   ]
+!
       system%name_    = 'system'
       system%keywords = ['name                 ',   &
                          'charge               ',   &
@@ -122,6 +132,15 @@ contains
 !
       disk%name_    = 'disk'
       disk%keywords = ['available            ']
+!
+      method%name_  = 'method'
+      method%keywords = ['hf                   ', &
+                         'ccs                  ', &
+                         'mp2                  ', &
+                         'cc2                  ', &
+                         'lowmem cc2           ', &
+                         'ccsd                 ', &
+                         'cc3                  ']
 !
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%keywords = ['threshold           ',    &
@@ -172,9 +191,11 @@ contains
 !
 !     Gather all sections into the file's section array 
 !
-      the_file%sections = [system,              &
+      the_file%sections = [calculations,        &
+                           system,              &
                            memory,              &
                            disk,                &
+                           method,              &
                            solver_cholesky,     &
                            solver_hf,           &
                            solver_cc_gs,        &
@@ -198,6 +219,12 @@ contains
 !
       integer :: k 
 !
+!     Look for illegal sections 
+!
+      call the_file%check_for_illegal_sections()
+!
+!     For each legal section present, look for illegal keywords within that section 
+!
       do k = 1, size(the_file%sections)
 !
          call the_file%check_section_for_illegal_keywords(the_file%sections(k))
@@ -205,6 +232,95 @@ contains
       enddo
 !
    end subroutine check_for_errors_input_file
+!
+!
+   subroutine check_for_illegal_sections_input_file(the_file)
+!!
+!!    Check for illegal sections 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(input_file) :: the_file
+!
+      character(len=200) :: line
+!
+      integer :: n_elements, k
+!
+      logical :: recognized 
+!  
+      rewind(the_file%unit)
+!
+      read(the_file%unit, '(a200)') line 
+      line = adjustl(line)
+!
+      do while (trim(line) /= 'end geometry') 
+!
+         if (line(1 : 3) == 'end') then
+!
+!           Located the end of a section -
+!           Attempt to move to the beginning of that section => fails if inconsistent beginning and end!
+!
+            call the_file%move_to_section(trim(adjustl(line(4 : 200))), n_elements)
+!
+!           Check whether section name is valid 
+!
+            recognized = .false.
+!
+            do k = 1, size(the_file%sections)
+!
+               if (trim(the_file%sections(k)%name_) == trim(adjustl(line(4 : 200)))) recognized = .true. 
+!
+            enddo
+!
+            if (.not. recognized) then 
+!
+               write(output%unit, '(/t3,a,a,a)') 'Could not recognize section named "', trim(adjustl(line(4 : 200))), '".'
+!
+               call the_file%print_sections()
+!
+               call output%error_msg('Something is wrong in the input file. See above.')
+!
+            endif 
+!
+!           Move to the end of the section again 
+!
+            do k = 1, n_elements + 1
+!
+               read(the_file%unit, *) 
+!
+            enddo
+!
+         endif 
+!
+         read(the_file%unit, '(a200)') line 
+         line = adjustl(line)
+!
+      enddo
+!
+   end subroutine check_for_illegal_sections_input_file
+!
+!
+   subroutine print_sections_input_file(the_file)
+!!
+!!    Print sections 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      integer :: k
+!
+      write(output%unit, '(/t3,a/)') 'The valid input sections are:'
+!
+      do k = 1, size(the_file%sections)
+!
+         write(output%unit, '(t6,a)') the_file%sections(k)%name_
+!
+      enddo
+!
+   end subroutine print_sections_input_file
 !
 !
    subroutine check_section_for_illegal_keywords_input_file(the_file, the_section)

@@ -1,5 +1,7 @@
-name: H2O-He
-charge: 0
+system
+   name: H2O-He
+   charge: 0
+end system
 
 do
   ground state
@@ -9,11 +11,11 @@ memory
    available: 8
 end memory
 
-hf
+solver hf
    algorithm:          scf-diis
    energy threshold:   1.0d-10
    gradient threshold: 1.0d-10
-end hf
+end solver hf
 
 method
    hf
