@@ -102,7 +102,8 @@ contains
 !
    subroutine read_settings_molecular_system(molecule)
 !!
-!!
+!!    Read settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
       implicit none
 !
@@ -137,6 +138,9 @@ contains
       integer(i6), dimension(:), allocatable :: shell_numbers
 !
 !     Read eT.inp and write files for Libint
+!
+      molecule%charge = 0
+      molecule%multiplicity = 1
 !
       call molecule%read_settings()
       call molecule%write_libint_files()
