@@ -354,7 +354,6 @@ contains
       current_atom = 1
 !
       molecule%atoms(current_atom)%symbol       = symbols(current_atom)
-      molecule%atoms(current_atom)%symbol(1:1)  = convert_char_to_uppercase(molecule%atoms(current_atom)%symbol(1:1))
       molecule%atoms(current_atom)%basis        = basis_sets(current_atom)
       molecule%atoms(current_atom)%x            = positions(current_atom,1)
       molecule%atoms(current_atom)%y            = positions(current_atom,2)
@@ -380,7 +379,6 @@ contains
                current_atom = current_atom + 1
 !
                molecule%atoms(current_atom)%symbol       = symbols(atom)
-               molecule%atoms(current_atom)%symbol(1:1)  = convert_char_to_uppercase(molecule%atoms(current_atom)%symbol(1:1))
                molecule%atoms(current_atom)%basis        = basis_sets(atom)
                molecule%atoms(current_atom)%x            = positions(atom,1)
                molecule%atoms(current_atom)%y            = positions(atom,2)
@@ -401,7 +399,6 @@ contains
                current_atom = current_atom + 1
 !
                molecule%atoms(current_atom)%symbol       = symbols(atom)
-               molecule%atoms(current_atom)%symbol(1:1)  = convert_char_to_uppercase(molecule%atoms(current_atom)%symbol(1:1))
                molecule%atoms(current_atom)%basis        = basis_sets(atom)
                molecule%atoms(current_atom)%x            = positions(atom,1)
                molecule%atoms(current_atom)%y            = positions(atom,2)

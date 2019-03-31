@@ -1136,7 +1136,7 @@ contains
 !
 !     Local variables
 !
-      integer :: n_records, record, cursor, current_atom
+      integer :: n_records, record, cursor, current_atom, i
 !
       character(len=200) :: string, coordinate
       character(len=100) :: current_basis
@@ -1189,6 +1189,14 @@ contains
             read(coordinate, '(f21.16)') positions(current_atom, 3)
 !
          endif
+!
+      enddo
+!
+!     First character of symbol should be upper case
+!
+      do i = 1, n_atoms
+!
+         symbols(i)(1:1) = convert_char_to_uppercase(symbols(i)(1:1))
 !
       enddo
 !
