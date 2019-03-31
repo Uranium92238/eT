@@ -68,6 +68,7 @@ module molecular_system_class
       procedure, private :: read_settings       => read_settings_molecular_system
       procedure, private :: read_system         => read_system_molecular_system
       procedure, private :: read_geometry       => read_geometry_molecular_system
+      procedure, private :: read_active_atoms   => read_active_atoms_molecular_system
 !
       procedure :: print_system            => print_system_molecular_system
       procedure :: print_geometry          => print_geometry_molecular_system
@@ -82,8 +83,7 @@ module molecular_system_class
       procedure :: get_max_shell_size      => get_max_shell_size_molecular_system
 !
       procedure :: shell_to_atom           => shell_to_atom_molecular_system
-!
-      procedure :: read_active_atoms       => read_active_atoms_molecular_system
+
 !
       procedure :: initialize_basis_sets   => initialize_basis_sets_molecular_system
       procedure :: initialize_atoms        => initialize_atoms_molecular_system
@@ -353,11 +353,12 @@ contains
 !
       current_atom = 1
 !
-      molecule%atoms(current_atom)%symbol = symbols(current_atom)
-      molecule%atoms(current_atom)%basis  = basis_sets(current_atom)
-      molecule%atoms(current_atom)%x      = positions(current_atom,1)
-      molecule%atoms(current_atom)%y      = positions(current_atom,2)
-      molecule%atoms(current_atom)%z      = positions(current_atom,3)
+      molecule%atoms(current_atom)%symbol       = symbols(current_atom)
+      molecule%atoms(current_atom)%symbol(1:1)  = convert_char_to_uppercase(molecule%atoms(current_atom)%symbol(1:1))
+      molecule%atoms(current_atom)%basis        = basis_sets(current_atom)
+      molecule%atoms(current_atom)%x            = positions(current_atom,1)
+      molecule%atoms(current_atom)%y            = positions(current_atom,2)
+      molecule%atoms(current_atom)%z            = positions(current_atom,3)
 !
       molecule%atoms(current_atom)%input_nbr = current_atom
 !
@@ -378,11 +379,12 @@ contains
 !
                current_atom = current_atom + 1
 !
-               molecule%atoms(current_atom)%symbol = symbols(atom)
-               molecule%atoms(current_atom)%basis  = basis_sets(atom)
-               molecule%atoms(current_atom)%x      = positions(atom,1)
-               molecule%atoms(current_atom)%y      = positions(atom,2)
-               molecule%atoms(current_atom)%z      = positions(atom,3)
+               molecule%atoms(current_atom)%symbol       = symbols(atom)
+               molecule%atoms(current_atom)%symbol(1:1)  = convert_char_to_uppercase(molecule%atoms(current_atom)%symbol(1:1))
+               molecule%atoms(current_atom)%basis        = basis_sets(atom)
+               molecule%atoms(current_atom)%x            = positions(atom,1)
+               molecule%atoms(current_atom)%y            = positions(atom,2)
+               molecule%atoms(current_atom)%z            = positions(atom,3)
 !
                molecule%atoms(current_atom)%input_nbr = atom
 !
@@ -398,11 +400,12 @@ contains
 !
                current_atom = current_atom + 1
 !
-               molecule%atoms(current_atom)%symbol = symbols(atom)
-               molecule%atoms(current_atom)%basis  = basis_sets(atom)
-               molecule%atoms(current_atom)%x      = positions(atom,1)
-               molecule%atoms(current_atom)%y      = positions(atom,2)
-               molecule%atoms(current_atom)%z      = positions(atom,3)
+               molecule%atoms(current_atom)%symbol       = symbols(atom)
+               molecule%atoms(current_atom)%symbol(1:1)  = convert_char_to_uppercase(molecule%atoms(current_atom)%symbol(1:1))
+               molecule%atoms(current_atom)%basis        = basis_sets(atom)
+               molecule%atoms(current_atom)%x            = positions(atom,1)
+               molecule%atoms(current_atom)%y            = positions(atom,2)
+               molecule%atoms(current_atom)%z            = positions(atom,3)
 !
                molecule%atoms(current_atom)%input_nbr = atom
 !

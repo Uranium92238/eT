@@ -74,6 +74,8 @@ module input_file_class
 !
       procedure :: get_n_atoms   => get_n_atoms_input_file
       procedure :: get_geometry  => get_geometry_input_file
+!  
+      procedure :: read_adjustl_lower => read_adjustl_lower_input_file
 !
    end type input_file
 !
@@ -1100,8 +1102,7 @@ contains
 !
       do record = 1, n_records
 !
-         read(the_file%unit, '(a200)') string
-         string = adjustl(string)
+         string = the_file%read_adjustl_lower()
 !
          if(string(1:6) /= 'basis:') n_atoms = n_atoms + 1
 !
@@ -1144,8 +1145,7 @@ contains
 !
 !     Set initial basis -> Error if not
 !
-      read(the_file%unit, '(a200)') string
-      string = adjustl(string)
+      string = the_file%read_adjustl_lower()
 !
       if(string(1:6) /= 'basis:') call output%error_msg('did not find basis in geometry section.')
       current_basis = trim(adjustl(string(7:200)))
@@ -1156,8 +1156,7 @@ contains
 !
       do record = 1, n_records - 1
 !
-         read(the_file%unit, '(a200)') string
-         string = adjustl(string)
+         string = the_file%read_adjustl_lower()
 !
          if(string(1:6) == 'basis:') then
 !
@@ -1194,6 +1193,25 @@ contains
       enddo
 !
    end subroutine get_geometry_input_file
+!
+!
+   function read_adjustl_lower_input_file(the_file) result(line)
+!!
+!!    Read, adjustl and convert to lower case
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+      implicit none
+!
+      class(input_file), intent(in) :: the_file
+!
+      character(len=200) :: line
+!  
+      read(the_file%unit, '(a200)') line
+      line = adjustl(line)
+      call convert_to_lowercase(line)
+!
+   end function read_adjustl_lower_input_file
+
 !
 !
 end module input_file_class

@@ -279,4 +279,42 @@ contains
    end subroutine convert_to_lowercase
 !
 !
+   function convert_char_to_uppercase(char_) result(char_out)
+!!
+!!    Convert to uppercase
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Adapted from routines posted on the Stack-exchange.
+!!    
+!!    Assumes ASCII table for representing characters as integers, 
+!!    where the lowercase letter is +32 relative to the uppercase letters.
+!!
+!!    Note: uppercase (65-90) and lowercase (97-122).
+!!
+      implicit none 
+!
+      character, intent(in) :: char_ 
+      character :: char_out 
+!
+      integer :: char_int
+!
+!     Represent character as integer 
+!  
+      char_int = ichar(char_) 
+!
+!     Convert if character is in the range of uppercase characters 
+!
+      if (char_int >= 97 .and. char_int <= 122) then ! Between a and z
+!
+         char_int = char_int - 32 
+!
+      endif
+!
+!     Replace the character by the (possibly) uppercased letter 
+!
+     char_out = char(char_int)
+!
+   end function convert_char_to_uppercase
+!
+!
 end module string_utilities
