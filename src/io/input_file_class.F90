@@ -138,7 +138,7 @@ contains
                          'ccs                  ', &
                          'mp2                  ', &
                          'cc2                  ', &
-                         'lowmem cc2           ', &
+                         'lowmem-cc2           ', &
                          'ccsd                 ', &
                          'cc3                  ']
 !

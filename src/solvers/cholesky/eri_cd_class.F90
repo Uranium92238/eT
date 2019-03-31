@@ -126,11 +126,7 @@ contains
 !
       solver%n_batches = 1
 !
-      if (requested_section('cholesky')) then
-!
-         call solver%read_settings()
-!
-      endif
+      call solver%read_settings()
 !
       solver%n_aop   = system%get_n_aos()*(system%get_n_aos()+1)/2 ! Number of ao pairs packed
       solver%n_ao    = system%get_n_aos()
@@ -3946,13 +3942,13 @@ contains
 !
       class(eri_cd) :: solver 
 !
-      call input%get_keyword_in_section('threshold', 'cholesky', solver%threshold)
-      call input%get_keyword_in_section('span', 'cholesky', solver%span)
-      call input%get_keyword_in_section('batches', 'cholesky', solver%n_batches)
-      call input%get_keyword_in_section('qualified', 'cholesky', solver%max_qual)
+      call input%get_keyword_in_section('threshold', 'solver cholesky', solver%threshold)
+      call input%get_keyword_in_section('span', 'solver cholesky', solver%span)
+      call input%get_keyword_in_section('batches', 'solver cholesky', solver%n_batches)
+      call input%get_keyword_in_section('qualified', 'solver cholesky', solver%max_qual)
 !
-      if (input%requested_keyword_in_section('one center', 'cholesky')) solver%one_center = .true.
-      if (input%requested_keyword_in_section('no vectors', 'cholesky')) solver%construct_vectors = .false.
+      if (input%requested_keyword_in_section('one center', 'solver cholesky')) solver%one_center = .true.
+      if (input%requested_keyword_in_section('no vectors', 'solver cholesky')) solver%construct_vectors = .false.
 !
    end subroutine read_settings_eri_cd
 !

@@ -79,11 +79,11 @@ contains
 !
       class(es_engine) :: engine 
 !
-      call input%get_keyword_in_section('algorithm', 'cc excited state', engine%algorithm)
+      call input%get_keyword_in_section('algorithm', 'solver cc es', engine%algorithm)
 !
-      if (input%requested_keyword_in_section('core excitation', 'cc excited state')) engine%es_type = 'core'
-      if (input%requested_keyword_in_section('ionization', 'cc excited state')) engine%es_type = 'valence ionized'
-      if (input%requested_keyword_in_section('core ionization', 'cc excited state')) engine%es_type = 'core ionized'
+      if (input%requested_keyword_in_section('core excitation', 'solver cc es')) engine%es_type = 'core'
+      if (input%requested_keyword_in_section('ionization', 'solver cc es')) engine%es_type = 'valence ionized'
+      if (input%requested_keyword_in_section('core ionization', 'solver cc es')) engine%es_type = 'core ionized'
 !
    end subroutine read_settings_es_engine
 !

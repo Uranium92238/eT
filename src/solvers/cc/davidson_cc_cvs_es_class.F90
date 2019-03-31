@@ -77,24 +77,24 @@ contains
                             &A description of the CVS approximation can be found in &
                             &S. Coriani & H. Koch, J. Chem. Phys. 143, 181103 (2015).'
 !
-     call input%get_keyword_in_section('residual threshold', 'cc excited state', solver%residual_threshold)
-     call input%get_keyword_in_section('energy threshold', 'cc excited state', solver%eigenvalue_threshold)
-     call input%get_keyword_in_section('max iterations', 'cc excited state', solver%max_iterations)
+     call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
+     call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
+     call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
 !
-     call input%get_required_keyword_in_section('singlet states', 'cc excited state', solver%n_singlet_states)
+     call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
 !
-      if (input%requested_keyword_in_section('restart', 'cc excited state')) solver%restart = .true.  
+      if (input%requested_keyword_in_section('restart', 'solver cc es')) solver%restart = .true.  
 !
-      if (input%requested_keyword_in_section('core excitation', 'cc excited state')) then 
+      if (input%requested_keyword_in_section('core excitation', 'solver cc es')) then 
 !  
 !        Determine the number of cores 
 !
-         solver%n_cores = input%get_n_elements_for_keyword_in_section('core excitation', 'cc excited state')
+         solver%n_cores = input%get_n_elements_for_keyword_in_section('core excitation', 'solver cc es')
 !
 !        Then read the core vector
 !
          call solver%initialize_cores()
-         call input%get_array_for_keyword_in_section('core excitation', 'cc excited state', solver%n_cores, solver%cores)
+         call input%get_array_for_keyword_in_section('core excitation', 'solver cc es', solver%n_cores, solver%cores)
 !
       else
 !

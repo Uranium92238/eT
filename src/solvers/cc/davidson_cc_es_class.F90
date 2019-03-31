@@ -622,21 +622,21 @@ contains
 !
       integer :: n_start_vecs
 !
-      call input%get_keyword_in_section('residual threshold', 'cc excited state', solver%residual_threshold)
-      call input%get_keyword_in_section('energy threshold', 'cc excited state', solver%eigenvalue_threshold)
-      call input%get_keyword_in_section('max iterations', 'cc excited state', solver%max_iterations)
+      call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
+      call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
+      call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
 !     
-      call input%get_required_keyword_in_section('singlet states', 'cc excited state', solver%n_singlet_states)
+      call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
 !
-      if (input%requested_keyword_in_section('restart', 'cc excited state')) solver%restart = .true.    
-      if (input%requested_keyword_in_section('left eigenvectors', 'cc excited state')) solver%transformation = 'left'    
-      if (input%requested_keyword_in_section('right eigenvectors', 'cc excited state')) solver%transformation = 'right'             
+      if (input%requested_keyword_in_section('restart', 'solver cc es')) solver%restart = .true.    
+      if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) solver%transformation = 'left'    
+      if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) solver%transformation = 'right'             
 !
-      if (input%requested_keyword_in_section('start vectors', 'cc excited state')) then 
+      if (input%requested_keyword_in_section('start vectors', 'solver cc es')) then 
 !  
 !        Determine the number of start vectors & do consistency check 
 !
-         n_start_vecs = input%get_n_elements_for_keyword_in_section('start vectors', 'cc excited state')
+         n_start_vecs = input%get_n_elements_for_keyword_in_section('start vectors', 'solver cc es')
 !
          if (n_start_vecs .ne. solver%n_singlet_states) then
 !
@@ -648,7 +648,7 @@ contains
 !
          call mem%alloc(solver%start_vectors, n_start_vecs)
 !
-         call input%get_array_for_keyword_in_section('start vectors', 'cc excited state', n_start_vecs, solver%start_vectors)
+         call input%get_array_for_keyword_in_section('start vectors', 'solver cc es', n_start_vecs, solver%start_vectors)
 !
       endif 
 !
