@@ -332,6 +332,9 @@ contains
 !!    Checks a section for illegal keywords 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
+!!    If there is an illegal keyword in the section, it stops with an error. 
+!!    If a legal keyword is specified more than once, it stops with an error.
+!!
       implicit none 
 !
       class(input_file) :: the_file
@@ -343,6 +346,11 @@ contains
       logical :: recognized 
 !
       integer :: n_records, record, k
+!
+      integer, dimension(:), allocatable :: keywords_instances
+!
+      allocate(keywords_instances(size(the_section%keywords)))
+      keywords_instances = 0
 !
       if (the_file%requested_section(the_section%name_)) then 
 !
@@ -360,7 +368,12 @@ contains
 !
                do k = 1, size(the_section%keywords)
 !
-                  if (trim(the_section%keywords(k)) == trim(keyword)) recognized = .true. 
+                  if (trim(the_section%keywords(k)) == trim(keyword)) then  
+!
+                     keywords_instances(k) = keywords_instances(k) + 1
+                     recognized = .true. 
+!
+                  endif 
 !
                enddo
 !
@@ -380,6 +393,21 @@ contains
          enddo
 !
       endif 
+!
+      do k = 1, size(the_section%keywords)
+!
+         if (keywords_instances(k) .gt. 1) then 
+!
+            write(output%unit, '(/t3,a,i0,a,a,a,a,a)') 'Found ', keywords_instances(k), ' instances of the keyword "', &
+                              trim(the_section%keywords(k)), '" in the section "', the_section%name_, '".'
+!
+            call output%error_msg('Something is wrong in the input file. See above.')
+!
+         endif
+!
+      enddo
+!
+      deallocate(keywords_instances)
 !
    end subroutine check_section_for_illegal_keywords_input_file
 !
