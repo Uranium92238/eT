@@ -37,13 +37,13 @@ module input_file_class
 !
       procedure :: init => init_input_file
 !
-      procedure, nopass :: string_is_comment    => string_is_comment_input_file
 !
-      procedure :: check_for_errors                   => check_for_errors_input_file
-      procedure :: check_section_for_illegal_keywords => check_section_for_illegal_keywords_input_file
-      procedure :: check_for_illegal_sections         => check_for_illegal_sections_input_file
-      procedure :: print_sections                     => print_sections_input_file
+      procedure :: check_for_errors                            => check_for_errors_input_file
+      procedure :: check_section_for_illegal_keywords          => check_section_for_illegal_keywords_input_file
+      procedure :: check_for_illegal_sections                  => check_for_illegal_sections_input_file
+      procedure :: print_sections                              => print_sections_input_file
 !
+      procedure, nopass :: string_is_comment                   => string_is_comment_input_file
       procedure, nopass :: extract_keyword_from_string         => extract_keyword_from_string_input_file
       procedure, nopass :: extract_keyword_value_from_string   => extract_keyword_value_from_string_input_file
 !
@@ -122,23 +122,28 @@ contains
 !     Define sections and valid keywords within each section  
 !
       calculations%name_    = 'do'
+      calculations%required = .true.
       calculations%keywords = ['ground state         ',  &
                                'excited state        ',  &
                                'cholesky eri         ',  &
                                'multipliers          '   ]
 !
       system%name_    = 'system'
+      system%required = .true.
       system%keywords = ['name                 ',   &
                          'charge               ',   &
                          'multiplicity         '    ] 
 !
       memory%name_    = 'memory'
+      memory%required = .false.
       memory%keywords = ['available            ']
 !
       disk%name_    = 'disk'
+      disk%required = .false.
       disk%keywords = ['available            ']
 !
-      method%name_  = 'method'
+      method%name_    = 'method'
+      method%required = .true.
       method%keywords = ['hf                   ', &
                          'ccs                  ', &
                          'mp2                  ', &
@@ -148,6 +153,7 @@ contains
                          'cc3                  ']
 !
       solver_cholesky%name_    = 'solver cholesky'
+      solver_cholesky%required = .false.
       solver_cholesky%keywords = ['threshold           ',    &
                                   'span                ',    &
                                   'batches             ',    &
@@ -156,6 +162,7 @@ contains
                                   'no vectors          '     ]
 !
       solver_hf%name_    = 'solver hf'
+      solver_hf%required = .false.
       solver_hf%keywords = ['algorithm            ',   &
                             'energy threshold     ',   &
                             'gradient threshold   ',   &
@@ -165,6 +172,7 @@ contains
                             'ao density guess     '    ]
 !
       solver_cc_gs%name_    = 'solver cc gs'
+      solver_cc_gs%required = .false.
       solver_cc_gs%keywords = ['algorithm            ',   &
                                'energy threshold     ',   &
                                'omega threshold      ',   &
@@ -173,6 +181,7 @@ contains
                                'restart              '    ]
 !
       solver_cc_es%name_    = 'solver cc es'
+      solver_cc_es%required = .false.
       solver_cc_es%keywords = ['algorithm            ',   &
                                'ionization           ',   &
                                'core ionization      ',   &
@@ -187,15 +196,15 @@ contains
                                'start vectors        ',   &
                                'diis dimension       '    ]
 !
-      solver_cc_multipliers%name_ = 'solver cc multipliers'
-!
+      solver_cc_multipliers%name_    = 'solver cc multipliers'
+      solver_cc_multipliers%required = .false.
       solver_cc_multipliers%keywords = ['algorithm            ',   &
                                         'threshold            ',   &
                                         'restart              ',   &
                                         'max iterations       '    ]
 !
-      active_atoms%name_ = 'active atoms'
-!
+      active_atoms%name_    = 'active atoms'
+      active_atoms%required = .false.
       active_atoms%keywords = ['selection type       ', &
                                'central atom         ', &
                                'hf                   ', &
@@ -239,7 +248,22 @@ contains
 !
       do k = 1, size(the_file%sections)
 !
-         call the_file%check_section_for_illegal_keywords(the_file%sections(k))
+         if (the_file%requested_section(the_file%sections(k)%name_)) then
+!
+            call the_file%check_section_for_illegal_keywords(the_file%sections(k))
+!
+         else
+!
+            if (the_file%sections(k)%required) then 
+!
+               write(output%unit, '(/t3,a,a,a)') 'All calculations require the section "', trim(the_file%sections(k)%name_), &
+                                                   '". It appears to be missing.'
+!
+               call output%error_msg('Something is wrong in the input file. See above.')
+! 
+            endif 
+!
+         endif
 !
       enddo
 !
@@ -366,47 +390,43 @@ contains
       allocate(keywords_instances(size(the_section%keywords)))
       keywords_instances = 0
 !
-      if (the_file%requested_section(the_section%name_)) then 
+      call the_file%move_to_section(the_section%name_, n_records)
 !
-         call the_file%move_to_section(the_section%name_, n_records)
+      do record = 1, n_records
 !
-         do record = 1, n_records
+         recognized = .false.
 !
-            recognized = .false.
+         read(the_file%unit, '(a200)') string 
 !
-            read(the_file%unit, '(a200)') string 
+         if (.not. the_file%string_is_comment(string)) then 
 !
-            if (.not. the_file%string_is_comment(string)) then 
+            call the_file%extract_keyword_from_string(string, keyword)
 !
-               call the_file%extract_keyword_from_string(string, keyword)
+            do k = 1, size(the_section%keywords)
 !
-               do k = 1, size(the_section%keywords)
+               if (trim(the_section%keywords(k)) == trim(keyword)) then  
 !
-                  if (trim(the_section%keywords(k)) == trim(keyword)) then  
-!
-                     keywords_instances(k) = keywords_instances(k) + 1
-                     recognized = .true. 
-!
-                  endif 
-!
-               enddo
-!
-               if (.not. recognized) then 
-!
-                  write(output%unit, '(/t3,a,a,a,a,a)') 'Could not recognize keyword "', trim(keyword), &
-                                                         '" in section "', trim(the_section%name_), '".'
-!
-                  call the_section%print_keywords()
-!
-                  call output%error_msg('Something is wrong in the input file. See above.')
+                  keywords_instances(k) = keywords_instances(k) + 1
+                  recognized = .true. 
 !
                endif 
 !
+            enddo
+!
+            if (.not. recognized) then 
+!
+               write(output%unit, '(/t3,a,a,a,a,a)') 'Could not recognize keyword "', trim(keyword), &
+                                                         '" in section "', trim(the_section%name_), '".'
+!
+               call the_section%print_keywords()
+!
+               call output%error_msg('Something is wrong in the input file. See above.')
+!
             endif 
 !
-         enddo
+         endif 
 !
-      endif 
+      enddo
 !
       do k = 1, size(the_section%keywords)
 !
@@ -948,7 +968,7 @@ contains
       if (n_ends > 1) call output%error_msg('Tried to move to section "' // string // '" with more than one ending clause.')
       if (n_ends == 0 .and. n_beginnings == 0) call output%error_msg('Tried to move to non-existent section "' // string // '".')
       if (n_ends < 1) call output%error_msg('Tried to move to section "' // string // '" with no end.')
-      if (n_beginnings < 1) call output%error_msg('Tried to move to section "' // string // '" does not start.')
+      if (n_beginnings < 1) call output%error_msg('Tried to move to section "' // string // '" with no beginning.')
 !
 !     Find the end of the section 
 !
