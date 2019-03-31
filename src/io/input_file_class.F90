@@ -45,6 +45,7 @@ module input_file_class
       procedure :: print_sections               => print_sections_input_file
 !
       procedure, nopass :: extract_keyword_from_string  => extract_keyword_from_string_input_file
+      procedure, nopass :: extract_keyword_value_from_string  => extract_keyword_value_from_string_input_file
 !
       procedure :: requested_section            => requested_section_input_file
       procedure :: requested_keyword_in_section => requested_keyword_in_section_input_file
@@ -85,10 +86,8 @@ contains
 !!    Initialize input file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
 !!
-!!    Initializes an input file file object
-!!
-!!    Output file is formatted and sequantial file.
-!!    Routine sets these, and sets tha file name    
+!!    Initializes the input file for opening by the disk manager
+!!    and sets the valid sections and their keywords. 
 !!
       implicit none
 !
@@ -210,8 +209,7 @@ contains
 !!    Check for errors
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
-!!    Does tests to control that the input file does not use illegal keywords 
-!!    or sections.
+!!    Looks for errors the user may have made when writing the input file.
 !!
       implicit none 
 !
@@ -238,6 +236,12 @@ contains
 !!
 !!    Check for illegal sections 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Finds the sections in the input file and controls whether they are among 
+!!    the valid sections in the program.
+!!
+!!    Tests only the end of each section. If the beginning of a section is incorrectly 
+!!    specified, an error will occur when it checks the section for illegal keywords. 
 !!
       implicit none 
 !
@@ -325,7 +329,7 @@ contains
 !
    subroutine check_section_for_illegal_keywords_input_file(the_file, the_section)
 !!
-!!    Checks a particular section for illegal keywords 
+!!    Checks a section for illegal keywords 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
       implicit none 
@@ -386,11 +390,6 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
 !!    If specified, reads keyword as an integer into keyword value.
-!!
-!!    Note: if the keyword is not present in the section, keyword_value will not be set,
-!!    and no error occurs. In typical usage, the standard value of the keyword is set before
-!!    this routine is called. Changes from standard are made only when the keyword is specified
-!!    - hence no errors when it does not find the keyword. 
 !!  
       implicit none 
 !
@@ -424,12 +423,11 @@ contains
 !
    subroutine get_required_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
 !!
-!!    Read requested integer keyword in section 
+!!    Read required integer keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
-!!    If keyword and section not specified
-!!    ends with error because required keyword 
-!!    not provided.
+!!    Reads keyword as an integer into keyword value. If the keyword or the 
+!!    section is not specified, an error occurs because the keyword is "required".
 !!
 !!  
       implicit none 
@@ -466,11 +464,6 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
 !!    If specified, reads keyword as a real double precision into keyword value.
-!!
-!!    Note: if the keyword is not present in the section, keyword_value will not be set,
-!!    and no error occurs. In typical usage, the standard value of the keyword is set before
-!!    this routine is called. Changes from standard are made only when the keyword is specified
-!!    - hence no errors when it does not find the keyword. 
 !!    
       implicit none 
 !
@@ -504,15 +497,11 @@ contains
 !
    subroutine get_required_dp_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
 !!
-!!    Read requested double precision keyword in section 
+!!    Read required double precision keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
-!!    If specified, reads keyword as a real double precision into keyword value.
-!!
-!!    Note: if the keyword is not present in the section, keyword_value will not be set,
-!!    and no error occurs. In typical usage, the standard value of the keyword is set before
-!!    this routine is called. Changes from standard are made only when the keyword is specified
-!!    - hence no errors when it does not find the keyword. 
+!!    Reads keyword as an double precision into keyword value. If the keyword or the 
+!!    section is not specified, an error occurs because the keyword is "required".
 !!    
       implicit none 
 !
@@ -548,12 +537,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
 !!    If specified, reads keyword as a string into keyword value.
-!!
-!!    Note: if the keyword is not present in the section, keyword_value will not be set,
-!!    and no error occurs. In typical usage, the standard value of the keyword is set before
-!!    this routine is called. Changes from standard are made only when the keyword is specified
-!!    - hence no errors when it does not find the keyword. 
-!!    
+!! 
       implicit none 
 !
       class(input_file), intent(in) :: the_file
@@ -584,12 +568,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
 !!    If specified, reads keyword as a string into keyword value.
-!!
-!!    Note: if the keyword is not present in the section, keyword_value will not be set,
-!!    and no error occurs. In typical usage, the standard value of the keyword is set before
-!!    this routine is called. Changes from standard are made only when the keyword is specified
-!!    - hence no errors when it does not find the keyword. 
-!!    
+!! 
       implicit none 
 !
       class(input_file), intent(in) :: the_file
@@ -629,9 +608,9 @@ contains
 !
       character(len=200) :: keyword_value 
 !
-      integer :: n_records, record, len_line_keyword
+      integer :: n_records, record
 !
-      character(len=200) :: line
+      character(len=200) :: line, local_keyword
 !
 !     Move to the requested section & get the number of records in that section 
 !
@@ -643,27 +622,20 @@ contains
 !
          read(the_file%unit, '(a200)') line 
 !
-         line = adjustl(line) 
+         if (the_file%string_is_comment(line)) then
 !
-         if (line(1 : 1) == '!') cycle ! Comment
+            cycle
 !
-         len_line_keyword = 0
-         do while (line(len_line_keyword + 1 : len_line_keyword + 1) /= ':' .and. len_line_keyword < 199)
+         else  
 !
-            len_line_keyword = len_line_keyword + 1
+            call the_file%extract_keyword_from_string(line, local_keyword)
 !
-         enddo
+            if (trim(local_keyword) == keyword) then 
 !
-         if (len_line_keyword == 0) then 
+               call the_file%extract_keyword_value_from_string(line, keyword_value)
+               return
 !
-            call output%error_msg('Failed to read keyword ' // keyword // ' in section ' // section)
-!
-         endif 
-!
-         if (trim(line(1 : len_line_keyword)) == keyword) then 
-!
-            keyword_value = adjustl(line(len_line_keyword + 2 : 200))
-            return
+            endif 
 !
          endif 
 !
@@ -707,8 +679,7 @@ contains
 !!    Extract keyword from string 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!    
-!!    Note: assumes that the string is not a comment. This routine is therefore 
-!!    called after a call to "is comment" logical routine. 
+!!    Note: assumes that the string is not a comment.
 !!
       implicit none 
 !
@@ -728,6 +699,7 @@ contains
          if (keyword(k : k) == ':') then 
 !
             colon_position = k 
+            exit 
 !
          endif 
 !
@@ -746,6 +718,53 @@ contains
    end subroutine extract_keyword_from_string_input_file
 !
 !
+   subroutine extract_keyword_value_from_string_input_file(string, keyword_value)
+!!
+!!    Extract keyword value from string 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!    
+!!    Note: assumes that the string is not a comment. This routine is therefore 
+!!    called after a call to "is comment" logical routine. 
+!!
+      implicit none 
+!
+      character(len=200), intent(in)   :: string 
+      character(len=200), intent(out)  :: keyword_value 
+!
+      integer :: k, colon_position
+!
+!     If there is a ":", we have to remove the ":" as well as the value(s) that follow 
+!
+      keyword_value = adjustl(string)
+!
+      colon_position = -1 
+!
+      do k = 1, 200
+!
+         if (keyword_value(k : k) == ':') then 
+!
+            colon_position = k 
+            exit 
+!
+         endif 
+!
+      enddo
+!
+      if (colon_position .ne. -1) then 
+!
+         do k = 1, colon_position
+!
+            keyword_value(k : k) = ' '
+!
+         enddo
+!
+      endif 
+!
+      keyword_value = adjustl(keyword_value)
+!
+   end subroutine extract_keyword_value_from_string_input_file
+!
+!
    logical function requested_keyword_in_section_input_file(the_file, keyword, section)
 !!
 !!    Is string keyword in section?
@@ -755,8 +774,6 @@ contains
 !!
 !!    Note: stops inside "move to section" if the section is not present!
 !!    => this routine should only be called if you know the section in present.
-!!    In typical usage, it is called after we have made sure the section exists; 
-!!    see the "section exists" function.
 !!
       implicit none 
 !
@@ -765,9 +782,9 @@ contains
       character(len=*), intent(in) :: keyword 
       character(len=*), intent(in) :: section  
 !
-      integer :: n_records, record, len_line_keyword
+      integer :: n_records, record
 !
-      character(len=200) :: line
+      character(len=200) :: line, local_keyword
 !
 !     Move to the requested section & get the number of records in that section 
 !
@@ -779,27 +796,20 @@ contains
 !
          read(the_file%unit, '(a200)') line 
 !
-         line = adjustl(line) 
+         if (the_file%string_is_comment(line)) then
 !
-         if (line(1 : 1) == '!') cycle ! Comment
+            cycle
 !
-         len_line_keyword = 0
-         do while (line(len_line_keyword + 1 : len_line_keyword + 1) /= ':' .and. len_line_keyword < 199)
+         else  
 !
-            len_line_keyword = len_line_keyword + 1
+            call the_file%extract_keyword_from_string(line, local_keyword)
 !
-         enddo
+            if (trim(local_keyword) == keyword) then 
 !
-         if (len_line_keyword == 0) then 
+               requested_keyword_in_section_input_file = .true.
+               return
 !
-            call output%error_msg('Failed to read keyword ' // keyword // ' in section ' // section)
-!
-         endif 
-!
-         if (trim(line(1 : len_line_keyword)) == keyword) then 
-!
-            requested_keyword_in_section_input_file = .true.
-            return
+            endif 
 !
          endif 
 !
@@ -814,10 +824,10 @@ contains
 !
    logical function requested_section_input_file(the_file, section)
 !!
-!!    Does section exist? 
+!!    Requested section?
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
-!!    Returns true if the section exists, false if it doesn't 
+!!    Returns true if the section exists, false if it doesn't.
 !!
       implicit none 
 !
@@ -877,7 +887,8 @@ contains
 !
       integer :: n_beginnings, n_ends 
 !
-!     Find the number of instances of the section
+!     Find the number of instances of the section,
+!     stopping with an error if there are any inconsistencies 
 !
       rewind(the_file%unit)
 !
@@ -1003,7 +1014,6 @@ contains
 !!    get_n_elements_for_keyword_in_section is called
 !!    in order to determine n_elements so that array_ 
 !!    can be allocated.
-!!
 !!
       implicit none 
 !
