@@ -36,27 +36,32 @@ module input_file_class
    contains
 !
       procedure :: init => init_input_file
+      procedure :: check_for_errors                                     => check_for_errors_input_file
+      procedure :: requested_section                                    => requested_section_input_file
+      procedure :: requested_keyword_in_section                         => requested_keyword_in_section_input_file
+      procedure :: get_n_elements_for_keyword_in_section                => get_n_elements_for_keyword_in_section_input_file
+      procedure :: get_array_for_keyword_in_section                     => get_array_for_keyword_in_section_input_file
+      procedure :: get_n_atoms                                          => get_n_atoms_input_file
+      procedure :: get_geometry                                         => get_geometry_input_file
 !
+      procedure, private :: get_string_keyword_in_section_wo_safety     => get_string_keyword_in_section_wo_safety_input_file
+      procedure, private :: move_to_section                             => move_to_section_input_file
+      procedure, private :: check_section_for_illegal_keywords          => check_section_for_illegal_keywords_input_file
+      procedure, private :: check_for_illegal_sections                  => check_for_illegal_sections_input_file
+      procedure, private :: print_sections                              => print_sections_input_file
+      procedure, private :: read_adjustl_lower                          => read_adjustl_lower_input_file
 !
-      procedure :: check_for_errors                            => check_for_errors_input_file
-      procedure :: check_section_for_illegal_keywords          => check_section_for_illegal_keywords_input_file
-      procedure :: check_for_illegal_sections                  => check_for_illegal_sections_input_file
-      procedure :: print_sections                              => print_sections_input_file
+      procedure, nopass, private :: string_is_comment                   => string_is_comment_input_file
+      procedure, nopass, private :: extract_keyword_from_string         => extract_keyword_from_string_input_file
+      procedure, nopass, private :: extract_keyword_value_from_string   => extract_keyword_value_from_string_input_file
 !
-      procedure, nopass :: string_is_comment                   => string_is_comment_input_file
-      procedure, nopass :: extract_keyword_from_string         => extract_keyword_from_string_input_file
-      procedure, nopass :: extract_keyword_value_from_string   => extract_keyword_value_from_string_input_file
+      generic :: get_keyword_in_section                                 => get_integer_keyword_in_section_input_file,   &
+                                                                           get_string_keyword_in_section_input_file,    &
+                                                                           get_dp_keyword_in_section_input_file
 !
-      procedure :: requested_section            => requested_section_input_file
-      procedure :: requested_keyword_in_section => requested_keyword_in_section_input_file
-!
-      generic :: get_keyword_in_section            => get_integer_keyword_in_section_input_file,   &
-                                                      get_string_keyword_in_section_input_file,    &
-                                                      get_dp_keyword_in_section_input_file
-!
-      generic :: get_required_keyword_in_section   => get_required_string_keyword_in_section_input_file,    &
-                                                      get_required_integer_keyword_in_section_input_file,   &
-                                                      get_required_dp_keyword_in_section_input_file
+      generic :: get_required_keyword_in_section                        => get_required_string_keyword_in_section_input_file,    &
+                                                                           get_required_integer_keyword_in_section_input_file,   &
+                                                                           get_required_dp_keyword_in_section_input_file
 !
       procedure :: get_integer_keyword_in_section_input_file
       procedure :: get_string_keyword_in_section_input_file
@@ -64,18 +69,6 @@ module input_file_class
       procedure :: get_required_string_keyword_in_section_input_file
       procedure :: get_required_integer_keyword_in_section_input_file
       procedure :: get_required_dp_keyword_in_section_input_file
-!
-      procedure, private :: get_string_keyword_in_section_wo_safety => get_string_keyword_in_section_wo_safety_input_file
-!
-      procedure, private :: move_to_section => move_to_section_input_file
-!
-      procedure :: get_n_elements_for_keyword_in_section => get_n_elements_for_keyword_in_section_input_file
-      procedure :: get_array_for_keyword_in_section      => get_array_for_keyword_in_section_input_file
-!
-      procedure :: get_n_atoms   => get_n_atoms_input_file
-      procedure :: get_geometry  => get_geometry_input_file
-!  
-      procedure :: read_adjustl_lower => read_adjustl_lower_input_file
 !
    end type input_file
 !

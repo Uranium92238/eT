@@ -50,7 +50,7 @@ module atomic_class
       real(dp) :: y
       real(dp) :: z
 !
-      integer :: input_nbr ! Number of atom on input
+      integer :: input_nbr ! Index of atom on input
 !
    contains
 !
