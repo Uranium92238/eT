@@ -35,9 +35,11 @@ module abstract_engine_class
 !
    contains
 !
-      procedure(essential_engine), deferred :: prepare 
-      procedure(essential_engine), deferred :: cleanup   
-      procedure(essential_engine_w_wf), deferred :: run        
+      procedure :: ignite => ignite_abstract_engine
+!
+      procedure(essential_engine), deferred, private      :: prepare 
+      procedure(essential_engine), deferred, private      :: cleanup   
+      procedure(essential_engine_w_wf), deferred, private :: run        
 !
    end type abstract_engine
 !
@@ -71,6 +73,26 @@ module abstract_engine_class
    end interface
 !
 contains
+!
+!
+   subroutine ignite_abstract_engine(engine, wf)
+!!
+!!    Ignite
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
+!!
+!!    Prepare, run, cleanup
+!!
+      implicit none
+!
+      class(abstract_engine) :: engine
+!
+      class(ccs) :: wf
+!
+      call engine%prepare()
+      call engine%run(wf)
+      call engine%cleanup()
+!
+   end subroutine ignite_abstract_engine
 !
 !
 end module abstract_engine_class

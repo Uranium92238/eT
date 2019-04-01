@@ -46,7 +46,7 @@ module hf_engine_class
 contains
 !
 !
-   subroutine prepare_hf_engine(engine, wf)
+   subroutine prepare_hf_engine(engine)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
@@ -54,10 +54,6 @@ contains
       implicit none 
 !
       class(hf_engine) :: engine
-!
-      class(hf)        :: wf  
-!
-      call wf%prepare()
 !
       engine%algorithm = 'scf-diis'
 !
@@ -108,16 +104,12 @@ contains
    end subroutine run_hf_engine
 !
 !
-   subroutine cleanup_hf_engine(wf)
+   subroutine cleanup_hf_engine()
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
-!
-      class(hf) :: wf
-!
-      call wf%cleanup() 
 !
    end subroutine cleanup_hf_engine
 !
@@ -146,9 +138,9 @@ contains
       class(hf_engine) :: engine 
       class(hf)        :: wf 
 !
-      call engine%prepare(wf)
+      call engine%prepare()
       call engine%run(wf)
-      call engine%cleanup(wf)
+      call engine%cleanup()
 !
    end subroutine ignite_hf_engine
 !

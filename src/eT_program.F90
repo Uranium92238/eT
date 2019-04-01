@@ -117,11 +117,10 @@ program eT_program
 !  Hartree-Fock calculation
 !
    if (input%requested_reference_calculation()) call reference_calculation(system)
-!!
-!!  Coupled cluster calculation
-!!
-!   if (input%requested_cc_calculation()) call cc_calculation()
-!!
+!
+!  Coupled cluster calculation
+!
+   if (input%requested_cc_calculation()) call cc_calculation(system)
 !
    call finalize_libint()
 !
@@ -134,13 +133,10 @@ program eT_program
    close(input%unit)
    close(timing%unit)
 !
-   !call mem%cleanup()
-   !call disk%cleanup()
-!
 end program eT_program
 !
 !
-subroutine reference_calculation()
+subroutine reference_calculation(system)
 !!
 !! Reference calculation
 !! Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -152,6 +148,8 @@ subroutine reference_calculation()
    use hf_engine_class
 !
    implicit none
+!
+   type(molecular_system) :: system
 !
 !  Possible reference wavefunctions   
 !
@@ -172,7 +170,9 @@ subroutine reference_calculation()
 !
       allocate(hf_wf)
 !
-      call ref_engine%ignite(hf_wf)    
+      call hf_wf%prepare(system)
+      call ref_engine%ignite(hf_wf)
+      call hf_wf%cleanup() 
 !
       deallocate(hf_wf)
 !
@@ -180,7 +180,9 @@ subroutine reference_calculation()
 !
       allocate(uhf_wf)
 !
-      call ref_engine%ignite(uhf_wf)  
+      call uhf_wf%prepare(system)
+      call ref_engine%ignite(uhf_wf)
+      call uhf_wf%cleanup()
 !
       deallocate(uhf_wf)
 !
@@ -191,11 +193,9 @@ subroutine reference_calculation()
    endif
 !
 end subroutine reference_calculation
-<<<<<<< HEAD
-=======
 !
 !
-subroutine cc_calculation()
+subroutine cc_calculation(system)
 !!
 !! Coupled cluster calculation
 !! Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -212,6 +212,8 @@ subroutine cc_calculation()
    use es_engine_class
 !
    implicit none
+!
+   type(molecular_system) :: system
 !
 !  Possible coupled cluster wavefunctions   
 !
@@ -263,24 +265,16 @@ subroutine cc_calculation()
 !
    end select
 !
-   if (requested_keyword_in_section('excited state', 'do')) then
+   if (input%requested_keyword_in_section('excited state', 'do')) then
 !
-      call cc_wf%prepare()
-!
-      call es_cc_engine%prepare()
-      call es_cc_engine%run(cc_wf)
-      call es_cc_engine%cleanup()
-!   
+      call cc_wf%prepare(system)
+      call es_cc_engine%ignite(cc_wf)
       call cc_wf%cleanup()   
 !
-   elseif (requested_keyword_in_section('ground state', 'do')) then
+   elseif (input%requested_keyword_in_section('ground state', 'do')) then
 !
-      call cc_wf%prepare()
-!
-      call gs_cc_engine%prepare()
-      call gs_cc_engine%run(cc_wf)
-      call gs_cc_engine%cleanup()
-!   
+      call cc_wf%prepare(system)
+      call gs_cc_engine%ignite(cc_wf) 
       call cc_wf%cleanup()  
 !
    else
@@ -290,4 +284,3 @@ subroutine cc_calculation()
    endif
 !
 end subroutine cc_calculation
->>>>>>> 0e90fda0135cf73c3c972f6d66cfcfbf547c5372
