@@ -138,7 +138,7 @@ module uhf_class
 contains 
 !
 !
-   subroutine prepare_uhf(wf)
+   subroutine prepare_uhf(wf, system)
 !!
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -147,7 +147,11 @@ contains
 !
       class(uhf) :: wf
 !
+      class(molecular_system), target, intent(in) :: system 
+!
       wf%name_ = 'UHF'
+!
+      wf%system => system
 !
       call wf%system%prepare()
 !

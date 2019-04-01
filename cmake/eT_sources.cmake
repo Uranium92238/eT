@@ -62,7 +62,6 @@ set(eT_fortran_sources
    src/wavefunctions/wavefunction_class.F90
    src/wavefunctions/hf_class.F90
    src/wavefunctions/uhf_class.F90
-   src/wavefunctions/mlhf_class.F90
    src/wavefunctions/ccs_class.F90
    src/wavefunctions/cc2_class.F90
    src/wavefunctions/lowmem_cc2_class.F90
