@@ -188,6 +188,13 @@ module ccs_class
       procedure :: destruct_t1                                  => destruct_t1_ccs
       procedure :: destruct_t1bar                               => destruct_t1bar_ccs
 !
+!     One-electron density
+!
+      procedure :: construct_one_el_density                     => construct_one_el_density_ccs
+!
+      procedure :: one_el_density_oo                            => one_el_density_oo_ccs
+      procedure :: one_el_density_vo                            => one_el_density_vo_ccs
+!
    end type ccs
 !
 !
@@ -3443,6 +3450,79 @@ contains
       enddo
 !
    end subroutine set_cvs_start_indices_ccs
+!
+!
+   subroutine one_el_density_oo_ccs(wf, D)
+!!
+!!    One electron density oo
+!!    Written by Sarai D. Folkestad
+!!
+!!    D_ii = 2  
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo) :: D
+!
+      integer :: i
+!
+!$omp parallel do private(i)
+      do i = 1, wf%n_o
+!
+         D(i,i) = D(i,i) + two  
+!
+      enddo
+!$omp end parallel do
+!
+   end subroutine one_el_density_oo_ccs
+!
+!
+   subroutine one_el_density_vo_ccs(wf, D)
+!!
+!!    One electron density vo
+!!    Written by Sarai D. Folkestad
+!!
+!!    D_ai = tbar_ai 
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo) :: D
+!
+      integer :: i, a
+!
+!$omp parallel do private(a, i)
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!        
+            D(wf%n_o + a, i) = D(wf%n_o + a, i) + t1bar(a, i)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine one_el_density_oo_ccs
+!
+!
+   subroutine construct_one_el_density_ccs(wf, D)
+!!
+!!    Construct one-electron density
+!!    Written by Sarai Dery Folkestad
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo) :: D
+!
+      D = zero
+!
+      call wf%one_el_density_oo(D)
+      call wf%one_el_density_vo(D)
+!
+   subroutine construct_one_el_density_ccs
 !
 !
 end module ccs_class
