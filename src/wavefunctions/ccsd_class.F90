@@ -150,10 +150,12 @@ module ccsd_class
 !
 !     One-electron density 
 !
-      procedure :: construct_one_el_density                    => construct_one_el_density_ccsd
+      procedure :: construct_density                           => construct_density_ccsd
 !
       procedure :: one_el_density_ccsd_oo                      => one_el_density_ccsd_oo_ccsd
+      procedure :: one_el_density_ccsd_vv                      => one_el_density_ccsd_vv_ccsd
       procedure :: one_el_density_ccsd_ov                      => one_el_density_ccsd_ov_ccsd
+!
 !
    end type ccsd
 !
@@ -1127,7 +1129,7 @@ contains
    end subroutine get_cvs_projector_ccsd
 !
 !
-   subroutine one_el_density_ccsd_oo_ccsd(wf, D)
+   subroutine one_el_density_ccsd_oo_ccsd(wf)
 !!
 !!    One electron density oo
 !!    Written by Sarai D. Folkestad
@@ -1137,8 +1139,6 @@ contains
       implicit none
 !
       class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo) :: D
 !
       real(dp), dimension(:,:,:,:), allocatable :: tbar_akbj, t_akbi
       real(dp), dimension(:,:), allocatable :: D_ij
@@ -1173,7 +1173,7 @@ contains
       do j = 1, wf%n_o
          do i = 1, wf%n_o
 !
-            D(i, j) = D(i, j) + D_ij(i,j)
+            wf%density(i, j) = wf%density(i, j) + D_ij(i,j)
 !
          enddo
       enddo
@@ -1184,7 +1184,7 @@ contains
    end subroutine one_el_density_ccsd_oo_ccsd
 !
 !
-   subroutine one_el_density_ccsd_vv_ccsd(wf, D)
+   subroutine one_el_density_ccsd_vv_ccsd(wf)
 !!
 !!    One electron density oo
 !!    Written by Sarai D. Folkestad
@@ -1194,8 +1194,6 @@ contains
       implicit none
 !
       class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo) :: D
 !
       real(dp), dimension(:,:,:,:), allocatable :: tbar_ajci, t_bjci
       real(dp), dimension(:,:), allocatable :: D_ab
@@ -1230,7 +1228,7 @@ contains
       do b = 1, wf%n_v
          do a = 1, wf%n_v
 !
-            D(wf%n_o + a, wf%n_o + b) = D(wf%n_o + a, wf%n_o + b) + D_ab(a,b)
+            wf%density(wf%n_o + a, wf%n_o + b) = wf%density(wf%n_o + a, wf%n_o + b) + D_ab(a,b)
 !
          enddo
       enddo 
@@ -1241,7 +1239,7 @@ contains
    end subroutine one_el_density_ccsd_vv_ccsd
 !
 !
-   subroutine one_el_density_ccsd_ov_ccsd(wf, D)
+   subroutine one_el_density_ccsd_ov_ccsd(wf)
 !!
 !!    One electron density vo
 !!    Written by Sarai D. Folkestad
@@ -1253,8 +1251,6 @@ contains
       implicit none
 !
       class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo) :: D
 !
       real(dp), dimension(:,:,:,:), allocatable :: u_iabj, t_aibj
       real(dp), dimension(:,:), allocatable :: D_ia
@@ -1293,7 +1289,7 @@ contains
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
-            D(i, wf%n_o + a) = D(i, wf%n_o + a) + D_ia(i, a)
+            wf%density(i, wf%n_o + a) = wf%density(i, wf%n_o + a) + D_ia(i, a)
 !
          enddo
       enddo
@@ -1304,7 +1300,7 @@ contains
    end subroutine one_el_density_ccsd_ov_ccsd
 !
 !
-   subroutine construct_one_el_density_ccsd(wf, D)
+   subroutine construct_density_ccsd(wf)
 !!
 !!    Construct one-electron density
 !!    Written by Sarai Dery Folkestad
@@ -1316,16 +1312,15 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo) :: D
+      wf%density = zero
 !
-      D = zero
+      call wf%one_el_density_ccs_oo()
+      call wf%one_el_density_ccsd_oo()
+      call wf%one_el_density_ccsd_vv()
+      call wf%one_el_density_ccs_vo()
+      call wf%one_el_density_ccsd_ov()
 !
-      call wf%one_el_density_ccs_oo(D)
-      call wf%one_el_density_ccsd_oo(D)
-      call wf%one_el_density_ccs_vo(D)
-      call wf%one_el_density_ccsd_ov(D)
-!
-   end subroutine construct_one_el_density_ccsd
+   end subroutine construct_density_ccsd
 !
 !
 end module ccsd_class

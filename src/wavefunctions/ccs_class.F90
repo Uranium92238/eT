@@ -64,6 +64,8 @@ module ccs_class
 !
       integer :: n_bath ! Number of bath orbitals (always the last ao/mo indices)
 !
+      real(dp), dimension(:,:), allocatable :: density
+!
    contains
 !
 !     Preparation and cleanup routines
@@ -186,10 +188,15 @@ module ccs_class
 !
 !     One-electron density
 !
-      procedure :: construct_one_el_density                     => construct_one_el_density_ccs
+      procedure :: construct_density                            => construct_density_ccs
 !
       procedure :: one_el_density_ccs_oo                        => one_el_density_ccs_oo_ccs
       procedure :: one_el_density_ccs_vo                        => one_el_density_ccs_vo_ccs
+!
+      procedure :: initialize_density                           => initialize_density_ccs
+      procedure :: destruct_density                             => destruct_density_ccs
+!
+      procedure :: calculate_expectation_value                   => calculate_expectation_value_ccs
 !
    end type ccs
 !
@@ -3414,7 +3421,7 @@ contains
    end subroutine set_cvs_start_indices_ccs
 !
 !
-   subroutine one_el_density_ccs_oo_ccs(wf, D)
+   subroutine one_el_density_ccs_oo_ccs(wf)
 !!
 !!    One electron density oo
 !!    Written by Sarai D. Folkestad
@@ -3425,14 +3432,12 @@ contains
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo) :: D
-!
       integer :: i
 !
 !$omp parallel do private(i)
       do i = 1, wf%n_o
 !
-         D(i,i) = D(i,i) + two  
+         wf%density(i,i) = wf%density(i,i) + two  
 !
       enddo
 !$omp end parallel do
@@ -3440,7 +3445,7 @@ contains
    end subroutine one_el_density_ccs_oo_ccs
 !
 !
-   subroutine one_el_density_ccs_vo_ccs(wf, D)
+   subroutine one_el_density_ccs_vo_ccs(wf)
 !!
 !!    One electron density vo
 !!    Written by Sarai D. Folkestad
@@ -3451,15 +3456,13 @@ contains
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo) :: D
-!
       integer :: i, a
 !
 !$omp parallel do private(a, i)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !        
-            D(wf%n_o + a, i) = D(wf%n_o + a, i) + wf%t1bar(a, i)
+            wf%density(wf%n_o + a, i) = wf%density(wf%n_o + a, i) + wf%t1bar(a, i)
 !
          enddo
       enddo
@@ -3468,7 +3471,7 @@ contains
    end subroutine one_el_density_ccs_vo_ccs
 !
 !
-   subroutine construct_one_el_density_ccs(wf, D)
+   subroutine construct_density_ccs(wf)
 !!
 !!    Construct one-electron density
 !!    Written by Sarai Dery Folkestad
@@ -3480,14 +3483,69 @@ contains
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo) :: D
+      wf%density = zero
 !
-      D = zero
+      call wf%one_el_density_ccs_oo()
+      call wf%one_el_density_ccs_vo()
 !
-      call wf%one_el_density_ccs_oo(D)
-      call wf%one_el_density_ccs_vo(D)
+   end subroutine construct_density_ccs
 !
-   end subroutine construct_one_el_density_ccs
+!
+   subroutine initialize_density_ccs(wf)
+!!
+!!    Initialize density
+!!    Written by Sarai D. Folkestad, Apr 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (.not. allocated(wf%density)) call mem%alloc(wf%density, wf%n_mo, wf%n_mo)
+!
+   end subroutine initialize_density_ccs
+!
+!
+   subroutine destruct_density_ccs(wf)
+!!
+!!    Destruct density
+!!    Written by Sarai D. Folkestad, Apr 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%density)) call mem%dealloc(wf%density, wf%n_mo, wf%n_mo)
+!
+   end subroutine destruct_density_ccs
+!
+!
+   function calculate_expectation_value_ccs(wf, A) result(expectation_value)
+!!
+!!    Calculate expectation value
+!!    Written by Sarai D. Folkestad
+!!
+!!    Calculate the expectation value of one-electron
+!!    operator Â
+!!
+!!       < A > = < Λ | Â | CC > = sum_pq A_pq D_pq
+!!
+!!    where A_pq are the T1-transformed integrals
+!!    and D_pq is the one-electron density matrix
+!!    in the T1-basis
+!!
+      implicit none
+!  
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: A
+!
+      real(dp) :: expectation_value
+!
+      real(dp) :: ddot
+!
+      expectation_value = ddot(wf%n_mo**2, A, 1, wf%density, 1)
+!
+   end function calculate_expectation_value_ccs
 !
 !
 end module ccs_class

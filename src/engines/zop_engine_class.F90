@@ -138,7 +138,9 @@ contains
 !     Compute expectation value of A
 !
       components = (/ 'X', 'Y', 'Z' /)
-   !   call wf%construct_density()
+!
+      call wf%initialize_density()
+      call wf%construct_density()
 !
       call mem%alloc(A, wf%n_mo, wf%n_mo)
 !
@@ -157,6 +159,7 @@ contains
       enddo
 !
       call mem%dealloc(A, wf%n_mo, wf%n_mo)
+      call wf%destruct_density()
 !
    end subroutine run_zop_engine
 !
