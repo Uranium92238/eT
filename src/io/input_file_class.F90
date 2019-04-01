@@ -33,6 +33,9 @@ module input_file_class
 !
       type(section), allocatable :: sections(:)
 !
+      character(len=21), allocatable :: rf_wfs(:)
+      character(len=21), allocatable :: cc_wfs(:)
+!
    contains
 !
       procedure :: init => init_input_file
@@ -100,6 +103,8 @@ contains
 !
       character(len=*) :: name
 !
+      integer :: k
+!
       type(section) :: calculations
       type(section) :: system 
       type(section) :: memory 
@@ -119,7 +124,36 @@ contains
       the_file%access = 'sequential'
       the_file%format = 'formatted'
 !
-!     Define sections and valid keywords within each section  
+!     Set method section 
+!
+      input%rf_wfs = (/ 'hf                   ',   &
+                        'uhf                  '    /)
+!
+      input%cc_wfs = (/ 'ccs                  ',   &
+                        'mp2                  ',   &
+                        'cc2                  ',   &
+                        'lowmem-cc2           ',   &
+                        'ccsd                 ',   &
+                        'cc3                  '    /)
+!
+      method%name_    = 'method'
+      method%required = .true.
+!
+      allocate(method%keywords(size(input%rf_wfs) + size(input%cc_wfs)))
+!
+      do k = 1, size(input%rf_wfs)
+!
+         method%keywords(k) = input%rf_wfs(k)
+!
+      enddo 
+!
+      do k = 1, size(input%cc_wfs)
+!
+         method%keywords(size(input%rf_wfs) + k) = input%cc_wfs(k)
+!
+      enddo 
+!
+!     Set other sections
 !
       calculations%name_    = 'do'
       calculations%required = .true.
@@ -141,16 +175,6 @@ contains
       disk%name_    = 'disk'
       disk%required = .false.
       disk%keywords = (/ 'available            ' /)
-!
-      method%name_    = 'method'
-      method%required = .true.
-      method%keywords = (/ 'hf                   ', &
-                           'ccs                  ', &
-                           'mp2                  ', &
-                           'cc2                  ', &
-                           'lowmem-cc2           ', &
-                           'ccsd                 ', &
-                           'cc3                  ' /)
 !
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%required = .false.
