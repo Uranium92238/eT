@@ -63,6 +63,7 @@ module wavefunction_class
       procedure :: get_ao_h_wx                     => get_ao_h_wx_wavefunction
       procedure :: get_ao_s_wx                     => get_ao_s_wx_wavefunction
       procedure :: get_ao_mu_wx                    => get_ao_mu_wx_wavefunction
+!
       procedure :: mo_transform                    => mo_transform_wavefunction
       procedure :: mo_transform_and_save_h         => mo_transform_and_save_h_wavefunction
 !
