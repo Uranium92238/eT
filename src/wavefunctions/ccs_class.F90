@@ -184,12 +184,18 @@ module ccs_class
       procedure :: destruct_t1                                  => destruct_t1_ccs
       procedure :: destruct_t1bar                               => destruct_t1bar_ccs
 !
-!     One-electron density
+!     One-electron density 
 !
       procedure :: construct_one_el_density                     => construct_one_el_density_ccs
 !
       procedure :: one_el_density_ccs_oo                        => one_el_density_ccs_oo_ccs
       procedure :: one_el_density_ccs_vo                        => one_el_density_ccs_vo_ccs
+!
+!     One-electron operators
+!
+      procedure :: construct_operator                           => construct_operator_ccs 
+!
+      procedure :: construct_mu                                 => construct_mu_ccs 
 !
    end type ccs
 !
@@ -258,6 +264,71 @@ contains
       write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
 !
    end subroutine cleanup_ccs
+!
+!
+   subroutine construct_operator_ccs(wf, A_pqk, operator)
+!!
+!!    Construct operator 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Constructs the operator A_pqk for p,q = 1, 2, ..., n_mo, and 
+!!    k = x, y, and z. Which operator is given by the string "operator".
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(out) :: A_pqk 
+!
+      character(len=*), intent(in) :: operator 
+!
+      if (trim(operator) == 'dipole') then 
+!
+         call wf%construct_mu(A_pqk)
+!
+      else
+!
+         call output%error_msg('Tried to construct unrecognized one-electron integral matrix ' // trim(operator))
+!
+      endif
+!
+   end subroutine construct_operator_ccs
+!
+!
+   subroutine construct_mu_ccs(wf, A_pqk)
+!!
+!!    Construct mu
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!    
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(inout) :: A_pqk 
+!
+      real(dp), dimension(:,:,:), allocatable :: A_wxk
+!
+!     Get the AO integrals from Libint 
+!
+      call mem%alloc(A_wxk, wf%n_ao, wf%n_ao, 3)
+!
+      call wf%get_ao_mu_wx(A_wxk(:,:,1), A_wxk(:,:,2), A_wxk(:,:,3))
+!
+!     MO transform the AO integrals 
+!
+      call wf%mo_transform(A_wxk(:,:,1), A_pqk(:,:,1))
+      call wf%mo_transform(A_wxk(:,:,2), A_pqk(:,:,2))
+      call wf%mo_transform(A_wxk(:,:,3), A_pqk(:,:,3))
+!
+      call mem%dealloc(A_wxk, wf%n_ao, wf%n_ao, 3)
+!
+!     T1 transform the MO integrals 
+!
+      call wf%t1_transform(A_pqk(:,:,1))
+      call wf%t1_transform(A_pqk(:,:,2))
+      call wf%t1_transform(A_pqk(:,:,3))
+!
+   end subroutine construct_mu_ccs
 !
 !
    subroutine initialize_files_ccs(wf)

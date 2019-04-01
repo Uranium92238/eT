@@ -77,7 +77,7 @@ contains
       class(zop_engine) :: engine 
 !
       call input%get_keyword_in_section('algorithm', 'solver cc es', engine%algorithm)
-      call input%get_keyword_in_section('operator', 'solver cc es', engine%operator)
+      call input%get_keyword_in_section('operator', 'cc zop', engine%operator)
 !
    end subroutine read_settings_zop_engine
 !
@@ -99,11 +99,9 @@ contains
 !
       character(len=1), allocatable :: components(:)
 !
-      real(dp), dimension(:,:), allocatable :: A 
+      real(dp), dimension(:,:,:), allocatable :: A 
 !
-      integer :: k
-!
-      real(dp) :: LAR 
+      real(dp), dimension(3) :: expectation_value  
 !
       write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
 !
@@ -126,37 +124,33 @@ contains
       call cc_gs_solver%run(wf)
       call cc_gs_solver%cleanup(wf)
 !
+!     Multiplier solution 
+!
       call wf%integrals%write_t1_cholesky(wf%t1)
       call wf%integrals%can_we_keep_g_pqrs_t1()
-!
-!     Multiplier solution 
 !
       call cc_mult_solver%prepare(wf)
       call cc_mult_solver%run(wf)
       call cc_mult_solver%cleanup(wf)
 !
-!     Compute expectation value of A
+!     Compute expectation value of A = (A_x A_y A_z) for the operator A 
 !
-      components = (/ 'X', 'Y', 'Z' /)
-   !   call wf%construct_density()
+      call wf%construct_density()
 !
-      call mem%alloc(A, wf%n_mo, wf%n_mo)
+      call mem%alloc(A, wf%n_mo, wf%n_mo, 3)
+      call wf%construct_operator(A, engine%operator)
 !
-      do k = 1, size(components)
+      expectation_value(1) = wf%calculate_expectation_value(A(:,:,1))
+      expectation_value(2) = wf%calculate_expectation_value(A(:,:,2))
+      expectation_value(3) = wf%calculate_expectation_value(A(:,:,3))
 !
-!        Get the T1-transformed matrix 
+      call mem%dealloc(A, wf%n_mo, wf%n_mo, 3)
 !
-     !    call wf%get_operator_t1(A, engine%operator, components(k))
-!
-!        Form expectation value for the component 
-!
-      !   LAR = wf%calculate_expectation_value(A)
-!
-         write(output%unit, *) '< A > = ', LAR, 'component:', components(k)
-!
-      enddo
-!
-      call mem%dealloc(A, wf%n_mo, wf%n_mo)
+      write(output%unit, '(/t3,a,a)') 'Operator: ', trim(engine%operator)
+!     
+      write(output%unit, '(/t6,a13,f19.12)') 'X component: ', expectation_value(1) 
+      write(output%unit, '(t6,a13,f19.12)')  'Y component: ', expectation_value(2) 
+      write(output%unit, '(t6,a13,f19.12)')  'Z component: ', expectation_value(3) 
 !
    end subroutine run_zop_engine
 !
