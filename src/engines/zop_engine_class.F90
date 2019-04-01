@@ -152,7 +152,7 @@ contains
 !
 !        Form expectation value for the component 
 !
-      !   LAR = wf%calculate_expectation_value(A)
+         LAR = wf%calculate_expectation_value(A)
 !
          write(output%unit, *) '< A > = ', LAR, 'component:', components(k)
 !
