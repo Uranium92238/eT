@@ -109,11 +109,11 @@ program eT_program
 !  Hartree-Fock calculation
 !
    if (input%requested_reference_calculation()) call reference_calculation()
-!!
-!!  Coupled cluster calculation
-!!
-!   if (input%requested_cc_calculation()) call cc_calculation()
-!!
+!
+!  Coupled cluster calculation
+!
+   if (input%requested_cc_calculation()) call cc_calculation()
+!
    call finalize_libint()
 !
    call eT_timer%freeze()
@@ -218,11 +218,14 @@ subroutine cc_calculation()
    type(gs_engine) :: gs_cc_engine
    type(es_engine) :: es_cc_engine
 !
+!  Other variables
+!
    character(len=21) :: cc_wf_name
 !
    cc_wf_name = input%get_cc_wf()
 !
    select case (trim(cc_wf_name))
+!
       case ('ccs')
 !
          cc_wf => ccs_wf
@@ -243,6 +246,36 @@ subroutine cc_calculation()
 !
          cc_wf => mp2_wf
 !
-      end select
+      case default
+!
+         call output%error_msg('could not recognize CC method ' // trim(cc_wf_name) // '.')
+!
+   end select
+!
+   if (requested_keyword_in_section('excited state', 'do')) then
+!
+      call cc_wf%prepare()
+!
+      call es_cc_engine%prepare()
+      call es_cc_engine%run(cc_wf)
+      call es_cc_engine%cleanup()
+!   
+      call cc_wf%cleanup()   
+!
+   elseif (requested_keyword_in_section('ground state', 'do')) then
+!
+      call cc_wf%prepare()
+!
+      call gs_cc_engine%prepare()
+      call gs_cc_engine%run(cc_wf)
+      call gs_cc_engine%cleanup()
+!   
+      call cc_wf%cleanup()  
+!
+   else
+!
+      call output%error_msg('could not recognize coupled cluster task.')
+!
+   endif
 !
 end subroutine cc_calculation
