@@ -32,10 +32,6 @@ program eT_program
 !
    use wavefunction_class
 !
-   use hf_class
-   use uhf_class
-   use mlhf_class
-!
    use ccs_class
    use cc2_class
    use lowmem_cc2_class
@@ -44,7 +40,6 @@ program eT_program
 !
    use io_eT_program
 !
-   use hf_engine_class
    use gs_engine_class
    use es_engine_class
    use multipliers_engine_class
@@ -121,7 +116,8 @@ program eT_program
 !
 !  Hartree-Fock calculation
 !
-   if (input%requested_reference_calculation()) call reference_calculation()
+   !if (input%requested_reference_calculation()) 
+   call reference_calculation()
 !!
 !!  Coupled cluster calculation
 !!
@@ -138,7 +134,71 @@ program eT_program
    call disk%close_file(input)
    call disk%close_file(timing)
 !
-   call mem%cleanup()
-   call disk%cleanup()
+   !call mem%cleanup()
+   !call disk%cleanup()
 !
 end program eT_program
+
+subroutine reference_calculation()
+!!
+!! Reference calculation
+!! Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+!! Directs the reference state calculation for eT
+!!
+   use hf_class
+   use uhf_class
+   use hf_engine_class
+!
+   implicit none
+!
+!  Possible reference wavefunctions   
+!
+   type(hf), allocatable  :: hf_wf
+   type(uhf), allocatable :: uhf_wf
+!
+!  Engine
+!
+   type(hf_engine)   :: ref_engine
+!
+!  Other variables
+!
+   character(len=21) :: reference_wf
+!
+ ! reference_wf = input%get_reference_wf()
+!
+   if (trim(reference_wf) == 'hf') then
+!
+      allocate(hf_wf)
+!
+      call hf_wf%prepare()
+!
+      call ref_engine%prepare()     
+      call ref_engine%run(hf_wf)     
+      call ref_engine%cleanup()  
+!
+      call hf_wf%cleanup()
+!
+      deallocate(hf_wf)
+!
+   elseif (trim(reference_wf) == 'uhf') then
+!
+      allocate(uhf_wf)
+!
+      call uhf_wf%prepare()
+!
+      call ref_engine%prepare()     
+      call ref_engine%run(uhf_wf)     
+      call ref_engine%cleanup()  
+!
+      call uhf_wf%cleanup()
+!
+      deallocate(uhf_wf)
+!
+   else
+!
+      call output%error_msg('did not recognize the reference wavefunction ' // trim(reference_wf) //'.')
+!
+   endif
+!
+end subroutine reference_calculation
