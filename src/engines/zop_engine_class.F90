@@ -97,8 +97,6 @@ contains
       type(diis_cc_gs)              :: cc_gs_solver
       type(davidson_cc_multipliers) :: cc_mult_solver
 !
-      character(len=1), allocatable :: components(:)
-!
       real(dp), dimension(:,:,:), allocatable :: A 
 !
       real(dp), dimension(3) :: expectation_value  
@@ -135,15 +133,33 @@ contains
 !
 !     Compute expectation value of A = (A_x A_y A_z) for the operator A 
 !
+      write(output%unit, *) 'qui 1'
+      flush(output%unit)
+!
+      call wf%initialize_multipliers()
+      call wf%read_multipliers()
+!
+      call wf%initialize_amplitudes()
+      call wf%read_amplitudes()
+!
       call wf%initialize_density()
       call wf%construct_density()
+!
+      write(output%unit, *) 'qui 2'
+      flush(output%unit)
 !
       call mem%alloc(A, wf%n_mo, wf%n_mo, 3)
       call wf%construct_operator(A, engine%operator)
 !
+      write(output%unit, *) 'qui 3'
+      flush(output%unit)
+!
       expectation_value(1) = wf%calculate_expectation_value(A(:,:,1))
       expectation_value(2) = wf%calculate_expectation_value(A(:,:,2))
       expectation_value(3) = wf%calculate_expectation_value(A(:,:,3))
+!
+      write(output%unit, *) 'qui 4'
+      flush(output%unit)
 !
       call mem%dealloc(A, wf%n_mo, wf%n_mo, 3)
 !

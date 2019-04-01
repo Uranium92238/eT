@@ -306,6 +306,8 @@ contains
 !!    Construct mu
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!    
+      use libint_initialization
+!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
@@ -318,6 +320,7 @@ contains
 !
       call mem%alloc(A_wxk, wf%n_ao, wf%n_ao, 3)
 !
+      call initialize_dipole()
       call wf%get_ao_mu_wx(A_wxk(:,:,1), A_wxk(:,:,2), A_wxk(:,:,3))
 !
 !     MO transform the AO integrals 
