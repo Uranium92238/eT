@@ -33,6 +33,9 @@ module input_file_class
 !
       type(section), allocatable :: sections(:)
 !
+      character(len=21), allocatable :: rf_wfs(:)
+      character(len=21), allocatable :: cc_wfs(:)
+!
    contains
 !
       procedure :: init => init_input_file
@@ -43,6 +46,9 @@ module input_file_class
       procedure :: get_array_for_keyword_in_section                     => get_array_for_keyword_in_section_input_file
       procedure :: get_n_atoms                                          => get_n_atoms_input_file
       procedure :: get_geometry                                         => get_geometry_input_file
+      procedure :: get_reference_wf                                     => get_reference_wf_input_file
+!
+      procedure :: requested_reference_calculation                      => requested_reference_calculation_input_file
 !
       procedure, private :: get_string_keyword_in_section_wo_safety     => get_string_keyword_in_section_wo_safety_input_file
       procedure, private :: move_to_section                             => move_to_section_input_file
@@ -93,6 +99,8 @@ contains
 !
       character(len=*) :: name
 !
+      integer :: k
+!
       type(section) :: calculations
       type(section) :: system 
       type(section) :: memory 
@@ -112,7 +120,36 @@ contains
       the_file%access = 'sequential'
       the_file%format = 'formatted'
 !
-!     Define sections and valid keywords within each section  
+!     Set method section 
+!
+      input%rf_wfs = (/ 'hf                   ',   &
+                        'uhf                  '    /)
+!
+      input%cc_wfs = (/ 'ccs                  ',   &
+                        'mp2                  ',   &
+                        'cc2                  ',   &
+                        'lowmem-cc2           ',   &
+                        'ccsd                 ',   &
+                        'cc3                  '    /)
+!
+      method%name_    = 'method'
+      method%required = .true.
+!
+      allocate(method%keywords(size(input%rf_wfs) + size(input%cc_wfs)))
+!
+      do k = 1, size(input%rf_wfs)
+!
+         method%keywords(k) = input%rf_wfs(k)
+!
+      enddo 
+!
+      do k = 1, size(input%cc_wfs)
+!
+         method%keywords(size(input%rf_wfs) + k) = input%cc_wfs(k)
+!
+      enddo 
+!
+!     Set other sections
 !
       calculations%name_    = 'do'
       calculations%required = .true.
@@ -134,16 +171,6 @@ contains
       disk%name_    = 'disk'
       disk%required = .false.
       disk%keywords = (/ 'available            ' /)
-!
-      method%name_    = 'method'
-      method%required = .true.
-      method%keywords = (/ 'hf                   ', &
-                           'ccs                  ', &
-                           'mp2                  ', &
-                           'cc2                  ', &
-                           'lowmem-cc2           ', &
-                           'ccsd                 ', &
-                           'cc3                  ' /)
 !
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%required = .false.
@@ -435,6 +462,77 @@ contains
       deallocate(keywords_instances)
 !
    end subroutine check_section_for_illegal_keywords_input_file
+!
+!
+   logical function requested_reference_calculation_input_file(the_file)
+!!
+!!    Requested reference calculation 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      integer :: n_rf_wfs, k
+!
+      n_rf_wfs = 0
+      do k = 1, size(the_file%rf_wfs)
+!
+         if (the_file%requested_keyword_in_section(the_file%rf_wfs(k), 'method')) then 
+!
+            n_rf_wfs = n_rf_wfs + 1
+!
+         endif 
+!
+      enddo 
+!
+      if (n_rf_wfs == 1) then 
+!
+         requested_reference_calculation_input_file = .true.
+!
+      elseif (n_rf_wfs > 1) then
+!
+         requested_reference_calculation_input_file = .false.
+         call output%error_msg('Requested more than one reference wavefunction.')
+!
+      else
+!
+         requested_reference_calculation_input_file = .false.
+!
+      endif  
+!
+   end function requested_reference_calculation_input_file
+!
+!
+   character(len=21) function get_reference_wf_input_file(the_file)
+!!
+!!    Get reference wavefunction 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      integer :: k
+!
+      logical :: recognized 
+!
+      recognized = .false.   
+!
+      do k = 1, size(input%rf_wfs)
+!
+         if (the_file%requested_keyword_in_section(input%rf_wfs(k),'method')) then 
+!
+            get_reference_wf_input_file = input%rf_wfs(k)
+            recognized = .true. 
+!
+         endif 
+!
+      enddo
+!
+      if (.not. recognized) call output%error_msg('Tried to read reference wavefunction, but could not find any.')
+!
+   end function get_reference_wf_input_file
 !
 !
    subroutine get_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
