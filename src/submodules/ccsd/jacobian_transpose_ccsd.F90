@@ -1779,9 +1779,11 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_cbjk_restricted ! g_cbjk, batch over b
 !
+      integer :: k, j, b, c
+!
 !     Batching variables
 !
-      integer :: rec1, rec0
+      integer :: rec0, rec1
       integer :: current_b_batch = 0
 !
       type(batching_index) :: batch_b
@@ -1904,8 +1906,19 @@ contains
 !
 !        Place in reordered full space vector and deallocate restricted vector
 !
-         call add_1342_to_1234(one, g_cbjk_restricted, g_ckbj(:,:,batch_b%first:batch_b%last,:), wf%n_v, wf%n_o, batch_b%length, &
-                               wf%n_o)
+!$omp parallel do schedule(static) private(k,j,b,c)
+         do k = 1, wf%n_o
+            do j = 1, wf%n_o
+               do b = batch_b%first, batch_b%last
+                  do c = 1, wf%n_v
+!
+                     g_ckbj(c,k,b,j) = g_cbjk_restricted(c,b-batch_b%first+1,j,k)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
 !
          call mem%dealloc(g_cbjk_restricted, wf%n_v, batch_b%length, wf%n_o, wf%n_o)
 !
@@ -1958,6 +1971,8 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: sigma_ajbi ! sigma_aibj contribution
 !
       real(dp), dimension(:,:,:,:), allocatable :: b_ajck ! b_akcj
+!
+      integer :: k, i, b, c
 !
 !     Batching variables
 !
@@ -2036,7 +2051,19 @@ contains
 !
 !        Place in reordered integral g_ckbi = g_cbik
 !
-         call add_1342_to_1234(one, g_cbik, g_ckbi(:,:,batch_b%first:batch_b%last,:), wf%n_v, wf%n_o, batch_b%length, wf%n_o)
+!$omp parallel do schedule(static) private(k,i,b,c)
+         do k = 1, wf%n_o
+            do i = 1, wf%n_o
+               do b = batch_b%first, batch_b%last
+                  do c = 1, wf%n_v
+!
+                     g_ckbi(c,k,b,i) = g_cbik(c,b-batch_b%first+1,i,k)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
 !
          call mem%dealloc(g_cbik, wf%n_v, batch_b%length, wf%n_o, wf%n_o)
 !
