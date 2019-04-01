@@ -47,6 +47,9 @@ module wavefunction_class
       real(dp), dimension(:,:), allocatable :: orbital_coefficients
       real(dp), dimension(:), allocatable :: orbital_energies
 !
+      type(file) :: orbital_coefficients_file
+      type(file) :: orbital_energies_file
+!
    contains
 !
       procedure :: initialize_orbital_coefficients => initialize_orbital_coefficients_wavefunction
@@ -62,6 +65,15 @@ module wavefunction_class
       procedure :: get_ao_mu_wx                    => get_ao_mu_wx_wavefunction
       procedure :: mo_transform                    => mo_transform_wavefunction
       procedure :: mo_transform_and_save_h         => mo_transform_and_save_h_wavefunction
+!
+      procedure :: initialize_wavefunction_files   => initialize_wavefunction_files_wavefunction
+!
+      procedure :: read_orbital_coefficients                => read_orbital_coefficients_wavefunction
+      procedure :: save_orbital_coefficients                => save_orbital_coefficients_wavefunction
+      procedure :: read_orbital_energies                    => read_orbital_energies_wavefunction
+      procedure :: save_orbital_energies                    => save_orbital_energies_wavefunction
+!
+      procedure :: is_restart_safe                          => is_restart_safe_wavefunction 
 !
    end type wavefunction
 !
@@ -80,6 +92,21 @@ contains
       if (.not. allocated(wf%orbital_coefficients)) call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
 !
    end subroutine initialize_orbital_coefficients_wavefunction
+!
+!
+   subroutine initialize_wavefunction_files_wavefunction(wf)
+!!
+!!    Initialize wavefunction files 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      implicit none 
+!
+      class(wavefunction) :: wf 
+!
+      call wf%orbital_coefficients_file%init('orbital_coefficients', 'sequential', 'unformatted')
+      call wf%orbital_energies_file%init('orbital_energies', 'sequential', 'unformatted')
+!
+   end subroutine initialize_wavefunction_files_wavefunction
 !
 !
    subroutine print_wavefunction_summary_wavefunction(wf)
@@ -386,6 +413,98 @@ contains
       enddo
 !
    end subroutine get_ao_mu_wx_wavefunction
+!
+!
+   subroutine save_orbital_coefficients_wavefunction(wf)
+!!
+!!    Save orbital coefficients 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(wavefunction), intent(inout) :: wf 
+!
+      call disk%open_file(wf%orbital_coefficients_file, 'write', 'rewind')
+!
+      write(wf%orbital_coefficients_file%unit) wf%orbital_coefficients
+!
+      call disk%close_file(wf%orbital_coefficients_file)
+!
+   end subroutine save_orbital_coefficients_wavefunction
+!
+!
+   subroutine read_orbital_coefficients_wavefunction(wf)
+!!
+!!    Save orbital coefficients 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(wavefunction), intent(inout) :: wf 
+!
+      call wf%is_restart_safe('ground state')
+!
+      call disk%open_file(wf%orbital_coefficients_file, 'read', 'rewind')
+!
+      read(wf%orbital_coefficients_file%unit) wf%orbital_coefficients
+!
+      call disk%close_file(wf%orbital_coefficients_file)
+!
+   end subroutine read_orbital_coefficients_wavefunction
+!
+!
+   subroutine save_orbital_energies_wavefunction(wf)
+!!
+!!    Save orbital energies 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(wavefunction), intent(inout) :: wf 
+!
+      call disk%open_file(wf%orbital_energies_file, 'write', 'rewind')
+!
+      write(wf%orbital_energies_file%unit) wf%orbital_energies
+!
+      call disk%close_file(wf%orbital_energies_file)
+!
+   end subroutine save_orbital_energies_wavefunction
+!
+!
+   subroutine read_orbital_energies_wavefunction(wf)
+!!
+!!    Save orbital energies 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(wavefunction), intent(inout) :: wf 
+!
+      call wf%is_restart_safe('ground state')
+!
+      call disk%open_file(wf%orbital_energies_file, 'read', 'rewind')
+!
+      read(wf%orbital_energies_file%unit) wf%orbital_energies
+!
+      call disk%close_file(wf%orbital_energies_file)
+!
+   end subroutine read_orbital_energies_wavefunction
+!
+!
+   subroutine is_restart_safe_wavefunction(wf, task)
+!!
+!!    Is restart safe?
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(wavefunction) :: wf 
+!
+      character(len=*), intent(in) :: task 
+!
+      call output%error_msg('Cannot restart for task ' // trim(task) // ' from abstract wavefunction ' // trim(wf%name_))
+!
+   end subroutine is_restart_safe_wavefunction
 !
 !
 end module wavefunction_class

@@ -303,7 +303,7 @@ contains
 !
       class(uhf), intent(inout) :: wf 
 !
-      call wf%is_restart_safe()
+      call wf%is_restart_safe('ground state')
 !
       call disk%open_file(wf%orbital_coefficients_file, 'read', 'rewind')
 !
@@ -343,7 +343,7 @@ contains
 !
       class(uhf), intent(inout) :: wf 
 !
-      call wf%is_restart_safe()
+      call wf%is_restart_safe('ground state')
 !
       call disk%open_file(wf%orbital_energies_file, 'read', 'rewind')
 !

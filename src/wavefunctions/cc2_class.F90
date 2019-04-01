@@ -853,6 +853,7 @@ contains
 !!
       class(cc2) :: wf 
 !
+      call wf%initialize_wavefunction_files()
       call wf%initialize_cc_files()
       call wf%initialize_singles_files()
       call wf%initialize_doubles_files()

@@ -56,8 +56,6 @@ module hf_class
       real(dp) :: libint_epsilon       = 1.0D-20   ! ε for libint, integral precision given
                                                    ! approximately by sqrt(ε)
 !
-      type(file) :: orbital_coefficients_file
-      type(file) :: orbital_energies_file
       type(file) :: restart_file
 !
       integer :: n_densities 
@@ -119,10 +117,6 @@ module hf_class
       procedure :: initialize_orbitals                      => initialize_orbitals_hf
       procedure :: roothan_hall_update_orbitals             => roothan_hall_update_orbitals_hf
       procedure :: print_orbital_energies                   => print_orbital_energies_hf
-      procedure :: read_orbital_coefficients                => read_orbital_coefficients_hf
-      procedure :: save_orbital_coefficients                => save_orbital_coefficients_hf
-      procedure :: read_orbital_energies                    => read_orbital_energies_hf
-      procedure :: save_orbital_energies                    => save_orbital_energies_hf
 !
 !     Class variable initialize and destruct routines
 !
@@ -194,8 +188,7 @@ contains
 !
       call wf%set_n_mo()
 !
-      call wf%orbital_coefficients_file%init('orbital_coefficients', 'sequential', 'unformatted')
-      call wf%orbital_energies_file%init('orbital_energies', 'sequential', 'unformatted')
+      call wf%initialize_wavefunction_files()
       call wf%restart_file%init('hf_restart_file', 'sequential', 'unformatted')
 !
       call disk%open_file(wf%restart_file, 'readwrite', 'rewind')
@@ -203,13 +196,15 @@ contains
       write(wf%restart_file%unit) wf%n_ao 
       write(wf%restart_file%unit) wf%n_mo 
       write(wf%restart_file%unit) wf%n_densities 
+      write(wf%restart_file%unit) wf%n_o 
+      write(wf%restart_file%unit) wf%n_v 
 !
       call disk%close_file(wf%restart_file) 
 !
    end subroutine prepare_hf
 !
 !
-   subroutine is_restart_safe_hf(wf)
+   subroutine is_restart_safe_hf(wf, task)
 !!
 !!    Is restart safe?
 !!    Written by Eirik F. Kjønstad, Mar 2019 
@@ -217,6 +212,8 @@ contains
       implicit none 
 !
       class(hf) :: wf 
+!
+      character(len=*), intent(in) :: task 
 !
       integer :: n_ao, n_mo, n_densities
 !
@@ -229,13 +226,13 @@ contains
       call disk%close_file(wf%restart_file)
 !
       if (n_ao .ne. wf%n_ao) call output%error_msg('attempted to restart HF with an inconsistent number ' // &
-                                                   'of atomic orbitals.')
+                                                   'of atomic orbitals for task ' // trim(task))
 !
       if (n_mo .ne. wf%n_mo) call output%error_msg('attempted to restart HF with an inconsistent number ' // &
-                                                   'of molecular orbitals.')
+                                                   'of molecular orbitals for task ' // trim(task))
 !
       if (n_densities .ne. wf%n_densities) call output%error_msg('attempted to restart HF with an inconsistent number ' // &
-                                                   'of atomic densities (likely a HF/UHF inconsistency).')
+                                                   'of atomic densities (likely a HF/UHF inconsistency) for task ' // trim(task))
 !
    end subroutine is_restart_safe_hf
 !
@@ -592,82 +589,6 @@ contains
    end subroutine get_ao_density_sq_hf
 !
 !
-   subroutine save_orbital_coefficients_hf(wf)
-!!
-!!    Save orbital coefficients 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
-!!
-      implicit none 
-!
-      class(hf), intent(inout) :: wf 
-!
-      call disk%open_file(wf%orbital_coefficients_file, 'write', 'rewind')
-!
-      write(wf%orbital_coefficients_file%unit) wf%orbital_coefficients
-!
-      call disk%close_file(wf%orbital_coefficients_file)
-!
-   end subroutine save_orbital_coefficients_hf
-!
-!
-   subroutine read_orbital_coefficients_hf(wf)
-!!
-!!    Save orbital coefficients 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
-!!
-      implicit none 
-!
-      class(hf), intent(inout) :: wf 
-!
-      call wf%is_restart_safe()
-!
-      call disk%open_file(wf%orbital_coefficients_file, 'read', 'rewind')
-!
-      read(wf%orbital_coefficients_file%unit) wf%orbital_coefficients
-!
-      call disk%close_file(wf%orbital_coefficients_file)
-!
-   end subroutine read_orbital_coefficients_hf
-!
-!
-   subroutine save_orbital_energies_hf(wf)
-!!
-!!    Save orbital energies 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
-!!
-      implicit none 
-!
-      class(hf), intent(inout) :: wf 
-!
-      call disk%open_file(wf%orbital_energies_file, 'write', 'rewind')
-!
-      write(wf%orbital_energies_file%unit) wf%orbital_energies
-!
-      call disk%close_file(wf%orbital_energies_file)
-!
-   end subroutine save_orbital_energies_hf
-!
-!
-   subroutine read_orbital_energies_hf(wf)
-!!
-!!    Save orbital energies 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
-!!
-      implicit none 
-!
-      class(hf), intent(inout) :: wf 
-!
-      call wf%is_restart_safe()
-!
-      call disk%open_file(wf%orbital_energies_file, 'read', 'rewind')
-!
-      read(wf%orbital_energies_file%unit) wf%orbital_energies
-!
-      call disk%close_file(wf%orbital_energies_file)
-!
-   end subroutine read_orbital_energies_hf
-!
-!
    subroutine cleanup_hf(wf)
 !!
 !!    Cleanup
@@ -676,6 +597,14 @@ contains
       implicit none
 !
       class(hf) :: wf
+!
+      call disk%open_file(wf%restart_file, 'readwrite', 'append')
+!
+      write(wf%restart_file%unit) wf%energy
+!
+      call disk%close_file(wf%restart_file) 
+!
+      call wf%mo_transform_and_save_h()
 !
       call wf%destruct_orbital_energies()
       call wf%destruct_ao_overlap()
