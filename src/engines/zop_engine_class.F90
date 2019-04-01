@@ -135,6 +135,7 @@ contains
 !
 !     Compute expectation value of A = (A_x A_y A_z) for the operator A 
 !
+      call wf%initialize_density()
       call wf%construct_density()
 !
       call mem%alloc(A, wf%n_mo, wf%n_mo, 3)
@@ -151,6 +152,8 @@ contains
       write(output%unit, '(/t6,a13,f19.12)') 'X component: ', expectation_value(1) 
       write(output%unit, '(t6,a13,f19.12)')  'Y component: ', expectation_value(2) 
       write(output%unit, '(t6,a13,f19.12)')  'Z component: ', expectation_value(3) 
+!
+      call wf%destruct_density()
 !
    end subroutine run_zop_engine
 !
