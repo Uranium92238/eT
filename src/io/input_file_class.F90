@@ -111,6 +111,7 @@ contains
       type(section) :: system 
       type(section) :: memory 
       type(section) :: disk 
+      type(section) :: cc_zop 
       type(section) :: method 
       type(section) :: solver_cholesky
       type(section) :: solver_hf
@@ -179,6 +180,10 @@ contains
       disk%required = .false.
       disk%keywords = (/ 'available            ' /)
 !
+      cc_zop%name_    = 'cc zop'
+      cc_zop%required = .false.
+      cc_zop%keywords = (/ 'operator' /)
+!
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%required = .false.
       solver_cholesky%keywords = (/ 'threshold           ',    &
@@ -244,6 +249,7 @@ contains
                            memory,                 &
                            disk,                   &
                            method,                 &
+                           cc_zop,                 &
                            solver_cholesky,        &
                            solver_hf,              &
                            solver_cc_gs,           &
