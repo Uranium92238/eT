@@ -129,7 +129,8 @@ program eT_program
    !call disk%cleanup()
 !
 end program eT_program
-
+!
+!
 subroutine reference_calculation()
 !!
 !! Reference calculation
@@ -181,3 +182,67 @@ subroutine reference_calculation()
    endif
 !
 end subroutine reference_calculation
+!
+!
+subroutine cc_calculation()
+!!
+!! Coupled cluster calculation
+!! Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+!! Directs the coupled cluster calculation for eT
+!!
+   use ccs_class
+   use cc2_class
+   use lowmem_cc2_class
+   use cc3_class
+   use mp2_class
+!
+   use gs_engine_class
+   use es_engine_class
+!
+   implicit none
+!
+!  Possible coupled cluster wavefunctions   
+!
+   type(ccs), target          :: ccs_wf
+   type(cc2), target          :: cc2_wf
+   type(lowmem_cc2), target   :: lowmem_cc2_wf
+   type(ccsd),target          :: ccsd_wf
+   type(cc3), target          :: cc3_wf
+   type(mp2), target          :: mp2_wf
+!
+   class(ccs), pointer :: cc_wf
+!
+!  Possible engines
+!
+   type(gs_engine) :: gs_cc_engine
+   type(es_engine) :: es_cc_engine
+!
+   character(len=21) :: cc_wf_name
+!
+   cc_wf_name = input%get_cc_wf()
+!
+   select case (trim(cc_wf_name))
+      case ('ccs')
+!
+         cc_wf => ccs_wf
+!
+      case ('cc2')
+!
+         cc_wf => cc2_wf
+!
+      case ('lowmem-cc2')
+!
+         cc_wf => lowmem_cc2_wf
+!
+      case ('cc3')
+!
+         cc_wf => cc3_wf
+!
+      case ('mp2')
+!
+         cc_wf => mp2_wf
+!
+      end select
+!
+end subroutine cc_calculation
