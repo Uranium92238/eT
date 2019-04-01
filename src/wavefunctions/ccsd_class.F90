@@ -1263,8 +1263,8 @@ contains
       call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
 !
       u_iabj = zero
-      call add_2134_to_1234(one, t_aibj, u_iabj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-      call add_4132_to_1234(-two, t_aibj, u_iabj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call add_2134_to_1234(two, t_aibj, u_iabj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call add_2431_to_1234(-one, t_aibj, u_iabj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
       call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
