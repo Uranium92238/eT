@@ -31,7 +31,7 @@ module input_file_class
 !
    type, extends(abstract_file) :: input_file 
 !
-      type(section), dimension(:), allocatable :: sections
+      type(section), allocatable :: sections(:)
 !
    contains
 !

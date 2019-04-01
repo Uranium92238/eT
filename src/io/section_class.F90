@@ -34,7 +34,7 @@ module section_class
 !
       logical :: required
 !
-      character(len=21), dimension(:), allocatable :: keywords
+      character(len=21), allocatable :: keywords(:)
 !
    contains
 !
