@@ -188,8 +188,8 @@ module ccs_class
 !
       procedure :: construct_one_el_density                     => construct_one_el_density_ccs
 !
-      procedure :: one_el_density_oo                            => one_el_density_oo_ccs
-      procedure :: one_el_density_vo                            => one_el_density_vo_ccs
+      procedure :: one_el_density_ccs_oo                        => one_el_density_ccs_oo_ccs
+      procedure :: one_el_density_ccs_vo                        => one_el_density_ccs_vo_ccs
 !
    end type ccs
 !
@@ -3414,7 +3414,7 @@ contains
    end subroutine set_cvs_start_indices_ccs
 !
 !
-   subroutine one_el_density_oo_ccs(wf, D)
+   subroutine one_el_density_ccs_oo_ccs(wf, D)
 !!
 !!    One electron density oo
 !!    Written by Sarai D. Folkestad
@@ -3437,10 +3437,10 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine one_el_density_oo_ccs
+   end subroutine one_el_density_ccs_oo_ccs
 !
 !
-   subroutine one_el_density_vo_ccs(wf, D)
+   subroutine one_el_density_ccs_vo_ccs(wf, D)
 !!
 !!    One electron density vo
 !!    Written by Sarai D. Folkestad
@@ -3459,19 +3459,22 @@ contains
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !        
-            D(wf%n_o + a, i) = D(wf%n_o + a, i) + t1bar(a, i)
+            D(wf%n_o + a, i) = D(wf%n_o + a, i) + wf%t1bar(a, i)
 !
          enddo
       enddo
 !$omp end parallel do
 !
-   end subroutine one_el_density_oo_ccs
+   end subroutine one_el_density_ccs_vo_ccs
 !
 !
    subroutine construct_one_el_density_ccs(wf, D)
 !!
 !!    Construct one-electron density
 !!    Written by Sarai Dery Folkestad
+!!
+!!    Constructs the one-electron density 
+!!    matrix in the T1 basis
 !!
       implicit none
 !
@@ -3481,10 +3484,10 @@ contains
 !
       D = zero
 !
-      call wf%one_el_density_oo(D)
-      call wf%one_el_density_vo(D)
+      call wf%one_el_density_ccs_oo(D)
+      call wf%one_el_density_ccs_vo(D)
 !
-   subroutine construct_one_el_density_ccs
+   end subroutine construct_one_el_density_ccs
 !
 !
 end module ccs_class
