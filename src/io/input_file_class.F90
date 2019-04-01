@@ -123,92 +123,92 @@ contains
 !
       calculations%name_    = 'do'
       calculations%required = .true.
-      calculations%keywords = ['ground state         ',  &
-                               'excited state        ',  &
-                               'cholesky eri         ',  &
-                               'multipliers          '   ]
+      calculations%keywords = (/ 'ground state         ',   &
+                                 'excited state        ',   &
+                                 'cholesky eri         ',   &
+                                 'multipliers          '   /)
 !
       system%name_    = 'system'
       system%required = .true.
-      system%keywords = ['name                 ',   &
-                         'charge               ',   &
-                         'multiplicity         '    ] 
+      system%keywords = (/ 'name                 ',   &
+                           'charge               ',   &
+                           'multiplicity         '    /)
 !
       memory%name_    = 'memory'
       memory%required = .false.
-      memory%keywords = ['available            ']
+      memory%keywords = (/ 'available            ' /)
 !
       disk%name_    = 'disk'
       disk%required = .false.
-      disk%keywords = ['available            ']
+      disk%keywords = (/ 'available            ' /)
 !
       method%name_    = 'method'
       method%required = .true.
-      method%keywords = ['hf                   ', &
-                         'ccs                  ', &
-                         'mp2                  ', &
-                         'cc2                  ', &
-                         'lowmem-cc2           ', &
-                         'ccsd                 ', &
-                         'cc3                  ']
+      method%keywords = (/ 'hf                   ', &
+                           'ccs                  ', &
+                           'mp2                  ', &
+                           'cc2                  ', &
+                           'lowmem-cc2           ', &
+                           'ccsd                 ', &
+                           'cc3                  ' /)
 !
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%required = .false.
-      solver_cholesky%keywords = ['threshold           ',    &
-                                  'span                ',    &
-                                  'batches             ',    &
-                                  'qualified           ',    &
-                                  'one center          ',    &
-                                  'no vectors          '     ]
+      solver_cholesky%keywords = (/ 'threshold           ',    &
+                                    'span                ',    &
+                                    'batches             ',    &
+                                    'qualified           ',    &
+                                    'one center          ',    &
+                                    'no vectors          '     /)
 !
       solver_hf%name_    = 'solver hf'
       solver_hf%required = .false.
-      solver_hf%keywords = ['algorithm            ',   &
-                            'energy threshold     ',   &
-                            'gradient threshold   ',   &
-                            'max iterations       ',   &
-                            'diis dimension       ',   &
-                            'restart              ',   &
-                            'ao density guess     '    ]
+      solver_hf%keywords = (/ 'algorithm            ',   &
+                              'energy threshold     ',   &
+                              'gradient threshold   ',   &
+                              'max iterations       ',   &
+                              'diis dimension       ',   &
+                              'restart              ',   &
+                              'ao density guess     '    /)
 !
       solver_cc_gs%name_    = 'solver cc gs'
       solver_cc_gs%required = .false.
-      solver_cc_gs%keywords = ['algorithm            ',   &
-                               'energy threshold     ',   &
-                               'omega threshold      ',   &
-                               'max iterations       ',   &
-                               'diis dimension       ',   &
-                               'restart              '    ]
+      solver_cc_gs%keywords = (/ 'algorithm            ',   &
+                                 'energy threshold     ',   &
+                                 'omega threshold      ',   &
+                                 'max iterations       ',   &
+                                 'diis dimension       ',   &
+                                 'restart              '    /)
 !
       solver_cc_es%name_    = 'solver cc es'
       solver_cc_es%required = .false.
-      solver_cc_es%keywords = ['algorithm            ',   &
-                               'ionization           ',   &
-                               'core ionization      ',   &
-                               'core excitation      ',   &
-                               'energy threshold     ',   &
-                               'residual threshold   ',   &
-                               'max iterations       ',   &
-                               'restart              ',   &
-                               'left eigenvectors    ',   &
-                               'right eigenvectors   ',   &
-                               'singlet states       ',   &
-                               'start vectors        ',   &
-                               'diis dimension       '    ]
+      solver_cc_es%keywords = (/ 'algorithm            ',   &
+                                 'ionization           ',   &
+                                 'core ionization      ',   &
+                                 'core excitation      ',   &
+                                 'energy threshold     ',   &
+                                 'residual threshold   ',   &
+                                 'max iterations       ',   &
+                                 'restart              ',   &
+                                 'left eigenvectors    ',   &
+                                 'right eigenvectors   ',   &
+                                 'singlet states       ',   &
+                                 'start vectors        ',   &
+                                 'diis dimension       '    /)
 !
       solver_cc_multipliers%name_    = 'solver cc multipliers'
       solver_cc_multipliers%required = .false.
-      solver_cc_multipliers%keywords = ['algorithm            ',   &
-                                        'threshold            ',   &
-                                        'restart              ',   &
-                                        'max iterations       '    ]
+      solver_cc_multipliers%keywords = (/ 'algorithm            ',   &
+                                          'threshold            ',   &
+                                          'restart              ',   &
+                                          'max iterations       '    /)
 !
       active_atoms%name_    = 'active atoms'
       active_atoms%required = .false.
-      active_atoms%keywords = ['selection type       ', &
-                               'central atom         ', &
-                               'hf                   ', &
-                               'active basis         ']
+      active_atoms%keywords = (/ 'selection type       ', &
+                                 'central atom         ', &
+                                 'hf                   ', &
+                                 'active basis         ' /)
 !
 !     Gather all sections into the file's section array 
 !
