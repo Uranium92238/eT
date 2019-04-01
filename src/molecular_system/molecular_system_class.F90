@@ -83,7 +83,6 @@ module molecular_system_class
       procedure :: get_max_shell_size      => get_max_shell_size_molecular_system
 !
       procedure :: shell_to_atom           => shell_to_atom_molecular_system
-
 !
       procedure :: initialize_basis_sets   => initialize_basis_sets_molecular_system
       procedure :: initialize_atoms        => initialize_atoms_molecular_system
