@@ -32,9 +32,9 @@ module gs_engine_class
 !
    contains 
 !
-      procedure :: prepare => prepare_gs_engine
-      procedure :: run     => run_gs_engine
-      procedure :: cleanup => cleanup_gs_engine
+      procedure, private :: prepare => prepare_gs_engine
+      procedure, private :: run     => run_gs_engine
+      procedure, private :: cleanup => cleanup_gs_engine
 !
 !
    end type gs_engine 
