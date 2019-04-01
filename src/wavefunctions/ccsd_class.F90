@@ -1141,17 +1141,12 @@ contains
       class(ccsd) :: wf
 !
       real(dp), dimension(:,:,:,:), allocatable :: tbar_akbj, t_akbi
-      real(dp), dimension(:,:), allocatable :: D_ij
-!
-      integer :: i, j
 !
       call mem%alloc(tbar_akbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%alloc(t_akbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call squareup(wf%t2bar, tbar_akbj, (wf%n_v)*(wf%n_o))
       call squareup(wf%t2, t_akbi, (wf%n_v)*(wf%n_o))
-!
-      call mem%alloc(D_ij, wf%n_o, wf%n_o)
 !
       call dgemm('T', 'N',                &
                   wf%n_o,                 &
@@ -1162,24 +1157,12 @@ contains
                   (wf%n_v**2)*(wf%n_o),   &
                   tbar_akbj,              & ! tbar_akb_j
                   (wf%n_v**2)*(wf%n_o),   &
-                  zero,                   &
-                  D_ij,                   &
-                  wf%n_o)
+                  one,                    &
+                  wf%density,             &
+                  wf%n_mo)
 !
       call mem%dealloc(tbar_akbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(t_akbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!!$omp parallel do private (i, j)
-      do j = 1, wf%n_o
-         do i = 1, wf%n_o
-!
-            wf%density(i, j) = wf%density(i, j) + D_ij(i,j)
-!
-         enddo
-      enddo
-!!$omp end parallel do
-!
-      call mem%dealloc(D_ij, wf%n_o, wf%n_o)
 !
    end subroutine one_el_density_ccsd_oo_ccsd
 !
@@ -1196,9 +1179,6 @@ contains
       class(ccsd) :: wf
 !
       real(dp), dimension(:,:,:,:), allocatable :: tbar_ajci, t_bjci
-      real(dp), dimension(:,:), allocatable :: D_ab
-!
-      integer :: a, b
 !
       call mem%alloc(tbar_ajci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%alloc(t_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -1206,35 +1186,21 @@ contains
       call squareup(wf%t2bar, tbar_ajci, (wf%n_v)*(wf%n_o))
       call squareup(wf%t2, t_bjci, (wf%n_v)*(wf%n_o))
 !
-      call mem%alloc(D_ab, wf%n_v, wf%n_v)
-!
-      call dgemm('N', 'T',                &
-                  wf%n_v,                 &
-                  wf%n_v,                 &
-                  (wf%n_o**2)*(wf%n_v),   &
-                  one,                    &
-                  tbar_ajci,              &
-                  wf%n_v,                 &
-                  t_bjci,                 &
-                  wf%n_v,                 &
-                  zero,                   &
-                  D_ab,                   &
-                  wf%n_v)
+      call dgemm('N', 'T',                            &
+                  wf%n_v,                             &
+                  wf%n_v,                             &
+                  (wf%n_o**2)*(wf%n_v),               &
+                  one,                                &
+                  tbar_ajci,                          & ! tbar_a_jci
+                  wf%n_v,                             &
+                  t_bjci,                             & ! t_b_jci
+                  wf%n_v,                             &
+                  one,                                &
+                  wf%density(wf%n_o + 1, wf%n_o + 1), &
+                  wf%n_mo)
 !
       call mem%dealloc(tbar_ajci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(t_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!$omp parallel do private(a, b)
-      do b = 1, wf%n_v
-         do a = 1, wf%n_v
-!
-            wf%density(wf%n_o + a, wf%n_o + b) = wf%density(wf%n_o + a, wf%n_o + b) + D_ab(a,b)
-!
-         enddo
-      enddo 
-!$omp end parallel do
-!
-      call mem%dealloc(D_ab, wf%n_v, wf%n_v)
 !
    end subroutine one_el_density_ccsd_vv_ccsd
 !
@@ -1275,9 +1241,9 @@ contains
                   1,                   &
                   (wf%n_o)*(wf%n_v),   &
                   one,                 &
-                  u_iabj,              &
+                  u_iabj,              & ! u_ia_bj
                   (wf%n_o)*(wf%n_v),   &
-                  wf%t1bar,            &
+                  wf%t1bar,            & ! tbar_bj
                   (wf%n_o)*(wf%n_v),   &
                   zero,                &
                   D_ia,                &
