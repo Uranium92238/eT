@@ -122,6 +122,7 @@ program eT_program
 !!
 !   if (input%requested_cc_calculation()) call cc_calculation()
 !!
+!
    call finalize_libint()
 !
    call eT_timer%freeze()
@@ -190,3 +191,103 @@ subroutine reference_calculation()
    endif
 !
 end subroutine reference_calculation
+<<<<<<< HEAD
+=======
+!
+!
+subroutine cc_calculation()
+!!
+!! Coupled cluster calculation
+!! Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+!! Directs the coupled cluster calculation for eT
+!!
+   use ccs_class
+   use cc2_class
+   use lowmem_cc2_class
+   use cc3_class
+   use mp2_class
+!
+   use gs_engine_class
+   use es_engine_class
+!
+   implicit none
+!
+!  Possible coupled cluster wavefunctions   
+!
+   type(ccs), target          :: ccs_wf
+   type(cc2), target          :: cc2_wf
+   type(lowmem_cc2), target   :: lowmem_cc2_wf
+   type(ccsd),target          :: ccsd_wf
+   type(cc3), target          :: cc3_wf
+   type(mp2), target          :: mp2_wf
+!
+   class(ccs), pointer :: cc_wf
+!
+!  Possible engines
+!
+   type(gs_engine) :: gs_cc_engine
+   type(es_engine) :: es_cc_engine
+!
+!  Other variables
+!
+   character(len=21) :: cc_wf_name
+!
+   cc_wf_name = input%get_cc_wf()
+!
+   select case (trim(cc_wf_name))
+!
+      case ('ccs')
+!
+         cc_wf => ccs_wf
+!
+      case ('cc2')
+!
+         cc_wf => cc2_wf
+!
+      case ('lowmem-cc2')
+!
+         cc_wf => lowmem_cc2_wf
+!
+      case ('cc3')
+!
+         cc_wf => cc3_wf
+!
+      case ('mp2')
+!
+         cc_wf => mp2_wf
+!
+      case default
+!
+         call output%error_msg('could not recognize CC method ' // trim(cc_wf_name) // '.')
+!
+   end select
+!
+   if (requested_keyword_in_section('excited state', 'do')) then
+!
+      call cc_wf%prepare()
+!
+      call es_cc_engine%prepare()
+      call es_cc_engine%run(cc_wf)
+      call es_cc_engine%cleanup()
+!   
+      call cc_wf%cleanup()   
+!
+   elseif (requested_keyword_in_section('ground state', 'do')) then
+!
+      call cc_wf%prepare()
+!
+      call gs_cc_engine%prepare()
+      call gs_cc_engine%run(cc_wf)
+      call gs_cc_engine%cleanup()
+!   
+      call cc_wf%cleanup()  
+!
+   else
+!
+      call output%error_msg('could not recognize coupled cluster task.')
+!
+   endif
+!
+end subroutine cc_calculation
+>>>>>>> 0e90fda0135cf73c3c972f6d66cfcfbf547c5372
