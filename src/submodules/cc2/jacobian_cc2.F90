@@ -668,10 +668,10 @@ contains
                do a = 1, wf%n_v
 !
                   rho_aibj(a,i,b,j) = rho_aibj(a,i,b,j) + c_aibj(a,i,b,j)*&
-                                          (- wf%fock_diagonal(i) &
-                                           - wf%fock_diagonal(j) &
-                                           + wf%fock_diagonal(wf%n_o + a) &
-                                           + wf%fock_diagonal(wf%n_o + b) )
+                                          (- wf%orbital_energies(i) &
+                                           - wf%orbital_energies(j) &
+                                           + wf%orbital_energies(wf%n_o + a) &
+                                           + wf%orbital_energies(wf%n_o + b) )
 !
                enddo
             enddo

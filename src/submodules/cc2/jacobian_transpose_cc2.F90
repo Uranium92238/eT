@@ -645,10 +645,10 @@ contains
                do a = 1, wf%n_v
 !
                   sigma_aibj(a, i, b, j) = sigma_aibj(a, i, b, j) + c_aibj(a,i,b,j) &
-                                          * (wf%fock_diagonal(a + wf%n_o) &
-                                          + wf%fock_diagonal(b + wf%n_o) &
-                                          - wf%fock_diagonal(i) &
-                                          - wf%fock_diagonal(j))
+                                          * (wf%orbital_energies(a + wf%n_o) &
+                                          + wf%orbital_energies(b + wf%n_o) &
+                                          - wf%orbital_energies(i) &
+                                          - wf%orbital_energies(j))
 !
                enddo
             enddo

@@ -60,8 +60,6 @@ module ccs_class
       real(dp), dimension(:,:), allocatable  :: fock_ai
       real(dp), dimension(:,:), allocatable  :: fock_ab
 !
-      real(dp), dimension(:), allocatable  :: fock_diagonal
-!
       type(mo_integral_tool) :: integrals
 !
       integer :: n_bath ! Number of bath orbitals (always the last ao/mo indices)
@@ -176,7 +174,6 @@ module ccs_class
       procedure :: initialize_fock_ia                           => initialize_fock_ia_ccs
       procedure :: initialize_fock_ai                           => initialize_fock_ai_ccs
       procedure :: initialize_fock_ab                           => initialize_fock_ab_ccs
-      procedure :: initialize_fock_diagonal                     => initialize_fock_diagonal_ccs
       procedure :: initialize_t1                                => initialize_t1_ccs
       procedure :: initialize_t1bar                             => initialize_t1bar_ccs
 !
@@ -184,7 +181,6 @@ module ccs_class
       procedure :: destruct_fock_ia                             => destruct_fock_ia_ccs
       procedure :: destruct_fock_ai                             => destruct_fock_ai_ccs
       procedure :: destruct_fock_ab                             => destruct_fock_ab_ccs
-      procedure :: destruct_fock_diagonal                       => destruct_fock_diagonal_ccs
       procedure :: destruct_t1                                  => destruct_t1_ccs
       procedure :: destruct_t1bar                               => destruct_t1bar_ccs
 !
@@ -201,7 +197,7 @@ module ccs_class
 contains
 !
 !
-   subroutine prepare_ccs(wf, ref_wf)
+   subroutine prepare_ccs(wf, system)
 !!
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -210,49 +206,42 @@ contains
 !
       class(ccs) :: wf
 !
-      class(hf) :: ref_wf
+      class(molecular_system), target, intent(in) :: system 
 !
-      integer :: p
+      type(file) :: hf_restart_file 
 !
       wf%name_ = 'ccs'
+      wf%system => system
 !
-      wf%system = ref_wf%system
+      call hf_restart_file%init('hf_restart_file', 'sequential', 'unformatted')
 !
-      wf%n_ao   = ref_wf%n_ao
-      wf%n_mo   = ref_wf%n_mo
-      wf%n_o    = ref_wf%n_o
-      wf%n_v    = ref_wf%n_v
+      call disk%open_file(hf_restart_file, 'read', 'rewind')
 !
-      wf%hf_energy = ref_wf%energy
+      read(hf_restart_file%unit) wf%n_ao 
+      read(hf_restart_file%unit) wf%n_mo 
+      read(hf_restart_file%unit) 
+      read(hf_restart_file%unit) wf%n_o  
+      read(hf_restart_file%unit) wf%n_v  
+      read(hf_restart_file%unit) wf%hf_energy  
+!
+      call disk%close_file(hf_restart_file)
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
       wf%n_es_amplitudes = wf%n_t1
 !
+      call wf%initialize_files()
+!
+      call wf%initialize_orbital_coefficients()
+      call wf%initialize_orbital_energies()
+!
+      call wf%read_orbital_coefficients()
+      call wf%read_orbital_energies()
+!
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
-!
-      call wf%initialize_fock_diagonal()
-!
-      wf%fock_ij(:,:) = ref_wf%mo_fock(1 : wf%n_o, 1 : wf%n_o)
-      wf%fock_ia(:,:) = ref_wf%mo_fock(1 : wf%n_o, wf%n_o + 1 : wf%n_mo)
-      wf%fock_ai(:,:) = ref_wf%mo_fock(wf%n_o + 1 : wf%n_mo, 1 : wf%n_o)
-      wf%fock_ab(:,:) = ref_wf%mo_fock(wf%n_o + 1 : wf%n_mo, wf%n_o + 1 : wf%n_mo)
-!
-      do p = 1, wf%n_mo
-!
-         wf%fock_diagonal(p) = ref_wf%mo_fock(p, p)
-!
-      enddo
-!
-      call ref_wf%mo_transform_and_save_h()
-!
-      call wf%initialize_orbital_coefficients()
-      wf%orbital_coefficients = ref_wf%orbital_coefficients
-!
-      call wf%initialize_files()
 !
    end subroutine prepare_ccs
 !
@@ -280,6 +269,7 @@ contains
 !!
       class(ccs) :: wf 
 !
+      call wf%initialize_wavefunction_files()
       call wf%initialize_singles_files()
       call wf%initialize_cc_files()
 !
@@ -1248,7 +1238,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o) - wf%fock_diagonal(i)
+            orbital_differences(ai) = wf%orbital_energies(a + wf%n_o) - wf%orbital_energies(i)
 !
          enddo
       enddo
@@ -1310,20 +1300,6 @@ contains
       if (.not. allocated(wf%fock_ab)) call mem%alloc(wf%fock_ab, wf%n_v, wf%n_v)
 !
    end subroutine initialize_fock_ab_ccs
-!
-!
-   subroutine initialize_fock_diagonal_ccs(wf)
-!!
-!!    Initialize Fock diagonal
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (.not. allocated(wf%fock_diagonal)) call mem%alloc(wf%fock_diagonal, wf%n_mo)
-!
-   end subroutine initialize_fock_diagonal_ccs
 !
 !
    subroutine initialize_t1_ccs(wf)
@@ -1409,20 +1385,6 @@ contains
       if (allocated(wf%fock_ab)) call mem%dealloc(wf%fock_ij, wf%n_v, wf%n_v)
 !
    end subroutine destruct_fock_ab_ccs
-!
-!
-   subroutine destruct_fock_diagonal_ccs(wf)
-!!
-!!    Destruct Fock diagonal
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (allocated(wf%fock_diagonal)) call mem%dealloc(wf%fock_diagonal, wf%n_mo)
-!
-   end subroutine destruct_fock_diagonal_ccs
 !
 !
    subroutine destruct_t1_ccs(wf)

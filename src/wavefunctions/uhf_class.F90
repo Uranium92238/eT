@@ -153,8 +153,6 @@ contains
 !
       wf%system => system
 !
-      call wf%system%prepare()
-!
       wf%n_ao = wf%system%get_n_aos()
 !
       call initialize_coulomb_c()
@@ -303,7 +301,7 @@ contains
 !
       class(uhf), intent(inout) :: wf 
 !
-      call wf%is_restart_safe()
+      call wf%is_restart_safe('ground state')
 !
       call disk%open_file(wf%orbital_coefficients_file, 'read', 'rewind')
 !
@@ -343,7 +341,7 @@ contains
 !
       class(uhf), intent(inout) :: wf 
 !
-      call wf%is_restart_safe()
+      call wf%is_restart_safe('ground state')
 !
       call disk%open_file(wf%orbital_energies_file, 'read', 'rewind')
 !

@@ -45,7 +45,7 @@ module mp2_class
 contains
 !
 !
-   subroutine prepare_mp2(wf, ref_wf)
+   subroutine prepare_mp2(wf, system)
 !!
 !!    Prepare
 !!    Written by Andreas Skeidsvoll, 2018
@@ -53,27 +53,38 @@ contains
       implicit none
 !
       class(mp2) :: wf
-      class(hf)  :: ref_wf
+!
+      class(molecular_system), target, intent(in) :: system 
+!
+      type(file) :: hf_restart_file 
 !
       wf%name_ = 'MP2'
 !
-      wf%system = ref_wf%system
+      wf%system => system
 !
-      wf%n_ao   = ref_wf%n_ao
-      wf%n_mo   = ref_wf%n_mo
-      wf%n_o    = ref_wf%n_o
-      wf%n_v    = ref_wf%n_v
+      call hf_restart_file%init('hf_restart_file', 'sequential', 'unformatted')
 !
-      wf%hf_energy = ref_wf%energy
+      call disk%open_file(hf_restart_file, 'read', 'rewind')
 !
+      read(hf_restart_file%unit) wf%n_ao 
+      read(hf_restart_file%unit) wf%n_mo 
+      read(hf_restart_file%unit) 
+      read(hf_restart_file%unit) wf%n_o  
+      read(hf_restart_file%unit) wf%n_v  
+      read(hf_restart_file%unit) wf%hf_energy  
+!
+      call disk%close_file(hf_restart_file)
+!
+      call wf%initialize_files()
+!
+      call wf%initialize_orbital_coefficients()
       call wf%initialize_orbital_energies()
-      wf%orbital_energies = ref_wf%orbital_energies
+!
+      call wf%read_orbital_coefficients()
+      call wf%read_orbital_energies()
 !
       call wf%initialize_amplitudes()
       wf%t1 = zero
-!
-      call wf%initialize_orbital_coefficients()
-      wf%orbital_coefficients = ref_wf%orbital_coefficients
 !
    end subroutine prepare_mp2
 !

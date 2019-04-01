@@ -106,7 +106,7 @@ module cc2_class
 contains
 !
 !
-   subroutine prepare_cc2(wf, ref_wf)
+   subroutine prepare_cc2(wf, system)
 !!
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -115,50 +115,44 @@ contains
 !
       class(cc2) :: wf
 !
-      class(hf) :: ref_wf
+      class(molecular_system), target, intent(in) :: system 
 !
-      integer :: p
+      type(file) :: hf_restart_file 
 !
       wf%name_ = 'cc2'
 !
-      wf%system = ref_wf%system
+      wf%system => system
 !
-      wf%n_ao   = ref_wf%n_ao
-      wf%n_mo   = ref_wf%n_mo
-      wf%n_o    = ref_wf%n_o
-      wf%n_v    = ref_wf%n_v
+      call hf_restart_file%init('hf_restart_file', 'sequential', 'unformatted')
 !
-      wf%hf_energy = ref_wf%energy
+      call disk%open_file(hf_restart_file, 'read', 'rewind')
+!
+      read(hf_restart_file%unit) wf%n_ao 
+      read(hf_restart_file%unit) wf%n_mo 
+      read(hf_restart_file%unit) 
+      read(hf_restart_file%unit) wf%n_o  
+      read(hf_restart_file%unit) wf%n_v  
+      read(hf_restart_file%unit) wf%hf_energy  
+!
+      call disk%close_file(hf_restart_file)
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_t2            = wf%n_t1*(wf%n_t1+1)/2
       wf%n_gs_amplitudes = wf%n_t1
       wf%n_es_amplitudes = wf%n_t1 + wf%n_t2
 !
+      call wf%initialize_files()
+!
+      call wf%initialize_orbital_coefficients()
+      call wf%initialize_orbital_energies()
+!
+      call wf%read_orbital_coefficients()
+      call wf%read_orbital_energies()
+!
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
-!
-      call wf%initialize_fock_diagonal()
-!
-      wf%fock_ij(:,:) = ref_wf%mo_fock(1 : wf%n_o, 1 : wf%n_o)
-      wf%fock_ia(:,:) = ref_wf%mo_fock(1 : wf%n_o, wf%n_o + 1 : wf%n_mo)
-      wf%fock_ai(:,:) = ref_wf%mo_fock(wf%n_o + 1 : wf%n_mo, 1 : wf%n_o)
-      wf%fock_ab(:,:) = ref_wf%mo_fock(wf%n_o + 1 : wf%n_mo, wf%n_o + 1 : wf%n_mo)
-!
-      do p = 1, wf%n_mo
-!
-         wf%fock_diagonal(p) = ref_wf%mo_fock(p, p)
-!
-      enddo
-!
-      call ref_wf%mo_transform_and_save_h()
-!
-      call wf%initialize_orbital_coefficients()
-      wf%orbital_coefficients = ref_wf%orbital_coefficients
-!
-      call wf%initialize_files()
 !
    end subroutine prepare_cc2
 !
@@ -194,10 +188,10 @@ contains
 !
                   correlation_energy = correlation_energy +                                &
                                        (wf%t1(a, i)*wf%t1(b, j) -                          &
-                                       (g_aibj(a,i,b,j))/(wf%fock_diagonal(wf%n_o + a)  &
-                                                         + wf%fock_diagonal(wf%n_o + b) &
-                                                         - wf%fock_diagonal(i)           &
-                                                         - wf%fock_diagonal(j)))         &
+                                       (g_aibj(a,i,b,j))/(wf%orbital_energies(wf%n_o + a)  &
+                                                         + wf%orbital_energies(wf%n_o + b) &
+                                                         - wf%orbital_energies(i)           &
+                                                         - wf%orbital_energies(j)))         &
                                        *(two*g_iajb(i,a,j,b)-g_iajb(i,b,j,a))
 !
                enddo
@@ -251,9 +245,9 @@ contains
                do a = 1, wf%n_v
 !
                   wf%u(a, i, b, j) = (two*g_aibj(a, i, b, j) - g_aibj(a, j, b, i))/ &
-                                       (  wf%fock_diagonal(i) + wf%fock_diagonal(j) &
-                                        - wf%fock_diagonal(wf%n_o + a) &
-                                        - wf%fock_diagonal(wf%n_o + b))
+                                       (  wf%orbital_energies(i) + wf%orbital_energies(j) &
+                                        - wf%orbital_energies(wf%n_o + a) &
+                                        - wf%orbital_energies(wf%n_o + b))
 !
                enddo
             enddo
@@ -344,7 +338,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o) - wf%fock_diagonal(i)
+            orbital_differences(ai) = wf%orbital_energies(a + wf%n_o) - wf%orbital_energies(i)
 !
             do j = 1, wf%n_o 
                do b = 1, wf%n_v
@@ -355,10 +349,10 @@ contains
 !
                      aibj = (ai*(ai-3)/2) + ai + bj
 !
-                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%fock_diagonal(a + wf%n_o)     &
-                                                                     - wf%fock_diagonal(i) &
-                                                                     +  wf%fock_diagonal(b + wf%n_o)  &
-                                                                     - wf%fock_diagonal(j)
+                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%orbital_energies(a + wf%n_o)     &
+                                                                     - wf%orbital_energies(i) &
+                                                                     +  wf%orbital_energies(b + wf%n_o)  &
+                                                                     - wf%orbital_energies(j)
 !
                   endif
 !
@@ -434,10 +428,10 @@ contains
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
-                  t2bar(a, i, b, j) = t2bar(a, i, b, j)/(- wf%fock_diagonal(a + wf%n_o) &
-                                                         -  wf%fock_diagonal(b + wf%n_o) &
-                                                         +  wf%fock_diagonal(i) &
-                                                         +  wf%fock_diagonal(j))
+                  t2bar(a, i, b, j) = t2bar(a, i, b, j)/(- wf%orbital_energies(a + wf%n_o) &
+                                                         -  wf%orbital_energies(b + wf%n_o) &
+                                                         +  wf%orbital_energies(i) &
+                                                         +  wf%orbital_energies(j))
 !
                enddo
             enddo
@@ -702,10 +696,10 @@ contains
                            aibj = ai*(ai - 3)/2 + ai + bj
 !
                            X(aibj + (wf%n_v)*(wf%n_o)) = r2_aibj(a, i, b, j)&
-                                                     /(omega(n) - wf%fock_diagonal(a + wf%n_o) &
-                                                                - wf%fock_diagonal(b + wf%n_o) &
-                                                                + wf%fock_diagonal(i) &
-                                                                + wf%fock_diagonal(j) )
+                                                     /(omega(n) - wf%orbital_energies(a + wf%n_o) &
+                                                                - wf%orbital_energies(b + wf%n_o) &
+                                                                + wf%orbital_energies(i) &
+                                                                + wf%orbital_energies(j) )
 !
                         endif
 !
@@ -765,10 +759,10 @@ contains
                            aibj = ai*(ai - 3)/2 + ai + bj
 !
                            X(aibj + (wf%n_v)*(wf%n_o)) = l2_aibj(a, i, b, j)&
-                                                     /(omega(n) - wf%fock_diagonal(a + wf%n_o) &
-                                                                - wf%fock_diagonal(b + wf%n_o) &
-                                                                + wf%fock_diagonal(i) &
-                                                                + wf%fock_diagonal(j) )
+                                                     /(omega(n) - wf%orbital_energies(a + wf%n_o) &
+                                                                - wf%orbital_energies(b + wf%n_o) &
+                                                                + wf%orbital_energies(i) &
+                                                                + wf%orbital_energies(j) )
 !
                         endif
 !
@@ -853,6 +847,7 @@ contains
 !!
       class(cc2) :: wf 
 !
+      call wf%initialize_wavefunction_files()
       call wf%initialize_cc_files()
       call wf%initialize_singles_files()
       call wf%initialize_doubles_files()

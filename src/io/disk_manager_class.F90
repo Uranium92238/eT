@@ -407,8 +407,12 @@ contains
 !  
       class(disk_manager) :: disk
 !
-      call input%get_keyword_in_section('available', 'disk', disk%total)
-      disk%total = disk%total*1000000000
+      if (input%requested_keyword_in_section('available','disk')) then
+!
+         call input%get_keyword_in_section('available', 'disk', disk%total)
+         disk%total = disk%total*1000000000
+!
+      endif 
 !
    end subroutine read_settings_disk_manager
 !
