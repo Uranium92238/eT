@@ -34,7 +34,7 @@ set(eT_fortran_sources
    src/engines/abstract_engine_class.F90
    src/engines/gs_engine_class.F90
    src/engines/es_engine_class.F90
-   src/engines/multipliers_engine_class.F90
+   src/engines/zop_engine_class.F90
    src/io/disk_manager_class.F90
    src/io/abstract_file_class.F90
    src/io/file_class.F90
