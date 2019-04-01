@@ -47,8 +47,10 @@ module input_file_class
       procedure :: get_n_atoms                                          => get_n_atoms_input_file
       procedure :: get_geometry                                         => get_geometry_input_file
       procedure :: get_reference_wf                                     => get_reference_wf_input_file
+      procedure :: get_cc_wf                                            => get_cc_wf_input_file
 !
       procedure :: requested_reference_calculation                      => requested_reference_calculation_input_file
+      procedure :: requested_cc_calculation                             => requested_cc_calculation_input_file
 !
       procedure, private :: get_string_keyword_in_section_wo_safety     => get_string_keyword_in_section_wo_safety_input_file
       procedure, private :: move_to_section                             => move_to_section_input_file
@@ -537,6 +539,77 @@ contains
       if (.not. recognized) call output%error_msg('Tried to read reference wavefunction, but could not find any.')
 !
    end function get_reference_wf_input_file
+!
+!
+   logical function requested_cc_calculation_input_file(the_file)
+!!
+!!    Requested CC calculation 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      integer :: n_cc_wfs, k
+!
+      n_cc_wfs = 0
+      do k = 1, size(the_file%cc_wfs)
+!
+         if (the_file%requested_keyword_in_section(the_file%cc_wfs(k), 'method')) then 
+!
+            n_cc_wfs = n_cc_wfs + 1
+!
+         endif 
+!
+      enddo 
+!
+      if (n_cc_wfs == 1) then 
+!
+         requested_cc_calculation_input_file = .true.
+!
+      elseif (n_cc_wfs > 1) then
+!
+         requested_cc_calculation_input_file = .false.
+         call output%error_msg('Requested more than one CC wavefunction.')
+!
+      else
+!
+         requested_cc_calculation_input_file = .false.
+!
+      endif  
+!
+   end function requested_cc_calculation_input_file
+!
+!
+   character(len=21) function get_cc_wf_input_file(the_file)
+!!
+!!    Get CC wavefunction 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      integer :: k
+!
+      logical :: recognized 
+!
+      recognized = .false.   
+!
+      do k = 1, size(input%cc_wfs)
+!
+         if (the_file%requested_keyword_in_section(input%cc_wfs(k),'method')) then 
+!
+            get_cc_wf_input_file = input%cc_wfs(k)
+            recognized = .true. 
+!
+         endif 
+!
+      enddo
+!
+      if (.not. recognized) call output%error_msg('Tried to read CC wavefunction, but could not find any.')
+!
+   end function get_cc_wf_input_file
 !
 !
    subroutine get_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
