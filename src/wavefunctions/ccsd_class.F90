@@ -1246,7 +1246,7 @@ contains
 !!
 !!    D_ia += sum_bj u^{ab}_ij tbar_bj 
 !!
-!!    u^{ab}_ij = 2t_aibj - t_ajbi
+!!    u^{ab}_ij = 2t_aibj - t_ajbi = u_iabj 
 !!
       implicit none
 !
@@ -1263,8 +1263,8 @@ contains
       call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
 !
       u_iabj = zero
-      call add_2134_to_1234(one, t_aibj, u_iabj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-      call add_4132_to_1234(-two, t_aibj, u_iabj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call add_2134_to_1234(two, t_aibj, u_iabj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call add_2431_to_1234(-one, t_aibj, u_iabj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
       call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1277,7 +1277,7 @@ contains
                   one,                 &
                   u_iabj,              &
                   (wf%n_o)*(wf%n_v),   &
-                  wf%t1,               &
+                  wf%t1bar,            &
                   (wf%n_o)*(wf%n_v),   &
                   zero,                &
                   D_ia,                &
