@@ -63,6 +63,11 @@ program eT_program
 !
    type(timings) :: eT_timer
 !
+!  Prepare memory manager and disk manager
+!
+   call mem%prepare()
+   call disk%prepare()
+!
 !  Prepare input, output and timing file
 !
    call output%init('eT.out')
@@ -112,14 +117,16 @@ program eT_program
 !
    call input%check_for_errors()
 !
-!  Prepare memory manager and disk manager
-!
-   call mem%prepare()
-   call disk%prepare()
-!
    call initialize_libint()
 !
+!  Hartree-Fock calculation
 !
+   if (input%requested_reference_calculation()) call reference_calculation()
+!!
+!!  Coupled cluster calculation
+!!
+!   if (input%requested_cc_calculation()) call cc_calculation()
+!!
    call finalize_libint()
 !
    call eT_timer%freeze()
@@ -130,5 +137,8 @@ program eT_program
    call disk%close_file(output)
    call disk%close_file(input)
    call disk%close_file(timing)
+!
+   call mem%cleanup()
+   call disk%cleanup()
 !
 end program eT_program
