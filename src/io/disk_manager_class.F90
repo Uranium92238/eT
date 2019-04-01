@@ -74,17 +74,8 @@ contains
 !
       class(disk_manager) :: disk
 !
-      if (requested_section('disk')) then
-!
-         call disk%read_settings()
-!
-      else
-!
-!        Set default
-!
-         disk%total = 30000000000_i15
-!
-      endif
+      disk%total = 30000000000_i15
+      call disk%read_settings()
 !
       disk%available = disk%total
 !
@@ -416,26 +407,8 @@ contains
 !  
       class(disk_manager) :: disk
 !
-      integer :: n_specs, i
-!
-      character(len=100) :: line
-!
-      call move_to_section('disk', n_specs)
-!
-      do i = 1, n_specs
-!
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (line(1:10) == 'available:' ) then
-!
-            read(line(11:100), *) disk%total
-            disk%total = disk%total*1000000000
-!
-         endif
-!
-      enddo
-!
+      call input%get_keyword_in_section('available', 'disk', disk%total)
+      disk%total = disk%total*1000000000
 !
    end subroutine read_settings_disk_manager
 !
