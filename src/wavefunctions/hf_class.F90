@@ -176,8 +176,6 @@ contains
 !
       call wf%read_settings()
 !
-      call wf%system%prepare()
-!
       wf%n_ao        = wf%system%get_n_aos()
       wf%n_densities = 1
 !

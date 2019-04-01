@@ -70,7 +70,7 @@ module lowmem_cc2_class
 contains
 !
 !
-   subroutine prepare_lowmem_cc2(wf, ref_wf)
+   subroutine prepare_lowmem_cc2(wf, system)
 !!
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -79,49 +79,43 @@ contains
 !
       class(lowmem_cc2) :: wf
 !
-      class(hf) :: ref_wf
+      class(molecular_system), target, intent(in) :: system 
 !
-      integer :: p
+      type(file) :: hf_restart_file 
 !
       wf%name_ = 'low memory cc2'
 !
-      wf%system = ref_wf%system
+      wf%system => system
 !
-      wf%n_ao   = ref_wf%n_ao
-      wf%n_mo   = ref_wf%n_mo
-      wf%n_o    = ref_wf%n_o
-      wf%n_v    = ref_wf%n_v
+      call hf_restart_file%init('hf_restart_file', 'sequential', 'unformatted')
 !
-      wf%hf_energy = ref_wf%energy
+      call disk%open_file(hf_restart_file, 'read', 'rewind')
+!
+      read(hf_restart_file%unit) wf%n_ao 
+      read(hf_restart_file%unit) wf%n_mo 
+      read(hf_restart_file%unit) 
+      read(hf_restart_file%unit) wf%n_o  
+      read(hf_restart_file%unit) wf%n_v  
+      read(hf_restart_file%unit) wf%hf_energy  
+!
+      call disk%close_file(hf_restart_file)
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
       wf%n_es_amplitudes = wf%n_t1
 !
+      call wf%initialize_files()
+!
+      call wf%initialize_orbital_coefficients()
+      call wf%initialize_orbital_energies()
+!
+      call wf%read_orbital_coefficients()
+      call wf%read_orbital_energies()
+!
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
-!
-      call wf%initialize_fock_diagonal()
-!
-      wf%fock_ij(:,:) = ref_wf%mo_fock(1 : wf%n_o, 1 : wf%n_o)
-      wf%fock_ia(:,:) = ref_wf%mo_fock(1 : wf%n_o, wf%n_o + 1 : wf%n_mo)
-      wf%fock_ai(:,:) = ref_wf%mo_fock(wf%n_o + 1 : wf%n_mo, 1 : wf%n_o)
-      wf%fock_ab(:,:) = ref_wf%mo_fock(wf%n_o + 1 : wf%n_mo, wf%n_o + 1 : wf%n_mo)
-!
-      do p = 1, wf%n_mo
-!
-         wf%fock_diagonal(p) = ref_wf%mo_fock(p, p)
-!
-      enddo
-!
-      call ref_wf%mo_transform_and_save_h()
-!
-      call wf%initialize_orbital_coefficients()
-      wf%orbital_coefficients = ref_wf%orbital_coefficients
-!
-      call wf%initialize_files()
 !
    end subroutine prepare_lowmem_cc2
 !
@@ -197,10 +191,10 @@ contains
 !
                         correlation_energy = correlation_energy + &
                                              (wf%t1(a, i + batch_i%first - 1)*wf%t1(b, j + batch_j%first - 1) &
-                                             - (g_aibj(a, i, b, j))/(wf%fock_diagonal(wf%n_o + a) &
-                                                               + wf%fock_diagonal(wf%n_o + b) &
-                                                               - wf%fock_diagonal(i + batch_i%first - 1) &
-                                                               - wf%fock_diagonal(j + batch_j%first - 1)))&
+                                             - (g_aibj(a, i, b, j))/(wf%orbital_energies(wf%n_o + a) &
+                                                               + wf%orbital_energies(wf%n_o + b) &
+                                                               - wf%orbital_energies(i + batch_i%first - 1) &
+                                                               - wf%orbital_energies(j + batch_j%first - 1)))&
                                              *(two*g_iajb(i, a, j, b)-g_iajb(i, b, j, a))
 !
                      enddo

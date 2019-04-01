@@ -53,9 +53,9 @@ contains
 !
       call wf%omega_ccs_a1(omega)
 !
-      call wf%omega_cc2_a1(omega, wf%fock_diagonal(1:wf%n_o), wf%fock_diagonal(wf%n_o + 1 : wf%n_mo))
-      call wf%omega_cc2_b1(omega, wf%fock_diagonal(1:wf%n_o), wf%fock_diagonal(wf%n_o + 1 : wf%n_mo))
-      call wf%omega_cc2_c1(omega, wf%fock_diagonal(1:wf%n_o), wf%fock_diagonal(wf%n_o + 1 : wf%n_mo))
+      call wf%omega_cc2_a1(omega, wf%orbital_energies(1:wf%n_o), wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
+      call wf%omega_cc2_b1(omega, wf%orbital_energies(1:wf%n_o), wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
+      call wf%omega_cc2_c1(omega, wf%orbital_energies(1:wf%n_o), wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
 !
    end subroutine construct_omega_lowmem_cc2
 !

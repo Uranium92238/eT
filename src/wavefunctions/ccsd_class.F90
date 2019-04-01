@@ -363,10 +363,10 @@ contains
 !
                      aibj = (ai*(ai-3)/2) + ai + bj
 !
-                     wf%t2(aibj) = g_aibj(a,i,b,j)/(wf%fock_diagonal(i) + &
-                                                    wf%fock_diagonal(j) - &
-                                                    wf%fock_diagonal(a + wf%n_o) - &
-                                                    wf%fock_diagonal(b + wf%n_o))
+                     wf%t2(aibj) = g_aibj(a,i,b,j)/(wf%orbital_energies(i) + &
+                                                    wf%orbital_energies(j) - &
+                                                    wf%orbital_energies(a + wf%n_o) - &
+                                                    wf%orbital_energies(b + wf%n_o))
 !
                   endif
 !
@@ -458,7 +458,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o) - wf%fock_diagonal(i)
+            orbital_differences(ai) = wf%orbital_energies(a + wf%n_o) - wf%orbital_energies(i)
 !
             do j = 1, wf%n_o
                do b = 1, wf%n_v
@@ -469,10 +469,10 @@ contains
 !
                      aibj = (ai*(ai-3)/2) + ai + bj
 !
-                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%fock_diagonal(a + wf%n_o) &
-                                                                   - wf%fock_diagonal(i) &
-                                                                   +  wf%fock_diagonal(b + wf%n_o) &
-                                                                   - wf%fock_diagonal(j)
+                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%orbital_energies(a + wf%n_o) &
+                                                                   - wf%orbital_energies(i) &
+                                                                   +  wf%orbital_energies(b + wf%n_o) &
+                                                                   - wf%orbital_energies(j)
 !
                   endif
 !

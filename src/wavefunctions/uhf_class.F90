@@ -153,8 +153,6 @@ contains
 !
       wf%system => system
 !
-      call wf%system%prepare()
-!
       wf%n_ao = wf%system%get_n_aos()
 !
       call initialize_coulomb_c()
