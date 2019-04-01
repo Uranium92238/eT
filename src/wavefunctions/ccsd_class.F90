@@ -1158,9 +1158,9 @@ contains
                   wf%n_o,                 &
                   (wf%n_v**2)*(wf%n_o),   &
                   -one,                   &
-                  t_akbi,                 &
+                  t_akbi,                 & ! t_akb_i
                   (wf%n_v**2)*(wf%n_o),   &
-                  tbar_akbj,              &
+                  tbar_akbj,              & ! tbar_akb_j
                   (wf%n_v**2)*(wf%n_o),   &
                   zero,                   &
                   D_ij,                   &
@@ -1169,7 +1169,7 @@ contains
       call mem%dealloc(tbar_akbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(t_akbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!$omp parallel do private (i, j)
+!!$omp parallel do private (i, j)
       do j = 1, wf%n_o
          do i = 1, wf%n_o
 !
@@ -1177,7 +1177,7 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do
+!!$omp end parallel do
 !
       call mem%dealloc(D_ij, wf%n_o, wf%n_o)
 !
@@ -1315,9 +1315,10 @@ contains
       wf%density = zero
 !
       call wf%one_el_density_ccs_oo()
+      call wf%one_el_density_ccs_vo()
+!      
       call wf%one_el_density_ccsd_oo()
       call wf%one_el_density_ccsd_vv()
-      call wf%one_el_density_ccs_vo()
       call wf%one_el_density_ccsd_ov()
 !
    end subroutine construct_density_ccsd
