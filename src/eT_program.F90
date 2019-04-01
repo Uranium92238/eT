@@ -29,23 +29,8 @@ program eT_program
    use disk_manager_class
    use memory_manager_class
    use libint_initialization
+   use timings_class
 !
-   use wavefunction_class
-!
-   use ccs_class
-   use cc2_class
-   use lowmem_cc2_class
-   use cc3_class
-   use mp2_class
-!
-   use io_eT_program
-!
-   use gs_engine_class
-   use es_engine_class
-   use multipliers_engine_class
-   use abstract_engine_class
-!
-   use eri_cd_class
    use omp_lib
 !
    implicit none
@@ -58,11 +43,6 @@ program eT_program
 !
    type(timings) :: eT_timer
 !
-!  Prepare memory manager and disk manager
-!
-   call mem%prepare()
-   call disk%prepare()
-!
 !  Prepare input, output and timing file
 !
    call output%init('eT.out')
@@ -73,6 +53,11 @@ program eT_program
 !
    call timing%init('timing.out')
    call disk%open_file(timing, 'write', 'rewind')
+!
+!  Prepare memory manager and disk manager
+!
+   call mem%prepare()
+   call disk%prepare()
 !
    call eT_timer%init("Total time in eT")
    call eT_timer%start()
@@ -116,8 +101,7 @@ program eT_program
 !
 !  Hartree-Fock calculation
 !
-   !if (input%requested_reference_calculation()) 
-   call reference_calculation()
+   if (input%requested_reference_calculation()) call reference_calculation()
 !!
 !!  Coupled cluster calculation
 !!
@@ -165,19 +149,13 @@ subroutine reference_calculation()
 !
    character(len=21) :: reference_wf
 !
- ! reference_wf = input%get_reference_wf()
+   reference_wf = input%get_reference_wf()
 !
    if (trim(reference_wf) == 'hf') then
 !
       allocate(hf_wf)
 !
-      call hf_wf%prepare()
-!
-      call ref_engine%prepare()     
-      call ref_engine%run(hf_wf)     
-      call ref_engine%cleanup()  
-!
-      call hf_wf%cleanup()
+      call ref_engine%ignite(hf_wf)    
 !
       deallocate(hf_wf)
 !
@@ -185,13 +163,7 @@ subroutine reference_calculation()
 !
       allocate(uhf_wf)
 !
-      call uhf_wf%prepare()
-!
-      call ref_engine%prepare()     
-      call ref_engine%run(uhf_wf)     
-      call ref_engine%cleanup()  
-!
-      call uhf_wf%cleanup()
+      call ref_engine%ignite(uhf_wf)  
 !
       deallocate(uhf_wf)
 !

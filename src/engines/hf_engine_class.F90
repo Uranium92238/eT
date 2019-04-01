@@ -33,25 +33,31 @@ module hf_engine_class
 !
    contains 
 !
-      procedure         :: prepare        => prepare_hf_engine
-      procedure         :: run            => run_hf_engine
-      procedure, nopass :: cleanup        => cleanup_hf_engine
+      procedure :: ignite                    => ignite_hf_engine
 !
-      procedure         :: read_settings => read_settings_hf_engine
+      procedure, private :: prepare          => prepare_hf_engine
+      procedure, private :: run              => run_hf_engine
+      procedure, nopass, private :: cleanup  => cleanup_hf_engine
+!
+      procedure, private :: read_settings    => read_settings_hf_engine
 !
    end type hf_engine 
 !
 contains
 !
 !
-   subroutine prepare_hf_engine(engine)
+   subroutine prepare_hf_engine(engine, wf)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
 !
-      class(hf_engine) :: engine 
+      class(hf_engine) :: engine
+!
+      class(hf)        :: wf  
+!
+      call wf%prepare()
 !
       engine%algorithm = 'scf-diis'
 !
@@ -102,12 +108,16 @@ contains
    end subroutine run_hf_engine
 !
 !
-   subroutine cleanup_hf_engine()
+   subroutine cleanup_hf_engine(wf)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
+!
+      class(hf) :: wf
+!
+      call wf%cleanup() 
 !
    end subroutine cleanup_hf_engine
 !
@@ -124,6 +134,25 @@ contains
       call input%get_keyword_in_section('algorithm', 'solver hf', engine%algorithm)
 !
    end subroutine read_settings_hf_engine
+!
+!
+   subroutine ignite_hf_engine(engine, wf)
+!!
+!!    Ignite
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
+!!
+!!    Prepare, run and cleansup 
+!!
+      implicit none 
+!
+      class(hf_engine)  :: engine 
+      class(hf)         :: wf 
+!
+      call engine%prepare(wf)
+      call engine%run(wf)
+      call engine%cleanup(wf)
+!
+   end subroutine ignite_hf_engine
 !
 !
 end module hf_engine_class
