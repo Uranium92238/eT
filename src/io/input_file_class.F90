@@ -161,6 +161,7 @@ contains
       calculations%required = .true.
       calculations%keywords = (/ 'ground state         ',   &
                                  'excited state        ',   &
+                                 'zop                  ',   &
                                  'cholesky eri         ',   &
                                  'multipliers          '   /)
 !

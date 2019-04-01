@@ -201,7 +201,7 @@ module ccs_class
       procedure :: construct_operator                           => construct_operator_ccs 
       procedure :: construct_mu                                 => construct_mu_ccs 
 !
-      procedure :: calculate_expectation_value                   => calculate_expectation_value_ccs
+      procedure :: calculate_expectation_value                  => calculate_expectation_value_ccs
 !
    end type ccs
 !
