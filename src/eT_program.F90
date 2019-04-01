@@ -210,6 +210,7 @@ subroutine cc_calculation(system)
 !
    use gs_engine_class
    use es_engine_class
+   use zop_engine_class
 !
    implicit none
 !
@@ -228,8 +229,9 @@ subroutine cc_calculation(system)
 !
 !  Possible engines
 !
-   type(gs_engine) :: gs_cc_engine
-   type(es_engine) :: es_cc_engine
+   type(gs_engine)   :: gs_cc_engine
+   type(es_engine)   :: es_cc_engine
+   type(zop_engine)  :: zop_cc_engine
 !
 !  Other variables
 !
@@ -274,6 +276,12 @@ subroutine cc_calculation(system)
       call cc_wf%prepare(system)
       call es_cc_engine%ignite(cc_wf)
       call cc_wf%cleanup()   
+!
+   elseif (input%requested_keyword_in_section('zop','do')) then 
+!
+      call cc_wf%prepare(system)
+      call zop_cc_engine%ignite(cc_wf)
+      call cc_wf%cleanup()
 !
    elseif (input%requested_keyword_in_section('ground state', 'do')) then
 !
