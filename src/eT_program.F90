@@ -117,11 +117,10 @@ program eT_program
 !  Hartree-Fock calculation
 !
    if (input%requested_reference_calculation()) call reference_calculation(system)
-!!
-!!  Coupled cluster calculation
-!!
-!   if (input%requested_cc_calculation()) call cc_calculation()
-!!
+!
+!  Coupled cluster calculation
+!
+   if (input%requested_cc_calculation()) call cc_calculation(system)
 !
    call finalize_libint()
 !
@@ -133,9 +132,6 @@ program eT_program
    close(output%unit)
    close(input%unit)
    close(timing%unit)
-!
-   !call mem%cleanup()
-   !call disk%cleanup()
 !
 end program eT_program
 !
@@ -197,8 +193,6 @@ subroutine reference_calculation(system)
    endif
 !
 end subroutine reference_calculation
-<<<<<<< HEAD
-=======
 !
 !
 subroutine cc_calculation(system)
@@ -271,20 +265,16 @@ subroutine cc_calculation(system)
 !
    end select
 !
-   if (requested_keyword_in_section('excited state', 'do')) then
+   if (input%requested_keyword_in_section('excited state', 'do')) then
 !
       call cc_wf%prepare(system)
-!
       call es_cc_engine%ignite(cc_wf)
-!   
       call cc_wf%cleanup()   
 !
-   elseif (requested_keyword_in_section('ground state', 'do')) then
+   elseif (input%requested_keyword_in_section('ground state', 'do')) then
 !
-      call cc_wf%prepare()
-!
-      call gs_cc_engine%ignite(cc_wf)
-!   
+      call cc_wf%prepare(system)
+      call gs_cc_engine%ignite(cc_wf) 
       call cc_wf%cleanup()  
 !
    else
@@ -294,4 +284,3 @@ subroutine cc_calculation(system)
    endif
 !
 end subroutine cc_calculation
->>>>>>> 0e90fda0135cf73c3c972f6d66cfcfbf547c5372

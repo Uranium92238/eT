@@ -37,9 +37,9 @@ module abstract_engine_class
 !
       procedure :: ignite => ignite_abstract_engine
 !
-      procedure(essential_engine), deferred      :: prepare 
-      procedure(essential_engine), deferred      :: cleanup   
-      procedure(essential_engine_w_wf), deferred :: run        
+      procedure(essential_engine), deferred, private      :: prepare 
+      procedure(essential_engine), deferred, private      :: cleanup   
+      procedure(essential_engine_w_wf), deferred, private :: run        
 !
    end type abstract_engine
 !
@@ -83,6 +83,10 @@ contains
 !!    Prepare, run, cleanup
 !!
       implicit none
+!
+      class(abstract_engine) :: engine
+!
+      class(ccs) :: wf
 !
       call engine%prepare()
       call engine%run(wf)
