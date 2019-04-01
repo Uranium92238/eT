@@ -251,6 +251,10 @@ subroutine cc_calculation(system)
 !
          cc_wf => lowmem_cc2_wf
 !
+      case ('ccsd')
+!
+         cc_wf => ccsd_wf
+!
       case ('cc3')
 !
          cc_wf => cc3_wf
