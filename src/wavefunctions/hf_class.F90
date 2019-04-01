@@ -165,7 +165,7 @@ module hf_class
 contains
 !
 !
-   subroutine prepare_hf(wf)
+   subroutine prepare_hf(wf, system)
 !!
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -174,7 +174,11 @@ contains
 !
       class(hf) :: wf
 !
+      class(molecular_system), target, intent(in) :: system
+!
       wf%name_ = 'HF'
+!
+      wf%system => system 
 !
       call wf%read_settings()
 !

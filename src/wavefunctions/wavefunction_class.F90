@@ -42,7 +42,7 @@ module wavefunction_class
       integer :: n_o
       integer :: n_v
 !
-      type(molecular_system) :: system
+      type(molecular_system), pointer :: system
 !
       real(dp), dimension(:,:), allocatable :: orbital_coefficients
       real(dp), dimension(:), allocatable :: orbital_energies

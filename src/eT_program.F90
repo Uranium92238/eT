@@ -29,21 +29,23 @@ program eT_program
    use disk_manager_class
    use memory_manager_class
    use libint_initialization
+   use molecular_system_class
    use timings_class
 !
    use omp_lib
 !
    implicit none
 !
-!  Other variables
+   integer :: io_error
+   integer :: n_threads
 !
-   integer :: n_threads = 1
+!  Molecular system object 
+!
+   type(molecular_system) :: system 
 !
 !  Timer object
 !
    type(timings) :: eT_timer
-!
-   integer :: io_error
 !
 !  Prepare input, output and timing file
 !
@@ -85,6 +87,8 @@ program eT_program
    write(output%unit,'(t4,a/)')       'Other contributors: A. Balbi, M. Scavino'
    flush(output%unit)
 !
+   n_threads = 1
+!
 !$   n_threads = omp_get_max_threads()
 !
    if (n_threads .eq. 1) then
@@ -106,13 +110,18 @@ program eT_program
 !
    call initialize_libint()
 !
+!  Prepare molecular system 
+!
+   call system%prepare()
+!
 !  Hartree-Fock calculation
 !
-   if (input%requested_reference_calculation()) call reference_calculation()
-!
-!  Coupled cluster calculation
-!
-   if (input%requested_cc_calculation()) call cc_calculation()
+   if (input%requested_reference_calculation()) call reference_calculation(system)
+!!
+!!  Coupled cluster calculation
+!!
+!   if (input%requested_cc_calculation()) call cc_calculation()
+!!
 !
    call finalize_libint()
 !
@@ -188,6 +197,8 @@ subroutine reference_calculation(system)
    endif
 !
 end subroutine reference_calculation
+<<<<<<< HEAD
+=======
 !
 !
 subroutine cc_calculation(system)
@@ -283,3 +294,4 @@ subroutine cc_calculation(system)
    endif
 !
 end subroutine cc_calculation
+>>>>>>> 0e90fda0135cf73c3c972f6d66cfcfbf547c5372
