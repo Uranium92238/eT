@@ -62,18 +62,22 @@ module input_file_class
       procedure, nopass, private :: extract_keyword_value_from_string   => extract_keyword_value_from_string_input_file
 !
       generic :: get_keyword_in_section                                 => get_integer_keyword_in_section_input_file,   &
+                                                                           get_integer8_keyword_in_section_input_file,  &
                                                                            get_string_keyword_in_section_input_file,    &
                                                                            get_dp_keyword_in_section_input_file
 !
       generic :: get_required_keyword_in_section                        => get_required_string_keyword_in_section_input_file,    &
                                                                            get_required_integer_keyword_in_section_input_file,   &
+                                                                           get_required_integer8_keyword_in_section_input_file,  &
                                                                            get_required_dp_keyword_in_section_input_file
 !
       procedure :: get_integer_keyword_in_section_input_file
+      procedure :: get_integer8_keyword_in_section_input_file
       procedure :: get_string_keyword_in_section_input_file
       procedure :: get_dp_keyword_in_section_input_file
       procedure :: get_required_string_keyword_in_section_input_file
       procedure :: get_required_integer_keyword_in_section_input_file
+      procedure :: get_required_integer8_keyword_in_section_input_file
       procedure :: get_required_dp_keyword_in_section_input_file
 !
    end type input_file
@@ -568,6 +572,39 @@ contains
    end subroutine get_integer_keyword_in_section_input_file
 !
 !
+   subroutine get_integer8_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+!!
+!!    Read integer keyword in section 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    If specified, reads keyword as an integer into keyword value.
+!!  
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: keyword 
+      character(len=*), intent(in) :: section  
+!
+      integer(i15), intent(out) :: keyword_value 
+!
+      character(len=200) :: keyword_value_string
+!
+      if (the_file%requested_keyword_in_section(keyword, section)) then 
+!
+!        Get the keyword value in string format 
+!
+         call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+!
+!        Extract the integer from the string
+!
+         read(keyword_value_string, *) keyword_value
+!
+      endif
+!
+   end subroutine get_integer8_keyword_in_section_input_file
+!
+!
    subroutine get_required_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
 !!
 !!    Read required integer keyword in section 
@@ -603,6 +640,43 @@ contains
       read(keyword_value_string, *) keyword_value
 !
    end subroutine get_required_integer_keyword_in_section_input_file
+!
+!
+   subroutine get_required_integer8_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+!!
+!!    Read required integer keyword in section 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Reads keyword as an integer into keyword value. If the keyword or the 
+!!    section is not specified, an error occurs because the keyword is "required".
+!!
+!!  
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: keyword 
+      character(len=*), intent(in) :: section  
+!
+      integer(i15), intent(out) :: keyword_value 
+!
+      character(len=200) :: keyword_value_string
+!
+      if (.not. the_file%requested_section(section)) & 
+         call output%error_msg('could not find the required section: '// trim(section) // '.')
+!
+      if (.not. the_file%requested_keyword_in_section(keyword, section)) & 
+         call output%error_msg('could not find the required keyword '// trim(keyword) // ' in section ' // trim(section))
+!
+!     Get the keyword value in string format 
+!
+      call the_file%get_string_keyword_in_section_wo_safety(keyword, section, keyword_value_string)
+!
+!     Extract the integer from the string
+!
+      read(keyword_value_string, *) keyword_value
+!
+   end subroutine get_required_integer8_keyword_in_section_input_file
 !
 !
    subroutine get_dp_keyword_in_section_input_file(the_file, keyword, section, keyword_value)

@@ -141,12 +141,10 @@ contains
 !!    Ignite
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
 !!
-!!    Prepare, run and cleansup 
-!!
       implicit none 
 !
-      class(hf_engine)  :: engine 
-      class(hf)         :: wf 
+      class(hf_engine) :: engine 
+      class(hf)        :: wf 
 !
       call engine%prepare(wf)
       call engine%run(wf)
