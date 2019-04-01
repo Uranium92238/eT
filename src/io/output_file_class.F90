@@ -40,8 +40,7 @@ module output_file_class
 !
    end type output_file
 !
-   type(output_file) :: output, timing 
-!
+   type(output_file) :: output, timing
 !
 contains
 !

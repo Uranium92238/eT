@@ -112,7 +112,7 @@ contains
 !
       class(disk_manager) :: disk
 !
-      class(abstract_file) :: the_file ! the file
+      class(file) :: the_file ! the file
 !
       character(len=*) :: permissions
       character(len=*), optional :: pos
@@ -163,7 +163,7 @@ contains
 !
       class(disk_manager) :: disk
 !
-      class(abstract_file) :: the_file ! the file
+      class(file) :: the_file ! the file
 !
       character(len=*) :: permissions
       character(len=*), optional :: pos
@@ -249,7 +249,7 @@ contains
 !
       class(disk_manager) :: disk
 !
-      class(abstract_file) :: the_file ! the file
+      class(file) :: the_file ! the file
 !
       character(len=*) :: permissions
 !
@@ -319,7 +319,7 @@ contains
 !
       class(disk_manager) :: disk
 !
-      class(abstract_file) :: the_file
+      class(file) :: the_file
 !
       character(len=*), optional :: destiny ! i.e. 'status' after close, can be 'keep' or 'delete'
 !
@@ -465,7 +465,7 @@ contains
 !  
       class(disk_manager) :: disk
 !
-      class(abstract_file) :: the_file
+      class(file) :: the_file
 !
       logical :: file_exists
 !

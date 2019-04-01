@@ -43,21 +43,23 @@ program eT_program
 !
    type(timings) :: eT_timer
 !
+   integer :: io_error
+!
 !  Prepare input, output and timing file
 !
    call output%init('eT.out')
-   call disk%open_file(output, 'write', 'rewind')
+   open(newunit=output%unit, file=output%name, access=output%access, &
+      action='write', status='unknown', form=output%format, iostat=io_error)
 !
    call input%init('eT.inp')
-   call disk%open_file(input, 'read')
+   open(newunit=input%unit, file=input%name, access=input%access, &
+      action='read', status='unknown', form=input%format, iostat=io_error)
 !
    call timing%init('timing.out')
-   call disk%open_file(timing, 'write', 'rewind')
+   open(newunit=timing%unit, file=timing%name, access=timing%access, &
+      action='write', status='unknown', form=timing%format, iostat=io_error)
 !
-!  Prepare memory manager and disk manager
-!
-   call mem%prepare()
-   call disk%prepare()
+   if (io_error /= 0) stop 'Error: could not open eT files (.inp/.out)'
 !
    call eT_timer%init("Total time in eT")
    call eT_timer%start()
@@ -97,6 +99,11 @@ program eT_program
 !
    call input%check_for_errors()
 !
+!  Prepare memory manager and disk manager
+!
+   call mem%prepare()
+   call disk%prepare()
+!
    call initialize_libint()
 !
 !  Hartree-Fock calculation
@@ -114,9 +121,9 @@ program eT_program
 !
    write(output%unit, '(/t3,a)') 'eT terminated successfully!'
 !
-   call disk%close_file(output)
-   call disk%close_file(input)
-   call disk%close_file(timing)
+   close(output%unit)
+   close(input%unit)
+   close(timing%unit)
 !
    !call mem%cleanup()
    !call disk%cleanup()
