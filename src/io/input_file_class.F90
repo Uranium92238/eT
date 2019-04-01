@@ -293,8 +293,7 @@ contains
 !  
       rewind(the_file%unit)
 !
-      read(the_file%unit, '(a200)') line 
-      line = adjustl(line)
+      line = the_file%read_adjustl_lower()
 !
       do while (trim(line) /= 'end geometry') 
 !
@@ -335,8 +334,7 @@ contains
 !
          endif 
 !
-         read(the_file%unit, '(a200)') line 
-         line = adjustl(line)
+         line = the_file%read_adjustl_lower()
 !
       enddo
 !
@@ -739,6 +737,7 @@ contains
       integer :: k, colon_position
 !
       keyword = adjustl(string)
+      call convert_to_lowercase(keyword)
 !
 !     If there is a ":", we have to remove the ":" as well as the value(s) that follow 
 !
@@ -786,6 +785,7 @@ contains
 !     If there is a ":", we have to remove the ":" as well as the value(s) that follow 
 !
       keyword_value = adjustl(string)
+      call convert_to_lowercase(keyword_value)
 !
       colon_position = -1 
 !
@@ -811,6 +811,7 @@ contains
       endif 
 !
       keyword_value = adjustl(keyword_value)
+      call convert_to_lowercase(keyword_value)
 !
    end subroutine extract_keyword_value_from_string_input_file
 !
@@ -900,8 +901,7 @@ contains
 !
       do 
 !
-         read(the_file%unit, '(a200)') line
-         line = adjustl(line)
+        line = the_file%read_adjustl_lower()
 !
          if (trim(line) == section) then 
 !
@@ -956,8 +956,7 @@ contains
 !
       do while (trim(line) /= 'end geometry')
 !
-         read(the_file%unit, '(a200)') line 
-         line = adjustl(line)   
+         line = the_file%read_adjustl_lower()
 !
          if (trim(line) == 'end ' // string) n_ends = n_ends + 1
          if (trim(line) == string) n_beginnings = n_beginnings + 1      
@@ -974,17 +973,15 @@ contains
 !
       rewind(the_file%unit)
 !
-      read(the_file%unit, '(a200)') line 
-      line = adjustl(line)
+      line = the_file%read_adjustl_lower()
 !
       end_record = 1
 !
       do while (trim(line) /= 'end geometry' .and. trim(line) /= 'end ' // string) 
 !
          end_record = end_record + 1
-!
-         read(the_file%unit, '(a200)') line 
-         line = adjustl(line)         
+! 
+        line = the_file%read_adjustl_lower()     
 !
       enddo   
 !
@@ -993,17 +990,15 @@ contains
 !
       rewind(the_file%unit)
 !
-      read(the_file%unit, '(a200)') line 
-      line = adjustl(line)
+      line = the_file%read_adjustl_lower()
 !
       start_record = 1
 !
       do while (trim(line) /= 'end geometry' .and. trim(line) /= string) 
 !
          start_record = start_record + 1
-!
-         read(the_file%unit, '(a200)') line 
-         line = adjustl(line)         
+! 
+        line = the_file%read_adjustl_lower()       
 !
       enddo
 !
