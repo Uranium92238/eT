@@ -447,19 +447,17 @@ contains
 !
 !     Set up the multipliers equation
 !
-      equation = zero
+!     equation = sum_bj tbar_bj A_bj,ai
+!  
+      call wf%jacobian_transpose_ccs_a1(equation, wf%t1bar)
+      call wf%jacobian_transpose_ccs_b1(equation, wf%t1bar)
+      call wf%jacobian_transpose_cc2_a1(equation, wf%t1bar)
 !
 !     equation += sum_bjck tbar_bjck A_{bjck,ai}
 !
       call wf%jacobian_transpose_cc2_b1(equation, t2bar)
 !
       call mem%dealloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     equation += sum_bj tbar_bj A_bj,ai
-!  
-      call wf%jacobian_transpose_ccs_a1(equation, wf%t1bar)
-      call wf%jacobian_transpose_ccs_b1(equation, wf%t1bar)
-      call wf%jacobian_transpose_cc2_a1(equation, wf%t1bar)
 !
 !     Add eta, equation = t-bar^T A + eta 
 !

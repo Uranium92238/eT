@@ -92,16 +92,12 @@ contains
 !
 !     Indices
 !
-      integer :: a, i, c, j, ai, bj, aibj
-!
       type(timings) :: jacobian_transpose_timer
 !
       call jacobian_transpose_timer%init('jacobian transpose')
       call jacobian_transpose_timer%start()
 !
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
-      sigma_ai = zero
-!
       call mem%alloc(b_ai, wf%n_v, wf%n_o)
 !
       call dcopy(wf%n_t1, b(1:wf%n_t1), 1, b_ai, 1)
@@ -119,31 +115,7 @@ contains
       call wf%jacobian_transpose_ccsd_b1(sigma_ai, b_ai)
 !
       call mem%alloc(b_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!$omp parallel do schedule(static) private(i, a, ai, j, c, bj, aibj)
-       do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            do j = 1, wf%n_o
-               do c = 1, wf%n_v
-!
-                  bj = wf%n_v*(j - 1) + c
-!
-                  if (ai .ge. bj) then
-!
-                     aibj = ai*(ai-3)/2 + ai + bj
-!
-                     b_aibj(a,i,c,j) = b(aibj + (wf%n_o)*(wf%n_v))
-                     b_aibj(c,j,a,i) = b(aibj + (wf%n_o)*(wf%n_v))
-!
-                  endif
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call squareup(b(wf%n_t1+1:wf%n_t1+wf%n_t2), b_aibj, wf%n_v*wf%n_o)
 !
       call wf%jacobian_transpose_ccsd_c1(sigma_ai, b_aibj)
       call wf%jacobian_transpose_ccsd_d1(sigma_ai, b_aibj)
@@ -152,14 +124,12 @@ contains
       call wf%jacobian_transpose_ccsd_g1(sigma_ai, b_aibj)
 !
       call dcopy(wf%n_t1, sigma_ai, 1, b(1:wf%n_t1), 1)
-!
       call mem%dealloc(sigma_ai, wf%n_v, wf%n_o)
 !
 !     Add the CCSD contributions to the doubles vector arising from
 !     the incoming singles vector
 !
       call mem%alloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      sigma_aibj = zero
 !
       call wf%jacobian_transpose_ccsd_a2(sigma_aibj, b_ai)
 !
@@ -175,53 +145,32 @@ contains
 !     Last two terms are already symmetric (h2 and i2). Perform the symmetrization
 !     sigma_aibj = P_ij^ab sigma_aibj now, for convenience
 !
-      call symmetric_sum(sigma_aibj, (wf%n_v)*(wf%n_o))
+      call symmetric_sum(sigma_aibj, wf%n_v*wf%n_o)
 !
-!     In preparation for last two terms, reorder
-!     sigma_aibj to rho_ab_ij, and b_aibj to b_abij
+!     In preparation for last two terms, reorder b_aibj to b_abij
+!
+      call mem%alloc(b_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call sort_1234_to_1324(b_aibj, b_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(b_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%alloc(b_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call sort_1234_to_1324(sigma_aibj, sigma_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call sort_1234_to_1324(b_aibj, b_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(b_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     Add the last two terms
 !
       call wf%jacobian_transpose_ccsd_h2(sigma_abij, b_abij)
       call wf%jacobian_transpose_ccsd_i2(sigma_abij, b_abij)
 !
       call mem%dealloc(b_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-!     Overwrite the incoming doubles b vector
-!
-!$omp parallel do schedule(static) private(a, i, c, j, ai, bj, aibj)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            do j = 1, wf%n_o
-               do c = 1, wf%n_v
-!
-                  bj = wf%n_v*(j - 1) + c
-!
-                  if (ai .ge. bj) then
-!
-                     aibj = ai*(ai-3)/2 + ai + bj
-!
-                     b((wf%n_o)*(wf%n_v) + aibj) = sigma_abij(a, c, i, j)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call add_1324_to_1234(one, sigma_abij, sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+!     Overwrite the incoming doubles b vector
+!
+      call packin(b(wf%n_t1+1:wf%n_t1+wf%n_t2), sigma_aibj, wf%n_v*wf%n_o)
+!
+      call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call jacobian_transpose_timer%freeze()
       call jacobian_transpose_timer%switch_off()
@@ -1641,8 +1590,7 @@ contains
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
-                  sigma_aibj(a,i,b,j) = sigma_aibj(a,i,b,j) - (wf%fock_ia(i, b))*b_ai(a, j)&
-                                    + two*(wf%fock_ia(j, b))*b_ai(a, i)
+                  sigma_aibj(a,i,b,j) = -(wf%fock_ia(i, b))*b_ai(a, j) + two*(wf%fock_ia(j, b))*b_ai(a, i)
 !
                enddo
             enddo
@@ -2887,7 +2835,7 @@ contains
                   (wf%n_v)**2, &
                   g_klij,      & ! g_kl_ij
                   (wf%n_o)**2, &
-                  one,         &
+                  zero,        &
                   sigma_abij,  &
                   (wf%n_v)**2)
 !
