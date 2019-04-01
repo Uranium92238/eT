@@ -1246,7 +1246,7 @@ contains
 !!
 !!    D_ia += sum_bj u^{ab}_ij tbar_bj 
 !!
-!!    u^{ab}_ij = 2t_aibj - t_ajbi
+!!    u^{ab}_ij = 2t_aibj - t_ajbi = u_iabj 
 !!
       implicit none
 !
@@ -1277,7 +1277,7 @@ contains
                   one,                 &
                   u_iabj,              &
                   (wf%n_o)*(wf%n_v),   &
-                  wf%t1,               &
+                  wf%t1bar,            &
                   (wf%n_o)*(wf%n_v),   &
                   zero,                &
                   D_ia,                &
