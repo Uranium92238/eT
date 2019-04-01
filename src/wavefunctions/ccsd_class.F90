@@ -1289,6 +1289,7 @@ contains
 
       call mem%dealloc(u_iabj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
+!$omp parallel do private(a, i)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
@@ -1296,6 +1297,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(D_ia, wf%n_o, wf%n_v)
 !
