@@ -38,7 +38,7 @@ module input_file_class
 !
    contains
 !
-      procedure :: init => init_input_file
+      procedure :: init                                                 => init_input_file
       procedure :: check_for_errors                                     => check_for_errors_input_file
       procedure :: requested_section                                    => requested_section_input_file
       procedure :: requested_keyword_in_section                         => requested_keyword_in_section_input_file

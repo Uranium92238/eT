@@ -33,6 +33,10 @@ module zop_engine_class
 !
       character(len=200) :: operator 
 !
+      integer :: n_components
+!
+      character(len=4), dimension(:), allocatable :: components
+!
    contains
 !
       procedure :: prepare                   => prepare_zop_engine
@@ -40,6 +44,11 @@ module zop_engine_class
       procedure :: cleanup                   => cleanup_zop_engine
 !
       procedure :: read_settings             => read_settings_zop_engine
+!
+      procedure, private :: set_components   => set_components_zop_engine
+      procedure, private :: set_n_components => set_n_components_zop_engine
+!
+      procedure, private :: construct_operator => construct_operator_zop_engine
 !
    end type zop_engine
 !
@@ -59,6 +68,10 @@ contains
 !     Set standards and then read if nonstandard
 !
       call engine%read_settings()
+!
+      call engine%set_n_components()
+!
+      call engine%set_components()
 !
    end subroutine prepare_zop_engine
 !
@@ -92,11 +105,11 @@ contains
       type(diis_cc_gs)              :: cc_gs_solver
       type(davidson_cc_multipliers) :: cc_mult_solver
 !
-      real(dp), dimension(:), allocatable :: t, tbar 
-!
       real(dp), dimension(:,:,:), allocatable :: A 
 !
-      real(dp), dimension(3) :: expectation_value  
+      real(dp), dimension(:), allocatable :: expectation_value  
+!
+      integer :: component
 !
       write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
 !
@@ -133,38 +146,26 @@ contains
 !
 !     Compute expectation value of A = (A_x A_y A_z) for the operator A 
 !
-      write(output%unit, *) 'qui 1'
-      flush(output%unit)
-!
       call wf%initialize_multipliers()
       call wf%read_multipliers()
 !
-      write(output%unit, *) 'qui 2'
-      flush(output%unit)
+!     Determine the number of components in operator and construct it
 !
-      call mem%alloc(A, wf%n_mo, wf%n_mo, 3)
-      call wf%construct_operator(A, engine%operator)
-!
-      write(output%unit, *) 'qui 3'
-      flush(output%unit)
+      call mem%alloc(A, wf%n_mo, wf%n_mo, engine%n_components)
+      call mem%alloc(expectation_value, engine%n_components)
+      call engine%construct_operator(wf, A)
 !
       call wf%initialize_density()
       call wf%construct_density()
 !
-      expectation_value(1) = wf%calculate_expectation_value(A(:,:,1))
-      expectation_value(2) = wf%calculate_expectation_value(A(:,:,2))
-      expectation_value(3) = wf%calculate_expectation_value(A(:,:,3))
+      do component = 1, engine%n_components
 !
-      write(output%unit, '(/t3,a,a)') 'Operator: ', trim(engine%operator)
-!     
-      write(output%unit, '(/t6,a13,f19.12)') 'X component: ', expectation_value(1) 
-      write(output%unit, '(t6,a13,f19.12)')  'Y component: ', expectation_value(2) 
-      write(output%unit, '(t6,a13,f19.12)')  'Z component: ', expectation_value(3) 
+         expectation_value(component) = wf%calculate_expectation_value(A(:,:,component))
 !
-      write(output%unit, *) 'qui 4'
-      flush(output%unit)
+      enddo
 !
-      call mem%dealloc(A, wf%n_mo, wf%n_mo, 3)
+      call mem%dealloc(A, wf%n_mo, wf%n_mo, engine%n_components)
+      call mem%dealloc(expectation_value, engine%n_components)
 !
       call wf%destruct_density()
 !
@@ -183,6 +184,87 @@ contains
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%name_)
 !
    end subroutine cleanup_zop_engine
+!
+!
+   subroutine set_n_components_zop_engine(engine)
+!!
+!!    Set n components 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!    Sets the number of components given the operator
+!!
+      implicit none
+!
+      class(zop_engine), intent(inout) :: engine
+!
+      engine%n_components = 0
+!
+      if (trim(engine%operator) == 'dipole') then
+!
+         engine%n_components = 3
+!
+      else
+!
+         call output%error_msg('could not recognize the operator ' &
+               // trim(engine%operator) //' in zop engine.')
+!
+      endif
+!
+   end subroutine set_n_components_zop_engine
+!
+!
+   subroutine set_components_zop_engine(engine)
+!!
+!!    Set components 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!    Sets the Cartesian components for given the operator
+!!
+      implicit none
+!
+      class(zop_engine), intent(inout) :: engine
+!
+      if (trim(engine%operator) == 'dipole') then
+!
+         engine%components = (/'x   ',&
+                               'y   ',&
+                               'z   '/)
+!
+      else
+!
+         call output%error_msg('could not recognize the operator ' &
+               // trim(engine%operator) //' in zop engine.')
+!
+      endif
+!
+   end subroutine set_components_zop_engine
+!
+!
+   subroutine construct_operator_zop_engine(engine, wf, A)
+!!
+!!    Construct operator
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(zop_engine), intent(in) :: engine
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(engine%n_components, engine%n_components), intent(out) :: A
+!
+      if (trim(engine%operator) == 'dipole') then 
+!
+         call wf%construct_mu(A)
+!
+      else
+!
+         call output%error_msg('Tried to construct unrecognized one-electron integral matrix '&
+                // trim(engine%operator))
+!
+      endif
+!
+   end subroutine construct_operator_zop_engine
 !
 !
 end module zop_engine_class

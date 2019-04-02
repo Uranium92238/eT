@@ -237,6 +237,9 @@ subroutine cc_calculation(system)
 !
    character(len=21) :: cc_wf_name
 !
+   if (.not. input%requested_reference_calculation()) &
+      call output%error_msg('to run CC calculation reference wavefunction must be specified.')
+!
    cc_wf_name = input%get_cc_wf()
 !
    select case (trim(cc_wf_name))
