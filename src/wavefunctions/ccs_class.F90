@@ -198,7 +198,6 @@ module ccs_class
 !
 !     One-electron operators and mean value
 !
-      procedure :: construct_operator                           => construct_operator_ccs 
       procedure :: construct_mu                                 => construct_mu_ccs 
       procedure :: construct_q                                  => construct_q_ccs 
 !
@@ -271,35 +270,6 @@ contains
       write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
 !
    end subroutine cleanup_ccs
-!
-!
-   subroutine construct_operator_ccs(wf, A_pqk, operator)
-!!
-!!    Construct operator 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
-!!
-!!    Constructs the operator A_pqk for p,q = 1, 2, ..., n_mo, and 
-!!    k = x, y, and z. Which operator is given by the string "operator".
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(out) :: A_pqk 
-!
-      character(len=*), intent(in) :: operator 
-!
-      if (trim(operator) == 'dipole') then 
-!
-         call wf%construct_mu(A_pqk)
-!
-      else
-!
-         call output%error_msg('Tried to construct unrecognized one-electron integral matrix ' // trim(operator))
-!
-      endif
-!
-   end subroutine construct_operator_ccs
 !
 !
    subroutine construct_mu_ccs(wf, mu_pqk)
