@@ -203,7 +203,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
 !!    The assumption here is that M is a 2-tensor ordered as xx, xy, xz, yy, yz, and zz,
-!!    where the other elements of the tensor are zero. 
+!!    where the other elements of the tensor are given by symmetry.
 !!
       implicit none 
 !
