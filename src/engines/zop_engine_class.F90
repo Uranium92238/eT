@@ -174,29 +174,6 @@ contains
 !
       call engine%print_summary(expectation_value, nuclear_contribution) 
 !
-   !  write(output%unit, '(/t3,a,a)') 'Operator: ', trim(engine%operator)
-!
-   !  write(output%unit, '(/t3,a,a)') 'Electronic part:'
-!  !  
-
-   !  write(output%unit, '(/t6,a13,f19.12)') 'X component: ', expectation_value(1)
-   !  write(output%unit, '(t6,a13,f19.12)')  'Y component: ', expectation_value(2)
-   !  write(output%unit, '(t6,a13,f19.12)')  'Z component: ', expectation_value(3)
-!
-   !  write(output%unit, '(/t3,a,a)') 'Nuclear part:'
-!  !  
-
-   !  write(output%unit, '(/t6,a13,f19.12)') 'X component: ', nuclear_contribution(1)
-   !  write(output%unit, '(t6,a13,f19.12)')  'Y component: ', nuclear_contribution(2)
-   !  write(output%unit, '(t6,a13,f19.12)')  'Z component: ', nuclear_contribution(3)
-!
-   !  write(output%unit, '(/t3,a,a)') 'Total:'
-!  !  
-
-   !  write(output%unit, '(/t6,a13,f19.12)') 'X component: ', expectation_value(1) + nuclear_contribution(1)
-   !  write(output%unit, '(t6,a13,f19.12)')  'Y component: ', expectation_value(2) + nuclear_contribution(2)
-   !  write(output%unit, '(t6,a13,f19.12)')  'Z component: ', expectation_value(3) + nuclear_contribution(3)
-!
       call mem%dealloc(A, wf%n_mo, wf%n_mo, engine%n_components)
       call mem%dealloc(expectation_value, engine%n_components)
 !
@@ -316,6 +293,10 @@ contains
       if (trim(engine%operator) == 'dipole') then 
 !
          call wf%system%get_nuclear_dipole(nuclear_contribution)
+!
+      elseif (trim(engine%operator) == 'quadrupole') then 
+!
+         call wf%system%get_nuclear_quadrupole(nuclear_contribution)
 !
       else
 !
