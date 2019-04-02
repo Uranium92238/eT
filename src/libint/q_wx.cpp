@@ -79,7 +79,7 @@ void construct_ao_q_wx(double *q_xx, double *q_xy, double *q_xz, double *q_yy, d
     for(auto f1=0; f1!=n1; ++f1){
       for(auto f2=0; f2!=n2; ++f2){
 
-        *(q_xx + n1*f2 + f1) = ints_shellset_xx[f1*n2 + f2]; 
+        *(q_xx + n1*f2 + f1) = -ints_shellset_xx[f1*n2 + f2]; 
 
       }
     }
@@ -102,7 +102,7 @@ void construct_ao_q_wx(double *q_xx, double *q_xy, double *q_xz, double *q_yy, d
     for(auto f1=0; f1!=n1; ++f1){
       for(auto f2=0; f2!=n2; ++f2){
 
-        *(q_xy + n1*f2 + f1) = ints_shellset_xy[f1*n2 + f2]; 
+        *(q_xy + n1*f2 + f1) = -ints_shellset_xy[f1*n2 + f2]; 
 
       }
     }
@@ -125,7 +125,7 @@ void construct_ao_q_wx(double *q_xx, double *q_xy, double *q_xz, double *q_yy, d
     for(auto f1=0; f1!=n1; ++f1){
       for(auto f2=0; f2!=n2; ++f2){
 
-        *(q_xz + n1*f2 + f1) = ints_shellset_xz[f1*n2 + f2]; 
+        *(q_xz + n1*f2 + f1) = -ints_shellset_xz[f1*n2 + f2]; 
 
       }
     }
@@ -148,7 +148,7 @@ void construct_ao_q_wx(double *q_xx, double *q_xy, double *q_xz, double *q_yy, d
     for(auto f1=0; f1!=n1; ++f1){
       for(auto f2=0; f2!=n2; ++f2){
 
-        *(q_yy + n1*f2 + f1) = ints_shellset_yy[f1*n2 + f2]; 
+        *(q_yy + n1*f2 + f1) = -ints_shellset_yy[f1*n2 + f2]; 
 
       }
     }
@@ -171,7 +171,7 @@ void construct_ao_q_wx(double *q_xx, double *q_xy, double *q_xz, double *q_yy, d
     for(auto f1=0; f1!=n1; ++f1){
       for(auto f2=0; f2!=n2; ++f2){
 
-        *(q_yz + n1*f2 + f1) = ints_shellset_yz[f1*n2 + f2]; 
+        *(q_yz + n1*f2 + f1) = -ints_shellset_yz[f1*n2 + f2]; 
 
       }
     }
@@ -194,7 +194,7 @@ void construct_ao_q_wx(double *q_xx, double *q_xy, double *q_xz, double *q_yy, d
     for(auto f1=0; f1!=n1; ++f1){
       for(auto f2=0; f2!=n2; ++f2){
 
-        *(q_zz + n1*f2 + f1) = ints_shellset_zz[f1*n2 + f2]; 
+        *(q_zz + n1*f2 + f1) = -ints_shellset_zz[f1*n2 + f2]; 
 
       }
     }
