@@ -90,7 +90,7 @@ contains
 !
       type(eri_cd)                  :: eri_chol_solver
       type(diis_cc_gs)              :: cc_gs_solver
-      type(diis_cc_multipliers)     :: cc_mult_solver
+      type(davidson_cc_multipliers) :: cc_mult_solver
 !
       real(dp), dimension(:), allocatable :: t, tbar 
 !
