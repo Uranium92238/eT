@@ -122,8 +122,6 @@ contains
 ! 
       real(dp), dimension(:), allocatable :: nuclear_contribution
 !
-      real(dp) :: r2 
-!
       integer :: component
 !
       write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
@@ -211,7 +209,7 @@ contains
 !
       if (trim(engine%operator) /= 'quadrupole') then 
 !
-         call output%error_msg('Cannot remove trace for operator ' // trim(engine%operator))
+         call output%warning_msg('Cannot remove trace for operator ' // trim(engine%operator))
 !
       else 
 !
