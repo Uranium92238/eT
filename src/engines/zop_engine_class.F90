@@ -49,6 +49,9 @@ module zop_engine_class
       procedure, private :: set_n_components => set_n_components_zop_engine
 !
       procedure, private :: construct_operator => construct_operator_zop_engine
+      procedure, private :: calculate_nuclear_contribution => calculate_nuclear_contribution_zop_engine
+!
+      procedure, private :: print_summary => print_summary_zop_engine
 !
    end type zop_engine
 !
@@ -108,6 +111,8 @@ contains
       real(dp), dimension(:,:,:), allocatable :: A 
 !
       real(dp), dimension(:), allocatable :: expectation_value  
+! 
+      real(dp), dimension(:), allocatable :: nuclear_contribution 
 !
       integer :: component
 !
@@ -153,7 +158,10 @@ contains
 !
       call mem%alloc(A, wf%n_mo, wf%n_mo, engine%n_components)
       call mem%alloc(expectation_value, engine%n_components)
+      call mem%alloc(nuclear_contribution, engine%n_components)
+!
       call engine%construct_operator(wf, A)
+      call engine%calculate_nuclear_contribution(wf, nuclear_contribution)
 !
       call wf%initialize_density()
       call wf%construct_density()
@@ -163,6 +171,31 @@ contains
          expectation_value(component) = wf%calculate_expectation_value(A(:,:,component))
 !
       enddo
+!
+      call engine%print_summary(expectation_value, nuclear_contribution) 
+!
+   !  write(output%unit, '(/t3,a,a)') 'Operator: ', trim(engine%operator)
+!
+   !  write(output%unit, '(/t3,a,a)') 'Electronic part:'
+!  !  
+
+   !  write(output%unit, '(/t6,a13,f19.12)') 'X component: ', expectation_value(1)
+   !  write(output%unit, '(t6,a13,f19.12)')  'Y component: ', expectation_value(2)
+   !  write(output%unit, '(t6,a13,f19.12)')  'Z component: ', expectation_value(3)
+!
+   !  write(output%unit, '(/t3,a,a)') 'Nuclear part:'
+!  !  
+
+   !  write(output%unit, '(/t6,a13,f19.12)') 'X component: ', nuclear_contribution(1)
+   !  write(output%unit, '(t6,a13,f19.12)')  'Y component: ', nuclear_contribution(2)
+   !  write(output%unit, '(t6,a13,f19.12)')  'Z component: ', nuclear_contribution(3)
+!
+   !  write(output%unit, '(/t3,a,a)') 'Total:'
+!  !  
+
+   !  write(output%unit, '(/t6,a13,f19.12)') 'X component: ', expectation_value(1) + nuclear_contribution(1)
+   !  write(output%unit, '(t6,a13,f19.12)')  'Y component: ', expectation_value(2) + nuclear_contribution(2)
+   !  write(output%unit, '(t6,a13,f19.12)')  'Z component: ', expectation_value(3) + nuclear_contribution(3)
 !
       call mem%dealloc(A, wf%n_mo, wf%n_mo, engine%n_components)
       call mem%dealloc(expectation_value, engine%n_components)
@@ -216,7 +249,7 @@ contains
    subroutine set_components_zop_engine(engine)
 !!
 !!    Set components 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
 !!
 !!    Sets the Cartesian components for given the operator
 !!
@@ -243,7 +276,7 @@ contains
    subroutine construct_operator_zop_engine(engine, wf, A)
 !!
 !!    Construct operator
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
 !!
       implicit none
 !
@@ -251,7 +284,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(engine%n_components, engine%n_components), intent(out) :: A
+      real(dp), dimension(wf%n_mo, wf%n_mo, engine%n_components), intent(out) :: A
 !
       if (trim(engine%operator) == 'dipole') then 
 !
@@ -265,6 +298,65 @@ contains
       endif
 !
    end subroutine construct_operator_zop_engine
+!
+!
+   subroutine calculate_nuclear_contribution_zop_engine(engine, wf, nuclear_contribution)
+!!
+!!    Calculate nuclear contribution
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
+!!
+      implicit none
+!
+      class(zop_engine), intent(in) :: engine
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(engine%n_components), intent(out) :: nuclear_contribution
+!
+      if (trim(engine%operator) == 'dipole') then 
+!
+         call wf%system%get_nuclear_dipole(nuclear_contribution)
+!
+      else
+!
+         call output%error_msg('Tried to construct nuclear contribution for unknown operator '&
+                // trim(engine%operator))
+!
+      endif
+!
+   end subroutine calculate_nuclear_contribution_zop_engine
+!
+!
+   subroutine print_summary_zop_engine(engine, electronic, nuclear)
+!!
+!!    Print summary
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
+!!
+      implicit none
+!
+      class(zop_engine), intent(in) :: engine
+!
+      real(dp), dimension(engine%n_components), intent(in) :: electronic
+      real(dp), dimension(engine%n_components), intent(in) :: nuclear
+!
+      integer :: component
+!
+      write(output%unit, '(/t3,a,a)') 'Operator: ', trim(engine%operator)
+!
+      write(output%unit, '(/t3, a)') 'Cart. comp.  Electronic         Nuclear             Total           '
+      write(output%unit, '(t3, a)')  '--------------------------------------------------------------------'
+!
+      do component = 1, engine%n_components
+!
+         write(output%unit, '(t6, a4, 3x, f19.12, f19.12, f19.12)') engine%components(component), &
+               electronic(component), nuclear(component), electronic(component) + nuclear(component)
+!
+      enddo
+!
+      write(output%unit, '(t3, a)')  '--------------------------------------------------------------------'
+      flush(output%unit)
+!
+   end subroutine print_summary_zop_engine
 !
 !
 end module zop_engine_class
