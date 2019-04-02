@@ -122,8 +122,6 @@ contains
 ! 
       real(dp), dimension(:), allocatable :: nuclear_contribution
 !
-      real(dp) :: r2 
-!
       integer :: component
 !
       write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
@@ -183,15 +181,6 @@ contains
       enddo
 !
       if (engine%traceless) call engine%remove_trace(expectation_value)
-!xx, xy, xz, yy, yz, and zz.
-      r2 = expectation_value(1) + expectation_value(4) + expectation_value(6)
-!
-      write(output%unit, *) 'xx:', (three*expectation_value(1) - r2)/two
-      write(output%unit, *) 'yy:', (three*expectation_value(4) - r2)/two
-      write(output%unit, *) 'zz:', (three*expectation_value(6) - r2)/two
-      write(output%unit, *) 'xy:', (three*expectation_value(2))/two
-      write(output%unit, *) 'xz:', (three*expectation_value(3))/two
-      write(output%unit, *) 'yz:', (three*expectation_value(5))/two
 !
       call engine%print_summary(expectation_value, nuclear_contribution) 
 !
@@ -220,7 +209,7 @@ contains
 !
       if (trim(engine%operator) /= 'quadrupole') then 
 !
-         call output%error_msg('Cannot remove trace for operator ' // trim(engine%operator))
+         call output%warning_msg('Cannot remove trace for operator ' // trim(engine%operator))
 !
       else 
 !
