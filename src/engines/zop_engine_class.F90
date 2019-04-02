@@ -180,7 +180,10 @@ contains
 !
       enddo
 !
-      if (engine%traceless) call engine%remove_trace(expectation_value)
+      if (engine%traceless) then
+         call engine%remove_trace(expectation_value)
+         call engine%remove_trace(nuclear_contribution)
+      endif
 !
       call engine%print_summary(expectation_value, nuclear_contribution) 
 !
