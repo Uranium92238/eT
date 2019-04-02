@@ -35,6 +35,8 @@ module zop_engine_class
 !
       integer :: n_components
 !
+      logical :: traceless 
+!
       character(len=4), dimension(:), allocatable :: components
 !
    contains
@@ -50,6 +52,8 @@ module zop_engine_class
 !
       procedure, private :: construct_operator => construct_operator_zop_engine
       procedure, private :: calculate_nuclear_contribution => calculate_nuclear_contribution_zop_engine
+!
+      procedure, private :: remove_trace => remove_trace_zop_engine
 !
       procedure, private :: print_summary => print_summary_zop_engine
 !
@@ -70,6 +74,8 @@ contains
 !
 !     Set standards and then read if nonstandard
 !
+      engine%traceless = .false.
+!
       call engine%read_settings()
 !
       call engine%set_n_components()
@@ -89,6 +95,8 @@ contains
       class(zop_engine) :: engine 
 !
       call input%get_keyword_in_section('operator', 'cc zop', engine%operator)
+!
+      if (input%requested_keyword_in_section('traceless','cc zop')) engine%traceless = .true.
 !
    end subroutine read_settings_zop_engine
 !
@@ -210,8 +218,6 @@ contains
 !
       real(dp) :: trace_
 !
-      real(dp), dimension(engine%n_components) :: temp_M 
-!
       if (trim(engine%operator) /= 'quadrupole') then 
 !
          call output%error_msg('Cannot remove trace for operator ' // trim(engine%operator))
@@ -220,7 +226,13 @@ contains
 !
          trace_ = M(1) + M(4) + M(6)
 !
-         
+         M(1) = (three*M(1) - trace_)/two
+         M(4) = (three*M(4) - trace_)/two
+         M(6) = (three*M(6) - trace_)/two
+!
+         M(2) = (three*M(2))/two
+         M(3) = (three*M(3))/two
+         M(5) = (three*M(5))/two
 !
       endif 
 !
