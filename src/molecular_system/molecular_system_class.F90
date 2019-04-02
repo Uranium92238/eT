@@ -76,6 +76,7 @@ module molecular_system_class
       procedure :: get_nuclear_repulsion   => get_nuclear_repulsion_molecular_system
       procedure :: get_n_electrons         => get_n_electrons_molecular_system
       procedure :: get_nuclear_dipole      => get_nuclear_dipole_molecular_system
+      procedure :: get_nuclear_quadrupole  => get_nuclear_quadrupole_molecular_system
 !
       procedure :: get_n_aos               => get_n_aos_molecular_system
       procedure :: get_n_shells            => get_n_shells_molecular_system
@@ -1229,6 +1230,35 @@ contains
       enddo
 !
    end subroutine get_nuclear_dipole_molecular_system
+!
+!
+   subroutine get_nuclear_quadrupole_molecular_system(molecule, Q_k)
+!!
+!!    Get nuclear dipole moment 
+!!    Written by Eirik F. Kjønstad, Apr 2019 
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      real(dp), dimension(6), intent(out) :: Q_k 
+!
+      integer :: j 
+!
+      Q_k = zero 
+!
+      do j = 1, molecule%n_atoms 
+!
+         Q_k(1) = Q_k(1) + (molecule%atoms(j)%x**2)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+         Q_k(2) = Q_k(2) + (molecule%atoms(j)%x*molecule%atoms(j)%y)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+         Q_k(3) = Q_k(3) + (molecule%atoms(j)%x*molecule%atoms(j)%z)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+         Q_k(4) = Q_k(4) + (molecule%atoms(j)%y**2)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+         Q_k(5) = Q_k(5) + (molecule%atoms(j)%y*molecule%atoms(j)%z)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+         Q_k(6) = Q_k(6) + (molecule%atoms(j)%z**2)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+!
+      enddo
+!
+   end subroutine get_nuclear_quadrupole_molecular_system
 !
 !
 end module molecular_system_class
