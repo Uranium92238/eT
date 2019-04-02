@@ -633,7 +633,7 @@ contains
       character(len=*), intent(in) :: keyword 
       character(len=*), intent(in) :: section  
 !
-      integer, intent(out) :: keyword_value 
+      integer(i6), intent(out) :: keyword_value 
 !
       character(len=200) :: keyword_value_string
 !
@@ -701,7 +701,7 @@ contains
       character(len=*), intent(in) :: keyword 
       character(len=*), intent(in) :: section  
 !
-      integer, intent(out) :: keyword_value 
+      integer(i6), intent(out) :: keyword_value 
 !
       character(len=200) :: keyword_value_string
 !
