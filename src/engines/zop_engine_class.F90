@@ -35,6 +35,8 @@ module zop_engine_class
 !
       integer :: n_components
 !
+      logical :: traceless 
+!
       character(len=4), dimension(:), allocatable :: components
 !
    contains
@@ -50,6 +52,8 @@ module zop_engine_class
 !
       procedure, private :: construct_operator => construct_operator_zop_engine
       procedure, private :: calculate_nuclear_contribution => calculate_nuclear_contribution_zop_engine
+!
+      procedure, private :: remove_trace => remove_trace_zop_engine
 !
       procedure, private :: print_summary => print_summary_zop_engine
 !
@@ -70,6 +74,8 @@ contains
 !
 !     Set standards and then read if nonstandard
 !
+      engine%traceless = .false.
+!
       call engine%read_settings()
 !
       call engine%set_n_components()
@@ -89,6 +95,8 @@ contains
       class(zop_engine) :: engine 
 !
       call input%get_keyword_in_section('operator', 'cc zop', engine%operator)
+!
+      if (input%requested_keyword_in_section('traceless','cc zop')) engine%traceless = .true.
 !
    end subroutine read_settings_zop_engine
 !
@@ -112,7 +120,9 @@ contains
 !
       real(dp), dimension(:), allocatable :: expectation_value  
 ! 
-      real(dp), dimension(:), allocatable :: nuclear_contribution 
+      real(dp), dimension(:), allocatable :: nuclear_contribution
+!
+      real(dp) :: r2 
 !
       integer :: component
 !
@@ -172,6 +182,8 @@ contains
 !
       enddo
 !
+      if (engine%traceless) call engine%remove_trace(expectation_value)
+!
       call engine%print_summary(expectation_value, nuclear_contribution) 
 !
       call mem%dealloc(A, wf%n_mo, wf%n_mo, engine%n_components)
@@ -180,6 +192,42 @@ contains
       call wf%destruct_density()
 !
    end subroutine run_zop_engine
+!
+!
+   subroutine remove_trace_zop_engine(engine, M)
+!!
+!!    Remove trace 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    The assumption here is that M is a 2-tensor ordered as xx, xy, xz, yy, yz, and zz.
+!!
+      implicit none 
+!
+      class(zop_engine), intent(in) :: engine 
+!
+      real(dp), dimension(engine%n_components), intent(inout) :: M
+!
+      real(dp) :: trace_
+!
+      if (trim(engine%operator) /= 'quadrupole') then 
+!
+         call output%error_msg('Cannot remove trace for operator ' // trim(engine%operator))
+!
+      else 
+!
+         trace_ = M(1) + M(4) + M(6)
+!
+         M(1) = (three*M(1) - trace_)/two
+         M(4) = (three*M(4) - trace_)/two
+         M(6) = (three*M(6) - trace_)/two
+!
+         M(2) = (three*M(2))/two
+         M(3) = (three*M(3))/two
+         M(5) = (three*M(5))/two
+!
+      endif 
+!
+   end subroutine remove_trace_zop_engine
 !
 !
    subroutine cleanup_zop_engine(engine)
@@ -213,6 +261,10 @@ contains
 !
          engine%n_components = 3
 !
+      elseif (trim(engine%operator) == 'quadrupole') then 
+!
+         engine%n_components = 6
+!
       else
 !
          call output%error_msg('could not recognize the operator ' &
@@ -239,6 +291,15 @@ contains
          engine%components = (/'x   ',&
                                'y   ',&
                                'z   '/)
+!
+      elseif (trim(engine%operator) == 'quadrupole') then 
+!
+         engine%components = (/ 'xx  ',   &
+                                'xy  ',   & 
+                                'xz  ',   & 
+                                'yy  ',   & 
+                                'yz  ',   & 
+                                'zz  '    /)
 !
       else
 !
@@ -267,7 +328,11 @@ contains
 !
          call wf%construct_mu(A)
 !
-      else
+      elseif (trim(engine%operator) == 'quadrupole') then 
+!
+         call wf%construct_q(A)
+!
+      else      
 !
          call output%error_msg('Tried to construct unrecognized one-electron integral matrix '&
                 // trim(engine%operator))
