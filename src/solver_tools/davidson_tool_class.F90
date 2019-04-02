@@ -809,50 +809,27 @@ contains
 !
       class(davidson_tool) :: davidson 
 !
-      real(dp), dimension(:), allocatable :: X, c_i
+      real(dp), dimension(:,:), allocatable :: X
 !
-      integer :: solution, i
+      integer :: solution
 !
-      real(dp) :: projection_of_X_on_c_i, ddot, norm
-!
-      call disk%open_file(davidson%trials, 'readwrite')
-      call disk%open_file(davidson%X, 'read')
-!
-      rewind(davidson%trials%unit)
-!
-      call mem%alloc(X, davidson%n_parameters)
-      call mem%alloc(c_i, davidson%n_parameters)
+      call mem%alloc(X, davidson%n_parameters, davidson%n_solutions)
 !
       do solution = 1, davidson%n_solutions
 !
-         call davidson%construct_X(X, solution)
-!
-         rewind(davidson%trials%unit)
-!
-         do i = 1, solution - 1
-!
-            read(davidson%trials%unit) c_i
-!
-            projection_of_X_on_c_i = ddot(davidson%n_parameters, c_i, 1, X, 1)
-!
-            call daxpy(davidson%n_parameters, - projection_of_X_on_c_i, c_i, 1, X, 1)
-!
-         enddo
-!
-         norm = sqrt(ddot(davidson%n_parameters, X, 1, X, 1))
-         call dscal(davidson%n_parameters, one/norm, X, 1)
-!
-         write(davidson%trials%unit) X
+         call davidson%construct_X(X(:,solution), solution)
 !
       enddo
 !
-      call mem%dealloc(X, davidson%n_parameters)
-      call mem%dealloc(c_i, davidson%n_parameters)
+      call davidson%write_trial(X(:,1), 'rewind')
 !
-      rewind(davidson%trials%unit)
+      do solution = 2, davidson%n_solutions
 !
-      call disk%close_file(davidson%trials)
-      call disk%close_file(davidson%X)
+         call davidson%write_trial(X(:,solution))
+!
+      enddo
+!
+      call mem%dealloc(X, davidson%n_parameters, davidson%n_solutions)
 !
 !     Delete transformed vectors file, if it is there
 !
@@ -865,6 +842,8 @@ contains
 !
       davidson%dim_red = davidson%n_solutions
       davidson%n_new_trials = davidson%n_solutions
+!
+      call davidson%orthonormalize_trial_vecs()
 !
    end subroutine set_trials_to_solutions_davidson_tool
 !
