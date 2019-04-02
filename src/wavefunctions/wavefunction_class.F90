@@ -63,6 +63,7 @@ module wavefunction_class
       procedure :: get_ao_h_wx                     => get_ao_h_wx_wavefunction
       procedure :: get_ao_s_wx                     => get_ao_s_wx_wavefunction
       procedure :: get_ao_mu_wx                    => get_ao_mu_wx_wavefunction
+      procedure :: get_ao_q_wx                     => get_ao_q_wx_wavefunction
 !
       procedure :: mo_transform                    => mo_transform_wavefunction
       procedure :: mo_transform_and_save_h         => mo_transform_and_save_h_wavefunction
@@ -414,6 +415,89 @@ contains
       enddo
 !
    end subroutine get_ao_mu_wx_wavefunction
+!
+!
+   subroutine get_ao_q_wx_wavefunction(wf, q_xx, q_xy, q_xz, q_yy, q_yz, q_zz)
+!!
+!!    Get AO q
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Uses the integral tool to construct the quadrupole integrals.
+!!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: q_xx
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: q_xy
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: q_xz
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: q_yy
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: q_yz
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: q_zz
+!
+      type(interval) :: A_interval, B_interval
+!
+      integer :: x, y, A, B
+!
+      real(dp), dimension(:,:), allocatable :: q_AB_xx 
+      real(dp), dimension(:,:), allocatable :: q_AB_xy 
+      real(dp), dimension(:,:), allocatable :: q_AB_xz 
+      real(dp), dimension(:,:), allocatable :: q_AB_yy 
+      real(dp), dimension(:,:), allocatable :: q_AB_yz 
+      real(dp), dimension(:,:), allocatable :: q_AB_zz 
+!
+      do A = 1, wf%system%n_s
+!
+         A_interval = wf%system%shell_limits(A)
+!
+         do B = 1, A
+!
+            B_interval = wf%system%shell_limits(B)
+!
+            call mem%alloc(q_AB_xx, A_interval%size, B_interval%size)
+            call mem%alloc(q_AB_xy, A_interval%size, B_interval%size)
+            call mem%alloc(q_AB_xz, A_interval%size, B_interval%size)
+            call mem%alloc(q_AB_yy, A_interval%size, B_interval%size)
+            call mem%alloc(q_AB_yz, A_interval%size, B_interval%size)
+            call mem%alloc(q_AB_zz, A_interval%size, B_interval%size)
+!
+            call wf%system%ao_integrals%construct_ao_q_wx(q_AB_xx, q_AB_xy, q_AB_xz, q_AB_yy, q_AB_yz, q_AB_zz, A, B)
+!
+             do x = 1, A_interval%size
+                do y = 1, B_interval%size
+!
+                   q_xx(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_xx(x, y)
+                   q_xx(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_xx(x, y)
+!
+                   q_xy(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_xy(x, y)
+                   q_xy(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_xy(x, y)
+!
+                   q_xz(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_xz(x, y)
+                   q_xz(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_xz(x, y)
+!
+                   q_yy(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_yy(x, y)
+                   q_yy(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_yy(x, y)
+!
+                   q_yz(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_yz(x, y)
+                   q_yz(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_yz(x, y)
+!
+                   q_zz(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_zz(x, y)
+                   q_zz(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_zz(x, y)
+!
+                enddo
+             enddo
+!
+            call mem%dealloc(q_AB_xx, A_interval%size, B_interval%size)
+            call mem%dealloc(q_AB_xy, A_interval%size, B_interval%size)
+            call mem%dealloc(q_AB_xz, A_interval%size, B_interval%size)
+            call mem%dealloc(q_AB_yy, A_interval%size, B_interval%size)
+            call mem%dealloc(q_AB_yz, A_interval%size, B_interval%size)
+            call mem%dealloc(q_AB_zz, A_interval%size, B_interval%size)
+!
+         enddo
+      enddo
+!
+   end subroutine get_ao_q_wx_wavefunction
 !
 !
    subroutine save_orbital_coefficients_wavefunction(wf)

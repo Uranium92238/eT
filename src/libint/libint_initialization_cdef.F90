@@ -89,6 +89,13 @@ interface
 !
    end subroutine initialize_dipole_c
 !
+   subroutine initialize_quadrupole_c() bind(C, name='initialize_quadrupole')
+!
+      use iso_c_binding
+      implicit none
+!
+   end subroutine initialize_quadrupole_c
+!
    subroutine initialize_nuclear_c() bind(C, name='initialize_nuclear')
 !
       use iso_c_binding

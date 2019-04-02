@@ -200,6 +200,7 @@ module ccs_class
 !
       procedure :: construct_operator                           => construct_operator_ccs 
       procedure :: construct_mu                                 => construct_mu_ccs 
+      procedure :: construct_q                                  => construct_q_ccs 
 !
       procedure :: calculate_expectation_value                  => calculate_expectation_value_ccs
 !
@@ -301,7 +302,7 @@ contains
    end subroutine construct_operator_ccs
 !
 !
-   subroutine construct_mu_ccs(wf, A_pqk)
+   subroutine construct_mu_ccs(wf, mu_pqk)
 !!
 !!    Construct mu
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -312,32 +313,77 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(out) :: A_pqk 
+      real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(inout) :: mu_pqk 
 !
-      real(dp), dimension(:,:,:), allocatable :: A_wxk
+      real(dp), dimension(:,:,:), allocatable :: mu_wxk
 !
 !     Get the AO integrals from Libint 
 !
-      call mem%alloc(A_wxk, wf%n_ao, wf%n_ao, 3)
+      call mem%alloc(mu_wxk, wf%n_ao, wf%n_ao, 3)
 !
       call initialize_dipole()
-      call wf%get_ao_mu_wx(A_wxk(:,:,1), A_wxk(:,:,2), A_wxk(:,:,3))
+      call wf%get_ao_mu_wx(mu_wxk(:,:,1), mu_wxk(:,:,2), mu_wxk(:,:,3))
 !
 !     MO transform the AO integrals 
 !
-      call wf%mo_transform(A_wxk(:,:,1), A_pqk(:,:,1))
-      call wf%mo_transform(A_wxk(:,:,2), A_pqk(:,:,2))
-      call wf%mo_transform(A_wxk(:,:,3), A_pqk(:,:,3))
+      call wf%mo_transform(mu_wxk(:,:,1), mu_pqk(:,:,1))
+      call wf%mo_transform(mu_wxk(:,:,2), mu_pqk(:,:,2))
+      call wf%mo_transform(mu_wxk(:,:,3), mu_pqk(:,:,3))
 !
-      call mem%dealloc(A_wxk, wf%n_ao, wf%n_ao, 3)
+      call mem%dealloc(mu_wxk, wf%n_ao, wf%n_ao, 3)
 !
 !     T1 transform the MO integrals 
 !
-      call wf%t1_transform(A_pqk(:,:,1))
-      call wf%t1_transform(A_pqk(:,:,2))
-      call wf%t1_transform(A_pqk(:,:,3))
+      call wf%t1_transform(mu_pqk(:,:,1))
+      call wf%t1_transform(mu_pqk(:,:,2))
+      call wf%t1_transform(mu_pqk(:,:,3))
 !
    end subroutine construct_mu_ccs
+!
+!
+   subroutine construct_q_ccs(wf, q_pqk)
+!!
+!!    Construct q
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!    
+      use libint_initialization
+!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo, 6), intent(inout) :: q_pqk 
+!
+      real(dp), dimension(:,:,:), allocatable :: q_wxk
+!
+!     Get the AO integrals from Libint 
+!
+      call mem%alloc(q_wxk, wf%n_ao, wf%n_ao, 6)
+!
+      call initialize_quadrupole()
+      call wf%get_ao_q_wx(q_wxk(:,:,1), q_wxk(:,:,2), q_wxk(:,:,3), q_wxk(:,:,4), q_wxk(:,:,5), q_wxk(:,:,6))
+!
+!     MO transform the AO integrals 
+!
+      call wf%mo_transform(q_wxk(:,:,1), q_pqk(:,:,1))
+      call wf%mo_transform(q_wxk(:,:,2), q_pqk(:,:,2))
+      call wf%mo_transform(q_wxk(:,:,3), q_pqk(:,:,3))
+      call wf%mo_transform(q_wxk(:,:,4), q_pqk(:,:,4))
+      call wf%mo_transform(q_wxk(:,:,5), q_pqk(:,:,5))
+      call wf%mo_transform(q_wxk(:,:,6), q_pqk(:,:,6))
+!
+      call mem%dealloc(q_wxk, wf%n_ao, wf%n_ao, 6)
+!
+!     T1 transform the MO integrals 
+!
+      call wf%t1_transform(q_pqk(:,:,1))
+      call wf%t1_transform(q_pqk(:,:,2))
+      call wf%t1_transform(q_pqk(:,:,3))
+      call wf%t1_transform(q_pqk(:,:,4))
+      call wf%t1_transform(q_pqk(:,:,5))
+      call wf%t1_transform(q_pqk(:,:,6))
+!
+   end subroutine construct_q_ccs
 !
 !
    subroutine initialize_files_ccs(wf)
