@@ -1134,7 +1134,7 @@ contains
 !!    One electron density oo
 !!    Written by Sarai D. Folkestad
 !!
-!!    D_ij -= sum_abk tbar_ak,bj t_ak,bi
+!!    D_ij -= sum_abk t_akb,i tbar_akb,j 
 !!
       implicit none
 !
@@ -1189,7 +1189,7 @@ contains
 !!    One electron density oo
 !!    Written by Sarai D. Folkestad
 !!
-!!    D_ab += sum_abk tbar_aj,ci t_bj,ci
+!!    D_ab += sum_jci tbar_a,jci t_b,jci
 !!
       implicit none
 !
@@ -1244,7 +1244,7 @@ contains
 !!    One electron density vo
 !!    Written by Sarai D. Folkestad
 !!
-!!    D_ia += sum_bj u^{ab}_ij tbar_bj 
+!!    D_ia += sum_bj u^{ab}_ij tbar_bj = sum_bj u_ia,bj tbar_bj 
 !!
 !!    u^{ab}_ij = 2t_aibj - t_ajbi = u_iabj 
 !!

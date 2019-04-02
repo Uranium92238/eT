@@ -25,14 +25,13 @@ module zop_engine_class
    use abstract_engine_class
    use diis_cc_gs_class
    use davidson_cc_multipliers_class
+   use diis_cc_multipliers_class
    use ccs_class
    use eri_cd_class
 !
    type, extends(abstract_engine) :: zop_engine
 !
-      character(len=200) :: algorithm
       character(len=200) :: operator 
-      character(len=200) :: es_type 
 !
    contains
 !
@@ -59,9 +58,6 @@ contains
 !
 !     Set standards and then read if nonstandard
 !
-      engine%algorithm  = 'davidson'
-      engine%es_type    = 'valence'
-!
       call engine%read_settings()
 !
    end subroutine prepare_zop_engine
@@ -76,7 +72,6 @@ contains
 !
       class(zop_engine) :: engine 
 !
-      call input%get_keyword_in_section('algorithm', 'solver cc es', engine%algorithm)
       call input%get_keyword_in_section('operator', 'cc zop', engine%operator)
 !
    end subroutine read_settings_zop_engine
@@ -95,7 +90,9 @@ contains
 !
       type(eri_cd)                  :: eri_chol_solver
       type(diis_cc_gs)              :: cc_gs_solver
-      type(davidson_cc_multipliers) :: cc_mult_solver
+      type(diis_cc_multipliers)     :: cc_mult_solver
+!
+      real(dp), dimension(:), allocatable :: t, tbar 
 !
       real(dp), dimension(:,:,:), allocatable :: A 
 !
@@ -124,6 +121,9 @@ contains
 !
 !     Multiplier solution 
 !
+      call wf%initialize_amplitudes()
+      call wf%read_amplitudes()
+!
       call wf%integrals%write_t1_cholesky(wf%t1)
       call wf%integrals%can_we_keep_g_pqrs_t1()
 !
@@ -139,12 +139,6 @@ contains
       call wf%initialize_multipliers()
       call wf%read_multipliers()
 !
-      call wf%initialize_amplitudes()
-      call wf%read_amplitudes()
-!
-      call wf%initialize_density()
-      call wf%construct_density()
-!
       write(output%unit, *) 'qui 2'
       flush(output%unit)
 !
@@ -154,20 +148,23 @@ contains
       write(output%unit, *) 'qui 3'
       flush(output%unit)
 !
+      call wf%initialize_density()
+      call wf%construct_density()
+!
       expectation_value(1) = wf%calculate_expectation_value(A(:,:,1))
       expectation_value(2) = wf%calculate_expectation_value(A(:,:,2))
       expectation_value(3) = wf%calculate_expectation_value(A(:,:,3))
-!
-      write(output%unit, *) 'qui 4'
-      flush(output%unit)
-!
-      call mem%dealloc(A, wf%n_mo, wf%n_mo, 3)
 !
       write(output%unit, '(/t3,a,a)') 'Operator: ', trim(engine%operator)
 !     
       write(output%unit, '(/t6,a13,f19.12)') 'X component: ', expectation_value(1) 
       write(output%unit, '(t6,a13,f19.12)')  'Y component: ', expectation_value(2) 
       write(output%unit, '(t6,a13,f19.12)')  'Z component: ', expectation_value(3) 
+!
+      write(output%unit, *) 'qui 4'
+      flush(output%unit)
+!
+      call mem%dealloc(A, wf%n_mo, wf%n_mo, 3)
 !
       call wf%destruct_density()
 !
