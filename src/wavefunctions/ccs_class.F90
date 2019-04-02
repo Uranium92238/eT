@@ -312,7 +312,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(inout) :: A_pqk 
+      real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(out) :: A_pqk 
 !
       real(dp), dimension(:,:,:), allocatable :: A_wxk
 !
@@ -3341,7 +3341,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes) :: x
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: x
 !
       character(len=1) :: tag
 !

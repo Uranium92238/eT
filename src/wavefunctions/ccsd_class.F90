@@ -918,8 +918,11 @@ contains
 !
       class(ccsd), intent(inout) :: wf 
 !
-      call disk%open_file(wf%t1bar_file, 'write', 'rewind')
-      call disk%open_file(wf%t2bar_file, 'write', 'rewind')
+      call disk%open_file(wf%t1bar_file, 'write')
+      call disk%open_file(wf%t2bar_file, 'write')
+!
+      rewind(wf%t1bar_file%unit)
+      rewind(wf%t2bar_file%unit)
 !
       write(wf%t1bar_file%unit) wf%t1bar  
       write(wf%t2bar_file%unit) wf%t2bar
@@ -941,8 +944,11 @@ contains
 !
       call wf%is_restart_safe('ground state')
 !
-      call disk%open_file(wf%t1bar_file, 'read', 'rewind')
-      call disk%open_file(wf%t2bar_file, 'read', 'rewind')
+      call disk%open_file(wf%t1bar_file, 'read')
+      call disk%open_file(wf%t2bar_file, 'read')
+!
+      rewind(wf%t1bar_file%unit)
+      rewind(wf%t2bar_file%unit)
 !
       read(wf%t1bar_file%unit) wf%t1bar  
       read(wf%t2bar_file%unit) wf%t2bar
@@ -1009,7 +1015,7 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes) :: x
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: x
 !
       character(len=1) :: tag
 !
@@ -1031,7 +1037,7 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_t2) :: x2
+      real(dp), dimension(wf%n_t2), intent(in) :: x2
       character(len=1), intent(in)    :: tag
 !
       real(dp), dimension(:), allocatable :: abs_x2

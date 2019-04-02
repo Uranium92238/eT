@@ -358,7 +358,7 @@ contains
 !
       call mem%alloc(X, wf%n_gs_amplitudes)
 !
-      call davidson%construct_X(X, 1)         
+      call davidson%construct_X(X, 1)
 !
       call wf%print_dominant_x_amplitudes(X, 'r')
 !
