@@ -112,7 +112,9 @@ contains
 !
       real(dp), dimension(:), allocatable :: expectation_value  
 ! 
-      real(dp), dimension(:), allocatable :: nuclear_contribution 
+      real(dp), dimension(:), allocatable :: nuclear_contribution
+!
+      real(dp) :: r2 
 !
       integer :: component
 !
@@ -172,30 +174,18 @@ contains
 !
       enddo
 !
+      if (engine%traceless) call engine%remove_trace(expectation_value)
+!xx, xy, xz, yy, yz, and zz.
+      r2 = expectation_value(1) + expectation_value(4) + expectation_value(6)
+!
+      write(output%unit, *) 'xx:', (three*expectation_value(1) - r2)/two
+      write(output%unit, *) 'yy:', (three*expectation_value(4) - r2)/two
+      write(output%unit, *) 'zz:', (three*expectation_value(6) - r2)/two
+      write(output%unit, *) 'xy:', (three*expectation_value(2))/two
+      write(output%unit, *) 'xz:', (three*expectation_value(3))/two
+      write(output%unit, *) 'yz:', (three*expectation_value(5))/two
+!
       call engine%print_summary(expectation_value, nuclear_contribution) 
-!
-   !  write(output%unit, '(/t3,a,a)') 'Operator: ', trim(engine%operator)
-!
-   !  write(output%unit, '(/t3,a,a)') 'Electronic part:'
-!  !  
-
-   !  write(output%unit, '(/t6,a13,f19.12)') 'X component: ', expectation_value(1)
-   !  write(output%unit, '(t6,a13,f19.12)')  'Y component: ', expectation_value(2)
-   !  write(output%unit, '(t6,a13,f19.12)')  'Z component: ', expectation_value(3)
-!
-   !  write(output%unit, '(/t3,a,a)') 'Nuclear part:'
-!  !  
-
-   !  write(output%unit, '(/t6,a13,f19.12)') 'X component: ', nuclear_contribution(1)
-   !  write(output%unit, '(t6,a13,f19.12)')  'Y component: ', nuclear_contribution(2)
-   !  write(output%unit, '(t6,a13,f19.12)')  'Z component: ', nuclear_contribution(3)
-!
-   !  write(output%unit, '(/t3,a,a)') 'Total:'
-!  !  
-
-   !  write(output%unit, '(/t6,a13,f19.12)') 'X component: ', expectation_value(1) + nuclear_contribution(1)
-   !  write(output%unit, '(t6,a13,f19.12)')  'Y component: ', expectation_value(2) + nuclear_contribution(2)
-   !  write(output%unit, '(t6,a13,f19.12)')  'Z component: ', expectation_value(3) + nuclear_contribution(3)
 !
       call mem%dealloc(A, wf%n_mo, wf%n_mo, engine%n_components)
       call mem%dealloc(expectation_value, engine%n_components)
@@ -203,6 +193,38 @@ contains
       call wf%destruct_density()
 !
    end subroutine run_zop_engine
+!
+!
+   subroutine remove_trace_zop_engine(engine, M)
+!!
+!!    Remove trace 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    The assumption here is that M is a 2-tensor ordered as xx, xy, xz, yy, yz, and zz.
+!!
+      implicit none 
+!
+      class(zop_engine), intent(in) :: engine 
+!
+      real(dp), dimension(engine%n_components), intent(inout) :: M
+!
+      real(dp) :: trace_
+!
+      real(dp), dimension(engine%n_components) :: temp_M 
+!
+      if (trim(engine%operator) /= 'quadrupole') then 
+!
+         call output%error_msg('Cannot remove trace for operator ' // trim(engine%operator))
+!
+      else 
+!
+         trace_ = M(1) + M(4) + M(6)
+!
+         
+!
+      endif 
+!
+   end subroutine remove_trace_zop_engine
 !
 !
    subroutine cleanup_zop_engine(engine)
@@ -236,6 +258,10 @@ contains
 !
          engine%n_components = 3
 !
+      elseif (trim(engine%operator) == 'quadrupole') then 
+!
+         engine%n_components = 6
+!
       else
 !
          call output%error_msg('could not recognize the operator ' &
@@ -262,6 +288,15 @@ contains
          engine%components = (/'x   ',&
                                'y   ',&
                                'z   '/)
+!
+      elseif (trim(engine%operator) == 'quadrupole') then 
+!
+         engine%components = (/ 'xx  ',   &
+                                'xy  ',   & 
+                                'xz  ',   & 
+                                'yy  ',   & 
+                                'yz  ',   & 
+                                'zz  '    /)
 !
       else
 !
@@ -290,7 +325,11 @@ contains
 !
          call wf%construct_mu(A)
 !
-      else
+      elseif (trim(engine%operator) == 'quadrupole') then 
+!
+         call wf%construct_q(A)
+!
+      else      
 !
          call output%error_msg('Tried to construct unrecognized one-electron integral matrix '&
                 // trim(engine%operator))
@@ -316,6 +355,10 @@ contains
       if (trim(engine%operator) == 'dipole') then 
 !
          call wf%system%get_nuclear_dipole(nuclear_contribution)
+!
+      elseif (trim(engine%operator) == 'quadrupole') then 
+!
+!        TODO!
 !
       else
 !

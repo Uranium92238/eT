@@ -346,6 +346,8 @@ contains
 !!    Construct q
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!    
+!!    xx, xy, xz, yy, yz, and zz.
+!!
       use libint_initialization
 !
       implicit none 
