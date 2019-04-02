@@ -71,7 +71,7 @@ void construct_ao_mu_wx(double *mu_X, double *mu_Y, double *mu_Z, int *s1, int *
     for(auto f1=0; f1!=n1; ++f1){
       for(auto f2=0; f2!=n2; ++f2){
 
-        *(mu_X + n1*f2 + f1) = ints_shellset_X[f1*n2 + f2]; 
+        *(mu_X + n1*f2 + f1) = -ints_shellset_X[f1*n2 + f2]; 
 
       }
     }
@@ -94,7 +94,7 @@ void construct_ao_mu_wx(double *mu_X, double *mu_Y, double *mu_Z, int *s1, int *
     for(auto f1=0; f1!=n1; ++f1){
       for(auto f2=0; f2!=n2; ++f2){
 
-        *(mu_Y + n1*f2 + f1) = ints_shellset_Y[f1*n2 + f2]; 
+        *(mu_Y + n1*f2 + f1) = -ints_shellset_Y[f1*n2 + f2]; 
 
       }
     }
@@ -117,7 +117,7 @@ void construct_ao_mu_wx(double *mu_X, double *mu_Y, double *mu_Z, int *s1, int *
     for(auto f1=0; f1!=n1; ++f1){
       for(auto f2=0; f2!=n2; ++f2){
 
-        *(mu_Z + n1*f2 + f1) = ints_shellset_Z[f1*n2 + f2]; 
+        *(mu_Z + n1*f2 + f1) = -ints_shellset_Z[f1*n2 + f2]; 
 
       }
     }

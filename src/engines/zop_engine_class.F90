@@ -97,6 +97,7 @@ contains
       real(dp), dimension(:,:,:), allocatable :: A 
 !
       real(dp), dimension(3) :: expectation_value  
+      real(dp), dimension(3) :: nuclear_dipole  
 !
       write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
 !
@@ -133,20 +134,11 @@ contains
 !
 !     Compute expectation value of A = (A_x A_y A_z) for the operator A 
 !
-      write(output%unit, *) 'qui 1'
-      flush(output%unit)
-!
       call wf%initialize_multipliers()
       call wf%read_multipliers()
 !
-      write(output%unit, *) 'qui 2'
-      flush(output%unit)
-!
       call mem%alloc(A, wf%n_mo, wf%n_mo, 3)
       call wf%construct_operator(A, engine%operator)
-!
-      write(output%unit, *) 'qui 3'
-      flush(output%unit)
 !
       call wf%initialize_density()
       call wf%construct_density()
@@ -155,14 +147,30 @@ contains
       expectation_value(2) = wf%calculate_expectation_value(A(:,:,2))
       expectation_value(3) = wf%calculate_expectation_value(A(:,:,3))
 !
-      write(output%unit, '(/t3,a,a)') 'Operator: ', trim(engine%operator)
-!     
-      write(output%unit, '(/t6,a13,f19.12)') 'X component: ', expectation_value(1) 
-      write(output%unit, '(t6,a13,f19.12)')  'Y component: ', expectation_value(2) 
-      write(output%unit, '(t6,a13,f19.12)')  'Z component: ', expectation_value(3) 
+      call wf%system%get_nuclear_dipole(nuclear_dipole)
 !
-      write(output%unit, *) 'qui 4'
-      flush(output%unit)
+      write(output%unit, '(/t3,a,a)') 'Operator: ', trim(engine%operator)
+!
+      write(output%unit, '(/t3,a,a)') 'Electronic part:'
+!     
+
+      write(output%unit, '(/t6,a13,f19.12)') 'X component: ', expectation_value(1)
+      write(output%unit, '(t6,a13,f19.12)')  'Y component: ', expectation_value(2)
+      write(output%unit, '(t6,a13,f19.12)')  'Z component: ', expectation_value(3)
+!
+      write(output%unit, '(/t3,a,a)') 'Nuclear part:'
+!     
+
+      write(output%unit, '(/t6,a13,f19.12)') 'X component: ', nuclear_dipole(1)
+      write(output%unit, '(t6,a13,f19.12)')  'Y component: ', nuclear_dipole(2)
+      write(output%unit, '(t6,a13,f19.12)')  'Z component: ', nuclear_dipole(3)
+!
+      write(output%unit, '(/t3,a,a)') 'Total:'
+!     
+
+      write(output%unit, '(/t6,a13,f19.12)') 'X component: ', expectation_value(1) + nuclear_dipole(1)
+      write(output%unit, '(t6,a13,f19.12)')  'Y component: ', expectation_value(2) + nuclear_dipole(2)
+      write(output%unit, '(t6,a13,f19.12)')  'Z component: ', expectation_value(3) + nuclear_dipole(3)
 !
       call mem%dealloc(A, wf%n_mo, wf%n_mo, 3)
 !

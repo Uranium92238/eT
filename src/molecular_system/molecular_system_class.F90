@@ -75,6 +75,7 @@ module molecular_system_class
 !
       procedure :: get_nuclear_repulsion   => get_nuclear_repulsion_molecular_system
       procedure :: get_n_electrons         => get_n_electrons_molecular_system
+      procedure :: get_nuclear_dipole      => get_nuclear_dipole_molecular_system
 !
       procedure :: get_n_aos               => get_n_aos_molecular_system
       procedure :: get_n_shells            => get_n_shells_molecular_system
@@ -1202,7 +1203,32 @@ contains
       enddo
 !
    end subroutine translate_from_input_order_to_eT_order_molecular_system
-
+!
+!
+   subroutine get_nuclear_dipole_molecular_system(molecule, mu_k)
+!!
+!!    Get nuclear dipole moment 
+!!    Written by Eirik F. Kjønstad, Apr 2019 
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      real(dp), dimension(3), intent(out) :: mu_k 
+!
+      integer :: j 
+!
+      mu_k = zero 
+!
+      do j = 1, molecule%n_atoms 
+!
+         mu_k(1) = mu_k(1) + (molecule%atoms(j)%x)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+         mu_k(2) = mu_k(2) + (molecule%atoms(j)%y)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+         mu_k(3) = mu_k(3) + (molecule%atoms(j)%z)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+!
+      enddo
+!
+   end subroutine get_nuclear_dipole_molecular_system
 !
 !
 end module molecular_system_class
