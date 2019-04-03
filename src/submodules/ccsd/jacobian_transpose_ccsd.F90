@@ -157,6 +157,7 @@ contains
       call mem%dealloc(b_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      sigma_abij = zero
 !
 !     Add the last two terms
 !
@@ -2896,7 +2897,7 @@ contains
                   (wf%n_v)**2, &
                   g_klij,      & ! g_kl_ij
                   (wf%n_o)**2, &
-                  zero,        &
+                  one,         &
                   sigma_abij,  &
                   (wf%n_v)**2)
 !
