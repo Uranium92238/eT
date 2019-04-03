@@ -22,23 +22,35 @@ module gs_engine_class
 !!    Coupled cluster ground state engine class module 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
-   use abstract_engine_class
    use ccs_class
-!
-   use diis_cc_gs_class
+   use abstract_engine_class
 !
    type, extends(abstract_engine) :: gs_engine 
 !
+      character(len=200) :: multipliers_algorithm
+!
    contains 
 !
-      procedure :: prepare => prepare_gs_engine
-      procedure :: run     => run_gs_engine
-      procedure :: cleanup => cleanup_gs_engine
+      procedure :: prepare                               => prepare_gs_engine
+      procedure :: run                                   => run_gs_engine
+      procedure :: cleanup                               => cleanup_gs_engine
 !
+      procedure, nopass :: do_ground_state               => do_ground_state_gs_engine 
+!
+      procedure :: do_multipliers                        => do_multipliers_gs_engine 
+!
+      procedure, nopass :: calculate_dipole_moment       => calculate_dipole_moment_gs_engine
+!
+      procedure, nopass :: calculate_quadrupole_moment   => calculate_quadrupole_moment_gs_engine
+      procedure, nopass :: remove_trace                  => remove_trace_gs_engine
+!
+      procedure :: read_settings                         => read_settings_gs_engine 
 !
    end type gs_engine 
 !
+!
 contains
+!
 !
    subroutine prepare_gs_engine(engine)
 !!
@@ -49,9 +61,26 @@ contains
 !
       class(gs_engine) :: engine 
 !
-      engine%name_ = 'Ground state engine'
+      engine%name_                 = 'Ground state CC engine'
+      engine%multipliers_algorithm = 'davidson'
+!
+      call engine%read_settings()
 !
    end subroutine prepare_gs_engine
+!
+!
+   subroutine read_settings_gs_engine(engine)
+!!
+!!    Read settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+      implicit none 
+!
+      class(gs_engine) :: engine 
+!
+      call input%get_keyword_in_section('algorithm', 'solver cc multipliers', engine%multipliers_algorithm)
+!
+   end subroutine read_settings_gs_engine
 !
 !
    subroutine run_gs_engine(engine, wf)
@@ -61,37 +90,16 @@ contains
 !!
       implicit none 
 !
-      class(gs_engine)  :: engine 
-      class(ccs)        :: wf
+      class(gs_engine) :: engine 
+      class(ccs)       :: wf
 !
-      type(eri_cd), allocatable     :: eri_chol_solver
-      type(diis_cc_gs), allocatable :: cc_gs_solver 
-!
-      write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
-!
-!     Cholesky decoposition 
+!     Cholesky decoposition of the electron repulsion integrals 
 !
       call engine%do_cholesky(wf, wf%orbital_coefficients)
 !
-!     Ground state solution (avoid starting solver if there are no equations to solve)
+!     Determine ground state
 !
-      if (trim(wf%name_) == 'MP2') then 
-!
-         call wf%integrals%write_t1_cholesky(wf%t1)
-         call wf%calculate_energy()
-         call wf%print_wavefunction_summary()
-!
-      else 
-!
-         allocate(cc_gs_solver)
-!
-         call cc_gs_solver%prepare(wf)
-         call cc_gs_solver%run(wf)
-         call cc_gs_solver%cleanup(wf)
-!
-         deallocate(cc_gs_solver)
-!
-      endif
+      call engine%do_ground_state(wf)
 !
    end subroutine run_gs_engine
 !
@@ -108,6 +116,218 @@ contains
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%name_)
 !
    end subroutine cleanup_gs_engine
+!
+!
+   subroutine do_ground_state_gs_engine(wf)
+!!
+!!    Do ground state   
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Performs a ground state coupled cluster calculation. Determines 
+!!    the amplitudes, i.e. the (right) ground state | CC > = e^T | R >.
+!!
+!!    After this routine, the wavefunction has the cluster amplitudes 
+!!    stored in memory.     
+!!
+      use diis_cc_gs_class
+!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      type(diis_cc_gs), allocatable :: diis_solver 
+!
+      if (trim(wf%name_) == 'MP2') then 
+!
+         call wf%integrals%write_t1_cholesky(wf%t1)
+         call wf%calculate_energy()
+!
+         call wf%print_wavefunction_summary()
+!
+      else 
+!
+         allocate(diis_solver)
+!
+         call diis_solver%prepare(wf)
+         call diis_solver%run(wf)
+         call diis_solver%cleanup(wf)
+!
+         deallocate(diis_solver)
+!
+      endif
+!
+   end subroutine do_ground_state_gs_engine
+!
+!
+   subroutine do_multipliers_gs_engine(engine, wf)
+!!
+!!    Do multipliers  
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Performs a (left) ground state coupled cluster calculation. Determines 
+!!    the amplitudes, i.e. the (left) ground state < Λ |  = (< R | + sum_mu tbar_mu < mu |) e^-T.
+!!
+!!    After this routine, the wavefunction has the cluster amplitudes 
+!!    and the multipliers stored in memory.   
+!!
+      use diis_cc_multipliers_class
+      use davidson_cc_multipliers_class
+!
+      implicit none 
+!
+      class(gs_engine), intent(in) :: engine 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      type(diis_cc_multipliers), allocatable     :: diis_solver
+      type(davidson_cc_multipliers), allocatable :: davidson_solver
+!
+      if (trim(engine%multipliers_algorithm) == 'davidson') then 
+!
+         allocate(davidson_solver)
+!
+         call davidson_solver%prepare(wf)
+         call davidson_solver%run(wf)
+         call davidson_solver%cleanup(wf)
+!
+         deallocate(davidson_solver)
+!
+      elseif (trim(engine%multipliers_algorithm) == 'diis') then 
+!
+         allocate(diis_solver)
+!
+         call diis_solver%prepare(wf)
+         call diis_solver%run(wf)
+         call diis_solver%cleanup(wf)
+!
+         deallocate(diis_solver)
+!
+      else
+!
+         call output%error_msg('Could not recognize multipliers algorithm ' // trim(engine%multipliers_algorithm))
+!
+      endif 
+!
+   end subroutine do_multipliers_gs_engine
+!
+!
+   subroutine calculate_dipole_moment_gs_engine(wf, electronic, nuclear, total)
+!!
+!!    Calculate dipole moment 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Determines < mu > = < Λ | mu | CC > for the one-electron operator mu. 
+!!    The routine assumes that the multipliers and amplitudes have been determined 
+!!    and that the one-electron density is calculated and in memory. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(3), intent(out) :: electronic
+      real(dp), dimension(3), intent(out) :: nuclear
+      real(dp), dimension(3), intent(out) :: total 
+!
+      integer :: k 
+!
+      real(dp), dimension(:,:,:), allocatable :: mu_pqk
+!
+!     Get the integrals mu_pqk for components k = 1, 2, 3 in the T1-transformed basis  
+!  
+      call mem%alloc(mu_pqk, wf%n_mo, wf%n_mo, 3)
+      call wf%construct_mu(mu_pqk)
+!
+!     Get electronic expectation value contribution 
+!
+      do k = 1, 3 
+!
+         electronic(k) = wf%calculate_expectation_value(mu_pqk(:,:,k))
+!
+      enddo 
+!
+      call mem%dealloc(mu_pqk, wf%n_mo, wf%n_mo, 3)
+!
+!     Get nuclear expectation value contribution, then sum the two
+!
+      call wf%system%get_nuclear_dipole(nuclear)
+!
+      total = electronic + nuclear 
+!
+   end subroutine calculate_dipole_moment_gs_engine
+!
+!
+   subroutine calculate_quadrupole_moment_gs_engine(wf, electronic, nuclear, total)
+!!
+!!    Calculate quadrupole moment 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Determines < q > = < Λ | q | CC > for the one-electron operator q. 
+!!    The routine assumes that the multipliers and amplitudes have been determined 
+!!    and that the one-electron density is calculated and in memory. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(6), intent(out) :: electronic
+      real(dp), dimension(6), intent(out) :: nuclear
+      real(dp), dimension(6), intent(out) :: total 
+!
+      integer :: k 
+!
+      real(dp), dimension(:,:,:), allocatable :: q_pqk
+!
+!     Get the integrals q_pqk for components k = 1, 2, ..., 6 in the T1-transformed basis  
+!  
+      call mem%alloc(q_pqk, wf%n_mo, wf%n_mo, 6)
+      call wf%construct_q(q_pqk)
+!
+!     Get electronic expectation value contribution 
+!
+      do k = 1, 6
+!
+         electronic(k) = wf%calculate_expectation_value(q_pqk(:,:,k))
+!
+      enddo 
+!
+      call mem%dealloc(q_pqk, wf%n_mo, wf%n_mo, 6)
+!
+!     Get nuclear expectation value contribution, then sum the two
+!
+      call wf%system%get_nuclear_quadrupole(nuclear)
+!
+      total = electronic + nuclear 
+!
+   end subroutine calculate_quadrupole_moment_gs_engine
+!
+!
+   subroutine remove_trace_gs_engine(M)
+!!
+!!    Remove trace 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    The assumption here is that M is a 2-tensor ordered as xx, xy, xz, yy, yz, and zz,
+!!    where the other elements of the tensor are given by symmetry, such as for the quadrupole 
+!!    moment. Thus, this routine can be called after a call to "calculate quadrupole moment"
+!!    to make the moment trace-free.
+!!
+      implicit none 
+!
+      real(dp), dimension(6), intent(inout) :: M
+!
+      real(dp) :: trace_
+!
+      trace_ = M(1) + M(4) + M(6)
+!
+      M(1) = (three*M(1) - trace_)/two
+      M(4) = (three*M(4) - trace_)/two
+      M(6) = (three*M(6) - trace_)/two
+!
+      M(2) = (three*M(2))/two
+      M(3) = (three*M(3))/two
+      M(5) = (three*M(5))/two
+!
+   end subroutine remove_trace_gs_engine
 !
 !
 end module gs_engine_class
