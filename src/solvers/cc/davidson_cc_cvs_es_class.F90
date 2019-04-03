@@ -38,6 +38,7 @@ module davidson_cvs_cc_es_class
 !
    contains
 !
+      procedure :: prepare                => prepare_davidson_cvs_cc_es
       procedure :: read_settings          => read_settings_davidson_cvs_cc_es
 !
       procedure :: set_start_vectors      => set_start_vectors_davidson_cvs_cc_es
@@ -54,6 +55,51 @@ module davidson_cvs_cc_es_class
 !
 contains
 !
+   subroutine prepare_davidson_cvs_cc_es(solver)
+!!
+!!    Prepare 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(davidson_cvs_cc_es) :: solver
+!
+      solver%tag = 'Davidson coupled cluster excited state solver'
+      solver%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      solver%description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
+               & the right or left eigenvectors of the Jacobian matrix, A. The eigenvalue &
+               & problem is solved in a reduced space, the dimension of which is &
+               & expanded until the convergence criteria are met.'
+!
+      solver%description2 = 'A complete description of the algorithm can be found in &
+                                          & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
+!
+      call solver%print_banner()
+!
+!     Set defaults
+!
+      solver%n_singlet_states     = 0
+      solver%max_iterations       = 100
+      solver%eigenvalue_threshold = 1.0d-6
+      solver%residual_threshold   = 1.0d-6
+      solver%transformation       = 'right'
+      solver%restart              = .false.
+      solver%max_dim_red          = 100 
+!
+      call solver%read_settings()
+!
+      call solver%print_settings()
+!
+      call solver%initialize_energies()
+      solver%energies = zero
+!
+      if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
+!
+      write(output%unit, '(/t3,a,a,a)') 'Solving for the ', trim(solver%transformation), ' eigenvectors.'
+      flush(output%unit)
+!
+   end subroutine prepare_davidson_cvs_cc_es
 !
    subroutine read_settings_davidson_cvs_cc_es(solver)
 !!
