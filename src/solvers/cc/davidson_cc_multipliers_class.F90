@@ -353,7 +353,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: X
 !
-      write(output%unit, '(/t3,a)') '- Multipliers vector amplitudes:'
+      write(output%unit, '(/t3,a)') '- Davidson CC multipliers solver summary:'
 !
       call mem%alloc(X, wf%n_gs_amplitudes)
 !
