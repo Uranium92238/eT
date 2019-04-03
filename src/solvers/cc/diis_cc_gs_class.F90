@@ -319,8 +319,6 @@ contains
 !
 !     Save amplitudes 
 !
-      write(output%unit, '(/t3,a,a,a)') 'Cleaning up ', trim(solver%tag), '.'
-!
       call wf%save_amplitudes()
 !
    end subroutine cleanup_diis_cc_gs

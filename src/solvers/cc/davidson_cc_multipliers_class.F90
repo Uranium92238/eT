@@ -35,7 +35,13 @@ module davidson_cc_multipliers_class
 !
       character(len=100) :: tag = 'Davidson coupled cluster multipliers solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
-      character(len=500) :: description = 'A Davidson CC multiplier equations solver.'
+!
+      character(len=500) :: description1 = 'A Davidson solver that solves the multiplier equation: t-bar^T A = -η. The linear &
+                                           & problem is solved in a reduced space, the dimension of which is &
+                                           & expanded until the convergence criteria are met.'
+!
+      character(len=500) :: description2 = 'A complete description of the algorithm can be found in &
+                                          & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
       integer :: max_iterations
 !
@@ -289,7 +295,8 @@ contains
 !
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call long_string_print(solver%description2)
 !
    end subroutine print_banner_davidson_cc_multipliers
 !

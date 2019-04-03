@@ -1052,7 +1052,7 @@ contains
       call mem%alloc(abs_x2, wf%n_t2)
       abs_x2 = abs(x2)
 !
-      n_elements = 20
+      n_elements = 10
       if (n_elements .gt. wf%n_t2) n_elements = wf%n_t2
 !
       call mem%alloc(dominant_indices, n_elements)
@@ -1065,9 +1065,9 @@ contains
 !     Print largest contributions
 !
       write(output%unit, '(/t6,a)') 'Largest double amplitudes:'
-      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
-      write(output%unit, '(t6,a)')  '  a         i         b         j         ' // tag // '(ai,bj)             '
-      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+      write(output%unit, '(t6,a)')  '--------------------------------------------------'
+      write(output%unit, '(t6,a)')  '   a      i       b      j         ' // tag // '(ai,bj)             '
+      write(output%unit, '(t6,a)')  '--------------------------------------------------'
 !
       do elm = 1, n_elements
 !
@@ -1075,11 +1075,11 @@ contains
          call invert_compound_index(ai, a, i, wf%n_v, wf%n_o)
          call invert_compound_index(bj, b, j, wf%n_v, wf%n_o)
 !
-         write(output%unit, '(t6,i3,7x,i3,7x,i3,7x,i3,5x,f19.12)') a, i, b, j, x2(dominant_indices(elm))
+         write(output%unit, '(t6,i4,4x,i3,4x,i4,4x,i3,3x,f19.12)') a, i, b, j, x2(dominant_indices(elm))
 !
       enddo
-!
-      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+!           '
+      write(output%unit, '(t6,a)')  '--------------------------------------------------'
 !
       call mem%dealloc(dominant_indices, n_elements)
       call mem%dealloc(dominant_values, n_elements)
