@@ -59,15 +59,15 @@ set(eT_fortran_sources
    src/tools/array_analysis.F90
    src/tools/linked_list/array_list_class.F90
    src/tools/linked_list/array_node_class.F90
-   src/wavefunctions/wavefunction_class.F90
-   src/wavefunctions/hf_class.F90
-   src/wavefunctions/uhf_class.F90
-   src/wavefunctions/ccs_class.F90
-   src/wavefunctions/cc2_class.F90
-   src/wavefunctions/lowmem_cc2_class.F90
-   src/wavefunctions/ccsd_class.F90
-   src/wavefunctions/cc3_class.F90
-   src/wavefunctions/mp2_class.F90
+   src/wavefunctions/wavefunction/wavefunction_class.F90
+   src/wavefunctions/hf/hf_class.F90
+   src/wavefunctions/uhf/uhf_class.F90
+   src/wavefunctions/ccs/ccs_class.F90
+   src/wavefunctions/cc2/cc2_class.F90
+   src/wavefunctions/lowmem_cc2/lowmem_cc2_class.F90
+   src/wavefunctions/ccsd/ccsd_class.F90
+   src/wavefunctions/cc3/cc3_class.F90
+   src/wavefunctions/mp2/mp2_class.F90
    src/molecular_system/atomic_class.F90
    src/molecular_system/molecular_system_class.F90
    src/molecular_system/periodic_table.F90
@@ -79,14 +79,14 @@ set(eT_fortran_sources
    src/solver_tools/davidson_tool_class.F90
    src/solver_tools/eigen_davidson_tool_class.F90
    src/solver_tools/linear_davidson_tool_class.F90
-   src/submodules/ccsd/omega_ccsd.F90
-   src/submodules/ccsd/jacobian_ccsd.F90
-   src/submodules/ccsd/jacobian_transpose_ccsd.F90
-   src/submodules/cc2/omega_cc2.F90
-   src/submodules/cc2/jacobian_cc2.F90
-   src/submodules/cc2/jacobian_transpose_cc2.F90
-   src/submodules/lowmem_cc2/omega_lowmem_cc2.F90
-   src/submodules/lowmem_cc2/jacobian_lowmem_cc2.F90
-   src/submodules/cc3/omega_cc3.F90
-   src/submodules/cc3/jacobian_cc3.F90
+   src/wavefunctions/ccsd/omega_ccsd.F90
+   src/wavefunctions/ccsd/jacobian_ccsd.F90
+   src/wavefunctions/ccsd/jacobian_transpose_ccsd.F90
+   src/wavefunctions/cc2/omega_cc2.F90
+   src/wavefunctions/cc2/jacobian_cc2.F90
+   src/wavefunctions/cc2/jacobian_transpose_cc2.F90
+   src/wavefunctions/lowmem_cc2/omega_lowmem_cc2.F90
+   src/wavefunctions/lowmem_cc2/jacobian_lowmem_cc2.F90
+   src/wavefunctions/cc3/omega_cc3.F90
+   src/wavefunctions/cc3/jacobian_cc3.F90
 )

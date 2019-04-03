@@ -92,8 +92,8 @@ module cc3_class
 !
    interface
 !
-      include "../submodules/cc3/omega_cc3_interface.F90"
-      include "../submodules/cc3/jacobian_cc3_interface.F90"
+      include "omega_cc3_interface.F90"
+      include "jacobian_cc3_interface.F90"
 !
    end interface
 !
