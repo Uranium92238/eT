@@ -40,7 +40,7 @@ module davidson_tool_class
       real(dp), dimension(:,:), allocatable :: A_red
       real(dp), dimension(:,:), allocatable :: X_red
 !
-      type(file) :: X, trials, transforms, preconditioner, projector
+      type(file) :: trials, transforms, preconditioner
 !
       integer :: dim_red
       integer :: max_dim_red
@@ -52,46 +52,38 @@ module davidson_tool_class
       real(dp) :: residual_threshold
 !
       logical :: do_precondition
-      logical :: do_projection
 !
       integer :: current_n_trials
 !
    contains
 !
-!     Read and write routines
+!     Read and write routines -> These should always be used outside the tool it self (i.e. in solvers)
 !
-      procedure, non_overridable :: read_trial    => read_trial_davidson_tool
-      procedure, non_overridable :: write_trial   => write_trial_davidson_tool
+      procedure, non_overridable :: read_trial                 => read_trial_davidson_tool
+      procedure, non_overridable :: write_trial                => write_trial_davidson_tool
 !
-      procedure, non_overridable :: read_transform  => read_transform_davidson_tool
-      procedure, non_overridable :: write_transform => write_transform_davidson_tool  
-!
-      procedure :: read_solution => read_solution_davidson_tool
+      procedure, non_overridable :: read_transform             => read_transform_davidson_tool
+      procedure, non_overridable :: write_transform            => write_transform_davidson_tool  
 !
 !     Other procedures
 !
-      procedure, non_overridable :: construct_reduced_matrix => construct_reduced_matrix_davidson_tool
-      procedure, non_overridable :: construct_X              => construct_X_davidson_tool
-      procedure, non_overridable :: construct_AX             => construct_AX_davidson_tool
+      procedure, non_overridable :: construct_reduced_matrix   => construct_reduced_matrix_davidson_tool
+      procedure, non_overridable :: construct_X                => construct_X_davidson_tool
+      procedure, non_overridable :: construct_AX               => construct_AX_davidson_tool
 !
-      procedure :: set_preconditioner               => set_preconditioner_davidson_tool
-      procedure :: set_projector                    => set_projector_davidson_tool
-      procedure :: precondition                     => precondition_davidson_tool
-      procedure :: projection                       => projection_davidson_tool
+      procedure :: set_preconditioner                          => set_preconditioner_davidson_tool
+      procedure :: precondition                                => precondition_davidson_tool
 !
-      procedure :: orthogonalize_against_trial_vecs => orthogonalize_against_trial_vecs_davidson_tool
-      procedure :: orthonormalize_trial_vecs        => orthonormalize_trial_vecs_davidson_tool
+      procedure :: orthogonalize_against_trial_vecs            => orthogonalize_against_trial_vecs_davidson_tool
+      procedure :: orthonormalize_trial_vecs                   => orthonormalize_trial_vecs_davidson_tool
 !
-      procedure :: set_A_red => set_A_red_davidson_tool
-      procedure :: get_A_red => get_A_red_davidson_tool
+      procedure :: set_trials_to_solutions                     => set_trials_to_solutions_davidson_tool
 !
-      procedure :: set_trials_to_solutions => set_trials_to_solutions_davidson_tool
+      procedure :: read_max_dim_red                            => read_max_dim_red_davidson_tool
 !
 !     Deferred routines  
 !
       procedure(solve_reduced_problem), deferred :: solve_reduced_problem
-!
-      procedure :: read_max_dim_red => read_max_dim_red_davidson_tool
 !
    end type davidson_tool
 !
@@ -137,6 +129,7 @@ contains
       if (present(n)) call davidson%trials%prepare_to_read_line(n)
 !
       read(davidson%trials%unit, iostat = ioerror) c_i
+!
       if (ioerror .ne. 0) call output%error_msg('reading trial vectors file.')
 !
       call disk%close_file(davidson%trials)
@@ -161,7 +154,11 @@ contains
 !
       character(len=*), optional :: position
 !
+      character(len=:), allocatable :: local_position
+!
       integer :: ioerror 
+!
+      local_position = 'append'
 !
 !     Was position passed ?
 !
@@ -175,15 +172,14 @@ contains
 !
          endif
 !
-         call disk%open_file(davidson%trials, 'write', position)
-!
-      else
-!
-         call disk%open_file(davidson%trials, 'write', 'append')
+         local_position = position
 !
       endif 
 !
+      call disk%open_file(davidson%trials, 'write', local_position)
+!
       write(davidson%trials%unit, iostat = ioerror) c_i
+!
       if (ioerror .ne. 0) call output%error_msg('writing trial vectors file.')
 !
       call disk%close_file(davidson%trials)
@@ -295,33 +291,6 @@ contains
    end subroutine orthogonalize_against_trial_vecs_davidson_tool
 !
 !
-   subroutine read_solution_davidson_tool(davidson, solution, n)
-!!
-!!    Read solution 
-!!    Written by Eirik F. Kjønstad, Dec 2018
-!!
-      implicit none 
-!
-      class(davidson_tool) :: davidson 
-!
-      real(dp), dimension(davidson%n_parameters) :: solution 
-!
-      integer :: n
-!
-      integer :: ioerror
-!
-      call disk%open_file(davidson%X, 'read')
-      call davidson%X%prepare_to_read_line(n)
-!
-      ioerror = 0
-      read(davidson%X%unit, iostat=ioerror) solution 
-      if (ioerror .ne. 0) call output%error_msg('could not read davidson solution.')
-!
-      call disk%close_file(davidson%X)
-!
-   end subroutine read_solution_davidson_tool
-!
-!
    subroutine read_transform_davidson_tool(davidson, rho_i, n)
 !!
 !!    Read transformed vector
@@ -344,7 +313,8 @@ contains
       call davidson%transforms%prepare_to_read_line(n)
 !
       read(davidson%transforms%unit, iostat = ioerror) rho_i
-      if (ioerror .ne. 0) call output%error_msg('reading transformed vectors file 2.')
+!
+      if (ioerror .ne. 0) call output%error_msg('reading transformed vectors file.')
 !
       call disk%close_file(davidson%transforms)
 !
@@ -368,7 +338,11 @@ contains
 !
       character(len=*), optional, intent(in) :: position 
 !
-      integer :: ioerror   
+      character(len=:), allocatable :: local_position
+!
+      integer :: ioerror 
+!
+      local_position = 'append'
 !
 !     Was position passed ?
 !
@@ -382,15 +356,14 @@ contains
 !
          endif
 !
-         call disk%open_file(davidson%transforms, 'write', position)
-!
-      else
-!
-         call disk%open_file(davidson%transforms, 'write', 'append')
+         local_position = position
 !
       endif 
 !
+      call disk%open_file(davidson%transforms, 'write', local_position)
+!
       write(davidson%transforms%unit, iostat = ioerror) rho_i
+!
       if (ioerror .ne. 0) call output%error_msg('writing transformed vector to file.')
 !
       call disk%close_file(davidson%transforms)
@@ -644,28 +617,6 @@ contains
    end subroutine set_preconditioner_davidson_tool
 !
 !
-   subroutine set_projector_davidson_tool(davidson, projector)
-!!
-!!    Set projector 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!!
-!!    This routine saves the projector to file. 
-!!
-      implicit none 
-!
-      class(davidson_tool) :: davidson
-!
-      real(dp), dimension(davidson%n_parameters), intent(in) :: projector 
-!
-      call disk%open_file(davidson%projector, 'write', 'rewind')
-      write(davidson%projector%unit) projector 
-      call disk%close_file(davidson%projector)
-!
-      davidson%do_projection = .true.
-!
-   end subroutine set_projector_davidson_tool
-!
-!
    subroutine precondition_davidson_tool(davidson, R)
 !!
 !!    Precondition 
@@ -709,92 +660,6 @@ contains
       endif 
 !
    end subroutine precondition_davidson_tool
-!
-!
-   subroutine projection_davidson_tool(davidson, R)
-!!
-!!    Projection
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!!
-!!    Project the vector R, i.e. 
-!!
-!!       R(i) <- R(i)*projector(i)
-!!
-!!    However, if the user has not set any preconditioner, 
-!!    this routine performs no action on R. 
-!!
-      implicit none 
-!
-      class(davidson_tool) :: davidson
-!
-      real(dp), dimension(davidson%n_parameters), intent(inout) :: R
-!
-      real(dp), dimension(:), allocatable :: projector
-!
-      integer :: i 
-!
-      if (davidson%do_projection) then 
-!
-         call mem%alloc(projector, davidson%n_parameters)
-!
-         call disk%open_file(davidson%projector, 'read')
-         rewind(davidson%projector%unit)
-         read(davidson%projector%unit) projector
-         call disk%close_file(davidson%projector)
-!
-         do i = 1, davidson%n_parameters
-!
-            R(i) = R(i)*projector(i)
-!
-         enddo 
-!
-         call mem%dealloc(projector, davidson%n_parameters)
-!
-      endif 
-!
-   end subroutine projection_davidson_tool
-!
-!
-   subroutine set_A_red_davidson_tool(davidson, A_red)
-!!
-!!    Set A reduced 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!!
-!!    Sets the reduced coefficient matrix A_red equal to the
-!!    array sent to the routine. This is a non-standard routine 
-!!    that should only be used if the matrix e.g. depends on 
-!!    a parameter (scaling certain elements, for instance),
-!!    that must be handled outside the Davidson object. 
-!!
-!!    Usually, construction of A_red is done solely by 
-!!    the Davidson object, based on trial vectors and 
-!!    transformed vectors on file. 
-!!
-      implicit none 
-!
-      class(davidson_tool) :: davidson 
-!
-      real(dp), dimension(davidson%dim_red, davidson%dim_red), intent(in) :: A_red 
-!
-      davidson%A_red = A_red 
-!
-   end subroutine set_A_red_davidson_tool
-!
-!
-   subroutine get_A_red_davidson_tool(davidson, A_red)
-!!
-!!    Get A reduced 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!!
-      implicit none 
-!
-      class(davidson_tool) :: davidson 
-!
-      real(dp), dimension(davidson%dim_red, davidson%dim_red), intent(inout) :: A_red 
-!
-      A_red = davidson%A_red 
-!
-   end subroutine get_A_red_davidson_tool
 !  
 !
    subroutine set_trials_to_solutions_davidson_tool(davidson)
@@ -857,28 +722,7 @@ contains
 !
       class(davidson_tool) :: davidson 
 !
-      character(len=100) :: line
-!
-      rewind(input%unit)
-!
-      do 
-!
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (trim(line) .eq. 'end geometry') then
-            backspace(input%unit)
-            return
-         endif
-!
-         if (line(1:22) == 'max reduced dimension:') then
-! 
-            read(line(23:100), *) davidson%max_dim_red
-            return
-! 
-         endif
-!
-      enddo
+      call input%get_keyword_in_section('max reduced dimension', 'solver cc es', davidson%max_dim_red)
 !
    end subroutine read_max_dim_red_davidson_tool
 !

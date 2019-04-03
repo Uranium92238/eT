@@ -123,7 +123,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: c_i
 !
-      integer, dimension(:), allocatable :: start_indices
+      integer, dimension(:), allocatable :: start_indices, start_vectors_copy
 !
       integer :: trial, i, j, k, l, first_ao_on_atom, last_ao_on_atom
       integer :: n_MOs_found, n_solutions_on_file
@@ -138,6 +138,13 @@ contains
          call output%error_msg('number of roots requested should be equal or greater than the number of cores.')
 !
       if (allocated(solver%start_vectors)) then
+!
+         call mem%alloc(start_vectors_copy, solver%n_singlet_states)
+         start_vectors_copy = solver%start_vectors
+!
+         call wf%system%translate_from_input_order_to_eT_order(solver%n_singlet_states, start_vectors_copy, solver%start_vectors)
+!
+         call mem%dealloc(start_vectors_copy, solver%n_singlet_states)
 !
 !        Initial trial vectors given on input
 !

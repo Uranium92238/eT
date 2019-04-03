@@ -464,11 +464,18 @@ contains
       real(dp), dimension(:), allocatable :: orbital_differences
       real(dp), dimension(:), allocatable :: lowest_orbital_differences
 !
-      integer, dimension(:), allocatable :: lowest_orbital_differences_index
+      integer, dimension(:), allocatable :: lowest_orbital_differences_index, start_vectors_copy
 !
       integer :: trial, n_solutions_on_file
 !
       if (allocated(solver%start_vectors)) then
+!
+         call mem%alloc(start_vectors_copy, solver%n_singlet_states)
+         start_vectors_copy = solver%start_vectors
+!
+         call wf%system%translate_from_input_order_to_eT_order(solver%n_singlet_states, start_vectors_copy, solver%start_vectors)
+!
+         call mem%dealloc(start_vectors_copy, solver%n_singlet_states)
 !
 !        Initial trial vectors given on input
 !
