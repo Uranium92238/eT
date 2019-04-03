@@ -231,15 +231,7 @@ contains
 !
          if (residual_norm .gt. solver%residual_threshold) converged_residual = .false.
 !
-         if (davidson%dim_red .ge. davidson%max_dim_red) then
-!
-           call davidson%set_trials_to_solutions()
-!
-         else
-!
-            davidson%dim_red = davidson%dim_red + davidson%n_new_trials
-!
-         endif
+         davidson%dim_red = davidson%dim_red + davidson%n_new_trials
 !
          iteration = iteration + 1       
 !

@@ -108,8 +108,6 @@ contains
       davidson%dim_red           = davidson%n_solutions     ! Initial dimension equal to number of solutions
       davidson%n_new_trials      = davidson%n_solutions 
 !
-      davidson%max_dim_red = 150
-!
       davidson%current_n_trials = 0  
 !
    end subroutine prepare_linear_davidson_tool

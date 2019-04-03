@@ -43,7 +43,6 @@ module davidson_tool_class
       type(file) :: trials, transforms, preconditioner
 !
       integer :: dim_red
-      integer :: max_dim_red
 !
       integer :: n_parameters
       integer :: n_solutions
@@ -78,8 +77,6 @@ module davidson_tool_class
       procedure :: orthonormalize_trial_vecs                   => orthonormalize_trial_vecs_davidson_tool
 !
       procedure :: set_trials_to_solutions                     => set_trials_to_solutions_davidson_tool
-!
-      procedure :: read_max_dim_red                            => read_max_dim_red_davidson_tool
 !
 !     Deferred routines  
 !
@@ -711,20 +708,6 @@ contains
       call davidson%orthonormalize_trial_vecs()
 !
    end subroutine set_trials_to_solutions_davidson_tool
-!
-!
-   subroutine read_max_dim_red_davidson_tool(davidson)
-!!
-!!    Read max reduced dimension
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!!
-      implicit none
-!
-      class(davidson_tool) :: davidson 
-!
-      call input%get_keyword_in_section('max reduced dimension', 'solver cc es', davidson%max_dim_red)
-!
-   end subroutine read_max_dim_red_davidson_tool
 !
 !
 end module davidson_tool_class

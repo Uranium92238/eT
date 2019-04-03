@@ -49,9 +49,11 @@ module davidson_cc_es_class
       real(dp) :: eigenvalue_threshold  
       real(dp) :: residual_threshold  
 !
-      logical  :: restart = .false.
+      logical  :: restart
 !
-      integer :: n_singlet_states = 0
+      integer :: n_singlet_states
+!
+      integer :: max_dim_red
 !
       character(len=40) :: transformation 
 !
@@ -106,6 +108,7 @@ contains
       solver%residual_threshold   = 1.0d-6
       solver%transformation       = 'right'
       solver%restart              = .false.
+      solver%max_dim_red          = 100 
 !
       call solver%read_settings()
 !
@@ -348,7 +351,7 @@ contains
 !
          enddo
 !
-         if (davidson%dim_red .ge. davidson%max_dim_red) then
+         if (davidson%dim_red .ge. solver%max_dim_red) then
 !
             call davidson%set_trials_to_solutions()
 !
@@ -632,6 +635,8 @@ contains
       call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
       call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
       call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
+      call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
+      call input%get_keyword_in_section('max reduced dimension', 'solver cc es', solver%max_dim_red)
 !     
       call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
 !
