@@ -182,8 +182,7 @@ contains
 !
       cc_zop%name_    = 'cc zop'
       cc_zop%required = .false.
-      cc_zop%keywords = (/ 'operator             ',   &
-                           'traceless            '    /)
+      cc_zop%keywords = (/ 'operator             ' /)
 !
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%required = .false.
