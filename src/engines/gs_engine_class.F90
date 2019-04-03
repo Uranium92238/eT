@@ -44,7 +44,9 @@ module gs_engine_class
       procedure, nopass :: calculate_quadrupole_moment   => calculate_quadrupole_moment_gs_engine
       procedure, nopass :: remove_trace                  => remove_trace_gs_engine
 !
-      procedure :: read_settings                         => read_settings_gs_engine 
+      procedure :: read_settings                         => read_settings_gs_engine
+! 
+      procedure :: read_gs_settings                      => read_gs_settings_gs_engine 
 !
    end type gs_engine 
 !
@@ -78,9 +80,23 @@ contains
 !
       class(gs_engine) :: engine 
 !
-      call input%get_keyword_in_section('algorithm', 'solver cc multipliers', engine%multipliers_algorithm)
+      call engine%read_gs_settings()
 !
    end subroutine read_settings_gs_engine
+!
+!
+   subroutine read_gs_settings_gs_engine(engine)
+!!
+!!    Read GS engine settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+      implicit none 
+!
+      class(gs_engine) :: engine 
+!
+      call input%get_keyword_in_section('algorithm', 'solver cc multipliers', engine%multipliers_algorithm)
+!
+   end subroutine read_gs_settings_gs_engine
 !
 !
    subroutine run_gs_engine(engine, wf)

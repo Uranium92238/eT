@@ -8,7 +8,7 @@ do
 end do
 
 cc zop
-   operator: quadrupole
+   quadrupole
 end cc zop
 
 memory

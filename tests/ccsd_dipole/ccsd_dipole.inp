@@ -8,7 +8,7 @@ do
 end do
 
 cc zop
-   operator: dipole
+   dipole
 end cc zop
 
 memory

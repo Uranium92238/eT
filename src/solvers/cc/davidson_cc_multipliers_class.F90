@@ -279,7 +279,6 @@ contains
       class(ccs) :: wf
 !
       call wf%save_multipliers()  
-      call wf%destruct_multipliers()
 !
    end subroutine cleanup_davidson_cc_multipliers
 !

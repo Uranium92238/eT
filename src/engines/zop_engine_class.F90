@@ -25,14 +25,9 @@ module zop_engine_class
 !!    Calculates expectation values < Λ | A | CC > for the operator A,
 !!    where A is the dipole or quadrupole operator. 
 !!
-   use abstract_engine_class
-   use diis_cc_gs_class
-   use davidson_cc_multipliers_class
-   use diis_cc_multipliers_class
-   use ccs_class
-   use eri_cd_class
+   use gs_engine_class
 !
-   type, extends(abstract_engine) :: zop_engine
+   type, extends(gs_engine) :: zop_engine
 !
       character(len=100) :: tag           = 'Zeroth order coupled cluster properties'
       character(len=100) :: author        = 'E. F. Kjønstad, S. D. Folkestad, 2019'
@@ -40,10 +35,8 @@ module zop_engine_class
       character(len=500) :: description1  = 'Calculates the time-independent expectation value of&
                                              & one-electron operators A, < A > = < Λ | A | CC >.'
 !
-      character(len=200) :: operator 
-!
-      integer :: n_components
-      character(len=4), dimension(:), allocatable :: components
+      logical :: dipole 
+      logical :: quadrupole 
 !
    contains
 !
@@ -52,17 +45,11 @@ module zop_engine_class
       procedure :: cleanup                                     => cleanup_zop_engine
 !
       procedure :: read_settings                               => read_settings_zop_engine
+      procedure :: read_zop_settings                           => read_zop_settings_zop_engine
 !
-      procedure, private :: set_components                     => set_components_zop_engine
+      procedure :: calculate_expectation_values                => calculate_expectation_values_zop_engine
 !
-      procedure, private :: construct_one_el_operator          => construct_one_el_operator_zop_engine
-!
-      procedure, private :: calculate_nuclear_contribution     => calculate_nuclear_contribution_zop_engine
-      procedure, private :: calculate_electronic_contribution  => calculate_electronic_contribution_zop_engine
-!
-      procedure, private :: remove_trace                       => remove_trace_zop_engine
-!
-      procedure, private :: print_summary                      => print_summary_zop_engine
+      procedure, nopass, private :: print_summary              => print_summary_zop_engine
 !
    end type zop_engine
 !
@@ -79,9 +66,11 @@ contains
 !
       engine%name_ = 'Zeroth order properties engine'
 !
-      call engine%read_settings()
+      engine%dipole                 = .false.
+      engine%quadrupole             = .false. 
+      engine%multipliers_algorithm  = 'davidson'
 !
-      call engine%set_components()
+      call engine%read_settings()
 !
    end subroutine prepare_zop_engine
 !
@@ -95,9 +84,25 @@ contains
 !
       class(zop_engine) :: engine 
 !
-      call input%get_keyword_in_section('operator', 'cc zop', engine%operator)
+      call engine%read_gs_settings()
+      call engine%read_zop_settings()
 !
    end subroutine read_settings_zop_engine
+!
+!
+   subroutine read_zop_settings_zop_engine(engine)
+!!
+!!    Read ZOP settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(zop_engine) :: engine 
+!
+      if (input%requested_keyword_in_section('dipole','cc zop')) engine%dipole = .true.
+      if (input%requested_keyword_in_section('quadrupole','cc zop')) engine%quadrupole = .true.
+!
+   end subroutine read_zop_settings_zop_engine
 !
 !
    subroutine run_zop_engine(engine, wf)
@@ -110,120 +115,140 @@ contains
       class(ccs)         :: wf
       class(zop_engine)  :: engine
 !
-      type(eri_cd)                  :: eri_chol_solver
-      type(diis_cc_gs)              :: cc_gs_solver
-      type(davidson_cc_multipliers) :: cc_mult_solver
+!     Cholesky decoposition of the electron repulsion integrals 
 !
-      real(dp), dimension(:), allocatable :: electronic_contribution ! to < A >
-      real(dp), dimension(:), allocatable :: nuclear_contribution    ! to < A > 
+      call engine%do_cholesky(wf, wf%orbital_coefficients)
 !
-      write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
+!     Determine ground state | CC > 
 !
-!     - Cholesky decompose the electron repulsion integrals 
+      call engine%do_ground_state(wf)
 !
-      call eri_chol_solver%prepare(wf%system)
-      call eri_chol_solver%run(wf%system)
+!     Determine multipliers < Λ |
 !
-      call eri_chol_solver%cholesky_vecs_diagonal_test(wf%system)
-      call eri_chol_solver%construct_mo_cholesky_vecs(wf%system, wf%n_mo, wf%orbital_coefficients)
+      call engine%do_multipliers(wf)
 !
-      call wf%integrals%prepare(eri_chol_solver%n_cholesky, wf%n_o, wf%n_v)
+!     Compute the one-electron density 
 !
-      call eri_chol_solver%cleanup()
+      call wf%initialize_density()
+      call wf%construct_density()
 !
-!     - Solve for the amplitudes, i.e. the | CC > state 
-!
-      call cc_gs_solver%prepare(wf)
-      call cc_gs_solver%run(wf)
-      call cc_gs_solver%cleanup(wf)
-!
-!     - Solve for the multipliers, i.e. the < Λ | state 
-!
-      call wf%initialize_amplitudes()
-      call wf%read_amplitudes()
-!
-      call wf%integrals%write_t1_cholesky(wf%t1)
-      call wf%integrals%can_we_keep_g_pqrs_t1()
-!
-      call cc_mult_solver%prepare(wf)
-      call cc_mult_solver%run(wf)
-      call cc_mult_solver%cleanup(wf)
-!
-      call wf%initialize_multipliers()
-      call wf%read_multipliers()
+!     Compute the requested expectation values
 !
       call long_string_print(engine%tag,'(//t3,a)',.true.)
       call long_string_print(engine%author,'(t3,a/)',.true.)
       call long_string_print(engine%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
-!     - Calculate the electronic contribution to < A >, i.e. < A_k > = sum_pq A_pqk D_pq
+      call engine%calculate_expectation_values(wf)
 !
-      write(output%unit, '(/t3,a,a,a)') 'Requested the operator A = ', trim(engine%operator), '.'
-!      
-      call mem%alloc(electronic_contribution, engine%n_components)
-      call engine%calculate_electronic_contribution(wf, electronic_contribution)
-!
-!     - Calculate the nuclear contribution to < A > 
-!
-      call mem%alloc(nuclear_contribution, engine%n_components)
-      call engine%calculate_nuclear_contribution(wf, nuclear_contribution)
-!
-!     - Print summary of calculated < A >
-!
-!     Remove trace if quadrupole moment, printing the < A > value with non-zero trace as well 
-!
-      if (engine%operator == 'quadrupole') then
-!
-         write(output%unit, '(/t3,a)') 'Quadrupole moment with non-zero trace:'
-!
-         call engine%print_summary(electronic_contribution, nuclear_contribution) 
-!
-         write(output%unit, '(/t3,a)') 'Quadrupole moment with zero trace:'
-!
-         call engine%remove_trace(electronic_contribution)
-         call engine%remove_trace(nuclear_contribution)
-!
-         call engine%print_summary(electronic_contribution, nuclear_contribution) 
-!
-      else
-!
-         call engine%print_summary(electronic_contribution, nuclear_contribution) 
-!
-      endif 
-!
-      call mem%dealloc(nuclear_contribution, engine%n_components)
-      call mem%dealloc(electronic_contribution, engine%n_components)
+      call wf%destruct_density()
 !
    end subroutine run_zop_engine
 !
 !
-   subroutine remove_trace_zop_engine(engine, M)
+   subroutine calculate_expectation_values_zop_engine(engine, wf)
 !!
-!!    Remove trace 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
-!!
-!!    The assumption here is that M is a 2-tensor ordered as xx, xy, xz, yy, yz, and zz,
-!!    where the other elements of the tensor are given by symmetry.
+!!    Calculate expectation values 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
 !!
       implicit none 
 !
       class(zop_engine), intent(in) :: engine 
 !
-      real(dp), dimension(6), intent(inout) :: M
+      class(ccs), intent(in) :: wf 
 !
-      real(dp) :: trace_
+      real(dp), dimension(3) :: mu_electronic
+      real(dp), dimension(3) :: mu_nuclear
+      real(dp), dimension(3) :: mu_total
 !
-      trace_ = M(1) + M(4) + M(6)
+      real(dp), dimension(6) :: q_electronic
+      real(dp), dimension(6) :: q_nuclear
+      real(dp), dimension(6) :: q_total
 !
-      M(1) = (three*M(1) - trace_)/two
-      M(4) = (three*M(4) - trace_)/two
-      M(6) = (three*M(6) - trace_)/two
+      character(len=4), dimension(:), allocatable :: components
 !
-      M(2) = (three*M(2))/two
-      M(3) = (three*M(3))/two
-      M(5) = (three*M(5))/two
+      if (engine%dipole) then 
 !
-   end subroutine remove_trace_zop_engine
+         call engine%calculate_dipole_moment(wf, mu_electronic, mu_nuclear, mu_total)
+!
+         allocate(components(3))
+!
+         components = (/'x   ',&
+                        'y   ',&
+                        'z   '/)  
+!
+         call engine%print_summary('dipole moment', mu_electronic, mu_nuclear, mu_total, &
+                                    components, 3)     
+!
+         deallocate(components)  
+!
+      endif
+!
+      if (engine%quadrupole) then 
+!
+         call engine%calculate_quadrupole_moment(wf, q_electronic, q_nuclear, q_total)
+!
+         allocate(components(6))
+!
+         components = (/ 'xx  ',   &
+                         'xy  ',   & 
+                         'xz  ',   & 
+                         'yy  ',   & 
+                         'yz  ',   & 
+                         'zz  '    /) 
+!
+         call engine%print_summary('quadrupole moment (with trace)', q_electronic, q_nuclear, q_total, &
+                                    components, 6)     
+!
+         call engine%remove_trace(q_electronic)
+         call engine%remove_trace(q_nuclear)
+!
+         q_total = q_electronic + q_nuclear
+!
+         call engine%print_summary('traceless quadrupole moment', q_electronic, q_nuclear, q_total, &
+                                    components, 6)   
+!
+         deallocate(components)  
+!
+      endif 
+!
+   end subroutine calculate_expectation_values_zop_engine
+!
+!
+   subroutine print_summary_zop_engine(operator_, electronic, nuclear, total, components, n_components)
+!!
+!!    Print summary
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
+!!
+      implicit none
+!
+      integer, intent(in) :: n_components
+!
+      real(dp), dimension(n_components), intent(in) :: electronic
+      real(dp), dimension(n_components), intent(in) :: nuclear
+      real(dp), dimension(n_components), intent(in) :: total 
+!
+      character(len=4), dimension(n_components), intent(in) :: components
+!
+      character(len=*), intent(in) :: operator_ 
+!
+      integer :: k
+!
+      write(output%unit, '(/t3,a,a)') 'Operator: ', trim(operator_)
+!
+      write(output%unit, '(/t3, a)') 'Cart. comp.  Electronic         Nuclear             Total           '
+      write(output%unit, '(t3, a)')  '--------------------------------------------------------------------'
+!
+      do k = 1, n_components
+!
+         write(output%unit, '(t6, a4, 3x, f19.12, f19.12, f19.12)') components(k), &
+               electronic(k), nuclear(k), total(k)
+!
+      enddo
+!
+      write(output%unit, '(t3, a)')  '--------------------------------------------------------------------'
+      flush(output%unit)
+!
+   end subroutine print_summary_zop_engine
 !
 !
    subroutine cleanup_zop_engine(engine)
@@ -238,193 +263,6 @@ contains
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%name_)
 !
    end subroutine cleanup_zop_engine
-!
-!
-   subroutine set_components_zop_engine(engine)
-!!
-!!    Set components 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
-!!
-!!    Sets the Cartesian components for given the operator
-!!
-      implicit none
-!
-      class(zop_engine), intent(inout) :: engine
-!
-      if (trim(engine%operator) == 'dipole') then
-!
-         engine%n_components = 3
-!
-         engine%components = (/'x   ',&
-                               'y   ',&
-                               'z   '/)
-!
-      elseif (trim(engine%operator) == 'quadrupole') then 
-!
-         engine%n_components = 6
-!
-         engine%components = (/ 'xx  ',   &
-                                'xy  ',   & 
-                                'xz  ',   & 
-                                'yy  ',   & 
-                                'yz  ',   & 
-                                'zz  '    /)
-!
-      else
-!
-         call output%error_msg('could not recognize the operator ' &
-               // trim(engine%operator) //' in zop engine.')
-!
-      endif
-!
-   end subroutine set_components_zop_engine
-!
-!
-   subroutine construct_one_el_operator_zop_engine(engine, wf, A)
-!!
-!!    Construct one-electron operator 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
-!!
-!!    Constructs A_pq^k, for each of the k components, where p and q are 
-!!    MO orbital indices and the operator is given in the T1-transformed basis.
-!!
-      implicit none
-!
-      class(zop_engine), intent(in) :: engine
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo, engine%n_components), intent(out) :: A
-!
-      if (trim(engine%operator) == 'dipole') then 
-!
-         call wf%construct_mu(A)
-!
-      elseif (trim(engine%operator) == 'quadrupole') then 
-!
-         call wf%construct_q(A)
-!
-      else      
-!
-         call output%error_msg('Tried to construct unrecognized one-electron operator ' // trim(engine%operator))
-!
-      endif
-!
-   end subroutine construct_one_el_operator_zop_engine
-!
-!
-   subroutine calculate_nuclear_contribution_zop_engine(engine, wf, nuclear_contribution)
-!!
-!!    Calculate nuclear contribution
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
-!!
-      implicit none
-!
-      class(zop_engine), intent(in) :: engine
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(engine%n_components), intent(out) :: nuclear_contribution
-!
-      write(output%unit, '(t6,a)') 'Constructing the nuclear contribution to < A >'
-!
-      if (trim(engine%operator) == 'dipole') then 
-!
-         call wf%system%get_nuclear_dipole(nuclear_contribution)
-!
-      elseif (trim(engine%operator) == 'quadrupole') then 
-!
-         call wf%system%get_nuclear_quadrupole(nuclear_contribution)
-!
-      else
-!
-         call output%error_msg('Tried to construct nuclear contribution for unknown operator '&
-                // trim(engine%operator))
-!
-      endif
-!
-   end subroutine calculate_nuclear_contribution_zop_engine
-!
-!
-   subroutine calculate_electronic_contribution_zop_engine(engine, wf, electronic_contribution)
-!!
-!!    Calculate electronic contribution
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
-!!
-!!    Calculate the electronic contribution to < A >, i.e. < A_k > = sum_pq A_pqk D_pq
-!!    for k = 1, 2, ..., n_contributions.
-!!
-      implicit none
-!
-      class(zop_engine), intent(in) :: engine
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(engine%n_components), intent(out) :: electronic_contribution
-!
-      real(dp), dimension(:,:,:), allocatable :: A_pqk
-!
-      integer :: component 
-!
-!     Construct A_pqk
-!
-      write(output%unit, '(/t6,a)') 'Constructing the one-electron operator A_pq'
-!
-      call mem%alloc(A_pqk, wf%n_mo, wf%n_mo, engine%n_components)
-      call engine%construct_one_el_operator(wf, A_pqk)
-!
-!     Construct D_pq 
-!
-      write(output%unit, '(t6,a)') 'Constructing the one-electron density D_pq'
-!
-      call wf%initialize_density()
-      call wf%construct_density()
-!
-!     Calculate < A_k > for k = 1, 2, ..., n_components
-!
-      write(output%unit, '(t6,a)') 'Computing the electronic contribution < A > = sum_pq A_pq D_pq'
-!
-      do component = 1, engine%n_components
-!
-         electronic_contribution(component) = wf%calculate_expectation_value(A_pqk(:,:,component))
-!
-      enddo
-!
-      call mem%dealloc(A_pqk, wf%n_mo, wf%n_mo, engine%n_components)
-!
-      call wf%destruct_density()
-!
-   end subroutine calculate_electronic_contribution_zop_engine
-!
-!
-   subroutine print_summary_zop_engine(engine, electronic, nuclear)
-!!
-!!    Print summary
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
-!!
-      implicit none
-!
-      class(zop_engine), intent(in) :: engine
-!
-      real(dp), dimension(engine%n_components), intent(in) :: electronic
-      real(dp), dimension(engine%n_components), intent(in) :: nuclear
-!
-      integer :: component
-!
-      write(output%unit, '(/t3, a)') 'Cart. comp.  Electronic         Nuclear             Total           '
-      write(output%unit, '(t3, a)')  '--------------------------------------------------------------------'
-!
-      do component = 1, engine%n_components
-!
-         write(output%unit, '(t6, a4, 3x, f19.12, f19.12, f19.12)') engine%components(component), &
-               electronic(component), nuclear(component), electronic(component) + nuclear(component)
-!
-      enddo
-!
-      write(output%unit, '(t3, a)')  '--------------------------------------------------------------------'
-      flush(output%unit)
-!
-   end subroutine print_summary_zop_engine
 !
 !
 end module zop_engine_class

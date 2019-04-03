@@ -182,7 +182,8 @@ contains
 !
       cc_zop%name_    = 'cc zop'
       cc_zop%required = .false.
-      cc_zop%keywords = (/ 'operator             ' /)
+      cc_zop%keywords = (/ 'dipole               ',   &
+                           'quadrupole           ' /)
 !
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%required = .false.
