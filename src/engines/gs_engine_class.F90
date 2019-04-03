@@ -24,7 +24,6 @@ module gs_engine_class
 !!
    use abstract_engine_class
    use ccs_class
-   use eri_cd_class
 !
    use diis_cc_gs_class
 !

@@ -26,6 +26,7 @@ module abstract_engine_class
 !
    use kinds
    use ccs_class
+   use eri_cd_class
 !
    implicit none
 !
@@ -39,7 +40,9 @@ module abstract_engine_class
 !
       procedure(essential_engine), deferred      :: prepare 
       procedure(essential_engine), deferred      :: cleanup   
-      procedure(essential_engine_w_wf), deferred :: run        
+      procedure(essential_engine_w_wf), deferred :: run 
+!
+      procedure, nopass :: do_cholesky => do_cholesky_abstract_engine       
 !
    end type abstract_engine
 !
@@ -93,6 +96,36 @@ contains
       call engine%cleanup()
 !
    end subroutine ignite_abstract_engine
+!
+!
+   subroutine do_cholesky_abstract_engine(wf, orbital_coefficients)
+!!
+!!    Do Cholesky
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
+!!
+!!    Cholesky decomposition of electronic repiulsion integrals
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_mo), intent(in) :: orbital_coefficients
+!
+      type(eri_cd) :: eri_chol_solver
+!
+!     Cholesky decoposition 
+!
+      call eri_chol_solver%prepare(wf%system)
+      call eri_chol_solver%run(wf%system)
+!
+      call eri_chol_solver%cholesky_vecs_diagonal_test(wf%system)
+      call eri_chol_solver%construct_mo_cholesky_vecs(wf%system, wf%n_mo, orbital_coefficients)
+!
+      call wf%integrals%prepare(eri_chol_solver%n_cholesky, wf%n_o, wf%n_v)
+!
+      call eri_chol_solver%cleanup()
+!
+   end subroutine do_cholesky_abstract_engine
 !
 !
 end module abstract_engine_class
