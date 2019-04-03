@@ -75,6 +75,8 @@ module memory_manager_class
 !
       procedure :: prepare => prepare_memory_manager
 !
+      procedure :: check_for_leak => check_for_leak_memory_manager
+!
 !     Allocation and deallocation routines for arrays
 !
       procedure :: alloc_1_memory_manager
@@ -158,6 +160,36 @@ contains
       call mem%print_settings()
 !
    end subroutine prepare_memory_manager
+!
+!
+   subroutine check_for_leak_memory_manager(mem)
+!!
+!!    Check for leak 
+!!    Written by Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Issues a warning if there has been a leak since the 
+!!    the memory manager was prepared. Should only be called 
+!!    at the end of the program, when all arrays that were
+!!    allocated since mem%prepare() should have been deallocated.
+!!
+      implicit none 
+!
+      class(memory_manager), intent(in) :: mem 
+!
+      if (mem%available .ne. mem%total) then 
+!
+         write(output%unit, '(/t3,a)')  'Mismatch in memory according to eT and specified on input:'
+!
+         write(output%unit, '(/t6, a27, f11.4, a)') 'Memory available (eT):     ', &
+                         real(mem%available)/real(1000000000), ' GB'
+         write(output%unit, '(t6, a27, f11.4, a)') 'Memory available (input):   ', &
+                         real(mem%total)/real(1000000000), ' GB'
+!
+         call output%warning_msg('Deallocations may be missing or specified with incorrect dimensionalities.')
+!
+      endif 
+!
+   end subroutine check_for_leak_memory_manager
 !
 !
    integer(i15) function get_available_memory_manager(mem)

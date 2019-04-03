@@ -37,7 +37,6 @@ module hf_engine_class
 !
       procedure, private :: prepare          => prepare_hf_engine
       procedure, private :: run              => run_hf_engine
-      procedure, nopass, private :: cleanup  => cleanup_hf_engine
 !
       procedure, private :: read_settings    => read_settings_hf_engine
 !
@@ -104,16 +103,6 @@ contains
    end subroutine run_hf_engine
 !
 !
-   subroutine cleanup_hf_engine()
-!!
-!!    Cleanup 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
-!!
-      implicit none 
-!
-   end subroutine cleanup_hf_engine
-!
-!
    subroutine read_settings_hf_engine(engine)
 !!
 !!    Read settings 
@@ -140,7 +129,6 @@ contains
 !
       call engine%prepare()
       call engine%run(wf)
-      call engine%cleanup()
 !
    end subroutine ignite_hf_engine
 !

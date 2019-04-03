@@ -129,6 +129,8 @@ program eT_program
    call eT_timer%freeze()
    call eT_timer%switch_off()
 !
+   call mem%check_for_leak()
+!
    write(output%unit, '(/t3,a)') 'eT terminated successfully!'
 !
    close(output%unit)
@@ -282,7 +284,7 @@ subroutine cc_calculation(system)
       call es_cc_engine%ignite(cc_wf)
       call cc_wf%cleanup()   
 !
-   elseif (input%requested_keyword_in_section('zop','do')) then 
+   elseif (input%requested_keyword_in_section('zop', 'do')) then 
 !
       call cc_wf%prepare(system)
       call zop_cc_engine%ignite(cc_wf)
