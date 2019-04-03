@@ -3373,7 +3373,7 @@ contains
 !!    Print dominant x1
 !!    Written by Eirik F. Kjønstad, Dec 2018
 !!
-!!    Prints the 20 most dominant single amplitudes,
+!!    Prints the 10 most dominant single amplitudes,
 !!    or sorts them if there are fewer than twenty of them.
 !!
       implicit none
@@ -3395,7 +3395,7 @@ contains
       call mem%alloc(abs_x1, wf%n_t1)
       abs_x1 = abs(x1)
 !
-      n_elements = 20
+      n_elements = 10
       if (n_elements .gt. wf%n_t1) n_elements = wf%n_t1
 !
       call mem%alloc(dominant_indices, n_elements)
@@ -3408,19 +3408,19 @@ contains
 !     Print largest contributions
 !
       write(output%unit, '(/t6,a)') 'Largest single amplitudes:'
-      write(output%unit, '(t6,a)')  '-----------------------------------------'
-      write(output%unit, '(t6,a)')  '  a         i         ' // tag // '(a,i)             '
-      write(output%unit, '(t6,a)')  '-----------------------------------------'
+      write(output%unit, '(t6,a)')  '-----------------------------------'
+      write(output%unit, '(t6,a)')  '   a       i         ' // tag // '(a,i)             '
+      write(output%unit, '(t6,a)')  '-----------------------------------'
 !
       do elm = 1, n_elements
 !
          call invert_compound_index(dominant_indices(elm), a, i, wf%n_v, wf%n_o)
 !
-         write(output%unit, '(t6,i3,7x,i3,5x,f19.12)') a, i, x1(dominant_indices(elm))
+         write(output%unit, '(t6,i4,4x,i3,3x,f19.12)') a, i, x1(dominant_indices(elm))
 !
       enddo
 !
-      write(output%unit, '(t6,a)')  '-----------------------------------------'
+      write(output%unit, '(t6,a)')  '------------------------------------'
 !
       call mem%dealloc(dominant_indices, n_elements)
       call mem%dealloc(dominant_values, n_elements)

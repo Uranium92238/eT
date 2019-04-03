@@ -208,8 +208,8 @@ contains
       logical, intent(in), optional :: colons
 !
       character(90)  :: temp
-      integer   :: l, l_left, lines, l_length
-      integer   :: i,j, padd, printed 
+      integer        :: l, l_left, lines, l_length
+      integer        :: i,j, padd, printed 
       character(20)  :: fs,fstring,ffstring,lfstring
       logical        :: col 
 !

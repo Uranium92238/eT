@@ -183,7 +183,7 @@ contains
       write(output%unit, '(t6, a29, i13)')  'Total number of shell pairs: ', solver%n_sp
       write(output%unit, '(t6, a29, i13)')  'Total number of AO pairs:    ', solver%n_aop
 !
-      write(output%unit, '(/t3, a38)') '- Preparing diagonal for decomposition'
+      write(output%unit, '(/t3, a39)') '- Preparing diagonal for decomposition:'
 !
       call det_basis_timer%start()
 !
@@ -299,7 +299,8 @@ contains
 !
       class(eri_cd) :: solver
 !
-      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
+      call disk%open_file(solver%cholesky_ao_vectors_info, 'read')
+      call disk%close_file(solver%cholesky_ao_vectors_info, 'delete')
 !
    end subroutine cleanup_eri_cd
 !
@@ -2820,9 +2821,6 @@ contains
 !
       call cpu_time(e_decomp_time)
 !
-      write(output%unit, '(/t6, a)') 'Done decomposing (J|K)!'
-      flush(output%unit)
-!
       call mem%alloc(cholesky_basis_updated, n_vectors, 3)
 !
 !$omp parallel do private(I)
@@ -2953,9 +2951,6 @@ contains
       call DTRTRI('l','n', solver%n_cholesky, cholesky_inverse, solver%n_cholesky, info)
 !
       if (info /= 0) call output%error_msg('Error: matrix inversion failed!', info)
-!
-      write(output%unit, '(/t6, a)') 'Done inverting L_JK!'
-      flush(output%unit)
 !
 !     Write inverse Cholesky vectors of auxiliary basis overlap
 !

@@ -37,12 +37,12 @@ module davidson_cc_es_class
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       character(len=500) :: description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
-                                           &the right eigenvectors of the Jacobian matrix, A. The eigenvalue &
-                                           &problem is solved in a reduced space, the dimension of which is &
-                                           &expanded until the convergence criteria are met.'
+                                           & the right or left eigenvectors of the Jacobian matrix, A. The eigenvalue &
+                                           & problem is solved in a reduced space, the dimension of which is &
+                                           & expanded until the convergence criteria are met.'
 !
       character(len=500) :: description2 = 'A complete description of the algorithm can be found in &
-                                             &E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
+                                          & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
       integer :: max_iterations
 !
