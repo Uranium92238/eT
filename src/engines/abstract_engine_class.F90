@@ -26,7 +26,6 @@ module abstract_engine_class
 !
    use kinds
    use ccs_class
-   use eri_cd_class
 !
    implicit none
 !
@@ -105,6 +104,9 @@ contains
 !!
 !!    Cholesky decomposition of electronic repiulsion integrals
 !!
+!
+      use eri_cd_class
+!
       implicit none
 !
       class(ccs), intent(inout) :: wf

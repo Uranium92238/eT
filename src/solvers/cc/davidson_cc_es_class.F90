@@ -63,7 +63,7 @@ module davidson_cc_es_class
 !
    contains
 !     
-      procedure, non_overridable :: prepare          => prepare_davidson_cc_es
+      procedure                  :: prepare          => prepare_davidson_cc_es
       procedure, non_overridable :: run              => run_davidson_cc_es
       procedure, non_overridable :: cleanup          => cleanup_davidson_cc_es
 !
@@ -97,6 +97,17 @@ contains
       implicit none
 !
       class(davidson_cc_es) :: solver
+!
+      solver%tag = 'Davidson coupled cluster excited state solver'
+      solver%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      solver%description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
+               & the right or left eigenvectors of the Jacobian matrix, A. The eigenvalue &
+               & problem is solved in a reduced space, the dimension of which is &
+               & expanded until the convergence criteria are met.'
+!
+      solver%description2 = 'A complete description of the algorithm can be found in &
+                                          & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
       call solver%print_banner()
 !
@@ -195,7 +206,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: r
 !
-      write(output%unit, '(/t3,a)') '- Excitation vector amplitudes:'
+      write(output%unit, '(/t3,a)') '- Summary of CC excited state calculation:'
 !
       call mem%alloc(r, wf%n_es_amplitudes)
 !
@@ -595,8 +606,6 @@ contains
       implicit none
 !
       class(davidson_cc_es) :: solver
-!
-      write(output%unit, '(/t3,a,a,a)') 'Cleaning up ', trim(solver%tag), '.'
 !
       call solver%destruct_energies()
       if (allocated(solver%start_vectors)) call mem%dealloc(solver%start_vectors, solver%n_singlet_states)
