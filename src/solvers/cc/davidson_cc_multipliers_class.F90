@@ -230,7 +230,7 @@ contains
          converged_residual = .true.
 !
          if (residual_norm .gt. solver%residual_threshold) converged_residual = .false.
-!
+!   
          davidson%dim_red = davidson%dim_red + davidson%n_new_trials
 !
          iteration = iteration + 1       
