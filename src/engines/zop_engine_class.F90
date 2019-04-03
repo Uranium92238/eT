@@ -232,19 +232,19 @@ contains
 !
       integer :: k
 !
-      write(output%unit, '(/t3,a,a)') 'Operator: ', trim(operator_)
+      write(output%unit, '(/t3,a,a)') '- Operator: ', trim(operator_)
 !
-      write(output%unit, '(/t3, a)') 'Cart. comp.  Electronic         Nuclear             Total           '
-      write(output%unit, '(t3, a)')  '--------------------------------------------------------------------'
+      write(output%unit, '(/t6, a)') 'Cart. comp.  Electronic         Nuclear             Total           '
+      write(output%unit, '(t6, a)')  '--------------------------------------------------------------------'
 !
       do k = 1, n_components
 !
-         write(output%unit, '(t6, a4, 3x, f19.12, f19.12, f19.12)') components(k), &
+         write(output%unit, '(t9, a4, 3x, f19.12, f19.12, f19.12)') components(k), &
                electronic(k), nuclear(k), total(k)
 !
       enddo
 !
-      write(output%unit, '(t3, a)')  '--------------------------------------------------------------------'
+      write(output%unit, '(t6, a)')  '--------------------------------------------------------------------'
       flush(output%unit)
 !
    end subroutine print_summary_zop_engine
