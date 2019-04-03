@@ -61,8 +61,8 @@ module lowmem_cc2_class
 !
    interface
 !
-      include "../submodules/lowmem_cc2/omega_lowmem_cc2_interface.F90"
-      include "../submodules/lowmem_cc2/jacobian_lowmem_cc2_interface.F90"
+      include "omega_lowmem_cc2_interface.F90"
+      include "jacobian_lowmem_cc2_interface.F90"
 !
    end interface
 !

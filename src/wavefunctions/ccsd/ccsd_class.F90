@@ -162,9 +162,9 @@ module ccsd_class
 !
    interface
 !
-      include "../submodules/ccsd/omega_ccsd_interface.F90"
-      include "../submodules/ccsd/jacobian_ccsd_interface.F90"
-      include "../submodules/ccsd/jacobian_transpose_ccsd_interface.F90"
+      include "omega_ccsd_interface.F90"
+      include "jacobian_ccsd_interface.F90"
+      include "jacobian_transpose_ccsd_interface.F90"
 !
    end interface
 !

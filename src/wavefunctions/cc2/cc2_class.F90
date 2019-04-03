@@ -96,9 +96,9 @@ module cc2_class
 !
    interface
 !
-      include "../submodules/cc2/omega_cc2_interface.F90"
-      include "../submodules/cc2/jacobian_cc2_interface.F90"
-      include "../submodules/cc2/jacobian_transpose_cc2_interface.F90"
+      include "omega_cc2_interface.F90"
+      include "jacobian_cc2_interface.F90"
+      include "jacobian_transpose_cc2_interface.F90"
 !
    end interface 
 !
