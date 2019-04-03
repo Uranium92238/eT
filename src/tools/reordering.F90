@@ -1623,11 +1623,13 @@ contains
    subroutine add_1324_to_1234(scalar, x_prqs, y_pqrs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Add 1342 to 1234
-!!    Written by Andreas Skeidsvoll, Apr 2019
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Andreas Skeidsvoll, Apr 2019: Created by modifying add_1342_to_1234
 !!
 !!    Performs:
 !!
-!!       y_pqrs(p,q,r,s) = y_pqrs(p,q,r,s) + scalar * x_prsq(p,r,s,q)
+!!       y_pqrs(p,q,r,s) = y_pqrs(p,q,r,s) + scalar * x_prqs(p,r,q,s)
 !!
       implicit none
 !
