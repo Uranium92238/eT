@@ -35,7 +35,19 @@
 !
    module subroutine jacobian_cc3_A_cc3(wf, omega, c_ai, c_abji, rho_ai, rho_abij)
 !!
+!!
 !!    CC3 jacobian terms
+!!
+!!    The triples amplitudes are expressed in terms of doubles amplitudes:
+!!    C_3 = (omega - ε^abc_ijk)^-1 (< mu3 | [H,C_2] | HF > + < mu3 | [[H,C_1],T_2] | HF >)
+!!    T_3 = (omega - ε^abc_ijk)^-1 < mu3 | [H,T_2] | HF >
+!!
+!!    They are then used to compute the contributions 
+!!    to the singles and doubles part of the transformed vector
+!!
+!!    rho1 = rho1(CCSD) + < mu1 | [H,C_3] | HF >
+!!    rho2 = rho2(CCSD) + < mu2 | [H,C_3] | HF > + < mu2 | [[H,C_1],T_3] | HF >
+!!
 !!    Alex C. Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
@@ -285,7 +297,7 @@
 !!
 !!    Calculate the Fock contribution to rho2 for fixed i,j and k
 !!
-!!    rho_abji =+ sum_kc (C^abc_ijk - C^cba_ijk) F_kc
+!!    rho_abji =+ P^ab_ij sum_kc (C^abc_ijk - C^cba_ijk) F_kc
 !!
 !!    Alexander Paul and Rolf H. Myhre, Feb 2019
 !!

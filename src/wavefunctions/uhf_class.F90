@@ -31,6 +31,8 @@ module uhf_class
    use array_analysis
    use interval_class
 !
+   use omp_lib
+!
    implicit none
 !
 !  Unrestricted Hartree-Fock wavefunction 
@@ -87,6 +89,8 @@ module uhf_class
       procedure :: set_ao_density_to_core_guess      => set_ao_density_to_core_guess_uhf
       procedure :: get_homo_degeneracy               => get_homo_degeneracy_uhf
       procedure :: get_ao_density_sq                 => get_ao_density_sq_uhf
+!
+      procedure :: construct_mo_fock                 => construct_mo_fock_uhf
 !
 !     MO orbital related routines 
 !
@@ -218,6 +222,23 @@ contains
       endif 
 !
    end subroutine set_initial_ao_density_guess_uhf
+!
+!
+   subroutine construct_mo_fock_uhf(wf)
+!!
+!!    Construct MO Fock
+!!    Written by Eirik F. Kjønstad, Mar 2019
+!!
+!!    Give notice to user that it does not yet exist.
+!!
+      implicit none
+!
+      class(uhf), intent(inout) :: wf
+!
+      write(output%unit, '(/t3,a,a,a)') 'Requested MO transformation of Fock matrix, but this ', &
+                                          'is not yet implemented for ', wf%name_
+!
+   end subroutine construct_mo_fock_uhf
 !
 !
    subroutine print_orbital_energies_uhf(wf, indentation)
@@ -1171,7 +1192,7 @@ contains
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
       integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
 !
-      integer :: thread, n_threads, omp_get_max_threads
+      integer :: thread = 0, n_threads = 1 
       logical :: local_cumulative 
 !
       real(dp), dimension(:,:), allocatable :: F, sp_density_schwarz
@@ -1221,7 +1242,7 @@ contains
       call wf%construct_sp_density_schwarz(sp_density_schwarz, D)
       max_D_schwarz = get_abs_max(sp_density_schwarz, n_s**2)
 !
-      n_threads = omp_get_max_threads()
+!$      n_threads = omp_get_max_threads()
 !
       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
       F = zero 

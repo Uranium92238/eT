@@ -30,7 +30,7 @@ submodule (ccsd_class) jacobian_ccsd
 !!
 !!    where
 !!
-!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | ν >.
+!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
 !!
 !!    Transfered to the current eT program from the first version
 !!    of eT by Andreas Skeidsvoll and Sarai D. Folkestad, 2018.
@@ -63,7 +63,7 @@ contains
 !!
 !!    Directs the transformation by the CCSD Jacobi matrix,
 !!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
+!!       A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >,
 !!
 !!    where the basis employed for the brackets is biorthonormal.
 !!    The transformation is rho = A c, i.e.,

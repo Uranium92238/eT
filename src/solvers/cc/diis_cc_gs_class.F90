@@ -108,6 +108,7 @@ contains
       if (solver%do_restart) then
 !
          call wf%read_amplitudes()
+         call wf%integrals%write_t1_cholesky(wf%t1) 
 ! 
       else
 !

@@ -33,6 +33,8 @@ module hf_class
    use interval_class
    use libint_initialization
 !
+   use omp_lib
+!
    implicit none
 !
 !  Hartree-Fock wavefunction 
@@ -191,6 +193,14 @@ contains
       call wf%orbital_coefficients_file%init('orbital_coefficients', 'sequential', 'unformatted')
       call wf%orbital_energies_file%init('orbital_energies', 'sequential', 'unformatted')
       call wf%restart_file%init('hf_restart_file', 'sequential', 'unformatted')
+!
+      call disk%open_file(wf%restart_file, 'readwrite', 'rewind')
+!
+      write(wf%restart_file%unit) wf%n_ao 
+      write(wf%restart_file%unit) wf%n_mo 
+      write(wf%restart_file%unit) wf%n_densities 
+!
+      call disk%close_file(wf%restart_file) 
 !
    end subroutine prepare_hf
 !
@@ -699,14 +709,6 @@ contains
 !
       class(hf) :: wf
 !
-      call disk%open_file(wf%restart_file, 'readwrite', 'rewind')
-!
-      write(wf%restart_file%unit) wf%n_ao 
-      write(wf%restart_file%unit) wf%n_mo 
-      write(wf%restart_file%unit) wf%n_densities 
-!
-      call disk%close_file(wf%restart_file) 
-!
       call wf%destruct_orbital_energies()
       call wf%destruct_ao_overlap()
       call wf%destruct_ao_fock()
@@ -1113,7 +1115,7 @@ contains
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz, sp_density_schwarz
 !
       real(dp), dimension(:,:), allocatable :: h_wx, h_AB
-      integer :: w, x, y, z, wx, yz, wz, yx
+      integer :: w, x, y, z 
 !
       integer :: A, B, C, D, atom
 !
@@ -1214,7 +1216,7 @@ contains
       max_eri     = get_abs_max(sp_eri_schwarz, n_s**2)
 !
 !$omp parallel do &
-!$omp private(A, B, C, D, A_interval, B_interval, C_interval, D_interval, w, x, y, z, wx, yz, &
+!$omp private(A, B, C, D, A_interval, B_interval, C_interval, D_interval, w, x, y, z, &
 !$omp g_C) schedule(dynamic)
       do A = 1, n_s
 !
@@ -1286,7 +1288,7 @@ contains
 !$omp end parallel do
 !
 !$omp parallel do &
-!$omp private(A, B, C, D, A_interval, B_interval, C_interval, D_interval, w, x, y, z, wz, yx, &
+!$omp private(A, B, C, D, A_interval, B_interval, C_interval, D_interval, w, x, y, z, &
 !$omp g_K) schedule(dynamic)
       do A = 1, n_s
 !
@@ -1457,7 +1459,7 @@ contains
 !
       real(dp) :: coulomb_thr, exchange_thr, precision_thr 
 !
-      integer :: thread, n_threads, omp_get_max_threads
+      integer :: thread = 0, n_threads = 1
 !
       logical :: local_cumulative
 !
@@ -1509,7 +1511,7 @@ contains
 !     Construct the two electron part of the Fock matrix, using the screening vectors 
 !     and parallellizing over available threads (each gets its own copy of the Fock matrix)
 !
-      n_threads = omp_get_max_threads()
+!$    n_threads = omp_get_max_threads()
 !
       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
       F = zero 
@@ -1578,14 +1580,14 @@ contains
       real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, deg, deg_12, deg_34, deg_12_34
 !
-      integer :: w, x, y, omp_get_thread_num, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: w, x, y, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
       integer :: s3s4, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
       real(dp), dimension(:), allocatable :: g 
 !
-      integer :: max_shell_size, thread, skip
+      integer :: max_shell_size, thread = 0, skip
 !
 !     Preallocate the vector that holds the shell quadruple 
 !     ERI integrals, then enter the construction loop 
@@ -1601,7 +1603,7 @@ contains
 !$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1, skip) schedule(dynamic)
       do s1s2 = 1, n_sig_sp
 !
-         thread = omp_get_thread_num()
+!$       thread = omp_get_thread_num()
          thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix 
 !
          sp_eri_schwarz_s1s2 = sp_eri_schwarz(s1s2, 1)
@@ -1755,14 +1757,14 @@ contains
       real(dp) :: d1, d2, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp7, deg, deg_12, deg_34, deg_12_34
 !
-      integer :: w, x, y, omp_get_thread_num, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: w, x, y, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
       integer :: s3s4, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
       real(dp), dimension(:), allocatable :: g 
 !
-      integer :: max_shell_size, thread, skip
+      integer :: max_shell_size, thread = 0, skip
 !
 !     Preallocate the vector that holds the shell quadruple 
 !     ERI integrals, then enter the construction loop 
@@ -1778,7 +1780,7 @@ contains
 !$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1, skip) schedule(dynamic)
       do s1s2 = 1, n_sig_sp
 !
-         thread = omp_get_thread_num()
+!$       thread = omp_get_thread_num()
          thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix 
 !
          sp_eri_schwarz_s1s2 = sp_eri_schwarz(s1s2, 1)
@@ -1908,14 +1910,14 @@ contains
       real(dp) :: d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp3, temp4, temp5, temp6, temp8, deg, deg_12, deg_34, deg_12_34
 !
-      integer :: w, x, y, omp_get_thread_num, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: w, x, y, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
       integer :: s3s4, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
       real(dp), dimension(:), allocatable :: g 
 !
-      integer :: max_shell_size, thread, skip
+      integer :: max_shell_size, thread = 0, skip
 !
 !     Preallocate the vector that holds the shell quadruple 
 !     ERI integrals, then enter the construction loop 
@@ -1931,7 +1933,7 @@ contains
 !$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1, skip) schedule(dynamic)
       do s1s2 = 1, n_sig_sp
 !
-         thread = omp_get_thread_num()
+!$       thread = omp_get_thread_num()
          thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix 
 !
          sp_eri_schwarz_s1s2 = sp_eri_schwarz(s1s2, 1)
@@ -2172,7 +2174,7 @@ contains
    end subroutine construct_ao_overlap_hf
 !
 !
-   subroutine construct_mo_fock_hf(wf, F_pq)
+   subroutine construct_mo_fock_hf(wf)
 !!
 !!    Construct MO Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2182,9 +2184,7 @@ contains
 !!
       implicit none
 !
-      class(hf), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq
+      class(hf), intent(inout) :: wf
 !
       real(dp), dimension(:,:), allocatable :: X
 !
@@ -2213,7 +2213,7 @@ contains
                   X,                         &
                   wf%n_ao,                   &
                   zero,                      &
-                  F_pq,                      & ! F = C^T F^ao C
+                  wf%mo_fock,                & ! F = C^T F^ao C
                   wf%n_mo)
 !
       call mem%dealloc(X, wf%n_ao, wf%n_mo)
@@ -2873,7 +2873,7 @@ contains
    end subroutine construct_roothan_hall_gradient_hf
 !
 !
-   subroutine do_roothan_hall_hf(wf, F, C, e, do_mo_transformation)
+   subroutine do_roothan_hall_hf(wf, F, C, e)
 !!
 !!    Do Roothan-Hall
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2906,22 +2906,20 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: F 
-      real(dp), dimension(wf%n_ao, wf%n_mo), intent(inout) :: C 
-      real(dp), dimension(wf%n_mo),       intent(inout) :: e  
-!
-      logical, optional, intent(in) :: do_mo_transformation
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)     :: F 
+      real(dp), dimension(wf%n_ao, wf%n_mo), intent(inout)  :: C 
+      real(dp), dimension(wf%n_mo), intent(inout)           :: e  
 !
       real(dp), dimension(:), allocatable   :: work
       real(dp), dimension(:,:), allocatable :: metric 
       real(dp), dimension(:,:), allocatable :: ao_fock 
       real(dp), dimension(:,:), allocatable :: FP 
 !
-      real(dp), dimension(:,:), allocatable :: ao_fock_copy 
-      real(dp), dimension(:,:), allocatable :: red_orbital_coefficients  
-      real(dp), dimension(:,:), allocatable :: tmp  
+      real(dp), dimension(:,:), allocatable :: prev_C
 !
-      integer :: info
+      real(dp) :: ddot, orbital_dotprod
+!
+      integer :: info, p
 !
       call mem%alloc(metric, wf%n_mo, wf%n_mo)
 !
@@ -2975,17 +2973,6 @@ contains
 !
       call mem%dealloc(FP, wf%n_mo, wf%n_ao) 
 !
-      if (present(do_mo_transformation)) then 
-!
-         if (do_mo_transformation) then 
-!
-            call mem%alloc(ao_fock_copy, wf%n_mo, wf%n_mo)
-            ao_fock_copy = ao_fock 
-!
-         endif 
-!
-      endif 
-!  
 !     Solve F'C' = L L^T C' e
 !
       info = 0
@@ -3009,54 +2996,10 @@ contains
 !
       if (info .ne. 0)  call output%error_msg('Error: could not solve Roothan-Hall equations.')
 !
-!     If requested MO transformation of Fock matrix, do it 
-!
-      if (present(do_mo_transformation)) then 
-!
-         if (do_mo_transformation) then 
-!
-            call mem%alloc(red_orbital_coefficients, wf%n_mo, wf%n_mo)
-            red_orbital_coefficients = ao_fock 
-!
-            call mem%alloc(tmp, wf%n_mo, wf%n_mo)
-!
-            call dgemm('N', 'N', &
-                        wf%n_mo, &
-                        wf%n_mo, &
-                        wf%n_mo, &
-                        one, &
-                        ao_fock_copy, &
-                        wf%n_mo, &
-                        red_orbital_coefficients, &
-                        wf%n_mo, &
-                        zero, &
-                        tmp, & ! tmp = F' C'  
-                        wf%n_mo)
-!
-            call wf%initialize_mo_fock() ! Allocate if necessary
-!
-            call dgemm('T', 'N',                  &
-                        wf%n_mo,                  &
-                        wf%n_mo,                  &
-                        wf%n_mo,                  &
-                        one,                      &
-                        red_orbital_coefficients, &
-                        wf%n_mo,                  &
-                        tmp,                      &
-                        wf%n_mo,                  &
-                        zero,                     &
-                        wf%mo_fock,               & ! F = C'^T F' C'  
-                        wf%n_mo)
-!
-            call mem%dealloc(ao_fock_copy, wf%n_mo, wf%n_mo)
-            call mem%dealloc(red_orbital_coefficients, wf%n_mo, wf%n_mo)
-            call mem%dealloc(tmp, wf%n_mo, wf%n_mo)
-!
-         endif
-!
-      endif
-!
 !     Transform back the solutions to original basis, C = P (P^T C) = P C'
+!
+      call mem%alloc(prev_C, wf%n_ao, wf%n_mo)
+      prev_C = C 
 !
       call dgemm('N','N',                       &
                   wf%n_ao,                      &
@@ -3072,6 +3015,23 @@ contains
                   wf%n_ao)
 !
       call mem%dealloc(ao_fock, wf%n_mo, wf%n_mo)
+!
+!     Test for orbitals that were approximately sign-flipped by dsygv,
+!     resetting them if this is the case (this changes the orbitals 
+!     minimally, thus preserving the sweetness of whatever CC guess
+!     is on file).
+!
+      do p = 1, wf%n_mo 
+!
+         orbital_dotprod = ddot(wf%n_ao, prev_C(1, p), 1, C(1, p), 1)/ddot(wf%n_ao, C(1, p), 1, C(1, p), 1)
+!
+         if (orbital_dotprod .lt. zero) then 
+!
+            C(:,p) = -C(:,p)
+!
+         endif
+!
+      enddo
 !
    end subroutine do_roothan_hall_hf
 !
