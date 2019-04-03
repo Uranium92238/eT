@@ -98,6 +98,8 @@ contains
       call jacobian_transpose_timer%start()
 !
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
+      sigma_ai = zero
+!
       call mem%alloc(b_ai, wf%n_v, wf%n_o)
 !
       call dcopy(wf%n_t1, b(1:wf%n_t1), 1, b_ai, 1)
@@ -130,6 +132,7 @@ contains
 !     the incoming singles vector
 !
       call mem%alloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      sigma_aibj = zero
 !
       call wf%jacobian_transpose_ccsd_a2(sigma_aibj, b_ai)
 !
@@ -1570,7 +1573,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: sigma_iajb ! sigma_aibj contribution
       real(dp), dimension(:,:,:,:), allocatable :: sigma_ibja ! sigma_aibj contribution
 !
-      integer :: i, a, j, b
+      integer :: i, a, j, b, aa, bb
 !
 !     Batching variables
 !
@@ -1590,7 +1593,7 @@ contains
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
-                  sigma_aibj(a,i,b,j) = -(wf%fock_ia(i, b))*b_ai(a, j) + two*(wf%fock_ia(j, b))*b_ai(a, i)
+                  sigma_aibj(a,i,b,j) = sigma_aibj(a,i,b,j) - (wf%fock_ia(i, b))*b_ai(a, j) + two*(wf%fock_ia(j, b))*b_ai(a, i)
 !
                enddo
             enddo
@@ -1686,7 +1689,21 @@ contains
 !
          call mem%dealloc(g_cajb, wf%n_v, batch_a%length, wf%n_o, wf%n_v)
 !
-         call add_2143_to_1234(one, sigma_iajb, sigma_aibj, batch_a%length, wf%n_o, wf%n_v, wf%n_o)
+!$omp parallel do private(b,j,i,a,aa)
+         do b = 1, wf%n_v
+            do j = 1, wf%n_o
+               do i = 1, wf%n_o
+                  do a = 1, batch_a%length
+!
+                     aa = a + batch_a%first - 1
+!
+                     sigma_aibj(aa,i,b,j) = sigma_aibj(aa,i,b,j) + sigma_iajb(i,a,j,b)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
 !
          call mem%dealloc(sigma_iajb, wf%n_o, batch_a%length, wf%n_o, wf%n_v)
 !
@@ -1743,8 +1760,23 @@ contains
 !
 !        Add it to sigma_aibj
 !
-         call add_2341_to_1234(one, sigma_ibja, sigma_aibj, wf%n_v, wf%n_o, batch_b%length, wf%n_o)
+!$omp parallel do private(j,b,i,a,bb)
+         do j = 1, wf%n_o
+            do b = 1, batch_b%length
 !
+               bb = b + batch_b%first - 1
+!
+               do i = 1, wf%n_o
+                  do a = 1, wf%n_v
+!
+                     sigma_aibj(a,i,bb,j) = sigma_aibj(a,i,bb,j) + sigma_ibja(i,b,j,a)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+
          call mem%dealloc(sigma_ibja, wf%n_o, batch_b%length, wf%n_o, wf%n_v)
 !
       enddo ! End of batches over b
@@ -2825,6 +2857,8 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_ikjl
       real(dp), dimension(:,:,:,:), allocatable :: g_klij ! g_ikjl
 !
+      integer :: a, i, b, j, aa, bb
+!
 !     Batching variables
 !
       integer :: rec2, rec0, rec1_a, rec1_b
@@ -2945,7 +2979,21 @@ contains
 !
             call mem%dealloc(g_abcd, batch_a%length, batch_b%length, wf%n_v, wf%n_v)
 !
-            call daxpy(batch_a%length*batch_b%length*wf%n_o**2, one, sigma_abij_batch, 1, sigma_abij, 1)
+!$omp parallel do schedule(static) private(j,i,b,a,aa,bb)
+            do j = 1, wf%n_o
+               do i = 1, wf%n_o
+                  do b = 1, batch_b%length
+                     do a = 1, batch_a%length
+!
+                        aa = a + batch_a%first - 1
+                        bb = b + batch_b%first - 1
+!
+                        sigma_abij(aa,bb,i,j) = sigma_abij(aa,bb,i,j) + sigma_abij_batch(a,b,i,j)
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
 !
             call mem%dealloc(sigma_abij_batch, batch_a%length, batch_b%length, wf%n_o, wf%n_o)
 !

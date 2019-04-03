@@ -2928,7 +2928,7 @@ contains
                   wf%n_v,     &
                   b_ai,       &
                   wf%n_v,     &
-                  zero,        &
+                  one,        &
                   sigma_ai,   &
                   wf%n_v)
 !

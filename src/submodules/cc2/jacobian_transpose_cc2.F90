@@ -101,6 +101,8 @@ contains
 !     Allocate and zero the transformed vecotr (singles part)
 !
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
+      sigma_ai = zero
+!
       call mem%alloc(c_ai, wf%n_v, wf%n_o)
 !
 !$omp parallel do schedule(static) private(a, i, ai)

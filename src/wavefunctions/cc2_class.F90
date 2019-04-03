@@ -448,6 +448,8 @@ contains
 !     Set up the multipliers equation
 !
 !     equation = sum_bj tbar_bj A_bj,ai
+!
+      equation = zero
 !  
       call wf%jacobian_transpose_ccs_a1(equation, wf%t1bar)
       call wf%jacobian_transpose_ccs_b1(equation, wf%t1bar)
