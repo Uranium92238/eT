@@ -64,16 +64,16 @@ contains
 !
       class(davidson_cvs_cc_es) :: solver
 !
-      solver%tag = 'Davidson coupled cluster excited state solver'
-      solver%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      solver%description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
-               & the right or left eigenvectors of the Jacobian matrix, A. The eigenvalue &
-               & problem is solved in a reduced space, the dimension of which is &
-               & expanded until the convergence criteria are met.'
-!
-      solver%description2 = 'A complete description of the algorithm can be found in &
-                                          & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
+      solver%tag = 'Davidson coupled cluster core excited state solver'
+      solver%description1 = 'A Davidson CVS solver that calculates core excitation energies and the &
+                            &corresponding right eigenvectors of the Jacobian matrix, A. The eigenvalue &
+                            &problem is solved in a reduced space, the dimension of which is expanded &
+                            &until the convergence criteria are met. In addition the CVS aproximation is &
+                            &used to obtain the core excitations'
+      solver%description2 = 'A complete description of the Davidson algorithm can be found in &
+                            &E. R. Davidson, J. Comput. Phys. 17, 87 (1975). &
+                            &A description of the CVS approximation can be found in &
+                            &S. Coriani & H. Koch, J. Chem. Phys. 143, 181103 (2015).'
 !
       call solver%print_banner()
 !
@@ -109,19 +109,6 @@ contains
       implicit none 
 !
       class(davidson_cvs_cc_es) :: solver 
-!
-!     These three asignments shouldn't really be in this routine. - EFK, Mar 2019
-!
-      solver%tag = 'Davidson coupled cluster core excited state solver'
-      solver%description1 = 'A Davidson CVS solver that calculates core excitation energies and the &
-                            &corresponding right eigenvectors of the Jacobian matrix, A. The eigenvalue &
-                            &problem is solved in a reduced space, the dimension of which is expanded &
-                            &until the convergence criteria are met. In addition the CVS aproximation is &
-                            &used to obtain the core excitations'
-      solver%description2 = 'A complete description of the Davidson algorithm can be found in &
-                            &E. R. Davidson, J. Comput. Phys. 17, 87 (1975). &
-                            &A description of the CVS approximation can be found in &
-                            &S. Coriani & H. Koch, J. Chem. Phys. 143, 181103 (2015).'
 !
      call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
      call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)

@@ -42,7 +42,6 @@ module zop_engine_class
 !
       procedure :: prepare                                     => prepare_zop_engine
       procedure :: run                                         => run_zop_engine
-      procedure :: cleanup                                     => cleanup_zop_engine
 !
       procedure :: read_settings                               => read_settings_zop_engine
       procedure :: read_zop_settings                           => read_zop_settings_zop_engine
@@ -249,20 +248,6 @@ contains
       flush(output%unit)
 !
    end subroutine print_summary_zop_engine
-!
-!
-   subroutine cleanup_zop_engine(engine)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(zop_engine) :: engine
-!
-      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%name_)
-!
-   end subroutine cleanup_zop_engine
 !
 !
 end module zop_engine_class

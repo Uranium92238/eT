@@ -216,8 +216,6 @@ contains
       solver_cc_es%name_    = 'solver cc es'
       solver_cc_es%required = .false.
       solver_cc_es%keywords = (/ 'algorithm            ',   &
-                                 'ionization           ',   &
-                                 'core ionization      ',   &
                                  'core excitation      ',   &
                                  'energy threshold     ',   &
                                  'residual threshold   ',   &

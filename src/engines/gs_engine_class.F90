@@ -33,7 +33,6 @@ module gs_engine_class
 !
       procedure :: prepare                               => prepare_gs_engine
       procedure :: run                                   => run_gs_engine
-      procedure :: cleanup                               => cleanup_gs_engine
 !
       procedure, nopass :: do_ground_state               => do_ground_state_gs_engine 
 !
@@ -118,20 +117,6 @@ contains
       call engine%do_ground_state(wf)
 !
    end subroutine run_gs_engine
-!
-!
-   subroutine cleanup_gs_engine(engine)
-!!
-!!    Cleanup 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
-!!
-      implicit none 
-!
-      class(gs_engine) :: engine 
-!
-      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%name_)
-!
-   end subroutine cleanup_gs_engine
 !
 !
    subroutine do_ground_state_gs_engine(wf)

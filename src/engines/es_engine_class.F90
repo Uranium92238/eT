@@ -33,7 +33,6 @@ module es_engine_class
 !
       procedure :: prepare                   => prepare_es_engine
       procedure :: run                       => run_es_engine
-      procedure :: cleanup                   => cleanup_es_engine
 !
       procedure :: read_settings             => read_settings_es_engine
       procedure :: read_es_settings          => read_es_settings_es_engine
@@ -91,8 +90,6 @@ contains
       call input%get_keyword_in_section('algorithm', 'solver cc es', engine%es_algorithm)
 !
       if (input%requested_keyword_in_section('core excitation', 'solver cc es')) engine%es_type = 'core'
-      if (input%requested_keyword_in_section('ionization', 'solver cc es')) engine%es_type = 'valence ionized'
-      if (input%requested_keyword_in_section('core ionization', 'solver cc es')) engine%es_type = 'core ionized'
 !
    end subroutine read_es_settings_es_engine
 !
@@ -106,8 +103,6 @@ contains
 !
       class(es_engine)  :: engine
       class(ccs)        :: wf
-!
-      write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
 !
 !     Cholesky decomposition
 !
@@ -125,20 +120,6 @@ contains
       call engine%do_excited_state(wf)
 !
    end subroutine run_es_engine
-!
-!
-   subroutine cleanup_es_engine(engine)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(es_engine) :: engine
-!
-      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%name_)
-!
-   end subroutine cleanup_es_engine
 !
 !
    subroutine do_excited_state_es_engine(engine, wf)

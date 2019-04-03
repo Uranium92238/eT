@@ -37,8 +37,7 @@ module abstract_engine_class
 !
       procedure :: ignite => ignite_abstract_engine
 !
-      procedure(essential_engine), deferred      :: prepare 
-      procedure(essential_engine), deferred      :: cleanup   
+      procedure(essential_engine), deferred      :: prepare   
       procedure(essential_engine_w_wf), deferred :: run 
 !
       procedure, nopass :: do_cholesky => do_cholesky_abstract_engine       
@@ -92,7 +91,6 @@ contains
 !
       call engine%prepare()
       call engine%run(wf)
-      call engine%cleanup()
 !
    end subroutine ignite_abstract_engine
 !
