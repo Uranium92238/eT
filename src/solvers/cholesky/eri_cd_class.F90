@@ -100,7 +100,7 @@ module eri_cd_class
 !
       procedure :: construct_mo_cholesky_vecs             => construct_mo_cholesky_vecs_cd_eri_solver
 !
-      procedure :: read_settings                              => read_settings_eri_cd
+      procedure :: read_settings                          => read_settings_eri_cd
       procedure :: print_banner                           => print_banner_eri_cd
       procedure :: print_settings                         => print_settings_eri_cd
 !
@@ -4281,7 +4281,7 @@ contains
          enddo
       enddo
 !
-      call disk%close_file(mo_cholesky_tmp)
+      call disk%close_file(mo_cholesky_tmp,'delete')
       call disk%close_file(solver%cholesky_mo_vectors)
 !
       call mem%dealloc(L_J, solver%n_cholesky)
