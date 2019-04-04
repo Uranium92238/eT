@@ -100,7 +100,7 @@ module eri_cd_class
 !
       procedure :: construct_mo_cholesky_vecs             => construct_mo_cholesky_vecs_cd_eri_solver
 !
-      procedure :: read_info                              => read_info_eri_cd
+      procedure :: read_settings                          => read_settings_eri_cd
       procedure :: print_banner                           => print_banner_eri_cd
       procedure :: print_settings                         => print_settings_eri_cd
 !
@@ -126,11 +126,7 @@ contains
 !
       solver%n_batches = 1
 !
-      if (requested_section('cholesky')) then
-!
-         call solver%read_info()
-!
-      endif
+      call solver%read_settings()
 !
       solver%n_aop   = system%get_n_aos()*(system%get_n_aos()+1)/2 ! Number of ao pairs packed
       solver%n_ao    = system%get_n_aos()
@@ -187,7 +183,7 @@ contains
       write(output%unit, '(t6, a29, i13)')  'Total number of shell pairs: ', solver%n_sp
       write(output%unit, '(t6, a29, i13)')  'Total number of AO pairs:    ', solver%n_aop
 !
-      write(output%unit, '(/t3, a38)') '- Preparing diagonal for decomposition'
+      write(output%unit, '(/t3, a39)') '- Preparing diagonal for decomposition:'
 !
       call det_basis_timer%start()
 !
@@ -303,7 +299,8 @@ contains
 !
       class(eri_cd) :: solver
 !
-      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
+      call disk%open_file(solver%cholesky_ao_vectors_info, 'read')
+      call disk%close_file(solver%cholesky_ao_vectors_info, 'delete')
 !
    end subroutine cleanup_eri_cd
 !
@@ -2824,9 +2821,6 @@ contains
 !
       call cpu_time(e_decomp_time)
 !
-      write(output%unit, '(/t6, a)') 'Done decomposing (J|K)!'
-      flush(output%unit)
-!
       call mem%alloc(cholesky_basis_updated, n_vectors, 3)
 !
 !$omp parallel do private(I)
@@ -2957,9 +2951,6 @@ contains
       call DTRTRI('l','n', solver%n_cholesky, cholesky_inverse, solver%n_cholesky, info)
 !
       if (info /= 0) call output%error_msg('Error: matrix inversion failed!', info)
-!
-      write(output%unit, '(/t6, a)') 'Done inverting L_JK!'
-      flush(output%unit)
 !
 !     Write inverse Cholesky vectors of auxiliary basis overlap
 !
@@ -3342,6 +3333,9 @@ contains
             endif
          enddo
 !
+         call mem%dealloc(cholesky_basis, solver%n_cholesky, 3)
+         call mem%dealloc(basis_shell_info, n_sp_in_basis, 4)
+!
       enddo ! done
 !
       call disk%close_file(solver%cholesky_ao_vectors)
@@ -3351,8 +3345,6 @@ contains
       call disk%close_file(solver%cholesky_ao_vectors_info)
 !
       call mem%dealloc(aux_chol_inverse_transpose, solver%n_cholesky, solver%n_cholesky)
-      call mem%dealloc(cholesky_basis, solver%n_cholesky, 3)
-      call mem%dealloc(basis_shell_info, n_sp_in_basis, 4)
       deallocate(construct_sp)
 !
    end subroutine construct_cholesky_vectors_eri_cd
@@ -3926,9 +3918,9 @@ contains
    end function get_sp_from_shells
 !
 !
- subroutine read_info_eri_cd(solver)
+ subroutine read_settings_eri_cd(solver)
 !!
-!!    Read information
+!!    Read settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!     Read input if it is present:
@@ -3943,63 +3935,17 @@ contains
 !!
       implicit none
 !
-      class(eri_cd) :: solver
+      class(eri_cd) :: solver 
 !
-      character(len=100) :: line
+      call input%get_keyword_in_section('threshold', 'solver cholesky', solver%threshold)
+      call input%get_keyword_in_section('span', 'solver cholesky', solver%span)
+      call input%get_keyword_in_section('batches', 'solver cholesky', solver%n_batches)
+      call input%get_keyword_in_section('qualified', 'solver cholesky', solver%max_qual)
 !
-      rewind(input%unit)
+      if (input%requested_keyword_in_section('one center', 'solver cholesky')) solver%one_center = .true.
+      if (input%requested_keyword_in_section('no vectors', 'solver cholesky')) solver%construct_vectors = .false.
 !
-      read(input%unit,'(a)') line
-      line = remove_preceding_blanks(line)
-!
-      do while ((trim(line) .ne. 'end cholesky') .and. (line(1:2) .ne. 'geometry'))
-!
-         read(input%unit,'(a)') line
-         line = remove_preceding_blanks(line)
-
-         if (trim(line) == 'cholesky') then ! found cholesky section in input
-!
-            do while (trim(line) .ne. 'end cholesky')
-!
-               read(input%unit,'(a)') line
-               line = remove_preceding_blanks(line)
-!
-               if (line(1:10) == 'threshold:') then
-!
-                  read(line(11:100), '(d16.5)') solver%threshold
-!
-               elseif (line(1:5) == 'span:') then
-!
-                  read(line(6:100), '(d16.5)') solver%span
-!
-               elseif (line(1:8) == 'batches:') then
-!
-                  read(line(9:100), '(i5)') solver%n_batches
-!
-               elseif (line(1:10) == 'qualified:') then
-!
-                  read(line(11:100), '(i5)') solver%max_qual
-!
-               elseif (trim(line) == 'one center') then
-!
-                  solver%one_center = .true.
-!
-               elseif (trim(line) == 'no vectors') then
-!
-                  solver%construct_vectors = .false.
-!
-               endif
-!
-            end do
-!
-            backspace(input%unit)
-!
-         endif
-!
-      enddo
-      backspace(input%unit)
-!
-   end subroutine read_info_eri_cd
+   end subroutine read_settings_eri_cd
 !
 !
    subroutine construct_mo_cholesky_vecs_cd_eri_solver(solver, system, n_mo, orbital_coefficients)
@@ -4330,7 +4276,7 @@ contains
          enddo
       enddo
 !
-      call disk%close_file(mo_cholesky_tmp)
+      call disk%close_file(mo_cholesky_tmp,'delete')
       call disk%close_file(solver%cholesky_mo_vectors)
 !
       call mem%dealloc(L_J, solver%n_cholesky)

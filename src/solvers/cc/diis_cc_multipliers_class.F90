@@ -286,7 +286,6 @@ contains
       class(ccs) :: wf
 !
       call wf%save_multipliers()  
-      call wf%destruct_multipliers()
 !
    end subroutine cleanup_diis_cc_multipliers
 !
@@ -336,34 +335,10 @@ contains
 !
       class(diis_cc_multipliers) :: solver 
 !
-      integer :: n_specs, i
+      call input%get_keyword_in_section('threshold', 'solver cc multipliers', solver%residual_threshold)
+      call input%get_keyword_in_section('max iterations', 'solver cc multipliers', solver%max_iterations)
 !
-      character(len=100) :: line
-!
-      if (.not. requested_section('multipliers')) return
-!
-      call move_to_section('multipliers', n_specs)
-!
-      do i = 1, n_specs
-!
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (line(1:10) == 'threshold:' ) then
-!
-            read(line(11:100), *) solver%residual_threshold
-!
-         elseif (line(1:7) == 'restart' ) then
-!
-            solver%restart = .true.
-!
-         elseif (line(1:15) == 'max iterations:' ) then
-!
-            read(line(16:100), *) solver%max_iterations
-!
-         endif
-!
-      enddo
+      if (input%requested_keyword_in_section('restart', 'solver cc multipliers')) solver%restart = .true.    
 !
    end subroutine read_settings_diis_cc_multipliers
 !

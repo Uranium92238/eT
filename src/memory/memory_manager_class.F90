@@ -52,7 +52,7 @@ module memory_manager_class
 !
    use kinds
    use parameters
-   use file_class
+   use input_file_class
    use batching_index_class
    use io_utilities
 !
@@ -74,6 +74,8 @@ module memory_manager_class
 !     Initialization routine (used if user specifies a memory different from standard)
 !
       procedure :: prepare => prepare_memory_manager
+!
+      procedure :: check_for_leak => check_for_leak_memory_manager
 !
 !     Allocation and deallocation routines for arrays
 !
@@ -113,9 +115,6 @@ module memory_manager_class
 !
 !     Routines for determining the number of batches
 !
-      procedure :: num_batch     => num_batch_memory_manager     ! For one-index batch
-      procedure :: num_two_batch => num_two_batch_memory_manager ! For two-index batches
-!
       procedure :: batch_setup_1_memory_manager
       procedure :: batch_setup_2_memory_manager
       procedure :: batch_setup_3_memory_manager
@@ -152,23 +151,45 @@ contains
 !
       class(memory_manager) :: mem
 !
-      if (requested_section('memory')) then
+      mem%total = 8000000000_i15
 !
-         call mem%read_settings()
-!
-      else
-!
-!        Set default value
-!
-         mem%total = 8000000000_i15
-!
-      endif
+      call mem%read_settings()
 !
       mem%available = mem%total
 !
       call mem%print_settings()
 !
    end subroutine prepare_memory_manager
+!
+!
+   subroutine check_for_leak_memory_manager(mem)
+!!
+!!    Check for leak 
+!!    Written by Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Issues a warning if there has been a leak since the 
+!!    the memory manager was prepared. Should only be called 
+!!    at the end of the program, when all arrays that were
+!!    allocated since mem%prepare() should have been deallocated.
+!!
+      implicit none 
+!
+      class(memory_manager), intent(in) :: mem 
+!
+      if (mem%available .ne. mem%total) then 
+!
+         write(output%unit, '(/t3,a)')  'Mismatch in memory according to eT and specified on input:'
+!
+         write(output%unit, '(/t6, a27, f11.4, a)') 'Memory available (eT):     ', &
+                         real(mem%available)/real(1000000000), ' GB'
+         write(output%unit, '(t6, a27, f11.4, a)') 'Memory available (input):   ', &
+                         real(mem%total)/real(1000000000), ' GB'
+!
+         call output%warning_msg('Deallocations may be missing or specified with incorrect dimensionalities.')
+!
+      endif 
+!
+   end subroutine check_for_leak_memory_manager
 !
 !
    integer(i15) function get_available_memory_manager(mem)
@@ -944,134 +965,6 @@ contains
    end subroutine dealloc_int_4_memory_manager
 !
 !
-   subroutine num_batch_memory_manager(mem, batch_p, required)
-!!
-!!    Number of batches
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
-!!
-!!    Given the required memory, this routine determines, for a one-index batching,
-!!    the maximum batch length and the number of batches in total.
-!!
-      implicit none
-!
-      class(memory_manager) :: mem
-!
-      class(batching_index) :: batch_p ! The index being batched over
-!
-      integer :: required
-!
-!
-      if (required .lt. mem%available) then
-!
-!        No need to batch
-!
-         batch_p%num_batches = 1
-         batch_p%max_length = batch_p%index_dimension
-!
-         return
-!
-      endif
-!
-!     We need to batch
-!
-!     Determine maximum batch length
-!
-      batch_p%max_length = int((mem%available)/(required/(batch_p%index_dimension)))
-!
-!     Number of full batches
-!
-      batch_p%num_batches = (batch_p%index_dimension)/(batch_p%max_length)
-!
-!     Test for rest not included in the preceding integer division
-!
-      if ((batch_p%num_batches)*(batch_p%max_length) .lt. batch_p%index_dimension) then
-!
-         batch_p%num_batches = batch_p%num_batches + 1
-!
-      endif
-!
-   end subroutine num_batch_memory_manager
-!
-!
-   subroutine num_two_batch_memory_manager(mem, batch_p, batch_q, required)
-!!
-!!    Number of two-batches
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
-!!
-!!    Given the required memory, this routine determines, for two-index batching,
-!!    the maximum batch length and the number of batches in total of both batching
-!!    indices.
-!!
-      implicit none
-!
-      class(memory_manager) :: mem
-!
-      class(batching_index) :: batch_p
-      class(batching_index) :: batch_q
-!
-      integer :: required
-!
-      integer :: i = 0
-!
-!
-      batch_p%num_batches = 1
-      batch_q%num_batches = 1
-!
-      if (required .lt. mem%available) then
-!
-!        No need to batch
-!
-         batch_p%num_batches = 1
-         batch_q%num_batches = 1
-!
-         batch_p%max_length = batch_p%index_dimension
-         batch_q%max_length = batch_q%index_dimension
-!
-         return
-!
-      endif
-!
-!     We need to batch
-!
-!     Test whether two different-length indices are requested,
-!     because this feature is not yet implemented
-!
-      if (batch_p%index_dimension .ne. batch_q%index_dimension) then
-!
-         call output%error_msg('batching over indices of different lengths is not yet implemented')
-!
-      endif
-!
-!     Determine number of batches
-!
-      do i = 1, batch_p%index_dimension
-!
-         if (mem%available .gt. required/i**2) then
-!
-            batch_p%num_batches = i
-            batch_q%num_batches = i
-!
-            batch_p%max_length = (batch_p%index_dimension)/(batch_p%num_batches)
-            batch_q%max_length = (batch_q%index_dimension)/(batch_q%num_batches)
-!
-!           Test for rest
-!
-            if ((batch_p%num_batches)*(batch_p%max_length) .lt. batch_p%index_dimension) then
-!
-               batch_p%num_batches = batch_p%num_batches + 1
-               batch_p%num_batches = batch_p%num_batches + 1
-!
-            endif
-!
-            return
-!
-         endif
-!
-      enddo
-!
-   end subroutine num_two_batch_memory_manager
-!
-!
    subroutine read_settings_memory_manager(mem)
 !!
 !!    Read settings
@@ -1081,28 +974,8 @@ contains
 !
       class(memory_manager) :: mem
 !
-      integer :: n_specs, i
-!
-      character(len=100) :: line
-!
-      mem%total = 8.0d0
-!
-      call move_to_section('memory', n_specs)
-!
-      do i = 1, n_specs
-!
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (line(1:10) == 'available:' ) then
-!
-            read(line(11:100), *) mem%total
-            mem%total = mem%total*1000000000
-!
-         endif
-!
-      enddo
-!
+      call input%get_keyword_in_section('available', 'memory', mem%total)
+      mem%total = mem%total*1000000000
 !
    end subroutine read_settings_memory_manager
 !

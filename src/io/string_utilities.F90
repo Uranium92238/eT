@@ -1,0 +1,320 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
+module string_utilities
+!
+!!
+!!    String utilities module
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, Mar 2019
+!!
+!
+   use kinds
+   use file_class
+!
+contains
+!
+!
+   function get_n_elements_in_string(string) result(n_elements)
+!!
+!!    Get n elements in string
+!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    Gets the number of elements in range or list,
+!!    To be used for reading of input.
+!!
+!!    Ranges should always be given as [a,b].
+!!
+!!    Lists should always be given as {a, b, c, d},
+!!    that is, in set notation.
+!!
+      implicit none
+!
+      character(len=200), intent(inout) :: string
+!
+      integer :: n_elements
+!
+!     Local variables
+!
+      integer :: first, last, n_characters
+      integer :: i
+!
+      n_elements = 0
+!
+      string = adjustl(string)
+!
+      n_characters = len_trim(string)
+!
+      if (string(1:1) == '[') then ! range given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= ']') call output%error_msg('found open range in input file.')
+!
+         do i = 2, n_characters - 1
+!
+            if (string(i:i) == ',') exit
+!
+         enddo
+!
+!        Read first element
+!
+         read(string(2:i-1), *) first
+!
+!        Read last element
+!
+         read(string(i+1:n_characters - 1), *) last
+!
+!        Calculate number of elements
+!
+         n_elements = last - first + 1
+!
+      elseif (string(1:1)=='{') then ! list given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= '}') call output%error_msg('found open set in input file.')
+!
+         n_elements = 1 ! Assuming that the set contains at least one element (otherwize why give list?) 
+!
+!        Loop through and count commas
+!
+         do i = 2, n_characters - 1
+!
+            if (string(i:i) == ',') n_elements = n_elements + 1
+!
+         enddo
+!
+      else ! Did not find list or 
+!
+         call output%error_msg('neither list nor range was found.')
+!
+      endif
+!
+   end function get_n_elements_in_string
+!
+!
+   subroutine get_elements_in_string(string, n_elements, elements)
+!!
+!!    Get elements
+!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    Gets the elements from range or list.
+!!    To be used for reading of input.
+!!
+!!    Ranges should always be given as [a,b].
+!!
+!!    Lists should always be given as {a, b, c, d},
+!!    that is, in set notation.
+!!
+      implicit none
+!
+      character(len=200), intent(inout) :: string
+!
+      integer, intent(in) :: n_elements
+!
+      integer, dimension(n_elements), intent(out) :: elements
+!
+!     Local variables
+!
+      integer :: first, last, n_characters, n_elements_found
+      integer :: i, j
+!
+      string = adjustl(string)
+!
+      n_characters = len_trim(string)
+!
+      if (string(1:1) == '[') then ! range given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= ']') call output%error_msg('found open range in input file.')
+!
+         do i = 2, n_characters - 1
+!
+            if (string(i:i) == ',') exit
+!
+         enddo
+!
+!        Read first element
+!
+         read(string(2:i-1), *) first
+!
+!        Read last element
+!
+         read(string(i+1:n_characters - 1), *) last
+!
+!        Sanity check - Is the number of elements found equal to n_elements
+!
+         if (n_elements .ne. last - first + 1) call output%error_msg('Mismatch in number of elements to be read.')
+!
+         do i = 1, n_elements
+!
+            elements(i) = first + i - 1
+!
+         enddo
+!
+      elseif (string(1:1)=='{') then ! list given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= '}') call output%error_msg('found open set in input file.')
+!
+!        Loop through and set the elements
+!
+         first            = 2
+         n_elements_found = 0
+!
+         do j = 1, n_elements
+!
+            do i = first, n_characters - 1
+!
+               if (string(i:i) == ',') exit
+!
+            enddo
+!
+            read(string(first:i-1), *) elements(j)
+!
+            n_elements_found = n_elements_found + 1
+!
+            first = i + 1
+!
+            if (first == n_characters) exit
+!
+         enddo
+!
+         if (n_elements_found .ne. n_elements) call output%error_msg('Mismatch in number of elements to be read.')
+!
+      else ! Did not find list or 
+!
+         call output%error_msg('neither list nor range was found.')
+!
+      endif
+!
+   end subroutine get_elements_in_string
+!
+!
+   function set_cursor_to_whitespace(string) result(cursor)
+!!
+!!    Set cursor to whitespace
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    Sets the cursor to the first whitespace in the string
+!!
+      implicit none
+!
+      character(len=200), intent(inout) :: string
+!
+      integer :: cursor
+!
+      string = adjustl(string)
+!
+      cursor = 1
+!
+      do while (cursor .lt. 200)
+         if (string(cursor:cursor) .eq. ' ') then
+            exit
+         else
+            cursor = cursor + 1
+            cycle
+         endif
+      enddo
+!
+   end function set_cursor_to_whitespace
+!
+!
+   subroutine convert_to_lowercase(string)
+!!
+!!    Convert to lowercase 
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Adapted from routines posted on the Stack-exchange.
+!!    
+!!    Assumes ASCII table for representing characters as integers, 
+!!    where the lowercase letter is +32 relative to the uppercase letters.
+!!
+!!    Note: uppercase (65-90) and lowercase (97-122).
+!!
+      implicit none 
+!
+      character(len=*), intent(inout) :: string 
+!
+      integer :: character, current_character
+!
+      do character = 1, len(string)
+!
+!        Represent character as integer 
+!  
+         current_character = ichar(string(character : character)) 
+!
+!        Convert if character is in the range of uppercase characters 
+!
+         if (current_character >= 65 .and. current_character <= 90) then ! Between A and Z
+!
+            current_character = current_character + 32 
+!
+         endif
+!
+!        Replace the character by the (possibly) lowercased letter 
+!
+         string(character : character) = char(current_character)
+!
+      enddo
+!
+   end subroutine convert_to_lowercase
+!
+!
+   function convert_char_to_uppercase(char_) result(char_out)
+!!
+!!    Convert to uppercase
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Adapted from routines posted on the Stack-exchange.
+!!    
+!!    Assumes ASCII table for representing characters as integers, 
+!!    where the lowercase letter is +32 relative to the uppercase letters.
+!!
+!!    Note: uppercase (65-90) and lowercase (97-122).
+!!
+      implicit none 
+!
+      character, intent(in) :: char_ 
+      character :: char_out 
+!
+      integer :: char_int
+!
+!     Represent character as integer 
+!  
+      char_int = ichar(char_) 
+!
+!     Convert if character is in the range of uppercase characters 
+!
+      if (char_int >= 97 .and. char_int <= 122) then ! Between a and z
+!
+         char_int = char_int - 32 
+!
+      endif
+!
+!     Replace the character by the (possibly) uppercased letter 
+!
+     char_out = char(char_int)
+!
+   end function convert_char_to_uppercase
+!
+!
+end module string_utilities

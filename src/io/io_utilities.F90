@@ -25,7 +25,7 @@ module io_utilities
 !!
 !
    use kinds
-   use file_class
+   use input_file_class
 !
 contains
 !
@@ -208,8 +208,8 @@ contains
       logical, intent(in), optional :: colons
 !
       character(90)  :: temp
-      integer   :: l, l_left, lines, l_length
-      integer   :: i,j, padd, printed 
+      integer        :: l, l_left, lines, l_length
+      integer        :: i,j, padd, printed 
       character(20)  :: fs,fstring,ffstring,lfstring
       logical        :: col 
 !

@@ -25,7 +25,7 @@ module shell_class
 !!
 !
    use kinds
-   use file_class
+   use output_file_class
    use disk_manager_class
 !
    implicit none

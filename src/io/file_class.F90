@@ -25,30 +25,12 @@ module file_class
 !!
 !!
 !
-   use kinds          
+   use kinds    
+   use abstract_file_class      
+   use output_file_class      
 !
-   type :: file
+   type, extends(abstract_file) :: file
 !
-!     Filename
-!
-      character(len=255) :: name = 'no_name'
-!
-!     Unit identifier
-!
-      integer :: unit = -1
-!
-!     File size (in bytes)
-!
-      integer, private :: file_size = -1
-!
-!     Logical for whether the file is currently opened or not
-!
-      logical :: opened = .false.
-!
-      character(len=40) :: access = 'unknown'
-      character(len=40) :: format = 'unknown'
-!
-      integer :: record_length = 0
 !
    contains
 !
@@ -56,21 +38,8 @@ module file_class
 !
       procedure :: prepare_to_read_line   => prepare_to_read_line_file
 !
-      procedure :: error_msg              => error_msg_file
-      procedure :: warning_msg            => warning_msg_file
-!
-      procedure :: determine_file_size    => determine_file_size_file
-!
-      procedure :: get_file_size          => get_file_size_file
-      procedure :: file_exists            => file_exists_file
-!
    end type file
 !
-!  The 'global' eT files 
-!
-   type(file) :: output
-   type(file) :: input
-   type(file) :: timing 
 !
 contains
 !
@@ -191,117 +160,6 @@ contains
       endif
 !
    end subroutine prepare_to_read_line_file
-!
-!
-   subroutine error_msg_file(out_file, error_specs, error_int)
-!!
-!!    Error message
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(file) :: out_file
-!
-      character(len=*) :: error_specs
-!
-      integer, optional :: error_int 
-!
-      character(len=40) :: error_int_char = ' '
-!
-      if (present(error_int)) then
-!
-         write(error_int_char, '(i12)') error_int   
-!
-         write(out_file%unit, '(a)') 'Error: ' // trim(error_specs) // ' ' // error_int_char
-!
-      else
-!
-         write(out_file%unit, '(a)') 'Error: ' // trim(error_specs)
-!
-      endif
-!
-      stop
-!
-   end subroutine error_msg_file
-!
-!
-   subroutine warning_msg_file(out_file, warning_specs)
-!!
-!!    Warning message
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(file) :: out_file
-!
-      character(len=*) :: warning_specs
-!
-      write(out_file%unit, '(a)') 'Warning: ' // trim(warning_specs)
-!
-   end subroutine warning_msg_file
-!
-!
-   subroutine determine_file_size_file(the_file)
-!!
-!!    Determine file size
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
-!!    Moved to file by Rolf H. Myhre Nov. 2018
-!!
-!!    The disk manager handles files. This routine is called by it
-!!    and should never be called by the user (because it can lead to
-!!    errors in the disk space estimates).
-!!
-      implicit none
-!
-      class(file) :: the_file
-!
-!     Inquire about the file size
-!
-      inquire(file=the_file%name, size=the_file%file_size)
-!
-!     Check whether the file size could be calculated
-!
-      if (the_file%file_size .eq. -1) then
-!
-         call output%error_msg('could not calculate file size of the file ' // trim(the_file%name))
-!
-      endif
-!
-   end subroutine determine_file_size_file
-!
-!
-   function get_file_size_file(the_file)
-!!
-!!    Return private variable file_size
-!!    Written by Rolf H. Myhre, 2018
-!!    
-!
-      implicit none
-!  
-      class(file), intent(in) :: the_file
-!
-      integer :: get_file_size_file
-!
-      get_file_size_file = the_file%file_size
-!
-   end function get_file_size_file
-!
-!  
-   function file_exists_file(the_file)
-!!
-!!    File exists
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!    Moved to file by Rolf H. Myhre Nov. 2018
-!!    
-      implicit none
-!  
-      class(file), intent(in) :: the_file
-!
-      logical :: file_exists_file
-!
-      inquire(file=the_file%name, exist=file_exists_file)
-!
-   end function file_exists_file
 !
 !  
 end module file_class

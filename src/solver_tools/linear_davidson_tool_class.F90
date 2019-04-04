@@ -49,12 +49,15 @@ module linear_davidson_tool_class
 !
    contains 
 !
+!     Prepare and Cleanup
+!
       procedure :: prepare                      => prepare_linear_davidson_tool 
+      procedure :: cleanup                      => cleanup_linear_davidson_tool 
+!
+!     Linear Davidson specific routines
 !
       procedure :: construct_next_trial_vec     => construct_next_trial_vec_linear_davidson_tool
-!
       procedure :: solve_reduced_problem        => solve_reduced_problem_linear_davidson_tool
-!
       procedure :: construct_residual           => construct_residual_linear_davidson_tool
 !
       procedure :: construct_reduced_gradient   => construct_reduced_gradient_linear_davidson_tool
@@ -91,7 +94,6 @@ contains
 !
       davidson%name = trim(name)
 !
-      call davidson%X%init(trim(davidson%name) // '_X', 'sequential', 'unformatted')
       call davidson%trials%init(trim(davidson%name) // '_trials', 'sequential', 'unformatted')
       call davidson%transforms%init(trim(davidson%name) // '_transforms', 'sequential', 'unformatted')
       call davidson%preconditioner%init(trim(davidson%name) // '_preconditioner', 'sequential', 'unformatted')
@@ -100,14 +102,11 @@ contains
 !
        call disk%delete(davidson%trials)
        call disk%delete(davidson%transforms)
-       call disk%delete(davidson%X)
 !
       davidson%do_precondition   = .false.         ! Switches to true if 'set_preconditioner' is called
 !
       davidson%dim_red           = davidson%n_solutions     ! Initial dimension equal to number of solutions
       davidson%n_new_trials      = davidson%n_solutions 
-!
-      davidson%max_dim_red = 150
 !
       davidson%current_n_trials = 0  
 !
@@ -282,13 +281,7 @@ contains
 !
       call davidson%construct_residual(R, 1)
 !
-      call disk%open_file(davidson%X, 'write', 'rewind')
-!
       call dscal(davidson%n_parameters, one/norm_X, X, 1)
-!
-      write(davidson%X%unit) X
-!
-      call disk%close_file(davidson%X)
 !
       call mem%dealloc(X, davidson%n_parameters)
 !
@@ -315,9 +308,7 @@ contains
             davidson%n_new_trials = davidson%n_new_trials + 1
             call dscal(davidson%n_parameters, one/norm_new_trial, R, 1)
 !
-            call disk%open_file(davidson%trials, 'write', 'append')
-            write(davidson%trials%unit) R
-            call disk%close_file(davidson%trials)
+            call davidson%write_trial(R, 'append')
 !
          else
 !
@@ -330,6 +321,26 @@ contains
       call mem%dealloc(R, davidson%n_parameters)
 !
    end subroutine construct_next_trial_vec_linear_davidson_tool
+!
+!
+   subroutine cleanup_linear_davidson_tool(davidson)
+!!
+!!    Finalize 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(linear_davidson_tool) :: davidson 
+!
+      call disk%open_file(davidson%trials, 'write', 'rewind')
+      call disk%open_file(davidson%transforms, 'write', 'rewind')
+      call disk%open_file(davidson%preconditioner, 'write', 'rewind')
+!
+      call disk%close_file(davidson%trials, 'delete')
+      call disk%close_file(davidson%transforms, 'delete')
+      call disk%close_file(davidson%preconditioner, 'delete')
+!
+   end subroutine cleanup_linear_davidson_tool
 !
 !
 end module linear_davidson_tool_class

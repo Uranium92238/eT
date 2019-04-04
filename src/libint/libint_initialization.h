@@ -33,6 +33,7 @@ void initialize_kinetic();
 void initialize_nuclear();
 void initialize_overlap();
 void initialize_dipole();
+void initialize_quadrupole();
 void set_coulomb_precision(double *prec);
 
 #ifdef __cplusplus

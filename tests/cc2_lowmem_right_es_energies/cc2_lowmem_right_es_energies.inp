@@ -1,42 +1,44 @@
-name: H2O-He
-charge: 0
+system
+   name: H2O-He
+   charge: 0
+end system
 
 do
-  ground state
-  excited state
+   ground state
+   excited state
 end do
 
 memory
    available: 8
 end memory
 
-cholesky
+solver cholesky
    threshold: 1.0d-12
-end cholesky
+end solver cholesky
 
-hf
+solver hf
    algorithm:          scf-diis
    energy threshold:   1.0d-10
    gradient threshold: 1.0d-10
-end hf
+end solver hf
 
 method
    hf
    lowmem-cc2
 end method
 
-cc ground state
+solver cc gs
    omega threshold:  1.0d-10
    energy threshold: 1.0d-10
-end cc ground state
+end solver cc gs
 
-cc excited state
+solver cc es
    algorithm:          diis
    singlet states:     4
    residual threshold: 1.0d-10
    energy threshold:   1.0d-10
    right eigenvectors
-end cc excited state
+end solver cc es
 
 geometry
 basis: cc-pVDZ
