@@ -61,7 +61,7 @@ contains
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_ai
-      real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij, c_abji
+      real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij
 !
       real(dp), dimension(:,:), allocatable :: sigma_ai
       real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj, sigma_abij
@@ -167,16 +167,16 @@ contains
       call ccsd_timer%freeze()
 !
       call mem%alloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%alloc(c_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%alloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call sort_1234_to_1342(c_aibj, c_abji, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call sort_1234_to_1324(sigma_aibj, sigma_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1324(c_aibj, c_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call cc3_timer%start()
-      call wf%jacobian_transpose_cc3_A(omega, c_ai, c_abji, sigma_ai, sigma_abij)
+      call wf%jacobian_transpose_cc3_A(omega, c_ai, c_abij, sigma_ai, sigma_abij)
       call cc3_timer%freeze()
       call cc3_timer%switch_off()
 !
@@ -200,10 +200,6 @@ contains
 !
       call sort_1234_to_1324(sigma_aibj, sigma_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%alloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call sort_1234_to_1243(c_abji, c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%dealloc(c_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
 !     Compute CCSD H2 and I2 contributions
 !
@@ -250,7 +246,7 @@ contains
    end subroutine effective_jacobian_transpose_transformation_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_A_cc3(wf, omega, c_ai, c_abji, sigma_ai, sigma_abij)
+   module subroutine jacobian_transpose_cc3_A_cc3(wf, omega, c_ai, c_abij, sigma_ai, sigma_abij)
 !!
 !!    Terms of the transpose of the  CC3 Jacobi matrix
 !!
@@ -263,7 +259,7 @@ contains
       real(dp), intent(in) :: omega
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abji
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: sigma_abij

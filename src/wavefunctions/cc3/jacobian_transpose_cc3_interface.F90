@@ -33,7 +33,7 @@
    end subroutine effective_jacobian_transpose_transformation_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_A_cc3(wf, omega, c_ai, c_abji, sigma_ai, sigma_abij)
+   module subroutine jacobian_transpose_cc3_A_cc3(wf, omega, c_ai, c_abij, sigma_ai, sigma_abij)
 !!
 !!    Terms of the transpose of the  CC3 Jacobi matrix
 !!    Alex C. Paul and Rolf H. Myhre, March 2019
@@ -45,7 +45,7 @@
       real(dp), intent(in) :: omega
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abji
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: sigma_abij
