@@ -21,7 +21,7 @@ submodule (cc3_class) jacobian_transpose
 !
 !!
 !!    Jacobian transpose submodule (cc3)
-!!    Written by Alexander Paul and Rolf H. Myhre March 2019
+!!    Written by Alexander Paul and Rolf H. Myhre, March 2019
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the transpose of the Jacobian matrix
@@ -39,10 +39,26 @@ submodule (cc3_class) jacobian_transpose
 contains
 !
 !
+   module subroutine prepare_for_jacobian_transpose_cc3(wf)
+!!
+!!    Prepare for Jacobian transpose (CC3)
+!!    Write some integrals and intermediates to disk
+!!    Written by Rolf H. Myhre and Alexander Paul, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      call wf%prepare_cc3_jacobian_transpose_integrals
+      call wf%prepare_cc3_jacobian_transpose_intermediates
+!
+   end subroutine prepare_for_jacobian_transpose_cc3
+!
+!
    module subroutine effective_jacobian_transpose_transformation_cc3(wf, omega, c)
 !!
 !!    Effective Jacobian transpose transformation (CC3)
-!!    Written by Alexander Paul and Rolf H. Myhre March 2019
+!!    Written by Alexander Paul and Rolf H. Myhre, March 2019
 !!
 !!    Directs the transformation by the transpose of the  CC3 Jacobi matrix,
 !!
@@ -265,6 +281,32 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: sigma_abij
 !
    end subroutine jacobian_transpose_cc3_A_cc3
+!
+!
+   module subroutine prepare_cc3_jacobian_transpose_integrals_cc3(wf)
+!!
+!!    Construct integrals needed in CC3 jacobian transpose and store on disk
+!!
+!!    written by Rolf H. Myhre and Alexander Paul, April 2019
+!!
+      implicit none
+!!
+      class(cc3) :: wf
+!
+   end subroutine prepare_cc3_jacobian_transpose_integrals_cc3
+!
+!
+   module subroutine prepare_cc3_jacobian_transpose_intermediates_cc3(wf)
+!!
+!!    Construct some intermediates needed in CC3 jacobian transpose and store on disk
+!!
+!!    written by Rolf H. Myhre and Alexander Paul, April 2019
+!!
+      implicit none
+!!
+      class(cc3) :: wf
+!
+   end subroutine prepare_cc3_jacobian_transpose_intermediates_cc3
 !
 !
 end submodule jacobian_transpose
