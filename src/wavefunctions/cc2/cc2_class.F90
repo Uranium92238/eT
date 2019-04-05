@@ -50,8 +50,6 @@ module cc2_class
 !
       procedure :: calculate_energy                            => calculate_energy_cc2
 !
-      procedure :: prepare_for_jacobian                        => prepare_for_jacobian_cc2
-!
       procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_cc2
       procedure :: jacobian_cc2_transformation                 => jacobian_cc2_transformation_cc2
 !

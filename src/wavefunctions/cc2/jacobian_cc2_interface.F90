@@ -17,18 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine prepare_for_jacobian_cc2(wf)
-!!
-!!    Prepare for Jacobian
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
-!!
-      implicit none 
-!
-      class(cc2), intent(inout) :: wf 
-!
-   end subroutine prepare_for_jacobian_cc2
-!
-!
    module subroutine jacobian_transform_trial_vector_cc2(wf, c_i)
 !!
 !!    Jacobian transform trial vector 

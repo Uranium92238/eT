@@ -65,6 +65,7 @@ module cc3_class
 !
 !     Routines related to the jacobian
 !
+      procedure :: prepare_for_excited_state_eq       => prepare_for_excited_state_eq_cc3
       procedure :: construct_excited_state_equation   => construct_excited_state_equation_cc3
 !
       procedure :: effective_jacobian_transformation  => effective_jacobian_transformation_cc3
@@ -233,6 +234,27 @@ contains
       call mem%dealloc(X_copy, wf%n_es_amplitudes)
 !
    end subroutine construct_excited_state_equation_cc3
+!
+!
+   subroutine prepare_for_excited_state_eq_cc3(wf,r_or_l)
+!!
+!!    Prepare for jacobian
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: r_or_l
+!
+!     For now, do nothing.
+!
+      if (trim(r_or_l) .eq. "left") then
+         write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', trim(r_or_l), &
+                                            & ' excited state equations.'
+      endif                                      
+!
+   end subroutine prepare_for_excited_state_eq_cc3
 !
 !
 end module cc3_class
