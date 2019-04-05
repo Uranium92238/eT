@@ -258,6 +258,7 @@ contains
       if (trim(r_or_l) .eq. "left") then
          write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', trim(r_or_l), &
                                             & ' excited state equations.'
+         call wf%prepare_for_jacobian_transpose()
       endif                                      
 !
    end subroutine prepare_for_excited_state_eq_cc3
