@@ -286,12 +286,168 @@ contains
    module subroutine prepare_cc3_jacobian_transpose_integrals_cc3(wf)
 !!
 !!    Construct integrals needed in CC3 jacobian transpose and store on disk
+!!    (ab|cd) ordered as abc,d
+!!    (mi|lk) ordered as lm,ik
+!!    (ib|kd) ordered as bd,ik
+!!    (ia|bj) ordered as iba,j
+!!    (ij|ab) ordered as ba,ij
 !!
 !!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
       implicit none
 !!
       class(cc3) :: wf
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_pqrs !Array for constructed integrals
+      real(dp), dimension(:,:,:,:), allocatable :: h_pqrs !Array for sorted integrals
+!
+      integer :: i, k, d, record
+      type(batching_index) :: batch_d, batch_k
+!
+      integer :: req_0, req_d, req_k
+      integer :: d_batch, k_batch
+!
+      integer :: ioerror=-1
+!
+!     (ab|cd)
+!
+      call wf%get_g_pqrs_required(req_0,req_d,wf%n_v,wf%n_v,wf%n_v,1)
+      req_d = req_d + wf%n_v**3
+!
+      call batch_d%init(wf%n_v)
+      call mem%batch_setup(batch_d,req_0,req_d)
+      call batch_d%determine_limits(1)
+!
+      call mem%alloc(g_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_d%length)
+!
+      call wf%g_becd_t%init('g_becd_t','direct','unformatted',dp*wf%n_v**3)
+      call disk%open_file(wf%g_becd_t,'write')
+!
+      do d_batch = 1,batch_d%num_batches
+!
+         call batch_d%determine_limits(d_batch)
+!
+         call wf%get_vvvv(g_pqrs, &
+                          1,wf%n_v, &
+                          1,wf%n_v, &
+                          1,wf%n_v, &
+                          batch_d%first,batch_d%last)
+!
+         do d = 1,batch_d%length
+!
+            record = batch_d%first + d - 1
+!
+            write(wf%g_becd_t%unit,rec=record,iostat=ioerror) g_pqrs(:,:,:,d)
+!
+            if(ioerror .ne. 0) then
+               call output%error_msg('Failed to write becd_t file')
+            endif
+!
+         enddo
+!
+      enddo
+!
+      call disk%close_file(wf%g_becd_t,'keep')
+!
+      call mem%dealloc(g_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_d%length)
+!
+!
+!     (mi|lk) 
+!
+      call wf%get_g_pqrs_required(req_0,req_k,wf%n_o,wf%n_o,wf%n_o,1)
+      req_k = req_k + 2*wf%n_o**3
+!
+      call batch_k%init(wf%n_o)
+      call mem%batch_setup(batch_k,req_0,req_k)
+      call batch_k%determine_limits(1)
+!
+      call mem%alloc(g_pqrs , wf%n_o , wf%n_o , wf%n_o , batch_k%length)
+      call mem%alloc(h_pqrs , wf%n_o , wf%n_o , wf%n_o , batch_k%length)
+!
+      call wf%g_milk_t%init('g_milk_t','direct','unformatted',dp*wf%n_o**2)
+      call disk%open_file(wf%g_milk_t,'write')
+!
+      do k_batch = 1,batch_k%num_batches
+!
+         call batch_k%determine_limits(k_batch)
+!
+         call wf%get_oooo(g_pqrs, &
+                          1,wf%n_o, &
+                          1,wf%n_o, &
+                          1,wf%n_o, &
+                          batch_k%first,batch_k%last)
+!
+         call sort_1234_to_3124(g_pqrs , h_pqrs , wf%n_o , wf%n_o , wf%n_o , batch_k%length)
+!
+         do k = 1,batch_k%length
+            do i = 1, wf%n_o
+!
+               record = (batch_k%first + k - 2)*wf%n_o + i
+               write(wf%g_milk_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,i,k)
+!
+               if(ioerror .ne. 0) then
+                  call output%error_msg('Failed to write milk_t file')
+               endif
+!
+            enddo
+         enddo
+!
+      enddo
+!
+      call disk%close_file(wf%g_milk_t,'keep')
+!
+      call mem%dealloc(g_pqrs,wf%n_o,wf%n_o,wf%n_o,batch_k%length)
+      call mem%dealloc(h_pqrs,wf%n_o,wf%n_o,wf%n_o,batch_k%length)
+!
+!
+!     (ib|kd) 
+!
+      call wf%get_g_pqrs_required(req_0,req_k,wf%n_v,wf%n_o,1,wf%n_o)
+      req_k = req_k + 2*wf%n_v**2*wf%n_o
+!
+      call mem%batch_setup(batch_k,req_0,req_k)
+!
+      call batch_k%init(wf%n_o)
+      call mem%batch_setup(batch_k,req_0,req_k)
+      call batch_k%determine_limits(1)
+!
+      call wf%g_ibkd_t%init('g_ibkd_t','direct','unformatted',dp*wf%n_v**3)
+      call disk%open_file(wf%g_ibkd_t,'write')
+!
+      do k_batch = 1,batch_k%num_batches
+!
+         call batch_k%determine_limits(k_batch)
+!
+         call mem%alloc(g_pqrs, wf%n_o , wf%n_v , batch_k%length , wf%n_v)
+         call mem%alloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
+!
+         call wf%get_ovov(g_pqrs, &
+                          1,wf%n_o, &
+                          1,wf%n_v, &
+                          batch_k%first,batch_k%last, &
+                          1,wf%n_v)
+!
+         call sort_1234_to_2413(g_pqrs , h_pqrs , wf%n_o , wf%n_v , batch_k%length , wf%n_v)
+!
+         do k = 1,batch_k%length
+            do i = 1, wf%n_o
+!
+               record = (batch_k%first + k - 2)*wf%n_o + i
+               write(wf%g_ibkd_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,i,k)
+!
+               if(ioerror .ne. 0) then
+                  call output%error_msg('Failed to write ibkd_t file')
+               endif
+!
+            enddo
+         enddo
+!
+         call mem%dealloc(g_pqrs, wf%n_o , wf%n_o , batch_k%length , wf%n_o)
+         call mem%dealloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
+!
+      enddo
+!
+      call disk%close_file(wf%g_ibkd_t,'keep')
 !
    end subroutine prepare_cc3_jacobian_transpose_integrals_cc3
 !

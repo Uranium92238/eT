@@ -30,7 +30,7 @@ module cc3_class
 !
    type, extends(ccsd) :: cc3
 !
-!     Integral files
+!     Ground state integral files
 !
       type(file)  :: g_bdck_t
       type(file)  :: g_ljck_t
@@ -38,10 +38,20 @@ module cc3_class
       type(file)  :: g_jlkc_t
       type(file)  :: L_jbkc_t
 !
+!     Right Jacobian integral files
+!
       type(file)  :: g_bdck_c1
       type(file)  :: g_ljck_c1
       type(file)  :: g_dbkc_c1
       type(file)  :: g_jlkc_c1
+!
+!     Left Jacobian integral files
+!
+      type(file)  :: g_becd_t
+      type(file)  :: g_milk_t
+      type(file)  :: g_ibkd_t
+      type(file)  :: g_iabj_t
+      type(file)  :: g_ijab_t
 !
    contains
 !

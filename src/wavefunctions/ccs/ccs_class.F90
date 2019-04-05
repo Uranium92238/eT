@@ -168,6 +168,8 @@ module ccs_class
       procedure :: get_vovv                                     => get_vovv_ccs
       procedure :: get_ovvv                                     => get_ovvv_ccs
 !
+      procedure :: get_g_pqrs_required                          => get_g_pqrs_required_ccs
+!
       procedure, nopass :: need_g_abcd                          => need_g_abcd_ccs
 !
 !     Routines to initialize and destruct arrays
@@ -1511,6 +1513,32 @@ contains
       if (allocated(wf%t1bar)) call mem%dealloc(wf%t1bar, wf%n_v, wf%n_o)
 !
    end subroutine destruct_t1bar_ccs
+!
+!
+   subroutine get_g_pqrs_required_ccs(wf, req_l, req_r, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Get memory required to construct g_pqrs
+!!    Written by Rolf H. Myhre, April 2019
+!!
+!!    Simple routine calculate an integral block with provided dimensions.
+!!    req_l and req_r are the memory required by construct_g_pqrs to allocate 
+!!    the Cholesky vectors
+!!
+!!    req_l = n_J*dim_p*dim_q, left Cholesky vector
+!!    req_r = n_J*dim_r*dim_s, right Cholesky vector
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      integer, intent(in)  :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(out) :: req_l, req_r
+!
+      req_l = wf%integrals%n_J*dim_p*dim_q
+      req_r = wf%integrals%n_J*dim_r*dim_s
+!
+   end subroutine get_g_pqrs_required_ccs
+!
 !
 !
    subroutine get_ovov_ccs(wf, g_iajb, first_i, last_i, first_a, last_a, &

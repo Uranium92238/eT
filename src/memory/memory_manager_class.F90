@@ -1031,6 +1031,12 @@ contains
 !
       integer :: e_size
 !
+      if (.not. batch_p%initialized) then
+!
+         call output%error_msg('batch_setup_1 called on uninitialized batch')
+!
+      endif
+!
       e_size = dp
       if(present(element_size)) then
          e_size = element_size
@@ -1128,6 +1134,12 @@ contains
       integer :: p_elements, q_elements
 !
       integer :: e_size
+!
+      if ((.not. batch_p%initialized) .or. (.not. batch_q%initialized)) then
+!
+         call output%error_msg('batch_setup_2 called on uninitialized batch')
+!
+      endif
 !
       e_size = dp
       if(present(element_size)) then
@@ -1324,6 +1336,12 @@ contains
 !
       integer :: e_size
 !
+      if ((.not. batch_p%initialized) .or. (.not. batch_q%initialized) .or. (.not. batch_r%initialized)) then
+!
+         call output%error_msg('batch_setup_3 called on uninitialized batch')
+!
+      endif
+!
       e_size = dp
       if(present(element_size)) then
          e_size = element_size
@@ -1499,6 +1517,12 @@ contains
 !
       integer :: e_size
       real(dp) :: buff
+!
+      if ((.not. batch_p%initialized) .or. (.not. batch_q%initialized) .or. (.not. batch_r%initialized)) then
+!
+         call output%error_msg('batch_setup_3 called on uninitialized batch')
+!
+      endif
 !
       e_size = dp
       if(present(element_size)) then
