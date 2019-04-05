@@ -17,6 +17,19 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
+module subroutine prepare_for_jacobian_transpose_cc3(wf)
+!!
+!!    Prepare for Jacobian transpose (CC3)
+!!    Write some integrals and intermediates to disk
+!!    Written by Rolf H. Myhre and Alexander Paul, April 2019
+!!
+   implicit none
+!
+   class(cc3) :: wf
+!
+end subroutine prepare_for_jacobian_transpose_cc3
+!
+!
    module subroutine effective_jacobian_transpose_transformation_cc3(wf, omega, c)
 !!
 !!    Jacobian transpose transformation (CC3)
@@ -51,5 +64,31 @@
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: sigma_abij
 !
    end subroutine jacobian_transpose_cc3_A_cc3
+!
+!
+   module subroutine prepare_cc3_jacobian_transpose_integrals_cc3(wf)
+!!
+!!    Construct integrals needed in CC3 jacobian transpose and store on disk
+!!
+!!    written by Rolf H. Myhre and Alexander Paul, April 2019
+!!
+      implicit none
+!!
+      class(cc3) :: wf
+!
+   end subroutine prepare_cc3_jacobian_transpose_integrals_cc3
+!
+!
+   module subroutine prepare_cc3_jacobian_transpose_intermediates_cc3(wf)
+!!
+!!    Construct some intermediates needed in CC3 jacobian transpose and store on disk
+!!
+!!    written by Rolf H. Myhre and Alexander Paul, April 2019
+!!
+      implicit none
+!!
+      class(cc3) :: wf
+!
+   end subroutine prepare_cc3_jacobian_transpose_intermediates_cc3
 !
 !

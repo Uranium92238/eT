@@ -90,10 +90,16 @@ module cc3_class
 !
 !     Routines related to the transpose of the jacobian
 !
-      procedure :: effective_jacobian_transpose_transformation  &
-                                                => effective_jacobian_transpose_transformation_cc3
+      procedure :: prepare_for_jacobian_transpose  => prepare_for_jacobian_transpose_cc3
+      procedure :: prepare_cc3_jacobian_transpose_integrals &
+                                                   => prepare_cc3_jacobian_transpose_integrals_cc3
+      procedure :: prepare_cc3_jacobian_transpose_intermediates &
+                                                   => prepare_cc3_jacobian_transpose_intermediates_cc3
 !
-      procedure :: jacobian_transpose_cc3_A     => jacobian_transpose_cc3_A_cc3
+      procedure :: effective_jacobian_transpose_transformation  &
+                                                   => effective_jacobian_transpose_transformation_cc3
+!
+      procedure :: jacobian_transpose_cc3_A        => jacobian_transpose_cc3_A_cc3
 !
    end type cc3
 !
