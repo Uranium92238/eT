@@ -50,8 +50,8 @@ module cc3_class
       type(file)  :: g_becd_t
       type(file)  :: g_milk_t
       type(file)  :: g_ibkd_t
-      type(file)  :: g_iabj_t
-      type(file)  :: g_ijab_t
+      type(file)  :: g_leck_t
+      type(file)  :: g_cdmk_t
 !
    contains
 !

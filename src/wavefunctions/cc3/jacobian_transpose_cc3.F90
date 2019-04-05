@@ -289,8 +289,8 @@ contains
 !!    (ab|cd) ordered as abc,d
 !!    (mi|lk) ordered as lm,ik
 !!    (ib|kd) ordered as bd,ik
-!!    (ia|bj) ordered as iba,j
-!!    (ij|ab) ordered as ba,ij
+!!    (le|ck) ordered as lce,k
+!!    (cd|mk) ordered as dcm,k
 !!
 !!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
@@ -309,7 +309,7 @@ contains
 !
       integer :: ioerror=-1
 !
-!     (ab|cd)
+!     (be|cd)
 !
       call wf%get_g_pqrs_required(req_0,req_d,wf%n_v,wf%n_v,wf%n_v,1)
       req_d = req_d + wf%n_v**3
@@ -349,6 +349,7 @@ contains
 !
       call disk%close_file(wf%g_becd_t,'keep')
 !
+      call batch_d%determine_limits(1)
       call mem%dealloc(g_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_d%length)
 !
 !
@@ -396,6 +397,7 @@ contains
 !
       call disk%close_file(wf%g_milk_t,'keep')
 !
+      call batch_k%determine_limits(1)
       call mem%dealloc(g_pqrs,wf%n_o,wf%n_o,wf%n_o,batch_k%length)
       call mem%dealloc(h_pqrs,wf%n_o,wf%n_o,wf%n_o,batch_k%length)
 !
@@ -409,9 +411,8 @@ contains
 !
       call batch_k%init(wf%n_o)
       call mem%batch_setup(batch_k,req_0,req_k)
-      call batch_k%determine_limits(1)
 !
-      call wf%g_ibkd_t%init('g_ibkd_t','direct','unformatted',dp*wf%n_v**3)
+      call wf%g_ibkd_t%init('g_ibkd_t','direct','unformatted',dp*wf%n_v**2)
       call disk%open_file(wf%g_ibkd_t,'write')
 !
       do k_batch = 1,batch_k%num_batches
@@ -448,6 +449,105 @@ contains
       enddo
 !
       call disk%close_file(wf%g_ibkd_t,'keep')
+!
+!
+!     (le|ck) 
+!
+      call wf%get_g_pqrs_required(req_0, req_k, wf%n_o, wf%n_v, wf%n_v, 1)
+      req_k = req_k + 2*wf%n_v**2*wf%n_o
+!
+      call mem%batch_setup(batch_k,req_0,req_k)
+!
+      call batch_k%init(wf%n_o)
+      call mem%batch_setup(batch_k,req_0,req_k)
+      call batch_k%determine_limits(1)
+!
+      call mem%alloc(g_pqrs, wf%n_o, wf%n_v, wf%n_v, batch_k%length)
+      call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_v, batch_k%length)
+!
+      call wf%g_leck_t%init('g_leck_t','direct','unformatted',dp*wf%n_o*wf%n_v**2)
+      call disk%open_file(wf%g_leck_t,'write')
+!
+      do k_batch = 1,batch_k%num_batches
+!
+         call batch_k%determine_limits(k_batch)
+!
+         call wf%get_ovov(g_pqrs, &
+                          1,wf%n_o, &
+                          1,wf%n_v, &
+                          1,wf%n_v, &
+                          batch_k%first,batch_k%last)
+!
+         call sort_1234_to_1324(g_pqrs , h_pqrs , wf%n_o , wf%n_v , wf%n_v , batch_k%length)
+!
+         do k = 1,batch_k%length
+!
+            record = batch_k%first + k - 1
+            write(wf%g_leck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
+!
+            if(ioerror .ne. 0) then
+               call output%error_msg('Failed to write leck_t file')
+            endif
+!
+         enddo
+!
+      enddo
+!
+      call disk%close_file(wf%g_leck_t,'keep')
+!
+      call batch_k%determine_limits(1)
+      call mem%dealloc(g_pqrs, wf%n_o, wf%n_v, wf%n_v, batch_k%length)
+      call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+!
+!
+!     (cd|mk) 
+!
+      call wf%get_g_pqrs_required(req_0, req_k, wf%n_v, wf%n_v, wf%n_o, 1)
+      req_k = req_k + 2*wf%n_v**2*wf%n_o
+!
+      call mem%batch_setup(batch_k,req_0,req_k)
+!
+      call batch_k%init(wf%n_o)
+      call mem%batch_setup(batch_k,req_0,req_k)
+      call batch_k%determine_limits(1)
+!
+      call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+      call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+!
+      call wf%g_cdmk_t%init('g_cdmk_t','direct','unformatted',dp*wf%n_o*wf%n_v**2)
+      call disk%open_file(wf%g_cdmk_t,'write')
+!
+      do k_batch = 1,batch_k%num_batches
+!
+         call batch_k%determine_limits(k_batch)
+!
+         call wf%get_vvoo(g_pqrs, &
+                          1,wf%n_v, &
+                          1,wf%n_v, &
+                          1,wf%n_o, &
+                          batch_k%first,batch_k%last)
+!
+         call sort_1234_to_2134(g_pqrs , h_pqrs , wf%n_o , wf%n_v , wf%n_v , batch_k%length)
+!
+         do k = 1,batch_k%length
+!
+            record = batch_k%first + k - 1
+            write(wf%g_cdmk_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
+!
+            if(ioerror .ne. 0) then
+               call output%error_msg('Failed to write cdmk_t file')
+            endif
+!
+         enddo
+!
+      enddo
+!
+      call disk%close_file(wf%g_cdmk_t,'keep')
+!
+      call batch_k%determine_limits(1)
+      call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+      call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+!
 !
    end subroutine prepare_cc3_jacobian_transpose_integrals_cc3
 !
