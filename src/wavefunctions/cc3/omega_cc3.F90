@@ -236,10 +236,6 @@ contains
       call mem%alloc(t_abji,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
       call squareup_and_sort_1234_to_1342(wf%t2,t_abji,wf%n_v,wf%n_o,wf%n_v,wf%n_o)
 !
-      t_abc = zero
-      u_abc = zero
-      v_abc = zero
-!
       req_0 = 0
       req_1 = 2*wf%n_v**3
       req_2 = 2*wf%n_o*wf%n_v+wf%n_v**2
