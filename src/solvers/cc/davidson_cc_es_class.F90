@@ -271,7 +271,7 @@ contains
       real(dp), dimension(:), allocatable :: c_i
       real(dp), dimension(:), allocatable :: X
 !
-      call wf%prepare_for_jacobian()
+      call wf%prepare_for_excited_state_eq(solver%transformation)
 !
       converged            = .false. 
       converged_eigenvalue = .false. 

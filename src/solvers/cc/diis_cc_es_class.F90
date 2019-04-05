@@ -211,6 +211,8 @@ contains
       real(dp), dimension(:), allocatable   :: eps
       real(dp), dimension(:,:), allocatable :: X, R
 !
+      call wf%prepare_for_excited_state_eq(solver%transformation)
+!
 !     Initialize energies, residual norms, and convergence arrays 
 !
       call mem%alloc(prev_energies, solver%n_singlet_states)
@@ -305,7 +307,7 @@ contains
 !
                converged_eigenvalue(state) = abs(solver%energies(state)-prev_energies(state)) &
                                                       .lt. solver%eigenvalue_threshold
-               converged_residual(state)   = residual_norms(state)                     .lt. solver%residual_threshold
+               converged_residual(state)   = residual_norms(state) .lt. solver%residual_threshold
 !
                converged(state) = converged_eigenvalue(state) .and. converged_residual(state)
 !
