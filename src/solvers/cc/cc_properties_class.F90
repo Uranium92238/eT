@@ -66,7 +66,6 @@ module cc_properties_class
       procedure :: read_settings                     => read_settings_cc_properties
 !
       procedure :: reset                             => reset_properties
-      procedure :: do_eom_or_lr                      => do_eom_or_lr_properties
 !
       procedure :: print_banner                      => print_banner_cc_properties
       procedure :: print_settings                    => print_settings_cc_properties
@@ -142,9 +141,9 @@ contains
 !
          call wf%construct_csiX(solver%X, solver%csiX)      
 !
-!        Do EOM or linear response
+!        Do EOM ?
 !
-         call solver%do_eom_or_lr(wf)
+         if (solver%eom) call wf%get_eom_contribution(solver%etaX, solver%csiX, solver%X)
 !
 !        Loop over excited states and calculate transition strength
 !  
@@ -379,38 +378,6 @@ contains
       endif
 !
    end subroutine print_summary_cc_properties
-!
-!
-   subroutine do_eom_or_lr_properties(solver, wf)
-!!
-!!    Calls construction of EOM or LR contribution.
-!!    Based on wf, gives the correct input to wf%get_eom_contribution
-!!    Written by Josefine H. Andersen, February 2019
-!!
-      implicit none
-!
-      class(cc_properties), intent(inout) :: solver
-!
-      class(ccs), intent(in) :: wf
-!
-!     Do EOM or LR
-!      
-      if (solver%eom) then
-!
-            call wf%get_eom_contribution(solver%etaX, solver%csiX, solver%X)
-!         
-      elseif (solver%linear_response) then !redundant feature, since program stops in read settings
-!
-         write(output%unit, '(t6,a)') 'Linear response has been selected but is not implemented. &
-                                      & etaX will be calculated with no contribution '
-!
-      else
-!
-         write(output%unit, '(t6,a)') 'You have not specified EOM or LR. etaX &
-                                      & will be calculated with no contributions'
-      endif
-!
-   end subroutine do_eom_or_lr_properties
 !
 !
 end module cc_properties_class
