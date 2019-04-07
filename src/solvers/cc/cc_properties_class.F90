@@ -334,7 +334,7 @@ contains
 !
       class(cc_properties) :: solver
 !
-      write(output%unit, '(/t3,a)') '- Davidson CC properties solver settings:'
+      write(output%unit, '(t3,a)') '- Davidson CC properties solver settings:'
 !
       write(output%unit,'(/t6,a26,a)') 'Operator:                 ', solver%operator_type
       write(output%unit,'(t6,a26,a)')  'Excitation:               ', solver%es_type 
@@ -364,7 +364,9 @@ contains
 !              
          write(output%unit, '(/t6,a,a)') 'Operator component: ', solver%component(i)
 !
-         write(output%unit, '(/t6,a)')  'State         etaX*R             L*csiX              Strength  '
+         write(output%unit, '(/t6,a)')  '                Transition moments                             '
+         write(output%unit, '(t6,a)')   '             -------------------------                         '
+         write(output%unit, '(t6,a)')   'State         Right              Left                Strength  '
          write(output%unit, '(t6,a)')   '---------------------------------------------------------------'
 !
       elseif (output_type == 'results') then
