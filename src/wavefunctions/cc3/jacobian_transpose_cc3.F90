@@ -290,7 +290,7 @@ contains
 !!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
       implicit none
-!!
+!
       class(cc3) :: wf
 !
    end subroutine prepare_cc3_jacobian_transpose_integrals_cc3
@@ -303,10 +303,756 @@ contains
 !!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
       implicit none
-!!
+!
       class(cc3) :: wf
 !
+!     Arrays for triples amplitudes
+      real(dp), dimension(:,:,:), allocatable :: t_abc
+      real(dp), dimension(:,:,:), allocatable :: u_abc
+!
+!     Unpacked doubles amplitudes
+      real(dp), dimension(:,:,:,:), allocatable :: t_abji
+!
+!     Arrays for intermediates
+!     cannot hold the whole X_acdi array
+      real(dp), dimension(:,:,:,:), allocatable, target :: X_acdi
+      real(dp), dimension(:,:,:,:), allocatable, target :: X_acdj
+      real(dp), dimension(:,:,:,:), allocatable, target :: X_acdk
+      real(dp), dimension(:,:,:,:), contiguous, pointer :: X_acdi_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer :: X_acdj_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer :: X_acdk_p => null()
+!
+      real(dp), dimension(:,:,:,:), allocatable :: Y_aikl
+      real(dp), dimension(:,:,:,:), allocatable :: Y_akil
+!
+!     Integrals and Pointers
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdci
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdcj
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdck
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_bdci_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_bdcj_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_bdck_p => null()
+!
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_ljci
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_lkci
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_lkcj
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_licj
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_lick
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_ljck
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ljci_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_lkci_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_lkcj_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_licj_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_lick_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ljck_p => null()
+!
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_jbic
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_kbic
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_kbjc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_ibjc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_ibkc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_jbkc
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_jbic_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_kbic_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_kbjc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ibjc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ibkc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_jbkc_p => null()
+!
+      real(dp), dimension(:,:,:,:), allocatable, target  :: L_jbic
+      real(dp), dimension(:,:,:,:), allocatable, target  :: L_kbic
+      real(dp), dimension(:,:,:,:), allocatable, target  :: L_kbjc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: L_ibjc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: L_ibkc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: L_jbkc
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_jbic_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_kbic_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_kbjc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_ibjc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_ibkc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_jbkc_p => null()
+!
+      integer :: i, j, k, i_rel, j_rel, k_rel
+      type(batching_index) :: batch_i, batch_j, batch_k
+      integer :: current_i_batch, current_j_batch, current_k_batch
+      integer :: req_0, req_1, req_2, req_3
+      real(dp) :: batch_buff = 0.0
+!
+      integer :: ioerror = -1
+      integer :: l
+!
+      call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+      call mem%alloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call squareup_and_sort_1234_to_1342(wf%t2, t_abji, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      req_0 = 0
+      req_1 = wf%n_v**3
+      req_2 = wf%n_o*wf%n_v + 2*wf%n_v**2
+      req_3 = 0
+!
+      call batch_i%init(wf%n_o)
+      call batch_j%init(wf%n_o)
+      call batch_k%init(wf%n_o)
+!
+      call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
+                           req_0, req_1, req_2, req_3, batch_buff)
+!
+!     Allocate integral arrays and assign pointers.
+!
+      if (batch_i%num_batches .eq. 1) then !no batching
+!
+         call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         call mem%alloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+         call mem%alloc(g_jbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+         call mem%alloc(L_jbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      else ! batching
+!
+         call batch_i%determine_limits(1)
+!
+         call mem%alloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%alloc(g_bdcj,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%alloc(g_bdck,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+!
+         call mem%alloc(g_ljci,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_lkci,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_lkcj,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_licj,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_lick,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_ljck,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+!
+         call mem%alloc(g_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(g_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+!
+         call mem%alloc(L_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(L_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(L_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(L_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(L_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%alloc(L_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+!
+      endif
+!
+      call mem%alloc(Y_aikl, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call disk%open_file(wf%g_bdck_t,'read')
+      call disk%open_file(wf%g_ljck_t,'read')
+      call disk%open_file(wf%g_ibkd_t,'read')
+      call disk%open_file(wf%L_jbkc_t,'read')
+!
+      call disk%open_file(wf%X_acdi,'readwrite')
+!
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+            call wf%jacobian_transpose_cc3_vvv_reader(batch_i, g_bdci)
+            g_bdci_p => g_bdci
+!
+         do current_j_batch = 1, current_i_batch
+!
+            call batch_j%determine_limits(current_j_batch)
+!
+            call wf%jacobian_transpose_cc3_ov_vv_reader(batch_j, batch_i, g_ljci, g_jbic, L_jbic)
+            g_ljci_p => g_ljci
+            g_jbic_p => g_jbic
+            L_jbic_p => L_jbic
+!
+            if (current_j_batch .ne. current_i_batch) then ! read for switched i - j
+!
+                  call wf%jacobian_transpose_cc3_vvv_reader(batch_j, g_bdcj)
+                  g_bdcj_p => g_bdcj
+!
+                  call wf%jacobian_transpose_cc3_ov_vv_reader(batch_i, batch_j, g_licj, g_ibjc, L_ibjc)
+                  g_licj_p => g_licj
+                  g_ibjc_p => g_ibjc
+                  L_ibjc_p => L_ibjc
+!
+            else
+!
+               g_bdcj_p => g_bdci
+!
+               g_licj_p => g_ljci
+               g_ibjc_p => g_jbic
+               L_ibjc_p => L_jbic
+!
+            endif
+!
+            do current_k_batch = 1, current_j_batch
+!
+               call batch_k%determine_limits(current_k_batch)
+!
+               if (current_k_batch .ne. current_i_batch .and. current_k_batch .ne. current_j_batch) then
+!
+!              cannot hold the whole X_acdi:
+!              Therefore, read in previous X, add contributions, write to disk again
+!
+                  if (current_i_batch .gt. 1) then
+!
+                     call wf%jacobian_transpose_cc3_X_reader(batch_i, X_acdi)
+                     X_acdi_p => X_acdi
+                     
+                     call wf%jacobian_transpose_cc3_X_reader(batch_j, X_acdj)
+                     X_acdj_p => X_acdj
+!
+                     call wf%jacobian_transpose_cc3_X_reader(batch_k, X_acdk)
+                     X_acdk_p => X_acdk
+!
+                  endif
+!
+                  call wf%jacobian_transpose_cc3_vvv_reader(batch_k, g_bdck)
+                  g_bdck_p => g_bdck
+!
+                  call wf%jacobian_transpose_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_kbic, L_kbic)
+                  g_lkci_p => g_lkci
+                  g_kbic_p => g_kbic
+                  L_kbic_p => L_kbic
+!
+                  call wf%jacobian_transpose_cc3_ov_vv_reader(batch_i, batch_k, g_lick, g_ibkc, L_ibkc)
+                  g_lick_p => g_lick
+                  g_ibkc_p => g_ibkc
+                  L_ibkc_p => L_ibkc
+!
+                  call wf%jacobian_transpose_cc3_ov_vv_reader(batch_k, batch_j, g_lkcj, g_kbjc, L_kbjc)
+                  g_lkcj_p => g_lkcj
+                  g_kbjc_p => g_kbjc
+                  L_kbjc_p => L_kbjc
+!
+                  call wf%jacobian_transpose_cc3_ov_vv_reader(batch_j, batch_k, g_ljck, g_jbkc, L_jbkc)
+                  g_ljck_p => g_ljck
+                  g_jbkc_p => g_jbkc
+                  L_jbkc_p => L_jbkc
+!
+               else if (current_k_batch .eq. current_i_batch) then
+!
+                  if (current_i_batch .gt. 1) then
+!
+                     call wf%jacobian_transpose_cc3_X_reader(batch_i, X_acdi)
+                     X_acdi_p => X_acdi
+                     
+                     call wf%jacobian_transpose_cc3_X_reader(batch_j, X_acdj)
+                     X_acdj_p => X_acdj
+!
+                     X_acdk_p => X_acdi
+!
+                  endif
+!
+                  g_bdck_p => g_bdci
+!
+                  if (current_j_batch .eq. current_i_batch) then
+!
+                     if (current_i_batch .gt. 1) then
+!
+                        call wf%jacobian_transpose_cc3_X_reader(batch_i, X_acdi)
+                        X_acdi_p => X_acdi
+!
+                        X_acdj_p => X_acdi
+!
+                        X_acdk_p => X_acdi
+!
+                     endif
+!
+                     g_lkci_p => g_ljci
+                     g_kbic_p => g_jbic
+                     L_kbic_p => L_jbic
+!
+                     g_lick_p => g_ljci
+                     g_ibkc_p => g_jbic
+                     L_ibkc_p => L_jbic
+!
+                     g_lkcj_p => g_ljci
+                     g_kbjc_p => g_jbic
+                     L_kbjc_p => L_jbic
+!
+                     g_ljck_p => g_ljci
+                     g_jbkc_p => g_jbic
+                     L_jbkc_p => L_jbic
+!
+                  else
+!
+                     call wf%jacobian_transpose_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_kbic, L_kbic)
+                     g_lkci_p => g_lkci
+                     g_kbic_p => g_kbic
+                     L_kbic_p => L_kbic
+!
+                     g_lick_p => g_lkci
+                     g_ibkc_p => g_kbic
+                     L_ibkc_p => L_kbic
+!
+                     g_lkcj_p => g_licj
+                     g_kbjc_p => g_ibjc
+                     L_kbjc_p => L_ibjc
+!
+                     g_ljck_p => g_ljci
+                     g_jbkc_p => g_jbic
+                     L_jbkc_p => L_jbic
+!
+                  endif
+!
+               else if (current_k_batch .eq. current_j_batch) then
+!
+                  if (current_i_batch .gt. 1) then
+!
+                     call wf%jacobian_transpose_cc3_X_reader(batch_i, X_acdi)
+                     X_acdi_p => X_acdi
+!
+                     call wf%jacobian_transpose_cc3_X_reader(batch_j, X_acdj)
+                     X_acdj_p => X_acdj
+!
+                     X_acdk_p => X_acdj
+!
+                  endif
+!
+                  g_bdck_p => g_bdcj
+!
+                  g_lkci_p => g_ljci
+                  g_kbic_p => g_jbic
+                  L_kbic_p => L_jbic
+!
+                  g_lick_p => g_ljci
+                  g_ibkc_p => g_jbic
+                  L_ibkc_p => L_jbic
+!
+                  call wf%jacobian_transpose_cc3_ov_vv_reader(batch_k, batch_j, g_lkcj, g_kbjc, L_kbjc)
+                  g_lkcj_p => g_lkcj
+                  g_kbjc_p => g_kbjc
+                  L_kbjc_p => L_kbjc
+!
+                  g_ljck_p => g_lkcj
+                  g_jbkc_p => g_kbjc
+                  L_jbkc_p => L_kbjc
+!
+                  elseif (current_i_batch .eq. current_j_batch) then
+!
+                     if (current_i_batch .gt. 1) then
+!
+                     call wf%jacobian_transpose_cc3_X_reader(batch_i, X_acdi)
+                     X_acdi_p => X_acdi
+!
+                     X_acdj_p => X_acdi
+!
+                     call wf%jacobian_transpose_cc3_X_reader(batch_k, X_acdk)
+                     X_acdk_p => X_acdk
+!
+                     endif
+!
+               endif
+!
+               do i = batch_i%first, batch_i%last
+!
+                  i_rel = i - batch_i%first + 1
+!
+                  do j = batch_j%first, min(batch_j%last, i)
+!
+                     j_rel = j - batch_j%first + 1
+!
+                     do k = batch_k%first, min(batch_k%last, j)
+!
+                        if (i .eq. j .and. i .eq. k) then
+                           cycle
+                        end if
+!
+                        k_rel = k - batch_k%first + 1
+!
+!                       Construct t^{abc}_{ijk} for given i, j, k
+!
+                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji,  &
+                                                g_bdci_p(:,:,:,i_rel),           &
+                                                g_bdcj_p(:,:,:,j_rel),           &
+                                                g_bdck_p(:,:,:,k_rel),           &
+                                                g_ljci_p(:,:,j_rel,i_rel),       &
+                                                g_lkci_p(:,:,k_rel,i_rel),       &
+                                                g_lkcj_p(:,:,k_rel,j_rel),       &
+                                                g_licj_p(:,:,i_rel,j_rel),       &
+                                                g_lick_p(:,:,i_rel,k_rel),       &
+                                                g_ljck_p(:,:,j_rel,k_rel))
+!
+                        call wf%omega_cc3_eps(i, j, k, t_abc)
+!
+                        call wf%construct_X_and_Y(i, j, k, t_abc, u_abc,      &
+                                                   X_acdi_p(:,:,:,i_rel),     &
+                                                   X_acdj_p(:,:,:,j_rel),     &
+                                                   X_acdk_p(:,:,:,k_rel),     &
+                                                   Y_aikl,                    &
+                                                   g_jbic_p(:,:,j_rel,i_rel), &
+                                                   g_kbic_p(:,:,k_rel,i_rel), &
+                                                   g_kbjc_p(:,:,k_rel,j_rel), &
+                                                   g_ibjc_p(:,:,i_rel,j_rel), &
+                                                   g_ibkc_p(:,:,i_rel,k_rel), &
+                                                   g_jbkc_p(:,:,j_rel,k_rel), &
+                                                   L_jbic_p(:,:,j_rel,i_rel), &
+                                                   L_kbic_p(:,:,k_rel,i_rel), &
+                                                   L_kbjc_p(:,:,k_rel,j_rel), &
+                                                   L_ibjc_p(:,:,i_rel,j_rel), &
+                                                   L_ibkc_p(:,:,i_rel,k_rel), &
+                                                   L_jbkc_p(:,:,j_rel,k_rel))
+!
+                     enddo ! loop over k
+                  enddo ! loop over j
+               enddo ! loop over i
+!
+               call wf%jacobian_transpose_cc3_write_intermediates(batch_i, batch_j, batch_k, &
+                                                                  X_acdi, X_acdj, X_acdk)
+!
+            enddo ! batch_k
+         enddo ! batch_j
+      enddo ! batch_i
+!
+!     Close files: 
+!
+      call disk%close_file(wf%g_bdck_t)
+      call disk%close_file(wf%g_ljck_t)
+      call disk%close_file(wf%g_ibkd_t)
+      call disk%close_file(wf%L_jbkc_t)
+!
+!     Allocate integral arrays and assign pointers.
+!
+      if (batch_i%num_batches .eq. 1) then ! no batching
+!
+         call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         call mem%dealloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+         call mem%dealloc(g_jbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+         call mem%dealloc(L_jbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      else ! batching
+         call batch_i%determine_limits(1)
+!
+         call mem%dealloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%dealloc(g_bdcj,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%dealloc(g_bdck,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+!
+         call mem%dealloc(g_ljci,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_lkci,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_lkcj,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_licj,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_lick,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_ljck,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+!
+         call mem%dealloc(g_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(g_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+!
+         call mem%dealloc(L_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(L_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(L_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(L_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(L_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+         call mem%dealloc(L_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
+!
+      endif
+!
+      ! read in X and sort to caid and write
+!
+!     sort Y_aikl to akil and write to disk 
+!
+      call mem%alloc(Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call sort_1234_to_1324(Y_aikl, Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call mem%dealloc(Y_aikl, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call wf%Y_akil%init('Y_akil','direct','unformatted', dp*(wf%n_v)*(wf%n_o)**2)
+      call disk%open_file(wf%Y_akil,'write')
+!
+      do l = 1, wf%n_o
+!
+         write(wf%g_dbkc_c1%unit, rec=l, iostat=ioerror) Y_akil(:,:,:,l)
+!
+      enddo
+!
+      call mem%dealloc(Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call disk%close_file(wf%Y_akil)
+!
    end subroutine prepare_cc3_jacobian_transpose_intermediates_cc3
+!
+!
+   module subroutine construct_X_and_Y_cc3(wf, i, j, k, t_abc, u_abc, X_acdi, X_acdj, X_acdk, Y_aikl, &
+                                             g_jbic, g_kbic, g_kbjc, g_ibjc, g_ibkc, g_jbkc,          &
+                                             L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
+!!
+!!    Constructs the intermediates X_acdi and Y_akil used to compute the contributions to sigma_ai
+!!
+!!    X_acdi = sum_bjk (t^bac_ijk * g_jbkd - t^abc_ijk * L_jbkd)
+!!    Y_akil = sum_bjc (t^bac_ijk * g_jblc - t^abc_ijk * L_jblc)
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      integer, intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: u_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_acdi
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_acdj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_acdk
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(inout)   :: Y_aikl
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jbic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_kbic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_kbjc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_ibjc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_ibkc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jbkc
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbjc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_ibjc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_ibkc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbkc
+!                       
+   end subroutine construct_X_and_Y_cc3
+!
+!
+   module subroutine jacobian_transpose_cc3_X_vvv_reader_cc3(wf, batch_x, X_acdx)
+!!
+!!    Read the X_acdx intermediate in the current batch
+!!
+!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      type(batching_index), intent(in) :: batch_x
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: X_acdx
+!
+      integer :: ioerror
+      integer :: x, x_abs
+!
+      character(len=100) :: iom
+!
+      do x = 1,batch_x%length
+!
+         x_abs = batch_x%first + x - 1
+!
+         read(wf%X_acdi%unit, rec=x_abs, iostat=ioerror, iomsg=iom) X_acdx(:,:,:,x)
+!
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a)') 'Failed to read X_acdx file'
+            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
+            call output%error_msg('Failed to read file')
+         endif
+!
+      enddo
+!
+   end subroutine jacobian_transpose_cc3_X_vvv_reader_cc3
+!
+!
+   module subroutine jacobian_transpose_cc3_vvv_reader_cc3(wf, batch_x, g_bdcx)
+!!
+!!    Read the bdck, integrals in the current batch
+!!
+!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      type(batching_index), intent(in) :: batch_x
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_bdcx
+!
+      integer :: ioerror
+      integer :: x, x_abs
+!
+      character(len=100) :: iom
+!
+      do x = 1,batch_x%length
+!
+         x_abs = batch_x%first + x - 1
+!
+         read(wf%g_bdck_t%unit, rec=x_abs, iostat=ioerror, iomsg=iom) g_bdcx(:,:,:,x)
+!
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a)') 'Failed to read bdck_t file'
+            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
+            call output%error_msg('Failed to read file')
+         endif
+!
+      enddo
+!
+   end subroutine jacobian_transpose_cc3_vvv_reader_cc3
+!
+!
+   module subroutine jacobian_transpose_cc3_ov_vv_reader_cc3(wf, batch_y, batch_x, g_lycx, g_ybxd, L_ybxc)
+!!
+!!    Read the ljck, g_ibkd, L_jbkc integrals in the current batches
+!!
+!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      type(batching_index), intent(in) :: batch_x, batch_y
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_lycx
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ybxd
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: L_ybxc
+!
+      integer :: ioerror, record
+      integer :: x, y, x_abs, y_abs
+!
+      character(len=100) :: iom
+!
+      do x = 1,batch_x%length
+!
+         x_abs = batch_x%first + x - 1
+!
+         do y = 1,batch_y%length
+!
+            y_abs = batch_y%first + y - 1
+!
+            record = wf%n_o*(x_abs - 1) + y_abs
+!
+            read(wf%g_ljck_t%unit, rec=record, iostat=ioerror, iomsg=iom) g_lycx(:,:,y,x)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a)') 'Failed to read g_ljck_t file'
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+!
+      enddo
+!
+!
+      do x = 1,batch_x%length
+!
+         x_abs = batch_x%first + x - 1
+!
+         do y = 1,batch_y%length
+!
+            y_abs = batch_y%first + y - 1
+!
+            record = wf%n_o*(x_abs - 1) + y_abs
+!
+            read(wf%g_ibkd_t%unit, rec=record, iostat=ioerror, iomsg=iom) g_ybxd(:,:,y,x)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a)') 'Failed to read g_ibkd file'
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+!
+      enddo
+!
+!
+      do x = 1,batch_x%length
+!
+         x_abs = batch_x%first + x - 1
+!
+         do y = 1,batch_y%length
+!
+            y_abs = batch_y%first + y - 1
+!
+            record = wf%n_o*(x_abs - 1) + y_abs
+!
+            read(wf%L_jbkc_t%unit, rec=record, iostat=ioerror, iomsg=iom) L_ybxc(:,:,y,x)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a)') 'Failed to read L_jbkc file'
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+!
+      enddo
+!
+   end subroutine jacobian_transpose_cc3_ov_vv_reader_cc3
+!
+!
+   module subroutine jacobian_transpose_cc3_write_intermediates_cc3(wf, batch_i, batch_j, batch_k, &
+                                                               X_acdi, X_acdj, X_acdk)
+!!
+!!    Write the contributions to the X_acdx intermediates to file in the respective batches
+!!
+!!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      type(batching_index), intent(in) :: batch_i, batch_j, batch_k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_i%length), intent(in) :: X_acdi
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_j%length), intent(in) :: X_acdj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_k%length), intent(in) :: X_acdk
+!
+      integer :: ioerror
+      integer :: x, record
+!
+!     Write X_acdi
+!
+      do x = 1, batch_i%length
+!
+         record = batch_i%first + x -1
+         write(wf%X_acdi%unit, rec=record, iostat=ioerror) X_acdi(:,:,:,x)
+!
+      enddo
+!    
+!     Write X_acdj
+!     Don't write twice if batch_i == batch_j
+!
+      if (batch_i%first .ne. batch_j%first) then
+!
+         do x = 1, batch_j%length
+!
+            record = batch_j%first + x -1
+            write(wf%X_acdi%unit, rec=record, iostat=ioerror) X_acdj(:,:,:,x)
+!
+         enddo
+!
+      endif
+!
+!     Write X_acdk
+!     Don't write twice if batch_j == batch_k 
+!     (batch_k == batch_i only when batch_j == batch_k)
+!
+      if (batch_j%first .ne. batch_k%first) then
+!
+         do x = 1, batch_k%length
+!
+            record = batch_k%first + x -1
+            write(wf%X_acdi%unit, rec=record, iostat=ioerror) X_acdk(:,:,:,x)
+!
+         enddo
+!
+      endif
+!
+   end subroutine jacobian_transpose_cc3_write_intermediates_cc3
 !
 !
 end submodule jacobian_transpose

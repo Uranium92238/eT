@@ -37,11 +37,17 @@ module cc3_class
       type(file)  :: g_dbkc_t
       type(file)  :: g_jlkc_t
       type(file)  :: L_jbkc_t
+      type(file)  :: g_ibkd_t 
 !
       type(file)  :: g_bdck_c1
       type(file)  :: g_ljck_c1
       type(file)  :: g_dbkc_c1
       type(file)  :: g_jlkc_c1
+!
+!     Files for the intermediates
+!
+      type(file)  :: X_acdi
+      type(file)  :: Y_akil
 !
    contains
 !
@@ -95,11 +101,16 @@ module cc3_class
                                                    => prepare_cc3_jacobian_transpose_integrals_cc3
       procedure :: prepare_cc3_jacobian_transpose_intermediates &
                                                    => prepare_cc3_jacobian_transpose_intermediates_cc3
+      procedure :: construct_X_and_Y                           => construct_X_and_Y_cc3
+      procedure :: jacobian_transpose_cc3_X_reader             => jacobian_transpose_cc3_X_reader_cc3
+      procedure :: jacobian_transpose_cc3_vvv_reader           => jacobian_transpose_cc3_vvv_reader_cc3
+      procedure :: jacobian_transpose_cc3_ov_vv_reader         => jacobian_transpose_cc3_ov_vv_reader_cc3
+      procedure :: jacobian_transpose_cc3_write_intermediates  => jacobian_transpose_cc3_write_intermediates_cc3
 !
       procedure :: effective_jacobian_transpose_transformation  &
                                                    => effective_jacobian_transpose_transformation_cc3
 !
-      procedure :: jacobian_transpose_cc3_A        => jacobian_transpose_cc3_A_cc3
+      procedure :: jacobian_transpose_cc3_A                    => jacobian_transpose_cc3_A_cc3
 !
    end type cc3
 !
