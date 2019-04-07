@@ -160,7 +160,7 @@ module ccsd_class
       procedure :: construct_csiX_doubles                      => construct_csiX_doubles_ccsd
 !
       procedure :: get_eom_contribution                        => get_eom_contribution_ccsd
-      procedure :: get_eom_doubles_contribution                => get_eom_doubles_contribution_ccsd
+      procedure :: construct_ccsd_eom_contribution             => construct_ccsd_eom_contribution_ccsd
 !      
       procedure :: F_transform_vector                           => F_transform_vector_ccsd
       procedure :: F_ccsd_a1_1                                  => F_ccsd_a1_1_ccsd

@@ -49,8 +49,8 @@ module cc_properties_class
 !
       real(dp) :: S
 !
-      real(dp), dimension(:,:), allocatable :: etaX
-      real(dp), dimension(:,:), allocatable :: csiX
+      real(dp), dimension(:), allocatable :: etaX
+      real(dp), dimension(:), allocatable :: csiX
 !
       real(dp) :: T_r, T_l
 !
@@ -282,10 +282,10 @@ contains
       call wf%destruct_multipliers()
 !
       if (allocated(solver%etaX)) &
-         call mem%dealloc(solver%etaX, wf%n_es_amplitudes, 1)
+         call mem%dealloc(solver%etaX, wf%n_es_amplitudes)
 !
       if (allocated(solver%csiX)) &
-         call mem%dealloc(solver%csiX, wf%n_es_amplitudes, 1)
+         call mem%dealloc(solver%csiX, wf%n_es_amplitudes)
 !
    end subroutine cleanup_cc_properties
 !
@@ -302,10 +302,10 @@ contains
       class(ccs) :: wf
 !
       if (.not. allocated(solver%etaX)) &
-         call mem%alloc(solver%etaX, wf%n_es_amplitudes, 1)
+         call mem%alloc(solver%etaX, wf%n_es_amplitudes)
 !
       if (.not. allocated(solver%csiX)) &
-         call mem%alloc(solver%csiX, wf%n_es_amplitudes, 1)
+         call mem%alloc(solver%csiX, wf%n_es_amplitudes)
 !
    end subroutine intialize_variables_cc_properties
 !

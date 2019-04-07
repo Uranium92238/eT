@@ -9,7 +9,8 @@
       class(ccsd), intent(In) :: wf
 !
       character(len=*), intent(in)            :: Xoperator
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
    end subroutine construct_etaX_ccsd
 !
@@ -24,8 +25,8 @@
       class(ccsd), intent(in) :: wf
 !
       character(len=*), intent(in) :: Xoperator
-      !real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
    end subroutine construct_etaX_singles_q1_ccsd
 !
@@ -40,8 +41,8 @@
       class(ccsd), intent(in) :: wf
 !
       character(len=*), intent(in) :: Xoperator
-      !real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
    end subroutine construct_etaX_singles_q2_ccsd
 !
@@ -55,8 +56,9 @@
 !
       class(ccsd), intent(in) :: wf
 !
-      character(len=*), intent(in)            :: Xoperator
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+      character(len=*), intent(in) :: Xoperator
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
    end subroutine construct_etaX_doubles_q1_ccsd 
 !
@@ -70,8 +72,9 @@
 !
       class(ccsd), intent(in) :: wf
 !
-      character(len=*), intent(in)            :: Xoperator
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+      character(len=*), intent(in) :: Xoperator
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
    end subroutine construct_etaX_doubles_q2_ccsd 
 !
@@ -86,7 +89,8 @@
       class(ccsd), intent(in) :: wf
 !
       character(len=*), intent(in) :: Xoperator
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
 !
    end subroutine construct_csiX_ccsd 
 !
@@ -101,7 +105,8 @@
       class(ccsd), intent(in) :: wf
 !
       character(len=*), intent(in) :: Xoperator
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
 !
    end subroutine construct_csiX_singles_ccsd
 !
@@ -116,7 +121,8 @@
       class(ccsd), intent(in) :: wf
 !
       character(len=*), intent(in) :: Xoperator
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
 !
    end subroutine construct_csiX_doubles_ccsd
 !
@@ -132,13 +138,13 @@
 !
       character(len=*), intent(inout), optional :: Xoperator
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
 !
    end subroutine get_eom_contribution_ccsd
 !
 !
-   module subroutine get_eom_doubles_contribution_ccsd(wf, Xoperator, etaX)
+   module subroutine construct_ccsd_eom_contribution_ccsd(wf, Xoperator, etaX)
 !!
 !!    Build EOM contribution to etaX in CCSD
 !!    Written by Josefine H. Andersen, February 2019
@@ -149,9 +155,9 @@
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
-   end subroutine get_eom_doubles_contribution_ccsd
+   end subroutine construct_ccsd_eom_contribution_ccsd
 !
 !
 

@@ -3667,7 +3667,7 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
       call wf%construct_ccs_etaX(Xoperator, etaX)
 !
@@ -3685,11 +3685,11 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 
-      real(dp), dimension(:,:), allocatable :: X_ia
+      real(dp), dimension(:), allocatable :: X_ia
 !
-      call mem%alloc(X_ia, wf%n_es_amplitudes, 1)
+      call mem%alloc(X_ia, wf%n_es_amplitudes)
 !
       call  wf%get_operator_ov(Xoperator, X_ia)
 !
@@ -3697,7 +3697,7 @@ contains
 !
       call sort_12_to_21(X_ia, etaX, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(X_ia, wf%n_es_amplitudes, 1) 
+      call mem%dealloc(X_ia, wf%n_es_amplitudes) 
 !
    end subroutine construct_ccs_etaX_ccs
 !
@@ -3713,7 +3713,7 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
 !
       call wf%construct_ccs_csiX(Xoperator, csiX)
 !
@@ -3731,7 +3731,7 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
 !
 !     csiX_ai = X_ai
 !
@@ -3751,8 +3751,8 @@ contains
 !
       character(len=*), intent(inout), optional :: Xoperator
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
 !
       call wf%get_eom_xcc_contribution(etaX, csiX)
 !
@@ -3768,15 +3768,15 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
 !
-      real(dp), dimension(:,:), allocatable                     :: multipliers
+      real(dp), dimension(:), allocatable                     :: multipliers
 !
-      real(dp) :: X_cc! = 0
+      real(dp) :: X_cc
       real(dp) :: ddot
 !
-      call mem%alloc(multipliers, wf%n_es_amplitudes, 1)
+      call mem%alloc(multipliers, wf%n_es_amplitudes)
 !
       call wf%get_multipliers(multipliers)
 !
@@ -3784,7 +3784,7 @@ contains
 !
       call daxpy(wf%n_es_amplitudes, X_cc, multipliers, 1, etaX, 1)
 !
-      call mem%dealloc(multipliers, wf%n_es_amplitudes, 1)
+      call mem%dealloc(multipliers, wf%n_es_amplitudes)
 !
    end subroutine get_eom_xcc_contribution_ccs
 !
@@ -3817,9 +3817,9 @@ contains
 !
       endif
 !
-      do i = 1, 3
-!
          call mem%alloc(X_pq, wf%n_mo, wf%n_mo)
+!
+      do i = 1, 3
 !
          call mo_operator%init(trim(Xoperator) // '_' // cartesian_coordinate(i), 'sequential', 'unformatted')       
          call disk%open_file(mo_operator, 'read', 'rewind')
@@ -3835,11 +3835,11 @@ contains
 !
          write(operator_output%unit) X_pq
 !
-         call mem%dealloc(X_pq, wf%n_mo, wf%n_mo)
-!
          call disk%close_file(operator_output)
 !
       enddo
+!
+         call mem%dealloc(X_pq, wf%n_mo, wf%n_mo)
 !
    end subroutine prepare_operator_pq_ccs
 !
@@ -3853,8 +3853,8 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: L
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: R
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: L
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: R
 !
       real(dp) :: norm, ddot
 !
@@ -3876,18 +3876,18 @@ contains
 !
       real(dp), intent(inout) :: S
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: csiX
 !
       real(dp), intent(out) :: T_l, T_r
       integer, intent(in)   :: state
 !
-      real(dp), dimension(:,:), allocatable :: L_n, R_n
+      real(dp), dimension(:), allocatable :: L_n, R_n
 !
       real(dp) :: ddot
 !
-      call mem%alloc(L_n, wf%n_es_amplitudes, 1)
-      call mem%alloc(R_n, wf%n_es_amplitudes, 1)
+      call mem%alloc(L_n, wf%n_es_amplitudes)
+      call mem%alloc(R_n, wf%n_es_amplitudes)
 !
       call wf%read_excited_state(L_n, state, 'left')
       call wf%read_excited_state(R_n, state, 'right')
@@ -3903,8 +3903,8 @@ contains
 !
       S  = T_l * T_r
 !
-      call mem%dealloc(L_n, wf%n_es_amplitudes, 1)
-      call mem%dealloc(R_n, wf%n_es_amplitudes, 1)
+      call mem%dealloc(L_n, wf%n_es_amplitudes)
+      call mem%dealloc(R_n, wf%n_es_amplitudes)
 !
    end subroutine calculate_transition_strength_ccs
 !

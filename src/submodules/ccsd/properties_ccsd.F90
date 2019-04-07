@@ -32,7 +32,7 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
 !     etaX_ai:
 !
@@ -61,18 +61,18 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout)   :: etaX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout)   :: etaX
 !      
       real(dp), dimension(:,:), allocatable :: etaX_temp
 !
-      real(dp), dimension(:,:), allocatable :: X_ca
-      real(dp), dimension(:,:), allocatable :: X_ik
+      real(dp), dimension(:), allocatable :: X_ca
+      real(dp), dimension(:), allocatable :: X_ik
 !      
       call mem%alloc(etaX_temp, wf%n_v, wf%n_o)
 !
 !     :: First term  sum_c tb_ci X_ca
 !
-      call mem%alloc(X_ca, wf%n_v*wf%n_v, 1)
+      call mem%alloc(X_ca, wf%n_v*wf%n_v)
       call wf%get_operator_vv(Xoperator, X_ca)
 !
       call dgemm('T','N',   &
@@ -88,11 +88,11 @@ contains
                  etaX_temp, &
                  wf%n_v)
 !         
-      call mem%dealloc(X_ca, wf%n_v*wf%n_v, 1)
+      call mem%dealloc(X_ca, wf%n_v*wf%n_v)
 !      
 !     :: Second term  - sum_k tb_ak X_ik
 !
-      call mem%alloc(X_ik, wf%n_o*wf%n_o, 1)
+      call mem%alloc(X_ik, wf%n_o*wf%n_o)
       call wf%get_operator_oo(Xoperator, X_ik)
 !      
       call dgemm('N','T',   &
@@ -108,7 +108,7 @@ contains
                  etaX_temp, &
                  wf%n_v)
 !         
-      call mem%dealloc(X_ik, wf%n_o*wf%n_o, 1)
+      call mem%dealloc(X_ik, wf%n_o*wf%n_o)
 !
 !     Add eta_temp to etaX
 !
@@ -133,7 +133,7 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
       real(dp), dimension(:,:), allocatable :: etaX_temp
 !
@@ -144,8 +144,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: I_a_d    ! intermediate, first term
       real(dp), dimension(:,:), allocatable :: I_l_i    ! intermediate, second term
-!      
-      real(dp), parameter :: one = 1.0
 !
       call mem%alloc(etaX_temp, wf%n_v, wf%n_o)
 !
@@ -263,10 +261,10 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
       real(dp), dimension(:,:), allocatable :: etaX_ai_bj
-      real(dp), dimension(:,:), allocatable :: etaX_temp
+      real(dp), dimension(:), allocatable :: etaX_temp
 !      
       real(dp), dimension(:,:), allocatable :: tb_ai
       real(dp), dimension(:,:), allocatable :: X_ai
@@ -306,7 +304,7 @@ contains
       call mem%dealloc(tb_ai, wf%n_v, wf%n_o) 
       call mem%dealloc(X_ai, wf%n_o, wf%n_v)
 !
-      call mem%alloc(etaX_temp, wf%n_t2, 1)
+      call mem%alloc(etaX_temp, wf%n_t2)
       etaX_temp = zero ! necessary
 !
       call symmetrize_and_add_to_packed(etaX_temp, etaX_ai_bj, (wf%n_v*wf%n_o))
@@ -315,9 +313,9 @@ contains
 !
 !     Add temporary etaX to etaX
 !
-      call daxpy(wf%n_t2, -one, etaX_temp, 1, etaX(wf%n_t1+1:wf%n_es_amplitudes, 1), 1)
+      call daxpy(wf%n_t2, -one, etaX_temp, 1, etaX(wf%n_t1+1:wf%n_es_amplitudes), 1)
 !
-      call mem%dealloc(etaX_temp, wf%n_t2, 1)
+      call mem%dealloc(etaX_temp, wf%n_t2)
 !
    end subroutine construct_etaX_doubles_q1_ccsd
 !
@@ -335,9 +333,9 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
-      real(dp), dimension(:,:), allocatable :: etaX_temp
+      real(dp), dimension(:), allocatable :: etaX_temp
       real(dp), dimension(:,:), allocatable :: etaX_ai_bj
       real(dp), dimension(:,:), allocatable :: etaX_aij_b
 !
@@ -409,7 +407,7 @@ contains
       call mem%dealloc(tb_ai_bj, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
       call mem%dealloc(X_jk, wf%n_o, wf%n_o)
 !
-      call mem%alloc(etaX_temp, wf%n_t2, 1)
+      call mem%alloc(etaX_temp, wf%n_t2)
       etaX_temp = zero ! necessary
       call symmetrize_and_add_to_packed(etaX_temp, etaX_ai_bj, wf%n_o*wf%n_v)      
 !
@@ -417,9 +415,9 @@ contains
 !
 !     Add temporary etaX to etaX vector
 !
-      call daxpy(wf%n_t2, -one, etaX_temp, 1, etaX(wf%n_t1+1:, 1), 1)
+      call daxpy(wf%n_t2, -one, etaX_temp, 1, etaX(wf%n_t1+1:), 1)
 !
-      call mem%dealloc(etaX_temp, wf%n_t2, 1)
+      call mem%dealloc(etaX_temp, wf%n_t2)
 !      
    end subroutine construct_etaX_doubles_q2_ccsd
 !
@@ -439,7 +437,7 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
 !
 !     csiX_ai
 !
@@ -468,25 +466,25 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
 !      
-      real(dp), dimension(:,:), allocatable   :: csiX_temp
+      real(dp), dimension(:), allocatable   :: csiX_temp
 !      
       real(dp), dimension(:,:), allocatable   :: u_ai_ck
       real(dp), dimension(:,:), allocatable   :: t_ai_ck
 !      
-      real(dp), dimension(:,:), allocatable   :: X_kc
-      real(dp), dimension(:,:), allocatable   :: X_ck
+      real(dp), dimension(:), allocatable   :: X_kc
+      real(dp), dimension(:), allocatable   :: X_ck
 !
-      call mem%alloc(csiX_temp, wf%n_t1, 1)
+      call mem%alloc(csiX_temp, wf%n_t1)
 !
-      call mem%alloc(X_kc, wf%n_o*wf%n_v, 1)
-      call mem%alloc(X_ck, wf%n_v*wf%n_o, 1)
+      call mem%alloc(X_kc, wf%n_o*wf%n_v)
+      call mem%alloc(X_ck, wf%n_v*wf%n_o)
 !      
       call wf%get_operator_ov(Xoperator, X_kc)
       call sort_12_to_21(X_kc, X_ck, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(X_kc, wf%n_o*wf%n_v, 1)
+      call mem%dealloc(X_kc, wf%n_o*wf%n_v)
 !
       call mem%alloc(t_ai_ck, wf%n_o*wf%n_v, wf%n_o*wf%n_v)
       call squareup(wf%t2, t_ai_ck,  wf%n_o*wf%n_v)
@@ -517,13 +515,13 @@ contains
                   (wf%n_o)*(wf%n_v))
 !
       call mem%dealloc(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call mem%dealloc(X_ck, wf%n_v*wf%n_o, 1)
+      call mem%dealloc(X_ck, wf%n_v*wf%n_o)
 !
 !     Add temporary csiX to csiX
 !
-      call daxpy(wf%n_t1, one, csiX_temp, 1, csiX(1:wf%n_t1, 1), 1)
+      call daxpy(wf%n_t1, one, csiX_temp, 1, csiX(1:wf%n_t1), 1)
 !
-      call mem%dealloc(csiX_temp, wf%n_t1, 1)
+      call mem%dealloc(csiX_temp, wf%n_t1)
 !
    end subroutine construct_csiX_singles_ccsd
 !
@@ -541,9 +539,9 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !      
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
 !
-      real(dp), dimension(:,:), allocatable :: csiX_temp
+      real(dp), dimension(:), allocatable :: csiX_temp
       real(dp), dimension(:,:), allocatable :: csiX_bj_ai
       real(dp), dimension(:,:), allocatable :: csiX_ai_bj
 !
@@ -579,8 +577,9 @@ contains
 !
 !     Add csiX_bj_ai to temporary csiX vector
 !
-      call mem%alloc(csiX_temp, wf%n_t2, 1)
+      call mem%alloc(csiX_temp, wf%n_t2)
       csiX_temp = zero ! necessary
+!
       call symmetrize_and_add_to_packed(csiX_temp, csiX_bj_ai, wf%n_v*wf%n_o)
 !
       call mem%dealloc(csiX_bj_ai, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
@@ -617,9 +616,9 @@ contains
 !
 !     Add doubles contribution to csiX
 !
-      call daxpy(wf%n_t2, one, csiX_temp, 1, csiX(wf%n_t1+1:wf%n_es_amplitudes, 1), 1)
+      call daxpy(wf%n_t2, one, csiX_temp, 1, csiX(wf%n_t1+1:wf%n_es_amplitudes), 1)
 !
-      call mem%dealloc(csiX_temp, wf%n_t2, 1)
+      call mem%dealloc(csiX_temp, wf%n_t2)
 !
    end subroutine construct_csiX_doubles_ccsd
 !
@@ -635,17 +634,17 @@ contains
 !
       character(len=*), intent(inout), optional :: Xoperator
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
 !
-      call wf%get_eom_doubles_contribution(Xoperator, etaX)
+      call wf%construct_ccsd_eom_contribution(Xoperator, etaX)
 !
       call wf%get_eom_xcc_contribution(etaX, csiX)
 !
    end subroutine get_eom_contribution_ccsd
 !
 !
-   module subroutine get_eom_doubles_contribution_ccsd(wf, Xoperator, etaX)
+   module subroutine construct_ccsd_eom_contribution_ccsd(wf, Xoperator, etaX)
 !!
 !!    Build EOM contribution to etaX in CCSD
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -660,9 +659,9 @@ contains
 !
       character(len=*), intent(in) :: Xoperator
 !
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
-      real(dp), dimension(:,:), allocatable :: etaX_temp
+      real(dp), dimension(:), allocatable :: etaX_temp
 !
       real(dp), dimension(:,:), allocatable :: tb_ai_bj
       real(dp), dimension(:,:), allocatable :: t_ck_dl
@@ -670,7 +669,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: I_ai_dl
 !
-      real(dp), dimension(:,:), allocatable :: X_ck
+      real(dp), dimension(:), allocatable :: X_ck
       real(dp), dimension(:,:), allocatable :: X_ld
       real(dp), dimension(:,:), allocatable :: X_dl
 !
@@ -681,10 +680,10 @@ contains
       call mem%alloc(tb_ai_bj, wf%n_v*wf%n_o,  wf%n_v*wf%n_o)
       call squareup(wf%t2bar, tb_ai_bj, wf%n_v*wf%n_o)
 !
-      call mem%alloc(X_ck, wf%n_v*wf%n_o, 1)
+      call mem%alloc(X_ck, wf%n_v*wf%n_o)
       call wf%get_operator_vo(Xoperator, X_ck)
 !
-      call mem%alloc(etaX_temp, wf%n_v*wf%n_o, 1)
+      call mem%alloc(etaX_temp, wf%n_v*wf%n_o)
 !      
       call dgemm('N','N',           &
                  (wf%n_v)*(wf%n_o), &
@@ -699,7 +698,7 @@ contains
                  etaX_temp,         &
                  (wf%n_v)*(wf%n_o))
 !
-      call mem%dealloc(X_ck, wf%n_v*wf%n_o, 1)
+      call mem%dealloc(X_ck, wf%n_v*wf%n_o)
 !
 !     :: Second term: sum_ckdl tb_aick u_ckdl X_ld
 !
@@ -766,9 +765,9 @@ contains
 !
       call daxpy(wf%n_t1, -one, etaX_temp, 1, etaX, 1)
 !
-      call mem%dealloc(etaX_temp, wf%n_v*wf%n_o, 1)
+      call mem%dealloc(etaX_temp, wf%n_v*wf%n_o)
 !
-   end subroutine get_eom_doubles_contribution_ccsd
+   end subroutine construct_ccsd_eom_contribution_ccsd
 !
 !
 end submodule properties_ccsd
