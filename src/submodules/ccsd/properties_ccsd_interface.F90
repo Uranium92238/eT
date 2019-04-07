@@ -14,22 +14,6 @@
    end subroutine construct_etaX_ccsd
 !
 !
-   module subroutine construct_etaX_ccs_singles_ccsd(wf, Xoperator, etaX)
-!!
-!!    Construct CCS term of CCSD etaX singles
-!!    Written by Josefine H. Andersen, February 2019
-!!
-      implicit none
-!
-      class(ccsd), intent(in) :: wf
-!
-      character(len=*), intent(in) :: Xoperator
-!
-      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
-!
-   end subroutine construct_etaX_ccs_singles_ccsd
-!
-!
    module subroutine construct_etaX_singles_q1_ccsd(wf, Xoperator, etaX)
 !!
 !!    Construct Q1 term in etaX singles contribution

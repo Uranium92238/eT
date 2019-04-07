@@ -200,7 +200,9 @@ module ccs_class
 !     Routines related to property calculations
 !
       procedure :: construct_etaX                              => construct_etaX_ccs
+      procedure :: construct_ccs_etaX                          => construct_ccs_etaX_ccs
       procedure :: construct_csiX                              => construct_csiX_ccs
+      procedure :: construct_ccs_csiX                          => construct_ccs_csiX_ccs
       procedure :: get_eom_contribution                        => get_eom_contribution_ccs
       procedure :: get_eom_xcc_contribution                    => get_eom_xcc_contribution_ccs
       procedure :: scale_left_excitation_vector                => scale_left_excitation_vector_ccs
@@ -3654,10 +3656,28 @@ contains
 !
    subroutine construct_etaX_ccs(wf, Xoperator, etaX)
 !!
-!!    Construct left-hand-side vector etaX 
+!!    Handling the construction of left-hand-side vector etaX 
 !!    Written by Josefine H. Andersen, 2019
 !!
 !!    etaX_ai = 2*X_ia
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      character(len=*), intent(in) :: Xoperator
+!
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: etaX
+!
+      call wf%construct_ccs_etaX(Xoperator, etaX)
+!
+   end subroutine construct_etaX_ccs
+!
+!
+   subroutine construct_ccs_etaX_ccs(wf, Xoperator, etaX)
+!!
+!!    Construct left-hand-side vector etaX (CCS)
+!!    Written by Josefine H. Andersen, 2019
 !!
       implicit none
 !
@@ -3677,12 +3697,30 @@ contains
 !
       call sort_12_to_21(X_ia, etaX, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(X_ia, wf%n_es_amplitudes, 1)
+      call mem%dealloc(X_ia, wf%n_es_amplitudes, 1) 
 !
-   end subroutine construct_etaX_ccs
+   end subroutine construct_ccs_etaX_ccs
 !
 !
    subroutine construct_csiX_ccs(wf, Xoperator, csiX)
+!!
+!!    Handling the construction of the right-hand-side vector csiX
+!!    Written by Josefine H. Andersen, 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      character(len=*), intent(in) :: Xoperator
+!      
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: csiX
+!
+      call wf%construct_ccs_csiX(Xoperator, csiX)
+!
+   end subroutine construct_csiX_ccs
+!
+!
+   subroutine construct_ccs_csiX_ccs(wf, Xoperator, csiX)
 !!
 !!    Construct right-hand-side vector csiX 
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -3699,7 +3737,7 @@ contains
 !
       call wf%get_operator_vo(Xoperator, csiX)
 !
-   end subroutine construct_csiX_ccs
+   end subroutine construct_ccs_csiX_ccs
 !
 !
    subroutine get_eom_contribution_ccs(wf, etaX, csiX, Xoperator)

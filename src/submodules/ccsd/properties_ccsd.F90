@@ -4,7 +4,7 @@ submodule (ccsd_class) properties_ccsd
 !!    Properties submodule (CCSD)
 !!    Written by Josefine H. Andersen, Mar 2019
 !!
-!!    Routine for construction of the right-hand-side and left-hand-side
+!!    Routines for construction of the right-hand-side and left-hand-side
 !!    vectors for transition moments.
 !!
 !
@@ -36,7 +36,7 @@ contains
 !
 !     etaX_ai:
 !
-      call wf%construct_etaX_ccs_singles(Xoperator, etaX)
+      call wf%construct_ccs_etaX(Xoperator, etaX)
       call wf%construct_etaX_singles_q1(Xoperator, etaX)
       call wf%construct_etaX_singles_q2(Xoperator, etaX)
 !
@@ -46,35 +46,6 @@ contains
       call wf%construct_etaX_doubles_q2(Xoperator, etaX)
 !
    end subroutine construct_etaX_ccsd
-!
-!
-   module subroutine construct_etaX_ccs_singles_ccsd(wf, Xoperator, etaX)
-!!
-!!    Construct CCS term of CCSD etaX singles
-!!    Written by Josefine H. Andersen, Feb 2019
-!!
-!!    2*X_ia
-!!
-      implicit none
-!
-      class(ccsd), intent(in) :: wf
-!
-      character(len=*), intent(in) :: Xoperator
-!
-      real(dp), dimension(wf%n_t1, 1), intent(inout) :: etaX
-!
-      real(dp), dimension(:,:), allocatable :: X_ia
-!
-      call mem%alloc(X_ia, wf%n_t1, 1)
-      call  wf%get_operator_ov(Xoperator, X_ia)
-!
-      call dscal(wf%n_t1, two, X_ia, 1)
-      
-      call sort_12_to_21(X_ia, etaX, wf%n_o, wf%n_v)
-!
-      call mem%dealloc(X_ia, wf%n_t1, 1)
-!
-   end subroutine construct_etaX_ccs_singles_ccsd
 !
 !
    module subroutine construct_etaX_singles_q1_ccsd(wf, Xoperator, etaX)
@@ -472,6 +443,7 @@ contains
 !
 !     csiX_ai
 !
+      call wf%construct_ccs_csiX(Xoperator, csiX)
       call wf%construct_csiX_singles(Xoperator, csiX)
 !
 !     ciX_aibj
@@ -486,7 +458,7 @@ contains
 !!    Construct csiX singles contribution (CCSD)
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
-!!    csiX_ai = X_ai + sum_ck u_aick X_kc
+!!    sum_ck u_aick X_kc
 !!    
 !!    where u_aick = 2t_ck_ai - t_ci_ak
 !!
@@ -507,12 +479,6 @@ contains
       real(dp), dimension(:,:), allocatable   :: X_ck
 !
       call mem%alloc(csiX_temp, wf%n_t1, 1)
-!
-!     :: First term: X_ai
-!
-      call wf%get_operator_vo(Xoperator, csiX_temp)     
-!
-!     :: Second term: u_aick X_kc
 !
       call mem%alloc(X_kc, wf%n_o*wf%n_v, 1)
       call mem%alloc(X_ck, wf%n_v*wf%n_o, 1)
@@ -546,7 +512,7 @@ contains
                   (wf%n_o)*(wf%n_v), &
                   X_ck,              &
                   (wf%n_o)*(wf%n_v), &
-                  one,               &
+                  zero,              &
                   csiX_temp,         &
                   (wf%n_o)*(wf%n_v))
 !

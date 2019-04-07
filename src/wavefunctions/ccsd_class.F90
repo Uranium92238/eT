@@ -150,7 +150,6 @@ module ccsd_class
 !     Routines related to property calculations
 !
       procedure :: construct_etaX                              => construct_etaX_ccsd
-      procedure :: construct_etaX_ccs_singles                  => construct_etaX_ccs_singles_ccsd
       procedure :: construct_etaX_singles_q1                   => construct_etaX_singles_q1_ccsd
       procedure :: construct_etaX_singles_q2                   => construct_etaX_singles_q2_ccsd
       procedure :: construct_etaX_doubles_q1                   => construct_etaX_doubles_q1_ccsd
