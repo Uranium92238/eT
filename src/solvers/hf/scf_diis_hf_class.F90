@@ -297,6 +297,10 @@ contains
             call wf%get_ao_density_sq(prev_ao_density)
 !
             call wf%roothan_hall_update_orbitals()     ! DIIS F => C
+!
+            call wf%save_orbital_coefficients()
+            call wf%save_orbital_energies()
+!
             call wf%update_ao_density()                ! C => D
 !
             if (iteration .ne. 1) call wf%set_ao_fock(ao_fock) ! Restore F 
@@ -368,7 +372,7 @@ contains
 !     MO transform the AO Fock matrix 
 !
       call wf%initialize_mo_fock()
-      call wf%construct_mo_fock(wf%mo_fock)
+      call wf%construct_mo_fock()
 !
 !     Save the orbitals to file & store restart information 
 !

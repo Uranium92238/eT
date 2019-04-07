@@ -1571,7 +1571,7 @@ contains
    end subroutine jacobian_cc3_c1_integrals_cc3
 !
 !
-   subroutine jacobian_cc3_construct_fock_ia_c1_cc3(wf, c_ai, F_ia_c1)
+   module subroutine jacobian_cc3_construct_fock_ia_c1_cc3(wf, c_ai, F_ia_c1)
 !!
 !!    Calculates C1-transformed occupied-virtual elements of the Fock matrix
 !!    required for the CC3 jacobian and returns it ordered as n_v, n_o

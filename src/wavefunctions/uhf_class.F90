@@ -90,6 +90,8 @@ module uhf_class
       procedure :: get_homo_degeneracy               => get_homo_degeneracy_uhf
       procedure :: get_ao_density_sq                 => get_ao_density_sq_uhf
 !
+      procedure :: construct_mo_fock                 => construct_mo_fock_uhf
+!
 !     MO orbital related routines 
 !
       procedure :: initialize_orbitals               => initialize_orbitals_uhf
@@ -220,6 +222,23 @@ contains
       endif 
 !
    end subroutine set_initial_ao_density_guess_uhf
+!
+!
+   subroutine construct_mo_fock_uhf(wf)
+!!
+!!    Construct MO Fock
+!!    Written by Eirik F. Kjønstad, Mar 2019
+!!
+!!    Give notice to user that it does not yet exist.
+!!
+      implicit none
+!
+      class(uhf), intent(inout) :: wf
+!
+      write(output%unit, '(/t3,a,a,a)') 'Requested MO transformation of Fock matrix, but this ', &
+                                          'is not yet implemented for ', wf%name_
+!
+   end subroutine construct_mo_fock_uhf
 !
 !
    subroutine print_orbital_energies_uhf(wf, indentation)
