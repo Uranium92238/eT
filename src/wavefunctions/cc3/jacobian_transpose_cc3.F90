@@ -630,7 +630,7 @@ contains
 !
       integer :: i, j, k, i_rel, j_rel, k_rel
       type(batching_index) :: batch_i, batch_j, batch_k
-      integer :: current_i_batch, current_j_batch, current_k_batch
+      integer :: i_batch, j_batch, k_batch ! used for the current batch
       integer :: req_0, req_1, req_2, req_3
       real(dp) :: batch_buff = 0.0
 !
@@ -706,35 +706,54 @@ contains
       call disk%open_file(wf%X_acdi,'readwrite')
 !
 !
-      do current_i_batch = 1, batch_i%num_batches
+      do i_batch = 1, batch_i%num_batches
 !
-         call batch_i%determine_limits(current_i_batch)
+         call batch_i%determine_limits(i_batch)
 !
             call wf%jacobian_transpose_cc3_vvv_reader(batch_i, g_bdci)
             g_bdci_p => g_bdci
 !
-         do current_j_batch = 1, current_i_batch
+!           cannot hold X_acdi - read in previous X, add contributions, write to disk again
 !
-            call batch_j%determine_limits(current_j_batch)
+            if (i_batch .gt. 1) then
+!
+               call wf%jacobian_transpose_cc3_X_reader(batch_i, X_acdi)
+               X_acdi_p => X_acdi
+!
+            end if
+!
+         do j_batch = 1, i_batch
+!
+            call batch_j%determine_limits(j_batch)
 !
             call wf%jacobian_transpose_cc3_ov_vv_reader(batch_j, batch_i, g_ljci, g_jbic, L_jbic)
             g_ljci_p => g_ljci
             g_jbic_p => g_jbic
             L_jbic_p => L_jbic
 !
-            if (current_j_batch .ne. current_i_batch) then ! read for switched i - j
+            if (j_batch .ne. i_batch) then ! read for switched i - j
 !
-                  call wf%jacobian_transpose_cc3_vvv_reader(batch_j, g_bdcj)
-                  g_bdcj_p => g_bdcj
+               call wf%jacobian_transpose_cc3_vvv_reader(batch_j, g_bdcj)
+               g_bdcj_p => g_bdcj
 !
-                  call wf%jacobian_transpose_cc3_ov_vv_reader(batch_i, batch_j, g_licj, g_ibjc, L_ibjc)
-                  g_licj_p => g_licj
-                  g_ibjc_p => g_ibjc
-                  L_ibjc_p => L_ibjc
+!              Don't read X in the first iteration - X_acdi file empty
+               if (i_batch .gt. 1 .or. j_batch .gt. 1) then
+!                   
+                  call wf%jacobian_transpose_cc3_X_reader(batch_j, X_acdj)
+                  X_acdj_p => X_acdj
+!                   
+               end if
+!
+               call wf%jacobian_transpose_cc3_ov_vv_reader(batch_i, batch_j, g_licj, g_ibjc, L_ibjc)
+               g_licj_p => g_licj
+               g_ibjc_p => g_ibjc
+               L_ibjc_p => L_ibjc
 !
             else
 !
                g_bdcj_p => g_bdci
+!
+               X_acdj_p => X_acdi
 !
                g_licj_p => g_ljci
                g_ibjc_p => g_jbic
@@ -742,30 +761,22 @@ contains
 !
             endif
 !
-            do current_k_batch = 1, current_j_batch
+            do k_batch = 1, j_batch
 !
-               call batch_k%determine_limits(current_k_batch)
+               call batch_k%determine_limits(k_batch)
 !
-               if (current_k_batch .ne. current_i_batch .and. current_k_batch .ne. current_j_batch) then
+               if (k_batch .ne. i_batch .and. k_batch .ne. j_batch) then
 !
-!              cannot hold the whole X_acdi:
-!              Therefore, read in previous X, add contributions, write to disk again
+                  call wf%jacobian_transpose_cc3_vvv_reader(batch_k, g_bdck)
+                  g_bdck_p => g_bdck
 !
-                  if (current_i_batch .gt. 1) then
-!
-                     call wf%jacobian_transpose_cc3_X_reader(batch_i, X_acdi)
-                     X_acdi_p => X_acdi
-                     
-                     call wf%jacobian_transpose_cc3_X_reader(batch_j, X_acdj)
-                     X_acdj_p => X_acdj
+!                 Don't read X in the first iteration - X_acdi file empty
+                  if (i_batch .gt. 1 .or. j_batch .gt. 1 .or. k_batch .gt. 1) then
 !
                      call wf%jacobian_transpose_cc3_X_reader(batch_k, X_acdk)
                      X_acdk_p => X_acdk
 !
                   endif
-!
-                  call wf%jacobian_transpose_cc3_vvv_reader(batch_k, g_bdck)
-                  g_bdck_p => g_bdck
 !
                   call wf%jacobian_transpose_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_kbic, L_kbic)
                   g_lkci_p => g_lkci
@@ -787,34 +798,13 @@ contains
                   g_jbkc_p => g_jbkc
                   L_jbkc_p => L_jbkc
 !
-               else if (current_k_batch .eq. current_i_batch) then
-!
-                  if (current_i_batch .gt. 1) then
-!
-                     call wf%jacobian_transpose_cc3_X_reader(batch_i, X_acdi)
-                     X_acdi_p => X_acdi
-                     
-                     call wf%jacobian_transpose_cc3_X_reader(batch_j, X_acdj)
-                     X_acdj_p => X_acdj
-!
-                     X_acdk_p => X_acdi
-!
-                  endif
+               else if (k_batch .eq. i_batch) then
 !
                   g_bdck_p => g_bdci
 !
-                  if (current_j_batch .eq. current_i_batch) then
+                  X_acdk_p => X_acdi
 !
-                     if (current_i_batch .gt. 1) then
-!
-                        call wf%jacobian_transpose_cc3_X_reader(batch_i, X_acdi)
-                        X_acdi_p => X_acdi
-!
-                        X_acdj_p => X_acdi
-!
-                        X_acdk_p => X_acdi
-!
-                     endif
+                  if (j_batch .eq. i_batch) then
 !
                      g_lkci_p => g_ljci
                      g_kbic_p => g_jbic
@@ -853,21 +843,11 @@ contains
 !
                   endif
 !
-               else if (current_k_batch .eq. current_j_batch) then
-!
-                  if (current_i_batch .gt. 1) then
-!
-                     call wf%jacobian_transpose_cc3_X_reader(batch_i, X_acdi)
-                     X_acdi_p => X_acdi
-!
-                     call wf%jacobian_transpose_cc3_X_reader(batch_j, X_acdj)
-                     X_acdj_p => X_acdj
-!
-                     X_acdk_p => X_acdj
-!
-                  endif
+               else if (k_batch .eq. j_batch) then
 !
                   g_bdck_p => g_bdcj
+!
+                  X_acdk_p => X_acdj
 !
                   g_lkci_p => g_ljci
                   g_kbic_p => g_jbic
@@ -885,20 +865,6 @@ contains
                   g_ljck_p => g_lkcj
                   g_jbkc_p => g_kbjc
                   L_jbkc_p => L_kbjc
-!
-                  elseif (current_i_batch .eq. current_j_batch) then
-!
-                     if (current_i_batch .gt. 1) then
-!
-                     call wf%jacobian_transpose_cc3_X_reader(batch_i, X_acdi)
-                     X_acdi_p => X_acdi
-!
-                     X_acdj_p => X_acdi
-!
-                     call wf%jacobian_transpose_cc3_X_reader(batch_k, X_acdk)
-                     X_acdk_p => X_acdk
-!
-                     endif
 !
                endif
 !
@@ -955,11 +921,16 @@ contains
                   enddo ! loop over j
                enddo ! loop over i
 !
-               call wf%jacobian_transpose_cc3_write_intermediates(batch_i, batch_j, batch_k, &
-                                                                  X_acdi, X_acdj, X_acdk)
+               call wf%jacobian_transpose_cc3_write_X(batch_k, X_acdk)
 !
             enddo ! batch_k
+!
+            call wf%jacobian_transpose_cc3_write_X(batch_j, X_acdj)
+!
          enddo ! batch_j
+!
+         call wf%jacobian_transpose_cc3_write_X(batch_i, X_acdi)
+!
       enddo ! batch_i
 !
 !     Close files: 
@@ -980,6 +951,7 @@ contains
          call mem%dealloc(L_jbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       else ! batching
+!
          call batch_i%determine_limits(1)
 !
          call mem%dealloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
@@ -1251,10 +1223,9 @@ contains
    end subroutine jacobian_transpose_cc3_X_reader_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_write_intermediates_cc3(wf, batch_i, batch_j, batch_k, &
-                                                               X_acdi, X_acdj, X_acdk)
+   module subroutine jacobian_transpose_cc3_write_X_cc3(wf, batch_x, X_acdx)
 !!
-!!    Write the contributions to the X_acdx intermediates to file in the respective batches
+!!    Write the contributions to the X_acdi intermediate to file in the respective batches
 !!
 !!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
 !!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
@@ -1263,54 +1234,21 @@ contains
 !
       class(cc3) :: wf
 !
-      type(batching_index), intent(in) :: batch_i, batch_j, batch_k
+      type(batching_index), intent(in) :: batch_x
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_i%length), intent(in) :: X_acdi
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_j%length), intent(in) :: X_acdj
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_k%length), intent(in) :: X_acdk
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_x%length), intent(in) :: X_acdx
 !
       integer :: ioerror
       integer :: x, record
 !
-!     Write X_acdi
+      do x = 1, batch_x%length
 !
-      do x = 1, batch_i%length
-!
-         record = batch_i%first + x -1
-         write(wf%X_acdi%unit, rec=record, iostat=ioerror) X_acdi(:,:,:,x)
+         record = batch_x%first + x -1
+         write(wf%X_acdi%unit, rec=record, iostat=ioerror) X_acdx(:,:,:,x)
 !
       enddo
-!    
-!     Write X_acdj
-!     Don't write twice if batch_i == batch_j
 !
-      if (batch_i%first .ne. batch_j%first) then
-!
-         do x = 1, batch_j%length
-!
-            record = batch_j%first + x -1
-            write(wf%X_acdi%unit, rec=record, iostat=ioerror) X_acdj(:,:,:,x)
-!
-         enddo
-!
-      endif
-!
-!     Write X_acdk
-!     Don't write twice if batch_j == batch_k 
-!     (batch_k == batch_i only when batch_j == batch_k)
-!
-      if (batch_j%first .ne. batch_k%first) then
-!
-         do x = 1, batch_k%length
-!
-            record = batch_k%first + x -1
-            write(wf%X_acdi%unit, rec=record, iostat=ioerror) X_acdk(:,:,:,x)
-!
-         enddo
-!
-      endif
-!
-   end subroutine jacobian_transpose_cc3_write_intermediates_cc3
+   end subroutine jacobian_transpose_cc3_write_X_cc3
 !
 !
    module subroutine sort_X_to_caid_and_write_cc3(wf)

@@ -190,10 +190,9 @@
    end subroutine jacobian_transpose_cc3_X_reader_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_write_intermediates_cc3(wf, batch_i, batch_j, batch_k, &
-                                                                     X_acdi, X_acdj, X_acdk)
+   module subroutine jacobian_transpose_cc3_write_X_cc3(wf, batch_x, X_acdx)
 !!
-!!    Write the contributions to the X_acdx intermediates to file in the respective batches
+!!    Write the contributions to the X_acdi intermediate to file in the respective batches
 !!
 !!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
 !!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
@@ -202,13 +201,11 @@
 !
       class(cc3) :: wf
 !
-      type(batching_index), intent(in) :: batch_i, batch_j, batch_k
+      type(batching_index), intent(in) :: batch_x
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_i%length), intent(in) :: X_acdi
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_j%length), intent(in) :: X_acdj
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_k%length), intent(in) :: X_acdk
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_x%length), intent(in) :: X_acdx
 !
-   end subroutine jacobian_transpose_cc3_write_intermediates_cc3
+   end subroutine jacobian_transpose_cc3_write_X_cc3
 !
 !
    module subroutine sort_X_to_caid_and_write_cc3(wf)

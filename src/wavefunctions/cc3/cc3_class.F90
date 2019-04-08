@@ -111,12 +111,12 @@ module cc3_class
       procedure :: prepare_cc3_jacobian_transpose_intermediates &
                                                    => prepare_cc3_jacobian_transpose_intermediates_cc3
 !
-      procedure :: construct_X_and_Y                           => construct_X_and_Y_cc3
-      procedure :: jacobian_transpose_cc3_X_reader             => jacobian_transpose_cc3_X_reader_cc3
-      procedure :: jacobian_transpose_cc3_vvv_reader           => jacobian_transpose_cc3_vvv_reader_cc3
-      procedure :: jacobian_transpose_cc3_ov_vv_reader         => jacobian_transpose_cc3_ov_vv_reader_cc3
-      procedure :: jacobian_transpose_cc3_write_intermediates  => jacobian_transpose_cc3_write_intermediates_cc3
-      procedure :: sort_X_to_caid_and_write                    => sort_X_to_caid_and_write_cc3
+      procedure :: construct_X_and_Y                     => construct_X_and_Y_cc3
+      procedure :: jacobian_transpose_cc3_X_reader       => jacobian_transpose_cc3_X_reader_cc3
+      procedure :: jacobian_transpose_cc3_vvv_reader     => jacobian_transpose_cc3_vvv_reader_cc3
+      procedure :: jacobian_transpose_cc3_ov_vv_reader   => jacobian_transpose_cc3_ov_vv_reader_cc3
+      procedure :: jacobian_transpose_cc3_write_X        => jacobian_transpose_cc3_write_X_cc3
+      procedure :: sort_X_to_caid_and_write              => sort_X_to_caid_and_write_cc3
 !
       procedure :: effective_jacobian_transpose_transformation  &
                                                    => effective_jacobian_transpose_transformation_cc3
