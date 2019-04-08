@@ -1264,7 +1264,8 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: X_caid
 !
       type(batching_index) :: batch_i
-      integer :: i_batch, i, d
+      integer :: record
+      integer :: i_batch, i, i_abs, d
       integer :: req_0, req_i
 !
       integer :: ioerror
