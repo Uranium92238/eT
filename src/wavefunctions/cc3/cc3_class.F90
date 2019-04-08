@@ -56,6 +56,7 @@ module cc3_class
 !     Left Jacobian intermediates files
 !
       type(file)  :: X_acdi
+      type(file)  :: X_caid
       type(file)  :: Y_akil
 !
    contains

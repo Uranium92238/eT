@@ -703,6 +703,7 @@ contains
       call disk%open_file(wf%g_ibkd_t,'read')
       call disk%open_file(wf%L_jbkc_t,'read')
 !
+      call wf%X_acdi%init('X_acdi','direct','unformatted',dp*wf%n_v**3)
       call disk%open_file(wf%X_acdi,'readwrite')
 !
 !
@@ -716,10 +717,8 @@ contains
 !           cannot hold X_acdi - read in previous X, add contributions, write to disk again
 !
             if (i_batch .gt. 1) then
-!
                call wf%jacobian_transpose_cc3_X_reader(batch_i, X_acdi)
                X_acdi_p => X_acdi
-!
             end if
 !
          do j_batch = 1, i_batch
@@ -738,10 +737,8 @@ contains
 !
 !              Don't read X in the first iteration - X_acdi file empty
                if (i_batch .gt. 1 .or. j_batch .gt. 1) then
-!                   
                   call wf%jacobian_transpose_cc3_X_reader(batch_j, X_acdj)
                   X_acdj_p => X_acdj
-!                   
                end if
 !
                call wf%jacobian_transpose_cc3_ov_vv_reader(batch_i, batch_j, g_licj, g_ibjc, L_ibjc)
@@ -772,10 +769,8 @@ contains
 !
 !                 Don't read X in the first iteration - X_acdi file empty
                   if (i_batch .gt. 1 .or. j_batch .gt. 1 .or. k_batch .gt. 1) then
-!
                      call wf%jacobian_transpose_cc3_X_reader(batch_k, X_acdk)
                      X_acdk_p => X_acdk
-!
                   endif
 !
                   call wf%jacobian_transpose_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_kbic, L_kbic)
@@ -998,9 +993,13 @@ contains
 !
       do l = 1, wf%n_o
 !
-         write(wf%g_dbkc_c1%unit, rec=l, iostat=ioerror) Y_akil(:,:,:,l)
+         write(wf%Y_akil%unit, rec=l, iostat=ioerror) Y_akil(:,:,:,l)
 !
       enddo
+!
+      if(ioerror .ne. 0) then
+         call output%error_msg('Failed to write Y_akil file')
+      endif
 !
       call mem%dealloc(Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
@@ -1260,6 +1259,76 @@ contains
       implicit none
 !
       class(cc3) :: wf
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_acdi
+      real(dp), dimension(:,:,:,:), allocatable :: X_caid
+!
+      type(batching_index) :: batch_i
+      integer :: i_batch, i, d
+      integer :: req_0, req_i
+!
+      integer :: ioerror
+      character(len=100) :: iom
+!
+      req_0 = 0
+      req_i = 2*wf%n_v**3
+!
+      call batch_i%init(wf%n_o)
+!
+      call mem%batch_setup(batch_i, req_0, req_i)
+!
+      call wf%X_caid%init('X_caid','direct','unformatted', dp*(wf%n_v)**2)
+      call disk%open_file(wf%X_caid,'write')
+!
+      do i_batch = 1, batch_i%num_batches
+!
+         call mem%alloc(X_acdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+!
+!        Read from file
+!
+         do i = 1, batch_i%length
+!
+            i_abs = batch_i%first + i - 1
+!
+            read(wf%X_acdi%unit, rec=i_abs, iostat=ioerror, iomsg=iom) X_acdi(:,:,:,i)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a)') 'Failed to read X_acdi file in sort_X_to_caid_and_write_cc3'
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+!
+!        Sort X_acdi to X_caid
+!
+         call mem%alloc(X_caid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
+!
+         call sort_1234_to_2143(X_acdi, X_caid, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+!
+         call mem%dealloc(X_acdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+!
+!        Write to file X_caid
+!
+         do d = 1, wf%n_v
+            do i = 1, batch_i%length
+!
+               record  = (d - 1)*wf%n_o + batch_i%first + i - 1
+               write(wf%X_caid%unit, rec=record, iostat=ioerror) X_caid(:,:,i,d)
+!
+            enddo
+         enddo
+!
+         if(ioerror .ne. 0) then
+            call output%error_msg('Failed to write X_caid file')
+         endif
+!
+         call mem%dealloc(X_caid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
+!
+      enddo ! batch_i
+!
+      call disk%close_file(wf%X_caid)
 !
    end subroutine sort_X_to_caid_and_write_cc3
 !
