@@ -710,8 +710,8 @@ contains
 !
          call batch_i%determine_limits(current_i_batch)
 !
-            call wf%jacobian_transpose_cc3_vvv_reader(batch_i, g_bdci)
-            g_bdci_p => g_bdci
+         call wf%jacobian_transpose_cc3_vvv_reader(batch_i, g_bdci)
+         g_bdci_p => g_bdci
 !
          do current_j_batch = 1, current_i_batch
 !
@@ -724,13 +724,13 @@ contains
 !
             if (current_j_batch .ne. current_i_batch) then ! read for switched i - j
 !
-                  call wf%jacobian_transpose_cc3_vvv_reader(batch_j, g_bdcj)
-                  g_bdcj_p => g_bdcj
+               call wf%jacobian_transpose_cc3_vvv_reader(batch_j, g_bdcj)
+               g_bdcj_p => g_bdcj
 !
-                  call wf%jacobian_transpose_cc3_ov_vv_reader(batch_i, batch_j, g_licj, g_ibjc, L_ibjc)
-                  g_licj_p => g_licj
-                  g_ibjc_p => g_ibjc
-                  L_ibjc_p => L_ibjc
+               call wf%jacobian_transpose_cc3_ov_vv_reader(batch_i, batch_j, g_licj, g_ibjc, L_ibjc)
+               g_licj_p => g_licj
+               g_ibjc_p => g_ibjc
+               L_ibjc_p => L_ibjc
 !
             else
 !
