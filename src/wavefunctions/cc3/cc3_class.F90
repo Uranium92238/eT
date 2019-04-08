@@ -66,6 +66,23 @@ module cc3_class
       procedure :: prepare                => prepare_cc3
       procedure :: cleanup                => cleanup_cc3
 !
+!     Routines for (integral) reading
+!
+      procedure :: read_1_4dim_array_with_1index_record_cc3
+      procedure :: read_2_4dim_array_with_1index_record_cc3
+      procedure :: read_3_4dim_array_with_1index_record_cc3
+      generic   :: single_batch_reader                      => read_1_4dim_array_with_1index_record_cc3, &
+                                                               read_2_4dim_array_with_1index_record_cc3, &
+                                                               read_3_4dim_array_with_1index_record_cc3
+      procedure :: read_1_4dim_array_with_2index_record_cc3
+      procedure :: read_2_4dim_array_with_2index_record_cc3
+      procedure :: read_3_4dim_array_with_2index_record_cc3
+      procedure :: read_4_4dim_array_with_2index_record_cc3
+      generic   :: double_batch_reader                      => read_1_4dim_array_with_2index_record_cc3, &
+                                                               read_2_4dim_array_with_2index_record_cc3, &
+                                                               read_3_4dim_array_with_2index_record_cc3, &
+                                                               read_4_4dim_array_with_2index_record_cc3
+!
 !     Routines related to omega
 !
       procedure :: construct_omega        => construct_omega_cc3
@@ -112,12 +129,13 @@ module cc3_class
       procedure :: prepare_cc3_jacobian_transpose_intermediates &
                                                    => prepare_cc3_jacobian_transpose_intermediates_cc3
 !
-      procedure :: construct_X_and_Y                     => construct_X_and_Y_cc3
       procedure :: jacobian_transpose_cc3_X_reader       => jacobian_transpose_cc3_X_reader_cc3
       procedure :: jacobian_transpose_cc3_vvv_reader     => jacobian_transpose_cc3_vvv_reader_cc3
       procedure :: jacobian_transpose_cc3_ov_vv_reader   => jacobian_transpose_cc3_ov_vv_reader_cc3
       procedure :: jacobian_transpose_cc3_write_X        => jacobian_transpose_cc3_write_X_cc3
       procedure :: sort_X_to_caid_and_write              => sort_X_to_caid_and_write_cc3
+!
+      procedure :: construct_X_and_Y                     => construct_X_and_Y_cc3
 !
       procedure :: effective_jacobian_transpose_transformation  &
                                                    => effective_jacobian_transpose_transformation_cc3
@@ -285,6 +303,556 @@ contains
       endif                                      
 !
    end subroutine prepare_for_excited_state_eq_cc3
+!
+!
+   subroutine read_1_4dim_array_with_1index_record_cc3(wf, batch_z, file_unit, g_pqrz)
+!!
+!!    Read parts of the direct access files "file_unit" into g_pqrz for the current batch z
+!!    NB: It is assumed that the batching index is sorted at the end
+!!        and that the record is equal to the batching index
+!!
+!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      type(batching_index), intent(in) :: batch_z
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
+!
+      integer, intent(in) :: file_unit
+!
+      integer :: ioerror
+      integer :: z, z_abs
+!
+      character(len=100) :: iom
+!
+      do z = 1, batch_z%length
+!
+         z_abs = batch_z%first + z - 1
+!
+         read(file_unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
+!
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a,i14)') 'Failed to read g_pqrz file with file unit: ', file_unit
+            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
+            call output%error_msg('Failed to read file')
+         endif
+!
+      enddo
+!
+   end subroutine read_1_4dim_array_with_1index_record_cc3
+!
+!
+   subroutine read_2_4dim_array_with_1index_record_cc3(wf, batch_z, file_unit_1, g_pqrz,  &
+                                                      file_unit_2, g_stuz)
+!!
+!!    Read parts of the direct access files "file_unit_1/2" 
+!!    into g_pqrz/g_stuz for the current batch z
+!!    NB: It is assumed that the batching index is sorted at the end
+!!        and that the record is equal to the batching index
+!!
+!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      type(batching_index), intent(in) :: batch_z
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_stuz
+!
+      integer, intent(in) :: file_unit_1
+      integer, intent(in) :: file_unit_2
+!
+      integer :: ioerror
+      integer :: z, z_abs
+!
+      character(len=100) :: iom
+!
+      do z = 1, batch_z%length
+!
+         z_abs = batch_z%first + z - 1
+!
+         read(file_unit_1, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
+!
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a,i14)') 'Failed to read g_pqrz file with file unit: ', file_unit_1
+            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
+            call output%error_msg('Failed to read file')
+         endif
+!
+      enddo
+!
+!     Second file
+!
+      do z = 1, batch_z%length
+!
+         z_abs = batch_z%first + z - 1
+!
+         read(file_unit_2, rec=z_abs, iostat=ioerror, iomsg=iom) g_stuz(:,:,:,z)
+!
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a,i14)') 'Failed to read g_stuz file with file unit: ', file_unit_2
+            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
+            call output%error_msg('Failed to read file')
+         endif
+!
+      enddo
+!
+   end subroutine read_2_4dim_array_with_1index_record_cc3
+!
+!
+   subroutine read_3_4dim_array_with_1index_record_cc3(wf, batch_z, file_unit_1, g_pqrz,        &
+                                                      file_unit_2, g_stuz, file_unit_3, g_vwxz)
+!!
+!!    Read parts of the direct access files "file_unit_1/2/3" 
+!!    into g_pqrz/g_stuz/g_vwxz for the current batch z
+!!    NB: It is assumed that the batching index is sorted at the end
+!!        and that the record is equal to the batching index
+!!
+!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      type(batching_index), intent(in) :: batch_z
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_stuz
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_vwxz
+!
+      integer, intent(in) :: file_unit_1
+      integer, intent(in) :: file_unit_2
+      integer, intent(in) :: file_unit_3
+!
+      integer :: ioerror
+      integer :: z, z_abs
+!
+      character(len=100) :: iom
+!
+      do z = 1, batch_z%length
+!
+         z_abs = batch_z%first + z - 1
+!
+         read(file_unit_1, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
+!
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a,i14)') 'Failed to read g_pqrz file with file unit: ', file_unit_1
+            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
+            call output%error_msg('Failed to read file')
+         endif
+!
+      enddo
+!
+!     Second file
+!
+      do z = 1, batch_z%length
+!
+         z_abs = batch_z%first + z - 1
+!
+         read(file_unit_2, rec=z_abs, iostat=ioerror, iomsg=iom) g_stuz(:,:,:,z)
+!
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a,i14)') 'Failed to read g_stuz file with file unit: ', file_unit_2
+            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
+            call output%error_msg('Failed to read file')
+         endif
+!
+      enddo
+!
+!     Third file
+!
+      do z = 1, batch_z%length
+!
+         z_abs = batch_z%first + z - 1
+!
+         read(file_unit_3, rec=z_abs, iostat=ioerror, iomsg=iom) g_vwxz(:,:,:,z)
+!
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a,i14)') 'Failed to read g_vwxz file with file unit: ', file_unit_3
+            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
+            call output%error_msg('Failed to read file')
+         endif
+!
+      enddo
+!
+   end subroutine read_3_4dim_array_with_1index_record_cc3
+!
+!
+   subroutine read_1_4dim_array_with_2index_record_cc3(wf, batch_z, batch_y, file_unit, g_pqzy)
+!!
+!!    Read parts of the direct access file "file_unit" into g_pqzy for the current batches in z and y
+!!    NB: It is assumed that the batching indices are sorted at the end of the array
+!!        in z,y order and that the record is equal to the compound index zy
+!!
+!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      type(batching_index), intent(in) :: batch_z
+      type(batching_index), intent(in) :: batch_y
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
+!
+      integer, intent(in) :: file_unit
+!
+      integer :: ioerror, record
+      integer :: z, z_abs, y, y_abs
+!
+      character(len=100) :: iom
+!
+      do y = 1, batch_y%length
+!
+         y_abs = batch_y%first + y - 1
+!
+         do z = 1, batch_z%length
+!
+            z_abs = batch_z%first + z - 1
+!
+            record = batch_z%index_dimension*(y_abs - 1) + z_abs
+!
+            read(file_unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a,i14)') 'Failed to read g_pqzy file with file unit: ', file_unit
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+      enddo
+!
+   end subroutine read_1_4dim_array_with_2index_record_cc3
+!
+!
+   subroutine read_2_4dim_array_with_2index_record_cc3(wf, batch_z, batch_y, file_unit_1, g_pqzy,  &
+                                                      file_unit_2, g_rszy)
+!!
+!!    Read parts of the direct access files "file_unit_1/2" into g_pqzy/g_rszy 
+!!    for the current batches in z and y
+!!    NB: It is assumed that the batching indices are sorted at the end of the array
+!!        in z,y order and that the record is equal to the compound index zy
+!!
+!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      type(batching_index), intent(in) :: batch_z
+      type(batching_index), intent(in) :: batch_y
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_rszy
+!
+      integer, intent(in) :: file_unit_1
+      integer, intent(in) :: file_unit_2
+!
+      integer :: ioerror, record
+      integer :: z, z_abs, y, y_abs
+!
+      character(len=100) :: iom
+!
+      do y = 1, batch_y%length
+!
+         y_abs = batch_y%first + y - 1
+!
+         do z = 1, batch_z%length
+!
+            z_abs = batch_z%first + z - 1
+!
+            record = batch_z%index_dimension*(y_abs - 1) + z_abs
+!
+            read(file_unit_1, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a,i14)') 'Failed to read g_pqzy file with file unit: ', file_unit_1
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+      enddo
+!
+!     Second file
+!
+      do y = 1, batch_y%length
+!
+         y_abs = batch_y%first + y - 1
+!
+         do z = 1, batch_z%length
+!
+            z_abs = batch_z%first + z - 1
+!
+            record = batch_z%index_dimension*(y_abs - 1) + z_abs
+!
+            read(file_unit_2, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a,i14)') 'Failed to read g_rszy file with file unit: ', file_unit_2
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+      enddo
+!
+   end subroutine read_2_4dim_array_with_2index_record_cc3
+!
+!
+   subroutine read_3_4dim_array_with_2index_record_cc3(wf, batch_z, batch_y, file_unit_1, g_pqzy,  &
+                                                      file_unit_2, g_rszy, file_unit_3, g_tuzy)
+!!
+!!    Read parts of the direct access files "file_unit_1/2/3" into g_pqzy/g_rszy/g_tuzy 
+!!    for the current batches in z and y
+!!    NB: It is assumed that the batching indices are sorted at the end of the array
+!!        in z,y order and that the record is equal to the compound index zy
+!!
+!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      type(batching_index), intent(in) :: batch_z
+      type(batching_index), intent(in) :: batch_y
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_rszy
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_tuzy
+!
+      integer, intent(in) :: file_unit_1
+      integer, intent(in) :: file_unit_2
+      integer, intent(in) :: file_unit_3
+!
+      integer :: ioerror, record
+      integer :: z, z_abs, y, y_abs
+!
+      character(len=100) :: iom
+!
+      do y = 1, batch_y%length
+!
+         y_abs = batch_y%first + y - 1
+!
+         do z = 1, batch_z%length
+!
+            z_abs = batch_z%first + z - 1
+!
+            record = batch_z%index_dimension*(y_abs - 1) + z_abs
+!
+            read(file_unit_1, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a,i14)') 'Failed to read g_pqzy file with file unit: ', file_unit_1
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+      enddo
+!
+!     Second file
+!
+      do y = 1, batch_y%length
+!
+         y_abs = batch_y%first + y - 1
+!
+         do z = 1, batch_z%length
+!
+            z_abs = batch_z%first + z - 1
+!
+            record = batch_z%index_dimension*(y_abs - 1) + z_abs
+!
+            read(file_unit_2, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a,i14)') 'Failed to read g_rszy file with file unit: ', file_unit_2
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+      enddo
+!
+!     Third file
+!
+      do y = 1, batch_y%length
+!
+         y_abs = batch_y%first + y - 1
+!
+         do z = 1, batch_z%length
+!
+            z_abs = batch_z%first + z - 1
+!
+            record = batch_z%index_dimension*(y_abs - 1) + z_abs
+!
+            read(file_unit_3, rec=record, iostat=ioerror, iomsg=iom) g_tuzy(:,:,z,y)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a,i14)') 'Failed to read g_tuzy file with file unit: ', file_unit_3
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+      enddo
+!
+   end subroutine read_3_4dim_array_with_2index_record_cc3
+!
+!
+   subroutine read_4_4dim_array_with_2index_record_cc3(wf, batch_z, batch_y, file_unit_1, g_pqzy,  &
+                                                      file_unit_2, g_rszy, file_unit_3, g_tuzy,    &
+                                                      file_unit_4, g_vwzy)
+!!
+!!    Read parts of the direct access files "file_unit_1/2/3/4" into g_pqzy/g_rszy/g_tuzy/g_vwzy 
+!!    for the current batches in z and y
+!!    NB: It is assumed that the batching indices are sorted at the end of the array
+!!        in z,y order and that the record is equal to the compound index zy
+!!
+!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      type(batching_index), intent(in) :: batch_z
+      type(batching_index), intent(in) :: batch_y
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_rszy
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_tuzy
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_vwzy
+!
+      integer, intent(in) :: file_unit_1
+      integer, intent(in) :: file_unit_2
+      integer, intent(in) :: file_unit_3
+      integer, intent(in) :: file_unit_4
+!
+      integer :: ioerror, record
+      integer :: z, z_abs, y, y_abs
+!
+      character(len=100) :: iom
+!
+      do y = 1, batch_y%length
+!
+         y_abs = batch_y%first + y - 1
+!
+         do z = 1, batch_z%length
+!
+            z_abs = batch_z%first + z - 1
+!
+            record = batch_z%index_dimension*(y_abs - 1) + z_abs
+!
+            read(file_unit_1, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a,i14)') 'Failed to read g_pqzy file with file unit: ', file_unit_1
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+      enddo
+!
+!     Second file
+!
+      do y = 1, batch_y%length
+!
+         y_abs = batch_y%first + y - 1
+!
+         do z = 1, batch_z%length
+!
+            z_abs = batch_z%first + z - 1
+!
+            record = batch_z%index_dimension*(y_abs - 1) + z_abs
+!
+            read(file_unit_2, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a,i14)') 'Failed to read g_rszy file with file unit: ', file_unit_2
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+      enddo
+!
+!     Third file
+!
+      do y = 1, batch_y%length
+!
+         y_abs = batch_y%first + y - 1
+!
+         do z = 1, batch_z%length
+!
+            z_abs = batch_z%first + z - 1
+!
+            record = batch_z%index_dimension*(y_abs - 1) + z_abs
+!
+            read(file_unit_3, rec=record, iostat=ioerror, iomsg=iom) g_tuzy(:,:,z,y)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a,i14)') 'Failed to read g_tuzy file with file unit: ', file_unit_3
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+      enddo
+!
+!     Fourth file
+!
+      do y = 1, batch_y%length
+!
+         y_abs = batch_y%first + y - 1
+!
+         do z = 1, batch_z%length
+!
+            z_abs = batch_z%first + z - 1
+!
+            record = batch_z%index_dimension*(y_abs - 1) + z_abs
+!
+            read(file_unit_4, rec=record, iostat=ioerror, iomsg=iom) g_vwzy(:,:,z,y)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a,i14)') 'Failed to read g_vwzy file with file unit: ', file_unit_4
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               write(output%unit,'(t3,a)') trim(iom)
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+      enddo
+!
+   end subroutine read_4_4dim_array_with_2index_record_cc3
 !
 !
 end module cc3_class
