@@ -536,7 +536,8 @@ contains
 !
          call batch_i%determine_limits(current_i_batch)
 !
-         call wf%jacobian_cc3_vvv_reader(batch_i, g_bdci, g_dbic, g_bdci_c1)
+         call wf%single_batch_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_t, g_dbic, &
+                                    wf%g_bdck_c1, g_bdci_c1)
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
 !
@@ -546,7 +547,8 @@ contains
 !
             call batch_j%determine_limits(current_j_batch)
 !
-            call wf%jacobian_cc3_ov_vv_reader(batch_j, batch_i, g_ljci, g_jlic, L_jbic, g_ljci_c1)
+            call wf%double_batch_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, wf%g_jlkc_t,  &
+                                       g_jlic, wf%L_jbkc_t, L_jbic, wf%g_ljck_c1, g_ljci_c1)
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
             L_jbic_p => L_jbic
@@ -555,13 +557,15 @@ contains
 !
             if (current_j_batch .ne. current_i_batch) then
 !
-               call wf%jacobian_cc3_vvv_reader(batch_j, g_bdcj, g_dbjc, g_bdcj_c1)
+               call wf%single_batch_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_t, g_dbjc, &
+                                          wf%g_bdck_c1, g_bdcj_c1)
                g_bdcj_p => g_bdcj
                g_dbjc_p => g_dbjc
 !
                g_bdcj_c1_p => g_bdcj_c1
 !
-               call wf%jacobian_cc3_ov_vv_reader(batch_i, batch_j, g_licj, g_iljc, L_ibjc, g_licj_c1)
+               call wf%double_batch_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, wf%g_jlkc_t,  &
+                                          g_iljc, wf%L_jbkc_t, L_ibjc, wf%g_ljck_c1, g_licj_c1)
                g_licj_p => g_licj
                g_iljc_p => g_iljc
                L_ibjc_p => L_ibjc
@@ -589,34 +593,39 @@ contains
 !
                if (current_k_batch .ne. current_i_batch .and. current_k_batch .ne. current_j_batch) then
 !
-                  call wf%jacobian_cc3_vvv_reader(batch_k, g_bdck, g_dbkc, g_bdck_c1)
+                  call wf%single_batch_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc, &
+                                             wf%g_bdck_c1, g_bdck_c1)
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
 !
                   g_bdck_c1_p => g_bdck_c1
-!
-                  call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_klic, L_kbic, g_lkci_c1)
+! 
+                  call wf%double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
+                                             g_klic, wf%L_jbkc_t, L_kbic, wf%g_ljck_c1, g_lkci_c1)
                   g_lkci_p => g_lkci
                   g_klic_p => g_klic
                   L_kbic_p => L_kbic
 !
                   g_lkci_c1_p => g_lkci_c1
 !
-                  call wf%jacobian_cc3_ov_vv_reader(batch_i, batch_k, g_lick, g_ilkc, L_ibkc, g_lick_c1)
+                  call wf%double_batch_reader(batch_i, batch_k, wf%g_ljck_t, g_lick, wf%g_jlkc_t,  &
+                                             g_ilkc, wf%L_jbkc_t, L_ibkc, wf%g_ljck_c1, g_lick_c1)
                   g_lick_p => g_lick
                   g_ilkc_p => g_ilkc
                   L_ibkc_p => L_ibkc
 !
                   g_lick_c1_p => g_lick_c1
 !
-                  call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_j, g_lkcj, g_kljc, L_kbjc, g_lkcj_c1)
+                  call wf%double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
+                                             g_kljc, wf%L_jbkc_t, L_kbjc, wf%g_ljck_c1, g_lkcj_c1)
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
                   L_kbjc_p => L_kbjc
 !
                   g_lkcj_c1_p => g_lkcj_c1
 !
-                  call wf%jacobian_cc3_ov_vv_reader(batch_j, batch_k, g_ljck, g_jlkc, L_jbkc, g_ljck_c1)
+                  call wf%double_batch_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck, wf%g_jlkc_t,  &
+                                             g_jlkc, wf%L_jbkc_t, L_jbkc, wf%g_ljck_c1, g_ljck_c1)
                   g_ljck_p => g_ljck
                   g_jlkc_p => g_jlkc
                   L_jbkc_p => L_jbkc
@@ -658,7 +667,8 @@ contains
 !
                   else
 !
-                     call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_klic, L_kbic, g_lkci_c1)
+                     call wf%double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
+                                                g_klic, wf%L_jbkc_t, L_kbic, wf%g_ljck_c1, g_lkci_c1)
                      g_lkci_p => g_lkci
                      g_klic_p => g_klic
                      L_kbic_p => L_kbic
@@ -704,7 +714,8 @@ contains
 !
                   g_lick_c1_p => g_licj_c1
 !
-                  call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_j, g_lkcj, g_kljc, L_kbjc, g_lkcj_c1)
+                  call wf%double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
+                                             g_kljc, wf%L_jbkc_t, L_kbjc, wf%g_ljck_c1, g_lkcj_c1)
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
                   L_kbjc_p => L_kbjc
@@ -933,14 +944,13 @@ contains
 !
          if (.not. batching_c3) then ! no batching in c3-part - g_bdci still in mem
 !
-            call wf%jacobian_cc3_vvv_reader(g_dbic_c1)
+            call wf%single_batch_reader(batch_i, wf%g_dbkc_c1, g_dbic_c1)
             g_bdci_p    => g_bdci
             g_dbic_c1_p => g_dbic_c1
 !
          else ! batching in c3-part - need to read bdci as well
 !
-            call wf%jacobian_cc3_vvv_reader(batch_i, g_bdci, g_dbic_c1)
-            g_bdci_p    => g_bdci
+            call wf%single_batch_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_c1, g_dbic_c1)
             g_dbic_c1_p => g_dbic_c1
 !
          end if
@@ -951,13 +961,14 @@ contains
 !
             if (.not. batching_c3) then ! no batching in c3-part - g_ljci still in mem
 !
-               call wf%jacobian_cc3_ov_vv_reader(g_jlic_c1)
+               call wf%double_batch_reader(batch_j, batch_i, wf%g_jlkc_c1, g_jlic_c1)
                g_ljci_p    => g_ljci
                g_jlic_c1_p => g_jlic_c1
 !
             else ! batching in c3-part - need to read ljci as well
 !
-               call wf%jacobian_cc3_ov_vv_reader(batch_j, batch_i, g_ljci, g_jlic_c1)
+               call wf%double_batch_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci,   &
+                                          wf%g_jlkc_c1, g_jlic_c1)
                g_ljci_p    => g_ljci
                g_jlic_c1_p => g_jlic_c1
 !
@@ -965,13 +976,14 @@ contains
 !
             if (current_j_batch .ne. current_i_batch) then
 !
-                  call wf%jacobian_cc3_vvv_reader(batch_j, g_bdcj, g_dbjc_c1)
-                  g_bdcj_p    => g_bdcj
-                  g_dbjc_c1_p => g_dbjc_c1
+               call wf%single_batch_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_c1, g_dbjc_c1)
+               g_bdcj_p    => g_bdcj
+               g_dbjc_c1_p => g_dbjc_c1
 !
-                  call wf%jacobian_cc3_ov_vv_reader(batch_i, batch_j, g_licj, g_iljc_c1)
-                  g_licj_p    => g_licj
-                  g_iljc_c1_p => g_iljc_c1
+               call wf%double_batch_reader(batch_i, batch_j, wf%g_ljck_t, g_licj,   &
+                                          wf%g_jlkc_c1, g_iljc_c1)
+               g_licj_p    => g_licj
+               g_iljc_c1_p => g_iljc_c1
 !
             else
 !
@@ -989,25 +1001,29 @@ contains
 !
                if (current_k_batch .ne. current_i_batch .and. current_k_batch .ne. current_j_batch) then
 !
-                     call wf%jacobian_cc3_vvv_reader(batch_k, g_bdck, g_dbkc_c1)
-                     g_bdck_p    => g_bdck
-                     g_dbkc_c1_p => g_dbkc_c1
+                  call wf%single_batch_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_c1, g_dbkc_c1)
+                  g_bdck_p    => g_bdck
+                  g_dbkc_c1_p => g_dbkc_c1
 !
-                     call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_klic_c1)
-                     g_lkci_p    => g_lkci
-                     g_klic_c1_p => g_klic_c1
+                  call wf%double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci,   &
+                                             wf%g_jlkc_c1, g_klic_c1)
+                  g_lkci_p    => g_lkci
+                  g_klic_c1_p => g_klic_c1
 !
-                     call wf%jacobian_cc3_ov_vv_reader(batch_i, batch_k, g_lick, g_ilkc_c1)
-                     g_lick_p    => g_lick
-                     g_ilkc_c1_p => g_ilkc_c1
+                  call wf%double_batch_reader(batch_i, batch_k, wf%g_ljck_t, g_lick,   &
+                                             wf%g_jlkc_c1, g_ilkc_c1)
+                  g_lick_p    => g_lick
+                  g_ilkc_c1_p => g_ilkc_c1
 !
-                     call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_j, g_lkcj, g_kljc_c1)
-                     g_lkcj_p    => g_lkcj
-                     g_kljc_c1_p => g_kljc_c1
+                  call wf%double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj,   &
+                                             wf%g_jlkc_c1, g_kljc_c1)
+                  g_lkcj_p    => g_lkcj
+                  g_kljc_c1_p => g_kljc_c1
 !
-                     call wf%jacobian_cc3_ov_vv_reader(batch_j, batch_k, g_ljck, g_jlkc_c1)
-                     g_ljck_p    => g_ljck
-                     g_jlkc_c1_p => g_jlkc_c1
+                  call wf%double_batch_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck,   &
+                                             wf%g_jlkc_c1, g_jlkc_c1)
+                  g_ljck_p    => g_ljck
+                  g_jlkc_c1_p => g_jlkc_c1
 !
                else if (current_k_batch .eq. current_i_batch) then
 !
@@ -1030,7 +1046,8 @@ contains
 !
                   else
 !
-                     call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_i, g_lkci, g_klic_c1)
+                     call wf%double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci,   &
+                                                wf%g_jlkc_c1, g_klic_c1)
                      g_lkci_p    => g_lkci
                      g_klic_c1_p => g_klic_c1
 !
@@ -1056,7 +1073,8 @@ contains
                   g_lick_p    => g_licj
                   g_ilkc_c1_p => g_iljc_c1
 !
-                  call wf%jacobian_cc3_ov_vv_reader(batch_k, batch_j, g_lkcj, g_kljc_c1)
+                  call wf%double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj,   &
+                                             wf%g_jlkc_c1, g_kljc_c1)
                   g_lkcj_p    => g_lkcj
                   g_kljc_c1_p => g_kljc_c1
 !
