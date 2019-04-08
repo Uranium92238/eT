@@ -134,24 +134,6 @@
    end subroutine construct_X_and_Y_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_X_reader_cc3(wf, batch_x, X_acdx)
-!!
-!!    Read the X_acdx intermediate in the current batch
-!!
-!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      type(batching_index), intent(in) :: batch_x
-!
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: X_acdx
-!
-   end subroutine jacobian_transpose_cc3_X_reader_cc3
-!
-!
    module subroutine jacobian_transpose_cc3_vvv_reader_cc3(wf, batch_x, g_bdcx)
 !!
 !!    Read the bdck, integrals in the current batch
@@ -190,6 +172,24 @@
    end subroutine jacobian_transpose_cc3_ov_vv_reader_cc3
 !
 !
+   module subroutine jacobian_transpose_cc3_X_reader_cc3(wf, batch_x, X_acdx)
+!!
+!!    Read the X_acdx intermediate in the current batch
+!!
+!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      type(batching_index), intent(in) :: batch_x
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: X_acdx
+!
+   end subroutine jacobian_transpose_cc3_X_reader_cc3
+!
+!
    module subroutine jacobian_transpose_cc3_write_intermediates_cc3(wf, batch_i, batch_j, batch_k, &
                                                                      X_acdi, X_acdj, X_acdk)
 !!
@@ -209,3 +209,16 @@
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_k%length), intent(in) :: X_acdk
 !
    end subroutine jacobian_transpose_cc3_write_intermediates_cc3
+!
+!
+   module subroutine sort_X_to_caid_and_write_cc3(wf)
+!!
+!!    Read in intermediate X_acdi from file, resort to X_caid and write to file again
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+   end subroutine sort_X_to_caid_and_write_cc3

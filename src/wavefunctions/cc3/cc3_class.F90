@@ -30,21 +30,30 @@ module cc3_class
 !
    type, extends(ccsd) :: cc3
 !
-!     Integral files
+!     Ground state integral files
 !
       type(file)  :: g_bdck_t
       type(file)  :: g_ljck_t
       type(file)  :: g_dbkc_t
       type(file)  :: g_jlkc_t
       type(file)  :: L_jbkc_t
-      type(file)  :: g_ibkd_t 
+!
+!     Right Jacobian integral files
 !
       type(file)  :: g_bdck_c1
       type(file)  :: g_ljck_c1
       type(file)  :: g_dbkc_c1
       type(file)  :: g_jlkc_c1
 !
-!     Files for the intermediates
+!     Left Jacobian integral files
+!
+      type(file)  :: g_becd_t
+      type(file)  :: g_milk_t
+      type(file)  :: g_ibkd_t
+      type(file)  :: g_leck_t
+      type(file)  :: g_cdmk_t
+!
+!     Left Jacobian intermediates files
 !
       type(file)  :: X_acdi
       type(file)  :: Y_akil
@@ -101,11 +110,13 @@ module cc3_class
                                                    => prepare_cc3_jacobian_transpose_integrals_cc3
       procedure :: prepare_cc3_jacobian_transpose_intermediates &
                                                    => prepare_cc3_jacobian_transpose_intermediates_cc3
+!
       procedure :: construct_X_and_Y                           => construct_X_and_Y_cc3
       procedure :: jacobian_transpose_cc3_X_reader             => jacobian_transpose_cc3_X_reader_cc3
       procedure :: jacobian_transpose_cc3_vvv_reader           => jacobian_transpose_cc3_vvv_reader_cc3
       procedure :: jacobian_transpose_cc3_ov_vv_reader         => jacobian_transpose_cc3_ov_vv_reader_cc3
       procedure :: jacobian_transpose_cc3_write_intermediates  => jacobian_transpose_cc3_write_intermediates_cc3
+      procedure :: sort_X_to_caid_and_write                    => sort_X_to_caid_and_write_cc3
 !
       procedure :: effective_jacobian_transpose_transformation  &
                                                    => effective_jacobian_transpose_transformation_cc3
