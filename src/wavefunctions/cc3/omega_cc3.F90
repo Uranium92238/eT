@@ -1724,7 +1724,7 @@ contains
 !
       if(i .ne. k .and. (j .ne. k .or. i .ne. j)) then
 !
-!        construct u_abc = 2*t_acb - t_abc - t_cab
+!        construct u_abc = 2*t_cba - t_abc - t_bca
 !
          call construct_321_min_231_min_123(t_abc, u_abc, wf%n_v)
 !

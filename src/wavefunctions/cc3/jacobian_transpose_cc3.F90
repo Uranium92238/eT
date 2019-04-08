@@ -711,8 +711,8 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-            call wf%jacobian_transpose_cc3_vvv_reader(batch_i, g_bdci)
-            g_bdci_p => g_bdci
+         call wf%jacobian_transpose_cc3_vvv_reader(batch_i, g_bdci)
+         g_bdci_p => g_bdci
 !
 !           cannot hold X_acdi - read in previous X, add contributions, write to disk again
 !

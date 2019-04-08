@@ -192,6 +192,39 @@ contains
    end subroutine sort_123_to_312
 !
 !
+   subroutine sort_123_to_231(x_pqr, x_qrp, dim_p, dim_q, dim_r)
+!!
+!!    Sort 123 to 312
+!!    Written by Rolf H. Myhre, April 2019
+!!
+!!    Performs:
+!!
+!!       x_qrp(q,r,p) = x_pqr(p,q,r)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(dim_p, dim_q, dim_r), intent(in)  :: x_pqr
+      real(dp), dimension(dim_q, dim_r, dim_p), intent(out) :: x_qrp
+!
+      integer :: r, q, p
+!
+!$omp parallel do schedule(static) private(r,q,p)
+      do p = 1, dim_p
+         do r = 1, dim_r
+            do q = 1, dim_q
+!
+               x_qrp(q,r,p) = x_pqr(p,q,r)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_123_to_231
+!
+!
    subroutine sort_123_to_312_and_add(x_pqr, x_rpq, dim_p, dim_q, dim_r)
 !!
 !!    Sort 123 to 312 and add
