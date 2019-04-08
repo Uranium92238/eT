@@ -1130,7 +1130,7 @@ contains
 !!    Written by Sarai D. Folkestad,
 !!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
 !!
-!!    Reorders the array x_pqrs to x_qprs (i.e., 1234 to 2314).
+!!    Reorders the array x_pqrs to x_qprs (i.e., 1234 to 2134).
 !!
       implicit none
 !
@@ -1158,13 +1158,47 @@ contains
    end subroutine sort_1234_to_2134
 !
 !
+   subroutine sort_1234_to_2143(x_pqrs, x_qpsr, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 2143
+!!    Written by Sarai D. Folkestad,
+!!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
+!!
+!!    Reorders the array x_pqrs to x_qpsr (i.e., 1234 to 2143).
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in)  :: x_pqrs
+      real(dp), dimension(dim_q, dim_p, dim_s, dim_r), intent(out) :: x_qpsr
+!
+      integer :: p, q, r, s
+!
+!$omp parallel do schedule(static) private(s,r,q,p)
+      do r = 1, dim_r
+         do s = 1, dim_s
+            do p = 1, dim_p
+               do q = 1, dim_q
+!
+                  x_qpsr(q, p, s, r) = x_pqrs(p,q,r,s)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_1234_to_2143
+!
+!
    subroutine sort_1234_to_2413(x_pqrs, x_qspr, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 2413
 !!    Written by Sarai D. Folkestad,
 !!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
 !!
-!!    Reorders the array x_pq_rs to x_qs_pr (i.e., 1234 to 2314).
+!!    Reorders the array x_pqrs to x_qspr (i.e., 1234 to 2413).
 !!
       implicit none
 !
