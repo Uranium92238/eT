@@ -28,16 +28,21 @@ set(eT_fortran_sources
    src/solvers/cc/davidson_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_es_class.F90
    src/solvers/cc/davidson_cc_ip_class.F90
-   src/solvers/cc/davidson_cvs_cc_es_class.F90
+   src/solvers/cc/davidson_cc_cvs_es_class.F90
    src/solvers/cholesky/eri_cd_class.F90
    src/engines/hf_engine_class.F90
    src/engines/abstract_engine_class.F90
    src/engines/gs_engine_class.F90
    src/engines/es_engine_class.F90
-   src/engines/multipliers_engine_class.F90
+   src/engines/zop_engine_class.F90
    src/io/disk_manager_class.F90
+   src/io/abstract_file_class.F90
    src/io/file_class.F90
+   src/io/input_file_class.F90
+   src/io/section_class.F90
+   src/io/output_file_class.F90
    src/io/io_utilities.F90
+   src/io/string_utilities.F90
    src/io/io_eT_program.F90
    src/integrals/ao_integral_tool_class.F90
    src/integrals/mo_integral_tool_class.F90
@@ -54,35 +59,33 @@ set(eT_fortran_sources
    src/tools/array_analysis.F90
    src/tools/linked_list/array_list_class.F90
    src/tools/linked_list/array_node_class.F90
-   src/wavefunctions/wavefunction_class.F90
-   src/wavefunctions/hf_class.F90
-   src/wavefunctions/uhf_class.F90
-   src/wavefunctions/mlhf_class.F90
-   src/wavefunctions/ccs_class.F90
-   src/wavefunctions/cc2_class.F90
-   src/wavefunctions/lowmem_cc2_class.F90
-   src/wavefunctions/ccsd_class.F90
-   src/wavefunctions/cc3_class.F90
-   src/wavefunctions/mp2_class.F90
+   src/wavefunctions/wavefunction/wavefunction_class.F90
+   src/wavefunctions/hf/hf_class.F90
+   src/wavefunctions/uhf/uhf_class.F90
+   src/wavefunctions/ccs/ccs_class.F90
+   src/wavefunctions/cc2/cc2_class.F90
+   src/wavefunctions/lowmem_cc2/lowmem_cc2_class.F90
+   src/wavefunctions/ccsd/ccsd_class.F90
+   src/wavefunctions/cc3/cc3_class.F90
+   src/wavefunctions/mp2/mp2_class.F90
    src/molecule/atomic_class.F90
    src/molecule/molecular_system/molecular_system_class.F90
    src/molecule/periodic_table.F90
    src/molecule/shell_class.F90
    src/molecule/basis_set_info.F90
-   src/molecule/active_atoms_info_class.F90
    src/libint/libint_initialization.F90
    src/solver_tools/diis_tool_class.F90
    src/solver_tools/davidson_tool_class.F90
    src/solver_tools/eigen_davidson_tool_class.F90
    src/solver_tools/linear_davidson_tool_class.F90
-   src/submodules/ccsd/omega_ccsd.F90
-   src/submodules/ccsd/jacobian_ccsd.F90
-   src/submodules/ccsd/jacobian_transpose_ccsd.F90
-   src/submodules/cc2/omega_cc2.F90
-   src/submodules/cc2/jacobian_cc2.F90
-   src/submodules/cc2/jacobian_transpose_cc2.F90
-   src/submodules/lowmem_cc2/omega_lowmem_cc2.F90
-   src/submodules/lowmem_cc2/jacobian_lowmem_cc2.F90
-   src/submodules/cc3/omega_cc3.F90
-   src/submodules/cc3/jacobian_cc3.F90
+   src/wavefunctions/ccsd/omega_ccsd.F90
+   src/wavefunctions/ccsd/jacobian_ccsd.F90
+   src/wavefunctions/ccsd/jacobian_transpose_ccsd.F90
+   src/wavefunctions/cc2/omega_cc2.F90
+   src/wavefunctions/cc2/jacobian_cc2.F90
+   src/wavefunctions/cc2/jacobian_transpose_cc2.F90
+   src/wavefunctions/lowmem_cc2/omega_lowmem_cc2.F90
+   src/wavefunctions/lowmem_cc2/jacobian_lowmem_cc2.F90
+   src/wavefunctions/cc3/omega_cc3.F90
+   src/wavefunctions/cc3/jacobian_cc3.F90
 )

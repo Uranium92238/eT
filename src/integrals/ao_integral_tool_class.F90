@@ -39,6 +39,7 @@ module ao_integral_tool_class
    include "../libint/h_wx_cdef.F90"
    include "../libint/s_wx_cdef.F90"
    include "../libint/mu_wx_cdef.F90"
+   include "../libint/q_wx_cdef.F90"
    include "../libint/g_wxyz_cdef.F90"
 !
 !  Class definition
@@ -49,9 +50,10 @@ module ao_integral_tool_class
 !
    contains
 !
-      procedure, nopass :: construct_ao_h_wx           => construct_ao_h_wx_ao_integral_tool            ! h_αβ
-      procedure, nopass :: construct_ao_s_wx           => construct_ao_s_wx_ao_integral_tool            ! h_αβ
-      procedure, nopass :: construct_ao_mu_wx          => construct_ao_mu_wx_ao_integral_tool           ! μ_αβ
+      procedure, nopass :: construct_ao_h_wx             => construct_ao_h_wx_ao_integral_tool  ! h_αβ
+      procedure, nopass :: construct_ao_s_wx             => construct_ao_s_wx_ao_integral_tool  ! s_αβ
+      procedure, nopass :: construct_ao_mu_wx            => construct_ao_mu_wx_ao_integral_tool ! μ_αβ
+      procedure, nopass :: construct_ao_q_wx             => construct_ao_q_wx_ao_integral_tool  ! q_αβ
 !
       generic :: construct_ao_g_wxyz => construct_ao_g_wxyz_2_ao_integral_tool, &
                                           construct_ao_g_wxyz_4_ao_integral_tool
@@ -400,6 +402,35 @@ contains
       call construct_ao_mu_wx_c(mu_X, mu_Y, mu_Z, s1_4, s2_4)
 !
    end subroutine construct_ao_mu_wx_ao_integral_tool
+!
+!
+   subroutine construct_ao_q_wx_ao_integral_tool(q_xx, q_xy, q_xz, q_yy, q_yz, q_zz, s1, s2)
+!!
+!!    Construct q_αβ
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Fortran wrapper for the C++ routine that calculates and
+!!    saves parts of the q_αβ integral in the array h. s1-s2 are the shells
+!!    that alpha and beta belong to.
+!!
+      implicit none 
+!
+      real(dp), dimension(:,:), intent(inout) :: q_xx 
+      real(dp), dimension(:,:), intent(inout) :: q_xy 
+      real(dp), dimension(:,:), intent(inout) :: q_xz 
+      real(dp), dimension(:,:), intent(inout) :: q_yy 
+      real(dp), dimension(:,:), intent(inout) :: q_yz 
+      real(dp), dimension(:,:), intent(inout) :: q_zz 
+!
+      integer, intent(in) :: s1, s2
+      integer(i6) :: s1_4, s2_4
+!
+      s1_4 = int(s1,i6)
+      s2_4 = int(s2,i6)
+!
+      call construct_ao_q_wx_c(q_xx, q_xy, q_xz, q_yy, q_yz, q_zz, s1_4, s2_4)
+!
+   end subroutine construct_ao_q_wx_ao_integral_tool
 !
 !
 end module ao_integral_tool_class

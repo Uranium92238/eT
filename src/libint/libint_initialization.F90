@@ -68,6 +68,14 @@ contains
 !
    end subroutine initialize_dipole
 !
+   subroutine initialize_quadrupole()
+!
+      implicit none
+!
+      call initialize_quadrupole_c()
+!
+   end subroutine initialize_quadrupole
+!
    subroutine initialize_coulomb()
 !
       implicit none

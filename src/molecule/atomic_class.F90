@@ -50,6 +50,8 @@ module atomic_class
       real(dp) :: y
       real(dp) :: z
 !
+      integer :: input_nbr ! Index of atom on input
+!
    contains
 !
       procedure          :: set_number       => set_number_atom

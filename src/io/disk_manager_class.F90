@@ -43,8 +43,6 @@ module disk_manager_class
 !
       procedure :: prepare                      => prepare_disk_manager
 !
-      procedure :: subtract_folder_size         => subtract_folder_size_disk_manager
-!
       procedure :: open_file_sequential         => open_file_sequential_disk_manager
       procedure :: open_file_direct             => open_file_direct_disk_manager
       procedure :: open_file                    => open_file_disk_manager
@@ -63,70 +61,6 @@ module disk_manager_class
 contains
 !
 !
-   subroutine subtract_folder_size_disk_manager(disk)
-!!
-!!    Subtract folder size
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
-!!
-      implicit none
-!
-      class(disk_manager) :: disk
-!
-      type(file) :: scratch_size
-!
-!     Strings for reading the size of the directory from file
-!
-      character(len=40) :: scratch_size_entry
-      character(len=40) :: scratch_size_entry_only_size
-!
-      integer :: counter
-!
-      integer(i15) :: size_of_directory ! in MB
-!
-!     For calculations with restart, it is necessary to account for the files
-!     already present in the folder. We calculate this and subtract from the available.
-!
-      call EXECUTE_COMMAND_LINE('du -m . >> scratch_size') ! Ask for number of megabytes
-!
-!     Open file to read the size
-!
-      call scratch_size%init('scratch_size', 'sequential', 'formatted')
-      call disk%open_file(output, 'readwrite')
-!
-      read(scratch_size%unit, *) scratch_size_entry
-!
-      rewind(scratch_size%unit)
-!
-      counter = 1
-      do while (scratch_size_entry(counter:counter) /= '.')
-!
-         counter = counter + 1
-!
-      enddo
-!
-      scratch_size_entry_only_size = scratch_size_entry(1:counter-1)
-!
-!     Now write the size to the file, rewind, and read into integer
-!
-      write(scratch_size%unit, *) scratch_size_entry_only_size
-!
-      rewind(scratch_size%unit)
-!
-      read(scratch_size%unit, *) size_of_directory
-!
-      write(output%unit,'(/t3,a36,i15)') 'Size of calculation directory (MB): ',size_of_directory
-!
-      size_of_directory = size_of_directory*1000 ! Megabytes to bytes
-!
-!     Set the initial available space
-!
-      disk%available = disk%total - size_of_directory
-!
-      call disk%close_file(scratch_size)
-!
-   end subroutine subtract_folder_size_disk_manager
-!
-!
    subroutine prepare_disk_manager(disk)
 !!
 !!    Init (disk manager)
@@ -140,17 +74,8 @@ contains
 !
       class(disk_manager) :: disk
 !
-      if (requested_section('disk')) then
-!
-         call disk%read_settings()
-!
-      else
-!
-!        Set default
-!
-         disk%total = 30000000000_i15
-!
-      endif
+      disk%total = 30000000000_i15
+      call disk%read_settings()
 !
       disk%available = disk%total
 !
@@ -434,14 +359,14 @@ contains
 !
 !                 Sanity check
 !
-                  if (file_size_when_opened .ne. file_size_when_closed) then
+                 if (file_size_when_opened .ne. file_size_when_closed) then
 !
-                     write(output%unit,'(t3,a)') 'Warning: deleting a file that has been written to since'
-                     write(output%unit,'(t3,a)') 'it was opened. To avoid an apparent accumulation of storage space,'
-                     write(output%unit,'(t3,a)') 'the estimated freed up space is taken to be the initial file size.'
-                     bytes_written_to_disk = -file_size_when_opened
+                  !  write(output%unit,'(t3,a)') 'Warning: deleting a file that has been written to since'
+                  !  write(output%unit,'(t3,a)') 'it was opened. To avoid an apparent accumulation of storage space,'
+                  !  write(output%unit,'(t3,a)') 'the estimated freed up space is taken to be the initial file size.'
+                    bytes_written_to_disk = -file_size_when_opened
 !
-                  endif
+                 endif
 !
             endif
 !
@@ -482,26 +407,12 @@ contains
 !  
       class(disk_manager) :: disk
 !
-      integer :: n_specs, i
+      if (input%requested_keyword_in_section('available','disk')) then
 !
-      character(len=100) :: line
+         call input%get_keyword_in_section('available', 'disk', disk%total)
+         disk%total = disk%total*1000000000
 !
-      call move_to_section('disk', n_specs)
-!
-      do i = 1, n_specs
-!
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (line(1:10) == 'available:' ) then
-!
-            read(line(11:100), *) disk%total
-            disk%total = disk%total*1000000000
-!
-         endif
-!
-      enddo
-!
+      endif 
 !
    end subroutine read_settings_disk_manager
 !
@@ -531,7 +442,7 @@ contains
 !  
       class(disk_manager) :: disk
 !
-      type(file) :: the_file
+      class(file) :: the_file
 !
       logical :: file_exists
 !
