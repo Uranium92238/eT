@@ -98,7 +98,8 @@ module molecular_system_class
 !
       procedure :: construct_ao_h_wx                        => construct_ao_h_wx_molecular_system      
       procedure :: construct_ao_s_wx                        => construct_ao_s_wx_molecular_system     
-      procedure :: construct_ao_mu_wx                        => construct_ao_mu_wx_molecular_system     
+      procedure :: construct_ao_mu_wx                       => construct_ao_mu_wx_molecular_system     
+      procedure :: construct_ao_q_wx                        => construct_ao_q_wx_molecular_system     
 !
    end type molecular_system
 !

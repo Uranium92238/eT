@@ -34,6 +34,7 @@ submodule (molecular_system_class) ao_integrals
    include "../../libint/h_wx_cdef.F90"
    include "../../libint/s_wx_cdef.F90"
    include "../../libint/mu_wx_cdef.F90"
+   include "../../libint/q_wx_cdef.F90"
 !
 !
 contains
@@ -120,6 +121,38 @@ contains
       call construct_ao_mu_wx_c(mu_X, mu_Y, mu_Z, s1_4, s2_4)
 !
    end subroutine construct_ao_mu_wx_molecular_system
+!
+!
+   module subroutine construct_ao_q_wx_molecular_system(molecule, q_xx, q_xy, q_xz, q_yy, q_yz, q_zz, s1, s2)
+!!
+!!    Construct q_αβ
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Fortran wrapper for the C++ routine that calculates and
+!!    saves parts of the q_αβ integral in the array h. s1-s2 are the shells
+!!    that alpha and beta belong to.
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      integer, intent(in) :: s1, s2
+!
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: q_xx 
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: q_xy 
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: q_xz 
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: q_yy 
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: q_yz 
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: q_zz 
+!
+      integer(i6) :: s1_4, s2_4
+!
+      s1_4 = int(s1,i6)
+      s2_4 = int(s2,i6)
+!
+      call construct_ao_q_wx_c(q_xx, q_xy, q_xz, q_yy, q_yz, q_zz, s1_4, s2_4)
+!
+   end subroutine construct_ao_q_wx_molecular_system
 !
 !
 end submodule ao_integrals

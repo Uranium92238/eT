@@ -461,7 +461,7 @@ contains
             call mem%alloc(q_AB_yz, A_interval%size, B_interval%size)
             call mem%alloc(q_AB_zz, A_interval%size, B_interval%size)
 !
-            call wf%system%ao_integrals%construct_ao_q_wx(q_AB_xx, q_AB_xy, q_AB_xz, q_AB_yy, q_AB_yz, q_AB_zz, A, B)
+            call wf%system%construct_ao_q_wx(q_AB_xx, q_AB_xy, q_AB_xz, q_AB_yy, q_AB_yz, q_AB_zz, A, B)
 !
              do x = 1, A_interval%size
                 do y = 1, B_interval%size
