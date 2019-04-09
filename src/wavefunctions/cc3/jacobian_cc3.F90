@@ -536,7 +536,7 @@ contains
 !
          call batch_i%determine_limits(current_i_batch)
 !
-         call wf%single_batch_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_t, g_dbic, &
+         call single_batch_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_t, g_dbic, &
                                     wf%g_bdck_c1, g_bdci_c1)
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
@@ -547,7 +547,7 @@ contains
 !
             call batch_j%determine_limits(current_j_batch)
 !
-            call wf%double_batch_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, wf%g_jlkc_t,  &
+            call double_batch_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, wf%g_jlkc_t,  &
                                        g_jlic, wf%L_jbkc_t, L_jbic, wf%g_ljck_c1, g_ljci_c1)
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
@@ -557,14 +557,14 @@ contains
 !
             if (current_j_batch .ne. current_i_batch) then
 !
-               call wf%single_batch_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_t, g_dbjc, &
+               call single_batch_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_t, g_dbjc, &
                                           wf%g_bdck_c1, g_bdcj_c1)
                g_bdcj_p => g_bdcj
                g_dbjc_p => g_dbjc
 !
                g_bdcj_c1_p => g_bdcj_c1
 !
-               call wf%double_batch_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, wf%g_jlkc_t,  &
+               call double_batch_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, wf%g_jlkc_t,  &
                                           g_iljc, wf%L_jbkc_t, L_ibjc, wf%g_ljck_c1, g_licj_c1)
                g_licj_p => g_licj
                g_iljc_p => g_iljc
@@ -593,14 +593,14 @@ contains
 !
                if (current_k_batch .ne. current_i_batch .and. current_k_batch .ne. current_j_batch) then
 !
-                  call wf%single_batch_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc, &
+                  call single_batch_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc, &
                                              wf%g_bdck_c1, g_bdck_c1)
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
 !
                   g_bdck_c1_p => g_bdck_c1
 ! 
-                  call wf%double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
+                  call double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
                                              g_klic, wf%L_jbkc_t, L_kbic, wf%g_ljck_c1, g_lkci_c1)
                   g_lkci_p => g_lkci
                   g_klic_p => g_klic
@@ -608,7 +608,7 @@ contains
 !
                   g_lkci_c1_p => g_lkci_c1
 !
-                  call wf%double_batch_reader(batch_i, batch_k, wf%g_ljck_t, g_lick, wf%g_jlkc_t,  &
+                  call double_batch_reader(batch_i, batch_k, wf%g_ljck_t, g_lick, wf%g_jlkc_t,  &
                                              g_ilkc, wf%L_jbkc_t, L_ibkc, wf%g_ljck_c1, g_lick_c1)
                   g_lick_p => g_lick
                   g_ilkc_p => g_ilkc
@@ -616,7 +616,7 @@ contains
 !
                   g_lick_c1_p => g_lick_c1
 !
-                  call wf%double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
+                  call double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
                                              g_kljc, wf%L_jbkc_t, L_kbjc, wf%g_ljck_c1, g_lkcj_c1)
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
@@ -624,7 +624,7 @@ contains
 !
                   g_lkcj_c1_p => g_lkcj_c1
 !
-                  call wf%double_batch_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck, wf%g_jlkc_t,  &
+                  call double_batch_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck, wf%g_jlkc_t,  &
                                              g_jlkc, wf%L_jbkc_t, L_jbkc, wf%g_ljck_c1, g_ljck_c1)
                   g_ljck_p => g_ljck
                   g_jlkc_p => g_jlkc
@@ -667,7 +667,7 @@ contains
 !
                   else
 !
-                     call wf%double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
+                     call double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
                                                 g_klic, wf%L_jbkc_t, L_kbic, wf%g_ljck_c1, g_lkci_c1)
                      g_lkci_p => g_lkci
                      g_klic_p => g_klic
@@ -714,7 +714,7 @@ contains
 !
                   g_lick_c1_p => g_licj_c1
 !
-                  call wf%double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
+                  call double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
                                              g_kljc, wf%L_jbkc_t, L_kbjc, wf%g_ljck_c1, g_lkcj_c1)
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
@@ -944,13 +944,13 @@ contains
 !
          if (.not. batching_c3) then ! no batching in c3-part - g_bdci still in mem
 !
-            call wf%single_batch_reader(batch_i, wf%g_dbkc_c1, g_dbic_c1)
+            call single_batch_reader(batch_i, wf%g_dbkc_c1, g_dbic_c1)
             g_bdci_p    => g_bdci
             g_dbic_c1_p => g_dbic_c1
 !
          else ! batching in c3-part - need to read bdci as well
 !
-            call wf%single_batch_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_c1, g_dbic_c1)
+            call single_batch_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_c1, g_dbic_c1)
             g_dbic_c1_p => g_dbic_c1
 !
          end if
@@ -961,13 +961,13 @@ contains
 !
             if (.not. batching_c3) then ! no batching in c3-part - g_ljci still in mem
 !
-               call wf%double_batch_reader(batch_j, batch_i, wf%g_jlkc_c1, g_jlic_c1)
+               call double_batch_reader(batch_j, batch_i, wf%g_jlkc_c1, g_jlic_c1)
                g_ljci_p    => g_ljci
                g_jlic_c1_p => g_jlic_c1
 !
             else ! batching in c3-part - need to read ljci as well
 !
-               call wf%double_batch_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci,   &
+               call double_batch_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci,   &
                                           wf%g_jlkc_c1, g_jlic_c1)
                g_ljci_p    => g_ljci
                g_jlic_c1_p => g_jlic_c1
@@ -976,11 +976,11 @@ contains
 !
             if (current_j_batch .ne. current_i_batch) then
 !
-               call wf%single_batch_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_c1, g_dbjc_c1)
+               call single_batch_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_c1, g_dbjc_c1)
                g_bdcj_p    => g_bdcj
                g_dbjc_c1_p => g_dbjc_c1
 !
-               call wf%double_batch_reader(batch_i, batch_j, wf%g_ljck_t, g_licj,   &
+               call double_batch_reader(batch_i, batch_j, wf%g_ljck_t, g_licj,   &
                                           wf%g_jlkc_c1, g_iljc_c1)
                g_licj_p    => g_licj
                g_iljc_c1_p => g_iljc_c1
@@ -1001,26 +1001,26 @@ contains
 !
                if (current_k_batch .ne. current_i_batch .and. current_k_batch .ne. current_j_batch) then
 !
-                  call wf%single_batch_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_c1, g_dbkc_c1)
+                  call single_batch_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_c1, g_dbkc_c1)
                   g_bdck_p    => g_bdck
                   g_dbkc_c1_p => g_dbkc_c1
 !
-                  call wf%double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci,   &
+                  call double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci,   &
                                              wf%g_jlkc_c1, g_klic_c1)
                   g_lkci_p    => g_lkci
                   g_klic_c1_p => g_klic_c1
 !
-                  call wf%double_batch_reader(batch_i, batch_k, wf%g_ljck_t, g_lick,   &
+                  call double_batch_reader(batch_i, batch_k, wf%g_ljck_t, g_lick,   &
                                              wf%g_jlkc_c1, g_ilkc_c1)
                   g_lick_p    => g_lick
                   g_ilkc_c1_p => g_ilkc_c1
 !
-                  call wf%double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj,   &
+                  call double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj,   &
                                              wf%g_jlkc_c1, g_kljc_c1)
                   g_lkcj_p    => g_lkcj
                   g_kljc_c1_p => g_kljc_c1
 !
-                  call wf%double_batch_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck,   &
+                  call double_batch_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck,   &
                                              wf%g_jlkc_c1, g_jlkc_c1)
                   g_ljck_p    => g_ljck
                   g_jlkc_c1_p => g_jlkc_c1
@@ -1046,7 +1046,7 @@ contains
 !
                   else
 !
-                     call wf%double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci,   &
+                     call double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci,   &
                                                 wf%g_jlkc_c1, g_klic_c1)
                      g_lkci_p    => g_lkci
                      g_klic_c1_p => g_klic_c1
@@ -1073,7 +1073,7 @@ contains
                   g_lick_p    => g_licj
                   g_ilkc_c1_p => g_iljc_c1
 !
-                  call wf%double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj,   &
+                  call double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj,   &
                                              wf%g_jlkc_c1, g_kljc_c1)
                   g_lkcj_p    => g_lkcj
                   g_kljc_c1_p => g_kljc_c1
@@ -1660,416 +1660,6 @@ contains
       call mem%dealloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
    end subroutine jacobian_cc3_construct_fock_ia_c1_cc3
-!
-!
-   module subroutine jacobian_cc3_c3_vvv_reader_cc3(wf, batch_x, g_bdcx, g_dbxc, g_bdcx_c1)
-!!
-!!    Read the bdck, dbkc and c1-transformed bdck integrals in the current batch
-!!    needed for the c3-contributions
-!!
-!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      type(batching_index), intent(in) :: batch_x
-!
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_bdcx
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_dbxc
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_bdcx_c1
-!
-      integer :: ioerror
-      integer :: x, x_abs
-!
-      character(len=100) :: iom
-!
-!     t1-transformed integrals
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         read(wf%g_bdck_t%unit, rec=x_abs, iostat=ioerror, iomsg=iom) g_bdcx(:,:,:,x)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a)') 'Failed to read bdck_t file'
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
-!
-      enddo
-!
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         read(wf%g_dbkc_t%unit, rec=x_abs, iostat=ioerror, iomsg=iom) g_dbxc(:,:,:,x)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a)') 'Failed to read dbkc_t file'
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
-!
-      enddo
-!
-!     c1-transformed integrals
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         read(wf%g_bdck_c1%unit, rec=x_abs, iostat=ioerror, iomsg=iom) g_bdcx_c1(:,:,:,x)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a)') 'Failed to read bdck_c file'
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
-!
-      enddo
-!
-!
-   end subroutine jacobian_cc3_c3_vvv_reader_cc3
-!
-!
-   module subroutine jacobian_cc3_t3_vvv_reader_cc3(wf, batch_x, g_bdcx, g_dbxc_c1)
-!!
-!!    Read the bdck and c1-transformed dbkc integrals in the current batch
-!!    needed for the t3-contribution
-!!
-!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      type(batching_index), intent(in) :: batch_x
-!
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_bdcx
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_dbxc_c1
-!
-      integer :: ioerror
-      integer :: x, x_abs
-!
-      character(len=100) :: iom
-!
-!     t1-transformed integrals
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         read(wf%g_bdck_t%unit, rec=x_abs, iostat=ioerror, iomsg=iom) g_bdcx(:,:,:,x)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a)') 'Failed to read bdck_t file'
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
-!
-      enddo
-!
-!     c1-transformed integrals
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         read(wf%g_dbkc_c1%unit, rec=x_abs, iostat=ioerror, iomsg=iom) g_dbxc_c1(:,:,:,x)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a)') 'Failed to read dbkc_c file'
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
-!
-      enddo
-!
-!
-   end subroutine jacobian_cc3_t3_vvv_reader_cc3
-!
-!
-   module subroutine jacobian_cc3_dbic_reader_cc3(wf, g_dbxc_c1)
-!!
-!!    Read the c1-transformed dbkc integral needed for the t3-contribution (non batching case)
-!!
-!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_dbxc_c1
-!
-      integer :: ioerror, x
-!
-      character(len=100) :: iom
-!
-      do x = 1, wf%n_o
-!
-         read(wf%g_dbkc_c1%unit, rec=x, iostat=ioerror, iomsg=iom) g_dbxc_c1(:,:,:,x)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a)') 'Failed to read dbkc_c file'
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
-!
-      enddo
-!
-!
-   end subroutine jacobian_cc3_dbic_reader_cc3
-!
-!
-   module subroutine jacobian_cc3_c3_ov_vv_reader_cc3(wf, batch_y, batch_x, g_lycx, g_ylxc, L_ybxc, &
-                                                      g_lycx_c1)
-!!
-!!    Read the ljck, jlkc, jbkc and c1-transformed ljck integrals in the current batches
-!!    needed for the c3-contribution
-!!
-!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      type(batching_index), intent(in) :: batch_x, batch_y
-!
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_lycx
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: L_ybxc
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_lycx_c1
-!
-      integer :: ioerror, record
-      integer :: x, y, x_abs, y_abs
-!
-      character(len=100) :: iom
-!
-!     t1-transformed integrals
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         do y = 1,batch_y%length
-!
-            y_abs = batch_y%first + y - 1
-!
-            record = wf%n_o*(x_abs - 1) + y_abs
-!
-            read(wf%g_ljck_t%unit, rec=record, iostat=ioerror, iomsg=iom) g_lycx(:,:,y,x)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a)') 'Failed to read ljck_t file'
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
-!
-         enddo
-!
-      enddo
-!
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         do y = 1,batch_y%length
-!
-            y_abs = batch_y%first + y - 1
-!
-            record = wf%n_o*(x_abs - 1) + y_abs
-!
-            read(wf%g_jlkc_t%unit, rec=record, iostat=ioerror, iomsg=iom) g_ylxc(:,:,y,x)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a)') 'Failed to read jlkc file'
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
-!
-         enddo
-!
-      enddo
-!
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         do y = 1,batch_y%length
-!
-            y_abs = batch_y%first + y - 1
-!
-            record = wf%n_o*(x_abs - 1) + y_abs
-!
-            read(wf%L_jbkc_t%unit, rec=record, iostat=ioerror, iomsg=iom) L_ybxc(:,:,y,x)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a)') 'Failed to read jbkc file'
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
-!
-         enddo
-!
-      enddo
-!
-!     c1-transformed integral
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         do y = 1,batch_y%length
-!
-            y_abs = batch_y%first + y - 1
-!
-            record = wf%n_o*(x_abs - 1) + y_abs
-!
-            read(wf%g_ljck_c1%unit, rec=record, iostat=ioerror, iomsg=iom) g_lycx_c1(:,:,y,x)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a)') 'Failed to read ljck_c1 file'
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
-!
-         enddo
-!
-      enddo
-!
-!
-   end subroutine jacobian_cc3_c3_ov_vv_reader_cc3
-!
-!
-   module subroutine jacobian_cc3_t3_ov_vv_reader_cc3(wf, batch_y, batch_x, g_lycx, g_ylxc_c1)
-!!
-!!    Read the ljck and c1-transformed jlkc integrals in the current batch
-!!    needed for the t3-contribution
-!!
-!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      type(batching_index), intent(in) :: batch_x, batch_y
-!
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_lycx
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc_c1
-!
-      integer :: ioerror, record
-      integer :: x, y, x_abs, y_abs
-!
-      character(len=100) :: iom
-!
-!     t1-transformed integrals
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         do y = 1,batch_y%length
-!
-            y_abs = batch_y%first + y - 1
-!
-            record = wf%n_o*(x_abs - 1) + y_abs
-!
-            read(wf%g_ljck_t%unit, rec=record, iostat=ioerror, iomsg=iom) g_lycx(:,:,y,x)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a)') 'Failed to read ljck_t file'
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
-!
-         enddo
-!
-      enddo
-!
-!     c1-transformed integrals
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         do y = 1,batch_y%length
-!
-            y_abs = batch_y%first + y - 1
-!
-            record = wf%n_o*(x_abs - 1) + y_abs
-!
-            read(wf%g_jlkc_c1%unit, rec=record, iostat=ioerror, iomsg=iom) g_ylxc_c1(:,:,y,x)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a)') 'Failed to read jlkc_c1 file'
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
-!
-         enddo
-!
-      enddo
-!
-   end subroutine jacobian_cc3_t3_ov_vv_reader_cc3
-!
-!
-   module subroutine jacobian_cc3_jlkc_reader_cc3(wf, g_ylxc_c1)
-!!
-!!    Read the c1-transformed jlkc  needed for the t3-contribution (non batching case)
-!!
-!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc_c1
-!
-      integer :: ioerror, record, x, y
-!
-      character(len=100) :: iom
-!
-      do x = 1, wf%n_o
-         do y = 1, wf%n_o
-!
-            record = wf%n_o*(x - 1) + y
-!
-            read(wf%g_jlkc_c1%unit, rec=record, iostat=ioerror, iomsg=iom) g_ylxc_c1(:,:,y,x)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a)') 'Failed to read jlkc_c1 file'
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
-!
-         enddo
-      enddo
-!
-   end subroutine jacobian_cc3_jlkc_reader_cc3
 !
 !
    module subroutine jacobian_cc3_c3_calc_cc3(wf, omega, i, j, k, c_abc, u_abc, t_abji, c_abji, &
