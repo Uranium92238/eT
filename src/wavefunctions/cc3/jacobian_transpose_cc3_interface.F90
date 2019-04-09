@@ -92,13 +92,16 @@
    end subroutine prepare_cc3_jacobian_transpose_intermediates_cc3
 !
 !
-   module subroutine construct_X_and_Y_cc3(wf, i, j, k, t_abc, u_abc, X_acdi, X_acdj, X_acdk, Y_aikl,  &
+   module subroutine construct_X_and_Y_cc3(wf, i, j, k, t_abc, u_abc, X_abdi, X_abdj, X_abdk, Y_aikl,  &
                                              g_jbic, g_kbic, g_kbjc, g_ibjc, g_ibkc, g_jbkc)
 !!
-!!    Constructs the intermediates X_acdi and Y_akil used to compute the contributions to sigma_ai
+!!    Constructs the intermediates X_abdi and Y_akil used to compute the contributions to sigma_ai
 !!
-!!    X_acdi = sum_bjk (t^bac_ijk * g_jbkd + t^abc_ijk * g_jdkb - 2 * t^abc_ijk * g_jbkd)
+!!    X_abdi = sum_cjk (t^cab_ijk * g_jckd + t^acb_ijk * g_jdkc - 2 * t^acb_ijk * g_jckd)
+!!           = sum_cjk (t^cab_ijk + t^abc_ijk - 2 * t^acb_ijk) * g_jckd
 !!    Y_akil = sum_bjc (t^bac_ijk * g_jblc + t^abc_ijk * g_jclb - 2 * t^abc_ijk * g_jblc)
+!!
+!!    All permutations for i,j,k have to be considered due to the restrictions in the loops
 !!
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -111,9 +114,9 @@
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: u_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_acdi
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_acdj
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_acdk
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_abdi
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_abdj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_abdk
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(inout)   :: Y_aikl
 !
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jbic
@@ -126,9 +129,9 @@
    end subroutine construct_X_and_Y_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_write_X_cc3(wf, batch_x, X_acdx)
+   module subroutine jacobian_transpose_cc3_write_X_cc3(wf, batch_x, X_abdx)
 !!
-!!    Write the contributions to the X_acdi intermediate to file in the respective batches
+!!    Write the contributions to the X_abdi intermediate to file in the respective batches
 !!
 !!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
 !!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
@@ -139,14 +142,14 @@
 !
       type(batching_index), intent(in) :: batch_x
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_x%length), intent(in) :: X_acdx
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_x%length), intent(in) :: X_abdx
 !
    end subroutine jacobian_transpose_cc3_write_X_cc3
 !
 !
    module subroutine sort_X_to_caid_and_write_cc3(wf)
 !!
-!!    Read in intermediate X_acdi from file, resort to X_caid and write to file again
+!!    Read in intermediate X_abdi from file, resort to X_baid and write to file again
 !!
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
