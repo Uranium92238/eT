@@ -17,26 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (molecular_system_class) ao_integrals
-!
-!!
-!!    AO integrals submodule
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2019
-!!
-!!    Routines to handle AO integrals. Provides an interface to Libint to eT developers.
-!!  
-!!    Note: C++ is not fond of 64-bit integers, so ints are explicitly 
-!!    translated to 32-bits here before calling Libint routines 
-!!
-!
-   implicit none
-!
-   include "../../libint/h_wx_cdef.F90"
-!
-!
-contains
-!
-!
    module subroutine construct_ao_h_wx_molecular_system(molecule, h, s1, s2)
 !!
 !!    Construct h_αβ
@@ -50,14 +30,4 @@ contains
 !
       real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h 
 !
-      integer(i6) :: s1_4, s2_4 
-!
-      s1_4 = int(s1,i6)
-      s2_4 = int(s2,i6)
-!
-      call construct_ao_h_wx_c(h, s1_4, s2_4)
-!
    end subroutine construct_ao_h_wx_molecular_system
-!
-!
-end submodule ao_integrals
