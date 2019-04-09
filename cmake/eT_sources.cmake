@@ -43,8 +43,6 @@ set(eT_fortran_sources
    src/io/output_file_class.F90
    src/io/io_utilities.F90
    src/io/string_utilities.F90
-   src/io/io_eT_program.F90
-   src/integrals/ao_integral_tool_class.F90
    src/integrals/mo_integral_tool_class.F90
    src/solver_tools/cholesky_array_list_class.F90
    src/memory/batching_index_class.F90
@@ -68,13 +66,13 @@ set(eT_fortran_sources
    src/wavefunctions/ccsd/ccsd_class.F90
    src/wavefunctions/cc3/cc3_class.F90
    src/wavefunctions/mp2/mp2_class.F90
-   src/molecular_system/atomic_class.F90
-   src/molecular_system/molecular_system_class.F90
-   src/molecular_system/periodic_table.F90
-   src/molecular_system/shell_class.F90
-   src/molecular_system/basis_set_info.F90
+   src/molecule/atomic_class.F90
+   src/molecule/molecular_system/molecular_system_class.F90
+   src/molecule/molecular_system/ao_integrals.F90
+   src/molecule/periodic_table.F90
+   src/molecule/shell_class.F90
+   src/molecule/basis_set_info.F90
    src/libint/libint_initialization.F90
-   src/molecular_system/active_atoms_info_class.F90
    src/solver_tools/diis_tool_class.F90
    src/solver_tools/davidson_tool_class.F90
    src/solver_tools/eigen_davidson_tool_class.F90
