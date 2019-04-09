@@ -224,8 +224,8 @@ contains
                                  'left eigenvectors    ',   &
                                  'right eigenvectors   ',   &
                                  'singlet states       ',   &
-                                 'start vectors        ',   &
-                                 'diis dimension       '    /)
+                                 'diis dimension       ',   &
+                                 'max reduced dimension' /)
 !
       solver_cc_multipliers%name_    = 'solver cc multipliers'
       solver_cc_multipliers%required = .false.

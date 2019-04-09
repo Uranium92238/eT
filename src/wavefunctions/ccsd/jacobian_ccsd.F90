@@ -32,8 +32,10 @@ submodule (ccsd_class) jacobian_ccsd
 !!
 !!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
 !!
-!!    Transfered to the current eT program from the first version
-!!    of eT by Andreas Skeidsvoll and Sarai D. Folkestad, 2018.
+!!
+!!
+!!    (Transfered to the current eT program from the first version
+!!    of eT by Andreas Skeidsvoll and Sarai D. Folkestad, 2018.)
 !!
 !
    implicit none
