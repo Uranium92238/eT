@@ -100,6 +100,14 @@ module molecular_system_class
 !
    end type molecular_system
 !
+!
+   interface
+!
+      include "ao_integrals_interface.F90"
+!
+   end interface 
+!
+!
 contains
 !
 !

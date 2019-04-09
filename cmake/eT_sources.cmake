@@ -70,6 +70,7 @@ set(eT_fortran_sources
    src/wavefunctions/mp2/mp2_class.F90
    src/molecule/atomic_class.F90
    src/molecule/molecular_system/molecular_system_class.F90
+   src/molecule/molecular_system/ao_integrals.F90
    src/molecule/periodic_table.F90
    src/molecule/shell_class.F90
    src/molecule/basis_set_info.F90

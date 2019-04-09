@@ -1290,7 +1290,7 @@ contains
             B_interval = wf%system%shell_limits(B)
 !
             call mem%alloc(h_AB, A_interval%size, B_interval%size)
-            call wf%system%ao_integrals%construct_ao_h_wx(h_AB, A, B)
+            call wf%system%construct_ao_h_wx(h_AB, A, B)
 !!
              do x = 1, A_interval%size
                 do y = 1, B_interval%size

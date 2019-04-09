@@ -36,7 +36,7 @@ module ao_integral_tool_class
 !
    use iso_c_binding
 !
-   include "../libint/h_wx_cdef.F90"
+ !  include "../libint/h_wx_cdef.F90"
    include "../libint/s_wx_cdef.F90"
    include "../libint/mu_wx_cdef.F90"
    include "../libint/q_wx_cdef.F90"
@@ -50,7 +50,7 @@ module ao_integral_tool_class
 !
    contains
 !
-      procedure, nopass :: construct_ao_h_wx             => construct_ao_h_wx_ao_integral_tool  ! h_αβ
+   !   procedure, nopass :: construct_ao_h_wx             => construct_ao_h_wx_ao_integral_tool  ! h_αβ
       procedure, nopass :: construct_ao_s_wx             => construct_ao_s_wx_ao_integral_tool  ! s_αβ
       procedure, nopass :: construct_ao_mu_wx            => construct_ao_mu_wx_ao_integral_tool ! μ_αβ
       procedure, nopass :: construct_ao_q_wx             => construct_ao_q_wx_ao_integral_tool  ! q_αβ
@@ -75,27 +75,27 @@ module ao_integral_tool_class
 contains
 !
 !
-   subroutine construct_ao_h_wx_ao_integral_tool(h, s1, s2)
-!!
-!!    Construct h_αβ
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Fortran wrapper for the C++ routine that calculates and
-!!    saves parts of the h_αβ integral in the array h. s1-s2 are the shells
-!!    that alpha and beta belong to.
-!!
-      implicit none
-!
-      real(dp), dimension(:,:), intent(inout) :: h
-      integer, intent(in) :: s1, s2
-      integer(i6) :: s1_4, s2_4
-!
-      s1_4 = int(s1,i6)
-      s2_4 = int(s2,i6)
-!
-      call construct_ao_h_wx_c(h, s1_4, s2_4)
-!
-   end subroutine construct_ao_h_wx_ao_integral_tool
+!    subroutine construct_ao_h_wx_ao_integral_tool(h, s1, s2)
+! !!
+! !!    Construct h_αβ
+! !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+! !!
+! !!    Fortran wrapper for the C++ routine that calculates and
+! !!    saves parts of the h_αβ integral in the array h. s1-s2 are the shells
+! !!    that alpha and beta belong to.
+! !!
+!       implicit none
+! !
+!       real(dp), dimension(:,:), intent(inout) :: h
+!       integer, intent(in) :: s1, s2
+!       integer(i6) :: s1_4, s2_4
+! !
+!       s1_4 = int(s1,i6)
+!       s2_4 = int(s2,i6)
+! !
+!       call construct_ao_h_wx_c(h, s1_4, s2_4)
+! !
+!    end subroutine construct_ao_h_wx_ao_integral_tool
 !
 !
    subroutine construct_ao_s_wx_ao_integral_tool(s, s1, s2)
