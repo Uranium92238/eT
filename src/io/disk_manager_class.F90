@@ -359,14 +359,14 @@ contains
 !
 !                 Sanity check
 !
-                  if (file_size_when_opened .ne. file_size_when_closed) then
+                 if (file_size_when_opened .ne. file_size_when_closed) then
 !
-                     write(output%unit,'(t3,a)') 'Warning: deleting a file that has been written to since'
-                     write(output%unit,'(t3,a)') 'it was opened. To avoid an apparent accumulation of storage space,'
-                     write(output%unit,'(t3,a)') 'the estimated freed up space is taken to be the initial file size.'
-                     bytes_written_to_disk = -file_size_when_opened
+                  !  write(output%unit,'(t3,a)') 'Warning: deleting a file that has been written to since'
+                  !  write(output%unit,'(t3,a)') 'it was opened. To avoid an apparent accumulation of storage space,'
+                  !  write(output%unit,'(t3,a)') 'the estimated freed up space is taken to be the initial file size.'
+                    bytes_written_to_disk = -file_size_when_opened
 !
-                  endif
+                 endif
 !
             endif
 !
