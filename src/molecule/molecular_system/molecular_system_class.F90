@@ -97,6 +97,8 @@ module molecular_system_class
       procedure :: translate_from_input_order_to_eT_order   => translate_from_input_order_to_eT_order_molecular_system
 !
       procedure :: construct_ao_h_wx                        => construct_ao_h_wx_molecular_system      
+      procedure :: construct_ao_s_wx                        => construct_ao_s_wx_molecular_system     
+      procedure :: construct_ao_mu_wx                        => construct_ao_mu_wx_molecular_system     
 !
    end type molecular_system
 !
