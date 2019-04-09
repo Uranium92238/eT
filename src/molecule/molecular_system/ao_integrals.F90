@@ -49,4 +49,31 @@ contains
    end subroutine construct_ao_h_wx_ao_integral_tool
 !
 !
+   module subroutine construct_ao_s_wx_ao_molecular_system(s, s1, s2)
+!!
+!!    Construct s_αβ
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Fortran wrapper for the C++ routine that calculates and
+!!    saves parts of the s_αβ integral in the array s. s1 and s2 are the shells
+!!    that w and x, respectively belong to.
+!!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      real(dp), dimension(molecule%shell_limits(s1),molecule%shell_limits(s1)), intent(inout) :: s
+!
+      integer, intent(in) :: s1, s2
+!
+      integer(i6) :: s1_4, s2_4 ! Integers that are passed to libint
+!
+      s1_4 = int(s1,i6)
+      s2_4 = int(s2,i6)
+!
+      call construct_ao_s_wx_c(s, s1_4, s2_4) 
+!
+   end subroutine construct_ao_s_wx_ao_molecular_system
+!
+!
 end submodule ao_integrals
