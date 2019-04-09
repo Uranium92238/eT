@@ -281,15 +281,13 @@ contains
    subroutine prepare_for_excited_state_eq_cc3(wf,r_or_l)
 !!
 !!    Prepare for jacobian
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!    Written by Rolf Heilemann Myhre, April 2019
 !!
       implicit none
 !
       class(cc3), intent(inout) :: wf
 !
       character(len=*), intent(in) :: r_or_l
-!
-!     For now, do nothing.
 !
       if (trim(r_or_l) .eq. "left") then
          write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', trim(r_or_l), &
