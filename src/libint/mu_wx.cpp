@@ -31,6 +31,7 @@ using namespace std;
 #include <string>
 #include <vector>
 #include "mu_wx.h"
+#include "extract_integrals.h"
 
 #include <libint2.hpp>
 
@@ -54,75 +55,10 @@ void construct_ao_mu_wx(double *mu_X, double *mu_Y, double *mu_Z, int *s1, int *
   auto ints_shellset_Y = buf_vec[2];      // location of the computed mu_Y integrals
   auto ints_shellset_Z = buf_vec[3];      // location of the computed mu_Z integrals
 
-  // mu_X
+  extract_integrals(mu_X, ints_shellset_X, n1, n2, -1.0e0);
+  extract_integrals(mu_Y, ints_shellset_Y, n1, n2, -1.0e0);
+  extract_integrals(mu_Z, ints_shellset_Z, n1, n2, -1.0e0);
 
-  if (ints_shellset_X == nullptr) {
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(mu_X + n1*f2 + f1) = 0.0e0;
-
-      }
-    }
-  }
-  else{
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(mu_X + n1*f2 + f1) = -ints_shellset_X[f1*n2 + f2]; 
-
-      }
-    }
-  }
-
-  // mu_Y
-
-  if (ints_shellset_Y == nullptr) {
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(mu_Y + n1*f2+f1) = 0.0e0;
-
-      }
-    }
-  }
-  else{
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(mu_Y + n1*f2 + f1) = -ints_shellset_Y[f1*n2 + f2]; 
-
-      }
-    }
-  }
-
-  // mu_Z
-
-  if (ints_shellset_Z == nullptr) {
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(mu_Z + n1*f2 + f1) = 0.0e0;
-
-      }
-    }
-  }
-  else{
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(mu_Z + n1*f2 + f1) = -ints_shellset_Z[f1*n2 + f2]; 
-
-      }
-    }
-  }
-
-return;
+  return;
 
 }
