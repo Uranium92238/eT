@@ -56,7 +56,7 @@ module diis_cc_gs_class
 !
       procedure :: prepare                  => prepare_diis_cc_gs
       procedure :: run                      => run_diis_cc_gs
-      procedure :: cleanup                  => cleanup_diis_cc_gs
+      procedure, nopass :: cleanup          => cleanup_diis_cc_gs
 !
       procedure :: print_banner             => print_banner_diis_cc_gs
       procedure :: read_settings            => read_settings_diis_cc_gs
@@ -306,14 +306,12 @@ contains
    end subroutine run_diis_cc_gs
 !
 !
-   subroutine cleanup_diis_cc_gs(solver, wf)
+   subroutine cleanup_diis_cc_gs(wf)
 !!
 !! 	Cleanup 
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
-!
-      class(diis_cc_gs) :: solver
 !
       class(ccs) :: wf
 !

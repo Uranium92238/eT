@@ -49,14 +49,14 @@ module cc3_class
 !
       type(file)  :: g_becd_t
       type(file)  :: g_milk_t
-      type(file)  :: g_ibkd_t
+      type(file)  :: g_lbkc_t
       type(file)  :: g_leck_t
       type(file)  :: g_cdmk_t
 !
 !     Left Jacobian intermediates files
 !
-      type(file)  :: X_acdi
-      type(file)  :: X_caid
+      type(file)  :: X_abdi
+      type(file)  :: X_baid
       type(file)  :: Y_akil
 !
    contains
@@ -129,13 +129,13 @@ module cc3_class
       procedure :: prepare_cc3_jacobian_transpose_intermediates &
                                                    => prepare_cc3_jacobian_transpose_intermediates_cc3
       procedure :: jacobian_transpose_cc3_write_X  => jacobian_transpose_cc3_write_X_cc3
-      procedure :: sort_X_to_caid_and_write        => sort_X_to_caid_and_write_cc3
+      procedure :: sort_X_to_baid_and_write        => sort_X_to_baid_and_write_cc3
       procedure :: construct_X_and_Y               => construct_X_and_Y_cc3
 !
       procedure :: effective_jacobian_transpose_transformation  &
                                                    => effective_jacobian_transpose_transformation_cc3
 !
-      procedure :: jacobian_transpose_cc3_A                    => jacobian_transpose_cc3_A_cc3
+      procedure :: jacobian_transpose_cc3_A        => jacobian_transpose_cc3_A_cc3
 !
    end type cc3
 !
@@ -144,6 +144,7 @@ module cc3_class
 !
       include "omega_cc3_interface.F90"
       include "jacobian_cc3_interface.F90"
+      include "prepare_jacobian_transpose_cc3_interface.F90"
       include "jacobian_transpose_cc3_interface.F90"
 !
    end interface
