@@ -34,4 +34,5 @@ extern vector<libint2::Engine> kinetic;                      // The kinetic ener
 extern vector<libint2::Engine> nuclear;                      // The nuclear attraction engine vector
 extern libint2::Engine overlap;                              // The overlap engine
 extern libint2::Engine dipole;                               // The dipole engine
+extern libint2::Engine quadrupole;                           // The quadrupole engine
 extern vector<libint2::Atom> atoms;                          // Atoms vector

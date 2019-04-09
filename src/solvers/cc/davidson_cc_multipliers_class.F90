@@ -35,7 +35,13 @@ module davidson_cc_multipliers_class
 !
       character(len=100) :: tag = 'Davidson coupled cluster multipliers solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
-      character(len=500) :: description = 'A Davidson CC multiplier equations solver.'
+!
+      character(len=500) :: description1 = 'A Davidson solver that solves the multiplier equation: t-bar^T A = -η. The linear &
+                                           & problem is solved in a reduced space, the dimension of which is &
+                                           & expanded until the convergence criteria are met.'
+!
+      character(len=500) :: description2 = 'A complete description of the algorithm can be found in &
+                                          & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
       integer :: max_iterations
 !
@@ -143,7 +149,7 @@ contains
       call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
 !
-      call davidson%prepare('multipliers', wf%n_gs_amplitudes, solver%residual_threshold, eta)
+      call davidson%prepare('multipliers', wf%n_gs_amplitudes, solver%residual_threshold, -eta)
 !
       call solver%set_precondition_vector(wf, davidson)
 !
@@ -230,16 +236,8 @@ contains
          converged_residual = .true.
 !
          if (residual_norm .gt. solver%residual_threshold) converged_residual = .false.
-!
-         if (davidson%dim_red .ge. davidson%max_dim_red) then
-!
-           call davidson%set_trials_to_solutions()
-!
-         else
-!
-            davidson%dim_red = davidson%dim_red + davidson%n_new_trials
-!
-         endif
+!   
+         davidson%dim_red = davidson%dim_red + davidson%n_new_trials
 !
          iteration = iteration + 1       
 !
@@ -281,7 +279,6 @@ contains
       class(ccs) :: wf
 !
       call wf%save_multipliers()  
-      call wf%destruct_multipliers()
 !
    end subroutine cleanup_davidson_cc_multipliers
 !
@@ -297,7 +294,8 @@ contains
 !
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call long_string_print(solver%description2)
 !
    end subroutine print_banner_davidson_cc_multipliers
 !
@@ -354,11 +352,11 @@ contains
 !
       real(dp), dimension(:), allocatable :: X
 !
-      write(output%unit, '(/t3,a)') '- Multipliers vector amplitudes:'
+      write(output%unit, '(/t3,a)') '- Davidson CC multipliers solver summary:'
 !
       call mem%alloc(X, wf%n_gs_amplitudes)
 !
-      call davidson%construct_X(X, 1)         
+      call davidson%construct_X(X, 1)
 !
       call wf%print_dominant_x_amplitudes(X, 'r')
 !
@@ -374,33 +372,10 @@ contains
 !
       class(davidson_cc_multipliers) :: solver 
 !
-      integer :: n_specs, i
-      character(len=100) :: line
+      call input%get_keyword_in_section('threshold', 'solver cc multipliers', solver%residual_threshold)
+      call input%get_keyword_in_section('max iterations', 'solver cc multipliers', solver%max_iterations)
 !
-      if (.not. requested_section('multipliers')) return
-!
-      call move_to_section('multipliers', n_specs)
-!
-      do i = 1, n_specs
-!
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (line(1:10) == 'threshold:' ) then
-!
-            read(line(11:100), *) solver%residual_threshold
-!
-         elseif (line(1:7) == 'restart' ) then
-!
-            solver%restart = .true.
-!
-         elseif (line(1:15) == 'max iterations:' ) then
-!
-            read(line(16:100), *) solver%max_iterations
-!
-         endif
-!
-      enddo
+      if (input%requested_keyword_in_section('restart', 'solver cc multipliers')) solver%restart = .true.    
 !
    end subroutine read_settings_davidson_cc_multipliers
 !

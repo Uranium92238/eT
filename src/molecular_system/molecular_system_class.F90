@@ -38,7 +38,7 @@ module molecular_system_class
 !
    type :: molecular_system
 !
-      character(len=100) :: name
+      character(len=200) :: name
       character(len=100), dimension(:), allocatable :: basis_sets
 !
       integer :: n_atoms
@@ -62,16 +62,21 @@ module molecular_system_class
 !
       procedure :: prepare                 => prepare_molecular_system
       procedure :: cleanup                 => cleanup_molecular_system
-      procedure :: write                   => write_molecular_system
 !
-      procedure, private :: read_info      => read_info_molecular_system
-      procedure, private :: read_geometry  => read_geometry_molecular_system
+      procedure, private :: write_libint_files  => write_libint_files_molecular_system
+!
+      procedure, private :: read_settings       => read_settings_molecular_system
+      procedure, private :: read_system         => read_system_molecular_system
+      procedure, private :: read_geometry       => read_geometry_molecular_system
+      procedure, private :: read_active_atoms   => read_active_atoms_molecular_system
 !
       procedure :: print_system            => print_system_molecular_system
       procedure :: print_geometry          => print_geometry_molecular_system
 !
       procedure :: get_nuclear_repulsion   => get_nuclear_repulsion_molecular_system
       procedure :: get_n_electrons         => get_n_electrons_molecular_system
+      procedure :: get_nuclear_dipole      => get_nuclear_dipole_molecular_system
+      procedure :: get_nuclear_quadrupole  => get_nuclear_quadrupole_molecular_system
 !
       procedure :: get_n_aos               => get_n_aos_molecular_system
       procedure :: get_n_shells            => get_n_shells_molecular_system
@@ -81,8 +86,6 @@ module molecular_system_class
 !
       procedure :: shell_to_atom           => shell_to_atom_molecular_system
 !
-      procedure :: reorder_atoms           => reorder_atoms_molecular_system
-!
       procedure :: initialize_basis_sets   => initialize_basis_sets_molecular_system
       procedure :: initialize_atoms        => initialize_atoms_molecular_system
       procedure :: initialize_shell_limits => initialize_shell_limits_molecular_system
@@ -91,9 +94,27 @@ module molecular_system_class
       procedure :: destruct_atoms          => destruct_atoms_molecular_system
       procedure :: destruct_shell_limits   => destruct_shell_limits_molecular_system
 !
+      procedure :: translate_from_input_order_to_eT_order => translate_from_input_order_to_eT_order_molecular_system
+!
    end type molecular_system
 !
 contains
+!
+!
+   subroutine read_settings_molecular_system(molecule)
+!!
+!!    Read settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      call molecule%read_system()
+      call molecule%read_geometry()
+      call molecule%read_active_atoms()
+!
+   end subroutine read_settings_molecular_system
 !
 !
    subroutine prepare_molecular_system(molecule)
@@ -119,30 +140,17 @@ contains
 !
 !     Read eT.inp and write files for Libint
 !
-      call molecule%read_info()
+      molecule%charge = 0
+      molecule%multiplicity = 1
 !
-      allocate(molecule%atoms(molecule%n_atoms))
-!
-      allocate(n_shells_on_atoms(molecule%n_atoms))
-      n_shells_on_atoms = 0
-!
-      call molecule%read_geometry()
-!
-      if (requested_section('active atoms')) then
-!
-         write(output%unit, '(t6, a)')'Active atoms:'
-         call molecule%reorder_atoms()
-         write(output%unit, '(t6, a/)')'OBS: Atoms will be reordered, active atoms first.'
-!
-      endif
-!
-      call molecule%write()
+      call molecule%read_settings()
+      call molecule%write_libint_files()
 !
 !     Initialize libint with atoms and basis sets
 !
       call initialize_atoms(molecule%name)
 !
-      do i = 1, molecule%n_basis_sets ! Loop over atoms  
+      do i = 1, molecule%n_basis_sets
 !
          write(temp_name, '(a, a1, i4.4)') trim(molecule%name), '_', i
 !
@@ -151,6 +159,9 @@ contains
       enddo
 !
 !     Initialize atoms and shells for eT
+!
+      allocate(n_shells_on_atoms(molecule%n_atoms))
+      n_shells_on_atoms = 0
 !
       call get_n_shells_on_atoms_c(n_shells_on_atoms)
 !
@@ -277,209 +288,153 @@ contains
    end subroutine cleanup_molecular_system
 !
 !
-   subroutine read_info_molecular_system(molecule)
+   subroutine read_system_molecular_system(molecule)
 !!
-!!    Read information
+!!    Read system
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Sets the number of atoms, charge and name of the molecule.
-!!    Determine if we have active space 
+!!    Sets the multiplicity charge and name of the molecule.
 !!
       implicit none
 !
       class(molecular_system) :: molecule
 !
-      character(len=100) :: line
 !
-      rewind(input%unit)
+      call input%get_required_keyword_in_section('name', 'system', molecule%name)
 !
-      molecule%multiplicity = 1 ! If not requested, assume singlet
-      molecule%n_atoms = 0
+      call input%get_keyword_in_section('charge', 'system', molecule%charge)
+      call input%get_keyword_in_section('multiplicity', 'system', molecule%multiplicity)
 !
-      read(input%unit,'(a)') line
-      line = remove_preceding_blanks(line)
-!
-      molecule%n_basis_sets = 0
-!
-      do while (trim(line) .ne. 'end geometry')
-
-         if (line(1:6) == 'basis:' .or.  &
-             line(1:6) == 'Basis:' .or.  &
-             line(1:6) == 'BASIS:' ) then
-!
-            molecule%n_basis_sets = molecule%n_basis_sets + 1
-!
-            read(input%unit,'(a)') line
-            line = remove_preceding_blanks(line)
-
-            do while (trim(line) .ne. 'end geometry'  .and.  &
-                       line(1:6) .ne. 'basis:'        .and.  &
-                       line(1:6) .ne. 'Basis:'        .and.  &
-                       line(1:6) .ne. 'BASIS:')
-
-               molecule%n_atoms = molecule%n_atoms + 1
-
-               read(input%unit,'(a)') line
-               line = remove_preceding_blanks(line)
-
-            enddo
-
-            backspace(input%unit)
-
-         elseif (line(1:5) == 'name:' .or.  &
-                 line(1:5) == 'Name:' .or.  &
-                 line(1:5) == 'NAME:' ) then
-
-            molecule%name = trim(line(6:100))
-            molecule%name = remove_preceding_blanks(molecule%name)
-
-         elseif (line(1:7) == 'charge:' .or.  &
-                 line(1:7) == 'Charge:' .or.  &
-                 line(1:7) == 'CHARGE:' ) then
-
-            read(line(8:100),*) molecule%charge
-!
-         elseif (line(1:13) == 'multiplicity:' .or.  &
-                 line(1:13) == 'Multiplicity:' .or.  &
-                 line(1:13) == 'MULTIPLICITY:' ) then
-
-            read(line(14:100),*) molecule%multiplicity
-!
-         elseif (line(1:12) == 'active atoms') then
-!
-            molecule%active_atoms = .true.
-!
-         endif
-
-         read(input%unit,'(a)') line
-         line = remove_preceding_blanks(line)
-
-      enddo
-!
-      if ((molecule%n_basis_sets .le. 0 ).or.( molecule%n_basis_sets .gt. molecule%n_atoms)) then
-!
-         call output%error_msg('number of basis sets specified exceeds number of atoms or is zero.')
-!
-      endif
-!
-   end subroutine read_info_molecular_system
+   end subroutine read_system_molecular_system
 !
 !
    subroutine read_geometry_molecular_system(molecule)
 !!
-!!    Read
+!!    Read geometry
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Read atoms and their coordinates, assumed to be in units of Ångstrøm.
+!!
+!!    In eT, atoms are ordered after basis set, with the first basis
+!!    set specified on input first.
+!!
+!!    If there are active atoms, the active atoms are first in eT,
+!!    irrespective of basis set.
+!!
+!!    This routine handles reading of the geometry and from eT.inp 
+!!    and orders the atoms according to basis set.
+!!    If active atoms are specified, they will be read and 
+!!    reordered in read_active_atoms_molecular_system
 !!
       implicit none
 !
       class(molecular_system) :: molecule
 !
-      character(len=100) :: line
+!     Local variables
+!
+      real(dp), dimension(:,:), allocatable :: positions
+!
+      character(len=2), dimension(:), allocatable :: symbols
+      character(len=100), dimension(:), allocatable :: basis_sets
+!
+      logical, dimension(:), allocatable :: selected_atom
+!
+      integer :: atom, current_atom
+!
       character(len=100) :: current_basis
 !
-      integer :: current_atom, current_basis_nbr
+      molecule%n_atoms = input%get_n_atoms()
 !
-      integer :: cursor
-      character(len=100) :: coordinate
+      call mem%alloc(positions, molecule%n_atoms, 3)
 !
-      rewind(input%unit)
+      allocate(symbols(molecule%n_atoms))
+      allocate(basis_sets(molecule%n_atoms))
 !
-      read(input%unit,'(a)') line
-      line = remove_preceding_blanks(line)
+      call input%get_geometry(molecule%n_atoms, symbols, positions, basis_sets)
 !
-      current_atom = 0
-      current_basis_nbr = 0
+      call molecule%initialize_atoms()
 !
-      do while (trim(line) .ne. 'end geometry')
-
-         if (line(1:6) == 'basis:' .or.  &
-             line(1:6) == 'Basis:' .or.  &
-             line(1:6) == 'BASIS:' ) then
-!     
-            current_basis_nbr = current_basis_nbr + 1
+!     1. Place the first atom in atoms
 !
-            current_basis = trim(line(7:100))
-            current_basis = remove_preceding_blanks(current_basis) 
+      current_atom = 1
 !
-            read(input%unit,'(a)') line
-            line = remove_preceding_blanks(line)
-
-
-           do while (trim(line) .ne. 'end geometry'  .and.  &
-                      line(1:6) .ne. 'basis:'        .and.  &
-                      line(1:6) .ne. 'Basis:'        .and.  &
-                      line(1:6) .ne. 'BASIS:')
+      molecule%atoms(current_atom)%symbol       = symbols(current_atom)
+      molecule%atoms(current_atom)%basis        = basis_sets(current_atom)
+      molecule%atoms(current_atom)%x            = positions(current_atom,1)
+      molecule%atoms(current_atom)%y            = positions(current_atom,2)
+      molecule%atoms(current_atom)%z            = positions(current_atom,3)
+!
+      molecule%atoms(current_atom)%input_nbr = current_atom
+!
+      current_basis = molecule%atoms(current_atom)%basis
+!
+      allocate(selected_atom(molecule%n_atoms))
+      selected_atom = .false.
+!
+      selected_atom(current_atom) = .true.
+!
+!     2. Place rest of atoms such that they come in order of basis set
+!
+      do while (current_atom < molecule%n_atoms)
+!
+         do atom = 1, molecule%n_atoms
+!
+            if (trim(basis_sets(atom)) == trim(current_basis) .and. .not. selected_atom(atom)) then
 !
                current_atom = current_atom + 1
 !
-               molecule%atoms(current_atom)%basis = current_basis
-               molecule%atoms(current_atom)%symbol = trim(line(1:2))
+               molecule%atoms(current_atom)%symbol       = symbols(atom)
+               molecule%atoms(current_atom)%basis        = basis_sets(atom)
+               molecule%atoms(current_atom)%x            = positions(atom,1)
+               molecule%atoms(current_atom)%y            = positions(atom,2)
+               molecule%atoms(current_atom)%z            = positions(atom,3)
 !
-               line = line(3:100)
-               line = remove_preceding_blanks(line)
+               molecule%atoms(current_atom)%input_nbr = atom
 !
-               cursor = 1
+               selected_atom(atom) = .true.      
 !
-               do
-                  if (line(cursor:cursor) .eq. ' ') then
-                     exit
-                  else
-                     cursor = cursor + 1
-                     cycle
-                  endif
-               enddo
+            endif
 !
-               coordinate = line(1:cursor)
-               read(coordinate, '(f21.16)') molecule%atoms(current_atom)%x
+         enddo
 !
-               cursor = cursor + 1
+         do atom = 1, molecule%n_atoms
 !
-               line = line(cursor:100)
-               line = remove_preceding_blanks(line)
+            if (.not. selected_atom(atom)) then
 !
-               cursor = 1 ! Initial value
+               current_atom = current_atom + 1
 !
-               do
-                  if (line(cursor:cursor) .eq. ' ') then
-                     exit
-                  else
-                     cursor = cursor + 1
-                     cycle
-                  endif
-               enddo
+               molecule%atoms(current_atom)%symbol       = symbols(atom)
+               molecule%atoms(current_atom)%basis        = basis_sets(atom)
+               molecule%atoms(current_atom)%x            = positions(atom,1)
+               molecule%atoms(current_atom)%y            = positions(atom,2)
+               molecule%atoms(current_atom)%z            = positions(atom,3)
 !
-               coordinate = line(1:cursor)
-               read(coordinate, '(f21.16)') molecule%atoms(current_atom)%y
+               molecule%atoms(current_atom)%input_nbr = atom
 !
-               cursor = cursor + 1
+               current_basis = molecule%atoms(current_atom)%basis
 !
-               coordinate = line(cursor:100)
-               coordinate = remove_preceding_blanks(coordinate)
+               selected_atom(atom) = .true.
 !
-               read(coordinate, '(f21.16)') molecule%atoms(current_atom)%z
+               exit             
 !
-              read(input%unit,'(a)') line
-              line = remove_preceding_blanks(line)
-
-           enddo
+            endif
 !
-           backspace(input%unit)
-!
-         endif
-
-         read(input%unit,'(a)') line
-         line = remove_preceding_blanks(line)
+         enddo         
 !
       enddo
+!
+      call mem%dealloc(positions, molecule%n_atoms, 3)
+!
+      deallocate(symbols)
+      deallocate(basis_sets)
+      deallocate(selected_atom)
 !
    end subroutine read_geometry_molecular_system
 !
 !
-   subroutine write_molecular_system(molecule)
+   subroutine write_libint_files_molecular_system(molecule)
 !!
-!!    Write
+!!    Write LibInt files
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Writes to disk an xyz file, which is used by the libint package
@@ -591,210 +546,137 @@ contains
 !
       call mem%dealloc(n_atoms_in_basis, molecule%n_basis_sets)
 !
-   end subroutine write_molecular_system
+   end subroutine write_libint_files_molecular_system
 !
 !
-   subroutine reorder_atoms_molecular_system(molecule)
+   subroutine read_active_atoms_molecular_system(molecule)
 !!
-!!    Reorder atoms
+!!    Read_active_atoms
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad
 !!
-!!    Reorder atoms in case of active atoms
+!!    In eT, atoms are ordered after basis set, with the first basis
+!!    set specified on input first.
 !!
+!!    If there are active atoms, the active atoms are first in eT,
+!!    irrespective of basis set.
+!!
+!!    This routine handles reading of the active atoms 
+!!    and their reordering to the begining of the atoms
+!!    array.
 !!
       implicit none
 !
       class(molecular_system) :: molecule
 !
-      character(len=100) :: line
-      character(len=100) :: active_basis
+      character(len=200) :: active_basis, selection_type
 !
-      integer :: i, j, active_atom_counter, ioerror = 0, first, last, atom_counter
+      integer :: i, j, active_atom_counter, atom_counter !ioerror = 0, first, last
       integer :: central_atom
 !
-      integer, dimension(:), allocatable :: active_atoms
+      integer, dimension(:), allocatable :: active_atoms, active_atoms_copy
 !
       type(atomic), dimension(:), allocatable :: atoms_copy
 !
-      logical :: found, set_active_basis
+      logical :: found
 !
       real(dp) :: hf_radius, x, y, z
 !
-      rewind(input%unit)
+!     Do nothing if active atoms not requsted
 !
-      read(input%unit,'(a)', iostat=ioerror) line
-      line = remove_preceding_blanks(line)
+      if (.not. input%requested_section('active atoms')) return
 !
-      set_active_basis = .false.
+!     Find selection type
+! 
+      call input%get_keyword_in_section('selection type', 'active atoms', selection_type)
 !
-      do while (trim(line) .ne. 'geometry')
+!     For the given selection type get the active atoms
 !
-         if (trim(line) == 'active atoms') then
+      if (trim(selection_type) == 'range' .or. trim(selection_type) == 'list') then
 !
-            do while (trim(line) .ne. 'end active atoms')
+!        Get the nuumber of elements in the list/range
 !
-               read(input%unit,'(a)', iostat=ioerror) line
-               line = remove_preceding_blanks(line)
+         molecule%n_active_atoms = input%get_n_elements_for_keyword_in_section('hf', 'active atoms')
 !
-               if (line(1:8) == 'hf list:') then
+         call mem%alloc(active_atoms, molecule%n_active_atoms)
 !
-                  line = line(9:100)
-                  line = remove_preceding_blanks(line)
-                  molecule%n_active_atoms = 0
+!        Get the active atoms
 !
-                  do i = 1, 92
+         call input%get_array_for_keyword_in_section('hf', 'active atoms', &
+                                                      molecule%n_active_atoms, active_atoms)
 !
-                     if (line(i:i) .ne. ' ') molecule%n_active_atoms = molecule%n_active_atoms + 1
+!        Translate atom list to current eT ordering (based on basis set)
 !
-                  enddo
+         call mem%alloc(active_atoms_copy, molecule%n_active_atoms)
+         active_atoms_copy = active_atoms
 !
-                  call mem%alloc(active_atoms, molecule%n_active_atoms)
-                  read(line, *) active_atoms
+         call molecule%translate_from_input_order_to_eT_order(molecule%n_active_atoms, active_atoms_copy, active_atoms)
 !
-                  exit
+         call mem%dealloc(active_atoms_copy, molecule%n_active_atoms)
 !
-               elseif (line(1:9) == 'hf range:') then 
+      elseif (selection_type == 'central atom') then
 !
-                  line = line(10:100)
-                  line = remove_preceding_blanks(line)
+         call input%get_keyword_in_section('central atom', 'active atoms', central_atom)
+         call input%get_keyword_in_section('hf', 'active atoms', hf_radius)
 !
-                  if (line(1:1)=='[') then ! range given
+!        Central atom in current eT ordering:
 !
-                     do i = 2, 100
+         do i = 1, molecule%n_atoms
 !
-                        if (line(i:i) == ',') exit
+            if (molecule%atoms(i)%input_nbr == central_atom) then
 !
-                     enddo
+               central_atom = i
+               exit
 !
-                     read(line(2:i-1), *) first
+            endif
 !
-                     do j = i, 100
+         enddo
 !
-                        if (line(j:j) == ']') exit
+!        Set active atoms
 !
-                     enddo
+         molecule%n_active_atoms = 0
 !
-                     read(line(i+1:j-1), *) last
+         do i = 1, molecule%n_atoms 
 !
-                     molecule%n_active_atoms = last - first + 1
+            x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
+            y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
+            z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
 !
-                     call mem%alloc(active_atoms, molecule%n_active_atoms)
+            if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) &
+                     molecule%n_active_atoms = molecule%n_active_atoms + 1
 !
-                     do i = first, last
+         enddo
 !
-                        active_atoms(i - first + 1) = i
+         call mem%alloc(active_atoms, molecule%n_active_atoms)
 !
-                     enddo
+         active_atom_counter = 0
 !
-                     exit
+         do i = 1, molecule%n_atoms 
 !
-                  else 
+           x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
+           y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
+           z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
 !
-                     call output%error_msg('active atom range not detected.')
+           if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) then 
 !
-                  endif
+              active_atom_counter = active_atom_counter + 1
 !
-               elseif (line(1:13) == 'central atom:') then
+              active_atoms(active_atom_counter) = i
 !
-                  read(line(14:100), *) central_atom
+           endif
 !
-                  do while (trim(line) .ne. 'end active atoms')
+         enddo
 !
-                     read(input%unit,'(a)') line
-                     line = remove_preceding_blanks(line)
+      else
 !
-                     if (line(1:10) == 'hf radius:') then
+         call output%error_msg('did not recognize selection type for active atoms.')
 !
-                        line = line(11:100)
-                        line = remove_preceding_blanks(line)
-                        read(line, '(f21.16)') hf_radius ! In Ångstom
+      endif
 !
-                     endif
+!     Find and set active basis
 !
-                  enddo
+      if (input%requested_keyword_in_section('active basis', 'active atoms')) then
 !
-                  molecule%n_active_atoms = 0
-!
-                  do i = 1, molecule%n_atoms 
-!
-                     x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
-                     y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
-                     z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
-!
-                     if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) molecule%n_active_atoms = molecule%n_active_atoms + 1
-!
-                  enddo
-!
-                  call mem%alloc(active_atoms, molecule%n_active_atoms)
-!
-                  active_atom_counter = 0
-!
-                  do i = 1, molecule%n_atoms 
-!
-                    x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
-                    y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
-                    z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
-!
-                    if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) then 
-!
-                       active_atom_counter = active_atom_counter + 1
-!
-                       active_atoms(active_atom_counter) = i
-!
-                    endif
-!
-                  enddo
-!
-                  exit
-!
-               else
-!
-                  call output%error_msg('active atom input not recognized.')
-!
-               endif
-            enddo
-         endif
-!
-         read(input%unit,'(a)') line
-         line = remove_preceding_blanks(line)
-!
-      enddo
-!
-!     Find active basis
-!
-      rewind(input%unit)
-!
-      read(input%unit,'(a)') line
-      line = remove_preceding_blanks(line)
-!
-      do while (trim(line) .ne. 'geometry')
-!
-         if (trim(line) == 'active atoms') then
-!
-            do while (trim(line) .ne. 'end active atoms')
-!
-               read(input%unit,'(a)', iostat=ioerror) line
-               line = remove_preceding_blanks(line)
-!
-               if (line(1:13) == 'active basis:') then
-!
-                  line = line(14:100)
-                  line = remove_preceding_blanks(line)
-                  read(line, '(a100)') active_basis
-                  set_active_basis = .true.
-!
-               endif
-            enddo
-         endif
-!
-         read(input%unit,'(a)') line
-         line = remove_preceding_blanks(line)
-!
-      enddo
-!
-!     If active basis is given, set it for the active atoms
-!
-      if (set_active_basis) then
+         call input%get_keyword_in_section('active basis', 'active atoms', active_basis)
 !
          do i = 1, molecule%n_active_atoms
 !
@@ -804,17 +686,24 @@ contains
 !
       endif
 !
-
+!     Print active atoms
+!
+      
+      write(output%unit, '(/t6, a)')'Active atoms:'
+!
       write(output%unit, '(t6, a18)')'------------------'
       write(output%unit, '(t6, a18)')' Atom      Symbol '
       write(output%unit, '(t6, a18)')'------------------'
+!
       do i = 1, molecule%n_active_atoms
 !
-         write(output%unit, '(t6, i5, 11x, a2)') active_atoms(i), molecule%atoms(active_atoms(i))%symbol
+         write(output%unit, '(t6, i5, 11x, a2)') molecule%atoms(active_atoms(i))%input_nbr, molecule%atoms(active_atoms(i))%symbol
 !
       enddo
+!
       write(output%unit, '(t6, a18)')'------------------'
       write(output%unit, '(t6, a30, i4)')'Total number of active atoms: ', molecule%n_active_atoms
+      write(output%unit, '(t6, a/)')'OBS: Atoms will be reordered, active atoms first.'
       flush(output%unit)
 !
 !     Reorder atoms
@@ -836,7 +725,7 @@ contains
 !
          do j = 1, molecule%n_active_atoms
 !
-            if (i == active_atoms(j)) then
+            if(i == active_atoms(j)) then
 !
                found = .true.
                exit
@@ -856,7 +745,7 @@ contains
 !
       deallocate(atoms_copy)
 !
-   end subroutine reorder_atoms_molecular_system
+   end subroutine read_active_atoms_molecular_system
 !
 !
    function get_nuclear_repulsion_molecular_system(molecule)
@@ -1258,7 +1147,8 @@ contains
 !
       write(output%unit, '(/t3,a)')       '- Molecular system specifications:'
 !
-      write(output%unit, '(/t6,a14,i1)')     'Charge:       ', molecule%charge 
+      write(output%unit, '(/t6,a14,a)')      'Name:         ', trim(molecule%name)
+      write(output%unit, '(t6,a14,i1)')      'Charge:       ', molecule%charge 
       write(output%unit, '(t6,a14,i1)')      'Multiplicity: ', molecule%multiplicity 
 !
       write(output%unit, '(/t6,a35,f25.12)') 'Nuclear repulsion energy (a.u.):   ', molecule%get_nuclear_repulsion()
@@ -1269,6 +1159,106 @@ contains
       call molecule%print_geometry()
 !
    end subroutine print_system_molecular_system
+!
+!
+   subroutine translate_from_input_order_to_eT_order_molecular_system(molecule, n_elements,  &
+                                                         array_input_ordering, array_eT_ordering)
+!!
+!!    Translate from input order to eT order
+!!    Written by Sarai D. Folkestad, Mar 2019
+!!
+!!    In eT, atoms are ordered after basis set, with the first basis
+!!    set specified on input first.
+!!
+!!    If there are active atoms, the active atoms are first in eT,
+!!    irrespective of basis set.
+!!
+!!    This routine translates an array of input indices,
+!!    which corresponds to the order of the atoms in the
+!!    input file to an array of indices corresponding to atom 
+!!    order in eT.
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      integer, intent(in) :: n_elements
+!
+      integer, dimension(n_elements), intent(in) :: array_input_ordering
+      integer, dimension(n_elements), intent(out) :: array_eT_ordering
+!  
+!     Local variables
+!
+      integer :: i, j
+!
+      do i = 1, n_elements
+         do j = 1, molecule%n_atoms
+!
+            if (array_input_ordering(i) == molecule%atoms(j)%input_nbr) then
+!
+               array_eT_ordering(i) = j
+! 
+            endif
+!
+         enddo
+      enddo
+!
+   end subroutine translate_from_input_order_to_eT_order_molecular_system
+!
+!
+   subroutine get_nuclear_dipole_molecular_system(molecule, mu_k)
+!!
+!!    Get nuclear dipole moment 
+!!    Written by Eirik F. Kjønstad, Apr 2019 
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      real(dp), dimension(3), intent(out) :: mu_k 
+!
+      integer :: j 
+!
+      mu_k = zero 
+!
+      do j = 1, molecule%n_atoms 
+!
+         mu_k(1) = mu_k(1) + (molecule%atoms(j)%x)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+         mu_k(2) = mu_k(2) + (molecule%atoms(j)%y)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+         mu_k(3) = mu_k(3) + (molecule%atoms(j)%z)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+!
+      enddo
+!
+   end subroutine get_nuclear_dipole_molecular_system
+!
+!
+   subroutine get_nuclear_quadrupole_molecular_system(molecule, Q_k)
+!!
+!!    Get nuclear dipole moment 
+!!    Written by Eirik F. Kjønstad, Apr 2019 
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      real(dp), dimension(6), intent(out) :: Q_k 
+!
+      integer :: j 
+!
+      Q_k = zero 
+!
+      do j = 1, molecule%n_atoms 
+!
+         Q_k(1) = Q_k(1) + (molecule%atoms(j)%x**2)*(molecule%atoms(j)%number_)*(angstrom_to_bohr**2)
+         Q_k(2) = Q_k(2) + (molecule%atoms(j)%x*molecule%atoms(j)%y)*(molecule%atoms(j)%number_)*(angstrom_to_bohr**2)
+         Q_k(3) = Q_k(3) + (molecule%atoms(j)%x*molecule%atoms(j)%z)*(molecule%atoms(j)%number_)*(angstrom_to_bohr**2)
+         Q_k(4) = Q_k(4) + (molecule%atoms(j)%y**2)*(molecule%atoms(j)%number_)*(angstrom_to_bohr**2)
+         Q_k(5) = Q_k(5) + (molecule%atoms(j)%y*molecule%atoms(j)%z)*(molecule%atoms(j)%number_)*(angstrom_to_bohr**2)
+         Q_k(6) = Q_k(6) + (molecule%atoms(j)%z**2)*(molecule%atoms(j)%number_)*(angstrom_to_bohr**2)
+!
+      enddo
+!
+   end subroutine get_nuclear_quadrupole_molecular_system
 !
 !
 end module molecular_system_class

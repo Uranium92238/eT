@@ -22,29 +22,22 @@ module es_engine_class
 !!    Coupled cluster ground state engine class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-   use abstract_engine_class
-   use ccs_class
-   use eri_cd_class
+   use gs_engine_class
 !
-   use davidson_cc_es_class
-   use davidson_cc_ip_class
-   use davidson_cvs_cc_es_class
-   use diis_cc_gs_class
-   use diis_cc_es_class
+   type, extends(gs_engine) :: es_engine
 !
-   type, extends(abstract_engine) :: es_engine
-!
-      character(len=100) :: algorithm
-      character(len=100) :: es_type
+      character(len=200) :: es_algorithm
+      character(len=200) :: es_type
 !
    contains
 !
       procedure :: prepare                   => prepare_es_engine
       procedure :: run                       => run_es_engine
-      procedure :: cleanup                   => cleanup_es_engine
 !
-      procedure :: determine_es_type         => determine_es_type_es_engine
-      procedure :: read_algorithm            => read_algorithm_es_engine
+      procedure :: read_settings             => read_settings_es_engine
+      procedure :: read_es_settings          => read_es_settings_es_engine
+!
+      procedure :: do_excited_state          => do_excited_state_es_engine
 !
    end type es_engine
 !
@@ -63,13 +56,42 @@ contains
 !
 !     Set standards and then read if nonstandard
 !
-      engine%algorithm = 'davidson'
-      call engine%read_algorithm()
-!
+      engine%es_algorithm = 'davidson'
       engine%es_type = 'valence'
-      call engine%determine_es_type()
+!
+      call engine%read_settings()
 !
    end subroutine prepare_es_engine
+!
+!
+   subroutine read_settings_es_engine(engine)
+!!
+!!    Read es settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(es_engine) :: engine 
+!
+      call engine%read_es_settings()
+!
+   end subroutine read_settings_es_engine
+!
+!
+   subroutine read_es_settings_es_engine(engine)
+!!
+!!    Read es settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      implicit none 
+!
+      class(es_engine) :: engine 
+!
+      call input%get_keyword_in_section('algorithm', 'solver cc es', engine%es_algorithm)
+!
+      if (input%requested_keyword_in_section('core excitation', 'solver cc es')) engine%es_type = 'core'
+!
+   end subroutine read_es_settings_es_engine
 !
 !
    subroutine run_es_engine(engine, wf)
@@ -82,50 +104,53 @@ contains
       class(es_engine)  :: engine
       class(ccs)        :: wf
 !
-      type(eri_cd), allocatable                      :: eri_chol_solver
-      type(diis_cc_gs), allocatable                  :: cc_gs_solver
-      type(diis_cc_es), allocatable                  :: cc_es_solver_diis
-!
-      type(davidson_cc_es), allocatable, target      ::  cc_valence_es
-      type(davidson_cvs_cc_es), allocatable, target  ::  cc_core_es
-      type(davidson_cc_ip), allocatable, target      ::  cc_valence_ip
-!
-      class(davidson_cc_es), pointer :: cc_es_solver
-!
-      write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
-!
 !     Cholesky decomposition
 !
-      allocate(eri_chol_solver)
-!
-      call eri_chol_solver%prepare(wf%system)
-      call eri_chol_solver%run(wf%system)
-!
-      call eri_chol_solver%cholesky_vecs_diagonal_test(wf%system)
-!
-      call eri_chol_solver%construct_mo_cholesky_vecs(wf%system, wf%n_mo, wf%orbital_coefficients)
-!
-      call wf%integrals%prepare(eri_chol_solver%n_cholesky, wf%n_o, wf%n_v)
-!
-      call eri_chol_solver%cleanup()
-      deallocate(eri_chol_solver)
+      call engine%do_cholesky(wf, wf%orbital_coefficients)
 !
 !     Ground state solution
 !
-      allocate(cc_gs_solver)
-!
-      call cc_gs_solver%prepare(wf)
-      call cc_gs_solver%run(wf)
-      call cc_gs_solver%cleanup(wf)
-!
-      deallocate(cc_gs_solver)
+      call engine%do_ground_state(wf)
 !
       call wf%integrals%write_t1_cholesky(wf%t1)
       call wf%integrals%can_we_keep_g_pqrs_t1()
 !
 !     Prepare for excited state
 !
-      if (engine%algorithm == 'diis' .or. wf%name_ == 'low memory cc2' .or. wf%name_ == 'cc3') then
+      call engine%do_excited_state(wf)
+!
+   end subroutine run_es_engine
+!
+!
+   subroutine do_excited_state_es_engine(engine, wf)
+!!
+!!    Do excited state
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+!!    Solves the excited state (valence or cvs) using
+!!    either a DIIS or Davidson solver
+!!
+!
+      use davidson_cc_es_class
+      use davidson_cvs_cc_es_class
+      use diis_cc_gs_class
+      use diis_cc_es_class
+!
+      implicit none
+!
+      class(es_engine)  :: engine
+      class(ccs)        :: wf
+!
+      type(diis_cc_es), allocatable                  :: cc_es_solver_diis
+!
+      type(davidson_cc_es), allocatable, target      ::  cc_valence_es
+      type(davidson_cvs_cc_es), allocatable, target  ::  cc_core_es
+!
+      class(davidson_cc_es), pointer :: cc_es_solver
+!
+!     Prepare for excited state
+!
+      if (engine%es_algorithm == 'diis' .or. wf%name_ == 'low memory cc2' .or. wf%name_ == 'cc3') then
 !
          allocate(cc_es_solver_diis)
 !
@@ -135,7 +160,7 @@ contains
 !
          deallocate(cc_es_solver_diis)
 !
-      elseif (engine%algorithm == 'davidson') then
+      elseif (engine%es_algorithm == 'davidson') then
 !
          if (engine%es_type == 'core') then
 !
@@ -151,19 +176,11 @@ contains
 !
          elseif(engine%es_type == 'valence ionized') then
 !
-            allocate(cc_valence_ip)
-            cc_es_solver => cc_valence_ip
-!
-            call cc_es_solver%prepare()
-            call cc_es_solver%run(wf)
-            call cc_es_solver%cleanup()
-!
-            cc_es_solver => null()
-            deallocate(cc_valence_ip)
+            call output%error_msg('valence ionized not implemented yet')
 !
          elseif(engine%es_type == 'core ionized') then
 !
-!           Nothing here yet...
+            call output%error_msg('core ionized not implemented yet')
 !
          else ! es_type = valence
 !
@@ -180,103 +197,7 @@ contains
          endif
 !
       endif
-!
-   end subroutine run_es_engine
-!
-!
-   subroutine cleanup_es_engine(engine)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(es_engine) :: engine
-!
-      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%name_)
-!
-   end subroutine cleanup_es_engine
-!
-!
-   subroutine determine_es_type_es_engine(engine)
-!!
-!!    Determine excited state type
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(es_engine), intent(inout) :: engine
-!
-      character(len=100) :: line
-!
-      integer :: i, n_keywords
-!
-      if (requested_section('cc excited state')) then
-!
-         call move_to_section('cc excited state', n_keywords)
-!
-         do i = 1, n_keywords
-!
-            read(input%unit, '(a100)') line
-            line = remove_preceding_blanks(line)
-!
-            if (line(1:15) == 'core excitation' ) then
-!
-               engine%es_type = 'core'
-               return
-!
-            elseif (line(1:10) == 'ionization' ) then
-!
-               engine%es_type = 'valence ionized'
-               return
-!
-            elseif (line(1:15) == 'core ionization' ) then
-!
-               engine%es_type = 'core ionized'
-               return
-!
-            endif
-!
-         enddo
-!
-      endif
-!
-      engine%es_type = 'valence'
-!
-   end subroutine determine_es_type_es_engine
-!
-!
-   subroutine read_algorithm_es_engine(engine)
-!!
-!!    Read algorithm
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(es_engine), intent(inout) :: engine
-!
-      character(len=100) :: line
-!
-      integer :: i, n_records
-!
-      call move_to_section('cc excited state', n_records)
-!
-      do i = 1, n_records
-!
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (line(1:10) == 'algorithm:') then
-!
-            engine%algorithm = line(11:100)
-            engine%algorithm = remove_preceding_blanks(engine%algorithm)
-            return
-!
-         endif
-!
-      enddo
-!
-   end subroutine read_algorithm_es_engine
+   end subroutine do_excited_state_es_engine
 !
 !
 end module es_engine_class
