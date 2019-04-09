@@ -860,7 +860,7 @@ contains
             call mem%alloc(g, A_interval%size, B_interval%size, &
                               A_interval%size, B_interval%size)
 !
-            call wf%system%ao_integrals%construct_ao_g_wxyz(g, s1, s2, s1, s2)
+            call wf%system%construct_ao_g_wxyz(g, s1, s2, s1, s2)
 !
             maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
 !
@@ -1050,7 +1050,7 @@ contains
             call mem%alloc(g, A_interval%size, B_interval%size, &
                               A_interval%size, B_interval%size)
 !
-            call wf%system%ao_integrals%construct_ao_g_wxyz(g, A, B, A, B)
+            call wf%system%construct_ao_g_wxyz(g, A, B, A, B)
 !
             maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
 !
@@ -1139,7 +1139,7 @@ contains
                      call mem%alloc(g_C, A_interval%size, B_interval%size, &
                                           C_interval%size, D_interval%size)
 !
-                     call wf%system%ao_integrals%construct_ao_g_wxyz(g_C, A, B, C, D)
+                     call wf%system%construct_ao_g_wxyz(g_C, A, B, C, D)
 !     
 !                    Add Fock matrix contributions
 !     
@@ -1208,7 +1208,7 @@ contains
                      call mem%alloc(g_K, A_interval%size, D_interval%size, &
                                           C_interval%size, B_interval%size)
 !
-                     call wf%system%ao_integrals%construct_ao_g_wxyz(g_K, A, D, C, B)
+                     call wf%system%construct_ao_g_wxyz(g_K, A, D, C, B)
 !     
 !                   Add Fock matrix contributions
 !     
@@ -1480,15 +1480,15 @@ contains
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
-      real(dp), dimension(:), allocatable :: g 
+      real(dp), dimension(wf%system%max_shell_size**4) :: g 
 !
       integer :: max_shell_size, thread = 0, skip
 !
 !     Preallocate the vector that holds the shell quadruple 
 !     ERI integrals, then enter the construction loop 
 !
-      call wf%system%get_max_shell_size(max_shell_size)
-      call mem%alloc(g, max_shell_size**4)
+   !   call wf%system%get_max_shell_size(max_shell_size)
+   !   call mem%alloc(g, max_shell_size**4)
 !
 !$omp parallel do                                                                             &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34,     &
@@ -1543,7 +1543,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%system%ao_integrals%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,         &
+               call wf%system%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,         &
                   precision_thr/max(temp7,temp8), thread, skip, shells(s1)%size, shells(s2)%size, &
                   shells(s3)%size, shells(s4)%size)
 !
@@ -1611,7 +1611,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g, max_shell_size**4)
+    !  call mem%dealloc(g, max_shell_size**4)
 !
       call set_coulomb_precision_c(wf%libint_epsilon)
 !
@@ -1657,15 +1657,15 @@ contains
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
-      real(dp), dimension(:), allocatable :: g 
+      real(dp), dimension(wf%system%max_shell_size**4) :: g 
 !
-      integer :: max_shell_size, thread = 0, skip
+      integer :: thread = 0, skip
 !
 !     Preallocate the vector that holds the shell quadruple 
 !     ERI integrals, then enter the construction loop 
 !
-      call wf%system%get_max_shell_size(max_shell_size)
-      call mem%alloc(g, max_shell_size**4)
+   !   call wf%system%get_max_shell_size(max_shell_size)
+   !   call mem%alloc(g, max_shell_size**4)
 !
 !$omp parallel do                                                                         &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34, &
@@ -1714,7 +1714,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%system%ao_integrals%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, &
+               call wf%system%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, &
                   precision_thr/temp7, thread, skip, shells(s1)%size, shells(s2)%size,    &
                   shells(s3)%size, shells(s4)%size)
 !
@@ -1766,7 +1766,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g, max_shell_size**4)
+   !   call mem%dealloc(g, max_shell_size**4)
 !
    end subroutine ao_fock_coulomb_construction_loop_hf
 !
@@ -1810,15 +1810,15 @@ contains
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
-      real(dp), dimension(:), allocatable :: g 
+      real(dp), dimension(wf%system%max_shell_size**4) :: g 
 !
-      integer :: max_shell_size, thread = 0, skip
+      integer :: thread = 0, skip
 !
 !     Preallocate the vector that holds the shell quadruple 
 !     ERI integrals, then enter the construction loop 
 !
-      call wf%system%get_max_shell_size(max_shell_size)
-      call mem%alloc(g, max_shell_size**4)
+   !   call wf%system%get_max_shell_size(max_shell_size)
+   !   call mem%alloc(g, max_shell_size**4)
 !
 !$omp parallel do                                                                         &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34, &
@@ -1870,7 +1870,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%system%ao_integrals%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, &
+               call wf%system%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, &
                   precision_thr/temp8, thread, skip, shells(s1)%size, shells(s2)%size,    &
                   shells(s3)%size, shells(s4)%size)
 !
@@ -1928,7 +1928,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g, max_shell_size**4)
+   !   call mem%dealloc(g, max_shell_size**4)
 !
    end subroutine ao_fock_exchange_construction_loop_hf
 !

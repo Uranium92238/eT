@@ -405,7 +405,7 @@ contains
                   (A_interval%size),(B_interval%size), &
                   (A_interval%size),(B_interval%size))
 !
-         call system%ao_integrals%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+         call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
          call mem%alloc(D_AB, (A_interval%size), (B_interval%size))
          call mem%alloc(D_AB_screen, (A_interval%size), (B_interval%size))
@@ -466,7 +466,7 @@ contains
                   (A_interval%size), (B_interval%size), &
                   (A_interval%size), (B_interval%size))
 !
-         call system%ao_integrals%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+         call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
          call mem%alloc(construct_test, (A_interval%size), (B_interval%size))
 !
@@ -606,7 +606,7 @@ contains
                (A_interval%size), (B_interval%size), &
                (A_interval%size), (B_interval%size))
 !
-         call system%ao_integrals%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+         call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
          if (A .eq. B) then
 !
@@ -778,7 +778,7 @@ contains
                      (A_interval%size), (B_interval%size), &
                      (A_interval%size), (B_interval%size))
 !
-            call system%ao_integrals%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+            call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
             call mem%alloc(D_AB, (A_interval%size), (B_interval%size))
             call mem%alloc(D_AB_screen, (A_interval%size), (B_interval%size))
@@ -841,7 +841,7 @@ contains
                   (A_interval%size), (B_interval%size), &
                   (A_interval%size), (B_interval%size))
 !
-         call system%ao_integrals%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+         call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
          call mem%alloc(construct_test, (A_interval%size), (B_interval%size))
 !
@@ -979,7 +979,7 @@ contains
                (A_interval%size), (B_interval%size), &
                (A_interval%size), (B_interval%size))
 !
-         call system%ao_integrals%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+         call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
          if (A .eq. B) then
 !
@@ -2086,7 +2086,7 @@ contains
                               (A_interval%size), (B_interval%size), &
                               (C_interval%size), (D_interval%size))
 !
-               call system%ao_integrals%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
+               call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
 !
                  do aop = 1, n_qual_aop_in_sp
 !
@@ -2758,7 +2758,7 @@ contains
                      (A_interval%size)*(B_interval%size), &
                      (C_interval%size)*(D_interval%size))
 !
-            call system%ao_integrals%construct_ao_g_wxyz(g_AB_CD, A, B, C, D)
+            call system%construct_ao_g_wxyz(g_AB_CD, A, B, C, D)
 !
 !           Only keep those that correspond to elements of the basis
 !
@@ -3236,7 +3236,7 @@ contains
                        (A_interval%size), (B_interval%size), &
                        (C_interval%size), (D_interval%size))
 !
-              call system%ao_integrals%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
+              call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
 !
                if (A == B) then
 !
@@ -3407,7 +3407,7 @@ contains
                      (A_interval%size), (B_interval%size))
 !
                g_ABAB = zero
-               call system%ao_integrals%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+               call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
                do x = 1, (A_interval%size)
                   do y = 1, (B_interval%size)
@@ -3572,7 +3572,7 @@ contains
                (A_interval%size), (B_interval%size), &
                (A_interval%size), (B_interval%size))
 !
-         call system%ao_integrals%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+         call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
          if (A .eq. B) then
 !
@@ -3818,7 +3818,7 @@ contains
 !
                  call mem%alloc(g_ABCD, A_interval%size, B_interval%size, C_interval%size, D_interval%size) 
 !
-                 call system%ao_integrals%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
+                 call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
 !
                  do w = 1, A_interval%size
                     do x = 1, B_interval%size
