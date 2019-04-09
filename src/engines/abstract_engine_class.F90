@@ -118,8 +118,8 @@ contains
       call eri_chol_solver%prepare(wf%system)
       call eri_chol_solver%run(wf%system)
 !
-      call eri_chol_solver%cholesky_vecs_diagonal_test(wf%system)
-      call eri_chol_solver%construct_mo_cholesky_vecs(wf%system, wf%n_mo, orbital_coefficients)
+      call eri_chol_solver%diagonal_test(wf%system)
+      call eri_chol_solver%construct_mo_cholesky_vectors(wf%system, wf%n_mo, orbital_coefficients)
 !
       call wf%integrals%prepare(eri_chol_solver%n_cholesky, wf%n_o, wf%n_v)
 !
