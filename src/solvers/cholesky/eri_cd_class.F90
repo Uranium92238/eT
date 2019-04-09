@@ -62,19 +62,20 @@ module eri_cd_class
                                                   &used directly, or be transformed to the MO basis for use in &
                                                   &post-HF calculations.'
 !
-      real(dp) :: threshold         = 1.0D-8
-      real(dp) :: span              = 1.0D-2
+      real(dp) :: threshold
+      real(dp) :: span     
 !
-      integer :: max_qual      = 1000
+      integer :: max_qual 
+      integer :: iteration
 !
-      integer :: iteration     = 0
+      logical :: one_center       
+      logical :: construct_vectors
 !
-      logical :: one_center         = .false.
-      logical :: construct_vectors  = .true.
-!
-      type(file) :: diagonal_info_target, diagonal_info_one_center, diagonal_info_construct
-      type(file) :: cholesky_aux, cholesky_aux_inverse, cholesky_ao_vectors, cholesky_ao_vectors_info, cholesky_mo_vectors
-      type(file) :: basis_shell_data
+      type(file) :: diagonal_info_target, diagonal_info_target_one_center, diagonal_info_cauchy_schwarz
+      type(file) :: Q, Q_inverse
+      type(file) :: cholesky_ao_vectors, cholesky_ao_vectors_info
+      type(file) :: cholesky_mo_vectors
+      type(file) :: cholesky_basis
 !
       integer :: n_cholesky
       integer :: n_sp_in_basis
@@ -88,17 +89,15 @@ module eri_cd_class
       procedure :: run                                    => run_eri_cd
       procedure :: cleanup                                => cleanup_eri_cd
 !
-      procedure :: invert_overlap_cholesky_vecs           => invert_overlap_cholesky_vecs_eri_cd
-      procedure :: cholesky_vecs_diagonal_test            => cholesky_vecs_diagonal_test_eri_cd
+      procedure :: invert_Q                               => invert_Q_eri_cd
       procedure :: diagonal_test                          => diagonal_test_eri_cd
       procedure :: full_test_cholesky_vecs                => full_test_cholesky_vecs_cd_eri_solver
       procedure :: construct_significant_diagonal         => construct_significant_diagonal_eri_cd
       procedure :: construct_significant_diagonal_atomic  => construct_significant_diagonal_atomic_eri_cd
-      procedure :: determine_auxilliary_cholesky_basis    => determine_auxilliary_cholesky_basis_eri_cd
-      procedure :: construct_overlap_cholesky_vecs        => construct_overlap_cholesky_vecs_eri_cd
+      procedure :: determine_cholesky_basis               => determine_cholesky_basis_eri_cd
+      procedure :: construct_S                            => construct_S_eri_cd
       procedure :: construct_cholesky_vectors             => construct_cholesky_vectors_eri_cd
-!
-      procedure :: construct_mo_cholesky_vecs             => construct_mo_cholesky_vecs_cd_eri_solver
+      procedure :: construct_mo_cholesky_vectors          => construct_mo_cholesky_vectors_cd_eri_solver
 !
       procedure :: read_settings                          => read_settings_eri_cd
       procedure :: print_banner                           => print_banner_eri_cd
@@ -124,7 +123,17 @@ contains
       class(eri_cd) :: solver
       type(molecular_system) :: system
 !
-      solver%n_batches = 1
+!     Set defaults
+!
+      solver%threshold           = 1.0D-8
+      solver%span                = 1.0D-2
+!
+      solver%max_qual            = 1000
+      solver%iteration           = 0
+      solver%n_batches           = 1
+!
+      solver%one_center          = .false.
+      solver%construct_vectors   = .true.
 !
       call solver%read_settings()
 !
@@ -133,16 +142,19 @@ contains
       solver%n_s     = system%get_n_shells()
       solver%n_sp    = solver%n_s*(solver%n_s + 1)/2              ! Number of shell pairs packed
 !
+!     Initialize files
 !
-      call solver%diagonal_info_target%init('target_diagonal', 'sequential', 'unformatted')
-      call solver%diagonal_info_construct%init('construct_diagonal', 'sequential', 'unformatted')
-      call solver%cholesky_aux%init('cholesky_aux', 'sequential', 'unformatted')
-      call solver%cholesky_aux_inverse%init('cholesky_aux_inverse', 'sequential', 'unformatted')
-      call solver%basis_shell_data%init('basis_shell_info', 'sequential', 'unformatted')
+      call solver%diagonal_info_target%init('target_diagonal_eri', 'sequential', 'unformatted')
+      call solver%diagonal_info_cauchy_schwarz%init('cauchy_schwarz_diagonal_eri', 'sequential', 'unformatted')
+!      
+      call solver%Q%init('Q_eri', 'sequential', 'unformatted')
+      call solver%Q_inverse%init('Q_inverse_eri', 'sequential', 'unformatted')
+!      
+      call solver%cholesky_basis%init('basis_shell_info', 'sequential', 'unformatted')
 !
       if (solver%one_center) then
 !
-         call solver%diagonal_info_one_center%init('one_center_diagonal', 'sequential', 'unformatted')
+         call solver%diagonal_info_target_one_center%init('one_center_target_diagonal', 'sequential', 'unformatted')
 !
       endif
 !
@@ -216,7 +228,7 @@ contains
 !
       if (solver%n_batches == 1) then
 !
-         call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target, solver%basis_shell_data)
+         call solver%determine_cholesky_basis(system, solver%diagonal_info_target, solver%cholesky_basis)
 !
       else
 !
@@ -240,7 +252,7 @@ contains
             write(temp_name, '(a11, i4.4)')'basis_info_', batch
             call batch_file_basis%init(trim(temp_name), 'sequential', 'unformatted')
 !
-            call solver%determine_auxilliary_cholesky_basis(system, batch_file_diag, batch_file_basis)
+            call solver%determine_cholesky_basis(system, batch_file_diag, batch_file_basis)
 !
             n_cholesky_batches(batch)     = solver%n_cholesky
             n_sp_in_basis_batches(batch)  = solver%n_sp_in_basis
@@ -250,8 +262,7 @@ contains
          write(output%unit, '(/t3, a27)') '- Final decomposition step:'
 !
          call solver%construct_diagonal_from_batch_bases(system, n_cholesky_batches, n_sp_in_basis_batches)
-         call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target, solver%basis_shell_data)
-         !call solver%append_bases(system, n_cholesky_batches, n_sp_in_basis_batches)
+         call solver%determine_cholesky_basis(system, solver%diagonal_info_target, solver%cholesky_basis)
 !
          call mem%dealloc(n_cholesky_batches, solver%n_batches)
          call mem%dealloc(n_sp_in_basis_batches, solver%n_batches)
@@ -265,8 +276,8 @@ contains
 !
       call invert_timer%start()
 !
-      call solver%construct_overlap_cholesky_vecs(system)
-      call solver%invert_overlap_cholesky_vecs()
+      call solver%construct_S(system)
+      call solver%invert_Q()
 !
       call invert_timer%freeze()
       call invert_timer%switch_off()
@@ -669,14 +680,14 @@ contains
 !        1. number of shell pairs to construct, number of ao pairs to construct
 !        2. construct_sp - vector of logicals to describe which shell pairs are to be constructed
 !
-      call disk%open_file(solver%diagonal_info_construct, 'write', 'rewind')
+      call disk%open_file(solver%diagonal_info_cauchy_schwarz, 'write', 'rewind')
       rewind(solver%diagonal_info_target%unit)
 !
-      write(solver%diagonal_info_construct%unit) n_construct_sp, n_construct_aop
-      write(solver%diagonal_info_construct%unit) construct_sp
+      write(solver%diagonal_info_cauchy_schwarz%unit) n_construct_sp, n_construct_aop
+      write(solver%diagonal_info_cauchy_schwarz%unit) construct_sp
 !
       call disk%close_file(solver%diagonal_info_target)
-      call disk%close_file(solver%diagonal_info_construct)
+      call disk%close_file(solver%diagonal_info_cauchy_schwarz)
 !
       deallocate(sig_sp)
       call mem%dealloc(D_xy, n_sig_aop)
@@ -1044,14 +1055,14 @@ contains
 !        1. number of shell pairs to construct, number of ao pairs to construct
 !        2. construct_sp - vector of logicals to describe which shell pairs are to be constructed
 !
-      call disk%open_file(solver%diagonal_info_construct, 'write', 'rewind')
+      call disk%open_file(solver%diagonal_info_cauchy_schwarz, 'write', 'rewind')
       rewind(solver%diagonal_info_target%unit)
 !
-      write(solver%diagonal_info_construct%unit) n_construct_sp, n_construct_aop
-      write(solver%diagonal_info_construct%unit) construct_sp
+      write(solver%diagonal_info_cauchy_schwarz%unit) n_construct_sp, n_construct_aop
+      write(solver%diagonal_info_cauchy_schwarz%unit) construct_sp
 !
       call disk%close_file(solver%diagonal_info_target)
-      call disk%close_file(solver%diagonal_info_construct)
+      call disk%close_file(solver%diagonal_info_cauchy_schwarz)
 !
       deallocate(sig_sp)
       call mem%dealloc(D_xy, n_sig_aop)
@@ -1656,16 +1667,16 @@ contains
 !
       enddo
 !
-      call disk%open_file(solver%basis_shell_data, 'write', 'rewind')
+      call disk%open_file(solver%cholesky_basis, 'write', 'rewind')
 !
-      write(solver%basis_shell_data%unit) n_sp_in_basis_total
+      write(solver%cholesky_basis%unit) n_sp_in_basis_total
 !
-      write(solver%basis_shell_data%unit) basis_shell_info_full
-      write(solver%basis_shell_data%unit) cholesky_full
+      write(solver%cholesky_basis%unit) basis_shell_info_full
+      write(solver%cholesky_basis%unit) cholesky_full
 !
       solver%n_cholesky = n_cholesky_total
 !
-      call disk%close_file(solver%basis_shell_data)
+      call disk%close_file(solver%cholesky_basis)
 !
       call mem%dealloc(cholesky_full, n_cholesky_total, 3)
       call mem%dealloc(basis_shell_info_full, n_sp_in_basis_total, 4)
@@ -1673,7 +1684,7 @@ contains
    end subroutine append_bases_eri_cd
 !
 !
-   subroutine determine_auxilliary_cholesky_basis_eri_cd(solver, system, diagonal_info, basis_info)
+   subroutine determine_cholesky_basis_eri_cd(solver, system, diagonal_info, basis_info)
 !!
 !!    Determine auxiliary cholesky basis
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2612,10 +2623,10 @@ contains
       call mem%dealloc(basis_shell_info, n_sp_in_basis, 4)
       call mem%dealloc(cholesky_basis_new, solver%n_cholesky, 3)
 !
-   end subroutine determine_auxilliary_cholesky_basis_eri_cd
+   end subroutine determine_cholesky_basis_eri_cd
 !
 !
-   subroutine construct_overlap_cholesky_vecs_eri_cd(solver, system)
+   subroutine construct_S_eri_cd(solver, system)
 !!
 !!    Construct overlap cholesky vectors
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2677,18 +2688,18 @@ contains
 !
 !     Read basis_shell_data
 !
-      call disk%open_file(solver%basis_shell_data, 'read')
-      rewind(solver%basis_shell_data%unit)
+      call disk%open_file(solver%cholesky_basis, 'read')
+      rewind(solver%cholesky_basis%unit)
 !
-      read(solver%basis_shell_data%unit) n_sp_in_basis
+      read(solver%cholesky_basis%unit) n_sp_in_basis
 !
       call mem%alloc(basis_shell_info, n_sp_in_basis, 4)
       call mem%alloc(cholesky_basis, solver%n_cholesky, 3)
 !
-      read(solver%basis_shell_data%unit) basis_shell_info
-      read(solver%basis_shell_data%unit) cholesky_basis
+      read(solver%cholesky_basis%unit) basis_shell_info
+      read(solver%cholesky_basis%unit) cholesky_basis
 !
-      call disk%close_file(solver%basis_shell_data, 'delete')
+      call disk%close_file(solver%cholesky_basis, 'delete')
 !
 !     Construct integrals (J | J')
 !
@@ -2834,15 +2845,15 @@ contains
       call mem%dealloc(cholesky_basis, solver%n_cholesky, 3)
       deallocate(keep_vectors)
 !
-!     Write cholesky_aux file containing
+!     Write Q file containing
 !
-!        1. Cholesky vectors L_JK
+!        1. Cholesky factor Q, S = QQ^T
 !
-      call disk%open_file(solver%cholesky_aux, 'write', 'rewind')
+      call disk%open_file(solver%Q, 'write', 'rewind')
 !
-      write(solver%cholesky_aux%unit) integrals_auxiliary(1:n_vectors, 1:n_vectors)
+      write(solver%Q%unit) integrals_auxiliary(1:n_vectors, 1:n_vectors)
 !
-      call disk%close_file(solver%cholesky_aux)
+      call disk%close_file(solver%Q)
 !
       call mem%dealloc(integrals_auxiliary, solver%n_cholesky, solver%n_cholesky)
 !
@@ -2902,23 +2913,23 @@ contains
 !        2. basis_shell_info
 !        3. cholesky_basis
 !
-      call disk%open_file(solver%basis_shell_data, 'write')
+      call disk%open_file(solver%cholesky_basis, 'write')
 !
-      write(solver%basis_shell_data%unit) n_sp_in_basis
-      write(solver%basis_shell_data%unit) basis_shell_info
-      write(solver%basis_shell_data%unit) cholesky_basis_updated
+      write(solver%cholesky_basis%unit) n_sp_in_basis
+      write(solver%cholesky_basis%unit) basis_shell_info
+      write(solver%cholesky_basis%unit) cholesky_basis_updated
 !
-      call disk%close_file(solver%basis_shell_data)
+      call disk%close_file(solver%cholesky_basis)
 !
       call mem%dealloc(basis_shell_info, n_sp_in_basis, 4)
       call mem%dealloc(cholesky_basis_updated, n_vectors, 3)
 !
       call cpu_time(e_build_basis_time)
 !
-   end subroutine construct_overlap_cholesky_vecs_eri_cd
+   end subroutine construct_S_eri_cd
 !
 !
-   subroutine invert_overlap_cholesky_vecs_eri_cd(solver)
+   subroutine invert_Q_eri_cd(solver)
 !!
 !!    Invert cholesky vectors of auxiliary basis overlap
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, July 2018
@@ -2937,14 +2948,14 @@ contains
 !
 !     Read Cholesky vectors of auxiliary basis overlap
 !
-      call disk%open_file(solver%cholesky_aux, 'read')
-      rewind(solver%cholesky_aux%unit)
+      call disk%open_file(solver%Q, 'read')
+      rewind(solver%Q%unit)
 !
       call mem%alloc(cholesky_inverse, solver%n_cholesky, solver%n_cholesky)
 !
-      read(solver%cholesky_aux%unit) cholesky_inverse
+      read(solver%Q%unit) cholesky_inverse
 !
-      call disk%close_file(solver%cholesky_aux, 'delete')
+      call disk%close_file(solver%Q, 'keep')
 !
 !     Invert cholesky vectors
 !
@@ -2957,17 +2968,17 @@ contains
 !        1. n_cholesky: Number of elements of the basis
 !        2. cholesky_inverse (n_cholesky, n_cholesky)
 !
-      call disk%open_file(solver%cholesky_aux_inverse, 'write', 'rewind')
+      call disk%open_file(solver%Q_inverse, 'write', 'rewind')
 !
 !     Write out columns, but only the parts that are not rubbish left over from dpstrf
 !
       do I = 1, solver%n_cholesky
 !
-         write(solver%cholesky_aux_inverse%unit) cholesky_inverse(1 + (I - 1) : solver%n_cholesky, I)
+         write(solver%Q_inverse%unit) cholesky_inverse(1 + (I - 1) : solver%n_cholesky, I)
 !
       enddo
 !
-      call disk%close_file(solver%cholesky_aux_inverse)
+      call disk%close_file(solver%Q_inverse)
 !
       call mem%dealloc(cholesky_inverse, solver%n_cholesky, solver%n_cholesky)
 !
@@ -2976,7 +2987,7 @@ contains
       call cpu_time(e_invert_time)
 !
 !
-   end subroutine invert_overlap_cholesky_vecs_eri_cd
+   end subroutine invert_Q_eri_cd
 !
 !
    subroutine construct_cholesky_vectors_eri_cd(solver, system)
@@ -3042,31 +3053,31 @@ contains
 !
 !     Read diagonal info
 !
-      call disk%open_file(solver%diagonal_info_construct, 'read')
-      rewind(solver%diagonal_info_construct%unit)
+      call disk%open_file(solver%diagonal_info_cauchy_schwarz, 'read')
+      rewind(solver%diagonal_info_cauchy_schwarz%unit)
 !
       allocate(construct_sp(solver%n_sp))
 !
-      read(solver%diagonal_info_construct%unit) n_construct_sp, n_construct_aop
-      read(solver%diagonal_info_construct%unit) construct_sp
+      read(solver%diagonal_info_cauchy_schwarz%unit) n_construct_sp, n_construct_aop
+      read(solver%diagonal_info_cauchy_schwarz%unit) construct_sp
 !
-      call disk%close_file(solver%diagonal_info_construct)
+      call disk%close_file(solver%diagonal_info_cauchy_schwarz)
 !
 !     Read inverse of cholesky vectors of auxiliary overlap, L_JK^-1
 !
-      call disk%open_file(solver%cholesky_aux_inverse, 'read')
-      rewind(solver%cholesky_aux_inverse%unit)
+      call disk%open_file(solver%Q_inverse, 'read')
+      rewind(solver%Q_inverse%unit)
 !
       call mem%alloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
       aux_chol_inverse = zero
 !
       do I = 1, solver%n_cholesky
 !
-         read(solver%cholesky_aux_inverse%unit) aux_chol_inverse(1 + (I - 1) : solver%n_cholesky, I)
+         read(solver%Q_inverse%unit) aux_chol_inverse(1 + (I - 1) : solver%n_cholesky, I)
 !
       enddo
 !
-      call disk%close_file(solver%cholesky_aux_inverse)
+      call disk%close_file(solver%Q_inverse)
 !
 !     Transpose L_JK^-1
 !
@@ -3146,18 +3157,18 @@ contains
 !
          write(solver%cholesky_ao_vectors_info%unit, *) size_AB
 !
-         call disk%open_file(solver%basis_shell_data, 'read')
-         rewind(solver%basis_shell_data%unit)
+         call disk%open_file(solver%cholesky_basis, 'read')
+         rewind(solver%cholesky_basis%unit)
 !
-         read(solver%basis_shell_data%unit) n_sp_in_basis
+         read(solver%cholesky_basis%unit) n_sp_in_basis
 !
          call mem%alloc(basis_shell_info, n_sp_in_basis, 4)
          call mem%alloc(cholesky_basis, solver%n_cholesky, 3)
 !
-         read(solver%basis_shell_data%unit) basis_shell_info
-         read(solver%basis_shell_data%unit) cholesky_basis
+         read(solver%cholesky_basis%unit) basis_shell_info
+         read(solver%cholesky_basis%unit) cholesky_basis
 !
-         call disk%close_file(solver%basis_shell_data)
+         call disk%close_file(solver%cholesky_basis)
 !
          call mem%alloc(AB_info, n_AB_included, 3) ! [offset, A, B]
          AB_info = zero
@@ -3352,122 +3363,6 @@ contains
 !
    subroutine diagonal_test_eri_cd(solver, system)
 !!
-!!
-!!
-      implicit none
-!
-      class(eri_cd) :: solver
-      type(molecular_system) :: system
-!
-      real(dp), dimension(:), allocatable :: D_red, D
-      real(dp), dimension(:,:,:,:), allocatable :: g_ABAB
-!
-      real(dp) :: max_diff
-!
-      integer :: n_sig_sp, n_sig_aop, AB_offset, x, y, xy_red, xy_full, sp, A, B
-!
-      type(interval) :: A_interval, B_interval
-!
-      logical, dimension(:), allocatable :: sig_sp
-!
-!     Read diagonal information
-!
-      call disk%open_file(solver%diagonal_info_target, 'read')
-      rewind(solver%diagonal_info_target%unit)
-!
-      read(solver%diagonal_info_target%unit) n_sig_sp, n_sig_aop
-!
-      call mem%alloc(D_red, n_sig_aop)
-!
-      allocate(sig_sp(solver%n_sp))
-!
-      read(solver%diagonal_info_target%unit) sig_sp
-      read(solver%diagonal_info_target%unit) D_red
-!
-      call disk%close_file(solver%diagonal_info_target)
-!
-      call mem%alloc(D, solver%n_ao**2)
-      D = zero
-!
-      AB_offset = 0
-      sp = 0
-!
-      do B = 1, solver%n_s 
-!
-         B_interval = system%shell_limits(B)
-!
-         do A = B, solver%n_s
-!
-            A_interval = system%shell_limits(A)
-!
-            sp = sp + 1
-!
-            call mem%alloc(g_ABAB, &
-                     (A_interval%size), (B_interval%size), &
-                     (A_interval%size), (B_interval%size))
-!
-               g_ABAB = zero
-               call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
-!
-               do x = 1, (A_interval%size)
-                  do y = 1, (B_interval%size)
-!
-                     xy_full = solver%n_ao*(y + B_interval%first - 2) + x + A_interval%first - 1
-!
-                     D(xy_full) = g_ABAB(x, y, x, y)
-!
-                  enddo
-               enddo
-!
-               call mem%dealloc(g_ABAB, &
-                     (A_interval%size), (B_interval%size), &
-                     (A_interval%size), (B_interval%size))
-!
-            if (sig_sp(sp)) then
-!
-               do x = 1, (A_interval%size)
-                  do y = 1, (B_interval%size)
-!
-                     xy_full = solver%n_ao*(y + B_interval%first - 2) + x + A_interval%first - 1
-!
-                     if (A .ne. B) then 
-!
-                        xy_red = (A_interval%size)*(y-1)+x
-!
-                     else
-!
-                        xy_red  = (max(y,x)*(max(y,x)-3)/2) + y + x
-!
-                     endif
-!
-                     D(xy_full) = D(xy_full) - D_red(xy_red + AB_offset)
-!
-                  enddo
-               enddo
-!
-               AB_offset = AB_offset + get_size_sp(A_interval, B_interval)
-!
-            endif
-         enddo
-      enddo
-!
-!     Calculate maximal difference and minimal difference
-!
-      max_diff = get_abs_max(D, solver%n_ao**2)
-!
-      call mem%dealloc(D, solver%n_ao**2)
-      call mem%dealloc(D_red, n_sig_aop)
-!
-      write(output%unit, '(/t2, a)')'- Testing the Screened diagonal:'
-!
-      write(output%unit, '(/t6, a, e12.4)')'Maximal difference between screened and actual diagonal: ', max_diff
-      flush(output%unit)
-!
-   end subroutine diagonal_test_eri_cd
-!
-!
-   subroutine cholesky_vecs_diagonal_test_eri_cd(solver, system)
-!!
 !!    Cholesky vectors diagonal test
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
@@ -3502,17 +3397,17 @@ contains
 !
 !     Read diagonal information
 !
-      call disk%open_file(solver%diagonal_info_construct, 'read')
+      call disk%open_file(solver%diagonal_info_cauchy_schwarz, 'read')
 !
-      rewind(solver%diagonal_info_construct%unit)
+      rewind(solver%diagonal_info_cauchy_schwarz%unit)
 !
-      read(solver%diagonal_info_construct%unit) n_construct_sp, n_construct_aop
+      read(solver%diagonal_info_cauchy_schwarz%unit) n_construct_sp, n_construct_aop
 !
       allocate(construct_sp(solver%n_sp))
 !
-      read(solver%diagonal_info_construct%unit) construct_sp
+      read(solver%diagonal_info_cauchy_schwarz%unit) construct_sp
 !
-      call disk%close_file(solver%diagonal_info_construct)
+      call disk%close_file(solver%diagonal_info_cauchy_schwarz)
 !
 !     Prepare for construction of diagonal
 !
@@ -3663,7 +3558,7 @@ contains
       write(output%unit, '(t6, a71, e12.4)')'Minimal element of difference between approximate and actual diagonal: ', min_diff
       flush(output%unit)
 !
-   end subroutine cholesky_vecs_diagonal_test_eri_cd
+   end subroutine diagonal_test_eri_cd
 !
 !
    subroutine full_test_cholesky_vecs_cd_eri_solver(solver, system)
@@ -3692,17 +3587,17 @@ contains
 !
 !     Read significant sp info 
 !
-      call disk%open_file(solver%diagonal_info_construct, 'read')
+      call disk%open_file(solver%diagonal_info_cauchy_schwarz, 'read')
 !
-      rewind(solver%diagonal_info_construct%unit)
+      rewind(solver%diagonal_info_cauchy_schwarz%unit)
 !
-      read(solver%diagonal_info_construct%unit) n_construct_sp, n_construct_aop
+      read(solver%diagonal_info_cauchy_schwarz%unit) n_construct_sp, n_construct_aop
 !
       allocate(construct_sp(solver%n_sp))
 !
-      read(solver%diagonal_info_construct%unit) construct_sp
+      read(solver%diagonal_info_cauchy_schwarz%unit) construct_sp
 !
-      call disk%close_file(solver%diagonal_info_construct)
+      call disk%close_file(solver%diagonal_info_cauchy_schwarz)
 !
       call disk%open_file(solver%cholesky_ao_vectors, 'read')
       call disk%open_file(solver%cholesky_ao_vectors_info, 'read')
@@ -3948,7 +3843,7 @@ contains
    end subroutine read_settings_eri_cd
 !
 !
-   subroutine construct_mo_cholesky_vecs_cd_eri_solver(solver, system, n_mo, orbital_coefficients)
+   subroutine construct_mo_cholesky_vectors_cd_eri_solver(solver, system, n_mo, orbital_coefficients)
 !!
 !!    Construct MO Cholesky vectors
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
@@ -4001,14 +3896,14 @@ contains
 !
       allocate(construct_sp(solver%n_sp))
 !
-      call disk%open_file(solver%diagonal_info_construct, 'read')
+      call disk%open_file(solver%diagonal_info_cauchy_schwarz, 'read')
 !
-      rewind(solver%diagonal_info_construct%unit)
+      rewind(solver%diagonal_info_cauchy_schwarz%unit)
 !
-      read(solver%diagonal_info_construct%unit) n_construct_sp, n_construct_aop
-      read(solver%diagonal_info_construct%unit) construct_sp
+      read(solver%diagonal_info_cauchy_schwarz%unit) n_construct_sp, n_construct_aop
+      read(solver%diagonal_info_cauchy_schwarz%unit) construct_sp
 !
-      call disk%close_file(solver%diagonal_info_construct)
+      call disk%close_file(solver%diagonal_info_cauchy_schwarz)
 !
 !     We batch over J, MO transforming L_pq^J for as many Js as we can manage.
 !
@@ -4285,7 +4180,7 @@ contains
       call cholesky_mo_timer%freeze()
       call cholesky_mo_timer%switch_off()
 !
-   end subroutine construct_mo_cholesky_vecs_cd_eri_solver
+   end subroutine construct_mo_cholesky_vectors_cd_eri_solver
 !
 !
    subroutine print_banner_eri_cd(solver)
