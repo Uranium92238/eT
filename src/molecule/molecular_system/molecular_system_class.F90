@@ -34,7 +34,7 @@ module molecular_system_class
 !
    implicit none
 !
-   include "../libint/atom_init_cdef.F90"
+   include "../../libint/atom_init_cdef.F90"
 !
    type :: molecular_system
 !
