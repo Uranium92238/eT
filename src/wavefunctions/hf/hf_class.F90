@@ -1482,7 +1482,7 @@ contains
 !
       real(dp), dimension(wf%system%max_shell_size**4) :: g 
 !
-      integer :: max_shell_size, thread = 0, skip
+      integer :: thread = 0, skip
 !
 !     Preallocate the vector that holds the shell quadruple 
 !     ERI integrals, then enter the construction loop 

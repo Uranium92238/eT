@@ -335,7 +335,7 @@ contains
             B_interval = wf%system%shell_limits(B)
 !
             call mem%alloc(s_AB, A_interval%size, B_interval%size)
-            call wf%system%ao_integrals%construct_ao_s_wx(s_AB, A, B)
+            call wf%system%construct_ao_s_wx(s_AB, A, B)
 !
              do x = 1, A_interval%size
                 do y = 1, B_interval%size
@@ -390,7 +390,7 @@ contains
             call mem%alloc(mu_AB_Y, A_interval%size, B_interval%size)
             call mem%alloc(mu_AB_Z, A_interval%size, B_interval%size)
 !
-            call wf%system%ao_integrals%construct_ao_mu_wx(mu_AB_X, mu_AB_Y, mu_AB_Z, A, B)
+            call wf%system%construct_ao_mu_wx(mu_AB_X, mu_AB_Y, mu_AB_Z, A, B)
 !
              do x = 1, A_interval%size
                 do y = 1, B_interval%size
@@ -461,7 +461,7 @@ contains
             call mem%alloc(q_AB_yz, A_interval%size, B_interval%size)
             call mem%alloc(q_AB_zz, A_interval%size, B_interval%size)
 !
-            call wf%system%ao_integrals%construct_ao_q_wx(q_AB_xx, q_AB_xy, q_AB_xz, q_AB_yy, q_AB_yz, q_AB_zz, A, B)
+            call wf%system%construct_ao_q_wx(q_AB_xx, q_AB_xy, q_AB_xz, q_AB_yy, q_AB_yz, q_AB_zz, A, B)
 !
              do x = 1, A_interval%size
                 do y = 1, B_interval%size

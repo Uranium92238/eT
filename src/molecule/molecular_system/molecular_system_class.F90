@@ -29,7 +29,6 @@ module molecular_system_class
    use io_utilities
    use interval_class
    use libint_initialization
-   use ao_integral_tool_class
    use active_atoms_info_class
 !
    implicit none
@@ -49,8 +48,6 @@ module molecular_system_class
       integer :: n_s
 !
       type(atomic), dimension(:), allocatable :: atoms
-!
-      type(ao_integral_tool) :: ao_integrals
 !
       type(interval), dimension(:), allocatable :: shell_limits 
 !
@@ -99,8 +96,10 @@ module molecular_system_class
 !
       procedure :: construct_ao_h_wx                        => construct_ao_h_wx_molecular_system      
       procedure :: construct_ao_g_wxyz                      => construct_ao_g_wxyz_molecular_system  
-!    
       procedure, nopass :: construct_ao_g_wxyz_epsilon      => construct_ao_g_wxyz_epsilon_molecular_system      
+      procedure :: construct_ao_s_wx                        => construct_ao_s_wx_molecular_system     
+      procedure :: construct_ao_mu_wx                       => construct_ao_mu_wx_molecular_system     
+      procedure :: construct_ao_q_wx                        => construct_ao_q_wx_molecular_system     
 !
    end type molecular_system
 !
