@@ -25,6 +25,8 @@ extern "C" {
 #endif
 
 void construct_ao_s_wx(double *s, int *s1, int *s2);
+void construct_ao_s_wx_1der(double *s_1x, double *s_1y, double *s_1z, 
+                  double *s_2x, double *s_2y, double *s_2z, int *s1, int *s2);
 
 #ifdef __cplusplus
 }

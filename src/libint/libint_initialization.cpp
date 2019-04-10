@@ -52,8 +52,8 @@ extern vector<Engine> nuclear;
 Engine overlap;
 extern Engine overlap;
 
-Engine overlap_1;
-extern Engine overlap_1;
+Engine overlap_1der;
+extern Engine overlap_1der;
 
 Engine dipole;
 extern Engine dipole;
@@ -153,8 +153,8 @@ void initialize_overlap(){
     Engine temporary(Operator::overlap, basis.max_nprim(), basis.max_l());
     overlap = temporary;
 
-    Engine temporary_1(Operator::overlap, basis.max_nprim(), basis.max_l(),1);
-    overlap_1 = temporary_1;
+    Engine temporary_1der(Operator::overlap, basis.max_nprim(), basis.max_l(),1);
+    overlap_1der = temporary_1der;
 
 }
 

@@ -81,7 +81,7 @@ void construct_ao_s_wx(double *s, int *s1, int *s2){
 
 }
 
-void construct_ao_s_wx_1(double *s_1x, double *s_1y, double *s_1z, 
+void construct_ao_s_wx_1der(double *s_1x, double *s_1y, double *s_1z, 
                   double *s_2x, double *s_2y, double *s_2z, int *s1, int *s2){
 
   //
@@ -90,12 +90,12 @@ void construct_ao_s_wx_1(double *s_1x, double *s_1y, double *s_1z,
   // with respect to the x-coordinate of the atom that s1 is centered on, etc.
   //
 
-  const auto& buf_vec = overlap_1.results();
+  const auto& buf_vec = overlap_1der.results();
 
   auto n1 = basis[*s1 - 1].size();
   auto n2 = basis[*s2 - 1].size();
 
-  overlap_1.compute(basis[*s1 - 1], basis[*s2 - 1]);
+  overlap_1der.compute(basis[*s1 - 1], basis[*s2 - 1]);
 
   // Get pointers to location of integrals
 
