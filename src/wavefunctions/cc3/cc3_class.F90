@@ -56,7 +56,7 @@ module cc3_class
 !     Left Jacobian intermediates files
 !
       type(file)  :: X_abdi
-      type(file)  :: X_baid
+      type(file)  :: X_abid
       type(file)  :: Y_akil
 !
    contains
@@ -99,8 +99,9 @@ module cc3_class
                                                    => prepare_cc3_jacobian_transpose_integrals_cc3
       procedure :: prepare_cc3_jacobian_transpose_intermediates &
                                                    => prepare_cc3_jacobian_transpose_intermediates_cc3
+!
       procedure :: jacobian_transpose_cc3_write_X  => jacobian_transpose_cc3_write_X_cc3
-      procedure :: sort_X_to_baid_and_write        => sort_X_to_baid_and_write_cc3
+      procedure :: sort_X_to_abid_and_write        => sort_X_to_abid_and_write_cc3
       procedure :: construct_X_and_Y               => construct_X_and_Y_cc3
 !
       procedure :: effective_jacobian_transpose_transformation  &

@@ -20,7 +20,9 @@
    module subroutine prepare_for_jacobian_transpose_cc3(wf)
 !!
 !!    Prepare for Jacobian transpose (CC3)
-!!    Write some integrals and intermediates to disk
+!!    Set up files containing integrals and intermediates for CC3 jacobian transpose
+!!    Called from solver
+!!
 !!    Written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
    implicit none
@@ -119,7 +121,7 @@
    end subroutine jacobian_transpose_cc3_write_X_cc3
 !
 !
-   module subroutine sort_X_to_baid_and_write_cc3(wf)
+   module subroutine sort_X_to_abid_and_write_cc3(wf)
 !!
 !!    Read in intermediate X_abdi from file, resort to X_baid and write to file again
 !!
@@ -129,4 +131,4 @@
 !
       class(cc3) :: wf
 !
-   end subroutine sort_X_to_baid_and_write_cc3
+   end subroutine sort_X_to_abid_and_write_cc3
