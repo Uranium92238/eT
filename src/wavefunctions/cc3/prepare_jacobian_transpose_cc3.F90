@@ -43,7 +43,8 @@ contains
    module subroutine prepare_for_jacobian_transpose_cc3(wf)
 !!
 !!    Prepare for Jacobian transpose (CC3)
-!!    Called from solve - Write some integrals and intermediates to disk
+!!    Set up files containing integrals and intermediates for CC3 jacobian transpose
+!!    Called from solver
 !!
 !!    Written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
@@ -351,7 +352,7 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, pointer :: X_abdj_p => null()
       real(dp), dimension(:,:,:,:), contiguous, pointer :: X_abdk_p => null()
 !
-      real(dp), dimension(:,:,:,:), allocatable :: Y_aikl
+      real(dp), dimension(:,:,:,:), allocatable :: Y_alik
       real(dp), dimension(:,:,:,:), allocatable :: Y_akil
 !
 !     Integrals and Pointers
@@ -391,12 +392,20 @@ contains
       integer :: ioerror = -1
       integer :: l
 !
+!     Arrays for the triples amplitudes
+!
       call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%alloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
       call mem%alloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1342(wf%t2, t_abji, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Array for the whole intermediate Y_alik
+!
+      call mem%alloc(Y_alik, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+!     Setup and Batching loops for the C3-contributions to rho1 and rho2
 !
       req_0 = 0
       req_1 = 2*wf%n_v**3 + (wf%n_o)*(wf%n_v)**2
@@ -451,8 +460,6 @@ contains
          X_abdk = zero
 !
       endif
-!
-      call mem%alloc(Y_aikl, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
       call disk%open_file(wf%g_bdck_t,'read')
       call disk%open_file(wf%g_ljck_t,'read')
@@ -618,7 +625,7 @@ contains
                         call wf%omega_cc3_eps(i, j, k, t_abc)
 !
                         call wf%construct_X_and_Y(i, j, k, t_abc, u_abc, v_abc,  &
-                                                   Y_aikl,                       &
+                                                   Y_alik,                       &
                                                    X_abdi_p(:,:,:,i_rel),        &
                                                    X_abdj_p(:,:,:,j_rel),        &
                                                    X_abdk_p(:,:,:,k_rel),        &
@@ -678,17 +685,18 @@ contains
 !
       endif
 !
-!     Resort X_abdi to X_baid for the final contraction with C^ac_il to sigma_dl
+!     Resort X_abdi to X_abid for the final contraction with C^ac_il to sigma_dl
 !
-      call wf%sort_X_to_baid_and_write()
+      call wf%sort_X_to_abid_and_write()
+      call disk%close_file(wf%X_abdi)
 !
-!     sort Y_aikl to akil and write to disk 
+!     sort Y_alik (ordered as alik) to akil and write to disk 
 !
       call mem%alloc(Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call sort_1234_to_1324(Y_aikl, Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call sort_1234_to_1432(Y_alik, Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call mem%dealloc(Y_aikl, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call mem%dealloc(Y_alik, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
       call wf%Y_akil%init('Y_akil','direct','unformatted', dp*(wf%n_v)*(wf%n_o)**2)
       call disk%open_file(wf%Y_akil,'write')
@@ -705,7 +713,7 @@ contains
 !
       call mem%dealloc(Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call disk%close_file(wf%Y_akil)
+      call disk%close_file(wf%Y_akil,'keep')
 !
    end subroutine prepare_cc3_jacobian_transpose_intermediates_cc3
 !
@@ -735,7 +743,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: v_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(inout)   :: Y_aikl
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(inout)   :: Y_aikl ! ordered alik
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_abdi
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_abdj
@@ -996,9 +1004,9 @@ contains
    end subroutine jacobian_transpose_cc3_write_X_cc3
 !
 !
-   module subroutine sort_X_to_baid_and_write_cc3(wf)
+   module subroutine sort_X_to_abid_and_write_cc3(wf)
 !!
-!!    Read in intermediate X_abdi from file, resort to X_baid and write to file again
+!!    Read in intermediate X_abdi from file, resort to X_abid and write to file again
 !!
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -1007,7 +1015,7 @@ contains
       class(cc3) :: wf
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_abdi
-      real(dp), dimension(:,:,:,:), allocatable :: X_baid
+      real(dp), dimension(:,:,:,:), allocatable :: X_abid
 !
       type(batching_index) :: batch_i
       integer :: record
@@ -1024,8 +1032,8 @@ contains
 !
       call mem%batch_setup(batch_i, req_0, req_i)
 !
-      call wf%X_baid%init('X_baid','direct','unformatted', dp*(wf%n_v)**2)
-      call disk%open_file(wf%X_baid,'write')
+      call wf%X_abid%init('X_abid','direct','unformatted', dp*(wf%n_v)**2)
+      call disk%open_file(wf%X_abid,'write')
 !
       do i_batch = 1, batch_i%num_batches
 !
@@ -1040,7 +1048,7 @@ contains
             read(wf%X_abdi%unit, rec=i_abs, iostat=ioerror, iomsg=iom) X_abdi(:,:,:,i)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a)') 'Failed to read X_abdi file in sort_X_to_baid_and_write_cc3'
+               write(output%unit,'(t3,a)') 'Failed to read X_abdi file in sort_X_to_abid_and_write_cc3'
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -1048,11 +1056,11 @@ contains
 !
          enddo
 !
-!        Sort X_abdi to X_baid
+!        Sort X_abdi to X_abid
 !
-         call mem%alloc(X_baid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
+         call mem%alloc(X_abid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
 !
-         call sort_1234_to_2143(X_abdi, X_baid, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call sort_1234_to_2143(X_abdi, X_abid, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
          call mem%dealloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
@@ -1062,22 +1070,22 @@ contains
             do i = 1, batch_i%length
 !
                record  = (d - 1)*wf%n_o + batch_i%first + i - 1
-               write(wf%X_baid%unit, rec=record, iostat=ioerror) X_baid(:,:,i,d)
+               write(wf%X_abid%unit, rec=record, iostat=ioerror) X_abid(:,:,i,d)
 !
             enddo
          enddo
 !
          if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write X_baid file')
+            call output%error_msg('Failed to write X_abid file')
          endif
 !
-         call mem%dealloc(X_baid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
+         call mem%dealloc(X_abid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
 !
       enddo ! batch_i
 !
-      call disk%close_file(wf%X_baid)
+      call disk%close_file(wf%X_abid,'keep')
 !
-   end subroutine sort_X_to_baid_and_write_cc3
+   end subroutine sort_X_to_abid_and_write_cc3
 !
 !
 end submodule prepare_jacobian_transpose
