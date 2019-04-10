@@ -74,7 +74,7 @@ if (args.SAD_dir):
     sad_dir = os.path.abspath(args.SAD_dir)
     os.environ['SAD_ET_DIR'] = sad_dir
 elif not 'SAD_ET_DIR' in os.environ:
-    sad_dir = os.path.join('${CMAKE_SOURCE_DIR}','src','molecular_system','sad')
+    sad_dir = os.path.join('${CMAKE_SOURCE_DIR}','src','molecule','sad')
     os.environ['SAD_ET_DIR'] = sad_dir
 
 #Set the Libint basis directory
