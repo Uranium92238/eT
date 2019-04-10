@@ -116,9 +116,39 @@
 !
       integer, intent(in) :: s1, s2
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(inout) :: s
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s
 !
    end subroutine construct_ao_s_wx_molecular_system
+!
+!
+   module subroutine construct_ao_s_wx_1der_molecular_system(molecule, s_1x, s_1y, s_1z, s_2x, s_2y, s_2z, s1, s2) 
+!!
+!!    Construct s_αβ 1st-derivative
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Fortran wrapper for the C++ routine that calculates and
+!!    saves parts of the s_αβ first derivative integrals in the arrays s_1x, s_1y, ..., s_2z. 
+!!
+!!    s1 and s2 are the shells that w and x respectively belong to.
+!! 
+!!    s_1x contains the first derivative with respect to the x component of the atom that s1 is centered on,
+!!    s_1y contains the first derivative with respect to the y component of the atom that s1 is centered on,
+!!    and so on...
+!!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      integer, intent(in) :: s1, s2
+!
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_1x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_1y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_1z
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_2x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_2y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_2z
+!
+   end subroutine construct_ao_s_wx_1der_molecular_system
 !
 !
    module subroutine construct_ao_mu_wx_molecular_system(molecule, mu_X, mu_Y, mu_Z, s1, s2)

@@ -93,10 +93,14 @@ module molecular_system_class
 !
       procedure :: translate_from_input_order_to_eT_order   => translate_from_input_order_to_eT_order_molecular_system
 !
-      procedure :: construct_ao_h_wx                        => construct_ao_h_wx_molecular_system      
+      procedure :: construct_ao_h_wx                        => construct_ao_h_wx_molecular_system     
+! 
       procedure :: construct_ao_g_wxyz                      => construct_ao_g_wxyz_molecular_system  
-      procedure, nopass :: construct_ao_g_wxyz_epsilon      => construct_ao_g_wxyz_epsilon_molecular_system      
-      procedure :: construct_ao_s_wx                        => construct_ao_s_wx_molecular_system     
+      procedure, nopass :: construct_ao_g_wxyz_epsilon      => construct_ao_g_wxyz_epsilon_molecular_system
+!      
+      procedure :: construct_ao_s_wx                        => construct_ao_s_wx_molecular_system
+      procedure :: construct_ao_s_wx_1der                   => construct_ao_s_wx_1der_molecular_system
+!   
       procedure :: construct_ao_mu_wx                       => construct_ao_mu_wx_molecular_system     
       procedure :: construct_ao_q_wx                        => construct_ao_q_wx_molecular_system     
 !

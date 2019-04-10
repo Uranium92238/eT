@@ -65,6 +65,8 @@ module wavefunction_class
       procedure :: get_ao_mu_wx                    => get_ao_mu_wx_wavefunction
       procedure :: get_ao_q_wx                     => get_ao_q_wx_wavefunction
 !
+    !  procedure :: construct_full_s_wx_1der        => construct_full_s_wx_1der_wavefunction
+!
       procedure :: mo_transform                    => mo_transform_wavefunction
       procedure :: mo_transform_and_save_h         => mo_transform_and_save_h_wavefunction
 !
@@ -311,8 +313,6 @@ contains
 !!
 !!    Get AO s 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
-!!
-!!    Uses the integral tool to construct the full one-electron h matrix.
 !!
       implicit none 
 !

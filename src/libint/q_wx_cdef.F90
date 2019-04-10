@@ -25,7 +25,7 @@ interface
 !
       implicit none
 !
-      real(c_double), dimension(1,1) :: q_xx, q_xy, q_xz, q_yy, q_yz, q_zz
+      real(c_double) :: q_xx(*), q_xy(*), q_xz(*), q_yy(*), q_yz(*), q_zz(*)
       integer(c_int) :: s1, s2
 !
    end subroutine construct_ao_q_wx_c
