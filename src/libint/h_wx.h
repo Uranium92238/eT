@@ -26,6 +26,9 @@ extern "C" {
 
 void construct_ao_h_wx(double *h, int *s1, int *s2);
 
+void construct_ao_h_wx_1der(double *h_1x, double *h_1y, double *h_1z, 
+                  double *h_2x, double *h_2y, double *h_2z, int *s1, int *s2);
+
 #ifdef __cplusplus
 }
 #endif

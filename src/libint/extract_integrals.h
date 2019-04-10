@@ -26,6 +26,8 @@ extern "C" {
 
 void extract_integrals(double *ints_fortran_order, const double *ints_cxx_order, int n1, int n2, double prefac);
 
+void extract_and_add_integrals(double *ints_fortran_order, const double *ints_cxx_order, int n1, int n2, double prefac);
+
 #ifdef __cplusplus
 }
 #endif

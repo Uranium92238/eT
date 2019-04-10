@@ -68,6 +68,43 @@ contains
    end subroutine construct_ao_h_wx_molecular_system
 !
 !
+   module subroutine construct_ao_h_wx_1der_molecular_system(molecule, h_1x, h_1y, h_1z, h_2x, h_2y, h_2z, s1, s2) 
+!!
+!!    Construct h_αβ 1st-derivative
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Fortran wrapper for the C++ routine that calculates and
+!!    saves parts of the h_αβ first derivative integrals in the arrays h_1x, h_1y, ..., h_2z. 
+!!
+!!    s1 and s2 are the shells that w and x respectively belong to.
+!! 
+!!    h_1x contains the first derivative with respect to the x component of the atom that s1 is centered on,
+!!    h_1y contains the first derivative with respect to the y component of the atom that s1 is centered on,
+!!    and so on...
+!!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      integer, intent(in) :: s1, s2
+!
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_1x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_1y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_1z
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_2x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_2y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_2z
+!
+      integer(i6) :: s1_4, s2_4 
+!
+      s1_4 = int(s1,i6)
+      s2_4 = int(s2,i6)
+!
+      call construct_ao_h_wx_1der_c(h_1x, h_1y, h_1z, h_2x, h_2y, h_2z, s1_4, s2_4) 
+!
+   end subroutine construct_ao_h_wx_1der_molecular_system
+!
+!
    module subroutine construct_ao_g_wxyz_molecular_system(molecule, g, s1, s2, s3, s4)
 !!
 !!    Construct g_αβγδ
@@ -183,7 +220,7 @@ contains
 !
       integer, intent(in) :: s1, s2
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size,molecule%shell_limits(s1)%size), intent(out) :: s
+      real(dp), dimension(molecule%shell_limits(s1)%size,molecule%shell_limits(s2)%size), intent(out) :: s
 !
       integer(i6) :: s1_4, s2_4 ! Integers that are passed to libint
 !
@@ -215,12 +252,12 @@ contains
 !
       integer, intent(in) :: s1, s2
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_1x
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_1y
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_1z
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_2x
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_2y
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_2z
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: s_1x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: s_1y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: s_1z
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: s_2x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: s_2y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: s_2z
 !
       integer(i6) :: s1_4, s2_4 
 !

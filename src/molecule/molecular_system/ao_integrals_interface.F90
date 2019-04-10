@@ -37,6 +37,27 @@
    end subroutine construct_ao_h_wx_molecular_system
 !
 !
+   module subroutine construct_ao_h_wx_1der_molecular_system(molecule, h_1x, h_1y, h_1z, h_2x, h_2y, h_2z, s1, s2) 
+!!
+!!    Construct h_αβ 1st-derivative
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      integer, intent(in) :: s1, s2
+!
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_1x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_1y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_1z
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_2x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_2y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_2z
+!
+   end subroutine construct_ao_h_wx_1der_molecular_system
+!
+!
    module subroutine construct_ao_g_wxyz_molecular_system(molecule, g, s1, s2, s3, s4)
 !!
 !!    Construct g_αβγδ

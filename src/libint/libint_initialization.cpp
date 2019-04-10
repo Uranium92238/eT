@@ -46,8 +46,14 @@ extern vector<Engine> electronic_repulsion_engines;
 vector<Engine> kinetic(omp_get_max_threads());
 extern vector<Engine> kinetic;
 
+Engine kinetic_1der;
+extern Engine kinetic_1der;
+
 vector<Engine> nuclear(omp_get_max_threads());
 extern vector<Engine> nuclear;
+
+Engine nuclear_1der;
+extern Engine nuclear_1der;
 
 Engine overlap;
 extern Engine overlap;
@@ -133,6 +139,9 @@ void initialize_kinetic(){
         kinetic[i] = temporary; 
     }
 
+    Engine temporary_1der(Operator::kinetic, basis.max_nprim(), basis.max_l(),1);
+    kinetic_1der = temporary_1der; 
+
 }
 
 void initialize_nuclear(){
@@ -145,6 +154,10 @@ void initialize_nuclear(){
     for (int i = 0; i != omp_get_max_threads(); i++){
         nuclear[i] = temporary; 
     }
+
+    Engine temporary_1der(Operator::nuclear, basis.max_nprim(), basis.max_l(),1);
+    temporary_1der.set_params(make_point_charges(atoms));
+    nuclear_1der = temporary_1der; 
 
 }
 

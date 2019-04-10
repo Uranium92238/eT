@@ -52,3 +52,16 @@ void extract_integrals(double *ints_fortran_order, const double *ints_cxx_order,
 
 }
 
+void extract_and_add_integrals(double *ints_fortran_order, const double *ints_cxx_order, int n1, int n2, double prefac){
+
+   if (ints_cxx_order != nullptr){
+      for(auto f1=0; f1!=n1; ++f1){
+         for(auto f2=0; f2!=n2; ++f2){
+
+            ints_fortran_order[n1*f2 + f1] = ints_fortran_order[n1*f2 + f1] + prefac*ints_cxx_order[f1*n2 + f2];
+
+         }
+      }
+   }
+
+}
