@@ -52,6 +52,7 @@ module cc3_class
       type(file)  :: g_lbkc_t
       type(file)  :: g_leck_t
       type(file)  :: g_cdmk_t
+      type(file)  :: L_kcld_t
 !
 !     Left Jacobian intermediates files
 !
@@ -106,6 +107,8 @@ module cc3_class
                                                    => effective_jacobian_transpose_transformation_cc3
 !
       procedure :: jacobian_transpose_cc3_sigma1_t3_A1   => jacobian_transpose_cc3_sigma1_t3_A1_cc3
+      procedure :: jacobian_transpose_cc3_sigma1_t3_B1   => jacobian_transpose_cc3_sigma1_t3_B1_cc3
+      procedure :: jacobian_transpose_cc3_X_ck_calc      => jacobian_transpose_cc3_X_ck_calc_cc3
 !
    end type cc3
 !

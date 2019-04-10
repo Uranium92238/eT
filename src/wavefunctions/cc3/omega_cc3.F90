@@ -628,16 +628,17 @@ contains
 !
          call sort_1234_to_2134(g_pqrs,h_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_k%length)
 !
-         do k = 1,batch_k%length
-!
-            record = batch_k%first + k -1
-            write(wf%g_bdck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
-!
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write bdck_t file')
-         endif
+         call single_record_writer(batch_k, wf%g_bdck_t, h_pqrs)
+   !      do k = 1,batch_k%length
+!!
+   !         record = batch_k%first + k -1
+   !         write(wf%g_bdck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
+!!
+   !      enddo
+!!
+   !      if(ioerror .ne. 0) then
+   !         call output%error_msg('Failed to write bdck_t file')
+   !      endif
 !
          call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
@@ -668,16 +669,17 @@ contains
 !
          call sort_1234_to_2413(g_pqrs,h_pqrs,wf%n_v,wf%n_v,batch_k%length,wf%n_v)
 !
-         do k = 1,batch_k%length
-!
-            record = batch_k%first + k -1
-            write(wf%g_dbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
-!
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write dbkc_t file')
-         endif
+         call single_record_writer(batch_k, wf%g_dbkc_t, h_pqrs)
+   !      do k = 1,batch_k%length
+!!
+   !         record = batch_k%first + k -1
+   !         write(wf%g_dbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
+!!
+   !      enddo
+!!
+   !      if(ioerror .ne. 0) then
+   !         call output%error_msg('Failed to write dbkc_t file')
+   !      endif
 !
          call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
@@ -712,19 +714,20 @@ contains
 !
          call sort_1234_to_1324(g_pqrs,h_pqrs,wf%n_o,wf%n_o,wf%n_v,batch_k%length)
 !
-         do k = 1,batch_k%length
-            do j = 1,wf%n_o
+         call compound_record_writer(wf%n_o, batch_k, wf%g_ljck_t, h_pqrs)
+   !      do k = 1,batch_k%length
+   !         do j = 1,wf%n_o
+!!
+   !            record  = (batch_k%first + k - 2)*wf%n_o + j
+   !            write(wf%g_ljck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+!!
+   !         enddo
+   !      enddo
 !
-               record  = (batch_k%first + k - 2)*wf%n_o + j
-               write(wf%g_ljck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+!         if(ioerror .ne. 0) then
+!            call output%error_msg('Failed to write ljck_t file')
+!         endif
 !
-            enddo
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write ljck_t file')
-         endif
-
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
          call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
 !
@@ -753,19 +756,20 @@ contains
 !
          call sort_1234_to_4213(g_pqrs, h_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
 !
-         do k = 1,batch_k%length
-            do j = 1,wf%n_o
+         call compound_record_writer(wf%n_o, batch_k, wf%g_jlkc_t, h_pqrs)
+      !   do k = 1,batch_k%length
+      !      do j = 1,wf%n_o
+!!
+      !         record  = (batch_k%first + k - 2)*wf%n_o + j
+      !         write(wf%g_jlkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+!!
+      !      enddo
+      !   enddo
 !
-               record  = (batch_k%first + k - 2)*wf%n_o + j
-               write(wf%g_jlkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+!         if(ioerror .ne. 0) then
+!            call output%error_msg('Failed to write jlkc_t file')
+!         endif
 !
-            enddo
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write jlkc_t file')
-         endif
-
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !

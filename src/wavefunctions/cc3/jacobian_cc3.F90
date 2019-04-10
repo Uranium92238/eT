@@ -1221,13 +1221,10 @@ contains
       real(dp), dimension(:,:,:), allocatable :: L_J_ck_c1, L_J_db_c1, L_J_jl_c1 ! c1 transformed Cholesky vectors
       real(dp), dimension(:,:,:), allocatable :: L_J_ck, L_J_bd, L_J_kc, L_J_lj ! Cholesky vectors
 !
-      integer :: k, j, record
       type(batching_index) :: batch_k
 !
       integer :: req_0, req_k
       integer :: current_k_batch
-!
-      integer :: ioerror=-1
 !
 !
       call batch_k%init(wf%n_o)
@@ -1321,16 +1318,7 @@ contains
 !
 !        Write to file
 !
-         do k = 1, batch_k%length
-!
-            record = batch_k%first + k -1
-            write(wf%g_bdck_c1%unit, rec=record, iostat=ioerror) h_pqrs(:,:,:,k)
-!
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write bdck_c1 file')
-         endif
+         call single_record_writer(batch_k, wf%g_bdck_c1, h_pqrs)
 !
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
@@ -1388,16 +1376,7 @@ contains
 !
 !        Write to file
 !
-         do k = 1,batch_k%length
-!
-            record = batch_k%first + k -1
-            write(wf%g_dbkc_c1%unit, rec=record, iostat=ioerror) h_pqrs(:,:,:,k)
-!
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write dbkc_c1 file')
-         endif
+         call single_record_writer(batch_k, wf%g_dbkc_c1, h_pqrs)
 !
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
@@ -1496,18 +1475,7 @@ contains
 !
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
 !
-         do k = 1,batch_k%length
-            do j = 1,wf%n_o
-!
-               record  = (batch_k%first + k - 2)*wf%n_o + j
-               write(wf%g_ljck_c1%unit, rec=record, iostat=ioerror) h_pqrs(:,:,j,k)
-!
-            enddo
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write ljck_c1 file')
-         endif
+         call compound_record_writer(wf%n_o, batch_k, wf%g_ljck_c1, h_pqrs)
 !
          call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
 !
@@ -1565,18 +1533,7 @@ contains
 !
 !        Write to file
 !
-         do k = 1, batch_k%length
-            do j = 1, wf%n_o
-!
-               record  = (batch_k%first + k - 2)*wf%n_o + j
-               write(wf%g_jlkc_c1%unit, rec=record, iostat=ioerror) h_pqrs(:,:,j,k)
-!
-            enddo
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write jlkc_c1 file')
-         endif
+         call compound_record_writer(wf%n_o, batch_k, wf%g_jlkc_c1, h_pqrs)
 !
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !

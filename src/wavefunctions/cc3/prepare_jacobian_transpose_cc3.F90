@@ -67,6 +67,8 @@ contains
 !!    (le|ck) ordered as lce,k
 !!    (cd|mk) ordered as dcm,k
 !!
+!!    L_kcld  ordered as ckd,l
+!!
 !!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
       implicit none
@@ -76,13 +78,10 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_pqrs !Array for constructed integrals
       real(dp), dimension(:,:,:,:), allocatable :: h_pqrs !Array for sorted integrals
 !
-      integer :: i, k, d, record
       type(batching_index) :: batch_d, batch_k
 !
       integer :: req_0, req_d, req_k
       integer :: d_batch, k_batch
-!
-      integer :: ioerror=-1
 !
 !     (be|cd)
 !
@@ -108,17 +107,7 @@ contains
                           1,wf%n_v, &
                           batch_d%first,batch_d%last)
 !
-         do d = 1,batch_d%length
-!
-            record = batch_d%first + d - 1
-!
-            write(wf%g_becd_t%unit,rec=record,iostat=ioerror) g_pqrs(:,:,:,d)
-!
-            if(ioerror .ne. 0) then
-               call output%error_msg('Failed to write becd_t file')
-            endif
-!
-         enddo
+         call single_record_writer(batch_d, wf%g_becd_t, g_pqrs)
 !
       enddo
 !
@@ -155,18 +144,7 @@ contains
 !
          call sort_1234_to_3124(g_pqrs , h_pqrs , wf%n_o , wf%n_o , wf%n_o , batch_k%length)
 !
-         do k = 1,batch_k%length
-            do i = 1, wf%n_o
-!
-               record = (batch_k%first + k - 2)*wf%n_o + i
-               write(wf%g_milk_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,i,k)
-!
-               if(ioerror .ne. 0) then
-                  call output%error_msg('Failed to write milk_t file')
-               endif
-!
-            enddo
-         enddo
+         call compound_record_writer(wf%n_o, batch_k, wf%g_milk_t, h_pqrs)
 !
       enddo
 !
@@ -203,16 +181,7 @@ contains
 !
          call sort_1234_to_2413(g_pqrs , h_pqrs , wf%n_o , wf%n_v , batch_k%length , wf%n_v) ! sort to bclk
 !
-         do k = 1,batch_k%length
-!
-               record = batch_k%first + k - 1
-               write(wf%g_lbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
-!
-               if(ioerror .ne. 0) then
-                  call output%error_msg('Failed to write lbkc_t file')
-               endif
-!
-         enddo
+         call single_record_writer(batch_k, wf%g_lbkc_t, h_pqrs)
 !
          call mem%dealloc(g_pqrs, wf%n_o , wf%n_v , batch_k%length , wf%n_v)
          call mem%dealloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
@@ -251,16 +220,7 @@ contains
 !
          call sort_1234_to_1324(g_pqrs , h_pqrs , wf%n_o , wf%n_v , wf%n_v , batch_k%length) ! lcek
 !
-         do k = 1,batch_k%length
-!
-            record = batch_k%first + k - 1
-            write(wf%g_leck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
-!
-            if(ioerror .ne. 0) then
-               call output%error_msg('Failed to write leck_t file')
-            endif
-!
-         enddo
+         call single_record_writer(batch_k, wf%g_leck_t, h_pqrs)
 !
       enddo
 !
@@ -300,16 +260,7 @@ contains
 !
          call sort_1234_to_2134(g_pqrs , h_pqrs , wf%n_o , wf%n_v , wf%n_v , batch_k%length)
 !
-         do k = 1,batch_k%length
-!
-            record = batch_k%first + k - 1
-            write(wf%g_cdmk_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
-!
-            if(ioerror .ne. 0) then
-               call output%error_msg('Failed to write cdmk_t file')
-            endif
-!
-         enddo
+         call single_record_writer(batch_k, wf%g_cdmk_t, h_pqrs)
 !
       enddo
 !
@@ -319,7 +270,43 @@ contains
       call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
       call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
 !
+!     L_kcld  ordered as ckd,l
 !
+      req_0 = 0
+      req_k = 2*wf%n_v**2 * wf%n_o
+!
+      call mem%batch_setup(batch_k, req_0, req_k)
+!
+      call batch_k%init(wf%n_o)
+      call mem%batch_setup(batch_k, req_0, req_k)
+      call batch_k%determine_limits(1)
+!
+      call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+      call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_v, batch_k%length)
+!
+      call wf%L_kcld_t%init('L_kcld_t','direct','unformatted', dp * wf%n_o* wf%n_v**2)
+      call disk%open_file(wf%L_kcld_t,'write')
+      call disk%open_file(wf%L_jbkc_t,'read')
+!
+      do k_batch = 1, batch_k%num_batches
+!
+!        L_jbkc ordered as bcjk is already on disk from the GS
+!
+         call compound_record_reader(wf%n_o, batch_k, wf%L_jbkc_t, g_pqrs)
+!
+         call sort_1234_to_1324(g_pqrs, h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+!
+         call single_record_writer(batch_k, wf%L_kcld_t, h_pqrs)
+!
+      enddo
+!
+      call disk%close_file(wf%L_kcld_t,'keep')
+!
+      call batch_k%determine_limits(1)
+      call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+      call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_v, batch_k%length)
+
+!      
    end subroutine prepare_cc3_jacobian_transpose_integrals_cc3
 !
 !
@@ -405,7 +392,7 @@ contains
 !
       call mem%alloc(Y_alik, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-!     Setup and Batching loops for the C3-contributions to rho1 and rho2
+!     Setup and Batching loops
 !
       req_0 = 0
       req_1 = 2*wf%n_v**3 + (wf%n_o)*(wf%n_v)**2
@@ -655,7 +642,7 @@ contains
       call disk%close_file(wf%g_ljck_t)
       call disk%close_file(wf%g_lbkc_t)
 !
-!     Allocate integral arrays and assign pointers.
+!     Deallocate integral arrays
 !
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
@@ -684,6 +671,14 @@ contains
          call mem%dealloc(g_lbkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
 !
       endif
+!
+!     Deallocate amplitude arrays
+!
+      call mem%dealloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%dealloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%dealloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+      call mem%dealloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
 !     Resort X_abdi to X_abid for the final contraction with C^ac_il to sigma_dl
 !
@@ -730,7 +725,7 @@ contains
 !!    g_lbic, g_lbjc, g_lbkc can be used for g_pcqd as well: 
 !!    The p(i,j,k) can be set in dgemm and q(i,j,k) is defined by the array used
 !!
-!!    All permutations for i,j,k have to be considered due to the restrictions in the loops
+!!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops
 !!
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!

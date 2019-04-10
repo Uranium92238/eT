@@ -30,21 +30,38 @@ module io_utilities
 !
    interface single_record_reader
 !
-      procedure   read_1_array_single_record, &
-                  read_2_array_single_record, &
-                  read_3_array_single_record
+      procedure   read_1_array_single_record,         &
+                  read_1_array_single_record_batch,   &
+                  read_2_arrays_single_record_batch,  &
+                  read_3_arrays_single_record_batch
 !
    end interface
+!
 !
    interface compound_record_reader
 !
-      procedure   read_1_array_compound_record_2batches, &
-                  read_2_array_compound_record_2batches, &
-                  read_3_array_compound_record_2batches, &
-                  read_4_array_compound_record_2batches, &
+      procedure   read_1_array_compound_record_2batches,    &
+                  read_2_arrays_compound_record_2batches,   &
+                  read_3_arrays_compound_record_2batches,   &
+                  read_4_arrays_compound_record_2batches,   &
                   read_1_array_compound_record_1batch
 !
    end interface
+!
+!
+   interface single_record_writer
+!
+      procedure   write_array_single_record_batch
+!
+   end interface single_record_writer
+!
+!
+   interface compound_record_writer
+!
+      procedure   write_array_compound_record_2batches, &
+                  write_array_compound_record_1batch
+!
+   end interface compound_record_writer
 !
 !
 contains
@@ -323,7 +340,43 @@ contains
    end subroutine long_string_print
 !
 !
-   subroutine read_1_array_single_record(batch_z, file_1, g_pqrz)
+   subroutine read_1_array_single_record(dim_z, file_1, g_pqrz)
+!!
+!!    Read the direct access file "file_1" with record z into g_pqrz
+!!    NB: It is assumed that z is sorted at the end
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_z
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
+!
+      type(file), intent(in) :: file_1
+!
+      integer :: ioerror
+      integer :: z
+!
+      character(len=100) :: iom
+!
+      do z = 1, dim_z
+!
+         read(file_1%unit, rec=z, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
+!
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
+            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
+            call output%error_msg('Failed to read file:file')
+         endif
+!
+      enddo
+!
+   end subroutine read_1_array_single_record
+!
+!
+   subroutine read_1_array_single_record_batch(batch_z, file_1, g_pqrz)
 !!
 !!    Read parts of the direct access files "file" into g_pqrz for the current batch z
 !!    NB: It is assumed that the batching index is sorted at the end
@@ -351,7 +404,7 @@ contains
          read(file_1%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_1%name)
+            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
             write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
@@ -359,10 +412,10 @@ contains
 !
       enddo
 !
-   end subroutine read_1_array_single_record
+   end subroutine read_1_array_single_record_batch
 !
 !
-   subroutine read_2_array_single_record(batch_z, file_1, g_pqrz, file_2, g_stuz)
+   subroutine read_2_arrays_single_record_batch(batch_z, file_1, g_pqrz, file_2, g_stuz)
 !!
 !!    Read parts of the direct access files "file_1/2" 
 !!    into g_pqrz/g_stuz for the current batch z
@@ -393,7 +446,7 @@ contains
          read(file_1%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_1%name)
+            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
             write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
@@ -410,7 +463,7 @@ contains
          read(file_2%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_stuz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_2%name)
+            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
             write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
@@ -418,10 +471,10 @@ contains
 !
       enddo
 !
-   end subroutine read_2_array_single_record
+   end subroutine read_2_arrays_single_record_batch
 !
 !
-   subroutine read_3_array_single_record(batch_z, file_1, g_pqrz, file_2, g_stuz, file_3, g_vwxz)
+   subroutine read_3_arrays_single_record_batch(batch_z, file_1, g_pqrz, file_2, g_stuz, file_3, g_vwxz)
 !!
 !!    Read parts of the direct access files "file_1/2" 
 !!    into g_pqrz/g_stuz for the current batch z
@@ -454,7 +507,7 @@ contains
          read(file_1%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_1%name)
+            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
             write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
@@ -471,7 +524,7 @@ contains
          read(file_2%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_stuz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_2%name)
+            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
             write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
@@ -488,7 +541,7 @@ contains
          read(file_3%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_vwxz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_3%name)
+            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%name)
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
             write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
@@ -496,7 +549,7 @@ contains
 !
       enddo
 !
-   end subroutine read_3_array_single_record
+   end subroutine read_3_arrays_single_record_batch
 !
 !
    subroutine read_1_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
@@ -535,7 +588,7 @@ contains
             read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_1%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -584,7 +637,7 @@ contains
    end subroutine read_1_array_compound_record_1batch
 !
 !
-   subroutine read_2_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, &
+   subroutine read_2_arrays_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, &
                                                    file_2, g_rszy)
 !!
 !!    Read parts of the direct access files "file_1/2" with records of zy into g_pqzy/g_rszy
@@ -623,7 +676,7 @@ contains
             read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_1%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -647,7 +700,7 @@ contains
             read(file_2%unit, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_2%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -656,10 +709,10 @@ contains
          enddo
       enddo
 !
-   end subroutine read_2_array_compound_record_2batches
+   end subroutine read_2_arrays_compound_record_2batches
 !
 !
-   subroutine read_3_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, &
+   subroutine read_3_arrays_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, &
                                                    file_2, g_rszy, file_3, g_tuzy)
 !!
 !!    Read parts of the direct access files "file_1/2/3" with records of zy 
@@ -701,7 +754,7 @@ contains
             read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_1%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -725,7 +778,7 @@ contains
             read(file_2%unit, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_2%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -749,7 +802,7 @@ contains
             read(file_3%unit, rec=record, iostat=ioerror, iomsg=iom) g_tuzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_3%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -758,10 +811,10 @@ contains
          enddo
       enddo
 !
-   end subroutine read_3_array_compound_record_2batches
+   end subroutine read_3_arrays_compound_record_2batches
 !
 !
-   subroutine read_4_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, file_2,  &
+   subroutine read_4_arrays_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, file_2,  &
                                                    g_rszy, file_3, g_tuzy, file_4, g_vwzy)
 !!
 !!    Read parts of the direct access files "file_1/2/3/4" with records of zy 
@@ -805,7 +858,7 @@ contains
             read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_1%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -829,7 +882,7 @@ contains
             read(file_2%unit, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_2%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -853,7 +906,7 @@ contains
             read(file_3%unit, rec=record, iostat=ioerror, iomsg=iom) g_tuzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_3%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -877,7 +930,7 @@ contains
             read(file_4%unit, rec=record, iostat=ioerror, iomsg=iom) g_vwzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read ', trim(file_4%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_4%name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -886,7 +939,121 @@ contains
          enddo
       enddo
 !
-   end subroutine read_4_array_compound_record_2batches
+   end subroutine read_4_arrays_compound_record_2batches
+!
+!
+   module subroutine write_array_single_record_batch(batch_z, file_1, g_pqrz)
+!!
+!!    Writes an array to a direct access file "file_1" with records z
+!!    The last index of the array (z) is batched over and is also the record number
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      type(batching_index), intent(in) :: batch_z
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
+!
+      type(file), intent(in) :: file_1
+!
+      integer :: ioerror
+      integer :: z, z_abs
+!
+         do z = 1, batch_z%length
+!
+            z_abs = batch_z%first + z - 1
+!
+            write(file_1%unit, rec=z_abs, iostat=ioerror) g_pqrz(:,:,:,z)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%name)
+               call output%error_msg('Failed to write file')
+            endif
+!
+         enddo
+!
+   end subroutine write_array_single_record_batch
+!
+!
+   module subroutine write_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
+!!
+!!    Writes an array to a direct access file "file_1" with records zy
+!!
+!!    NB: It is assumed that the array is split in batches of z and y 
+!!        which are sorted in y,z order at the end of the array
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      type(batching_index), intent(in) :: batch_z
+      type(batching_index), intent(in) :: batch_y
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
+!
+      type(file), intent(in) :: file_1
+!
+      integer :: ioerror, record
+      integer :: z, z_abs, y, y_abs
+!
+      do y = 1, batch_y%length
+!
+         y_abs = batch_y%first + y - 1
+!
+         do z = 1, batch_z%length
+!
+            z_abs = batch_z%first + z - 1
+!
+            record = (y_abs - 1) * batch_z%index_dimension + z_abs
+!
+            write(file_1%unit, rec=record, iostat=ioerror) g_pqzy(:,:,z,y)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%name)
+               call output%error_msg('Failed to write file')
+            endif
+!
+         enddo
+      enddo
+!
+   end subroutine write_array_compound_record_2batches
+!
+!
+   module subroutine write_array_compound_record_1batch(dim_z, batch_y, file_1, g_pqzy)
+!!
+!!    Writes an array to a direct access file "file_1" with records zy
+!!
+!!    NB: It is assumed that z is of full dimension and y is batched over
+!!        z and y are sorted in z,y order at the end of the array
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_z
+!
+      type(batching_index), intent(inout) :: batch_y
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(inout) :: g_pqzy
+!
+      type(file), intent(inout) :: file_1
+!
+      type(batching_index) :: batch_z
+!
+!     Fake a batching_index with full dimensions and call 2batches_writer
+!
+      call batch_z%init(dim_z)
+!
+      batch_z%first = 1
+      batch_z%last = dim_z
+      batch_z%length = dim_z
+      batch_z%max_length = dim_z
+      batch_z%num_batches = 1
+!
+      call write_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
+!
+   end subroutine write_array_compound_record_1batch
 !
 !
 end module

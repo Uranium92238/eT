@@ -33,27 +33,9 @@
    end subroutine effective_jacobian_transpose_transformation_cc3
 !
 !
-!     module subroutine jacobian_transpose_cc3_A_cc3(wf, omega, c_ai, c_abij, sigma_ai, sigma_abij)
-!  !!
-!  !!    Terms of the transpose of the  CC3 Jacobi matrix
-!  !!    Alex C. Paul and Rolf H. Myhre, March 2019
-!  !!
-!        implicit none
-!  !
-!        class(cc3) :: wf
-!  !
-!        real(dp), intent(in) :: omega
-!  !
-!        real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
-!        real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
-!  !
-!        real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
-!        real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: sigma_abij
-!  !
-!     end subroutine jacobian_transpose_cc3_A_cc3
-!
-!
    module subroutine jacobian_transpose_cc3_sigma1_t3_A1_cc3(wf, c_abij, sigma_ai)
+!!
+!!    Computes first contribution of the T3 amplitudes to sigma_1
 !!
 !!    Reads in the intermediates X_abid and Y_akil prepared in prepare_jacobian_transpose
 !!    contracts with c_abij and adds to sigma_ai
@@ -72,5 +54,51 @@
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
 !
    end subroutine jacobian_transpose_cc3_sigma1_t3_A1_cc3
+!
+!
+   module subroutine jacobian_transpose_cc3_sigma1_t3_B1_cc3(wf, c_abij, sigma_ai)
+!!
+!!    Computes first contribution of the T3 amplitudes to sigma_1
+!!
+!!    Constructs t^abc_ijk for fixed ijk and contracts with c_abij
+!!    The intermediate X_ck is then contracted with L_kcld
+!!
+!!    sigma_dl =  sum_abcijk C^ab_ij (t^abc_ijk - t^acb_ijk) L_kcld
+!!    
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
+!
+   end subroutine jacobian_transpose_cc3_sigma1_t3_B1_cc3
+!
+!
+   module subroutine jacobian_transpose_cc3_X_ck_calc_cc3(wf, i, j, k, t_abc, u_abc, X_ck, c_abij)
+!!
+!!    Constructs the intermediate X_ck
+!!
+!!    X_ck =  sum_abcijk C^ab_ij (t^abc_ijk - t^acb_ijk)
+!!
+!!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      integer, intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: t_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: X_ck
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: c_abij
+!
+   end subroutine jacobian_transpose_cc3_X_ck_calc_cc3
 !
 !
