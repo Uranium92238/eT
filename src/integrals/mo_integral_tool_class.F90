@@ -1362,7 +1362,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
       call mem%dealloc(L_Jrs, integrals%n_J, integrals%n_mo, integrals%n_mo)
       call mem%dealloc(Q_JK, integrals%n_J, integrals%n_J)
 !
-      call integrals%Z%init('Z_CD', 'direct', 'unformatted', dp*(integrals%n_mo**2))
+      call integrals%Z%init('Z_molecular_gradient_intermediate', 'direct', 'unformatted', dp*(integrals%n_mo**2))
 !
       call disk%open_file(integrals%Z, 'write')
 !
@@ -1443,7 +1443,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
 !     Write to W intermediate file 
 !
-      call integrals%W%init('W', 'direct', 'unformatted', dp*integrals%n_mo**2)
+      call integrals%W%init('W_molecular_gradient_intermediate', 'direct', 'unformatted', dp*integrals%n_mo**2)
 !
       call disk%open_file(integrals%W, 'write')
 !
