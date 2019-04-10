@@ -29,6 +29,7 @@ module mo_integral_tool_class
    use memory_manager_class
    use timings_class
    use reordering
+   use eri_cd_class
 !
    implicit none
 !
@@ -43,6 +44,11 @@ module mo_integral_tool_class
 !
       type(file) :: cholesky_mo
       type(file) :: cholesky_mo_t1
+!
+!     Files for gradients
+!
+      type(file) :: Q, Q_inverse, S_inverse
+      type(file) :: W, Z
 !
       integer, private :: n_o
       integer, private :: n_v
@@ -79,13 +85,15 @@ module mo_integral_tool_class
       procedure :: set_full_index         => set_full_index_mo_integral_tool
       procedure :: can_we_keep_g_pqrs_t1  => can_we_keep_g_pqrs_t1_mo_integral_tool
 !
+      procedure :: construct_S_CD_inverse => construct_S_CD_inverse_mo_integral_tool
+!
    end type mo_integral_tool
 !
 !
 contains
 !
 !
-   subroutine prepare_mo_integral_tool(integrals, n_J, n_o, n_v)
+   subroutine prepare_mo_integral_tool(integrals, n_o, n_v, eri_cholesky)
 !!
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -102,17 +110,21 @@ contains
 !
       class(mo_integral_tool) :: integrals
 !
-      integer, intent(in) :: n_J
       integer, intent(in) :: n_o
       integer, intent(in) :: n_v
 !
-      integrals%n_J  = n_J
+      type(eri_cd), intent(in) :: eri_cholesky
+!
+      integrals%n_J  = eri_cholesky%n_cholesky
       integrals%n_o  = n_o
       integrals%n_v  = n_v
       integrals%n_mo = n_o + n_v
 !
-      call integrals%cholesky_mo%init('cholesky_mo_vectors', 'direct', 'unformatted', dp*n_J)
-      call integrals%cholesky_mo_t1%init('cholesky_mo_t1_vectors', 'direct', 'unformatted', dp*n_J)
+      call integrals%cholesky_mo%init(eri_cholesky%cholesky_mo_vectors%name, 'direct', 'unformatted', dp*integrals%n_J)
+      call integrals%cholesky_mo_t1%init('cholesky_mo_t1_vectors', 'direct', 'unformatted', dp*integrals%n_J)
+!
+      call integrals%Q%init(eri_cholesky%Q%name, 'sequential', 'unformatted')
+      call integrals%Q_inverse%init(eri_cholesky%Q_inverse%name, 'sequential', 'unformatted')
 !
 !     Initially MO cholesky on file, and not T1-transformed cholesky
 !     nor full T1-ERI matrix
@@ -1237,6 +1249,89 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
       call write_t1_cholesky_timer%switch_off()
 !
    end subroutine write_t1_cholesky_mo_integral_tool
+!
+!
+   subroutine construct_S_CD_inverse_mo_integral_tool(integrals)
+!!
+!!    Construct S inverse 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+!!    Constructs S^-1 = Q^-T Q^-1, which is the inverse of
+!!    S_JK = (J | K). J and K are elements of the Cholesky basis
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(inout) :: integrals
+!
+      real(dp), dimension(:,:), allocatable :: Q_inverse
+      real(dp), dimension(:,:), allocatable :: S_inverse
+!
+      call disk%open_file(integrals%Q_inverse, 'read')
+      rewind(integrals%Q_inverse%unit)
+!
+      call mem%alloc(Q_inverse, integrals%n_J, integrals%n_J)
+!
+      read(integrals%Q_inverse%unit) Q_inverse
+!
+      call disk%close_file(integrals%Q_inverse, 'keep')
+!
+      call mem%alloc(S_inverse, integrals%n_J, integrals%n_J)
+!
+      call dgemm('T', 'N', &
+                  integrals%n_J, &
+                  integrals%n_J, &
+                  integrals%n_J, &
+                  one,           &
+                  Q_inverse,     &
+                  integrals%n_J, &
+                  Q_inverse,     &
+                  integrals%n_J, &
+                  zero,          &
+                  S_inverse,     &
+                  integrals%n_J)
+!
+      call mem%dealloc(Q_inverse, integrals%n_J, integrals%n_J)
+!
+      call integrals%S_inverse%init('S_CD_inverse', 'sequential', 'unformatted')
+!
+      call disk%open_file(integrals%S_inverse, 'write', 'rewind')
+!
+      write(integrals%S_inverse%unit) S_inverse
+!
+      call disk%close_file(integrals%S_inverse, 'keep')
+!
+      call mem%dealloc(S_inverse, integrals%n_J, integrals%n_J)
+!
+   end subroutine construct_S_CD_inverse_mo_integral_tool
+!
+!
+   subroutine construct_Z_mo_integral_tool(integrals)
+!!
+!!    Construct Z
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+!!    Constructs the Z intermediate for molecular gradients
+!!
+!!       Z_rs,K = L_rs,M (Q^-1)_M,K 
+!!
+!!    where L is T1-transformed Cholesky vectors and Q^-1 is 
+!!    the inverse Cholesky factor of S_JK = (J| K).
+!!
+!!    Note: The routine assumes that we may hold N^3 in
+!!          memory.
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(inout) :: integrals
+!
+      real(dp), dimension(:,:,:), allocatable :: L_rsJ
+!
+      call mem%alloc(L_rsJ, integrals%n_mo, integrals%n_mo, integrals%n_J)
+!
+!
+      call mem%dealloc(L_rsJ, integrals%n_mo, integrals%n_mo, integrals%n_J)
+!
+   end subroutine construct_Z_mo_integral_tool
 !
 !
 end module mo_integral_tool_class

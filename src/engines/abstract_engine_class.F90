@@ -121,7 +121,7 @@ contains
       call eri_chol_solver%diagonal_test(wf%system)
       call eri_chol_solver%construct_mo_cholesky_vectors(wf%system, wf%n_mo, orbital_coefficients)
 !
-      call wf%integrals%prepare(eri_chol_solver%n_cholesky, wf%n_o, wf%n_v)
+      call wf%integrals%prepare(wf%n_o, wf%n_v, eri_chol_solver)
 !
       call eri_chol_solver%cleanup()
 !
