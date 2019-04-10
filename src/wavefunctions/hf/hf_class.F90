@@ -915,26 +915,36 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
 !
       real(dp), dimension(:,:), allocatable :: D_red 
+!      real(dp), dimension(:,:), contiguous, pointer :: D_red_p => null()
 !
       type(interval) :: A_interval, B_interval
 !
       integer :: s1, s2 
+      integer :: n_threads = 1, thread = 0
 !
       real(dp) :: maximum
 !
-!$omp parallel do private(s1, s2, A_interval, B_interval, D_red, maximum) schedule(dynamic)
+!!$    n_threads = omp_get_max_threads()
+!
+!      call mem%alloc(D_red,wf%system%max_shell_size**2,n_threads)
+!
+!$omp parallel do private(s1, s2, A_interval, B_interval, maximum, thread) schedule(dynamic)
       do s1 = 1, wf%system%n_s
          do s2 = 1, s1
+!
+!!$          thread = omp_get_thread_num()
 !
             A_interval = wf%system%shell_limits(s1)
             B_interval = wf%system%shell_limits(s2)
 !
             call mem%alloc(D_red, A_interval%size, B_interval%size)
+!            D_red_p(1:A_interval%size,1:B_interval%size) => D_red(1:A_interval%size*B_interval%size,thread)
 !
             D_red = D(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
 !
             maximum = get_abs_max(D_red, (A_interval%size)*(B_interval%size))
 !
+!            nullify(D_red_p)
             call mem%dealloc(D_red, A_interval%size, B_interval%size)
 !
             sp_density_schwarz(s1, s2) = maximum
@@ -943,6 +953,8 @@ contains
          enddo
       enddo
 !$omp end parallel do
+!
+!      call mem%dealloc(D_red,wf%system%max_shell_size**2,n_threads)
 !
    end subroutine construct_sp_density_schwarz_hf
 !
