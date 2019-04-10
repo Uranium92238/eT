@@ -105,6 +105,8 @@ module cc3_class
       procedure :: effective_jacobian_transpose_transformation  &
                                                    => effective_jacobian_transpose_transformation_cc3
 !
+      procedure :: jacobian_transpose_cc3_sigma1_t3_A1   => jacobian_transpose_cc3_sigma1_t3_A1_cc3
+!
    end type cc3
 !
 !

@@ -834,14 +834,14 @@ contains
 !
 !        X_abdi += - sum_c (2*t_acb - t_abc - t_cab)*(g_kcjd)^T
 !
-         call dgemm('N','T',           &
+         call dgemm('N','T',           & ! g is transposed
                      wf%n_v**2,        &
                      wf%n_v,           &
                      wf%n_v,           &
                      -one,             &
                      u_abc,            & ! u_ab_c
                      wf%n_v**2,        &
-                     g_lbjc(:,:,k),    & ! g_c_d_kj
+                     g_lbjc(:,:,k),    & ! g_c_d_jk
                      wf%n_v,           &
                      one,              &
                      X_abdi,           & ! X_ab_di
@@ -868,14 +868,14 @@ contains
 !
 !        X_abdj += - sum_c (2*t_bca - t_bac - t_cba)*(g_kcid)^T
 !
-         call dgemm('N','T',           &
+         call dgemm('N','T',           & ! g is transposed
                      wf%n_v**2,        &
                      wf%n_v,           &
                      wf%n_v,           &
                      -one,             &
                      v_abc,            & ! v_ab_c
                      wf%n_v**2,        &
-                     g_lbic(:,:,k),    & ! g_c_d_ki
+                     g_lbic(:,:,k),    & ! g_c_d_ik
                      wf%n_v,           &
                      one,              &
                      X_abdj,           & ! X_ab_dj
@@ -942,7 +942,7 @@ contains
 !
 !           X_abdk += - sum_c (2*t_cab - t_acb - t_bac)*(g_jcid)^T
 !
-            call dgemm('N','T',           &
+            call dgemm('N','T',           & ! g is transposed
                         wf%n_v**2,        &
                         wf%n_v,           &
                         wf%n_v,           &

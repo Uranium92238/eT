@@ -323,7 +323,7 @@ contains
    end subroutine long_string_print
 !
 !
-   module subroutine read_1_array_single_record(batch_z, file_1, g_pqrz)
+   subroutine read_1_array_single_record(batch_z, file_1, g_pqrz)
 !!
 !!    Read parts of the direct access files "file" into g_pqrz for the current batch z
 !!    NB: It is assumed that the batching index is sorted at the end
@@ -362,8 +362,7 @@ contains
    end subroutine read_1_array_single_record
 !
 !
-   subroutine read_2_array_single_record(batch_z, file_1, g_pqrz,  &
-                                                      file_2, g_stuz)
+   subroutine read_2_array_single_record(batch_z, file_1, g_pqrz, file_2, g_stuz)
 !!
 !!    Read parts of the direct access files "file_1/2" 
 !!    into g_pqrz/g_stuz for the current batch z
@@ -422,8 +421,7 @@ contains
    end subroutine read_2_array_single_record
 !
 !
-   subroutine read_3_array_single_record(batch_z, file_1, g_pqrz,  &
-                                                      file_2, g_stuz, file_3, g_vwxz)
+   subroutine read_3_array_single_record(batch_z, file_1, g_pqrz, file_2, g_stuz, file_3, g_vwxz)
 !!
 !!    Read parts of the direct access files "file_1/2" 
 !!    into g_pqrz/g_stuz for the current batch z

@@ -176,7 +176,8 @@ contains
       call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call cc3_timer%start()
-      call wf%jacobian_transpose_cc3_A(omega, c_ai, c_abij, sigma_ai, sigma_abij)
+      call wf%jacobian_transpose_cc3_sigma1_t3_A1(c_abij, sigma_ai)
+!      call wf%jacobian_transpose_cc3_A(omega, c_ai, c_abij, sigma_ai, sigma_abij)
       call cc3_timer%freeze()
       call cc3_timer%switch_off()
 !
@@ -246,25 +247,134 @@ contains
    end subroutine effective_jacobian_transpose_transformation_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_A_cc3(wf, omega, c_ai, c_abij, sigma_ai, sigma_abij)
+   module subroutine jacobian_transpose_cc3_sigma1_t3_A1_cc3(wf, c_abij, sigma_ai)
 !!
-!!    Terms of the transpose of the  CC3 Jacobi matrix
+!!    Reads in the intermediates X_abid and Y_akil prepared in prepare_jacobian_transpose
+!!    contracts with c_abij and adds to sigma_ai
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, March 2019
+!!    sigma_dl =  sum_abi X_abid * C_abil 
+!!                + sum_aik C_daki * Y_akil
+!!    
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
       class(cc3) :: wf
 !
-      real(dp), intent(in) :: omega
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: sigma_abij
 !
-   end subroutine jacobian_transpose_cc3_A_cc3
+      real(dp), dimension(:,:,:,:), allocatable :: X_abid
+      real(dp), dimension(:,:,:,:), allocatable :: Y_akil
+!
+      type(batching_index) :: batch_d
+      integer :: d_batch, l
+      integer :: req_0, req_d
+!
+      integer :: ioerror
+      character(len=100) :: iom
+!
+!     :: X_abid term ::
+!
+      call batch_d%init(wf%n_v)
+!
+      req_0 = 0
+      req_d = wf%n_o * wf%n_v**2
+!
+      call mem%batch_setup(batch_d, req_0, req_d)
+!
+      call disk%open_file(wf%X_abid,'read')
+!
+      call mem%alloc(X_abid, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
+!
+      do d_batch = 1, batch_d%num_batches
+!
+         call batch_d%determine_limits(d_batch)
+!
+!        Read in X_abid written with compound index "id" as record
+!
+         call compound_record_reader(wf%n_o, batch_d, wf%X_abid, X_abid)
+!
+         call dgemm('T','N',                    & ! X is transposed
+                     batch_d%length,            &
+                     wf%n_o,                    &
+                     wf%n_o * wf%n_v**2,        &
+                     one,                       &
+                     X_abid,                    & ! X_d_abi
+                     wf%n_o * wf%n_v**2,        &
+                     c_abij,                    & ! c_abi_l
+                     wf%n_o * wf%n_v**2,        &
+                     one,                       &
+                     sigma_ai(batch_d%first,1), & ! sigma_dl
+                     wf%n_v)
+!
+      enddo
+!
+      call mem%dealloc(X_abid, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
+!
+      call disk%close_file(wf%X_abid)
+!
+!     :: Y_akil term ::
+!
+      call disk%open_file(wf%Y_akil,'read')
+!
+      call mem%alloc(Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      do l = 1, wf%n_o
+!
+         read(wf%Y_akil%unit, rec=l, iostat=ioerror, iomsg=iom) Y_akil(:,:,:,l)
+!
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a,a)') 'Failed to read Y_akil file'
+            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            write(output%unit,'(t3,a)') trim(iom)
+            call output%error_msg('Failed to read file')
+         endif
+!
+      enddo
+!
+      call disk%close_file(wf%Y_akil)
+!
+      call dgemm('N','N',              &
+                  wf%n_v,              &
+                  wf%n_o,              &
+                  wf%n_v * wf%n_o**2,  &
+                  one,                 &
+                  c_abij,              & ! C_d_aik
+                  wf%n_v,              &
+                  Y_akil,              & ! Y_aik_l
+                  wf%n_v * wf%n_o**2,  &
+                  one,                 &
+                  sigma_ai,            & ! sigma_dl
+                  wf%n_v)
+!
+      call mem%dealloc(Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call disk%close_file(wf%Y_akil)
+!
+   end subroutine jacobian_transpose_cc3_sigma1_t3_A1_cc3
+!
+!
+!     module subroutine jacobian_transpose_cc3_A_cc3(wf, omega, c_ai, c_abij, sigma_ai, sigma_abij)
+!  !!
+!  !!    Terms of the transpose of the  CC3 Jacobi matrix
+!  !!
+!  !!    Written by Alexander Paul and Rolf H. Myhre, March 2019
+!  !!
+!        implicit none
+!  !
+!        class(cc3) :: wf
+!  !
+!        real(dp), intent(in) :: omega
+!  !
+!        real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+!        real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
+!  !
+!        real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
+!        real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: sigma_abij
+!  !
+!     end subroutine jacobian_transpose_cc3_A_cc3
 !
 !
 end submodule jacobian_transpose
