@@ -19,7 +19,7 @@
 // -----------------------------------------------------------------------
 /*
  
-  	Construct overlap matrix s
+  	Overlap matrix routines
   	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
  
 */
@@ -31,6 +31,7 @@ using namespace std;
 #include <string>
 #include <vector>
 #include "s_wx.h"
+#include "extract_integrals.h"
 
 #include <libint2.hpp>
 
@@ -40,6 +41,10 @@ using namespace libint2;
 
 void construct_ao_s_wx(double *s, int *s1, int *s2){
 
+  //
+  // This routine constructs the overlap s_wx for w in shell s1 and x in shell s2
+  //
+
   const auto& buf_vec = overlap.results(); // will point to computed shell sets
 
   auto n1 = basis[*s1 - 1].size();          // Number of basis functions in shell 1
@@ -47,7 +52,9 @@ void construct_ao_s_wx(double *s, int *s1, int *s2){
 
   overlap.compute(basis[*s1 - 1], basis[*s2 - 1]);
 
-  auto ints_shellset  = buf_vec[0];        // location of the computed integrals
+  auto ints_shellset = buf_vec[0];        // location of the computed integrals
+
+  //extract_integrals(s, ints_shellset, n1, n2, 1.0e0);
 
   if (ints_shellset == nullptr) {
 
@@ -70,6 +77,45 @@ void construct_ao_s_wx(double *s, int *s1, int *s2){
     }
   }
 
-return;
+  return;
 
 }
+
+void construct_ao_s_wx_1(double *s_1x, double *s_1y, double *s_1z, 
+                  double *s_2x, double *s_2y, double *s_2z, int *s1, int *s2){
+
+  //
+  // This routine constructs the overlap derivatives s_wx^(1) for w in shell s1 and x in shell s2.
+  // Here, we have s_wx^(1) = (s_1x, s_1y, ..., s_2z). The elements in s_1x are the derivatives of s_wx
+  // with respect to the x-coordinate of the atom that s1 is centered on, etc.
+  //
+
+  const auto& buf_vec = overlap_1.results();
+
+  auto n1 = basis[*s1 - 1].size();
+  auto n2 = basis[*s2 - 1].size();
+
+  overlap_1.compute(basis[*s1 - 1], basis[*s2 - 1]);
+
+  // Get pointers to location of integrals
+
+  auto ints_shellset_1x = buf_vec[0];
+  auto ints_shellset_1y = buf_vec[1];
+  auto ints_shellset_1z = buf_vec[2];
+  auto ints_shellset_2x = buf_vec[3];
+  auto ints_shellset_2y = buf_vec[4];
+  auto ints_shellset_2z = buf_vec[5];
+
+  // Extract the integrals from each set
+
+  extract_integrals(s_1x, ints_shellset_1x, n1, n2, 1.0e0);
+  extract_integrals(s_1y, ints_shellset_1y, n1, n2, 1.0e0);
+  extract_integrals(s_1z, ints_shellset_1z, n1, n2, 1.0e0);
+  extract_integrals(s_2x, ints_shellset_2x, n1, n2, 1.0e0);
+  extract_integrals(s_2y, ints_shellset_2y, n1, n2, 1.0e0);
+  extract_integrals(s_2z, ints_shellset_2z, n1, n2, 1.0e0);
+
+  return;
+
+}
+
