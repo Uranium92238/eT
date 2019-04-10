@@ -1334,4 +1334,85 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
    end subroutine construct_Z_mo_integral_tool
 !
 !
+   subroutine construct_W_mo_integral_tool(integrals)
+!!
+!!    Construct W
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+!!    Constructs the Z intermediate for molecular gradients
+!!
+!!       W_rs,K = L_rs^M (Q^T)_M,K = L_M,rs Q_KM
+!!
+!!    where L is T1-transformed Cholesky vectors and Q^-1 is 
+!!    the inverse Cholesky factor of S_JK = (J| K).
+!!
+!!    Note: The routine assumes that we may hold N^3 in
+!!          memory.
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(inout) :: integrals
+!
+      real(dp), dimension(:,:), allocatable :: Q_KM
+!
+      real(dp), dimension(:,:,:), allocatable :: L_Mrs, W_rsK
+!
+      integer :: J
+!
+!     Read Q_KM from file 
+!
+      call mem%alloc(Q_KM, integrals%n_J, integrals%n_J)
+!
+      call disk%open_file(integrals%Q, 'read')
+!
+      rewind(integrals%Q%unit)
+      read(integrals%Q%unit) Q_KM
+!
+      call disk%close_file(integrals%Q)
+!
+!     Read L_Mrs from file 
+!
+      call mem%alloc(L_Mrs, integrals%n_J, integrals%n_mo, integrals%n_mo)
+!
+      call integrals%read_cholesky_t1(L_Mrs, 1, integrals%n_mo, 1, integrals%n_mo)
+!
+!     Construct W_rs,K = L_M,rs Q_K,M
+!
+      call mem%alloc(W_rsK, integrals%n_mo, integrals%n_mo, integrals%n_J)
+!
+      call dgemm('T','T', &
+                  (integrals%n_mo)**2, &
+                  integrals%n_J, &
+                  integrals%n_J, &
+                  one, &
+                  L_Mrs, & ! L_M,rs 
+                  integrals%n_J, &
+                  Q_KM, & ! Q_K,M
+                  integrals%n_J, &
+                  zero, &
+                  W_rsK, & ! W_rs,K
+                  (integrals%n_mo)**2)
+!
+      call mem%dealloc(L_Mrs, integrals%n_J, integrals%n_mo, integrals%n_mo)
+      call mem%dealloc(Q_KM, integrals%n_J, integrals%n_J)
+!
+!     Write to W intermediate file 
+!
+      call integrals%W%init('W', 'direct', 'unformatted', dp*integrals%n_mo**2)
+!
+      call disk%open_file(integrals%W, 'write')
+!
+      do J = 1, integrals%n_J
+!
+         write(integrals%W%unit, rec=J) W_rsK(:,:,J)
+!
+      enddo 
+!
+      call disk%close_file(integrals%W)
+!
+      call mem%dealloc(W_rsK, integrals%n_mo, integrals%n_mo, integrals%n_J)
+!
+   end subroutine construct_W_mo_integral_tool
+!
+!
 end module mo_integral_tool_class
