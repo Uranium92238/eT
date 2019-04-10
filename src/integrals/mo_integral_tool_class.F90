@@ -86,6 +86,7 @@ module mo_integral_tool_class
       procedure :: can_we_keep_g_pqrs_t1  => can_we_keep_g_pqrs_t1_mo_integral_tool
 !
       procedure :: construct_S_CD_inverse => construct_S_CD_inverse_mo_integral_tool
+      procedure :: construct_Z            => construct_Z_mo_integral_tool
 !
    end type mo_integral_tool
 !
