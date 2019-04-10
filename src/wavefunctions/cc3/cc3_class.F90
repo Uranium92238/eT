@@ -72,8 +72,6 @@ module cc3_class
 !
       procedure :: omega_cc3_a            => omega_cc3_a_cc3
       procedure :: omega_cc3_integrals    => omega_cc3_integrals_cc3
-      procedure :: omega_cc3_vvv_reader   => omega_cc3_vvv_reader_cc3
-      procedure :: omega_cc3_ov_vv_reader => omega_cc3_ov_vv_reader_cc3
       procedure :: omega_cc3_W_calc       => omega_cc3_W_calc_cc3
       procedure :: omega_cc3_eps          => omega_cc3_eps_cc3
       procedure :: omega_cc3_omega1       => omega_cc3_omega1_cc3
@@ -106,8 +104,6 @@ module cc3_class
 !
       procedure :: effective_jacobian_transpose_transformation  &
                                                    => effective_jacobian_transpose_transformation_cc3
-!
-      procedure :: jacobian_transpose_cc3_A        => jacobian_transpose_cc3_A_cc3
 !
    end type cc3
 !

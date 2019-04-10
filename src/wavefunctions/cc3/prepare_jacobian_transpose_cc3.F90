@@ -473,14 +473,14 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call single_batch_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_lbkc_t, g_lbic)
+         call single_record_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_lbkc_t, g_lbic)
          g_bdci_p => g_bdci
          g_lbic_p => g_lbic
 !
 !           cannot hold X_abdi - read in previous X, add contributions, write to disk again
 !
             if (i_batch .gt. 1) then
-               call single_batch_reader(batch_i, wf%X_abdi, X_abdi)
+               call single_record_reader(batch_i, wf%X_abdi, X_abdi)
                X_abdi_p => X_abdi
             end if
 !
@@ -488,22 +488,22 @@ contains
 !
             call batch_j%determine_limits(j_batch)
 !
-            call double_batch_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci)
+            call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci)
             g_ljci_p => g_ljci
 !
             if (j_batch .ne. i_batch) then ! read for switched i - j
 !
-               call single_batch_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_lbkc_t, g_lbjc)
+               call single_record_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_lbkc_t, g_lbjc)
                g_bdcj_p => g_bdcj
                g_lbjc_p => g_lbjc
 !
 !              Don't read X in the first iteration - X_abdi file empty
                if (i_batch .gt. 1 .or. j_batch .gt. 1) then
-                  call single_batch_reader(batch_j, wf%X_abdi, X_abdj)
+                  call single_record_reader(batch_j, wf%X_abdi, X_abdj)
                   X_abdj_p => X_abdj
                end if
 !
-               call double_batch_reader(batch_i, batch_j, wf%g_ljck_t, g_licj)
+               call compound_record_reader(batch_i, batch_j, wf%g_ljck_t, g_licj)
                g_licj_p => g_licj
 !
             else
@@ -523,26 +523,26 @@ contains
 !
                if (k_batch .ne. i_batch .and. k_batch .ne. j_batch) then
 !
-                  call single_batch_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_lbkc_t, g_lbkc)
+                  call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_lbkc_t, g_lbkc)
                   g_bdck_p => g_bdck
                   g_lbkc_p => g_lbkc
 !
 !                 Don't read X in the first iteration - X_abdi file empty
                   if (i_batch .gt. 1 .or. j_batch .gt. 1 .or. k_batch .gt. 1) then
-                     call single_batch_reader(batch_k, wf%X_abdi, X_abdk)
+                     call single_record_reader(batch_k, wf%X_abdi, X_abdk)
                      X_abdk_p => X_abdk
                   endif
 !
-                  call double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci)
+                  call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci)
                   g_lkci_p => g_lkci
 !
-                  call double_batch_reader(batch_i, batch_k, wf%g_ljck_t, g_lick)
+                  call compound_record_reader(batch_i, batch_k, wf%g_ljck_t, g_lick)
                   g_lick_p => g_lick
 !
-                  call double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj)
+                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj)
                   g_lkcj_p => g_lkcj
 !
-                  call double_batch_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck)
+                  call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck)
                   g_ljck_p => g_ljck
 !
                else if (k_batch .eq. i_batch) then
@@ -564,7 +564,7 @@ contains
 !
                   else
 !
-                     call double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci)
+                     call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci)
                      g_lkci_p => g_lkci
 !
                      g_lick_p => g_lkci
@@ -586,7 +586,7 @@ contains
 !
                   g_lick_p => g_ljci
 !
-                  call double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj)
+                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj)
                   g_lkcj_p => g_lkcj
 !
                   g_ljck_p => g_lkcj
@@ -688,6 +688,7 @@ contains
 !     Resort X_abdi to X_abid for the final contraction with C^ac_il to sigma_dl
 !
       call wf%sort_X_to_abid_and_write()
+!
       call disk%close_file(wf%X_abdi)
 !
 !     sort Y_alik (ordered as alik) to akil and write to disk 

@@ -28,20 +28,21 @@ module io_utilities
    use input_file_class
    use batching_index_class
 !
-   interface single_batch_reader
+   interface single_record_reader
 !
-      procedure   read_1_4dim_array_with_1index_record, &
-                  read_2_4dim_array_with_1index_record, &
-                  read_3_4dim_array_with_1index_record
+      procedure   read_1_array_single_record, &
+                  read_2_array_single_record, &
+                  read_3_array_single_record
 !
    end interface
 !
-   interface double_batch_reader
+   interface compound_record_reader
 !
-      procedure   read_1_4dim_array_with_2index_record, &
-                  read_2_4dim_array_with_2index_record, &
-                  read_3_4dim_array_with_2index_record, &
-                  read_4_4dim_array_with_2index_record
+      procedure   read_1_array_compound_record_2batches, &
+                  read_2_array_compound_record_2batches, &
+                  read_3_array_compound_record_2batches, &
+                  read_4_array_compound_record_2batches, &
+                  read_1_array_compound_record_1batch
 !
    end interface
 !
@@ -322,14 +323,13 @@ contains
    end subroutine long_string_print
 !
 !
-   module subroutine read_1_4dim_array_with_1index_record(batch_z, file_1, g_pqrz)
+   module subroutine read_1_array_single_record(batch_z, file_1, g_pqrz)
 !!
 !!    Read parts of the direct access files "file" into g_pqrz for the current batch z
 !!    NB: It is assumed that the batching index is sorted at the end
 !!        and that the record is equal to the batching index
 !!
-!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -359,10 +359,10 @@ contains
 !
       enddo
 !
-   end subroutine read_1_4dim_array_with_1index_record
+   end subroutine read_1_array_single_record
 !
 !
-   subroutine read_2_4dim_array_with_1index_record(batch_z, file_1, g_pqrz,  &
+   subroutine read_2_array_single_record(batch_z, file_1, g_pqrz,  &
                                                       file_2, g_stuz)
 !!
 !!    Read parts of the direct access files "file_1/2" 
@@ -370,8 +370,7 @@ contains
 !!    NB: It is assumed that the batching index is sorted at the end
 !!        and that the record is equal to the batching index
 !!
-!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -420,10 +419,10 @@ contains
 !
       enddo
 !
-   end subroutine read_2_4dim_array_with_1index_record
+   end subroutine read_2_array_single_record
 !
 !
-   subroutine read_3_4dim_array_with_1index_record(batch_z, file_1, g_pqrz,  &
+   subroutine read_3_array_single_record(batch_z, file_1, g_pqrz,  &
                                                       file_2, g_stuz, file_3, g_vwxz)
 !!
 !!    Read parts of the direct access files "file_1/2" 
@@ -431,8 +430,7 @@ contains
 !!    NB: It is assumed that the batching index is sorted at the end
 !!        and that the record is equal to the batching index
 !!
-!!    Based on omega_cc3_vvv_reader_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -500,17 +498,17 @@ contains
 !
       enddo
 !
-   end subroutine read_3_4dim_array_with_1index_record
+   end subroutine read_3_array_single_record
 !
 !
-   subroutine read_1_4dim_array_with_2index_record(batch_z, batch_y, file_1, g_pqzy)
+   subroutine read_1_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
 !!
-!!    Read parts of the direct access file "file_1" into g_pqzy for the current batches in z and y
+!!    Read parts of the direct access file "file_1" with records of zy into g_pqzy
+!!    Read in batches of z and y
 !!    NB: It is assumed that the batching indices are sorted at the end of the array
 !!        in z,y order and that the record is equal to the compound index zy
 !!
-!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -548,19 +546,55 @@ contains
          enddo
       enddo
 !
-   end subroutine read_1_4dim_array_with_2index_record
+   end subroutine read_1_array_compound_record_2batches
 !
 !
-   subroutine read_2_4dim_array_with_2index_record(batch_z, batch_y, file_1, g_pqzy,  &
-                                                      file_2, g_rszy)
+   subroutine read_1_array_compound_record_1batch(dim_z, batch_y, file_1, g_pqzy)
 !!
-!!    Read parts of the direct access files "file_1/2" into g_pqzy/g_rszy 
-!!    for the current batches in z and y
+!!    Read parts of the direct access file "file_1" with records of zy into g_pqzy
+!!    Reads z in full dimension y in batches
+!!    NB: It is assumed that the indices zy are sorted at the end of the array
+!!        in z,y order and that the record is equal to the compound index zy
+!!
+!!    Based on read_1_array_compound_record_2batches written by Alexander Paul and Rolf H. Myhre
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_z
+!
+      type(batching_index), intent(inout) :: batch_y
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(inout) :: g_pqzy
+!
+      type(file), intent(inout) :: file_1
+!
+      type(batching_index) :: batch_z
+!
+!     Fake a batching_index with full dimensions and call 2batches_reader
+!
+      call batch_z%init(dim_z)
+!
+      batch_z%first = 1
+      batch_z%last = dim_z
+      batch_z%length = dim_z
+      batch_z%max_length = dim_z
+      batch_z%num_batches = 1
+!
+      call read_1_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
+!
+   end subroutine read_1_array_compound_record_1batch
+!
+!
+   subroutine read_2_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, &
+                                                   file_2, g_rszy)
+!!
+!!    Read parts of the direct access files "file_1/2" with records of zy into g_pqzy/g_rszy
+!!    Reads in batches of z and y
 !!    NB: It is assumed that the batching indices are sorted at the end of the array
 !!        in z,y order and that the record is equal to the compound index zy
 !!
-!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -624,19 +658,19 @@ contains
          enddo
       enddo
 !
-   end subroutine read_2_4dim_array_with_2index_record
+   end subroutine read_2_array_compound_record_2batches
 !
 !
-   subroutine read_3_4dim_array_with_2index_record(batch_z, batch_y, file_1, g_pqzy,  &
-                                                      file_2, g_rszy, file_3, g_tuzy)
+   subroutine read_3_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, &
+                                                   file_2, g_rszy, file_3, g_tuzy)
 !!
-!!    Read parts of the direct access files "file_1/2/3" into g_pqzy/g_rszy/g_tuzy
-!!    for the current batches in z and y
+!!    Read parts of the direct access files "file_1/2/3" with records of zy 
+!!    into g_pqzy/g_rszy/g_tuzy
+!!    Reads in batches of z and y
 !!    NB: It is assumed that the batching indices are sorted at the end of the array
 !!        in z,y order and that the record is equal to the compound index zy
 !!
-!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -726,20 +760,19 @@ contains
          enddo
       enddo
 !
-   end subroutine read_3_4dim_array_with_2index_record
+   end subroutine read_3_array_compound_record_2batches
 !
 !
-   subroutine read_4_4dim_array_with_2index_record(batch_z, batch_y, file_1, g_pqzy,  &
-                                                      file_2, g_rszy, file_3, g_tuzy,    &
-                                                      file_4, g_vwzy)
+   subroutine read_4_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, file_2,  &
+                                                   g_rszy, file_3, g_tuzy, file_4, g_vwzy)
 !!
-!!    Read parts of the direct access files "file_1/2/3/4" into g_pqzy/g_rszy/g_tuzy/g_vwzy 
-!!    for the current batches in z and y
+!!    Read parts of the direct access files "file_1/2/3/4" with records of zy 
+!!    into g_pqzy/g_rszy/g_tuzy/g_vwzy
+!!    Reads in batches of z and y
 !!    NB: It is assumed that the batching indices are sorted at the end of the array
 !!        in z,y order and that the record is equal to the compound index zy
 !!
-!!    Based on omega_cc3_ov_vv_reader_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -855,7 +888,7 @@ contains
          enddo
       enddo
 !
-   end subroutine read_4_4dim_array_with_2index_record
+   end subroutine read_4_array_compound_record_2batches
 !
 !
 end module
