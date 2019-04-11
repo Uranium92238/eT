@@ -270,43 +270,6 @@ contains
       call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
       call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
 !
-!     L_kcld  ordered as ckd,l
-!
-      req_0 = 0
-      req_k = 2*wf%n_v**2 * wf%n_o
-!
-      call mem%batch_setup(batch_k, req_0, req_k)
-!
-      call batch_k%init(wf%n_o)
-      call mem%batch_setup(batch_k, req_0, req_k)
-      call batch_k%determine_limits(1)
-!
-      call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
-      call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_v, batch_k%length)
-!
-      call wf%L_kcld_t%init('L_kcld_t','direct','unformatted', dp * wf%n_o* wf%n_v**2)
-      call disk%open_file(wf%L_kcld_t,'write')
-      call disk%open_file(wf%L_jbkc_t,'read')
-!
-      do k_batch = 1, batch_k%num_batches
-!
-!        L_jbkc ordered as bcjk is already on disk from the GS
-!
-         call compound_record_reader(wf%n_o, batch_k, wf%L_jbkc_t, g_pqrs)
-!
-         call sort_1234_to_1324(g_pqrs, h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
-!
-         call single_record_writer(batch_k, wf%L_kcld_t, h_pqrs)
-!
-      enddo
-!
-      call disk%close_file(wf%L_kcld_t,'keep')
-!
-      call batch_k%determine_limits(1)
-      call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
-      call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_v, batch_k%length)
-
-!      
    end subroutine prepare_cc3_jacobian_transpose_integrals_cc3
 !
 !

@@ -161,7 +161,7 @@ contains
       call wf%jacobian_transpose_ccsd_f2(sigma_aibj, c_aibj)
       call wf%jacobian_transpose_ccsd_g2(sigma_aibj, c_aibj)
 !
-!     Compute CC3 contributions to sigma_ai and sigma_aibj and symmetrise sigma_aibj
+!     Compute CC3 contributions to sigma_ai and sigma_aibj and symmetrize sigma_aibj
 !     CCSD H2 and I2 are already symmetric and will be computed afterwards
 !
       call ccsd_timer%freeze()
@@ -176,9 +176,13 @@ contains
       call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call cc3_timer%start()
-      call wf%jacobian_transpose_cc3_sigma1_t3_A1(c_abij, sigma_ai)
-      call wf%jacobian_transpose_cc3_sigma1_t3_B1(c_abij, sigma_ai)
-!      call wf%jacobian_transpose_cc3_A(omega, c_ai, c_abij, sigma_ai, sigma_abij)
+!
+!     CC3-Contributions from the T3-amplitudes
+      call wf%jacobian_transpose_cc3_sigma1_T3_A1(c_abij, sigma_ai)
+      call wf%jacobian_transpose_cc3_sigma1_T3_B1(c_abij, sigma_ai)
+!
+!     CC3-Contributions from the C3-amplitudes
+      call wf%jacobian_transpose_cc3_C3_terms(omega, c_ai, c_abij, sigma_ai, sigma_abij)
       call cc3_timer%freeze()
       call cc3_timer%switch_off()
 !
@@ -255,8 +259,7 @@ contains
 !!    Reads in the intermediates X_abid and Y_akil prepared in prepare_jacobian_transpose
 !!    contracts with c_abij and adds to sigma_ai
 !!
-!!    sigma_dl =  sum_abi X_abid * C_abil 
-!!                + sum_aik C_daki * Y_akil
+!!    sigma_dl =  sum_abi X_abid * C_abil + sum_aik C_daki * Y_akil
 !!    
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -396,6 +399,7 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ljck_p => null()
 !
       real(dp), dimension(:,:,:,:), allocatable :: L_kcld
+      real(dp), dimension(:,:,:,:), allocatable :: L_jbkc
 !
 !     Intermediate
       real(dp), dimension(:,:), allocatable :: X_ck
@@ -646,11 +650,14 @@ contains
       call mem%batch_setup(batch_l, req_0, req_1)
       call batch_l%determine_limits(1)
 !
-      call mem%alloc(L_kcld, wf%n_v, wf%n_o, wf%n_v, batch_l%length)
+      call mem%alloc(L_jbkc, wf%n_v, wf%n_v, wf%n_o, batch_l%length) ! ordered bcjk
+      call mem%alloc(L_kcld, wf%n_v, wf%n_o, wf%n_v, batch_l%length) ! ordered ckdl
 !
       do l_batch = 1, batch_l%num_batches
 !
-         call single_record_reader(batch_l, wf%L_kcld_t, L_kcld)
+         call compound_record_reader(wf%n_o, batch_l, wf%L_jbkc_t, L_jbkc)
+!
+         call sort_1234_to_1324(L_jbkc, L_kcld, wf%n_v, wf%n_v, wf%n_o, batch_l%length)
 !
 !        sigma_dl += sum_ck X_ck * L_kcld
 !
@@ -670,6 +677,7 @@ contains
       enddo
 !
       call batch_l%determine_limits(1)
+      call mem%dealloc(L_jbkc, wf%n_v, wf%n_v, wf%n_o, batch_l%length)
       call mem%dealloc(L_kcld, wf%n_v, wf%n_o, wf%n_v, batch_l%length)
 !
       call disk%close_file(wf%L_kcld_t)
@@ -813,25 +821,37 @@ contains
    end subroutine jacobian_transpose_cc3_X_ck_calc_cc3
 
 
-!     module subroutine jacobian_transpose_cc3_A_cc3(wf, omega, c_ai, c_abij, sigma_ai, sigma_abij)
-!  !!
-!  !!    Terms of the transpose of the  CC3 Jacobi matrix
-!  !!
-!  !!    Written by Alexander Paul and Rolf H. Myhre, March 2019
-!  !!
-!        implicit none
-!  !
-!        class(cc3) :: wf
-!  !
-!        real(dp), intent(in) :: omega
-!  !
-!        real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
-!        real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
-!  !
-!        real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
-!        real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: sigma_abij
-!  !
-!     end subroutine jacobian_transpose_cc3_A_cc3
+   module subroutine jacobian_transpose_cc3_C3_terms_cc3(wf, omega, c_ai, c_abij, sigma_ai, sigma_abij)
+!!
+!!    Construct C^abc_ijk in single batches of ijk and compute the contributions
+!!    to the singles and doubles part of the outgoing vector
+!!
+!!    The construction of C3 is split into contributions 
+!!    from outer products and matrix multiplications
+!!
+!!    1 array for each Permutation of C_abc will be used 
+!!    to reduce the amount of N^7-contractions and sorting
+!!
+!!    c_μ3 = (ω - ε^abc_ijk)^-1 (c_μ1 < μ1 | [H,tau_ν3] | R > + c_μ2 < μ2 | [H,tau_ν3] | R >
+!!
+!!    σ1 += c_μ3 < μ3 | [[H,T_2],tau_ν1] | R >
+!!    σ2 += c_μ3 < μ3 | [H,tau_ ν2] | R >
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), intent(in) :: omega
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: sigma_abij
+!
+   end subroutine jacobian_transpose_cc3_C3_terms_cc3
 !
 !
 end submodule jacobian_transpose
