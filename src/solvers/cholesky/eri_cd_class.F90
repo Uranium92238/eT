@@ -1434,6 +1434,7 @@ contains
 !     and screening vector (old refers here to the initially screened diagonal)
 !
       call mem%alloc(D, n_sig_aop)
+      D = zero
       call mem%alloc(screening_vector, n_sig_aop)
 !
       call disk%open_file(solver%diagonal_info_target, 'read')
