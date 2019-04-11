@@ -29,7 +29,6 @@ module molecular_system_class
    use io_utilities
    use interval_class
    use libint_initialization
-   use active_atoms_info_class
 !
    implicit none
 !
