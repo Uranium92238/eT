@@ -1917,10 +1917,6 @@ contains
 !
       do while (.not. done)
 !
-!
-      write(output%unit, *) 'hei1'
-      flush(output%unit)
-!
          write_warning = .true. ! Logical used to ensure warning of significant negative diagonal only appears once per iteration
 !
          solver%iteration = solver%iteration + 1
@@ -1942,6 +1938,8 @@ contains
 !
             do I = first, last
 !
+            !   write(output%unit, *) 'diag', I, D_xy(I)
+!
                if (D_xy(I) .gt. max_in_sig_sp(sp)) then
 !
                   max_in_sig_sp(sp) = D_xy(I)
@@ -1951,10 +1949,6 @@ contains
             enddo
 !
          enddo
-!
-!
-      write(output%unit, *) 'hei2'
-      flush(output%unit)
 !
 !        Sort from largest to smallest and determine an index array of sorting
 !
@@ -1973,10 +1967,6 @@ contains
          call mem%alloc(qual_sp, solver%n_sp, 3)
          qual_sp = 0
          qual_aop = 0
-!
-!
-      write(output%unit, *) 'hei3'
-      flush(output%unit)
 !
          do sp = 1, n_sig_sp
 !
@@ -2044,10 +2034,6 @@ contains
 !
          enddo
 !
-!
-      write(output%unit, *) 'hei4'
-      flush(output%unit)
-!
          call mem%dealloc(sorted_max_sig_sp, n_sig_sp)
 !
 !        Cut out the qualified parts of the aop and sp lists
@@ -2063,10 +2049,6 @@ contains
 !
          call mem%alloc(qual_aop, n_qual_aop, 3)
          call mem%alloc(qual_sp, n_qual_sp, 3)
-!
-!
-      write(output%unit, *) 'hei5'
-      flush(output%unit)
 !
          qual_aop    = qual_aop_copy
          qual_sp     = qual_sp_copy
@@ -2089,9 +2071,6 @@ contains
 !
          call mem%alloc(g_wxyz, n_sig_aop, n_qual_aop)
 !
-!
-      write(output%unit, *) 'hei6'
-      flush(output%unit)
 !
 !$omp parallel do &
 !$omp private(AB_sp, CD_sp, A, B, A_interval, B_interval, C, D, C_interval, D_interval, &
@@ -2218,10 +2197,6 @@ contains
 !
          endif
 !
-!
-      write(output%unit, *) 'hei7'
-      flush(output%unit)
-!
          call mem%alloc(approx_diagonal_accumulative, n_sig_aop)
          approx_diagonal_accumulative = zero
 !
@@ -2234,9 +2209,6 @@ contains
          construct_more_choleskys = .true.
 !
          call mem%alloc(qual_max, n_qual_aop)
-!
-      write(output%unit, *) 'hei8'
-      flush(output%unit)
 !
          do while ((current_qual .lt. n_qual_aop) .and. construct_more_choleskys)
 !
@@ -2349,13 +2321,7 @@ contains
 !
             endif
 !
-      write(output%unit, *) 'hei9'
-      flush(output%unit)
-!
          enddo ! End of decomposition
-!
-      write(output%unit, *) 'hei10'
-      flush(output%unit)
 !
          do xy = 1, n_sig_aop
 !
@@ -2373,9 +2339,6 @@ contains
          call mem%dealloc(g_wxyz, n_sig_aop, n_qual_aop)
 !
          n_new_cholesky = current_qual
-!
-      write(output%unit, *) 'hei11'
-      flush(output%unit)
 !
 !        Find new significant diagonals
 !
@@ -2412,9 +2375,6 @@ contains
             endif
 !
          enddo
-!
-      write(output%unit, *) 'hei12'
-      flush(output%unit)
 !
          call cpu_time(s_reduce_time)
 !
@@ -2454,9 +2414,6 @@ contains
                endif
 !
             enddo
-!
-      write(output%unit, *) 'hei13'
-      flush(output%unit)
 !
             new_sig_sp_to_first_sig_aop(current_new_sig_sp) = n_new_sig_aop + 1
 !
@@ -2524,9 +2481,6 @@ contains
 !
             call mem%dealloc(screening_vector_new, n_new_sig_aop)
 !
-      write(output%unit, *) 'hei13b'
-      flush(output%unit)
-!
 !           Remove the unused columns of cholesky new
 !
             call cholesky_array%keep_columns(cholesky_array%n_nodes, 1, n_new_cholesky)
@@ -2538,29 +2492,18 @@ contains
 !
             cholesky_new => null()
 !
-      write(output%unit, *) '13c'
-      flush(output%unit)
-!
-            if (allocated(cholesky_basis_new)) write(output%unit,*) 'Heeeey'; flush(output%unit)
-!
             call mem%alloc(cholesky_basis_new, solver%n_cholesky + n_new_cholesky, 3)
             cholesky_basis_new(:, :) = cholesky_basis(1 : solver%n_cholesky + n_new_cholesky, :)
             call mem%dealloc(cholesky_basis, solver%n_cholesky + n_qual_aop, 3)
 !
-   !        Deallocate old lists & reallocate + copy over new lists
+!           Deallocate old lists & reallocate + copy over new lists
 !
             deallocate(new_sig_sp)
-!
-      write(output%unit, *) 'weasdey'
-      flush(output%unit)
 !
             call mem%dealloc(sig_sp_to_first_sig_aop, n_sig_sp + 1)
             call mem%alloc(sig_sp_to_first_sig_aop, n_new_sig_sp + 1)
             sig_sp_to_first_sig_aop = new_sig_sp_to_first_sig_aop
             call mem%dealloc(new_sig_sp_to_first_sig_aop, n_new_sig_sp + 1)
-!
-      write(output%unit, *) 'asddddd'
-      flush(output%unit)
 !
             call mem%dealloc(sig_aop_to_aos, n_sig_aop, 2)
             call mem%alloc(sig_aop_to_aos, n_new_sig_aop, 2)
@@ -2579,17 +2522,12 @@ contains
             solver%iteration, n_sig_aop,'/', n_sig_sp, D_max_full , n_qual_aop, solver%n_cholesky, solver%n_cholesky*n_sig_aop
             flush(output%unit)
 !
-      write(output%unit, *) 'weey'
-      flush(output%unit)
-!
          else
 !
             call cholesky_array%finalize()
 !
             cholesky_new   => null()
             cholesky       => null()
-                  write(output%unit, *) 'hei14a'
-      flush(output%unit)
 !
             call mem%dealloc(D_xy, n_sig_aop)
 !
@@ -2601,8 +2539,6 @@ contains
             solver%n_cholesky = solver%n_cholesky + n_new_cholesky
 !
             done = .true.
-                  write(output%unit, *) 'hei14b'
-      flush(output%unit)
 !
             write(output%unit, '(t3, i4, 8x, i9, 1x, a1, i9, 6x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
             solver%iteration, 0,'/',0, D_max_full, n_qual_aop, solver%n_cholesky, 0
