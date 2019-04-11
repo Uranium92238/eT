@@ -279,7 +279,7 @@ contains
 !!
 !!    The triples amplitudes are expressed in terms of doubles amplitudes:
 !!    C_3 = (omega - ε^abc_ijk)^-1 (< mu3 | [H,C_2] | HF > + < mu3 | [[H,C_1],T_2] | HF >)
-!!    T_3 = (omega - ε^abc_ijk)^-1 < mu3 | [H,T_2] | HF >
+!!    T_3 = (-ε^abc_ijk)^-1 < mu3 | [H,T_2] | HF >
 !!
 !!    They are then used to compute the contributions 
 !!    to the singles and doubles part of the transformed vector
@@ -536,7 +536,7 @@ contains
 !
          call batch_i%determine_limits(current_i_batch)
 !
-         call single_batch_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_t, g_dbic, &
+         call single_record_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_t, g_dbic, &
                                     wf%g_bdck_c1, g_bdci_c1)
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
@@ -547,7 +547,7 @@ contains
 !
             call batch_j%determine_limits(current_j_batch)
 !
-            call double_batch_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, wf%g_jlkc_t,  &
+            call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, wf%g_jlkc_t,  &
                                        g_jlic, wf%L_jbkc_t, L_jbic, wf%g_ljck_c1, g_ljci_c1)
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
@@ -557,14 +557,14 @@ contains
 !
             if (current_j_batch .ne. current_i_batch) then
 !
-               call single_batch_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_t, g_dbjc, &
+               call single_record_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_t, g_dbjc, &
                                           wf%g_bdck_c1, g_bdcj_c1)
                g_bdcj_p => g_bdcj
                g_dbjc_p => g_dbjc
 !
                g_bdcj_c1_p => g_bdcj_c1
 !
-               call double_batch_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, wf%g_jlkc_t,  &
+               call compound_record_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, wf%g_jlkc_t,  &
                                           g_iljc, wf%L_jbkc_t, L_ibjc, wf%g_ljck_c1, g_licj_c1)
                g_licj_p => g_licj
                g_iljc_p => g_iljc
@@ -593,14 +593,14 @@ contains
 !
                if (current_k_batch .ne. current_i_batch .and. current_k_batch .ne. current_j_batch) then
 !
-                  call single_batch_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc, &
+                  call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc, &
                                              wf%g_bdck_c1, g_bdck_c1)
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
 !
                   g_bdck_c1_p => g_bdck_c1
 ! 
-                  call double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
+                  call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
                                              g_klic, wf%L_jbkc_t, L_kbic, wf%g_ljck_c1, g_lkci_c1)
                   g_lkci_p => g_lkci
                   g_klic_p => g_klic
@@ -608,7 +608,7 @@ contains
 !
                   g_lkci_c1_p => g_lkci_c1
 !
-                  call double_batch_reader(batch_i, batch_k, wf%g_ljck_t, g_lick, wf%g_jlkc_t,  &
+                  call compound_record_reader(batch_i, batch_k, wf%g_ljck_t, g_lick, wf%g_jlkc_t,  &
                                              g_ilkc, wf%L_jbkc_t, L_ibkc, wf%g_ljck_c1, g_lick_c1)
                   g_lick_p => g_lick
                   g_ilkc_p => g_ilkc
@@ -616,7 +616,7 @@ contains
 !
                   g_lick_c1_p => g_lick_c1
 !
-                  call double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
+                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
                                              g_kljc, wf%L_jbkc_t, L_kbjc, wf%g_ljck_c1, g_lkcj_c1)
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
@@ -624,7 +624,7 @@ contains
 !
                   g_lkcj_c1_p => g_lkcj_c1
 !
-                  call double_batch_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck, wf%g_jlkc_t,  &
+                  call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck, wf%g_jlkc_t,  &
                                              g_jlkc, wf%L_jbkc_t, L_jbkc, wf%g_ljck_c1, g_ljck_c1)
                   g_ljck_p => g_ljck
                   g_jlkc_p => g_jlkc
@@ -667,7 +667,7 @@ contains
 !
                   else
 !
-                     call double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
+                     call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
                                                 g_klic, wf%L_jbkc_t, L_kbic, wf%g_ljck_c1, g_lkci_c1)
                      g_lkci_p => g_lkci
                      g_klic_p => g_klic
@@ -714,7 +714,7 @@ contains
 !
                   g_lick_c1_p => g_licj_c1
 !
-                  call double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
+                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
                                              g_kljc, wf%L_jbkc_t, L_kbjc, wf%g_ljck_c1, g_lkcj_c1)
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
@@ -944,13 +944,13 @@ contains
 !
          if (.not. batching_c3) then ! no batching in c3-part - g_bdci still in mem
 !
-            call single_batch_reader(batch_i, wf%g_dbkc_c1, g_dbic_c1)
+            call single_record_reader(batch_i, wf%g_dbkc_c1, g_dbic_c1)
             g_bdci_p    => g_bdci
             g_dbic_c1_p => g_dbic_c1
 !
          else ! batching in c3-part - need to read bdci as well
 !
-            call single_batch_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_c1, g_dbic_c1)
+            call single_record_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_c1, g_dbic_c1)
             g_dbic_c1_p => g_dbic_c1
 !
          end if
@@ -961,13 +961,13 @@ contains
 !
             if (.not. batching_c3) then ! no batching in c3-part - g_ljci still in mem
 !
-               call double_batch_reader(batch_j, batch_i, wf%g_jlkc_c1, g_jlic_c1)
+               call compound_record_reader(batch_j, batch_i, wf%g_jlkc_c1, g_jlic_c1)
                g_ljci_p    => g_ljci
                g_jlic_c1_p => g_jlic_c1
 !
             else ! batching in c3-part - need to read ljci as well
 !
-               call double_batch_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci,   &
+               call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci,   &
                                           wf%g_jlkc_c1, g_jlic_c1)
                g_ljci_p    => g_ljci
                g_jlic_c1_p => g_jlic_c1
@@ -976,11 +976,11 @@ contains
 !
             if (current_j_batch .ne. current_i_batch) then
 !
-               call single_batch_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_c1, g_dbjc_c1)
+               call single_record_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_c1, g_dbjc_c1)
                g_bdcj_p    => g_bdcj
                g_dbjc_c1_p => g_dbjc_c1
 !
-               call double_batch_reader(batch_i, batch_j, wf%g_ljck_t, g_licj,   &
+               call compound_record_reader(batch_i, batch_j, wf%g_ljck_t, g_licj,   &
                                           wf%g_jlkc_c1, g_iljc_c1)
                g_licj_p    => g_licj
                g_iljc_c1_p => g_iljc_c1
@@ -1001,26 +1001,26 @@ contains
 !
                if (current_k_batch .ne. current_i_batch .and. current_k_batch .ne. current_j_batch) then
 !
-                  call single_batch_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_c1, g_dbkc_c1)
+                  call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_c1, g_dbkc_c1)
                   g_bdck_p    => g_bdck
                   g_dbkc_c1_p => g_dbkc_c1
 !
-                  call double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci,   &
+                  call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci,   &
                                              wf%g_jlkc_c1, g_klic_c1)
                   g_lkci_p    => g_lkci
                   g_klic_c1_p => g_klic_c1
 !
-                  call double_batch_reader(batch_i, batch_k, wf%g_ljck_t, g_lick,   &
+                  call compound_record_reader(batch_i, batch_k, wf%g_ljck_t, g_lick,   &
                                              wf%g_jlkc_c1, g_ilkc_c1)
                   g_lick_p    => g_lick
                   g_ilkc_c1_p => g_ilkc_c1
 !
-                  call double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj,   &
+                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj,   &
                                              wf%g_jlkc_c1, g_kljc_c1)
                   g_lkcj_p    => g_lkcj
                   g_kljc_c1_p => g_kljc_c1
 !
-                  call double_batch_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck,   &
+                  call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck,   &
                                              wf%g_jlkc_c1, g_jlkc_c1)
                   g_ljck_p    => g_ljck
                   g_jlkc_c1_p => g_jlkc_c1
@@ -1046,7 +1046,7 @@ contains
 !
                   else
 !
-                     call double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci,   &
+                     call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci,   &
                                                 wf%g_jlkc_c1, g_klic_c1)
                      g_lkci_p    => g_lkci
                      g_klic_c1_p => g_klic_c1
@@ -1073,7 +1073,7 @@ contains
                   g_lick_p    => g_licj
                   g_ilkc_c1_p => g_iljc_c1
 !
-                  call double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj,   &
+                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj,   &
                                              wf%g_jlkc_c1, g_kljc_c1)
                   g_lkcj_p    => g_lkcj
                   g_kljc_c1_p => g_kljc_c1
@@ -1221,13 +1221,10 @@ contains
       real(dp), dimension(:,:,:), allocatable :: L_J_ck_c1, L_J_db_c1, L_J_jl_c1 ! c1 transformed Cholesky vectors
       real(dp), dimension(:,:,:), allocatable :: L_J_ck, L_J_bd, L_J_kc, L_J_lj ! Cholesky vectors
 !
-      integer :: k, j, record
       type(batching_index) :: batch_k
 !
       integer :: req_0, req_k
       integer :: current_k_batch
-!
-      integer :: ioerror=-1
 !
 !
       call batch_k%init(wf%n_o)
@@ -1321,16 +1318,7 @@ contains
 !
 !        Write to file
 !
-         do k = 1, batch_k%length
-!
-            record = batch_k%first + k -1
-            write(wf%g_bdck_c1%unit, rec=record, iostat=ioerror) h_pqrs(:,:,:,k)
-!
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write bdck_c1 file')
-         endif
+         call single_record_writer(batch_k, wf%g_bdck_c1, h_pqrs)
 !
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
@@ -1388,16 +1376,7 @@ contains
 !
 !        Write to file
 !
-         do k = 1,batch_k%length
-!
-            record = batch_k%first + k -1
-            write(wf%g_dbkc_c1%unit, rec=record, iostat=ioerror) h_pqrs(:,:,:,k)
-!
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write dbkc_c1 file')
-         endif
+         call single_record_writer(batch_k, wf%g_dbkc_c1, h_pqrs)
 !
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
@@ -1496,18 +1475,7 @@ contains
 !
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
 !
-         do k = 1,batch_k%length
-            do j = 1,wf%n_o
-!
-               record  = (batch_k%first + k - 2)*wf%n_o + j
-               write(wf%g_ljck_c1%unit, rec=record, iostat=ioerror) h_pqrs(:,:,j,k)
-!
-            enddo
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write ljck_c1 file')
-         endif
+         call compound_record_writer(wf%n_o, batch_k, wf%g_ljck_c1, h_pqrs)
 !
          call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
 !
@@ -1565,18 +1533,7 @@ contains
 !
 !        Write to file
 !
-         do k = 1, batch_k%length
-            do j = 1, wf%n_o
-!
-               record  = (batch_k%first + k - 2)*wf%n_o + j
-               write(wf%g_jlkc_c1%unit, rec=record, iostat=ioerror) h_pqrs(:,:,j,k)
-!
-            enddo
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write jlkc_c1 file')
-         endif
+         call compound_record_writer(wf%n_o, batch_k, wf%g_jlkc_c1, h_pqrs)
 !
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !

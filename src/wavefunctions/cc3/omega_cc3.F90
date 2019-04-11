@@ -310,7 +310,7 @@ contains
 !
          call batch_i%determine_limits(i_batch)
 !
-         call single_batch_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_t, g_dbic)
+         call single_record_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_t, g_dbic)
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
 !
@@ -318,7 +318,7 @@ contains
 !
             call batch_j%determine_limits(j_batch)
 !
-            call double_batch_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, &
+            call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, &
                                        wf%g_jlkc_t, g_jlic, wf%L_jbkc_t, L_jbic)
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
@@ -326,11 +326,11 @@ contains
 !
             if (j_batch .ne. i_batch) then
 !
-               call single_batch_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_t, g_dbjc)
+               call single_record_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_t, g_dbjc)
                g_bdcj_p => g_bdcj
                g_dbjc_p => g_dbjc
 !
-               call double_batch_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, &
+               call compound_record_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, &
                                           wf%g_jlkc_t, g_iljc, wf%L_jbkc_t, L_ibjc)
                g_licj_p => g_licj
                g_iljc_p => g_iljc
@@ -353,29 +353,29 @@ contains
 !
                if (k_batch .ne. i_batch .and. k_batch .ne. j_batch) then
 !
-                  call single_batch_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc)
+                  call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc)
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
 !
-                  call double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, &
+                  call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, &
                                              wf%g_jlkc_t, g_klic, wf%L_jbkc_t, L_kbic)
                   g_lkci_p => g_lkci
                   g_klic_p => g_klic
                   L_kbic_p => L_kbic
 !
-                  call double_batch_reader(batch_i, batch_k, wf%g_ljck_t, g_lick, &
+                  call compound_record_reader(batch_i, batch_k, wf%g_ljck_t, g_lick, &
                                              wf%g_jlkc_t, g_ilkc, wf%L_jbkc_t, L_ibkc)
                   g_lick_p => g_lick
                   g_ilkc_p => g_ilkc
                   L_ibkc_p => L_ibkc
 !
-                  call double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, &
+                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, &
                                              wf%g_jlkc_t, g_kljc, wf%L_jbkc_t, L_kbjc)
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
                   L_kbjc_p => L_kbjc
 !
-                  call double_batch_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck, &
+                  call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck, &
                                              wf%g_jlkc_t, g_jlkc, wf%L_jbkc_t, L_jbkc)
                   g_ljck_p => g_ljck
                   g_jlkc_p => g_jlkc
@@ -406,7 +406,7 @@ contains
 !
                   else
 !
-                     call double_batch_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, &
+                     call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, &
                                                 wf%g_jlkc_t, g_klic, wf%L_jbkc_t, L_kbic)
                      g_lkci_p => g_lkci
                      g_klic_p => g_klic
@@ -439,7 +439,7 @@ contains
                   g_ilkc_p => g_iljc
                   L_ibkc_p => L_ibjc
 !
-                  call double_batch_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, &
+                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, &
                                              wf%g_jlkc_t, g_kljc, wf%L_jbkc_t, L_kbjc)
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
@@ -628,16 +628,17 @@ contains
 !
          call sort_1234_to_2134(g_pqrs,h_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_k%length)
 !
-         do k = 1,batch_k%length
-!
-            record = batch_k%first + k -1
-            write(wf%g_bdck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
-!
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write bdck_t file')
-         endif
+         call single_record_writer(batch_k, wf%g_bdck_t, h_pqrs)
+   !      do k = 1,batch_k%length
+!!
+   !         record = batch_k%first + k -1
+   !         write(wf%g_bdck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
+!!
+   !      enddo
+!!
+   !      if(ioerror .ne. 0) then
+   !         call output%error_msg('Failed to write bdck_t file')
+   !      endif
 !
          call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
@@ -668,16 +669,17 @@ contains
 !
          call sort_1234_to_2413(g_pqrs,h_pqrs,wf%n_v,wf%n_v,batch_k%length,wf%n_v)
 !
-         do k = 1,batch_k%length
-!
-            record = batch_k%first + k -1
-            write(wf%g_dbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
-!
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write dbkc_t file')
-         endif
+         call single_record_writer(batch_k, wf%g_dbkc_t, h_pqrs)
+   !      do k = 1,batch_k%length
+!!
+   !         record = batch_k%first + k -1
+   !         write(wf%g_dbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
+!!
+   !      enddo
+!!
+   !      if(ioerror .ne. 0) then
+   !         call output%error_msg('Failed to write dbkc_t file')
+   !      endif
 !
          call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
@@ -712,19 +714,20 @@ contains
 !
          call sort_1234_to_1324(g_pqrs,h_pqrs,wf%n_o,wf%n_o,wf%n_v,batch_k%length)
 !
-         do k = 1,batch_k%length
-            do j = 1,wf%n_o
+         call compound_record_writer(wf%n_o, batch_k, wf%g_ljck_t, h_pqrs)
+   !      do k = 1,batch_k%length
+   !         do j = 1,wf%n_o
+!!
+   !            record  = (batch_k%first + k - 2)*wf%n_o + j
+   !            write(wf%g_ljck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+!!
+   !         enddo
+   !      enddo
 !
-               record  = (batch_k%first + k - 2)*wf%n_o + j
-               write(wf%g_ljck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+!         if(ioerror .ne. 0) then
+!            call output%error_msg('Failed to write ljck_t file')
+!         endif
 !
-            enddo
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write ljck_t file')
-         endif
-
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
          call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
 !
@@ -753,19 +756,20 @@ contains
 !
          call sort_1234_to_4213(g_pqrs, h_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
 !
-         do k = 1,batch_k%length
-            do j = 1,wf%n_o
+         call compound_record_writer(wf%n_o, batch_k, wf%g_jlkc_t, h_pqrs)
+      !   do k = 1,batch_k%length
+      !      do j = 1,wf%n_o
+!!
+      !         record  = (batch_k%first + k - 2)*wf%n_o + j
+      !         write(wf%g_jlkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+!!
+      !      enddo
+      !   enddo
 !
-               record  = (batch_k%first + k - 2)*wf%n_o + j
-               write(wf%g_jlkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+!         if(ioerror .ne. 0) then
+!            call output%error_msg('Failed to write jlkc_t file')
+!         endif
 !
-            enddo
-         enddo
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write jlkc_t file')
-         endif
-
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !
@@ -827,148 +831,6 @@ contains
 !
 !
    end subroutine omega_cc3_integrals_cc3
-!
-!
-   module subroutine omega_cc3_vvv_reader_cc3(wf,batch_x,g_bdcx,g_dbxc)
-!!
-!!    Read the bdck and dbkc integrals needed in the current batch
-!!
-!!    Rolf H. Myhre, January 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      type(batching_index), intent(in) :: batch_x
-!
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_bdcx
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_dbxc
-!
-      integer :: ioerror
-      integer :: x, x_abs
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         read(wf%g_bdck_t%unit,rec=x_abs, iostat=ioerror) g_bdcx(:,:,:,x)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a)') 'Failed to read bdck file'
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            call output%error_msg('Failed to read file')
-         endif
-!
-      enddo
-!
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         read(wf%g_dbkc_t%unit,rec=x_abs, iostat=ioerror) g_dbxc(:,:,:,x)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a)') 'Failed to read dbkc file'
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            call output%error_msg('Failed to read file')
-         endif
-!
-      enddo
-!
-!
-   end subroutine omega_cc3_vvv_reader_cc3
-!
-!
-   module subroutine omega_cc3_ov_vv_reader_cc3(wf,batch_y,batch_x,g_lycx,g_ylxc,L_ybxc)
-!!
-!!    Read the ljck, jlkc and jbkc integrals needed in the current batches
-!!
-!!    Written by Rolf H. Myhre, January 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      type(batching_index), intent(in) :: batch_x, batch_y
-!
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_lycx
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: L_ybxc
-!
-      integer :: ioerror, record
-      integer :: x, y, x_abs, y_abs
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         do y = 1,batch_y%length
-!
-            y_abs = batch_y%first + y - 1
-!
-            record = wf%n_o*(x_abs - 1) + y_abs
-!
-            read(wf%g_ljck_t%unit,rec=record, iostat=ioerror) g_lycx(:,:,y,x)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a)') 'Failed to read ljck file'
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               call output%error_msg('Failed to read file')
-            endif
-!
-         enddo
-!
-      enddo
-!
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         do y = 1,batch_y%length
-!
-            y_abs = batch_y%first + y - 1
-!
-            record = wf%n_o*(x_abs - 1) + y_abs
-!
-            read(wf%g_jlkc_t%unit,rec=record, iostat=ioerror) g_ylxc(:,:,y,x)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a)') 'Failed to read jlkc file'
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               call output%error_msg('Failed to read file')
-            endif
-!
-         enddo
-!
-      enddo
-!
-!
-      do x = 1,batch_x%length
-!
-         x_abs = batch_x%first + x - 1
-!
-         do y = 1,batch_y%length
-!
-            y_abs = batch_y%first + y - 1
-!
-            record = wf%n_o*(x_abs - 1) + y_abs
-!
-            read(wf%L_jbkc_t%unit,rec=record, iostat=ioerror) L_ybxc(:,:,y,x)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a)') 'Failed to read jbkc file'
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               call output%error_msg('Failed to read file')
-            endif
-!
-         enddo
-!
-      enddo
-!
-!
-   end subroutine omega_cc3_ov_vv_reader_cc3
 !
 !
    module subroutine omega_cc3_W_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abji, &
