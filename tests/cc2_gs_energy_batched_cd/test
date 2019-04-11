@@ -34,7 +34,7 @@ f = [
 options = cli()
 
 ierr = 0
-for inp in ['cc2_gs_energy_batched.inp']:
+for inp in ['cc2_gs_energy_batched_cd.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,
