@@ -1184,7 +1184,7 @@ contains
 !
          D_batch(:) = D_xy(batch_first : batch_last)
 !
-         screening_vector_batch(:) = screening_vector_batch(batch_first : batch_last)
+         screening_vector_batch(:) = screening_vector(batch_first : batch_last)
 !
 !        Write info file for batch diagonal containing
 !
@@ -2262,6 +2262,8 @@ contains
             if ((D_max*screening_vector(xy_max) .gt. solver%threshold) .and. &
                (D_max .gt. solver%threshold)  .and. &
                (D_max .ge. solver%span*D_max_full)) then
+!
+               write(output%unit, *) 'SARAISARAISARAI'
 !
                cholesky_basis(solver%n_cholesky + current_qual, 1) = qual_aop(qual_max(current_qual), 1)
                cholesky_basis(solver%n_cholesky + current_qual, 2) = qual_aop(qual_max(current_qual), 2)
