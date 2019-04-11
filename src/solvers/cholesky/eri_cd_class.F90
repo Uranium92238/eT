@@ -2235,8 +2235,6 @@ contains
                (D_max .gt. solver%threshold)  .and. &
                (D_max .ge. solver%span*D_max_full)) then
 !
-               write(output%unit, *) 'SARAISARAISARAI'
-!
                cholesky_basis(solver%n_cholesky + current_qual, 1) = qual_aop(qual_max(current_qual), 1)
                cholesky_basis(solver%n_cholesky + current_qual, 2) = qual_aop(qual_max(current_qual), 2)
 !
