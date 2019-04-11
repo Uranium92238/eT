@@ -400,13 +400,13 @@ contains
 !     Intermediate
       real(dp), dimension(:,:), allocatable :: X_ck
 !
-      type(batching_index) :: batch_i, batch_j, batch_k
+      type(batching_index) :: batch_i, batch_j, batch_k, batch_l
       integer :: i, j, k, i_rel, j_rel, k_rel
-      integer :: i_batch, j_batch, k_batch ! used for the current batch
+      integer :: i_batch, j_batch, k_batch, l_batch ! used for the current batch
       integer :: req_0, req_1, req_2, req_3
       real(dp) :: batch_buff = 0.0
 !
-!     Arrays for the triples amplitudes
+!     :: Construct intermediate X_ck ::
 !
       call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -634,12 +634,43 @@ contains
       call mem%dealloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
 !
-!     sigma_dl = sum_ck X_ck
+!     :: sigma_dl = sum_ck X_ck * L_kcld ::
 !
 !
       call disk%open_file(wf%L_kcld_t,'read')
 !
+      req_0 = 0
+      req_1 = wf%n_v**2 * wf%n_o
 !
+      call batch_l%init(wf%n_o)
+      call mem%batch_setup(batch_l, req_0, req_1)
+      call batch_l%determine_limits(1)
+!
+      call mem%alloc(L_kcld, wf%n_v, wf%n_o, wf%n_v, batch_l%length)
+!
+      do l_batch = 1, batch_l%num_batches
+!
+         call single_record_reader(batch_l, wf%L_kcld_t, L_kcld)
+!
+!        sigma_dl += sum_ck X_ck * L_kcld
+!
+         call dgemm('T','N',                    &
+                     wf%n_v * batch_l%length,   &
+                     1,                         &
+                     wf%n_v * wf%n_o,           &
+                     one,                       &
+                     L_kcld,                    & ! L_dl_ck
+                     wf%n_v * wf%n_o,           &
+                     X_ck,                      & ! X_ck
+                     wf%n_v * wf%n_o,           &
+                     one,                       &
+                     sigma_ai(1,batch_l%first), & ! sigma_dl
+                     wf%n_v * wf%n_o)
+!
+      enddo
+!
+      call batch_l%determine_limits(1)
+      call mem%dealloc(L_kcld, wf%n_v, wf%n_o, wf%n_v, batch_l%length)
 !
       call disk%close_file(wf%L_kcld_t)
       call mem%dealloc(X_ck, wf%n_v, wf%n_o)
@@ -667,6 +698,117 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: X_ck
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: c_abij
+!
+      if (j .ne. k) then ! t_abc - t_acb = 0 if j==k
+!
+!     Construct u_abc = t_abc - t_acb
+!
+      call construct_123_minus_132(t_abc, u_abc, wf%n_v)
+!
+!     X_ck += sum_ab (t^abc - t^acb) * C_abij
+!
+         call dgemv('T',               &
+                     wf%n_v**2,        & ! dim of c
+                     wf%n_v,           & ! dim of X
+                     one,              &
+                     u_abc,            & ! u_c_ab
+                     wf%n_v**2,        &
+                     c_abij(:,:,i,j),  & ! c_ab_ij
+                     1,                &
+                     one,              &
+                     X_ck(:,k),        & ! X_ck
+                     1)
+!
+!        X_cj += sum_ab C_abik * (t^acb - t^abc)
+!
+         call dgemv('T',               &
+                     wf%n_v**2,        & ! dim of c
+                     wf%n_v,           & ! dim of X
+                     -one,             &
+                     u_abc,            & ! u_c_ab
+                     wf%n_v**2,        &
+                     c_abij(:,:,i,k),  & ! c_ab_ik
+                     1,                &
+                     one,              &
+                     X_ck(:,j),        & ! X_cj
+                     1)
+!
+      end if
+!
+      if (i .ne. j) then
+!
+!        Construct u_abc = t_bac - t_cab
+!
+         call construct_213_minus_312(t_abc, u_abc, wf%n_v)
+!
+!        X_ck += sum_ab C_abji * (t^bac - t^cab)
+!
+         call dgemv('T',               &
+                     wf%n_v**2,        & ! dim of c
+                     wf%n_v,           & ! dim of X
+                     one,              &
+                     u_abc,            & ! u_c_ab
+                     wf%n_v**2,        &
+                     c_abij(:,:,j,i),  & ! c_ab_ji
+                     1,                &
+                     one,              &
+                     X_ck(:,k),        & ! X_ck
+                     1)
+!
+         if(j .ne. k) then
+!
+!           X_ci += sum_ab C_abjk * (t^cab - t^bac)
+!
+            call dgemv('T',               &
+                        wf%n_v**2,        & ! dim of c
+                        wf%n_v,           & ! dim of X
+                        -one,             &
+                        u_abc,            & ! u_c_ab
+                        wf%n_v**2,        &
+                        c_abij(:,:,j,k),  & ! c_ab_jk
+                        1,                &
+                        one,              &
+                        X_ck(:,i),        & ! X_ci
+                        1)
+!
+         end if
+!
+!        Construct u_abc = t_cba - t_bca
+!
+         call construct_321_minus_231(t_abc, u_abc, wf%n_v) ! t_cba - t_bca = 0 if i==j
+!
+!        X_ci += sum_ab C_abkj * (t_cba - t_bca)
+!
+         call dgemv('T',               &
+                     wf%n_v**2,        & ! dim of c
+                     wf%n_v,           & ! dim of X
+                     one,              &
+                     u_abc,            & ! u_c_ab
+                     wf%n_v**2,        &
+                     c_abij(:,:,k,j),  & ! c_ab_kj
+                     1,                &
+                     one,              &
+                     X_ck(:,i),        & ! X_ci
+                     1)
+!
+         if(j .ne. k) then
+!
+!           X_cj += sum_ab C_abki * (t^bca - t^cba)
+!
+            call dgemv('T',               &
+                        wf%n_v**2,        & ! dim of c
+                        wf%n_v,           & ! dim of X
+                        one,              &
+                        u_abc,            & ! u_c_ab
+                        wf%n_v**2,        &
+                        c_abij(:,:,k,i),  & ! c_ab_ki
+                        1,                &
+                        one,              &
+                        X_ck(:,j),        & ! X_cj
+                        1)
+!
+         end if
+      end if
 !
    end subroutine jacobian_transpose_cc3_X_ck_calc_cc3
 
