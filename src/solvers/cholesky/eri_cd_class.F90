@@ -245,6 +245,7 @@ contains
          do batch = 1, solver%n_batches 
 !
             write(output%unit, '(/t3, a6, i3, a1)') 'Batch ', batch, ':'
+            flush(output%unit)
 !
             write(temp_name, '(a14, i4.4)')'diagonal_info_', batch
             call batch_file_diag%init(trim(temp_name), 'sequential', 'unformatted')
@@ -1183,7 +1184,7 @@ contains
 !
          D_batch(:) = D_xy(batch_first : batch_last)
 !
-         screening_vector_batch(:) = screening_vector_batch(batch_first : batch_last)
+         screening_vector_batch(:) = screening_vector(batch_first : batch_last)
 !
 !        Write info file for batch diagonal containing
 !
@@ -1433,6 +1434,7 @@ contains
 !     and screening vector (old refers here to the initially screened diagonal)
 !
       call mem%alloc(D, n_sig_aop)
+      D = zero
       call mem%alloc(screening_vector, n_sig_aop)
 !
       call disk%open_file(solver%diagonal_info_target, 'read')
@@ -1937,6 +1939,8 @@ contains
 !
             do I = first, last
 !
+            !   write(output%unit, *) 'diag', I, D_xy(I)
+!
                if (D_xy(I) .gt. max_in_sig_sp(sp)) then
 !
                   max_in_sig_sp(sp) = D_xy(I)
@@ -2067,6 +2071,7 @@ contains
 !        Construct g_wxyz
 !
          call mem%alloc(g_wxyz, n_sig_aop, n_qual_aop)
+!
 !
 !$omp parallel do &
 !$omp private(AB_sp, CD_sp, A, B, A_interval, B_interval, C, D, C_interval, D_interval, &
@@ -2488,12 +2493,11 @@ contains
 !
             cholesky_new => null()
 !
-!
             call mem%alloc(cholesky_basis_new, solver%n_cholesky + n_new_cholesky, 3)
             cholesky_basis_new(:, :) = cholesky_basis(1 : solver%n_cholesky + n_new_cholesky, :)
             call mem%dealloc(cholesky_basis, solver%n_cholesky + n_qual_aop, 3)
 !
-   !        Deallocate old lists & reallocate + copy over new lists
+!           Deallocate old lists & reallocate + copy over new lists
 !
             deallocate(new_sig_sp)
 !
