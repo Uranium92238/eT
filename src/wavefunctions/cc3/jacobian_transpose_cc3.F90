@@ -641,8 +641,6 @@ contains
 !     :: sigma_dl = sum_ck X_ck * L_kcld ::
 !
 !
-      call disk%open_file(wf%L_kcld_t,'read')
-!
       req_0 = 0
       req_1 = wf%n_v**2 * wf%n_o
 !
@@ -680,7 +678,6 @@ contains
       call mem%dealloc(L_jbkc, wf%n_v, wf%n_v, wf%n_o, batch_l%length)
       call mem%dealloc(L_kcld, wf%n_v, wf%n_o, wf%n_v, batch_l%length)
 !
-      call disk%close_file(wf%L_kcld_t)
       call mem%dealloc(X_ck, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_transpose_cc3_sigma1_t3_B1_cc3
