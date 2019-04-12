@@ -65,7 +65,7 @@ module diis_tool_class
       integer, private :: n_parameters ! The length of the X vector
       integer, private :: n_equations  ! The length of the O vector
 !
-      logical :: accumulate = .false. ! Variable keeping track of wether we are cummulatively building the diis history or not
+      logical :: accumulate = .true. ! Variable keeping track of wether we are cummulatively building the diis history or not
 !                                      ! Note: default is to accumulate
 !
    contains
@@ -205,12 +205,12 @@ contains
 !
 !     Ask disk manager to open the files
 !
-      do i = 1, solver%diis_dimension
+     do i = 1, solver%diis_dimension
 !
-         call disk%open_file(solver%dx(i), 'readwrite')
-         call disk%open_file(solver%x_dx(i), 'readwrite')
+        call disk%open_file(solver%dx(i), 'readwrite')
+        call disk%open_file(solver%x_dx(i), 'readwrite')
 !
-      enddo
+     enddo
 !
 !     Compute the current dimensionality of the problem 
 !     (1, 2,..., 7, 8, 8, 8, 8,...) for the standard diis_dimension = 8
@@ -278,8 +278,6 @@ contains
          rewind(solver%x_dx(i)%unit)
          read(solver%x_dx(i)%unit) x_dx_i
 !
-         write(output%unit, *) 'i x_dx_i', x_dx_i(1:5)
-!
 !        Add w_i (x_i + Δ x_i) to the amplitudes
 !
          call daxpy(solver%n_parameters, diis_vector(i), x_dx_i, 1, x_dx, 1)
@@ -293,10 +291,10 @@ contains
 !     Close files
 !
       do i = 1, solver%diis_dimension
-!
+
          call disk%close_file(solver%dx(i))
          call disk%close_file(solver%x_dx(i))
-!
+
       enddo
 !
       solver%iteration = solver%iteration + 1
@@ -305,7 +303,10 @@ contains
 !
 !
    function get_current_dim_diis_tool(solver)
-!
+!!
+!!    Get current dimension 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
       implicit none
 !
       class(diis_tool) :: solver
@@ -321,12 +322,6 @@ contains
          get_current_dim_diis_tool = solver%iteration
 !
       endif
-!
-   !   get_current_dim_diis_tool = solver%iteration - &
-   !            ((solver%diis_dimension)-1)*((solver%iteration-1)/((solver%diis_dimension)-1))
-!
-   !   get_current_dim_diis_tool = solver%iteration - &
-   !            ((solver%diis_dimension))*((solver%iteration-1)/((solver%diis_dimension)))
 !
    end function get_current_dim_diis_tool
 !
@@ -351,9 +346,11 @@ contains
 !
       integer, intent(in) :: current_dim
 !
-      integer :: k, tmp_unit
+      integer :: k
 !
-      if (current_dim .le. solver%diis_dimension) then 
+      type(file) :: tmp_file
+!
+      if (current_dim .le. solver%diis_dimension .and. current_dim .eq. solver%iteration) then 
 !
 !        Still doing first set of vectors - just write to the correct file 
 !
@@ -365,37 +362,34 @@ contains
 !
       else 
 !
-!        Redefine which file is which, to keep the right ordering:
-!        The 2nd should become the 1st; the 3rd the 2nd; and so on. 
-!        The 1st will become the last, then be overwritten.
+!        Redefine files such that the current entry is the last, 
+!        while all the others move one position up 
 !
-         tmp_unit = solver%dx(1)%unit
+         tmp_file = solver%dx(1)
 !
-         do k = 2, solver%diis_dimension
+         do k = 1, current_dim - 1 
 !
-            solver%dx(k - 1)%unit = solver%dx(k)%unit
+            solver%dx(k) = solver%dx(k+1)
 !
-         enddo
+         enddo 
 !
-         solver%dx(solver%diis_dimension)%unit = tmp_unit
+         solver%dx(current_dim) = tmp_file
 !
-         tmp_unit = solver%x_dx(1)%unit
+         rewind(solver%dx(current_dim)%unit)
+         write(solver%dx(current_dim)%unit) dx
 !
-         do k = 2, solver%diis_dimension
+         tmp_file = solver%x_dx(1)
 !
-            solver%x_dx(k - 1)%unit = solver%x_dx(k)%unit
+         do k = 1, current_dim - 1 
 !
-         enddo
+            solver%x_dx(k) = solver%x_dx(k+1)
 !
-         solver%x_dx(solver%diis_dimension)%unit = tmp_unit
+         enddo 
 !
-!        Now write the current entry to the last file 
+         solver%x_dx(current_dim) = tmp_file
 !
-         rewind(solver%dx(solver%diis_dimension)%unit)
-         write(solver%dx(solver%diis_dimension)%unit) dx 
-!
-         rewind(solver%x_dx(solver%diis_dimension)%unit)
-         write(solver%x_dx(solver%diis_dimension)%unit) x_dx 
+         rewind(solver%x_dx(current_dim)%unit)
+         write(solver%x_dx(current_dim)%unit) x_dx
 !
       endif
 !
