@@ -55,6 +55,9 @@ extern Engine overlap;
 Engine dipole;
 extern Engine dipole;
 
+Engine quadrupole;
+extern Engine quadrupole;
+
 vector<Atom> atoms;
 extern vector<Atom> atoms;
 
@@ -153,5 +156,12 @@ void initialize_dipole(){
 
     Engine temporary(Operator::emultipole1, basis.max_nprim(), basis.max_l()); // Note that expansion point = (0,0,0) by default
     dipole = temporary;
+
+}
+
+void initialize_quadrupole(){
+
+    Engine temporary(Operator::emultipole2, basis.max_nprim(), basis.max_l()); // Note that expansion point = (0,0,0) by default
+    quadrupole = temporary;
 
 }

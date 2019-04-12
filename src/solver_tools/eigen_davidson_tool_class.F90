@@ -46,30 +46,45 @@ module eigen_davidson_tool_class
 !
       real(dp) :: eigenvalue_threshold
 !
+      type(file) :: projector
+!
+      logical :: do_projection
+!
       real(dp), dimension(:), allocatable :: omega_re 
       real(dp), dimension(:), allocatable :: omega_im
 !
    contains 
 !
-      procedure :: prepare                  => prepare_eigen_davidson_tool 
-      procedure :: cleanup                  => cleanup_eigen_davidson_tool
+!     Prepare and cleanup
 !
-      procedure :: get_eigenvalue           => get_eigenvalue_eigen_davidson_tool
+      procedure :: prepare                            => prepare_eigen_davidson_tool 
+      procedure :: cleanup                            => cleanup_eigen_davidson_tool
 !
-      procedure :: construct_next_trial_vec => construct_next_trial_vec_eigen_davidson_tool
+!     Get-Set routines
 !
-      procedure :: solve_reduced_problem    => solve_reduced_problem_eigen_davidson_tool
+      procedure :: get_eigenvalue                     => get_eigenvalue_eigen_davidson_tool
 !
-      procedure :: construct_residual       => construct_residual_eigen_davidson_tool
+!     Eigenvalue Davidson specific routines
 !
-      procedure :: construct_re_residual    => construct_re_residual_eigen_davidson_tool
-      procedure :: construct_im_residual    => construct_im_residual_eigen_davidson_tool
+      procedure :: construct_next_trial_vec           => construct_next_trial_vec_eigen_davidson_tool
+      procedure :: solve_reduced_problem              => solve_reduced_problem_eigen_davidson_tool
+      procedure :: construct_residual                 => construct_residual_eigen_davidson_tool
 !
-      procedure :: initialize_omega_re      => initialize_omega_re_eigen_davidson_tool
-      procedure :: initialize_omega_im      => initialize_omega_im_eigen_davidson_tool
+!     Projector routines
 !
-      procedure :: destruct_omega_re        => destruct_omega_re_eigen_davidson_tool
-      procedure :: destruct_omega_im        => destruct_omega_im_eigen_davidson_tool
+      procedure :: set_projector                      => set_projector_eigen_davidson_tool
+      procedure :: projection                         => projection_eigen_davidson_tool
+!
+!     Private helper routines
+!
+      procedure, private :: construct_re_residual     => construct_re_residual_eigen_davidson_tool
+      procedure, private :: construct_im_residual     => construct_im_residual_eigen_davidson_tool
+!  
+      procedure, private :: initialize_omega_re       => initialize_omega_re_eigen_davidson_tool
+      procedure, private :: initialize_omega_im       => initialize_omega_im_eigen_davidson_tool
+!  
+      procedure, private :: destruct_omega_re         => destruct_omega_re_eigen_davidson_tool
+      procedure, private :: destruct_omega_im         => destruct_omega_im_eigen_davidson_tool
 !
    end type eigen_davidson_tool
 !
@@ -88,7 +103,7 @@ contains
 !
       character(len=*), intent(in) :: name
 !
-      integer, intent(in) :: n_parameters, n_solutions  
+      integer, intent(in)      :: n_parameters, n_solutions  
       real(dp), intent(in)     :: residual_threshold, eigenvalue_threshold  
 !
       davidson%n_parameters = n_parameters
@@ -99,7 +114,6 @@ contains
 !
       davidson%name = trim(name)
 !
-      call davidson%X%init(trim(davidson%name) // '_X', 'sequential', 'unformatted')
       call davidson%trials%init(trim(davidson%name) // '_trials', 'sequential', 'unformatted')
       call davidson%transforms%init(trim(davidson%name) // '_transforms', 'sequential', 'unformatted')
       call davidson%preconditioner%init(trim(davidson%name) // '_preconditioner', 'sequential', 'unformatted')
@@ -114,13 +128,9 @@ contains
       davidson%do_projection     = .false.         ! Switches to true if 'set_projection' is called
 !
       davidson%dim_red           = n_solutions     ! Initial dimension equal to number of solutions
-      davidson%n_new_trials      = n_solutions 
+      davidson%n_new_trials      = n_solutions   
 !
-      davidson%max_dim_red = min(n_solutions*50, 150)   
-!
-      davidson%current_n_trials = 0
-!
-      call davidson%read_max_dim_red()     
+      davidson%current_n_trials = 0    
 !
    end subroutine prepare_eigen_davidson_tool
 !
@@ -135,10 +145,14 @@ contains
       class(eigen_davidson_tool) :: davidson 
 !
       call disk%open_file(davidson%trials, 'write', 'rewind')
+      call disk%open_file(davidson%projector, 'write', 'rewind')
       call disk%open_file(davidson%transforms, 'write', 'rewind')
+      call disk%open_file(davidson%preconditioner, 'write', 'rewind')
 !
       call disk%close_file(davidson%trials, 'delete')
+      call disk%close_file(davidson%projector, 'delete')
       call disk%close_file(davidson%transforms, 'delete')
+      call disk%close_file(davidson%preconditioner, 'delete')
 !
    end subroutine cleanup_eigen_davidson_tool
 !  
@@ -247,7 +261,7 @@ contains
       call mem%alloc(A_red, davidson%dim_red, davidson%dim_red)
 !
       X_red = zero
-      A_red = davidson%A_red 
+      call dcopy(davidson%dim_red**2, davidson%A_red, 1, A_red, 1)
 !
       call mem%alloc(omega_re, davidson%dim_red)
       call mem%alloc(omega_im, davidson%dim_red)
@@ -313,6 +327,7 @@ contains
 !
       if (allocated(davidson%X_red)) &
          call mem%dealloc(davidson%X_red, davidson%dim_red - davidson%n_new_trials, davidson%n_solutions)
+!
       call mem%alloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
       davidson%X_red = zero
 !
@@ -569,22 +584,7 @@ contains
 !
       call davidson%construct_residual(R, X, norm_X, k)
 !
-!     Write the normalized solution X to file,
-!     then deallocate 
-!
-      if (k .eq. 1) then 
-!
-         call disk%open_file(davidson%X, 'write', 'rewind')
-!
-      else
-!
-         call disk%open_file(davidson%X, 'write', 'append')
-!
-      endif 
-!
       call dscal(davidson%n_parameters, one/norm_X, X, 1)
-!
-      call disk%close_file(davidson%X)
 !
       call mem%dealloc(X, davidson%n_parameters)
 !
@@ -610,7 +610,7 @@ contains
 !
             davidson%n_new_trials = davidson%n_new_trials + 1
             call dscal(davidson%n_parameters, one/norm_new_trial, R, 1)
-            call davidson%write_trial(R)
+            call davidson%write_trial(R, 'append')
 !
          endif
 !
@@ -619,6 +619,72 @@ contains
       call mem%dealloc(R, davidson%n_parameters)
 !
    end subroutine construct_next_trial_vec_eigen_davidson_tool
+!
+!
+   subroutine set_projector_eigen_davidson_tool(davidson, projector)
+!!
+!!    Set projector 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    This routine saves the projector to file. 
+!!
+      implicit none 
+!
+      class(eigen_davidson_tool) :: davidson
+!
+      real(dp), dimension(davidson%n_parameters), intent(in) :: projector 
+!
+      call disk%open_file(davidson%projector, 'write', 'rewind')
+      write(davidson%projector%unit) projector 
+      call disk%close_file(davidson%projector)
+!
+      davidson%do_projection = .true.
+!
+   end subroutine set_projector_eigen_davidson_tool
+!
+!
+   subroutine projection_eigen_davidson_tool(davidson, R)
+!!
+!!    Projection
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    Project the vector R, i.e. 
+!!
+!!       R(i) <- R(i)*projector(i)
+!!
+!!    However, if the user has not set any preconditioner, 
+!!    this routine performs no action on R. 
+!!
+      implicit none 
+!
+      class(eigen_davidson_tool) :: davidson
+!
+      real(dp), dimension(davidson%n_parameters), intent(inout) :: R
+!
+      real(dp), dimension(:), allocatable :: projector
+!
+      integer :: i 
+!
+      if (davidson%do_projection) then 
+!
+         call mem%alloc(projector, davidson%n_parameters)
+!
+         call disk%open_file(davidson%projector, 'read')
+         rewind(davidson%projector%unit)
+         read(davidson%projector%unit) projector
+         call disk%close_file(davidson%projector)
+!
+         do i = 1, davidson%n_parameters
+!
+            R(i) = R(i)*projector(i)
+!
+         enddo 
+!
+         call mem%dealloc(projector, davidson%n_parameters)
+!
+      endif 
+!
+   end subroutine projection_eigen_davidson_tool
 !
 !
 end module eigen_davidson_tool_class

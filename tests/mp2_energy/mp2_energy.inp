@@ -1,5 +1,7 @@
-name: H2O He
-charge: 0
+system
+   name: H2O He
+   charge: 0
+end system
 
 method
   hf
@@ -10,15 +12,15 @@ memory
    available: 8
 end memory
 
-cholesky
+solver cholesky
    threshold: 1.0d-12
-end cholesky
+end solver cholesky
 
-hf
-  algorithm:          scf-diis
-  energy threshold:   1.0d-12
-  gradient threshold: 1.0d-12
-end hf
+solver hf
+   algorithm:          scf-diis
+   energy threshold:   1.0d-12
+   gradient threshold: 1.0d-12
+end solver hf
 
 do
    ground state

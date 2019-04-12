@@ -1,0 +1,342 @@
+
+
+
+                       eT - a coupled cluster program 
+       Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch
+
+  ----------------------------------------------------------------------------------
+   Author:                Contribution(s):
+  ----------------------------------------------------------------------------------
+   Sarai D. Folkestad     Program design, HF, CCS, CC2, CCSD, Libint-interface,
+                          Cholesky decomposition, Davidson-tool, CVS, DIIS-tool
+                          Zeroth order properties
+   Linda Goletto          CC2
+   Eirik F. Kjønstad      Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,
+                          Cholesky decomposition, Libint-interface, Davidson-tool
+                          Zeroth order properties
+   Rolf H. Myhre          CC3, Runtest-interface, Launch script
+   Alexander Paul         CC2, CC3
+   Andreas Skeidsvoll     MP2
+  ----------------------------------------------------------------------------------
+   Other contributors: A. Balbi, M. Scavino
+
+  Running on 4 OMP threads
+
+  Memory available for calculation:         8 GB
+  Disk space available for calculation:    30 GB
+
+  - Molecular system specifications:
+
+     Name:         h2ohe
+     Charge:       0
+     Multiplicity: 1
+
+     Nuclear repulsion energy (a.u.):             12.116100574587
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+     H    0.866810000000   0.601440000000   5.000000000000   cc-pvtz    
+     H   -0.866810000000   0.601440000000   5.000000000000   cc-pvtz    
+     O    0.000000000000  -0.075790000000   5.000000000000   cc-pvtz    
+     He   0.100000000000  -0.020000000000   7.530000000000   cc-pvtz    
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:         66
+     Number of molecular orbitals:       72
+     Number of atomic orbitals:          72
+
+
+  :: Self-consistent field DIIS Hartree-Fock solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock matrix 
+  is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:               8
+     Energy threshold:              0.1000E-09
+     Gradient threshold:            0.1000E-09
+
+     Coulomb screening threshold:   0.1000E-12
+     Exchange screening threshold:  0.1000E-12
+     ERI integral precision:        0.1000E-25
+
+  - Setting initial AO density to SAD:
+
+     Energy of initial guess:       -78.504367435811
+     Number of electrons in guess:   12.000000000000
+
+  Iteration    Energy (a.u.)        Max(grad.)    Delta E (a.u.)
+  --------------------------------------------------------------
+    1           -78.828779826056     0.1028E+00     0.7883E+02
+    2           -78.858408446759     0.8789E-01     0.2963E-01
+    3           -78.877019725799     0.9809E-02     0.1861E-01
+    4           -78.877399348129     0.2251E-02     0.3796E-03
+    5           -78.877443923120     0.4966E-03     0.4457E-04
+    6           -78.877445891057     0.8117E-04     0.1968E-05
+    7           -78.877445942164     0.9288E-05     0.5111E-07
+    8           -78.877445942642     0.1106E-05     0.4784E-09
+    9           -78.877445942671     0.9283E-06     0.2858E-10
+   10           -78.877445942680     0.4281E-06     0.9379E-11
+   11           -78.877445942681     0.7257E-07     0.6253E-12
+   12           -78.877445942681     0.1045E-07     0.8527E-13
+   13           -78.877445942681     0.4485E-08     0.2274E-12
+   14           -78.877445942681     0.9025E-09     0.3695E-12
+   15           -78.877445942681     0.2497E-09     0.5684E-13
+   16           -78.877445942680     0.7817E-10     0.1705E-12
+  --------------------------------------------------------------
+
+  Convergence criterion met in  16 iterations!
+
+  - Summary of HF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                 0.621789335082
+     Nuclear repulsion energy:     12.116100574587
+     Electronic energy:           -90.993546517267
+     Total energy:                -78.877445942680
+
+  - Molecular orbital energies:
+
+    1  -20.577645695303      2   -1.285003403620      3   -0.901638324223
+    4   -0.638606064333      5   -0.551612145757      6   -0.495530737868
+    7    0.126258597214      8    0.186334924633      9    0.484621859408
+   10    0.523122422006     11    0.649215232064     12    0.698924525591
+   13    0.782938552670     14    0.812824235383     15    0.828948656673
+   16    0.835982157562     17    0.948795590248     18    1.117792500421
+   19    1.229629813121     20    1.367812671329     21    1.398292340628
+   22    1.520812958612     23    1.530852275274     24    1.639235270516
+   25    1.995241459206     26    2.001817070196     27    2.106224645722
+   28    2.260889641378     29    2.334337116057     30    2.626402826706
+   31    2.826930735295     32    3.354705510542     33    3.436700901049
+   34    3.489889098196     35    3.499361332950     36    3.682133964098
+   37    3.715783218062     38    3.861936208006     39    3.879845287101
+   40    3.965506988132     41    3.976026666711     42    4.029364230200
+   43    4.101793293939     44    4.157566191458     45    4.280499325857
+   46    4.543835920093     47    4.602711641799     48    4.678647187251
+   49    4.745534387865     50    5.231136421485     51    5.518783482449
+   52    5.822448134462     53    6.113516519322     54    6.373719367045
+   55    6.373925216680     56    6.375887442451     57    6.376009672090
+   58    6.393651233230     59    6.437072175384     60    6.535582766691
+   61    6.650335558394     62    6.696925033937     63    7.012821690811
+   64    7.128387233490     65    7.172186855630     66    7.398976292385
+   67    7.580375855042     68    7.636225692115     69    7.869161848859
+   70    7.872183687240     71    7.990049127702     72   10.824478824594
+
+
+  - Cleaning up Self-consistent field DIIS Hartree-Fock solver
+
+
+  :: Cholesky decomposition of electronic repulsion integrals solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations.
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-09
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+     Total number of AOs:                    72
+     Total number of shell pairs:           406
+     Total number of AO pairs:             2628
+
+  - Preparing diagonal for decomposition:
+
+     Significant shell pairs:                   368
+     Significant AO pairs:                     2304
+
+     Construct shell pairs:                     403
+     Construct AO pairs:                       2601
+
+     Significant AO and shell pairs in batch   1:
+
+        Significant shell pairs:                   113
+        Significant AO pairs:                      465
+
+     Significant AO and shell pairs in batch   2:
+
+        Significant shell pairs:                    63
+        Significant AO pairs:                      455
+
+     Significant AO and shell pairs in batch   3:
+
+        Significant shell pairs:                    70
+        Significant AO pairs:                      470
+
+     Significant AO and shell pairs in batch   4:
+
+        Significant shell pairs:                    76
+        Significant AO pairs:                      463
+
+     Significant AO and shell pairs in batch   5:
+
+        Significant shell pairs:                    46
+        Significant AO pairs:                      451
+
+  - Decomposing batched diagonal:
+
+  Batch   1:
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1              450 /      107       0.13931E+01     186             33                14850
+     2              367 /       89       0.12051E-01     274            113                41471
+     3              299 /       71       0.11005E-03     245            208                62192
+     4              179 /       49       0.10717E-05     194            283                50657
+     5                0 /        0       0.10388E-07     140            360                    0
+  -------------------------------------------------------------------------------------------------------
+
+  Batch   2:
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1              424 /       56       0.13931E+01     177             34                14416
+     2              408 /       50       0.13760E-01     300            122                49776
+     3              348 /       38       0.13036E-03     253            223                77604
+     4              193 /       25       0.12898E-05     189            315                60795
+     5               15 /        1       0.12496E-07     101            384                 5760
+     6                0 /        0       0.10703E-09       1            385                    0
+  -------------------------------------------------------------------------------------------------------
+
+  Batch   3:
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1              446 /       67       0.10931E+01     244             43                19178
+     2              374 /       54       0.10786E-01     316            122                45628
+     3              347 /       45       0.99105E-04     253            207                71829
+     4              256 /       36       0.96781E-06     205            285                72960
+     5                0 /        0       0.93348E-08     142            358                    0
+  -------------------------------------------------------------------------------------------------------
+
+  Batch   4:
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1              443 /       70       0.48661E+01     127             27                11961
+     2              407 /       62       0.46251E-01     286            115                46805
+     3              334 /       51       0.44301E-03     179            176                58784
+     4              209 /       32       0.43678E-05     150            238                49742
+     5               76 /        8       0.42515E-07     110            277                21052
+     6                0 /        0       0.36791E-09      32            294                    0
+  -------------------------------------------------------------------------------------------------------
+
+  Batch   5:
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1              420 /       41       0.20496E+01     218             86                36120
+     2              250 /       30       0.20355E-01     178            160                40000
+     3              152 /       18       0.12706E-03     111            225                34200
+     4              108 /       10       0.88036E-06      56            261                28188
+     5                0 /        0       0.81027E-08      56            295                    0
+  -------------------------------------------------------------------------------------------------------
+
+  - Final decomposition step:
+
+     Significant AO and shell pairs in final decomposition:
+
+     Significant shell pairs:                   302
+     Significant AO pairs:                     2080
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1             2046 /      291       0.48661E+01     468             76               155496
+     2             1889 /      273       0.44584E-01    1000            294               555366
+     3             1678 /      242       0.43132E-03     863            475               797050
+     4             1535 /      204       0.42765E-05     969            734              1126690
+     5              795 /       67       0.42276E-07     814           1022               812490
+     6                0 /        0       0.40406E-09     197           1106                    0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals: 
+
+     Final number of Cholesky vectors:       1106
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.9712E-10
+     Minimal element of difference between approximate and actual diagonal:  -0.2665E-14
+
+
+  :: DIIS CC ground solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
+  of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 13. 
+  
+
+  - DIIS CC ground state solver settings:
+
+     Omega threshold:           0.10E-09
+     Energy threshold:          0.10E-09
+
+     DIIS dimension:                   8
+     Max number of iterations:       100
+
+  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) 
+  ---------------------------------------------------------------
+    1           -79.196218411204     0.6541E-01     0.7920E+02
+    2           -79.198404383436     0.9739E-02     0.2186E-02
+    3           -79.198883494494     0.1263E-02     0.4791E-03
+    4           -79.198905454074     0.3354E-03     0.2196E-04
+    5           -79.198908022429     0.7916E-04     0.2568E-05
+    6           -79.198907951380     0.1442E-04     0.7105E-07
+    7           -79.198907844960     0.2764E-05     0.1064E-06
+    8           -79.198907847892     0.8147E-06     0.2933E-08
+    9           -79.198907849480     0.3568E-06     0.1588E-08
+   10           -79.198907850437     0.7698E-07     0.9571E-09
+   11           -79.198907850055     0.1677E-07     0.3828E-09
+   12           -79.198907850094     0.3225E-08     0.3983E-10
+   13           -79.198907850096     0.7255E-09     0.1648E-11
+   14           -79.198907850103     0.1601E-09     0.6636E-11
+   15           -79.198907850106     0.1945E-10     0.3112E-11
+  --------------------------------------------------------------
+
+  Convergence criterion met in  15 iterations!
+
+  - DIIS CC ground state solver summary:
+
+     Final ground state energy (a.u.):  -79.198907850106
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         t(a,i)             
+     -----------------------------------
+        1      5       -0.011284883316
+        5      6       -0.009506801209
+       15      4        0.008999619857
+       14      5        0.008067263849
+        8      4       -0.007328076717
+        9      6        0.006866194226
+       10      6        0.006861275786
+       34      4       -0.005969290543
+        6      2        0.005771246977
+       35      5        0.005434178954
+     ------------------------------------
+
+     T1 diagnostic (|T1|/sqrt(N_e)): 0.008220088566
+
+  - Cleaning up cc2 wavefunction
+
+  Mismatch in memory according to eT and specified on input:
+
+     Memory available (eT):          7.9984 GB
+     Memory available (input):       8.0000 GB
+
+  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
+
+  eT terminated successfully!

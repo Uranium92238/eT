@@ -52,9 +52,7 @@ contains
 !
       class(davidson_cc_ip) :: solver 
 !
-      integer :: n_specs, i
-!
-      character(len=100) :: line
+!     These two asignments shouldn't really be in this routine. - EFK, Mar 2019
 !
       solver%tag = 'Davidson coupled cluster ionized state solver'
       solver%description1 = 'A Davidson CVS solver that calculates core ionization energies &
@@ -64,36 +62,13 @@ contains
                             &are met. Bath orbitals and projection is used to obtain ionized &
                             &states.'
 !
-      call move_to_section('cc excited state', n_specs)
+      call input%get_keyword_in_section('residual threshold', 'cc excited state', solver%residual_threshold)
+      call input%get_keyword_in_section('energy threshold', 'cc excited state', solver%eigenvalue_threshold)
+      call input%get_keyword_in_section('max iterations', 'cc excited state', solver%max_iterations)
 !
-      do i = 1, n_specs
+      call input%get_required_keyword_in_section('singlet states', 'cc excited state', solver%n_singlet_states)
 !
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (line(1:19) == 'residual threshold:' ) then
-!
-            read(line(20:100), *) solver%residual_threshold
-!
-         elseif (line(1:17) == 'energy threshold:' ) then
-!
-            read(line(18:100), *) solver%eigenvalue_threshold
-!
-         elseif (line(1:15) == 'singlet states:' ) then
-!
-            read(line(16:100), *) solver%n_singlet_states
-!
-         elseif (line(1:15) == 'max iterations:' ) then
-!
-            read(line(16:100), *) solver%max_iterations
-!
-         elseif (trim(line) == 'restart') then
-!
-            solver%restart = .true.
-!
-         endif
-!
-      enddo
+      if (input%requested_keyword_in_section('restart', 'cc excited state')) solver%restart = .true.  
 !
    end subroutine read_settings_davidson_cc_ip
 !
