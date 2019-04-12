@@ -21,13 +21,13 @@ assert version_info.major == 2
 # construct filter(s)
 f = [
     get_filter(string='Final ground state energy (a.u.):',
-               abs_tolerance=1.0e-10),
+               abs_tolerance=1.0e-9),
     get_filter(string=' x ',
-               abs_tolerance=1.0e-10),
+               abs_tolerance=1.0e-9),
     get_filter(string=' y ',
-               abs_tolerance=1.0e-10),
+               abs_tolerance=1.0e-9),
     get_filter(string=' z ',
-               abs_tolerance=1.0e-10),
+               abs_tolerance=1.0e-9),
     get_filter(from_string='- Davidson CC multipliers solver summary:',
                num_lines=10,
                abs_tolerance=1.0e-9,

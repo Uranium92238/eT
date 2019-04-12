@@ -23,17 +23,17 @@ f = [
 # Four singlet excitation energies
     get_filter(from_string='State                (Hartree)             (eV)',
                num_lines=6,
-               abs_tolerance=1.0e-10,
+               abs_tolerance=1.0e-9,
                mask=[2]),
 # Largest single amplitudes
     get_filter(from_string='Largest single amplitudes:',
                num_lines=5,
-               abs_tolerance=1.0e-10,
+               abs_tolerance=1.0e-9,
                mask=[3],
                ignore_sign=True),
 # Gs energy
    get_filter(string='Final ground state energy (a.u.):',
-               abs_tolerance=1.0e-10)
+               abs_tolerance=1.0e-9)
 ]
 
 # invoke the command line interface parser which returns options

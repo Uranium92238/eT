@@ -66,7 +66,10 @@ module diis_tool_class
       integer, private :: n_equations  ! The length of the O vector
 !
       logical :: accumulate = .true. ! Variable keeping track of wether we are cummulatively building the diis history or not
-!                                      ! Note: default is to accumulate
+!                                    ! Note: default is to accumulate
+!
+      logical :: erase_history = .false.  ! (DIIS space) 1,2,3,4,...,8,1,2,3,... if true 
+                                          ! (DIIS space) 1,2,3,4,...,8,8,8,8,... if false 
 !
    contains
 !
@@ -147,7 +150,21 @@ contains
       solver%iteration = 1 
 !
       solver%accumulate = .true. 
-      if (present(accumulate)) solver%accumulate = accumulate
+      if (present(accumulate)) then 
+!
+         solver%accumulate = accumulate
+!
+      endif
+!
+      if (solver%accumulate) then 
+!
+         solver%erase_history = .false.
+!
+      else
+!
+         solver%erase_history = .true.
+!
+      endif 
 !
       if (present(diis_dimension)) solver%diis_dimension = diis_dimension
 !
@@ -191,7 +208,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: x_dx_i ! To hold previous x_dx_i temporarily
 !
-      integer :: i = 0, j = 0
+      integer :: i = 0
 !
       integer :: info = -1         ! Error integer for dgesv routine (LU factorization)
       integer :: current_dim 
@@ -313,13 +330,15 @@ contains
 !
       integer :: get_current_dim_diis_tool
 !
-      if (solver%iteration .gt. solver%diis_dimension) then 
+      if (solver%iteration .gt. solver%diis_dimension .and. &
+            .not. solver%erase_history) then 
 !
          get_current_dim_diis_tool = solver%diis_dimension
 !
       else
 !
-         get_current_dim_diis_tool = solver%iteration
+         get_current_dim_diis_tool = solver%iteration - &
+                           solver%diis_dimension*((solver%iteration-1)/solver%diis_dimension)
 !
       endif
 !
@@ -334,8 +353,7 @@ contains
 !!    Writes the current dx and x_dx to file. Each index 1, 2, ..., diis_dim
 !!    has its own file. If more iterations have passed than we keep on file
 !!    (i.e., solver%iteration > solver%diis_dimension), then we do a first-in/
-!!    last-out replacement. Otherwise, we write the the correct file for the 
-!!    first time.
+!!    last-out replacement unless erase_history is true. 
 !!
       implicit none 
 !
@@ -350,9 +368,11 @@ contains
 !
       type(file) :: tmp_file
 !
-      if (current_dim .le. solver%diis_dimension .and. current_dim .eq. solver%iteration) then 
+      if (current_dim .le. solver%diis_dimension &
+            .and. current_dim .eq. solver%iteration &
+            .or. solver%erase_history) then 
 !
-!        Still doing first set of vectors - just write to the correct file 
+!        Just write to the correct file 
 !
          rewind(solver%dx(current_dim)%unit)
          write(solver%dx(current_dim)%unit) dx

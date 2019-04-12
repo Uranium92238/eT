@@ -290,6 +290,8 @@ contains
                call wf%construct_excited_state_equation(X(:,state), R(:,state), solver%energies(state), &
                                                         solver%transformation)
 !
+               residual_norms(state) = get_l2_norm(R(:, state), wf%n_es_amplitudes)
+!
 !$omp parallel do private(amplitude)
                do amplitude = 1, wf%n_es_amplitudes
 !
@@ -297,9 +299,6 @@ contains
 !
                enddo
 !$omp end parallel do 
-!
-               residual_norms(state) = get_l2_norm(R(:, state), wf%n_es_amplitudes)
-
 !
 !              Update convergence logicals 
 !
