@@ -33,7 +33,7 @@ module newton_raphson_cc_gs_class
 !
    type :: newton_raphson_cc_gs
 !
-      character(len=100) :: tag = 'Newton-Raphson coupled cluster ground state solver'
+      character(len=100) :: tag = 'DIIS accelerated Newton-Raphson coupled cluster ground state solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2019'
 !
       character(len=500) :: description1 = 'A Newton-Raphson CC ground state equations solver. Solves the &
@@ -161,7 +161,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: omega, dt, t  
 !
-      integer :: iteration
+      integer :: iteration, micro_iterations
 !
       logical :: converged, converged_omega, converged_energy
 !
@@ -170,11 +170,16 @@ contains
       call diis_manager%init('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, 8)
 !
       iteration = 0
+      micro_iterations = 0
       prev_energy = zero
 !
       converged_energy = .false.
       converged_omega = .false.
       converged = .false.
+!
+      write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)    # micro-iters'
+      write(output%unit, '(t3,a)')  '-------------------------------------------------------------------------------'
+      flush(output%unit)
 !
       call mem%alloc(omega, wf%n_gs_amplitudes)
       call mem%alloc(dt, wf%n_gs_amplitudes)
@@ -183,10 +188,6 @@ contains
       do while (.not. converged .and. iteration .le. solver%max_iterations) 
 !
          iteration = iteration + 1
-!
-         write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) '
-         write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
-         flush(output%unit)
 !
 !        Construct Fock, calculate energy, and construct omega 
 !
@@ -201,8 +202,8 @@ contains
 !
 !        Print energy, energy difference and residual, then test convergence 
 !
-         write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
-                                          omega_norm, abs(energy-prev_energy)
+         write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4, 8x, i3)') iteration, wf%energy, &
+                                          omega_norm, abs(energy-prev_energy), micro_iterations
          flush(output%unit)
 !
          converged_energy   = abs(energy-prev_energy) .lt. solver%energy_threshold
@@ -217,7 +218,7 @@ contains
          if (.not. converged) then 
 !
             solver%micro_residual_threshold = omega_norm*solver%relative_micro_residual_threshold
-            call solver%do_micro_iterations(wf, omega, dt)
+            call solver%do_micro_iterations(wf, omega, dt, micro_iterations)
 !
             call wf%get_amplitudes(t)
 !
@@ -239,16 +240,19 @@ contains
 !
       enddo
 !
-      write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
+      write(output%unit, '(t3,a)')  '-------------------------------------------------------------------------------'
 !
       if (.not. converged) then 
 !   
          write(output%unit, '(/t3,a)')  'Warning: was not able to converge the equations in the given'
-         write(output%unit, '(t3,a/)')  'number of maximum iterations.'
+         write(output%unit, '(t3,a)')  'number of maximum iterations.'
 !
       else
 !
+         write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
+!
          call solver%print_summary(wf)
+
 !
       endif 
 !
@@ -260,7 +264,7 @@ contains
    end subroutine run_newton_raphson_cc_gs
 !
 !
-   subroutine do_micro_iterations_newton_raphson_cc_gs(solver, wf, omega, dt)
+   subroutine do_micro_iterations_newton_raphson_cc_gs(solver, wf, omega, dt, final_iteration)
 !!
 !!    Do micro iterations 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
@@ -275,6 +279,8 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(in)  :: omega 
       real(dp), dimension(wf%n_gs_amplitudes), intent(out) :: dt  
+!
+      integer, intent(out) :: final_iteration
 !
       real(dp), dimension(:), allocatable :: epsilon, first_trial, c_i
 !
@@ -314,9 +320,9 @@ contains
 !
 !     Enter iterative loop
 !
-      write(output%unit,'(/t3,a)') 'Micro-iteration     Residual norm'
-      write(output%unit,'(t3,a)')  '---------------------------------'
-      flush(output%unit)
+     ! write(output%unit,'(/t3,a)') 'Micro-iteration     Residual norm'
+     ! write(output%unit,'(t3,a)')  '---------------------------------'
+     ! flush(output%unit)
 !
       micro_iteration = 1
       converged_residual = .false.
@@ -354,8 +360,8 @@ contains
 !
          call davidson%construct_next_trial_vec(residual_norm)
 !
-         write(output%unit,'(t3,i3,16x,e11.4)') micro_iteration, residual_norm
-         flush(output%unit)
+        ! write(output%unit,'(t3,i3,16x,e11.4)') micro_iteration, residual_norm
+        ! flush(output%unit)
 !
          converged_residual = .true.
 !
@@ -367,8 +373,8 @@ contains
 !
       enddo
 !
-      write(output%unit,'(t3,a/)')  '---------------------------------'
-      flush(output%unit)
+     ! write(output%unit,'(t3,a/)')  '---------------------------------'
+     ! flush(output%unit)
 !
       if (.not. converged_residual) then
 !
@@ -380,6 +386,8 @@ contains
 !
       call davidson%construct_X(dt, 1)
       call davidson%cleanup()
+!
+      final_iteration = micro_iteration
 !
    end subroutine do_micro_iterations_newton_raphson_cc_gs
 !
