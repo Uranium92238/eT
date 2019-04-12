@@ -63,6 +63,7 @@ module newton_raphson_cc_gs_class
       procedure :: read_settings            => read_settings_newton_raphson_cc_gs
       procedure :: print_banner             => print_banner_newton_raphson_cc_gs
       procedure :: print_settings           => print_settings_newton_raphson_cc_gs
+      procedure, nopass :: print_summary            => print_summary_newton_raphson_cc_gs
 !
    end type newton_raphson_cc_gs
 !
@@ -240,6 +241,22 @@ contains
 !
       write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
 !
+      if (.not. converged) then 
+!   
+         write(output%unit, '(/t3,a)')  'Warning: was not able to converge the equations in the given'
+         write(output%unit, '(t3,a/)')  'number of maximum iterations.'
+!
+      else
+!
+         call solver%print_summary(wf)
+!
+      endif 
+!
+      call mem%dealloc(omega, wf%n_gs_amplitudes)
+      call mem%dealloc(dt, wf%n_gs_amplitudes)
+      call mem%dealloc(t, wf%n_gs_amplitudes)
+!
+!
    end subroutine run_newton_raphson_cc_gs
 !
 !
@@ -416,6 +433,28 @@ contains
       if (input%requested_keyword_in_section('restart', 'solver cc gs')) solver%restart = .true.
 !
    end subroutine read_settings_newton_raphson_cc_gs
+!
+!
+   subroutine print_summary_newton_raphson_cc_gs(wf)
+!!
+!!    Print summary 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp) :: t1_diagnostic 
+!
+      write(output%unit, '(/t3,a)') '- DIIS accelerated Newton-Raphson CC ground state solver summary:'
+!
+      write(output%unit, '(/t6,a33,f18.12)') 'Final ground state energy (a.u.):', wf%energy 
+      call wf%print_dominant_amplitudes()
+!
+      t1_diagnostic = wf%get_t1_diagnostic() 
+      write(output%unit, '(/t6,a32,f14.12)') 'T1 diagnostic (|T1|/sqrt(N_e)): ', t1_diagnostic
+!
+   end subroutine print_summary_newton_raphson_cc_gs
 !
 !
 end module newton_raphson_cc_gs_class
