@@ -427,12 +427,11 @@ contains
          g_bdci_p => g_bdci
          g_lbic_p => g_lbic
 !
-!           cannot hold X_abdi - read in previous X, add contributions, write to disk again
-!
-            if (i_batch .gt. 1) then
-               call single_record_reader(batch_i, wf%X_abdi, X_abdi)
-               X_abdi_p => X_abdi
-            end if
+!        cannot hold X_abdi - read in previous X, add contributions, write to disk again
+         if (i_batch .gt. 1) then
+            call single_record_reader(batch_i, wf%X_abdi, X_abdi)
+            X_abdi_p => X_abdi
+         end if
 !
          do j_batch = 1, i_batch
 !
@@ -587,15 +586,15 @@ contains
                   enddo ! loop over j
                enddo ! loop over i
 !
-               call wf%jacobian_transpose_cc3_write_X(batch_k, X_abdk)
+               call single_record_writer(batch_k, wf%X_abdi, X_abdk)
 !
             enddo ! batch_k
 !
-            call wf%jacobian_transpose_cc3_write_X(batch_j, X_abdj)
+            call single_record_writer(batch_j, wf%X_abdi, X_abdj)
 !
          enddo ! batch_j
 !
-         call wf%jacobian_transpose_cc3_write_X(batch_i, X_abdi)
+         call single_record_writer(batch_i, wf%X_abdi, X_abdi)
 !
       enddo ! batch_i
 !
@@ -933,34 +932,6 @@ contains
       end if
 !                
    end subroutine construct_X_and_Y_cc3
-!
-!
-   module subroutine jacobian_transpose_cc3_write_X_cc3(wf, batch_x, X_abdx)
-!!
-!!    Write the contributions to the X_abdi intermediate to file in the respective batches
-!!
-!!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      type(batching_index), intent(in) :: batch_x
-!
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_x%length), intent(in) :: X_abdx
-!
-      integer :: ioerror
-      integer :: x, record
-!
-      do x = 1, batch_x%length
-!
-         record = batch_x%first + x -1
-         write(wf%X_abdi%unit, rec=record, iostat=ioerror) X_abdx(:,:,:,x)
-!
-      enddo
-!
-   end subroutine jacobian_transpose_cc3_write_X_cc3
 !
 !
    module subroutine sort_X_to_abid_and_write_cc3(wf)

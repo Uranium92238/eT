@@ -459,7 +459,7 @@ contains
 !
 !     Allocate integral arrays and assign pointers.
 !
-      if (batch_i%num_batches .eq. 1) then !no batching
+      if (batch_i%num_batches .eq. 1) then ! no batching
 !
          batching_c3 = .false.
 !
