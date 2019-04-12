@@ -37,13 +37,18 @@ module newton_raphson_cc_gs_class
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2019'
 !
       character(len=500) :: description1 = 'A Newton-Raphson CC ground state equations solver. Solves the &
-                                             ground state equation using updates Δt based on the Newton equation, &
-                                             A Δt = -Ω, where the A is the Jacobian and Ω the omega vector.'
+                                             &ground state equation using updates Δt based on the Newton equation, &
+                                             &A Δt = -Ω, where the A is the Jacobian and Ω the omega vector.'
 !
       integer :: max_iterations
+      integer :: diis_dimension
 !
       real(dp) :: omega_threshold
       real(dp) :: energy_threshold
+!
+      integer  :: max_micro_iterations
+      real(dp) :: micro_residual_threshold
+      real(dp) :: relative_micro_residual_threshold
 !
       logical :: restart
 !
@@ -52,6 +57,8 @@ module newton_raphson_cc_gs_class
       procedure, nopass :: cleanup          => cleanup_newton_raphson_cc_gs
       procedure :: prepare                  => prepare_newton_raphson_cc_gs
       procedure :: run                      => run_newton_raphson_cc_gs
+!
+      procedure :: do_micro_iterations      => do_micro_iterations_newton_raphson_cc_gs
 !
       procedure :: read_settings            => read_settings_newton_raphson_cc_gs
       procedure :: print_banner             => print_banner_newton_raphson_cc_gs
@@ -80,10 +87,13 @@ contains
 !
 !     Set standard settings 
 !
-      solver%max_iterations   = 100
-      solver%energy_threshold = 1.0d-6
-      solver%omega_threshold  = 1.0d-6
-      solver%restart       = .false.
+      solver%max_iterations            = 100
+      solver%diis_dimension            = 100
+      solver%max_micro_iterations      = 100
+      solver%relative_micro_residual_threshold = 1.0d-2
+      solver%energy_threshold          = 1.0d-6
+      solver%omega_threshold           = 1.0d-6
+      solver%restart                   = .false.
 !
 !     Read & print settings (thresholds, etc.)
 !
@@ -120,6 +130,17 @@ contains
 !
       class(newton_raphson_cc_gs) :: solver 
 !
+      write(output%unit, '(/t3,a)')      '- DIIS accelerated Newton-Raphson CC ground state solver settings:'
+!
+      write(output%unit, '(/t6,a32,e9.2)') 'Omega threshold:                ', solver%omega_threshold
+      write(output%unit, '(t6,a32,e9.2)')  'Energy threshold:               ', solver%energy_threshold
+      write(output%unit, '(t6,a32,e9.2)')  'Relative micro threshold:       ', solver%relative_micro_residual_threshold
+
+      write(output%unit, '(/t6,a32,i9)')   'DIIS dimension:                 ', solver%diis_dimension
+      write(output%unit, '(t6,a32,i9)')    'Max number of iterations:       ', solver%max_iterations
+      write(output%unit, '(t6,a32,i9)')    'Max number of micro-iterations: ', solver%max_micro_iterations
+!
+      flush(output%unit)
 !
    end subroutine print_settings_newton_raphson_cc_gs
 !
@@ -135,32 +156,36 @@ contains
 !
       class(ccs) :: wf
 !
-      logical :: converged_residual 
+      type(diis_tool) :: diis_manager
 !
-      real(dp) :: residual_norm
-!
-      real(dp), dimension(:), allocatable :: epsilon  
-      real(dp), dimension(:), allocatable :: omega   
+      real(dp), dimension(:), allocatable :: omega, dt, t  
 !
       integer :: iteration
 !
-      integer :: micro_iteration
+      logical :: converged, converged_omega, converged_energy
 !
-!     Get preconditioner for micro iterations 
+      real(dp) :: energy, prev_energy, omega_norm
 !
-      call mem%alloc(epsilon, wf%n_gs_amplitudes)
-      call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
-!
-      converged = .false.
+      call diis_manager%init('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, 8)
 !
       iteration = 0
       prev_energy = zero
 !
+      converged_energy = .false.
+      converged_omega = .false.
+      converged = .false.
+!
       call mem%alloc(omega, wf%n_gs_amplitudes)
+      call mem%alloc(dt, wf%n_gs_amplitudes)
+      call mem%alloc(t, wf%n_gs_amplitudes)
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations) 
 !
          iteration = iteration + 1
+!
+         write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) '
+         write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
+         flush(output%unit)
 !
 !        Construct Fock, calculate energy, and construct omega 
 !
@@ -176,7 +201,7 @@ contains
 !        Print energy, energy difference and residual, then test convergence 
 !
          write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
-                                          omega_norm, abs(wf%energy-prev_energy)
+                                          omega_norm, abs(energy-prev_energy)
          flush(output%unit)
 !
          converged_energy   = abs(energy-prev_energy) .lt. solver%energy_threshold
@@ -188,11 +213,158 @@ contains
 !
 !        If not converged, perform micro-iterations to get an estimate for the next amplitudes 
 !
-         call solver%do_micro_iterations(omega, )
+         if (.not. converged) then 
+!
+            solver%micro_residual_threshold = omega_norm*solver%relative_micro_residual_threshold
+            call solver%do_micro_iterations(wf, omega, dt)
+!
+            call wf%get_amplitudes(t)
+!
+            call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)
+!
+            call diis_manager%update(omega, t)
+!
+            call wf%set_amplitudes(t)
+!
+!           Compute the new T1 transformed Cholesky vectors,
+!           and store in memory the entire ERI-T1 matrix if possible and necessary 
+!
+            call wf%integrals%write_t1_cholesky(wf%t1)
+            if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
+!
+         endif 
+!
+         prev_energy = energy 
 !
       enddo
 !
+      write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
+!
    end subroutine run_newton_raphson_cc_gs
+!
+!
+   subroutine do_micro_iterations_newton_raphson_cc_gs(solver, wf, omega, dt)
+!!
+!!    Do micro iterations 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+      use linear_davidson_tool_class
+!
+      implicit none 
+!
+      class(newton_raphson_cc_gs), intent(in) :: solver 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in)  :: omega 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(out) :: dt  
+!
+      real(dp), dimension(:), allocatable :: epsilon, first_trial, c_i
+!
+      real(dp) :: norm_trial, residual_norm, ddot
+!
+      type(linear_davidson_tool) :: davidson 
+!
+      integer :: micro_iteration 
+!
+      logical :: converged_residual 
+!
+!     Initialize solver tool and set preconditioner 
+!
+      call mem%alloc(epsilon, wf%n_gs_amplitudes)
+      call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
+!
+      call davidson%prepare('cc_gs_newton_raphson', wf%n_gs_amplitudes, solver%micro_residual_threshold, -omega)
+!
+      call davidson%set_preconditioner(epsilon)
+      call mem%dealloc(epsilon, wf%n_gs_amplitudes)
+!
+!     Set start vector / initial guess 
+!
+!     Use - omega_mu / eps_mu as first guess 
+!
+      call mem%alloc(first_trial, wf%n_gs_amplitudes)
+      call dcopy(wf%n_gs_amplitudes, omega, 1, first_trial, 1)
+      call dscal(wf%n_gs_amplitudes, -one, first_trial, 1) 
+!
+      call davidson%precondition(first_trial)
+!
+      norm_trial = sqrt(ddot(wf%n_gs_amplitudes, first_trial, 1, first_trial, 1))
+      call dscal(wf%n_gs_amplitudes, one/norm_trial, first_trial, 1)
+!
+      call davidson%write_trial(first_trial, 'rewind')
+      call mem%dealloc(first_trial, wf%n_gs_amplitudes)
+!
+!     Enter iterative loop
+!
+      write(output%unit,'(/t3,a)') 'Micro-iteration     Residual norm'
+      write(output%unit,'(t3,a)')  '---------------------------------'
+      flush(output%unit)
+!
+      micro_iteration = 1
+      converged_residual = .false.
+!
+      do while (.not. converged_residual .and. (micro_iteration .le. solver%max_micro_iterations))
+!
+!        Transform new trial vectors and write to file
+!
+         call mem%alloc(c_i, davidson%n_parameters)
+!
+         call davidson%read_trial(c_i, davidson%dim_red)
+         call wf%jacobian_transform_trial_vector(c_i) 
+!
+         if (micro_iteration == 1) then
+!
+            call davidson%write_transform(c_i, 'rewind')
+!
+         else
+!
+            call davidson%write_transform(c_i, 'append')
+!
+         endif
+!
+         call mem%dealloc(c_i, davidson%n_parameters)
+!
+!        Solve problem in reduced space
+!
+         call davidson%construct_reduced_matrix()
+         call davidson%construct_reduced_gradient()
+         call davidson%solve_reduced_problem()
+!
+!        Construct new trials and check if convergence criterion on residual is satisfied
+!
+         davidson%n_new_trials = 0
+!
+         call davidson%construct_next_trial_vec(residual_norm)
+!
+         write(output%unit,'(t3,i3,16x,e11.4)') micro_iteration, residual_norm
+         flush(output%unit)
+!
+         converged_residual = .true.
+!
+         if (residual_norm .gt. solver%micro_residual_threshold) converged_residual = .false.
+!   
+         davidson%dim_red = davidson%dim_red + davidson%n_new_trials
+!
+         micro_iteration = micro_iteration + 1       
+!
+      enddo
+!
+      write(output%unit,'(t3,a/)')  '---------------------------------'
+      flush(output%unit)
+!
+      if (.not. converged_residual) then
+!
+         write(output%unit, '(/t6,a)')  'Warning: was not able to converge the equations in the given'
+         write(output%unit, '(t6,a/)')  'number of maximum micro-iterations.'
+         flush(output%unit)
+!
+      endif
+!
+      call davidson%construct_X(dt, 1)
+      call davidson%cleanup()
+!
+   end subroutine do_micro_iterations_newton_raphson_cc_gs
 !
 !
    subroutine cleanup_newton_raphson_cc_gs(wf)
@@ -233,6 +405,15 @@ contains
       implicit none 
 !
       class(newton_raphson_cc_gs) :: solver    
+!
+      call input%get_keyword_in_section('omega threshold', 'solver cc gs', solver%omega_threshold)
+      call input%get_keyword_in_section('energy threshold', 'solver cc gs', solver%energy_threshold)
+      call input%get_keyword_in_section('diis dimension', 'solver cc gs', solver%diis_dimension)
+      call input%get_keyword_in_section('max iterations', 'solver cc gs', solver%max_iterations)
+      call input%get_keyword_in_section('rel micro threshold', 'solver cc gs', solver%relative_micro_residual_threshold)
+      call input%get_keyword_in_section('max micro iterations', 'solver cc gs', solver%max_micro_iterations)
+!
+      if (input%requested_keyword_in_section('restart', 'solver cc gs')) solver%restart = .true.
 !
    end subroutine read_settings_newton_raphson_cc_gs
 !

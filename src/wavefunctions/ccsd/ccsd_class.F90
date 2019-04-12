@@ -62,6 +62,8 @@ module ccsd_class
       procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccsd
       procedure :: print_dominant_x_amplitudes                 => print_dominant_x_amplitudes_ccsd
 !
+      procedure :: from_biorthogonal_to_biorthonormal          => from_biorthogonal_to_biorthonormal_ccsd
+!
       procedure :: save_doubles_vector                         => save_doubles_vector_ccsd
       procedure :: read_doubles_vector                         => read_doubles_vector_ccsd
 !
@@ -1294,6 +1296,36 @@ contains
       call wf%one_el_density_ccsd_ov()
 !
    end subroutine construct_density_ccsd
+!
+!
+   subroutine from_biorthogonal_to_biorthonormal_ccsd(wf, X)
+!!
+!!    From biorthogonal to biorthonormal 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      implicit none 
+!
+      class(ccsd), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_t2), intent(inout) :: X 
+!
+      real(dp), dimension(:,:), allocatable :: X_unpacked
+!
+      integer :: I
+!
+      call mem%alloc(X_unpacked, wf%n_t1, wf%n_t1)
+      call squareup(X, X_unpacked, wf%n_t1)
+!
+      do I = 1, wf%n_t1 
+!
+         X_unpacked(I,I) = X_unpacked(I,I)/two
+!
+      enddo 
+!
+      call packin(X, X_unpacked, wf%n_t1)
+      call mem%dealloc(X_unpacked, wf%n_t1, wf%n_t1)
+!
+   end subroutine from_biorthogonal_to_biorthonormal_ccsd
 !
 !
 end module ccsd_class

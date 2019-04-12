@@ -78,6 +78,8 @@ contains
       call wf%omega_ccsd_d2(omega2)
       call wf%omega_ccsd_e2(omega2)
 !
+      call wf%from_biorthogonal_to_biorthonormal(omega2)
+!
       call dcopy((wf%n_o)*(wf%n_v), omega1, 1, omega, 1)
       call dcopy((wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v)+1)/2, omega2, 1, omega((wf%n_o)*(wf%n_v)+1), 1)
 !

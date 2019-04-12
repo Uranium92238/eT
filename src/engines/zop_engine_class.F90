@@ -68,6 +68,7 @@ contains
       engine%dipole                 = .false.
       engine%quadrupole             = .false. 
       engine%multipliers_algorithm  = 'davidson'
+      engine%gs_algorithm           = 'diis'
 !
       call engine%read_settings()
 !
