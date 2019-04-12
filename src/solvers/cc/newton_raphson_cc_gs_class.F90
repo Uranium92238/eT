@@ -33,7 +33,7 @@ module newton_raphson_cc_gs_class
 !
    type :: newton_raphson_cc_gs
 !
-      character(len=100) :: tag = 'DIIS accelerated Newton-Raphson coupled cluster ground state solver'
+      character(len=100) :: tag = 'DIIS Newton-Raphson coupled cluster ground state solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2019'
 !
       character(len=500) :: description1 = 'A Newton-Raphson CC ground state equations solver. Solves the &
@@ -417,7 +417,7 @@ contains
 !
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description1,'(t3,a)',.false.)
+      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
    end subroutine print_banner_newton_raphson_cc_gs
 !
