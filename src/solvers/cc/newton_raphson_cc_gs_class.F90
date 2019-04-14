@@ -88,13 +88,13 @@ contains
 !
 !     Set standard settings 
 !
-      solver%max_iterations            = 100
-      solver%diis_dimension            = 8
-      solver%max_micro_iterations      = 100
-      solver%relative_micro_residual_threshold = 1.0d-2
-      solver%energy_threshold          = 1.0d-6
-      solver%omega_threshold           = 1.0d-6
-      solver%restart                   = .false.
+      solver%max_iterations                     = 100
+      solver%diis_dimension                     = 8
+      solver%max_micro_iterations               = 100
+      solver%relative_micro_residual_threshold  = 1.0d-2
+      solver%energy_threshold                   = 1.0d-6
+      solver%omega_threshold                    = 1.0d-6
+      solver%restart                            = .false.
 !
 !     Read & print settings (thresholds, etc.)
 !
@@ -177,10 +177,6 @@ contains
       converged_omega = .false.
       converged = .false.
 !
-      write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)    # micro-iters'
-      write(output%unit, '(t3,a)')  '-------------------------------------------------------------------------------'
-      flush(output%unit)
-!
       call mem%alloc(omega, wf%n_gs_amplitudes)
       call mem%alloc(dt, wf%n_gs_amplitudes)
       call mem%alloc(t, wf%n_gs_amplitudes)
@@ -202,8 +198,13 @@ contains
 !
 !        Print energy, energy difference and residual, then test convergence 
 !
-         write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4, 8x, i3)') iteration, wf%energy, &
-                                          omega_norm, abs(energy-prev_energy), micro_iterations
+         write(output%unit, '(/t3,a)') 'Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)'
+         write(output%unit, '(t3,a)')  '----------------------------------------------------------------'
+         flush(output%unit)
+         write(output%unit, '(t3,2x,i3,9x,f17.12,4x,e11.4,4x,e11.4, 8x)') iteration, wf%energy, &
+                                          omega_norm, abs(energy-prev_energy)
+
+         write(output%unit, '(t3,a)')  '----------------------------------------------------------------'
          flush(output%unit)
 !
          converged_energy   = abs(energy-prev_energy) .lt. solver%energy_threshold
@@ -239,8 +240,6 @@ contains
          prev_energy = energy 
 !
       enddo
-!
-      write(output%unit, '(t3,a)')  '-------------------------------------------------------------------------------'
 !
       if (.not. converged) then 
 !   
@@ -320,9 +319,9 @@ contains
 !
 !     Enter iterative loop
 !
-     ! write(output%unit,'(/t3,a)') 'Micro-iteration     Residual norm'
-     ! write(output%unit,'(t3,a)')  '---------------------------------'
-     ! flush(output%unit)
+      write(output%unit,'(/t6,a)') 'Micro-iter.  Residual norm'
+      write(output%unit,'(t6,a)')  '--------------------------'
+      flush(output%unit)
 !
       micro_iteration = 1
       converged_residual = .false.
@@ -360,8 +359,8 @@ contains
 !
          call davidson%construct_next_trial_vec(residual_norm)
 !
-        ! write(output%unit,'(t3,i3,16x,e11.4)') micro_iteration, residual_norm
-        ! flush(output%unit)
+          write(output%unit,'(t6,2x,i3,8x,e11.4)') micro_iteration, residual_norm
+          flush(output%unit)
 !
          converged_residual = .true.
 !
@@ -373,8 +372,8 @@ contains
 !
       enddo
 !
-     ! write(output%unit,'(t3,a/)')  '---------------------------------'
-     ! flush(output%unit)
+      write(output%unit,'(t6,a/)')  '--------------------------'
+       flush(output%unit)
 !
       if (.not. converged_residual) then
 !
