@@ -89,7 +89,7 @@ contains
 !     Set standard settings 
 !
       solver%max_iterations            = 100
-      solver%diis_dimension            = 100
+      solver%diis_dimension            = 8
       solver%max_micro_iterations      = 100
       solver%relative_micro_residual_threshold = 1.0d-2
       solver%energy_threshold          = 1.0d-6
