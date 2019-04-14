@@ -953,7 +953,7 @@ contains
 !
       tmp_string = adjustl(string)
 !
-      if (string(1:1) == '!') then 
+      if (tmp_string(1:1) == '!') then 
 !
          string_is_comment_input_file = .true.
 !
