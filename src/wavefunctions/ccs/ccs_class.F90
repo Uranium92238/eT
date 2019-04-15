@@ -203,6 +203,8 @@ module ccs_class
 !
       procedure :: calculate_expectation_value                  => calculate_expectation_value_ccs
 !
+      procedure :: rescale_amplitudes                           => rescale_amplitudes_ccs
+!
    end type ccs
 !
 !
@@ -3637,6 +3639,19 @@ contains
       expectation_value = ddot(wf%n_mo**2, A, 1, wf%density, 1)
 !
    end function calculate_expectation_value_ccs
+!
+!
+   subroutine rescale_amplitudes_ccs(wf, amplitudes)
+!!
+      implicit none
+!  
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_gs_amplitudes) :: amplitudes
+!
+!     Do nothing    
+! 
+   end subroutine rescale_amplitudes_ccs
 !
 !
 end module ccs_class

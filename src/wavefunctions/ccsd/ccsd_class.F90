@@ -158,6 +158,7 @@ module ccsd_class
       procedure :: one_el_density_ccsd_vv                      => one_el_density_ccsd_vv_ccsd
       procedure :: one_el_density_ccsd_ov                      => one_el_density_ccsd_ov_ccsd
 !
+      procedure :: rescale_amplitudes                           => rescale_amplitudes_ccsd
 !
    end type ccsd
 !
@@ -1327,5 +1328,25 @@ contains
 !
    end subroutine from_biorthogonal_to_biorthonormal_ccsd
 !
+!
+   subroutine rescale_amplitudes_ccsd(wf, amplitudes)
+!!
+      implicit none
+!  
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_gs_amplitudes) :: amplitudes
+!
+      integer :: ai, aiai
+!
+      do ai = 1, wfn_t1
+!
+         aiai = ai*(ai - 3)/2 + 2*ai
+!
+         amplitudes(wf%n_t1 + aiai) = two*amplitudes(wf%n_t1 + aiai)
+!
+      enddo
+! 
+   end subroutine rescale_amplitudes_ccsd
 !
 end module ccsd_class
