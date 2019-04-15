@@ -1339,7 +1339,7 @@ contains
 !
       integer :: ai, aiai
 !
-      do ai = 1, wfn_t1
+      do ai = 1, wf%n_t1
 !
          aiai = ai*(ai - 3)/2 + 2*ai
 !
@@ -1348,5 +1348,6 @@ contains
       enddo
 ! 
    end subroutine rescale_amplitudes_ccsd
+!
 !
 end module ccsd_class
