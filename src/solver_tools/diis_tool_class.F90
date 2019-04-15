@@ -124,7 +124,7 @@ contains
    end subroutine finalize_diis_tool
 !
 !
-   subroutine init_diis_tool(solver, name, n_parameters, n_equations, diis_dimension, accumulate)
+   subroutine init_diis_tool(solver, name, n_parameters, n_equations, diis_dimension, accumulate, erase_history)
 !!
 !!    Init DIIS
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
@@ -139,6 +139,7 @@ contains
       integer, intent(in), optional :: diis_dimension
 !
       logical, intent(in), optional :: accumulate
+      logical, intent(in), optional :: erase_history
 !
       integer :: I
 !
@@ -146,25 +147,23 @@ contains
 !
       solver%name = trim(name)
       solver%n_parameters = n_parameters
-      solver%n_equations = n_equations
-      solver%iteration = 1 
+      solver%n_equations  = n_equations
+      solver%iteration    = 1 
 !
       solver%accumulate = .true. 
+      solver%erase_history = .false. 
+!
       if (present(accumulate)) then 
 !
          solver%accumulate = accumulate
 !
       endif
 !
-      if (solver%accumulate) then 
+      if (present(erase_history)) then
 !
-         solver%erase_history = .false.
+         solver%erase_history = erase_history
 !
-      else
-!
-         solver%erase_history = .true.
-!
-      endif 
+      endif
 !
       if (present(diis_dimension)) solver%diis_dimension = diis_dimension
 !
@@ -230,7 +229,7 @@ contains
      enddo
 !
 !     Compute the current dimensionality of the problem 
-!     (1, 2,..., 7, 8, 8, 8, 8,...) for the standard diis_dimension = 8
+!     (1, 2,..., 7, 8, 8, 8, 8,...) for the standard diis_dimension = 8 without erasing history
 !
       current_dim = solver%get_current_dim()
 !
