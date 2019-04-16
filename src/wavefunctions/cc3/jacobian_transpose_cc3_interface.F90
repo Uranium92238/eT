@@ -134,7 +134,7 @@
    end subroutine jacobian_transpose_cc3_C3_terms_cc3
 !
 !
-   module subroutine jacobian_transpose__cc3_calc_c3_matmul_cc3(wf, i, j, k, c_abij, c_abc, c_bac, & 
+   module subroutine jacobian_transpose_cc3_calc_c3_matmul_cc3(wf, i, j, k, c_abij, c_abc, c_bac, & 
                                                                c_cba, c_acb, c_cab, c_bca, u_abc,  &
                                                                g_dbic, g_dbjc, g_dbkc,             &
                                                                g_jlic, g_klic, g_kljc,             &
@@ -183,6 +183,34 @@
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_ilkc
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_jlkc
 !
-   end subroutine jacobian_transpose__cc3_calc_c3_matmul_cc3
+   end subroutine jacobian_transpose_cc3_calc_c3_matmul_cc3
+!
+!
+   module subroutine jacobian_transpose_cc3_collect_c3_cc3(wf, omega, i, j, k, c_abc, c_bac, & 
+                                                            c_cba, c_acb, c_cab, c_bca)
+!!
+!!    Adds up the contributions from all permutations of the indices abc to c_abc
+!!    from the matrix multiplications and outer products
+!!
+!!    Divides by (ω - ε^abc_ijk)
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), intent(in) :: omega
+!
+      integer, intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_bac
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_cba
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_acb
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_cab
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_bca
+!
+   end subroutine jacobian_transpose_cc3_collect_c3_cc3
 !
 !

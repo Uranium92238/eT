@@ -1232,16 +1232,16 @@ contains
 !                       and construct the intermediates X_bcek, Y_cmjk 
 !                       and calculate contributions to sigma2
 !
-                     !   call wf%jacobian_transpose__cc3_calc_outer()
+                     !   call wf%jacobian_transpose_cc3_calc_outer()
 !
-                        call wf%jacobian_transpose__cc3_calc_c3_matmul(i, j, k, c_abij, c_abc, c_bac,    & 
+                        call wf%jacobian_transpose_cc3_calc_c3_matmul(i, j, k, c_abij, c_abc, c_bac,     & 
                                                                      c_cba, c_acb, c_cab, c_bca, u_abc,  &
                                                                      g_dbic, g_dbjc, g_dbkc,             &
                                                                      g_jlic, g_klic, g_kljc,             &
                                                                      g_iljc, g_ilkc, g_jlkc)
 !
-                     !   call wf%jacobian_transpose__cc3_collect_c3(omega, c_abc, c_bac,  &
-                                                                     !c_cba, c_acb, c_cab, c_bca)
+                        call wf%jacobian_transpose_cc3_collect_c3(omega, i, j, k, c_abc, c_bac,  &
+                                                                  c_cba, c_acb, c_cab, c_bca)
 !
                      !   call wf%jacobian_transpose_cc3_sigma2()
 !
@@ -1341,7 +1341,7 @@ contains
    end subroutine jacobian_transpose_cc3_C3_terms_cc3
 !
 !
-   module subroutine jacobian_transpose__cc3_calc_c3_matmul_cc3(wf, i, j, k, c_abij, c_abc, c_bac, & 
+   module subroutine jacobian_transpose_cc3_calc_c3_matmul_cc3(wf, i, j, k, c_abij, c_abc, c_bac, & 
                                                                c_cba, c_acb, c_cab, c_bca, u_abc,  &
                                                                g_dbic, g_dbjc, g_dbkc,             &
                                                                g_jlic, g_klic, g_kljc,             &
@@ -1354,9 +1354,12 @@ contains
 !!    = (ω - ε^abc_ijk)^-1 P^abc_ijk (C_ai*L_jbkc - C_ak*L_jbic + Cabij*F_kc - C_abik*F_jc
 !!    + sum_l (C_ablk g_iljc - C_abil L_jlkc) - sum_d (C_adjk g_ibdc - C_adij L_dbkc)
 !!
-!!    Contibutions:
+!!    Contibutions in this routine:
 !!    sum_l (C_ablk g_iljc + C_abil g_jckl - 2 C_abil g_jlkc) 
 !!    - sum_d (C_adjk g_ibdc + C_adij g_dckb - 2 C_adij g_dbkc)
+!!
+!!    L_jlkc and L_dbkc split up to reduce the amount of N^7 contractions
+!!    but 6 arrays for c_abc needed (for all permutations of abc)
 !!
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -1632,7 +1635,75 @@ contains
       c_acb = c_acb + u_abc
       c_bca = c_bca - two*u_abc
 !
-   end subroutine jacobian_transpose__cc3_calc_c3_matmul_cc3
+   end subroutine jacobian_transpose_cc3_calc_c3_matmul_cc3
+!
+!
+   module subroutine jacobian_transpose_cc3_collect_c3_cc3(wf, omega, i, j, k, c_abc, c_bac, & 
+                                                            c_cba, c_acb, c_cab, c_bca)
+!!
+!!    Adds up the contributions from all permutations of the indices abc to c_abc
+!!    from the matrix multiplications and outer products
+!!
+!!    Divides by (ω - ε^abc_ijk)
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), intent(in) :: omega
+!
+      integer, intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_bac
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_cba
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_acb
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_cab
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_bca
+!
+      integer :: a, b, c
+!
+      real(dp) :: epsilon_ijk, epsilon_c, epsilon_cb
+!
+      call sort_123_to_213_and_add(c_bac, c_abc, wf%n_v, wf%n_v, wf%n_v)
+      call sort_123_to_321_and_add(c_cba, c_abc, wf%n_v, wf%n_v, wf%n_v)
+      call sort_123_to_132_and_add(c_acb, c_abc, wf%n_v, wf%n_v, wf%n_v)
+      call sort_123_to_231_and_add(c_bca, c_abc, wf%n_v, wf%n_v, wf%n_v)
+      call sort_123_to_312_and_add(c_cab, c_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     Scale by (ω - ε^abc_ijk)^-1
+!
+      epsilon_ijk = omega + wf%orbital_energies(i) + wf%orbital_energies(j) + wf%orbital_energies(k)
+!
+!$omp parallel do schedule(static) private(a)
+      do a = 1,wf%n_v
+!
+         c_abc(a,a,a) = zero
+!
+      enddo
+!$omp end parallel do
+!
+!$omp parallel do schedule(static) private(c,b,a,epsilon_c,epsilon_cb)
+      do c = 1, wf%n_v
+!
+         epsilon_c = epsilon_ijk - wf%orbital_energies(wf%n_o + c)
+!
+         do b = 1, wf%n_v
+!
+            epsilon_cb = epsilon_c - wf%orbital_energies(wf%n_o + b)
+!
+            do a = 1, wf%n_v
+!
+               c_abc(a,b,c) = c_abc(a,b,c)*one/(epsilon_cb - wf%orbital_energies(wf%n_o + a))
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine jacobian_transpose_cc3_collect_c3_cc3
 !
 !
 end submodule jacobian_transpose
