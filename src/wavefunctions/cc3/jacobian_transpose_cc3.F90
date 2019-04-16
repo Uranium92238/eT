@@ -2015,7 +2015,7 @@ contains
                   t_abij(:,:,:,j),  & ! t_bamj
                   wf%n_v**2,        &
                   one,              &
-                  Y_cmjk(:,:,i,k).  & ! Y_cmik
+                  Y_cmjk(:,:,i,k),  & ! Y_cmik
                   wf%n_v)
 !
 !     Y_cmji = sum_ab c^cba_ijk t^ba_mk
@@ -2030,12 +2030,12 @@ contains
                   t_abij(:,:,:,k),  & ! t_bamk
                   wf%n_v**2,        &
                   one,              &
-                  Y_cmjk(:,:,j,i).  & ! Y_cmji
+                  Y_cmjk(:,:,j,i),  & ! Y_cmji
                   wf%n_v)
 !
 !     X_bcek = sum_a c^abc_ijk t^ae_ij
 !
-      call dgemm('T','N'            &
+      call dgemm('T','N',           &
                   wf%n_v**2,        &
                   wf%n_v,           &
                   wf%n_v,           &
@@ -2050,7 +2050,7 @@ contains
 !
 !     X_bcej = sum_a c^bca_ijk t^ae_ki
 !
-      call dgemm('N','N'            &
+      call dgemm('N','N',           &
                   wf%n_v**2,        &
                   wf%n_v,           &
                   wf%n_v,           &
@@ -2079,7 +2079,7 @@ contains
                      t_abij(:,:,:,i),  & ! t_bami
                      wf%n_v**2,        &
                      one,              &
-                     Y_cmjk(:,:,j,k).  & ! Y_cmjk
+                     Y_cmjk(:,:,j,k),  & ! Y_cmjk
                      wf%n_v)
 !
 !        Y_cmij = sum_ab c^bca_ijk t^ba_mk
@@ -2094,13 +2094,13 @@ contains
                      t_abij(:,:,:,k),  & ! t_bamk
                      wf%n_v**2,        &
                      one,              &
-                     Y_cmjk(:,:,i,j).  & ! Y_cmij
+                     Y_cmjk(:,:,i,j),  & ! Y_cmij
                      wf%n_v)
 !
 !
 !        X_bcek = sum_a c^bac_ijk t^ae_ji
 !
-         call dgemm('T','N'            &
+         call dgemm('T','N',           &
                      wf%n_v**2,        &
                      wf%n_v,           &
                      wf%n_v,           &
@@ -2115,7 +2115,7 @@ contains
 !
 !        X_bcei = sum_a c^cba t^ae_kj
 !
-         call dgemm('N','N'            &
+         call dgemm('N','N',           &
                      wf%n_v**2,        &
                      wf%n_v,           &
                      wf%n_v,           &
@@ -2146,13 +2146,13 @@ contains
                      t_abij(:,:,:,j),  & ! t_bamj
                      wf%n_v**2,        &
                      one,              &
-                     Y_cmjk(:,:,k,i).  & ! Y_cmki
+                     Y_cmjk(:,:,k,i),  & ! Y_cmki
                      wf%n_v)
 !
 !
 !        X_bcek = sum_a c^acb_ijk t^ae_ik
 !
-         call dgemm('T','N'            &
+         call dgemm('T','N',           &
                      wf%n_v**2,        &
                      wf%n_v,           &
                      wf%n_v,           &
@@ -2183,13 +2183,13 @@ contains
                      t_abij(:,:,:,i),  & ! t_bami
                      wf%n_v**2,        &
                      one,              &
-                     Y_cmjk(:,:,k,j).  & ! Y_cmkj                     
+                     Y_cmjk(:,:,k,j),  & ! Y_cmkj                     
                      wf%n_v)
 !
 !
 !        X_bcek = sum_a c^cab_ijk t^ae_jk
 !
-         call dgemm('T','N'            &
+         call dgemm('T','N',           &
                      wf%n_v**2,        &
                      wf%n_v,           &
                      wf%n_v,           &
