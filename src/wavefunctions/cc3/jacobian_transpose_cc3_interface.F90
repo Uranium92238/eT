@@ -214,3 +214,71 @@
    end subroutine jacobian_transpose_cc3_collect_c3_cc3
 !
 !
+   module subroutine jacobian_transpose_cc3_sigma2_cc3(wf, i, j, k, c_abc, u_abc, sigma_abij,   &
+                                                      g_bdci, g_bdcj, g_bdck, g_ljci, g_lkci,   &
+                                                      g_lkcj, g_licj, g_lick, g_ljck)
+!!
+!!    Calculates triples contribution to sigma2
+!!
+!!    sigma_adij =   sum_ckd c^abc_ijk g_bdck
+!!    sigma_abil = - sum_cki c^bac_ijk g_lick
+!!
+!!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops   
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      integer, intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: sigma_abij
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_bdci
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_bdcj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_bdck
+!
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_ljci
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_lkci
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_lkcj
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_licj
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_lick
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_ljck
+!
+   end subroutine jacobian_transpose_cc3_sigma2_cc3
+!
+!
+   module subroutine construct_intermediates_c3_cc3(wf, i, j, k, c_abc, u_abc, t_abij, Y_cmjk,   &
+                                                   X_bcei, X_bcej, X_bcek)
+!!
+!!    Constructs the intermediates X_bcei and Y_cmjk used to compute the c3 contributions to sigma_ai
+!!
+!!    X_bcei = sum_aij c^abc_ijk * t^ae_ij
+!!    Y_cmjk = sum_abj c^bac_ijk * t^ba_mj
+!!
+!!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      integer, intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)      :: t_abij
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(inout)   :: Y_cmjk
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_bcei
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_bcej
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_bcek
+!
+   end subroutine construct_intermediates_c3_cc3

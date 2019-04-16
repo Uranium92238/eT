@@ -352,6 +352,7 @@ contains
 !     Array for the whole intermediate Y_alik
 !
       call mem%alloc(Y_alik, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      Y_alik = zero
 !
 !     Setup and Batching loops
 !
