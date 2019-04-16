@@ -1232,7 +1232,8 @@ contains
 !
 !
 !
-      if (j .ne. k) then
+      !if (j .ne. k) then
+      if (i .ne. j .and. j .ne. k) then
 !
 !        Construct u_abc = t_acb - t_cab
 !
@@ -1267,7 +1268,7 @@ contains
                     1)
 !
 !
-         if (i .ne. j) then
+      !   if (i .ne. j) then
 !
 !           omega_aj += sum_cb (t^cab - t^acb)*L_kbic
 !
@@ -1298,12 +1299,12 @@ contains
                        1)
 !
 !
-         end if
+      !   end if
 !
-      end if
+      !end if
 !
 !
-      if (i .ne. j .and. j .ne. k) then
+      !if (i .ne. j .and. j .ne. k) then
 !
 !        Construct u_abc = t_bac - t_bca
 !        This is zero if j == k

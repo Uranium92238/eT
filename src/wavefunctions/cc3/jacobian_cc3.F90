@@ -1204,7 +1204,7 @@ contains
 !!
 !!    NB: the indices d and l are contained in rho_2 while b, c and j,k are summation indices
 !!    (d'b|kc) ordered as bcd,k
-!!    (jl'|kc) orderd as cljk
+!!    (jl'|kc) orderd as cl,jk
 !!
 !!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
 !!    Modified by Alexander Paul and Rolf H. Myhre
@@ -2136,13 +2136,14 @@ contains
                  1)
 !
 !
-      if (j .ne. k) then
+      if (i .ne. j .and. j .ne. k) then
 !
 !        Construct u_abc = t_acb - t_cab
 !
          call construct_132_minus_312(t_abc, u_abc, wf%n_v)
 !
 !        rho_abik += sum_c (t^acb - t^cab)*F_jc
+!        Term only needed for j .ne. k and u_abc is 0 if i .eq. j
 !
          call dgemv('N',               &
                     wf%n_v**2,         &
@@ -2156,37 +2157,28 @@ contains
                     rho_abij(:,:,i,k), &
                     1)
 !
+!        rho_abjk += sum_c (t^cab - t^acb)*F_ic
+!        Term only needed for j .ne. k and i .ne. j
 !
-         if (i .ne. j) then
-!
-!           rho_abjk += sum_c (t^cab - t^acb)*F_ic
-!
-            call dgemv('N',                  &
-                        wf%n_v**2,           &
-                        wf%n_v,              &
-                        -one,                &
-                        u_abc,               &
-                        wf%n_v**2,           &
-                        F_kc(:,i),           &
-                        1,                   &
-                        one,                 &
-                        rho_abij(:,:,j,k),   &
-                        1)
-!
-         end if
-!
-      end if
-!
-!
-      if (i .ne. j) then
+         call dgemv('N',                  &
+                     wf%n_v**2,           &
+                     wf%n_v,              &
+                     -one,                &
+                     u_abc,               &
+                     wf%n_v**2,           &
+                     F_kc(:,i),           &
+                     1,                   &
+                     one,                 &
+                     rho_abij(:,:,j,k),   &
+                     1)
 !
 !        Construct u_abc = t_bac - t_bca
-!        This is zero if j == k
 !
          call construct_213_minus_231(t_abc, u_abc, wf%n_v)
 !
 !
 !        rho_abij += sum_c (t^bac - t^bca)*F_kc
+!        Term only needed for i .ne. j and u_abc is 0 if j .eq. k
 !
          call dgemv('N',               &
                     wf%n_v**2,         &
@@ -2201,6 +2193,7 @@ contains
                     1)
 !
 !        rho_abki += sum_c (t^bca - t^bac)*F_jc
+!        Term only needed for i .ne. j and u_abc is 0 if j .eq. k
 !
          call dgemv('N',               &
                     wf%n_v**2,         &
