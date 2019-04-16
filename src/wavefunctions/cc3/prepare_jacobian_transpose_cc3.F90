@@ -67,8 +67,6 @@ contains
 !!    (le|ck) ordered as lce,k
 !!    (cd|mk) ordered as dcm,k
 !!
-!!    L_kcld  ordered as ckd,l
-!!
 !!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
       implicit none

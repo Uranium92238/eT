@@ -134,3 +134,55 @@
    end subroutine jacobian_transpose_cc3_C3_terms_cc3
 !
 !
+   module subroutine jacobian_transpose__cc3_calc_c3_matmul_cc3(wf, i, j, k, c_abij, c_abc, c_bac, & 
+                                                               c_cba, c_acb, c_cab, c_bca, u_abc,  &
+                                                               g_dbic, g_dbjc, g_dbkc,             &
+                                                               g_jlic, g_klic, g_kljc,             &
+                                                               g_iljc, g_ilkc, g_jlkc)
+!!
+!!    Calculate the contributions from matrix multiplications 
+!!    to the  C3 amplitudes for fixed indices i,j,k
+!!
+!!    C^abc_ijk 
+!!    = (ω - ε^abc_ijk)^-1 P^abc_ijk (C_ai*L_jbkc - C_ak*L_jbic + Cabij*F_kc - C_abik*F_jc
+!!    + sum_l (C_ablk g_iljc - C_abil L_jlkc) - sum_d (C_adjk g_ibdc - C_adij L_dbkc)
+!!
+!!    Contibutions:
+!!    sum_l (C_ablk g_iljc + C_abil g_jckl - 2 C_abil g_jlkc) 
+!!    - sum_d (C_adjk g_ibdc + C_adij g_dckb - 2 C_adij g_dbkc)
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      integer, intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_bac
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_cba
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_acb
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_cab
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_bca
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: u_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
+!
+!     g_dbkc ordered bcd,k
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_dbic
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_dbjc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in) :: g_dbkc
+!
+!     g_jlkc ordered cl,jk
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_jlic
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_klic
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_kljc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_iljc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_ilkc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_jlkc
+!
+   end subroutine jacobian_transpose__cc3_calc_c3_matmul_cc3
+!
+!
