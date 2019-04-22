@@ -61,11 +61,11 @@ contains
    module subroutine prepare_cc3_jacobian_transpose_integrals_cc3(wf)
 !!
 !!    Construct integrals needed in CC3 jacobian transpose and store on disk
-!!    (ab|cd) ordered as abc,d
-!!    (mi|lk) ordered as lm,ik
+!!    (be|cd) ordered as abd,d
+!!    (mj|lk) ordered as mjk,l
 !!    (lb|kc) ordered as bcl,k
 !!    (le|ck) ordered as lce,k
-!!    (cd|mk) ordered as dcm,k
+!!    (cd|mk) ordered as mdc,k
 !!
 !!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
@@ -84,13 +84,14 @@ contains
 !     (be|cd)
 !
       call wf%get_g_pqrs_required(req_0,req_d,wf%n_v,wf%n_v,wf%n_v,1)
-      req_d = req_d + wf%n_v**3
+      req_d = req_d + 2*wf%n_v**3
 !
       call batch_d%init(wf%n_v)
       call mem%batch_setup(batch_d,req_0,req_d)
       call batch_d%determine_limits(1)
 !
       call mem%alloc(g_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_d%length)
+      call mem%alloc(h_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_d%length)
 !
       call wf%g_becd_t%init('g_becd_t','direct','unformatted',dp*wf%n_v**3)
       call disk%open_file(wf%g_becd_t,'write')
@@ -99,11 +100,13 @@ contains
 !
          call batch_d%determine_limits(d_batch)
 !
-         call wf%get_vvvv(g_pqrs, &
+         call wf%get_vvvv(g_pqrs,   &
                           1,wf%n_v, &
                           1,wf%n_v, &
                           1,wf%n_v, &
                           batch_d%first,batch_d%last)
+!
+         call sort_1234_to_1324(g_pqrs, h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_d%length)
 !
          call single_record_writer(batch_d, wf%g_becd_t, g_pqrs)
 !
@@ -113,9 +116,10 @@ contains
 !
       call batch_d%determine_limits(1)
       call mem%dealloc(g_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_d%length)
+      call mem%dealloc(h_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_d%length)
 !
 !
-!     (mi|lk) 
+!     (mj|lk) 
 !
       call wf%get_g_pqrs_required(req_0,req_k,wf%n_o,wf%n_o,wf%n_o,1)
       req_k = req_k + 2*wf%n_o**3
@@ -127,26 +131,26 @@ contains
       call mem%alloc(g_pqrs , wf%n_o , wf%n_o , wf%n_o , batch_k%length)
       call mem%alloc(h_pqrs , wf%n_o , wf%n_o , wf%n_o , batch_k%length)
 !
-      call wf%g_milk_t%init('g_milk_t','direct','unformatted',dp*wf%n_o**2)
-      call disk%open_file(wf%g_milk_t,'write')
+      call wf%g_mjlk_t%init('g_mjlk_t','direct','unformatted',dp*wf%n_o**3)
+      call disk%open_file(wf%g_mjlk_t,'write')
 !
       do k_batch = 1,batch_k%num_batches
 !
          call batch_k%determine_limits(k_batch)
 !
-         call wf%get_oooo(g_pqrs, &
+         call wf%get_oooo(g_pqrs,   &
                           1,wf%n_o, &
                           1,wf%n_o, &
                           1,wf%n_o, &
                           batch_k%first,batch_k%last)
 !
-         call sort_1234_to_3124(g_pqrs , h_pqrs , wf%n_o , wf%n_o , wf%n_o , batch_k%length)
+         call sort_1234_to_1243(g_pqrs , h_pqrs , wf%n_o , wf%n_o , wf%n_o , batch_k%length)
 !
-         call compound_record_writer(wf%n_o, batch_k, wf%g_milk_t, h_pqrs)
+         call single_record_writer(batch_k, wf%g_mjlk_t, h_pqrs)
 !
       enddo
 !
-      call disk%close_file(wf%g_milk_t,'keep')
+      call disk%close_file(wf%g_mjlk_t,'keep')
 !
       call batch_k%determine_limits(1)
       call mem%dealloc(g_pqrs,wf%n_o,wf%n_o,wf%n_o,batch_k%length)
@@ -171,7 +175,7 @@ contains
          call mem%alloc(g_pqrs, wf%n_o , wf%n_v , batch_k%length , wf%n_v)
          call mem%alloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
 !
-         call wf%get_ovov(g_pqrs, &
+         call wf%get_ovov(g_pqrs,   &
                           1,wf%n_o, &
                           1,wf%n_v, &
                           batch_k%first,batch_k%last, &
@@ -210,7 +214,7 @@ contains
 !
          call batch_k%determine_limits(k_batch)
 !
-         call wf%get_ovov(g_pqrs, &
+         call wf%get_ovov(g_pqrs,   &
                           1,wf%n_o, &
                           1,wf%n_v, &
                           1,wf%n_v, &
@@ -250,13 +254,13 @@ contains
 !
          call batch_k%determine_limits(k_batch)
 !
-         call wf%get_vvoo(g_pqrs, &
+         call wf%get_vvoo(g_pqrs,   &
                           1,wf%n_v, &
                           1,wf%n_v, &
                           1,wf%n_o, &
                           batch_k%first,batch_k%last)
 !
-         call sort_1234_to_2134(g_pqrs , h_pqrs , wf%n_o , wf%n_v , wf%n_v , batch_k%length)
+         call sort_1234_to_3214(g_pqrs , h_pqrs , wf%n_o , wf%n_v , wf%n_v , batch_k%length)
 !
          call single_record_writer(batch_k, wf%g_cdmk_t, h_pqrs)
 !
@@ -425,6 +429,10 @@ contains
          call single_record_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_lbkc_t, g_lbic)
          g_bdci_p => g_bdci
          g_lbic_p => g_lbic
+!
+         if (i_batch .eq. 1) then
+            X_abdi_p => X_abdi
+         end if
 !
 !        cannot hold X_abdi - read in previous X, add contributions, write to disk again
          if (i_batch .gt. 1) then
@@ -662,11 +670,11 @@ contains
 !
          write(wf%Y_akil%unit, rec=l, iostat=ioerror) Y_akil(:,:,:,l)
 !
-      enddo
+         if(ioerror .ne. 0) then
+            call output%error_msg('Failed to write Y_akil file')
+         endif
 !
-      if(ioerror .ne. 0) then
-         call output%error_msg('Failed to write Y_akil file')
-      endif
+      enddo
 !
       call mem%dealloc(Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
@@ -961,35 +969,38 @@ contains
 !
       call mem%batch_setup(batch_i, req_0, req_i)
 !
-      call wf%X_abid%init('X_abid','direct','unformatted', dp*(wf%n_v)**2)
+      call wf%X_abid%init('X_abid','direct','unformatted', dp*wf%n_v**2)
       call disk%open_file(wf%X_abid,'write')
 !
       do i_batch = 1, batch_i%num_batches
 !
+         call batch_i%determine_limits(i_batch)
          call mem%alloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
 !        Read from file
 !
-         do i = 1, batch_i%length
+         call single_record_reader(batch_i, wf%X_abdi, X_abdi)
 !
-            i_abs = batch_i%first + i - 1
-!
-            read(wf%X_abdi%unit, rec=i_abs, iostat=ioerror, iomsg=iom) X_abdi(:,:,:,i)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a)') 'Failed to read X_abdi file in sort_X_to_abid_and_write_cc3'
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
-!
-         enddo
+      !   do i = 1, batch_i%length
+!!
+      !      i_abs = batch_i%first + i - 1
+!!
+      !      read(wf%X_abdi%unit, rec=i_abs, iostat=ioerror, iomsg=iom) X_abdi(:,:,:,i)
+!!
+      !      if(ioerror .ne. 0) then
+      !         write(output%unit,'(t3,a)') 'Failed to read X_abdi file in sort_X_to_abid_and_write_cc3'
+      !         write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+      !         write(output%unit,'(t3,a)') trim(iom)
+      !         call output%error_msg('Failed to read file')
+      !      endif
+!!
+      !   enddo
 !
 !        Sort X_abdi to X_abid
 !
          call mem%alloc(X_abid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
 !
-         call sort_1234_to_2143(X_abdi, X_abid, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call sort_1234_to_1243(X_abdi, X_abid, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
          call mem%dealloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !

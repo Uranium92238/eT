@@ -48,7 +48,7 @@ module cc3_class
 !     Left Jacobian integral files
 !
       type(file)  :: g_becd_t
-      type(file)  :: g_milk_t
+      type(file)  :: g_mjlk_t
       type(file)  :: g_lbkc_t
       type(file)  :: g_leck_t
       type(file)  :: g_cdmk_t
@@ -110,10 +110,13 @@ module cc3_class
       procedure :: jacobian_transpose_cc3_X_ck_calc      => jacobian_transpose_cc3_X_ck_calc_cc3
 !
       procedure :: jacobian_transpose_cc3_C3_terms       => jacobian_transpose_cc3_C3_terms_cc3
+      procedure :: jacobian_transpose_cc3_calc_outer     => jacobian_transpose_cc3_calc_outer_cc3
       procedure :: jacobian_transpose_cc3_calc_c3_matmul => jacobian_transpose_cc3_calc_c3_matmul_cc3
       procedure :: jacobian_transpose_cc3_collect_c3     => jacobian_transpose_cc3_collect_c3_cc3
       procedure :: jacobian_transpose_cc3_sigma2         => jacobian_transpose_cc3_sigma2_cc3
       procedure :: construct_intermediates_c3            => construct_intermediates_c3_cc3
+      procedure :: jacobian_transpose_cc3_sigma1_C3_A1   => jacobian_transpose_cc3_sigma1_C3_A1_cc3
+      procedure :: jacobian_transpose_cc3_sigma1_C3_B1   => jacobian_transpose_cc3_sigma1_C3_B1_cc3
 !
    end type cc3
 !

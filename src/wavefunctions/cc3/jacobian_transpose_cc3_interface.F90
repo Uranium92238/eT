@@ -134,6 +134,57 @@
    end subroutine jacobian_transpose_cc3_C3_terms_cc3
 !
 !
+   module subroutine jacobian_transpose_cc3_calc_outer_cc3(wf, i, j, k, c_ai, c_abij,     & 
+                                                            c_abc, c_bac, c_cba, c_acb,   &
+                                                            c_cab, c_bca, u_abc, F_kc,    &
+                                                            L_jbic, L_kbic, L_kbjc,       &
+                                                            L_ibjc, L_ibkc, L_jbkc)
+!!
+!!    Calculate the contributions from outer products 
+!!    to the  C3 amplitudes for fixed indices i,j,k
+!!
+!!    C^abc_ijk 
+!!    = (ω - ε^abc_ijk)^-1 P^abc_ijk (C_ai*L_jbkc - C_ak*L_jbic + Cabij*F_kc - C_abik*F_jc)
+!!    + sum_l (C_ablk g_iljc - C_abil L_jlkc) - sum_d (C_adjk g_ibdc - C_adij L_dbkc)
+!!
+!!    Contibutions in this routine:
+!!    P^abc_ijk (C_ai*L_jbkc - C_ak*L_jbic + Cabij*F_kc - C_abik*F_jc)
+!!
+!!    L_jlkc and L_dbkc split up to reduce the amount of N^7 contractions
+!!    but 6 arrays for c_abc needed (for all permutations of abc)
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      integer, intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_bac
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_cba
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_acb
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_cab
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_bca
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: u_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: F_kc
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_jbic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_kbic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_kbjc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_ibjc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_ibkc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_jbkc
+!
+   end subroutine jacobian_transpose_cc3_calc_outer_cc3
+!
+!
    module subroutine jacobian_transpose_cc3_calc_c3_matmul_cc3(wf, i, j, k, c_abij, c_abc, c_bac, & 
                                                                c_cba, c_acb, c_cab, c_bca, u_abc,  &
                                                                g_dbic, g_dbjc, g_dbkc,             &
@@ -282,3 +333,43 @@
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_bcek
 !
    end subroutine construct_intermediates_c3_cc3
+!
+!
+   module subroutine jacobian_transpose_cc3_sigma1_C3_A1_cc3(wf, sigma_ai, Y_cmjk)
+!!
+!!    Computes the contribution of the intermediate Y_cmjk to sigma_1
+!!
+!!    sigma1 += sum_mjk Y_cmjk * g_mjlk
+!!    sigma1 += sum_cmj g_mjcd * Y_cmjk
+!!    sigma1 += sum_cmk g_leck * Y_cmjk
+!!    
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(in) :: Y_cmjk
+!
+   end subroutine jacobian_transpose_cc3_sigma1_C3_A1_cc3
+!
+!
+   module subroutine jacobian_transpose_cc3_sigma1_C3_B1_cc3(wf, sigma_ai)
+!!
+!!    Computes the contribution of the intermediate X_bcek to sigma_1
+!!
+!!    sigma1 += sum_bec g_becd * X_bcek
+!!    sigma1 += sum_cek X_bcek * g_leck
+!!    sigma1 += sum_bek X_bcek * g_lkbe
+!!    
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
+!
+   end subroutine jacobian_transpose_cc3_sigma1_C3_B1_cc3
