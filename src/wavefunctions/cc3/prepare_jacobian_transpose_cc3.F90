@@ -341,6 +341,8 @@ contains
       integer :: req_0, req_1, req_2, req_3
       real(dp) :: batch_buff = 0.0
 !
+      logical :: not_first_i, not_first_j, not_first_k
+!
       integer :: ioerror = -1
       integer :: l
 !
@@ -422,6 +424,10 @@ contains
       call disk%open_file(wf%X_abdi,'readwrite')
 !
 !
+      not_first_i = .false.
+      not_first_j = .false.
+      not_first_k = .false.
+!
       do i_batch = 1, batch_i%num_batches
 !
          call batch_i%determine_limits(i_batch)
@@ -430,15 +436,15 @@ contains
          g_bdci_p => g_bdci
          g_lbic_p => g_lbic
 !
-         if (i_batch .eq. 1) then
+!        cannot hold X_abdi - read in previous X, add contributions, write to disk again
+         if (not_first_i) then
+            call single_record_reader(batch_i, wf%X_abdi, X_abdi)
+            X_abdi_p => X_abdi
+         else
             X_abdi_p => X_abdi
          end if
 !
-!        cannot hold X_abdi - read in previous X, add contributions, write to disk again
-         if (i_batch .gt. 1) then
-            call single_record_reader(batch_i, wf%X_abdi, X_abdi)
-            X_abdi_p => X_abdi
-         end if
+         not_first_i = .true.
 !
          do j_batch = 1, i_batch
 !
@@ -454,7 +460,7 @@ contains
                g_lbjc_p => g_lbjc
 !
 !              Don't read X in the first iteration - X_abdi file empty
-               if (i_batch .gt. 1 .or. j_batch .gt. 1) then
+               if (not_first_j) then
                   call single_record_reader(batch_j, wf%X_abdi, X_abdj)
                   X_abdj_p => X_abdj
                end if
@@ -473,6 +479,8 @@ contains
 !
             endif
 !
+            not_first_j = .true.
+!
             do k_batch = 1, j_batch
 !
                call batch_k%determine_limits(k_batch)
@@ -484,7 +492,7 @@ contains
                   g_lbkc_p => g_lbkc
 !
 !                 Don't read X in the first iteration - X_abdi file empty
-                  if (i_batch .gt. 1 .or. j_batch .gt. 1 .or. k_batch .gt. 1) then
+                  if (not_first_k) then
                      call single_record_reader(batch_k, wf%X_abdi, X_abdk)
                      X_abdk_p => X_abdk
                   endif
@@ -549,6 +557,8 @@ contains
 !
                endif
 !
+               not_first_k = .true.
+!
                do i = batch_i%first, batch_i%last
 !
                   i_rel = i - batch_i%first + 1
@@ -593,15 +603,19 @@ contains
                   enddo ! loop over j
                enddo ! loop over i
 !
-               call single_record_writer(batch_k, wf%X_abdi, X_abdk)
+               if (k_batch .ne. j_batch) then
+                  call single_record_writer(batch_k, wf%X_abdi, X_abdk_p)
+               endif
 !
             enddo ! batch_k
 !
-            call single_record_writer(batch_j, wf%X_abdi, X_abdj)
+            if (j_batch .ne. i_batch) then
+               call single_record_writer(batch_j, wf%X_abdi, X_abdj_p)
+            endif
 !
          enddo ! batch_j
 !
-         call single_record_writer(batch_i, wf%X_abdi, X_abdi)
+         call single_record_writer(batch_i, wf%X_abdi, X_abdi_p)
 !
       enddo ! batch_i
 !
@@ -679,6 +693,11 @@ contains
       call mem%dealloc(Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
       call disk%close_file(wf%Y_akil,'keep')
+!
+      write(output%unit,*)
+      write(output%unit,*) "trololo x"
+      write(output%unit,*)
+      flush(output%unit)
 !
    end subroutine prepare_cc3_jacobian_transpose_intermediates_cc3
 !

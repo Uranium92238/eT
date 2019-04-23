@@ -351,7 +351,7 @@ contains
 !
                call batch_k%determine_limits(k_batch)
 !
-               if (k_batch .ne. i_batch .and. k_batch .ne. j_batch) then
+               if (k_batch .ne. j_batch) then
 !
                   call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc)
                   g_bdck_p => g_bdck
@@ -381,50 +381,26 @@ contains
                   g_jlkc_p => g_jlkc
                   L_jbkc_p => L_jbkc
 !
-               else if (k_batch .eq. i_batch) then
+               else if (k_batch .eq. i_batch) then !k_batch = j_batch = i_batch
 !
                   g_bdck_p => g_bdci
                   g_dbkc_p => g_dbic
 !
-                  if (j_batch .eq. i_batch) then
+                  g_lkci_p => g_ljci
+                  g_klic_p => g_jlic
+                  L_kbic_p => L_jbic
 !
-                     g_lkci_p => g_ljci
-                     g_klic_p => g_jlic
-                     L_kbic_p => L_jbic
+                  g_lick_p => g_ljci
+                  g_ilkc_p => g_jlic
+                  L_ibkc_p => L_jbic
 !
-                     g_lick_p => g_ljci
-                     g_ilkc_p => g_jlic
-                     L_ibkc_p => L_jbic
+                  g_lkcj_p => g_ljci
+                  g_kljc_p => g_jlic
+                  L_kbjc_p => L_jbic
 !
-                     g_lkcj_p => g_ljci
-                     g_kljc_p => g_jlic
-                     L_kbjc_p => L_jbic
-!
-                     g_ljck_p => g_ljci
-                     g_jlkc_p => g_jlic
-                     L_jbkc_p => L_jbic
-!
-                  else
-!
-                     call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, &
-                                                wf%g_jlkc_t, g_klic, wf%L_jbkc_t, L_kbic)
-                     g_lkci_p => g_lkci
-                     g_klic_p => g_klic
-                     L_kbic_p => L_kbic
-!
-                     g_lick_p => g_lkci
-                     g_ilkc_p => g_klic
-                     L_ibkc_p => L_kbic
-!
-                     g_lkcj_p => g_licj
-                     g_kljc_p => g_iljc
-                     L_kbjc_p => L_ibjc
-!
-                     g_ljck_p => g_ljci
-                     g_jlkc_p => g_jlic
-                     L_jbkc_p => L_jbic
-!
-                  endif
+                  g_ljck_p => g_ljci
+                  g_jlkc_p => g_jlic
+                  L_jbkc_p => L_jbic
 !
                else if (k_batch .eq. j_batch) then
 !
@@ -629,16 +605,6 @@ contains
          call sort_1234_to_2134(g_pqrs,h_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_k%length)
 !
          call single_record_writer(batch_k, wf%g_bdck_t, h_pqrs)
-   !      do k = 1,batch_k%length
-!!
-   !         record = batch_k%first + k -1
-   !         write(wf%g_bdck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
-!!
-   !      enddo
-!!
-   !      if(ioerror .ne. 0) then
-   !         call output%error_msg('Failed to write bdck_t file')
-   !      endif
 !
          call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
@@ -670,16 +636,6 @@ contains
          call sort_1234_to_2413(g_pqrs,h_pqrs,wf%n_v,wf%n_v,batch_k%length,wf%n_v)
 !
          call single_record_writer(batch_k, wf%g_dbkc_t, h_pqrs)
-   !      do k = 1,batch_k%length
-!!
-   !         record = batch_k%first + k -1
-   !         write(wf%g_dbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
-!!
-   !      enddo
-!!
-   !      if(ioerror .ne. 0) then
-   !         call output%error_msg('Failed to write dbkc_t file')
-   !      endif
 !
          call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
@@ -715,18 +671,6 @@ contains
          call sort_1234_to_1324(g_pqrs,h_pqrs,wf%n_o,wf%n_o,wf%n_v,batch_k%length)
 !
          call compound_record_writer(wf%n_o, batch_k, wf%g_ljck_t, h_pqrs)
-   !      do k = 1,batch_k%length
-   !         do j = 1,wf%n_o
-!!
-   !            record  = (batch_k%first + k - 2)*wf%n_o + j
-   !            write(wf%g_ljck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
-!!
-   !         enddo
-   !      enddo
-!
-!         if(ioerror .ne. 0) then
-!            call output%error_msg('Failed to write ljck_t file')
-!         endif
 !
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
          call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
@@ -757,18 +701,6 @@ contains
          call sort_1234_to_4213(g_pqrs, h_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
 !
          call compound_record_writer(wf%n_o, batch_k, wf%g_jlkc_t, h_pqrs)
-      !   do k = 1,batch_k%length
-      !      do j = 1,wf%n_o
-!!
-      !         record  = (batch_k%first + k - 2)*wf%n_o + j
-      !         write(wf%g_jlkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
-!!
-      !      enddo
-      !   enddo
-!
-!         if(ioerror .ne. 0) then
-!            call output%error_msg('Failed to write jlkc_t file')
-!         endif
 !
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
@@ -1232,7 +1164,6 @@ contains
 !
 !
 !
-      !if (j .ne. k) then
       if (i .ne. j .and. j .ne. k) then
 !
 !        Construct u_abc = t_acb - t_cab
@@ -1268,8 +1199,6 @@ contains
                     1)
 !
 !
-      !   if (i .ne. j) then
-!
 !           omega_aj += sum_cb (t^cab - t^acb)*L_kbic
 !
             call dgemv('N', &
@@ -1298,13 +1227,6 @@ contains
                        omega2(:,:,j,k), &
                        1)
 !
-!
-      !   end if
-!
-      !end if
-!
-!
-      !if (i .ne. j .and. j .ne. k) then
 !
 !        Construct u_abc = t_bac - t_bca
 !        This is zero if j == k
