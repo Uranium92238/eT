@@ -509,35 +509,20 @@ contains
                   call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck)
                   g_ljck_p => g_ljck
 !
-               else if (k_batch .eq. i_batch) then
+               else if (k_batch .eq. i_batch) then !k_batch = j_batch = i_batch
 !
                   g_bdck_p => g_bdci
                   g_lbkc_p => g_lbic
 !
                   X_abdk_p => X_abdi
 !
-                  if (j_batch .eq. i_batch) then
+                  g_lkci_p => g_ljci
 !
-                     g_lkci_p => g_ljci
+                  g_lick_p => g_ljci
 !
-                     g_lick_p => g_ljci
+                  g_lkcj_p => g_ljci
 !
-                     g_lkcj_p => g_ljci
-!
-                     g_ljck_p => g_ljci
-!
-                  else
-!
-                     call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci)
-                     g_lkci_p => g_lkci
-!
-                     g_lick_p => g_lkci
-!
-                     g_lkcj_p => g_licj
-!
-                     g_ljck_p => g_ljci
-!
-                  endif
+                  g_ljck_p => g_ljci
 !
                else if (k_batch .eq. j_batch) then
 !
@@ -634,6 +619,8 @@ contains
 !
          call mem%dealloc(g_lbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
+         call mem%dealloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+!
       else ! batching
 !
          call batch_i%determine_limits(1)
@@ -653,6 +640,10 @@ contains
          call mem%dealloc(g_lbjc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
          call mem%dealloc(g_lbkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
 !
+         call mem%dealloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         call mem%dealloc(X_abdj, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         call mem%dealloc(X_abdk, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+!
       endif
 !
 !     Deallocate amplitude arrays
@@ -667,7 +658,7 @@ contains
 !
       call wf%sort_X_to_abid_and_write()
 !
-      call disk%close_file(wf%X_abdi)
+      call disk%close_file(wf%X_abdi, 'delete')
 !
 !     sort Y_alik (ordered as alik) to akil and write to disk 
 !
@@ -971,15 +962,14 @@ contains
       class(cc3) :: wf
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_abdi
-      real(dp), dimension(:,:,:,:), allocatable :: X_abid
+      real(dp), dimension(:,:,:), allocatable :: X_abid
 !
       type(batching_index) :: batch_i
       integer :: record
-      integer :: i_batch, i, i_abs, d
+      integer :: i_batch, i, d, id
       integer :: req_0, req_i
 !
-      integer :: ioerror
-      character(len=100) :: iom
+      integer :: ioerror = 0
 !
       req_0 = 0
       req_i = 2*wf%n_v**3
@@ -991,37 +981,21 @@ contains
       call wf%X_abid%init('X_abid','direct','unformatted', dp*wf%n_v**2)
       call disk%open_file(wf%X_abid,'write')
 !
+      call batch_i%determine_limits(1)
+      call mem%alloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+      call mem%alloc(X_abid, wf%n_v, wf%n_v, batch_i%length*wf%n_v)
+!
       do i_batch = 1, batch_i%num_batches
 !
          call batch_i%determine_limits(i_batch)
-         call mem%alloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
 !        Read from file
 !
          call single_record_reader(batch_i, wf%X_abdi, X_abdi)
 !
-      !   do i = 1, batch_i%length
-!!
-      !      i_abs = batch_i%first + i - 1
-!!
-      !      read(wf%X_abdi%unit, rec=i_abs, iostat=ioerror, iomsg=iom) X_abdi(:,:,:,i)
-!!
-      !      if(ioerror .ne. 0) then
-      !         write(output%unit,'(t3,a)') 'Failed to read X_abdi file in sort_X_to_abid_and_write_cc3'
-      !         write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-      !         write(output%unit,'(t3,a)') trim(iom)
-      !         call output%error_msg('Failed to read file')
-      !      endif
-!!
-      !   enddo
-!
 !        Sort X_abdi to X_abid
 !
-         call mem%alloc(X_abid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
-!
          call sort_1234_to_1243(X_abdi, X_abid, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-!
-         call mem%dealloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
 !        Write to file
 !
@@ -1029,18 +1003,21 @@ contains
             do i = 1, batch_i%length
 !
                record  = (d - 1)*wf%n_o + batch_i%first + i - 1
-               write(wf%X_abid%unit, rec=record, iostat=ioerror) X_abid(:,:,i,d)
+               id = (d - 1)*wf%n_o + i - 1
+               write(wf%X_abid%unit, rec=record, iostat=ioerror) X_abid(:,:,id)
+!
+               if(ioerror .ne. 0) then
+                  call output%error_msg('Failed to write X_abid file')
+               endif
 !
             enddo
          enddo
 !
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write X_abid file')
-         endif
-!
-         call mem%dealloc(X_abid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
-!
       enddo ! batch_i
+!
+      call batch_i%determine_limits(1)
+      call mem%dealloc(X_abid, wf%n_v, wf%n_v, batch_i%length*wf%n_v)
+      call mem%dealloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
       call disk%close_file(wf%X_abid,'keep')
 !
