@@ -417,7 +417,7 @@ contains
 !
       integer              :: i, j, k, i_rel, j_rel, k_rel
       type(batching_index) :: batch_i, batch_j, batch_k
-      integer              :: current_i_batch, current_j_batch, current_k_batch
+      integer              :: i_batch, j_batch, k_batch
       integer              :: req_0, req_1, req_2, req_3
       real(dp)             :: batch_buff = 0.0
 !
@@ -532,9 +532,9 @@ contains
       call disk%open_file(wf%g_bdck_c1,'read')
       call disk%open_file(wf%g_ljck_c1,'read')
 !
-      do current_i_batch = 1, batch_i%num_batches
+      do i_batch = 1, batch_i%num_batches
 !
-         call batch_i%determine_limits(current_i_batch)
+         call batch_i%determine_limits(i_batch)
 !
          call single_record_reader(batch_i, wf%g_bdck_t, g_bdci, wf%g_dbkc_t, g_dbic, &
                                     wf%g_bdck_c1, g_bdci_c1)
@@ -543,9 +543,9 @@ contains
 !
          g_bdci_c1_p => g_bdci_c1
 !
-         do current_j_batch = 1, current_i_batch
+         do j_batch = 1, i_batch
 !
-            call batch_j%determine_limits(current_j_batch)
+            call batch_j%determine_limits(j_batch)
 !
             call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, wf%g_jlkc_t,  &
                                        g_jlic, wf%L_jbkc_t, L_jbic, wf%g_ljck_c1, g_ljci_c1)
@@ -555,7 +555,7 @@ contains
 !
             g_ljci_c1_p => g_ljci_c1
 !
-            if (current_j_batch .ne. current_i_batch) then
+            if (j_batch .ne. i_batch) then
 !
                call single_record_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_t, g_dbjc, &
                                           wf%g_bdck_c1, g_bdcj_c1)
@@ -587,11 +587,11 @@ contains
 !
             endif
 !
-            do current_k_batch = 1, current_j_batch
+            do k_batch = 1, j_batch
 !
-               call batch_k%determine_limits(current_k_batch)
+               call batch_k%determine_limits(k_batch)
 !
-               if (current_k_batch .ne. current_i_batch .and. current_k_batch .ne. current_j_batch) then
+               if (k_batch .ne. i_batch .and. k_batch .ne. j_batch) then
 !
                   call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc, &
                                              wf%g_bdck_c1, g_bdck_c1)
@@ -632,7 +632,7 @@ contains
 !
                   g_ljck_c1_p => g_ljck_c1
 !
-               else if (current_k_batch .eq. current_i_batch) then
+               else if (k_batch .eq. i_batch) then
 !
                   g_bdck_p => g_bdci
                   g_dbkc_p => g_dbic
@@ -663,7 +663,7 @@ contains
 !
                   g_ljck_c1_p => g_ljci_c1
 !
-               else if (current_k_batch .eq. current_j_batch) then
+               else if (k_batch .eq. j_batch) then
 !
                   g_bdck_p => g_bdcj
                   g_dbkc_p => g_dbjc
@@ -906,9 +906,9 @@ contains
       call disk%open_file(wf%g_dbkc_c1,'read')
       call disk%open_file(wf%g_jlkc_c1,'read')
 !
-      do current_i_batch = 1, batch_i%num_batches
+      do i_batch = 1, batch_i%num_batches
 !
-         call batch_i%determine_limits(current_i_batch)
+         call batch_i%determine_limits(i_batch)
 !
          if (.not. batching_c3) then ! no batching in c3-part - g_bdci still in mem
 !
@@ -923,9 +923,9 @@ contains
 !
          end if
 !
-         do current_j_batch = 1, current_i_batch
+         do j_batch = 1, i_batch
 !
-            call batch_j%determine_limits(current_j_batch)
+            call batch_j%determine_limits(j_batch)
 !
             if (.not. batching_c3) then ! no batching in c3-part - g_ljci still in mem
 !
@@ -942,7 +942,7 @@ contains
 !
             end if
 !
-            if (current_j_batch .ne. current_i_batch) then
+            if (j_batch .ne. i_batch) then
 !
                call single_record_reader(batch_j, wf%g_bdck_t, g_bdcj, wf%g_dbkc_c1, g_dbjc_c1)
                g_bdcj_p    => g_bdcj
@@ -963,11 +963,11 @@ contains
 !
             endif
 !
-            do current_k_batch = 1, current_j_batch
+            do k_batch = 1, j_batch
 !
-               call batch_k%determine_limits(current_k_batch)
+               call batch_k%determine_limits(k_batch)
 !
-               if (current_k_batch .ne. current_i_batch .and. current_k_batch .ne. current_j_batch) then
+               if (k_batch .ne. i_batch .and. k_batch .ne. j_batch) then
 !
                   call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_c1, g_dbkc_c1)
                   g_bdck_p    => g_bdck
@@ -993,12 +993,12 @@ contains
                   g_ljck_p    => g_ljck
                   g_jlkc_c1_p => g_jlkc_c1
 !
-               else if (current_k_batch .eq. current_i_batch) then
+               else if (k_batch .eq. i_batch) then
 !
                   g_bdck_p    => g_bdci
                   g_dbkc_c1_p => g_dbic_c1
 !
-                  if (current_j_batch .eq. current_i_batch) then
+                  if (j_batch .eq. i_batch) then
 !
                      g_lkci_p    => g_ljci
                      g_klic_c1_p => g_jlic_c1
@@ -1030,7 +1030,7 @@ contains
 !
                   endif
 !
-               else if (current_k_batch .eq. current_j_batch) then
+               else if (k_batch .eq. j_batch) then
 !
                   g_bdck_p    => g_bdcj
                   g_dbkc_c1_p => g_dbjc_c1
@@ -1192,7 +1192,7 @@ contains
       type(batching_index) :: batch_k
 !
       integer :: req_0, req_k
-      integer :: current_k_batch
+      integer :: k_batch
 !
 !
       call batch_k%init(wf%n_o)
@@ -1209,9 +1209,9 @@ contains
       call wf%g_bdck_c1%init('g_bdck_c1','direct','unformatted', dp*(wf%n_v)**3)
       call disk%open_file(wf%g_bdck_c1,'write')
 !
-      do current_k_batch = 1, batch_k%num_batches
+      do k_batch = 1, batch_k%num_batches
 !
-         call batch_k%determine_limits(current_k_batch)
+         call batch_k%determine_limits(k_batch)
 !
 !        :: Term 1: g_b'dck = sum_J L_J_bd L_J_ck ::
 !
@@ -1311,9 +1311,9 @@ contains
       call wf%g_dbkc_c1%init('g_dbkc_c1','direct','unformatted',dp*(wf%n_v)**3)
       call disk%open_file(wf%g_dbkc_c1,'write')
 !
-      do current_k_batch = 1, batch_k%num_batches
+      do k_batch = 1, batch_k%num_batches
 !
-         call batch_k%determine_limits(current_k_batch)
+         call batch_k%determine_limits(k_batch)
 !
          call mem%alloc(L_J_kc, wf%integrals%n_J, batch_k%length, wf%n_v)
 !
@@ -1368,9 +1368,9 @@ contains
       call wf%g_ljck_c1%init('g_ljck_c1','direct','unformatted', dp*(wf%n_v)*(wf%n_o))
       call disk%open_file(wf%g_ljck_c1,'write')
 !
-      do current_k_batch = 1, batch_k%num_batches
+      do k_batch = 1, batch_k%num_batches
 !
-         call batch_k%determine_limits(current_k_batch)
+         call batch_k%determine_limits(k_batch)
 !
 !        :: Term 1: g_lj'ck = sum_J L_J_jl_c1 L_J_ck ::
 !
@@ -1468,9 +1468,9 @@ contains
       call wf%g_jlkc_c1%init('g_jlkc_c1','direct','unformatted', dp*(wf%n_v)*(wf%n_o))
       call disk%open_file(wf%g_jlkc_c1,'write')
 !
-      do current_k_batch = 1, batch_k%num_batches
+      do k_batch = 1, batch_k%num_batches
 !
-         call batch_k%determine_limits(current_k_batch)
+         call batch_k%determine_limits(k_batch)
 !
          call mem%alloc(L_J_kc, wf%integrals%n_J, batch_k%length, wf%n_v)
 !
