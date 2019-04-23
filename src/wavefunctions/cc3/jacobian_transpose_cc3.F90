@@ -2655,7 +2655,6 @@ contains
          call mem%alloc(g_leck, wf%n_o, wf%n_v, wf%n_v, batch_k%length)
 !
          call single_record_reader(batch_k, wf%X_bcek, X_bcek, wf%g_leck_t, g_leck)
-         !call single_record_reader(batch_k, wf%g_leck_t, g_leck)
 !
          call dgemm('N','T',                    &
                      wf%n_v,                    &
