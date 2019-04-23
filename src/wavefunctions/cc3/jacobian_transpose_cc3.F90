@@ -179,10 +179,12 @@ contains
 !
 !     CC3-Contributions from the T3-amplitudes
       call wf%jacobian_transpose_cc3_sigma1_T3_A1(c_abij, sigma_ai)
+!
       call wf%jacobian_transpose_cc3_sigma1_T3_B1(c_abij, sigma_ai)
 !
 !     CC3-Contributions from the C3-amplitudes
       call wf%jacobian_transpose_cc3_C3_terms(omega, c_ai, c_abij, sigma_ai, sigma_abij)
+!
       call cc3_timer%freeze()
       call cc3_timer%switch_off()
 !
@@ -520,29 +522,13 @@ contains
 !
                   g_bdck_p => g_bdci
 !
-                  if (j_batch .eq. i_batch) then
+                  g_lkci_p => g_ljci
 !
-                     g_lkci_p => g_ljci
+                  g_lick_p => g_ljci
 !
-                     g_lick_p => g_ljci
+                  g_lkcj_p => g_ljci
 !
-                     g_lkcj_p => g_ljci
-!
-                     g_ljck_p => g_ljci
-!
-                  else
-!
-                     call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci)
-!
-                     g_lkci_p => g_lkci
-!
-                     g_lick_p => g_lkci
-!
-                     g_lkcj_p => g_licj
-!
-                     g_ljck_p => g_ljci
-!
-                  endif
+                  g_ljck_p => g_ljci
 !
                else if (k_batch .eq. j_batch) then
 !
@@ -661,18 +647,17 @@ contains
 !
 !        sigma_dl += sum_ck X_ck * L_kcld
 !
-         call dgemm('T','N',                    &
-                     wf%n_v * batch_l%length,   &
-                     1,                         &
+         call dgemv('T',                        &
                      wf%n_v * wf%n_o,           &
+                     wf%n_v * batch_l%length,   &
                      one,                       &
                      L_kcld,                    & ! L_dl_ck
                      wf%n_v * wf%n_o,           &
                      X_ck,                      & ! X_ck
-                     wf%n_v * wf%n_o,           &
+                     1,                         &
                      one,                       &
                      sigma_ai(1,batch_l%first), & ! sigma_dl
-                     wf%n_v * wf%n_o)
+                     1)
 !
       enddo
 !
@@ -1154,52 +1139,28 @@ contains
                   g_jlkc_p => g_jlkc
                   L_jbkc_p => L_jbkc
 !
-               else if (k_batch .eq. i_batch) then
+               else if (k_batch .eq. i_batch) then ! k_batch = j_batch = i_batch
 !
                   g_bdck_p => g_bdci
                   g_dbkc_p => g_dbic
 !
                   X_bcek_p => X_bcei
 !
-                  if (j_batch .eq. i_batch) then
+                  g_lkci_p => g_ljci
+                  g_klic_p => g_jlic
+                  L_kbic_p => L_jbic
 !
-                     g_lkci_p => g_ljci
-                     g_klic_p => g_jlic
-                     L_kbic_p => L_jbic
+                  g_lick_p => g_ljci
+                  g_ilkc_p => g_jlic
+                  L_ibkc_p => L_jbic
 !
-                     g_lick_p => g_ljci
-                     g_ilkc_p => g_jlic
-                     L_ibkc_p => L_jbic
+                  g_lkcj_p => g_ljci
+                  g_kljc_p => g_jlic
+                  L_kbjc_p => L_jbic
 !
-                     g_lkcj_p => g_ljci
-                     g_kljc_p => g_jlic
-                     L_kbjc_p => L_jbic
-!
-                     g_ljck_p => g_ljci
-                     g_jlkc_p => g_jlic
-                     L_jbkc_p => L_jbic
-!
-                  else
-!
-                     call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
-                                                g_klic, wf%L_jbkc_t, L_kbic)
-                     g_lkci_p => g_lkci
-                     g_klic_p => g_klic
-                     L_kbic_p => L_kbic
-!
-                     g_lick_p => g_lkci
-                     g_ilkc_p => g_klic
-                     L_ibkc_p => L_kbic
-!
-                     g_lkcj_p => g_licj
-                     g_kljc_p => g_iljc
-                     L_kbjc_p => L_ibjc
-!
-                     g_ljck_p => g_ljci
-                     g_jlkc_p => g_jlic
-                     L_jbkc_p => L_jbic
-!
-                  endif
+                  g_ljck_p => g_ljci
+                  g_jlkc_p => g_jlic
+                  L_jbkc_p => L_jbic
 !
                else if (k_batch .eq. j_batch) then
 !
@@ -1250,12 +1211,9 @@ contains
 !
                         call wf%jacobian_transpose_cc3_calc_outer(i, j, k, c_ai, c_abij,        & 
                                                                   c_abc, c_bac, c_cba, c_acb,   &
-                                                                  c_cab, c_bca, u_abc, F_kc,    &
+                                                                  c_bca, u_abc, F_kc,           &
                                                                   L_jbic_p(:,:,j_rel,i_rel),    &
                                                                   L_kbic_p(:,:,k_rel,i_rel),    &
-                                                                  L_kbjc_p(:,:,k_rel,j_rel),    &
-                                                                  L_ibjc_p(:,:,i_rel,j_rel),    &
-                                                                  L_ibkc_p(:,:,i_rel,k_rel),    &
                                                                   L_jbkc_p(:,:,j_rel,k_rel))
 !
                         call wf%jacobian_transpose_cc3_calc_c3_matmul(i, j, k, c_abij, c_abc,      & 
@@ -1297,15 +1255,20 @@ contains
 !
 !              write the intermediate X_bcek to file. 
 !              Will be read in after the loops for the contractions to sigma_ai
-               call single_record_writer(batch_k, wf%X_bcek, X_bcek)
+!
+               if (k_batch .ne. j_batch) then
+                  call single_record_writer(batch_k, wf%X_bcek, X_bcek_p)
+               endif
 !
             enddo ! batch_k
 !
-            call single_record_writer(batch_j, wf%X_bcek, X_bcej)
+            if (j_batch .ne. i_batch) then
+               call single_record_writer(batch_j, wf%X_bcek, X_bcej_p)
+            endif
 !
          enddo ! batch_j
 !
-         call single_record_writer(batch_i, wf%X_bcek, X_bcei)
+         call single_record_writer(batch_i, wf%X_bcek, X_bcei_p)
 !
       enddo ! batch_i
 !
@@ -1396,9 +1359,8 @@ contains
 !
    module subroutine jacobian_transpose_cc3_calc_outer_cc3(wf, i, j, k, c_ai, c_abij,     & 
                                                             c_abc, c_bac, c_cba, c_acb,   &
-                                                            c_cab, c_bca, u_abc, F_kc,    &
-                                                            L_jbic, L_kbic, L_kbjc,       &
-                                                            L_ibjc, L_ibkc, L_jbkc)
+                                                            c_bca, u_abc, F_kc,           &
+                                                            L_jbic, L_kbic, L_jbkc)
 !!
 !!    Calculate the contributions from outer products 
 !!    to the  C3 amplitudes for fixed indices i,j,k
@@ -1428,7 +1390,6 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_bac
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_cba
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_acb
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_cab
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_bca
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: u_abc
@@ -1437,9 +1398,6 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_jbic
       real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_kbic
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_kbjc
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_ibjc
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_ibkc
       real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_jbkc
 !
 !     :: Contribution 1 ::
@@ -1907,8 +1865,8 @@ contains
       call sort_123_to_213_and_add(c_bac, c_abc, wf%n_v, wf%n_v, wf%n_v)
       call sort_123_to_321_and_add(c_cba, c_abc, wf%n_v, wf%n_v, wf%n_v)
       call sort_123_to_132_and_add(c_acb, c_abc, wf%n_v, wf%n_v, wf%n_v)
-      call sort_123_to_231_and_add(c_bca, c_abc, wf%n_v, wf%n_v, wf%n_v)
-      call sort_123_to_312_and_add(c_cab, c_abc, wf%n_v, wf%n_v, wf%n_v)
+      call sort_123_to_312_and_add(c_bca, c_abc, wf%n_v, wf%n_v, wf%n_v)
+      call sort_123_to_231_and_add(c_cab, c_abc, wf%n_v, wf%n_v, wf%n_v)
 !
 !     Scale by (ω - ε^abc_ijk)^-1
 !

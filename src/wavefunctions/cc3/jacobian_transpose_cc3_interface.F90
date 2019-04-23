@@ -136,9 +136,8 @@
 !
    module subroutine jacobian_transpose_cc3_calc_outer_cc3(wf, i, j, k, c_ai, c_abij,     & 
                                                             c_abc, c_bac, c_cba, c_acb,   &
-                                                            c_cab, c_bca, u_abc, F_kc,    &
-                                                            L_jbic, L_kbic, L_kbjc,       &
-                                                            L_ibjc, L_ibkc, L_jbkc)
+                                                            c_bca, u_abc, F_kc,           &
+                                                            L_jbic, L_kbic, L_jbkc)
 !!
 !!    Calculate the contributions from outer products 
 !!    to the  C3 amplitudes for fixed indices i,j,k
@@ -168,7 +167,6 @@
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_bac
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_cba
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_acb
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_cab
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_bca
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: u_abc
@@ -177,9 +175,6 @@
 !
       real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_jbic
       real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_kbic
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_kbjc
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_ibjc
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_ibkc
       real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_jbkc
 !
    end subroutine jacobian_transpose_cc3_calc_outer_cc3

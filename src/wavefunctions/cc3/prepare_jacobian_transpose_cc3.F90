@@ -685,11 +685,6 @@ contains
 !
       call disk%close_file(wf%Y_akil,'keep')
 !
-      write(output%unit,*)
-      write(output%unit,*) "trololo x"
-      write(output%unit,*)
-      flush(output%unit)
-!
    end subroutine prepare_cc3_jacobian_transpose_intermediates_cc3
 !
 !
