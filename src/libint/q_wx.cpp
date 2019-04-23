@@ -31,6 +31,7 @@ using namespace std;
 #include <string>
 #include <vector>
 #include "q_wx.h"
+#include "extract_integrals.h"
 
 #include <libint2.hpp>
 
@@ -54,6 +55,7 @@ void construct_ao_q_wx(double *q_xx, double *q_xy, double *q_xz, double *q_yy, d
   // buf_vec[1] -> mu_x
   // buf_vec[2] -> mu_y
   // buf_vec[3] -> mu_z
+  //
 
   auto ints_shellset_xx = buf_vec[4]; 
   auto ints_shellset_xy = buf_vec[5]; 
@@ -62,145 +64,14 @@ void construct_ao_q_wx(double *q_xx, double *q_xy, double *q_xz, double *q_yy, d
   auto ints_shellset_yz = buf_vec[8]; 
   auto ints_shellset_zz = buf_vec[9]; 
 
-  // q_xx 
+  extract_integrals(q_xx, ints_shellset_xx, n1, n2, -1.0e0);
+  extract_integrals(q_xy, ints_shellset_xy, n1, n2, -1.0e0);
+  extract_integrals(q_xz, ints_shellset_xz, n1, n2, -1.0e0);
+  extract_integrals(q_yy, ints_shellset_yy, n1, n2, -1.0e0);
+  extract_integrals(q_yz, ints_shellset_yz, n1, n2, -1.0e0);
+  extract_integrals(q_zz, ints_shellset_zz, n1, n2, -1.0e0);
 
-  if (ints_shellset_xx == nullptr) {
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(q_xx + n1*f2 + f1) = 0.0e0;
-
-      }
-    }
-  }
-  else{
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(q_xx + n1*f2 + f1) = -ints_shellset_xx[f1*n2 + f2]; 
-
-      }
-    }
-  }
-
-  // q_xy
-
-  if (ints_shellset_xx == nullptr) {
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(q_xy + n1*f2 + f1) = 0.0e0;
-
-      }
-    }
-  }
-  else{
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(q_xy + n1*f2 + f1) = -ints_shellset_xy[f1*n2 + f2]; 
-
-      }
-    }
-  }
-
-  // q_xz
-
-  if (ints_shellset_xz == nullptr) {
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(q_xz + n1*f2 + f1) = 0.0e0;
-
-      }
-    }
-  }
-  else{
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(q_xz + n1*f2 + f1) = -ints_shellset_xz[f1*n2 + f2]; 
-
-      }
-    }
-  }
-
-  // q_yy
-
-  if (ints_shellset_yy == nullptr) {
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(q_yy + n1*f2 + f1) = 0.0e0;
-
-      }
-    }
-  }
-  else{
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(q_yy + n1*f2 + f1) = -ints_shellset_yy[f1*n2 + f2]; 
-
-      }
-    }
-  }  
-
-  // q_yz
-
-  if (ints_shellset_xz == nullptr) {
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(q_yz + n1*f2 + f1) = 0.0e0;
-
-      }
-    }
-  }
-  else{
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(q_yz + n1*f2 + f1) = -ints_shellset_yz[f1*n2 + f2]; 
-
-      }
-    }
-  }
-
-  // q_zz
-
-  if (ints_shellset_xz == nullptr) {
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(q_zz + n1*f2 + f1) = 0.0e0;
-
-      }
-    }
-  }
-  else{
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(q_zz + n1*f2 + f1) = -ints_shellset_zz[f1*n2 + f2]; 
-
-      }
-    }
-  }
-
-return;
+  return;
 
 }
 

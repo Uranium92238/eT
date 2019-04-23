@@ -26,7 +26,8 @@ module disk_manager_class
 !
    use kinds
    use file_class
-   use io_utilities
+   use input_file_class
+   !use io_utilities
 !
    type :: disk_manager
 !

@@ -103,24 +103,6 @@
    end subroutine construct_X_and_Y_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_write_X_cc3(wf, batch_x, X_abdx)
-!!
-!!    Write the contributions to the X_abdi intermediate to file in the respective batches
-!!
-!!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, April 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      type(batching_index), intent(in) :: batch_x
-!
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, batch_x%length), intent(in) :: X_abdx
-!
-   end subroutine jacobian_transpose_cc3_write_X_cc3
-!
-!
    module subroutine sort_X_to_abid_and_write_cc3(wf)
 !!
 !!    Read in intermediate X_abdi from file, resort to X_baid and write to file again

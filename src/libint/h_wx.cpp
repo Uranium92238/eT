@@ -35,6 +35,7 @@ using namespace std;
 #include <libint2.hpp>
 
 #include "h_wx.h"
+#include "extract_integrals.h"
 
 #include "globals.h"
 #include "omp_control.h"
@@ -56,24 +57,8 @@ void construct_ao_h_wx(double *h, int *s1, int *s2){
   auto n1 = basis[*s1 - 1].size();                // Number of basis functions in shell 1
   auto n2 = basis[*s2 - 1].size();                // number of basis functions in shell 2
 
-  if (ints_shellset == nullptr) {
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
+  extract_integrals(h, ints_shellset, n1, n2, 1.0e0);
 
-      *(h + n1*f2+f1) = 0.0e0;
-
-      }
-    }
-  }
-  else{
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-      *(h + n1*f2+f1) = ints_shellset[f1*n2+f2]; 
-
-      }
-    }
-  }
 /*
 /   Add nuclear attraction contribution
 */

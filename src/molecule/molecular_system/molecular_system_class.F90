@@ -29,12 +29,10 @@ module molecular_system_class
    use io_utilities
    use interval_class
    use libint_initialization
-   use ao_integral_tool_class
-   use active_atoms_info_class
 !
    implicit none
 !
-   include "../libint/atom_init_cdef.F90"
+   include "../../libint/atom_init_cdef.F90"
 !
    type :: molecular_system
 !
@@ -50,53 +48,67 @@ module molecular_system_class
 !
       type(atomic), dimension(:), allocatable :: atoms
 !
-      type(ao_integral_tool) :: ao_integrals
-!
       type(interval), dimension(:), allocatable :: shell_limits 
 !
       logical :: active_atoms = .false.
 !
       integer :: n_active_atoms = 0
+      integer :: max_shell_size
 !
    contains
 !
-      procedure :: prepare                 => prepare_molecular_system
-      procedure :: cleanup                 => cleanup_molecular_system
+      procedure :: prepare                                  => prepare_molecular_system
+      procedure :: cleanup                                  => cleanup_molecular_system
 !
-      procedure, private :: write_libint_files  => write_libint_files_molecular_system
+      procedure, private :: write_libint_files              => write_libint_files_molecular_system
 !
-      procedure, private :: read_settings       => read_settings_molecular_system
-      procedure, private :: read_system         => read_system_molecular_system
-      procedure, private :: read_geometry       => read_geometry_molecular_system
-      procedure, private :: read_active_atoms   => read_active_atoms_molecular_system
+      procedure, private :: read_settings                   => read_settings_molecular_system
+      procedure, private :: read_system                     => read_system_molecular_system
+      procedure, private :: read_geometry                   => read_geometry_molecular_system
+      procedure, private :: read_active_atoms               => read_active_atoms_molecular_system
 !
-      procedure :: print_system            => print_system_molecular_system
-      procedure :: print_geometry          => print_geometry_molecular_system
+      procedure :: print_system                             => print_system_molecular_system
+      procedure :: print_geometry                           => print_geometry_molecular_system
 !
-      procedure :: get_nuclear_repulsion   => get_nuclear_repulsion_molecular_system
-      procedure :: get_n_electrons         => get_n_electrons_molecular_system
-      procedure :: get_nuclear_dipole      => get_nuclear_dipole_molecular_system
-      procedure :: get_nuclear_quadrupole  => get_nuclear_quadrupole_molecular_system
+      procedure :: get_nuclear_repulsion                    => get_nuclear_repulsion_molecular_system
+      procedure :: get_n_electrons                          => get_n_electrons_molecular_system
+      procedure :: get_nuclear_dipole                       => get_nuclear_dipole_molecular_system
+      procedure :: get_nuclear_quadrupole                   => get_nuclear_quadrupole_molecular_system
 !
-      procedure :: get_n_aos               => get_n_aos_molecular_system
-      procedure :: get_n_shells            => get_n_shells_molecular_system
-      procedure :: get_shell_limits        => get_shell_limits_molecular_system
-      procedure :: basis2shell             => basis2shell_molecular_system
-      procedure :: get_max_shell_size      => get_max_shell_size_molecular_system
+      procedure :: get_n_aos                                => get_n_aos_molecular_system
+      procedure :: get_n_shells                             => get_n_shells_molecular_system
+      procedure :: get_shell_limits                         => get_shell_limits_molecular_system
+      procedure :: basis2shell                              => basis2shell_molecular_system
+      procedure :: get_max_shell_size                       => get_max_shell_size_molecular_system
 !
-      procedure :: shell_to_atom           => shell_to_atom_molecular_system
+      procedure :: shell_to_atom                            => shell_to_atom_molecular_system
 !
-      procedure :: initialize_basis_sets   => initialize_basis_sets_molecular_system
-      procedure :: initialize_atoms        => initialize_atoms_molecular_system
-      procedure :: initialize_shell_limits => initialize_shell_limits_molecular_system
+      procedure :: initialize_basis_sets                    => initialize_basis_sets_molecular_system
+      procedure :: initialize_atoms                         => initialize_atoms_molecular_system
+      procedure :: initialize_shell_limits                  => initialize_shell_limits_molecular_system
 !
-      procedure :: destruct_basis_sets     => destruct_basis_sets_molecular_system
-      procedure :: destruct_atoms          => destruct_atoms_molecular_system
-      procedure :: destruct_shell_limits   => destruct_shell_limits_molecular_system
+      procedure :: destruct_basis_sets                      => destruct_basis_sets_molecular_system
+      procedure :: destruct_atoms                           => destruct_atoms_molecular_system
+      procedure :: destruct_shell_limits                    => destruct_shell_limits_molecular_system
 !
-      procedure :: translate_from_input_order_to_eT_order => translate_from_input_order_to_eT_order_molecular_system
+      procedure :: translate_from_input_order_to_eT_order   => translate_from_input_order_to_eT_order_molecular_system
+!
+      procedure :: construct_ao_h_wx                        => construct_ao_h_wx_molecular_system      
+      procedure :: construct_ao_g_wxyz                      => construct_ao_g_wxyz_molecular_system  
+      procedure, nopass :: construct_ao_g_wxyz_epsilon      => construct_ao_g_wxyz_epsilon_molecular_system      
+      procedure :: construct_ao_s_wx                        => construct_ao_s_wx_molecular_system     
+      procedure :: construct_ao_mu_wx                       => construct_ao_mu_wx_molecular_system     
+      procedure :: construct_ao_q_wx                        => construct_ao_q_wx_molecular_system     
 !
    end type molecular_system
+!
+!
+   interface
+!
+      include "ao_integrals_interface.F90"
+!
+   end interface 
+!
 !
 contains
 !
@@ -260,6 +272,8 @@ contains
       enddo
 !
       call molecule%print_system()
+!
+      call molecule%get_max_shell_size(molecule%max_shell_size)
 !
    end subroutine prepare_molecular_system
 !
