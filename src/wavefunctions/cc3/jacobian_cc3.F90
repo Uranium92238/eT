@@ -639,61 +639,29 @@ contains
 !
                   g_bdck_c1_p => g_bdci_c1
 !
-                  if (current_j_batch .eq. current_i_batch) then
+                  g_lkci_p => g_ljci
+                  g_klic_p => g_jlic
+                  L_kbic_p => L_jbic
 !
-                     g_lkci_p => g_ljci
-                     g_klic_p => g_jlic
-                     L_kbic_p => L_jbic
+                  g_lkci_c1_p => g_ljci_c1
 !
-                     g_lkci_c1_p => g_ljci_c1
+                  g_lick_p => g_ljci
+                  g_ilkc_p => g_jlic
+                  L_ibkc_p => L_jbic
 !
-                     g_lick_p => g_ljci
-                     g_ilkc_p => g_jlic
-                     L_ibkc_p => L_jbic
+                  g_lick_c1_p => g_ljci_c1
 !
-                     g_lick_c1_p => g_ljci_c1
+                  g_lkcj_p => g_ljci
+                  g_kljc_p => g_jlic
+                  L_kbjc_p => L_jbic
 !
-                     g_lkcj_p => g_ljci
-                     g_kljc_p => g_jlic
-                     L_kbjc_p => L_jbic
+                  g_lkcj_c1_p => g_ljci_c1
 !
-                     g_lkcj_c1_p => g_ljci_c1
+                  g_ljck_p => g_ljci
+                  g_jlkc_p => g_jlic
+                  L_jbkc_p => L_jbic
 !
-                     g_ljck_p => g_ljci
-                     g_jlkc_p => g_jlic
-                     L_jbkc_p => L_jbic
-!
-                     g_ljck_c1_p => g_ljci_c1
-!
-                  else
-!
-                     call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
-                                                g_klic, wf%L_jbkc_t, L_kbic, wf%g_ljck_c1, g_lkci_c1)
-                     g_lkci_p => g_lkci
-                     g_klic_p => g_klic
-                     L_kbic_p => L_kbic
-!
-                     g_lkci_c1_p => g_lkci_c1
-!
-                     g_lick_p => g_lkci
-                     g_ilkc_p => g_klic
-                     L_ibkc_p => L_kbic
-!
-                     g_lick_c1_p => g_lkci_c1
-!
-                     g_lkcj_p => g_licj
-                     g_kljc_p => g_iljc
-                     L_kbjc_p => L_ibjc
-!
-                     g_lkcj_c1_p => g_licj_c1
-!
-                     g_ljck_p => g_ljci
-                     g_jlkc_p => g_jlic
-                     L_jbkc_p => L_jbic
-!
-                     g_ljck_c1_p => g_ljci_c1
-!
-                  endif
+                  g_ljck_c1_p => g_ljci_c1
 !
                else if (current_k_batch .eq. current_j_batch) then
 !
