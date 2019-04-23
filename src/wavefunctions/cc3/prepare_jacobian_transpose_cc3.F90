@@ -1003,7 +1003,7 @@ contains
             do i = 1, batch_i%length
 !
                record  = (d - 1)*wf%n_o + batch_i%first + i - 1
-               id = (d - 1)*wf%n_o + i - 1
+               id = (d - 1)*wf%n_o + i
                write(wf%X_abid%unit, rec=record, iostat=ioerror) X_abid(:,:,id)
 !
                if(ioerror .ne. 0) then
