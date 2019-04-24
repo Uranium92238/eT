@@ -1349,7 +1349,7 @@ contains
                  wf%n_v, &
                  wf%n_v, &
                  wf%n_v**2, &
-                 alpha, &
+                 one, &
                  u_abc, &
                  wf%n_v, &
                  g_dbkc, &
@@ -1358,60 +1358,60 @@ contains
                  omega2(:,:,i,j), &
                  wf%n_v)
 !
-      if (i .ne. j) then
 !
-!        omega_ablj += \sum_c (2*t_abc - t_acb - t_cba)*g_ilkc
-!
-         call dgemm('N','N', &
-                    wf%n_v**2, &
-                    wf%n_o, &
-                    wf%n_v, &
-                    -one, &
-                    u_abc, &
-                    wf%n_v**2, &
-                    g_ilkc, &
-                    wf%n_v, &
-                    one, &
-                    omega2(:,:,:,j), &
-                    wf%n_v**2)
-!
-      end if
-!
-!
-!     resort to u_abc = 2*t_bac - t_bca - t_cab
-!
-      call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
-!
-!     omega_adji += sum_bc (2*t_bac - t_bca - t_cab)*g_dbkc
-!
-      call dgemm('N','N', &
-                 wf%n_v, &
-                 wf%n_v, &
-                 wf%n_v**2, &
-                 alpha, &
-                 v_abc, &
-                 wf%n_v, &
-                 g_dbkc, &
-                 wf%n_v**2, &
-                 one, &
-                 omega2(:,:,j,i), &
-                 wf%n_v)
-!
-!     omega_abli += \sum_c (2*t_bac - t_bca - t_cab)*g_jlkc
+!     omega_ablj += \sum_c (2*t_abc - t_acb - t_cba)*g_ilkc
 !
       call dgemm('N','N', &
                  wf%n_v**2, &
                  wf%n_o, &
                  wf%n_v, &
                  -one, &
-                 v_abc, &
+                 u_abc, &
                  wf%n_v**2, &
-                 g_jlkc, &
+                 g_ilkc, &
                  wf%n_v, &
                  one, &
-                 omega2(:,:,:,i), &
+                 omega2(:,:,:,j), &
                  wf%n_v**2)
 !
+!
+      if (i .ne. j) then
+!
+!        resort to u_abc = 2*t_bac - t_bca - t_cab
+!      
+         call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
+!      
+!        omega_adji += sum_bc (2*t_bac - t_bca - t_cab)*g_dbkc
+!      
+         call dgemm('N','N', &
+                    wf%n_v, &
+                    wf%n_v, &
+                    wf%n_v**2, &
+                    one, &
+                    v_abc, &
+                    wf%n_v, &
+                    g_dbkc, &
+                    wf%n_v**2, &
+                    one, &
+                    omega2(:,:,j,i), &
+                    wf%n_v)
+!      
+!        omega_abli += \sum_c (2*t_bac - t_bca - t_cab)*g_jlkc
+!      
+         call dgemm('N','N', &
+                    wf%n_v**2, &
+                    wf%n_o, &
+                    wf%n_v, &
+                    -one, &
+                    v_abc, &
+                    wf%n_v**2, &
+                    g_jlkc, &
+                    wf%n_v, &
+                    one, &
+                    omega2(:,:,:,i), &
+                    wf%n_v**2)
+!
+      end if
 !
       if (j .ne. k) then
 !
