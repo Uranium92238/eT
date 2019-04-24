@@ -1331,14 +1331,6 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_ilkc
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_jlkc
 !
-      real(dp) :: alpha
-!
-      if (i .ne. j) then
-         alpha = one
-      else
-         alpha = half
-      end if
-!
 !     construct u_abc = 2*t_abc - t_acb - t_cba
 !
       call construct_123_min_132_min_321(t_abc, u_abc, wf%n_v)
@@ -1375,9 +1367,9 @@ contains
                  wf%n_v**2)
 !
 !
-      if (i .ne. j) then
+      if (j .ne. i) then
 !
-!        resort to u_abc = 2*t_bac - t_bca - t_cab
+!        resort to u_bac = 2*t_bac - t_bca - t_cab
 !      
          call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
 !      
@@ -1411,74 +1403,67 @@ contains
                     omega2(:,:,:,i), &
                     wf%n_v**2)
 !
-      end if
+      end if ! j .ne. i
+!
+!
+!     construct u_cba = 2*t_cba - t_abc - t_bca
+!
+      call construct_321_min_231_min_123(t_abc, u_abc, wf%n_v)
+!
+!     omega_adkj += sum_bc (2*t_cba - t_abc - t_bca)*g_dbic
+!
+      call dgemm('N','N', &
+                 wf%n_v, &
+                 wf%n_v, &
+                 wf%n_v**2, &
+                 one, &
+                 u_abc, &
+                 wf%n_v, &
+                 g_dbic, &
+                 wf%n_v**2, &
+                 one, &
+                 omega2(:,:,k,j), &
+                 wf%n_v)
+!
+!     omega_ablj += \sum_c (2*t_cba - t_abc - t_bca)*g_klic
+!
+      call dgemm('N','N', &
+                 wf%n_v**2, &
+                 wf%n_o, &
+                 wf%n_v, &
+                 -one, &
+                 u_abc, &
+                 wf%n_v**2, &
+                 g_klic, &
+                 wf%n_v, &
+                 one, &
+                 omega2(:,:,:,j), &
+                 wf%n_v**2)
+!
 !
       if (j .ne. k) then
 !
-!        construct u_abc = 2*t_acb - t_abc - t_cab
-!
-         call construct_132_min_123_min_312(t_abc, u_abc, wf%n_v)
-!
-         if (i .ne. k) then
-            alpha = one
-         else
-            alpha = half
-         end if
-!
-!        omega_adik += sum_bc (2*t_acb - t_abc - t_cab)*g_dbjc
-!
-         call dgemm('N','N', &
-                    wf%n_v, &
-                    wf%n_v, &
-                    wf%n_v**2, &
-                    alpha, &
-                    u_abc, &
-                    wf%n_v, &
-                    g_dbjc, &
-                    wf%n_v**2, &
-                    one, &
-                    omega2(:,:,i,k), &
-                    wf%n_v)
-!
-         if (i .ne. k .and. i .ne. j) then
-!
-!           omega_ablk += \sum_c (2*t_acb - t_abc - t_cab)*g_iljc
-!
-            call dgemm('N','N', &
-                       wf%n_v**2, &
-                       wf%n_o, &
-                       wf%n_v, &
-                       -one, &
-                       u_abc, &
-                       wf%n_v**2, &
-                       g_iljc, &
-                       wf%n_v, &
-                       one, &
-                       omega2(:,:,:,k), &
-                       wf%n_v**2)
-!
-         end if
-!
-!        resort to u_abc = 2*t_bca - t_bac - t_cba
+!        resort to u_cab = 2*t_cab - t_acb - t_bac
 !
          call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
 !
-!        omega_adki += sum_bc (2*t_bca - t_bac - t_cba)*g_dbjc
+!
+!        omega_adjk += sum_bc (2*t_cab - t_acb - t_bac)*g_dbic
 !
          call dgemm('N','N', &
                     wf%n_v, &
                     wf%n_v, &
                     wf%n_v**2, &
-                    alpha, &
+                    one, &
                     v_abc, &
                     wf%n_v, &
-                    g_dbjc, &
+                    g_dbic, &
                     wf%n_v**2, &
                     one, &
-                    omega2(:,:,k,i), &
+                    omega2(:,:,j,k), &
                     wf%n_v)
 !
-!        omega_abli += \sum_c (2*t_bca - t_bac - t_cba)*g_kljc
+!        omega_ablk += sum_c (2*t_cab - t_acb - t_bac)*g_jlic
 !
          call dgemm('N','N', &
                     wf%n_v**2, &
@@ -1487,87 +1472,71 @@ contains
                     -one, &
                     v_abc, &
                     wf%n_v**2, &
-                    g_kljc, &
+                    g_jlic, &
                     wf%n_v, &
                     one, &
-                    omega2(:,:,:,i), &
+                    omega2(:,:,:,k), &
                     wf%n_v**2)
 !
-      end if
 !
+         if (j .ne. i) then
 !
-      if(i .ne. k .and. (j .ne. k .or. i .ne. j)) then
+   !        construct u_acb = 2*t_acb - t_abc - t_cab
 !
-!        construct u_abc = 2*t_cba - t_abc - t_bca
+            call construct_132_min_123_min_312(t_abc, u_abc, wf%n_v)
 !
-         call construct_321_min_231_min_123(t_abc, u_abc, wf%n_v)
-!
-         if (i .ne. j) then
-!
-            if (k .ne. j) then
-               alpha = one
-            else
-               alpha = half
-            end if
-!
-!           omega_adkj += sum_bc (2*t_cba - t_abc - t_bca)*g_dbic
+!           omega_adik += sum_bc (2*t_acb - t_abc - t_cab)*g_dbjc
 !
             call dgemm('N','N', &
                        wf%n_v, &
                        wf%n_v, &
                        wf%n_v**2, &
-                       alpha, &
+                       one, &
                        u_abc, &
                        wf%n_v, &
-                       g_dbic, &
+                       g_dbjc, &
                        wf%n_v**2, &
                        one, &
-                       omega2(:,:,k,j), &
+                       omega2(:,:,i,k), &
                        wf%n_v)
 !
-!           omega_ablj += \sum_c (2*t_cba - t_abc - t_bca)*g_klic
+!
+!              omega_ablk += \sum_c (2*t_acb - t_abc - t_cab)*g_iljc
+!
+               call dgemm('N','N', &
+                          wf%n_v**2, &
+                          wf%n_o, &
+                          wf%n_v, &
+                          -one, &
+                          u_abc, &
+                          wf%n_v**2, &
+                          g_iljc, &
+                          wf%n_v, &
+                          one, &
+                          omega2(:,:,:,k), &
+                          wf%n_v**2)
+!
+!
+!           resort to u_abc = 2*t_bca - t_bac - t_cba
+!
+            call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+!           omega_adki += sum_bc (2*t_bca - t_bac - t_cba)*g_dbjc
 !
             call dgemm('N','N', &
-                       wf%n_v**2, &
-                       wf%n_o, &
                        wf%n_v, &
-                       -one, &
-                       u_abc, &
-                       wf%n_v**2, &
-                       g_klic, &
                        wf%n_v, &
+                       wf%n_v**2, &
                        one, &
-                       omega2(:,:,:,j), &
-                       wf%n_v**2)
-!
-         end if
-!
-!        resort to u_abc = 2*t_cab - t_acb - t_bac
-!
-         call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
-!
-         if (i .ne. j) then
-!
-!           omega_adjk += sum_bc (2*t_cab - t_acb - t_bac)*g_dbic
-!
-            call dgemm('N','N', &
-                       wf%n_v, &
-                       wf%n_v, &
-                       wf%n_v**2, &
-                       alpha, &
                        v_abc, &
                        wf%n_v, &
-                       g_dbic, &
+                       g_dbjc, &
                        wf%n_v**2, &
                        one, &
-                       omega2(:,:,j,k), &
+                       omega2(:,:,k,i), &
                        wf%n_v)
 !
-         end if
-!
-         if (j .ne. k) then
-!
-!           omega_ablk += sum_c (2*t_cab - t_acb - t_bac)*g_jlic
+!           omega_abli += \sum_c (2*t_bca - t_bac - t_cba)*g_kljc
 !
             call dgemm('N','N', &
                        wf%n_v**2, &
@@ -1576,15 +1545,14 @@ contains
                        -one, &
                        v_abc, &
                        wf%n_v**2, &
-                       g_jlic, &
+                       g_kljc, &
                        wf%n_v, &
                        one, &
-                       omega2(:,:,:,k), &
+                       omega2(:,:,:,i), &
                        wf%n_v**2)
 !
-         end if
-!
-      end if
+         end if ! j .ne. i
+      end if ! k .ne. j
 !
 !
    end subroutine omega_cc3_omega2_cc3
