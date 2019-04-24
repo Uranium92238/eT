@@ -1425,7 +1425,7 @@ contains
                  omega2(:,:,k,j), &
                  wf%n_v)
 !
-!     omega_ablj += \sum_c (2*t_cba - t_abc - t_bca)*g_klic
+!     omega_ablj += sum_c (2*t_cba - t_abc - t_bca)*g_klic
 !
       call dgemm('N','N', &
                  wf%n_v**2, &

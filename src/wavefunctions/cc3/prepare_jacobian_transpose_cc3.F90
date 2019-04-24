@@ -681,7 +681,7 @@ contains
    end subroutine prepare_cc3_jacobian_transpose_intermediates_cc3
 !
 !
-   module subroutine construct_X_and_Y_cc3(wf, i, j, k, t_abc, u_abc, v_abc, Y_aikl,      &
+   module subroutine construct_X_and_Y_cc3(wf, i, j, k, t_abc, u_abc, v_abc, Y_aijl,      &
                                            X_abdi, X_abdj, X_abdk, g_lbic, g_lbjc, g_lbkc)
 !!
 !!    Constructs the intermediates X_abdi and Y_akil used to compute the contributions to sigma_ai
@@ -706,7 +706,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: v_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(inout)   :: Y_aikl ! ordered alik
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(inout)   :: Y_aijl ! ordered alik
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_abdi
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_abdj
@@ -735,7 +735,7 @@ contains
                   X_abdi,           & ! X_ab_di
                   wf%n_v**2)
 !
-!     Y_aikl += - sum_bc (2*t_abc - t_acb - t_cba)*g_lbkc
+!     Y_aijl += - sum_bc (2*t_abc - t_acb - t_cba)*g_lbkc
 !
       call dgemm('N','N',           &
                   wf%n_v,           &
@@ -747,7 +747,7 @@ contains
                   g_lbkc,           & ! g_bc_l_k
                   wf%n_v**2,        &
                   one,              &
-                  Y_aikl(:,:,i,j),  & ! Y_al_ij
+                  Y_aijl(:,:,i,j),  & ! Y_al_ij
                   wf%n_v)
 !
       if (j .ne. i) then
@@ -771,7 +771,7 @@ contains
                      X_abdj,           & ! X_ab_dj
                      wf%n_v**2)
 !
-!        Y_aikl += - sum_bc (2*t_bac - t_cab - t_bca)*g_lbkc
+!        Y_ajil += - sum_bc (2*t_bac - t_cab - t_bca)*g_lbkc
 !
          call dgemm('N','N',           &
                      wf%n_v,           &
@@ -783,7 +783,7 @@ contains
                      g_lbkc,           & ! g_bc_l_k
                      wf%n_v**2,        &
                      one,              &
-                     Y_aikl(:,:,j,i),  & ! Y_al_ji
+                     Y_aijl(:,:,j,i),  & ! Y_al_ji
                      wf%n_v)
 !
       end if ! j .ne. i
@@ -807,7 +807,7 @@ contains
                   X_abdk,           & ! X_ab_dk
                   wf%n_v**2)
 !
-!     Y_aikl += - sum_bc (2*t_cba - t_bca - t_abc)*g_lbic
+!     Y_akjl += - sum_bc (2*t_cba - t_bca - t_abc)*g_lbic
 !
       call dgemm('N','N',           &
                   wf%n_v,           &
@@ -819,31 +819,31 @@ contains
                   g_lbic,           & ! g_bc_l_i
                   wf%n_v**2,        &
                   one,              &
-                  Y_aikl(:,:,k,j),  & ! Y_al_kj
+                  Y_aijl(:,:,k,j),  & ! Y_al_kj
                   wf%n_v)
 !
       if (k .ne. j) then
 !
-!        resort to u_cba = 2*t_cab - t_acb - t_bac
+!        resort to u_cab = 2*t_cab - t_acb - t_bac
 !
          call sort_123_to_213(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-!        X_abdk += - sum_c (2*t_cab - t_acb - t_bac)*(g_jcid)^T
+!        X_abdj += - sum_c (2*t_cab - t_acb - t_bac)*(g_ickd)
 !
-         call dgemm('N','T',           & ! g is transposed
+         call dgemm('N','N',           & 
                      wf%n_v**2,        &
                      wf%n_v,           &
                      wf%n_v,           &
                      -one,             &
                      v_abc,            & ! v_ab_c
                      wf%n_v**2,        &
-                     g_lbic(:,:,j),    & ! g_c_d_ji
+                     g_lbkc(:,:,i),    & ! g_c_d_ik
                      wf%n_v,           &
                      one,              &
-                     X_abdk,           & ! X_ab_dk
+                     X_abdj,           & ! X_ab_dj
                      wf%n_v**2)
 !
-!        Y_aikl += - sum_c (2*t_cab - t_acb - t_bac)*g_lbjc
+!        Y_ajkl += - sum_c (2*t_cab - t_acb - t_bac)*g_lbic
 !
          call dgemm('N','N',           &
                      wf%n_v,           &
@@ -852,28 +852,28 @@ contains
                      -one,             &
                      v_abc,            & ! v_a_bc
                      wf%n_v,           &
-                     g_lbjc,           & ! g_bc_l_j
+                     g_lbic,           & ! g_bc_l_i
                      wf%n_v**2,        &
                      one,              &
-                     Y_aikl(:,:,k,i),  & ! Y_al_ki
+                     Y_aijl(:,:,j,k),  & ! Y_al_jk
                      wf%n_v)
 !
          if (j .ne. i) then
 !
-!           construct u_abc = 2*t_acb - t_abc - t_cab
+!           construct u_acb = 2*t_acb - t_abc - t_cab
 !
             call construct_132_min_123_min_312(t_abc, u_abc, wf%n_v)
 !
-!           X_abdi += - sum_c (2*t_acb - t_abc - t_cab)*(g_kcjd)^T
+!           X_abdi += - sum_c (2*t_acb - t_abc - t_cab)*(g_jckd)
 !
-            call dgemm('N','T',           & ! g is transposed
+            call dgemm('N','N',           & 
                         wf%n_v**2,        &
                         wf%n_v,           &
                         wf%n_v,           &
                         -one,             &
                         u_abc,            & ! u_ab_c
                         wf%n_v**2,        &
-                        g_lbjc(:,:,k),    & ! g_c_d_jk
+                        g_lbkc(:,:,j),    & ! g_c_d_jk
                         wf%n_v,           &
                         one,              &
                         X_abdi,           & ! X_ab_di
@@ -891,29 +891,29 @@ contains
                         g_lbjc,           & ! g_bc_l_j
                         wf%n_v**2,        &
                         one,              &
-                        Y_aikl(:,:,i,k),  & ! Y_al_ik
+                        Y_aijl(:,:,i,k),  & ! Y_al_ik
                         wf%n_v)
 !
-!           resort to v_abc = 2*t_bca - t_bac - t_cba
+!           resort to u_bca = 2*t_bca - t_bac - t_cba
 !
             call sort_123_to_213(u_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-!           X_abdj += - sum_c (2*t_bca - t_bac - t_cba)*(g_kcid)^T
+!           X_abdk += - sum_c (2*t_bca - t_bac - t_cba)*(g_jcid)
 !
-            call dgemm('N','T',           & ! g is transposed
+            call dgemm('N','N',           & 
                         wf%n_v**2,        &
                         wf%n_v,           &
                         wf%n_v,           &
                         -one,             &
                         v_abc,            & ! v_ab_c
                         wf%n_v**2,        &
-                        g_lbic(:,:,k),    & ! g_c_d_ik
+                        g_lbic(:,:,j),    & ! g_c_d_ji
                         wf%n_v,           &
                         one,              &
-                        X_abdj,           & ! X_ab_dj
+                        X_abdk,           & ! X_ab_dk
                         wf%n_v**2)
 !
-!           Y_aikl += - sum_bc (2*t_bca - t_bac - t_cba)*g_lbic
+!           Y_akil += - sum_bc (2*t_bca - t_bac - t_cba)*g_lbjc
 !
             call dgemm('N','N',           &
                         wf%n_v,           &
@@ -922,10 +922,10 @@ contains
                         -one,             &
                         v_abc,            & ! v_a_bc
                         wf%n_v,           &
-                        g_lbic,           & ! g_bc_l_i
+                        g_lbjc,           & ! g_bc_l_j
                         wf%n_v**2,        &
                         one,              &
-                        Y_aikl(:,:,j,k),  & ! Y_al_jk
+                        Y_aijl(:,:,k,i),  & ! Y_al_ki
                         wf%n_v)
 !
          end if ! j .ne. i

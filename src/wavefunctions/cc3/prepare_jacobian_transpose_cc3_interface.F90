@@ -65,7 +65,7 @@
    end subroutine prepare_cc3_jacobian_transpose_intermediates_cc3
 !
 !
-   module subroutine construct_X_and_Y_cc3(wf, i, j, k, t_abc, u_abc, v_abc, Y_aikl,      &
+   module subroutine construct_X_and_Y_cc3(wf, i, j, k, t_abc, u_abc, v_abc, Y_aijl,      &
                                            X_abdi, X_abdj, X_abdk, g_lbic, g_lbjc, g_lbkc)
 !!
 !!    Constructs the intermediates X_abdi and Y_akil used to compute the contributions to sigma_ai
@@ -90,7 +90,7 @@
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: v_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(inout)   :: Y_aikl
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(inout)   :: Y_aijl
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_abdi
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_abdj
