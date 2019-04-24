@@ -224,8 +224,6 @@ contains
             call wf%get_amplitudes(t)
 !
             call wf%form_newton_raphson_t_estimate(t, dt)
-       !     call wf%rescale_amplitudes(dt)
-       !     call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)
 !
             call diis_manager%update(omega, t)
 !
