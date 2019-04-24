@@ -1510,7 +1510,7 @@ contains
                alpha = half
             end if
 !
-!           omega_adkj += sum_bc (2*t_acb - t_abc - t_cab)*g_dbic
+!           omega_adkj += sum_bc (2*t_cba - t_abc - t_bca)*g_dbic
 !
             call dgemm('N','N', &
                        wf%n_v, &
@@ -1525,7 +1525,7 @@ contains
                        omega2(:,:,k,j), &
                        wf%n_v)
 !
-!           omega_ablj += \sum_c (2*t_acb - t_abc - t_cab)*g_kljic
+!           omega_ablj += \sum_c (2*t_cba - t_abc - t_bca)*g_klic
 !
             call dgemm('N','N', &
                        wf%n_v**2, &

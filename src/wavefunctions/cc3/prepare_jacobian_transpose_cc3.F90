@@ -423,7 +423,6 @@ contains
       call wf%X_abdi%init('X_abdi','direct','unformatted',dp*wf%n_v**3)
       call disk%open_file(wf%X_abdi,'readwrite')
 !
-!
       not_first_i = .false.
       not_first_j = .false.
       not_first_k = .false.
@@ -439,10 +438,8 @@ contains
 !        cannot hold X_abdi - read in previous X, add contributions, write to disk again
          if (not_first_i) then
             call single_record_reader(batch_i, wf%X_abdi, X_abdi)
-            X_abdi_p => X_abdi
-         else
-            X_abdi_p => X_abdi
          end if
+         X_abdi_p => X_abdi
 !
          not_first_i = .true.
 !
@@ -517,11 +514,9 @@ contains
                   X_abdk_p => X_abdi
 !
                   g_lkci_p => g_ljci
-!
                   g_lick_p => g_ljci
 !
                   g_lkcj_p => g_ljci
-!
                   g_ljck_p => g_ljci
 !
                else if (k_batch .eq. j_batch) then
@@ -532,12 +527,10 @@ contains
                   X_abdk_p => X_abdj
 !
                   g_lkci_p => g_ljci
-!
                   g_lick_p => g_ljci
 !
                   call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj)
                   g_lkcj_p => g_lkcj
-!
                   g_ljck_p => g_lkcj
 !
                endif
@@ -589,18 +582,18 @@ contains
                enddo ! loop over i
 !
                if (k_batch .ne. j_batch) then
-                  call single_record_writer(batch_k, wf%X_abdi, X_abdk_p)
+                  call single_record_writer(batch_k, wf%X_abdi, X_abdk)
                endif
 !
             enddo ! batch_k
 !
             if (j_batch .ne. i_batch) then
-               call single_record_writer(batch_j, wf%X_abdi, X_abdj_p)
+               call single_record_writer(batch_j, wf%X_abdi, X_abdj)
             endif
 !
          enddo ! batch_j
 !
-         call single_record_writer(batch_i, wf%X_abdi, X_abdi_p)
+         call single_record_writer(batch_i, wf%X_abdi, X_abdi)
 !
       enddo ! batch_i
 !
