@@ -44,6 +44,7 @@ option(ENABLE_PROFILING      "Enable profiling of code"                         
 find_package(Libint2 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
+message("-- Boost location: ${Boost_INCLUDE_DIRS}")
 
 # Include the relevant directories 
 include_directories(${Boost_INCLUDE_DIRS})
@@ -57,8 +58,6 @@ include(Fortran_flags)
 include(eT_CXX_sources)
 include(CXX_flags)
 include(ConfigTesting)
-
-message("-- Boost location: ${Boost_INCLUDE_DIRS}")
 
 
 # Math detection
