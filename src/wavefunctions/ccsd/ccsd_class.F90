@@ -85,6 +85,8 @@ module ccsd_class
       procedure :: omega_ccsd_d2                               => omega_ccsd_d2_ccsd
       procedure :: omega_ccsd_e2                               => omega_ccsd_e2_ccsd
 !
+      procedure :: form_newton_raphson_t_estimate              => form_newton_raphson_t_estimate_ccsd
+!
 !     Routines related to Jacobian transformation
 !
       procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_ccsd
@@ -157,8 +159,6 @@ module ccsd_class
       procedure :: one_el_density_ccsd_oo                      => one_el_density_ccsd_oo_ccsd
       procedure :: one_el_density_ccsd_vv                      => one_el_density_ccsd_vv_ccsd
       procedure :: one_el_density_ccsd_ov                      => one_el_density_ccsd_ov_ccsd
-!
-      procedure :: rescale_amplitudes                           => rescale_amplitudes_ccsd
 !
    end type ccsd
 !
@@ -1329,25 +1329,53 @@ contains
    end subroutine from_biorthogonal_to_biorthonormal_ccsd
 !
 !
-   subroutine rescale_amplitudes_ccsd(wf, amplitudes)
+   subroutine form_newton_raphson_t_estimate_ccsd(wf, t, dt)
 !!
-      implicit none
-!  
-      class(ccsd), intent(in) :: wf
+!!    Form Newton-Raphson t estimate 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Here, t is the full amplitude vector and dt is the correction to the amplitude vector.
+!!
+!!    The correction is assumed to be obtained from either 
+!!    solving the Newton-Raphson equation
+!!
+!!       A dt = -omega, 
+!!
+!!    where A and omega are given in the biorthonormal basis,
+!!    or from the quasi-Newton equation (A ~ diagonal with diagonal = epsilon) 
+!!
+!!        dt = -omega/epsilon
+!!
+!!    Epsilon is the vector of orbital differences. 
+!!
+!!    On exit, t = t + dt, where the appropriate basis change has been accounted 
+!!    for (in particular for the double amplitudes in CCSD wavefunctions). Also,
+!!    dt is expressed in the basis compatible with t.
+!!
+      implicit none 
 !
-      real(dp), dimension(wf%n_gs_amplitudes) :: amplitudes
+      class(ccsd), intent(in) :: wf 
 !
-      integer :: ai, aiai
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: dt 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t 
+!
+      integer :: ai, aiai 
+!
+!     Change dt doubles diagonal to match the definition of the 
+!     double amplitudes 
 !
       do ai = 1, wf%n_t1
 !
          aiai = ai*(ai - 3)/2 + 2*ai
+         dt(wf%n_t1 + aiai) = two*dt(wf%n_t1 + aiai)
 !
-         amplitudes(wf%n_t1 + aiai) = two*amplitudes(wf%n_t1 + aiai)
+      enddo  
 !
-      enddo
-! 
-   end subroutine rescale_amplitudes_ccsd
+!     Add the dt vector to the t vector 
+!
+      call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)    
+!
+   end subroutine form_newton_raphson_t_estimate_ccsd
 !
 !
 end module ccsd_class
