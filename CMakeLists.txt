@@ -45,6 +45,12 @@ find_package(Libint2 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
 
+# Include the relevant directories 
+include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${EIGEN3_INCLUDE_DIR})
+include_directories(${Libint2_H_DIR})
+include_directories(${Libint2_INCLUDE_DIR})
+
 # Including the source files
 include(eT_sources)
 include(Fortran_flags)
