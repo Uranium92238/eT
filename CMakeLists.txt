@@ -58,6 +58,9 @@ include(eT_CXX_sources)
 include(CXX_flags)
 include(ConfigTesting)
 
+message("-- Boost location: ${Boost_INCLUDE_DIRS}")
+
+
 # Math detection
 set(BLAS_LANG "Fortran")
 set(LAPACK_LANG "Fortran")
