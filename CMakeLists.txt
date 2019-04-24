@@ -32,7 +32,7 @@ set(CMAKE_MODULE_PATH
     /usr/local/share/cmake/Modules
     )
 
-# set options with standard values 
+# Set options with standard values 
 option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"      	                    ON)
 option(ENABLE_AUTO_BLAS      "Enable CMake to autodetect BLAS"                  ON)
 option(ENABLE_AUTO_LAPACK    "Enable CMake to autodetect LAPACK"                ON)
@@ -40,8 +40,10 @@ option(ENABLE_OMP            "Enable OpenMP parallelization"                    
 option(ENABLE_THREADED_MKL   "Enable OpenMP parallelization"                    ON)
 option(ENABLE_PROFILING      "Enable profiling of code"                         OFF)
 
+# Find packages needed for libint 
 find_package(Libint2 REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED)
 
 # Including the source files
 include(eT_sources)
