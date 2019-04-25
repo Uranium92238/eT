@@ -43,7 +43,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: tbar_aibj, t_aibj, tbar_abij
 !
-      integer(i15) :: a, i, b, j, ai, bj, aibj
+      integer :: a, i, b, j, ai, bj, aibj
 !
       call mem%alloc(c_ai, wf%n_v, wf%n_o)
 !
@@ -438,7 +438,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: X_ia, X_ib, X_ik, c_kc 
 !
-      integer(i15) :: a, i, b, j
+      integer :: a, i, b, j
 !
 !     Construct L_iakc = 2 g_iakc - g_icka, which will be used in all terms  
 !
@@ -861,8 +861,8 @@ contains
 !
       type(batching_index) :: batch_c, batch_d
 !
-      integer(i15) :: req0, req1_c, req1_d, req2, current_c_batch, current_d_batch
-      integer(i15) :: c, d, i, j
+      integer :: req0, req1_c, req1_d, req2, current_c_batch, current_d_batch
+      integer :: c, d, i, j
 !
 !     Term 1:  - g_ikjl tbar_blak c_bj
 !
@@ -1199,7 +1199,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: tbar_idbk
       real(dp), dimension(:,:,:,:), allocatable :: g_ibdc, g_bcid, g_dcja, g_kbda
 !
-      integer(i15) :: req0, req1, current_d_batch
+      integer :: req0, req1, current_d_batch
       type(batching_index) :: batch_d
 !
 !     :: Term 1, - g_ibdc tbar_ajdk c_bjck
@@ -1663,7 +1663,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_jbda, L_jbda
 !
-      integer(i15)         :: req0, req1, current_d_batch
+      integer         :: req0, req1, current_d_batch
       type(batching_index) :: batch_d
 !
 !     Note: we construct both terms at once 
@@ -2740,7 +2740,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_abkd, red_Y_dbik, red_Z_kdij, Z_kdij, rho_abij
       real(dp), dimension(:,:,:,:), allocatable :: rho_ajbi, tbar_ajdk, X_dkbi, Y_dkbi, Z_kjdi
 !
-      integer(i15)         :: req0, req1, current_d_batch
+      integer         :: req0, req1, current_d_batch
       type(batching_index) :: batch_d
 !
 !     Construct intermediates for terms 1 and 3: 
@@ -3164,7 +3164,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: L_adck, L_aidc
       real(dp), dimension(:,:,:,:), allocatable :: g_dakc, g_iadc
 !
-      integer(i15)         :: req0, req1, current_d_batch
+      integer         :: req0, req1, current_d_batch
       type(batching_index) :: batch_d
 !
 !     Term 1: L_dakc tbar_bjdi c_ck

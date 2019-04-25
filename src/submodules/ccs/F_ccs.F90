@@ -37,7 +37,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: rho
 !
-      integer(i15) :: a, i, ai
+      integer :: a, i, ai
 !
       call mem%alloc(rho, wf%n_v, wf%n_o)
       rho = zero
@@ -342,7 +342,7 @@ contains
 !
       type(batching_index) :: batch_c
 !
-      integer(i15) :: current_c_batch, req0, req1
+      integer :: current_c_batch, req0, req1
 !
       call mem%alloc(X_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       X_iajb = zero

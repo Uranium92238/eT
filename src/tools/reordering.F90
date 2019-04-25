@@ -1202,12 +1202,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in) :: x_pqrs
       real(dp), dimension(dim_q, dim_s, dim_r, dim_p)             :: x_qsrp
 !
-      integer(i15) :: p, q, r, s
+      integer :: p, q, r, s
 !
 !$omp parallel do schedule(static) private(p,q,r,s)
       do p = 1, dim_p
@@ -1236,12 +1236,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in) :: x_pqrs
       real(dp), dimension(dim_r, dim_s, dim_q, dim_p)             :: x_rsqp
 !
-      integer(i15) :: p, q, r, s
+      integer :: p, q, r, s
 !
 !$omp parallel do schedule(static) private(p,q,r,s)
       do p = 1, dim_p
@@ -1624,14 +1624,14 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !  
       real(dp), intent(in) :: gamma 
 !
       real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(inout) :: y_pqrs
       real(dp), dimension(dim_p, dim_r, dim_q, dim_s), intent(in)    :: x
 !
-      integer(i15) :: p, q, r, s
+      integer :: p, q, r, s
 !
 !$omp parallel do schedule(static) private(p,q,r,s)
       do s = 1, dim_s
@@ -2529,12 +2529,12 @@ subroutine add_2413_to_1234(scalar, x_qspr, y_pqrs, dim_p, dim_q, dim_r, dim_s)
 !!       
       implicit none 
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s 
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs 
       real(dp), dimension(dim_q*dim_p, dim_r*dim_s)   :: x_qp_sr 
 !
-      integer(i15) :: p, q, r, s, rs, sr,  pq, qp 
+      integer :: p, q, r, s, rs, sr,  pq, qp 
 ! 
 !$omp parallel do schedule(static) private(s,r,rs,sr,q,qp,p,pq)
       do s = 1, dim_s 
