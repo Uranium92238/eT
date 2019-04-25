@@ -117,7 +117,7 @@ contains
       call wf%integrals%write_t1_cholesky(wf%t1)
       call wf%integrals%can_we_keep_g_pqrs_t1()
 !
-!     Prepare for excited state
+!     Excited state solutions
 !
       call engine%do_excited_state(wf)
 !

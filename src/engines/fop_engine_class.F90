@@ -99,6 +99,12 @@ contains
       call wf%integrals%write_t1_cholesky(wf%t1)
       call wf%integrals%can_we_keep_g_pqrs_t1()
 !
+!     Excited state solutions
+!
+      call engine%do_excited_state(wf, 'right')
+      call engine%do_excited_state(wf, 'left')
+!
+!
    end subroutine run_fop_engine
 !
 !
