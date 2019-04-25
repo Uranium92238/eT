@@ -31,7 +31,7 @@ submodule (cc3_class) prepare_jacobian_transpose
 !!
 !!    And the intermediates
 !!    X_abdi = sum_cjk (t^cba_ijk + t^acb_ijk - 2 * t^abc_ijk) * g_kcjd
-!!    Y_akil = sum_cjk (t^cba_ijk + t^acb_ijk - 2 * t^abc_ijk) * g_lbkc
+!!    Y_ajil = sum_cjk (t^cba_ijk + t^acb_ijk - 2 * t^abc_ijk) * g_lbkc
 !!
 !
    implicit none
@@ -277,7 +277,7 @@ contains
 !
    module subroutine prepare_cc3_jacobian_transpose_intermediates_cc3(wf)
 !!
-!!    Construct X_abdi and Y_akil needed in CC3 jacobian transpose and store on disk
+!!    Construct X_abdi and Y_ajil needed in CC3 jacobian transpose and store on disk
 !!    For that: construct t^abc_ijk in single batches of ijk 
 !!    and contract with the respective integrals
 !!
@@ -304,8 +304,8 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, pointer :: X_abdj_p => null()
       real(dp), dimension(:,:,:,:), contiguous, pointer :: X_abdk_p => null()
 !
-      real(dp), dimension(:,:,:,:), allocatable :: Y_alik
-      real(dp), dimension(:,:,:,:), allocatable :: Y_akil
+      real(dp), dimension(:,:,:,:), allocatable :: Y_alij
+      real(dp), dimension(:,:,:,:), allocatable :: Y_ajil
 !
 !     Integrals and Pointers
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdci
@@ -355,10 +355,10 @@ contains
       call mem%alloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1342(wf%t2, t_abji, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Array for the whole intermediate Y_alik
+!     Array for the whole intermediate Y_alij
 !
-      call mem%alloc(Y_alik, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      Y_alik = zero
+      call mem%alloc(Y_alij, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      Y_alij = zero
 !
 !     Setup and Batching loops
 !
@@ -569,7 +569,7 @@ contains
                         call wf%omega_cc3_eps(i, j, k, t_abc)
 !
                         call wf%construct_X_and_Y(i, j, k, t_abc, u_abc, v_abc,  &
-                                                   Y_alik,                       &
+                                                   Y_alij,                       &
                                                    X_abdi_p(:,:,:,i_rel),        &
                                                    X_abdj_p(:,:,:,j_rel),        &
                                                    X_abdk_p(:,:,:,k_rel),        &
@@ -653,30 +653,30 @@ contains
 !
       call disk%close_file(wf%X_abdi, 'delete')
 !
-!     sort Y_alik (ordered as alik) to akil and write to disk 
+!     sort Y_alij (ordered as alij) to ajil and write to disk 
 !
-      call mem%alloc(Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call mem%alloc(Y_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call sort_1234_to_1432(Y_alik, Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call sort_1234_to_1432(Y_alij, Y_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call mem%dealloc(Y_alik, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call mem%dealloc(Y_alij, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call wf%Y_akil%init('Y_akil','direct','unformatted', dp*(wf%n_v)*(wf%n_o)**2)
-      call disk%open_file(wf%Y_akil,'write')
+      call wf%Y_ajil%init('Y_ajil','direct','unformatted', dp*(wf%n_v)*(wf%n_o)**2)
+      call disk%open_file(wf%Y_ajil,'write')
 !
       do l = 1, wf%n_o
 !
-         write(wf%Y_akil%unit, rec=l, iostat=ioerror) Y_akil(:,:,:,l)
+         write(wf%Y_ajil%unit, rec=l, iostat=ioerror) Y_ajil(:,:,:,l)
 !
          if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write Y_akil file')
+            call output%error_msg('Failed to write Y_ajil file')
          endif
 !
       enddo
 !
-      call mem%dealloc(Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call mem%dealloc(Y_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call disk%close_file(wf%Y_akil,'keep')
+      call disk%close_file(wf%Y_ajil,'keep')
 !
    end subroutine prepare_cc3_jacobian_transpose_intermediates_cc3
 !
@@ -684,10 +684,10 @@ contains
    module subroutine construct_X_and_Y_cc3(wf, i, j, k, t_abc, u_abc, v_abc, Y_aijl,      &
                                            X_abdi, X_abdj, X_abdk, g_lbic, g_lbjc, g_lbkc)
 !!
-!!    Constructs the intermediates X_abdi and Y_akil used to compute the contributions to sigma_ai
+!!    Constructs the intermediates X_abdi and Y_ajil used to compute the contributions to sigma_ai
 !!
 !!    X_abdi = sum_cjk (t^cba_ijk + t^acb_ijk - 2 * t^abc_ijk) * g_kcjd
-!!    Y_akil = sum_cjk (t^cba_ijk + t^acb_ijk - 2 * t^abc_ijk) * g_lbkc
+!!    Y_ajil = sum_cjk (t^cba_ijk + t^acb_ijk - 2 * t^abc_ijk) * g_lbkc
 !!
 !!    g_lbic, g_lbjc, g_lbkc can be used for g_pcqd as well: 
 !!    The p(i,j,k) can be set in dgemm and q(i,j,k) is defined by the array used
@@ -706,7 +706,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: v_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(inout)   :: Y_aijl ! ordered alik
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(inout)   :: Y_aijl ! ordered alij
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_abdi
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_abdj

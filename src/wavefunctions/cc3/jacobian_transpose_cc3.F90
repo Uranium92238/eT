@@ -258,10 +258,10 @@ contains
 !!
 !!    Computes the first contribution of the T3 amplitudes to sigma_1
 !!
-!!    Reads in the intermediates X_abid and Y_akil prepared in prepare_jacobian_transpose
+!!    Reads in the intermediates X_abid and Y_ajil prepared in prepare_jacobian_transpose
 !!    contracts with c_abij and adds to sigma_ai
 !!
-!!    sigma_dl =  sum_abi X_abid * C_abil + sum_aik C_daki * Y_akil
+!!    sigma_dl =  sum_abi X_abid * C_abil + sum_aik C_daji * Y_ajil
 !!    
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -274,7 +274,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_abid
-      real(dp), dimension(:,:,:,:), allocatable :: Y_akil
+      real(dp), dimension(:,:,:,:), allocatable :: Y_ajil
 !
       type(batching_index) :: batch_d
       integer :: d_batch
@@ -322,30 +322,30 @@ contains
 !
       call disk%close_file(wf%X_abid)
 !
-!     :: Y_akil term ::
+!     :: Y_ajil term ::
 !
-      call disk%open_file(wf%Y_akil,'read')
+      call disk%open_file(wf%Y_ajil,'read')
 !
-      call mem%alloc(Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call mem%alloc(Y_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call single_record_reader(wf%n_o, wf%Y_akil, Y_akil)
+      call single_record_reader(wf%n_o, wf%Y_ajil, Y_ajil)
 !
-      call disk%close_file(wf%Y_akil)
+      call disk%close_file(wf%Y_ajil)
 !
       call dgemm('N','N',              &
                   wf%n_v,              &
                   wf%n_o,              &
                   wf%n_v * wf%n_o**2,  &
                   one,                 &
-                  c_abij,              & ! C_d_aik
+                  c_abij,              & ! C_d_aji
                   wf%n_v,              &
-                  Y_akil,              & ! Y_aik_l
+                  Y_ajil,              & ! Y_aji_l
                   wf%n_v * wf%n_o**2,  &
                   one,                 &
                   sigma_ai,            & ! sigma_dl
                   wf%n_v)
 !
-      call mem%dealloc(Y_akil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call mem%dealloc(Y_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
    end subroutine jacobian_transpose_cc3_sigma1_t3_A1_cc3
 !
