@@ -57,6 +57,7 @@ contains
 !     Set standards and then read if nonstandard
 !
       engine%es_algorithm = 'davidson'
+      engine%gs_algorithm = 'diis'
       engine%es_type = 'valence'
 !
       call engine%read_settings()
@@ -73,6 +74,7 @@ contains
 !
       class(es_engine) :: engine 
 !
+      call engine%read_gs_settings()
       call engine%read_es_settings()
 !
    end subroutine read_settings_es_engine

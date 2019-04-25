@@ -209,6 +209,8 @@ contains
       solver_cc_gs%keywords = (/ 'algorithm            ',   &
                                  'energy threshold     ',   &
                                  'omega threshold      ',   &
+                                 'max micro iterations ',   &
+                                 'rel micro threshold  ',   &
                                  'max iterations       ',   &
                                  'diis dimension       ',   &
                                  'restart              '    /)

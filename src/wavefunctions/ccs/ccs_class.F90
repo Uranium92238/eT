@@ -125,6 +125,8 @@ module ccs_class
       procedure :: construct_omega                             => construct_omega_ccs
       procedure :: omega_ccs_a1                                => omega_ccs_a1_ccs
 !
+      procedure :: form_newton_raphson_t_estimate              => form_newton_raphson_t_estimate_ccs
+!
 !     Routines related to the Jacobian transformation
 !
       procedure :: prepare_for_jacobian                        => prepare_for_jacobian_ccs
@@ -3637,6 +3639,41 @@ contains
       expectation_value = ddot(wf%n_mo**2, A, 1, wf%density, 1)
 !
    end function calculate_expectation_value_ccs
+!
+!
+   subroutine form_newton_raphson_t_estimate_ccs(wf, t, dt)
+!!
+!!    Form Newton-Raphson t estimate 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Here, t is the full amplitude vector and dt is the correction to the amplitude vector.
+!!
+!!    The correction is assumed to be obtained from either 
+!!    solving the Newton-Raphson equation
+!!
+!!       A dt = -omega, 
+!!
+!!    where A and omega are given in the biorthonormal basis,
+!!    or from the quasi-Newton equation (A ~ diagonal with diagonal = epsilon) 
+!!
+!!        dt = -omega/epsilon
+!!
+!!    Epsilon is the vector of orbital differences. 
+!!
+!!    On exit, t = t + dt, where the appropriate basis change has been accounted 
+!!    for (in particular for the double amplitudes in CCSD wavefunctions). Also,
+!!    dt is expressed in the basis compatible with t.
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: dt 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t 
+!
+      call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)
+!
+   end subroutine form_newton_raphson_t_estimate_ccs
 !
 !
 end module ccs_class

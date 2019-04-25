@@ -62,6 +62,8 @@ module ccsd_class
       procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccsd
       procedure :: print_dominant_x_amplitudes                 => print_dominant_x_amplitudes_ccsd
 !
+      procedure :: from_biorthogonal_to_biorthonormal          => from_biorthogonal_to_biorthonormal_ccsd
+!
       procedure :: save_doubles_vector                         => save_doubles_vector_ccsd
       procedure :: read_doubles_vector                         => read_doubles_vector_ccsd
 !
@@ -82,6 +84,8 @@ module ccsd_class
       procedure :: omega_ccsd_c2                               => omega_ccsd_c2_ccsd
       procedure :: omega_ccsd_d2                               => omega_ccsd_d2_ccsd
       procedure :: omega_ccsd_e2                               => omega_ccsd_e2_ccsd
+!
+      procedure :: form_newton_raphson_t_estimate              => form_newton_raphson_t_estimate_ccsd
 !
 !     Routines related to Jacobian transformation
 !
@@ -155,7 +159,6 @@ module ccsd_class
       procedure :: one_el_density_ccsd_oo                      => one_el_density_ccsd_oo_ccsd
       procedure :: one_el_density_ccsd_vv                      => one_el_density_ccsd_vv_ccsd
       procedure :: one_el_density_ccsd_ov                      => one_el_density_ccsd_ov_ccsd
-!
 !
    end type ccsd
 !
@@ -1294,6 +1297,85 @@ contains
       call wf%one_el_density_ccsd_ov()
 !
    end subroutine construct_density_ccsd
+!
+!
+   subroutine from_biorthogonal_to_biorthonormal_ccsd(wf, X)
+!!
+!!    From biorthogonal to biorthonormal 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      implicit none 
+!
+      class(ccsd), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_t2), intent(inout) :: X 
+!
+      real(dp), dimension(:,:), allocatable :: X_unpacked
+!
+      integer :: I
+!
+      call mem%alloc(X_unpacked, wf%n_t1, wf%n_t1)
+      call squareup(X, X_unpacked, wf%n_t1)
+!
+      do I = 1, wf%n_t1 
+!
+         X_unpacked(I,I) = X_unpacked(I,I)/two
+!
+      enddo 
+!
+      call packin(X, X_unpacked, wf%n_t1)
+      call mem%dealloc(X_unpacked, wf%n_t1, wf%n_t1)
+!
+   end subroutine from_biorthogonal_to_biorthonormal_ccsd
+!
+!
+   subroutine form_newton_raphson_t_estimate_ccsd(wf, t, dt)
+!!
+!!    Form Newton-Raphson t estimate 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Here, t is the full amplitude vector and dt is the correction to the amplitude vector.
+!!
+!!    The correction is assumed to be obtained from either 
+!!    solving the Newton-Raphson equation
+!!
+!!       A dt = -omega, 
+!!
+!!    where A and omega are given in the biorthonormal basis,
+!!    or from the quasi-Newton equation (A ~ diagonal with diagonal = epsilon) 
+!!
+!!        dt = -omega/epsilon
+!!
+!!    Epsilon is the vector of orbital differences. 
+!!
+!!    On exit, t = t + dt, where the appropriate basis change has been accounted 
+!!    for (in particular for the double amplitudes in CCSD wavefunctions). Also,
+!!    dt is expressed in the basis compatible with t.
+!!
+      implicit none 
+!
+      class(ccsd), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: dt 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t 
+!
+      integer :: ai, aiai 
+!
+!     Change dt doubles diagonal to match the definition of the 
+!     double amplitudes 
+!
+      do ai = 1, wf%n_t1
+!
+         aiai = ai*(ai - 3)/2 + 2*ai
+         dt(wf%n_t1 + aiai) = two*dt(wf%n_t1 + aiai)
+!
+      enddo  
+!
+!     Add the dt vector to the t vector 
+!
+      call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)    
+!
+   end subroutine form_newton_raphson_t_estimate_ccsd
 !
 !
 end module ccsd_class

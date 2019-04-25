@@ -262,7 +262,8 @@ contains
             call solver%do_diagonal_precondition(-one, epsilon, omega, wf%n_gs_amplitudes)
 !
             call wf%get_amplitudes(amplitudes)
-            amplitudes = amplitudes + omega 
+!
+            call wf%form_newton_raphson_t_estimate(amplitudes, omega)
 !
             call diis_manager%update(omega, amplitudes)
             call wf%set_amplitudes(amplitudes)
