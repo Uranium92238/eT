@@ -238,7 +238,7 @@ module ccs_class
 !
    interface
 !
-      include "../../submodules/ccs/F_ccs_interface.F90"
+      include "F_ccs_interface.F90"
 !
    end interface
 !

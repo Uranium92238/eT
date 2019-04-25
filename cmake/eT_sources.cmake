@@ -38,6 +38,7 @@ set(eT_fortran_sources
    src/engines/es_engine_class.F90
    #src/engines/properties_engine_class.F90
    src/engines/zop_engine_class.F90
+   src/engines/fop_engine_class.F90
    src/io/disk_manager_class.F90
    src/io/abstract_file_class.F90
    src/io/file_class.F90
@@ -80,9 +81,9 @@ set(eT_fortran_sources
    src/solver_tools/davidson_tool_class.F90
    src/solver_tools/eigen_davidson_tool_class.F90
    src/solver_tools/linear_davidson_tool_class.F90
-   src/submodules/ccsd/properties_ccsd.F90
-   src/submodules/ccs/F_ccs.F90
-   src/submodules/ccsd/F_ccsd.F90
+   src/wavefunctions/ccsd/properties_ccsd.F90
+   src/wavefunctions/ccs/F_ccs.F90
+   src/wavefunctions/ccsd/F_ccsd.F90
    src/wavefunctions/ccsd/omega_ccsd.F90
    src/wavefunctions/ccsd/jacobian_ccsd.F90
    src/wavefunctions/ccsd/jacobian_transpose_ccsd.F90

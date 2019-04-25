@@ -202,8 +202,8 @@ module ccsd_class
 !
    interface
 !
-      include "../../submodules/ccsd/properties_ccsd_interface.F90"
-      include "../../submodules/ccsd/F_ccsd_interface.F90"
+      include "properties_ccsd_interface.F90"
+      include "F_ccsd_interface.F90"
       include "omega_ccsd_interface.F90"
       include "jacobian_ccsd_interface.F90"
       include "jacobian_transpose_ccsd_interface.F90"
