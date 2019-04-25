@@ -37,21 +37,23 @@ module davidson_cc_es_class
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       character(len=500) :: description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
-                                           &the right eigenvectors of the Jacobian matrix, A. The eigenvalue &
-                                           &problem is solved in a reduced space, the dimension of which is &
-                                           &expanded until the convergence criteria are met.'
+                                           & the right or left eigenvectors of the Jacobian matrix, A. The eigenvalue &
+                                           & problem is solved in a reduced space, the dimension of which is &
+                                           & expanded until the convergence criteria are met.'
 !
       character(len=500) :: description2 = 'A complete description of the algorithm can be found in &
-                                             &E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
+                                          & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
       integer :: max_iterations
 !
       real(dp) :: eigenvalue_threshold  
       real(dp) :: residual_threshold  
 !
-      logical  :: restart = .false.
+      logical  :: restart
 !
-      integer :: n_singlet_states = 0
+      integer :: n_singlet_states
+!
+      integer :: max_dim_red
 !
       character(len=40) :: transformation 
 !
@@ -61,7 +63,7 @@ module davidson_cc_es_class
 !
    contains
 !     
-      procedure, non_overridable :: prepare          => prepare_davidson_cc_es
+      procedure                  :: prepare          => prepare_davidson_cc_es
       procedure, non_overridable :: run              => run_davidson_cc_es
       procedure, non_overridable :: cleanup          => cleanup_davidson_cc_es
 !
@@ -87,7 +89,7 @@ module davidson_cc_es_class
 contains
 !
 !
-   subroutine prepare_davidson_cc_es(solver, transform)
+   subroutine prepare_davidson_cc_es(solver)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -96,7 +98,16 @@ contains
 !
       class(davidson_cc_es) :: solver
 !
-      character(len=*), optional :: transform
+      solver%tag = 'Davidson coupled cluster excited state solver'
+      solver%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      solver%description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
+               & the right or left eigenvectors of the Jacobian matrix, A. The eigenvalue &
+               & problem is solved in a reduced space, the dimension of which is &
+               & expanded until the convergence criteria are met.'
+!
+      solver%description2 = 'A complete description of the algorithm can be found in &
+                                          & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
       call solver%print_banner()
 !
@@ -108,10 +119,9 @@ contains
       solver%residual_threshold   = 1.0d-6
       solver%transformation       = 'right'
       solver%restart              = .false.
+      solver%max_dim_red          = 100 
 !
       call solver%read_settings()
-!
-      if (present(transform)) solver%transformation = transform
 !
       call solver%print_settings()
 !
@@ -197,7 +207,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: r
 !
-      write(output%unit, '(/t3,a)') '- Excitation vector amplitudes:'
+      write(output%unit, '(/t3,a)') '- Summary of CC excited state calculation:'
 !
       call mem%alloc(r, wf%n_es_amplitudes)
 !
@@ -353,7 +363,7 @@ contains
 !
          enddo
 !
-         if (davidson%dim_red .ge. davidson%max_dim_red) then
+         if (davidson%dim_red .ge. solver%max_dim_red) then
 !
             call davidson%set_trials_to_solutions()
 !
@@ -469,11 +479,18 @@ contains
       real(dp), dimension(:), allocatable :: orbital_differences
       real(dp), dimension(:), allocatable :: lowest_orbital_differences
 !
-      integer, dimension(:), allocatable :: lowest_orbital_differences_index
+      integer, dimension(:), allocatable :: lowest_orbital_differences_index, start_vectors_copy
 !
       integer :: trial, n_solutions_on_file
 !
       if (allocated(solver%start_vectors)) then
+!
+         call mem%alloc(start_vectors_copy, solver%n_singlet_states)
+         start_vectors_copy = solver%start_vectors
+!
+         call wf%system%translate_from_input_order_to_eT_order(solver%n_singlet_states, start_vectors_copy, solver%start_vectors)
+!
+         call mem%dealloc(start_vectors_copy, solver%n_singlet_states)
 !
 !        Initial trial vectors given on input
 !
@@ -591,8 +608,6 @@ contains
 !
       class(davidson_cc_es) :: solver
 !
-      write(output%unit, '(/t3,a,a,a)') 'Cleaning up ', trim(solver%tag), '.'
-!
       call solver%destruct_energies()
       if (allocated(solver%start_vectors)) call mem%dealloc(solver%start_vectors, solver%n_singlet_states)
 !
@@ -625,71 +640,25 @@ contains
 !
       class(davidson_cc_es) :: solver 
 !
-      integer :: n_specs, i, j, n_start_vecs
+      integer :: n_start_vecs
 !
-      character(len=100) :: line
+      call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
+      call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
+      call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
+      call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
+      call input%get_keyword_in_section('max reduced dimension', 'solver cc es', solver%max_dim_red)
+!     
+      call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
 !
-      if (.not. requested_section('cc excited state')) then 
+      if (input%requested_keyword_in_section('restart', 'solver cc es')) solver%restart = .true.    
+      if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) solver%transformation = 'left'    
+      if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) solver%transformation = 'right'             
 !
-         call output%error_msg('number of excitations must be specified.')
+      if (input%requested_keyword_in_section('start vectors', 'solver cc es')) then 
+!  
+!        Determine the number of start vectors & do consistency check 
 !
-      endif
-!
-      call move_to_section('cc excited state', n_specs)
-!
-      do i = 1, n_specs
-!
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (line(1:19) == 'residual threshold:' ) then
-!
-            read(line(20:100), *) solver%residual_threshold
-!
-         elseif (line(1:17) == 'energy threshold:' ) then
-!
-            read(line(18:100), *) solver%eigenvalue_threshold
-!
-         elseif (line(1:15) == 'singlet states:' ) then
-!
-            read(line(16:100), *) solver%n_singlet_states
-!
-         elseif (line(1:15) == 'max iterations:' ) then
-!
-            read(line(16:100), *) solver%max_iterations
-!
-         elseif (line(1:18) == 'right eigenvectors') then 
-!
-            solver%transformation = 'right'
-!
-         elseif (line(1:18) == 'left eigenvectors') then 
-!
-            solver%transformation = 'left'
-!
-         elseif (trim(line) == 'restart') then
-!
-            solver%restart = .true.
-!
-         elseif (line(1:14) == 'start vectors:') then
-!
-            line = line(15:100)
-            line = remove_preceding_blanks(line)
-            n_start_vecs = 0
-!
-            do j = 1, 86
-!
-               if (line(j:j) .ne. ' ') n_start_vecs = n_start_vecs + 1
-!
-            enddo
-!
-            call mem%alloc(solver%start_vectors, n_start_vecs)
-            read(line, *) solver%start_vectors
-!
-         endif
-!
-      enddo
-!
-      if (allocated(solver%start_vectors)) then
+         n_start_vecs = input%get_n_elements_for_keyword_in_section('start vectors', 'solver cc es')
 !
          if (n_start_vecs .ne. solver%n_singlet_states) then
 !
@@ -697,7 +666,14 @@ contains
 !
          endif
 !
-      endif
+!        Then read the start vectors into array 
+!
+         call mem%alloc(solver%start_vectors, n_start_vecs)
+!
+         call input%get_array_for_keyword_in_section('start vectors', 'solver cc es', n_start_vecs, solver%start_vectors)
+!
+      endif 
+!
 !
    end subroutine read_settings_davidson_cc_es
 !

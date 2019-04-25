@@ -408,36 +408,9 @@ contains
 !
       class(scf_diis_hf) :: solver 
 !
-      integer :: n_records, i 
+      call input%get_keyword_in_section('diis dimension', 'solver hf', solver%diis_dimension)
 !
-      character(len=100) :: line, value 
-!
-      if (requested_section('hf')) then ! User has requested something 
-!
-         call move_to_section('hf', n_records)
-!
-         do i = 1, n_records
-!
-            read(input%unit, '(a100)') line
-            line = remove_preceding_blanks(line)
-!
-            if (line(1:15) == 'diis dimension:') then
-!
-               value = line(16:100)
-               value = remove_preceding_blanks(value)
-               read(value, *) solver%diis_dimension
-               cycle
-!
-            elseif (line(1:7) == 'restart') then
-!
-               solver%restart = .true.
-               cycle
-!
-            endif 
-!
-         enddo
-!
-      endif 
+      if (input%requested_keyword_in_section('restart', 'solver hf')) solver%restart = .true.  
 !
    end subroutine read_scf_diis_settings_scf_diis_hf
 !

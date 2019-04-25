@@ -142,58 +142,16 @@ contains
 !
       class(diis_cc_es) :: solver 
 !
-      integer :: n_specs, i
+      call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
+      call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
+      call input%get_keyword_in_section('diis dimension', 'solver cc es', solver%diis_dimension)
+      call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
+!               
+      call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
 !
-      character(len=100) :: line
-!
-      if (.not. requested_section('cc excited state')) then 
-!
-         call output%error_msg('number of excitations must be specified.')
-!
-      endif
-!
-      call move_to_section('cc excited state', n_specs)
-!
-      do i = 1, n_specs
-!
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (line(1:19) == 'residual threshold:' ) then
-!
-            read(line(20:100), *) solver%residual_threshold
-!
-         elseif (line(1:17) == 'energy threshold:' ) then
-!
-            read(line(18:100), *) solver%eigenvalue_threshold
-!
-         elseif (line(1:15) == 'singlet states:' ) then
-!
-            read(line(16:100), *) solver%n_singlet_states
-!
-         elseif (line(1:15) == 'max iterations:' ) then
-!
-            read(line(16:100), *) solver%max_iterations
-!
-         elseif (line(1:15) == 'diis dimension:' ) then
-!
-            read(line(16:100), *) solver%diis_dimension
-!
-         elseif (line(1:18) == 'right eigenvectors') then 
-!
-            solver%transformation = 'right'
-!
-         elseif (line(1:18) == 'left eigenvectors') then 
-!
-            solver%transformation = 'left'
-!
-         elseif (line(1:7) == 'restart') then 
-!
-            solver%restart = .true.
-!
-         endif
-!
-      enddo
+      if (input%requested_keyword_in_section('restart', 'solver cc es')) solver%restart = .true.    
+      if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) solver%transformation = 'left'    
+      if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) solver%transformation = 'right'    
 !
    end subroutine read_settings_diis_cc_es
 !

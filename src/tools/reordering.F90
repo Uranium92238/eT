@@ -1614,42 +1614,6 @@ contains
    end subroutine add_1423_to_1234
 !
 !
-   subroutine add_1324_to_1234(gamma, x, y_pqrs, dim_p, dim_q, dim_r, dim_s)
-!!
-!!    Add 1324 to 1234
-!!    Written by Sarai D. Folkestad, 
-!!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
-!!
-!!    y_pqrs(p,q,r,s) =+ y_pqrs(p,q,r,s) + gamma*x(p,r,q,s)
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
-!  
-      real(dp), intent(in) :: gamma 
-!
-      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(inout) :: y_pqrs
-      real(dp), dimension(dim_p, dim_r, dim_q, dim_s), intent(in)    :: x
-!
-      integer :: p, q, r, s
-!
-!$omp parallel do schedule(static) private(p,q,r,s)
-      do s = 1, dim_s
-         do r = 1, dim_r
-            do q = 1, dim_q
-               do p = 1, dim_p
-!
-                  y_pqrs(p,q,r,s) = y_pqrs(p,q,r,s) + gamma*x(p,r,q,s)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine add_1324_to_1234
-!
-!
    subroutine add_1432_to_1234(scalar, x_psrq, y_pqrs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Add 1432 to 1234
@@ -1722,6 +1686,45 @@ contains
 !$omp end parallel do
 !
    end subroutine add_1342_to_1234
+!
+!
+   subroutine add_1324_to_1234(scalar, x_prqs, y_pqrs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 1342 to 1234
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Andreas Skeidsvoll, Apr 2019: Created by modifying add_1342_to_1234
+!!
+!!    Performs:
+!!
+!!       y_pqrs(p,q,r,s) = y_pqrs(p,q,r,s) + scalar * x_prqs(p,r,q,s)
+!!
+      implicit none
+!
+      real(dp), intent(in) :: scalar
+!
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(inout) :: y_pqrs
+      real(dp), dimension(dim_p, dim_r, dim_q, dim_s), intent(in)    :: x_prqs
+!
+      integer :: p, q, r, s
+!
+!$omp parallel do schedule(static) private(s,r,q,p)
+      do s = 1, dim_s
+         do r = 1, dim_r
+            do q = 1, dim_q
+               do p = 1, dim_p
+!
+                  y_pqrs(p,q,r,s) = y_pqrs(p,q,r,s) + scalar*x_prqs(p,r,q,s)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_1324_to_1234
 !
 !
    subroutine add_1243_to_1234(scalar, x_pqsr, y_pqrs, dim_p, dim_q, dim_r, dim_s)

@@ -21,7 +21,7 @@ program eT_program
 !
 !!
 !!  eT - a coupled cluster program
-!!  Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
+!!  Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2019
 !!
 !
    use kinds
@@ -29,79 +29,19 @@ program eT_program
    use disk_manager_class
    use memory_manager_class
    use libint_initialization
+   use molecular_system_class
+   use timings_class
 !
-   use wavefunction_class
-!
-   use hf_class
-   use uhf_class
-   use mlhf_class
-!
-   use ccs_class
-   use cc2_class
-   use lowmem_cc2_class
-   use cc3_class
-   use mp2_class
-!
-   use io_eT_program
-!
-   use hf_engine_class
-   use gs_engine_class
-   use es_engine_class
-   use multipliers_engine_class
-   use properties_engine_class
-   use abstract_engine_class
-!
-   use eri_cd_class
    use omp_lib
 !
    implicit none
 !
-!  Allocatable system
+   integer :: io_error
+   integer :: n_threads
 !
-   type(molecular_system), allocatable :: system
+!  Molecular system object 
 !
-!  Wavefunction allocatables and pointers
-!
-   type(hf), allocatable, target          :: hf_wf
-   type(uhf), allocatable, target         :: uhf_wf
-   type(mlhf), allocatable, target        :: mlhf_wf
-!
-   type(ccs), allocatable, target         :: ccs_wf
-   type(cc2), allocatable, target         :: cc2_wf
-   type(lowmem_cc2), allocatable, target  :: lowmem_cc2_wf
-   type(ccsd), allocatable, target        :: ccsd_wf
-   type(cc3), allocatable, target         :: cc3_wf
-   type(mp2), allocatable, target         :: mp2_wf
-!
-!  Wavefunction pointers
-!
-   class(hf), pointer  :: ref_wf    => null()
-   class(ccs), pointer :: cc_wf     => null()
-!
-!  Cholesky decomposition solver
-!
-   type(eri_cd), allocatable :: chol_solver
-!
-!  Engines
-!
-   type(hf_engine), allocatable                  :: gs_hf_engine
-   type(gs_engine), allocatable, target          :: gs_cc_engine
-   type(es_engine), allocatable, target          :: es_cc_engine
-   type(multipliers_engine), allocatable, target :: multipliers_cc_engine
-   type(properties_engine), allocatable, target    :: properties_cc_engine
-!
-!  Engine pointer
-!
-   class(abstract_engine), pointer :: engine => null()
-!
-!  Other variables
-!
-   integer :: n_methods, i
-!
-   integer :: n_threads = 1
-!
-   character(len=40) :: cc_engine
-   character(len=40), dimension(:), allocatable :: cc_methods
+   type(molecular_system) :: system 
 !
 !  Timer object
 !
@@ -109,14 +49,19 @@ program eT_program
 !
 !  Prepare input, output and timing file
 !
-   call output%init('eT.out', 'sequential', 'formatted')
-   call disk%open_file(output, 'write', 'rewind')
+   call output%init('eT.out')
+   open(newunit=output%unit, file=output%name, access=output%access, &
+      action='write', status='unknown', form=output%format, iostat=io_error)
 !
-   call input%init('eT.inp', 'sequential', 'formatted')
-   call disk%open_file(input, 'read')
+   call input%init('eT.inp')
+   open(newunit=input%unit, file=input%name, access=input%access, &
+      action='read', status='unknown', form=input%format, iostat=io_error)
 !
-   call timing%init('timing.out', 'sequential', 'formatted')
-   call disk%open_file(timing, 'write', 'rewind')
+   call timing%init('timing.out')
+   open(newunit=timing%unit, file=timing%name, access=timing%access, &
+      action='write', status='unknown', form=timing%format, iostat=io_error)
+!
+   if (io_error /= 0) stop 'Error: could not open eT files (.inp/.out)'
 !
    call eT_timer%init("Total time in eT")
    call eT_timer%start()
@@ -131,16 +76,20 @@ program eT_program
    write(output%unit,'(t4, a, a)')    'Author:                ','Contribution(s):'
    write(output%unit,'(t3, a)')      '----------------------------------------------------------------------------------'
    write(output%unit,'(t4, a, a)')    'Sarai D. Folkestad     ','Program design, HF, CCS, CC2, CCSD, Libint-interface,'
-   write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS'
+   write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS, DIIS-tool'
+   write(output%unit,'(t4, a, a)')    '                       ','Zeroth order properties'
    write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
    write(output%unit,'(t4, a, a)')    'Eirik F. Kjønstad      ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
+   write(output%unit,'(t4, a, a)')    '                       ','Zeroth order properties'
    write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, Launch script'
    write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2, CC3'
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
    write(output%unit,'(t3,a)')       '----------------------------------------------------------------------------------'
    write(output%unit,'(t4,a/)')       'Other contributors: A. Balbi, M. Scavino'
    flush(output%unit)
+!
+   n_threads = 1
 !
 !$   n_threads = omp_get_max_threads()
 !
@@ -154,6 +103,8 @@ program eT_program
 !
    endif
 !
+   call input%check_for_errors()
+!
 !  Prepare memory manager and disk manager
 !
    call mem%prepare()
@@ -161,229 +112,194 @@ program eT_program
 !
    call initialize_libint()
 !
-   n_methods = get_n_methods()
+!  Prepare molecular system 
 !
-!  ::  Hartree-Fock calculation (or only Cholesky decomposition of ERIs)
+   call system%prepare()
 !
-   if (n_methods == 0) then
+!  Hartree-Fock calculation
 !
-      if (requested_task('cholesky eri')) then
+   if (input%requested_reference_calculation()) call reference_calculation(system)
 !
-         allocate(system)
-         call system%prepare()
+!  Coupled cluster calculation
 !
-         call initialize_coulomb()
-         call initialize_kinetic()
-         call initialize_nuclear()
-         call initialize_overlap()
-!
-         allocate(chol_solver)
-!
-         call chol_solver%prepare(system)
-         call chol_solver%run(system)
-         call chol_solver%cholesky_vecs_diagonal_test(system)
-         call chol_solver%cleanup()
-!
-      else
-!
-         call output%error_msg('no calculation requested.')
-!
-      endif
-!
-   else
-!
-      if (requested_method('mlhf')) then
-!
-         allocate(mlhf_wf)
-         ref_wf => mlhf_wf
-!
-         call ref_wf%prepare()
-!
-      else
-!
-         if (requested_method('uhf')) then
-!
-            allocate(uhf_wf)
-            ref_wf => uhf_wf
-!
-         else ! Assume standard RHF
-!
-            allocate(hf_wf)
-            ref_wf => hf_wf
-!
-         endif
-!
-         call ref_wf%prepare()
-!
-         allocate(gs_hf_engine)
-!
-         call gs_hf_engine%prepare()
-         call gs_hf_engine%run(ref_wf)
-         call gs_hf_engine%cleanup()
-!
-         deallocate(gs_hf_engine)
-!
-      endif
-!
-   endif
-!
-!  :: Coupled cluster calculation
-!
-   if (requested_method('mlhf')) n_methods = n_methods - 1
-   if (requested_method('hf'))   n_methods = n_methods - 1
-   if (requested_method('uhf'))  n_methods = n_methods - 1
-!
-   if (n_methods .eq. 0) call ref_wf%cleanup()
-!
-   if (n_methods .gt. 0) then
-!
-      allocate(cc_methods(n_methods))
-!
-      call read_cc_methods(n_methods, cc_methods)
-      call select_engine(cc_engine)
-!
-      do i = 1, n_methods
-!
-!        Determine type of CC method
-!
-         if (cc_methods(i) == 'ccs') then
-!
-            allocate(ccs_wf)
-            cc_wf => ccs_wf
-!
-         elseif (cc_methods(i) == 'mp2') then
-!
-            allocate(mp2_wf)
-            cc_wf => mp2_wf
-!
-         elseif (cc_methods(i) == 'cc2') then
-!
-            allocate(cc2_wf)
-            cc_wf => cc2_wf
-!
-         elseif (cc_methods(i) == 'lowmem-cc2') then
-!
-            allocate(lowmem_cc2_wf)
-            cc_wf => lowmem_cc2_wf
-!
-         elseif (cc_methods(i) == 'ccsd') then
-!
-            allocate(ccsd_wf)
-            cc_wf => ccsd_wf
-!
-         elseif (cc_methods(i) == 'cc3') then
-!
-            allocate(cc3_wf)
-            cc_wf => cc3_wf
-!
-         endif
-!
-!        Determine engine
-!
-         if (cc_engine == 'ground state') then
-!
-            allocate(gs_cc_engine)
-            engine => gs_cc_engine
-!
-         elseif (cc_engine == 'excited state') then
-!
-            allocate(es_cc_engine)
-            engine => es_cc_engine
-!
-         elseif (cc_engine == 'multipliers') then
-!
-            allocate(multipliers_cc_engine)
-            engine => multipliers_cc_engine
-!
-         elseif (cc_engine == 'properties') then
-!
-            allocate(properties_cc_engine)
-            engine => properties_cc_engine
-!
-         endif
-!
-!        Solve cc problem
-!
-         call cc_wf%prepare(ref_wf)
-!
-         call ref_wf%cleanup()
-!
-         nullify(ref_wf)
-         if (requested_method('mlhf')) then
-!
-            deallocate(mlhf_wf)
-!
-         else if (requested_method('uhf')) then
-!
-            deallocate(uhf_wf)
-!
-         else ! Assume standard RHF
-!
-            deallocate(hf_wf)
-!
-         endif
-!
-         call engine%prepare()
-         call engine%run(cc_wf)
-         call engine%cleanup()
-!
-         nullify(engine)
-         if (cc_engine == 'ground state') then
-!
-            deallocate(gs_cc_engine)
-!
-         elseif (cc_engine == 'excited state') then
-!
-            deallocate(es_cc_engine)
-!
-         elseif (cc_engine == 'multipliers') then
-!
-            deallocate(multipliers_cc_engine)
-!
-         elseif (cc_engine == 'properties') then
-!
-            deallocate(properties_cc_engine)
-!
-         end if
-!
-         call cc_wf%cleanup()
-         nullify(cc_wf)
-!
-         if (cc_methods(i) == 'ccs') then
-!
-            deallocate(ccs_wf)
-!
-         elseif (cc_methods(i) == 'mp2') then
-!
-            deallocate(mp2_wf)
-!
-         elseif (cc_methods(i) == 'cc2') then
-!
-            deallocate(cc2_wf)
-!
-         elseif (cc_methods(i) == 'ccsd') then
-!
-            deallocate(ccsd_wf)
-!
-         elseif (cc_methods(i) == 'cc3') then
-!
-            deallocate(cc3_wf)
-!
-         endif
-!
-      enddo
-!
-   endif
+   if (input%requested_cc_calculation()) call cc_calculation(system)
 !
    call finalize_libint()
 !
    call eT_timer%freeze()
    call eT_timer%switch_off()
 !
+   call mem%check_for_leak()
+!
    write(output%unit, '(/t3,a)') 'eT terminated successfully!'
 !
-   call disk%close_file(output)
-   call disk%close_file(input)
-   call disk%close_file(timing)
+   close(output%unit)
+   close(input%unit)
+   close(timing%unit)
 !
 end program eT_program
+!
+!
+subroutine reference_calculation(system)
+!!
+!! Reference calculation
+!! Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+!! Directs the reference state calculation for eT
+!!
+   use hf_class
+   use uhf_class
+   use hf_engine_class
+!
+   implicit none
+!
+   type(molecular_system) :: system
+!
+!  Possible reference wavefunctions   
+!
+   type(hf), allocatable  :: hf_wf
+   type(uhf), allocatable :: uhf_wf
+!
+!  Engine
+!
+   type(hf_engine)   :: ref_engine
+!
+!  Other variables
+!
+   character(len=21) :: reference_wf
+!
+   reference_wf = input%get_reference_wf()
+!
+   if (trim(reference_wf) == 'hf') then
+!
+      allocate(hf_wf)
+!
+      call hf_wf%prepare(system)
+      call ref_engine%ignite(hf_wf)
+      call hf_wf%cleanup() 
+!
+      deallocate(hf_wf)
+!
+   elseif (trim(reference_wf) == 'uhf') then
+!
+      allocate(uhf_wf)
+!
+      call uhf_wf%prepare(system)
+      call ref_engine%ignite(uhf_wf)
+      call uhf_wf%cleanup()
+!
+      deallocate(uhf_wf)
+!
+   else
+!
+      call output%error_msg('did not recognize the reference wavefunction ' // trim(reference_wf) //'.')
+!
+   endif
+!
+end subroutine reference_calculation
+!
+!
+subroutine cc_calculation(system)
+!!
+!! Coupled cluster calculation
+!! Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+!! Directs the coupled cluster calculation for eT
+!!
+   use ccs_class
+   use cc2_class
+   use lowmem_cc2_class
+   use cc3_class
+   use mp2_class
+!
+   use gs_engine_class
+   use es_engine_class
+   use zop_engine_class
+!
+   implicit none
+!
+   type(molecular_system) :: system
+!
+!  Possible coupled cluster wavefunctions   
+!
+   type(ccs), target          :: ccs_wf
+   type(cc2), target          :: cc2_wf
+   type(lowmem_cc2), target   :: lowmem_cc2_wf
+   type(ccsd),target          :: ccsd_wf
+   type(cc3), target          :: cc3_wf
+   type(mp2), target          :: mp2_wf
+!
+   class(ccs), pointer :: cc_wf
+!
+!  Possible engines
+!
+   type(gs_engine)   :: gs_cc_engine
+   type(es_engine)   :: es_cc_engine
+   type(zop_engine)  :: zop_cc_engine
+!
+!  Other variables
+!
+   character(len=21) :: cc_wf_name
+!
+   if (.not. input%requested_reference_calculation()) &
+      call output%error_msg('to run CC calculation reference wavefunction must be specified.')
+!
+   cc_wf_name = input%get_cc_wf()
+!
+   select case (trim(cc_wf_name))
+!
+      case ('ccs')
+!
+         cc_wf => ccs_wf
+!
+      case ('cc2')
+!
+         cc_wf => cc2_wf
+!
+      case ('lowmem-cc2')
+!
+         cc_wf => lowmem_cc2_wf
+!
+      case ('ccsd')
+!
+         cc_wf => ccsd_wf
+!
+      case ('cc3')
+!
+         cc_wf => cc3_wf
+!
+      case ('mp2')
+!
+         cc_wf => mp2_wf
+!
+      case default
+!
+         call output%error_msg('could not recognize CC method ' // trim(cc_wf_name) // '.')
+!
+   end select
+!
+   if (input%requested_keyword_in_section('excited state', 'do')) then
+!
+      call cc_wf%prepare(system)
+      call es_cc_engine%ignite(cc_wf)
+      call cc_wf%cleanup()   
+!
+   elseif (input%requested_keyword_in_section('zop', 'do')) then 
+!
+      call cc_wf%prepare(system)
+      call zop_cc_engine%ignite(cc_wf)
+      call cc_wf%cleanup()
+!
+   elseif (input%requested_keyword_in_section('ground state', 'do')) then
+!
+      call cc_wf%prepare(system)
+      call gs_cc_engine%ignite(cc_wf) 
+      call cc_wf%cleanup()  
+!
+   else
+!
+      call output%error_msg('could not recognize coupled cluster task.')
+!
+   endif
+!
+end subroutine cc_calculation

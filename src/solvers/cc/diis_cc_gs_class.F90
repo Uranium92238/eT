@@ -48,7 +48,7 @@ module diis_cc_gs_class
       real(dp) :: energy_threshold
       real(dp) :: omega_threshold 
 !
-      logical    :: do_restart
+      logical    :: restart
 !
    contains
 !     
@@ -56,7 +56,7 @@ module diis_cc_gs_class
 !
       procedure :: prepare                  => prepare_diis_cc_gs
       procedure :: run                      => run_diis_cc_gs
-      procedure :: cleanup                  => cleanup_diis_cc_gs
+      procedure, nopass :: cleanup          => cleanup_diis_cc_gs
 !
       procedure :: print_banner             => print_banner_diis_cc_gs
       procedure :: read_settings            => read_settings_diis_cc_gs
@@ -91,12 +91,11 @@ contains
       solver%max_iterations   = 100
       solver%energy_threshold = 1.0d-6
       solver%omega_threshold  = 1.0d-6
-      solver%do_restart       = .false.
+      solver%restart       = .false.
 !
 !     Read & print settings (thresholds, etc.)
 !
-      if (requested_section('cc ground state')) call solver%read_settings()
-!
+      call solver%read_settings()
       call solver%print_settings()
 !
 !     Set the amplitudes to the initial guess or read if restart
@@ -105,7 +104,7 @@ contains
 !
 !     Prepare restart information file 
 !
-      if (solver%do_restart) then
+      if (solver%restart) then
 !
          call wf%read_amplitudes()
          call wf%integrals%write_t1_cholesky(wf%t1) 
@@ -263,7 +262,8 @@ contains
             call solver%do_diagonal_precondition(-one, epsilon, omega, wf%n_gs_amplitudes)
 !
             call wf%get_amplitudes(amplitudes)
-            amplitudes = amplitudes + omega 
+!
+            call wf%form_newton_raphson_t_estimate(amplitudes, omega)
 !
             call diis_manager%update(omega, amplitudes)
             call wf%set_amplitudes(amplitudes)
@@ -307,20 +307,16 @@ contains
    end subroutine run_diis_cc_gs
 !
 !
-   subroutine cleanup_diis_cc_gs(solver, wf)
+   subroutine cleanup_diis_cc_gs(wf)
 !!
 !! 	Cleanup 
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(diis_cc_gs) :: solver
-!
       class(ccs) :: wf
 !
 !     Save amplitudes 
-!
-      write(output%unit, '(/t3,a,a,a)') 'Cleaning up ', trim(solver%tag), '.'
 !
       call wf%save_amplitudes()
 !
@@ -352,40 +348,12 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      integer :: n_specs, i
+      call input%get_keyword_in_section('omega threshold', 'solver cc gs', solver%omega_threshold)
+      call input%get_keyword_in_section('energy threshold', 'solver cc gs', solver%energy_threshold)
+      call input%get_keyword_in_section('diis dimension', 'solver cc gs', solver%diis_dimension)
+      call input%get_keyword_in_section('max iterations', 'solver cc gs', solver%max_iterations)
 !
-      character(len=100) :: line
-!
-      call move_to_section('cc ground state', n_specs)
-!
-      do i = 1, n_specs
-!
-         read(input%unit, '(a100)') line
-         line = remove_preceding_blanks(line)
-!
-         if (line(1:16) == 'omega threshold:' ) then
-!
-            read(line(17:100), *) solver%omega_threshold
-!
-         elseif (line(1:17) == 'energy threshold:' ) then
-!
-            read(line(18:100), *) solver%energy_threshold
-!
-         elseif (line(1:15) == 'diis dimension:' ) then
-!
-            read(line(16:100), *) solver%diis_dimension
-!
-         elseif (line(1:15) == 'max iterations:' ) then
-!
-            read(line(16:100), *) solver%max_iterations
-!
-         elseif (trim(line) == 'restart') then
-!
-            solver%do_restart = .true.
-!
-         endif
-!
-      enddo
+      if (input%requested_keyword_in_section('restart', 'solver cc gs')) solver%restart = .true.
 !
    end subroutine read_settings_diis_cc_gs
 !
