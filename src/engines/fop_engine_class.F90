@@ -44,6 +44,7 @@ module fop_engine_class
    contains
 !
       procedure :: prepare             => prepare_fop_engine
+      procedure :: run                 => run_fop_engine
 !
       procedure :: read_settings       => read_settings_fop_engine
       procedure :: read_fop_settings   => read_fop_settings_fop_engine
@@ -75,6 +76,21 @@ contains
       call engine%read_settings()
 !
    end subroutine prepare_fop_engine
+!
+!
+   subroutine run_fop_engine(engine, wf)
+!!
+!!    Prepare
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(fop_engine) :: engine
+      class(ccs)         :: wf
+!
+      write(output%unit, *)'FISKFISKFSIK'
+!
+   end subroutine run_fop_engine
 !
 !
    subroutine read_settings_fop_engine(engine)

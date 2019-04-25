@@ -215,6 +215,7 @@ subroutine cc_calculation(system)
    use gs_engine_class
    use es_engine_class
    use zop_engine_class
+   use fop_engine_class
 !
    implicit none
 !
@@ -236,6 +237,7 @@ subroutine cc_calculation(system)
    type(gs_engine)   :: gs_cc_engine
    type(es_engine)   :: es_cc_engine
    type(zop_engine)  :: zop_cc_engine
+   type(fop_engine)  :: fop_cc_engine
 !
 !  Other variables
 !
@@ -278,7 +280,13 @@ subroutine cc_calculation(system)
 !
    end select
 !
-   if (input%requested_keyword_in_section('excited state', 'do')) then
+   if (input%requested_keyword_in_section('fop', 'do')) then
+!
+      call cc_wf%prepare(system)
+      call fop_cc_engine%ignite(cc_wf)
+      call cc_wf%cleanup()
+!
+   elseif (input%requested_keyword_in_section('excited state', 'do')) then
 !
       call cc_wf%prepare(system)
       call es_cc_engine%ignite(cc_wf)
