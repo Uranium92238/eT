@@ -63,6 +63,7 @@ module wavefunction_class
       procedure :: get_ao_h_wx                     => get_ao_h_wx_wavefunction
       procedure :: get_ao_s_wx                     => get_ao_s_wx_wavefunction
       procedure :: get_ao_mu_wx                    => get_ao_mu_wx_wavefunction
+      procedure :: get_mo_mu                       => get_mo_mu_wavefunction
       procedure :: get_ao_q_wx                     => get_ao_q_wx_wavefunction
 !
       procedure :: mo_transform                    => mo_transform_wavefunction
@@ -648,6 +649,36 @@ contains
       call output%error_msg('Cannot restart for task ' // trim(task) // ' from abstract wavefunction ' // trim(wf%name_))
 !
    end subroutine is_restart_safe_wavefunction
+!
+!
+   subroutine get_mo_mu_wavefunction(wf, mu)
+!!
+!!    Get MO dipole operator
+!!    Written by Sarai D. Folekstad, Apr 2019
+!!
+      implicit none
+!      
+      class(wavefunction), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo, 3) :: mu
+      real(dp), dimension(:,:), allocatable :: mu_X_wx, mu_Y_wx, mu_Z_wx
+!
+!
+      call mem%alloc(mu_X_wx, wf%n_ao, wf%n_ao)
+      call mem%alloc(mu_Y_wx, wf%n_ao, wf%n_ao)
+      call mem%alloc(mu_Z_wx, wf%n_ao, wf%n_ao)
+!
+      call wf%get_ao_mu_wx(mu_X_wx, mu_Y_wx, mu_Z_wx)
+!
+      call wf%mo_transform(mu_X_wx, mu(1,1,1))
+      call wf%mo_transform(mu_Y_wx, mu(1,1,2))
+      call wf%mo_transform(mu_Z_wx, mu(1,1,3))
+!
+      call mem%dealloc(mu_X_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(mu_Y_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(mu_Z_wx, wf%n_ao, wf%n_ao)
+!
+   end subroutine get_mo_mu_wavefunction
 !
 !
 end module wavefunction_class

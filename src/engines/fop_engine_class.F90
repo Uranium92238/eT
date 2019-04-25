@@ -49,6 +49,8 @@ module fop_engine_class
       procedure :: read_settings       => read_settings_fop_engine
       procedure :: read_fop_settings   => read_fop_settings_fop_engine
 !
+      procedure :: do_eom              => do_eom_fop_engine
+!
    end type fop_engine
 !
 contains
@@ -80,8 +82,8 @@ contains
 !
    subroutine run_fop_engine(engine, wf)
 !!
-!!    Prepare
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Run
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
       implicit none
 !
@@ -96,6 +98,12 @@ contains
 !
       call engine%do_ground_state(wf)
 !
+!     Determine multipliers
+!
+      call engine%do_multipliers(wf)
+!
+!     Prepare for excited state calculation
+!
       call wf%integrals%write_t1_cholesky(wf%t1)
       call wf%integrals%can_we_keep_g_pqrs_t1()
 !
@@ -104,6 +112,9 @@ contains
       call engine%do_excited_state(wf, 'right')
       call engine%do_excited_state(wf, 'left')
 !
+!     EOM properties if requested
+!
+    !  if (engine%eom) call engine%do_eom(wf)
 !
    end subroutine run_fop_engine
 !
@@ -111,7 +122,7 @@ contains
    subroutine read_settings_fop_engine(engine)
 !!
 !!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
 !!
       implicit none 
 !
@@ -126,7 +137,7 @@ contains
    subroutine read_fop_settings_fop_engine(engine)
 !!
 !!    Read FOP settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
 !!
       implicit none 
 !
@@ -143,5 +154,72 @@ contains
       if (.not. engine%eom .and. .not. engine%lr) call output%error_msg('specify either eom og lr for fop.')
 !
    end subroutine read_fop_settings_fop_engine
+!
+!
+   subroutine do_eom_fop_engine(engine, wf)
+!!
+!!    Do EOM
+!!    Written by Josefine H. Andersen and Sarai D. Folkestad, Apr 2019
+!!
+      implicit none
+!
+      class(fop_engine) :: engine
+      class(ccs)         :: wf
+!
+      real(dp), dimension(:,:,:), allocatable :: operator
+!
+      character(len=1), dimension(3) :: components = ['X', 'Y', 'Z']
+!
+      real(dp), dimension(3) :: transition_strength, transition_moment_left, transition_moment_right
+!
+      real(dp), dimension(:), allocatable :: etaX, csiX
+!
+      integer :: component, n_states, state
+!
+      call mem%alloc(etaX, wf%n_es_amplitudes)
+      call mem%alloc(csiX, wf%n_es_amplitudes)
+!
+!     Print banner
+!
+      call long_string_print(engine%tag,'(//t3,a)',.true.)
+      call long_string_print(engine%author,'(t3,a/)',.true.)
+      call long_string_print(engine%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
+!
+      if (engine%dipole_length) then
+!
+         call mem%alloc(operator, wf%n_mo, wf%n_mo, 3)
+         call wf%construct_mu(operator)  ! Constructs dipole operator in t1-transformed basis.
+!
+         transition_strength     = zero
+         transition_moment_right = zero
+         transition_moment_left  = zero
+!
+         do component = 1, size(components)
+!
+            etaX = zero
+            csiX = zero
+!
+            !call wf%construct_etaX(operator, solver%etaX)      
+!
+            !call wf%construct_csiX(operator, solver%csiX)      
+!
+!
+            !wf%get_eom_contribution(solver%etaX, solver%csiX, operator)
+!
+!           Loop over excited states and calculate transition strength
+!  
+            do state = 1, n_states
+!
+              ! call wf%calculate_transition_strength(transition_strength(component), etaX, &
+              !     csiX, n, transition_moment_left(component), transition_moment_right(component))
+!    
+            enddo
+!
+         enddo
+!
+      endif
+!
+   end subroutine do_eom_fop_engine
+!
 !
 end module fop_engine_class
