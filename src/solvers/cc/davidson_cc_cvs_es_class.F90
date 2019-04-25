@@ -55,7 +55,7 @@ module davidson_cvs_cc_es_class
 !
 contains
 !
-   subroutine prepare_davidson_cvs_cc_es(solver)
+   subroutine prepare_davidson_cvs_cc_es(solver, transformation)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -63,6 +63,8 @@ contains
       implicit none
 !
       class(davidson_cvs_cc_es) :: solver
+!
+      character(len=*), optional :: transformation
 !
       solver%tag = 'Davidson coupled cluster core excited state solver'
       solver%description1 = 'A Davidson CVS solver that calculates core excitation energies and the &
@@ -88,6 +90,8 @@ contains
       solver%max_dim_red          = 100 
 !
       call solver%read_settings()
+!
+      if (present(transformation)) solver%transformation = trim(transformation)
 !
       call solver%print_settings()
 !

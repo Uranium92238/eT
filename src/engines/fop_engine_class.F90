@@ -88,7 +88,16 @@ contains
       class(fop_engine) :: engine
       class(ccs)         :: wf
 !
-      write(output%unit, *)'FISKFISKFSIK'
+!     Cholesky decomposition
+!
+      call engine%do_cholesky(wf, wf%orbital_coefficients)
+!
+!     Ground state solution
+!
+      call engine%do_ground_state(wf)
+!
+      call wf%integrals%write_t1_cholesky(wf%t1)
+      call wf%integrals%can_we_keep_g_pqrs_t1()
 !
    end subroutine run_fop_engine
 !

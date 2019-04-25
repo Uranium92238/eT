@@ -124,7 +124,7 @@ contains
    end subroutine run_es_engine
 !
 !
-   subroutine do_excited_state_es_engine(engine, wf)
+   subroutine do_excited_state_es_engine(engine, wf, transformation)
 !!
 !!    Do excited state
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -143,6 +143,8 @@ contains
       class(es_engine)  :: engine
       class(ccs)        :: wf
 !
+      character(len=*), optional :: transformation
+!
       type(diis_cc_es), allocatable                  :: cc_es_solver_diis
 !
       type(davidson_cc_es), allocatable, target      ::  cc_valence_es
@@ -156,7 +158,16 @@ contains
 !
          allocate(cc_es_solver_diis)
 !
-         call cc_es_solver_diis%prepare()
+         if (present(transformation)) then
+!
+            call cc_es_solver_diis%prepare(transformation)
+!
+         else
+!
+            call cc_es_solver_diis%prepare()
+!
+         endif
+!
          call cc_es_solver_diis%run(wf)
          call cc_es_solver_diis%cleanup()
 !
@@ -169,7 +180,16 @@ contains
             allocate(cc_core_es)
             cc_es_solver => cc_core_es
 !
-            call cc_es_solver%prepare()
+            if (present(transformation)) then
+!
+               call cc_es_solver%prepare(transformation)
+!
+            else
+!
+               call cc_es_solver%prepare()
+!
+            endif
+!
             call cc_es_solver%run(wf)
             call cc_es_solver%cleanup()
 !
@@ -189,7 +209,16 @@ contains
             allocate(cc_valence_es)
             cc_es_solver => cc_valence_es
 !
-            call cc_es_solver%prepare()
+            if (present(transformation)) then
+!
+               call cc_es_solver%prepare(transformation)
+!
+            else
+!
+               call cc_es_solver%prepare()
+!
+            endif
+!
             call cc_es_solver%run(wf)
             call cc_es_solver%cleanup()
 !
