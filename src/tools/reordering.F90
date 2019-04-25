@@ -357,6 +357,105 @@ contains
    end subroutine construct_123_minus_321
 !
 !
+   subroutine construct_132_minus_231(x_pqr, y_pqr, dim_)
+!!
+!!    Construct 123 minus 321
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, April 2019
+!!
+!!    Performs:
+!!
+!!       y_pqr(p,q,r) = x_pqr(p,r,q) - x_pqr(q,r,p)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
+      real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
+!
+      integer :: p,q,r
+!
+!$omp parallel do schedule(static) private(p,q,r)
+      do r = 1, dim_
+         do q = 1, dim_
+           do p = 1, dim_
+!
+               y_pqr(p,q,r) = x_pqr(p,r,q) - x_pqr(q,r,p)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine construct_132_minus_231
+!
+!
+   subroutine construct_123_minus_213(x_pqr, y_pqr, dim_)
+!!
+!!    Construct 123 minus 321
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, April 2019
+!!
+!!    Performs:
+!!
+!!       y_pqr(p,q,r) = x_pqr(p,q,r) - x_pqr(q,p,r)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
+      real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
+!
+      integer :: p,q,r
+!
+!$omp parallel do schedule(static) private(p,q,r)
+      do r = 1, dim_
+         do q = 1, dim_
+           do p = 1, dim_
+!
+               y_pqr(p,q,r) = x_pqr(p,q,r) - x_pqr(q,p,r)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine construct_123_minus_213
+!
+!
+   subroutine construct_321_minus_312(x_pqr, y_pqr, dim_)
+!!
+!!    Construct 123 minus 321
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, April 2019
+!!
+!!    Performs:
+!!
+!!       y_pqr(p,q,r) = x_pqr(r,q,p) - x_pqr(r,p.q)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
+      real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
+!
+      integer :: p,q,r
+!
+!$omp parallel do schedule(static) private(p,q,r)
+      do r = 1, dim_
+         do q = 1, dim_
+           do p = 1, dim_
+!
+               y_pqr(p,q,r) = x_pqr(r,q,p) - x_pqr(r,p,q)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine construct_321_minus_312
+!
+!
    subroutine construct_123_minus_132(x_pqr, y_pqr, dim_)
 !!
 !!    Construct 123 minus 132

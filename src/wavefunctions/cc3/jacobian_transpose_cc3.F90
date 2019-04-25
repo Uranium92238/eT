@@ -355,10 +355,10 @@ contains
 !!    Computes the second contribution of the T3 amplitudes to sigma_1
 !!
 !!    Constructs t^abc_ijk for fixed ijk and contracts with c_abij
-!!    The intermediate X_ck is then contracted with L_kcld
+!!    The intermediate X_ai is then contracted with L_kcld
 !!
 !!    sigma_dl =  sum_abcijk C^ab_ij (t^abc_ijk - t^acb_ijk) L_kcld
-!!             =  sum_ck X_ck * L_kcld
+!!             =  sum_ck X_ai * L_kcld
 !!    
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -402,7 +402,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: L_jbkc
 !
 !     Intermediate
-      real(dp), dimension(:,:), allocatable :: X_ck
+      real(dp), dimension(:,:), allocatable :: X_ai
 !
       type(batching_index) :: batch_i, batch_j, batch_k, batch_l
       integer :: i, j, k, i_rel, j_rel, k_rel
@@ -410,7 +410,7 @@ contains
       integer :: req_0, req_1, req_2, req_3
       real(dp) :: batch_buff = 0.0
 !
-!     :: Construct intermediate X_ck ::
+!     :: Construct intermediate X_ai ::
 !
       call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -418,10 +418,10 @@ contains
       call mem%alloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1342(wf%t2, t_abji, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Array for the whole intermediate X_ck
+!     Array for the whole intermediate X_ai
 !
-      call mem%alloc(X_ck, wf%n_v, wf%n_o)
-      X_ck = zero
+      call mem%alloc(X_ai, wf%n_v, wf%n_o)
+      X_ai = zero
 !
 !     Setup and Batching loops
 !
@@ -575,8 +575,8 @@ contains
 !
                         call wf%omega_cc3_eps(i, j, k, t_abc)
 !
-                        call wf%jacobian_transpose_cc3_X_ck_calc(i, j, k, t_abc, u_abc,   &
-                                                                  X_ck, c_abij)
+                        call wf%jacobian_transpose_cc3_X_ai_calc(i, j, k, t_abc, u_abc,   &
+                                                                  X_ai, c_abij)
 !
                      enddo ! loop over k
                   enddo ! loop over j
@@ -622,7 +622,7 @@ contains
       call mem%dealloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
 !
-!     :: sigma_dl = sum_ck X_ck * L_kcld ::
+!     :: sigma_dl = sum_ck X_ai * L_kcld ::
 !
 !
       req_0 = 0
@@ -645,7 +645,7 @@ contains
 !
          call sort_1234_to_1324(L_jbkc, L_kcld, wf%n_v, wf%n_v, wf%n_o, batch_l%length)
 !
-!        sigma_dl += sum_ck X_ck * L_kcld
+!        sigma_dl += sum_ck X_ai * L_kcld
 !
          call dgemv('T',                        &
                      wf%n_v * wf%n_o,           &
@@ -653,7 +653,7 @@ contains
                      one,                       &
                      L_kcld,                    & ! L_dl_ck
                      wf%n_v * wf%n_o,           &
-                     X_ck,                      & ! X_ck
+                     X_ai,                      & ! X_ai
                      1,                         &
                      one,                       &
                      sigma_ai(1,batch_l%first), & ! sigma_dl
@@ -667,16 +667,16 @@ contains
 !
       call disk%close_file(wf%L_jbkc_t)
 !
-      call mem%dealloc(X_ck, wf%n_v, wf%n_o)
+      call mem%dealloc(X_ai, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_transpose_cc3_sigma1_t3_B1_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_X_ck_calc_cc3(wf, i, j, k, t_abc, u_abc, X_ck, c_abij)
+   module subroutine jacobian_transpose_cc3_X_ai_calc_cc3(wf, i, j, k, t_abc, u_abc, X_ai, c_bcjk)
 !!
-!!    Constructs the intermediate X_ck
+!!    Constructs the intermediate X_ai
 !!
-!!    X_ck =  sum_abcijk C^ab_ij (t^abc_ijk - t^acb_ijk)
+!!    X_ai = sum_abcijk (t^abc_ijk - t^bac_ijk) C^bc_jk 
 !!
 !!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops
 !!
@@ -689,122 +689,113 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: X_ck
+      real(dp), dimension(wf%n_v, wf%n_o), intent(out)                  :: X_ai
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: c_abij
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: c_bcjk
 !
-      if (j .ne. k) then ! t_abc - t_acb = 0 if j==k
+      
+!     Construct u_acb = (t_acb - t_bca)
+!     Zero if i == k, but this is never true
 !
-!     Construct u_abc = t_abc - t_acb
+      call construct_132_minus_231(t_abc, u_abc, wf%n_v)
 !
-      call construct_123_minus_132(t_abc, u_abc, wf%n_v)
+!     X_ai += sum_bc (t^acb - t^bca) * C_bckj
 !
-!     X_ck += sum_ab (t^abc - t^acb) * C_abij
+      call dgemv('N',               &
+                  wf%n_v,           & ! dim of c
+                  wf%n_v**2,        & ! dim of X
+                  one,              &
+                  u_abc,            & ! u_a_bc
+                  wf%n_v,           &
+                  c_bcjk(:,:,k,j),  & ! c_bc_kj
+                  1,                &
+                  one,              &
+                  X_ai(:,i),        & ! X_ai
+                  1)
 !
-         call dgemv('T',               &
-                     wf%n_v**2,        & ! dim of c
-                     wf%n_v,           & ! dim of X
+!     X_ak += -sum_bc (t^acb - t^bca) * C_bcij
+!
+      call dgemv('N',               &
+                  wf%n_v,           & ! dim of c
+                  wf%n_v**2,        & ! dim of X
+                  one,              &
+                  u_abc,            & ! u_a_bc
+                  wf%n_v,           &
+                  c_bcjk(:,:,i,j),  & ! c_bc_ij
+                  1,                &
+                  one,              &
+                  X_ai(:,k),        & ! X_ak
+                  1)
+!
+      if (k .ne. j .and. j .ne. i) then ! The rest is either zero or identical to the first terms
+!
+!        Construct u_abc = t_abc - t_bac
+!
+         call construct_123_minus_213(t_abc, u_abc, wf%n_v)
+!
+!        X_ai += sum_bc (t^abc - t^bac) * C_bcjk
+!
+         call dgemv('N',               &
+                     wf%n_v,           & ! dim of c
+                     wf%n_v**2,        & ! dim of X
                      one,              &
-                     u_abc,            & ! u_c_ab
-                     wf%n_v**2,        &
-                     c_abij(:,:,i,j),  & ! c_ab_ij
+                     u_abc,            & ! u_a_bc
+                     wf%n_v,           &
+                     c_bcjk(:,:,j,k),  & ! c_bc_jk
                      1,                &
                      one,              &
-                     X_ck(:,k),        & ! X_ck
+                     X_ai(:,i),        & ! X_ai
                      1)
 !
-!        X_cj += sum_ab C_abik * (t^acb - t^abc)
+!        X_aj += -sum_bc (t^abc - t^bac) * C_bcik
 !
-         call dgemv('T',               &
-                     wf%n_v**2,        & ! dim of c
-                     wf%n_v,           & ! dim of X
+         call dgemv('N',               &
+                     wf%n_v,           & ! dim of c
+                     wf%n_v**2,        & ! dim of X
                      -one,             &
-                     u_abc,            & ! u_c_ab
-                     wf%n_v**2,        &
-                     c_abij(:,:,i,k),  & ! c_ab_ik
+                     u_abc,            & ! u_a_bc
+                     wf%n_v,           &
+                     c_bcjk(:,:,i,k),  & ! c_bc_ik
                      1,                &
                      one,              &
-                     X_ck(:,j),        & ! X_cj
+                     X_ai(:,j),        & ! X_aj
+                     1)
+!
+!        Construct u_cba = t_cba - t_cab
+!
+         call construct_321_minus_312(t_abc, u_abc, wf%n_v)
+!
+!        X_ak += sum_bc (t^cba - t^cab) * C_bcji
+!
+         call dgemv('N',               &
+                     wf%n_v,           & ! dim of c
+                     wf%n_v**2,        & ! dim of X
+                     one,              &
+                     u_abc,            & ! u_a_bc
+                     wf%n_v,           &
+                     c_bcjk(:,:,j,i),  & ! c_bc_ji
+                     1,                &
+                     one,              &
+                     X_ai(:,k),        & ! X_ak
+                     1)
+!
+!        X_aj += -sum_bc (t^cba - t^cab) * C_bcki
+!
+         call dgemv('N',               &
+                     wf%n_v,           & ! dim of c
+                     wf%n_v**2,        & ! dim of X
+                     -one,             &
+                     u_abc,            & ! u_a_bc
+                     wf%n_v,           &
+                     c_bcjk(:,:,k,i),  & ! c_bc_ki
+                     1,                &
+                     one,              &
+                     X_ai(:,j),        & ! X_aj
                      1)
 !
       end if
 !
-      if (i .ne. j) then
-!
-!        Construct u_abc = t_bac - t_cab
-!
-         call construct_213_minus_312(t_abc, u_abc, wf%n_v)
-!
-!        X_ck += sum_ab C_abji * (t^bac - t^cab)
-!
-         call dgemv('T',               &
-                     wf%n_v**2,        & ! dim of c
-                     wf%n_v,           & ! dim of X
-                     one,              &
-                     u_abc,            & ! u_c_ab
-                     wf%n_v**2,        &
-                     c_abij(:,:,j,i),  & ! c_ab_ji
-                     1,                &
-                     one,              &
-                     X_ck(:,k),        & ! X_ck
-                     1)
-!
-         if(j .ne. k) then
-!
-!           X_ci += sum_ab C_abjk * (t^cab - t^bac)
-!
-            call dgemv('T',               &
-                        wf%n_v**2,        & ! dim of c
-                        wf%n_v,           & ! dim of X
-                        -one,             &
-                        u_abc,            & ! u_c_ab
-                        wf%n_v**2,        &
-                        c_abij(:,:,j,k),  & ! c_ab_jk
-                        1,                &
-                        one,              &
-                        X_ck(:,i),        & ! X_ci
-                        1)
-!
-         end if
-!
-!        Construct u_abc = t_cba - t_bca
-!
-         call construct_321_minus_231(t_abc, u_abc, wf%n_v) ! t_cba - t_bca = 0 if i==j
-!
-!        X_ci += sum_ab C_abkj * (t_cba - t_bca)
-!
-         call dgemv('T',               &
-                     wf%n_v**2,        & ! dim of c
-                     wf%n_v,           & ! dim of X
-                     one,              &
-                     u_abc,            & ! u_c_ab
-                     wf%n_v**2,        &
-                     c_abij(:,:,k,j),  & ! c_ab_kj
-                     1,                &
-                     one,              &
-                     X_ck(:,i),        & ! X_ci
-                     1)
-!
-         if(j .ne. k) then
-!
-!           X_cj += sum_ab C_abki * (t^bca - t^cba)
-!
-            call dgemv('T',               &
-                        wf%n_v**2,        & ! dim of c
-                        wf%n_v,           & ! dim of X
-                        one,              &
-                        u_abc,            & ! u_c_ab
-                        wf%n_v**2,        &
-                        c_abij(:,:,k,i),  & ! c_ab_ki
-                        1,                &
-                        one,              &
-                        X_ck(:,j),        & ! X_cj
-                        1)
-!
-         end if
-      end if
-!
-   end subroutine jacobian_transpose_cc3_X_ck_calc_cc3
+   end subroutine jacobian_transpose_cc3_X_ai_calc_cc3
 
 
    module subroutine jacobian_transpose_cc3_C3_terms_cc3(wf, omega, c_ai, c_abij, sigma_ai, sigma_abij)

@@ -1101,6 +1101,7 @@ contains
 !
 !
 !     Construct u_abc = t_abc - t_cba
+!     Zero if i == k, but this is never true
 !
       call construct_123_minus_321(t_abc, u_abc, wf%n_v)
 !
@@ -1134,7 +1135,6 @@ contains
 !
 !
 !     omega_ak += sum_cb (t^cba - t^abc)*L_jbic
-!     Same as above if i == k, but this is never true
 !
       call dgemv('N', &
                  wf%n_v, &

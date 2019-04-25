@@ -60,7 +60,7 @@
 !!    Computes first contribution of the T3 amplitudes to sigma_1
 !!
 !!    Constructs t^abc_ijk for fixed ijk and contracts with c_abij
-!!    The intermediate X_ck is then contracted with L_kcld
+!!    The intermediate X_ai is then contracted with L_kcld
 !!
 !!    sigma_dl =  sum_abcijk C^ab_ij (t^abc_ijk - t^acb_ijk) L_kcld
 !!    
@@ -77,11 +77,11 @@
    end subroutine jacobian_transpose_cc3_sigma1_t3_B1_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_X_ck_calc_cc3(wf, i, j, k, t_abc, u_abc, X_ck, c_abij)
+   module subroutine jacobian_transpose_cc3_X_ai_calc_cc3(wf, i, j, k, t_abc, u_abc, X_ai, c_bcjk)
 !!
-!!    Constructs the intermediate X_ck
+!!    Constructs the intermediate X_ai
 !!
-!!    X_ck =  sum_abcijk C^ab_ij (t^abc_ijk - t^acb_ijk)
+!!    X_ai =  sum_bcjk (t^abc_ijk - t^bac_ijk)*C^bc_jk
 !!
 !!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops
 !!
@@ -94,11 +94,11 @@
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: X_ck
+      real(dp), dimension(wf%n_v, wf%n_o), intent(out)                  :: X_ai
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: c_abij
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: c_bcjk
 !
-   end subroutine jacobian_transpose_cc3_X_ck_calc_cc3
+   end subroutine jacobian_transpose_cc3_X_ai_calc_cc3
 !
 !
    module subroutine jacobian_transpose_cc3_C3_terms_cc3(wf, omega, c_ai, c_abij, sigma_ai, sigma_abij)

@@ -107,7 +107,7 @@ module cc3_class
 !
       procedure :: jacobian_transpose_cc3_sigma1_t3_A1   => jacobian_transpose_cc3_sigma1_t3_A1_cc3
       procedure :: jacobian_transpose_cc3_sigma1_t3_B1   => jacobian_transpose_cc3_sigma1_t3_B1_cc3
-      procedure :: jacobian_transpose_cc3_X_ck_calc      => jacobian_transpose_cc3_X_ck_calc_cc3
+      procedure :: jacobian_transpose_cc3_X_ai_calc      => jacobian_transpose_cc3_X_ai_calc_cc3
 !
       procedure :: jacobian_transpose_cc3_C3_terms       => jacobian_transpose_cc3_C3_terms_cc3
       procedure :: jacobian_transpose_cc3_calc_outer     => jacobian_transpose_cc3_calc_outer_cc3
