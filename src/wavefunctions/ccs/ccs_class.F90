@@ -200,7 +200,8 @@ module ccs_class
 !     Routines related to property calculations
 !
       procedure :: construct_etaX                              => construct_etaX_ccs
-      procedure :: construct_ccs_etaX                          => construct_ccs_etaX_ccs
+      procedure :: construct_ccs_etaX_a1                       => construct_ccs_etaX_a1_ccs
+      procedure :: construct_ccs_etaX_b1                       => construct_ccs_etaX_b1_ccs
       procedure :: construct_csiX                              => construct_csiX_ccs
       procedure :: construct_ccs_csiX                          => construct_ccs_csiX_ccs
       procedure :: get_eom_contribution                        => get_eom_contribution_ccs
@@ -3744,73 +3745,175 @@ contains
    end subroutine get_operator_vv_ccs
 !
 !
-   subroutine construct_etaX_ccs(wf, Xoperator, etaX)
+   subroutine construct_etaX_ccs(wf, X, etaX)
 !!
-!!    Handling the construction of left-hand-side vector etaX 
+
 !!    Written by Josefine H. Andersen, 2019
 !!
-!!    etaX_ai = 2*X_ia
+!!    Adapted by Sarai D. Folekstad, Apr 2019
+!!
+!!    Handling the construction of left-hand-side vector etaX 
+!!
+!!    η^X_μ = < Λ | X τ_μ | CC >
+!!
+!!   !! etaX_ai = 2*X_ia ++
 !!
       implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      character(len=*), intent(in) :: Xoperator
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
-      call wf%construct_ccs_etaX(Xoperator, etaX)
+      etaX = zero
+!
+      call wf%construct_ccs_etaX_a1(X, etaX)
+      call wf%construct_ccs_etaX_b1(X, etaX)
 !
    end subroutine construct_etaX_ccs
 !
 !
-   subroutine construct_ccs_etaX_ccs(wf, Xoperator, etaX)
+   subroutine construct_ccs_etaX_a1_ccs(wf, X, etaX_ai)
 !!
 !!    Construct left-hand-side vector etaX (CCS)
 !!    Written by Josefine H. Andersen, 2019
 !!
+!!    Adapted by Sarai D. Folekstad, Apr 2019
+!!
       implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      character(len=*), intent(in) :: Xoperator
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
-
-      real(dp), dimension(:), allocatable :: X_ia
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX_ai
 !
-      call mem%alloc(X_ia, wf%n_es_amplitudes)
+      integer :: a, i
 !
-      call  wf%get_operator_ov(Xoperator, X_ia)
+!$omp parallel do private(a, i)
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
 !
-      call dscal(wf%n_es_amplitudes, two, X_ia, 1)
+            etaX_ai(a, i) = etaX_ai(a, i) + two*X(i, wf%n_o + a)
 !
-      call sort_12_to_21(X_ia, etaX, wf%n_o, wf%n_v)
+         enddo
+      enddo
+!$omp end parallel do
 !
-      call mem%dealloc(X_ia, wf%n_es_amplitudes) 
-!
-   end subroutine construct_ccs_etaX_ccs
+   end subroutine construct_ccs_etaX_a1_ccs
 !
 !
-   subroutine construct_csiX_ccs(wf, Xoperator, csiX)
+   subroutine construct_ccs_etaX_b1_ccs(wf, X, etaX_ai)
 !!
-!!    Handling the construction of the right-hand-side vector csiX
+!!    Construct B1 term of etaX singles
+!!    Written by Josefine H. Andersen
+!!
+!!    Adapted by Sarai D. Folkestad, Apr 2019
+!!
+!!    B1 = sum_c tb_ci X_ca - sum_k tb_ak X_ik
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
+!      
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)   :: etaX_ai
+!      
+      !real(dp), dimension(:,:), allocatable :: etaX_temp
+!
+      real(dp), dimension(:,:), allocatable :: X_ca
+      real(dp), dimension(:,:), allocatable :: X_ik
+!
+      integer :: i, k, a, c
+!
+!     :: First term  sum_c tb_ci X_ca
+!
+      call mem%alloc(X_ca, wf%n_v, wf%n_v)
+!
+!$omp parallel do private(a, c)
+      do a = 1, wf%n_v
+         do c = 1, wf%n_v
+!
+            X_ca(c, a) = X(c + wf%n_o, a + wf%n_o)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call dgemm('T','N',  &
+                 wf%n_v,   &
+                 wf%n_o,   &
+                 wf%n_v,   &
+                 one,      &
+                 X_ca,     &
+                 wf%n_v,   &
+                 wf%t1bar, &
+                 wf%n_v,   &
+                 one,      &
+                 etaX_ai,  &
+                 wf%n_v)
+!         
+      call mem%dealloc(X_ca, wf%n_v, wf%n_v)
+!      
+!     :: Second term  - sum_k tb_ak X_ik
+!
+      call mem%alloc(X_ik, wf%n_o, wf%n_o)
+!
+!$omp parallel do private(k, i)
+      do k = 1, wf%n_o
+         do i = 1, wf%n_o
+!
+            X_ca(i, k) = X(i, k)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!      
+      call dgemm('N','T',   &
+                 wf%n_v,    &
+                 wf%n_o,    &
+                 wf%n_o,    &
+                 -one,      &
+                 wf%t1bar,  &
+                 wf%n_v,    &
+                 X_ik,      &
+                 wf%n_o,    &
+                 one,       &
+                 etaX_ai,   &
+                 wf%n_v)
+!         
+      call mem%dealloc(X_ik, wf%n_o, wf%n_o)
+!
+   end subroutine construct_ccs_etaX_b1_ccs
+!
+!
+   subroutine construct_csiX_ccs(wf, X, csiX)
+!!
+!!    Construct csiX
 !!    Written by Josefine H. Andersen, 2019
 !!
+!!    Adapted by Sarai D. Folkestad
+!!
+!!    Handling the construction of the right-hand-side vector :
+!!
+!!       ξ^X_μ = < μ | exp(-T) X exp(T)| R >
+!!
       implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      character(len=*), intent(in) :: Xoperator
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
 !
-      call wf%construct_ccs_csiX(Xoperator, csiX)
+      call wf%construct_ccs_csiX(X, csiX)
 !
    end subroutine construct_csiX_ccs
 !
 !
-   subroutine construct_ccs_csiX_ccs(wf, Xoperator, csiX)
+   subroutine construct_ccs_csiX_ccs(wf, X, csiX_ai)
 !!
 !!    Construct right-hand-side vector csiX 
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -3819,18 +3922,28 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      character(len=*), intent(in) :: Xoperator
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: csiX_ai
+!
+      integer :: a, i
 !
 !     csiX_ai = X_ai
 !
-      call wf%get_operator_vo(Xoperator, csiX)
+!$omp parallel do private(a, i)
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            csiX_ai(a, i) = csiX_ai(a, i) + X(wf%n_o + a, i)
+!
+         enddo
+      enddo
+!$omp end parallel do
 !
    end subroutine construct_ccs_csiX_ccs
 !
 !
-   subroutine get_eom_contribution_ccs(wf, etaX, csiX, Xoperator)
+   subroutine get_eom_contribution_ccs(wf, etaX, csiX, X)
 !!
 !!    Add EOM contribution to etaX vector
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -3839,42 +3952,57 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      character(len=*), intent(inout), optional :: Xoperator
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
       real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
 !
-      call wf%get_eom_xcc_contribution(etaX, csiX)
+      call wf%get_eom_xcc_contribution(etaX, csiX, X)
 !
    end subroutine get_eom_contribution_ccs
 !
 !
-   subroutine get_eom_xcc_contribution_ccs(wf, etaX, csiX)
+   subroutine get_eom_xcc_contribution_ccs(wf, etaX_ai, csiX_ai, X)
 !!
-!!    Add EOM contribution to etaX vector
+!!    Get eom contribution
 !!    Written by Josefine H. Andersen, Feb 2019
+!!
+!!    Adapted by Sarai D. Folkestad, Apr 2019
+!!
+!!    Add EOM contribution to etaX vector:
+!!
+!!       η^X_μ -= tbar_μ < Λ | X | R >
+!!             -= tbar_μ ((sum_i 2*X_ii) + sum_μ tbar_μ * < μ | exp(-T) X exp(T)| R >)
 !!
       implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: csiX_ai
 !
-      real(dp), dimension(:), allocatable                     :: multipliers
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
       real(dp) :: X_cc
       real(dp) :: ddot
 !
-      call mem%alloc(multipliers, wf%n_es_amplitudes)
+      integer :: i
 !
-      call wf%get_multipliers(multipliers)
+!     Term 1: sum_i 2*X_ii
 !
-      X_cc = ddot(wf%n_es_amplitudes, multipliers, 1, csiX, 1)
+      X_cc = zero
 !
-      call daxpy(wf%n_es_amplitudes, X_cc, multipliers, 1, etaX, 1)
+      do i = 1, wf%n_o 
 !
-      call mem%dealloc(multipliers, wf%n_es_amplitudes)
+         X_cc = X_cc + two*X(i,i)
+!
+      enddo
+!
+!     Term 2: (sum_μ tbar_μ * < μ | exp(-T) X exp(T)| R >) 
+!
+      X_cc = X_cc + ddot((wf%n_o)*(wf%n_v), wf%t1bar, 1, csiX_ai, 1)
+!
+      call daxpy((wf%n_o)*(wf%n_v), -X_cc, wf%t1bar, 1, etaX_ai, 1)
 !
    end subroutine get_eom_xcc_contribution_ccs
 !

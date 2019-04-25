@@ -36,7 +36,7 @@ contains
 !
 !     etaX_ai:
 !
-      call wf%construct_ccs_etaX(Xoperator, etaX)
+   !   call wf%construct_ccs_etaX(Xoperator, etaX)
       call wf%construct_etaX_singles_q1(Xoperator, etaX)
       call wf%construct_etaX_singles_q2(Xoperator, etaX)
 !
@@ -441,7 +441,7 @@ contains
 !
 !     csiX_ai
 !
-      call wf%construct_ccs_csiX(Xoperator, csiX)
+     !! call wf%construct_ccs_csiX(Xoperator, csiX)
       call wf%construct_csiX_singles(Xoperator, csiX)
 !
 !     ciX_aibj
@@ -639,7 +639,7 @@ contains
 !
       call wf%construct_ccsd_eom_contribution(Xoperator, etaX)
 !
-      call wf%get_eom_xcc_contribution(etaX, csiX)
+   !!   call wf%get_eom_xcc_contribution(etaX, csiX)
 !
    end subroutine get_eom_contribution_ccsd
 !

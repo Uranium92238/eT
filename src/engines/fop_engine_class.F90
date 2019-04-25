@@ -199,7 +199,7 @@ contains
             etaX = zero
             csiX = zero
 !
-            !call wf%construct_etaX(operator, solver%etaX)      
+            call wf%construct_etaX(operator(:,:,component), etaX)      
 !
             !call wf%construct_csiX(operator, solver%csiX)      
 !

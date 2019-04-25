@@ -153,17 +153,17 @@ module ccsd_class
 !
 !     Routines related to property calculations
 !
-      procedure :: construct_etaX                              => construct_etaX_ccsd
+    !  procedure :: construct_etaX                              => construct_etaX_ccsd
       procedure :: construct_etaX_singles_q1                   => construct_etaX_singles_q1_ccsd
       procedure :: construct_etaX_singles_q2                   => construct_etaX_singles_q2_ccsd
       procedure :: construct_etaX_doubles_q1                   => construct_etaX_doubles_q1_ccsd
       procedure :: construct_etaX_doubles_q2                   => construct_etaX_doubles_q2_ccsd
 !     
-      procedure :: construct_csiX                              => construct_csiX_ccsd
+    !  procedure :: construct_csiX                              => construct_csiX_ccsd
       procedure :: construct_csiX_singles                      => construct_csiX_singles_ccsd
       procedure :: construct_csiX_doubles                      => construct_csiX_doubles_ccsd
 !
-      procedure :: get_eom_contribution                        => get_eom_contribution_ccsd
+     ! procedure :: get_eom_contribution                        => get_eom_contribution_ccsd
       procedure :: construct_ccsd_eom_contribution             => construct_ccsd_eom_contribution_ccsd
 !      
       procedure :: F_transform_vector                           => F_transform_vector_ccsd
