@@ -299,11 +299,11 @@
 !
 !
    module subroutine construct_intermediates_c3_cc3(wf, i, j, k, c_abc, u_abc, t_abij, Y_cmjk,   &
-                                                   X_bcei, X_bcej, X_bcek)
+                                                   Y_bcei, Y_bcej, Y_bcek)
 !!
-!!    Constructs the intermediates X_bcei and Y_cmjk used to compute the c3 contributions to sigma_ai
+!!    Constructs the intermediates Y_bcei and Y_cmjk used to compute the c3 contributions to sigma_ai
 !!
-!!    X_bcei = sum_aij c^abc_ijk * t^ae_ij
+!!    Y_bcei = sum_aij c^abc_ijk * t^ae_ij
 !!    Y_cmjk = sum_abj c^bac_ijk * t^ba_mj
 !!
 !!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops
@@ -321,11 +321,11 @@
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)      :: t_abij
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(inout)   :: Y_cmjk
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(out)     :: Y_cmjk
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_bcei
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_bcej
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_bcek
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: Y_bcei
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: Y_bcej
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: Y_bcek
 !
    end subroutine construct_intermediates_c3_cc3
 !

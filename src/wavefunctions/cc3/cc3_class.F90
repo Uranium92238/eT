@@ -50,8 +50,8 @@ module cc3_class
       type(file)  :: g_becd_t
       type(file)  :: g_mjlk_t
       type(file)  :: g_lbkc_t
-      type(file)  :: g_leck_t
-      type(file)  :: g_cdmk_t
+      type(file)  :: g_ckld_t
+      type(file)  :: g_cdlk_t
 !
 !     Left Jacobian intermediates files
 !

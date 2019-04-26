@@ -2145,12 +2145,12 @@ contains
 !
 !
    module subroutine construct_intermediates_c3_cc3(wf, i, j, k, c_abc, u_abc, t_abij, Y_cmjk,   &
-                                                   X_bcei, X_bcej, X_bcek)
+                                                   Y_bcei, Y_bcej, Y_bcek)
 !!
-!!    Constructs the intermediates X_bcei and Y_cmjk used to compute the c3 contributions to sigma_ai
+!!    Constructs the intermediates Y_bcei and Y_cmik used to compute the c3 contributions to sigma_ai
 !!
-!!    X_bcei = sum_aij c^abc_ijk * t^ae_ij
-!!    Y_cmjk = sum_abj c^bac_ijk * t^ba_mj
+!!    Y_bcei = sum_aij c^abc_ijk * t^ae_ij
+!!    Y_cmik = sum_abj c^abc_ijk * t^ab_mj
 !!
 !!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops
 !!
@@ -2167,11 +2167,11 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)      :: t_abij
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(inout)   :: Y_cmjk
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(out)     :: Y_cmjk
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_bcei
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_bcej
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_bcek
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: Y_bcei
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: Y_bcej
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: Y_bcek
 !
 !     Y_cikm = sum_ab c^abc_ijk t^ab_mj
 !
@@ -2188,6 +2188,22 @@ contains
                   Y_cmjk(:,:,i,k),  & ! Y_cmik
                   wf%n_v)
 !
+!     Y_bcek = sum_a c^abc_ijk t^ae_ij
+!
+      call dgemm('T','N',           &
+                  wf%n_v**2,        &
+                  wf%n_v,           &
+                  wf%n_v,           &
+                  one,              &
+                  c_abc,            & ! c_a_bc
+                  wf%n_v,           &
+                  t_abij(:,:,i,j),  & ! t_ae_ij
+                  wf%n_v,           &
+                  one,              &
+                  Y_bcek,           & ! Y_bcek
+                  wf%n_v**2)
+!
+!
 !     Y_ckim = sum_ab c^cab_ijk t^ab_mj
 !
       call dgemm('N','N',           &
@@ -2203,22 +2219,7 @@ contains
                   Y_cmjk(:,:,j,i),  & ! Y_cmki
                   wf%n_v)
 !
-!     X_bcek = sum_a c^abc_ijk t^ae_ij
-!
-      call dgemm('T','N',           &
-                  wf%n_v**2,        &
-                  wf%n_v,           &
-                  wf%n_v,           &
-                  one,              &
-                  c_abc,            & ! c_a_bc
-                  wf%n_v,           &
-                  t_abij(:,:,i,j),  & ! t_a_e_ij
-                  wf%n_v,           &
-                  one,              &
-                  X_bcek,           & ! X_bcek
-                  wf%n_v**2)
-!
-!     X_bcej = sum_a c^bca_ijk t^ae_ki
+!     Y_bcej = sum_a c^bca_ijk t^ae_ki
 !
       call dgemm('N','N',           &
                   wf%n_v**2,        &
@@ -2230,12 +2231,53 @@ contains
                   t_abij(:,:,k,i),  & ! t_a_e_ki
                   wf%n_v,           &
                   one,              &
-                  X_bcej,           & ! X_bcej
+                  Y_bcej,           & ! Y_bcej
                   wf%n_v**2)
 !
-      if (i .ne. j) then
+!
+      call sort_123_to_231(c_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     123->231(bca) = cab
+!     123->231(cab) = abc
+!
+!     Y_cmkj = sum_ab c^bca_ijk t^ab_mi
+!
+      call dgemm('N','N',           &
+                  wf%n_v,           &
+                  wf%n_o,           &
+                  wf%n_v**2,        &
+                  one,              &
+                  c_abc,            & ! c_bca
+                  wf%n_v,           &
+                  t_abij(:,:,:,i),  & ! t_abmi
+                  wf%n_v**2,        &
+                  one,              &
+                  Y_cmjk(:,:,k,j),  & ! Y_cmji                     
+                  wf%n_v)
+!
+!
+!     Y_bcek = sum_a c^cab_ijk t^ae_jk
+!
+      call dgemm('T','N',           &
+                  wf%n_v**2,        &
+                  wf%n_v,           &
+                  wf%n_v,           &
+                  one,              &
+                  c_abc,            & ! c_cab
+                  wf%n_v,           &
+                  t_abij(:,:,j,k),  & ! t_aejk
+                  wf%n_v,           &
+                  one,              &
+                  Y_bcei,           & ! Y_bcei
+                  wf%n_v**2)
+!
+      if (k .ne. j .and. j .ne. i) then
 !
          call sort_123_to_213(c_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!        123->213(bac) = abc
+!        123->213(acb) = cab
+!        123->213(cba) = bca
 !
 !        Y_cmjk = sum_ab c^bac_ijk t^ab_mi
 !
@@ -2252,23 +2294,7 @@ contains
                      Y_cmjk(:,:,j,k),  & ! Y_cmjk
                      wf%n_v)
 !
-!        Y_cmki = sum_ab c^cba_ijk t^ab_mj
-!
-         call dgemm('N','N',           &
-                     wf%n_v,           &
-                     wf%n_o,           &
-                     wf%n_v**2,        &
-                     one,              &
-                     c_abc,            & ! c_cba
-                     wf%n_v,           &
-                     t_abij(:,:,:,j),  & ! t_abmj
-                     wf%n_v**2,        &
-                     one,              &
-                     Y_cmjk(:,:,k,i),  & ! Y_cmki
-                     wf%n_v)
-!
-!
-!        X_bcek = sum_a c^bac_ijk t^ae_ji
+!        Y_bcek = sum_a c^bac_ijk t^ae_ji
 !
          call dgemm('T','N',           &
                      wf%n_v**2,        &
@@ -2280,10 +2306,26 @@ contains
                      t_abij(:,:,j,i),  & ! t_aeji
                      wf%n_v,           &
                      one,              &
-                     X_bcek,           & ! X_bcek
+                     Y_bcek,           & ! Y_bcek
                      wf%n_v**2)
 !
-!        X_bcei = sum_a c^cba t^ae_kj
+!
+!        Y_cmij = sum_ab c^acb_ijk t^ab_mk
+!
+         call dgemm('N','N',           &
+                     wf%n_v,           &
+                     wf%n_o,           &
+                     wf%n_v**2,        &
+                     one,              &
+                     c_abc,            & ! c_acb
+                     wf%n_v,           &
+                     t_abij(:,:,:,k),  & ! t_abmjk
+                     wf%n_v**2,        &
+                     one,              &
+                     Y_cmjk(:,:,i,j),  & ! Y_cmij
+                     wf%n_v)
+!
+!        Y_bcei = sum_a c^cba t^ae_kj
 !
          call dgemm('N','N',           &
                      wf%n_v**2,        &
@@ -2295,32 +2337,32 @@ contains
                      t_abij(:,:,k,j),  & ! t_aekj
                      wf%n_v,           &
                      one,              &
-                     X_bcei,           & ! X_bcei
+                     Y_bcei,           & ! Y_bcei
                      wf%n_v**2)
 !
-      end if
-!
-      if (j .ne. k) then
 !
          call sort_123_to_132(c_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-!        Y_cmij = sum_ab c^acb_ijk t^ab_mk
+!        123->132(cba) = cab
+!        123->132(acb) = abc
 !
-         call dgemm('T','N',           &
+!        Y_cmki = sum_ab c^cba_ijk t^ab_mj
+!
+         call dgemm('N','N',           &
                      wf%n_v,           &
                      wf%n_o,           &
                      wf%n_v**2,        &
                      one,              &
-                     c_abc,            & ! c_acb
-                     wf%n_v**2,        &
-                     t_abij(:,:,:,k),  & ! t_abmk
+                     c_abc,            & ! c_cab
+                     wf%n_v,           &
+                     t_abij(:,:,:,j),  & ! t_abmj
                      wf%n_v**2,        &
                      one,              &
-                     Y_cmjk(:,:,i,j),  & ! Y_cmij
+                     Y_cmjk(:,:,k,i),  & ! Y_cmki
                      wf%n_v)
 !
 !
-!        X_bcek = sum_a c^acb_ijk t^ae_ik
+!        Y_bcej = sum_a c^acb_ijk t^ae_ik
 !
          call dgemm('T','N',           &
                      wf%n_v**2,        &
@@ -2332,44 +2374,7 @@ contains
                      t_abij(:,:,i,k),  & ! t_aeik
                      wf%n_v,           &
                      one,              &
-                     X_bcej,           & ! X_bcej
-                     wf%n_v**2)
-!
-      end if
-!
-      if (i .ne. j .and. j .ne. k) then
-!
-         call sort_123_to_231(c_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
-!
-!        Y_cmkj = sum_ab c^bca_ijk t^ab_mi
-!
-         call dgemm('N','N',           &
-                     wf%n_v,           &
-                     wf%n_o,           &
-                     wf%n_v**2,        &
-                     one,              &
-                     c_abc,            & ! c_bca
-                     wf%n_v,           &
-                     t_abij(:,:,:,i),  & ! t_abmi
-                     wf%n_v**2,        &
-                     one,              &
-                     Y_cmjk(:,:,k,j),  & ! Y_cmji                     
-                     wf%n_v)
-!
-!
-!        X_bcek = sum_a c^cab_ijk t^ae_jk
-!
-         call dgemm('T','N',           &
-                     wf%n_v**2,        &
-                     wf%n_v,           &
-                     wf%n_v,           &
-                     one,              &
-                     c_abc,            & ! c_cab
-                     wf%n_v,           &
-                     t_abij(:,:,j,k),  & ! t_aejk
-                     wf%n_v,           &
-                     one,              &
-                     X_bcei,           & ! X_bcei
+                     Y_bcej,           & ! Y_bcej
                      wf%n_v**2)
 !
       end if
@@ -2397,17 +2402,17 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_mjlk
       real(dp), dimension(:,:,:,:), allocatable :: g_mjcd
-      real(dp), dimension(:,:,:,:), allocatable :: g_mdck
+      real(dp), dimension(:,:,:,:), allocatable :: g_cjmd
 !
 !     arrays for resorting
-      real(dp), dimension(:,:,:,:), allocatable :: Y_xcmy
-      real(dp), dimension(:,:,:,:), allocatable :: g_dcmx
+      real(dp), dimension(:,:,:,:), allocatable :: Y_cmkj
+      real(dp), dimension(:,:,:,:), allocatable :: g_cmxd
 !
-      type(batching_index) ::  batch_j, batch_k, batch_l
-      integer :: j_batch, k_batch, l_batch
+      type(batching_index) :: batch_l, batch_d
+      integer :: l_batch, d_batch
       integer :: req_0, req_1
 !
-!     :: Term 1: sigma1 += sum_mjk Y_cmjk * g_mjlk ::
+!     :: Term 1: sigma_cl += sum_mjk Y_cmjk * g_mjlk ::
 !
       call disk%open_file(wf%g_mjlk_t,'read')
 !
@@ -2423,7 +2428,7 @@ contains
 !
       do l_batch = 1, batch_l%num_batches
 !
-       call batch_l%determine_limits(l_batch)
+         call batch_l%determine_limits(l_batch)
 !
          call single_record_reader(batch_l, wf%g_mjlk_t, g_mjlk)
 !
@@ -2447,103 +2452,99 @@ contains
 !
       call disk%close_file(wf%g_mjlk_t)
 !
-!     :: Term 2: sigma1 += - sum_cmj g_mjcd * Y_cmjk ::
 !
-      call mem%alloc(Y_xcmy, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call sort_1234_to_4123(Y_cmjk, Y_xcmy, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!     :: Term 2: sigma_dk += - sum_cmj g_mjcd * Y_cmjk ::
 !
-      call disk%open_file(wf%g_cdmk_t,'read')
+      call disk%open_file(wf%g_cdlk_t,'read')
 !
-      call batch_j%init(wf%n_o)
+      call batch_d%init(wf%n_v)
 !
       req_0 = 0
-      req_1 = 2*(wf%n_o)*(wf%n_v)**2
+      req_1 = 2*(wf%n_o)**2*(wf%n_v)
 !
-      call mem%batch_setup(batch_j, req_0, req_1)
+      call mem%batch_setup(batch_d, req_0, req_1)
 !
-      call batch_j%determine_limits(1)
+      do d_batch = 1, batch_d%num_batches
 !
-      call mem%alloc(g_mjcd, wf%n_o, wf%n_v, wf%n_v, batch_j%length)
-      call mem%alloc(g_dcmx, wf%n_v, wf%n_v, wf%n_o, batch_j%length)
+         call batch_d%determine_limits(d_batch)
 !
-      do j_batch = 1, batch_j%num_batches
+!        Unlikely to batch at this point
+         call mem%alloc(g_mjcd, wf%n_v, wf%n_o, batch_d%length, wf%n_o) !cj#dm 
+         call mem%alloc(g_cmxd, wf%n_v, wf%n_o, wf%n_o, batch_d%length) !cmj#d
 !
-       call batch_l%determine_limits(j_batch)
+!        read g_mjcd stored as cj#d#m
+         call compound_record_reader(wf%n_o, batch_d, wf%g_cdlk_t, g_mjcd, .true.) !switch d and m true
+         call sort_1234_to_1423(g_mjcd, g_cmxd, wf%n_v, wf%n_o, batch_d%length, wf%n_o) !mj#dm -> cmj#d
 !
-         call single_record_reader(batch_j, wf%g_cdmk_t, g_mjcd)
-         call sort_1234_to_2314(g_mjcd, g_dcmx, wf%n_o, wf%n_v, wf%n_v, batch_j%length)
-!
-         call dgemm('N','T',                       &
-                     wf%n_v,                       &
-                     batch_j%length,               &
-                     wf%n_v*wf%n_o*batch_k%length, &
-                     -one,                         &
-                     g_dcmx,                       & ! g_d_cmj
-                     wf%n_v,                       &
-                     Y_xcmy,                       & ! Y_k_cmj
+         call dgemm('T','N',                       &
+                     batch_d%length,               &
                      wf%n_o,                       &
+                     wf%n_v*wf%n_o**2,             &
+                     -one,                         &
+                     g_cmxd,                       & ! g_cmj_#d
+                     wf%n_v*wf%n_o**2,             &
+                     Y_cmjk,                       & ! Y_cmj_k
+                     wf%n_v*wf%n_o**2,             &
                      one,                          &
-                     sigma_ai(1,batch_j%first),    &
+                     sigma_ai(batch_d%first,1),    &
+                     wf%n_v)
+!
+         call mem%dealloc(g_mjcd, wf%n_v, wf%n_o, batch_d%length, wf%n_o) !cj#dm
+         call mem%dealloc(g_cmxd, wf%n_v, wf%n_o, wf%n_o, batch_d%length) !cmj#d
+!
+      enddo
+!
+      call disk%close_file(wf%g_cdlk_t)
+!
+!
+!     :: Term 3: sigma_dj += - sum_cmj g_mdck * Y_cmjk ::
+!
+      call mem%alloc(Y_cmkj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call sort_1234_to_1243(Y_cmjk, Y_cmkj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call disk%open_file(wf%g_ckld_t,'read')
+!
+      call batch_d%init(wf%n_v)
+!
+      req_0 = 0
+      req_1 = 2*(wf%n_o)**2*(wf%n_v)
+!
+      call mem%batch_setup(batch_d, req_0, req_1)
+!
+      call batch_d%determine_limits(1)
+!
+      call mem%alloc(g_cjmd, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
+      call mem%alloc(g_cmxd, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
+!
+      do d_batch = 1, batch_d%num_batches
+!
+         call batch_d%determine_limits(d_batch)
+!
+         call compound_record_reader(wf%n_o, batch_d, wf%g_ckld_t, g_cjmd)
+         call sort_1234_to_1324(g_cjmd, g_cmxd, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
+!
+         call dgemm('T','N',                       &
+                     batch_d%length,               &
+                     wf%n_o,                       &
+                     wf%n_v*wf%n_o**2,             &
+                     -one,                         &
+                     g_cmxd,                       & ! g_cmj_#d
+                     wf%n_v*wf%n_o**2,             &
+                     Y_cmkj,                       & ! Y_cmj_k
+                     wf%n_v*wf%n_o**2,             &
+                     one,                          &
+                     sigma_ai(batch_d%first,1),    &
                      wf%n_v)
 !
       enddo
 !
-      call batch_j%determine_limits(1)
-      call mem%dealloc(g_mjcd, wf%n_o, wf%n_v, wf%n_v, batch_j%length)
-      call mem%dealloc(g_dcmx, wf%n_v, wf%n_v, wf%n_o, batch_j%length)
+      call batch_d%determine_limits(1)
+      call mem%dealloc(g_cjmd, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
+      call mem%dealloc(g_cmxd, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
 !
-      call disk%close_file(wf%g_cdmk_t)
+      call disk%close_file(wf%g_ckld_t)
 !
-      call mem%dealloc(Y_xcmy, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!
-!     :: Term 3: sigma1 += - sum_cmk g_mdck * Y_cmjk ::
-!
-      call mem%alloc(Y_xcmy, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call sort_1234_to_3124(Y_cmjk, Y_xcmy, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-!
-      call disk%open_file(wf%g_leck_t,'read')
-!
-      call batch_k%init(wf%n_o)
-!
-      req_0 = 0
-      req_1 = 2*(wf%n_o)*(wf%n_v)**2
-!
-      call mem%batch_setup(batch_k, req_0, req_1)
-!
-      call batch_k%determine_limits(1)
-!
-      call mem%alloc(g_mdck, wf%n_o, wf%n_v, wf%n_v, batch_k%length)
-      call mem%alloc(g_dcmx, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
-!
-      do k_batch = 1, batch_k%num_batches
-!
-       call batch_l%determine_limits(k_batch)
-!
-         call single_record_reader(batch_k, wf%g_leck_t, g_mdck)
-         call sort_1234_to_3214(g_mdck, g_dcmx, wf%n_o, wf%n_v, wf%n_v, batch_k%length)
-!
-         call dgemm('N','T',                       &
-                     wf%n_v,                       &
-                     wf%n_o,                       &
-                     wf%n_v*wf%n_o*batch_k%length, &
-                     -one,                         &
-                     g_dcmx,                       & ! g_d_cmk
-                     wf%n_v,                       &
-                     Y_xcmy,                       & ! Y_j_cmk
-                     wf%n_o,                       &
-                     one,                          &
-                     sigma_ai,                     &
-                     wf%n_v)
-!
-      enddo
-!
-      call batch_k%determine_limits(1)
-      call mem%dealloc(g_mdck, wf%n_o, wf%n_v, wf%n_v, batch_k%length)
-      call mem%dealloc(g_dcmx, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
-!
-      call disk%close_file(wf%g_leck_t)
-!
-      call mem%dealloc(Y_xcmy, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(Y_cmkj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
    end subroutine jacobian_transpose_cc3_sigma1_C3_A1_cc3
 !
@@ -2637,8 +2638,8 @@ contains
 !
       call batch_k%init(wf%n_o)
 !
-      call disk%open_file(wf%g_leck_t,'read')
-      call disk%open_file(wf%g_cdmk_t,'read')
+      call disk%open_file(wf%g_ckld_t,'read')
+      call disk%open_file(wf%g_cdlk_t,'read')
 !
       req_0 = 0
       req_k = 2*wf%n_v**3 + (wf%n_v**2)*(wf%n_o)
@@ -2652,7 +2653,7 @@ contains
          call mem%alloc(X_bcek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
          call mem%alloc(g_leck, wf%n_o, wf%n_v, wf%n_v, batch_k%length)
 !
-         call single_record_reader(batch_k, wf%X_bcek, X_bcek, wf%g_leck_t, g_leck)
+         call single_record_reader(batch_k, wf%X_bcek, X_bcek, wf%g_ckld_t, g_leck)
 !
          call dgemm('N','T',                    &
                      wf%n_v,                    &
@@ -2679,7 +2680,7 @@ contains
 !
          call mem%alloc(g_lkbe, wf%n_o, wf%n_v, wf%n_v, batch_k%length)
 !
-         call single_record_reader(batch_k, wf%g_cdmk_t, g_lkbe)
+         call single_record_reader(batch_k, wf%g_cdlk_t, g_lkbe)
 !
          call dgemm('N','T',                    &
                      wf%n_v,                    &
@@ -2699,8 +2700,8 @@ contains
 !
       enddo
 !
-      call disk%close_file(wf%g_leck_t)
-      call disk%close_file(wf%g_cdmk_t)
+      call disk%close_file(wf%g_ckld_t)
+      call disk%close_file(wf%g_cdlk_t)
 !
    end subroutine jacobian_transpose_cc3_sigma1_C3_B1_cc3
 !

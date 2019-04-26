@@ -441,7 +441,7 @@ contains
    end subroutine read_1_array_compound_record_2batches
 !
 !
-   subroutine read_1_array_compound_record_1batch(dim_z, batch_y, file_1, g_pqzy)
+   subroutine read_1_array_compound_record_1batch(dim_z, batch_y, file_1, g_pqzy, switch)
 !!
 !!    Read parts of the direct access file "file_1" with records of zy into g_pqzy
 !!    Reads z in full dimension y in batches
@@ -457,11 +457,22 @@ contains
 !
       type(batching_index), intent(inout) :: batch_y
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(inout) :: g_pqzy
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
 !
       type(file), intent(inout) :: file_1
 !
+      logical, intent(in), optional :: switch
+      logical :: switched
+!
       type(batching_index) :: batch_z
+!
+!     Can't overload a function based on ordering alone, 
+!     so optional keyword to revert order of y and z
+!
+      switched = .false.
+      if(present(switch)) then
+         switched = switch
+      endif
 !
 !     Fake a batching_index with full dimensions and call 2batches_reader
 !
@@ -473,7 +484,11 @@ contains
       batch_z%max_length = dim_z
       batch_z%num_batches = 1
 !
-      call read_1_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
+      if(.not. switched) then
+         call read_1_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
+      else
+         call read_1_array_compound_record_2batches(batch_y, batch_z, file_1, g_pqzy)
+      endif
 !
    end subroutine read_1_array_compound_record_1batch
 !
