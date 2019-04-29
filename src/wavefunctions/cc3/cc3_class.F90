@@ -57,7 +57,7 @@ module cc3_class
 !
       type(file)  :: X_abdi
       type(file)  :: X_abid
-      type(file)  :: X_bcek
+      type(file)  :: Y_bcek
       type(file)  :: Y_ajil
 !
    contains
