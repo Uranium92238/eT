@@ -2178,12 +2178,12 @@ contains
                   wf%n_o,           &
                   wf%n_v**2,        &
                   one,              &
-                  c_abc,            & ! c_abc
+                  c_abc,            & ! c_ab_c
                   wf%n_v**2,        &
-                  t_abij(:,:,:,j),  & ! t_abmj
+                  t_abij(:,:,:,j),  & ! t_ab_m,j
                   wf%n_v**2,        &
                   one,              &
-                  Y_cmjk(:,:,i,k),  & ! Y_cmik
+                  Y_cmjk(:,:,i,k),  & ! Y_c_m,ik
                   wf%n_v)
 !
 !     Y_bcek = sum_a c^abc_ijk t^ae_ij
@@ -2195,10 +2195,10 @@ contains
                   one,              &
                   c_abc,            & ! c_a_bc
                   wf%n_v,           &
-                  t_abij(:,:,i,j),  & ! t_ae_ij
+                  t_abij(:,:,i,j),  & ! t_a_e,ij
                   wf%n_v,           &
                   one,              &
-                  Y_bcek,           & ! Y_bcek
+                  Y_bcek,           & ! Y_bc_e,k
                   wf%n_v**2)
 !
 !
@@ -2209,12 +2209,12 @@ contains
                   wf%n_o,           &
                   wf%n_v**2,        &
                   one,              &
-                  c_abc,            & ! c_cab
+                  c_abc,            & ! c_c_ab
                   wf%n_v,           &
-                  t_abij(:,:,:,k),  & ! t_abmk
+                  t_abij(:,:,:,k),  & ! t_ab_m,k
                   wf%n_v**2,        &
                   one,              &
-                  Y_cmjk(:,:,j,i),  & ! Y_cmki
+                  Y_cmjk(:,:,j,i),  & ! Y_c_m,ki
                   wf%n_v)
 !
 !     Y_bcej = sum_a c^bca_ijk t^ae_ki
@@ -2229,7 +2229,7 @@ contains
                   t_abij(:,:,k,i),  & ! t_a_e_ki
                   wf%n_v,           &
                   one,              &
-                  Y_bcej,           & ! Y_bcej
+                  Y_bcej,           & ! Y_bc_e,j
                   wf%n_v**2)
 !
 !
@@ -2245,12 +2245,12 @@ contains
                   wf%n_o,           &
                   wf%n_v**2,        &
                   one,              &
-                  c_abc,            & ! c_bca
+                  c_abc,            & ! c_c_ab
                   wf%n_v,           &
-                  t_abij(:,:,:,i),  & ! t_abmi
+                  t_abij(:,:,:,i),  & ! t_ab_m,i
                   wf%n_v**2,        &
                   one,              &
-                  Y_cmjk(:,:,k,j),  & ! Y_cmji                     
+                  Y_cmjk(:,:,k,j),  & ! Y_c_m,ji                     
                   wf%n_v)
 !
 !
@@ -2261,12 +2261,12 @@ contains
                   wf%n_v,           &
                   wf%n_v,           &
                   one,              &
-                  c_abc,            & ! c_cab
+                  c_abc,            & ! c_a_bc
                   wf%n_v,           &
-                  t_abij(:,:,j,k),  & ! t_aejk
+                  t_abij(:,:,j,k),  & ! t_a_e,jk
                   wf%n_v,           &
                   one,              &
-                  Y_bcei,           & ! Y_bcei
+                  Y_bcei,           & ! Y_bc_e,i
                   wf%n_v**2)
 !
       if (k .ne. j .and. j .ne. i) then
@@ -2284,12 +2284,12 @@ contains
                      wf%n_o,           &
                      wf%n_v**2,        &
                      one,              &
-                     c_abc,            & ! c_bac
+                     c_abc,            & ! c_ab_c
                      wf%n_v**2,        &
-                     t_abij(:,:,:,i),  & ! t_abmi
+                     t_abij(:,:,:,i),  & ! t_ab_m,i
                      wf%n_v**2,        &
                      one,              &
-                     Y_cmjk(:,:,j,k),  & ! Y_cmjk
+                     Y_cmjk(:,:,j,k),  & ! Y_c_m,jk
                      wf%n_v)
 !
 !        Y_bcek = sum_a c^bac_ijk t^ae_ji
@@ -2299,12 +2299,12 @@ contains
                      wf%n_v,           &
                      wf%n_v,           &
                      one,              &
-                     c_abc,            & ! c_bac
+                     c_abc,            & ! c_a_bc
                      wf%n_v,           &
                      t_abij(:,:,j,i),  & ! t_aeji
                      wf%n_v,           &
                      one,              &
-                     Y_bcek,           & ! Y_bcek
+                     Y_bcek,           & ! Y_bc_e,k
                      wf%n_v**2)
 !
 !
@@ -2315,12 +2315,12 @@ contains
                      wf%n_o,           &
                      wf%n_v**2,        &
                      one,              &
-                     c_abc,            & ! c_acb
+                     c_abc,            & ! c_c_ab
                      wf%n_v,           &
-                     t_abij(:,:,:,k),  & ! t_abmjk
+                     t_abij(:,:,:,k),  & ! t_ab_m,k
                      wf%n_v**2,        &
                      one,              &
-                     Y_cmjk(:,:,i,j),  & ! Y_cmij
+                     Y_cmjk(:,:,i,j),  & ! Y_c_m,ij
                      wf%n_v)
 !
 !        Y_bcei = sum_a c^cba t^ae_kj
@@ -2330,12 +2330,12 @@ contains
                      wf%n_v,           &
                      wf%n_v,           &
                      one,              &
-                     c_abc,            & ! c_cba
+                     c_abc,            & ! c_bc_a
                      wf%n_v**2,        &
-                     t_abij(:,:,k,j),  & ! t_aekj
+                     t_abij(:,:,k,j),  & ! t_a_e,kj
                      wf%n_v,           &
                      one,              &
-                     Y_bcei,           & ! Y_bcei
+                     Y_bcei,           & ! Y_bc_e,i
                      wf%n_v**2)
 !
 !
@@ -2351,12 +2351,12 @@ contains
                      wf%n_o,           &
                      wf%n_v**2,        &
                      one,              &
-                     c_abc,            & ! c_cab
+                     c_abc,            & ! c_c_ab
                      wf%n_v,           &
-                     t_abij(:,:,:,j),  & ! t_abmj
+                     t_abij(:,:,:,j),  & ! t_ab_m,j
                      wf%n_v**2,        &
                      one,              &
-                     Y_cmjk(:,:,k,i),  & ! Y_cmki
+                     Y_cmjk(:,:,k,i),  & ! Y_c_m,ki
                      wf%n_v)
 !
 !
@@ -2367,12 +2367,12 @@ contains
                      wf%n_v,           &
                      wf%n_v,           &
                      one,              &
-                     c_abc,            & ! c_acb
+                     c_abc,            & ! c_a_bc
                      wf%n_v,           &
-                     t_abij(:,:,i,k),  & ! t_aeik
+                     t_abij(:,:,i,k),  & ! t_a_e,ik
                      wf%n_v,           &
                      one,              &
-                     Y_bcej,           & ! Y_bcej
+                     Y_bcej,           & ! Y_bc_e,j
                      wf%n_v**2)
 !
       end if
