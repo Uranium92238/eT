@@ -2387,8 +2387,8 @@ contains
 !!    Computes the contribution of the intermediate Y_cmjk to sigma_1
 !!
 !!    sigma1 +=   sum_mjk Y_cmjk * g_mjlk
-!!    sigma1 += - sum_cmj g_mjcd * Y_cmjk
-!!    sigma1 += - sum_cmk g_mdck * Y_cmjk
+!!    sigma1 += - sum_cmj g_cdmj * Y_cmjk
+!!    sigma1 += - sum_cmk g_ckmd * Y_cmjk
 !!    
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -2401,12 +2401,11 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(in) :: Y_cmjk
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_mjlk
-      real(dp), dimension(:,:,:,:), allocatable :: g_mjcd
+      real(dp), dimension(:,:,:,:), allocatable :: g_cdmj
       real(dp), dimension(:,:,:,:), allocatable :: g_cjmd
 !
 !     arrays for resorting
       real(dp), dimension(:,:,:,:), allocatable :: Y_cmkj
-      real(dp), dimension(:,:,:,:), allocatable :: g_cmjd
 !
       type(batching_index) :: batch_l, batch_d
       integer :: l_batch, d_batch
@@ -2465,24 +2464,21 @@ contains
       call mem%batch_setup(batch_d, req_0, req_1)
 !
       call batch_d%determine_limits(1)
-      call mem%alloc(g_cmjd, wf%n_v, wf%n_o, wf%n_o, batch_d%length) !cmj#d
+      call mem%alloc(g_cdmj, wf%n_v, wf%n_o, wf%n_o, batch_d%length) !cmj#d
 !
       do d_batch = 1, batch_d%num_batches
 !
          call batch_d%determine_limits(d_batch)
 !
-         call mem%alloc(g_mjcd, wf%n_v, wf%n_o, batch_d%length, wf%n_o) !cm#dj
-!
-!        read g_mjcd stored as cm#d#j
-         call compound_record_reader(wf%n_o, batch_d, wf%g_cdlk_t, g_mjcd, .true.) !switch d and j true
-         call sort_1234_to_1243(g_mjcd, g_cmjd, wf%n_v, wf%n_o, batch_d%length, wf%n_o) !cm#dj -> cmj#d
+!        read g_cdmj stored as cmj#d
+         call compound_record_reader(wf%n_o, batch_d, wf%g_cdlk_t, g_cdmj)
 !
          call dgemm('T','N',                       &
                      batch_d%length,               &
                      wf%n_o,                       &
                      wf%n_v*wf%n_o**2,             &
                      -one,                         &
-                     g_cmjd,                       & ! g_cmj_#d
+                     g_cdmj,                       & ! g_cmj_#d
                      wf%n_v*wf%n_o**2,             &
                      Y_cmjk,                       & ! Y_cmj_k
                      wf%n_v*wf%n_o**2,             &
@@ -2490,17 +2486,15 @@ contains
                      sigma_ai(batch_d%first,1),    &
                      wf%n_v)
 !
-         call mem%dealloc(g_mjcd, wf%n_v, wf%n_o, batch_d%length, wf%n_o) !cj#dm
-!
       enddo
 !
       call batch_d%determine_limits(1)
-      call mem%dealloc(g_cmjd, wf%n_v, wf%n_o, wf%n_o, batch_d%length) !cmj#d
+      call mem%dealloc(g_cdmj, wf%n_v, wf%n_o, wf%n_o, batch_d%length) !cmj#d
 !
       call disk%close_file(wf%g_cdlk_t)
 !
 !
-!     :: Term 3: sigma_dk += - sum_cmj g_mdcj * Y_cmkj ::
+!     :: Term 3: sigma_dk += - sum_cmj g_cjmd * Y_cmkj ::
 !
       call mem%alloc(Y_cmkj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       call sort_1234_to_1243(Y_cmjk, Y_cmkj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
@@ -2688,7 +2682,7 @@ contains
       call disk%open_file(wf%g_cdlk_t,'read')
 !
       req_0 = 0
-      req_k = 2*wf%n_v**3 + wf%n_o*wf%n_v**2
+      req_k = 2*wf%n_v**3 + 2*wf%n_o*wf%n_v**2
 !
       call mem%batch_setup(batch_k, req_0, req_k)
 !
@@ -2696,19 +2690,18 @@ contains
       call mem%alloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
       call mem%alloc(Y_cbek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
-      call mem%alloc(g_celk, wf%n_v, wf%n_o, wf%n_v, batch_k%length) !read in cle#k
-!
       do k_batch = 1, batch_k%num_batches
 !
          call batch_k%determine_limits(k_batch)
 !
+         call mem%alloc(g_celk, wf%n_v, wf%n_o, batch_k%length, wf%n_v) !read in cl#ke
          call mem%alloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) !sort to ce#kl
 !
          call single_record_reader(batch_k, wf%Y_bcek, Y_bcek)
          call sort_1234_to_2134(Y_bcek, Y_cbek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
-         call compound_record_reader(wf%n_v, batch_k, wf%g_cdlk_t, g_celk) !stored as cl#e#k
-         call sort_1234_to_1342(g_celk, g_cekl, wf%n_v, wf%n_o, wf%n_v, batch_k%length) !cle#k -> ce#kl
+         call compound_record_reader(wf%n_v, batch_k, wf%g_cdlk_t, g_celk, .true.) !stored as cl#k#e
+         call sort_1234_to_1432(g_celk, g_cekl, wf%n_v, wf%n_o, batch_k%length, wf%n_v) !cl#ke -> ce#kl
 !
          call dgemm('N','N',                    &
                      wf%n_v,                    &
@@ -2723,6 +2716,7 @@ contains
                      sigma_ai,                  &
                      wf%n_v)
 !
+         call mem%dealloc(g_celk, wf%n_v, wf%n_o, batch_k%length, wf%n_v) !read in cl#ke
          call mem%dealloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) !sort to ce#kl
 !
       enddo
@@ -2730,8 +2724,6 @@ contains
       call batch_k%determine_limits(1)
       call mem%dealloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
       call mem%dealloc(Y_cbek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
-!
-      call mem%dealloc(g_celk, wf%n_v, wf%n_o, wf%n_v, batch_k%length)
 !
       call disk%close_file(wf%g_cdlk_t)
 !
