@@ -81,7 +81,7 @@ contains
       integer :: req_0, req_d, req_k
       integer :: d_batch, k_batch
 !
-!     (be|cd) stored as bced
+!     (be|cd) stored as bce#d
 !
       call wf%get_g_pqrs_required(req_0,req_d,wf%n_v,wf%n_v,wf%n_v,1)
       req_d = req_d + 2*wf%n_v**3
