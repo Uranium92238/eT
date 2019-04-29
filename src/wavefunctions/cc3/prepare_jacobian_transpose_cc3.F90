@@ -108,7 +108,7 @@ contains
 !
          call sort_1234_to_1324(g_pqrs, h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_d%length)
 !
-         call single_record_writer(batch_d, wf%g_becd_t, g_pqrs)
+         call single_record_writer(batch_d, wf%g_becd_t, h_pqrs)
 !
       enddo
 !
@@ -119,7 +119,7 @@ contains
       call mem%dealloc(h_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_d%length)
 !
 !
-!     (mj|lk) 
+!     (mj|lk) stored as mjk#l
 !
       call wf%get_g_pqrs_required(req_0,req_k,wf%n_o,wf%n_o,wf%n_o,1)
       req_k = req_k + 2*wf%n_o**3
@@ -128,8 +128,7 @@ contains
       call mem%batch_setup(batch_k,req_0,req_k)
       call batch_k%determine_limits(1)
 !
-      call mem%alloc(g_pqrs , wf%n_o , wf%n_o , wf%n_o , batch_k%length)
-      call mem%alloc(h_pqrs , wf%n_o , wf%n_o , wf%n_o , batch_k%length)
+      call mem%alloc(h_pqrs, wf%n_o, wf%n_o, wf%n_o, batch_k%length)
 !
       call wf%g_mjlk_t%init('g_mjlk_t','direct','unformatted',dp*wf%n_o**3)
       call disk%open_file(wf%g_mjlk_t,'write')
@@ -138,32 +137,38 @@ contains
 !
          call batch_k%determine_limits(k_batch)
 !
+         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_o)
+!
          call wf%get_oooo(g_pqrs,   &
                           1,wf%n_o, &
                           1,wf%n_o, &
-                          1,wf%n_o, &
-                          batch_k%first,batch_k%last)
+                          batch_k%first,batch_k%last, &
+                          1,wf%n_o)
 !
          call sort_1234_to_1243(g_pqrs , h_pqrs , wf%n_o , wf%n_o , wf%n_o , batch_k%length)
 !
          call single_record_writer(batch_k, wf%g_mjlk_t, h_pqrs)
+!
+         call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_o)
 !
       enddo
 !
       call disk%close_file(wf%g_mjlk_t,'keep')
 !
       call batch_k%determine_limits(1)
-      call mem%dealloc(g_pqrs,wf%n_o,wf%n_o,wf%n_o,batch_k%length)
       call mem%dealloc(h_pqrs,wf%n_o,wf%n_o,wf%n_o,batch_k%length)
 !
 !
-!     (lb|kc) 
+!     (lb|kc)  !stored as bcl#k
 !
       call wf%get_g_pqrs_required(req_0,req_k,wf%n_v,wf%n_o,1,wf%n_o)
       req_k = req_k + 2*wf%n_v**2*wf%n_o
 !
       call batch_k%init(wf%n_o)
       call mem%batch_setup(batch_k,req_0,req_k)
+!
+      call batch_k%determine_limits(1)
+      call mem%alloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
 !
       call wf%g_lbkc_t%init('g_lbkc_t','direct','unformatted',dp*wf%n_o*wf%n_v**2)
       call disk%open_file(wf%g_lbkc_t,'write')
@@ -173,7 +178,6 @@ contains
          call batch_k%determine_limits(k_batch)
 !
          call mem%alloc(g_pqrs, wf%n_o , wf%n_v , batch_k%length , wf%n_v)
-         call mem%alloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
 !
          call wf%get_ovov(g_pqrs,   &
                           1,wf%n_o, &
@@ -186,9 +190,11 @@ contains
          call single_record_writer(batch_k, wf%g_lbkc_t, h_pqrs)
 !
          call mem%dealloc(g_pqrs, wf%n_o , wf%n_v , batch_k%length , wf%n_v)
-         call mem%dealloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
 !
       enddo
+!
+      call batch_k%determine_limits(1)
+      call mem%dealloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
 !
       call disk%close_file(wf%g_lbkc_t,'keep')
 !
@@ -232,7 +238,7 @@ contains
 !     (cd|lk) !stored as cl#k#d
 !
       call wf%get_g_pqrs_required(req_0, req_d, wf%n_v, 1, wf%n_o, wf%n_o)
-      req_k = req_k + 2*wf%n_v*wf%n_o**2
+      req_d = req_d + 2*wf%n_v*wf%n_o**2
 !
       call batch_d%init(wf%n_v)
       call mem%batch_setup(batch_d,req_0,req_d)
@@ -247,9 +253,9 @@ contains
 !
       do d_batch = 1,batch_d%num_batches
 !
-         call mem%alloc(g_pqrs, wf%n_v, batch_d%length, wf%n_o, wf%n_o)
+         call batch_k%determine_limits(d_batch)
 !
-         call batch_k%determine_limits(k_batch)
+         call mem%alloc(g_pqrs, wf%n_v, batch_d%length, wf%n_o, wf%n_o)
 !
          call wf%get_vvoo(g_pqrs,                     &
                           1,wf%n_v,                   &
@@ -257,7 +263,7 @@ contains
                           1,wf%n_o,                   &
                           1,wf%n_o)
 !
-         call sort_1234_to_1342(g_pqrs, h_pqrs, wf%n_v, batch_d%length, wf%n_o, wf%n_o)
+         call sort_1234_to_1342(g_pqrs, h_pqrs, wf%n_v, batch_d%length, wf%n_o, wf%n_o) !sort to clkd
 !
          call compound_record_writer(wf%n_o, batch_d, wf%g_cdlk_t, h_pqrs)
 !
@@ -267,7 +273,7 @@ contains
 !
       call disk%close_file(wf%g_cdlk_t,'keep')
 !
-      call batch_k%determine_limits(1)
+      call batch_d%determine_limits(1)
       call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
 !
    end subroutine prepare_cc3_jacobian_transpose_integrals_cc3

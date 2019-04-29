@@ -2386,9 +2386,9 @@ contains
 !!
 !!    Computes the contribution of the intermediate Y_cmjk to sigma_1
 !!
-!!    sigma1 +=   sum_mjk Y_cmjk * g_mjlk
-!!    sigma1 += - sum_cmj g_cdmj * Y_cmjk
-!!    sigma1 += - sum_cmk g_ckmd * Y_cmjk
+!!    sigma_dk +=   sum_mjk Y_cmjk * g_mjlk
+!!    sigma_cl += - sum_cmj g_cdmj * Y_cmjk
+!!    sigma_cl += - sum_cmk g_ckmd * Y_cmjk
 !!    
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -2510,7 +2510,7 @@ contains
 !
       call batch_d%determine_limits(1)
 !
-      call mem%alloc(g_cjmd, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
+      call mem%alloc(g_cjmd, wf%n_v, wf%n_o, wf%n_o, batch_d%length) !Stored as cm#j#d
 !
       do d_batch = 1, batch_d%num_batches
 !
@@ -2547,9 +2547,9 @@ contains
 !!
 !!    Computes the contribution of the intermediate Y_bcek to sigma_1
 !!
-!!    sigma1 +=   sum_bec g_becd * Y_bcek
-!!    sigma1 += - sum_cek Y_bcek * g_ckle
-!!    sigma1 += - sum_bek Y_bcek * g_lkbe
+!!    sigma_dk +=   sum_bec g_becd * Y_bcek
+!!    sigma_bl += - sum_cek Y_bcek * g_ckle
+!!    sigma_bl += - sum_bek Y_cbek * g_celk
 !!    
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -2627,12 +2627,13 @@ contains
 !
       call disk%close_file(wf%g_becd_t)
 !
+!
 !     :: Term 2: sigma_bl += - sum_cek Y_bcek * g_ckle ::
 !
       call batch_k%init(wf%n_o)
 !
       req_0 = 0
-      req_k = wf%n_v**3 + wf%n_o*wf%n_v**2
+      req_k = wf%n_v**3 + 2*wf%n_o*wf%n_v**2
 !
       call mem%batch_setup(batch_k, req_0, req_k)
 !
@@ -2677,7 +2678,7 @@ contains
       call disk%close_file(wf%g_ckld_t)
 !
 !     
-!     :: Term 3: sigma_bl += - sum_bek Y_cbek * g_celk ::
+!     :: Term 3: sigma_bl += - sum_cek Y_cbek * g_celk ::
 !
       call disk%open_file(wf%g_cdlk_t,'read')
 !
