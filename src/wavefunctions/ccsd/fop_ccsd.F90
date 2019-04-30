@@ -632,9 +632,9 @@ contains
    end subroutine csiX_ccsd_a2_ccsd
 !
 !
-   module subroutine get_eom_contribution_ccsd(wf, etaX, csiX, X)
+   module subroutine add_etaX_eom_correction_ccsd(wf, etaX, csiX, X)
 !!
-!!    Get EOM correction
+!!    Add etaX EOM correction
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Add EOM contribution to etaX vector 
@@ -654,9 +654,9 @@ contains
 !
       call wf%etaX_eom_ccsd_a1(X, etaX(1:wf%n_t1))
 !
-      call wf%get_eom_xcc_contribution(etaX, csiX)
+      call wf%etaX_eom_a(etaX, csiX)
 !
-   end subroutine get_eom_contribution_ccsd
+   end subroutine add_etaX_eom_correction_ccsd
 !
 !
    module subroutine etaX_eom_ccsd_a1_ccsd(wf, X, etaX_ai)

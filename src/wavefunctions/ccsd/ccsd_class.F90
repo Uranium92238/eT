@@ -162,7 +162,7 @@ module ccsd_class
       procedure :: csiX_ccsd_a1                                => csiX_ccsd_a1_ccsd    
       procedure :: csiX_ccsd_a2                                => csiX_ccsd_a2_ccsd    
 !
-      procedure :: get_eom_contribution                        => get_eom_contribution_ccsd
+      procedure :: add_etaX_eom_correction                     => add_etaX_eom_correction_ccsd
       procedure :: etaX_eom_ccsd_a1                            => etaX_eom_ccsd_a1_ccsd
 !
       procedure, nopass :: need_g_abcd                         => need_g_abcd_ccsd

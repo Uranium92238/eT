@@ -97,9 +97,9 @@
    end subroutine csiX_ccs_a1_ccs
 !
 !
-   module subroutine get_eom_contribution_ccs(wf, etaX, csiX, X)
+   module subroutine add_etaX_eom_correction_ccs(wf, etaX, csiX, X)
 !!
-!!    Add EOM contribution to etaX vector
+!!    Add EOM conrrection to etaX vector
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
       implicit none
@@ -111,10 +111,10 @@
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
       real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
 !
-   end subroutine get_eom_contribution_ccs
+   end subroutine add_etaX_eom_correction_ccs
 !
 !
-   module subroutine get_eom_xcc_contribution_ccs(wf, etaX, csiX)
+   module subroutine etaX_eom_a_ccs(wf, etaX, csiX)
 !!
 !!    Get eom contribution
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -126,7 +126,8 @@
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
       real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
 !
-   end subroutine get_eom_xcc_contribution_ccs
+   end subroutine etaX_eom_a_ccs
+!
 !
    module subroutine scale_left_excitation_vector_ccs(wf, L, R)
 !!

@@ -198,8 +198,8 @@ module ccs_class
       procedure :: construct_csiX                              => construct_csiX_ccs
       procedure :: csiX_ccs_a1                                 => csiX_ccs_a1_ccs
 !
-      procedure :: get_eom_contribution                        => get_eom_contribution_ccs
-      procedure :: get_eom_xcc_contribution                    => get_eom_xcc_contribution_ccs
+      procedure :: add_etaX_eom_correction                     => add_etaX_eom_correction_ccs
+      procedure :: etaX_eom_a                                  => etaX_eom_a_ccs
 !
       procedure :: scale_left_excitation_vector                => scale_left_excitation_vector_ccs
 !

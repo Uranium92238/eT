@@ -144,9 +144,9 @@
    end subroutine csiX_ccsd_a2_ccsd
 !
 !
-   module subroutine get_eom_contribution_ccsd(wf, etaX, csiX, X)
+   module subroutine add_etaX_eom_correction_ccsd(wf, etaX, csiX, X)
 !!
-!!    Get EOM correction
+!!    Add EtaX EOM correction
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
       implicit none
@@ -158,7 +158,7 @@
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
       real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
 !
-   end subroutine get_eom_contribution_ccsd
+   end subroutine add_etaX_eom_correction_ccsd
 !
 !
    module subroutine etaX_eom_ccsd_a1_ccsd(wf, X, etaX_ai)
