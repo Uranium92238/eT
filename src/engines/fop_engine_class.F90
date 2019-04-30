@@ -254,7 +254,6 @@ contains
       do state = 1, n_states
 !
          write(output%unit, '(/t6,a7, i3)') 'State: ', state
-         write(output%unit, '(t6,a10)') '----------'
 !
          write(output%unit, '(/t6,a)')  '            Transition moments                                '
          write(output%unit, '(t6,a)')   '         -------------------------                            '
