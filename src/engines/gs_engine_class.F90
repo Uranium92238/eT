@@ -66,7 +66,7 @@ contains
 !
       engine%name_                 = 'Ground state CC engine'
       engine%multipliers_algorithm = 'davidson'
-      engine%gs_algorithm        = 'diis'
+      engine%gs_algorithm          = 'diis'
 !
       call engine%read_settings()
 !

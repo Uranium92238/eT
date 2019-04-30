@@ -1147,6 +1147,19 @@ contains
 !
       enddo 
 !
+      write(output%unit, '(/t3, a/)')'In Bohr:'
+      do I = 1, molecule%n_atoms 
+!
+         write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a11)')  molecule%atoms(I)%symbol, &
+                                                                          angstrom_to_bohr*molecule%atoms(I)%x,      &
+                                                                          angstrom_to_bohr*molecule%atoms(I)%y,      &
+                                                                          angstrom_to_bohr*molecule%atoms(I)%z,      &
+                                                                          molecule%atoms(I)%basis 
+!  
+         flush(output%unit)
+!
+      enddo 
+!
    end subroutine print_geometry_molecular_system
 !
 !

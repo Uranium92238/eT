@@ -28,9 +28,7 @@ module fop_engine_class
    type, extends(es_engine) :: fop_engine
 !
       character(len=100) :: tag           = 'First order coupled cluster properties'
-      character(len=100) :: author        = 'J. H. Andersen, E. F. Kjønstad, S. D. Folkestad, 2019'
-!
-      character(len=500) :: description1  = ''
+      character(len=100) :: author        = 'J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, 2019'
 !
 !     Property solver types
 !
@@ -51,6 +49,8 @@ module fop_engine_class
 !
       procedure :: do_eom              => do_eom_fop_engine
 !
+      procedure, nopass :: print_summary_eom   => print_summary_eom_fop_engine
+!
    end type fop_engine
 !
 contains
@@ -69,11 +69,12 @@ contains
 !
 !     Set standards and then read if nonstandard
 !
-      engine%es_algorithm  = 'davidson'
-      engine%gs_algorithm  = 'diis'
-      engine%es_type       = 'valence'
-      engine%lr            = .false.
-      engine%eom           = .false.
+      engine%es_algorithm           = 'davidson'
+      engine%gs_algorithm           = 'diis'
+      engine%multipliers_algorithm  = 'davidson'
+      engine%es_type                = 'valence'
+      engine%lr                     = .false.
+      engine%eom                    = .false.
 !
       call engine%read_settings()
 !
@@ -114,7 +115,7 @@ contains
 !
 !     EOM properties if requested
 !
-    !  if (engine%eom) call engine%do_eom(wf)
+      if (engine%eom) call engine%do_eom(wf)
 !
    end subroutine run_fop_engine
 !
@@ -170,11 +171,13 @@ contains
 !
       character(len=1), dimension(3) :: components = ['X', 'Y', 'Z']
 !
-      real(dp), dimension(3) :: transition_strength, transition_moment_left, transition_moment_right
+      real(dp), dimension(:,:), allocatable :: transition_strength, transition_moment_left, transition_moment_right
 !
       real(dp), dimension(:), allocatable :: etaX, csiX
 !
       integer :: component, n_states, state
+!
+      character(len=100) :: description = 'Equation-of-motion fop calculation.'
 !
       call mem%alloc(etaX, wf%n_es_amplitudes)
       call mem%alloc(csiX, wf%n_es_amplitudes)
@@ -183,43 +186,93 @@ contains
 !
       call long_string_print(engine%tag,'(//t3,a)',.true.)
       call long_string_print(engine%author,'(t3,a/)',.true.)
-      call long_string_print(engine%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
+      call long_string_print(description,'(t3,a)',.false.,'(t3,a)','(t3,a)')
+!
+      call input%get_required_keyword_in_section('singlet states', 'solver cc es', n_states)
+!
+      call mem%alloc(transition_strength, 3, n_states)
+      call mem%alloc(transition_moment_left, 3, n_states)
+      call mem%alloc(transition_moment_right, 3, n_states)
+!
+      transition_strength     = zero
+      transition_moment_right = zero
+      transition_moment_left  = zero
 !
       if (engine%dipole_length) then
 !
          call mem%alloc(operator, wf%n_mo, wf%n_mo, 3)
-         call wf%construct_mu(operator)  ! Constructs dipole operator in t1-transformed basis.
 !
-         transition_strength     = zero
-         transition_moment_right = zero
-         transition_moment_left  = zero
+         call wf%construct_mu(operator)  ! Constructs dipole operator in t1-transformed basis.
 !
          do component = 1, size(components)
 !
-            etaX = zero
-            csiX = zero
-!
-            call wf%construct_etaX(operator(:,:,component), etaX)      
-!
-            !call wf%construct_csiX(operator, solver%csiX)      
-!
-!
-            !wf%get_eom_contribution(solver%etaX, solver%csiX, operator)
+            call wf%construct_etaX(operator(:,:,component), etaX)
+            call wf%construct_csiX(operator(:,:,component), csiX)      
+            call wf%get_eom_contribution(etaX, csiX, operator(:,:, component))
 !
 !           Loop over excited states and calculate transition strength
 !  
             do state = 1, n_states
 !
-              ! call wf%calculate_transition_strength(transition_strength(component), etaX, &
-              !     csiX, n, transition_moment_left(component), transition_moment_right(component))
+               call wf%calculate_transition_strength(transition_strength(component, state), etaX, &
+                   csiX, state, transition_moment_left(component, state), transition_moment_right(component, state))
 !    
             enddo
 !
          enddo
 !
+         call engine%print_summary_eom(transition_strength, transition_moment_left, transition_moment_right, n_states)
+!
       endif
 !
+      call mem%dealloc(transition_strength, 3, n_states)
+      call mem%dealloc(transition_moment_left, 3, n_states)
+      call mem%dealloc(transition_moment_right, 3, n_states)      
+!
    end subroutine do_eom_fop_engine
+!
+!
+   subroutine print_summary_eom_fop_engine(transition_strength, transition_moment_left, transition_moment_right, n_states)
+!!
+!!    Print summary
+!!    Written by Josefine H. Andersen
+!!
+!!    Adapted by Sarai D. Folkestad, Apr 2019
+!!
+      implicit none
+!
+      integer, intent(in)  :: n_states
+!
+      real(dp), dimension(3, n_states), intent(in) :: transition_strength, transition_moment_left, transition_moment_right
+!
+      character(len=1), dimension(3) :: components = ['X', 'Y', 'Z']
+!
+      integer :: comp, state
+!              
+      write(output%unit, '(/t3,a)') '- EOM first order property calculation results:'
+!
+      do state = 1, n_states
+!
+         write(output%unit, '(/t6,a7, i3)') 'State: ', state
+         write(output%unit, '(t6,a10)') '----------'
+!
+         write(output%unit, '(/t6,a)')  '            Transition moments                                '
+         write(output%unit, '(t6,a)')   '         -------------------------                            '
+         write(output%unit, '(t6,a)')   'Comp.     Left              Right                Strength     '
+         write(output%unit, '(t6,a)')   '--------------------------------------------------------------'
+!
+         do comp = 1, 3
+!
+            write(output%unit, '(t6,a1,2x,f19.12,1x,f19.12,1x,f19.12)') components(comp), transition_moment_left(comp, state),&
+                                              transition_moment_right(comp, state), transition_strength(comp, state)
+!
+         enddo
+!   
+         write(output%unit, '(t6,a)')   '--------------------------------------------------------------'
+!
+      enddo
+!
+   end subroutine print_summary_eom_fop_engine
 !
 !
 end module fop_engine_class
