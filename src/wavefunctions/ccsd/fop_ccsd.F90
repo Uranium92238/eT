@@ -74,7 +74,7 @@ contains
       real(dp), dimension(:,:), allocatable :: etaX_ai
       real(dp), dimension(:,:,:,:), allocatable :: etaX_aibj
 !
-      integer :: a, i, ai, b, j, bj, aibj
+      integer :: a, i, ai
 !
       etaX = zero
 !
