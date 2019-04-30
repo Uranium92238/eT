@@ -450,6 +450,14 @@ contains
 !
       call wf%csiX_ccsd_a2(X, csiX_aibj)
 !
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            csiX_aibj(a, i, a, i) = half*csiX_aibj(a, i, a, i)
+!
+         enddo
+      enddo
+!
       call symmetrize_and_add_to_packed(csiX(wf%n_t1 + 1 : wf%n_es_amplitudes), csiX_aibj, (wf%n_v)*(wf%n_o))
 !
       call mem%dealloc(csiX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
