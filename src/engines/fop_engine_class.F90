@@ -266,6 +266,8 @@ contains
                                               transition_moment_right(comp, state), transition_strength(comp, state)
 !
          enddo
+!
+
 !   
          write(output%unit, '(t6,a)')   '--------------------------------------------------------------'
 !
