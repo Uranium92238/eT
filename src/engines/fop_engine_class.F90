@@ -177,16 +177,17 @@ contains
 !
       integer :: component, n_states, state
 !
-      character(len=100) :: description = 'Equation-of-motion fop calculation.'
-!
       call mem%alloc(etaX, wf%n_es_amplitudes)
       call mem%alloc(csiX, wf%n_es_amplitudes)
 !
 !     Print banner
 !
+      engine%description = 'Calculates dipole transition moments and oscillator strengths between &
+                              &the ground state and the excited states.'
+!
       call long_string_print(engine%tag,'(//t3,a)',.true.)
       call long_string_print(engine%author,'(t3,a/)',.true.)
-      call long_string_print(description,'(t3,a)',.false.,'(t3,a)','(t3,a)')
+      call long_string_print(engine%description,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
       call input%get_required_keyword_in_section('singlet states', 'solver cc es', n_states)
 !
