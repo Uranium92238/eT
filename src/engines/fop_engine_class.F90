@@ -173,7 +173,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: transition_strength, transition_moment_left, transition_moment_right
 !
-      real(dp), dimension(:), allocatable :: etaX, csiX
+      real(dp), dimension(:), allocatable :: etaX, csiX, excitation_energies
 !
       integer :: component, n_states, state
 !
@@ -190,6 +190,9 @@ contains
       call long_string_print(engine%description,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
       call input%get_required_keyword_in_section('singlet states', 'solver cc es', n_states)
+      call mem%alloc(excitation_energies, n_states)
+!
+      call wf%read_excitation_energies(n_states, excitation_energies)
 !
       call mem%alloc(transition_strength, 3, n_states)
       call mem%alloc(transition_moment_left, 3, n_states)
@@ -222,7 +225,8 @@ contains
 !
          enddo
 !
-         call engine%print_summary_eom(transition_strength, transition_moment_left, transition_moment_right, n_states)
+         call engine%print_summary_eom(transition_strength, transition_moment_left, &
+                                    transition_moment_right, n_states, excitation_energies)
 !
       endif
 !
@@ -233,7 +237,8 @@ contains
    end subroutine do_eom_fop_engine
 !
 !
-   subroutine print_summary_eom_fop_engine(transition_strength, transition_moment_left, transition_moment_right, n_states)
+   subroutine print_summary_eom_fop_engine(transition_strength, transition_moment_left, &
+                                    transition_moment_right, n_states, excitation_energies)
 !!
 !!    Print summary
 !!    Written by Josefine H. Andersen
@@ -245,32 +250,43 @@ contains
       integer, intent(in)  :: n_states
 !
       real(dp), dimension(3, n_states), intent(in) :: transition_strength, transition_moment_left, transition_moment_right
+      real(dp), dimension(n_states), intent(in) :: excitation_energies
 !
       character(len=1), dimension(3) :: components = ['X', 'Y', 'Z']
 !
       integer :: comp, state
+!
+      real(dp) :: sum_strength
 !              
-      write(output%unit, '(/t3,a)') '- EOM first order property calculation results:'
+      write(output%unit, '(/t3,a)') '- Summary of EOM first order properties calculation:'
 !
       do state = 1, n_states
 !
-         write(output%unit, '(/t6,a7, i3)') 'State: ', state
+         write(output%unit, '(/t6, a6 ,i3, a1)') 'State ', state, ':'
+         write(output%unit, '(t6, a)') '----------'
+         write(output%unit, '(t6, a25, f19.12)') 'Excitation energy [E_h]: ', excitation_energies(state)
+         write(output%unit, '(t6, a25, f19.12)') 'Excitation energy [eV]:  ', excitation_energies(state)*Hartree_to_eV
 !
-         write(output%unit, '(/t6,a)')  '            Transition moments                                '
-         write(output%unit, '(t6,a)')   '         -------------------------                            '
-         write(output%unit, '(t6,a)')   'Comp.     Left              Right                Strength     '
-         write(output%unit, '(t6,a)')   '--------------------------------------------------------------'
+         write(output%unit, '(/t6,a)')  '               Transition moments             Transition strength  '    
+         write(output%unit, '(t6,a)')   '-------------------------------------------------------------------'
+         write(output%unit, '(t6,a)')   'Comp.     < k |q| 0 >       < 0 |q| k >     < k |q| 0 > < 0 |q| k >'
+         write(output%unit, '(t6,a)')   '-------------------------------------------------------------------'
+!
+         sum_strength = zero
 !
          do comp = 1, 3
 !
-            write(output%unit, '(t6,a1,2x,f19.12,1x,f19.12,1x,f19.12)') components(comp), transition_moment_left(comp, state),&
+            write(output%unit, '(t6,a1,4x,f17.10,1x,f17.10,4x,f17.10)') components(comp), transition_moment_left(comp, state),&
                                               transition_moment_right(comp, state), transition_strength(comp, state)
 !
-         enddo
+            sum_strength = sum_strength + transition_strength(comp, state)
 !
-
+         enddo
 !   
-         write(output%unit, '(t6,a)')   '--------------------------------------------------------------'
+         write(output%unit, '(t6,a)')   '-------------------------------------------------------------------'
+!
+         write(output%unit, '(t6, a21, f19.12)') 'Oscillator strength: ', (two/three)*excitation_energies(state)*sum_strength
+!
 !
       enddo
 !
