@@ -33,6 +33,8 @@ module abstract_engine_class
 !
       character(len=200) :: name_
 !
+      character(len=200) :: description
+!
    contains
 !
       procedure :: ignite => ignite_abstract_engine
