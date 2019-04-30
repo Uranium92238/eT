@@ -71,6 +71,11 @@ contains
       type(timings) :: cc3_timer
       type(timings) :: ccsd_timer
 !
+      write(output%unit,*)
+      write(output%unit,*) "lalala"
+      write(output%unit,*)
+      flush(output%unit)
+!
       call cc3_timer%init('CC3 contribution)')
       call ccsd_timer%init('CCSD contribution)')
 !
@@ -935,13 +940,6 @@ contains
       call mem%alloc(c_bca, wf%n_v, wf%n_v, wf%n_v)
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      c_abc = zero
-      c_bac = zero
-      c_cba = zero
-      c_acb = zero
-      c_cab = zero
-      c_bca = zero
-!
 !     Fock matrix subblock: Resorting for easier contractions later
 !
       call mem%alloc(F_kc, wf%n_v, wf%n_o)
@@ -1200,6 +1198,13 @@ contains
                         if (i .eq. j .and. i .eq. k) then
                            cycle
                         end if
+!
+                        c_abc = zero
+                        c_bac = zero
+                        c_cba = zero
+                        c_acb = zero
+                        c_cab = zero
+                        c_bca = zero
 !
                         k_rel = k - batch_k%first + 1
 !
@@ -1520,9 +1525,9 @@ contains
       call dger(wf%n_v**2,       &
                wf%n_v,           &
                -one,             &
-               c_abij(:,:,i,k),  & ! c_ab_ik
+               c_abij(:,:,i,k),  & ! c_ab,ik
                1,                &
-               F_kc(:,j),        & ! F_cj
+               F_kc(:,j),        & ! F_c,j
                1,                &
                u_abc,            &
                wf%n_v**2)
@@ -1816,9 +1821,9 @@ contains
                   wf%n_v**2,        &
                   wf%n_v,           &
                   -one,             &
-                  c_abij(:,:,j,k),  & ! c_bdjk
+                  c_abij(:,:,j,k),  & ! c_b_d,jk
                   wf%n_v,           &
-                  g_dbic,           & ! g_daic ordered acd,i
+                  g_dbic,           & ! g_daic ordered ac_d,i
                   wf%n_v**2,        &
                   one,              &
                   u_abc,            &
@@ -1948,7 +1953,7 @@ contains
                   g_bdck,              & ! g_d_bc,k
                   wf%n_v,              &
                   one,                 &
-                  sigma_abij(:,:,i,j), & ! sigma_adij
+                  sigma_abij(:,:,i,j), & ! sigma_a_d,ij
                   wf%n_v)
 !
 !     sigma_ablj += - sum_c c^abc_ijk g_lick
@@ -1963,7 +1968,7 @@ contains
                   g_lick,              & ! g_l_c,ik
                   wf%n_o,              &
                   one,                 &
-                  sigma_abij(:,:,:,j), & ! sigma_ablj
+                  sigma_abij(:,:,:,j), & ! sigma_ab_l,j
                   wf%n_v**2)
 !
 !
@@ -1979,7 +1984,7 @@ contains
                   g_bdcj,              & ! g_d_bc,j
                   wf%n_v,              &
                   one,                 &
-                  sigma_abij(:,:,k,i), & ! sigma_adki
+                  sigma_abij(:,:,k,i), & ! sigma_a_d,ki
                   wf%n_v)
 !
 !     sigma_ablk += -sum_c c^cab_ijk g_ljci
@@ -1994,7 +1999,7 @@ contains
                   g_ljci,              & ! g_l_c,ji
                   wf%n_o,              &
                   one,                 &
-                  sigma_abij(:,:,:,k), & ! sigma_ablk
+                  sigma_abij(:,:,:,k), & ! sigma_ab_l,k
                   wf%n_v**2)
 !
 !
@@ -2014,7 +2019,7 @@ contains
                   g_bdci,              & ! g_d_bc,i
                   wf%n_v,              &
                   one,                 &
-                  sigma_abij(:,:,j,k), & ! sigma_adjk
+                  sigma_abij(:,:,j,k), & ! sigma_a_d,jk
                   wf%n_v)
 !
 !     sigma_abli += -sum_c c^bca_ijk g_lkcj
@@ -2029,7 +2034,7 @@ contains
                   g_lkcj,              & ! g_l_c,kj
                   wf%n_o,              &
                   one,                 &
-                  sigma_abij(:,:,:,i), & ! sigma_abli
+                  sigma_abij(:,:,:,i), & ! sigma_ab_l,i
                   wf%n_v**2)
 !
 !
@@ -2052,7 +2057,7 @@ contains
                      g_bdck,              & ! g_d_bc,k
                      wf%n_v,              &
                      one,                 &
-                     sigma_abij(:,:,j,i), & ! sigma_adji
+                     sigma_abij(:,:,j,i), & ! sigma_a_d,ji
                      wf%n_v)
 !
 !        sigma_abli += - sum_c c^bac_ijk g_ljck
@@ -2067,7 +2072,7 @@ contains
                      g_ljck,              & ! g_l_c,jk
                      wf%n_o,              &
                      one,                 &
-                     sigma_abij(:,:,:,i), & ! sigma_abli
+                     sigma_abij(:,:,:,i), & ! sigma_ab_l,i
                      wf%n_v**2)
 !
 !
@@ -2083,7 +2088,7 @@ contains
                      g_bdci,              & ! g_d_bc,i
                      wf%n_v,              &
                      one,                 &
-                     sigma_abij(:,:,k,j), & ! sigma_adkj
+                     sigma_abij(:,:,k,j), & ! sigma_a_d,kj
                      wf%n_v)
 !
 !        sigma_ablk += - sum_c c^acb_ijk g_licj
@@ -2098,7 +2103,7 @@ contains
                      g_licj,              & ! g_l_c,ij
                      wf%n_o,              &
                      one,                 &
-                     sigma_abij(:,:,:,k), & ! sigma_ablk
+                     sigma_abij(:,:,:,k), & ! sigma_ab_l,k
                      wf%n_v**2)
 !
 !
@@ -2301,7 +2306,7 @@ contains
                      one,              &
                      c_abc,            & ! c_a_bc
                      wf%n_v,           &
-                     t_abij(:,:,j,i),  & ! t_aeji
+                     t_abij(:,:,j,i),  & ! t_a_e,ji
                      wf%n_v,           &
                      one,              &
                      Y_bcek,           & ! Y_bc_e,k

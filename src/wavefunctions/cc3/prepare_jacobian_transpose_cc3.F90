@@ -53,7 +53,9 @@ contains
       class(cc3) :: wf
 !
       call wf%prepare_cc3_jacobian_transpose_integrals
+!
       call wf%prepare_cc3_jacobian_transpose_intermediates
+!
 !
    end subroutine prepare_for_jacobian_transpose_cc3
 !
@@ -253,13 +255,13 @@ contains
 !
       do d_batch = 1,batch_d%num_batches
 !
-         call batch_k%determine_limits(d_batch)
+         call batch_d%determine_limits(d_batch)
 !
          call mem%alloc(g_pqrs, wf%n_v, batch_d%length, wf%n_o, wf%n_o)
 !
          call wf%get_vvoo(g_pqrs,                     &
                           1,wf%n_v,                   &
-                          batch_k%first,batch_k%last, &
+                          batch_d%first,batch_d%last, &
                           1,wf%n_o,                   &
                           1,wf%n_o)
 !
