@@ -17,6 +17,19 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
+!
+  module subroutine prepare_for_eom_fop_ccs(wf)
+!!
+!!    Prepare for eom fop
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+  end subroutine prepare_for_eom_fop_ccs
+!
+!
    module subroutine construct_etaX_ccs(wf, X, etaX)
 !!
 !!    Construct η^X

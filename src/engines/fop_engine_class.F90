@@ -99,14 +99,14 @@ contains
 !
       call engine%do_ground_state(wf)
 !
-!     Determine multipliers
-!
-      call engine%do_multipliers(wf)
-!
 !     Prepare for excited state calculation
 !
       call wf%integrals%write_t1_cholesky(wf%t1)
       call wf%integrals%can_we_keep_g_pqrs_t1()
+!
+!     Determine multipliers
+!
+      call engine%do_multipliers(wf)
 !
 !     Excited state solutions
 !
@@ -176,6 +176,8 @@ contains
       real(dp), dimension(:), allocatable :: etaX, csiX, excitation_energies
 !
       integer :: component, n_states, state
+!
+      call wf%prepare_for_eom_fop()
 !
       call mem%alloc(etaX, wf%n_es_amplitudes)
       call mem%alloc(csiX, wf%n_es_amplitudes)

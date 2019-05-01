@@ -191,6 +191,8 @@ module ccs_class
 !
 !     Routines related to EOM first order property calculations
 !
+      procedure :: prepare_for_eom_fop                         => prepare_for_eom_fop_ccs
+!
       procedure :: construct_etaX                              => construct_etaX_ccs
       procedure :: etaX_ccs_a1                                 => etaX_ccs_a1_ccs
       procedure :: etaX_ccs_b1                                 => etaX_ccs_b1_ccs
