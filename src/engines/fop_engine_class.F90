@@ -270,16 +270,16 @@ contains
 !
          write(output%unit, '(t6, a30, f19.8)')  'Hartree-to-eV (CODATA 2014):  ', Hartree_to_eV
 !
-         write(output%unit, '(/t6,a)')  '                 Transition moments               Transition strength      '    
-         write(output%unit, '(t6,a)')   '---------------------------------------------------------------------------'
-         write(output%unit, '(t6,a)')   'Comp. q     < k |q| 0 >       < 0 |q| k >         < k |q| 0 > < 0 |q| k >  '
-         write(output%unit, '(t6,a)')   '---------------------------------------------------------------------------'
+         write(output%unit, '(/t6,a)')  '                 Transition moments               Transition strength   '    
+         write(output%unit, '(t6,a)')   '------------------------------------------------------------------------'
+         write(output%unit, '(t6,a)')   'Comp. q     < k |q| 0 >       < 0 |q| k >       < k |q| 0 > < 0 |q| k > '
+         write(output%unit, '(t6,a)')   '------------------------------------------------------------------------'
 !
          sum_strength = zero
 !
          do component = 1, 3
 !
-            write(output%unit, '(t6,a1,7x,f17.10,1x,f17.10,3x,f17.10)') components(component),                       &
+            write(output%unit, '(t6,a1,6x,f17.10,1x,f17.10,6x,f17.10)') components(component),                       &
                                                                         transition_moment_left(component, state),    &
                                                                         transition_moment_right(component, state),   &
                                                                         transition_strength(component, state)
