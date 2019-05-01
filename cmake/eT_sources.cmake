@@ -79,9 +79,11 @@ set(eT_fortran_sources
    src/solver_tools/davidson_tool_class.F90
    src/solver_tools/eigen_davidson_tool_class.F90
    src/solver_tools/linear_davidson_tool_class.F90
-   src/wavefunctions/ccsd/fop_ccsd.F90
    src/wavefunctions/ccs/fop_ccs.F90
+   src/wavefunctions/ccsd/fop_ccsd.F90
    src/wavefunctions/ccsd/omega_ccsd.F90
+   src/wavefunctions/ccsd/files_ccsd.F90
+   src/wavefunctions/ccsd/get_set_ccsd.F90
    src/wavefunctions/ccsd/jacobian_ccsd.F90
    src/wavefunctions/ccsd/jacobian_transpose_ccsd.F90
    src/wavefunctions/cc2/omega_cc2.F90
