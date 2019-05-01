@@ -209,6 +209,8 @@ contains
 !
 !           Read the solutions from file & set as initial trial vectors 
 !
+            call wf%is_restart_safe('excited state')
+!
             call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
 !
             write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
@@ -219,7 +221,7 @@ contains
 !
             do trial = 1, n_solutions_on_file
 !
-               call wf%restart_excited_state(c_i, trial, solver%transformation)
+               call wf%read_excited_state(c_i, trial, solver%transformation)
                call davidson%write_trial(c_i)
 !
             enddo 

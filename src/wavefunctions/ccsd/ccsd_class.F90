@@ -523,8 +523,6 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      call wf%is_restart_safe('ground state')
-!
       call disk%open_file(wf%t1_file, 'read', 'rewind')
       call disk%open_file(wf%t2_file, 'read', 'rewind')
 !
@@ -688,30 +686,29 @@ contains
 !
       call wf%is_restart_safe('excited state')
 !
-!     Check if we have read doubles vectors.
-!     If not, set up doubles.
+      call wf%read_excited_state(X, n, side)
 !
-      if (trim(side) == 'right') then 
-!
-!        Read singles vector
-!
-         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
-!
-!        Read doubles vector
-!
-         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
-!
-      elseif (trim(side) == 'left') then
-!
-!        Read singles vector
-!
-         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
-!
-!        Read doubles vector
-!
-         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
-!
-      endif
+!       if (trim(side) == 'right') then 
+! !
+! !        Read singles vector
+! !
+!          call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
+! !
+! !        Read doubles vector
+! !
+!          call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
+! !
+!       elseif (trim(side) == 'left') then
+! !
+! !        Read singles vector
+! !
+!          call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
+! !
+! !        Read doubles vector
+! !
+!          call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
+! !
+!       endif
 !
    end subroutine restart_excited_state_ccsd
 !

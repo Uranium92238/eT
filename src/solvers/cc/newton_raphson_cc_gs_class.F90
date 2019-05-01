@@ -63,7 +63,7 @@ module newton_raphson_cc_gs_class
       procedure :: read_settings            => read_settings_newton_raphson_cc_gs
       procedure :: print_banner             => print_banner_newton_raphson_cc_gs
       procedure :: print_settings           => print_settings_newton_raphson_cc_gs
-      procedure, nopass :: print_summary            => print_summary_newton_raphson_cc_gs
+      procedure, nopass :: print_summary    => print_summary_newton_raphson_cc_gs
 !
    end type newton_raphson_cc_gs
 !
@@ -109,6 +109,7 @@ contains
 !
       if (solver%restart) then
 !
+         call wf%is_restart_safe('ground state')
          call wf%read_amplitudes()
          call wf%integrals%write_t1_cholesky(wf%t1) 
 ! 

@@ -130,6 +130,7 @@ contains
       class(fop_engine) :: engine 
 !
       call engine%read_gs_settings()
+      call engine%read_es_settings()
       call engine%read_fop_settings()
 !
    end subroutine read_settings_fop_engine

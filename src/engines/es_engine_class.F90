@@ -227,7 +227,13 @@ contains
 !
          endif
 !
-      endif
+      else
+!
+         call output%error_msg('Could not start excited state solver. It may be that the &
+                                 &algorithm is not implemented for the method specified.')
+!
+      endif 
+!
    end subroutine do_excited_state_es_engine
 !
 !

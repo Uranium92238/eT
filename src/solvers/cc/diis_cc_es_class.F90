@@ -254,6 +254,7 @@ contains
 !
       if (solver%restart) then ! Overwrite all or some of the orbital differences 
 !
+         call wf%is_restart_safe('excited state')
          call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
 !
          write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
@@ -261,7 +262,7 @@ contains
 !
          do state = 1, n_solutions_on_file
 !
-            call wf%restart_excited_state(X(:,state), state, solver%transformation)
+            call wf%read_excited_state(X(:,state), state, solver%transformation)
 !
          enddo
 !
@@ -360,8 +361,8 @@ contains
 !
          if (iteration .eq. 1) then 
 !
-            write(output%unit, '(/t3,a,i0,a)')  'Note: residual of state ', state, ' converged in first iteration.'
-            write(output%unit, '(t3,a/)')       'Energy convergence has not been tested.'
+            write(output%unit, '(/t3,a)')  'Note: residual of all states converged in first iteration.'
+            write(output%unit, '(t3,a/)')  'Energy convergence has not been tested.'
 !
          endif
 !
