@@ -1133,7 +1133,7 @@ contains
 !
       integer :: I 
 !
-      write(output%unit, *)
+      write(output%unit, '(/t6, a/)')'Geometry in Angstom:'
 !
       do I = 1, molecule%n_atoms 
 !
@@ -1147,7 +1147,7 @@ contains
 !
       enddo 
 !
-      write(output%unit, '(/t3, a/)')'In Bohr:'
+      write(output%unit, '(/t6, a/)')'Geometry in Bohr:'
       do I = 1, molecule%n_atoms 
 !
          write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a11)')  molecule%atoms(I)%symbol, &

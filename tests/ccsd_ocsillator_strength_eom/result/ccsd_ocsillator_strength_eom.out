@@ -1,0 +1,1188 @@
+
+
+
+                       eT - a coupled cluster program 
+       Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch
+
+  ----------------------------------------------------------------------------------
+   Author:                Contribution(s):
+  ----------------------------------------------------------------------------------
+   Josefine H. Andersen   First order properties
+   Sarai D. Folkestad     Program design, HF, CCS, CC2, CCSD, Libint-interface,
+                          Cholesky decomposition, Davidson-tool, CVS, DIIS-tool
+                          Zeroth order properties, First order properties
+   Linda Goletto          CC2
+   Eirik F. Kjønstad      Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,
+                          Cholesky decomposition, Libint-interface, Davidson-tool
+                          Zeroth order properties, First order properties
+   Rolf H. Myhre          CC3, Runtest-interface, Launch script
+   Alexander Paul         CC2, CC3
+   Andreas Skeidsvoll     MP2
+  ----------------------------------------------------------------------------------
+   Other contributors: A. Balbi, M. Scavino
+
+  Running on 7 OMP threads
+
+  Memory available for calculation:     ***** GB
+  Disk space available for calculation:    30 GB
+
+  - Molecular system specifications:
+
+     Name:         h2o-he
+     Charge:       0
+     Multiplicity: 1
+
+     Nuclear repulsion energy (a.u.):             48.499011140892
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+     Geometry in Angstom:
+
+     H    0.866810000000   0.601440000000   5.000000000000   aug-cc-pvdz
+     F   -0.866810000000   0.601440000000   5.000000000000   aug-cc-pvdz
+     O    0.000000000000  -0.075790000000   5.000000000000   aug-cc-pvdz
+     He   0.100000000000   0.100000000000   7.500000000000   aug-cc-pvdz
+
+     Geometry in Bohr:
+
+     H    1.638033502034   1.136556880358   9.448630622825   aug-cc-pvdz
+     F   -1.638033502034   1.136556880358   9.448630622825   aug-cc-pvdz
+     O    0.000000000000  -0.143222342981   9.448630622825   aug-cc-pvdz
+     He   0.188972612457   0.188972612457  14.172945934238   aug-cc-pvdz
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         54
+     Number of molecular orbitals:       64
+     Number of atomic orbitals:          64
+
+
+  :: Self-consistent field DIIS Hartree-Fock solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock matrix 
+  is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:               8
+     Energy threshold:              0.1000E-05
+     Gradient threshold:            0.1000E-11
+
+     Coulomb screening threshold:   0.1000E-14
+     Exchange screening threshold:  0.1000E-14
+     ERI integral precision:        0.1000E-29
+
+  - Setting initial AO density to SAD:
+
+     Energy of initial guess:      -178.240585675146
+     Number of electrons in guess:   20.000000000000
+
+  Iteration    Energy (a.u.)        Max(grad.)    Delta E (a.u.)
+  --------------------------------------------------------------
+    1          -177.468539955220     0.7276E-01     0.1775E+03
+    2          -177.496085483343     0.1208E-01     0.2755E-01
+    3          -177.497376973771     0.5721E-02     0.1291E-02
+    4          -177.497538688344     0.2442E-02     0.1617E-03
+    5          -177.497566236824     0.4759E-03     0.2755E-04
+    6          -177.497568302915     0.1265E-03     0.2066E-05
+    7          -177.497568475935     0.4247E-04     0.1730E-06
+    8          -177.497568501734     0.7696E-05     0.2580E-07
+    9          -177.497568503285     0.5324E-05     0.1551E-08
+   10          -177.497568503682     0.2865E-05     0.3968E-09
+   11          -177.497568503773     0.3589E-06     0.9155E-10
+   12          -177.497568503776     0.1028E-06     0.2444E-11
+   13          -177.497568503776     0.4545E-07     0.3411E-12
+   14          -177.497568503776     0.1839E-07     0.5684E-13
+   15          -177.497568503776     0.6554E-08     0.5684E-13
+   16          -177.497568503776     0.4008E-08     0.2842E-13
+   17          -177.497568503776     0.2260E-08     0.5684E-13
+   18          -177.497568503776     0.3520E-09     0.2274E-12
+   19          -177.497568503776     0.9646E-10     0.1421E-12
+   20          -177.497568503776     0.3517E-10     0.5684E-13
+   21          -177.497568503776     0.8703E-11     0.5684E-13
+   22          -177.497568503776     0.2044E-11     0.5684E-13
+   23          -177.497568503776     0.1320E-11     0.8527E-13
+   24          -177.497568503776     0.5110E-12     0.5684E-13
+  --------------------------------------------------------------
+
+  Convergence criterion met in  24 iterations!
+
+  - Summary of HF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                 0.487264724339
+     Nuclear repulsion energy:     48.499011140892
+     Electronic energy:          -225.996579644668
+     Total energy:               -177.497568503776
+
+  - Molecular orbital energies:
+
+    1  -26.357406140808      2  -20.663116310011      3   -1.907197210255
+    4   -1.216719666973      5   -0.914744587312      6   -0.878954791324
+    7   -0.844134023860      8   -0.804032982364      9   -0.508035464739
+   10   -0.449352526613     11    0.037912197726     12    0.133969941161
+   13    0.153310348416     14    0.201803315882     15    0.209645484640
+   16    0.232723287513     17    0.258070267960     18    0.290700841992
+   19    0.293843653674     20    0.359413000883     21    0.376310811597
+   22    0.434884760573     23    0.500671329308     24    0.564274496360
+   25    0.592161803364     26    0.618324395311     27    0.668416778315
+   28    0.716136585869     29    0.881858887526     30    1.053049904775
+   31    1.139533509994     32    1.152331302386     33    1.189671188277
+   34    1.229523010825     35    1.352088095967     36    1.381642947124
+   37    1.462623360958     38    1.551955707279     39    1.581673301674
+   40    1.595357346765     41    1.696469191525     42    1.789442275845
+   43    1.892538172219     44    2.007532614176     45    2.058794579244
+   46    2.179015526252     47    2.246238557543     48    2.265854130655
+   49    2.669630356877     50    2.928074940458     51    3.070048410188
+   52    3.079949829157     53    3.200764529694     54    3.497524934787
+   55    3.549180815303     56    3.599562919371     57    3.732492746802
+   58    3.841934764192     59    4.288110461185     60    4.842025513430
+   61    4.892233344492     62    5.156266358389     63    5.160502789641
+   64    5.341960376927
+
+  - Cleaning up Self-consistent field DIIS Hartree-Fock solver
+
+
+  :: Cholesky decomposition of electronic repulsion integrals solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations.
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-11
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+     Total number of AOs:                    64
+     Total number of shell pairs:           406
+     Total number of AO pairs:             2080
+
+  - Preparing diagonal for decomposition:
+
+     Significant shell pairs:                   396
+     Significant AO pairs:                     2036
+
+     Construct shell pairs:                     406
+     Construct AO pairs:                       2080
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1             2011 /      386       0.53537E+01     369             55               110605
+     2             1867 /      364       0.52868E-01    1000            226               421942
+     3             1788 /      348       0.51965E-03    1000            399               713412
+     4             1569 /      315       0.50118E-05    1000            619               971211
+     5             1273 /      265       0.49871E-07    1000            907              1154611
+     6              632 /      105       0.46322E-09     863           1184               748288
+     7                0 /        0       0.46207E-11     266           1276                    0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals: 
+
+     Final number of Cholesky vectors:       1276
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.9914E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.8882E-15
+
+
+  :: DIIS CC ground solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
+  of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 13. 
+  
+
+  - DIIS CC ground state solver settings:
+
+     Omega threshold:           0.10E-11
+     Energy threshold:          0.10E-05
+
+     DIIS dimension:                   8
+     Max number of iterations:       100
+
+  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) 
+  ---------------------------------------------------------------
+    1          -177.924451846288     0.1270E+00     0.1779E+03
+    2          -177.931486401051     0.3673E-01     0.7035E-02
+    3          -177.940679524401     0.1218E-01     0.9193E-02
+    4          -177.943137729672     0.3226E-02     0.2458E-02
+    5          -177.942927496688     0.1145E-02     0.2102E-03
+    6          -177.942866347019     0.4152E-03     0.6115E-04
+    7          -177.942888851756     0.1801E-03     0.2250E-04
+    8          -177.942885670011     0.5772E-04     0.3182E-05
+    9          -177.942884332855     0.3004E-04     0.1337E-05
+   10          -177.942884578391     0.1534E-04     0.2455E-06
+   11          -177.942884556881     0.6021E-05     0.2151E-07
+   12          -177.942884540901     0.2692E-05     0.1598E-07
+   13          -177.942884479094     0.1274E-05     0.6181E-07
+   14          -177.942884497838     0.5063E-06     0.1874E-07
+   15          -177.942884549110     0.2369E-06     0.5127E-07
+   16          -177.942884539896     0.1178E-06     0.9214E-08
+   17          -177.942884533376     0.4649E-07     0.6521E-08
+   18          -177.942884529804     0.2267E-07     0.3572E-08
+   19          -177.942884530248     0.9578E-08     0.4441E-09
+   20          -177.942884531206     0.4803E-08     0.9581E-09
+   21          -177.942884531391     0.1800E-08     0.1850E-09
+   22          -177.942884531198     0.8065E-09     0.1934E-09
+   23          -177.942884531222     0.4212E-09     0.2444E-10
+   24          -177.942884531213     0.2364E-09     0.9379E-11
+   25          -177.942884531209     0.7710E-10     0.3752E-11
+   26          -177.942884531212     0.3720E-10     0.3013E-11
+   27          -177.942884531212     0.1654E-10     0.3695E-12
+   28          -177.942884531212     0.7332E-11     0.1421E-12
+   29          -177.942884531213     0.3459E-11     0.8242E-12
+   30          -177.942884531213     0.1770E-11     0.3126E-12
+   31          -177.942884531213     0.8264E-12     0.5684E-13
+  --------------------------------------------------------------
+
+  Convergence criterion met in  31 iterations!
+
+  - DIIS CC ground state solver summary:
+
+     Final ground state energy (a.u.): -177.942884531213
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         t(a,i)             
+     -----------------------------------
+        9     10       -0.013932844004
+       10     10       -0.013121511640
+        8      9        0.012726828028
+        6     10        0.012627235600
+        3      9        0.010707728685
+        9      7       -0.010320167965
+        1      9       -0.009502997251
+        4      9        0.009104773901
+        8      6        0.009016233776
+       11      9       -0.008975652688
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         t(ai,bj)             
+     --------------------------------------------------
+       32      5      32      5       -0.033057336748
+       26     10      26     10       -0.022376093959
+       41      5      41      5       -0.021142351135
+       42      5      42      5       -0.021053193379
+       43      5      43      5       -0.019170780883
+       17      8      17      8       -0.016813085185
+        4      5      32      5       -0.016109363447
+       30      7      30      7       -0.014514164483
+       15      5      15      5       -0.013966323936
+        3      9       3      9       -0.013865886435
+     --------------------------------------------------
+
+     T1 diagnostic (|T1|/sqrt(N_e)): 0.010667447766
+
+
+  :: Davidson coupled cluster multipliers solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A Davidson solver that solves the multiplier equation: t-bar^T A = -η. 
+  The linear  problem is solved in a reduced space, the dimension of which 
+  is  expanded until the convergence criteria are met.
+
+  A complete description of the algorithm can be found in  E. R. Davidson, 
+  J. Comput. Phys. 17, 87 (1975).
+
+  - Davidson CC multipliers solver settings:
+
+     Residual threshold:        0.10E-11
+     Max number of iterations:       100
+
+  Iteration     Residual norm
+  ---------------------------
+    1             0.3368E+00
+    2             0.9247E-01
+    3             0.2302E-01
+    4             0.8842E-02
+    5             0.2404E-02
+    6             0.1131E-02
+    7             0.4147E-03
+    8             0.1522E-03
+    9             0.5620E-04
+   10             0.2445E-04
+   11             0.1222E-04
+   12             0.5891E-05
+   13             0.2559E-05
+   14             0.9563E-06
+   15             0.3144E-06
+   16             0.9576E-07
+   17             0.3500E-07
+   18             0.1041E-07
+   19             0.3598E-08
+   20             0.1073E-08
+   21             0.4357E-09
+   22             0.1346E-09
+   23             0.4891E-10
+   24             0.1472E-10
+   25             0.4518E-11
+   26             0.1540E-11
+   27             0.4905E-12
+  ---------------------------
+
+  - Davidson CC multipliers solver summary:
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         r(a,i)             
+     -----------------------------------
+        6     10        0.017087391489
+       10     10       -0.016712129497
+        9     10       -0.015720707322
+        8      9        0.013562053735
+        9      7       -0.012403129431
+        4     10       -0.011480563072
+        8      6        0.011198244774
+        3      9        0.010940295915
+        5     10       -0.010587570391
+       11      9       -0.010431689469
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         r(ai,bj)             
+     --------------------------------------------------
+       32      5      32      5       -0.065599057089
+       26     10      26     10       -0.044350827132
+       41      5      41      5       -0.041937933996
+       42      5      42      5       -0.041761169731
+       43      5      43      5       -0.038025757899
+       17      8      17      8       -0.032644424445
+        4      5      32      5       -0.031943759949
+       25      9      26     10        0.030548828438
+       30      7      29      9       -0.030402119955
+       29      6      30      7       -0.030229436878
+     --------------------------------------------------
+
+
+  :: Davidson coupled cluster excited state solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A Davidson solver that calculates the lowest eigenvalues and  the right 
+  or left eigenvectors of the Jacobian matrix, A. The eigenvalue  problem 
+  is solved in a reduced space, the dimension of which is  expanded until 
+  the convergence criteria are met.
+
+  A complete description of the algorithm can be found in  E. R. Davidson, 
+  J. Comput. Phys. 17, 87 (1975).
+
+  - Davidson CC excited state solver settings:
+
+     Energy threshold:    0.10E-05
+     Residual threshold:  0.10E-11
+     Transformation:      right                                   
+
+     Number of singlet states:   1
+     Max number of iterations: 100
+
+  Solving for the right eigenvectors.
+
+  No Jacobian preparations for ccsd wavefunction.
+
+  Orthonormalizing the trial vectors.
+
+  Iteration:                  1
+  Reduced space dimension:    1
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.390684378275         0.000000000000            0.4750E+00
+  -------------------------------------------------------------------
+
+  Iteration:                  2
+  Reduced space dimension:    2
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.226429312020         0.000000000000            0.1105E+00
+  -------------------------------------------------------------------
+
+  Iteration:                  3
+  Reduced space dimension:    3
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.206824104339         0.000000000000            0.1350E+00
+  -------------------------------------------------------------------
+
+  Iteration:                  4
+  Reduced space dimension:    4
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.195811793640         0.000000000000            0.6563E-01
+  -------------------------------------------------------------------
+
+  Iteration:                  5
+  Reduced space dimension:    5
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.191986591554         0.000000000000            0.3022E-01
+  -------------------------------------------------------------------
+
+  Iteration:                  6
+  Reduced space dimension:    6
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190564342807         0.000000000000            0.1657E-01
+  -------------------------------------------------------------------
+
+  Iteration:                  7
+  Reduced space dimension:    7
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190688356388         0.000000000000            0.9740E-02
+  -------------------------------------------------------------------
+
+  Iteration:                  8
+  Reduced space dimension:    8
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190659336618         0.000000000000            0.3679E-02
+  -------------------------------------------------------------------
+
+  Iteration:                  9
+  Reduced space dimension:    9
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190636429438         0.000000000000            0.1870E-02
+  -------------------------------------------------------------------
+
+  Iteration:                 10
+  Reduced space dimension:   10
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190653254376         0.000000000000            0.1023E-02
+  -------------------------------------------------------------------
+
+  Iteration:                 11
+  Reduced space dimension:   11
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190652760993         0.000000000000            0.5556E-03
+  -------------------------------------------------------------------
+
+  Iteration:                 12
+  Reduced space dimension:   12
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190641236956         0.000000000000            0.2664E-03
+  -------------------------------------------------------------------
+
+  Iteration:                 13
+  Reduced space dimension:   13
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190639757180         0.000000000000            0.1325E-03
+  -------------------------------------------------------------------
+
+  Iteration:                 14
+  Reduced space dimension:   14
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642286377         0.000000000000            0.7655E-04
+  -------------------------------------------------------------------
+
+  Iteration:                 15
+  Reduced space dimension:   15
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642808036         0.000000000000            0.5476E-04
+  -------------------------------------------------------------------
+
+  Iteration:                 16
+  Reduced space dimension:   16
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642598730         0.000000000000            0.2765E-04
+  -------------------------------------------------------------------
+
+  Iteration:                 17
+  Reduced space dimension:   17
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642399133         0.000000000000            0.1361E-04
+  -------------------------------------------------------------------
+
+  Iteration:                 18
+  Reduced space dimension:   18
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642342217         0.000000000000            0.6633E-05
+  -------------------------------------------------------------------
+
+  Iteration:                 19
+  Reduced space dimension:   19
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642358209         0.000000000000            0.3100E-05
+  -------------------------------------------------------------------
+
+  Iteration:                 20
+  Reduced space dimension:   20
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642355431         0.000000000000            0.1364E-05
+  -------------------------------------------------------------------
+
+  Iteration:                 21
+  Reduced space dimension:   21
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372075         0.000000000000            0.6036E-06
+  -------------------------------------------------------------------
+
+  Iteration:                 22
+  Reduced space dimension:   22
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642378040         0.000000000000            0.3449E-06
+  -------------------------------------------------------------------
+
+  Iteration:                 23
+  Reduced space dimension:   23
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372919         0.000000000000            0.1538E-06
+  -------------------------------------------------------------------
+
+  Iteration:                 24
+  Reduced space dimension:   24
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372986         0.000000000000            0.6407E-07
+  -------------------------------------------------------------------
+
+  Iteration:                 25
+  Reduced space dimension:   25
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372710         0.000000000000            0.2591E-07
+  -------------------------------------------------------------------
+
+  Iteration:                 26
+  Reduced space dimension:   26
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372828         0.000000000000            0.9256E-08
+  -------------------------------------------------------------------
+
+  Iteration:                 27
+  Reduced space dimension:   27
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372905         0.000000000000            0.4162E-08
+  -------------------------------------------------------------------
+
+  Iteration:                 28
+  Reduced space dimension:   28
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372860         0.000000000000            0.1920E-08
+  -------------------------------------------------------------------
+
+  Iteration:                 29
+  Reduced space dimension:   29
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372867         0.000000000000            0.8465E-09
+  -------------------------------------------------------------------
+
+  Iteration:                 30
+  Reduced space dimension:   30
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372869         0.000000000000            0.4076E-09
+  -------------------------------------------------------------------
+
+  Iteration:                 31
+  Reduced space dimension:   31
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.2699E-09
+  -------------------------------------------------------------------
+
+  Iteration:                 32
+  Reduced space dimension:   32
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372872         0.000000000000            0.1863E-09
+  -------------------------------------------------------------------
+
+  Iteration:                 33
+  Reduced space dimension:   33
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.9298E-10
+  -------------------------------------------------------------------
+
+  Iteration:                 34
+  Reduced space dimension:   34
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.3951E-10
+  -------------------------------------------------------------------
+
+  Iteration:                 35
+  Reduced space dimension:   35
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.1721E-10
+  -------------------------------------------------------------------
+
+  Iteration:                 36
+  Reduced space dimension:   36
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.8492E-11
+  -------------------------------------------------------------------
+
+  Iteration:                 37
+  Reduced space dimension:   37
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.4234E-11
+  -------------------------------------------------------------------
+
+  Iteration:                 38
+  Reduced space dimension:   38
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.1786E-11
+  -------------------------------------------------------------------
+
+  Iteration:                 39
+  Reduced space dimension:   39
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.7587E-12
+  -------------------------------------------------------------------
+
+  Convergence criterion met in  39 iterations!
+
+  - Summary of CC excited state calculation:
+
+     Electronic state nr.  1
+
+     Energy (Hartree):              0.190642372870
+     Fraction singles (|r1|/|r|):   0.973250879980
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         r(a,i)             
+     -----------------------------------
+        1     10        0.770923505166
+        3     10       -0.354174216716
+        5     10        0.330994297132
+        4     10       -0.293559547765
+       14     10        0.115454645857
+       11     10        0.067250119669
+        2     10        0.058506281567
+       15     10       -0.040149871133
+       18     10       -0.036106594304
+       16     10        0.033895211220
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         r(ai,bj)             
+     --------------------------------------------------
+        3      9       1     10       -0.042044404864
+       11      9       1     10        0.033175183105
+        4      9       1     10       -0.032704751086
+        1      9       1     10        0.032227871283
+        8      9       1     10       -0.029184996002
+        1     10      10     10        0.025671438977
+        1     10       9     10        0.025646388526
+        5      9       1     10        0.025446680650
+        1     10      26     10        0.025373635762
+        1     10       6     10       -0.025213871793
+     --------------------------------------------------
+
+  - Electronic excitation energies:
+
+                                      Excitation energy            
+                          ------------------------------------------
+     State                (Hartree)             (eV)                
+     ---------------------------------------------------------------
+      1                   0.190642372870         5.187643199934
+     ---------------------------------------------------------------
+     eV/Hartree (CODATA 2014): 27.21138602
+
+  Storing excited states to file.
+
+
+  :: Davidson coupled cluster excited state solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A Davidson solver that calculates the lowest eigenvalues and  the right 
+  or left eigenvectors of the Jacobian matrix, A. The eigenvalue  problem 
+  is solved in a reduced space, the dimension of which is  expanded until 
+  the convergence criteria are met.
+
+  A complete description of the algorithm can be found in  E. R. Davidson, 
+  J. Comput. Phys. 17, 87 (1975).
+
+  - Davidson CC excited state solver settings:
+
+     Energy threshold:    0.10E-05
+     Residual threshold:  0.10E-11
+     Transformation:      left                                    
+
+     Number of singlet states:   1
+     Max number of iterations: 100
+
+  Solving for the left eigenvectors.
+
+  No Jacobian preparations for ccsd wavefunction.
+
+  Orthonormalizing the trial vectors.
+
+  Iteration:                  1
+  Reduced space dimension:    1
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.390684378275         0.000000000000            0.9238E+00
+  -------------------------------------------------------------------
+
+  Iteration:                  2
+  Reduced space dimension:    2
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.237015249161         0.000000000000            0.1622E+00
+  -------------------------------------------------------------------
+
+  Iteration:                  3
+  Reduced space dimension:    3
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.219416655492         0.000000000000            0.1302E+00
+  -------------------------------------------------------------------
+
+  Iteration:                  4
+  Reduced space dimension:    4
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.195376267469         0.000000000000            0.1013E+00
+  -------------------------------------------------------------------
+
+  Iteration:                  5
+  Reduced space dimension:    5
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.191778401853         0.000000000000            0.3800E-01
+  -------------------------------------------------------------------
+
+  Iteration:                  6
+  Reduced space dimension:    6
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.191140393008         0.000000000000            0.2148E-01
+  -------------------------------------------------------------------
+
+  Iteration:                  7
+  Reduced space dimension:    7
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190660802884         0.000000000000            0.1140E-01
+  -------------------------------------------------------------------
+
+  Iteration:                  8
+  Reduced space dimension:    8
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190693054282         0.000000000000            0.5022E-02
+  -------------------------------------------------------------------
+
+  Iteration:                  9
+  Reduced space dimension:    9
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190652367259         0.000000000000            0.2378E-02
+  -------------------------------------------------------------------
+
+  Iteration:                 10
+  Reduced space dimension:   10
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190634012475         0.000000000000            0.1313E-02
+  -------------------------------------------------------------------
+
+  Iteration:                 11
+  Reduced space dimension:   11
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190630329165         0.000000000000            0.6839E-03
+  -------------------------------------------------------------------
+
+  Iteration:                 12
+  Reduced space dimension:   12
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190643280627         0.000000000000            0.3567E-03
+  -------------------------------------------------------------------
+
+  Iteration:                 13
+  Reduced space dimension:   13
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190643779220         0.000000000000            0.1729E-03
+  -------------------------------------------------------------------
+
+  Iteration:                 14
+  Reduced space dimension:   14
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642539526         0.000000000000            0.9454E-04
+  -------------------------------------------------------------------
+
+  Iteration:                 15
+  Reduced space dimension:   15
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190643326095         0.000000000000            0.7025E-04
+  -------------------------------------------------------------------
+
+  Iteration:                 16
+  Reduced space dimension:   16
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190641600553         0.000000000000            0.3725E-04
+  -------------------------------------------------------------------
+
+  Iteration:                 17
+  Reduced space dimension:   17
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642456007         0.000000000000            0.1814E-04
+  -------------------------------------------------------------------
+
+  Iteration:                 18
+  Reduced space dimension:   18
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642362004         0.000000000000            0.8491E-05
+  -------------------------------------------------------------------
+
+  Iteration:                 19
+  Reduced space dimension:   19
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642355610         0.000000000000            0.3970E-05
+  -------------------------------------------------------------------
+
+  Iteration:                 20
+  Reduced space dimension:   20
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642413498         0.000000000000            0.1942E-05
+  -------------------------------------------------------------------
+
+  Iteration:                 21
+  Reduced space dimension:   21
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642369582         0.000000000000            0.7664E-06
+  -------------------------------------------------------------------
+
+  Iteration:                 22
+  Reduced space dimension:   22
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642373588         0.000000000000            0.4378E-06
+  -------------------------------------------------------------------
+
+  Iteration:                 23
+  Reduced space dimension:   23
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642371800         0.000000000000            0.2077E-06
+  -------------------------------------------------------------------
+
+  Iteration:                 24
+  Reduced space dimension:   24
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642371408         0.000000000000            0.8337E-07
+  -------------------------------------------------------------------
+
+  Iteration:                 25
+  Reduced space dimension:   25
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642373331         0.000000000000            0.3515E-07
+  -------------------------------------------------------------------
+
+  Iteration:                 26
+  Reduced space dimension:   26
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372734         0.000000000000            0.1233E-07
+  -------------------------------------------------------------------
+
+  Iteration:                 27
+  Reduced space dimension:   27
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372952         0.000000000000            0.5697E-08
+  -------------------------------------------------------------------
+
+  Iteration:                 28
+  Reduced space dimension:   28
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372880         0.000000000000            0.2773E-08
+  -------------------------------------------------------------------
+
+  Iteration:                 29
+  Reduced space dimension:   29
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372860         0.000000000000            0.1470E-08
+  -------------------------------------------------------------------
+
+  Iteration:                 30
+  Reduced space dimension:   30
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372877         0.000000000000            0.9426E-09
+  -------------------------------------------------------------------
+
+  Iteration:                 31
+  Reduced space dimension:   31
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372860         0.000000000000            0.6058E-09
+  -------------------------------------------------------------------
+
+  Iteration:                 32
+  Reduced space dimension:   32
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.3132E-09
+  -------------------------------------------------------------------
+
+  Iteration:                 33
+  Reduced space dimension:   33
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.1332E-09
+  -------------------------------------------------------------------
+
+  Iteration:                 34
+  Reduced space dimension:   34
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.5289E-10
+  -------------------------------------------------------------------
+
+  Iteration:                 35
+  Reduced space dimension:   35
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.2338E-10
+  -------------------------------------------------------------------
+
+  Iteration:                 36
+  Reduced space dimension:   36
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.1124E-10
+  -------------------------------------------------------------------
+
+  Iteration:                 37
+  Reduced space dimension:   37
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.5705E-11
+  -------------------------------------------------------------------
+
+  Iteration:                 38
+  Reduced space dimension:   38
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.2331E-11
+  -------------------------------------------------------------------
+
+  Iteration:                 39
+  Reduced space dimension:   39
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  -------------------------------------------------------------------
+   1       0.190642372870         0.000000000000            0.9894E-12
+  -------------------------------------------------------------------
+
+  Convergence criterion met in  39 iterations!
+
+  - Summary of CC excited state calculation:
+
+     Electronic state nr.  1
+
+     Energy (Hartree):              0.190642372870
+     Fraction singles (|r1|/|r|):   0.929847927035
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         r(a,i)             
+     -----------------------------------
+        1     10        0.737903140021
+        3     10       -0.337420989488
+        5     10        0.315712638101
+        4     10       -0.279742001508
+       14     10        0.109029769923
+       11     10        0.062689688276
+        2     10        0.056597175650
+       15     10       -0.037706562751
+       18     10       -0.034086198809
+        7     10       -0.031699160326
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         r(ai,bj)             
+     --------------------------------------------------
+        3      9       1     10       -0.068544104978
+       11      9       1     10        0.062889659634
+        8      9       1     10       -0.057482984051
+        4      9       1     10       -0.054225231602
+        1      7      17      8        0.047845790003
+       14      9       1     10        0.045323577631
+        3      6       1     10        0.041570204867
+       14      6       1     10       -0.041532678661
+        5      9       1     10        0.040134720907
+        1      7      18      8       -0.039371661465
+     --------------------------------------------------
+
+  - Electronic excitation energies:
+
+                                      Excitation energy            
+                          ------------------------------------------
+     State                (Hartree)             (eV)                
+     ---------------------------------------------------------------
+      1                   0.190642372870         5.187643199933
+     ---------------------------------------------------------------
+     eV/Hartree (CODATA 2014): 27.21138602
+
+  Storing excited states to file.
+
+
+  :: First order coupled cluster properties
+  :: J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, 2019
+
+  Calculates dipole transition moments and oscillator strengths between the 
+  ground state and the excited states.
+
+  - Summary of EOM first order properties calculation:
+
+     State   1:
+     ----------
+     Excitation energy [E_h]:      0.190642372870
+     Excitation energy [eV]:       5.187643199933
+
+                    Transition moments             Transition strength  
+     -------------------------------------------------------------------
+     Comp.     < k |q| 0 >       < 0 |q| k >     < k |q| 0 > < 0 |q| k >
+     -------------------------------------------------------------------
+     X         0.0116502719      0.0220027810         0.0002563384
+     Y        -0.0021761762     -0.0040916897         0.0000089042
+     Z        -0.1403696517     -0.2606337365         0.0365850668
+     -------------------------------------------------------------------
+     Oscillator strength:      0.004683486952
+
+  - Cleaning up ccsd wavefunction
+
+  Mismatch in memory according to eT and specified on input:
+
+     Memory available (eT):     *********** GB
+     Memory available (input):  *********** GB
+
+  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
+
+  eT terminated successfully!
