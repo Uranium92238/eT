@@ -274,12 +274,12 @@ contains
 !
    module subroutine etaX_eom_a_ccs(wf, etaX, csiX)
 !!
-!!    Get eom contribution
+!!    EtaX EOM A
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
-!!    Add EOM contribution to etaX vector
+!!    Add EOM A correction to etaX vector:
 !!
-!!       EOM correction:  η^X,corr_μ += tbar_μ (ξ * tbar) 
+!!       A:  η^X,corr_μ += tbar_μ (ξ * tbar) 
 !!
       implicit none
 !
@@ -306,27 +306,6 @@ contains
    end subroutine etaX_eom_a_ccs
 !
 !
-   module subroutine scale_left_excitation_vector_ccs(wf, L, R)
-!!
-!!    Make left and right excitation vectors biorthogonal by scaling left vector
-!!    Written by Josefine H. Andersen, Feb 2019
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: L
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: R
-!
-      real(dp) :: norm, ddot
-!
-      norm = ddot(wf%n_es_amplitudes, L, 1, R, 1)
-!
-      call dscal(wf%n_es_amplitudes, one/norm, L, 1)
-!
-   end subroutine scale_left_excitation_vector_ccs
-!
-!
    module subroutine calculate_transition_strength_ccs(wf, S, etaX, csiX, state, T_l, T_r)
 !!
 !!    Calculate transition strength for spectra
@@ -344,30 +323,47 @@ contains
       real(dp), intent(out) :: T_l, T_r
       integer, intent(in)   :: state
 !
-      real(dp), dimension(:), allocatable :: L_n, R_n
+      real(dp), dimension(:), allocatable :: L, R
 !
-      real(dp) :: ddot
+      real(dp) :: ddot, LT_R
 !
-      call mem%alloc(L_n, wf%n_es_amplitudes)
-      call mem%alloc(R_n, wf%n_es_amplitudes)
+!     Read states and make them binormal by scaling the left vector 
 !
-      call wf%read_excited_state(L_n, state, 'left')
-      call wf%read_excited_state(R_n, state, 'right')
+      call mem%alloc(L, wf%n_es_amplitudes)
+      call mem%alloc(R, wf%n_es_amplitudes)
 !
-      call wf%scale_left_excitation_vector(L_n, R_n)
+      call wf%read_excited_state(L, state, 'left')
+      call wf%read_excited_state(R, state, 'right')
+!
+      LT_R = ddot(wf%n_es_amplitudes, L, 1, R, 1)
+      call dscal(wf%n_es_amplitudes, one/LT_R, L, 1)
 !
 !     Left and right transition moments
 !
-      T_r = ddot(wf%n_es_amplitudes, etaX, 1, R_n, 1)
-      T_l = ddot(wf%n_es_amplitudes, L_n, 1, csiX, 1)
+      T_r = ddot(wf%n_es_amplitudes, etaX, 1, R, 1)
+      T_l = ddot(wf%n_es_amplitudes, L, 1, csiX, 1)
 !
 !     Transition strength
 !
       S  = T_l * T_r
 !
-      call mem%dealloc(L_n, wf%n_es_amplitudes)
-      call mem%dealloc(R_n, wf%n_es_amplitudes)
+      call mem%dealloc(L, wf%n_es_amplitudes)
+      call mem%dealloc(R, wf%n_es_amplitudes)
+!
+!     Sanity check in case roots are ordered incorrectly
+!
+      if ((abs(LT_R)-one) .gt. 0.01D0) then 
+!
+        write(output%unit, '(/t3,a,i0,a)') 'The right and left eigenvector number ', state, ' are not &
+                                            &consistent! The converged states are not ordered correctly.'
+!
+        write(output%unit, '(/t3,a,f19.12)') 'Dotproduct between L and R: ', LT_R
+!
+        call output%error_msg('Error while calculating transition moments.')
+!
+      endif 
 !
    end subroutine calculate_transition_strength_ccs
+!
 !
 end submodule fop_ccs

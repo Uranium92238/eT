@@ -129,21 +129,6 @@
    end subroutine etaX_eom_a_ccs
 !
 !
-   module subroutine scale_left_excitation_vector_ccs(wf, L, R)
-!!
-!!    Make left and right excitation vectors biorthogonal by scaling left vector
-!!    Written by Josefine H. Andersen, Feb 2019
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: L
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: R
-!
-   end subroutine scale_left_excitation_vector_ccs
-!
-!
    module subroutine calculate_transition_strength_ccs(wf, S, etaX, csiX, state, T_l, T_r)
 !!
 !!    Calculate transition strength for spectra

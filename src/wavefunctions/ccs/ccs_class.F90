@@ -97,7 +97,6 @@ module ccs_class
       procedure :: read_singles_vector                         => read_singles_vector_ccs
 !
       procedure :: save_excited_state                          => save_excited_state_ccs
-      procedure :: restart_excited_state                       => restart_excited_state_ccs
       procedure :: read_excited_state                          => read_excited_state_ccs
       procedure :: get_n_excited_states_on_file                => get_n_excited_states_on_file_ccs
 !
@@ -200,8 +199,6 @@ module ccs_class
 !
       procedure :: add_etaX_eom_correction                     => add_etaX_eom_correction_ccs
       procedure :: etaX_eom_a                                  => etaX_eom_a_ccs
-!
-      procedure :: scale_left_excitation_vector                => scale_left_excitation_vector_ccs
 !
       procedure :: calculate_transition_strength               => calculate_transition_strength_ccs
 !
@@ -760,9 +757,9 @@ contains
    end subroutine save_excited_state_ccs
 !
 !
-   subroutine restart_excited_state_ccs(wf, X, n, side)
+   subroutine read_excited_state_ccs(wf, X, n, side)
 !!
-!!    Restart excited state 
+!!    Read excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019 
 !!
 !!    Reads an excited state to disk. Since this routine is used by 
@@ -792,48 +789,6 @@ contains
          call wf%read_singles_vector(X, n, wf%r1_file)
 !
       elseif (trim(side) == 'left') then 
-!
-         call wf%read_singles_vector(X, n, wf%l1_file)
-!
-      else
-!
-         call output%error_msg('Tried to read an excited state, but argument side not recognized: ' // side)
-!
-      endif
-!
-   end subroutine restart_excited_state_ccs
-!
-!
-   subroutine read_excited_state_ccs(wf, X, n, side)
-!!
-!!    Restart excited state 
-!!    Written by Eirik F. Kjønstad, Mar 2019
-!!
-!!    Reads an excited state to disk. Since this routine is used by 
-!!    solvers, it returns the vector in the full space. Thus, we open 
-!!    files for singles, doubles, etc., paste them together, and return 
-!!    the result in X.
-!!
-!!    NB! This will place the cursor of the file at position n + 1.
-!!    Be cautious when using this in combination with writing to the files.
-!!    We recommend to separate these tasks---write all states or read all
-!!    states; don't mix if you can avoid it.
-!!
-      implicit none
-!
-      class(ccs), intent(inout) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X
-!
-      integer, intent(in) :: n ! state number 
-!
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
-!
-      if (trim(side) == 'right') then
-!
-         call wf%read_singles_vector(X, n, wf%r1_file)
-!
-      elseif (trim(side) == 'left') then
 !
          call wf%read_singles_vector(X, n, wf%l1_file)
 !
