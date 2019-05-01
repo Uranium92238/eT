@@ -98,7 +98,7 @@ contains
 !
       class(davidson_cc_es) :: solver
 !
-      character(len=*), optional :: transformation
+      character(len=*), intent(in) :: transformation
 !
       solver%tag = 'Davidson coupled cluster excited state solver'
       solver%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
@@ -122,11 +122,9 @@ contains
       solver%transformation       = 'right'
       solver%restart              = .false.
       solver%max_dim_red          = 100 
+      solver%transformation = trim(transformation)
 !
       call solver%read_settings()
-!
-      if (present(transformation)) solver%transformation = trim(transformation)
-!
       call solver%print_settings()
 !
       call solver%initialize_energies()
@@ -657,8 +655,6 @@ contains
       call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
 !
       if (input%requested_keyword_in_section('restart', 'solver cc es')) solver%restart = .true.    
-      if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) solver%transformation = 'left'    
-      if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) solver%transformation = 'right'             
 !
       if (input%requested_keyword_in_section('start vectors', 'solver cc es')) then 
 !  

@@ -64,7 +64,7 @@ contains
 !
       class(davidson_cvs_cc_es) :: solver
 !
-      character(len=*), optional :: transformation
+      character(len=*), intent(in) :: transformation
 !
       solver%tag = 'Davidson coupled cluster core excited state solver'
       solver%description1 = 'A Davidson CVS solver that calculates core excitation energies and the &
@@ -88,11 +88,9 @@ contains
       solver%transformation       = 'right'
       solver%restart              = .false.
       solver%max_dim_red          = 100 
+      solver%transformation = trim(transformation)
 !
       call solver%read_settings()
-!
-      if (present(transformation)) solver%transformation = trim(transformation)
-!
       call solver%print_settings()
 !
       call solver%initialize_energies()

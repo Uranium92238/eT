@@ -76,7 +76,7 @@ module diis_cc_es_class
 contains
 !
 !
-   subroutine prepare_diis_cc_es(solver, transform)
+   subroutine prepare_diis_cc_es(solver, transformation)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -85,7 +85,7 @@ contains
 !
       class(diis_cc_es) :: solver
 !
-      character(len=*), optional :: transform
+      character(len=*), intent(in) :: transformation
 !
       call solver%print_banner()
 !
@@ -98,11 +98,9 @@ contains
       solver%transformation       = 'right'
       solver%diis_dimension       = 20
       solver%restart              = .false.
+      solver%transformation       = trim(transformation)
 !
       call solver%read_settings()
-!
-      if (present(transform)) solver%transformation = transform
-!
       call solver%print_settings()
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
