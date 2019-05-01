@@ -254,7 +254,7 @@ contains
 !
       character(len=1), dimension(3) :: components = ['X', 'Y', 'Z']
 !
-      integer :: comp, state
+      integer :: component, state
 !
       real(dp) :: sum_strength
 !              
@@ -264,26 +264,30 @@ contains
 !
          write(output%unit, '(/t6, a6 ,i3, a1)') 'State ', state, ':'
          write(output%unit, '(t6, a)') '----------'
-         write(output%unit, '(t6, a25, f19.12)') 'Excitation energy [E_h]: ', excitation_energies(state)
-         write(output%unit, '(t6, a25, f19.12)') 'Excitation energy [eV]:  ', excitation_energies(state)*Hartree_to_eV
+         write(output%unit, '(t6, a30, f19.12)') 'Excitation energy [E_h]:      ', excitation_energies(state)
+         write(output%unit, '(t6, a30, f19.12)') 'Excitation energy [eV]:       ', excitation_energies(state)*Hartree_to_eV
 !
-         write(output%unit, '(/t6,a)')  '               Transition moments             Transition strength  '    
-         write(output%unit, '(t6,a)')   '-------------------------------------------------------------------'
-         write(output%unit, '(t6,a)')   'Comp.     < k |q| 0 >       < 0 |q| k >     < k |q| 0 > < 0 |q| k >'
-         write(output%unit, '(t6,a)')   '-------------------------------------------------------------------'
+         write(output%unit, '(t6, a30, f19.8)')  'Hartree-to-eV (CODATA 2014):  ', Hartree_to_eV
+!
+         write(output%unit, '(/t6,a)')  '                 Transition moments               Transition strength      '    
+         write(output%unit, '(t6,a)')   '---------------------------------------------------------------------------'
+         write(output%unit, '(t6,a)')   'Comp. q     < k |q| 0 >       < 0 |q| k >         < k |q| 0 > < 0 |q| k >  '
+         write(output%unit, '(t6,a)')   '---------------------------------------------------------------------------'
 !
          sum_strength = zero
 !
-         do comp = 1, 3
+         do component = 1, 3
 !
-            write(output%unit, '(t6,a1,4x,f17.10,1x,f17.10,4x,f17.10)') components(comp), transition_moment_left(comp, state),&
-                                              transition_moment_right(comp, state), transition_strength(comp, state)
+            write(output%unit, '(t6,a1,7x,f17.10,1x,f17.10,3x,f17.10)') components(component),                       &
+                                                                        transition_moment_left(component, state),    &
+                                                                        transition_moment_right(component, state),   &
+                                                                        transition_strength(component, state)
 !
-            sum_strength = sum_strength + transition_strength(comp, state)
+            sum_strength = sum_strength + transition_strength(component, state)
 !
          enddo
 !   
-         write(output%unit, '(t6,a)')   '-------------------------------------------------------------------'
+         write(output%unit, '(t6,a)')   '-------------------------------------------------------------------------'
 !
          write(output%unit, '(t6, a21, f19.12)') 'Oscillator strength: ', (two/three)*excitation_energies(state)*sum_strength
 !
