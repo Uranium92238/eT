@@ -67,7 +67,6 @@ module ccsd_class
       procedure :: save_doubles_vector                         => save_doubles_vector_ccsd
       procedure :: read_doubles_vector                         => read_doubles_vector_ccsd
 !
-      procedure :: restart_excited_state                       => restart_excited_state_ccsd
       procedure :: read_excited_state                          => read_excited_state_ccsd
 !
       procedure :: save_excited_state                          => save_excited_state_ccsd 
@@ -667,56 +666,10 @@ contains
    end subroutine save_excited_state_ccsd
 !
 !
-   subroutine restart_excited_state_ccsd(wf, X, n, side)
-!!
-!!    Restart excited state 
-!!    Written by Sarai D. Fokestad, Mar 2019 
-!!
-!!    Wrapper for setting trial vectors to excited states on file
-!!
-      implicit none 
-!
-      class(ccsd), intent(inout) :: wf 
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
-!
-      call wf%is_restart_safe('excited state')
-!
-      call wf%read_excited_state(X, n, side)
-!
-!       if (trim(side) == 'right') then 
-! !
-! !        Read singles vector
-! !
-!          call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
-! !
-! !        Read doubles vector
-! !
-!          call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
-! !
-!       elseif (trim(side) == 'left') then
-! !
-! !        Read singles vector
-! !
-!          call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
-! !
-! !        Read doubles vector
-! !
-!          call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
-! !
-!       endif
-!
-   end subroutine restart_excited_state_ccsd
-!
-!
    subroutine read_excited_state_ccsd(wf, X, n, side)
 !!
 !!    Read excited state 
-!!    Rewritten by Josefine H. Andersen
+!!    Written by Sarai D. Fokestad, Mar 2019 
 !!
       implicit none
 !
