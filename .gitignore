@@ -6,9 +6,4 @@ documentation/docs/
 *.swo
 .DS_Store
 __pycache__
-<<<<<<< HEAD
-CMakeLists.txt
-cmake/CXX_flags.cmake
-=======
 *sublime*
->>>>>>> feadc9e97efbaf4bd11d0ab9fa937d2aa6dd0263
