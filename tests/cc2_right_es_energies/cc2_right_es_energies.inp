@@ -13,7 +13,7 @@ memory
 end memory
 
 solver cholesky
-   threshold: 1.0d-10
+   threshold: 1.0d-12
 end solver cholesky
 
 solver hf
