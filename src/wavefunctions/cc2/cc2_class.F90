@@ -269,6 +269,7 @@ contains
 !
       call wf%get_vovo(g_aibj)
 !
+!$omp parallel do private(a, i, b, j)
       do b = 1, wf%n_v 
          do j = 1, wf%n_o 
             do i = 1, wf%n_o
@@ -283,6 +284,7 @@ contains
             enddo
          enddo 
       enddo
+!$omp end parallel do
 !    
       call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
 !
@@ -317,6 +319,7 @@ contains
 !
       call wf%get_vovo(g_aibj)
 !
+!$omp parallel do private(a, i, b, j)
       do b = 1, wf%n_v 
          do j = 1, wf%n_o 
             do i = 1, wf%n_o
@@ -333,6 +336,7 @@ contains
             enddo
          enddo 
       enddo
+!$omp end parallel do
 !
       call packin(wf%t2, t_aibj, wf%n_t1)    
 !
