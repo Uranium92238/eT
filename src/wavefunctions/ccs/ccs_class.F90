@@ -62,8 +62,6 @@ module ccs_class
 !
       type(mo_integral_tool) :: integrals
 !
-      integer :: n_bath ! Number of bath orbitals (always the last ao/mo indices)
-!
       real(dp), dimension(:,:), allocatable :: density
 !
    contains
@@ -147,7 +145,6 @@ module ccs_class
       procedure :: construct_eta                               => construct_eta_ccs
 !
       procedure :: get_cvs_projector                           => get_cvs_projector_ccs
-      procedure :: get_ip_projector                            => get_ip_projector_ccs
 !
       procedure :: set_cvs_start_indices                       => set_cvs_start_indices_ccs
 !
@@ -3238,33 +3235,6 @@ contains
      enddo
 !
    end subroutine get_cvs_projector_ccs
-!
-!
-   subroutine get_ip_projector_ccs(wf, projector)
-!!
-!!    Get ip projector
-!!    Written by Sarai D. Folekstad, Oct 2018
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
-!
-      integer :: i, a, ai
-!
-      projector = zero
-!
-      a = wf%n_v ! Last virtual is bath orbital
-!
-      do i = 1, wf%n_o
-!
-         ai = wf%n_v*(i - 1) + a
-         projector(ai) = one
-!
-     enddo
-!
-   end subroutine get_ip_projector_ccs
 !
 !
    subroutine print_dominant_amplitudes_ccs(wf)
