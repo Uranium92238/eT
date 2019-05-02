@@ -63,8 +63,9 @@ contains
       real(dp), dimension(:,:), allocatable :: c_ai
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij
 !
-      real(dp), dimension(:,:), allocatable :: sigma_ai
-      real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj, sigma_abij
+      real(dp), dimension(:,:), allocatable :: sigma_ai, dummy_ai
+      real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj, sigma_abij, dummy_abij
+      real(dp), dimension(:), allocatable :: dummy_aibj
 !
       integer :: i, j, a, b, ai, bj, aibj, b_end ! Index
 !
@@ -80,6 +81,8 @@ contains
       sigma_ai = zero
 !
       call mem%alloc(c_ai, wf%n_v, wf%n_o)
+!
+      call mem%alloc(dummy_aibj,wf%n_t2)
 !
       do i = 1, wf%n_o
          do a = 1, wf%n_v
@@ -166,6 +169,9 @@ contains
 !
       call ccsd_timer%freeze()
 !
+      call mem%alloc(dummy_ai, wf%n_v, wf%n_o)
+      call mem%alloc(dummy_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+
       call mem%alloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%alloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -178,12 +184,28 @@ contains
       call cc3_timer%start()
 !
 !     CC3-Contributions from the T3-amplitudes
-      call wf%jacobian_transpose_cc3_sigma1_T3_A1(c_abij, sigma_ai)
+!      call wf%jacobian_transpose_cc3_sigma1_T3_A1(c_abij, sigma_ai)
 !
-      call wf%jacobian_transpose_cc3_sigma1_T3_B1(c_abij, sigma_ai)
+!      call wf%jacobian_transpose_cc3_sigma1_T3_B1(c_abij, sigma_ai)
+!
+      dummy_ai = zero
+      dummy_abij = zero
 !
 !     CC3-Contributions from the C3-amplitudes
-      call wf%jacobian_transpose_cc3_C3_terms(omega, c_ai, c_abij, sigma_ai, sigma_abij)
+      call wf%jacobian_transpose_cc3_C3_terms(omega, c_ai, c_abij, dummy_ai, dummy_abij)
+!
+      write(output%unit,*)
+      write(output%unit,*) "Wolololo"
+      write(output%unit,"(6F16.9)") sigma_ai
+      write(output%unit,*)
+      write(output%unit,"(6F16.9)") dummy_ai
+      write(output%unit,*)
+!
+      sigma_ai = sigma_ai + dummy_ai
+      sigma_abij = sigma_abij + dummy_abij
+!
+      write(output%unit,"(6F16.9)") sigma_ai
+      write(output%unit,*)
 !
       call cc3_timer%freeze()
       call cc3_timer%switch_off()
@@ -207,6 +229,12 @@ contains
       call symmetric_sum(sigma_aibj, (wf%n_v)*(wf%n_o))
 !
       call sort_1234_to_1324(sigma_aibj, sigma_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call sort_1234_to_1324(dummy_abij, sigma_aibj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call symmetric_sum(sigma_aibj, (wf%n_v)*(wf%n_o))
+!
+      call sort_1234_to_1324(sigma_aibj, dummy_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Compute CCSD H2 and I2 contributions
@@ -242,12 +270,26 @@ contains
                   aibj = ai*(ai-3)/2 + ai + bj
 !
                   c(wf%n_t1 + aibj) = sigma_abij(a,b,i,j)
+                  dummy_aibj(aibj) = dummy_abij(a,b,i,j)
 !
                enddo
             enddo
          enddo
       enddo
 !$omp end parallel do
+!
+!
+      write(output%unit,*)
+      write(output%unit,*) "Final rho vector"
+      write(output%unit,"(6F16.9)") (c(i),i=1,wf%n_t1)
+      write(output%unit,*)
+      write(output%unit,"(4F16.9)") (c(i),i=wf%n_t1+1,wf%n_t1+wf%n_t2)
+      write(output%unit,*)
+      write(output%unit,*) "L3 contribution"
+      write(output%unit,"(6F16.9)") dummy_ai
+      write(output%unit,*)
+      write(output%unit,"(4F16.9)") dummy_aibj
+      write(output%unit,*)
 !
       call mem%dealloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -916,7 +958,7 @@ contains
       type(batching_index) :: batch_i, batch_j, batch_k
       integer              :: i_batch, j_batch, k_batch
       integer              :: req_0, req_1, req_2, req_3
-      real(dp)             :: batch_buff = 0.0
+      real(dp)             :: batch_buff = zero, xnorm = zero, ddot
 !
       logical :: not_first_i, not_first_j, not_first_k
 !
@@ -1049,8 +1091,8 @@ contains
 !
             call batch_j%determine_limits(j_batch)
 !
-            call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, wf%g_jlkc_t,  &
-                                       g_jlic, wf%L_jbkc_t, L_jbic)
+            call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, &
+                                        wf%g_jlkc_t, g_jlic, wf%L_jbkc_t, L_jbic)
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
             L_jbic_p => L_jbic
@@ -1230,6 +1272,17 @@ contains
                         call wf%jacobian_transpose_cc3_collect_c3(omega, i, j, k, c_abc, c_bac,  &
                                                                   c_cba, c_acb, c_cab, c_bca)
 !
+                        if(j .ne. i .and. k .ne. j) then 
+                           xnorm = xnorm + 6.0*ddot(wf%n_v**3,c_abc,1,c_abc,1)
+                        elseif(j .eq. i .or. k .eq. j) then 
+                           xnorm = xnorm + 3.0*ddot(wf%n_v**3,c_abc,1,c_abc,1)
+                        endif
+!
+                        write(output%unit,*)
+                        write(output%unit,*) "Trololo"
+                        write(output%unit,"(4F16.9)") c_abc
+                        write(output%unit,*)
+!
                         call wf%jacobian_transpose_cc3_sigma2(i, j, k, c_abc, u_abc, sigma_abij,   &
                                                                g_bdci_p(:,:,:,i_rel),              &
                                                                g_bdcj_p(:,:,:,j_rel),              &
@@ -1269,6 +1322,10 @@ contains
          call single_record_writer(batch_i, wf%Y_bcek, Y_bcei)
 !
       enddo ! batch_i
+!
+      write(output%unit,*)
+      write(output%unit,*) "L3 norm", xnorm
+      write(output%unit,*)
 !
       call disk%close_file(wf%g_bdck_t)
       call disk%close_file(wf%g_dbkc_t)
@@ -1905,8 +1962,8 @@ contains
 !!
 !!    Calculates triples contribution to sigma2
 !!
-!!    sigma_adij =   sum_ckd c^abc_ijk g_bdck
-!!    sigma_abil = sigma_bali = - sum_cki c^bac_ijk g_lick
+!!    sigma_adij += sum_bc,k c^abc_ijk g_bdck
+!!    sigma_ablj += -sum_c,ik c^abc_ijk g_lick
 !!
 !!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops   
 !!
@@ -1942,7 +1999,7 @@ contains
                   wf%n_v,              &
                   wf%n_v,              &
                   wf%n_v**2,           &
-                  two,                 &
+                  one,                 &
                   c_abc,               & ! c_a_bc
                   wf%n_v,              &
                   g_bdck,              & ! g_d_bc,k
@@ -1957,7 +2014,7 @@ contains
                   wf%n_v**2,           &
                   wf%n_o,              &
                   wf%n_v,              &
-                  -two,                &
+                  -one,                &
                   c_abc,               & ! c_ab_c
                   wf%n_v**2,           &
                   g_lick,              & ! g_l_c,ik
@@ -1973,7 +2030,7 @@ contains
                   wf%n_v,              &
                   wf%n_v,              &
                   wf%n_v**2,           &
-                  two,                 &
+                  one,                 &
                   c_abc,               & ! c_bc_a
                   wf%n_v**2,           &
                   g_bdcj,              & ! g_d_bc,j
@@ -1988,7 +2045,7 @@ contains
                   wf%n_v**2,           &
                   wf%n_o,              &
                   wf%n_v,              &
-                  -two,                &
+                  -one,                &
                   c_abc,               & ! c_c_ab
                   wf%n_v,              &
                   g_ljci,              & ! g_l_c,ji
@@ -2008,7 +2065,7 @@ contains
                   wf%n_v,              &
                   wf%n_v,              &
                   wf%n_v**2,           &
-                  two,                 &
+                  one,                 &
                   u_abc,               & ! c_a_bc
                   wf%n_v,              &
                   g_bdci,              & ! g_d_bc,i
@@ -2023,7 +2080,7 @@ contains
                   wf%n_v**2,           &
                   wf%n_o,              &
                   wf%n_v,              &
-                  -two,                &
+                  -one,                &
                   u_abc,               & ! c_c_ab
                   wf%n_v,              &
                   g_lkcj,              & ! g_l_c,kj
@@ -2046,7 +2103,7 @@ contains
                      wf%n_v,              &
                      wf%n_v,              &
                      wf%n_v**2,           &
-                     two,                 &
+                     one,                 &
                      u_abc,               & ! c_a_bc
                      wf%n_v,              &
                      g_bdck,              & ! g_d_bc,k
@@ -2061,7 +2118,7 @@ contains
                      wf%n_v**2,           &
                      wf%n_o,              &
                      wf%n_v,              &
-                     -two,                &
+                     -one,                &
                      u_abc,               & ! c_ab_c
                      wf%n_v**2,           &
                      g_ljck,              & ! g_l_c,jk
@@ -2077,7 +2134,7 @@ contains
                      wf%n_v,              &
                      wf%n_v,              &
                      wf%n_v**2,           &
-                     two,                 &
+                     one,                 &
                      u_abc,               & ! c_bc_a
                      wf%n_v**2,           &
                      g_bdci,              & ! g_d_bc,i
@@ -2092,7 +2149,7 @@ contains
                      wf%n_v**2,           &
                      wf%n_o,              &
                      wf%n_v,              &
-                     -two,                &
+                     -one,                &
                      u_abc,               & ! c_c_ab
                      wf%n_v,              &
                      g_licj,              & ! g_l_c,ij
@@ -2102,7 +2159,7 @@ contains
                      wf%n_v**2)
 !
 !
-         call sort_123_to_231(c_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
+         call sort_123_to_321(c_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
 !        123_to_321(acb) -> bca
 !        123_to_321(cba) -> abc
 !
@@ -2112,13 +2169,13 @@ contains
                      wf%n_v,              &
                      wf%n_v,              &
                      wf%n_v**2,           &
-                     two,                 &
+                     one,                 &
                      u_abc,               & ! c_bc_a
                      wf%n_v**2,           &
                      g_bdcj,              & ! g_d_bc,j
                      wf%n_v,              &
                      one,                 &
-                     sigma_abij(:,:,i,k), & ! sigma_adik
+                     sigma_abij(:,:,i,k), & ! sigma_ad,ik
                      wf%n_v)
 !
 !        sigma_ablj += - sum_c c^cba_ijk g_lkci
@@ -2127,13 +2184,13 @@ contains
                      wf%n_v**2,           &
                      wf%n_o,              &
                      wf%n_v,              &
-                     -two,                &
+                     -one,                &
                      u_abc,               & ! c_ab_c
                      wf%n_v**2,           &
                      g_lkci,              & ! g_l_c,ki
                      wf%n_o,              &
                      one,                 &
-                     sigma_abij(:,:,:,j), & ! sigma_ablj
+                     sigma_abij(:,:,:,j), & ! sigma_ab_l,j
                      wf%n_v**2)
 !
       end if

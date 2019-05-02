@@ -319,7 +319,7 @@ contains
             call batch_j%determine_limits(j_batch)
 !
             call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, &
-                                       wf%g_jlkc_t, g_jlic, wf%L_jbkc_t, L_jbic)
+                                        wf%g_jlkc_t, g_jlic, wf%L_jbkc_t, L_jbic)
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
             L_jbic_p => L_jbic
