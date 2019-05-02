@@ -30,7 +30,7 @@ submodule (ccs_class) fop_ccs
 !!
 !!    Equation-of-motion (EOM):
 !!
-!!   (Followinng Koch, K., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
+!!   (Following Koch, H., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
 !!    J. Chem. Phys. 100, 4393 (1994))
 !!
 !!       η_μ^X,EOM =  < Λ | [X, τ_μ] | CC > + (< Λ | τ_μ X | R >  - tbar_μ < Λ | X | R > )
@@ -55,6 +55,9 @@ contains
 !!    Construct EOM etaX
 !!    Written by Sarai D. Folkestad, May 2019
 !!
+!!    Constructs the EOM effective etaX vector, adding the EOM
+!!    correction to etaX. 
+!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -78,7 +81,7 @@ contains
 !!
 !!    Adapted by Sarai D. Folekstad, Apr 2019
 !!
-!!    Handling the construction of left-hand-side vector etaX 
+!!    Constructs left-hand-side vector etaX:
 !!
 !!       η^X_μ = < Λ | [X, τ_μ] | CC >
 !!
@@ -100,12 +103,12 @@ contains
 !
    module subroutine etaX_ccs_a1_ccs(wf, X, etaX_ai)
 !!
-!!    Construct etaX A1 (CCS)
+!!    Construct etaX A1 
 !!    Written by Josefine H. Andersen, 2019
 !!
 !!    Adapted by Sarai D. Folekstad, Apr 2019
 !!
-!!    Constructs the A1 term of η_ai^X:
+!!    Adds the A1 term of η_ai^X:
 !!
 !!       A1 = 2X_ia
 !!
@@ -139,7 +142,7 @@ contains
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2019
 !!
-!!    Constructs the B1 term of η_ai^X:
+!!    Adds the B1 term of η_ai^X:
 !!
 !!       B1 = sum_c tb_ci X_ca - sum_k tb_ak X_ik
 !!
@@ -226,7 +229,7 @@ contains
 !!
 !!    Adapted by Sarai D. Folkestad
 !!
-!!    Handling the construction of ξ^X_μ :
+!!    Constructs ξ^X_μ :
 !!
 !!       ξ^X_μ = < μ | exp(-T) X exp(T)| R >
 !!
@@ -247,10 +250,12 @@ contains
 !
    module subroutine csiX_ccs_a1_ccs(wf, X, csiX_ai)
 !!
-!!    Construct csiX 
+!!    Construct csiX A1 
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
-!!       ξ^X_ai = X_ai
+!!    Adds the A1 term to csiX:
+!! 
+!!       ξ^X_ai =+ X_ai
 !!
       implicit none
 !
@@ -311,8 +316,14 @@ contains
 !
    module subroutine calculate_transition_strength_ccs(wf, S, etaX, csiX, state, T_l, T_r)
 !!
-!!    Calculate transition strength for spectra
+!!    Calculate transition strength
 !!    Written by Josefine H. Andersen, February 2019
+!!
+!!    Given etaX and csiX, this routine calculates the left and right transition 
+!!    moments T_l and T_r for the state number "state" and the transition strength 
+!!    S = T_l * T_r.
+!! 
+!!    The left and right states L and R are read from file and made binormal by the routine.
 !!
       implicit none
 !
@@ -358,11 +369,12 @@ contains
       if ((abs(LT_R)-one) .gt. 0.01D0) then 
 !
         write(output%unit, '(/t3,a,i0,a)') 'The right and left eigenvector number ', state, ' are not &
-                                            &consistent! The converged states are not ordered correctly.'
+                                            &consistent! The converged states are probably not ordered &
+                                            &correctly.'
 !
         write(output%unit, '(/t3,a,f19.12)') 'Dotproduct between L and R: ', LT_R
 !
-        call output%error_msg('Error while calculating transition moments.')
+        call output%error_msg('Error while calculating transition strength.')
 !
       endif 
 !

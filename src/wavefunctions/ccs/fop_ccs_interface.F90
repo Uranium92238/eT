@@ -22,6 +22,9 @@
 !!    Construct EOM etaX
 !!    Written by Sarai D. Folkestad, May 2019
 !!
+!!    Constructs the EOM effective etaX vector, adding the EOM
+!!    correction to etaX. 
+!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -39,6 +42,12 @@
 !!    Construct η^X
 !!    Written by Josefine H. Andersen, 2019
 !!
+!!    Adapted by Sarai D. Folekstad, Apr 2019
+!!
+!!    Constructs left-hand-side vector etaX:
+!!
+!!       η^X_μ = < Λ | [X, τ_μ] | CC >
+!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -52,8 +61,14 @@
 !
    module subroutine etaX_ccs_a1_ccs(wf, X, etaX_ai)
 !!
-!!    Construct etaX A1 (CCS)
+!!    Construct etaX A1 
 !!    Written by Josefine H. Andersen, 2019
+!!
+!!    Adapted by Sarai D. Folekstad, Apr 2019
+!!
+!!    Adds the A1 term of η_ai^X:
+!!
+!!       A1 = 2X_ia
 !!
       implicit none
 !
@@ -71,6 +86,12 @@
 !!    Construct etaX B1
 !!    Written by Josefine H. Andersen
 !!
+!!    Adapted by Sarai D. Folkestad, Apr 2019
+!!
+!!    Adds the B1 term of η_ai^X:
+!!
+!!       B1 = sum_c tb_ci X_ca - sum_k tb_ak X_ik
+!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -87,6 +108,12 @@
 !!    Construct csiX
 !!    Written by Josefine H. Andersen, 2019
 !!
+!!    Adapted by Sarai D. Folkestad
+!!
+!!    Constructs ξ^X_μ :
+!!
+!!       ξ^X_μ = < μ | exp(-T) X exp(T)| R >
+!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -100,8 +127,12 @@
 !
    module subroutine csiX_ccs_a1_ccs(wf, X, csiX_ai)
 !!
-!!    Construct right-hand-side vector csiX 
+!!    Construct csiX A1 
 !!    Written by Josefine H. Andersen, Feb 2019
+!!
+!!    Adds the A1 term to csiX:
+!! 
+!!       ξ^X_ai =+ X_ai
 !!
       implicit none
 !
@@ -116,8 +147,12 @@
 !
    module subroutine etaX_eom_a_ccs(wf, etaX, csiX)
 !!
-!!    Get eom contribution
+!!    EtaX EOM A
 !!    Written by Josefine H. Andersen, Feb 2019
+!!
+!!    Add EOM A correction to etaX vector:
+!!
+!!       A:  η^X,corr_μ += tbar_μ (ξ * tbar) 
 !!
       implicit none
 !
@@ -131,8 +166,14 @@
 !
    module subroutine calculate_transition_strength_ccs(wf, S, etaX, csiX, state, T_l, T_r)
 !!
-!!    Calculate transition strength for spectra
+!!    Calculate transition strength
 !!    Written by Josefine H. Andersen, February 2019
+!!
+!!    Given etaX and csiX, this routine calculates the left and right transition 
+!!    moments T_l and T_r for the state number "state" and the transition strength 
+!!    S = T_l * T_r.
+!! 
+!!    The left and right states L and R are read from file and made binormal by the routine.
 !!
       implicit none
 !
