@@ -654,8 +654,6 @@ contains
 !
       call disk%close_file(wf%restart_file) 
 !
-      call wf%mo_transform_and_save_h()
-!
       call wf%destruct_orbital_energies()
       call wf%destruct_ao_overlap()
       call wf%destruct_ao_fock()

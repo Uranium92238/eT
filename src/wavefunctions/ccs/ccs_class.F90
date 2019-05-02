@@ -214,6 +214,7 @@ module ccs_class
 !
 !     One-electron operators and mean value
 !
+      procedure :: construct_h                                  => construct_h_ccs 
       procedure :: construct_mu                                 => construct_mu_ccs 
       procedure :: construct_q                                  => construct_q_ccs 
 !
@@ -332,6 +333,23 @@ contains
       call wf%t1_transform(mu_pqk(:,:,3))
 !
    end subroutine construct_mu_ccs
+!
+!
+   subroutine construct_h_ccs(wf, h_pq)
+!!
+!!    Construct h
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!    
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: h_pq 
+!
+      call wf%get_mo_h(h_pq)
+      call wf%t1_transform(h_pq)
+!
+   end subroutine construct_h_ccs
 !
 !
    subroutine construct_q_ccs(wf, q_pqk)
@@ -1017,20 +1035,12 @@ contains
 !
       integer :: i = 0
 !
-      type(file)   :: h_pq_file
-!
       real(dp), dimension(:,:), allocatable :: h_pq
 !
-!     Read MO-transformed h array
-!
-      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
-      call disk%open_file(h_pq_file, 'read')
-      rewind(h_pq_file%unit)
+!     Get T1-transformed h
 !
       call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
-      read(h_pq_file%unit) h_pq
-!
-      call disk%close_file(h_pq_file)
+      call wf%construct_h(h_pq)
 !
 !     Compute energy
 !
@@ -1112,8 +1122,6 @@ contains
 !
       class(ccs) :: wf
 !
-      type(file) :: h_pq_file
-!
       real(dp), dimension(:,:), allocatable :: F_pq
 !
       integer :: i, j, k, a, b
@@ -1124,19 +1132,10 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_iajk
       real(dp), dimension(:,:,:,:), allocatable :: g_aijk
 !
-!     Read MO-transformed h integrals into the
-!
-      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
-      call disk%open_file(h_pq_file, 'read', 'rewind')
+!     Get T1-transformed h integrals, put them in F_pq 
 !
       call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
-      read(h_pq_file%unit) F_pq
-!
-      call disk%close_file(h_pq_file)
-!
-!     Perform t1-transformation of F_pq = h_pq
-!
-      call wf%t1_transform(F_pq)
+      call wf%construct_h(F_pq)
 !
 !     Occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
