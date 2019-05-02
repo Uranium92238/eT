@@ -26,7 +26,13 @@ f = [
                mask=[2]), 
     get_filter(from_string='Comp. q     < k |q| 0 >       < 0 |q| k >       < k |q| 0 > < 0 |q| k > ',
                num_lines=4,
-               abs_tolerance=1.0e-10),
+               abs_tolerance=1.0e-10,
+               mask=[2,3],
+               ignore_sign=True),
+    get_filter(from_string='Comp. q     < k |q| 0 >       < 0 |q| k >       < k |q| 0 > < 0 |q| k > ',
+               num_lines=4,
+               abs_tolerance=1.0e-10,
+               mask=[4]),
     get_filter(string='Final ground state energy (a.u.):',
                abs_tolerance=1.0e-10)
 ]
