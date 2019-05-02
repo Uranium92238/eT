@@ -30,7 +30,7 @@ submodule (ccsd_class) fop_ccsd
 !!
 !!    Equation-of-motion (EOM):
 !!
-!!   (Followinng Koch, K., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
+!!   (Following Koch, H., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
 !!    J. Chem. Phys. 100, 4393 (1994))
 !!
 !!       η_μ^X,EOM =  < Λ | [X, τ_μ] | CC > + (< Λ | τ_μ X | R >  - tbar_μ < Λ | X | R > )
@@ -55,6 +55,9 @@ contains
 !!    Construct EOM etaX
 !!    Written by Sarai D. Folkestad, May 2019
 !!
+!!    Constructs the EOM effective etaX vector, adding the EOM
+!!    correction to etaX. 
+!!
       implicit none
 !
       class(ccsd), intent(in) :: wf
@@ -75,16 +78,14 @@ contains
 !
    module subroutine construct_etaX_ccsd(wf, X, etaX)
 !!
-!!    Construct etaX
-!!    Written by Josefine H. Andersen, Feb 2019
+!!    Construct η^X
+!!    Written by Josefine H. Andersen, 2019
 !!
-!!    Adapted by Sarai D. Folekstad
+!!    Adapted by Sarai D. Folekstad, Apr 2019
 !!
-!!    Constructs the part of η^X common to LR and EOM (η^X,0)
+!!    Constructs left-hand-side vector etaX:
 !!
-!!       η^X,0 = < Λ | [X, τ_μ] | CC >
-!!    
-!!    for CCSD.
+!!       η^X_μ = < Λ | [X, τ_μ] | CC >
 !!
       implicit none
 !
@@ -420,16 +421,14 @@ contains
 !
    module subroutine construct_csiX_ccsd(wf, X, csiX)
 !!
-!!    Construct csiX (CCSD)
-!!    Written by Josefine H. Andersen, Feb 2019
+!!    Construct csiX
+!!    Written by Josefine H. Andersen, 2019
 !!
 !!    Adapted by Sarai D. Folkestad
 !!
-!!    Constructs the ξ^X vector, common to LR and EOM,
+!!    Constructs ξ^X_μ :
 !!
 !!       ξ^X_μ = < μ | exp(-T) X exp(T)| R >
-!!
-!!    for CCSD.
 !!
       implicit none
 !
