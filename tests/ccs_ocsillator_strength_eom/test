@@ -41,7 +41,7 @@ f = [
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_ocsillator_strength_eom.inp']:
+for inp in ['ccs_ocsillator_strength_eom.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,
