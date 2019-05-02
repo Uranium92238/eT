@@ -27,7 +27,6 @@ set(eT_fortran_sources
    src/solvers/cc/diis_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_es_class.F90
-   src/solvers/cc/davidson_cc_ip_class.F90
    src/solvers/cc/davidson_cc_cvs_es_class.F90
    src/solvers/cc/newton_raphson_cc_gs_class.F90
    src/solvers/cholesky/eri_cd_class.F90
