@@ -50,6 +50,29 @@ submodule (ccsd_class) fop_ccsd
 contains
 !
 !
+   module subroutine construct_eom_etaX_ccsd(wf, X, csiX, etaX)
+!!
+!!    Construct EOM etaX
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
+!
+      call wf%construct_etaX(X, etaX)
+!
+      call wf%etaX_eom_a(etaX, csiX)
+!
+      call wf%etaX_eom_ccsd_a1(X, etaX(1:wf%n_t1))
+!
+   end subroutine construct_eom_etaX_ccsd
+!
+!
    module subroutine construct_etaX_ccsd(wf, X, etaX)
 !!
 !!    Construct etaX
@@ -630,33 +653,6 @@ contains
       call mem%dealloc(t_cjai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine csiX_ccsd_a2_ccsd
-!
-!
-   module subroutine add_etaX_eom_correction_ccsd(wf, etaX, csiX, X)
-!!
-!!    Add etaX EOM correction
-!!    Written by Josefine H. Andersen, Feb 2019
-!!
-!!    Add EOM contribution to etaX vector 
-!!
-!!       η^{X,corr} = (< Λ | τ_μ X | R >  - tbar_μ < Λ | X | R > )
-!!
-!!    for CCSD.
-!!
-      implicit none
-!
-      class(ccsd), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
-!
-      call wf%etaX_eom_ccsd_a1(X, etaX(1:wf%n_t1))
-!
-      call wf%etaX_eom_a(etaX, csiX)
-!
-   end subroutine add_etaX_eom_correction_ccsd
 !
 !
    module subroutine etaX_eom_ccsd_a1_ccsd(wf, X, etaX_ai)

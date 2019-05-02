@@ -17,6 +17,23 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
+   module subroutine construct_eom_etaX_ccs(wf, X, csiX, etaX)
+!!
+!!    Construct EOM etaX
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
+!
+   end subroutine construct_eom_etaX_ccs
+!
+!
    module subroutine construct_etaX_ccs(wf, X, etaX)
 !!
 !!    Construct η^X
@@ -95,23 +112,6 @@
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: csiX_ai
 !
    end subroutine csiX_ccs_a1_ccs
-!
-!
-   module subroutine add_etaX_eom_correction_ccs(wf, etaX, csiX, X)
-!!
-!!    Add EOM conrrection to etaX vector
-!!    Written by Josefine H. Andersen, Feb 2019
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
-!
-   end subroutine add_etaX_eom_correction_ccs
 !
 !
    module subroutine etaX_eom_a_ccs(wf, etaX, csiX)

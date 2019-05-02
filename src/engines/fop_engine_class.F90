@@ -211,9 +211,9 @@ contains
 !
          do component = 1, size(components)
 !
-            call wf%construct_etaX(operator(:,:,component), etaX)
             call wf%construct_csiX(operator(:,:,component), csiX)      
-            call wf%add_etaX_eom_correction(etaX, csiX, operator(:,:, component))
+!
+            call wf%construct_eom_etaX(operator(:,:,component), csiX, etaX)
 !
 !           Loop over excited states and calculate transition strength
 !  

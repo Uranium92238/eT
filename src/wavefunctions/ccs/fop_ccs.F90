@@ -49,6 +49,28 @@ submodule (ccs_class) fop_ccs
 !
 contains
 !
+!
+  module subroutine construct_eom_etaX_ccs(wf, X, csiX, etaX)
+!!
+!!    Construct EOM etaX
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
+!
+      call wf%construct_etaX(X, etaX)
+!
+      call wf%etaX_eom_a(etaX, csiX)
+!
+  end subroutine construct_eom_etaX_ccs
+!
+!
    module subroutine construct_etaX_ccs(wf, X, etaX)
 !!
 !!    Construct η^X
@@ -251,25 +273,6 @@ contains
 !$omp end parallel do
 !
    end subroutine csiX_ccs_a1_ccs
-!
-!
-   module subroutine add_etaX_eom_correction_ccs(wf, etaX, csiX, X)
-!!
-!!    Add EOM correction to etaX vector
-!!    Written by Josefine H. Andersen, Feb 2019
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
-!
-      call wf%etaX_eom_a(etaX, csiX)
-!
-   end subroutine add_etaX_eom_correction_ccs
 !
 !
    module subroutine etaX_eom_a_ccs(wf, etaX, csiX)

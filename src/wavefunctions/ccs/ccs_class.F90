@@ -188,13 +188,13 @@ module ccs_class
 !     Routines related to EOM first order property calculations
 !
       procedure :: construct_etaX                              => construct_etaX_ccs
+      procedure :: construct_eom_etaX                          => construct_eom_etaX_ccs
       procedure :: etaX_ccs_a1                                 => etaX_ccs_a1_ccs
       procedure :: etaX_ccs_b1                                 => etaX_ccs_b1_ccs
 !
       procedure :: construct_csiX                              => construct_csiX_ccs
       procedure :: csiX_ccs_a1                                 => csiX_ccs_a1_ccs
 !
-      procedure :: add_etaX_eom_correction                     => add_etaX_eom_correction_ccs
       procedure :: etaX_eom_a                                  => etaX_eom_a_ccs
 !
       procedure :: calculate_transition_strength               => calculate_transition_strength_ccs

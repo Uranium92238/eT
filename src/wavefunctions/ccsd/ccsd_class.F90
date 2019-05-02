@@ -153,6 +153,7 @@ module ccsd_class
 !     Routines related to property calculations
 !
       procedure :: construct_etaX                              => construct_etaX_ccsd  
+      procedure :: construct_eom_etaX                          => construct_eom_etaX_ccsd  
       procedure :: etaX_ccsd_a1                                => etaX_ccsd_a1_ccsd    
       procedure :: etaX_ccsd_a2                                => etaX_ccsd_a2_ccsd    
       procedure :: etaX_ccsd_b2                                => etaX_ccsd_b2_ccsd    
@@ -161,7 +162,6 @@ module ccsd_class
       procedure :: csiX_ccsd_a1                                => csiX_ccsd_a1_ccsd    
       procedure :: csiX_ccsd_a2                                => csiX_ccsd_a2_ccsd    
 !
-      procedure :: add_etaX_eom_correction                     => add_etaX_eom_correction_ccsd
       procedure :: etaX_eom_ccsd_a1                            => etaX_eom_ccsd_a1_ccsd
 !
       procedure, nopass :: need_g_abcd                         => need_g_abcd_ccsd
