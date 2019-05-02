@@ -141,7 +141,7 @@ contains
 !
       class(scf_diis_hf) :: solver 
 !
-      write(output%unit, '(t6,a29,i2)') 'DIIS dimension:              ', solver%diis_dimension
+      write(output%unit, '(t6,a29,i2)') 'DIIS dimension:               ', solver%diis_dimension
 !
    end subroutine print_scf_diis_settings_scf_diis_hf
 !

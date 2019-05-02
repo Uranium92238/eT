@@ -29,12 +29,14 @@ module gs_engine_class
 !
       character(len=200) :: multipliers_algorithm
 !
+      character(len=200) :: gs_algorithm  
+!
    contains 
 !
       procedure :: prepare                               => prepare_gs_engine
       procedure :: run                                   => run_gs_engine
 !
-      procedure, nopass :: do_ground_state               => do_ground_state_gs_engine 
+      procedure :: do_ground_state                       => do_ground_state_gs_engine 
 !
       procedure :: do_multipliers                        => do_multipliers_gs_engine 
 !
@@ -64,6 +66,7 @@ contains
 !
       engine%name_                 = 'Ground state CC engine'
       engine%multipliers_algorithm = 'davidson'
+      engine%gs_algorithm          = 'diis'
 !
       call engine%read_settings()
 !
@@ -94,6 +97,7 @@ contains
       class(gs_engine) :: engine 
 !
       call input%get_keyword_in_section('algorithm', 'solver cc multipliers', engine%multipliers_algorithm)
+      call input%get_keyword_in_section('algorithm', 'solver cc gs', engine%gs_algorithm )
 !
    end subroutine read_gs_settings_gs_engine
 !
@@ -119,7 +123,7 @@ contains
    end subroutine run_gs_engine
 !
 !
-   subroutine do_ground_state_gs_engine(wf)
+   subroutine do_ground_state_gs_engine(engine, wf)
 !!
 !!    Do ground state   
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
@@ -131,12 +135,16 @@ contains
 !!    stored in memory.     
 !!
       use diis_cc_gs_class
+      use newton_raphson_cc_gs_class
 !
       implicit none 
+!
+      class(gs_engine), intent(in) :: engine 
 !
       class(ccs), intent(inout) :: wf 
 !
       type(diis_cc_gs), allocatable :: diis_solver 
+      type(newton_raphson_cc_gs), allocatable :: newton_raphson_solver 
 !
       if (trim(wf%name_) == 'MP2') then 
 !
@@ -145,7 +153,7 @@ contains
 !
          call wf%print_wavefunction_summary()
 !
-      else 
+      elseif (trim(engine%gs_algorithm) == 'diis') then 
 !
          allocate(diis_solver)
 !
@@ -155,7 +163,17 @@ contains
 !
          deallocate(diis_solver)
 !
-      endif
+      elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
+!
+         allocate(newton_raphson_solver)
+!
+         call newton_raphson_solver%prepare(wf)
+         call newton_raphson_solver%run(wf)
+         call newton_raphson_solver%cleanup(wf)
+!
+         deallocate(newton_raphson_solver)
+!
+      endif 
 !
    end subroutine do_ground_state_gs_engine
 !

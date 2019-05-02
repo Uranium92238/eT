@@ -112,6 +112,7 @@ contains
       type(section) :: memory 
       type(section) :: disk 
       type(section) :: cc_zop 
+      type(section) :: cc_fop 
       type(section) :: method 
       type(section) :: solver_cholesky
       type(section) :: solver_hf
@@ -163,6 +164,7 @@ contains
       calculations%keywords = (/ 'ground state         ',   &
                                  'excited state        ',   &
                                  'zop                  ',   &
+                                 'fop                  ',   &
                                  'cholesky eri         ',   &
                                  'multipliers          '   /)
 !
@@ -184,6 +186,12 @@ contains
       cc_zop%required = .false.
       cc_zop%keywords = (/ 'dipole               ',   &
                            'quadrupole           ' /)
+!
+      cc_fop%name_    = 'cc fop'
+      cc_fop%required = .false.
+      cc_fop%keywords = (/ 'dipole length        ',   &
+                           'lr                   ',   &
+                           'eom                  ' /)
 !
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%required = .false.
@@ -209,6 +217,8 @@ contains
       solver_cc_gs%keywords = (/ 'algorithm            ',   &
                                  'energy threshold     ',   &
                                  'omega threshold      ',   &
+                                 'max micro iterations ',   &
+                                 'rel micro threshold  ',   &
                                  'max iterations       ',   &
                                  'diis dimension       ',   &
                                  'restart              '    /)
@@ -249,6 +259,7 @@ contains
                            disk,                   &
                            method,                 &
                            cc_zop,                 &
+                           cc_fop,                 &
                            solver_cholesky,        &
                            solver_hf,              &
                            solver_cc_gs,           &
@@ -953,7 +964,7 @@ contains
 !
       tmp_string = adjustl(string)
 !
-      if (string(1:1) == '!') then 
+      if (tmp_string(1:1) == '!') then 
 !
          string_is_comment_input_file = .true.
 !

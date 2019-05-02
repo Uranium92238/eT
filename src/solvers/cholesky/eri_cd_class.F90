@@ -496,7 +496,7 @@ contains
 !
 !           Determine whether shell pair should be constructed
 !
-            construct_sp(I) = is_significant(construct_test, (A_interval%size)*(B_interval%size), solver%threshold)
+            construct_sp(I) = is_significant(construct_test, (A_interval%size)*(B_interval%size), min(solver%threshold,1.0d-8))
 !
          call mem%dealloc(construct_test, (A_interval%size), (B_interval%size))
 !
@@ -871,7 +871,7 @@ contains
 !
 !           Determine whether shell pair should be constructed
 !
-            construct_sp(I) = is_significant(construct_test, (A_interval%size)*(B_interval%size), solver%threshold)
+            construct_sp(I) = is_significant(construct_test, (A_interval%size)*(B_interval%size), min(solver%threshold,1.0d-8))
 !
          call mem%dealloc(construct_test, (A_interval%size), (B_interval%size))
 !

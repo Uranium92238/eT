@@ -65,8 +65,10 @@ module wavefunction_class
       procedure :: get_ao_mu_wx                    => get_ao_mu_wx_wavefunction
       procedure :: get_ao_q_wx                     => get_ao_q_wx_wavefunction
 !
+      procedure :: get_mo_mu                       => get_mo_mu_wavefunction
+      procedure :: get_mo_h                        => get_mo_h_wavefunction
+!
       procedure :: mo_transform                    => mo_transform_wavefunction
-      procedure :: mo_transform_and_save_h         => mo_transform_and_save_h_wavefunction
 !
       procedure :: initialize_wavefunction_files   => initialize_wavefunction_files_wavefunction
 !
@@ -172,38 +174,6 @@ contains
       if (allocated(wf%orbital_energies)) call mem%dealloc(wf%orbital_energies, wf%n_mo)
 !
    end subroutine destruct_orbital_energies_wavefunction
-!
-!
-   subroutine mo_transform_and_save_h_wavefunction(wf)
-!!
-!!    MO transform and save h 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-      implicit none 
-!
-      class(wavefunction) :: wf 
-!
-      real(dp), dimension(:,:), allocatable :: h_wx, h_pq 
-!
-      type(file) :: h_pq_file
-!
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
-!
-      call wf%get_ao_h_wx(h_wx)
-      call wf%mo_transform(h_wx, h_pq)
-!
-      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
-      call disk%open_file(h_pq_file, 'write', 'rewind')
-!
-      write(h_pq_file%unit) h_pq 
-!
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
-      call mem%dealloc(h_pq, wf%n_mo, wf%n_mo)     
-!
-      call disk%close_file(h_pq_file)
-!
-   end subroutine mo_transform_and_save_h_wavefunction
 !
 !
    subroutine mo_transform_wavefunction(wf, X_wx, Y_pq)
@@ -590,6 +560,58 @@ contains
       call output%error_msg('Cannot restart for task ' // trim(task) // ' from abstract wavefunction ' // trim(wf%name_))
 !
    end subroutine is_restart_safe_wavefunction
+!
+!
+   subroutine get_mo_mu_wavefunction(wf, mu)
+!!
+!!    Get MO dipole operator
+!!    Written by Sarai D. Folekstad, Apr 2019
+!!
+      implicit none
+!      
+      class(wavefunction), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo, 3) :: mu
+      real(dp), dimension(:,:), allocatable :: mu_X_wx, mu_Y_wx, mu_Z_wx
+!
+      call mem%alloc(mu_X_wx, wf%n_ao, wf%n_ao)
+      call mem%alloc(mu_Y_wx, wf%n_ao, wf%n_ao)
+      call mem%alloc(mu_Z_wx, wf%n_ao, wf%n_ao)
+!
+      call wf%get_ao_mu_wx(mu_X_wx, mu_Y_wx, mu_Z_wx)
+!
+      call wf%mo_transform(mu_X_wx, mu(1,1,1))
+      call wf%mo_transform(mu_Y_wx, mu(1,1,2))
+      call wf%mo_transform(mu_Z_wx, mu(1,1,3))
+!
+      call mem%dealloc(mu_X_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(mu_Y_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(mu_Z_wx, wf%n_ao, wf%n_ao)
+!
+   end subroutine get_mo_mu_wavefunction
+!
+!
+   subroutine get_mo_h_wavefunction(wf, h)
+!!
+!!    Get MO h
+!!    Written by Sarai D. Folekstad, Apr 2019
+!!
+      implicit none
+!      
+      class(wavefunction), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo) :: h
+      real(dp), dimension(:,:), allocatable :: h_wx
+!
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+!
+      call wf%get_ao_h_wx(h_wx)
+!
+      call wf%mo_transform(h_wx, h)
+!
+      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+!
+   end subroutine get_mo_h_wavefunction
 !
 !
 end module wavefunction_class

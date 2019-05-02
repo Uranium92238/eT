@@ -62,8 +62,6 @@ module ccs_class
 !
       type(mo_integral_tool) :: integrals
 !
-      integer :: n_bath ! Number of bath orbitals (always the last ao/mo indices)
-!
       real(dp), dimension(:,:), allocatable :: density
 !
    contains
@@ -97,7 +95,7 @@ module ccs_class
       procedure :: read_singles_vector                         => read_singles_vector_ccs
 !
       procedure :: save_excited_state                          => save_excited_state_ccs
-      procedure :: restart_excited_state                       => restart_excited_state_ccs
+      procedure :: read_excited_state                          => read_excited_state_ccs
       procedure :: get_n_excited_states_on_file                => get_n_excited_states_on_file_ccs
 !
       procedure :: save_excitation_energies                    => save_excitation_energies_ccs
@@ -125,6 +123,8 @@ module ccs_class
       procedure :: construct_omega                             => construct_omega_ccs
       procedure :: omega_ccs_a1                                => omega_ccs_a1_ccs
 !
+      procedure :: form_newton_raphson_t_estimate              => form_newton_raphson_t_estimate_ccs
+!
 !     Routines related to the Jacobian transformation
 !
       procedure :: prepare_for_jacobian                        => prepare_for_jacobian_ccs
@@ -145,7 +145,6 @@ module ccs_class
       procedure :: construct_eta                               => construct_eta_ccs
 !
       procedure :: get_cvs_projector                           => get_cvs_projector_ccs
-      procedure :: get_ip_projector                            => get_ip_projector_ccs
 !
       procedure :: set_cvs_start_indices                       => set_cvs_start_indices_ccs
 !
@@ -186,6 +185,20 @@ module ccs_class
       procedure :: destruct_t1                                  => destruct_t1_ccs
       procedure :: destruct_t1bar                               => destruct_t1bar_ccs
 !
+!     Routines related to EOM first order property calculations
+!
+      procedure :: construct_etaX                              => construct_etaX_ccs
+      procedure :: construct_eom_etaX                          => construct_eom_etaX_ccs
+      procedure :: etaX_ccs_a1                                 => etaX_ccs_a1_ccs
+      procedure :: etaX_ccs_b1                                 => etaX_ccs_b1_ccs
+!
+      procedure :: construct_csiX                              => construct_csiX_ccs
+      procedure :: csiX_ccs_a1                                 => csiX_ccs_a1_ccs
+!
+      procedure :: etaX_eom_a                                  => etaX_eom_a_ccs
+!
+      procedure :: calculate_transition_strength               => calculate_transition_strength_ccs
+!
 !     One-electron density 
 !
       procedure :: construct_density                            => construct_density_ccs
@@ -198,12 +211,20 @@ module ccs_class
 !
 !     One-electron operators and mean value
 !
+      procedure :: construct_h                                  => construct_h_ccs 
       procedure :: construct_mu                                 => construct_mu_ccs 
       procedure :: construct_q                                  => construct_q_ccs 
 !
       procedure :: calculate_expectation_value                  => calculate_expectation_value_ccs
 !
    end type ccs
+!
+!
+   interface 
+!
+      include "fop_ccs_interface.F90"
+!
+   end interface
 !
 !
 contains
@@ -309,6 +330,23 @@ contains
       call wf%t1_transform(mu_pqk(:,:,3))
 !
    end subroutine construct_mu_ccs
+!
+!
+   subroutine construct_h_ccs(wf, h_pq)
+!!
+!!    Construct h
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!    
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: h_pq 
+!
+      call wf%get_mo_h(h_pq)
+      call wf%t1_transform(h_pq)
+!
+   end subroutine construct_h_ccs
 !
 !
    subroutine construct_q_ccs(wf, q_pqk)
@@ -734,9 +772,9 @@ contains
    end subroutine save_excited_state_ccs
 !
 !
-   subroutine restart_excited_state_ccs(wf, X, n, side)
+   subroutine read_excited_state_ccs(wf, X, n, side)
 !!
-!!    Restart excited state 
+!!    Read excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019 
 !!
 !!    Reads an excited state to disk. Since this routine is used by 
@@ -775,7 +813,7 @@ contains
 !
       endif
 !
-   end subroutine restart_excited_state_ccs
+   end subroutine read_excited_state_ccs
 !
 !
    subroutine save_excitation_energies_ccs(wf, n_states, energies)
@@ -994,20 +1032,12 @@ contains
 !
       integer :: i = 0
 !
-      type(file)   :: h_pq_file
-!
       real(dp), dimension(:,:), allocatable :: h_pq
 !
-!     Read MO-transformed h array
-!
-      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
-      call disk%open_file(h_pq_file, 'read')
-      rewind(h_pq_file%unit)
+!     Get T1-transformed h
 !
       call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
-      read(h_pq_file%unit) h_pq
-!
-      call disk%close_file(h_pq_file)
+      call wf%construct_h(h_pq)
 !
 !     Compute energy
 !
@@ -1089,8 +1119,6 @@ contains
 !
       class(ccs) :: wf
 !
-      type(file) :: h_pq_file
-!
       real(dp), dimension(:,:), allocatable :: F_pq
 !
       integer :: i, j, k, a, b
@@ -1101,19 +1129,10 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_iajk
       real(dp), dimension(:,:,:,:), allocatable :: g_aijk
 !
-!     Read MO-transformed h integrals into the
-!
-      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
-      call disk%open_file(h_pq_file, 'read', 'rewind')
+!     Get T1-transformed h integrals, put them in F_pq 
 !
       call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
-      read(h_pq_file%unit) F_pq
-!
-      call disk%close_file(h_pq_file)
-!
-!     Perform t1-transformation of F_pq = h_pq
-!
-      call wf%t1_transform(F_pq)
+      call wf%construct_h(F_pq)
 !
 !     Occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
@@ -3184,97 +3203,6 @@ contains
    end subroutine construct_multiplier_equation_ccs
 !
 !
-   subroutine add_bath_orbitals_ccs(wf)
-!!
-!!    Add bath orbitals,
-!!    Written by Sarai D. Folkestad, Oct. 2018
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      integer :: p, q, pq, ao, removed_orbitals
-!
-      type(file) :: h_pq_file
-!
-      real(dp), dimension(:,:), allocatable :: orbital_coeff_copy, L_J, h_pq
-!
-!     Read number and type of bath orbitals (for now only 1 and for ionization)
-!
-      wf%n_bath = 1
-!
-!     Add atom X to system (if necessary), with s-type orbitals
-!
-      call mem%alloc(orbital_coeff_copy, wf%n_ao, wf%n_mo)
-!
-      orbital_coeff_copy = wf%orbital_coefficients
-!
-      call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
-!
-!     Update coefficient matrix
-!
-      call mem%alloc(wf%orbital_coefficients, wf%n_ao + wf%n_bath, wf%n_mo + wf%n_bath)
-      wf%orbital_coefficients = zero
-!
-      wf%orbital_coefficients(1:wf%n_ao, 1:wf%n_mo) = orbital_coeff_copy(:,:)
-!
-      call mem%dealloc(orbital_coeff_copy, wf%n_ao, wf%n_mo)
-!
-      removed_orbitals = wf%n_ao - wf%n_mo ! Due to linear dependancy
-!
-!     Bath orbitals do not mix with other orbitals
-!
-      do ao = wf%n_ao + 1, wf%n_ao + wf%n_bath
-!
-         wf%orbital_coefficients(ao, ao - removed_orbitals) = one
-!
-      enddo
-!
-!     Update n_ao, n_mo, n_v
-!
-      wf%n_ao = wf%n_ao + wf%n_bath
-      wf%n_mo = wf%n_mo + wf%n_bath
-      wf%n_v  = wf%n_v + wf%n_bath
-!
-!     Update h_pq matrix
-!
-      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
-      call disk%open_file(h_pq_file, 'readwrite')
-      rewind(h_pq_file%unit)
-!
-      call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
-      h_pq = zero
-!
-      read(h_pq_file%unit) h_pq(1:wf%n_mo - wf%n_bath, 1:wf%n_mo - wf%n_bath)
-      rewind(h_pq_file%unit)
-      write(h_pq_file%unit) h_pq
-!
-      call disk%close_file(h_pq_file)
-!
-!     Update cholesky vectors
-!
-      call disk%open_file(wf%integrals%cholesky_mo, 'write')
-!
-      call mem%alloc(L_J, 1, wf%integrals%n_J)
-      L_J = zero
-!
-      do p = wf%n_mo - wf%n_bath, wf%n_mo
-         do q = 1, p
-!
-            pq = p*(p-3)/2 + p + q
-!
-            write(wf%integrals%cholesky_mo%unit, rec=pq) L_J
-!
-         enddo
-      enddo
-!
-      call mem%dealloc(L_J, 1, wf%integrals%n_J)
-!
-      call disk%close_file(wf%integrals%cholesky_mo)
-!
-   end subroutine add_bath_orbitals_ccs
-!
-!
    subroutine get_cvs_projector_ccs(wf, projector, n_cores, core_MOs)
 !!
 !!    Get CVS projector
@@ -3307,33 +3235,6 @@ contains
      enddo
 !
    end subroutine get_cvs_projector_ccs
-!
-!
-   subroutine get_ip_projector_ccs(wf, projector)
-!!
-!!    Get ip projector
-!!    Written by Sarai D. Folekstad, Oct 2018
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
-!
-      integer :: i, a, ai
-!
-      projector = zero
-!
-      a = wf%n_v ! Last virtual is bath orbital
-!
-      do i = 1, wf%n_o
-!
-         ai = wf%n_v*(i - 1) + a
-         projector(ai) = one
-!
-     enddo
-!
-   end subroutine get_ip_projector_ccs
 !
 !
    subroutine print_dominant_amplitudes_ccs(wf)
@@ -3637,6 +3538,41 @@ contains
       expectation_value = ddot(wf%n_mo**2, A, 1, wf%density, 1)
 !
    end function calculate_expectation_value_ccs
+!
+!
+   subroutine form_newton_raphson_t_estimate_ccs(wf, t, dt)
+!!
+!!    Form Newton-Raphson t estimate 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Here, t is the full amplitude vector and dt is the correction to the amplitude vector.
+!!
+!!    The correction is assumed to be obtained from either 
+!!    solving the Newton-Raphson equation
+!!
+!!       A dt = -omega, 
+!!
+!!    where A and omega are given in the biorthonormal basis,
+!!    or from the quasi-Newton equation (A ~ diagonal with diagonal = epsilon) 
+!!
+!!        dt = -omega/epsilon
+!!
+!!    Epsilon is the vector of orbital differences. 
+!!
+!!    On exit, t = t + dt, where the appropriate basis change has been accounted 
+!!    for (in particular for the double amplitudes in CCSD wavefunctions). Also,
+!!    dt is expressed in the basis compatible with t.
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: dt 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t 
+!
+      call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)
+!
+   end subroutine form_newton_raphson_t_estimate_ccs
 !
 !
 end module ccs_class

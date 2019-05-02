@@ -55,7 +55,7 @@ module davidson_cvs_cc_es_class
 !
 contains
 !
-   subroutine prepare_davidson_cvs_cc_es(solver)
+   subroutine prepare_davidson_cvs_cc_es(solver, transformation)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -63,6 +63,8 @@ contains
       implicit none
 !
       class(davidson_cvs_cc_es) :: solver
+!
+      character(len=*), intent(in) :: transformation
 !
       solver%tag = 'Davidson coupled cluster core excited state solver'
       solver%description1 = 'A Davidson CVS solver that calculates core excitation energies and the &
@@ -86,9 +88,9 @@ contains
       solver%transformation       = 'right'
       solver%restart              = .false.
       solver%max_dim_red          = 100 
+      solver%transformation = trim(transformation)
 !
       call solver%read_settings()
-!
       call solver%print_settings()
 !
       call solver%initialize_energies()
@@ -205,6 +207,8 @@ contains
 !
 !           Read the solutions from file & set as initial trial vectors 
 !
+            call wf%is_restart_safe('excited state')
+!
             call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
 !
             write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
@@ -215,7 +219,7 @@ contains
 !
             do trial = 1, n_solutions_on_file
 !
-               call wf%restart_excited_state(c_i, trial, solver%transformation)
+               call wf%read_excited_state(c_i, trial, solver%transformation)
                call davidson%write_trial(c_i)
 !
             enddo 
