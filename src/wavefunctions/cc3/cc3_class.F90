@@ -58,7 +58,7 @@ module cc3_class
       type(file)  :: X_abdi
       type(file)  :: X_abid
       type(file)  :: Y_bcek
-      type(file)  :: Y_ajil
+      type(file)  :: X_ajil
 !
    contains
 !
@@ -100,7 +100,7 @@ module cc3_class
                                                    => prepare_cc3_jacobian_transpose_intermediates_cc3
 !
       procedure :: sort_X_to_abid_and_write        => sort_X_to_abid_and_write_cc3
-      procedure :: construct_X_and_Y               => construct_X_and_Y_cc3
+      procedure :: construct_X_intermediates       => construct_X_intermediates_cc3
 !
       procedure :: effective_jacobian_transpose_transformation  &
                                                    => effective_jacobian_transpose_transformation_cc3

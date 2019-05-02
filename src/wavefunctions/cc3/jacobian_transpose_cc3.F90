@@ -71,11 +71,6 @@ contains
       type(timings) :: cc3_timer
       type(timings) :: ccsd_timer
 !
-      write(output%unit,*)
-      write(output%unit,*) "lalala"
-      write(output%unit,*)
-      flush(output%unit)
-!
       call cc3_timer%init('CC3 contribution)')
       call ccsd_timer%init('CCSD contribution)')
 !
@@ -263,10 +258,10 @@ contains
 !!
 !!    Computes the first contribution of the T3 amplitudes to sigma_1
 !!
-!!    Reads in the intermediates X_abid and Y_ajil prepared in prepare_jacobian_transpose
+!!    Reads in the intermediates X_abid and X_ajil prepared in prepare_jacobian_transpose
 !!    contracts with c_abij and adds to sigma_ai
 !!
-!!    sigma_dl =  sum_abi X_abid * C_abil + sum_aik C_daji * Y_ajil
+!!    sigma_dl =  sum_abi X_abid * C_abil + sum_aik C_daji * X_ajil
 !!    
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -276,10 +271,10 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(out) :: sigma_ai
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_abid
-      real(dp), dimension(:,:,:,:), allocatable :: Y_ajil
+      real(dp), dimension(:,:,:,:), allocatable :: X_ajil
 !
       type(batching_index) :: batch_d
       integer :: d_batch
@@ -310,12 +305,12 @@ contains
          call dgemm('T','N',                    & ! X is transposed
                      batch_d%length,            &
                      wf%n_o,                    &
-                     wf%n_o * wf%n_v**2,        &
+                     wf%n_o*wf%n_v**2,          &
                      one,                       &
                      X_abid,                    & ! X_d_abi
-                     wf%n_o * wf%n_v**2,        &
+                     wf%n_o*wf%n_v**2,          &
                      c_abij,                    & ! c_abi_l
-                     wf%n_o * wf%n_v**2,        &
+                     wf%n_o*wf%n_v**2,          &
                      one,                       &
                      sigma_ai(batch_d%first,1), & ! sigma_dl
                      wf%n_v)
@@ -327,15 +322,15 @@ contains
 !
       call disk%close_file(wf%X_abid)
 !
-!     :: Y_ajil term ::
+!     :: X_ajil term ::
 !
-      call disk%open_file(wf%Y_ajil,'read')
+      call disk%open_file(wf%X_ajil,'read')
 !
-      call mem%alloc(Y_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call mem%alloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call single_record_reader(wf%n_o, wf%Y_ajil, Y_ajil)
+      call single_record_reader(wf%n_o, wf%X_ajil, X_ajil)
 !
-      call disk%close_file(wf%Y_ajil)
+      call disk%close_file(wf%X_ajil)
 !
       call dgemm('N','N',              &
                   wf%n_v,              &
@@ -344,13 +339,13 @@ contains
                   one,                 &
                   c_abij,              & ! C_d_aji
                   wf%n_v,              &
-                  Y_ajil,              & ! Y_aji_l
+                  X_ajil,              & ! X_aji_l
                   wf%n_v * wf%n_o**2,  &
                   one,                 &
                   sigma_ai,            & ! sigma_dl
                   wf%n_v)
 !
-      call mem%dealloc(Y_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call mem%dealloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
    end subroutine jacobian_transpose_cc3_sigma1_t3_A1_cc3
 !
@@ -1923,25 +1918,25 @@ contains
 !
       integer, intent(in) :: i, j, k
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: c_abc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: sigma_abij
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(out)  :: sigma_abij
 !
 !     g_bdck ordered as dbc,k
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_bdci
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_bdcj
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_bdck
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck
 !
 !     g_ljck ordered as lc,jk
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_ljci
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_lkci
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_lkcj
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_licj
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_lick
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_ljck
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljci
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lkci
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lkcj
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_licj
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lick
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljck
 !
-!     sigma_adij += sum_bc c^abc_ijk g_bdck
+!     sigma_adij += sum_bc,k c^abc_ijk g_bdck
 !
       call dgemm('N', 'T',             &
                   wf%n_v,              &
@@ -1972,7 +1967,7 @@ contains
                   wf%n_v**2)
 !
 !
-!     sigma_adki += sum_bc c^bca_ijk g_bdcj
+!     sigma_adki += sum_bc,j c^bca_ijk g_bdcj
 !
       call dgemm('T', 'T',             &
                   wf%n_v,              &
@@ -2007,7 +2002,7 @@ contains
 !     123_to_231(cab) -> abc
 !     123_to_231(bca) -> cab
 !
-!     sigma_adjk += sum_bc c^cab_ijk g_bdci
+!     sigma_adjk += sum_bc,i c^cab_ijk g_bdci
 !
       call dgemm('N', 'T',             &
                   wf%n_v,              &
@@ -2045,7 +2040,7 @@ contains
 !        123_to_213(acb) -> cab
 !        123_to_213(cba) -> bca
 !
-!        sigma_adji += sum_bc c^bac_ijk g_bdck
+!        sigma_adji += sum_bc,k c^bac_ijk g_bdck
 !
          call dgemm('N', 'T',             &
                      wf%n_v,              &
@@ -2152,7 +2147,7 @@ contains
 !!
 !!    Constructs the intermediates Y_bcei and Y_cmik used to compute the c3 contributions to sigma_ai
 !!
-!!    Y_bcei = sum_aij c^abc_ijk * t^ae_ij
+!!    Y_bcek = sum_aij c^abc_ijk * t^ae_ij
 !!    Y_cmik = sum_abj c^abc_ijk * t^ab_mj
 !!
 !!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops
@@ -2165,18 +2160,18 @@ contains
 !
       integer, intent(in) :: i, j, k
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: c_abc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)      :: t_abij
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abij
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(out)     :: Y_cmjk
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(out)  :: Y_cmjk
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: Y_bcei
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: Y_bcej
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: Y_bcek
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: Y_bcei
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: Y_bcej
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: Y_bcek
 !
-!     Y_cikm = sum_ab c^abc_ijk t^ab_mj
+!     Y_cikm = sum_ab,j c^abc_ijk t^ab_mj
 !
       call dgemm('T','N',           &
                   wf%n_v,           &
@@ -2191,7 +2186,7 @@ contains
                   Y_cmjk(:,:,i,k),  & ! Y_c_m,ik
                   wf%n_v)
 !
-!     Y_bcek = sum_a c^abc_ijk t^ae_ij
+!     Y_bcek = sum_a,ij c^abc_ijk t^ae_ij
 !
       call dgemm('T','N',           &
                   wf%n_v**2,        &
@@ -2207,7 +2202,7 @@ contains
                   wf%n_v**2)
 !
 !
-!     Y_ckim = sum_ab c^cab_ijk t^ab_mj
+!     Y_cjim = sum_ab,k c^cab_ijk t^ab_mk
 !
       call dgemm('N','N',           &
                   wf%n_v,           &
@@ -2219,10 +2214,10 @@ contains
                   t_abij(:,:,:,k),  & ! t_ab_m,k
                   wf%n_v**2,        &
                   one,              &
-                  Y_cmjk(:,:,j,i),  & ! Y_c_m,ki
+                  Y_cmjk(:,:,j,i),  & ! Y_c_m,ji
                   wf%n_v)
 !
-!     Y_bcej = sum_a c^bca_ijk t^ae_ki
+!     Y_bcej = sum_a,ki c^bca_ijk t^ae_ki
 !
       call dgemm('N','N',           &
                   wf%n_v**2,        &
@@ -2243,7 +2238,7 @@ contains
 !     123->231(bca) = cab
 !     123->231(cab) = abc
 !
-!     Y_cmkj = sum_ab c^bca_ijk t^ab_mi
+!     Y_cmkj = sum_ab,i c^bca_ijk t^ab_mi
 !
       call dgemm('N','N',           &
                   wf%n_v,           &
@@ -2255,11 +2250,11 @@ contains
                   t_abij(:,:,:,i),  & ! t_ab_m,i
                   wf%n_v**2,        &
                   one,              &
-                  Y_cmjk(:,:,k,j),  & ! Y_c_m,ji                     
+                  Y_cmjk(:,:,k,j),  & ! Y_c_m,kj
                   wf%n_v)
 !
 !
-!     Y_bcek = sum_a c^cab_ijk t^ae_jk
+!     Y_bcei = sum_a,jk c^cab_ijk t^ae_jk
 !
       call dgemm('T','N',           &
                   wf%n_v**2,        &
@@ -2282,7 +2277,7 @@ contains
 !        123->213(acb) = cab
 !        123->213(cba) = bca
 !
-!        Y_cmjk = sum_ab c^bac_ijk t^ab_mi
+!        Y_cmjk = sum_ab,i c^bac_ijk t^ab_mi
 !
          call dgemm('T','N',           &
                      wf%n_v,           &
@@ -2297,7 +2292,7 @@ contains
                      Y_cmjk(:,:,j,k),  & ! Y_c_m,jk
                      wf%n_v)
 !
-!        Y_bcek = sum_a c^bac_ijk t^ae_ji
+!        Y_bcek = sum_a,ji c^bac_ijk t^ae_ji
 !
          call dgemm('T','N',           &
                      wf%n_v**2,        &
@@ -2313,7 +2308,7 @@ contains
                      wf%n_v**2)
 !
 !
-!        Y_cmij = sum_ab c^acb_ijk t^ab_mk
+!        Y_cmij = sum_ab,k c^acb_ijk t^ab_mk
 !
          call dgemm('N','N',           &
                      wf%n_v,           &
@@ -2328,7 +2323,7 @@ contains
                      Y_cmjk(:,:,i,j),  & ! Y_c_m,ij
                      wf%n_v)
 !
-!        Y_bcei = sum_a c^cba t^ae_kj
+!        Y_bcei = sum_a,kj c^cba t^ae_kj
 !
          call dgemm('N','N',           &
                      wf%n_v**2,        &
@@ -2349,7 +2344,7 @@ contains
 !        123->132(cba) = cab
 !        123->132(acb) = abc
 !
-!        Y_cmki = sum_ab c^cba_ijk t^ab_mj
+!        Y_cmki = sum_ab,j c^cba_ijk t^ab_mj
 !
          call dgemm('N','N',           &
                      wf%n_v,           &
@@ -2365,7 +2360,7 @@ contains
                      wf%n_v)
 !
 !
-!        Y_bcej = sum_a c^acb_ijk t^ae_ik
+!        Y_bcej = sum_a,ik c^acb_ijk t^ae_ik
 !
          call dgemm('T','N',           &
                      wf%n_v**2,        &

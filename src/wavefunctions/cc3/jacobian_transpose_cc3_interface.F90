@@ -50,7 +50,7 @@
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(out) :: sigma_ai
 !
    end subroutine jacobian_transpose_cc3_sigma1_t3_A1_cc3
 !
@@ -279,21 +279,21 @@
 !
       integer, intent(in) :: i, j, k
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: c_abc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: sigma_abij
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(out)  :: sigma_abij
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_bdci
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_bdcj
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_bdck
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck
 !
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_ljci
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_lkci
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_lkcj
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_licj
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_lick
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                      :: g_ljck
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljci
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lkci
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lkcj
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_licj
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lick
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljck
 !
    end subroutine jacobian_transpose_cc3_sigma2_cc3
 !
@@ -316,16 +316,16 @@
 !
       integer, intent(in) :: i, j, k
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: c_abc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: c_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)      :: t_abij
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abij
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(out)     :: Y_cmjk
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(out)  :: Y_cmjk
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: Y_bcei
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: Y_bcej
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: Y_bcek
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: Y_bcei
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: Y_bcej
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: Y_bcek
 !
    end subroutine construct_intermediates_c3_cc3
 !

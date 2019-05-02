@@ -65,8 +65,8 @@
    end subroutine prepare_cc3_jacobian_transpose_intermediates_cc3
 !
 !
-   module subroutine construct_X_and_Y_cc3(wf, i, j, k, t_abc, u_abc, v_abc, Y_aijl,      &
-                                           X_abdi, X_abdj, X_abdk, g_lbic, g_lbjc, g_lbkc)
+   module subroutine construct_X_intermediates_cc3(wf, i, j, k, t_abc, u_abc, v_abc, X_alij,      &
+                                                   X_abdi, X_abdj, X_abdk, g_lbic, g_lbjc, g_lbkc)
 !!
 !!    Constructs the intermediates X_abdi and Y_akil used to compute the contributions to sigma_ai
 !!
@@ -86,21 +86,21 @@
 !
       integer, intent(in) :: i, j, k
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: v_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: t_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: v_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(inout)   :: Y_aijl
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(out)  :: X_alij
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_abdi
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_abdj
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout)           :: X_abdk
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: X_abdi
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: X_abdj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: X_abdk
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o), intent(in)              :: g_lbic
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o), intent(in)              :: g_lbjc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o), intent(in)              :: g_lbkc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o), intent(in)           :: g_lbic
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o), intent(in)           :: g_lbjc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o), intent(in)           :: g_lbkc
 !                       
-   end subroutine construct_X_and_Y_cc3
+   end subroutine construct_X_intermediates_cc3
 !
 !
    module subroutine sort_X_to_abid_and_write_cc3(wf)

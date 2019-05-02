@@ -1351,7 +1351,7 @@ contains
                  wf%n_v)
 !
 !
-!     omega_ablj += \sum_c (2*t_abc - t_acb - t_cba)*g_ilkc
+!     omega_ablj += sum_c (2*t_abc - t_acb - t_cba)*g_ilkc
 !
       call dgemm('N','N', &
                  wf%n_v**2, &
