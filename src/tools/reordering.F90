@@ -2520,7 +2520,8 @@ subroutine add_2413_to_1234(scalar, x_qspr, y_pqrs, dim_p, dim_q, dim_r, dim_s)
    end subroutine sort_1234_to_4213
 !
 !
-   subroutine sort_1234_to_2143(x_pq_rs, x_qp_sr, dim_p, dim_q, dim_r, dim_s) !!
+   subroutine sort_1234_to_2143(x_pqrs, x_qpsr, dim_p, dim_q, dim_r, dim_s) 
+!!
 !!    Sort 1234 to 2143 
 !!    Written by Sarai D. Folkestad, 
 !!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
@@ -2534,25 +2535,18 @@ subroutine add_2413_to_1234(scalar, x_qspr, y_pqrs, dim_p, dim_q, dim_r, dim_s)
 !
       integer, intent(in) :: dim_p, dim_q, dim_r, dim_s 
 !
-      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs 
-      real(dp), dimension(dim_q*dim_p, dim_r*dim_s)   :: x_qp_sr 
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in) :: x_pqrs 
+      real(dp), dimension(dim_q, dim_p, dim_s, dim_r)             :: x_qpsr 
 !
-      integer :: p, q, r, s, rs, sr,  pq, qp 
+      integer :: p, q, r, s
 ! 
-!$omp parallel do schedule(static) private(s,r,rs,sr,q,qp,p,pq)
-      do s = 1, dim_s 
-         do r = 1, dim_r 
+!$omp parallel do schedule(static) private(p,q,r,s)
+      do r = 1, dim_r 
+         do s = 1, dim_s 
+            do p = 1, dim_p
+                do q = 1, dim_q 
 !
-            rs = dim_r*(s-1) + r             
-            sr = dim_s*(r-1) + s 
-!
-            do q = 1, dim_q
-                do p = 1, dim_p 
-!
-                   pq = dim_p*(q-1) + p
-                   qp = dim_q*(p-1) + q 
-!
-                   x_qp_sr(qp, sr) = x_pq_rs(pq, rs) 
+                   x_qpsr(q,p,s,r) = x_pqrs(p,q,r,s) 
 !
                 enddo
              enddo
