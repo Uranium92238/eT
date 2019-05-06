@@ -82,8 +82,6 @@ contains
 !
       call mem%alloc(c_ai, wf%n_v, wf%n_o)
 !
-      call mem%alloc(dummy_aibj,wf%n_t2)
-!
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -169,9 +167,6 @@ contains
 !
       call ccsd_timer%freeze()
 !
-      call mem%alloc(dummy_ai, wf%n_v, wf%n_o)
-      call mem%alloc(dummy_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-
       call mem%alloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%alloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -184,28 +179,12 @@ contains
       call cc3_timer%start()
 !
 !     CC3-Contributions from the T3-amplitudes
-!      call wf%jacobian_transpose_cc3_sigma1_T3_A1(c_abij, sigma_ai)
+      call wf%jacobian_transpose_cc3_sigma1_T3_A1(c_abij, sigma_ai)
 !
-!      call wf%jacobian_transpose_cc3_sigma1_T3_B1(c_abij, sigma_ai)
-!
-      dummy_ai = zero
-      dummy_abij = zero
+      call wf%jacobian_transpose_cc3_sigma1_T3_B1(c_abij, sigma_ai)
 !
 !     CC3-Contributions from the C3-amplitudes
-      call wf%jacobian_transpose_cc3_C3_terms(omega, c_ai, c_abij, dummy_ai, dummy_abij)
-!
-      write(output%unit,*)
-      write(output%unit,*) "Wolololo"
-      write(output%unit,"(6F16.9)") sigma_ai
-      write(output%unit,*)
-      write(output%unit,"(6F16.9)") dummy_ai
-      write(output%unit,*)
-!
-      sigma_ai = sigma_ai + dummy_ai
-      sigma_abij = sigma_abij + dummy_abij
-!
-      write(output%unit,"(6F16.9)") sigma_ai
-      write(output%unit,*)
+      call wf%jacobian_transpose_cc3_C3_terms(omega, c_ai, c_abij, sigma_ai, sigma_abij)
 !
       call cc3_timer%freeze()
       call cc3_timer%switch_off()
@@ -230,11 +209,6 @@ contains
 !
       call sort_1234_to_1324(sigma_aibj, sigma_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call sort_1234_to_1324(dummy_abij, sigma_aibj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call symmetric_sum(sigma_aibj, (wf%n_v)*(wf%n_o))
-!
-      call sort_1234_to_1324(sigma_aibj, dummy_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Compute CCSD H2 and I2 contributions
@@ -270,7 +244,6 @@ contains
                   aibj = ai*(ai-3)/2 + ai + bj
 !
                   c(wf%n_t1 + aibj) = sigma_abij(a,b,i,j)
-                  dummy_aibj(aibj) = dummy_abij(a,b,i,j)
 !
                enddo
             enddo
@@ -284,11 +257,6 @@ contains
       write(output%unit,"(6F16.9)") (c(i),i=1,wf%n_t1)
       write(output%unit,*)
       write(output%unit,"(4F16.9)") (c(i),i=wf%n_t1+1,wf%n_t1+wf%n_t2)
-      write(output%unit,*)
-      write(output%unit,*) "L3 contribution"
-      write(output%unit,"(6F16.9)") dummy_ai
-      write(output%unit,*)
-      write(output%unit,"(4F16.9)") dummy_aibj
       write(output%unit,*)
 !
       call mem%dealloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -958,7 +926,7 @@ contains
       type(batching_index) :: batch_i, batch_j, batch_k
       integer              :: i_batch, j_batch, k_batch
       integer              :: req_0, req_1, req_2, req_3
-      real(dp)             :: batch_buff = zero, xnorm = zero, ddot
+      real(dp)             :: batch_buff = zero 
 !
       logical :: not_first_i, not_first_j, not_first_k
 !
@@ -1272,17 +1240,6 @@ contains
                         call wf%jacobian_transpose_cc3_collect_c3(omega, i, j, k, c_abc, c_bac,  &
                                                                   c_cba, c_acb, c_cab, c_bca)
 !
-                        if(j .ne. i .and. k .ne. j) then 
-                           xnorm = xnorm + 6.0*ddot(wf%n_v**3,c_abc,1,c_abc,1)
-                        elseif(j .eq. i .or. k .eq. j) then 
-                           xnorm = xnorm + 3.0*ddot(wf%n_v**3,c_abc,1,c_abc,1)
-                        endif
-!
-                        write(output%unit,*)
-                        write(output%unit,*) "Trololo"
-                        write(output%unit,"(4F16.9)") c_abc
-                        write(output%unit,*)
-!
                         call wf%jacobian_transpose_cc3_sigma2(i, j, k, c_abc, u_abc, sigma_abij,   &
                                                                g_bdci_p(:,:,:,i_rel),              &
                                                                g_bdcj_p(:,:,:,j_rel),              &
@@ -1293,6 +1250,7 @@ contains
                                                                g_licj_p(:,:,i_rel,j_rel),          &
                                                                g_lick_p(:,:,i_rel,k_rel),          &
                                                                g_ljck_p(:,:,j_rel,k_rel))
+!
 !
                         call wf%construct_intermediates_c3(i, j, k, c_abc, u_abc, t_abij, &
                                                             Y_cmjk,                       &
@@ -1322,10 +1280,6 @@ contains
          call single_record_writer(batch_i, wf%Y_bcek, Y_bcei)
 !
       enddo ! batch_i
-!
-      write(output%unit,*)
-      write(output%unit,*) "L3 norm", xnorm
-      write(output%unit,*)
 !
       call disk%close_file(wf%g_bdck_t)
       call disk%close_file(wf%g_dbkc_t)
@@ -2302,7 +2256,7 @@ contains
                   wf%n_o,           &
                   wf%n_v**2,        &
                   one,              &
-                  c_abc,            & ! c_c_ab
+                  u_abc,            & ! c_c_ab
                   wf%n_v,           &
                   t_abij(:,:,:,i),  & ! t_ab_m,i
                   wf%n_v**2,        &
@@ -2318,7 +2272,7 @@ contains
                   wf%n_v,           &
                   wf%n_v,           &
                   one,              &
-                  c_abc,            & ! c_a_bc
+                  u_abc,            & ! c_a_bc
                   wf%n_v,           &
                   t_abij(:,:,j,k),  & ! t_a_e,jk
                   wf%n_v,           &
@@ -2341,7 +2295,7 @@ contains
                      wf%n_o,           &
                      wf%n_v**2,        &
                      one,              &
-                     c_abc,            & ! c_ab_c
+                     u_abc,            & ! c_ab_c
                      wf%n_v**2,        &
                      t_abij(:,:,:,i),  & ! t_ab_m,i
                      wf%n_v**2,        &
@@ -2356,7 +2310,7 @@ contains
                      wf%n_v,           &
                      wf%n_v,           &
                      one,              &
-                     c_abc,            & ! c_a_bc
+                     u_abc,            & ! c_a_bc
                      wf%n_v,           &
                      t_abij(:,:,j,i),  & ! t_a_e,ji
                      wf%n_v,           &
@@ -2372,7 +2326,7 @@ contains
                      wf%n_o,           &
                      wf%n_v**2,        &
                      one,              &
-                     c_abc,            & ! c_c_ab
+                     u_abc,            & ! c_c_ab
                      wf%n_v,           &
                      t_abij(:,:,:,k),  & ! t_ab_m,k
                      wf%n_v**2,        &
@@ -2387,7 +2341,7 @@ contains
                      wf%n_v,           &
                      wf%n_v,           &
                      one,              &
-                     c_abc,            & ! c_bc_a
+                     u_abc,            & ! c_bc_a
                      wf%n_v**2,        &
                      t_abij(:,:,k,j),  & ! t_a_e,kj
                      wf%n_v,           &
@@ -2408,7 +2362,7 @@ contains
                      wf%n_o,           &
                      wf%n_v**2,        &
                      one,              &
-                     c_abc,            & ! c_c_ab
+                     u_abc,            & ! c_c_ab
                      wf%n_v,           &
                      t_abij(:,:,:,j),  & ! t_ab_m,j
                      wf%n_v**2,        &
@@ -2424,7 +2378,7 @@ contains
                      wf%n_v,           &
                      wf%n_v,           &
                      one,              &
-                     c_abc,            & ! c_a_bc
+                     u_abc,            & ! c_a_bc
                      wf%n_v,           &
                      t_abij(:,:,i,k),  & ! t_a_e,ik
                      wf%n_v,           &
@@ -2662,12 +2616,12 @@ contains
                         batch_k%length,                        &
                         wf%n_v**3,                             &
                         one,                                   &
-                        g_becd,                                &
+                        g_becd,                                & !g_bce_d
                         wf%n_v**3,                             &
                         Y_bcek,                                &
-                        wf%n_v**3,                             &
+                        wf%n_v**3,                             & ! Y_bce,k
                         one,                                   &
-                        sigma_ai(batch_d%first,batch_k%first), &
+                        sigma_ai(batch_d%first,batch_k%first), & ! sigma_a_i
                         wf%n_v)
 !
          enddo ! d_batch
