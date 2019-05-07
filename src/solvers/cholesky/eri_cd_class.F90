@@ -2215,8 +2215,9 @@ contains
 !
             current_qual = current_qual + 1
 !
-            D_max = zero
-            xy_max = 0
+            qual_max(current_qual) = 1
+            xy_max = qual_aop(1, 3) 
+            D_max = D_xy(xy_max) - approx_diagonal_accumulative(xy_max)
 !
             do qual = 1, n_qual_aop
 !
@@ -2225,8 +2226,8 @@ contains
                if (D_xy(xy) - approx_diagonal_accumulative(xy) .gt. D_max) then
 !
                   qual_max(current_qual) = qual
-                  D_max    = D_xy(xy) - approx_diagonal_accumulative(xy)
                   xy_max = xy
+                  D_max = D_xy(xy) - approx_diagonal_accumulative(xy)
 !
                endif
 !
