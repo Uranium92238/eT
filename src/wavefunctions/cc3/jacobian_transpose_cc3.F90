@@ -2455,9 +2455,9 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(in) :: Y_cmjk
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_mjlk
-      real(dp), dimension(:,:,:,:), allocatable :: g_cdmj
-      real(dp), dimension(:,:,:,:), allocatable :: g_cjmd
+      real(dp), dimension(:,:,:,:), allocatable :: g_mjlk ! ordered g_mjkl
+      real(dp), dimension(:,:,:,:), allocatable :: g_cdmj ! ordered g_cmjd
+      real(dp), dimension(:,:,:,:), allocatable :: g_cjmd ! ordered g_cmjd
 !
 !     arrays for resorting
       real(dp), dimension(:,:,:,:), allocatable :: Y_cmkj
@@ -2478,7 +2478,7 @@ contains
       call mem%batch_setup(batch_l, req_0, req_1)
 !
       call batch_l%determine_limits(1)
-      call mem%alloc(g_mjlk, wf%n_o, wf%n_o, wf%n_o, batch_l%length)
+      call mem%alloc(g_mjlk, wf%n_o, wf%n_o, wf%n_o, batch_l%length) ! g_mjk#l
 !
       do l_batch = 1, batch_l%num_batches
 !
@@ -2499,7 +2499,7 @@ contains
                      sigma_ai(1,batch_l%first), &
                      wf%n_v)
 !
-      enddo
+      enddo ! l_batch
 !
       call batch_l%determine_limits(1)
       call mem%dealloc(g_mjlk, wf%n_o, wf%n_o, wf%n_o, batch_l%length)
@@ -2514,12 +2514,12 @@ contains
       call batch_d%init(wf%n_v)
 !
       req_0 = 0
-      req_1 = 2*wf%n_o*wf%n_o**2
+      req_1 = 2*wf%n_v*wf%n_o**2
 !
       call mem%batch_setup(batch_d, req_0, req_1)
 !
       call batch_d%determine_limits(1)
-      call mem%alloc(g_cdmj, wf%n_v, wf%n_o, wf%n_o, batch_d%length) !cmj#d
+      call mem%alloc(g_cdmj, wf%n_v, wf%n_o, wf%n_o, batch_d%length) ! cmj#d
 !
       do d_batch = 1, batch_d%num_batches
 !
@@ -2565,13 +2565,13 @@ contains
 !
       call batch_d%determine_limits(1)
 !
-      call mem%alloc(g_cjmd, wf%n_v, wf%n_o, wf%n_o, batch_d%length) !Stored as cm#j#d
+      call mem%alloc(g_cjmd, wf%n_v, wf%n_o, wf%n_o, batch_d%length) ! cmj#d
 !
       do d_batch = 1, batch_d%num_batches
 !
          call batch_d%determine_limits(d_batch)
 !
-         call compound_record_reader(wf%n_o, batch_d, wf%g_ckld_t, g_cjmd) !stored as cm#j#d
+         call compound_record_reader(wf%n_o, batch_d, wf%g_ckld_t, g_cjmd) ! cmj#d
 !
          call dgemm('T','N',                       &
                      batch_d%length,               &
@@ -2617,7 +2617,9 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_becd ! vvvv sorted as bce#d
       real(dp), dimension(:,:,:,:), allocatable :: g_ckle ! ovvo sorted as cl#ke
       real(dp), dimension(:,:,:,:), allocatable :: g_celk ! vvoo sorted as cle#k
-      real(dp), dimension(:,:,:,:), allocatable :: g_cekl ! integrals sorted as cekl
+!
+!     arrays for reordering
+      real(dp), dimension(:,:,:,:), allocatable :: g_cekl
 !
       real(dp), dimension(:,:,:,:), allocatable :: Y_bcek
       real(dp), dimension(:,:,:,:), allocatable :: Y_cbek
@@ -2662,9 +2664,9 @@ contains
                         batch_k%length,                        &
                         wf%n_v**3,                             &
                         one,                                   &
-                        g_becd,                                &
+                        g_becd,                                & ! g_bce_d
                         wf%n_v**3,                             &
-                        Y_bcek,                                &
+                        Y_bcek,                                & ! Y_bce_k
                         wf%n_v**3,                             &
                         one,                                   &
                         sigma_ai(batch_d%first,batch_k%first), &
@@ -2722,8 +2724,8 @@ contains
                      sigma_ai,                  &
                      wf%n_v)
 !
-         call mem%dealloc(g_ckle, wf%n_v, wf%n_o, batch_k%length, wf%n_v) !read in cl#ke
-         call mem%dealloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) !sort to ce#kl
+         call mem%dealloc(g_ckle, wf%n_v, wf%n_o, batch_k%length, wf%n_v) ! cl#ke
+         call mem%dealloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) ! ce#kl
 !
       enddo
 !
@@ -2772,8 +2774,8 @@ contains
                      sigma_ai,                  &
                      wf%n_v)
 !
-         call mem%dealloc(g_celk, wf%n_v, wf%n_o, batch_k%length, wf%n_v) !read in cl#ke
-         call mem%dealloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) !sort to ce#kl
+         call mem%dealloc(g_celk, wf%n_v, wf%n_o, batch_k%length, wf%n_v) !cl#ke
+         call mem%dealloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) !ce#kl
 !
       enddo
 !

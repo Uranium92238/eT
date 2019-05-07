@@ -27,7 +27,7 @@ submodule (cc3_class) prepare_jacobian_transpose
 !!    for the linear transform of trial vectors by the transpose of the Jacobian matrix
 !!
 !!    Sets up the integrals
-!!    g_vvvv ordered 1323, g_oooo ordered 1324, g_ovov ordered 2413, 
+!!    g_vvvv ordered 1324, g_oooo ordered 1243, g_ovov ordered 2413, 
 !!    g_voov ordered 1324, g_vvoo ordered 1342
 !!
 !!    And the intermediates
