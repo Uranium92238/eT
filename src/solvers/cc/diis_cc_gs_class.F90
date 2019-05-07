@@ -106,6 +106,7 @@ contains
 !
       if (solver%restart) then
 !
+         call wf%is_restart_safe('ground state')
          call wf%read_amplitudes()
          call wf%integrals%write_t1_cholesky(wf%t1) 
 ! 
@@ -262,7 +263,8 @@ contains
             call solver%do_diagonal_precondition(-one, epsilon, omega, wf%n_gs_amplitudes)
 !
             call wf%get_amplitudes(amplitudes)
-            amplitudes = amplitudes + omega 
+!
+            call wf%form_newton_raphson_t_estimate(amplitudes, omega)
 !
             call diis_manager%update(omega, amplitudes)
             call wf%set_amplitudes(amplitudes)

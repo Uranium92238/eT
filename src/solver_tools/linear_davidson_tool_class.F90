@@ -340,6 +340,11 @@ contains
       call disk%close_file(davidson%transforms, 'delete')
       call disk%close_file(davidson%preconditioner, 'delete')
 !
+      if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
+      if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
+      if (allocated(davidson%F)) call mem%dealloc(davidson%F, davidson%n_parameters)
+      if (allocated(davidson%F_red)) call mem%dealloc(davidson%F_red, davidson%dim_red)
+!
    end subroutine cleanup_linear_davidson_tool
 !
 !
