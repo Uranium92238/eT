@@ -46,7 +46,15 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
             "${CMAKE_Fortran_FLAGS} -qopenmp -parallel"
             )
     endif()
+#
+#   Enable runtime checks if requested (not default)
 # 
+    if(ENABLE_RUNTIME_CHECKS)
+        set(CMAKE_Fortran_FLAGS
+            "${CMAKE_Fortran_FLAGS} -check bounds" # need to add more & test this 
+            )
+    endif()
+#
 endif()
 # 
 #   2. GNU gfortran
@@ -55,7 +63,7 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
 # 
 #   Set standard flags 
 # 
-    set(CMAKE_Fortran_FLAGS "-std=f2008 -O3 -Wall -march=native -fcheck=all")
+    set(CMAKE_Fortran_FLAGS "-std=f2008 -O3 -Wall -march=native")
 # 
 #   Testing processor 32-bit or 64-bit
 # 
@@ -92,6 +100,14 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
     if(ENABLE_PROFILING)
         set(CMAKE_Fortran_FLAGS
             "${CMAKE_Fortran_FLAGS} -pg"
+            )
+    endif()
+#
+#   Enable runtime checks if requested (not default)
+# 
+    if(ENABLE_RUNTIME_CHECKS)
+        set(CMAKE_Fortran_FLAGS
+            "${CMAKE_Fortran_FLAGS} -fcheck=all"    
             )
     endif()
 # 
