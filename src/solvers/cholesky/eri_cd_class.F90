@@ -2215,8 +2215,11 @@ contains
 !
             current_qual = current_qual + 1
 !
-            D_max = zero
-            xy_max = 0
+            xy_max = qual_aop(1, 3) ! Initial value is the first
+            D_max = D_xy(xy_max) - approx_diagonal_accumulative(xy_max)
+            qual_max(current_qual) = 1
+      !      D_max = zero
+      !      xy_max = 0
 !
             do qual = 1, n_qual_aop
 !
