@@ -63,9 +63,8 @@ contains
       real(dp), dimension(:,:), allocatable :: c_ai
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij
 !
-      real(dp), dimension(:,:), allocatable :: sigma_ai, dummy_ai
-      real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj, sigma_abij, dummy_abij
-      real(dp), dimension(:), allocatable :: dummy_aibj
+      real(dp), dimension(:,:), allocatable :: sigma_ai
+      real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj, sigma_abij
 !
       integer :: i, j, a, b, ai, bj, aibj, b_end ! Index
 !
@@ -202,14 +201,7 @@ contains
 !     Last two CCSD-terms (H2, I2) are already symmetric.
 !     Perform the symmetrization sigma_aibj = P_ij^ab sigma_aibj
 !
-      call mem%alloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call sort_1234_to_1324(sigma_abij, sigma_aibj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call symmetric_sum(sigma_aibj, (wf%n_v)*(wf%n_o))
-!
-      call sort_1234_to_1324(sigma_aibj, sigma_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call symmetrize_12_and_34(sigma_abij, wf%n_v, wf%n_o)
 !
 !     Compute CCSD H2 and I2 contributions
 !
@@ -251,13 +243,6 @@ contains
       enddo
 !$omp end parallel do
 !
-!
-      write(output%unit,*)
-      write(output%unit,*) "Final rho vector"
-      write(output%unit,"(6F16.9)") (c(i),i=1,wf%n_t1)
-      write(output%unit,*)
-      write(output%unit,"(4F16.9)") (c(i),i=wf%n_t1+1,wf%n_t1+wf%n_t2)
-      write(output%unit,*)
 !
       call mem%dealloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -712,29 +697,29 @@ contains
 !     X_ai += sum_bc (t^acb - t^bca) * C_bckj
 !
       call dgemv('N',               &
-                  wf%n_v,           & ! dim of c
-                  wf%n_v**2,        & ! dim of X
+                  wf%n_v,           & 
+                  wf%n_v**2,        & 
                   one,              &
                   u_abc,            & ! u_a_bc
                   wf%n_v,           &
-                  c_bcjk(:,:,k,j),  & ! c_bc_kj
+                  c_bcjk(:,:,k,j),  & ! c_bc,kj
                   1,                &
                   one,              &
-                  X_ai(:,i),        & ! X_ai
+                  X_ai(:,i),        & ! X_a,i
                   1)
 !
 !     X_ak += -sum_bc (t^acb - t^bca) * C_bcij
 !
       call dgemv('N',               &
-                  wf%n_v,           & ! dim of c
-                  wf%n_v**2,        & ! dim of X
-                  one,              &
+                  wf%n_v,           & 
+                  wf%n_v**2,        & 
+                  -one,              &
                   u_abc,            & ! u_a_bc
                   wf%n_v,           &
-                  c_bcjk(:,:,i,j),  & ! c_bc_ij
+                  c_bcjk(:,:,i,j),  & ! c_bc,ij
                   1,                &
                   one,              &
-                  X_ai(:,k),        & ! X_ak
+                  X_ai(:,k),        & ! X_a,k
                   1)
 !
       if (k .ne. j .and. j .ne. i) then ! The rest is either zero or identical to the first terms
@@ -746,29 +731,29 @@ contains
 !        X_ai += sum_bc (t^abc - t^bac) * C_bcjk
 !
          call dgemv('N',               &
-                     wf%n_v,           & ! dim of c
-                     wf%n_v**2,        & ! dim of X
+                     wf%n_v,           & 
+                     wf%n_v**2,        & 
                      one,              &
                      u_abc,            & ! u_a_bc
                      wf%n_v,           &
-                     c_bcjk(:,:,j,k),  & ! c_bc_jk
+                     c_bcjk(:,:,j,k),  & ! c_bc,jk
                      1,                &
                      one,              &
-                     X_ai(:,i),        & ! X_ai
+                     X_ai(:,i),        & ! X_a,i
                      1)
 !
 !        X_aj += -sum_bc (t^abc - t^bac) * C_bcik
 !
          call dgemv('N',               &
-                     wf%n_v,           & ! dim of c
-                     wf%n_v**2,        & ! dim of X
+                     wf%n_v,           & 
+                     wf%n_v**2,        & 
                      -one,             &
                      u_abc,            & ! u_a_bc
                      wf%n_v,           &
-                     c_bcjk(:,:,i,k),  & ! c_bc_ik
+                     c_bcjk(:,:,i,k),  & ! c_bc,ik
                      1,                &
                      one,              &
-                     X_ai(:,j),        & ! X_aj
+                     X_ai(:,j),        & ! X_a,j
                      1)
 !
 !        Construct u_cba = t_cba - t_cab
@@ -778,29 +763,29 @@ contains
 !        X_ak += sum_bc (t^cba - t^cab) * C_bcji
 !
          call dgemv('N',               &
-                     wf%n_v,           & ! dim of c
-                     wf%n_v**2,        & ! dim of X
+                     wf%n_v,           & 
+                     wf%n_v**2,        & 
                      one,              &
                      u_abc,            & ! u_a_bc
                      wf%n_v,           &
-                     c_bcjk(:,:,j,i),  & ! c_bc_ji
+                     c_bcjk(:,:,j,i),  & ! c_bc,ji
                      1,                &
                      one,              &
-                     X_ai(:,k),        & ! X_ak
+                     X_ai(:,k),        & ! X_a,k
                      1)
 !
 !        X_aj += -sum_bc (t^cba - t^cab) * C_bcki
 !
          call dgemv('N',               &
-                     wf%n_v,           & ! dim of c
-                     wf%n_v**2,        & ! dim of X
+                     wf%n_v,           & 
+                     wf%n_v**2,        & 
                      -one,             &
                      u_abc,            & ! u_a_bc
                      wf%n_v,           &
-                     c_bcjk(:,:,k,i),  & ! c_bc_ki
+                     c_bcjk(:,:,k,i),  & ! c_bc,ki
                      1,                &
                      one,              &
-                     X_ai(:,j),        & ! X_aj
+                     X_ai(:,j),        & ! X_a,j
                      1)
 !
       end if

@@ -156,6 +156,73 @@ contains
    end subroutine symmetric_sum
 !
 !
+   subroutine symmetrize_12_and_34(x, dim_p, dim_r)
+!!
+!!    Symmetric sum
+!!    Written by Rolf H. Myhre, May 2019
+!!
+!!    Performs the action
+!!
+!!       x(p,q,r,s) = x(p,q,r,s) + x(q,p,s,r)
+!!
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_p, dim_r
+!
+      real(dp), dimension(dim_p, dim_p, dim_r, dim_r), intent(inout) :: x
+!
+      integer :: p, q, r, s, p_lim
+!
+!     Lower triangles first
+!
+!$omp parallel do private(p, q, r, s, p_lim)
+      do s = 1, dim_r
+         do r = s, dim_r
+            do q = 1, dim_p
+!
+               if(r .ne. s) then
+                  p_lim = 1
+               else
+                  p_lim = q
+               endif
+!
+               do p = p_lim, dim_p
+!
+                  x(p,q,r,s) = x(p,q,r,s) + x(q,p,s,r)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+!  And the upper triangles
+!
+!$omp parallel do private(p, q, r, s)
+      do s = 1, dim_r
+         do r = 1, s
+            do q = 1, dim_p
+!
+               if(r .ne. s) then
+                  p_lim = dim_p
+               else
+                  p_lim = q-1
+               endif
+!
+               do p = 1, p_lim
+!
+                  x(p,q,r,s) = x(q,p,s,r)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine symmetrize_12_and_34
+!
+!
 !     -::- Three-index re-sort and re-sort-add routines -::-
 !     ------------------------------------------------------
 !
@@ -392,7 +459,7 @@ contains
 !
    subroutine construct_123_minus_213(x_pqr, y_pqr, dim_)
 !!
-!!    Construct 123 minus 321
+!!    Construct 123 minus 213
 !!    Written by Eirik F. Kjønstad and Rolf H. Myhre, April 2019
 !!
 !!    Performs:
@@ -425,7 +492,7 @@ contains
 !
    subroutine construct_321_minus_312(x_pqr, y_pqr, dim_)
 !!
-!!    Construct 123 minus 321
+!!    Construct 321 minus 312
 !!    Written by Eirik F. Kjønstad and Rolf H. Myhre, April 2019
 !!
 !!    Performs:
