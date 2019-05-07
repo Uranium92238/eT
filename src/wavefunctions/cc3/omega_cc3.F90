@@ -351,7 +351,7 @@ contains
 !
                call batch_k%determine_limits(k_batch)
 !
-               if (k_batch .ne. j_batch) then
+               if (k_batch .ne. j_batch) then !k_batch != j_batch, k_batch != i_batch
 !
                   call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc)
                   g_bdck_p => g_bdck
@@ -402,7 +402,7 @@ contains
                   g_jlkc_p => g_jlic
                   L_jbkc_p => L_jbic
 !
-               else if (k_batch .eq. j_batch) then
+               else !k_batch == j_batch != i_batch
 !
                   g_bdck_p => g_bdcj
                   g_dbkc_p => g_dbjc

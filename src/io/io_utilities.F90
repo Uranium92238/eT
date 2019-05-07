@@ -816,18 +816,18 @@ contains
       integer :: ioerror
       integer :: z, z_abs
 !
-         do z = 1, batch_z%length
+      do z = 1, batch_z%length
 !
-            z_abs = batch_z%first + z - 1
+         z_abs = batch_z%first + z - 1
 !
-            write(file_1%unit, rec=z_abs, iostat=ioerror) g_pqrz(:,:,:,z)
+         write(file_1%unit, rec=z_abs, iostat=ioerror) g_pqrz(:,:,:,z)
 !
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%name)
-               call output%error_msg('Failed to write file')
-            endif
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%name)
+            call output%error_msg('Failed to write file')
+         endif
 !
-         enddo
+      enddo
 !
    end subroutine write_array_single_record_batch
 !
