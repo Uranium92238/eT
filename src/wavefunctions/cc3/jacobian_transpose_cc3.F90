@@ -422,7 +422,7 @@ contains
 !
       req_0 = 0
       req_1 = wf%n_v**3
-      req_2 = wf%n_o * wf%n_v
+      req_2 = wf%n_o*wf%n_v
       req_3 = 0
 !
       call batch_i%init(wf%n_o)
@@ -493,7 +493,7 @@ contains
 !
                call batch_k%determine_limits(k_batch)
 !
-               if (k_batch .ne. i_batch .and. k_batch .ne. j_batch) then
+               if (k_batch .ne. j_batch) then !k_batch != j_batch, k_batch != i_batch
 !
                   call single_record_reader(batch_k, wf%g_bdck_t, g_bdck)
                   g_bdck_p => g_bdck
@@ -501,40 +501,35 @@ contains
                   call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci)
                   g_lkci_p => g_lkci
 !
-
                   call compound_record_reader(batch_i, batch_k, wf%g_ljck_t, g_lick)
                   g_lick_p => g_lick
 !
                   call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj)
                   g_lkcj_p => g_lkcj
 !
-
                   call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck)
                   g_ljck_p => g_ljck
 !
 !
-               else if (k_batch .eq. i_batch) then
+               else if (k_batch .eq. i_batch) then !k_batch == j_batch == i_batch
 !
                   g_bdck_p => g_bdci
 !
                   g_lkci_p => g_ljci
-!
                   g_lick_p => g_ljci
 !
                   g_lkcj_p => g_ljci
-!
                   g_ljck_p => g_ljci
 !
-               else if (k_batch .eq. j_batch) then
+               else !k_batch == j_batch != i_batch
+!
+                  g_bdck_p => g_bdcj
 !
                   g_lkci_p => g_ljci
-!
                   g_lick_p => g_licj
 !
                   call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj)
-!
                   g_lkcj_p => g_lkcj
-!
                   g_ljck_p => g_lkcj
 !
                endif
@@ -549,7 +544,7 @@ contains
 !
                      do k = batch_k%first, min(batch_k%last, j)
 !
-                        if (i .eq. j .and. i .eq. k) then
+                        if (k .eq. i) then ! k == j == i
                            cycle
                         end if
 !
@@ -913,8 +908,6 @@ contains
       integer              :: req_0, req_1, req_2, req_3
       real(dp)             :: batch_buff = zero 
 !
-      logical :: not_first_i, not_first_j, not_first_k
-!
 !     Set up arrays for amplitudes
 !
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -964,7 +957,6 @@ contains
          call mem%alloc(L_jbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
          call mem%alloc(Y_bcei, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         Y_bcei = zero
 !
       else ! batching
 !
@@ -1005,10 +997,6 @@ contains
          call mem%alloc(Y_bcej, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
          call mem%alloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
-         Y_bcei = zero
-         Y_bcej = zero
-         Y_bcek = zero
-!
       endif
 !
       call disk%open_file(wf%g_bdck_t,'read')
@@ -1020,10 +1008,6 @@ contains
       call wf%Y_bcek%init('Y_bcek','direct','unformatted',dp*wf%n_v**3)
       call disk%open_file(wf%Y_bcek,'readwrite')
 !
-      not_first_i = .false.
-      not_first_j = .false.
-      not_first_k = .false.
-!
       do i_batch = 1, batch_i%num_batches
 !
          call batch_i%determine_limits(i_batch)
@@ -1032,13 +1016,8 @@ contains
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
 !
-!        cannot hold Y_bcei - read in previous X, add contributions, write to disk again
-         if (not_first_i) then
-            call single_record_reader(batch_i, wf%Y_bcek, Y_bcei)
-         end if
+         Y_bcei = zero
          Y_bcei_p => Y_bcei
-!
-         not_first_i = .true.
 !
          do j_batch = 1, i_batch
 !
@@ -1056,11 +1035,8 @@ contains
                g_bdcj_p => g_bdcj
                g_dbjc_p => g_dbjc
 !
-!              Don't read X in the first iteration - Y_bcei file empty
-               if (not_first_j) then
-                  call single_record_reader(batch_j, wf%Y_bcek, Y_bcej)
-                  Y_bcej_p => Y_bcej
-               end if
+               call single_record_reader(batch_j, wf%Y_bcek, Y_bcej)
+               Y_bcej_p => Y_bcej
 !
                call compound_record_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, wf%g_jlkc_t,  &
                                           g_iljc, wf%L_jbkc_t, L_ibjc)
@@ -1081,23 +1057,18 @@ contains
 !
             endif
 !
-            not_first_j = .true.
-!
             do k_batch = 1, j_batch
 !
                call batch_k%determine_limits(k_batch)
 !
-               if (k_batch .ne. i_batch .and. k_batch .ne. j_batch) then
+               if (k_batch .ne. j_batch) then !k_batch != j_batch, k_batch != i_batch
 !
                   call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc)
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
 !
-!                 Don't read X in the first iteration - Y_bcei file empty
-                  if (not_first_k) then
-                     call single_record_reader(batch_k, wf%Y_bcek, Y_bcek)
-                     Y_bcek_p => Y_bcek
-                  endif
+                  call single_record_reader(batch_k, wf%Y_bcek, Y_bcek)
+                  Y_bcek_p => Y_bcek
 ! 
                   call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
                                              g_klic, wf%L_jbkc_t, L_kbic)
@@ -1123,7 +1094,7 @@ contains
                   g_jlkc_p => g_jlkc
                   L_jbkc_p => L_jbkc
 !
-               else if (k_batch .eq. i_batch) then ! k_batch = j_batch = i_batch
+               else if (k_batch .eq. i_batch) then !k_batch == j_batch == i_batch
 !
                   g_bdck_p => g_bdci
                   g_dbkc_p => g_dbic
@@ -1146,7 +1117,7 @@ contains
                   g_jlkc_p => g_jlic
                   L_jbkc_p => L_jbic
 !
-               else if (k_batch .eq. j_batch) then
+               else !k_batch == j_batch != i_batch
 !
                   g_bdck_p => g_bdcj
                   g_dbkc_p => g_dbjc
@@ -1172,8 +1143,6 @@ contains
                   L_jbkc_p => L_kbjc
 !
                endif
-!
-               not_first_k = .true.
 !
                do i = batch_i%first, batch_i%last
 !
@@ -1250,7 +1219,7 @@ contains
 !              write the intermediate Y_bcek to file. 
 !              Will be read in after the loops for the contractions to sigma_ai
 !
-               if (k_batch .ne. j_batch) then
+               if (k_batch .ne. j_batch) then !k_batch != j_batch, k_batch != i_batch
                   call single_record_writer(batch_k, wf%Y_bcek, Y_bcek)
                endif
 !
