@@ -68,9 +68,12 @@ contains
 !
       integer :: i, j, a, b, ai, bj, aibj, b_end ! Index
 !
-      type(timings) :: cc3_timer
+      type(timings) :: cc3_timer, cc3_timer_t3_a, cc3_timer_t3_b, cc3_timer_c3
       type(timings) :: ccsd_timer
 !
+      call cc3_timer_t3_a%init('CC3 a1 contribution)')
+      call cc3_timer_t3_b%init('CC3 b1 contribution)')
+      call cc3_timer_c3%init('CC3 C3 contribution)')
       call cc3_timer%init('CC3 contribution)')
       call ccsd_timer%init('CCSD contribution)')
 !
@@ -178,12 +181,27 @@ contains
       call cc3_timer%start()
 !
 !     CC3-Contributions from the T3-amplitudes
+      call cc3_timer_t3_a%start()
+!
       call wf%jacobian_transpose_cc3_sigma1_T3_A1(c_abij, sigma_ai)
+!
+      call cc3_timer_t3_a%freeze()
+      call cc3_timer_t3_a%switch_off()
+!
+      call cc3_timer_t3_b%start()
 !
       call wf%jacobian_transpose_cc3_sigma1_T3_B1(c_abij, sigma_ai)
 !
+      call cc3_timer_t3_b%freeze()
+      call cc3_timer_t3_b%switch_off()
+!
 !     CC3-Contributions from the C3-amplitudes
+      call cc3_timer_c3%start()
+!
       call wf%jacobian_transpose_cc3_C3_terms(omega, c_ai, c_abij, sigma_ai, sigma_abij)
+!
+      call cc3_timer_c3%freeze()
+      call cc3_timer_c3%switch_off()
 !
       call cc3_timer%freeze()
       call cc3_timer%switch_off()
