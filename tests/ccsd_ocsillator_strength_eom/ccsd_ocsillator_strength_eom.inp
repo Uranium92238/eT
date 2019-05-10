@@ -18,23 +18,23 @@ cc fop
 end cc fop
 
 solver hf
-   gradient threshold: 1.0d-12
+   gradient threshold: 1.0d-11
 end solver hf
 
 solver cholesky
-   threshold: 1.0d-12
+   threshold: 1.0d-11
 end solver cholesky
 
 solver cc gs
-   omega threshold: 1.0d-12
+   omega threshold: 1.0d-11
 end solver cc gs
 
 solver cc multipliers
-   threshold: 1.0d-12
+   threshold: 1.0d-11
 end solver cc multipliers
 
 solver cc es
-   residual threshold: 1.0d-12
+   residual threshold: 1.0d-11
    singlet states: 1
 end solver cc es
 
