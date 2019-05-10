@@ -212,6 +212,7 @@ contains
       write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) '
       write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
       flush(output%unit)
+      flush(timing%unit)
 !
       prev_energy = zero
       iteration   = 1
