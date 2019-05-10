@@ -214,13 +214,7 @@ contains
 !
       call ccsd_timer%start()
 !
-      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call sort_1234_to_1324(rho_abij, rho_aibj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call symmetric_sum(rho_aibj, (wf%n_v)*(wf%n_o))
-!
-      call sort_1234_to_1324(rho_aibj, rho_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call symmetrize_12_and_34(rho_abij, wf%n_v, wf%n_o)
 !
       call mem%alloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call sort_1234_to_1243(c_abji, c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)

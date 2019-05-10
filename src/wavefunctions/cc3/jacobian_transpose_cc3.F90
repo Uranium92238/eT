@@ -52,6 +52,8 @@ contains
 !!    sent to the routine. On exit, the vector c is equal to sigma (the transformed
 !!    vector).
 !!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
       implicit none
 !
       class(cc3) :: wf
