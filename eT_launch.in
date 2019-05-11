@@ -25,6 +25,7 @@ import shutil
 import argparse
 import sys
 import glob
+import subprocess
 
 if sys.version < '3.5':
     print('requires python version >= 3.5')
@@ -49,8 +50,11 @@ parser.add_argument('-v', "--verbose", help="Run some print statements", action=
 parser.add_argument('-bd', "--binary-dir", help="Specify location of eT executable", type=str)
 parser.add_argument('-sd', "--SAD-dir", help="Specify location of SAD data dir", type=str)
 parser.add_argument('-ldd', "--libint-data-dir", help="Specify location of Libint basis directory", type=str)
-parser.add_argument("--profile", help="Copy gmon.out from scratch", action='store_true')
+parser.add_argument('--profile', help="Copy gmon.out from scratch", action='store_true')
+parser.add_argument('-i_err', '--ignore_errors', help="Continue with default behaviour if errors detected", action='store_true')
 args = parser.parse_args()
+
+something_wrong = False
 
 #Check that output file makes sense and set default
 if (args.output_file[0]):
@@ -151,7 +155,18 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
         print("Ready to run eT in", scratch, "with", omps, "threads")
 
     # Run eT
-    os.system(executable)
+    p = subprocess.run(executable,
+                       shell=True,
+                       stderr=subprocess.PIPE)
+
+    s = p.stderr.decode('utf8') 
+
+    if (s != ''):
+        if (not args.ignore_errors):
+            something_wrong = True
+        print()
+        print("Error message from eT:")
+        print(s)
 
     if (args.verbose):
         print("Copying output to", out_dest)
@@ -165,8 +180,13 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
     
     os.chdir(cwd)
 
+    if (something_wrong):
+        print("Stopping now")
+        break
+        
+
 # Delete scratch
-if not args.keep_scratch:
+if (not args.keep_scratch and not something_wrong):
     if (args.verbose):
         print()
         print("Deleting scratch")
