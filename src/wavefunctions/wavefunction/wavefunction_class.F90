@@ -79,7 +79,8 @@ module wavefunction_class
 !
       procedure :: is_restart_safe                          => is_restart_safe_wavefunction 
 !
-   end type wavefunction
+   end type wavefunction 
+!
 !
 contains
 !
@@ -232,22 +233,22 @@ contains
 !!    Get AO h 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
-!!    Uses the integral tool to construct the full one-electron h matrix.
+!!    Constructs the full one-electron h matrix.
 !!
       implicit none 
 !
       class(wavefunction), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: h 
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: h 
 !
       type(interval) :: A_interval, B_interval
 !
-      integer :: x, y, A, B
+      integer :: x, y, A, B 
 !
-      real(dp), dimension(:,:), allocatable :: h_AB 
+      real(dp), dimension(:,:), pointer                        :: h_AB_p 
+      real(dp), dimension(wf%system%max_shell_size**2), target :: h_AB
 !
-!$omp parallel do &
-!$omp private(A, B, h_AB, A_interval, B_interval, x, y) schedule(static)
+!$omp parallel do private(A, B, h_AB, h_AB_p, A_interval, B_interval, x, y) schedule(static)
       do A = 1, wf%system%n_s
 !
          A_interval = wf%system%shell_limits(A)
@@ -256,19 +257,18 @@ contains
 !
             B_interval = wf%system%shell_limits(B)
 !
-            call mem%alloc(h_AB, A_interval%size, B_interval%size)
             call wf%system%construct_ao_h_wx(h_AB, A, B)
 !
-             do x = 1, A_interval%size
-                do y = 1, B_interval%size
+            h_AB_p(1 : A_interval%size, 1 : B_interval%size) => h_AB(1 : A_interval%size*B_interval%size)
 !
-                   h(A_interval%first - 1 + x, B_interval%first - 1 + y) = h_AB(x, y)
-                   h(B_interval%first - 1 + y, A_interval%first - 1 + x) = h_AB(x, y)
+            do x = 1, A_interval%size
+               do y = 1, B_interval%size
 !
-                enddo
-             enddo
+                  h(A_interval%first - 1 + x, B_interval%first - 1 + y) = h_AB_p(x, y)
+                  h(B_interval%first - 1 + y, A_interval%first - 1 + x) = h_AB_p(x, y)
 !
-            call mem%dealloc(h_AB, A_interval%size, B_interval%size)
+               enddo
+            enddo
 !
          enddo
       enddo
@@ -279,23 +279,25 @@ contains
 !
    subroutine get_ao_s_wx_wavefunction(wf, s)
 !!
-!!    Get AO s 
+!!    Get AO s
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
-!!    Uses the integral tool to construct the full one-electron h matrix.
+!!    Constructs the full one-electron overlap matrix s.
 !!
       implicit none 
 !
       class(wavefunction), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: s 
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: s 
 !
       type(interval) :: A_interval, B_interval
 !
       integer :: x, y, A, B
 !
-      real(dp), dimension(:,:), allocatable :: s_AB 
+      real(dp), dimension(:,:), pointer                        :: s_AB_p 
+      real(dp), dimension(wf%system%max_shell_size**2), target :: s_AB 
 !
+!$omp parallel do private(A, B, A_interval, B_interval, s_AB, s_AB_p, x, y)
       do A = 1, wf%system%n_s
 !
          A_interval = wf%system%shell_limits(A)
@@ -304,22 +306,24 @@ contains
 !
             B_interval = wf%system%shell_limits(B)
 !
-            call mem%alloc(s_AB, A_interval%size, B_interval%size)
             call wf%system%construct_ao_s_wx(s_AB, A, B)
 !
-             do x = 1, A_interval%size
-                do y = 1, B_interval%size
+            s_AB_p(1 : A_interval%size, 1 : B_interval%size) => s_AB(1 : A_interval%size*B_interval%size)
 !
-                   s(A_interval%first - 1 + x, B_interval%first - 1 + y) = s_AB(x, y)
-                   s(B_interval%first - 1 + y, A_interval%first - 1 + x) = s_AB(x, y)
+            do x = 1, A_interval%size
+               do y = 1, B_interval%size
 !
-                enddo
-             enddo
+                  s(A_interval%first - 1 + x, B_interval%first - 1 + y) = s_AB_p(x, y)
+                  s(B_interval%first - 1 + y, A_interval%first - 1 + x) = s_AB_p(x, y)
 !
-            call mem%dealloc(s_AB, A_interval%size, B_interval%size)
+               enddo
+            enddo
+!
+            nullify(s_AB_p)
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine get_ao_s_wx_wavefunction
 !

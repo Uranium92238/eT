@@ -49,8 +49,8 @@ extern vector<Engine> kinetic;
 vector<Engine> nuclear(omp_get_max_threads());
 extern vector<Engine> nuclear;
 
-Engine overlap;
-extern Engine overlap;
+vector<Engine> overlap(omp_get_max_threads());
+extern vector<Engine> overlap;
 
 Engine dipole;
 extern Engine dipole;
@@ -148,7 +148,10 @@ void initialize_nuclear(){
 void initialize_overlap(){
 
     Engine temporary(Operator::overlap, basis.max_nprim(), basis.max_l());
-    overlap = temporary;
+   
+    for (int i = 0; i != omp_get_max_threads(); i++){
+        overlap[i] = temporary; 
+    }
 
 }
 
