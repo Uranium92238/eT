@@ -243,7 +243,6 @@ contains
       class(hf) :: wf
 !
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
-      flush(output%unit)
 !
 !     Save the orbitals to file & store restart information 
 !

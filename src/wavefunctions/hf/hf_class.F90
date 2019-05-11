@@ -183,6 +183,7 @@ contains
       call initialize_kinetic_c()
       call initialize_nuclear_c()
       call initialize_overlap_c()
+      call initialize_dipole()
 !
       call wf%set_n_mo()
 !
@@ -321,6 +322,57 @@ contains
       call print_vector(wf%orbital_energies, wf%n_ao, indent)
 !
    end subroutine print_orbital_energies_hf
+!
+!
+   subroutine mo_transform_hf(wf, X_wx, Y_pq)
+!!
+!!    MO transform 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Performs MO transformation of X and saves the result in Y:
+!!
+!!       Y_pq = sum_wx C_wp X_wx C_xq
+!!
+      implicit none 
+!
+      class(hf), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: X_wx 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Y_pq  
+!
+      real(dp), dimension(:,:), allocatable :: Z_wq ! = sum_x X_wx C_xq
+!
+      call mem%alloc(Z_wq, wf%n_ao, wf%n_mo)
+!
+      call dgemm('N', 'N',                 &
+                  wf%n_ao,                 &
+                  wf%n_mo,                 &
+                  wf%n_ao,                 &
+                  one,                     &
+                  X_wx,                    &
+                  wf%n_ao,                 &
+                  wf%orbital_coefficients, & ! C_xq
+                  wf%n_ao,                 &
+                  zero,                    &
+                  Z_wq,                    &
+                  wf%n_ao)
+!
+      call dgemm('T', 'N',                 &
+                  wf%n_mo,                 &
+                  wf%n_mo,                 &
+                  wf%n_ao,                 &
+                  one,                     &
+                  wf%orbital_coefficients, & ! C_wp 
+                  wf%n_ao,                 &
+                  Z_wq,                    &
+                  wf%n_ao,                 &
+                  zero,                    &
+                  Y_pq,                    &
+                  wf%n_mo)
+!
+      call mem%dealloc(Z_wq, wf%n_ao, wf%n_mo)
+!
+   end subroutine mo_transform_hf
 !
 !
    subroutine set_initial_ao_density_guess_hf(wf, guess)
@@ -601,8 +653,6 @@ contains
       write(wf%restart_file%unit) wf%energy
 !
       call disk%close_file(wf%restart_file) 
-!
-      call wf%mo_transform_and_save_h()
 !
       call wf%destruct_orbital_energies()
       call wf%destruct_ao_overlap()

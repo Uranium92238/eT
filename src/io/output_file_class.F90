@@ -96,7 +96,7 @@ contains
 !
       endif
 !
-      stop
+      stop "Something went wrong, check the .out file"
 !
    end subroutine error_msg_output_file
 !
