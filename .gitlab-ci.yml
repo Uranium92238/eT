@@ -9,7 +9,8 @@ build:
     - cd build
     - make
   artifacts:
-    - /build
+    paths: 
+      - /build
 
 run:
   stage: run
