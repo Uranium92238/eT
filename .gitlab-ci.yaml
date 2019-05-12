@@ -1,0 +1,14 @@
+# Just testing feature for now
+Stages:
+   - Build
+   - Run
+
+Build:
+   stage: Build
+   script:
+      - echo "Building..."
+
+Run:
+   stage: Run
+   script:
+      - echo "Running..."
