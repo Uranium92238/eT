@@ -4204,6 +4204,13 @@ contains
       write(output%unit, '(/t6, a21, e10.2)') 'Target threshold is: ', solver%threshold
       write(output%unit, '( t6, a21, e10.2)') 'Span factor:         ', solver%span
       write(output%unit, '( t6, a21, 4x, i6)')'Max qual:            ', solver%max_qual
+!
+      if (solver%one_center) then 
+
+         write(output%unit, '(/t6, a)') 'Doing one-center Cholesky decomposition (1C-CD).'
+      
+      endif 
+!
       flush(output%unit)
 !
    end subroutine print_settings_eri_cd
