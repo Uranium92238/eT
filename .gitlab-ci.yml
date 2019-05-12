@@ -5,9 +5,11 @@ stages:
 build:
   stage: build
   script:
+    - git submodule init
+    - git submodule update
     - ./setup --int32 -FC=gfortran -CXX=g++-8
     - cd build
-    - make -j4
+    - make -j2
   artifacts:
     paths: 
       - build/
@@ -16,4 +18,4 @@ run:
   stage: run
   script:
     - cd build
-    - ctest --verbose -R hf
+    - ctest
