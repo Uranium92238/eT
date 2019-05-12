@@ -706,11 +706,11 @@ contains
       real(dp), dimension(:), allocatable :: screening_vector_local, screening_vector_reduced, max_in_sp_diagonal
       real(dp), dimension(:), allocatable :: D_xy 
 !
-      real(dp), dimension(:,:), allocatable :: D_AB, D_AB_screen, construct_test
+      real(dp), dimension(:,:,:,:), pointer :: g_ABAB_p
+      real(dp), dimension(system%max_shell_size**4), target :: g_ABAB
+      real(dp), dimension(system%max_shell_size**2) :: D_AB, D_AB_screen, construct_test
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_ABAB
-!
-      integer :: x, y, xy, xy_packed, A, B, I
+      integer :: x, y, xy, xy_packed, A, B, I, K
 !
       type(interval) :: A_interval, B_interval
 !
@@ -755,7 +755,7 @@ contains
       sig_sp = .false.
 !
 !$omp parallel do &
-!$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_ABAB, D_AB, D_AB_screen) &
+!$omp private(I, K, A, B, A_interval, B_interval, x, y, xy, g_ABAB, g_ABAB_p, D_AB, D_AB_screen) &
 !$omp shared(sig_sp) &
 !$omp schedule(guided)
       do I = 1, solver%n_sp
@@ -770,30 +770,25 @@ contains
 !
 !           Construct diagonal D_AB for the given shell pair
 !
-            call mem%alloc(g_ABAB, &
-                     (A_interval%size), (B_interval%size), &
-                     (A_interval%size), (B_interval%size))
-!
             call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
-            call mem%alloc(D_AB, (A_interval%size), (B_interval%size))
-            call mem%alloc(D_AB_screen, (A_interval%size), (B_interval%size))
+            g_ABAB_p(1 : A_interval%size, 1 : B_interval%size, &
+                     1 : A_interval%size, 1 : B_interval%size) &
+                     => g_ABAB(1 : (A_interval%size)**2*(B_interval%size)**2)
 !
+            K = 0
             do x = 1, (A_interval%size)
                do y = 1, (B_interval%size)
 !
-                  D_AB_screen(x, y) = g_ABAB(x, y, x, y)&
+                  K = K + 1
+                  D_AB_screen(K) = g_ABAB_p(x, y, x, y)&
                               *screening_vector_local(x + A_interval%first - 1)&
                               *screening_vector_local(y + B_interval%first - 1)
 !  
-                  D_AB(x, y) = g_ABAB(x, y, x, y)
+                  D_AB(K) = g_ABAB_p(x, y, x, y)
 !
                enddo
             enddo
-!
-            call mem%dealloc(g_ABAB, &
-                  (A_interval%size), (B_interval%size), &
-                  (A_interval%size), (B_interval%size))
 !
 !           Determine whether shell pair is significant
 !
@@ -801,9 +796,6 @@ contains
                          is_significant(D_AB_screen, (A_interval%size)*(B_interval%size), solver%threshold))
 !
             max_in_sp_diagonal(I) = get_abs_max(D_AB, (A_interval%size)*(B_interval%size))
-!
-            call mem%dealloc(D_AB, (A_interval%size), (B_interval%size))
-            call mem%dealloc(D_AB_screen, (A_interval%size), (B_interval%size))
 !
          endif
 !
@@ -820,7 +812,7 @@ contains
       construct_sp = .false.
 !
 !$omp parallel do &
-!$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_ABAB, construct_test) &
+!$omp private(I, K, A, B, A_interval, B_interval, x, y, xy, g_ABAB, g_ABAB_p, construct_test) &
 !$omp shared(construct_sp) &
 !$omp schedule(guided)
       do I = 1, solver%n_sp
@@ -833,31 +825,25 @@ contains
 !
 !        Construct diagonal D_AB for the given shell pair
 !
-         call mem%alloc(g_ABAB, &
-                  (A_interval%size), (B_interval%size), &
-                  (A_interval%size), (B_interval%size))
-!
          call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
-         call mem%alloc(construct_test, (A_interval%size), (B_interval%size))
+         g_ABAB_p(1 : A_interval%size, 1 : B_interval%size, &
+                  1 : A_interval%size, 1 : B_interval%size) &
+                  => g_ABAB(1 : (A_interval%size)**2*(B_interval%size)**2)
 !
+         K = 0
          do x = 1, (A_interval%size)
             do y = 1, (B_interval%size)
 !
-               construct_test(x, y) = sqrt(g_ABAB(x, y, x, y)*max_diagonal)
+               K = K + 1
+               construct_test(K) = sqrt(g_ABAB_p(x, y, x, y)*max_diagonal)
 !
             enddo
          enddo
 !
-         call mem%dealloc(g_ABAB, &
-                  (A_interval%size), (B_interval%size), &
-                  (A_interval%size), (B_interval%size))
+!        Determine whether shell pair should be constructed
 !
-!           Determine whether shell pair should be constructed
-!
-            construct_sp(I) = is_significant(construct_test, (A_interval%size)*(B_interval%size), min(solver%threshold,1.0d-8))
-!
-         call mem%dealloc(construct_test, (A_interval%size), (B_interval%size))
+         construct_sp(I) = is_significant(construct_test, (A_interval%size)*(B_interval%size), min(solver%threshold,1.0d-8))
 !
       enddo
 !$omp end parallel do
@@ -960,7 +946,7 @@ contains
 !     This is convenient because significant_sp_to_first_significant_aop will be used to calculate lengths.
 !
 !$omp parallel do &
-!$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_ABAB) &
+!$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_ABAB, g_ABAB_p) &
 !$omp shared(D_xy, screening_vector_reduced, ao_offsets) &
 !$omp schedule(guided)
       do I = 1, n_sig_sp
@@ -971,11 +957,11 @@ contains
          A_interval = system%shell_limits(A)
          B_interval = system%shell_limits(B)
 !
-         call mem%alloc(g_ABAB, &
-               (A_interval%size), (B_interval%size), &
-               (A_interval%size), (B_interval%size))
-!
          call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
+!
+         g_ABAB_p(1 : A_interval%size, 1 : B_interval%size, &
+                  1 : A_interval%size, 1 : B_interval%size) &
+                  => g_ABAB(1 : (A_interval%size)**2*(B_interval%size)**2)
 !
          if (A .eq. B) then
 !
@@ -985,7 +971,7 @@ contains
                   xy = A_interval%size*(y - 1) + x
                   xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
-                  D_xy(xy_packed + ao_offsets(I)) = g_ABAB(x, y, x, y)
+                  D_xy(xy_packed + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
                   screening_vector_reduced(xy_packed + ao_offsets(I)) = &
                                           screening_vector_local(x + A_interval%first - 1)*&
                                           screening_vector_local(y + B_interval%first - 1)
@@ -999,7 +985,7 @@ contains
                do y = 1, (B_interval%size)
 !
                   xy = A_interval%size*(y - 1) + x
-                  D_xy(xy + ao_offsets(I)) = g_ABAB(x, y, x, y)
+                  D_xy(xy + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
                   screening_vector_reduced(xy + ao_offsets(I)) = &
                                       screening_vector_local(x + A_interval%first - 1)*&
                                       screening_vector_local(y + B_interval%first - 1)
@@ -1008,10 +994,6 @@ contains
             enddo
 !
          endif
-!
-         call mem%dealloc(g_ABAB, &
-               (A_interval%size), (B_interval%size), &
-               (A_interval%size), (B_interval%size))
 !
       enddo
 !$omp end parallel do
@@ -1675,9 +1657,7 @@ contains
 !!    Determine auxiliary cholesky basis
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Determines the elements of the auxiliary basis for an RI-type expansion
-!!    by Cholesky decomposition
-!!
+!!    Determines the elements of the Cholesky auxiliary basis.
 !!
       implicit none
 !
@@ -1765,7 +1745,8 @@ contains
       real(dp), dimension(:,:), allocatable :: g_wxyz                         ! Array for eri
       real(dp), dimension(:,:), allocatable :: cholesky_tmp                   ! Array used for dgemm, reordered copy of cholesky vectors of current batch of qualified
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_ABCD                     ! Array for eri for shell pairs AB and CD
+      real(dp), dimension(system%max_shell_size**4), target :: g_ABCD         ! Array for eri for shell pairs AB and CD
+      real(dp), dimension(:,:,:,:), pointer :: g_ABCD_p                       ! Pointer for eri for shell pairs AB and CD
 !
 !     Real pointers
 !
@@ -1923,8 +1904,6 @@ contains
 !
             do I = first, last
 !
-            !   write(output%unit, *) 'diag', I, D_xy(I)
-!
                if (D_xy(I) .gt. max_in_sig_sp(sp)) then
 !
                   max_in_sig_sp(sp) = D_xy(I)
@@ -2056,10 +2035,9 @@ contains
 !
          call mem%alloc(g_wxyz, n_sig_aop, n_qual_aop)
 !
-!
 !$omp parallel do &
 !$omp private(AB_sp, CD_sp, A, B, A_interval, B_interval, C, D, C_interval, D_interval, &
-!$omp  aop, w, x, y, z, wx, wx_packed, g_ABCD, n_qual_aop_in_sp) &
+!$omp  aop, w, x, y, z, wx, wx_packed, g_ABCD, g_ABCD_p, n_qual_aop_in_sp) &
 !$omp shared(g_wxyz, n_qual_aop_in_prev_sps, qual_aop) &
 !$omp schedule(guided)
          do CD_sp = 1, n_qual_sp
@@ -2082,54 +2060,50 @@ contains
                A_interval = system%shell_limits(A)
                B_interval = system%shell_limits(B)
 !
-               call mem%alloc(g_ABCD, &
-                              (A_interval%size), (B_interval%size), &
-                              (C_interval%size), (D_interval%size))
-!
                call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
 !
-                 do aop = 1, n_qual_aop_in_sp
+               g_ABCD_p(1 : A_interval%size, 1 : B_interval%size, &
+                        1 : C_interval%size, 1 : D_interval%size) &
+                        => g_ABCD(1 : (A_interval%size)*(B_interval%size)*(C_interval%size)*(D_interval%size))
 !
-                    y = qual_aop(aop + n_qual_aop_in_prev_sps(CD_sp), 1)
-                    z = qual_aop(aop + n_qual_aop_in_prev_sps(CD_sp), 2)
+               do aop = 1, n_qual_aop_in_sp
 !
-                    if (A == B) then
+                  y = qual_aop(aop + n_qual_aop_in_prev_sps(CD_sp), 1)
+                  z = qual_aop(aop + n_qual_aop_in_prev_sps(CD_sp), 2)
 !
-                       do w = 1, A_interval%size
-                          do x = w, B_interval%size
+                  if (A == B) then
 !
-                             wx_packed = (max(w,x)*(max(w,x)-3)/2) + w + x
+                     do w = 1, A_interval%size
+                        do x = w, B_interval%size
 !
-                             g_wxyz(sig_sp_to_first_sig_aop(AB_sp) + wx_packed - 1, aop + n_qual_aop_in_prev_sps(CD_sp)) &
-                                   = g_ABCD(w, x, y - C_interval%first + 1, z - D_interval%first + 1)
+                           wx_packed = (max(w,x)*(max(w,x)-3)/2) + w + x
 !
-                          enddo
-                       enddo
+                           g_wxyz(sig_sp_to_first_sig_aop(AB_sp) + wx_packed - 1, aop + n_qual_aop_in_prev_sps(CD_sp)) &
+                                   = g_ABCD_p(w, x, y - C_interval%first + 1, z - D_interval%first + 1)
 !
-                    else
+                        enddo
+                     enddo
 !
-                       do w = 1, A_interval%size
-                          do x = 1, B_interval%size
+                  else
 !
-                             wx = A_interval%size*(x-1) + w
+                     do w = 1, A_interval%size
+                        do x = 1, B_interval%size
 !
-                             g_wxyz(sig_sp_to_first_sig_aop(AB_sp) + wx - 1, aop + n_qual_aop_in_prev_sps(CD_sp)) &
-                                   = g_ABCD(w, x, y - C_interval%first + 1, z - D_interval%first + 1)
+                           wx = A_interval%size*(x-1) + w
 !
-                          enddo
-                       enddo
+                           g_wxyz(sig_sp_to_first_sig_aop(AB_sp) + wx - 1, aop + n_qual_aop_in_prev_sps(CD_sp)) &
+                                   = g_ABCD_p(w, x, y - C_interval%first + 1, z - D_interval%first + 1)
 !
-                    endif
+                        enddo
+                     enddo
 !
-                 enddo
+                  endif
 !
-                  call mem%dealloc(g_ABCD, &
-                                    (A_interval%size), (B_interval%size), &
-                                    (C_interval%size), (D_interval%size))
+               enddo
 !
-            enddo
+         enddo
 !
-         enddo ! cd_sp
+      enddo ! cd_sp
 !$omp end parallel do
 !
          call mem%dealloc(n_qual_aop_in_prev_sps, n_qual_sp)
