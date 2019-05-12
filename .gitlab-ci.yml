@@ -5,10 +5,14 @@ stages:
 build:
   stage: build
   script:
-    - echo "Building."
     - ./setup --int32 -FC=gfortran -CXX=g++-8
+    - cd build
+    - make
+  artifacts:
+    - /build
 
 run:
   stage: run
   script:
-    - echo "Running!"
+    - cd build
+    - ctest
