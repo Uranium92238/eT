@@ -6,6 +6,7 @@ build:
   stage: build
   script:
     - echo "Building."
+    - ./setup --int32 -FC=gfortran -CXX=g++-8
 
 run:
   stage: run
