@@ -2617,12 +2617,16 @@ contains
 !
 !     Integer allocatable arrays
 !
-      integer, dimension(:,:), allocatable :: basis_shell_info        ! Info on shells containing elements of the basis
-      integer, dimension(:,:), allocatable :: basis_shell_info_full   ! Info on shells containing elements of the basis
-      integer, dimension(:,:), allocatable :: cholesky_basis          ! ao and ao pair indices of the elements of the cholesky basis
-      integer, dimension(:,:), allocatable :: cholesky_basis_updated  ! ao and ao pair indices of the elements of the cholesky basis      
-      integer, dimension(:,:), allocatable :: basis_aops_in_CD_sp     ! basis ao pairs in shell pair CD
-      integer, dimension(:,:), allocatable :: basis_aops_in_AB_sp     ! basis ao pairs in shell pair AB
+      integer, dimension(:,:), allocatable :: basis_shell_info                      ! Info on shells containing elements of the basis
+      integer, dimension(:,:), allocatable :: basis_shell_info_full                 ! Info on shells containing elements of the basis
+      integer, dimension(:,:), allocatable :: cholesky_basis                        ! ao and ao pair indices of the elements of the cholesky basis
+      integer, dimension(:,:), allocatable :: cholesky_basis_updated                ! ao and ao pair indices of the elements of the cholesky basis    
+!  
+      integer, dimension(3*system%max_shell_size**2), target :: basis_aops_in_CD_sp ! basis ao pairs in shell pair CD
+      integer, dimension(3*system%max_shell_size**2), target :: basis_aops_in_AB_sp ! basis ao pairs in shell pair AB
+!
+      integer, dimension(:,:), pointer :: basis_aops_in_CD_sp_p                     ! basis ao pairs in shell pair CD
+      integer, dimension(:,:), pointer :: basis_aops_in_AB_sp_p                     ! basis ao pairs in shell pair AB
 !
       integer, dimension(:), allocatable :: keep_vectors
 !
@@ -2636,7 +2640,9 @@ contains
 !
 !     Real allocatable arrays
 !
-      real(dp), dimension(:,:), allocatable :: g_AB_CD
+      real(dp), dimension(system%max_shell_size**4), target :: g_AB_CD
+      real(dp), dimension(:,:), pointer :: g_AB_CD_p
+!
       real(dp), dimension(:,:), allocatable :: integrals_auxiliary
 !
       real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
@@ -2670,8 +2676,8 @@ contains
 !
 !$omp parallel do &
 !$omp private(AB_sp, CD_sp, A, B, A_interval, B_interval, C, D, C_interval, D_interval, &
-!$omp w, x, y, z, wx, yz, g_AB_CD, I, J, K, L, &
-!$omp current_aop_in_sp, basis_aops_in_CD_sp, basis_aops_in_AB_sp) &
+!$omp w, x, y, z, wx, yz, g_AB_CD, g_AB_CD_p, I, J, K, L, &
+!$omp current_aop_in_sp, basis_aops_in_CD_sp, basis_aops_in_AB_sp, basis_aops_in_CD_sp_p, basis_aops_in_AB_sp_p) &
 !$omp shared(integrals_auxiliary, cholesky_basis, basis_shell_info) &
 !$omp schedule(guided)
       do CD_sp = 1, n_sp_in_basis
@@ -2682,7 +2688,7 @@ contains
          C_interval = system%shell_limits(C)
          D_interval = system%shell_limits(D)
 !
-         call mem%alloc(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
+         basis_aops_in_CD_sp_p(1 : basis_shell_info(CD_sp, 4), 1 : 3) => basis_aops_in_CD_sp(1 : basis_shell_info(CD_sp, 4)*3)
 !
 !        Determine which elements in the shell pair CD are elements of the basis
 !
@@ -2693,9 +2699,9 @@ contains
 !
                current_aop_in_sp = current_aop_in_sp + 1
 !
-               basis_aops_in_CD_sp(current_aop_in_sp, 1) = cholesky_basis(I,1) - C_interval%first + 1
-               basis_aops_in_CD_sp(current_aop_in_sp, 2) = cholesky_basis(I,2) - D_interval%first + 1
-               basis_aops_in_CD_sp(current_aop_in_sp, 3) = I
+               basis_aops_in_CD_sp_p(current_aop_in_sp, 1) = cholesky_basis(I,1) - C_interval%first + 1
+               basis_aops_in_CD_sp_p(current_aop_in_sp, 2) = cholesky_basis(I,2) - D_interval%first + 1
+               basis_aops_in_CD_sp_p(current_aop_in_sp, 3) = I
 !
             endif
          enddo
@@ -2708,7 +2714,7 @@ contains
             A_interval = system%shell_limits(A)
             B_interval = system%shell_limits(B)
 !
-            call mem%alloc(basis_aops_in_AB_sp, basis_shell_info(AB_sp, 4), 3)
+            basis_aops_in_AB_sp_p(1 : basis_shell_info(AB_sp, 4), 1 : 3) => basis_aops_in_AB_sp(1 : basis_shell_info(AB_sp, 4)*3)
 !
 !           Determine which elements in the shell pair AB are elements of the basis
 !
@@ -2719,52 +2725,44 @@ contains
 !
                   current_aop_in_sp = current_aop_in_sp + 1
 !
-                  basis_aops_in_AB_sp(current_aop_in_sp, 1) = cholesky_basis(I,1) - A_interval%first + 1
-                  basis_aops_in_AB_sp(current_aop_in_sp, 2) = cholesky_basis(I,2) - B_interval%first + 1
-                  basis_aops_in_AB_sp(current_aop_in_sp, 3) = I
+                  basis_aops_in_AB_sp_p(current_aop_in_sp, 1) = cholesky_basis(I,1) - A_interval%first + 1
+                  basis_aops_in_AB_sp_p(current_aop_in_sp, 2) = cholesky_basis(I,2) - B_interval%first + 1
+                  basis_aops_in_AB_sp_p(current_aop_in_sp, 3) = I
 !
                endif
             enddo
 !
 !           Construct integrals
 !
-            call mem%alloc(g_AB_CD, &
-                     (A_interval%size)*(B_interval%size), &
-                     (C_interval%size)*(D_interval%size))
-!
             call system%construct_ao_g_wxyz(g_AB_CD, A, B, C, D)
+!
+            g_AB_CD_p(1 : A_interval%size*B_interval%size, &
+                        1 : C_interval%size*D_interval%size) &
+                        => g_AB_CD(1 : A_interval%size*B_interval%size*C_interval%size*D_interval%size)
 !
 !           Only keep those that correspond to elements of the basis
 !
             do I = 1, basis_shell_info(AB_sp, 4)
                do J = 1, basis_shell_info(CD_sp, 4)
 !
-                  y = basis_aops_in_CD_sp(J, 1)
-                  z = basis_aops_in_CD_sp(J, 2)
+                  y = basis_aops_in_CD_sp_p(J, 1)
+                  z = basis_aops_in_CD_sp_p(J, 2)
                   yz = C_interval%size*(z-1)+y
 !
-                  w = basis_aops_in_AB_sp(I, 1)
-                  x = basis_aops_in_AB_sp(I, 2)
+                  w = basis_aops_in_AB_sp_p(I, 1)
+                  x = basis_aops_in_AB_sp_p(I, 2)
                   wx = A_interval%size*(x-1)+w
 !
-                  K = basis_aops_in_AB_sp(I, 3)
-                  L = basis_aops_in_CD_sp(J, 3)
+                  K = basis_aops_in_AB_sp_p(I, 3)
+                  L = basis_aops_in_CD_sp_p(J, 3)
 !
-                  integrals_auxiliary(K, L) = g_AB_CD(wx, yz)
-                  integrals_auxiliary(L, K) = g_AB_CD(wx, yz)
+                  integrals_auxiliary(K, L) = g_AB_CD_p(wx, yz)
+                  integrals_auxiliary(L, K) = g_AB_CD_p(wx, yz)
 !
                enddo
             enddo
 !
-            call mem%dealloc(g_AB_CD, &
-                     (A_interval%size)*(B_interval%size), &
-                     (C_interval%size)*(D_interval%size))
-!
-            call mem%dealloc(basis_aops_in_AB_sp, basis_shell_info(AB_sp, 4), 3)
-!
          enddo ! AB
-!
-         call mem%dealloc(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
 !
       enddo ! CD
 !$omp end parallel do
@@ -2982,10 +2980,11 @@ contains
 !
 !     Integer allocatable arrays
 !
-      integer, dimension(:,:), allocatable :: basis_shell_info     ! Info on shells containing elements of the basis
-      integer, dimension(:,:), allocatable :: AB_info              ! Info on offsets and shells for OMP-loop [offset, A, B]
-      integer, dimension(:,:), allocatable :: basis_aops_in_CD_sp  ! Basis ao pairs in shell pair CD
-      integer, dimension(:,:), allocatable :: cholesky_basis       ! Info on cholesky basis
+      integer, dimension(:,:), allocatable :: basis_shell_info                      ! Info on shells containing elements of the basis
+      integer, dimension(:,:), allocatable :: AB_info                               ! Info on offsets and shells for OMP-loop [offset, A, B]
+      integer, dimension(3*system%max_shell_size**2), target :: basis_aops_in_CD_sp   ! Basis ao pairs in shell pair CD
+      integer, dimension(:,:), pointer :: basis_aops_in_CD_sp_p                     ! Basis ao pairs in shell pair CD
+      integer, dimension(:,:), allocatable :: cholesky_basis                     ! Info on cholesky basis
 !
 !     Reals
 !
@@ -2994,7 +2993,8 @@ contains
 !
 !     Real allocatable arrays
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_ABCD
+      real(dp), dimension(system%max_shell_size**4), target :: g_ABCD
+      real(dp), dimension(:,:,:,:), pointer :: g_ABCD_p
 
       real(dp), dimension(:,:), allocatable :: g_wx_L
       real(dp), dimension(:,:), allocatable :: L_wx_J
@@ -3170,7 +3170,7 @@ contains
 !$omp parallel do &
 !$omp private(AB_sp, CD_sp, I, A, B, A_interval, &
 !$omp B_interval, C, D, C_interval, D_interval, &
-!$omp basis_aops_in_CD_sp, current_aop_in_sp, g_ABCD, &
+!$omp basis_aops_in_CD_sp, basis_aops_in_CD_sp_p, current_aop_in_sp, g_ABCD, g_ABCD_p, &
 !$omp w, x, y, z, wx, wx_packed, L, J) &
 !$omp shared(g_wx_L, AB_info, basis_shell_info, cholesky_basis) &
 !$omp schedule(guided)
@@ -3190,7 +3190,7 @@ contains
                C_interval = system%shell_limits(C)
                D_interval = system%shell_limits(D)
 !
-               call mem%alloc(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
+               basis_aops_in_CD_sp_p(1 : basis_shell_info(CD_sp, 4), 1 : 3) => basis_aops_in_CD_sp(1 : basis_shell_info(CD_sp, 4)*3)
 !
                current_aop_in_sp = 0
 !
@@ -3199,18 +3199,18 @@ contains
 !
                      current_aop_in_sp = current_aop_in_sp + 1
 !
-                     basis_aops_in_CD_sp(current_aop_in_sp, 1) = cholesky_basis(I,1) - C_interval%first + 1
-                     basis_aops_in_CD_sp(current_aop_in_sp, 2) = cholesky_basis(I,2) - D_interval%first + 1
-                     basis_aops_in_CD_sp(current_aop_in_sp, 3) = I
+                     basis_aops_in_CD_sp_p(current_aop_in_sp, 1) = cholesky_basis(I,1) - C_interval%first + 1
+                     basis_aops_in_CD_sp_p(current_aop_in_sp, 2) = cholesky_basis(I,2) - D_interval%first + 1
+                     basis_aops_in_CD_sp_p(current_aop_in_sp, 3) = I
 !
                   endif
                enddo
 !
-              call mem%alloc(g_ABCD, &
-                       (A_interval%size), (B_interval%size), &
-                       (C_interval%size), (D_interval%size))
+               call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
 !
-              call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
+               g_ABCD_p(1 : A_interval%size, 1 : B_interval%size, &
+                        1 : C_interval%size, 1 : D_interval%size) &
+                        => g_ABCD(1 : A_interval%size*B_interval%size*C_interval%size*D_interval%size)               
 !
                if (A == B) then
 !
@@ -3221,44 +3221,37 @@ contains
 !
                         do J = 1, basis_shell_info(CD_sp, 4)
 !
-                           y = basis_aops_in_CD_sp(J, 1)
-                           z = basis_aops_in_CD_sp(J, 2)
-                           L = basis_aops_in_CD_sp(J, 3)
+                           y = basis_aops_in_CD_sp_p(J, 1)
+                           z = basis_aops_in_CD_sp_p(J, 2)
+                           L = basis_aops_in_CD_sp_p(J, 3)
 
-                           g_wx_L(wx_packed + AB_info(AB_sp, 1), L) = g_ABCD(w, x, y, z)
+                           g_wx_L(wx_packed + AB_info(AB_sp, 1), L) = g_ABCD_p(w, x, y, z)
 !
-                           enddo
                         enddo
                      enddo
+                  enddo
 !
-                  else
+               else
 !
-                     do w = 1, A_interval%size
-                        do x = 1, B_interval%size
-                           do J = 1, basis_shell_info(CD_sp, 4)
+                  do w = 1, A_interval%size
+                     do x = 1, B_interval%size
+                        do J = 1, basis_shell_info(CD_sp, 4)
 !
-                              y = basis_aops_in_CD_sp(J, 1)
-                              z = basis_aops_in_CD_sp(J, 2)
-                              L = basis_aops_in_CD_sp(J, 3)
+                           y = basis_aops_in_CD_sp_p(J, 1)
+                           z = basis_aops_in_CD_sp_p(J, 2)
+                           L = basis_aops_in_CD_sp_p(J, 3)
 !
-                              wx = A_interval%size*(x-1) + w
+                           wx = A_interval%size*(x-1) + w
 !
-                              g_wx_L(wx + AB_info(AB_sp, 1), L) = g_ABCD(w, x, y, z)
+                           g_wx_L(wx + AB_info(AB_sp, 1), L) = g_ABCD_p(w, x, y, z)
 !
-                           enddo
                         enddo
                      enddo
+                  enddo
 !
-                  endif
-!
-                  call mem%dealloc(g_ABCD,                   &
-                     (A_interval%size), (B_interval%size),   &
-                     (C_interval%size), (D_interval%size))
-!
-               call mem%dealloc(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
+               endif
 !
             enddo ! CD
-!
          enddo ! AB
 !$omp end parallel do
 !
@@ -3340,7 +3333,9 @@ contains
 !
       type(molecular_system), intent(in) :: system
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_ABAB
+      real(dp), dimension(system%max_shell_size**4), target :: g_ABAB
+      real(dp), dimension(:,:,:,:), pointer :: g_ABAB_p
+!
       real(dp), dimension(:), allocatable :: D_xy
       real(dp), dimension(:,:), allocatable :: L_K_yz
 !
@@ -3415,7 +3410,7 @@ contains
       call mem%alloc(D_xy, n_construct_aop)
 !
 !$omp parallel do &
-!$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_ABAB) &
+!$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_ABAB, g_ABAB_p) &
 !$omp shared(D_xy, ao_offsets) &
 !$omp schedule(guided)
       do I = 1, n_construct_sp
@@ -3426,12 +3421,10 @@ contains
          A_interval = system%shell_limits(A)
          B_interval = system%shell_limits(B)
 !
-         call mem%alloc(g_ABAB, &
-               (A_interval%size), (B_interval%size), &
-               (A_interval%size), (B_interval%size))
-!
          call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
+         g_ABAB_p(1 : A_interval%size, 1 : B_interval%size, 1 : A_interval%size, 1 : B_interval%size) &
+                        => g_ABAB(1 : (A_interval%size)**2*(B_interval%size)**2)
          if (A .eq. B) then
 !
             do x = 1, A_interval%size
@@ -3439,7 +3432,7 @@ contains
 !
                   xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
-                  D_xy(xy_packed + ao_offsets(I)) = g_ABAB(x, y, x, y)
+                  D_xy(xy_packed + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
 !
                enddo
             enddo
@@ -3450,16 +3443,12 @@ contains
                do y = 1, (B_interval%size)
 !
                   xy = A_interval%size*(y - 1) + x
-                  D_xy(xy + ao_offsets(I)) = g_ABAB(x, y, x, y)
+                  D_xy(xy + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
 !
                enddo
             enddo
 !
          endif
-!
-         call mem%dealloc(g_ABAB, &
-               (A_interval%size), (B_interval%size), &
-               (A_interval%size), (B_interval%size))
 !
       enddo
 !$omp end parallel do   
