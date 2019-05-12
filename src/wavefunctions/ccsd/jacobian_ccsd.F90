@@ -2646,7 +2646,7 @@ contains
 !
 !     Construct g_bj,kc
 !
-      call mem%alloc(g_bjkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call mem%alloc(g_bjkc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
       call wf%get_voov(g_bjkc)
 !
@@ -2656,7 +2656,7 @@ contains
 !
       call sort_1234_to_4312(g_bjkc, g_ckbj, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(g_bjkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(g_bjkc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
 !     rho_aibj += sum_ck 2*c_aick * g_ckbj
 !
