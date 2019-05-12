@@ -10,7 +10,7 @@ build:
     - make
   artifacts:
     paths: 
-      - /build
+      - build/
 
 run:
   stage: run
