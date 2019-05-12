@@ -1,13 +1,13 @@
-Stages:
-  - Build
-  - Run
+stages:
+  - build
+  - run
 
-Build:
-  stage: Build
+build:
+  stage: build
   script:
     - echo "Building."
 
-Run:
-  stage: Run
+run:
+  stage: run
   script:
     - echo "Running!"
