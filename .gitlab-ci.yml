@@ -6,9 +6,9 @@ Stages:
 Build:
    stage: Build
    script:
-      - echo "Building..."
+      - echo "Building."
 
 Run:
    stage: Run
    script:
-      - echo "Running..."
+      - echo "Running!"
