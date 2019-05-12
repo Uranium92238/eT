@@ -7,7 +7,7 @@ build:
   script:
     - ./setup --int32 -FC=gfortran -CXX=g++-8
     - cd build
-    - make
+    - make -j4
   artifacts:
     paths: 
       - build/
@@ -16,4 +16,4 @@ run:
   stage: run
   script:
     - cd build
-    - ctest
+    - ctest --verbose -R hf
