@@ -96,7 +96,7 @@
    end subroutine jacobian_cc3_construct_fock_ia_c1_cc3
 !
 !
-   module subroutine jacobian_cc3_c3_calc_cc3(wf, omega, i, j, k, c_abc, u_abc, t_abji, c_abji,    &
+   module subroutine jacobian_cc3_c3_calc_cc3(wf, i, j, k, c_abc, u_abc, t_abji, c_abji,           &
                                                 g_bdci, g_bdcj, g_bdck, g_ljci, g_lkci,            &
                                                 g_lkcj, g_licj, g_lick, g_ljck,                    &
                                                 g_bdci_c1, g_bdcj_c1, g_bdck_c1, g_ljci_c1,        &
@@ -112,8 +112,6 @@
       implicit none
 !
       class(cc3) :: wf
-!
-      real(dp), intent(in) :: omega
 !
       integer, intent(in) :: i, j, k
 !
@@ -149,40 +147,24 @@
    end subroutine jacobian_cc3_c3_calc_cc3
 !
 !
-   module subroutine jacobian_cc3_t3_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abji,   &
-                                                g_bdci, g_bdcj, g_bdck, g_ljci, g_lkci,   &
-                                                g_lkcj, g_licj, g_lick, g_ljck)
+   module subroutine jacobian_cc3_eps_cc3(wf, omega, i, j, k, c_abc)
 !!
-!!    Construct t^abc_ijk amplitudes
+!!    Sets the diagonal of c_abc to 0 and divides by (ω - ε^abc_ijk)
 !!
-!!    t^abc = (omega - ε^abc_ijk)^-1 * P^abc_ijk (sum_d t^ad_ij (bd|ck) - sum_l t^ab_il (ck|lj))
-!!
-!!    Alexander Paul and Rolf H. Myhre Feb 2019
+!!    Based on omega_cc3_eps_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
 !
       class(cc3) :: wf
 !
+      real(dp), intent(in) :: omega
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout) :: c_abc
+!
       integer, intent(in) :: i, j, k
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: t_abc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
-!
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abji
-!
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck
-!
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljci
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkci
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkcj
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_licj
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lick
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck
-!
-!
-   end subroutine jacobian_cc3_t3_calc_cc3
+   end subroutine jacobian_cc3_eps_cc3
 !
 !
    module subroutine jacobian_cc3_fock_rho2_cc3(wf, i, j, k, t_abc, u_abc, rho_abij, F_kc)

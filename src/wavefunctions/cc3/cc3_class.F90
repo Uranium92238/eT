@@ -89,6 +89,7 @@ module cc3_class
       procedure :: jacobian_cc3_c1_integrals          => jacobian_cc3_c1_integrals_cc3
       procedure :: jacobian_cc3_construct_fock_ia_c1  => jacobian_cc3_construct_fock_ia_c1_cc3
       procedure :: jacobian_cc3_c3_calc               => jacobian_cc3_c3_calc_cc3
+      procedure :: jacobian_cc3_eps                   => jacobian_cc3_eps_cc3
       procedure :: jacobian_cc3_fock_rho2             => jacobian_cc3_fock_rho2_cc3
 !
 !     Routines related to the transpose of the jacobian
@@ -110,9 +111,7 @@ module cc3_class
       procedure :: jacobian_transpose_cc3_X_ai_calc      => jacobian_transpose_cc3_X_ai_calc_cc3
 !
       procedure :: jacobian_transpose_cc3_C3_terms       => jacobian_transpose_cc3_C3_terms_cc3
-      procedure :: jacobian_transpose_cc3_calc_outer     => jacobian_transpose_cc3_calc_outer_cc3
-      procedure :: jacobian_transpose_cc3_calc_c3_matmul => jacobian_transpose_cc3_calc_c3_matmul_cc3
-      procedure :: jacobian_transpose_cc3_collect_c3     => jacobian_transpose_cc3_collect_c3_cc3
+      procedure :: jacobian_transpose_cc3_C3_calc        => jacobian_transpose_cc3_C3_calc_cc3
       procedure :: jacobian_transpose_cc3_sigma2         => jacobian_transpose_cc3_sigma2_cc3
       procedure :: construct_intermediates_c3            => construct_intermediates_c3_cc3
       procedure :: jacobian_transpose_cc3_sigma1_C3_A1   => jacobian_transpose_cc3_sigma1_C3_A1_cc3

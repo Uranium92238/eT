@@ -137,7 +137,106 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine add_two_132_min_231_min_123
+end subroutine add_two_132_min_231_min_123
+!
+!
+subroutine add_two_213_min_231_min_312(x_pqr, y_pqr, dim_)
+!!
+!!    Add two*213 minus 231 minus 312
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, May 2019
+!!
+!!    Performs:
+!!
+!!       y_pqr(p,q,r) += 2*x_pqr(q,p,r) - x_pqr(q,r,p) - x_pqr(r,p,q)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
+      real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
+!
+      integer :: p,q,r
+!
+!$omp parallel do schedule(static) private(p,q,r)
+      do r = 1, dim_
+         do q = 1, dim_
+            do p = 1, dim_
+!
+               y_pqr(p,q,r) = y_pqr(p,q,r) + two*x_pqr(q,p,r) - x_pqr(q,r,p) - x_pqr(r,p,q)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+end subroutine add_two_213_min_231_min_312
+!
+!
+subroutine add_two_321_min_312_min_123(x_pqr, y_pqr, dim_)
+!!
+!!    Add two*321 minus 312 minus 123
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, May 2019
+!!
+!!    Performs:
+!!
+!!       y_pqr(p,q,r) += 2*x_pqr(r,q,p) - x_pqr(r,p,q) - x_pqr(p,q,r)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
+      real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
+!
+      integer :: p,q,r
+!
+!$omp parallel do schedule(static) private(p,q,r)
+      do r = 1, dim_
+         do q = 1, dim_
+            do p = 1, dim_
+!
+               y_pqr(p,q,r) = y_pqr(p,q,r) + two*x_pqr(r,q,p) - x_pqr(r,p,q) - x_pqr(p,q,r)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+end subroutine add_two_321_min_312_min_123
+!
+!
+subroutine add_two_312_min_321_min_213(x_pqr, y_pqr, dim_)
+!!
+!!    Add two*312 minus 321 minus 213
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, May 2019
+!!
+!!    Performs:
+!!
+!!       y_pqr(p,q,r) += 2*x_pqr(r,p,q) - x_pqr(r,q,p) - x_pqr(q,p,r)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_,dim_,dim_), intent(in)  :: x_pqr
+      real(dp), dimension(dim_,dim_,dim_), intent(out) :: y_pqr
+!
+      integer :: p,q,r
+!
+!$omp parallel do schedule(static) private(p,q,r)
+      do r = 1, dim_
+         do q = 1, dim_
+            do p = 1, dim_
+!
+               y_pqr(p,q,r) = y_pqr(p,q,r) + two*x_pqr(r,p,q) - x_pqr(r,q,p) - x_pqr(q,p,r)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+end subroutine add_two_312_min_321_min_213
 !
 !
 !     -::- Two-index re-sort and re-sort-add routines -::-
