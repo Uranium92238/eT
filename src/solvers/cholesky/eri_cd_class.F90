@@ -347,13 +347,15 @@ contains
       integer, dimension(:), allocatable  :: ao_offsets
 !
       real(dp), dimension(:), allocatable :: screening_vector_local, screening_vector_reduced, max_in_sp_diagonal
-      real(dp), dimension(:,:), allocatable :: D_AB, D_AB_screen, construct_test
       real(dp), dimension(:), allocatable :: D_xy 
 !
       real(dp), dimension(:,:,:,:), pointer :: g_ABAB_p
-      real(dp), dimension(system%max_shell_size**4), target :: g_ABAB
 !
-      integer :: x, y, xy, xy_packed, A, B, I
+      real(dp), dimension(system%max_shell_size**4), target :: g_ABAB
+      real(dp), dimension(system%max_shell_size**2) :: construct_test
+      real(dp), dimension(system%max_shell_size**2) :: D_AB, D_AB_screen
+!
+      integer :: x, y, xy, xy_packed, A, B, I, K
 !
       type(interval) :: A_interval, B_interval
 !
@@ -400,7 +402,7 @@ contains
       call mem%alloc(max_in_sp_diagonal, solver%n_sp)
 !
 !$omp parallel do &
-!$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_ABAB, g_ABAB_p, D_AB, D_AB_screen) &
+!$omp private(I, K, A, B, A_interval, B_interval, x, y, xy, g_ABAB, g_ABAB_p, D_AB, D_AB_screen) &
 !$omp shared(sig_sp,  max_in_sp_diagonal) &
 !$omp schedule(guided)
       do I = 1, solver%n_sp
@@ -419,17 +421,16 @@ contains
                   1 : A_interval%size, 1 : B_interval%size) &
                   => g_ABAB(1 : (A_interval%size)**2*(B_interval%size)**2)
 !
-         call mem%alloc(D_AB, (A_interval%size), (B_interval%size))
-         call mem%alloc(D_AB_screen, (A_interval%size), (B_interval%size))
-!
+         K = 0
          do x = 1, (A_interval%size)
             do y = 1, (B_interval%size)
 !
-               D_AB_screen(x, y) = g_ABAB_p(x, y, x, y)&
+               K = K + 1
+               D_AB_screen(K) = g_ABAB_p(x, y, x, y)&
                            *screening_vector_local(x + A_interval%first - 1)&
                            *screening_vector_local(y + B_interval%first - 1)
 !
-               D_AB(x, y) = g_ABAB_p(x, y, x, y)
+               D_AB(K) = g_ABAB_p(x, y, x, y)
 !
             enddo
          enddo
@@ -440,9 +441,6 @@ contains
                       is_significant(D_AB_screen, (A_interval%size)*(B_interval%size), solver%threshold))
 !
          max_in_sp_diagonal(I) = get_abs_max(D_AB, (A_interval%size)*(B_interval%size))
-!
-         call mem%dealloc(D_AB, (A_interval%size), (B_interval%size))
-         call mem%dealloc(D_AB_screen, (A_interval%size), (B_interval%size))
 !
       enddo
 !$omp end parallel do
@@ -457,7 +455,7 @@ contains
       construct_sp = .false.
 !
 !$omp parallel do &
-!$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_ABAB, g_ABAB_p, construct_test) &
+!$omp private(I, K, A, B, A_interval, B_interval, x, y, xy, g_ABAB, g_ABAB_p, construct_test) &
 !$omp shared(construct_sp) &
 !$omp schedule(guided)
       do I = 1, solver%n_sp
@@ -476,12 +474,12 @@ contains
                   1 : A_interval%size, 1 : B_interval%size) &
                   => g_ABAB(1 : (A_interval%size)**2*(B_interval%size)**2)
 !
-         call mem%alloc(construct_test, (A_interval%size), (B_interval%size))
-!
+         K = 0
          do x = 1, (A_interval%size)
             do y = 1, (B_interval%size)
 !
-               construct_test(x, y) = sqrt(g_ABAB_p(x, y, x, y)*max_diagonal)
+               K = K + 1
+               construct_test(K) = sqrt(g_ABAB_p(x, y, x, y)*max_diagonal)
 !
             enddo
          enddo
@@ -489,8 +487,6 @@ contains
 !        Determine whether shell pair should be constructed
 !
          construct_sp(I) = is_significant(construct_test, (A_interval%size)*(B_interval%size), min(solver%threshold,1.0d-8))
-!
-         call mem%dealloc(construct_test, (A_interval%size), (B_interval%size))
 !
       enddo
 !$omp end parallel do
