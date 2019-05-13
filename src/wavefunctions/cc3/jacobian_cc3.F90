@@ -1068,7 +1068,12 @@ contains
 !
 !                       Construct C^{abc}_{ijk} for given i, j, k
 !                       and calculate contributions to rho1 and rho2
-!                       The terms have the same form as the omega terms (where t_abc = c_abc)
+!                       Using c1-transformed integrals the terms have the same form 
+!                       as the omega terms (where t_abc = c_abc)
+!
+!                       Therefore the contributions to the c3-amplitudes can be computed 
+!                       using the same routine once for t1-transformed and once for 
+!                       c1-transformed integrals
 !
                         call c3_timer%start()
                         call zero_array(c_abc,wf%n_v**3)
