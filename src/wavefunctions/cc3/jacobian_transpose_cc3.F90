@@ -1449,7 +1449,7 @@ contains
                u_abc,            &
                wf%n_v**2)
 !
-!     c_abc <- u_abc = - sum_l (2*c_bali g_jlkc - c_bcli g_jlka - c_cali g_jlkb)
+!     c_abc <- u_abc <- v_abc = - sum_l (2*c_bali g_jlkc - c_bcli g_jlka - c_cali g_jlkb)
 !
       call dgemm('N', 'T',          &
                   wf%n_v**2,        &
@@ -1464,7 +1464,7 @@ contains
                   v_abc,            &
                   wf%n_v**2)
 !
-!     c_abc <- u_abc = sum_d (2*c_bdji g_dakc - c_bdji g_dcka - c_cdji g_dakb)
+!     c_abc <- u_abc <- v_abc = sum_d (2*c_bdji g_dakc - c_bdji g_dcka - c_cdji g_dakb)
 !
       call dgemm('N', 'T',          &
                   wf%n_v,           &
