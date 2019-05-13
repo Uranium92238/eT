@@ -1193,7 +1193,7 @@ contains
                                                          g_ilkc_p(:,:,i_rel,k_rel),   &
                                                          g_jlkc_p(:,:,j_rel,k_rel))
 !
-                        call wf%jacobian_cc3_eps(omega, i, j, k, c_abc)
+                        call wf%omega_cc3_eps(i, j, k, c_abc, omega)
                         call c3_timer%freeze()
 !
                         call sigma2_timer%start()

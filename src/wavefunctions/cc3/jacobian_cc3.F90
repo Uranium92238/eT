@@ -732,7 +732,7 @@ contains
                                                       g_lick_c1_p(:,:,i_rel,k_rel),          &
                                                       g_ljck_c1_p(:,:,j_rel,k_rel))
 !
-                        call wf%jacobian_cc3_eps(omega, i, j, k, c_abc)
+                        call wf%omega_cc3_eps(i, j, k, c_abc, omega)
 !
                         call wf%omega_cc3_omega1(i, j, k, c_abc, u_abc, rho_ai, rho_abij, F_kc, &
                                                    L_jbic_p(:,:,j_rel,i_rel),                   &
@@ -1594,7 +1594,7 @@ contains
 !!    c^abc = (omega - ε^abc_ijk)^-1 * P^abc_ijk (sum_d c^ad_ij g_ckbd - sum_l c^ab_il g_cklj
 !!             + sum_d t^ad_ij g'_bdck - sum_l t^ab_il g'_cklj)
 !!
-!!    Based on omega_cc3_W_calc_cc3 and omega_cc3_eps_cc3 written by Rolf H. Myhre
+!!    Based on omega_cc3_W_calc_cc3 written by Rolf H. Myhre
 !!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
@@ -2002,58 +2002,6 @@ contains
       call sort_123_to_321_and_add(u_abc, c_abc, wf%n_v, wf%n_v, wf%n_v)
 !
    end subroutine jacobian_cc3_c3_calc_cc3
-!
-!
-   module subroutine jacobian_cc3_eps_cc3(wf, omega, i, j, k, c_abc)
-!!
-!!    Sets the diagonal of c_abc to 0 and divides by (ω - ε^abc_ijk)
-!!
-!!    Based on omega_cc3_eps_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      real(dp), intent(in) :: omega
-!
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout) :: c_abc
-!
-      integer, intent(in) :: i, j, k
-!
-      integer :: a, b, c
-!
-      real(dp) :: epsilon_ijk, epsilon_c, epsilon_cb
-!
-      epsilon_ijk = omega + wf%orbital_energies(i) + wf%orbital_energies(j) + wf%orbital_energies(k)
-!
-!$omp parallel do schedule(static) private(a)
-      do a = 1,wf%n_v
-!
-         c_abc(a,a,a) = zero
-!
-      enddo
-!$omp end parallel do
-!
-!$omp parallel do schedule(static) private(c, b, a, epsilon_c, epsilon_cb)
-      do c = 1, wf%n_v
-!
-         epsilon_c = epsilon_ijk - wf%orbital_energies(wf%n_o + c)
-!
-         do b = 1, wf%n_v
-!
-            epsilon_cb = epsilon_c - wf%orbital_energies(wf%n_o + b)
-!
-            do a = 1, wf%n_v
-!
-               c_abc(a,b,c) = c_abc(a,b,c)*one/(epsilon_cb - wf%orbital_energies(wf%n_o + a))
-!
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine jacobian_cc3_eps_cc3
 !
 !
    module subroutine jacobian_cc3_fock_rho2_cc3(wf, i, j, k, t_abc, u_abc, rho_abij, F_kc)

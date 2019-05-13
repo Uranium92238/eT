@@ -1013,9 +1013,10 @@ contains
    end subroutine omega_cc3_W_calc_cc3
 !
 !
-   module subroutine omega_cc3_eps_cc3(wf, i, j, k, t_abc)
+   module subroutine omega_cc3_eps_cc3(wf, i, j, k, t_abc, omega)
 !!
 !!    Divide W^abc_ijk with -epsilon^abc_ijk to obtain T^abc_ijk
+!!    Optional argument omega for jacobian transformations
 !!
 !!    t^abv_ijk = -W^abc_ijk/epsilon^abc_ijk
 !!
@@ -1029,12 +1030,22 @@ contains
 !
       real(dp), dimension(wf%n_v,wf%n_v,wf%n_v), intent(inout) :: t_abc
 !
+      real(dp), optional :: omega
+!
       integer a, b, c
 !
       real(dp) :: epsilon_ijk, epsilon_c, epsilon_cb
 !
 !
-      epsilon_ijk = wf%orbital_energies(i) + wf%orbital_energies(j) + wf%orbital_energies(k)
+      if (present(omega)) then 
+!
+         epsilon_ijk =  omega + wf%orbital_energies(i)                     &
+                        + wf%orbital_energies(j) + wf%orbital_energies(k)
+      else
+!
+         epsilon_ijk = wf%orbital_energies(i) + wf%orbital_energies(j)  &
+                       + wf%orbital_energies(k)
+      end if 
 !
 !$omp parallel do schedule(static) private(a)
       do a = 1,wf%n_v
