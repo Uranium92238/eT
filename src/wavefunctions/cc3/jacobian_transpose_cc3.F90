@@ -1390,9 +1390,9 @@ contains
 !
       type(timings) :: matmul_timer, dger_timer, sum_timer
 !
-      call matmul_timer%init('matmul contribution)')
-      call dger_timer%init('dger contribution)')
-      call sum_timer%init('sum contribution)')
+      call matmul_timer%init('matmul contribution')
+      call dger_timer%init('dger contribution')
+      call sum_timer%init('sum contribution')
 !
 !     :: Contribution 1 ::
 !
