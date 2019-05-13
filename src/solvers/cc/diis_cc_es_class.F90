@@ -286,7 +286,6 @@ contains
          write(output%unit,'(/t3,a)') 'Root     Eigenvalue (Re)     Residual norm    '
          write(output%unit,'(t3,a)')  '----------------------------------------------'
          flush(output%unit)
-         flush(timing%unit)
 !
          do state = 1, solver%n_singlet_states
 !
@@ -339,6 +338,7 @@ contains
 !
             write(output%unit, '(i3,3x,f19.12,6x,e11.4)') state, solver%energies(state), residual_norms(state)
             flush(output%unit)
+            flush(timing%unit)
 !
          enddo
 !
