@@ -104,8 +104,11 @@ module cc2_class
 !
 !     Routines related to property calculations
 !
-      procedure :: prepare_for_eom_fop                         => prepare_for_eom_fop_cc2  
-      procedure :: construct_etaX                              => construct_etaX_cc2  
+      procedure :: prepare_for_eom_fop                         => prepare_for_eom_fop_cc2
+      procedure :: construct_eom_etaX                          => construct_eom_etaX_cc2
+!
+      procedure :: construct_etaX                              => construct_etaX_cc2 
+!
       procedure :: etaX_eom_a                                  => etaX_eom_a_cc2    
       procedure :: etaX_cc2_a1                                 => etaX_cc2_a1_cc2    
       procedure :: etaX_cc2_a2                                 => etaX_cc2_a2_cc2    
@@ -115,7 +118,6 @@ module cc2_class
       procedure :: csiX_cc2_a1                                 => csiX_cc2_a1_cc2    
       procedure :: csiX_cc2_a2                                 => csiX_cc2_a2_cc2    
 !
-      procedure :: add_etaX_eom_correction                     => add_etaX_eom_correction_cc2
       procedure :: etaX_eom_cc2_a1                             => etaX_eom_cc2_a1_cc2
 !
       procedure :: construct_t2                                => construct_t2_cc2

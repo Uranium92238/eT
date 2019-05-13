@@ -68,6 +68,32 @@ contains
    end subroutine prepare_for_eom_fop_cc2
 !
 !
+   module subroutine construct_eom_etaX_cc2(wf, X, csiX, etaX)
+!!
+!!    Construct EOM etaX
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Constructs the EOM effective etaX vector, adding the EOM
+!!    correction to etaX. 
+!!
+      implicit none
+!
+      class(cc2), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
+!
+      call wf%construct_etaX(X, etaX)
+!
+      call wf%etaX_eom_a(etaX, csiX)
+!
+      call wf%etaX_eom_cc2_a1(X, etaX(1:wf%n_t1))
+!
+   end subroutine construct_eom_etaX_cc2
+!
+!
    module subroutine construct_etaX_cc2(wf, X, etaX)
 !!
 !!    Construct etaX
@@ -648,33 +674,6 @@ contains
       call mem%dealloc(t_cjai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine csiX_cc2_a2_cc2
-!
-!
-   module subroutine add_etaX_eom_correction_cc2(wf, etaX, csiX, X)
-!!
-!!    Add etaX EOM correction
-!!    Written by Josefine H. Andersen, Feb 2019
-!!
-!!    Add EOM contribution to etaX vector 
-!!
-!!       η^{X,corr} = (< Λ | τ_μ X | R >  - tbar_μ < Λ | X | R > )
-!!
-!!    for cc2.
-!!
-      implicit none
-!
-      class(cc2), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
-!
-      call wf%etaX_eom_cc2_a1(X, etaX(1:wf%n_t1))
-!
-      call wf%etaX_eom_a(etaX, csiX)
-!
-   end subroutine add_etaX_eom_correction_cc2
 !
 !
    module subroutine etaX_eom_cc2_a1_cc2(wf, X, etaX_ai)

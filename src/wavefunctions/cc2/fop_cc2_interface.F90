@@ -28,6 +28,23 @@
 !
    end subroutine prepare_for_eom_fop_cc2
 !
+!
+   module subroutine construct_eom_etaX_cc2(wf, X, csiX, etaX)
+!!
+!!    Construct EOM etaX
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+      implicit none
+!
+      class(cc2), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
+!
+   end subroutine construct_eom_etaX_cc2
+!
    module subroutine construct_etaX_cc2(wf, X, etaX)
 !!
 !!    Construct etaX
@@ -153,23 +170,6 @@
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: csiX_aibj
 !
    end subroutine csiX_cc2_a2_cc2
-!
-!
-   module subroutine add_etaX_eom_correction_cc2(wf, etaX, csiX, X)
-!!
-!!    Add EtaX EOM correction
-!!    Written by Josefine H. Andersen, Feb 2019
-!!
-      implicit none
-!
-      class(cc2), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
-!
-   end subroutine add_etaX_eom_correction_cc2
 !
 !
    module subroutine etaX_eom_cc2_a1_cc2(wf, X, etaX_ai)
