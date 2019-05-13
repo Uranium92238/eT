@@ -32,7 +32,7 @@ extern eTBasis basis;                                        // The basis set us
 extern vector<libint2::Engine> electronic_repulsion_engines; // The electronic repulsion engines vector
 extern vector<libint2::Engine> kinetic;                      // The kinetic energy engines vector
 extern vector<libint2::Engine> nuclear;                      // The nuclear attraction engine vector
-extern libint2::Engine overlap;                              // The overlap engine
-extern libint2::Engine dipole;                               // The dipole engine
-extern libint2::Engine quadrupole;                           // The quadrupole engine
+extern vector<libint2::Engine> overlap;                      // The overlap engine vector
+extern vector<libint2::Engine> dipole;                       // The dipole engine
+extern vector<libint2::Engine> quadrupole;                   // The quadrupole engine
 extern vector<libint2::Atom> atoms;                          // Atoms vector

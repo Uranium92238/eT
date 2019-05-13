@@ -39,6 +39,7 @@ option(ENABLE_AUTO_LAPACK    "Enable CMake to autodetect LAPACK"                
 option(ENABLE_OMP            "Enable OpenMP parallelization"                    ON)
 option(ENABLE_THREADED_MKL   "Enable OpenMP parallelization"                    ON)
 option(ENABLE_PROFILING      "Enable profiling of code"                         OFF)
+option(ENABLE_RUNTIME_CHECKS "Enable all runtime checks (for debug purposes)"   OFF)
 
 # Find packages needed for libint 
 find_package(Libint2 REQUIRED)

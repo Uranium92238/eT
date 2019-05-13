@@ -30,7 +30,7 @@ submodule (ccs_class) fop_ccs
 !!
 !!    Equation-of-motion (EOM):
 !!
-!!   (Followinng Koch, K., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
+!!   (Following Koch, H., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
 !!    J. Chem. Phys. 100, 4393 (1994))
 !!
 !!       η_μ^X,EOM =  < Λ | [X, τ_μ] | CC > + (< Λ | τ_μ X | R >  - tbar_μ < Λ | X | R > )
@@ -67,6 +67,30 @@ contains
   end subroutine prepare_for_eom_fop_ccs
 !
 !
+  module subroutine construct_eom_etaX_ccs(wf, X, csiX, etaX)
+!!
+!!    Construct EOM etaX
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Constructs the EOM effective etaX vector, adding the EOM
+!!    correction to etaX. 
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
+!
+      call wf%construct_etaX(X, etaX)
+!
+      call wf%etaX_eom_a(etaX, csiX)
+!
+  end subroutine construct_eom_etaX_ccs
+!
+!
    module subroutine construct_etaX_ccs(wf, X, etaX)
 !!
 !!    Construct η^X
@@ -74,7 +98,7 @@ contains
 !!
 !!    Adapted by Sarai D. Folekstad, Apr 2019
 !!
-!!    Handling the construction of left-hand-side vector etaX 
+!!    Constructs left-hand-side vector etaX:
 !!
 !!       η^X_μ = < Λ | [X, τ_μ] | CC >
 !!
@@ -96,12 +120,12 @@ contains
 !
    module subroutine etaX_ccs_a1_ccs(wf, X, etaX_ai)
 !!
-!!    Construct etaX A1 (CCS)
+!!    Construct etaX A1 
 !!    Written by Josefine H. Andersen, 2019
 !!
 !!    Adapted by Sarai D. Folekstad, Apr 2019
 !!
-!!    Constructs the A1 term of η_ai^X:
+!!    Adds the A1 term of η_ai^X:
 !!
 !!       A1 = 2X_ia
 !!
@@ -135,7 +159,7 @@ contains
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2019
 !!
-!!    Constructs the B1 term of η_ai^X:
+!!    Adds the B1 term of η_ai^X:
 !!
 !!       B1 = sum_c tb_ci X_ca - sum_k tb_ak X_ik
 !!
@@ -222,7 +246,7 @@ contains
 !!
 !!    Adapted by Sarai D. Folkestad
 !!
-!!    Handling the construction of ξ^X_μ :
+!!    Constructs ξ^X_μ :
 !!
 !!       ξ^X_μ = < μ | exp(-T) X exp(T)| R >
 !!
@@ -243,10 +267,12 @@ contains
 !
    module subroutine csiX_ccs_a1_ccs(wf, X, csiX_ai)
 !!
-!!    Construct csiX 
+!!    Construct csiX A1 
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
-!!       ξ^X_ai = X_ai
+!!    Adds the A1 term to csiX:
+!! 
+!!       ξ^X_ai =+ X_ai
 !!
       implicit none
 !
@@ -271,33 +297,14 @@ contains
    end subroutine csiX_ccs_a1_ccs
 !
 !
-   module subroutine add_etaX_eom_correction_ccs(wf, etaX, csiX, X)
-!!
-!!    Add EOM correction to etaX vector
-!!    Written by Josefine H. Andersen, Feb 2019
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
-!
-      call wf%etaX_eom_a(etaX, csiX)
-!
-   end subroutine add_etaX_eom_correction_ccs
-!
-!
    module subroutine etaX_eom_a_ccs(wf, etaX, csiX)
 !!
-!!    Get eom contribution
+!!    EtaX EOM A
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
-!!    Add EOM contribution to etaX vector
+!!    Add EOM A correction to etaX vector:
 !!
-!!       EOM correction:  η^X,corr_μ += tbar_μ (ξ * tbar) 
+!!       A:  η^X,corr_μ += tbar_μ (ξ * tbar) 
 !!
       implicit none
 !
@@ -324,31 +331,16 @@ contains
    end subroutine etaX_eom_a_ccs
 !
 !
-   module subroutine scale_left_excitation_vector_ccs(wf, L, R)
-!!
-!!    Make left and right excitation vectors biorthogonal by scaling left vector
-!!    Written by Josefine H. Andersen, Feb 2019
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: L
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: R
-!
-      real(dp) :: norm, ddot
-!
-      norm = ddot(wf%n_es_amplitudes, L, 1, R, 1)
-!
-      call dscal(wf%n_es_amplitudes, one/norm, L, 1)
-!
-   end subroutine scale_left_excitation_vector_ccs
-!
-!
    module subroutine calculate_transition_strength_ccs(wf, S, etaX, csiX, state, T_l, T_r)
 !!
-!!    Calculate transition strength for spectra
+!!    Calculate transition strength
 !!    Written by Josefine H. Andersen, February 2019
+!!
+!!    Given etaX and csiX, this routine calculates the left and right transition 
+!!    moments T_l and T_r for the state number "state" and the transition strength 
+!!    S = T_l * T_r.
+!! 
+!!    The left and right states L and R are read from file and made binormal by the routine.
 !!
       implicit none
 !
@@ -362,30 +354,48 @@ contains
       real(dp), intent(out) :: T_l, T_r
       integer, intent(in)   :: state
 !
-      real(dp), dimension(:), allocatable :: L_n, R_n
+      real(dp), dimension(:), allocatable :: L, R
 !
-      real(dp) :: ddot
+      real(dp) :: ddot, LT_R
 !
-      call mem%alloc(L_n, wf%n_es_amplitudes)
-      call mem%alloc(R_n, wf%n_es_amplitudes)
+!     Read states and make them binormal by scaling the left vector 
 !
-      call wf%read_excited_state(L_n, state, 'left')
-      call wf%read_excited_state(R_n, state, 'right')
+      call mem%alloc(L, wf%n_es_amplitudes)
+      call mem%alloc(R, wf%n_es_amplitudes)
 !
-      call wf%scale_left_excitation_vector(L_n, R_n)
+      call wf%read_excited_state(L, state, 'left')
+      call wf%read_excited_state(R, state, 'right')
+!
+      LT_R = ddot(wf%n_es_amplitudes, L, 1, R, 1)
+      call dscal(wf%n_es_amplitudes, one/LT_R, L, 1)
 !
 !     Left and right transition moments
 !
-      T_r = ddot(wf%n_es_amplitudes, etaX, 1, R_n, 1)
-      T_l = ddot(wf%n_es_amplitudes, L_n, 1, csiX, 1)
+      T_r = ddot(wf%n_es_amplitudes, etaX, 1, R, 1)
+      T_l = ddot(wf%n_es_amplitudes, L, 1, csiX, 1)
 !
 !     Transition strength
 !
       S  = T_l * T_r
 !
-      call mem%dealloc(L_n, wf%n_es_amplitudes)
-      call mem%dealloc(R_n, wf%n_es_amplitudes)
+      call mem%dealloc(L, wf%n_es_amplitudes)
+      call mem%dealloc(R, wf%n_es_amplitudes)
+!
+!     Sanity check in case roots are ordered incorrectly
+!
+      if ((abs(LT_R)-one) .gt. 0.01D0) then 
+!
+        write(output%unit, '(/t3,a,i0,a)') 'The right and left eigenvector number ', state, ' are not &
+                                            &consistent! The converged states are probably not ordered &
+                                            &correctly.'
+!
+        write(output%unit, '(/t3,a,f19.12)') 'Dotproduct between L and R: ', LT_R
+!
+        call output%error_msg('Error while calculating transition strength.')
+!
+      endif 
 !
    end subroutine calculate_transition_strength_ccs
+!
 !
 end submodule fop_ccs

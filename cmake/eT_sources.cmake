@@ -27,7 +27,6 @@ set(eT_fortran_sources
    src/solvers/cc/diis_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_es_class.F90
-   src/solvers/cc/davidson_cc_ip_class.F90
    src/solvers/cc/davidson_cc_cvs_es_class.F90
    src/solvers/cc/newton_raphson_cc_gs_class.F90
    src/solvers/cholesky/eri_cd_class.F90
@@ -73,16 +72,17 @@ set(eT_fortran_sources
    src/molecule/molecular_system/ao_integrals.F90
    src/molecule/periodic_table.F90
    src/molecule/shell_class.F90
-   src/molecule/basis_set_info.F90
    src/libint/libint_initialization.F90
    src/solver_tools/diis_tool_class.F90
    src/solver_tools/davidson_tool_class.F90
    src/solver_tools/eigen_davidson_tool_class.F90
    src/solver_tools/linear_davidson_tool_class.F90
-   src/wavefunctions/ccsd/fop_ccsd.F90
    src/wavefunctions/ccs/fop_ccs.F90
    src/wavefunctions/cc2/fop_cc2.F90
+   src/wavefunctions/ccsd/fop_ccsd.F90
    src/wavefunctions/ccsd/omega_ccsd.F90
+   src/wavefunctions/ccsd/files_ccsd.F90
+   src/wavefunctions/ccsd/get_set_ccsd.F90
    src/wavefunctions/ccsd/jacobian_ccsd.F90
    src/wavefunctions/ccsd/jacobian_transpose_ccsd.F90
    src/wavefunctions/cc2/omega_cc2.F90

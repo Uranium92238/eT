@@ -76,7 +76,7 @@ module diis_cc_es_class
 contains
 !
 !
-   subroutine prepare_diis_cc_es(solver, transform)
+   subroutine prepare_diis_cc_es(solver, transformation)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -85,7 +85,7 @@ contains
 !
       class(diis_cc_es) :: solver
 !
-      character(len=*), optional :: transform
+      character(len=*), intent(in) :: transformation
 !
       call solver%print_banner()
 !
@@ -98,11 +98,9 @@ contains
       solver%transformation       = 'right'
       solver%diis_dimension       = 20
       solver%restart              = .false.
+      solver%transformation       = trim(transformation)
 !
       call solver%read_settings()
-!
-      if (present(transform)) solver%transformation = transform
-!
       call solver%print_settings()
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
@@ -254,6 +252,7 @@ contains
 !
       if (solver%restart) then ! Overwrite all or some of the orbital differences 
 !
+         call wf%is_restart_safe('excited state')
          call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
 !
          write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
@@ -261,7 +260,7 @@ contains
 !
          do state = 1, n_solutions_on_file
 !
-            call wf%restart_excited_state(X(:,state), state, solver%transformation)
+            call wf%read_excited_state(X(:,state), state, solver%transformation)
 !
          enddo
 !
@@ -295,6 +294,8 @@ contains
                call wf%construct_excited_state_equation(X(:,state), R(:,state), solver%energies(state), &
                                                         solver%transformation)
 !
+               residual_norms(state) = get_l2_norm(R(:, state), wf%n_es_amplitudes)
+!
 !$omp parallel do private(amplitude)
                do amplitude = 1, wf%n_es_amplitudes
 !
@@ -302,9 +303,6 @@ contains
 !
                enddo
 !$omp end parallel do 
-!
-               residual_norms(state) = get_l2_norm(R(:, state), wf%n_es_amplitudes)
-
 !
 !              Update convergence logicals 
 !
@@ -360,8 +358,8 @@ contains
 !
          if (iteration .eq. 1) then 
 !
-            write(output%unit, '(/t3,a,i0,a)')  'Note: residual of state ', state, ' converged in first iteration.'
-            write(output%unit, '(t3,a/)')       'Energy convergence has not been tested.'
+            write(output%unit, '(/t3,a)')  'Note: residual of all states converged in first iteration.'
+            write(output%unit, '(t3,a/)')  'Energy convergence has not been tested.'
 !
          endif
 !

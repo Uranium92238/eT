@@ -28,6 +28,7 @@ module es_engine_class
 !
       character(len=200) :: es_algorithm
       character(len=200) :: es_type
+      character(len=200) :: es_transformation
 !
    contains
 !
@@ -56,9 +57,10 @@ contains
 !
 !     Set standards and then read if nonstandard
 !
-      engine%es_algorithm = 'davidson'
-      engine%gs_algorithm = 'diis'
-      engine%es_type = 'valence'
+      engine%es_algorithm        = 'davidson'
+      engine%gs_algorithm        = 'diis'
+      engine%es_type             = 'valence'
+      engine%es_transformation   = 'right'
 !
       call engine%read_settings()
 !
@@ -92,6 +94,8 @@ contains
       call input%get_keyword_in_section('algorithm', 'solver cc es', engine%es_algorithm)
 !
       if (input%requested_keyword_in_section('core excitation', 'solver cc es')) engine%es_type = 'core'
+      if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) engine%es_transformation = 'left'
+      if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) engine%es_transformation = 'right'
 !
    end subroutine read_es_settings_es_engine
 !
@@ -119,7 +123,7 @@ contains
 !
 !     Excited state solutions
 !
-      call engine%do_excited_state(wf)
+      call engine%do_excited_state(wf, engine%es_transformation)
 !
    end subroutine run_es_engine
 !
@@ -132,7 +136,6 @@ contains
 !!    Solves the excited state (valence or cvs) using
 !!    either a DIIS or Davidson solver
 !!
-!
       use davidson_cc_es_class
       use davidson_cvs_cc_es_class
       use diis_cc_gs_class
@@ -143,7 +146,7 @@ contains
       class(es_engine)  :: engine
       class(ccs)        :: wf
 !
-      character(len=*), optional :: transformation
+      character(len=*), intent(in) :: transformation
 !
       type(diis_cc_es), allocatable                  :: cc_es_solver_diis
 !
@@ -158,16 +161,7 @@ contains
 !
          allocate(cc_es_solver_diis)
 !
-         if (present(transformation)) then
-!
-            call cc_es_solver_diis%prepare(transformation)
-!
-         else
-!
-            call cc_es_solver_diis%prepare()
-!
-         endif
-!
+         call cc_es_solver_diis%prepare(transformation)
          call cc_es_solver_diis%run(wf)
          call cc_es_solver_diis%cleanup()
 !
@@ -180,16 +174,7 @@ contains
             allocate(cc_core_es)
             cc_es_solver => cc_core_es
 !
-            if (present(transformation)) then
-!
-               call cc_es_solver%prepare(transformation)
-!
-            else
-!
-               call cc_es_solver%prepare()
-!
-            endif
-!
+            call cc_es_solver%prepare(transformation)
             call cc_es_solver%run(wf)
             call cc_es_solver%cleanup()
 !
@@ -209,16 +194,7 @@ contains
             allocate(cc_valence_es)
             cc_es_solver => cc_valence_es
 !
-            if (present(transformation)) then
-!
-               call cc_es_solver%prepare(transformation)
-!
-            else
-!
-               call cc_es_solver%prepare()
-!
-            endif
-!
+            call cc_es_solver%prepare(transformation)
             call cc_es_solver%run(wf)
             call cc_es_solver%cleanup()
 !
@@ -227,7 +203,13 @@ contains
 !
          endif
 !
-      endif
+      else
+!
+         call output%error_msg('Could not start excited state solver. It may be that the &
+                                 &algorithm is not implemented for the method specified.')
+!
+      endif 
+!
    end subroutine do_excited_state_es_engine
 !
 !

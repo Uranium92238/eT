@@ -369,7 +369,7 @@ contains
 !
 !     u_ai_lc(ai, lc) = 2 * t_li^ca - t_il^ca = 2 * t_cl_ai(cl, ai) - t_cl_ai(ci, al)
 !
-      call mem%alloc(u_ailc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+      call mem%alloc(u_ailc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       u_ailc = zero
 !
       call add_4312_to_1234(two, t_clai, u_ailc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
@@ -390,7 +390,7 @@ contains
                   rho_ai,            &
                   (wf%n_v)*(wf%n_o))
 !
-      call mem%dealloc(u_ailc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(u_ailc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call mem%dealloc(X_lc, wf%n_o, wf%n_v)
 !
 !     :: Term 2. - sum_ckdl L_lckd t_li^cd c_ak ::
@@ -2646,7 +2646,7 @@ contains
 !
 !     Construct g_bj,kc
 !
-      call mem%alloc(g_bjkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call mem%alloc(g_bjkc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
       call wf%get_voov(g_bjkc)
 !
@@ -2656,7 +2656,7 @@ contains
 !
       call sort_1234_to_4312(g_bjkc, g_ckbj, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(g_bjkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(g_bjkc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
 !     rho_aibj += sum_ck 2*c_aick * g_ckbj
 !

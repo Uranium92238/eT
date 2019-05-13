@@ -20,28 +20,21 @@ assert version_info.major == 2
 
 # construct filter(s)
 f = [
-    get_filter(from_string='State                (Hartree)             (eV)',
-               num_lines=4,
-               abs_tolerance=1.0e-10,
-               mask=[2]), 
-    get_filter(from_string='Comp. q     < k |q| 0 >       < 0 |q| k >       < k |q| 0 > < 0 |q| k > ',
-               num_lines=4,
-               abs_tolerance=1.0e-10,
-               mask=[1,2],
-               ignore_sign=True),
-    get_filter(from_string='Comp. q     < k |q| 0 >       < 0 |q| k >       < k |q| 0 > < 0 |q| k > ',
-               num_lines=4,
-               abs_tolerance=1.0e-10,
-               mask=[3]),
+    get_filter(string='Significant shell pairs:',
+               abs_tolerance=1.0e-10),
+    get_filter(string='Significant AO pairs:',
+               abs_tolerance=1.0e-10),
+    get_filter(string='Final number of Cholesky vectors:',
+               abs_tolerance=1.0e-10),
     get_filter(string='Final ground state energy (a.u.):',
-               abs_tolerance=1.0e-10)
+               abs_tolerance=1.0e-10),
 ]
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_ocsillator_strength_eom.inp']:
+for inp in ['ccsd_gs_energy_1c_cd.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

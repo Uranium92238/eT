@@ -197,6 +197,7 @@ contains
 !
          write(output%unit, '(/t3,a)') 'Requested restart. Reading multipliers from file.'
 !
+         call wf%is_restart_safe('ground state')
          call wf%read_multipliers()
          call wf%get_multipliers(multipliers) 
 !

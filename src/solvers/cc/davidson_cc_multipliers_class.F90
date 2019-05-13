@@ -161,12 +161,14 @@ contains
 !
          write(output%unit, '(/t3,a)') 'Requested restart. Reading multipliers from file.'
 !
+         call wf%is_restart_safe('ground state')
          call wf%read_multipliers()
 !
          call mem%alloc(multipliers, wf%n_gs_amplitudes)
          call wf%get_multipliers(multipliers)
 !
          norm_trial = sqrt(ddot(wf%n_gs_amplitudes, multipliers, 1, multipliers, 1))
+         call dscal(wf%n_gs_amplitudes, one/norm_trial, multipliers, 1)
 !
          call davidson%write_trial(multipliers, 'rewind')
          call mem%dealloc(multipliers, wf%n_gs_amplitudes)
