@@ -5,7 +5,7 @@ stages:
 build:
   stage: build
   script:
-    - echo "Hello world 2"
+    - echo "Hello world 3"
     - git submodule init
     - git submodule update
     - ./setup --int32 -FC=gfortran -CXX=g++-8
