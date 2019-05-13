@@ -575,6 +575,8 @@ contains
 !
 !                       Construct t^{abc}_{ijk} for given i, j, k
 !
+                        call zero_array(t_abc,wf%n_v**3)
+!
                         call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji,  &
                                                    g_bdci_p(:,:,:,i_rel),        &
                                                    g_bdcj_p(:,:,:,j_rel),        &
@@ -1445,7 +1447,7 @@ contains
                u_abc,            &
                wf%n_v**2)
 !
-!     c_abc <- u_abc = - sum_l (2*c_bali g_jlkc - c_bcli g_jlka - c_cali g_jlkb)
+!     c_abc <- u_abc <- v_abc = - sum_l (2*c_bali g_jlkc - c_bcli g_jlka - c_cali g_jlkb)
 !
       call dgemm('N', 'T',          &
                   wf%n_v**2,        &
@@ -1460,7 +1462,7 @@ contains
                   v_abc,            &
                   wf%n_v**2)
 !
-!     c_abc <- u_abc = sum_d (2*c_bdji g_dakc - c_bdji g_dcka - c_cdji g_dakb)
+!     c_abc <- u_abc <- v_abc = sum_d (2*c_bdji g_dakc - c_bdji g_dcka - c_cdji g_dakb)
 !
       call dgemm('N', 'T',          &
                   wf%n_v,           &

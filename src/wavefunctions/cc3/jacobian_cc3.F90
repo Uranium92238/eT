@@ -590,6 +590,8 @@ contains
 !
 !                       Construct t^{abc}_{ijk} for given i, j, k
 !
+                        call zero_array(t_abc,wf%n_v**3)
+!
                         call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji,  &
                                                    g_bdci_p(:,:,:,i_rel),        &
                                                    g_bdcj_p(:,:,:,j_rel),        &
@@ -1069,50 +1071,56 @@ contains
 !                       The terms have the same form as the omega terms (where t_abc = c_abc)
 !
                         call c3_timer%start()
-                        call wf%jacobian_cc3_c3_calc(i, j, k, c_abc, u_abc, t_abji, c_abji,  &
-                                                      g_bdci_p(:,:,:,i_rel),                 &
-                                                      g_bdcj_p(:,:,:,j_rel),                 &
-                                                      g_bdck_p(:,:,:,k_rel),                 &
-                                                      g_ljci_p(:,:,j_rel,i_rel),             &
-                                                      g_lkci_p(:,:,k_rel,i_rel),             &
-                                                      g_lkcj_p(:,:,k_rel,j_rel),             &
-                                                      g_licj_p(:,:,i_rel,j_rel),             &
-                                                      g_lick_p(:,:,i_rel,k_rel),             &
-                                                      g_ljck_p(:,:,j_rel,k_rel),             &
-                                                      g_bdci_c1_p(:,:,:,i_rel),              &
-                                                      g_bdcj_c1_p(:,:,:,j_rel),              &
-                                                      g_bdck_c1_p(:,:,:,k_rel),              &
-                                                      g_ljci_c1_p(:,:,j_rel,i_rel),          &
-                                                      g_lkci_c1_p(:,:,k_rel,i_rel),          &
-                                                      g_lkcj_c1_p(:,:,k_rel,j_rel),          &
-                                                      g_licj_c1_p(:,:,i_rel,j_rel),          &
-                                                      g_lick_c1_p(:,:,i_rel,k_rel),          &
-                                                      g_ljck_c1_p(:,:,j_rel,k_rel))
+                        call zero_array(c_abc,wf%n_v**3)
+!
+                        call wf%omega_cc3_W_calc(i, j, k, c_abc, u_abc, c_abji, &
+                                                g_bdci_p(:,:,:,i_rel),          &
+                                                g_bdcj_p(:,:,:,j_rel),          &
+                                                g_bdck_p(:,:,:,k_rel),          &
+                                                g_ljci_p(:,:,j_rel,i_rel),      &
+                                                g_lkci_p(:,:,k_rel,i_rel),      &
+                                                g_lkcj_p(:,:,k_rel,j_rel),      &
+                                                g_licj_p(:,:,i_rel,j_rel),      &
+                                                g_lick_p(:,:,i_rel,k_rel),      &
+                                                g_ljck_p(:,:,j_rel,k_rel))
+!
+                        call wf%omega_cc3_W_calc(i, j, k, c_abc, u_abc, t_abji, &
+                                                g_bdci_c1_p(:,:,:,i_rel),       &
+                                                g_bdcj_c1_p(:,:,:,j_rel),       &
+                                                g_bdck_c1_p(:,:,:,k_rel),       &
+                                                g_ljci_c1_p(:,:,j_rel,i_rel),   &
+                                                g_lkci_c1_p(:,:,k_rel,i_rel),   &
+                                                g_lkcj_c1_p(:,:,k_rel,j_rel),   &
+                                                g_licj_c1_p(:,:,i_rel,j_rel),   &
+                                                g_lick_c1_p(:,:,i_rel,k_rel),   &
+                                                g_ljck_c1_p(:,:,j_rel,k_rel))
 !
                         call wf%omega_cc3_eps(i, j, k, c_abc, omega)
                         call c3_timer%freeze()
 !
                         call rho1_timer%start()
-                        call wf%omega_cc3_omega1(i, j, k, c_abc, u_abc, rho_ai, rho_abij, F_kc, &
-                                                   L_jbic_p(:,:,j_rel,i_rel),                   &
-                                                   L_kbic_p(:,:,k_rel,i_rel),                   &
-                                                   L_kbjc_p(:,:,k_rel,j_rel),                   &
-                                                   L_ibjc_p(:,:,i_rel,j_rel),                   &
-                                                   L_ibkc_p(:,:,i_rel,k_rel),                   &
-                                                   L_jbkc_p(:,:,j_rel,k_rel))
+                        call wf%omega_cc3_omega1(i, j, k, c_abc, u_abc,    &
+                                                rho_ai, rho_abij, F_kc,    &
+                                                L_jbic_p(:,:,j_rel,i_rel), &
+                                                L_kbic_p(:,:,k_rel,i_rel), &
+                                                L_kbjc_p(:,:,k_rel,j_rel), &
+                                                L_ibjc_p(:,:,i_rel,j_rel), &
+                                                L_ibkc_p(:,:,i_rel,k_rel), &
+                                                L_jbkc_p(:,:,j_rel,k_rel))
                         call rho1_timer%freeze()
 !
                         call rho2_timer%start()
-                        call wf%omega_cc3_omega2(i, j, k, c_abc, u_abc, v_abc, rho_abij,  &
-                                                   g_dbic_p(:,:,:,i_rel),                 &
-                                                   g_dbjc_p(:,:,:,j_rel),                 &
-                                                   g_dbkc_p(:,:,:,k_rel),                 &
-                                                   g_jlic_p(:,:,j_rel,i_rel),             &
-                                                   g_klic_p(:,:,k_rel,i_rel),             &
-                                                   g_kljc_p(:,:,k_rel,j_rel),             &
-                                                   g_iljc_p(:,:,i_rel,j_rel),             &
-                                                   g_ilkc_p(:,:,i_rel,k_rel),             &
-                                                   g_jlkc_p(:,:,j_rel,k_rel))
+                        call wf%omega_cc3_omega2(i, j, k, c_abc, u_abc, v_abc,   &
+                                                rho_abij,                        &
+                                                g_dbic_p(:,:,:,i_rel),           &
+                                                g_dbjc_p(:,:,:,j_rel),           &
+                                                g_dbkc_p(:,:,:,k_rel),           &
+                                                g_jlic_p(:,:,j_rel,i_rel),       &
+                                                g_klic_p(:,:,k_rel,i_rel),       &
+                                                g_kljc_p(:,:,k_rel,j_rel),       &
+                                                g_iljc_p(:,:,i_rel,j_rel),       &
+                                                g_ilkc_p(:,:,i_rel,k_rel),       &
+                                                g_jlkc_p(:,:,j_rel,k_rel))
                         call rho2_timer%freeze()
 !
                      enddo ! loop over k

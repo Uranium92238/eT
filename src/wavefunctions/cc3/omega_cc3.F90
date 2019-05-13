@@ -443,6 +443,8 @@ contains
 !
                         k_rel = k - batch_k%first + 1
 !
+                        call zero_array(t_abc,wf%n_v**3)
+!
                         call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji, &
                                                  g_bdci_p(:,:,:,i_rel), &
                                                  g_bdcj_p(:,:,:,j_rel), &
@@ -800,214 +802,220 @@ contains
       real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljck
 !
 !
+!     u_abc terms
+!     -----------
 !
 !     t^ad_ij*(bd|ck)
 !     ---------------
 !
-      call dgemm('N', 'N', &
-                 wf%n_v, &
-                 wf%n_v**2, &
-                 wf%n_v, &
-                 one, &
-                 t_abji(:,:,j,i), &
-                 wf%n_v, &
-                 g_bdck, &
-                 wf%n_v, &
-                 zero, &
-                 t_abc, &
+      call dgemm('N', 'N',        &
+                 wf%n_v,          &
+                 wf%n_v**2,       &
+                 wf%n_v,          &
+                 one,             &
+                 t_abji(:,:,j,i), & !t_a_d,ji
+                 wf%n_v,          &
+                 g_bdck,          & !g_d_bc,k
+                 wf%n_v,          &
+                 one,             &
+                 t_abc,           &
                  wf%n_v)
 !
 !     t^ab_il*(lj|ck)
 !     ---------------
 !
-      call dgemm('N', 'N', &
-                 wf%n_v**2, &
-                 wf%n_v, &
-                 wf%n_o, &
-                 -one, &
-                 t_abji(:,:,:,i), &
-                 wf%n_v**2, &
-                 g_ljck, &
-                 wf%n_o, &
-                 one, &
-                 t_abc, &
+      call dgemm('N', 'N',        &
+                 wf%n_v**2,       &
+                 wf%n_v,          &
+                 wf%n_o,          &
+                 -one,            &
+                 t_abji(:,:,:,i), & !t_ab_l,i
+                 wf%n_v**2,       &
+                 g_ljck,          & !g_l_c,jk
+                 wf%n_o,          &
+                 one,             &
+                 t_abc,           &
                  wf%n_v**2)
-!
-!
-!
-!     t^bd_ji*(ad|ck)
-!     ---------------
-!
-      call dgemm('N', 'N', &
-                 wf%n_v, &
-                 wf%n_v**2, &
-                 wf%n_v, &
-                 one, &
-                 t_abji(:,:,i,j), &
-                 wf%n_v, &
-                 g_bdck, &
-                 wf%n_v, &
-                 zero, &
-                 u_abc, &
-                 wf%n_v)
-!
-!     t^ba_jl*(li|ck)
-!     ---------------
-!
-      call dgemm('N', 'N', &
-                 wf%n_v**2, &
-                 wf%n_v, &
-                 wf%n_o, &
-                 -one, &
-                 t_abji(:,:,:,j), &
-                 wf%n_v**2, &
-                 g_lick, &
-                 wf%n_o, &
-                 one, &
-                 u_abc, &
-                 wf%n_v**2)
-!
-      call sort_123_to_213_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
-!
-!
-!     t^ad_ik*(cd|bj)
-!     ---------------
-!
-      call dgemm('N', 'N', &
-                 wf%n_v, &
-                 wf%n_v**2, &
-                 wf%n_v, &
-                 one, &
-                 t_abji(:,:,k,i), &
-                 wf%n_v, &
-                 g_bdcj, &
-                 wf%n_v, &
-                 zero, &
-                 u_abc, &
-                 wf%n_v)
-!
-!     t^ac_il*(lk|bj)
-!     ---------------
-!
-      call dgemm('N', 'N', &
-                 wf%n_v**2, &
-                 wf%n_v, &
-                 wf%n_o, &
-                 -one, &
-                 t_abji(:,:,:,i), &
-                 wf%n_v**2, &
-                 g_lkcj, &
-                 wf%n_o, &
-                 one, &
-                 u_abc, &
-                 wf%n_v**2)
-!
-      call sort_123_to_132_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
 !
 !
 !     t^cd_ki*(ad|bj)
 !     ---------------
 !
-      call dgemm('N', 'N', &
-                 wf%n_v, &
-                 wf%n_v**2, &
-                 wf%n_v, &
-                 one, &
-                 t_abji(:,:,i,k), &
-                 wf%n_v, &
-                 g_bdcj, &
-                 wf%n_v, &
-                 zero, &
-                 u_abc, &
-                 wf%n_v)
-!
-!     t^ca_kl*(li|bj)
-!     ---------------
-!
-      call dgemm('N', 'N', &
-                 wf%n_v**2, &
-                 wf%n_v, &
-                 wf%n_o, &
-                 -one, &
-                 t_abji(:,:,:,k), &
-                 wf%n_v**2, &
-                 g_licj, &
-                 wf%n_o, &
-                 one, &
-                 u_abc, &
+      call dgemm('T', 'T',        &
+                 wf%n_v**2,       &
+                 wf%n_v,          &
+                 wf%n_v,          &
+                 one,             &
+                 g_bdcj,          & !g_d_bc,j
+                 wf%n_v,          &
+                 t_abji(:,:,i,k), & !t_c_d,ik
+                 wf%n_v,          &
+                 one,             &
+                 t_abc,           &
                  wf%n_v**2)
-!
-      call sort_123_to_231_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
-!
-!
-!     t^bd_jk*(cd|ai)
-!     ---------------
-!
-      call dgemm('N', 'N', &
-                 wf%n_v, &
-                 wf%n_v**2, &
-                 wf%n_v, &
-                 one, &
-                 t_abji(:,:,k,j), &
-                 wf%n_v, &
-                 g_bdci, &
-                 wf%n_v, &
-                 zero, &
-                 u_abc, &
-                 wf%n_v)
 !
 !     t^bc_jl*(lk|ai)
 !     ---------------
 !
-      call dgemm('N', 'N', &
-                 wf%n_v**2, &
-                 wf%n_v, &
-                 wf%n_o, &
-                 -one, &
-                 t_abji(:,:,:,j), &
-                 wf%n_v**2, &
-                 g_lkci, &
-                 wf%n_o, &
-                 one, &
-                 u_abc, &
-                 wf%n_v**2)
+      call dgemm('T', 'T',        &
+                 wf%n_v,          &
+                 wf%n_v**2,       &
+                 wf%n_o,          &
+                 -one,            &
+                 g_lkci,          & !g_l_c,ki
+                 wf%n_o,          &
+                 t_abji(:,:,:,j), & !t_bc_l,j
+                 wf%n_v**2,       &
+                 one,             &
+                 t_abc,           &
+                 wf%n_v)
 !
-      call sort_123_to_312_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
+!     u_acb terms
+!     -----------
 !
-!
-!     t^cd_kj*(bd|ai)
+!     t^ad_ik*(cd|bj)
 !     ---------------
 !
-      call dgemm('N', 'N', &
-                 wf%n_v, &
-                 wf%n_v**2, &
-                 wf%n_v, &
-                 one, &
-                 t_abji(:,:,j,k), &
-                 wf%n_v, &
-                 g_bdci, &
-                 wf%n_v, &
-                 zero, &
-                 u_abc, &
+      call dgemm('N', 'N',        &
+                 wf%n_v,          &
+                 wf%n_v**2,       &
+                 wf%n_v,          &
+                 one,             &
+                 t_abji(:,:,k,i), & !t_a_d,ki
+                 wf%n_v,          &
+                 g_bdcj,          & !g_d_cb,j
+                 wf%n_v,          &
+                 zero,            &
+                 u_abc,           &
                  wf%n_v)
+!
+!     t^ac_il*(lk|bj)
+!     ---------------
+!
+      call dgemm('N', 'N',        &
+                 wf%n_v**2,       &
+                 wf%n_v,          &
+                 wf%n_o,          &
+                 -one,            &
+                 t_abji(:,:,:,i), & !t_ac_l,i
+                 wf%n_v**2,       &
+                 g_lkcj,          & !g_l_c,kj
+                 wf%n_o,          &
+                 one,             &
+                 u_abc,           &
+                 wf%n_v**2)
+!
+!
+!     t^bd_ji*(ad|ck)
+!     ---------------
+!
+      call dgemm('T', 'T',        &
+                 wf%n_v**2,       &
+                 wf%n_v,          &
+                 wf%n_v,          &
+                 one,             &
+                 g_bdck,          & !g_d_ac,k
+                 wf%n_v,          &
+                 t_abji(:,:,i,j), & !t_b_d,ij
+                 wf%n_v,          &
+                 one,             &
+                 u_abc,           &
+                 wf%n_v**2)
 !
 !     t^cb_kl*(lj|ai)
 !     ---------------
 !
-      call dgemm('N', 'N', &
-                 wf%n_v**2, &
-                 wf%n_v, &
-                 wf%n_o, &
-                 -one, &
-                 t_abji(:,:,:,k), &
-                 wf%n_v**2, &
-                 g_ljci, &
-                 wf%n_o, &
-                 one, &
-                 u_abc, &
+      call dgemm('T', 'T',        &
+                 wf%n_v,          &
+                 wf%n_v**2,       &
+                 wf%n_o,          &
+                 -one,            &
+                 g_ljci,          & !g_l_a,ji
+                 wf%n_o,          &
+                 t_abji(:,:,:,k), & !t_cb_l,k
+                 wf%n_v**2,       &
+                 one,             &
+                 u_abc,           &
+                 wf%n_v)
+!
+!
+      call sort_123_to_132_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+!
+!     u_bac terms
+!     -----------
+!
+!     t^cd_kj*(bd|ai)
+!     ---------------
+!
+      call dgemm('T', 'T',        &
+                 wf%n_v**2,       &
+                 wf%n_v,          &
+                 wf%n_v,          &
+                 one,             &
+                 g_bdci,          & !g_d_ba,i
+                 wf%n_v,          &
+                 t_abji(:,:,j,k), & !t_c_d,jk
+                 wf%n_v,          &
+                 zero,            &
+                 u_abc,           &
                  wf%n_v**2)
 !
-      call sort_123_to_321_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
+!     t^ba_jl*(li|ck)
+!     ---------------
+!
+      call dgemm('N', 'N',        &
+                 wf%n_v**2,       &
+                 wf%n_v,          &
+                 wf%n_o,          &
+                 -one,            &
+                 t_abji(:,:,:,j), & !t_ba_l,j
+                 wf%n_v**2,       &
+                 g_lick,          & !g_l_c,ik
+                 wf%n_o,          &
+                 one,             &
+                 u_abc,           &
+                 wf%n_v**2)
+!
+      call sort_123_to_213_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+!
+!     u_cab terms
+!     -----------
+!
+!     t^bd_jk*(cd|ai)
+!     ---------------
+!
+      call dgemm('T', 'T',        &
+                 wf%n_v**2,       &
+                 wf%n_v,          &
+                 wf%n_v,          &
+                 one,             &
+                 g_bdci,          & !g_d_ca,i
+                 wf%n_v,          &
+                 t_abji(:,:,k,j), & !t_b_d,kj
+                 wf%n_v,          &
+                 zero,            &
+                 u_abc,           &
+                 wf%n_v**2)
+!
+!     t^ca_kl*(li|bj)
+!     ---------------
+!
+      call dgemm('N', 'N',        &
+                 wf%n_v**2,       &
+                 wf%n_v,          &
+                 wf%n_o,          &
+                 -one,            &
+                 t_abji(:,:,:,k), & !t_ca_l,k
+                 wf%n_v**2,       &
+                 g_licj,          & !g_l_c,ij
+                 wf%n_o,          &
+                 one,             &
+                 u_abc,           &
+                 wf%n_v**2)
+!
+      call sort_123_to_231_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
 !
 !
    end subroutine omega_cc3_W_calc_cc3
