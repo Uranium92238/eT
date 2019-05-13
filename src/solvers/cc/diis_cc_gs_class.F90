@@ -212,7 +212,6 @@ contains
       write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) '
       write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
       flush(output%unit)
-      flush(timing%unit)
 !
       prev_energy = zero
       iteration   = 1
@@ -233,6 +232,7 @@ contains
          write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
                                           omega_norm, abs(wf%energy-prev_energy)
          flush(output%unit)
+         flush(timing%unit)
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !

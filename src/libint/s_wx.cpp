@@ -31,6 +31,7 @@ using namespace std;
 #include <string>
 #include <vector>
 #include "s_wx.h"
+#include "extract_integrals.h"
 
 #include <libint2.hpp>
 
@@ -40,36 +41,19 @@ using namespace libint2;
 
 void construct_ao_s_wx(double *s, int *s1, int *s2){
 
-  const auto& buf_vec = overlap.results(); // will point to computed shell sets
+   int thread = omp_get_thread_num();
 
-  auto n1 = basis[*s1 - 1].size();          // Number of basis functions in shell 1
-  auto n2 = basis[*s2 - 1].size();          // number of basis functions in shell 2
+   const auto& buf_vec = overlap[thread].results(); // Will point to computed shell sets
 
-  overlap.compute(basis[*s1 - 1], basis[*s2 - 1]);
+   auto n1 = basis[*s1 - 1].size();          // Number of basis functions in shell 1
+   auto n2 = basis[*s2 - 1].size();          // Number of basis functions in shell 2
 
-  auto ints_shellset  = buf_vec[0];        // location of the computed integrals
+   overlap[thread].compute(basis[*s1 - 1], basis[*s2 - 1]);
 
-  if (ints_shellset == nullptr) {
+   auto ints_shellset = buf_vec[0]; // location of the computed integrals
 
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
+   extract_integrals(s, ints_shellset, n1, n2, 1.0e0);
 
-        *(s + n1*f2+f1) = 0.0e0;
-
-      }
-    }
-  }
-  else{
-
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
-
-        *(s + n1*f2+f1) = ints_shellset[f1*n2+f2]; 
-
-      }
-    }
-  }
-
-return;
+   return;
 
 }

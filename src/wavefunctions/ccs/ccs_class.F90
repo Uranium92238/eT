@@ -1141,6 +1141,7 @@ contains
       call mem%alloc(g_ijkl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
       call wf%get_oooo(g_ijkl)
 !
+!$omp parallel do private(i,j,k)
       do i = 1, wf%n_o
          do j = 1, wf%n_o
             do k = 1, wf%n_o
@@ -1150,6 +1151,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(g_ijkl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
@@ -1162,6 +1164,7 @@ contains
       call mem%alloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       call wf%get_vooo(g_aijk)
 !
+!$omp parallel do private(i,a,j)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
             do j = 1, wf%n_o
@@ -1173,6 +1176,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
@@ -1185,6 +1189,7 @@ contains
       call mem%alloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call wf%get_voov(g_aijb)
 !
+!$omp parallel do private(a,b,i)
       do a = 1, wf%n_v
          do b = 1, wf%n_v
             do i = 1, wf%n_o
@@ -1194,6 +1199,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(g_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
@@ -1214,12 +1220,13 @@ contains
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_pq
 !
       integer :: i, j, a, b
 !
+!$omp parallel do private(i,j)
       do i = 1, wf%n_o
          do j = 1, wf%n_o
 !
@@ -1227,7 +1234,9 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
+!$omp parallel do private(i,a)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -1236,7 +1245,9 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do 
 !
+!$omp parallel do private(a,b)
       do a = 1, wf%n_v
          do b = 1, wf%n_v
 !
@@ -1244,6 +1255,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine set_fock_ccs
 !
@@ -1285,13 +1297,16 @@ contains
       X = zero
       Y = zero
 !
+!$omp parallel do private(p)
       do p = 1, wf%n_mo
 !
          X(p, p) = one
          Y(p, p) = one
 !
       enddo
+!$omp end parallel do
 !
+!$omp parallel do private(i,a)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -1300,6 +1315,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
 !     Construct intermediate W = Z Y^T and then use it to do transformation
 !
@@ -1352,6 +1368,7 @@ contains
 !
       integer :: a, i, ai
 !
+!$omp parallel do private(i,a)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -1361,6 +1378,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine get_gs_orbital_differences_ccs
 !
@@ -1718,10 +1736,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -1785,10 +1799,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -1854,10 +1864,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -1921,10 +1927,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -1990,10 +1992,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2057,10 +2055,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -2132,10 +2126,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2200,10 +2190,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2267,10 +2253,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -2340,10 +2322,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2411,10 +2389,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -2484,10 +2458,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2556,10 +2526,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2627,10 +2593,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -2764,12 +2726,18 @@ contains
       call mem%alloc(X_copy, wf%n_es_amplitudes)
       call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
-      if (trim(r_or_l) .eq. "right") then
+      if (r_or_l .eq. "right") then
+!
          call wf%jacobian_transform_trial_vector(X_copy) ! X_copy <- AX
-      elseif (trim(r_or_l) .eq. 'left') then
+!
+      elseif (r_or_l .eq. 'left') then
+!
          call wf%jacobian_transpose_transform_trial_vector(X_copy) ! X_copy <- XA
+!
       else
+!
          call output%error_msg('Neither left nor right in construct_excited_state')
+!
       endif
 !
       w = ddot(wf%n_es_amplitudes, X, 1, X_copy, 1)
@@ -3008,7 +2976,7 @@ contains
          call mem%dealloc(L_aijb, wf%n_v, wf%n_o, wf%n_o, batch_b%length)
          call mem%dealloc(c_jb, (wf%n_o), (batch_b%length))
 !
-   enddo ! batch_b
+      enddo ! batch_b
 !
    end subroutine jacobian_ccs_b1_ccs
 !

@@ -57,8 +57,8 @@ contains
       type(timings) :: cc3_timer
       type(timings) :: ccsd_timer
 !
-      call cc3_timer%init('CC3 contribution)')
-      call ccsd_timer%init('CCSD contribution)')
+      call cc3_timer%init('CC3 contribution')
+      call ccsd_timer%init('CCSD contribution')
 !
       call mem%alloc(omega1, wf%n_v, wf%n_o)
       call mem%alloc(omega2, wf%n_t2)

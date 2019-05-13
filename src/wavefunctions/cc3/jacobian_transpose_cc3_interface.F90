@@ -135,7 +135,7 @@
 !
 !
    module subroutine jacobian_transpose_cc3_C3_calc_cc3(wf, i, j ,k, c_ai, c_abij,  &
-                                                         c_abc, u_abc, F_kc,        &
+                                                         c_abc, u_abc, v_abc, F_kc, &
                                                          L_ibjc, L_ibkc, L_jbkc,    &
                                                          g_dbic, g_dbjc, g_dbkc,    &
                                                          g_jlic, g_klic, g_kljc,    &
@@ -167,6 +167,7 @@
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: v_abc
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: F_kc
 !
