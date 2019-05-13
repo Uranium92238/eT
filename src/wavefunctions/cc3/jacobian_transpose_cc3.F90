@@ -276,7 +276,10 @@ contains
 !!    Reads in the intermediates X_abid and X_ajil prepared in prepare_jacobian_transpose
 !!    contracts with c_abij and adds to sigma_ai
 !!
-!!    sigma_dl =  sum_abi X_abid * C_abil + sum_aik C_daji * X_ajil
+!!    sigma_dl +=  sum_abi X_abid * C_abil + sum_aik C_daji * X_ajil
+!!
+!!    where: X_abid = - sum_jck (2t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_kcjd
+!!           X_ajil = - sum_bck (2t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_lbkc
 !!    
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -372,8 +375,8 @@ contains
 !!    Constructs t^abc_ijk for fixed ijk and contracts with c_abij
 !!    The intermediate X_ai is then contracted with L_iald
 !!
-!!    sigma_dl =  sum_abcijk C^bc_jk (t^abc_ijk - t^bac_ijk) L_iald
-!!             =  sum_ck X_ai * L_iald
+!!    sigma_dl +=  sum_abcijk C^bc_jk (t^abc_ijk - t^bac_ijk) L_iald
+!!             +=  sum_ck X_ai * L_iald
 !!    
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -632,7 +635,7 @@ contains
       call mem%dealloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
 !
-!     :: sigma_dl = sum_ai X_ai * L_iald ::
+!     :: sigma_dl += sum_ai X_ai * L_iald ::
 !
 !
       req_0 = 0

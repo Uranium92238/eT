@@ -33,6 +33,84 @@
    end subroutine effective_jacobian_transformation_cc3
 !
 !
+   module subroutine jacobian_cc3_rho2_T3_A1_cc3(wf, c_ai, rho_abij)
+!!
+!!    Computes the first contribution of the T3 amplitudes to rho_2
+!!
+!!    Reads in the intermediates X_abid and X_ajil prepared in 
+!!    prepare_jacobian_transform contracts with c_ai and adds to rho_abij
+!!
+!!    rho_abil += sum_abi X_abid * C_dl
+!!    rho_daji += sum_aik C_dl * X_ajil
+!!
+!!    where: X_abid = - sum_jck (2 t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_kcjd
+!!           X_ajil = - sum_bck (2 t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_lbkc
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(out) :: rho_abij
+!
+   end subroutine jacobian_cc3_rho2_T3_A1_cc3
+!
+!
+   module subroutine jacobian_cc3_rho2_T3_B1_cc3(wf, c_ai, rho_abij)
+!!
+!!    Computes the second contribution of the T3 amplitudes to rho_2
+!!
+!!    sigma_abij +=  sum_ckdl C^d_l L_kcld (t^abc_ijk - t^bac_ijk)
+!!               +=  sum_ck F_kc_c1 * (t^abc_ijk - t^bac_ijk)
+!!
+!!    Constructs t^abc_ijk for fixed ijk contracts with 
+!!    the c1-transformed Fock matrix
+!!    
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_abij
+!
+   end subroutine jacobian_cc3_rho2_T3_B1_cc3
+!
+!
+   module subroutine jacobian_cc3_C3_terms_cc3(wf, omega, c_ai, c_abji, rho_ai, rho_abij)
+!!
+!!    Construct C^abc_ijk in single batches of ijk and compute the contributions
+!!    to the singles and doubles part of the outgoing vector
+!!
+!!    The triples amplitudes are expressed in terms of doubles amplitudes:
+!!    C_3 = (omega - ε^abc_ijk)^-1 (< μ3 | [H,C_2] | HF > + < μ3 | [[H,C_1],T_2] | HF >)
+!!
+!!    rho1 += < μ1 | [H,C_3] | R >
+!!    rho2 += < μ2 | [H,C_3] | R >
+!!
+!!    Based on omega_cc3_a_cc3 written by Rolf H. Myhre
+!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), intent(in) :: omega
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abji
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_abij
+!
+   end subroutine jacobian_cc3_C3_terms_cc3
+!
+!
    module subroutine jacobian_cc3_A_cc3(wf, omega, c_ai, c_abji, rho_ai, rho_abij)
 !!
 !!

@@ -42,19 +42,17 @@ module cc3_class
 !
       type(file)  :: g_bdck_c1
       type(file)  :: g_ljck_c1
-      type(file)  :: g_dbkc_c1
-      type(file)  :: g_jlkc_c1
 !
 !     Left Jacobian integral files
 !
       type(file)  :: g_becd_t
       type(file)  :: g_mjlk_t
-      type(file)  :: g_lbkc_t
       type(file)  :: g_ckld_t
       type(file)  :: g_cdlk_t
 !
-!     Left Jacobian intermediates files
+!     Jacobian intermediates files
 !
+      type(file)  :: g_lbkc_t
       type(file)  :: X_abdi
       type(file)  :: X_abid
       type(file)  :: Y_bcek
@@ -85,7 +83,9 @@ module cc3_class
 !
       procedure :: effective_jacobian_transformation  => effective_jacobian_transformation_cc3
 !
-      procedure :: jacobian_cc3_A                     => jacobian_cc3_A_cc3
+      procedure :: jacobian_cc3_rho2_T3_A1            => jacobian_cc3_rho2_T3_A1_cc3
+      procedure :: jacobian_cc3_rho2_T3_B1            => jacobian_cc3_rho2_T3_B1_cc3
+      procedure :: jacobian_cc3_C3_terms              => jacobian_cc3_C3_terms_cc3
       procedure :: jacobian_cc3_c1_integrals          => jacobian_cc3_c1_integrals_cc3
       procedure :: jacobian_cc3_construct_fock_ia_c1  => jacobian_cc3_construct_fock_ia_c1_cc3
       procedure :: jacobian_cc3_c3_calc               => jacobian_cc3_c3_calc_cc3
@@ -93,11 +93,11 @@ module cc3_class
 !
 !     Routines related to the transpose of the jacobian
 !
-      procedure :: prepare_for_jacobian_transpose  => prepare_for_jacobian_transpose_cc3
       procedure :: prepare_cc3_jacobian_transpose_integrals &
                                                    => prepare_cc3_jacobian_transpose_integrals_cc3
-      procedure :: prepare_cc3_jacobian_transpose_intermediates &
-                                                   => prepare_cc3_jacobian_transpose_intermediates_cc3
+      procedure :: prepare_cc3_g_lbkc_t_file       => prepare_cc3_g_lbkc_t_file_cc3
+      procedure :: prepare_cc3_jacobian_intermediates &
+                                                   => prepare_cc3_jacobian_intermediates_cc3
 !
       procedure :: sort_X_to_abid_and_write        => sort_X_to_abid_and_write_cc3
       procedure :: construct_X_intermediates       => construct_X_intermediates_cc3
@@ -122,8 +122,8 @@ module cc3_class
    interface
 !
       include "omega_cc3_interface.F90"
+      include "prepare_jacobian_transform_cc3_interface.F90"
       include "jacobian_cc3_interface.F90"
-      include "prepare_jacobian_transpose_cc3_interface.F90"
       include "jacobian_transpose_cc3_interface.F90"
 !
    end interface
@@ -268,12 +268,27 @@ contains
       class(cc3), intent(inout) :: wf
 !
       character(len=*), intent(in) :: r_or_l
-!
+!      
       if (trim(r_or_l) .eq. "left") then
+!
          write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', trim(r_or_l), &
                                             & ' excited state equations.'
-         call wf%prepare_for_jacobian_transpose()
-      endif                                      
+!
+         call wf%prepare_cc3_jacobian_intermediates()
+         call wf%prepare_cc3_jacobian_transpose_integrals()
+!
+      elseif(trim(r_or_l) .eq. "right") then
+!
+         write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', trim(r_or_l), &
+                                            & ' excited state equations.'
+!
+         call wf%prepare_cc3_jacobian_intermediates()
+!
+      else
+!
+         call output%error_msg('Neither left nor right in prepare_fore_excited_state_eq_cc3')
+!
+      endif                                 
 !
    end subroutine prepare_for_excited_state_eq_cc3
 !

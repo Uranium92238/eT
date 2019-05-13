@@ -17,22 +17,25 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (cc3_class) prepare_jacobian_transpose
+submodule (cc3_class) prepare_jacobian_transform
 !
 !!
-!!    Prepare jacobian transpose submodule (cc3)
+!!    Prepare jacobian transformation (cc3)
 !!    Written by Alexander Paul and Rolf H. Myhre, March 2019
 !!
-!!    Routines setting up the files containing intermediates and integrals 
-!!    for the linear transform of trial vectors by the transpose of the Jacobian matrix
+!!    Routines setting up the files containing intermediates for the linear 
+!!    transform of trial vectors by the Jacobian matrix and its transpose.
 !!
-!!    Sets up the integrals
-!!    g_vvvv ordered 1324, g_oooo ordered 1243, g_ovov ordered 2413, 
-!!    g_voov ordered 1324, g_vvoo ordered 1342
+!!    X_abdi = - sum_cjk (2 * t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_kcjd
+!!    X_ajil = - sum_bck (2 * t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_lbkc
 !!
-!!    And the intermediates
-!!    X_abdi = sum_cjk (t^cba_ijk + t^acb_ijk - 2 * t^abc_ijk) * g_kcjd
-!!    X_ajil = sum_cjk (t^cba_ijk + t^acb_ijk - 2 * t^abc_ijk) * g_lbkc
+!!
+!!    Also contains the routine setting up the integral files 
+!!    for the transpose transformation:
+!!    g_vvvv ordered 1324
+!!    g_oooo ordered 1243
+!!    g_voov ordered 1324 
+!!    g_vvoo ordered 1342
 !!
 !
    implicit none
@@ -41,48 +44,27 @@ submodule (cc3_class) prepare_jacobian_transpose
 contains
 !
 !
-   module subroutine prepare_for_jacobian_transpose_cc3(wf)
-!!
-!!    Prepare for Jacobian transpose (CC3)
-!!    Set up files containing integrals and intermediates for CC3 jacobian transpose
-!!    Called from solver
-!!
-!!    Written by Rolf H. Myhre and Alexander Paul, April 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      call wf%prepare_cc3_jacobian_transpose_integrals
-!
-      call wf%prepare_cc3_jacobian_transpose_intermediates
-!
-!
-   end subroutine prepare_for_jacobian_transpose_cc3
-!
-!
    module subroutine prepare_cc3_jacobian_transpose_integrals_cc3(wf)
 !!
 !!    Construct integrals needed in CC3 jacobian transpose and store on disk
 !!    (be|cd) ordered as bce,d
 !!    (mj|lk) ordered as mjk,l
-!!    (lb|kc) ordered as bcl,k
 !!    (ck|ld) ordered as cl,kd
 !!    (cd|lk) ordered as cl,kd
 !!
 !!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
-      implicit none
+   implicit none
 !
       class(cc3) :: wf
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_pqrs !Array for constructed integrals
-      real(dp), dimension(:,:,:,:), allocatable :: h_pqrs !Array for sorted integrals
+      real(dp), dimension(:,:,:,:), allocatable :: g_pqrs ! Array for constructed integrals
+      real(dp), dimension(:,:,:,:), allocatable :: h_pqrs ! Array for sorted integrals
 !
-      type(batching_index) :: batch_d, batch_k, batch_l
+      type(batching_index) :: batch_d, batch_l
 !
-      integer :: req_0, req_d, req_k, req_l
-      integer :: d_batch, k_batch, l_batch
+      integer :: req_0, req_d, req_l
+      integer :: d_batch, l_batch
 !
 !     (be|cd) stored as bce#d
 !
@@ -160,46 +142,6 @@ contains
 !
       call batch_l%determine_limits(1)
       call mem%dealloc(h_pqrs,wf%n_o,wf%n_o,wf%n_o,batch_l%length)
-!
-!
-!     (lb|kc)  !stored as bcl#k
-!
-      call wf%get_g_pqrs_required(req_0,req_k,wf%n_o,wf%n_v,1,wf%n_v)
-      req_k = req_k + 2*wf%n_v**2*wf%n_o
-!
-      call batch_k%init(wf%n_o)
-      call mem%batch_setup(batch_k,req_0,req_k)
-      call batch_k%determine_limits(1)
-!
-      call mem%alloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
-!
-      call wf%g_lbkc_t%init('g_lbkc_t','direct','unformatted',dp*wf%n_o*wf%n_v**2)
-      call disk%open_file(wf%g_lbkc_t,'write')
-!
-      do k_batch = 1,batch_k%num_batches
-!
-         call batch_k%determine_limits(k_batch)
-!
-         call mem%alloc(g_pqrs, wf%n_o , wf%n_v , batch_k%length , wf%n_v)
-!
-         call wf%get_ovov(g_pqrs,   &
-                          1,wf%n_o, &
-                          1,wf%n_v, &
-                          batch_k%first,batch_k%last, &
-                          1,wf%n_v)
-!
-         call sort_1234_to_2413(g_pqrs , h_pqrs , wf%n_o , wf%n_v , batch_k%length , wf%n_v) ! sort to bclk
-!
-         call single_record_writer(batch_k, wf%g_lbkc_t, h_pqrs)
-!
-         call mem%dealloc(g_pqrs, wf%n_o , wf%n_v , batch_k%length , wf%n_v)
-!
-      enddo
-!
-      call batch_k%determine_limits(1)
-      call mem%dealloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
-!
-      call disk%close_file(wf%g_lbkc_t,'keep')
 !
 !
 !     (ck|ld) !stored as cl#k#d
@@ -283,7 +225,71 @@ contains
    end subroutine prepare_cc3_jacobian_transpose_integrals_cc3
 !
 !
-   module subroutine prepare_cc3_jacobian_transpose_intermediates_cc3(wf)
+   module subroutine prepare_cc3_g_lbkc_t_file_cc3(wf)
+!!
+!!    Construct ovov-integral needed in the construction of the intermediates 
+!!    for the CC3 jacobian transformations and store on disk
+!!
+!!    (lb|kc) ordered as bcl,k
+!!
+!!    written by Rolf H. Myhre and Alexander Paul, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_pqrs ! Array for constructed integrals
+      real(dp), dimension(:,:,:,:), allocatable :: h_pqrs ! Array for sorted integrals
+!
+      type(batching_index) :: batch_k
+!
+      integer :: req_0, req_k
+      integer :: k_batch
+!
+!     (lb|kc)  ! stored as bcl#k
+!
+      call wf%get_g_pqrs_required(req_0,req_k,wf%n_o,wf%n_v,1,wf%n_v)
+      req_k = req_k + 2*wf%n_v**2*wf%n_o
+!
+      call batch_k%init(wf%n_o)
+      call mem%batch_setup(batch_k,req_0,req_k)
+      call batch_k%determine_limits(1)
+!
+      call mem%alloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
+!
+      call wf%g_lbkc_t%init('g_lbkc_t','direct','unformatted',dp*wf%n_o*wf%n_v**2)
+      call disk%open_file(wf%g_lbkc_t,'write')
+!
+      do k_batch = 1,batch_k%num_batches
+!
+         call batch_k%determine_limits(k_batch)
+!
+         call mem%alloc(g_pqrs, wf%n_o , wf%n_v , batch_k%length , wf%n_v)
+!
+         call wf%get_ovov(g_pqrs,   &
+                          1,wf%n_o, &
+                          1,wf%n_v, &
+                          batch_k%first,batch_k%last, &
+                          1,wf%n_v)
+!
+         call sort_1234_to_2413(g_pqrs , h_pqrs , wf%n_o , wf%n_v , batch_k%length , wf%n_v) ! sort to bclk
+!
+         call single_record_writer(batch_k, wf%g_lbkc_t, h_pqrs)
+!
+         call mem%dealloc(g_pqrs, wf%n_o , wf%n_v , batch_k%length , wf%n_v)
+!
+      enddo
+!
+      call batch_k%determine_limits(1)
+      call mem%dealloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
+!
+      call disk%close_file(wf%g_lbkc_t,'keep')
+
+!
+   end subroutine prepare_cc3_g_lbkc_t_file_cc3
+!
+!
+   module subroutine prepare_cc3_jacobian_intermediates_cc3(wf)
 !!
 !!    Construct X_abdi and X_ajil needed in CC3 jacobian transpose and store on disk
 !!    For that: construct t^abc_ijk in single batches of ijk 
@@ -352,8 +358,12 @@ contains
       integer :: ioerror = -1
       integer :: l
 !
-!     Arrays for the triples amplitudes
+!     Construct the g_lbkc_t file (only needed for the intermediates)
+!     g_ljck_t and g_bdck_t are already on disk from the ground state calculation
 !
+      call wf%prepare_cc3_g_lbkc_t_file()
+!
+!     Arrays for the triples amplitudes
       call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%alloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -362,7 +372,6 @@ contains
       call squareup_and_sort_1234_to_1342(wf%t2, t_abji, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Array for the whole intermediate X_alij
-!
       call mem%alloc(X_alij, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       X_alij = zero
 !
@@ -582,7 +591,9 @@ contains
 !
       call disk%close_file(wf%g_bdck_t)
       call disk%close_file(wf%g_ljck_t)
-      call disk%close_file(wf%g_lbkc_t)
+!
+!     g_lbkc_t file only needed for the construction of the intermediates
+      call disk%close_file(wf%g_lbkc_t,'delete')
 !
 !     Deallocate integral arrays
 !
@@ -659,7 +670,7 @@ contains
 !
       call disk%close_file(wf%X_ajil,'keep')
 !
-   end subroutine prepare_cc3_jacobian_transpose_intermediates_cc3
+   end subroutine prepare_cc3_jacobian_intermediates_cc3
 !
 !
    module subroutine construct_X_intermediates_cc3(wf, i, j, k, t_abc, u_abc, v_abc, X_alij,      &
@@ -988,4 +999,4 @@ contains
    end subroutine sort_X_to_abid_and_write_cc3
 !
 !
-end submodule prepare_jacobian_transpose
+end submodule prepare_jacobian_transform

@@ -17,29 +17,13 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine prepare_for_jacobian_transpose_cc3(wf)
-!!
-!!    Prepare for Jacobian transpose (CC3)
-!!    Set up files containing integrals and intermediates for CC3 jacobian transpose
-!!    Called from solver
-!!
-!!    Written by Rolf H. Myhre and Alexander Paul, April 2019
-!!
-   implicit none
-!
-   class(cc3) :: wf
-!
-   end subroutine prepare_for_jacobian_transpose_cc3
-!
-!
    module subroutine prepare_cc3_jacobian_transpose_integrals_cc3(wf)
 !!
 !!    Construct integrals needed in CC3 jacobian transpose and store on disk
-!!    (ab|cd) ordered as abc,d
-!!    (mi|lk) ordered as lm,ik
-!!    (lb|kc) ordered as bcl,k
-!!    (le|ck) ordered as lce,k
-!!    (cd|mk) ordered as dcm,k
+!!    (be|cd) ordered as bce,d
+!!    (mj|lk) ordered as mjk,l
+!!    (ck|ld) ordered as cl,kd
+!!    (cd|lk) ordered as cl,kd
 !!
 !!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
@@ -50,7 +34,23 @@
    end subroutine prepare_cc3_jacobian_transpose_integrals_cc3
 !
 !
-   module subroutine prepare_cc3_jacobian_transpose_intermediates_cc3(wf)
+   module subroutine prepare_cc3_g_lbkc_t_file_cc3(wf)
+!!
+!!    Construct ovov-integral only needed in the construction of 
+!!    the intermediates for the CC3 jacobian transformations and store on disk
+!!
+!!    (lb|kc) ordered as bcl,k
+!!
+!!    written by Rolf H. Myhre and Alexander Paul, April 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+   end subroutine prepare_cc3_g_lbkc_t_file_cc3
+!
+!
+   module subroutine prepare_cc3_jacobian_intermediates_cc3(wf)
 !!
 !!    Construct X_abdi and Y_akil needed in CC3 jacobian transpose and store on disk
 !!    For that: construct t^abc_ijk in single batches of ijk 
@@ -62,7 +62,7 @@
 !!
       class(cc3) :: wf
 !
-   end subroutine prepare_cc3_jacobian_transpose_intermediates_cc3
+   end subroutine prepare_cc3_jacobian_intermediates_cc3
 !
 !
    module subroutine construct_X_intermediates_cc3(wf, i, j, k, t_abc, u_abc, v_abc, X_alij,      &
