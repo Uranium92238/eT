@@ -391,19 +391,20 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_iajb ! g_iajb
 !
+      real(dp) :: correlation_energy
+!
       integer :: a = 0, i = 0, b = 0, j = 0, ai = 0
       integer :: bj = 0, aibj = 0
+!
+!     Compute the correlation energy E = E + sum_aibj (t_ij^ab + t_i^a t_j^b) L_iajb
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_iajb)
 !
-!     Set the initial value of the energy
+      correlation_energy = zero
 !
-      wf%energy = wf%hf_energy
-!
-!     Add the correlation energy E = E + sum_aibj (t_ij^ab + t_i^a t_j^b) L_iajb
-!
+!$omp parallel do private(a,i,ai,bj,j,b,aibj) reduction(+:correlation_energy)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
@@ -416,9 +417,7 @@ contains
 !
                   aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
 !
-!                 Add the correlation energy
-!
-                  wf%energy = wf%energy +                                   &
+                  correlation_energy = correlation_energy +                 &
                                  (wf%t2(aibj) + (wf%t1(a,i))*(wf%t1(b,j)))* &
                                  (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
 !
@@ -426,8 +425,11 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+      wf%energy = wf%hf_energy + correlation_energy
 !
    end subroutine calculate_energy_ccsd
 !
@@ -503,6 +505,7 @@ contains
 !
       eta = zero
 !
+!$omp parallel do private(i,a)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -511,6 +514,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
 !     eta_ai_bj = 2* L_iajb = 4 * g_iajb(i,a,j,b) - 2 * g_iajb(i,b,j,a)
 !
@@ -528,6 +532,7 @@ contains
 !
 !     Pack vector into doubles eta
 !
+!$omp parallel do private(j,b,bj,i,a,ai,aibj)
       do j = 1, wf%n_o
          do b = 1, wf%n_v
 !
@@ -546,6 +551,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -979,11 +985,13 @@ contains
       call mem%alloc(X_unpacked, wf%n_t1, wf%n_t1)
       call squareup(X, X_unpacked, wf%n_t1)
 !
+!$omp parallel do private(I)
       do I = 1, wf%n_t1 
 !
          X_unpacked(I,I) = X_unpacked(I,I)/two
 !
-      enddo 
+      enddo
+!$omp end parallel do 
 !
       call packin(X, X_unpacked, wf%n_t1)
       call mem%dealloc(X_unpacked, wf%n_t1, wf%n_t1)
@@ -1026,12 +1034,14 @@ contains
 !     Change dt doubles diagonal to match the definition of the 
 !     double amplitudes 
 !
+!$omp parallel do private(ai, aiai)
       do ai = 1, wf%n_t1
 !
          aiai = ai*(ai - 3)/2 + 2*ai
          dt(wf%n_t1 + aiai) = two*dt(wf%n_t1 + aiai)
 !
-      enddo  
+      enddo 
+!$omp end parallel do 
 !
 !     Add the dt vector to the t vector 
 !

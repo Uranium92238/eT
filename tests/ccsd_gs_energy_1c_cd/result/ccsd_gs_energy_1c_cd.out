@@ -1,0 +1,266 @@
+
+
+
+                       eT - a coupled cluster program 
+       Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch
+
+  ----------------------------------------------------------------------------------
+   Author:                Contribution(s):
+  ----------------------------------------------------------------------------------
+   Josefine H. Andersen   First order properties
+   Sarai D. Folkestad     Program design, HF, CCS, CC2, CCSD, Libint-interface,
+                          Cholesky decomposition, Davidson-tool, CVS, DIIS-tool
+                          Zeroth order properties, First order properties
+   Linda Goletto          CC2
+   Eirik F. Kjønstad      Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,
+                          Cholesky decomposition, Libint-interface, Davidson-tool
+                          Zeroth order properties, First order properties
+   Rolf H. Myhre          CC3, Runtest-interface, Launch script
+   Alexander Paul         CC2, CC3
+   Andreas Skeidsvoll     MP2
+  ----------------------------------------------------------------------------------
+   Other contributors: A. Balbi, M. Scavino
+
+  Running on 8 OMP threads
+
+  Memory available for calculation:         8 GB
+  Disk space available for calculation:    30 GB
+
+  - Molecular system specifications:
+
+     Name:         hofhe
+     Charge:       0
+     Multiplicity: 1
+
+     Nuclear repulsion energy (a.u.):             12.116100574587
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+     Geometry (Å):
+
+     H    0.866810000000   0.601440000000   5.000000000000   cc-pvdz    
+     H   -0.866810000000   0.601440000000   5.000000000000   cc-pvdz    
+     O    0.000000000000  -0.075790000000   5.000000000000   cc-pvdz    
+     He   0.100000000000  -0.020000000000   7.530000000000   cc-pvdz    
+
+     Geometry (bohr):
+
+     H    1.638033502034   1.136556880358   9.448630622825   cc-pvdz    
+     H   -1.638033502034   1.136556880358   9.448630622825   cc-pvdz    
+     O    0.000000000000  -0.143222342981   9.448630622825   cc-pvdz    
+     He   0.188972612457  -0.037794522491  14.229637717975   cc-pvdz    
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:         23
+     Number of molecular orbitals:       29
+     Number of atomic orbitals:          29
+
+
+  :: Self-consistent field DIIS Hartree-Fock solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock matrix 
+  is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:               8
+     Energy threshold:              0.1000E-09
+     Gradient threshold:            0.1000E-09
+
+     Coulomb screening threshold:   0.1000E-12
+     Exchange screening threshold:  0.1000E-12
+     ERI integral precision:        0.1000E-25
+
+  - Setting initial AO density to SAD:
+
+     Energy of initial guess:       -78.492022922278
+     Number of electrons in guess:   12.000000000000
+
+  Iteration    Energy (a.u.)        Max(grad.)    Delta E (a.u.)
+  --------------------------------------------------------------
+    1           -78.796606526463     0.9053E-01     0.7880E+02
+    2           -78.828675823330     0.7128E-01     0.3207E-01
+    3           -78.843428154401     0.8290E-02     0.1475E-01
+    4           -78.843809541666     0.2414E-02     0.3814E-03
+    5           -78.843850846799     0.3301E-03     0.4131E-04
+    6           -78.843851669326     0.5527E-04     0.8225E-06
+    7           -78.843851692851     0.5865E-05     0.2353E-07
+    8           -78.843851693556     0.2356E-05     0.7052E-09
+    9           -78.843851693630     0.2071E-06     0.7378E-10
+   10           -78.843851693630     0.1594E-07     0.2274E-12
+   11           -78.843851693630     0.3322E-08     0.5684E-13
+   12           -78.843851693630     0.1197E-08     0.2842E-13
+   13           -78.843851693630     0.4264E-09     0.1137E-12
+   14           -78.843851693630     0.1280E-09     0.1137E-12
+   15           -78.843851693630     0.1479E-10     0.9948E-13
+  --------------------------------------------------------------
+
+  Convergence criterion met in  15 iterations!
+
+  - Summary of HF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                 0.645629080236
+     Nuclear repulsion energy:     12.116100574587
+     Electronic energy:           -90.959952268217
+     Total energy:                -78.843851693630
+
+  - Molecular orbital energies:
+
+    1  -20.574269195128      2   -1.277667044958      3   -0.898849406809
+    4   -0.629870222684      5   -0.541641772841      6   -0.485872762812
+    7    0.159756317424      8    0.229311906285      9    0.704416610872
+   10    0.746260122921     11    1.155862024397     12    1.170770887084
+   13    1.267961746557     14    1.449847537230     15    1.463234913441
+   16    1.474444394534     17    1.682695299885     18    1.804186820060
+   19    1.902641648751     20    2.148883457177     21    2.200395756980
+   22    2.540321860022     23    2.541517310547     24    2.559338707351
+   25    3.175416260672     26    3.209661156326     27    3.328173215213
+   28    3.721936473483     29    3.985492632598
+
+  - Cleaning up Self-consistent field DIIS Hartree-Fock solver
+
+
+  :: Cholesky decomposition of electronic repulsion integrals solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations.
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-09
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+     Doing one-center Cholesky decomposition (1C-CD).
+
+     Total number of AOs:                    29
+     Total number of shell pairs:           120
+     Total number of AO pairs:              435
+
+  - Preparing diagonal for decomposition:
+
+     Significant shell pairs:                    39
+     Significant AO pairs:                      150
+
+     Construct shell pairs:                     120
+     Construct AO pairs:                        435
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1              125 /       29       0.47383E+01     112             42                 5250
+     2               38 /       14       0.47165E-01     101            104                 3952
+     3               24 /        6       0.34076E-03      27            116                 2784
+     4                1 /        1       0.21270E-05      24            136                  136
+     5                0 /        0       0.15562E-07       1            137                    0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals: 
+
+     Final number of Cholesky vectors:        137
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.4794E-03
+     Minimal element of difference between approximate and actual diagonal:  -0.8882E-15
+
+
+  :: DIIS CC ground solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
+  of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 13. 
+  
+
+  - DIIS CC ground state solver settings:
+
+     Omega threshold:           0.10E-09
+     Energy threshold:          0.10E-09
+
+     DIIS dimension:                   8
+     Max number of iterations:       100
+
+  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) 
+  ---------------------------------------------------------------
+    1           -79.084239568582     0.9389E-01     0.7908E+02
+    2           -79.092590783475     0.2720E-01     0.8351E-02
+    3           -79.099413136854     0.7498E-02     0.6822E-02
+    4           -79.100348131823     0.2093E-02     0.9350E-03
+    5           -79.100374289204     0.5147E-03     0.2616E-04
+    6           -79.100396174901     0.2311E-03     0.2189E-04
+    7           -79.100387995685     0.4930E-04     0.8179E-05
+    8           -79.100386617149     0.1177E-04     0.1379E-05
+    9           -79.100386015276     0.4099E-05     0.6019E-06
+   10           -79.100385826643     0.1771E-05     0.1886E-06
+   11           -79.100385867615     0.6992E-06     0.4097E-07
+   12           -79.100385876567     0.3084E-06     0.8951E-08
+   13           -79.100385889160     0.1028E-06     0.1259E-07
+   14           -79.100385883699     0.2986E-07     0.5462E-08
+   15           -79.100385882946     0.6336E-08     0.7530E-09
+   16           -79.100385883153     0.2104E-08     0.2073E-09
+   17           -79.100385883343     0.6436E-09     0.1900E-09
+   18           -79.100385883404     0.1548E-09     0.6074E-10
+   19           -79.100385883411     0.5227E-10     0.7731E-11
+  --------------------------------------------------------------
+
+  Convergence criterion met in  19 iterations!
+
+  - DIIS CC ground state solver summary:
+
+     Final ground state energy (a.u.):  -79.100385883411
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         t(a,i)             
+     -----------------------------------
+        1      5       -0.014703068565
+       14      4        0.009552678475
+        7      4       -0.008274582697
+       15      5        0.006130253940
+        4      5       -0.005626748262
+        6      2       -0.005476292830
+        2      4       -0.005293324731
+       13      5       -0.005263637297
+        5      6        0.004902708567
+       11      6       -0.003459751473
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         t(ai,bj)             
+     --------------------------------------------------
+        2      4       2      4       -0.047330909693
+        5      6       5      6       -0.046238024877
+        9      3       9      3       -0.041363592049
+        3      4       3      4       -0.036653796657
+        6      5       6      5       -0.034554735223
+        1      5       1      5       -0.034144572830
+       16      3      16      3       -0.032108825965
+       17      3      17      3       -0.032053141153
+       18      3      18      3       -0.031352093663
+        2      4       3      4       -0.029712640698
+     --------------------------------------------------
+
+     T1 diagnostic (|T1|/sqrt(N_e)): 0.007217777082
+
+  - Cleaning up ccsd wavefunction
+
+  Mismatch in memory according to eT and specified on input:
+
+     Memory available (eT):          7.9941 GB
+     Memory available (input):       8.0000 GB
+
+  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
+
+  eT terminated successfully!

@@ -79,7 +79,8 @@ module wavefunction_class
 !
       procedure :: is_restart_safe                          => is_restart_safe_wavefunction 
 !
-   end type wavefunction
+   end type wavefunction 
+!
 !
 contains
 !
@@ -232,22 +233,22 @@ contains
 !!    Get AO h 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
-!!    Uses the integral tool to construct the full one-electron h matrix.
+!!    Constructs the full one-electron h matrix.
 !!
       implicit none 
 !
       class(wavefunction), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: h 
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: h 
 !
       type(interval) :: A_interval, B_interval
 !
-      integer :: x, y, A, B
+      integer :: x, y, A, B 
 !
-      real(dp), dimension(:,:), allocatable :: h_AB 
+      real(dp), dimension(:,:), pointer                        :: h_AB_p 
+      real(dp), dimension(wf%system%max_shell_size**2), target :: h_AB
 !
-!$omp parallel do &
-!$omp private(A, B, h_AB, A_interval, B_interval, x, y) schedule(static)
+!$omp parallel do private(A, B, h_AB, h_AB_p, A_interval, B_interval, x, y) schedule(static)
       do A = 1, wf%system%n_s
 !
          A_interval = wf%system%shell_limits(A)
@@ -256,19 +257,18 @@ contains
 !
             B_interval = wf%system%shell_limits(B)
 !
-            call mem%alloc(h_AB, A_interval%size, B_interval%size)
             call wf%system%construct_ao_h_wx(h_AB, A, B)
 !
-             do x = 1, A_interval%size
-                do y = 1, B_interval%size
+            h_AB_p(1 : A_interval%size, 1 : B_interval%size) => h_AB(1 : A_interval%size*B_interval%size)
 !
-                   h(A_interval%first - 1 + x, B_interval%first - 1 + y) = h_AB(x, y)
-                   h(B_interval%first - 1 + y, A_interval%first - 1 + x) = h_AB(x, y)
+            do x = 1, A_interval%size
+               do y = 1, B_interval%size
 !
-                enddo
-             enddo
+                  h(A_interval%first - 1 + x, B_interval%first - 1 + y) = h_AB_p(x, y)
+                  h(B_interval%first - 1 + y, A_interval%first - 1 + x) = h_AB_p(x, y)
 !
-            call mem%dealloc(h_AB, A_interval%size, B_interval%size)
+               enddo
+            enddo
 !
          enddo
       enddo
@@ -279,23 +279,25 @@ contains
 !
    subroutine get_ao_s_wx_wavefunction(wf, s)
 !!
-!!    Get AO s 
+!!    Get AO s
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
-!!    Uses the integral tool to construct the full one-electron h matrix.
+!!    Constructs the full one-electron overlap matrix s.
 !!
       implicit none 
 !
       class(wavefunction), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: s 
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: s 
 !
       type(interval) :: A_interval, B_interval
 !
       integer :: x, y, A, B
 !
-      real(dp), dimension(:,:), allocatable :: s_AB 
+      real(dp), dimension(:,:), pointer                        :: s_AB_p 
+      real(dp), dimension(wf%system%max_shell_size**2), target :: s_AB 
 !
+!$omp parallel do private(A, B, A_interval, B_interval, s_AB, s_AB_p, x, y)
       do A = 1, wf%system%n_s
 !
          A_interval = wf%system%shell_limits(A)
@@ -304,22 +306,24 @@ contains
 !
             B_interval = wf%system%shell_limits(B)
 !
-            call mem%alloc(s_AB, A_interval%size, B_interval%size)
             call wf%system%construct_ao_s_wx(s_AB, A, B)
 !
-             do x = 1, A_interval%size
-                do y = 1, B_interval%size
+            s_AB_p(1 : A_interval%size, 1 : B_interval%size) => s_AB(1 : A_interval%size*B_interval%size)
 !
-                   s(A_interval%first - 1 + x, B_interval%first - 1 + y) = s_AB(x, y)
-                   s(B_interval%first - 1 + y, A_interval%first - 1 + x) = s_AB(x, y)
+            do x = 1, A_interval%size
+               do y = 1, B_interval%size
 !
-                enddo
-             enddo
+                  s(A_interval%first - 1 + x, B_interval%first - 1 + y) = s_AB_p(x, y)
+                  s(B_interval%first - 1 + y, A_interval%first - 1 + x) = s_AB_p(x, y)
 !
-            call mem%dealloc(s_AB, A_interval%size, B_interval%size)
+               enddo
+            enddo
+!
+            nullify(s_AB_p)
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine get_ao_s_wx_wavefunction
 !
@@ -329,25 +333,31 @@ contains
 !!    Get AO mu
 !!    Written by Eirik F. Kjønstad, Sep 2018 
 !!
-!!    Uses the integral tool to construct the full dipole integrals
+!!    Constructs the full dipole integrals mu
 !!    for the X, Y, and Z components.
 !!
       implicit none 
 !
       class(wavefunction), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: mu_X
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: mu_Y
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: mu_Z
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: mu_X
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: mu_Y
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: mu_Z
 !
       type(interval) :: A_interval, B_interval
 !
       integer :: x, y, A, B
 !
-      real(dp), dimension(:,:), allocatable :: mu_AB_X 
-      real(dp), dimension(:,:), allocatable :: mu_AB_Y 
-      real(dp), dimension(:,:), allocatable :: mu_AB_Z 
+      real(dp), dimension(:,:), pointer :: mu_AB_X_p
+      real(dp), dimension(:,:), pointer :: mu_AB_Y_p
+      real(dp), dimension(:,:), pointer :: mu_AB_Z_p
 !
+      real(dp), dimension(wf%system%max_shell_size**2), target :: mu_AB_X 
+      real(dp), dimension(wf%system%max_shell_size**2), target :: mu_AB_Y 
+      real(dp), dimension(wf%system%max_shell_size**2), target :: mu_AB_Z 
+!
+!$omp parallel do private(A, B, A_interval, B_interval, x, y, mu_AB_X, mu_AB_Y, mu_AB_Z, &
+!$omp                       &   mu_AB_X_p, mu_AB_Y_p, mu_AB_Z_p)
       do A = 1, wf%system%n_s
 !
          A_interval = wf%system%shell_limits(A)
@@ -356,33 +366,30 @@ contains
 !
             B_interval = wf%system%shell_limits(B)
 !
-            call mem%alloc(mu_AB_X, A_interval%size, B_interval%size)
-            call mem%alloc(mu_AB_Y, A_interval%size, B_interval%size)
-            call mem%alloc(mu_AB_Z, A_interval%size, B_interval%size)
-!
             call wf%system%construct_ao_mu_wx(mu_AB_X, mu_AB_Y, mu_AB_Z, A, B)
 !
-             do x = 1, A_interval%size
-                do y = 1, B_interval%size
+            mu_AB_X_p(1 : A_interval%size, 1 : B_interval%size) => mu_AB_X(1 : A_interval%size*B_interval%size)
+            mu_AB_Y_p(1 : A_interval%size, 1 : B_interval%size) => mu_AB_Y(1 : A_interval%size*B_interval%size)
+            mu_AB_Z_p(1 : A_interval%size, 1 : B_interval%size) => mu_AB_Z(1 : A_interval%size*B_interval%size)
 !
-                   mu_X(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_X(x, y)
-                   mu_X(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_X(x, y)
+            do x = 1, A_interval%size
+               do y = 1, B_interval%size
 !
-                   mu_Y(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_Y(x, y)
-                   mu_Y(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_Y(x, y)
+                  mu_X(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_X_p(x, y)
+                  mu_X(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_X_p(x, y)
 !
-                   mu_Z(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_Z(x, y)
-                   mu_Z(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_Z(x, y)
+                  mu_Y(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_Y_p(x, y)
+                  mu_Y(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_Y_p(x, y)
 !
-                enddo
-             enddo
+                  mu_Z(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_Z_p(x, y)
+                  mu_Z(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_Z_p(x, y)
 !
-            call mem%dealloc(mu_AB_X, A_interval%size, B_interval%size)
-            call mem%dealloc(mu_AB_Y, A_interval%size, B_interval%size)
-            call mem%dealloc(mu_AB_Z, A_interval%size, B_interval%size)
+               enddo
+            enddo
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine get_ao_mu_wx_wavefunction
 !
@@ -398,24 +405,33 @@ contains
 !
       class(wavefunction), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: q_xx
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: q_xy
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: q_xz
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: q_yy
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: q_yz
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: q_zz
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: q_xx
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: q_xy
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: q_xz
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: q_yy
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: q_yz
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: q_zz
 !
       type(interval) :: A_interval, B_interval
 !
       integer :: x, y, A, B
 !
-      real(dp), dimension(:,:), allocatable :: q_AB_xx 
-      real(dp), dimension(:,:), allocatable :: q_AB_xy 
-      real(dp), dimension(:,:), allocatable :: q_AB_xz 
-      real(dp), dimension(:,:), allocatable :: q_AB_yy 
-      real(dp), dimension(:,:), allocatable :: q_AB_yz 
-      real(dp), dimension(:,:), allocatable :: q_AB_zz 
+      real(dp), dimension(:,:), pointer :: q_AB_xx_p
+      real(dp), dimension(:,:), pointer :: q_AB_xy_p
+      real(dp), dimension(:,:), pointer :: q_AB_xz_p
+      real(dp), dimension(:,:), pointer :: q_AB_yy_p
+      real(dp), dimension(:,:), pointer :: q_AB_yz_p
+      real(dp), dimension(:,:), pointer :: q_AB_zz_p
 !
+      real(dp), dimension(wf%system%max_shell_size**2), target :: q_AB_xx 
+      real(dp), dimension(wf%system%max_shell_size**2), target :: q_AB_xy 
+      real(dp), dimension(wf%system%max_shell_size**2), target :: q_AB_xz 
+      real(dp), dimension(wf%system%max_shell_size**2), target :: q_AB_yy 
+      real(dp), dimension(wf%system%max_shell_size**2), target :: q_AB_yz 
+      real(dp), dimension(wf%system%max_shell_size**2), target :: q_AB_zz 
+!
+!$omp parallel do private (A, B, x, y, A_interval, B_interval, q_AB_xx, q_AB_xy, q_AB_xz, q_AB_yy, &
+!$omp   & q_AB_yz, q_AB_zz, q_AB_xx_p, q_AB_xy_p, q_AB_xz_p, q_AB_yy_p, q_AB_yz_p, q_AB_zz_p)
       do A = 1, wf%system%n_s
 !
          A_interval = wf%system%shell_limits(A)
@@ -424,48 +440,42 @@ contains
 !
             B_interval = wf%system%shell_limits(B)
 !
-            call mem%alloc(q_AB_xx, A_interval%size, B_interval%size)
-            call mem%alloc(q_AB_xy, A_interval%size, B_interval%size)
-            call mem%alloc(q_AB_xz, A_interval%size, B_interval%size)
-            call mem%alloc(q_AB_yy, A_interval%size, B_interval%size)
-            call mem%alloc(q_AB_yz, A_interval%size, B_interval%size)
-            call mem%alloc(q_AB_zz, A_interval%size, B_interval%size)
-!
             call wf%system%construct_ao_q_wx(q_AB_xx, q_AB_xy, q_AB_xz, q_AB_yy, q_AB_yz, q_AB_zz, A, B)
+!
+            q_AB_xx_p(1 : A_interval%size, 1 : B_interval%size) => q_AB_xx(1 : A_interval%size*B_interval%size)
+            q_AB_xy_p(1 : A_interval%size, 1 : B_interval%size) => q_AB_xy(1 : A_interval%size*B_interval%size)
+            q_AB_xz_p(1 : A_interval%size, 1 : B_interval%size) => q_AB_xz(1 : A_interval%size*B_interval%size)
+            q_AB_yy_p(1 : A_interval%size, 1 : B_interval%size) => q_AB_yy(1 : A_interval%size*B_interval%size)
+            q_AB_yz_p(1 : A_interval%size, 1 : B_interval%size) => q_AB_yz(1 : A_interval%size*B_interval%size)
+            q_AB_zz_p(1 : A_interval%size, 1 : B_interval%size) => q_AB_zz(1 : A_interval%size*B_interval%size)
 !
              do x = 1, A_interval%size
                 do y = 1, B_interval%size
 !
-                   q_xx(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_xx(x, y)
-                   q_xx(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_xx(x, y)
+                   q_xx(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_xx_p(x, y)
+                   q_xx(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_xx_p(x, y)
 !
-                   q_xy(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_xy(x, y)
-                   q_xy(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_xy(x, y)
+                   q_xy(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_xy_p(x, y)
+                   q_xy(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_xy_p(x, y)
 !
-                   q_xz(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_xz(x, y)
-                   q_xz(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_xz(x, y)
+                   q_xz(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_xz_p(x, y)
+                   q_xz(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_xz_p(x, y)
 !
-                   q_yy(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_yy(x, y)
-                   q_yy(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_yy(x, y)
+                   q_yy(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_yy_p(x, y)
+                   q_yy(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_yy_p(x, y)
 !
-                   q_yz(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_yz(x, y)
-                   q_yz(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_yz(x, y)
+                   q_yz(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_yz_p(x, y)
+                   q_yz(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_yz_p(x, y)
 !
-                   q_zz(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_zz(x, y)
-                   q_zz(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_zz(x, y)
+                   q_zz(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_zz_p(x, y)
+                   q_zz(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_zz_p(x, y)
 !
                 enddo
              enddo
 !
-            call mem%dealloc(q_AB_xx, A_interval%size, B_interval%size)
-            call mem%dealloc(q_AB_xy, A_interval%size, B_interval%size)
-            call mem%dealloc(q_AB_xz, A_interval%size, B_interval%size)
-            call mem%dealloc(q_AB_yy, A_interval%size, B_interval%size)
-            call mem%dealloc(q_AB_yz, A_interval%size, B_interval%size)
-            call mem%dealloc(q_AB_zz, A_interval%size, B_interval%size)
-!
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine get_ao_q_wx_wavefunction
 !
