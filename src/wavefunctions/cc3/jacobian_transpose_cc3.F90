@@ -841,6 +841,7 @@ contains
 !     Arrays for triples amplitudes
       real(dp), dimension(:,:,:), allocatable :: c_abc
       real(dp), dimension(:,:,:), allocatable :: u_abc
+      real(dp), dimension(:,:,:), allocatable :: v_abc
 !
 !     Unpacked doubles amplitudes
       real(dp), dimension(:,:,:,:), allocatable :: t_abij
@@ -938,6 +939,7 @@ contains
 !
       call mem%alloc(c_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%alloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
 !     Fock matrix subblock: Resorting for easier contractions later
 !
@@ -1183,19 +1185,19 @@ contains
 !                       and calculate contributions to sigma2
 !
                         call c3_timer%start()
-                        call wf%jacobian_transpose_cc3_C3_calc(i, j ,k, c_ai,          &
-                                                         c_abij, c_abc, u_abc, F_kc,   &
-                                                         L_ibjc_p(:,:,i_rel,j_rel),    &
-                                                         L_ibkc_p(:,:,i_rel,k_rel),    &
-                                                         L_jbkc_p(:,:,j_rel,k_rel),    &
-                                                         g_dbic_p(:,:,:,i_rel),        &
-                                                         g_dbjc_p(:,:,:,j_rel),        &
-                                                         g_dbkc_p(:,:,:,k_rel),        &
-                                                         g_jlic_p(:,:,j_rel,i_rel),    &
-                                                         g_klic_p(:,:,k_rel,i_rel),    &
-                                                         g_kljc_p(:,:,k_rel,j_rel),    &
-                                                         g_iljc_p(:,:,i_rel,j_rel),    &
-                                                         g_ilkc_p(:,:,i_rel,k_rel),    &
+                        call wf%jacobian_transpose_cc3_C3_calc(i, j ,k, c_ai, c_abij, &
+                                                         c_abc, u_abc, v_abc, F_kc,   &
+                                                         L_ibjc_p(:,:,i_rel,j_rel),   &
+                                                         L_ibkc_p(:,:,i_rel,k_rel),   &
+                                                         L_jbkc_p(:,:,j_rel,k_rel),   &
+                                                         g_dbic_p(:,:,:,i_rel),       &
+                                                         g_dbjc_p(:,:,:,j_rel),       &
+                                                         g_dbkc_p(:,:,:,k_rel),       &
+                                                         g_jlic_p(:,:,j_rel,i_rel),   &
+                                                         g_klic_p(:,:,k_rel,i_rel),   &
+                                                         g_kljc_p(:,:,k_rel,j_rel),   &
+                                                         g_iljc_p(:,:,i_rel,j_rel),   &
+                                                         g_ilkc_p(:,:,i_rel,k_rel),   &
                                                          g_jlkc_p(:,:,j_rel,k_rel))
 !
                         call wf%jacobian_cc3_eps(omega, i, j, k, c_abc)
@@ -1306,6 +1308,7 @@ contains
 !
       call mem%dealloc(c_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%dealloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%dealloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -1331,7 +1334,7 @@ contains
 !
 !
    module subroutine jacobian_transpose_cc3_C3_calc_cc3(wf, i, j ,k, c_ai, c_abij,  &
-                                                         c_abc, u_abc, F_kc,        &
+                                                         c_abc, u_abc, v_abc, F_kc, &
                                                          L_ibjc, L_ibkc, L_jbkc,    &
                                                          g_dbic, g_dbjc, g_dbkc,    &
                                                          g_jlic, g_klic, g_kljc,    &
@@ -1363,6 +1366,7 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: c_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: v_abc
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: F_kc
 !
@@ -1458,7 +1462,42 @@ contains
                wf%n_v**2)
       call dger_timer%freeze()
 !
+!     c_abc <- u_abc = - sum_l (2*c_bali g_jlkc - c_bcli g_jlka - c_cali g_jlkb)
+!
+      call matmul_timer%start()
+      call dgemm('N', 'T',          &
+                  wf%n_v**2,        &
+                  wf%n_v,           &
+                  wf%n_o,           &
+                  -one,             &
+                  c_abij(:,:,:,i),  & ! c_ba_l,i c_bc_l,i c_ca_l,i
+                  wf%n_v**2,        &
+                  g_jlkc,           & ! g_c_l,jk g_b_l,jk g_a_l,jk
+                  wf%n_v,           &
+                  zero,             &
+                  v_abc,            &
+                  wf%n_v**2)
+      call matmul_timer%freeze()
+!
+!     c_abc <- u_abc = sum_d (2*c_bdji g_dakc - c_bdji g_dcka - c_cdji g_dakb)
+!
+      call matmul_timer%start()
+      call dgemm('N', 'T',          &
+                  wf%n_v,           &
+                  wf%n_v**2,        &
+                  wf%n_v,           &
+                  one,              &
+                  c_abij(:,:,j,i),  & ! c_b_d,ji c_c_d,ji
+                  wf%n_v,           &
+                  g_dbkc,           & ! g_ac_d,k g_ca_d,k g_ab_d,k
+                  wf%n_v**2,        &
+                  one,              &
+                  v_abc,            &
+                  wf%n_v)
+      call matmul_timer%freeze()
+!
       call sum_timer%start()
+      call sort_123_to_213_and_add(v_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
       call add_two_123_min_132_min_321(u_abc, c_abc, wf%n_v)
       call sum_timer%freeze()
 !
@@ -1527,7 +1566,42 @@ contains
                wf%n_v**2)
       call dger_timer%freeze()
 !
+!     c_cab <- u_abc <- v_abc = - sum_l (2*c_cali g_kljb - c_cbli g_klja - c_bali g_kljc)
+!
+      call matmul_timer%start()
+      call dgemm('N', 'T',          &
+                  wf%n_v**2,        &
+                  wf%n_v,           &
+                  wf%n_o,           &
+                  -one,             &
+                  c_abij(:,:,:,i),  & ! c_ca_l,i c_cb_l,i c_ba_l,i
+                  wf%n_v**2,        &
+                  g_kljc,           & ! g_b_l,kj g_a_l,kj g_c_l,kj
+                  wf%n_v,           &
+                  zero,             &
+                  v_abc,            &
+                  wf%n_v**2)
+      call matmul_timer%freeze()
+!
+!     c_abc <- u_abc <- v_abc = sum_d (2*c_cdki g_dajb - c_cdki g_dbja - c_bdki g_dajc)
+!
+      call matmul_timer%start()
+      call dgemm('N', 'T',          &
+                  wf%n_v,           &
+                  wf%n_v**2,        &
+                  wf%n_v,           &
+                  one,              &
+                  c_abij(:,:,k,i),  & ! c_c_d,ki c_b_d,ki
+                  wf%n_v,           &
+                  g_dbjc,           & ! g_ab_d,j g_ba_d,j g_ac_d,j
+                  wf%n_v**2,        &
+                  one,              &
+                  v_abc,            &
+                  wf%n_v)
+      call matmul_timer%freeze()
+!
       call sum_timer%start()
+      call sort_123_to_213_and_add(v_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
       call add_two_132_min_231_min_123(u_abc, c_abc, wf%n_v)
       call sum_timer%freeze()
 !
@@ -1596,54 +1670,7 @@ contains
                wf%n_v**2)
       call dger_timer%freeze()
 !
-      call sum_timer%start()
-      call add_two_231_min_213_min_132(u_abc, c_abc, wf%n_v)
-      call sum_timer%freeze()
-!
-!
-!     :: Contribution 4 ::
-!
-!     c_abc <- u_abc = - sum_l (2*c_bali g_jlkc - c_bcli g_jlka - c_cali g_jlkb)
-!
-      call matmul_timer%start()
-      call dgemm('N', 'T',          &
-                  wf%n_v**2,        &
-                  wf%n_v,           &
-                  wf%n_o,           &
-                  -one,             &
-                  c_abij(:,:,:,i),  & ! c_ba_l,i c_bc_l,i c_ca_l,i
-                  wf%n_v**2,        &
-                  g_jlkc,           & ! g_c_l,jk g_b_l,jk g_a_l,jk
-                  wf%n_v,           &
-                  zero,             &
-                  u_abc,            &
-                  wf%n_v**2)
-      call matmul_timer%freeze()
-!
-!     c_abc <- u_abc = sum_d (2*c_bdji g_dakc - c_bdji g_dcka - c_cdji g_dakb)
-!
-      call matmul_timer%start()
-      call dgemm('N', 'T',          &
-                  wf%n_v,           &
-                  wf%n_v**2,        &
-                  wf%n_v,           &
-                  one,              &
-                  c_abij(:,:,j,i),  & ! c_b_d,ji c_c_d,ji
-                  wf%n_v,           &
-                  g_dbkc,           & ! g_ac_d,k g_ca_d,k g_ab_d,k
-                  wf%n_v**2,        &
-                  one,              &
-                  u_abc,            &
-                  wf%n_v)
-      call matmul_timer%freeze()
-!
-      call sum_timer%start()
-      call add_two_213_min_231_min_312(u_abc, c_abc, wf%n_v)
-      call sum_timer%freeze()
-!
-!     :: Contribution 5 ::
-! 
-!     c_abc <- u_abc = - sum_l (2*c_cblj g_klia - c_calj g_klib - c_ablj g_klic)
+!     c_abc <- u_abc <- v_abc = - sum_l (2*c_cblj g_klia - c_calj g_klib - c_ablj g_klic)
 !
       call matmul_timer%start()
       call dgemm('N', 'T',          &
@@ -1656,11 +1683,11 @@ contains
                   g_klic,           & ! g_a_l,ki g_b_l,ki g_c_l,ki
                   wf%n_v,           &
                   zero,             &
-                  u_abc,            &
+                  v_abc,            &
                   wf%n_v**2)
       call matmul_timer%freeze()
 ! 
-!     c_abc <- u_abc = sum_d (2*c_cdkj g_dbia - c_cdkj g_daib - c_adkj g_dbic)
+!     c_abc <- u_abc <- v_abc = sum_d (2*c_cdkj g_dbia - c_cdkj g_daib - c_adkj g_dbic)
 !
       call matmul_timer%start()
       call dgemm('N', 'T',          &
@@ -1673,53 +1700,13 @@ contains
                   g_dbic,           & ! g_ba_d,i g_ab_d,i g_bc_d,i
                   wf%n_v**2,        &
                   one,              &
-                  u_abc,            &
+                  v_abc,            &
                   wf%n_v)
       call matmul_timer%freeze()
 !
       call sum_timer%start()
-      call add_two_321_min_312_min_123(u_abc, c_abc, wf%n_v)
-      call sum_timer%freeze()
-!
-!
-!     :: Contribution 6 ::
-!
-!     c_cab <- u_abc = - sum_l (2*c_cali g_kljb - c_cbli g_klja - c_bali g_kljc)
-!
-      call matmul_timer%start()
-      call dgemm('N', 'T',          &
-                  wf%n_v**2,        &
-                  wf%n_v,           &
-                  wf%n_o,           &
-                  -one,             &
-                  c_abij(:,:,:,i),  & ! c_ca_l,i c_cb_l,i c_ba_l,i
-                  wf%n_v**2,        &
-                  g_kljc,           & ! g_b_l,kj g_a_l,kj g_c_l,kj
-                  wf%n_v,           &
-                  zero,             &
-                  u_abc,            &
-                  wf%n_v**2)
-      call matmul_timer%freeze()
-!
-!     c_abc <- u_abc = sum_d (2*c_cdki g_dajb - c_cdki g_dbja - c_bdki g_dajc)
-!
-      call matmul_timer%start()
-      call dgemm('N', 'T',          &
-                  wf%n_v,           &
-                  wf%n_v**2,        &
-                  wf%n_v,           &
-                  one,              &
-                  c_abij(:,:,k,i),  & ! c_c_d,ki c_b_d,ki
-                  wf%n_v,           &
-                  g_dbjc,           & ! g_ab_d,j g_ba_d,j g_ac_d,j
-                  wf%n_v**2,        &
-                  one,              &
-                  u_abc,            &
-                  wf%n_v)
-      call matmul_timer%freeze()
-!
-      call sum_timer%start()
-      call add_two_312_min_321_min_213(u_abc, c_abc, wf%n_v)
+      call sort_123_to_213_and_add(v_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
+      call add_two_231_min_213_min_132(u_abc, c_abc, wf%n_v)
       call sum_timer%freeze()
 !
       call matmul_timer%switch_off()
