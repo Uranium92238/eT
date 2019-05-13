@@ -712,25 +712,29 @@ contains
 !                       and calculate contributions to rho1 and rho2
 !                       The terms have the same form as the omega terms (where t_abc = c_abc)
 !
-                        call wf%jacobian_cc3_c3_calc(i, j, k, c_abc, u_abc, t_abji, c_abji,  &
-                                                      g_bdci_p(:,:,:,i_rel),                 &
-                                                      g_bdcj_p(:,:,:,j_rel),                 &
-                                                      g_bdck_p(:,:,:,k_rel),                 &
-                                                      g_ljci_p(:,:,j_rel,i_rel),             &
-                                                      g_lkci_p(:,:,k_rel,i_rel),             &
-                                                      g_lkcj_p(:,:,k_rel,j_rel),             &
-                                                      g_licj_p(:,:,i_rel,j_rel),             &
-                                                      g_lick_p(:,:,i_rel,k_rel),             &
-                                                      g_ljck_p(:,:,j_rel,k_rel),             &
-                                                      g_bdci_c1_p(:,:,:,i_rel),              &
-                                                      g_bdcj_c1_p(:,:,:,j_rel),              &
-                                                      g_bdck_c1_p(:,:,:,k_rel),              &
-                                                      g_ljci_c1_p(:,:,j_rel,i_rel),          &
-                                                      g_lkci_c1_p(:,:,k_rel,i_rel),          &
-                                                      g_lkcj_c1_p(:,:,k_rel,j_rel),          &
-                                                      g_licj_c1_p(:,:,i_rel,j_rel),          &
-                                                      g_lick_c1_p(:,:,i_rel,k_rel),          &
-                                                      g_ljck_c1_p(:,:,j_rel,k_rel))
+                        call zero_array(c_abc,wf%n_v**3)
+!
+                        call wf%omega_cc3_W_calc(i, j, k, c_abc, u_abc, c_abji, &
+                                                 g_bdci_p(:,:,:,i_rel), &
+                                                 g_bdcj_p(:,:,:,j_rel), &
+                                                 g_bdck_p(:,:,:,k_rel), &
+                                                 g_ljci_p(:,:,j_rel,i_rel), &
+                                                 g_lkci_p(:,:,k_rel,i_rel), &
+                                                 g_lkcj_p(:,:,k_rel,j_rel), &
+                                                 g_licj_p(:,:,i_rel,j_rel), &
+                                                 g_lick_p(:,:,i_rel,k_rel), &
+                                                 g_ljck_p(:,:,j_rel,k_rel))
+!
+                        call wf%omega_cc3_W_calc(i, j, k, c_abc, u_abc, t_abji, &
+                                                 g_bdci_c1_p(:,:,:,i_rel),              &
+                                                 g_bdcj_c1_p(:,:,:,j_rel),              &
+                                                 g_bdck_c1_p(:,:,:,k_rel),              &
+                                                 g_ljci_c1_p(:,:,j_rel,i_rel),          &
+                                                 g_lkci_c1_p(:,:,k_rel,i_rel),          &
+                                                 g_lkcj_c1_p(:,:,k_rel,j_rel),          &
+                                                 g_licj_c1_p(:,:,i_rel,j_rel),          &
+                                                 g_lick_c1_p(:,:,i_rel,k_rel),          &
+                                                 g_ljck_c1_p(:,:,j_rel,k_rel))
 !
                         call wf%omega_cc3_eps(i, j, k, c_abc, omega)
 !
@@ -1066,6 +1070,8 @@ contains
 !                       Construct t^{abc}_{ijk} for given i, j, k
 !                       and calculate contributions to rho2
 !                       Using c1-transformed integrals the terms have the same form as the omega terms
+!
+                        call zero_array(t_abc,wf%n_v**3)
 !
                         call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji,  &
                                                    g_bdci_p(:,:,:,i_rel),        &
