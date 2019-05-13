@@ -147,26 +147,6 @@
    end subroutine jacobian_cc3_c3_calc_cc3
 !
 !
-   module subroutine jacobian_cc3_eps_cc3(wf, omega, i, j, k, c_abc)
-!!
-!!    Sets the diagonal of c_abc to 0 and divides by (ω - ε^abc_ijk)
-!!
-!!    Based on omega_cc3_eps_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      real(dp), intent(in) :: omega
-!
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(inout) :: c_abc
-!
-      integer, intent(in) :: i, j, k
-!
-   end subroutine jacobian_cc3_eps_cc3
-!
-!
    module subroutine jacobian_cc3_fock_rho2_cc3(wf, i, j, k, t_abc, u_abc, rho_abij, F_kc)
 !!
 !!    Calculate the Fock contribution to rho2 for fixed i,j and k

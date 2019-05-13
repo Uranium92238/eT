@@ -92,9 +92,10 @@
    end subroutine omega_cc3_W_calc_cc3
 !
 !
-   module subroutine omega_cc3_eps_cc3(wf, i, j, k, t_abc)
+   module subroutine omega_cc3_eps_cc3(wf, i, j, k, t_abc, omega)
 !!
 !!    Divide W^abc_ijk with -epsilon^abc_ijk to obtain T^abc_ijk
+!!    Optional argument omega for jacobian transformations
 !!
 !!    Rolf H. Myhre, January 2019
 !!
@@ -106,6 +107,7 @@
 !
       real(dp), dimension(wf%n_v,wf%n_v,wf%n_v), intent(inout) :: t_abc
 !
+      real(dp), optional :: omega
 !
    end subroutine omega_cc3_eps_cc3
 !

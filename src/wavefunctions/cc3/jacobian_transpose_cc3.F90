@@ -813,12 +813,6 @@ contains
 !!    Construct C^abc_ijk in single batches of ijk and compute the contributions
 !!    to the singles and doubles part of the outgoing vector
 !!
-!!    The construction of C3 is split into contributions 
-!!    from outer products and matrix multiplications
-!!
-!!    1 array for each Permutation of C_abc will be used 
-!!    to reduce the amount of N^7-contractions and sorting
-!!
 !!    c_μ3 = (ω - ε^abc_ijk)^-1 (c_μ1 < μ1 | [H,tau_ν3] | R > + c_μ2 < μ2 | [H,tau_ν3] | R >
 !!
 !!    σ1 += c_μ3 < μ3 | [[H,T_2],tau_ν1] | R >
@@ -931,7 +925,6 @@ contains
       call X_timer%init('X contribution')
 !
 !     Set up arrays for amplitudes
-!
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1200,7 +1193,7 @@ contains
                                                          g_ilkc_p(:,:,i_rel,k_rel),   &
                                                          g_jlkc_p(:,:,j_rel,k_rel))
 !
-                        call wf%jacobian_cc3_eps(omega, i, j, k, c_abc)
+                        call wf%omega_cc3_eps(i, j, k, c_abc, omega)
                         call c3_timer%freeze()
 !
                         call sigma2_timer%start()
