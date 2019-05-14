@@ -5,6 +5,7 @@ stages:
 build:
   stage: build
   script:
+    - echo "Hello"
     - gfortran --version
     - g++ --version
     - cmake --version
