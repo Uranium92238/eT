@@ -575,8 +575,6 @@ contains
 !
 !                       Construct t^{abc}_{ijk} for given i, j, k
 !
-                        call zero_array(t_abc,wf%n_v**3)
-!
                         call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji,  &
                                                    g_bdci_p(:,:,:,i_rel),        &
                                                    g_bdcj_p(:,:,:,j_rel),        &

@@ -443,8 +443,6 @@ contains
 !
                         k_rel = k - batch_k%first + 1
 !
-                        call zero_array(t_abc,wf%n_v**3)
-!
                         call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji, &
                                                  g_bdci_p(:,:,:,i_rel), &
                                                  g_bdcj_p(:,:,:,j_rel), &
@@ -769,7 +767,8 @@ contains
 !
    module subroutine omega_cc3_W_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abji, &
                                           g_bdci, g_bdcj, g_bdck, &
-                                          g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck)
+                                          g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck, &
+                                          keep_t)
 !!
 !!    Calculate the the contributions to the t_3 amplitudes
 !!    for occupied indices i,j,k
@@ -801,6 +800,18 @@ contains
       real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lick
       real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljck
 !
+      logical, optional, intent(in) :: keep_t !If present and true, t_abc is not overwritten by first dgemm
+!
+      real(dp) :: alpha
+!
+      if (.not. present(keep_t)) then
+         alpha = zero
+      elseif (keep_t) then
+         alpha = one
+      else
+         alpha = zero
+      endif
+!
 !
 !     u_abc terms
 !     -----------
@@ -817,7 +828,7 @@ contains
                  wf%n_v,          &
                  g_bdck,          & !g_d_bc,k
                  wf%n_v,          &
-                 one,             &
+                 alpha,           &
                  t_abc,           &
                  wf%n_v)
 !

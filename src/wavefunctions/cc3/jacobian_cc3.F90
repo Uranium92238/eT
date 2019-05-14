@@ -590,8 +590,6 @@ contains
 !
 !                       Construct t^{abc}_{ijk} for given i, j, k
 !
-                        call zero_array(t_abc,wf%n_v**3)
-!
                         call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji,  &
                                                    g_bdci_p(:,:,:,i_rel),        &
                                                    g_bdcj_p(:,:,:,j_rel),        &
@@ -1076,7 +1074,6 @@ contains
 !                       c1-transformed integrals
 !
                         call c3_timer%start()
-                        call zero_array(c_abc,wf%n_v**3)
 !
                         call wf%omega_cc3_W_calc(i, j, k, c_abc, u_abc, c_abji, &
                                                 g_bdci_p(:,:,:,i_rel),          &
@@ -1098,7 +1095,8 @@ contains
                                                 g_lkcj_c1_p(:,:,k_rel,j_rel),   &
                                                 g_licj_c1_p(:,:,i_rel,j_rel),   &
                                                 g_lick_c1_p(:,:,i_rel,k_rel),   &
-                                                g_ljck_c1_p(:,:,j_rel,k_rel))
+                                                g_ljck_c1_p(:,:,j_rel,k_rel),   &
+                                                .true.) !Do not overwrite c_abc
 !
                         call wf%omega_cc3_eps(i, j, k, c_abc, omega)
                         call c3_timer%freeze()

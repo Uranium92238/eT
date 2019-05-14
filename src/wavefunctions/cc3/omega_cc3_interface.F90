@@ -60,7 +60,8 @@
 !
    module subroutine omega_cc3_W_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abji, &
                                           g_bdci, g_bdcj, g_bdck, &
-                                          g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck)
+                                          g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck, &
+                                          keep_t)
 !!
 !!    Read the ljck, jlkc and jbkc integrals needed in the current batches
 !!
@@ -88,6 +89,7 @@
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lick
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck
 !
+      logical, optional, intent(in) :: keep_t
 !
    end subroutine omega_cc3_W_calc_cc3
 !
