@@ -10,7 +10,7 @@ build:
     - cmake --version
     - git submodule init
     - git submodule update
-    - ./setup -FC=gfortran -CXX=g++
+    - ./setup --int32 -FC=gfortran -CXX=g++
     - cd build
     - make
   artifacts:
