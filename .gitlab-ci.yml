@@ -21,4 +21,4 @@ run:
   stage: run
   script:
     - cd build
-    - ctest
+    - ctest --verbose
