@@ -53,13 +53,13 @@ program eT_program
    open(newunit=output%unit, file=output%name, access=output%access, &
       action='write', status='unknown', form=output%format, iostat=io_error)
 !
-      if (io_error /= 0) stop 'Error: could not open eT output file (eT.out)'
+   if (io_error /= 0) stop 'Error: could not open eT output file (eT.out)'
 !
    call input%init('eT.inp')
    open(newunit=input%unit, file=input%name, access=input%access, &
       action='read', status='unknown', form=input%format, iostat=io_error)
 !
-      if (io_error /= 0) stop 'Error: could not open eT input file (eT.inp)'
+   if (io_error /= 0) stop 'Error: could not open eT input file (eT.inp)'
 !
    call timing%init('timing.out')
    open(newunit=timing%unit, file=timing%name, access=timing%access, &
