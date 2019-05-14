@@ -7,9 +7,10 @@ build:
   script:
     - gfortran --version
     - g++ --version
+    - cmake --version
     - git submodule init
     - git submodule update
-    - ./setup -FC=gfortran -CXX=g++-8
+    - ./setup -FC=gfortran -CXX=g++
     - cd build
     - make
   artifacts:
