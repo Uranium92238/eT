@@ -902,15 +902,9 @@ contains
 !     but utilising this makes the code more complicated and
 !     error prone without any huge advantages
 !
-      real(dp), dimension(:,:,:,:), allocatable, target  :: L_jbic
-      real(dp), dimension(:,:,:,:), allocatable, target  :: L_kbic
-      real(dp), dimension(:,:,:,:), allocatable, target  :: L_kbjc
       real(dp), dimension(:,:,:,:), allocatable, target  :: L_ibjc
       real(dp), dimension(:,:,:,:), allocatable, target  :: L_ibkc
       real(dp), dimension(:,:,:,:), allocatable, target  :: L_jbkc
-      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_jbic_p => null()
-      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_kbic_p => null()
-      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_kbjc_p => null()
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_ibjc_p => null()
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_ibkc_p => null()
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_jbkc_p => null()
@@ -968,7 +962,7 @@ contains
          call mem%alloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
          call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
          call mem%alloc(g_jlic, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-         call mem%alloc(L_jbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+         call mem%alloc(L_ibjc, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
          call mem%alloc(Y_bcei, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
 !
@@ -1000,9 +994,6 @@ contains
          call mem%alloc(g_ilkc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
          call mem%alloc(g_jlkc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
 !
-         call mem%alloc(L_jbic, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(L_kbic, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(L_kbjc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
          call mem%alloc(L_ibjc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
          call mem%alloc(L_ibkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
          call mem%alloc(L_jbkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
@@ -1038,10 +1029,10 @@ contains
             call batch_j%determine_limits(j_batch)
 !
             call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, &
-                                        wf%g_jlkc_t, g_jlic, wf%L_jbkc_t, L_jbic)
+                                        wf%g_jlkc_t, g_jlic, wf%L_jbkc_t, L_ibjc)
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
-            L_jbic_p => L_jbic
+            L_ibjc_p => L_ibjc
 !
             if (j_batch .ne. i_batch) then
 !
@@ -1052,11 +1043,9 @@ contains
                call single_record_reader(batch_j, wf%Y_bcek, Y_bcej)
                Y_bcej_p => Y_bcej
 !
-               call compound_record_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, wf%g_jlkc_t,  &
-                                          g_iljc, wf%L_jbkc_t, L_ibjc)
+               call compound_record_reader(batch_i, batch_j, wf%g_ljck_t, g_licj, wf%g_jlkc_t, g_iljc)
                g_licj_p => g_licj
                g_iljc_p => g_iljc
-               L_ibjc_p => L_ibjc
 !
             else
 !
@@ -1067,7 +1056,6 @@ contains
 !
                g_licj_p => g_ljci
                g_iljc_p => g_jlic
-               L_ibjc_p => L_jbic
 !
             endif
 !
@@ -1084,26 +1072,25 @@ contains
                   call single_record_reader(batch_k, wf%Y_bcek, Y_bcek)
                   Y_bcek_p => Y_bcek
 ! 
-                  call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t,  &
-                                             g_klic, wf%L_jbkc_t, L_kbic)
+                  call compound_record_reader(batch_k, batch_i, wf%g_ljck_t, g_lkci, wf%g_jlkc_t, g_klic)
+!
                   g_lkci_p => g_lkci
                   g_klic_p => g_klic
-                  L_kbic_p => L_kbic
 !
-                  call compound_record_reader(batch_i, batch_k, wf%g_ljck_t, g_lick, wf%g_jlkc_t,  &
-                                             g_ilkc, wf%L_jbkc_t, L_ibkc)
+                  call compound_record_reader(batch_i, batch_k, wf%g_ljck_t, g_lick, wf%g_jlkc_t, g_ilkc, & 
+                                              wf%L_jbkc_t, L_ibkc)
+!
                   g_lick_p => g_lick
                   g_ilkc_p => g_ilkc
                   L_ibkc_p => L_ibkc
 !
-                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
-                                             g_kljc, wf%L_jbkc_t, L_kbjc)
+                  call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t, g_kljc)
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
-                  L_kbjc_p => L_kbjc
 !
-                  call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck, wf%g_jlkc_t,  &
-                                             g_jlkc, wf%L_jbkc_t, L_jbkc)
+                  call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck, wf%g_jlkc_t, g_jlkc, & 
+                                              wf%L_jbkc_t, L_jbkc)
+!
                   g_ljck_p => g_ljck
                   g_jlkc_p => g_jlkc
                   L_jbkc_p => L_jbkc
@@ -1117,19 +1104,17 @@ contains
 !
                   g_lkci_p => g_ljci
                   g_klic_p => g_jlic
-                  L_kbic_p => L_jbic
 !
                   g_lick_p => g_ljci
                   g_ilkc_p => g_jlic
-                  L_ibkc_p => L_jbic
+                  L_ibkc_p => L_ibjc
 !
                   g_lkcj_p => g_ljci
                   g_kljc_p => g_jlic
-                  L_kbjc_p => L_jbic
 !
                   g_ljck_p => g_ljci
                   g_jlkc_p => g_jlic
-                  L_jbkc_p => L_jbic
+                  L_jbkc_p => L_ibjc
 !
                else !k_batch == j_batch != i_batch
 !
@@ -1140,21 +1125,19 @@ contains
 !
                   g_lkci_p => g_ljci
                   g_klic_p => g_jlic
-                  L_kbic_p => L_jbic
 !
                   g_lick_p => g_licj
                   g_ilkc_p => g_iljc
                   L_ibkc_p => L_ibjc
 !
                   call compound_record_reader(batch_k, batch_j, wf%g_ljck_t, g_lkcj, wf%g_jlkc_t,  &
-                                             g_kljc, wf%L_jbkc_t, L_kbjc)
+                                             g_kljc, wf%L_jbkc_t, L_jbkc)
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
-                  L_kbjc_p => L_kbjc
 !
                   g_ljck_p => g_lkcj
                   g_jlkc_p => g_kljc
-                  L_jbkc_p => L_kbjc
+                  L_jbkc_p => L_jbkc
 !
                endif
 !
@@ -1258,7 +1241,7 @@ contains
          call mem%dealloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
          call mem%dealloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
          call mem%dealloc(g_jlic, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-         call mem%dealloc(L_jbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+         call mem%dealloc(L_ibjc, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
          call mem%dealloc(Y_bcei, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
 !
@@ -1287,9 +1270,6 @@ contains
          call mem%dealloc(g_ilkc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
          call mem%dealloc(g_jlkc, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
 !
-         call mem%dealloc(L_jbic, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(L_kbic, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
-         call mem%dealloc(L_kbjc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
          call mem%dealloc(L_ibjc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
          call mem%dealloc(L_ibkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
          call mem%dealloc(L_jbkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
