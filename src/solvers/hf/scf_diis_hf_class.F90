@@ -183,10 +183,10 @@ contains
 !
 !     :: Part I. Preparations. 
 !
-      call iteration_timer%init('SCF DIIS iteration time')
-      call solver_timer%init('SCF DIIS solver time')
+      iteration_timer = new_timer('SCF DIIS iteration time')
+      solver_timer = new_timer('SCF DIIS solver time')
 !
-      call solver_timer%start()
+      call solver_timer%turn_on()
 !
 !     Construct screening vectors for efficient Fock construction 
 !
@@ -257,7 +257,7 @@ contains
 !
       do while (.not. solver%converged .and. iteration .le. solver%max_iterations)  
 !
-         call iteration_timer%start()       
+         call iteration_timer%turn_on()       
 !
 !        Set energy and print information for current iteration
 !
@@ -319,8 +319,7 @@ contains
 !
          endif
 !
-         call iteration_timer%freeze()
-         call iteration_timer%switch_off()       
+         call iteration_timer%turn_off()       
 !
          iteration = iteration + 1
 !
@@ -350,8 +349,7 @@ contains
 !
       endif 
 !
-      call solver_timer%freeze()
-      call solver_timer%switch_off()
+      call solver_timer%turn_off()
 !
    end subroutine run_scf_diis_hf
 !

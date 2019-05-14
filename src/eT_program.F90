@@ -63,8 +63,8 @@ program eT_program
 !
    if (io_error /= 0) stop 'Error: could not open eT files (.inp/.out)'
 !
-   call eT_timer%init("Total time in eT")
-   call eT_timer%start()
+   eT_timer = new_timer("Total time in eT")
+   call eT_timer%turn_on()
 !
 !  Print program banner
 !
@@ -127,8 +127,7 @@ program eT_program
 !
    call finalize_libint()
 !
-   call eT_timer%freeze()
-   call eT_timer%switch_off()
+   call eT_timer%turn_off()
 !
    call mem%check_for_leak()
 !

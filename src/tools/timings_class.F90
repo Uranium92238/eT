@@ -27,19 +27,18 @@ module timings_class
 !!
 !!       type(timings) :: A1_timer
 !!
-!!       call A1_timer%init('name')
-!!       call A1_timer%start()
+!!       A1_timer = new_timer('name')
+!!       call A1_timer%turn_on()
 !!
 !!       ... do stuff ...
 !!
-!!       call A1_timer%freeze()
-!!       call A1_timer%switch_off()
+!!       call A1_timer%turn_off()
 !!
-!!    You can freeze and start the clock repeatedly, e.g. in a loop:
+!!    You can freeze and turn_on the clock repeatedly, e.g. in a loop:
 !!
 !!    do (...)
 !!
-!!       call A1_timer%start()
+!!       call A1_timer%turn_on()
 !!
 !!       ... stuff that we want to time 
 !!
@@ -49,22 +48,20 @@ module timings_class
 !!
 !!    enddo
 !!
-!!    call A1_timer%switch_off()
+!!    call A1_timer%turn_off()
 !!
 !!    The object will automatically print the time elapsed to
-!!    the timing file in eT when swtich_off is called, but you can 
-!!    also request the elapsed time by calling 
+!!    the timing file in eT when turn_off is called, but you can 
+!!    also request the elapsed time (e.g. for prints to the main
+!!    output file):
 !! 
 !!       wall_time = A1_timer%get_elapsed_time('wall')
 !!       cpu_time  = A1_timer%get_elapsed_time('cpu')
 !!
-!!    Note that a switched off clock is reset! This means that 
-!!    you must collect the timings before you switch it off.
-!!    Otherwise they will just equal zero.
-!!
+!!    The recommended use is to use a timer object once.
 !!    A timer that has been switched off may be reused,
 !!    though the tag will be the same (indistinguishable
-!!    in output).  
+!!    in output). 
 !!
 !
    use file_class
@@ -74,7 +71,10 @@ module timings_class
 !
    type timings 
 !
+      private 
       character(len=100) :: tag 
+!
+      logical :: ticking
 !
       real(dp) :: elapsed_wall_time
       real(dp) :: elapsed_cpu_time 
@@ -87,49 +87,55 @@ module timings_class
 !
    contains 
 !
-      procedure :: init             => init_timings
+      procedure :: turn_on                => turn_on_timings
+      procedure :: freeze                 => freeze_timings
+      procedure :: turn_off               => turn_off_timings
 !
-      procedure :: start            => start_timings
-      procedure :: freeze           => freeze_timings
-      procedure :: reset            => reset_timings
+      procedure :: get_elapsed_time       => get_elapsed_time_timings
 !
-      procedure :: switch_off       => switch_off_timings
-!
-      procedure :: print_times      => print_times_timings
-      procedure :: get_elapsed_time => get_elapsed_time_timings
+      procedure, private :: reset         => reset_timings
+      procedure, private :: print_times   => print_times_timings
 !
    end type timings 
+!
+!
+   interface timings
+!
+      procedure :: new_timer
+!
+   end interface timings 
+!
 !
 contains
 !
 !
-   subroutine init_timings(timer,tag)
+   function new_timer(tag) result(timer)
 !!
-!!    Init 
+!!    Timer constructor routine 
 !!    Written by Eirik F. Kjønstad, Dec 2018 
 !!
 !!    Initializes timer. Tag is the name of the timer,
-!!    as shown in the timing output file when switch_off()
+!!    as shown in the timing output file when turn_off()
 !!    is called.
 !!
-      class(timings) :: timer 
+      type(timings) :: timer 
 !
-      character(len=*) :: tag 
+      character(len=*), intent(in) :: tag 
 !
 !     Set name & then set all times to zero 
 !
       timer%tag = tag
       call timer%reset()
 !
-   end subroutine init_timings
+   end function new_timer
 !
 !
-   subroutine start_timings(timer)
+   subroutine turn_on_timings(timer)
 !!
-!!    Start 
+!!    Turn on  
 !!    Written by Eirik F. Kjønstad, Dec 2018 
 !!
-!!    Starts the wall and CPU clocks.
+!!    Turns on the wall and CPU clocks.
 !!
       implicit none 
 !
@@ -140,7 +146,9 @@ contains
       call system_clock(count=counter, count_rate=c_rate)
       timer%wall_time_start = real(counter,dp)/c_rate
 !
-   end subroutine start_timings
+      timer%ticking = .true.
+!
+   end subroutine turn_on_timings
 !
 !
    subroutine freeze_timings(timer)
@@ -163,6 +171,8 @@ contains
       timer%elapsed_cpu_time  = timer%elapsed_cpu_time + (timer%cpu_time_end - timer%cpu_time_start)
       timer%elapsed_wall_time = timer%elapsed_wall_time + (timer%wall_time_end - timer%wall_time_start)
 !
+      timer%ticking = .false.
+!
    end subroutine freeze_timings
 !
 !
@@ -177,34 +187,32 @@ contains
 !
       class(timings), intent(inout) :: timer 
 !
-      timer%elapsed_wall_time = zero 
-      timer%elapsed_cpu_time  = zero 
-      timer%wall_time_start   = zero 
-      timer%wall_time_end     = zero 
-      timer%cpu_time_start    = zero 
-      timer%cpu_time_end      = zero 
+      timer%elapsed_wall_time    = zero 
+      timer%elapsed_cpu_time     = zero 
+      timer%wall_time_start      = zero 
+      timer%wall_time_end        = zero 
+      timer%cpu_time_start       = zero 
+      timer%cpu_time_end         = zero 
 !
    end subroutine reset_timings
 !
 !
-   subroutine switch_off_timings(timer)
+   subroutine turn_off_timings(timer)
 !!
 !!    Switch off 
 !!    Written by Eirik F. Kjønstad, Dec 2018 
 !!
 !!    Prints the wall and CPU times to the timing file,
-!!    then resets the timer.
+!!    stopping the clock if it was not frozen beforehand.
 !!
       implicit none 
 !
       class(timings), intent(inout) :: timer 
 !
-!     Print & reset 
-!
+      if (timer%ticking) call timer%freeze() ! Stop timer if it is ticking
       call timer%print_times()
-      call timer%reset()
 !
-   end subroutine switch_off_timings
+   end subroutine turn_off_timings
 !
 !
    subroutine print_times_timings(timer)
@@ -225,7 +233,7 @@ contains
    end subroutine print_times_timings
 !
 !
-   real(dp) function get_elapsed_time_timings(timer, what)
+   function get_elapsed_time_timings(timer, what) result(elapsed)
 !!
 !!    Get elapsed time 
 !!    Written by Eirik F. Kjønstad, Dec 2018 
@@ -239,16 +247,20 @@ contains
 !
       class(timings), intent(in) :: timer 
 !
-      character(len=*) :: what
+      character(len=*), intent(in) :: what
 !
-      get_elapsed_time_timings = zero
-      if (what == 'wall') then 
+      real(dp) :: elapsed 
 !
-         get_elapsed_time_timings = timer%elapsed_wall_time
+      if (timer%ticking) call output%error_msg("Don't ask for elapsed time when the clock is ticking.")
 !
-      elseif (what == 'cpu') then 
+      elapsed = zero
+      if (trim(what) == 'wall') then 
 !
-         get_elapsed_time_timings = timer%elapsed_cpu_time
+         elapsed = timer%elapsed_wall_time
+!
+      elseif (trim(what) == 'cpu') then 
+!
+         elapsed = timer%elapsed_cpu_time
 !
       else
 !
