@@ -73,11 +73,11 @@ contains
       type(timings) :: cc3_timer, cc3_timer_t3_a, cc3_timer_t3_b, cc3_timer_c3
       type(timings) :: ccsd_timer
 !
-      call cc3_timer_t3_a%init('CC3 a1 contribution')
-      call cc3_timer_t3_b%init('CC3 b1 contribution')
-      call cc3_timer_c3%init('CC3 C3 contribution')
-      call cc3_timer%init('CC3 contribution')
-      call ccsd_timer%init('CCSD contribution')
+      call cc3_timer_t3_a%init('Time in CC3 T3 a1')
+      call cc3_timer_t3_b%init('Time in CC3 T3 b1')
+      call cc3_timer_c3%init('Time in CC3 C3')
+      call cc3_timer%init('Total CC3 contribution')
+      call ccsd_timer%init('Total CCSD contribution')
 !
 !     Allocate and zero the transformed singles vector
 !

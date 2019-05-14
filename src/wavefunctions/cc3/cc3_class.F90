@@ -268,7 +268,12 @@ contains
       class(cc3), intent(inout) :: wf
 !
       character(len=*), intent(in) :: r_or_l
-!      
+!
+      type(timings) :: prep_timer      
+!
+      call prep_timer%init("Time preparing for Jacobian")
+      call prep_timer%start()
+!
       if (trim(r_or_l) .eq. "left") then
 !
          write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', trim(r_or_l), &
@@ -289,6 +294,9 @@ contains
          call output%error_msg('Neither left nor right in prepare_fore_excited_state_eq_cc3')
 !
       endif                                 
+!
+      call prep_timer%freeze()
+      call prep_timer%switch_off()
 !
    end subroutine prepare_for_excited_state_eq_cc3
 !
