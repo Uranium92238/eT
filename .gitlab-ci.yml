@@ -5,13 +5,8 @@ stages:
 build:
   stage: build
   script:
-    - ls -ltr
-    - ls /etc
     - gfortran --version
     - g++ --version
-    - module load module-git
-    - module load cmake-3-12.2
-    - module load gcc-8.2.0
     - git submodule init
     - git submodule update
     - ./setup -FC=gfortran -CXX=g++-8
