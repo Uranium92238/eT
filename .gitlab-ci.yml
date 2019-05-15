@@ -13,7 +13,7 @@ build:
     - git submodule update
     - ./setup --int32 -FC=gfortran -CXX=g++
     - cd build
-    - make
+    - make -j2
   artifacts:
     paths: 
       - build/
@@ -22,4 +22,4 @@ run:
   stage: run
   script:
     - cd build
-    - ctest --verbose
+    - ctest
