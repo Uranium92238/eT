@@ -30,7 +30,7 @@ module zop_engine_class
    type, extends(gs_engine) :: zop_engine
 !
       character(len=100) :: tag           = 'Zeroth order coupled cluster properties'
-      character(len=100) :: author        = 'E. F. Kjønstad, S. D. Folkestad, 2019'
+ !     character(len=100) :: author        = 'E. F. Kjønstad, S. D. Folkestad, 2019'
 !
       character(len=500) :: description1  = 'Calculates the time-independent expectation value of&
                                              & one-electron operators A, < A > = < Λ | A | CC >.'

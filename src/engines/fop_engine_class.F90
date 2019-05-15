@@ -28,7 +28,7 @@ module fop_engine_class
    type, extends(es_engine) :: fop_engine
 !
       character(len=100) :: tag           = 'First order coupled cluster properties'
-      character(len=100) :: author        = 'J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, 2019'
+   !   character(len=100) :: author        = 'J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, 2019'
 !
 !     Property solver types
 !

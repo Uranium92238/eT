@@ -64,11 +64,22 @@ contains
 !
       class(gs_engine) :: engine 
 !
-      engine%name_                 = 'Ground state CC engine'
+      engine%name_                 = 'ground state coupled cluster'
+!
+      engine%timer = timings(trim(engine%name_) // ' engine')
+      call engine%timer%turn_on()
+!
       engine%multipliers_algorithm = 'davidson'
       engine%gs_algorithm          = 'diis'
 !
       call engine%read_settings()
+!
+      engine%tasks = [character(len=150) ::                                                                          &
+            'Cholesky decomposition of the ERI-matrix',                                                              &
+            'Calculation of the ground state amplitudes ('//trim(engine%gs_algorithm)//'-algorithm)', &
+            'Calculation of the ground state energy']
+!
+      engine%description = 'Calculates the ground state CC wavefunction | CC > = exp(T) | R >'
 !
    end subroutine prepare_gs_engine
 !
@@ -112,6 +123,8 @@ contains
       class(gs_engine) :: engine 
       class(ccs)       :: wf
 !
+      call engine%print_banner(wf)
+!
 !     Cholesky decoposition of the electron repulsion integrals 
 !
       call engine%do_cholesky(wf, wf%orbital_coefficients)
@@ -146,7 +159,7 @@ contains
       type(diis_cc_gs), allocatable :: diis_solver 
       type(newton_raphson_cc_gs), allocatable :: newton_raphson_solver 
 !
-      if (trim(wf%name_) == 'MP2') then 
+      if (trim(wf%name_) == 'mp2') then 
 !
          call wf%integrals%write_t1_cholesky(wf%t1)
          call wf%calculate_energy()

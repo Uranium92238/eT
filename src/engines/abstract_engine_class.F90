@@ -32,8 +32,13 @@ module abstract_engine_class
    type, abstract :: abstract_engine
 !
       character(len=200) :: name_
+      character(len=200) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       character(len=200) :: description
+!
+      type(timings) :: timer ! Timer for engine. Obs! must always be turned on in prepare. Is switched of in cleanup. 
+!
+      character(len=150), dimension(:), allocatable :: tasks ! The tasks of the engine, used for prints. Should be set in prepare.
 !
    contains
 !
@@ -42,7 +47,11 @@ module abstract_engine_class
       procedure(essential_engine), deferred      :: prepare   
       procedure(essential_engine_w_wf), deferred :: run 
 !
+      procedure, non_overridable :: cleanup => cleanup_abstract_engine
+!
       procedure, nopass :: do_cholesky => do_cholesky_abstract_engine       
+!
+      procedure :: print_banner => print_banner_abstract_engine
 !
    end type abstract_engine
 !
@@ -93,6 +102,7 @@ contains
 !
       call engine%prepare()
       call engine%run(wf)
+      call engine%cleanup(wf)
 !
    end subroutine ignite_abstract_engine
 !
@@ -128,6 +138,73 @@ contains
       call eri_chol_solver%cleanup()
 !
    end subroutine do_cholesky_abstract_engine
+!
+!
+   subroutine cleanup_abstract_engine(engine, wf)
+!!
+!!    Cleanup
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Prints the timings of the engine. For now
+!!    non-overridable procedure
+!!
+      implicit none
+!
+      class(abstract_engine), intent(inout)  :: engine
+!
+      class(ccs), intent(in)                 :: wf
+!
+      call engine%timer%turn_off()
+!
+      write(output%unit, '(/t3, a)') '- Time elapsed in the ' // trim(wf%name_) // ' ' //trim(engine%name_) // ' calculation:'
+      write(output%unit, '(/t6,a17,f12.5)')  'wall time (sec): ', engine%timer%get_elapsed_time('wall')
+      write(output%unit, '(t6,a17,f12.5)')  'cpu time (sec):  ', engine%timer%get_elapsed_time('cpu')
+!
+   end subroutine cleanup_abstract_engine
+!
+!
+   subroutine print_banner_abstract_engine(engine, wf)
+!!
+!!    Print tasks 
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+      implicit none
+!
+      class(abstract_engine), intent(in)  :: engine
+!
+      class(ccs), intent(in)         :: wf
+!
+      integer :: task, letter
+!
+      character(len=500) :: calculation_type, full_engine_name
+      character(len=40)  :: uppercase_wf
+!
+      if (.not. allocated(engine%tasks)) call output%error_msg('Tasks of engine was not set. Do this in prepare.')
+!
+      full_engine_name  = 'The eT ' // trim(engine%name_) // ' engine'
+!
+      do letter = 1, 40
+!
+         uppercase_wf(letter:letter) = convert_char_to_uppercase(wf%name_(letter:letter))
+!
+      enddo
+!
+      calculation_type  = 'This is a ' // trim(uppercase_wf) // ' calculation. The following tasks will be performed:'
+
+!     
+      call long_string_print(full_engine_name,'(//t3,a)',.true.)
+      call long_string_print(engine%author,'(t3,a/)',.true.)
+      call long_string_print(engine%description,'(t3,a)',.false.,'(t3,a)','(t3,a/)') 
+!
+      call long_string_print(calculation_type,'(t3,a)',.false.,'(t3,a)','(t3,a/)') 
+!
+      do task = 1, size(engine%tasks)
+!
+         write(output%unit, '(t6, a2, a)') '- ', trim(engine%tasks(task))
+!
+      enddo
+!
+   end subroutine print_banner_abstract_engine
 !
 !
 end module abstract_engine_class
