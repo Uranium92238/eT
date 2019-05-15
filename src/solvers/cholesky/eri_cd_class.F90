@@ -184,8 +184,8 @@ contains
 !
       type(timings) :: det_basis_timer, invert_timer, build_timer
 !
-      call det_basis_timer%init("Cholesky; time to determine auxiliary basis")
-      call invert_timer%init("Cholesky; time to construct (J|K), decompose, and invert")
+      det_basis_timer   = new_timer("Cholesky; time to determine auxiliary basis")
+      invert_timer      = new_timer("Cholesky; time to construct (J|K), decompose, and invert")
 !
       call solver%print_banner()
 !
@@ -197,7 +197,7 @@ contains
 !
       write(output%unit, '(/t3, a39)') '- Preparing diagonal for decomposition:'
 !
-      call det_basis_timer%start()
+      call det_basis_timer%turn_on()
 !
       if (solver%one_center) then
 !
@@ -270,30 +270,27 @@ contains
 !
       endif
 !
-      call det_basis_timer%freeze()
-      call det_basis_timer%switch_off()
+      call det_basis_timer%turn_off()
       
       flush(output%unit)
 !
-      call invert_timer%start()
+      call invert_timer%turn_on()
 !
       call solver%construct_S(system)
       call solver%invert_Q()
 !
-      call invert_timer%freeze()
-      call invert_timer%switch_off()
+      call invert_timer%turn_off()
 !
       flush(output%unit)
 !
       if (solver%construct_vectors) then
 !
-         call build_timer%init("Cholesky; time to build L_ab^J and test")
-         call build_timer%start()
+         build_timer = new_timer("Cholesky; time to build L_ab^J and test")
+         call build_timer%turn_on()
 !
          call solver%construct_cholesky_vectors(system)
 !
-         call build_timer%freeze()
-         call build_timer%switch_off()
+         call build_timer%turn_off()
 !
       endif
 !
@@ -3843,8 +3840,8 @@ contains
 !     Read information about for which shell pairs 
 !     the AO Cholesky vectors were constructed (the rest screened out)
 !
-      call cholesky_mo_timer%init('transform and write mo cholesky to file')
-      call cholesky_mo_timer%start()
+      cholesky_mo_timer = new_timer('transform and write mo cholesky to file')
+      call cholesky_mo_timer%turn_on()
 !
       allocate(construct_sp(solver%n_sp))
 !
@@ -4129,8 +4126,7 @@ contains
       call mem%dealloc(L_J, solver%n_cholesky)
       call mem%dealloc(L_J_padded, batch_J%max_length)
 !
-      call cholesky_mo_timer%freeze()
-      call cholesky_mo_timer%switch_off()
+      call cholesky_mo_timer%turn_off()
 !
    end subroutine construct_mo_cholesky_vectors_cd_eri_solver
 !

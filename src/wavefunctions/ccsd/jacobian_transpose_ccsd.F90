@@ -94,8 +94,8 @@ contains
 !
       type(timings) :: jacobian_transpose_timer
 !
-      call jacobian_transpose_timer%init('jacobian transpose')
-      call jacobian_transpose_timer%start()
+      jacobian_transpose_timer = new_timer('jacobian transpose')
+      call jacobian_transpose_timer%turn_on()
 !
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
       sigma_ai = zero
@@ -176,8 +176,7 @@ contains
 !
       call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call jacobian_transpose_timer%freeze()
-      call jacobian_transpose_timer%switch_off()
+      call jacobian_transpose_timer%turn_off()
 !
    end subroutine jacobian_transpose_ccsd_transformation_ccsd
 !

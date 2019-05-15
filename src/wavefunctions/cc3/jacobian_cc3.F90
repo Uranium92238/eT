@@ -75,8 +75,8 @@ contains
       type(timings) :: cc3_timer
       type(timings) :: ccsd_timer
 !
-      call cc3_timer%init('CC3 contribution)')
-      call ccsd_timer%init('CCSD contribution)')
+      cc3_timer = new_timer('CC3 contribution)')
+      ccsd_timer = new_timer('CCSD contribution)')
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -99,7 +99,7 @@ contains
 !
 !     :: CCS contributions to the singles c vector ::
 !
-      call ccsd_timer%start()
+      call ccsd_timer%turn_on()
 !
       call wf%jacobian_ccs_a1(rho_ai, c_ai)
       call wf%jacobian_ccs_b1(rho_ai, c_ai)
@@ -185,7 +185,7 @@ contains
 !     Compute CC3 contributions to rho_ai and rho_aibj and symmetrise rho_aibj
 !     CCSD J2 and K2 are already symmetric and will be computed afterwards
 !
-      call cc3_timer%start()
+      call cc3_timer%turn_on()
 !
       call mem%alloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%alloc(c_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -206,13 +206,12 @@ contains
 !
       call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
 !
-      call cc3_timer%freeze()
-      call cc3_timer%switch_off()
+      call cc3_timer%turn_off()
 !
 !     Last two CCSD-terms (J2, K2) are already symmetric.
 !     Perform the symmetrization rho_ai_bj = P_ij^ab rho_ai_bj
 !
-      call ccsd_timer%start()
+      call ccsd_timer%turn_on()
 !
       call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call sort_1234_to_1324(rho_abij, rho_aibj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -233,8 +232,7 @@ contains
 !
       call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call ccsd_timer%freeze()
-      call ccsd_timer%switch_off()
+      call ccsd_timer%turn_off()
 !
 !     divide by the biorthonormal factor 1 + delta_ai,bj and
 !     overwrite the incoming, packed doubles c vector for exit

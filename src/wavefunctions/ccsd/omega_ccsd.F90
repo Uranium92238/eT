@@ -118,8 +118,8 @@ contains
 !
       type(timings) :: ccsd_a1_timer
 !
-      call ccsd_a1_timer%init('omega ccsd a1')
-      call ccsd_a1_timer%start()
+      ccsd_a1_timer = new_timer('omega ccsd a1')
+      call ccsd_a1_timer%turn_on()
 !
 !     u_ki^cd = 2*t_ki^cd - t_ik^cd (ordered as u_dkci)
 !
@@ -174,8 +174,7 @@ contains
 !
       call mem%dealloc(u_dkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call ccsd_a1_timer%freeze()
-      call ccsd_a1_timer%switch_off()
+      call ccsd_a1_timer%turn_off()
 !
    end subroutine omega_ccsd_a1_ccsd
 !
@@ -204,8 +203,8 @@ contains
 !
       type(timings) :: ccsd_b1_timer 
 !  
-      call ccsd_b1_timer%init('omega ccsd b1')
-      call ccsd_b1_timer%start()
+      ccsd_b1_timer = new_timer('omega ccsd b1')
+      call ccsd_b1_timer%turn_on()
 !
 !     Form u_alck = u_kl^ac = 2 * t_kl^ac - t_lk^ac
 !     Square up amplitudes and reorder: t_akcl to t_alck
@@ -243,8 +242,7 @@ contains
       call mem%dealloc(u_alck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(g_lcki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call ccsd_b1_timer%freeze()
-      call ccsd_b1_timer%switch_off()
+      call ccsd_b1_timer%turn_off()
 !
    end subroutine omega_ccsd_b1_ccsd
 !
@@ -276,8 +274,8 @@ contains
 !
       type(timings) :: ccsd_c1_timer 
 !
-      call ccsd_c1_timer%init('omega ccsd c1')
-      call ccsd_c1_timer%start()
+      ccsd_c1_timer = new_timer('omega ccsd c1')
+      call ccsd_c1_timer%turn_on()
 !
 !     Form u_aick = u_ik^ac = 2*t_ik^ac - t_ki^ac
 !
@@ -314,8 +312,7 @@ contains
       call mem%dealloc(u_aick,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(F_c_k, wf%n_v, wf%n_o)
 !
-      call ccsd_c1_timer%freeze()
-      call ccsd_c1_timer%switch_off()
+      call ccsd_c1_timer%turn_off()
 !
    end subroutine omega_ccsd_c1_ccsd
 !
@@ -386,10 +383,10 @@ contains
 !
       type(timings) :: ccsd_a2_timer, ccsd_a2_integral_timer
 !
-      call ccsd_a2_timer%init('omega ccsd a2')
-      call ccsd_a2_integral_timer%init('omega ccsd a2 g_abcd')
+      ccsd_a2_timer = new_timer('omega ccsd a2')
+      ccsd_a2_integral_timer = new_timer('omega ccsd a2 g_abcd')
 !      
-      call ccsd_a2_timer%start()
+      call ccsd_a2_timer%turn_on()
 !
 !     Some helpful integers
 !
@@ -439,7 +436,7 @@ contains
 !
             call mem%alloc(g_acbd, batch_a%length, wf%n_v, batch_b%length, wf%n_v)
 !
-            call ccsd_a2_integral_timer%start()
+            call ccsd_a2_integral_timer%turn_on()
 !
             call wf%get_vvvv(g_acbd,         &
                               batch_a%first, &
@@ -763,10 +760,8 @@ contains
          enddo ! End batching over b
       enddo ! End batching over a
 !
-      call ccsd_a2_timer%freeze()
-!
-      call ccsd_a2_timer%switch_off()
-      call ccsd_a2_integral_timer%switch_off()
+      call ccsd_a2_timer%turn_off()
+      call ccsd_a2_integral_timer%turn_off()
 !
    end subroutine omega_ccsd_a2_ccsd
 !
@@ -806,8 +801,8 @@ contains
 !
       type(timings) :: ccsd_b2_timer
 !
-      call ccsd_b2_timer%init('omega ccsd b2')
-      call ccsd_b2_timer%start()
+      ccsd_b2_timer = new_timer('omega ccsd b2')
+      call ccsd_b2_timer%turn_on()
 !
 !     Allocate and construct g_kilj
 !
@@ -887,8 +882,7 @@ contains
       call add_to_packed(omega2, omega_aibj, (wf%n_o)*(wf%n_v))
       call mem%dealloc(omega_aibj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call ccsd_b2_timer%freeze()
-      call ccsd_b2_timer%switch_off()
+      call ccsd_b2_timer%turn_off()
 !
    end subroutine omega_ccsd_b2_ccsd
 !
@@ -950,8 +944,8 @@ contains
 !
       type(timings) :: ccsd_c2_timer
 !
-      call ccsd_c2_timer%init('omega ccsd c2')
-      call ccsd_c2_timer%start()
+      ccsd_c2_timer = new_timer('omega ccsd c2')
+      call ccsd_c2_timer%turn_on()
 !
 !     Sort t_al_di = t_li^ad as t_aidl (1234 to 1432)
 !
@@ -1181,8 +1175,7 @@ contains
 !
       call mem%dealloc(Y_aibj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call ccsd_c2_timer%freeze()
-      call ccsd_c2_timer%switch_off()
+      call ccsd_c2_timer%turn_off()
 !
    end subroutine omega_ccsd_c2_ccsd
 !
@@ -1225,8 +1218,8 @@ contains
 !
       type(timings) :: ccsd_d2_timer
 !
-      call ccsd_d2_timer%init('omega ccsd d2')
-      call ccsd_d2_timer%start()
+      ccsd_d2_timer = new_timer('omega ccsd d2')
+      call ccsd_d2_timer%turn_on()
 !
 !     :: Calculate the D2.2 term of omega ::
 !
@@ -1338,8 +1331,7 @@ contains
 !
       call mem%dealloc(omega2_aibj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call ccsd_d2_timer%freeze()
-      call ccsd_d2_timer%switch_off()
+      call ccsd_d2_timer%turn_off()
 !
    end subroutine omega_ccsd_d2_ccsd
 !
@@ -1387,8 +1379,8 @@ contains
 !
       type(timings) :: ccsd_e2_timer 
 !
-      call ccsd_e2_timer%init('omega ccsd e2')
-      call ccsd_e2_timer%start()
+      ccsd_e2_timer = new_timer('omega ccsd e2')
+      call ccsd_e2_timer%turn_on()
 !
 !     :: Calculate the E2.1 term of omega ::
 !
@@ -1539,8 +1531,7 @@ contains
 !
       call mem%dealloc(omega2_aibj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call ccsd_e2_timer%freeze()
-      call ccsd_e2_timer%switch_off()
+      call ccsd_e2_timer%turn_off()
 !
    end subroutine omega_ccsd_e2_ccsd
 !
