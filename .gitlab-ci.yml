@@ -5,6 +5,7 @@ stages:
 build:
   stage: build
   script:
+    - whoami
     - gfortran --version
     - g++ --version
     - cmake --version
