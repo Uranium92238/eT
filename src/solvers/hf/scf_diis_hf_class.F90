@@ -319,7 +319,8 @@ contains
 !
          endif
 !
-         call iteration_timer%turn_off()       
+         call iteration_timer%turn_off()  
+         call iteration_timer%reset()     
 !
          iteration = iteration + 1
 !

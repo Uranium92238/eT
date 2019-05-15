@@ -52,16 +52,30 @@ module timings_class
 !!
 !!    The object will automatically print the time elapsed to
 !!    the timing file in eT when turn_off is called, but you can 
-!!    also request the elapsed time (e.g. for prints to the main
-!!    output file):
-!! 
+!!    also request the elapsed time after the timer has been 
+!!    turned off (e.g. for prints to the main output file):
+!!
+!!       call A1_timer%turn_off() 
+!!
 !!       wall_time = A1_timer%get_elapsed_time('wall')
 !!       cpu_time  = A1_timer%get_elapsed_time('cpu')
 !!
-!!    The recommended use is to use a timer object once.
-!!    A timer that has been switched off may be reused,
+!!    A timer that has been turned off may be reused,
 !!    though the tag will be the same (indistinguishable
-!!    in output). 
+!!    in output). Iteration timers in solvers are an 
+!!    example where this is useful. In that case, do a 
+!!    reset to zero out the timings of a turned off timer:
+!!
+!!    do while (.not. converged)
+!!
+!!       call iteration_timer%turn_on()
+!!
+!!       ... do stuff ...
+!!
+!!       call iteration_timer%turn_off()
+!!       call iteration_timer%reset()
+!!
+!!    enddo
 !!
 !
    use file_class
@@ -74,7 +88,7 @@ module timings_class
       private 
       character(len=100) :: tag 
 !
-      logical :: ticking
+      logical :: on
 !
       real(dp) :: elapsed_wall_time
       real(dp) :: elapsed_cpu_time 
@@ -91,9 +105,10 @@ module timings_class
       procedure :: freeze                 => freeze_timings
       procedure :: turn_off               => turn_off_timings
 !
+      procedure :: reset                  => reset_timings
+!
       procedure :: get_elapsed_time       => get_elapsed_time_timings
 !
-      procedure, private :: reset         => reset_timings
       procedure, private :: print_times   => print_times_timings
 !
    end type timings 
@@ -146,7 +161,7 @@ contains
       call system_clock(count=counter, count_rate=c_rate)
       timer%wall_time_start = real(counter,dp)/c_rate
 !
-      timer%ticking = .true.
+      timer%on = .true.
 !
    end subroutine turn_on_timings
 !
@@ -171,7 +186,7 @@ contains
       timer%elapsed_cpu_time  = timer%elapsed_cpu_time + (timer%cpu_time_end - timer%cpu_time_start)
       timer%elapsed_wall_time = timer%elapsed_wall_time + (timer%wall_time_end - timer%wall_time_start)
 !
-      timer%ticking = .false.
+      timer%on = .false.
 !
    end subroutine freeze_timings
 !
@@ -199,7 +214,7 @@ contains
 !
    subroutine turn_off_timings(timer)
 !!
-!!    Switch off 
+!!    Turn off 
 !!    Written by Eirik F. Kjønstad, Dec 2018 
 !!
 !!    Prints the wall and CPU times to the timing file,
@@ -209,7 +224,7 @@ contains
 !
       class(timings), intent(inout) :: timer 
 !
-      if (timer%ticking) call timer%freeze() ! Stop timer if it is ticking
+      if (timer%on) call timer%freeze() 
       call timer%print_times()
 !
    end subroutine turn_off_timings
@@ -251,7 +266,7 @@ contains
 !
       real(dp) :: elapsed 
 !
-      if (timer%ticking) call output%error_msg("Don't ask for elapsed time when the clock is ticking.")
+      if (timer%on) call output%error_msg("Don't ask for elapsed time when the clock is on.")
 !
       elapsed = zero
       if (trim(what) == 'wall') then 
