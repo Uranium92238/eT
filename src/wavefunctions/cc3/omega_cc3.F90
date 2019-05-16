@@ -154,7 +154,7 @@ contains
       real(dp), dimension(:,:,:), allocatable :: v_abc
 !
 !     Unpacked doubles amplitudes
-      real(dp), dimension(:,:,:,:), allocatable :: t_abji
+      real(dp), dimension(:,:,:,:), allocatable :: t_abij
 !
       real(dp), dimension(:,:), allocatable :: F_kc !Transpose the fock matrix sub block
 !
@@ -231,8 +231,8 @@ contains
       call mem%alloc(F_kc,wf%n_v,wf%n_o)
       call sort_12_to_21(wf%fock_ia,F_kc,wf%n_o,wf%n_v)
 !
-      call mem%alloc(t_abji,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
-      call squareup_and_sort_1234_to_1342(wf%t2,t_abji,wf%n_v,wf%n_o,wf%n_v,wf%n_o)
+      call mem%alloc(t_abij,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
+      call squareup_and_sort_1234_to_1324(wf%t2,t_abij,wf%n_v,wf%n_o,wf%n_v,wf%n_o)
 !
       req_0 = 0
       req_1 = 2*wf%n_v**3
@@ -441,7 +441,7 @@ contains
 !
                         k_rel = k - batch_k%first + 1
 !
-                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji, &
+                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abij, &
                                                  g_bdci_p(:,:,:,i_rel), &
                                                  g_bdcj_p(:,:,:,j_rel), &
                                                  g_bdck_p(:,:,:,k_rel), &
@@ -541,7 +541,7 @@ contains
       call mem%dealloc(u_abc,wf%n_v,wf%n_v,wf%n_v)
       call mem%dealloc(v_abc,wf%n_v,wf%n_v,wf%n_v)
 !
-      call mem%dealloc(t_abji,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
+      call mem%dealloc(t_abij,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
 !
    end subroutine omega_cc3_a_cc3
 !
@@ -763,7 +763,7 @@ contains
    end subroutine omega_cc3_integrals_cc3
 !
 !
-   module subroutine omega_cc3_W_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abji, &
+   module subroutine omega_cc3_W_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abij, &
                                           g_bdci, g_bdcj, g_bdck, &
                                           g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck, &
                                           keep_t)
@@ -785,7 +785,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abji
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abij
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj
@@ -822,7 +822,7 @@ contains
                  wf%n_v**2,       &
                  wf%n_v,          &
                  one,             &
-                 t_abji(:,:,j,i), & !t_a_d,ji
+                 t_abij(:,:,i,j), & !t_a_d,ij
                  wf%n_v,          &
                  g_bdck,          & !g_d_bc,k
                  wf%n_v,          &
@@ -830,7 +830,7 @@ contains
                  t_abc,           &
                  wf%n_v)
 !
-!     t^ab_il*(lj|ck)
+!     t^ab_lj*(li|ck)
 !     ---------------
 !
       call dgemm('N', 'N',        &
@@ -838,9 +838,9 @@ contains
                  wf%n_v,          &
                  wf%n_o,          &
                  -one,            &
-                 t_abji(:,:,:,i), & !t_ab_l,i
+                 t_abij(:,:,:,j), & !t_ab_l,j
                  wf%n_v**2,       &
-                 g_ljck,          & !g_l_c,jk
+                 g_lick,          & !g_l_c,ik
                  wf%n_o,          &
                  one,             &
                  t_abc,           &
@@ -857,13 +857,13 @@ contains
                  one,             &
                  g_bdcj,          & !g_d_bc,j
                  wf%n_v,          &
-                 t_abji(:,:,i,k), & !t_c_d,ik
+                 t_abij(:,:,k,i), & !t_c_d,ki
                  wf%n_v,          &
                  one,             &
                  t_abc,           &
                  wf%n_v**2)
 !
-!     t^bc_jl*(lk|ai)
+!     t^bc_lk*(lj|ai)
 !     ---------------
 !
       call dgemm('T', 'T',        &
@@ -871,9 +871,9 @@ contains
                  wf%n_v**2,       &
                  wf%n_o,          &
                  -one,            &
-                 g_lkci,          & !g_l_c,ki
+                 g_ljci,          & !g_l_a,ji
                  wf%n_o,          &
-                 t_abji(:,:,:,j), & !t_bc_l,j
+                 t_abij(:,:,:,k), & !t_bc_l,k
                  wf%n_v**2,       &
                  one,             &
                  t_abc,           &
@@ -890,7 +890,7 @@ contains
                  wf%n_v**2,       &
                  wf%n_v,          &
                  one,             &
-                 t_abji(:,:,k,i), & !t_a_d,ki
+                 t_abij(:,:,i,k), & !t_a_d,ik
                  wf%n_v,          &
                  g_bdcj,          & !g_d_cb,j
                  wf%n_v,          &
@@ -898,7 +898,7 @@ contains
                  u_abc,           &
                  wf%n_v)
 !
-!     t^ac_il*(lk|bj)
+!     t^ac_lk*(li|bj)
 !     ---------------
 !
       call dgemm('N', 'N',        &
@@ -906,9 +906,9 @@ contains
                  wf%n_v,          &
                  wf%n_o,          &
                  -one,            &
-                 t_abji(:,:,:,i), & !t_ac_l,i
+                 t_abij(:,:,:,k), & !t_ac_l,k
                  wf%n_v**2,       &
-                 g_lkcj,          & !g_l_c,kj
+                 g_licj,          & !g_l_b,ij
                  wf%n_o,          &
                  one,             &
                  u_abc,           &
@@ -925,13 +925,13 @@ contains
                  one,             &
                  g_bdck,          & !g_d_ac,k
                  wf%n_v,          &
-                 t_abji(:,:,i,j), & !t_b_d,ij
+                 t_abij(:,:,j,i), & !t_b_d,ji
                  wf%n_v,          &
                  one,             &
                  u_abc,           &
                  wf%n_v**2)
 !
-!     t^cb_kl*(lj|ai)
+!     t^cb_lj*(lk|ai)
 !     ---------------
 !
       call dgemm('T', 'T',        &
@@ -939,9 +939,9 @@ contains
                  wf%n_v**2,       &
                  wf%n_o,          &
                  -one,            &
-                 g_ljci,          & !g_l_a,ji
+                 g_lkci,          & !g_l_a,ki
                  wf%n_o,          &
-                 t_abji(:,:,:,k), & !t_cb_l,k
+                 t_abij(:,:,:,j), & !t_cb_l,j
                  wf%n_v**2,       &
                  one,             &
                  u_abc,           &
@@ -964,13 +964,13 @@ contains
                  one,             &
                  g_bdci,          & !g_d_ba,i
                  wf%n_v,          &
-                 t_abji(:,:,j,k), & !t_c_d,jk
+                 t_abij(:,:,k,j), & !t_c_d,kj
                  wf%n_v,          &
                  zero,            &
                  u_abc,           &
                  wf%n_v**2)
 !
-!     t^ba_jl*(li|ck)
+!     t^ba_li*(lj|ck)
 !     ---------------
 !
       call dgemm('N', 'N',        &
@@ -978,9 +978,9 @@ contains
                  wf%n_v,          &
                  wf%n_o,          &
                  -one,            &
-                 t_abji(:,:,:,j), & !t_ba_l,j
+                 t_abij(:,:,:,i), & !t_ba_l,i
                  wf%n_v**2,       &
-                 g_lick,          & !g_l_c,ik
+                 g_ljck,          & !g_l_c,jk
                  wf%n_o,          &
                  one,             &
                  u_abc,           &
@@ -1002,13 +1002,13 @@ contains
                  one,             &
                  g_bdci,          & !g_d_ca,i
                  wf%n_v,          &
-                 t_abji(:,:,k,j), & !t_b_d,kj
+                 t_abij(:,:,j,k), & !t_b_d,jk
                  wf%n_v,          &
                  zero,            &
                  u_abc,           &
                  wf%n_v**2)
 !
-!     t^ca_kl*(li|bj)
+!     t^ca_li*(lk|bj)
 !     ---------------
 !
       call dgemm('N', 'N',        &
@@ -1016,9 +1016,9 @@ contains
                  wf%n_v,          &
                  wf%n_o,          &
                  -one,            &
-                 t_abji(:,:,:,k), & !t_ca_l,k
+                 t_abij(:,:,:,i), & !t_ca_l,i
                  wf%n_v**2,       &
-                 g_licj,          & !g_l_c,ij
+                 g_lkcj,          & !g_l_c,kj
                  wf%n_o,          &
                  one,             &
                  u_abc,           &
