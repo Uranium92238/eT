@@ -322,8 +322,8 @@ contains
 !
       type(timings) :: jacobian_ccsd_a1_timer
 !
-      call jacobian_ccsd_a1_timer%init('jacobian ccsd a1')
-      call jacobian_ccsd_a1_timer%start()
+      jacobian_ccsd_a1_timer = new_timer('jacobian ccsd a1')
+      call jacobian_ccsd_a1_timer%turn_on()
 !
 !     :: Term 1: sum_ckdl L_lckd u_li^ca c_dk ::
 !
@@ -492,8 +492,7 @@ contains
 !
       call mem%dealloc(X_ac, wf%n_v, wf%n_v)
 !
-      call jacobian_ccsd_a1_timer%freeze()
-      call jacobian_ccsd_a1_timer%switch_off()
+      call jacobian_ccsd_a1_timer%turn_off()
 !
    end subroutine jacobian_ccsd_a1_ccsd
 !
@@ -517,8 +516,8 @@ contains
 !
       type(timings) :: jacobian_ccsd_b1_timer
 !
-      call jacobian_ccsd_b1_timer%init('jacobian ccsd b1')
-      call jacobian_ccsd_b1_timer%start()
+      jacobian_ccsd_b1_timer = new_timer('jacobian ccsd b1')
+      call jacobian_ccsd_b1_timer%turn_on()
 !
 !     Construct v_aibj = 2*c_aibj - c_ajbi ordered as
 !
@@ -547,8 +546,7 @@ contains
 !
       call mem%dealloc(v_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call jacobian_ccsd_b1_timer%freeze()
-      call jacobian_ccsd_b1_timer%switch_off()
+      call jacobian_ccsd_b1_timer%turn_off()
 !
    end subroutine jacobian_ccsd_b1_ccsd
 !
@@ -573,8 +571,8 @@ contains
 !
       type(timings) :: jacobian_ccsd_c1_timer
 !
-      call jacobian_ccsd_c1_timer%init('jacobian ccsd c1')
-      call jacobian_ccsd_c1_timer%start()
+      jacobian_ccsd_c1_timer = new_timer('jacobian ccsd c1')
+      call jacobian_ccsd_c1_timer%turn_on()
 !
 !     Construct L_jikb = 2*g_jikb - g_kijb as
 !
@@ -608,8 +606,7 @@ contains
 !
       call mem%dealloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call jacobian_ccsd_c1_timer%freeze()
-      call jacobian_ccsd_c1_timer%switch_off()
+      call jacobian_ccsd_c1_timer%turn_off()
 !
    end subroutine jacobian_ccsd_c1_ccsd
 !
@@ -640,8 +637,8 @@ contains
 !
       integer :: rec0, rec1
 !
-      call jacobian_ccsd_d1_timer%init('jacobian ccsd d1')
-      call jacobian_ccsd_d1_timer%start()
+      jacobian_ccsd_d1_timer = new_timer('jacobian ccsd d1')
+      call jacobian_ccsd_d1_timer%turn_on()
 !
 !     Prepare for batching over index a
 !
@@ -700,8 +697,7 @@ contains
 !
       enddo ! End batching over a
 !
-      call jacobian_ccsd_d1_timer%freeze()
-      call jacobian_ccsd_d1_timer%switch_off()
+      call jacobian_ccsd_d1_timer%turn_off()
 !
    end subroutine jacobian_ccsd_d1_ccsd
 !
@@ -733,8 +729,8 @@ contains
 !
       integer :: rec0, rec1
 !
-      call jacobian_ccsd_a2_timer%init('jacobian ccsd a2')
-      call jacobian_ccsd_a2_timer%start()
+      jacobian_ccsd_a2_timer = new_timer('jacobian ccsd a2')
+      call jacobian_ccsd_a2_timer%turn_on()
 !
 !     :: Term 1. - sum_k g_aikj c_bk ::
 !
@@ -820,8 +816,7 @@ contains
 !
       enddo ! End of batches over b
 !
-      call jacobian_ccsd_a2_timer%freeze()
-      call jacobian_ccsd_a2_timer%switch_off()
+      call jacobian_ccsd_a2_timer%turn_off()
 !
    end subroutine jacobian_ccsd_a2_ccsd
 !
@@ -850,8 +845,8 @@ contains
 !
       type(timings) :: jacobian_ccsd_b2_timer
 !
-      call jacobian_ccsd_b2_timer%init('jacobian ccsd b2')
-      call jacobian_ccsd_b2_timer%start()
+      jacobian_ccsd_b2_timer = new_timer('jacobian ccsd b2')
+      call jacobian_ccsd_b2_timer%turn_on()
 !
 !     :: Term 1. - sum_kc F_kc t_ij^ac c_bk ::
 !
@@ -948,8 +943,7 @@ contains
       call mem%dealloc(X_kj, wf%n_o, wf%n_o)
       call mem%dealloc(t_aicj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call jacobian_ccsd_b2_timer%freeze()
-      call jacobian_ccsd_b2_timer%switch_off()
+      call jacobian_ccsd_b2_timer%turn_off()
 !
    end subroutine jacobian_ccsd_b2_ccsd
 !
@@ -991,8 +985,8 @@ contains
 !
       type(timings) :: jacobian_ccsd_c2_timer
 !
-      call jacobian_ccsd_c2_timer%init('jacobian ccsd c2')
-      call jacobian_ccsd_c2_timer%start()
+      jacobian_ccsd_c2_timer = new_timer('jacobian ccsd c2')
+      call jacobian_ccsd_c2_timer%turn_on()
 !
 !     :: Term 1. sum_kcl g_ljkc t_ki^ac c_bl ::
 !
@@ -1306,8 +1300,7 @@ contains
       call mem%dealloc(L_ljck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(rho_bjai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call jacobian_ccsd_c2_timer%freeze()
-      call jacobian_ccsd_c2_timer%switch_off()
+      call jacobian_ccsd_c2_timer%turn_off()
 !
    end subroutine jacobian_ccsd_c2_ccsd
 !
@@ -1365,8 +1358,8 @@ contains
 !
       type(timings) :: jacobian_ccsd_d2_timer
 !
-      call jacobian_ccsd_d2_timer%init('jacobian ccsd d2')
-      call jacobian_ccsd_d2_timer%start()
+      jacobian_ccsd_d2_timer = new_timer('jacobian ccsd d2')
+      call jacobian_ccsd_d2_timer%turn_on()
 !
 !     Initialize batching variable
 !
@@ -1795,8 +1788,7 @@ contains
 !
       enddo ! End of batches over b
 !
-      call jacobian_ccsd_d2_timer%freeze()
-      call jacobian_ccsd_d2_timer%switch_off()
+      call jacobian_ccsd_d2_timer%turn_off()
 !
    end subroutine jacobian_ccsd_d2_ccsd
 !
@@ -1822,8 +1814,8 @@ contains
 !
       type(timings) :: jacobian_ccsd_e2_timer
 !
-      call jacobian_ccsd_e2_timer%init('jacobian ccsd e2')
-      call jacobian_ccsd_e2_timer%start()
+      jacobian_ccsd_e2_timer = new_timer('jacobian ccsd e2')
+      call jacobian_ccsd_e2_timer%turn_on()
 !
       call mem%alloc(t_dlbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1887,8 +1879,7 @@ contains
 !
       call mem%dealloc(X_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call jacobian_ccsd_e2_timer%freeze()
-      call jacobian_ccsd_e2_timer%switch_off()
+      call jacobian_ccsd_e2_timer%turn_off()
 !
    end subroutine jacobian_ccsd_e2_ccsd
 !
@@ -1931,8 +1922,8 @@ contains
 !
       type(timings) :: jacobian_ccsd_f2_timer
 !
-      call jacobian_ccsd_f2_timer%init('jacobian ccsd f2')
-      call jacobian_ccsd_f2_timer%start()
+      jacobian_ccsd_f2_timer = new_timer('jacobian ccsd f2')
+      call jacobian_ccsd_f2_timer%turn_on()
 !
 !     :: Construct L_kc,ld ::
 !
@@ -2137,8 +2128,7 @@ contains
       call mem%dealloc(t_aibl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(Z_l_j, wf%n_o, wf%n_o)
 !
-      call jacobian_ccsd_f2_timer%freeze()
-      call jacobian_ccsd_f2_timer%switch_off()
+      call jacobian_ccsd_f2_timer%turn_off()
 !
    end subroutine jacobian_ccsd_f2_ccsd
 !
@@ -2181,8 +2171,8 @@ contains
 !
       type(timings) :: jacobian_ccsd_g2_timer
 !
-      call jacobian_ccsd_g2_timer%init('jacobian ccsd g2')
-      call jacobian_ccsd_g2_timer%start()
+      jacobian_ccsd_g2_timer = new_timer('jacobian ccsd g2')
+      call jacobian_ccsd_g2_timer%turn_on()
 !
 !     :: Term 1: - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck  ::
 !
@@ -2377,8 +2367,7 @@ contains
 !
       call mem%dealloc(Z_l_j, wf%n_o, wf%n_o)
 !
-      call jacobian_ccsd_g2_timer%freeze()
-      call jacobian_ccsd_g2_timer%switch_off()
+      call jacobian_ccsd_g2_timer%turn_off()
 !
    end subroutine jacobian_ccsd_g2_ccsd
 !
@@ -2414,8 +2403,8 @@ contains
 !
       type(timings) :: jacobian_ccsd_h2_timer
 !
-      call jacobian_ccsd_h2_timer%init('jacobian ccsd h2')
-      call jacobian_ccsd_h2_timer%start()
+      jacobian_ccsd_h2_timer = new_timer('jacobian ccsd h2')
+      call jacobian_ccsd_h2_timer%turn_on()
 !
 !     :: Term 1: sum_ckld t_ci,ak * g_kc,ld * c_bl,dj ::
 !
@@ -2549,8 +2538,7 @@ contains
 !
       call mem%dealloc(rho_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call jacobian_ccsd_h2_timer%freeze()
-      call jacobian_ccsd_h2_timer%switch_off()
+      call jacobian_ccsd_h2_timer%turn_off()
 !
    end subroutine jacobian_ccsd_h2_ccsd
 !
@@ -2587,8 +2575,8 @@ contains
 !
       type(timings) :: jacobian_ccsd_i2_timer
 !
-      call jacobian_ccsd_i2_timer%init('jacobian ccsd i2')
-      call jacobian_ccsd_i2_timer%start()
+      jacobian_ccsd_i2_timer = new_timer('jacobian ccsd i2')
+      call jacobian_ccsd_i2_timer%turn_on()
 !
 !     :: sum_c F_bc * c_ai,cj ::
 !
@@ -2754,8 +2742,7 @@ contains
 !
       call mem%dealloc(rho_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call jacobian_ccsd_i2_timer%freeze()
-      call jacobian_ccsd_i2_timer%switch_off()
+      call jacobian_ccsd_i2_timer%turn_off()
 !
    end subroutine jacobian_ccsd_i2_ccsd
 !
@@ -2784,8 +2771,8 @@ contains
 !
       type(timings) :: jacobian_ccsd_j2_timer
 !
-      call jacobian_ccsd_j2_timer%init('jacobian ccsd j2')
-      call jacobian_ccsd_j2_timer%start()
+      jacobian_ccsd_j2_timer = new_timer('jacobian ccsd j2')
+      call jacobian_ccsd_j2_timer%turn_on()
 !
 !     Constructing g_kcld
 !
@@ -2872,8 +2859,7 @@ contains
       call mem%dealloc(g_klcd, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call jacobian_ccsd_j2_timer%freeze()
-      call jacobian_ccsd_j2_timer%switch_off()
+      call jacobian_ccsd_j2_timer%turn_off()
 !
    end subroutine jacobian_ccsd_j2_ccsd
 !
@@ -2917,8 +2903,8 @@ contains
 !
       type(timings) :: jacobian_ccsd_k2_timer
 !
-      call jacobian_ccsd_k2_timer%init('jacobian ccsd k2')
-      call jacobian_ccsd_k2_timer%start()
+      jacobian_ccsd_k2_timer = new_timer('jacobian ccsd k2')
+      call jacobian_ccsd_k2_timer%turn_on()
 !
       call mem%alloc(g_kilj, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
@@ -3039,8 +3025,7 @@ contains
          enddo ! End batches of b
       enddo ! End batches of a
 !
-      call jacobian_ccsd_k2_timer%freeze()
-      call jacobian_ccsd_k2_timer%switch_off()
+      call jacobian_ccsd_k2_timer%turn_off()
 !
    end subroutine jacobian_ccsd_k2_ccsd
 !

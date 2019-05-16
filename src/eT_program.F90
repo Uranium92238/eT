@@ -53,18 +53,22 @@ program eT_program
    open(newunit=output%unit, file=output%name, access=output%access, &
       action='write', status='unknown', form=output%format, iostat=io_error)
 !
+   if (io_error /= 0) stop 'Error: could not open eT output file (eT.out)'
+!
    call input%init('eT.inp')
    open(newunit=input%unit, file=input%name, access=input%access, &
       action='read', status='unknown', form=input%format, iostat=io_error)
+!
+   if (io_error /= 0) stop 'Error: could not open eT input file (eT.inp)'
 !
    call timing%init('timing.out')
    open(newunit=timing%unit, file=timing%name, access=timing%access, &
       action='write', status='unknown', form=timing%format, iostat=io_error)
 !
-   if (io_error /= 0) stop 'Error: could not open eT files (.inp/.out)'
+   if (io_error /= 0) stop 'Error: could not open eT timing file (timing.out)'
 !
-   call eT_timer%init("Total time in eT")
-   call eT_timer%start()
+   eT_timer = new_timer("Total time in eT")
+   call eT_timer%turn_on()
 !
 !  Print program banner
 !
@@ -127,8 +131,7 @@ program eT_program
 !
    call finalize_libint()
 !
-   call eT_timer%freeze()
-   call eT_timer%switch_off()
+   call eT_timer%turn_off()
 !
    call mem%check_for_leak()
 !

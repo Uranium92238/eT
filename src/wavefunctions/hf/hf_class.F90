@@ -1385,8 +1385,8 @@ contains
 !
       type(timings) :: ao_fock_timer 
 !
-      call ao_fock_timer%init('AO Fock construction')
-      call ao_fock_timer%start()
+      ao_fock_timer = new_timer('AO Fock construction')
+      call ao_fock_timer%turn_on()
 !
 !     Set thresholds to ignore Coulomb and exchange terms,
 !     as well as the desired Libint integral precision  
@@ -1454,8 +1454,7 @@ contains
 !
       if (.not. local_cumulative) ao_fock = ao_fock + h_wx
 !
-      call ao_fock_timer%freeze()
-      call ao_fock_timer%switch_off()
+      call ao_fock_timer%turn_off()
 !
    end subroutine construct_ao_fock_hf
 !
