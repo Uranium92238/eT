@@ -53,7 +53,14 @@ contains
 !
       class(es_engine) :: engine
 !
-      engine%name_       = 'Excited state engine'
+      engine%name_  = 'Excited state engine'
+!
+      engine%timer = timings(trim(engine%name_))
+      call engine%timer%turn_on()
+!
+      engine%tag    = 'excited state'
+!
+      engine%description  = 'Calculates the coupled cluster excitation vectors and excitation energies'
 !
 !     Set standards and then read if nonstandard
 !
@@ -63,6 +70,15 @@ contains
       engine%es_transformation   = 'right'
 !
       call engine%read_settings()
+!
+!
+      engine%tasks = [character(len=150) ::                                                           &
+            'Cholesky decomposition of the ERI-matrix',                                               &
+            'Calculation of the ground state amplitudes ('//trim(engine%gs_algorithm)//'-algorithm)', &
+            'Calculation of the ground state energy',                                                 &
+            'Calculation of the ' // trim(engine%es_transformation) //' hand side '// trim(engine%es_type) // &
+            ' excitation vectors ('//trim(engine%es_algorithm)//'-algorithm)',                        &
+            'Calculation of the excitation energies ('//trim(engine%es_algorithm)//'-algorithm)']
 !
    end subroutine prepare_es_engine
 !

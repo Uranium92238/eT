@@ -27,9 +27,6 @@ module fop_engine_class
 !
    type, extends(es_engine) :: fop_engine
 !
-      character(len=100) :: tag           = 'First order coupled cluster properties'
-   !   character(len=100) :: author        = 'J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, 2019'
-!
 !     Property solver types
 !
       logical :: eom
@@ -65,7 +62,15 @@ contains
 !
       class(fop_engine) :: engine
 !
-      engine%name_       = 'First order properties engine'
+      engine%name_       = 'First order coupled cluster properties engine'
+      engine%author      = 'J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, 2019'
+!
+      engine%timer = timings(trim(engine%name_))
+      call engine%timer%turn_on()
+!
+      engine%tag         = 'first order properties'
+      engine%description = 'Calculates dipole transition moments and oscillator strengths between &
+                           &the ground state and the excited states.'
 !
 !     Set standards and then read if nonstandard
 !
@@ -77,6 +82,13 @@ contains
       engine%eom                    = .false.
 !
       call engine%read_settings()
+!
+      engine%tasks = [character(len=150) ::                                                                       &
+            'Cholesky decomposition of the ERI-matrix',                                                           &
+            'Calculation of the ground state amplitudes and energy ('//trim(engine%gs_algorithm)//'-algorithm)',  &
+            'Calculation of the multipliers ('//trim(engine%multipliers_algorithm)//'-algorithm)',                &
+            'Calculation of the excitation vectors and energies ('//trim(engine%es_algorithm)//'-algorithm)',     &
+            'Calculation of the first order property.']
 !
    end subroutine prepare_fop_engine
 !
@@ -178,17 +190,11 @@ contains
 !
       integer :: component, n_states, state
 !
+      call long_string_print('EOM first order properties calculation','(/t3,a)',.true.)
+      call long_string_print(engine%author,'(t3,a)',.true.)
+!
       call mem%alloc(etaX, wf%n_es_amplitudes)
       call mem%alloc(csiX, wf%n_es_amplitudes)
-!
-!     Print banner
-!
-      engine%description = 'Calculates dipole transition moments and oscillator strengths between &
-                              &the ground state and the excited states.'
-!
-      call long_string_print(engine%tag,'(//t3,a)',.true.)
-      call long_string_print(engine%author,'(t3,a/)',.true.)
-      call long_string_print(engine%description,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
       call input%get_required_keyword_in_section('singlet states', 'solver cc es', n_states)
       call mem%alloc(excitation_energies, n_states)

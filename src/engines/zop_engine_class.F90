@@ -29,11 +29,11 @@ module zop_engine_class
 !
    type, extends(gs_engine) :: zop_engine
 !
-      character(len=100) :: tag           = 'Zeroth order coupled cluster properties'
+    !  character(len=100) :: tag           = 'Zeroth order coupled cluster properties'
  !     character(len=100) :: author        = 'E. F. Kjønstad, S. D. Folkestad, 2019'
 !
-      character(len=500) :: description1  = 'Calculates the time-independent expectation value of&
-                                             & one-electron operators A, < A > = < Λ | A | CC >.'
+     ! character(len=500) :: description1  = 'Calculates the time-independent expectation value of&
+     !                                        & one-electron operators A, < A > = < Λ | A | CC >.'
 !
       logical :: dipole 
       logical :: quadrupole 
@@ -63,7 +63,14 @@ contains
 !
       class(zop_engine) :: engine
 !
-      engine%name_ = 'Zeroth order properties engine'
+      engine%name_ = 'Zeroth order coupled cluster properties engine'
+!
+      engine%timer = timings(trim(engine%name_))
+      call engine%timer%turn_on()
+!
+      engine%tag   = 'zeroth order properties'
+      engine%description  = 'Calculates the time-independent expectation value of&
+                            & one-electron operators A, < A > = < Λ | A | CC >.'
 !
       engine%dipole                 = .false.
       engine%quadrupole             = .false. 
@@ -71,6 +78,12 @@ contains
       engine%gs_algorithm           = 'diis'
 !
       call engine%read_settings()
+!
+      engine%tasks = [character(len=150) ::                                                                       &
+            'Cholesky decomposition of the ERI-matrix',                                                           &
+            'Calculation of the ground state amplitudes and energy ('//trim(engine%gs_algorithm)//'-algorithm)',  &
+            'Calculation of the multipliers ('//trim(engine%multipliers_algorithm)//'-algorithm)',                &
+            'Calculation of the zeroth order property']
 !
    end subroutine prepare_zop_engine
 !
@@ -131,12 +144,6 @@ contains
 !
       call wf%initialize_density()
       call wf%construct_density()
-!
-!     Compute the requested expectation values
-!
-      call long_string_print(engine%tag,'(//t3,a)',.true.)
-      call long_string_print(engine%author,'(t3,a/)',.true.)
-      call long_string_print(engine%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
       call engine%calculate_expectation_values(wf)
 !

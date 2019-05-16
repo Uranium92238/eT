@@ -118,7 +118,7 @@ contains
       type(section) :: solver_hf
       type(section) :: solver_cc_gs
       type(section) :: solver_cc_es
-      type(section) :: solver_cc_multipliers ! cc zop later 
+      type(section) :: solver_cc_multipliers 
       type(section) :: active_atoms
 !
 !     Set input file name, access and format 

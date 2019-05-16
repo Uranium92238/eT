@@ -64,9 +64,10 @@ contains
 !
       class(gs_engine) :: engine 
 !
-      engine%name_                 = 'ground state coupled cluster'
+      engine%name_ = 'Ground state coupled cluster engine'
+      engine%tag   = 'ground state'
 !
-      engine%timer = timings(trim(engine%name_) // ' engine')
+      engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
 !
       engine%multipliers_algorithm = 'davidson'
@@ -74,8 +75,8 @@ contains
 !
       call engine%read_settings()
 !
-      engine%tasks = [character(len=150) ::                                                                          &
-            'Cholesky decomposition of the ERI-matrix',                                                              &
+      engine%tasks = [character(len=150) ::                                                           &
+            'Cholesky decomposition of the ERI-matrix',                                               &
             'Calculation of the ground state amplitudes ('//trim(engine%gs_algorithm)//'-algorithm)', &
             'Calculation of the ground state energy']
 !
@@ -122,8 +123,6 @@ contains
 !
       class(gs_engine) :: engine 
       class(ccs)       :: wf
-!
-      call engine%print_banner(wf)
 !
 !     Cholesky decoposition of the electron repulsion integrals 
 !
@@ -215,6 +214,8 @@ contains
       type(davidson_cc_multipliers), allocatable :: davidson_solver
 !
       if (trim(engine%multipliers_algorithm) == 'davidson') then 
+!
+         if (trim(wf%name_) == 'cc2') call output%error_msg('For CC2 multipliers the DIIS algorithm must be specified.')
 !
          allocate(davidson_solver)
 !

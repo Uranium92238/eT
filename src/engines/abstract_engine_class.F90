@@ -32,9 +32,9 @@ module abstract_engine_class
    type, abstract :: abstract_engine
 !
       character(len=200) :: name_
+      character(len=200) :: tag
+      character(len=200) :: description  
       character(len=200) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      character(len=200) :: description
 !
       type(timings) :: timer ! Timer for engine. Obs! must always be turned on in prepare. Is switched of in cleanup. 
 !
@@ -101,6 +101,7 @@ contains
       class(ccs) :: wf
 !
       call engine%prepare()
+      call engine%print_banner(wf)
       call engine%run(wf)
       call engine%cleanup(wf)
 !
@@ -154,11 +155,12 @@ contains
 !
       class(ccs), intent(in)                 :: wf
 !
+      write(output%unit, '(/t3, a)') '- Finalizing the ' // trim(wf%name_) // ' ' // trim(engine%tag) // ' calculation'
+!
       call engine%timer%turn_off()
 !
-      write(output%unit, '(/t3, a)') '- Time elapsed in the ' // trim(wf%name_) // ' ' //trim(engine%name_) // ' calculation:'
-      write(output%unit, '(/t6,a17,f12.5)')  'wall time (sec): ', engine%timer%get_elapsed_time('wall')
-      write(output%unit, '(t6,a17,f12.5)')  'cpu time (sec):  ', engine%timer%get_elapsed_time('cpu')
+      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', engine%timer%get_elapsed_time('wall')
+      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', engine%timer%get_elapsed_time('cpu')
 !
    end subroutine cleanup_abstract_engine
 !
@@ -172,16 +174,14 @@ contains
 !
       class(abstract_engine), intent(in)  :: engine
 !
-      class(ccs), intent(in)         :: wf
+      class(ccs), intent(in)              :: wf
 !
       integer :: task, letter
 !
-      character(len=500) :: calculation_type, full_engine_name
+      character(len=500) :: calculation_type
       character(len=40)  :: uppercase_wf
 !
       if (.not. allocated(engine%tasks)) call output%error_msg('Tasks of engine was not set. Do this in prepare.')
-!
-      full_engine_name  = 'The eT ' // trim(engine%name_) // ' engine'
 !
       do letter = 1, 40
 !
@@ -189,10 +189,10 @@ contains
 !
       enddo
 !
-      calculation_type  = 'This is a ' // trim(uppercase_wf) // ' calculation. The following tasks will be performed:'
-
+      calculation_type  = 'This is a '// trim(uppercase_wf) // ' ' // trim(engine%tag) // ' calculation.&
+                           & The following tasks will be performed:'
 !     
-      call long_string_print(full_engine_name,'(//t3,a)',.true.)
+      call long_string_print(engine%name_,'(//t3,a)',.true.)
       call long_string_print(engine%author,'(t3,a/)',.true.)
       call long_string_print(engine%description,'(t3,a)',.false.,'(t3,a)','(t3,a/)') 
 !
