@@ -426,7 +426,7 @@ contains
 !     :: Construct intermediate X_ai ::
 !
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call squareup_and_sort_1234_to_1342(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Setup and Batching loops
 !
@@ -924,7 +924,7 @@ contains
 !     Setup and Batching loops
 !
       req_0 = 3*wf%n_v**3 + wf%n_v*wf%n_o**3
-      req_1 = 2*(wf%n_v)**3
+      req_1 = 3*(wf%n_v)**3
       req_2 = 2*(wf%n_o)*(wf%n_v) + (wf%n_v)**2
       req_3 = 0
 !

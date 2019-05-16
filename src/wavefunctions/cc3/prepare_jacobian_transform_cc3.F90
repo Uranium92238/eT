@@ -365,7 +365,7 @@ contains
 !
 !     Alloc and squareup the t2 amplitudes
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call squareup_and_sort_1234_to_1342(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Setup and Batching loops
 !

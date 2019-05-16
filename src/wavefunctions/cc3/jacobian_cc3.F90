@@ -65,7 +65,7 @@ contains
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_ai
-      real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij, c_abji
+      real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij
 !
       real(dp), dimension(:,:), allocatable :: rho_ai
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj, rho_abij
@@ -189,9 +189,9 @@ contains
 !     CCSD J2 and K2 are already symmetric and will be computed afterwards
 !
       call mem%alloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%alloc(c_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%alloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call sort_1234_to_1342(c_aibj, c_abji, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1324(c_aibj, c_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call sort_1234_to_1324(rho_aibj, rho_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -213,7 +213,7 @@ contains
 !     CC3-Contributions from the C3-amplitudes
       call cc3_timer_c3%turn_on()
 !
-      call wf%jacobian_cc3_C3_terms(omega, c_ai, c_abji, rho_ai, rho_abij)
+      call wf%jacobian_cc3_C3_terms(omega, c_ai, c_abij, rho_ai, rho_abij)
 !
       call cc3_timer_c3%turn_off()
 !
@@ -233,10 +233,6 @@ contains
       call ccsd_timer%turn_on()
 !
       call symmetrize_12_and_34(rho_abij, wf%n_v, wf%n_o)
-!
-      call mem%alloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call sort_1234_to_1243(c_abji, c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%dealloc(c_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
 !     Compute CCSD J2 and K2 contributions
 !
@@ -440,7 +436,7 @@ contains
       real(dp)             :: batch_buff = 0.0
 !
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call squareup_and_sort_1234_to_1342(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     C1 transformed Fock matrix
 !
@@ -650,7 +646,7 @@ contains
    end subroutine jacobian_cc3_rho2_T3_B1_cc3
 !
 !
-   module subroutine jacobian_cc3_C3_terms_cc3(wf, omega, c_ai, c_abji, rho_ai, rho_abij)
+   module subroutine jacobian_cc3_C3_terms_cc3(wf, omega, c_ai, c_abij, rho_ai, rho_abij)
 !!
 !!    Construct C^abc_ijk in single batches of ijk and compute the contributions
 !!    to the singles and doubles part of the outgoing vector
@@ -671,7 +667,7 @@ contains
       real(dp), intent(in) :: omega
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abji
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_abij
@@ -776,7 +772,7 @@ contains
 !
 !     Set up arrays for amplitudes
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call squareup_and_sort_1234_to_1342(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Resorting of the Fock-Matrix for easier contractions later
       call mem%alloc(F_kc, wf%n_v, wf%n_o)
@@ -1078,7 +1074,7 @@ contains
 !                       using the same routine once for t1-transformed and once for 
 !                       c1-transformed integrals
 !
-                        call wf%omega_cc3_W_calc(i, j, k, c_abc, u_abc, c_abji, &
+                        call wf%omega_cc3_W_calc(i, j, k, c_abc, u_abc, c_abij, &
                                                 g_bdci_p(:,:,:,i_rel),          &
                                                 g_bdcj_p(:,:,:,j_rel),          &
                                                 g_bdck_p(:,:,:,k_rel),          &
@@ -1348,7 +1344,8 @@ contains
 !     g'_ljck = (lj'|ck) + (lj|ck') + (lj|c'k) ordered as lc,jk
 !
 !
-      req_0 = max((wf%integrals%n_J)*(wf%n_v)**2, 2*(wf%integrals%n_J)*(wf%n_o)**2 + (wf%integrals%n_J)*(wf%n_v)*(wf%n_o))
+      req_0 = max((wf%integrals%n_J)*(wf%n_v)**2, &
+                  2*(wf%integrals%n_J)*(wf%n_o)**2 + (wf%integrals%n_J)*(wf%n_v)*(wf%n_o))
       req_k = max(2*(wf%n_v)*(wf%n_o)**2, (wf%n_v)*(wf%n_o)**2 + (wf%integrals%n_J)*(wf%n_v))
 !
       call mem%alloc(L_J_lj, wf%integrals%n_J, wf%n_o, wf%n_o)

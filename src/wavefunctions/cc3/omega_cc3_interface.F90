@@ -58,7 +58,7 @@
    end subroutine omega_cc3_integrals_cc3
 !
 !
-   module subroutine omega_cc3_W_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abji, &
+   module subroutine omega_cc3_W_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abij, &
                                           g_bdci, g_bdcj, g_bdck, &
                                           g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck, &
                                           keep_t)
@@ -76,7 +76,7 @@
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abji
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abij
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj

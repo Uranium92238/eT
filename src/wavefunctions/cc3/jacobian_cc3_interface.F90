@@ -82,7 +82,7 @@
    end subroutine jacobian_cc3_rho2_T3_B1_cc3
 !
 !
-   module subroutine jacobian_cc3_C3_terms_cc3(wf, omega, c_ai, c_abji, rho_ai, rho_abij)
+   module subroutine jacobian_cc3_C3_terms_cc3(wf, omega, c_ai, c_abij, rho_ai, rho_abij)
 !!
 !!    Construct C^abc_ijk in single batches of ijk and compute the contributions
 !!    to the singles and doubles part of the outgoing vector
@@ -103,7 +103,7 @@
       real(dp), intent(in) :: omega
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abji
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_abij
@@ -111,7 +111,7 @@
    end subroutine jacobian_cc3_C3_terms_cc3
 !
 !
-   module subroutine jacobian_cc3_A_cc3(wf, omega, c_ai, c_abji, rho_ai, rho_abij)
+   module subroutine jacobian_cc3_A_cc3(wf, omega, c_ai, c_abij, rho_ai, rho_abij)
 !!
 !!
 !!    CC3 jacobian terms
@@ -135,7 +135,7 @@
       real(dp), intent(in) :: omega
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abji
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_abij
