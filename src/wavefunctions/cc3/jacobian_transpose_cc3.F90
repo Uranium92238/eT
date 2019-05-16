@@ -916,14 +916,9 @@ contains
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Fock matrix subblock: Resorting for easier contractions later
-!
-      call mem%alloc(F_kc, wf%n_v, wf%n_o)
-      call sort_12_to_21(wf%fock_ia, F_kc, wf%n_o, wf%n_v)
-!
 !     Setup and Batching loops
 !
-      req_0 = 3*wf%n_v**3 + wf%n_v*wf%n_o**3
+      req_0 = 3*wf%n_v**3 + wf%n_v*wf%n_o**3 + wf%n_o*wf%n_v
       req_1 = 3*(wf%n_v)**3
       req_2 = 2*(wf%n_o)*(wf%n_v) + (wf%n_v)**2
       req_3 = 0
@@ -967,6 +962,10 @@ contains
          call mem%alloc(L_jbkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
 !
       endif
+!
+!     Fock matrix subblock: Resorting for easier contractions later
+      call mem%alloc(F_kc, wf%n_v, wf%n_o)
+      call sort_12_to_21(wf%fock_ia, F_kc, wf%n_o, wf%n_v)
 !
 !     Arrays for the triples amplitudes and intermediates
       call mem%alloc(c_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -1032,7 +1031,9 @@ contains
             call batch_j%determine_limits(j_batch)
 !
             call compound_record_reader(batch_j, batch_i, wf%g_ljck_t, g_ljci, &
-                                        wf%g_jlkc_t, g_jlic, wf%L_jbkc_t, L_ibjc)
+                                        wf%g_jlkc_t, g_jlic)
+            call compound_record_reader(batch_i, batch_j, wf%L_jbkc_t, L_ibjc)
+!
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
             L_ibjc_p => L_ibjc
@@ -1282,9 +1283,9 @@ contains
       call mem%dealloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%dealloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
       call mem%dealloc(F_kc, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
 !     Contribution of the Y_cmkj to sigma1
 !

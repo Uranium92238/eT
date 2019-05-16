@@ -224,15 +224,12 @@ contains
 !     Set up required integrals on disk
       call wf%omega_cc3_integrals()
 !
-      call mem%alloc(F_kc,wf%n_v,wf%n_o)
-      call sort_12_to_21(wf%fock_ia,F_kc,wf%n_o,wf%n_v)
-!
       call mem%alloc(t_abij,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
       call squareup_and_sort_1234_to_1324(wf%t2,t_abij,wf%n_v,wf%n_o,wf%n_v,wf%n_o)
 !
-      req_0 = 3*wf%n_v**3
+      req_0 = 3*wf%n_v**3 + wf%n_v*wf%n_o
       req_1 = 2*wf%n_v**3
-      req_2 = 2*wf%n_o*wf%n_v+wf%n_v**2
+      req_2 = 2*wf%n_o*wf%n_v + wf%n_v**2
       req_3 = 0
 !
       call batch_i%init(wf%n_o)
@@ -269,6 +266,10 @@ contains
          call mem%alloc(g_ljck,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
 !
       endif
+!
+!     Resorting of the Fock-Matrix for easier contractions later
+      call mem%alloc(F_kc,wf%n_v,wf%n_o)
+      call sort_12_to_21(wf%fock_ia,F_kc,wf%n_o,wf%n_v)
 !
 !     Arrays for the triples amplitudes
       call mem%alloc(t_abc,wf%n_v,wf%n_v,wf%n_v)
