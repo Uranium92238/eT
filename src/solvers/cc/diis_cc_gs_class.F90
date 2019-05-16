@@ -107,6 +107,9 @@ contains
       if (solver%restart) then
 !
          call wf%is_restart_safe('ground state')
+!
+         write(output%unit, '(/t3,a)') 'Requested restart. Reading in solution from file.'
+!
          call wf%read_amplitudes()
          call wf%integrals%write_t1_cholesky(wf%t1) 
 ! 
