@@ -75,8 +75,11 @@ contains
       type(timings) :: cc3_timer, cc3_timer_t3_a, cc3_timer_t3_b, cc3_timer_c3
       type(timings) :: ccsd_timer
 !
-      call cc3_timer%init('CC3 contribution)')
-      call ccsd_timer%init('CCSD contribution)')
+      cc3_timer_t3_a = new_timer('Time in CC3 T3 a1')
+      cc3_timer_t3_b = new_timer('Time in CC3 T3 b1')
+      cc3_timer_c3   = new_timer('Time in CC3 C3')
+      cc3_timer      = new_timer('Total CC3 contribution')
+      ccsd_timer     = new_timer('Total CCSD contribution')
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -99,7 +102,7 @@ contains
 !
 !     :: CCS contributions to the singles c vector ::
 !
-      call ccsd_timer%start()
+      call ccsd_timer%turn_on()
 !
       call wf%jacobian_ccs_a1(rho_ai, c_ai)
       call wf%jacobian_ccs_b1(rho_ai, c_ai)
@@ -194,31 +197,27 @@ contains
       call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call cc3_timer%start()
+      call cc3_timer%turn_on()
 !
 !     CC3-Contributions from the T3-amplitudes
       call wf%jacobian_cc3_rho2_T3_A1(c_ai, rho_abij)
 !
-      call cc3_timer_t3_a%freeze()
-      call cc3_timer_t3_a%switch_off()
+      call cc3_timer_t3_a%turn_off()
 !
-      call cc3_timer_t3_b%start()
+      call cc3_timer_t3_b%turn_on()
 !
       call wf%jacobian_cc3_rho2_T3_B1(c_ai, rho_abij)
 !
-      call cc3_timer_t3_b%freeze()
-      call cc3_timer_t3_b%switch_off()
+      call cc3_timer_t3_b%turn_off()
 !
 !     CC3-Contributions from the C3-amplitudes
-      call cc3_timer_c3%start()
+      call cc3_timer_c3%turn_on()
 !
       call wf%jacobian_cc3_C3_terms(omega, c_ai, c_abji, rho_ai, rho_abij)
 !
-      call cc3_timer_c3%freeze()
-      call cc3_timer_c3%switch_off()
+      call cc3_timer_c3%turn_off()
 !
-      call cc3_timer%freeze()
-      call cc3_timer%switch_off()
+      call cc3_timer%turn_off()
 !
 !     Done with singles vector c; Overwrite the incoming singles c vector for exit
 !
@@ -228,13 +227,10 @@ contains
 !
       call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
 !
-      call cc3_timer%freeze()
-      call cc3_timer%switch_off()
-!
 !     Last two CCSD-terms (J2, K2) are already symmetric.
 !     Perform the symmetrization rho_ai_bj = P_ij^ab rho_ai_bj
 !
-      call ccsd_timer%start()
+      call ccsd_timer%turn_on()
 !
       call symmetrize_12_and_34(rho_abij, wf%n_v, wf%n_o)
 !
@@ -249,8 +245,7 @@ contains
 !
       call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call ccsd_timer%freeze()
-      call ccsd_timer%switch_off()
+      call ccsd_timer%turn_off()
 !
 !     divide by the biorthonormal factor 1 + delta_ai,bj and
 !     overwrite the incoming, packed doubles c vector for exit
@@ -774,12 +769,6 @@ contains
       integer              :: req_0, req_1, req_2, req_3
       real(dp)             :: batch_buff = 0.0
 !
-      type(timings) :: c3_timer, rho1_timer, rho2_timer
-!
-      call c3_timer%init('C3 construction')
-      call rho1_timer%init('rho1 contribution')
-      call rho2_timer%init('rho2 contribution')
-!
 !     Set up required c1-transformed integrals
       call wf%jacobian_cc3_c1_integrals(c_ai)
 !
@@ -1073,8 +1062,6 @@ contains
 !                       using the same routine once for t1-transformed and once for 
 !                       c1-transformed integrals
 !
-                        call c3_timer%start()
-!
                         call wf%omega_cc3_W_calc(i, j, k, c_abc, u_abc, c_abji, &
                                                 g_bdci_p(:,:,:,i_rel),          &
                                                 g_bdcj_p(:,:,:,j_rel),          &
@@ -1099,9 +1086,7 @@ contains
                                                 .true.) !Do not overwrite c_abc
 !
                         call wf%omega_cc3_eps(i, j, k, c_abc, omega)
-                        call c3_timer%freeze()
 !
-                        call rho1_timer%start()
                         call wf%omega_cc3_omega1(i, j, k, c_abc, u_abc,    &
                                                 rho_ai, rho_abij, F_kc,    &
                                                 L_jbic_p(:,:,j_rel,i_rel), &
@@ -1110,9 +1095,7 @@ contains
                                                 L_ibjc_p(:,:,i_rel,j_rel), &
                                                 L_ibkc_p(:,:,i_rel,k_rel), &
                                                 L_jbkc_p(:,:,j_rel,k_rel))
-                        call rho1_timer%freeze()
 !
-                        call rho2_timer%start()
                         call wf%omega_cc3_omega2(i, j, k, c_abc, u_abc, v_abc,   &
                                                 rho_abij,                        &
                                                 g_dbic_p(:,:,:,i_rel),           &
@@ -1124,7 +1107,6 @@ contains
                                                 g_iljc_p(:,:,i_rel,j_rel),       &
                                                 g_ilkc_p(:,:,i_rel,k_rel),       &
                                                 g_jlkc_p(:,:,j_rel,k_rel))
-                        call rho2_timer%freeze()
 !
                      enddo ! loop over k
                   enddo ! loop over j
@@ -1212,10 +1194,6 @@ contains
       call mem%dealloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%dealloc(F_kc, wf%n_v, wf%n_o)
-!
-      call c3_timer%switch_off()
-      call rho1_timer%switch_off()
-      call rho2_timer%switch_off()
 !
    end subroutine jacobian_cc3_C3_terms_cc3
 !

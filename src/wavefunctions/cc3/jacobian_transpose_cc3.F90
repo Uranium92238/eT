@@ -73,11 +73,11 @@ contains
       type(timings) :: cc3_timer, cc3_timer_t3_a, cc3_timer_t3_b, cc3_timer_c3
       type(timings) :: ccsd_timer
 !
-      call cc3_timer_t3_a%init('Time in CC3 T3 a1')
-      call cc3_timer_t3_b%init('Time in CC3 T3 b1')
-      call cc3_timer_c3%init('Time in CC3 C3')
-      call cc3_timer%init('Total CC3 contribution')
-      call ccsd_timer%init('Total CCSD contribution')
+      cc3_timer_t3_a = new_timer('Time in CC3 T3 a1')
+      cc3_timer_t3_b = new_timer('Time in CC3 T3 b1')
+      cc3_timer_c3   = new_timer('Time in CC3 C3')
+      cc3_timer      = new_timer('Total CC3 contribution')
+      ccsd_timer     = new_timer('Total CCSD contribution')
 !
 !     Allocate and zero the transformed singles vector
 !
@@ -98,7 +98,7 @@ contains
 !
 !     :: CCS contributions to the transformed singles vector ::
 !
-      call ccsd_timer%start()
+      call ccsd_timer%turn_on()
 !
       call wf%jacobian_transpose_ccs_a1(sigma_ai, c_ai)
       call wf%jacobian_transpose_ccs_b1(sigma_ai, c_ai)
@@ -180,37 +180,33 @@ contains
       call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call cc3_timer%start()
+      call cc3_timer%turn_on()
 !
 !     CC3-Contributions from the T3-amplitudes
-      call cc3_timer_t3_a%start()
+      call cc3_timer_t3_a%turn_on()
 !
       call wf%jacobian_transpose_cc3_sigma1_T3_A1(c_abij, sigma_ai)
 !
-      call cc3_timer_t3_a%freeze()
-      call cc3_timer_t3_a%switch_off()
+      call cc3_timer_t3_a%turn_off()
 !
-      call cc3_timer_t3_b%start()
+      call cc3_timer_t3_b%turn_on()
 !
       call wf%jacobian_transpose_cc3_sigma1_T3_B1(c_abij, sigma_ai)
 !
-      call cc3_timer_t3_b%freeze()
-      call cc3_timer_t3_b%switch_off()
+      call cc3_timer_t3_b%turn_off()
 !
 !     CC3-Contributions from the C3-amplitudes
-      call cc3_timer_c3%start()
+      call cc3_timer_c3%turn_on()
 !
       call wf%jacobian_transpose_cc3_C3_terms(omega, c_ai, c_abij, sigma_ai, sigma_abij)
 !
-      call cc3_timer_c3%freeze()
-      call cc3_timer_c3%switch_off()
+      call cc3_timer_c3%turn_off()
 !
-      call cc3_timer%freeze()
-      call cc3_timer%switch_off()
+      call cc3_timer%turn_off()
 !
 !     Done with singles vector c; Overwrite the incoming singles c vector for exit
 !
-      call ccsd_timer%start()
+      call ccsd_timer%turn_on()
 !
       call mem%dealloc(c_ai, wf%n_v, wf%n_o)
 !
@@ -230,8 +226,7 @@ contains
 !
       call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call ccsd_timer%freeze()
-      call ccsd_timer%switch_off()
+      call ccsd_timer%turn_off()
 !
 !     overwrite the incoming, packed doubles c vector for exit
 !
@@ -915,12 +910,6 @@ contains
       integer              :: req_0, req_1, req_2, req_3
       real(dp)             :: batch_buff = zero 
 !
-      type(timings) :: c3_timer, sigma2_timer, X_timer
-!
-      call c3_timer%init('C3 construction')
-      call sigma2_timer%init('sigma2 contribution')
-      call X_timer%init('X contribution')
-!
 !     Set up arrays for amplitudes
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -1163,7 +1152,6 @@ contains
 !                       and construct the intermediates Y_bcek, Y_cmjk 
 !                       and calculate contributions to sigma2
 !
-                        call c3_timer%start()
                         call wf%jacobian_transpose_cc3_C3_calc(i, j ,k, c_ai, c_abij, &
                                                          c_abc, u_abc, v_abc, F_kc,   &
                                                          L_ibjc_p(:,:,i_rel,j_rel),   &
@@ -1180,9 +1168,7 @@ contains
                                                          g_jlkc_p(:,:,j_rel,k_rel))
 !
                         call wf%omega_cc3_eps(i, j, k, c_abc, omega)
-                        call c3_timer%freeze()
 !
-                        call sigma2_timer%start()
                         call wf%jacobian_transpose_cc3_sigma2(i, j, k, c_abc, u_abc, sigma_abij,   &
                                                                g_bdci_p(:,:,:,i_rel),              &
                                                                g_bdcj_p(:,:,:,j_rel),              &
@@ -1193,16 +1179,12 @@ contains
                                                                g_licj_p(:,:,i_rel,j_rel),          &
                                                                g_lick_p(:,:,i_rel,k_rel),          &
                                                                g_ljck_p(:,:,j_rel,k_rel))
-                        call sigma2_timer%freeze()
 !
-!
-                        call X_timer%start()
                         call wf%construct_intermediates_c3(i, j, k, c_abc, u_abc, t_abij, &
                                                             Y_cmjk,                       &
                                                             Y_bcei_p(:,:,:,i_rel),        &
                                                             Y_bcej_p(:,:,:,j_rel),        &
                                                             Y_bcek_p(:,:,:,k_rel))
-                        call X_timer%freeze()
 !
                      enddo ! loop over k
                   enddo ! loop over j
@@ -1301,10 +1283,6 @@ contains
       call wf%jacobian_transpose_CC3_sigma1_C3_B1(sigma_ai)
 !
       call disk%close_file(wf%Y_bcek)
-!
-      call c3_timer%switch_off()
-      call sigma2_timer%switch_off()
-      call X_timer%switch_off()
 !
    end subroutine jacobian_transpose_cc3_C3_terms_cc3
 !

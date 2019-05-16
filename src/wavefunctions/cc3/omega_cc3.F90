@@ -57,8 +57,8 @@ contains
       type(timings) :: cc3_timer
       type(timings) :: ccsd_timer
 !
-      call cc3_timer%init('CC3 contribution')
-      call ccsd_timer%init('CCSD contribution')
+      cc3_timer = new_timer('CC3 contribution)')
+      ccsd_timer = new_timer('CCSD contribution)')
 !
       call mem%alloc(omega1, wf%n_v, wf%n_o)
       call mem%alloc(omega2, wf%n_t2)
@@ -70,7 +70,7 @@ contains
 !
 !     Construct CCSD singles contributions
 !
-      call ccsd_timer%start()
+      call ccsd_timer%turn_on()
 !
       call wf%omega_ccsd_a1(omega1)
       call wf%omega_ccsd_b1(omega1)
@@ -88,18 +88,16 @@ contains
 !
       call dcopy(wf%n_t2, omega2, 1, omega(wf%n_t1+1), 1)
 !
-      call ccsd_timer%freeze()
-      call ccsd_timer%switch_off()
+      call ccsd_timer%turn_off()
 !
       call mem%dealloc(omega2, wf%n_t2)
       call mem%alloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       omega_abij = zero
 !
-      call cc3_timer%start()
+      call cc3_timer%turn_on()
       call wf%omega_cc3_a(omega1,omega_abij)
-      call cc3_timer%freeze()
-      call cc3_timer%switch_off()
+      call cc3_timer%turn_off()
 !
       call dcopy(wf%n_t1, omega1, 1, omega, 1)
 !

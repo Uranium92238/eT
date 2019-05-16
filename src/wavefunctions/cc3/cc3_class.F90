@@ -271,8 +271,8 @@ contains
 !
       type(timings) :: prep_timer      
 !
-      call prep_timer%init("Time preparing for Jacobian")
-      call prep_timer%start()
+      prep_timer = new_timer("Time preparing for Jacobian")
+      call prep_timer%turn_on()
 !
       if (trim(r_or_l) .eq. "left") then
 !
@@ -295,8 +295,7 @@ contains
 !
       endif                                 
 !
-      call prep_timer%freeze()
-      call prep_timer%switch_off()
+      call prep_timer%turn_off()
 !
    end subroutine prepare_for_excited_state_eq_cc3
 !
