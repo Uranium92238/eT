@@ -49,6 +49,8 @@ module gs_engine_class
 ! 
       procedure :: read_gs_settings                      => read_gs_settings_gs_engine 
 !
+      procedure, private :: set_printables                        => set_printables_gs_engine
+!
    end type gs_engine 
 !
 !
@@ -65,7 +67,6 @@ contains
       class(gs_engine) :: engine 
 !
       engine%name_ = 'Ground state coupled cluster engine'
-      engine%tag   = 'ground state'
 !
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
@@ -74,13 +75,6 @@ contains
       engine%gs_algorithm          = 'diis'
 !
       call engine%read_settings()
-!
-      engine%tasks = [character(len=150) ::                                                           &
-            'Cholesky decomposition of the ERI-matrix',                                               &
-            'Calculation of the ground state amplitudes ('//trim(engine%gs_algorithm)//'-algorithm)', &
-            'Calculation of the ground state energy']
-!
-      engine%description = 'Calculates the ground state CC wavefunction | CC > = exp(T) | R >'
 !
    end subroutine prepare_gs_engine
 !
@@ -361,6 +355,27 @@ contains
       M(5) = (three*M(5))/two
 !
    end subroutine remove_trace_gs_engine
+!
+!
+   subroutine set_printables_gs_engine(engine)
+!!
+!!    Set printables 
+!!    Written by sarai D. Folkestad, May 2019
+!!
+      implicit none
+!
+      class(gs_engine) :: engine
+!
+      engine%tag   = 'ground state'
+!
+      engine%tasks = [character(len=150) ::                                                           &
+            'Cholesky decomposition of the ERI-matrix',                                               &
+            'Calculation of the ground state amplitudes ('//trim(engine%gs_algorithm)//'-algorithm)', &
+            'Calculation of the ground state energy']
+!
+      engine%description = 'Calculates the ground state CC wavefunction | CC > = exp(T) | R >'
+!
+   end subroutine set_printables_gs_engine
 !
 !
 end module gs_engine_class

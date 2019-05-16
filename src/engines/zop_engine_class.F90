@@ -29,12 +29,6 @@ module zop_engine_class
 !
    type, extends(gs_engine) :: zop_engine
 !
-    !  character(len=100) :: tag           = 'Zeroth order coupled cluster properties'
- !     character(len=100) :: author        = 'E. F. Kjønstad, S. D. Folkestad, 2019'
-!
-     ! character(len=500) :: description1  = 'Calculates the time-independent expectation value of&
-     !                                        & one-electron operators A, < A > = < Λ | A | CC >.'
-!
       logical :: dipole 
       logical :: quadrupole 
 !
@@ -47,6 +41,8 @@ module zop_engine_class
       procedure :: read_zop_settings                           => read_zop_settings_zop_engine
 !
       procedure :: calculate_expectation_values                => calculate_expectation_values_zop_engine
+!
+      procedure, private :: set_printables                              => set_printables_zop_engine
 !
       procedure, nopass, private :: print_summary              => print_summary_zop_engine
 !
@@ -68,22 +64,12 @@ contains
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
 !
-      engine%tag   = 'zeroth order properties'
-      engine%description  = 'Calculates the time-independent expectation value of&
-                            & one-electron operators A, < A > = < Λ | A | CC >.'
-!
       engine%dipole                 = .false.
       engine%quadrupole             = .false. 
       engine%multipliers_algorithm  = 'davidson'
       engine%gs_algorithm           = 'diis'
 !
       call engine%read_settings()
-!
-      engine%tasks = [character(len=150) ::                                                                       &
-            'Cholesky decomposition of the ERI-matrix',                                                           &
-            'Calculation of the ground state amplitudes and energy ('//trim(engine%gs_algorithm)//'-algorithm)',  &
-            'Calculation of the multipliers ('//trim(engine%multipliers_algorithm)//'-algorithm)',                &
-            'Calculation of the zeroth order property']
 !
    end subroutine prepare_zop_engine
 !
@@ -256,6 +242,29 @@ contains
       flush(output%unit)
 !
    end subroutine print_summary_zop_engine
+!
+!
+   subroutine set_printables_zop_engine(engine)
+!!
+!!    Set printables 
+!!    Written by sarai D. Folkestad, May 2019
+!!
+      implicit none
+!
+      class(zop_engine) :: engine
+!
+      engine%tag   = 'zeroth order properties'
+!
+      engine%tasks = [character(len=150) ::                                                                       &
+      'Cholesky decomposition of the ERI-matrix',                                                           &
+      'Calculation of the ground state amplitudes and energy ('//trim(engine%gs_algorithm)//'-algorithm)',  &
+      'Calculation of the multipliers ('//trim(engine%multipliers_algorithm)//'-algorithm)',                &
+      'Calculation of the zeroth order property']
+!      
+      engine%description  = 'Calculates the time-independent expectation value of&
+                            & one-electron operators A, < A > = < Λ | A | CC >.'
+!
+   end subroutine set_printables_zop_engine
 !
 !
 end module zop_engine_class

@@ -46,12 +46,13 @@ module abstract_engine_class
 !
       procedure(essential_engine), deferred      :: prepare   
       procedure(essential_engine_w_wf), deferred :: run 
+      procedure(essential_engine), deferred, private  :: set_printables 
 !
       procedure, non_overridable :: cleanup => cleanup_abstract_engine
 !
       procedure, nopass :: do_cholesky => do_cholesky_abstract_engine       
 !
-      procedure :: print_banner => print_banner_abstract_engine
+      procedure, non_overridable :: print_banner => print_banner_abstract_engine
 !
    end type abstract_engine
 !
@@ -168,8 +169,19 @@ contains
 !
    subroutine print_banner_abstract_engine(engine, wf)
 !!
-!!    Print tasks 
+!!    Print banner
 !!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Prints: 
+!!    
+!!       - Engine name
+!!       - Authors and date
+!!       - Wavefunction type
+!!       - Engine tasks
+!!
+!!    Dependancies:
+!!
+!!       - The printables of the engine must be set for each decendant (set_printables and prepare)
 !!
       implicit none
 !
@@ -180,6 +192,8 @@ contains
       integer :: task
 !
       character(len=500) :: calculation_type
+!
+      call engine%set_printables()
 !
       if (.not. allocated(engine%tasks)) call output%error_msg('Tasks of engine was not set. Do this in prepare.')
 !

@@ -40,6 +40,8 @@ module es_engine_class
 !
       procedure :: do_excited_state          => do_excited_state_es_engine
 !
+      procedure, private :: set_printables   => set_printables_es_engine
+!
    end type es_engine
 !
 contains
@@ -58,10 +60,6 @@ contains
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
 !
-      engine%tag    = 'excited state'
-!
-      engine%description  = 'Calculates the coupled cluster excitation vectors and excitation energies'
-!
 !     Set standards and then read if nonstandard
 !
       engine%es_algorithm        = 'davidson'
@@ -70,15 +68,6 @@ contains
       engine%es_transformation   = 'right'
 !
       call engine%read_settings()
-!
-!
-      engine%tasks = [character(len=150) ::                                                           &
-            'Cholesky decomposition of the ERI-matrix',                                               &
-            'Calculation of the ground state amplitudes ('//trim(engine%gs_algorithm)//'-algorithm)', &
-            'Calculation of the ground state energy',                                                 &
-            'Calculation of the ' // trim(engine%es_transformation) //' hand side '// trim(engine%es_type) // &
-            ' excitation vectors ('//trim(engine%es_algorithm)//'-algorithm)',                        &
-            'Calculation of the excitation energies ('//trim(engine%es_algorithm)//'-algorithm)']
 !
    end subroutine prepare_es_engine
 !
@@ -227,6 +216,30 @@ contains
       endif 
 !
    end subroutine do_excited_state_es_engine
+!
+!
+   subroutine set_printables_es_engine(engine)
+!!
+!!    Set printables 
+!!    Written by sarai D. Folkestad, May 2019
+!!
+      implicit none
+!
+      class(es_engine) :: engine
+!
+      engine%tag    = 'excited state'
+!
+      engine%tasks = [character(len=150) ::                                                              &
+      'Cholesky decomposition of the ERI-matrix',                                                        &
+      'Calculation of the ground state amplitudes ('//trim(engine%gs_algorithm)//'-algorithm)',          &
+      'Calculation of the ground state energy',                                                          &
+      'Calculation of the ' // trim(engine%es_transformation) //' hand side '// trim(engine%es_type) //  &
+      ' excitation vectors ('//trim(engine%es_algorithm)//'-algorithm)',                                 &
+      'Calculation of the excitation energies ('//trim(engine%es_algorithm)//'-algorithm)']
+!
+      engine%description  = 'Calculates the coupled cluster excitation vectors and excitation energies'
+!
+   end subroutine set_printables_es_engine
 !
 !
 end module es_engine_class

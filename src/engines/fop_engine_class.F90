@@ -46,7 +46,9 @@ module fop_engine_class
 !
       procedure :: do_eom              => do_eom_fop_engine
 !
-      procedure, nopass :: print_summary_eom   => print_summary_eom_fop_engine
+      procedure, nopass :: print_summary_eom    => print_summary_eom_fop_engine
+!
+      procedure, private :: set_printables      => set_printables_fop_engine
 !
    end type fop_engine
 !
@@ -62,17 +64,11 @@ contains
 !
       class(fop_engine) :: engine
 !
-      character(len=5) :: fop_type
-!
       engine%name_       = 'First order coupled cluster properties engine'
       engine%author      = 'J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, 2019'
 !
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
-!
-      engine%tag         = 'first order properties'
-      engine%description = 'Calculates dipole transition moments and oscillator strengths between &
-                           &the ground state and the excited states.'
 !
 !     Set standards and then read if nonstandard
 !
@@ -84,28 +80,6 @@ contains
       engine%eom                    = .false.
 !
       call engine%read_settings()
-!
-!     Prepare for print of engine banner
-!
-      if (engine%eom) then
-!
-         fop_type = 'EOM'
-!
-      else
-!
-         fop_type = 'LR'
-!
-      endif
-!
-!     Tasks for engine banner
-!
-      engine%tasks = [character(len=150) ::                                                                       &
-            'Cholesky decomposition of the ERI-matrix',                                                           &
-            'Calculation of the ground state amplitudes and energy ('//trim(engine%gs_algorithm)//'-algorithm)',  &
-            'Calculation of the multipliers ('//trim(engine%multipliers_algorithm)//'-algorithm)',                &
-            'Calculation of the ' //trim(engine%es_type) //' excitation vectors and&
-           & energies ('//trim(engine%es_algorithm)//'-algorithm)',                                               &
-            'Calculation of the first order property ('//trim(fop_type)//')']
 !
    end subroutine prepare_fop_engine
 !
@@ -319,6 +293,43 @@ contains
       enddo
 !
    end subroutine print_summary_eom_fop_engine
+!
+!
+   subroutine set_printables_fop_engine(engine)
+!!
+!!    Set printables 
+!!    Written by sarai D. Folkestad, May 2019
+!!
+      implicit none
+!
+      class(fop_engine) :: engine
+!
+      character(len=5) :: fop_type
+!
+      engine%tag = 'first order properties'
+!
+      if (engine%eom) then
+!
+         fop_type = 'EOM'
+!
+      else
+!
+         fop_type = 'LR'
+!
+      endif
+!
+      engine%tasks = [character(len=150) ::                                                                 &
+      'Cholesky decomposition of the ERI-matrix',                                                           &
+      'Calculation of the ground state amplitudes and energy ('//trim(engine%gs_algorithm)//'-algorithm)',  &
+      'Calculation of the multipliers ('//trim(engine%multipliers_algorithm)//'-algorithm)',                &
+      'Calculation of the ' //trim(engine%es_type) //' excitation vectors and&
+      & energies ('//trim(engine%es_algorithm)//'-algorithm)',                                              &
+      'Calculation of the first order property ('//trim(fop_type)//')']
+!
+      engine%description = 'Calculates dipole transition moments and oscillator strengths between &
+                           &the ground state and the excited states.'
+!
+   end subroutine set_printables_fop_engine
 !
 !
 end module fop_engine_class
