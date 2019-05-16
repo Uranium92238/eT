@@ -59,7 +59,8 @@ contains
 !
       class(zop_engine) :: engine
 !
-      engine%name_ = 'Zeroth order coupled cluster properties engine'
+      engine%name_ = 'Zeroth order coupled cluster properties engine'   
+      engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()

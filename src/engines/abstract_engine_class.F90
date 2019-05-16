@@ -34,7 +34,7 @@ module abstract_engine_class
       character(len=200) :: name_
       character(len=200) :: tag
       character(len=200) :: description  
-      character(len=200) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+      character(len=200) :: author
 !
       type(timings) :: timer ! Timer for engine. Obs! must always be turned on in prepare. Is switched of in cleanup. 
 !

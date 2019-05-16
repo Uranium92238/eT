@@ -49,7 +49,7 @@ module gs_engine_class
 ! 
       procedure :: read_gs_settings                      => read_gs_settings_gs_engine 
 !
-      procedure, private :: set_printables                        => set_printables_gs_engine
+      procedure, private :: set_printables               => set_printables_gs_engine
 !
    end type gs_engine 
 !
@@ -67,6 +67,7 @@ contains
       class(gs_engine) :: engine 
 !
       engine%name_ = 'Ground state coupled cluster engine'
+      engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
