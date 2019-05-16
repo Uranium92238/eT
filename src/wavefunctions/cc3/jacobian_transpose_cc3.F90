@@ -943,7 +943,7 @@ contains
 !     Setup and Batching loops
 !
       req_0 = 0
-      req_1 = 2*(wf%n_v)**3
+      req_1 = 3*(wf%n_v)**3
       req_2 = 2*(wf%n_o)*(wf%n_v) + (wf%n_v)**2
       req_3 = 0
 !

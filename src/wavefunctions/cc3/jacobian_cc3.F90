@@ -1354,7 +1354,8 @@ contains
 !     g'_ljck = (lj'|ck) + (lj|ck') + (lj|c'k) ordered as lc,jk
 !
 !
-      req_0 = max((wf%integrals%n_J)*(wf%n_v)**2, 2*(wf%integrals%n_J)*(wf%n_o)**2 + (wf%integrals%n_J)*(wf%n_v)*(wf%n_o))
+      req_0 = max((wf%integrals%n_J)*(wf%n_v)**2, &
+                  2*(wf%integrals%n_J)*(wf%n_o)**2 + (wf%integrals%n_J)*(wf%n_v)*(wf%n_o))
       req_k = max(2*(wf%n_v)*(wf%n_o)**2, (wf%n_v)*(wf%n_o)**2 + (wf%integrals%n_J)*(wf%n_v))
 !
       call mem%alloc(L_J_lj, wf%integrals%n_J, wf%n_o, wf%n_o)
