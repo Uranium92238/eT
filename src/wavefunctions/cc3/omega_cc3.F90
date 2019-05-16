@@ -224,17 +224,13 @@ contains
 !     Set up required integrals on disk
       call wf%omega_cc3_integrals()
 !
-      call mem%alloc(t_abc,wf%n_v,wf%n_v,wf%n_v)
-      call mem%alloc(u_abc,wf%n_v,wf%n_v,wf%n_v)
-      call mem%alloc(v_abc,wf%n_v,wf%n_v,wf%n_v)
-!
       call mem%alloc(F_kc,wf%n_v,wf%n_o)
       call sort_12_to_21(wf%fock_ia,F_kc,wf%n_o,wf%n_v)
 !
       call mem%alloc(t_abji,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
       call squareup_and_sort_1234_to_1342(wf%t2,t_abji,wf%n_v,wf%n_o,wf%n_v,wf%n_o)
 !
-      req_0 = 0
+      req_0 = 3*wf%n_v**3
       req_1 = 2*wf%n_v**3
       req_2 = 2*wf%n_o*wf%n_v+wf%n_v**2
       req_3 = 0
@@ -250,19 +246,14 @@ contains
 !     Without pointers we'll have to use three times as much
 !     memory for the non-batching case
 !
+!     Split up so that the integral and amplitude arrays are closer in mem
+!
       if (batch_i%num_batches .eq. 1) then !no batching
 !
          call mem%alloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,wf%n_o)
-!
-         call mem%alloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,wf%n_o)
-!
          call mem%alloc(g_ljci,wf%n_o,wf%n_v,wf%n_o,wf%n_o)
 !
-         call mem%alloc(g_jlic,wf%n_v,wf%n_o,wf%n_o,wf%n_o)
-!
-         call mem%alloc(L_jbic,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
-!
-      else !batching
+      else ! batching
 !
          call batch_i%determine_limits(1)
 !
@@ -270,16 +261,35 @@ contains
          call mem%alloc(g_bdcj,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
          call mem%alloc(g_bdck,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
 !
-         call mem%alloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
-         call mem%alloc(g_dbjc,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
-         call mem%alloc(g_dbkc,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
-!
          call mem%alloc(g_ljci,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
          call mem%alloc(g_lkci,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
          call mem%alloc(g_lkcj,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
          call mem%alloc(g_licj,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
          call mem%alloc(g_lick,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
          call mem%alloc(g_ljck,wf%n_o,wf%n_v,batch_i%length,batch_i%length)
+!
+      endif
+!
+!     Arrays for the triples amplitudes
+      call mem%alloc(t_abc,wf%n_v,wf%n_v,wf%n_v)
+      call mem%alloc(u_abc,wf%n_v,wf%n_v,wf%n_v)
+      call mem%alloc(v_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+!     Remaining integrals
+!
+      if (batch_i%num_batches .eq. 1) then !no batching
+!
+         call mem%alloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,wf%n_o)
+         call mem%alloc(g_jlic,wf%n_v,wf%n_o,wf%n_o,wf%n_o)
+         call mem%alloc(L_jbic,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
+!
+      else ! batching
+!
+         call batch_i%determine_limits(1)
+!
+         call mem%alloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%alloc(g_dbjc,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
+         call mem%alloc(g_dbkc,wf%n_v,wf%n_v,wf%n_v,batch_i%length)
 !
          call mem%alloc(g_jlic,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
          call mem%alloc(g_klic,wf%n_v,wf%n_o,batch_i%length,batch_i%length)
@@ -296,7 +306,6 @@ contains
          call mem%alloc(L_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length)
 !
       endif
-!
 !
       call disk%open_file(wf%g_bdck_t,'read')
       call disk%open_file(wf%g_ljck_t,'read')
@@ -454,15 +463,6 @@ contains
 !
                         call wf%omega_cc3_eps(i, j, k, t_abc)
 !
-                        call wf%omega_cc3_omega1(i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
-                                                 L_jbic_p(:,:,j_rel,i_rel), &
-                                                 L_kbic_p(:,:,k_rel,i_rel), &
-                                                 L_kbjc_p(:,:,k_rel,j_rel), &
-                                                 L_ibjc_p(:,:,i_rel,j_rel), &
-                                                 L_ibkc_p(:,:,i_rel,k_rel), &
-                                                 L_jbkc_p(:,:,j_rel,k_rel))
-!
-!
                         call wf%omega_cc3_omega2(i, j, k, t_abc, u_abc, v_abc, omega2, &
                                                  g_dbic_p(:,:,:,i_rel), &
                                                  g_dbjc_p(:,:,:,j_rel), &
@@ -473,6 +473,14 @@ contains
                                                  g_iljc_p(:,:,i_rel,j_rel), &
                                                  g_ilkc_p(:,:,i_rel,k_rel), &
                                                  g_jlkc_p(:,:,j_rel,k_rel))
+!
+                        call wf%omega_cc3_omega1(i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
+                                                 L_jbic_p(:,:,j_rel,i_rel), &
+                                                 L_kbic_p(:,:,k_rel,i_rel), &
+                                                 L_kbjc_p(:,:,k_rel,j_rel), &
+                                                 L_ibjc_p(:,:,i_rel,j_rel), &
+                                                 L_ibkc_p(:,:,i_rel,k_rel), &
+                                                 L_jbkc_p(:,:,j_rel,k_rel))
 !
                      enddo
                   enddo

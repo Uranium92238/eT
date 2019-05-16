@@ -388,7 +388,7 @@ contains
       real(dp), dimension(:,:,:), allocatable :: u_abc
 !
 !     Unpacked doubles amplitudes
-      real(dp), dimension(:,:,:,:), allocatable :: t_abji
+      real(dp), dimension(:,:,:,:), allocatable :: t_abij
 !
 !     Integrals and Pointers
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdci
@@ -425,20 +425,12 @@ contains
 !
 !     :: Construct intermediate X_ai ::
 !
-      call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
-      call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
-!
-      call mem%alloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call squareup_and_sort_1234_to_1342(wf%t2, t_abji, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Array for the whole intermediate X_ai
-!
-      call mem%alloc(X_ai, wf%n_v, wf%n_o)
-      X_ai = zero
+      call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call squareup_and_sort_1234_to_1342(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Setup and Batching loops
 !
-      req_0 = 0
+      req_0 = 2*wf%n_v**3 + wf%n_v*wf%n_o
       req_1 = wf%n_v**3
       req_2 = wf%n_o*wf%n_v
       req_3 = 0
@@ -450,9 +442,11 @@ contains
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                                  req_0, req_1, req_2, req_3, batch_buff)
 !
-!     Allocate integral arrays and assign pointers.
+!     Allocate integral arrays
 !
-      if (batch_i%num_batches .eq. 1) then !no batching
+!     Split up so that the integral and amplitude arrays are closer in mem
+!
+      if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
          call mem%alloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
@@ -473,6 +467,14 @@ contains
          call mem%alloc(g_ljck, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
 !
       endif
+!
+!     Arrays for the triples amplitudes
+      call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     Array for the whole intermediate X_ai
+      call mem%alloc(X_ai, wf%n_v, wf%n_o)
+      X_ai = zero
 !
       call disk%open_file(wf%g_bdck_t,'read')
       call disk%open_file(wf%g_ljck_t,'read')
@@ -529,7 +531,7 @@ contains
                   g_ljck_p => g_ljck
 !
 !
-               else if (k_batch .eq. i_batch) then !k_batch == j_batch == i_batch
+               else if (k_batch .eq. i_batch) then ! k_batch == j_batch == i_batch
 !
                   g_bdck_p => g_bdci
 !
@@ -539,7 +541,7 @@ contains
                   g_lkcj_p => g_ljci
                   g_ljck_p => g_ljci
 !
-               else !k_batch == j_batch != i_batch
+               else ! k_batch == j_batch != i_batch
 !
                   g_bdck_p => g_bdcj
 !
@@ -570,7 +572,7 @@ contains
 !
 !                       Construct t^{abc}_{ijk} for given i, j, k
 !
-                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji,  &
+                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abij,  &
                                                    g_bdci_p(:,:,:,i_rel),        &
                                                    g_bdcj_p(:,:,:,j_rel),        &
                                                    g_bdck_p(:,:,:,k_rel),        &
@@ -627,7 +629,7 @@ contains
       call mem%dealloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%dealloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call mem%dealloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
 !
 !     :: sigma_dl += sum_ai X_ai * L_iald ::
@@ -914,24 +916,14 @@ contains
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Arrays for the triples amplitudes and intermediates
-!
-      call mem%alloc(c_abc, wf%n_v, wf%n_v, wf%n_v)
-      call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
-      call mem%alloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
-!
 !     Fock matrix subblock: Resorting for easier contractions later
 !
       call mem%alloc(F_kc, wf%n_v, wf%n_o)
       call sort_12_to_21(wf%fock_ia, F_kc, wf%n_o, wf%n_v)
 !
-!     vooo Intermediate
-      call mem%alloc(Y_cmjk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      Y_cmjk = zero
-!
 !     Setup and Batching loops
 !
-      req_0 = 0
+      req_0 = 3*wf%n_v**3 + wf%n_v*wf%n_o**3
       req_1 = 2*(wf%n_v)**3
       req_2 = 2*(wf%n_o)*(wf%n_v) + (wf%n_v)**2
       req_3 = 0
@@ -943,17 +935,15 @@ contains
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                            req_0, req_1, req_2, req_3, batch_buff)
 !
-!     Allocate integral arrays and assign pointers.
+!     Allocate integral arrays
+!
+!     Split up so that the integral and amplitude arrays are closer in mem
 !
       if (batch_i%num_batches .eq. 1) then ! no batching
 !
-         call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
          call mem%alloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
-         call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
          call mem%alloc(g_jlic, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
          call mem%alloc(L_ibjc, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-         call mem%alloc(Y_bcei, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
 !
       else ! batching
 !
@@ -961,20 +951,9 @@ contains
 !
 !        Ordered such that batching indices are at the end
 !
-         call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%alloc(g_bdcj, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-         call mem%alloc(g_bdck, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-!
          call mem%alloc(g_dbic, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
          call mem%alloc(g_dbjc, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
          call mem%alloc(g_dbkc, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-!
-         call mem%alloc(g_ljci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_lkci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_lkcj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_licj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_lick, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
-         call mem%alloc(g_ljck, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
 !
          call mem%alloc(g_jlic, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
          call mem%alloc(g_klic, wf%n_v, wf%n_o, batch_i%length, batch_i%length)
@@ -987,11 +966,46 @@ contains
          call mem%alloc(L_ibkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
          call mem%alloc(L_jbkc, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
 !
+      endif
+!
+!     Arrays for the triples amplitudes and intermediates
+      call mem%alloc(c_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%alloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     Remaining integral arrays
+!
+      if (batch_i%num_batches .eq. 1) then ! no batching
+!
+         call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+         call mem%alloc(g_ljci, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+         call mem%alloc(Y_bcei, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+!
+      else ! batching
+!
+         call batch_i%determine_limits(1)
+!
+         call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_bdcj, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(g_bdck, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+!
+         call mem%alloc(g_ljci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_lkci, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_lkcj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_licj, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_lick, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+         call mem%alloc(g_ljck, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
+!
          call mem%alloc(Y_bcei, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
          call mem%alloc(Y_bcej, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
          call mem%alloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
-      endif
+      end if
+!
+!     vooo Intermediate
+      call mem%alloc(Y_cmjk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      Y_cmjk = zero
 !
       call disk%open_file(wf%g_bdck_t,'read')
       call disk%open_file(wf%g_dbkc_t,'read')

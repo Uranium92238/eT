@@ -307,7 +307,7 @@ contains
       real(dp), dimension(:,:,:), allocatable :: v_abc
 !
 !     Unpacked doubles amplitudes
-      real(dp), dimension(:,:,:,:), allocatable :: t_abji
+      real(dp), dimension(:,:,:,:), allocatable :: t_abij
 !
 !     Arrays for intermediates
 !     cannot hold the whole X_abdi array
@@ -363,21 +363,13 @@ contains
 !
       call wf%prepare_cc3_g_lbkc_t_file()
 !
-!     Arrays for the triples amplitudes
-      call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
-      call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
-      call mem%alloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
-!
-      call mem%alloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call squareup_and_sort_1234_to_1342(wf%t2, t_abji, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Array for the whole intermediate X_alij
-      call mem%alloc(X_alij, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      X_alij = zero
+!     Alloc and squareup the t2 amplitudes
+      call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call squareup_and_sort_1234_to_1342(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Setup and Batching loops
 !
-      req_0 = 0
+      req_0 = 3*wf%n_v**3 + wf%n_v*wf%n_o**3
       req_1 = 2*wf%n_v**3 + wf%n_o*wf%n_v**2
       req_2 = wf%n_o*wf%n_v
       req_3 = 0
@@ -389,16 +381,14 @@ contains
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                                  req_0, req_1, req_2, req_3, batch_buff)
 !
-!     Allocate integral arrays and assign pointers.
+!     Allocate integral arrays
 !
-      if (batch_i%num_batches .eq. 1) then !no batching
+!     Split up so that the integral and amplitude arrays are closer in mem
+!
+      if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%alloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
          call mem%alloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-!
-         call mem%alloc(g_lbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-         call mem%alloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
 !
       else ! batching
 !
@@ -415,6 +405,25 @@ contains
          call mem%alloc(g_lick, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
          call mem%alloc(g_ljck, wf%n_o, wf%n_v, batch_i%length, batch_i%length)
 !
+      endif
+!
+!     Arrays for the triples amplitudes
+      call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
+      call mem%alloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+!     Remaining integral arrays
+!
+      if (batch_i%num_batches .eq. 1) then ! no batching
+!
+         call mem%alloc(g_lbic, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+         call mem%alloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
+!
+      else ! batching
+!
+         call batch_i%determine_limits(1)
+!
          call mem%alloc(g_lbic, wf%n_v, wf%n_v, wf%n_o, batch_i%length)
          call mem%alloc(g_lbjc, wf%n_v, wf%n_v, wf%n_o, batch_i%length)
          call mem%alloc(g_lbkc, wf%n_v, wf%n_v, wf%n_o, batch_i%length)
@@ -423,7 +432,11 @@ contains
          call mem%alloc(X_abdj, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
          call mem%alloc(X_abdk, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
-      endif
+      end if
+!
+!     Array for the whole intermediate X_alij
+      call mem%alloc(X_alij, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      X_alij = zero
 !
       call disk%open_file(wf%g_bdck_t,'read')
       call disk%open_file(wf%g_ljck_t,'read')
@@ -477,7 +490,7 @@ contains
 !
                call batch_k%determine_limits(k_batch)
 !
-               if (k_batch .ne. j_batch) then !k_batch != j_batch, k_batch != i_batch
+               if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
                   call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_lbkc_t, g_lbkc)
                   g_bdck_p => g_bdck
@@ -498,7 +511,7 @@ contains
                   call compound_record_reader(batch_j, batch_k, wf%g_ljck_t, g_ljck)
                   g_ljck_p => g_ljck
 !
-               else if (k_batch .eq. i_batch) then !k_batch == j_batch == i_batch
+               else if (k_batch .eq. i_batch) then ! k_batch == j_batch == i_batch
 !
                   g_bdck_p => g_bdci
                   g_lbkc_p => g_lbic
@@ -511,7 +524,7 @@ contains
                   g_lkcj_p => g_ljci
                   g_ljck_p => g_ljci
 !
-               else !k_batch == j_batch != i_batch
+               else ! k_batch == j_batch != i_batch
 !
                   g_bdck_p => g_bdcj
                   g_lbkc_p => g_lbjc
@@ -545,7 +558,7 @@ contains
 !
 !                       Construct t^{abc}_{ijk} for given i, j, k
 !
-                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji,  &
+                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abij,  &
                                                 g_bdci_p(:,:,:,i_rel),           &
                                                 g_bdcj_p(:,:,:,j_rel),           &
                                                 g_bdck_p(:,:,:,k_rel),           &
@@ -571,7 +584,7 @@ contains
                   enddo ! loop over j
                enddo ! loop over i
 !
-               if (k_batch .ne. j_batch) then !k_batch != j_batch, k_batch != i_batch
+               if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
                   call single_record_writer(batch_k, wf%X_abdi, X_abdk)
                endif
 !
@@ -637,7 +650,7 @@ contains
       call mem%dealloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%dealloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call mem%dealloc(t_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
 !     Resort X_abdi to X_abid for the final contraction with C^ac_il to sigma_dl
 !
