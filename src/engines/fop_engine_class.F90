@@ -62,6 +62,8 @@ contains
 !
       class(fop_engine) :: engine
 !
+      character(len=5) :: fop_type
+!
       engine%name_       = 'First order coupled cluster properties engine'
       engine%author      = 'J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, 2019'
 !
@@ -83,12 +85,27 @@ contains
 !
       call engine%read_settings()
 !
+!     Prepare for print of engine banner
+!
+      if (engine%eom) then
+!
+         fop_type = 'EOM'
+!
+      else
+!
+         fop_type = 'LR'
+!
+      endif
+!
+!     Tasks for engine banner
+!
       engine%tasks = [character(len=150) ::                                                                       &
             'Cholesky decomposition of the ERI-matrix',                                                           &
             'Calculation of the ground state amplitudes and energy ('//trim(engine%gs_algorithm)//'-algorithm)',  &
             'Calculation of the multipliers ('//trim(engine%multipliers_algorithm)//'-algorithm)',                &
-            'Calculation of the excitation vectors and energies ('//trim(engine%es_algorithm)//'-algorithm)',     &
-            'Calculation of the first order property.']
+            'Calculation of the ' //trim(engine%es_type) //' excitation vectors and&
+           & energies ('//trim(engine%es_algorithm)//'-algorithm)',                                               &
+            'Calculation of the first order property ('//trim(fop_type)//')']
 !
    end subroutine prepare_fop_engine
 !

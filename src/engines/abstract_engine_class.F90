@@ -155,7 +155,8 @@ contains
 !
       class(ccs), intent(in)                 :: wf
 !
-      write(output%unit, '(/t3, a)') '- Finalizing the ' // trim(wf%name_) // ' ' // trim(engine%tag) // ' calculation'
+      write(output%unit, '(/t3, a)') '- Finalizing the ' // trim(convert_to_uppercase(wf%name_)) // &
+                                       ' ' // trim(engine%tag) // ' calculation'
 !
       call engine%timer%turn_off()
 !
@@ -176,20 +177,13 @@ contains
 !
       class(ccs), intent(in)              :: wf
 !
-      integer :: task, letter
+      integer :: task
 !
       character(len=500) :: calculation_type
-      character(len=40)  :: uppercase_wf
 !
       if (.not. allocated(engine%tasks)) call output%error_msg('Tasks of engine was not set. Do this in prepare.')
 !
-      do letter = 1, 40
-!
-         uppercase_wf(letter:letter) = convert_char_to_uppercase(wf%name_(letter:letter))
-!
-      enddo
-!
-      calculation_type  = 'This is a '// trim(uppercase_wf) // ' ' // trim(engine%tag) // ' calculation.&
+      calculation_type  = 'This is a '// trim(convert_to_uppercase(wf%name_)) // ' ' // trim(engine%tag) // ' calculation.&
                            & The following tasks will be performed:'
 !     
       call long_string_print(engine%name_,'(//t3,a)',.true.)
