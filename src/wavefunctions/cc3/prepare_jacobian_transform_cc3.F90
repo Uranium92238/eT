@@ -227,12 +227,12 @@ contains
 !
    module subroutine prepare_cc3_g_lbkc_t_file_cc3(wf)
 !!
-!!    Construct ovov-integral needed in the construction of the intermediates 
+!!    Construct ovov-integral needed only in the construction of the intermediates 
 !!    for the CC3 jacobian transformations and store on disk
 !!
 !!    (lb|kc) ordered as bcl,k
 !!
-!!    written by Rolf H. Myhre and Alexander Paul, April 2019
+!!    written by Rolf H. Myhre and Alexander Paul, Mai 2019
 !!
       implicit none
 !
@@ -295,6 +295,11 @@ contains
 !!    For that: construct t^abc_ijk in single batches of ijk 
 !!    and contract with the respective integrals
 !!
+!!    t^abc_ijk = - (ε^abc_ijk)^-1 P^abc_ijk(sum_d t^ad_ij(bd|ck) - sum_l t^ab_il(lj|ck))
+!!
+!!    X_abid = - sum_jck (2t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_kcjd
+!!    X_ajil = - sum_bck (2t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_lbkc
+!!
 !!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
       implicit none
@@ -355,9 +360,6 @@ contains
       integer :: req_0, req_1, req_2, req_3
       real(dp) :: batch_buff = 0.0
 !
-      integer :: ioerror = -1
-      integer :: l
-!
 !     Construct the g_lbkc_t file (only needed for the intermediates)
 !     g_ljck_t and g_bdck_t are already on disk from the ground state calculation
 !
@@ -382,7 +384,6 @@ contains
                                  req_0, req_1, req_2, req_3, batch_buff)
 !
 !     Allocate integral arrays
-!
 !     Split up so that the integral and amplitude arrays are closer in mem
 !
       if (batch_i%num_batches .eq. 1) then ! no batching
@@ -475,7 +476,7 @@ contains
                call compound_record_reader(batch_i, batch_j, wf%g_ljck_t, g_licj)
                g_licj_p => g_licj
 !
-            else !j_batch == i_batch
+            else ! j_batch == i_batch
 !
                g_bdcj_p => g_bdci
                g_lbjc_p => g_lbic
@@ -669,15 +670,7 @@ contains
       call wf%X_ajil%init('X_ajil','direct','unformatted', dp*(wf%n_v)*(wf%n_o)**2)
       call disk%open_file(wf%X_ajil,'write')
 !
-      do l = 1, wf%n_o
-!
-         write(wf%X_ajil%unit, rec=l, iostat=ioerror) X_ajil(:,:,:,l)
-!
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write X_ajil file')
-         endif
-!
-      enddo
+      call single_record_writer(wf%n_o, wf%X_ajil, X_ajil)
 !
       call mem%dealloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !

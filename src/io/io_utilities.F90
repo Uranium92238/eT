@@ -51,6 +51,7 @@ module io_utilities
    interface single_record_writer
 !
       procedure   write_array_single_record_batch
+      procedure   write_array_single_record
 !
    end interface single_record_writer
 !
@@ -796,6 +797,38 @@ contains
       enddo
 !
    end subroutine read_4_arrays_compound_record_2batches
+!
+!
+   module subroutine write_array_single_record(dim_z, file_1, g_pqrz)
+!!
+!!    Writes an array to a direct access file "file_1" with records z
+!!    The last index of the array (z) is the record number
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_z
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
+!
+      type(file), intent(in) :: file_1
+!
+      integer :: ioerror
+      integer :: z
+!
+      do z = 1, dim_z
+!
+         write(file_1%unit, rec=z, iostat=ioerror) g_pqrz(:,:,:,z)
+!
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%name)
+            call output%error_msg('Failed to write file')
+         endif
+!
+      enddo
+!
+   end subroutine write_array_single_record
 !
 !
    module subroutine write_array_single_record_batch(batch_z, file_1, g_pqrz)

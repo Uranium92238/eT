@@ -258,7 +258,6 @@ contains
       enddo
 !$omp end parallel do
 !
-!
       call mem%dealloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
    end subroutine effective_jacobian_transpose_transformation_cc3
@@ -371,7 +370,7 @@ contains
 !!    The intermediate X_ai is then contracted with L_iald
 !!
 !!    sigma_dl +=  sum_abcijk C^bc_jk (t^abc_ijk - t^bac_ijk) L_iald
-!!             +=  sum_ck X_ai * L_iald
+!!             +=  sum_ai X_ai * L_iald
 !!    
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -513,7 +512,7 @@ contains
 !
                call batch_k%determine_limits(k_batch)
 !
-               if (k_batch .ne. j_batch) then !k_batch != j_batch, k_batch != i_batch
+               if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
                   call single_record_reader(batch_k, wf%g_bdck_t, g_bdck)
                   g_bdck_p => g_bdck
@@ -602,7 +601,7 @@ contains
 !
 !     Deallocate the integral arrays
 !
-      if (batch_i%num_batches .eq. 1) then !no batching
+      if (batch_i%num_batches .eq. 1) then ! no batching
 !
          call mem%dealloc(g_bdci, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
          call mem%dealloc(g_ljci, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
@@ -705,7 +704,7 @@ contains
 !
       
 !     Construct u_acb = (t_acb - t_bca)
-!     Zero if i == k, but this is never true
+!     u_acb zero if i == k, but this is never true
 !
       call construct_132_minus_231(t_abc, u_abc, wf%n_v)
 !
@@ -737,7 +736,9 @@ contains
                   X_ai(:,k),        & ! X_a,k
                   1)
 !
-      if (k .ne. j .and. j .ne. i) then ! The rest is either zero or identical to the first terms
+!     Only this condition needed. If 2 indices would be equal u would be zero 
+!     or the contribution would be equal to one of the first two terms
+      if (k .ne. j .and. j .ne. i) then
 !
 !        Construct u_abc = t_abc - t_bac
 !
@@ -1067,7 +1068,7 @@ contains
 !
                call batch_k%determine_limits(k_batch)
 !
-               if (k_batch .ne. j_batch) then !k_batch != j_batch, k_batch != i_batch
+               if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
                   call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc)
                   g_bdck_p => g_bdck
@@ -1099,7 +1100,7 @@ contains
                   g_jlkc_p => g_jlkc
                   L_jbkc_p => L_jbkc
 !
-               else if (k_batch .eq. i_batch) then !k_batch == j_batch == i_batch
+               else if (k_batch .eq. i_batch) then ! k_batch == j_batch == i_batch
 !
                   g_bdck_p => g_bdci
                   g_dbkc_p => g_dbic
@@ -1120,7 +1121,7 @@ contains
                   g_jlkc_p => g_jlic
                   L_jbkc_p => L_ibjc
 !
-               else !k_batch == j_batch != i_batch
+               else ! k_batch == j_batch != i_batch
 !
                   g_bdck_p => g_bdcj
                   g_dbkc_p => g_dbjc
@@ -2223,7 +2224,7 @@ contains
       enddo
 !
       call batch_d%determine_limits(1)
-      call mem%dealloc(g_cdmj, wf%n_v, wf%n_o, wf%n_o, batch_d%length) !cmj#d
+      call mem%dealloc(g_cdmj, wf%n_v, wf%n_o, wf%n_o, batch_d%length) ! cmj#d
 !
       call disk%close_file(wf%g_cdlk_t)
 !
@@ -2382,11 +2383,11 @@ contains
 !
          call batch_k%determine_limits(k_batch)
 !
-         call mem%alloc(g_ckle, wf%n_v, wf%n_o, batch_k%length, wf%n_v) !read in cl#ke
-         call mem%alloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) !sort to ce#kl
+         call mem%alloc(g_ckle, wf%n_v, wf%n_o, batch_k%length, wf%n_v) ! read in cl#ke
+         call mem%alloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) ! sort to ce#kl
 !
-         call compound_record_reader(wf%n_v, batch_k, wf%g_ckld_t, g_ckle, .true.) !stored as cl#k#e
-         call sort_1234_to_1432(g_ckle, g_cekl, wf%n_v, wf%n_o, batch_k%length, wf%n_v) !cl#ke -> ce#kl
+         call compound_record_reader(wf%n_v, batch_k, wf%g_ckld_t, g_ckle, .true.) ! stored as cl#k#e
+         call sort_1234_to_1432(g_ckle, g_cekl, wf%n_v, wf%n_o, batch_k%length, wf%n_v) ! cl#ke -> ce#kl
 !
          call single_record_reader(batch_k, wf%Y_bcek, Y_bcek)
 !
@@ -2431,14 +2432,14 @@ contains
 !
          call batch_k%determine_limits(k_batch)
 !
-         call mem%alloc(g_celk, wf%n_v, wf%n_o, batch_k%length, wf%n_v) !read in cl#ke
-         call mem%alloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) !sort to ce#kl
+         call mem%alloc(g_celk, wf%n_v, wf%n_o, batch_k%length, wf%n_v) ! read in cl#ke
+         call mem%alloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) ! sort to ce#kl
 !
          call single_record_reader(batch_k, wf%Y_bcek, Y_bcek)
          call sort_1234_to_2134(Y_bcek, Y_cbek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
-         call compound_record_reader(wf%n_v, batch_k, wf%g_cdlk_t, g_celk, .true.) !stored as cl#k#e
-         call sort_1234_to_1432(g_celk, g_cekl, wf%n_v, wf%n_o, batch_k%length, wf%n_v) !cl#ke -> ce#kl
+         call compound_record_reader(wf%n_v, batch_k, wf%g_cdlk_t, g_celk, .true.) ! stored as cl#k#e
+         call sort_1234_to_1432(g_celk, g_cekl, wf%n_v, wf%n_o, batch_k%length, wf%n_v) ! cl#ke -> ce#kl
 !
          call dgemm('N','N',                    &
                      wf%n_v,                    &
@@ -2453,8 +2454,8 @@ contains
                      sigma_ai,                  &
                      wf%n_v)
 !
-         call mem%dealloc(g_celk, wf%n_v, wf%n_o, batch_k%length, wf%n_v) !cl#ke
-         call mem%dealloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) !ce#kl
+         call mem%dealloc(g_celk, wf%n_v, wf%n_o, batch_k%length, wf%n_v) ! cl#ke
+         call mem%dealloc(g_cekl, wf%n_v, wf%n_v, batch_k%length, wf%n_o) ! ce#kl
 !
       enddo
 !

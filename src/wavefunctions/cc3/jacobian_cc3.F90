@@ -654,6 +654,9 @@ contains
 !!    The triples amplitudes are expressed in terms of doubles amplitudes:
 !!    C_3 = (omega - ε^abc_ijk)^-1 (< μ3 | [H,C_2] | HF > + < μ3 | [[H,C_1],T_2] | HF >)
 !!
+!!    c^abc = (omega - ε^abc_ijk)^-1 * P^abc_ijk (sum_d c^ad_ij g_ckbd - sum_l c^ab_il g_cklj
+!!             + sum_d t^ad_ij g'_bdck - sum_l t^ab_il g'_cklj
+!!
 !!    rho1 += < μ1 | [H,C_3] | R >
 !!    rho2 += < μ2 | [H,C_3] | R >
 !!
@@ -1095,7 +1098,7 @@ contains
                                                 g_licj_c1_p(:,:,i_rel,j_rel),   &
                                                 g_lick_c1_p(:,:,i_rel,k_rel),   &
                                                 g_ljck_c1_p(:,:,j_rel,k_rel),   &
-                                                .true.) !Do not overwrite c_abc
+                                                .true.) ! Do not overwrite c_abc
 !
                         call wf%omega_cc3_eps(i, j, k, c_abc, omega)
 !
