@@ -198,6 +198,7 @@ contains
       call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call cc3_timer%turn_on()
+      call cc3_timer_t3_a%turn_on()
 !
 !     CC3-Contributions from the T3-amplitudes
       call wf%jacobian_cc3_rho2_T3_A1(c_ai, rho_abij)
