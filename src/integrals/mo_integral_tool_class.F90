@@ -1074,8 +1074,8 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
       type(timings) :: write_t1_cholesky_timer
 !
-      call write_t1_cholesky_timer%init('transform and write t1 cholesky to file')
-      call write_t1_cholesky_timer%start()
+      write_t1_cholesky_timer = new_timer('transform and write t1 cholesky to file')
+      call write_t1_cholesky_timer%turn_on()
 !
       call disk%open_file(integrals%cholesky_mo_t1, 'write')
 !
@@ -1233,8 +1233,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
       call disk%close_file(integrals%cholesky_mo_t1)
 !
-      call write_t1_cholesky_timer%freeze()
-      call write_t1_cholesky_timer%switch_off()
+      call write_t1_cholesky_timer%turn_off()
 !
    end subroutine write_t1_cholesky_mo_integral_tool
 !

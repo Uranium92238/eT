@@ -28,7 +28,6 @@ module atomic_class
    use parameters
    use file_class
    use shell_class
-   use basis_set_info
    use memory_manager_class
    use disk_manager_class
 !
