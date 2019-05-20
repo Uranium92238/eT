@@ -202,9 +202,9 @@ contains
 !     
       call long_string_print(engine%name_,'(//t3,a)',.true.)
       call long_string_print(engine%author,'(t3,a/)',.true.)
-      call long_string_print(engine%description,'(t3,a)',.false.,'(t3,a)','(t3,a/)') 
+      call long_string_print(engine%description,'(/t3,a)',.false.,'(t3,a)','(t3,a)') 
 !
-      call long_string_print(calculation_type,'(t3,a)',.false.,'(t3,a)','(t3,a/)') 
+      write(output%unit, '(/t3,a/)') trim(calculation_type)
 !
       do task = 1, size(engine%tasks)
 !
