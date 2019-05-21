@@ -87,6 +87,11 @@ contains
 !
       integer :: a, i, current_a_batch
 !
+      type(timings) :: timer 
+!  
+      call timer%init('omega cc2 a1')
+      call timer%start()
+!
       call mem%alloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Reorder u_bicj to u_bjci
@@ -144,6 +149,9 @@ contains
 !
       call mem%dealloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+      call timer%freeze()
+      call timer%switch_off()
+!
    end subroutine omega_cc2_a1_cc2
 !
 !
@@ -170,6 +178,11 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_kbji
       real(dp), dimension(:,:,:,:), allocatable :: g_jbki
+!
+      type(timings) :: timer 
+!  
+      call timer%init('omega cc2 b1')
+      call timer%start()
 !
 !     g_kbji ordered as g_jbki
 !
@@ -200,6 +213,9 @@ contains
 !
       call mem%dealloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
+      call timer%freeze()
+      call timer%switch_off()
+!
    end subroutine omega_cc2_b1_cc2
 !
 !
@@ -225,6 +241,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: F_bj
 !
+      type(timings) :: timer
+!  
+      call timer%init('omega cc2 c1')
+      call timer%start()
+!
       call mem%alloc(F_bj, wf%n_o, wf%n_v)
       call sort_12_to_21(wf%fock_ia, F_bj, wf%n_o, wf%n_v)
 !
@@ -242,6 +263,9 @@ contains
                   (wf%n_o)*(wf%n_v))
 !
       call mem%dealloc(F_bj, wf%n_o, wf%n_v)
+!
+      call timer%freeze()
+      call timer%switch_off()
 !
     end subroutine omega_cc2_c1_cc2
 !
