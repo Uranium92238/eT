@@ -70,11 +70,11 @@ contains
 !
       integer :: i, j, a, b, ai, bj, aibj, b_end ! Index
 !
-      type(timings) :: cc3_timer, cc3_timer_t3_a, cc3_timer_t3_b, cc3_timer_c3
+      type(timings) :: cc3_timer, cc3_timer_t3_a1, cc3_timer_t3_b1, cc3_timer_c3
       type(timings) :: ccsd_timer
 !
-      cc3_timer_t3_a = new_timer('Time in CC3 T3 a1')
-      cc3_timer_t3_b = new_timer('Time in CC3 T3 b1')
+      cc3_timer_t3_a1 = new_timer('Time in CC3 T3 a1')
+      cc3_timer_t3_b1 = new_timer('Time in CC3 T3 b1')
       cc3_timer_c3   = new_timer('Time in CC3 C3')
       cc3_timer      = new_timer('Total CC3 contribution')
       ccsd_timer     = new_timer('Total CCSD contribution')
@@ -183,22 +183,22 @@ contains
       call cc3_timer%turn_on()
 !
 !     CC3-Contributions from the T3-amplitudes
-      call cc3_timer_t3_a%turn_on()
+      call cc3_timer_t3_a1%turn_on()
 !
-      call wf%jacobian_transpose_cc3_sigma1_T3_A1(c_abij, sigma_ai)
+      call wf%jacobian_transpose_cc3_t3_a1(c_abij, sigma_ai)
 !
-      call cc3_timer_t3_a%turn_off()
+      call cc3_timer_t3_a1%turn_off()
 !
-      call cc3_timer_t3_b%turn_on()
+      call cc3_timer_t3_b1%turn_on()
 !
-      call wf%jacobian_transpose_cc3_sigma1_T3_B1(c_abij, sigma_ai)
+      call wf%jacobian_transpose_cc3_t3_b1(c_abij, sigma_ai)
 !
-      call cc3_timer_t3_b%turn_off()
+      call cc3_timer_t3_b1%turn_off()
 !
 !     CC3-Contributions from the C3-amplitudes
       call cc3_timer_c3%turn_on()
 !
-      call wf%jacobian_transpose_cc3_C3_terms(omega, c_ai, c_abij, sigma_ai, sigma_abij)
+      call wf%jacobian_transpose_cc3_c3_a(omega, c_ai, c_abij, sigma_ai, sigma_abij)
 !
       call cc3_timer_c3%turn_off()
 !
@@ -263,7 +263,7 @@ contains
    end subroutine effective_jacobian_transpose_transformation_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_sigma1_t3_A1_cc3(wf, c_abij, sigma_ai)
+   module subroutine jacobian_transpose_cc3_t3_a1_cc3(wf, c_abij, sigma_ai)
 !!
 !!    Computes the first contribution of the T3 amplitudes to sigma_1
 !!
@@ -359,10 +359,10 @@ contains
 !
       call mem%dealloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-   end subroutine jacobian_transpose_cc3_sigma1_t3_A1_cc3
+   end subroutine jacobian_transpose_cc3_t3_a1_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_sigma1_t3_B1_cc3(wf, c_abij, sigma_ai)
+   module subroutine jacobian_transpose_cc3_t3_b1_cc3(wf, c_abij, sigma_ai)
 !!
 !!    Computes the second contribution of the T3 amplitudes to sigma_1
 !!
@@ -584,8 +584,7 @@ contains
 !
                         call wf%omega_cc3_eps(i, j, k, t_abc)
 !
-                        call wf%jacobian_transpose_cc3_X_ai_calc(i, j, k, t_abc, u_abc,   &
-                                                                  X_ai, c_abij)
+                        call wf%construct_x_ai_intermediate(i, j, k, t_abc, u_abc, X_ai, c_abij)
 !
                      enddo ! loop over k
                   enddo ! loop over j
@@ -678,10 +677,10 @@ contains
 !
       call mem%dealloc(X_ai, wf%n_v, wf%n_o)
 !
-   end subroutine jacobian_transpose_cc3_sigma1_t3_B1_cc3
+   end subroutine jacobian_transpose_cc3_t3_b1_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_X_ai_calc_cc3(wf, i, j, k, t_abc, u_abc, X_ai, c_bcjk)
+   module subroutine construct_x_ai_intermediate_cc3(wf, i, j, k, t_abc, u_abc, x_ai, c_bcjk)
 !!
 !!    Constructs the intermediate X_ai
 !!
@@ -806,10 +805,10 @@ contains
 !
       end if
 !
-   end subroutine jacobian_transpose_cc3_X_ai_calc_cc3
+   end subroutine construct_x_ai_intermediate_cc3
 
 
-   module subroutine jacobian_transpose_cc3_C3_terms_cc3(wf, omega, c_ai, c_abij, sigma_ai, sigma_abij)
+   module subroutine jacobian_transpose_cc3_c3_a_cc3(wf, omega, c_ai, c_abij, sigma_ai, sigma_abij)
 !!
 !!    Construct C^abc_ijk in single batches of ijk and compute the contributions
 !!    to the singles and doubles part of the outgoing vector
@@ -1168,39 +1167,39 @@ contains
 !                       and construct the intermediates Y_bcek, Y_cmjk 
 !                       and calculate contributions to sigma2
 !
-                        call wf%jacobian_transpose_cc3_C3_calc(i, j ,k, c_ai, c_abij, &
-                                                         c_abc, u_abc, v_abc, F_kc,   &
-                                                         L_ibjc_p(:,:,i_rel,j_rel),   &
-                                                         L_ibkc_p(:,:,i_rel,k_rel),   &
-                                                         L_jbkc_p(:,:,j_rel,k_rel),   &
-                                                         g_dbic_p(:,:,:,i_rel),       &
-                                                         g_dbjc_p(:,:,:,j_rel),       &
-                                                         g_dbkc_p(:,:,:,k_rel),       &
-                                                         g_jlic_p(:,:,j_rel,i_rel),   &
-                                                         g_klic_p(:,:,k_rel,i_rel),   &
-                                                         g_kljc_p(:,:,k_rel,j_rel),   &
-                                                         g_iljc_p(:,:,i_rel,j_rel),   &
-                                                         g_ilkc_p(:,:,i_rel,k_rel),   &
-                                                         g_jlkc_p(:,:,j_rel,k_rel))
+                        call wf%jacobian_transpose_cc3_c3_calc(i, j ,k, c_ai, c_abij,       &
+                                                               c_abc, u_abc, v_abc, F_kc,   &
+                                                               L_ibjc_p(:,:,i_rel,j_rel),   &
+                                                               L_ibkc_p(:,:,i_rel,k_rel),   &
+                                                               L_jbkc_p(:,:,j_rel,k_rel),   &
+                                                               g_dbic_p(:,:,:,i_rel),       &
+                                                               g_dbjc_p(:,:,:,j_rel),       &
+                                                               g_dbkc_p(:,:,:,k_rel),       &
+                                                               g_jlic_p(:,:,j_rel,i_rel),   &
+                                                               g_klic_p(:,:,k_rel,i_rel),   &
+                                                               g_kljc_p(:,:,k_rel,j_rel),   &
+                                                               g_iljc_p(:,:,i_rel,j_rel),   &
+                                                               g_ilkc_p(:,:,i_rel,k_rel),   &
+                                                               g_jlkc_p(:,:,j_rel,k_rel))
 !
                         call wf%omega_cc3_eps(i, j, k, c_abc, omega)
 !
-                        call wf%jacobian_transpose_cc3_sigma2(i, j, k, c_abc, u_abc, sigma_abij,   &
-                                                               g_bdci_p(:,:,:,i_rel),              &
-                                                               g_bdcj_p(:,:,:,j_rel),              &
-                                                               g_bdck_p(:,:,:,k_rel),              &
-                                                               g_ljci_p(:,:,j_rel,i_rel),          &
-                                                               g_lkci_p(:,:,k_rel,i_rel),          &
-                                                               g_lkcj_p(:,:,k_rel,j_rel),          &
-                                                               g_licj_p(:,:,i_rel,j_rel),          &
-                                                               g_lick_p(:,:,i_rel,k_rel),          &
-                                                               g_ljck_p(:,:,j_rel,k_rel))
+                        call wf%jacobian_transpose_cc3_a_n7(i, j, k, c_abc, u_abc, sigma_abij, &
+                                                            g_bdci_p(:,:,:,i_rel),             &
+                                                            g_bdcj_p(:,:,:,j_rel),             &
+                                                            g_bdck_p(:,:,:,k_rel),             &
+                                                            g_ljci_p(:,:,j_rel,i_rel),         &
+                                                            g_lkci_p(:,:,k_rel,i_rel),         &
+                                                            g_lkcj_p(:,:,k_rel,j_rel),         &
+                                                            g_licj_p(:,:,i_rel,j_rel),         &
+                                                            g_lick_p(:,:,i_rel,k_rel),         &
+                                                            g_ljck_p(:,:,j_rel,k_rel))
 !
-                        call wf%construct_intermediates_c3(i, j, k, c_abc, u_abc, t_abij, &
-                                                            Y_cmjk,                       &
-                                                            Y_bcei_p(:,:,:,i_rel),        &
-                                                            Y_bcej_p(:,:,:,j_rel),        &
-                                                            Y_bcek_p(:,:,:,k_rel))
+                        call wf%construct_y_intermediates(i, j, k, c_abc, u_abc, t_abij, &
+                                                          Y_cmjk,                       &
+                                                          Y_bcei_p(:,:,:,i_rel),        &
+                                                          Y_bcej_p(:,:,:,j_rel),        &
+                                                          Y_bcek_p(:,:,:,k_rel))
 !
                      enddo ! loop over k
                   enddo ! loop over j
@@ -1290,25 +1289,25 @@ contains
 !
 !     Contribution of the Y_cmkj to sigma1
 !
-      call wf%jacobian_transpose_CC3_sigma1_C3_A1(sigma_ai, Y_cmjk)
+      call wf%jacobian_transpose_cc3_c3_a_y_o(sigma_ai, Y_cmjk)
 !
       call mem%dealloc(Y_cmjk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
 !     Contribution of the Y_bcek to sigma1
 !
-      call wf%jacobian_transpose_CC3_sigma1_C3_B1(sigma_ai)
+      call wf%jacobian_transpose_cc3_c3_a_y_v(sigma_ai)
 !
       call disk%close_file(wf%Y_bcek)
 !
-   end subroutine jacobian_transpose_cc3_C3_terms_cc3
+   end subroutine jacobian_transpose_cc3_c3_a_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_C3_calc_cc3(wf, i, j ,k, c_ai, c_abij,  &
-                                                         c_abc, u_abc, v_abc, F_kc, &
-                                                         L_ibjc, L_ibkc, L_jbkc,    &
-                                                         g_dbic, g_dbjc, g_dbkc,    &
-                                                         g_jlic, g_klic, g_kljc,    &
-                                                         g_iljc, g_ilkc, g_jlkc)
+   module subroutine jacobian_transpose_cc3_c3_calc_cc3(wf, i, j ,k, c_ai, c_abij, &
+                                                        c_abc, u_abc, v_abc, F_kc, &
+                                                        L_ibjc, L_ibkc, L_jbkc,    &
+                                                        g_dbic, g_dbjc, g_dbkc,    &
+                                                        g_jlic, g_klic, g_kljc,    &
+                                                        g_iljc, g_ilkc, g_jlkc)
 !!
 !!    Calculate the C3 amplitudes for fixed indices i,j,k 
 !!
@@ -1633,12 +1632,12 @@ contains
       call add_two_231_min_213_min_132(u_abc, c_abc, wf%n_v)
 !
 !
-   end subroutine jacobian_transpose_cc3_C3_calc_cc3
+   end subroutine jacobian_transpose_cc3_c3_calc_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_sigma2_cc3(wf, i, j, k, c_abc, u_abc, sigma_abij,   &
-                                                      g_bdci, g_bdcj, g_bdck, g_ljci, g_lkci,   &
-                                                      g_lkcj, g_licj, g_lick, g_ljck)
+   module subroutine jacobian_transpose_cc3_a_n7_cc3(wf, i, j, k, c_abc, u_abc, sigma_abij,  &
+                                                     g_bdci, g_bdcj, g_bdck, g_ljci, g_lkci, &
+                                                     g_lkcj, g_licj, g_lick, g_ljck)
 !!
 !!    Calculates triples contribution to sigma2
 !!
@@ -1876,10 +1875,10 @@ contains
       end if
 !
 !
-   end subroutine jacobian_transpose_cc3_sigma2_cc3
+   end subroutine jacobian_transpose_cc3_a_n7_cc3
 !
 !
-   module subroutine construct_intermediates_c3_cc3(wf, i, j, k, c_abc, u_abc, t_abij, Y_cmjk,   &
+   module subroutine construct_y_intermediates_cc3(wf, i, j, k, c_abc, u_abc, t_abij, y_cmjk,   &
                                                    Y_bcei, Y_bcej, Y_bcek)
 !!
 !!    Constructs the intermediates Y_bcei and Y_cmik used to compute the c3 contributions to sigma_ai
@@ -2114,10 +2113,10 @@ contains
 !
       end if
 !
-   end subroutine construct_intermediates_c3_cc3
+   end subroutine construct_y_intermediates_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_sigma1_C3_A1_cc3(wf, sigma_ai, Y_cmjk)
+   module subroutine jacobian_transpose_cc3_c3_a_y_o_cc3(wf, sigma_ai, Y_cmjk)
 !!
 !!    Computes the contribution of the intermediate Y_cmjk to sigma_1
 !!
@@ -2275,10 +2274,10 @@ contains
 !
       call mem%dealloc(Y_cmkj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-   end subroutine jacobian_transpose_cc3_sigma1_C3_A1_cc3
+   end subroutine jacobian_transpose_cc3_c3_a_y_o_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_sigma1_C3_B1_cc3(wf, sigma_ai)
+   module subroutine jacobian_transpose_cc3_c3_a_y_v_cc3(wf, sigma_ai)
 !!
 !!    Computes the contribution of the intermediate Y_bcek to sigma_1
 !!
@@ -2465,7 +2464,7 @@ contains
 !
       call disk%close_file(wf%g_cdlk_t)
 !
-   end subroutine jacobian_transpose_cc3_sigma1_C3_B1_cc3
+   end subroutine jacobian_transpose_cc3_c3_a_y_v_cc3
 !
 !
 end submodule jacobian_transpose

@@ -33,7 +33,7 @@
    end subroutine effective_jacobian_transpose_transformation_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_sigma1_t3_A1_cc3(wf, c_abij, sigma_ai)
+   module subroutine jacobian_transpose_cc3_t3_a1_cc3(wf, c_abij, sigma_ai)
 !!
 !!    Computes first contribution of the T3 amplitudes to sigma_1
 !!
@@ -52,10 +52,10 @@
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(out) :: sigma_ai
 !
-   end subroutine jacobian_transpose_cc3_sigma1_t3_A1_cc3
+   end subroutine jacobian_transpose_cc3_t3_a1_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_sigma1_t3_B1_cc3(wf, c_abij, sigma_ai)
+   module subroutine jacobian_transpose_cc3_t3_b1_cc3(wf, c_abij, sigma_ai)
 !!
 !!    Computes first contribution of the T3 amplitudes to sigma_1
 !!
@@ -74,10 +74,10 @@
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
 !
-   end subroutine jacobian_transpose_cc3_sigma1_t3_B1_cc3
+   end subroutine jacobian_transpose_cc3_t3_b1_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_X_ai_calc_cc3(wf, i, j, k, t_abc, u_abc, X_ai, c_bcjk)
+   module subroutine construct_x_ai_intermediate_cc3(wf, i, j, k, t_abc, u_abc, X_ai, c_bcjk)
 !!
 !!    Constructs the intermediate X_ai
 !!
@@ -98,10 +98,10 @@
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: c_bcjk
 !
-   end subroutine jacobian_transpose_cc3_X_ai_calc_cc3
+   end subroutine construct_x_ai_intermediate_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_C3_terms_cc3(wf, omega, c_ai, c_abij, sigma_ai, sigma_abij)
+   module subroutine jacobian_transpose_cc3_c3_a_cc3(wf, omega, c_ai, c_abij, sigma_ai, sigma_abij)
 !!
 !!    Construct C^abc_ijk in single batches of ijk and compute the contributions
 !!    to the singles and doubles part of the outgoing vector
@@ -131,10 +131,10 @@
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: sigma_abij
 !
-   end subroutine jacobian_transpose_cc3_C3_terms_cc3
+   end subroutine jacobian_transpose_cc3_c3_a_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_C3_calc_cc3(wf, i, j ,k, c_ai, c_abij,  &
+   module subroutine jacobian_transpose_cc3_c3_calc_cc3(wf, i, j ,k, c_ai, c_abij,  &
                                                          c_abc, u_abc, v_abc, F_kc, &
                                                          L_ibjc, L_ibkc, L_jbkc,    &
                                                          g_dbic, g_dbjc, g_dbkc,    &
@@ -189,12 +189,12 @@
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_ilkc
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_jlkc
 !
-   end subroutine jacobian_transpose_cc3_C3_calc_cc3
+   end subroutine jacobian_transpose_cc3_c3_calc_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_sigma2_cc3(wf, i, j, k, c_abc, u_abc, sigma_abij,   &
-                                                      g_bdci, g_bdcj, g_bdck, g_ljci, g_lkci,   &
-                                                      g_lkcj, g_licj, g_lick, g_ljck)
+   module subroutine jacobian_transpose_cc3_a_n7_cc3(wf, i, j, k, c_abc, u_abc, sigma_abij,   &
+                                                     g_bdci, g_bdcj, g_bdck, g_ljci, g_lkci,   &
+                                                     g_lkcj, g_licj, g_lick, g_ljck)
 !!
 !!    Calculates triples contribution to sigma2
 !!
@@ -227,10 +227,10 @@
       real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lick
       real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljck
 !
-   end subroutine jacobian_transpose_cc3_sigma2_cc3
+   end subroutine jacobian_transpose_cc3_a_n7_cc3
 !
 !
-   module subroutine construct_intermediates_c3_cc3(wf, i, j, k, c_abc, u_abc, t_abij, Y_cmjk,   &
+   module subroutine construct_Y_intermediates_cc3(wf, i, j, k, c_abc, u_abc, t_abij, Y_cmjk,   &
                                                    Y_bcei, Y_bcej, Y_bcek)
 !!
 !!    Constructs the intermediates Y_bcei and Y_cmjk used to compute the c3 contributions to sigma_ai
@@ -259,10 +259,10 @@
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: Y_bcej
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: Y_bcek
 !
-   end subroutine construct_intermediates_c3_cc3
+   end subroutine construct_Y_intermediates_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_sigma1_C3_A1_cc3(wf, sigma_ai, Y_cmjk)
+   module subroutine jacobian_transpose_cc3_c3_a_y_o_cc3(wf, sigma_ai, Y_cmjk)
 !!
 !!    Computes the contribution of the intermediate Y_cmjk to sigma_1
 !!
@@ -280,10 +280,10 @@
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(in) :: Y_cmjk
 !
-   end subroutine jacobian_transpose_cc3_sigma1_C3_A1_cc3
+   end subroutine jacobian_transpose_cc3_c3_a_y_o_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_sigma1_C3_B1_cc3(wf, sigma_ai)
+   module subroutine jacobian_transpose_cc3_c3_a_y_v_cc3(wf, sigma_ai)
 !!
 !!    Computes the contribution of the intermediate X_bcek to sigma_1
 !!
@@ -299,4 +299,5 @@
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
 !
-   end subroutine jacobian_transpose_cc3_sigma1_C3_B1_cc3
+   end subroutine jacobian_transpose_cc3_c3_a_y_v_cc3
+!

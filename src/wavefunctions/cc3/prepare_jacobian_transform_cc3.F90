@@ -44,7 +44,7 @@ submodule (cc3_class) prepare_jacobian_transform
 contains
 !
 !
-   module subroutine prepare_cc3_jacobian_transpose_integrals_cc3(wf)
+   module subroutine prep_cc3_jacobian_trans_integrals_cc3(wf)
 !!
 !!    Construct integrals needed in CC3 jacobian transpose and store on disk
 !!    (be|cd) ordered as bce,d
@@ -222,10 +222,10 @@ contains
       call batch_d%determine_limits(1)
       call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
 !
-   end subroutine prepare_cc3_jacobian_transpose_integrals_cc3
+   end subroutine prep_cc3_jacobian_trans_integrals_cc3
 !
 !
-   module subroutine prepare_cc3_g_lbkc_t_file_cc3(wf)
+   module subroutine prep_cc3_g_lbkc_t_file_cc3(wf)
 !!
 !!    Construct ovov-integral needed only in the construction of the intermediates 
 !!    for the CC3 jacobian transformations and store on disk
@@ -286,10 +286,10 @@ contains
       call disk%close_file(wf%g_lbkc_t,'keep')
 
 !
-   end subroutine prepare_cc3_g_lbkc_t_file_cc3
+   end subroutine prep_cc3_g_lbkc_t_file_cc3
 !
 !
-   module subroutine prepare_cc3_jacobian_intermediates_cc3(wf)
+   module subroutine prep_cc3_jacobian_intermediates_cc3(wf)
 !!
 !!    Construct X_abdi and X_ajil needed in CC3 jacobian transpose and store on disk
 !!    For that: construct t^abc_ijk in single batches of ijk 
@@ -363,7 +363,7 @@ contains
 !     Construct the g_lbkc_t file (only needed for the intermediates)
 !     g_ljck_t and g_bdck_t are already on disk from the ground state calculation
 !
-      call wf%prepare_cc3_g_lbkc_t_file()
+      call wf%prep_cc3_g_lbkc_t_file()
 !
 !     Alloc and squareup the t2 amplitudes
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -572,7 +572,7 @@ contains
 !
                         call wf%omega_cc3_eps(i, j, k, t_abc)
 !
-                        call wf%construct_X_intermediates(i, j, k, t_abc, u_abc, v_abc,  &
+                        call wf%construct_x_intermediates(i, j, k, t_abc, u_abc, v_abc,  &
                                                           X_alij,                        &
                                                           X_abdi_p(:,:,:,i_rel),         &
                                                           X_abdj_p(:,:,:,j_rel),         &
@@ -655,7 +655,7 @@ contains
 !
 !     Resort X_abdi to X_abid for the final contraction with C^ac_il to sigma_dl
 !
-      call wf%sort_X_to_abid_and_write()
+      call wf%sort_x_to_abid_and_write()
 !
       call disk%close_file(wf%X_abdi, 'delete')
 !
@@ -676,10 +676,10 @@ contains
 !
       call disk%close_file(wf%X_ajil,'keep')
 !
-   end subroutine prepare_cc3_jacobian_intermediates_cc3
+   end subroutine prep_cc3_jacobian_intermediates_cc3
 !
 !
-   module subroutine construct_X_intermediates_cc3(wf, i, j, k, t_abc, u_abc, v_abc, X_alij,      &
+   module subroutine construct_x_intermediates_cc3(wf, i, j, k, t_abc, u_abc, v_abc, x_alij,      &
                                                    X_abdi, X_abdj, X_abdk, g_lbic, g_lbjc, g_lbkc)
 !!
 !!    Constructs the intermediates X_abdi and X_ajil used to compute the contributions to sigma_ai
@@ -929,10 +929,10 @@ contains
          end if ! j .ne. i
       end if ! k .ne. j
 !                
-   end subroutine construct_X_intermediates_cc3
+   end subroutine construct_x_intermediates_cc3
 !
 !
-   module subroutine sort_X_to_abid_and_write_cc3(wf)
+   module subroutine sort_x_to_abid_and_write_cc3(wf)
 !!
 !!    Read in intermediate X_abdi from file, resort to X_abid and write to file again
 !!
@@ -1002,7 +1002,7 @@ contains
 !
       call disk%close_file(wf%X_abid,'keep')
 !
-   end subroutine sort_X_to_abid_and_write_cc3
+   end subroutine sort_x_to_abid_and_write_cc3
 !
 !
 end submodule prepare_jacobian_transform

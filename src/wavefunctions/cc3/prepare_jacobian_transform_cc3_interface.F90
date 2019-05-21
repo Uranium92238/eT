@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine prepare_cc3_jacobian_transpose_integrals_cc3(wf)
+   module subroutine prep_cc3_jacobian_trans_integrals_cc3(wf)
 !!
 !!    Construct integrals needed in CC3 jacobian transpose and store on disk
 !!    (be|cd) ordered as bce,d
@@ -31,10 +31,10 @@
 !!
       class(cc3) :: wf
 !
-   end subroutine prepare_cc3_jacobian_transpose_integrals_cc3
+   end subroutine prep_cc3_jacobian_trans_integrals_cc3
 !
 !
-   module subroutine prepare_cc3_g_lbkc_t_file_cc3(wf)
+   module subroutine prep_cc3_g_lbkc_t_file_cc3(wf)
 !!
 !!    Construct ovov-integral only needed in the construction of 
 !!    the intermediates for the CC3 jacobian transformations and store on disk
@@ -47,10 +47,10 @@
 !
       class(cc3) :: wf
 !
-   end subroutine prepare_cc3_g_lbkc_t_file_cc3
+   end subroutine prep_cc3_g_lbkc_t_file_cc3
 !
 !
-   module subroutine prepare_cc3_jacobian_intermediates_cc3(wf)
+   module subroutine prep_cc3_jacobian_intermediates_cc3(wf)
 !!
 !!    Construct X_abdi and Y_akil needed in CC3 jacobian transpose and store on disk
 !!    For that: construct t^abc_ijk in single batches of ijk 
@@ -62,7 +62,7 @@
 !!
       class(cc3) :: wf
 !
-   end subroutine prepare_cc3_jacobian_intermediates_cc3
+   end subroutine prep_cc3_jacobian_intermediates_cc3
 !
 !
    module subroutine construct_X_intermediates_cc3(wf, i, j, k, t_abc, u_abc, v_abc, X_alij,      &

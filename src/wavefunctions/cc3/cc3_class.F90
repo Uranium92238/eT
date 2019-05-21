@@ -76,16 +76,21 @@ module cc3_class
       procedure :: omega_cc3_a_n6         => omega_cc3_a_n6_cc3
       procedure :: omega_cc3_a_n7         => omega_cc3_a_n7_cc3
 !
-!     Routine used for prepare, both left and right
-      procedure :: prepare_cc3_jacobian_intermediates &
-                                                   => prepare_cc3_jacobian_intermediates_cc3
-      procedure :: construct_X_intermediates       => construct_X_intermediates_cc3
-      procedure :: sort_X_to_abid_and_write        => sort_X_to_abid_and_write_cc3
+!     Routines used for prepare, both left and right
+!
+      procedure :: prepare_for_jacobian            => prepare_for_jacobian_cc3
+      procedure :: prepare_for_jacobian_transpose  => prepare_for_jacobian_transpose_cc3
+!
+!     Both
+      procedure :: prep_cc3_g_lbkc_t_file          => prep_cc3_g_lbkc_t_file_cc3
+      procedure :: prep_cc3_jacobian_intermediates => prep_cc3_jacobian_intermediates_cc3
+      procedure :: construct_x_intermediates       => construct_x_intermediates_cc3
+      procedure :: sort_x_to_abid_and_write        => sort_x_to_abid_and_write_cc3
+!
+!     Only left
+      procedure :: prep_cc3_jacobian_trans_integrals => prep_cc3_jacobian_trans_integrals_cc3
 !
 !     Routines related to the jacobian
-!
-      procedure :: prepare_for_jacobian               => prepare_for_jacobian_cc3
-      procedure :: prepare_for_jacobian_transpose     => prepare_for_jacobian_transpose_cc3
 !
       procedure :: construct_excited_state_equation   => construct_excited_state_equation_cc3
 !
@@ -96,34 +101,28 @@ module cc3_class
       procedure :: jacobian_cc3_t3_a2  => jacobian_cc3_t3_a2_cc3
 !
       procedure :: jacobian_cc3_t3_b2     => jacobian_cc3_t3_b2_cc3
+      procedure :: construct_c1_fock      => construct_c1_fock_cc3
       procedure :: jacobian_cc3_b2_fock   => jacobian_cc3_b2_fock_cc3
-      procedure :: jacobian_cc3_c1_fock   => jacobian_cc3_c1_fock_cc3
 !
       procedure :: jacobian_cc3_c3_a         => jacobian_cc3_c3_a_cc3
-      procedure :: jacobian_cc3_c1_integrals => jacobian_cc3_c1_integrals_cc3
+      procedure :: construct_c1_integrals    => construct_c1_integrals_cc3
 !
 !     Routines related to the transpose of the jacobian
-!
-      procedure :: prepare_cc3_jacobian_transpose_integrals &
-                                                   => prepare_cc3_jacobian_transpose_integrals_cc3
-      procedure :: prepare_cc3_g_lbkc_t_file       => prepare_cc3_g_lbkc_t_file_cc3
 !
       procedure :: effective_jacobian_transpose_transformation  &
                                                    => effective_jacobian_transpose_transformation_cc3
 !
-      procedure :: jacobian_transpose_cc3_sigma1_t3_A1   => jacobian_transpose_cc3_sigma1_t3_A1_cc3
+      procedure :: jacobian_transpose_cc3_t3_a1 => jacobian_transpose_cc3_t3_a1_cc3
 !
-      procedure :: jacobian_transpose_cc3_sigma1_t3_B1   => jacobian_transpose_cc3_sigma1_t3_B1_cc3
-      procedure :: jacobian_transpose_cc3_X_ai_calc      => jacobian_transpose_cc3_X_ai_calc_cc3
+      procedure :: jacobian_transpose_cc3_t3_b1 => jacobian_transpose_cc3_t3_b1_cc3
+      procedure :: construct_x_ai_intermediate  => construct_x_ai_intermediate_cc3
 !
-      procedure :: jacobian_transpose_cc3_C3_terms       => jacobian_transpose_cc3_C3_terms_cc3
-!
-      procedure :: jacobian_transpose_cc3_C3_calc        => jacobian_transpose_cc3_C3_calc_cc3
-      procedure :: jacobian_transpose_cc3_sigma2         => jacobian_transpose_cc3_sigma2_cc3
-      procedure :: construct_intermediates_c3            => construct_intermediates_c3_cc3
-!
-      procedure :: jacobian_transpose_cc3_sigma1_C3_A1   => jacobian_transpose_cc3_sigma1_C3_A1_cc3
-      procedure :: jacobian_transpose_cc3_sigma1_C3_B1   => jacobian_transpose_cc3_sigma1_C3_B1_cc3
+      procedure :: jacobian_transpose_cc3_c3_a     => jacobian_transpose_cc3_c3_a_cc3
+      procedure :: jacobian_transpose_cc3_c3_calc  => jacobian_transpose_cc3_c3_calc_cc3
+      procedure :: jacobian_transpose_cc3_a_n7     => jacobian_transpose_cc3_a_n7_cc3
+      procedure :: construct_y_intermediates       => construct_y_intermediates_cc3
+      procedure :: jacobian_transpose_cc3_c3_a_y_o => jacobian_transpose_cc3_c3_a_y_o_cc3
+      procedure :: jacobian_transpose_cc3_c3_a_y_v => jacobian_transpose_cc3_c3_a_y_v_cc3
 !
    end type cc3
 !
@@ -285,7 +284,7 @@ contains
       write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', 'right', &
                                             & ' excited state equations.'
 !
-      call wf%prepare_cc3_jacobian_intermediates()
+      call wf%prep_cc3_jacobian_intermediates()
 !
       call prep_timer%turn_off()
       flush(timing%unit)
@@ -310,8 +309,8 @@ contains
       write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', 'left', &
                                             & ' excited state equations.'
 !
-      call wf%prepare_cc3_jacobian_intermediates()
-      call wf%prepare_cc3_jacobian_transpose_integrals()
+      call wf%prep_cc3_jacobian_intermediates()
+      call wf%prep_cc3_jacobian_trans_integrals()
 !
       call prep_timer%turn_off()
       flush(timing%unit)

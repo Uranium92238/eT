@@ -442,7 +442,7 @@ contains
 !     C1 transformed Fock matrix
 !
       call mem%alloc(F_kc_c1, wf%n_v, wf%n_o)
-      call wf%jacobian_cc3_c1_fock(c_ai, F_kc_c1)
+      call wf%construct_c1_fock(c_ai, F_kc_c1)
 !
 !     Setup and Batching loops for the T3-contributions to rho2
 !
@@ -772,7 +772,7 @@ contains
       real(dp)             :: batch_buff = 0.0
 !
 !     Set up required c1-transformed integrals
-      call wf%jacobian_cc3_c1_integrals(c_ai)
+      call wf%construct_c1_integrals(c_ai)
 !
 !     Set up arrays for amplitudes
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -1214,7 +1214,7 @@ contains
    end subroutine jacobian_cc3_c3_a_cc3
 !
 !
-   module subroutine jacobian_cc3_c1_integrals_cc3(wf, c_ai)
+   module subroutine construct_c1_integrals_cc3(wf, c_ai)
 !!
 !!    Construct c1-transformed integrals needed in CC3 jacobian
 !!    from the c1-transformed Cholesky Vectors
@@ -1444,10 +1444,10 @@ contains
 !
       call disk%close_file(wf%g_ljck_c1,'keep')
 !
-   end subroutine jacobian_cc3_c1_integrals_cc3
+   end subroutine construct_c1_integrals_cc3
 !
 !
-   module subroutine jacobian_cc3_c1_fock_cc3(wf, c_ai, F_ia_c1)
+   module subroutine construct_c1_fock_cc3(wf, c_ai, F_ia_c1)
 !!
 !!    Calculates C1-transformed occupied-virtual elements of the Fock matrix
 !!    required for the CC3 jacobian and returns it ordered as n_v, n_o
@@ -1517,7 +1517,7 @@ contains
 !
       call mem%dealloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-   end subroutine jacobian_cc3_c1_fock_cc3
+   end subroutine construct_c1_fock_cc3
 !
 !
    module subroutine jacobian_cc3_b2_fock_cc3(wf, i, j, k, t_abc, u_abc, rho_abij, F_kc)
