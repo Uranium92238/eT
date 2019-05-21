@@ -84,7 +84,9 @@ module cc3_class
 !
 !     Routines related to the jacobian
 !
-      procedure :: prepare_for_excited_state_eq       => prepare_for_excited_state_eq_cc3
+      procedure :: prepare_for_jacobian               => prepare_for_jacobian_cc3
+      procedure :: prepare_for_jacobian_transpose     => prepare_for_jacobian_transpose_cc3
+!
       procedure :: construct_excited_state_equation   => construct_excited_state_equation_cc3
 !
 !     Right hand side transformation
@@ -265,7 +267,33 @@ contains
    end subroutine construct_excited_state_equation_cc3
 !
 !
-   subroutine prepare_for_excited_state_eq_cc3(wf,r_or_l)
+   subroutine prepare_for_jacobian_cc3(wf)
+!!
+!!    Prepare for jacobian
+!!    Written by Rolf Heilemann Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!  
+!
+      type(timings) :: prep_timer      
+!
+      prep_timer = new_timer("Time preparing for Jacobian")
+      call prep_timer%turn_on()
+!
+      write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', 'right', &
+                                            & ' excited state equations.'
+!
+      call wf%prepare_cc3_jacobian_intermediates()
+!
+      call prep_timer%turn_off()
+      flush(timing%unit)
+!
+   end subroutine prepare_for_jacobian_cc3
+!
+!
+   subroutine prepare_for_jacobian_transpose_cc3(wf)
 !!
 !!    Prepare for jacobian
 !!    Written by Rolf Heilemann Myhre, April 2019
@@ -274,38 +302,21 @@ contains
 !
       class(cc3), intent(inout) :: wf
 !
-      character(len=*), intent(in) :: r_or_l
-!
       type(timings) :: prep_timer      
 !
       prep_timer = new_timer("Time preparing for Jacobian")
       call prep_timer%turn_on()
 !
-      if (trim(r_or_l) .eq. "left") then
-!
-         write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', trim(r_or_l), &
+      write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', 'left', &
                                             & ' excited state equations.'
 !
-         call wf%prepare_cc3_jacobian_intermediates()
-         call wf%prepare_cc3_jacobian_transpose_integrals()
-!
-      elseif(trim(r_or_l) .eq. "right") then
-!
-         write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', trim(r_or_l), &
-                                            & ' excited state equations.'
-!
-         call wf%prepare_cc3_jacobian_intermediates()
-!
-      else
-!
-         call output%error_msg('Neither left nor right in prepare_fore_excited_state_eq_cc3')
-!
-      endif                                 
+      call wf%prepare_cc3_jacobian_intermediates()
+      call wf%prepare_cc3_jacobian_transpose_integrals()
 !
       call prep_timer%turn_off()
       flush(timing%unit)
 !
-   end subroutine prepare_for_excited_state_eq_cc3
+   end subroutine prepare_for_jacobian_transpose_cc3
 !
 !
 end module cc3_class
