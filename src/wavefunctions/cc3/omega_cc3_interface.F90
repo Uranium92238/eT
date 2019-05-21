@@ -114,13 +114,19 @@
    end subroutine omega_cc3_eps_cc3
 !
 !
-   module subroutine omega_cc3_omega1_cc3(wf, i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
-                                          L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
+   module subroutine omega_cc3_a_n6_cc3(wf, i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
+                                        L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
+!!
+!!    omega_cc3_a_n6
+!!
+!!    Written by Rolf H. Myhre, January 2019
 !!
 !!    Calculate the triples contribution to omega1 and
-!!    the Fock contribution to omega2
+!!    the Fock contribution to omega2 scaling as n^6
 !!
-!!    Rolf H. Myhre, January 2019
+!!    omega^a_i += sum_bcjk (t^abc_ijk - t^cba_ijk)*L_jbkc
+!!    
+!!    omega^ab_ij += P^{ab}_{ij}sum_ck (t^abc_ijk - t^cba_ijk)*F_kc
 !!
       implicit none
 !
@@ -143,17 +149,22 @@
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_ibkc
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbkc
 !
-   end subroutine omega_cc3_omega1_cc3
+   end subroutine omega_cc3_a_n6_cc3
 !
 !
-   module subroutine omega_cc3_omega2_cc3(wf, i, j, k, t_abc, u_abc, v_abc, omega2, &
-                                          g_dbic, g_dbjc, g_dbkc, &
-                                          g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
+   module subroutine omega_cc3_a_n7_cc3(wf, i, j, k, t_abc, u_abc, v_abc, omega2, &
+                                        g_dbic, g_dbjc, g_dbkc, &
+                                        g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
 !!
-!!    Calculate the triples contribution to omega1 and
-!!    the Fock contribution to omega2
+!!    omega_cc3_a_n7
 !!
-!!    Rolf H. Myhre, January 2019
+!!    Written by Rolf H. Myhre, January 2019
+!!
+!!    Calculate the triples contribution to omega2. Scaling as n^7
+!!
+!!    omega_abli -= P^ab_li sum_cjk(2t^bac_ijk - t^bca_ijk - t^cab_ijk)*g_jlkc
+!!
+!!    omega_adij -= P^ad_ij sum_bck(2t^abc_ijk - t^cba_ijk - t^acb_ijk)*g_dbkc
 !!
       implicit none
 !
@@ -178,6 +189,6 @@
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_ilkc
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlkc
 !
-   end subroutine omega_cc3_omega2_cc3
+   end subroutine omega_cc3_a_n7_cc3
 !
 !

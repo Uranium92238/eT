@@ -33,7 +33,7 @@
    end subroutine effective_jacobian_transformation_cc3
 !
 !
-   module subroutine jacobian_cc3_rho2_T3_A1_cc3(wf, c_ai, rho_abij)
+   module subroutine jacobian_cc3_t3_a2_cc3(wf, c_ai, rho_abij)
 !!
 !!    Computes the first contribution of the T3 amplitudes to rho_2
 !!
@@ -56,10 +56,10 @@
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(out) :: rho_abij
 !
-   end subroutine jacobian_cc3_rho2_T3_A1_cc3
+   end subroutine jacobian_cc3_t3_a2_cc3
 !
 !
-   module subroutine jacobian_cc3_rho2_T3_B1_cc3(wf, c_ai, rho_abij)
+   module subroutine jacobian_cc3_t3_b2_cc3(wf, c_ai, rho_abij)
 !!
 !!    Computes the second contribution of the T3 amplitudes to rho_2
 !!
@@ -79,10 +79,10 @@
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_abij
 !
-   end subroutine jacobian_cc3_rho2_T3_B1_cc3
+   end subroutine jacobian_cc3_t3_b2_cc3
 !
 !
-   module subroutine jacobian_cc3_C3_terms_cc3(wf, omega, c_ai, c_abij, rho_ai, rho_abij)
+   module subroutine jacobian_cc3_c3_a_cc3(wf, omega, c_ai, c_abij, rho_ai, rho_abij)
 !!
 !!    Construct C^abc_ijk in single batches of ijk and compute the contributions
 !!    to the singles and doubles part of the outgoing vector
@@ -108,7 +108,7 @@
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_abij
 !
-   end subroutine jacobian_cc3_C3_terms_cc3
+   end subroutine jacobian_cc3_c3_a_cc3
 !
 !
    module subroutine jacobian_cc3_A_cc3(wf, omega, c_ai, c_abij, rho_ai, rho_abij)
@@ -157,7 +157,7 @@
    end subroutine jacobian_cc3_c1_integrals_cc3
 !
 !
-   module subroutine jacobian_cc3_construct_fock_ia_c1_cc3(wf, c_ai, F_ia_c1)
+   module subroutine jacobian_cc3_c1_fock_cc3(wf, c_ai, F_ia_c1)
 !!
 !!    Calculates C1 transformed elements of the Fock matrix required for the CC3 jacobian
 !!    Rolf H. Myhre and Alexander Paul, Feb 2019
@@ -171,10 +171,10 @@
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(out) :: F_ia_c1
 !
-   end subroutine jacobian_cc3_construct_fock_ia_c1_cc3
+   end subroutine jacobian_cc3_c1_fock_cc3
 !
 !
-   module subroutine jacobian_cc3_fock_rho2_cc3(wf, i, j, k, t_abc, u_abc, rho_abij, F_kc)
+   module subroutine jacobian_cc3_b2_fock_cc3(wf, i, j, k, t_abc, u_abc, rho_abij, F_kc)
 !!
 !!    Calculate the Fock contribution to rho2 for fixed i,j and k
 !!
@@ -195,6 +195,6 @@
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_kc
 !
-   end subroutine jacobian_cc3_fock_rho2_cc3
+   end subroutine jacobian_cc3_b2_fock_cc3
 !
 !

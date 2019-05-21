@@ -72,14 +72,14 @@ contains
 !
       integer :: i, j, a, b, ai, bj, aibj, b_end ! Index
 !
-      type(timings) :: cc3_timer, cc3_timer_t3_a, cc3_timer_t3_b, cc3_timer_c3
+      type(timings) :: cc3_timer, cc3_timer_t3_a2, cc3_timer_t3_b2, cc3_timer_c3
       type(timings) :: ccsd_timer
 !
-      cc3_timer_t3_a = new_timer('Time in CC3 T3 a1')
-      cc3_timer_t3_b = new_timer('Time in CC3 T3 b1')
-      cc3_timer_c3   = new_timer('Time in CC3 C3')
-      cc3_timer      = new_timer('Total CC3 contribution')
-      ccsd_timer     = new_timer('Total CCSD contribution')
+      cc3_timer_t3_a2 = new_timer('Time in CC3 T3 a2')
+      cc3_timer_t3_b2 = new_timer('Time in CC3 T3 b2')
+      cc3_timer_c3    = new_timer('Time in CC3 C3')
+      cc3_timer       = new_timer('Total CC3 contribution')
+      ccsd_timer      = new_timer('Total CCSD contribution')
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -198,23 +198,23 @@ contains
       call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call cc3_timer%turn_on()
-      call cc3_timer_t3_a%turn_on()
+      call cc3_timer_t3_a2%turn_on()
 !
 !     CC3-Contributions from the T3-amplitudes
-      call wf%jacobian_cc3_rho2_T3_A1(c_ai, rho_abij)
+      call wf%jacobian_cc3_t3_a2(c_ai, rho_abij)
 !
-      call cc3_timer_t3_a%turn_off()
+      call cc3_timer_t3_a2%turn_off()
 !
-      call cc3_timer_t3_b%turn_on()
+      call cc3_timer_t3_b2%turn_on()
 !
-      call wf%jacobian_cc3_rho2_T3_B1(c_ai, rho_abij)
+      call wf%jacobian_cc3_t3_b2(c_ai, rho_abij)
 !
-      call cc3_timer_t3_b%turn_off()
+      call cc3_timer_t3_b2%turn_off()
 !
 !     CC3-Contributions from the C3-amplitudes
       call cc3_timer_c3%turn_on()
 !
-      call wf%jacobian_cc3_C3_terms(omega, c_ai, c_abij, rho_ai, rho_abij)
+      call wf%jacobian_cc3_c3_a(omega, c_ai, c_abij, rho_ai, rho_abij)
 !
       call cc3_timer_c3%turn_off()
 !
@@ -281,7 +281,7 @@ contains
    end subroutine effective_jacobian_transformation_cc3
 !
 !
-   module subroutine jacobian_cc3_rho2_T3_A1_cc3(wf, c_ai, rho_abij)
+   module subroutine jacobian_cc3_t3_a2_cc3(wf, c_ai, rho_abij)
 !!
 !!    Computes the first contribution of the T3 amplitudes to rho_2
 !!
@@ -378,10 +378,10 @@ contains
 !
       call mem%dealloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-   end subroutine jacobian_cc3_rho2_T3_A1_cc3
+   end subroutine jacobian_cc3_t3_a2_cc3
 !
 !
-   module subroutine jacobian_cc3_rho2_T3_B1_cc3(wf, c_ai, rho_abij)
+   module subroutine jacobian_cc3_t3_b2_cc3(wf, c_ai, rho_abij)
 !!
 !!    Computes the second contribution of the T3 amplitudes to rho_2
 !!
@@ -442,7 +442,7 @@ contains
 !     C1 transformed Fock matrix
 !
       call mem%alloc(F_kc_c1, wf%n_v, wf%n_o)
-      call wf%jacobian_cc3_construct_fock_ia_c1(c_ai, F_kc_c1)
+      call wf%jacobian_cc3_c1_fock(c_ai, F_kc_c1)
 !
 !     Setup and Batching loops for the T3-contributions to rho2
 !
@@ -597,7 +597,7 @@ contains
 !
                         call wf%omega_cc3_eps(i, j, k, t_abc)
 !
-                        call wf%jacobian_cc3_fock_rho2(i, j, k, t_abc, u_abc, rho_abij, F_kc_c1)
+                        call wf%jacobian_cc3_b2_fock(i, j, k, t_abc, u_abc, rho_abij, F_kc_c1)
 !
                      enddo ! loop over k
                   enddo ! loop over j
@@ -644,10 +644,10 @@ contains
 !
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-   end subroutine jacobian_cc3_rho2_T3_B1_cc3
+   end subroutine jacobian_cc3_t3_b2_cc3
 !
 !
-   module subroutine jacobian_cc3_C3_terms_cc3(wf, omega, c_ai, c_abij, rho_ai, rho_abij)
+   module subroutine jacobian_cc3_c3_a_cc3(wf, omega, c_ai, c_abij, rho_ai, rho_abij)
 !!
 !!    Construct C^abc_ijk in single batches of ijk and compute the contributions
 !!    to the singles and doubles part of the outgoing vector
@@ -1103,26 +1103,26 @@ contains
 !
                         call wf%omega_cc3_eps(i, j, k, c_abc, omega)
 !
-                        call wf%omega_cc3_omega2(i, j, k, c_abc, u_abc, v_abc,   &
-                                                rho_abij,                        &
-                                                g_dbic_p(:,:,:,i_rel),           &
-                                                g_dbjc_p(:,:,:,j_rel),           &
-                                                g_dbkc_p(:,:,:,k_rel),           &
-                                                g_jlic_p(:,:,j_rel,i_rel),       &
-                                                g_klic_p(:,:,k_rel,i_rel),       &
-                                                g_kljc_p(:,:,k_rel,j_rel),       &
-                                                g_iljc_p(:,:,i_rel,j_rel),       &
-                                                g_ilkc_p(:,:,i_rel,k_rel),       &
-                                                g_jlkc_p(:,:,j_rel,k_rel))
+                        call wf%omega_cc3_a_n7(i, j, k, c_abc, u_abc, v_abc,   &
+                                               rho_abij,                        &
+                                               g_dbic_p(:,:,:,i_rel),           &
+                                               g_dbjc_p(:,:,:,j_rel),           &
+                                               g_dbkc_p(:,:,:,k_rel),           &
+                                               g_jlic_p(:,:,j_rel,i_rel),       &
+                                               g_klic_p(:,:,k_rel,i_rel),       &
+                                               g_kljc_p(:,:,k_rel,j_rel),       &
+                                               g_iljc_p(:,:,i_rel,j_rel),       &
+                                               g_ilkc_p(:,:,i_rel,k_rel),       &
+                                               g_jlkc_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_omega1(i, j, k, c_abc, u_abc,    &
-                                                rho_ai, rho_abij, F_kc,    &
-                                                L_jbic_p(:,:,j_rel,i_rel), &
-                                                L_kbic_p(:,:,k_rel,i_rel), &
-                                                L_kbjc_p(:,:,k_rel,j_rel), &
-                                                L_ibjc_p(:,:,i_rel,j_rel), &
-                                                L_ibkc_p(:,:,i_rel,k_rel), &
-                                                L_jbkc_p(:,:,j_rel,k_rel))
+                        call wf%omega_cc3_a_n6(i, j, k, c_abc, u_abc,    &
+                                               rho_ai, rho_abij, F_kc,    &
+                                               L_jbic_p(:,:,j_rel,i_rel), &
+                                               L_kbic_p(:,:,k_rel,i_rel), &
+                                               L_kbjc_p(:,:,k_rel,j_rel), &
+                                               L_ibjc_p(:,:,i_rel,j_rel), &
+                                               L_ibkc_p(:,:,i_rel,k_rel), &
+                                               L_jbkc_p(:,:,j_rel,k_rel))
 !
                      enddo ! loop over k
                   enddo ! loop over j
@@ -1211,7 +1211,7 @@ contains
 !
       call mem%dealloc(F_kc, wf%n_v, wf%n_o)
 !
-   end subroutine jacobian_cc3_C3_terms_cc3
+   end subroutine jacobian_cc3_c3_a_cc3
 !
 !
    module subroutine jacobian_cc3_c1_integrals_cc3(wf, c_ai)
@@ -1447,7 +1447,7 @@ contains
    end subroutine jacobian_cc3_c1_integrals_cc3
 !
 !
-   module subroutine jacobian_cc3_construct_fock_ia_c1_cc3(wf, c_ai, F_ia_c1)
+   module subroutine jacobian_cc3_c1_fock_cc3(wf, c_ai, F_ia_c1)
 !!
 !!    Calculates C1-transformed occupied-virtual elements of the Fock matrix
 !!    required for the CC3 jacobian and returns it ordered as n_v, n_o
@@ -1517,10 +1517,10 @@ contains
 !
       call mem%dealloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-   end subroutine jacobian_cc3_construct_fock_ia_c1_cc3
+   end subroutine jacobian_cc3_c1_fock_cc3
 !
 !
-   module subroutine jacobian_cc3_fock_rho2_cc3(wf, i, j, k, t_abc, u_abc, rho_abij, F_kc)
+   module subroutine jacobian_cc3_b2_fock_cc3(wf, i, j, k, t_abc, u_abc, rho_abij, F_kc)
 !!
 !!    Calculate the triples contribution to rho2 for fixed i,j and k
 !!
@@ -1653,7 +1653,7 @@ contains
 !
       end if
 !
-   end subroutine jacobian_cc3_fock_rho2_cc3
+   end subroutine jacobian_cc3_b2_fock_cc3
 !
 !
 end submodule jacobian

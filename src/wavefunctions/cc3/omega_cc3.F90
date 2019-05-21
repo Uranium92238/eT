@@ -464,24 +464,24 @@ contains
 !
                         call wf%omega_cc3_eps(i, j, k, t_abc)
 !
-                        call wf%omega_cc3_omega2(i, j, k, t_abc, u_abc, v_abc, omega2, &
-                                                 g_dbic_p(:,:,:,i_rel), &
-                                                 g_dbjc_p(:,:,:,j_rel), &
-                                                 g_dbkc_p(:,:,:,k_rel), &
-                                                 g_jlic_p(:,:,j_rel,i_rel), &
-                                                 g_klic_p(:,:,k_rel,i_rel), &
-                                                 g_kljc_p(:,:,k_rel,j_rel), &
-                                                 g_iljc_p(:,:,i_rel,j_rel), &
-                                                 g_ilkc_p(:,:,i_rel,k_rel), &
-                                                 g_jlkc_p(:,:,j_rel,k_rel))
+                        call wf%omega_cc3_a_n7(i, j, k, t_abc, u_abc, v_abc, omega2, &
+                                               g_dbic_p(:,:,:,i_rel),                &
+                                               g_dbjc_p(:,:,:,j_rel),                &
+                                               g_dbkc_p(:,:,:,k_rel),                &
+                                               g_jlic_p(:,:,j_rel,i_rel),            &
+                                               g_klic_p(:,:,k_rel,i_rel),            &
+                                               g_kljc_p(:,:,k_rel,j_rel),            &
+                                               g_iljc_p(:,:,i_rel,j_rel),            &
+                                               g_ilkc_p(:,:,i_rel,k_rel),            &
+                                               g_jlkc_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_omega1(i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
-                                                 L_jbic_p(:,:,j_rel,i_rel), &
-                                                 L_kbic_p(:,:,k_rel,i_rel), &
-                                                 L_kbjc_p(:,:,k_rel,j_rel), &
-                                                 L_ibjc_p(:,:,i_rel,j_rel), &
-                                                 L_ibkc_p(:,:,i_rel,k_rel), &
-                                                 L_jbkc_p(:,:,j_rel,k_rel))
+                        call wf%omega_cc3_a_n6(i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
+                                               L_jbic_p(:,:,j_rel,i_rel),                   &
+                                               L_kbic_p(:,:,k_rel,i_rel),                   &
+                                               L_kbjc_p(:,:,k_rel,j_rel),                   &
+                                               L_ibjc_p(:,:,i_rel,j_rel),                   &
+                                               L_ibkc_p(:,:,i_rel,k_rel),                   &
+                                               L_jbkc_p(:,:,j_rel,k_rel))
 !
                      enddo
                   enddo
@@ -1103,17 +1103,19 @@ contains
    end subroutine omega_cc3_eps_cc3
 !
 !
-   module subroutine omega_cc3_omega1_cc3(wf, i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
-                                          L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
+   module subroutine omega_cc3_a_n6_cc3(wf, i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
+                                        L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
+!!
+!!    omega_cc3_a_n6
 !!
 !!    Calculate the triples contribution to omega1 and
-!!    the Fock contribution to omega2
+!!    the Fock contribution to omega2 scaling as n^6
+!!
+!!    Written by Rolf H. Myhre, January 2019
 !!
 !!    omega^a_i += sum_bcjk (t^abc_ijk - t^cba_ijk)*L_jbkc
 !!    
 !!    omega^ab_ij += P^{ab}_{ij}sum_ck (t^abc_ijk - t^cba_ijk)*F_kc
-!!
-!!    Written by Rolf H. Myhre, January 2019
 !!
       implicit none
 !
@@ -1330,20 +1332,22 @@ contains
 !
       end if
 !
-   end subroutine omega_cc3_omega1_cc3
+   end subroutine omega_cc3_a_n6_cc3
 !
 !
-   module subroutine omega_cc3_omega2_cc3(wf, i, j, k, t_abc, u_abc, v_abc, omega2, &
-                                          g_dbic, g_dbjc, g_dbkc, &
-                                          g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
+   module subroutine omega_cc3_a_n7_cc3(wf, i, j, k, t_abc, u_abc, v_abc, omega2, &
+                                        g_dbic, g_dbjc, g_dbkc, &
+                                        g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
 !!
-!!    Calculate the triples contribution to omega2
+!!    omega_cc3_a_n7
+!!
+!!    Written by Rolf H. Myhre, January 2019
+!!
+!!    Calculate the triples contribution to omega2. Scaling as n^7
 !!
 !!    omega_abli -= P^ab_li sum_cjk(2t^bac_ijk - t^bca_ijk - t^cab_ijk)*g_jlkc
 !!
 !!    omega_adij -= P^ad_ij sum_bck(2t^abc_ijk - t^cba_ijk - t^acb_ijk)*g_dbkc
-!!
-!!    Written by Rolf H. Myhre, January 2019
 !!
       implicit none
 !
@@ -1592,7 +1596,7 @@ contains
       end if ! k .ne. j
 !
 !
-   end subroutine omega_cc3_omega2_cc3
+   end subroutine omega_cc3_a_n7_cc3
 !
 !
 end submodule
