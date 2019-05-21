@@ -127,7 +127,8 @@ module ccs_class
 !
 !     Routines related to the Jacobian transformation
 !
-      procedure :: prepare_for_excited_state_eq                => prepare_for_excited_state_eq_ccs
+      procedure :: prepare_for_jacobian                        => prepare_for_jacobian_ccs
+      procedure :: prepare_for_jacobian_transpose              => prepare_for_jacobian_transpose_ccs
 !
       procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_ccs
       procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_ccs
@@ -3340,7 +3341,7 @@ contains
    end function get_t1_diagnostic_ccs
 !
 !
-   subroutine prepare_for_excited_state_eq_ccs(wf,r_or_l)
+   subroutine prepare_for_jacobian_ccs(wf)
 !!
 !!    Prepare for jacobian
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
@@ -3349,14 +3350,27 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      character(len=*), intent(in) :: r_or_l
+!     For now, do nothing.
+!
+      write(output%unit,'(/t3,a,a,a,a,a)') 'No preparation for ', trim(wf%name_), ' excited state equation.'
+!
+   end subroutine prepare_for_jacobian_ccs
+!
+!
+   subroutine prepare_for_jacobian_transpose_ccs(wf)
+!!
+!!    Prepare for jacobian
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
 !
 !     For now, do nothing.
 !
-      write(output%unit,'(/t3,a,a,a,a,a)') 'No preparation for ', trim(wf%name_), ' ', trim(r_or_l), &
-                                         & ' excited state equation.'
+      write(output%unit,'(/t3,a,a,a,a,a)') 'No preparation for ', trim(wf%name_), ' excited state equation.'
 !
-   end subroutine prepare_for_excited_state_eq_ccs
+   end subroutine prepare_for_jacobian_transpose_ccs
 !
 !
    subroutine set_cvs_start_indices_ccs(wf, n_cores, core_MOs, n_start_indices, start_indices)
