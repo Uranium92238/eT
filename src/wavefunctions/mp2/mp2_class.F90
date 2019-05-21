@@ -58,7 +58,7 @@ contains
 !
       type(file) :: hf_restart_file 
 !
-      wf%name_ = 'MP2'
+      wf%name_ = 'mp2'
 !
       wf%system => system
 !
