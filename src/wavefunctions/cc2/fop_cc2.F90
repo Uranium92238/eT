@@ -82,7 +82,7 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: csiX
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
       call wf%construct_etaX(X, etaX)
