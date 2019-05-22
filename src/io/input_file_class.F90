@@ -38,7 +38,6 @@ module input_file_class
 !
    contains
 !
-      procedure :: init                                                 => init_input_file
       procedure :: open_file                                            => open_file_input_file
       procedure :: close_file                                           => close_file_input_file
 !
@@ -87,6 +86,11 @@ module input_file_class
 !
    end type input_file
 !
+   interface input_file
+!
+      procedure new_input_file
+!
+   end interface input_file
 !
    type(input_file) :: input
 !
@@ -94,7 +98,7 @@ module input_file_class
 contains
 !
 !
-   subroutine init_input_file(the_file, file_name)
+   module function new_input_file(file_name) result(the_file)
 !!
 !!    Initialize input file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
@@ -104,9 +108,9 @@ contains
 !!
       implicit none
 !
-      class(input_file) :: the_file
+      type(input_file) :: the_file
 !
-      character(len=*) :: file_name
+      character(len=*), intent(in) :: file_name
 !
       integer :: k
 !
@@ -133,30 +137,30 @@ contains
 !
 !     Set method section 
 !
-      input%rf_wfs = (/ 'hf                   ',   &
-                        'uhf                  '    /)
+      the_file%rf_wfs = (/ 'hf                   ',   &
+                           'uhf                  '    /)
 !
-      input%cc_wfs = (/ 'ccs                  ',   &
-                        'mp2                  ',   &
-                        'cc2                  ',   &
-                        'lowmem-cc2           ',   &
-                        'ccsd                 ',   &
-                        'cc3                  '    /)
+      the_file%cc_wfs = (/ 'ccs                  ',   &
+                           'mp2                  ',   &
+                           'cc2                  ',   &
+                           'lowmem-cc2           ',   &
+                           'ccsd                 ',   &
+                           'cc3                  '    /)
 !
       method%name_    = 'method'
       method%required = .true.
 !
-      allocate(method%keywords(size(input%rf_wfs) + size(input%cc_wfs)))
+      allocate(method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs)))
 !
-      do k = 1, size(input%rf_wfs)
+      do k = 1, size(the_file%rf_wfs)
 !
-         method%keywords(k) = input%rf_wfs(k)
+         method%keywords(k) = the_file%rf_wfs(k)
 !
       enddo 
 !
-      do k = 1, size(input%cc_wfs)
+      do k = 1, size(the_file%cc_wfs)
 !
-         method%keywords(size(input%rf_wfs) + k) = input%cc_wfs(k)
+         method%keywords(size(the_file%rf_wfs) + k) = the_file%cc_wfs(k)
 !
       enddo 
 !
@@ -270,7 +274,7 @@ contains
                            solver_cc_multipliers,  &
                            active_atoms]
 !
-   end subroutine init_input_file
+   end function new_input_file
 !
 !
    subroutine open_file_input_file(the_file)

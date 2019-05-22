@@ -33,7 +33,6 @@ module output_file_class
 !
    contains
 !
-      procedure :: init                   => init_output_file
       procedure :: open_file              => open_file_output_file
       procedure :: close_file             => close_file_output_file
       procedure :: flush_file             => flush_file_output_file
@@ -43,33 +42,37 @@ module output_file_class
 !
    end type output_file
 !
+   interface output_file
+!
+      procedure new_output_file
+!
+   end interface output_file
+!
    type(output_file) :: output, timing
 !
 contains
 !
 !
-   subroutine init_output_file(the_file, file_name)
+   module function new_output_file(file_name) result(the_file)
 !!
-!!    Initialize output file
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
-!!
-!!    Initializes an output file file object
+!!    Output file constructer
+!!    Writen by Rolf H. Myhre May 2019
 !!
 !!    Output file is formatted and sequantial file.
-!!    Routine sets these, and sets tha file name    
+!!    Routine sets these, and sets the file name    
 !!
       implicit none
 !
-      class(output_file) :: the_file
+      type(output_file) :: the_file
 !
-      character(len=*) :: file_name
+      character(len=*), intent(in) :: file_name
 !
       the_file%file_name = file_name
 !
       the_file%file_access = 'sequential'
       the_file%file_format = 'formatted'
 !
-   end subroutine init_output_file
+   end function
 !
 !
    subroutine open_file_output_file(the_file)

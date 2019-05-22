@@ -51,6 +51,8 @@ contains
 !!    Direct file constructer
 !!    Writen by Rolf H. Myhre May 2019
 !!
+      implicit none
+!
       type(direct_file) :: the_file
 !
       character(len=*), intent(in) :: file_name

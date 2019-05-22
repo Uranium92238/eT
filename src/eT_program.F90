@@ -48,13 +48,13 @@ program eT_program
 !
 !  Prepare input, output and timing file
 !
-   call output%init('eT.out')
+   output = output_file('eT.out')
    call output%open_file()
 !
-   call input%init('eT.inp')
+   input = input_file('eT.inp')
    call input%open_file()
 !
-   call timing%init('timing.out')
+   timing = output_file('timing.out')
    call timing%open_file()
 !
    eT_timer = new_timer("Total time in eT")

@@ -207,7 +207,7 @@ contains
          read(file_1%unit, rec=z, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
+            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
             write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file:file')
@@ -246,7 +246,7 @@ contains
          read(file_1%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
+            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
             write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
@@ -288,7 +288,7 @@ contains
          read(file_1%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
+            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
             write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
@@ -305,7 +305,7 @@ contains
          read(file_2%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_stuz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
+            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%file_name)
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
             write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
@@ -349,7 +349,7 @@ contains
          read(file_1%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
+            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
             write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
@@ -366,7 +366,7 @@ contains
          read(file_2%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_stuz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
+            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%file_name)
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
             write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
@@ -383,7 +383,7 @@ contains
          read(file_3%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_vwxz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%name)
+            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%file_name)
             write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
             write(output%unit,'(t3,a)') trim(iom)
             call output%error_msg('Failed to read file')
@@ -430,7 +430,7 @@ contains
             read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -533,7 +533,7 @@ contains
             read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -557,7 +557,7 @@ contains
             read(file_2%unit, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%file_name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -611,7 +611,7 @@ contains
             read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -635,7 +635,7 @@ contains
             read(file_2%unit, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%file_name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -659,7 +659,7 @@ contains
             read(file_3%unit, rec=record, iostat=ioerror, iomsg=iom) g_tuzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%file_name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -715,7 +715,7 @@ contains
             read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -739,7 +739,7 @@ contains
             read(file_2%unit, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%file_name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -763,7 +763,7 @@ contains
             read(file_3%unit, rec=record, iostat=ioerror, iomsg=iom) g_tuzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%file_name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -787,7 +787,7 @@ contains
             read(file_4%unit, rec=record, iostat=ioerror, iomsg=iom) g_vwzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_4%name)
+               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_4%file_name)
                write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
                write(output%unit,'(t3,a)') trim(iom)
                call output%error_msg('Failed to read file')
@@ -822,7 +822,7 @@ contains
          write(file_1%unit, rec=z, iostat=ioerror) g_pqrz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%name)
+            write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%file_name)
             call output%error_msg('Failed to write file')
          endif
 !
@@ -856,7 +856,7 @@ contains
          write(file_1%unit, rec=z_abs, iostat=ioerror) g_pqrz(:,:,:,z)
 !
          if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%name)
+            write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%file_name)
             call output%error_msg('Failed to write file')
          endif
 !
@@ -899,7 +899,7 @@ contains
             write(file_1%unit, rec=record, iostat=ioerror) g_pqzy(:,:,z,y)
 !
             if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%name)
+               write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%file_name)
                call output%error_msg('Failed to write file')
             endif
 !
