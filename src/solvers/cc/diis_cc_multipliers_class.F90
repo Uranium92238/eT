@@ -52,13 +52,15 @@ module diis_cc_multipliers_class
 !
       logical :: restart
 !
+      type(timings) :: timer
+!
    contains
 !     
-      procedure, nopass :: cleanup          => cleanup_diis_cc_multipliers
       procedure, nopass :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_multipliers
 !
       procedure :: prepare                  => prepare_diis_cc_multipliers
       procedure :: run                      => run_diis_cc_multipliers
+      procedure:: cleanup                   => cleanup_diis_cc_multipliers
 !
       procedure :: read_settings            => read_settings_diis_cc_multipliers
 !
@@ -83,6 +85,9 @@ contains
       class(diis_cc_multipliers) :: solver
 !
       class(ccs) :: wf
+!
+      solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' multipliers')
+      call solver%timer%turn_on()
 !
 !     Print solver banner
 !
@@ -277,16 +282,25 @@ contains
    end subroutine run_diis_cc_multipliers
 !
 !
-   subroutine cleanup_diis_cc_multipliers(wf)
+   subroutine cleanup_diis_cc_multipliers(solver, wf)
 !!
 !! 	Cleanup 
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
+      class(diis_cc_multipliers) :: solver
       class(ccs) :: wf
 !
       call wf%save_multipliers()  
+!
+      call solver%timer%turn_off()
+!
+      write(output%unit, '(/t3, a)') '- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) // &
+                                       ' multipliers equations'
+!
+      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
+      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
 !
    end subroutine cleanup_diis_cc_multipliers
 !

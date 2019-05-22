@@ -49,10 +49,12 @@ module davidson_cc_multipliers_class
 !
       logical :: restart
 !
+      type(timings) :: timer
+!
    contains
 !
       procedure :: prepare                         => prepare_davidson_cc_multipliers
-      procedure, nopass :: cleanup                 => cleanup_davidson_cc_multipliers
+      procedure :: cleanup                         => cleanup_davidson_cc_multipliers
 !
       procedure :: print_banner                    => print_banner_davidson_cc_multipliers
       procedure :: print_settings                  => print_settings_davidson_cc_multipliers
@@ -83,6 +85,9 @@ contains
       class(davidson_cc_multipliers) :: solver
 !
       class(ccs) :: wf
+!
+      solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' multipliers')
+      call solver%timer%turn_on()
 !
 !     Print solver banner
 !
@@ -271,7 +276,7 @@ contains
    end subroutine run_davidson_cc_multipliers
 !
 !
-   subroutine cleanup_davidson_cc_multipliers(wf)
+   subroutine cleanup_davidson_cc_multipliers(solver, wf)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -279,8 +284,17 @@ contains
       implicit none
 !
       class(ccs) :: wf
+      class(davidson_cc_multipliers) :: solver
 !
       call wf%save_multipliers()  
+!
+      call solver%timer%turn_off()
+!
+      write(output%unit, '(/t3, a)') '- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) // &
+                                       ' multipliers equations'
+!
+      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
+      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
 !
    end subroutine cleanup_davidson_cc_multipliers
 !
