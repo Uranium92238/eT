@@ -5,7 +5,6 @@ stages:
 build:
   stage: build
   script:
-    - echo "Compiling eT"
     - whoami
     - gfortran --version
     - g++ --version
@@ -15,6 +14,9 @@ build:
     - ./setup --int32 -FC=gfortran -CXX=g++
     - cd build
     - make -j2
+  only:
+    - master
+    - merge_requests
   artifacts:
     paths: 
       - build/
@@ -22,8 +24,8 @@ build:
 run:
   stage: run
   script:
-    - echo "Running eT tests"
     - cd build
     - ctest
   only:
     - master
+    - merge_requests
