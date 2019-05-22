@@ -43,7 +43,7 @@ module abstract_file_class
 !
 !     Logical for whether the file is currently opened or not
 !
-      logical :: opened = .false.
+      logical :: file_opened = .false.
 !
       character(len=40) :: file_access = 'unknown'
       character(len=40) :: file_format = 'unknown'

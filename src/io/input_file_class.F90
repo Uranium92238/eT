@@ -39,6 +39,9 @@ module input_file_class
    contains
 !
       procedure :: init                                                 => init_input_file
+      procedure :: open_file                                            => open_file_input_file
+      procedure :: close_file                                           => close_file_input_file
+!
       procedure :: check_for_errors                                     => check_for_errors_input_file
       procedure :: requested_section                                    => requested_section_input_file
       procedure :: requested_keyword_in_section                         => requested_keyword_in_section_input_file
@@ -268,6 +271,51 @@ contains
                            active_atoms]
 !
    end subroutine init_input_file
+!
+!
+   subroutine open_file_input_file(the_file)
+!!
+!!    Open the input file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(input_file) :: the_file
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      open(newunit=the_file%unit, file=the_file%file_name, access=the_file%file_access, &
+           action='read', status='unknown', form=the_file%file_format, iostat=io_error, iomsg=io_msg)
+!
+      if (io_error /= 0) stop 'Error: could not open eT input file '//trim(the_file%file_name)//&
+                             &'error message: '//trim(io_msg)
+!
+      the_file%file_opened = .true.
+!
+   end subroutine open_file_input_file
+!
+!
+   subroutine close_file_input_file(the_file)
+!!
+!!    Close the input file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(input_file) :: the_file
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      close(the_file%unit, iostat=io_error, iomsg=io_msg, status='keep')
+!
+      if (io_error /= 0) stop 'Error: could not close eT input file '//trim(the_file%file_name)//&
+                             &'error message: '//trim(io_msg)
+!
+      the_file%file_opened = .false.
+!
+   end subroutine close_file_input_file
 !
 !
    subroutine check_for_errors_input_file(the_file)

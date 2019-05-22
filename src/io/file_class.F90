@@ -92,7 +92,7 @@ contains
 !
       endif
 !
-      the_file%opened = .false.
+      the_file%file_opened = .false.
 !
       the_file%file_access = file_access
       the_file%file_format = file_format
@@ -130,7 +130,7 @@ contains
 !
 !     Sanity checks
 !
-      if (.not. the_file%opened) then
+      if (.not. the_file%file_opened) then
 !
          call output%error_msg('attempted to read unopened file:' // trim(the_file%file_name))
 !

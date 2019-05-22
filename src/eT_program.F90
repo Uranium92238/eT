@@ -36,7 +36,6 @@ program eT_program
 !
    implicit none
 !
-   integer :: io_error
    integer :: n_threads
 !
 !  Molecular system object 
@@ -50,22 +49,13 @@ program eT_program
 !  Prepare input, output and timing file
 !
    call output%init('eT.out')
-   open(newunit=output%unit, file=output%file_name, access=output%file_access, &
-      action='write', status='unknown', form=output%file_format, iostat=io_error)
-!
-   if (io_error /= 0) stop 'Error: could not open eT output file (eT.out)'
+   call output%open_file()
 !
    call input%init('eT.inp')
-   open(newunit=input%unit, file=input%file_name, access=input%file_access, &
-      action='read', status='unknown', form=input%file_format, iostat=io_error)
-!
-   if (io_error /= 0) stop 'Error: could not open eT input file (eT.inp)'
+   call input%open_file()
 !
    call timing%init('timing.out')
-   open(newunit=timing%unit, file=timing%file_name, access=timing%file_access, &
-      action='write', status='unknown', form=timing%file_format, iostat=io_error)
-!
-   if (io_error /= 0) stop 'Error: could not open eT timing file (timing.out)'
+   call timing%open_file()
 !
    eT_timer = new_timer("Total time in eT")
    call eT_timer%turn_on()
@@ -92,7 +82,7 @@ program eT_program
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
    write(output%unit,'(t3,a)')       '----------------------------------------------------------------------------------'
    write(output%unit,'(t4,a/)')       'Other contributors: A. Balbi, M. Scavino'
-   flush(output%unit)
+   call output%flush_file()   
 !
    n_threads = 1
 !
@@ -137,9 +127,9 @@ program eT_program
 !
    write(output%unit, '(/t3,a)') 'eT terminated successfully!'
 !
-   close(output%unit)
-   close(input%unit)
-   close(timing%unit)
+   call output%close_file()
+   call input%close_file()
+   call timing%close_file()
 !
 end program eT_program
 !

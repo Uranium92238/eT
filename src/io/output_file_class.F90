@@ -34,6 +34,9 @@ module output_file_class
    contains
 !
       procedure :: init                   => init_output_file
+      procedure :: open_file              => open_file_output_file
+      procedure :: close_file             => close_file_output_file
+      procedure :: flush_file             => flush_file_output_file
 !
       procedure :: error_msg              => error_msg_output_file
       procedure :: warning_msg            => warning_msg_output_file
@@ -67,6 +70,71 @@ contains
       the_file%file_format = 'formatted'
 !
    end subroutine init_output_file
+!
+!
+   subroutine open_file_output_file(the_file)
+!!
+!!    Open the output file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file) :: the_file
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      open(newunit=the_file%unit, file=the_file%file_name, access=the_file%file_access, &
+           action='write', status='unknown', form=the_file%file_format, iostat=io_error, iomsg=io_msg)
+!
+      if (io_error /= 0) stop 'Error: could not open eT output file '//trim(the_file%file_name)//&
+                             &'error message: '//trim(io_msg)
+!
+      the_file%file_opened = .true.
+!
+   end subroutine open_file_output_file
+!
+!
+   subroutine close_file_output_file(the_file)
+!!
+!!    Close the output file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file) :: the_file
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      close(the_file%unit, iostat=io_error, iomsg=io_msg, status='keep')
+!
+      if (io_error /= 0) stop 'Error: could not close eT output file '//trim(the_file%file_name)//&
+                             &'error message: '//trim(io_msg)
+!
+      the_file%file_opened = .false.
+!
+   end subroutine close_file_output_file
+!
+!
+   subroutine flush_file_output_file(the_file)
+!!
+!!    Flush the output file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file) :: the_file
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      flush(the_file%unit, iostat=io_error, iomsg=io_msg)
+!
+      if (io_error /= 0) stop 'Error: could not flush eT output file '//trim(the_file%file_name)//&
+                             &'error message: '//trim(io_msg)
+!
+   end subroutine flush_file_output_file
 !
 !
    subroutine error_msg_output_file(out_file, error_specs, error_int)

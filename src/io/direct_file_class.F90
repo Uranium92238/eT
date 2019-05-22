@@ -62,7 +62,7 @@ contains
       the_file%file_format = 'unformatted'
 !
       if (record_length .le. 0) then
-         call output%error_msg("Record length less than zero for file"//file_name)
+         call output%error_msg("Record length less than zero for file "//file_name)
       endif
 !
       the_file%record_length = record_length 
