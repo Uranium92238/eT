@@ -32,8 +32,13 @@ module abstract_engine_class
    type, abstract :: abstract_engine
 !
       character(len=200) :: name_
+      character(len=200) :: tag
+      character(len=200) :: description  
+      character(len=200) :: author
 !
-      character(len=200) :: description
+      type(timings) :: timer ! Timer for engine. Obs! must always be turned on in prepare. Is switched of in cleanup. 
+!
+      character(len=150), dimension(:), allocatable :: tasks ! The tasks of the engine, used for prints. Should be set in prepare.
 !
    contains
 !
@@ -41,8 +46,13 @@ module abstract_engine_class
 !
       procedure(essential_engine), deferred      :: prepare   
       procedure(essential_engine_w_wf), deferred :: run 
+      procedure(essential_engine), deferred, private  :: set_printables 
+!
+      procedure, non_overridable :: cleanup => cleanup_abstract_engine
 !
       procedure, nopass :: do_cholesky => do_cholesky_abstract_engine       
+!
+      procedure, non_overridable :: print_banner => print_banner_abstract_engine
 !
    end type abstract_engine
 !
@@ -92,7 +102,9 @@ contains
       class(ccs) :: wf
 !
       call engine%prepare()
+      call engine%print_banner(wf)
       call engine%run(wf)
+      call engine%cleanup(wf)
 !
    end subroutine ignite_abstract_engine
 !
@@ -128,6 +140,79 @@ contains
       call eri_chol_solver%cleanup()
 !
    end subroutine do_cholesky_abstract_engine
+!
+!
+   subroutine cleanup_abstract_engine(engine, wf)
+!!
+!!    Cleanup
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Prints the timings of the engine. For now
+!!    non-overridable procedure
+!!
+      implicit none
+!
+      class(abstract_engine), intent(inout)  :: engine
+!
+      class(ccs), intent(in)                 :: wf
+!
+      write(output%unit, '(/t3, a)') '- Finalizing the ' // trim(convert_to_uppercase(wf%name_)) // &
+                                       ' ' // trim(engine%tag) // ' calculation'
+!
+      call engine%timer%turn_off()
+!
+      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', engine%timer%get_elapsed_time('wall')
+      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', engine%timer%get_elapsed_time('cpu')
+!
+   end subroutine cleanup_abstract_engine
+!
+!
+   subroutine print_banner_abstract_engine(engine, wf)
+!!
+!!    Print banner
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Prints: 
+!!    
+!!       - Engine name
+!!       - Authors and date
+!!       - Wavefunction type
+!!       - Engine tasks
+!!
+!!    Dependancies:
+!!
+!!       - The printables of the engine must be set for each decendant (set_printables and prepare)
+!!
+      implicit none
+!
+      class(abstract_engine), intent(in)  :: engine
+!
+      class(ccs), intent(in)              :: wf
+!
+      integer :: task
+!
+      character(len=500) :: calculation_type
+!
+      call engine%set_printables()
+!
+      if (.not. allocated(engine%tasks)) call output%error_msg('Tasks of engine was not set. Do this in prepare.')
+!
+      calculation_type  = 'This is a '// trim(convert_to_uppercase(wf%name_)) // ' ' // trim(engine%tag) // ' calculation.&
+                           & The following tasks will be performed:'
+!     
+      call long_string_print(engine%name_,'(//t3,a)',.true.)
+      call long_string_print(engine%author,'(t3,a/)',.true.)
+      call long_string_print(engine%description,'(/t3,a)',.false.,'(t3,a)','(t3,a)') 
+!
+      write(output%unit, '(/t3,a/)') trim(calculation_type)
+!
+      do task = 1, size(engine%tasks)
+!
+         write(output%unit, '(t6, a2, a)') '- ', trim(engine%tasks(task))
+!
+      enddo
+!
+   end subroutine print_banner_abstract_engine
 !
 !
 end module abstract_engine_class

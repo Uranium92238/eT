@@ -232,69 +232,67 @@ contains
 !
          endif 
 !
-!           Calculate the mixing factor of equal mix 
+!        Calculate the mixing factor of equal mix 
 !
-            mix_factor = 1.0d0/(sqrt(real(solver%n_cores, kind=dp)))*0.9
+         mix_factor = 1.0d0/(sqrt(real(solver%n_cores, kind=dp)))*0.9
 !
-!           Loop through the occupied MOs and determine if they are core mos
+!        Loop through the occupied MOs and determine if they are core mos
 !
-            n_MOs_found = 0
+         n_MOs_found = 0
 !
-            call solver%initialize_core_MOs()
-            solver%core_MOs = 0
+         call solver%initialize_core_MOs()
+         solver%core_MOs = 0
 !
-!           Translate cores to correct ordering (see molecular system for a description of eT ordering of atoms)
+!        Translate cores to correct ordering (see molecular system for a description of eT ordering of atoms)
 !
-            call mem%alloc(cores, solver%n_cores)
-            cores = solver%cores
+         call mem%alloc(cores, solver%n_cores)
+         cores = solver%cores
 !
-            call wf%system%translate_from_input_order_to_eT_order(solver%n_cores, cores, solver%cores)
-            call mem%dealloc(cores, solver%n_cores)
+         call wf%system%translate_from_input_order_to_eT_order(solver%n_cores, cores, solver%cores)
+         call mem%dealloc(cores, solver%n_cores)
 !
-            do j = 1, solver%n_cores
+         do j = 1, solver%n_cores
 !
-               first_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(1)%first
-               last_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(wf%system%atoms(solver%cores(j))%n_shells)%last
+            first_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(1)%first
+            last_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(wf%system%atoms(solver%cores(j))%n_shells)%last
 !
-               do k = first_ao_on_atom, last_ao_on_atom
+            do k = first_ao_on_atom, last_ao_on_atom
 
-                  do i = 1, wf%n_o
+               do i = 1, wf%n_o
 !
-                     if (abs(wf%orbital_coefficients(k, i)) .ge. mix_factor) then
+                  if (abs(wf%orbital_coefficients(k, i)) .ge. mix_factor) then
 !
-                        used =  .false.
+                     used =  .false.
 !
-                        do l = 1, n_MOs_found
+                     do l = 1, n_MOs_found
 !
-                           if (solver%core_MOs(l) == i) used = .true.
+                        if (solver%core_MOs(l) == i) used = .true.
 !
-                        enddo
+                     enddo
 !
-                        if (.not. used) then
+                     if (.not. used) then
 !
-                           n_MOs_found = n_MOs_found + 1
+                        n_MOs_found = n_MOs_found + 1
 !
-                           if (n_MOs_found .gt. solver%n_cores) &
-                              call output%error_msg('something went wrong in the selection of core MOs.')
+                        if (n_MOs_found .gt. solver%n_cores) &
+                           call output%error_msg('something went wrong in the selection of core MOs.')
 !
-
+                        solver%core_MOs(n_MOs_found) = i
+                        exit
 !
-                           solver%core_MOs(n_MOs_found) = i
-                           exit
+                     else
 !
-                        else
-!
-                           cycle
-!
-                        endif
+                        cycle
 !
                      endif
 !
-                  enddo
+                  endif
 !
                enddo
 !
             enddo
+!
+         enddo
 !
          if (n_solutions_on_file .lt. solver%n_singlet_states) then ! Koopman for the rest
 

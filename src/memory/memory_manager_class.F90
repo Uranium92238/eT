@@ -151,9 +151,15 @@ contains
 !
       class(memory_manager) :: mem
 !
-      mem%total = 8000000000_i15
+!     Initially set total in GB
+!
+      mem%total = 8
 !
       call mem%read_settings()
+!
+!     Convert from GB to B
+!
+      mem%total = mem%total*1000000000
 !
       mem%available = mem%total
 !
@@ -975,7 +981,6 @@ contains
       class(memory_manager) :: mem
 !
       call input%get_keyword_in_section('available', 'memory', mem%total)
-      mem%total = mem%total*1000000000
 !
    end subroutine read_settings_memory_manager
 !

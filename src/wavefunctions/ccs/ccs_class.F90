@@ -290,7 +290,7 @@ contains
 !
       class(ccs) :: wf
 !
-      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
+      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(convert_to_uppercase(wf%name_)), ' wavefunction'
 !
    end subroutine cleanup_ccs
 !
@@ -1073,13 +1073,12 @@ contains
 !
       type(timings) :: omega_ccs_a1_timer
 !
-      call omega_ccs_a1_timer%init('omega ccs a1')
-      call omega_ccs_a1_timer%start()
+      omega_ccs_a1_timer = new_timer('omega ccs a1')
+      call omega_ccs_a1_timer%turn_on()
 !
       call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, omega, 1)
 !
-      call omega_ccs_a1_timer%freeze()
-      call omega_ccs_a1_timer%switch_off()
+      call omega_ccs_a1_timer%turn_off()
 !
    end subroutine omega_ccs_a1_ccs
 !

@@ -47,7 +47,12 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
-      omega = zero
+      type(timings) :: timer
+!
+      timer = new_timer('omega CC2')
+      call timer%turn_on()
+!
+      call zero_array(omega, wf%n_gs_amplitudes)
 !
       call wf%omega_ccs_a1(omega)
 !
@@ -56,6 +61,8 @@ contains
       call wf%omega_cc2_a1(omega)
       call wf%omega_cc2_b1(omega)
       call wf%omega_cc2_c1(omega)
+!
+      call timer%turn_off()
 !
    end subroutine construct_omega_cc2
 !
@@ -89,8 +96,8 @@ contains
 !
       type(timings) :: timer 
 !  
-      call timer%init('omega cc2 a1')
-      call timer%start()
+      timer = new_timer('omega cc2 a1')
+      call timer%turn_on()
 !
       call mem%alloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -134,6 +141,7 @@ contains
 !
          call mem%dealloc(g_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
 !
+!$omp parallel do private(i, a)
          do i = 1, wf%n_o
             do a = 1, batch_a%length
 !
@@ -142,6 +150,7 @@ contains
 !
             enddo
          enddo
+!$omp end parallel do
 !
          call mem%dealloc(omega_ai, batch_a%length, wf%n_o)
 !
@@ -149,8 +158,7 @@ contains
 !
       call mem%dealloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call timer%freeze()
-      call timer%switch_off()
+      call timer%turn_off()
 !
    end subroutine omega_cc2_a1_cc2
 !
@@ -181,8 +189,8 @@ contains
 !
       type(timings) :: timer 
 !  
-      call timer%init('omega cc2 b1')
-      call timer%start()
+      timer = new_timer('omega cc2 b1')
+      call timer%turn_on()
 !
 !     g_kbji ordered as g_jbki
 !
@@ -213,8 +221,7 @@ contains
 !
       call mem%dealloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call timer%freeze()
-      call timer%switch_off()
+      call timer%turn_off()
 !
    end subroutine omega_cc2_b1_cc2
 !
@@ -243,8 +250,8 @@ contains
 !
       type(timings) :: timer
 !  
-      call timer%init('omega cc2 c1')
-      call timer%start()
+      timer = new_timer('omega cc2 c1')
+      call timer%turn_on()
 !
       call mem%alloc(F_bj, wf%n_o, wf%n_v)
       call sort_12_to_21(wf%fock_ia, F_bj, wf%n_o, wf%n_v)
@@ -264,8 +271,7 @@ contains
 !
       call mem%dealloc(F_bj, wf%n_o, wf%n_v)
 !
-      call timer%freeze()
-      call timer%switch_off()
+      call timer%turn_off()
 !
     end subroutine omega_cc2_c1_cc2
 !

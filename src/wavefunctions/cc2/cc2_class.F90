@@ -267,13 +267,18 @@ contains
 !
       integer :: a, i, b, j
 !
+      type(timings) :: timer
+!
+      timer = new_timer('Construct u CC2')
+      call timer%turn_on()
+!
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
 !
       call wf%get_vovo(g_aibj)
 !
 !$omp parallel do private(a, i, b, j)
-      do b = 1, wf%n_v 
-         do j = 1, wf%n_o 
+      do j = 1, wf%n_o 
+         do b = 1, wf%n_v
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
@@ -289,6 +294,8 @@ contains
 !$omp end parallel do
 !    
       call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
+!
+      call timer%turn_off()
 !
    end subroutine construct_u_cc2
 !
@@ -322,8 +329,8 @@ contains
       call wf%get_vovo(g_aibj)
 !
 !$omp parallel do private(a, i, b, j)
-      do b = 1, wf%n_v 
-         do j = 1, wf%n_o 
+      do j = 1, wf%n_o 
+         do b = 1, wf%n_v 
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !

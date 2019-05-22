@@ -1410,6 +1410,35 @@ contains
    end subroutine trans
 !
 !
+   subroutine copy_and_scale(alpha, X, Y, n)
+!!
+!!    Copy and scale
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Y = alpha*X
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+!
+      real(dp), dimension(n), intent(out) :: Y
+      real(dp), dimension(n), intent(in) :: X
+!
+      real(dp), intent(in) :: alpha
+!
+      integer :: i
+!
+!$omp parallel do private(i)
+      do i = 1, n
+!
+         Y(i) = alpha*X(i)
+!
+      enddo
+!$omp end parallel do 
+!
+   end subroutine copy_and_scale
+!
+!
 end module array_utilities
 
 
