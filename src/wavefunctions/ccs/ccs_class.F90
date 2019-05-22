@@ -128,6 +128,7 @@ module ccs_class
 !     Routines related to the Jacobian transformation
 !
       procedure :: prepare_for_jacobian                        => prepare_for_jacobian_ccs
+      procedure :: prepare_for_jacobian_transpose              => prepare_for_jacobian_transpose_ccs
 !
       procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_ccs
       procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_ccs
@@ -166,6 +167,8 @@ module ccs_class
       procedure :: get_vvov                                     => get_vvov_ccs
       procedure :: get_vovv                                     => get_vovv_ccs
       procedure :: get_ovvv                                     => get_ovvv_ccs
+!
+      procedure :: get_g_pqrs_required                          => get_g_pqrs_required_ccs
 !
       procedure, nopass :: need_g_abcd                          => need_g_abcd_ccs
 !
@@ -288,7 +291,7 @@ contains
 !
       class(ccs) :: wf
 !
-      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
+      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(convert_to_uppercase(wf%name_)), ' wavefunction'
 !
    end subroutine cleanup_ccs
 !
@@ -1071,13 +1074,12 @@ contains
 !
       type(timings) :: omega_ccs_a1_timer
 !
-      call omega_ccs_a1_timer%init('omega ccs a1')
-      call omega_ccs_a1_timer%start()
+      omega_ccs_a1_timer = new_timer('omega ccs a1')
+      call omega_ccs_a1_timer%turn_on()
 !
       call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, omega, 1)
 !
-      call omega_ccs_a1_timer%freeze()
-      call omega_ccs_a1_timer%switch_off()
+      call omega_ccs_a1_timer%turn_off()
 !
    end subroutine omega_ccs_a1_ccs
 !
@@ -1139,6 +1141,7 @@ contains
       call mem%alloc(g_ijkl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
       call wf%get_oooo(g_ijkl)
 !
+!$omp parallel do private(i,j,k)
       do i = 1, wf%n_o
          do j = 1, wf%n_o
             do k = 1, wf%n_o
@@ -1148,6 +1151,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(g_ijkl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
@@ -1160,6 +1164,7 @@ contains
       call mem%alloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       call wf%get_vooo(g_aijk)
 !
+!$omp parallel do private(i,a,j)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
             do j = 1, wf%n_o
@@ -1171,6 +1176,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
@@ -1183,6 +1189,7 @@ contains
       call mem%alloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call wf%get_voov(g_aijb)
 !
+!$omp parallel do private(a,b,i)
       do a = 1, wf%n_v
          do b = 1, wf%n_v
             do i = 1, wf%n_o
@@ -1192,6 +1199,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(g_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
@@ -1212,12 +1220,13 @@ contains
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_pq
 !
       integer :: i, j, a, b
 !
+!$omp parallel do private(i,j)
       do i = 1, wf%n_o
          do j = 1, wf%n_o
 !
@@ -1225,7 +1234,9 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
+!$omp parallel do private(i,a)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -1234,7 +1245,9 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do 
 !
+!$omp parallel do private(a,b)
       do a = 1, wf%n_v
          do b = 1, wf%n_v
 !
@@ -1242,6 +1255,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine set_fock_ccs
 !
@@ -1283,13 +1297,16 @@ contains
       X = zero
       Y = zero
 !
+!$omp parallel do private(p)
       do p = 1, wf%n_mo
 !
          X(p, p) = one
          Y(p, p) = one
 !
       enddo
+!$omp end parallel do
 !
+!$omp parallel do private(i,a)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -1298,6 +1315,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
 !     Construct intermediate W = Z Y^T and then use it to do transformation
 !
@@ -1350,6 +1368,7 @@ contains
 !
       integer :: a, i, ai
 !
+!$omp parallel do private(i,a)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -1359,6 +1378,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine get_gs_orbital_differences_ccs
 !
@@ -1532,6 +1552,32 @@ contains
    end subroutine destruct_t1bar_ccs
 !
 !
+   subroutine get_g_pqrs_required_ccs(wf, req_l, req_r, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Get memory required to construct g_pqrs
+!!    Written by Rolf H. Myhre, April 2019
+!!
+!!    Simple routine calculate an integral block with provided dimensions.
+!!    req_l and req_r are the memory required by construct_g_pqrs to allocate 
+!!    the Cholesky vectors
+!!
+!!    req_l = n_J*dim_p*dim_q, left Cholesky vector
+!!    req_r = n_J*dim_r*dim_s, right Cholesky vector
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      integer, intent(in)  :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(out) :: req_l, req_r
+!
+      req_l = wf%integrals%n_J*dim_p*dim_q
+      req_r = wf%integrals%n_J*dim_r*dim_s
+!
+   end subroutine get_g_pqrs_required_ccs
+!
+!
+!
    subroutine get_ovov_ccs(wf, g_iajb, first_i, last_i, first_a, last_a, &
                                          first_j, last_j, first_b, last_b)
 !!
@@ -1690,10 +1736,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -1757,10 +1799,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -1826,10 +1864,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -1893,10 +1927,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -1962,10 +1992,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2029,10 +2055,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -2104,10 +2126,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2172,10 +2190,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2239,10 +2253,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -2312,10 +2322,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2383,10 +2389,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -2456,10 +2458,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2528,10 +2526,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2599,10 +2593,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -2737,11 +2727,17 @@ contains
       call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
       if (r_or_l .eq. "right") then
+!
          call wf%jacobian_transform_trial_vector(X_copy) ! X_copy <- AX
+!
       elseif (r_or_l .eq. 'left') then
+!
          call wf%jacobian_transpose_transform_trial_vector(X_copy) ! X_copy <- XA
+!
       else
+!
          call output%error_msg('Neither left nor right in construct_excited_state')
+!
       endif
 !
       w = ddot(wf%n_es_amplitudes, X, 1, X_copy, 1)
@@ -2980,7 +2976,7 @@ contains
          call mem%dealloc(L_aijb, wf%n_v, wf%n_o, wf%n_o, batch_b%length)
          call mem%dealloc(c_jb, (wf%n_o), (batch_b%length))
 !
-   enddo ! batch_b
+      enddo ! batch_b
 !
    end subroutine jacobian_ccs_b1_ccs
 !
@@ -3356,10 +3352,25 @@ contains
 !
 !     For now, do nothing.
 !
-      write(output%unit,'(/t3,a,a,a)') 'No Jacobian preparations for ', &
-                                       trim(wf%name_), ' wavefunction.'
+      write(output%unit,'(/t3,a,a,a,a,a)') 'No preparation for ', trim(wf%name_), ' excited state equation.'
 !
    end subroutine prepare_for_jacobian_ccs
+!
+!
+   subroutine prepare_for_jacobian_transpose_ccs(wf)
+!!
+!!    Prepare for jacobian
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+!     For now, do nothing.
+!
+      write(output%unit,'(/t3,a,a,a,a,a)') 'No preparation for ', trim(wf%name_), ' excited state equation.'
+!
+   end subroutine prepare_for_jacobian_transpose_ccs
 !
 !
    subroutine set_cvs_start_indices_ccs(wf, n_cores, core_MOs, n_start_indices, start_indices)

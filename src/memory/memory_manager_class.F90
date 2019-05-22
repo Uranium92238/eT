@@ -151,9 +151,15 @@ contains
 !
       class(memory_manager) :: mem
 !
-      mem%total = 8000000000_i15
+!     Initially set total in GB
+!
+      mem%total = 8
 !
       call mem%read_settings()
+!
+!     Convert from GB to B
+!
+      mem%total = mem%total*1000000000
 !
       mem%available = mem%total
 !
@@ -975,7 +981,6 @@ contains
       class(memory_manager) :: mem
 !
       call input%get_keyword_in_section('available', 'memory', mem%total)
-      mem%total = mem%total*1000000000
 !
    end subroutine read_settings_memory_manager
 !
@@ -1030,6 +1035,12 @@ contains
       integer :: req_tot
 !
       integer :: e_size
+!
+      if (.not. batch_p%initialized) then
+!
+         call output%error_msg('batch_setup_1 called on uninitialized batch')
+!
+      endif
 !
       e_size = dp
       if(present(element_size)) then
@@ -1128,6 +1139,12 @@ contains
       integer :: p_elements, q_elements
 !
       integer :: e_size
+!
+      if ((.not. batch_p%initialized) .or. (.not. batch_q%initialized)) then
+!
+         call output%error_msg('batch_setup_2 called on uninitialized batch')
+!
+      endif
 !
       e_size = dp
       if(present(element_size)) then
@@ -1324,6 +1341,12 @@ contains
 !
       integer :: e_size
 !
+      if ((.not. batch_p%initialized) .or. (.not. batch_q%initialized) .or. (.not. batch_r%initialized)) then
+!
+         call output%error_msg('batch_setup_3 called on uninitialized batch')
+!
+      endif
+!
       e_size = dp
       if(present(element_size)) then
          e_size = element_size
@@ -1499,6 +1522,12 @@ contains
 !
       integer :: e_size
       real(dp) :: buff
+!
+      if ((.not. batch_p%initialized) .or. (.not. batch_q%initialized) .or. (.not. batch_r%initialized)) then
+!
+         call output%error_msg('batch_setup_3 called on uninitialized batch')
+!
+      endif
 !
       e_size = dp
       if(present(element_size)) then

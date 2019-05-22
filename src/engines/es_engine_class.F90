@@ -40,6 +40,8 @@ module es_engine_class
 !
       procedure :: do_excited_state          => do_excited_state_es_engine
 !
+      procedure, private :: set_printables   => set_printables_es_engine
+!
    end type es_engine
 !
 contains
@@ -53,7 +55,11 @@ contains
 !
       class(es_engine) :: engine
 !
-      engine%name_       = 'Excited state engine'
+      engine%name_  = 'Excited state engine'
+      engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      engine%timer = timings(trim(engine%name_))
+      call engine%timer%turn_on()
 !
 !     Set standards and then read if nonstandard
 !
@@ -161,9 +167,9 @@ contains
 !
          allocate(cc_es_solver_diis)
 !
-         call cc_es_solver_diis%prepare(transformation)
+         call cc_es_solver_diis%prepare(transformation, wf)
          call cc_es_solver_diis%run(wf)
-         call cc_es_solver_diis%cleanup()
+         call cc_es_solver_diis%cleanup(wf)
 !
          deallocate(cc_es_solver_diis)
 !
@@ -174,9 +180,9 @@ contains
             allocate(cc_core_es)
             cc_es_solver => cc_core_es
 !
-            call cc_es_solver%prepare(transformation)
+            call cc_es_solver%prepare(transformation, wf)
             call cc_es_solver%run(wf)
-            call cc_es_solver%cleanup()
+            call cc_es_solver%cleanup(wf)
 !
             cc_es_solver => null()
             deallocate(cc_core_es)
@@ -194,9 +200,9 @@ contains
             allocate(cc_valence_es)
             cc_es_solver => cc_valence_es
 !
-            call cc_es_solver%prepare(transformation)
+            call cc_es_solver%prepare(transformation, wf)
             call cc_es_solver%run(wf)
-            call cc_es_solver%cleanup()
+            call cc_es_solver%cleanup(wf)
 !
             cc_es_solver => null()
             deallocate(cc_valence_es)
@@ -211,6 +217,30 @@ contains
       endif 
 !
    end subroutine do_excited_state_es_engine
+!
+!
+   subroutine set_printables_es_engine(engine)
+!!
+!!    Set printables 
+!!    Written by sarai D. Folkestad, May 2019
+!!
+      implicit none
+!
+      class(es_engine) :: engine
+!
+      engine%tag    = 'excited state'
+!
+      engine%tasks = [character(len=150) ::                                                              &
+      'Cholesky decomposition of the ERI-matrix',                                                        &
+      'Calculation of the ground state amplitudes ('//trim(engine%gs_algorithm)//'-algorithm)',          &
+      'Calculation of the ground state energy',                                                          &
+      'Calculation of the ' // trim(engine%es_transformation) //' hand side '// trim(engine%es_type) //  &
+      ' excitation vectors ('//trim(engine%es_algorithm)//'-algorithm)',                                 &
+      'Calculation of the excitation energies ('//trim(engine%es_algorithm)//'-algorithm)']
+!
+      engine%description  = 'Calculates the coupled cluster excitation vectors and excitation energies'
+!
+   end subroutine set_printables_es_engine
 !
 !
 end module es_engine_class

@@ -48,7 +48,9 @@ module diis_cc_gs_class
       real(dp) :: energy_threshold
       real(dp) :: omega_threshold 
 !
-      logical    :: restart
+      logical  :: restart
+!
+      type(timings) :: timer
 !
    contains
 !     
@@ -56,7 +58,7 @@ module diis_cc_gs_class
 !
       procedure :: prepare                  => prepare_diis_cc_gs
       procedure :: run                      => run_diis_cc_gs
-      procedure, nopass :: cleanup          => cleanup_diis_cc_gs
+      procedure :: cleanup                  => cleanup_diis_cc_gs
 !
       procedure :: print_banner             => print_banner_diis_cc_gs
       procedure :: read_settings            => read_settings_diis_cc_gs
@@ -81,6 +83,9 @@ contains
 !
       class(ccs) :: wf
 !
+      solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' ground state')
+      call solver%timer%turn_on()
+!
 !     Print solver banner
 !
       call solver%print_banner()
@@ -91,7 +96,7 @@ contains
       solver%max_iterations   = 100
       solver%energy_threshold = 1.0d-6
       solver%omega_threshold  = 1.0d-6
-      solver%restart       = .false.
+      solver%restart          = .false.
 !
 !     Read & print settings (thresholds, etc.)
 !
@@ -107,6 +112,9 @@ contains
       if (solver%restart) then
 !
          call wf%is_restart_safe('ground state')
+!
+         write(output%unit, '(/t3,a)') 'Requested restart. Reading in solution from file.'
+!
          call wf%read_amplitudes()
          call wf%integrals%write_t1_cholesky(wf%t1) 
 ! 
@@ -232,6 +240,7 @@ contains
          write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
                                           omega_norm, abs(wf%energy-prev_energy)
          flush(output%unit)
+         flush(timing%unit)
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !
@@ -308,18 +317,27 @@ contains
    end subroutine run_diis_cc_gs
 !
 !
-   subroutine cleanup_diis_cc_gs(wf)
+   subroutine cleanup_diis_cc_gs(solver, wf)
 !!
 !! 	Cleanup 
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
+      class(diis_cc_gs) :: solver
       class(ccs) :: wf
 !
 !     Save amplitudes 
 !
       call wf%save_amplitudes()
+!
+      call solver%timer%turn_off()
+!
+      write(output%unit, '(/t3, a)') '- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) // &
+                                       ' ground state equations'
+!
+      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
+      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
 !
    end subroutine cleanup_diis_cc_gs
 !
