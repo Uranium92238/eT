@@ -83,6 +83,8 @@ module eri_cd_class
 !
       integer :: n_batches
 !
+      type(timings) :: timer
+!
    contains
 !
       procedure :: prepare                                => prepare_eri_cd
@@ -122,6 +124,9 @@ contains
 !
       class(eri_cd) :: solver
       type(molecular_system) :: system
+!
+      solver%timer = new_timer('Cholesky decomposition of ERIs')
+      call solver%timer%turn_on()
 !
 !     Set defaults
 !
@@ -310,6 +315,13 @@ contains
 !
       call disk%open_file(solver%cholesky_ao_vectors_info, 'read')
       call disk%close_file(solver%cholesky_ao_vectors_info, 'delete')
+!
+      call solver%timer%turn_off()
+!
+      write(output%unit, '(/t3, a)') '- Finished decomposing the ERIs.'
+!
+      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
+      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
 !
    end subroutine cleanup_eri_cd
 !

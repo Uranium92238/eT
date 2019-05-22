@@ -167,9 +167,9 @@ contains
 !
          allocate(cc_es_solver_diis)
 !
-         call cc_es_solver_diis%prepare(transformation)
+         call cc_es_solver_diis%prepare(transformation, wf)
          call cc_es_solver_diis%run(wf)
-         call cc_es_solver_diis%cleanup()
+         call cc_es_solver_diis%cleanup(wf)
 !
          deallocate(cc_es_solver_diis)
 !
@@ -180,9 +180,9 @@ contains
             allocate(cc_core_es)
             cc_es_solver => cc_core_es
 !
-            call cc_es_solver%prepare(transformation)
+            call cc_es_solver%prepare(transformation, wf)
             call cc_es_solver%run(wf)
-            call cc_es_solver%cleanup()
+            call cc_es_solver%cleanup(wf)
 !
             cc_es_solver => null()
             deallocate(cc_core_es)
@@ -200,9 +200,9 @@ contains
             allocate(cc_valence_es)
             cc_es_solver => cc_valence_es
 !
-            call cc_es_solver%prepare(transformation)
+            call cc_es_solver%prepare(transformation, wf)
             call cc_es_solver%run(wf)
-            call cc_es_solver%cleanup()
+            call cc_es_solver%cleanup(wf)
 !
             cc_es_solver => null()
             deallocate(cc_valence_es)
