@@ -25,3 +25,5 @@ run:
     - echo "Running eT tests"
     - cd build
     - ctest
+  only:
+    - master
