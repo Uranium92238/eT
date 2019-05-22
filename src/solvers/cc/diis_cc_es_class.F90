@@ -72,6 +72,8 @@ module diis_cc_es_class
       procedure :: read_settings                   => read_settings_diis_cc_es
       procedure :: print_settings                  => print_settings_diis_cc_es
 !
+      procedure :: prepare_wf_for_excited_state    => prepare_wf_for_excited_state_diis_cc_es
+!
    end type diis_cc_es
 !
 !
@@ -230,6 +232,8 @@ contains
       real(dp), dimension(:), allocatable   :: eps
       real(dp), dimension(:,:), allocatable :: X, R
 !
+      call solver%prepare_wf_for_excited_state(wf)
+!
 !     Initialize energies, residual norms, and convergence arrays 
 !
       call mem%alloc(prev_energies, solver%n_singlet_states)
@@ -324,7 +328,7 @@ contains
 !
                converged_eigenvalue(state) = abs(solver%energies(state)-prev_energies(state)) &
                                                       .lt. solver%eigenvalue_threshold
-               converged_residual(state)   = residual_norms(state)                     .lt. solver%residual_threshold
+               converged_residual(state)   = residual_norms(state) .lt. solver%residual_threshold
 !
                converged(state) = converged_eigenvalue(state) .and. converged_residual(state)
 !
@@ -352,6 +356,7 @@ contains
 !
             write(output%unit, '(i3,3x,f19.12,6x,e11.4)') state, solver%energies(state), residual_norms(state)
             flush(output%unit)
+            flush(timing%unit)
 !
          enddo
 !
@@ -498,6 +503,23 @@ contains
       write(output%unit, '(t6,a26,f11.8)') 'eV/Hartree (CODATA 2014): ', Hartree_to_eV
 !
    end subroutine print_summary_diis_cc_es
+!
+!
+   subroutine prepare_wf_for_excited_state_diis_cc_es(solver, wf)
+!!
+!!    Prepare wf for excited state
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2019
+!!
+      implicit none
+!
+      class(diis_cc_es), intent(in)   :: solver 
+      class(ccs), intent(inout)           :: wf
+!
+      if (solver%transformation == 'right') call wf%prepare_for_jacobian()
+!
+      if (solver%transformation == 'left') call wf%prepare_for_jacobian_transpose()
+!
+   end subroutine prepare_wf_for_excited_state_diis_cc_es
 !
 !
 end module diis_cc_es_class

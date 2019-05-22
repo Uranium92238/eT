@@ -91,4 +91,6 @@ set(eT_fortran_sources
    src/wavefunctions/lowmem_cc2/jacobian_lowmem_cc2.F90
    src/wavefunctions/cc3/omega_cc3.F90
    src/wavefunctions/cc3/jacobian_cc3.F90
+   src/wavefunctions/cc3/prepare_jacobian_transform_cc3.F90
+   src/wavefunctions/cc3/jacobian_transpose_cc3.F90
 )
