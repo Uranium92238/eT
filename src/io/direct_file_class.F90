@@ -31,9 +31,33 @@ module direct_file_class
 !
    type, extends(abstract_file) :: direct_file
 !
-      integer :: record_length
+      integer, private  :: record_dim     ! Number of words per record
+      integer, private  :: word_size      ! Size of a word, default is double precision
+      integer, private  :: record_length  ! record_dim*word_size
 !
    contains
+!
+!     Open and close
+!
+      procedure, public :: open_file => open_file_direct_file
+!
+!     Writer routines
+!
+      procedure, public :: writer_dp_direct_file
+      procedure, public :: writer_i6_direct_file
+      procedure, public :: writer_i15_direct_file
+      generic           :: writer => writer_dp_direct_file, &
+                                     writer_i6_direct_file, &
+                                     writer_i15_direct_file
+!
+!     Reader routines
+!
+      procedure, public :: reader_dp_direct_file
+      procedure, public :: reader_i6_direct_file
+      procedure, public :: reader_i15_direct_file
+      generic           :: reader => reader_dp_direct_file, &
+                                     reader_i6_direct_file, &
+                                     reader_i15_direct_file
 !
    end type direct_file
 !
@@ -46,30 +70,220 @@ module direct_file_class
 contains
 !
 !
-   module function new_direct_file(file_name, record_length) result(the_file)
+   module function new_direct_file(file_name, rec_dim, w_size) result(the_file)
 !!
 !!    Direct file constructer
-!!    Writen by Rolf H. Myhre May 2019
+!!    Writen by Rolf H. Myhre, May 2019
+!!
+!!    rec_dim is number of words in each record
+!!    w_size (optional) is the size of each word, default is double precision
+!!    record length is rec_dim*w_size
 !!
       implicit none
 !
       type(direct_file) :: the_file
 !
       character(len=*), intent(in) :: file_name
-      integer, intent(in) :: record_length
+      integer, intent(in) :: rec_dim
+      integer, intent(in), optional :: w_size
+!
+      if (present(w_size)) then
+         if (w_size .gt. 0) then
+            the_file%word_size = w_size
+         else
+            call output%error_msg("Word size less than zero for file "//file_name)
+         endif
+      else
+         the_file%word_size = dp
+      endif
 !
       the_file%file_name = file_name
 !
       the_file%file_access = 'direct'
       the_file%file_format = 'unformatted'
 !
-      if (record_length .le. 0) then
-         call output%error_msg("Record length less than zero for file "//file_name)
+      if (rec_dim .le. 0) then
+         call output%error_msg("Record dimension less than zero for file "//file_name)
       endif
 !
-      the_file%record_length = record_length 
+      the_file%record_dim = rec_dim
+      the_file%record_length = rec_dim*the_file%word_size
 !
    end function
+!
+!
+   subroutine open_file_direct_file(the_file,file_action)
+!!
+!!    Open the output file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file)            :: the_file
+      character(len=*), intent(in)  :: file_action
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      open(newunit=the_file%unit, file=the_file%file_name, access=the_file%file_access, &
+           action='write', status='unknown', form=the_file%file_format, iostat=io_error, iomsg=io_msg)
+!
+      if (io_error /= 0) stop 'Error: could not open eT output file '//trim(the_file%file_name)//&
+                             &'error message: '//trim(io_msg)
+!
+      the_file%file_opened = .true.
+!
+   end subroutine open_file_output_file
+!
+!
+   module subroutine writer_dp_direct_file(the_file, array, record)
+!!
+!!    Direct file writer, real double precision
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      real(dp), dimension(the_file%record_dim), intent(in) :: array
+      integer, intent(in) :: record
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to write to file: '//the_file%file_name//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine writer_dp_direct_file
+!
+!
+   module subroutine writer_i6_direct_file(the_file, array, record)
+!!
+!!    Direct file writer, integer 32
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      integer(i6), dimension(the_file%record_dim), intent(in) :: array
+      integer, intent(in) :: record
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to write to file: '//the_file%file_name//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine writer_i6_direct_file
+!
+!
+   module subroutine writer_i15_direct_file(the_file, array, record)
+!!
+!!    Direct file writer, integer 64
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      integer(i15), dimension(the_file%record_dim), intent(in) :: array
+      integer, intent(in) :: record
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to write to file: '//trim(the_file%file_name)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine writer_i15_direct_file
+!
+!
+   module subroutine reader_dp_direct_file(the_file, array, record)
+!!
+!!    Direct file reader, real double precision
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      real(dp), dimension(the_file%record_dim), intent(out) :: array
+      integer, intent(in) :: record
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine reader_dp_direct_file
+!
+!
+   module subroutine reader_i6_direct_file(the_file, array, record)
+!!
+!!    Direct file reader, integer 32
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      integer(i6), dimension(the_file%record_dim), intent(out) :: array
+      integer, intent(in) :: record
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine reader_i6_direct_file
+!
+!
+   module subroutine reader_i15_direct_file(the_file, array, record)
+!!
+!!    Direct file reader, integer 32
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      integer(i15), dimension(the_file%record_dim), intent(out) :: array
+      integer, intent(in) :: record
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine reader_i15_direct_file
 !
 !
 end module direct_file_class
