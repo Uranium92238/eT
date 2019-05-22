@@ -38,7 +38,6 @@ module fop_engine_class
 !
    contains
 !
-      procedure :: prepare             => prepare_fop_engine
       procedure :: run                 => run_fop_engine
 !
       procedure :: read_settings       => read_settings_fop_engine
@@ -52,17 +51,25 @@ module fop_engine_class
 !
    end type fop_engine
 !
+!
+   interface fop_engine_constructor 
+!
+      procedure :: new_fop_engine 
+!
+   end interface fop_engine_constructor 
+!
+!
 contains
 !
 !
-   subroutine prepare_fop_engine(engine)
+   function new_fop_engine() result(engine)
 !!
-!!    Prepare
+!!    New FOP engine
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(fop_engine) :: engine
+      type(fop_engine) :: engine
 !
       engine%name_       = 'First order coupled cluster properties engine'
       engine%author      = 'J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, 2019'
@@ -81,7 +88,7 @@ contains
 !
       call engine%read_settings()
 !
-   end subroutine prepare_fop_engine
+   end function new_fop_engine
 !
 !
    subroutine run_fop_engine(engine, wf)

@@ -34,7 +34,6 @@ module zop_engine_class
 !
    contains
 !
-      procedure :: prepare                                     => prepare_zop_engine
       procedure :: run                                         => run_zop_engine
 !
       procedure :: read_settings                               => read_settings_zop_engine
@@ -48,16 +47,24 @@ module zop_engine_class
 !
    end type zop_engine
 !
+!
+   interface zop_engine_constructor 
+!
+      procedure :: new_zop_engine
+!
+   end interface zop_engine_constructor
+!
+!
 contains
 !
-   subroutine prepare_zop_engine(engine)
+   function new_zop_engine() result(engine)
 !!
-!!    Prepare
+!!    New ZOP engine
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(zop_engine) :: engine
+      type(zop_engine) :: engine
 !
       engine%name_ = 'Zeroth order coupled cluster properties engine'   
       engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
@@ -72,7 +79,7 @@ contains
 !
       call engine%read_settings()
 !
-   end subroutine prepare_zop_engine
+   end function new_zop_engine
 !
 !
    subroutine read_settings_zop_engine(engine)

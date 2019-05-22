@@ -166,12 +166,13 @@ subroutine reference_calculation(system)
 !
 !  Engine
 !
-   type(hf_engine)   :: ref_engine
+   type(hf_engine) :: ref_engine
 !
 !  Other variables
 !
    character(len=21) :: reference_wf
 !
+   ref_engine = new_hf_engine()
    reference_wf = input%get_reference_wf()
 !
    if (trim(reference_wf) == 'hf') then
@@ -236,12 +237,7 @@ subroutine cc_calculation(system)
 !
    class(ccs), pointer :: cc_wf
 !
-!  Possible engines
-!
-   type(gs_engine)   :: gs_cc_engine
-   type(es_engine)   :: es_cc_engine
-   type(zop_engine)  :: zop_cc_engine
-   type(fop_engine)  :: fop_cc_engine
+   class(abstract_engine), allocatable :: cc_engine 
 !
 !  Other variables
 !
@@ -286,32 +282,28 @@ subroutine cc_calculation(system)
 !
    if (input%requested_keyword_in_section('fop', 'do')) then
 !
-      call cc_wf%prepare(system)
-      call fop_cc_engine%ignite(cc_wf)
-      call cc_wf%cleanup()
+      cc_engine = new_fop_engine()
 !
    elseif (input%requested_keyword_in_section('excited state', 'do')) then
 !
-      call cc_wf%prepare(system)
-      call es_cc_engine%ignite(cc_wf)
-      call cc_wf%cleanup()   
+      cc_engine = new_es_engine()
 !
    elseif (input%requested_keyword_in_section('zop', 'do')) then 
 !
-      call cc_wf%prepare(system)
-      call zop_cc_engine%ignite(cc_wf)
-      call cc_wf%cleanup()
+      cc_engine = new_zop_engine()
 !
    elseif (input%requested_keyword_in_section('ground state', 'do')) then
 !
-      call cc_wf%prepare(system)
-      call gs_cc_engine%ignite(cc_wf) 
-      call cc_wf%cleanup()  
+      cc_engine = new_gs_engine()
 !
    else
 !
       call output%error_msg('could not recognize coupled cluster task.')
 !
    endif
+!
+   call cc_wf%prepare(system)
+   call cc_engine%ignite(cc_wf)
+   call cc_wf%cleanup()
 !
 end subroutine cc_calculation
