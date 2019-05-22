@@ -581,7 +581,7 @@ contains
                   g_kjai,               & ! g_k,jai
                   wf%n_o,               &
                   zero,                 &
-                  rho_bjai,           & ! rho_b,jai 
+                  rho_bjai,             & ! rho_b,jai 
                   wf%n_v)
 !
       call mem%dealloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
