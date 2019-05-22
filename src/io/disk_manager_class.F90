@@ -95,7 +95,7 @@ contains
 !!    The routine takes the following arguments:
 !!
 !!       - the_file (an object of type "file"). It is assumed that a file name
-!!         has been set: i.e., the_file%name = 'filename'.
+!!         has been set: i.e., the_file%file_name = 'filename'.
 !!       - permissions ('read', 'write', 'readwrite')
 !!       - pos ('rewind', 'append'). Optional argument specified for overwriting or appending
 !!         sequential file. Default is writing to current position where ever that might be.
@@ -112,22 +112,22 @@ contains
 !     Sanity checks
 !
       if ( present(pos)) then
-         if (the_file%access  == 'direct') then
+         if (the_file%file_access  == 'direct') then
 !
             call output%warning_msg('position specifier is disregarded for direct access file.')
 !
          endif
-      elseif (the_file%access .ne. 'direct' .and. the_file%access .ne. 'sequential' ) then
+      elseif (the_file%file_access .ne. 'direct' .and. the_file%file_access .ne. 'sequential' ) then
 !
-         call output%error_msg('illegal access type for file: ' // trim(the_file%name) //',' // trim(the_file%access))
+         call output%error_msg('illegal access type for file: ' // trim(the_file%file_name) //',' // trim(the_file%file_access))
 !
       endif
 !
-      if (the_file%access  == 'direct') then
+      if (the_file%file_access  == 'direct') then
 !
          call disk%open_file_direct(the_file, permissions)
 !
-      elseif (the_file%access  == 'sequential') then
+      elseif (the_file%file_access  == 'sequential') then
 !
          call disk%open_file_sequential(the_file, permissions, pos)
 !
@@ -146,7 +146,7 @@ contains
 !!    The routine takes the following arguments:
 !!
 !!       - the_file (an object of type "file"). It is assumed that a file name
-!!         has been set: i.e., the_file%name = 'filename'.
+!!         has been set: i.e., the_file%file_name = 'filename'.
 !!       - permissions ('read', 'write', 'readwrite')
 !!       - position ('rewind', 'append'). Optional argument specified for overwriting or appending.
 !!                                        Default is writing to current position whatever that might be.
@@ -164,15 +164,15 @@ contains
 !
 !     Sanity checks
 !
-      if (the_file%name == 'no_name') then
+      if (the_file%file_name == 'no_name') then
 !
          call output%error_msg('to open a file, you must set the name of the file.')
 !
-      elseif (the_file%format == 'unknown') then
+      elseif (the_file%file_format == 'unknown') then
 !
          call output%error_msg('to open a file, you must set the format of the file.')
 !
-      elseif (the_file%access == 'direct') then
+      elseif (the_file%file_access == 'direct') then
 
 !
          call output%error_msg('tried to open sequential access file as a direct access file.')
@@ -185,15 +185,15 @@ contains
 !
          io_error = -1
 !
-         open(newunit=the_file%unit, file=the_file%name, access='sequential', &
-              action=permissions, status='unknown', form=the_file%format, position=pos, iostat=io_error)
+         open(newunit=the_file%unit, file=the_file%file_name, access='sequential', &
+              action=permissions, status='unknown', form=the_file%file_format, position=pos, iostat=io_error)
 !
       else
 !
          io_error = -1
 !
-         open(newunit=the_file%unit, file=the_file%name, access='sequential', &
-              action=permissions, status='unknown', form=the_file%format, iostat=io_error)
+         open(newunit=the_file%unit, file=the_file%file_name, access='sequential', &
+              action=permissions, status='unknown', form=the_file%file_format, iostat=io_error)
 !
       endif
 !
@@ -201,7 +201,7 @@ contains
 !
       if (io_error .ne. 0) then
 !
-         call output%error_msg('could not open file: ' //  trim(the_file%name))
+         call output%error_msg('could not open file: ' //  trim(the_file%file_name))
 !
       endif
 !
@@ -234,7 +234,7 @@ contains
 !!    The routine takes the following arguments:
 !!
 !!       - the_file (an object of type "file"). It is assumed that a file name
-!!         has been set: i.e., the_file%name = 'filename'.
+!!         has been set: i.e., the_file%file_name = 'filename'.
 !!       - permissions ('read', 'write', 'readwrite')
 !!
       implicit none
@@ -249,15 +249,15 @@ contains
 !
 !     Sanity checks
 !
-      if (the_file%name == 'no_name') then
+      if (the_file%file_name == 'no_name') then
 !
          call output%error_msg('to open a file, you must set the name of the file.')
 !
-      elseif (the_file%format == 'unknown') then
+      elseif (the_file%file_format == 'unknown') then
 !
          call output%error_msg('to open a file, you must set the format of the file.')
 !
-      elseif (the_file%access == 'sequential') then
+      elseif (the_file%file_access == 'sequential') then
 !
          call output%error_msg('tried to open direct access file as a sequential access file.')
 !
@@ -271,15 +271,15 @@ contains
 !
       io_error = -1
 !
-      open(newunit=the_file%unit, file=the_file%name, access='direct', &
-           action=permissions, status='unknown', form=the_file%format, recl=the_file%record_length, iostat=io_error)
+      open(newunit=the_file%unit, file=the_file%file_name, access='direct', &
+           action=permissions, status='unknown', form=the_file%file_format, recl=the_file%record_length, iostat=io_error)
 !
 !
 !     Check whether file open was successful
 !
       if (io_error .ne. 0) then
 !
-         call output%error_msg('could not open file: ' // trim(the_file%name))
+         call output%error_msg('could not open file: ' // trim(the_file%file_name))
 !
       endif
 !

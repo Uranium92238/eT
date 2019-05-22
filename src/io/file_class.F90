@@ -31,6 +31,8 @@ module file_class
 !
    type, extends(abstract_file) :: file
 !
+      integer :: record_length = 0
+!
 !
    contains
 !
@@ -44,15 +46,15 @@ module file_class
 contains
 !
 !
-   subroutine init_file(the_file, name, access, format, record_length)
+   subroutine init_file(the_file, file_name, file_access, file_format, record_length)
 !!
 !!    Initialize file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
 !!
 !!    Initializes a file object
 !!
-!!       - access ('direct' or 'sequential')
-!!       - format ('formatted' or unformatted)
+!!       - file_access ('direct' or 'sequential')
+!!       - file_format ('formatted' or unformatted)
 !!       - record_length, optional argument which must be provided if
 !!         the_file is direct access
 !!
@@ -62,38 +64,38 @@ contains
 !
       class(file) :: the_file
 !
-      character(len=*) :: name
-      character(len=*) :: access
-      character(len=*) :: format
+      character(len=*) :: file_name
+      character(len=*) :: file_access
+      character(len=*) :: file_format
 !
       integer, optional :: record_length
 !
 !     Sanity checks
 !
-      the_file%name = name
+      the_file%file_name = file_name
 !
       if (.not. present(record_length)) then
 !
-        if (access == 'direct') then
+        if (file_access == 'direct') then
 !
             call output%error_msg('for direct access files a record length must be specified.')
 !
          endif
 !
-      elseif (access .ne. 'direct' .and. access .ne. 'sequential') then
+      elseif (file_access .ne. 'direct' .and. file_access .ne. 'sequential') then
 !
-         call output%error_msg('illegal access type specified for file: ' // name // access)
+         call output%error_msg('illegal access type specified for file: ' // file_name // file_access)
 !
-      elseif (format .ne. 'unformatted' .and. format .ne. 'formatted') then
+      elseif (file_format .ne. 'unformatted' .and. file_format .ne. 'formatted') then
 !
-         call output%error_msg('illegal format specified for file: ' // name)
+         call output%error_msg('illegal format specified for file: ' // file_name)
 !
       endif
 !
       the_file%opened = .false.
 !
-      the_file%access = access
-      the_file%format = format
+      the_file%file_access = file_access
+      the_file%file_format = file_format
 !
       if (present(record_length)) then
 !
@@ -130,9 +132,9 @@ contains
 !
       if (.not. the_file%opened) then
 !
-         call output%error_msg('attempted to read unopened file:' // trim(the_file%name))
+         call output%error_msg('attempted to read unopened file:' // trim(the_file%file_name))
 !
-      elseif (the_file%access == 'direct') then
+      elseif (the_file%file_access == 'direct') then
 !
          call output%warning_msg('no need to prepare to read line for a direct access file.')
          return
@@ -141,7 +143,7 @@ contains
 !
       rewind(the_file%unit)
 !
-      if (the_file%format == 'unformatted') then
+      if (the_file%file_format == 'unformatted') then
 !
          do i = 1, (line - 1)
 !
@@ -149,7 +151,7 @@ contains
 !
          enddo
 !
-      elseif (the_file%format == 'formatted') then
+      elseif (the_file%file_format == 'formatted') then
 !
          do i = 1, (line - 1)
 !

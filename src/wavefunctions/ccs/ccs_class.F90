@@ -924,12 +924,12 @@ contains
 !
       if (trim(side) == 'right') then 
 !
-         inquire(file=wf%r1_file%name, size=n_states)
+         n_states = wf%r1_file%get_file_size()
          n_states = n_states/(dp*wf%n_t1)
 !
       elseif (trim(side) == 'left') then 
 !
-         inquire(file=wf%l1_file%name, size=n_states)
+         n_states = wf%l1_file%get_file_size()
          n_states = n_states/(dp*wf%n_t1)
 !
       else

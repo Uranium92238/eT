@@ -91,7 +91,7 @@ module input_file_class
 contains
 !
 !
-   subroutine init_input_file(the_file, name)
+   subroutine init_input_file(the_file, file_name)
 !!
 !!    Initialize input file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
@@ -103,7 +103,7 @@ contains
 !
       class(input_file) :: the_file
 !
-      character(len=*) :: name
+      character(len=*) :: file_name
 !
       integer :: k
 !
@@ -123,10 +123,10 @@ contains
 !
 !     Set input file name, access and format 
 !
-      the_file%name = name
+      the_file%file_name = file_name
 !
-      the_file%access = 'sequential'
-      the_file%format = 'formatted'
+      the_file%file_access = 'sequential'
+      the_file%file_format = 'formatted'
 !
 !     Set method section 
 !

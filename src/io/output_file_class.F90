@@ -45,7 +45,7 @@ module output_file_class
 contains
 !
 !
-   subroutine init_output_file(the_file, name)
+   subroutine init_output_file(the_file, file_name)
 !!
 !!    Initialize output file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
@@ -59,12 +59,12 @@ contains
 !
       class(output_file) :: the_file
 !
-      character(len=*) :: name
+      character(len=*) :: file_name
 !
-      the_file%name = name
+      the_file%file_name = file_name
 !
-      the_file%access = 'sequential'
-      the_file%format = 'formatted'
+      the_file%file_access = 'sequential'
+      the_file%file_format = 'formatted'
 !
    end subroutine init_output_file
 !

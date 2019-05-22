@@ -50,20 +50,20 @@ program eT_program
 !  Prepare input, output and timing file
 !
    call output%init('eT.out')
-   open(newunit=output%unit, file=output%name, access=output%access, &
-      action='write', status='unknown', form=output%format, iostat=io_error)
+   open(newunit=output%unit, file=output%file_name, access=output%file_access, &
+      action='write', status='unknown', form=output%file_format, iostat=io_error)
 !
    if (io_error /= 0) stop 'Error: could not open eT output file (eT.out)'
 !
    call input%init('eT.inp')
-   open(newunit=input%unit, file=input%name, access=input%access, &
-      action='read', status='unknown', form=input%format, iostat=io_error)
+   open(newunit=input%unit, file=input%file_name, access=input%file_access, &
+      action='read', status='unknown', form=input%file_format, iostat=io_error)
 !
    if (io_error /= 0) stop 'Error: could not open eT input file (eT.inp)'
 !
    call timing%init('timing.out')
-   open(newunit=timing%unit, file=timing%name, access=timing%access, &
-      action='write', status='unknown', form=timing%format, iostat=io_error)
+   open(newunit=timing%unit, file=timing%file_name, access=timing%file_access, &
+      action='write', status='unknown', form=timing%file_format, iostat=io_error)
 !
    if (io_error /= 0) stop 'Error: could not open eT timing file (timing.out)'
 !

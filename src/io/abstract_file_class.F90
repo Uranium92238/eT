@@ -31,7 +31,7 @@ module abstract_file_class
 !
 !     Filename
 !
-      character(len=255) :: name = 'no_name'
+      character(len=255) :: file_name = 'no_name'
 !
 !     Unit identifier
 !
@@ -45,10 +45,8 @@ module abstract_file_class
 !
       logical :: opened = .false.
 !
-      character(len=40) :: access = 'unknown'
-      character(len=40) :: format = 'unknown'
-!
-      integer :: record_length = 0
+      character(len=40) :: file_access = 'unknown'
+      character(len=40) :: file_format = 'unknown'
 !
    contains
 !
@@ -78,14 +76,14 @@ contains
 !
 !     Inquire about the file size
 !
-      inquire(file=the_file%name, size=the_file%file_size)
+      inquire(file=trim(the_file%file_name), size=the_file%file_size)
 !
 !     Check whether the file size could be calculated
 !
       if (the_file%file_size .eq. -1) then
 !
-         write(*,'(/a, a/)') 'Error: Could not determine size of file '// trim(the_file%name)
-         stop
+         write(*,'(/a, a/)') 'Error: Could not determine size of file '// trim(the_file%file_name)
+         stop 'Something wrong in determine file size, check output'
 !
       endif
 !
@@ -104,6 +102,7 @@ contains
 !
       integer :: get_file_size_abstract_file
 !
+      call the_file%determine_file_size()
       get_file_size_abstract_file = the_file%file_size
 !
    end function get_file_size_abstract_file
@@ -121,7 +120,7 @@ contains
 !
       logical :: file_exists_abstract_file
 !
-      inquire(file=the_file%name, exist=file_exists_abstract_file)
+      inquire(file=trim(the_file%file_name), exist=file_exists_abstract_file)
 !
    end function file_exists_abstract_file
 !
