@@ -62,7 +62,6 @@ module cc3_class
 !
 !     Preparation and cleanup routines
 !
-      procedure :: prepare                => prepare_cc3
       procedure :: cleanup                => cleanup_cc3
 !
 !     Routines related to omega
@@ -137,17 +136,24 @@ module cc3_class
    end interface
 !
 !
+   interface cc3
+!
+      procedure :: new_cc3 
+!
+   end interface cc3
+!
+!
 contains
 !
 !
-   subroutine prepare_cc3(wf, system)
+   function new_cc3(system) result(wf)
 !!
-!!    Prepare
+!!    New CC3
 !!    Written by Rolf H. Myhre, 2018
 !!
       implicit none
 !
-      class(cc3) :: wf
+      type(cc3) :: wf
 !
       class(molecular_system), target, intent(in) :: system 
 !
@@ -189,7 +195,7 @@ contains
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
-   end subroutine prepare_cc3
+   end function new_cc3
 !
 !
    subroutine cleanup_cc3(wf)

@@ -48,11 +48,11 @@ module zop_engine_class
    end type zop_engine
 !
 !
-   interface zop_engine_constructor 
+   interface zop_engine
 !
       procedure :: new_zop_engine
 !
-   end interface zop_engine_constructor
+   end interface zop_engine
 !
 !
 contains

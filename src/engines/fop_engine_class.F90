@@ -52,11 +52,11 @@ module fop_engine_class
    end type fop_engine
 !
 !
-   interface fop_engine_constructor 
+   interface fop_engine
 !
       procedure :: new_fop_engine 
 !
-   end interface fop_engine_constructor 
+   end interface fop_engine
 !
 !
 contains

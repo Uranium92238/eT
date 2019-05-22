@@ -53,11 +53,11 @@ module gs_engine_class
    end type gs_engine 
 !
 !
-   interface gs_engine_constructor 
+   interface gs_engine
 !
       procedure :: new_gs_engine 
 !
-   end interface gs_engine_constructor 
+   end interface gs_engine 
 !
 !
 contains

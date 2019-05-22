@@ -42,11 +42,11 @@ module hf_engine_class
    end type hf_engine 
 !
 !
-   interface hf_engine_constructor
+   interface hf_engine
 !
       procedure :: new_hf_engine 
 !
-   end interface hf_engine_constructor
+   end interface hf_engine
 !
 !
 contains

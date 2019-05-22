@@ -44,11 +44,11 @@ module es_engine_class
    end type es_engine
 !
 !
-   interface es_engine_constructor
+   interface es_engine
 !
       procedure :: new_es_engine 
 !
-   end interface es_engine_constructor
+   end interface es_engine
 !
 !
 contains
