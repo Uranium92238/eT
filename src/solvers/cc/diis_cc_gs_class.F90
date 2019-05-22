@@ -107,6 +107,9 @@ contains
       if (solver%restart) then
 !
          call wf%is_restart_safe('ground state')
+!
+         write(output%unit, '(/t3,a)') 'Requested restart. Reading in solution from file.'
+!
          call wf%read_amplitudes()
          call wf%integrals%write_t1_cholesky(wf%t1) 
 ! 
@@ -232,6 +235,7 @@ contains
          write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
                                           omega_norm, abs(wf%energy-prev_energy)
          flush(output%unit)
+         flush(timing%unit)
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !

@@ -58,46 +58,10 @@
    end subroutine omega_cc3_integrals_cc3
 !
 !
-   module subroutine omega_cc3_vvv_reader_cc3(wf,batch_x,g_bdcx,g_dbxc)
-!!
-!!    Read in the intgrals needed in the current batches
-!!
-!!    Rolf H. Myhre, January 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      type(batching_index), intent(in) :: batch_x
-!
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_bdcx
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_dbxc
-!
-   end subroutine omega_cc3_vvv_reader_cc3
-!
-!
-   module subroutine omega_cc3_ov_vv_reader_cc3(wf,batch_y,batch_x,g_lycx,g_ylxc,L_ybxc)
-!!
-!!    Read the ljck, jlkc and jbkc integrals needed in the current batches
-!!
-!!    Rolf H. Myhre, January 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      type(batching_index), intent(in) :: batch_x, batch_y
-!
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_lycx
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ylxc
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: L_ybxc
-!
-   end subroutine omega_cc3_ov_vv_reader_cc3
-!
-!
-   module subroutine omega_cc3_W_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abji, &
+   module subroutine omega_cc3_W_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abij, &
                                           g_bdci, g_bdcj, g_bdck, &
-                                          g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck)
+                                          g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck, &
+                                          keep_t)
 !!
 !!    Read the ljck, jlkc and jbkc integrals needed in the current batches
 !!
@@ -112,7 +76,7 @@
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abji
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abij
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj
@@ -125,13 +89,15 @@
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lick
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck
 !
+      logical, optional, intent(in) :: keep_t
 !
    end subroutine omega_cc3_W_calc_cc3
 !
 !
-   module subroutine omega_cc3_eps_cc3(wf, i, j, k, t_abc)
+   module subroutine omega_cc3_eps_cc3(wf, i, j, k, t_abc, omega)
 !!
 !!    Divide W^abc_ijk with -epsilon^abc_ijk to obtain T^abc_ijk
+!!    Optional argument omega for jacobian transformations
 !!
 !!    Rolf H. Myhre, January 2019
 !!
@@ -143,17 +109,24 @@
 !
       real(dp), dimension(wf%n_v,wf%n_v,wf%n_v), intent(inout) :: t_abc
 !
+      real(dp), optional :: omega
 !
    end subroutine omega_cc3_eps_cc3
 !
 !
-   module subroutine omega_cc3_omega1_cc3(wf, i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
-                                          L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
+   module subroutine omega_cc3_a_n6_cc3(wf, i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
+                                        L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
+!!
+!!    omega_cc3_a_n6
+!!
+!!    Written by Rolf H. Myhre, January 2019
 !!
 !!    Calculate the triples contribution to omega1 and
-!!    the Fock contribution to omega2
+!!    the Fock contribution to omega2 scaling as n^6
 !!
-!!    Rolf H. Myhre, January 2019
+!!    omega^a_i += sum_bcjk (t^abc_ijk - t^cba_ijk)*L_jbkc
+!!    
+!!    omega^ab_ij += P^{ab}_{ij}sum_ck (t^abc_ijk - t^cba_ijk)*F_kc
 !!
       implicit none
 !
@@ -176,17 +149,22 @@
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_ibkc
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbkc
 !
-   end subroutine omega_cc3_omega1_cc3
+   end subroutine omega_cc3_a_n6_cc3
 !
 !
-   module subroutine omega_cc3_omega2_cc3(wf, i, j, k, t_abc, u_abc, v_abc, omega2, &
-                                          g_dbic, g_dbjc, g_dbkc, &
-                                          g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
+   module subroutine omega_cc3_a_n7_cc3(wf, i, j, k, t_abc, u_abc, v_abc, omega2, &
+                                        g_dbic, g_dbjc, g_dbkc, &
+                                        g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
 !!
-!!    Calculate the triples contribution to omega1 and
-!!    the Fock contribution to omega2
+!!    omega_cc3_a_n7
 !!
-!!    Rolf H. Myhre, January 2019
+!!    Written by Rolf H. Myhre, January 2019
+!!
+!!    Calculate the triples contribution to omega2. Scaling as n^7
+!!
+!!    omega_abli -= P^ab_li sum_cjk(2t^bac_ijk - t^bca_ijk - t^cab_ijk)*g_jlkc
+!!
+!!    omega_adij -= P^ad_ij sum_bck(2t^abc_ijk - t^cba_ijk - t^acb_ijk)*g_dbkc
 !!
       implicit none
 !
@@ -211,6 +189,6 @@
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_ilkc
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlkc
 !
-   end subroutine omega_cc3_omega2_cc3
+   end subroutine omega_cc3_a_n7_cc3
 !
 !
