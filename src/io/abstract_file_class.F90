@@ -39,7 +39,8 @@ module abstract_file_class
 !
 !     File size (in bytes)
 !
-      integer, private :: file_size = -1
+      integer, private :: open_file_size = -1
+      integer, private :: current_file_size = -1
 !
 !     Logical for whether the file is currently opened or not
 !
@@ -50,8 +51,10 @@ module abstract_file_class
 !
    contains
 !
-      procedure :: determine_file_size    => determine_file_size_abstract_file
+      procedure :: set_current_file_size  => set_current_file_size_abstract_file
+      procedure :: set_open_file_size     => set_open_file_size_abstract_file
       procedure :: get_file_size          => get_file_size_abstract_file
+      procedure :: get_file_change        => get_file_change_abstract_file
       procedure :: file_exists            => file_exists_abstract_file
 !
    end type abstract_file
@@ -60,37 +63,35 @@ module abstract_file_class
 contains
 !
 !
-   subroutine determine_file_size_abstract_file(the_file)
+   subroutine set_current_file_size_abstract_file(the_file)
 !!
-!!    Determine file size
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
-!!    Moved to file by Rolf H. Myhre Nov. 2018
-!!
-!!    The disk manager handles files. This routine is called by it
-!!    and should never be called by the user (because it can lead to
-!!    errors in the disk space estimates).
+!!    Determine current file size
+!!    Written by Rolf H. Myhre May 2019
 !!
       implicit none
 !
       class(abstract_file) :: the_file
 !
-!     Inquire about the file size
+      the_file%current_file_size = the_file%get_file_size()
 !
-      inquire(file=trim(the_file%file_name), size=the_file%file_size)
-!
-!     Check whether the file size could be calculated
-!
-      if (the_file%file_size .eq. -1) then
-!
-         write(*,'(/a, a/)') 'Error: Could not determine size of file '// trim(the_file%file_name)
-         stop 'Something wrong in determine file size, check output'
-!
-      endif
-!
-   end subroutine determine_file_size_abstract_file
+   end subroutine set_current_file_size_abstract_file
 !
 !
-   function get_file_size_abstract_file(the_file)
+   subroutine set_open_file_size_abstract_file(the_file)
+!!
+!!    Determine current file size
+!!    Written by Rolf H. Myhre May 2019
+!!
+      implicit none
+!
+      class(abstract_file) :: the_file
+!
+      the_file%open_file_size = the_file%get_file_size()
+!
+   end subroutine set_open_file_size_abstract_file
+!
+!
+   function get_file_size_abstract_file(the_file) result(file_size)
 !!
 !!    Return private variable file_size
 !!    Written by Rolf H. Myhre, 2018
@@ -100,12 +101,47 @@ contains
 !  
       class(abstract_file), intent(in) :: the_file
 !
-      integer :: get_file_size_abstract_file
+      integer :: file_size
 !
-      call the_file%determine_file_size()
-      get_file_size_abstract_file = the_file%file_size
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+!     Inquire about the file size
+!
+      inquire(file=trim(the_file%file_name), size=file_size, &
+              iostat=io_error, iomsg=io_msg)
+!
+!     Check whether the file size could be calculated
+!
+      if (io_error .ne. 0) then
+!
+         stop 'Error: Could not determine size of file '// trim(the_file%file_name)
+!
+      endif
+!
+!     Inquire returns -1 if file is deleted, change to 0      
+!
+      if (file_size .eq. -1) file_size = 0
 !
    end function get_file_size_abstract_file
+!
+!  
+   function get_file_change_abstract_file(the_file) result(change)
+!!
+!!    Return private variable file_size
+!!    Written by Rolf H. Myhre, 2018
+!!    
+!
+      implicit none
+!  
+      class(abstract_file), intent(in) :: the_file
+!
+      integer :: change
+!
+      call the_file%set_current_file_size()
+      change = the_file%current_file_size - the_file%open_file_size
+!
+   end function get_file_change_abstract_file
 !
 !  
    function file_exists_abstract_file(the_file)

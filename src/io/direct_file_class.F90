@@ -28,6 +28,7 @@ module direct_file_class
    use kinds    
    use abstract_file_class      
    use output_file_class      
+   use disk_manager_class
 !
    type, extends(abstract_file) :: direct_file
 !
@@ -40,6 +41,7 @@ module direct_file_class
 !     Open and close
 !
       procedure, public :: open_file => open_file_direct_file
+      procedure, public :: close_file => close_file_direct_file
 !
 !     Writer routines
 !
@@ -91,7 +93,7 @@ contains
          if (w_size .gt. 0) then
             the_file%word_size = w_size
          else
-            call output%error_msg("Word size less than zero for file "//file_name)
+            call output%error_msg("Word size less than zero for file "//trim(file_name))
          endif
       else
          the_file%word_size = dp
@@ -112,28 +114,76 @@ contains
    end function
 !
 !
-   subroutine open_file_direct_file(the_file,file_action)
+   subroutine open_file_direct_file(the_file, file_action)
 !!
 !!    Open the output file
 !!    Written by Rolf Heilemann Myhre, May 2019
 !!
       implicit none
 !
-      class(output_file)            :: the_file
-      character(len=*), intent(in)  :: file_action
+      class(direct_file)                     :: the_file
+      character(len=*), optional, intent(in) :: file_action
 !
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      open(newunit=the_file%unit, file=the_file%file_name, access=the_file%file_access, &
-           action='write', status='unknown', form=the_file%file_format, iostat=io_error, iomsg=io_msg)
+      character(len=20)    :: act
 !
-      if (io_error /= 0) stop 'Error: could not open eT output file '//trim(the_file%file_name)//&
-                             &'error message: '//trim(io_msg)
+      if(present(file_action)) then
+         act = trim(file_action)
+      else
+         act = 'read'
+      endif 
+!
+      open(newunit=the_file%unit, file=the_file%file_name, access=the_file%file_access, &
+           action=trim(act), recl=the_file%record_length, status='unknown', form=the_file%file_format, &
+           iostat=io_error, iomsg=io_msg)
+!
+      if (io_error .ne. 0) then 
+         call output%error_msg('Error: could not open eT output file '//trim(the_file%file_name)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
 !
       the_file%file_opened = .true.
 !
-   end subroutine open_file_output_file
+      call the_file%set_open_file_size()
+!
+   end subroutine open_file_direct_file
+!
+!
+   subroutine close_file_direct_file(the_file, file_status)
+!!
+!!    Open the output file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file)                     :: the_file
+      character(len=*), optional, intent(in) :: file_status
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      character(len=20)    :: stat
+!
+      if(present(file_status)) then
+         stat = trim(file_status)
+      else
+         stat = 'keep'
+      endif 
+!
+      close(the_file%unit, iostat=io_error, iomsg=io_msg, status=trim(stat))
+!
+      if (io_error .ne. 0) then 
+         call output%error_msg('Error: could not close eT file '//trim(the_file%file_name)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+      the_file%file_opened = .false.
+!
+      call disk%update(the_file)
+!
+   end subroutine close_file_direct_file
 !
 !
    module subroutine writer_dp_direct_file(the_file, array, record)

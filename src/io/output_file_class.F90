@@ -91,7 +91,7 @@ contains
            action='write', status='unknown', form=the_file%file_format, iostat=io_error, iomsg=io_msg)
 !
       if (io_error /= 0) stop 'Error: could not open eT output file '//trim(the_file%file_name)//&
-                             &'error message: '//trim(io_msg)
+                             &'. Error message: '//trim(io_msg)
 !
       the_file%file_opened = .true.
 !
@@ -112,8 +112,10 @@ contains
 !
       close(the_file%unit, iostat=io_error, iomsg=io_msg, status='keep')
 !
-      if (io_error /= 0) stop 'Error: could not close eT output file '//trim(the_file%file_name)//&
-                             &'error message: '//trim(io_msg)
+      if (io_error.ne. 0) then
+          stop 'Error: could not close eT output file '//trim(the_file%file_name)//&
+              &'error message: '//trim(io_msg)
+      endif
 !
       the_file%file_opened = .false.
 !

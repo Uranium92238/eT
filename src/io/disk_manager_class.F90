@@ -27,7 +27,6 @@ module disk_manager_class
    use kinds
    use file_class
    use input_file_class
-   !use io_utilities
 !
    type :: disk_manager
 !
@@ -43,6 +42,9 @@ module disk_manager_class
    contains
 !
       procedure :: prepare                      => prepare_disk_manager
+!
+      procedure :: check_available              => check_available_disk_manager
+      procedure :: update                       => update_disk_manager
 !
       procedure :: open_file_sequential         => open_file_sequential_disk_manager
       procedure :: open_file_direct             => open_file_direct_disk_manager
@@ -75,7 +77,7 @@ contains
 !
       class(disk_manager) :: disk
 !
-      disk%total = 30000000000_i15
+      disk%total = 3000000000000_i15
       call disk%read_settings()
 !
       disk%available = disk%total
@@ -85,7 +87,55 @@ contains
    end subroutine prepare_disk_manager
 !
 !
- subroutine open_file_disk_manager(disk, the_file, permissions, pos)
+   function check_available_disk_manager(disk, disk_used) result(room)
+!!
+!!    Check available
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Check if room for input integer on disk 
+!!
+      implicit none
+!
+      class(disk_manager), intent(in)  :: disk
+      integer, intent(in)              :: disk_used
+      logical                          :: room
+!
+      if(disk%available - disk_used .lt. 0) then
+         room = .false.
+      else
+         room = .true.
+      endif
+!
+   end function check_available_disk_manager
+!
+!
+   subroutine update_disk_manager(disk, call_file)
+!!
+!!    Update disk manager
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Check if disk space available and update if there is
+!!
+      implicit none
+!
+      class(disk_manager), intent(inout)  :: disk
+      class(abstract_file), intent(in)    :: call_file
+!
+      integer  :: disk_used
+      logical  :: room
+!
+      disk_used = call_file%get_file_change()
+!
+      room = disk%check_available(disk_used)
+!
+      if (room) then
+         disk%available = disk%available - disk_used
+      else
+         call output%error_msg('File '//trim(call_file%file_name)//' has used too much disk space')
+      endif
+!
+   end subroutine update_disk_manager
+!
+!
+   subroutine open_file_disk_manager(disk, the_file, permissions, pos)
 !!
 !!    Open file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
@@ -209,7 +259,7 @@ contains
 !
       the_file%file_opened = .true.
 !
-      call the_file%determine_file_size()
+      call the_file%set_current_file_size()
 !
 !     If the intent is 'write' or 'readwrite' and the disk is entirely filled
 !     (according to the specified available disk space), the calculation will stop:
@@ -287,7 +337,7 @@ contains
 !
       the_file%file_opened = .true.
 !
-      call the_file%determine_file_size()
+      call the_file%set_current_file_size()
 !
 !     If the intent is 'write' or 'readwrite' and the disk is entirely filled
 !     (according to the specified available disk space), the calculation will stop:
@@ -334,7 +384,7 @@ contains
 !
       file_size_when_opened = the_file%get_file_size()
 !
-      call the_file%determine_file_size()
+      call the_file%set_current_file_size()
 !
       file_size_when_closed = the_file%get_file_size()
 !
