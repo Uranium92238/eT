@@ -154,7 +154,7 @@ contains
       call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
 !
-      call davidson%prepare('multipliers', wf%n_gs_amplitudes, solver%residual_threshold, -eta)
+      davidson = linear_davidson_tool('multipliers', wf%n_gs_amplitudes, solver%residual_threshold, -eta)
 !
       call solver%set_precondition_vector(wf, davidson)
 !

@@ -257,7 +257,7 @@ contains
       do state = 1, solver%n_singlet_states
 !  
          write(string_state, '(i3.3)') state
-         call diis(state)%init('diis_cc_es_' // string_state, wf%n_es_amplitudes, wf%n_es_amplitudes, solver%diis_dimension)
+         diis(state) = diis_tool('diis_cc_es_' // string_state, wf%n_es_amplitudes, wf%n_es_amplitudes, solver%diis_dimension)
 !
       enddo 
 !
@@ -398,6 +398,12 @@ contains
          call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
 !
       endif 
+!
+      do state = 1, solver%n_singlet_states
+!
+         call diis(state)%cleanup()
+!
+      enddo
 !
       call mem%dealloc(prev_energies, solver%n_singlet_states)
       call mem%dealloc(residual_norms, solver%n_singlet_states)

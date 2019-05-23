@@ -290,8 +290,8 @@ contains
 !
       iteration = 1
 !
-      call davidson%prepare('cc_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
-                               solver%residual_threshold, solver%eigenvalue_threshold)
+      davidson = eigen_davidson_tool('cc_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
+                                       solver%residual_threshold, solver%eigenvalue_threshold)
 !
 !     Construct first trial vectors
 !

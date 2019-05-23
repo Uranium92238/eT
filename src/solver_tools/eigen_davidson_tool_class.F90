@@ -26,10 +26,7 @@ module eigen_davidson_tool_class
 !!    A tool to help solve an eigenvalue equation A X_n = omega_n X_n
 !!    for symmetric A using the Davidson algorithm. It is tailored to
 !!    be usable also in cases where A cannot be stored, but where the 
-!!    transformation X -> A X is implemented. A typical Davidson loop
-!!    will use this tool as follows:
-!!
-!!       To-write.
+!!    transformation X -> A X is implemented. 
 !!
 !
    use kinds
@@ -57,7 +54,6 @@ module eigen_davidson_tool_class
 !
 !     Prepare and cleanup
 !
-      procedure :: prepare                            => prepare_eigen_davidson_tool 
       procedure :: cleanup                            => cleanup_eigen_davidson_tool
 !
 !     Get-Set routines
@@ -88,18 +84,26 @@ module eigen_davidson_tool_class
 !
    end type eigen_davidson_tool
 !
+!
+   interface eigen_davidson_tool
+!
+      procedure :: new_eigen_davidson_tool
+!
+   end interface eigen_davidson_tool
+!
+!
 contains
 !
 !
-   subroutine prepare_eigen_davidson_tool(davidson, name, n_parameters, n_solutions, &
-                                             residual_threshold, eigenvalue_threshold)
+   function new_eigen_davidson_tool(name, n_parameters, n_solutions, &
+                                       residual_threshold, eigenvalue_threshold) result(davidson)
 !!
-!!    Initialize 
+!!    New eigen Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
 !
-      class(eigen_davidson_tool) :: davidson 
+      type(eigen_davidson_tool) :: davidson 
 !
       character(len=*), intent(in) :: name
 !
@@ -121,8 +125,8 @@ contains
 !
 !     For safety, delete old files if they are on disk
 !
-       call disk%delete(davidson%trials)
-       call disk%delete(davidson%transforms)
+      call disk%delete(davidson%trials)
+      call disk%delete(davidson%transforms)
 !
       davidson%do_precondition   = .false.         ! Switches to true if 'set_preconditioner' is called
       davidson%do_projection     = .false.         ! Switches to true if 'set_projection' is called
@@ -132,7 +136,7 @@ contains
 !
       davidson%current_n_trials = 0    
 !
-   end subroutine prepare_eigen_davidson_tool
+   end function new_eigen_davidson_tool
 !
 !
    subroutine cleanup_eigen_davidson_tool(davidson)
