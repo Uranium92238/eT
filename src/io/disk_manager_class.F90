@@ -25,19 +25,19 @@ module disk_manager_class
 !!
 !
    use kinds
+   use global_files
    use file_class
-   use input_file_class
 !
    type :: disk_manager
 !
 !     The total amount of disk space specified by user (standard: 30 GB)
 !
-      integer(i15), private :: total
+      integer(i15), private :: total = 300000
 !
 !     The amount of disk space currently available, based on the files
 !     currently stored on file
 !
-      integer(i15), private :: available
+      integer(i15), private :: available = 300000
 !
    contains
 !
@@ -108,7 +108,7 @@ contains
    end function check_available_disk_manager
 !
 !
-   subroutine update_disk_manager(disk, call_file)
+   subroutine update_disk_manager(disk, disk_used, file_name)
 !!
 !!    Update disk manager
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -117,19 +117,17 @@ contains
       implicit none
 !
       class(disk_manager), intent(inout)  :: disk
-      class(abstract_file), intent(in)    :: call_file
+      integer, intent(in)  :: disk_used
+      character(len=*), intent(in) :: file_name
 !
-      integer  :: disk_used
       logical  :: room
-!
-      disk_used = call_file%get_file_change()
 !
       room = disk%check_available(disk_used)
 !
       if (room) then
          disk%available = disk%available - disk_used
       else
-         call output%error_msg('File '//trim(call_file%file_name)//' has used too much disk space')
+         call output%error_msg('File '//trim(file_name)//' has used too much disk space')
       endif
 !
    end subroutine update_disk_manager

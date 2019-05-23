@@ -92,8 +92,6 @@ module input_file_class
 !
    end interface input_file
 !
-   type(input_file) :: input
-!
 !
 contains
 !
@@ -594,11 +592,11 @@ contains
 !
       recognized = .false.   
 !
-      do k = 1, size(input%rf_wfs)
+      do k = 1, size(the_file%rf_wfs)
 !
-         if (the_file%requested_keyword_in_section(input%rf_wfs(k),'method')) then 
+         if (the_file%requested_keyword_in_section(the_file%rf_wfs(k),'method')) then 
 !
-            get_reference_wf_input_file = input%rf_wfs(k)
+            get_reference_wf_input_file = the_file%rf_wfs(k)
             recognized = .true. 
 !
          endif 
@@ -665,11 +663,11 @@ contains
 !
       recognized = .false.   
 !
-      do k = 1, size(input%cc_wfs)
+      do k = 1, size(the_file%cc_wfs)
 !
-         if (the_file%requested_keyword_in_section(input%cc_wfs(k),'method')) then 
+         if (the_file%requested_keyword_in_section(the_file%cc_wfs(k),'method')) then 
 !
-            get_cc_wf_input_file = input%cc_wfs(k)
+            get_cc_wf_input_file = the_file%cc_wfs(k)
             recognized = .true. 
 !
          endif 

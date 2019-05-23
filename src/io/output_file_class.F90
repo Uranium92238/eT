@@ -48,7 +48,7 @@ module output_file_class
 !
    end interface output_file
 !
-   type(output_file) :: output, timing
+   type(output_file) :: output
 !
 contains
 !
@@ -94,6 +94,8 @@ contains
                              &'. Error message: '//trim(io_msg)
 !
       the_file%file_opened = .true.
+!
+      call the_file%set_open_file_size()
 !
    end subroutine open_file_output_file
 !

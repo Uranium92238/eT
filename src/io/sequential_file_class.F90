@@ -17,10 +17,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module direct_file_class
+module sequential_file_class
 !
 !!
-!!    Direct access file class module
+!!    Sequential access file class module
 !!    Written by Rolf H. Myhre, May 2019
 !!
 !!
@@ -30,51 +30,50 @@ module direct_file_class
    use output_file_class      
    use disk_manager_class
 !
-   type, extends(abstract_file) :: direct_file
+   type, extends(abstract_file) :: sequential_file
 !
-      integer, private  :: record_dim     ! Number of words per record
       integer, private  :: word_size      ! Size of a word, default is double precision
-      integer, private  :: record_length  ! record_dim*word_size
 !
    contains
 !
 !     Open and close
 !
-      procedure, public :: open_file => open_file_direct_file
-      procedure, public :: close_file => close_file_direct_file
+      procedure, public :: open_file => open_file_sequential_file
+      procedure, public :: close_file => close_file_sequential_file
+      procedure, public :: rewind_file => rewind_file_sequential_file
 !
 !     Writer routines
 !
-      procedure, public :: writer_dp_direct_file
-      procedure, public :: writer_i6_direct_file
-      procedure, public :: writer_i15_direct_file
-      generic           :: writer => writer_dp_direct_file, &
-                                     writer_i6_direct_file, &
-                                     writer_i15_direct_file
+      procedure, public :: writer_dp_sequential_file
+      procedure, public :: writer_i6_sequential_file
+      procedure, public :: writer_i15_sequential_file
+      generic           :: writer => writer_dp_sequential_file, &
+                                     writer_i6_sequential_file, &
+                                     writer_i15_sequential_file
 !
 !     Reader routines
 !
-      procedure, public :: reader_dp_direct_file
-      procedure, public :: reader_i6_direct_file
-      procedure, public :: reader_i15_direct_file
-      generic           :: reader => reader_dp_direct_file, &
-                                     reader_i6_direct_file, &
-                                     reader_i15_direct_file
+      procedure, public :: reader_dp_sequential_file
+      procedure, public :: reader_i6_sequential_file
+      procedure, public :: reader_i15_sequential_file
+      generic           :: reader => reader_dp_sequential_file, &
+                                     reader_i6_sequential_file, &
+                                     reader_i15_sequential_file
 !
-   end type direct_file
+   end type sequential_file
 !
-   interface direct_file
+   interface sequential_file
 !
-      procedure new_direct_file
+      procedure new_sequential_file
 !
-   end interface direct_file
+   end interface sequential_file
 !
 contains
 !
 !
-   module function new_direct_file(file_name, rec_dim, w_size) result(the_file)
+   module function new_sequential_file(file_name, w_size) result(the_file)
 !!
-!!    Direct file constructer
+!!    Sequential file constructer
 !!    Writen by Rolf H. Myhre, May 2019
 !!
 !!    rec_dim is number of words in each record
@@ -83,10 +82,9 @@ contains
 !!
       implicit none
 !
-      type(direct_file) :: the_file
+      type(sequential_file) :: the_file
 !
       character(len=*), intent(in) :: file_name
-      integer, intent(in) :: rec_dim
       integer, intent(in), optional :: w_size
 !
       if (present(w_size)) then
@@ -101,46 +99,46 @@ contains
 !
       the_file%file_name = file_name
 !
-      the_file%file_access = 'direct'
+      the_file%file_access = 'sequential'
       the_file%file_format = 'unformatted'
-!
-      if (rec_dim .le. 0) then
-         call output%error_msg("Record dimension less than zero for file "//file_name)
-      endif
-!
-      the_file%record_dim = rec_dim
-      the_file%record_length = rec_dim*the_file%word_size
 !
    end function
 !
 !
-   subroutine open_file_direct_file(the_file, file_action)
+   subroutine open_file_sequential_file(the_file, file_action, file_pos)
 !!
-!!    Open eT direct file
+!!    Open eT sequential file
 !!    Written by Rolf Heilemann Myhre, May 2019
 !!
       implicit none
 !
-      class(direct_file)                     :: the_file
+      class(sequential_file)                 :: the_file
       character(len=*), optional, intent(in) :: file_action
+      character(len=*), optional, intent(in) :: file_pos
 !
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      character(len=20)    :: act
+      character(len=20)    :: act, pos
 !
       if(present(file_action)) then
          act = trim(file_action)
       else
-         act = 'read'
+         act = 'readwrite'
+      endif 
+!
+      if(present(file_pos)) then
+         pos = trim(file_pos)
+      else
+         pos = 'rewind'
       endif 
 !
       open(newunit=the_file%unit, file=the_file%file_name, access=the_file%file_access, &
-           action=trim(act), recl=the_file%record_length, status='unknown', form=the_file%file_format, &
+           action=trim(act), status='unknown', form=the_file%file_format, position=pos, &
            iostat=io_error, iomsg=io_msg)
 !
       if (io_error .ne. 0) then 
-         call output%error_msg('Error: could not open eT direct file '//trim(the_file%file_name)//&
+         call output%error_msg('Error: could not open eT sequential file '//trim(the_file%file_name)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
@@ -148,17 +146,17 @@ contains
 !
       call the_file%set_open_file_size()
 !
-   end subroutine open_file_direct_file
+   end subroutine open_file_sequential_file
 !
 !
-   subroutine close_file_direct_file(the_file, file_status)
+   subroutine close_file_sequential_file(the_file, file_status)
 !!
-!!    Open the output file
+!!    Open the sequential file
 !!    Written by Rolf Heilemann Myhre, May 2019
 !!
       implicit none
 !
-      class(direct_file)                     :: the_file
+      class(sequential_file)                 :: the_file
       character(len=*), optional, intent(in) :: file_status
 !
       integer  :: file_change
@@ -186,157 +184,179 @@ contains
       file_change = the_file%get_file_change()
       call disk%update(file_change, the_file%file_name)
 !
-   end subroutine close_file_direct_file
+   end subroutine close_file_sequential_file
 !
 !
-   module subroutine writer_dp_direct_file(the_file, array, record)
+   subroutine rewind_file_sequential_file(the_file)
 !!
-!!    Direct file writer, real double precision
-!!    Written by Rolf H. Myhre, May 2019
+!!    Rewind the sequential file
+!!    Written by Rolf Heilemann Myhre, May 2019
 !!
       implicit none
 !
-      class(direct_file) :: the_file
-!
-      real(dp), dimension(the_file%record_dim), intent(in) :: array
-      integer, intent(in) :: record
+      class(sequential_file)                 :: the_file
 !
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+      rewind(the_file%unit, iostat=io_error, iomsg=io_msg)
+!
+      if (io_error .ne. 0) then 
+         call output%error_msg('Error: could not rewind eT file '//trim(the_file%file_name)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine rewind_file_sequential_file
+!
+!
+   module subroutine writer_dp_sequential_file(the_file, array, n)
+!!
+!!    Sequential file writer, real double precision
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(sequential_file) :: the_file
+!
+      integer, intent(in)                 :: n
+      real(dp), dimension(n), intent(in)  :: array
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      write(the_file%unit, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//the_file%file_name//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_dp_direct_file
+   end subroutine writer_dp_sequential_file
 !
 !
-   module subroutine writer_i6_direct_file(the_file, array, record)
+   module subroutine writer_i6_sequential_file(the_file, array, n)
 !!
-!!    Direct file writer, integer 32
+!!    Sequential file writer, integer 32
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(direct_file) :: the_file
+      class(sequential_file) :: the_file
 !
-      integer(i6), dimension(the_file%record_dim), intent(in) :: array
-      integer, intent(in) :: record
+      integer, intent(in)                    :: n
+      integer(i6), dimension(n), intent(in)  :: array
 !
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+      write(the_file%unit, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//the_file%file_name//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_i6_direct_file
+   end subroutine writer_i6_sequential_file
 !
 !
-   module subroutine writer_i15_direct_file(the_file, array, record)
+   module subroutine writer_i15_sequential_file(the_file, array, n)
 !!
-!!    Direct file writer, integer 64
+!!    Sequential file writer, integer 64
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(direct_file) :: the_file
+      class(sequential_file) :: the_file
 !
-      integer(i15), dimension(the_file%record_dim), intent(in) :: array
-      integer, intent(in) :: record
+      integer, intent(in)                    :: n
+      integer(i15), dimension(n), intent(in) :: array
 !
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+      write(the_file%unit, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//trim(the_file%file_name)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_i15_direct_file
+   end subroutine writer_i15_sequential_file
 !
 !
-   module subroutine reader_dp_direct_file(the_file, array, record)
+   module subroutine reader_dp_sequential_file(the_file, array, n)
 !!
-!!    Direct file reader, real double precision
+!!    Sequential file reader, real double precision
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(direct_file) :: the_file
+      class(sequential_file) :: the_file
 !
-      real(dp), dimension(the_file%record_dim), intent(out) :: array
-      integer, intent(in) :: record
+      integer, intent(in)                 :: n
+      real(dp), dimension(n), intent(out) :: array
 !
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+      read(the_file%unit, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_dp_direct_file
+   end subroutine reader_dp_sequential_file
 !
 !
-   module subroutine reader_i6_direct_file(the_file, array, record)
+   module subroutine reader_i6_sequential_file(the_file, array, n)
 !!
-!!    Direct file reader, integer 32
+!!    Sequential file reader, integer 32
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(direct_file) :: the_file
+      class(sequential_file) :: the_file
 !
-      integer(i6), dimension(the_file%record_dim), intent(out) :: array
-      integer, intent(in) :: record
+      integer, intent(in)                    :: n
+      integer(i6), dimension(n), intent(out) :: array
 !
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+      read(the_file%unit, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_i6_direct_file
+   end subroutine reader_i6_sequential_file
 !
 !
-   module subroutine reader_i15_direct_file(the_file, array, record)
+   module subroutine reader_i15_sequential_file(the_file, array, n)
 !!
-!!    Direct file reader, integer 64
+!!    Sequential file reader, integer 64
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(direct_file) :: the_file
+      class(sequential_file) :: the_file
 !
-      integer(i15), dimension(the_file%record_dim), intent(out) :: array
-      integer, intent(in) :: record
+      integer, intent(in)                     :: n
+      integer(i15), dimension(n), intent(out) :: array
 !
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+      read(the_file%unit, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_i15_direct_file
+   end subroutine reader_i15_sequential_file
 !
 !
-end module direct_file_class
+end module sequential_file_class

@@ -30,6 +30,7 @@ module ccs_class
    use mo_integral_tool_class
 !
    use reordering
+   use string_utilities
    use array_utilities
    use array_analysis
    use interval_class
