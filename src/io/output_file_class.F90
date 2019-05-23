@@ -26,7 +26,7 @@ module output_file_class
 !!
 !
    use kinds    
-   use abstract_file_class      
+   use abstract_file_class, only : abstract_file 
 !
    type, extends(abstract_file) :: output_file
 !

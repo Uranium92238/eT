@@ -25,7 +25,8 @@ module disk_manager_class
 !!
 !
    use kinds
-   use global_files
+   use global_files , only : input
+   use output_file_class, only : output
    use file_class
 !
    type :: disk_manager

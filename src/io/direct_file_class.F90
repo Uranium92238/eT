@@ -26,9 +26,9 @@ module direct_file_class
 !!
 !
    use kinds    
-   use abstract_file_class      
-   use output_file_class      
-   use disk_manager_class
+   use abstract_file_class, only : abstract_file
+   use output_file_class, only : output
+   use disk_manager_class, only : disk
 !
    type, extends(abstract_file) :: direct_file
 !
@@ -132,7 +132,7 @@ contains
       if(present(file_action)) then
          act = trim(file_action)
       else
-         act = 'read'
+         act = 'readwrite'
       endif 
 !
       open(newunit=the_file%unit, file=the_file%file_name, access=the_file%file_access, &

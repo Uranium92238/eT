@@ -320,7 +320,7 @@ contains
 !
       call mem%batch_setup(batch_d, req_0, req_d)
 !
-      call disk%open_file(wf%X_abid,'read')
+      call wf%X_abid%open_file('read')
 !
       call batch_d%determine_limits(1)
       call mem%alloc(X_abid, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
@@ -351,17 +351,17 @@ contains
       call batch_d%determine_limits(1)
       call mem%dealloc(X_abid, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
 !
-      call disk%close_file(wf%X_abid)
+      call wf%X_abid%close_file()
 !
 !     :: X_ajil term ::
 !
-      call disk%open_file(wf%X_ajil,'read')
+      call wf%X_ajil%open_file('read')
 !
       call mem%alloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
       call single_record_reader(wf%n_o, wf%X_ajil, X_ajil)
 !
-      call disk%close_file(wf%X_ajil)
+      call wf%X_ajil%close_file()
 !
       call dgemm('N','T',           &
                   wf%n_v,           &
@@ -488,8 +488,8 @@ contains
       call mem%alloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call disk%open_file(wf%g_bdck_t,'read')
-      call disk%open_file(wf%g_ljck_t,'read')
+      call wf%g_bdck_t%open_file('read')
+      call wf%g_ljck_t%open_file('read')
 !
       do i_batch = 1, batch_i%num_batches
 !
@@ -608,8 +608,8 @@ contains
 !
 !     Close files
 !
-      call disk%close_file(wf%g_bdck_t)
-      call disk%close_file(wf%g_ljck_t)
+      call wf%g_bdck_t%close_file()
+      call wf%g_ljck_t%close_file()
 !
 !     Deallocate the integral arrays
 !
@@ -877,14 +877,14 @@ contains
 !
       endif
 !
-      call disk%open_file(wf%g_bdck_t,'read')
-      call disk%open_file(wf%g_ljck_t,'read')
-      call disk%open_file(wf%g_dbkc_t,'read')
-      call disk%open_file(wf%g_jlkc_t,'read')
-      call disk%open_file(wf%L_jbkc_t,'read')
+      call wf%g_bdck_t%open_file('read')
+      call wf%g_ljck_t%open_file('read')
+      call wf%g_dbkc_t%open_file('read')
+      call wf%g_jlkc_t%open_file('read')
+      call wf%L_jbkc_t%open_file('read')
 !
-      call disk%open_file(wf%g_bdck_c1,'read')
-      call disk%open_file(wf%g_ljck_c1,'read')
+      call wf%g_bdck_c1%open_file('read')
+      call wf%g_ljck_c1%open_file('read')
 !
       do i_batch = 1, batch_i%num_batches
 !
@@ -1133,14 +1133,14 @@ contains
 !
 !     Close files
 !
-      call disk%close_file(wf%g_bdck_t)
-      call disk%close_file(wf%g_dbkc_t)
-      call disk%close_file(wf%g_jlkc_t)
-      call disk%close_file(wf%g_ljck_t)
-      call disk%close_file(wf%L_jbkc_t)
+      call wf%g_bdck_t%close_file()
+      call wf%g_ljck_t%close_file()
+      call wf%g_dbkc_t%close_file()
+      call wf%g_jlkc_t%close_file()
+      call wf%L_jbkc_t%close_file()
 !
-      call disk%close_file(wf%g_bdck_c1)
-      call disk%close_file(wf%g_ljck_c1)
+      call wf%g_bdck_c1%close_file()
+      call wf%g_ljck_c1%close_file()
 !
 !     Deallocate the integral arrays
 !
@@ -1254,8 +1254,8 @@ contains
 !
       call mem%batch_setup(batch_k, req_0, req_k)
 !
-      call wf%g_bdck_c1%init('g_bdck_c1','direct','unformatted', dp*(wf%n_v)**3)
-      call disk%open_file(wf%g_bdck_c1,'write')
+      wf%g_bdck_c1 = direct_file('g_bdck_c1', wf%n_v**3)
+      call wf%g_bdck_c1%open_file('write')
 !
       do k_batch = 1, batch_k%num_batches
 !
@@ -1342,7 +1342,7 @@ contains
 !
       call mem%dealloc(L_J_bd, wf%integrals%n_J, wf%n_v, wf%n_v)
 !
-      call disk%close_file(wf%g_bdck_c1,'keep')
+      call wf%g_bdck_c1%close_file()
 !
 !
 !     g'_ljck = (lj'|ck) + (lj|ck') + (lj|c'k) ordered as lc,jk
@@ -1356,8 +1356,8 @@ contains
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      call wf%g_ljck_c1%init('g_ljck_c1','direct','unformatted', dp*(wf%n_v)*(wf%n_o))
-      call disk%open_file(wf%g_ljck_c1,'write')
+      wf%g_ljck_c1 = direct_file('g_ljck_c1', wf%n_v*wf%n_o)
+      call wf%g_ljck_c1%open_file('write')
 !
       do k_batch = 1, batch_k%num_batches
 !
@@ -1442,7 +1442,7 @@ contains
 !
       call mem%dealloc(L_J_lj, wf%integrals%n_J, wf%n_o, wf%n_o)
 !
-      call disk%close_file(wf%g_ljck_c1,'keep')
+      call wf%g_ljck_c1%close_file()
 !
    end subroutine construct_c1_integrals_cc3
 !

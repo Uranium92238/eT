@@ -24,8 +24,10 @@ module io_utilities
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
 !!
 !
-   use output_file_class
-   use batching_index_class
+   use kinds
+   use direct_file_class, only : direct_file
+   use output_file_class, only : output
+   use batching_index_class, only : batching_index
 !
    interface single_record_reader
 !
@@ -195,7 +197,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
 !
-      type(file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_1
 !
       integer :: ioerror
       integer :: z
@@ -232,7 +234,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
 !
-      type(file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_1
 !
       integer :: ioerror
       integer :: z, z_abs
@@ -273,8 +275,8 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_stuz
 !
-      type(file), intent(in) :: file_1
-      type(file), intent(in) :: file_2
+      type(direct_file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_2
 !
       integer :: ioerror
       integer :: z, z_abs
@@ -333,9 +335,9 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_stuz
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_vwxz
 !
-      type(file), intent(in) :: file_1
-      type(file), intent(in) :: file_2
-      type(file), intent(in) :: file_3
+      type(direct_file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_2
+      type(direct_file), intent(in) :: file_3
 !
       integer :: ioerror
       integer :: z, z_abs
@@ -410,7 +412,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
 !
-      type(file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_1
 !
       integer :: ioerror, record
       integer :: z, z_abs, y, y_abs
@@ -460,7 +462,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
 !
-      type(file), intent(inout) :: file_1
+      type(direct_file), intent(inout) :: file_1
 !
       logical, intent(in), optional :: switch
       logical :: switched
@@ -512,8 +514,8 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_rszy
 !
-      type(file), intent(in) :: file_1
-      type(file), intent(in) :: file_2
+      type(direct_file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_2
 !
       integer :: ioerror, record
       integer :: z, z_abs, y, y_abs
@@ -589,9 +591,9 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_rszy
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_tuzy
 !
-      type(file), intent(in) :: file_1
-      type(file), intent(in) :: file_2
-      type(file), intent(in) :: file_3
+      type(direct_file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_2
+      type(direct_file), intent(in) :: file_3
 !
       integer :: ioerror, record
       integer :: z, z_abs, y, y_abs
@@ -692,10 +694,10 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_tuzy
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_vwzy
 !
-      type(file), intent(in) :: file_1
-      type(file), intent(in) :: file_2
-      type(file), intent(in) :: file_3
-      type(file), intent(in) :: file_4
+      type(direct_file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_2
+      type(direct_file), intent(in) :: file_3
+      type(direct_file), intent(in) :: file_4
 !
       integer :: ioerror, record
       integer :: z, z_abs, y, y_abs
@@ -812,7 +814,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
 !
-      type(file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_1
 !
       integer :: ioerror
       integer :: z
@@ -844,7 +846,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
 !
-      type(file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_1
 !
       integer :: ioerror
       integer :: z, z_abs
@@ -881,7 +883,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
 !
-      type(file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_1
 !
       integer :: ioerror, record
       integer :: z, z_abs, y, y_abs
@@ -926,7 +928,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(inout) :: g_pqzy
 !
-      type(file), intent(inout) :: file_1
+      type(direct_file), intent(inout) :: file_1
 !
       type(batching_index) :: batch_z
 !

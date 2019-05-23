@@ -26,9 +26,9 @@ module sequential_file_class
 !!
 !
    use kinds    
-   use abstract_file_class      
-   use output_file_class      
-   use disk_manager_class
+   use abstract_file_class, only : abstract_file
+   use output_file_class, only : output
+   use disk_manager_class, only : disk
 !
    type, extends(abstract_file) :: sequential_file
 !
@@ -38,9 +38,10 @@ module sequential_file_class
 !
 !     Open and close
 !
-      procedure, public :: open_file => open_file_sequential_file
-      procedure, public :: close_file => close_file_sequential_file
+      procedure, public :: open_file   => open_file_sequential_file
+      procedure, public :: close_file  => close_file_sequential_file
       procedure, public :: rewind_file => rewind_file_sequential_file
+      procedure, public :: skip        => skip_sequential_file
 !
 !     Writer routines
 !
@@ -71,7 +72,7 @@ module sequential_file_class
 contains
 !
 !
-   module function new_sequential_file(file_name, w_size) result(the_file)
+   module function new_sequential_file(file_name) result(the_file)
 !!
 !!    Sequential file constructer
 !!    Writen by Rolf H. Myhre, May 2019
@@ -85,17 +86,6 @@ contains
       type(sequential_file) :: the_file
 !
       character(len=*), intent(in) :: file_name
-      integer, intent(in), optional :: w_size
-!
-      if (present(w_size)) then
-         if (w_size .gt. 0) then
-            the_file%word_size = w_size
-         else
-            call output%error_msg("Word size less than zero for file "//trim(file_name))
-         endif
-      else
-         the_file%word_size = dp
-      endif
 !
       the_file%file_name = file_name
 !
@@ -207,6 +197,28 @@ contains
       endif
 !
    end subroutine rewind_file_sequential_file
+!
+!
+   subroutine skip_sequential_file(the_file)
+!!
+!!    Rewind the sequential file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(sequential_file), intent(in)  :: the_file
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      read(the_file%unit, iostat=io_error, iomsg=io_msg) 
+!
+      if (io_error .ne. 0) then 
+         call output%error_msg('Error: could not skip eT sequential file '//trim(the_file%file_name)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine skip_sequential_file
 !
 !
    module subroutine writer_dp_sequential_file(the_file, array, n)

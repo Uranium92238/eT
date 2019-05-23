@@ -25,9 +25,9 @@ module input_file_class
 !!
 !
    use kinds   
-   use section_class 
-   use output_file_class
+   use section_class, only : section
    use string_utilities 
+   use abstract_file_class, only : abstract_file
 !
    type, extends(abstract_file) :: input_file 
 !
