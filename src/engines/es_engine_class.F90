@@ -32,7 +32,6 @@ module es_engine_class
 !
    contains
 !
-      procedure :: prepare                   => prepare_es_engine
       procedure :: run                       => run_es_engine
 !
       procedure :: read_settings             => read_settings_es_engine
@@ -44,19 +43,28 @@ module es_engine_class
 !
    end type es_engine
 !
+!
+   interface es_engine
+!
+      procedure :: new_es_engine 
+!
+   end interface es_engine
+!
+!
 contains
 !
-   subroutine prepare_es_engine(engine)
+!
+   function new_es_engine() result(engine)
 !!
-!!    Prepare
+!!    New ES engine
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(es_engine) :: engine
+      type(es_engine) :: engine
 !
       engine%name_  = 'Excited state engine'
-      engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
+      engine%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
@@ -70,7 +78,7 @@ contains
 !
       call engine%read_settings()
 !
-   end subroutine prepare_es_engine
+   end function new_es_engine
 !
 !
    subroutine read_settings_es_engine(engine)
@@ -228,7 +236,7 @@ contains
 !
       class(es_engine) :: engine
 !
-      engine%tag    = 'excited state'
+      engine%tag = 'excited state'
 !
       engine%tasks = [character(len=150) ::                                                              &
       'Cholesky decomposition of the ERI-matrix',                                                        &

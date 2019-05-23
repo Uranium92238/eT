@@ -151,54 +151,45 @@ subroutine reference_calculation(system)
 !!
 !! Directs the reference state calculation for eT
 !!
-   use hf_class
-   use uhf_class
-   use hf_engine_class
+   use molecular_system_class, only: molecular_system
+!
+   use input_file_class, only: input 
+   use output_file_class, only: output
+!
+   use hf_class, only: hf 
+   use uhf_class, only: uhf 
+   use hf_engine_class, only: hf_engine 
 !
    implicit none
 !
    type(molecular_system) :: system
 !
-!  Possible reference wavefunctions   
+   class(hf), allocatable  :: ref_wf
 !
-   type(hf), allocatable  :: hf_wf
-   type(uhf), allocatable :: uhf_wf
+   type(hf_engine) :: ref_engine
 !
-!  Engine
+   character(len=21) :: ref_wf_name
 !
-   type(hf_engine)   :: ref_engine
+   ref_engine = hf_engine()
+   ref_wf_name = input%get_reference_wf()
 !
-!  Other variables
+   if (trim(ref_wf_name) == 'hf') then
 !
-   character(len=21) :: reference_wf
+      ref_wf = hf(system)
 !
-   reference_wf = input%get_reference_wf()
+   elseif (trim(ref_wf_name) == 'uhf') then
 !
-   if (trim(reference_wf) == 'hf') then
-!
-      allocate(hf_wf)
-!
-      call hf_wf%prepare(system)
-      call ref_engine%ignite(hf_wf)
-      call hf_wf%cleanup() 
-!
-      deallocate(hf_wf)
-!
-   elseif (trim(reference_wf) == 'uhf') then
-!
-      allocate(uhf_wf)
-!
-      call uhf_wf%prepare(system)
-      call ref_engine%ignite(uhf_wf)
-      call uhf_wf%cleanup()
-!
-      deallocate(uhf_wf)
+      ref_wf = uhf(system)
 !
    else
 !
-      call output%error_msg('did not recognize the reference wavefunction ' // trim(reference_wf) //'.')
+      call output%error_msg('did not recognize the reference wavefunction ' &
+                                    // trim(ref_wf_name) //'.')
 !
    endif
+!
+   call ref_engine%ignite(ref_wf)
+   call ref_wf%cleanup()
 !
 end subroutine reference_calculation
 !
@@ -210,40 +201,30 @@ subroutine cc_calculation(system)
 !!
 !! Directs the coupled cluster calculation for eT
 !!
-   use ccs_class
-   use cc2_class
-   use lowmem_cc2_class
-   use cc3_class
-   use mp2_class
+   use input_file_class, only: input
+   use output_file_class, only: output 
 !
-   use gs_engine_class
-   use es_engine_class
-   use zop_engine_class
-   use fop_engine_class
+   use molecular_system_class, only: molecular_system
+!
+   use ccs_class, only: ccs 
+   use cc2_class, only: cc2 
+   use lowmem_cc2_class, only: lowmem_cc2
+   use ccsd_class, only: ccsd
+   use cc3_class, only: cc3
+   use mp2_class, only: mp2 
+!
+   use abstract_engine_class, only: abstract_engine
+   use gs_engine_class, only: gs_engine
+   use es_engine_class, only: es_engine
+   use zop_engine_class, only: zop_engine 
+   use fop_engine_class, only: fop_engine 
 !
    implicit none
 !
    type(molecular_system) :: system
 !
-!  Possible coupled cluster wavefunctions   
-!
-   type(ccs), target          :: ccs_wf
-   type(cc2), target          :: cc2_wf
-   type(lowmem_cc2), target   :: lowmem_cc2_wf
-   type(ccsd),target          :: ccsd_wf
-   type(cc3), target          :: cc3_wf
-   type(mp2), target          :: mp2_wf
-!
-   class(ccs), pointer :: cc_wf
-!
-!  Possible engines
-!
-   type(gs_engine)   :: gs_cc_engine
-   type(es_engine)   :: es_cc_engine
-   type(zop_engine)  :: zop_cc_engine
-   type(fop_engine)  :: fop_cc_engine
-!
-!  Other variables
+   class(ccs), allocatable :: cc_wf
+   class(abstract_engine), allocatable :: cc_engine 
 !
    character(len=21) :: cc_wf_name
 !
@@ -256,27 +237,27 @@ subroutine cc_calculation(system)
 !
       case ('ccs')
 !
-         cc_wf => ccs_wf
+         cc_wf = ccs(system)
 !
       case ('cc2')
 !
-         cc_wf => cc2_wf
+         cc_wf = cc2(system)
 !
       case ('lowmem-cc2')
 !
-         cc_wf => lowmem_cc2_wf
+         cc_wf = lowmem_cc2(system)
 !
       case ('ccsd')
 !
-         cc_wf => ccsd_wf
+         cc_wf = ccsd(system)
 !
       case ('cc3')
 !
-         cc_wf => cc3_wf
+         cc_wf = cc3(system)
 !
       case ('mp2')
 !
-         cc_wf => mp2_wf
+         cc_wf = mp2(system)
 !
       case default
 !
@@ -286,32 +267,27 @@ subroutine cc_calculation(system)
 !
    if (input%requested_keyword_in_section('fop', 'do')) then
 !
-      call cc_wf%prepare(system)
-      call fop_cc_engine%ignite(cc_wf)
-      call cc_wf%cleanup()
+      cc_engine = fop_engine()
 !
    elseif (input%requested_keyword_in_section('excited state', 'do')) then
 !
-      call cc_wf%prepare(system)
-      call es_cc_engine%ignite(cc_wf)
-      call cc_wf%cleanup()   
+      cc_engine = es_engine()
 !
    elseif (input%requested_keyword_in_section('zop', 'do')) then 
 !
-      call cc_wf%prepare(system)
-      call zop_cc_engine%ignite(cc_wf)
-      call cc_wf%cleanup()
+      cc_engine = zop_engine()
 !
    elseif (input%requested_keyword_in_section('ground state', 'do')) then
 !
-      call cc_wf%prepare(system)
-      call gs_cc_engine%ignite(cc_wf) 
-      call cc_wf%cleanup()  
+      cc_engine = gs_engine()
 !
    else
 !
       call output%error_msg('could not recognize coupled cluster task.')
 !
    endif
+!
+   call cc_engine%ignite(cc_wf)
+   call cc_wf%cleanup()
 !
 end subroutine cc_calculation

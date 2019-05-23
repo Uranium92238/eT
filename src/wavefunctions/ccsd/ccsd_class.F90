@@ -42,8 +42,6 @@ module ccsd_class
 !
 !     Preparation and cleanup routines
 !
-      procedure :: prepare                                     => prepare_ccsd
-!
       procedure :: initialize_files                            => initialize_files_ccsd
       procedure :: initialize_doubles_files                    => initialize_doubles_files_ccsd
 !
@@ -189,17 +187,24 @@ module ccsd_class
    end interface
 !
 !
+   interface ccsd 
+!
+      procedure :: new_ccsd 
+!
+   end interface ccsd 
+!
+!
 contains
 !
 !
-   subroutine prepare_ccsd(wf, system)
+   function new_ccsd(system) result(wf)
 !!
-!!    Prepare
+!!    New CCSD
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(ccsd) :: wf
+      type(ccsd) :: wf
 !
       class(molecular_system), target, intent(in) :: system 
 !
@@ -241,7 +246,7 @@ contains
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
-   end subroutine prepare_ccsd
+   end function new_ccsd
 !
 !
    logical function need_g_abcd_ccsd()
