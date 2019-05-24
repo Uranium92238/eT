@@ -40,6 +40,11 @@ module output_file_class
       procedure :: error_msg              => error_msg_output_file
       procedure :: warning_msg            => warning_msg_output_file
 !
+      procedure :: printf                 => printf_output_file
+      procedure :: printd                 => printd_output_file
+!
+      procedure :: long_string_print      => long_string_print_output_file
+!
    end type output_file
 !
    interface output_file
@@ -183,7 +188,7 @@ contains
 !!
       implicit none
 !
-      class(output_file) :: out_file
+      class(output_file), intent(in) :: out_file
 !
       character(len=*) :: warning_specs
 !
@@ -192,4 +197,169 @@ contains
    end subroutine warning_msg_output_file
 !
 !  
+   subroutine printf_output_file(the_file, fstring, string)
+!!
+!!    Print formatted
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: fstring
+      character(len=*), intent(in) :: string
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      write(the_file%unit, fstring, iostat=io_error, iomsg=io_msg) string
+!
+      if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%file_name)//&
+                             &'error message: '//trim(io_msg)
+!
+   end subroutine printf_output_file
+!
+!  
+   subroutine printd_output_file(the_file, string)
+!!
+!!    Print formatted
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: string
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      write(the_file%unit, '(t3,a)', iostat=io_error, iomsg=io_msg) string
+!
+      if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%file_name)//&
+                             &'error message: '//trim(io_msg)
+!
+   end subroutine printd_output_file
+!
+!  
+   subroutine long_string_print_output_file(the_file, string, format_string, colons, &
+                                            fformat_string, lformat_string, line_length)
+!!
+!!    Long string print
+!!    Written by Rolf H. Myhre, Nov 2018
+!!
+!!    Prints a reasonbly formatted long string over several lines
+!!    format_string: optional format string
+!!    fformat_string: optional format string for first printed line, 
+!!                    will be used for single line if present
+!!    lformat_string: optional format string for last printed line
+!!    line_length: optional argument for length printed lines, 
+!!                 routine adds extra length to not split up words
+!!
+!!
+      implicit none
+!
+      class(output_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: string
+      character(len=*), intent(in), optional :: format_string, fformat_string, lformat_string
+      integer, intent(in), optional :: line_length
+      logical, intent(in), optional :: colons
+!
+      character(90)  :: temp
+      integer        :: l, l_left, lines, l_length
+      integer        :: i,j, padd, printed 
+      character(20)  :: fs,fstring,ffstring,lfstring
+      logical        :: col 
+!
+!     Default line length
+      l_length = 70
+      if(present(line_length)) then
+         l_length = line_length
+      endif
+!
+!     Figure out the formatting
+      fstring = '(t3,a)'
+      if(present(format_string)) then
+         fstring = format_string
+      endif
+!
+      ffstring = fstring
+      if(present(fformat_string)) then
+         ffstring = fformat_string
+      endif
+!
+      lfstring = fstring
+      if(present(lformat_string)) then
+         lfstring = lformat_string
+      endif
+!
+!     First line format
+      fs = ffstring
+!
+!     Fancy colons for banner headings
+      col = .false.
+      if(present(colons)) then
+         col = colons
+      endif
+      if(col) then
+         l_length = l_length - 3
+      endif
+!
+      l = len_trim(string)      
+      l_left = l
+      lines = l/l_length + 1
+      printed = 1
+!
+      do i = 1,lines
+!
+         if(i .ne. lines) then
+!
+            if(i .ne. 1) then
+               fs = fstring
+            endif
+!
+!           Add some extra padding to not split words
+            do j = 1,18
+               padd = j
+               if(string(printed+l_length+j:printed+l_length+j) == ' ') then
+                  exit
+               endif
+            enddo
+!
+!           Copy string to be printed. Add hyphen if word must be split
+            if(padd == 18) then
+               temp(1:l_length+padd+1) = string(printed:printed+l_length+padd)
+               temp(l_length+padd+1:l_length+padd+1) = '-'
+               printed = printed + l_length + padd
+            else
+               temp(1:l_length+padd+1) = string(printed:printed+l_length+padd+1)
+               printed = printed + l_length + padd + 1
+            endif
+!
+!           Print
+            if(col) then
+               call the_file%printf(fs, ':: '//temp(1:l_length+padd+1))
+            else
+               call the_file%printf(fs, temp(1:l_length+padd+1))
+            endif
+!
+         else
+!           Print the remaining string
+            fs = lfstring
+            if(col) then
+               call the_file%printf(fs, ':: '//string(printed:l))
+            else
+               call the_file%printf(fs, string(printed:l))
+            endif
+            printed = l
+         endif
+!
+      enddo
+!
+      call the_file%flush_file()
+!
+   end subroutine long_string_print_output_file
+!
+!
 end module output_file_class
