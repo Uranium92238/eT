@@ -40,8 +40,12 @@ module output_file_class
       procedure :: error_msg              => error_msg_output_file
       procedure :: warning_msg            => warning_msg_output_file
 !
-      procedure :: printf                 => printf_output_file
+      procedure, public :: printf_1_output_file
+      procedure, public :: printf_2_output_file
+      generic :: printf                   => printf_1_output_file, printf_2_output_file
+!
       procedure :: printd                 => printd_output_file
+      procedure :: author                 => author_output_file
 !
       procedure :: long_string_print      => long_string_print_output_file
 !
@@ -197,7 +201,7 @@ contains
    end subroutine warning_msg_output_file
 !
 !  
-   subroutine printf_output_file(the_file, fstring, string)
+   subroutine printf_1_output_file(the_file, fstring, string)
 !!
 !!    Print formatted
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -217,7 +221,31 @@ contains
       if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%file_name)//&
                              &'error message: '//trim(io_msg)
 !
-   end subroutine printf_output_file
+   end subroutine printf_1_output_file
+!
+!  
+   subroutine printf_2_output_file(the_file, fstring, string1, string2)
+!!
+!!    Print formatted
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: fstring
+      character(len=*), intent(in) :: string1
+      character(len=*), intent(in) :: string2
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      write(the_file%unit, fstring, iostat=io_error, iomsg=io_msg) string1, string2
+!
+      if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%file_name)//&
+                             &'error message: '//trim(io_msg)
+!
+   end subroutine printf_2_output_file
 !
 !  
    subroutine printd_output_file(the_file, string)
@@ -240,6 +268,29 @@ contains
                              &'error message: '//trim(io_msg)
 !
    end subroutine printd_output_file
+!
+!  
+   subroutine author_output_file(the_file, author, contribution)
+!!
+!!    Print formatted
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: author
+      character(len=*), intent(in) :: contribution
+!
+      character(len=100) :: d_author
+      character(len=100) :: d_contribution
+!
+      d_author = author
+      d_contribution = contribution
+!
+      call the_file%printf('(t4,a23,a54)', d_author, d_contribution)
+!
+   end subroutine author_output_file
 !
 !  
    subroutine long_string_print_output_file(the_file, string, format_string, colons, &
@@ -308,7 +359,7 @@ contains
 !
       l = len_trim(string)      
       l_left = l
-      lines = l/l_length + 1
+      lines = (l-1)/l_length + 1
       printed = 1
 !
       do i = 1,lines
