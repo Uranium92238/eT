@@ -70,10 +70,9 @@ module ccs_class
 !
 !     Preparation and cleanup routines
 !
-      procedure :: prepare                                     => prepare_ccs
-      procedure :: read_hf                                     => read_hf_ccs
       procedure :: cleanup                                     => cleanup_ccs
 !
+      procedure :: read_hf                                     => read_hf_ccs
       procedure :: initialize_files                            => initialize_files_ccs
       procedure :: initialize_cc_files                         => initialize_cc_files_ccs
       procedure :: initialize_singles_files                    => initialize_singles_files_ccs
@@ -233,17 +232,24 @@ module ccs_class
    end interface
 !
 !
+   interface ccs 
+!
+      procedure :: new_ccs 
+!
+   end interface ccs
+!
+!
 contains
 !
 !
-   subroutine prepare_ccs(wf, system)
+   function new_ccs(system) result(wf)
 !!
-!!    Prepare
+!!    New CCS
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(ccs) :: wf
+      type(ccs) :: wf
 !
       class(molecular_system), target, intent(in) :: system 
 !
@@ -269,7 +275,7 @@ contains
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
-   end subroutine prepare_ccs
+   end function new_ccs
 !
 !
    subroutine read_hf_ccs(wf)

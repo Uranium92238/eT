@@ -56,6 +56,8 @@ module diis_cc_es_class
 !
       integer, dimension(:,:), allocatable :: start_vectors
 !
+      type(timings) :: timer
+!
    contains
 !     
       procedure, non_overridable :: prepare        => prepare_diis_cc_es
@@ -78,7 +80,7 @@ module diis_cc_es_class
 contains
 !
 !
-   subroutine prepare_diis_cc_es(solver, transformation)
+   subroutine prepare_diis_cc_es(solver, transformation, wf)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -86,8 +88,12 @@ contains
       implicit none
 !
       class(diis_cc_es) :: solver
+      class(ccs), intent(in) :: wf
 !
       character(len=*), intent(in) :: transformation
+!
+      solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
+      call solver%timer%turn_on()
 !
       call solver%print_banner()
 !
@@ -156,7 +162,7 @@ contains
    end subroutine read_settings_diis_cc_es
 !
 !
-   subroutine cleanup_diis_cc_es(solver)
+   subroutine cleanup_diis_cc_es(solver, wf)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -164,8 +170,18 @@ contains
       implicit none
 !
       class(diis_cc_es) :: solver
+      class(ccs), intent(in) :: wf
 !
       call mem%dealloc(solver%energies, solver%n_singlet_states)
+!
+      call solver%timer%turn_off()
+!
+      write(output%unit, '(/t3, a)') '- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) &
+                                       // ' excited state equations ('// &
+                                       trim(solver%transformation) //')'
+!
+      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
+      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
 !
    end subroutine cleanup_diis_cc_es
 !
@@ -241,7 +257,7 @@ contains
       do state = 1, solver%n_singlet_states
 !  
          write(string_state, '(i3.3)') state
-         call diis(state)%init('diis_cc_es_' // string_state, wf%n_es_amplitudes, wf%n_es_amplitudes, solver%diis_dimension)
+         diis(state) = diis_tool('diis_cc_es_' // string_state, wf%n_es_amplitudes, wf%n_es_amplitudes, solver%diis_dimension)
 !
       enddo 
 !
@@ -371,7 +387,7 @@ contains
          write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
          call solver%print_summary(wf, X) 
 !
-         write(output%unit, '(/t3,a)') 'Storing converged states to file.'       
+         write(output%unit, '(/t3,a)') '- Storing converged states to file.'       
 !
          do state = 1, solver%n_singlet_states
 !
@@ -382,6 +398,12 @@ contains
          call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
 !
       endif 
+!
+      do state = 1, solver%n_singlet_states
+!
+         call diis(state)%cleanup()
+!
+      enddo
 !
       call mem%dealloc(prev_energies, solver%n_singlet_states)
       call mem%dealloc(residual_norms, solver%n_singlet_states)

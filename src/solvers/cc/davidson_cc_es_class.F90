@@ -61,6 +61,8 @@ module davidson_cc_es_class
 !
       integer, dimension(:), allocatable :: start_vectors
 !
+      type(timings) :: timer
+!
    contains
 !     
       procedure                  :: prepare          => prepare_davidson_cc_es
@@ -91,7 +93,7 @@ module davidson_cc_es_class
 contains
 !
 !
-   subroutine prepare_davidson_cc_es(solver, transformation)
+   subroutine prepare_davidson_cc_es(solver, transformation, wf)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -99,8 +101,12 @@ contains
       implicit none
 !
       class(davidson_cc_es) :: solver
+      class(ccs), intent(in) :: wf
 !
       character(len=*), intent(in) :: transformation
+!
+      solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
+      call solver%timer%turn_on()
 !
       solver%tag = 'Davidson coupled cluster excited state solver'
       solver%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
@@ -284,8 +290,8 @@ contains
 !
       iteration = 1
 !
-      call davidson%prepare('cc_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
-                               solver%residual_threshold, solver%eigenvalue_threshold)
+      davidson = eigen_davidson_tool('cc_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
+                                       solver%residual_threshold, solver%eigenvalue_threshold)
 !
 !     Construct first trial vectors
 !
@@ -414,7 +420,7 @@ contains
          write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration - 1, ' iterations!'
          call solver%print_summary(davidson, wf)
 !
-         write(output%unit,'(/t3,a)') 'Storing excited states to file.'
+         write(output%unit,'(/t3,a)') '- Storing excited states to file.'
 !
          call mem%alloc(X, wf%n_es_amplitudes)
 !
@@ -432,8 +438,6 @@ contains
          write(output%unit,'(/t3,a)') 'Maximal number of iterations performed without reaching convergence!'
 !
       endif
-!
-      call davidson%cleanup()
 !
    end subroutine run_davidson_cc_es
 !
@@ -605,7 +609,7 @@ contains
    end subroutine set_precondition_vector_davidson_cc_es
 !
 !
-   subroutine cleanup_davidson_cc_es(solver)
+   subroutine cleanup_davidson_cc_es(solver, wf)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -613,9 +617,19 @@ contains
       implicit none
 !
       class(davidson_cc_es) :: solver
+      class(ccs), intent(in) :: wf
 !
       call solver%destruct_energies()
       if (allocated(solver%start_vectors)) call mem%dealloc(solver%start_vectors, solver%n_singlet_states)
+!
+      call solver%timer%turn_off()
+!
+      write(output%unit, '(/t3, a)') '- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) // &
+                                       ' excited state equations ('// &
+                                       trim(solver%transformation) //')'
+!
+      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
+      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
 !
    end subroutine cleanup_davidson_cc_es
 !

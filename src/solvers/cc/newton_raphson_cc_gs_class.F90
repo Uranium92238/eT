@@ -158,7 +158,7 @@ contains
 !
       class(ccs) :: wf
 !
-      type(diis_tool) :: diis_manager
+      type(diis_tool) :: diis
 !
       real(dp), dimension(:), allocatable :: omega, dt, t  
 !
@@ -168,7 +168,7 @@ contains
 !
       real(dp) :: energy, prev_energy, omega_norm
 !
-      call diis_manager%init('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, 8)
+      diis = diis_tool('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
       iteration = 0
       micro_iterations = 0
@@ -226,7 +226,7 @@ contains
 !
             call wf%form_newton_raphson_t_estimate(t, dt)
 !
-            call diis_manager%update(omega, t)
+            call diis%update(omega, t)
 !
             call wf%set_amplitudes(t)
 !
@@ -256,10 +256,11 @@ contains
 !
       endif 
 !
+      call diis%cleanup()
+!
       call mem%dealloc(omega, wf%n_gs_amplitudes)
       call mem%dealloc(dt, wf%n_gs_amplitudes)
       call mem%dealloc(t, wf%n_gs_amplitudes)
-!
 !
    end subroutine run_newton_raphson_cc_gs
 !
@@ -297,7 +298,7 @@ contains
       call mem%alloc(epsilon, wf%n_gs_amplitudes)
       call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
 !
-      call davidson%prepare('cc_gs_newton_raphson', wf%n_gs_amplitudes, solver%micro_residual_threshold, -omega)
+      davidson = linear_davidson_tool('cc_gs_newton_raphson', wf%n_gs_amplitudes, solver%micro_residual_threshold, -omega)
 !
       call davidson%set_preconditioner(epsilon)
       call mem%dealloc(epsilon, wf%n_gs_amplitudes)

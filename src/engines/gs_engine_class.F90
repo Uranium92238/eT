@@ -33,7 +33,6 @@ module gs_engine_class
 !
    contains 
 !
-      procedure :: prepare                               => prepare_gs_engine
       procedure :: run                                   => run_gs_engine
 !
       procedure :: do_ground_state                       => do_ground_state_gs_engine 
@@ -54,20 +53,27 @@ module gs_engine_class
    end type gs_engine 
 !
 !
+   interface gs_engine
+!
+      procedure :: new_gs_engine 
+!
+   end interface gs_engine 
+!
+!
 contains
 !
 !
-   subroutine prepare_gs_engine(engine)
+   function new_gs_engine() result(engine)
 !!
-!!    Prepare 
+!!    New GS engine  
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
 !
-      class(gs_engine) :: engine 
+      type(gs_engine) :: engine 
 !
-      engine%name_ = 'Ground state coupled cluster engine'
-      engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
+      engine%name_   = 'Ground state coupled cluster engine'
+      engine%author  = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
@@ -77,7 +83,7 @@ contains
 !
       call engine%read_settings()
 !
-   end subroutine prepare_gs_engine
+   end function new_gs_engine   
 !
 !
    subroutine read_settings_gs_engine(engine)

@@ -157,7 +157,7 @@ contains
 !
       class(hf) :: wf
 !
-      type(diis_tool) :: diis_manager
+      type(diis_tool) :: diis
 !
       logical :: converged_energy
       logical :: converged_gradient
@@ -202,7 +202,7 @@ contains
       dim_fock     = ((wf%n_ao)*(wf%n_ao + 1)/2)*(wf%n_densities)
       dim_gradient = (wf%n_ao*(wf%n_ao - 1)/2)*(wf%n_densities)
 !
-      call diis_manager%init('hf_diis', dim_fock, dim_gradient, solver%diis_dimension)
+      diis = diis_tool('hf_diis', dim_fock, dim_gradient, solver%diis_dimension)
 !
 !     Set the initial density guess and Fock matrix 
 !
@@ -240,7 +240,7 @@ contains
       max_grad = get_abs_max(G, dim_gradient)
 !
       call wf%get_ao_fock(F)
-      call diis_manager%update(G, F)
+      call diis%update(G, F)
 !
 !     Part II. Iterative SCF loop.
 !
@@ -314,7 +314,7 @@ contains
             call wf%get_ao_fock(F)
             call dcopy(dim_fock, F, 1, ao_fock, 1)
 !
-            call diis_manager%update(G, F)
+            call diis%update(G, F)
             call wf%set_ao_fock(F)
 !
          endif
@@ -337,9 +337,7 @@ contains
       call mem%dealloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
       call mem%dealloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
 !
-!     Initialize engine (make final deallocations, and other stuff)
-!
-      call diis_manager%finalize()
+      call diis%cleanup()
 !
       if (.not. solver%converged) then 
 !
