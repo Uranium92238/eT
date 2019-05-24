@@ -46,20 +46,24 @@ module direct_file_class
 !     Writer routines
 !
       procedure, public :: writer_dp_direct_file
-      procedure, public :: writer_i6_direct_file
-      procedure, public :: writer_i15_direct_file
+      procedure, public :: writer_dp_dim_direct_file
+      procedure, public :: writer_i_direct_file
+      procedure, public :: writer_i_dim_direct_file
       generic           :: writer => writer_dp_direct_file, &
-                                     writer_i6_direct_file, &
-                                     writer_i15_direct_file
+                                     writer_dp_dim_direct_file, &
+                                     writer_i_direct_file, &
+                                     writer_i_dim_direct_file
 !
 !     Reader routines
 !
       procedure, public :: reader_dp_direct_file
-      procedure, public :: reader_i6_direct_file
-      procedure, public :: reader_i15_direct_file
+      procedure, public :: reader_dp_dim_direct_file
+      procedure, public :: reader_i_direct_file
+      procedure, public :: reader_i_dim_direct_file
       generic           :: reader => reader_dp_direct_file, &
-                                     reader_i6_direct_file, &
-                                     reader_i15_direct_file
+                                     reader_dp_dim_direct_file, &
+                                     reader_i_direct_file, &
+                                     reader_i_dim_direct_file
 !
    end type direct_file
 !
@@ -189,9 +193,34 @@ contains
    end subroutine close_file_direct_file
 !
 !
-   module subroutine writer_dp_direct_file(the_file, array, record)
+   module subroutine writer_dp_direct_file(the_file, scalar, record)
 !!
-!!    Direct file writer, real double precision
+!!    Direct file writer, real(dp) scalar
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      real(dp), intent(in) :: scalar
+      integer, intent(in)  :: record
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) scalar
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to write to file: '//the_file%file_name//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine writer_dp_direct_file
+!
+!
+   module subroutine writer_dp_dim_direct_file(the_file, array, record)
+!!
+!!    Direct file writer, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -211,44 +240,44 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_dp_direct_file
+   end subroutine writer_dp_dim_direct_file
 !
 !
-   module subroutine writer_i6_direct_file(the_file, array, record)
+   module subroutine writer_i_direct_file(the_file, scalar, record)
 !!
-!!    Direct file writer, integer 32
+!!    Direct file writer, integer scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
       class(direct_file) :: the_file
 !
-      integer(i6), dimension(the_file%record_dim), intent(in) :: array
+      integer, intent(in) :: scalar
       integer, intent(in) :: record
 !
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) scalar
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//the_file%file_name//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_i6_direct_file
+   end subroutine writer_i_direct_file
 !
 !
-   module subroutine writer_i15_direct_file(the_file, array, record)
+   module subroutine writer_i_dim_direct_file(the_file, array, record)
 !!
-!!    Direct file writer, integer 64
+!!    Direct file writer, integer array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
       class(direct_file) :: the_file
 !
-      integer(i15), dimension(the_file%record_dim), intent(in) :: array
+      integer, dimension(the_file%record_dim), intent(in) :: array
       integer, intent(in) :: record
 !
       integer              :: io_error
@@ -261,12 +290,37 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_i15_direct_file
+   end subroutine writer_i_dim_direct_file
 !
 !
-   module subroutine reader_dp_direct_file(the_file, array, record)
+   module subroutine reader_dp_direct_file(the_file, scalar, record)
 !!
-!!    Direct file reader, real double precision
+!!    Direct file reader, real(dp) scalar
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      real(dp), intent(out)   :: scalar
+      integer, intent(in)     :: record
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) scalar
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine reader_dp_direct_file
+!
+!
+   module subroutine reader_dp_dim_direct_file(the_file, array, record)
+!!
+!!    Direct file reader, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -286,19 +340,44 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_dp_direct_file
+   end subroutine reader_dp_dim_direct_file
 !
 !
-   module subroutine reader_i6_direct_file(the_file, array, record)
+   module subroutine reader_i_direct_file(the_file, scalar, record)
 !!
-!!    Direct file reader, integer 32
+!!    Direct file reader, integer scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
       class(direct_file) :: the_file
 !
-      integer(i6), dimension(the_file%record_dim), intent(out) :: array
+      integer, intent(out) :: scalar
+      integer, intent(in)  :: record
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) scalar
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine reader_i_direct_file
+!
+!
+   module subroutine reader_i_dim_direct_file(the_file, array, record)
+!!
+!!    Direct file reader, integer array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      integer, dimension(the_file%record_dim), intent(out) :: array
       integer, intent(in) :: record
 !
       integer              :: io_error
@@ -311,32 +390,7 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_i6_direct_file
-!
-!
-   module subroutine reader_i15_direct_file(the_file, array, record)
-!!
-!!    Direct file reader, integer 64
-!!    Written by Rolf H. Myhre, May 2019
-!!
-      implicit none
-!
-      class(direct_file) :: the_file
-!
-      integer(i15), dimension(the_file%record_dim), intent(out) :: array
-      integer, intent(in) :: record
-!
-      integer              :: io_error
-      character(len=100)   :: io_msg
-!
-      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
-!
-      if(io_error .ne. 0) then
-         call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
-                              &'. Error message: '//trim(io_msg))
-      endif
-!
-   end subroutine reader_i15_direct_file
+   end subroutine reader_i_dim_direct_file
 !
 !
 end module direct_file_class

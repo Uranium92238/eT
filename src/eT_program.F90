@@ -25,12 +25,14 @@ program eT_program
 !!
 !
    use kinds
-   use file_class
-   use disk_manager_class
+   use direct_file_class, only : direct_file
+   use sequential_file_class, only : sequential_file
+   use global_files, only : input
+   use timings_class, only : timings
+   use disk_manager_class, only : disk
    use memory_manager_class
    use libint_initialization
    use molecular_system_class
-   use timings_class
 !
    use omp_lib
 !
@@ -57,8 +59,9 @@ program eT_program
    timing = output_file('timing.out')
    call timing%open_file()
 !
-   eT_timer = new_timer("Total time in eT")
+   eT_timer = timings("Total time in eT")
    call eT_timer%turn_on()
+!
 !
 !  Print program banner
 !
@@ -143,7 +146,7 @@ subroutine reference_calculation(system)
 !!
    use molecular_system_class, only: molecular_system
 !
-   use input_file_class, only: input 
+   use global_files, only: input 
    use output_file_class, only: output
 !
    use hf_class, only: hf 
@@ -191,7 +194,7 @@ subroutine cc_calculation(system)
 !!
 !! Directs the coupled cluster calculation for eT
 !!
-   use input_file_class, only: input
+   use global_files, only: input
    use output_file_class, only: output 
 !
    use molecular_system_class, only: molecular_system

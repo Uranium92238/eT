@@ -574,13 +574,11 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: h_pqrs !Array for sorted integrals
       real(dp), dimension(:,:), allocatable     :: v2_help !Help array for constructing L_jbkc
 !
-      integer :: k, j, record
+      integer :: k, j
       type(batching_index) :: batch_k
 !
       integer :: req_0, req_k
       integer :: current_k_batch
-!
-      integer :: ioerror=-1
 !
       call mem%alloc(v2_help,wf%n_v,wf%n_v)
 !
@@ -727,12 +725,14 @@ contains
       wf%L_jbkc_t = direct_file('L_jbkc_t',wf%n_v**2)
       call wf%L_jbkc_t%open_file('write')
 !
+      call batch_k%determine_limits(1)
+      call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+!
       do current_k_batch = 1,batch_k%num_batches
 !
          call batch_k%determine_limits(current_k_batch)
 !
          call mem%alloc(g_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
-         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
 !
          call wf%get_ovov(g_pqrs, &
                            1,wf%n_o, &
@@ -751,21 +751,17 @@ contains
 !
                call daxpy(wf%n_v**2, -one, v2_help, 1, h_pqrs(:,:,j,k), 1)
 !
-               record  = (batch_k%first + k - 2)*wf%n_o + j
-               write(wf%L_jbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
-!
             enddo
          enddo
 !
-         if(ioerror .ne. 0) then
-            call output%error_msg('Failed to write jbkc_t file')
-         endif
-
+         call compound_record_writer(wf%n_o, batch_k, wf%L_jbkc_t, h_pqrs)
+!
          call mem%dealloc(g_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
-         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
 !
       enddo
 !
+      call batch_k%determine_limits(1)
+      call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
       call wf%L_jbkc_t%close_file()
 !
 !

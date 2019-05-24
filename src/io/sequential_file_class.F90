@@ -46,20 +46,24 @@ module sequential_file_class
 !     Writer routines
 !
       procedure, public :: writer_dp_sequential_file
-      procedure, public :: writer_i6_sequential_file
-      procedure, public :: writer_i15_sequential_file
+      procedure, public :: writer_dp_dim_sequential_file
+      procedure, public :: writer_i_sequential_file
+      procedure, public :: writer_i_dim_sequential_file
       generic           :: writer => writer_dp_sequential_file, &
-                                     writer_i6_sequential_file, &
-                                     writer_i15_sequential_file
+                                     writer_dp_dim_sequential_file, &
+                                     writer_i_sequential_file, &
+                                     writer_i_dim_sequential_file
 !
 !     Reader routines
 !
       procedure, public :: reader_dp_sequential_file
-      procedure, public :: reader_i6_sequential_file
-      procedure, public :: reader_i15_sequential_file
+      procedure, public :: reader_dp_dim_sequential_file
+      procedure, public :: reader_i_sequential_file
+      procedure, public :: reader_i_dim_sequential_file
       generic           :: reader => reader_dp_sequential_file, &
-                                     reader_i6_sequential_file, &
-                                     reader_i15_sequential_file
+                                     reader_dp_dim_sequential_file, &
+                                     reader_i_sequential_file, &
+                                     reader_i_dim_sequential_file
 !
    end type sequential_file
 !
@@ -199,36 +203,73 @@ contains
    end subroutine rewind_file_sequential_file
 !
 !
-   subroutine skip_sequential_file(the_file)
+   subroutine skip_sequential_file(the_file, jump)
 !!
-!!    Rewind the sequential file
+!!    Skip sequential file
 !!    Written by Rolf Heilemann Myhre, May 2019
+!!    Skip jump number of lines. Default: 1
 !!
       implicit none
 !
       class(sequential_file), intent(in)  :: the_file
+      integer, optional,  intent(in)      :: jump
+!
+      integer :: i,skips
 !
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      read(the_file%unit, iostat=io_error, iomsg=io_msg) 
-!
-      if (io_error .ne. 0) then 
-         call output%error_msg('Error: could not skip eT sequential file '//trim(the_file%file_name)//&
-                              &'. Error message: '//trim(io_msg))
+      if(present(jump)) then
+         skips = jump
+      else
+         skips = 1
       endif
+!
+      do i = 1,skips
+         read(the_file%unit, iostat=io_error, iomsg=io_msg) 
+!
+         if (io_error .ne. 0) then 
+            call output%error_msg('Error: could not skip eT sequential file '//trim(the_file%file_name)//&
+                                 &'. Error message: '//trim(io_msg))
+         endif
+!
+      enddo
 !
    end subroutine skip_sequential_file
 !
 !
-   module subroutine writer_dp_sequential_file(the_file, array, n)
+   module subroutine writer_dp_sequential_file(the_file, scalar)
 !!
-!!    Sequential file writer, real double precision
+!!    Sequential file writer, real(dp0 scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(sequential_file) :: the_file
+      class(sequential_file), intent(in) :: the_file
+!
+      real(dp), intent(in) :: scalar
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to write to file: '//the_file%file_name//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine writer_dp_sequential_file
+!
+!
+   module subroutine writer_dp_dim_sequential_file(the_file, array, n)
+!!
+!!    Sequential file writer, real(dp) array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(sequential_file), intent(in)  :: the_file
 !
       integer, intent(in)                 :: n
       real(dp), dimension(n), intent(in)  :: array
@@ -243,45 +284,44 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_dp_sequential_file
+   end subroutine writer_dp_dim_sequential_file
 !
 !
-   module subroutine writer_i6_sequential_file(the_file, array, n)
+   module subroutine writer_i_sequential_file(the_file, scalar)
 !!
-!!    Sequential file writer, integer 32
+!!    Sequential file writer, integer scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(sequential_file) :: the_file
+      class(sequential_file), intent(in) :: the_file
 !
-      integer, intent(in)                    :: n
-      integer(i6), dimension(n), intent(in)  :: array
+      integer, intent(in)  :: scalar
 !
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, iostat=io_error, iomsg=io_msg) array
+      write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//the_file%file_name//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_i6_sequential_file
+   end subroutine writer_i_sequential_file
 !
 !
-   module subroutine writer_i15_sequential_file(the_file, array, n)
+   module subroutine writer_i_dim_sequential_file(the_file, array, n)
 !!
-!!    Sequential file writer, integer 64
+!!    Sequential file writer, integer array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(sequential_file) :: the_file
+      class(sequential_file), intent(in)  :: the_file
 !
-      integer, intent(in)                    :: n
-      integer(i15), dimension(n), intent(in) :: array
+      integer, intent(in)                 :: n
+      integer, dimension(n), intent(in)   :: array
 !
       integer              :: io_error
       character(len=100)   :: io_msg
@@ -293,17 +333,41 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_i15_sequential_file
+   end subroutine writer_i_dim_sequential_file
 !
 !
-   module subroutine reader_dp_sequential_file(the_file, array, n)
+   module subroutine reader_dp_sequential_file(the_file, scalar)
 !!
-!!    Sequential file reader, real double precision
+!!    Sequential file reader, real(dp) scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(sequential_file) :: the_file
+      class(sequential_file), intent(in)  :: the_file
+!
+      real(dp), intent(out) :: scalar
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      read(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine reader_dp_sequential_file
+!
+!
+   module subroutine reader_dp_dim_sequential_file(the_file, array, n)
+!!
+!!    Sequential file reader, real(dp) array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(sequential_file), intent(in)  :: the_file
 !
       integer, intent(in)                 :: n
       real(dp), dimension(n), intent(out) :: array
@@ -318,20 +382,44 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_dp_sequential_file
+   end subroutine reader_dp_dim_sequential_file
 !
 !
-   module subroutine reader_i6_sequential_file(the_file, array, n)
+   module subroutine reader_i_sequential_file(the_file, scalar)
 !!
-!!    Sequential file reader, integer 32
+!!    Sequential file reader, integer scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
-      class(sequential_file) :: the_file
+      class(sequential_file), intent(in) :: the_file
 !
-      integer, intent(in)                    :: n
-      integer(i6), dimension(n), intent(out) :: array
+      integer, intent(out) :: scalar
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      read(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine reader_i_sequential_file
+!
+!
+   module subroutine reader_i_dim_sequential_file(the_file, array, n)
+!!
+!!    Sequential file reader, integer array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(sequential_file), intent(in) :: the_file
+!
+      integer, intent(in)                 :: n
+      integer, dimension(n), intent(out)  :: array
 !
       integer              :: io_error
       character(len=100)   :: io_msg
@@ -343,32 +431,7 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_i6_sequential_file
-!
-!
-   module subroutine reader_i15_sequential_file(the_file, array, n)
-!!
-!!    Sequential file reader, integer 64
-!!    Written by Rolf H. Myhre, May 2019
-!!
-      implicit none
-!
-      class(sequential_file) :: the_file
-!
-      integer, intent(in)                     :: n
-      integer(i15), dimension(n), intent(out) :: array
-!
-      integer              :: io_error
-      character(len=100)   :: io_msg
-!
-      read(the_file%unit, iostat=io_error, iomsg=io_msg) array
-!
-      if(io_error .ne. 0) then
-         call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
-                              &'. Error message: '//trim(io_msg))
-      endif
-!
-   end subroutine reader_i15_sequential_file
+   end subroutine reader_i_dim_sequential_file
 !
 !
 end module sequential_file_class
