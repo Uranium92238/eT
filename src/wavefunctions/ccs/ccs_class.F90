@@ -68,7 +68,6 @@ module ccs_class
 !
 !     Preparation and cleanup routines
 !
-      procedure :: prepare                                     => prepare_ccs
       procedure :: cleanup                                     => cleanup_ccs
 !
       procedure :: initialize_files                            => initialize_files_ccs
@@ -128,6 +127,7 @@ module ccs_class
 !     Routines related to the Jacobian transformation
 !
       procedure :: prepare_for_jacobian                        => prepare_for_jacobian_ccs
+      procedure :: prepare_for_jacobian_transpose              => prepare_for_jacobian_transpose_ccs
 !
       procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_ccs
       procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_ccs
@@ -166,6 +166,8 @@ module ccs_class
       procedure :: get_vvov                                     => get_vvov_ccs
       procedure :: get_vovv                                     => get_vovv_ccs
       procedure :: get_ovvv                                     => get_ovvv_ccs
+!
+      procedure :: get_g_pqrs_required                          => get_g_pqrs_required_ccs
 !
       procedure, nopass :: need_g_abcd                          => need_g_abcd_ccs
 !
@@ -229,17 +231,24 @@ module ccs_class
    end interface
 !
 !
+   interface ccs 
+!
+      procedure :: new_ccs 
+!
+   end interface ccs
+!
+!
 contains
 !
 !
-   subroutine prepare_ccs(wf, system)
+   function new_ccs(system) result(wf)
 !!
-!!    Prepare
+!!    New CCS
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(ccs) :: wf
+      type(ccs) :: wf
 !
       class(molecular_system), target, intent(in) :: system 
 !
@@ -278,7 +287,7 @@ contains
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
-   end subroutine prepare_ccs
+   end function new_ccs
 !
 !
    subroutine cleanup_ccs(wf)
@@ -1549,6 +1558,32 @@ contains
       if (allocated(wf%t1bar)) call mem%dealloc(wf%t1bar, wf%n_v, wf%n_o)
 !
    end subroutine destruct_t1bar_ccs
+!
+!
+   subroutine get_g_pqrs_required_ccs(wf, req_l, req_r, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Get memory required to construct g_pqrs
+!!    Written by Rolf H. Myhre, April 2019
+!!
+!!    Simple routine calculate an integral block with provided dimensions.
+!!    req_l and req_r are the memory required by construct_g_pqrs to allocate 
+!!    the Cholesky vectors
+!!
+!!    req_l = n_J*dim_p*dim_q, left Cholesky vector
+!!    req_r = n_J*dim_r*dim_s, right Cholesky vector
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      integer, intent(in)  :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(out) :: req_l, req_r
+!
+      req_l = wf%integrals%n_J*dim_p*dim_q
+      req_r = wf%integrals%n_J*dim_r*dim_s
+!
+   end subroutine get_g_pqrs_required_ccs
+!
 !
 !
    subroutine get_ovov_ccs(wf, g_iajb, first_i, last_i, first_a, last_a, &
@@ -3325,10 +3360,25 @@ contains
 !
 !     For now, do nothing.
 !
-      write(output%unit,'(/t3,a,a,a)') 'No Jacobian preparations for ', &
-                                       trim(wf%name_), ' wavefunction.'
+      write(output%unit,'(/t3,a,a,a,a,a)') 'No preparation for ', trim(wf%name_), ' excited state equation.'
 !
    end subroutine prepare_for_jacobian_ccs
+!
+!
+   subroutine prepare_for_jacobian_transpose_ccs(wf)
+!!
+!!    Prepare for jacobian
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+!     For now, do nothing.
+!
+      write(output%unit,'(/t3,a,a,a,a,a)') 'No preparation for ', trim(wf%name_), ' excited state equation.'
+!
+   end subroutine prepare_for_jacobian_transpose_ccs
 !
 !
    subroutine set_cvs_start_indices_ccs(wf, n_cores, core_MOs, n_start_indices, start_indices)

@@ -26,10 +26,7 @@ module linear_davidson_tool_class
 !!    A tool to help solve an eigenvalue equation A X_n = F X_n
 !!    for symmetric A using the Davidson algorithm. It is tailored to
 !!    be usable also in cases where A cannot be stored, but where the 
-!!    transformation X -> A X is implemented. A typical Davidson loop
-!!    will use this tool as follows:
-!!
-!!       To-write.
+!!    transformation X -> A X is implemented. 
 !!
 !
    use kinds
@@ -51,7 +48,6 @@ module linear_davidson_tool_class
 !
 !     Prepare and Cleanup
 !
-      procedure :: prepare                      => prepare_linear_davidson_tool 
       procedure :: cleanup                      => cleanup_linear_davidson_tool 
 !
 !     Linear Davidson specific routines
@@ -64,17 +60,25 @@ module linear_davidson_tool_class
 !
    end type linear_davidson_tool
 !
+!
+   interface linear_davidson_tool
+!
+      procedure :: new_linear_davidson_tool
+!
+   end interface linear_davidson_tool
+!
+!
 contains
 !
 !
-   subroutine prepare_linear_davidson_tool(davidson, name, n_parameters, residual_threshold, F)
+   function new_linear_davidson_tool(name, n_parameters, residual_threshold, F) result(davidson)
 !!
-!!    Initialize 
+!!    New linear Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
 !
-      class(linear_davidson_tool) :: davidson 
+      type(linear_davidson_tool) :: davidson 
 !
       character(len=*), intent(in) :: name
 !
@@ -100,8 +104,8 @@ contains
 !
 !     For safety, delete old files if they are on disk
 !
-       call disk%delete(davidson%trials)
-       call disk%delete(davidson%transforms)
+      call disk%delete(davidson%trials)
+      call disk%delete(davidson%transforms)
 !
       davidson%do_precondition   = .false.         ! Switches to true if 'set_preconditioner' is called
 !
@@ -110,7 +114,7 @@ contains
 !
       davidson%current_n_trials = 0  
 !
-   end subroutine prepare_linear_davidson_tool
+   end function new_linear_davidson_tool
 !
 !
    subroutine construct_reduced_gradient_linear_davidson_tool(davidson)

@@ -35,30 +35,37 @@ module hf_engine_class
 !
       procedure :: ignite                    => ignite_hf_engine
 !
-      procedure, private :: prepare          => prepare_hf_engine
       procedure, private :: run              => run_hf_engine
 !
       procedure, private :: read_settings    => read_settings_hf_engine
 !
    end type hf_engine 
 !
+!
+   interface hf_engine
+!
+      procedure :: new_hf_engine 
+!
+   end interface hf_engine
+!
+!
 contains
 !
 !
-   subroutine prepare_hf_engine(engine)
+   function new_hf_engine() result(engine)
 !!
-!!    Prepare 
+!!    New HF engine 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
 !
-      class(hf_engine) :: engine
+      type(hf_engine) :: engine
 !
       engine%algorithm = 'scf-diis'
 !
       call engine%read_settings()
 !
-   end subroutine prepare_hf_engine
+   end function new_hf_engine
 !
 !
    subroutine run_hf_engine(engine, wf)
@@ -127,7 +134,6 @@ contains
       class(hf_engine) :: engine 
       class(hf)        :: wf 
 !
-      call engine%prepare()
       call engine%run(wf)
 !
    end subroutine ignite_hf_engine

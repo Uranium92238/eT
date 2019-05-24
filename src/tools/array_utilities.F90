@@ -74,7 +74,7 @@ contains
 !
       integer, intent(in) :: n 
 !
-      real(dp), dimension(n) :: X 
+      real(dp), dimension(n), intent(out) :: X 
 !
       integer :: I 
 !

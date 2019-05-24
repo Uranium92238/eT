@@ -73,9 +73,8 @@ module diis_tool_class
 !
    contains
 !
-      procedure :: init     => init_diis_tool     ! Called to set up a DIIS solver
-      procedure :: update   => update_diis_tool   ! Called to perform a DIIS step
-      procedure :: finalize => finalize_diis_tool
+      procedure :: update     => update_diis_tool   ! Called to perform a DIIS step
+      procedure :: cleanup    => cleanup_diis_tool
 !
       procedure :: get_current_dim => get_current_dim_diis_tool
 !
@@ -91,45 +90,22 @@ module diis_tool_class
    end type diis_tool
 !
 !
+   interface diis_tool 
+!
+      procedure :: new_diis_tool
+!
+   end interface diis_tool 
+!
+!
 contains
 !
 !
-   subroutine finalize_diis_tool(solver)
+   function new_diis_tool(name, n_parameters, n_equations, diis_dimension, accumulate, erase_history) result(solver)
 !!
-!!    Finalize DIIS
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, July 2018
-!!
-      implicit none
-!
-      class(diis_tool) :: solver
-!
-      integer :: i
-!
-      do i = 1, solver%diis_dimension
-!
-         call disk%open_file(solver%x_dx(i), 'readwrite')
-         call disk%close_file(solver%x_dx(i), 'delete')
-!
-         call disk%open_file(solver%dx(i), 'readwrite')
-         call disk%close_file(solver%dx(i), 'delete')
-!
-      enddo
-!
-      call disk%open_file(solver%diis_matrix, 'readwrite')
-      call disk%close_file(solver%diis_matrix, 'delete')
-!
-      solver%iteration = 1
-      solver%diis_dimension = 8
-
-   end subroutine finalize_diis_tool
-!
-!
-   subroutine init_diis_tool(solver, name, n_parameters, n_equations, diis_dimension, accumulate, erase_history)
-!!
-!!    Init DIIS
+!!    New DIIS tool
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
 !!
-      class(diis_tool) :: solver
+      type(diis_tool) :: solver
 !
       character(len=*), intent(in) :: name
 !
@@ -184,12 +160,42 @@ contains
 !
       call solver%diis_matrix%init(trim(solver%name) // '_diis_matrix', 'sequential', 'unformatted')
 !
-   end subroutine init_diis_tool
+   end function new_diis_tool
+!
+!
+   subroutine cleanup_diis_tool(solver)
+!!
+!!    Cleanup
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, July 2018
+!!
+      implicit none
+!
+      class(diis_tool) :: solver
+!
+      integer :: i
+!
+      do i = 1, solver%diis_dimension
+!
+         call disk%open_file(solver%x_dx(i), 'readwrite')
+         call disk%close_file(solver%x_dx(i), 'delete')
+!
+         call disk%open_file(solver%dx(i), 'readwrite')
+         call disk%close_file(solver%dx(i), 'delete')
+!
+      enddo
+!
+      call disk%open_file(solver%diis_matrix, 'readwrite')
+      call disk%close_file(solver%diis_matrix, 'delete')
+!
+      solver%iteration = 1
+      solver%diis_dimension = 8
+
+   end subroutine cleanup_diis_tool
 !
 !
     subroutine update_diis_tool(solver, dx, x_dx)
 !!
-!!    Update (DIIS_tool)
+!!    Update 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
 !!
 !!    Based on the CCSD specific routine written by Sarai D. Folkestad

@@ -41,8 +41,6 @@ module cc2_class
 !
    contains
 !
-      procedure :: prepare                                     => prepare_cc2
-!
       procedure :: construct_u                                 => construct_u_cc2
 !
       procedure :: construct_omega                             => construct_omega_cc2
@@ -52,8 +50,6 @@ module cc2_class
       procedure :: omega_cc2_c1                                => omega_cc2_c1_cc2
 !
       procedure :: calculate_energy                            => calculate_energy_cc2
-!
-      procedure :: prepare_for_jacobian                        => prepare_for_jacobian_cc2
 !
       procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_cc2
       procedure :: jacobian_cc2_transformation                 => jacobian_cc2_transformation_cc2
@@ -135,17 +131,24 @@ module cc2_class
    end interface 
 !
 !
+   interface cc2
+!
+      procedure :: new_cc2 
+!
+   end interface cc2
+!
+!
 contains
 !
 !
-   subroutine prepare_cc2(wf, system)
+   function new_cc2(system) result(wf)
 !!
-!!    Prepare
+!!    New CC2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(cc2) :: wf
+      type(cc2) :: wf
 !
       class(molecular_system), target, intent(in) :: system 
 !
@@ -186,7 +189,7 @@ contains
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
-   end subroutine prepare_cc2
+   end function new_cc2
 !
 !
    subroutine calculate_energy_cc2(wf)

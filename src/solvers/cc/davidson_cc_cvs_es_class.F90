@@ -55,16 +55,20 @@ module davidson_cvs_cc_es_class
 !
 contains
 !
-   subroutine prepare_davidson_cvs_cc_es(solver, transformation)
+   subroutine prepare_davidson_cvs_cc_es(solver, transformation, wf)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(davidson_cvs_cc_es) :: solver
+      class(davidson_cvs_cc_es) :: solver    
+      class(ccs), intent(in) :: wf
 !
       character(len=*), intent(in) :: transformation
+!
+      solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' core excited state')
+      call solver%timer%turn_on()
 !
       solver%tag = 'Davidson coupled cluster core excited state solver'
       solver%description1 = 'A Davidson CVS solver that calculates core excitation energies and the &
