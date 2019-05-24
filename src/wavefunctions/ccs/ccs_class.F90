@@ -29,6 +29,7 @@ module ccs_class
 !
    use mo_integral_tool_class
 !
+   use sequential_file_class, only : sequential_file
    use reordering
    use string_utilities
    use array_utilities
@@ -70,6 +71,7 @@ module ccs_class
 !     Preparation and cleanup routines
 !
       procedure :: prepare                                     => prepare_ccs
+      procedure :: read_hf                                     => read_hf_ccs
       procedure :: cleanup                                     => cleanup_ccs
 !
       procedure :: initialize_files                            => initialize_files_ccs
@@ -245,23 +247,10 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
-      type(file) :: hf_restart_file 
-!
       wf%name_ = 'ccs'
       wf%system => system
 !
-      call hf_restart_file%init('hf_restart_file', 'sequential', 'unformatted')
-!
-      call disk%open_file(hf_restart_file, 'read', 'rewind')
-!
-      read(hf_restart_file%unit) wf%n_ao 
-      read(hf_restart_file%unit) wf%n_mo 
-      read(hf_restart_file%unit) 
-      read(hf_restart_file%unit) wf%n_o  
-      read(hf_restart_file%unit) wf%n_v  
-      read(hf_restart_file%unit) wf%hf_energy  
-!
-      call disk%close_file(hf_restart_file)
+      call wf%read_hf()
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
@@ -281,6 +270,33 @@ contains
       call wf%initialize_fock_ab()
 !
    end subroutine prepare_ccs
+!
+!
+   subroutine read_hf_ccs(wf)
+!!
+!!    Read HF file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Short routine to read the HF information from disk
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      type(sequential_file) :: hf_restart_file 
+!
+      hf_restart_file = sequential_file('hf_restart_file')
+      call hf_restart_file%open_file('read', 'rewind')
+!
+      call hf_restart_file%reader(wf%n_ao)     
+      call hf_restart_file%reader(wf%n_mo)     
+      call hf_restart_file%skip()     
+      call hf_restart_file%reader(wf%n_o)     
+      call hf_restart_file%reader(wf%n_v)     
+      call hf_restart_file%reader(wf%hf_energy)     
+!
+      call hf_restart_file%close_file()
+!
+   end subroutine read_hf_ccs
 !
 !
    subroutine cleanup_ccs(wf)

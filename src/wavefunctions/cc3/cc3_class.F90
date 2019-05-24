@@ -24,6 +24,7 @@ module cc3_class
 !!    Written by Rolf H. Myhre and Alexander Paul, 2018-2019
 !!
 !
+   use kinds
    use ccsd_class
    use direct_file_class, only : direct_file
    use sequential_file_class, only : sequential_file
@@ -153,23 +154,11 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
-      type(sequential_file) :: hf_restart_file 
-!
       wf%name_ = 'cc3'
 !
       wf%system => system
 !
-      hf_restart_file = sequential_file('hf_restart_file')
-      call hf_restart_file%open_file('read', 'rewind')
-!
-      read(hf_restart_file%unit) wf%n_ao 
-      read(hf_restart_file%unit) wf%n_mo 
-      call hf_restart_file%skip()     
-      read(hf_restart_file%unit) wf%n_o  
-      read(hf_restart_file%unit) wf%n_v  
-      read(hf_restart_file%unit) wf%hf_energy  
-!
-      call hf_restart_file%close_file()
+      call wf%read_hf()
 !
       wf%n_t1 = (wf%n_o)*(wf%n_v)
       wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
