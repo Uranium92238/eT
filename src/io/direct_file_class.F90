@@ -224,7 +224,7 @@ contains
 !!
       implicit none
 !
-      class(direct_file) :: the_file
+      class(direct_file), intent(in) :: the_file
 !
       real(dp), intent(in) :: scalar
       integer, intent(in)  :: record
@@ -249,7 +249,7 @@ contains
 !!
       implicit none
 !
-      class(direct_file) :: the_file
+      class(direct_file), intent(in) :: the_file
 !
       real(dp), dimension(the_file%record_dim), intent(in) :: array
       integer, intent(in) :: record
@@ -273,11 +273,9 @@ contains
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
-!
-      class(direct_file) :: the_file
-!
-      real(dp), dimension(:,:), intent(in) :: array
-      integer, intent(in) :: record
+      class(direct_file), intent(in)         :: the_file
+      real(dp), dimension(:,:), intent(in)   :: array
+      integer, intent(in)                    :: record
 !
       call the_file%writer_dp_1_direct_file(array, record)
 !
@@ -290,11 +288,9 @@ contains
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
-!
-      class(direct_file) :: the_file
-!
+      class(direct_file), intent(in)         :: the_file
       real(dp), dimension(:,:,:), intent(in) :: array
-      integer, intent(in) :: record
+      integer, intent(in)                    :: record
 !
       call the_file%writer_dp_1_direct_file(array, record)
 !
@@ -307,11 +303,9 @@ contains
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
-!
-      class(direct_file) :: the_file
-!
-      real(dp), dimension(:,:,:,:), intent(in) :: array
-      integer, intent(in) :: record
+      class(direct_file), intent(in)            :: the_file
+      real(dp), dimension(:,:,:,:), intent(in)  :: array
+      integer, intent(in)                       :: record
 !
       call the_file%writer_dp_1_direct_file(array, record)
 !
@@ -325,7 +319,7 @@ contains
 !!
       implicit none
 !
-      class(direct_file) :: the_file
+      class(direct_file), intent(in) :: the_file
 !
       integer, intent(in) :: scalar
       integer, intent(in) :: record
@@ -350,7 +344,7 @@ contains
 !!
       implicit none
 !
-      class(direct_file) :: the_file
+      class(direct_file), intent(in) :: the_file
 !
       integer, dimension(the_file%record_dim), intent(in) :: array
       integer, intent(in) :: record
@@ -374,11 +368,9 @@ contains
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
-!
-      class(direct_file) :: the_file
-!
+      class(direct_file), intent(in)      :: the_file
       integer, dimension(:,:), intent(in) :: array
-      integer, intent(in) :: record
+      integer, intent(in)                 :: record
 !
       call the_file%writer_i_1_direct_file(array, record)
 !
@@ -391,11 +383,9 @@ contains
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
-!
-      class(direct_file) :: the_file
-!
-      integer, dimension(:,:,:), intent(in) :: array
-      integer, intent(in) :: record
+      class(direct_file), intent(in)         :: the_file
+      integer, dimension(:,:,:), intent(in)  :: array
+      integer, intent(in)                    :: record
 !
       call the_file%writer_i_1_direct_file(array, record)
 !
@@ -408,11 +398,9 @@ contains
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
-!
-      class(direct_file) :: the_file
-!
-      integer, dimension(:,:,:,:), intent(in) :: array
-      integer, intent(in) :: record
+      class(direct_file), intent(in)            :: the_file
+      integer, dimension(:,:,:,:), intent(in)   :: array
+      integer, intent(in)                       :: record
 !
       call the_file%writer_i_1_direct_file(array, record)
 !
@@ -426,7 +414,7 @@ contains
 !!
       implicit none
 !
-      class(direct_file) :: the_file
+      class(direct_file), intent(in) :: the_file
 !
       real(dp), intent(out)   :: scalar
       integer, intent(in)     :: record
@@ -451,7 +439,7 @@ contains
 !!
       implicit none
 !
-      class(direct_file) :: the_file
+      class(direct_file), intent(in) :: the_file
 !
       real(dp), dimension(the_file%record_dim), intent(out) :: array
       integer, intent(in) :: record
@@ -475,11 +463,9 @@ contains
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
-!
-      class(direct_file) :: the_file
-!
-      real(dp), dimension(:,:), intent(out) :: array
-      integer, intent(in) :: record
+      class(direct_file), intent(in)         :: the_file
+      real(dp), dimension(:,:), intent(out)  :: array
+      integer, intent(in)                    :: record
 !
       call the_file%reader_dp_1_direct_file(array,record)
 !
@@ -492,11 +478,9 @@ contains
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
-!
-      class(direct_file) :: the_file
-!
-      real(dp), dimension(:,:,:), intent(out) :: array
-      integer, intent(in) :: record
+      class(direct_file), intent(in)            :: the_file
+      real(dp), dimension(:,:,:), intent(out)   :: array
+      integer, intent(in)                       :: record
 !
       call the_file%reader_dp_1_direct_file(array,record)
 !
@@ -509,11 +493,9 @@ contains
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
-!
-      class(direct_file) :: the_file
-!
+      class(direct_file), intent(in)            :: the_file
       real(dp), dimension(:,:,:,:), intent(out) :: array
-      integer, intent(in) :: record
+      integer, intent(in)                       :: record
 !
       call the_file%reader_dp_1_direct_file(array,record)
 !
@@ -527,7 +509,7 @@ contains
 !!
       implicit none
 !
-      class(direct_file) :: the_file
+      class(direct_file), intent(in) :: the_file
 !
       integer, intent(out) :: scalar
       integer, intent(in)  :: record
@@ -552,7 +534,7 @@ contains
 !!
       implicit none
 !
-      class(direct_file) :: the_file
+      class(direct_file), intent(in) :: the_file
 !
       integer, dimension(the_file%record_dim), intent(out) :: array
       integer, intent(in) :: record
@@ -576,11 +558,9 @@ contains
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
-!
-      class(direct_file) :: the_file
-!
-      integer, dimension(:,:), intent(out) :: array
-      integer, intent(in) :: record
+      class(direct_file), intent(in)         :: the_file
+      integer, dimension(:,:), intent(out)   :: array
+      integer, intent(in)                    :: record
 !
       call the_file%reader_i_1_direct_file(array, record)
 !
@@ -593,11 +573,9 @@ contains
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
-!
-      class(direct_file) :: the_file
-!
+      class(direct_file), intent(in)         :: the_file
       integer, dimension(:,:,:), intent(out) :: array
-      integer, intent(in) :: record
+      integer, intent(in)                    :: record
 !
       call the_file%reader_i_1_direct_file(array, record)
 !
@@ -610,11 +588,9 @@ contains
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
-!
-      class(direct_file) :: the_file
-!
-      integer, dimension(:,:,:,:), intent(out) :: array
-      integer, intent(in) :: record
+      class(direct_file), intent(in)            :: the_file
+      integer, dimension(:,:,:,:), intent(out)  :: array
+      integer, intent(in)                       :: record
 !
       call the_file%reader_i_1_direct_file(array, record)
 !

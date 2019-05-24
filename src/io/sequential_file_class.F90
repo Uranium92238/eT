@@ -46,24 +46,48 @@ module sequential_file_class
 !     Writer routines
 !
       procedure, public :: writer_dp_sequential_file
-      procedure, public :: writer_dp_dim_sequential_file
+      procedure, public :: writer_dp_1_sequential_file
+      procedure, public :: writer_dp_2_sequential_file
+      procedure, public :: writer_dp_3_sequential_file
+      procedure, public :: writer_dp_4_sequential_file
       procedure, public :: writer_i_sequential_file
-      procedure, public :: writer_i_dim_sequential_file
-      generic           :: writer => writer_dp_sequential_file, &
-                                     writer_dp_dim_sequential_file, &
-                                     writer_i_sequential_file, &
-                                     writer_i_dim_sequential_file
+      procedure, public :: writer_i_1_sequential_file
+      procedure, public :: writer_i_2_sequential_file
+      procedure, public :: writer_i_3_sequential_file
+      procedure, public :: writer_i_4_sequential_file
+      generic           :: writer => writer_dp_sequential_file,   &
+                                     writer_dp_1_sequential_file, &
+                                     writer_dp_2_sequential_file, &
+                                     writer_dp_3_sequential_file, &
+                                     writer_dp_4_sequential_file, &
+                                     writer_i_sequential_file,    &
+                                     writer_i_1_sequential_file,  &
+                                     writer_i_2_sequential_file,  &
+                                     writer_i_3_sequential_file,  &
+                                     writer_i_4_sequential_file
 !
 !     Reader routines
 !
       procedure, public :: reader_dp_sequential_file
-      procedure, public :: reader_dp_dim_sequential_file
+      procedure, public :: reader_dp_1_sequential_file
+      procedure, public :: reader_dp_2_sequential_file
+      procedure, public :: reader_dp_3_sequential_file
+      procedure, public :: reader_dp_4_sequential_file
       procedure, public :: reader_i_sequential_file
-      procedure, public :: reader_i_dim_sequential_file
+      procedure, public :: reader_i_1_sequential_file
+      procedure, public :: reader_i_2_sequential_file
+      procedure, public :: reader_i_3_sequential_file
+      procedure, public :: reader_i_4_sequential_file
       generic           :: reader => reader_dp_sequential_file, &
-                                     reader_dp_dim_sequential_file, &
+                                     reader_dp_1_sequential_file, &
+                                     reader_dp_2_sequential_file, &
+                                     reader_dp_3_sequential_file, &
+                                     reader_dp_4_sequential_file, &
                                      reader_i_sequential_file, &
-                                     reader_i_dim_sequential_file
+                                     reader_i_1_sequential_file, &
+                                     reader_i_2_sequential_file, &
+                                     reader_i_3_sequential_file, &
+                                     reader_i_4_sequential_file
 !
    end type sequential_file
 !
@@ -262,7 +286,7 @@ contains
    end subroutine writer_dp_sequential_file
 !
 !
-   module subroutine writer_dp_dim_sequential_file(the_file, array, n)
+   module subroutine writer_dp_1_sequential_file(the_file, array, n)
 !!
 !!    Sequential file writer, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -284,7 +308,52 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_dp_dim_sequential_file
+   end subroutine writer_dp_1_sequential_file
+!
+!
+   module subroutine writer_dp_2_sequential_file(the_file, array, n)
+!!
+!!    Sequential file writer, real(dp) array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(sequential_file), intent(in)     :: the_file
+      integer, intent(in)                    :: n
+      real(dp), dimension(:,:), intent(in)   :: array
+!
+      call the_file%writer_dp_1_sequential_file(array, n)
+!
+   end subroutine writer_dp_2_sequential_file
+!
+!
+   module subroutine writer_dp_3_sequential_file(the_file, array, n)
+!!
+!!    Sequential file writer, real(dp) array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(sequential_file), intent(in)     :: the_file
+      integer, intent(in)                    :: n
+      real(dp), dimension(:,:,:), intent(in) :: array
+!
+      call the_file%writer_dp_1_sequential_file(array, n)
+!
+   end subroutine writer_dp_3_sequential_file
+!
+!
+   module subroutine writer_dp_4_sequential_file(the_file, array, n)
+!!
+!!    Sequential file writer, real(dp) array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(sequential_file), intent(in)        :: the_file
+      integer, intent(in)                       :: n
+      real(dp), dimension(:,:,:,:), intent(in)  :: array
+!
+      call the_file%writer_dp_1_sequential_file(array, n)
+!
+   end subroutine writer_dp_4_sequential_file
 !
 !
    module subroutine writer_i_sequential_file(the_file, scalar)
@@ -311,7 +380,7 @@ contains
    end subroutine writer_i_sequential_file
 !
 !
-   module subroutine writer_i_dim_sequential_file(the_file, array, n)
+   module subroutine writer_i_1_sequential_file(the_file, array, n)
 !!
 !!    Sequential file writer, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -333,7 +402,52 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_i_dim_sequential_file
+   end subroutine writer_i_1_sequential_file
+!
+!
+   module subroutine writer_i_2_sequential_file(the_file, array, n)
+!!
+!!    Sequential file writer, integer array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(sequential_file), intent(in)  :: the_file
+      integer, intent(in)                 :: n
+      integer, dimension(:,:), intent(in) :: array
+!
+      call the_file%writer_i_1_sequential_file(array, n)
+!
+   end subroutine writer_i_2_sequential_file
+!
+!
+   module subroutine writer_i_3_sequential_file(the_file, array, n)
+!!
+!!    Sequential file writer, integer array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(sequential_file), intent(in)     :: the_file
+      integer, intent(in)                    :: n
+      integer, dimension(:,:,:), intent(in)  :: array
+!
+      call the_file%writer_i_1_sequential_file(array, n)
+!
+   end subroutine writer_i_3_sequential_file
+!
+!
+   module subroutine writer_i_4_sequential_file(the_file, array, n)
+!!
+!!    Sequential file writer, integer array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(sequential_file), intent(in)        :: the_file
+      integer, intent(in)                       :: n
+      integer, dimension(:,:,:,:), intent(in)   :: array
+!
+      call the_file%writer_i_1_sequential_file(array, n)
+!
+   end subroutine writer_i_4_sequential_file
 !
 !
    module subroutine reader_dp_sequential_file(the_file, scalar)
@@ -360,7 +474,7 @@ contains
    end subroutine reader_dp_sequential_file
 !
 !
-   module subroutine reader_dp_dim_sequential_file(the_file, array, n)
+   module subroutine reader_dp_1_sequential_file(the_file, array, n)
 !!
 !!    Sequential file reader, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -382,7 +496,52 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_dp_dim_sequential_file
+   end subroutine reader_dp_1_sequential_file
+!
+!
+   module subroutine reader_dp_2_sequential_file(the_file, array, n)
+!!
+!!    Sequential file reader, real(dp) array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(sequential_file), intent(in)     :: the_file
+      integer, intent(in)                    :: n
+      real(dp), dimension(:,:), intent(out)  :: array
+!
+      call the_file%reader_dp_1_sequential_file(array, n)
+!
+   end subroutine reader_dp_2_sequential_file
+!
+!
+   module subroutine reader_dp_3_sequential_file(the_file, array, n)
+!!
+!!    Sequential file reader, real(dp) array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(sequential_file), intent(in)        :: the_file
+      integer, intent(in)                       :: n
+      real(dp), dimension(:,:,:), intent(out)   :: array
+!
+      call the_file%reader_dp_1_sequential_file(array, n)
+!
+   end subroutine reader_dp_3_sequential_file
+!
+!
+   module subroutine reader_dp_4_sequential_file(the_file, array, n)
+!!
+!!    Sequential file reader, real(dp) array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(sequential_file), intent(in)        :: the_file
+      integer, intent(in)                       :: n
+      real(dp), dimension(:,:,:,:), intent(out) :: array
+!
+      call the_file%reader_dp_1_sequential_file(array, n)
+!
+   end subroutine reader_dp_4_sequential_file
 !
 !
    module subroutine reader_i_sequential_file(the_file, scalar)
@@ -409,7 +568,7 @@ contains
    end subroutine reader_i_sequential_file
 !
 !
-   module subroutine reader_i_dim_sequential_file(the_file, array, n)
+   module subroutine reader_i_1_sequential_file(the_file, array, n)
 !!
 !!    Sequential file reader, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -431,7 +590,52 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_i_dim_sequential_file
+   end subroutine reader_i_1_sequential_file
+!
+!
+   module subroutine reader_i_2_sequential_file(the_file, array, n)
+!!
+!!    Sequential file reader, integer array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(sequential_file), intent(in)     :: the_file
+      integer, intent(in)                    :: n
+      integer, dimension(:,:), intent(out)   :: array
+!
+      call the_file%reader_i_1_sequential_file(array, n)
+!
+   end subroutine reader_i_2_sequential_file
+!
+!
+   module subroutine reader_i_3_sequential_file(the_file, array, n)
+!!
+!!    Sequential file reader, integer array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(sequential_file), intent(in)     :: the_file
+      integer, intent(in)                    :: n
+      integer, dimension(:,:,:), intent(out) :: array
+!
+      call the_file%reader_i_1_sequential_file(array, n)
+!
+   end subroutine reader_i_3_sequential_file
+!
+!
+   module subroutine reader_i_4_sequential_file(the_file, array, n)
+!!
+!!    Sequential file reader, integer array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(sequential_file), intent(in)        :: the_file
+      integer, intent(in)                       :: n
+      integer, dimension(:,:,:,:), intent(out)  :: array
+!
+      call the_file%reader_i_1_sequential_file(array, n)
+!
+   end subroutine reader_i_4_sequential_file
 !
 !
 end module sequential_file_class
