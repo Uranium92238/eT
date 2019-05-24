@@ -46,24 +46,48 @@ module direct_file_class
 !     Writer routines
 !
       procedure, public :: writer_dp_direct_file
-      procedure, public :: writer_dp_dim_direct_file
+      procedure, public :: writer_dp_1_direct_file
+      procedure, public :: writer_dp_2_direct_file
+      procedure, public :: writer_dp_3_direct_file
+      procedure, public :: writer_dp_4_direct_file
       procedure, public :: writer_i_direct_file
-      procedure, public :: writer_i_dim_direct_file
-      generic           :: writer => writer_dp_direct_file, &
-                                     writer_dp_dim_direct_file, &
-                                     writer_i_direct_file, &
-                                     writer_i_dim_direct_file
+      procedure, public :: writer_i_1_direct_file
+      procedure, public :: writer_i_2_direct_file
+      procedure, public :: writer_i_3_direct_file
+      procedure, public :: writer_i_4_direct_file
+      generic           :: writer => writer_dp_direct_file,    &
+                                     writer_dp_1_direct_file,  &
+                                     writer_dp_2_direct_file,  &
+                                     writer_dp_3_direct_file,  &
+                                     writer_dp_4_direct_file,  &
+                                     writer_i_direct_file,     &
+                                     writer_i_1_direct_file,   &
+                                     writer_i_2_direct_file,   &
+                                     writer_i_3_direct_file,   &
+                                     writer_i_4_direct_file
 !
 !     Reader routines
 !
       procedure, public :: reader_dp_direct_file
-      procedure, public :: reader_dp_dim_direct_file
+      procedure, public :: reader_dp_1_direct_file
+      procedure, public :: reader_dp_2_direct_file
+      procedure, public :: reader_dp_3_direct_file
+      procedure, public :: reader_dp_4_direct_file
       procedure, public :: reader_i_direct_file
-      procedure, public :: reader_i_dim_direct_file
-      generic           :: reader => reader_dp_direct_file, &
-                                     reader_dp_dim_direct_file, &
-                                     reader_i_direct_file, &
-                                     reader_i_dim_direct_file
+      procedure, public :: reader_i_1_direct_file
+      procedure, public :: reader_i_2_direct_file
+      procedure, public :: reader_i_3_direct_file
+      procedure, public :: reader_i_4_direct_file
+      generic           :: reader => reader_dp_direct_file,    &
+                                     reader_dp_1_direct_file,  &
+                                     reader_dp_2_direct_file,  &
+                                     reader_dp_3_direct_file,  &
+                                     reader_dp_4_direct_file,  &
+                                     reader_i_direct_file,     &
+                                     reader_i_1_direct_file,   &
+                                     reader_i_2_direct_file,   &
+                                     reader_i_3_direct_file,   &
+                                     reader_i_4_direct_file
 !
    end type direct_file
 !
@@ -218,7 +242,7 @@ contains
    end subroutine writer_dp_direct_file
 !
 !
-   module subroutine writer_dp_dim_direct_file(the_file, array, record)
+   module subroutine writer_dp_1_direct_file(the_file, array, record)
 !!
 !!    Direct file writer, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -240,7 +264,58 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_dp_dim_direct_file
+   end subroutine writer_dp_1_direct_file
+!
+!
+   module subroutine writer_dp_2_direct_file(the_file, array, record)
+!!
+!!    Direct file writer, real(dp) array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      real(dp), dimension(:,:), intent(in) :: array
+      integer, intent(in) :: record
+!
+      call the_file%writer_dp_1_direct_file(array, record)
+!
+   end subroutine writer_dp_2_direct_file
+!
+!
+   module subroutine writer_dp_3_direct_file(the_file, array, record)
+!!
+!!    Direct file writer, real(dp) array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      real(dp), dimension(:,:,:), intent(in) :: array
+      integer, intent(in) :: record
+!
+      call the_file%writer_dp_1_direct_file(array, record)
+!
+   end subroutine writer_dp_3_direct_file
+!
+!
+   module subroutine writer_dp_4_direct_file(the_file, array, record)
+!!
+!!    Direct file writer, real(dp) array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      real(dp), dimension(:,:,:,:), intent(in) :: array
+      integer, intent(in) :: record
+!
+      call the_file%writer_dp_1_direct_file(array, record)
+!
+   end subroutine writer_dp_4_direct_file
 !
 !
    module subroutine writer_i_direct_file(the_file, scalar, record)
@@ -268,7 +343,7 @@ contains
    end subroutine writer_i_direct_file
 !
 !
-   module subroutine writer_i_dim_direct_file(the_file, array, record)
+   module subroutine writer_i_1_direct_file(the_file, array, record)
 !!
 !!    Direct file writer, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -290,7 +365,58 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_i_dim_direct_file
+   end subroutine writer_i_1_direct_file
+!
+!
+   module subroutine writer_i_2_direct_file(the_file, array, record)
+!!
+!!    Direct file writer, integer array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      integer, dimension(:,:), intent(in) :: array
+      integer, intent(in) :: record
+!
+      call the_file%writer_i_1_direct_file(array, record)
+!
+   end subroutine writer_i_2_direct_file
+!
+!
+   module subroutine writer_i_3_direct_file(the_file, array, record)
+!!
+!!    Direct file writer, integer array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      integer, dimension(:,:,:), intent(in) :: array
+      integer, intent(in) :: record
+!
+      call the_file%writer_i_1_direct_file(array, record)
+!
+   end subroutine writer_i_3_direct_file
+!
+!
+   module subroutine writer_i_4_direct_file(the_file, array, record)
+!!
+!!    Direct file writer, integer array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      integer, dimension(:,:,:,:), intent(in) :: array
+      integer, intent(in) :: record
+!
+      call the_file%writer_i_1_direct_file(array, record)
+!
+   end subroutine writer_i_4_direct_file
 !
 !
    module subroutine reader_dp_direct_file(the_file, scalar, record)
@@ -318,7 +444,7 @@ contains
    end subroutine reader_dp_direct_file
 !
 !
-   module subroutine reader_dp_dim_direct_file(the_file, array, record)
+   module subroutine reader_dp_1_direct_file(the_file, array, record)
 !!
 !!    Direct file reader, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -340,7 +466,58 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_dp_dim_direct_file
+   end subroutine reader_dp_1_direct_file
+!
+!
+   module subroutine reader_dp_2_direct_file(the_file, array, record)
+!!
+!!    Direct file reader, real(dp) array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      real(dp), dimension(:,:), intent(out) :: array
+      integer, intent(in) :: record
+!
+      call the_file%reader_dp_1_direct_file(array,record)
+!
+   end subroutine reader_dp_2_direct_file
+!
+!
+   module subroutine reader_dp_3_direct_file(the_file, array, record)
+!!
+!!    Direct file reader, real(dp) array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      real(dp), dimension(:,:,:), intent(out) :: array
+      integer, intent(in) :: record
+!
+      call the_file%reader_dp_1_direct_file(array,record)
+!
+   end subroutine reader_dp_3_direct_file
+!
+!
+   module subroutine reader_dp_4_direct_file(the_file, array, record)
+!!
+!!    Direct file reader, real(dp) array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      real(dp), dimension(:,:,:,:), intent(out) :: array
+      integer, intent(in) :: record
+!
+      call the_file%reader_dp_1_direct_file(array,record)
+!
+   end subroutine reader_dp_4_direct_file
 !
 !
    module subroutine reader_i_direct_file(the_file, scalar, record)
@@ -368,7 +545,7 @@ contains
    end subroutine reader_i_direct_file
 !
 !
-   module subroutine reader_i_dim_direct_file(the_file, array, record)
+   module subroutine reader_i_1_direct_file(the_file, array, record)
 !!
 !!    Direct file reader, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -390,7 +567,58 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_i_dim_direct_file
+   end subroutine reader_i_1_direct_file
+!
+!
+   module subroutine reader_i_2_direct_file(the_file, array, record)
+!!
+!!    Direct file reader, integer array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      integer, dimension(:,:), intent(out) :: array
+      integer, intent(in) :: record
+!
+      call the_file%reader_i_1_direct_file(array, record)
+!
+   end subroutine reader_i_2_direct_file
+!
+!
+   module subroutine reader_i_3_direct_file(the_file, array, record)
+!!
+!!    Direct file reader, integer array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      integer, dimension(:,:,:), intent(out) :: array
+      integer, intent(in) :: record
+!
+      call the_file%reader_i_1_direct_file(array, record)
+!
+   end subroutine reader_i_3_direct_file
+!
+!
+   module subroutine reader_i_4_direct_file(the_file, array, record)
+!!
+!!    Direct file reader, integer array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file) :: the_file
+!
+      integer, dimension(:,:,:,:), intent(out) :: array
+      integer, intent(in) :: record
+!
+      call the_file%reader_i_1_direct_file(array, record)
+!
+   end subroutine reader_i_4_direct_file
 !
 !
 end module direct_file_class

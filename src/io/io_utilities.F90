@@ -236,23 +236,13 @@ contains
 !
       type(direct_file), intent(in) :: file_1
 !
-      integer :: ioerror
       integer :: z, z_abs
-!
-      character(len=100) :: iom
 !
       do z = 1, batch_z%length
 !
          z_abs = batch_z%first + z - 1
 !
-         read(file_1%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
+         call file_1%reader(g_pqrz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -278,23 +268,13 @@ contains
       type(direct_file), intent(in) :: file_1
       type(direct_file), intent(in) :: file_2
 !
-      integer :: ioerror
       integer :: z, z_abs
-!
-      character(len=100) :: iom
 !
       do z = 1, batch_z%length
 !
          z_abs = batch_z%first + z - 1
 !
-         read(file_1%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
+         call file_1%reader(g_pqrz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -304,14 +284,7 @@ contains
 !
          z_abs = batch_z%first + z - 1
 !
-         read(file_2%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_stuz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%file_name)
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
+         call file_2%reader(g_stuz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -339,23 +312,13 @@ contains
       type(direct_file), intent(in) :: file_2
       type(direct_file), intent(in) :: file_3
 !
-      integer :: ioerror
       integer :: z, z_abs
-!
-      character(len=100) :: iom
 !
       do z = 1, batch_z%length
 !
          z_abs = batch_z%first + z - 1
 !
-         read(file_1%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
+         call file_1%reader(g_pqrz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -365,14 +328,7 @@ contains
 !
          z_abs = batch_z%first + z - 1
 !
-         read(file_2%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_stuz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%file_name)
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
+         call file_2%reader(g_stuz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -382,14 +338,7 @@ contains
 !
          z_abs = batch_z%first + z - 1
 !
-         read(file_3%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_vwxz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%file_name)
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
+         call file_3%reader(g_vwxz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -414,10 +363,8 @@ contains
 !
       type(direct_file), intent(in) :: file_1
 !
-      integer :: ioerror, record
+      integer :: record
       integer :: z, z_abs, y, y_abs
-!
-      character(len=100) :: iom
 !
       do y = 1, batch_y%length
 !
@@ -429,14 +376,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_1%reader(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -517,10 +457,8 @@ contains
       type(direct_file), intent(in) :: file_1
       type(direct_file), intent(in) :: file_2
 !
-      integer :: ioerror, record
+      integer :: record
       integer :: z, z_abs, y, y_abs
-!
-      character(len=100) :: iom
 !
       do y = 1, batch_y%length
 !
@@ -532,14 +470,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_1%reader(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -556,14 +487,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_2%unit, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%file_name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_2%reader(g_rszy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -595,10 +519,8 @@ contains
       type(direct_file), intent(in) :: file_2
       type(direct_file), intent(in) :: file_3
 !
-      integer :: ioerror, record
+      integer :: record
       integer :: z, z_abs, y, y_abs
-!
-      character(len=100) :: iom
 !
       do y = 1, batch_y%length
 !
@@ -610,14 +532,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_1%reader(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -634,14 +549,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_2%unit, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%file_name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_2%reader(g_rszy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -658,14 +566,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_3%unit, rec=record, iostat=ioerror, iomsg=iom) g_tuzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%file_name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_3%reader(g_tuzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -699,10 +600,8 @@ contains
       type(direct_file), intent(in) :: file_3
       type(direct_file), intent(in) :: file_4
 !
-      integer :: ioerror, record
+      integer :: record
       integer :: z, z_abs, y, y_abs
-!
-      character(len=100) :: iom
 !
       do y = 1, batch_y%length
 !
@@ -714,14 +613,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_1%reader(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -738,14 +630,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_2%unit, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%file_name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_2%reader(g_rszy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -762,14 +647,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_3%unit, rec=record, iostat=ioerror, iomsg=iom) g_tuzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%file_name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_3%reader(g_tuzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -786,14 +664,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_4%unit, rec=record, iostat=ioerror, iomsg=iom) g_vwzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_4%file_name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_4%reader(g_vwzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -816,17 +687,11 @@ contains
 !
       type(direct_file), intent(in) :: file_1
 !
-      integer :: ioerror
       integer :: z
 !
       do z = 1, dim_z
 !
-         write(file_1%unit, rec=z, iostat=ioerror) g_pqrz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%file_name)
-            call output%error_msg('Failed to write file')
-         endif
+         call file_1%writer(g_pqrz(:,:,:,z), z)
 !
       enddo
 !
@@ -848,19 +713,13 @@ contains
 !
       type(direct_file), intent(in) :: file_1
 !
-      integer :: ioerror
       integer :: z, z_abs
 !
       do z = 1, batch_z%length
 !
          z_abs = batch_z%first + z - 1
 !
-         write(file_1%unit, rec=z_abs, iostat=ioerror) g_pqrz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%file_name)
-            call output%error_msg('Failed to write file')
-         endif
+         call file_1%writer(g_pqrz(:,:,:,z), z_abs)
 !
       enddo
 !
@@ -885,7 +744,7 @@ contains
 !
       type(direct_file), intent(in) :: file_1
 !
-      integer :: ioerror, record
+      integer :: record
       integer :: z, z_abs, y, y_abs
 !
       do y = 1, batch_y%length
@@ -898,12 +757,7 @@ contains
 !
             record = (y_abs - 1) * batch_z%index_dimension + z_abs
 !
-            write(file_1%unit, rec=record, iostat=ioerror) g_pqzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%file_name)
-               call output%error_msg('Failed to write file')
-            endif
+            call file_1%writer(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo
