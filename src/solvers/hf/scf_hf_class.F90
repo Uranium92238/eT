@@ -47,7 +47,6 @@ module scf_hf_class
 !
    contains
 !
-      procedure :: prepare       => prepare_scf_hf
       procedure :: run           => run_scf_hf
       procedure :: cleanup       => cleanup_scf_hf
 !
@@ -56,17 +55,24 @@ module scf_hf_class
    end type scf_hf
 !
 !
+   interface scf_hf
+!
+      procedure :: new_scf_hf
+!
+   end interface scf_hf 
+!
+!
 contains
 !
 !
-   subroutine prepare_scf_hf(solver, wf)
+   function new_scf_hf(wf) result(solver)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(scf_hf) :: solver
+      type(scf_hf) :: solver
 !
       class(hf) :: wf
 !
@@ -106,7 +112,7 @@ contains
       write(output%unit, '(/t3,a,a,a)') '- Setting initial AO density to ', trim(solver%ao_density_guess), ':'
       call wf%set_initial_ao_density_guess(solver%ao_density_guess)
 !
-   end subroutine prepare_scf_hf
+   end function new_scf_hf
 !
 !
    subroutine run_scf_hf(solver, wf)
