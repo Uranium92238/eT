@@ -178,7 +178,7 @@ contains
 !
       class(ccs) :: wf
 !
-      type(diis_tool) :: diis_manager
+      type(diis_tool) :: diis
 !
       logical :: converged_residual 
 !
@@ -190,7 +190,7 @@ contains
 !
       integer :: iteration
 !
-      call diis_manager%init('cc_multipliers_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
+      diis = diis_tool('cc_multipliers_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
       call mem%alloc(residual, wf%n_gs_amplitudes)
       call mem%alloc(multipliers, wf%n_gs_amplitudes)
@@ -250,7 +250,7 @@ contains
             call wf%get_multipliers(multipliers)
             multipliers = multipliers + residual 
 !
-            call diis_manager%update(residual, multipliers)
+            call diis%update(residual, multipliers)
             call wf%set_multipliers(multipliers)
 !
          endif
@@ -259,7 +259,7 @@ contains
 !
       enddo
 !
-      call diis_manager%finalize()
+      call diis%cleanup()
 !
       if (.not. converged_residual) then 
 !   

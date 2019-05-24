@@ -207,7 +207,7 @@ contains
 !
       integer :: iteration
 !
-      call diis_manager%init('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
+      diis_manager = diis_tool('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
       call mem%alloc(omega, wf%n_gs_amplitudes)
       call mem%alloc(amplitudes, wf%n_gs_amplitudes)
@@ -300,7 +300,7 @@ contains
       call mem%dealloc(amplitudes, wf%n_gs_amplitudes)
       call mem%dealloc(epsilon, wf%n_gs_amplitudes)
 !
-      call diis_manager%finalize()
+      call diis_manager%cleanup()
 !
       if (.not. converged) then 
 !   
