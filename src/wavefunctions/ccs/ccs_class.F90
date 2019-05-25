@@ -1035,30 +1035,52 @@ contains
 !!    Calculate energy
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
+!!    Calculates the CCSD energy. This is only equal to the actual
+!!    energy when the ground state equations are solved, of course.
+!!
+!!       E = E_hf + sum_aibj t_i^a t_j^b L_iajb
+!!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      integer :: i = 0
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajb
 !
-      real(dp), dimension(:,:), allocatable :: h_pq
+      real(dp) :: correlation_energy 
 !
-!     Get T1-transformed h
+      integer :: a, i, b, j, ai, bj, aibj
 !
-      call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
-      call wf%construct_h(h_pq)
+      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-!     Compute energy
+      call wf%get_ovov(g_iajb)
 !
-      wf%energy = wf%system%get_nuclear_repulsion()
+      correlation_energy = zero 
 !
-      do i = 1, wf%n_o
+!$omp parallel do private(a,i,ai,bj,j,b,aibj) reduction(+:correlation_energy)
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
 !
-         wf%energy = wf%energy + h_pq(i,i) + wf%fock_ij(i,i)
+            ai = (i-1)*wf%n_v + a
 !
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v
+!
+                  bj = wf%n_v*(j - 1) + b
+!
+                  aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
+!
+                  correlation_energy = correlation_energy + (wf%t1(a,i))*(wf%t1(b,j))* &
+                                                      (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
+!
+               enddo
+            enddo
+         enddo
       enddo
+!$omp end parallel do
 !
-      call mem%dealloc(h_pq, wf%n_mo, wf%n_mo)
+      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+      wf%energy = wf%hf_energy + correlation_energy
 !
    end subroutine calculate_energy_ccs
 !

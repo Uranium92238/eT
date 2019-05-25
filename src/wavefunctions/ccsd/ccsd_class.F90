@@ -383,12 +383,14 @@ contains
 !
    subroutine calculate_energy_ccsd(wf)
 !!
-!!     Calculate energy (CCSD)
-!!     Written by Sarai D. Folkestad, Eirik F. Kjønstad,
-!!     Andreas Skeidsvoll, 2018
+!!    Calculate energy (CCSD)
+!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
+!!    Andreas Skeidsvoll, 2018
 !!
-!!     Calculates the CCSD energy. This is only equal to the actual
-!!     energy when the ground state equations are solved, of course.
+!!    Calculates the CCSD energy. This is only equal to the actual
+!!    energy when the ground state equations are solved, of course.
+!!
+!!       E = E_hf + sum_aibj (t_ij^ab + t_i^a t_j^b) L_iajb
 !!
       implicit none
 !
@@ -398,10 +400,7 @@ contains
 !
       real(dp) :: correlation_energy
 !
-      integer :: a = 0, i = 0, b = 0, j = 0, ai = 0
-      integer :: bj = 0, aibj = 0
-!
-!     Compute the correlation energy E = E + sum_aibj (t_ij^ab + t_i^a t_j^b) L_iajb
+      integer :: a, i, b, j, ai, bj, aibj
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
