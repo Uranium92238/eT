@@ -33,9 +33,9 @@ module output_file_class
 !
    contains
 !
-      procedure :: open_file              => open_file_output_file
-      procedure :: close_file             => close_file_output_file
-      procedure :: flush_file             => flush_file_output_file
+      procedure :: open_                  => open_output_file
+      procedure :: close_                 => close_output_file
+      procedure :: flush_                 => flush_output_file
 !
       procedure :: error_msg              => error_msg_output_file
       procedure :: warning_msg            => warning_msg_output_file
@@ -62,7 +62,7 @@ module output_file_class
 contains
 !
 !
-   module function new_output_file(file_name) result(the_file)
+   module function new_output_file(name_) result(the_file)
 !!
 !!    Output file constructer
 !!    Writen by Rolf H. Myhre May 2019
@@ -74,17 +74,17 @@ contains
 !
       type(output_file) :: the_file
 !
-      character(len=*), intent(in) :: file_name
+      character(len=*), intent(in) :: name_
 !
-      the_file%file_name = file_name
+      the_file%name_ = name_
 !
-      the_file%file_access = 'sequential'
-      the_file%file_format = 'formatted'
+      the_file%access_ = 'sequential'
+      the_file%format_ = 'formatted'
 !
    end function
 !
 !
-   subroutine open_file_output_file(the_file)
+   subroutine open_output_file(the_file)
 !!
 !!    Open the output file
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -96,20 +96,20 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      open(newunit=the_file%unit, file=the_file%file_name, access=the_file%file_access, &
-           action='write', status='unknown', form=the_file%file_format, iostat=io_error, iomsg=io_msg)
+      open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
+           action='write', status='unknown', form=the_file%format_, iostat=io_error, iomsg=io_msg)
 !
-      if (io_error /= 0) stop 'Error: could not open eT output file '//trim(the_file%file_name)//&
+      if (io_error /= 0) stop 'Error: could not open eT output file '//trim(the_file%name_)//&
                              &'. Error message: '//trim(io_msg)
 !
-      the_file%file_opened = .true.
+      the_file%opened = .true.
 !
-      call the_file%set_open_file_size()
+      call the_file%set_open_size()
 !
-   end subroutine open_file_output_file
+   end subroutine open_output_file
 !
 !
-   subroutine close_file_output_file(the_file)
+   subroutine close_output_file(the_file)
 !!
 !!    Close the output file
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -124,16 +124,16 @@ contains
       close(the_file%unit, iostat=io_error, iomsg=io_msg, status='keep')
 !
       if (io_error.ne. 0) then
-          stop 'Error: could not close eT output file '//trim(the_file%file_name)//&
+          stop 'Error: could not close eT output file '//trim(the_file%name_)//&
               &'error message: '//trim(io_msg)
       endif
 !
-      the_file%file_opened = .false.
+      the_file%opened = .false.
 !
-   end subroutine close_file_output_file
+   end subroutine close_output_file
 !
 !
-   subroutine flush_file_output_file(the_file)
+   subroutine flush_output_file(the_file)
 !!
 !!    Flush the output file
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -147,10 +147,10 @@ contains
 !
       flush(the_file%unit, iostat=io_error, iomsg=io_msg)
 !
-      if (io_error /= 0) stop 'Error: could not flush eT output file '//trim(the_file%file_name)//&
+      if (io_error /= 0) stop 'Error: could not flush eT output file '//trim(the_file%name_)//&
                              &'error message: '//trim(io_msg)
 !
-   end subroutine flush_file_output_file
+   end subroutine flush_output_file
 !
 !
    subroutine error_msg_output_file(out_file, error_specs, error_int)
@@ -218,7 +218,7 @@ contains
 !
       write(the_file%unit, fstring, iostat=io_error, iomsg=io_msg) string
 !
-      if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%file_name)//&
+      if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%name_)//&
                              &'error message: '//trim(io_msg)
 !
    end subroutine printf_1_output_file
@@ -242,7 +242,7 @@ contains
 !
       write(the_file%unit, fstring, iostat=io_error, iomsg=io_msg) string1, string2
 !
-      if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%file_name)//&
+      if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%name_)//&
                              &'error message: '//trim(io_msg)
 !
    end subroutine printf_2_output_file
@@ -264,7 +264,7 @@ contains
 !
       write(the_file%unit, '(t3,a)', iostat=io_error, iomsg=io_msg) string
 !
-      if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%file_name)//&
+      if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%name_)//&
                              &'error message: '//trim(io_msg)
 !
    end subroutine printd_output_file
@@ -408,7 +408,7 @@ contains
 !
       enddo
 !
-      call the_file%flush_file()
+      call the_file%flush_()
 !
    end subroutine long_string_print_output_file
 !

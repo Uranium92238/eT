@@ -173,7 +173,7 @@ contains
 !
       the_file%opened = .true.
 !
-      call the_file%set_size()
+      call the_file%set_open_size()
 !
    end subroutine open__direct_file
 !
@@ -210,7 +210,7 @@ contains
 !
       the_file%opened = .false.
 !
-      file_change = the_file%get_file_change()
+      file_change = the_file%get_change()
       call disk%update(file_change, the_file%name_)
 !
    end subroutine close__direct_file

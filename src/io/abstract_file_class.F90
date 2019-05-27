@@ -31,7 +31,7 @@ module abstract_file_class
 !
 !     Filename
 !
-      character(len=255) :: file_name = 'no_name'
+      character(len=255) :: name_ = 'no_name'
 !
 !     Unit identifier
 !
@@ -39,23 +39,23 @@ module abstract_file_class
 !
 !     File size (in bytes)
 !
-      integer, private :: open_file_size = -1
-      integer, private :: current_file_size = -1
+      integer, private :: open_size = -1
+      integer, private :: current_size = -1
 !
 !     Logical for whether the file is currently opened or not
 !
-      logical :: file_opened = .false.
+      logical :: opened = .false.
 !
-      character(len=40) :: file_access = 'unknown'
-      character(len=40) :: file_format = 'unknown'
+      character(len=40) :: access_ = 'unknown'
+      character(len=40) :: format_ = 'unknown'
 !
    contains
 !
-      procedure :: set_current_file_size  => set_current_file_size_abstract_file
-      procedure :: set_open_file_size     => set_open_file_size_abstract_file
-      procedure :: get_file_size          => get_file_size_abstract_file
-      procedure :: get_file_change        => get_file_change_abstract_file
-      procedure :: file_exists            => file_exists_abstract_file
+      procedure :: set_current_size       => set_current_size_abstract_file
+      procedure :: set_open_size          => set_open_size_abstract_file
+      procedure :: get_size               => get_size_abstract_file
+      procedure :: get_change             => get_change_abstract_file
+      procedure :: exists                 => exists_abstract_file
 !
    end type abstract_file
 !
@@ -63,7 +63,7 @@ module abstract_file_class
 contains
 !
 !
-   subroutine set_current_file_size_abstract_file(the_file)
+   subroutine set_current_size_abstract_file(the_file)
 !!
 !!    Determine current file size
 !!    Written by Rolf H. Myhre May 2019
@@ -72,12 +72,12 @@ contains
 !
       class(abstract_file) :: the_file
 !
-      the_file%current_file_size = the_file%get_file_size()
+      the_file%current_size = the_file%get_size()
 !
-   end subroutine set_current_file_size_abstract_file
+   end subroutine set_current_size_abstract_file
 !
 !
-   subroutine set_open_file_size_abstract_file(the_file)
+   subroutine set_open_size_abstract_file(the_file)
 !!
 !!    Determine current file size
 !!    Written by Rolf H. Myhre May 2019
@@ -86,12 +86,12 @@ contains
 !
       class(abstract_file) :: the_file
 !
-      the_file%open_file_size = the_file%get_file_size()
+      the_file%open_size = the_file%get_size()
 !
-   end subroutine set_open_file_size_abstract_file
+   end subroutine set_open_size_abstract_file
 !
 !
-   function get_file_size_abstract_file(the_file) result(file_size)
+   function get_size_abstract_file(the_file) result(file_size)
 !!
 !!    Return private variable file_size
 !!    Written by Rolf H. Myhre, 2018
@@ -108,14 +108,14 @@ contains
 !
 !     Inquire about the file size
 !
-      inquire(file=trim(the_file%file_name), size=file_size, &
+      inquire(file=trim(the_file%name_), size=file_size, &
               iostat=io_error, iomsg=io_msg)
 !
 !     Check whether the file size could be calculated
 !
       if (io_error .ne. 0) then
 !
-         stop 'Error: Could not determine size of file '// trim(the_file%file_name)
+         stop 'Error: Could not determine size of file '// trim(the_file%name_)
 !
       endif
 !
@@ -123,10 +123,10 @@ contains
 !
       if (file_size .eq. -1) file_size = 0
 !
-   end function get_file_size_abstract_file
+   end function get_size_abstract_file
 !
 !  
-   function get_file_change_abstract_file(the_file) result(change)
+   function get_change_abstract_file(the_file) result(change)
 !!
 !!    Return private variable file_size
 !!    Written by Rolf H. Myhre, 2018
@@ -138,13 +138,13 @@ contains
 !
       integer :: change
 !
-      call the_file%set_current_file_size()
-      change = the_file%current_file_size - the_file%open_file_size
+      call the_file%set_current_size()
+      change = the_file%current_size - the_file%open_size
 !
-   end function get_file_change_abstract_file
+   end function get_change_abstract_file
 !
 !  
-   function file_exists_abstract_file(the_file)
+   function exists_abstract_file(the_file)
 !!
 !!    File exists
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -154,11 +154,11 @@ contains
 !  
       class(abstract_file), intent(in) :: the_file
 !
-      logical :: file_exists_abstract_file
+      logical :: exists_abstract_file
 !
-      inquire(file=trim(the_file%file_name), exist=file_exists_abstract_file)
+      inquire(file=trim(the_file%name_), exist=exists_abstract_file)
 !
-   end function file_exists_abstract_file
+   end function exists_abstract_file
 !
 !  
 end module abstract_file_class

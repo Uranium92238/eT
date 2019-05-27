@@ -46,15 +46,15 @@ module file_class
 contains
 !
 !
-   subroutine init_file(the_file, file_name, file_access, file_format, record_length)
+   subroutine init_file(the_file, name_, access_, format_, record_length)
 !!
 !!    Initialize file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
 !!
 !!    Initializes a file object
 !!
-!!       - file_access ('direct' or 'sequential')
-!!       - file_format ('formatted' or unformatted)
+!!       - access_ ('direct' or 'sequential')
+!!       - format_ ('formatted' or unformatted)
 !!       - record_length, optional argument which must be provided if
 !!         the_file is direct access
 !!
@@ -64,38 +64,38 @@ contains
 !
       class(file) :: the_file
 !
-      character(len=*) :: file_name
-      character(len=*) :: file_access
-      character(len=*) :: file_format
+      character(len=*) :: name_
+      character(len=*) :: access_
+      character(len=*) :: format_
 !
       integer, optional :: record_length
 !
 !     Sanity checks
 !
-      the_file%file_name = file_name
+      the_file%name_ = name_
 !
       if (.not. present(record_length)) then
 !
-        if (file_access == 'direct') then
+        if (access_ == 'direct') then
 !
             call output%error_msg('for direct access files a record length must be specified.')
 !
          endif
 !
-      elseif (file_access .ne. 'direct' .and. file_access .ne. 'sequential') then
+      elseif (access_ .ne. 'direct' .and. access_ .ne. 'sequential') then
 !
-         call output%error_msg('illegal access type specified for file: ' // file_name // file_access)
+         call output%error_msg('illegal access type specified for file: ' // name_ // access_)
 !
-      elseif (file_format .ne. 'unformatted' .and. file_format .ne. 'formatted') then
+      elseif (format_ .ne. 'unformatted' .and. format_ .ne. 'formatted') then
 !
-         call output%error_msg('illegal format specified for file: ' // file_name)
+         call output%error_msg('illegal format specified for file: ' // name_)
 !
       endif
 !
-      the_file%file_opened = .false.
+      the_file%opened = .false.
 !
-      the_file%file_access = file_access
-      the_file%file_format = file_format
+      the_file%access_ = access_
+      the_file%format_ = format_
 !
       if (present(record_length)) then
 !
@@ -130,11 +130,11 @@ contains
 !
 !     Sanity checks
 !
-      if (.not. the_file%file_opened) then
+      if (.not. the_file%opened) then
 !
-         call output%error_msg('attempted to read unopened file:' // trim(the_file%file_name))
+         call output%error_msg('attempted to read unopened file:' // trim(the_file%name_))
 !
-      elseif (the_file%file_access == 'direct') then
+      elseif (the_file%access_ == 'direct') then
 !
          call output%warning_msg('no need to prepare to read line for a direct access file.')
          return
@@ -143,7 +143,7 @@ contains
 !
       rewind(the_file%unit)
 !
-      if (the_file%file_format == 'unformatted') then
+      if (the_file%format_ == 'unformatted') then
 !
          do i = 1, (line - 1)
 !
@@ -151,7 +151,7 @@ contains
 !
          enddo
 !
-      elseif (the_file%file_format == 'formatted') then
+      elseif (the_file%format_ == 'formatted') then
 !
          do i = 1, (line - 1)
 !

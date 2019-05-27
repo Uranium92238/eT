@@ -96,7 +96,7 @@ module input_file_class
 contains
 !
 !
-   module function new_input_file(file_name) result(the_file)
+   module function new_input_file(name_) result(the_file)
 !!
 !!    Initialize input file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
@@ -108,7 +108,7 @@ contains
 !
       type(input_file) :: the_file
 !
-      character(len=*), intent(in) :: file_name
+      character(len=*), intent(in) :: name_
 !
       integer :: k
 !
@@ -128,10 +128,10 @@ contains
 !
 !     Set input file name, access and format 
 !
-      the_file%file_name = file_name
+      the_file%name_ = name_
 !
-      the_file%file_access = 'sequential'
-      the_file%file_format = 'formatted'
+      the_file%access_ = 'sequential'
+      the_file%format_ = 'formatted'
 !
 !     Set method section 
 !
@@ -287,13 +287,13 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      open(newunit=the_file%unit, file=the_file%file_name, access=the_file%file_access, &
-           action='read', status='unknown', form=the_file%file_format, iostat=io_error, iomsg=io_msg)
+      open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
+           action='read', status='unknown', form=the_file%format_, iostat=io_error, iomsg=io_msg)
 !
-      if (io_error /= 0) stop 'Error: could not open eT input file '//trim(the_file%file_name)//&
+      if (io_error /= 0) stop 'Error: could not open eT input file '//trim(the_file%name_)//&
                              &'error message: '//trim(io_msg)
 !
-      the_file%file_opened = .true.
+      the_file%opened = .true.
 !
    end subroutine open_file_input_file
 !
@@ -312,10 +312,10 @@ contains
 !
       close(the_file%unit, iostat=io_error, iomsg=io_msg, status='keep')
 !
-      if (io_error /= 0) stop 'Error: could not close eT input file '//trim(the_file%file_name)//&
+      if (io_error /= 0) stop 'Error: could not close eT input file '//trim(the_file%name_)//&
                              &'error message: '//trim(io_msg)
 !
-      the_file%file_opened = .false.
+      the_file%opened = .false.
 !
    end subroutine close_file_input_file
 !
