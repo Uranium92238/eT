@@ -291,16 +291,16 @@ contains
       type(sequential_file) :: hf_restart_file 
 !
       hf_restart_file = sequential_file('hf_restart_file')
-      call hf_restart_file%open_file('read', 'rewind')
+      call hf_restart_file%open_('read', 'rewind')
 !
-      call hf_restart_file%reader(wf%n_ao)     
-      call hf_restart_file%reader(wf%n_mo)     
+      call hf_restart_file%read_(wf%n_ao)     
+      call hf_restart_file%read_(wf%n_mo)     
       call hf_restart_file%skip()     
-      call hf_restart_file%reader(wf%n_o)     
-      call hf_restart_file%reader(wf%n_v)     
-      call hf_restart_file%reader(wf%hf_energy)     
+      call hf_restart_file%read_(wf%n_o)     
+      call hf_restart_file%read_(wf%n_v)     
+      call hf_restart_file%read_(wf%hf_energy)     
 !
-      call hf_restart_file%close_file()
+      call hf_restart_file%close_()
 !
    end subroutine read_hf_ccs
 !
@@ -950,12 +950,12 @@ contains
 !
       if (trim(side) == 'right') then 
 !
-         n_states = wf%r1_file%get_file_size()
+         n_states = wf%r1_file%get_size()
          n_states = n_states/(dp*wf%n_t1)
 !
       elseif (trim(side) == 'left') then 
 !
-         n_states = wf%l1_file%get_file_size()
+         n_states = wf%l1_file%get_size()
          n_states = n_states/(dp*wf%n_t1)
 !
       else
