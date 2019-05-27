@@ -25,7 +25,6 @@ module section_class
 !!
 !
    use kinds    
-   use output_file_class
    use string_utilities  
 !
    type :: section

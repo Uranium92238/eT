@@ -282,10 +282,10 @@ contains
 !
       class(scf_hf) :: solver 
 !
-      call long_string_print(solver%tag,'(//t3,a)',.true.)
-      call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%warning,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
-      call long_string_print(solver%description)
+      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
+      call output%long_string_print(solver%author,'(t3,a/)',.true.)
+      call output%long_string_print(solver%warning,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call output%long_string_print(solver%description)
 !
    end subroutine print_banner_scf_hf
 !

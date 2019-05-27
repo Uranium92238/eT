@@ -29,7 +29,9 @@ module ccs_class
 !
    use mo_integral_tool_class
 !
+   use sequential_file_class, only : sequential_file
    use reordering
+   use string_utilities
    use array_utilities
    use array_analysis
    use interval_class
@@ -70,6 +72,7 @@ module ccs_class
 !
       procedure :: cleanup                                     => cleanup_ccs
 !
+      procedure :: read_hf                                     => read_hf_ccs
       procedure :: initialize_files                            => initialize_files_ccs
       procedure :: initialize_cc_files                         => initialize_cc_files_ccs
       procedure :: initialize_singles_files                    => initialize_singles_files_ccs
@@ -250,23 +253,10 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
-      type(file) :: hf_restart_file 
-!
       wf%name_ = 'ccs'
       wf%system => system
 !
-      call hf_restart_file%init('hf_restart_file', 'sequential', 'unformatted')
-!
-      call disk%open_file(hf_restart_file, 'read', 'rewind')
-!
-      read(hf_restart_file%unit) wf%n_ao 
-      read(hf_restart_file%unit) wf%n_mo 
-      read(hf_restart_file%unit) 
-      read(hf_restart_file%unit) wf%n_o  
-      read(hf_restart_file%unit) wf%n_v  
-      read(hf_restart_file%unit) wf%hf_energy  
-!
-      call disk%close_file(hf_restart_file)
+      call wf%read_hf()
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
@@ -286,6 +276,33 @@ contains
       call wf%initialize_fock_ab()
 !
    end function new_ccs
+!
+!
+   subroutine read_hf_ccs(wf)
+!!
+!!    Read HF file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Short routine to read the HF information from disk
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      type(sequential_file) :: hf_restart_file 
+!
+      hf_restart_file = sequential_file('hf_restart_file')
+      call hf_restart_file%open_('read', 'rewind')
+!
+      call hf_restart_file%read_(wf%n_ao)     
+      call hf_restart_file%read_(wf%n_mo)     
+      call hf_restart_file%skip()     
+      call hf_restart_file%read_(wf%n_o)     
+      call hf_restart_file%read_(wf%n_v)     
+      call hf_restart_file%read_(wf%hf_energy)     
+!
+      call hf_restart_file%close_()
+!
+   end subroutine read_hf_ccs
 !
 !
    subroutine cleanup_ccs(wf)
@@ -933,12 +950,12 @@ contains
 !
       if (trim(side) == 'right') then 
 !
-         inquire(file=wf%r1_file%name, size=n_states)
+         n_states = wf%r1_file%get_size()
          n_states = n_states/(dp*wf%n_t1)
 !
       elseif (trim(side) == 'left') then 
 !
-         inquire(file=wf%l1_file%name, size=n_states)
+         n_states = wf%l1_file%get_size()
          n_states = n_states/(dp*wf%n_t1)
 !
       else
