@@ -84,21 +84,11 @@ contains
 !
       type(direct_file), intent(in) :: file_1
 !
-      integer :: ioerror
       integer :: z
-!
-      character(len=100) :: iom
 !
       do z = 1, dim_z
 !
-         read(file_1%unit, rec=z, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%file_name)
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file:file')
-         endif
+         call file_1%read_(g_pqrz(:,:,:,z),z)
 !
       enddo
 !
@@ -127,7 +117,7 @@ contains
 !
          z_abs = batch_z%first + z - 1
 !
-         call file_1%reader(g_pqrz(:,:,:,z),z_abs)
+         call file_1%read_(g_pqrz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -159,7 +149,7 @@ contains
 !
          z_abs = batch_z%first + z - 1
 !
-         call file_1%reader(g_pqrz(:,:,:,z),z_abs)
+         call file_1%read_(g_pqrz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -169,7 +159,7 @@ contains
 !
          z_abs = batch_z%first + z - 1
 !
-         call file_2%reader(g_stuz(:,:,:,z),z_abs)
+         call file_2%read_(g_stuz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -203,7 +193,7 @@ contains
 !
          z_abs = batch_z%first + z - 1
 !
-         call file_1%reader(g_pqrz(:,:,:,z),z_abs)
+         call file_1%read_(g_pqrz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -213,7 +203,7 @@ contains
 !
          z_abs = batch_z%first + z - 1
 !
-         call file_2%reader(g_stuz(:,:,:,z),z_abs)
+         call file_2%read_(g_stuz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -223,7 +213,7 @@ contains
 !
          z_abs = batch_z%first + z - 1
 !
-         call file_3%reader(g_vwxz(:,:,:,z),z_abs)
+         call file_3%read_(g_vwxz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -261,7 +251,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            call file_1%reader(g_pqzy(:,:,z,y), record)
+            call file_1%read_(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -355,7 +345,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            call file_1%reader(g_pqzy(:,:,z,y), record)
+            call file_1%read_(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -372,7 +362,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            call file_2%reader(g_rszy(:,:,z,y), record)
+            call file_2%read_(g_rszy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -417,7 +407,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            call file_1%reader(g_pqzy(:,:,z,y), record)
+            call file_1%read_(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -434,7 +424,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            call file_2%reader(g_rszy(:,:,z,y), record)
+            call file_2%read_(g_rszy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -451,7 +441,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            call file_3%reader(g_tuzy(:,:,z,y), record)
+            call file_3%read_(g_tuzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -498,7 +488,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            call file_1%reader(g_pqzy(:,:,z,y), record)
+            call file_1%read_(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -515,7 +505,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            call file_2%reader(g_rszy(:,:,z,y), record)
+            call file_2%read_(g_rszy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -532,7 +522,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            call file_3%reader(g_tuzy(:,:,z,y), record)
+            call file_3%read_(g_tuzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -549,7 +539,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            call file_4%reader(g_vwzy(:,:,z,y), record)
+            call file_4%read_(g_vwzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -576,7 +566,7 @@ contains
 !
       do z = 1, dim_z
 !
-         call file_1%writer(g_pqrz(:,:,:,z), z)
+         call file_1%write_(g_pqrz(:,:,:,z), z)
 !
       enddo
 !
@@ -604,7 +594,7 @@ contains
 !
          z_abs = batch_z%first + z - 1
 !
-         call file_1%writer(g_pqrz(:,:,:,z), z_abs)
+         call file_1%write_(g_pqrz(:,:,:,z), z_abs)
 !
       enddo
 !
@@ -642,7 +632,7 @@ contains
 !
             record = (y_abs - 1) * batch_z%index_dimension + z_abs
 !
-            call file_1%writer(g_pqzy(:,:,z,y), record)
+            call file_1%write_(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo

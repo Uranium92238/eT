@@ -51,13 +51,13 @@ program eT_program
 !  Prepare input, output and timing file
 !
    output = output_file('eT.out')
-   call output%open_file()
+   call output%open_()
 !
    input = input_file('eT.inp')
-   call input%open_file()
+   call input%open_()
 !
    timing = output_file('timing.out')
-   call timing%open_file()
+   call timing%open_()
 !
    eT_timer = timings("Total time in eT")
    call eT_timer%turn_on()
@@ -85,7 +85,7 @@ program eT_program
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
    write(output%unit,'(t3,a)')       '----------------------------------------------------------------------------------'
    write(output%unit,'(t4,a/)')       'Other contributors: A. Balbi, M. Scavino'
-   call output%flush_file()   
+   call output%flush_()   
 !
    n_threads = 1
 !
@@ -130,9 +130,9 @@ program eT_program
 !
    write(output%unit, '(/t3,a)') 'eT terminated successfully!'
 !
-   call output%close_file()
-   call input%close_file()
-   call timing%close_file()
+   call output%close_()
+   call input%close_()
+   call timing%close_()
 !
 end program eT_program
 !

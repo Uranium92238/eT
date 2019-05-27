@@ -301,7 +301,7 @@ contains
 !
       call mem%batch_setup(batch_d, req_0, req_d)
 !
-      call wf%X_abid%open_file('read')
+      call wf%X_abid%open_('read')
 !
       call batch_d%determine_limits(1)
       call mem%alloc(X_abid, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
@@ -332,17 +332,17 @@ contains
       call batch_d%determine_limits(1)
       call mem%dealloc(X_abid, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
 !
-      call wf%X_abid%close_file()
+      call wf%X_abid%close_()
 !
 !     :: X_ajil term ::
 !
-      call wf%X_ajil%open_file('read')
+      call wf%X_ajil%open_('read')
 !
       call mem%alloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
       call single_record_reader(wf%n_o, wf%X_ajil, X_ajil)
 !
-      call wf%X_ajil%close_file()
+      call wf%X_ajil%close_()
 !
       call dgemm('N','N',              &
                   wf%n_v,              &
@@ -475,8 +475,8 @@ contains
       call mem%alloc(X_ai, wf%n_v, wf%n_o)
       X_ai = zero
 !
-      call wf%g_bdck_t%open_file('read')
-      call wf%g_ljck_t%open_file('read')
+      call wf%g_bdck_t%open_('read')
+      call wf%g_ljck_t%open_('read')
 !
       do i_batch = 1, batch_i%num_batches
 !
@@ -595,8 +595,8 @@ contains
 !
 !     Close files
 !
-      call wf%g_bdck_t%close_file()
-      call wf%g_ljck_t%close_file()
+      call wf%g_bdck_t%close_()
+      call wf%g_ljck_t%close_()
 !
 !     Deallocate the integral arrays
 !
@@ -636,7 +636,7 @@ contains
       req_0 = 0
       req_1 = wf%n_v**2 * wf%n_o
 !
-      call wf%L_jbkc_t%open_file('read')
+      call wf%L_jbkc_t%open_('read')
 !
       call batch_l%init(wf%n_o)
       call mem%batch_setup(batch_l, req_0, req_1)
@@ -673,7 +673,7 @@ contains
       call mem%dealloc(L_jbkc, wf%n_v, wf%n_v, wf%n_o, batch_l%length)
       call mem%dealloc(L_iald, wf%n_v, wf%n_o, wf%n_v, batch_l%length)
 !
-      call wf%L_jbkc_t%close_file()
+      call wf%L_jbkc_t%close_()
 !
       call mem%dealloc(X_ai, wf%n_v, wf%n_o)
 !
@@ -1006,14 +1006,14 @@ contains
       call mem%alloc(Y_cmjk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       Y_cmjk = zero
 !
-      call wf%g_bdck_t%open_file('read')
-      call wf%g_ljck_t%open_file('read')
-      call wf%g_dbkc_t%open_file('read')
-      call wf%g_jlkc_t%open_file('read')
-      call wf%L_jbkc_t%open_file('read')
+      call wf%g_bdck_t%open_('read')
+      call wf%g_ljck_t%open_('read')
+      call wf%g_dbkc_t%open_('read')
+      call wf%g_jlkc_t%open_('read')
+      call wf%L_jbkc_t%open_('read')
 !
       wf%Y_bcek = direct_file('Y_bcek', wf%n_v**3)
-      call wf%Y_bcek%open_file()
+      call wf%Y_bcek%open_()
 !
       do i_batch = 1, batch_i%num_batches
 !
@@ -1224,11 +1224,11 @@ contains
 !
       enddo ! batch_i
 !
-      call wf%g_bdck_t%close_file()
-      call wf%g_ljck_t%close_file()
-      call wf%g_dbkc_t%close_file()
-      call wf%g_jlkc_t%close_file()
-      call wf%L_jbkc_t%close_file()
+      call wf%g_bdck_t%close_()
+      call wf%g_ljck_t%close_()
+      call wf%g_dbkc_t%close_()
+      call wf%g_jlkc_t%close_()
+      call wf%L_jbkc_t%close_()
 !
 !     Deallocate the integral arrays
 !
@@ -1297,7 +1297,7 @@ contains
 !
       call wf%jacobian_transpose_cc3_c3_a_y_v(sigma_ai)
 !
-      call wf%Y_bcek%close_file()
+      call wf%Y_bcek%close_()
 !
    end subroutine jacobian_transpose_cc3_c3_a_cc3
 !
@@ -2147,7 +2147,7 @@ contains
 !
 !     :: Term 1: sigma_cl += sum_mjk Y_cmjk * g_mjlk ::
 !
-      call wf%g_mjlk_t%open_file('read')
+      call wf%g_mjlk_t%open_('read')
 !
       call batch_l%init(wf%n_o)
 !
@@ -2183,12 +2183,12 @@ contains
       call batch_l%determine_limits(1)
       call mem%dealloc(g_mjlk, wf%n_o, wf%n_o, wf%n_o, batch_l%length)
 !
-      call wf%g_mjlk_t%close_file()
+      call wf%g_mjlk_t%close_()
 !
 !
 !     :: Term 2: sigma_dk += - sum_cmj g_cdmj * Y_cmjk ::
 !
-      call wf%g_cdlk_t%open_file('read')
+      call wf%g_cdlk_t%open_('read')
 !
       call batch_d%init(wf%n_v)
 !
@@ -2225,7 +2225,7 @@ contains
       call batch_d%determine_limits(1)
       call mem%dealloc(g_cdmj, wf%n_v, wf%n_o, wf%n_o, batch_d%length) ! cmj#d
 !
-      call wf%g_ckld_t%close_file()
+      call wf%g_ckld_t%close_()
 !
 !
 !     :: Term 3: sigma_dk += - sum_cmj g_cjmd * Y_cmkj ::
@@ -2233,7 +2233,7 @@ contains
       call mem%alloc(Y_cmkj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       call sort_1234_to_1243(Y_cmjk, Y_cmkj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call wf%g_ckld_t%open_file('read')
+      call wf%g_ckld_t%open_('read')
 !
       call batch_d%init(wf%n_v)
 !
@@ -2270,7 +2270,7 @@ contains
       call batch_d%determine_limits(1)
       call mem%dealloc(g_cjmd, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
 !
-      call wf%g_ckld_t%close_file()
+      call wf%g_ckld_t%close_()
 !
       call mem%dealloc(Y_cmkj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
@@ -2309,7 +2309,7 @@ contains
 !
 !     :: Term 1: sigma_dk += sum_bec g_becd * Y_bcek ::
 !
-      call wf%g_becd_t%open_file('read')
+      call wf%g_becd_t%open_('read')
 !
       call batch_k%init(wf%n_o)
       call batch_d%init(wf%n_v)
@@ -2361,7 +2361,7 @@ contains
       call batch_d%determine_limits(1)
       call mem%dealloc(g_becd, wf%n_v, wf%n_v, wf%n_v, batch_d%length)
 !
-      call wf%g_becd_t%close_file()
+      call wf%g_becd_t%close_()
 !
 !
 !     :: Term 2: sigma_bl += - sum_cek Y_bcek * g_ckle ::
@@ -2376,7 +2376,7 @@ contains
       call batch_k%determine_limits(1)
       call mem%alloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
-      call wf%g_ckld_t%open_file('read')
+      call wf%g_ckld_t%open_('read')
 !
       do k_batch = 1, batch_k%num_batches
 !
@@ -2411,12 +2411,12 @@ contains
       call batch_k%determine_limits(1)
       call mem%dealloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
-      call wf%g_ckld_t%close_file()
+      call wf%g_ckld_t%close_()
 !
 !     
 !     :: Term 3: sigma_bl += - sum_cek Y_cbek * g_celk ::
 !
-      call wf%g_cdlk_t%open_file('read')
+      call wf%g_cdlk_t%open_('read')
 !
       req_0 = 0
       req_k = 2*wf%n_v**3 + 2*wf%n_o*wf%n_v**2
@@ -2462,7 +2462,7 @@ contains
       call mem%dealloc(Y_bcek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
       call mem%dealloc(Y_cbek, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
-      call wf%g_cdlk_t%close_file()
+      call wf%g_cdlk_t%close_()
 !
    end subroutine jacobian_transpose_cc3_c3_a_y_v_cc3
 !

@@ -79,7 +79,7 @@ contains
       call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_d%length)
 !
       wf%g_becd_t = direct_file('g_becd_t',wf%n_v**3)
-      call wf%g_becd_t%open_file('write')
+      call wf%g_becd_t%open_('write')
 !
       do d_batch = 1,batch_d%num_batches
 !
@@ -97,7 +97,7 @@ contains
 !
       enddo
 !
-      call wf%g_becd_t%close_file()
+      call wf%g_becd_t%close_()
 !
       call batch_d%determine_limits(1)
       call mem%dealloc(g_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_d%length)
@@ -116,7 +116,7 @@ contains
       call mem%alloc(h_pqrs, wf%n_o, wf%n_o, wf%n_o, batch_l%length)
 !
       wf%g_mjlk_t = direct_file('g_mjlk_t',wf%n_o**3)
-      call wf%g_mjlk_t%open_file('write')
+      call wf%g_mjlk_t%open_('write')
 !
       do l_batch = 1,batch_l%num_batches
 !
@@ -138,7 +138,7 @@ contains
 !
       enddo
 !
-      call wf%g_mjlk_t%close_file()
+      call wf%g_mjlk_t%close_()
 !
       call batch_l%determine_limits(1)
       call mem%dealloc(h_pqrs,wf%n_o,wf%n_o,wf%n_o,batch_l%length)
@@ -157,7 +157,7 @@ contains
       call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_d%length) 
 !
       wf%g_ckld_t = direct_file('g_ckld_t',wf%n_v*wf%n_o)
-      call wf%g_ckld_t%open_file('write')
+      call wf%g_ckld_t%open_('write')
 !
       do d_batch = 1,batch_d%num_batches
 !
@@ -174,7 +174,7 @@ contains
 !
       enddo
 !
-      call wf%g_ckld_t%close_file()
+      call wf%g_ckld_t%close_()
 !
       call batch_d%determine_limits(1)
       call mem%dealloc(g_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_d%length) 
@@ -193,7 +193,7 @@ contains
       call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
 !
       wf%g_cdlk_t = direct_file('g_cdlk_t',wf%n_v*wf%n_o)
-      call wf%g_cdlk_t%open_file('write')
+      call wf%g_cdlk_t%open_('write')
 !
 !     Going to batch over both d and k, so both are used as records, store as cl#k#d
 !
@@ -217,7 +217,7 @@ contains
 !
       enddo
 !
-      call wf%g_cdlk_t%close_file()
+      call wf%g_cdlk_t%close_()
 !
       call batch_d%determine_limits(1)
       call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
@@ -258,7 +258,7 @@ contains
       call mem%alloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
 !
       wf%g_lbkc_t = direct_file('g_lbkc_t',wf%n_o*wf%n_v**2)
-      call wf%g_lbkc_t%open_file('write')
+      call wf%g_lbkc_t%open_('write')
 !
       do k_batch = 1,batch_k%num_batches
 !
@@ -283,7 +283,7 @@ contains
       call batch_k%determine_limits(1)
       call mem%dealloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
 !
-      call wf%g_lbkc_t%close_file()
+      call wf%g_lbkc_t%close_()
 
 !
    end subroutine prep_cc3_g_lbkc_t_file_cc3
@@ -439,12 +439,12 @@ contains
       call mem%alloc(X_alij, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       X_alij = zero
 !
-      call wf%g_bdck_t%open_file('read')
-      call wf%g_ljck_t%open_file('read')
-      call wf%g_lbkc_t%open_file('read')
+      call wf%g_bdck_t%open_('read')
+      call wf%g_ljck_t%open_('read')
+      call wf%g_lbkc_t%open_('read')
 !
       wf%X_abdi = direct_file('X_abdi',wf%n_v**3)
-      call wf%X_abdi%open_file()
+      call wf%X_abdi%open_()
 !
       do i_batch = 1, batch_i%num_batches
 !
@@ -603,11 +603,11 @@ contains
 !
 !     Close files: 
 !
-      call wf%g_bdck_t%close_file()
-      call wf%g_ljck_t%close_file()
+      call wf%g_bdck_t%close_()
+      call wf%g_ljck_t%close_()
 !
 !     g_lbkc_t file only needed for the construction of the intermediates
-      call wf%g_lbkc_t%close_file('delete')
+      call wf%g_lbkc_t%close_('delete')
 !
 !     Deallocate integral arrays
 !
@@ -657,7 +657,7 @@ contains
 !
       call wf%sort_x_to_abid_and_write()
 !
-      call wf%X_abdi%close_file('delete')
+      call wf%X_abdi%close_('delete')
 !
 !     sort X_alij (ordered as alij) to ajil and write to disk 
 !
@@ -668,13 +668,13 @@ contains
       call mem%dealloc(X_alij, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
       wf%X_ajil = direct_file('X_ajil',wf%n_v*wf%n_o**2)
-      call wf%X_ajil%open_file('write')
+      call wf%X_ajil%open_('write')
 !
       call single_record_writer(wf%n_o, wf%X_ajil, X_ajil)
 !
       call mem%dealloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call wf%X_ajil%close_file()
+      call wf%X_ajil%close_()
 !
    end subroutine prep_cc3_jacobian_intermediates_cc3
 !
@@ -960,7 +960,7 @@ contains
       call mem%batch_setup(batch_i, req_0, req_i)
 !
       wf%X_abid = direct_file('X_abid',wf%n_v**2)
-      call wf%X_abid%open_file('write')
+      call wf%X_abid%open_('write')
 !
       call batch_i%determine_limits(1)
       call mem%alloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
@@ -1000,7 +1000,7 @@ contains
       call mem%dealloc(X_abid, wf%n_v, wf%n_v, batch_i%length*wf%n_v)
       call mem%dealloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
-      call wf%X_abid%close_file()
+      call wf%X_abid%close_()
 !
    end subroutine sort_x_to_abid_and_write_cc3
 !
