@@ -38,56 +38,56 @@ module sequential_file_class
 !
 !     Open and close
 !
-      procedure, public :: open_file   => open_file_sequential_file
-      procedure, public :: close_file  => close_file_sequential_file
-      procedure, public :: rewind_file => rewind_file_sequential_file
-      procedure, public :: skip        => skip_sequential_file
+      procedure, public :: open_   => open__sequential_file
+      procedure, public :: close_  => close__sequential_file
+      procedure, public :: rewind_ => rewind__sequential_file
+      procedure, public :: skip    => skip_sequential_file
 !
-!     Writer routines
+!     Write routines
 !
-      procedure, public :: writer_dp_sequential_file
-      procedure, public :: writer_dp_1_sequential_file
-      procedure, public :: writer_dp_2_sequential_file
-      procedure, public :: writer_dp_3_sequential_file
-      procedure, public :: writer_dp_4_sequential_file
-      procedure, public :: writer_i_sequential_file
-      procedure, public :: writer_i_1_sequential_file
-      procedure, public :: writer_i_2_sequential_file
-      procedure, public :: writer_i_3_sequential_file
-      procedure, public :: writer_i_4_sequential_file
-      generic           :: writer => writer_dp_sequential_file,   &
-                                     writer_dp_1_sequential_file, &
-                                     writer_dp_2_sequential_file, &
-                                     writer_dp_3_sequential_file, &
-                                     writer_dp_4_sequential_file, &
-                                     writer_i_sequential_file,    &
-                                     writer_i_1_sequential_file,  &
-                                     writer_i_2_sequential_file,  &
-                                     writer_i_3_sequential_file,  &
-                                     writer_i_4_sequential_file
+      procedure, public :: write_dp_sequential_file
+      procedure, public :: write_dp_1_sequential_file
+      procedure, public :: write_dp_2_sequential_file
+      procedure, public :: write_dp_3_sequential_file
+      procedure, public :: write_dp_4_sequential_file
+      procedure, public :: write_i_sequential_file
+      procedure, public :: write_i_1_sequential_file
+      procedure, public :: write_i_2_sequential_file
+      procedure, public :: write_i_3_sequential_file
+      procedure, public :: write_i_4_sequential_file
+      generic           :: write_ => write_dp_sequential_file,   &
+                                     write_dp_1_sequential_file, &
+                                     write_dp_2_sequential_file, &
+                                     write_dp_3_sequential_file, &
+                                     write_dp_4_sequential_file, &
+                                     write_i_sequential_file,    &
+                                     write_i_1_sequential_file,  &
+                                     write_i_2_sequential_file,  &
+                                     write_i_3_sequential_file,  &
+                                     write_i_4_sequential_file
 !
-!     Reader routines
+!     Read routines
 !
-      procedure, public :: reader_dp_sequential_file
-      procedure, public :: reader_dp_1_sequential_file
-      procedure, public :: reader_dp_2_sequential_file
-      procedure, public :: reader_dp_3_sequential_file
-      procedure, public :: reader_dp_4_sequential_file
-      procedure, public :: reader_i_sequential_file
-      procedure, public :: reader_i_1_sequential_file
-      procedure, public :: reader_i_2_sequential_file
-      procedure, public :: reader_i_3_sequential_file
-      procedure, public :: reader_i_4_sequential_file
-      generic           :: reader => reader_dp_sequential_file, &
-                                     reader_dp_1_sequential_file, &
-                                     reader_dp_2_sequential_file, &
-                                     reader_dp_3_sequential_file, &
-                                     reader_dp_4_sequential_file, &
-                                     reader_i_sequential_file, &
-                                     reader_i_1_sequential_file, &
-                                     reader_i_2_sequential_file, &
-                                     reader_i_3_sequential_file, &
-                                     reader_i_4_sequential_file
+      procedure, public :: read_dp_sequential_file
+      procedure, public :: read_dp_1_sequential_file
+      procedure, public :: read_dp_2_sequential_file
+      procedure, public :: read_dp_3_sequential_file
+      procedure, public :: read_dp_4_sequential_file
+      procedure, public :: read_i_sequential_file
+      procedure, public :: read_i_1_sequential_file
+      procedure, public :: read_i_2_sequential_file
+      procedure, public :: read_i_3_sequential_file
+      procedure, public :: read_i_4_sequential_file
+      generic           :: read_ => read_dp_sequential_file, &
+                                     read_dp_1_sequential_file, &
+                                     read_dp_2_sequential_file, &
+                                     read_dp_3_sequential_file, &
+                                     read_dp_4_sequential_file, &
+                                     read_i_sequential_file, &
+                                     read_i_1_sequential_file, &
+                                     read_i_2_sequential_file, &
+                                     read_i_3_sequential_file, &
+                                     read_i_4_sequential_file
 !
    end type sequential_file
 !
@@ -100,7 +100,7 @@ module sequential_file_class
 contains
 !
 !
-   module function new_sequential_file(file_name) result(the_file)
+   module function new_sequential_file(name_) result(the_file)
 !!
 !!    Sequential file constructer
 !!    Writen by Rolf H. Myhre, May 2019
@@ -113,17 +113,17 @@ contains
 !
       type(sequential_file) :: the_file
 !
-      character(len=*), intent(in) :: file_name
+      character(len=*), intent(in) :: name_
 !
-      the_file%file_name = file_name
+      the_file%name_ = name_
 !
-      the_file%file_access = 'sequential'
-      the_file%file_format = 'unformatted'
+      the_file%access_ = 'sequential'
+      the_file%format_ = 'unformatted'
 !
    end function
 !
 !
-   subroutine open_file_sequential_file(the_file, file_action, file_pos)
+   subroutine open__sequential_file(the_file, file_action, file_pos)
 !!
 !!    Open eT sequential file
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -151,23 +151,23 @@ contains
          pos = 'rewind'
       endif 
 !
-      open(newunit=the_file%unit, file=the_file%file_name, access=the_file%file_access, &
-           action=trim(act), status='unknown', form=the_file%file_format, position=pos, &
+      open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
+           action=trim(act), status='unknown', form=the_file%format_, position=pos, &
            iostat=io_error, iomsg=io_msg)
 !
       if (io_error .ne. 0) then 
-         call output%error_msg('Error: could not open eT sequential file '//trim(the_file%file_name)//&
+         call output%error_msg('Error: could not open eT sequential file '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-      the_file%file_opened = .true.
+      the_file%opened = .true.
 !
-      call the_file%set_open_file_size()
+      call the_file%set_open__size()
 !
-   end subroutine open_file_sequential_file
+   end subroutine open__sequential_file
 !
 !
-   subroutine close_file_sequential_file(the_file, file_status)
+   subroutine close__sequential_file(the_file, file_status)
 !!
 !!    Open the sequential file
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -193,19 +193,19 @@ contains
       close(the_file%unit, iostat=io_error, iomsg=io_msg, status=trim(stat))
 !
       if (io_error .ne. 0) then 
-         call output%error_msg('Error: could not close eT file '//trim(the_file%file_name)//&
+         call output%error_msg('Error: could not close eT file '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-      the_file%file_opened = .false.
+      the_file%opened = .false.
 !
-      file_change = the_file%get_file_change()
-      call disk%update(file_change, the_file%file_name)
+      file_change = the_file%get_change()
+      call disk%update(file_change, the_file%name_)
 !
-   end subroutine close_file_sequential_file
+   end subroutine close__sequential_file
 !
 !
-   subroutine rewind_file_sequential_file(the_file)
+   subroutine rewind__sequential_file(the_file)
 !!
 !!    Rewind the sequential file
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -220,11 +220,11 @@ contains
       rewind(the_file%unit, iostat=io_error, iomsg=io_msg)
 !
       if (io_error .ne. 0) then 
-         call output%error_msg('Error: could not rewind eT file '//trim(the_file%file_name)//&
+         call output%error_msg('Error: could not rewind eT file '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine rewind_file_sequential_file
+   end subroutine rewind__sequential_file
 !
 !
    subroutine skip_sequential_file(the_file, jump)
@@ -253,7 +253,7 @@ contains
          read(the_file%unit, iostat=io_error, iomsg=io_msg) 
 !
          if (io_error .ne. 0) then 
-            call output%error_msg('Error: could not skip eT sequential file '//trim(the_file%file_name)//&
+            call output%error_msg('Error: could not skip eT sequential file '//trim(the_file%name_)//&
                                  &'. Error message: '//trim(io_msg))
          endif
 !
@@ -262,9 +262,9 @@ contains
    end subroutine skip_sequential_file
 !
 !
-   module subroutine writer_dp_sequential_file(the_file, scalar)
+   module subroutine write_dp_sequential_file(the_file, scalar)
 !!
-!!    Sequential file writer, real(dp0 scalar
+!!    Sequential file write, real(dp0 scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -279,16 +279,16 @@ contains
       write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
 !
       if(io_error .ne. 0) then
-         call output%error_msg('Failed to write to file: '//the_file%file_name//&
+         call output%error_msg('Failed to write to file: '//the_file%name_//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_dp_sequential_file
+   end subroutine write_dp_sequential_file
 !
 !
-   module subroutine writer_dp_1_sequential_file(the_file, array, n)
+   module subroutine write_dp_1_sequential_file(the_file, array, n)
 !!
-!!    Sequential file writer, real(dp) array
+!!    Sequential file write, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -304,16 +304,16 @@ contains
       write(the_file%unit, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
-         call output%error_msg('Failed to write to file: '//the_file%file_name//&
+         call output%error_msg('Failed to write to file: '//the_file%name_//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_dp_1_sequential_file
+   end subroutine write_dp_1_sequential_file
 !
 !
-   module subroutine writer_dp_2_sequential_file(the_file, array, n)
+   module subroutine write_dp_2_sequential_file(the_file, array, n)
 !!
-!!    Sequential file writer, real(dp) array
+!!    Sequential file write, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -321,14 +321,14 @@ contains
       integer, intent(in)                    :: n
       real(dp), dimension(:,:), intent(in)   :: array
 !
-      call the_file%writer_dp_1_sequential_file(array, n)
+      call the_file%write_dp_1_sequential_file(array, n)
 !
-   end subroutine writer_dp_2_sequential_file
+   end subroutine write_dp_2_sequential_file
 !
 !
-   module subroutine writer_dp_3_sequential_file(the_file, array, n)
+   module subroutine write_dp_3_sequential_file(the_file, array, n)
 !!
-!!    Sequential file writer, real(dp) array
+!!    Sequential file write, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -336,14 +336,14 @@ contains
       integer, intent(in)                    :: n
       real(dp), dimension(:,:,:), intent(in) :: array
 !
-      call the_file%writer_dp_1_sequential_file(array, n)
+      call the_file%write_dp_1_sequential_file(array, n)
 !
-   end subroutine writer_dp_3_sequential_file
+   end subroutine write_dp_3_sequential_file
 !
 !
-   module subroutine writer_dp_4_sequential_file(the_file, array, n)
+   module subroutine write_dp_4_sequential_file(the_file, array, n)
 !!
-!!    Sequential file writer, real(dp) array
+!!    Sequential file write, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -351,14 +351,14 @@ contains
       integer, intent(in)                       :: n
       real(dp), dimension(:,:,:,:), intent(in)  :: array
 !
-      call the_file%writer_dp_1_sequential_file(array, n)
+      call the_file%write_dp_1_sequential_file(array, n)
 !
-   end subroutine writer_dp_4_sequential_file
+   end subroutine write_dp_4_sequential_file
 !
 !
-   module subroutine writer_i_sequential_file(the_file, scalar)
+   module subroutine write_i_sequential_file(the_file, scalar)
 !!
-!!    Sequential file writer, integer scalar
+!!    Sequential file write, integer scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -373,16 +373,16 @@ contains
       write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
 !
       if(io_error .ne. 0) then
-         call output%error_msg('Failed to write to file: '//the_file%file_name//&
+         call output%error_msg('Failed to write to file: '//the_file%name_//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_i_sequential_file
+   end subroutine write_i_sequential_file
 !
 !
-   module subroutine writer_i_1_sequential_file(the_file, array, n)
+   module subroutine write_i_1_sequential_file(the_file, array, n)
 !!
-!!    Sequential file writer, integer array
+!!    Sequential file write, integer array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -398,16 +398,16 @@ contains
       write(the_file%unit, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
-         call output%error_msg('Failed to write to file: '//trim(the_file%file_name)//&
+         call output%error_msg('Failed to write to file: '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine writer_i_1_sequential_file
+   end subroutine write_i_1_sequential_file
 !
 !
-   module subroutine writer_i_2_sequential_file(the_file, array, n)
+   module subroutine write_i_2_sequential_file(the_file, array, n)
 !!
-!!    Sequential file writer, integer array
+!!    Sequential file write, integer array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -415,14 +415,14 @@ contains
       integer, intent(in)                 :: n
       integer, dimension(:,:), intent(in) :: array
 !
-      call the_file%writer_i_1_sequential_file(array, n)
+      call the_file%write_i_1_sequential_file(array, n)
 !
-   end subroutine writer_i_2_sequential_file
+   end subroutine write_i_2_sequential_file
 !
 !
-   module subroutine writer_i_3_sequential_file(the_file, array, n)
+   module subroutine write_i_3_sequential_file(the_file, array, n)
 !!
-!!    Sequential file writer, integer array
+!!    Sequential file write, integer array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -430,14 +430,14 @@ contains
       integer, intent(in)                    :: n
       integer, dimension(:,:,:), intent(in)  :: array
 !
-      call the_file%writer_i_1_sequential_file(array, n)
+      call the_file%write_i_1_sequential_file(array, n)
 !
-   end subroutine writer_i_3_sequential_file
+   end subroutine write_i_3_sequential_file
 !
 !
-   module subroutine writer_i_4_sequential_file(the_file, array, n)
+   module subroutine write_i_4_sequential_file(the_file, array, n)
 !!
-!!    Sequential file writer, integer array
+!!    Sequential file write, integer array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -445,14 +445,14 @@ contains
       integer, intent(in)                       :: n
       integer, dimension(:,:,:,:), intent(in)   :: array
 !
-      call the_file%writer_i_1_sequential_file(array, n)
+      call the_file%write_i_1_sequential_file(array, n)
 !
-   end subroutine writer_i_4_sequential_file
+   end subroutine write_i_4_sequential_file
 !
 !
-   module subroutine reader_dp_sequential_file(the_file, scalar)
+   module subroutine read_dp_sequential_file(the_file, scalar)
 !!
-!!    Sequential file reader, real(dp) scalar
+!!    Sequential file read, real(dp) scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -467,16 +467,16 @@ contains
       read(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
 !
       if(io_error .ne. 0) then
-         call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
+         call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_dp_sequential_file
+   end subroutine read_dp_sequential_file
 !
 !
-   module subroutine reader_dp_1_sequential_file(the_file, array, n)
+   module subroutine read_dp_1_sequential_file(the_file, array, n)
 !!
-!!    Sequential file reader, real(dp) array
+!!    Sequential file read, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -492,16 +492,16 @@ contains
       read(the_file%unit, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
-         call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
+         call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_dp_1_sequential_file
+   end subroutine read_dp_1_sequential_file
 !
 !
-   module subroutine reader_dp_2_sequential_file(the_file, array, n)
+   module subroutine read_dp_2_sequential_file(the_file, array, n)
 !!
-!!    Sequential file reader, real(dp) array
+!!    Sequential file read, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -509,14 +509,14 @@ contains
       integer, intent(in)                    :: n
       real(dp), dimension(:,:), intent(out)  :: array
 !
-      call the_file%reader_dp_1_sequential_file(array, n)
+      call the_file%read_dp_1_sequential_file(array, n)
 !
-   end subroutine reader_dp_2_sequential_file
+   end subroutine read_dp_2_sequential_file
 !
 !
-   module subroutine reader_dp_3_sequential_file(the_file, array, n)
+   module subroutine read_dp_3_sequential_file(the_file, array, n)
 !!
-!!    Sequential file reader, real(dp) array
+!!    Sequential file read, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -524,14 +524,14 @@ contains
       integer, intent(in)                       :: n
       real(dp), dimension(:,:,:), intent(out)   :: array
 !
-      call the_file%reader_dp_1_sequential_file(array, n)
+      call the_file%read_dp_1_sequential_file(array, n)
 !
-   end subroutine reader_dp_3_sequential_file
+   end subroutine read_dp_3_sequential_file
 !
 !
-   module subroutine reader_dp_4_sequential_file(the_file, array, n)
+   module subroutine read_dp_4_sequential_file(the_file, array, n)
 !!
-!!    Sequential file reader, real(dp) array
+!!    Sequential file read, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -539,14 +539,14 @@ contains
       integer, intent(in)                       :: n
       real(dp), dimension(:,:,:,:), intent(out) :: array
 !
-      call the_file%reader_dp_1_sequential_file(array, n)
+      call the_file%read_dp_1_sequential_file(array, n)
 !
-   end subroutine reader_dp_4_sequential_file
+   end subroutine read_dp_4_sequential_file
 !
 !
-   module subroutine reader_i_sequential_file(the_file, scalar)
+   module subroutine read_i_sequential_file(the_file, scalar)
 !!
-!!    Sequential file reader, integer scalar
+!!    Sequential file read, integer scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -561,16 +561,16 @@ contains
       read(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
 !
       if(io_error .ne. 0) then
-         call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
+         call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_i_sequential_file
+   end subroutine read_i_sequential_file
 !
 !
-   module subroutine reader_i_1_sequential_file(the_file, array, n)
+   module subroutine read_i_1_sequential_file(the_file, array, n)
 !!
-!!    Sequential file reader, integer array
+!!    Sequential file read, integer array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -586,16 +586,16 @@ contains
       read(the_file%unit, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
-         call output%error_msg('Failed to read from file: '//trim(the_file%file_name)//&
+         call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine reader_i_1_sequential_file
+   end subroutine read_i_1_sequential_file
 !
 !
-   module subroutine reader_i_2_sequential_file(the_file, array, n)
+   module subroutine read_i_2_sequential_file(the_file, array, n)
 !!
-!!    Sequential file reader, integer array
+!!    Sequential file read, integer array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -603,14 +603,14 @@ contains
       integer, intent(in)                    :: n
       integer, dimension(:,:), intent(out)   :: array
 !
-      call the_file%reader_i_1_sequential_file(array, n)
+      call the_file%read_i_1_sequential_file(array, n)
 !
-   end subroutine reader_i_2_sequential_file
+   end subroutine read_i_2_sequential_file
 !
 !
-   module subroutine reader_i_3_sequential_file(the_file, array, n)
+   module subroutine read_i_3_sequential_file(the_file, array, n)
 !!
-!!    Sequential file reader, integer array
+!!    Sequential file read, integer array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -618,14 +618,14 @@ contains
       integer, intent(in)                    :: n
       integer, dimension(:,:,:), intent(out) :: array
 !
-      call the_file%reader_i_1_sequential_file(array, n)
+      call the_file%read_i_1_sequential_file(array, n)
 !
-   end subroutine reader_i_3_sequential_file
+   end subroutine read_i_3_sequential_file
 !
 !
-   module subroutine reader_i_4_sequential_file(the_file, array, n)
+   module subroutine read_i_4_sequential_file(the_file, array, n)
 !!
-!!    Sequential file reader, integer array
+!!    Sequential file read, integer array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -633,9 +633,9 @@ contains
       integer, intent(in)                       :: n
       integer, dimension(:,:,:,:), intent(out)  :: array
 !
-      call the_file%reader_i_1_sequential_file(array, n)
+      call the_file%read_i_1_sequential_file(array, n)
 !
-   end subroutine reader_i_4_sequential_file
+   end subroutine read_i_4_sequential_file
 !
 !
 end module sequential_file_class

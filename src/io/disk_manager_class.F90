@@ -109,7 +109,7 @@ contains
    end function check_available_disk_manager
 !
 !
-   subroutine update_disk_manager(disk, disk_used, file_name)
+   subroutine update_disk_manager(disk, disk_used, name_)
 !!
 !!    Update disk manager
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -119,7 +119,7 @@ contains
 !
       class(disk_manager), intent(inout)  :: disk
       integer, intent(in)  :: disk_used
-      character(len=*), intent(in) :: file_name
+      character(len=*), intent(in) :: name_
 !
       logical  :: room
 !
@@ -128,7 +128,7 @@ contains
       if (room) then
          disk%available = disk%available - disk_used
       else
-         call output%error_msg('File '//trim(file_name)//' has used too much disk space')
+         call output%error_msg('File '//trim(name_)//' has used too much disk space')
       endif
 !
    end subroutine update_disk_manager
@@ -144,7 +144,7 @@ contains
 !!    The routine takes the following arguments:
 !!
 !!       - the_file (an object of type "file"). It is assumed that a file name
-!!         has been set: i.e., the_file%file_name = 'filename'.
+!!         has been set: i.e., the_file%name_ = 'filename'.
 !!       - permissions ('read', 'write', 'readwrite')
 !!       - pos ('rewind', 'append'). Optional argument specified for overwriting or appending
 !!         sequential file. Default is writing to current position where ever that might be.
@@ -161,22 +161,22 @@ contains
 !     Sanity checks
 !
       if ( present(pos)) then
-         if (the_file%file_access  == 'direct') then
+         if (the_file%access_  == 'direct') then
 !
             call output%warning_msg('position specifier is disregarded for direct access file.')
 !
          endif
-      elseif (the_file%file_access .ne. 'direct' .and. the_file%file_access .ne. 'sequential' ) then
+      elseif (the_file%access_ .ne. 'direct' .and. the_file%access_ .ne. 'sequential' ) then
 !
-         call output%error_msg('illegal access type for file: ' // trim(the_file%file_name) //',' // trim(the_file%file_access))
+         call output%error_msg('illegal access type for file: ' // trim(the_file%name_) //',' // trim(the_file%access_))
 !
       endif
 !
-      if (the_file%file_access  == 'direct') then
+      if (the_file%access_  == 'direct') then
 !
          call disk%open_file_direct(the_file, permissions)
 !
-      elseif (the_file%file_access  == 'sequential') then
+      elseif (the_file%access_  == 'sequential') then
 !
          call disk%open_file_sequential(the_file, permissions, pos)
 !
@@ -195,7 +195,7 @@ contains
 !!    The routine takes the following arguments:
 !!
 !!       - the_file (an object of type "file"). It is assumed that a file name
-!!         has been set: i.e., the_file%file_name = 'filename'.
+!!         has been set: i.e., the_file%name_ = 'filename'.
 !!       - permissions ('read', 'write', 'readwrite')
 !!       - position ('rewind', 'append'). Optional argument specified for overwriting or appending.
 !!                                        Default is writing to current position whatever that might be.
@@ -213,15 +213,15 @@ contains
 !
 !     Sanity checks
 !
-      if (the_file%file_name == 'no_name') then
+      if (the_file%name_ == 'no_name') then
 !
          call output%error_msg('to open a file, you must set the name of the file.')
 !
-      elseif (the_file%file_format == 'unknown') then
+      elseif (the_file%format_ == 'unknown') then
 !
          call output%error_msg('to open a file, you must set the format of the file.')
 !
-      elseif (the_file%file_access == 'direct') then
+      elseif (the_file%access_ == 'direct') then
 
 !
          call output%error_msg('tried to open sequential access file as a direct access file.')
@@ -234,15 +234,15 @@ contains
 !
          io_error = -1
 !
-         open(newunit=the_file%unit, file=the_file%file_name, access='sequential', &
-              action=permissions, status='unknown', form=the_file%file_format, position=pos, iostat=io_error)
+         open(newunit=the_file%unit, file=the_file%name_, access='sequential', &
+              action=permissions, status='unknown', form=the_file%format_, position=pos, iostat=io_error)
 !
       else
 !
          io_error = -1
 !
-         open(newunit=the_file%unit, file=the_file%file_name, access='sequential', &
-              action=permissions, status='unknown', form=the_file%file_format, iostat=io_error)
+         open(newunit=the_file%unit, file=the_file%name_, access='sequential', &
+              action=permissions, status='unknown', form=the_file%format_, iostat=io_error)
 !
       endif
 !
@@ -250,15 +250,15 @@ contains
 !
       if (io_error .ne. 0) then
 !
-         call output%error_msg('could not open file: ' //  trim(the_file%file_name))
+         call output%error_msg('could not open file: ' //  trim(the_file%name_))
 !
       endif
 !
 !     Tell the file that it is now open, and ask it to calculate its own size
 !
-      the_file%file_opened = .true.
+      the_file%opened = .true.
 !
-      call the_file%set_current_file_size()
+      call the_file%set_current_size()
 !
 !     If the intent is 'write' or 'readwrite' and the disk is entirely filled
 !     (according to the specified available disk space), the calculation will stop:
@@ -283,7 +283,7 @@ contains
 !!    The routine takes the following arguments:
 !!
 !!       - the_file (an object of type "file"). It is assumed that a file name
-!!         has been set: i.e., the_file%file_name = 'filename'.
+!!         has been set: i.e., the_file%name_ = 'filename'.
 !!       - permissions ('read', 'write', 'readwrite')
 !!
       implicit none
@@ -298,15 +298,15 @@ contains
 !
 !     Sanity checks
 !
-      if (the_file%file_name == 'no_name') then
+      if (the_file%name_ == 'no_name') then
 !
          call output%error_msg('to open a file, you must set the name of the file.')
 !
-      elseif (the_file%file_format == 'unknown') then
+      elseif (the_file%format_ == 'unknown') then
 !
          call output%error_msg('to open a file, you must set the format of the file.')
 !
-      elseif (the_file%file_access == 'sequential') then
+      elseif (the_file%access_ == 'sequential') then
 !
          call output%error_msg('tried to open direct access file as a sequential access file.')
 !
@@ -320,23 +320,23 @@ contains
 !
       io_error = -1
 !
-      open(newunit=the_file%unit, file=the_file%file_name, access='direct', &
-           action=permissions, status='unknown', form=the_file%file_format, recl=the_file%record_length, iostat=io_error)
+      open(newunit=the_file%unit, file=the_file%name_, access='direct', &
+           action=permissions, status='unknown', form=the_file%format_, recl=the_file%record_length, iostat=io_error)
 !
 !
 !     Check whether file open was successful
 !
       if (io_error .ne. 0) then
 !
-         call output%error_msg('could not open file: ' // trim(the_file%file_name))
+         call output%error_msg('could not open file: ' // trim(the_file%name_))
 !
       endif
 !
 !     Tell the file that it is now open, and ask it to calculate its own size
 !
-      the_file%file_opened = .true.
+      the_file%opened = .true.
 !
-      call the_file%set_current_file_size()
+      call the_file%set_current_size()
 !
 !     If the intent is 'write' or 'readwrite' and the disk is entirely filled
 !     (according to the specified available disk space), the calculation will stop:
@@ -373,7 +373,7 @@ contains
 !
 !     Sanity check
 !
-      if (.not. the_file%file_opened) then
+      if (.not. the_file%opened) then
 !
          call output%error_msg('tried to close a file that has not been opened.')
 !
@@ -381,11 +381,11 @@ contains
 !
 !     Get the file size (both when opened & closed)
 !
-      file_size_when_opened = the_file%get_file_size()
+      file_size_when_opened = the_file%get_size()
 !
-      call the_file%set_current_file_size()
+      call the_file%set_current_size()
 !
-      file_size_when_closed = the_file%get_file_size()
+      file_size_when_closed = the_file%get_size()
 !
 !     Close file
 !
@@ -443,7 +443,7 @@ contains
 !
 !     Set the status for the file to 'closed'
 !
-      the_file%file_opened = .false.
+      the_file%opened = .false.
 !
    end subroutine close_file_disk_manager
 !
@@ -496,7 +496,7 @@ contains
 !
       logical :: file_exists
 !
-      file_exists = the_file%file_exists()
+      file_exists = the_file%exists()
 !
       if (file_exists) then
 !
