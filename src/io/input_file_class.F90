@@ -25,9 +25,9 @@ module input_file_class
 !!
 !
    use kinds   
-   use section_class 
-   use output_file_class
+   use section_class, only : section
    use string_utilities 
+   use abstract_file_class, only : abstract_file
 !
    type, extends(abstract_file) :: input_file 
 !
@@ -38,7 +38,9 @@ module input_file_class
 !
    contains
 !
-      procedure :: init                                                 => init_input_file
+      procedure :: open_                                                => open__input_file
+      procedure :: close_                                               => close__input_file
+!
       procedure :: check_for_errors                                     => check_for_errors_input_file
       procedure :: requested_section                                    => requested_section_input_file
       procedure :: requested_keyword_in_section                         => requested_keyword_in_section_input_file
@@ -84,14 +86,17 @@ module input_file_class
 !
    end type input_file
 !
+   interface input_file
 !
-   type(input_file) :: input
+      procedure new_input_file
+!
+   end interface input_file
 !
 !
 contains
 !
 !
-   subroutine init_input_file(the_file, name)
+   module function new_input_file(name_) result(the_file)
 !!
 !!    Initialize input file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
@@ -101,9 +106,9 @@ contains
 !!
       implicit none
 !
-      class(input_file) :: the_file
+      type(input_file) :: the_file
 !
-      character(len=*) :: name
+      character(len=*), intent(in) :: name_
 !
       integer :: k
 !
@@ -123,37 +128,37 @@ contains
 !
 !     Set input file name, access and format 
 !
-      the_file%name = name
+      the_file%name_ = name_
 !
-      the_file%access = 'sequential'
-      the_file%format = 'formatted'
+      the_file%access_ = 'sequential'
+      the_file%format_ = 'formatted'
 !
 !     Set method section 
 !
-      input%rf_wfs = (/ 'hf                   ',   &
-                        'uhf                  '    /)
+      the_file%rf_wfs = (/ 'hf                   ',   &
+                           'uhf                  '    /)
 !
-      input%cc_wfs = (/ 'ccs                  ',   &
-                        'mp2                  ',   &
-                        'cc2                  ',   &
-                        'lowmem-cc2           ',   &
-                        'ccsd                 ',   &
-                        'cc3                  '    /)
+      the_file%cc_wfs = (/ 'ccs                  ',   &
+                           'mp2                  ',   &
+                           'cc2                  ',   &
+                           'lowmem-cc2           ',   &
+                           'ccsd                 ',   &
+                           'cc3                  '    /)
 !
       method%name_    = 'method'
       method%required = .true.
 !
-      allocate(method%keywords(size(input%rf_wfs) + size(input%cc_wfs)))
+      allocate(method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs)))
 !
-      do k = 1, size(input%rf_wfs)
+      do k = 1, size(the_file%rf_wfs)
 !
-         method%keywords(k) = input%rf_wfs(k)
+         method%keywords(k) = the_file%rf_wfs(k)
 !
       enddo 
 !
-      do k = 1, size(input%cc_wfs)
+      do k = 1, size(the_file%cc_wfs)
 !
-         method%keywords(size(input%rf_wfs) + k) = input%cc_wfs(k)
+         method%keywords(size(the_file%rf_wfs) + k) = the_file%cc_wfs(k)
 !
       enddo 
 !
@@ -267,7 +272,52 @@ contains
                            solver_cc_multipliers,  &
                            active_atoms]
 !
-   end subroutine init_input_file
+   end function new_input_file
+!
+!
+   subroutine open__input_file(the_file)
+!!
+!!    Open the input file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(input_file) :: the_file
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
+           action='read', status='unknown', form=the_file%format_, iostat=io_error, iomsg=io_msg)
+!
+      if (io_error /= 0) stop 'Error: could not open eT input file '//trim(the_file%name_)//&
+                             &'error message: '//trim(io_msg)
+!
+      the_file%opened = .true.
+!
+   end subroutine open__input_file
+!
+!
+   subroutine close__input_file(the_file)
+!!
+!!    Close the input file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(input_file) :: the_file
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      close(the_file%unit, iostat=io_error, iomsg=io_msg, status='keep')
+!
+      if (io_error /= 0) stop 'Error: could not close eT input file '//trim(the_file%name_)//&
+                             &'error message: '//trim(io_msg)
+!
+      the_file%opened = .false.
+!
+   end subroutine close__input_file
 !
 !
    subroutine check_for_errors_input_file(the_file)
@@ -542,11 +592,11 @@ contains
 !
       recognized = .false.   
 !
-      do k = 1, size(input%rf_wfs)
+      do k = 1, size(the_file%rf_wfs)
 !
-         if (the_file%requested_keyword_in_section(input%rf_wfs(k),'method')) then 
+         if (the_file%requested_keyword_in_section(the_file%rf_wfs(k),'method')) then 
 !
-            get_reference_wf_input_file = input%rf_wfs(k)
+            get_reference_wf_input_file = the_file%rf_wfs(k)
             recognized = .true. 
 !
          endif 
@@ -613,11 +663,11 @@ contains
 !
       recognized = .false.   
 !
-      do k = 1, size(input%cc_wfs)
+      do k = 1, size(the_file%cc_wfs)
 !
-         if (the_file%requested_keyword_in_section(input%cc_wfs(k),'method')) then 
+         if (the_file%requested_keyword_in_section(the_file%cc_wfs(k),'method')) then 
 !
-            get_cc_wf_input_file = input%cc_wfs(k)
+            get_cc_wf_input_file = the_file%cc_wfs(k)
             recognized = .true. 
 !
          endif 

@@ -52,7 +52,7 @@ module memory_manager_class
 !
    use kinds
    use parameters
-   use input_file_class
+   use global_files
    use batching_index_class
    use io_utilities
 !

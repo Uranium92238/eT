@@ -87,7 +87,6 @@ module eri_cd_class
 !
    contains
 !
-      procedure :: prepare                                => prepare_eri_cd
       procedure :: run                                    => run_eri_cd
       procedure :: cleanup                                => cleanup_eri_cd
 !
@@ -112,17 +111,24 @@ module eri_cd_class
    end type eri_cd
 !
 !
+   interface eri_cd 
+!
+      procedure :: new_eri_cd
+!
+   end interface eri_cd 
+!
+!
 contains
 !
 !
-   subroutine prepare_eri_cd(solver, system)
+   function new_eri_cd(system) result(solver)
 !!
-!!    Prepare ERI
+!!    New ERI CD
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(eri_cd) :: solver
+      type(eri_cd) :: solver
       type(molecular_system) :: system
 !
       solver%timer = new_timer('Cholesky decomposition of ERIs')
@@ -163,7 +169,7 @@ contains
 !
       endif
 !
-   end subroutine prepare_eri_cd
+   end function new_eri_cd
 !
 !
    subroutine run_eri_cd(solver, system, screening_vector)
@@ -4152,11 +4158,11 @@ contains
 !
       class(eri_cd) :: solver
 !
-      call long_string_print(solver%tag,'(//t3,a)',.true.)
-      call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description1)
-      call long_string_print(solver%description2,'(/t3,a/)')
-      call long_string_print(solver%description3)
+      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
+      call output%long_string_print(solver%author,'(t3,a/)',.true.)
+      call output%long_string_print(solver%description1)
+      call output%long_string_print(solver%description2,'(/t3,a/)')
+      call output%long_string_print(solver%description3)
 !
    end subroutine print_banner_eri_cd
 !
