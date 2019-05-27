@@ -198,7 +198,7 @@ contains
    end subroutine warning_msg_output_file
 !
 !  
-   subroutine printf_output_file(the_file, string, reals, ints, l_length)
+   subroutine printf_output_file(the_file, string, reals, ints, fs, ll)
 !!
 !!    Print any number of reals and ints formatted python style
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -207,7 +207,8 @@ contains
 !!              including formatting of reals and doubles
 !!    reals:    Array of real(dp) to print
 !!    ints:     Array of integers to print
-!!    l_length: integer with desired line length passed to print_long_string  
+!!    ll:       integer with desired line length passed to print_long_string  
+!!    fs:       Format string passed to print_long_string
 !!
       implicit none
 !
@@ -216,38 +217,52 @@ contains
       character(len=*), intent(in)                 :: string 
       real(dp), dimension(:), intent(in), optional :: reals 
       integer, dimension(:), intent(in), optional  :: ints
-      integer, intent(in), optional                :: l_length
+      integer, intent(in), optional                :: ll
+      character(len=*), optional, intent(in)       :: fs
 !
       character(len=1000)  :: pstring 
-      character(len=20)   :: fstring 
+      character(len=20)    :: fstring 
 !
       integer :: i, p_pos, int_check, i_err
       integer :: int_len, real_len, string_len
       integer :: int_count, real_count
       integer :: print_pos, printed
-      integer :: line_length
 !
+      integer           :: l_length
+      character(len=20) :: f_string
+!
+!     Set print string and format string blank
       pstring = ' '
       fstring = ' '
 !
       string_len = len_trim(string)
 !
+!     Check how many reals are present
       if(present(reals)) then
          real_len = size(reals)
       else
          real_len = 0
       endif
 !
+!     Check how many ints are present
       if(present(ints)) then
          int_len = size(ints)
       else
          int_len = 0
       endif
 !
-      if(present(l_length)) then
-         line_length = l_length
+!     Line length to send to long_string_print
+      if(present(ll)) then
+         l_length = ll
       else
-         line_length = 70
+         l_length = 70
+      endif
+!
+!     Format string to send to long_string_print
+      if(present(fs)) then
+         f_string = fs
+      else
+         f_string = '(t3,a)'
       endif
 !
       real_count = 0
@@ -261,57 +276,68 @@ contains
 !
          i = i + 1
 !
+!        Look for (
          if(string(i:i) .eq. "(") then
 !
+!           Is ( followed by f, F, e or E?
             if(string(i+1:i+1) .eq. "f" .or. string(i+1:i+1) .eq. "F" .or. &
                string(i+1:i+1) .eq. "e" .or. string(i+1:i+1) .eq. "E") then
 !
+!              Is it followed by a number, if so, assume a format string
                read(string(i+2:),'(i1)',iostat=i_err) int_check
                if (i_err .eq. 0) then
 !
                   real_count = real_count + 1
                   if (real_count .gt. real_len) call the_file%error_msg('Not enough reals in printf')
 !
+!                 Print everything between previous print and (
                   write(pstring(print_pos:),'(a)') string(printed:i-1)
                   print_pos = print_pos + i - printed
                   p_pos = i
 !
+!                 Get length of format string
                   do while (string(i:i) .ne. ")" .and. i .le. string_len)
                      i = i + 1
                   enddo
 !
                   printed = i+1
 !
-                  write(fstring,'(a)') string(p_pos:i)
+!                 Copy format string to fstring and write the next real to pstring
+                  fstring = string(p_pos:i)
                   write(pstring(print_pos:),fstring) reals(real_count)
 !
+!                 Set next position to print
                   print_pos = len_trim(pstring) + 1
 !
                endif
 !
-            endif
-!  
-            if(string(i+1:i+1) .eq. "i" .or. string(i+1:i+1) .eq. "I") then
+!           Is ( followed by i or I?
+            elseif(string(i+1:i+1) .eq. "i" .or. string(i+1:i+1) .eq. "I") then
 !
+!              Is it followed by a number, if so, assume a format string
                read(string(i+2:),'(i1)',iostat=i_err) int_check
                if (i_err .eq. 0) then
 !
                   int_count = int_count + 1
                   if (int_count .gt. int_len) call the_file%error_msg('Not enough ints in printf')
 !
+!                 Print everything between previous print and (
                   write(pstring(print_pos:),'(a)') string(printed:i-1)
                   print_pos = print_pos + i - printed
                   p_pos = i
 !
+!                 Get length of format string
                   do while (string(i:i) .ne. ")" .and. i .le. string_len)
                      i = i + 1
                   enddo
 !
                   printed = i + 1
 !
-                  write(fstring,'(a)') string(p_pos:i)
+!                 Copy format string to fstring and write the next real to pstring
+                  fstring = string(p_pos:i)
                   write(pstring(print_pos:),fstring) ints(int_count)
 !
+!                 Set next position to print
                   print_pos = len_trim(pstring) + 1
 !
                endif
@@ -319,13 +345,14 @@ contains
 !  
          elseif (i .eq. string_len) then
 !
+!           Reached the end, print the rest
             write(pstring(print_pos:),'(a)') string(printed:i)
 !
          endif
 !
       enddo 
 !
-      call the_file%long_string_print(pstring, line_length=line_length)
+      call the_file%long_string_print(pstring, fs=f_string, ll=l_length)
 !
    end subroutine printf_output_file
 !
@@ -375,18 +402,18 @@ contains
    end subroutine author_output_file
 !
 !  
-   subroutine long_string_print_output_file(the_file, string, format_string, colons, &
-                                            fformat_string, lformat_string, line_length)
+   subroutine long_string_print_output_file(the_file, string, fs, colons, &
+                                            ffs, lfs, ll)
 !!
 !!    Long string print
 !!    Written by Rolf H. Myhre, Nov 2018
 !!
 !!    Prints a reasonbly formatted long string over several lines
-!!    format_string: optional format string
-!!    fformat_string: optional format string for first printed line, 
+!!    fs: optional format string
+!!    ffs: optional format string for first printed line, 
 !!                    will be used for single line if present
-!!    lformat_string: optional format string for last printed line
-!!    line_length: optional argument for length printed lines, 
+!!    lfs: optional format string for last printed line
+!!    ll: optional argument for length printed lines, 
 !!                 routine adds extra length to not split up words
 !!
 !!
@@ -395,40 +422,40 @@ contains
       class(output_file), intent(in) :: the_file
 !
       character(len=*), intent(in) :: string
-      character(len=*), intent(in), optional :: format_string, fformat_string, lformat_string
-      integer, intent(in), optional :: line_length
+      character(len=*), intent(in), optional :: fs, ffs, lfs
+      integer, intent(in), optional :: ll
       logical, intent(in), optional :: colons
 !
       character(90)  :: temp
       integer        :: l, l_left, lines, l_length
       integer        :: i,j, padd, printed 
-      character(20)  :: fs,fstring,ffstring,lfstring
+      character(20)  :: f_s,fstring,ffstring,lfstring
       logical        :: col 
 !
 !     Default line length
       l_length = 70
-      if(present(line_length)) then
-         l_length = line_length
+      if(present(ll)) then
+         l_length = ll
       endif
 !
 !     Figure out the formatting
       fstring = '(t3,a)'
-      if(present(format_string)) then
-         fstring = format_string
+      if(present(fs)) then
+         fstring = fs
       endif
 !
       ffstring = fstring
-      if(present(fformat_string)) then
-         ffstring = fformat_string
+      if(present(ffs)) then
+         ffstring = ffs
       endif
 !
       lfstring = fstring
-      if(present(lformat_string)) then
-         lfstring = lformat_string
+      if(present(lfs)) then
+         lfstring = lfs
       endif
 !
 !     First line format
-      fs = ffstring
+      f_s = ffstring
 !
 !     Fancy colons for banner headings
       col = .false.
@@ -449,7 +476,7 @@ contains
          if(i .ne. lines) then
 !
             if(i .ne. 1) then
-               fs = fstring
+               f_s = fstring
             endif
 !
 !           Add some extra padding to not split words
@@ -472,18 +499,18 @@ contains
 !
 !           Print
             if(col) then
-               write(the_file%unit,fs) ':: '//temp(1:l_length+padd+1)
+               write(the_file%unit,f_s) ':: '//temp(1:l_length+padd+1)
             else
-               write(the_file%unit,fs) temp(1:l_length+padd+1)
+               write(the_file%unit,f_s) temp(1:l_length+padd+1)
             endif
 !
          else
 !           Print the remaining string
-            fs = lfstring
+            f_s = lfstring
             if(col) then
-               write(the_file%unit,fs) ':: '//string(printed:l)
+               write(the_file%unit,f_s) ':: '//string(printed:l)
             else
-               write(the_file%unit,fs) string(printed:l)
+               write(the_file%unit,f_s) string(printed:l)
             endif
             printed = l
          endif
