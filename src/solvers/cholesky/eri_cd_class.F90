@@ -4152,11 +4152,11 @@ contains
 !
       class(eri_cd) :: solver
 !
-      call long_string_print(solver%tag,'(//t3,a)',.true.)
-      call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description1)
-      call long_string_print(solver%description2,'(/t3,a/)')
-      call long_string_print(solver%description3)
+      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
+      call output%long_string_print(solver%author,'(t3,a/)',.true.)
+      call output%long_string_print(solver%description1)
+      call output%long_string_print(solver%description2,'(/t3,a/)')
+      call output%long_string_print(solver%description3)
 !
    end subroutine print_banner_eri_cd
 !

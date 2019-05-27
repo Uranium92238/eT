@@ -199,9 +199,9 @@ contains
       calculation_type  = 'This is a '// trim(convert_to_uppercase(wf%name_)) // ' ' // trim(engine%tag) // ' calculation.&
                            & The following tasks will be performed:'
 !     
-      call long_string_print(engine%name_,'(//t3,a)',.true.)
-      call long_string_print(engine%author,'(t3,a/)',.true.)
-      call long_string_print(engine%description,'(/t3,a)',.false.,'(t3,a)','(t3,a)') 
+      call output%long_string_print(engine%name_,'(//t3,a)',.true.)
+      call output%long_string_print(engine%author,'(t3,a/)',.true.)
+      call output%long_string_print(engine%description,'(/t3,a)',.false.,'(t3,a)','(t3,a)') 
 !
       write(output%unit, '(/t3,a/)') trim(calculation_type)
 !

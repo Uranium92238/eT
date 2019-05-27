@@ -26,47 +26,131 @@ module output_file_class
 !!
 !
    use kinds    
-   use abstract_file_class      
+   use abstract_file_class, only : abstract_file 
 !
    type, extends(abstract_file) :: output_file
 !
 !
    contains
 !
-      procedure :: init                   => init_output_file
+      procedure :: open_                  => open_output_file
+      procedure :: close_                 => close_output_file
+      procedure :: flush_                 => flush_output_file
 !
       procedure :: error_msg              => error_msg_output_file
       procedure :: warning_msg            => warning_msg_output_file
 !
+      procedure, public :: printf_1_output_file
+      procedure, public :: printf_2_output_file
+      generic :: printf                   => printf_1_output_file, printf_2_output_file
+!
+      procedure :: printd                 => printd_output_file
+      procedure :: author                 => author_output_file
+!
+      procedure :: long_string_print      => long_string_print_output_file
+!
    end type output_file
 !
-   type(output_file) :: output, timing
+   interface output_file
+!
+      procedure new_output_file
+!
+   end interface output_file
+!
+   type(output_file) :: output
 !
 contains
 !
 !
-   subroutine init_output_file(the_file, name)
+   module function new_output_file(name_) result(the_file)
 !!
-!!    Initialize output file
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
-!!
-!!    Initializes an output file file object
+!!    Output file constructer
+!!    Writen by Rolf H. Myhre May 2019
 !!
 !!    Output file is formatted and sequantial file.
-!!    Routine sets these, and sets tha file name    
+!!    Routine sets these, and sets the file name    
+!!
+      implicit none
+!
+      type(output_file) :: the_file
+!
+      character(len=*), intent(in) :: name_
+!
+      the_file%name_ = name_
+!
+      the_file%access_ = 'sequential'
+      the_file%format_ = 'formatted'
+!
+   end function
+!
+!
+   subroutine open_output_file(the_file)
+!!
+!!    Open the output file
+!!    Written by Rolf Heilemann Myhre, May 2019
 !!
       implicit none
 !
       class(output_file) :: the_file
 !
-      character(len=*) :: name
+      integer              :: io_error
+      character(len=100)   :: io_msg
 !
-      the_file%name = name
+      open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
+           action='write', status='unknown', form=the_file%format_, iostat=io_error, iomsg=io_msg)
 !
-      the_file%access = 'sequential'
-      the_file%format = 'formatted'
+      if (io_error /= 0) stop 'Error: could not open eT output file '//trim(the_file%name_)//&
+                             &'. Error message: '//trim(io_msg)
 !
-   end subroutine init_output_file
+      the_file%opened = .true.
+!
+      call the_file%set_open_size()
+!
+   end subroutine open_output_file
+!
+!
+   subroutine close_output_file(the_file)
+!!
+!!    Close the output file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file) :: the_file
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      close(the_file%unit, iostat=io_error, iomsg=io_msg, status='keep')
+!
+      if (io_error.ne. 0) then
+          stop 'Error: could not close eT output file '//trim(the_file%name_)//&
+              &'error message: '//trim(io_msg)
+      endif
+!
+      the_file%opened = .false.
+!
+   end subroutine close_output_file
+!
+!
+   subroutine flush_output_file(the_file)
+!!
+!!    Flush the output file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file) :: the_file
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      flush(the_file%unit, iostat=io_error, iomsg=io_msg)
+!
+      if (io_error /= 0) stop 'Error: could not flush eT output file '//trim(the_file%name_)//&
+                             &'error message: '//trim(io_msg)
+!
+   end subroutine flush_output_file
 !
 !
    subroutine error_msg_output_file(out_file, error_specs, error_int)
@@ -108,7 +192,7 @@ contains
 !!
       implicit none
 !
-      class(output_file) :: out_file
+      class(output_file), intent(in) :: out_file
 !
       character(len=*) :: warning_specs
 !
@@ -117,4 +201,216 @@ contains
    end subroutine warning_msg_output_file
 !
 !  
+   subroutine printf_1_output_file(the_file, fstring, string)
+!!
+!!    Print formatted
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: fstring
+      character(len=*), intent(in) :: string
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      write(the_file%unit, fstring, iostat=io_error, iomsg=io_msg) string
+!
+      if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%name_)//&
+                             &'error message: '//trim(io_msg)
+!
+   end subroutine printf_1_output_file
+!
+!  
+   subroutine printf_2_output_file(the_file, fstring, string1, string2)
+!!
+!!    Print formatted
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: fstring
+      character(len=*), intent(in) :: string1
+      character(len=*), intent(in) :: string2
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      write(the_file%unit, fstring, iostat=io_error, iomsg=io_msg) string1, string2
+!
+      if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%name_)//&
+                             &'error message: '//trim(io_msg)
+!
+   end subroutine printf_2_output_file
+!
+!  
+   subroutine printd_output_file(the_file, string)
+!!
+!!    Print formatted
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: string
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      write(the_file%unit, '(t3,a)', iostat=io_error, iomsg=io_msg) string
+!
+      if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%name_)//&
+                             &'error message: '//trim(io_msg)
+!
+   end subroutine printd_output_file
+!
+!  
+   subroutine author_output_file(the_file, author, contribution)
+!!
+!!    Print formatted
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: author
+      character(len=*), intent(in) :: contribution
+!
+      character(len=100) :: d_author
+      character(len=100) :: d_contribution
+!
+      d_author = author
+      d_contribution = contribution
+!
+      call the_file%printf('(t4,a23,a54)', d_author, d_contribution)
+!
+   end subroutine author_output_file
+!
+!  
+   subroutine long_string_print_output_file(the_file, string, format_string, colons, &
+                                            fformat_string, lformat_string, line_length)
+!!
+!!    Long string print
+!!    Written by Rolf H. Myhre, Nov 2018
+!!
+!!    Prints a reasonbly formatted long string over several lines
+!!    format_string: optional format string
+!!    fformat_string: optional format string for first printed line, 
+!!                    will be used for single line if present
+!!    lformat_string: optional format string for last printed line
+!!    line_length: optional argument for length printed lines, 
+!!                 routine adds extra length to not split up words
+!!
+!!
+      implicit none
+!
+      class(output_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: string
+      character(len=*), intent(in), optional :: format_string, fformat_string, lformat_string
+      integer, intent(in), optional :: line_length
+      logical, intent(in), optional :: colons
+!
+      character(90)  :: temp
+      integer        :: l, l_left, lines, l_length
+      integer        :: i,j, padd, printed 
+      character(20)  :: fs,fstring,ffstring,lfstring
+      logical        :: col 
+!
+!     Default line length
+      l_length = 70
+      if(present(line_length)) then
+         l_length = line_length
+      endif
+!
+!     Figure out the formatting
+      fstring = '(t3,a)'
+      if(present(format_string)) then
+         fstring = format_string
+      endif
+!
+      ffstring = fstring
+      if(present(fformat_string)) then
+         ffstring = fformat_string
+      endif
+!
+      lfstring = fstring
+      if(present(lformat_string)) then
+         lfstring = lformat_string
+      endif
+!
+!     First line format
+      fs = ffstring
+!
+!     Fancy colons for banner headings
+      col = .false.
+      if(present(colons)) then
+         col = colons
+      endif
+      if(col) then
+         l_length = l_length - 3
+      endif
+!
+      l = len_trim(string)      
+      l_left = l
+      lines = (l-1)/l_length + 1
+      printed = 1
+!
+      do i = 1,lines
+!
+         if(i .ne. lines) then
+!
+            if(i .ne. 1) then
+               fs = fstring
+            endif
+!
+!           Add some extra padding to not split words
+            do j = 1,18
+               padd = j
+               if(string(printed+l_length+j:printed+l_length+j) == ' ') then
+                  exit
+               endif
+            enddo
+!
+!           Copy string to be printed. Add hyphen if word must be split
+            if(padd == 18) then
+               temp(1:l_length+padd+1) = string(printed:printed+l_length+padd)
+               temp(l_length+padd+1:l_length+padd+1) = '-'
+               printed = printed + l_length + padd
+            else
+               temp(1:l_length+padd+1) = string(printed:printed+l_length+padd+1)
+               printed = printed + l_length + padd + 1
+            endif
+!
+!           Print
+            if(col) then
+               call the_file%printf(fs, ':: '//temp(1:l_length+padd+1))
+            else
+               call the_file%printf(fs, temp(1:l_length+padd+1))
+            endif
+!
+         else
+!           Print the remaining string
+            fs = lfstring
+            if(col) then
+               call the_file%printf(fs, ':: '//string(printed:l))
+            else
+               call the_file%printf(fs, string(printed:l))
+            endif
+            printed = l
+         endif
+!
+      enddo
+!
+      call the_file%flush_()
+!
+   end subroutine long_string_print_output_file
+!
+!
 end module output_file_class

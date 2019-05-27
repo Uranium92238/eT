@@ -643,10 +643,10 @@ contains
 !
       class(davidson_cc_es) :: solver 
 !
-      call long_string_print(solver%tag,'(//t3,a)',.true.)
-      call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
-      call long_string_print(solver%description2)
+      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
+      call output%long_string_print(solver%author,'(t3,a/)',.true.)
+      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call output%long_string_print(solver%description2)
 !
    end subroutine print_banner_davidson_cc_es
 !

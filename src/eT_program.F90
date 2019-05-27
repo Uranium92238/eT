@@ -25,18 +25,19 @@ program eT_program
 !!
 !
    use kinds
-   use file_class
-   use disk_manager_class
+   use direct_file_class, only : direct_file
+   use sequential_file_class, only : sequential_file
+   use global_files, only : input
+   use timings_class, only : timings
+   use disk_manager_class, only : disk
    use memory_manager_class
    use libint_initialization
    use molecular_system_class
-   use timings_class
 !
    use omp_lib
 !
    implicit none
 !
-   integer :: io_error
    integer :: n_threads
 !
 !  Molecular system object 
@@ -49,26 +50,18 @@ program eT_program
 !
 !  Prepare input, output and timing file
 !
-   call output%init('eT.out')
-   open(newunit=output%unit, file=output%name, access=output%access, &
-      action='write', status='unknown', form=output%format, iostat=io_error)
+   output = output_file('eT.out')
+   call output%open_()
 !
-   if (io_error /= 0) stop 'Error: could not open eT output file (eT.out)'
+   input = input_file('eT.inp')
+   call input%open_()
 !
-   call input%init('eT.inp')
-   open(newunit=input%unit, file=input%name, access=input%access, &
-      action='read', status='unknown', form=input%format, iostat=io_error)
+   timing = output_file('timing.out')
+   call timing%open_()
 !
-   if (io_error /= 0) stop 'Error: could not open eT input file (eT.inp)'
-!
-   call timing%init('timing.out')
-   open(newunit=timing%unit, file=timing%name, access=timing%access, &
-      action='write', status='unknown', form=timing%format, iostat=io_error)
-!
-   if (io_error /= 0) stop 'Error: could not open eT timing file (timing.out)'
-!
-   eT_timer = new_timer("Total time in eT")
+   eT_timer = timings("Total time in eT")
    call eT_timer%turn_on()
+!
 !
 !  Print program banner
 !
@@ -92,7 +85,7 @@ program eT_program
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
    write(output%unit,'(t3,a)')       '----------------------------------------------------------------------------------'
    write(output%unit,'(t4,a/)')       'Other contributors: A. Balbi, M. Scavino'
-   flush(output%unit)
+   call output%flush_()   
 !
    n_threads = 1
 !
@@ -137,9 +130,9 @@ program eT_program
 !
    write(output%unit, '(/t3,a)') 'eT terminated successfully!'
 !
-   close(output%unit)
-   close(input%unit)
-   close(timing%unit)
+   call output%close_()
+   call input%close_()
+   call timing%close_()
 !
 end program eT_program
 !
@@ -153,7 +146,7 @@ subroutine reference_calculation(system)
 !!
    use molecular_system_class, only: molecular_system
 !
-   use input_file_class, only: input 
+   use global_files, only: input 
    use output_file_class, only: output
 !
    use hf_class, only: hf 
@@ -201,7 +194,7 @@ subroutine cc_calculation(system)
 !!
 !! Directs the coupled cluster calculation for eT
 !!
-   use input_file_class, only: input
+   use global_files, only: input
    use output_file_class, only: output 
 !
    use molecular_system_class, only: molecular_system

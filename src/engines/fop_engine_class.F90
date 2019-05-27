@@ -188,8 +188,8 @@ contains
 !
       integer :: component, n_states, state
 !
-      call long_string_print('EOM first order properties calculation','(/t3,a)',.true.)
-      call long_string_print(engine%author,'(t3,a)',.true.)
+      call output%long_string_print('EOM first order properties calculation','(/t3,a)',.true.)
+      call output%long_string_print(engine%author,'(t3,a)',.true.)
 !
       call mem%alloc(etaX, wf%n_es_amplitudes)
       call mem%alloc(csiX, wf%n_es_amplitudes)
