@@ -20,8 +20,8 @@
 module output_file_class
 !
 !!
-!!    File class module
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
+!!    Output ile class module
+!!    Written by Rolf H. Myhre, May 2019
 !!
 !!
 !
@@ -40,12 +40,9 @@ module output_file_class
       procedure :: error_msg              => error_msg_output_file
       procedure :: warning_msg            => warning_msg_output_file
 !
-      procedure, public :: printf_1_output_file
-      procedure, public :: printf_2_output_file
-      generic :: printf                   => printf_1_output_file, printf_2_output_file
-!
-      procedure :: printd                 => printd_output_file
-      procedure :: author                 => author_output_file
+      procedure, public :: printf         => printf_output_file
+      procedure, public :: printd         => printd_output_file
+      procedure, public :: author         => author_output_file
 !
       procedure :: long_string_print      => long_string_print_output_file
 !
@@ -67,7 +64,7 @@ contains
 !!    Output file constructer
 !!    Writen by Rolf H. Myhre May 2019
 !!
-!!    Output file is formatted and sequantial file.
+!!    Output file is a formatted and sequantial file.
 !!    Routine sets these, and sets the file name    
 !!
       implicit none
@@ -201,51 +198,136 @@ contains
    end subroutine warning_msg_output_file
 !
 !  
-   subroutine printf_1_output_file(the_file, fstring, string)
+   subroutine printf_output_file(the_file, string, reals, ints, l_length)
 !!
-!!    Print formatted
+!!    Print any number of reals and ints formatted python style
 !!    Written by Rolf Heilemann Myhre, May 2019
+!!
+!!    string:   String of character that should be printed, 
+!!              including formatting of reals and doubles
+!!    reals:    Array of real(dp) to print
+!!    ints:     Array of integers to print
+!!    l_length: integer with desired line length passed to print_long_string  
 !!
       implicit none
 !
       class(output_file), intent(in) :: the_file
 !
-      character(len=*), intent(in) :: fstring
-      character(len=*), intent(in) :: string
+      character(len=*), intent(in)                 :: string 
+      real(dp), dimension(:), intent(in), optional :: reals 
+      integer, dimension(:), intent(in), optional  :: ints
+      integer, intent(in), optional                :: l_length
 !
-      integer              :: io_error
-      character(len=100)   :: io_msg
+      character(len=1000)  :: pstring 
+      character(len=20)   :: fstring 
 !
-      write(the_file%unit, fstring, iostat=io_error, iomsg=io_msg) string
+      integer :: i, p_pos, int_check, i_err
+      integer :: int_len, real_len, string_len
+      integer :: int_count, real_count
+      integer :: print_pos, printed
+      integer :: line_length
 !
-      if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%name_)//&
-                             &'error message: '//trim(io_msg)
+      pstring = ' '
+      fstring = ' '
 !
-   end subroutine printf_1_output_file
+      string_len = len_trim(string)
 !
+      if(present(reals)) then
+         real_len = size(reals)
+      else
+         real_len = 0
+      endif
+!
+      if(present(ints)) then
+         int_len = size(ints)
+      else
+         int_len = 0
+      endif
+!
+      if(present(l_length)) then
+         line_length = l_length
+      else
+         line_length = 70
+      endif
+!
+      real_count = 0
+      int_count  = 0
+!
+      print_pos = 1
+      printed = 1
+      i = 0
+!
+      do while (i .lt. string_len)
+!
+         i = i + 1
+!
+         if(string(i:i) .eq. "(") then
+!
+            if(string(i+1:i+1) .eq. "f" .or. string(i+1:i+1) .eq. "F" .or. &
+               string(i+1:i+1) .eq. "e" .or. string(i+1:i+1) .eq. "E") then
+!
+               read(string(i+2:),'(i1)',iostat=i_err) int_check
+               if (i_err .eq. 0) then
+!
+                  real_count = real_count + 1
+                  if (real_count .gt. real_len) call the_file%error_msg('Not enough reals in printf')
+!
+                  write(pstring(print_pos:),'(a)') string(printed:i-1)
+                  print_pos = print_pos + i - printed
+                  p_pos = i
+!
+                  do while (string(i:i) .ne. ")" .and. i .le. string_len)
+                     i = i + 1
+                  enddo
+!
+                  printed = i+1
+!
+                  write(fstring,'(a)') string(p_pos:i)
+                  write(pstring(print_pos:),fstring) reals(real_count)
+!
+                  print_pos = len_trim(pstring) + 1
+!
+               endif
+!
+            endif
 !  
-   subroutine printf_2_output_file(the_file, fstring, string1, string2)
-!!
-!!    Print formatted
-!!    Written by Rolf Heilemann Myhre, May 2019
-!!
-      implicit none
+            if(string(i+1:i+1) .eq. "i" .or. string(i+1:i+1) .eq. "I") then
 !
-      class(output_file), intent(in) :: the_file
+               read(string(i+2:),'(i1)',iostat=i_err) int_check
+               if (i_err .eq. 0) then
 !
-      character(len=*), intent(in) :: fstring
-      character(len=*), intent(in) :: string1
-      character(len=*), intent(in) :: string2
+                  int_count = int_count + 1
+                  if (int_count .gt. int_len) call the_file%error_msg('Not enough ints in printf')
 !
-      integer              :: io_error
-      character(len=100)   :: io_msg
+                  write(pstring(print_pos:),'(a)') string(printed:i-1)
+                  print_pos = print_pos + i - printed
+                  p_pos = i
 !
-      write(the_file%unit, fstring, iostat=io_error, iomsg=io_msg) string1, string2
+                  do while (string(i:i) .ne. ")" .and. i .le. string_len)
+                     i = i + 1
+                  enddo
 !
-      if (io_error /= 0) stop 'Error: could not print to eT output file '//trim(the_file%name_)//&
-                             &'error message: '//trim(io_msg)
+                  printed = i + 1
 !
-   end subroutine printf_2_output_file
+                  write(fstring,'(a)') string(p_pos:i)
+                  write(pstring(print_pos:),fstring) ints(int_count)
+!
+                  print_pos = len_trim(pstring) + 1
+!
+               endif
+            endif
+!  
+         elseif (i .eq. string_len) then
+!
+            write(pstring(print_pos:),'(a)') string(printed:i)
+!
+         endif
+!
+      enddo 
+!
+      call the_file%long_string_print(pstring, line_length=line_length)
+!
+   end subroutine printf_output_file
 !
 !  
    subroutine printd_output_file(the_file, string)
@@ -288,7 +370,7 @@ contains
       d_author = author
       d_contribution = contribution
 !
-      call the_file%printf('(t4,a23,a54)', d_author, d_contribution)
+      write(the_file%unit,'(t4,a23,a54)') d_author, d_contribution
 !
    end subroutine author_output_file
 !
@@ -390,18 +472,18 @@ contains
 !
 !           Print
             if(col) then
-               call the_file%printf(fs, ':: '//temp(1:l_length+padd+1))
+               write(the_file%unit,fs) ':: '//temp(1:l_length+padd+1)
             else
-               call the_file%printf(fs, temp(1:l_length+padd+1))
+               write(the_file%unit,fs) temp(1:l_length+padd+1)
             endif
 !
          else
 !           Print the remaining string
             fs = lfstring
             if(col) then
-               call the_file%printf(fs, ':: '//string(printed:l))
+               write(the_file%unit,fs) ':: '//string(printed:l)
             else
-               call the_file%printf(fs, string(printed:l))
+               write(the_file%unit,fs) string(printed:l)
             endif
             printed = l
          endif
