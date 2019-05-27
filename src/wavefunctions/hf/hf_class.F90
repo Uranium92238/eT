@@ -116,6 +116,7 @@ module hf_class
       procedure :: initialize_orbitals                      => initialize_orbitals_hf
       procedure :: roothan_hall_update_orbitals             => roothan_hall_update_orbitals_hf
       procedure :: print_orbital_energies                   => print_orbital_energies_hf
+      procedure :: print_orbitals                           => print_orbitals_hf 
 !
 !     Class variable initialize and destruct routines
 !
@@ -268,6 +269,8 @@ contains
 !
       call wf%print_orbital_energies('3')
 !
+      call wf%print_orbitals()
+!
    end subroutine print_wavefunction_summary_hf
 !
 !
@@ -328,6 +331,90 @@ contains
       call print_vector(wf%orbital_energies, wf%n_ao, indent)
 !
    end subroutine print_orbital_energies_hf
+!
+!
+   subroutine print_orbitals_hf(wf)
+!!
+!!    Print orbitals 
+!!    Written by Eirik F. Kjønstad, May 2019
+!!
+!!    Prints the orbitals with atom & orbital information given.
+!!
+      implicit none 
+!  
+      class(hf), intent(in) :: wf 
+!
+      integer, parameter :: n_entries  = 5
+      integer, parameter :: max_virtuals = 10
+!
+      integer :: atom, mo_offset, first_mo, last_mo, shell, ao, mo, l, mos_to_print
+!
+      character(len=3) :: adv ! advance = 'yes' or 'no', depending on the circumstances
+!
+      character(len=1), dimension(6), parameter :: angular_momentum = ['s', 'p', 'd', 'f', 'g', 'h']
+!
+      mos_to_print = min(wf%n_mo, wf%n_o + max_virtuals)
+      write(output%unit, '(/t3,a,i0,a,i0,a)') 'Printing the first ', mos_to_print, ' MOs (out of the total ', wf%n_mo, ' MOs).'
+!
+      do mo_offset = 1, mos_to_print, n_entries
+!
+         first_mo = mo_offset
+         last_mo  = min(mo_offset + n_entries - 1, wf%n_mo)
+!
+         write(output%unit, '(/t3,a,i0,a,i0,a/)') '- Molecular orbitals ', first_mo, ' to ', last_mo, ':'
+!
+         write(output%unit, '(t6,a)', advance='no') 'I    Atom(l)'
+!
+         adv = 'no'
+         do mo = first_mo, last_mo 
+!
+            if (mo == last_mo) adv = 'yes'
+!
+            if (mo == first_mo) then
+!
+               write(output%unit, '(6x,i4)', advance=adv) mo 
+!
+            else
+!
+               write(output%unit, '(8x,i4)', advance=adv) mo 
+!
+            endif
+!
+         enddo
+!
+         write(output%unit, '(t5,a)') '---------------------------------------------------------------------------'
+!
+         do atom = 1, wf%system%n_atoms
+!
+            do shell = 1, wf%system%atoms(atom)%n_shells 
+!
+               l = wf%system%atoms(atom)%shells(shell)%l
+!
+               do ao = wf%system%atoms(atom)%shells(shell)%first, wf%system%atoms(atom)%shells(shell)%last 
+!
+                  write(output%unit, '(t3,i4,5x,a2,a1,a1,a1,2x)', advance='no') atom, &
+                                                                          wf%system%atoms(atom)%symbol, &
+                                                                         '(', angular_momentum(l + 1), ')'
+!
+                  adv = 'no'
+                  do mo = first_mo, last_mo 
+!
+                     if (mo == last_mo) adv = 'yes'
+                     write(output%unit, '(2x, f10.6)', advance=adv) wf%orbital_coefficients(ao, mo)
+!
+                  enddo
+!
+               enddo
+!
+            enddo
+!
+         enddo
+!
+         write(output%unit, '(t5,a)') '---------------------------------------------------------------------------'
+!
+      enddo 
+!
+   end subroutine print_orbitals_hf
 !
 !
    subroutine mo_transform_hf(wf, X_wx, Y_pq)
