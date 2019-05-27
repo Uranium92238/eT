@@ -162,38 +162,25 @@ contains
 !
       character(len=*), intent(in) :: transformation
 !
-      type(diis_cc_es), allocatable                  :: cc_es_solver_diis
+      type(diis_cc_es), allocatable :: cc_es_solver_diis
 !
-      type(davidson_cc_es), allocatable, target      ::  cc_valence_es
-      type(davidson_cvs_cc_es), allocatable, target  ::  cc_core_es
-!
-      class(davidson_cc_es), pointer :: cc_es_solver
+      class(davidson_cc_es), allocatable :: cc_es_solver_davidson
 !
 !     Prepare for excited state
 !
       if (engine%es_algorithm == 'diis' .or. wf%name_ == 'low memory cc2' .or. wf%name_ == 'cc3') then
 !
-         allocate(cc_es_solver_diis)
-!
-         call cc_es_solver_diis%prepare(transformation, wf)
+         cc_es_solver_diis = diis_cc_es(transformation, wf)
          call cc_es_solver_diis%run(wf)
          call cc_es_solver_diis%cleanup(wf)
-!
-         deallocate(cc_es_solver_diis)
 !
       elseif (engine%es_algorithm == 'davidson') then
 !
          if (engine%es_type == 'core') then
 !
-            allocate(cc_core_es)
-            cc_es_solver => cc_core_es
-!
-            call cc_es_solver%prepare(transformation, wf)
-            call cc_es_solver%run(wf)
-            call cc_es_solver%cleanup(wf)
-!
-            cc_es_solver => null()
-            deallocate(cc_core_es)
+            cc_es_solver_davidson = davidson_cvs_cc_es(transformation, wf)
+            call cc_es_solver_davidson%run(wf)
+            call cc_es_solver_davidson%cleanup(wf)
 !
          elseif(engine%es_type == 'valence ionized') then
 !
@@ -205,15 +192,9 @@ contains
 !
          else ! es_type = valence
 !
-            allocate(cc_valence_es)
-            cc_es_solver => cc_valence_es
-!
-            call cc_es_solver%prepare(transformation, wf)
-            call cc_es_solver%run(wf)
-            call cc_es_solver%cleanup(wf)
-!
-            cc_es_solver => null()
-            deallocate(cc_valence_es)
+            cc_es_solver_davidson = davidson_cc_es(transformation, wf)
+            call cc_es_solver_davidson%run(wf)
+            call cc_es_solver_davidson%cleanup(wf)
 !
          endif
 !

@@ -38,7 +38,6 @@ module davidson_cvs_cc_es_class
 !
    contains
 !
-      procedure :: prepare                => prepare_davidson_cvs_cc_es
       procedure :: read_settings          => read_settings_davidson_cvs_cc_es
 !
       procedure :: set_start_vectors      => set_start_vectors_davidson_cvs_cc_es
@@ -53,16 +52,23 @@ module davidson_cvs_cc_es_class
    end type davidson_cvs_cc_es
 !
 !
+   interface davidson_cvs_cc_es
+!
+      procedure :: new_davidson_cvs_cc_es
+!
+   end interface davidson_cvs_cc_es
+!
+!
 contains
 !
-   subroutine prepare_davidson_cvs_cc_es(solver, transformation, wf)
+   function new_davidson_cvs_cc_es(transformation, wf) result(solver)
 !!
-!!    Prepare 
+!!    New Davidson CVS CC ES 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(davidson_cvs_cc_es) :: solver    
+      type(davidson_cvs_cc_es) :: solver    
       class(ccs), intent(in) :: wf
 !
       character(len=*), intent(in) :: transformation
@@ -83,7 +89,7 @@ contains
 !
       call solver%print_banner()
 !
-!     Set defaults
+!     Set defaults, then read possible non-defaults
 !
       solver%n_singlet_states     = 0
       solver%max_iterations       = 100
@@ -92,7 +98,7 @@ contains
       solver%transformation       = 'right'
       solver%restart              = .false.
       solver%max_dim_red          = 100 
-      solver%transformation = trim(transformation)
+      solver%transformation       = trim(transformation)
 !
       call solver%read_settings()
       call solver%print_settings()
@@ -105,7 +111,8 @@ contains
       write(output%unit, '(/t3,a,a,a)') 'Solving for the ', trim(solver%transformation), ' eigenvectors.'
       flush(output%unit)
 !
-   end subroutine prepare_davidson_cvs_cc_es
+   end function new_davidson_cvs_cc_es
+!
 !
    subroutine read_settings_davidson_cvs_cc_es(solver)
 !!

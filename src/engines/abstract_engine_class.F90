@@ -115,7 +115,6 @@ contains
 !!
 !!    Cholesky decomposition of electronic repiulsion integrals
 !!
-!
       use eri_cd_class
 !
       implicit none
@@ -128,7 +127,7 @@ contains
 !
 !     Cholesky decoposition 
 !
-      call eri_chol_solver%prepare(wf%system)
+      eri_chol_solver = eri_cd(wf%system)
       call eri_chol_solver%run(wf%system)
 !
       call eri_chol_solver%diagonal_test(wf%system)

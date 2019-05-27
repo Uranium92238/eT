@@ -51,7 +51,6 @@ module scf_diis_hf_class
 !
    contains
 !     
-      procedure :: prepare                => prepare_scf_diis_hf
       procedure :: run                    => run_scf_diis_hf
       procedure :: cleanup                => cleanup_scf_diis_hf
 !
@@ -63,17 +62,24 @@ module scf_diis_hf_class
    end type scf_diis_hf
 !
 !
+   interface scf_diis_hf 
+!
+      procedure :: new_scf_diis_hf
+!
+   end interface scf_diis_hf
+!
+!
 contains
 !
 !
-   subroutine prepare_scf_diis_hf(solver, wf)
+   function new_scf_diis_hf(wf) result(solver)
 !!
-!!    Prepare 
+!!    New SCF DIIS 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(scf_diis_hf) :: solver
+      type(scf_diis_hf) :: solver
 !
       class(hf) :: wf
 !
@@ -88,12 +94,12 @@ contains
 !
 !     Set standard settings 
 !
-      solver%restart         = .false.
-      solver%diis_dimension     = 8
-      solver%max_iterations     = 100
-      solver%ao_density_guess   = 'SAD'
-      solver%energy_threshold   = 1.0D-6
-      solver%gradient_threshold = 1.0D-6
+      solver%restart             = .false.
+      solver%diis_dimension      = 8
+      solver%max_iterations      = 100
+      solver%ao_density_guess    = 'SAD'
+      solver%energy_threshold    = 1.0D-6
+      solver%gradient_threshold  = 1.0D-6
 !
 !     Read user's specified settings & set wavefunction screening based on them
 !     (note that the screenings must be tighter for tighter gradient thresholds)
@@ -129,7 +135,7 @@ contains
 !
       endif
 !
-   end subroutine prepare_scf_diis_hf
+   end function new_scf_diis_hf
 !
 !
    subroutine print_scf_diis_settings_scf_diis_hf(solver)
