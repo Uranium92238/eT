@@ -162,7 +162,7 @@ contains
 !
       the_file%opened = .true.
 !
-      call the_file%set_open__size()
+      call the_file%set_open_size()
 !
    end subroutine open__sequential_file
 !
