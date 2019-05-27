@@ -308,11 +308,11 @@ contains
 !
       endif
 !
-      call wf%g_bdck_t%open_file('read')
-      call wf%g_ljck_t%open_file('read')
-      call wf%g_dbkc_t%open_file('read')
-      call wf%g_jlkc_t%open_file('read')
-      call wf%L_jbkc_t%open_file('read')
+      call wf%g_bdck_t%open_('read')
+      call wf%g_ljck_t%open_('read')
+      call wf%g_dbkc_t%open_('read')
+      call wf%g_jlkc_t%open_('read')
+      call wf%L_jbkc_t%open_('read')
 !
       do i_batch = 1,batch_i%num_batches
 !
@@ -492,11 +492,11 @@ contains
 !
 !     Close files
 !
-      call wf%g_bdck_t%close_file()
-      call wf%g_ljck_t%close_file()
-      call wf%g_dbkc_t%close_file()
-      call wf%g_jlkc_t%close_file()
-      call wf%L_jbkc_t%close_file()
+      call wf%g_bdck_t%close_()
+      call wf%g_ljck_t%close_()
+      call wf%g_dbkc_t%close_()
+      call wf%g_jlkc_t%close_()
+      call wf%L_jbkc_t%close_()
 !
 !     Deallocate the integral arrays
 !
@@ -592,7 +592,7 @@ contains
       call mem%batch_setup(batch_k,req_0,req_k)
 !
       wf%g_bdck_t = direct_file('g_bdck_t',wf%n_v**3)
-      call wf%g_bdck_t%open_file('write')
+      call wf%g_bdck_t%open_('write')
 !
       do current_k_batch = 1,batch_k%num_batches
 !
@@ -616,14 +616,14 @@ contains
 !
       enddo
 !
-      call wf%g_bdck_t%close_file()
+      call wf%g_bdck_t%close_()
 !
 !
 !     (db|kc)
 !     Same batching
 !
       wf%g_dbkc_t = direct_file('g_dbkc_t',wf%n_v**3)
-      call wf%g_dbkc_t%open_file('write')
+      call wf%g_dbkc_t%open_('write')
 !
       do current_k_batch = 1,batch_k%num_batches
 !
@@ -647,7 +647,7 @@ contains
 !
       enddo
 !
-      call wf%g_dbkc_t%close_file()
+      call wf%g_dbkc_t%close_()
 !
 !
 !     (lj|ck)
@@ -658,7 +658,7 @@ contains
       call mem%batch_setup(batch_k,req_0,req_k)
 !
       wf%g_ljck_t = direct_file('g_ljck_t',wf%n_v*wf%n_o)
-      call wf%g_ljck_t%open_file('write')
+      call wf%g_ljck_t%open_('write')
 !
       do current_k_batch = 1,batch_k%num_batches
 !
@@ -682,13 +682,13 @@ contains
 !
       enddo
 !
-      call wf%g_ljck_t%close_file()
+      call wf%g_ljck_t%close_()
 !
 !     (jl|kc)
 !     Same batching
 !
       wf%g_jlkc_t = direct_file('g_jlkc_t',wf%n_v*wf%n_o)
-      call wf%g_jlkc_t%open_file('write')
+      call wf%g_jlkc_t%open_('write')
 !
       do current_k_batch = 1,batch_k%num_batches
 !
@@ -712,7 +712,7 @@ contains
 !
       enddo
 !
-      call wf%g_jlkc_t%close_file()
+      call wf%g_jlkc_t%close_()
 !
 !
 !     (jb|kc)
@@ -723,7 +723,7 @@ contains
       call mem%batch_setup(batch_k,req_0,req_k)
 !
       wf%L_jbkc_t = direct_file('L_jbkc_t',wf%n_v**2)
-      call wf%L_jbkc_t%open_file('write')
+      call wf%L_jbkc_t%open_('write')
 !
       call batch_k%determine_limits(1)
       call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
@@ -762,7 +762,7 @@ contains
 !
       call batch_k%determine_limits(1)
       call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
-      call wf%L_jbkc_t%close_file()
+      call wf%L_jbkc_t%close_()
 !
 !
    end subroutine omega_cc3_integrals_cc3
