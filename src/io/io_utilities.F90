@@ -88,9 +88,9 @@ contains
 !
       character(90)  :: temp
       integer        :: l, l_left, lines, l_length
-      integer        :: i,j, padd, printed 
+      integer        :: i,j, padd, printed
       character(20)  :: fs,fstring,ffstring,lfstring
-      logical        :: col 
+      logical        :: col
 !
 !     Default line length
       l_length = 70
@@ -126,7 +126,7 @@ contains
          l_length = l_length - 3
       endif
 !
-      l = len_trim(string)      
+      l = len_trim(string)
       l_left = l
       lines = l/l_length + 1
       printed = 1
@@ -259,7 +259,7 @@ contains
 !
    subroutine read_2_arrays_single_record_batch(batch_z, file_1, g_pqrz, file_2, g_stuz)
 !!
-!!    Read parts of the direct access files "file_1/2" 
+!!    Read parts of the direct access files "file_1/2"
 !!    into g_pqrz/g_stuz for the current batch z
 !!    NB: It is assumed that the batching index is sorted at the end
 !!        and that the record is equal to the batching index
@@ -318,7 +318,7 @@ contains
 !
    subroutine read_3_arrays_single_record_batch(batch_z, file_1, g_pqrz, file_2, g_stuz, file_3, g_vwxz)
 !!
-!!    Read parts of the direct access files "file_1/2" 
+!!    Read parts of the direct access files "file_1/2"
 !!    into g_pqrz/g_stuz for the current batch z
 !!    NB: It is assumed that the batching index is sorted at the end
 !!        and that the record is equal to the batching index
@@ -467,7 +467,7 @@ contains
 !
       type(batching_index) :: batch_z
 !
-!     Can't overload a function based on ordering alone, 
+!     Can't overload a function based on ordering alone,
 !     so optional keyword to revert order of y and z
 !
       switched = .false.
@@ -572,7 +572,7 @@ contains
    subroutine read_3_arrays_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, &
                                                    file_2, g_rszy, file_3, g_tuzy)
 !!
-!!    Read parts of the direct access files "file_1/2/3" with records of zy 
+!!    Read parts of the direct access files "file_1/2/3" with records of zy
 !!    into g_pqzy/g_rszy/g_tuzy
 !!    Reads in batches of z and y
 !!    NB: It is assumed that the batching indices are sorted at the end of the array
@@ -674,7 +674,7 @@ contains
    subroutine read_4_arrays_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, file_2,  &
                                                    g_rszy, file_3, g_tuzy, file_4, g_vwzy)
 !!
-!!    Read parts of the direct access files "file_1/2/3/4" with records of zy 
+!!    Read parts of the direct access files "file_1/2/3/4" with records of zy
 !!    into g_pqzy/g_rszy/g_tuzy/g_vwzy
 !!    Reads in batches of z and y
 !!    NB: It is assumed that the batching indices are sorted at the end of the array
@@ -799,7 +799,7 @@ contains
    end subroutine read_4_arrays_compound_record_2batches
 !
 !
-   module subroutine write_array_single_record(dim_z, file_1, g_pqrz)
+   subroutine write_array_single_record(dim_z, file_1, g_pqrz)
 !!
 !!    Writes an array to a direct access file "file_1" with records z
 !!    The last index of the array (z) is the record number
@@ -810,7 +810,7 @@ contains
 !
       integer, intent(in) :: dim_z
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
+      real(dp), dimension(:,:,:,:), contiguous, intent(in) :: g_pqrz
 !
       type(file), intent(in) :: file_1
 !
@@ -831,7 +831,7 @@ contains
    end subroutine write_array_single_record
 !
 !
-   module subroutine write_array_single_record_batch(batch_z, file_1, g_pqrz)
+   subroutine write_array_single_record_batch(batch_z, file_1, g_pqrz)
 !!
 !!    Writes an array to a direct access file "file_1" with records z
 !!    The last index of the array (z) is batched over and is also the record number
@@ -842,7 +842,7 @@ contains
 !
       type(batching_index), intent(in) :: batch_z
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
+      real(dp), dimension(:,:,:,:), contiguous, intent(in) :: g_pqrz
 !
       type(file), intent(in) :: file_1
 !
@@ -865,11 +865,11 @@ contains
    end subroutine write_array_single_record_batch
 !
 !
-   module subroutine write_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
+   subroutine write_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
 !!
 !!    Writes an array to a direct access file "file_1" with records zy
 !!
-!!    NB: It is assumed that the array is split in batches of z and y 
+!!    NB: It is assumed that the array is split in batches of z and y
 !!        which are sorted in y,z order at the end of the array
 !!
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
@@ -879,7 +879,7 @@ contains
       type(batching_index), intent(in) :: batch_z
       type(batching_index), intent(in) :: batch_y
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
+      real(dp), dimension(:,:,:,:), contiguous, intent(in) :: g_pqzy
 !
       type(file), intent(in) :: file_1
 !
@@ -909,7 +909,7 @@ contains
    end subroutine write_array_compound_record_2batches
 !
 !
-   module subroutine write_array_compound_record_1batch(dim_z, batch_y, file_1, g_pqzy)
+   subroutine write_array_compound_record_1batch(dim_z, batch_y, file_1, g_pqzy)
 !!
 !!    Writes an array to a direct access file "file_1" with records zy
 !!
@@ -922,11 +922,11 @@ contains
 !
       integer, intent(in) :: dim_z
 !
-      type(batching_index), intent(inout) :: batch_y
+      type(batching_index), intent(in) :: batch_y
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(inout) :: g_pqzy
+      real(dp), dimension(:,:,:,:), contiguous, intent(in) :: g_pqzy
 !
-      type(file), intent(inout) :: file_1
+      type(file), intent(in) :: file_1
 !
       type(batching_index) :: batch_z
 !

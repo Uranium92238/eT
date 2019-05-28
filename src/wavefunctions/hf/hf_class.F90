@@ -37,7 +37,7 @@ module hf_class
 !
    implicit none
 !
-!  Hartree-Fock wavefunction 
+!  Hartree-Fock wavefunction
 !
    type, extends(wavefunction) :: hf
 !
@@ -45,24 +45,27 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: ao_fock
       real(dp), dimension(:,:), allocatable :: mo_fock
 !
-      real(dp), dimension(:,:), allocatable :: ao_overlap 
+      real(dp), dimension(:,:), allocatable :: ao_overlap
       real(dp), dimension(:,:), allocatable :: cholesky_ao_overlap
-      real(dp), dimension(:,:), allocatable :: pivot_matrix_ao_overlap 
+      real(dp), dimension(:,:), allocatable :: pivot_matrix_ao_overlap
+!
+      real(dp), dimension(:,:), allocatable :: sp_eri_schwarz
+      integer, dimension(:,:), allocatable :: sp_eri_schwarz_list
 !
       real(dp) :: linear_dep_threshold = 1.0D-6
 !
-      real(dp) :: coulomb_threshold    = 1.0D-12   ! screening threshold 
-      real(dp) :: exchange_threshold   = 1.0D-10   ! screening threshold 
+      real(dp) :: coulomb_threshold    = 1.0D-12   ! screening threshold
+      real(dp) :: exchange_threshold   = 1.0D-10   ! screening threshold
       real(dp) :: libint_epsilon       = 1.0D-20   ! ε for libint, integral precision given
                                                    ! approximately by sqrt(ε)
 !
       type(file) :: restart_file
 !
-      integer :: n_densities 
+      integer :: n_densities
 !
    contains
 !
-!     Preparation and cleanup routines 
+!     Preparation and cleanup routines
 !
       procedure :: prepare                                  => prepare_hf
       procedure :: cleanup                                  => cleanup_hf
@@ -75,9 +78,9 @@ module hf_class
       procedure :: decompose_ao_overlap                     => decompose_ao_overlap_hf
       procedure :: print_wavefunction_summary               => print_wavefunction_summary_hf
 !
-!     AO Fock and energy related routines 
+!     AO Fock and energy related routines
 !
-      procedure :: construct_ao_fock                        => construct_ao_fock_hf            
+      procedure :: construct_ao_fock                        => construct_ao_fock_hf
       procedure :: ao_fock_construction_loop                => ao_fock_construction_loop_hf
       procedure :: ao_fock_coulomb_construction_loop        => ao_fock_coulomb_construction_loop_hf
       procedure :: ao_fock_exchange_construction_loop       => ao_fock_exchange_construction_loop_hf
@@ -93,7 +96,7 @@ module hf_class
       procedure :: update_fock_and_energy                   => update_fock_and_energy_hf
       procedure :: update_fock_and_energy_cumulative        => update_fock_and_energy_cumulative_hf
 !
-!     AO Density related routines 
+!     AO Density related routines
 !
       procedure :: construct_ao_density                     => construct_ao_density_hf
       procedure :: rotate_ao_density                        => rotate_ao_density_hf
@@ -106,12 +109,12 @@ module hf_class
       procedure :: save_ao_density                          => save_ao_density_hf
       procedure :: get_ao_density_sq                        => get_ao_density_sq_hf
       procedure :: set_initial_ao_density_guess             => set_initial_ao_density_guess_hf
-      procedure :: set_ao_density_to_sad                    => set_ao_density_to_sad_hf 
+      procedure :: set_ao_density_to_sad                    => set_ao_density_to_sad_hf
       procedure :: set_ao_density_to_core_guess             => set_ao_density_to_core_guess_hf
       procedure :: get_n_electrons_in_density               => get_n_electrons_in_density_hf
       procedure :: construct_sp_density_schwarz             => construct_sp_density_schwarz_hf
 !
-!     MO orbital related routines 
+!     MO orbital related routines
 !
       procedure :: do_roothan_hall                          => do_roothan_hall_hf
       procedure :: initialize_orbitals                      => initialize_orbitals_hf
@@ -143,7 +146,7 @@ module hf_class
       procedure :: construct_roothan_hall_gradient          => construct_roothan_hall_gradient_hf
       procedure :: get_packed_roothan_hall_gradient         => get_packed_roothan_hall_gradient_hf
 !
-!     Integral related routines 
+!     Integral related routines
 !
       procedure :: construct_sp_eri_schwarz                 => construct_sp_eri_schwarz_hf
       procedure :: get_n_sig_eri_sp                         => get_n_sig_eri_sp_hf
@@ -172,7 +175,7 @@ contains
 !
       wf%name_ = 'HF'
 !
-      wf%system => system 
+      wf%system => system
 !
       call wf%read_settings()
 !
@@ -192,13 +195,13 @@ contains
 !
       call disk%open_file(wf%restart_file, 'readwrite', 'rewind')
 !
-      write(wf%restart_file%unit) wf%n_ao 
-      write(wf%restart_file%unit) wf%n_mo 
-      write(wf%restart_file%unit) wf%n_densities 
-      write(wf%restart_file%unit) wf%n_o 
-      write(wf%restart_file%unit) wf%n_v 
+      write(wf%restart_file%unit) wf%n_ao
+      write(wf%restart_file%unit) wf%n_mo
+      write(wf%restart_file%unit) wf%n_densities
+      write(wf%restart_file%unit) wf%n_o
+      write(wf%restart_file%unit) wf%n_v
 !
-      call disk%close_file(wf%restart_file) 
+      call disk%close_file(wf%restart_file)
 !
    end subroutine prepare_hf
 !
@@ -206,21 +209,21 @@ contains
    subroutine is_restart_safe_hf(wf, task)
 !!
 !!    Is restart safe?
-!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!    Written by Eirik F. Kjønstad, Mar 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
-      character(len=*), intent(in) :: task 
+      character(len=*), intent(in) :: task
 !
       integer :: n_ao, n_mo, n_densities
 !
       call disk%open_file(wf%restart_file, 'read', 'rewind')
 !
-      read(wf%restart_file%unit) n_ao 
-      read(wf%restart_file%unit) n_mo 
-      read(wf%restart_file%unit) n_densities  
+      read(wf%restart_file%unit) n_ao
+      read(wf%restart_file%unit) n_mo
+      read(wf%restart_file%unit) n_densities
 !
       call disk%close_file(wf%restart_file)
 !
@@ -238,16 +241,16 @@ contains
 !
    subroutine print_wavefunction_summary_hf(wf)
 !!
-!!    Print wavefunction summary 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Print wavefunction summary
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Prints information related to the wavefunction, most of which is meaningful 
+!!    Prints information related to the wavefunction, most of which is meaningful
 !!    only for a properly  converged wavefunction. Should be overwritten in descendants
-!!    if more or less or other information is present. 
+!!    if more or less or other information is present.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf), intent(in) :: wf 
+      class(hf), intent(in) :: wf
 !
       real(dp) :: homo_lumo_gap
 !
@@ -267,15 +270,15 @@ contains
 !
    subroutine read_settings_hf(wf)
 !!
-!!    Read settings 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Read settings
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Designed to be overwritten by descendants with 
+!!    Designed to be overwritten by descendants with
 !!    descendant specific settings (see e.g. UHF).
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       call wf%read_hf_settings()
 !
@@ -287,9 +290,9 @@ contains
 !!    Read HF settings
 !!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       call input%get_keyword_in_section('coulomb threshold', 'solver hf', wf%coulomb_threshold)
       call input%get_keyword_in_section('exchange threshold', 'solver hf', wf%exchange_threshold)
@@ -300,19 +303,19 @@ contains
 !
    subroutine print_orbital_energies_hf(wf, indentation)
 !!
-!!    Print orbital energies  
+!!    Print orbital energies
 !!    Written by Eirik F. Kjønstad, Sep 2018
 !!
 !!    Prints the current orbital energies to output
 !!    in a hopefully readable way.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf), intent(in) :: wf 
+      class(hf), intent(in) :: wf
 !
       character(len=*), optional :: indentation
 !
-      character(len=40) :: indent 
+      character(len=40) :: indent
 !
       indent = '6'
       if (present(indentation)) indent = trim(indentation)
@@ -326,19 +329,19 @@ contains
 !
    subroutine mo_transform_hf(wf, X_wx, Y_pq)
 !!
-!!    MO transform 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    MO transform
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
 !!    Performs MO transformation of X and saves the result in Y:
 !!
 !!       Y_pq = sum_wx C_wp X_wx C_xq
 !!
-      implicit none 
+      implicit none
 !
-      class(hf), intent(in) :: wf 
+      class(hf), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: X_wx 
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Y_pq  
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: X_wx
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Y_pq
 !
       real(dp), dimension(:,:), allocatable :: Z_wq ! = sum_x X_wx C_xq
 !
@@ -362,7 +365,7 @@ contains
                   wf%n_mo,                 &
                   wf%n_ao,                 &
                   one,                     &
-                  wf%orbital_coefficients, & ! C_wp 
+                  wf%orbital_coefficients, & ! C_wp
                   wf%n_ao,                 &
                   Z_wq,                    &
                   wf%n_ao,                 &
@@ -380,22 +383,22 @@ contains
 !!    Set initial AO density
 !!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Sets initial AO density (or densities) to the 
+!!    Sets initial AO density (or densities) to the
 !!    appropriate initial guess requested by the solver.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       character(len=*) :: guess
 !
       real(dp), dimension(:,:), allocatable :: h_wx
 !
-      if (trim(guess) == 'sad' .or. trim(guess) == 'SAD') then 
+      if (trim(guess) == 'sad' .or. trim(guess) == 'SAD') then
 !
          call wf%set_ao_density_to_sad()
 !
-      elseif (trim(guess) == 'core' .or. trim(guess) == 'CORE') then 
+      elseif (trim(guess) == 'core' .or. trim(guess) == 'CORE') then
 !
          call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
          call wf%get_ao_h_wx(h_wx)
@@ -404,73 +407,73 @@ contains
 !
          call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
-      else 
+      else
 !
          call output%error_msg('Guess AO density ' // trim(guess) // ' is currently not supported.')
 !
-      endif 
+      endif
 !
    end subroutine set_initial_ao_density_guess_hf
 !
 !
    subroutine initialize_orbitals_hf(wf)
 !!
-!!    Initialize orbitals 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Initialize orbitals
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Initializes the arrays associated with the orbital 
+!!    Initializes the arrays associated with the orbital
 !!    coefficients. In spin-unrestricted wavefunctions, this
 !!    will include alpha and beta coefficients, though these
-!!    are the same and therefore redundant in restricted 
-!!    wavefunctions. 
+!!    are the same and therefore redundant in restricted
+!!    wavefunctions.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       call wf%initialize_orbital_coefficients()
       call wf%initialize_orbital_energies()
 !
-      wf%orbital_coefficients = zero 
-      wf%orbital_energies     = zero 
+      wf%orbital_coefficients = zero
+      wf%orbital_energies     = zero
 !
    end subroutine initialize_orbitals_hf
 !
 !
    subroutine initialize_density_hf(wf)
 !!
-!!    Initialize density 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Initialize density
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Initializes the AO density (or densities). 
-!!    In spin-unrestricted wavefunctions, this alpha and beta densities, 
-!!    though these are the same and therefore redundant in restricted 
-!!    wavefunctions. 
+!!    Initializes the AO density (or densities).
+!!    In spin-unrestricted wavefunctions, this alpha and beta densities,
+!!    though these are the same and therefore redundant in restricted
+!!    wavefunctions.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       call wf%initialize_ao_density()
 !
-      wf%ao_density = zero 
+      wf%ao_density = zero
 !
    end subroutine initialize_density_hf
 !
 !
    subroutine initialize_fock_hf(wf)
 !!
-!!    Initialize Fock 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Initialize Fock
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Initializes the AO Fock matrix (or matrices). 
-!!    In spin-unrestricted wavefunctions, this alpha and beta matrices, 
-!!    though these are the same and therefore redundant in restricted 
-!!    wavefunctions. 
+!!    Initializes the AO Fock matrix (or matrices).
+!!    In spin-unrestricted wavefunctions, this alpha and beta matrices,
+!!    though these are the same and therefore redundant in restricted
+!!    wavefunctions.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       call wf%initialize_ao_fock()
 !
@@ -481,78 +484,68 @@ contains
 !
    subroutine destruct_fock_hf(wf)
 !!
-!!    Destruct Fock 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Destruct Fock
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Destructs the AO Fock matrix (or matrices). 
-!!    In spin-unrestricted wavefunctions, this alpha and beta matrices, 
-!!    though these are the same and therefore redundant in restricted 
-!!    wavefunctions. 
+!!    Destructs the AO Fock matrix (or matrices).
+!!    In spin-unrestricted wavefunctions, this alpha and beta matrices,
+!!    though these are the same and therefore redundant in restricted
+!!    wavefunctions.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       call wf%destruct_ao_fock()
 !
    end subroutine destruct_fock_hf
 !
 !
-   subroutine update_fock_and_energy_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
+   subroutine update_fock_and_energy_hf(wf, h_wx)
 !!
 !!    Update Fock and energy
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
 !!    Called by solver when a new density has been obtained and
 !!    the next Fock and energy is to be computed.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
-!
-      integer, intent(in) :: n_s
+      class(hf) :: wf
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
-      real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
-!
-      call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)      
+      call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx)
 !
       call wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
 !
    end subroutine update_fock_and_energy_hf
 !
 !
-   subroutine update_fock_and_energy_cumulative_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, prev_ao_density, h_wx)
+   subroutine update_fock_and_energy_cumulative_hf(wf, prev_ao_density, h_wx)
 !!
 !!    Update Fock and energy cumulatively
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
 !!    Called by solver when a new density has been obtained and
-!!    the next Fock and energy is to be computed. By cumulatively 
+!!    the next Fock and energy is to be computed. By cumulatively
 !!    we mean using the density change to build the Fock matrix
 !!    in the iterative loop.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
-!
-      integer, intent(in) :: n_s
+      class(hf) :: wf
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in) :: prev_ao_density
 !
-      real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
-!
-      logical :: cumulative 
+      logical :: cumulative
 !
       call daxpy(wf%n_ao**2, -one, prev_ao_density, 1, wf%ao_density, 1)
 !
       cumulative = .true.
-      call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx, cumulative)
+      call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx, cumulative)
 !
       call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density, 1)
 !
@@ -563,16 +556,16 @@ contains
 !
    subroutine roothan_hall_update_orbitals_hf(wf)
 !!
-!!    Roothan-Hall update of orbitals 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Roothan-Hall update of orbitals
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    This routine guides the construction of new orbital coefficients 
-!!    from the current AO Fock matrix (or matrices if the wavefunction 
+!!    This routine guides the construction of new orbital coefficients
+!!    from the current AO Fock matrix (or matrices if the wavefunction
 !!    is unrestricted).
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies)
 !
@@ -581,15 +574,15 @@ contains
 !
    subroutine update_ao_density_hf(wf)
 !!
-!!    Update AO density 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Update AO density
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Updates the AO density (or densities, if unrestricted) based 
+!!    Updates the AO density (or densities, if unrestricted) based
 !!    on the current orbital coefficient matrix (or matrices).
-!! 
-      implicit none 
+!!
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       call wf%construct_ao_density()
 !
@@ -598,17 +591,17 @@ contains
 !
    subroutine save_ao_density_hf(wf)
 !!
-!!    Save AO density 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Save AO density
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Save the AO density (or densities, if unrestricted) based 
+!!    Save the AO density (or densities, if unrestricted) based
 !!    on the current orbital coefficient matrix (or matrices).
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
-      type(file) :: ao_density 
+      type(file) :: ao_density
 !
       call ao_density%init('ao_density', 'sequential', 'formatted')
       call disk%open_file(ao_density, 'readwrite', 'rewind')
@@ -623,14 +616,14 @@ contains
    subroutine get_ao_density_sq_hf(wf, D)
 !!
 !!    Get AO density squared
-!!    Written by Eirik F. Kjønstad, Nov 2018 
+!!    Written by Eirik F. Kjønstad, Nov 2018
 !!
-!!    Returns the unpacked AO density matrix D 
+!!    Returns the unpacked AO density matrix D
 !!    (or density matrices in descendants, see overwriting routines)
-!! 
-      implicit none 
+!!
+      implicit none
 !
-      class(hf), intent(in) :: wf 
+      class(hf), intent(in) :: wf
 !
       real(dp), dimension(:,:), intent(inout) :: D
 !
@@ -652,7 +645,7 @@ contains
 !
       write(wf%restart_file%unit) wf%energy
 !
-      call disk%close_file(wf%restart_file) 
+      call disk%close_file(wf%restart_file)
 !
       call wf%destruct_orbital_energies()
       call wf%destruct_ao_overlap()
@@ -862,24 +855,20 @@ contains
    end subroutine construct_ao_density_hf
 !
 !
-   subroutine construct_sp_eri_schwarz_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s)
+   subroutine construct_sp_eri_schwarz_hf(wf)
 !!
 !!    Construct shell-pair electronic-repulsion-integral Schwarz vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Computes a vector that contains the largest value (in absolute terms)
-!!    of g_wxwx^1/2 for each shell pair (A,B), where w and x is in A and B, 
+!!    of g_wxwx^1/2 for each shell pair (A,B), where w and x is in A and B,
 !!    respectively.
 !!
       implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       integer :: n_s
-!
-      real(dp), dimension(n_s*(n_s + 1)/2, 2) :: sp_eri_schwarz
-!
-      integer, dimension(n_s*(n_s + 1)/2, 3) :: sp_eri_schwarz_list
 !
       integer, dimension(:),  allocatable :: sp_eri_schwarz_index_list
       real(dp), dimension(:), allocatable :: sorted_sp_eri_schwarz
@@ -894,7 +883,9 @@ contains
 !
       type(interval) :: A_interval, B_interval
 !
-!     Set the maximum element in each shell pair 
+      n_s = wf%system%get_n_shells()
+!
+!     Set the maximum element in each shell pair
 !
       call set_coulomb_precision_c(1.0d-50)
 !
@@ -911,31 +902,31 @@ contains
 !
             maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
 !
-            sp_eri_schwarz(s1s2, 1) = sqrt(maximum)
+            wf%sp_eri_schwarz(s1s2, 1) = sqrt(maximum)
 !
-            sp_eri_schwarz_list(s1s2, 1) = s1 
-            sp_eri_schwarz_list(s1s2, 2) = s2
+            wf%sp_eri_schwarz_list(s1s2, 1) = s1
+            wf%sp_eri_schwarz_list(s1s2, 2) = s2
 !
          enddo
       enddo
 !$omp end parallel do
 !
-!     Sort the sp_eri_schwarz vector and use the resulting index list 
-!     to resort the sp_eri_schwarz_list matrix 
+!     Sort the sp_eri_schwarz vector and use the resulting index list
+!     to resort the sp_eri_schwarz_list matrix
 !
       call mem%alloc(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2)
       sp_eri_schwarz_index_list = 0
 !
       call mem%alloc(sorted_sp_eri_schwarz, n_s*(n_s + 1)/2)
-      sorted_sp_eri_schwarz = sp_eri_schwarz(:, 1)
+      sorted_sp_eri_schwarz = wf%sp_eri_schwarz(:, 1)
 !
-      call get_n_highest(n_s*(n_s + 1)/2, n_s*(n_s + 1)/2, sp_eri_schwarz, sorted_sp_eri_schwarz, sp_eri_schwarz_index_list)
+      call get_n_highest(n_s*(n_s + 1)/2, n_s*(n_s + 1)/2, wf%sp_eri_schwarz, sorted_sp_eri_schwarz, sp_eri_schwarz_index_list)
 !
-      sp_eri_schwarz(:, 2) = sp_eri_schwarz(:, 1)
-      sp_eri_schwarz(:, 1) = sorted_sp_eri_schwarz
+      wf%sp_eri_schwarz(:, 2) = wf%sp_eri_schwarz(:, 1)
+      wf%sp_eri_schwarz(:, 1) = sorted_sp_eri_schwarz
       call mem%dealloc(sorted_sp_eri_schwarz, n_s*(n_s + 1)/2)
 !
-      sp_eri_schwarz_list(:,3) = sp_eri_schwarz_index_list
+      wf%sp_eri_schwarz_list(:,3) = sp_eri_schwarz_index_list
       call mem%dealloc(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2)
 !
    end subroutine construct_sp_eri_schwarz_hf
@@ -943,27 +934,27 @@ contains
 !
    subroutine construct_sp_density_schwarz_hf(wf, sp_density_schwarz, D)
 !!
-!!    Construct shell-pair density schwarz vector 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Construct shell-pair density schwarz vector
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
 !!    Computes a vector that contains the largest value (in absolute terms)
-!!    of D_wx^1/2 for each shell pair (A,B), where w and x is in A and B, 
+!!    of D_wx^1/2 for each shell pair (A,B), where w and x is in A and B,
 !!    respectively.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       real(dp), dimension(wf%system%n_s, wf%system%n_s) :: sp_density_schwarz
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
 !
-      real(dp), dimension(:,:), allocatable, target :: D_red 
+      real(dp), dimension(:,:), allocatable, target :: D_red
       real(dp), dimension(:,:), contiguous, pointer :: D_red_p => null()
 !
       type(interval) :: A_interval, B_interval
 !
-      integer :: s1, s2 
+      integer :: s1, s2
       integer :: n_threads = 1, thread = 0
 !
       real(dp) :: maximum
@@ -1003,19 +994,19 @@ contains
 !
    subroutine get_n_sig_eri_sp_hf(wf, n_sig_sp, sp_eri_schwarz)
 !!
-!!    Get number of significant ERI shell-pairs 
+!!    Get number of significant ERI shell-pairs
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    Calculates the number of significant shell pairs. The threshold 
-!!    determines how small the largest element of g_wxwx in a shell 
-!!    pair AB (w in A, x in B) to be ignored completely in the Fock 
+!!    Calculates the number of significant shell pairs. The threshold
+!!    determines how small the largest element of g_wxwx in a shell
+!!    pair AB (w in A, x in B) to be ignored completely in the Fock
 !!    construction loop.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf), intent(in) :: wf 
+      class(hf), intent(in) :: wf
 !
-      integer, intent(inout) :: n_sig_sp 
+      integer, intent(inout) :: n_sig_sp
 !
       real(dp), dimension(wf%system%n_s*(wf%system%n_s + 1)/2, 2), intent(in) :: sp_eri_schwarz
 !
@@ -1064,7 +1055,7 @@ contains
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz, sp_density_schwarz
 !
       real(dp), dimension(:,:), allocatable :: h_wx
-      integer :: w, x, y, z 
+      integer :: w, x, y, z
 !
       integer :: A, B, C, D, atom
 !
@@ -1075,7 +1066,7 @@ contains
 !
       real(dp) :: maximum, max_eri, max_density
 !
-      real(dp), dimension(wf%system%max_shell_size**4) :: g 
+      real(dp), dimension(wf%system%max_shell_size**4) :: g
 !
       real(dp), dimension(wf%system%max_shell_size**4), target :: g_C, g_K
       real(dp), dimension(:,:,:,:), pointer :: g_C_p, g_K_p
@@ -1086,13 +1077,13 @@ contains
       integer, dimension(:,:), allocatable :: shells_on_atoms
 !
 !     Set thresholds to ignore Coulomb and exchange terms,
-!     as well as the desired Libint integral precision  
+!     as well as the desired Libint integral precision
 !
       coulomb_thr = wf%coulomb_threshold
-      if (present(coulomb)) coulomb_thr = coulomb 
+      if (present(coulomb)) coulomb_thr = coulomb
 !
       exchange_thr = wf%exchange_threshold
-      if (present(exchange)) exchange_thr = exchange 
+      if (present(exchange)) exchange_thr = exchange
 !
       n_s = wf%system%get_n_shells()
 !
@@ -1171,8 +1162,8 @@ contains
 !
             B_interval = wf%system%shell_limits(B)
 !
-            if (sp_eri_schwarz(A, B)*max_eri*max_density .lt. coulomb_thr) cycle  
-!           
+            if (sp_eri_schwarz(A, B)*max_eri*max_density .lt. coulomb_thr) cycle
+!
             do atom = 1, wf%system%n_atoms
 !
                do C = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
@@ -1184,15 +1175,15 @@ contains
                      D_interval = wf%system%shell_limits(D)
 !
                      if (sp_eri_schwarz(A, B)*sp_eri_schwarz(C, D)*sp_density_schwarz(C, D) &
-                                       .lt. coulomb_thr) cycle               
+                                       .lt. coulomb_thr) cycle
 !
                      call wf%system%construct_ao_g_wxyz(g_C, A, B, C, D)
 
                      g_C_p(1 : A_interval%size, 1 : B_interval%size, 1 : C_interval%size, 1 : D_interval%size) &
                                  => g_C(1 : A_interval%size*B_interval%size*C_interval%size*D_interval%size)
-!     
+!
 !                    Add Fock matrix contributions
-!     
+!
                      if (A .ne. B) then
 !
                         do w = A_interval%first, A_interval%last
@@ -1221,7 +1212,7 @@ contains
                            enddo
                         enddo
                      endif
-!                  
+!
                   enddo
                enddo
             enddo
@@ -1239,7 +1230,7 @@ contains
          do B = 1, A
 !
             B_interval = wf%system%shell_limits(B)
-!           
+!
             do atom = 1, wf%system%n_atoms
 !
                do C = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
@@ -1250,15 +1241,15 @@ contains
 !
                      D_interval = wf%system%shell_limits(D)
 !
-                     if (sp_eri_schwarz(A, D)*sp_eri_schwarz(C, B)*sp_density_schwarz(C, D) .lt. exchange_thr) cycle               
+                     if (sp_eri_schwarz(A, D)*sp_eri_schwarz(C, B)*sp_density_schwarz(C, D) .lt. exchange_thr) cycle
 !
                      call wf%system%construct_ao_g_wxyz(g_K, A, D, C, B)
 
                      g_K_p(1 : A_interval%size, 1 : D_interval%size, 1 : C_interval%size, 1 : B_interval%size) &
                                     => g_K(1 : A_interval%size*B_interval%size*C_interval%size*D_interval%size)
-!     
+!
 !                   Add Fock matrix contributions
-!     
+!
                      if (A .ne. B) then
 !
                         do w = A_interval%first, A_interval%last
@@ -1266,7 +1257,7 @@ contains
                               do y = C_interval%first, C_interval%last
                                  do z = D_interval%first, D_interval%last
 !
-                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + & 
+                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + &
                                              (- half*g_K_p(w, z, y, x))*wf%ao_density(y, z)
 !
                                  enddo
@@ -1289,7 +1280,7 @@ contains
                            enddo
                         enddo
                      endif
-!                  
+!
                   enddo
                enddo
             enddo
@@ -1343,7 +1334,7 @@ contains
    end subroutine construct_ao_fock_SAD_hf
 !
 !
-   subroutine construct_ao_fock_hf(wf, D, ao_fock, sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx, cumulative)
+   subroutine construct_ao_fock_hf(wf, D, ao_fock, h_wx, cumulative)
 !!
 !!    Construct AO Fock matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1359,19 +1350,16 @@ contains
 !
       class(hf) :: wf
 !
-      integer, intent(in) :: n_s
+      integer :: n_s
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: D 
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: ao_fock 
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: D
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: ao_fock
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
-      real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
+      logical, intent(in), optional :: cumulative
 !
-      logical, intent(in), optional :: cumulative 
-!
-      real(dp) :: coulomb_thr, exchange_thr, precision_thr 
+      real(dp) :: coulomb_thr, exchange_thr, precision_thr
 !
       integer :: thread = 0, n_threads = 1
 !
@@ -1383,22 +1371,24 @@ contains
 !
       real(dp) :: max_D_schwarz, max_eri_schwarz
 !
-      type(timings) :: ao_fock_timer 
+      type(timings) :: ao_fock_timer
+!
+      n_s = wf%system%get_n_shells()
 !
       ao_fock_timer = new_timer('AO Fock construction')
       call ao_fock_timer%turn_on()
 !
 !     Set thresholds to ignore Coulomb and exchange terms,
-!     as well as the desired Libint integral precision  
+!     as well as the desired Libint integral precision
 !
       coulomb_thr   = wf%coulomb_threshold
       exchange_thr  = wf%exchange_threshold
       precision_thr = wf%libint_epsilon
 !
       local_cumulative = .false.
-      if (present(cumulative)) then 
+      if (present(cumulative)) then
 !
-         if (cumulative) then 
+         if (cumulative) then
 !
             local_cumulative = .true.
 !
@@ -1416,29 +1406,29 @@ contains
       call wf%construct_sp_density_schwarz(sp_density_schwarz, D)
       max_D_schwarz = get_abs_max(sp_density_schwarz, n_s**2)
 !
-!     Compute number of significant ERI shell pairs (the Fock construction 
-!     only loops over these shell pairs) and the maximum element 
+!     Compute number of significant ERI shell pairs (the Fock construction
+!     only loops over these shell pairs) and the maximum element
 !
-      call wf%get_n_sig_eri_sp(n_sig_sp, sp_eri_schwarz)
-      max_eri_schwarz = get_abs_max(sp_eri_schwarz, n_s*(n_s + 1)/2)
+      call wf%get_n_sig_eri_sp(n_sig_sp, wf%sp_eri_schwarz)
+      max_eri_schwarz = get_abs_max(wf%sp_eri_schwarz, n_s*(n_s + 1)/2)
 !
-!     Construct the two electron part of the Fock matrix, using the screening vectors 
+!     Construct the two electron part of the Fock matrix, using the screening vectors
 !     and parallellizing over available threads (each gets its own copy of the Fock matrix)
 !
 !$    n_threads = omp_get_max_threads()
 !
       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
-      F = zero 
+      F = zero
 !
-      call wf%ao_fock_construction_loop(F, D, n_threads, max_D_schwarz, max_eri_schwarz,              & 
-                                         sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list,     &
-                                         n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr,     &
+      call wf%ao_fock_construction_loop(F, D, n_threads, max_D_schwarz, max_eri_schwarz,                 &
+                                         sp_density_schwarz, wf%sp_eri_schwarz, wf%sp_eri_schwarz_list,  &
+                                         n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr,        &
                                          wf%system%shell_limits)
 !
       call mem%dealloc(sp_density_schwarz, n_s, n_s)
 !
 !     Put the accumulated Fock matrices from each thread into the Fock matrix,
-!     and symmetrize the result 
+!     and symmetrize the result
 !
       if (.not. local_cumulative) ao_fock = zero
       do thread = 1, n_threads
@@ -1447,7 +1437,7 @@ contains
 !
       enddo
 !
-      call mem%dealloc(F, wf%n_ao, wf%n_ao*n_threads) 
+      call mem%dealloc(F, wf%n_ao, wf%n_ao*n_threads)
 !
       call symmetric_sum(ao_fock, wf%n_ao)
       ao_fock = ao_fock*half
@@ -1459,29 +1449,29 @@ contains
    end subroutine construct_ao_fock_hf
 !
 !
-   subroutine ao_fock_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,    & 
+   subroutine ao_fock_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,    &
                                           sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list, &
                                           n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr, shells)
 !!
-!!    AO Fock construction loop 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    AO Fock construction loop
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-!!    This routine constructs the entire two-electron part of the Fock matrix, 
+!!    This routine constructs the entire two-electron part of the Fock matrix,
 !!
 !!       F_αβ = sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ,
 !!
-!!    where contributions from different threads are gathered column blocks 
-!!    of the incoming F matrix. 
+!!    where contributions from different threads are gathered column blocks
+!!    of the incoming F matrix.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf), intent(in) :: wf 
+      class(hf), intent(in) :: wf
 !
       integer, intent(in) :: n_threads, n_s, n_sig_sp
 !
       type(interval), dimension(n_s), intent(in) :: shells
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F 
+      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, exchange_thr, precision_thr
@@ -1493,12 +1483,12 @@ contains
       real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, deg, deg_12, deg_34, deg_12_34
 !
-      integer :: w, x, y, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: w, x, y, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim
       integer :: s3s4, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
-      real(dp), dimension(wf%system%max_shell_size**4) :: g 
+      real(dp), dimension(wf%system%max_shell_size**4) :: g
 !
       integer :: thread = 0, skip
 !
@@ -1511,7 +1501,7 @@ contains
       do s1s2 = 1, n_sig_sp
 !
 !$       thread = omp_get_thread_num()
-         thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix 
+         thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix
 !
          sp_eri_schwarz_s1s2 = sp_eri_schwarz(s1s2, 1)
 !
@@ -1534,7 +1524,7 @@ contains
 !
             do s4 = 1, s4_max
 !
-               s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4 
+               s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4
 !
                temp = sp_eri_schwarz_s1s2*sp_eri_schwarz(s3s4, 2)
 
@@ -1571,20 +1561,20 @@ contains
 !
                   z_red = z - shells(s4)%first + 1
 !
-                  do y = shells(s3)%first, shells(s3)%last 
+                  do y = shells(s3)%first, shells(s3)%last
 !
                      y_red = y - shells(s3)%first + 1
 !
                      d1 = D(y, z)
 !
-                     do x = shells(s2)%first, shells(s2)%last 
+                     do x = shells(s2)%first, shells(s2)%last
 !
                         x_red = x - shells(s2)%first + 1
 !
                         d3 = D(x, y)
                         d5 = D(x, z)
 !
-                        do w = shells(s1)%first, shells(s1)%last 
+                        do w = shells(s1)%first, shells(s1)%last
 !
                            d2 = D(w, x)
                            d4 = D(w, y)
@@ -1628,29 +1618,29 @@ contains
    end subroutine ao_fock_construction_loop_hf
 !
 !
-   subroutine ao_fock_coulomb_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,     & 
+   subroutine ao_fock_coulomb_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
                                                    sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list, &
                                                    n_s, n_sig_sp, coulomb_thr, precision_thr, shells)
 !!
-!!    AO Fock Coulomb construction loop 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    AO Fock Coulomb construction loop
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-!!    This routine constructs the Coulomb two-electron part of the Fock matrix, 
+!!    This routine constructs the Coulomb two-electron part of the Fock matrix,
 !!
 !!       F_αβ = F_αβ + sum_γδ g_αβγδ D_γδ,
 !!
-!!    where contributions from different threads are gathered column blocks 
-!!    of the incoming F matrix. 
+!!    where contributions from different threads are gathered column blocks
+!!    of the incoming F matrix.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf), intent(in) :: wf 
+      class(hf), intent(in) :: wf
 !
       integer, intent(in) :: n_threads, n_s, n_sig_sp
 !
       type(interval), dimension(n_s), intent(in) :: shells
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F 
+      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, precision_thr
@@ -1662,12 +1652,12 @@ contains
       real(dp) :: d1, d2, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp7, deg, deg_12, deg_34, deg_12_34
 !
-      integer :: w, x, y, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: w, x, y, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim
       integer :: s3s4, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
-      real(dp), dimension(wf%system%max_shell_size**4) :: g 
+      real(dp), dimension(wf%system%max_shell_size**4) :: g
 !
       integer :: thread = 0, skip
 !
@@ -1680,7 +1670,7 @@ contains
       do s1s2 = 1, n_sig_sp
 !
 !$       thread = omp_get_thread_num()
-         thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix 
+         thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix
 !
          sp_eri_schwarz_s1s2 = sp_eri_schwarz(s1s2, 1)
 !
@@ -1703,7 +1693,7 @@ contains
 !
             do s4 = 1, s4_max
 !
-               s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4 
+               s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4
 !
                temp = sp_eri_schwarz_s1s2*sp_eri_schwarz(s3s4, 2)
 
@@ -1734,17 +1724,17 @@ contains
 !
                   z_red = z - shells(s4)%first + 1
 !
-                  do y = shells(s3)%first, shells(s3)%last 
+                  do y = shells(s3)%first, shells(s3)%last
 !
                      y_red = y - shells(s3)%first + 1
 !
                      d1 = D(y, z)
 !
-                     do x = shells(s2)%first, shells(s2)%last 
+                     do x = shells(s2)%first, shells(s2)%last
 !
                         x_red = x - shells(s2)%first + 1
 !
-                        do w = shells(s1)%first, shells(s1)%last 
+                        do w = shells(s1)%first, shells(s1)%last
 !
                            d2 = D(w, x)
 !
@@ -1773,29 +1763,29 @@ contains
    end subroutine ao_fock_coulomb_construction_loop_hf
 !
 !
-   subroutine ao_fock_exchange_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz, & 
+   subroutine ao_fock_exchange_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz, &
                                           sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list,       &
                                           n_s, n_sig_sp, exchange_thr, precision_thr, shells)
 !!
-!!    AO Fock exchange construction loop 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    AO Fock exchange construction loop
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-!!    This routine constructs the entire two-electron part of the Fock matrix, 
+!!    This routine constructs the entire two-electron part of the Fock matrix,
 !!
 !!       F_αβ = F_αβ - 1/2 * sum_γδ g_αδγβ D_γδ,
 !!
-!!    where contributions from different threads are gathered column blocks 
-!!    of the incoming F matrix. 
+!!    where contributions from different threads are gathered column blocks
+!!    of the incoming F matrix.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf), intent(in) :: wf 
+      class(hf), intent(in) :: wf
 !
       integer, intent(in) :: n_threads, n_s, n_sig_sp
 !
       type(interval), dimension(n_s), intent(in) :: shells
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F 
+      real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, exchange_thr, precision_thr
@@ -1807,12 +1797,12 @@ contains
       real(dp) :: d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp3, temp4, temp5, temp6, temp8, deg, deg_12, deg_34, deg_12_34
 !
-      integer :: w, x, y, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: w, x, y, z, s1s2, s1, s2, s3, s4, s4_max, tot_dim
       integer :: s3s4, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
-      real(dp), dimension(wf%system%max_shell_size**4) :: g 
+      real(dp), dimension(wf%system%max_shell_size**4) :: g
 !
       integer :: thread = 0, skip
 !
@@ -1825,7 +1815,7 @@ contains
       do s1s2 = 1, n_sig_sp
 !
 !$       thread = omp_get_thread_num()
-         thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix 
+         thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix
 !
          sp_eri_schwarz_s1s2 = sp_eri_schwarz(s1s2, 1)
 !
@@ -1848,7 +1838,7 @@ contains
 !
             do s4 = 1, s4_max
 !
-               s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4 
+               s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4
 !
                temp = sp_eri_schwarz_s1s2*sp_eri_schwarz(s3s4, 2)
 
@@ -1882,18 +1872,18 @@ contains
 !
                   z_red = z - shells(s4)%first + 1
 !
-                  do y = shells(s3)%first, shells(s3)%last 
+                  do y = shells(s3)%first, shells(s3)%last
 !
                      y_red = y - shells(s3)%first + 1
 !
-                     do x = shells(s2)%first, shells(s2)%last 
+                     do x = shells(s2)%first, shells(s2)%last
 !
                         x_red = x - shells(s2)%first + 1
 !
                         d3 = D(x, y)
                         d5 = D(x, z)
 !
-                        do w = shells(s1)%first, shells(s1)%last 
+                        do w = shells(s1)%first, shells(s1)%last
 !
                            d4 = D(w, y)
                            d6 = D(w, z)
@@ -1963,7 +1953,7 @@ contains
 !
    subroutine calculate_hf_energy_from_fock_hf(wf, F_wx, h_wx)
 !!
-!!    Calculate HF energy from F 
+!!    Calculate HF energy from F
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Calculates the Hartree-Fock energy,
@@ -2015,7 +2005,7 @@ contains
 !
    subroutine set_ao_fock_hf(wf, F)
 !!
-!!    Set AO Fock 
+!!    Set AO Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Sets the AO Fock from input
@@ -2033,7 +2023,7 @@ contains
 !
    subroutine get_ao_fock_hf(wf, F)
 !!
-!!    Set AO Fock 
+!!    Set AO Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Sets the AO Fock from input
@@ -2068,8 +2058,8 @@ contains
 !!    Construct MO Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Constructs the MO Fock matrix F_pq using the current AO 
-!!    Fock and the orbital coefficients. 
+!!    Constructs the MO Fock matrix F_pq using the current AO
+!!    Fock and the orbital coefficients.
 !!
       implicit none
 !
@@ -2077,7 +2067,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: X
 !
-      call mem%alloc(X, wf%n_ao, wf%n_mo)   
+      call mem%alloc(X, wf%n_ao, wf%n_mo)
 !
       call dgemm('N', 'N',                   &
                   wf%n_ao,                   &
@@ -2227,14 +2217,14 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Performs a Cholesky decomposition of the AO overlap matrix S,
-!!    to within a given threshold: 
+!!    to within a given threshold:
 !!
-!!       P^T S P = L L^T 
+!!       P^T S P = L L^T
 !!
 !!    The routine allocates and sets P and L, the 'permutation matrix'
-!!    and the 'cholesky ao overlap'. Moreover, it sets the number of 
-!!    linearly independent AOs, wf%n_mo, which is sometimes less than 
-!!    wf%n_ao. From P and L, we can transform equations to the linearly 
+!!    and the 'cholesky ao overlap'. Moreover, it sets the number of
+!!    linearly independent AOs, wf%n_mo, which is sometimes less than
+!!    wf%n_ao. From P and L, we can transform equations to the linearly
 !!    independent basis and back.
 !!
       implicit none
@@ -2679,19 +2669,19 @@ contains
 !
    subroutine get_packed_roothan_hall_gradient_hf(wf, G)
 !!
-!!    Get packed Roothan-Hall gradient 
-!!    Written by Eirik F. Kjønstad, Nov 2018 
+!!    Get packed Roothan-Hall gradient
+!!    Written by Eirik F. Kjønstad, Nov 2018
 !!
-!!    Constructs and returns the gradient as an 
+!!    Constructs and returns the gradient as an
 !!    anti-symmetrized packed vector.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf), intent(in) :: wf 
+      class(hf), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities), intent(inout) :: G 
+      real(dp), dimension(wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities), intent(inout) :: G
 !
-      real(dp), dimension(:,:), allocatable :: G_sq, Po, Pv 
+      real(dp), dimension(:,:), allocatable :: G_sq, Po, Pv
 !
       call mem%alloc(Po, wf%n_ao, wf%n_ao)
       call mem%alloc(Pv, wf%n_ao, wf%n_ao)
@@ -2707,7 +2697,7 @@ contains
       call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock)
 !
       call mem%dealloc(Po, wf%n_ao, wf%n_ao)
-      call mem%dealloc(Pv, wf%n_ao, wf%n_ao)      
+      call mem%dealloc(Pv, wf%n_ao, wf%n_ao)
 !
       G = zero
       call packin_anti(G, G_sq, wf%n_ao)
@@ -2773,36 +2763,36 @@ contains
 !!
 !!       P^T F P (P^T C) = P^T S P P^T C e = L L^T (P^T C) e,
 !!
-!!    which differs from the AO basis if linear dependence is present 
-!!    to within some given threshold. The components of the equation is 
+!!    which differs from the AO basis if linear dependence is present
+!!    to within some given threshold. The components of the equation is
 !!    given by the Cholesky decomposition
 !!
 !!       P^T S P = L L^T,
 !!
 !!    where P is referred to as the 'permutation matrix' and L the 'cholesky
-!!    ao overlap' (note that these are member variables of the solver which 
-!!    must be set by a call to solver%decompose_ao_overlap(wf)). The number 
-!!    of linearly independent orbitals is wf%n_mo, whereas the full number 
-!!    is wf%n_ao.   
+!!    ao overlap' (note that these are member variables of the solver which
+!!    must be set by a call to solver%decompose_ao_overlap(wf)). The number
+!!    of linearly independent orbitals is wf%n_mo, whereas the full number
+!!    is wf%n_ao.
 !!
-!!    Default is to not transform the Fock matrix to the MO basis. If 
-!!    do_mo_transformation is passed and is set true, the MO Fock matrix 
-!!    is initialized and transformed to the MO basis: 
+!!    Default is to not transform the Fock matrix to the MO basis. If
+!!    do_mo_transformation is passed and is set true, the MO Fock matrix
+!!    is initialized and transformed to the MO basis:
 !!
-!!       F_mo = C'^T P^T F P C' 
+!!       F_mo = C'^T P^T F P C'
 !!
       implicit none
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)     :: F 
-      real(dp), dimension(wf%n_ao, wf%n_mo), intent(inout)  :: C 
-      real(dp), dimension(wf%n_mo), intent(inout)           :: e  
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)     :: F
+      real(dp), dimension(wf%n_ao, wf%n_mo), intent(inout)  :: C
+      real(dp), dimension(wf%n_mo), intent(inout)           :: e
 !
       real(dp), dimension(:), allocatable   :: work
-      real(dp), dimension(:,:), allocatable :: metric 
-      real(dp), dimension(:,:), allocatable :: ao_fock 
-      real(dp), dimension(:,:), allocatable :: FP 
+      real(dp), dimension(:,:), allocatable :: metric
+      real(dp), dimension(:,:), allocatable :: ao_fock
+      real(dp), dimension(:,:), allocatable :: FP
 !
       real(dp), dimension(:,:), allocatable :: prev_C
 !
@@ -2817,7 +2807,7 @@ contains
                   wf%n_mo,                &
                   wf%n_mo,                &
                   one,                    &
-                  wf%cholesky_ao_overlap, & 
+                  wf%cholesky_ao_overlap, &
                   wf%n_mo,                &
                   wf%cholesky_ao_overlap, &
                   wf%n_mo,                &
@@ -2825,12 +2815,12 @@ contains
                   metric,                 & ! metric = L L^T
                   wf%n_mo)
 !
-!     Allocate reduced space matrices 
+!     Allocate reduced space matrices
 !
       call mem%alloc(ao_fock, wf%n_mo, wf%n_mo)
 !
 !     Construct reduced space Fock matrix, F' = P^T F P,
-!     which is to be diagonalized over the metric L L^T 
+!     which is to be diagonalized over the metric L L^T
 !
       call mem%alloc(FP, wf%n_ao, wf%n_mo)
 !
@@ -2843,7 +2833,7 @@ contains
                   wf%n_ao,                      &
                   wf%pivot_matrix_ao_overlap,   &
                   wf%n_ao,                      &
-                  zero,                         &  
+                  zero,                         &
                   FP,                           &
                   wf%n_ao)
 !
@@ -2858,9 +2848,9 @@ contains
                   wf%n_ao,                      &
                   zero,                         &
                   ao_fock,                      & ! F' = P^T F P
-                  wf%n_mo)   
+                  wf%n_mo)
 !
-      call mem%dealloc(FP, wf%n_mo, wf%n_ao) 
+      call mem%dealloc(FP, wf%n_mo, wf%n_ao)
 !
 !     Solve F'C' = L L^T C' e
 !
@@ -2888,7 +2878,7 @@ contains
 !     Transform back the solutions to original basis, C = P (P^T C) = P C'
 !
       call mem%alloc(prev_C, wf%n_ao, wf%n_mo)
-      prev_C = C 
+      prev_C = C
 !
       call dgemm('N','N',                       &
                   wf%n_ao,                      &
@@ -2897,7 +2887,7 @@ contains
                   one,                          &
                   wf%pivot_matrix_ao_overlap,   &
                   wf%n_ao,                      &
-                  ao_fock,                      & ! orbital coefficients 
+                  ao_fock,                      & ! orbital coefficients
                   wf%n_mo,                      &
                   zero,                         &
                   C,                            &
@@ -2906,15 +2896,15 @@ contains
       call mem%dealloc(ao_fock, wf%n_mo, wf%n_mo)
 !
 !     Test for orbitals that were approximately sign-flipped by dsygv,
-!     resetting them if this is the case (this changes the orbitals 
+!     resetting them if this is the case (this changes the orbitals
 !     minimally, thus preserving the sweetness of whatever CC guess
 !     is on file).
 !
-      do p = 1, wf%n_mo 
+      do p = 1, wf%n_mo
 !
          orbital_dotprod = ddot(wf%n_ao, prev_C(1, p), 1, C(1, p), 1)/ddot(wf%n_ao, C(1, p), 1, C(1, p), 1)
 !
-         if (orbital_dotprod .lt. zero) then 
+         if (orbital_dotprod .lt. zero) then
 !
             C(:,p) = -C(:,p)
 !
@@ -2927,48 +2917,48 @@ contains
 !
    subroutine set_ao_density_to_sad_hf(wf)
 !!
-!!    Set AO density to SAD 
-!!    Written by Eirik F. Kjønstad, Aug-Sep 2018 
+!!    Set AO density to SAD
+!!    Written by Eirik F. Kjønstad, Aug-Sep 2018
 !!
-!!    The routine uses the pre-computed library of atomic densities to 
-!!    assemble the superposition of atomic densities (SAD) start guess.  
+!!    The routine uses the pre-computed library of atomic densities to
+!!    assemble the superposition of atomic densities (SAD) start guess.
 !!    The library is assumed to be in the location given by the environ-
-!!    ment variable "ET_SAD_DIR". Note that the library is located in the 
+!!    ment variable "ET_SAD_DIR". Note that the library is located in the
 !!    directory
 !!
 !!       eT/src/molecular_system/sad/ => set ET_SAD_DIR accordingly
 !!
-!!    The SAD guess is based on ground state UHF calculations, where 
-!!    the valence electrons are evenly spread out in the degenerate HOMO 
-!!    orbitals (to ensure a spherically symmetric AO density, which in 
+!!    The SAD guess is based on ground state UHF calculations, where
+!!    the valence electrons are evenly spread out in the degenerate HOMO
+!!    orbitals (to ensure a spherically symmetric AO density, which in
 !!    turn ensures a rotationally invariant SAD guess for the molecule).
 !!
-!!    The algorithm is based on the procedure implemented in Psi4, although 
-!!    we perform spherical averaging of the densities in the UHF calculations 
-!!    in order to get a unique rotationally invariant SAD density. This is 
+!!    The algorithm is based on the procedure implemented in Psi4, although
+!!    we perform spherical averaging of the densities in the UHF calculations
+!!    in order to get a unique rotationally invariant SAD density. This is
 !!    especially important for us, since we will use the initial idempotent
-!!    density that results from a single Roothan-Hall step in multilevel HF 
-!!    calculations. The atomic calculations are performed with the ground 
+!!    density that results from a single Roothan-Hall step in multilevel HF
+!!    calculations. The atomic calculations are performed with the ground
 !!    state multiplicities, as listed in Griffiths, David J.,
 !!    "Introduction to Quantum Mechanics." (1995).
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
       integer :: I, n_ao_on_atom, first_ao_on_atom, last_ao_on_atom, n_s_on_atom
 !
       real(dp), dimension(:,:), allocatable :: atomic_density
 !
-      wf%ao_density = zero 
+      wf%ao_density = zero
 !
       do I = 1, wf%system%n_atoms
 !
          n_ao_on_atom     = wf%system%atoms(I)%n_ao
          n_s_on_atom      = wf%system%atoms(I)%n_shells
 !
-         first_ao_on_atom = wf%system%atoms(I)%shells(1)%first 
-         last_ao_on_atom  = wf%system%atoms(I)%shells(n_s_on_atom)%last 
+         first_ao_on_atom = wf%system%atoms(I)%shells(1)%first
+         last_ao_on_atom  = wf%system%atoms(I)%shells(n_s_on_atom)%last
 !
          call mem%alloc(atomic_density, n_ao_on_atom, n_ao_on_atom)
 !
@@ -2979,29 +2969,29 @@ contains
 !
          call mem%dealloc(atomic_density, n_ao_on_atom, n_ao_on_atom)
 !
-      enddo 
+      enddo
 !
    end subroutine set_ao_density_to_sad_hf
 !
 !
    subroutine get_n_electrons_in_density_hf(wf, n_electrons)
 !!
-!!    Get number of electrons in density 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Get number of electrons in density
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Calculates the number of electrons in the current 
-!!    AO density, a useful check on the sensibility of the 
-!!    initial AO density guess. It is by default printed 
+!!    Calculates the number of electrons in the current
+!!    AO density, a useful check on the sensibility of the
+!!    initial AO density guess. It is by default printed
 !!    by some solvers.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf), intent(in)   :: wf 
-      real(dp), intent(inout) :: n_electrons 
+      class(hf), intent(in)   :: wf
+      real(dp), intent(inout) :: n_electrons
 !
-      integer :: ao 
+      integer :: ao
 !
-      real(dp), dimension(:,:), allocatable :: DS 
+      real(dp), dimension(:,:), allocatable :: DS
 !
       call mem%alloc(DS, wf%n_ao, wf%n_ao)
 !
@@ -3038,16 +3028,16 @@ contains
 !!
 !!    Solves the Roothan-Hall equation ignoring the two-
 !!    electron AO density dependent part of the Fock matrix,
-!!    giving an initial density from the resulting orbital 
-!!    coefficients. 
+!!    giving an initial density from the resulting orbital
+!!    coefficients.
 !!
-      implicit none 
+      implicit none
 !
-      class(hf) :: wf 
+      class(hf) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx 
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
-      wf%ao_fock = h_wx 
+      wf%ao_fock = h_wx
       call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies)
       call wf%construct_ao_density()
 !
@@ -3084,15 +3074,15 @@ contains
 !
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()
-      call wf%decompose_ao_overlap() 
+      call wf%decompose_ao_overlap()
 !
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-      write(output%unit, '(/t6,a30,i8)') 'Number of occupied orbitals:  ', wf%n_o 
+      write(output%unit, '(/t6,a30,i8)') 'Number of occupied orbitals:  ', wf%n_o
       write(output%unit, '(t6,a30,i8)')  'Number of virtual orbitals:   ', wf%n_v
-      write(output%unit, '(t6,a30,i8)')  'Number of molecular orbitals: ', wf%n_mo 
-      write(output%unit, '(t6,a30,i8)')  'Number of atomic orbitals:    ', wf%n_ao 
+      write(output%unit, '(t6,a30,i8)')  'Number of molecular orbitals: ', wf%n_mo
+      write(output%unit, '(t6,a30,i8)')  'Number of atomic orbitals:    ', wf%n_ao
 !
      if (wf%n_mo .lt. wf%n_ao) &
             write(output%unit, '(/t6, a, i4, a)')'Removed ', wf%n_ao - wf%n_mo, ' AOs due to linear dep.'
@@ -3102,10 +3092,10 @@ contains
 !
    subroutine set_screening_and_precision_thresholds_hf(wf, gradient_threshold)
 !!
-!!    Set screening and precision thresholds 
+!!    Set screening and precision thresholds
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Sets the screening thresholds for Coulomb and exchange 
+!!    Sets the screening thresholds for Coulomb and exchange
 !!    integrals given the convergence threshold for the gradient
 !!
 !!       coulomb_threshold = gradient_threshold * 1.0d-2

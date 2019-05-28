@@ -125,12 +125,12 @@ contains
 !
    subroutine read_settings_fop_engine(engine)
 !!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(fop_engine) :: engine 
+      class(fop_engine) :: engine
 !
       call engine%read_gs_settings()
       call engine%read_es_settings()
@@ -141,12 +141,12 @@ contains
 !
    subroutine read_fop_settings_fop_engine(engine)
 !!
-!!    Read FOP settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!    Read FOP settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(fop_engine) :: engine 
+      class(fop_engine) :: engine
 !
       if (input%requested_keyword_in_section('dipole length','cc fop')) engine%dipole_length = .true.
       if (input%requested_keyword_in_section('eom','cc fop')) engine%eom   = .true.
@@ -208,17 +208,17 @@ contains
 !
          do component = 1, size(components)
 !
-            call wf%construct_csiX(operator(:,:,component), csiX)      
+            call wf%construct_csiX(operator(:,:,component), csiX)
 !
             call wf%construct_eom_etaX(operator(:,:,component), csiX, etaX)
 !
 !           Loop over excited states and calculate transition strength
-!  
+!
             do state = 1, n_states
 !
                call wf%calculate_transition_strength(transition_strength(component, state), etaX, &
                    csiX, state, transition_moment_left(component, state), transition_moment_right(component, state))
-!    
+!
             enddo
 !
          enddo
@@ -230,7 +230,7 @@ contains
 !
       call mem%dealloc(transition_strength, 3, n_states)
       call mem%dealloc(transition_moment_left, 3, n_states)
-      call mem%dealloc(transition_moment_right, 3, n_states)      
+      call mem%dealloc(transition_moment_right, 3, n_states)
 !
    end subroutine do_eom_fop_engine
 !
@@ -255,7 +255,7 @@ contains
       integer :: component, state
 !
       real(dp) :: sum_strength
-!              
+!
       write(output%unit, '(/t3,a)') '- Summary of EOM first order properties calculation:'
 !
       do state = 1, n_states
@@ -267,7 +267,7 @@ contains
 !
          write(output%unit, '(t6, a30, f19.8)')  'Hartree-to-eV (CODATA 2014):  ', Hartree_to_eV
 !
-         write(output%unit, '(/t6,a)')  '                 Transition moments               Transition strength   '    
+         write(output%unit, '(/t6,a)')  '                 Transition moments               Transition strength   '
          write(output%unit, '(t6,a)')   '------------------------------------------------------------------------'
          write(output%unit, '(t6,a)')   'Comp. q     < k |q| 0 >       < 0 |q| k >       < k |q| 0 > < 0 |q| k > '
          write(output%unit, '(t6,a)')   '------------------------------------------------------------------------'
@@ -284,7 +284,7 @@ contains
             sum_strength = sum_strength + transition_strength(component, state)
 !
          enddo
-!   
+!
          write(output%unit, '(t6,a)')   '-------------------------------------------------------------------------'
 !
          write(output%unit, '(t6, a21, f19.12)') 'Oscillator strength: ', (two/three)*excitation_energies(state)*sum_strength
@@ -297,7 +297,7 @@ contains
 !
    subroutine set_printables_fop_engine(engine)
 !!
-!!    Set printables 
+!!    Set printables
 !!    Written by sarai D. Folkestad, May 2019
 !!
       implicit none
