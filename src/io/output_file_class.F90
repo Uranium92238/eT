@@ -200,15 +200,21 @@ contains
 !  
    subroutine printf_output_file(the_file, string, reals, ints, fs, ll)
 !!
-!!    Print any number of reals and ints formatted python style
+!!    Printf 
 !!    Written by Rolf Heilemann Myhre, May 2019
 !!
+!!    Prints any number of reals and integers formatted Python style.
+!!
 !!    string:   String of character that should be printed, 
-!!              including formatting of reals and doubles
-!!    reals:    Array of real(dp) to print
-!!    ints:     Array of integers to print
-!!    ll:       integer with desired line length passed to print_long_string  
-!!    fs:       Format string passed to print_long_string
+!!              including formatting of reals and integers 
+!!    reals:    Array of real(dp) to print - in the order specified by string 
+!!    ints:     Array of integers to print - in the order specified by string 
+!!    fs:       Specifies the format of 'string', e.g. fs='(/t6,a)' gives 
+!!              a new line, then indentation 6, then the value of 'string'
+!!              with reals and integers as specified.
+!!    ll:       Integer specifying number of characters per line of print.
+!!
+!!    Example: call output%printf('Energy (a.u.): (f18.12)', reals=[wf%energy], fs='(/t6,a)')
 !!
       implicit none
 !
