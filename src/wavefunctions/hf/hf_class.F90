@@ -344,7 +344,7 @@ contains
 !  
       class(hf), intent(in) :: wf 
 !
-      integer, parameter :: n_entries  = 5
+      integer, parameter :: n_entries  = 4
       integer, parameter :: max_virtuals = 10
 !
       integer :: atom, mo_offset, first_mo, last_mo, shell, ao, mo, l, mos_to_print
@@ -363,7 +363,7 @@ contains
 !
          write(output%unit, '(/t3,a,i0,a,i0,a/)') '- Molecular orbitals ', first_mo, ' to ', last_mo, ':'
 !
-         write(output%unit, '(t6,a)', advance='no') 'I    Atom(l)'
+         write(output%unit, '(t6,a)', advance='no') 'AO   Atom'
 !
          adv = 'no'
          do mo = first_mo, last_mo 
@@ -372,7 +372,7 @@ contains
 !
             if (mo == first_mo) then
 !
-               write(output%unit, '(6x,i4)', advance=adv) mo 
+               write(output%unit, '(7x,i4)', advance=adv) mo 
 !
             else
 !
@@ -382,7 +382,7 @@ contains
 !
          enddo
 !
-         write(output%unit, '(t5,a)') '---------------------------------------------------------------------------'
+         write(output%unit, '(t5,a)') '---------------------------------------------------------------'
 !
          do atom = 1, wf%system%n_atoms
 !
@@ -392,7 +392,7 @@ contains
 !
                do ao = wf%system%atoms(atom)%shells(shell)%first, wf%system%atoms(atom)%shells(shell)%last 
 !
-                  write(output%unit, '(t3,i4,5x,a2,a1,a1,a1,2x)', advance='no') atom, &
+                  write(output%unit, '(t3,i4,i4,1x,a2,a1,a1,a1)', advance='no') ao, atom, &
                                                                           wf%system%atoms(atom)%symbol, &
                                                                          '(', angular_momentum(l + 1), ')'
 !
@@ -410,7 +410,7 @@ contains
 !
          enddo
 !
-         write(output%unit, '(t5,a)') '---------------------------------------------------------------------------'
+         write(output%unit, '(t5,a)') '---------------------------------------------------------------'
 !
       enddo 
 !
