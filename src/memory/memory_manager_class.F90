@@ -1551,7 +1551,7 @@ contains
       req2_min   = (req2 + int(req2*buff))*e_size
       req3_min   = (req3 + int(req3*buff))*e_size
 ! 
-      req_min = req0_tot + req1_min + req2_min + req3_min
+      req_min = req0_tot + 3*req1_min + 6*req2_min + 9*req3_min
 !
       req_tot = req0_tot + req1_min*(batch_p%index_dimension) &
                          + req2_min*(batch_p%index_dimension)**2 &
@@ -1595,10 +1595,10 @@ contains
                incremented = .false.
             endif
 !
-            if (  elements**3*req3_min   &
-                + 6*elements**2*req2_min &
-                + 3*elements*req1_min    &
-                + req0 .ge. mem%available) then 
+            if (  9*elements**3*req3_min  &
+                + 6*elements**2*req2_min  &
+                + 3*elements*req1_min     &
+                + req0_tot .ge. mem%available) then 
 !
                found_batch_size = .true.       ! cannot hold +1 batch size 
 !

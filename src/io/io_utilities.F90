@@ -547,7 +547,7 @@ contains
    end subroutine read_4_arrays_compound_record_2batches
 !
 !
-   module subroutine write_array_single_record(dim_z, file_1, g_pqrz)
+   subroutine write_array_single_record(dim_z, file_1, g_pqrz)
 !!
 !!    Writes an array to a direct access file "file_1" with records z
 !!    The last index of the array (z) is the record number
@@ -558,7 +558,7 @@ contains
 !
       integer, intent(in) :: dim_z
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
+      real(dp), dimension(:,:,:,:), contiguous, intent(in) :: g_pqrz
 !
       type(direct_file), intent(in) :: file_1
 !
@@ -573,7 +573,7 @@ contains
    end subroutine write_array_single_record
 !
 !
-   module subroutine write_array_single_record_batch(batch_z, file_1, g_pqrz)
+   subroutine write_array_single_record_batch(batch_z, file_1, g_pqrz)
 !!
 !!    Writes an array to a direct access file "file_1" with records z
 !!    The last index of the array (z) is batched over and is also the record number
@@ -584,7 +584,7 @@ contains
 !
       type(batching_index), intent(in) :: batch_z
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
+      real(dp), dimension(:,:,:,:), contiguous, intent(in) :: g_pqrz
 !
       type(direct_file), intent(in) :: file_1
 !
@@ -601,7 +601,7 @@ contains
    end subroutine write_array_single_record_batch
 !
 !
-   module subroutine write_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
+   subroutine write_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
 !!
 !!    Writes an array to a direct access file "file_1" with records zy
 !!
@@ -615,7 +615,7 @@ contains
       type(batching_index), intent(in) :: batch_z
       type(batching_index), intent(in) :: batch_y
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
+      real(dp), dimension(:,:,:,:), contiguous, intent(in) :: g_pqzy
 !
       type(direct_file), intent(in) :: file_1
 !
@@ -640,7 +640,7 @@ contains
    end subroutine write_array_compound_record_2batches
 !
 !
-   module subroutine write_array_compound_record_1batch(dim_z, batch_y, file_1, g_pqzy)
+   subroutine write_array_compound_record_1batch(dim_z, batch_y, file_1, g_pqzy)
 !!
 !!    Writes an array to a direct access file "file_1" with records zy
 !!
