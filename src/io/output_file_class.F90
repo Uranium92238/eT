@@ -198,7 +198,7 @@ contains
    end subroutine warning_msg_output_file
 !
 !  
-   subroutine printf_output_file(the_file, string, reals, ints, logs, fs, ll)
+   subroutine printf_output_file(the_file, string, reals, ints, chars, logs, fs, ffs, lfs, ll)
 !!
 !!    Printf 
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -209,9 +209,16 @@ contains
 !!              including formatting of reals and integers 
 !!    reals:    Array of real(dp) to print - in the order specified by string 
 !!    ints:     Array of integers to print - in the order specified by string 
+!!    chars:    Array of strings to print - in the order specified by string
+!!              Note that all the strings must be of same length in Fortran
+!!
 !!    fs:       Specifies the format of the entire string, e.g. fs='(/t6,a)' gives 
 !!              a new line, then indentation 5, then the value of 'string'
-!!              with reals and integers as specified.
+!!              with reals and integers as specified. Default: '(t3,a)'
+!!    ffs:      Specifies the format of the first printed line if different from fs. 
+!!              Default: same as fs
+!!    lfs:      Specifies the format of the last printed line if different from fs. 
+!!              Default: same as fs
 !!    ll:       Integer specifying number of characters per line of print.
 !!
 !!    Example: call output%printf('Energy (a.u.): (f19.12)', reals=[wf%energy], fs='(/t6,a)')
@@ -220,23 +227,31 @@ contains
 !
       class(output_file), intent(in) :: the_file
 !
-      character(len=*), intent(in)                 :: string 
-      real(dp), dimension(:), intent(in), optional :: reals 
-      integer, dimension(:), intent(in), optional  :: ints
-      logical, dimension(:), intent(in), optional  :: logs
-      integer, intent(in), optional                :: ll
-      character(len=*), optional, intent(in)       :: fs
+!     Data to print
+      character(len=*), intent(in)                          :: string 
+      real(dp), dimension(:), intent(in), optional          :: reals 
+      integer, dimension(:), intent(in), optional           :: ints
+      character(len=*), dimension(:), intent(in), optional  :: chars
+      logical, dimension(:), intent(in), optional           :: logs
+!
+!     Parameters to pass to long_string_print
+      integer, intent(in), optional                         :: ll
+      character(len=*), optional, intent(in)                :: fs
+      character(len=*), optional, intent(in)                :: ffs
+      character(len=*), optional, intent(in)                :: lfs
 !
       character(len=1000)  :: pstring 
       character(len=20)    :: fstring 
 !
       integer :: i, p_pos, int_check, i_err
-      integer :: int_len, real_len, log_len, string_len
-      integer :: int_count, real_count, log_count
+      integer :: int_len, real_len, log_len, char_len, string_len
+      integer :: int_count, real_count, log_count, char_count
       integer :: print_pos, printed
 !
       integer           :: l_length
       character(len=20) :: f_string
+      character(len=20) :: ff_string
+      character(len=20) :: lf_string
 !
 !     Set print string and format string blank
       pstring = ' '
@@ -265,6 +280,13 @@ contains
          log_len = 0
       endif
 !
+!     Check how many chars are present
+      if(present(chars)) then
+         char_len = size(chars)
+      else
+         char_len = 0
+      endif
+!
 !     Line length to send to long_string_print
       if(present(ll)) then
          l_length = ll
@@ -279,9 +301,24 @@ contains
          f_string = '(t3,a)'
       endif
 !
+!     First line format string to send to long_string_print
+      if(present(ffs)) then
+         ff_string = ffs
+      else
+         ff_string = f_string
+      endif
+!
+!     Last line format string to send to long_string_print
+      if(present(lfs)) then
+         lf_string = lfs
+      else
+         lf_string = f_string
+      endif
+!
       real_count = 0
       int_count  = 0
       log_count  = 0
+      char_count  = 0
 !
       print_pos = 1
       printed = 1
@@ -387,8 +424,6 @@ contains
                      fstring(2:2) = 'a'
                   endif
 !
-                  write(output%unit,*) fstring
-!
                   if(logs(log_count)) then
                      write(pstring(print_pos:), fstring) 'True'     
                   else
@@ -397,6 +432,41 @@ contains
 !
 !                 Set next position to print
                   print_pos = len_trim(pstring) + 1
+!
+               endif
+!  
+!           Is ( followed by a or A?
+            elseif(string(i+1:i+1) .eq. "a" .or. string(i+1:i+1) .eq. "A") then
+!
+!              Is it followed by a number, if so, assume a format string
+               read(string(i+2:),'(i1)',iostat=i_err) int_check
+               if (i_err .eq. 0) then
+!
+                  char_count = char_count + 1
+                  if (char_count .gt. char_len) call the_file%error_msg('Not enough chars in printf')
+!
+!                 Print everything between previous print and (
+                  write(pstring(print_pos:),'(a)') string(printed:i-1)
+                  print_pos = print_pos + i - printed
+                  p_pos = i
+!
+!                 Get length of format string
+                  do while (string(i:i) .ne. ")" .and. i .le. string_len)
+                     i = i + 1
+                  enddo
+!
+                  printed = i + 1
+!
+!                 Copy format string to fstring and check if a0
+                  fstring = string(p_pos:i)
+                  if (fstring(2:3) .eq. 'a0') then
+                     fstring = '(a)'
+                  endif
+!
+                  write(pstring(print_pos:), fstring) trim(chars(char_count))
+!
+!                 Set next position to print
+                  print_pos = print_pos + len_trim(chars(char_count)) + 1
 !
                endif
             endif
@@ -410,7 +480,7 @@ contains
 !
       enddo 
 !
-      call the_file%long_string_print(pstring, fs=f_string, ll=l_length)
+      call the_file%long_string_print(pstring, fs=f_string, ffs=ff_string, lfs=lf_string, ll=l_length)
 !
    end subroutine printf_output_file
 !
