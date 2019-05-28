@@ -198,7 +198,7 @@ contains
    end subroutine warning_msg_output_file
 !
 !  
-   subroutine printf_output_file(the_file, string, reals, ints, fs, ll)
+   subroutine printf_output_file(the_file, string, reals, ints, logs, fs, ll)
 !!
 !!    Printf 
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -209,12 +209,12 @@ contains
 !!              including formatting of reals and integers 
 !!    reals:    Array of real(dp) to print - in the order specified by string 
 !!    ints:     Array of integers to print - in the order specified by string 
-!!    fs:       Specifies the format of 'string', e.g. fs='(/t6,a)' gives 
-!!              a new line, then indentation 6, then the value of 'string'
+!!    fs:       Specifies the format of the entire string, e.g. fs='(/t6,a)' gives 
+!!              a new line, then indentation 5, then the value of 'string'
 !!              with reals and integers as specified.
 !!    ll:       Integer specifying number of characters per line of print.
 !!
-!!    Example: call output%printf('Energy (a.u.): (f18.12)', reals=[wf%energy], fs='(/t6,a)')
+!!    Example: call output%printf('Energy (a.u.): (f19.12)', reals=[wf%energy], fs='(/t6,a)')
 !!
       implicit none
 !
@@ -223,6 +223,7 @@ contains
       character(len=*), intent(in)                 :: string 
       real(dp), dimension(:), intent(in), optional :: reals 
       integer, dimension(:), intent(in), optional  :: ints
+      logical, dimension(:), intent(in), optional  :: logs
       integer, intent(in), optional                :: ll
       character(len=*), optional, intent(in)       :: fs
 !
@@ -230,8 +231,8 @@ contains
       character(len=20)    :: fstring 
 !
       integer :: i, p_pos, int_check, i_err
-      integer :: int_len, real_len, string_len
-      integer :: int_count, real_count
+      integer :: int_len, real_len, log_len, string_len
+      integer :: int_count, real_count, log_count
       integer :: print_pos, printed
 !
       integer           :: l_length
@@ -257,6 +258,13 @@ contains
          int_len = 0
       endif
 !
+!     Check how many logicals are present
+      if(present(logs)) then
+         log_len = size(logs)
+      else
+         log_len = 0
+      endif
+!
 !     Line length to send to long_string_print
       if(present(ll)) then
          l_length = ll
@@ -273,6 +281,7 @@ contains
 !
       real_count = 0
       int_count  = 0
+      log_count  = 0
 !
       print_pos = 1
       printed = 1
@@ -342,6 +351,49 @@ contains
 !                 Copy format string to fstring and write the next real to pstring
                   fstring = string(p_pos:i)
                   write(pstring(print_pos:),fstring) ints(int_count)
+!
+!                 Set next position to print
+                  print_pos = len_trim(pstring) + 1
+!
+               endif
+!  
+!           Is ( followed by l or L?
+            elseif(string(i+1:i+1) .eq. "l" .or. string(i+1:i+1) .eq. "L") then
+!
+!              Is it followed by a number, if so, assume a format string
+               read(string(i+2:),'(i1)',iostat=i_err) int_check
+               if (i_err .eq. 0) then
+!
+                  log_count = log_count + 1
+                  if (log_count .gt. log_len) call the_file%error_msg('Not enough ints in printf')
+!
+!                 Print everything between previous print and (
+                  write(pstring(print_pos:),'(a)') string(printed:i-1)
+                  print_pos = print_pos + i - printed
+                  p_pos = i
+!
+!                 Get length of format string
+                  do while (string(i:i) .ne. ")" .and. i .le. string_len)
+                     i = i + 1
+                  enddo
+!
+                  printed = i + 1
+!
+!                 Copy format string to fstring and write the next real to pstring
+                  fstring = string(p_pos:i)
+                  if (fstring(2:3) .eq. 'l0') then
+                     fstring = '(a)'
+                  else
+                     fstring(2:2) = 'a'
+                  endif
+!
+                  write(output%unit,*) fstring
+!
+                  if(logs(log_count)) then
+                     write(pstring(print_pos:), fstring) 'True'     
+                  else
+                     write(pstring(print_pos:), fstring) 'False'     
+                  endif
 !
 !                 Set next position to print
                   print_pos = len_trim(pstring) + 1
