@@ -63,7 +63,6 @@ module uhf_class
       procedure :: determine_n_alpha_and_n_beta      => determine_n_alpha_and_n_beta_uhf
       procedure :: read_settings                     => read_settings_uhf
       procedure :: read_uhf_settings                 => read_uhf_settings_uhf
-      procedure :: print_wavefunction_summary        => print_wavefunction_summary_uhf
 !
 !     AO Fock and energy related routines 
 !
@@ -95,6 +94,7 @@ module uhf_class
       procedure :: initialize_orbitals               => initialize_orbitals_uhf
       procedure :: roothan_hall_update_orbitals      => roothan_hall_update_orbitals_uhf
       procedure :: print_orbital_energies            => print_orbital_energies_uhf
+      procedure :: print_energy                      => print_energy_uhf
       procedure :: save_orbital_coefficients         => save_orbital_coefficients_uhf
       procedure :: read_orbital_coefficients         => read_orbital_coefficients_uhf
       procedure :: save_orbital_energies             => save_orbital_energies_uhf
@@ -672,7 +672,7 @@ contains
    end subroutine roothan_hall_update_orbitals_uhf
 !
 !
-   subroutine print_wavefunction_summary_uhf(wf, n_virtuals_print)
+   subroutine print_energy_uhf(wf)
 !!
 !!    Print wavefunction summary 
 !!    Written by Eirik F. Kjønstad, Sep 2018 
@@ -690,10 +690,6 @@ contains
       real(dp) :: homo_lumo_gap_a
       real(dp) :: homo_lumo_gap_b
 !
-      integer :: n_virtuals_print
-!
-      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name_), ' wavefunction energetics (a.u.):'
-!
       homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
       homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
 !
@@ -703,9 +699,7 @@ contains
       write(output%unit, '(t6,a26,f19.12)')  'Electronic energy:        ', wf%energy - wf%system%get_nuclear_repulsion()
       write(output%unit, '(t6,a26,f19.12)')  'Total energy:             ', wf%energy
 !
-      call wf%print_orbital_energies('3')
-!
-   end subroutine print_wavefunction_summary_uhf
+   end subroutine print_energy_uhf
 !
 !
    subroutine update_ao_density_uhf(wf)

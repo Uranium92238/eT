@@ -215,7 +215,8 @@ contains
                               'max iterations       ',   &
                               'diis dimension       ',   &
                               'restart              ',   &
-                              'ao density guess     '    /)
+                              'ao density guess     ',   &
+                              'print orbitals       '    /)
 !
       solver_cc_gs%name_    = 'solver cc gs'
       solver_cc_gs%required = .false.

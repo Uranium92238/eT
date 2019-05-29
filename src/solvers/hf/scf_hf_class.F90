@@ -200,7 +200,8 @@ contains
             write(output%unit, '(t3,a)') '------------------------------------------------'
             write(output%unit, '(/t3,a27,i3,a12)') 'Converged criterion met in ', iteration, ' iterations!'
 !
-            call wf%print_wavefunction_summary(10)
+            !call wf%print_wavefunction_summary(10)
+            call solver%print_summary(wf)
             flush(output%unit)
 !
          else
@@ -263,12 +264,6 @@ contains
 !     Save AO density (or densities) to disk 
 !
       call wf%save_ao_density()
-!
-!     Final deallocations of solver 
-!     (note that we keep certain arrays in the wavefunction for later)
-!
-      call wf%destruct_ao_overlap()
-      call wf%destruct_fock()
 !
    end subroutine cleanup_scf_hf
 !
