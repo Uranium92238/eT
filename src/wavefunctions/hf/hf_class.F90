@@ -868,7 +868,7 @@ contains
 !
       class(hf) :: wf
 !
-      integer :: n_s
+      !integer :: n_s
 !
       integer, dimension(:),  allocatable :: sp_eri_schwarz_index_list
       real(dp), dimension(:), allocatable :: sorted_sp_eri_schwarz
@@ -883,14 +883,14 @@ contains
 !
       type(interval) :: A_interval, B_interval
 !
-      n_s = wf%system%get_n_shells()
+     ! n_s = wf%system%get_n_shells()
 !
 !     Set the maximum element in each shell pair
 !
       call set_coulomb_precision_c(1.0d-50)
 !
 !$omp parallel do private(s1, s2, s1s2, A_interval, B_interval, g, maximum) schedule(dynamic)
-      do s1 = 1, n_s
+      do s1 = 1, wf%system%n_s
          do s2 = 1, s1
 !
             s1s2 = (max(s1,s2)*(max(s1,s2)-3)/2) + s1 + s2
@@ -914,20 +914,21 @@ contains
 !     Sort the sp_eri_schwarz vector and use the resulting index list
 !     to resort the sp_eri_schwarz_list matrix
 !
-      call mem%alloc(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2)
+      call mem%alloc(sp_eri_schwarz_index_list, wf%system%n_s*(wf%system%n_s + 1)/2)
       sp_eri_schwarz_index_list = 0
 !
-      call mem%alloc(sorted_sp_eri_schwarz, n_s*(n_s + 1)/2)
+      call mem%alloc(sorted_sp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2)
       sorted_sp_eri_schwarz = wf%sp_eri_schwarz(:, 1)
 !
-      call get_n_highest(n_s*(n_s + 1)/2, n_s*(n_s + 1)/2, wf%sp_eri_schwarz, sorted_sp_eri_schwarz, sp_eri_schwarz_index_list)
+      call get_n_highest(wf%system%n_s*(wf%system%n_s + 1)/2, wf%system%n_s*(wf%system%n_s + 1)/2, wf%sp_eri_schwarz,&
+                      sorted_sp_eri_schwarz, sp_eri_schwarz_index_list)
 !
       wf%sp_eri_schwarz(:, 2) = wf%sp_eri_schwarz(:, 1)
       wf%sp_eri_schwarz(:, 1) = sorted_sp_eri_schwarz
-      call mem%dealloc(sorted_sp_eri_schwarz, n_s*(n_s + 1)/2)
+      call mem%dealloc(sorted_sp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2)
 !
       wf%sp_eri_schwarz_list(:,3) = sp_eri_schwarz_index_list
-      call mem%dealloc(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2)
+      call mem%dealloc(sp_eri_schwarz_index_list, wf%system%n_s*(wf%system%n_s + 1)/2)
 !
    end subroutine construct_sp_eri_schwarz_hf
 !
@@ -1044,7 +1045,7 @@ contains
 !
       class(hf) :: wf
 !
-      integer :: n_s
+     ! integer :: n_s
 !
       real(dp), optional :: coulomb, exchange ! Non-standard screening thresholds
 !
@@ -1083,12 +1084,12 @@ contains
       exchange_thr = wf%exchange_threshold
       if (present(exchange)) exchange_thr = exchange
 !
-      n_s = wf%system%get_n_shells()
+      !n_s = wf%system%get_n_shells()
 !
-   call mem%alloc(sp_eri_schwarz, n_s, n_s)
+   call mem%alloc(sp_eri_schwarz, wf%system%n_s, wf%system%n_s)
 !
 !$omp parallel do private(A, B, A_interval, B_interval, g, maximum) schedule(dynamic)
-      do A = 1, n_s
+      do A = 1, wf%system%n_s
          do B = 1, A
 !
             A_interval = wf%system%shell_limits(A)
@@ -1117,7 +1118,7 @@ contains
 !
       enddo
 !
-      call mem%alloc(sp_density_schwarz, n_s, n_s)
+      call mem%alloc(sp_density_schwarz, wf%system%n_s, wf%system%n_s)
       sp_density_schwarz = zero
 !
 !$omp parallel do private(A, B, A_interval, B_interval, D_yz, D_yz_p, maximum) schedule(dynamic)
@@ -1146,13 +1147,13 @@ contains
 !
       wf%ao_fock = zero
 !
-      max_density = get_abs_max(sp_density_schwarz, n_s**2)
-      max_eri     = get_abs_max(sp_eri_schwarz, n_s**2)
+      max_density = get_abs_max(sp_density_schwarz, wf%system%n_s**2)
+      max_eri     = get_abs_max(sp_eri_schwarz, wf%system%n_s**2)
 !
 !$omp parallel do &
 !$omp private(A, B, C, D, A_interval, B_interval, C_interval, D_interval, w, x, y, z, &
 !$omp g_C, g_C_p) schedule(dynamic)
-      do A = 1, n_s
+      do A = 1, wf%system%n_s
 !
          A_interval = wf%system%shell_limits(A)
 !
@@ -1221,7 +1222,7 @@ contains
 !$omp parallel do &
 !$omp private(A, B, C, D, A_interval, B_interval, C_interval, D_interval, w, x, y, z, &
 !$omp g_K, g_K_p) schedule(dynamic)
-      do A = 1, n_s
+      do A = 1, wf%system%n_s
 !
          A_interval = wf%system%shell_limits(A)
 !
@@ -1348,7 +1349,7 @@ contains
 !
       class(hf) :: wf
 !
-      integer :: n_s
+    !  integer :: n_s
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: D
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: ao_fock
@@ -1371,7 +1372,7 @@ contains
 !
       type(timings) :: ao_fock_timer
 !
-      n_s = wf%system%get_n_shells()
+     ! n_s = wf%system%get_n_shells()
 !
       ao_fock_timer = new_timer('AO Fock construction')
       call ao_fock_timer%turn_on()
@@ -1400,15 +1401,15 @@ contains
 !
 !     Construct the density screening vector and the maximum element in the density
 !
-      call mem%alloc(sp_density_schwarz, n_s, n_s)
+      call mem%alloc(sp_density_schwarz, wf%system%n_s, wf%system%n_s)
       call wf%construct_sp_density_schwarz(sp_density_schwarz, D)
-      max_D_schwarz = get_abs_max(sp_density_schwarz, n_s**2)
+      max_D_schwarz = get_abs_max(sp_density_schwarz, wf%system%n_s**2)
 !
 !     Compute number of significant ERI shell pairs (the Fock construction
 !     only loops over these shell pairs) and the maximum element
 !
       call wf%get_n_sig_eri_sp(n_sig_sp)
-      max_eri_schwarz = get_abs_max(wf%sp_eri_schwarz, n_s*(n_s + 1)/2)
+      max_eri_schwarz = get_abs_max(wf%sp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2)
 !
 !     Construct the two electron part of the Fock matrix, using the screening vectors
 !     and parallellizing over available threads (each gets its own copy of the Fock matrix)
@@ -1418,12 +1419,12 @@ contains
       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
       F = zero
 !
-      call wf%ao_fock_construction_loop(F, D, n_threads, max_D_schwarz, max_eri_schwarz,                 &
+      call wf%ao_fock_construction_loop(F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
                                          sp_density_schwarz,  &
-                                         n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr,        &
+                                         n_sig_sp, coulomb_thr, exchange_thr, precision_thr, &
                                          wf%system%shell_limits)
 !
-      call mem%dealloc(sp_density_schwarz, n_s, n_s)
+      call mem%dealloc(sp_density_schwarz, wf%system%n_s, wf%system%n_s)
 !
 !     Put the accumulated Fock matrices from each thread into the Fock matrix,
 !     and symmetrize the result
@@ -1448,7 +1449,7 @@ contains
 !
 !
    subroutine ao_fock_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,    &
-                                          sp_density_schwarz, n_s, n_sig_sp, coulomb_thr, &
+                                          sp_density_schwarz, n_sig_sp, coulomb_thr, &
                                           exchange_thr, precision_thr, shells)
 !!
 !!    AO Fock construction loop
@@ -1465,16 +1466,16 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      integer, intent(in) :: n_threads, n_s, n_sig_sp
+      integer, intent(in) :: n_threads, n_sig_sp
 !
-      type(interval), dimension(n_s), intent(in) :: shells
+      type(interval), dimension(wf%system%n_s), intent(in) :: shells
 !
       real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, exchange_thr, precision_thr
 !
-      real(dp), dimension(n_s, n_s), intent(in)               :: sp_density_schwarz
+      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in)               :: sp_density_schwarz
 !
       real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, deg, deg_12, deg_34, deg_12_34
@@ -1616,7 +1617,7 @@ contains
 !
    subroutine ao_fock_coulomb_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
                                                    sp_density_schwarz, &
-                                                   n_s, n_sig_sp, coulomb_thr, precision_thr, shells)
+                                                   n_sig_sp, coulomb_thr, precision_thr, shells)
 !!
 !!    AO Fock Coulomb construction loop
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -1632,16 +1633,16 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      integer, intent(in) :: n_threads, n_s, n_sig_sp
+      integer, intent(in) :: n_threads,  n_sig_sp
 !
-      type(interval), dimension(n_s), intent(in) :: shells
+      type(interval), dimension(wf%system%n_s), intent(in) :: shells
 !
       real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, precision_thr
 !
-      real(dp), dimension(n_s, n_s), intent(in)               :: sp_density_schwarz
+      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in)               :: sp_density_schwarz
 !
       real(dp) :: d1, d2, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp7, deg, deg_12, deg_34, deg_12_34
@@ -1759,7 +1760,7 @@ contains
 !
    subroutine ao_fock_exchange_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz, &
                                           sp_density_schwarz, &
-                                          n_s, n_sig_sp, exchange_thr, precision_thr, shells)
+                                           n_sig_sp, exchange_thr, precision_thr, shells)
 !!
 !!    AO Fock exchange construction loop
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -1775,16 +1776,16 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      integer, intent(in) :: n_threads, n_s, n_sig_sp
+      integer, intent(in) :: n_threads,  n_sig_sp
 !
-      type(interval), dimension(n_s), intent(in) :: shells
+      type(interval), dimension(wf%system%n_s), intent(in) :: shells
 !
       real(dp), dimension(wf%n_ao, wf%n_ao*n_threads)   :: F
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, exchange_thr, precision_thr
 !
-      real(dp), dimension(n_s, n_s), intent(in)               :: sp_density_schwarz
+      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: sp_density_schwarz
 !
       real(dp) :: d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp3, temp4, temp5, temp6, temp8, deg, deg_12, deg_34, deg_12_34

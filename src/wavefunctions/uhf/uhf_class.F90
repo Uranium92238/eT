@@ -560,15 +560,11 @@ contains
 !
       class(uhf) :: wf
 !
-      integer :: n_s
-!
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
-      n_s = wf%system%get_n_shells()
+      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha', h_wx)
 !
-      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha', n_s, h_wx)
-!
-      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_b, 'beta', n_s, h_wx)
+      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_b, 'beta', h_wx)
 !
       call wf%calculate_uhf_energy(h_wx)
 !
@@ -1092,15 +1088,11 @@ contains
 !
       class(uhf) :: wf
 !
-      integer :: n_s
-!
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in) :: prev_ao_density
 !
       logical :: cumulative
-!
-      n_s = wf%system%get_n_shells()
 !
 !     Here, the previous AO density is sent as [D_a D_b],
 !     where each is full square
@@ -1113,10 +1105,10 @@ contains
 !
       cumulative = .true.
       call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha', &
-                      n_s, h_wx, cumulative)
+                      h_wx, cumulative)
 !
       call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_b, 'beta', &
-                      n_s, h_wx, cumulative)
+                      h_wx, cumulative)
 !
       call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density_a, 1)
       call daxpy(wf%n_ao**2, one, prev_ao_density(1, 2), 1, wf%ao_density_b, 1)
@@ -1130,7 +1122,7 @@ contains
 !
 !
    subroutine construct_ao_spin_fock_uhf(wf, D, D_sigma, sigma, &
-                     n_s, h_wx, cumulative)
+                     h_wx, cumulative)
 !!
 !!    Construct AO spin Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
@@ -1155,7 +1147,6 @@ contains
 !
       character(len=*), intent(in) :: sigma
 !
-      integer, intent(in) :: n_s
 !
       logical, intent(in), optional :: cumulative
 !
@@ -1202,14 +1193,14 @@ contains
 !     only loops over these shell pairs) and the maximum element
 !
       call wf%get_n_sig_eri_sp(n_sig_sp)
-      max_eri_schwarz = get_abs_max(wf%sp_eri_schwarz, n_s*(n_s + 1)/2)
+      max_eri_schwarz = get_abs_max(wf%sp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2)
 !
 !     Construct the Coulomb two electron part of the Fock matrix, using the screening vectors
 !     and parallellizing over available threads (each gets its own copy of the Fock matrix)
 !
-      call mem%alloc(sp_density_schwarz, n_s, n_s)
+      call mem%alloc(sp_density_schwarz, wf%system%n_s, wf%system%n_s)
       call wf%construct_sp_density_schwarz(sp_density_schwarz, D)
-      max_D_schwarz = get_abs_max(sp_density_schwarz, n_s**2)
+      max_D_schwarz = get_abs_max(sp_density_schwarz, wf%system%n_s**2)
 !
 !$      n_threads = omp_get_max_threads()
 !
@@ -1218,7 +1209,7 @@ contains
 !
       call wf%ao_fock_coulomb_construction_loop(F, D, n_threads, max_D_schwarz, max_eri_schwarz,         &
                                                 sp_density_schwarz, &
-                                                n_s, n_sig_sp, coulomb_thr, precision_thr,               &
+                                                n_sig_sp, coulomb_thr, precision_thr,               &
                                                 wf%system%shell_limits)
 !
 !     Construct the Coulomb two electron part of the Fock matrix, using the screening vectors
@@ -1228,14 +1219,14 @@ contains
       scaled_D_sigma = two*D_sigma
 !
       call wf%construct_sp_density_schwarz(sp_density_schwarz, scaled_D_sigma)
-      max_D_schwarz = get_abs_max(sp_density_schwarz, n_s**2)
+      max_D_schwarz = get_abs_max(sp_density_schwarz, wf%system%n_s**2)
 !
       call wf%ao_fock_exchange_construction_loop(F, scaled_D_sigma, n_threads, max_D_schwarz, max_eri_schwarz, &
                                                    sp_density_schwarz,   &
-                                                   n_s, n_sig_sp, exchange_thr, precision_thr,                 &
+                                                   n_sig_sp, exchange_thr, precision_thr,                 &
                                                    wf%system%shell_limits)
 !
-      call mem%dealloc(sp_density_schwarz, n_s, n_s)
+      call mem%dealloc(sp_density_schwarz, wf%system%n_s, wf%system%n_s)
       call mem%dealloc(scaled_D_sigma, wf%n_ao, wf%n_ao)
 !
 !     Add the accumulated Fock matrix F into the correct Fock matrix
