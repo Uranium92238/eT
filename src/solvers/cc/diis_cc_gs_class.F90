@@ -396,11 +396,12 @@ contains
 !
       write(output%unit, '(/t3,a)') '- DIIS CC ground state solver summary:'
 !
-      write(output%unit, '(/t6,a33,f18.12)') 'Final ground state energy (a.u.):', wf%energy 
+      call output%printf('Final ground state energy (a.u.): (f18.12)', reals=[wf%energy], fs='(/t6,a)')
+!
       call wf%print_dominant_amplitudes()
 !
       t1_diagnostic = wf%get_t1_diagnostic() 
-      write(output%unit, '(/t6,a32,f14.12)') 'T1 diagnostic (|T1|/sqrt(N_e)): ', t1_diagnostic
+      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', reals=[t1_diagnostic], fs='(/t6,a)')
 !
    end subroutine print_summary_diis_cc_gs
 !
