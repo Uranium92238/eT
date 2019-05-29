@@ -200,7 +200,7 @@ contains
             write(output%unit, '(t3,a)') '------------------------------------------------'
             write(output%unit, '(/t3,a27,i3,a12)') 'Converged criterion met in ', iteration, ' iterations!'
 !
-            call wf%print_wavefunction_summary()
+            call wf%print_wavefunction_summary(10)
             flush(output%unit)
 !
          else

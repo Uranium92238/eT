@@ -243,7 +243,7 @@ contains
    end subroutine is_restart_safe_hf
 !
 !
-   subroutine print_wavefunction_summary_hf(wf)
+   subroutine print_wavefunction_summary_hf(wf, n_virtuals_print)
 !!
 !!    Print wavefunction summary 
 !!    Written by Eirik F. Kjønstad, Sep 2018 
@@ -255,6 +255,8 @@ contains
       implicit none 
 !
       class(hf), intent(in) :: wf 
+!
+      integer :: n_virtuals_print
 !
       real(dp) :: homo_lumo_gap
 !
@@ -269,7 +271,7 @@ contains
 !
       call wf%print_orbital_energies('3')
 !
-      call wf%print_orbitals()
+      call wf%print_orbitals(n_virtuals_print)
 !
    end subroutine print_wavefunction_summary_hf
 !
@@ -333,7 +335,7 @@ contains
    end subroutine print_orbital_energies_hf
 !
 !
-   subroutine print_orbitals_hf(wf)
+   subroutine print_orbitals_hf(wf, n_virtuals)
 !!
 !!    Print orbitals 
 !!    Written by Eirik F. Kjønstad, May 2019
@@ -344,8 +346,10 @@ contains
 !  
       class(hf), intent(in) :: wf 
 !
+      integer, intent(in) :: n_virtuals
+!
       integer, parameter :: n_entries  = 4
-      integer, parameter :: max_virtuals = 10
+   !   integer, parameter :: max_virtuals = 10
 !
       integer :: atom, mo_offset, first_mo, last_mo, shell, ao, mo, l, mos_to_print
 !
@@ -353,7 +357,9 @@ contains
 !
       character(len=1), dimension(6), parameter :: angular_momentum = ['s', 'p', 'd', 'f', 'g', 'h']
 !
-      mos_to_print = min(wf%n_mo, wf%n_o + max_virtuals)
+      if (n_virtuals .gt. wf%n_v) call output%warning_msg('Requested print of more virtual orbitals than actually exists.')
+!
+      mos_to_print = min(wf%n_mo, wf%n_o + n_virtuals)
       write(output%unit, '(/t3,a,i0,a,i0,a)') 'Printing the first ', mos_to_print, ' MOs (out of the total ', wf%n_mo, ' MOs).'
 !
       do mo_offset = 1, mos_to_print, n_entries

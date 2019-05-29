@@ -294,7 +294,7 @@ contains
 !
             endif
 !
-            call wf%print_wavefunction_summary()
+            call wf%print_wavefunction_summary(2)
 
 !
          else

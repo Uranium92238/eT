@@ -672,7 +672,7 @@ contains
    end subroutine roothan_hall_update_orbitals_uhf
 !
 !
-   subroutine print_wavefunction_summary_uhf(wf)
+   subroutine print_wavefunction_summary_uhf(wf, n_virtuals_print)
 !!
 !!    Print wavefunction summary 
 !!    Written by Eirik F. Kjønstad, Sep 2018 
@@ -689,6 +689,8 @@ contains
 !
       real(dp) :: homo_lumo_gap_a
       real(dp) :: homo_lumo_gap_b
+!
+      integer :: n_virtuals_print
 !
       write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name_), ' wavefunction energetics (a.u.):'
 !
