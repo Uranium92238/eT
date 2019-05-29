@@ -1,0 +1,163 @@
+
+
+
+                       eT - a coupled cluster program 
+       Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch
+
+  ----------------------------------------------------------------------------------
+   Author:                Contribution(s):
+  ----------------------------------------------------------------------------------
+   Josefine H. Andersen   First order properties
+   Sarai D. Folkestad     Program design, HF, CCS, CC2, CCSD, Libint-interface,
+                          Cholesky decomposition, Davidson-tool, CVS, DIIS-tool
+                          Zeroth order properties, First order properties
+   Linda Goletto          CC2
+   Eirik F. Kjønstad      Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,
+                          Cholesky decomposition, Libint-interface, Davidson-tool
+                          Zeroth order properties, First order properties
+   Rolf H. Myhre          CC3, Runtest-interface, Launch script
+   Alexander Paul         CC2, CC3
+   Andreas Skeidsvoll     MP2
+  ----------------------------------------------------------------------------------
+   Other contributors: A. Balbi, M. Scavino
+
+  Running on 4 OMP threads
+
+  Memory available for calculation:         8 GB
+  Disk space available for calculation:  3000 GB
+
+  - Molecular system specifications:
+
+     Name:         hofhe
+     Charge:       0
+     Multiplicity: 3
+
+     Nuclear repulsion energy (a.u.):             48.393468434740
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+     Geometry (Å):
+
+     H    0.866810000000   0.601440000000   5.000000000000   cc-pvdz    
+     F   -0.866810000000   0.601440000000   5.000000000000   cc-pvdz    
+     O    0.000000000000  -0.075790000000   5.000000000000   cc-pvdz    
+     He   0.100000000000  -0.020000000000   7.530000000000   cc-pvdz    
+
+     Geometry (bohr):
+
+     H    1.638033502034   1.136556880358   9.448630622825   cc-pvdz    
+     F   -1.638033502034   1.136556880358   9.448630622825   cc-pvdz    
+     O    0.000000000000  -0.143222342981   9.448630622825   cc-pvdz    
+     He   0.188972612457  -0.037794522491  14.229637717975   cc-pvdz    
+
+
+  :: Self-consistent field DIIS Hartree-Fock solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock matrix 
+  is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:               8
+     Energy threshold:              0.1000E-11
+     Gradient threshold:            0.1000E-11
+
+     Coulomb screening threshold:   0.1000E-14
+     Exchange screening threshold:  0.1000E-14
+     ERI integral precision:        0.1000E-29
+
+  - Setting initial AO density to SAD:
+
+     Energy of initial guess:      -178.512758915857
+     Number of electrons in guess:   20.000000000000
+
+  Iteration    Energy (a.u.)        Max(grad.)    Delta E (a.u.)
+  --------------------------------------------------------------
+    1          -177.235968948893     0.4858E-01     0.1772E+03
+    2          -177.302484939394     0.2286E-01     0.6652E-01
+    3          -177.312278757870     0.1139E-01     0.9794E-02
+    4          -177.314566927746     0.5468E-02     0.2288E-02
+    5          -177.315268475906     0.4074E-02     0.7015E-03
+    6          -177.315524835182     0.9856E-03     0.2564E-03
+    7          -177.315558065041     0.2063E-03     0.3323E-04
+    8          -177.315560276710     0.7971E-04     0.2212E-05
+    9          -177.315560552006     0.2714E-04     0.2753E-06
+   10          -177.315560575789     0.8356E-05     0.2378E-07
+   11          -177.315560580026     0.6874E-05     0.4237E-08
+   12          -177.315560582620     0.5377E-05     0.2594E-08
+   13          -177.315560585541     0.2744E-05     0.2922E-08
+   14          -177.315560586534     0.7069E-06     0.9927E-09
+   15          -177.315560586608     0.2950E-06     0.7344E-10
+   16          -177.315560586616     0.1134E-06     0.8356E-11
+   17          -177.315560586617     0.3363E-07     0.6821E-12
+   18          -177.315560586617     0.1966E-07     0.1137E-12
+   19          -177.315560586617     0.7720E-08     0.0000E+00
+   20          -177.315560586617     0.3048E-08     0.2842E-13
+   21          -177.315560586617     0.1484E-08     0.8527E-13
+   22          -177.315560586617     0.3459E-09     0.0000E+00
+   23          -177.315560586617     0.1818E-09     0.2842E-13
+   24          -177.315560586617     0.1426E-09     0.0000E+00
+   25          -177.315560586617     0.9839E-10     0.1421E-12
+   26          -177.315560586617     0.4202E-10     0.2842E-13
+   27          -177.315560586617     0.1575E-10     0.0000E+00
+   28          -177.315560586617     0.6074E-11     0.2842E-13
+   29          -177.315560586617     0.2016E-11     0.8527E-13
+   30          -177.315560586617     0.4690E-12     0.5684E-13
+  --------------------------------------------------------------
+
+  Convergence criterion met in  30 iterations!
+
+  - Summary of UHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap (alpha):         0.645902330182
+     HOMO-LUMO gap (beta):          0.647935076416
+     Nuclear repulsion energy:     48.393468434740
+     Electronic energy:          -225.709029021357
+     Total energy:               -177.315560586617
+
+  Alpha orbital energies:
+
+    1  -26.495816002829      2  -20.818349957896      3   -2.057453733898
+    4   -1.384999729402      5   -1.024809894233      6   -1.021290147827
+    7   -0.940033879762      8   -0.927063112601      9   -0.658687059702
+   10   -0.656447203933     11   -0.214962507774     12    0.430939822408
+   13    0.658428674344     14    0.958336542567     15    1.004765365318
+   16    1.071260092378     17    1.255207028832     18    1.350781563641
+   19    1.353818737715     20    1.411285512956     21    1.523365254139
+   22    1.596127129400     23    1.710223597666     24    2.053653113005
+   25    2.425235766978     26    2.510882858760     27    2.511740885644
+   28    2.537624588066     29    2.550012294702     30    2.761115579754
+   31    2.887233868503     32    3.357637315664     33    3.643188307028
+   34    3.818738904460     35    3.855920507052     36    4.392892265277
+   37    4.454793937983     38    4.948067289077
+
+  Beta orbital energies:
+
+    1  -26.481967826905      2  -20.762131289522      3   -1.998105864831
+    4   -1.250954525100      5   -0.966559252520      6   -0.929286341553
+    7   -0.888615067253      8   -0.830120600381      9   -0.591447279319
+   10    0.056487797097     11    0.226482585936     12    0.474044064477
+   13    0.784675252555     14    1.046718341766     15    1.105138377269
+   16    1.120668692565     17    1.271517100516     18    1.368679848294
+   19    1.414269757545     20    1.438713004764     21    1.592271839186
+   22    1.645772080774     23    1.754383283127     24    2.137903737871
+   25    2.444405740757     26    2.511411624478     27    2.512153498863
+   28    2.550611313122     29    2.639175919347     30    2.798012281379
+   31    2.997279409375     32    3.450656471972     33    3.680030440798
+   34    3.857133606587     35    3.908351927824     36    4.445071072050
+   37    4.466835864341     38    4.967553674884
+
+  - Cleaning up Self-consistent field DIIS Hartree-Fock solver
+
+  Requested MO transformation of Fock matrix, but this is not yet implemented for UHF                                     
+
+  Mismatch in memory according to eT and specified on input:
+
+     Memory available (eT):          7.9992 GB
+     Memory available (input):       8.0000 GB
+
+  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
+
+  eT terminated successfully!
