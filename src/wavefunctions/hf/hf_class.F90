@@ -50,7 +50,7 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: pivot_matrix_ao_overlap
 !
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz
-      integer, dimension(:,:), allocatable :: sp_eri_schwarz_list
+      integer, dimension(:,:), allocatable  :: sp_eri_schwarz_list
 !
       real(dp) :: linear_dep_threshold = 1.0D-6
 !
@@ -992,7 +992,7 @@ contains
    end subroutine construct_sp_density_schwarz_hf
 !
 !
-   subroutine get_n_sig_eri_sp_hf(wf, n_sig_sp, sp_eri_schwarz)
+   subroutine get_n_sig_eri_sp_hf(wf, n_sig_sp)
 !!
 !!    Get number of significant ERI shell-pairs
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
@@ -1008,15 +1008,13 @@ contains
 !
       integer, intent(inout) :: n_sig_sp
 !
-      real(dp), dimension(wf%system%n_s*(wf%system%n_s + 1)/2, 2), intent(in) :: sp_eri_schwarz
-!
       integer :: s1s2
 !
       n_sig_sp = 0
 !
       do s1s2 = 1, wf%system%n_s*(wf%system%n_s + 1)/2
 !
-         if (sp_eri_schwarz(s1s2, 1)*sp_eri_schwarz(1, 1) .lt. sqrt(wf%libint_epsilon)) then
+         if (wf%sp_eri_schwarz(s1s2, 1)*wf%sp_eri_schwarz(1, 1) .lt. sqrt(wf%libint_epsilon)) then
 !
             exit
 !
@@ -1409,7 +1407,7 @@ contains
 !     Compute number of significant ERI shell pairs (the Fock construction
 !     only loops over these shell pairs) and the maximum element
 !
-      call wf%get_n_sig_eri_sp(n_sig_sp, wf%sp_eri_schwarz)
+      call wf%get_n_sig_eri_sp(n_sig_sp)
       max_eri_schwarz = get_abs_max(wf%sp_eri_schwarz, n_s*(n_s + 1)/2)
 !
 !     Construct the two electron part of the Fock matrix, using the screening vectors
@@ -1421,7 +1419,7 @@ contains
       F = zero
 !
       call wf%ao_fock_construction_loop(F, D, n_threads, max_D_schwarz, max_eri_schwarz,                 &
-                                         sp_density_schwarz, wf%sp_eri_schwarz, wf%sp_eri_schwarz_list,  &
+                                         sp_density_schwarz,  &
                                          n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr,        &
                                          wf%system%shell_limits)
 !
@@ -1450,8 +1448,8 @@ contains
 !
 !
    subroutine ao_fock_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,    &
-                                          sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list, &
-                                          n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr, shells)
+                                          sp_density_schwarz, n_s, n_sig_sp, coulomb_thr, &
+                                          exchange_thr, precision_thr, shells)
 !!
 !!    AO Fock construction loop
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -1476,8 +1474,6 @@ contains
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, exchange_thr, precision_thr
 !
-      real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
       real(dp), dimension(n_s, n_s), intent(in)               :: sp_density_schwarz
 !
       real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
@@ -1503,12 +1499,12 @@ contains
 !$       thread = omp_get_thread_num()
          thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix
 !
-         sp_eri_schwarz_s1s2 = sp_eri_schwarz(s1s2, 1)
+         sp_eri_schwarz_s1s2 = wf%sp_eri_schwarz(s1s2, 1)
 !
-         s1s2_packed = sp_eri_schwarz_list(s1s2, 3) ! The s1s2-th largest packed index
+         s1s2_packed = wf%sp_eri_schwarz_list(s1s2, 3) ! The s1s2-th largest packed index
 !
-         s1 = sp_eri_schwarz_list(s1s2_packed, 1)
-         s2 = sp_eri_schwarz_list(s1s2_packed, 2)
+         s1 = wf%sp_eri_schwarz_list(s1s2_packed, 1)
+         s2 = wf%sp_eri_schwarz_list(s1s2_packed, 2)
 !
          sp_density_schwarz_s1s2 = sp_density_schwarz(s1, s2)
          if (sp_eri_schwarz_s1s2*(max_D_schwarz)*(max_eri_schwarz) .lt. coulomb_thr) cycle
@@ -1526,7 +1522,7 @@ contains
 !
                s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4
 !
-               temp = sp_eri_schwarz_s1s2*sp_eri_schwarz(s3s4, 2)
+               temp = sp_eri_schwarz_s1s2*wf%sp_eri_schwarz(s3s4, 2)
 
                if (temp*(max_D_schwarz) .lt. coulomb_thr) cycle ! Screened out shell pair
 !
@@ -1619,7 +1615,7 @@ contains
 !
 !
    subroutine ao_fock_coulomb_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
-                                                   sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list, &
+                                                   sp_density_schwarz, &
                                                    n_s, n_sig_sp, coulomb_thr, precision_thr, shells)
 !!
 !!    AO Fock Coulomb construction loop
@@ -1645,8 +1641,6 @@ contains
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, precision_thr
 !
-      real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
       real(dp), dimension(n_s, n_s), intent(in)               :: sp_density_schwarz
 !
       real(dp) :: d1, d2, sp_eri_schwarz_s1s2
@@ -1672,12 +1666,12 @@ contains
 !$       thread = omp_get_thread_num()
          thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix
 !
-         sp_eri_schwarz_s1s2 = sp_eri_schwarz(s1s2, 1)
+         sp_eri_schwarz_s1s2 = wf%sp_eri_schwarz(s1s2, 1)
 !
-         s1s2_packed = sp_eri_schwarz_list(s1s2, 3) ! The s1s2-th largest packed index
+         s1s2_packed = wf%sp_eri_schwarz_list(s1s2, 3) ! The s1s2-th largest packed index
 !
-         s1 = sp_eri_schwarz_list(s1s2_packed, 1)
-         s2 = sp_eri_schwarz_list(s1s2_packed, 2)
+         s1 = wf%sp_eri_schwarz_list(s1s2_packed, 1)
+         s2 = wf%sp_eri_schwarz_list(s1s2_packed, 2)
 !
          sp_density_schwarz_s1s2 = sp_density_schwarz(s1, s2)
          if (sp_eri_schwarz_s1s2*(max_D_schwarz)*(max_eri_schwarz) .lt. coulomb_thr) cycle
@@ -1695,7 +1689,7 @@ contains
 !
                s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4
 !
-               temp = sp_eri_schwarz_s1s2*sp_eri_schwarz(s3s4, 2)
+               temp = sp_eri_schwarz_s1s2*wf%sp_eri_schwarz(s3s4, 2)
 
                if (temp*(max_D_schwarz) .lt. coulomb_thr) cycle ! Screened out shell pair
 !
@@ -1764,7 +1758,7 @@ contains
 !
 !
    subroutine ao_fock_exchange_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz, &
-                                          sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list,       &
+                                          sp_density_schwarz, &
                                           n_s, n_sig_sp, exchange_thr, precision_thr, shells)
 !!
 !!    AO Fock exchange construction loop
@@ -1790,8 +1784,6 @@ contains
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, exchange_thr, precision_thr
 !
-      real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
       real(dp), dimension(n_s, n_s), intent(in)               :: sp_density_schwarz
 !
       real(dp) :: d3, d4, d5, d6, sp_eri_schwarz_s1s2
@@ -1817,12 +1809,12 @@ contains
 !$       thread = omp_get_thread_num()
          thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix
 !
-         sp_eri_schwarz_s1s2 = sp_eri_schwarz(s1s2, 1)
+         sp_eri_schwarz_s1s2 = wf%sp_eri_schwarz(s1s2, 1)
 !
-         s1s2_packed = sp_eri_schwarz_list(s1s2, 3) ! The s1s2-th largest packed index
+         s1s2_packed = wf%sp_eri_schwarz_list(s1s2, 3) ! The s1s2-th largest packed index
 !
-         s1 = sp_eri_schwarz_list(s1s2_packed, 1)
-         s2 = sp_eri_schwarz_list(s1s2_packed, 2)
+         s1 = wf%sp_eri_schwarz_list(s1s2_packed, 1)
+         s2 = wf%sp_eri_schwarz_list(s1s2_packed, 2)
 !
          sp_density_schwarz_s1s2 = sp_density_schwarz(s1, s2)
          if (sp_eri_schwarz_s1s2*(max_D_schwarz)*(max_eri_schwarz) .lt. exchange_thr) cycle
@@ -1840,7 +1832,7 @@ contains
 !
                s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4
 !
-               temp = sp_eri_schwarz_s1s2*sp_eri_schwarz(s3s4, 2)
+               temp = sp_eri_schwarz_s1s2*wf%sp_eri_schwarz(s3s4, 2)
 
                if (temp*(max_D_schwarz) .lt. exchange_thr) cycle ! Screened out shell pair
 !
