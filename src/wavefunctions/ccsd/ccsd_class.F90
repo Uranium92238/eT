@@ -42,8 +42,6 @@ module ccsd_class
 !
 !     Preparation and cleanup routines
 !
-      procedure :: prepare                                     => prepare_ccsd
-!
       procedure :: initialize_files                            => initialize_files_ccsd
       procedure :: initialize_doubles_files                    => initialize_doubles_files_ccsd
 !
@@ -189,17 +187,24 @@ module ccsd_class
    end interface
 !
 !
+   interface ccsd 
+!
+      procedure :: new_ccsd 
+!
+   end interface ccsd 
+!
+!
 contains
 !
 !
-   subroutine prepare_ccsd(wf, system)
+   function new_ccsd(system) result(wf)
 !!
-!!    Prepare
+!!    New CCSD
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(ccsd) :: wf
+      type(ccsd) :: wf
 !
       class(molecular_system), target, intent(in) :: system 
 !
@@ -241,7 +246,7 @@ contains
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
-   end subroutine prepare_ccsd
+   end function new_ccsd
 !
 !
    logical function need_g_abcd_ccsd()
@@ -378,12 +383,14 @@ contains
 !
    subroutine calculate_energy_ccsd(wf)
 !!
-!!     Calculate energy (CCSD)
-!!     Written by Sarai D. Folkestad, Eirik F. Kjønstad,
-!!     Andreas Skeidsvoll, 2018
+!!    Calculate energy (CCSD)
+!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
+!!    Andreas Skeidsvoll, 2018
 !!
-!!     Calculates the CCSD energy. This is only equal to the actual
-!!     energy when the ground state equations are solved, of course.
+!!    Calculates the CCSD energy. This is only equal to the actual
+!!    energy when the ground state equations are solved, of course.
+!!
+!!       E = E_hf + sum_aibj (t_ij^ab + t_i^a t_j^b) L_iajb
 !!
       implicit none
 !
@@ -393,10 +400,7 @@ contains
 !
       real(dp) :: correlation_energy
 !
-      integer :: a = 0, i = 0, b = 0, j = 0, ai = 0
-      integer :: bj = 0, aibj = 0
-!
-!     Compute the correlation energy E = E + sum_aibj (t_ij^ab + t_i^a t_j^b) L_iajb
+      integer :: a, i, b, j, ai, bj, aibj
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !

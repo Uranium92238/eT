@@ -33,7 +33,6 @@ module gs_engine_class
 !
    contains
 !
-      procedure :: prepare                               => prepare_gs_engine
       procedure :: run                                   => run_gs_engine
 !
       procedure :: do_ground_state                       => do_ground_state_gs_engine
@@ -54,20 +53,27 @@ module gs_engine_class
    end type gs_engine
 !
 !
+   interface gs_engine
+!
+      procedure :: new_gs_engine 
+!
+   end interface gs_engine 
+!
+!
 contains
 !
 !
-   subroutine prepare_gs_engine(engine)
+   function new_gs_engine() result(engine)
 !!
-!!    Prepare
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    New GS engine  
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none
 !
-      class(gs_engine) :: engine
+      type(gs_engine) :: engine 
 !
-      engine%name_ = 'Ground state coupled cluster engine'
-      engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
+      engine%name_   = 'Ground state coupled cluster engine'
+      engine%author  = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
@@ -77,7 +83,7 @@ contains
 !
       call engine%read_settings()
 !
-   end subroutine prepare_gs_engine
+   end function new_gs_engine
 !
 !
    subroutine read_settings_gs_engine(engine)
@@ -162,25 +168,18 @@ contains
 !
       elseif (trim(engine%gs_algorithm) == 'diis') then
 !
-         allocate(diis_solver)
-!
-         call diis_solver%prepare(wf)
+         diis_solver = diis_cc_gs(wf)
          call diis_solver%run(wf)
          call diis_solver%cleanup(wf)
 !
-         deallocate(diis_solver)
+
+      elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
 !
-      elseif (trim(engine%gs_algorithm) == 'newton-raphson') then
-!
-         allocate(newton_raphson_solver)
-!
-         call newton_raphson_solver%prepare(wf)
+         newton_raphson_solver = newton_raphson_cc_gs(wf)
          call newton_raphson_solver%run(wf)
          call newton_raphson_solver%cleanup(wf)
 !
-         deallocate(newton_raphson_solver)
-!
-      endif
+      endif 
 !
    end subroutine do_ground_state_gs_engine
 !
@@ -212,23 +211,15 @@ contains
 !
          if (trim(wf%name_) == 'cc2') call output%error_msg('For CC2 multipliers the DIIS algorithm must be specified.')
 !
-         allocate(davidson_solver)
-!
-         call davidson_solver%prepare(wf)
+         davidson_solver = davidson_cc_multipliers(wf)
          call davidson_solver%run(wf)
          call davidson_solver%cleanup(wf)
 !
-         deallocate(davidson_solver)
+      elseif (trim(engine%multipliers_algorithm) == 'diis') then 
 !
-      elseif (trim(engine%multipliers_algorithm) == 'diis') then
-!
-         allocate(diis_solver)
-!
-         call diis_solver%prepare(wf)
+         diis_solver = diis_cc_multipliers(wf)
          call diis_solver%run(wf)
          call diis_solver%cleanup(wf)
-!
-         deallocate(diis_solver)
 !
       else
 !

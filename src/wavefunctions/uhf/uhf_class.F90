@@ -60,8 +60,6 @@ module uhf_class
 !
 !     Preparation routines
 !
-      procedure :: prepare                           => prepare_uhf
-!
       procedure :: determine_n_alpha_and_n_beta      => determine_n_alpha_and_n_beta_uhf
       procedure :: read_settings                     => read_settings_uhf
       procedure :: read_uhf_settings                 => read_uhf_settings_uhf
@@ -135,17 +133,24 @@ module uhf_class
    end type uhf
 !
 !
-contains
+   interface uhf 
+!
+      procedure :: new_uhf 
+!
+   end interface uhf 
 !
 !
-   subroutine prepare_uhf(wf, system)
+contains 
+!
+!
+   function new_uhf(system) result(wf)
 !!
-!!    Prepare
+!!    New UHF
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(uhf) :: wf
+      type(uhf) :: wf
 !
       class(molecular_system), target, intent(in) :: system
 !
@@ -182,7 +187,7 @@ contains
       call wf%orbital_energies_file%init('orbital_energies', 'sequential', 'unformatted')
       call wf%restart_file%init('hf_restart_file', 'sequential', 'unformatted')
 !
-   end subroutine prepare_uhf
+   end function new_uhf
 !
 !
    subroutine set_initial_ao_density_guess_uhf(wf, guess)

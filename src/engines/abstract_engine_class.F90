@@ -36,17 +36,17 @@ module abstract_engine_class
       character(len=200) :: description  
       character(len=200) :: author
 !
-      type(timings) :: timer ! Timer for engine. Obs! must always be turned on in prepare. Is switched of in cleanup. 
+      type(timings) :: timer ! Timer for engine. Obs! must be turned on in prepare, off in cleanup. 
 !
-      character(len=150), dimension(:), allocatable :: tasks ! The tasks of the engine, used for prints. Should be set in prepare.
+      character(len=150), dimension(:), allocatable :: tasks   ! The printed tasks of the engine. 
+                                                               ! Should be set in prepare.
 !
    contains
 !
       procedure :: ignite => ignite_abstract_engine
 !
-      procedure(essential_engine), deferred      :: prepare   
-      procedure(essential_engine_w_wf), deferred :: run 
-      procedure(essential_engine), deferred, private  :: set_printables 
+      procedure(essential_engine_w_wf), deferred     :: run 
+      procedure(essential_engine), deferred, private :: set_printables 
 !
       procedure, non_overridable :: cleanup => cleanup_abstract_engine
 !
@@ -93,7 +93,7 @@ contains
 !!    Ignite
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
 !!
-!!    Prepare, run, cleanup
+!!    Banner, run & cleanup
 !!
       implicit none
 !
@@ -101,7 +101,6 @@ contains
 !
       class(ccs) :: wf
 !
-      call engine%prepare()
       call engine%print_banner(wf)
       call engine%run(wf)
       call engine%cleanup(wf)
@@ -116,7 +115,6 @@ contains
 !!
 !!    Cholesky decomposition of electronic repiulsion integrals
 !!
-!
       use eri_cd_class
 !
       implicit none
@@ -129,7 +127,7 @@ contains
 !
 !     Cholesky decoposition 
 !
-      call eri_chol_solver%prepare(wf%system)
+      eri_chol_solver = eri_cd(wf%system)
       call eri_chol_solver%run(wf%system)
 !
       call eri_chol_solver%diagonal_test(wf%system)
@@ -200,9 +198,9 @@ contains
       calculation_type  = 'This is a '// trim(convert_to_uppercase(wf%name_)) // ' ' // trim(engine%tag) // ' calculation.&
                            & The following tasks will be performed:'
 !     
-      call long_string_print(engine%name_,'(//t3,a)',.true.)
-      call long_string_print(engine%author,'(t3,a/)',.true.)
-      call long_string_print(engine%description,'(/t3,a)',.false.,'(t3,a)','(t3,a)') 
+      call output%long_string_print(engine%name_,'(//t3,a)',.true.)
+      call output%long_string_print(engine%author,'(t3,a/)',.true.)
+      call output%long_string_print(engine%description,'(/t3,a)',.false.,'(t3,a)','(t3,a)') 
 !
       write(output%unit, '(/t3,a/)') trim(calculation_type)
 !

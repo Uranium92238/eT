@@ -55,7 +55,6 @@ module newton_raphson_cc_gs_class
    contains
 !     
       procedure, nopass :: cleanup          => cleanup_newton_raphson_cc_gs
-      procedure :: prepare                  => prepare_newton_raphson_cc_gs
       procedure :: run                      => run_newton_raphson_cc_gs
 !
       procedure :: do_micro_iterations      => do_micro_iterations_newton_raphson_cc_gs
@@ -68,17 +67,24 @@ module newton_raphson_cc_gs_class
    end type newton_raphson_cc_gs
 !
 !
+   interface newton_raphson_cc_gs
+!
+      procedure :: new_newton_raphson_cc_gs
+!
+   end interface newton_raphson_cc_gs
+!
+!
 contains
 !
 !
-   subroutine prepare_newton_raphson_cc_gs(solver, wf)
+   function new_newton_raphson_cc_gs(wf) result(solver)
 !!
-!!    Prepare 
+!!    New Newton-Rahpson GS 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(newton_raphson_cc_gs) :: solver
+      type(newton_raphson_cc_gs) :: solver
 !
       class(ccs) :: wf
 !
@@ -120,7 +126,7 @@ contains
 !
       endif
 !
-   end subroutine prepare_newton_raphson_cc_gs
+   end function new_newton_raphson_cc_gs
 !
 !
    subroutine print_settings_newton_raphson_cc_gs(solver)
@@ -158,7 +164,7 @@ contains
 !
       class(ccs) :: wf
 !
-      type(diis_tool) :: diis_manager
+      type(diis_tool) :: diis
 !
       real(dp), dimension(:), allocatable :: omega, dt, t  
 !
@@ -168,7 +174,7 @@ contains
 !
       real(dp) :: energy, prev_energy, omega_norm
 !
-      call diis_manager%init('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, 8)
+      diis = diis_tool('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
       iteration = 0
       micro_iterations = 0
@@ -226,7 +232,7 @@ contains
 !
             call wf%form_newton_raphson_t_estimate(t, dt)
 !
-            call diis_manager%update(omega, t)
+            call diis%update(omega, t)
 !
             call wf%set_amplitudes(t)
 !
@@ -256,10 +262,11 @@ contains
 !
       endif 
 !
+      call diis%cleanup()
+!
       call mem%dealloc(omega, wf%n_gs_amplitudes)
       call mem%dealloc(dt, wf%n_gs_amplitudes)
       call mem%dealloc(t, wf%n_gs_amplitudes)
-!
 !
    end subroutine run_newton_raphson_cc_gs
 !
@@ -297,7 +304,7 @@ contains
       call mem%alloc(epsilon, wf%n_gs_amplitudes)
       call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
 !
-      call davidson%prepare('cc_gs_newton_raphson', wf%n_gs_amplitudes, solver%micro_residual_threshold, -omega)
+      davidson = linear_davidson_tool('cc_gs_newton_raphson', wf%n_gs_amplitudes, solver%micro_residual_threshold, -omega)
 !
       call davidson%set_preconditioner(epsilon)
       call mem%dealloc(epsilon, wf%n_gs_amplitudes)
@@ -415,9 +422,9 @@ contains
 !
       class(newton_raphson_cc_gs) :: solver 
 !
-      call long_string_print(solver%tag,'(//t3,a)',.true.)
-      call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
+      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
+      call output%long_string_print(solver%author,'(t3,a/)',.true.)
+      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
    end subroutine print_banner_newton_raphson_cc_gs
 !

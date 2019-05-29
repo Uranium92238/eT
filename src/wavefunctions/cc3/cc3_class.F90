@@ -24,7 +24,10 @@ module cc3_class
 !!    Written by Rolf H. Myhre and Alexander Paul, 2018-2019
 !!
 !
+   use kinds
    use ccsd_class
+   use direct_file_class, only : direct_file
+   use sequential_file_class, only : sequential_file
 !
    implicit none
 !
@@ -32,37 +35,36 @@ module cc3_class
 !
 !     Ground state integral files
 !
-      type(file)  :: g_bdck_t
-      type(file)  :: g_ljck_t
-      type(file)  :: g_dbkc_t
-      type(file)  :: g_jlkc_t
-      type(file)  :: L_jbkc_t
+      type(direct_file)  :: g_bdck_t
+      type(direct_file)  :: g_ljck_t
+      type(direct_file)  :: g_dbkc_t
+      type(direct_file)  :: g_jlkc_t
+      type(direct_file)  :: L_jbkc_t
 !
 !     Right Jacobian integral files
 !
-      type(file)  :: g_bdck_c1
-      type(file)  :: g_ljck_c1
+      type(direct_file)  :: g_bdck_c1
+      type(direct_file)  :: g_ljck_c1
 !
 !     Left Jacobian integral files
 !
-      type(file)  :: g_becd_t
-      type(file)  :: g_mjlk_t
-      type(file)  :: g_ckld_t
-      type(file)  :: g_cdlk_t
+      type(direct_file)  :: g_becd_t
+      type(direct_file)  :: g_mjlk_t
+      type(direct_file)  :: g_ckld_t
+      type(direct_file)  :: g_cdlk_t
 !
 !     Jacobian intermediates files
 !
-      type(file)  :: g_lbkc_t
-      type(file)  :: X_abdi
-      type(file)  :: X_abid
-      type(file)  :: Y_bcek
-      type(file)  :: X_ajil
+      type(direct_file)  :: g_lbkc_t
+      type(direct_file)  :: X_abdi
+      type(direct_file)  :: X_abid
+      type(direct_file)  :: Y_bcek
+      type(direct_file)  :: X_ajil
 !
    contains
 !
 !     Preparation and cleanup routines
 !
-      procedure :: prepare                => prepare_cc3
       procedure :: cleanup                => cleanup_cc3
 !
 !     Routines related to omega
@@ -137,38 +139,32 @@ module cc3_class
    end interface
 !
 !
+   interface cc3
+!
+      procedure :: new_cc3 
+!
+   end interface cc3
+!
+!
 contains
 !
 !
-   subroutine prepare_cc3(wf, system)
+   function new_cc3(system) result(wf)
 !!
-!!    Prepare
+!!    New CC3
 !!    Written by Rolf H. Myhre, 2018
 !!
       implicit none
 !
-      class(cc3) :: wf
+      type(cc3) :: wf
 !
       class(molecular_system), target, intent(in) :: system 
-!
-      type(file) :: hf_restart_file 
 !
       wf%name_ = 'cc3'
 !
       wf%system => system
 !
-      call hf_restart_file%init('hf_restart_file', 'sequential', 'unformatted')
-!
-      call disk%open_file(hf_restart_file, 'read', 'rewind')
-!
-      read(hf_restart_file%unit) wf%n_ao 
-      read(hf_restart_file%unit) wf%n_mo 
-      read(hf_restart_file%unit) 
-      read(hf_restart_file%unit) wf%n_o  
-      read(hf_restart_file%unit) wf%n_v  
-      read(hf_restart_file%unit) wf%hf_energy  
-!
-      call disk%close_file(hf_restart_file)
+      call wf%read_hf()
 !
       wf%n_t1 = (wf%n_o)*(wf%n_v)
       wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
@@ -189,7 +185,7 @@ contains
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
-   end subroutine prepare_cc3
+   end function new_cc3
 !
 !
    subroutine cleanup_cc3(wf)

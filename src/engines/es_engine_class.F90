@@ -32,7 +32,6 @@ module es_engine_class
 !
    contains
 !
-      procedure :: prepare                   => prepare_es_engine
       procedure :: run                       => run_es_engine
 !
       procedure :: read_settings             => read_settings_es_engine
@@ -44,19 +43,28 @@ module es_engine_class
 !
    end type es_engine
 !
+!
+   interface es_engine
+!
+      procedure :: new_es_engine 
+!
+   end interface es_engine
+!
+!
 contains
 !
-   subroutine prepare_es_engine(engine)
+!
+   function new_es_engine() result(engine)
 !!
-!!    Prepare
+!!    New ES engine
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(es_engine) :: engine
+      type(es_engine) :: engine
 !
       engine%name_  = 'Excited state engine'
-      engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
+      engine%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
@@ -70,7 +78,7 @@ contains
 !
       call engine%read_settings()
 !
-   end subroutine prepare_es_engine
+   end function new_es_engine
 !
 !
    subroutine read_settings_es_engine(engine)
@@ -154,38 +162,25 @@ contains
 !
       character(len=*), intent(in) :: transformation
 !
-      type(diis_cc_es), allocatable                  :: cc_es_solver_diis
+      type(diis_cc_es), allocatable :: cc_es_solver_diis
 !
-      type(davidson_cc_es), allocatable, target      ::  cc_valence_es
-      type(davidson_cvs_cc_es), allocatable, target  ::  cc_core_es
-!
-      class(davidson_cc_es), pointer :: cc_es_solver
+      class(davidson_cc_es), allocatable :: cc_es_solver_davidson
 !
 !     Prepare for excited state
 !
       if (engine%es_algorithm == 'diis' .or. wf%name_ == 'low memory cc2' .or. wf%name_ == 'cc3') then
 !
-         allocate(cc_es_solver_diis)
-!
-         call cc_es_solver_diis%prepare(transformation, wf)
+         cc_es_solver_diis = diis_cc_es(transformation, wf)
          call cc_es_solver_diis%run(wf)
          call cc_es_solver_diis%cleanup(wf)
-!
-         deallocate(cc_es_solver_diis)
 !
       elseif (engine%es_algorithm == 'davidson') then
 !
          if (engine%es_type == 'core') then
 !
-            allocate(cc_core_es)
-            cc_es_solver => cc_core_es
-!
-            call cc_es_solver%prepare(transformation, wf)
-            call cc_es_solver%run(wf)
-            call cc_es_solver%cleanup(wf)
-!
-            cc_es_solver => null()
-            deallocate(cc_core_es)
+            cc_es_solver_davidson = davidson_cvs_cc_es(transformation, wf)
+            call cc_es_solver_davidson%run(wf)
+            call cc_es_solver_davidson%cleanup(wf)
 !
          elseif(engine%es_type == 'valence ionized') then
 !
@@ -197,15 +192,9 @@ contains
 !
          else ! es_type = valence
 !
-            allocate(cc_valence_es)
-            cc_es_solver => cc_valence_es
-!
-            call cc_es_solver%prepare(transformation, wf)
-            call cc_es_solver%run(wf)
-            call cc_es_solver%cleanup(wf)
-!
-            cc_es_solver => null()
-            deallocate(cc_valence_es)
+            cc_es_solver_davidson = davidson_cc_es(transformation, wf)
+            call cc_es_solver_davidson%run(wf)
+            call cc_es_solver_davidson%cleanup(wf)
 !
          endif
 !
@@ -228,7 +217,7 @@ contains
 !
       class(es_engine) :: engine
 !
-      engine%tag    = 'excited state'
+      engine%tag = 'excited state'
 !
       engine%tasks = [character(len=150) ::                                                              &
       'Cholesky decomposition of the ERI-matrix',                                                        &

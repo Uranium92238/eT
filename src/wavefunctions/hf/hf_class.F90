@@ -67,7 +67,6 @@ module hf_class
 !
 !     Preparation and cleanup routines
 !
-      procedure :: prepare                                  => prepare_hf
       procedure :: cleanup                                  => cleanup_hf
 !
       procedure :: is_restart_safe                          => is_restart_safe_hf
@@ -159,17 +158,24 @@ module hf_class
    end type hf
 !
 !
+   interface hf 
+!
+      procedure :: new_hf 
+!
+   end interface hf 
+!
+!
 contains
 !
 !
-   subroutine prepare_hf(wf, system)
+   function new_hf(system) result(wf)
 !!
-!!    Prepare
+!!    New HF
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(hf) :: wf
+      type(hf) :: wf
 !
       class(molecular_system), target, intent(in) :: system
 !
@@ -203,7 +209,7 @@ contains
 !
       call disk%close_file(wf%restart_file)
 !
-   end subroutine prepare_hf
+   end function new_hf
 !
 !
    subroutine is_restart_safe_hf(wf, task)
