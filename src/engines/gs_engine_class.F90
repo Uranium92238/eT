@@ -164,7 +164,12 @@ contains
          call wf%integrals%write_t1_cholesky(wf%t1)
          call wf%calculate_energy()
 !
-         call wf%print_wavefunction_summary()
+         write(output%unit, '(/t3,a,a,a)') ':: Summary of ', trim(convert_to_uppercase(wf%name_)), ' wavefunction energetics (a.u.)'
+!
+         write(output%unit, '(/t3,a26,f19.12)') 'HF energy:                ', wf%hf_energy
+         write(output%unit, '(t3,a26,f19.12)')  'MP2 correction:           ', (wf%energy)-(wf%hf_energy)
+         write(output%unit, '(t3,a26,f19.12)')  'MP2 energy:               ', wf%energy
+!
 !
       elseif (trim(engine%gs_algorithm) == 'diis') then 
 !

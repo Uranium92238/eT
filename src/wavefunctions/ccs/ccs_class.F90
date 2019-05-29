@@ -222,8 +222,6 @@ module ccs_class
 !
       procedure :: calculate_expectation_value                  => calculate_expectation_value_ccs
 !
-      procedure :: print_wavefunction_summary => print_wavefunction_summary_ccs
-!
    end type ccs
 !
 !
@@ -3632,24 +3630,5 @@ contains
 !
    end subroutine form_newton_raphson_t_estimate_ccs
 !
-!
-!
-   subroutine print_wavefunction_summary_ccs(wf)
-!!
-!!    Print wavefunction summary 
-!!
-!!    Prints information related to the wavefunction,
-!!    most of which is meaningful only for a properly 
-!!    converged wavefunction. Should be overwritten in 
-!!    descendants if more or less or other information 
-!!    is present. 
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf
-!
-      write(output%unit, '(a)') 'HALLOHALLOHALLO fjerne print_wavefunction'
-!
-   end subroutine print_wavefunction_summary_ccs
 !
 end module ccs_class

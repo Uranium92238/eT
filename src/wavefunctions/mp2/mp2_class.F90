@@ -37,7 +37,6 @@ module mp2_class
    contains
 !
       procedure :: calculate_energy           => calculate_energy_mp2
-      procedure :: print_wavefunction_summary => print_wavefunction_summary_mp2
 !
    end type mp2
 !
@@ -154,30 +153,6 @@ contains
       wf%energy = wf%hf_energy - e2_neg
 !
    end subroutine calculate_energy_mp2
-!
-!
-   subroutine print_wavefunction_summary_mp2(wf)
-!!
-!!    Print wavefunction summary 
-!!    Written by Andreas Skeidsvoll, 2018
-!!
-!!    Prints information related to the wavefunction,
-!!    most of which is meaningful only for a properly 
-!!    converged wavefunction. Should be overwritten in 
-!!    descendants if more or less or other information 
-!!    is present. 
-!!
-      implicit none 
-!
-      class(mp2), intent(in) :: wf
-!
-      write(output%unit, '(/t3,a,a,a)') ':: Summary of ', trim(wf%name_), ' wavefunction energetics (a.u.)'
-!
-      write(output%unit, '(/t3,a26,f19.12)') 'HF energy:                ', wf%hf_energy
-      write(output%unit, '(t3,a26,f19.12)')  'MP2 correction:           ', (wf%energy)-(wf%hf_energy)
-      write(output%unit, '(t3,a26,f19.12)')  'MP2 energy:               ', wf%energy
-!
-   end subroutine print_wavefunction_summary_mp2
 !
 !
 end module mp2_class
