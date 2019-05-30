@@ -80,6 +80,8 @@ void construct_ao_h_wx_1der(double *h_1x, double *h_1y, double *h_1z,
 */
   const auto& buf_vec = kinetic_1der.results(); // will point to computed shell sets
 
+  kinetic_1der.compute(basis[*s1 - 1], basis[*s2 - 1]);
+
   auto ints_shellset_1x = buf_vec[0];
   auto ints_shellset_1y = buf_vec[1];
   auto ints_shellset_1z = buf_vec[2];
@@ -102,6 +104,8 @@ void construct_ao_h_wx_1der(double *h_1x, double *h_1y, double *h_1z,
 /   Add nuclear 1st derivative
 */
   const auto& buf_vec_n = nuclear_1der.results(); // will point to computed shell sets
+
+  nuclear_1der.compute(basis[*s1 - 1], basis[*s2 - 1]);
 
   ints_shellset_1x = buf_vec_n[0];
   ints_shellset_1y = buf_vec_n[1];

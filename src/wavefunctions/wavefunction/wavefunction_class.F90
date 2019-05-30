@@ -342,48 +342,43 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms), intent(out) :: s_wxqk
 !
-      integer :: k, j, A, B, A_s, B_s, w, x
+      integer :: A, B, A_atom, B_atom  
 !
-      real(dp), dimension(:), allocatable, target :: s_ABqk 
+      real(dp), dimension((wf%system%max_shell_size**2)*3*2), target :: s_ABqk 
 !
       real(dp), dimension(:,:,:,:), pointer :: s_ABqk_p 
 !
       type(interval) :: A_interval, B_interval 
 !     
-      call mem%alloc(s_ABqk, (wf%system%max_shell_size**2)*3*2)
+      do A = 1, wf%system%n_s
 !
-      do k = 1, wf%system%n_atoms
-         do j = 1, wf%system%n_atoms
+         A_atom     = wf%system%shell_to_atom(A)
+         A_interval = wf%system%shell_limits(A)
 !
-            do A = 1, wf%system%atoms(k)%n_shells
+         do B = 1, A
 !
-               A_s = wf%system%atoms(k)%shells(A)%number_
-               A_interval = wf%system%shell_limits(A_s)
+            B_atom     = wf%system%shell_to_atom(B)
+            B_interval = wf%system%shell_limits(B)
 !
-               do B = 1, wf%system%atoms(j)%n_shells
+            s_ABqk_p(1 : A_interval%size, 1 : B_interval%size, 1 : 3, 1 : 2) &
+                                 => s_ABqk(1 : A_interval%size*B_interval%size*3*2)
 !
-                  B_s = wf%system%atoms(j)%shells(B)%number_
-                  B_interval = wf%system%shell_limits(B)  
+            call wf%system%construct_ao_s_wx_1der(s_ABqk_p(:,:,1,1),    &
+                                                   s_ABqk_p(:,:,2,1),   &
+                                                   s_ABqk_p(:,:,3,1),   &
+                                                   s_ABqk_p(:,:,1,2),   &
+                                                   s_ABqk_p(:,:,2,2),   &
+                                                   s_ABqk_p(:,:,3,2),   &
+                                                   A, B)
 !
-                  s_ABqk_p(1 : A_interval%size, 1 : B_interval%size, &
-                           1 : 3, 1 : 2) => s_ABqk(1 : A_interval%size*B_interval%size*3*2)
+            do w = 1, A_interval%size
+               do x = 1, B_interval%size
 !
-                  call wf%system%construct_ao_s_wx_1der(s_ABqk_p(:,:,1,1),    &
-                                                         s_ABqk_p(:,:,2,1),   &
-                                                         s_ABqk_p(:,:,3,1),   &
-                                                         s_ABqk_p(:,:,1,2),   &
-                                                         s_ABqk_p(:,:,2,2),   &
-                                                         s_ABqk_p(:,:,3,2),   &
-                                                         A_s, B_s)
+                  s_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, :, A_atom) = s_ABqk_p(w, x, :, 1)
+                  s_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, :, A_atom) = s_ABqk_p(w, x, :, 1)
 !
-                  do w = 1, A_interval%size
-                     do x = 1, B_interval%size
-!
-                        s_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, :, k) = s_ABqk_p(w, x, :, 1)
-                        s_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, :, j) = s_ABqk_p(w, x, :, 2)
-!
-                     enddo
-                  enddo                  
+                  s_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, :, B_atom) = s_ABqk_p(w, x, :, 2)
+                  s_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, :, B_atom) = s_ABqk_p(w, x, :, 2)
 !
                enddo
             enddo
