@@ -33,8 +33,6 @@ module lowmem_cc2_class
 !
    contains
 !
-      procedure :: prepare          => prepare_lowmem_cc2
-!
       procedure :: construct_omega  => construct_omega_lowmem_cc2
 !
       procedure :: omega_cc2_a1     => omega_cc2_a1_lowmem_cc2
@@ -67,17 +65,24 @@ module lowmem_cc2_class
    end interface
 !
 !
+   interface lowmem_cc2
+!
+      procedure :: new_lowmem_cc2
+!
+   end interface lowmem_cc2
+!
+!
 contains
 !
 !
-   subroutine prepare_lowmem_cc2(wf, system)
+   function new_lowmem_cc2(system) result(wf)
 !!
-!!    Prepare
+!!    New lowmem CC2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(lowmem_cc2) :: wf
+      type(lowmem_cc2) :: wf
 !
       class(molecular_system), target, intent(in) :: system 
 !
@@ -117,7 +122,7 @@ contains
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
-   end subroutine prepare_lowmem_cc2
+   end function new_lowmem_cc2
 !
 !
    subroutine calculate_energy_lowmem_cc2(wf)

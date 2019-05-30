@@ -25,7 +25,7 @@ module string_utilities
 !!
 !
    use kinds
-   use file_class
+   use output_file_class, only : output
 !
 contains
 !
@@ -315,6 +315,52 @@ contains
      char_out = char(char_int)
 !
    end function convert_char_to_uppercase
+!
+!
+   function convert_to_uppercase(string) result(string_out)
+!!
+!!    Convert to lowercase 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+!!    Adapted from routines posted on the Stack-exchange.
+!!    
+!!    Assumes ASCII table for representing characters as integers, 
+!!    where the lowercase letter is +32 relative to the uppercase letters.
+!!
+!!    Note: uppercase (65-90) and lowercase (97-122).
+!!
+      implicit none 
+!
+      character(len=*), intent(in) :: string
+      character(len=500) :: string_out 
+!
+      integer :: character, current_character
+!
+      if (len(string) .gt. 500) call output%error_msg('string is too long to convert.')
+!
+      string_out = repeat(' ', 500)
+!
+      do character = 1, len(string)
+!
+!        Represent character as integer 
+!  
+         current_character = ichar(string(character : character)) 
+!
+!        Convert if character is in the range of uppercase characters 
+!
+         if (current_character >= 97 .and. current_character <= 122) then ! Between a and z
+!
+            current_character = current_character - 32 
+!
+         endif
+!
+!        Replace the character by the (possibly) lowercased letter 
+!
+         string_out(character : character) = char(current_character)
+!
+      enddo
+!
+   end function convert_to_uppercase
 !
 !
 end module string_utilities

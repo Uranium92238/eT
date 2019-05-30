@@ -1138,7 +1138,7 @@ contains
 !
       integer :: I 
 !
-      write(output%unit, *)
+      write(output%unit, '(/t6, a/)')'Geometry (Å):'
 !
       do I = 1, molecule%n_atoms 
 !
@@ -1146,6 +1146,19 @@ contains
                                                                           molecule%atoms(I)%x,      &
                                                                           molecule%atoms(I)%y,      &
                                                                           molecule%atoms(I)%z,      &
+                                                                          molecule%atoms(I)%basis 
+!  
+         flush(output%unit)
+!
+      enddo 
+!
+      write(output%unit, '(/t6, a/)')'Geometry (bohr):'
+      do I = 1, molecule%n_atoms 
+!
+         write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a11)')  molecule%atoms(I)%symbol, &
+                                                                          angstrom_to_bohr*molecule%atoms(I)%x,      &
+                                                                          angstrom_to_bohr*molecule%atoms(I)%y,      &
+                                                                          angstrom_to_bohr*molecule%atoms(I)%z,      &
                                                                           molecule%atoms(I)%basis 
 !  
          flush(output%unit)

@@ -29,18 +29,11 @@ module zop_engine_class
 !
    type, extends(gs_engine) :: zop_engine
 !
-      character(len=100) :: tag           = 'Zeroth order coupled cluster properties'
-      character(len=100) :: author        = 'E. F. Kjønstad, S. D. Folkestad, 2019'
-!
-      character(len=500) :: description1  = 'Calculates the time-independent expectation value of&
-                                             & one-electron operators A, < A > = < Λ | A | CC >.'
-!
       logical :: dipole 
       logical :: quadrupole 
 !
    contains
 !
-      procedure :: prepare                                     => prepare_zop_engine
       procedure :: run                                         => run_zop_engine
 !
       procedure :: read_settings                               => read_settings_zop_engine
@@ -48,30 +41,45 @@ module zop_engine_class
 !
       procedure :: calculate_expectation_values                => calculate_expectation_values_zop_engine
 !
+      procedure, private :: set_printables                              => set_printables_zop_engine
+!
       procedure, nopass, private :: print_summary              => print_summary_zop_engine
 !
    end type zop_engine
 !
+!
+   interface zop_engine
+!
+      procedure :: new_zop_engine
+!
+   end interface zop_engine
+!
+!
 contains
 !
-   subroutine prepare_zop_engine(engine)
+   function new_zop_engine() result(engine)
 !!
-!!    Prepare
+!!    New ZOP engine
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(zop_engine) :: engine
+      type(zop_engine) :: engine
 !
-      engine%name_ = 'Zeroth order properties engine'
+      engine%name_ = 'Zeroth order coupled cluster properties engine'   
+      engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      engine%timer = timings(trim(engine%name_))
+      call engine%timer%turn_on()
 !
       engine%dipole                 = .false.
       engine%quadrupole             = .false. 
       engine%multipliers_algorithm  = 'davidson'
+      engine%gs_algorithm           = 'diis'
 !
       call engine%read_settings()
 !
-   end subroutine prepare_zop_engine
+   end function new_zop_engine
 !
 !
    subroutine read_settings_zop_engine(engine)
@@ -130,12 +138,6 @@ contains
 !
       call wf%initialize_density()
       call wf%construct_density()
-!
-!     Compute the requested expectation values
-!
-      call long_string_print(engine%tag,'(//t3,a)',.true.)
-      call long_string_print(engine%author,'(t3,a/)',.true.)
-      call long_string_print(engine%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
       call engine%calculate_expectation_values(wf)
 !
@@ -248,6 +250,29 @@ contains
       flush(output%unit)
 !
    end subroutine print_summary_zop_engine
+!
+!
+   subroutine set_printables_zop_engine(engine)
+!!
+!!    Set printables 
+!!    Written by sarai D. Folkestad, May 2019
+!!
+      implicit none
+!
+      class(zop_engine) :: engine
+!
+      engine%tag   = 'zeroth order properties'
+!
+      engine%tasks = [character(len=150) ::                                                                       &
+      'Cholesky decomposition of the ERI-matrix',                                                           &
+      'Calculation of the ground state amplitudes and energy ('//trim(engine%gs_algorithm)//'-algorithm)',  &
+      'Calculation of the multipliers ('//trim(engine%multipliers_algorithm)//'-algorithm)',                &
+      'Calculation of the zeroth order property']
+!      
+      engine%description  = 'Calculates the time-independent expectation value of&
+                            & one-electron operators A, < A > = < Λ | A | CC >.'
+!
+   end subroutine set_printables_zop_engine
 !
 !
 end module zop_engine_class

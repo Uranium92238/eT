@@ -57,6 +57,11 @@ def input_parser():
                          action='store_true',
                          default=False)
 
+    parser.add_argument('--runtime_checks',
+                         help="Add runtime checks flag to Fortran compiler",
+                         action='store_true',
+                         default=False)
+
     ompgroup = parser.add_mutually_exclusive_group()
     ompgroup.add_argument('--omp',
                           help="enable OpenMP parallelization",
@@ -119,6 +124,7 @@ def construct_command(args):
     command += " -DENABLE_OMP=" + cmake_translator(args.omp)
     command += " -DENABLE_THREADED_MKL=" + cmake_translator(args.omp)
     command += " -DENABLE_PROFILING=" + cmake_translator(args.profiling)
+    command += " -DENABLE_RUNTIME_CHECKS=" + cmake_translator(args.runtime_checks)
 
     if (args.libint_lib):
         command += " -DLIBINT2_ROOT=" + args.libint_lib   

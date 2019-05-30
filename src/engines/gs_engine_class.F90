@@ -29,12 +29,13 @@ module gs_engine_class
 !
       character(len=200) :: multipliers_algorithm
 !
+      character(len=200) :: gs_algorithm  
+!
    contains 
 !
-      procedure :: prepare                               => prepare_gs_engine
       procedure :: run                                   => run_gs_engine
 !
-      procedure, nopass :: do_ground_state               => do_ground_state_gs_engine 
+      procedure :: do_ground_state                       => do_ground_state_gs_engine 
 !
       procedure :: do_multipliers                        => do_multipliers_gs_engine 
 !
@@ -47,27 +48,42 @@ module gs_engine_class
 ! 
       procedure :: read_gs_settings                      => read_gs_settings_gs_engine 
 !
+      procedure, private :: set_printables               => set_printables_gs_engine
+!
    end type gs_engine 
+!
+!
+   interface gs_engine
+!
+      procedure :: new_gs_engine 
+!
+   end interface gs_engine 
 !
 !
 contains
 !
 !
-   subroutine prepare_gs_engine(engine)
+   function new_gs_engine() result(engine)
 !!
-!!    Prepare 
+!!    New GS engine  
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
 !
-      class(gs_engine) :: engine 
+      type(gs_engine) :: engine 
 !
-      engine%name_                 = 'Ground state CC engine'
+      engine%name_   = 'Ground state coupled cluster engine'
+      engine%author  = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      engine%timer = timings(trim(engine%name_))
+      call engine%timer%turn_on()
+!
       engine%multipliers_algorithm = 'davidson'
+      engine%gs_algorithm          = 'diis'
 !
       call engine%read_settings()
 !
-   end subroutine prepare_gs_engine
+   end function new_gs_engine
 !
 !
    subroutine read_settings_gs_engine(engine)
@@ -94,6 +110,7 @@ contains
       class(gs_engine) :: engine 
 !
       call input%get_keyword_in_section('algorithm', 'solver cc multipliers', engine%multipliers_algorithm)
+      call input%get_keyword_in_section('algorithm', 'solver cc gs', engine%gs_algorithm )
 !
    end subroutine read_gs_settings_gs_engine
 !
@@ -119,7 +136,7 @@ contains
    end subroutine run_gs_engine
 !
 !
-   subroutine do_ground_state_gs_engine(wf)
+   subroutine do_ground_state_gs_engine(engine, wf)
 !!
 !!    Do ground state   
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
@@ -131,31 +148,37 @@ contains
 !!    stored in memory.     
 !!
       use diis_cc_gs_class
+      use newton_raphson_cc_gs_class
 !
       implicit none 
+!
+      class(gs_engine), intent(in) :: engine 
 !
       class(ccs), intent(inout) :: wf 
 !
       type(diis_cc_gs), allocatable :: diis_solver 
+      type(newton_raphson_cc_gs), allocatable :: newton_raphson_solver 
 !
-      if (trim(wf%name_) == 'MP2') then 
+      if (trim(wf%name_) == 'mp2') then 
 !
          call wf%integrals%write_t1_cholesky(wf%t1)
          call wf%calculate_energy()
 !
          call wf%print_wavefunction_summary()
 !
-      else 
+      elseif (trim(engine%gs_algorithm) == 'diis') then 
 !
-         allocate(diis_solver)
-!
-         call diis_solver%prepare(wf)
+         diis_solver = diis_cc_gs(wf)
          call diis_solver%run(wf)
          call diis_solver%cleanup(wf)
 !
-         deallocate(diis_solver)
+      elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
 !
-      endif
+         newton_raphson_solver = newton_raphson_cc_gs(wf)
+         call newton_raphson_solver%run(wf)
+         call newton_raphson_solver%cleanup(wf)
+!
+      endif 
 !
    end subroutine do_ground_state_gs_engine
 !
@@ -185,23 +208,17 @@ contains
 !
       if (trim(engine%multipliers_algorithm) == 'davidson') then 
 !
-         allocate(davidson_solver)
+         if (trim(wf%name_) == 'cc2') call output%error_msg('For CC2 multipliers the DIIS algorithm must be specified.')
 !
-         call davidson_solver%prepare(wf)
+         davidson_solver = davidson_cc_multipliers(wf)
          call davidson_solver%run(wf)
          call davidson_solver%cleanup(wf)
 !
-         deallocate(davidson_solver)
-!
       elseif (trim(engine%multipliers_algorithm) == 'diis') then 
 !
-         allocate(diis_solver)
-!
-         call diis_solver%prepare(wf)
+         diis_solver = diis_cc_multipliers(wf)
          call diis_solver%run(wf)
          call diis_solver%cleanup(wf)
-!
-         deallocate(diis_solver)
 !
       else
 !
@@ -329,6 +346,27 @@ contains
       M(5) = (three*M(5))/two
 !
    end subroutine remove_trace_gs_engine
+!
+!
+   subroutine set_printables_gs_engine(engine)
+!!
+!!    Set printables 
+!!    Written by sarai D. Folkestad, May 2019
+!!
+      implicit none
+!
+      class(gs_engine) :: engine
+!
+      engine%tag   = 'ground state'
+!
+      engine%tasks = [character(len=150) ::                                                           &
+            'Cholesky decomposition of the ERI-matrix',                                               &
+            'Calculation of the ground state amplitudes ('//trim(engine%gs_algorithm)//'-algorithm)', &
+            'Calculation of the ground state energy']
+!
+      engine%description = 'Calculates the ground state CC wavefunction | CC > = exp(T) | R >'
+!
+   end subroutine set_printables_gs_engine
 !
 !
 end module gs_engine_class

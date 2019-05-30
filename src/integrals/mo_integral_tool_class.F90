@@ -121,11 +121,11 @@ contains
       integrals%n_v  = n_v
       integrals%n_mo = n_o + n_v
 !
-      call integrals%cholesky_mo%init(eri_cholesky%cholesky_mo_vectors%name, 'direct', 'unformatted', dp*integrals%n_J)
+      call integrals%cholesky_mo%init(eri_cholesky%cholesky_mo_vectors%name_, 'direct', 'unformatted', dp*integrals%n_J)
       call integrals%cholesky_mo_t1%init('cholesky_mo_t1_vectors', 'direct', 'unformatted', dp*integrals%n_J)
 !
-      call integrals%Q%init(eri_cholesky%Q%name, 'sequential', 'unformatted')
-      call integrals%Q_inverse%init(eri_cholesky%Q_inverse%name, 'sequential', 'unformatted')
+      call integrals%Q%init(eri_cholesky%Q%name_, 'sequential', 'unformatted')
+      call integrals%Q_inverse%init(eri_cholesky%Q_inverse%name_, 'sequential', 'unformatted')
 !
 !     Initially MO cholesky on file, and not T1-transformed cholesky
 !     nor full T1-ERI matrix
@@ -1087,8 +1087,8 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
       type(timings) :: write_t1_cholesky_timer
 !
-      call write_t1_cholesky_timer%init('transform and write t1 cholesky to file')
-      call write_t1_cholesky_timer%start()
+      write_t1_cholesky_timer = new_timer('transform and write t1 cholesky to file')
+      call write_t1_cholesky_timer%turn_on()
 !
       call disk%open_file(integrals%cholesky_mo_t1, 'write')
 !
@@ -1246,8 +1246,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
       call disk%close_file(integrals%cholesky_mo_t1)
 !
-      call write_t1_cholesky_timer%freeze()
-      call write_t1_cholesky_timer%switch_off()
+      call write_t1_cholesky_timer%turn_off()
 !
    end subroutine write_t1_cholesky_mo_integral_tool
 !

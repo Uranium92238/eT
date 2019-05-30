@@ -55,17 +55,17 @@ extern vector<Engine> nuclear;
 Engine nuclear_1der;
 extern Engine nuclear_1der;
 
-Engine overlap;
-extern Engine overlap;
-
 Engine overlap_1der;
 extern Engine overlap_1der;
 
-Engine dipole;
-extern Engine dipole;
+vector<Engine> overlap(omp_get_max_threads());
+extern vector<Engine> overlap;
 
-Engine quadrupole;
-extern Engine quadrupole;
+vector<Engine> dipole(omp_get_max_threads());
+extern vector<Engine> dipole;
+
+vector<Engine> quadrupole(omp_get_max_threads());
+extern vector<Engine> quadrupole;
 
 vector<Atom> atoms;
 extern vector<Atom> atoms;
@@ -164,7 +164,10 @@ void initialize_nuclear(){
 void initialize_overlap(){
 
     Engine temporary(Operator::overlap, basis.max_nprim(), basis.max_l());
-    overlap = temporary;
+   
+    for (int i = 0; i != omp_get_max_threads(); i++){
+        overlap[i] = temporary; 
+    }
 
     Engine temporary_1der(Operator::overlap, basis.max_nprim(), basis.max_l(),1);
     overlap_1der = temporary_1der;
@@ -174,13 +177,19 @@ void initialize_overlap(){
 void initialize_dipole(){
 
     Engine temporary(Operator::emultipole1, basis.max_nprim(), basis.max_l()); // Note that expansion point = (0,0,0) by default
-    dipole = temporary;
+
+    for (int i = 0; i != omp_get_max_threads(); i++){
+        dipole[i] = temporary; 
+    }
 
 }
 
 void initialize_quadrupole(){
 
     Engine temporary(Operator::emultipole2, basis.max_nprim(), basis.max_l()); // Note that expansion point = (0,0,0) by default
-    quadrupole = temporary;
+
+    for (int i = 0; i != omp_get_max_threads(); i++){
+        quadrupole[i] = temporary; 
+    }
 
 }

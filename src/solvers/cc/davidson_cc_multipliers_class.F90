@@ -49,10 +49,11 @@ module davidson_cc_multipliers_class
 !
       logical :: restart
 !
+      type(timings) :: timer
+!
    contains
 !
-      procedure :: prepare                         => prepare_davidson_cc_multipliers
-      procedure, nopass :: cleanup                 => cleanup_davidson_cc_multipliers
+      procedure :: cleanup                         => cleanup_davidson_cc_multipliers
 !
       procedure :: print_banner                    => print_banner_davidson_cc_multipliers
       procedure :: print_settings                  => print_settings_davidson_cc_multipliers
@@ -70,19 +71,29 @@ module davidson_cc_multipliers_class
    end type davidson_cc_multipliers
 !
 !
+   interface davidson_cc_multipliers
+!
+      procedure :: new_davidson_cc_multipliers
+!
+   end interface davidson_cc_multipliers
+!
+!
 contains
 !
 !
-   subroutine prepare_davidson_cc_multipliers(solver, wf)
+   function new_davidson_cc_multipliers(wf) result(solver)
 !!
-!!    Prepare 
+!!    New Davidson CC multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(davidson_cc_multipliers) :: solver
+      type(davidson_cc_multipliers) :: solver
 !
       class(ccs) :: wf
+!
+      solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' multipliers')
+      call solver%timer%turn_on()
 !
 !     Print solver banner
 !
@@ -102,7 +113,7 @@ contains
 !
       call wf%initialize_multipliers()
 !
-   end subroutine prepare_davidson_cc_multipliers
+   end function new_davidson_cc_multipliers
 !
 !
    subroutine print_settings_davidson_cc_multipliers(solver)
@@ -149,7 +160,7 @@ contains
       call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
 !
-      call davidson%prepare('multipliers', wf%n_gs_amplitudes, solver%residual_threshold, -eta)
+      davidson = linear_davidson_tool('multipliers', wf%n_gs_amplitudes, solver%residual_threshold, -eta)
 !
       call solver%set_precondition_vector(wf, davidson)
 !
@@ -161,12 +172,14 @@ contains
 !
          write(output%unit, '(/t3,a)') 'Requested restart. Reading multipliers from file.'
 !
+         call wf%is_restart_safe('ground state')
          call wf%read_multipliers()
 !
          call mem%alloc(multipliers, wf%n_gs_amplitudes)
          call wf%get_multipliers(multipliers)
 !
          norm_trial = sqrt(ddot(wf%n_gs_amplitudes, multipliers, 1, multipliers, 1))
+         call dscal(wf%n_gs_amplitudes, one/norm_trial, multipliers, 1)
 !
          call davidson%write_trial(multipliers, 'rewind')
          call mem%dealloc(multipliers, wf%n_gs_amplitudes)
@@ -269,7 +282,7 @@ contains
    end subroutine run_davidson_cc_multipliers
 !
 !
-   subroutine cleanup_davidson_cc_multipliers(wf)
+   subroutine cleanup_davidson_cc_multipliers(solver, wf)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -277,8 +290,17 @@ contains
       implicit none
 !
       class(ccs) :: wf
+      class(davidson_cc_multipliers) :: solver
 !
       call wf%save_multipliers()  
+!
+      call solver%timer%turn_off()
+!
+      write(output%unit, '(/t3, a)') '- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) // &
+                                       ' multipliers equations'
+!
+      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
+      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
 !
    end subroutine cleanup_davidson_cc_multipliers
 !
@@ -292,10 +314,10 @@ contains
 !
       class(davidson_cc_multipliers) :: solver 
 !
-      call long_string_print(solver%tag,'(//t3,a)',.true.)
-      call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
-      call long_string_print(solver%description2)
+      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
+      call output%long_string_print(solver%author,'(t3,a/)',.true.)
+      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call output%long_string_print(solver%description2)
 !
    end subroutine print_banner_davidson_cc_multipliers
 !

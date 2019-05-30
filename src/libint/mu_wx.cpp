@@ -41,12 +41,14 @@ using namespace libint2;
 
 void construct_ao_mu_wx(double *mu_X, double *mu_Y, double *mu_Z, int *s1, int *s2){
 
-  const auto& buf_vec = dipole.results(); // will point to computed shell sets
+  int thread = omp_get_thread_num();
+
+  const auto& buf_vec = dipole[thread].results(); // will point to computed shell sets
 
   auto n1 = basis[*s1 - 1].size();        // Number of basis functions in shell 1
   auto n2 = basis[*s2 - 1].size();        // number of basis functions in shell 2
 
-  dipole.compute(basis[*s1 - 1], basis[*s2 - 1]);
+  dipole[thread].compute(basis[*s1 - 1], basis[*s2 - 1]);
 
   // I don't know why, but Libint computes the overlap integrals for some reason (they are in buf_vec[0])!
   // => We treat this as junk & never use it. - Eirik

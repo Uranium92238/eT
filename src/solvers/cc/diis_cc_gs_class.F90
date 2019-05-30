@@ -48,15 +48,16 @@ module diis_cc_gs_class
       real(dp) :: energy_threshold
       real(dp) :: omega_threshold 
 !
-      logical    :: restart
+      logical  :: restart
+!
+      type(timings) :: timer
 !
    contains
 !     
       procedure, nopass :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_gs
 !
-      procedure :: prepare                  => prepare_diis_cc_gs
       procedure :: run                      => run_diis_cc_gs
-      procedure, nopass :: cleanup          => cleanup_diis_cc_gs
+      procedure :: cleanup                  => cleanup_diis_cc_gs
 !
       procedure :: print_banner             => print_banner_diis_cc_gs
       procedure :: read_settings            => read_settings_diis_cc_gs
@@ -67,19 +68,29 @@ module diis_cc_gs_class
    end type diis_cc_gs
 !
 !
+   interface diis_cc_gs 
+!
+      procedure :: new_diis_cc_gs
+!
+   end interface diis_cc_gs 
+!
+!
 contains
 !
 !
-   subroutine prepare_diis_cc_gs(solver, wf)
+   function new_diis_cc_gs(wf) result(solver)
 !!
-!!    Prepare 
+!!    New DIIS CC GS 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(diis_cc_gs) :: solver
+      type(diis_cc_gs) :: solver
 !
       class(ccs) :: wf
+!
+      solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' ground state')
+      call solver%timer%turn_on()
 !
 !     Print solver banner
 !
@@ -91,7 +102,7 @@ contains
       solver%max_iterations   = 100
       solver%energy_threshold = 1.0d-6
       solver%omega_threshold  = 1.0d-6
-      solver%restart       = .false.
+      solver%restart          = .false.
 !
 !     Read & print settings (thresholds, etc.)
 !
@@ -106,6 +117,10 @@ contains
 !
       if (solver%restart) then
 !
+         call wf%is_restart_safe('ground state')
+!
+         write(output%unit, '(/t3,a)') 'Requested restart. Reading in solution from file.'
+!
          call wf%read_amplitudes()
          call wf%integrals%write_t1_cholesky(wf%t1) 
 ! 
@@ -116,7 +131,7 @@ contains
 !
       endif
 !
-   end subroutine prepare_diis_cc_gs
+   end function new_diis_cc_gs
 !
 !
    subroutine print_settings_diis_cc_gs(solver)
@@ -198,7 +213,7 @@ contains
 !
       integer :: iteration
 !
-      call diis_manager%init('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
+      diis_manager = diis_tool('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
       call mem%alloc(omega, wf%n_gs_amplitudes)
       call mem%alloc(amplitudes, wf%n_gs_amplitudes)
@@ -231,6 +246,7 @@ contains
          write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
                                           omega_norm, abs(wf%energy-prev_energy)
          flush(output%unit)
+         flush(timing%unit)
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !
@@ -262,7 +278,8 @@ contains
             call solver%do_diagonal_precondition(-one, epsilon, omega, wf%n_gs_amplitudes)
 !
             call wf%get_amplitudes(amplitudes)
-            amplitudes = amplitudes + omega 
+!
+            call wf%form_newton_raphson_t_estimate(amplitudes, omega)
 !
             call diis_manager%update(omega, amplitudes)
             call wf%set_amplitudes(amplitudes)
@@ -289,7 +306,7 @@ contains
       call mem%dealloc(amplitudes, wf%n_gs_amplitudes)
       call mem%dealloc(epsilon, wf%n_gs_amplitudes)
 !
-      call diis_manager%finalize()
+      call diis_manager%cleanup()
 !
       if (.not. converged) then 
 !   
@@ -306,18 +323,27 @@ contains
    end subroutine run_diis_cc_gs
 !
 !
-   subroutine cleanup_diis_cc_gs(wf)
+   subroutine cleanup_diis_cc_gs(solver, wf)
 !!
 !! 	Cleanup 
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
+      class(diis_cc_gs) :: solver
       class(ccs) :: wf
 !
 !     Save amplitudes 
 !
       call wf%save_amplitudes()
+!
+      call solver%timer%turn_off()
+!
+      write(output%unit, '(/t3, a)') '- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) // &
+                                       ' ground state equations'
+!
+      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
+      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
 !
    end subroutine cleanup_diis_cc_gs
 !
@@ -331,9 +357,9 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      call long_string_print(solver%tag,'(//t3,a)',.true.)
-      call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
+      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
+      call output%long_string_print(solver%author,'(t3,a/)',.true.)
+      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
    end subroutine print_banner_diis_cc_gs
 !
@@ -370,11 +396,12 @@ contains
 !
       write(output%unit, '(/t3,a)') '- DIIS CC ground state solver summary:'
 !
-      write(output%unit, '(/t6,a33,f18.12)') 'Final ground state energy (a.u.):', wf%energy 
+      call output%printf('Final ground state energy (a.u.): (f18.12)', reals=[wf%energy], fs='(/t6,a)')
+!
       call wf%print_dominant_amplitudes()
 !
       t1_diagnostic = wf%get_t1_diagnostic() 
-      write(output%unit, '(/t6,a32,f14.12)') 'T1 diagnostic (|T1|/sqrt(N_e)): ', t1_diagnostic
+      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', reals=[t1_diagnostic], fs='(/t6,a)')
 !
    end subroutine print_summary_diis_cc_gs
 !

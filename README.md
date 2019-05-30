@@ -38,7 +38,7 @@ cmake ..
 ```
 Compile eT:
 ```
-make
+make [-j4]
 ```
 Run tests:
 ```

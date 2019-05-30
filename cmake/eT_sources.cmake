@@ -27,22 +27,26 @@ set(eT_fortran_sources
    src/solvers/cc/diis_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_es_class.F90
-   src/solvers/cc/davidson_cc_ip_class.F90
    src/solvers/cc/davidson_cc_cvs_es_class.F90
+   src/solvers/cc/newton_raphson_cc_gs_class.F90
    src/solvers/cholesky/eri_cd_class.F90
    src/engines/hf_engine_class.F90
    src/engines/abstract_engine_class.F90
    src/engines/gs_engine_class.F90
    src/engines/es_engine_class.F90
    src/engines/zop_engine_class.F90
+   src/engines/fop_engine_class.F90
    src/io/disk_manager_class.F90
    src/io/abstract_file_class.F90
    src/io/file_class.F90
+   src/io/direct_file_class.F90
+   src/io/sequential_file_class.F90
    src/io/input_file_class.F90
    src/io/section_class.F90
    src/io/output_file_class.F90
    src/io/io_utilities.F90
    src/io/string_utilities.F90
+   src/io/global_files.F90
    src/integrals/mo_integral_tool_class.F90
    src/solver_tools/cholesky_array_list_class.F90
    src/memory/batching_index_class.F90
@@ -76,7 +80,11 @@ set(eT_fortran_sources
    src/solver_tools/davidson_tool_class.F90
    src/solver_tools/eigen_davidson_tool_class.F90
    src/solver_tools/linear_davidson_tool_class.F90
+   src/wavefunctions/ccs/fop_ccs.F90
+   src/wavefunctions/ccsd/fop_ccsd.F90
    src/wavefunctions/ccsd/omega_ccsd.F90
+   src/wavefunctions/ccsd/files_ccsd.F90
+   src/wavefunctions/ccsd/get_set_ccsd.F90
    src/wavefunctions/ccsd/jacobian_ccsd.F90
    src/wavefunctions/ccsd/jacobian_transpose_ccsd.F90
    src/wavefunctions/cc2/omega_cc2.F90
@@ -86,4 +94,6 @@ set(eT_fortran_sources
    src/wavefunctions/lowmem_cc2/jacobian_lowmem_cc2.F90
    src/wavefunctions/cc3/omega_cc3.F90
    src/wavefunctions/cc3/jacobian_cc3.F90
+   src/wavefunctions/cc3/prepare_jacobian_transform_cc3.F90
+   src/wavefunctions/cc3/jacobian_transpose_cc3.F90
 )

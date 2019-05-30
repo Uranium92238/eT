@@ -1,0 +1,31 @@
+stages:
+  - build
+  - run
+
+build:
+  stage: build
+  script:
+    - whoami
+    - gfortran --version
+    - g++ --version
+    - cmake --version
+    - git submodule init
+    - git submodule update
+    - ./setup --int32 -FC=gfortran -CXX=g++
+    - cd build
+    - make -j2
+  only:
+    - master
+    - merge_requests
+  artifacts:
+    paths: 
+      - build/
+
+run:
+  stage: run
+  script:
+    - cd build
+    - ctest
+  only:
+    - master
+    - merge_requests

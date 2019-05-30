@@ -64,7 +64,6 @@ module hf_class
 !
 !     Preparation and cleanup routines 
 !
-      procedure :: prepare                                  => prepare_hf
       procedure :: cleanup                                  => cleanup_hf
 !
       procedure :: is_restart_safe                          => is_restart_safe_hf
@@ -156,17 +155,24 @@ module hf_class
    end type hf
 !
 !
+   interface hf 
+!
+      procedure :: new_hf 
+!
+   end interface hf 
+!
+!
 contains
 !
 !
-   subroutine prepare_hf(wf, system)
+   function new_hf(system) result(wf)
 !!
-!!    Prepare
+!!    New HF
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(hf) :: wf
+      type(hf) :: wf
 !
       class(molecular_system), target, intent(in) :: system
 !
@@ -183,6 +189,7 @@ contains
       call initialize_kinetic_c()
       call initialize_nuclear_c()
       call initialize_overlap_c()
+      call initialize_dipole()
 !
       call wf%set_n_mo()
 !
@@ -199,7 +206,7 @@ contains
 !
       call disk%close_file(wf%restart_file) 
 !
-   end subroutine prepare_hf
+   end function new_hf
 !
 !
    subroutine is_restart_safe_hf(wf, task)
@@ -321,6 +328,57 @@ contains
       call print_vector(wf%orbital_energies, wf%n_ao, indent)
 !
    end subroutine print_orbital_energies_hf
+!
+!
+   subroutine mo_transform_hf(wf, X_wx, Y_pq)
+!!
+!!    MO transform 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Performs MO transformation of X and saves the result in Y:
+!!
+!!       Y_pq = sum_wx C_wp X_wx C_xq
+!!
+      implicit none 
+!
+      class(hf), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: X_wx 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Y_pq  
+!
+      real(dp), dimension(:,:), allocatable :: Z_wq ! = sum_x X_wx C_xq
+!
+      call mem%alloc(Z_wq, wf%n_ao, wf%n_mo)
+!
+      call dgemm('N', 'N',                 &
+                  wf%n_ao,                 &
+                  wf%n_mo,                 &
+                  wf%n_ao,                 &
+                  one,                     &
+                  X_wx,                    &
+                  wf%n_ao,                 &
+                  wf%orbital_coefficients, & ! C_xq
+                  wf%n_ao,                 &
+                  zero,                    &
+                  Z_wq,                    &
+                  wf%n_ao)
+!
+      call dgemm('T', 'N',                 &
+                  wf%n_mo,                 &
+                  wf%n_mo,                 &
+                  wf%n_ao,                 &
+                  one,                     &
+                  wf%orbital_coefficients, & ! C_wp 
+                  wf%n_ao,                 &
+                  Z_wq,                    &
+                  wf%n_ao,                 &
+                  zero,                    &
+                  Y_pq,                    &
+                  wf%n_mo)
+!
+      call mem%dealloc(Z_wq, wf%n_ao, wf%n_mo)
+!
+   end subroutine mo_transform_hf
 !
 !
    subroutine set_initial_ao_density_guess_hf(wf, guess)
@@ -602,8 +660,6 @@ contains
 !
       call disk%close_file(wf%restart_file) 
 !
-      call wf%mo_transform_and_save_h()
-!
       call wf%destruct_orbital_energies()
       call wf%destruct_ao_overlap()
       call wf%destruct_ao_fock()
@@ -840,7 +896,7 @@ contains
 !
       real(dp) :: maximum
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g
+      real(dp), dimension(wf%system%max_shell_size**4) :: g
 !
       type(interval) :: A_interval, B_interval
 !
@@ -857,15 +913,9 @@ contains
             A_interval = wf%system%shell_limits(s1)
             B_interval = wf%system%shell_limits(s2)
 !
-            call mem%alloc(g, A_interval%size, B_interval%size, &
-                              A_interval%size, B_interval%size)
-!
             call wf%system%construct_ao_g_wxyz(g, s1, s2, s1, s2)
 !
             maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
-!
-            call mem%dealloc(g, A_interval%size, B_interval%size, &
-                                A_interval%size, B_interval%size)
 !
             sp_eri_schwarz(s1s2, 1) = sqrt(maximum)
 !
@@ -914,28 +964,36 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
 !
-      real(dp), dimension(:,:), allocatable :: D_red 
+      real(dp), dimension(:,:), allocatable, target :: D_red 
+      real(dp), dimension(:,:), contiguous, pointer :: D_red_p => null()
 !
       type(interval) :: A_interval, B_interval
 !
       integer :: s1, s2 
+      integer :: n_threads = 1, thread = 0
 !
       real(dp) :: maximum
 !
-!$omp parallel do private(s1, s2, A_interval, B_interval, D_red, maximum) schedule(dynamic)
+!$    n_threads = omp_get_max_threads()
+!
+      call mem%alloc(D_red,wf%system%max_shell_size**2,n_threads)
+!
+!$omp parallel do private(s1, s2, A_interval, B_interval, D_red_p, maximum, thread) schedule(dynamic)
       do s1 = 1, wf%system%n_s
          do s2 = 1, s1
+!
+!$          thread = omp_get_thread_num()
 !
             A_interval = wf%system%shell_limits(s1)
             B_interval = wf%system%shell_limits(s2)
 !
-            call mem%alloc(D_red, A_interval%size, B_interval%size)
+            D_red_p(1:A_interval%size,1:B_interval%size) => D_red(1:A_interval%size*B_interval%size,thread+1)
 !
-            D_red = D(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
+            D_red_p = D(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
 !
-            maximum = get_abs_max(D_red, (A_interval%size)*(B_interval%size))
+            maximum = get_abs_max(D_red_p, (A_interval%size)*(B_interval%size))
 !
-            call mem%dealloc(D_red, A_interval%size, B_interval%size)
+            nullify(D_red_p)
 !
             sp_density_schwarz(s1, s2) = maximum
             sp_density_schwarz(s2, s1) = maximum
@@ -943,6 +1001,8 @@ contains
          enddo
       enddo
 !$omp end parallel do
+!
+      call mem%dealloc(D_red,wf%system%max_shell_size**2,n_threads)
 !
    end subroutine construct_sp_density_schwarz_hf
 !
@@ -1009,7 +1069,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz, sp_density_schwarz
 !
-      real(dp), dimension(:,:), allocatable :: h_wx, h_AB
+      real(dp), dimension(:,:), allocatable :: h_wx
       integer :: w, x, y, z 
 !
       integer :: A, B, C, D, atom
@@ -1021,9 +1081,13 @@ contains
 !
       real(dp) :: maximum, max_eri, max_density
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g, g_C, g_K
+      real(dp), dimension(wf%system%max_shell_size**4) :: g 
 !
-      real(dp), dimension(:,:), allocatable :: D_yz
+      real(dp), dimension(wf%system%max_shell_size**4), target :: g_C, g_K
+      real(dp), dimension(:,:,:,:), pointer :: g_C_p, g_K_p
+!
+      real(dp), dimension(wf%system%max_shell_size**2), target :: D_yz
+      real(dp), dimension(:,:), contiguous, pointer :: D_yz_p
 !
       integer, dimension(:,:), allocatable :: shells_on_atoms
 !
@@ -1047,15 +1111,9 @@ contains
             A_interval = wf%system%shell_limits(A)
             B_interval = wf%system%shell_limits(B)
 !
-            call mem%alloc(g, A_interval%size, B_interval%size, &
-                              A_interval%size, B_interval%size)
-!
             call wf%system%construct_ao_g_wxyz(g, A, B, A, B)
 !
             maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
-!
-            call mem%dealloc(g, A_interval%size, B_interval%size, &
-                              A_interval%size, B_interval%size)
 !
             sp_eri_schwarz(A, B) = sqrt(maximum)
             sp_eri_schwarz(B, A) = sqrt(maximum)
@@ -1079,7 +1137,7 @@ contains
       call mem%alloc(sp_density_schwarz, n_s, n_s)
       sp_density_schwarz = zero
 !
-!$omp parallel do private(A, B, A_interval, B_interval, D_yz, maximum) schedule(dynamic)
+!$omp parallel do private(A, B, A_interval, B_interval, D_yz, D_yz_p, maximum) schedule(dynamic)
       do atom = 1, wf%system%n_atoms
          do A = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
 !
@@ -1089,14 +1147,12 @@ contains
 !
                B_interval = wf%system%shell_limits(B)
 !
-               call mem%alloc(D_yz, A_interval%size, B_interval%size)
-!
-               D_yz = wf%ao_density(A_interval%first : A_interval%last, &
+               D_yz_p(1 : A_interval%size, 1 : B_interval%size) => D_yz(1 : A_interval%size*B_interval%size)
+
+               D_yz_p = wf%ao_density(A_interval%first : A_interval%last, &
                                     B_interval%first : B_interval%last)
 !
                maximum = get_abs_max(D_yz, (A_interval%size)*(B_interval%size))
-!
-               call mem%dealloc(D_yz, A_interval%size, B_interval%size)
 !
                sp_density_schwarz(A, B) = maximum
 !
@@ -1112,7 +1168,7 @@ contains
 !
 !$omp parallel do &
 !$omp private(A, B, C, D, A_interval, B_interval, C_interval, D_interval, w, x, y, z, &
-!$omp g_C) schedule(dynamic)
+!$omp g_C, g_C_p) schedule(dynamic)
       do A = 1, n_s
 !
          A_interval = wf%system%shell_limits(A)
@@ -1136,10 +1192,10 @@ contains
                      if (sp_eri_schwarz(A, B)*sp_eri_schwarz(C, D)*sp_density_schwarz(C, D) &
                                        .lt. coulomb_thr) cycle               
 !
-                     call mem%alloc(g_C, A_interval%size, B_interval%size, &
-                                          C_interval%size, D_interval%size)
-!
                      call wf%system%construct_ao_g_wxyz(g_C, A, B, C, D)
+
+                     g_C_p(1 : A_interval%size, 1 : B_interval%size, 1 : C_interval%size, 1 : D_interval%size) &
+                                 => g_C(1 : A_interval%size*B_interval%size*C_interval%size*D_interval%size)
 !     
 !                    Add Fock matrix contributions
 !     
@@ -1150,7 +1206,7 @@ contains
                               do y = C_interval%first, C_interval%last
                                  do z = D_interval%first, D_interval%last
 !
-                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + g_C(w, x, y, z)*wf%ao_density(y, z)
+                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + g_C_p(w, x, y, z)*wf%ao_density(y, z)
 !
                                  enddo
                               enddo
@@ -1164,7 +1220,7 @@ contains
                               do y = C_interval%first, C_interval%last
                                  do z = D_interval%first, D_interval%last
 !
-                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + g_C(w, x, y, z)*wf%ao_density(y, z)
+                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + g_C_p(w, x, y, z)*wf%ao_density(y, z)
 !
                                  enddo
                               enddo
@@ -1172,9 +1228,6 @@ contains
                         enddo
                      endif
 !                  
-                     call mem%dealloc(g_C, A_interval%size, B_interval%size, &
-                                             C_interval%size, D_interval%size)
-!
                   enddo
                enddo
             enddo
@@ -1184,7 +1237,7 @@ contains
 !
 !$omp parallel do &
 !$omp private(A, B, C, D, A_interval, B_interval, C_interval, D_interval, w, x, y, z, &
-!$omp g_K) schedule(dynamic)
+!$omp g_K, g_K_p) schedule(dynamic)
       do A = 1, n_s
 !
          A_interval = wf%system%shell_limits(A)
@@ -1205,10 +1258,10 @@ contains
 !
                      if (sp_eri_schwarz(A, D)*sp_eri_schwarz(C, B)*sp_density_schwarz(C, D) .lt. exchange_thr) cycle               
 !
-                     call mem%alloc(g_K, A_interval%size, D_interval%size, &
-                                          C_interval%size, B_interval%size)
-!
                      call wf%system%construct_ao_g_wxyz(g_K, A, D, C, B)
+
+                     g_K_p(1 : A_interval%size, 1 : D_interval%size, 1 : C_interval%size, 1 : B_interval%size) &
+                                    => g_K(1 : A_interval%size*B_interval%size*C_interval%size*D_interval%size)
 !     
 !                   Add Fock matrix contributions
 !     
@@ -1220,7 +1273,7 @@ contains
                                  do z = D_interval%first, D_interval%last
 !
                                     wf%ao_fock(w, x) = wf%ao_fock(w, x) + & 
-                                             (- half*g_K(w, z, y, x))*wf%ao_density(y, z)
+                                             (- half*g_K_p(w, z, y, x))*wf%ao_density(y, z)
 !
                                  enddo
 !
@@ -1235,7 +1288,7 @@ contains
                               do y = C_interval%first, C_interval%last
                                  do z = D_interval%first, D_interval%last
 !
-                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + (- half*g_K(w, z, y, x))*wf%ao_density(y, z)
+                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + (- half*g_K_p(w, z, y, x))*wf%ao_density(y, z)
 !
                                  enddo
                               enddo
@@ -1243,9 +1296,6 @@ contains
                         enddo
                      endif
 !                  
-                     call mem%dealloc(g_K, A_interval%size, B_interval%size, &
-                                             C_interval%size, D_interval%size)
-!
                   enddo
                enddo
             enddo
@@ -1279,32 +1329,7 @@ contains
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
 !
-!$omp parallel do &
-!$omp private(A, B, h_AB, A_interval, B_interval, x, y) schedule(static)
-      do A = 1, n_s
-!
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, n_s
-!
-            B_interval = wf%system%shell_limits(B)
-!
-            call mem%alloc(h_AB, A_interval%size, B_interval%size)
-            call wf%system%construct_ao_h_wx(h_AB, A, B)
-!!
-             do x = 1, A_interval%size
-                do y = 1, B_interval%size
-!!
-                   h_wx(A_interval%first - 1 + x, B_interval%first - 1 + y) = h_AB(x, y)
-!!
-                enddo
-             enddo
-!
-            call mem%dealloc(h_AB, A_interval%size, B_interval%size)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call wf%get_ao_h_wx(h_wx)
 !
       call wf%calculate_hf_energy_from_G(wf%ao_fock, h_wx)
 
@@ -1366,8 +1391,8 @@ contains
 !
       type(timings) :: ao_fock_timer 
 !
-      call ao_fock_timer%init('AO Fock construction')
-      call ao_fock_timer%start()
+      ao_fock_timer = new_timer('AO Fock construction')
+      call ao_fock_timer%turn_on()
 !
 !     Set thresholds to ignore Coulomb and exchange terms,
 !     as well as the desired Libint integral precision  
@@ -1435,8 +1460,7 @@ contains
 !
       if (.not. local_cumulative) ao_fock = ao_fock + h_wx
 !
-      call ao_fock_timer%freeze()
-      call ao_fock_timer%switch_off()
+      call ao_fock_timer%turn_off()
 !
    end subroutine construct_ao_fock_hf
 !
@@ -1483,12 +1507,6 @@ contains
       real(dp), dimension(wf%system%max_shell_size**4) :: g 
 !
       integer :: thread = 0, skip
-!
-!     Preallocate the vector that holds the shell quadruple 
-!     ERI integrals, then enter the construction loop 
-!
-   !   call wf%system%get_max_shell_size(max_shell_size)
-   !   call mem%alloc(g, max_shell_size**4)
 !
 !$omp parallel do                                                                             &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34,     &
@@ -1611,8 +1629,6 @@ contains
       enddo
 !$omp end parallel do
 !
-    !  call mem%dealloc(g, max_shell_size**4)
-!
       call set_coulomb_precision_c(wf%libint_epsilon)
 !
    end subroutine ao_fock_construction_loop_hf
@@ -1660,12 +1676,6 @@ contains
       real(dp), dimension(wf%system%max_shell_size**4) :: g 
 !
       integer :: thread = 0, skip
-!
-!     Preallocate the vector that holds the shell quadruple 
-!     ERI integrals, then enter the construction loop 
-!
-   !   call wf%system%get_max_shell_size(max_shell_size)
-   !   call mem%alloc(g, max_shell_size**4)
 !
 !$omp parallel do                                                                         &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34, &
@@ -1766,8 +1776,6 @@ contains
       enddo
 !$omp end parallel do
 !
-   !   call mem%dealloc(g, max_shell_size**4)
-!
    end subroutine ao_fock_coulomb_construction_loop_hf
 !
 !
@@ -1813,12 +1821,6 @@ contains
       real(dp), dimension(wf%system%max_shell_size**4) :: g 
 !
       integer :: thread = 0, skip
-!
-!     Preallocate the vector that holds the shell quadruple 
-!     ERI integrals, then enter the construction loop 
-!
-   !   call wf%system%get_max_shell_size(max_shell_size)
-   !   call mem%alloc(g, max_shell_size**4)
 !
 !$omp parallel do                                                                         &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34, &
@@ -1927,8 +1929,6 @@ contains
          enddo
       enddo
 !$omp end parallel do
-!
-   !   call mem%dealloc(g, max_shell_size**4)
 !
    end subroutine ao_fock_exchange_construction_loop_hf
 !

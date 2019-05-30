@@ -36,29 +36,36 @@ module mp2_class
 !
    contains
 !
-      procedure :: prepare                    => prepare_mp2
       procedure :: calculate_energy           => calculate_energy_mp2
       procedure :: print_wavefunction_summary => print_wavefunction_summary_mp2
 !
    end type mp2
 !
+!
+   interface mp2
+!
+      procedure :: new_mp2
+!
+   end interface mp2
+!
+!
 contains
 !
 !
-   subroutine prepare_mp2(wf, system)
+   function new_mp2(system) result(wf)
 !!
-!!    Prepare
+!!    New MP2
 !!    Written by Andreas Skeidsvoll, 2018
 !!
       implicit none
 !
-      class(mp2) :: wf
+      type(mp2) :: wf
 !
       class(molecular_system), target, intent(in) :: system 
 !
       type(file) :: hf_restart_file 
 !
-      wf%name_ = 'MP2'
+      wf%name_ = 'mp2'
 !
       wf%system => system
 !
@@ -86,7 +93,7 @@ contains
       call wf%initialize_amplitudes()
       wf%t1 = zero
 !
-   end subroutine prepare_mp2
+   end function new_mp2
 !
 !
    subroutine calculate_energy_mp2(wf)

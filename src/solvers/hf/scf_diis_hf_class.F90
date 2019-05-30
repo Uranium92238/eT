@@ -51,7 +51,6 @@ module scf_diis_hf_class
 !
    contains
 !     
-      procedure :: prepare                => prepare_scf_diis_hf
       procedure :: run                    => run_scf_diis_hf
       procedure :: cleanup                => cleanup_scf_diis_hf
 !
@@ -63,17 +62,24 @@ module scf_diis_hf_class
    end type scf_diis_hf
 !
 !
+   interface scf_diis_hf 
+!
+      procedure :: new_scf_diis_hf
+!
+   end interface scf_diis_hf
+!
+!
 contains
 !
 !
-   subroutine prepare_scf_diis_hf(solver, wf)
+   function new_scf_diis_hf(wf) result(solver)
 !!
-!!    Prepare 
+!!    New SCF DIIS 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(scf_diis_hf) :: solver
+      type(scf_diis_hf) :: solver
 !
       class(hf) :: wf
 !
@@ -88,12 +94,12 @@ contains
 !
 !     Set standard settings 
 !
-      solver%restart         = .false.
-      solver%diis_dimension     = 8
-      solver%max_iterations     = 100
-      solver%ao_density_guess   = 'SAD'
-      solver%energy_threshold   = 1.0D-6
-      solver%gradient_threshold = 1.0D-6
+      solver%restart             = .false.
+      solver%diis_dimension      = 8
+      solver%max_iterations      = 100
+      solver%ao_density_guess    = 'SAD'
+      solver%energy_threshold    = 1.0D-6
+      solver%gradient_threshold  = 1.0D-6
 !
 !     Read user's specified settings & set wavefunction screening based on them
 !     (note that the screenings must be tighter for tighter gradient thresholds)
@@ -129,7 +135,7 @@ contains
 !
       endif
 !
-   end subroutine prepare_scf_diis_hf
+   end function new_scf_diis_hf
 !
 !
    subroutine print_scf_diis_settings_scf_diis_hf(solver)
@@ -141,7 +147,7 @@ contains
 !
       class(scf_diis_hf) :: solver 
 !
-      write(output%unit, '(t6,a29,i2)') 'DIIS dimension:              ', solver%diis_dimension
+      write(output%unit, '(t6,a29,i2)') 'DIIS dimension:               ', solver%diis_dimension
 !
    end subroutine print_scf_diis_settings_scf_diis_hf
 !
@@ -157,7 +163,7 @@ contains
 !
       class(hf) :: wf
 !
-      type(diis_tool) :: diis_manager
+      type(diis_tool) :: diis
 !
       logical :: converged_energy
       logical :: converged_gradient
@@ -183,10 +189,10 @@ contains
 !
 !     :: Part I. Preparations. 
 !
-      call iteration_timer%init('SCF DIIS iteration time')
-      call solver_timer%init('SCF DIIS solver time')
+      iteration_timer = new_timer('SCF DIIS iteration time')
+      solver_timer = new_timer('SCF DIIS solver time')
 !
-      call solver_timer%start()
+      call solver_timer%turn_on()
 !
 !     Construct screening vectors for efficient Fock construction 
 !
@@ -202,7 +208,7 @@ contains
       dim_fock     = ((wf%n_ao)*(wf%n_ao + 1)/2)*(wf%n_densities)
       dim_gradient = (wf%n_ao*(wf%n_ao - 1)/2)*(wf%n_densities)
 !
-      call diis_manager%init('hf_diis', dim_fock, dim_gradient, solver%diis_dimension)
+      diis = diis_tool('hf_diis', dim_fock, dim_gradient, solver%diis_dimension)
 !
 !     Set the initial density guess and Fock matrix 
 !
@@ -240,7 +246,7 @@ contains
       max_grad = get_abs_max(G, dim_gradient)
 !
       call wf%get_ao_fock(F)
-      call diis_manager%update(G, F)
+      call diis%update(G, F)
 !
 !     Part II. Iterative SCF loop.
 !
@@ -257,7 +263,7 @@ contains
 !
       do while (.not. solver%converged .and. iteration .le. solver%max_iterations)  
 !
-         call iteration_timer%start()       
+         call iteration_timer%turn_on()       
 !
 !        Set energy and print information for current iteration
 !
@@ -314,13 +320,13 @@ contains
             call wf%get_ao_fock(F)
             call dcopy(dim_fock, F, 1, ao_fock, 1)
 !
-            call diis_manager%update(G, F)
+            call diis%update(G, F)
             call wf%set_ao_fock(F)
 !
          endif
 !
-         call iteration_timer%freeze()
-         call iteration_timer%switch_off()       
+         call iteration_timer%turn_off()  
+         call iteration_timer%reset()     
 !
          iteration = iteration + 1
 !
@@ -337,9 +343,7 @@ contains
       call mem%dealloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
       call mem%dealloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
 !
-!     Initialize engine (make final deallocations, and other stuff)
-!
-      call diis_manager%finalize()
+      call diis%cleanup()
 !
       if (.not. solver%converged) then 
 !
@@ -350,8 +354,7 @@ contains
 !
       endif 
 !
-      call solver_timer%freeze()
-      call solver_timer%switch_off()
+      call solver_timer%turn_off()
 !
    end subroutine run_scf_diis_hf
 !

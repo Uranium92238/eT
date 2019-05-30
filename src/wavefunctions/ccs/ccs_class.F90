@@ -29,7 +29,9 @@ module ccs_class
 !
    use mo_integral_tool_class
 !
+   use sequential_file_class, only : sequential_file
    use reordering
+   use string_utilities
    use array_utilities
    use array_analysis
    use interval_class
@@ -62,17 +64,15 @@ module ccs_class
 !
       type(mo_integral_tool) :: integrals
 !
-      integer :: n_bath ! Number of bath orbitals (always the last ao/mo indices)
-!
       real(dp), dimension(:,:), allocatable :: density
 !
    contains
 !
 !     Preparation and cleanup routines
 !
-      procedure :: prepare                                     => prepare_ccs
       procedure :: cleanup                                     => cleanup_ccs
 !
+      procedure :: read_hf                                     => read_hf_ccs
       procedure :: initialize_files                            => initialize_files_ccs
       procedure :: initialize_cc_files                         => initialize_cc_files_ccs
       procedure :: initialize_singles_files                    => initialize_singles_files_ccs
@@ -97,7 +97,7 @@ module ccs_class
       procedure :: read_singles_vector                         => read_singles_vector_ccs
 !
       procedure :: save_excited_state                          => save_excited_state_ccs
-      procedure :: restart_excited_state                       => restart_excited_state_ccs
+      procedure :: read_excited_state                          => read_excited_state_ccs
       procedure :: get_n_excited_states_on_file                => get_n_excited_states_on_file_ccs
 !
       procedure :: save_excitation_energies                    => save_excitation_energies_ccs
@@ -125,9 +125,12 @@ module ccs_class
       procedure :: construct_omega                             => construct_omega_ccs
       procedure :: omega_ccs_a1                                => omega_ccs_a1_ccs
 !
+      procedure :: form_newton_raphson_t_estimate              => form_newton_raphson_t_estimate_ccs
+!
 !     Routines related to the Jacobian transformation
 !
       procedure :: prepare_for_jacobian                        => prepare_for_jacobian_ccs
+      procedure :: prepare_for_jacobian_transpose              => prepare_for_jacobian_transpose_ccs
 !
       procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_ccs
       procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_ccs
@@ -145,7 +148,6 @@ module ccs_class
       procedure :: construct_eta                               => construct_eta_ccs
 !
       procedure :: get_cvs_projector                           => get_cvs_projector_ccs
-      procedure :: get_ip_projector                            => get_ip_projector_ccs
 !
       procedure :: set_cvs_start_indices                       => set_cvs_start_indices_ccs
 !
@@ -168,6 +170,8 @@ module ccs_class
       procedure :: get_vovv                                     => get_vovv_ccs
       procedure :: get_ovvv                                     => get_ovvv_ccs
 !
+      procedure :: get_g_pqrs_required                          => get_g_pqrs_required_ccs
+!
       procedure, nopass :: need_g_abcd                          => need_g_abcd_ccs
 !
 !     Routines to initialize and destruct arrays
@@ -186,6 +190,20 @@ module ccs_class
       procedure :: destruct_t1                                  => destruct_t1_ccs
       procedure :: destruct_t1bar                               => destruct_t1bar_ccs
 !
+!     Routines related to EOM first order property calculations
+!
+      procedure :: construct_etaX                              => construct_etaX_ccs
+      procedure :: construct_eom_etaX                          => construct_eom_etaX_ccs
+      procedure :: etaX_ccs_a1                                 => etaX_ccs_a1_ccs
+      procedure :: etaX_ccs_b1                                 => etaX_ccs_b1_ccs
+!
+      procedure :: construct_csiX                              => construct_csiX_ccs
+      procedure :: csiX_ccs_a1                                 => csiX_ccs_a1_ccs
+!
+      procedure :: etaX_eom_a                                  => etaX_eom_a_ccs
+!
+      procedure :: calculate_transition_strength               => calculate_transition_strength_ccs
+!
 !     One-electron density 
 !
       procedure :: construct_density                            => construct_density_ccs
@@ -198,6 +216,7 @@ module ccs_class
 !
 !     One-electron operators and mean value
 !
+      procedure :: construct_h                                  => construct_h_ccs 
       procedure :: construct_mu                                 => construct_mu_ccs 
       procedure :: construct_q                                  => construct_q_ccs 
 !
@@ -206,37 +225,38 @@ module ccs_class
    end type ccs
 !
 !
+   interface 
+!
+      include "fop_ccs_interface.F90"
+!
+   end interface
+!
+!
+   interface ccs 
+!
+      procedure :: new_ccs 
+!
+   end interface ccs
+!
+!
 contains
 !
 !
-   subroutine prepare_ccs(wf, system)
+   function new_ccs(system) result(wf)
 !!
-!!    Prepare
+!!    New CCS
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(ccs) :: wf
+      type(ccs) :: wf
 !
       class(molecular_system), target, intent(in) :: system 
-!
-      type(file) :: hf_restart_file 
 !
       wf%name_ = 'ccs'
       wf%system => system
 !
-      call hf_restart_file%init('hf_restart_file', 'sequential', 'unformatted')
-!
-      call disk%open_file(hf_restart_file, 'read', 'rewind')
-!
-      read(hf_restart_file%unit) wf%n_ao 
-      read(hf_restart_file%unit) wf%n_mo 
-      read(hf_restart_file%unit) 
-      read(hf_restart_file%unit) wf%n_o  
-      read(hf_restart_file%unit) wf%n_v  
-      read(hf_restart_file%unit) wf%hf_energy  
-!
-      call disk%close_file(hf_restart_file)
+      call wf%read_hf()
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
@@ -255,7 +275,34 @@ contains
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
-   end subroutine prepare_ccs
+   end function new_ccs
+!
+!
+   subroutine read_hf_ccs(wf)
+!!
+!!    Read HF file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Short routine to read the HF information from disk
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      type(sequential_file) :: hf_restart_file 
+!
+      hf_restart_file = sequential_file('hf_restart_file')
+      call hf_restart_file%open_('read', 'rewind')
+!
+      call hf_restart_file%read_(wf%n_ao)     
+      call hf_restart_file%read_(wf%n_mo)     
+      call hf_restart_file%skip()     
+      call hf_restart_file%read_(wf%n_o)     
+      call hf_restart_file%read_(wf%n_v)     
+      call hf_restart_file%read_(wf%hf_energy)     
+!
+      call hf_restart_file%close_()
+!
+   end subroutine read_hf_ccs
 !
 !
    subroutine cleanup_ccs(wf)
@@ -267,7 +314,7 @@ contains
 !
       class(ccs) :: wf
 !
-      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
+      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(convert_to_uppercase(wf%name_)), ' wavefunction'
 !
    end subroutine cleanup_ccs
 !
@@ -309,6 +356,23 @@ contains
       call wf%t1_transform(mu_pqk(:,:,3))
 !
    end subroutine construct_mu_ccs
+!
+!
+   subroutine construct_h_ccs(wf, h_pq)
+!!
+!!    Construct h
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!    
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: h_pq 
+!
+      call wf%get_mo_h(h_pq)
+      call wf%t1_transform(h_pq)
+!
+   end subroutine construct_h_ccs
 !
 !
    subroutine construct_q_ccs(wf, q_pqk)
@@ -734,9 +798,9 @@ contains
    end subroutine save_excited_state_ccs
 !
 !
-   subroutine restart_excited_state_ccs(wf, X, n, side)
+   subroutine read_excited_state_ccs(wf, X, n, side)
 !!
-!!    Restart excited state 
+!!    Read excited state 
 !!    Written by Eirik F. Kjønstad, Mar 2019 
 !!
 !!    Reads an excited state to disk. Since this routine is used by 
@@ -775,7 +839,7 @@ contains
 !
       endif
 !
-   end subroutine restart_excited_state_ccs
+   end subroutine read_excited_state_ccs
 !
 !
    subroutine save_excitation_energies_ccs(wf, n_states, energies)
@@ -886,12 +950,12 @@ contains
 !
       if (trim(side) == 'right') then 
 !
-         inquire(file=wf%r1_file%name, size=n_states)
+         n_states = wf%r1_file%get_size()
          n_states = n_states/(dp*wf%n_t1)
 !
       elseif (trim(side) == 'left') then 
 !
-         inquire(file=wf%l1_file%name, size=n_states)
+         n_states = wf%l1_file%get_size()
          n_states = n_states/(dp*wf%n_t1)
 !
       else
@@ -988,38 +1052,52 @@ contains
 !!    Calculate energy
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
+!!    Calculates the CCSD energy. This is only equal to the actual
+!!    energy when the ground state equations are solved, of course.
+!!
+!!       E = E_hf + sum_aibj t_i^a t_j^b L_iajb
+!!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      integer :: i = 0
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajb
 !
-      type(file)   :: h_pq_file
+      real(dp) :: correlation_energy 
 !
-      real(dp), dimension(:,:), allocatable :: h_pq
+      integer :: a, i, b, j, ai, bj, aibj
 !
-!     Read MO-transformed h array
+      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
-      call disk%open_file(h_pq_file, 'read')
-      rewind(h_pq_file%unit)
+      call wf%get_ovov(g_iajb)
 !
-      call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
-      read(h_pq_file%unit) h_pq
+      correlation_energy = zero 
 !
-      call disk%close_file(h_pq_file)
+!$omp parallel do private(a,i,ai,bj,j,b,aibj) reduction(+:correlation_energy)
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
 !
-!     Compute energy
+            ai = (i-1)*wf%n_v + a
 !
-      wf%energy = wf%system%get_nuclear_repulsion()
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v
 !
-      do i = 1, wf%n_o
+                  bj = wf%n_v*(j - 1) + b
 !
-         wf%energy = wf%energy + h_pq(i,i) + wf%fock_ij(i,i)
+                  aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
 !
+                  correlation_energy = correlation_energy + (wf%t1(a,i))*(wf%t1(b,j))* &
+                                                      (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
+!
+               enddo
+            enddo
+         enddo
       enddo
+!$omp end parallel do
 !
-      call mem%dealloc(h_pq, wf%n_mo, wf%n_mo)
+      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+      wf%energy = wf%hf_energy + correlation_energy
 !
    end subroutine calculate_energy_ccs
 !
@@ -1041,13 +1119,12 @@ contains
 !
       type(timings) :: omega_ccs_a1_timer
 !
-      call omega_ccs_a1_timer%init('omega ccs a1')
-      call omega_ccs_a1_timer%start()
+      omega_ccs_a1_timer = new_timer('omega ccs a1')
+      call omega_ccs_a1_timer%turn_on()
 !
       call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, omega, 1)
 !
-      call omega_ccs_a1_timer%freeze()
-      call omega_ccs_a1_timer%switch_off()
+      call omega_ccs_a1_timer%turn_off()
 !
    end subroutine omega_ccs_a1_ccs
 !
@@ -1089,8 +1166,6 @@ contains
 !
       class(ccs) :: wf
 !
-      type(file) :: h_pq_file
-!
       real(dp), dimension(:,:), allocatable :: F_pq
 !
       integer :: i, j, k, a, b
@@ -1101,25 +1176,17 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_iajk
       real(dp), dimension(:,:,:,:), allocatable :: g_aijk
 !
-!     Read MO-transformed h integrals into the
-!
-      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
-      call disk%open_file(h_pq_file, 'read', 'rewind')
+!     Get T1-transformed h integrals, put them in F_pq 
 !
       call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
-      read(h_pq_file%unit) F_pq
-!
-      call disk%close_file(h_pq_file)
-!
-!     Perform t1-transformation of F_pq = h_pq
-!
-      call wf%t1_transform(F_pq)
+      call wf%construct_h(F_pq)
 !
 !     Occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
       call mem%alloc(g_ijkl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
       call wf%get_oooo(g_ijkl)
 !
+!$omp parallel do private(i,j,k)
       do i = 1, wf%n_o
          do j = 1, wf%n_o
             do k = 1, wf%n_o
@@ -1129,6 +1196,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(g_ijkl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
@@ -1141,6 +1209,7 @@ contains
       call mem%alloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       call wf%get_vooo(g_aijk)
 !
+!$omp parallel do private(i,a,j)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
             do j = 1, wf%n_o
@@ -1152,6 +1221,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
@@ -1164,6 +1234,7 @@ contains
       call mem%alloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call wf%get_voov(g_aijb)
 !
+!$omp parallel do private(a,b,i)
       do a = 1, wf%n_v
          do b = 1, wf%n_v
             do i = 1, wf%n_o
@@ -1173,6 +1244,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(g_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
@@ -1193,12 +1265,13 @@ contains
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_pq
 !
       integer :: i, j, a, b
 !
+!$omp parallel do private(i,j)
       do i = 1, wf%n_o
          do j = 1, wf%n_o
 !
@@ -1206,7 +1279,9 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
+!$omp parallel do private(i,a)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -1215,7 +1290,9 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do 
 !
+!$omp parallel do private(a,b)
       do a = 1, wf%n_v
          do b = 1, wf%n_v
 !
@@ -1223,6 +1300,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine set_fock_ccs
 !
@@ -1264,13 +1342,16 @@ contains
       X = zero
       Y = zero
 !
+!$omp parallel do private(p)
       do p = 1, wf%n_mo
 !
          X(p, p) = one
          Y(p, p) = one
 !
       enddo
+!$omp end parallel do
 !
+!$omp parallel do private(i,a)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -1279,6 +1360,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
 !     Construct intermediate W = Z Y^T and then use it to do transformation
 !
@@ -1331,6 +1413,7 @@ contains
 !
       integer :: a, i, ai
 !
+!$omp parallel do private(i,a)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -1340,6 +1423,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine get_gs_orbital_differences_ccs
 !
@@ -1513,6 +1597,32 @@ contains
    end subroutine destruct_t1bar_ccs
 !
 !
+   subroutine get_g_pqrs_required_ccs(wf, req_l, req_r, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Get memory required to construct g_pqrs
+!!    Written by Rolf H. Myhre, April 2019
+!!
+!!    Simple routine calculate an integral block with provided dimensions.
+!!    req_l and req_r are the memory required by construct_g_pqrs to allocate 
+!!    the Cholesky vectors
+!!
+!!    req_l = n_J*dim_p*dim_q, left Cholesky vector
+!!    req_r = n_J*dim_r*dim_s, right Cholesky vector
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      integer, intent(in)  :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(out) :: req_l, req_r
+!
+      req_l = wf%integrals%n_J*dim_p*dim_q
+      req_r = wf%integrals%n_J*dim_r*dim_s
+!
+   end subroutine get_g_pqrs_required_ccs
+!
+!
+!
    subroutine get_ovov_ccs(wf, g_iajb, first_i, last_i, first_a, last_a, &
                                          first_j, last_j, first_b, last_b)
 !!
@@ -1671,10 +1781,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -1738,10 +1844,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -1807,10 +1909,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -1874,10 +1972,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -1943,10 +2037,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2010,10 +2100,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -2085,10 +2171,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2153,10 +2235,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2220,10 +2298,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -2293,10 +2367,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2364,10 +2434,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -2437,10 +2503,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2509,10 +2571,6 @@ contains
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
 !!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -2580,10 +2638,6 @@ contains
 !!    The set of "get pqrs" routines will return the integral as t1-transformed,
 !!    with the appropriate index restrictions if passed. If no index restrictions
 !!    are provided, the routines assume that the full integral should be returned.
-!!
-!!    Note that the MO integral tool controls how the integrals are constructed.
-!!    The choice depends on logicals within the tool that knows whether t1-transformed
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file.
 !!
       implicit none
 !
@@ -2718,11 +2772,17 @@ contains
       call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
       if (r_or_l .eq. "right") then
+!
          call wf%jacobian_transform_trial_vector(X_copy) ! X_copy <- AX
+!
       elseif (r_or_l .eq. 'left') then
+!
          call wf%jacobian_transpose_transform_trial_vector(X_copy) ! X_copy <- XA
+!
       else
+!
          call output%error_msg('Neither left nor right in construct_excited_state')
+!
       endif
 !
       w = ddot(wf%n_es_amplitudes, X, 1, X_copy, 1)
@@ -2961,7 +3021,7 @@ contains
          call mem%dealloc(L_aijb, wf%n_v, wf%n_o, wf%n_o, batch_b%length)
          call mem%dealloc(c_jb, (wf%n_o), (batch_b%length))
 !
-   enddo ! batch_b
+      enddo ! batch_b
 !
    end subroutine jacobian_ccs_b1_ccs
 !
@@ -3184,97 +3244,6 @@ contains
    end subroutine construct_multiplier_equation_ccs
 !
 !
-   subroutine add_bath_orbitals_ccs(wf)
-!!
-!!    Add bath orbitals,
-!!    Written by Sarai D. Folkestad, Oct. 2018
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      integer :: p, q, pq, ao, removed_orbitals
-!
-      type(file) :: h_pq_file
-!
-      real(dp), dimension(:,:), allocatable :: orbital_coeff_copy, L_J, h_pq
-!
-!     Read number and type of bath orbitals (for now only 1 and for ionization)
-!
-      wf%n_bath = 1
-!
-!     Add atom X to system (if necessary), with s-type orbitals
-!
-      call mem%alloc(orbital_coeff_copy, wf%n_ao, wf%n_mo)
-!
-      orbital_coeff_copy = wf%orbital_coefficients
-!
-      call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
-!
-!     Update coefficient matrix
-!
-      call mem%alloc(wf%orbital_coefficients, wf%n_ao + wf%n_bath, wf%n_mo + wf%n_bath)
-      wf%orbital_coefficients = zero
-!
-      wf%orbital_coefficients(1:wf%n_ao, 1:wf%n_mo) = orbital_coeff_copy(:,:)
-!
-      call mem%dealloc(orbital_coeff_copy, wf%n_ao, wf%n_mo)
-!
-      removed_orbitals = wf%n_ao - wf%n_mo ! Due to linear dependancy
-!
-!     Bath orbitals do not mix with other orbitals
-!
-      do ao = wf%n_ao + 1, wf%n_ao + wf%n_bath
-!
-         wf%orbital_coefficients(ao, ao - removed_orbitals) = one
-!
-      enddo
-!
-!     Update n_ao, n_mo, n_v
-!
-      wf%n_ao = wf%n_ao + wf%n_bath
-      wf%n_mo = wf%n_mo + wf%n_bath
-      wf%n_v  = wf%n_v + wf%n_bath
-!
-!     Update h_pq matrix
-!
-      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
-      call disk%open_file(h_pq_file, 'readwrite')
-      rewind(h_pq_file%unit)
-!
-      call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
-      h_pq = zero
-!
-      read(h_pq_file%unit) h_pq(1:wf%n_mo - wf%n_bath, 1:wf%n_mo - wf%n_bath)
-      rewind(h_pq_file%unit)
-      write(h_pq_file%unit) h_pq
-!
-      call disk%close_file(h_pq_file)
-!
-!     Update cholesky vectors
-!
-      call disk%open_file(wf%integrals%cholesky_mo, 'write')
-!
-      call mem%alloc(L_J, 1, wf%integrals%n_J)
-      L_J = zero
-!
-      do p = wf%n_mo - wf%n_bath, wf%n_mo
-         do q = 1, p
-!
-            pq = p*(p-3)/2 + p + q
-!
-            write(wf%integrals%cholesky_mo%unit, rec=pq) L_J
-!
-         enddo
-      enddo
-!
-      call mem%dealloc(L_J, 1, wf%integrals%n_J)
-!
-      call disk%close_file(wf%integrals%cholesky_mo)
-!
-   end subroutine add_bath_orbitals_ccs
-!
-!
    subroutine get_cvs_projector_ccs(wf, projector, n_cores, core_MOs)
 !!
 !!    Get CVS projector
@@ -3307,33 +3276,6 @@ contains
      enddo
 !
    end subroutine get_cvs_projector_ccs
-!
-!
-   subroutine get_ip_projector_ccs(wf, projector)
-!!
-!!    Get ip projector
-!!    Written by Sarai D. Folekstad, Oct 2018
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
-!
-      integer :: i, a, ai
-!
-      projector = zero
-!
-      a = wf%n_v ! Last virtual is bath orbital
-!
-      do i = 1, wf%n_o
-!
-         ai = wf%n_v*(i - 1) + a
-         projector(ai) = one
-!
-     enddo
-!
-   end subroutine get_ip_projector_ccs
 !
 !
    subroutine print_dominant_amplitudes_ccs(wf)
@@ -3455,10 +3397,25 @@ contains
 !
 !     For now, do nothing.
 !
-      write(output%unit,'(/t3,a,a,a)') 'No Jacobian preparations for ', &
-                                       trim(wf%name_), ' wavefunction.'
+      write(output%unit,'(/t3,a,a,a,a,a)') 'No preparation for ', trim(wf%name_), ' excited state equation.'
 !
    end subroutine prepare_for_jacobian_ccs
+!
+!
+   subroutine prepare_for_jacobian_transpose_ccs(wf)
+!!
+!!    Prepare for jacobian
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+!     For now, do nothing.
+!
+      write(output%unit,'(/t3,a,a,a,a,a)') 'No preparation for ', trim(wf%name_), ' excited state equation.'
+!
+   end subroutine prepare_for_jacobian_transpose_ccs
 !
 !
    subroutine set_cvs_start_indices_ccs(wf, n_cores, core_MOs, n_start_indices, start_indices)
@@ -3637,6 +3594,41 @@ contains
       expectation_value = ddot(wf%n_mo**2, A, 1, wf%density, 1)
 !
    end function calculate_expectation_value_ccs
+!
+!
+   subroutine form_newton_raphson_t_estimate_ccs(wf, t, dt)
+!!
+!!    Form Newton-Raphson t estimate 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!
+!!    Here, t is the full amplitude vector and dt is the correction to the amplitude vector.
+!!
+!!    The correction is assumed to be obtained from either 
+!!    solving the Newton-Raphson equation
+!!
+!!       A dt = -omega, 
+!!
+!!    where A and omega are given in the biorthonormal basis,
+!!    or from the quasi-Newton equation (A ~ diagonal with diagonal = epsilon) 
+!!
+!!        dt = -omega/epsilon
+!!
+!!    Epsilon is the vector of orbital differences. 
+!!
+!!    On exit, t = t + dt, where the appropriate basis change has been accounted 
+!!    for (in particular for the double amplitudes in CCSD wavefunctions). Also,
+!!    dt is expressed in the basis compatible with t.
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: dt 
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: t 
+!
+      call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)
+!
+   end subroutine form_newton_raphson_t_estimate_ccs
 !
 !
 end module ccs_class

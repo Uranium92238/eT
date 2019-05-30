@@ -117,9 +117,9 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      call long_string_print(solver%tag,'(//t3,a)',.true.)
-      call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description)
+      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
+      call output%long_string_print(solver%author,'(t3,a/)',.true.)
+      call output%long_string_print(solver%description)
 !
    end subroutine print_banner_abstract_hf_solver
 !

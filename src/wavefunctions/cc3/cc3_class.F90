@@ -24,30 +24,47 @@ module cc3_class
 !!    Written by Rolf H. Myhre and Alexander Paul, 2018-2019
 !!
 !
+   use kinds
    use ccsd_class
+   use direct_file_class, only : direct_file
+   use sequential_file_class, only : sequential_file
 !
    implicit none
 !
    type, extends(ccsd) :: cc3
 !
-!     Integral files
+!     Ground state integral files
 !
-      type(file)  :: g_bdck_t
-      type(file)  :: g_ljck_t
-      type(file)  :: g_dbkc_t
-      type(file)  :: g_jlkc_t
-      type(file)  :: L_jbkc_t
+      type(direct_file)  :: g_bdck_t
+      type(direct_file)  :: g_ljck_t
+      type(direct_file)  :: g_dbkc_t
+      type(direct_file)  :: g_jlkc_t
+      type(direct_file)  :: L_jbkc_t
 !
-      type(file)  :: g_bdck_c1
-      type(file)  :: g_ljck_c1
-      type(file)  :: g_dbkc_c1
-      type(file)  :: g_jlkc_c1
+!     Right Jacobian integral files
+!
+      type(direct_file)  :: g_bdck_c1
+      type(direct_file)  :: g_ljck_c1
+!
+!     Left Jacobian integral files
+!
+      type(direct_file)  :: g_becd_t
+      type(direct_file)  :: g_mjlk_t
+      type(direct_file)  :: g_ckld_t
+      type(direct_file)  :: g_cdlk_t
+!
+!     Jacobian intermediates files
+!
+      type(direct_file)  :: g_lbkc_t
+      type(direct_file)  :: X_abdi
+      type(direct_file)  :: X_abid
+      type(direct_file)  :: Y_bcek
+      type(direct_file)  :: X_ajil
 !
    contains
 !
 !     Preparation and cleanup routines
 !
-      procedure :: prepare                => prepare_cc3
       procedure :: cleanup                => cleanup_cc3
 !
 !     Routines related to omega
@@ -56,36 +73,58 @@ module cc3_class
 !
       procedure :: omega_cc3_a            => omega_cc3_a_cc3
       procedure :: omega_cc3_integrals    => omega_cc3_integrals_cc3
-      procedure :: omega_cc3_vvv_reader   => omega_cc3_vvv_reader_cc3
-      procedure :: omega_cc3_ov_vv_reader => omega_cc3_ov_vv_reader_cc3
       procedure :: omega_cc3_W_calc       => omega_cc3_W_calc_cc3
       procedure :: omega_cc3_eps          => omega_cc3_eps_cc3
-      procedure :: omega_cc3_omega1       => omega_cc3_omega1_cc3
-      procedure :: omega_cc3_omega2       => omega_cc3_omega2_cc3
+      procedure :: omega_cc3_a_n6         => omega_cc3_a_n6_cc3
+      procedure :: omega_cc3_a_n7         => omega_cc3_a_n7_cc3
+!
+!     Routines used for prepare, both left and right
+!
+      procedure :: prepare_for_jacobian            => prepare_for_jacobian_cc3
+      procedure :: prepare_for_jacobian_transpose  => prepare_for_jacobian_transpose_cc3
+!
+!     Both
+      procedure :: prep_cc3_g_lbkc_t_file          => prep_cc3_g_lbkc_t_file_cc3
+      procedure :: prep_cc3_jacobian_intermediates => prep_cc3_jacobian_intermediates_cc3
+      procedure :: construct_x_intermediates       => construct_x_intermediates_cc3
+      procedure :: sort_x_to_abid_and_write        => sort_x_to_abid_and_write_cc3
+!
+!     Only left
+      procedure :: prep_cc3_jacobian_trans_integrals => prep_cc3_jacobian_trans_integrals_cc3
 !
 !     Routines related to the jacobian
 !
       procedure :: construct_excited_state_equation   => construct_excited_state_equation_cc3
 !
+!     Right hand side transformation
+!
       procedure :: effective_jacobian_transformation  => effective_jacobian_transformation_cc3
 !
-      procedure :: jacobian_cc3_A                     => jacobian_cc3_A_cc3
-      procedure :: jacobian_cc3_c1_integrals          => jacobian_cc3_c1_integrals_cc3
-      procedure :: jacobian_cc3_construct_fock_ia_c1  => jacobian_cc3_construct_fock_ia_c1_cc3
-      procedure :: jacobian_cc3_c3_vvv_reader_cc3
-      procedure :: jacobian_cc3_t3_vvv_reader_cc3
-      procedure :: jacobian_cc3_dbic_reader_cc3
-      generic   :: jacobian_cc3_vvv_reader            => jacobian_cc3_c3_vvv_reader_cc3, &
-                                                         jacobian_cc3_t3_vvv_reader_cc3, &
-                                                         jacobian_cc3_dbic_reader_cc3
-      procedure :: jacobian_cc3_c3_ov_vv_reader_cc3
-      procedure :: jacobian_cc3_t3_ov_vv_reader_cc3
-      procedure :: jacobian_cc3_jlkc_reader_cc3
-      generic   :: jacobian_cc3_ov_vv_reader          => jacobian_cc3_c3_ov_vv_reader_cc3, &
-                                                         jacobian_cc3_t3_ov_vv_reader_cc3, &
-                                                         jacobian_cc3_jlkc_reader_cc3
-      procedure :: jacobian_cc3_c3_calc               => jacobian_cc3_c3_calc_cc3
-      procedure :: jacobian_cc3_fock_rho2             => jacobian_cc3_fock_rho2_cc3
+      procedure :: jacobian_cc3_t3_a2  => jacobian_cc3_t3_a2_cc3
+!
+      procedure :: jacobian_cc3_t3_b2     => jacobian_cc3_t3_b2_cc3
+      procedure :: construct_c1_fock      => construct_c1_fock_cc3
+      procedure :: jacobian_cc3_b2_fock   => jacobian_cc3_b2_fock_cc3
+!
+      procedure :: jacobian_cc3_c3_a         => jacobian_cc3_c3_a_cc3
+      procedure :: construct_c1_integrals    => construct_c1_integrals_cc3
+!
+!     Routines related to the transpose of the jacobian
+!
+      procedure :: effective_jacobian_transpose_transformation  &
+                                                   => effective_jacobian_transpose_transformation_cc3
+!
+      procedure :: jacobian_transpose_cc3_t3_a1 => jacobian_transpose_cc3_t3_a1_cc3
+!
+      procedure :: jacobian_transpose_cc3_t3_b1 => jacobian_transpose_cc3_t3_b1_cc3
+      procedure :: construct_x_ai_intermediate  => construct_x_ai_intermediate_cc3
+!
+      procedure :: jacobian_transpose_cc3_c3_a     => jacobian_transpose_cc3_c3_a_cc3
+      procedure :: jacobian_transpose_cc3_c3_calc  => jacobian_transpose_cc3_c3_calc_cc3
+      procedure :: jacobian_transpose_cc3_a_n7     => jacobian_transpose_cc3_a_n7_cc3
+      procedure :: construct_y_intermediates       => construct_y_intermediates_cc3
+      procedure :: jacobian_transpose_cc3_c3_a_y_o => jacobian_transpose_cc3_c3_a_y_o_cc3
+      procedure :: jacobian_transpose_cc3_c3_a_y_v => jacobian_transpose_cc3_c3_a_y_v_cc3
 !
    end type cc3
 !
@@ -93,43 +132,39 @@ module cc3_class
    interface
 !
       include "omega_cc3_interface.F90"
+      include "prepare_jacobian_transform_cc3_interface.F90"
       include "jacobian_cc3_interface.F90"
+      include "jacobian_transpose_cc3_interface.F90"
 !
    end interface
+!
+!
+   interface cc3
+!
+      procedure :: new_cc3 
+!
+   end interface cc3
 !
 !
 contains
 !
 !
-   subroutine prepare_cc3(wf, system)
+   function new_cc3(system) result(wf)
 !!
-!!    Prepare
+!!    New CC3
 !!    Written by Rolf H. Myhre, 2018
 !!
       implicit none
 !
-      class(cc3) :: wf
+      type(cc3) :: wf
 !
       class(molecular_system), target, intent(in) :: system 
-!
-      type(file) :: hf_restart_file 
 !
       wf%name_ = 'cc3'
 !
       wf%system => system
 !
-      call hf_restart_file%init('hf_restart_file', 'sequential', 'unformatted')
-!
-      call disk%open_file(hf_restart_file, 'read', 'rewind')
-!
-      read(hf_restart_file%unit) wf%n_ao 
-      read(hf_restart_file%unit) wf%n_mo 
-      read(hf_restart_file%unit) 
-      read(hf_restart_file%unit) wf%n_o  
-      read(hf_restart_file%unit) wf%n_v  
-      read(hf_restart_file%unit) wf%hf_energy  
-!
-      call disk%close_file(hf_restart_file)
+      call wf%read_hf()
 !
       wf%n_t1 = (wf%n_o)*(wf%n_v)
       wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
@@ -150,7 +185,7 @@ contains
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
-   end subroutine prepare_cc3
+   end function new_cc3
 !
 !
    subroutine cleanup_cc3(wf)
@@ -206,15 +241,15 @@ contains
 !
 !     Construct residual based on previous excitation energy w
 !
-      if (r_or_l .eq. "right") then
-         call mem%alloc(X_copy, wf%n_es_amplitudes)
-      else
-         call output%error_msg('Left hand side not yet implemented for CC3')
-      endif
+      call mem%alloc(X_copy, wf%n_es_amplitudes)
 !
       call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
-      call wf%effective_jacobian_transformation(w, X_copy) ! X_copy <- AX
+      if (r_or_l .eq. "right") then
+         call wf%effective_jacobian_transformation(w, X_copy) ! X_copy <- AX
+      else
+         call wf%effective_jacobian_transpose_transformation(w, X_copy) ! X_copy <- AX
+      end if
 !
       call dcopy(wf%n_es_amplitudes, X_copy, 1, R, 1)
       call daxpy(wf%n_es_amplitudes, -w, X, 1, R, 1)
@@ -225,6 +260,58 @@ contains
       call mem%dealloc(X_copy, wf%n_es_amplitudes)
 !
    end subroutine construct_excited_state_equation_cc3
+!
+!
+   subroutine prepare_for_jacobian_cc3(wf)
+!!
+!!    Prepare for jacobian
+!!    Written by Rolf Heilemann Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!  
+!
+      type(timings) :: prep_timer      
+!
+      prep_timer = new_timer("Time preparing for Jacobian")
+      call prep_timer%turn_on()
+!
+      write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', 'right', &
+                                            & ' excited state equations.'
+!
+      call wf%prep_cc3_jacobian_intermediates()
+!
+      call prep_timer%turn_off()
+      flush(timing%unit)
+!
+   end subroutine prepare_for_jacobian_cc3
+!
+!
+   subroutine prepare_for_jacobian_transpose_cc3(wf)
+!!
+!!    Prepare for jacobian
+!!    Written by Rolf Heilemann Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      type(timings) :: prep_timer      
+!
+      prep_timer = new_timer("Time preparing for Jacobian")
+      call prep_timer%turn_on()
+!
+      write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', 'left', &
+                                            & ' excited state equations.'
+!
+      call wf%prep_cc3_jacobian_intermediates()
+      call wf%prep_cc3_jacobian_trans_integrals()
+!
+      call prep_timer%turn_off()
+      flush(timing%unit)
+!
+   end subroutine prepare_for_jacobian_transpose_cc3
 !
 !
 end module cc3_class

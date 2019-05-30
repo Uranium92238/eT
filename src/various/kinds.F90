@@ -31,10 +31,11 @@ module kinds
 !
    implicit none
 !
-   integer, parameter :: sp  = selected_real_kind(6,37)
    integer, parameter :: dp  = selected_real_kind(15,307)
    integer, parameter :: qp  = selected_real_kind(33,4931)
    integer, parameter :: i15 = selected_int_kind(15)
    integer, parameter :: i6  = selected_int_kind(6)
+!
+   integer, parameter :: int_size = bit_size(i15)/8
 !
 end module kinds

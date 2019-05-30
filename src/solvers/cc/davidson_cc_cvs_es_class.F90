@@ -38,7 +38,6 @@ module davidson_cvs_cc_es_class
 !
    contains
 !
-      procedure :: prepare                => prepare_davidson_cvs_cc_es
       procedure :: read_settings          => read_settings_davidson_cvs_cc_es
 !
       procedure :: set_start_vectors      => set_start_vectors_davidson_cvs_cc_es
@@ -53,16 +52,29 @@ module davidson_cvs_cc_es_class
    end type davidson_cvs_cc_es
 !
 !
+   interface davidson_cvs_cc_es
+!
+      procedure :: new_davidson_cvs_cc_es
+!
+   end interface davidson_cvs_cc_es
+!
+!
 contains
 !
-   subroutine prepare_davidson_cvs_cc_es(solver)
+   function new_davidson_cvs_cc_es(transformation, wf) result(solver)
 !!
-!!    Prepare 
+!!    New Davidson CVS CC ES 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(davidson_cvs_cc_es) :: solver
+      type(davidson_cvs_cc_es) :: solver    
+      class(ccs), intent(in) :: wf
+!
+      character(len=*), intent(in) :: transformation
+!
+      solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' core excited state')
+      call solver%timer%turn_on()
 !
       solver%tag = 'Davidson coupled cluster core excited state solver'
       solver%description1 = 'A Davidson CVS solver that calculates core excitation energies and the &
@@ -77,7 +89,7 @@ contains
 !
       call solver%print_banner()
 !
-!     Set defaults
+!     Set defaults, then read possible non-defaults
 !
       solver%n_singlet_states     = 0
       solver%max_iterations       = 100
@@ -86,9 +98,9 @@ contains
       solver%transformation       = 'right'
       solver%restart              = .false.
       solver%max_dim_red          = 100 
+      solver%transformation       = trim(transformation)
 !
       call solver%read_settings()
-!
       call solver%print_settings()
 !
       call solver%initialize_energies()
@@ -99,7 +111,8 @@ contains
       write(output%unit, '(/t3,a,a,a)') 'Solving for the ', trim(solver%transformation), ' eigenvectors.'
       flush(output%unit)
 !
-   end subroutine prepare_davidson_cvs_cc_es
+   end function new_davidson_cvs_cc_es
+!
 !
    subroutine read_settings_davidson_cvs_cc_es(solver)
 !!
@@ -205,6 +218,8 @@ contains
 !
 !           Read the solutions from file & set as initial trial vectors 
 !
+            call wf%is_restart_safe('excited state')
+!
             call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
 !
             write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
@@ -215,7 +230,7 @@ contains
 !
             do trial = 1, n_solutions_on_file
 !
-               call wf%restart_excited_state(c_i, trial, solver%transformation)
+               call wf%read_excited_state(c_i, trial, solver%transformation)
                call davidson%write_trial(c_i)
 !
             enddo 
