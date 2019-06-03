@@ -615,7 +615,7 @@ contains
       type(batching_index), intent(in) :: batch_z
       type(batching_index), intent(in) :: batch_y
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
+      real(dp), dimension(:,:,:,:), contiguous, intent(in) :: g_pqzy
 !
       type(direct_file), intent(in) :: file_1
 !
@@ -640,12 +640,15 @@ contains
    end subroutine write_array_compound_record_2batches
 !
 !
-   module subroutine write_array_compound_record_1batch(dim_z, batch_y, file_1, g_pqzy)
+   module subroutine write_array_compound_record_1batch(dim_z, batch_y, file_1, g_pqzy, reverse)
 !!
 !!    Writes an array to a direct access file "file_1" with records zy
 !!
 !!    NB: It is assumed that z is of full dimension and y is batched over
 !!        z and y are sorted in z,y order at the end of the array
+!!
+!!    reverse, optional logical that changes order of z and y if .true.. 
+!!    Fortran does not let us overload based on argument order alone, unfortunately
 !!
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -653,13 +656,23 @@ contains
 !
       integer, intent(in) :: dim_z
 !
-      type(batching_index), intent(inout) :: batch_y
+      type(batching_index), intent(in) :: batch_y
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(inout) :: g_pqzy
+      real(dp), dimension(:,:,:,:), contiguous, intent(in) :: g_pqzy
 !
-      type(direct_file), intent(inout) :: file_1
+      type(direct_file), intent(in) :: file_1
+!
+      logical, optional, intent(in) :: reverse
 !
       type(batching_index) :: batch_z
+!
+      logical :: rev
+!
+      if(present(reverse)) then
+         rev = reverse
+      else
+         rev = .false.
+      endif
 !
 !     Fake a batching_index with full dimensions and call 2batches_writer
 !
@@ -671,7 +684,11 @@ contains
       batch_z%max_length = dim_z
       batch_z%num_batches = 1
 !
-      call write_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
+      if (.not. rev) then
+         call write_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
+      else
+         call write_array_compound_record_2batches(batch_y, batch_z, file_1, g_pqzy)
+      endif
 !
    end subroutine write_array_compound_record_1batch
 !
