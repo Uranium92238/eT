@@ -466,7 +466,7 @@ contains
                   write(pstring(print_pos:), fstring) trim(chars(char_count))
 !
 !                 Set next position to print
-                  print_pos = print_pos + len_trim(chars(char_count)) + 1
+                  print_pos = print_pos + len_trim(chars(char_count))
 !
                endif
             endif
