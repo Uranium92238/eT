@@ -4,10 +4,11 @@
 3. [CMake](https://cmake.org/) (3.10 or newer)
 4. GNU compilers (gfortran, gcc, g++) or Intel compilers (ifort, icc, icpc). These need to be recent versions (2016-) since some features of the Fortran 2008 standard were included only recently in Gfortran and Ifort. 
 5. BLAS and LAPACK libraries.
+6. [Boost](https://www.boost.org)
 
 You also need to set two environment variables, e.g. in .bashrc:
 * export LIBINT\_DATA\_PATH=/path-to-libint/libint-2.4.2/lib/basis
-* export SAD\_ET\_DIR=/path-to-eT/src/molecular\_system/sad
+* export SAD\_ET\_DIR=/path-to-eT/src/molecule/sad
 
 # Installation of eT
 Open the terminal and clone the repository:
@@ -17,10 +18,6 @@ git clone git@gitlab.com:eT-program/eT.git
 This will create a folder called "eT". Change to this directory:
 ```
 cd eT
-```
-At the moment, the new version of the program is in the branch called new\_eT. Switch branch:
-```
-git checkout new_eT
 ```
 Initialize and update the submodules:
 ```
