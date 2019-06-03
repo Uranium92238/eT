@@ -943,14 +943,11 @@ contains
       class(cc3) :: wf
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_abdi
-      real(dp), dimension(:,:,:), allocatable :: X_abid
+      real(dp), dimension(:,:,:,:), allocatable :: X_abid
 !
       type(batching_index) :: batch_i
-      integer :: record
-      integer :: i_batch, i, d, id
+      integer :: i_batch
       integer :: req_0, req_i
-!
-      integer :: ioerror = 0
 !
       req_0 = 0
       req_i = 2*wf%n_v**3
@@ -964,7 +961,7 @@ contains
 !
       call batch_i%determine_limits(1)
       call mem%alloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-      call mem%alloc(X_abid, wf%n_v, wf%n_v, batch_i%length*wf%n_v)
+      call mem%alloc(X_abid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
 !
       do i_batch = 1, batch_i%num_batches
 !
@@ -980,24 +977,12 @@ contains
 !
 !        Write to file
 !
-         do d = 1, wf%n_v
-            do i = 1, batch_i%length
-!
-               record  = (d - 1)*wf%n_o + batch_i%first + i - 1
-               id = (d - 1)*batch_i%length + i
-               write(wf%X_abid%unit, rec=record, iostat=ioerror) X_abid(:,:,id)
-!
-               if(ioerror .ne. 0) then
-                  call output%error_msg('Failed to write X_abid file')
-               endif
-!
-            enddo
-         enddo
+         call compound_record_writer(wf%n_v, batch_i, wf%X_abid, X_abid, .true.)
 !
       enddo ! batch_i
 !
       call batch_i%determine_limits(1)
-      call mem%dealloc(X_abid, wf%n_v, wf%n_v, batch_i%length*wf%n_v)
+      call mem%dealloc(X_abid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
       call mem%dealloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
       call wf%X_abid%close_()
