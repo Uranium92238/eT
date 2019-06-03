@@ -23,14 +23,14 @@ module scf_hf_class
 !!		Self-consistent field solver HF solver class module
 !!		Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    A Roothan-Hall self-consistent field solver. In each iteration, 
+!!    A Roothan-Hall self-consistent field solver. In each iteration,
 !!    the Roothan-Hall equation (or equations for unrestricted HF theory)
-!!    are solved to provide the next orbital coefficients. From the new 
-!!    orbitals, a new density provides the next Fock matrix. The cycle 
-!!    repeats until the solution is self-consistent (as measured by 
+!!    are solved to provide the next orbital coefficients. From the new
+!!    orbitals, a new density provides the next Fock matrix. The cycle
+!!    repeats until the solution is self-consistent (as measured by
 !!    the energy change).
 !!
-!!    Supported wavefunctions: HF, UHF    
+!!    Supported wavefunctions: HF, UHF
 !!
 !
    use kinds
@@ -67,7 +67,7 @@ contains
 !
    function new_scf_hf(wf) result(solver)
 !!
-!!    Prepare 
+!!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -86,7 +86,7 @@ contains
                                   &are solved to provide the next orbital coefficients. From the new &
                                   &orbitals, a new density provides the next Fock matrix. The cycle &
                                   &repeats until the solution is self-consistent (as measured by &
-                                  &the energy change).' 
+                                  &the energy change).'
 !
       solver%warning = 'Warning: We recommend to use the SCF-DIIS algorithm instead, which &
                               &supports a gradient threshold and typically converges much faster. &
@@ -117,7 +117,7 @@ contains
 !
    subroutine run_scf_hf(solver, wf)
 !!
-!!    Run 
+!!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -133,28 +133,25 @@ contains
 !
       integer :: iteration
 !
-      real(dp), dimension(:,:), allocatable :: h_wx 
+      real(dp), dimension(:,:), allocatable :: h_wx
 !
       integer :: n_s
 !
-      real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
-      integer, dimension(:,:), allocatable :: sp_eri_schwarz_list
-!
 !     :: Part I. Preparations
 !
-!     Construct ERI screening vector for efficient Fock construction 
+!     Construct ERI screening vector for efficient Fock construction
 !
       n_s = wf%system%n_s
 !
-      call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%alloc(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      call mem%alloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
+      call mem%alloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
-      call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
+      call wf%construct_sp_eri_schwarz()
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
 !
-      call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
+      call wf%update_fock_and_energy(h_wx)
 !
       call wf%get_n_electrons_in_density(n_electrons)
 !
@@ -164,10 +161,10 @@ contains
 !     Update the orbitals and density to make sure the density is idempotent
 !     (not the case for the standard atomic superposition density)
 !
-      call wf%roothan_hall_update_orbitals() ! F => C 
-      call wf%update_ao_density()            ! C => D 
+      call wf%roothan_hall_update_orbitals() ! F => C
+      call wf%update_ao_density()            ! C => D
 !
-      call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
+      call wf%update_fock_and_energy(h_wx)
 !
 !     :: Part II. Iterative SCF loop.
 !
@@ -181,7 +178,7 @@ contains
       write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        Delta E (a.u.)'
       write(output%unit, '(t3,a)')  '------------------------------------------------'
 !
-      do while (.not. converged .and. iteration .le. solver%max_iterations)         
+      do while (.not. converged .and. iteration .le. solver%max_iterations)
 !
          energy = wf%energy
 !
@@ -205,14 +202,14 @@ contains
 !
          else
 !
-            call wf%roothan_hall_update_orbitals() ! F => C 
-            call wf%update_ao_density()            ! C => D 
+            call wf%roothan_hall_update_orbitals() ! F => C
+            call wf%update_ao_density()            ! C => D
 !
             call wf%save_orbital_coefficients()
             call wf%save_orbital_energies()
 !
             prev_energy = wf%energy
-            call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
+            call wf%update_fock_and_energy(h_wx)
 !
          endif
 !
@@ -220,26 +217,26 @@ contains
 !
       enddo
 !
-      call mem%dealloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%dealloc(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      call mem%dealloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
+      call mem%dealloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
-      if (.not. converged) then 
+      if (.not. converged) then
 !
          write(output%unit, '(t3,a)')   '---------------------------------------------------'
          write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given'
          write(output%unit, '(t3,a/)')  'number of maximum iterations.'
          stop
 !
-      endif 
+      endif
 !
    end subroutine run_scf_hf
 !
 !
    subroutine cleanup_scf_hf(solver, wf)
 !!
-!!    Cleanup 
+!!    Cleanup
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -250,21 +247,21 @@ contains
 !
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
 !
-!     Save the orbitals to file & store restart information 
+!     Save the orbitals to file & store restart information
 !
       call wf%save_orbital_coefficients()
 !
-!     MO transform the AO Fock matrix 
+!     MO transform the AO Fock matrix
 !     [NB! This is bound to go wrong for UHF. We should generalize and overwrite. @todo]
 !
       call wf%initialize_mo_fock()
       call wf%construct_mo_fock()
 !
-!     Save AO density (or densities) to disk 
+!     Save AO density (or densities) to disk
 !
       call wf%save_ao_density()
 !
-!     Final deallocations of solver 
+!     Final deallocations of solver
 !     (note that we keep certain arrays in the wavefunction for later)
 !
       call wf%destruct_ao_overlap()
@@ -278,9 +275,9 @@ contains
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(scf_hf) :: solver 
+      class(scf_hf) :: solver
 !
       call output%long_string_print(solver%tag,'(//t3,a)',.true.)
       call output%long_string_print(solver%author,'(t3,a/)',.true.)

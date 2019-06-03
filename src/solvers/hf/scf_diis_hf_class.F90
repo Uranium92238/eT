@@ -23,12 +23,12 @@ module scf_diis_hf_class
 !!		Self-consistent field DIIS HF solver class module
 !!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
-!!    A DIIS-accelerated Roothan-Hall self-consistent field solver. 
-!!    In each Roothan-Hall update, a fitted F matrix is used instead 
-!!    of the one produced from the previously obtained density. 
+!!    A DIIS-accelerated Roothan-Hall self-consistent field solver.
+!!    In each Roothan-Hall update, a fitted F matrix is used instead
+!!    of the one produced from the previously obtained density.
 !!
 !!    Supported wavefunctions: HF, UHF
-!!    
+!!
 !
    use kinds
    use diis_tool_class
@@ -44,17 +44,17 @@ module scf_diis_hf_class
 !
       integer :: diis_dimension
 !
-      logical :: converged 
+      logical :: converged
 !
       type(file) :: restart_file
-      logical    :: restart 
+      logical    :: restart
 !
    contains
-!     
+!
       procedure :: run                    => run_scf_diis_hf
       procedure :: cleanup                => cleanup_scf_diis_hf
 !
-      procedure :: read_settings           => read_settings_scf_diis_hf 
+      procedure :: read_settings           => read_settings_scf_diis_hf
       procedure :: read_scf_diis_settings  => read_scf_diis_settings_scf_diis_hf
 !
       procedure :: print_scf_diis_settings => print_scf_diis_settings_scf_diis_hf
@@ -88,11 +88,11 @@ contains
       solver%description = 'A DIIS-accelerated Roothan-Hall self-consistent field solver. &
                                   &A least-square DIIS fit is performed on the previous Fock matrices and &
                                   &associated gradients. Following the Roothan-Hall update of the density, &
-                                  &the DIIS-fitted Fock matrix is used to get the next orbital coefficients.' 
+                                  &the DIIS-fitted Fock matrix is used to get the next orbital coefficients.'
 !
       call solver%print_banner()
 !
-!     Set standard settings 
+!     Set standard settings
 !
       solver%restart             = .false.
       solver%diis_dimension      = 8
@@ -120,7 +120,7 @@ contains
       call wf%initialize_density()
       call wf%initialize_orbitals()
 !
-      if (solver%restart) then 
+      if (solver%restart) then
 !
          write(output%unit, '(/t3,a)') '- Requested restart. Reading orbitals from file:'
 !
@@ -128,7 +128,7 @@ contains
          call wf%update_ao_density()
          call wf%read_orbital_energies()
 !
-      else 
+      else
 !
          write(output%unit, '(/t3,a,a,a)') '- Setting initial AO density to ', trim(solver%ao_density_guess), ':'
          call wf%set_initial_ao_density_guess(solver%ao_density_guess)
@@ -140,12 +140,12 @@ contains
 !
    subroutine print_scf_diis_settings_scf_diis_hf(solver)
 !!
-!!    Print SCF-DIIS settings    
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Print SCF-DIIS settings
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(scf_diis_hf) :: solver 
+      class(scf_diis_hf) :: solver
 !
       write(output%unit, '(t6,a29,i2)') 'DIIS dimension:               ', solver%diis_dimension
 !
@@ -154,7 +154,7 @@ contains
 !
    subroutine run_scf_diis_hf(solver, wf)
 !!
-!!    Run 
+!!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -172,36 +172,33 @@ contains
 !
       integer :: iteration
 !
-      real(dp), dimension(:,:), allocatable :: F 
-      real(dp), dimension(:,:), allocatable :: G 
-      real(dp), dimension(:,:), allocatable :: ao_fock 
-      real(dp), dimension(:,:), allocatable :: h_wx 
-      real(dp), dimension(:,:), allocatable :: prev_ao_density 
+      real(dp), dimension(:,:), allocatable :: F
+      real(dp), dimension(:,:), allocatable :: G
+      real(dp), dimension(:,:), allocatable :: ao_fock
+      real(dp), dimension(:,:), allocatable :: h_wx
+      real(dp), dimension(:,:), allocatable :: prev_ao_density
 !
       integer :: n_s
 !
-      real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
-      integer, dimension(:,:), allocatable :: sp_eri_schwarz_list
-!
       integer :: dim_gradient, dim_fock
 !
-      type(timings) :: iteration_timer, solver_timer 
+      type(timings) :: iteration_timer, solver_timer
 !
-!     :: Part I. Preparations. 
+!     :: Part I. Preparations.
 !
       iteration_timer = new_timer('SCF DIIS iteration time')
       solver_timer = new_timer('SCF DIIS solver time')
 !
       call solver_timer%turn_on()
 !
-!     Construct screening vectors for efficient Fock construction 
+!     Construct screening vectors for efficient Fock construction
 !
       n_s = wf%system%get_n_shells()
 !
-      call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%alloc(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      call mem%alloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
+      call mem%alloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
-      call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
+      call wf%construct_sp_eri_schwarz()
 !
 !     Initialize the DIIS manager object
 !
@@ -210,12 +207,12 @@ contains
 !
       diis = diis_tool('hf_diis', dim_fock, dim_gradient, solver%diis_dimension)
 !
-!     Set the initial density guess and Fock matrix 
+!     Set the initial density guess and Fock matrix
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
 !
-      call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
+      call wf%update_fock_and_energy(h_wx)
 !
       call wf%get_n_electrons_in_density(n_electrons)
 !
@@ -223,23 +220,23 @@ contains
       write(output%unit, '(t6,a30,f17.12)')  'Number of electrons in guess: ', n_electrons
 !
 !     Do a Roothan-Hall update to ensure idempotentency of densities,
-!     and use it to construct the first proper Fock matrix from which 
-!     to begin cumulative construction 
+!     and use it to construct the first proper Fock matrix from which
+!     to begin cumulative construction
 !
-      if (.not. solver%restart) then 
-!         
+      if (.not. solver%restart) then
+!
          call wf%roothan_hall_update_orbitals() ! F => C
          call wf%update_ao_density()            ! C => D
 !
-         call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
+         call wf%update_fock_and_energy(h_wx)
 !
       endif
 !
       call mem%alloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
       call mem%alloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
 !
-      call mem%alloc(G, wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities)          
-      call mem%alloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities) 
+      call mem%alloc(G, wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities)
+      call mem%alloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
 !
       call wf%get_packed_roothan_hall_gradient(G)
 !
@@ -261,9 +258,9 @@ contains
 !
       iteration = 1
 !
-      do while (.not. solver%converged .and. iteration .le. solver%max_iterations)  
+      do while (.not. solver%converged .and. iteration .le. solver%max_iterations)
 !
-         call iteration_timer%turn_on()       
+         call iteration_timer%turn_on()
 !
 !        Set energy and print information for current iteration
 !
@@ -287,7 +284,7 @@ contains
             write(output%unit, '(t3,a)')          '--------------------------------------------------------------'
             write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
 !
-            if (.not. converged_energy) then 
+            if (.not. converged_energy) then
 !
                write(output%unit, '(/t3,a,/t9,a)') 'Note: the gradient converged in the first iteration,', &
                                                           'so the energy convergence has not been tested!'
@@ -309,9 +306,9 @@ contains
 !
             call wf%update_ao_density()                ! C => D
 !
-            if (iteration .ne. 1) call wf%set_ao_fock(ao_fock) ! Restore F 
+            if (iteration .ne. 1) call wf%set_ao_fock(ao_fock) ! Restore F
 !
-            call wf%update_fock_and_energy_cumulative(sp_eri_schwarz, sp_eri_schwarz_list, n_s, prev_ao_density, h_wx)
+            call wf%update_fock_and_energy_cumulative(prev_ao_density, h_wx)
 !
             call wf%get_packed_roothan_hall_gradient(G)
 !
@@ -325,18 +322,18 @@ contains
 !
          endif
 !
-         call iteration_timer%turn_off()  
-         call iteration_timer%reset()     
+         call iteration_timer%turn_off()
+         call iteration_timer%reset()
 !
          iteration = iteration + 1
 !
       enddo
 !
-      call mem%dealloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%dealloc(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      call mem%dealloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
+      call mem%dealloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
-      call mem%dealloc(G, wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities)          
-      call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities) 
+      call mem%dealloc(G, wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities)
+      call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
@@ -345,14 +342,14 @@ contains
 !
       call diis%cleanup()
 !
-      if (.not. solver%converged) then 
+      if (.not. solver%converged) then
 !
          write(output%unit, '(t3,a)')   '---------------------------------------------------'
          write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given'
          write(output%unit, '(t3,a/)')  'number of maximum iterations.'
          stop
 !
-      endif 
+      endif
 !
       call solver_timer%turn_off()
 !
@@ -361,7 +358,7 @@ contains
 !
    subroutine cleanup_scf_diis_hf(solver, wf)
 !!
-!! 	Cleanup 
+!! 	Cleanup
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -372,12 +369,12 @@ contains
 !
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
 !
-!     MO transform the AO Fock matrix 
+!     MO transform the AO Fock matrix
 !
       call wf%initialize_mo_fock()
       call wf%construct_mo_fock()
 !
-!     Save the orbitals to file & store restart information 
+!     Save the orbitals to file & store restart information
 !
       call wf%save_orbital_coefficients()
       call wf%save_orbital_energies()
@@ -387,12 +384,12 @@ contains
 !
    subroutine read_settings_scf_diis_hf(solver)
 !!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(scf_diis_hf) :: solver 
+      class(scf_diis_hf) :: solver
 !
       call solver%read_hf_solver_settings()
       call solver%read_scf_diis_settings()
@@ -402,18 +399,18 @@ contains
 !
    subroutine read_scf_diis_settings_scf_diis_hf(solver)
 !!
-!!    Read SCF DIIS settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Read SCF DIIS settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-!!    Reads settings specific to the class. 
+!!    Reads settings specific to the class.
 !!
-      implicit none 
+      implicit none
 !
-      class(scf_diis_hf) :: solver 
+      class(scf_diis_hf) :: solver
 !
       call input%get_keyword_in_section('diis dimension', 'solver hf', solver%diis_dimension)
 !
-      if (input%requested_keyword_in_section('restart', 'solver hf')) solver%restart = .true.  
+      if (input%requested_keyword_in_section('restart', 'solver hf')) solver%restart = .true.
 !
    end subroutine read_scf_diis_settings_scf_diis_hf
 !
