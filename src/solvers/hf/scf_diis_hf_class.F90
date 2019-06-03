@@ -291,7 +291,7 @@ contains
 !
             endif
 !
-            call wf%print_wavefunction_summary()
+            call solver%print_summary(wf)
 
 !
          else
@@ -378,6 +378,10 @@ contains
 !
       call wf%save_orbital_coefficients()
       call wf%save_orbital_energies()
+!
+!     Save AO density (or densities) to disk 
+!
+      call wf%save_ao_density()
 !
    end subroutine cleanup_scf_diis_hf
 !

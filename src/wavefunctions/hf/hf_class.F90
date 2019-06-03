@@ -75,7 +75,7 @@ module hf_class
       procedure :: read_hf_settings                         => read_hf_settings_hf
       procedure :: construct_ao_overlap                     => construct_ao_overlap_hf
       procedure :: decompose_ao_overlap                     => decompose_ao_overlap_hf
-      procedure :: print_wavefunction_summary               => print_wavefunction_summary_hf
+      procedure :: print_energy                             => print_energy_hf
 !
 !     AO Fock and energy related routines
 !
@@ -119,6 +119,7 @@ module hf_class
       procedure :: initialize_orbitals                      => initialize_orbitals_hf
       procedure :: roothan_hall_update_orbitals             => roothan_hall_update_orbitals_hf
       procedure :: print_orbital_energies                   => print_orbital_energies_hf
+      procedure :: print_orbitals                           => print_orbitals_hf 
 !
 !     Class variable initialize and destruct routines
 !
@@ -245,7 +246,7 @@ contains
    end subroutine is_restart_safe_hf
 !
 !
-   subroutine print_wavefunction_summary_hf(wf)
+   subroutine print_energy_hf(wf)
 !!
 !!    Print wavefunction summary
 !!    Written by Eirik F. Kjønstad, Sep 2018
@@ -260,8 +261,6 @@ contains
 !
       real(dp) :: homo_lumo_gap
 !
-      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name_), ' wavefunction energetics (a.u.):'
-!
       homo_lumo_gap = wf%orbital_energies(wf%n_o + 1) - wf%orbital_energies(wf%n_o)
 !
       write(output%unit, '(/t6,a26,f19.12)') 'HOMO-LUMO gap:            ', homo_lumo_gap
@@ -269,9 +268,7 @@ contains
       write(output%unit, '(t6,a26,f19.12)')  'Electronic energy:        ', wf%energy - wf%system%get_nuclear_repulsion()
       write(output%unit, '(t6,a26,f19.12)')  'Total energy:             ', wf%energy
 !
-      call wf%print_orbital_energies('3')
-!
-   end subroutine print_wavefunction_summary_hf
+   end subroutine print_energy_hf
 !
 !
    subroutine read_settings_hf(wf)
@@ -331,6 +328,146 @@ contains
       call print_vector(wf%orbital_energies, wf%n_ao, indent)
 !
    end subroutine print_orbital_energies_hf
+!
+!
+   subroutine print_orbitals_hf(wf, n_orbitals, orbital_list)
+!!
+!!    Print orbitals 
+!!    Written by Eirik F. Kjønstad, May 2019
+!!
+!!    Prints the orbitals with atom & orbital information given.
+!!
+      implicit none 
+!  
+      class(hf), intent(in) :: wf 
+!
+      integer, intent(in) :: n_orbitals
+!
+      integer, dimension(n_orbitals), intent(in), optional :: orbital_list
+!
+      integer, parameter :: n_entries  = 4
+!
+      integer :: atom, mo_offset, first_mo, last_mo, shell, ao, mo, l, mos_to_print
+!
+      character(len=3) :: adv ! advance = 'yes' or 'no', depending on the circumstances
+!
+      character(len=1), dimension(6), parameter :: angular_momentum = ['s', 'p', 'd', 'f', 'g', 'h']
+!
+      integer, dimension(:), allocatable :: orbital_list_local
+!
+      mos_to_print = min(wf%n_mo, n_orbitals)
+!
+      write(output%unit, '(/t3,a,i0,a,i0,a)') 'Printing ', mos_to_print, ' MOs (out of the total ', wf%n_mo, ' MOs).'
+!
+      call mem%alloc(orbital_list_local, mos_to_print)
+!
+      if (.not. present(orbital_list)) then
+!
+!        Default is to print MOs [1,n_orbitals]
+!
+         do mo = 1, mos_to_print
+!
+            orbital_list_local(mo) = mo
+!
+         enddo
+!
+      else
+!
+!        If list is provided, print only MOs in list
+!
+         orbital_list_local = orbital_list
+!
+!        Sanity check
+!
+         do mo = 1, mos_to_print
+!
+            if (orbital_list(mo) .lt. 1 .or. orbital_list(mo) .gt. wf%n_mo) &
+                     call output%error_msg('Tried to print non-existent orbital')
+!
+         enddo
+!
+      endif
+!
+      do mo_offset = 1, mos_to_print, n_entries
+!
+         first_mo = mo_offset
+         last_mo  = min(mo_offset + n_entries - 1, mos_to_print)
+!
+         write(output%unit, '(/t3,a)', advance='no') '- Printing molecular orbitals: '
+!
+         do mo = first_mo, last_mo 
+!
+            if (mo == first_mo) then
+!
+               write(output%unit, '(i0)', advance='no') orbital_list_local(mo) 
+!
+            elseif ((mo == last_mo) ) then
+!
+            write(output%unit, '(a,1x,i0/)', advance='yes') ',', orbital_list_local(mo) 
+!
+            else
+!
+               write(output%unit, '(a,1x,i0)', advance='no') ',', orbital_list_local(mo)
+!
+            endif
+!
+         enddo 
+!   
+         write(output%unit, '(t6,a)', advance='no') 'AO   Atom'
+!
+         adv = 'no'
+         do mo = first_mo, last_mo 
+!
+            if (mo == last_mo) adv = 'yes'
+!
+            if (mo == first_mo) then
+!
+               write(output%unit, '(7x,i4)', advance=adv) orbital_list_local(mo) 
+!
+            else
+!
+               write(output%unit, '(8x,i4)', advance=adv) orbital_list_local(mo)
+!
+            endif
+!
+         enddo
+!
+         write(output%unit, '(t5,a)') '---------------------------------------------------------------'
+!
+         do atom = 1, wf%system%n_atoms
+!
+            do shell = 1, wf%system%atoms(atom)%n_shells 
+!
+               l = wf%system%atoms(atom)%shells(shell)%l
+!
+               do ao = wf%system%atoms(atom)%shells(shell)%first, wf%system%atoms(atom)%shells(shell)%last 
+!
+                  write(output%unit, '(t3,i4,i4,1x,a2,a1,a1,a1)', advance='no') ao, atom, &
+                                                                          wf%system%atoms(atom)%symbol, &
+                                                                         '(', angular_momentum(l + 1), ')'
+!
+                  adv = 'no'
+                  do mo = first_mo, last_mo 
+!
+                     if (mo == last_mo) adv = 'yes'
+                     write(output%unit, '(2x, f10.6)', advance=adv) wf%orbital_coefficients(ao, orbital_list_local(mo))
+!
+                  enddo
+!
+               enddo
+!
+            enddo
+!
+         enddo
+!
+         write(output%unit, '(t5,a)') '---------------------------------------------------------------'
+!
+      enddo 
+!
+      call mem%dealloc(orbital_list_local, n_orbitals)
+
+!
+   end subroutine print_orbitals_hf
 !
 !
    subroutine mo_transform_hf(wf, X_wx, Y_pq)
