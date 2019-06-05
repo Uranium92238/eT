@@ -1481,15 +1481,30 @@ contains
 !!    batch_r: Initialized batching object
 !!
 !!    req0: required memory that does not scale with batch size 
-!!    req1: required memory that scales linearly with batch size
-!!    req2: required memory that scales quadratically with batch size
-!!    req3: required memory that scales cubically with batch indices pqr
+!!    req1: required memory for 1 of the 3 identical indices 
+!!          scales linearly with batch size
+!!          total req1 is 3*req1 for batches in p,q and r
+!!    req2: required memory for 1 pair (e.g. pr) of the 3 identical indices
+!!          scales quadratically with batch size
+!!          total req2 is 6*req2 due to permutations of the indices (pq,qp,pr,rp,qr,rq)
+!!    req3: required memory for 1 triple (e.g. rqp) of the 3 idenctical indices
+!!          scales cubically with batch size
+!!          total req3 is 6*req3 due to permutations of the indices (pqr,qpr,rqp,prq,qrp,rpq)
 !!
 !!    buffer_size: overwrite the default buffer size of 10%
 !!
 !!    element_size: memory per element, default is double precision
 !!
 !!    Be careful with symmetries and permutations!
+!!
+!!    example: CC3 omega/jacobian/jacobian_transpose
+!!             use restricted loops over i≥j≥k to reduce the cost
+!!             In case we use the integral g_ljci:
+!!             1 array if we are not batching
+!!             6 smaller arrays g_licj, g_lick, g_ljck, g_ljci, g_lkci, g_lkcj
+!!             needed in case we are batching but:
+!!             req2 = wf%n_o*wf%n_v 
+!!             for this example because the factor of 6 is included in this routine
 !!
       implicit none
 !
@@ -1550,11 +1565,13 @@ contains
       req1_min   = (req1 + int(req1*buff))*e_size
       req2_min   = (req2 + int(req2*buff))*e_size
       req3_min   = (req3 + int(req3*buff))*e_size
-! 
-      req_min = req0_tot + 3*req1_min + 6*req2_min + 9*req3_min
 !
-      req_tot = req0_tot + req1_min*(batch_p%index_dimension) &
-                         + req2_min*(batch_p%index_dimension)**2 &
+!     Minimal required memory for batches of size 1
+      req_min = req0_tot + 3*req1_min + 6*req2_min + 6*req3_min
+!
+!     Required memory to hold complete arrays in mem (no batching)
+      req_tot = req0_tot + req1_min*(batch_p%index_dimension)     &
+                         + req2_min*(batch_p%index_dimension)**2  &
                          + req3_min*(batch_p%index_dimension)**3
 !
       if (req_tot .lt. mem%available) then
@@ -1595,7 +1612,7 @@ contains
                incremented = .false.
             endif
 !
-            if (  9*elements**3*req3_min  &
+            if (  6*elements**3*req3_min  &
                 + 6*elements**2*req2_min  &
                 + 3*elements*req1_min     &
                 + req0_tot .ge. mem%available) then 
