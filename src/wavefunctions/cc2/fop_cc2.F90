@@ -96,7 +96,7 @@ contains
 !
    module subroutine construct_etaX_cc2(wf, X, etaX)
 !!
-!!    Construct etaX
+!!    Construct η^X
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folekstad
@@ -104,9 +104,7 @@ contains
 !!    Constructs the part of η^X common to LR and EOM (η^X,0)
 !!
 !!       η^X,0 = < Λ | [X, τ_μ] | CC >
-!!    
-!!    for cc2.
-!!
+!!   
       implicit none
 !
       class(cc2), intent(in) :: wf
@@ -333,7 +331,7 @@ contains
 !
    module subroutine etaX_cc2_b2_cc2(wf, X, etaX_aibj)
 !!
-!!    etaX cc2 B2
+!!    etaX CC2 B2
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2019
@@ -449,8 +447,6 @@ contains
 !!    Constructs the ξ^X vector, common to LR and EOM,
 !!
 !!       ξ^X_μ = < μ | exp(-T) X exp(T)| R >
-!!
-!!    for cc2.
 !!
       implicit none
 !
