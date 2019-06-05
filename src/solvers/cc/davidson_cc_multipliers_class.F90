@@ -53,7 +53,6 @@ module davidson_cc_multipliers_class
 !
    contains
 !
-      procedure :: prepare                         => prepare_davidson_cc_multipliers
       procedure :: cleanup                         => cleanup_davidson_cc_multipliers
 !
       procedure :: print_banner                    => print_banner_davidson_cc_multipliers
@@ -72,17 +71,24 @@ module davidson_cc_multipliers_class
    end type davidson_cc_multipliers
 !
 !
+   interface davidson_cc_multipliers
+!
+      procedure :: new_davidson_cc_multipliers
+!
+   end interface davidson_cc_multipliers
+!
+!
 contains
 !
 !
-   subroutine prepare_davidson_cc_multipliers(solver, wf)
+   function new_davidson_cc_multipliers(wf) result(solver)
 !!
-!!    Prepare 
+!!    New Davidson CC multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(davidson_cc_multipliers) :: solver
+      type(davidson_cc_multipliers) :: solver
 !
       class(ccs) :: wf
 !
@@ -107,7 +113,7 @@ contains
 !
       call wf%initialize_multipliers()
 !
-   end subroutine prepare_davidson_cc_multipliers
+   end function new_davidson_cc_multipliers
 !
 !
    subroutine print_settings_davidson_cc_multipliers(solver)
@@ -308,10 +314,10 @@ contains
 !
       class(davidson_cc_multipliers) :: solver 
 !
-      call long_string_print(solver%tag,'(//t3,a)',.true.)
-      call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
-      call long_string_print(solver%description2)
+      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
+      call output%long_string_print(solver%author,'(t3,a/)',.true.)
+      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call output%long_string_print(solver%description2)
 !
    end subroutine print_banner_davidson_cc_multipliers
 !

@@ -55,7 +55,6 @@ module newton_raphson_cc_gs_class
    contains
 !     
       procedure, nopass :: cleanup          => cleanup_newton_raphson_cc_gs
-      procedure :: prepare                  => prepare_newton_raphson_cc_gs
       procedure :: run                      => run_newton_raphson_cc_gs
 !
       procedure :: do_micro_iterations      => do_micro_iterations_newton_raphson_cc_gs
@@ -68,17 +67,24 @@ module newton_raphson_cc_gs_class
    end type newton_raphson_cc_gs
 !
 !
+   interface newton_raphson_cc_gs
+!
+      procedure :: new_newton_raphson_cc_gs
+!
+   end interface newton_raphson_cc_gs
+!
+!
 contains
 !
 !
-   subroutine prepare_newton_raphson_cc_gs(solver, wf)
+   function new_newton_raphson_cc_gs(wf) result(solver)
 !!
-!!    Prepare 
+!!    New Newton-Rahpson GS 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(newton_raphson_cc_gs) :: solver
+      type(newton_raphson_cc_gs) :: solver
 !
       class(ccs) :: wf
 !
@@ -120,7 +126,7 @@ contains
 !
       endif
 !
-   end subroutine prepare_newton_raphson_cc_gs
+   end function new_newton_raphson_cc_gs
 !
 !
    subroutine print_settings_newton_raphson_cc_gs(solver)
@@ -416,9 +422,9 @@ contains
 !
       class(newton_raphson_cc_gs) :: solver 
 !
-      call long_string_print(solver%tag,'(//t3,a)',.true.)
-      call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
+      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
+      call output%long_string_print(solver%author,'(t3,a/)',.true.)
+      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
    end subroutine print_banner_newton_raphson_cc_gs
 !

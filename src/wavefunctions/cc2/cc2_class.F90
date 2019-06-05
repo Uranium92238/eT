@@ -758,7 +758,7 @@ contains
 !
 !        Read or construct doubles vector
 !
-         if (wf%r2_file%file_exists()) then
+         if (wf%r2_file%exists()) then
 !
             call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
 !
@@ -821,7 +821,7 @@ contains
 !
 !        Read or construct doubles vector
 !
-         if (wf%l2_file%file_exists()) then
+         if (wf%l2_file%exists()) then
 !
             call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
 !

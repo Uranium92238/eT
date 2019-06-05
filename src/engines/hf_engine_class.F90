@@ -78,28 +78,20 @@ contains
       class(hf_engine)  :: engine 
       class(hf)         :: wf 
 !
+      type(scf_hf), allocatable :: scf
       type(scf_diis_hf), allocatable :: scf_diis
-      type(scf_hf), allocatable      :: scf
 !
       if (trim(engine%algorithm) == 'scf-diis') then
 !
-         allocate(scf_diis)
-!
-         call scf_diis%prepare(wf)
+         scf_diis = scf_diis_hf(wf)
          call scf_diis%run(wf)
          call scf_diis%cleanup(wf)
 !
-         deallocate(scf_diis)
-!
       elseif (trim(engine%algorithm) == 'scf') then 
 !
-         allocate(scf)
-!
-         call scf%prepare(wf)
+         scf = scf_hf(wf)
          call scf%run(wf)
          call scf%cleanup(wf)
-!
-         deallocate(scf)
 !
       else
 !

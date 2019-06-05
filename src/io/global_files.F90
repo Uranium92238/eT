@@ -17,25 +17,15 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module kinds
+module global_files
 !
-!!
-!!    Kinds module
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!
-!!    Defines a set of kinds in terms of precision. Usage:
-!!
-!!       In declarations:   "real(dp) :: foo", "integer(i15) :: foo_int", etc.
-!!       In record-lengths: "recl=dp*200" (200 double precision numbers per record)
-!!
+   use input_file_class, only : input_file
+   use output_file_class, only : output_file
 !
    implicit none
 !
-   integer, parameter :: dp  = selected_real_kind(15,307)
-   integer, parameter :: qp  = selected_real_kind(33,4931)
-   integer, parameter :: i15 = selected_int_kind(15)
-   integer, parameter :: i6  = selected_int_kind(6)
+   type(input_file) :: input
+   type(output_file) :: timing
 !
-   integer, parameter :: int_size = bit_size(i15)/8
+end module global_files
 !
-end module kinds

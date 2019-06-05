@@ -29,7 +29,9 @@ module ccs_class
 !
    use mo_integral_tool_class
 !
+   use sequential_file_class, only : sequential_file
    use reordering
+   use string_utilities
    use array_utilities
    use array_analysis
    use interval_class
@@ -70,6 +72,7 @@ module ccs_class
 !
       procedure :: cleanup                                     => cleanup_ccs
 !
+      procedure :: read_hf                                     => read_hf_ccs
       procedure :: initialize_files                            => initialize_files_ccs
       procedure :: initialize_cc_files                         => initialize_cc_files_ccs
       procedure :: initialize_singles_files                    => initialize_singles_files_ccs
@@ -252,23 +255,10 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
-      type(file) :: hf_restart_file 
-!
       wf%name_ = 'ccs'
       wf%system => system
 !
-      call hf_restart_file%init('hf_restart_file', 'sequential', 'unformatted')
-!
-      call disk%open_file(hf_restart_file, 'read', 'rewind')
-!
-      read(hf_restart_file%unit) wf%n_ao 
-      read(hf_restart_file%unit) wf%n_mo 
-      read(hf_restart_file%unit) 
-      read(hf_restart_file%unit) wf%n_o  
-      read(hf_restart_file%unit) wf%n_v  
-      read(hf_restart_file%unit) wf%hf_energy  
-!
-      call disk%close_file(hf_restart_file)
+      call wf%read_hf()
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
@@ -288,6 +278,33 @@ contains
       call wf%initialize_fock_ab()
 !
    end function new_ccs
+!
+!
+   subroutine read_hf_ccs(wf)
+!!
+!!    Read HF file
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Short routine to read the HF information from disk
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      type(sequential_file) :: hf_restart_file 
+!
+      hf_restart_file = sequential_file('hf_restart_file')
+      call hf_restart_file%open_('read', 'rewind')
+!
+      call hf_restart_file%read_(wf%n_ao)     
+      call hf_restart_file%read_(wf%n_mo)     
+      call hf_restart_file%skip()     
+      call hf_restart_file%read_(wf%n_o)     
+      call hf_restart_file%read_(wf%n_v)     
+      call hf_restart_file%read_(wf%hf_energy)     
+!
+      call hf_restart_file%close_()
+!
+   end subroutine read_hf_ccs
 !
 !
    subroutine cleanup_ccs(wf)
@@ -935,12 +952,12 @@ contains
 !
       if (trim(side) == 'right') then 
 !
-         inquire(file=wf%r1_file%name, size=n_states)
+         n_states = wf%r1_file%get_size()
          n_states = n_states/(dp*wf%n_t1)
 !
       elseif (trim(side) == 'left') then 
 !
-         inquire(file=wf%l1_file%name, size=n_states)
+         n_states = wf%l1_file%get_size()
          n_states = n_states/(dp*wf%n_t1)
 !
       else
@@ -1037,30 +1054,52 @@ contains
 !!    Calculate energy
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
+!!    Calculates the CCSD energy. This is only equal to the actual
+!!    energy when the ground state equations are solved, of course.
+!!
+!!       E = E_hf + sum_aibj t_i^a t_j^b L_iajb
+!!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      integer :: i = 0
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajb
 !
-      real(dp), dimension(:,:), allocatable :: h_pq
+      real(dp) :: correlation_energy 
 !
-!     Get T1-transformed h
+      integer :: a, i, b, j, ai, bj, aibj
 !
-      call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
-      call wf%construct_h(h_pq)
+      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-!     Compute energy
+      call wf%get_ovov(g_iajb)
 !
-      wf%energy = wf%system%get_nuclear_repulsion()
+      correlation_energy = zero 
 !
-      do i = 1, wf%n_o
+!$omp parallel do private(a,i,ai,bj,j,b,aibj) reduction(+:correlation_energy)
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
 !
-         wf%energy = wf%energy + h_pq(i,i) + wf%fock_ij(i,i)
+            ai = (i-1)*wf%n_v + a
 !
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v
+!
+                  bj = wf%n_v*(j - 1) + b
+!
+                  aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
+!
+                  correlation_energy = correlation_energy + (wf%t1(a,i))*(wf%t1(b,j))* &
+                                                      (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
+!
+               enddo
+            enddo
+         enddo
       enddo
+!$omp end parallel do
 !
-      call mem%dealloc(h_pq, wf%n_mo, wf%n_mo)
+      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+      wf%energy = wf%hf_energy + correlation_energy
 !
    end subroutine calculate_energy_ccs
 !

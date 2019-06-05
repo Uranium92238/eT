@@ -56,7 +56,6 @@ module diis_cc_gs_class
 !     
       procedure, nopass :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_gs
 !
-      procedure :: prepare                  => prepare_diis_cc_gs
       procedure :: run                      => run_diis_cc_gs
       procedure :: cleanup                  => cleanup_diis_cc_gs
 !
@@ -69,17 +68,24 @@ module diis_cc_gs_class
    end type diis_cc_gs
 !
 !
+   interface diis_cc_gs 
+!
+      procedure :: new_diis_cc_gs
+!
+   end interface diis_cc_gs 
+!
+!
 contains
 !
 !
-   subroutine prepare_diis_cc_gs(solver, wf)
+   function new_diis_cc_gs(wf) result(solver)
 !!
-!!    Prepare 
+!!    New DIIS CC GS 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(diis_cc_gs) :: solver
+      type(diis_cc_gs) :: solver
 !
       class(ccs) :: wf
 !
@@ -125,7 +131,7 @@ contains
 !
       endif
 !
-   end subroutine prepare_diis_cc_gs
+   end function new_diis_cc_gs
 !
 !
    subroutine print_settings_diis_cc_gs(solver)
@@ -351,9 +357,9 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      call long_string_print(solver%tag,'(//t3,a)',.true.)
-      call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
+      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
+      call output%long_string_print(solver%author,'(t3,a/)',.true.)
+      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
    end subroutine print_banner_diis_cc_gs
 !
@@ -390,11 +396,12 @@ contains
 !
       write(output%unit, '(/t3,a)') '- DIIS CC ground state solver summary:'
 !
-      write(output%unit, '(/t6,a33,f18.12)') 'Final ground state energy (a.u.):', wf%energy 
+      call output%printf('Final ground state energy (a.u.): (f18.12)', reals=[wf%energy], fs='(/t6,a)')
+!
       call wf%print_dominant_amplitudes()
 !
       t1_diagnostic = wf%get_t1_diagnostic() 
-      write(output%unit, '(/t6,a32,f14.12)') 'T1 diagnostic (|T1|/sqrt(N_e)): ', t1_diagnostic
+      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', reals=[t1_diagnostic], fs='(/t6,a)')
 !
    end subroutine print_summary_diis_cc_gs
 !

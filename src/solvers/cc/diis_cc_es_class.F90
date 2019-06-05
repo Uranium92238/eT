@@ -60,7 +60,6 @@ module diis_cc_es_class
 !
    contains
 !     
-      procedure, non_overridable :: prepare        => prepare_diis_cc_es
       procedure, non_overridable :: run            => run_diis_cc_es
       procedure, non_overridable :: cleanup        => cleanup_diis_cc_es
 !
@@ -77,17 +76,24 @@ module diis_cc_es_class
    end type diis_cc_es
 !
 !
+   interface diis_cc_es 
+!
+      procedure :: new_diis_cc_es
+!
+   end interface diis_cc_es
+!
+!
 contains
 !
 !
-   subroutine prepare_diis_cc_es(solver, transformation, wf)
+   function new_diis_cc_es(transformation, wf) result(solver)
 !!
-!!    Prepare 
+!!    New DIIS CC ES 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(diis_cc_es) :: solver
+      type(diis_cc_es) :: solver
       class(ccs), intent(in) :: wf
 !
       character(len=*), intent(in) :: transformation
@@ -116,7 +122,7 @@ contains
       call mem%alloc(solver%energies, solver%n_singlet_states)
       solver%energies = zero
 !
-   end subroutine prepare_diis_cc_es
+   end function new_diis_cc_es
 !
 !
    subroutine print_settings_diis_cc_es(solver)
@@ -195,9 +201,9 @@ contains
 !
       class(diis_cc_es) :: solver 
 !
-      call long_string_print(solver%tag,'(//t3,a)',.true.)
-      call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
+      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
+      call output%long_string_print(solver%author,'(t3,a/)',.true.)
+      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
    end subroutine print_banner_diis_cc_es
 !

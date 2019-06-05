@@ -24,7 +24,10 @@ module cc3_class
 !!    Written by Rolf H. Myhre and Alexander Paul, 2018-2019
 !!
 !
+   use kinds
    use ccsd_class
+   use direct_file_class, only : direct_file
+   use sequential_file_class, only : sequential_file
 !
    implicit none
 !
@@ -32,31 +35,31 @@ module cc3_class
 !
 !     Ground state integral files
 !
-      type(file)  :: g_bdck_t
-      type(file)  :: g_ljck_t
-      type(file)  :: g_dbkc_t
-      type(file)  :: g_jlkc_t
-      type(file)  :: L_jbkc_t
+      type(direct_file)  :: g_bdck_t
+      type(direct_file)  :: g_ljck_t
+      type(direct_file)  :: g_dbkc_t
+      type(direct_file)  :: g_jlkc_t
+      type(direct_file)  :: L_jbkc_t
 !
 !     Right Jacobian integral files
 !
-      type(file)  :: g_bdck_c1
-      type(file)  :: g_ljck_c1
+      type(direct_file)  :: g_bdck_c1
+      type(direct_file)  :: g_ljck_c1
 !
 !     Left Jacobian integral files
 !
-      type(file)  :: g_becd_t
-      type(file)  :: g_mjlk_t
-      type(file)  :: g_ckld_t
-      type(file)  :: g_cdlk_t
+      type(direct_file)  :: g_becd_t
+      type(direct_file)  :: g_mjlk_t
+      type(direct_file)  :: g_ckld_t
+      type(direct_file)  :: g_cdlk_t
 !
 !     Jacobian intermediates files
 !
-      type(file)  :: g_lbkc_t
-      type(file)  :: X_abdi
-      type(file)  :: X_abid
-      type(file)  :: Y_bcek
-      type(file)  :: X_ajil
+      type(direct_file)  :: g_lbkc_t
+      type(direct_file)  :: X_abdi
+      type(direct_file)  :: X_abid
+      type(direct_file)  :: Y_bcek
+      type(direct_file)  :: X_ajil
 !
    contains
 !
@@ -157,24 +160,11 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
-      type(file) :: hf_restart_file 
-!
       wf%name_ = 'cc3'
 !
       wf%system => system
 !
-      call hf_restart_file%init('hf_restart_file', 'sequential', 'unformatted')
-!
-      call disk%open_file(hf_restart_file, 'read', 'rewind')
-!
-      read(hf_restart_file%unit) wf%n_ao 
-      read(hf_restart_file%unit) wf%n_mo 
-      read(hf_restart_file%unit) 
-      read(hf_restart_file%unit) wf%n_o  
-      read(hf_restart_file%unit) wf%n_v  
-      read(hf_restart_file%unit) wf%hf_energy  
-!
-      call disk%close_file(hf_restart_file)
+      call wf%read_hf()
 !
       wf%n_t1 = (wf%n_o)*(wf%n_v)
       wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
@@ -207,7 +197,7 @@ contains
 !
       class(cc3) :: wf
 !
-      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
+      call output%printf('- Cleaning up (a0) wavefunction', chars=[trim(wf%name_)], fs='(/t3,a)')
 !
    end subroutine cleanup_cc3
 !
@@ -287,13 +277,12 @@ contains
       prep_timer = new_timer("Time preparing for Jacobian")
       call prep_timer%turn_on()
 !
-      write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', 'right', &
-                                            & ' excited state equations.'
+      call output%printf('Preparing for (a0) right excited state equations', chars=[trim(wf%name_)], fs='(/t3,a)')
 !
       call wf%prep_cc3_jacobian_intermediates()
 !
       call prep_timer%turn_off()
-      flush(timing%unit)
+      call timing%flush_()
 !
    end subroutine prepare_for_jacobian_cc3
 !
@@ -312,14 +301,13 @@ contains
       prep_timer = new_timer("Time preparing for Jacobian")
       call prep_timer%turn_on()
 !
-      write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', 'left', &
-                                            & ' excited state equations.'
+      call output%printf('Preparing for (a0) left excited state equations', chars=[trim(wf%name_)], fs='(/t3,a)')
 !
       call wf%prep_cc3_jacobian_intermediates()
       call wf%prep_cc3_jacobian_trans_integrals()
 !
       call prep_timer%turn_off()
-      flush(timing%unit)
+      call timing%flush_()
 !
    end subroutine prepare_for_jacobian_transpose_cc3
 !

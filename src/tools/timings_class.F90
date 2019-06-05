@@ -78,8 +78,9 @@ module timings_class
 !!    enddo
 !!
 !
-   use file_class
    use parameters
+   use global_files
+   use output_file_class
 !
    implicit none
 !

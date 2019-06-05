@@ -65,7 +65,6 @@ module davidson_cc_es_class
 !
    contains
 !     
-      procedure                  :: prepare          => prepare_davidson_cc_es
       procedure, non_overridable :: run              => run_davidson_cc_es
       procedure, non_overridable :: cleanup          => cleanup_davidson_cc_es
 !
@@ -90,17 +89,24 @@ module davidson_cc_es_class
    end type davidson_cc_es
 !
 !
+   interface davidson_cc_es 
+!
+      procedure :: new_davidson_cc_es 
+!
+   end interface davidson_cc_es 
+!
+!
 contains
 !
 !
-   subroutine prepare_davidson_cc_es(solver, transformation, wf)
+   function new_davidson_cc_es(transformation, wf) result(solver)
 !!
-!!    Prepare 
+!!    New Davidson CC ES 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(davidson_cc_es) :: solver
+      type(davidson_cc_es) :: solver
       class(ccs), intent(in) :: wf
 !
       character(len=*), intent(in) :: transformation
@@ -130,7 +136,7 @@ contains
       solver%transformation       = 'right'
       solver%restart              = .false.
       solver%max_dim_red          = 100 
-      solver%transformation = trim(transformation)
+      solver%transformation       = trim(transformation)
 !
       call solver%read_settings()
       call solver%print_settings()
@@ -143,7 +149,7 @@ contains
       write(output%unit, '(/t3,a,a,a)') 'Solving for the ', trim(solver%transformation), ' eigenvectors.'
       flush(output%unit)
 !
-   end subroutine prepare_davidson_cc_es
+   end function new_davidson_cc_es
 !
 !
    subroutine initialize_energies_davidson_cc_es(solver)
@@ -643,10 +649,10 @@ contains
 !
       class(davidson_cc_es) :: solver 
 !
-      call long_string_print(solver%tag,'(//t3,a)',.true.)
-      call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
-      call long_string_print(solver%description2)
+      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
+      call output%long_string_print(solver%author,'(t3,a/)',.true.)
+      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call output%long_string_print(solver%description2)
 !
    end subroutine print_banner_davidson_cc_es
 !

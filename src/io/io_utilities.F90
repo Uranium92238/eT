@@ -24,8 +24,10 @@ module io_utilities
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
 !!
 !
-   use output_file_class
-   use batching_index_class
+   use kinds
+   use direct_file_class, only : direct_file
+   use output_file_class, only : output
+   use batching_index_class, only : batching_index
 !
    interface single_record_reader
 !
@@ -67,121 +69,6 @@ module io_utilities
 contains
 !
 !
-   subroutine long_string_print(string,format_string,colons,fformat_string,lformat_string,line_length)
-!!
-!!    Long string print
-!!    Written by Rolf H. Myhre, Nov 2018
-!!
-!!    Prints a reasonbly formatted long string over several lines
-!!    format_string: optional format string
-!!    fformat_string: optional format string for first printed line, will be used for single line if present
-!!    lformat_string: optional format string for last printed line
-!!    line_length: optional argument for length printed lines, routine adds extra length to not split up words
-!!
-!!
-      implicit none
-!
-      character(len=*), intent(in) :: string
-      character(len=*), intent(in), optional :: format_string,fformat_string,lformat_string
-      integer, intent(in), optional :: line_length
-      logical, intent(in), optional :: colons
-!
-      character(90)  :: temp
-      integer        :: l, l_left, lines, l_length
-      integer        :: i,j, padd, printed 
-      character(20)  :: fs,fstring,ffstring,lfstring
-      logical        :: col 
-!
-!     Default line length
-      l_length = 70
-      if(present(line_length)) then
-         l_length = line_length
-      endif
-!
-!     Figure out the formatting
-      fstring = '(t3,a)'
-      if(present(format_string)) then
-         fstring = format_string
-      endif
-!
-      ffstring = fstring
-      if(present(fformat_string)) then
-         ffstring = fformat_string
-      endif
-!
-      lfstring = fstring
-      if(present(lformat_string)) then
-         lfstring = lformat_string
-      endif
-!
-!     First line format
-      fs = ffstring
-!
-!     Fancy colons for banner headings
-      col = .false.
-      if(present(colons)) then
-         col = colons
-      endif
-      if(col) then
-         l_length = l_length - 3
-      endif
-!
-      l = len_trim(string)      
-      l_left = l
-      lines = l/l_length + 1
-      printed = 1
-!
-      do i = 1,lines
-!
-         if(i .ne. lines) then
-!
-            if(i .ne. 1) then
-               fs = fstring
-            endif
-!
-!           Add some extra padding to not split words
-            do j = 1,18
-               padd = j
-               if(string(printed+l_length+j:printed+l_length+j) == ' ') then
-                  exit
-               endif
-            enddo
-!
-!           Copy string to be printed. Add hyphen if word must be split
-            if(padd == 18) then
-               temp(1:l_length+padd+1) = string(printed:printed+l_length+padd)
-               temp(l_length+padd+1:l_length+padd+1) = '-'
-               printed = printed + l_length + padd
-            else
-               temp(1:l_length+padd+1) = string(printed:printed+l_length+padd+1)
-               printed = printed + l_length + padd + 1
-            endif
-!
-!           Print
-            if(col) then
-               write(output%unit, fs)  ':: '//temp(1:l_length+padd+1)
-            else
-               write(output%unit, fs)  temp(1:l_length+padd+1)
-            endif
-!
-         else
-!           Print the remaining string
-            fs = lfstring
-            if(col) then
-               write(output%unit, fs)  ':: '//string(printed:l)
-            else
-               write(output%unit, fs)  string(printed:l)
-            endif
-            printed = l
-         endif
-!
-      enddo
-!
-      flush(output%unit)
-!
-   end subroutine long_string_print
-!
-!
    subroutine read_1_array_single_record(dim_z, file_1, g_pqrz)
 !!
 !!    Read the direct access file "file_1" with record z into g_pqrz
@@ -195,23 +82,13 @@ contains
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
 !
-      type(file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_1
 !
-      integer :: ioerror
       integer :: z
-!
-      character(len=100) :: iom
 !
       do z = 1, dim_z
 !
-         read(file_1%unit, rec=z, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file:file')
-         endif
+         call file_1%read_(g_pqrz(:,:,:,z),z)
 !
       enddo
 !
@@ -232,25 +109,15 @@ contains
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
 !
-      type(file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_1
 !
-      integer :: ioerror
       integer :: z, z_abs
-!
-      character(len=100) :: iom
 !
       do z = 1, batch_z%length
 !
          z_abs = batch_z%first + z - 1
 !
-         read(file_1%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
+         call file_1%read_(g_pqrz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -259,7 +126,7 @@ contains
 !
    subroutine read_2_arrays_single_record_batch(batch_z, file_1, g_pqrz, file_2, g_stuz)
 !!
-!!    Read parts of the direct access files "file_1/2" 
+!!    Read parts of the direct access files "file_1/2"
 !!    into g_pqrz/g_stuz for the current batch z
 !!    NB: It is assumed that the batching index is sorted at the end
 !!        and that the record is equal to the batching index
@@ -273,26 +140,16 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_stuz
 !
-      type(file), intent(in) :: file_1
-      type(file), intent(in) :: file_2
+      type(direct_file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_2
 !
-      integer :: ioerror
       integer :: z, z_abs
-!
-      character(len=100) :: iom
 !
       do z = 1, batch_z%length
 !
          z_abs = batch_z%first + z - 1
 !
-         read(file_1%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
+         call file_1%read_(g_pqrz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -302,14 +159,7 @@ contains
 !
          z_abs = batch_z%first + z - 1
 !
-         read(file_2%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_stuz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
+         call file_2%read_(g_stuz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -318,7 +168,7 @@ contains
 !
    subroutine read_3_arrays_single_record_batch(batch_z, file_1, g_pqrz, file_2, g_stuz, file_3, g_vwxz)
 !!
-!!    Read parts of the direct access files "file_1/2" 
+!!    Read parts of the direct access files "file_1/2"
 !!    into g_pqrz/g_stuz for the current batch z
 !!    NB: It is assumed that the batching index is sorted at the end
 !!        and that the record is equal to the batching index
@@ -333,27 +183,17 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_stuz
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_vwxz
 !
-      type(file), intent(in) :: file_1
-      type(file), intent(in) :: file_2
-      type(file), intent(in) :: file_3
+      type(direct_file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_2
+      type(direct_file), intent(in) :: file_3
 !
-      integer :: ioerror
       integer :: z, z_abs
-!
-      character(len=100) :: iom
 !
       do z = 1, batch_z%length
 !
          z_abs = batch_z%first + z - 1
 !
-         read(file_1%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_pqrz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
+         call file_1%read_(g_pqrz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -363,14 +203,7 @@ contains
 !
          z_abs = batch_z%first + z - 1
 !
-         read(file_2%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_stuz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
+         call file_2%read_(g_stuz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -380,14 +213,7 @@ contains
 !
          z_abs = batch_z%first + z - 1
 !
-         read(file_3%unit, rec=z_abs, iostat=ioerror, iomsg=iom) g_vwxz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%name)
-            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-            write(output%unit,'(t3,a)') trim(iom)
-            call output%error_msg('Failed to read file')
-         endif
+         call file_3%read_(g_vwxz(:,:,:,z),z_abs)
 !
       enddo
 !
@@ -410,12 +236,10 @@ contains
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
 !
-      type(file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_1
 !
-      integer :: ioerror, record
+      integer :: record
       integer :: z, z_abs, y, y_abs
-!
-      character(len=100) :: iom
 !
       do y = 1, batch_y%length
 !
@@ -427,14 +251,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_1%read_(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -460,14 +277,14 @@ contains
 !
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
 !
-      type(file), intent(inout) :: file_1
+      type(direct_file), intent(inout) :: file_1
 !
       logical, intent(in), optional :: switch
       logical :: switched
 !
       type(batching_index) :: batch_z
 !
-!     Can't overload a function based on ordering alone, 
+!     Can't overload a function based on ordering alone,
 !     so optional keyword to revert order of y and z
 !
       switched = .false.
@@ -512,13 +329,11 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_rszy
 !
-      type(file), intent(in) :: file_1
-      type(file), intent(in) :: file_2
+      type(direct_file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_2
 !
-      integer :: ioerror, record
+      integer :: record
       integer :: z, z_abs, y, y_abs
-!
-      character(len=100) :: iom
 !
       do y = 1, batch_y%length
 !
@@ -530,14 +345,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_1%read_(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -554,14 +362,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_2%unit, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_2%read_(g_rszy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -572,7 +373,7 @@ contains
    subroutine read_3_arrays_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, &
                                                    file_2, g_rszy, file_3, g_tuzy)
 !!
-!!    Read parts of the direct access files "file_1/2/3" with records of zy 
+!!    Read parts of the direct access files "file_1/2/3" with records of zy
 !!    into g_pqzy/g_rszy/g_tuzy
 !!    Reads in batches of z and y
 !!    NB: It is assumed that the batching indices are sorted at the end of the array
@@ -589,14 +390,12 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_rszy
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_tuzy
 !
-      type(file), intent(in) :: file_1
-      type(file), intent(in) :: file_2
-      type(file), intent(in) :: file_3
+      type(direct_file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_2
+      type(direct_file), intent(in) :: file_3
 !
-      integer :: ioerror, record
+      integer :: record
       integer :: z, z_abs, y, y_abs
-!
-      character(len=100) :: iom
 !
       do y = 1, batch_y%length
 !
@@ -608,14 +407,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_1%read_(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -632,14 +424,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_2%unit, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_2%read_(g_rszy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -656,14 +441,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_3%unit, rec=record, iostat=ioerror, iomsg=iom) g_tuzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_3%read_(g_tuzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -674,7 +452,7 @@ contains
    subroutine read_4_arrays_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, file_2,  &
                                                    g_rszy, file_3, g_tuzy, file_4, g_vwzy)
 !!
-!!    Read parts of the direct access files "file_1/2/3/4" with records of zy 
+!!    Read parts of the direct access files "file_1/2/3/4" with records of zy
 !!    into g_pqzy/g_rszy/g_tuzy/g_vwzy
 !!    Reads in batches of z and y
 !!    NB: It is assumed that the batching indices are sorted at the end of the array
@@ -692,15 +470,13 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_tuzy
       real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_vwzy
 !
-      type(file), intent(in) :: file_1
-      type(file), intent(in) :: file_2
-      type(file), intent(in) :: file_3
-      type(file), intent(in) :: file_4
+      type(direct_file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_2
+      type(direct_file), intent(in) :: file_3
+      type(direct_file), intent(in) :: file_4
 !
-      integer :: ioerror, record
+      integer :: record
       integer :: z, z_abs, y, y_abs
-!
-      character(len=100) :: iom
 !
       do y = 1, batch_y%length
 !
@@ -712,14 +488,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_1%unit, rec=record, iostat=ioerror, iomsg=iom) g_pqzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_1%name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_1%read_(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -736,14 +505,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_2%unit, rec=record, iostat=ioerror, iomsg=iom) g_rszy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_2%name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_2%read_(g_rszy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -760,14 +522,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_3%unit, rec=record, iostat=ioerror, iomsg=iom) g_tuzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_3%name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_3%read_(g_tuzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -784,14 +539,7 @@ contains
 !
             record = batch_z%index_dimension*(y_abs - 1) + z_abs
 !
-            read(file_4%unit, rec=record, iostat=ioerror, iomsg=iom) g_vwzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to read file: ', trim(file_4%name)
-               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
-               write(output%unit,'(t3,a)') trim(iom)
-               call output%error_msg('Failed to read file')
-            endif
+            call file_4%read_(g_vwzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -799,7 +547,7 @@ contains
    end subroutine read_4_arrays_compound_record_2batches
 !
 !
-   module subroutine write_array_single_record(dim_z, file_1, g_pqrz)
+   subroutine write_array_single_record(dim_z, file_1, g_pqrz)
 !!
 !!    Writes an array to a direct access file "file_1" with records z
 !!    The last index of the array (z) is the record number
@@ -810,28 +558,22 @@ contains
 !
       integer, intent(in) :: dim_z
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
+      real(dp), dimension(:,:,:,:), contiguous, intent(in) :: g_pqrz
 !
-      type(file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_1
 !
-      integer :: ioerror
       integer :: z
 !
       do z = 1, dim_z
 !
-         write(file_1%unit, rec=z, iostat=ioerror) g_pqrz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%name)
-            call output%error_msg('Failed to write file')
-         endif
+         call file_1%write_(g_pqrz(:,:,:,z), z)
 !
       enddo
 !
    end subroutine write_array_single_record
 !
 !
-   module subroutine write_array_single_record_batch(batch_z, file_1, g_pqrz)
+   subroutine write_array_single_record_batch(batch_z, file_1, g_pqrz)
 !!
 !!    Writes an array to a direct access file "file_1" with records z
 !!    The last index of the array (z) is batched over and is also the record number
@@ -842,34 +584,28 @@ contains
 !
       type(batching_index), intent(in) :: batch_z
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqrz
+      real(dp), dimension(:,:,:,:), contiguous, intent(in) :: g_pqrz
 !
-      type(file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_1
 !
-      integer :: ioerror
       integer :: z, z_abs
 !
       do z = 1, batch_z%length
 !
          z_abs = batch_z%first + z - 1
 !
-         write(file_1%unit, rec=z_abs, iostat=ioerror) g_pqrz(:,:,:,z)
-!
-         if(ioerror .ne. 0) then
-            write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%name)
-            call output%error_msg('Failed to write file')
-         endif
+         call file_1%write_(g_pqrz(:,:,:,z), z_abs)
 !
       enddo
 !
    end subroutine write_array_single_record_batch
 !
 !
-   module subroutine write_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
+   subroutine write_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
 !!
 !!    Writes an array to a direct access file "file_1" with records zy
 !!
-!!    NB: It is assumed that the array is split in batches of z and y 
+!!    NB: It is assumed that the array is split in batches of z and y
 !!        which are sorted in y,z order at the end of the array
 !!
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
@@ -879,11 +615,11 @@ contains
       type(batching_index), intent(in) :: batch_z
       type(batching_index), intent(in) :: batch_y
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
+      real(dp), dimension(:,:,:,:), contiguous, intent(in) :: g_pqzy
 !
-      type(file), intent(in) :: file_1
+      type(direct_file), intent(in) :: file_1
 !
-      integer :: ioerror, record
+      integer :: record
       integer :: z, z_abs, y, y_abs
 !
       do y = 1, batch_y%length
@@ -896,12 +632,7 @@ contains
 !
             record = (y_abs - 1) * batch_z%index_dimension + z_abs
 !
-            write(file_1%unit, rec=record, iostat=ioerror) g_pqzy(:,:,z,y)
-!
-            if(ioerror .ne. 0) then
-               write(output%unit,'(t3,a,a)') 'Failed to write file: ', trim(file_1%name)
-               call output%error_msg('Failed to write file')
-            endif
+            call file_1%write_(g_pqzy(:,:,z,y), record)
 !
          enddo
       enddo
@@ -909,12 +640,15 @@ contains
    end subroutine write_array_compound_record_2batches
 !
 !
-   module subroutine write_array_compound_record_1batch(dim_z, batch_y, file_1, g_pqzy)
+   subroutine write_array_compound_record_1batch(dim_z, batch_y, file_1, g_pqzy, reverse)
 !!
 !!    Writes an array to a direct access file "file_1" with records zy
 !!
 !!    NB: It is assumed that z is of full dimension and y is batched over
 !!        z and y are sorted in z,y order at the end of the array
+!!
+!!    reverse, optional logical that changes order of z and y if .true.. 
+!!    Fortran does not let us overload based on argument order alone, unfortunately
 !!
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -922,13 +656,23 @@ contains
 !
       integer, intent(in) :: dim_z
 !
-      type(batching_index), intent(inout) :: batch_y
+      type(batching_index), intent(in) :: batch_y
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(inout) :: g_pqzy
+      real(dp), dimension(:,:,:,:), contiguous, intent(in) :: g_pqzy
 !
-      type(file), intent(inout) :: file_1
+      type(direct_file), intent(in) :: file_1
+!
+      logical, optional, intent(in) :: reverse
 !
       type(batching_index) :: batch_z
+!
+      logical :: rev
+!
+      if(present(reverse)) then
+         rev = reverse
+      else
+         rev = .false.
+      endif
 !
 !     Fake a batching_index with full dimensions and call 2batches_writer
 !
@@ -940,7 +684,11 @@ contains
       batch_z%max_length = dim_z
       batch_z%num_batches = 1
 !
-      call write_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
+      if (.not. rev) then
+         call write_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
+      else
+         call write_array_compound_record_2batches(batch_y, batch_z, file_1, g_pqzy)
+      endif
 !
    end subroutine write_array_compound_record_1batch
 !
