@@ -325,7 +325,7 @@ contains
 !$omp parallel do private(amplitude)
                do amplitude = 1, wf%n_es_amplitudes
 !
-                  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude))
+                  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude) - solver%energies(state))
 !
                enddo
 !$omp end parallel do 
