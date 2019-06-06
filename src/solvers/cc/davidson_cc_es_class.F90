@@ -28,55 +28,28 @@ module davidson_cc_es_class
    use file_class
    use ccs_class
    use eigen_davidson_tool_class
+   use abstract_cc_es_class, only: abstract_cc_es
 !
    implicit none
 !
-   type :: davidson_cc_es
-!
-      character(len=100) :: tag = 'Davidson coupled cluster excited state solver'
-      character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      character(len=500) :: description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
-                                           & the right or left eigenvectors of the Jacobian matrix, A. The eigenvalue &
-                                           & problem is solved in a reduced space, the dimension of which is &
-                                           & expanded until the convergence criteria are met.'
-!
-      character(len=500) :: description2 = 'A complete description of the algorithm can be found in &
-                                          & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
-!
-      integer :: max_iterations
-!
-      real(dp) :: eigenvalue_threshold  
-      real(dp) :: residual_threshold  
-!
-      logical  :: restart
-!
-      integer :: n_singlet_states
+   type, extends(abstract_cc_es) :: davidson_cc_es
 !
       integer :: max_dim_red
-!
-      character(len=40) :: transformation 
-!
-      real(dp), dimension(:), allocatable :: energies
-!
-      integer, dimension(:), allocatable :: start_vectors
-!
-      type(timings) :: timer
 !
    contains
 !     
       procedure, non_overridable :: run              => run_davidson_cc_es
-      procedure, non_overridable :: cleanup          => cleanup_davidson_cc_es
+   !   procedure, non_overridable :: cleanup          => cleanup_davidson_cc_es
 !
       procedure, nopass :: set_precondition_vector   => set_precondition_vector_davidson_cc_es
       procedure :: set_projection_vector             => set_projection_vector_davidson_cc_es
 !
-      procedure :: print_banner                      => print_banner_davidson_cc_es
+   !   procedure :: print_banner                      => print_banner_davidson_cc_es
 !
       procedure :: read_settings                     => read_settings_davidson_cc_es
 !
       procedure :: print_settings                    => print_settings_davidson_cc_es
-      procedure :: print_summary                     => print_summary_davidson_cc_es
+   !   procedure :: print_summary                     => print_summary_davidson_cc_es
 !
       procedure :: set_start_vectors                 => set_start_vectors_davidson_cc_es
       procedure :: transform_trial_vector            => transform_trial_vector_davidson_cc_es
@@ -84,7 +57,7 @@ module davidson_cc_es_class
       procedure :: initialize_energies               => initialize_energies_davidson_cc_es
       procedure :: destruct_energies                 => destruct_energies_davidson_cc_es   
 !
-      procedure :: prepare_wf_for_excited_state      => prepare_wf_for_excited_state_davidson_cc_es
+   !   procedure :: prepare_wf_for_excited_state      => prepare_wf_for_excited_state_davidson_cc_es
 !
    end type davidson_cc_es
 !
@@ -114,7 +87,8 @@ contains
       solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
       call solver%timer%turn_on()
 !
-      solver%tag = 'Davidson coupled cluster excited state solver'
+      solver%name_ = 'Davidson coupled cluster excited state solver'
+      solver%tag = 'Davidson'
       solver%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       solver%description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
@@ -281,12 +255,13 @@ contains
 !
       type(eigen_davidson_tool) :: davidson
 !
-      integer :: iteration, trial, solution
+      integer :: iteration, trial, solution, state
 !
       real(dp) :: residual_norm
 !
       real(dp), dimension(:), allocatable :: c_i
       real(dp), dimension(:), allocatable :: X
+      real(dp), dimension(:,:), allocatable :: r
 !
       call solver%prepare_wf_for_excited_state(wf)
 !
@@ -424,7 +399,18 @@ contains
       if (converged) then
 !
          write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration - 1, ' iterations!'
-         call solver%print_summary(davidson, wf)
+!
+         call mem%alloc(r, wf%n_es_amplitudes, solver%n_singlet_states)
+!
+         do state = 1, solver%n_singlet_states
+!
+            call davidson%construct_X(r(:,state), state)   
+!
+         enddo 
+!
+         call solver%print_summary(wf, r) 
+!
+         call mem%dealloc(r, wf%n_es_amplitudes, solver%n_singlet_states)
 !
          write(output%unit,'(/t3,a)') '- Storing excited states to file.'
 !
@@ -725,23 +711,6 @@ contains
       if (.false.) write(output%unit, *) wf%name_, solver%tag ! Hack to suppress unavoidable compiler warnings
 !
    end subroutine set_projection_vector_davidson_cc_es
-!
-!
-   subroutine prepare_wf_for_excited_state_davidson_cc_es(solver, wf)
-!!
-!!    Prepare wf for excited state
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2019
-!!
-      implicit none
-!
-      class(davidson_cc_es), intent(in)   :: solver 
-      class(ccs), intent(inout)           :: wf
-!
-      if (solver%transformation == 'right') call wf%prepare_for_jacobian()
-!
-      if (solver%transformation == 'left') call wf%prepare_for_jacobian_transpose()
-!
-   end subroutine prepare_wf_for_excited_state_davidson_cc_es
 !
 !
 end module davidson_cc_es_class

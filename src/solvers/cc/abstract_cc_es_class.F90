@@ -58,15 +58,17 @@ module abstract_cc_es_class
 !
    contains
 !
-      procedure, non_overridable :: print_banner      => print_banner_abstract_cc_es
+      procedure, non_overridable :: print_banner                  => print_banner_abstract_cc_es
 !
-      procedure, non_overridable :: read_es_settings  => read_es_settings_abstract_cc_es     
+      procedure, non_overridable :: read_es_settings              => read_es_settings_abstract_cc_es     
 !
-      procedure, non_overridable :: print_es_settings => print_es_settings_abstract_cc_es
+      procedure, non_overridable :: print_es_settings             => print_es_settings_abstract_cc_es
 !
-      procedure, non_overridable :: cleanup           => cleanup_abstract_cc_es
+      procedure, non_overridable :: cleanup                       => cleanup_abstract_cc_es
 !
-      procedure, non_overridable :: print_summary     => print_summary_abstract_cc_es
+      procedure :: print_summary                 => print_summary_abstract_cc_es
+!
+      procedure, non_overridable :: prepare_wf_for_excited_state  => prepare_wf_for_excited_state_abstract_cc_es
 !
    end type abstract_cc_es
 !
@@ -100,6 +102,8 @@ contains
 !
       class(abstract_cc_es) :: solver 
 !
+      integer :: n_start_vecs
+!
       call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
       call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
       call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
@@ -109,6 +113,26 @@ contains
       if (input%requested_keyword_in_section('restart', 'solver cc es')) solver%restart = .true.    
       if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) solver%transformation = 'left'    
       if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) solver%transformation = 'right'    
+!
+      if (input%requested_keyword_in_section('start vectors', 'solver cc es')) then 
+!  
+!        Determine the number of start vectors & do consistency check 
+!
+         n_start_vecs = input%get_n_elements_for_keyword_in_section('start vectors', 'solver cc es')
+!
+         if (n_start_vecs .ne. solver%n_singlet_states) then
+!
+            call output%error_msg('mismatch in number of start vectors and number of specified roots.')
+!
+         endif
+!
+!        Then read the start vectors into array 
+!
+         call mem%alloc(solver%start_vectors, n_start_vecs)
+!
+         call input%get_array_for_keyword_in_section('start vectors', 'solver cc es', n_start_vecs, solver%start_vectors)
+!
+      endif 
 !
    end subroutine read_es_settings_abstract_cc_es
 !
@@ -211,5 +235,21 @@ contains
 !
    end subroutine print_summary_abstract_cc_es
 !
+!
+   subroutine prepare_wf_for_excited_state_abstract_cc_es(solver, wf)
+!!
+!!    Prepare wf for excited state
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2019
+!!
+      implicit none
+!
+      class(abstract_cc_es), intent(in)   :: solver 
+      class(ccs), intent(inout)           :: wf
+!
+      if (solver%transformation == 'right') call wf%prepare_for_jacobian()
+!
+      if (solver%transformation == 'left') call wf%prepare_for_jacobian_transpose()
+!
+   end subroutine prepare_wf_for_excited_state_abstract_cc_es
 !
 end module abstract_cc_es_class

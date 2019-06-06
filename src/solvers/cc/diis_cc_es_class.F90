@@ -47,8 +47,6 @@ module diis_cc_es_class
 !
       procedure :: print_settings                  => print_settings_diis_cc_es
 !
-      procedure :: prepare_wf_for_excited_state    => prepare_wf_for_excited_state_diis_cc_es
-!
    end type diis_cc_es
 !
 !
@@ -414,23 +412,6 @@ contains
       call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states)      
 !
    end subroutine set_start_vectors_diis_cc_es
-!
-!
-   subroutine prepare_wf_for_excited_state_diis_cc_es(solver, wf)
-!!
-!!    Prepare wf for excited state
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2019
-!!
-      implicit none
-!
-      class(diis_cc_es), intent(in)   :: solver 
-      class(ccs), intent(inout)           :: wf
-!
-      if (solver%transformation == 'right') call wf%prepare_for_jacobian()
-!
-      if (solver%transformation == 'left') call wf%prepare_for_jacobian_transpose()
-!
-   end subroutine prepare_wf_for_excited_state_diis_cc_es
 !
 !
 end module diis_cc_es_class
