@@ -52,8 +52,6 @@ module abstract_cc_es_class
 !
       real(dp), dimension(:), allocatable :: energies
 !
-      integer, dimension(:), allocatable :: start_vectors
-!
       type(timings) :: timer
 !
    contains
@@ -66,7 +64,7 @@ module abstract_cc_es_class
 !
       procedure, non_overridable :: cleanup                       => cleanup_abstract_cc_es
 !
-      procedure :: print_summary                 => print_summary_abstract_cc_es
+      procedure, non_overridable :: print_summary                 => print_summary_abstract_cc_es
 !
       procedure, non_overridable :: prepare_wf_for_excited_state  => prepare_wf_for_excited_state_abstract_cc_es
 !
@@ -114,26 +112,6 @@ contains
       if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) solver%transformation = 'left'    
       if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) solver%transformation = 'right'    
 !
-      if (input%requested_keyword_in_section('start vectors', 'solver cc es')) then 
-!  
-!        Determine the number of start vectors & do consistency check 
-!
-         n_start_vecs = input%get_n_elements_for_keyword_in_section('start vectors', 'solver cc es')
-!
-         if (n_start_vecs .ne. solver%n_singlet_states) then
-!
-            call output%error_msg('mismatch in number of start vectors and number of specified roots.')
-!
-         endif
-!
-!        Then read the start vectors into array 
-!
-         call mem%alloc(solver%start_vectors, n_start_vecs)
-!
-         call input%get_array_for_keyword_in_section('start vectors', 'solver cc es', n_start_vecs, solver%start_vectors)
-!
-      endif 
-!
    end subroutine read_es_settings_abstract_cc_es
 !
 !
@@ -155,8 +133,6 @@ contains
       flush(output%unit)
 !
    end subroutine print_es_settings_abstract_cc_es
-!
-!
 !
 !
    subroutine cleanup_abstract_cc_es(solver, wf)
@@ -251,5 +227,6 @@ contains
       if (solver%transformation == 'left') call wf%prepare_for_jacobian_transpose()
 !
    end subroutine prepare_wf_for_excited_state_abstract_cc_es
+!
 !
 end module abstract_cc_es_class
