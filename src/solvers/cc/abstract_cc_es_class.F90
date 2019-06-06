@@ -21,7 +21,7 @@ module abstract_cc_es_class
 !
 !!
 !!    Abstract coupled cluster excited state solver class module
-!!    Written by Sarai D. Folkestad, June 2019
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, June 2019
 !!   
 !
    use kinds
