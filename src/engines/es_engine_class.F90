@@ -39,7 +39,7 @@ module es_engine_class
 !
       procedure :: do_excited_state          => do_excited_state_es_engine
 !
-      procedure, private :: set_printables   => set_printables_es_engine
+      procedure :: set_printables            => set_printables_es_engine
 !
    end type es_engine
 !

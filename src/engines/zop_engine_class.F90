@@ -41,7 +41,7 @@ module zop_engine_class
 !
       procedure :: calculate_expectation_values                => calculate_expectation_values_zop_engine
 !
-      procedure, private :: set_printables                              => set_printables_zop_engine
+      procedure :: set_printables                              => set_printables_zop_engine
 !
       procedure, nopass, private :: print_summary              => print_summary_zop_engine
 !
