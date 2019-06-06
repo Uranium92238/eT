@@ -72,15 +72,20 @@ void construct_ao_h_wx(double *h, int *s1, int *s2){
   return;
 }
 
-void construct_ao_h_wx_1der(double *h_1x, double *h_1y, double *h_1z, 
+void construct_ao_kinetic_1der(double *h_1x, double *h_1y, double *h_1z, 
                   double *h_2x, double *h_2y, double *h_2z, int *s1, int *s2){
-
 /*
-/   Extract kinetic 1st derivative
+    Add kinetic contribution to derivative of h 
 */
-  const auto& buf_vec = kinetic_1der.results(); // will point to computed shell sets
+
+  const auto& buf_vec = kinetic_1der.results();
+
+  auto n1 = basis[*s1 - 1].size();
+  auto n2 = basis[*s2 - 1].size();
 
   kinetic_1der.compute(basis[*s1 - 1], basis[*s2 - 1]);
+
+  // Get pointers to location of integrals
 
   auto ints_shellset_1x = buf_vec[0];
   auto ints_shellset_1y = buf_vec[1];
@@ -89,10 +94,7 @@ void construct_ao_h_wx_1der(double *h_1x, double *h_1y, double *h_1z,
   auto ints_shellset_2y = buf_vec[4];
   auto ints_shellset_2z = buf_vec[5];
 
-  auto n1 = basis[*s1 - 1].size();
-  auto n2 = basis[*s2 - 1].size();
-
-// Extract the integrals from each set
+  // Extract the integrals from each set
 
   extract_integrals(h_1x, ints_shellset_1x, n1, n2, 1.0e0);
   extract_integrals(h_1y, ints_shellset_1y, n1, n2, 1.0e0);
@@ -100,27 +102,37 @@ void construct_ao_h_wx_1der(double *h_1x, double *h_1y, double *h_1z,
   extract_integrals(h_2x, ints_shellset_2x, n1, n2, 1.0e0);
   extract_integrals(h_2y, ints_shellset_2y, n1, n2, 1.0e0);
   extract_integrals(h_2z, ints_shellset_2z, n1, n2, 1.0e0);
+
+}
+
+void construct_ao_h_wx_1der(double *h_wxqk, int *s1, int *s2){
 /*
-/   Add nuclear 1st derivative
+/   Add nuclear 1st derivative contribution to h
 */
-  const auto& buf_vec_n = nuclear_1der.results(); // will point to computed shell sets
+  const auto& ints = nuclear_1der.results(); // will point to computed shell sets
 
   nuclear_1der.compute(basis[*s1 - 1], basis[*s2 - 1]);
 
-  ints_shellset_1x = buf_vec_n[0];
-  ints_shellset_1y = buf_vec_n[1];
-  ints_shellset_1z = buf_vec_n[2];
-  ints_shellset_2x = buf_vec_n[3];
-  ints_shellset_2y = buf_vec_n[4];
-  ints_shellset_2z = buf_vec_n[5];
+  auto n_atoms = atoms.size();
 
-// Extract and add the integrals from each set
+  auto atom1 = shell2atom[*s1];
+  auto atom2 = shell2atom[*s2];
+  auto n_ao = basis.size();
 
-  extract_and_add_integrals(h_1x, ints_shellset_1x, n1, n2, 1.0e0);
-  extract_and_add_integrals(h_1y, ints_shellset_1y, n1, n2, 1.0e0);
-  extract_and_add_integrals(h_1z, ints_shellset_1z, n1, n2, 1.0e0);
-  extract_and_add_integrals(h_2x, ints_shellset_2x, n1, n2, 1.0e0);
-  extract_and_add_integrals(h_2y, ints_shellset_2y, n1, n2, 1.0e0);
-  extract_and_add_integrals(h_2z, ints_shellset_2z, n1, n2, 1.0e0);
+  auto n_centers = n_atoms + 2; 
+
+  for (auto center = 0, auto shellset = 0; center != n_centers; ++center){
+
+    auto atom = (center == 0) ? atom1 : ((center == 1) ? atom2 : center - 2);
+
+    for (auto coordinate = 0; coordinate != 3; ++coordinate, ++shellset){
+
+      auto hwqx_offset = n_ao*(n_ao*(3*(atom + 1) + (coordinate + 1))+1)+1;
+
+      
+
+    }
+
+  }
 
 }
