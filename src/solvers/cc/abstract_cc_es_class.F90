@@ -49,6 +49,7 @@ module abstract_cc_es_class
       integer :: n_singlet_states
 !
       character(len=40) :: transformation 
+      character(len=40) :: restart_transformation 
 !
       real(dp), dimension(:), allocatable :: energies
 !
@@ -56,17 +57,20 @@ module abstract_cc_es_class
 !
    contains
 !
-      procedure, non_overridable :: print_banner                  => print_banner_abstract_cc_es
+      procedure, non_overridable :: print_banner                     => print_banner_abstract_cc_es
 !
-      procedure, non_overridable :: read_es_settings              => read_es_settings_abstract_cc_es     
+      procedure, non_overridable :: read_es_settings                 => read_es_settings_abstract_cc_es     
 !
-      procedure, non_overridable :: print_es_settings             => print_es_settings_abstract_cc_es
+      procedure, non_overridable :: print_es_settings                => print_es_settings_abstract_cc_es
 !
-      procedure, non_overridable :: cleanup                       => cleanup_abstract_cc_es
+      procedure, non_overridable :: cleanup                          => cleanup_abstract_cc_es
 !
-      procedure, non_overridable :: print_summary                 => print_summary_abstract_cc_es
+      procedure, non_overridable :: print_summary                    => print_summary_abstract_cc_es
 !
-      procedure, non_overridable :: prepare_wf_for_excited_state  => prepare_wf_for_excited_state_abstract_cc_es
+      procedure, non_overridable :: prepare_wf_for_excited_state     => prepare_wf_for_excited_state_abstract_cc_es
+!
+      procedure, non_overridable :: determine_restart_transformation => determine_restart_transformation_abstract_cc_es 
+
 !
    end type abstract_cc_es
 !
@@ -100,8 +104,6 @@ contains
 !
       class(abstract_cc_es) :: solver 
 !
-      integer :: n_start_vecs
-!
       call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
       call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
       call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
@@ -131,6 +133,8 @@ contains
       write(output%unit,'(/t6,a,i3,a)')   'Number of singlet states: ', solver%n_singlet_states
       write(output%unit, '(t6,a26,i3)')   'Max number of iterations: ', solver%max_iterations
       flush(output%unit)
+!
+      call output%printf('Solving for the (a0) eigenvectors.', chars=[trim(solver%transformation)], fs='(/t6,a)')
 !
    end subroutine print_es_settings_abstract_cc_es
 !
@@ -174,6 +178,10 @@ contains
 !
       integer :: state 
 !
+      character(len=1) :: label ! R or L, depending on whether left or right transformation 
+!
+      label = trim(adjustl(convert_to_uppercase(solver%transformation(1:1))))
+!
       write(output%unit, '(/t3,a)') '- Excitation vector amplitudes:'
       flush(output%unit)
 !
@@ -184,11 +192,11 @@ contains
 !
          write(output%unit, '(/t6,a30,f15.12)')  'Energy (Hartree):             ', solver%energies(state)
          flush(output%unit)
-         write(output%unit, '(t6,a30,f15.12)') 'Fraction singles (|r1|/|r|):  ', &
+         write(output%unit, '(t6,a30,f15.12)') 'Fraction singles (|' // label // '1|/|' // label // '|):  ', &
                         get_l2_norm(X(1:wf%n_t1,state),wf%n_t1)/get_l2_norm(X(:,state),wf%n_es_amplitudes)   
          flush(output%unit)
 !
-         call wf%print_dominant_x_amplitudes(X(1,state), 'r')
+         call wf%print_dominant_x_amplitudes(X(1,state), label)
 !
       enddo 
 !
@@ -227,6 +235,63 @@ contains
       if (solver%transformation == 'left') call wf%prepare_for_jacobian_transpose()
 !
    end subroutine prepare_wf_for_excited_state_abstract_cc_es
+!
+!
+   subroutine determine_restart_transformation_abstract_cc_es(solver, wf)
+!!
+!!    Determine number of states on file 
+!!    Written by Eirik F. Kjønstad, June 2019
+!!
+      implicit none 
+!
+      class(abstract_cc_es), intent(inout) :: solver
+!
+      class(ccs), intent(in) :: wf 
+!
+      integer :: n_left_vectors_on_file, n_right_vectors_on_file
+!
+      n_left_vectors_on_file = wf%get_n_excited_states_on_file('left')
+      n_right_vectors_on_file = wf%get_n_excited_states_on_file('right')
+!
+      if (solver%transformation == 'right') then 
+!
+         if (n_right_vectors_on_file > 0) then 
+!
+            solver%restart_transformation = 'right'
+!
+         elseif (n_right_vectors_on_file == 0 .and. n_left_vectors_on_file > 0) then 
+!
+            solver%restart_transformation = 'left'
+!
+         else
+!
+            call output%error_msg('Could not restart excited state calculation.')
+!
+         endif 
+!
+      elseif (solver%transformation == 'left') then
+!
+         if (n_left_vectors_on_file > 0) then 
+!
+            solver%restart_transformation = 'left'
+!
+         elseif (n_left_vectors_on_file == 0 .and. n_right_vectors_on_file > 0) then 
+!
+            solver%restart_transformation = 'right'
+!
+         else
+!
+            call output%error_msg('Could not restart excited state calculation.')
+!
+         endif          
+!
+      else 
+!
+         call output%error_msg('Could not restart excited state calculation.')
+!
+      endif  
+!
+   end subroutine determine_restart_transformation_abstract_cc_es
 !
 !
 end module abstract_cc_es_class

@@ -229,14 +229,16 @@ contains
       if (solver%restart) then ! Overwrite all or some of the orbital differences 
 !
          call wf%is_restart_safe('excited state')
-         call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
+         call solver%determine_restart_transformation(wf) ! Read right or left?
 !
-         write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
-                                                ' solutions on file.'
+         n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
+!
+         call output%printf('Requested restart - there are (i0) (a0) eigenvectors on file.', &
+                              ints=[n_solutions_on_file], chars=[solver%restart_transformation])
 !
          do state = 1, n_solutions_on_file
 !
-            call wf%read_excited_state(X(:,state), state, solver%transformation)
+            call wf%read_excited_state(X(:,state), state, solver%restart_transformation)
 !
          enddo
 !
