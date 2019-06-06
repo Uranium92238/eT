@@ -422,7 +422,7 @@ contains
 !
          call wf%is_restart_safe('excited state')
 !
-         call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
+         n_solutions_on_file = wf%get_n_excited_states_on_file(solver%transformation)
 !
          write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
                                              ' solutions on file.'

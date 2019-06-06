@@ -36,6 +36,8 @@ module diis_cc_es_class
 !
       integer :: diis_dimension
 !
+      character(len=100) :: restart_transformation
+!
    contains
 !     
       procedure, non_overridable :: run            => run_diis_cc_es
@@ -45,7 +47,8 @@ module diis_cc_es_class
       procedure :: read_settings                   => read_settings_diis_cc_es
       procedure :: read_diis_settings              => read_diis_settings_diis_cc_es
 !
-      procedure :: print_settings                  => print_settings_diis_cc_es
+      procedure :: print_settings                   => print_settings_diis_cc_es
+      procedure :: determine_restart_transformation => determine_restart_transformation_diis_cc_es  
 !
    end type diis_cc_es
 !
@@ -158,6 +161,63 @@ contains
    end subroutine read_diis_settings_diis_cc_es
 !
 !
+   subroutine determine_restart_transformation_diis_cc_es(solver, wf)
+!!
+!!    Determine number of states on file 
+!!    Written by Eirik F. Kjønstad, June 2019
+!!
+      implicit none 
+!
+      class(diis_cc_es), intent(inout) :: solver
+!
+      class(ccs), intent(in) :: wf 
+!
+      integer :: n_left_vectors_on_file, n_right_vectors_on_file
+!
+      n_left_vectors_on_file = wf%get_n_excited_states_on_file('left')
+      n_right_vectors_on_file = wf%get_n_excited_states_on_file('right')
+!
+      if (solver%transformation == 'right') then 
+!
+         if (n_right_vectors_on_file > 0) then 
+!
+            solver%restart_transformation = 'right'
+!
+         elseif (n_right_vectors_on_file == 0 .and. n_left_vectors_on_file > 0) then 
+!
+            solver%restart_transformation = 'left'
+!
+         else
+!
+            call output%error_msg('Could not restart excited state calculation.')
+!
+         endif 
+!
+      elseif (solver%transformation == 'left') then
+!
+         if (n_left_vectors_on_file > 0) then 
+!
+            solver%restart_transformation = 'left'
+!
+         elseif (n_left_vectors_on_file == 0 .and. n_right_vectors_on_file > 0) then 
+!
+            solver%restart_transformation = 'right'
+!
+         else
+!
+            call output%error_msg('Could not restart excited state calculation.')
+!
+         endif          
+!
+      else 
+!
+         call output%error_msg('Could not restart excited state calculation.')
+!
+      endif  
+!
+   end subroutine determine_restart_transformation_diis_cc_es
+!
+!
    subroutine run_diis_cc_es(solver, wf)
 !!
 !!    Run 
@@ -229,14 +289,19 @@ contains
       if (solver%restart) then ! Overwrite all or some of the orbital differences 
 !
          call wf%is_restart_safe('excited state')
-         call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
+         call solver%determine_restart_transformation(wf) ! Read right or left?
+!
+         n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
 !
          write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
-                                                ' solutions on file.'
+                                             ' solutions on file.'
+         flush(output%unit)
+!
+         write(output%unit, *) 'DEBUG: reading vectors: ', solver%restart_transformation 
 !
          do state = 1, n_solutions_on_file
 !
-            call wf%read_excited_state(X(:,state), state, solver%transformation)
+            call wf%read_excited_state(X(:,state), state, solver%restart_transformation)
 !
          enddo
 !
