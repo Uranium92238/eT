@@ -115,9 +115,6 @@ contains
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
-      write(output%unit, '(/t3,a,a,a)') 'Solving for the ', trim(solver%transformation), ' eigenvectors.'
-      flush(output%unit)
-!
    end function new_davidson_cc_es
 !
 !
@@ -425,7 +422,8 @@ contains
          call solver%determine_restart_transformation(wf) ! Read right or left?
          n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
 !
-         write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, ' solutions on file.'
+         call output%printf('Requested restart - there are (i0) (a0) eigenvectors on file.', &
+                              ints=[n_solutions_on_file], chars=[solver%restart_transformation])
 !
          call mem%alloc(c_i, wf%n_es_amplitudes)
 !

@@ -948,6 +948,8 @@ contains
 !
       integer :: n_states 
 !
+      n_states = 0
+!
       if (trim(side) == 'right') then 
 !
          n_states = wf%r1_file%get_size()

@@ -45,7 +45,7 @@ module diis_cc_es_class
       procedure :: read_settings                   => read_settings_diis_cc_es
       procedure :: read_diis_settings              => read_diis_settings_diis_cc_es
 !
-      procedure :: print_settings                   => print_settings_diis_cc_es
+      procedure :: print_settings                  => print_settings_diis_cc_es
 !
    end type diis_cc_es
 !
@@ -233,8 +233,8 @@ contains
 !
          n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
 !
-         write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, ' solutions on file.'
-         flush(output%unit)
+         call output%printf('Requested restart - there are (i0) (a0) eigenvectors on file.', &
+                              ints=[n_solutions_on_file], chars=[solver%restart_transformation])
 !
          do state = 1, n_solutions_on_file
 !

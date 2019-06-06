@@ -134,6 +134,8 @@ contains
       write(output%unit, '(t6,a26,i3)')   'Max number of iterations: ', solver%max_iterations
       flush(output%unit)
 !
+      call output%printf('Solving for the (a0) eigenvectors.', chars=[trim(solver%transformation)], fs='(/t6,a)')
+!
    end subroutine print_es_settings_abstract_cc_es
 !
 !
@@ -176,6 +178,10 @@ contains
 !
       integer :: state 
 !
+      character(len=1) :: label ! R or L, depending on whether left or right transformation 
+!
+      label = trim(adjustl(convert_to_uppercase(solver%transformation(1:1))))
+!
       write(output%unit, '(/t3,a)') '- Excitation vector amplitudes:'
       flush(output%unit)
 !
@@ -186,11 +192,11 @@ contains
 !
          write(output%unit, '(/t6,a30,f15.12)')  'Energy (Hartree):             ', solver%energies(state)
          flush(output%unit)
-         write(output%unit, '(t6,a30,f15.12)') 'Fraction singles (|r1|/|r|):  ', &
+         write(output%unit, '(t6,a30,f15.12)') 'Fraction singles (|' // label // '1|/|' // label // '|):  ', &
                         get_l2_norm(X(1:wf%n_t1,state),wf%n_t1)/get_l2_norm(X(:,state),wf%n_es_amplitudes)   
          flush(output%unit)
 !
-         call wf%print_dominant_x_amplitudes(X(1,state), 'r')
+         call wf%print_dominant_x_amplitudes(X(1,state), label)
 !
       enddo 
 !
