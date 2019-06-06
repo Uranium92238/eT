@@ -39,6 +39,7 @@ module davidson_cvs_cc_es_class
    contains
 !
       procedure :: read_settings          => read_settings_davidson_cvs_cc_es
+      procedure :: read_cvs_settings      => read_cvs_settings_davidson_cvs_cc_es
 !
       procedure :: set_start_vectors      => set_start_vectors_davidson_cvs_cc_es
       procedure :: set_projection_vector  => set_projection_vector_davidson_cvs_cc_es
@@ -68,7 +69,7 @@ contains
 !!
       implicit none
 !
-      type(davidson_cvs_cc_es) :: solver    
+      type(davidson_cvs_cc_es) :: solver
       class(ccs), intent(in) :: wf
 !
       character(len=*), intent(in) :: transformation
@@ -76,7 +77,10 @@ contains
       solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' core excited state')
       call solver%timer%turn_on()
 !
-      solver%tag = 'Davidson coupled cluster core excited state solver'
+      solver%tag = 'Davidson CVS'
+!
+      solver%name_ = 'Davidson coupled cluster core excited state solver'
+      solver%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
       solver%description1 = 'A Davidson CVS solver that calculates core excitation energies and the &
                             &corresponding right eigenvectors of the Jacobian matrix, A. The eigenvalue &
                             &problem is solved in a reduced space, the dimension of which is expanded &
@@ -123,13 +127,21 @@ contains
 !
       class(davidson_cvs_cc_es) :: solver 
 !
-     call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
-     call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
-     call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
+      call solver%read_es_settings()
+      call solver%read_davidson_settings()
+      call solver%read_cvs_settings()
 !
-     call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
+   end subroutine read_settings_davidson_cvs_cc_es
 !
-      if (input%requested_keyword_in_section('restart', 'solver cc es')) solver%restart = .true.  
+!
+   subroutine read_cvs_settings_davidson_cvs_cc_es(solver)
+!!
+!!    Read settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(davidson_cvs_cc_es) :: solver 
 !
       if (input%requested_keyword_in_section('core excitation', 'solver cc es')) then 
 !  
@@ -149,7 +161,7 @@ contains
 !
       endif 
 !
-   end subroutine read_settings_davidson_cvs_cc_es
+   end subroutine read_cvs_settings_davidson_cvs_cc_es
 !
 !
    subroutine set_start_vectors_davidson_cvs_cc_es(solver, wf, davidson)
@@ -169,7 +181,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: c_i
 !
-      integer, dimension(:), allocatable :: start_indices, start_vectors_copy
+      integer, dimension(:), allocatable :: start_indices
 !
       integer :: trial, i, j, k, l, first_ao_on_atom, last_ao_on_atom
       integer :: n_MOs_found, n_solutions_on_file
@@ -183,154 +195,121 @@ contains
       if (solver%n_cores .gt. solver%n_singlet_states) &
          call output%error_msg('number of roots requested should be equal or greater than the number of cores.')
 !
-      if (allocated(solver%start_vectors)) then
+      if (solver%restart) then 
 !
-         call mem%alloc(start_vectors_copy, solver%n_singlet_states)
-         start_vectors_copy = solver%start_vectors
+!        Read the solutions from file & set as initial trial vectors 
 !
-         call wf%system%translate_from_input_order_to_eT_order(solver%n_singlet_states, start_vectors_copy, solver%start_vectors)
+         call wf%is_restart_safe('excited state')
 !
-         call mem%dealloc(start_vectors_copy, solver%n_singlet_states)
+         call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
 !
-!        Initial trial vectors given on input
+         write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
+                                             ' solutions on file.'
+         flush(output%unit)
 !
          call mem%alloc(c_i, wf%n_es_amplitudes)
 !
-         c_i = zero
-         c_i(solver%start_vectors(1)) = one
+         do trial = 1, n_solutions_on_file
 !
-         call davidson%write_trial(c_i, 'rewind')
-!
-         do trial = 2, solver%n_singlet_states
-!
-            c_i = zero
-            c_i(solver%start_vectors(trial)) = one
-!
+            call wf%read_excited_state(c_i, trial, solver%transformation)
             call davidson%write_trial(c_i)
 !
-         enddo
+         enddo 
 !
          call mem%dealloc(c_i, wf%n_es_amplitudes)
 !
       else
 !
-         if (solver%restart) then 
+         n_solutions_on_file = 0
 !
-!           Read the solutions from file & set as initial trial vectors 
+      endif 
 !
-            call wf%is_restart_safe('excited state')
+!     Calculate the mixing factor of equal mix 
 !
-            call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
+      mix_factor = 1.0d0/(sqrt(real(solver%n_cores, kind=dp)))*0.9
 !
-            write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
-                                                ' solutions on file.'
-            flush(output%unit)
+!     Loop through the occupied MOs and determine if they are core mos
 !
-            call mem%alloc(c_i, wf%n_es_amplitudes)
+      n_MOs_found = 0
 !
-            do trial = 1, n_solutions_on_file
+      call solver%initialize_core_MOs()
+      solver%core_MOs = 0
 !
-               call wf%read_excited_state(c_i, trial, solver%transformation)
-               call davidson%write_trial(c_i)
+!     Translate cores to correct ordering (see molecular system for a description of eT ordering of atoms)
 !
-            enddo 
+      call mem%alloc(cores, solver%n_cores)
+      cores = solver%cores
 !
-            call mem%dealloc(c_i, wf%n_es_amplitudes)
+      call wf%system%translate_from_input_order_to_eT_order(solver%n_cores, cores, solver%cores)
+      call mem%dealloc(cores, solver%n_cores)
 !
-         else
+      do j = 1, solver%n_cores
 !
-            n_solutions_on_file = 0
+         first_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(1)%first
+         last_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(wf%system%atoms(solver%cores(j))%n_shells)%last
 !
-         endif 
-!
-!           Calculate the mixing factor of equal mix 
-!
-            mix_factor = 1.0d0/(sqrt(real(solver%n_cores, kind=dp)))*0.9
-!
-!           Loop through the occupied MOs and determine if they are core mos
-!
-            n_MOs_found = 0
-!
-            call solver%initialize_core_MOs()
-            solver%core_MOs = 0
-!
-!           Translate cores to correct ordering (see molecular system for a description of eT ordering of atoms)
-!
-            call mem%alloc(cores, solver%n_cores)
-            cores = solver%cores
-!
-            call wf%system%translate_from_input_order_to_eT_order(solver%n_cores, cores, solver%cores)
-            call mem%dealloc(cores, solver%n_cores)
-!
-            do j = 1, solver%n_cores
-!
-               first_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(1)%first
-               last_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(wf%system%atoms(solver%cores(j))%n_shells)%last
-!
-               do k = first_ao_on_atom, last_ao_on_atom
+         do k = first_ao_on_atom, last_ao_on_atom
 
-                  do i = 1, wf%n_o
+            do i = 1, wf%n_o
 !
-                     if (abs(wf%orbital_coefficients(k, i)) .ge. mix_factor) then
+               if (abs(wf%orbital_coefficients(k, i)) .ge. mix_factor) then
 !
-                        used =  .false.
+                  used =  .false.
 !
-                        do l = 1, n_MOs_found
+                  do l = 1, n_MOs_found
 !
-                           if (solver%core_MOs(l) == i) used = .true.
-!
-                        enddo
-!
-                        if (.not. used) then
-!
-                           n_MOs_found = n_MOs_found + 1
-!
-                           if (n_MOs_found .gt. solver%n_cores) &
-                              call output%error_msg('something went wrong in the selection of core MOs.')
-!
-
-!
-                           solver%core_MOs(n_MOs_found) = i
-                           exit
-!
-                        else
-!
-                           cycle
-!
-                        endif
-!
-                     endif
+                     if (solver%core_MOs(l) == i) used = .true.
 !
                   enddo
 !
-               enddo
+                  if (.not. used) then
 !
-            enddo
+                     n_MOs_found = n_MOs_found + 1
 !
-         if (n_solutions_on_file .lt. solver%n_singlet_states) then ! Koopman for the rest
+                     if (n_MOs_found .gt. solver%n_cores) &
+                        call output%error_msg('something went wrong in the selection of core MOs.')
+!
 
-            call mem%alloc(start_indices, solver%n_singlet_states)
 !
-            call wf%set_cvs_start_indices(solver%n_cores, solver%core_MOs, solver%n_singlet_states, start_indices)
+                     solver%core_MOs(n_MOs_found) = i
+                     exit
 !
-            call mem%alloc(c_i, wf%n_es_amplitudes)
+                  else
 !
-            do trial = n_solutions_on_file + 1, solver%n_singlet_states
+                     cycle
 !
-               c_i = zero
-               c_i(start_indices(trial)) = one
-               call davidson%write_trial(c_i)
+                  endif
+!
+               endif
 !
             enddo
 !
-            call mem%dealloc(c_i, wf%n_es_amplitudes)
-            call mem%dealloc(start_indices, solver%n_singlet_states)
+         enddo
 !
-         endif
+      enddo
 !
-         call davidson%orthonormalize_trial_vecs()
+      if (n_solutions_on_file .lt. solver%n_singlet_states) then ! Koopman for the rest
+
+         call mem%alloc(start_indices, solver%n_singlet_states)
+!
+         call wf%set_cvs_start_indices(solver%n_cores, solver%core_MOs, solver%n_singlet_states, start_indices)
+!
+         call mem%alloc(c_i, wf%n_es_amplitudes)
+!
+         do trial = n_solutions_on_file + 1, solver%n_singlet_states
+!
+            c_i = zero
+            c_i(start_indices(trial)) = one
+            call davidson%write_trial(c_i)
+!
+         enddo
+!
+         call mem%dealloc(c_i, wf%n_es_amplitudes)
+         call mem%dealloc(start_indices, solver%n_singlet_states)
 !
       endif
+!
+      call davidson%orthonormalize_trial_vecs()
 !
    end subroutine set_start_vectors_davidson_cvs_cc_es
 !

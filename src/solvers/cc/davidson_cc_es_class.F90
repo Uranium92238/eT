@@ -28,63 +28,31 @@ module davidson_cc_es_class
    use file_class
    use ccs_class
    use eigen_davidson_tool_class
+   use abstract_cc_es_class, only: abstract_cc_es
 !
    implicit none
 !
-   type :: davidson_cc_es
-!
-      character(len=100) :: tag = 'Davidson coupled cluster excited state solver'
-      character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      character(len=500) :: description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
-                                           & the right or left eigenvectors of the Jacobian matrix, A. The eigenvalue &
-                                           & problem is solved in a reduced space, the dimension of which is &
-                                           & expanded until the convergence criteria are met.'
-!
-      character(len=500) :: description2 = 'A complete description of the algorithm can be found in &
-                                          & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
-!
-      integer :: max_iterations
-!
-      real(dp) :: eigenvalue_threshold  
-      real(dp) :: residual_threshold  
-!
-      logical  :: restart
-!
-      integer :: n_singlet_states
+   type, extends(abstract_cc_es) :: davidson_cc_es
 !
       integer :: max_dim_red
-!
-      character(len=40) :: transformation 
-!
-      real(dp), dimension(:), allocatable :: energies
-!
-      integer, dimension(:), allocatable :: start_vectors
-!
-      type(timings) :: timer
 !
    contains
 !     
       procedure, non_overridable :: run              => run_davidson_cc_es
-      procedure, non_overridable :: cleanup          => cleanup_davidson_cc_es
 !
       procedure, nopass :: set_precondition_vector   => set_precondition_vector_davidson_cc_es
       procedure :: set_projection_vector             => set_projection_vector_davidson_cc_es
 !
-      procedure :: print_banner                      => print_banner_davidson_cc_es
-!
       procedure :: read_settings                     => read_settings_davidson_cc_es
+      procedure :: read_davidson_settings            => read_davidson_settings_davidson_cc_es
 !
       procedure :: print_settings                    => print_settings_davidson_cc_es
-      procedure :: print_summary                     => print_summary_davidson_cc_es
 !
       procedure :: set_start_vectors                 => set_start_vectors_davidson_cc_es
       procedure :: transform_trial_vector            => transform_trial_vector_davidson_cc_es
 !       
       procedure :: initialize_energies               => initialize_energies_davidson_cc_es
       procedure :: destruct_energies                 => destruct_energies_davidson_cc_es   
-!
-      procedure :: prepare_wf_for_excited_state      => prepare_wf_for_excited_state_davidson_cc_es
 !
    end type davidson_cc_es
 !
@@ -114,7 +82,8 @@ contains
       solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
       call solver%timer%turn_on()
 !
-      solver%tag = 'Davidson coupled cluster excited state solver'
+      solver%name_ = 'Davidson coupled cluster excited state solver'
+      solver%tag = 'Davidson'
       solver%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       solver%description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
@@ -195,73 +164,11 @@ contains
 !
       class(davidson_cc_es) :: solver 
 !
-      write(output%unit, '(/t3,a)') '- Davidson CC excited state solver settings:'
+      call solver%print_es_settings()
 !
-      write(output%unit,'(/t6,a20,e9.2)') 'Energy threshold:   ', solver%eigenvalue_threshold
-      write(output%unit,'(t6,a20,e9.2)')  'Residual threshold: ', solver%residual_threshold
-      write(output%unit, '(t6,a21,a)')    'Transformation:      ', solver%transformation
-      write(output%unit,'(/t6,a,i3,a)')   'Number of singlet states: ', solver%n_singlet_states
-      write(output%unit, '(t6,a26,i3)')   'Max number of iterations: ', solver%max_iterations
-      flush(output%unit)
+      call output%printf('Max reduced space dimension: (i4)',  ints=[solver%max_dim_red], fs='(/t6,a)')
 !
    end subroutine print_settings_davidson_cc_es
-!
-!
-   subroutine print_summary_davidson_cc_es(solver, davidson, wf)
-!!
-!!    Print summary 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
-!!
-      implicit none 
-!
-      class(davidson_cc_es), intent(in) :: solver 
-      class(eigen_davidson_tool) :: davidson
-!
-      class(ccs), intent(in) :: wf 
-!
-      integer :: state 
-!
-      real(dp), dimension(:), allocatable :: r
-!
-      write(output%unit, '(/t3,a)') '- Summary of CC excited state calculation:'
-!
-      call mem%alloc(r, wf%n_es_amplitudes)
-!
-      do state = 1, solver%n_singlet_states
-!
-         write(output%unit, '(/t6,a21,i2)')    'Electronic state nr. ', state
-!
-         call davidson%construct_X(r, state)         
-!
-         write(output%unit, '(/t6,a30,f15.12)')  'Energy (Hartree):             ', &
-                        davidson%get_eigenvalue(state)
-         write(output%unit, '(t6,a30,f15.12)')   'Fraction singles (|r1|/|r|):  ', &
-                        get_l2_norm(r(1:wf%n_t1), wf%n_t1)/get_l2_norm(r,wf%n_es_amplitudes)   
-!
-         call wf%print_dominant_x_amplitudes(r, 'r')
-!
-      enddo 
-!
-      call mem%dealloc(r, wf%n_es_amplitudes)
-!
-      write(output%unit, '(/t3,a)') '- Electronic excitation energies:'
-!
-      write(output%unit, '(/t6,a)') '                                 Excitation energy            '
-      write(output%unit, '(t6,a)')  '                     ------------------------------------------'
-      write(output%unit, '(t6,a)')  'State                (Hartree)             (eV)                '
-      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
-!
-      do state = 1, solver%n_singlet_states
-!
-         write(output%unit, '(t6,i2,14x,f19.12,4x,f19.12)') state, davidson%get_eigenvalue(state), &
-                                                           davidson%get_eigenvalue(state)*Hartree_to_eV
-!
-      enddo 
-!
-      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
-      write(output%unit, '(t6,a26,f11.8)') 'eV/Hartree (CODATA 2014): ', Hartree_to_eV
-!
-   end subroutine print_summary_davidson_cc_es
 !
 !
    subroutine run_davidson_cc_es(solver, wf)
@@ -281,12 +188,13 @@ contains
 !
       type(eigen_davidson_tool) :: davidson
 !
-      integer :: iteration, trial, solution
+      integer :: iteration, trial, solution, state
 !
       real(dp) :: residual_norm
 !
       real(dp), dimension(:), allocatable :: c_i
       real(dp), dimension(:), allocatable :: X
+      real(dp), dimension(:,:), allocatable :: r
 !
       call solver%prepare_wf_for_excited_state(wf)
 !
@@ -424,7 +332,18 @@ contains
       if (converged) then
 !
          write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration - 1, ' iterations!'
-         call solver%print_summary(davidson, wf)
+!
+         call mem%alloc(r, wf%n_es_amplitudes, solver%n_singlet_states)
+!
+         do state = 1, solver%n_singlet_states
+!
+            call davidson%construct_X(r(:,state), state)   
+!
+         enddo 
+!
+         call solver%print_summary(wf, r) 
+!
+         call mem%dealloc(r, wf%n_es_amplitudes, solver%n_singlet_states)
 !
          write(output%unit,'(/t3,a)') '- Storing excited states to file.'
 !
@@ -497,95 +416,67 @@ contains
 !
       integer :: trial, n_solutions_on_file
 !
-      if (allocated(solver%start_vectors)) then
+      if (solver%restart) then 
 !
-         call mem%alloc(start_vectors_copy, solver%n_singlet_states)
-         start_vectors_copy = solver%start_vectors
+!        Read the solutions from file & set as initial trial vectors 
 !
-         call wf%system%translate_from_input_order_to_eT_order(solver%n_singlet_states, start_vectors_copy, solver%start_vectors)
+         call wf%is_restart_safe('excited state')
 !
-         call mem%dealloc(start_vectors_copy, solver%n_singlet_states)
+         call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
 !
-!        Initial trial vectors given on input
+         write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
+                                             ' solutions on file.'
 !
          call mem%alloc(c_i, wf%n_es_amplitudes)
 !
-         do trial = 1, solver%n_singlet_states
+         do trial = 1, n_solutions_on_file
 !
-            c_i = zero
-            c_i(solver%start_vectors(trial)) = one
-!
+            call wf%read_excited_state(c_i, trial, solver%transformation)
             call davidson%write_trial(c_i)
 !
-         enddo
+         enddo 
 !
          call mem%dealloc(c_i, wf%n_es_amplitudes)
 !
       else
 !
-         if (solver%restart) then 
+         n_solutions_on_file = 0
 !
-!           Read the solutions from file & set as initial trial vectors 
+      endif 
 !
-            call wf%is_restart_safe('excited state')
+      if (n_solutions_on_file .lt. solver%n_singlet_states) then 
 !
-            call wf%get_n_excited_states_on_file(solver%transformation, n_solutions_on_file)
+!        Compute the remaining start vectors using Koopman
 !
-            write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
-                                                ' solutions on file.'
+         call mem%alloc(orbital_differences, wf%n_es_amplitudes)
+         call wf%get_es_orbital_differences(orbital_differences, wf%n_es_amplitudes)
 !
-            call mem%alloc(c_i, wf%n_es_amplitudes)
+         call mem%alloc(lowest_orbital_differences, solver%n_singlet_states)
+         call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states)
 !
-            do trial = 1, n_solutions_on_file
+         call get_n_lowest(solver%n_singlet_states, wf%n_es_amplitudes, orbital_differences, &
+                        lowest_orbital_differences, lowest_orbital_differences_index)
 !
-               call wf%read_excited_state(c_i, trial, solver%transformation)
-               call davidson%write_trial(c_i)
+         call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states)
+         call mem%dealloc(orbital_differences, wf%n_es_amplitudes)
 !
-            enddo 
+         call mem%alloc(c_i, wf%n_es_amplitudes)
 !
-            call mem%dealloc(c_i, wf%n_es_amplitudes)
+         do trial = n_solutions_on_file + 1, solver%n_singlet_states
 !
-         else
+            c_i = zero
+            c_i(lowest_orbital_differences_index(trial)) = one
 !
-            n_solutions_on_file = 0
+            call davidson%write_trial(c_i)
 !
-         endif 
+         enddo 
 !
-         if (n_solutions_on_file .lt. solver%n_singlet_states) then 
-!
-!           Compute the remaining start vectors using Koopman
-!
-            call mem%alloc(orbital_differences, wf%n_es_amplitudes)
-            call wf%get_es_orbital_differences(orbital_differences, wf%n_es_amplitudes)
-!
-            call mem%alloc(lowest_orbital_differences, solver%n_singlet_states)
-            call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states)
-!
-            call get_n_lowest(solver%n_singlet_states, wf%n_es_amplitudes, orbital_differences, &
-                           lowest_orbital_differences, lowest_orbital_differences_index)
-!
-            call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states)
-            call mem%dealloc(orbital_differences, wf%n_es_amplitudes)
-!
-            call mem%alloc(c_i, wf%n_es_amplitudes)
-!
-            do trial = n_solutions_on_file + 1, solver%n_singlet_states
-!
-               c_i = zero
-               c_i(lowest_orbital_differences_index(trial)) = one
-!
-               call davidson%write_trial(c_i)
-!
-            enddo 
-!
-            call mem%dealloc(c_i, wf%n_es_amplitudes)
-            call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states)
-!      
-         endif
-!
-         call davidson%orthonormalize_trial_vecs()
-!
+         call mem%dealloc(c_i, wf%n_es_amplitudes)
+         call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states)
+!     
       endif
+!
+      call davidson%orthonormalize_trial_vecs()
 !
    end subroutine set_start_vectors_davidson_cc_es
 !
@@ -615,48 +506,6 @@ contains
    end subroutine set_precondition_vector_davidson_cc_es
 !
 !
-   subroutine cleanup_davidson_cc_es(solver, wf)
-!!
-!!    Cleanup 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(davidson_cc_es) :: solver
-      class(ccs), intent(in) :: wf
-!
-      call solver%destruct_energies()
-      if (allocated(solver%start_vectors)) call mem%dealloc(solver%start_vectors, solver%n_singlet_states)
-!
-      call solver%timer%turn_off()
-!
-      write(output%unit, '(/t3, a)') '- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) // &
-                                       ' excited state equations ('// &
-                                       trim(solver%transformation) //')'
-!
-      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
-      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
-!
-   end subroutine cleanup_davidson_cc_es
-!
-!
-   subroutine print_banner_davidson_cc_es(solver)
-!!
-!!    Print banner
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(davidson_cc_es) :: solver 
-!
-      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
-      call output%long_string_print(solver%author,'(t3,a/)',.true.)
-      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
-      call output%long_string_print(solver%description2)
-!
-   end subroutine print_banner_davidson_cc_es
-!
-!
    subroutine read_settings_davidson_cc_es(solver)
 !!
 !!    Read settings 
@@ -666,40 +515,25 @@ contains
 !
       class(davidson_cc_es) :: solver 
 !
-      integer :: n_start_vecs
+      call solver%read_es_settings()
 !
-      call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
-      call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
-      call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
-      call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
-      call input%get_keyword_in_section('max reduced dimension', 'solver cc es', solver%max_dim_red)
-!     
-      call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
-!
-      if (input%requested_keyword_in_section('restart', 'solver cc es')) solver%restart = .true.    
-!
-      if (input%requested_keyword_in_section('start vectors', 'solver cc es')) then 
-!  
-!        Determine the number of start vectors & do consistency check 
-!
-         n_start_vecs = input%get_n_elements_for_keyword_in_section('start vectors', 'solver cc es')
-!
-         if (n_start_vecs .ne. solver%n_singlet_states) then
-!
-            call output%error_msg('mismatch in number of start vectors and number of specified roots.')
-!
-         endif
-!
-!        Then read the start vectors into array 
-!
-         call mem%alloc(solver%start_vectors, n_start_vecs)
-!
-         call input%get_array_for_keyword_in_section('start vectors', 'solver cc es', n_start_vecs, solver%start_vectors)
-!
-      endif 
-!
+      call solver%read_davidson_settings()
 !
    end subroutine read_settings_davidson_cc_es
+!
+!
+   subroutine read_davidson_settings_davidson_cc_es(solver)
+!!
+!!    Read settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(davidson_cc_es) :: solver 
+!
+      call input%get_keyword_in_section('max reduced dimension', 'solver cc es', solver%max_dim_red)
+!
+   end subroutine read_davidson_settings_davidson_cc_es
 !
 !
    subroutine set_projection_vector_davidson_cc_es(solver, wf, davidson)
@@ -725,23 +559,6 @@ contains
       if (.false.) write(output%unit, *) wf%name_, solver%tag ! Hack to suppress unavoidable compiler warnings
 !
    end subroutine set_projection_vector_davidson_cc_es
-!
-!
-   subroutine prepare_wf_for_excited_state_davidson_cc_es(solver, wf)
-!!
-!!    Prepare wf for excited state
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2019
-!!
-      implicit none
-!
-      class(davidson_cc_es), intent(in)   :: solver 
-      class(ccs), intent(inout)           :: wf
-!
-      if (solver%transformation == 'right') call wf%prepare_for_jacobian()
-!
-      if (solver%transformation == 'left') call wf%prepare_for_jacobian_transpose()
-!
-   end subroutine prepare_wf_for_excited_state_davidson_cc_es
 !
 !
 end module davidson_cc_es_class
