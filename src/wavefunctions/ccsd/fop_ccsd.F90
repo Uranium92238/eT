@@ -33,7 +33,7 @@ submodule (ccsd_class) fop_ccsd
 !!   (Following Koch, H., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
 !!    J. Chem. Phys. 100, 4393 (1994))
 !!
-!!       η_μ^X,EOM =  < Λ | [X, τ_μ] | CC > + (< Λ | τ_μ X | R >  - tbar_μ < Λ | X | R > )
+!!       η_μ^X,EOM =  < Λ | [X, τ_μ] | CC > + (< Λ | τ_μ X | CC >  - tbar_μ < Λ | X | CC > )
 !!                 = η^{X,0} + η^{X,corr}
 !!
 !!    Where the last two terms are called the EOM-corrections and the first term also 
