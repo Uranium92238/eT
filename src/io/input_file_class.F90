@@ -96,7 +96,7 @@ module input_file_class
 contains
 !
 !
-   module function new_input_file(name_) result(the_file)
+   function new_input_file(name_) result(the_file)
 !!
 !!    Initialize input file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
@@ -291,8 +291,13 @@ contains
       open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
            action='read', status='unknown', form=the_file%format_, iostat=io_error, iomsg=io_msg)
 !
-      if (io_error /= 0) stop 'Error: could not open eT input file '//trim(the_file%name_)//&
+      if (io_error /= 0) then 
+!
+         print *, 'Error: could not open eT input file '//trim(the_file%name_)//&
                              &'error message: '//trim(io_msg)
+         stop 
+!
+      endif 
 !
       the_file%opened = .true.
 !
@@ -313,8 +318,13 @@ contains
 !
       close(the_file%unit, iostat=io_error, iomsg=io_msg, status='keep')
 !
-      if (io_error /= 0) stop 'Error: could not close eT input file '//trim(the_file%name_)//&
+      if (io_error /= 0) then 
+!
+         print *, 'Error: could not close eT input file '//trim(the_file%name_)//&
                              &'error message: '//trim(io_msg)
+         stop
+!
+      endif  
 !
       the_file%opened = .false.
 !
