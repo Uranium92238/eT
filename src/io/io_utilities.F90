@@ -168,8 +168,8 @@ contains
 !
    subroutine read_3_arrays_single_record_batch(batch_z, file_1, g_pqrz, file_2, g_stuz, file_3, g_vwxz)
 !!
-!!    Read parts of the direct access files "file_1/2"
-!!    into g_pqrz/g_stuz for the current batch z
+!!    Read parts of the direct access files "file_1/2/3"
+!!    into g_pqrz/g_stuz/g_vwxz for the current batch z
 !!    NB: It is assumed that the batching index is sorted at the end
 !!        and that the record is equal to the batching index
 !!

@@ -28,50 +28,24 @@ module diis_cc_es_class
    use file_class
    use ccs_class
    use diis_tool_class
+   use abstract_cc_es_class, only: abstract_cc_es
 !
    implicit none
 !
-   type :: diis_cc_es
+   type, extends(abstract_cc_es) :: diis_cc_es
 !
-      character(len=100) :: tag = 'DIIS coupled cluster excited state solver'
-      character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      character(len=500) :: description1 = 'A DIIS solver that solves for the lowest eigenvalues and &
-                                           &the right eigenvectors of the Jacobian matrix, A. The eigenvalue &
-                                           &problem is solved by DIIS extrapolation of residuals for each &
-                                           &eigenvector until the convergence criteria are met.'
-!
-      logical :: restart 
-!
-      integer :: max_iterations
-!
-      real(dp) :: eigenvalue_threshold  
-      real(dp) :: residual_threshold  
-!
-      integer :: n_singlet_states, diis_dimension
-!
-      real(dp), dimension(:), allocatable :: energies
-!
-      character(len=40) :: transformation 
-!
-      integer, dimension(:,:), allocatable :: start_vectors
-!
-      type(timings) :: timer
+      integer :: diis_dimension
 !
    contains
 !     
       procedure, non_overridable :: run            => run_diis_cc_es
-      procedure, non_overridable :: cleanup        => cleanup_diis_cc_es
 !
       procedure :: set_start_vectors               => set_start_vectors_diis_cc_es
 !
-      procedure :: print_banner                    => print_banner_diis_cc_es
-      procedure :: print_summary                   => print_summary_diis_cc_es
-!
       procedure :: read_settings                   => read_settings_diis_cc_es
-      procedure :: print_settings                  => print_settings_diis_cc_es
+      procedure :: read_diis_settings              => read_diis_settings_diis_cc_es
 !
-      procedure :: prepare_wf_for_excited_state    => prepare_wf_for_excited_state_diis_cc_es
+      procedure :: print_settings                  => print_settings_diis_cc_es
 !
    end type diis_cc_es
 !
@@ -100,6 +74,20 @@ contains
 !
       solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
       call solver%timer%turn_on()
+!
+!     Set printables
+!
+      solver%name_  = 'DIIS coupled cluster excited state solver'
+      solver%tag    = 'DIIS'
+      solver%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      solver%description1 = 'A DIIS solver that solves for the lowest eigenvalues and &
+                           & the right eigenvectors of the Jacobian matrix, A. The eigenvalue &
+                           & problem is solved by DIIS extrapolation of residuals for each &
+                           & eigenvector until the convergence criteria are met.'
+!
+      solver%description2 = 'More on the DIIS algorithm can be found in &
+                           &P. Pulay, Chemical Physics Letters, 73(2), 393-398 (1980).'
 !
       call solver%print_banner()
 !
@@ -134,13 +122,9 @@ contains
 !
       class(diis_cc_es) :: solver 
 !
-      write(output%unit, '(/t3,a)') '- DIIS CC excited state solver settings:'
+      call solver%print_es_settings()
 !
-      write(output%unit,'(/t6,a20,e9.2)') 'Energy threshold:   ', solver%eigenvalue_threshold
-      write(output%unit,'(t6,a20,e9.2)')  'Residual threshold: ', solver%residual_threshold
-      write(output%unit,'(/t6,a,i3,a)')   'Number of singlet states: ', solver%n_singlet_states
-      write(output%unit, '(t6,a26,i3)')   'Max number of iterations: ', solver%max_iterations
-      flush(output%unit)
+      call output%printf('DIIS dimension: (i3)',  ints=[solver%diis_dimension], fs='(/t6,a)')
 !
    end subroutine print_settings_diis_cc_es
 !
@@ -154,58 +138,24 @@ contains
 !
       class(diis_cc_es) :: solver 
 !
-      call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
-      call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
-      call input%get_keyword_in_section('diis dimension', 'solver cc es', solver%diis_dimension)
-      call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
-!               
-      call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
-!
-      if (input%requested_keyword_in_section('restart', 'solver cc es')) solver%restart = .true.    
-      if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) solver%transformation = 'left'    
-      if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) solver%transformation = 'right'    
+      call solver%read_es_settings()
+      call solver%read_diis_settings()
 !
    end subroutine read_settings_diis_cc_es
 !
 !
-   subroutine cleanup_diis_cc_es(solver, wf)
+   subroutine read_diis_settings_diis_cc_es(solver)
 !!
-!!    Cleanup 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(diis_cc_es) :: solver
-      class(ccs), intent(in) :: wf
-!
-      call mem%dealloc(solver%energies, solver%n_singlet_states)
-!
-      call solver%timer%turn_off()
-!
-      write(output%unit, '(/t3, a)') '- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) &
-                                       // ' excited state equations ('// &
-                                       trim(solver%transformation) //')'
-!
-      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
-      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
-!
-   end subroutine cleanup_diis_cc_es
-!
-!
-   subroutine print_banner_diis_cc_es(solver)
-!!
-!!    Print banner
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Read settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
 !
       class(diis_cc_es) :: solver 
 !
-      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
-      call output%long_string_print(solver%author,'(t3,a/)',.true.)
-      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
+      call input%get_keyword_in_section('diis dimension', 'solver cc es', solver%diis_dimension)
 !
-   end subroutine print_banner_diis_cc_es
+   end subroutine read_diis_settings_diis_cc_es
 !
 !
    subroutine run_diis_cc_es(solver, wf)
@@ -325,7 +275,7 @@ contains
 !$omp parallel do private(amplitude)
                do amplitude = 1, wf%n_es_amplitudes
 !
-                  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude))
+                  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude) - solver%energies(state))
 !
                enddo
 !$omp end parallel do 
@@ -462,76 +412,6 @@ contains
       call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states)      
 !
    end subroutine set_start_vectors_diis_cc_es
-!
-!
-   subroutine print_summary_diis_cc_es(solver, wf, X)
-!!
-!!    Print summary 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
-!!
-      implicit none 
-!
-      class(diis_cc_es), intent(in) :: solver 
-!
-      class(ccs), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_es_amplitudes, solver%n_singlet_states), intent(in) :: X
-!
-      integer :: state 
-!
-      write(output%unit, '(/t3,a)') '- Excitation vector amplitudes:'
-      flush(output%unit)
-!
-      do state = 1, solver%n_singlet_states
-!
-         write(output%unit, '(/t6,a21,i2)')    'Electronic state nr. ', state
-         flush(output%unit)       
-!
-         write(output%unit, '(/t6,a30,f15.12)')  'Energy (Hartree):             ', solver%energies(state)
-         flush(output%unit)
-         write(output%unit, '(t6,a30,f15.12)') 'Fraction singles (|r1|/|r|):  ', &
-                        get_l2_norm(X(1:wf%n_t1,state),wf%n_t1)/get_l2_norm(X(:,state),wf%n_es_amplitudes)   
-         flush(output%unit)
-!
-         call wf%print_dominant_x_amplitudes(X(1,state), 'r')
-!
-      enddo 
-!
-      write(output%unit, '(/t3,a)') '- Electronic excitation energies:'
-!
-      write(output%unit, '(/t6,a)') '                                 Excitation energy            '
-      write(output%unit, '(t6,a)')  '                     ------------------------------------------'
-      write(output%unit, '(t6,a)')  'State                (Hartree)             (eV)                '
-      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
-!
-      do state = 1, solver%n_singlet_states
-!
-         write(output%unit, '(t6,i2,14x,f19.12,4x,f19.12)') state, solver%energies(state), &
-                                                            solver%energies(state)*Hartree_to_eV
-!
-      enddo 
-!
-      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
-      write(output%unit, '(t6,a26,f11.8)') 'eV/Hartree (CODATA 2014): ', Hartree_to_eV
-!
-   end subroutine print_summary_diis_cc_es
-!
-!
-   subroutine prepare_wf_for_excited_state_diis_cc_es(solver, wf)
-!!
-!!    Prepare wf for excited state
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2019
-!!
-      implicit none
-!
-      class(diis_cc_es), intent(in)   :: solver 
-      class(ccs), intent(inout)           :: wf
-!
-      if (solver%transformation == 'right') call wf%prepare_for_jacobian()
-!
-      if (solver%transformation == 'left') call wf%prepare_for_jacobian_transpose()
-!
-   end subroutine prepare_wf_for_excited_state_diis_cc_es
 !
 !
 end module diis_cc_es_class
