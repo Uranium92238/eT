@@ -49,6 +49,7 @@ module abstract_cc_es_class
       integer :: n_singlet_states
 !
       character(len=40) :: transformation 
+      character(len=40) :: restart_transformation 
 !
       real(dp), dimension(:), allocatable :: energies
 !
@@ -56,17 +57,20 @@ module abstract_cc_es_class
 !
    contains
 !
-      procedure, non_overridable :: print_banner                  => print_banner_abstract_cc_es
+      procedure, non_overridable :: print_banner                     => print_banner_abstract_cc_es
 !
-      procedure, non_overridable :: read_es_settings              => read_es_settings_abstract_cc_es     
+      procedure, non_overridable :: read_es_settings                 => read_es_settings_abstract_cc_es     
 !
-      procedure, non_overridable :: print_es_settings             => print_es_settings_abstract_cc_es
+      procedure, non_overridable :: print_es_settings                => print_es_settings_abstract_cc_es
 !
-      procedure, non_overridable :: cleanup                       => cleanup_abstract_cc_es
+      procedure, non_overridable :: cleanup                          => cleanup_abstract_cc_es
 !
-      procedure, non_overridable :: print_summary                 => print_summary_abstract_cc_es
+      procedure, non_overridable :: print_summary                    => print_summary_abstract_cc_es
 !
-      procedure, non_overridable :: prepare_wf_for_excited_state  => prepare_wf_for_excited_state_abstract_cc_es
+      procedure, non_overridable :: prepare_wf_for_excited_state     => prepare_wf_for_excited_state_abstract_cc_es
+!
+      procedure, non_overridable :: determine_restart_transformation => determine_restart_transformation_abstract_cc_es 
+
 !
    end type abstract_cc_es
 !
@@ -99,8 +103,6 @@ contains
       implicit none 
 !
       class(abstract_cc_es) :: solver 
-!
-      integer :: n_start_vecs
 !
       call input%get_keyword_in_section('residual threshold', 'solver cc es', solver%residual_threshold)
       call input%get_keyword_in_section('energy threshold', 'solver cc es', solver%eigenvalue_threshold)
@@ -227,6 +229,63 @@ contains
       if (solver%transformation == 'left') call wf%prepare_for_jacobian_transpose()
 !
    end subroutine prepare_wf_for_excited_state_abstract_cc_es
+!
+!
+   subroutine determine_restart_transformation_abstract_cc_es(solver, wf)
+!!
+!!    Determine number of states on file 
+!!    Written by Eirik F. Kjønstad, June 2019
+!!
+      implicit none 
+!
+      class(abstract_cc_es), intent(inout) :: solver
+!
+      class(ccs), intent(in) :: wf 
+!
+      integer :: n_left_vectors_on_file, n_right_vectors_on_file
+!
+      n_left_vectors_on_file = wf%get_n_excited_states_on_file('left')
+      n_right_vectors_on_file = wf%get_n_excited_states_on_file('right')
+!
+      if (solver%transformation == 'right') then 
+!
+         if (n_right_vectors_on_file > 0) then 
+!
+            solver%restart_transformation = 'right'
+!
+         elseif (n_right_vectors_on_file == 0 .and. n_left_vectors_on_file > 0) then 
+!
+            solver%restart_transformation = 'left'
+!
+         else
+!
+            call output%error_msg('Could not restart excited state calculation.')
+!
+         endif 
+!
+      elseif (solver%transformation == 'left') then
+!
+         if (n_left_vectors_on_file > 0) then 
+!
+            solver%restart_transformation = 'left'
+!
+         elseif (n_left_vectors_on_file == 0 .and. n_right_vectors_on_file > 0) then 
+!
+            solver%restart_transformation = 'right'
+!
+         else
+!
+            call output%error_msg('Could not restart excited state calculation.')
+!
+         endif          
+!
+      else 
+!
+         call output%error_msg('Could not restart excited state calculation.')
+!
+      endif  
+!
+   end subroutine determine_restart_transformation_abstract_cc_es
 !
 !
 end module abstract_cc_es_class

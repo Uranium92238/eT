@@ -412,7 +412,7 @@ contains
       real(dp), dimension(:), allocatable :: orbital_differences
       real(dp), dimension(:), allocatable :: lowest_orbital_differences
 !
-      integer, dimension(:), allocatable :: lowest_orbital_differences_index, start_vectors_copy
+      integer, dimension(:), allocatable :: lowest_orbital_differences_index
 !
       integer :: trial, n_solutions_on_file
 !
@@ -422,16 +422,16 @@ contains
 !
          call wf%is_restart_safe('excited state')
 !
-         n_solutions_on_file = wf%get_n_excited_states_on_file(solver%transformation)
+         call solver%determine_restart_transformation(wf) ! Read right or left?
+         n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
 !
-         write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, &
-                                             ' solutions on file.'
+         write(output%unit, '(/t3,a,i0,a)') 'Requested restart. There are ', n_solutions_on_file, ' solutions on file.'
 !
          call mem%alloc(c_i, wf%n_es_amplitudes)
 !
          do trial = 1, n_solutions_on_file
 !
-            call wf%read_excited_state(c_i, trial, solver%transformation)
+            call wf%read_excited_state(c_i, trial, solver%restart_transformation)
             call davidson%write_trial(c_i)
 !
          enddo 
