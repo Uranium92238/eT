@@ -81,6 +81,7 @@ module hf_class
 !
       procedure :: construct_ao_fock                        => construct_ao_fock_hf
       procedure :: construct_ao_G                           => construct_ao_G_hf
+      procedure :: construct_ao_G_1der                      => construct_ao_G_1der_hf
 !
       procedure :: construct_coulomb_ao_G                   => construct_coulomb_ao_G_hf
       procedure :: construct_exchange_ao_G                  => construct_exchange_ao_G_hf
@@ -1025,8 +1026,6 @@ contains
 !
       class(hf) :: wf
 !
-      !integer :: n_s
-!
       integer, dimension(:),  allocatable :: sp_eri_schwarz_index_list
       real(dp), dimension(:), allocatable :: sorted_sp_eri_schwarz
 !
@@ -1039,8 +1038,6 @@ contains
       real(dp), dimension(wf%system%max_shell_size**4) :: g
 !
       type(interval) :: A_interval, B_interval
-!
-     ! n_s = wf%system%get_n_shells()
 !
 !     Set the maximum element in each shell pair
 !
@@ -1201,8 +1198,6 @@ contains
       implicit none
 !
       class(hf) :: wf
-!
-     ! integer :: n_s
 !
       real(dp), optional :: coulomb, exchange ! Non-standard screening thresholds
 !
@@ -1632,7 +1627,7 @@ contains
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, exchange_thr, precision_thr
 !
-      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in)               :: sp_density_schwarz
+      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: sp_density_schwarz
 !
       real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, deg, deg_12, deg_34, deg_12_34
@@ -2133,6 +2128,135 @@ contains
       wf%energy = wf%energy + one/two*ddot((wf%n_ao)**2, wf%ao_density, 1, F_wx, 1)
 
    end subroutine calculate_hf_energy_from_fock_hf
+!
+!
+   subroutine construct_ao_G_1der_hf(wf, G_ao, D_ao)
+!!
+!!    Construct AO G 1der
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    This routine constructs the entire two-electron part of the Fock matrix,
+!!
+!!       F_αβqk = sum_γδ g_αβγδqk D_γδ - 1/2 * sum_γδ g_αδγβqk D_γδ (= G(D)_αβqk),
+!!
+!!    where contributions from different threads are gathered column blocks
+!!    of the incoming F matrix.
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms) :: G_ao
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D_ao
+!
+      real(dp), dimension((wf%system%max_shell_size**4)*3*4), target :: g_ABCDqk 
+      real(dp), dimension(:,:,:,:,:,:), pointer :: g_ABCDqk_p 
+!
+      integer :: A, B, C, D, D_max, w, x, y, z, w_red, x_red, y_red, z_red, tot_dim, k, atom 
+!
+      real(dp) :: d1, d2, d3, d4, d5, d6
+!
+      integer, dimension(4) :: atoms 
+!
+      real(dp) :: deg, deg_AB, deg_CD, deg_AB_CD 
+!
+      real(dp), dimension(3,4) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
+!
+      do A = 1, wf%system%n_s 
+!
+         atoms(1) = wf%system%shell_to_atom(A)
+!
+         do B = 1, A 
+!
+            deg_AB = real(2-B/A, kind=dp)
+            atoms(2) = wf%system%shell_to_atom(B)
+!
+            do C = 1, A
+!
+               D_max = (C/A)*B + (1-C/A)*C
+               atoms(3) = wf%system%shell_to_atom(C)
+!
+               do D = 1, D_max
+!
+                  deg_CD    = real(2-D/C, kind=dp)
+                  deg_AB_CD = min(1-C/A+2-min(D/B,B/D), 2)
+
+                  deg = deg_AB*deg_CD*deg_AB_CD ! Shell degeneracy
+!
+                  atoms(4) = wf%system%shell_to_atom(D)
+!
+                  call wf%system%construct_ao_g_wxyz_1der(g_ABCDqk, A, B, C, D, &
+                                                            atoms(1), atoms(2), atoms(3), atoms(4))                 
+!
+                  tot_dim = (wf%system%shell_limits(A)%size)*(wf%system%shell_limits(B)%size)&
+                              *(wf%system%shell_limits(C)%size)*(wf%system%shell_limits(D)%size)&
+                              *3*4
+!
+                  g_ABCDqk(1:tot_dim) = deg*g_ABCDqk(1:tot_dim)
+!
+                  g_ABCDqk_p(1 : wf%system%shell_limits(A)%size, 1 : wf%system%shell_limits(B)%size, &
+                             1 : wf%system%shell_limits(C)%size, 1 : wf%system%shell_limits(D)%size, &
+                             1 : 3, 1 : 4) => g_ABCDqk(1 : tot_dim)
+!
+                  do z = wf%system%shell_limits(D)%first, wf%system%shell_limits(D)%last
+!
+                     z_red = z - wf%system%shell_limits(D)%first + 1
+!
+                     do y = wf%system%shell_limits(C)%first, wf%system%shell_limits(C)%last
+!
+                        y_red = y - wf%system%shell_limits(C)%first + 1
+!
+                        d1 = D_ao(y, z)
+!
+                        do x = wf%system%shell_limits(B)%first, wf%system%shell_limits(B)%last
+!
+                           x_red = x - wf%system%shell_limits(B)%first + 1
+!
+                           d3 = D_ao(x, y)
+                           d5 = D_ao(x, z)
+!
+                           do w = wf%system%shell_limits(A)%first, wf%system%shell_limits(A)%last
+!
+                              d2 = D_ao(w, x)
+                              d4 = D_ao(w, y)
+                              d6 = D_ao(w, z)
+!
+                              w_red = w - wf%system%shell_limits(A)%first + 1
+!
+                              temp = g_ABCDqk_p(w_red, x_red, y_red, z_red, :, :)
+!
+                              temp1 = half*temp*d1
+                              temp2 = half*temp*d2
+!
+                              temp3 = one_over_eight*temp*d3
+                              temp4 = one_over_eight*temp*d4
+                              temp5 = one_over_eight*temp*d5
+                              temp6 = one_over_eight*temp*d6
+!
+                              do atom = 1, 4
+                                 do k = 1, 3
+!
+                                    G_ao(w, x, k, atoms(atom)) = G_ao(w, x, k, atoms(atom)) + temp1(k, atom)
+                                    G_ao(y, x, k, atoms(atom)) = G_ao(y, x, k, atoms(atom)) - temp6(k, atom)
+                                    G_ao(y, z, k, atoms(atom)) = G_ao(y, z, k, atoms(atom)) + temp2(k, atom)
+                                    G_ao(w, z, k, atoms(atom)) = G_ao(w, z, k, atoms(atom)) - temp3(k, atom)
+                                    G_ao(x, z, k, atoms(atom)) = G_ao(x, z, k, atoms(atom)) - temp4(k, atom)
+                                    G_ao(w, y, k, atoms(atom)) = G_ao(w, y, k, atoms(atom)) - temp5(k, atom)
+!
+                                 enddo
+                              enddo
+!
+                           enddo
+                        enddo
+                     enddo
+                  enddo
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+   end subroutine construct_ao_G_1der_hf
 !
 !
    subroutine set_ao_density_hf(wf, D)
