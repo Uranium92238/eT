@@ -205,14 +205,16 @@ contains
 !
       implicit none
 !
-      class(gs_engine), intent(in) :: engine
+      class(gs_engine), intent(inout) :: engine 
 !
       class(ccs), intent(inout) :: wf
 !
       type(diis_cc_multipliers), allocatable     :: diis_solver
       type(davidson_cc_multipliers), allocatable :: davidson_solver
 !
-      if (trim(engine%multipliers_algorithm) == 'davidson') then
+      if (trim(wf%name_) == 'cc2') engine%multipliers_algorithm = 'diis'
+!
+      if (trim(engine%multipliers_algorithm) == 'davidson') then 
 !
          if (trim(wf%name_) == 'cc2') call output%error_msg('For CC2 multipliers the DIIS algorithm must be specified.')
 !

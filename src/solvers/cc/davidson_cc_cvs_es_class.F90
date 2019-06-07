@@ -269,8 +269,6 @@ contains
                      if (n_MOs_found .gt. solver%n_cores) &
                         call output%error_msg('something went wrong in the selection of core MOs.')
 !
-
-!
                      solver%core_MOs(n_MOs_found) = i
                      exit
 !

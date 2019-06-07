@@ -34,6 +34,9 @@ module cc2_class
 !
       real(dp), dimension(:,:,:,:), allocatable :: u
 !
+      real(dp), dimension(:), allocatable :: t2    ! Used for properties only
+      real(dp), dimension(:), allocatable :: t2bar ! Used for properties only
+!
       type(file) :: r2_file, l2_file
 !
    contains
@@ -84,9 +87,37 @@ module cc2_class
       procedure :: save_doubles_vector                         => save_doubles_vector_cc2
       procedure :: read_doubles_vector                         => read_doubles_vector_cc2
 !
+      procedure :: read_excited_state                          => read_excited_state_cc2
+!
       procedure :: restart_excited_state                       => restart_excited_state_cc2
       procedure :: save_excited_state                          => save_excited_state_cc2
       procedure :: is_restart_safe                             => is_restart_safe_cc2
+!
+      procedure :: initialize_t2                               => initialize_t2_cc2
+      procedure :: initialize_t2bar                            => initialize_t2bar_cc2
+      procedure :: destruct_t2                                 => destruct_t2_cc2
+      procedure :: destruct_t2bar                              => destruct_t2bar_cc2
+!
+!     Routines related to property calculations
+!
+      procedure :: prepare_for_eom_fop                         => prepare_for_eom_fop_cc2
+      procedure :: construct_eom_etaX                          => construct_eom_etaX_cc2
+!
+      procedure :: construct_etaX                              => construct_etaX_cc2 
+!
+      procedure :: etaX_eom_a                                  => etaX_eom_a_cc2    
+      procedure :: etaX_cc2_a1                                 => etaX_cc2_a1_cc2    
+      procedure :: etaX_cc2_a2                                 => etaX_cc2_a2_cc2    
+      procedure :: etaX_cc2_b2                                 => etaX_cc2_b2_cc2    
+!     
+      procedure :: construct_csiX                              => construct_csiX_cc2  
+      procedure :: csiX_cc2_a1                                 => csiX_cc2_a1_cc2    
+      procedure :: csiX_cc2_a2                                 => csiX_cc2_a2_cc2    
+!
+      procedure :: etaX_eom_cc2_a1                             => etaX_eom_cc2_a1_cc2
+!
+      procedure :: construct_t2                                => construct_t2_cc2
+      procedure :: construct_t2bar                             => construct_t2bar_cc2
 !
    end type cc2
 !
@@ -95,6 +126,7 @@ module cc2_class
       include "omega_cc2_interface.F90"
       include "jacobian_cc2_interface.F90"
       include "jacobian_transpose_cc2_interface.F90"
+      include "fop_cc2_interface.F90"
 !
    end interface 
 !
@@ -238,12 +270,18 @@ contains
 !
       integer :: a, i, b, j
 !
+      type(timings) :: timer
+!
+      timer = new_timer('Construct u CC2')
+      call timer%turn_on()
+!
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
 !
       call wf%get_vovo(g_aibj)
 !
-      do b = 1, wf%n_v 
-         do j = 1, wf%n_o 
+!$omp parallel do private(a, i, b, j)
+      do j = 1, wf%n_o 
+         do b = 1, wf%n_v
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
@@ -256,10 +294,68 @@ contains
             enddo
          enddo 
       enddo
+!$omp end parallel do
 !    
       call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
 !
+      call timer%turn_off()
+!
    end subroutine construct_u_cc2
+!
+!
+   subroutine construct_t2_cc2(wf)
+!!
+!!    Construct t2 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
+!!
+!!    Construct
+!!
+!!       t_aibj = - g_aibj/ε_aibj
+!!
+!!    where
+!!
+!!       ε_aibj = ε_a - ε_i + ε_b - ε_j 
+!!
+!!    and ε_r is the r'th orbital energy.
+!!
+      implicit none
+!
+      class(cc2), intent(inout) :: wf
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, t_aibj
+!
+      integer :: a, i, b, j
+!
+      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
+      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
+!
+      call wf%get_vovo(g_aibj)
+!
+!$omp parallel do private(a, i, b, j)
+      do j = 1, wf%n_o 
+         do b = 1, wf%n_v 
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  t_aibj(a, i, b, j) = (g_aibj(a, i, b, j))/ &
+                                   (wf%orbital_energies(i) &
+                                  + wf%orbital_energies(j) &
+                                  - wf%orbital_energies(wf%n_o + a) &
+                                  - wf%orbital_energies(wf%n_o + b))
+
+!
+               enddo
+            enddo
+         enddo 
+      enddo
+!$omp end parallel do
+!
+      call packin(wf%t2, t_aibj, wf%n_t1)    
+!
+      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
+      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
+!
+   end subroutine construct_t2_cc2
 !
 !
    subroutine initialize_u_cc2(wf)
@@ -871,6 +967,162 @@ contains
 !
    end subroutine initialize_doubles_files_cc2
 !
+!
+   subroutine initialize_t2_cc2(wf)
+!!
+!!    Initialize t2 amplitudes
+!!    Written by Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(cc2) :: wf
+!
+      if (.not. allocated(wf%t2)) call mem%alloc(wf%t2, wf%n_t2)
+!
+   end subroutine initialize_t2_cc2
+!
+!
+   subroutine initialize_t2bar_cc2(wf)
+!!
+!!    Initialize t2bar amplitudes
+!!    Written by Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(cc2) :: wf
+!
+      if (.not. allocated(wf%t2bar)) call mem%alloc(wf%t2bar, wf%n_t2)
+!
+   end subroutine initialize_t2bar_cc2
+!
+!
+   subroutine destruct_t2_cc2(wf)
+!!
+!!    Destruct t2 amplitudes
+!!    Written by Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(cc2) :: wf
+!
+      if (allocated(wf%t2)) call mem%dealloc(wf%t2, wf%n_t2)
+!
+   end subroutine destruct_t2_cc2
+!
+!
+   subroutine destruct_t2bar_cc2(wf)
+!!
+!!    Destruct t2bar amplitudes
+!!    Written by Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(cc2) :: wf
+!
+      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_t2)
+!
+   end subroutine destruct_t2bar_cc2
+!
+!
+   subroutine construct_t2bar_cc2(wf)
+!!
+!!    Construct t2bar
+!!    Written by Sarai D. Folkestad, May, 2019
+!!
+!!
+      implicit none
+!
+      class(cc2) :: wf
+!
+      real(dp), dimension(:,:,:,:), allocatable :: t2bar, g_iajb
+!
+      integer :: a, i, b, j
+!
+      call mem%alloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      t2bar = zero
+!
+!     t2bar = sum_ai tbar_ai A_ai,aibj
+!
+      call wf%jacobian_transpose_cc2_a2(t2bar, wf%t1bar)
+!
+      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call wf%get_ovov(g_iajb)
+!
+!     t2bar += η_aibj
+!
+      call add_2143_to_1234(four, g_iajb, t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_2341_to_1234(-two, g_iajb, t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+!     t2bar = t2bar/(-ε_aibj)
+!
+!$omp parallel do private(a, b, i, j)
+      do b = 1, wf%n_v
+         do j = 1, wf%n_o
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  t2bar(a, i, b, j) = t2bar(a, i, b, j)/(- wf%orbital_energies(a + wf%n_o) &
+                                                         -  wf%orbital_energies(b + wf%n_o) &
+                                                         +  wf%orbital_energies(i) &
+                                                         +  wf%orbital_energies(j))
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call packin(wf%t2bar, t2bar, wf%n_t1)
+!
+      call mem%dealloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+   end subroutine construct_t2bar_cc2
+!
+!
+   subroutine read_excited_state_cc2(wf, X, n, side)
+!!
+!!    Restart excited state 
+!!    Written by Eirik F. Kjønstad, Mar 2019
+!!
+!!    Reads an excited state to disk. Since this routine is used by 
+!!    solvers, it returns the vector in the full space. Thus, we open 
+!!    files for singles, doubles, etc., paste them together, and return 
+!!    the result in X.
+!!
+!!    NB! This will place the cursor of the file at position n + 1.
+!!    Be cautious when using this in combination with writing to the files.
+!!    We recommend to separate these tasks---write all states or read all
+!!    states; don't mix if you can avoid it.
+!!
+      implicit none
+!
+      class(cc2), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      if (trim(side) == 'right') then
+!
+         call wf%read_singles_vector(X(1:wf%n_t1), n, wf%r1_file)
+         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
+!
+      elseif (trim(side) == 'left') then
+!
+         call wf%read_singles_vector(X(1:wf%n_t1), n, wf%l1_file)
+         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
+!
+      else
+!
+         call output%error_msg('Tried to read an excited state, but argument side not recognized: ' // side)
+!
+      endif
+!
+   end subroutine read_excited_state_cc2
 !
 !
 end module cc2_class

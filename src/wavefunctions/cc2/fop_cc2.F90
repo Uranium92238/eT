@@ -17,23 +17,23 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (ccsd_class) fop_ccsd
+submodule (cc2_class) fop_cc2
 !
 !!
-!!    First order properties submodule (CCSD)
+!!    First order properties submodule (cc2)
 !!    Written by Josefine H. Andersen, Mar 2019
 !!
-!!    Adapted by Sarai D. Folkestad
+!!    Adapted by Sarai D. Folkestad, May 2019
 !!
 !!    Routines for construction of the right-hand-side, η^X, and left-hand-side, ξ^X
 !!    vectors for transition moments.
 !!
 !!    Equation-of-motion (EOM):
 !!
-!!   (Following Koch, H., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
+!!   (Followinng Koch, K., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
 !!    J. Chem. Phys. 100, 4393 (1994))
 !!
-!!       η_μ^X,EOM =  < Λ | [X, τ_μ] | CC > + (< Λ | τ_μ X | CC >  - tbar_μ < Λ | X | CC > )
+!!       η_μ^X,EOM =  < Λ | [X, τ_μ] | CC > + (< Λ | τ_μ X | R >  - tbar_μ < Λ | X | R > )
 !!                 = η^{X,0} + η^{X,corr}
 !!
 !!    Where the last two terms are called the EOM-corrections and the first term also 
@@ -50,7 +50,25 @@ submodule (ccsd_class) fop_ccsd
 contains
 !
 !
-   module subroutine construct_eom_etaX_ccsd(wf, X, csiX, etaX)
+   module subroutine prepare_for_eom_fop_cc2(wf)
+!!
+!!    Prepare for EOM first order properties
+!!    Written by Sarai D. Folekstad, May 2019
+!!
+      implicit none
+!
+      class(cc2), intent(inout) :: wf
+!
+      call wf%initialize_t2()
+      call wf%initialize_t2bar()
+!
+      call wf%construct_t2()
+      call wf%construct_t2bar()
+!
+   end subroutine prepare_for_eom_fop_cc2
+!
+!
+   module subroutine construct_eom_etaX_cc2(wf, X, csiX, etaX)
 !!
 !!    Construct EOM etaX
 !!    Written by Sarai D. Folkestad, May 2019
@@ -60,7 +78,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
@@ -71,25 +89,25 @@ contains
 !
       call wf%etaX_eom_a(etaX, csiX)
 !
-      call wf%etaX_eom_ccsd_a1(X, etaX(1:wf%n_t1))
+      call wf%etaX_eom_cc2_a1(X, etaX(1:wf%n_t1))
 !
-   end subroutine construct_eom_etaX_ccsd
+   end subroutine construct_eom_etaX_cc2
 !
 !
-   module subroutine construct_etaX_ccsd(wf, X, etaX)
+   module subroutine construct_etaX_cc2(wf, X, etaX)
 !!
 !!    Construct η^X
-!!    Written by Josefine H. Andersen, 2019
+!!    Written by Josefine H. Andersen, Feb 2019
 !!
-!!    Adapted by Sarai D. Folekstad, Apr 2019
+!!    Adapted by Sarai D. Folekstad
 !!
-!!    Constructs left-hand-side vector etaX:
+!!    Constructs the part of η^X common to LR and EOM (η^X,0)
 !!
-!!       η^X_μ = < Λ | [X, τ_μ] | CC >
-!!
+!!       η^X,0 = < Λ | [X, τ_μ] | CC >
+!!   
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
@@ -110,7 +128,7 @@ contains
       call wf%etaX_ccs_a1(X, etaX_ai)
       call wf%etaX_ccs_b1(X, etaX_ai)
 !
-      call wf%etaX_ccsd_a1(X, etaX_ai)
+      call wf%etaX_cc2_a1(X, etaX_ai)
 !
 !$omp parallel do private (a, i, ai)
       do i = 1, wf%n_o
@@ -131,19 +149,19 @@ contains
       call mem%alloc(etaX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       etaX_aibj = zero
 !
-      call wf%etaX_ccsd_a2(X, etaX_aibj)
-      call wf%etaX_ccsd_b2(X, etaX_aibj)
+      call wf%etaX_cc2_a2(X, etaX_aibj)
+      call wf%etaX_cc2_b2(X, etaX_aibj)
 !
       call symmetrize_and_add_to_packed(etaX(wf%n_t1 + 1 : wf%n_es_amplitudes), etaX_aibj, (wf%n_v)*(wf%n_o))
 !
       call mem%dealloc(etaX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine construct_etaX_ccsd
+   end subroutine construct_etaX_cc2
 !
 !
-   module subroutine etaX_ccsd_a1_ccsd(wf, X, etaX_ai)
+   module subroutine etaX_cc2_a1_cc2(wf, X, etaX_ai)
 !!
-!!    etaX CCSD A1
+!!    etaX cc2 A1
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2019
@@ -152,7 +170,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
@@ -268,11 +286,11 @@ contains
       call mem%dealloc(I_li, wf%n_o, wf%n_o)
       call mem%dealloc(X_id, wf%n_o, wf%n_v)
 !
-   end subroutine etaX_ccsd_a1_ccsd
+   end subroutine etaX_cc2_a1_cc2
 !
-   module subroutine etaX_ccsd_a2_ccsd(wf, X, etaX_aibj)
+   module subroutine etaX_cc2_a2_cc2(wf, X, etaX_aibj)
 !!
-!!    etaX CCSD A2
+!!    etaX cc2 A2
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2019
@@ -283,7 +301,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
@@ -308,12 +326,12 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine etaX_ccsd_a2_ccsd
+   end subroutine etaX_cc2_a2_cc2
 !
 !
-   module subroutine etaX_ccsd_b2_ccsd(wf, X, etaX_aibj)
+   module subroutine etaX_cc2_b2_cc2(wf, X, etaX_aibj)
 !!
-!!    etaX CCSD B2
+!!    etaX CC2 B2
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2019
@@ -324,7 +342,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
@@ -416,23 +434,23 @@ contains
       call mem%dealloc(tb_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(X_jk, wf%n_o, wf%n_o)
 !
-   end subroutine etaX_ccsd_b2_ccsd
+   end subroutine etaX_cc2_b2_cc2
 !
 !
-   module subroutine construct_csiX_ccsd(wf, X, csiX)
+   module subroutine construct_csiX_cc2(wf, X, csiX)
 !!
-!!    Construct csiX
-!!    Written by Josefine H. Andersen, 2019
+!!    Construct csiX (cc2)
+!!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad
 !!
-!!    Constructs ξ^X_μ :
+!!    Constructs the ξ^X vector, common to LR and EOM,
 !!
 !!       ξ^X_μ = < μ | exp(-T) X exp(T)| R >
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
@@ -451,7 +469,7 @@ contains
       csiX_ai = zero
 !
       call wf%csiX_ccs_a1(X, csiX_ai)
-      call wf%csiX_ccsd_a1(X, csiX_ai)
+      call wf%csiX_cc2_a1(X, csiX_ai)
 !
 !$omp parallel do private (a, i, ai)
       do i = 1, wf%n_o
@@ -470,7 +488,7 @@ contains
       call mem%alloc(csiX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       csiX_aibj = zero     
 !
-      call wf%csiX_ccsd_a2(X, csiX_aibj)
+      call wf%csiX_cc2_a2(X, csiX_aibj)
 !
       do a = 1, wf%n_v
          do i = 1, wf%n_o
@@ -484,12 +502,12 @@ contains
 !
       call mem%dealloc(csiX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine construct_csiX_ccsd
+   end subroutine construct_csiX_cc2
 !
 !
-   module subroutine csiX_ccsd_a1_ccsd(wf, X, csiX_ai)
+   module subroutine csiX_cc2_a1_cc2(wf, X, csiX_ai)
 !!
-!!    csiX CCSD A1
+!!    csiX cc2 A1
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2010
@@ -502,7 +520,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
@@ -560,12 +578,12 @@ contains
       call mem%dealloc(u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(X_ck, wf%n_v, wf%n_o)
 !
-   end subroutine csiX_ccsd_a1_ccsd
+   end subroutine csiX_cc2_a1_cc2
 !
 !
-   module subroutine csiX_ccsd_a2_ccsd(wf, X, csiX_aibj)
+   module subroutine csiX_cc2_a2_cc2(wf, X, csiX_aibj)
 !!
-!!    CsiX CCSD A2
+!!    CsiX cc2 A2
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folekstad
@@ -576,7 +594,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
@@ -651,12 +669,12 @@ contains
       call mem%dealloc(X_kj, wf%n_o, wf%n_o)
       call mem%dealloc(t_cjai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine csiX_ccsd_a2_ccsd
+   end subroutine csiX_cc2_a2_cc2
 !
 !
-   module subroutine etaX_eom_ccsd_a1_ccsd(wf, X, etaX_ai)
+   module subroutine etaX_eom_cc2_a1_cc2(wf, X, etaX_ai)
 !!
-!!    etaX EOM CCSD A1
+!!    etaX EOM cc2 A1
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad
@@ -669,7 +687,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
@@ -785,10 +803,10 @@ contains
             call mem%dealloc(I_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
             call mem%dealloc(X_dl, wf%n_v, wf%n_o)
 !
-   end subroutine etaX_eom_ccsd_a1_ccsd
+   end subroutine etaX_eom_cc2_a1_cc2
 !
 !
-   module subroutine etaX_eom_a_ccsd(wf, etaX, csiX)
+   module subroutine etaX_eom_a_cc2(wf, etaX, csiX)
 !!
 !!    Get eom contribution
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -799,7 +817,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
       real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
@@ -820,7 +838,7 @@ contains
 !
       call mem%dealloc(multipliers, wf%n_es_amplitudes)
 !
-   end subroutine etaX_eom_a_ccsd
+   end subroutine etaX_eom_a_cc2
 !
 !
-end submodule fop_ccsd
+end submodule fop_cc2

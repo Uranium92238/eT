@@ -50,6 +50,23 @@ submodule (ccs_class) fop_ccs
 contains
 !
 !
+  module subroutine prepare_for_eom_fop_ccs(wf)
+!!
+!!    Prepare for eom fop
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+!     For now, do nothing.
+!
+      write(output%unit,'(/t3,a,a,a)') 'No EOM preparations for ', &
+                                       trim(wf%name_), ' wavefunction.'
+!
+  end subroutine prepare_for_eom_fop_ccs
+!
+!
   module subroutine construct_eom_etaX_ccs(wf, X, csiX, etaX)
 !!
 !!    Construct EOM etaX
@@ -64,7 +81,7 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
       call wf%construct_etaX(X, etaX)
@@ -303,7 +320,7 @@ contains
 !
       call mem%alloc(multipliers, wf%n_es_amplitudes)
 !
-      call wf%get_multipliers(multipliers)
+      call dcopy(wf%n_t1, wf%t1bar, 1, multipliers, 1)
 !
       X_cc = ddot(wf%n_es_amplitudes, multipliers, 1, csiX, 1)
 !

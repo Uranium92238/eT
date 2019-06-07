@@ -98,16 +98,21 @@ contains
 !
       integer :: i, j, a, b, ai, bj, aibj ! Index
 !
+      type(timings) :: timer
+!
+      timer = new_timer('Jacobian transpose transformation CC2')
+      call timer%turn_on()
+!
 !     Allocate and zero the transformed vecotr (singles part)
 !
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
-      sigma_ai = zero
+      call zero_array(sigma_ai, wf%n_t1)
 !
       call mem%alloc(c_ai, wf%n_v, wf%n_o)
 !
 !$omp parallel do schedule(static) private(a, i, ai)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
 !
@@ -131,8 +136,8 @@ contains
       call mem%alloc(c_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
 !
@@ -162,8 +167,8 @@ contains
 !     transformed vector for exit
 !
 !$omp parallel do schedule(static) private(a, i, ai)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
 !
@@ -180,7 +185,7 @@ contains
 !     Allocate unpacked transformed vector
 !
       call mem%alloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      sigma_aibj = zero
+      call zero_array(sigma_aibj, wf%n_t1**2)
 !
 !     Contributions from singles vector c
 !
@@ -197,15 +202,15 @@ contains
 !     Overwrite the incoming doubles c vector & pack in
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
 !
-            ai = wf%n_v*(i - 1) + a
+            bj = wf%n_v*(j - 1) + b
 !
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
 !
-                  bj = wf%n_v*(j - 1) + b
+                  ai = wf%n_v*(i - 1) + a
 !
                   if (ai .ge. bj) then
 !
@@ -222,6 +227,8 @@ contains
 !$omp end parallel do
 !
       call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_transpose_cc2_transformation_cc2
 !
@@ -245,11 +252,16 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)     :: c_bj
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)  :: sigma_ai
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_iakc, g_icjb, g_jbka
+      real(dp), dimension(:,:,:,:), allocatable :: g_iakc
       real(dp), dimension(:,:,:,:), allocatable :: L_aick
       real(dp), dimension(:,:,:,:), allocatable :: u_cjbk
 !
       real(dp), dimension(:,:), allocatable :: X_ck, Y_ik, Y_ca
+!
+      type(timings) :: timer
+!
+      timer = new_timer('jacobian transpose a1 cc2')
+      call timer%turn_on()
 !
 !     :: Term 1: sigma_ai =+ sum_bjck c_bj u^bc_jk L_iakc
 !
@@ -277,12 +289,10 @@ contains
       call wf%get_ovov(g_iakc)
 !
       call mem%alloc(L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call zero_array(L_aick, wf%n_t1**2)
 !
-      L_aick = zero
       call add_2143_to_1234(two, g_iakc, L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2341_to_1234(-one, g_iakc, L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(g_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     sigma_ai =+ sum_kc L_iakc * X_ck
 !
@@ -304,9 +314,7 @@ contains
 !
 !     :: Term 2: sigma_ai =+ sum_bjck - c_ak u^bc_jk g_jbic
 !
-      call mem%alloc(g_icjb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call wf%get_ovov(g_icjb)
+!      Note: Pretend g_iakc is g_icjb
 !
       call mem%alloc(u_cjbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call sort_1234_to_3214(wf%u, u_cjbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -320,15 +328,13 @@ contains
                   wf%n_o,                 &
                   (wf%n_o)*(wf%n_v)**2,   &
                   one,                    &
-                  g_icjb,                 & ! g_i_cjb
+                  g_iakc,                 & ! g_i_cjb
                   wf%n_o,                 &
                   u_cjbk,                 & ! u_cjb_k
                   (wf%n_o)*(wf%n_v)**2,   &
                   zero,                   &
                   Y_ik,                   & ! Y_ik
                   wf%n_o)
-!
-      call mem%dealloc(g_icjb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     sigma_ai =+ - c_ak * Y_ik
 !
@@ -349,9 +355,7 @@ contains
 !
 !     :: Term 3: sigma_ai =+ sum_bjck - c_ci u^bc_jk g_jbka
 !
-      call mem%alloc(g_jbka, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call wf%get_ovov(g_jbka)
+!     Note: we pretend that g_iakc is g_jbka 
 !
       call mem%alloc(Y_ca, wf%n_v, wf%n_v)
 !
@@ -364,13 +368,13 @@ contains
                   one,                    &
                   u_cjbk,                 & ! u_c_jbk
                   wf%n_v,                 &
-                  g_jbka,                 & ! g_jbk_a
+                  g_iakc,                 & ! g_jbk_a
                   (wf%n_v)*(wf%n_o)**2,   &
                   zero,                   &
                   Y_ca,                   & ! Y_ca
                   wf%n_v)
 !
-      call mem%dealloc(g_jbka, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(g_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call mem%dealloc(u_cjbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     sigma_ai =+ - c_ci * Y_ca
@@ -389,6 +393,8 @@ contains
                   wf%n_v)
 !
       call mem%dealloc(Y_ca, wf%n_v, wf%n_v)
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_transpose_cc2_a1_cc2
 !
@@ -414,6 +420,11 @@ contains
       type(batching_index) :: batch_a
 !
       integer :: req0, req1, current_a_batch
+!
+      type(timings) :: timer
+!
+      timer = new_timer('jacobian transpose b1 cc2')
+      call timer%turn_on()
 !
 !     :: Term 1: sigma_ai =+ sum_bjc c_bjci g_bjca = sum_bjc (g_bjca)^T c_bjci
 !
@@ -461,7 +472,7 @@ contains
 !
       call wf%get_oovo(g_ikbj)
 !
-!     sigma_ai =+ sum_bjk - c_akbj g_ikbj
+!     sigma_ai =- sum_bjk c_akbj g_ikbj
 !
       call dgemm('N', 'T',                & ! transposed g_ikbj
                   wf%n_v,                 &
@@ -477,6 +488,8 @@ contains
                   wf%n_v)
 !
       call mem%dealloc(g_ikbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_transpose_cc2_b1_cc2
 !
@@ -501,7 +514,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_ikjb, g_cajb
       real(dp), dimension(:,:,:,:), allocatable :: L_kibj, L_cajb
-      real(dp), dimension(:,:,:,:), allocatable :: sigma_iajb
+      real(dp), dimension(:,:,:,:), allocatable :: sigma_ajbi
 !
       type(batching_index) :: batch_c
 !
@@ -509,13 +522,18 @@ contains
 !
       integer :: a, i, b, j
 !
+      type(timings) :: timer
+!
+      timer = new_timer('jacobian transpose a2 cc2')
+      call timer%turn_on()
+!
 !     Term 1: (2F_jb c_ai - F_ib c_aj)
 !
       sigma_aibj = zero
 !
 !$omp parallel do private(a, i, b, j)
-      do b = 1, wf%n_v
-         do j = 1, wf%n_o
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
@@ -538,7 +556,8 @@ contains
       call wf%get_ooov(g_ikjb)
 !
       call mem%alloc(L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-      L_kibj = zero
+      call zero_array(L_kibj, (wf%n_o**3)*wf%n_v)
+!
       call add_2143_to_1234(two, g_ikjb, L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
       call add_4123_to_1234(-one, g_ikjb, L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -561,8 +580,8 @@ contains
 !
 !     Term 4: L_cajb c_ci
 !
-      call mem%alloc(sigma_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      sigma_iajb = zero
+      call mem%alloc(sigma_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call zero_array(sigma_ajbi, wf%n_t1**2)
 !
       req0 = (wf%n_v)*(wf%n_o)*(wf%integrals%n_J)
       req1 = (wf%n_v)*(wf%integrals%n_J) + (wf%n_o)*(wf%n_v)**2
@@ -586,36 +605,38 @@ contains
                            1, wf%n_v)
 !
          call mem%alloc(L_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
-         call dcopy((batch_c%length)*(wf%n_v**2)*(wf%n_o), g_cajb, 1, L_cajb, 1)
-         call dscal((batch_c%length)*(wf%n_v**2)*(wf%n_o), two, L_cajb, 1)
+!
+         call copy_and_scale(two, g_cajb, L_cajb, (batch_c%length)*(wf%n_v**2)*(wf%n_o))
          call add_1432_to_1234(-one, g_cajb, L_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
          call mem%dealloc(g_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
          call dgemm('T', 'N',                &
+                     (wf%n_v**2)*wf%n_o,     &
                      wf%n_o,                 &
-                     (wf%n_v**2)*(wf%n_o),   &
-                     batch_c%length,         &
-                     one,                    &
-                     c_ai(batch_c%first, 1), & ! c_c_i
                      wf%n_v,                 &
-                     L_cajb,                 & ! L_c_ajb
-                     batch_c%length,         &
                      one,                    &
-                     sigma_iajb,             &
-                     wf%n_o)
+                     L_cajb,                 &
+                     wf%n_v,                 &
+                     c_ai,                   &
+                     wf%n_v,                 &
+                     one,                    &
+                     sigma_ajbi,             &
+                     (wf%n_v**2)*(wf%n_o))
 !
          call mem%dealloc(L_cajb, batch_c%length, wf%n_v, wf%n_o, wf%n_v)
 !
       enddo ! batch_c
 !
-      call add_2143_to_1234(one, sigma_iajb, sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_1432_to_1234(one, sigma_ajbi, sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(sigma_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(sigma_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Symmetrize
 !
       call symmetric_sum(sigma_aibj, (wf%n_o)*(wf%n_v))
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_transpose_cc2_a2_cc2
 !
@@ -638,9 +659,14 @@ contains
 !
       integer :: a, i, b, j
 !
+      type(timings) :: timer
+!
+      timer = new_timer('jacobian transpose b2 cc2')
+      call timer%turn_on()
+!
 !$omp parallel do private(a, i, b, j)
-      do b = 1, wf%n_v
-         do j = 1, wf%n_o
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
@@ -655,6 +681,8 @@ contains
          enddo
       enddo
 !$omp end parallel do
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_transpose_cc2_b2_cc2
 !

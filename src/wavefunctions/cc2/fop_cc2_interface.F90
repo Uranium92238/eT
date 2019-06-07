@@ -17,24 +17,35 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
+   module subroutine prepare_for_eom_fop_cc2(wf)
+!!
+!!    Prepare for EOM first order properties
+!!    Written by Sarai D. Folekstad, May 2019
+!!
+      implicit none
 !
-   module subroutine construct_eom_etaX_ccsd(wf, X, csiX, etaX)
+      class(cc2), intent(inout)  :: wf
+!
+   end subroutine prepare_for_eom_fop_cc2
+!
+!
+   module subroutine construct_eom_etaX_cc2(wf, X, csiX, etaX)
 !!
 !!    Construct EOM etaX
 !!    Written by Sarai D. Folkestad, May 2019
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: csiX
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
-   end subroutine construct_eom_etaX_ccsd
+   end subroutine construct_eom_etaX_cc2
 !
-   module subroutine construct_etaX_ccsd(wf, X, etaX)
+   module subroutine construct_etaX_cc2(wf, X, etaX)
 !!
 !!    Construct etaX
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -44,153 +55,156 @@
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
-   end subroutine construct_etaX_ccsd
+   end subroutine construct_etaX_cc2
 !
 !
-   module subroutine etaX_ccsd_a1_ccsd(wf, X, etaX_ai)
+   module subroutine etaX_cc2_a1_cc2(wf, X, etaX_ai)
 !!
-!!    etaX CCSD A1
+!!    etaX cc2 A1
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2019
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX_ai
 !
-   end subroutine etaX_ccsd_a1_ccsd
+   end subroutine etaX_cc2_a1_cc2
 !
 !
-   module subroutine etaX_ccsd_a2_ccsd(wf, X, etaX_aibj)
+   module subroutine etaX_cc2_a2_cc2(wf, X, etaX_aibj)
 !!
-!!    etaX CCSD A2
+!!    etaX cc2 A2
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2019
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: etaX_aibj
 !
-   end subroutine etaX_ccsd_a2_ccsd
+   end subroutine etaX_cc2_a2_cc2
 !
 !
-   module subroutine etaX_ccsd_b2_ccsd(wf, X, etaX_aibj)
+   module subroutine etaX_cc2_b2_cc2(wf, X, etaX_aibj)
 !!
-!!    etaX CCSD B2
+!!    etaX cc2 B2
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2019
 !! 
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: etaX_aibj
 !
-   end subroutine etaX_ccsd_b2_ccsd
+   end subroutine etaX_cc2_b2_cc2
 !
 !
-   module subroutine construct_csiX_ccsd(wf, X, csiX)
+   module subroutine construct_csiX_cc2(wf, X, csiX)
 !!
-!!    Construct csiX (CCSD)
+!!    Construct csiX (cc2)
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
 !
-   end subroutine construct_csiX_ccsd
+   end subroutine construct_csiX_cc2
 !
 !
-   module subroutine csiX_ccsd_a1_ccsd(wf, X, csiX_ai)
+   module subroutine csiX_cc2_a1_cc2(wf, X, csiX_ai)
 !!
-!!    csiX CCSD A1
+!!    csiX cc2 A1
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2019
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: csiX_ai
 !
-   end subroutine csiX_ccsd_a1_ccsd
+   end subroutine csiX_cc2_a1_cc2
 !
 !
-   module subroutine csiX_ccsd_a2_ccsd(wf, X, csiX_aibj)
+   module subroutine csiX_cc2_a2_cc2(wf, X, csiX_aibj)
 !!
-!!    CsiX CCSD A2
+!!    CsiX cc2 A2
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folekstad
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: csiX_aibj
 !
-   end subroutine csiX_ccsd_a2_ccsd
+   end subroutine csiX_cc2_a2_cc2
 !
 !
-   module subroutine etaX_eom_ccsd_a1_ccsd(wf, X, etaX_ai)
+   module subroutine etaX_eom_cc2_a1_cc2(wf, X, etaX_ai)
 !!
-!!    etaX EOM CCSD A1
+!!    etaX EOM cc2 A1
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
 !!    Adapted by Sarai D. Folkestad
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX_ai
 !
-   end subroutine etaX_eom_ccsd_a1_ccsd
+   end subroutine etaX_eom_cc2_a1_cc2
 !
 !
-   module subroutine etaX_eom_a_ccsd(wf, etaX, csiX)
+   module subroutine etaX_eom_a_cc2(wf, etaX, csiX)
 !!
 !!    Get eom contribution
 !!    Written by Josefine H. Andersen, Feb 2019
 !!
+!!    Add EOM contribution to etaX vector
+!!
+!!       EOM correction:  η^X,corr_μ += tbar_μ (ξ * tbar) 
+!!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
       real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
 !
-   end subroutine etaX_eom_a_ccsd
 !
-!
+   end subroutine etaX_eom_a_cc2
