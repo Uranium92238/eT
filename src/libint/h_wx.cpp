@@ -119,6 +119,9 @@ void construct_ao_h_wx_1der(double *h_wxqk, int *s1, int *s2){
   auto atom2 = shell2atom[*s2];
   auto n_ao = basis.size();
 
+  auto n1 = basis[*s1 - 1].size();
+  auto n2 = basis[*s2 - 1].size();
+
   auto n_centers = n_atoms + 2; 
 
   for (auto center = 0, auto shellset = 0; center != n_centers; ++center){
@@ -127,9 +130,11 @@ void construct_ao_h_wx_1der(double *h_wxqk, int *s1, int *s2){
 
     for (auto coordinate = 0; coordinate != 3; ++coordinate, ++shellset){
 
-      auto hwqx_offset = n_ao*(n_ao*(3*(atom + 1) + (coordinate + 1))+1)+1;
+      auto hwqx_offset = n_ao*(n_ao*(3*(atom) + coordinate));
 
-      
+      double *h_wxqk_block = h_wxqk + hwqx_offset
+
+      extract_and_add_integrals(h_wxqk_block, ints[shellset], n1, n2);
 
     }
 
