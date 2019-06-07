@@ -658,9 +658,21 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
+      real(dp), dimension(:,:,:,:), allocatable :: h_wxqk
+!
       call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx)
 !
       call wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+!
+!     Debug; calculate the derivative 
+!
+      call mem%alloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+!
+      call wf%get_ao_h_wx_1der(h_wxqk)
+!
+      write(output%unit, *) 'Deriv of first element:', h_wxqk(1,1,:,:)
+!
+      call mem%dealloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
 !
    end subroutine update_fock_and_energy_hf
 !

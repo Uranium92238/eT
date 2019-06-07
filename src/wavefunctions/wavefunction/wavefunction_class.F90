@@ -55,8 +55,6 @@ module wavefunction_class
       procedure :: initialize_orbital_coefficients => initialize_orbital_coefficients_wavefunction
       procedure :: initialize_orbital_energies     => initialize_orbital_energies_wavefunction
 !
-      !procedure :: print_wavefunction_summary      => print_wavefunction_summary_wavefunction
-!
       procedure :: destruct_orbital_coefficients   => destruct_orbital_coefficients_wavefunction
       procedure :: destruct_orbital_energies       => destruct_orbital_energies_wavefunction
 !
@@ -64,6 +62,7 @@ module wavefunction_class
 !
       procedure :: get_ao_s_wx                     => get_ao_s_wx_wavefunction
       procedure :: get_ao_s_wx_1der                => get_ao_s_wx_1der_wavefunction
+      procedure :: get_ao_h_wx_1der                => get_ao_h_wx_1der_wavefunction
 !
       procedure :: get_ao_mu_wx                    => get_ao_mu_wx_wavefunction
       procedure :: get_ao_q_wx                     => get_ao_q_wx_wavefunction
@@ -404,10 +403,13 @@ contains
 !
       real(dp), dimension((wf%system%max_shell_size**2)*3*2), target :: h_ABqk 
 !
-      real(dp), dimension(:,:,:,:), pointer :: h_ABqk_p 
+      real(dp), dimension(:,:,:,:), pointer, contiguous :: h_ABqk_p 
 !
       type(interval) :: A_interval, B_interval 
 !     
+      call output%printf('Hello world 1')
+      call output%flush_()
+!
       do A = 1, wf%system%n_s
 !
          A_atom     = wf%system%shell_to_atom(A)
@@ -417,6 +419,9 @@ contains
 !
             B_atom     = wf%system%shell_to_atom(B)
             B_interval = wf%system%shell_limits(B)
+   !
+            call output%printf('A: (i0), B: (i0)', ints=[A, B])
+            call output%flush_()
 !
             h_ABqk_p(1 : A_interval%size, 1 : B_interval%size, 1 : 3, 1 : 2) &
                                  => h_ABqk(1 : A_interval%size*B_interval%size*3*2)
@@ -428,6 +433,9 @@ contains
                                                             h_ABqk_p(:,:,2,2),   &
                                                             h_ABqk_p(:,:,3,2),   &
                                                             A, B)
+!
+            call output%printf('hazza')
+            call output%flush_()
 !
             do w = 1, A_interval%size
                do x = 1, B_interval%size
@@ -441,8 +449,14 @@ contains
                enddo
             enddo
 !
+            call output%printf('hazza2')
+            call output%flush_()
+!
          enddo
       enddo
+!
+      call output%printf('Hello world 2')
+      call output%flush_()
 !
       do A = 1, wf%system%n_s
          do B = 1, wf%system%n_s
