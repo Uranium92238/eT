@@ -115,7 +115,8 @@ contains
 !
       if (io_error .ne. 0) then
 !
-         stop 'Error: Could not determine size of file '// trim(the_file%name_)
+          print *, 'Error: Could not determine size of file ' // trim(the_file%name_)
+          stop
 !
       endif
 !

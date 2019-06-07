@@ -100,7 +100,7 @@ module sequential_file_class
 contains
 !
 !
-   module function new_sequential_file(name_) result(the_file)
+   function new_sequential_file(name_) result(the_file)
 !!
 !!    Sequential file constructer
 !!    Writen by Rolf H. Myhre, May 2019
@@ -120,7 +120,7 @@ contains
       the_file%access_ = 'sequential'
       the_file%format_ = 'unformatted'
 !
-   end function
+   end function new_sequential_file
 !
 !
    subroutine open__sequential_file(the_file, file_action, file_pos)
@@ -262,7 +262,7 @@ contains
    end subroutine skip_sequential_file
 !
 !
-   module subroutine write_dp_sequential_file(the_file, scalar)
+   subroutine write_dp_sequential_file(the_file, scalar)
 !!
 !!    Sequential file write, real(dp0 scalar
 !!    Written by Rolf H. Myhre, May 2019
@@ -286,7 +286,7 @@ contains
    end subroutine write_dp_sequential_file
 !
 !
-   module subroutine write_dp_1_sequential_file(the_file, array, n)
+   subroutine write_dp_1_sequential_file(the_file, array, n)
 !!
 !!    Sequential file write, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -311,7 +311,7 @@ contains
    end subroutine write_dp_1_sequential_file
 !
 !
-   module subroutine write_dp_2_sequential_file(the_file, array, n)
+   subroutine write_dp_2_sequential_file(the_file, array, n)
 !!
 !!    Sequential file write, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -326,7 +326,7 @@ contains
    end subroutine write_dp_2_sequential_file
 !
 !
-   module subroutine write_dp_3_sequential_file(the_file, array, n)
+   subroutine write_dp_3_sequential_file(the_file, array, n)
 !!
 !!    Sequential file write, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -341,7 +341,7 @@ contains
    end subroutine write_dp_3_sequential_file
 !
 !
-   module subroutine write_dp_4_sequential_file(the_file, array, n)
+   subroutine write_dp_4_sequential_file(the_file, array, n)
 !!
 !!    Sequential file write, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -356,7 +356,7 @@ contains
    end subroutine write_dp_4_sequential_file
 !
 !
-   module subroutine write_i_sequential_file(the_file, scalar)
+   subroutine write_i_sequential_file(the_file, scalar)
 !!
 !!    Sequential file write, integer scalar
 !!    Written by Rolf H. Myhre, May 2019
@@ -380,7 +380,7 @@ contains
    end subroutine write_i_sequential_file
 !
 !
-   module subroutine write_i_1_sequential_file(the_file, array, n)
+   subroutine write_i_1_sequential_file(the_file, array, n)
 !!
 !!    Sequential file write, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -405,7 +405,7 @@ contains
    end subroutine write_i_1_sequential_file
 !
 !
-   module subroutine write_i_2_sequential_file(the_file, array, n)
+   subroutine write_i_2_sequential_file(the_file, array, n)
 !!
 !!    Sequential file write, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -420,7 +420,7 @@ contains
    end subroutine write_i_2_sequential_file
 !
 !
-   module subroutine write_i_3_sequential_file(the_file, array, n)
+   subroutine write_i_3_sequential_file(the_file, array, n)
 !!
 !!    Sequential file write, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -435,7 +435,7 @@ contains
    end subroutine write_i_3_sequential_file
 !
 !
-   module subroutine write_i_4_sequential_file(the_file, array, n)
+   subroutine write_i_4_sequential_file(the_file, array, n)
 !!
 !!    Sequential file write, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -450,7 +450,7 @@ contains
    end subroutine write_i_4_sequential_file
 !
 !
-   module subroutine read_dp_sequential_file(the_file, scalar)
+   subroutine read_dp_sequential_file(the_file, scalar)
 !!
 !!    Sequential file read, real(dp) scalar
 !!    Written by Rolf H. Myhre, May 2019
@@ -474,7 +474,7 @@ contains
    end subroutine read_dp_sequential_file
 !
 !
-   module subroutine read_dp_1_sequential_file(the_file, array, n)
+   subroutine read_dp_1_sequential_file(the_file, array, n)
 !!
 !!    Sequential file read, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -499,7 +499,7 @@ contains
    end subroutine read_dp_1_sequential_file
 !
 !
-   module subroutine read_dp_2_sequential_file(the_file, array, n)
+   subroutine read_dp_2_sequential_file(the_file, array, n)
 !!
 !!    Sequential file read, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -514,7 +514,7 @@ contains
    end subroutine read_dp_2_sequential_file
 !
 !
-   module subroutine read_dp_3_sequential_file(the_file, array, n)
+   subroutine read_dp_3_sequential_file(the_file, array, n)
 !!
 !!    Sequential file read, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -529,7 +529,7 @@ contains
    end subroutine read_dp_3_sequential_file
 !
 !
-   module subroutine read_dp_4_sequential_file(the_file, array, n)
+   subroutine read_dp_4_sequential_file(the_file, array, n)
 !!
 !!    Sequential file read, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -544,7 +544,7 @@ contains
    end subroutine read_dp_4_sequential_file
 !
 !
-   module subroutine read_i_sequential_file(the_file, scalar)
+   subroutine read_i_sequential_file(the_file, scalar)
 !!
 !!    Sequential file read, integer scalar
 !!    Written by Rolf H. Myhre, May 2019
@@ -568,7 +568,7 @@ contains
    end subroutine read_i_sequential_file
 !
 !
-   module subroutine read_i_1_sequential_file(the_file, array, n)
+   subroutine read_i_1_sequential_file(the_file, array, n)
 !!
 !!    Sequential file read, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -593,7 +593,7 @@ contains
    end subroutine read_i_1_sequential_file
 !
 !
-   module subroutine read_i_2_sequential_file(the_file, array, n)
+   subroutine read_i_2_sequential_file(the_file, array, n)
 !!
 !!    Sequential file read, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -608,7 +608,7 @@ contains
    end subroutine read_i_2_sequential_file
 !
 !
-   module subroutine read_i_3_sequential_file(the_file, array, n)
+   subroutine read_i_3_sequential_file(the_file, array, n)
 !!
 !!    Sequential file read, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -623,7 +623,7 @@ contains
    end subroutine read_i_3_sequential_file
 !
 !
-   module subroutine read_i_4_sequential_file(the_file, array, n)
+   subroutine read_i_4_sequential_file(the_file, array, n)
 !!
 !!    Sequential file read, integer array
 !!    Written by Rolf H. Myhre, May 2019

@@ -99,7 +99,7 @@ module direct_file_class
 contains
 !
 !
-   module function new_direct_file(name_, rec_dim, w_size) result(the_file)
+   function new_direct_file(name_, rec_dim, w_size) result(the_file)
 !!
 !!    Direct file constructer
 !!    Writen by Rolf H. Myhre, May 2019
@@ -138,7 +138,7 @@ contains
       the_file%record_dim = rec_dim
       the_file%record_length = rec_dim*the_file%word_size
 !
-   end function
+   end function new_direct_file
 !
 !
    subroutine open__direct_file(the_file, file_action)
@@ -216,7 +216,7 @@ contains
    end subroutine close__direct_file
 !
 !
-   module subroutine write__dp_direct_file(the_file, scalar, record)
+   subroutine write__dp_direct_file(the_file, scalar, record)
 !!
 !!    Direct file write_, real(dp) scalar
 !!    Written by Rolf H. Myhre, May 2019
@@ -241,7 +241,7 @@ contains
    end subroutine write__dp_direct_file
 !
 !
-   module subroutine write__dp_1_direct_file(the_file, array, record)
+   subroutine write__dp_1_direct_file(the_file, array, record)
 !!
 !!    Direct file write_, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -266,7 +266,7 @@ contains
    end subroutine write__dp_1_direct_file
 !
 !
-   module subroutine write__dp_2_direct_file(the_file, array, record)
+   subroutine write__dp_2_direct_file(the_file, array, record)
 !!
 !!    Direct file write_, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -281,7 +281,7 @@ contains
    end subroutine write__dp_2_direct_file
 !
 !
-   module subroutine write__dp_3_direct_file(the_file, array, record)
+   subroutine write__dp_3_direct_file(the_file, array, record)
 !!
 !!    Direct file write_, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -296,7 +296,7 @@ contains
    end subroutine write__dp_3_direct_file
 !
 !
-   module subroutine write__dp_4_direct_file(the_file, array, record)
+   subroutine write__dp_4_direct_file(the_file, array, record)
 !!
 !!    Direct file write_, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -311,7 +311,7 @@ contains
    end subroutine write__dp_4_direct_file
 !
 !
-   module subroutine write__i_direct_file(the_file, scalar, record)
+   subroutine write__i_direct_file(the_file, scalar, record)
 !!
 !!    Direct file write_, integer scalar
 !!    Written by Rolf H. Myhre, May 2019
@@ -336,7 +336,7 @@ contains
    end subroutine write__i_direct_file
 !
 !
-   module subroutine write__i_1_direct_file(the_file, array, record)
+   subroutine write__i_1_direct_file(the_file, array, record)
 !!
 !!    Direct file write_, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -361,7 +361,7 @@ contains
    end subroutine write__i_1_direct_file
 !
 !
-   module subroutine write__i_2_direct_file(the_file, array, record)
+   subroutine write__i_2_direct_file(the_file, array, record)
 !!
 !!    Direct file write_, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -376,7 +376,7 @@ contains
    end subroutine write__i_2_direct_file
 !
 !
-   module subroutine write__i_3_direct_file(the_file, array, record)
+   subroutine write__i_3_direct_file(the_file, array, record)
 !!
 !!    Direct file write_, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -391,7 +391,7 @@ contains
    end subroutine write__i_3_direct_file
 !
 !
-   module subroutine write__i_4_direct_file(the_file, array, record)
+   subroutine write__i_4_direct_file(the_file, array, record)
 !!
 !!    Direct file write_, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -406,7 +406,7 @@ contains
    end subroutine write__i_4_direct_file
 !
 !
-   module subroutine read__dp_direct_file(the_file, scalar, record)
+   subroutine read__dp_direct_file(the_file, scalar, record)
 !!
 !!    Direct file read_, real(dp) scalar
 !!    Written by Rolf H. Myhre, May 2019
@@ -431,7 +431,7 @@ contains
    end subroutine read__dp_direct_file
 !
 !
-   module subroutine read__dp_1_direct_file(the_file, array, record)
+   subroutine read__dp_1_direct_file(the_file, array, record)
 !!
 !!    Direct file read_, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -456,7 +456,7 @@ contains
    end subroutine read__dp_1_direct_file
 !
 !
-   module subroutine read__dp_2_direct_file(the_file, array, record)
+   subroutine read__dp_2_direct_file(the_file, array, record)
 !!
 !!    Direct file read_, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -471,7 +471,7 @@ contains
    end subroutine read__dp_2_direct_file
 !
 !
-   module subroutine read__dp_3_direct_file(the_file, array, record)
+   subroutine read__dp_3_direct_file(the_file, array, record)
 !!
 !!    Direct file read_, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -486,7 +486,7 @@ contains
    end subroutine read__dp_3_direct_file
 !
 !
-   module subroutine read__dp_4_direct_file(the_file, array, record)
+   subroutine read__dp_4_direct_file(the_file, array, record)
 !!
 !!    Direct file read_, real(dp) array
 !!    Written by Rolf H. Myhre, May 2019
@@ -501,7 +501,7 @@ contains
    end subroutine read__dp_4_direct_file
 !
 !
-   module subroutine read__i_direct_file(the_file, scalar, record)
+   subroutine read__i_direct_file(the_file, scalar, record)
 !!
 !!    Direct file read_, integer scalar
 !!    Written by Rolf H. Myhre, May 2019
@@ -526,7 +526,7 @@ contains
    end subroutine read__i_direct_file
 !
 !
-   module subroutine read__i_1_direct_file(the_file, array, record)
+   subroutine read__i_1_direct_file(the_file, array, record)
 !!
 !!    Direct file read_, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -551,7 +551,7 @@ contains
    end subroutine read__i_1_direct_file
 !
 !
-   module subroutine read__i_2_direct_file(the_file, array, record)
+   subroutine read__i_2_direct_file(the_file, array, record)
 !!
 !!    Direct file read_, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -566,7 +566,7 @@ contains
    end subroutine read__i_2_direct_file
 !
 !
-   module subroutine read__i_3_direct_file(the_file, array, record)
+   subroutine read__i_3_direct_file(the_file, array, record)
 !!
 !!    Direct file read_, integer array
 !!    Written by Rolf H. Myhre, May 2019
@@ -581,7 +581,7 @@ contains
    end subroutine read__i_3_direct_file
 !
 !
-   module subroutine read__i_4_direct_file(the_file, array, record)
+   subroutine read__i_4_direct_file(the_file, array, record)
 !!
 !!    Direct file read_, integer array
 !!    Written by Rolf H. Myhre, May 2019

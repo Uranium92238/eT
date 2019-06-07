@@ -48,7 +48,7 @@ module gs_engine_class
 !
       procedure :: read_gs_settings                      => read_gs_settings_gs_engine
 !
-      procedure, private :: set_printables               => set_printables_gs_engine
+      procedure :: set_printables                        => set_printables_gs_engine
 !
    end type gs_engine
 !

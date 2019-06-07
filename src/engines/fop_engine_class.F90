@@ -38,16 +38,16 @@ module fop_engine_class
 !
    contains
 !
-      procedure :: run                 => run_fop_engine
+      procedure :: run                       => run_fop_engine
 !
-      procedure :: read_settings       => read_settings_fop_engine
-      procedure :: read_fop_settings   => read_fop_settings_fop_engine
+      procedure :: read_settings             => read_settings_fop_engine
+      procedure :: read_fop_settings         => read_fop_settings_fop_engine
 !
-      procedure :: do_eom              => do_eom_fop_engine
+      procedure :: do_eom                    => do_eom_fop_engine
 !
-      procedure, nopass :: print_summary_eom    => print_summary_eom_fop_engine
+      procedure, nopass :: print_summary_eom => print_summary_eom_fop_engine
 !
-      procedure, private :: set_printables      => set_printables_fop_engine
+      procedure :: set_printables            => set_printables_fop_engine
 !
    end type fop_engine
 !
