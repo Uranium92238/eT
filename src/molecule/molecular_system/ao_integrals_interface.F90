@@ -37,9 +37,9 @@
    end subroutine construct_ao_h_wx_molecular_system
 !
 !
-   module subroutine construct_ao_h_wx_1der_molecular_system(molecule, h_1x, h_1y, h_1z, h_2x, h_2y, h_2z, s1, s2) 
+   module subroutine construct_ao_h_wx_kinetic_1der_molecular_system(molecule, h_1x, h_1y, h_1z, h_2x, h_2y, h_2z, s1, s2) 
 !!
-!!    Construct h_αβ 1st-derivative
+!!    Construct h_αβ kinetic 1st-derivative
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -55,7 +55,33 @@
       real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_2y
       real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_2z
 !
-   end subroutine construct_ao_h_wx_1der_molecular_system
+   end subroutine construct_ao_h_wx_kinetic_1der_molecular_system
+!
+!
+   module subroutine construct_and_add_ao_h_wx_nuclear_1der_molecular_system(h_wxqk, s1, s2) 
+!!
+!!    Construct and add h_αβ nuclear 1st-derivative
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Fortran wrapper for the C++ routine that calculates and
+!!    adds parts of the h_αβ (nuclear contribution) first derivative integrals 
+!!    in the arrays. 
+!!
+!!    s1 and s2 are the shells that w and x respectively belong to.
+!! 
+!!    h_1x contains the first derivative with respect to the x component of the atom that s1 is centered on,
+!!    h_1y contains the first derivative with respect to the y component of the atom that s1 is centered on,
+!!    and so on...
+!!
+      implicit none
+!
+      integer, intent(in) :: s1, s2
+!
+      real(dp), dimension(:,:,:,:), contiguous :: h_wxqk
+!
+      integer(i6) :: s1_4, s2_4 
+!
+   end subroutine construct_and_add_ao_h_wx_nuclear_1der_molecular_system
 !
 !
    module subroutine construct_ao_g_wxyz_molecular_system(molecule, g, s1, s2, s3, s4)

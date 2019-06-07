@@ -72,7 +72,7 @@ void construct_ao_h_wx(double *h, int *s1, int *s2){
   return;
 }
 
-void construct_ao_kinetic_1der(double *h_1x, double *h_1y, double *h_1z, 
+void construct_ao_h_wx_kinetic_1der(double *h_1x, double *h_1y, double *h_1z, 
                   double *h_2x, double *h_2y, double *h_2z, int *s1, int *s2){
 /*
     Add kinetic contribution to derivative of h 
@@ -105,7 +105,7 @@ void construct_ao_kinetic_1der(double *h_1x, double *h_1y, double *h_1z,
 
 }
 
-void construct_ao_h_wx_1der(double *h_wxqk, int *s1, int *s2){
+void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2){
 /*
 /   Add nuclear 1st derivative contribution to h
 */
@@ -117,6 +117,7 @@ void construct_ao_h_wx_1der(double *h_wxqk, int *s1, int *s2){
 
   auto atom1 = shell2atom[*s1];
   auto atom2 = shell2atom[*s2];
+
   auto n_ao = basis.size();
 
   auto n1 = basis[*s1 - 1].size();
@@ -124,7 +125,7 @@ void construct_ao_h_wx_1der(double *h_wxqk, int *s1, int *s2){
 
   auto n_centers = n_atoms + 2; 
 
-  for (auto center = 0, auto shellset = 0; center != n_centers; ++center){
+  for (auto center = 0, shellset = 0; center != n_centers; ++center){
 
     auto atom = (center == 0) ? atom1 : ((center == 1) ? atom2 : center - 2);
 
@@ -132,9 +133,9 @@ void construct_ao_h_wx_1der(double *h_wxqk, int *s1, int *s2){
 
       auto hwqx_offset = n_ao*(n_ao*(3*(atom) + coordinate));
 
-      double *h_wxqk_block = h_wxqk + hwqx_offset
+      double *h_wxqk_block = h_wxqk + hwqx_offset;
 
-      extract_and_add_integrals(h_wxqk_block, ints[shellset], n1, n2);
+      extract_and_add_integrals(h_wxqk_block, ints[shellset], n1, n2, 1.0e0);
 
     }
 

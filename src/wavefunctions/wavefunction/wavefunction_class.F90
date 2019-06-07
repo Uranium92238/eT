@@ -334,7 +334,7 @@ contains
    subroutine get_ao_s_wx_1der_wavefunction(wf, s_wxqk)
 !!
 !!    Get AO s 1st derivative
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Written by Eirik F. Kjønstad, June 2019 
 !!
       implicit none 
 !
@@ -342,7 +342,7 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms), intent(out) :: s_wxqk
 !
-      integer :: A, B, A_atom, B_atom  
+      integer :: A, B, A_atom, B_atom, w, x 
 !
       real(dp), dimension((wf%system%max_shell_size**2)*3*2), target :: s_ABqk 
 !
@@ -387,6 +387,72 @@ contains
       enddo
 !
    end subroutine get_ao_s_wx_1der_wavefunction
+!
+!
+   subroutine get_ao_h_wx_1der_wavefunction(wf, h_wxqk)
+!!
+!!    Get AO h 1st derivative
+!!    Written by Eirik F. Kjønstad, June 2019 
+!!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms), intent(out) :: h_wxqk
+!
+      integer :: A, B, A_atom, B_atom, w, x 
+!
+      real(dp), dimension((wf%system%max_shell_size**2)*3*2), target :: h_ABqk 
+!
+      real(dp), dimension(:,:,:,:), pointer :: h_ABqk_p 
+!
+      type(interval) :: A_interval, B_interval 
+!     
+      do A = 1, wf%system%n_s
+!
+         A_atom     = wf%system%shell_to_atom(A)
+         A_interval = wf%system%shell_limits(A)
+!
+         do B = 1, A
+!
+            B_atom     = wf%system%shell_to_atom(B)
+            B_interval = wf%system%shell_limits(B)
+!
+            h_ABqk_p(1 : A_interval%size, 1 : B_interval%size, 1 : 3, 1 : 2) &
+                                 => h_ABqk(1 : A_interval%size*B_interval%size*3*2)
+!
+            call wf%system%construct_ao_h_wx_kinetic_1der(h_ABqk_p(:,:,1,1),     &
+                                                            h_ABqk_p(:,:,2,1),   &
+                                                            h_ABqk_p(:,:,3,1),   &
+                                                            h_ABqk_p(:,:,1,2),   &
+                                                            h_ABqk_p(:,:,2,2),   &
+                                                            h_ABqk_p(:,:,3,2),   &
+                                                            A, B)
+!
+            do w = 1, A_interval%size
+               do x = 1, B_interval%size
+!
+                  h_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, :, A_atom) = h_ABqk_p(w, x, :, 1)
+                  h_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, :, A_atom) = h_ABqk_p(w, x, :, 1)
+!
+                  h_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, :, B_atom) = h_ABqk_p(w, x, :, 2)
+                  h_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, :, B_atom) = h_ABqk_p(w, x, :, 2)
+!
+               enddo
+            enddo
+!
+         enddo
+      enddo
+!
+      do A = 1, wf%system%n_s
+         do B = 1, wf%system%n_s
+!
+            call wf%system%construct_and_add_ao_h_wx_nuclear_1der(h_wxqk, A, B)
+!
+         enddo 
+      enddo
+!
+   end subroutine get_ao_h_wx_1der_wavefunction
 !
 !
    subroutine get_ao_mu_wx_wavefunction(wf, mu_X, mu_Y, mu_Z)

@@ -93,8 +93,9 @@ module molecular_system_class
 !
       procedure :: translate_from_input_order_to_eT_order   => translate_from_input_order_to_eT_order_molecular_system
 !
-      procedure :: construct_ao_h_wx                        => construct_ao_h_wx_molecular_system     
-      procedure :: construct_ao_h_wx_1der                   => construct_ao_h_wx_1der_molecular_system     
+      procedure :: construct_ao_h_wx                              => construct_ao_h_wx_molecular_system     
+      procedure :: construct_ao_h_wx_kinetic_1der                 => construct_ao_h_wx_kinetic_1der_molecular_system     
+      procedure, nopass :: construct_and_add_ao_h_wx_nuclear_1der => construct_and_add_ao_h_wx_nuclear_1der_molecular_system
 ! 
       procedure :: construct_ao_g_wxyz                      => construct_ao_g_wxyz_molecular_system  
       procedure, nopass :: construct_ao_g_wxyz_epsilon      => construct_ao_g_wxyz_epsilon_molecular_system
@@ -174,6 +175,8 @@ contains
          call initialize_basis(molecule%basis_sets(i), temp_name)
 !
       enddo
+!
+      call initialize_shell2atom_c()
 !
 !     Initialize atoms and shells for eT
 !

@@ -70,6 +70,9 @@ extern vector<Engine> quadrupole;
 vector<Atom> atoms;
 extern vector<Atom> atoms;
 
+vector<int> shell2atom;
+extern vector<int> shell2atom;
+
 void initialize_atoms(char *name){
 
     string xyzfilename(strcat(name,".xyz"));
@@ -93,6 +96,12 @@ void initialize_basis(char *basisset, char *filename){
     cout.clear();
 
     basis.add(temporary);
+
+}
+
+void initialize_shell2atom(){
+
+    shell2atom = basis.shell2atom(atoms);
 
 }
 

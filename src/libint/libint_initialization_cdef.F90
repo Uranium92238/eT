@@ -38,6 +38,12 @@ interface
 !
    end subroutine initialize_basis_c
 !
+   subroutine initialize_shell2atom_c() bind(C, name='shell2atom')
+!
+      implicit none
+!
+   end subroutine initialize_shell2atom_c
+!
    subroutine initialize_atoms_c(name) bind(C, name='initialize_atoms')
 !
       use iso_c_binding, only: C_CHAR
