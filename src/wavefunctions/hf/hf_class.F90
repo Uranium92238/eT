@@ -80,9 +80,11 @@ module hf_class
 !     AO Fock and energy related routines
 !
       procedure :: construct_ao_fock                        => construct_ao_fock_hf
-      procedure :: ao_fock_construction_loop                => ao_fock_construction_loop_hf
-      procedure :: ao_fock_coulomb_construction_loop        => ao_fock_coulomb_construction_loop_hf
-      procedure :: ao_fock_exchange_construction_loop       => ao_fock_exchange_construction_loop_hf
+      procedure :: construct_ao_G                           => construct_ao_G_hf
+!
+      procedure :: construct_coulomb_ao_G                   => construct_coulomb_ao_G_hf
+      procedure :: construct_exchange_ao_G                  => construct_exchange_ao_G_hf
+!
       procedure :: construct_ao_fock_SAD                    => construct_ao_fock_SAD_hf
       procedure :: construct_mo_fock                        => construct_mo_fock_hf
       procedure :: set_ao_fock                              => set_ao_fock_hf
@@ -658,7 +660,7 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
-      real(dp), dimension(:,:,:,:), allocatable :: h_wxqk
+   !   real(dp), dimension(:,:,:,:), allocatable :: h_wxqk
 !
       call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx)
 !
@@ -666,13 +668,13 @@ contains
 !
 !     Debug; calculate the derivative 
 !
-      call mem%alloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+   !   call mem%alloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
 !
-      call wf%get_ao_h_wx_1der(h_wxqk)
+   !   call wf%get_ao_s_wx_1der(h_wxqk)
 !
-      write(output%unit, *) 'Deriv of first element:', h_wxqk(1,1,:,:)
+   !   write(output%unit, *) 'Deriv of first element:', h_wxqk(1,1,:,:)
 !
-      call mem%dealloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+   !   call mem%dealloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
 !
    end subroutine update_fock_and_energy_hf
 !
@@ -1574,7 +1576,7 @@ contains
       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
       F = zero
 !
-      call wf%ao_fock_construction_loop(F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
+      call wf%construct_ao_G(F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
                                          sp_density_schwarz,  &
                                          n_sig_sp, coulomb_thr, exchange_thr, precision_thr, &
                                          wf%system%shell_limits)
@@ -1603,16 +1605,16 @@ contains
    end subroutine construct_ao_fock_hf
 !
 !
-   subroutine ao_fock_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,    &
+   subroutine construct_ao_G_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,    &
                                           sp_density_schwarz, n_sig_sp, coulomb_thr, &
                                           exchange_thr, precision_thr, shells)
 !!
-!!    AO Fock construction loop
+!!    Construct AO G 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    This routine constructs the entire two-electron part of the Fock matrix,
 !!
-!!       F_αβ = sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ,
+!!       F_αβ = sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ (= G(D)_αβ),
 !!
 !!    where contributions from different threads are gathered column blocks
 !!    of the incoming F matrix.
@@ -1767,10 +1769,10 @@ contains
 !
       call set_coulomb_precision_c(wf%libint_epsilon)
 !
-   end subroutine ao_fock_construction_loop_hf
+   end subroutine construct_ao_G_hf
 !
 !
-   subroutine ao_fock_coulomb_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
+   subroutine construct_coulomb_ao_G_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
                                                    sp_density_schwarz, &
                                                    n_sig_sp, coulomb_thr, precision_thr, shells)
 !!
@@ -1910,10 +1912,10 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine ao_fock_coulomb_construction_loop_hf
+   end subroutine construct_coulomb_ao_G_hf
 !
 !
-   subroutine ao_fock_exchange_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz, &
+   subroutine construct_exchange_ao_G_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz, &
                                           sp_density_schwarz, &
                                            n_sig_sp, exchange_thr, precision_thr, shells)
 !!
@@ -2062,7 +2064,7 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine ao_fock_exchange_construction_loop_hf
+   end subroutine construct_exchange_ao_G_hf
 !
 !
    subroutine calculate_hf_energy_from_G_hf(wf, half_GD_wx, h_wx)
