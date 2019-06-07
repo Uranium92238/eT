@@ -23,14 +23,14 @@ module zop_engine_class
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
 !!    Calculates expectation values < Λ | A | CC > for the operator A,
-!!    where A is the dipole or quadrupole operator. 
+!!    where A is the dipole or quadrupole operator.
 !!
    use gs_engine_class
 !
    type, extends(gs_engine) :: zop_engine
 !
-      logical :: dipole 
-      logical :: quadrupole 
+      logical :: dipole
+      logical :: quadrupole
 !
    contains
 !
@@ -41,7 +41,7 @@ module zop_engine_class
 !
       procedure :: calculate_expectation_values                => calculate_expectation_values_zop_engine
 !
-      procedure, private :: set_printables                              => set_printables_zop_engine
+      procedure :: set_printables                              => set_printables_zop_engine
 !
       procedure, nopass, private :: print_summary              => print_summary_zop_engine
 !
@@ -66,14 +66,14 @@ contains
 !
       type(zop_engine) :: engine
 !
-      engine%name_ = 'Zeroth order coupled cluster properties engine'   
+      engine%name_ = 'Zeroth order coupled cluster properties engine'
       engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
 !
       engine%dipole                 = .false.
-      engine%quadrupole             = .false. 
+      engine%quadrupole             = .false.
       engine%multipliers_algorithm  = 'davidson'
       engine%gs_algorithm           = 'diis'
 !
@@ -84,12 +84,12 @@ contains
 !
    subroutine read_settings_zop_engine(engine)
 !!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(zop_engine) :: engine 
+      class(zop_engine) :: engine
 !
       call engine%read_gs_settings()
       call engine%read_zop_settings()
@@ -99,12 +99,12 @@ contains
 !
    subroutine read_zop_settings_zop_engine(engine)
 !!
-!!    Read ZOP settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!    Read ZOP settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(zop_engine) :: engine 
+      class(zop_engine) :: engine
 !
       if (input%requested_keyword_in_section('dipole','cc zop')) engine%dipole = .true.
       if (input%requested_keyword_in_section('quadrupole','cc zop')) engine%quadrupole = .true.
@@ -122,11 +122,11 @@ contains
       class(ccs)         :: wf
       class(zop_engine)  :: engine
 !
-!     Cholesky decoposition of the electron repulsion integrals 
+!     Cholesky decoposition of the electron repulsion integrals
 !
       call engine%do_cholesky(wf, wf%orbital_coefficients)
 !
-!     Determine ground state | CC > 
+!     Determine ground state | CC >
 !
       call engine%do_ground_state(wf)
 !
@@ -134,7 +134,7 @@ contains
 !
       call engine%do_multipliers(wf)
 !
-!     Compute the one-electron density 
+!     Compute the one-electron density
 !
       call wf%initialize_density()
       call wf%construct_density()
@@ -148,14 +148,14 @@ contains
 !
    subroutine calculate_expectation_values_zop_engine(engine, wf)
 !!
-!!    Calculate expectation values 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
+!!    Calculate expectation values
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(zop_engine), intent(in) :: engine 
+      class(zop_engine), intent(in) :: engine
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
       real(dp), dimension(3) :: mu_electronic
       real(dp), dimension(3) :: mu_nuclear
@@ -167,7 +167,7 @@ contains
 !
       character(len=4), dimension(:), allocatable :: components
 !
-      if (engine%dipole) then 
+      if (engine%dipole) then
 !
          call engine%calculate_dipole_moment(wf, mu_electronic, mu_nuclear, mu_total)
 !
@@ -175,30 +175,30 @@ contains
 !
          components = (/'x   ',&
                         'y   ',&
-                        'z   '/)  
+                        'z   '/)
 !
          call engine%print_summary('dipole moment', mu_electronic, mu_nuclear, mu_total, &
-                                    components, 3)     
+                                    components, 3)
 !
-         deallocate(components)  
+         deallocate(components)
 !
       endif
 !
-      if (engine%quadrupole) then 
+      if (engine%quadrupole) then
 !
          call engine%calculate_quadrupole_moment(wf, q_electronic, q_nuclear, q_total)
 !
          allocate(components(6))
 !
          components = (/ 'xx  ',   &
-                         'xy  ',   & 
-                         'xz  ',   & 
-                         'yy  ',   & 
-                         'yz  ',   & 
-                         'zz  '    /) 
+                         'xy  ',   &
+                         'xz  ',   &
+                         'yy  ',   &
+                         'yz  ',   &
+                         'zz  '    /)
 !
          call engine%print_summary('quadrupole moment (with trace)', q_electronic, q_nuclear, q_total, &
-                                    components, 6)     
+                                    components, 6)
 !
          call engine%remove_trace(q_electronic)
          call engine%remove_trace(q_nuclear)
@@ -206,11 +206,11 @@ contains
          q_total = q_electronic + q_nuclear
 !
          call engine%print_summary('traceless quadrupole moment', q_electronic, q_nuclear, q_total, &
-                                    components, 6)   
+                                    components, 6)
 !
-         deallocate(components)  
+         deallocate(components)
 !
-      endif 
+      endif
 !
    end subroutine calculate_expectation_values_zop_engine
 !
@@ -226,11 +226,11 @@ contains
 !
       real(dp), dimension(n_components), intent(in) :: electronic
       real(dp), dimension(n_components), intent(in) :: nuclear
-      real(dp), dimension(n_components), intent(in) :: total 
+      real(dp), dimension(n_components), intent(in) :: total
 !
       character(len=4), dimension(n_components), intent(in) :: components
 !
-      character(len=*), intent(in) :: operator_ 
+      character(len=*), intent(in) :: operator_
 !
       integer :: k
 !
@@ -254,7 +254,7 @@ contains
 !
    subroutine set_printables_zop_engine(engine)
 !!
-!!    Set printables 
+!!    Set printables
 !!    Written by sarai D. Folkestad, May 2019
 !!
       implicit none
@@ -268,7 +268,7 @@ contains
       'Calculation of the ground state amplitudes and energy ('//trim(engine%gs_algorithm)//'-algorithm)',  &
       'Calculation of the multipliers ('//trim(engine%multipliers_algorithm)//'-algorithm)',                &
       'Calculation of the zeroth order property']
-!      
+!
       engine%description  = 'Calculates the time-independent expectation value of&
                             & one-electron operators A, < A > = < Λ | A | CC >.'
 !

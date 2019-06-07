@@ -151,7 +151,11 @@ module ccsd_class
 !     Routines related to property calculations
 !
       procedure :: construct_etaX                              => construct_etaX_ccsd  
+!
+      procedure :: etaX_eom_a                                  => etaX_eom_a_ccsd    
+!
       procedure :: construct_eom_etaX                          => construct_eom_etaX_ccsd  
+
       procedure :: etaX_ccsd_a1                                => etaX_ccsd_a1_ccsd    
       procedure :: etaX_ccsd_a2                                => etaX_ccsd_a2_ccsd    
       procedure :: etaX_ccsd_b2                                => etaX_ccsd_b2_ccsd    

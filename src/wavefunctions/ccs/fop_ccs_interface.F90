@@ -17,6 +17,19 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
+!
+  module subroutine prepare_for_eom_fop_ccs(wf)
+!!
+!!    Prepare for eom fop
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+  end subroutine prepare_for_eom_fop_ccs
+!
+!
    module subroutine construct_eom_etaX_ccs(wf, X, csiX, etaX)
 !!
 !!    Construct EOM etaX
@@ -31,7 +44,7 @@
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: csiX
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
    end subroutine construct_eom_etaX_ccs

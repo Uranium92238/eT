@@ -38,7 +38,6 @@ submodule (cc2_class) jacobian_cc2
 !
 contains
 !
-!
    module subroutine jacobian_transform_trial_vector_cc2(wf, c_i)
 !!
 !!    Jacobian transform trial vector 
@@ -86,10 +85,15 @@ contains
 !
       integer :: i, j, a, b, ai, bj, aibj ! Index
 !
+      type(timings) :: timer
+!
+      timer = new_timer('Jacobian transformation CC2')
+      call timer%turn_on()
+!
 !     Allocate and zero the transformed vector (singles part)
 !
       call mem%alloc(rho_ai, wf%n_v, wf%n_o)
-      rho_ai = zero
+      call zero_array(rho_ai, wf%n_t1)
 !
       call mem%alloc(c_ai, wf%n_v, wf%n_o)
 !
@@ -119,15 +123,15 @@ contains
       call mem%alloc(c_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
 !
-            ai = wf%n_v*(i - 1) + a
+            bj = wf%n_v*(j - 1) + b
 !  
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
 !
-                  bj = wf%n_v*(j - 1) + b
+                  ai = wf%n_v*(i - 1) + a
 !
                   if (ai .ge. bj) then
 !
@@ -147,11 +151,11 @@ contains
 !     Scale the doubles vector by 1 + delta_ai,bj, i.e.
 !     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
 !
-!$omp parallel do schedule(static) private(ai) 
-      do a =1, wf%n_v
-         do i = 1, wf%n_o
+!$omp parallel do schedule(static) private(a, i) 
+      do i =1, wf%n_o
+         do a = 1, wf%n_v
 !
-            c_aibj(a, i,a, i) = two*c_aibj(a, i, a, i)
+            c_aibj(a, i, a, i) = two*c_aibj(a, i, a, i)
 !
          enddo
       enddo
@@ -163,8 +167,8 @@ contains
 !     transformed vector for exit
 !
 !$omp parallel do schedule(static) private(a, i, ai) 
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
 !
@@ -181,7 +185,7 @@ contains
 !     Allocate unpacked transformed vector
 !
       call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      rho_aibj = zero
+      call zero_array(rho_aibj, wf%n_t1**2)
 !
 !     Contributions from singles vector c
 !
@@ -198,15 +202,15 @@ contains
 !     Overwrite the incoming doubles c vector & pack in
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
 !
-            ai = wf%n_v*(i - 1) + a
+            bj = wf%n_v*(j - 1) + b
 !  
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
 !
-                  bj = wf%n_v*(j - 1) + b
+                  ai = wf%n_v*(i - 1) + a
 !
                   if (ai .ge. bj) then
 !
@@ -223,6 +227,8 @@ contains
 !$omp end parallel do
 !
       call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_cc2_transformation_cc2
 !
@@ -243,6 +249,11 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_jbkc, u_bkci, X_kcji, L_ckbj
       real(dp), dimension(:,:), allocatable     :: X_ji, X_ck
+!
+      type(timings) :: timer
+!
+      timer = new_timer('jacobian cc2 a1')
+      call timer%turn_on()
 !
       call mem%alloc(g_jbkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
@@ -322,7 +333,7 @@ contains
 !     L_kcjb ordered as L_ckbj
 !
       call mem%alloc(L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      L_ckbj = zero
+      call zero_array(L_ckbj, wf%n_t1**2)
 !
       call add_2143_to_1234(two, g_jbkc, L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o) ! Still pretending that g_jbkc is g_kcjb although this is not necessary
       call add_4123_to_1234(-one, g_jbkc, L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -361,6 +372,8 @@ contains
 !
       call mem%dealloc(X_ck, wf%n_v, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_cc2_a1_cc2
 !
 !
@@ -388,11 +401,16 @@ contains
       type(batching_index) :: batch_a 
       integer         :: req0, req1, current_a_batch
 !
+      type(timings) :: timer
+!
+      timer = new_timer('jacobian cc2 b1')
+      call timer%turn_on()
+!
 !     Make X_aijb = 2 c_aibj - c_ajbi 
 !
       call mem%alloc(X_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call zero_array(X_aijb, wf%n_t1**2)
 !
-      X_aijb = zero 
       call add_1243_to_1234(two, c_aibj, X_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call add_1342_to_1234(-one, c_aibj, X_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
@@ -422,7 +440,8 @@ contains
 !
       call mem%alloc(L_kbji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      L_kbji = -one*g_jbki 
+      call copy_and_scale(-one, g_jbki, L_kbji, (wf%n_o**3)*wf%n_v)
+!      
       call add_3214_to_1234(two, g_jbki, L_kbji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%dealloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
@@ -470,7 +489,8 @@ contains
 !
          call mem%alloc(L_abkc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         L_abkc = two*g_abkc 
+         call copy_and_scale(two, g_abkc, L_abkc, (wf%n_v**2)*(batch_a%length)*wf%n_o)
+!
          call add_1432_to_1234(-one, g_abkc, L_abkc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
 !
          call mem%dealloc(g_abkc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
@@ -494,6 +514,8 @@ contains
 !
       call mem%dealloc(c_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_cc2_b1_cc2
 !
 !
@@ -511,8 +533,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(out)  :: rho_aibj   
 !
-      real(dp), dimension(:,:,:,:), allocatable :: rho_bjai_1 
-      real(dp), dimension(:,:,:,:), allocatable :: rho_aibj_2 
+      real(dp), dimension(:,:,:,:), allocatable :: rho_bjai
       real(dp), dimension(:,:,:,:), allocatable :: g_kjai 
       real(dp), dimension(:,:,:,:), allocatable :: g_aibc
 !
@@ -521,13 +542,18 @@ contains
       type(batching_index) :: batch_c 
       integer         :: req0, req1, current_c_batch 
 !
+      type(timings) :: timer
+!
+      timer = new_timer('jacobian cc2 a2')
+      call timer%turn_on()
+!
 !     (1/Δ_aibj)P_aibj (- sum_k c_bk g_kjai)
 !
       call mem%alloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
       call wf%get_oovo(g_kjai)
 !
-      call mem%alloc(rho_bjai_1, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(rho_bjai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call dgemm('N','N',               &
                   wf%n_v,               &
@@ -539,29 +565,12 @@ contains
                   g_kjai,               & ! g_k,jai
                   wf%n_o,               &
                   zero,                 &
-                  rho_bjai_1,           & ! rho_b,jai 
+                  rho_bjai,             & ! rho_b,jai 
                   wf%n_v)
 !
-!$omp parallel do private(a, i)
-      do a = 1, wf%n_v 
-         do i = 1, wf%n_o
-!
-            rho_bjai_1(a, i, a, i) = half*rho_bjai_1(a, i, a, i)
-!
-         enddo
-      enddo
-!$omp end parallel do 
-!
-      call daxpy((wf%n_o)**2*(wf%n_v)**2, one, rho_bjai_1, 1, rho_aibj, 1)
-      call add_21_to_12(one, rho_bjai_1, rho_aibj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-      call mem%dealloc(rho_bjai_1, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
 !     (1/Δ_aibj)P_aibj (sum_c g_aibc c_cj)
-!
-      call mem%alloc(rho_aibj_2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      rho_aibj_2 = zero 
 !
       req0 = (wf%integrals%n_J)*(wf%n_o)*(wf%n_v)
       req1 = (wf%n_o)*(wf%n_v)**2 + (wf%integrals%n_J)*(wf%n_v)
@@ -592,7 +601,7 @@ contains
                      c_ai(batch_c%first, 1), & ! c_c,j
                      wf%n_v,                 &
                      one,                    &
-                     rho_aibj_2,             & ! rho_aib,j 
+                     rho_bjai,               & ! rho_aib,j But we will symmetrize and may place in rho_bjai
                      (wf%n_o)*(wf%n_v)**2)
 !
          call mem%dealloc(g_aibc, wf%n_v, wf%n_o, wf%n_v, batch_c%length)
@@ -600,19 +609,21 @@ contains
       enddo  ! batch over c 
 !
 !$omp parallel do private(a, i)
-      do a = 1, wf%n_v 
-         do i = 1, wf%n_o
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
-            rho_aibj_2(a, i, a, i) = half*rho_aibj_2(a, i, a, i)
+            rho_bjai(a, i, a, i) = half*rho_bjai(a, i, a, i)
 !
          enddo
       enddo
 !$omp end parallel do 
 !
-      call daxpy((wf%n_o)**2*(wf%n_v)**2, one, rho_aibj_2, 1, rho_aibj, 1)
-      call add_21_to_12(one, rho_aibj_2, rho_aibj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))     
+      call daxpy((wf%n_o)**2*(wf%n_v)**2, one, rho_bjai, 1, rho_aibj, 1)
+      call add_21_to_12(one, rho_bjai, rho_aibj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))     
 !
-      call mem%dealloc(rho_aibj_2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(rho_bjai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_cc2_a2_cc2
 !
@@ -633,11 +644,16 @@ contains
 !
       integer :: i, j, a, b
 !
+      type(timings) :: timer
+!
+      timer = new_timer('jacobian cc2 b2')
+      call timer%turn_on()
+!
 !     c_aibj/(1/Δ_aibj) 
 !
 !$omp parallel do private(a, i)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
             c_aibj(a, i, a, i) = half*c_aibj(a, i, a, i) 
 !
@@ -645,9 +661,10 @@ contains
       enddo
 !$omp end parallel do
 !
+!
 !$omp parallel do private(a, i, b, j)
-      do b = 1, wf%n_v
-         do j = 1, wf%n_o
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
@@ -663,6 +680,7 @@ contains
       enddo
 !$omp end parallel do
 !
+      call timer%turn_off()
 !
    end subroutine jacobian_cc2_b2_cc2
 !

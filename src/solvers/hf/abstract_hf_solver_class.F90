@@ -43,6 +43,8 @@ module abstract_hf_solver_class
 !  
       character(len=200) :: ao_density_guess = 'SAD'
 !
+      integer, dimension(:), allocatable :: orbitals_to_print
+!
    contains 
 !
       procedure :: print_banner             => print_banner_abstract_hf_solver
@@ -51,6 +53,8 @@ module abstract_hf_solver_class
       procedure :: read_hf_solver_settings  => read_hf_solver_settings_abstract_hf_solver
 !
       procedure :: print_hf_solver_settings => print_hf_solver_settings_hf_solver
+!
+      procedure :: print_summary            => print_summary_abstract_hf_solver
 !
    end type abstract_hf_solver
 !
@@ -96,14 +100,28 @@ contains
 !!
 !!    Reads the settings specific to this class.
 !!
+      use memory_manager_class, only: mem
+!
       implicit none 
 !
       class(abstract_hf_solver) :: solver 
+!
+      integer :: n_orbitals_to_print
 !
       call input%get_keyword_in_section('energy threshold', 'solver hf', solver%energy_threshold)
       call input%get_keyword_in_section('gradient threshold', 'solver hf', solver%gradient_threshold)
       call input%get_keyword_in_section('max iterations', 'solver hf', solver%max_iterations)
       call input%get_keyword_in_section('ao density guess', 'solver hf', solver%ao_density_guess)
+!
+      if (input%requested_keyword_in_section('print orbitals', 'solver hf')) then
+!
+         n_orbitals_to_print = input%get_n_elements_for_keyword_in_section('print orbitals', 'solver hf')
+!
+         call mem%alloc(solver%orbitals_to_print, n_orbitals_to_print)
+!
+         call input%get_array_for_keyword_in_section('print orbitals', 'solver hf', n_orbitals_to_print, solver%orbitals_to_print)
+!
+      endif
 !
    end subroutine read_hf_solver_settings_abstract_hf_solver
 !
@@ -123,5 +141,36 @@ contains
 !
    end subroutine print_banner_abstract_hf_solver
 !
+!
+   subroutine print_summary_abstract_hf_solver(solver, wf)
+!!
+!!    Print banner
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      use string_utilities, only: convert_to_uppercase
+      use hf_class, only: hf 
+!
+      implicit none 
+!
+      class(abstract_hf_solver) :: solver
+      class(hf), intent(in) :: wf
+!
+      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(convert_to_uppercase(wf%name_)),&
+             ' wavefunction energetics (a.u.):'
+!
+      call wf%print_energy()
+      call wf%print_orbital_energies('3')
+!
+      if (allocated(solver%orbitals_to_print)) then
+      
+         call wf%print_orbitals(size(solver%orbitals_to_print), solver%orbitals_to_print)
+!
+      else
+!
+         call wf%print_orbitals(wf%n_o + 10)
+!
+      endif
+!
+   end subroutine print_summary_abstract_hf_solver
 !
 end module abstract_hf_solver_class

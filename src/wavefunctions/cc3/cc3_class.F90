@@ -197,7 +197,7 @@ contains
 !
       class(cc3) :: wf
 !
-      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
+      call output%printf('- Cleaning up (a0) wavefunction', chars=[trim(wf%name_)], fs='(/t3,a)')
 !
    end subroutine cleanup_cc3
 !
@@ -277,13 +277,12 @@ contains
       prep_timer = new_timer("Time preparing for Jacobian")
       call prep_timer%turn_on()
 !
-      write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', 'right', &
-                                            & ' excited state equations.'
+      call output%printf('Preparing for (a0) right excited state equations', chars=[trim(wf%name_)], fs='(/t3,a)')
 !
       call wf%prep_cc3_jacobian_intermediates()
 !
       call prep_timer%turn_off()
-      flush(timing%unit)
+      call timing%flush_()
 !
    end subroutine prepare_for_jacobian_cc3
 !
@@ -302,14 +301,13 @@ contains
       prep_timer = new_timer("Time preparing for Jacobian")
       call prep_timer%turn_on()
 !
-      write(output%unit,'(/t3,a,a,a,a,a)') 'Preparing for ', trim(wf%name_), ' ', 'left', &
-                                            & ' excited state equations.'
+      call output%printf('Preparing for (a0) left excited state equations', chars=[trim(wf%name_)], fs='(/t3,a)')
 !
       call wf%prep_cc3_jacobian_intermediates()
       call wf%prep_cc3_jacobian_trans_integrals()
 !
       call prep_timer%turn_off()
-      flush(timing%unit)
+      call timing%flush_()
 !
    end subroutine prepare_for_jacobian_transpose_cc3
 !

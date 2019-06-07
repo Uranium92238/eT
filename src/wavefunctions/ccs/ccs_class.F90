@@ -192,6 +192,8 @@ module ccs_class
 !
 !     Routines related to EOM first order property calculations
 !
+      procedure :: prepare_for_eom_fop                         => prepare_for_eom_fop_ccs
+!
       procedure :: construct_etaX                              => construct_etaX_ccs
       procedure :: construct_eom_etaX                          => construct_eom_etaX_ccs
       procedure :: etaX_ccs_a1                                 => etaX_ccs_a1_ccs
@@ -932,7 +934,7 @@ contains
    end subroutine read_excitation_energies_ccs
 !
 !
-   subroutine get_n_excited_states_on_file_ccs(wf, side, n_states)
+   function get_n_excited_states_on_file_ccs(wf, side) result(n_states)
 !!
 !!    Get number of excited states on file 
 !!    Written by Eirik F. Kjønstad, Mar 2019 
@@ -946,7 +948,9 @@ contains
 !
       character(len=*), intent(in) :: side 
 !
-      integer, intent(out) :: n_states 
+      integer :: n_states 
+!
+      n_states = 0
 !
       if (trim(side) == 'right') then 
 !
@@ -964,7 +968,7 @@ contains
 !
       endif
 !
-   end subroutine get_n_excited_states_on_file_ccs
+   end function get_n_excited_states_on_file_ccs
 !
 !
    subroutine destruct_multipliers_ccs(wf)

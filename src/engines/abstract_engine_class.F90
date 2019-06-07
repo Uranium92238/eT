@@ -45,8 +45,8 @@ module abstract_engine_class
 !
       procedure :: ignite => ignite_abstract_engine
 !
-      procedure(essential_engine_w_wf), deferred     :: run 
-      procedure(essential_engine), deferred, private :: set_printables 
+      procedure(essential_engine_w_wf), deferred   :: run 
+      procedure(essential_engine), deferred        :: set_printables 
 !
       procedure, non_overridable :: cleanup => cleanup_abstract_engine
 !

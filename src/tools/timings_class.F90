@@ -243,8 +243,8 @@ contains
       class(timings), intent(in) :: timer 
 !
       write(timing%unit, '(/t3,a)') timer%tag
-      write(timing%unit, '(t3,a17,f12.5)')  'wall time (sec): ', timer%elapsed_wall_time
-      write(timing%unit, '(t3,a17,f12.5)')  'cpu time (sec):  ', timer%elapsed_cpu_time
+      write(timing%unit, '(t3,a17,f20.2)')  'wall time (sec): ', timer%elapsed_wall_time
+      write(timing%unit, '(t3,a17,f20.2)')  'cpu time (sec):  ', timer%elapsed_cpu_time
 !
    end subroutine print_times_timings
 !

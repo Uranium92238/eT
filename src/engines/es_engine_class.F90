@@ -39,7 +39,7 @@ module es_engine_class
 !
       procedure :: do_excited_state          => do_excited_state_es_engine
 !
-      procedure, private :: set_printables   => set_printables_es_engine
+      procedure :: set_printables            => set_printables_es_engine
 !
    end type es_engine
 !
@@ -83,12 +83,12 @@ contains
 !
    subroutine read_settings_es_engine(engine)
 !!
-!!    Read es settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!    Read es settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(es_engine) :: engine 
+      class(es_engine) :: engine
 !
       call engine%read_gs_settings()
       call engine%read_es_settings()
@@ -98,12 +98,12 @@ contains
 !
    subroutine read_es_settings_es_engine(engine)
 !!
-!!    Read es settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!    Read es settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
-      implicit none 
+      implicit none
 !
-      class(es_engine) :: engine 
+      class(es_engine) :: engine
 !
       call input%get_keyword_in_section('algorithm', 'solver cc es', engine%es_algorithm)
 !
@@ -203,14 +203,14 @@ contains
          call output%error_msg('Could not start excited state solver. It may be that the &
                                  &algorithm is not implemented for the method specified.')
 !
-      endif 
+      endif
 !
    end subroutine do_excited_state_es_engine
 !
 !
    subroutine set_printables_es_engine(engine)
 !!
-!!    Set printables 
+!!    Set printables
 !!    Written by sarai D. Folkestad, May 2019
 !!
       implicit none

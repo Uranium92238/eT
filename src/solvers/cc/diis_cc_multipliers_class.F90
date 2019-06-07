@@ -298,7 +298,7 @@ contains
       class(diis_cc_multipliers) :: solver
       class(ccs) :: wf
 !
-      call wf%save_multipliers()  
+      call wf%save_multipliers()
 !
       call solver%timer%turn_off()
 !
