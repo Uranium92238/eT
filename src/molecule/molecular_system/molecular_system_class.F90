@@ -176,8 +176,6 @@ contains
 !
       enddo
 !
-      call initialize_shell2atom_c()
-!
 !     Initialize atoms and shells for eT
 !
       allocate(n_shells_on_atoms(molecule%n_atoms))
@@ -282,6 +280,8 @@ contains
       call molecule%print_system()
 !
       call molecule%get_max_shell_size(molecule%max_shell_size)
+!
+      call initialize_shell2atom_c()
 !
    end subroutine prepare_molecular_system
 !

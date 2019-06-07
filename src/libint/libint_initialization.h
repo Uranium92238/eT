@@ -35,6 +35,7 @@ void initialize_overlap();
 void initialize_dipole();
 void initialize_quadrupole();
 void set_coulomb_precision(double *prec);
+void initialize_shell2atom();
 
 #ifdef __cplusplus
 }
