@@ -73,6 +73,8 @@ module molecular_system_class
       procedure :: print_geometry                           => print_geometry_molecular_system
 !
       procedure :: get_nuclear_repulsion                    => get_nuclear_repulsion_molecular_system
+      procedure :: get_nuclear_repulsion_1der               => get_nuclear_repulsion_1der_molecular_system
+!
       procedure :: get_n_electrons                          => get_n_electrons_molecular_system
       procedure :: get_nuclear_dipole                       => get_nuclear_dipole_molecular_system
       procedure :: get_nuclear_quadrupole                   => get_nuclear_quadrupole_molecular_system
@@ -781,6 +783,48 @@ contains
       deallocate(atoms_copy)
 !
    end subroutine read_active_atoms_molecular_system
+!
+!
+   function get_nuclear_repulsion_1der_molecular_system(molecule) result(h_nuc_qk)
+!!
+!!    Get nuclear repulsion 1der 
+!!    Written by Eirik F. Kjønstad, June 2019
+!!
+!!       h_nuc^x = - x  / r_ij^2
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      real(dp), dimension(3, molecule%n_atoms) :: h_nuc_qk 
+!
+      real(dp) :: x_ij, y_ij, z_ij, r_ij
+!
+      integer :: i, j
+!
+      do i = 1, molecule%n_atoms
+!
+         h_nuc_qk(:,i) = zero 
+!
+         do j = i + 1, molecule%n_atoms
+!
+            x_ij = molecule%atoms(i)%x - molecule%atoms(j)%x
+            y_ij = molecule%atoms(i)%y - molecule%atoms(j)%y
+            z_ij = molecule%atoms(i)%z - molecule%atoms(j)%z
+!
+            r_ij = sqrt(x_ij**2 + y_ij**2 + z_ij**2)
+!
+            r_ij = angstrom_to_bohr*r_ij
+!
+            h_nuc_qk(1,i) = h_nuc_qk(1,i) - angstrom_to_bohr*(molecule%atoms(i)%x)/(r_ij**2)
+            h_nuc_qk(2,i) = h_nuc_qk(2,i) - angstrom_to_bohr*(molecule%atoms(i)%y)/(r_ij**2)
+            h_nuc_qk(3,i) = h_nuc_qk(3,i) - angstrom_to_bohr*(molecule%atoms(i)%z)/(r_ij**2)
+!
+         enddo
+      enddo
+!
+   end function get_nuclear_repulsion_1der_molecular_system
+!
 !
 !
    function get_nuclear_repulsion_molecular_system(molecule)

@@ -149,6 +149,8 @@ module hf_class
       procedure :: construct_roothan_hall_gradient          => construct_roothan_hall_gradient_hf
       procedure :: get_packed_roothan_hall_gradient         => get_packed_roothan_hall_gradient_hf
 !
+      procedure :: construct_molecular_gradient             => construct_molecular_gradient_hf
+!
 !     Integral related routines
 !
       procedure :: construct_sp_eri_schwarz                 => construct_sp_eri_schwarz_hf
@@ -3381,6 +3383,156 @@ contains
       if (wf%libint_epsilon .gt. (wf%coulomb_threshold)**2) wf%libint_epsilon = (wf%coulomb_threshold)**2
 !
    end subroutine set_screening_and_precision_thresholds_hf
+!
+!
+   subroutine construct_molecular_gradient_hf(wf, E_qk)
+!!
+!!    Contruct molecular gradient
+!!    Written by Åsmund H. Tveten and Eirik F. Kjønstad, 2019
+!!
+!!    Constructs the molecular gradient,
+!! 
+!!       E^x = Tr[D h^x] + (1/2)Tr[D G^x(D)] - Tr[D F D S^x] + h_nuc^x.
+!!
+!!    Here, x denotes the energy in the x direction. In the code, 
+!!    x = (q,k), where q denotes the component (x,y, or z) and k 
+!!    denotes the atom (k = 1,2,3,...,n_atoms).
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(3, wf%system%n_atoms), intent(out) :: E_qk ! Molecular gradient
+!
+      real(dp), dimension(:,:,:,:), allocatable :: h_wxqk
+      real(dp), dimension(:,:,:,:), allocatable :: G_wxqk
+      real(dp), dimension(:,:,:,:), allocatable :: s_wxqk
+!
+      real(dp), dimension(:,:,:,:), allocatable :: Dhx_wxqk
+      real(dp), dimension(:,:,:,:), allocatable :: DGx_wxqk
+      real(dp), dimension(:,:,:,:), allocatable :: DFDSx_wxqk
+!
+      real(dp), dimension(:,:), allocatable :: DFD, FD  
+!
+      integer :: w, k, q
+!
+!     Construct h_nuc^x, and the AO integral derivatives, h^x, S^x, and G^x(D)
+!
+      E_qk = wf%system%get_nuclear_repulsion_1der() ! E_qk = h_nuc_qk
+!
+      call mem%alloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+      call mem%alloc(G_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+      call mem%alloc(s_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+!
+      call wf%get_ao_h_wx_1der(h_wxqk)
+      call wf%get_ao_s_wx_1der(s_wxqk)
+      call wf%construct_ao_G_1der(G_wxqk, wf%ao_density)
+!
+!     Construct D F D 
+!
+      call mem%alloc(FD, wf%n_ao, wf%n_ao)
+!
+      call dgemm('N','N',        &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  one,           &
+                  wf%ao_fock,    &
+                  wf%n_ao,       &
+                  wf%ao_density, &
+                  wf%n_ao,       &
+                  zero,          &
+                  FD,            &  
+                  wf%n_ao)
+!
+      call mem%alloc(DFD, wf%n_ao, wf%n_ao)
+!
+      call dgemm('N','N',        &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  one,           &
+                  wf%ao_density, &
+                  wf%n_ao,       &
+                  FD,            &
+                  wf%n_ao,       &
+                  zero,          &
+                  DFD,           & 
+                  wf%n_ao)
+!
+      call mem%dealloc(FD, wf%n_ao, wf%n_ao)
+!
+!     Construct the products, D h^x, D G^x(D), and D F D S^x
+!
+      call mem%alloc(Dhx_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+      call mem%alloc(DGx_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+      call mem%alloc(DFDSx_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+!
+      do k = 1, wf%system%n_atoms 
+         do q = 1, 3
+!
+            call dgemm('N','N',              &
+                        wf%n_ao,             &
+                        wf%n_ao,             &
+                        wf%n_ao,             &
+                        one,                 &
+                        wf%ao_density,       &
+                        wf%n_ao,             &
+                        h_wxqk(1,1,q,k),     &
+                        wf%n_ao,             &
+                        zero,                &
+                        Dhx_wxqk(1,1,q,k),   &
+                        wf%n_ao)
+!
+            call dgemm('N','N',              &
+                        wf%n_ao,             &
+                        wf%n_ao,             &
+                        wf%n_ao,             &
+                        one,                 &
+                        wf%ao_density,       &
+                        wf%n_ao,             &
+                        G_wxqk(1,1,q,k),     &
+                        wf%n_ao,             &
+                        zero,                &
+                        DGx_wxqk(1,1,q,k),   &
+                        wf%n_ao)
+!
+            call dgemm('N','N',              &
+                        wf%n_ao,             &
+                        wf%n_ao,             &
+                        wf%n_ao,             &
+                        one,                 &
+                        DFD,                 &
+                        wf%n_ao,             &
+                        s_wxqk(1,1,q,k),     &
+                        wf%n_ao,             &
+                        zero,                &
+                        DFDSx_wxqk(1,1,q,k), &
+                        wf%n_ao)
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(DFD, wf%n_ao, wf%n_ao)
+!
+      call mem%dealloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+      call mem%dealloc(G_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+      call mem%dealloc(s_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+!
+!     Perform the traces, adding the contributions to the gradient 
+!
+      do w = 1, wf%n_ao
+!
+            E_qk(:,:) = E_qk(:,:) &
+               + Dhx_wxqk(w,w,:,:) + half*DGx_wxqk(w,w,:,:) - DFDSx_wxqk(w,w,:,:)
+!
+      enddo    
+!
+      call mem%dealloc(Dhx_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+      call mem%dealloc(DGx_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+      call mem%dealloc(DFDSx_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+!
+   end subroutine construct_molecular_gradient_hf
 !
 !
 end module hf_class
