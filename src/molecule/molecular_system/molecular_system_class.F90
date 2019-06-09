@@ -97,6 +97,7 @@ module molecular_system_class
       procedure :: construct_ao_h_wx_kinetic_1der                 => construct_ao_h_wx_kinetic_1der_molecular_system     
       procedure, nopass :: construct_and_add_ao_h_wx_nuclear_1der => construct_and_add_ao_h_wx_nuclear_1der_molecular_system
 ! 
+      procedure :: construct_ao_g_wxyz_1der                 => construct_ao_g_wxyz_1der_molecular_system
       procedure :: construct_ao_g_wxyz                      => construct_ao_g_wxyz_molecular_system  
       procedure, nopass :: construct_ao_g_wxyz_epsilon      => construct_ao_g_wxyz_epsilon_molecular_system
 !      

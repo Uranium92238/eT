@@ -43,6 +43,9 @@ extern eTBasis basis;
 vector<Engine> electronic_repulsion_engines(omp_get_max_threads());
 extern vector<Engine> electronic_repulsion_engines;
 
+Engine electronic_repulsion_1der;
+extern Engine electronic_repulsion_1der;
+
 vector<Engine> kinetic(omp_get_max_threads());
 extern vector<Engine> kinetic;
 
@@ -128,6 +131,10 @@ void initialize_coulomb(){
     for (int i = 0; i != omp_get_max_threads(); i++){
         electronic_repulsion_engines[i] = temporary;
     }
+
+    Engine temporary_1der(Operator::coulomb, basis.max_nprim(), basis.max_l(), 1);
+
+    electronic_repulsion_1der = temporary_1der;
 
 }
 

@@ -38,6 +38,7 @@ using namespace std;
 
 #include "globals.h"
 #include "omp_control.h"
+#include "extract_integrals.h"
 
 using namespace libint2;
 
@@ -131,4 +132,38 @@ void construct_ao_g_wxyz_epsilon(double *g, int *s1, int *s2, int *s3, int *s4, 
    }
 
   return;
+}
+
+void construct_ao_g_wxyz_1der(double *g_wxyzqk, int *s1, int *s2, int *s3, int *s4,
+                                      int *atom1, int *atom2, int *atom3, int *atom4){
+/*
+/   Compute 1st derivative of g_wxyz
+*/
+  const auto& buf_vec = electronic_repulsion_1der.results();
+
+  auto n1 = basis[*s1 - 1].size(); 
+  auto n2 = basis[*s2 - 1].size(); 
+  auto n3 = basis[*s3 - 1].size(); 
+  auto n4 = basis[*s4 - 1].size(); 
+
+  electronic_repulsion_1der.compute(basis[*s1 - 1], basis[*s2 - 1], 
+                                    basis[*s3 - 1], basis[*s4 - 1]);
+
+  auto offset = 0;
+
+  for (auto k = 0, shell_set = 0; k != 4; ++k){
+
+    for (auto q = 0; q != 3; ++q, ++shell_set){
+
+        auto ints = buf_vec[shell_set];
+
+        offset = offset + n1*n2*n3*n4;
+
+        auto *g_wxyzqk_block = g_wxyzqk + offset;
+
+        extract_integrals_4(g_wxyzqk_block, ints, n1, n2, n3, n4, 1.0e0);
+
+    }
+  }
+
 }

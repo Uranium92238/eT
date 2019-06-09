@@ -105,6 +105,30 @@
    end subroutine construct_ao_g_wxyz_molecular_system
 !
 !
+   module subroutine construct_ao_g_wxyz_1der_molecular_system(molecule, g_wxyzqk, s1, s2, s3, s4, &
+                                                                  a1, a2, a3, a4)
+!!
+!!    Construct g_αβγδ 1der
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Fortran wrapper for the C++ routine that calculates and
+!!    saves the g_αβγδ integral in the array g. s1-s4 are 
+!!    the shells that alpha, beta, gamma and delta belong to. 
+!!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      integer, intent(in) :: s1, s2, s3, s4 ! Shells 
+      integer, intent(in) :: a1, a2, a3, a4 ! Atoms 
+!
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size,    &
+                           molecule%shell_limits(s3)%size, molecule%shell_limits(s4)%size,   &
+                           3, 4), intent(out) :: g_wxyzqk
+!
+   end subroutine construct_ao_g_wxyz_1der_molecular_system
+!
+!
    module subroutine construct_ao_g_wxyz_epsilon_molecular_system(g, s1, s2, s3, s4, eps, thread, skip, &
                                                             n1, n2, n3, n4)
 !!
