@@ -50,6 +50,8 @@ module molecular_system_class
 !
       type(interval), dimension(:), allocatable :: shell_limits 
 !
+      integer, dimension(:), allocatable :: shell2atom 
+!
       logical :: active_atoms = .false.
 !
       integer :: n_active_atoms = 0
@@ -86,10 +88,12 @@ module molecular_system_class
       procedure :: initialize_basis_sets                    => initialize_basis_sets_molecular_system
       procedure :: initialize_atoms                         => initialize_atoms_molecular_system
       procedure :: initialize_shell_limits                  => initialize_shell_limits_molecular_system
+      procedure :: initialize_shell2atom                    => initialize_shell2atom_molecular_system
 !
       procedure :: destruct_basis_sets                      => destruct_basis_sets_molecular_system
       procedure :: destruct_atoms                           => destruct_atoms_molecular_system
       procedure :: destruct_shell_limits                    => destruct_shell_limits_molecular_system
+      procedure :: destruct_shell2atom                      => destruct_shell2atom_molecular_system
 !
       procedure :: translate_from_input_order_to_eT_order   => translate_from_input_order_to_eT_order_molecular_system
 !
@@ -283,6 +287,14 @@ contains
       call molecule%get_max_shell_size(molecule%max_shell_size)
 !
       call initialize_shell2atom_c()
+!
+      call molecule%initialize_shell2atom()
+!
+      do i = 1, molecule%n_s 
+!
+         molecule%shell2atom(i) = molecule%shell_to_atom(i)
+!
+      enddo
 !
    end subroutine prepare_molecular_system
 !
@@ -1087,7 +1099,7 @@ contains
 !
    subroutine destruct_basis_sets_molecular_system(molecule)
 !!
-!!    destruct basis sets
+!!    Destruct basis sets
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
       implicit none
@@ -1101,7 +1113,7 @@ contains
 !
    subroutine initialize_shell_limits_molecular_system(molecule)
 !!
-!!    Initialize basis sets
+!!    Initialize shell limits 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
       implicit none
@@ -1115,6 +1127,34 @@ contains
       if (.not. allocated(molecule%shell_limits)) allocate(molecule%shell_limits(n_s))
 !
    end subroutine initialize_shell_limits_molecular_system
+!
+!
+   subroutine initialize_shell2atom_molecular_system(molecule)
+!!
+!!    Initialize shell to atom 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      if (.not. allocated(molecule%shell2atom)) call mem%alloc(molecule%shell2atom, molecule%n_s)
+!
+   end subroutine initialize_shell2atom_molecular_system
+!
+!
+   subroutine destruct_shell2atom_molecular_system(molecule)
+!!
+!!    Destruct shell to atom 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      if (allocated(molecule%shell2atom)) call mem%dealloc(molecule%shell2atom, molecule%n_s)
+!
+   end subroutine destruct_shell2atom_molecular_system
 !
 !
    subroutine destruct_shell_limits_molecular_system(molecule)

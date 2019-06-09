@@ -65,7 +65,7 @@ void extract_integrals_4(double *ints_fortran_order, const double *ints_cxx_orde
 
                for(auto f4=0; f4!=n4; ++f4, ++f1234){
 
-                  ints_fortran_order[f1234] = 0.0e0;
+                  ints_fortran_order[n1*(n2*(n3*f4+f3)+f2)+f1] = 0.0e0;
 
                }
             }

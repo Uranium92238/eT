@@ -32,8 +32,7 @@ interface
    end subroutine construct_ao_g_wxyz_c
 !
 !
-   subroutine construct_ao_g_wxyz_1der_c(g_wxyzqk, s1, s2, s3, s4, &
-                              a1, a2, a3, a4) bind(C, name='construct_ao_g_wxyz_1der')
+   subroutine construct_ao_g_wxyz_1der_c(g_wxyzqk, s1, s2, s3, s4) bind(C, name='construct_ao_g_wxyz_1der')
 !
       use iso_c_binding
 !
@@ -41,7 +40,6 @@ interface
 !
       real(c_double) :: g_wxyzqk(*)
       integer(c_int) :: s1, s2, s3, s4
-      integer(c_int) :: a1, a2, a3, a4
 !
    end subroutine construct_ao_g_wxyz_1der_c
 !

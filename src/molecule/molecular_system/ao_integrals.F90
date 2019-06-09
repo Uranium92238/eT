@@ -168,8 +168,7 @@ contains
    end subroutine construct_ao_g_wxyz_molecular_system
 !
 !
-   module subroutine construct_ao_g_wxyz_1der_molecular_system(molecule, g_wxyzqk, s1, s2, s3, s4, &
-                                                                  a1, a2, a3, a4)
+   module subroutine construct_ao_g_wxyz_1der_molecular_system(molecule, g_wxyzqk, s1, s2, s3, s4)
 !!
 !!    Construct g_αβγδ 1der
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -183,27 +182,19 @@ contains
       class(molecular_system), intent(in) :: molecule 
 !
       integer, intent(in) :: s1, s2, s3, s4 ! Shells 
-      integer, intent(in) :: a1, a2, a3, a4 ! Atoms 
 !
       real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size,    &
                            molecule%shell_limits(s3)%size, molecule%shell_limits(s4)%size,   &
                            3, 4), intent(out) :: g_wxyzqk
 !
       integer(i6) :: s1_4, s2_4, s3_4, s4_4
-      integer(i6) :: a1_4, a2_4, a3_4, a4_4
 !
       s1_4 = int(s1,i6)
       s2_4 = int(s2,i6)
       s3_4 = int(s3,i6)
       s4_4 = int(s4,i6)
 !
-      a1_4 = int(a1,i6)
-      a2_4 = int(a2,i6)
-      a3_4 = int(a3,i6)
-      a4_4 = int(a4,i6)
-!
-      call construct_ao_g_wxyz_1der_c(g_wxyzqk, s1_4, s2_4, s3_4, s4_4, &
-                                                a1_4, a2_4, a3_4, a4_4)
+      call construct_ao_g_wxyz_1der_c(g_wxyzqk, s1_4, s2_4, s3_4, s4_4)
 !
    end subroutine construct_ao_g_wxyz_1der_molecular_system
 !

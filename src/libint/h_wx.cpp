@@ -96,16 +96,12 @@ void construct_ao_h_wx_kinetic_1der(double *h_1x, double *h_1y, double *h_1z,
 
   // Extract the integrals from each set
 
-  cout << "hello!" << endl;
-
   extract_integrals(h_1x, ints_shellset_1x, n1, n2, 1.0e0);
   extract_integrals(h_1y, ints_shellset_1y, n1, n2, 1.0e0);
   extract_integrals(h_1z, ints_shellset_1z, n1, n2, 1.0e0);
   extract_integrals(h_2x, ints_shellset_2x, n1, n2, 1.0e0);
   extract_integrals(h_2y, ints_shellset_2y, n1, n2, 1.0e0);
   extract_integrals(h_2z, ints_shellset_2z, n1, n2, 1.0e0);
-
-  cout << "hello!!" << endl;
 
 }
 

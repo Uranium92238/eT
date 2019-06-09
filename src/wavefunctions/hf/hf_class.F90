@@ -661,21 +661,9 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
-   !   real(dp), dimension(:,:,:,:), allocatable :: h_wxqk
-!
       call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx)
 !
       call wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
-!
-!     Debug; calculate the derivative 
-!
-   !   call mem%alloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
-!
-   !   call wf%get_ao_s_wx_1der(h_wxqk)
-!
-   !   write(output%unit, *) 'Deriv of first element:', h_wxqk(1,1,:,:)
-!
-   !   call mem%dealloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
 !
    end subroutine update_fock_and_energy_hf
 !
@@ -2152,7 +2140,7 @@ contains
       real(dp), dimension((wf%system%max_shell_size**4)*3*4), target :: g_ABCDqk 
       real(dp), dimension(:,:,:,:,:,:), pointer :: g_ABCDqk_p 
 !
-      integer :: A, B, C, D, D_max, w, x, y, z, w_red, x_red, y_red, z_red, tot_dim, k, atom 
+      integer :: A, B, C, D, D_max, w, x, y, z, w_red, x_red, y_red, z_red, tot_dim, k, q 
 !
       real(dp) :: d1, d2, d3, d4, d5, d6
 !
@@ -2164,17 +2152,17 @@ contains
 !
       do A = 1, wf%system%n_s 
 !
-         atoms(1) = wf%system%shell_to_atom(A)
+         atoms(1) = wf%system%shell2atom(A)
 !
          do B = 1, A 
 !
             deg_AB = real(2-B/A, kind=dp)
-            atoms(2) = wf%system%shell_to_atom(B)
+            atoms(2) = wf%system%shell2atom(B)
 !
             do C = 1, A
 !
                D_max = (C/A)*B + (1-C/A)*C
-               atoms(3) = wf%system%shell_to_atom(C)
+               atoms(3) = wf%system%shell2atom(C)
 !
                do D = 1, D_max
 !
@@ -2183,10 +2171,9 @@ contains
 
                   deg = deg_AB*deg_CD*deg_AB_CD ! Shell degeneracy
 !
-                  atoms(4) = wf%system%shell_to_atom(D)
+                  atoms(4) = wf%system%shell2atom(D)
 !
-                  call wf%system%construct_ao_g_wxyz_1der(g_ABCDqk, A, B, C, D, &
-                                                            atoms(1), atoms(2), atoms(3), atoms(4))                 
+                  call wf%system%construct_ao_g_wxyz_1der(g_ABCDqk, A, B, C, D)                 
 !
                   tot_dim = (wf%system%shell_limits(A)%size)*(wf%system%shell_limits(B)%size)&
                               *(wf%system%shell_limits(C)%size)*(wf%system%shell_limits(D)%size)&
@@ -2223,7 +2210,7 @@ contains
 !
                               w_red = w - wf%system%shell_limits(A)%first + 1
 !
-                              temp = g_ABCDqk_p(w_red, x_red, y_red, z_red, :, :)
+                              temp = g_ABCDqk_p(w_red, x_red, y_red, z_red, 1:3, 1:4)
 !
                               temp1 = half*temp*d1
                               temp2 = half*temp*d2
@@ -2233,15 +2220,15 @@ contains
                               temp5 = one_over_eight*temp*d5
                               temp6 = one_over_eight*temp*d6
 !
-                              do atom = 1, 4
-                                 do k = 1, 3
+                              do k = 1, 4
+                                 do q = 1, 3
 !
-                                    G_ao(w, x, k, atoms(atom)) = G_ao(w, x, k, atoms(atom)) + temp1(k, atom)
-                                    G_ao(y, x, k, atoms(atom)) = G_ao(y, x, k, atoms(atom)) - temp6(k, atom)
-                                    G_ao(y, z, k, atoms(atom)) = G_ao(y, z, k, atoms(atom)) + temp2(k, atom)
-                                    G_ao(w, z, k, atoms(atom)) = G_ao(w, z, k, atoms(atom)) - temp3(k, atom)
-                                    G_ao(x, z, k, atoms(atom)) = G_ao(x, z, k, atoms(atom)) - temp4(k, atom)
-                                    G_ao(w, y, k, atoms(atom)) = G_ao(w, y, k, atoms(atom)) - temp5(k, atom)
+                                    G_ao(w, x, q, atoms(k)) = G_ao(w, x, q, atoms(k)) + temp1(q, k)
+                                    G_ao(y, x, q, atoms(k)) = G_ao(y, x, q, atoms(k)) - temp6(q, k)
+                                    G_ao(y, z, q, atoms(k)) = G_ao(y, z, q, atoms(k)) + temp2(q, k)
+                                    G_ao(w, z, q, atoms(k)) = G_ao(w, z, q, atoms(k)) - temp3(q, k)
+                                    G_ao(x, z, q, atoms(k)) = G_ao(x, z, q, atoms(k)) - temp4(q, k)
+                                    G_ao(w, y, q, atoms(k)) = G_ao(w, y, q, atoms(k)) - temp5(q, k)
 !
                                  enddo
                               enddo
