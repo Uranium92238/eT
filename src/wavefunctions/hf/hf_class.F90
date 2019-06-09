@@ -194,12 +194,6 @@ contains
       wf%n_ao        = wf%system%get_n_aos()
       wf%n_densities = 1
 !
-      call initialize_coulomb_c()
-      call initialize_kinetic_c()
-      call initialize_nuclear_c()
-      call initialize_overlap_c()
-      call initialize_dipole()
-!
       call wf%set_n_mo()
 !
       call wf%initialize_wavefunction_files()
@@ -773,7 +767,7 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      real(dp), dimension(:,:), intent(inout) :: D
+      real(dp), dimension(wf%n_ao**2,wf%n_densities), intent(inout) :: D
 !
       call dcopy(wf%n_ao**2, wf%ao_density, 1, D, 1)
 !
@@ -2295,7 +2289,7 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      real(dp), dimension(:,:), intent(inout) :: F ! Packed
+      real(dp), dimension(wf%n_ao*(wf%n_ao+1)/2, wf%n_densities), intent(inout) :: F ! Packed
 !
       call packin(F, wf%ao_fock, wf%n_ao)
 !

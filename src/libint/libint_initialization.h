@@ -29,6 +29,7 @@ void finalize_libint();
 void initialize_coulomb();
 void initialize_atoms(char *name);
 void initialize_basis(char *basisset, char *filename);
+void reset_basis();
 void initialize_kinetic();
 void initialize_nuclear();
 void initialize_overlap();

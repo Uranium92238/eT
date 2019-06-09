@@ -38,6 +38,12 @@ interface
 !
    end subroutine initialize_basis_c
 !
+   subroutine reset_basis_c() bind(C, name='reset_basis')
+!
+      implicit none
+!
+   end subroutine reset_basis_c
+!
    subroutine initialize_shell2atom_c() bind(C, name='initialize_shell2atom')
 !
       implicit none

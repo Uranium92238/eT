@@ -160,17 +160,7 @@ contains
 !
       wf%n_ao = wf%system%get_n_aos()
 !
-      call initialize_coulomb_c()
-      call initialize_kinetic_c()
-      call initialize_nuclear_c()
-      call initialize_overlap_c()
-!
-      call wf%initialize_ao_overlap()
-      call wf%construct_ao_overlap()
-      call wf%decompose_ao_overlap()
-!
-      wf%n_o         = (wf%system%get_n_electrons())/2
-      wf%n_v         = wf%n_mo - wf%n_o
+      call wf%set_n_mo()
       wf%n_densities = 2
 !
       call wf%determine_n_alpha_and_n_beta()
@@ -610,7 +600,7 @@ contains
 !
    subroutine get_ao_fock_uhf(wf, F)
 !!
-!!    Set AO Fock
+!!    Get AO Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Returns the AO Fock
@@ -619,7 +609,7 @@ contains
 !
       class(uhf), intent(in) :: wf
 !
-      real(dp), dimension(:,:), intent(inout) :: F ! Packed
+      real(dp), dimension(wf%n_ao*(wf%n_ao+1)/2, wf%n_densities), intent(inout) :: F ! Packed
 !
       real(dp), dimension(:), allocatable :: F_sigma
 !
@@ -633,7 +623,7 @@ contains
 !     Beta Fock
 !
       call packin(F_sigma, wf%ao_fock_b, wf%n_ao)
-      call dcopy(wf%n_ao*(wf%n_ao + 1)/2, F_sigma, 1, F(wf%n_ao*(wf%n_ao + 1)/2 + 1, 1), 1)
+      call dcopy(wf%n_ao*(wf%n_ao + 1)/2, F_sigma, 1, F(1, 2), 1)
 !
       call mem%dealloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2)
 !
@@ -829,10 +819,10 @@ contains
 !
       class(uhf), intent(in) :: wf
 !
-      real(dp), dimension(:,:), intent(inout) :: D
+      real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(inout) :: D
 !
       call dcopy(wf%n_ao**2, wf%ao_density_a, 1, D, 1)
-      call dcopy(wf%n_ao**2, wf%ao_density_b, 1, D(wf%n_ao**2 + 1, 1), 1)
+      call dcopy(wf%n_ao**2, wf%ao_density_b, 1, D(1, 2), 1)
 !
    end subroutine get_ao_density_sq_uhf
 !

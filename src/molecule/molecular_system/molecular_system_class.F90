@@ -72,6 +72,8 @@ module molecular_system_class
       procedure :: print_system                             => print_system_molecular_system
       procedure :: print_geometry                           => print_geometry_molecular_system
 !
+      procedure :: set_geometry                             => set_geometry_molecular_system
+!
       procedure :: get_nuclear_repulsion                    => get_nuclear_repulsion_molecular_system
       procedure :: get_nuclear_repulsion_1der               => get_nuclear_repulsion_1der_molecular_system
 !
@@ -86,6 +88,9 @@ module molecular_system_class
       procedure :: get_max_shell_size                       => get_max_shell_size_molecular_system
 !
       procedure :: shell_to_atom                            => shell_to_atom_molecular_system
+!
+      procedure :: initialize_libint_atoms_and_bases           => initialize_libint_atoms_and_bases_molecular_system
+      procedure, nopass :: initialize_libint_integral_engines  => initialize_libint_integral_engines_molecular_system
 !
       procedure :: initialize_basis_sets                    => initialize_basis_sets_molecular_system
       procedure :: initialize_atoms                         => initialize_atoms_molecular_system
@@ -142,6 +147,36 @@ contains
    end subroutine read_settings_molecular_system
 !
 !
+   subroutine initialize_libint_atoms_and_bases_molecular_system(molecule)
+!!
+!!    Initialize Libint atoms and bases 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad 2018-2019
+!!
+      implicit none 
+!
+      class(molecular_system) :: molecule 
+!           
+      character(len=100) :: temp_name
+!
+      integer :: i
+!
+      call molecule%write_libint_files()
+!
+      call initialize_atoms(molecule%name)
+!
+      call reset_basis_c()
+!
+      do i = 1, molecule%n_basis_sets
+!
+         write(temp_name, '(a, a1, i4.4)') trim(molecule%name), '_', i
+!
+         call initialize_basis(molecule%basis_sets(i), temp_name)
+!
+      enddo
+!
+   end subroutine initialize_libint_atoms_and_bases_molecular_system
+!
+!
    subroutine prepare_molecular_system(molecule)
 !!
 !!    Initialize
@@ -150,8 +185,6 @@ contains
       implicit none
 !
       class(molecular_system) :: molecule
-!
-      character(len=100) :: temp_name
 !
       integer :: s 
 !
@@ -163,25 +196,18 @@ contains
       integer(i6), dimension(:), allocatable :: first_ao_in_shells
       integer(i6), dimension(:), allocatable :: shell_numbers
 !
-!     Read eT.inp and write files for Libint
+!     Read eT.inp 
 !
       molecule%charge = 0
       molecule%multiplicity = 1
 !
       call molecule%read_settings()
-      call molecule%write_libint_files()
 !
-!     Initialize libint with atoms and basis sets
+!     Initialize libint with atoms and basis sets,
+!     then initialize the integral engines 
 !
-      call initialize_atoms(molecule%name)
-!
-      do i = 1, molecule%n_basis_sets
-!
-         write(temp_name, '(a, a1, i4.4)') trim(molecule%name), '_', i
-!
-         call initialize_basis(molecule%basis_sets(i), temp_name)
-!
-      enddo
+      call molecule%initialize_libint_atoms_and_bases()
+      call molecule%initialize_libint_integral_engines()
 !
 !     Initialize atoms and shells for eT
 !
@@ -303,7 +329,7 @@ contains
 !
    subroutine cleanup_molecular_system(molecule)
 !!
-!!    Initialize
+!!    Cleanup
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -343,6 +369,60 @@ contains
       call input%get_keyword_in_section('multiplicity', 'system', molecule%multiplicity)
 !
    end subroutine read_system_molecular_system
+!
+!
+   subroutine set_geometry_molecular_system(molecule, R_qk)
+!!
+!!    Set geometry 
+!!    Written by Eirik F. Kjønstad, June 2019 
+!!
+!!    Sets the molecular geometry. R_qk is the qth coordinate (q = 1(x), 2(y), 3(z))
+!!    of the kth atom (k = 1, 2, 3, ..., n_atoms).
+!!
+      implicit none 
+!
+      class(molecular_system), intent(inout) :: molecule 
+!
+      real(dp), dimension(3, molecule%n_atoms), intent(in) :: R_qk 
+!
+      integer :: k
+!
+!     Update geometry 
+!
+      do k = 1, molecule%n_atoms
+!
+         molecule%atoms(k)%x = R_qk(1,k)
+         molecule%atoms(k)%y = R_qk(2,k)
+         molecule%atoms(k)%z = R_qk(3,k)
+!
+      enddo
+!
+!     Write Libint files, then update the atoms and bases 
+!     on the Libint side.
+!
+      call molecule%initialize_libint_atoms_and_bases()
+!
+!     Finally, reinitialize the Libint integral engines 
+!
+      call molecule%initialize_libint_integral_engines()
+!
+   end subroutine set_geometry_molecular_system
+!
+!
+   subroutine initialize_libint_integral_engines_molecular_system()
+!!
+!!    Initialize Libint integral engines 
+!!    Written by Eirik F. Kjønstad, June 2019 
+!!
+      implicit none 
+!
+      call initialize_coulomb_c()
+      call initialize_kinetic_c()
+      call initialize_nuclear_c()
+      call initialize_overlap_c()
+      call initialize_dipole_c()
+!
+   end subroutine initialize_libint_integral_engines_molecular_system
 !
 !
    subroutine read_geometry_molecular_system(molecule)

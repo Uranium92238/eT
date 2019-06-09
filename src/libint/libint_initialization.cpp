@@ -86,6 +86,13 @@ void initialize_atoms(char *name){
 
 }
 
+void reset_basis(){
+
+    eTBasis temp_basis;
+    basis = temp_basis;
+
+}
+
 void initialize_basis(char *basisset, char *filename){
     
     string xyzfilename(strcat(filename,".xyz"));
