@@ -3408,13 +3408,11 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: G_wxqk
       real(dp), dimension(:,:,:,:), allocatable :: s_wxqk
 !
-      real(dp), dimension(:,:,:,:), allocatable :: Dhx_wxqk
-      real(dp), dimension(:,:,:,:), allocatable :: DGx_wxqk
-      real(dp), dimension(:,:,:,:), allocatable :: DFDSx_wxqk
-!
       real(dp), dimension(:,:), allocatable :: DFD, FD  
 !
-      integer :: w, k, q
+      real(dp) :: ddot
+!
+      integer :: k, q
 !
 !     Construct h_nuc^x, and the AO integral derivatives, h^x, S^x, and G^x(D)
 !
@@ -3462,75 +3460,24 @@ contains
 !
       call mem%dealloc(FD, wf%n_ao, wf%n_ao)
 !
-!     Construct the products, D h^x, D G^x(D), and D F D S^x
+!     Perform the traces, adding the contributions to the gradient 
 !
-      call mem%alloc(Dhx_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
-      call mem%alloc(DGx_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
-      call mem%alloc(DFDSx_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
-!
-      do k = 1, wf%system%n_atoms 
+      do k = 1, wf%system%n_atoms
          do q = 1, 3
 !
-            call dgemm('N','N',              &
-                        wf%n_ao,             &
-                        wf%n_ao,             &
-                        wf%n_ao,             &
-                        one,                 &
-                        wf%ao_density,       &
-                        wf%n_ao,             &
-                        h_wxqk(1,1,q,k),     &
-                        wf%n_ao,             &
-                        zero,                &
-                        Dhx_wxqk(1,1,q,k),   &
-                        wf%n_ao)
-!
-            call dgemm('N','N',              &
-                        wf%n_ao,             &
-                        wf%n_ao,             &
-                        wf%n_ao,             &
-                        one,                 &
-                        wf%ao_density,       &
-                        wf%n_ao,             &
-                        G_wxqk(1,1,q,k),     &
-                        wf%n_ao,             &
-                        zero,                &
-                        DGx_wxqk(1,1,q,k),   &
-                        wf%n_ao)
-!
-            call dgemm('N','N',              &
-                        wf%n_ao,             &
-                        wf%n_ao,             &
-                        wf%n_ao,             &
-                        one,                 &
-                        DFD,                 &
-                        wf%n_ao,             &
-                        s_wxqk(1,1,q,k),     &
-                        wf%n_ao,             &
-                        zero,                &
-                        DFDSx_wxqk(1,1,q,k), &
-                        wf%n_ao)
+            E_qk(q,k) = E_qk(q,k) &
+              + ddot(wf%n_ao**2, wf%ao_density, 1, h_wxqk(1,1,q,k), 1) &
+              + half*ddot(wf%n_ao**2, wf%ao_density, 1, G_wxqk(1,1,q,k), 1) &
+              - ddot(wf%n_ao**2, DFD, 1, s_wxqk(1,1,q,k), 1)
 !
          enddo
-      enddo
+      enddo 
 !
       call mem%dealloc(DFD, wf%n_ao, wf%n_ao)
 !
       call mem%dealloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%dealloc(G_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
-      call mem%dealloc(s_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
-!
-!     Perform the traces, adding the contributions to the gradient 
-!
-      do w = 1, wf%n_ao
-!
-            E_qk(:,:) = E_qk(:,:) &
-               + Dhx_wxqk(w,w,:,:) + half*DGx_wxqk(w,w,:,:) - DFDSx_wxqk(w,w,:,:)
-!
-      enddo    
-!
-      call mem%dealloc(Dhx_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
-      call mem%dealloc(DGx_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
-      call mem%dealloc(DFDSx_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+      call mem%dealloc(s_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)   
 !
    end subroutine construct_molecular_gradient_hf
 !
