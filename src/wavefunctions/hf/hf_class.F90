@@ -81,7 +81,9 @@ module hf_class
 !
       procedure :: construct_ao_fock                        => construct_ao_fock_hf
       procedure :: construct_ao_G                           => construct_ao_G_hf
+      procedure :: construct_ao_G_slow                      => construct_ao_G_slow_hf
       procedure :: construct_ao_G_1der                      => construct_ao_G_1der_hf
+      procedure :: construct_ao_G_1der_numerical            => construct_ao_G_1der_numerical_hf
 !
       procedure :: construct_coulomb_ao_G                   => construct_coulomb_ao_G_hf
       procedure :: construct_exchange_ao_G                  => construct_exchange_ao_G_hf
@@ -1751,6 +1753,121 @@ contains
    end subroutine construct_ao_G_hf
 !
 !
+   subroutine construct_ao_G_slow_hf(wf, F, D, shells)
+!!
+!!    Construct AO G slow 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    This routine constructs the entire two-electron part of the Fock matrix,
+!!
+!!       F_αβ = sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ (= G(D)_αβ),
+!!
+!!    where contributions from different threads are gathered column blocks
+!!    of the incoming F matrix.
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      type(interval), dimension(wf%system%n_s), intent(in) :: shells
+      real(dp), dimension(wf%n_ao, wf%n_ao)   :: F
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
+!
+      real(dp) :: d1, d2, d3, d4, d5, d6
+      real(dp) :: deg, deg_12, deg_34, deg_12_34, temp1, temp2, temp3, temp4, temp5, temp6, temp
+!
+      integer :: w, x, y, z, s1, s2, s3, s4, s4_max, tot_dim
+      integer :: w_red, x_red, y_red, z_red, wxyz
+!
+      real(dp), dimension(wf%system%max_shell_size**4) :: g
+!
+      integer :: thread = 0, skip
+!
+      do s1 = 1, wf%system%n_s 
+         do s2 = 1, s1 
+!
+            deg_12 = real(2-s2/s1, kind=dp)
+!
+            do s3 = 1, s1
+!
+               s4_max = (s3/s1)*s2 + (1-s3/s1)*s3
+!
+               do s4 = 1, s4_max
+!
+                  deg_34    = real(2-s4/s3, kind=dp)
+                  deg_12_34 = min(1-s3/s1+2-min(s4/s2,s2/s4), 2)
+
+                  deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
+!
+                  call wf%system%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,         &
+                  wf%libint_epsilon, thread, skip, shells(s1)%size, shells(s2)%size, &
+                  shells(s3)%size, shells(s4)%size)
+!
+                  if (skip == 1) cycle
+!
+                  tot_dim = (shells(s1)%size)*(shells(s2)%size)*(shells(s3)%size)*(shells(s4)%size)
+!
+                  g(1:tot_dim) = deg*g(1:tot_dim)
+!
+                  do z = shells(s4)%first, shells(s4)%last
+!
+                     z_red = z - shells(s4)%first + 1
+!
+                     do y = shells(s3)%first, shells(s3)%last
+!
+                        y_red = y - shells(s3)%first + 1
+!
+                        d1 = D(y, z)
+!
+                        do x = shells(s2)%first, shells(s2)%last
+!
+                           x_red = x - shells(s2)%first + 1
+!
+                           d3 = D(x, y)
+                           d5 = D(x, z)
+!
+                           do w = shells(s1)%first, shells(s1)%last
+!
+                              d2 = D(w, x)
+                              d4 = D(w, y)
+                              d6 = D(w, z)
+!
+                              w_red = w - shells(s1)%first + 1
+!
+                              wxyz = shells(s1)%size*(shells(s2)%size*(shells(s3)%size*(z_red-1)+y_red-1)+x_red-1)+w_red
+!
+                              temp = g(wxyz)
+!
+                              temp1 = half*temp*d1
+                              temp2 = half*temp*d2
+!
+                              temp3 = one_over_eight*temp*d3
+                              temp4 = one_over_eight*temp*d4
+                              temp5 = one_over_eight*temp*d5
+                              temp6 = one_over_eight*temp*d6
+!
+                              F(w, x) = F(w, x) + temp1
+                              F(y, x) = F(y, x) - temp6
+!
+                              F(y, z) = F(y, z) + temp2
+                              F(w, z) = F(w, z) - temp3
+                              F(x, z) = F(x, z) - temp4
+!
+                              F(w, y) = F(w, y) - temp5
+!
+                           enddo
+                        enddo
+                     enddo
+                  enddo
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+   end subroutine construct_ao_G_slow_hf
+!
+!
    subroutine construct_coulomb_ao_G_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
                                                    sp_density_schwarz, &
                                                    n_sig_sp, coulomb_thr, precision_thr, shells)
@@ -2112,6 +2229,78 @@ contains
       wf%energy = wf%energy + one/two*ddot((wf%n_ao)**2, wf%ao_density, 1, F_wx, 1)
 
    end subroutine calculate_hf_energy_from_fock_hf
+!
+!
+   subroutine construct_ao_G_1der_numerical_hf(wf, G_wxqk, dx)
+!!
+!!    Get AO G(D) 1st derivative numerically
+!!    Written by Eirik F. Kjønstad, June 2019 
+!!
+!!    Uses forward differences to calculate the derivative.
+!!
+      implicit none 
+!
+      class(hf), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms) :: G_wxqk
+!
+      real(dp), intent(in) :: dx ! Displacement length in bohr
+!
+      real(dp), dimension(:,:), allocatable :: G_wx, G_wx_displaced, R_qk, R_qk_displaced
+!
+      integer :: k, q, w, x 
+!
+!     Get s at the reference geometry 
+!
+      call mem%alloc(G_wx, wf%n_ao, wf%n_ao)
+      G_wx = zero
+      call wf%construct_ao_G_slow(G_wx, wf%ao_density, wf%system%shell_limits)
+!
+      call symmetric_sum(G_wx, wf%n_ao)
+      G_wx = half*G_wx 
+!
+      call mem%alloc(R_qk, 3, wf%system%n_atoms)
+      call mem%alloc(R_qk_displaced, 3, wf%system%n_atoms)
+!
+      R_qk = wf%system%get_geometry()
+      call mem%alloc(G_wx_displaced, wf%n_ao, wf%n_ao)
+!
+      do k = 1, wf%system%n_atoms
+         do q = 1, 3
+!
+!           Get s at the displaced geometry 
+!
+            R_qk_displaced = R_qk 
+            R_qk_displaced(q,k) = R_qk_displaced(q,k) + dx 
+            call wf%system%set_geometry(R_qk_displaced)
+!
+            G_wx_displaced = zero 
+            call wf%construct_ao_G_slow(G_wx_displaced, wf%ao_density, wf%system%shell_limits)
+!
+            call symmetric_sum(G_wx_displaced, wf%n_ao)
+            G_wx_displaced = half*G_wx_displaced 
+!
+!           Use difference from reference to compute derivative
+!
+            do w = 1, wf%n_ao
+               do x = 1, wf%n_ao 
+!
+                  G_wxqk(w,x,q,k) = (G_wx_displaced(w,x) - G_wx(w,x))/dx
+!
+               enddo
+            enddo
+!
+         enddo
+      enddo
+!    
+      call wf%system%set_geometry(R_qk)
+!
+      call mem%dealloc(G_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(R_qk, 3, wf%system%n_atoms)
+      call mem%dealloc(R_qk_displaced, 3, wf%system%n_atoms)
+      call mem%dealloc(G_wx_displaced, wf%n_ao, wf%n_ao)
+!
+   end subroutine construct_ao_G_1der_numerical_hf
 !
 !
    subroutine construct_ao_G_1der_hf(wf, G_ao, D_ao)
@@ -3408,7 +3597,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: G_wxqk
       real(dp), dimension(:,:,:,:), allocatable :: s_wxqk
 !
-      real(dp), dimension(:,:), allocatable :: DFD, FD, D 
+      real(dp), dimension(:,:), allocatable :: DFD, FD, D, h_plus_F
 !
       real(dp), dimension(3, wf%system%n_atoms) :: TrDh_qk, TrDG_qk, TrDFDS_qk
 !
@@ -3426,6 +3615,11 @@ contains
 !
       s_wxqk = zero
       call wf%get_ao_s_wx_1der(s_wxqk)
+      write(output%unit, *) 'derii s analytical: ', s_wxqk(:,:,1,1)
+!
+      s_wxqk = zero
+      call wf%get_ao_s_wx_1der_numerical(s_wxqk, 1.0d-8)
+      write(output%unit, *) 'derii s numerical: ', s_wxqk(:,:,1,1)
 !
       G_wxqk = zero
       call wf%construct_ao_G_1der(G_wxqk, wf%ao_density)
@@ -3441,13 +3635,28 @@ contains
 
       enddo
 !
+      write(output%unit, *) 'derii G analytical: ', G_wxqk(:,:,1,1)
+!
+      G_wxqk = zero
+      call wf%construct_ao_G_1der_numerical(G_wxqk, 1.0d-8)
+      write(output%unit, *) 'derii G numerical: ', G_wxqk(:,:,1,1)
+!
       h_wxqk = zero
       call wf%get_ao_h_wx_1der(h_wxqk)
+      write(output%unit, *) 'derii h analytical: ', h_wxqk(:,:,1,1)
+!
+      h_wxqk = zero
+      call wf%get_ao_h_wx_1der_numerical(h_wxqk, 1.0d-8)
+      write(output%unit, *) 'derii h numerical: ', h_wxqk(:,:,1,1)
+!
+      call mem%alloc(h_plus_F, wf%n_ao, wf%n_ao)
+      call wf%get_ao_h_wx(h_plus_F)
+      h_plus_F = h_plus_F + wf%ao_fock 
 !
 !     Construct D F D 
 !
       call mem%alloc(D, wf%n_ao, wf%n_ao)
-      D = half*wf%ao_density
+      D = wf%ao_density ! 1/2 D - Tested that it satisfies DSD = D, as it should!
 !
       call mem%alloc(FD, wf%n_ao, wf%n_ao)
 !
@@ -3456,9 +3665,9 @@ contains
                   wf%n_ao,       &
                   wf%n_ao,       &
                   one,           &
-                  wf%ao_fock,    &
+                  h_plus_F,    & 
                   wf%n_ao,       &
-                  D,             &
+                  D,             & 
                   wf%n_ao,       &
                   zero,          &
                   FD,            &  
@@ -3494,14 +3703,10 @@ contains
       do k = 1, wf%system%n_atoms
          do q = 1, 3
 !
-            TrDh_qk(q,k) = ddot(wf%n_ao**2, D, 1, h_wxqk(:,:,q,k), 1)
-            TrDG_qk(q,k) = half*ddot(wf%n_ao**2, D, 1, G_wxqk(:,:,q,k), 1)
-            TrDFDS_qk(q,k) = -ddot(wf%n_ao**2, DFD, 1, s_wxqk(:,:,q,k), 1)
-!
             E_qk(q,k) = E_qk(q,k) &
               + ddot(wf%n_ao**2, D, 1, h_wxqk(:,:,q,k), 1)        & 
               + half*ddot(wf%n_ao**2, D, 1, G_wxqk(:,:,q,k), 1)   &
-              - ddot(wf%n_ao**2, DFD, 1, s_wxqk(:,:,q,k), 1)
+              - quarter*ddot(wf%n_ao**2, DFD, 1, s_wxqk(:,:,q,k), 1)
 !
          enddo
       enddo 
@@ -3512,30 +3717,6 @@ contains
 !
          write(output%unit, '(t3,a2,f12.6,f12.6,f12.6)') wf%system%atoms(k)%symbol, &
             E_qk(1,k), E_qk(2,k), E_qk(3,k) 
-!
-      enddo
-!
-      write(output%unit, *) 'Tr ( D h^x ):'
-      do k = 1, wf%system%n_atoms
-!
-         write(output%unit, '(t3,a2,f12.6,f12.6,f12.6)') wf%system%atoms(k)%symbol, &
-            TrDh_qk(1,k), TrDh_qk(2,k), TrDh_qk(3,k) 
-!
-      enddo
-!
-      write(output%unit, *) '1/2 Tr ( D G^x(D) ):'
-      do k = 1, wf%system%n_atoms
-!
-         write(output%unit, '(t3,a2,f12.6,f12.6,f12.6)') wf%system%atoms(k)%symbol, &
-            TrDG_qk(1,k), TrDG_qk(2,k), TrDG_qk(3,k) 
-!
-      enddo
-!
-      write(output%unit, *) '- Tr ( D F D S^x ):'
-      do k = 1, wf%system%n_atoms
-!
-         write(output%unit, '(t3,a2,f12.6,f12.6,f12.6)') wf%system%atoms(k)%symbol, &
-            TrDFDS_qk(1,k), TrDFDS_qk(2,k), TrDFDS_qk(3,k) 
 !
       enddo
 !
