@@ -126,6 +126,11 @@ void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2, in
   auto n1 = basis[*s1 - 1].size();
   auto n2 = basis[*s2 - 1].size();
 
+  cout << "First index of shells: " << *s1 << " and " << *s2 << endl;
+  cout << "First1: " << s1_first << " First2: " << s2_first << endl;
+  cout << "Size1: " << n1 << " Size2: " << n2 << endl;
+  cout << "Total number of AOs: " << *n_ao << endl;
+
   auto n_atoms = atoms.size();
   auto n_centers = n_atoms + 2;
 
@@ -151,11 +156,11 @@ void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2, in
           }
         }
         if (*s1 != *s2){
-          for (auto f1 = 0, f12 = 0; f1 != n1; ++f1){
-            for (auto f2 = 0; f2 != n2; ++f2, ++f12){
+          for (auto f2 = 0, f12 = 0; f2 != n2; ++f2){
+            for (auto f1 = 0; f1 != n1; ++f1, ++f12){
 
-              auto index_offset_tr = nao*(nao*(3*atom+coordinate)+s1_first+f1)+s2_first+f2;
-              h_wxqk[index_offset_tr] = h_wxqk[index_offset_tr] + current_ints[f12];
+               auto index_offset_tr = nao*(nao*(3*atom+coordinate)+s1_first+f1)+s2_first+f2;
+               h_wxqk[index_offset_tr] = h_wxqk[index_offset_tr] + current_ints[f12];
 
             }
           }          
