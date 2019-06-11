@@ -45,7 +45,7 @@ interface
    end subroutine construct_ao_h_wx_kinetic_1der_c
 !
 !
-   subroutine construct_and_add_ao_h_wx_nuclear_1der_c(h_wxqk, s1, s2) &
+   subroutine construct_and_add_ao_h_wx_nuclear_1der_c(h_wxqk, s1, s2, n_ao) &
                            bind(C, name='construct_and_add_ao_h_wx_nuclear_1der')
 !
       use iso_c_binding
@@ -53,7 +53,7 @@ interface
       implicit none
 !
       real(c_double) :: h_wxqk(*)
-      integer(c_int) :: s1, s2
+      integer(c_int) :: s1, s2, n_ao
 !
    end subroutine construct_and_add_ao_h_wx_nuclear_1der_c
 !

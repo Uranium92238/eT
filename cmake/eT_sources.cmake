@@ -22,6 +22,7 @@ set(eT_fortran_sources
    src/solvers/hf/abstract_hf_solver_class.F90
    src/solvers/hf/scf_diis_hf_class.F90
    src/solvers/hf/scf_hf_class.F90
+   src/solvers/hf/cg_geoopt_hf_class.F90
    src/solvers/cc/diis_cc_gs_class.F90
    src/solvers/cc/diis_cc_es_class.F90
    src/solvers/cc/diis_cc_multipliers_class.F90
@@ -77,6 +78,7 @@ set(eT_fortran_sources
    src/molecule/periodic_table.F90
    src/molecule/shell_class.F90
    src/libint/libint_initialization.F90
+   src/solver_tools/conjugate_gradient_tool_class.F90
    src/solver_tools/diis_tool_class.F90
    src/solver_tools/davidson_tool_class.F90
    src/solver_tools/eigen_davidson_tool_class.F90

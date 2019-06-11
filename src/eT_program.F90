@@ -153,6 +153,8 @@ subroutine reference_calculation(system)
    use uhf_class, only: uhf 
    use hf_engine_class, only: hf_engine 
 !
+   use cg_geoopt_hf_class, only: cg_geoopt_hf
+!
    implicit none
 !
    type(molecular_system) :: system
@@ -160,6 +162,8 @@ subroutine reference_calculation(system)
    class(hf), allocatable  :: ref_wf
 !
    type(hf_engine) :: ref_engine
+!
+   type(cg_geoopt_hf) :: solver 
 !
    character(len=21) :: ref_wf_name
 !
@@ -169,6 +173,11 @@ subroutine reference_calculation(system)
    if (trim(ref_wf_name) == 'hf') then
 !
       ref_wf = hf(system)
+!
+      solver = cg_geoopt_hf()
+      call solver%run(ref_wf)
+!
+      stop
 !
    elseif (trim(ref_wf_name) == 'uhf') then
 !

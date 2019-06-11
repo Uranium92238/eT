@@ -155,9 +155,40 @@ void construct_ao_g_wxyz_1der(double *g_wxyzqk, int *s1, int *s2, int *s3, int *
 
         auto ints = buf_vec[shell_set];
 
-        auto *g_wxyzqk_block = g_wxyzqk + offset;
+        if (ints == nullptr)
+        {
+          for(auto f1=0; f1!=n1; ++f1){
 
-        extract_integrals_4(g_wxyzqk_block, ints, n1, n2, n3, n4, 1.0e0);
+            for(auto f2=0; f2!=n2; ++f2){
+
+              for(auto f3=0; f3!=n3; ++f3){
+
+                for(auto f4=0; f4!=n4; ++f4){
+
+                  g_wxyzqk[offset + n1*(n2*(n3*f4+f3)+f2)+f1] = 0.0e0;
+
+                }
+              }
+            }  
+          }
+        }
+        else
+        {
+          for(auto f1=0, f1234=0; f1!=n1; ++f1){
+  
+            for(auto f2=0; f2!=n2; ++f2){
+  
+              for(auto f3=0; f3!=n3; ++f3){
+  
+                for(auto f4=0; f4!=n4; ++f4, ++f1234){
+  
+                  g_wxyzqk[offset + n1*(n2*(n3*f4+f3)+f2)+f1] = ints[f1234];
+  
+                }
+              }
+            }
+          }
+        }
 
         offset = offset + n1*n2*n3*n4;
 

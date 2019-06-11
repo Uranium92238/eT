@@ -72,10 +72,12 @@ module molecular_system_class
       procedure :: print_system                             => print_system_molecular_system
       procedure :: print_geometry                           => print_geometry_molecular_system
 !
+      procedure :: get_geometry                             => get_geometry_molecular_system
       procedure :: set_geometry                             => set_geometry_molecular_system
 !
       procedure :: get_nuclear_repulsion                    => get_nuclear_repulsion_molecular_system
       procedure :: get_nuclear_repulsion_1der               => get_nuclear_repulsion_1der_molecular_system
+      procedure :: get_nuclear_repulsion_1der_numerical     => get_nuclear_repulsion_1der_numerical_molecular_system
 !
       procedure :: get_n_electrons                          => get_n_electrons_molecular_system
       procedure :: get_nuclear_dipole                       => get_nuclear_dipole_molecular_system
@@ -104,9 +106,9 @@ module molecular_system_class
 !
       procedure :: translate_from_input_order_to_eT_order   => translate_from_input_order_to_eT_order_molecular_system
 !
-      procedure :: construct_ao_h_wx                              => construct_ao_h_wx_molecular_system     
-      procedure :: construct_ao_h_wx_kinetic_1der                 => construct_ao_h_wx_kinetic_1der_molecular_system     
-      procedure, nopass :: construct_and_add_ao_h_wx_nuclear_1der => construct_and_add_ao_h_wx_nuclear_1der_molecular_system
+      procedure :: construct_ao_h_wx                        => construct_ao_h_wx_molecular_system     
+      procedure :: construct_ao_h_wx_kinetic_1der           => construct_ao_h_wx_kinetic_1der_molecular_system     
+      procedure :: construct_and_add_ao_h_wx_nuclear_1der   => construct_and_add_ao_h_wx_nuclear_1der_molecular_system
 ! 
       procedure :: construct_ao_g_wxyz_1der                 => construct_ao_g_wxyz_1der_molecular_system
       procedure :: construct_ao_g_wxyz                      => construct_ao_g_wxyz_molecular_system  
@@ -387,13 +389,13 @@ contains
 !
       integer :: k
 !
-!     Update geometry 
+!     Update geometry on eT side
 !
       do k = 1, molecule%n_atoms
 !
-         molecule%atoms(k)%x = R_qk(1,k)
-         molecule%atoms(k)%y = R_qk(2,k)
-         molecule%atoms(k)%z = R_qk(3,k)
+         molecule%atoms(k)%x = (R_qk(1,k))/angstrom_to_bohr
+         molecule%atoms(k)%y = (R_qk(2,k))/angstrom_to_bohr
+         molecule%atoms(k)%z = (R_qk(3,k))/angstrom_to_bohr
 !
       enddo
 !
@@ -407,6 +409,33 @@ contains
       call molecule%initialize_libint_integral_engines()
 !
    end subroutine set_geometry_molecular_system
+!
+!
+   function get_geometry_molecular_system(molecule) result(R_qk)
+!!
+!!    Get geometry 
+!!    Written by Eirik F. Kjønstad, June 2019 
+!!
+!!    Gets the molecular geometry. R_qk is the qth coordinate (q = 1(x), 2(y), 3(z))
+!!    of the kth atom (k = 1, 2, 3, ..., n_atoms).
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      real(dp), dimension(3, molecule%n_atoms) :: R_qk 
+!
+      integer :: k
+!
+      do k = 1, molecule%n_atoms
+!
+         R_qk(1,k) = (molecule%atoms(k)%x)*angstrom_to_bohr
+         R_qk(2,k) = (molecule%atoms(k)%y)*angstrom_to_bohr
+         R_qk(3,k) = (molecule%atoms(k)%z)*angstrom_to_bohr
+!
+      enddo
+!
+   end function get_geometry_molecular_system
 !
 !
    subroutine initialize_libint_integral_engines_molecular_system()
@@ -865,12 +894,61 @@ contains
    end subroutine read_active_atoms_molecular_system
 !
 !
+   function get_nuclear_repulsion_1der_numerical_molecular_system(molecule) result(h_nuc_qk)
+!!
+!!    Get nuclear repulsion 1der numerical 
+!!    Written by Eirik F. Kjønstad, June 2019
+!!
+!!    Computes derivative numerically.
+!!
+      implicit none 
+!
+      class(molecular_system), intent(inout) :: molecule 
+!
+      real(dp), dimension(3, molecule%n_atoms) :: h_nuc_qk 
+!
+      real(dp), parameter :: dx = 1.0d-9 
+!
+      real(dp) :: energy_x, energy_xdx
+!
+      real(dp) :: dx_bohr
+!
+      integer :: k
+!
+      h_nuc_qk = zero
+!
+      dx_bohr = dx*angstrom_to_bohr
+      energy_x = molecule%get_nuclear_repulsion()
+!
+      do k = 1, molecule%n_atoms
+!
+         molecule%atoms(k)%x = molecule%atoms(k)%x + dx*angstrom_to_bohr
+         energy_xdx = molecule%get_nuclear_repulsion()
+         h_nuc_qk(1,k) = (energy_xdx-energy_x)/dx_bohr
+         molecule%atoms(k)%x = molecule%atoms(k)%x - dx*angstrom_to_bohr
+!
+         molecule%atoms(k)%y = molecule%atoms(k)%y + dx*angstrom_to_bohr
+         energy_xdx = molecule%get_nuclear_repulsion()
+         h_nuc_qk(2,k) = (energy_xdx-energy_x)/dx_bohr
+         molecule%atoms(k)%y = molecule%atoms(k)%y - dx*angstrom_to_bohr
+!
+         molecule%atoms(k)%z = molecule%atoms(k)%z + dx*angstrom_to_bohr
+         energy_xdx = molecule%get_nuclear_repulsion()
+         h_nuc_qk(3,k) = (energy_xdx-energy_x)/dx_bohr
+         molecule%atoms(k)%z = molecule%atoms(k)%z - dx*angstrom_to_bohr
+!
+      enddo
+!
+   end function get_nuclear_repulsion_1der_numerical_molecular_system
+!
+!
    function get_nuclear_repulsion_1der_molecular_system(molecule) result(h_nuc_qk)
 !!
 !!    Get nuclear repulsion 1der 
 !!    Written by Eirik F. Kjønstad, June 2019
 !!
-!!       h_nuc^x = - x  / r_ij^2
+!!       h_nuc^x_k = - sum_{i≠j} 1/2 Zi Zj / r_ij^(3/2) r_ij^x_k 
+!!                 = - sum_{j≠k} Zk Zj / r_kj^(3/2)  + sum_{i≠k} Zi Zk / r_ik^(3/2)
 !!
       implicit none 
 !
@@ -878,28 +956,42 @@ contains
 !
       real(dp), dimension(3, molecule%n_atoms) :: h_nuc_qk 
 !
-      real(dp) :: x_ij, y_ij, z_ij, r_ij
+      real(dp) :: x_ij, y_ij, z_ij, r_ij, x_i, y_i, z_i, Zi, Zj
 !
-      integer :: i, j
+      integer :: i, j, k
 !
-      do i = 1, molecule%n_atoms
+      h_nuc_qk = zero
 !
-         h_nuc_qk(:,i) = zero 
+      do k = 1, molecule%n_atoms 
+         do i = 1, molecule%n_atoms
+            do j = i + 1, molecule%n_atoms
 !
-         do j = i + 1, molecule%n_atoms
+               x_ij = (molecule%atoms(i)%x - molecule%atoms(j)%x)*angstrom_to_bohr
+               y_ij = (molecule%atoms(i)%y - molecule%atoms(j)%y)*angstrom_to_bohr
+               z_ij = (molecule%atoms(i)%z - molecule%atoms(j)%z)*angstrom_to_bohr
 !
-            x_ij = molecule%atoms(i)%x - molecule%atoms(j)%x
-            y_ij = molecule%atoms(i)%y - molecule%atoms(j)%y
-            z_ij = molecule%atoms(i)%z - molecule%atoms(j)%z
+               r_ij = sqrt(x_ij**2 + y_ij**2 + z_ij**2)
 !
-            r_ij = sqrt(x_ij**2 + y_ij**2 + z_ij**2)
+               Zi = molecule%atoms(i)%number_
+               Zj = molecule%atoms(j)%number_
 !
-            r_ij = angstrom_to_bohr*r_ij
+               if (k == i) then 
 !
-            h_nuc_qk(1,i) = h_nuc_qk(1,i) - angstrom_to_bohr*(molecule%atoms(i)%x)/(r_ij**2)
-            h_nuc_qk(2,i) = h_nuc_qk(2,i) - angstrom_to_bohr*(molecule%atoms(i)%y)/(r_ij**2)
-            h_nuc_qk(3,i) = h_nuc_qk(3,i) - angstrom_to_bohr*(molecule%atoms(i)%z)/(r_ij**2)
+                  h_nuc_qk(1,i) = h_nuc_qk(1,i) - Zi*Zj*x_ij/(r_ij**3)
+                  h_nuc_qk(2,i) = h_nuc_qk(2,i) - Zi*Zj*y_ij/(r_ij**3)
+                  h_nuc_qk(3,i) = h_nuc_qk(3,i) - Zi*Zj*z_ij/(r_ij**3)
 !
+               endif
+!
+               if (k == j) then 
+!
+                  h_nuc_qk(1,j) = h_nuc_qk(1,j) + Zi*Zj*x_ij/(r_ij**3)
+                  h_nuc_qk(2,j) = h_nuc_qk(2,j) + Zi*Zj*y_ij/(r_ij**3)
+                  h_nuc_qk(3,j) = h_nuc_qk(3,j) + Zi*Zj*z_ij/(r_ij**3)
+!
+               endif
+!
+            enddo 
          enddo
       enddo
 !

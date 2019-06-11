@@ -140,6 +140,7 @@ void initialize_coulomb(){
     }
 
     Engine temporary_1der(Operator::coulomb, basis.max_nprim(), basis.max_l(), 1);
+    temporary_1der.set_precision(1.0e-25);
 
     electronic_repulsion_1der = temporary_1der;
 

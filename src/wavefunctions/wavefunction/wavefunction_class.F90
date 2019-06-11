@@ -74,14 +74,34 @@ module wavefunction_class
 !
       procedure :: initialize_wavefunction_files   => initialize_wavefunction_files_wavefunction
 !
-      procedure :: read_orbital_coefficients                => read_orbital_coefficients_wavefunction
-      procedure :: save_orbital_coefficients                => save_orbital_coefficients_wavefunction
-      procedure :: read_orbital_energies                    => read_orbital_energies_wavefunction
-      procedure :: save_orbital_energies                    => save_orbital_energies_wavefunction
+      procedure :: read_orbital_coefficients       => read_orbital_coefficients_wavefunction
+      procedure :: save_orbital_coefficients       => save_orbital_coefficients_wavefunction
+      procedure :: read_orbital_energies           => read_orbital_energies_wavefunction
+      procedure :: save_orbital_energies           => save_orbital_energies_wavefunction
 !
-      procedure :: is_restart_safe                          => is_restart_safe_wavefunction 
+      procedure :: is_restart_safe                 => is_restart_safe_wavefunction 
+!
+      procedure(gradient_function), deferred :: &
+               construct_molecular_gradient        
 !
    end type wavefunction 
+!
+!
+   abstract interface 
+!
+      subroutine gradient_function(wf, E_qk)
+!
+         import :: wavefunction, dp
+!
+         implicit none 
+!
+         class(wavefunction), intent(in) :: wf
+!
+         real(dp), dimension(3, wf%system%n_atoms), intent(inout) :: E_qk 
+!
+      end subroutine gradient_function
+!
+   end interface 
 !
 !
 contains
@@ -114,27 +134,6 @@ contains
       call wf%orbital_energies_file%init('orbital_energies', 'sequential', 'unformatted')
 !
    end subroutine initialize_wavefunction_files_wavefunction
-!
-!
-!   subroutine print_wavefunction_summary_wavefunction(wf)
-!!!
-!!!    Print wavefunction summary 
-!!!    Written by Eirik F. Kjønstad, Sep 2018 
-!!!
-!!!    Prints information related to the wavefunction,
-!!!    most of which is meaningful only for a properly 
-!!!    converged wavefunction. Should be overwritten in 
-!!!    descendants if more or less or other information 
-!!!    is present. 
-!!!
-!      implicit none 
-!!
-!      class(wavefunction), intent(in) :: wf 
-!!
-!      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name_), ' wavefunction:'
-!!
-!!
-!   end subroutine print_wavefunction_summary_wavefunction
 !
 !
    subroutine destruct_orbital_coefficients_wavefunction(wf)
@@ -339,16 +338,18 @@ contains
 !
       class(wavefunction), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms), intent(out) :: s_wxqk
+      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms) :: s_wxqk
 !
-      integer :: A, B, A_atom, B_atom, w, x 
+      integer :: A, B, A_atom, B_atom, w, x, q
 !
-      real(dp), dimension((wf%system%max_shell_size**2)*3*2), target :: s_ABqk 
+      real(dp), dimension((wf%system%max_shell_size**2)*6), target :: s_ABqk 
 !
-      real(dp), dimension(:,:,:,:), pointer :: s_ABqk_p 
+      real(dp), dimension(:,:,:,:), pointer, contiguous :: s_ABqk_p 
 !
       type(interval) :: A_interval, B_interval 
 !     
+      s_wxqk = zero
+!
       do A = 1, wf%system%n_s
 !
          A_atom     = wf%system%shell_to_atom(A)
@@ -360,7 +361,7 @@ contains
             B_interval = wf%system%shell_limits(B)
 !
             s_ABqk_p(1 : A_interval%size, 1 : B_interval%size, 1 : 3, 1 : 2) &
-                                 => s_ABqk(1 : A_interval%size*B_interval%size*3*2)
+                                 => s_ABqk(1 : (A_interval%size)*(B_interval%size)*6)
 !
             call wf%system%construct_ao_s_wx_1der(s_ABqk_p(:,:,1,1),    &
                                                    s_ABqk_p(:,:,2,1),   &
@@ -370,17 +371,21 @@ contains
                                                    s_ABqk_p(:,:,3,2),   &
                                                    A, B)
 !
-            do w = 1, A_interval%size
-               do x = 1, B_interval%size
+            do q = 1, 3
+               do w = 1, A_interval%size
+                  do x = 1, B_interval%size
 !
-                  s_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, :, A_atom) = s_ABqk_p(w, x, :, 1)
-                  s_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, :, A_atom) = s_ABqk_p(w, x, :, 1)
+                     s_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, q, A_atom) = s_ABqk_p(w, x, q, 1)
+                     s_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, q, A_atom) = s_ABqk_p(w, x, q, 1)
 !
-                  s_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, :, B_atom) = s_ABqk_p(w, x, :, 2)
-                  s_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, :, B_atom) = s_ABqk_p(w, x, :, 2)
+                     s_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, q, B_atom) = s_ABqk_p(w, x, q, 2)
+                     s_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, q, B_atom) = s_ABqk_p(w, x, q, 2)
 !
+                  enddo
                enddo
             enddo
+!
+            nullify(s_ABqk_p)
 !
          enddo
       enddo
@@ -397,15 +402,17 @@ contains
 !
       class(wavefunction), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms), intent(out) :: h_wxqk
+      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms), intent(inout) :: h_wxqk
 !
-      integer :: A, B, A_atom, B_atom, w, x 
+      integer :: A, B, A_atom, B_atom, w, x, q, k
 !
-      real(dp), dimension((wf%system%max_shell_size**2)*3*2), target :: h_ABqk 
+      real(dp), dimension((wf%system%max_shell_size**2)*3*(wf%system%n_atoms)), target :: h_ABqk 
 !
       real(dp), dimension(:,:,:,:), pointer, contiguous :: h_ABqk_p 
 !
       type(interval) :: A_interval, B_interval 
+!
+      h_wxqk = zero
 !
       do A = 1, wf%system%n_s
 !
@@ -428,27 +435,30 @@ contains
                                                             h_ABqk_p(:,:,3,2),   &
                                                             A, B)
 !
-            do w = 1, A_interval%size
-               do x = 1, B_interval%size
+            do q = 1, 3
+               do w = 1, A_interval%size
+                  do x = 1, B_interval%size
 !
-                  h_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, :, A_atom) = h_ABqk_p(w, x, :, 1)
-                  h_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, :, A_atom) = h_ABqk_p(w, x, :, 1)
+                  h_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, q, A_atom) = h_ABqk_p(w, x, q, 1)
+                  h_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, q, A_atom) = h_ABqk_p(w, x, q, 1)
+                  h_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, q, B_atom) = h_ABqk_p(w, x, q, 2)
+                  h_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, q, B_atom) = h_ABqk_p(w, x, q, 2)
 !
-                  h_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, :, B_atom) = h_ABqk_p(w, x, :, 2)
-                  h_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, :, B_atom) = h_ABqk_p(w, x, :, 2)
-!
+                  enddo
                enddo
             enddo
+!
+            nullify(h_ABqk_p)
 !
          enddo
       enddo
 !
-      do A = 1, wf%system%n_s
-         do B = 1, wf%system%n_s
+      do A = 1, wf%system%n_s 
+         do B = 1, A
 !
-            call wf%system%construct_and_add_ao_h_wx_nuclear_1der(h_wxqk, A, B)
+            call wf%system%construct_and_add_ao_h_wx_nuclear_1der(h_wxqk, A, B, wf%n_ao)
 !
-         enddo 
+         enddo
       enddo
 !
    end subroutine get_ao_h_wx_1der_wavefunction

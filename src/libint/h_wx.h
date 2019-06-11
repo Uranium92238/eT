@@ -32,7 +32,7 @@ void construct_ao_h_wx_1der(double *h_1x, double *h_1y, double *h_1z,
 void construct_ao_h_wx_kinetic_1der(double *h_1x, double *h_1y, double *h_1z, 
                double *h_2x, double *h_2y, double *h_2z, int *s1, int *s2);
 
-void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2);
+void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2, int *n_ao);
 
 #ifdef __cplusplus
 }

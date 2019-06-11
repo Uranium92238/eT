@@ -105,7 +105,7 @@ void construct_ao_h_wx_kinetic_1der(double *h_1x, double *h_1y, double *h_1z,
 
 }
 
-void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2){
+void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2, int *n_ao){
 /*
 /   Add nuclear 1st derivative contribution to h
 */
@@ -113,17 +113,25 @@ void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2){
 
   nuclear_1der.compute(basis[*s1 - 1], basis[*s2 - 1]);
 
-  auto n_atoms = atoms.size();
+  auto shell_to_atom = basis.shell2atom(atoms);
 
-  auto atom1 = shell2atom[*s1];
-  auto atom2 = shell2atom[*s2];
+  auto atom1 = shell_to_atom[*s1 - 1];
+  auto atom2 = shell_to_atom[*s2 - 1];
 
-  auto n_ao = basis.size();
+  auto shell2bf = basis.shell2bf();
+
+  auto s1_first = shell2bf[*s1-1];
+  auto s2_first = shell2bf[*s2-1];
 
   auto n1 = basis[*s1 - 1].size();
   auto n2 = basis[*s2 - 1].size();
 
-  auto n_centers = n_atoms + 2; 
+  auto n_atoms = atoms.size();
+  auto n_centers = n_atoms + 2;
+
+  auto atom = 0;
+
+  int nao = *n_ao;
 
   for (auto center = 0, shellset = 0; center != n_centers; ++center){
 
@@ -131,14 +139,29 @@ void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2){
 
     for (auto coordinate = 0; coordinate != 3; ++coordinate, ++shellset){
 
-      auto hwqx_offset = n_ao*(n_ao*(3*(atom) + coordinate));
+      auto current_ints = ints[shellset];
 
-      double *h_wxqk_block = h_wxqk + hwqx_offset;
+      if (current_ints != nullptr){
+        for (auto f1 = 0, f12 = 0; f1 != n1; ++f1){
+          for (auto f2 = 0; f2 != n2; ++f2, ++f12){
 
-      extract_and_add_integrals(h_wxqk_block, ints[shellset], n1, n2, 1.0e0);
+            auto index_offset = nao*(nao*(3*atom+coordinate)+s2_first+f2)+s1_first+f1;
+            h_wxqk[index_offset] = h_wxqk[index_offset] + current_ints[f12];
 
+          }
+        }
+        if (*s1 != *s2){
+          for (auto f1 = 0, f12 = 0; f1 != n1; ++f1){
+            for (auto f2 = 0; f2 != n2; ++f2, ++f12){
+
+              auto index_offset_tr = nao*(nao*(3*atom+coordinate)+s1_first+f1)+s2_first+f2;
+              h_wxqk[index_offset_tr] = h_wxqk[index_offset_tr] + current_ints[f12];
+
+            }
+          }          
+        }
+      }
     }
-
   }
 
 }

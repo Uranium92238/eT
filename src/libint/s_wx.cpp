@@ -61,12 +61,6 @@ void construct_ao_s_wx(double *s, int *s1, int *s2){
 void construct_ao_s_wx_1der(double *s_1x, double *s_1y, double *s_1z, 
                   double *s_2x, double *s_2y, double *s_2z, int *s1, int *s2){
 
-  //
-  // This routine constructs the overlap derivatives s_wx^(1) for w in shell s1 and x in shell s2.
-  // Here, we have s_wx^(1) = (s_1x, s_1y, ..., s_2z). The elements in s_1x are the derivatives of s_wx
-  // with respect to the x-coordinate of the atom that s1 is centered on, etc.
-  //
-
   const auto& buf_vec = overlap_1der.results();
 
   auto n1 = basis[*s1 - 1].size();
@@ -91,8 +85,6 @@ void construct_ao_s_wx_1der(double *s_1x, double *s_1y, double *s_1z,
   extract_integrals(s_2x, ints_shellset_2x, n1, n2, 1.0e0);
   extract_integrals(s_2y, ints_shellset_2y, n1, n2, 1.0e0);
   extract_integrals(s_2z, ints_shellset_2z, n1, n2, 1.0e0);
-
-  return;
 
 }
 

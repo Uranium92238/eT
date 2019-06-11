@@ -107,7 +107,7 @@ contains
    end subroutine construct_ao_h_wx_kinetic_1der_molecular_system
 !
 !
-   module subroutine construct_and_add_ao_h_wx_nuclear_1der_molecular_system(h_wxqk, s1, s2) 
+   module subroutine construct_and_add_ao_h_wx_nuclear_1der_molecular_system(molecule, h_wxqk, s1, s2, n_ao) 
 !!
 !!    Construct and add h_αβ nuclear 1st-derivative
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -124,16 +124,19 @@ contains
 !!
       implicit none
 !
-      integer, intent(in) :: s1, s2
+      class(molecular_system), intent(in) :: molecule
+!
+      integer, intent(in) :: s1, s2, n_ao
 !
       real(dp), dimension(:,:,:,:), contiguous :: h_wxqk
 !
-      integer(i6) :: s1_4, s2_4 
+      integer(i6) :: s1_4, s2_4, n_ao_4
 !
       s1_4 = int(s1,i6)
       s2_4 = int(s2,i6)
+      n_ao_4 = int(n_ao,i6)
 !
-      call construct_and_add_ao_h_wx_nuclear_1der_c(h_wxqk, s1_4, s2_4) 
+      call construct_and_add_ao_h_wx_nuclear_1der_c(h_wxqk, s1_4, s2_4, n_ao_4) 
 !
    end subroutine construct_and_add_ao_h_wx_nuclear_1der_molecular_system
 !
@@ -316,12 +319,12 @@ contains
 !
       integer, intent(in) :: s1, s2
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: s_1x
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: s_1y
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: s_1z
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: s_2x
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: s_2y
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: s_2z
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size) :: s_1x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size) :: s_1y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size) :: s_1z
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size) :: s_2x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size) :: s_2y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size) :: s_2z
 !
       integer(i6) :: s1_4, s2_4 
 !

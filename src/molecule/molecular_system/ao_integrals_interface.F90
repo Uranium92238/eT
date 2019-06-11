@@ -58,7 +58,7 @@
    end subroutine construct_ao_h_wx_kinetic_1der_molecular_system
 !
 !
-   module subroutine construct_and_add_ao_h_wx_nuclear_1der_molecular_system(h_wxqk, s1, s2) 
+   module subroutine construct_and_add_ao_h_wx_nuclear_1der_molecular_system(molecule, h_wxqk, s1, s2, n_ao) 
 !!
 !!    Construct and add h_αβ nuclear 1st-derivative
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -75,11 +75,11 @@
 !!
       implicit none
 !
-      integer, intent(in) :: s1, s2
+      class(molecular_system), intent(in) :: molecule
+!
+      integer, intent(in) :: s1, s2, n_ao 
 !
       real(dp), dimension(:,:,:,:), contiguous :: h_wxqk
-!
-      integer(i6) :: s1_4, s2_4 
 !
    end subroutine construct_and_add_ao_h_wx_nuclear_1der_molecular_system
 !
@@ -210,12 +210,12 @@
 !
       integer, intent(in) :: s1, s2
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_1x
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_1y
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_1z
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_2x
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_2y
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s_2z
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size) :: s_1x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size) :: s_1y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size) :: s_1z
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size) :: s_2x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size) :: s_2y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size) :: s_2z
 !
    end subroutine construct_ao_s_wx_1der_molecular_system
 !

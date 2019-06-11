@@ -48,11 +48,11 @@ module abstract_engine_class
       procedure(essential_engine_w_wf), deferred   :: run 
       procedure(essential_engine), deferred        :: set_printables 
 !
-      procedure, non_overridable :: cleanup => cleanup_abstract_engine
+      procedure, non_overridable :: cleanup        => cleanup_abstract_engine
 !
-      procedure, nopass :: do_cholesky => do_cholesky_abstract_engine       
+      procedure, nopass :: do_cholesky             => do_cholesky_abstract_engine       
 !
-      procedure, non_overridable :: print_banner => print_banner_abstract_engine
+      procedure, non_overridable :: print_banner   => print_banner_abstract_engine
 !
    end type abstract_engine
 !
