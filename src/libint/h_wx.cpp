@@ -126,11 +126,6 @@ void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2, in
   auto n1 = basis[*s1 - 1].size();
   auto n2 = basis[*s2 - 1].size();
 
-  cout << "First index of shells: " << *s1 << " and " << *s2 << endl;
-  cout << "First1: " << s1_first << " First2: " << s2_first << endl;
-  cout << "Size1: " << n1 << " Size2: " << n2 << endl;
-  cout << "Total number of AOs: " << *n_ao << endl;
-
   auto n_atoms = atoms.size();
   auto n_centers = n_atoms + 2;
 

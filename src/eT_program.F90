@@ -174,10 +174,10 @@ subroutine reference_calculation(system)
 !
       ref_wf = hf(system)
 !
-      solver = cg_geoopt_hf()
-      call solver%run(ref_wf)
+   !   solver = cg_geoopt_hf()
+   !   call solver%run(ref_wf)
 !
-      stop
+   !   stop
 !
    elseif (trim(ref_wf_name) == 'uhf') then
 !

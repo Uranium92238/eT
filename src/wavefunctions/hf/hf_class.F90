@@ -987,7 +987,7 @@ contains
                  wf%n_ao,                   &
                  wf%n_ao,                   &
                  wf%n_o,                    &
-                 one,                       &
+                 two,                       &
                  wf%orbital_coefficients,   &
                  wf%n_ao,                   &
                  wf%orbital_coefficients,   &
@@ -1328,7 +1328,7 @@ contains
                               do y = C_interval%first, C_interval%last
                                  do z = D_interval%first, D_interval%last
 !
-                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + two*g_C_p(w, x, y, z)*wf%ao_density(y, z)
+                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + g_C_p(w, x, y, z)*wf%ao_density(y, z)
 !
                                  enddo
                               enddo
@@ -1342,7 +1342,7 @@ contains
                               do y = C_interval%first, C_interval%last
                                  do z = D_interval%first, D_interval%last
 !
-                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + two*g_C_p(w, x, y, z)*wf%ao_density(y, z)
+                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + g_C_p(w, x, y, z)*wf%ao_density(y, z)
 !
                                  enddo
                               enddo
@@ -1395,7 +1395,7 @@ contains
                                  do z = D_interval%first, D_interval%last
 !
                                     wf%ao_fock(w, x) = wf%ao_fock(w, x) + &
-                                             (- g_K_p(w, z, y, x))*wf%ao_density(y, z)
+                                             (- half*g_K_p(w, z, y, x))*wf%ao_density(y, z)
 !
                                  enddo
 !
@@ -1410,7 +1410,7 @@ contains
                               do y = C_interval%first, C_interval%last
                                  do z = D_interval%first, D_interval%last
 !
-                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + (- g_K_p(w, z, y, x))*wf%ao_density(y, z)
+                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + (- half*g_K_p(w, z, y, x))*wf%ao_density(y, z)
 !
                                  enddo
                               enddo
@@ -1721,13 +1721,13 @@ contains
 !
                            temp = g(wxyz)
 !
-                           temp1 = temp*d1
-                           temp2 = temp*d2
+                           temp1 = half*temp*d1
+                           temp2 = half*temp*d2
 !
-                           temp3 = quarter*temp*d3
-                           temp4 = quarter*temp*d4
-                           temp5 = quarter*temp*d5
-                           temp6 = quarter*temp*d6
+                           temp3 = one_over_eight*temp*d3
+                           temp4 = one_over_eight*temp*d4
+                           temp5 = one_over_eight*temp*d5
+                           temp6 = one_over_eight*temp*d6
 !
                            F(w, thread_offset + x) = F(w, thread_offset + x) + temp1
                            F(y, thread_offset + x) = F(y, thread_offset + x) - temp6
@@ -1838,13 +1838,13 @@ contains
 !
                               temp = g(wxyz)
 !
-                              temp1 = temp*d1
-                              temp2 = temp*d2
+                              temp1 = half*temp*d1
+                              temp2 = half*temp*d2
 !
-                              temp3 = quarter*temp*d3
-                              temp4 = quarter*temp*d4
-                              temp5 = quarter*temp*d5
-                              temp6 = quarter*temp*d6
+                              temp3 = one_over_eight*temp*d3
+                              temp4 = one_over_eight*temp*d4
+                              temp5 = one_over_eight*temp*d5
+                              temp6 = one_over_eight*temp*d6
 !
                               F(w, x) = F(w, x) + temp1
                               F(y, x) = F(y, x) - temp6
@@ -2191,8 +2191,8 @@ contains
 !
       wf%energy = wf%system%get_nuclear_repulsion()
 !
-      wf%energy = wf%energy + two*ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
-      wf%energy = wf%energy + ddot((wf%n_ao)**2, wf%ao_density, 1, half_GD_wx, 1)
+      wf%energy = wf%energy + ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
+      wf%energy = wf%energy + half*ddot((wf%n_ao)**2, wf%ao_density, 1, half_GD_wx, 1)
 
    end subroutine calculate_hf_energy_from_G_hf
 !
@@ -2212,7 +2212,7 @@ contains
 !!
 !!    The traces are calculated as dot products (since B is symmetric here):
 !!
-!!       Tr(AB) = sum_x (AB)_xx = sum_xy A_xy B_yx = sum_xy A_xy B_xy.
+!!       Tr(AB) = sum_x (AB)_xx = sum_xy A_xy B_yx = sum_xy A_xy B_xy = A-dot-B.
 !!
       implicit none
 !
@@ -2225,8 +2225,8 @@ contains
 !
       wf%energy = wf%system%get_nuclear_repulsion()
 !
-      wf%energy = wf%energy + ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
-      wf%energy = wf%energy + ddot((wf%n_ao)**2, wf%ao_density, 1, F_wx, 1)
+      wf%energy = wf%energy + half*ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
+      wf%energy = wf%energy + half*ddot((wf%n_ao)**2, wf%ao_density, 1, F_wx, 1)
 
    end subroutine calculate_hf_energy_from_fock_hf
 !
@@ -3417,7 +3417,7 @@ contains
          call wf%system%atoms(I)%read_atomic_density(atomic_density)
 !
          wf%ao_density(first_ao_on_atom:last_ao_on_atom, first_ao_on_atom:last_ao_on_atom) &
-                                             = half*atomic_density(1:n_ao_on_atom, 1:n_ao_on_atom)
+                                             = atomic_density(1:n_ao_on_atom, 1:n_ao_on_atom)
 !
          call mem%dealloc(atomic_density, n_ao_on_atom, n_ao_on_atom)
 !
@@ -3613,37 +3613,37 @@ contains
       call mem%alloc(G_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%alloc(s_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
 !
-      s_wxqk = zero
-      call wf%get_ao_s_wx_1der(s_wxqk)
-      write(output%unit, *) 'derii s analytical: ', s_wxqk(:,:,1,1)
+      ! s_wxqk = zero
+      ! call wf%get_ao_s_wx_1der(s_wxqk)
+      ! write(output%unit, *) 'derii s analytical: ', s_wxqk(:,:,1,1)
 !
       s_wxqk = zero
       call wf%get_ao_s_wx_1der_numerical(s_wxqk, 1.0d-8)
       write(output%unit, *) 'derii s numerical: ', s_wxqk(:,:,1,1)
 !
-      G_wxqk = zero
-      call wf%construct_ao_G_1der(G_wxqk, wf%ao_density)
+!       G_wxqk = zero
+!       call wf%construct_ao_G_1der(G_wxqk, wf%ao_density)
 
-      do k = 1, wf%system%n_atoms
+!       do k = 1, wf%system%n_atoms
 
-         do q = 1, 3
+!          do q = 1, 3
 
-           call symmetric_sum(G_wxqk(:,:,q,k), wf%n_ao)
-           G_wxqk(:,:,q,k) = half*G_wxqk(:,:,q,k)
+!            call symmetric_sum(G_wxqk(:,:,q,k), wf%n_ao)
+!            G_wxqk(:,:,q,k) = half*G_wxqk(:,:,q,k)
 
-         enddo
+!          enddo
 
-      enddo
-!
-      write(output%unit, *) 'derii G analytical: ', G_wxqk(:,:,1,1)
+!       enddo
+! !
+!       write(output%unit, *) 'derii G analytical: ', G_wxqk(:,:,1,1)
 !
       G_wxqk = zero
       call wf%construct_ao_G_1der_numerical(G_wxqk, 1.0d-8)
       write(output%unit, *) 'derii G numerical: ', G_wxqk(:,:,1,1)
 !
-      h_wxqk = zero
-      call wf%get_ao_h_wx_1der(h_wxqk)
-      write(output%unit, *) 'derii h analytical: ', h_wxqk(:,:,1,1)
+      ! h_wxqk = zero
+      ! call wf%get_ao_h_wx_1der(h_wxqk)
+      ! write(output%unit, *) 'derii h analytical: ', h_wxqk(:,:,1,1)
 !
       h_wxqk = zero
       call wf%get_ao_h_wx_1der_numerical(h_wxqk, 1.0d-8)
