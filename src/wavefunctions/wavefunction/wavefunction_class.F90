@@ -342,7 +342,7 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms) :: s_wxqk
 !
-      integer :: A, B, A_atom, B_atom, w, x, q
+      integer :: A, B, A_atom, B_atom, w, x, q, w_f, x_f 
 !
       real(dp), dimension((wf%system%max_shell_size**2)*6), target :: s_ABqk 
 !
@@ -377,11 +377,14 @@ contains
                do w = 1, A_interval%size
                   do x = 1, B_interval%size
 !
-                     s_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, q, A_atom) = s_ABqk_p(w, x, q, 1)
-                     s_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, q, A_atom) = s_ABqk_p(w, x, q, 1)
+                     w_f = A_interval%first - 1 + w
+                     x_f = B_interval%first - 1 + x
 !
-                     s_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, q, B_atom) = s_ABqk_p(w, x, q, 2)
-                     s_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, q, B_atom) = s_ABqk_p(w, x, q, 2)
+                     s_wxqk(w_f, x_f, q, A_atom) = s_wxqk(w_f, x_f, q, A_atom) + s_ABqk_p(w, x, q, 1)
+                     s_wxqk(x_f, w_f, q, A_atom) = s_wxqk(x_f, w_f, q, A_atom) + s_ABqk_p(w, x, q, 1)
+!
+                     s_wxqk(w_f, x_f, q, B_atom) = s_wxqk(w_f, x_f, q, B_atom) + s_ABqk_p(w, x, q, 2)
+                     s_wxqk(x_f, w_f, q, B_atom) = s_wxqk(x_f, w_f, q, B_atom) + s_ABqk_p(w, x, q, 2)
 !
                   enddo
                enddo
@@ -470,7 +473,7 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms), intent(inout) :: h_wxqk
 !
-      integer :: A, B, A_atom, B_atom, w, x, q, k
+      integer :: A, B, A_atom, B_atom, w, x, q, k, w_f, x_f 
 !
       real(dp), dimension((wf%system%max_shell_size**2)*3*(wf%system%n_atoms)), target :: h_ABqk 
 !
@@ -505,10 +508,14 @@ contains
                do w = 1, A_interval%size
                   do x = 1, B_interval%size
 !
-                  h_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, q, A_atom) = h_ABqk_p(w, x, q, 1)
-                  h_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, q, A_atom) = h_ABqk_p(w, x, q, 1)
-                  h_wxqk(A_interval%first - 1 + w, B_interval%first - 1 + x, q, B_atom) = h_ABqk_p(w, x, q, 2)
-                  h_wxqk(B_interval%first - 1 + x, A_interval%first - 1 + w, q, B_atom) = h_ABqk_p(w, x, q, 2)
+                     w_f = A_interval%first - 1 + w
+                     x_f = B_interval%first - 1 + x
+!
+                     h_wxqk(w_f, x_f, q, A_atom) = h_wxqk(w_f, x_f, q, A_atom) + h_ABqk_p(w, x, q, 1)
+                     h_wxqk(x_f, w_f, q, A_atom) = h_wxqk(x_f, w_f, q, A_atom) + h_ABqk_p(w, x, q, 1)
+!
+                     h_wxqk(w_f, x_f, q, B_atom) = h_wxqk(w_f, x_f, q, B_atom) + h_ABqk_p(w, x, q, 2)
+                     h_wxqk(x_f, w_f, q, B_atom) = h_wxqk(x_f, w_f, q, B_atom) + h_ABqk_p(w, x, q, 2)
 !
                   enddo
                enddo

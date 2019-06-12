@@ -3613,14 +3613,13 @@ contains
       call mem%alloc(G_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%alloc(s_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
 !
-      ! s_wxqk = zero
-      ! call wf%get_ao_s_wx_1der(s_wxqk)
-      ! write(output%unit, *) 'derii s analytical: ', s_wxqk(:,:,1,1)
-     ! call wf%construct_ao_density()
+      s_wxqk = zero
+      call wf%get_ao_s_wx_1der(s_wxqk)
+      write(output%unit, *) 'derii s analytical: ', s_wxqk(:,:,1,1)
 !
       s_wxqk = zero
       call wf%get_ao_s_wx_1der_numerical(s_wxqk, 1.0d-8)
-   !   write(output%unit, *) 'derii s numerical: ', s_wxqk(:,:,1,1)
+      write(output%unit, *) 'derii s numerical: ', s_wxqk(:,:,1,1)
 !
 !       G_wxqk = zero
 !       call wf%construct_ao_G_1der(G_wxqk, wf%ao_density)
@@ -3642,13 +3641,13 @@ contains
       call wf%construct_ao_G_1der_numerical(G_wxqk, 1.0d-8)
    !   write(output%unit, *) 'derii G numerical: ', G_wxqk(:,:,1,1)
 !
-     !  h_wxqk = zero
-     !  call wf%get_ao_h_wx_1der(h_wxqk)
-     !  write(output%unit, *) 'derii h analytical: ', h_wxqk(:,:,1,1)
+       h_wxqk = zero
+       call wf%get_ao_h_wx_1der(h_wxqk)
+       write(output%unit, *) 'derii h analytical: ', h_wxqk(:,:,1,1)
 !
       h_wxqk = zero
       call wf%get_ao_h_wx_1der_numerical(h_wxqk, 1.0d-8)
-   !   write(output%unit, *) 'derii h numerical: ', h_wxqk(:,:,1,1)
+      write(output%unit, *) 'derii h numerical: ', h_wxqk(:,:,1,1)
 !
 !     Construct D F D 
 !
@@ -3717,6 +3716,7 @@ contains
             E_qk(1,k), E_qk(2,k), E_qk(3,k) 
 !
       enddo
+      stop
 !
    !   write(output%unit, *) 'TrDh_qk:'
 !
