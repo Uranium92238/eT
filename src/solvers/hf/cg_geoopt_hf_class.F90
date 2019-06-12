@@ -125,7 +125,7 @@ contains
       conjugate_gradient   = conjugate_gradient_tool(3*wf%system%n_atoms)
       ground_state_engine  = hf_engine()
 !
-      iteration = 1
+      iteration = 0
 !
       converged          = .false.
       converged_energy   = .false.
@@ -170,7 +170,8 @@ contains
 !
          else
 !
-            call conjugate_gradient%get_next_direction(molecular_gradient, descent_direction)
+           ! call conjugate_gradient%get_next_direction(molecular_gradient, descent_direction)
+            descent_direction = -molecular_gradient 
 !
             geometry = geometry + descent_direction
             call wf%system%set_geometry(geometry)

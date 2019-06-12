@@ -102,6 +102,7 @@ contains
 !
          call cg%compute_beta(gradient)
          descent_direction = cg%beta*descent_direction - gradient 
+         write(output%unit, *) 'beta is : ', cg%beta
 !
       endif 
 !
