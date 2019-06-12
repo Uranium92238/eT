@@ -894,7 +894,7 @@ contains
    end subroutine read_active_atoms_molecular_system
 !
 !
-   function get_nuclear_repulsion_1der_numerical_molecular_system(molecule) result(h_nuc_qk)
+   function get_nuclear_repulsion_1der_numerical_molecular_system(molecule, dx) result(h_nuc_qk)
 !!
 !!    Get nuclear repulsion 1der numerical 
 !!    Written by Eirik F. Kjønstad, June 2019
@@ -905,39 +905,38 @@ contains
 !
       class(molecular_system), intent(inout) :: molecule 
 !
-      real(dp), dimension(3, molecule%n_atoms) :: h_nuc_qk 
+      real(dp), intent(in) :: dx
 !
-      real(dp), parameter :: dx = 1.0d-9 
+      real(dp), dimension(3, molecule%n_atoms) :: h_nuc_qk 
 !
       real(dp) :: energy_x, energy_xdx
 !
-      real(dp) :: dx_bohr
+      real(dp), dimension(3, molecule%n_atoms) :: R_qk, R_qk_displaced
 !
-      integer :: k
+      integer :: k, q
 !
       h_nuc_qk = zero
 !
-      dx_bohr = dx*angstrom_to_bohr
       energy_x = molecule%get_nuclear_repulsion()
+! 
+      R_qk = molecule%get_geometry()
 !
       do k = 1, molecule%n_atoms
+         do q = 1, 3
 !
-         molecule%atoms(k)%x = molecule%atoms(k)%x + dx*angstrom_to_bohr
-         energy_xdx = molecule%get_nuclear_repulsion()
-         h_nuc_qk(1,k) = (energy_xdx-energy_x)/dx_bohr
-         molecule%atoms(k)%x = molecule%atoms(k)%x - dx*angstrom_to_bohr
+            R_qk_displaced = R_qk 
+            R_qk_displaced(q,k) = R_qk_displaced(q,k) + dx 
 !
-         molecule%atoms(k)%y = molecule%atoms(k)%y + dx*angstrom_to_bohr
-         energy_xdx = molecule%get_nuclear_repulsion()
-         h_nuc_qk(2,k) = (energy_xdx-energy_x)/dx_bohr
-         molecule%atoms(k)%y = molecule%atoms(k)%y - dx*angstrom_to_bohr
+            call molecule%set_geometry(R_qk_displaced)
 !
-         molecule%atoms(k)%z = molecule%atoms(k)%z + dx*angstrom_to_bohr
-         energy_xdx = molecule%get_nuclear_repulsion()
-         h_nuc_qk(3,k) = (energy_xdx-energy_x)/dx_bohr
-         molecule%atoms(k)%z = molecule%atoms(k)%z - dx*angstrom_to_bohr
+            energy_xdx = molecule%get_nuclear_repulsion()
 !
+            h_nuc_qk(q,k) = (energy_xdx-energy_x)/dx
+!
+         enddo
       enddo
+!
+      call molecule%set_geometry(R_qk)
 !
    end function get_nuclear_repulsion_1der_numerical_molecular_system
 !
