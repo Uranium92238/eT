@@ -3597,7 +3597,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: G_wxqk
       real(dp), dimension(:,:,:,:), allocatable :: s_wxqk
 !
-      real(dp), dimension(:,:), allocatable :: DFD, FD, D, h_plus_F
+      real(dp), dimension(:,:), allocatable :: DFD, FD
 !
       real(dp), dimension(3, wf%system%n_atoms) :: TrDh_qk, TrDG_qk, TrDFDS_qk
 !
@@ -3607,7 +3607,7 @@ contains
 !
 !     Construct h_nuc^x, and the AO integral derivatives, h^x, S^x, and G^x(D)
 !
-      E_qk = wf%system%get_nuclear_repulsion_1der_numerical(1.0d-5) ! E_qk = h_nuc_qk
+      E_qk = wf%system%get_nuclear_repulsion_1der_numerical(1.0d-8) ! E_qk = h_nuc_qk
 !
       call mem%alloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%alloc(G_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
@@ -3616,11 +3616,11 @@ contains
       ! s_wxqk = zero
       ! call wf%get_ao_s_wx_1der(s_wxqk)
       ! write(output%unit, *) 'derii s analytical: ', s_wxqk(:,:,1,1)
-      call wf%construct_ao_density()
+     ! call wf%construct_ao_density()
 !
       s_wxqk = zero
       call wf%get_ao_s_wx_1der_numerical(s_wxqk, 1.0d-8)
-      write(output%unit, *) 'derii s numerical: ', s_wxqk(:,:,1,1)
+   !   write(output%unit, *) 'derii s numerical: ', s_wxqk(:,:,1,1)
 !
 !       G_wxqk = zero
 !       call wf%construct_ao_G_1der(G_wxqk, wf%ao_density)
@@ -3640,7 +3640,7 @@ contains
 !
       G_wxqk = zero
       call wf%construct_ao_G_1der_numerical(G_wxqk, 1.0d-8)
-      write(output%unit, *) 'derii G numerical: ', G_wxqk(:,:,1,1)
+   !   write(output%unit, *) 'derii G numerical: ', G_wxqk(:,:,1,1)
 !
      !  h_wxqk = zero
      !  call wf%get_ao_h_wx_1der(h_wxqk)
@@ -3648,16 +3648,9 @@ contains
 !
       h_wxqk = zero
       call wf%get_ao_h_wx_1der_numerical(h_wxqk, 1.0d-8)
-      write(output%unit, *) 'derii h numerical: ', h_wxqk(:,:,1,1)
-!
-   !   call mem%alloc(h_plus_F, wf%n_ao, wf%n_ao)
-   !   call wf%get_ao_h_wx(h_plus_F)
-   !   h_plus_F = h_plus_F + wf%ao_fock 
+   !   write(output%unit, *) 'derii h numerical: ', h_wxqk(:,:,1,1)
 !
 !     Construct D F D 
-!
-      call mem%alloc(D, wf%n_ao, wf%n_ao)
-      D = wf%ao_density ! 1/2 D - Tested that it satisfies DSD = D, as it should!
 !
       call mem%alloc(FD, wf%n_ao, wf%n_ao)
 !
@@ -3668,7 +3661,7 @@ contains
                   one,           &
                   wf%ao_fock,    & 
                   wf%n_ao,       &
-                  D,             & 
+                  wf%ao_density, & 
                   wf%n_ao,       &
                   zero,          &
                   FD,            &  
@@ -3681,7 +3674,7 @@ contains
                   wf%n_ao,       &
                   wf%n_ao,       &
                   one,           &
-                  D,             &
+                  wf%ao_density, &
                   wf%n_ao,       &
                   FD,            &
                   wf%n_ao,       &
@@ -3693,32 +3686,30 @@ contains
 !
 !     Perform the traces, adding the contributions to the gradient 
 !
-      write(output%unit, *) 'h_nuc_qk:'
-      do k = 1, wf%system%n_atoms
+     ! write(output%unit, *) 'h_nuc_qk:'
+     ! do k = 1, wf%system%n_atoms
 !
-         write(output%unit, '(t3,a2,f12.6,f12.6,f12.6)') wf%system%atoms(k)%symbol, &
-            E_qk(1,k), E_qk(2,k), E_qk(3,k) 
+     !    write(output%unit, '(t3,a2,f12.6,f12.6,f12.6)') wf%system%atoms(k)%symbol, &
+    !        E_qk(1,k), E_qk(2,k), E_qk(3,k) 
 !
-      enddo
+   !   enddo
 !
       do k = 1, wf%system%n_atoms
          do q = 1, 3
 !
-            TrDh_qk(q,k) = ddot(wf%n_ao**2, D, 1, h_wxqk(:,:,q,k), 1)
-            TrDG_qk(q,k) = ddot(wf%n_ao**2, D, 1, G_wxqk(:,:,q,k), 1)
+            TrDh_qk(q,k) = ddot(wf%n_ao**2, wf%ao_density, 1, h_wxqk(:,:,q,k), 1)
+            TrDG_qk(q,k) = ddot(wf%n_ao**2, wf%ao_density, 1, G_wxqk(:,:,q,k), 1)
             TrDFDS_qk(q,k) = ddot(wf%n_ao**2, DFD, 1, s_wxqk(:,:,q,k), 1)
 !
-!           Notes: 2 1 -1 gives the correct symmetry!
-!
             E_qk(q,k) = E_qk(q,k)   &
-            +half*(two*TrDh_qk(q,k)    & 
-              + TrDG_qk(q,k)        &
-              - TrDFDS_qk(q,k))
+              + TrDh_qk(q,k)        & 
+              + half*TrDG_qk(q,k)   &
+              - half*TrDFDS_qk(q,k)
 !
          enddo
       enddo 
 !
-      write(output%unit, *) 'the gradient:'
+      write(output%unit, '(/t3,a/)') 'Molecular gradient (Hartree/bohr)'
 !
       do k = 1, wf%system%n_atoms
 !
@@ -3727,34 +3718,33 @@ contains
 !
       enddo
 !
-      write(output%unit, *) 'TrDh_qk:'
+   !   write(output%unit, *) 'TrDh_qk:'
 !
-      do k = 1, wf%system%n_atoms
+   !   do k = 1, wf%system%n_atoms
 !
-         write(output%unit, '(t3,a2,f12.6,f12.6,f12.6)') wf%system%atoms(k)%symbol, &
-            TrDh_qk(1,k), TrDh_qk(2,k), TrDh_qk(3,k) 
+   !      write(output%unit, '(t3,a2,f12.6,f12.6,f12.6)') wf%system%atoms(k)%symbol, &
+   !         TrDh_qk(1,k), TrDh_qk(2,k), TrDh_qk(3,k) 
 !
-      enddo
+   !   enddo
 !
-      write(output%unit, *) 'TrDG_qk:'
+   !   write(output%unit, *) 'TrDG_qk:'
 !
-      do k = 1, wf%system%n_atoms
+   !   do k = 1, wf%system%n_atoms
 !
-         write(output%unit, '(t3,a2,f12.6,f12.6,f12.6)') wf%system%atoms(k)%symbol, &
-            TrDG_qk(1,k), TrDG_qk(2,k), TrDG_qk(3,k) 
+   !      write(output%unit, '(t3,a2,f12.6,f12.6,f12.6)') wf%system%atoms(k)%symbol, &
+   !         TrDG_qk(1,k), TrDG_qk(2,k), TrDG_qk(3,k) 
 !
-      enddo
+   !   enddo
 !
-      write(output%unit, *) 'TrDFDS_qk:'
+   !   write(output%unit, *) 'TrDFDS_qk:'
 !
-      do k = 1, wf%system%n_atoms
+   !   do k = 1, wf%system%n_atoms
 !
-         write(output%unit, '(t3,a2,f12.6,f12.6,f12.6)') wf%system%atoms(k)%symbol, &
-            TrDFDS_qk(1,k), TrDFDS_qk(2,k), TrDFDS_qk(3,k) 
+   !      write(output%unit, '(t3,a2,f12.6,f12.6,f12.6)') wf%system%atoms(k)%symbol, &
+   !         TrDFDS_qk(1,k), TrDFDS_qk(2,k), TrDFDS_qk(3,k) 
 !
-      enddo
+   !   enddo
 !
-      call mem%dealloc(D, wf%n_ao, wf%n_ao)
       call mem%dealloc(DFD, wf%n_ao, wf%n_ao)
 !
       call mem%dealloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)

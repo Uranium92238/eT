@@ -146,6 +146,8 @@ contains
          iteration = iteration + 1
 !
          geometry = wf%system%get_geometry()
+!
+         call wf%set_n_mo()
          call ground_state_engine%ignite(wf)
 !
          energy = wf%energy 
@@ -170,7 +172,7 @@ contains
 !
             call conjugate_gradient%get_next_direction(molecular_gradient, descent_direction)
 !
-            geometry = geometry + 0.01d0*descent_direction
+            geometry = geometry + descent_direction
             call wf%system%set_geometry(geometry)
 !
             call wf%system%print_geometry()
