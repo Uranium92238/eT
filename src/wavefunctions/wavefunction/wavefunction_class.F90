@@ -475,7 +475,7 @@ contains
 !
       integer :: A, B, A_atom, B_atom, w, x, q, k, w_f, x_f 
 !
-      real(dp), dimension((wf%system%max_shell_size**2)*3*(wf%system%n_atoms)), target :: h_ABqk 
+      real(dp), dimension((wf%system%max_shell_size**2)*3*2), target :: h_ABqk 
 !
       real(dp), dimension(:,:,:,:), pointer, contiguous :: h_ABqk_p 
 !
@@ -512,17 +512,39 @@ contains
                      x_f = B_interval%first - 1 + x
 !
                      h_wxqk(w_f, x_f, q, A_atom) = h_wxqk(w_f, x_f, q, A_atom) + h_ABqk_p(w, x, q, 1)
-                     h_wxqk(x_f, w_f, q, A_atom) = h_wxqk(x_f, w_f, q, A_atom) + h_ABqk_p(w, x, q, 1)
-!
                      h_wxqk(w_f, x_f, q, B_atom) = h_wxqk(w_f, x_f, q, B_atom) + h_ABqk_p(w, x, q, 2)
-                     h_wxqk(x_f, w_f, q, B_atom) = h_wxqk(x_f, w_f, q, B_atom) + h_ABqk_p(w, x, q, 2)
 !
                   enddo
                enddo
             enddo
 !
+            if (A .ne. B) then 
+!
+               do q = 1, 3
+                  do w = 1, A_interval%size
+                     do x = 1, B_interval%size
+   !
+                        w_f = A_interval%first - 1 + w
+                        x_f = B_interval%first - 1 + x
+   !
+                        h_wxqk(x_f, w_f, q, A_atom) = h_wxqk(x_f, w_f, q, A_atom) + h_ABqk_p(w, x, q, 1)
+                        h_wxqk(x_f, w_f, q, B_atom) = h_wxqk(x_f, w_f, q, B_atom) + h_ABqk_p(w, x, q, 2)
+   !
+                     enddo
+                  enddo
+               enddo
+!
+            endif 
+!
             nullify(h_ABqk_p)
 !
+         enddo
+      enddo
+!
+      write(output%unit, *) 'derii h analytical (kin): '
+      do x = 1, wf%n_ao
+         do w = 1, wf%n_ao 
+            write(output%unit, *) w, x, h_wxqk(w,x,1,1)
          enddo
       enddo
 !
@@ -531,6 +553,13 @@ contains
 !
             call wf%system%construct_and_add_ao_h_wx_nuclear_1der(h_wxqk, A, B, wf%n_ao)
 !
+         enddo
+      enddo
+!
+      write(output%unit, *) 'derii h analytical (kin+nuc): '
+      do x = 1, wf%n_ao
+         do w = 1, wf%n_ao 
+            write(output%unit, *) w, x, h_wxqk(w,x,1,1)
          enddo
       enddo
 !

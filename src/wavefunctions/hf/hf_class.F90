@@ -3603,7 +3603,7 @@ contains
 !
       real(dp) :: ddot
 !
-      integer :: k, q
+      integer :: k, q, w, x
 !
 !     Construct h_nuc^x, and the AO integral derivatives, h^x, S^x, and G^x(D)
 !
@@ -3643,11 +3643,17 @@ contains
 !
        h_wxqk = zero
        call wf%get_ao_h_wx_1der(h_wxqk)
-       write(output%unit, *) 'derii h analytical: ', h_wxqk(:,:,1,1)
+    !   write(output%unit, *) 'derii h analytical: ', h_wxqk(:,:,1,1)
 !
       h_wxqk = zero
       call wf%get_ao_h_wx_1der_numerical(h_wxqk, 1.0d-8)
-      write(output%unit, *) 'derii h numerical: ', h_wxqk(:,:,1,1)
+      !write(output%unit, *) 'derii h numerical: ', h_wxqk(:,:,1,1)
+      write(output%unit, *) 'derii h numerical (kin+nuc): '
+      do x = 1, wf%n_ao
+         do w = 1, wf%n_ao 
+            write(output%unit, *) w, x, h_wxqk(w,x,1,1)
+         enddo
+      enddo
 !
 !     Construct D F D 
 !

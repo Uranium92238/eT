@@ -1258,6 +1258,7 @@ contains
          accumulated_shells = accumulated_shells + molecule%atoms(I)%n_shells
 !
          if (shell .le. accumulated_shells) then
+!
             shell_to_atom_molecular_system = I
             return
 !
