@@ -3733,12 +3733,12 @@ contains
          enddo
       enddo 
 !
-      write(output%unit, '(/t3,a/)') 'Molecular gradient (Hartree/bohr):'
+      write(output%unit, '(/t6,a/)') 'Molecular gradient (Hartree/bohr):'
 !
       do k = 1, wf%system%n_atoms
 !
          write(output%unit, '(t6,a2,f12.6,f12.6,f12.6)') wf%system%atoms(k)%symbol, &
-            E_qk(1,k), E_qk(2,k), E_qk(3,k) 
+                                          E_qk(1,k), E_qk(2,k), E_qk(3,k) 
 !
       enddo
 !

@@ -24,12 +24,16 @@ module cg_geoopt_hf_class
       real(dp) :: energy_threshold
       real(dp) :: gradient_threshold
 !
+      real(dp), dimension(:), allocatable :: energies, gradient_norms 
+!
    contains
 !
       procedure :: run           => run_cg_geoopt_hf
+      procedure :: cleanup       => cleanup_cg_geoopt_hf
 !
       procedure :: read_settings => read_settings_cg_geoopt_hf
       procedure :: print_banner  => print_banner_cg_geoopt_hf
+      procedure :: print_summary => print_summary_cg_geoopt_hf
 !
    end type cg_geoopt_hf
 !
@@ -63,13 +67,16 @@ contains
 !
 !     Set standard settings 
 !
-      solver%max_iterations      = 100
-      solver%energy_threshold    = 1.0d-6
-      solver%gradient_threshold  = 1.0d-6
+      solver%max_iterations      = 250
+      solver%energy_threshold    = 1.0d-4
+      solver%gradient_threshold  = 1.0d-4
 !
 !     Read settings (thresholds, etc.)
 !
       call solver%read_settings()
+!
+      call mem%alloc(solver%energies, solver%max_iterations)
+      call mem%alloc(solver%gradient_norms, solver%max_iterations)
 !
    end function new_cg_geoopt_hf
 !
@@ -155,8 +162,8 @@ contains
 !
          norm_gradient = get_l2_norm(molecular_gradient, 3*wf%system%n_atoms)
 !
-         write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, energy, norm_gradient, abs(energy-prev_energy)
-         flush(output%unit)
+         solver%energies(iteration) = energy 
+         solver%gradient_norms(iteration) = norm_gradient
 !
          converged_gradient = norm_gradient              <= solver%gradient_threshold
          converged_energy   = abs(energy - prev_energy)  <= solver%energy_threshold
@@ -165,8 +172,7 @@ contains
 !
          if (converged) then
 !
-            write(output%unit, '(t3,a)') '------------------------------------------------'
-            write(output%unit, '(/t3,a27,i3,a12)') 'Converged criterion met in ', iteration, ' iterations!'
+            write(output%unit, '(/t3,a,i0,a)') 'Converged geometry in ', iteration, ' iterations!'
 !
          else
 !
@@ -176,10 +182,9 @@ contains
             geometry = geometry + descent_direction
             call wf%system%set_geometry(geometry)
 !
-            call wf%system%print_geometry()
-!
          endif
 !
+         call wf%system%print_geometry()
          prev_energy = energy 
 !
       enddo
@@ -190,12 +195,15 @@ contains
 !
       if (.not. converged) then 
 !
-         write(output%unit, '(t3,a)')   '---------------------------------------------------'
          write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given'
          write(output%unit, '(t3,a/)')  'number of maximum iterations.'
          stop
 !
-      endif 
+      else
+!
+         call solver%print_summary(iteration)
+!
+      endif  
 !
    end subroutine run_cg_geoopt_hf
 !
@@ -214,6 +222,53 @@ contains
       call output%long_string_print(solver%description)
 !
    end subroutine print_banner_cg_geoopt_hf
+!
+!
+   subroutine print_summary_cg_geoopt_hf(solver, n_iterations)
+!!
+!!    Print summary 
+!!    Written by Eirik F. Kjønstad, June 2019 
+!!
+      implicit none 
+!
+      class(cg_geoopt_hf), intent(in) :: solver 
+!
+      integer, intent(in) :: n_iterations
+!
+      integer :: iteration 
+!
+      write(output%unit, '(/t3,a)') '- Summary of geometry optimization iterations: '
+!
+      write(output%unit, '(/t6,a)') 'Iteration       Energy                Gradient norm       '
+      write(output%unit, '(t6,a)')  '----------------------------------------------------------'
+!
+      do iteration = 1, n_iterations
+!
+         call output%printf('(i4)         (f19.12)     (e11.4)', &
+                                    ints=[iteration], &
+                                    reals=[solver%energies(iteration), solver%gradient_norms(iteration)], &
+                                    fs='(t6,a)')
+!
+      enddo 
+!
+      write(output%unit, '(t6,a)')  '----------------------------------------------------------'
+!
+   end subroutine print_summary_cg_geoopt_hf
+!
+!
+   subroutine cleanup_cg_geoopt_hf(solver)
+!!
+!!    Cleanup 
+!!    Written by Eirik F. Kjønstad, June 2019 
+!!
+      implicit none 
+!
+      class(cg_geoopt_hf) :: solver 
+!
+      call mem%dealloc(solver%energies, solver%max_iterations)
+      call mem%dealloc(solver%gradient_norms, solver%max_iterations)
+!
+   end subroutine cleanup_cg_geoopt_hf
 !
 !
 end module cg_geoopt_hf_class
