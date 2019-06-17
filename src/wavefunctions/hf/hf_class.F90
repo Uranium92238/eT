@@ -3594,11 +3594,8 @@ contains
       real(dp), dimension(3, wf%system%n_atoms), intent(inout) :: E_qk ! Molecular gradient
 !
       real(dp), dimension(:,:,:,:), allocatable :: h_wxqk
-      real(dp), dimension(:,:,:,:), allocatable :: h_wxqk_a
       real(dp), dimension(:,:,:,:), allocatable :: G_wxqk
-      real(dp), dimension(:,:,:,:), allocatable :: G_wxqk_a
       real(dp), dimension(:,:,:,:), allocatable :: s_wxqk
-      real(dp), dimension(:,:,:,:), allocatable :: s_wxqk_a
 !
       real(dp), dimension(:,:), allocatable :: DFD, FD
 !
@@ -3608,22 +3605,31 @@ contains
 !
       integer :: k, q
 !
+      type(timings) :: s_timer, h_timer, G_timer, non_integral_timer
+!
+!     Initialize timers 
+!
+      s_timer = timings('HF gradient - 1st derivative-integrals of S')
+      h_timer = timings('HF gradient - 1st derivative-integrals of h')
+      G_timer = timings('HF gradient - 1st derivative-integrals of G(D)')
+      non_integral_timer = timings('HF gradient - non-integral-time')
+!
 !     Construct h_nuc^x, and the AO integral derivatives, h^x, S^x, and G^x(D)
 !
       E_qk = wf%system%get_nuclear_repulsion_1der_numerical(1.0d-8) ! E_qk = h_nuc_qk
 !
-      call mem%alloc(h_wxqk_a, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%alloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
-      call mem%alloc(G_wxqk_a, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%alloc(G_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
-      call mem%alloc(s_wxqk_a, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%alloc(s_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+!
+      call s_timer%turn_on()
 !
       s_wxqk = zero
       call wf%get_ao_s_wx_1der(s_wxqk)
 !
-      ! s_wxqk = zero
-      ! call wf%get_ao_s_wx_1der_numerical(s_wxqk, 1.0d-8)
+      call s_timer%turn_off()
+!
+      call G_timer%turn_on()
 !
       G_wxqk = zero
       call wf%construct_ao_G_1der(G_wxqk, wf%ao_density)
@@ -3639,15 +3645,17 @@ contains
 
       enddo
 !
-      ! G_wxqk = zero
-      ! call wf%construct_ao_G_1der_numerical(G_wxqk, 1.0d-8)
+      call G_timer%turn_off()
+!
+      call h_timer%turn_on()
 !
       h_wxqk = zero
       call wf%get_ao_h_wx_1der(h_wxqk)
-!  
-      ! h_wxqk = zero
-      ! call wf%get_ao_h_wx_1der_numerical(h_wxqk, 1.0d-8)
 !
+      call h_timer%turn_off()
+!
+      call non_integral_timer%turn_on()
+!  
 !     Construct D F D 
 !
       call mem%alloc(FD, wf%n_ao, wf%n_ao)
@@ -3709,6 +3717,8 @@ contains
       enddo
 !
       call mem%dealloc(DFD, wf%n_ao, wf%n_ao)
+!
+      call non_integral_timer%turn_off()
 !
       call mem%dealloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%dealloc(G_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
