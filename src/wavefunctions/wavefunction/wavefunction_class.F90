@@ -473,15 +473,13 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms), intent(inout) :: h_wxqk
 !
-      integer :: A, B, A_atom, B_atom, w, x, q, k, w_f, x_f 
+      integer :: A, B, A_atom, B_atom, w, x, q, w_f, x_f 
 !
       real(dp), dimension((wf%system%max_shell_size**2)*3*2), target :: h_ABqk 
 !
       real(dp), dimension(:,:,:,:), pointer, contiguous :: h_ABqk_p 
 !
       type(interval) :: A_interval, B_interval 
-!
-      real(dp) :: scale 
 !
       h_wxqk = zero
 !
@@ -543,13 +541,6 @@ contains
          enddo
       enddo
 !
-      ! write(output%unit, *) 'derii h analytical (kin): '
-      ! do x = 1, wf%n_ao
-      !    do w = 1, wf%n_ao 
-      !       write(output%unit, *) w, x, h_wxqk(w,x,1,1)
-      !    enddo
-      ! enddo
-!
       do A = 1, wf%system%n_s 
          do B = 1, A
 !
@@ -557,20 +548,6 @@ contains
 !
          enddo
       enddo
-!
-      ! write(output%unit, *) 'derii h analytical (kin+nuc): '
-      ! do x = 1, wf%n_ao
-      !    do w = 1, wf%n_ao 
-      !       write(output%unit, *) w, x, h_wxqk(w,x,1,1)
-      !    enddo
-      ! enddo
-!
-      write(output%unit, *) 'derii Shell, first, last, size '
-      do A = 1, wf%system%n_s
-!
-         write(output%unit, *) A, wf%system%shell_limits(A)%first, wf%system%shell_limits(A)%first, wf%system%shell_limits(A)%size
-!
-      enddo 
 !
    end subroutine get_ao_h_wx_1der_wavefunction
 !

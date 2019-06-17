@@ -68,7 +68,6 @@ void construct_ao_h_wx(double *h, int *s1, int *s2){
   ints_shellset = buf_vec_n[0];                          // location of the computed integrals
 
   extract_and_add_integrals(h, ints_shellset, n1, n2, 1.0e0);
-  //extract_integrals(h, ints_shellset, n1, n2, 1.0e0);
 
   return;
 }
