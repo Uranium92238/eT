@@ -138,14 +138,17 @@ void construct_ao_g_wxyz_1der(double *g_wxyzqk, int *s1, int *s2, int *s3, int *
 /*
 /   Compute 1st derivative of g_wxyz
 */
-  const auto& buf_vec = electronic_repulsion_1der.results();
+
+  int thread = omp_get_thread_num();
+
+  const auto& buf_vec = electronic_repulsion_1der[thread].results();
 
   auto n1 = basis[*s1 - 1].size(); 
   auto n2 = basis[*s2 - 1].size(); 
   auto n3 = basis[*s3 - 1].size(); 
   auto n4 = basis[*s4 - 1].size(); 
 
-  electronic_repulsion_1der.compute(basis[*s1 - 1], basis[*s2 - 1], 
+  electronic_repulsion_1der[thread].compute(basis[*s1 - 1], basis[*s2 - 1], 
                                     basis[*s3 - 1], basis[*s4 - 1]);
 
   auto offset = 0;

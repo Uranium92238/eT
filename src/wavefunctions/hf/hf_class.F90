@@ -2325,7 +2325,8 @@ contains
       real(dp), dimension((wf%system%max_shell_size**4)*3*4), target :: g_ABCDqk 
       real(dp), dimension(:,:,:,:,:,:), pointer, contiguous :: g_ABCDqk_p 
 !
-      integer :: A, B, C, D, D_max, w, x, y, z, w_red, x_red, y_red, z_red, tot_dim, k, q 
+      integer :: A, B, C, D, D_max, w, x, y, z, n_sig_sp, AB, AB_packed
+      integer :: w_red, x_red, y_red, z_red, tot_dim, k, q, n_threads, thread
 !
       real(dp) :: d1, d2, d3, d4, d5, d6
 !
@@ -2335,21 +2336,36 @@ contains
 !
       real(dp), dimension(3,4) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
 !
-      G_ao = zero
+      real(dp), dimension(:,:,:,:,:), allocatable :: G_ao_t
 !
-      do A = 1, wf%system%n_s 
+!$    n_threads = omp_get_max_threads()
+      call mem%alloc(G_ao_t, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms, n_threads)
+      G_ao_t = zero 
 !
-         atoms(1) = wf%system%shell_to_atom(A)
+      call wf%get_n_sig_eri_sp(n_sig_sp)
 !
-         do B = 1, A 
+!$omp parallel do private(A, B, C, D, D_max, atoms, deg, deg_CD, deg_AB, deg_AB_CD, g_ABCDqk, g_ABCDqk_p, &
+!$omp w, x, y, z, w_red, x_red, y_red, z_red, temp, temp1, temp2, temp3, temp4, temp5, temp6, &
+!$omp d1, d2, d3, d4, d5, d6, thread, q, k, tot_dim, AB, AB_packed) schedule(dynamic)
+      do AB = 1, n_sig_sp 
 !
-            deg_AB = real(2-B/A, kind=dp)
-            atoms(2) = wf%system%shell_to_atom(B)
+!$       thread = omp_get_thread_num()
+!
+         if (wf%sp_eri_schwarz(AB, 1)*wf%sp_eri_schwarz(1, 1) < wf%coulomb_threshold) cycle
+         AB_packed = wf%sp_eri_schwarz_list(AB, 3) 
+!
+         A = wf%sp_eri_schwarz_list(AB_packed, 1)
+         B = wf%sp_eri_schwarz_list(AB_packed, 2)
+!
+         atoms(1) = wf%system%shell2atom(A)
+         atoms(2) = wf%system%shell2atom(B)
+!
+         deg_AB = real(2-B/A, kind=dp)
 !
             do C = 1, A
 !
                D_max = (C/A)*B + (1-C/A)*C
-               atoms(3) = wf%system%shell_to_atom(C)
+               atoms(3) = wf%system%shell2atom(C)
 !
                do D = 1, D_max
 !
@@ -2358,7 +2374,7 @@ contains
 
                   deg = deg_AB*deg_CD*deg_AB_CD ! Shell degeneracy
 !
-                  atoms(4) = wf%system%shell_to_atom(D)
+                  atoms(4) = wf%system%shell2atom(D)
 !
                   call wf%system%construct_ao_g_wxyz_1der(g_ABCDqk, A, B, C, D)                 
 !
@@ -2414,12 +2430,12 @@ contains
                               do k = 1, 4
                                  do q = 1, 3
 !
-                                    G_ao(w, x, q, atoms(k)) = G_ao(w, x, q, atoms(k)) + temp1(q, k)
-                                    G_ao(y, x, q, atoms(k)) = G_ao(y, x, q, atoms(k)) - temp6(q, k)
-                                    G_ao(y, z, q, atoms(k)) = G_ao(y, z, q, atoms(k)) + temp2(q, k)
-                                    G_ao(w, z, q, atoms(k)) = G_ao(w, z, q, atoms(k)) - temp3(q, k)
-                                    G_ao(x, z, q, atoms(k)) = G_ao(x, z, q, atoms(k)) - temp4(q, k)
-                                    G_ao(w, y, q, atoms(k)) = G_ao(w, y, q, atoms(k)) - temp5(q, k)
+                                    G_ao_t(w, x, q, atoms(k), thread+1) = G_ao_t(w, x, q, atoms(k), thread+1) + temp1(q, k)
+                                    G_ao_t(y, x, q, atoms(k), thread+1) = G_ao_t(y, x, q, atoms(k), thread+1) - temp6(q, k)
+                                    G_ao_t(y, z, q, atoms(k), thread+1) = G_ao_t(y, z, q, atoms(k), thread+1) + temp2(q, k)
+                                    G_ao_t(w, z, q, atoms(k), thread+1) = G_ao_t(w, z, q, atoms(k), thread+1) - temp3(q, k)
+                                    G_ao_t(x, z, q, atoms(k), thread+1) = G_ao_t(x, z, q, atoms(k), thread+1) - temp4(q, k)
+                                    G_ao_t(w, y, q, atoms(k), thread+1) = G_ao_t(w, y, q, atoms(k), thread+1) - temp5(q, k)
 !
                                  enddo
                               enddo
@@ -2432,7 +2448,17 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do 
+!
+      G_ao = zero
+!
+      do thread = 1, n_threads
+!
+         call daxpy(3*wf%system%n_atoms*wf%n_ao**2, one, G_ao_t(1,1,1,1,thread), 1, G_ao, 1)
+!
       enddo
+!
+      call mem%dealloc(G_ao_t, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms, n_threads)
 !
    end subroutine construct_ao_G_1der_hf
 !

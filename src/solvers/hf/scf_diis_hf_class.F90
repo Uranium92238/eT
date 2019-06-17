@@ -195,8 +195,8 @@ contains
 !
       n_s = wf%system%get_n_shells()
 !
-      call mem%alloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%alloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      if (.not. allocated(wf%sp_eri_schwarz)) call mem%alloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
+      if (.not. allocated(wf%sp_eri_schwarz_list)) call mem%alloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call wf%construct_sp_eri_schwarz()
 !
@@ -329,8 +329,8 @@ contains
 !
       enddo
 !
-      call mem%dealloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%dealloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+   !   call mem%dealloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
+   !   call mem%dealloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call mem%dealloc(G, wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities)
       call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
