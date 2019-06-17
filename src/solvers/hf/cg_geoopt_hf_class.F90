@@ -176,8 +176,8 @@ contains
 !
          else
 !
-           ! call conjugate_gradient%get_next_direction(molecular_gradient, descent_direction)
-            descent_direction = -molecular_gradient 
+            call conjugate_gradient%get_next_direction(molecular_gradient, descent_direction)
+           ! descent_direction = -molecular_gradient 
 !
             geometry = geometry + descent_direction
             call wf%system%set_geometry(geometry)

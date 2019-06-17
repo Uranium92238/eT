@@ -126,10 +126,17 @@ contains
 !
       real(dp) :: gradient2, previous_gradient2, ddot  
 !
-      gradient2 = ddot(cg%n_parameters, gradient, 1, gradient, 1)
+      real(dp), dimension(:), allocatable :: temp 
+!
+      call mem%alloc(temp, cg%n_parameters)
+      temp = gradient - cg%previous_gradient
+!
+      gradient2 = ddot(cg%n_parameters, gradient, 1, temp, 1)
       previous_gradient2 = ddot(cg%n_parameters, cg%previous_gradient, 1, cg%previous_gradient, 1)
 !
-      cg%beta = gradient2/previous_gradient2
+      cg%beta = max(gradient2/previous_gradient2, zero)
+!
+      call mem%dealloc(temp, cg%n_parameters)  
 !
    end subroutine compute_beta_conjugate_gradient_tool
 !
