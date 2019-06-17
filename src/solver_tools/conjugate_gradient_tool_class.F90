@@ -116,7 +116,7 @@ contains
 !!    Compute beta 
 !!    Written by Åsmund H. Tveten and Eirik F. Kjønstad, 2019
 !!
-!!    Computes beta as the Flecter-Reeves constant.
+!!    Computes beta as the Polak–Ribière constant.
 !!
       implicit none 
 !

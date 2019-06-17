@@ -15,9 +15,9 @@ module cg_geoopt_hf_class
 !
    type :: cg_geoopt_hf
 !
-      character(len=100) :: tag
-      character(len=100) :: author
-      character(len=100) :: description
+      character(len=400) :: tag
+      character(len=400) :: author
+      character(len=400) :: description
 !
       integer :: max_iterations
 !
@@ -61,7 +61,10 @@ contains
 !
       solver%tag     = 'Conjugate gradient geometry optimization solver'
       solver%author  = 'Åsmund H. Tveten, Eirik F. Kjønstad, 2019'
-      solver%description = 'To-do.'
+!
+      solver%description = 'A solver that uses the Polak–Ribière conjugate gradient (CG) constant to find &
+                           & a stationary geometry. Currently, the CG algorithm does not support a line &
+                           & search.'
 !
       call solver%print_banner()
 !
@@ -177,7 +180,6 @@ contains
          else
 !
             call conjugate_gradient%get_next_direction(molecular_gradient, descent_direction)
-           ! descent_direction = -molecular_gradient 
 !
             geometry = geometry + descent_direction
             call wf%system%set_geometry(geometry)
