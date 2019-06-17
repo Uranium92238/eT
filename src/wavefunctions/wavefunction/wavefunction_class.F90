@@ -481,6 +481,8 @@ contains
 !
       type(interval) :: A_interval, B_interval 
 !
+      real(dp) :: scale 
+!
       h_wxqk = zero
 !
       do A = 1, wf%system%n_s
@@ -541,12 +543,12 @@ contains
          enddo
       enddo
 !
-      write(output%unit, *) 'derii h analytical (kin): '
-      do x = 1, wf%n_ao
-         do w = 1, wf%n_ao 
-            write(output%unit, *) w, x, h_wxqk(w,x,1,1)
-         enddo
-      enddo
+      ! write(output%unit, *) 'derii h analytical (kin): '
+      ! do x = 1, wf%n_ao
+      !    do w = 1, wf%n_ao 
+      !       write(output%unit, *) w, x, h_wxqk(w,x,1,1)
+      !    enddo
+      ! enddo
 !
       do A = 1, wf%system%n_s 
          do B = 1, A
@@ -556,12 +558,19 @@ contains
          enddo
       enddo
 !
-      write(output%unit, *) 'derii h analytical (kin+nuc): '
-      do x = 1, wf%n_ao
-         do w = 1, wf%n_ao 
-            write(output%unit, *) w, x, h_wxqk(w,x,1,1)
-         enddo
-      enddo
+      ! write(output%unit, *) 'derii h analytical (kin+nuc): '
+      ! do x = 1, wf%n_ao
+      !    do w = 1, wf%n_ao 
+      !       write(output%unit, *) w, x, h_wxqk(w,x,1,1)
+      !    enddo
+      ! enddo
+!
+      write(output%unit, *) 'derii Shell, first, last, size '
+      do A = 1, wf%system%n_s
+!
+         write(output%unit, *) A, wf%system%shell_limits(A)%first, wf%system%shell_limits(A)%first, wf%system%shell_limits(A)%size
+!
+      enddo 
 !
    end subroutine get_ao_h_wx_1der_wavefunction
 !

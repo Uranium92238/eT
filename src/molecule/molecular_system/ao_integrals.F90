@@ -128,7 +128,7 @@ contains
 !
       integer, intent(in) :: s1, s2, n_ao
 !
-      real(dp), dimension(:,:,:,:), contiguous :: h_wxqk
+      real(dp), dimension(n_ao,n_ao,3,molecule%n_atoms) :: h_wxqk
 !
       integer(i6) :: s1_4, s2_4, n_ao_4
 !

@@ -3594,6 +3594,7 @@ contains
       real(dp), dimension(3, wf%system%n_atoms), intent(inout) :: E_qk ! Molecular gradient
 !
       real(dp), dimension(:,:,:,:), allocatable :: h_wxqk
+      real(dp), dimension(:,:,:,:), allocatable :: h_wxqk_a
       real(dp), dimension(:,:,:,:), allocatable :: G_wxqk
       real(dp), dimension(:,:,:,:), allocatable :: s_wxqk
 !
@@ -3609,17 +3610,18 @@ contains
 !
       E_qk = wf%system%get_nuclear_repulsion_1der_numerical(1.0d-8) ! E_qk = h_nuc_qk
 !
+      call mem%alloc(h_wxqk_a, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%alloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%alloc(G_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%alloc(s_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
 !
       s_wxqk = zero
       call wf%get_ao_s_wx_1der(s_wxqk)
-      write(output%unit, *) 'derii s analytical: ', s_wxqk(:,:,1,1)
+   !   write(output%unit, *) 'derii s analytical: ', s_wxqk(:,:,1,1)
 !
       s_wxqk = zero
       call wf%get_ao_s_wx_1der_numerical(s_wxqk, 1.0d-8)
-      write(output%unit, *) 'derii s numerical: ', s_wxqk(:,:,1,1)
+    !  write(output%unit, *) 'derii s numerical: ', s_wxqk(:,:,1,1)
 !
 !       G_wxqk = zero
 !       call wf%construct_ao_G_1der(G_wxqk, wf%ao_density)
@@ -3639,19 +3641,20 @@ contains
 !
       G_wxqk = zero
       call wf%construct_ao_G_1der_numerical(G_wxqk, 1.0d-8)
-   !   write(output%unit, *) 'derii G numerical: ', G_wxqk(:,:,1,1)
 !
-       h_wxqk = zero
-       call wf%get_ao_h_wx_1der(h_wxqk)
-    !   write(output%unit, *) 'derii h analytical: ', h_wxqk(:,:,1,1)
-!
+       h_wxqk_a = zero
+       call wf%get_ao_h_wx_1der(h_wxqk_a)
+!  
       h_wxqk = zero
       call wf%get_ao_h_wx_1der_numerical(h_wxqk, 1.0d-8)
-      !write(output%unit, *) 'derii h numerical: ', h_wxqk(:,:,1,1)
-      write(output%unit, *) 'derii h numerical (kin+nuc): '
-      do x = 1, wf%n_ao
-         do w = 1, wf%n_ao 
-            write(output%unit, *) w, x, h_wxqk(w,x,1,1)
+      write(output%unit, *) 'derii h numerical | analytical (kin+nuc): '
+      do k = 1, wf%system%n_atoms 
+         do q = 1, 3
+            do x = 1, wf%n_ao 
+               do w = 1, wf%n_ao 
+                  write(output%unit, *) w, x, q, k, h_wxqk(w,x,q,k), h_wxqk_a(w,x,q,k), h_wxqk(w,x,q,k)-h_wxqk_a(w,x,q,k)
+               enddo
+            enddo
          enddo
       enddo
 !
@@ -3753,6 +3756,7 @@ contains
 !
       call mem%dealloc(DFD, wf%n_ao, wf%n_ao)
 !
+      call mem%dealloc(h_wxqk_a, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%dealloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%dealloc(G_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%dealloc(s_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)   

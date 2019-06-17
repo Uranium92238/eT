@@ -170,17 +170,24 @@ void initialize_kinetic(){
 
 void initialize_nuclear(){
 
+    vector<pair<double, array<double, 3>>> q;
+    for (const auto& atom : atoms) {
+      q.push_back({static_cast<double>(atom.atomic_number),
+                   {{atom.x, atom.y, atom.z}}});
+    }
 
     Engine temporary(Operator::nuclear, basis.max_nprim(), basis.max_l());
 
-    temporary.set_params(make_point_charges(atoms));                           // Tell the engine where the atomic charges are
+   // temporary.set_params(make_point_charges(atoms));                           // Tell the engine where the atomic charges are
+    temporary.set_params(q);
 
     for (int i = 0; i != omp_get_max_threads(); i++){
         nuclear[i] = temporary; 
     }
 
     Engine temporary_1der(Operator::nuclear, basis.max_nprim(), basis.max_l(),1);
-    temporary_1der.set_params(make_point_charges(atoms));
+   // temporary_1der.set_params(make_point_charges(atoms)); NBNBNB! "MAKE_POINT_CHARGES" DOES NOT WORK FOR 1ST ORDER DERIVATIVES!! BUG
+    temporary_1der.set_params(q);
     nuclear_1der = temporary_1der; 
 
 }

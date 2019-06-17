@@ -68,6 +68,7 @@ void construct_ao_h_wx(double *h, int *s1, int *s2){
   ints_shellset = buf_vec_n[0];                          // location of the computed integrals
 
   extract_and_add_integrals(h, ints_shellset, n1, n2, 1.0e0);
+  //extract_integrals(h, ints_shellset, n1, n2, 1.0e0);
 
   return;
 }
@@ -109,7 +110,6 @@ void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2, in
 /*
 /   Add nuclear 1st derivative contribution to h
 */
-
   const auto& integrals = nuclear_1der.results(); // will point to computed shell sets
 
   nuclear_1der.compute(basis[*s1 - 1], basis[*s2 - 1]);
@@ -127,8 +127,8 @@ void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2, in
   int n1 = basis[*s1 - 1].size();
   int n2 = basis[*s2 - 1].size();
 
-  int n_atoms = atoms.size();
-  int n_centers = n_atoms + 2;
+  const auto n_atoms = atoms.size();
+  const auto n_centers = n_atoms + 2;
 
   auto atom = 0;
 
@@ -142,22 +142,22 @@ void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2, in
 
       if (integrals[shellset] != nullptr){
 
-        auto current_integrals = integrals[shellset];
+        const auto current_integrals = integrals[shellset];
 
-        for (int f1 = 0; f1 != n1; ++f1){
-          for (int f2 = 0; f2 != n2; ++f2){
+        for (int f1 = 0, f12 = 0; f1 != n1; ++f1){
+          for (int f2 = 0; f2 != n2; ++f2, ++f12){
 
-            int offset = nao*(nao*(3*(atom)+xyz)+s2_first+f2)+s1_first+f1;
-            h_wxqk[offset] = h_wxqk[offset] + current_integrals[f1*n2 + f2];
+            auto offset = nao*(nao*(3*(atom)+xyz)+s2_first+f2)+s1_first+f1;
+            h_wxqk[offset] = h_wxqk[offset] + current_integrals[f12];
 
           }
         }
         if (*s1 != *s2){
-          for (int f1 = 0; f1 != n1; ++f1){
-            for (int f2 = 0; f2 != n2; ++f2){
+          for (int f1 = 0, f12 = 0; f1 != n1; ++f1){
+            for (int f2 = 0; f2 != n2; ++f2, ++f12){
 
-               int offset = nao*(nao*(3*(atom)+xyz)+s1_first+f1)+s2_first+f2;
-               h_wxqk[offset] = h_wxqk[offset] + current_integrals[f1*n2 + f2];
+               auto offset = nao*(nao*(3*(atom)+xyz)+s1_first+f1)+s2_first+f2;
+               h_wxqk[offset] = h_wxqk[offset] + current_integrals[f12];
 
             }
           }          

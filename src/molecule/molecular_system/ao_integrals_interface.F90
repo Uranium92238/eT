@@ -79,7 +79,7 @@
 !
       integer, intent(in) :: s1, s2, n_ao 
 !
-      real(dp), dimension(:,:,:,:), contiguous :: h_wxqk
+      real(dp), dimension(n_ao,n_ao,3,molecule%n_atoms) :: h_wxqk
 !
    end subroutine construct_and_add_ao_h_wx_nuclear_1der_molecular_system
 !
