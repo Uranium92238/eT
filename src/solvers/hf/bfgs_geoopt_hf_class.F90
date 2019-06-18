@@ -1,20 +1,17 @@
-module cg_geoopt_hf_class
+module bfgs_geoopt_hf_class
 !
 !!
-!!    Geometry optimization solver using the conjugate gradient method for HF 
-!!    Written by Åsmund H. Tveten and Eirik F. Kjønstad, 2019
-!!
-!!    Supported wavefunctions: HF    
+!!    BFGS geometry optimization for Hartree-Fock
+!!    Written by Eirik F. Kjønstad, June 2019
 !!
 !
    use hf_class 
    use hf_engine_class
-   use conjugate_gradient_tool_class
    use bfgs_tool_class
 !
    implicit none
 !
-   type :: cg_geoopt_hf
+   type :: bfgs_geoopt_hf
 !
       character(len=400) :: tag
       character(len=400) :: author
@@ -33,54 +30,52 @@ module cg_geoopt_hf_class
 !
    contains
 !
-      procedure :: run                 => run_cg_geoopt_hf
-      procedure :: cleanup             => cleanup_cg_geoopt_hf
+      procedure :: run                 => run_bfgs_geoopt_hf
+      procedure :: cleanup             => cleanup_bfgs_geoopt_hf
 !
-      procedure :: line_search         => line_search_cg_geoopt_hf
+      procedure :: line_search         => line_search_bfgs_geoopt_hf
 !
-      procedure :: read_settings       => read_settings_cg_geoopt_hf
-      procedure :: print_banner        => print_banner_cg_geoopt_hf
-      procedure :: print_summary       => print_summary_cg_geoopt_hf
-      procedure :: determine_gradient  => determine_gradient_cg_geoopt_hf
+      procedure :: read_settings       => read_settings_bfgs_geoopt_hf
+      procedure :: print_banner        => print_banner_bfgs_geoopt_hf
+      procedure :: print_summary       => print_summary_bfgs_geoopt_hf
+      procedure :: determine_gradient  => determine_gradient_bfgs_geoopt_hf
 !
-   end type cg_geoopt_hf
+   end type bfgs_geoopt_hf
 !
 !
-   interface cg_geoopt_hf 
+   interface bfgs_geoopt_hf 
 !
-      procedure :: new_cg_geoopt_hf
+      procedure :: new_bfgs_geoopt_hf
 !
-   end interface cg_geoopt_hf
+   end interface bfgs_geoopt_hf
 !
 !
 contains
 !
 !
-   function new_cg_geoopt_hf() result(solver)
+   function new_bfgs_geoopt_hf() result(solver)
 !!
-!!    New CG geoopt HF 
-!!    Written by Åsmund H. Tveten and Eirik F. Kjønstad, 2019
+!!    New BFGS geoopt HF 
+!!    Written by Eirik F. Kjønstad, 2019
 !!
       implicit none
 !
-      type(cg_geoopt_hf) :: solver
+      type(bfgs_geoopt_hf) :: solver
 !
 !     Print solver banner
 !
-      solver%tag     = 'Conjugate gradient geometry optimization solver'
-      solver%author  = 'Åsmund H. Tveten, Eirik F. Kjønstad, 2019'
+      solver%tag     = 'BFGS geometry optimization solver'
+      solver%author  = 'Eirik F. Kjønstad, 2019'
 !
-      solver%description = 'A solver that uses the PR conjugate gradient (CG) constant to find &
-                           & a stationary geometry. Currently, the CG algorithm does not support a line &
-                           & search.'
+      solver%description = 'A BFGS solver.'
 !
       call solver%print_banner()
 !
 !     Set standard settings 
 !
       solver%max_iterations      = 250
-      solver%energy_threshold    = 1.0d-4
-      solver%gradient_threshold  = 1.0d-4
+      solver%energy_threshold    = 1.0d-6
+      solver%gradient_threshold  = 1.0d-6
 !
 !     Read settings (thresholds, etc.)
 !
@@ -91,17 +86,17 @@ contains
 !
       solver%hf_gs_engine = hf_engine()
 !
-   end function new_cg_geoopt_hf
+   end function new_bfgs_geoopt_hf
 !
 !
-   subroutine read_settings_cg_geoopt_hf(solver)
+   subroutine read_settings_bfgs_geoopt_hf(solver)
 !!
 !!    Read settings 
 !!    Written by Åsmund H. Tveten and Eirik F. Kjønstad, 2019
 !!
       implicit none 
 !
-      class(cg_geoopt_hf), intent(inout) :: solver 
+      class(bfgs_geoopt_hf), intent(inout) :: solver 
 !
       call input%get_keyword_in_section('gradient threshold', &
                                         'solver geometry optimization', solver%gradient_threshold)
@@ -112,17 +107,17 @@ contains
       call input%get_keyword_in_section('max iterations', &
                                         'solver geometry optimization', solver%max_iterations)
 !
-   end subroutine read_settings_cg_geoopt_hf
+   end subroutine read_settings_bfgs_geoopt_hf
 !
 !
-   function line_search_cg_geoopt_hf(solver, wf, descent_direction) result(alpha)
+   function line_search_bfgs_geoopt_hf(solver, wf, descent_direction) result(alpha)
 !!
 !!    Line search 
 !!    Written by Eirik F. Kjønstad, June 2019
 !!
       implicit none 
 !
-      class(cg_geoopt_hf) :: solver 
+      class(bfgs_geoopt_hf) :: solver 
 !
       class(hf) :: wf 
 !
@@ -153,7 +148,7 @@ contains
       c = b - (b - a)/phi 
       d = a + (b - a)/phi 
 !
-      do while (abs(c-d) >= 0.1d0)
+      do while (abs(c-d) >= 0.05d0)
 !
          call output%printf('a = (f5.2), b = (f5.2)', reals=[a,b])
 !
@@ -186,19 +181,55 @@ contains
 !
       alpha = (a + b)/two
 !
-      if (abs(alpha) < half) alpha = one
+      write(output%unit, *) 'alpha:::', alpha 
+   !   if (abs(alpha) < half) alpha = one
 !
-   end function line_search_cg_geoopt_hf
+   end function line_search_bfgs_geoopt_hf
+!    function line_search_bfgs_geoopt_hf(solver, wf, geometry, direction) result(alpha)
+! !!
+! !!    Line search 
+! !!    Written by Eirik F. Kjønstad, June 2019
+! !!
+!       implicit none 
+! !
+!       class(bfgs_geoopt_hf) :: solver 
+! !
+!       class(hf) :: wf 
+! !
+!       real(dp) :: a, b, c, fa, fb, fc 
+! !
+!       real(dp), dimension(3, wf%system%n_atoms) :: x, g 
+! !
+! !     Compute three points 
+! !
+!       a = -one
+!       x = geometry + a*direction
+!       g = solver%determine_gradient(wf, x)
+!       fa = get_l2_norm(g, 3*wf%system%n_atoms)
+! !
+!       b = zero 
+!       fb = solver%gradient_norms(solver%iteration)
+! !
+!       c = one 
+!       x = geometry + c*direction 
+!       g = solver%determine_gradient(wf, x)
+!       fc = get_l2_norm(g, 3*wf%system%n_atoms) 
+! !
+! !     Do cubic interpolation & determine minimum 
+! !
+
+! !
+!    end function line_search_bfgs_geoopt_hf
 !
 !
-   function determine_gradient_cg_geoopt_hf(solver, wf, geometry) result(gradient)
+   function determine_gradient_bfgs_geoopt_hf(solver, wf, geometry) result(gradient)
 !!
 !!    Determine gradient 
 !!    Written by Eirik F. Kjønstad, June 2019 
 !!
       implicit none 
 !
-      class(cg_geoopt_hf) :: solver 
+      class(bfgs_geoopt_hf) :: solver 
 !  
       class(hf) :: wf 
 !
@@ -211,17 +242,17 @@ contains
 !
       call wf%construct_molecular_gradient(gradient)      
 !
-   end function determine_gradient_cg_geoopt_hf
+   end function determine_gradient_bfgs_geoopt_hf
 !
 !
-   subroutine run_cg_geoopt_hf(solver, wf)
+   subroutine run_bfgs_geoopt_hf(solver, wf)
 !!
 !!    Run 
-!!    Written by Åsmund H. Tveten and Eirik F. Kjønstad, 2019
+!!    Written by Eirik F. Kjønstad, 2019
 !!
       implicit none
 !
-      class(cg_geoopt_hf) :: solver
+      class(bfgs_geoopt_hf) :: solver
 !
       class(hf) :: wf
 !
@@ -231,14 +262,11 @@ contains
 !
       real(dp) :: energy, prev_energy, norm_gradient, alpha
 !
-      real(dp), dimension(:,:), allocatable :: molecular_gradient
-      real(dp), dimension(:,:), allocatable :: descent_direction
-      real(dp), dimension(:,:), allocatable :: geometry
+      real(dp), dimension(3,wf%system%n_atoms) :: gradient
+      real(dp), dimension(3,wf%system%n_atoms) :: bfgs_direction
+      real(dp), dimension(3,wf%system%n_atoms) :: geometry
 !
-      type(conjugate_gradient_tool) :: conjugate_gradient 
       type(bfgs_tool) :: bfgs 
-!
-      conjugate_gradient = conjugate_gradient_tool(3*wf%system%n_atoms)
 !
       bfgs = bfgs_tool(3*wf%system%n_atoms)
 !
@@ -251,26 +279,16 @@ contains
       energy = zero
       prev_energy = zero
 !
-      call mem%alloc(molecular_gradient, 3, wf%system%n_atoms)
-      call mem%alloc(descent_direction, 3, wf%system%n_atoms)
-      call mem%alloc(geometry, 3, wf%system%n_atoms)
-!
-      molecular_gradient = zero 
-      descent_direction = zero
+      geometry = wf%system%get_geometry()
 !
       do while (.not. converged .and. solver%iteration <= solver%max_iterations)        
 !
          solver%iteration = solver%iteration + 1
 !
-         geometry = wf%system%get_geometry()
-!
-         call wf%set_n_mo()                  ! Decomposes AO overlap (linear dependence)
-         call solver%hf_gs_engine%ignite(wf) ! Converges HF orbitals/density
-!
-         call wf%construct_molecular_gradient(molecular_gradient)
+         gradient = solver%determine_gradient(wf, geometry)
 !
          energy = wf%energy 
-         norm_gradient = get_l2_norm(molecular_gradient, 3*wf%system%n_atoms)
+         norm_gradient = get_l2_norm(gradient, 3*wf%system%n_atoms)
 !
          solver%energies(solver%iteration) = energy 
          solver%gradient_norms(solver%iteration) = norm_gradient
@@ -286,15 +304,26 @@ contains
 !
          else
 !
-          !  call conjugate_gradient%get_next_direction(molecular_gradient, descent_direction)
+!           Update Hessian 
 !
-            ! alpha = solver%line_search(wf, descent_direction)
-           ! descent_direction = alpha*descent_direction
+            call bfgs%update_hessian(geometry, gradient)
 !
-          !  call bfgs%get_next_geometry(molecular_gradient, descent_direction, geometry)
-           ! geometry = geometry + descent_direction
-           ! geometry = geometry - molecular_gradient
-            call wf%system%set_geometry(geometry)
+!           Keep a copy of the current geometry and gradient (needed for BFGS)
+!
+            call bfgs%set_previous_geometry_and_gradient(geometry, gradient)
+!
+!           Get next search direction (according to the current BFGS Hessian)
+!
+            call bfgs%get_direction(gradient, bfgs_direction)
+!
+!           Do a line search in that direction,
+!           which returns alpha (= how long the step should be)         
+!
+            alpha = solver%line_search(wf, bfgs_direction)
+!
+!           Update geometry
+!
+            geometry = geometry + alpha*bfgs_direction 
 !
          endif
 !
@@ -302,10 +331,6 @@ contains
          prev_energy = energy 
 !
       enddo
-!
-      call mem%dealloc(molecular_gradient, 3, wf%system%n_atoms)
-      call mem%dealloc(descent_direction, 3, wf%system%n_atoms)
-      call mem%dealloc(geometry, 3, wf%system%n_atoms)
 !
       if (.not. converged) then 
 !
@@ -319,33 +344,33 @@ contains
 !
       endif  
 !
-   end subroutine run_cg_geoopt_hf
+   end subroutine run_bfgs_geoopt_hf
 !
 !
-   subroutine print_banner_cg_geoopt_hf(solver)
+   subroutine print_banner_bfgs_geoopt_hf(solver)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none 
 !
-      class(cg_geoopt_hf) :: solver 
+      class(bfgs_geoopt_hf) :: solver 
 !
       call output%long_string_print(solver%tag,'(//t3,a)',.true.)
       call output%long_string_print(solver%author,'(t3,a/)',.true.)
       call output%long_string_print(solver%description)
 !
-   end subroutine print_banner_cg_geoopt_hf
+   end subroutine print_banner_bfgs_geoopt_hf
 !
 !
-   subroutine print_summary_cg_geoopt_hf(solver)
+   subroutine print_summary_bfgs_geoopt_hf(solver)
 !!
 !!    Print summary 
 !!    Written by Eirik F. Kjønstad, June 2019 
 !!
       implicit none 
 !
-      class(cg_geoopt_hf), intent(in) :: solver 
+      class(bfgs_geoopt_hf), intent(in) :: solver 
 !
       integer :: iteration 
 !
@@ -365,22 +390,22 @@ contains
 !
       write(output%unit, '(t6,a)')  '----------------------------------------------------------'
 !
-   end subroutine print_summary_cg_geoopt_hf
+   end subroutine print_summary_bfgs_geoopt_hf
 !
 !
-   subroutine cleanup_cg_geoopt_hf(solver)
+   subroutine cleanup_bfgs_geoopt_hf(solver)
 !!
 !!    Cleanup 
 !!    Written by Eirik F. Kjønstad, June 2019 
 !!
       implicit none 
 !
-      class(cg_geoopt_hf) :: solver 
+      class(bfgs_geoopt_hf) :: solver 
 !
       call mem%dealloc(solver%energies, solver%max_iterations)
       call mem%dealloc(solver%gradient_norms, solver%max_iterations)
 !
-   end subroutine cleanup_cg_geoopt_hf
+   end subroutine cleanup_bfgs_geoopt_hf
 !
 !
-end module cg_geoopt_hf_class
+end module bfgs_geoopt_hf_class

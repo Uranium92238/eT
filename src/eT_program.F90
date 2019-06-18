@@ -153,7 +153,7 @@ subroutine reference_calculation(system)
    use uhf_class, only: uhf 
    use hf_engine_class, only: hf_engine 
 !
-   use cg_geoopt_hf_class, only: cg_geoopt_hf
+   use bfgs_geoopt_hf_class, only: bfgs_geoopt_hf
 !
    implicit none
 !
@@ -163,7 +163,7 @@ subroutine reference_calculation(system)
 !
    type(hf_engine) :: ref_engine
 !
-   type(cg_geoopt_hf) :: solver 
+   type(bfgs_geoopt_hf) :: solver 
 !
    character(len=21) :: ref_wf_name
 !
@@ -174,7 +174,7 @@ subroutine reference_calculation(system)
 !
       ref_wf = hf(system)
 !
-      solver = cg_geoopt_hf()
+      solver = bfgs_geoopt_hf()
       call solver%run(ref_wf)
 !
       stop

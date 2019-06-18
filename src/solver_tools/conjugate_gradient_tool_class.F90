@@ -134,7 +134,7 @@ contains
       gradient2 = ddot(cg%n_parameters, gradient, 1, temp, 1)
       previous_gradient2 = ddot(cg%n_parameters, cg%previous_gradient, 1, cg%previous_gradient, 1)
 !
-      cg%beta = max(gradient2/previous_gradient2, zero)
+      cg%beta = max(zero,gradient2/previous_gradient2)
 !
       call mem%dealloc(temp, cg%n_parameters)  
 !
