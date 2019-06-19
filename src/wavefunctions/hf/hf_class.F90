@@ -3576,8 +3576,8 @@ contains
 !!    Sets the screening thresholds for Coulomb and exchange
 !!    integrals given the convergence threshold for the gradient
 !!
-!!       coulomb_threshold = gradient_threshold * 1.0d-2
-!!       exchange_threshold = gradient_threshold * 1.0d-2
+!!       coulomb_threshold  = gradient_threshold * 1.0d-3
+!!       exchange_threshold = gradient_threshold * 1.0d-3
 !!
 !!       libint_epsilon = (gradient_threshold * 1.0d-3)**2
 !!
@@ -3642,7 +3642,7 @@ contains
 !
 !     Construct h_nuc^x, and the AO integral derivatives, h^x, S^x, and G^x(D)
 !
-      E_qk = wf%system%get_nuclear_repulsion_1der_numerical(1.0d-8) ! E_qk = h_nuc_qk
+      E_qk = wf%system%get_nuclear_repulsion_1der() ! E_qk = h_nuc_qk
 !
       call mem%alloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%alloc(G_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
@@ -3737,8 +3737,8 @@ contains
 !
       do k = 1, wf%system%n_atoms
 !
-         write(output%unit, '(t6,a2,f12.6,f12.6,f12.6)') wf%system%atoms(k)%symbol, &
-                                          E_qk(1,k), E_qk(2,k), E_qk(3,k) 
+         write(output%unit, '(t6,a2,f19.12,f19.12,f19.12)') wf%system%atoms(k)%symbol, &
+                                                            E_qk(1,k), E_qk(2,k), E_qk(3,k) 
 !
       enddo
 !

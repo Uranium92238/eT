@@ -200,6 +200,8 @@ contains
          energy = wf%energy 
          max_gradient = get_abs_max(gradient, 3*wf%system%n_atoms)
 !
+         call output%printf('Absolute maximum of molecular gradient: (f17.12)', reals=[max_gradient], fs='(/t3,a)')
+!
          solver%energies(solver%iteration) = energy 
          solver%gradient_maxs(solver%iteration) = max_gradient
 !
@@ -210,9 +212,11 @@ contains
 !
          if (converged) then
 !
-            write(output%unit, '(/t3,a,i0,a)') 'Converged geometry in ', solver%iteration, ' iterations!'
+            call output%printf('Geometry converged in (i0) iterations!', ints=[solver%iteration], fs='(/t3,a)')
 !
          else
+!
+            call output%printf('Geometry not yet converged. Finding next geometry.', fs='(/t3,a)')
 !
             call bfgs%update_hessian(geometry, gradient)
             call bfgs%get_direction(gradient, bfgs_direction)

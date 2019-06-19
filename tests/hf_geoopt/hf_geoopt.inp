@@ -1,0 +1,33 @@
+system
+  name: derivativetest
+  charge: 0
+  multiplicity: 1
+end system
+
+do
+  ground state geoopt
+end do
+
+method
+  hf
+end method
+
+solver hf
+  algorithm: scf-diis
+  energy threshold: 1.0d-11
+  gradient threshold: 1.0d-11
+end solver hf
+
+solver hf geoopt
+  algorithm: bfgs
+  max step: 0.5d0
+  energy threshold:   1.0d-10
+  gradient threshold: 1.0d-10
+end solver hf geoopt
+
+geometry
+basis: aug-cc-pVDZ
+H 0.0000 0.0000 0.0000
+H 1.0000 0.0000 0.0000
+O 0.0000 1.0000 0.0000
+end geometry
