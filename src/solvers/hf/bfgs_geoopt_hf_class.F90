@@ -68,8 +68,8 @@ contains
 !
 !     Print solver banner
 !
-      solver%tag     = 'BFGS geometry optimization solver'
-      solver%author  = 'Eirik F. Kjønstad, 2019'
+      solver%tag     = 'HF geometry optimization BFGS solver'
+      solver%author  = 'Eirik F. Kjønstad, Åsmund H. Tveten, 2019'
 !
       solver%description = 'Constructs an approximate Hessian using the BFGS algorithm &
                            &using the previous geometries and gradients. From the BFGS Hessian, &

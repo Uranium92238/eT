@@ -79,10 +79,12 @@ program eT_program
    write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
    write(output%unit,'(t4, a, a)')    'Eirik F. Kjønstad      ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
-   write(output%unit,'(t4, a, a)')    '                       ','Zeroth order properties, First order properties'
+   write(output%unit,'(t4, a, a)')    '                       ','Zeroth order properties, First order properties,       '
+   write(output%unit,'(t4, a, a)')    '                       ','BFGS-tool                                              '
    write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, Launch script'
    write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2, CC3'
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
+   write(output%unit,'(t4, a, a)')    'Åsmund H. Tveten       ','HF'
    write(output%unit,'(t3,a)')       '----------------------------------------------------------------------------------'
    write(output%unit,'(t4,a/)')       'Other contributors: A. Balbi, M. Scavino'
    call output%flush_()   
