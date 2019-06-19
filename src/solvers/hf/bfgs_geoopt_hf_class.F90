@@ -8,6 +8,7 @@ module bfgs_geoopt_hf_class
    use hf_class 
    use hf_engine_class
    use bfgs_tool_class
+   use diis_tool_class
 !
    implicit none
 !
@@ -23,6 +24,7 @@ module bfgs_geoopt_hf_class
 !
       real(dp) :: energy_threshold
       real(dp) :: gradient_threshold
+      real(dp) :: max_step 
 !
       type(hf_engine) :: hf_gs_engine
 !
@@ -32,8 +34,6 @@ module bfgs_geoopt_hf_class
 !
       procedure :: run                 => run_bfgs_geoopt_hf
       procedure :: cleanup             => cleanup_bfgs_geoopt_hf
-!
-      procedure :: line_search         => line_search_bfgs_geoopt_hf
 !
       procedure :: read_settings       => read_settings_bfgs_geoopt_hf
       procedure :: print_banner        => print_banner_bfgs_geoopt_hf
@@ -67,15 +67,19 @@ contains
       solver%tag     = 'BFGS geometry optimization solver'
       solver%author  = 'Eirik F. Kjønstad, 2019'
 !
-      solver%description = 'A BFGS solver.'
+      solver%description = 'Constructs an approximate Hessian using the BFGS algorithm &
+                           &using the previous geometries and gradients. From the BFGS Hessian, &
+                           &a level shift given by the rational function (RF) augmented Hessian &
+                           &is applied. See J. Comput. Chem. 18: 1473-1483, 1997.'
 !
       call solver%print_banner()
 !
 !     Set standard settings 
 !
       solver%max_iterations      = 250
-      solver%energy_threshold    = 1.0d-6
-      solver%gradient_threshold  = 1.0d-6
+      solver%energy_threshold    = 1.0d-4
+      solver%gradient_threshold  = 1.0d-4
+      solver%max_step            = 0.5d0
 !
 !     Read settings (thresholds, etc.)
 !
@@ -110,118 +114,6 @@ contains
    end subroutine read_settings_bfgs_geoopt_hf
 !
 !
-   function line_search_bfgs_geoopt_hf(solver, wf, descent_direction) result(alpha)
-!!
-!!    Line search 
-!!    Written by Eirik F. Kjønstad, June 2019
-!!
-      implicit none 
-!
-      class(bfgs_geoopt_hf) :: solver 
-!
-      class(hf) :: wf 
-!
-      real(dp), dimension(3, wf%system%n_atoms) :: descent_direction
-!
-      real(dp) :: alpha 
-!
-      real(dp) :: gradient_norm_a, gradient_norm_b, gradient_norm_c, gradient_norm_d, a, b, c, d 
-!
-      real(dp), dimension(3, wf%system%n_atoms) :: geometry_0, geometry, gradient  
-!
-      real(dp), parameter :: phi = (one + sqrt(five))/two
-!
-!     Initialize by finding the first bracket [a,b]
-!
-      geometry_0 = wf%system%get_geometry()
-!
-      a = half
-      geometry = geometry_0 + a*descent_direction
-      gradient = solver%determine_gradient(wf, geometry)
-      gradient_norm_a = get_l2_norm(gradient, 3*wf%system%n_atoms)
-!
-      b = two
-      geometry = geometry_0 + b*descent_direction
-      gradient = solver%determine_gradient(wf, geometry)
-      gradient_norm_b = get_l2_norm(gradient, 3*wf%system%n_atoms)
-! 
-      c = b - (b - a)/phi 
-      d = a + (b - a)/phi 
-!
-      do while (abs(c-d) >= 0.05d0)
-!
-         call output%printf('a = (f5.2), b = (f5.2)', reals=[a,b])
-!
-         geometry = geometry_0 + c*descent_direction
-         gradient = solver%determine_gradient(wf, geometry)
-         gradient_norm_c = get_l2_norm(gradient, 3*wf%system%n_atoms)
-!
-         geometry = geometry_0 + d*descent_direction
-         gradient = solver%determine_gradient(wf, geometry)
-         gradient_norm_d = get_l2_norm(gradient, 3*wf%system%n_atoms)
-!
-         call output%printf('gradient norm 0 = (f19.12)', reals=[solver%gradient_norms(solver%iteration)])
-         call output%printf('gradient norm c = (f19.12)', reals=[gradient_norm_c])
-         call output%printf('gradient norm d = (f19.12)', reals=[gradient_norm_d])
-!
-         if (gradient_norm_c < gradient_norm_d) then 
-!
-            b = d
-!
-         else
-!
-            a = c
-!
-         endif
-!
-         c = b - (b - a)/phi 
-         d = a + (b - a)/phi 
-!
-      enddo  
-!
-      alpha = (a + b)/two
-!
-      write(output%unit, *) 'alpha:::', alpha 
-   !   if (abs(alpha) < half) alpha = one
-!
-   end function line_search_bfgs_geoopt_hf
-!    function line_search_bfgs_geoopt_hf(solver, wf, geometry, direction) result(alpha)
-! !!
-! !!    Line search 
-! !!    Written by Eirik F. Kjønstad, June 2019
-! !!
-!       implicit none 
-! !
-!       class(bfgs_geoopt_hf) :: solver 
-! !
-!       class(hf) :: wf 
-! !
-!       real(dp) :: a, b, c, fa, fb, fc 
-! !
-!       real(dp), dimension(3, wf%system%n_atoms) :: x, g 
-! !
-! !     Compute three points 
-! !
-!       a = -one
-!       x = geometry + a*direction
-!       g = solver%determine_gradient(wf, x)
-!       fa = get_l2_norm(g, 3*wf%system%n_atoms)
-! !
-!       b = zero 
-!       fb = solver%gradient_norms(solver%iteration)
-! !
-!       c = one 
-!       x = geometry + c*direction 
-!       g = solver%determine_gradient(wf, x)
-!       fc = get_l2_norm(g, 3*wf%system%n_atoms) 
-! !
-! !     Do cubic interpolation & determine minimum 
-! !
-
-! !
-!    end function line_search_bfgs_geoopt_hf
-!
-!
    function determine_gradient_bfgs_geoopt_hf(solver, wf, geometry) result(gradient)
 !!
 !!    Determine gradient 
@@ -235,10 +127,20 @@ contains
 !
       real(dp), dimension(3, wf%system%n_atoms) :: geometry, gradient 
 !
+!     Update geometry to the one requested
+!
       call wf%system%set_geometry(geometry)
 !
-      call wf%set_n_mo()                  ! Decomposes AO overlap (linear dependence)
-      call solver%hf_gs_engine%ignite(wf) ! Converges HF orbitals/density
+!     Re-decompose the AO overlap 
+!
+      call wf%set_n_mo() 
+!
+!     Attempt to converge HF orbitals/density, using restart 
+!
+      if (solver%iteration > 1) solver%hf_gs_engine%restart = .true.
+      call solver%hf_gs_engine%ignite(wf) 
+!
+!     Compute gradient 
 !
       call wf%construct_molecular_gradient(gradient)      
 !
@@ -260,7 +162,7 @@ contains
       logical :: converged_energy
       logical :: converged_gradient
 !
-      real(dp) :: energy, prev_energy, norm_gradient, alpha
+      real(dp) :: energy, prev_energy, norm_gradient
 !
       real(dp), dimension(3,wf%system%n_atoms) :: gradient
       real(dp), dimension(3,wf%system%n_atoms) :: bfgs_direction
@@ -268,7 +170,7 @@ contains
 !
       type(bfgs_tool) :: bfgs 
 !
-      bfgs = bfgs_tool(3*wf%system%n_atoms)
+      bfgs = bfgs_tool(3*wf%system%n_atoms, solver%max_step)
 !
       solver%iteration = 0
 !
@@ -304,26 +206,10 @@ contains
 !
          else
 !
-!           Update Hessian 
-!
             call bfgs%update_hessian(geometry, gradient)
-!
-!           Keep a copy of the current geometry and gradient (needed for BFGS)
-!
-            call bfgs%set_previous_geometry_and_gradient(geometry, gradient)
-!
-!           Get next search direction (according to the current BFGS Hessian)
-!
             call bfgs%get_direction(gradient, bfgs_direction)
 !
-!           Do a line search in that direction,
-!           which returns alpha (= how long the step should be)         
-!
-            alpha = solver%line_search(wf, bfgs_direction)
-!
-!           Update geometry
-!
-            geometry = geometry + alpha*bfgs_direction 
+            geometry = geometry + bfgs_direction 
 !
          endif
 !

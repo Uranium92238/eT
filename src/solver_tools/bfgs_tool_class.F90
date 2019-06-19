@@ -38,6 +38,7 @@ module bfgs_tool_class
       private 
       integer  :: iteration 
       integer  :: n_parameters
+      real(dp) :: max_step 
 !
       real(dp), dimension(:,:), allocatable :: Hessian
 !
@@ -46,9 +47,8 @@ module bfgs_tool_class
 !
    contains
 !
-      procedure, public :: get_direction => get_direction_bfgs_tool
-      procedure, public :: set_previous_geometry_and_gradient => set_previous_geometry_and_gradient_bfgs_tool
-      procedure, public :: update_hessian => update_hessian_bfgs_tool
+      procedure, public :: get_direction           => get_direction_bfgs_tool
+      procedure, public :: update_hessian          => update_hessian_bfgs_tool
 !
    end type bfgs_tool
 !
@@ -63,18 +63,21 @@ module bfgs_tool_class
 contains
 !
 !
-   function new_bfgs_tool(n_parameters) result(bfgs)
+   function new_bfgs_tool(n_parameters, max_step) result(bfgs)
 !!
 !!    New BFGS tool
 !!    Written by Eirik F. Kjønstad, 2019
 !!
       type(bfgs_tool) :: bfgs
 !
-      integer, intent(in) :: n_parameters
+      integer, intent(in)  :: n_parameters
+      real(dp), intent(in) :: max_step
 !  
       integer :: k 
 !
       bfgs%n_parameters = n_parameters
+      bfgs%max_step     = max_step
+!
       bfgs%iteration    = 0
 !
       call mem%alloc(bfgs%prev_g, bfgs%n_parameters)
@@ -101,7 +104,11 @@ contains
 !!    Get direction 
 !!    Written by Eirik F. Kjønstad, 2019
 !!
-!!    Solves H d = - g and returns d 
+!!    Solves H d = - g and returns d. 
+!!
+!!    H is level shifted using the augmented RF approach, where  
+!!    the level shift is given by the lowest eigenvalue of the 
+!!    augmented Hessian (H, g; g^T 0).
 !!
       implicit none 
 !
@@ -111,43 +118,47 @@ contains
 !
       real(dp), dimension(bfgs%n_parameters) :: d 
 !
-      integer, dimension(bfgs%n_parameters) :: ipiv 
-      real(dp), dimension(bfgs%n_parameters, bfgs%n_parameters) :: H 
+      real(dp), dimension(bfgs%n_parameters + 1, bfgs%n_parameters + 1) :: aug_H 
+      real(dp), dimension(bfgs%n_parameters+1) :: eigvals 
 !
       integer :: info 
+      real(dp), dimension(4*(bfgs%n_parameters+1)) :: work 
 !
-      H = bfgs%Hessian
-      d = -g
+      real(dp) :: norm_d
 !
-      call dgesv(bfgs%n_parameters,    &
-                  1,                   & ! Number of RHS 
-                  H,                   &
-                  bfgs%n_parameters,   &
-                  ipiv,                &
-                  d,                   &
-                  bfgs%n_parameters,   &
+!     Set up rational function (RF) augmented Hessian 
+!
+      aug_H = zero 
+      aug_H(1:bfgs%n_parameters, 1:bfgs%n_parameters) = bfgs%Hessian(:,:)
+      aug_H(1:bfgs%n_parameters, bfgs%n_parameters + 1) = g(:)
+      aug_H(bfgs%n_parameters + 1, 1:bfgs%n_parameters) = g(:)
+!
+!     :: Get eigenvalue and eigenvectors 
+!
+      call dsyev('V', 'L',                   &
+                  bfgs%n_parameters+1,       &
+                  aug_H,                     & ! aug_H on entry, eigenvectors on exit
+                  bfgs%n_parameters+1,       &
+                  eigvals,                   &
+                  work,                      &
+                  4*(bfgs%n_parameters+1),   &
                   info)
 !
-      if (info /= 0) call output%error_msg('Could not solve linear equation in BFGS.')
+      if (info .ne. 0) call output%error_msg('Could not solve eigenvalue equation in BFGS tool.')
+!
+      call output%printf('Level shift: (f19.12)', reals=[eigvals(1)], fs='(/t3,a)')
+!
+      d = aug_H(1:bfgs%n_parameters,1)/aug_H(bfgs%n_parameters+1,1)
+!
+      norm_d = get_l2_norm(d, bfgs%n_parameters)
+      if (norm_d > bfgs%max_step) then
+!
+         call output%printf('BFGS step exceeds max. Scaling down to max_step.')
+         d = d*(bfgs%max_step/norm_d)
+!
+      endif
 !
    end subroutine get_direction_bfgs_tool
-!
-!
-   subroutine set_previous_geometry_and_gradient_bfgs_tool(bfgs, x, g)
-!!
-!!    Set previous geometry and gradient 
-!!    Written by Eirik F. Kjønstad, June 2019 
-!!
-      implicit none 
-!
-      class(bfgs_tool) :: bfgs 
-!
-      real(dp), dimension(bfgs%n_parameters), intent(in) :: x, g 
-!
-      bfgs%prev_x = x 
-      bfgs%prev_g = g 
-!
-   end subroutine set_previous_geometry_and_gradient_bfgs_tool
 !
 !
    subroutine update_hessian_bfgs_tool(bfgs, x, g)
@@ -155,12 +166,8 @@ contains
 !!    Update Hessian 
 !!    Written by Eirik F. Kjønstad, 2019
 !!
+!!    x:  current geometry
 !!    g:  current gradient 
-!!    x:  current geometry on entry, next geometry on exit 
-!!
-!!    Direction for line-search in iteration k: 
-!!
-!!         d_k = - H_k^-1 g_k     
 !!
 !!    The Hessian is updated according to 
 !!    
@@ -183,7 +190,7 @@ contains
       integer, dimension(bfgs%n_parameters) :: ipiv 
 !
       real(dp), dimension(bfgs%n_parameters) :: s, y, z
-      real(dp), dimension(bfgs%n_parameters, bfgs%n_parameters) :: H, yyT, zzT 
+      real(dp), dimension(bfgs%n_parameters, bfgs%n_parameters) :: H, yyT, zzT
 !
       real(dp) :: yTs, zTs, sTy, ddot
 !
@@ -191,7 +198,14 @@ contains
 !
       bfgs%iteration = bfgs%iteration + 1
 !
-      if (bfgs%iteration == 1) return 
+      if (bfgs%iteration == 1) then 
+!
+         call output%printf('First iteration: no update of the Hessian', fs='(/t3,a)')
+         bfgs%prev_x = x
+         bfgs%prev_g = g
+         return
+!
+      endif 
 !
 !     Compute s_k and y_k from the k+1- and k-th geometries and gradients,
 !     and then compute z_k = H_k s_k 
@@ -200,7 +214,6 @@ contains
       y = g - bfgs%prev_g 
 !
       sTy = ddot(bfgs%n_parameters, s, 1, y, 1)
-      if (sTy < 0) y = -y
 !
       call dgemm('N', 'N',             &
                   bfgs%n_parameters,   &

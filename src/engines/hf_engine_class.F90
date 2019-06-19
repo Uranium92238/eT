@@ -30,6 +30,7 @@ module hf_engine_class
    type hf_engine 
 !
       character(len=200) :: algorithm 
+      logical :: restart 
 !
    contains 
 !
@@ -62,6 +63,7 @@ contains
       type(hf_engine) :: engine
 !
       engine%algorithm = 'scf-diis'
+      engine%restart = .false.
 !
       call engine%read_settings()
 !
@@ -83,11 +85,13 @@ contains
 !
       if (trim(engine%algorithm) == 'scf-diis') then
 !
-         scf_diis = scf_diis_hf(wf)
+         scf_diis = scf_diis_hf(wf, engine%restart)
          call scf_diis%run(wf)
          call scf_diis%cleanup(wf)
 !
       elseif (trim(engine%algorithm) == 'scf') then 
+!
+         if (engine%restart) call output%error_msg('SCF does not support restart.')
 !
          scf = scf_hf(wf)
          call scf%run(wf)
@@ -112,6 +116,7 @@ contains
       class(hf_engine) :: engine 
 !
       call input%get_keyword_in_section('algorithm', 'solver hf', engine%algorithm)
+      if (input%requested_keyword_in_section('restart', 'solver hf')) engine%restart = .true.
 !
    end subroutine read_settings_hf_engine
 !

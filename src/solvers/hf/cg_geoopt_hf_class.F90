@@ -236,11 +236,8 @@ contains
       real(dp), dimension(:,:), allocatable :: geometry
 !
       type(conjugate_gradient_tool) :: conjugate_gradient 
-      type(bfgs_tool) :: bfgs 
 !
       conjugate_gradient = conjugate_gradient_tool(3*wf%system%n_atoms)
-!
-      bfgs = bfgs_tool(3*wf%system%n_atoms)
 !
       solver%iteration = 0
 !
