@@ -196,7 +196,7 @@ contains
       real(dp) :: energy, prev_energy, max_gradient
 !
       real(dp), dimension(3,wf%system%n_atoms) :: gradient
-      real(dp), dimension(3,wf%system%n_atoms) :: bfgs_direction
+      real(dp), dimension(3,wf%system%n_atoms) :: step
       real(dp), dimension(3,wf%system%n_atoms) :: geometry
 !
       type(bfgs_tool) :: bfgs 
@@ -243,9 +243,9 @@ contains
             call output%printf('Geometry not yet converged. Finding next geometry.', fs='(/t3,a)')
 !
             call bfgs%update_hessian(geometry, gradient)
-            call bfgs%get_step(gradient, bfgs_direction)
 !
-            geometry = geometry + bfgs_direction 
+            call bfgs%get_step(gradient, step)
+            geometry = geometry + step 
 !
          endif
 !
