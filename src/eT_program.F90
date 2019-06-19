@@ -153,7 +153,7 @@ subroutine reference_calculation(system)
    use uhf_class, only: uhf 
    use hf_engine_class, only: hf_engine 
 !
-   use bfgs_geoopt_hf_class, only: bfgs_geoopt_hf
+   use hf_geoopt_engine_class, only: hf_geoopt_engine 
 !
    implicit none
 !
@@ -161,23 +161,16 @@ subroutine reference_calculation(system)
 !
    class(hf), allocatable  :: ref_wf
 !
-   type(hf_engine) :: ref_engine
-!
-   type(bfgs_geoopt_hf) :: solver 
+   type(hf_engine)         :: ref_engine
+   type(hf_geoopt_engine)  :: ref_geoopt_engine 
 !
    character(len=21) :: ref_wf_name
 !
-   ref_engine = hf_engine()
    ref_wf_name = input%get_reference_wf()
 !
    if (trim(ref_wf_name) == 'hf') then
 !
       ref_wf = hf(system)
-!
-      solver = bfgs_geoopt_hf()
-      call solver%run(ref_wf)
-!
-      stop
 !
    elseif (trim(ref_wf_name) == 'uhf') then
 !
@@ -190,7 +183,18 @@ subroutine reference_calculation(system)
 !
    endif
 !
-   call ref_engine%ignite(ref_wf)
+   if (input%requested_keyword_in_section('ground state geoopt', 'do')) then 
+!
+      ref_geoopt_engine = hf_geoopt_engine()
+      call ref_geoopt_engine%ignite(ref_wf)
+!
+   else 
+!
+      ref_engine = hf_engine()
+      call ref_engine%ignite(ref_wf)
+!
+   endif 
+!
    call ref_wf%cleanup()
 !
 end subroutine reference_calculation

@@ -1,7 +1,7 @@
 module bfgs_geoopt_hf_class
 !
 !!
-!!    BFGS geometry optimization for Hartree-Fock
+!!    BFGS geometry optimization Hartree-Fock solver
 !!    Written by Eirik F. Kjønstad, June 2019
 !!
 !
@@ -18,6 +18,8 @@ module bfgs_geoopt_hf_class
       character(len=400) :: author
       character(len=400) :: description
 !
+      logical :: restart 
+!
       integer :: iteration 
 !
       integer :: max_iterations
@@ -28,7 +30,7 @@ module bfgs_geoopt_hf_class
 !
       type(hf_engine) :: hf_gs_engine
 !
-      real(dp), dimension(:), allocatable :: energies, gradient_norms 
+      real(dp), dimension(:), allocatable :: energies, gradient_maxs 
 !
    contains
 !
@@ -53,7 +55,7 @@ module bfgs_geoopt_hf_class
 contains
 !
 !
-   function new_bfgs_geoopt_hf() result(solver)
+   function new_bfgs_geoopt_hf(restart) result(solver)
 !!
 !!    New BFGS geoopt HF 
 !!    Written by Eirik F. Kjønstad, 2019
@@ -61,6 +63,8 @@ contains
       implicit none
 !
       type(bfgs_geoopt_hf) :: solver
+!
+      logical, intent(in) :: restart 
 !
 !     Print solver banner
 !
@@ -80,13 +84,14 @@ contains
       solver%energy_threshold    = 1.0d-4
       solver%gradient_threshold  = 1.0d-4
       solver%max_step            = 0.5d0
+      solver%restart             = restart
 !
 !     Read settings (thresholds, etc.)
 !
       call solver%read_settings()
 !
       call mem%alloc(solver%energies, solver%max_iterations)
-      call mem%alloc(solver%gradient_norms, solver%max_iterations)
+      call mem%alloc(solver%gradient_maxs, solver%max_iterations)
 !
       solver%hf_gs_engine = hf_engine()
 !
@@ -103,13 +108,16 @@ contains
       class(bfgs_geoopt_hf), intent(inout) :: solver 
 !
       call input%get_keyword_in_section('gradient threshold', &
-                                        'solver geometry optimization', solver%gradient_threshold)
+                                        'solver hf geoopt', solver%gradient_threshold)
 !
       call input%get_keyword_in_section('energy threshold', &
-                                        'solver geometry optimization', solver%gradient_threshold)
+                                        'solver hf geoopt', solver%energy_threshold)
 !
       call input%get_keyword_in_section('max iterations', &
-                                        'solver geometry optimization', solver%max_iterations)
+                                        'solver hf geoopt', solver%max_iterations)
+!
+      call input%get_keyword_in_section('max step', &
+                                        'solver hf geoopt', solver%max_step)
 !
    end subroutine read_settings_bfgs_geoopt_hf
 !
@@ -137,7 +145,7 @@ contains
 !
 !     Attempt to converge HF orbitals/density, using restart 
 !
-      if (solver%iteration > 1) solver%hf_gs_engine%restart = .true.
+      if (solver%restart .or. solver%iteration > 1) solver%hf_gs_engine%restart = .true.
       call solver%hf_gs_engine%ignite(wf) 
 !
 !     Compute gradient 
@@ -162,7 +170,7 @@ contains
       logical :: converged_energy
       logical :: converged_gradient
 !
-      real(dp) :: energy, prev_energy, norm_gradient
+      real(dp) :: energy, prev_energy, max_gradient
 !
       real(dp), dimension(3,wf%system%n_atoms) :: gradient
       real(dp), dimension(3,wf%system%n_atoms) :: bfgs_direction
@@ -190,12 +198,12 @@ contains
          gradient = solver%determine_gradient(wf, geometry)
 !
          energy = wf%energy 
-         norm_gradient = get_l2_norm(gradient, 3*wf%system%n_atoms)
+         max_gradient = get_abs_max(gradient, 3*wf%system%n_atoms)
 !
          solver%energies(solver%iteration) = energy 
-         solver%gradient_norms(solver%iteration) = norm_gradient
+         solver%gradient_maxs(solver%iteration) = max_gradient
 !
-         converged_gradient = norm_gradient              <= solver%gradient_threshold
+         converged_gradient = max_gradient               <= solver%gradient_threshold
          converged_energy   = abs(energy - prev_energy)  <= solver%energy_threshold
 !
          converged = converged_gradient .and. converged_energy
@@ -269,7 +277,7 @@ contains
 !
          call output%printf('(i4)         (f19.12)     (e11.4)', &
                                     ints=[iteration], &
-                                    reals=[solver%energies(iteration), solver%gradient_norms(iteration)], &
+                                    reals=[solver%energies(iteration), solver%gradient_maxs(iteration)], &
                                     fs='(t6,a)')
 !
       enddo 
@@ -289,7 +297,7 @@ contains
       class(bfgs_geoopt_hf) :: solver 
 !
       call mem%dealloc(solver%energies, solver%max_iterations)
-      call mem%dealloc(solver%gradient_norms, solver%max_iterations)
+      call mem%dealloc(solver%gradient_maxs, solver%max_iterations)
 !
    end subroutine cleanup_bfgs_geoopt_hf
 !

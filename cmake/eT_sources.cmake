@@ -33,6 +33,7 @@ set(eT_fortran_sources
    src/solvers/cc/newton_raphson_cc_gs_class.F90
    src/solvers/cholesky/eri_cd_class.F90
    src/engines/hf_engine_class.F90
+   src/engines/hf_geoopt_engine_class.F90
    src/engines/abstract_engine_class.F90
    src/engines/gs_engine_class.F90
    src/engines/es_engine_class.F90

@@ -121,6 +121,7 @@ contains
       type(section) :: method 
       type(section) :: solver_cholesky
       type(section) :: solver_hf
+      type(section) :: solver_hf_geoopt
       type(section) :: solver_cc_gs
       type(section) :: solver_cc_es
       type(section) :: solver_cc_multipliers 
@@ -167,6 +168,7 @@ contains
       calculations%name_    = 'do'
       calculations%required = .true.
       calculations%keywords = (/ 'ground state         ',   &
+                                 'ground state geoopt  ',   &
                                  'excited state        ',   &
                                  'zop                  ',   &
                                  'fop                  ',   &
@@ -218,6 +220,15 @@ contains
                               'ao density guess     ',   &
                               'print orbitals       '    /)
 !
+      solver_hf_geoopt%name_    = 'solver hf geoopt'
+      solver_hf_geoopt%required = .false.
+      solver_hf_geoopt%keywords = (/ 'algorithm            ',   &
+                                     'max step             ',   &
+                                     'energy threshold     ',   &
+                                     'gradient threshold   ',   &
+                                     'max iterations       ',   &
+                                     'restart              ' /)
+!
       solver_cc_gs%name_    = 'solver cc gs'
       solver_cc_gs%required = .false.
       solver_cc_gs%keywords = (/ 'algorithm            ',   &
@@ -268,6 +279,7 @@ contains
                            cc_fop,                 &
                            solver_cholesky,        &
                            solver_hf,              &
+                           solver_hf_geoopt,       &
                            solver_cc_gs,           &
                            solver_cc_es,           &
                            solver_cc_multipliers,  &
