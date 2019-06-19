@@ -76,7 +76,6 @@ module molecular_system_class
       procedure :: set_geometry                             => set_geometry_molecular_system
 !
       procedure :: get_nuclear_repulsion                    => get_nuclear_repulsion_molecular_system
-      procedure :: get_nuclear_repulsion_1der               => get_nuclear_repulsion_1der_molecular_system
       procedure :: get_nuclear_repulsion_1der_numerical     => get_nuclear_repulsion_1der_numerical_molecular_system
 !
       procedure :: get_n_electrons                          => get_n_electrons_molecular_system
@@ -939,62 +938,6 @@ contains
       call molecule%set_geometry(R_qk)
 !
    end function get_nuclear_repulsion_1der_numerical_molecular_system
-!
-!
-   function get_nuclear_repulsion_1der_molecular_system(molecule) result(h_nuc_qk)
-!!
-!!    Get nuclear repulsion 1der 
-!!    Written by Eirik F. Kjønstad, June 2019
-!!
-!!       h_nuc^x_k = - sum_{i≠j} 1/2 Zi Zj / r_ij^(3/2) r_ij^x_k 
-!!                 = - sum_{j≠k} Zk Zj / r_kj^(3/2)  + sum_{i≠k} Zi Zk / r_ik^(3/2)
-!!
-      implicit none 
-!
-      class(molecular_system), intent(in) :: molecule 
-!
-      real(dp), dimension(3, molecule%n_atoms) :: h_nuc_qk 
-!
-      real(dp) :: x_ij, y_ij, z_ij, r_ij, x_i, y_i, z_i, Zi, Zj
-!
-      integer :: i, j, k
-!
-      h_nuc_qk = zero
-!
-      do k = 1, molecule%n_atoms 
-         do i = 1, molecule%n_atoms
-            do j = i + 1, molecule%n_atoms
-!
-               x_ij = (molecule%atoms(i)%x - molecule%atoms(j)%x)*angstrom_to_bohr
-               y_ij = (molecule%atoms(i)%y - molecule%atoms(j)%y)*angstrom_to_bohr
-               z_ij = (molecule%atoms(i)%z - molecule%atoms(j)%z)*angstrom_to_bohr
-!
-               r_ij = sqrt(x_ij**2 + y_ij**2 + z_ij**2)
-!
-               Zi = molecule%atoms(i)%number_
-               Zj = molecule%atoms(j)%number_
-!
-               if (k == i) then 
-!
-                  h_nuc_qk(1,i) = h_nuc_qk(1,i) - Zi*Zj*x_ij/(r_ij**3)
-                  h_nuc_qk(2,i) = h_nuc_qk(2,i) - Zi*Zj*y_ij/(r_ij**3)
-                  h_nuc_qk(3,i) = h_nuc_qk(3,i) - Zi*Zj*z_ij/(r_ij**3)
-!
-               endif
-!
-               if (k == j) then 
-!
-                  h_nuc_qk(1,j) = h_nuc_qk(1,j) + Zi*Zj*x_ij/(r_ij**3)
-                  h_nuc_qk(2,j) = h_nuc_qk(2,j) + Zi*Zj*y_ij/(r_ij**3)
-                  h_nuc_qk(3,j) = h_nuc_qk(3,j) + Zi*Zj*z_ij/(r_ij**3)
-!
-               endif
-!
-            enddo 
-         enddo
-      enddo
-!
-   end function get_nuclear_repulsion_1der_molecular_system
 !
 !
 !

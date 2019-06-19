@@ -187,14 +187,10 @@ contains
       real(dp), dimension(bfgs%n_parameters) :: x 
       real(dp), dimension(bfgs%n_parameters) :: g  
 !
-      integer, dimension(bfgs%n_parameters) :: ipiv 
-!
       real(dp), dimension(bfgs%n_parameters) :: s, y, z
-      real(dp), dimension(bfgs%n_parameters, bfgs%n_parameters) :: H, yyT, zzT
+      real(dp), dimension(bfgs%n_parameters, bfgs%n_parameters) :: yyT, zzT
 !
       real(dp) :: yTs, zTs, sTy, ddot
-!
-      integer :: info 
 !
       bfgs%iteration = bfgs%iteration + 1
 !
