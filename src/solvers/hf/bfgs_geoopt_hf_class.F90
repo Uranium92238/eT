@@ -40,6 +40,7 @@ module bfgs_geoopt_hf_class
       procedure :: read_settings       => read_settings_bfgs_geoopt_hf
       procedure :: print_banner        => print_banner_bfgs_geoopt_hf
       procedure :: print_summary       => print_summary_bfgs_geoopt_hf
+      procedure :: print_settings      => print_settings_bfgs_geoopt_hf
       procedure :: determine_gradient  => determine_gradient_bfgs_geoopt_hf
 !
    end type bfgs_geoopt_hf
@@ -86,12 +87,15 @@ contains
       solver%max_step            = 0.5d0
       solver%restart             = restart
 !
-!     Read settings (thresholds, etc.)
+!     Read & print settings (thresholds, etc.)
 !
       call solver%read_settings()
+      call solver%print_settings()
 !
       call mem%alloc(solver%energies, solver%max_iterations)
       call mem%alloc(solver%gradient_maxs, solver%max_iterations)
+!
+      call output%printf('Starting HF solver.', fs='(/t3,a)')
 !
       solver%hf_gs_engine = hf_engine()
 !
@@ -120,6 +124,25 @@ contains
                                         'solver hf geoopt', solver%max_step)
 !
    end subroutine read_settings_bfgs_geoopt_hf
+!
+!
+   subroutine print_settings_bfgs_geoopt_hf(solver)
+!!
+!!    Print settings
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(bfgs_geoopt_hf) :: solver
+!
+      call output%printf('- BFGS geometry optimization settings:', fs='(/t3,a)')
+!
+      write(output%unit, '(/t6,a20,e11.4)') 'Gradient threshold: ', solver%gradient_threshold
+      write(output%unit, '(t6,a20,e11.4)')  'Energy threshold:   ', solver%energy_threshold
+      write(output%unit, '(t6,a20,i4)')     'Max iterations:     ', solver%max_iterations
+      write(output%unit, '(t6,a20,e11.4)')  'Max step size:      ', solver%max_step
+!
+   end subroutine print_settings_bfgs_geoopt_hf
 !
 !
    function determine_gradient_bfgs_geoopt_hf(solver, wf, geometry) result(gradient)
@@ -200,7 +223,8 @@ contains
          energy = wf%energy 
          max_gradient = get_abs_max(gradient, 3*wf%system%n_atoms)
 !
-         call output%printf('Absolute maximum of molecular gradient: (f17.12)', reals=[max_gradient], fs='(/t3,a)')
+         call output%printf('Geometry optimization iteration (i0)', ints=[solver%iteration], fs='(/t3,a)')
+         call output%printf('Absolute maximum of molecular gradient: (f17.12)', reals=[max_gradient], fs='(t3,a)')
 !
          solver%energies(solver%iteration) = energy 
          solver%gradient_maxs(solver%iteration) = max_gradient
