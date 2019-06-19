@@ -243,7 +243,7 @@ contains
             call output%printf('Geometry not yet converged. Finding next geometry.', fs='(/t3,a)')
 !
             call bfgs%update_hessian(geometry, gradient)
-            call bfgs%get_direction(gradient, bfgs_direction)
+            call bfgs%get_step(gradient, bfgs_direction)
 !
             geometry = geometry + bfgs_direction 
 !
