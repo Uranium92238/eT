@@ -3420,7 +3420,7 @@ contains
 !!
 !!    Constructs the molecular gradient,
 !! 
-!!       E^x = Tr[D h^x] + (1/2)Tr[D G^x(D)] - Tr[D F D S^x] + h_nuc^x.
+!!       E^x = Tr[D h^x] + (1/2)Tr[D G^x(D)] - (1/2)Tr[D F D S^x] + h_nuc^x.
 !!
 !!    Here, x denotes the energy in the x direction. In the code, 
 !!    x = (q,k), where q denotes the component (x,y, or z) and k 
@@ -3444,13 +3444,14 @@ contains
 !
       integer :: k, q
 !
-      type(timings) :: s_timer, h_timer, G_timer, non_integral_timer
+      type(timings) :: s_timer, h_timer, G_timer, G_timer_sym, non_integral_timer
 !
 !     Initialize timers 
 !
       s_timer = timings('HF gradient - 1st derivative-integrals of S')
       h_timer = timings('HF gradient - 1st derivative-integrals of h')
-      G_timer = timings('HF gradient - 1st derivative-integrals of G(D)')
+      G_timer = timings('HF gradient - 1st derivative-integrals of G(D) - integrals')
+      G_timer_sym = timings('HF gradient - 1st derivative-integrals of G(D) - symmetrization')
       non_integral_timer = timings('HF gradient - non-integral-time')
 !
 !     Construct h_nuc^x, and the AO integral derivatives, h^x, S^x, and G^x(D)
@@ -3473,6 +3474,9 @@ contains
       G_wxqk = zero
       call wf%construct_ao_G_1der(G_wxqk, wf%ao_density)
 !
+      call G_timer%turn_off()
+      call G_timer_sym%turn_on()
+!
       do k = 1, wf%system%n_atoms
 
          do q = 1, 3
@@ -3484,7 +3488,7 @@ contains
 
       enddo
 !
-      call G_timer%turn_off()
+      call G_timer_sym%turn_off()
 !
       call h_timer%turn_on()
 !
