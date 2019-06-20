@@ -108,6 +108,13 @@ void construct_ao_h_wx_kinetic_1der(double *h_1x, double *h_1y, double *h_1z,
 void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2, int *n_ao){
 /*
 /   Add nuclear 1st derivative contribution to h
+/
+/   Shellset 1-3: xyz (orbital) derivative contributions with respect to center given by s1 
+/   Shellset 4-6: xyz (orbital) derivative contributions with respect to center given by s2 
+/   Shellset 7-:  xyz (operator) derivative contributions due to atoms 1, 2, 3, ..., n_atoms
+/
+/   Contributions are added in the full Fortran-ordered array h_wxqk (indices: ao,ao,xyz,atom)
+/
 */
   const auto& integrals = nuclear_1der.results(); // will point to computed shell sets
 

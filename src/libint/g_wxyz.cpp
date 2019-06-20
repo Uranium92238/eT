@@ -153,8 +153,8 @@ void construct_ao_g_wxyz_1der(double *g_wxyzqk, int *s1, int *s2, int *s3, int *
 
   auto offset = 0;
 
-  for (auto k = 0, shell_set = 0; k != 4; ++k){
-    for (auto q = 0; q != 3; ++q, ++shell_set){
+  for (auto k = 0, shell_set = 0; k != 4; ++k){ // Loop over shell centers/atoms
+    for (auto q = 0; q != 3; ++q, ++shell_set){ // Loop over xyz on the given shell
 
         auto ints = buf_vec[shell_set];
 

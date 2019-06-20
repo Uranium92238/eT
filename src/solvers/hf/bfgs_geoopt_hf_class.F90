@@ -75,7 +75,8 @@ contains
       solver%description = 'Constructs an approximate Hessian using the BFGS algorithm &
                            &using the previous geometries and gradients. From the BFGS Hessian, &
                            &a level shift given by the rational function (RF) augmented Hessian &
-                           &is applied. See J. Comput. Chem. 18: 1473-1483, 1997.'
+                           &is applied. See J. Comput. Chem. 18: 1473-1483, 1997. The HF gradient &
+                           &is evaluated as described in J. Chem. Phys. 115.22 (2001): 10344-10352.'
 !
       call solver%print_banner()
 !

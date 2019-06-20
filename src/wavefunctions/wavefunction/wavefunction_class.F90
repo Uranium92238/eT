@@ -60,11 +60,9 @@ module wavefunction_class
 !
       procedure :: get_ao_h_wx                     => get_ao_h_wx_wavefunction
       procedure :: get_ao_h_wx_1der                => get_ao_h_wx_1der_wavefunction
-      procedure :: get_ao_h_wx_1der_numerical      => get_ao_h_wx_1der_numerical_wavefunction
 !
       procedure :: get_ao_s_wx                     => get_ao_s_wx_wavefunction
       procedure :: get_ao_s_wx_1der                => get_ao_s_wx_1der_wavefunction
-      procedure :: get_ao_s_wx_1der_numerical      => get_ao_s_wx_1der_numerical_wavefunction
 !
       procedure :: get_ao_mu_wx                    => get_ao_mu_wx_wavefunction
       procedure :: get_ao_q_wx                     => get_ao_q_wx_wavefunction
@@ -336,6 +334,8 @@ contains
 !!    Get AO s 1st derivative
 !!    Written by Eirik F. Kjønstad, June 2019 
 !!
+!!    Constructs the derivative of the AO overlap matrix.
+!!
       implicit none 
 !
       class(wavefunction), intent(in) :: wf 
@@ -354,12 +354,12 @@ contains
 !
       do A = 1, wf%system%n_s
 !
-         A_atom     = wf%system%shell_to_atom(A)
+         A_atom     = wf%system%shell2atom(A)
          A_interval = wf%system%shell_limits(A)
 !
          do B = 1, A
 !
-            B_atom     = wf%system%shell_to_atom(B)
+            B_atom     = wf%system%shell2atom(B)
             B_interval = wf%system%shell_limits(B)
 !
             s_ABqk_p(1 : A_interval%size, 1 : B_interval%size, 1 : 3, 1 : 2) &
@@ -398,80 +398,18 @@ contains
    end subroutine get_ao_s_wx_1der_wavefunction
 !
 !
-   subroutine get_ao_s_wx_1der_numerical_wavefunction(wf, s_wxqk, dx)
-!!
-!!    Get AO s 1st derivative numerically
-!!    Written by Eirik F. Kjønstad, June 2019 
-!!
-!!    Uses forward differences to calculate the derivative.
-!!
-      implicit none 
-!
-      class(wavefunction), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms) :: s_wxqk
-!
-      real(dp), intent(in) :: dx ! Displacement length in bohr
-!
-      real(dp), dimension(:,:), allocatable :: s_wx, s_wx_displaced, R_qk, R_qk_displaced
-!
-      integer :: k, q, w, x 
-!
-!     Get s at the reference geometry 
-!
-      call mem%alloc(s_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_s_wx(s_wx)
-!
-      call mem%alloc(R_qk, 3, wf%system%n_atoms)
-      call mem%alloc(R_qk_displaced, 3, wf%system%n_atoms)
-!
-      R_qk = wf%system%get_geometry()
-      call mem%alloc(s_wx_displaced, wf%n_ao, wf%n_ao)
-!
-      do k = 1, wf%system%n_atoms
-         do q = 1, 3
-!
-!           Get s at the displaced geometry 
-!
-            R_qk_displaced = R_qk 
-            R_qk_displaced(q,k) = R_qk_displaced(q,k) + dx 
-            call wf%system%set_geometry(R_qk_displaced)
-!
-            call wf%get_ao_s_wx(s_wx_displaced)
-!
-!           Use difference from reference to compute derivative
-!
-            do w = 1, wf%n_ao
-               do x = 1, wf%n_ao 
-!
-                  s_wxqk(w,x,q,k) = (s_wx_displaced(w,x) - s_wx(w,x))/dx
-!
-               enddo
-            enddo
-!
-         enddo
-      enddo
-!    
-      call wf%system%set_geometry(R_qk)
-!
-      call mem%dealloc(s_wx, wf%n_ao, wf%n_ao)
-      call mem%dealloc(R_qk, 3, wf%system%n_atoms)
-      call mem%dealloc(R_qk_displaced, 3, wf%system%n_atoms)
-      call mem%dealloc(s_wx_displaced, wf%n_ao, wf%n_ao)
-!
-   end subroutine get_ao_s_wx_1der_numerical_wavefunction
-!
-!
    subroutine get_ao_h_wx_1der_wavefunction(wf, h_wxqk)
 !!
 !!    Get AO h 1st derivative
 !!    Written by Eirik F. Kjønstad, June 2019 
 !!
+!!    Constructs the 1st derivative of the nuclear-electron attraction integrals.
+!!
       implicit none 
 !
       class(wavefunction), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms), intent(inout) :: h_wxqk
+      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms), intent(out) :: h_wxqk
 !
       integer :: A, B, A_atom, B_atom, w, x, q, w_f, x_f 
 !
@@ -485,12 +423,12 @@ contains
 !
       do A = 1, wf%system%n_s
 !
-         A_atom     = wf%system%shell_to_atom(A)
+         A_atom     = wf%system%shell2atom(A)
          A_interval = wf%system%shell_limits(A)
 !
          do B = 1, A
 !
-            B_atom     = wf%system%shell_to_atom(B)
+            B_atom     = wf%system%shell2atom(B)
             B_interval = wf%system%shell_limits(B)
 !
             h_ABqk_p(1 : A_interval%size, 1 : B_interval%size, 1 : 3, 1 : 2) &
@@ -550,70 +488,6 @@ contains
       enddo
 !
    end subroutine get_ao_h_wx_1der_wavefunction
-!
-!
-   subroutine get_ao_h_wx_1der_numerical_wavefunction(wf, s_wxqk, dx)
-!!
-!!    Get AO h 1st derivative numerically
-!!    Written by Eirik F. Kjønstad, June 2019 
-!!
-!!    Uses forward differences to calculate the derivative.
-!!
-      implicit none 
-!
-      class(wavefunction), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms) :: s_wxqk
-!
-      real(dp), intent(in) :: dx ! Displacement length in bohr
-!
-      real(dp), dimension(:,:), allocatable :: s_wx, s_wx_displaced, R_qk, R_qk_displaced
-!
-      integer :: k, q, w, x 
-!
-!     Get s at the reference geometry 
-!
-      call mem%alloc(s_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_h_wx(s_wx)
-!
-      call mem%alloc(R_qk, 3, wf%system%n_atoms)
-      call mem%alloc(R_qk_displaced, 3, wf%system%n_atoms)
-!
-      R_qk = wf%system%get_geometry()
-      call mem%alloc(s_wx_displaced, wf%n_ao, wf%n_ao)
-!
-      do k = 1, wf%system%n_atoms
-         do q = 1, 3
-!
-!           Get s at the displaced geometry 
-!
-            R_qk_displaced = R_qk 
-            R_qk_displaced(q,k) = R_qk_displaced(q,k) + dx 
-            call wf%system%set_geometry(R_qk_displaced)
-!
-            call wf%get_ao_h_wx(s_wx_displaced)
-!
-!           Use difference from reference to compute derivative
-!
-            do w = 1, wf%n_ao
-               do x = 1, wf%n_ao 
-!
-                  s_wxqk(w,x,q,k) = (s_wx_displaced(w,x) - s_wx(w,x))/dx
-!
-               enddo
-            enddo
-!
-         enddo
-      enddo
-!    
-      call wf%system%set_geometry(R_qk)
-!
-      call mem%dealloc(s_wx, wf%n_ao, wf%n_ao)
-      call mem%dealloc(R_qk, 3, wf%system%n_atoms)
-      call mem%dealloc(R_qk_displaced, 3, wf%system%n_atoms)
-      call mem%dealloc(s_wx_displaced, wf%n_ao, wf%n_ao)
-!
-   end subroutine get_ao_h_wx_1der_numerical_wavefunction
 !
 !
    subroutine get_ao_mu_wx_wavefunction(wf, mu_X, mu_Y, mu_Z)
