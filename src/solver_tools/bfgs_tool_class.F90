@@ -23,6 +23,24 @@ module bfgs_tool_class
 !!    BFGS solver tool class module
 !!    Written by Eirik F. Kjønstad, 2019
 !!
+!!    Usage:
+!!
+!!    bfgs = bfgs_tool(dim_g, max_step_length)
+!!
+!!    if (.not. converged) then 
+!! 
+!!       call bfgs%udpate_hessian(x, g)      
+!!       call bfgs%get_step(g, d)
+!!       x = x + d 
+!!
+!!    endif      
+!!
+!!    Notation:
+!!
+!!       x : parameters (geometry)
+!!       g : gradient 
+!!       d : BFGS step (i.e., solution d of H d = -g, where H has been level-shifted)
+!!
 !
    use kinds
    use parameters
@@ -36,18 +54,18 @@ module bfgs_tool_class
    type :: bfgs_tool
 !
       private 
-      integer  :: iteration 
-      integer  :: n_parameters
-      real(dp) :: max_step 
+      integer  :: iteration    ! Starts at 0, increments when calling "update"
+      integer  :: n_parameters ! Length of gradient 
+      real(dp) :: max_step     ! Maximum acceptable step length (in 2-norm)
 !
-      real(dp), dimension(:,:), allocatable :: Hessian
+      real(dp), dimension(:), allocatable :: prev_g ! Prev. gradient 
+      real(dp), dimension(:), allocatable :: prev_x ! Prev. geometry ('parameters', more generally)
 !
-      real(dp), dimension(:), allocatable :: prev_g 
-      real(dp), dimension(:), allocatable :: prev_x 
+      real(dp), dimension(:,:), allocatable :: Hessian ! BFGS Hessian estimate
 !
    contains
 !
-      procedure, public :: get_direction           => get_direction_bfgs_tool
+      procedure, public :: get_step                => get_step_bfgs_tool
       procedure, public :: update_hessian          => update_hessian_bfgs_tool
 !
    end type bfgs_tool
@@ -99,9 +117,9 @@ contains
    end function new_bfgs_tool
 !
 !
-   subroutine get_direction_bfgs_tool(bfgs, g, d)
+   subroutine get_step_bfgs_tool(bfgs, g, d)
 !!
-!!    Get direction 
+!!    Get step 
 !!    Written by Eirik F. Kjønstad, 2019
 !!
 !!    Solves H d = - g and returns d. 
@@ -133,7 +151,8 @@ contains
       aug_H(1:bfgs%n_parameters, bfgs%n_parameters + 1) = g(:)
       aug_H(bfgs%n_parameters + 1, 1:bfgs%n_parameters) = g(:)
 !
-!     :: Get eigenvalue and eigenvectors 
+!     Get lowest eigenvalue (level shift) and eigenvector (d, step)
+!     of the augmented Hessian 
 !
       call dsyev('V', 'L',                   &
                   bfgs%n_parameters+1,       &
@@ -150,6 +169,9 @@ contains
 !
       d = aug_H(1:bfgs%n_parameters,1)/aug_H(bfgs%n_parameters+1,1)
 !
+!     Scale the vector to the boundary of the trust region (max step)
+!     if the d vector is too long 
+!
       norm_d = get_l2_norm(d, bfgs%n_parameters)
       if (norm_d > bfgs%max_step) then
 !
@@ -158,7 +180,7 @@ contains
 !
       endif
 !
-   end subroutine get_direction_bfgs_tool
+   end subroutine get_step_bfgs_tool
 !
 !
    subroutine update_hessian_bfgs_tool(bfgs, x, g)
@@ -166,8 +188,8 @@ contains
 !!    Update Hessian 
 !!    Written by Eirik F. Kjønstad, 2019
 !!
-!!    x:  current geometry
-!!    g:  current gradient 
+!!       x:  current geometry
+!!       g:  current gradient 
 !!
 !!    The Hessian is updated according to 
 !!    
@@ -180,6 +202,10 @@ contains
 !!       y_k = g_k - g_k-1 
 !!       z_k = H_k s_k 
 !!
+!!    For k = 1, the routine does not update the Hessian but keeps a copy 
+!!    of the geometry and gradient for the next iteration. For k > 1, the 
+!!    routine also updates the Hessian.
+!!
       implicit none 
 !
       class(bfgs_tool), intent(inout) :: bfgs 
@@ -190,26 +216,28 @@ contains
       real(dp), dimension(bfgs%n_parameters) :: s, y, z
       real(dp), dimension(bfgs%n_parameters, bfgs%n_parameters) :: yyT, zzT
 !
-      real(dp) :: yTs, zTs, sTy, ddot
+      real(dp) :: yTs, zTs, ddot
 !
       bfgs%iteration = bfgs%iteration + 1
 !
-      if (bfgs%iteration == 1) then 
-!
-         call output%printf('First iteration: no update of the Hessian', fs='(/t3,a)')
-         bfgs%prev_x = x
-         bfgs%prev_g = g
-         return
-!
-      endif 
-!
-!     Compute s_k and y_k from the k+1- and k-th geometries and gradients,
-!     and then compute z_k = H_k s_k 
+!     Compute s_k and y_k from the k+1- and k-th geometries and gradients
 !
       s = x - bfgs%prev_x 
       y = g - bfgs%prev_g 
 !
-      sTy = ddot(bfgs%n_parameters, s, 1, y, 1)
+!     Keep a copy, for next time, of the current geometry and gradient 
+!
+      bfgs%prev_x = x
+      bfgs%prev_g = g
+!
+      if (bfgs%iteration == 1) then 
+!
+         call output%printf('First iteration: no update of the Hessian', fs='(/t3,a)')
+         return
+!
+      endif 
+!
+!     Compute z_k = H_k s_k 
 !
       call dgemm('N', 'N',             &
                   bfgs%n_parameters,   &
@@ -253,11 +281,10 @@ contains
       yTs = ddot(bfgs%n_parameters, y, 1, s, 1)
       zTs = ddot(bfgs%n_parameters, z, 1, s, 1)
 !
+!     Update the Hessian
+!
       call daxpy(bfgs%n_parameters**2, -one/zTs, zzT, 1, bfgs%Hessian, 1)
       call daxpy(bfgs%n_parameters**2, one/yTs, yyT, 1, bfgs%Hessian, 1)
-!
-      bfgs%prev_x = x
-      bfgs%prev_g = g
 !
    end subroutine update_hessian_bfgs_tool
 !
