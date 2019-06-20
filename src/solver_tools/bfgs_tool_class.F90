@@ -136,7 +136,7 @@ contains
 !
       real(dp), dimension(bfgs%n_parameters) :: d 
 !
-      real(dp), dimension(bfgs%n_parameters + 1, bfgs%n_parameters + 1) :: aug_H 
+      real(dp), dimension(:,:), allocatable    :: aug_H 
       real(dp), dimension(bfgs%n_parameters+1) :: eigvals 
 !
       integer :: info 
@@ -145,6 +145,8 @@ contains
       real(dp) :: norm_d
 !
 !     Set up rational function (RF) augmented Hessian 
+!
+      call mem%alloc(aug_H, bfgs%n_parameters + 1, bfgs%n_parameters + 1)
 !
       aug_H = zero 
       aug_H(1:bfgs%n_parameters, 1:bfgs%n_parameters) = bfgs%Hessian(:,:)
@@ -168,6 +170,8 @@ contains
       call output%printf('Level shift: (f19.12)', reals=[eigvals(1)], fs='(/t3,a)')
 !
       d = aug_H(1:bfgs%n_parameters,1)/aug_H(bfgs%n_parameters+1,1)
+!
+      call mem%dealloc(aug_H, bfgs%n_parameters + 1, bfgs%n_parameters + 1)
 !
 !     Scale the vector to the boundary of the trust region (max step)
 !     if the d vector is too long 
@@ -214,7 +218,7 @@ contains
       real(dp), dimension(bfgs%n_parameters) :: g  
 !
       real(dp), dimension(bfgs%n_parameters) :: s, y, z
-      real(dp), dimension(bfgs%n_parameters, bfgs%n_parameters) :: yyT, zzT
+      real(dp), dimension(:,:), allocatable  :: yyT, zzT
 !
       real(dp) :: yTs, zTs, ddot
 !
@@ -254,6 +258,9 @@ contains
 !     
 !     Compute the outer products yyT and zzT
 !
+      call mem%alloc(yyT, bfgs%n_parameters, bfgs%n_parameters)
+      call mem%alloc(zzT, bfgs%n_parameters, bfgs%n_parameters)
+!
       yyT = zero 
       call dger(bfgs%n_parameters,     &
                   bfgs%n_parameters,   &
@@ -285,6 +292,9 @@ contains
 !
       call daxpy(bfgs%n_parameters**2, -one/zTs, zzT, 1, bfgs%Hessian, 1)
       call daxpy(bfgs%n_parameters**2, one/yTs, yyT, 1, bfgs%Hessian, 1)
+!
+      call mem%dealloc(yyT, bfgs%n_parameters, bfgs%n_parameters)
+      call mem%dealloc(zzT, bfgs%n_parameters, bfgs%n_parameters)
 !
    end subroutine update_hessian_bfgs_tool
 !
