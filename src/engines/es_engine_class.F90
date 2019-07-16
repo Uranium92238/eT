@@ -154,6 +154,7 @@ contains
       use davidson_cvs_cc_es_class
       use diis_cc_gs_class
       use diis_cc_es_class
+      use diis_A_inv_cc_es_class
 !
       implicit none
 !
@@ -164,6 +165,8 @@ contains
 !
       type(diis_cc_es), allocatable :: cc_es_solver_diis
 !
+      type(diis_A_inv_cc_es), allocatable :: cc_es_solver_A_inv
+!
       class(davidson_cc_es), allocatable :: cc_es_solver_davidson
 !
 !     Prepare for excited state
@@ -173,6 +176,12 @@ contains
          cc_es_solver_diis = diis_cc_es(transformation, wf)
          call cc_es_solver_diis%run(wf)
          call cc_es_solver_diis%cleanup(wf)
+!
+      elseif (engine%es_algorithm == 'diis a inverse') then
+!
+         cc_es_solver_A_inv = diis_A_inv_cc_es(transformation, wf)
+         call cc_es_solver_A_inv%run(wf)
+         call cc_es_solver_A_inv%cleanup(wf)
 !
       elseif (engine%es_algorithm == 'davidson') then
 !

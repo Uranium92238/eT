@@ -241,6 +241,7 @@ contains
                                  'right eigenvectors   ',   &
                                  'singlet states       ',   &
                                  'diis dimension       ',   &
+                                 'max micro iterations ',   &
                                  'max reduced dimension' /)
 !
       solver_cc_multipliers%name_    = 'solver cc multipliers'
