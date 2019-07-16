@@ -55,12 +55,24 @@ module lowmem_cc2_class
       procedure :: effective_jacobian_cc2_e1 => effective_jacobian_cc2_e1_lowmem_cc2
       procedure :: effective_jacobian_cc2_f1 => effective_jacobian_cc2_f1_lowmem_cc2
 !
+      procedure :: effective_jacobian_transpose_transformation => effective_jacobian_transpose_transformation_lowmem_cc2
+      procedure :: jacobian_transpose_ccs_b1 => jacobian_transpose_ccs_b1_lowmem_cc2
+      procedure :: jacobian_transpose_cc2_a1 => jacobian_transpose_cc2_a1_lowmem_cc2
+      procedure :: jacobian_transpose_cc2_b1 => jacobian_transpose_cc2_b1_lowmem_cc2
+      procedure :: effective_jacobian_transpose_cc2_a1   => effective_jacobian_transpose_cc2_a1_lowmem_cc2
+      procedure :: effective_jacobian_transpose_cc2_b1   => effective_jacobian_transpose_cc2_b1_lowmem_cc2
+      procedure :: effective_jacobian_transpose_cc2_c1   => effective_jacobian_transpose_cc2_c1_lowmem_cc2
+      procedure :: effective_jacobian_transpose_cc2_d1   => effective_jacobian_transpose_cc2_d1_lowmem_cc2
+      procedure :: effective_jacobian_transpose_cc2_e1   => effective_jacobian_transpose_cc2_e1_lowmem_cc2
+      procedure :: effective_jacobian_transpose_cc2_f1   => effective_jacobian_transpose_cc2_f1_lowmem_cc2
+!
    end type lowmem_cc2
 !
    interface
 !
       include "omega_lowmem_cc2_interface.F90"
       include "jacobian_lowmem_cc2_interface.F90"
+      include "jacobian_transpose_lowmem_cc2_interface.F90"
 !
    end interface
 !
@@ -258,15 +270,16 @@ contains
 !
 !     Construct residual based on previous excitation energy w
 !
-      if (r_or_l .eq. "right") then
-         call mem%alloc(X_copy, wf%n_es_amplitudes)
-      else
-         call output%error_msg('Left hand side not yet implemented for CC2 lowmem')
-      endif
+      call mem%alloc(X_copy, wf%n_es_amplitudes)
 !
       call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
-      call wf%effective_jacobian_transformation(w, X_copy) ! X_copy <- AX
+      if (r_or_l .eq. "right") then
+         call wf%effective_jacobian_transformation(w, X_copy) ! X_copy <- AX
+      elseif (r_or_l .eq. "left") then
+         call wf%effective_jacobian_transpose_transformation(w, X_copy) ! X_copy <- A^TX
+      endif
+
 !
       call dcopy(wf%n_es_amplitudes, X_copy, 1, R, 1)
       call daxpy(wf%n_es_amplitudes, -w, X, 1, R, 1)
