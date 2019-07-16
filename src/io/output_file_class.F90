@@ -211,7 +211,7 @@ contains
    end subroutine warning_msg_output_file
 !
 !  
-   subroutine printf_output_file(the_file, string, reals, ints, chars, logs, fs, ffs, lfs, ll)
+   subroutine printf_output_file(the_file, string, reals, ints, chars, logs, fs, ffs, lfs, ll, adv)
 !!
 !!    Printf 
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -233,6 +233,7 @@ contains
 !!    lfs:      Specifies the format of the last printed line if different from fs. 
 !!              Default: same as fs
 !!    ll:       Integer specifying number of characters per line of print.
+!!    adv:      Logical specifies whether advance is 'yes' or 'no', default = 'yes'
 !!
 !!    Example: call output%printf('Energy (a.u.): (f19.12)', reals=[wf%energy], fs='(/t6,a)')
 !!
@@ -253,6 +254,8 @@ contains
       character(len=*), optional, intent(in)                :: ffs
       character(len=*), optional, intent(in)                :: lfs
 !
+      logical, intent(in), optional :: adv
+!
       character(len=1000)  :: pstring 
       character(len=20)    :: fstring 
 !
@@ -265,6 +268,7 @@ contains
       character(len=20) :: f_string
       character(len=20) :: ff_string
       character(len=20) :: lf_string
+      logical           :: adva
 !
 !     Set print string and format string blank
       pstring = ' '
@@ -326,6 +330,13 @@ contains
          lf_string = lfs
       else
          lf_string = f_string
+      endif
+!
+!     Advance write?
+      if(present(adv)) then
+         adva = adv
+      else
+         adva = .True.
       endif
 !
       real_count = 0
@@ -493,15 +504,19 @@ contains
 !
       enddo 
 !
-      call the_file%long_string_print(pstring, fs=f_string, ffs=ff_string, lfs=lf_string, ll=l_length)
+      call the_file%long_string_print(pstring, fs=f_string, ffs=ff_string, lfs=lf_string, & 
+                                      ll=l_length, adv=adva)
 !
    end subroutine printf_output_file
 !
 !  
-   subroutine printd_output_file(the_file, string)
+   subroutine printd_output_file(the_file, string, adv)
 !!
-!!    Print formatted
+!!    Print with default format
 !!    Written by Rolf Heilemann Myhre, May 2019
+!!
+!!    string:   String to print
+!!    adv:      Logical specifies whether advance is 'yes' or 'no', default = 'yes'
 !!
       implicit none
 !
@@ -509,10 +524,23 @@ contains
 !
       character(len=*), intent(in) :: string
 !
+      logical, intent(in), optional :: adv
+!
+      character(len=3) :: adva
+!
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, '(t3,a)', iostat=io_error, iomsg=io_msg) string
+      adva = 'yes'
+      if(present(adv)) then
+         if(adv) then
+            adva = 'yes'
+         else
+            adva = 'no'
+         endif
+      endif
+!
+      write(the_file%unit, '(t3,a)', iostat=io_error, iomsg=io_msg, advance=trim(adva)) string
 !
       if (io_error /= 0) then 
 !
@@ -549,7 +577,7 @@ contains
 !
 !  
    subroutine long_string_print_output_file(the_file, string, fs, colons, &
-                                            ffs, lfs, ll)
+                                            ffs, lfs, ll, adv)
 !!
 !!    Long string print
 !!    Written by Rolf H. Myhre, Nov 2018
@@ -571,12 +599,15 @@ contains
       character(len=*), intent(in), optional :: fs, ffs, lfs
       integer, intent(in), optional :: ll
       logical, intent(in), optional :: colons
+      logical, intent(in), optional :: adv
 !
       character(90)  :: temp
       integer        :: l, l_left, lines, l_length
       integer        :: i,j, padd, printed 
       character(20)  :: f_s,fstring,ffstring,lfstring
       logical        :: col 
+!
+      character(len=3) :: adva
 !
 !     Default line length
       l_length = 70
@@ -610,6 +641,15 @@ contains
       endif
       if(col) then
          l_length = l_length - 3
+      endif
+!
+      adva = 'yes'
+      if(present(adv)) then
+         if(adv) then
+            adva = 'yes'
+         else
+            adva = 'no'
+         endif
       endif
 !
       l = len_trim(string)      
@@ -654,9 +694,9 @@ contains
 !           Print the remaining string
             f_s = lfstring
             if(col) then
-               write(the_file%unit,f_s) ':: '//string(printed:l)
+               write(the_file%unit,f_s, advance=trim(adva)) ':: '//string(printed:l)
             else
-               write(the_file%unit,f_s) string(printed:l)
+               write(the_file%unit,f_s, advance=trim(adva)) string(printed:l)
             endif
             printed = l
          endif
