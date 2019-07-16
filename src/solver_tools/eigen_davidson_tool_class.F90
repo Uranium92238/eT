@@ -602,7 +602,7 @@ contains
       if (norm_residual .gt. davidson%residual_threshold) then 
 !
          call davidson%projection(R)
-         call davidson%precondition(R)
+         call davidson%precondition(R, davidson%omega_re(k))
 !
          norm_precond_residual = get_l2_norm(R, davidson%n_parameters)
          call dscal(davidson%n_parameters, one/norm_precond_residual, R, 1)
