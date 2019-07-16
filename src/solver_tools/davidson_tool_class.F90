@@ -614,14 +614,23 @@ contains
    end subroutine set_preconditioner_davidson_tool
 !
 !
-   subroutine precondition_davidson_tool(davidson, R)
+   subroutine precondition_davidson_tool(davidson, R, alpha)
 !!
 !!    Precondition 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
-!!    Preconditions the vector R, i.e. 
+!!    Preconditions the vector R. 
 !!
-!!       R(i) <- R(i)/preconditioner(i)
+!!    Without the optional α:
+!!
+!!       R(i) <- R(i)/preconditioner(i).
+!!
+!!    With α:
+!!
+!!       R(i) <- R(i)/(preconditioner(i) - alpha).
+!!
+!!    α will typically be the current (approximated) eigenvalue
+!!    if we are solving an eigenvalue problem.
 !!
 !!    However, if the user has not set any preconditioner, 
 !!    this routine performs no action on R. 
@@ -631,6 +640,8 @@ contains
       class(davidson_tool) :: davidson
 !
       real(dp), dimension(davidson%n_parameters), intent(inout) :: R
+!
+      real(dp), intent(in), optional :: alpha
 !
       real(dp), dimension(:), allocatable :: preconditioner
 !
@@ -646,11 +657,23 @@ contains
          read(davidson%preconditioner%unit) preconditioner
          call disk%close_file(davidson%preconditioner)
 !
-         do i = 1, davidson%n_parameters
+         if (.not. present(alpha)) then
 !
-            R(i) = R(i)/preconditioner(i)
+            do i = 1, davidson%n_parameters
 !
-         enddo 
+               R(i) = R(i)/preconditioner(i)
+!
+            enddo 
+!
+         else
+!
+            do i = 1, davidson%n_parameters
+!
+               R(i) = R(i)/(preconditioner(i)-alpha)
+!
+            enddo 
+!
+         endif
 !
          call mem%dealloc(preconditioner, davidson%n_parameters)
 !
