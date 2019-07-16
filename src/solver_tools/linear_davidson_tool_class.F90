@@ -249,7 +249,7 @@ contains
    end subroutine construct_residual_linear_davidson_tool
 !
 !
-   subroutine construct_next_trial_vec_linear_davidson_tool(davidson, residual_norm)
+   subroutine construct_next_trial_vec_linear_davidson_tool(davidson, residual_norm, alpha)
 !!
 !!    Construct next trial vector  
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -270,9 +270,15 @@ contains
 !
       real(dp), intent(out) :: residual_norm 
 !
-      real(dp) :: norm_X, norm_new_trial, norm_residual, norm_precond_residual
+      real(dp), optional :: alpha
+!
+      real(dp) :: norm_X, norm_new_trial, norm_residual, norm_precond_residual, alpha_local
 !
       real(dp), dimension(:), allocatable :: R, X 
+!
+      alpha_local = zero
+!
+      if (present(alpha)) alpha_local = alpha
 !
 !     Construct full space solution vector X, 
 !     and the associated residual R 
@@ -298,7 +304,7 @@ contains
 !
       if (norm_residual .gt. davidson%residual_threshold) then 
 !
-         call davidson%precondition(R)
+         call davidson%precondition(R, alpha_local)
 !
          norm_precond_residual = get_l2_norm(R, davidson%n_parameters)
          call dscal(davidson%n_parameters, one/norm_precond_residual, R, 1)
