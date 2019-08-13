@@ -198,6 +198,7 @@ contains
       integer              :: io_error_1, io_error_2 
       character(len=100)   :: io_msg_1, io_msg_2
 !
+!     Assumes 1 character is 1 byte
       character(len=the_file%record_length) :: line
 !
       integer :: record, next_record
