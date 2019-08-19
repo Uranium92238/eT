@@ -23,7 +23,7 @@ run:
   stage: run
   script:
     - cd build
-    - ctest
+    - ctest --verbose
   only:
     - master
     - merge_requests
