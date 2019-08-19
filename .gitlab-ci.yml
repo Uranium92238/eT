@@ -25,7 +25,7 @@ run:
     - cd build
     - cp tests/hf_energy/hf_energy.inp eT.inp
     - ./eT
-    - eT.out
+    - cat eT.out
   only:
     - master
     - merge_requests
