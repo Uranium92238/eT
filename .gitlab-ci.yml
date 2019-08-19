@@ -23,9 +23,7 @@ run:
   stage: run
   script:
     - cd build
-    - ctest
-    - cat tests/hf_energy/hf_energy.stderr
-    - cat tests/hf_energy/hf_energy.stdout
+    - eT_launch tests/hf_energy/hf_energy.inp
     - cat tests/hf_energy/hf_energy.out
   only:
     - master
