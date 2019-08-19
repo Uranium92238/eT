@@ -23,8 +23,9 @@ run:
   stage: run
   script:
     - cd build
-    - eT_launch tests/hf_energy/hf_energy.inp
-    - cat tests/hf_energy/hf_energy.out
+    - cp tests/hf_energy/hf_energy.inp eT.inp
+    - ./eT
+    - eT.out
   only:
     - master
     - merge_requests
