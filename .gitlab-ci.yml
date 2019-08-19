@@ -23,10 +23,7 @@ run:
   stage: run
   script:
     - cd build
-    - ctest --verbose
-    - cat tests/hf_energy/hf_energy.stderr
-    - cat tests/hf_energy/hf_energy.stdout
-    - cat tests/hf_energy/hf_energy.out
+    - ctest --output-on-failure
   only:
     - master
     - merge_requests
