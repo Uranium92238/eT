@@ -298,7 +298,7 @@ contains
 !
          solver%energies = davidson%omega_re
 !
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
+         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
 !
 !        Test for total convergence
 !
@@ -353,7 +353,7 @@ contains
 !
          enddo
 !
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
+         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
 !
       elseif (.not. converged ) then
 !

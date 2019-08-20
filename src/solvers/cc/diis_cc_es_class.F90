@@ -326,7 +326,7 @@ contains
 !
          enddo 
 !
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
+         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
          prev_energies = solver%energies 
 !
          write(output%unit,'(t3,a)')  '----------------------------------------------'     
@@ -353,7 +353,11 @@ contains
 !
          enddo 
 !
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
+         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
+!
+      else 
+!
+         call output%error_msg("Did not converge in the max number of iterations.")
 !
       endif 
 !
