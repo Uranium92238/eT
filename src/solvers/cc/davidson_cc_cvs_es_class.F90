@@ -70,7 +70,7 @@ contains
       implicit none
 !
       type(davidson_cvs_cc_es) :: solver
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       character(len=*), intent(in) :: transformation
 !
@@ -114,6 +114,8 @@ contains
 !
       write(output%unit, '(/t3,a,a,a)') 'Solving for the ', trim(solver%transformation), ' eigenvectors.'
       flush(output%unit)
+!
+      wf%n_excited_states = solver%n_singlet_states
 !
    end function new_davidson_cvs_cc_es
 !
