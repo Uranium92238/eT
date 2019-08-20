@@ -74,7 +74,7 @@ contains
       implicit none
 !
       type(diis_A_inv_cc_es) :: solver
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       character(len=*), intent(in) :: transformation
 !
@@ -116,6 +116,8 @@ contains
 !
       call mem%alloc(solver%energies, solver%n_singlet_states)
       solver%energies = zero
+!
+      wf%n_excited_states = solver%n_singlet_states
 !
    end function new_diis_A_inv_cc_es
 !
