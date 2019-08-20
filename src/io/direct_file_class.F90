@@ -238,13 +238,14 @@ contains
 !
          write(copy%unit, rec=record, iostat=io_error_2, iomsg=io_msg_2) line
 !
-         record = record + 1
-      enddo
-!
-      if(io_error_2 .ne. 0) then
-         call output%error_msg('Failed to write to file: '//trim(copy%name_)//&
+         if(io_error_2 .ne. 0) then
+            call output%error_msg('Failed to write to file: '//trim(copy%name_)//&
                               &'. Error message: '//trim(io_msg_2))
-      endif
+         endif
+!
+         record = record + 1
+!
+      enddo
 !
       call copy%close_()
 !
