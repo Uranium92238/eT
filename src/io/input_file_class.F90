@@ -38,8 +38,8 @@ module input_file_class
 !
    contains
 !
-      procedure :: open_                                                => open__input_file
-      procedure :: close_                                               => close__input_file
+      procedure :: open_                                                => open_input_file
+      procedure :: close_                                               => close_input_file
 !
       procedure :: check_for_errors                                     => check_for_errors_input_file
       procedure :: requested_section                                    => requested_section_input_file
@@ -277,7 +277,7 @@ contains
    end function new_input_file
 !
 !
-   subroutine open__input_file(the_file)
+   subroutine open_input_file(the_file)
 !!
 !!    Open the input file
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -302,10 +302,10 @@ contains
 !
       the_file%opened = .true.
 !
-   end subroutine open__input_file
+   end subroutine open_input_file
 !
 !
-   subroutine close__input_file(the_file)
+   subroutine close_input_file(the_file)
 !!
 !!    Close the input file
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -329,7 +329,7 @@ contains
 !
       the_file%opened = .false.
 !
-   end subroutine close__input_file
+   end subroutine close_input_file
 !
 !
    subroutine check_for_errors_input_file(the_file)
