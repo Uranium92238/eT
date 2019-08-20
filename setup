@@ -72,6 +72,12 @@ def input_parser():
                           action='store_true',
                           default=False)
 
+    parser.add_argument('-F_flags', '--extra_F_flags',
+                         help="additional Fortran flags")
+    parser.add_argument('-CXX_flags', '--extra_CXX_flags',
+                         help="additional C++ flags")
+
+
     args = parser.parse_args()
 
     if (args.int32):
@@ -128,10 +134,16 @@ def construct_command(args):
 
     if (args.libint_lib):
         command += " -DLIBINT2_ROOT=" + args.libint_lib   
+
     if (args.Fortran_compiler):
         command += " -DCMAKE_Fortran_COMPILER=" + args.Fortran_compiler
     if (args.CXX_compiler):
         command += " -DCMAKE_CXX_COMPILER=" + args.CXX_compiler   
+
+    if (args.extra_F_flags):
+        command += " -DEXTRA_Fortran_FLAGS=" + args.extra_F_flags   
+    if (args.extra_CXX_flags):
+        command += " -DEXTRA_CXX_FLAGS=" + args.extra_CXX_flags   
 
     command += " %s" % root_dir
     return command
