@@ -45,6 +45,8 @@ module ccs_class
 !
       real(dp) :: hf_energy
 !
+      real(dp), dimension(:), allocatable :: left_excitation_energies, right_excitation_energies
+!
       integer  :: n_gs_amplitudes
       integer  :: n_es_amplitudes
       integer  :: n_t1
@@ -844,12 +846,12 @@ contains
    end subroutine read_excited_state_ccs
 !
 !
-   subroutine save_excitation_energies_ccs(wf, n_states, energies)
+   subroutine save_excitation_energies_ccs(wf, n_states, energies, r_or_l)
 !!
 !!    Save excitation energies 
 !!    Written by Sarai D. Folkestad, Mar 2019 
 !!
-!!    Saves 'n_states' excitation energies to disk. 
+!!    Saves 'n_states' excitation energies to disk & in memory. 
 !!
       implicit none
 !
@@ -858,6 +860,22 @@ contains
       integer, intent(in) :: n_states ! number of states
 !
       real(dp), dimension(n_states), intent(in) :: energies
+!
+      character(len=*), intent(in) :: r_or_l 
+!
+      if (trim(r_or_l) == 'right') then 
+!
+         wf%right_excitation_energies = energies 
+!
+      elseif (trim(r_or_l) == 'left') then 
+!
+         wf%left_excitation_energies = energies 
+!
+      else
+!
+         call output%error_msg('Could not recognize transformation in save_excitation_energies_ccs')
+!
+      endif 
 !
       call disk%open_file(wf%excitation_energies_file, 'write', 'rewind')
 !

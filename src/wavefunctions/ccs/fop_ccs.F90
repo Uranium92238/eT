@@ -342,6 +342,8 @@ contains
 !! 
 !!    The left and right states L and R are read from file and made binormal by the routine.
 !!
+!!    Consistency/sanity check: Eirik F. Kjønstad, Aug 2019
+!!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -357,6 +359,44 @@ contains
       real(dp), dimension(:), allocatable :: L, R
 !
       real(dp) :: ddot, LT_R
+!
+      real(dp) :: energy_threshold
+!
+!     Sanity check in case roots are ordered incorrectly
+!
+      if (input%requested_keyword_in_section('energy threshold', 'solver cc es')) then 
+!
+        call input%get_keyword_in_section('energy threshold', 'solver cc es', energy_threshold)
+!
+      elseif (input%requested_keyword_in_section('residual threshold', 'solver cc es')) then 
+!
+        call input%get_keyword_in_section('residual threshold', 'solver cc es', energy_threshold)
+!
+      else
+!
+        call output%printf('Note: assuming default energy threshold (1.0d-6) when testing root consistency.', fs='(t6,a)')
+!
+        energy_threshold = 1.0d-6
+!
+      endif 
+!
+      if (abs(wf%left_excitation_energies(state) - wf%right_excitation_energies(state)) > energy_threshold) then 
+!
+          call output%printf('Eigenvector (i0) is not left-right consistent to threshold (e8.2).', &
+                              ints=[state], reals=[energy_threshold], fs='(/t6,a)')
+!
+          call output%printf('Energies (left, right): (f19.12) (f19.12)', &
+                reals=[wf%left_excitation_energies(state), wf%right_excitation_energies(state)], fs='(/t6,a)')
+!
+          call output%error_msg('while calculating transition strength.')
+!
+      !  else
+!
+         ! Note: consider to add in verbose mode
+         ! call output%printf('The left and right states corresponding to root (i0) are consistent', ints=[state])
+!
+      endif 
+!
 !
 !     Read states and make them binormal by scaling the left vector 
 !
@@ -380,20 +420,6 @@ contains
 !
       call mem%dealloc(L, wf%n_es_amplitudes)
       call mem%dealloc(R, wf%n_es_amplitudes)
-!
-!     Sanity check in case roots are ordered incorrectly
-!
-      if ((abs(LT_R)-one) .gt. 0.01D0) then 
-!
-        write(output%unit, '(/t3,a,i0,a)') 'The right and left eigenvector number ', state, ' are not &
-                                            &consistent! The converged states are probably not ordered &
-                                            &correctly.'
-!
-        write(output%unit, '(/t3,a,f19.12)') 'Dotproduct between L and R: ', LT_R
-!
-        call output%error_msg('Error while calculating transition strength.')
-!
-      endif 
 !
    end subroutine calculate_transition_strength_ccs
 !
