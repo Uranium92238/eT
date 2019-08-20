@@ -1196,7 +1196,6 @@ contains
 !!        L_ldkc  = 2 * g_ldkc  - g_lckd.
 !!
 !!    The first and second terms are referred to as D2.1 and D2.2.
-!!    All terms are added to the omega vector of the wavefunction object wf.
 !!
 !!    The routine adds the terms in the following order: D2.2, D2.1
 !!
@@ -1228,7 +1227,7 @@ contains
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%get_ovov(g_ldkc)
 !
-      call mem%alloc(L_ldkc,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(L_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       L_ldkc = zero
 !
       call add_1432_to_1234(-one, g_ldkc, L_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -1238,25 +1237,25 @@ contains
 !
 !     Form u_aild = u_il^ad = 2 * t_il^ad - t_li^ad
 !
-      call mem%alloc(t_aidl,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(t_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_aidl, (wf%n_o)*(wf%n_v))
 !
-      call mem%alloc(u_aidl,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(u_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       u_aidl = zero
 !
       call add_1432_to_1234(-one, t_aidl, u_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_aidl, 1, u_aidl, 1)
 !
-      call mem%dealloc(t_aidl,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(t_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%alloc(u_aild,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(u_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call sort_1234_to_1243(u_aidl, u_aild, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(u_aidl,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(u_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Form the intermediate Z_aikc = sum_dl u_aild L_ldkc and set it to zero
 !
-      call mem%alloc(Z_aikc,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(Z_aikc,  wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
       call dgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
@@ -1271,7 +1270,7 @@ contains
                   Z_aikc,            &
                   (wf%n_o)*(wf%n_v))
 !
-      call mem%dealloc(L_ldkc,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(L_ldkc,  wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     Form the D2.2 term, 1/4 sum_kc Z_aikc u_kc_bj = 1/4 sum_kc Z_aikc(ai,kc) u_aild(bj,kc)
 !
@@ -1297,14 +1296,11 @@ contains
 !     where Z_ai,kc = sum_dl u_ai,ld L_ld,kc. Note that u_aild(ai,ld) = u_il^ad,
 !     which means that u_aild(bj,kc)^T = u_aild(kc,bj) = u_kj^cb = u_jk^bc.
 !
-      call mem%dealloc(Z_aikc,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(Z_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
 !     :: Calculate the D2.1 term of omega ::
 !
-!     Form g_aikc = g_aikc
-!
       call mem%alloc(g_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
       call wf%get_voov(g_aikc)
 !
 !     Calculate the D2.1 term, sum_ck u_jk^bc g_aikc = sum_ck g_aikc(ai,kc) u_aild(bj,kc)
@@ -1322,7 +1318,7 @@ contains
                   omega2_aibj,       &
                   (wf%n_o)*(wf%n_v))
 !
-      call mem%dealloc(u_aild,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(u_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call mem%dealloc(g_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
 !     Add the D2.1 term to the omega vector
