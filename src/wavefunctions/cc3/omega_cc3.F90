@@ -80,7 +80,7 @@ contains
 !
 !     Construct CCSD doubles contributions
 !
-      call wf%omega_ccsd_a2(omega2)
+      call wf%omega_ccsd_a2(omega2, wf%t2)
       call wf%omega_ccsd_b2(omega2)
       call wf%omega_ccsd_c2(omega2)
       call wf%omega_ccsd_d2(omega2)
