@@ -72,7 +72,7 @@ contains
 !
 !     Construct doubles contributions
 !
-      call wf%omega_ccsd_a2(omega2)
+      call wf%omega_ccsd_a2(omega2, wf%t2)
       call wf%omega_ccsd_b2(omega2)
       call wf%omega_ccsd_c2(omega2)
       call wf%omega_ccsd_d2(omega2)
@@ -317,31 +317,31 @@ contains
    end subroutine omega_ccsd_c1_ccsd
 !
 !
-   module subroutine omega_ccsd_a2_ccsd(wf, omega2)
+   module subroutine omega_ccsd_a2_ccsd(wf, omega2, t2)
 !!
 !!    Omega A2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!      
-!!    A2 = g_aibj + sum_(cd)g_acbd * t_cidj = A2.1 + A.2.2
+!!    A2 = sum_(cd)g_acbd * t_cidj 
 !!
-!!    Structure: Batching over both a and b for A2.2.
+!!    Structure: Batching over both a and b 
 !!                t^+_ci_dj = t_cidj + t_di_cj
 !!                t^-_ci_dj = t_cidj - t_di_cj
 !!                g^+_ac_bd = g_acbd + g_bc_ad
 !!                g^-_ac_bd = g_acbd - g_bc_ad
 !!
-!!                omega_A2.2_ai_bj = 1/4*(g^+_ac_bd*t^+_ci_dj + g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bj_ai
-!!                omega_A2.2_aj_bi = 1/4*(g^+_ac_bd*t^+_ci_dj - g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bi_aj
+!!                omega_A2_ai_bj = 1/4*(g^+_ac_bd*t^+_ci_dj + g^-_ac_bd*t^-_ci_dj) = omega_A2_bj_ai
+!!                omega_A2_aj_bi = 1/4*(g^+_ac_bd*t^+_ci_dj - g^-_ac_bd*t^-_ci_dj) = omega_A2_bi_aj
 !!
       implicit none
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
+      real(dp), dimension(wf%n_t2), intent(inout) :: omega2
+      real(dp), dimension(wf%n_t2), intent(in)    :: t2
 !
 !     Integrals
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj
       real(dp), dimension(:,:,:,:), allocatable :: g_acbd
       real(dp), dimension(:,:), allocatable :: g_p_abcd
       real(dp), dimension(:,:), allocatable :: g_m_abcd
@@ -392,22 +392,6 @@ contains
 !
       n_v_packed = wf%n_v*(wf%n_v+1)/2
       n_o_packed = wf%n_o*(wf%n_o+1)/2
-!
-!     :: Calculate the A2.1 term of omega ::
-!
-!     Create g_aibj
-!
-      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call wf%get_vovo(g_aibj)
-!
-!     Add A2.1 to Omega 2
-!
-      call add_to_packed(omega2, g_aibj, (wf%n_o)*(wf%n_v))
-
-      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!    ::  Calculate the A2.2 term  of omega ::
 !
       req0 = 2*(n_v_packed)*(n_o_packed)
 !
@@ -506,8 +490,8 @@ contains
                            cidj = (ci*(ci-3)/2) + ci + dj
                            dicj = (max(cj,di)*(max(cj,di)-3)/2) + cj + di 
 !
-                           t_p_cdij(cd, ij) = wf%t2(cidj) + wf%t2(dicj)
-                           t_m_cdij(cd, ij) = wf%t2(cidj) - wf%t2(dicj)
+                           t_p_cdij(cd, ij) = t2(cidj) + t2(dicj)
+                           t_m_cdij(cd, ij) = t2(cidj) - t2(dicj)
 !
                        enddo
                     enddo
@@ -658,8 +642,8 @@ contains
                            cidj = (max(ci,dj)*(max(ci,dj)-3)/2) + ci + dj 
                            dicj = (max(cj,di)*(max(cj,di)-3)/2) + cj + di 
 !
-                           t_p_cdij(cd, ij) = wf%t2(cidj) + wf%t2(dicj)
-                           t_m_cdij(cd, ij) = wf%t2(cidj) - wf%t2(dicj)
+                           t_p_cdij(cd, ij) = t2(cidj) + t2(dicj)
+                           t_m_cdij(cd, ij) = t2(cidj) - t2(dicj)
 !
                         enddo
                      enddo
@@ -771,7 +755,7 @@ contains
 !!    Omega B2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
-!!    Omega B2 = sum_(kl) t_ak_bl*(g_kilj + sum_(cd) t_cidj * g_kcld)
+!!    Omega B2 = g_aibj + sum_(kl) t_ak_bl*(g_kilj + sum_(cd) t_cidj * g_kcld)
 !!
 !!    Structure: g_kilj is constructed first and reordered as g_klij.
 !!    Then the contraction over cd is performed, and the results added to g_klij.
@@ -785,6 +769,7 @@ contains
 !
 !     Integrals
 !
+      real(dp), dimension(:,:,:,:), allocatable :: g_aibj
       real(dp), dimension(:,:,:,:), allocatable :: g_kcld
       real(dp), dimension(:,:,:,:), allocatable :: g_klcd
       real(dp), dimension(:,:,:,:), allocatable :: g_klij
@@ -803,6 +788,13 @@ contains
 !
       ccsd_b2_timer = new_timer('omega ccsd b2')
       call ccsd_b2_timer%turn_on()
+!
+!     Construct g_aibj and add to omega2 
+!
+      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call wf%get_vovo(g_aibj)
+      call add_to_packed(omega2, g_aibj, (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Allocate and construct g_kilj
 !

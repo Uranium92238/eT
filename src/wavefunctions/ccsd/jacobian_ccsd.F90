@@ -155,7 +155,7 @@ contains
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
-         c_aibj(a,i,a,i) = two*c_aibj(a,i,a,i)
+            c_aibj(a,i,a,i) = two*c_aibj(a,i,a,i)
 !
          enddo
       enddo
@@ -207,10 +207,11 @@ contains
       call wf%jacobian_ccsd_h2(rho_aibj, c_aibj)
       call wf%jacobian_ccsd_i2(rho_aibj, c_aibj)
 !
-!     Last two terms are already symmetric (J2 and K2). Perform the symmetrization
+!     Last three terms are already symmetric (J2, K2, and L2). Perform the symmetrization
 !     rho_aibj = P_ij^ab rho_aibj now, for convenience
 !
       call symmetric_sum(rho_aibj, (wf%n_v)*(wf%n_o))
+      call wf%jacobian_ccsd_l2(rho_aibj, c_aibj)
 !
 !     In preparation for last two terms, reorder
 !     rho_aibj to rho_abij, and c_aibj to c_abij
@@ -251,7 +252,6 @@ contains
       call mem%dealloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
 !     Overwrite the incoming doubles c vector & pack in
-!
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
       do a = 1, wf%n_v
@@ -2884,22 +2884,6 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_kilj
       real(dp), dimension(:,:,:,:), allocatable :: g_klij
-      real(dp), dimension(:,:,:,:), allocatable :: g_acbd
-      real(dp), dimension(:,:,:,:), allocatable :: g_abcd
-!
-      real(dp), dimension(:,:,:,:), allocatable :: rho_batch_abij
-!
-      integer :: a = 0, b = 0, i = 0, j = 0
-!
-!     Batching and memory handling variables
-!
-      integer :: current_a_batch = 0
-      integer :: current_b_batch = 0
-!
-      type(batching_index) :: batch_a
-      type(batching_index) :: batch_b
-!
-      integer :: rec0, rec1_a, rec1_b, rec2
 !
       type(timings) :: jacobian_ccsd_k2_timer
 !
@@ -2935,99 +2919,47 @@ contains
 !
       call mem%dealloc(g_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
-!     Prepare for batching over a and b
-!
-!     ::  sum_cd g_ac,bd * c_ci,dj ::
-!
-      rec0 = 0
-!
-      rec1_a = wf%integrals%n_J*wf%n_v
-      rec1_b = wf%integrals%n_J*wf%n_v
-!
-      rec2 = wf%n_v**2
-!
-!     Initialize batching variables
-!
-      call batch_a%init(wf%n_v)
-      call batch_b%init(wf%n_v)
-!
-      call mem%batch_setup(batch_a, batch_b, rec0, rec1_a, rec1_b, rec2)
-!
-!     Start looping over a-batches
-!
-      do current_a_batch = 1, batch_a%num_batches
-!
-         call batch_a%determine_limits(current_a_batch)
-!
-         do current_b_batch = 1, batch_b%num_batches
-!
-            call batch_b%determine_limits(current_b_batch)
-!
-            call mem%alloc(g_acbd, (wf%n_v),(batch_a%length), (wf%n_v),(batch_b%length))
-!
-!           g_ca_db = sum_J L_ca_J*L_db_J
-!
-            call wf%get_vvvv(g_acbd,                     &
-                           batch_a%first, batch_a%last,  &
-                           1, wf%n_v,                    &
-                           batch_b%first, batch_b%last,  &
-                           1, wf%n_v)
-!
-!           sum_cd g_ac,bd * c_ci,dj = sum_cd g_ac,bd c_cd,ij = sum_cd g_abcd c_cd_ij
-!
-!           Reorder g_acbd into g_abcd (i.e., 1234 to 1324)
-!
-            call mem%alloc(g_abcd, (batch_a%length),(batch_b%length), (wf%n_v), (wf%n_v))
-!
-            call sort_1234_to_1324(g_acbd, g_abcd, batch_a%length, wf%n_v, batch_b%length, wf%n_v)
-!
-            call mem%dealloc(g_acbd, (wf%n_v),(batch_a%length), (wf%n_v),(batch_b%length))
-!
-            call mem%alloc(rho_batch_abij, batch_a%length, batch_b%length, wf%n_o, wf%n_o)
-!
-!           rho_abij += sum_cd g_acbd * c_cidj = sum_cd g_abcd(a,b,c,d) c_abij(c,d,i,j)
-!
-            call dgemm('N', 'N',                            &
-                        (batch_a%length)*(batch_b%length),  &
-                        (wf%n_o)**2,                        &
-                        (wf%n_v)**2,                        &
-                        one,                                &
-                        g_abcd,                             & ! g_ab_cd
-                        (batch_a%length)*(batch_b%length),  &
-                        c_abij,                             & ! c_cd_ij
-                        (wf%n_v)**2,                        &
-                        zero,                               &
-                        rho_batch_abij,                     & ! rho_ab_ij
-                        (batch_a%length)*(batch_b%length))
-!
-            call mem%dealloc(g_abcd, (batch_a%length),(batch_b%length), (wf%n_v), (wf%n_v))
-!
-!           Reorder into rho_abij
-!
-!$omp parallel do private(b, a, i, j)
-            do j = 1, wf%n_o
-               do i = 1, wf%n_o
-                  do b = 1, batch_b%length
-                     do a = 1, batch_a%length
-!
-                        rho_abij(batch_a%first + a - 1, batch_b%first + b - 1, i, j) =                &
-                                          rho_abij(batch_a%first + a - 1, batch_b%first + b - 1, i, j)&
-                                          + rho_batch_abij(a,b,i,j)
-!
-                     enddo
-                  enddo
-               enddo
-            enddo
-!$omp end parallel do
-!
-            call mem%dealloc(rho_batch_abij, batch_a%length, batch_b%length, wf%n_o, wf%n_o)
-!
-         enddo ! End batches of b
-      enddo ! End batches of a
-!
       call jacobian_ccsd_k2_timer%turn_off()
 !
    end subroutine jacobian_ccsd_k2_ccsd
+!
+!
+   module subroutine jacobian_ccsd_l2_ccsd(wf, rho_aibj, c_aibj)
+!!
+!!    Jacobian CCSD L2
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
+!!
+!!    rho_aibj^L2 = sum_cd g_ac,bd * c_ci,dj 
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o)             :: rho_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_aibj
+!
+      real(dp), dimension(:), allocatable :: c2, rho2 
+!
+      real(dp), dimension(:,:,:,:), allocatable :: rho_aibj_contribution
+!
+      call mem%alloc(c2, wf%n_t2)
+      call packin(c2, c_aibj, wf%n_t1)
+!
+      call mem%alloc(rho2, wf%n_t2)
+      rho2 = zero 
+!
+      call wf%omega_ccsd_a2(rho2, c2)
+!
+      call mem%alloc(rho_aibj_contribution, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(rho2, rho_aibj_contribution, wf%n_t1)
+!
+      call daxpy((wf%n_v)**2*(wf%n_o)**2, one, rho_aibj_contribution, 1, rho_aibj, 1)
+!
+      call mem%dealloc(rho_aibj_contribution, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(c2, wf%n_t2)
+      call mem%dealloc(rho2, wf%n_t2)
+!
+   end subroutine jacobian_ccsd_l2_ccsd
 !
 !
 end submodule jacobian_ccsd
