@@ -130,7 +130,7 @@ contains
    subroutine print_settings_bfgs_geoopt_hf(solver)
 !!
 !!    Print settings
-!!    Written by Eirik F. Kjønstad, Sep 2018
+!!    Written by Eirik F. Kjønstad, 2019
 !!
       implicit none
 !
@@ -273,7 +273,7 @@ contains
    subroutine print_banner_bfgs_geoopt_hf(solver)
 !!
 !!    Print banner
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Written by Eirik F. Kjønstad, 2019
 !!
       implicit none 
 !

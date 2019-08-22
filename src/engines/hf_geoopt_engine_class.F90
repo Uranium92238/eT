@@ -20,7 +20,7 @@
 module hf_geoopt_engine_class
 !!
 !!    Hartree-Fock geometry optimization engine class module 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    Written by Eirik F. Kjønstad, 2019 
 !!
    use hf_class 
 !
@@ -55,7 +55,7 @@ contains
    function new_hf_geoopt_engine() result(engine)
 !!
 !!    New HF engine 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    Written by Eirik F. Kjønstad, 2019 
 !!
       implicit none 
 !
@@ -72,7 +72,7 @@ contains
    subroutine run_hf_geoopt_engine(engine, wf)
 !!
 !!    Run 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    Written by Eirik F. Kjønstad, 2019 
 !!
       implicit none 
 !
@@ -99,7 +99,7 @@ contains
    subroutine read_settings_hf_geoopt_engine(engine)
 !!
 !!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    Written by Eirik F. Kjønstad, 2019 
 !!
       implicit none
 !
@@ -114,7 +114,7 @@ contains
    subroutine ignite_hf_geoopt_engine(engine, wf)
 !!
 !!    Ignite
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
+!!    Written by Eirik F. Kjønstad, 2019 
 !!
       implicit none 
 !

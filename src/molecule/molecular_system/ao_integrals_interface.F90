@@ -40,7 +40,7 @@
    module subroutine construct_ao_h_wx_kinetic_1der_molecular_system(molecule, h_1x, h_1y, h_1z, h_2x, h_2y, h_2z, s1, s2) 
 !!
 !!    Construct h_αβ kinetic 1st-derivative
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Written by Eirik F. Kjønstad, 2019
 !!
       implicit none
 !
@@ -61,7 +61,7 @@
    module subroutine construct_and_add_ao_h_wx_nuclear_1der_molecular_system(molecule, h_wxqk, s1, s2, n_ao) 
 !!
 !!    Construct and add h_αβ nuclear 1st-derivative
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Written by Eirik F. Kjønstad, 2019
 !!
 !!    Fortran wrapper for the C++ routine that calculates and
 !!    adds parts of the h_αβ (nuclear contribution) first derivative integrals 
@@ -108,7 +108,7 @@
    module subroutine construct_ao_g_wxyz_1der_molecular_system(molecule, g_wxyzqk, s1, s2, s3, s4)
 !!
 !!    Construct g_αβγδ 1der
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Written by Eirik F. Kjønstad, 2019
 !!
 !!    Fortran wrapper for the C++ routine that calculates and
 !!    saves the g_αβγδ integral in the array g. s1-s4 are 
@@ -193,7 +193,7 @@
    module subroutine construct_ao_s_wx_1der_molecular_system(molecule, s_1x, s_1y, s_1z, s_2x, s_2y, s_2z, s1, s2) 
 !!
 !!    Construct s_αβ 1st-derivative
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Written by Eirik F. Kjønstad, 2019
 !!
 !!    Fortran wrapper for the C++ routine that calculates and
 !!    saves parts of the s_αβ first derivative integrals in the arrays s_1x, s_1y, ..., s_2z. 

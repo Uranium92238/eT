@@ -436,7 +436,7 @@ contains
 !!    Alloc (memory manager)
 !!    Written by Rolf H. Myhre, January 2019
 !!
-!!    Allocates a four dimensional double precision array and updates the available
+!!    Allocates a five dimensional double precision array and updates the available
 !!    memory accordingly.
 !!
       implicit none
@@ -650,7 +650,7 @@ contains
 !!    Dealloc (memory manager)
 !!    Written by Rolf H. Myhre, January 2019
 !!
-!!    Deallocates a four dimensional double precision array and updates the available
+!!    Deallocates a five dimensional double precision array and updates the available
 !!    memory accordingly.
 !!
       implicit none

@@ -2119,7 +2119,7 @@ contains
    subroutine construct_ao_G_1der_hf(wf, G_ao, D_ao)
 !!
 !!    Construct AO G 1der
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!    Written by Eirik F. Kjønstad, 2019
 !!
 !!    This routine constructs the entire two-electron part of the Fock matrix,
 !!
