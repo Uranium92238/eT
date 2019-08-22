@@ -45,6 +45,9 @@ module ccs_class
 !
       real(dp) :: hf_energy
 !
+      integer :: n_excited_states
+      real(dp), dimension(:), allocatable :: left_excitation_energies, right_excitation_energies
+!
       integer  :: n_gs_amplitudes
       integer  :: n_es_amplitudes
       integer  :: n_t1
@@ -100,6 +103,10 @@ module ccs_class
       procedure :: read_excited_state                          => read_excited_state_ccs
       procedure :: get_n_excited_states_on_file                => get_n_excited_states_on_file_ccs
 !
+      procedure :: initialize_right_excitation_energies        => initialize_right_excitation_energies_ccs
+      procedure :: initialize_left_excitation_energies         => initialize_left_excitation_energies_ccs
+      procedure :: destruct_right_excitation_energies          => destruct_right_excitation_energies_ccs
+      procedure :: destruct_left_excitation_energies           => destruct_left_excitation_energies_ccs
       procedure :: save_excitation_energies                    => save_excitation_energies_ccs
       procedure :: read_excitation_energies                    => read_excitation_energies_ccs
       procedure :: get_n_excitation_energies_on_file           => get_n_excitation_energies_on_file_ccs
@@ -538,6 +545,62 @@ contains
    end function need_g_abcd_ccs
 !
 !
+   subroutine initialize_right_excitation_energies_ccs(wf)
+!!
+!!    Initialize right excitation energies 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (.not. allocated(wf%right_excitation_energies)) call mem%alloc(wf%right_excitation_energies, wf%n_excited_states)
+!
+   end subroutine initialize_right_excitation_energies_ccs
+!
+!
+   subroutine destruct_right_excitation_energies_ccs(wf)
+!!
+!!    Destruct right excitation energies 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%right_excitation_energies)) call mem%dealloc(wf%right_excitation_energies, wf%n_excited_states)
+!
+   end subroutine destruct_right_excitation_energies_ccs
+!
+!
+   subroutine initialize_left_excitation_energies_ccs(wf)
+!!
+!!    Initialize left excitation energies 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (.not. allocated(wf%left_excitation_energies)) call mem%alloc(wf%left_excitation_energies, wf%n_excited_states)
+!
+   end subroutine initialize_left_excitation_energies_ccs
+!
+!
+   subroutine destruct_left_excitation_energies_ccs(wf)
+!!
+!!    Destruct left excitation energies 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%left_excitation_energies)) call mem%dealloc(wf%left_excitation_energies, wf%n_excited_states)
+!
+   end subroutine destruct_left_excitation_energies_ccs
+!
+!
    subroutine destruct_amplitudes_ccs(wf)
 !!
 !!    Destruct amplitudes
@@ -864,12 +927,12 @@ contains
    end subroutine read_excited_state_ccs
 !
 !
-   subroutine save_excitation_energies_ccs(wf, n_states, energies)
+   subroutine save_excitation_energies_ccs(wf, n_states, energies, r_or_l)
 !!
 !!    Save excitation energies 
 !!    Written by Sarai D. Folkestad, Mar 2019 
 !!
-!!    Saves 'n_states' excitation energies to disk. 
+!!    Saves 'n_states' excitation energies to disk & in memory. 
 !!
       implicit none
 !
@@ -878,6 +941,24 @@ contains
       integer, intent(in) :: n_states ! number of states
 !
       real(dp), dimension(n_states), intent(in) :: energies
+!
+      character(len=*), intent(in) :: r_or_l 
+!
+      if (trim(r_or_l) == 'right') then 
+!
+         call wf%initialize_right_excitation_energies()
+         wf%right_excitation_energies = energies 
+!
+      elseif (trim(r_or_l) == 'left') then 
+!
+         call wf%initialize_left_excitation_energies()
+         wf%left_excitation_energies = energies 
+!
+      else
+!
+         call output%error_msg('Could not recognize transformation in save_excitation_energies_ccs')
+!
+      endif 
 !
       call disk%open_file(wf%excitation_energies_file, 'write', 'rewind')
 !

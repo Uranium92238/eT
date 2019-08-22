@@ -68,7 +68,7 @@ contains
       implicit none
 !
       type(diis_cc_es) :: solver
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       character(len=*), intent(in) :: transformation
 !
@@ -109,6 +109,8 @@ contains
 !
       call mem%alloc(solver%energies, solver%n_singlet_states)
       solver%energies = zero
+!
+      wf%n_excited_states = solver%n_singlet_states
 !
    end function new_diis_cc_es
 !
@@ -326,7 +328,7 @@ contains
 !
          enddo 
 !
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
+         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
          prev_energies = solver%energies 
 !
          write(output%unit,'(t3,a)')  '----------------------------------------------'     
@@ -353,7 +355,11 @@ contains
 !
          enddo 
 !
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
+         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
+!
+      else 
+!
+         call output%error_msg("Did not converge in the max number of iterations.")
 !
       endif 
 !

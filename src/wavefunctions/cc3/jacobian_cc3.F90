@@ -183,19 +183,25 @@ contains
       call wf%jacobian_ccsd_h2(rho_aibj, c_aibj)
       call wf%jacobian_ccsd_i2(rho_aibj, c_aibj)
 !
-      call ccsd_timer%freeze()
-!
 !     Compute CC3 contributions to rho_ai and rho_aibj and symmetrise rho_aibj
-!     CCSD J2 and K2 are already symmetric and will be computed afterwards
+!     CCSD J2 and K2 are already symmetric and will be computed afterwards. The CCSD L2 
+!     term is also already symmetric, but is computed as aibj and is computed before 
+!     reordering, where the half*c2 cancels out in later symmetrization of ai-bj.
 !
       call mem%alloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%alloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call sort_1234_to_1324(c_aibj, c_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      c_aibj = half*c_aibj
+      call wf%jacobian_ccsd_l2(rho_aibj, c_aibj)
+!
       call sort_1234_to_1324(rho_aibj, rho_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call ccsd_timer%freeze()
 !
       call cc3_timer%turn_on()
       call cc3_timer_t3_a2%turn_on()

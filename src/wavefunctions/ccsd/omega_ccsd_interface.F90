@@ -59,7 +59,7 @@
    end subroutine omega_ccsd_c1_ccsd
 !
 !
-   module subroutine omega_ccsd_a2_ccsd(wf, omega2)
+   module subroutine omega_ccsd_a2_ccsd(wf, omega2, t2)
 !!
 !!    Omega A2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -68,7 +68,8 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
+      real(dp), dimension(wf%n_t2), intent(inout) :: omega2
+      real(dp), dimension(wf%n_t2), intent(in)    :: t2
 !
    end subroutine omega_ccsd_a2_ccsd
 !

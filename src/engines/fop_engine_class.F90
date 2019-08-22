@@ -191,7 +191,7 @@ contains
       call wf%prepare_for_eom_fop()
 !
       call output%long_string_print('EOM first order properties calculation','(/t3,a)',.true.)
-      call output%long_string_print(engine%author,'(t3,a)',.true.)
+      call output%long_string_print(engine%author,'(t3,a/)',.true.)
 !
       call mem%alloc(etaX, wf%n_es_amplitudes)
       call mem%alloc(csiX, wf%n_es_amplitudes)
@@ -224,6 +224,9 @@ contains
 !           Loop over excited states and calculate transition strength
 !
             do state = 1, n_states
+!
+               call output%printf('Computing transition moment from ground state to state (i0), (a0) component', &
+                                    ints=[state], chars=[components(component)], fs='(t6,a)')
 !
                call wf%calculate_transition_strength(transition_strength(component, state), etaX, &
                    csiX, state, transition_moment_left(component, state), transition_moment_right(component, state))

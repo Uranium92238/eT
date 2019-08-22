@@ -106,6 +106,7 @@ module ccsd_class
       procedure :: jacobian_ccsd_i2                            => jacobian_ccsd_i2_ccsd
       procedure :: jacobian_ccsd_j2                            => jacobian_ccsd_j2_ccsd
       procedure :: jacobian_ccsd_k2                            => jacobian_ccsd_k2_ccsd
+      procedure :: jacobian_ccsd_l2                            => jacobian_ccsd_l2_ccsd
 !
 !     Routines related to Jacobian transpose transformation
 !

@@ -75,7 +75,7 @@ contains
       implicit none
 !
       type(davidson_cc_es) :: solver
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       character(len=*), intent(in) :: transformation
 !
@@ -114,6 +114,8 @@ contains
       solver%energies = zero
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
+!
+      wf%n_excited_states = solver%n_singlet_states
 !
    end function new_davidson_cc_es
 !
@@ -298,7 +300,7 @@ contains
 !
          solver%energies = davidson%omega_re
 !
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
+         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
 !
 !        Test for total convergence
 !
@@ -353,7 +355,7 @@ contains
 !
          enddo
 !
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies)
+         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
 !
       elseif (.not. converged ) then
 !

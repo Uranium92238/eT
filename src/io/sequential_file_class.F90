@@ -38,9 +38,9 @@ module sequential_file_class
 !
 !     Open and close
 !
-      procedure, public :: open_   => open__sequential_file
-      procedure, public :: close_  => close__sequential_file
-      procedure, public :: rewind_ => rewind__sequential_file
+      procedure, public :: open_   => open_sequential_file
+      procedure, public :: close_  => close_sequential_file
+      procedure, public :: rewind_ => rewind_sequential_file
       procedure, public :: skip    => skip_sequential_file
 !
 !     Write routines
@@ -123,7 +123,7 @@ contains
    end function new_sequential_file
 !
 !
-   subroutine open__sequential_file(the_file, file_action, file_pos)
+   subroutine open_sequential_file(the_file, file_action, file_pos)
 !!
 !!    Open eT sequential file
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -164,10 +164,10 @@ contains
 !
       call the_file%set_open_size()
 !
-   end subroutine open__sequential_file
+   end subroutine open_sequential_file
 !
 !
-   subroutine close__sequential_file(the_file, file_status)
+   subroutine close_sequential_file(the_file, file_status)
 !!
 !!    Open the sequential file
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -202,10 +202,10 @@ contains
       file_change = the_file%get_change()
       call disk%update(file_change, the_file%name_)
 !
-   end subroutine close__sequential_file
+   end subroutine close_sequential_file
 !
 !
-   subroutine rewind__sequential_file(the_file)
+   subroutine rewind_sequential_file(the_file)
 !!
 !!    Rewind the sequential file
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -224,7 +224,7 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine rewind__sequential_file
+   end subroutine rewind_sequential_file
 !
 !
    subroutine skip_sequential_file(the_file, jump)
