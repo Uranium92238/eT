@@ -19,15 +19,29 @@
 !
 interface
 !
+!
    subroutine construct_ao_s_wx_c(s, s1, s2) bind(C, name='construct_ao_s_wx')
 !
       use iso_c_binding
 !
       implicit none
 !
-      real(c_double), dimension(1,1) :: s
+      real(c_double) :: s(*)
       integer(c_int) :: s1, s2
 !
    end subroutine construct_ao_s_wx_c
+!
+!
+   subroutine construct_ao_s_wx_1der_c(s_1x, s_1y, s_1z, s_2x, s_2y, s_2z, s1, s2) bind(C, name='construct_ao_s_wx_1der')
+!
+      use iso_c_binding
+!
+      implicit none
+!
+      real(c_double) :: s_1x(*), s_1y(*), s_1z(*), s_2x(*), s_2y(*), s_2z(*)
+      integer(c_int) :: s1, s2
+!
+   end subroutine construct_ao_s_wx_1der_c
+!
 !
 end interface

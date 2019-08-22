@@ -79,10 +79,12 @@ program eT_program
    write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
    write(output%unit,'(t4, a, a)')    'Eirik F. Kjønstad      ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
-   write(output%unit,'(t4, a, a)')    '                       ','Zeroth order properties, First order properties'
+   write(output%unit,'(t4, a, a)')    '                       ','Zeroth order properties, First order properties,       '
+   write(output%unit,'(t4, a, a)')    '                       ','BFGS-tool                                              '
    write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, Launch script'
    write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2, CC3'
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
+   write(output%unit,'(t4, a, a)')    'Åsmund H. Tveten       ','HF'
    write(output%unit,'(t3,a)')       '----------------------------------------------------------------------------------'
    write(output%unit,'(t4,a/)')       'Other contributors: A. Balbi, M. Scavino'
    call output%flush_()   
@@ -153,17 +155,19 @@ subroutine reference_calculation(system)
    use uhf_class, only: uhf 
    use hf_engine_class, only: hf_engine 
 !
+   use hf_geoopt_engine_class, only: hf_geoopt_engine 
+!
    implicit none
 !
    type(molecular_system) :: system
 !
    class(hf), allocatable  :: ref_wf
 !
-   type(hf_engine) :: ref_engine
+   type(hf_engine)         :: ref_engine
+   type(hf_geoopt_engine)  :: ref_geoopt_engine 
 !
    character(len=21) :: ref_wf_name
 !
-   ref_engine = hf_engine()
    ref_wf_name = input%get_reference_wf()
 !
    if (trim(ref_wf_name) == 'hf') then
@@ -181,7 +185,18 @@ subroutine reference_calculation(system)
 !
    endif
 !
-   call ref_engine%ignite(ref_wf)
+   if (input%requested_keyword_in_section('ground state geoopt', 'do')) then 
+!
+      ref_geoopt_engine = hf_geoopt_engine()
+      call ref_geoopt_engine%ignite(ref_wf)
+!
+   else 
+!
+      ref_engine = hf_engine()
+      call ref_engine%ignite(ref_wf)
+!
+   endif 
+!
    call ref_wf%cleanup()
 !
 end subroutine reference_calculation

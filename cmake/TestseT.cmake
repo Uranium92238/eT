@@ -42,6 +42,7 @@ endmacro()
 # NEVER comment out tests
 
 add_eT_runtest(hf_energy                       "eT;short;hf;sad")
+add_eT_runtest(hf_geoopt                       "eT;short;hf;bfgs;gradient")
 add_eT_runtest(hf_scf_energy                   "eT;short;hf;sad")
 add_eT_runtest(uhf_energy                      "eT;short;uhf")
 add_eT_runtest(mp2_energy                      "eT;short;hf;mp2")

@@ -19,27 +19,44 @@
 !
 interface
 !
+!
    subroutine construct_ao_g_wxyz_c(g, s1, s2, s3, s4) bind(C, name='construct_ao_g_wxyz')
 !
       use iso_c_binding
+!
       implicit none
 !
-      real(c_double), dimension(1,1) :: g
+      real(c_double) :: g(*)
       integer(c_int) :: s1, s2, s3, s4
 !
    end subroutine construct_ao_g_wxyz_c
+!
+!
+   subroutine construct_ao_g_wxyz_1der_c(g_wxyzqk, s1, s2, s3, s4) bind(C, name='construct_ao_g_wxyz_1der')
+!
+      use iso_c_binding
+!
+      implicit none
+!
+      real(c_double) :: g_wxyzqk(*)
+      integer(c_int) :: s1, s2, s3, s4
+!
+   end subroutine construct_ao_g_wxyz_1der_c
+!
 !
    subroutine construct_ao_g_wxyz_epsilon_c(g, s1, s2, s3, s4, epsilon, &
                thread, skip, n1, n2, n3, n4) bind(C, name='construct_ao_g_wxyz_epsilon')
 !
       use iso_c_binding
+!
       implicit none
 !
-      real(c_double), dimension(1,1) :: g
-      real(c_double)  :: epsilon
+      real(c_double) :: g(*)
+      real(c_double) :: epsilon
       integer(c_int) :: s1, s2, s3, s4, thread
       integer(c_int) :: skip, n1, n2, n3, n4
 !
    end subroutine construct_ao_g_wxyz_epsilon_c
+!
 !
 end interface

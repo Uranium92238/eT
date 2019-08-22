@@ -83,6 +83,7 @@ module memory_manager_class
       procedure :: alloc_2_memory_manager
       procedure :: alloc_3_memory_manager
       procedure :: alloc_4_memory_manager
+      procedure :: alloc_5_memory_manager
       procedure :: alloc_int_1_memory_manager
       procedure :: alloc_int_2_memory_manager
       procedure :: alloc_int_3_memory_manager
@@ -91,6 +92,7 @@ module memory_manager_class
                             alloc_2_memory_manager, &
                             alloc_3_memory_manager, &
                             alloc_4_memory_manager, &
+                            alloc_5_memory_manager, &
                             alloc_int_1_memory_manager, &
                             alloc_int_2_memory_manager, &
                             alloc_int_3_memory_manager, &
@@ -100,6 +102,7 @@ module memory_manager_class
       procedure :: dealloc_2_memory_manager
       procedure :: dealloc_3_memory_manager
       procedure :: dealloc_4_memory_manager
+      procedure :: dealloc_5_memory_manager
       procedure :: dealloc_int_1_memory_manager
       procedure :: dealloc_int_2_memory_manager
       procedure :: dealloc_int_3_memory_manager
@@ -108,6 +111,7 @@ module memory_manager_class
                               dealloc_2_memory_manager, &
                               dealloc_3_memory_manager, &
                               dealloc_4_memory_manager, &
+                              dealloc_5_memory_manager, &
                               dealloc_int_1_memory_manager, &
                               dealloc_int_2_memory_manager, &
                               dealloc_int_3_memory_manager, &
@@ -427,6 +431,56 @@ contains
    end subroutine alloc_4_memory_manager
 !
 !
+   subroutine alloc_5_memory_manager(mem, array, M, N, O, P, Q)
+!!
+!!    Alloc (memory manager)
+!!    Written by Rolf H. Myhre, January 2019
+!!
+!!    Allocates a five dimensional double precision array and updates the available
+!!    memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      real(dp), dimension(:,:,:,:,:), allocatable :: array
+!
+      integer, intent(in) :: M, N, O, P, Q ! First, second, third, fourth, fifth dimension of array 
+!
+      integer :: size_array ! Total size of array (M*N*O*P*Q)
+      integer :: error = 0
+!
+      size_array = M*N*O*P*Q
+!
+!     Allocate array and check whether allocation was successful
+!
+      allocate(array(M,N,O,P,Q), stat = error)
+!
+      if (error .ne. 0) then
+!
+         call output%error_msg('could not allocate array with #elements =', size_array)
+!
+      endif
+!
+!     Update the available memory
+!
+!     The 'double precision' type (see types.F90) is typically 8 bytes,
+!     though it might differ due to its definition in terms of precision.
+!
+      mem%available = mem%available - dp*size_array
+!
+!     Check if there is no more memory (defined as being no more memory
+!     left of what was specified by user as available)
+!
+      if (mem%available .lt. 0) then
+!
+         call output%error_msg('user-specified memory insufficient.')
+!
+      endif
+!
+   end subroutine alloc_5_memory_manager
+!
+!
    subroutine dealloc_1_memory_manager(mem, array, M)
 !!
 !!    Dealloc (memory manager)
@@ -589,6 +643,47 @@ contains
       mem%available = mem%available + dp*size_array
 !
    end subroutine dealloc_4_memory_manager
+!
+!
+   subroutine dealloc_5_memory_manager(mem, array, M, N, O, P, Q)
+!!
+!!    Dealloc (memory manager)
+!!    Written by Rolf H. Myhre, January 2019
+!!
+!!    Deallocates a five dimensional double precision array and updates the available
+!!    memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      real(dp), dimension(:,:,:,:,:), allocatable :: array
+!
+      integer, intent(in) :: M, N, O, P, Q ! First, second, third, fourth, fifth dimension of array
+!
+      integer :: size_array ! Total size of array (M*N*O*P)
+      integer :: error = 0
+!
+      size_array = M*N*O*P*Q
+!
+!     Deallocate array and check whether deallocation was successful
+!
+      deallocate(array, stat = error)
+!
+      if (error .ne. 0) then
+!
+         call output%error_msg('could not deallocate array with #elements =', size_array)
+!
+      endif
+!
+!     Update the available memory
+!
+!     The 'double precision' type (see types.F90) is typically 8 bytes,
+!     though it might differ due to its definition in terms of precision.
+!
+      mem%available = mem%available + dp*size_array
+!
+   end subroutine dealloc_5_memory_manager
 !
 !
    subroutine alloc_int_1_memory_manager(mem, array, M)

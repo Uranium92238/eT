@@ -68,6 +68,79 @@ contains
    end subroutine construct_ao_h_wx_molecular_system
 !
 !
+   module subroutine construct_ao_h_wx_kinetic_1der_molecular_system(molecule, &
+                           h_1x, h_1y, h_1z, h_2x, h_2y, h_2z, s1, s2) 
+!!
+!!    Construct h_αβ kinetic 1st-derivative
+!!    Written by Eirik F. Kjønstad, 2019
+!!
+!!    Fortran wrapper for the C++ routine that calculates and
+!!    saves parts of the h_αβ (kinetic contribution) first derivative integrals 
+!!    in the arrays h_1x, h_1y, ..., h_2z. 
+!!
+!!    s1 and s2 are the shells that w and x respectively belong to.
+!! 
+!!    h_1x contains the first derivative with respect to the x component of the atom that s1 is centered on,
+!!    h_1y contains the first derivative with respect to the y component of the atom that s1 is centered on,
+!!    and so on...
+!!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      integer, intent(in) :: s1, s2
+!
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_1x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_1y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_1z
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_2x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_2y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_2z
+!
+      integer(i6) :: s1_4, s2_4 
+!
+      s1_4 = int(s1,i6)
+      s2_4 = int(s2,i6)
+!
+      call construct_ao_h_wx_kinetic_1der_c(h_1x, h_1y, h_1z, h_2x, h_2y, h_2z, s1_4, s2_4) 
+!
+   end subroutine construct_ao_h_wx_kinetic_1der_molecular_system
+!
+!
+   module subroutine construct_and_add_ao_h_wx_nuclear_1der_molecular_system(molecule, h_wxqk, s1, s2, n_ao) 
+!!
+!!    Construct and add h_αβ nuclear 1st-derivative
+!!    Written by Eirik F. Kjønstad, 2019
+!!
+!!    Fortran wrapper for the C++ routine that calculates and
+!!    adds parts of the h_αβ (nuclear contribution) first derivative integrals 
+!!    in the arrays. 
+!!
+!!    s1 and s2 are the shells that w and x respectively belong to.
+!! 
+!!    h_1x contains the first derivative with respect to the x component of the atom that s1 is centered on,
+!!    h_1y contains the first derivative with respect to the y component of the atom that s1 is centered on,
+!!    and so on...
+!!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      integer, intent(in) :: s1, s2, n_ao
+!
+      real(dp), dimension(n_ao,n_ao,3,molecule%n_atoms) :: h_wxqk
+!
+      integer(i6) :: s1_4, s2_4, n_ao_4
+!
+      s1_4 = int(s1,i6)
+      s2_4 = int(s2,i6)
+      n_ao_4 = int(n_ao,i6)
+!
+      call construct_and_add_ao_h_wx_nuclear_1der_c(h_wxqk, s1_4, s2_4, n_ao_4) 
+!
+   end subroutine construct_and_add_ao_h_wx_nuclear_1der_molecular_system
+!
+!
    module subroutine construct_ao_g_wxyz_molecular_system(molecule, g, s1, s2, s3, s4)
 !!
 !!    Construct g_αβγδ
@@ -96,6 +169,37 @@ contains
       call construct_ao_g_wxyz_c(g, s1_4, s2_4, s3_4, s4_4)
 !
    end subroutine construct_ao_g_wxyz_molecular_system
+!
+!
+   module subroutine construct_ao_g_wxyz_1der_molecular_system(molecule, g_wxyzqk, s1, s2, s3, s4)
+!!
+!!    Construct g_αβγδ 1der
+!!    Written by Eirik F. Kjønstad, 2019
+!!
+!!    Fortran wrapper for the C++ routine that calculates and
+!!    saves the g_αβγδ integral in the array g. s1-s4 are 
+!!    the shells that alpha, beta, gamma and delta belong to. 
+!!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      integer, intent(in) :: s1, s2, s3, s4 ! Shells 
+!
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size,    &
+                           molecule%shell_limits(s3)%size, molecule%shell_limits(s4)%size,   &
+                           3, 4), intent(out) :: g_wxyzqk
+!
+      integer(i6) :: s1_4, s2_4, s3_4, s4_4
+!
+      s1_4 = int(s1,i6)
+      s2_4 = int(s2,i6)
+      s3_4 = int(s3,i6)
+      s4_4 = int(s4,i6)
+!
+      call construct_ao_g_wxyz_1der_c(g_wxyzqk, s1_4, s2_4, s3_4, s4_4)
+!
+   end subroutine construct_ao_g_wxyz_1der_molecular_system
 !
 !
    module subroutine construct_ao_g_wxyz_epsilon_molecular_system(g, s1, s2, s3, s4, eps, thread, skip, &
@@ -183,7 +287,7 @@ contains
 !
       integer, intent(in) :: s1, s2
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size,molecule%shell_limits(s1)%size), intent(inout) :: s
+      real(dp), dimension(molecule%shell_limits(s1)%size,molecule%shell_limits(s2)%size), intent(out) :: s
 !
       integer(i6) :: s1_4, s2_4 ! Integers that are passed to libint
 !
@@ -193,6 +297,43 @@ contains
       call construct_ao_s_wx_c(s, s1_4, s2_4) 
 !
    end subroutine construct_ao_s_wx_molecular_system
+!
+!
+   module subroutine construct_ao_s_wx_1der_molecular_system(molecule, s_1x, s_1y, s_1z, s_2x, s_2y, s_2z, s1, s2) 
+!!
+!!    Construct s_αβ 1st-derivative
+!!    Written by Eirik F. Kjønstad, 2019
+!!
+!!    Fortran wrapper for the C++ routine that calculates and
+!!    saves parts of the s_αβ first derivative integrals in the arrays s_1x, s_1y, ..., s_2z. 
+!!
+!!    s1 and s2 are the shells that w and x respectively belong to.
+!! 
+!!    s_1x contains the first derivative with respect to the x component of the atom that s1 is centered on,
+!!    s_1y contains the first derivative with respect to the y component of the atom that s1 is centered on,
+!!    and so on...
+!!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      integer, intent(in) :: s1, s2
+!
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size) :: s_1x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size) :: s_1y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size) :: s_1z
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size) :: s_2x
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size) :: s_2y
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size) :: s_2z
+!
+      integer(i6) :: s1_4, s2_4 
+!
+      s1_4 = int(s1,i6)
+      s2_4 = int(s2,i6)
+!
+      call construct_ao_s_wx_1der_c(s_1x, s_1y, s_1z, s_2x, s_2y, s_2z, s1_4, s2_4) 
+!
+   end subroutine construct_ao_s_wx_1der_molecular_system
 !
 !
    module subroutine construct_ao_mu_wx_molecular_system(molecule, mu_X, mu_Y, mu_Z, s1, s2)

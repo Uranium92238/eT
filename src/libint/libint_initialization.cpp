@@ -43,11 +43,23 @@ extern eTBasis basis;
 vector<Engine> electronic_repulsion_engines(omp_get_max_threads());
 extern vector<Engine> electronic_repulsion_engines;
 
+vector<Engine> electronic_repulsion_1der(omp_get_max_threads());
+extern vector<Engine> electronic_repulsion_1der;
+
 vector<Engine> kinetic(omp_get_max_threads());
 extern vector<Engine> kinetic;
 
+Engine kinetic_1der;
+extern Engine kinetic_1der;
+
 vector<Engine> nuclear(omp_get_max_threads());
 extern vector<Engine> nuclear;
+
+Engine nuclear_1der;
+extern Engine nuclear_1der;
+
+Engine overlap_1der;
+extern Engine overlap_1der;
 
 vector<Engine> overlap(omp_get_max_threads());
 extern vector<Engine> overlap;
@@ -61,6 +73,9 @@ extern vector<Engine> quadrupole;
 vector<Atom> atoms;
 extern vector<Atom> atoms;
 
+vector<int> shell2atom;
+extern vector<int> shell2atom;
+
 void initialize_atoms(char *name){
 
     string xyzfilename(strcat(name,".xyz"));
@@ -68,6 +83,13 @@ void initialize_atoms(char *name){
     ifstream input_file(xyzfilename);
     vector<Atom> temporary_atoms = read_dotxyz(input_file);
     atoms = temporary_atoms;
+
+}
+
+void reset_basis(){
+
+    eTBasis temp_basis;
+    basis = temp_basis;
 
 }
 
@@ -84,6 +106,12 @@ void initialize_basis(char *basisset, char *filename){
     cout.clear();
 
     basis.add(temporary);
+
+}
+
+void initialize_shell2atom(){
+
+    shell2atom = basis.shell2atom(atoms);
 
 }
 
@@ -111,6 +139,12 @@ void initialize_coulomb(){
         electronic_repulsion_engines[i] = temporary;
     }
 
+    Engine temporary_1der(Operator::coulomb, basis.max_nprim(), basis.max_l(), 1);
+    temporary_1der.set_precision(1.0e-25);
+
+    for (int i = 0; i != omp_get_max_threads(); i++){
+        electronic_repulsion_1der[i] = temporary_1der;
+    }
 }
 
 void set_coulomb_precision(double *prec){
@@ -130,18 +164,29 @@ void initialize_kinetic(){
         kinetic[i] = temporary; 
     }
 
+    Engine temporary_1der(Operator::kinetic, basis.max_nprim(), basis.max_l(),1);
+    kinetic_1der = temporary_1der; 
+
 }
 
 void initialize_nuclear(){
 
+    vector<pair<double, array<double, 3>>> q;
+    for (const auto& atom : atoms) {
+      q.push_back({static_cast<double>(atom.atomic_number),
+                   {{atom.x, atom.y, atom.z}}});
+    }
 
     Engine temporary(Operator::nuclear, basis.max_nprim(), basis.max_l());
-
-    temporary.set_params(make_point_charges(atoms));                           // Tell the engine where the atomic charges are
+    temporary.set_params(q);
 
     for (int i = 0; i != omp_get_max_threads(); i++){
         nuclear[i] = temporary; 
     }
+
+    Engine temporary_1der(Operator::nuclear, basis.max_nprim(), basis.max_l(),1);
+    temporary_1der.set_params(q);
+    nuclear_1der = temporary_1der; 
 
 }
 
@@ -152,6 +197,9 @@ void initialize_overlap(){
     for (int i = 0; i != omp_get_max_threads(); i++){
         overlap[i] = temporary; 
     }
+
+    Engine temporary_1der(Operator::overlap, basis.max_nprim(), basis.max_l(),1);
+    overlap_1der = temporary_1der;
 
 }
 

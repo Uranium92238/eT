@@ -72,7 +72,7 @@ module scf_diis_hf_class
 contains
 !
 !
-   function new_scf_diis_hf(wf) result(solver)
+   function new_scf_diis_hf(wf, restart) result(solver)
 !!
 !!    New SCF DIIS 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -82,6 +82,8 @@ contains
       type(scf_diis_hf) :: solver
 !
       class(hf) :: wf
+!
+      logical, intent(in) :: restart 
 !
       solver%tag = 'Self-consistent field DIIS Hartree-Fock solver'
       solver%author = 'E. F. Kjønstad and S, D. Folkestad, 2018'
@@ -94,7 +96,7 @@ contains
 !
 !     Set standard settings
 !
-      solver%restart             = .false.
+      solver%restart             = restart
       solver%diis_dimension      = 8
       solver%max_iterations      = 100
       solver%ao_density_guess    = 'SAD'
@@ -195,8 +197,8 @@ contains
 !
       n_s = wf%system%get_n_shells()
 !
-      call mem%alloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%alloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      if (.not. allocated(wf%sp_eri_schwarz)) call mem%alloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
+      if (.not. allocated(wf%sp_eri_schwarz_list)) call mem%alloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call wf%construct_sp_eri_schwarz()
 !
@@ -329,8 +331,8 @@ contains
 !
       enddo
 !
-      call mem%dealloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%dealloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+   !   call mem%dealloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
+   !   call mem%dealloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call mem%dealloc(G, wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities)
       call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
@@ -413,8 +415,6 @@ contains
       class(scf_diis_hf) :: solver
 !
       call input%get_keyword_in_section('diis dimension', 'solver hf', solver%diis_dimension)
-!
-      if (input%requested_keyword_in_section('restart', 'solver hf')) solver%restart = .true.
 !
    end subroutine read_scf_diis_settings_scf_diis_hf
 !

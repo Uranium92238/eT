@@ -29,6 +29,8 @@ void construct_ao_g_wxyz_epsilon(double *g, int *s1, int *s2, int *s3, int *s4, 
 
 void construct_ao_g_wxyz(double *g, int *s1, int *s2, int *s3, int *s4);
 
+void construct_ao_g_wxyz_1der(double *g_wxyzqk, int *s1, int *s2, int *s3, int *s4);
+
 #ifdef __cplusplus
 }
 #endif

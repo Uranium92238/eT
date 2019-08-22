@@ -96,6 +96,7 @@ module eri_cd_class
       procedure :: construct_significant_diagonal         => construct_significant_diagonal_eri_cd
       procedure :: construct_significant_diagonal_atomic  => construct_significant_diagonal_atomic_eri_cd
       procedure :: determine_cholesky_basis               => determine_cholesky_basis_eri_cd
+      procedure :: determine_cholesky_basis_PCD           => determine_cholesky_basis_PCD_eri_cd
       procedure :: construct_S                            => construct_S_eri_cd
       procedure :: construct_cholesky_vectors             => construct_cholesky_vectors_eri_cd
       procedure :: construct_mo_cholesky_vectors          => construct_mo_cholesky_vectors_cd_eri_solver
@@ -146,6 +147,8 @@ contains
       solver%one_center          = .false.
       solver%construct_vectors   = .true.
 !
+      solver%n_cholesky          = 0
+!
       call solver%read_settings()
 !
       solver%n_aop   = system%get_n_aos()*(system%get_n_aos()+1)/2 ! Number of ao pairs packed
@@ -169,6 +172,15 @@ contains
 !
       endif
 !
+      call solver%print_banner()
+      call solver%print_settings()
+!
+!     Additional prints
+!
+      write(output%unit, '(/t6, a29, i13)') 'Total number of AOs:         ', system%get_n_aos()
+      write(output%unit, '(t6, a29, i13)')  'Total number of shell pairs: ', solver%n_sp
+      write(output%unit, '(t6, a29, i13)')  'Total number of AO pairs:    ', solver%n_aop
+!
    end function new_eri_cd
 !
 !
@@ -185,26 +197,10 @@ contains
 !
       real(dp), dimension(solver%n_ao), optional :: screening_vector
 !
-      integer :: batch
-!
-      integer, dimension(:), allocatable :: n_cholesky_batches, n_sp_in_basis_batches
-!
-      type(file) :: batch_file_diag, batch_file_basis
-!
-      character(len=100) :: temp_name
-!
       type(timings) :: det_basis_timer, invert_timer, build_timer
 !
       det_basis_timer   = new_timer("Cholesky; time to determine auxiliary basis")
       invert_timer      = new_timer("Cholesky; time to construct (J|K), decompose, and invert")
-!
-      call solver%print_banner()
-!
-      call solver%print_settings()
-!
-      write(output%unit, '(/t6, a29, i13)') 'Total number of AOs:         ', system%get_n_aos()
-      write(output%unit, '(t6, a29, i13)')  'Total number of shell pairs: ', solver%n_sp
-      write(output%unit, '(t6, a29, i13)')  'Total number of AO pairs:    ', solver%n_aop
 !
       write(output%unit, '(/t3, a39)') '- Preparing diagonal for decomposition:'
 !
@@ -236,48 +232,13 @@ contains
 !
       endif
 !
-!
       if (solver%n_batches == 1) then
 !
          call solver%determine_cholesky_basis(system, solver%diagonal_info_target, solver%cholesky_basis)
 !
       else
 !
-         call mem%alloc(n_cholesky_batches, solver%n_batches)
-         call mem%alloc(n_sp_in_basis_batches, solver%n_batches)
-!
-         n_cholesky_batches = 0
-         n_sp_in_basis_batches = 0
-!
-         call solver%construct_diagonal_batches(system)
-!
-         write(output%unit, '(/t3, a31)') '- Decomposing batched diagonal:'
-!
-         do batch = 1, solver%n_batches 
-!
-            write(output%unit, '(/t3, a6, i3, a1)') 'Batch ', batch, ':'
-            flush(output%unit)
-!
-            write(temp_name, '(a14, i4.4)')'diagonal_info_', batch
-            call batch_file_diag%init(trim(temp_name), 'sequential', 'unformatted')
-
-            write(temp_name, '(a11, i4.4)')'basis_info_', batch
-            call batch_file_basis%init(trim(temp_name), 'sequential', 'unformatted')
-!
-            call solver%determine_cholesky_basis(system, batch_file_diag, batch_file_basis)
-!
-            n_cholesky_batches(batch)     = solver%n_cholesky
-            n_sp_in_basis_batches(batch)  = solver%n_sp_in_basis
-!
-         enddo
-!
-         write(output%unit, '(/t3, a27)') '- Final decomposition step:'
-!
-         call solver%construct_diagonal_from_batch_bases(system, n_cholesky_batches, n_sp_in_basis_batches)
-         call solver%determine_cholesky_basis(system, solver%diagonal_info_target, solver%cholesky_basis)
-!
-         call mem%dealloc(n_cholesky_batches, solver%n_batches)
-         call mem%dealloc(n_sp_in_basis_batches, solver%n_batches)
+         call solver%determine_cholesky_basis_PCD(system)
 !
       endif
 !
@@ -1665,6 +1626,65 @@ contains
       call mem%dealloc(basis_shell_info_full, n_sp_in_basis_total, 4)
 !
    end subroutine append_bases_eri_cd
+!
+!
+   subroutine determine_cholesky_basis_PCD_eri_cd(solver, system)
+!!
+!!    Determine auxiliary cholesky basis for partitioned Cholesky decomposition
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Determines the elements of the auxiliary basis by PCD
+!!
+      implicit none
+!
+      class(eri_cd), intent(inout) :: solver
+!
+      class(molecular_system), intent(in) :: system
+!
+      integer :: batch
+!
+      integer, dimension(:), allocatable :: n_cholesky_batches, n_sp_in_basis_batches
+!
+      type(file) :: batch_file_diag, batch_file_basis
+!
+      character(len=100) :: temp_name
+!
+      call mem%alloc(n_cholesky_batches, solver%n_batches)
+      call mem%alloc(n_sp_in_basis_batches, solver%n_batches)
+!
+      n_cholesky_batches = 0
+      n_sp_in_basis_batches = 0
+!
+      call solver%construct_diagonal_batches(system)
+!
+      write(output%unit, '(/t3, a31)') '- Decomposing batched diagonal:'
+!
+      do batch = 1, solver%n_batches 
+!
+         write(output%unit, '(/t3, a6, i3, a1)') 'Batch ', batch, ':'
+!
+         write(temp_name, '(a14, i4.4)')'diagonal_info_', batch
+         call batch_file_diag%init(trim(temp_name), 'sequential', 'unformatted')
+
+         write(temp_name, '(a11, i4.4)')'basis_info_', batch
+         call batch_file_basis%init(trim(temp_name), 'sequential', 'unformatted')
+!
+         call solver%determine_cholesky_basis(system, batch_file_diag, batch_file_basis)
+!
+         n_cholesky_batches(batch)     = solver%n_cholesky
+         n_sp_in_basis_batches(batch)  = solver%n_sp_in_basis
+!
+      enddo
+!
+      write(output%unit, '(/t3, a27)') '- Final decomposition step:'
+!
+      call solver%construct_diagonal_from_batch_bases(system, n_cholesky_batches, n_sp_in_basis_batches)
+      call solver%determine_cholesky_basis(system, solver%diagonal_info_target, solver%cholesky_basis)
+!
+      call mem%dealloc(n_cholesky_batches, solver%n_batches)
+      call mem%dealloc(n_sp_in_basis_batches, solver%n_batches)
+!
+   end subroutine determine_cholesky_basis_PCD_eri_cd
 !
 !
    subroutine determine_cholesky_basis_eri_cd(solver, system, diagonal_info, basis_info)

@@ -29,12 +29,14 @@ void finalize_libint();
 void initialize_coulomb();
 void initialize_atoms(char *name);
 void initialize_basis(char *basisset, char *filename);
+void reset_basis();
 void initialize_kinetic();
 void initialize_nuclear();
 void initialize_overlap();
 void initialize_dipole();
 void initialize_quadrupole();
 void set_coulomb_precision(double *prec);
+void initialize_shell2atom();
 
 #ifdef __cplusplus
 }

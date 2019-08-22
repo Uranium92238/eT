@@ -29,6 +29,7 @@ module mo_integral_tool_class
    use memory_manager_class
    use timings_class
    use reordering
+   use eri_cd_class
 !
    implicit none
 !
@@ -53,19 +54,19 @@ module mo_integral_tool_class
 !
    contains
 !
-      procedure :: prepare                => prepare_mo_integral_tool
-      procedure :: cleanup                => cleanup_mo_integral_tool
+      procedure :: prepare                      => prepare_mo_integral_tool
+      procedure :: cleanup                      => cleanup_mo_integral_tool
 !
 !     Read MO Cholesky vectors
 !
-      procedure :: read_cholesky          => read_cholesky_mo_integral_tool
+      procedure :: read_cholesky                => read_cholesky_mo_integral_tool
 !
 !     Read/write/construct T1-transformed Cholesky vectors as well as T1-ERI construction
 !
-      procedure :: read_cholesky_t1       => read_cholesky_t1_mo_integral_tool
-      procedure :: write_t1_cholesky      => write_t1_cholesky_mo_integral_tool
+      procedure :: read_cholesky_t1             => read_cholesky_t1_mo_integral_tool
+      procedure :: write_t1_cholesky            => write_t1_cholesky_mo_integral_tool
 !
-      procedure :: construct_g_pqrs_t1    => construct_g_pqrs_t1_mo_integral_tool
+      procedure :: construct_g_pqrs_t1          => construct_g_pqrs_t1_mo_integral_tool
 !
       procedure :: construct_cholesky_ij        => construct_cholesky_ij_mo_integral_tool
       procedure :: construct_cholesky_ab        => construct_cholesky_ab_mo_integral_tool
@@ -76,8 +77,8 @@ module mo_integral_tool_class
       procedure :: construct_cholesky_ai_a_c1   => construct_cholesky_ai_a_c1_mo_integral_tool
       procedure :: construct_cholesky_ai_i_c1   => construct_cholesky_ai_i_c1_mo_integral_tool
 !
-      procedure :: set_full_index         => set_full_index_mo_integral_tool
-      procedure :: can_we_keep_g_pqrs_t1  => can_we_keep_g_pqrs_t1_mo_integral_tool
+      procedure :: set_full_index               => set_full_index_mo_integral_tool
+      procedure :: can_we_keep_g_pqrs_t1        => can_we_keep_g_pqrs_t1_mo_integral_tool
 !
    end type mo_integral_tool
 !
@@ -85,7 +86,7 @@ module mo_integral_tool_class
 contains
 !
 !
-   subroutine prepare_mo_integral_tool(integrals, n_J, n_o, n_v)
+   subroutine prepare_mo_integral_tool(integrals, n_o, n_v, eri_cholesky)
 !!
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -102,17 +103,18 @@ contains
 !
       class(mo_integral_tool) :: integrals
 !
-      integer, intent(in) :: n_J
       integer, intent(in) :: n_o
       integer, intent(in) :: n_v
 !
-      integrals%n_J  = n_J
+      type(eri_cd), intent(in) :: eri_cholesky
+!
+      integrals%n_J  = eri_cholesky%n_cholesky
       integrals%n_o  = n_o
       integrals%n_v  = n_v
       integrals%n_mo = n_o + n_v
 !
-      call integrals%cholesky_mo%init('cholesky_mo_vectors', 'direct', 'unformatted', dp*n_J)
-      call integrals%cholesky_mo_t1%init('cholesky_mo_t1_vectors', 'direct', 'unformatted', dp*n_J)
+      call integrals%cholesky_mo%init(eri_cholesky%cholesky_mo_vectors%name_, 'direct', 'unformatted', dp*integrals%n_J)
+      call integrals%cholesky_mo_t1%init('cholesky_mo_t1_vectors', 'direct', 'unformatted', dp*integrals%n_J)
 !
 !     Initially MO cholesky on file, and not T1-transformed cholesky
 !     nor full T1-ERI matrix

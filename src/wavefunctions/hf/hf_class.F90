@@ -80,9 +80,13 @@ module hf_class
 !     AO Fock and energy related routines
 !
       procedure :: construct_ao_fock                        => construct_ao_fock_hf
-      procedure :: ao_fock_construction_loop                => ao_fock_construction_loop_hf
-      procedure :: ao_fock_coulomb_construction_loop        => ao_fock_coulomb_construction_loop_hf
-      procedure :: ao_fock_exchange_construction_loop       => ao_fock_exchange_construction_loop_hf
+!
+      procedure :: construct_ao_G                           => construct_ao_G_hf
+      procedure :: construct_ao_G_1der                      => construct_ao_G_1der_hf
+!
+      procedure :: construct_coulomb_ao_G                   => construct_coulomb_ao_G_hf
+      procedure :: construct_exchange_ao_G                  => construct_exchange_ao_G_hf
+!
       procedure :: construct_ao_fock_SAD                    => construct_ao_fock_SAD_hf
       procedure :: construct_mo_fock                        => construct_mo_fock_hf
       procedure :: set_ao_fock                              => set_ao_fock_hf
@@ -146,6 +150,8 @@ module hf_class
       procedure :: construct_roothan_hall_gradient          => construct_roothan_hall_gradient_hf
       procedure :: get_packed_roothan_hall_gradient         => get_packed_roothan_hall_gradient_hf
 !
+      procedure :: construct_molecular_gradient             => construct_molecular_gradient_hf
+!
 !     Integral related routines
 !
       procedure :: construct_sp_eri_schwarz                 => construct_sp_eri_schwarz_hf
@@ -188,12 +194,6 @@ contains
 !
       wf%n_ao        = wf%system%get_n_aos()
       wf%n_densities = 1
-!
-      call initialize_coulomb_c()
-      call initialize_kinetic_c()
-      call initialize_nuclear_c()
-      call initialize_overlap_c()
-      call initialize_dipole()
 !
       call wf%set_n_mo()
 !
@@ -768,7 +768,7 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      real(dp), dimension(:,:), intent(inout) :: D
+      real(dp), dimension(wf%n_ao**2,wf%n_densities), intent(inout) :: D
 !
       call dcopy(wf%n_ao**2, wf%ao_density, 1, D, 1)
 !
@@ -1011,8 +1011,6 @@ contains
 !
       class(hf) :: wf
 !
-      !integer :: n_s
-!
       integer, dimension(:),  allocatable :: sp_eri_schwarz_index_list
       real(dp), dimension(:), allocatable :: sorted_sp_eri_schwarz
 !
@@ -1025,8 +1023,6 @@ contains
       real(dp), dimension(wf%system%max_shell_size**4) :: g
 !
       type(interval) :: A_interval, B_interval
-!
-     ! n_s = wf%system%get_n_shells()
 !
 !     Set the maximum element in each shell pair
 !
@@ -1187,8 +1183,6 @@ contains
       implicit none
 !
       class(hf) :: wf
-!
-     ! integer :: n_s
 !
       real(dp), optional :: coulomb, exchange ! Non-standard screening thresholds
 !
@@ -1492,8 +1486,6 @@ contains
 !
       class(hf) :: wf
 !
-    !  integer :: n_s
-!
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: D
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: ao_fock
 !
@@ -1562,7 +1554,7 @@ contains
       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
       F = zero
 !
-      call wf%ao_fock_construction_loop(F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
+      call wf%construct_ao_G(F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
                                          sp_density_schwarz,  &
                                          n_sig_sp, coulomb_thr, exchange_thr, precision_thr, &
                                          wf%system%shell_limits)
@@ -1591,19 +1583,22 @@ contains
    end subroutine construct_ao_fock_hf
 !
 !
-   subroutine ao_fock_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,    &
+   subroutine construct_ao_G_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,    &
                                           sp_density_schwarz, n_sig_sp, coulomb_thr, &
                                           exchange_thr, precision_thr, shells)
 !!
-!!    AO Fock construction loop
+!!    Construct AO G 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    This routine constructs the entire two-electron part of the Fock matrix,
 !!
-!!       F_αβ = sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ,
+!!       F_αβ =+ sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ (= G(D)_αβ),
 !!
 !!    where contributions from different threads are gathered column blocks
 !!    of the incoming F matrix.
+!!
+!!    Note: the contributions from each thread need to be added to a single 
+!!    n_ao x n_ao matrix & symmetrized to get G(D)_αβ.
 !!
       implicit none
 !
@@ -1618,7 +1613,7 @@ contains
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, exchange_thr, precision_thr
 !
-      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in)               :: sp_density_schwarz
+      real(dp), dimension(wf%system%n_s, wf%system%n_s), intent(in) :: sp_density_schwarz
 !
       real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, deg, deg_12, deg_34, deg_12_34
@@ -1695,8 +1690,6 @@ contains
 !
                g(1:tot_dim) = deg*g(1:tot_dim)
 !
-!              Add Fock matrix contributions
-!
                do z = shells(s4)%first, shells(s4)%last
 !
                   z_red = z - shells(s4)%first + 1
@@ -1755,10 +1748,10 @@ contains
 !
       call set_coulomb_precision_c(wf%libint_epsilon)
 !
-   end subroutine ao_fock_construction_loop_hf
+   end subroutine construct_ao_G_hf
 !
 !
-   subroutine ao_fock_coulomb_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
+   subroutine construct_coulomb_ao_G_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
                                                    sp_density_schwarz, &
                                                    n_sig_sp, coulomb_thr, precision_thr, shells)
 !!
@@ -1771,6 +1764,9 @@ contains
 !!
 !!    where contributions from different threads are gathered column blocks
 !!    of the incoming F matrix.
+!!
+!!    Note: the contributions from each thread need to be added to a single 
+!!    n_ao x n_ao matrix & symmetrized to get the Coulomb part of G(D)_αβ.
 !!
       implicit none
 !
@@ -1856,8 +1852,6 @@ contains
 !
                g(1:tot_dim) = deg*g(1:tot_dim)
 !
-!              Add Fock matrix contributions
-!
                do z = shells(s4)%first, shells(s4)%last
 !
                   z_red = z - shells(s4)%first + 1
@@ -1898,10 +1892,10 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine ao_fock_coulomb_construction_loop_hf
+   end subroutine construct_coulomb_ao_G_hf
 !
 !
-   subroutine ao_fock_exchange_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz, &
+   subroutine construct_exchange_ao_G_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz, &
                                           sp_density_schwarz, &
                                            n_sig_sp, exchange_thr, precision_thr, shells)
 !!
@@ -1914,6 +1908,9 @@ contains
 !!
 !!    where contributions from different threads are gathered column blocks
 !!    of the incoming F matrix.
+!!
+!!    Note: the contributions from each thread need to be added to a single 
+!!    n_ao x n_ao matrix & symmetrized to get the exchange part of G(D)_αβ.
 !!
       implicit none
 !
@@ -2002,8 +1999,6 @@ contains
 !
                g(1:tot_dim) = deg*g(1:tot_dim)
 !
-!              Add Fock matrix contributions
-!
                do z = shells(s4)%first, shells(s4)%last
 !
                   z_red = z - shells(s4)%first + 1
@@ -2050,7 +2045,7 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine ao_fock_exchange_construction_loop_hf
+   end subroutine construct_exchange_ao_G_hf
 !
 !
    subroutine calculate_hf_energy_from_G_hf(wf, half_GD_wx, h_wx)
@@ -2082,7 +2077,7 @@ contains
       wf%energy = wf%system%get_nuclear_repulsion()
 !
       wf%energy = wf%energy + ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
-      wf%energy = wf%energy + two*(one/four)*ddot((wf%n_ao)**2, wf%ao_density, 1, half_GD_wx, 1)
+      wf%energy = wf%energy + half*ddot((wf%n_ao)**2, wf%ao_density, 1, half_GD_wx, 1)
 
    end subroutine calculate_hf_energy_from_G_hf
 !
@@ -2102,7 +2097,7 @@ contains
 !!
 !!    The traces are calculated as dot products (since B is symmetric here):
 !!
-!!       Tr(AB) = sum_x (AB)_xx = sum_xy A_xy B_yx = sum_xy A_xy B_xy.
+!!       Tr(AB) = sum_x (AB)_xx = sum_xy A_xy B_yx = sum_xy A_xy B_xy = A-dot-B.
 !!
       implicit none
 !
@@ -2115,10 +2110,170 @@ contains
 !
       wf%energy = wf%system%get_nuclear_repulsion()
 !
-      wf%energy = wf%energy + one/two*ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
-      wf%energy = wf%energy + one/two*ddot((wf%n_ao)**2, wf%ao_density, 1, F_wx, 1)
+      wf%energy = wf%energy + half*ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
+      wf%energy = wf%energy + half*ddot((wf%n_ao)**2, wf%ao_density, 1, F_wx, 1)
 
    end subroutine calculate_hf_energy_from_fock_hf
+!
+!
+   subroutine construct_ao_G_1der_hf(wf, G_ao, D_ao)
+!!
+!!    Construct AO G 1der
+!!    Written by Eirik F. Kjønstad, 2019
+!!
+!!    This routine constructs the entire two-electron part of the Fock matrix,
+!!
+!!       F_αβqk = sum_γδ g_αβγδqk D_γδ - 1/2 * sum_γδ g_αδγβqk D_γδ (= G(D)_αβqk),
+!!
+!!    where contributions from different threads are gathered column blocks
+!!    of the incoming F matrix.
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms) :: G_ao
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D_ao
+!
+      real(dp), dimension((wf%system%max_shell_size**4)*3*4), target :: g_ABCDqk 
+      real(dp), dimension(:,:,:,:,:,:), pointer, contiguous :: g_ABCDqk_p 
+!
+      integer :: A, B, C, D, D_max, w, x, y, z, n_sig_sp, AB, AB_packed
+      integer :: w_red, x_red, y_red, z_red, tot_dim, k, q, n_threads, thread
+!
+      real(dp) :: d1, d2, d3, d4, d5, d6
+!
+      integer, dimension(4) :: atoms 
+!
+      real(dp) :: deg, deg_AB, deg_CD, deg_AB_CD 
+!
+      real(dp), dimension(3,4) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
+!
+      real(dp), dimension(:,:,:,:,:), allocatable :: G_ao_t
+!
+!$    n_threads = omp_get_max_threads()
+      call mem%alloc(G_ao_t, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms, n_threads)
+      G_ao_t = zero 
+!
+      call wf%get_n_sig_eri_sp(n_sig_sp)
+!
+!$omp parallel do private(A, B, C, D, D_max, atoms, deg, deg_CD, deg_AB, deg_AB_CD, g_ABCDqk, g_ABCDqk_p, &
+!$omp w, x, y, z, w_red, x_red, y_red, z_red, temp, temp1, temp2, temp3, temp4, temp5, temp6, &
+!$omp d1, d2, d3, d4, d5, d6, thread, q, k, tot_dim, AB, AB_packed) schedule(dynamic)
+      do AB = 1, n_sig_sp 
+!
+!$       thread = omp_get_thread_num()
+!
+         if (wf%sp_eri_schwarz(AB, 1)*wf%sp_eri_schwarz(1, 1) < wf%coulomb_threshold) cycle
+         AB_packed = wf%sp_eri_schwarz_list(AB, 3) 
+!
+         A = wf%sp_eri_schwarz_list(AB_packed, 1)
+         B = wf%sp_eri_schwarz_list(AB_packed, 2)
+!
+         atoms(1) = wf%system%shell2atom(A)
+         atoms(2) = wf%system%shell2atom(B)
+!
+         deg_AB = real(2-B/A, kind=dp)
+!
+            do C = 1, A
+!
+               D_max = (C/A)*B + (1-C/A)*C
+               atoms(3) = wf%system%shell2atom(C)
+!
+               do D = 1, D_max
+!
+                  deg_CD    = real(2-D/C, kind=dp)
+                  deg_AB_CD = min(1-C/A+2-min(D/B,B/D), 2)
+
+                  deg = deg_AB*deg_CD*deg_AB_CD ! Shell degeneracy
+!
+                  atoms(4) = wf%system%shell2atom(D)
+!
+                  call wf%system%construct_ao_g_wxyz_1der(g_ABCDqk, A, B, C, D)                 
+!
+                  tot_dim = (wf%system%shell_limits(A)%size)*(wf%system%shell_limits(B)%size)&
+                              *(wf%system%shell_limits(C)%size)*(wf%system%shell_limits(D)%size)&
+                              *3*4
+!
+                  g_ABCDqk(1:tot_dim) = deg*g_ABCDqk(1:tot_dim)
+!
+                  g_ABCDqk_p(1 : wf%system%shell_limits(A)%size, 1 : wf%system%shell_limits(B)%size, &
+                             1 : wf%system%shell_limits(C)%size, 1 : wf%system%shell_limits(D)%size, &
+                             1 : 3, 1 : 4) => g_ABCDqk(1 : tot_dim)
+!
+                  do z = wf%system%shell_limits(D)%first, wf%system%shell_limits(D)%last
+!
+                     z_red = z - wf%system%shell_limits(D)%first + 1
+!
+                     do y = wf%system%shell_limits(C)%first, wf%system%shell_limits(C)%last
+!
+                        y_red = y - wf%system%shell_limits(C)%first + 1
+!
+                        d1 = D_ao(y, z)
+!
+                        do x = wf%system%shell_limits(B)%first, wf%system%shell_limits(B)%last
+!
+                           x_red = x - wf%system%shell_limits(B)%first + 1
+!
+                           d3 = D_ao(x, y)
+                           d5 = D_ao(x, z)
+!
+                           do w = wf%system%shell_limits(A)%first, wf%system%shell_limits(A)%last
+!
+                              d2 = D_ao(w, x)
+                              d4 = D_ao(w, y)
+                              d6 = D_ao(w, z)
+!
+                              w_red = w - wf%system%shell_limits(A)%first + 1
+!
+                              do k = 1, 4
+                                 do q = 1, 3
+                                    temp(q, k) = g_ABCDqk_p(w_red, x_red, y_red, z_red, q, k)
+                                 enddo
+                              enddo
+!
+                              temp1 = half*temp*d1
+                              temp2 = half*temp*d2
+!
+                              temp3 = one_over_eight*temp*d3
+                              temp4 = one_over_eight*temp*d4
+                              temp5 = one_over_eight*temp*d5
+                              temp6 = one_over_eight*temp*d6
+!
+                              do k = 1, 4
+                                 do q = 1, 3
+!
+                                    G_ao_t(w, x, q, atoms(k), thread+1) = G_ao_t(w, x, q, atoms(k), thread+1) + temp1(q, k)
+                                    G_ao_t(y, x, q, atoms(k), thread+1) = G_ao_t(y, x, q, atoms(k), thread+1) - temp6(q, k)
+                                    G_ao_t(y, z, q, atoms(k), thread+1) = G_ao_t(y, z, q, atoms(k), thread+1) + temp2(q, k)
+                                    G_ao_t(w, z, q, atoms(k), thread+1) = G_ao_t(w, z, q, atoms(k), thread+1) - temp3(q, k)
+                                    G_ao_t(x, z, q, atoms(k), thread+1) = G_ao_t(x, z, q, atoms(k), thread+1) - temp4(q, k)
+                                    G_ao_t(w, y, q, atoms(k), thread+1) = G_ao_t(w, y, q, atoms(k), thread+1) - temp5(q, k)
+!
+                                 enddo
+                              enddo
+!
+                           enddo
+                        enddo
+                     enddo
+                  enddo
+!
+               enddo
+            enddo
+         enddo
+!$omp end parallel do 
+!
+      G_ao = zero
+!
+      do thread = 1, n_threads
+!
+         call daxpy(3*wf%system%n_atoms*wf%n_ao**2, one, G_ao_t(1,1,1,1,thread), 1, G_ao, 1)
+!
+      enddo
+!
+      call mem%dealloc(G_ao_t, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms, n_threads)
+!
+   end subroutine construct_ao_G_1der_hf
 !
 !
    subroutine set_ao_density_hf(wf, D)
@@ -2168,7 +2323,7 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      real(dp), dimension(:,:), intent(inout) :: F ! Packed
+      real(dp), dimension(wf%n_ao*(wf%n_ao+1)/2, wf%n_densities), intent(inout) :: F ! Packed
 !
       call packin(F, wf%ao_fock, wf%n_ao)
 !
@@ -3234,8 +3389,8 @@ contains
 !!    Sets the screening thresholds for Coulomb and exchange
 !!    integrals given the convergence threshold for the gradient
 !!
-!!       coulomb_threshold = gradient_threshold * 1.0d-2
-!!       exchange_threshold = gradient_threshold * 1.0d-2
+!!       coulomb_threshold  = gradient_threshold * 1.0d-3
+!!       exchange_threshold = gradient_threshold * 1.0d-3
 !!
 !!       libint_epsilon = (gradient_threshold * 1.0d-3)**2
 !!
@@ -3256,6 +3411,163 @@ contains
       if (wf%libint_epsilon .gt. (wf%coulomb_threshold)**2) wf%libint_epsilon = (wf%coulomb_threshold)**2
 !
    end subroutine set_screening_and_precision_thresholds_hf
+!
+!
+   subroutine construct_molecular_gradient_hf(wf, E_qk)
+!!
+!!    Contruct molecular gradient
+!!    Written by Åsmund H. Tveten and Eirik F. Kjønstad, 2019
+!!
+!!    Constructs the molecular gradient,
+!! 
+!!       E^x = Tr[D h^x] + (1/2)Tr[D G^x(D)] - (1/2)Tr[D F D S^x] + h_nuc^x.
+!!
+!!    Here, x denotes the energy in the x direction. In the code, 
+!!    x = (q,k), where q denotes the component (x,y, or z) and k 
+!!    denotes the atom (k = 1,2,3,...,n_atoms).
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(3, wf%system%n_atoms), intent(inout) :: E_qk ! Molecular gradient
+!
+      real(dp), dimension(:,:,:,:), allocatable :: h_wxqk
+      real(dp), dimension(:,:,:,:), allocatable :: G_wxqk
+      real(dp), dimension(:,:,:,:), allocatable :: s_wxqk
+!
+      real(dp), dimension(:,:), allocatable :: DFD, FD
+!
+      real(dp), dimension(3, wf%system%n_atoms) :: TrDh_qk, TrDG_qk, TrDFDS_qk
+!
+      real(dp) :: ddot
+!
+      integer :: k, q
+!
+      type(timings) :: s_timer, h_timer, G_timer, G_timer_sym, non_integral_timer
+!
+!     Initialize timers 
+!
+      s_timer = timings('HF gradient - 1st derivative-integrals of S')
+      h_timer = timings('HF gradient - 1st derivative-integrals of h')
+      G_timer = timings('HF gradient - 1st derivative-integrals of G(D) - integrals')
+      G_timer_sym = timings('HF gradient - 1st derivative-integrals of G(D) - symmetrization')
+      non_integral_timer = timings('HF gradient - non-integral-time')
+!
+!     Construct h_nuc^x, and the AO integral derivatives, h^x, S^x, and G^x(D)
+!
+      E_qk = wf%system%get_nuclear_repulsion_1der() ! E_qk = h_nuc_qk
+!
+      call mem%alloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+      call mem%alloc(G_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+      call mem%alloc(s_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+!
+      call s_timer%turn_on()
+!
+      s_wxqk = zero
+      call wf%get_ao_s_wx_1der(s_wxqk)
+!
+      call s_timer%turn_off()
+!
+      call G_timer%turn_on()
+!
+      G_wxqk = zero
+      call wf%construct_ao_G_1der(G_wxqk, wf%ao_density)
+!
+      call G_timer%turn_off()
+      call G_timer_sym%turn_on()
+!
+      do k = 1, wf%system%n_atoms
+
+         do q = 1, 3
+
+           call symmetric_sum(G_wxqk(:,:,q,k), wf%n_ao)
+           G_wxqk(:,:,q,k) = half*G_wxqk(:,:,q,k)
+
+         enddo
+
+      enddo
+!
+      call G_timer_sym%turn_off()
+!
+      call h_timer%turn_on()
+!
+      h_wxqk = zero
+      call wf%get_ao_h_wx_1der(h_wxqk)
+!
+      call h_timer%turn_off()
+!
+      call non_integral_timer%turn_on()
+!  
+!     Construct D F D 
+!
+      call mem%alloc(FD, wf%n_ao, wf%n_ao)
+!
+      call dgemm('N','N',        &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  one,           &
+                  wf%ao_fock,    & 
+                  wf%n_ao,       &
+                  wf%ao_density, & 
+                  wf%n_ao,       &
+                  zero,          &
+                  FD,            &  
+                  wf%n_ao)
+!
+      call mem%alloc(DFD, wf%n_ao, wf%n_ao)
+!
+      call dgemm('N','N',        &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  one,           &
+                  wf%ao_density, &
+                  wf%n_ao,       &
+                  FD,            &
+                  wf%n_ao,       &
+                  zero,          &
+                  DFD,           & 
+                  wf%n_ao)
+!
+      call mem%dealloc(FD, wf%n_ao, wf%n_ao)
+!
+!     Perform the traces, adding the contributions to the gradient 
+!
+      do k = 1, wf%system%n_atoms
+         do q = 1, 3
+!
+            TrDh_qk(q,k) = ddot(wf%n_ao**2, wf%ao_density, 1, h_wxqk(:,:,q,k), 1)
+            TrDG_qk(q,k) = ddot(wf%n_ao**2, wf%ao_density, 1, G_wxqk(:,:,q,k), 1)
+            TrDFDS_qk(q,k) = ddot(wf%n_ao**2, DFD, 1, s_wxqk(:,:,q,k), 1)
+!
+            E_qk(q,k) = E_qk(q,k)   &
+              + TrDh_qk(q,k)        & 
+              + half*TrDG_qk(q,k)   &
+              - half*TrDFDS_qk(q,k)
+!
+         enddo
+      enddo 
+!
+      write(output%unit, '(/t6,a/)') 'Molecular gradient (Hartree/bohr):'
+!
+      do k = 1, wf%system%n_atoms
+!
+         write(output%unit, '(t6,a2,f19.12,f19.12,f19.12)') wf%system%atoms(k)%symbol, &
+                                                            E_qk(1,k), E_qk(2,k), E_qk(3,k) 
+!
+      enddo
+!
+      call mem%dealloc(DFD, wf%n_ao, wf%n_ao)
+!
+      call non_integral_timer%turn_off()
+!
+      call mem%dealloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+      call mem%dealloc(G_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+      call mem%dealloc(s_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)   
+!
+   end subroutine construct_molecular_gradient_hf
 !
 !
 end module hf_class

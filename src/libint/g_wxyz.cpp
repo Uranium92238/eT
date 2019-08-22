@@ -38,6 +38,7 @@ using namespace std;
 
 #include "globals.h"
 #include "omp_control.h"
+#include "extract_integrals.h"
 
 using namespace libint2;
 
@@ -131,4 +132,70 @@ void construct_ao_g_wxyz_epsilon(double *g, int *s1, int *s2, int *s3, int *s4, 
    }
 
   return;
+}
+
+void construct_ao_g_wxyz_1der(double *g_wxyzqk, int *s1, int *s2, int *s3, int *s4){
+/*
+/   Compute 1st derivative of g_wxyz
+*/
+
+  int thread = omp_get_thread_num();
+
+  const auto& buf_vec = electronic_repulsion_1der[thread].results();
+
+  auto n1 = basis[*s1 - 1].size(); 
+  auto n2 = basis[*s2 - 1].size(); 
+  auto n3 = basis[*s3 - 1].size(); 
+  auto n4 = basis[*s4 - 1].size(); 
+
+  electronic_repulsion_1der[thread].compute(basis[*s1 - 1], basis[*s2 - 1], 
+                                    basis[*s3 - 1], basis[*s4 - 1]);
+
+  auto offset = 0;
+
+  for (auto k = 0, shell_set = 0; k != 4; ++k){ // Loop over shell centers/atoms
+    for (auto q = 0; q != 3; ++q, ++shell_set){ // Loop over xyz on the given shell
+
+        auto ints = buf_vec[shell_set];
+
+        if (ints == nullptr)
+        {
+          for(auto f1=0; f1!=n1; ++f1){
+
+            for(auto f2=0; f2!=n2; ++f2){
+
+              for(auto f3=0; f3!=n3; ++f3){
+
+                for(auto f4=0; f4!=n4; ++f4){
+
+                  g_wxyzqk[offset + n1*(n2*(n3*f4+f3)+f2)+f1] = 0.0e0;
+
+                }
+              }
+            }  
+          }
+        }
+        else
+        {
+          for(auto f1=0, f1234=0; f1!=n1; ++f1){
+  
+            for(auto f2=0; f2!=n2; ++f2){
+  
+              for(auto f3=0; f3!=n3; ++f3){
+  
+                for(auto f4=0; f4!=n4; ++f4, ++f1234){
+  
+                  g_wxyzqk[offset + n1*(n2*(n3*f4+f3)+f2)+f1] = ints[f1234];
+  
+                }
+              }
+            }
+          }
+        }
+
+        offset = offset + n1*n2*n3*n4;
+
+    }
+  }
+
 }

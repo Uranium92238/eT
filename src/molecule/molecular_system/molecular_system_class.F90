@@ -50,6 +50,8 @@ module molecular_system_class
 !
       type(interval), dimension(:), allocatable :: shell_limits 
 !
+      integer, dimension(:), allocatable :: shell2atom 
+!
       logical :: active_atoms = .false.
 !
       integer :: n_active_atoms = 0
@@ -70,7 +72,13 @@ module molecular_system_class
       procedure :: print_system                             => print_system_molecular_system
       procedure :: print_geometry                           => print_geometry_molecular_system
 !
+      procedure :: get_geometry                             => get_geometry_molecular_system
+      procedure :: set_geometry                             => set_geometry_molecular_system
+!
       procedure :: get_nuclear_repulsion                    => get_nuclear_repulsion_molecular_system
+      procedure :: get_nuclear_repulsion_1der_numerical     => get_nuclear_repulsion_1der_numerical_molecular_system
+      procedure :: get_nuclear_repulsion_1der               => get_nuclear_repulsion_1der_molecular_system
+!
       procedure :: get_n_electrons                          => get_n_electrons_molecular_system
       procedure :: get_nuclear_dipole                       => get_nuclear_dipole_molecular_system
       procedure :: get_nuclear_quadrupole                   => get_nuclear_quadrupole_molecular_system
@@ -83,20 +91,32 @@ module molecular_system_class
 !
       procedure :: shell_to_atom                            => shell_to_atom_molecular_system
 !
+      procedure :: initialize_libint_atoms_and_bases           => initialize_libint_atoms_and_bases_molecular_system
+      procedure, nopass :: initialize_libint_integral_engines  => initialize_libint_integral_engines_molecular_system
+!
       procedure :: initialize_basis_sets                    => initialize_basis_sets_molecular_system
       procedure :: initialize_atoms                         => initialize_atoms_molecular_system
       procedure :: initialize_shell_limits                  => initialize_shell_limits_molecular_system
+      procedure :: initialize_shell2atom                    => initialize_shell2atom_molecular_system
 !
       procedure :: destruct_basis_sets                      => destruct_basis_sets_molecular_system
       procedure :: destruct_atoms                           => destruct_atoms_molecular_system
       procedure :: destruct_shell_limits                    => destruct_shell_limits_molecular_system
+      procedure :: destruct_shell2atom                      => destruct_shell2atom_molecular_system
 !
       procedure :: translate_from_input_order_to_eT_order   => translate_from_input_order_to_eT_order_molecular_system
 !
-      procedure :: construct_ao_h_wx                        => construct_ao_h_wx_molecular_system      
+      procedure :: construct_ao_h_wx                        => construct_ao_h_wx_molecular_system     
+      procedure :: construct_ao_h_wx_kinetic_1der           => construct_ao_h_wx_kinetic_1der_molecular_system     
+      procedure :: construct_and_add_ao_h_wx_nuclear_1der   => construct_and_add_ao_h_wx_nuclear_1der_molecular_system
+! 
+      procedure :: construct_ao_g_wxyz_1der                 => construct_ao_g_wxyz_1der_molecular_system
       procedure :: construct_ao_g_wxyz                      => construct_ao_g_wxyz_molecular_system  
-      procedure, nopass :: construct_ao_g_wxyz_epsilon      => construct_ao_g_wxyz_epsilon_molecular_system      
-      procedure :: construct_ao_s_wx                        => construct_ao_s_wx_molecular_system     
+      procedure, nopass :: construct_ao_g_wxyz_epsilon      => construct_ao_g_wxyz_epsilon_molecular_system
+!      
+      procedure :: construct_ao_s_wx                        => construct_ao_s_wx_molecular_system
+      procedure :: construct_ao_s_wx_1der                   => construct_ao_s_wx_1der_molecular_system
+!   
       procedure :: construct_ao_mu_wx                       => construct_ao_mu_wx_molecular_system     
       procedure :: construct_ao_q_wx                        => construct_ao_q_wx_molecular_system     
 !
@@ -129,6 +149,36 @@ contains
    end subroutine read_settings_molecular_system
 !
 !
+   subroutine initialize_libint_atoms_and_bases_molecular_system(molecule)
+!!
+!!    Initialize Libint atoms and bases 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad 2018-2019
+!!
+      implicit none 
+!
+      class(molecular_system) :: molecule 
+!           
+      character(len=100) :: temp_name
+!
+      integer :: i
+!
+      call molecule%write_libint_files()
+!
+      call initialize_atoms(molecule%name)
+!
+      call reset_basis_c()
+!
+      do i = 1, molecule%n_basis_sets
+!
+         write(temp_name, '(a, a1, i4.4)') trim(molecule%name), '_', i
+!
+         call initialize_basis(molecule%basis_sets(i), temp_name)
+!
+      enddo
+!
+   end subroutine initialize_libint_atoms_and_bases_molecular_system
+!
+!
    subroutine prepare_molecular_system(molecule)
 !!
 !!    Initialize
@@ -137,8 +187,6 @@ contains
       implicit none
 !
       class(molecular_system) :: molecule
-!
-      character(len=100) :: temp_name
 !
       integer :: s 
 !
@@ -150,25 +198,18 @@ contains
       integer(i6), dimension(:), allocatable :: first_ao_in_shells
       integer(i6), dimension(:), allocatable :: shell_numbers
 !
-!     Read eT.inp and write files for Libint
+!     Read eT.inp 
 !
       molecule%charge = 0
       molecule%multiplicity = 1
 !
       call molecule%read_settings()
-      call molecule%write_libint_files()
 !
-!     Initialize libint with atoms and basis sets
+!     Initialize libint with atoms and basis sets,
+!     then initialize the integral engines 
 !
-      call initialize_atoms(molecule%name)
-!
-      do i = 1, molecule%n_basis_sets
-!
-         write(temp_name, '(a, a1, i4.4)') trim(molecule%name), '_', i
-!
-         call initialize_basis(molecule%basis_sets(i), temp_name)
-!
-      enddo
+      call molecule%initialize_libint_atoms_and_bases()
+      call molecule%initialize_libint_integral_engines()
 !
 !     Initialize atoms and shells for eT
 !
@@ -275,12 +316,22 @@ contains
 !
       call molecule%get_max_shell_size(molecule%max_shell_size)
 !
+      call initialize_shell2atom_c()
+!
+      call molecule%initialize_shell2atom()
+!
+      do i = 1, molecule%n_s 
+!
+         molecule%shell2atom(i) = molecule%shell_to_atom(i)
+!
+      enddo
+!
    end subroutine prepare_molecular_system
 !
 !
    subroutine cleanup_molecular_system(molecule)
 !!
-!!    Initialize
+!!    Cleanup
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -320,6 +371,87 @@ contains
       call input%get_keyword_in_section('multiplicity', 'system', molecule%multiplicity)
 !
    end subroutine read_system_molecular_system
+!
+!
+   subroutine set_geometry_molecular_system(molecule, R_qk)
+!!
+!!    Set geometry 
+!!    Written by Eirik F. Kjønstad, June 2019 
+!!
+!!    Sets the molecular geometry. R_qk is the qth coordinate (q = 1(x), 2(y), 3(z))
+!!    of the kth atom (k = 1, 2, 3, ..., n_atoms).
+!!
+      implicit none 
+!
+      class(molecular_system), intent(inout) :: molecule 
+!
+      real(dp), dimension(3, molecule%n_atoms), intent(in) :: R_qk 
+!
+      integer :: k
+!
+!     Update geometry on eT side
+!
+      do k = 1, molecule%n_atoms
+!
+         molecule%atoms(k)%x = (R_qk(1,k))/angstrom_to_bohr
+         molecule%atoms(k)%y = (R_qk(2,k))/angstrom_to_bohr
+         molecule%atoms(k)%z = (R_qk(3,k))/angstrom_to_bohr
+!
+      enddo
+!
+!     Write Libint files, then update the atoms and bases 
+!     on the Libint side.
+!
+      call molecule%initialize_libint_atoms_and_bases()
+!
+!     Finally, reinitialize the Libint integral engines 
+!
+      call molecule%initialize_libint_integral_engines()
+!
+   end subroutine set_geometry_molecular_system
+!
+!
+   function get_geometry_molecular_system(molecule) result(R_qk)
+!!
+!!    Get geometry 
+!!    Written by Eirik F. Kjønstad, June 2019 
+!!
+!!    Gets the molecular geometry. R_qk is the qth coordinate (q = 1(x), 2(y), 3(z))
+!!    of the kth atom (k = 1, 2, 3, ..., n_atoms).
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      real(dp), dimension(3, molecule%n_atoms) :: R_qk 
+!
+      integer :: k
+!
+      do k = 1, molecule%n_atoms
+!
+         R_qk(1,k) = (molecule%atoms(k)%x)*angstrom_to_bohr
+         R_qk(2,k) = (molecule%atoms(k)%y)*angstrom_to_bohr
+         R_qk(3,k) = (molecule%atoms(k)%z)*angstrom_to_bohr
+!
+      enddo
+!
+   end function get_geometry_molecular_system
+!
+!
+   subroutine initialize_libint_integral_engines_molecular_system()
+!!
+!!    Initialize Libint integral engines 
+!!    Written by Eirik F. Kjønstad, June 2019 
+!!
+      implicit none 
+!
+      call initialize_coulomb_c()
+      call initialize_kinetic_c()
+      call initialize_nuclear_c()
+      call initialize_overlap_c()
+      call initialize_dipole_c()
+!
+   end subroutine initialize_libint_integral_engines_molecular_system
 !
 !
    subroutine read_geometry_molecular_system(molecule)
@@ -762,6 +894,93 @@ contains
    end subroutine read_active_atoms_molecular_system
 !
 !
+   function get_nuclear_repulsion_1der_numerical_molecular_system(molecule, dx) result(h_nuc_qk)
+!!
+!!    Get nuclear repulsion 1der numerical 
+!!    Written by Eirik F. Kjønstad, June 2019
+!!
+!!    Computes derivative numerically.
+!!
+      implicit none 
+!
+      class(molecular_system), intent(inout) :: molecule 
+!
+      real(dp), intent(in) :: dx
+!
+      real(dp), dimension(3, molecule%n_atoms) :: h_nuc_qk 
+!
+      real(dp) :: energy_x, energy_xdx
+!
+      real(dp), dimension(3, molecule%n_atoms) :: R_qk, R_qk_displaced
+!
+      integer :: k, q
+!
+      h_nuc_qk = zero
+!
+      energy_x = molecule%get_nuclear_repulsion()
+! 
+      R_qk = molecule%get_geometry()
+!
+      do k = 1, molecule%n_atoms
+         do q = 1, 3
+!
+            R_qk_displaced = R_qk 
+            R_qk_displaced(q,k) = R_qk_displaced(q,k) + dx 
+!
+            call molecule%set_geometry(R_qk_displaced)
+!
+            energy_xdx = molecule%get_nuclear_repulsion()
+!
+            h_nuc_qk(q,k) = (energy_xdx-energy_x)/dx
+!
+         enddo
+      enddo
+!
+      call molecule%set_geometry(R_qk)
+!
+   end function get_nuclear_repulsion_1der_numerical_molecular_system
+!
+!
+   function get_nuclear_repulsion_1der_molecular_system(molecule) result(h_nuc_qk)
+!!
+!!    Get nuclear repulsion 1der 
+!!    Written by Eirik F. Kjønstad, June 2019
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      real(dp), dimension(3, molecule%n_atoms) :: h_nuc_qk 
+!
+      real(dp) :: x_ij, y_ij, z_ij, r_ij_3
+      integer :: i, j 
+!
+      h_nuc_qk = zero
+!
+      do i = 1, molecule%n_atoms 
+         do j = 1, i - 1
+!
+            x_ij = (molecule%atoms(i)%x - molecule%atoms(j)%x)*angstrom_to_bohr
+            y_ij = (molecule%atoms(i)%y - molecule%atoms(j)%y)*angstrom_to_bohr 
+            z_ij = (molecule%atoms(i)%z - molecule%atoms(j)%z)*angstrom_to_bohr
+!
+            r_ij_3 = sqrt(x_ij**2 + y_ij**2 + z_ij**2)**3
+!
+            h_nuc_qk(1, i) = h_nuc_qk(1, i) - x_ij * molecule%atoms(i)%number_*molecule%atoms(j)%number_/r_ij_3
+            h_nuc_qk(2, i) = h_nuc_qk(2, i) - y_ij * molecule%atoms(i)%number_*molecule%atoms(j)%number_/r_ij_3
+            h_nuc_qk(3, i) = h_nuc_qk(3, i) - z_ij * molecule%atoms(i)%number_*molecule%atoms(j)%number_/r_ij_3
+!
+            h_nuc_qk(1, j) = h_nuc_qk(1, j) + x_ij * molecule%atoms(i)%number_*molecule%atoms(j)%number_/r_ij_3
+            h_nuc_qk(2, j) = h_nuc_qk(2, j) + y_ij * molecule%atoms(i)%number_*molecule%atoms(j)%number_/r_ij_3
+            h_nuc_qk(3, j) = h_nuc_qk(3, j) + z_ij * molecule%atoms(i)%number_*molecule%atoms(j)%number_/r_ij_3
+!
+         enddo
+      enddo
+!
+   end function get_nuclear_repulsion_1der_molecular_system
+!
+!
+!
    function get_nuclear_repulsion_molecular_system(molecule)
 !!
 !!    Get nuclear repulsion
@@ -1022,6 +1241,7 @@ contains
          accumulated_shells = accumulated_shells + molecule%atoms(I)%n_shells
 !
          if (shell .le. accumulated_shells) then
+!
             shell_to_atom_molecular_system = I
             return
 !
@@ -1078,7 +1298,7 @@ contains
 !
    subroutine destruct_basis_sets_molecular_system(molecule)
 !!
-!!    destruct basis sets
+!!    Destruct basis sets
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
       implicit none
@@ -1092,7 +1312,7 @@ contains
 !
    subroutine initialize_shell_limits_molecular_system(molecule)
 !!
-!!    Initialize basis sets
+!!    Initialize shell limits 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
       implicit none
@@ -1106,6 +1326,34 @@ contains
       if (.not. allocated(molecule%shell_limits)) allocate(molecule%shell_limits(n_s))
 !
    end subroutine initialize_shell_limits_molecular_system
+!
+!
+   subroutine initialize_shell2atom_molecular_system(molecule)
+!!
+!!    Initialize shell to atom 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      if (.not. allocated(molecule%shell2atom)) call mem%alloc(molecule%shell2atom, molecule%n_s)
+!
+   end subroutine initialize_shell2atom_molecular_system
+!
+!
+   subroutine destruct_shell2atom_molecular_system(molecule)
+!!
+!!    Destruct shell to atom 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      if (allocated(molecule%shell2atom)) call mem%dealloc(molecule%shell2atom, molecule%n_s)
+!
+   end subroutine destruct_shell2atom_molecular_system
 !
 !
    subroutine destruct_shell_limits_molecular_system(molecule)

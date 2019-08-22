@@ -231,6 +231,8 @@ module ccs_class
 !
       procedure :: calculate_expectation_value                  => calculate_expectation_value_ccs
 !
+      procedure :: construct_molecular_gradient                 => construct_molecular_gradient_ccs
+!
    end type ccs
 !
 !
@@ -285,6 +287,24 @@ contains
       call wf%initialize_fock_ab()
 !
    end function new_ccs
+!
+!
+   subroutine construct_molecular_gradient_ccs(wf, E_qk)
+!!
+!!    Construct molecular gradient 
+!!    Written by Eirik F. Kjønstad, June 2019 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(3, wf%system%n_atoms), intent(inout) :: E_qk 
+!
+      E_qk = zero 
+!
+      call output%error_msg('Molecular gradient not implemented for ' // trim(wf%name_))
+!
+   end subroutine construct_molecular_gradient_ccs
 !
 !
    subroutine read_hf_ccs(wf)
