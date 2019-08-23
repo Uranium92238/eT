@@ -464,7 +464,7 @@ contains
 !
          do trial = n_solutions_on_file + 1, solver%n_singlet_states
 !
-            c_i = zero
+            call zero_array(c_i, wf%n_es_amplitudes)
             c_i(lowest_orbital_differences_index(trial)) = one
 !
             call davidson%write_trial(c_i)

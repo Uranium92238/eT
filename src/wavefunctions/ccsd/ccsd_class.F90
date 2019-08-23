@@ -38,6 +38,20 @@ module ccsd_class
 !
       integer :: n_t2  
 !
+!     Intermediate files 
+!
+      type(sequential_file) :: jacobian_c2_intermediate_oovo_1
+      type(sequential_file) :: jacobian_c2_intermediate_oovo_2
+      type(sequential_file) :: jacobian_c2_intermediate_oovo_3
+      type(sequential_file) :: jacobian_d2_intermediate
+      type(sequential_file) :: jacobian_e2_intermediate
+      type(sequential_file) :: jacobian_g2_intermediate_vv
+      type(sequential_file) :: jacobian_g2_intermediate_oo
+      type(sequential_file) :: jacobian_g2_intermediate_vovo
+      type(sequential_file) :: jacobian_h2_intermediate_voov_1
+      type(sequential_file) :: jacobian_h2_intermediate_voov_2
+      type(sequential_file) :: jacobian_j2_intermediate_oooo
+!
    contains
 !
 !     Preparation and cleanup routines
@@ -107,6 +121,15 @@ module ccsd_class
       procedure :: jacobian_ccsd_j2                            => jacobian_ccsd_j2_ccsd
       procedure :: jacobian_ccsd_k2                            => jacobian_ccsd_k2_ccsd
       procedure :: jacobian_ccsd_l2                            => jacobian_ccsd_l2_ccsd
+!
+      procedure :: prepare_for_jacobian                        => prepare_for_jacobian_ccsd
+!
+      procedure :: save_jacobian_c2_intermediates              => save_jacobian_c2_intermediates_ccsd
+      procedure :: save_jacobian_d2_intermediate               => save_jacobian_d2_intermediate_ccsd
+      procedure :: save_jacobian_e2_intermediate               => save_jacobian_e2_intermediate_ccsd
+      procedure :: save_jacobian_g2_intermediates              => save_jacobian_g2_intermediates_ccsd
+      procedure :: save_jacobian_h2_intermediates              => save_jacobian_h2_intermediates_ccsd
+      procedure :: save_jacobian_j2_intermediate               => save_jacobian_j2_intermediate_ccsd
 !
 !     Routines related to Jacobian transpose transformation
 !

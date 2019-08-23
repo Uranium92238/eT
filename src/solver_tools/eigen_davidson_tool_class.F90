@@ -264,16 +264,14 @@ contains
       call mem%alloc(X_red, davidson%dim_red, davidson%dim_red)
       call mem%alloc(A_red, davidson%dim_red, davidson%dim_red)
 !
-      X_red = zero
+      call zero_array(X_red, davidson%dim_red**2)
       call dcopy(davidson%dim_red**2, davidson%A_red, 1, A_red, 1)
 !
       call mem%alloc(omega_re, davidson%dim_red)
       call mem%alloc(omega_im, davidson%dim_red)
 !
-      omega_re = zero
-      omega_im = zero
-!
 !     Find optimal work size, lwork = -1
+!
       call dgeev('N','V',             &
                   davidson%dim_red,   &
                   A_red,              &
@@ -291,7 +289,6 @@ contains
       worksize = int(optwork+0.01)
 !
       call mem%alloc(work, worksize)
-      work = zero
 !      
       call dgeev('N','V',             &
                   davidson%dim_red,   &
@@ -319,9 +316,6 @@ contains
       call davidson%initialize_omega_im()
       call davidson%initialize_omega_re()
 !
-      davidson%omega_re = zero
-      davidson%omega_im = zero
-!
       call mem%alloc(index_list, davidson%n_solutions)
 !
       call get_n_lowest(davidson%n_solutions, davidson%dim_red, &
@@ -333,19 +327,19 @@ contains
          call mem%dealloc(davidson%X_red, davidson%dim_red - davidson%n_new_trials, davidson%n_solutions)
 !
       call mem%alloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
-      davidson%X_red = zero
 !
+!$omp parallel do private(i, j) collapse(2)
       do j = 1, davidson%n_solutions
 !
          do i = 1, davidson%dim_red
 !
             davidson%X_red(i, j) = X_red(i, index_list(j))
+            davidson%omega_im(j) = omega_im(index_list(j))
 !
          enddo
 !
-         davidson%omega_im(j) = omega_im(index_list(j))
-!
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(X_red, davidson%dim_red, davidson%dim_red)
       call mem%dealloc(omega_re, davidson%dim_red)
@@ -678,11 +672,13 @@ contains
          read(davidson%projector%unit) projector
          call disk%close_file(davidson%projector)
 !
+!$omp parallel do private(i)
          do i = 1, davidson%n_parameters
 !
             R(i) = R(i)*projector(i)
 !
          enddo 
+!$omp end parallel do
 !
          call mem%dealloc(projector, davidson%n_parameters)
 !

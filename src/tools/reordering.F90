@@ -297,6 +297,7 @@ end subroutine add_two_312_min_321_min_213
 !
       integer :: p, q
 !
+!$omp parallel do schedule(static) private(p, q)
       do q = 1, dim_q
          do p = 1, dim_p
 !
@@ -304,6 +305,7 @@ end subroutine add_two_312_min_321_min_213
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine add_21_to_12
 !
@@ -2856,13 +2858,14 @@ subroutine add_2413_to_1234(scalar, x_qspr, y_pqrs, dim_p, dim_q, dim_r, dim_s)
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,pqrs)
       do q = 1, dim_q
          do r = 1, dim_r
-            do p = 1, dim_p
+            do s = 1, dim_s
+!
+               rs = dim_r*(s-1) + r
+!
+               do p = 1, dim_p
 !
                   pq = dim_p*(q-1) + p
 !
-               do s = 1, dim_s
-!
-                  rs = dim_r*(s-1) + r
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
                   x_psrq(p,s,r,q) = x_pqrs(pqrs)
