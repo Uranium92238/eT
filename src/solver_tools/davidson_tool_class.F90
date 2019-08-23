@@ -447,7 +447,7 @@ contains
 !        Pad previous A_red
 !
          call mem%alloc(A_red_copy, davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
-         A_red_copy = davidson%A_red
+         call copy_and_scale(one, davidson%A_red, A_red_copy, (davidson%dim_red - davidson%n_new_trials)**2)
 !
          call mem%dealloc(davidson%A_red, davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
 !
@@ -521,7 +521,7 @@ contains
 !
       integer :: i, ioerror
 !
-      X = zero
+      call zero_array(X, davidson%n_parameters)
 !
       call mem%alloc(c_i, davidson%n_parameters)
 !
@@ -562,7 +562,7 @@ contains
 !
       integer :: i, ioerror
 !
-      AX = zero
+      call zero_array(AX, davidson%n_parameters)
 !
       call mem%alloc(rho_i, davidson%n_parameters)
 !
@@ -659,19 +659,23 @@ contains
 !
          if (.not. present(alpha)) then
 !
+!$omp parallel do private(i)
             do i = 1, davidson%n_parameters
 !
                R(i) = R(i)/preconditioner(i)
 !
             enddo 
+!$omp end parallel do
 !
          else
 !
+!$omp parallel do private(i)
             do i = 1, davidson%n_parameters
 !
                R(i) = R(i)/(preconditioner(i)-alpha)
 !
             enddo 
+!$omp end parallel do
 !
          endif
 !

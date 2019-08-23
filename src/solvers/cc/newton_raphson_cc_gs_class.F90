@@ -282,7 +282,7 @@ contains
 !
       class(newton_raphson_cc_gs), intent(in) :: solver 
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(in)  :: omega 
       real(dp), dimension(wf%n_gs_amplitudes), intent(out) :: dt  
@@ -324,6 +324,11 @@ contains
 !
       call davidson%write_trial(first_trial, 'rewind')
       call mem%dealloc(first_trial, wf%n_gs_amplitudes)
+!
+!     Prepare intermediates for Jacobian transformation
+!
+      call wf%prepare_for_jacobian()
+!
 !
 !     Enter iterative loop
 !
