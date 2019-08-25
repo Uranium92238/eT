@@ -148,9 +148,10 @@ contains
       call get_n_lowest(solver%n_singlet_states, wf%n_es_amplitudes, orbital_differences, &
                            lowest_orbital_differences, lowest_orbital_differences_index)
 !
+      call zero_array(R, (solver%n_singlet_states)*(wf%n_es_amplitudes))
+!
       do state = 1, solver%n_singlet_states
 !
-         R(:,state) = zero
          R(lowest_orbital_differences_index(state), state) = one
 !
       enddo 
@@ -488,14 +489,16 @@ contains
 !
                if (.not. converged(state)) then
 !
-                  X(:,state) = X(:,state) + dX(:)
+                  call daxpy(wf%n_es_amplitudes, one, dX, 1, X(1, state), 1)
 !
                   call diis(state)%update(dX(:), X(:,state))
 !
                   norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
-                  X(:,state) = X(:,state)/norm_X
+!
+                  call dscal(wf%n_es_amplitudes, one/norm_X, X(1,state), 1)
 !
                endif 
+!
                call mem%dealloc(dX, wf%n_es_amplitudes)
 !
             endif 

@@ -42,6 +42,7 @@ module diis_tool_class
 !
    use kinds
    use parameters
+   use array_utilities
 !
    use file_class
    use disk_manager_class
@@ -289,7 +290,7 @@ contains
 !
 !     Update the parameters (place in x_dx on exit)
 !
-      x_dx = zero 
+      call zero_array(x_dx, solver%n_parameters)
 !
       call mem%alloc(x_dx_i, solver%n_parameters)
 !
