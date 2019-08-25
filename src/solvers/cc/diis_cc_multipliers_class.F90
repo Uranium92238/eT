@@ -254,7 +254,7 @@ contains
             call solver%do_diagonal_precondition(-one, epsilon, residual, wf%n_gs_amplitudes)
 !
             call wf%get_multipliers(multipliers)
-            multipliers = multipliers + residual 
+            call daxpy(wf%n_gs_amplitudes, one, residual, 1, multipliers, 1)
 !
             call diis%update(residual, multipliers)
             call wf%set_multipliers(multipliers)
@@ -366,17 +366,3 @@ contains
 !
 end module diis_cc_multipliers_class
 !
-!  Testing multipliers against dalton:
-!
-!  Run Dalton, requesting transition moments (*CCOPA)
-!
-!  Copy the file CCL0_1__1 to the eT scratch folder
-!
-!  This file is sequential and unformatted and contains the following records:
-!
-!     1. Some integer and a string containing the CC-method used 
-!
-!     2. Multipliers singles-vector
-!
-!     3. Multipliers doubles-vector (for CCSD/CC2)
-!  
