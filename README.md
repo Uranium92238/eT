@@ -1,16 +1,12 @@
 # Prerequisites
-1. [Libint 2.4.2 library](https://github.com/evaleev/libint/releases/download/v2.4.2/libint-2.4.2.tgz)
-2. [Eigen 3](http://eigen.tuxfamily.org/index.php?title=Main_Page) (3.3.5 or newer)
-3. [CMake](https://cmake.org/) (3.10 or newer)
-4. GNU compilers (gfortran, gcc, g++) or Intel compilers (ifort, icc, icpc). These need to be recent versions (2016-) since some features of the Fortran 2008 standard were included only recently in Gfortran and Ifort. 
-5. BLAS and LAPACK libraries.
-6. [Boost](https://www.boost.org)
+1. [CMake](https://cmake.org/) (3.7 or newer)
+2. Python 3
+3. Recent (2016-) GNU (gfortran, gcc, g++) or Intel compilers (ifort, icc, icpc) 
+4. BLAS and LAPACK libraries
+5. [Libint 2 library](https://www.etprogram.org/libint/libint-2.7.0-beta.1.tgz) (link: 2.7.0 library configured for eT)
+and the dependencies [Eigen 3](http://eigen.tuxfamily.org/index.php?title=Main_Page) (3.3.5 or newer) and [Boost](https://www.boost.org). To compile the library, see the instructions on the [Libint Wiki](https://github.com/evaleev/libint/wiki).
 
-You also need to set two environment variables, e.g. in .bashrc:
-* export LIBINT\_DATA\_PATH=/path-to-libint/libint-2.4.2/lib/basis
-* export SAD\_ET\_DIR=/path-to-eT/src/molecule/sad
-
-# Installation of eT
+# Quick install of eT
 Open the terminal and clone the repository:
 ```
 git clone git@gitlab.com:eT-program/eT.git
@@ -24,20 +20,32 @@ Initialize and update the submodules:
 git submodule init 
 git submodule update
 ```
-Now make a directory for the compiled program, and enter the directory:
+Run the setup script to configure using CMake:
 ```
-mkdir build
+./setup [--help]
+```
+CMake will identify the compilers to use (Fortran, C++) and the location of libraries (BLAS, LAPACK, Libint, Eigen, Boost). If the setup script does not correctly locate and identify libraries (BLAS, LAPACK, Libint, Eigen, Boost), try setting the associated environment variables in the .bashrc (example paths given):
+```
+export LIBINT2_ROOT=/home/eirikfad/prog/libint
+export EIGEN3_ROOT=/home/eirikfad/prog/eigen3/include/eigen3
+export BOOST_INCLUDEDIR=/usr/include
+export MATH_ROOT=/opt/intel/mkl/lib/intel64_lin 
+```
+Change to the "build" directory and compile the executable:
+```
 cd build
-```
-Configure using CMake:
-```
-cmake ..
-```
-Compile eT:
-```
 make [-j4]
 ```
-Run tests:
+If successful, the directory now contain the executable (eT) as well as a Python launch script (eT_launch). 
+To test that the program performs as expected, make sure all the tests pass using the compiled executable:
 ```
 ctest
+``` 
+To use the launch script, it is useful to define an alias in .bashrc:
+```
+alias eT=pathtoeT/build/eT_launch
+```
+The program can then be conveniently run by using the command eT:
+```
+eT [--help]
 ```
