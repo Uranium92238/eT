@@ -1098,7 +1098,7 @@ contains
 !
       class(ccs) :: wf
 !
-      wf%t1 = zero
+      call zero_array(wf%t1, wf%n_t1)
 !
    end subroutine set_initial_amplitudes_guess_ccs
 !
@@ -1245,7 +1245,7 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
-      omega = zero
+      call zero_array(omega, wf%n_gs_amplitudes)
       call wf%omega_ccs_a1(omega)
 !
    end subroutine construct_omega_ccs
@@ -1292,8 +1292,8 @@ contains
       call wf%get_oooo(g_ijkl)
 !
 !$omp parallel do private(i,j,k)
-      do i = 1, wf%n_o
-         do j = 1, wf%n_o
+      do j = 1, wf%n_o
+         do i = 1, wf%n_o
             do k = 1, wf%n_o
 !
                F_pq(i, j) = F_pq(i, j) + two*g_ijkl(i,j,k,k) - g_ijkl(i,k,k,j)
@@ -1377,8 +1377,8 @@ contains
       integer :: i, j, a, b
 !
 !$omp parallel do private(i,j)
-      do i = 1, wf%n_o
-         do j = 1, wf%n_o
+      do j = 1, wf%n_o
+         do i = 1, wf%n_o
 !
             wf%fock_ij(i,j) = F_pq(i,j)
 !
@@ -1398,8 +1398,8 @@ contains
 !$omp end parallel do 
 !
 !$omp parallel do private(a,b)
-      do a = 1, wf%n_v
-         do b = 1, wf%n_v
+      do b = 1, wf%n_v
+         do a = 1, wf%n_v
 !
             wf%fock_ab(a,b) = F_pq(wf%n_o + a, wf%n_o + b)
 !
@@ -1444,8 +1444,8 @@ contains
       call mem%alloc(X, wf%n_mo, wf%n_mo)
       call mem%alloc(Y, wf%n_mo, wf%n_mo)
 !
-      X = zero
-      Y = zero
+      call zero_array(X, (wf%n_mo)**2)
+      call zero_array(Y, (wf%n_mo)**2)
 !
 !$omp parallel do private(p)
       do p = 1, wf%n_mo
@@ -1599,7 +1599,8 @@ contains
       class(ccs) :: wf
 !
       if (.not. allocated(wf%t1)) call mem%alloc(wf%t1, wf%n_v, wf%n_o)
-      wf%t1 = zero ! Hack, fix later, for integrals
+!
+      call zero_array(wf%t1, wf%n_t1) ! Hack, fix later, for integrals
 !
    end subroutine initialize_t1_ccs
 !
@@ -2926,7 +2927,7 @@ contains
 !     Allocate the transformed vector & add the terms to it
 !
       call mem%alloc(rho_ai, wf%n_v, wf%n_o)
-      rho_ai = zero
+      call zero_array(rho_ai, wf%n_t1)
 !
       call wf%jacobian_ccs_a1(rho_ai, c_ai)
       call wf%jacobian_ccs_b1(rho_ai, c_ai)
@@ -2966,7 +2967,7 @@ contains
 !     Allocate the transformed vector & add the terms to it
 !
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
-      sigma_ai = zero
+      call zero_array(sigma_ai, wf%n_t1)
 !
       call wf%jacobian_transpose_ccs_a1(sigma_ai, b_ai)
       call wf%jacobian_transpose_ccs_b1(sigma_ai, b_ai)
@@ -3216,7 +3217,7 @@ contains
       call wf%get_voov(g_ckia)
 !
       call mem%alloc(L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      L_aick = zero
+      call zero_array(L_aick, (wf%n_o)**2*(wf%n_v)**2)
 !
       call batch_a%init(wf%n_v)
 !
@@ -3366,7 +3367,7 @@ contains
 !
       integer :: core, i, a, ai
 !
-      projector = zero
+      call zero_array(projector, wf%n_es_amplitudes)
 !
       do core = 1, n_cores
 !
@@ -3636,7 +3637,7 @@ contains
 !
       class(ccs) :: wf
 !
-      wf%density = zero
+      call zero_array(wf%density, (wf%n_mo)**2)
 !
       call wf%one_el_density_ccs_oo()
       call wf%one_el_density_ccs_vo()
