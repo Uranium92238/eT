@@ -4,8 +4,8 @@ system
 end system
 
 do
-   ground state
-   excited state
+  ground state
+  excited state
 end do
 
 memory
@@ -24,7 +24,7 @@ end solver hf
 
 method
    hf
-   ccsd
+   cc2
 end method
 
 solver cc gs
@@ -33,12 +33,12 @@ solver cc gs
 end solver cc gs
 
 solver cc es
-   core excitation:    {1}
    algorithm:          davidson
    singlet states:     2
    residual threshold: 1.0d-10
    energy threshold:   1.0d-10
-   right eigenvectors
+   left eigenvectors
+   core excitation: {1}
 end solver cc es
 
 geometry

@@ -422,6 +422,9 @@ contains
       integer :: req_0, req_1, req_2, req_3
       real(dp) :: batch_buff = 0.0
 !
+      logical :: ijk_core
+      integer :: i_cvs
+!
 !     :: Construct intermediate X_ai ::
 !
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -565,6 +568,28 @@ contains
 !
                         if (k .eq. i) then ! k == j == i
                            cycle
+                        end if
+!
+!                       Check if at least one index i,j,k is a core orbital
+                        if(wf%cvs_cc3) then
+!
+                           ijk_core = .false.
+!
+                           do i_cvs = 1, wf%n_cores
+!
+                              if(     i .eq. wf%core_MOs(i_cvs)   &
+                                 .or. j .eq. wf%core_MOs(i_cvs)   &
+                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+!
+                                 ijk_core = .true.
+!
+                              end if
+!
+                           end do
+!
+!                          Cycle if i,j,k are not core orbitals
+                           if (.not. ijk_core) cycle
+!
                         end if
 !
                         k_rel = k - batch_k%first + 1
@@ -910,7 +935,11 @@ contains
       type(batching_index) :: batch_i, batch_j, batch_k
       integer              :: i_batch, j_batch, k_batch
       integer              :: req_0, req_1, req_2, req_3
-      real(dp)             :: batch_buff = zero 
+      real(dp)             :: batch_buff = zero
+!
+      logical :: ijk_core
+      integer :: i_cvs
+!
 !
 !     Set up arrays for amplitudes
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -1161,6 +1190,28 @@ contains
 !
                         c_abc = zero
 !
+!                       Check if at least one index i,j,k is a core orbital
+                        if(wf%cvs_cc3) then
+!
+                           ijk_core = .false.
+!
+                           do i_cvs = 1, wf%n_cores
+!
+                              if(     i .eq. wf%core_MOs(i_cvs)   &
+                                 .or. j .eq. wf%core_MOs(i_cvs)   &
+                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+!
+                                 ijk_core = .true.
+!
+                              end if
+!
+                           end do
+!
+!                          Cycle if i,j,k are not core orbitals
+                           if (.not. ijk_core) cycle
+!
+                        end if
+!
                         k_rel = k - batch_k%first + 1
 !
 !                       Construct C^abc_ijk for given i, j, k
@@ -1312,8 +1363,8 @@ contains
 !!    Calculate the C3 amplitudes for fixed indices i,j,k 
 !!
 !!    C^abc_ijk 
-!!    = (ω - ε^abc_ijk)^-1 P^abc_ijk (C_ai*L_jbkc - C_ak*L_jbic + Cabij*F_kc - C_abik*F_jc)
-!!    + sum_l (C_ablk g_iljc - C_abil L_jlkc) - sum_d (C_adjk g_ibdc - C_adij L_dbkc)
+!!    = (ω - ε^abc_ijk)^-1 P^abc_ijk ((C_ai*L_jbkc - C_ak*L_jbic + C_abij*F_kc - C_abik*F_jc)
+!!    + sum_l (C_ablk g_iljc - C_abil L_jlkc) - sum_d (C_adjk g_ibdc - C_adij L_dbkc))
 !!
 !!    Contibutions from outer products:
 !!    P^abc_ijk (C_ai*L_jbkc - C_ak*L_jbic + Cabij*F_kc - C_abik*F_jc)

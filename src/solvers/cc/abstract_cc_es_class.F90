@@ -60,11 +60,9 @@ module abstract_cc_es_class
       procedure, non_overridable :: print_banner                     => print_banner_abstract_cc_es
 !
       procedure, non_overridable :: read_es_settings                 => read_es_settings_abstract_cc_es     
-!
       procedure, non_overridable :: print_es_settings                => print_es_settings_abstract_cc_es
 !
       procedure, non_overridable :: cleanup                          => cleanup_abstract_cc_es
-!
       procedure, non_overridable :: print_summary                    => print_summary_abstract_cc_es
 !
       procedure, non_overridable :: prepare_wf_for_excited_state     => prepare_wf_for_excited_state_abstract_cc_es

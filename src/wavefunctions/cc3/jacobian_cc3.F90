@@ -442,6 +442,9 @@ contains
       integer              :: req_0, req_1, req_2, req_3
       real(dp)             :: batch_buff = 0.0
 !
+      logical :: ijk_core
+      integer :: i_cvs
+!
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -586,6 +589,29 @@ contains
                            cycle
                         end if
 !
+!                       Check if at least one index i,j,k is a core orbital
+!                       i,j,k contribute to rho2 and thus have to be restricted as well
+                        if(wf%cvs_cc3) then
+!
+                           ijk_core = .false.
+!
+                           do i_cvs = 1, wf%n_cores
+!
+                              if(     i .eq. wf%core_MOs(i_cvs)   &
+                                 .or. j .eq. wf%core_MOs(i_cvs)   &
+                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+!
+                                 ijk_core = .true.
+!
+                              end if
+!
+                           end do
+!
+!                          Cycle if i,j,k are not core orbitals
+                           if (.not. ijk_core) cycle
+!
+                        end if
+!
                         k_rel = k - batch_k%first + 1
 !
 !                       Construct t^{abc}_{ijk} for given i, j, k
@@ -641,12 +667,12 @@ contains
 !
       endif
 !
-      call mem%dealloc(F_kc_c1, wf%n_v, wf%n_o)
-!
 !     Deallocate amplitude arrays
 !
       call mem%dealloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%dealloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+      call mem%dealloc(F_kc_c1, wf%n_v, wf%n_o)
 !
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -659,10 +685,10 @@ contains
 !!    to the singles and doubles part of the outgoing vector
 !!
 !!    The triples amplitudes are expressed in terms of doubles amplitudes:
-!!    C_3 = (omega - ε^abc_ijk)^-1 (< μ3 | [H,C_2] | HF > + < μ3 | [[H,C_1],T_2] | HF >)
+!!    C_3 = (ω - ε^abc_ijk)^-1 (< μ3 | [H,C_2] | HF > + < μ3 | [[H,C_1],T_2] | HF >)
 !!
-!!    c^abc = (omega - ε^abc_ijk)^-1 * P^abc_ijk (sum_d c^ad_ij g_ckbd - sum_l c^ab_il g_cklj
-!!             + sum_d t^ad_ij g'_bdck - sum_l t^ab_il g'_cklj
+!!    c^abc = (ω - ε^abc_ijk)^-1 * P^abc_ijk (sum_d c^ad_ij g_ckbd - sum_l c^ab_il g_cklj
+!!             + sum_d t^ad_ij g'_bdck - sum_l t^ab_il g'_cklj)
 !!
 !!    rho1 += < μ1 | [H,C_3] | R >
 !!    rho2 += < μ2 | [H,C_3] | R >
@@ -777,6 +803,9 @@ contains
       integer              :: req_0, req_1, req_2, req_3
       real(dp)             :: batch_buff = 0.0
 !
+      logical :: ijk_core
+      integer :: i_cvs
+!
 !     Set up required c1-transformed integrals
       call wf%construct_c1_integrals(c_ai)
 !
@@ -848,6 +877,8 @@ contains
       call mem%alloc(c_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%alloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%alloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
+!
+      call zero_array(c_abc, wf%n_v**3)
 !
 !     Remaining integral arrays
 !
@@ -1071,6 +1102,28 @@ contains
 !
                         if (i .eq. j .and. i .eq. k) then
                            cycle
+                        end if
+!
+!                       Check if at least one index i,j,k is a core orbital
+                        if(wf%cvs_cc3) then
+!
+                           ijk_core = .false.
+!
+                           do i_cvs = 1, wf%n_cores
+!
+                              if(     i .eq. wf%core_MOs(i_cvs)   &
+                                 .or. j .eq. wf%core_MOs(i_cvs)   &
+                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+!
+                                 ijk_core = .true.
+!
+                              end if
+!
+                           end do
+!
+!                          Cycle if i,j,k are not core orbitals
+                           if (.not. ijk_core) cycle
+!
                         end if
 !
                         k_rel = k - batch_k%first + 1

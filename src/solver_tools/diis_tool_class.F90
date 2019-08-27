@@ -344,7 +344,7 @@ contains
       else
 !
          get_current_dim_diis_tool = solver%iteration - &
-                           solver%diis_dimension*((solver%iteration-1)/solver%diis_dimension)
+                           solver%diis_dimension*((solver%iteration-1)/solver%diis_dimension) 
 !
       endif
 !
@@ -452,25 +452,25 @@ contains
 !
          call disk%open_file(solver%diis_matrix, 'readwrite')
 !
-         if (solver%iteration .gt. solver%diis_dimension) then
+         if (solver%iteration .gt. solver%diis_dimension .and. .not. solver%erase_history) then
 !
 !           First entry goes out, eliminating the (old) 1st row & column.
 !
-            call mem%alloc(diis_matrix_tmp, current_dim, current_dim)
+               call mem%alloc(diis_matrix_tmp, current_dim, current_dim)
 !
-            rewind(solver%diis_matrix%unit)
+               rewind(solver%diis_matrix%unit)
 !
-            do j = 1, current_dim
-               do i = 1, current_dim
+               do j = 1, current_dim
+                  do i = 1, current_dim
 !
-                  read(solver%diis_matrix%unit) diis_matrix_tmp(i,j)
+                     read(solver%diis_matrix%unit) diis_matrix_tmp(i,j)
 !
+                  enddo
                enddo
-            enddo
 !
-            diis_matrix(1 : (current_dim - 1), 1 : (current_dim - 1)) = diis_matrix_tmp(2 : current_dim, 2 : current_dim)      
+               diis_matrix(1 : (current_dim - 1), 1 : (current_dim - 1)) = diis_matrix_tmp(2 : current_dim, 2 : current_dim)      
 !
-            call mem%dealloc(diis_matrix_tmp, current_dim, current_dim)
+               call mem%dealloc(diis_matrix_tmp, current_dim, current_dim)
 !
          elseif (current_dim .gt. 1) then
 !

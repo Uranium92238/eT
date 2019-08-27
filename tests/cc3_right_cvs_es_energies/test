@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+# provides os.path.join
+import os
+
+# provides exit
+import sys
+
+# we make sure we can import runtest and runtest_config
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+# we import essential functions from the runtest library
+from runtest import version_info, get_filter, cli, run
+
+# this tells runtest how to run your code
+from runtest_config import configure
+
+# we stop the script if the major version is not compatible
+assert version_info.major == 2
+
+# construct filter(s)
+f = [
+# Two singlet excitation energies
+    get_filter(from_string='State                (Hartree)             (eV)',
+               num_lines=4,
+               abs_tolerance=1.0e-10,
+               mask=[2]),
+# Largest single amplitudes
+    get_filter(from_string='Largest single amplitudes:',
+               num_lines=5,
+               abs_tolerance=1.0e-10,
+               mask=[3],
+               ignore_sign=True),
+]
+
+# invoke the command line interface parser which returns options
+options = cli()
+
+ierr = 0
+for inp in ['cc3_right_cvs_es_energies.inp']:
+    # the run function runs the code and filters the outputs
+    ierr += run(options,
+                configure,
+                input_files=inp,
+                filters={'out': f})
+
+sys.exit(ierr)
