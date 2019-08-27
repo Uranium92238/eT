@@ -46,7 +46,7 @@ contains
 !!
 !!    Directs the transformation by the transpose of the  CC3 Jacobi matrix,
 !!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >,
+!!       A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >,
 !!
 !!    The transformation is performed as sigma^T = c^T A, where c is the vector
 !!    sent to the routine. On exit, the vector c is equal to sigma (the transformed
@@ -82,7 +82,7 @@ contains
 !     Allocate and zero the transformed singles vector
 !
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
-      sigma_ai = zero
+      call zero_array(sigma_ai, wf%n_v*wf%n_o)
 !
       call mem%alloc(c_ai, wf%n_v, wf%n_o)
 !
@@ -151,7 +151,7 @@ contains
 !     Allocate unpacked transformed vector
 !
       call mem%alloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      sigma_aibj = zero
+      call zero_array(sigma_aibj, (wf%n_v*wf%n_o)**2)
 !
 !     Contributions from singles vector c
 !
@@ -420,7 +420,6 @@ contains
       integer :: i, j, k, i_rel, j_rel, k_rel
       integer :: i_batch, j_batch, k_batch, l_batch ! used for the current batch
       integer :: req_0, req_1, req_2, req_3
-      real(dp) :: batch_buff = 0.0
 !
       logical :: ijk_core
       integer :: i_cvs
@@ -442,7 +441,7 @@ contains
       call batch_k%init(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                                 req_0, req_1, req_2, req_3, batch_buff)
+                                 req_0, req_1, req_2, req_3, zero)
 !
 !     Allocate integral arrays
 !
@@ -476,7 +475,7 @@ contains
 !
 !     Array for the whole intermediate X_ai
       call mem%alloc(X_ai, wf%n_v, wf%n_o)
-      X_ai = zero
+      call zero_array(X_ai, wf%n_v*wf%n_o)
 !
       call wf%g_bdck_t%open_('read')
       call wf%g_ljck_t%open_('read')
@@ -751,7 +750,7 @@ contains
       call dgemv('N',               &
                   wf%n_v,           & 
                   wf%n_v**2,        & 
-                  -one,              &
+                  -one,             &
                   u_abc,            & ! u_a_bc
                   wf%n_v,           &
                   c_bcjk(:,:,i,j),  & ! c_bc,ij
@@ -838,10 +837,10 @@ contains
 !!    Construct C^abc_ijk in single batches of ijk and compute the contributions
 !!    to the singles and doubles part of the outgoing vector
 !!
-!!    c_μ3 = (ω - ε^abc_ijk)^-1 (c_μ1 < μ1 | [H,tau_ν3] | R > + c_μ2 < μ2 | [H,tau_ν3] | R >
+!!    c_μ3 = (ω - ε^abc_ijk)^-1 (c_μ1 < μ1 | [H,τ_ν3] | R > + c_μ2 < μ2 | [H,τ_ν3] | R >
 !!
-!!    σ1 += c_μ3 < μ3 | [[H,T_2],tau_ν1] | R >
-!!    σ2 += c_μ3 < μ3 | [H,tau_ ν2] | R >
+!!    σ1 += c_μ3 < μ3 | [[H,T_2],τ_ν1] | R >
+!!    σ2 += c_μ3 < μ3 | [H,τ_ ν2] | R >
 !!
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -866,7 +865,6 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: t_abij
 !
       real(dp), dimension(:,:), allocatable :: F_kc
-!
 !
 !     Arrays for intermediates
 !     cannot hold the whole Y_bcek array
@@ -935,7 +933,6 @@ contains
       type(batching_index) :: batch_i, batch_j, batch_k
       integer              :: i_batch, j_batch, k_batch
       integer              :: req_0, req_1, req_2, req_3
-      real(dp)             :: batch_buff = zero
 !
       logical :: ijk_core
       integer :: i_cvs
@@ -957,7 +954,7 @@ contains
       call batch_k%init(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                           req_0, req_1, req_2, req_3, batch_buff)
+                           req_0, req_1, req_2, req_3, zero)
 !
 !     Allocate integral arrays
 !
@@ -1033,7 +1030,7 @@ contains
 !
 !     vooo Intermediate
       call mem%alloc(Y_cmjk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      Y_cmjk = zero
+      call zero_array(Y_cmjk, wf%n_v*wf%n_o**3)
 !
       call wf%g_bdck_t%open_('read')
       call wf%g_ljck_t%open_('read')
@@ -1052,7 +1049,7 @@ contains
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
 !
-         Y_bcei = zero
+         call zero_array(Y_bcei, batch_i%length*wf%n_v**3)
          Y_bcei_p => Y_bcei
 !
          do j_batch = 1, i_batch
@@ -1188,7 +1185,8 @@ contains
                            cycle
                         end if
 !
-                        c_abc = zero
+!                       c3_calc does not zero out the array
+                        call zero_array(c_abc, wf%n_v**3)
 !
 !                       Check if at least one index i,j,k is a core orbital
                         if(wf%cvs_cc3) then
@@ -1246,10 +1244,10 @@ contains
                                                             g_lick_p(:,:,i_rel,k_rel),         &
                                                             g_ljck_p(:,:,j_rel,k_rel))
 !
-                        call wf%construct_y_intermediates(i, j, k, c_abc, u_abc, t_abij, &
-                                                          Y_cmjk,                       &
-                                                          Y_bcei_p(:,:,:,i_rel),        &
-                                                          Y_bcej_p(:,:,:,j_rel),        &
+                        call wf%construct_y_intermediates(i, j, k, c_abc, u_abc, t_abij,  &
+                                                          Y_cmjk,                         &
+                                                          Y_bcei_p(:,:,:,i_rel),          &
+                                                          Y_bcej_p(:,:,:,j_rel),          &
                                                           Y_bcek_p(:,:,:,k_rel))
 !
                      enddo ! loop over k
@@ -1340,13 +1338,13 @@ contains
 !
 !     Contribution of the Y_cmkj to sigma1
 !
-      call wf%jacobian_transpose_cc3_c3_a_y_o(sigma_ai, Y_cmjk)
+      call wf%jacobian_transpose_cc3_c3_a1_y_o(sigma_ai, Y_cmjk)
 !
       call mem%dealloc(Y_cmjk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
 !     Contribution of the Y_bcek to sigma1
 !
-      call wf%jacobian_transpose_cc3_c3_a_y_v(sigma_ai)
+      call wf%jacobian_transpose_cc3_c3_b1_y_v(sigma_ai)
 !
       call wf%Y_bcek%close_()
 !
@@ -1411,8 +1409,6 @@ contains
 !
 !     :: Contribution 1 ::
 !
-!     The same contractions contributes to 3 permutations of the indices in c_abc
-!
 !     c_abc <- u_abc = -sum_l (2* c_ablj g_ilkc - c_aclj g_ilkb - c_cblj g_ilka)
 !
       call dgemm('N', 'T',          &
@@ -1442,8 +1438,6 @@ contains
                   one,              &
                   u_abc,            &
                   wf%n_v)
-!
-!     The same outer products contributes to 3 permutations of the indices in c_abc
 !
 !     c_abc <- u_abc = 2*L_iajb*c_ck - L_iajc*c_bk - L_icjb*c_ak
 !
@@ -1958,7 +1952,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: Y_bcej
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: Y_bcek
 !
-!     Y_cikm = sum_ab,j c^abc_ijk t^ab_mj
+!     Y_cmik = sum_ab,j c^abc_ijk t^ab_mj
 !
       call dgemm('T','N',           &
                   wf%n_v,           &
@@ -1989,7 +1983,7 @@ contains
                   wf%n_v**2)
 !
 !
-!     Y_cjim = sum_ab,k c^cab_ijk t^ab_mk
+!     Y_cmji = sum_ab,k c^cab_ijk t^ab_mk
 !
       call dgemm('N','N',           &
                   wf%n_v,           &
@@ -2167,7 +2161,7 @@ contains
    end subroutine construct_y_intermediates_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_c3_a_y_o_cc3(wf, sigma_ai, Y_cmjk)
+   module subroutine jacobian_transpose_cc3_c3_a1_y_o_cc3(wf, sigma_ai, Y_cmjk)
 !!
 !!    Computes the contribution of the intermediate Y_cmjk to sigma_1
 !!
@@ -2325,10 +2319,10 @@ contains
 !
       call mem%dealloc(Y_cmkj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-   end subroutine jacobian_transpose_cc3_c3_a_y_o_cc3
+   end subroutine jacobian_transpose_cc3_c3_a1_y_o_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_c3_a_y_v_cc3(wf, sigma_ai)
+   module subroutine jacobian_transpose_cc3_c3_b1_y_v_cc3(wf, sigma_ai)
 !!
 !!    Computes the contribution of the intermediate Y_bcek to sigma_1
 !!
@@ -2515,7 +2509,7 @@ contains
 !
       call wf%g_cdlk_t%close_()
 !
-   end subroutine jacobian_transpose_cc3_c3_a_y_v_cc3
+   end subroutine jacobian_transpose_cc3_c3_b1_y_v_cc3
 !
 !
 end submodule jacobian_transpose

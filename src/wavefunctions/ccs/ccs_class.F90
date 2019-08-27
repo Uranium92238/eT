@@ -68,6 +68,8 @@ module ccs_class
       type(mo_integral_tool) :: integrals
 !
       real(dp), dimension(:,:), allocatable :: density
+      real(dp), dimension(:,:), allocatable :: left_transition_density
+      real(dp), dimension(:,:), allocatable :: right_transition_density
 !
    contains
 !
@@ -138,6 +140,7 @@ module ccs_class
 !
       procedure :: prepare_for_jacobian                        => prepare_for_jacobian_ccs
       procedure :: prepare_for_jacobian_transpose              => prepare_for_jacobian_transpose_ccs
+      procedure :: prepare_for_multiplier_equation             => prepare_for_multiplier_equation_ccs
 !
       procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_ccs
       procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_ccs
@@ -160,46 +163,48 @@ module ccs_class
 !
 !     Routines to get electron repulsion integrals (ERIs)
 !
-      procedure :: get_ovov                                     => get_ovov_ccs
-      procedure :: get_vovo                                     => get_vovo_ccs
-      procedure :: get_vvoo                                     => get_vvoo_ccs
-      procedure :: get_voov                                     => get_voov_ccs
-      procedure :: get_ovvo                                     => get_ovvo_ccs
-      procedure :: get_oovv                                     => get_oovv_ccs
-      procedure :: get_oooo                                     => get_oooo_ccs
-      procedure :: get_vvvv                                     => get_vvvv_ccs
-      procedure :: get_ooov                                     => get_ooov_ccs
-      procedure :: get_oovo                                     => get_oovo_ccs
-      procedure :: get_ovoo                                     => get_ovoo_ccs
-      procedure :: get_vooo                                     => get_vooo_ccs
-      procedure :: get_vvvo                                     => get_vvvo_ccs
-      procedure :: get_vvov                                     => get_vvov_ccs
-      procedure :: get_vovv                                     => get_vovv_ccs
-      procedure :: get_ovvv                                     => get_ovvv_ccs
+      procedure :: get_ovov                                    => get_ovov_ccs
+      procedure :: get_vovo                                    => get_vovo_ccs
+      procedure :: get_vvoo                                    => get_vvoo_ccs
+      procedure :: get_voov                                    => get_voov_ccs
+      procedure :: get_ovvo                                    => get_ovvo_ccs
+      procedure :: get_oovv                                    => get_oovv_ccs
+      procedure :: get_oooo                                    => get_oooo_ccs
+      procedure :: get_vvvv                                    => get_vvvv_ccs
+      procedure :: get_ooov                                    => get_ooov_ccs
+      procedure :: get_oovo                                    => get_oovo_ccs
+      procedure :: get_ovoo                                    => get_ovoo_ccs
+      procedure :: get_vooo                                    => get_vooo_ccs
+      procedure :: get_vvvo                                    => get_vvvo_ccs
+      procedure :: get_vvov                                    => get_vvov_ccs
+      procedure :: get_vovv                                    => get_vovv_ccs
+      procedure :: get_ovvv                                    => get_ovvv_ccs
 !
-      procedure :: get_g_pqrs_required                          => get_g_pqrs_required_ccs
+      procedure :: get_g_pqrs_required                         => get_g_pqrs_required_ccs
 !
-      procedure, nopass :: need_g_abcd                          => need_g_abcd_ccs
+      procedure, nopass :: need_g_abcd                         => need_g_abcd_ccs
 !
 !     Routines to initialize and destruct arrays
 !
-      procedure :: initialize_fock_ij                           => initialize_fock_ij_ccs
-      procedure :: initialize_fock_ia                           => initialize_fock_ia_ccs
-      procedure :: initialize_fock_ai                           => initialize_fock_ai_ccs
-      procedure :: initialize_fock_ab                           => initialize_fock_ab_ccs
-      procedure :: initialize_t1                                => initialize_t1_ccs
-      procedure :: initialize_t1bar                             => initialize_t1bar_ccs
+      procedure :: initialize_fock_ij                          => initialize_fock_ij_ccs
+      procedure :: initialize_fock_ia                          => initialize_fock_ia_ccs
+      procedure :: initialize_fock_ai                          => initialize_fock_ai_ccs
+      procedure :: initialize_fock_ab                          => initialize_fock_ab_ccs
+      procedure :: initialize_t1                               => initialize_t1_ccs
+      procedure :: initialize_t1bar                            => initialize_t1bar_ccs
+      procedure :: initialize_gs_density                       => initialize_gs_density_ccs
+      procedure :: initialize_transition_densities             => initialize_transition_densities_ccs
 !
-      procedure :: destruct_fock_ij                             => destruct_fock_ij_ccs
-      procedure :: destruct_fock_ia                             => destruct_fock_ia_ccs
-      procedure :: destruct_fock_ai                             => destruct_fock_ai_ccs
-      procedure :: destruct_fock_ab                             => destruct_fock_ab_ccs
-      procedure :: destruct_t1                                  => destruct_t1_ccs
-      procedure :: destruct_t1bar                               => destruct_t1bar_ccs
+      procedure :: destruct_fock_ij                            => destruct_fock_ij_ccs
+      procedure :: destruct_fock_ia                            => destruct_fock_ia_ccs
+      procedure :: destruct_fock_ai                            => destruct_fock_ai_ccs
+      procedure :: destruct_fock_ab                            => destruct_fock_ab_ccs
+      procedure :: destruct_t1                                 => destruct_t1_ccs
+      procedure :: destruct_t1bar                              => destruct_t1bar_ccs
+      procedure :: destruct_gs_density                         => destruct_gs_density_ccs
+      procedure :: destruct_transition_densities               => destruct_transition_densities_ccs
 !
 !     Routines related to EOM first order property calculations
-!
-      procedure :: prepare_for_eom_fop                         => prepare_for_eom_fop_ccs
 !
       procedure :: construct_etaX                              => construct_etaX_ccs
       procedure :: construct_eom_etaX                          => construct_eom_etaX_ccs
@@ -213,23 +218,31 @@ module ccs_class
 !
       procedure :: calculate_transition_strength               => calculate_transition_strength_ccs
 !
-!     One-electron density 
+!     Routines related to one-electron densities
 !
-      procedure :: construct_density                            => construct_density_ccs
+      procedure :: prepare_for_density                         => prepare_for_density_ccs
 !
-      procedure :: one_el_density_ccs_oo                        => one_el_density_ccs_oo_ccs
-      procedure :: one_el_density_ccs_vo                        => one_el_density_ccs_vo_ccs
+      procedure :: construct_gs_density                        => construct_gs_density_ccs
+      procedure :: construct_right_transition_density          => construct_right_transition_density_ccs
+      procedure :: construct_left_transition_density           => construct_left_transition_density_ccs
 !
-      procedure :: initialize_density                           => initialize_density_ccs
-      procedure :: destruct_density                             => destruct_density_ccs
+      procedure :: gs_one_el_density_ccs_oo                    => gs_one_el_density_ccs_oo_ccs
+      procedure :: gs_one_el_density_ccs_vo                    => gs_one_el_density_ccs_vo_ccs
+!
+      procedure :: right_transition_density_ccs_oo             => right_transition_density_ccs_oo_ccs
+      procedure :: right_transition_density_ccs_ov             => right_transition_density_ccs_ov_ccs
+      procedure :: right_transition_density_ccs_vv             => right_transition_density_ccs_vv_ccs
+      procedure :: right_transition_density_ccs_gs_contr       => right_transition_density_ccs_gs_contr_ccs
+!
+      procedure :: binormalize_L_wrt_R                         => binormalize_L_wrt_R_ccs
 !
 !     One-electron operators and mean value
 !
-      procedure :: construct_h                                  => construct_h_ccs 
-      procedure :: construct_mu                                 => construct_mu_ccs 
-      procedure :: construct_q                                  => construct_q_ccs 
+      procedure :: construct_h                                 => construct_h_ccs 
+      procedure :: construct_mu                                => construct_mu_ccs 
+      procedure :: construct_q                                 => construct_q_ccs 
 !
-      procedure :: calculate_expectation_value                  => calculate_expectation_value_ccs
+      procedure :: calculate_expectation_value                 => calculate_expectation_value_ccs
 !
       procedure :: construct_molecular_gradient                 => construct_molecular_gradient_ccs
 !
@@ -2948,7 +2961,7 @@ contains
 !!    Calculates the transpose Jacobian transformation, i.e., the transformation
 !!    by the transpose of the Jacobian matrix
 !!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >.
+!!       A_mu,nu = < mu | exp(-T) [H, τ_nu] exp(T) | R >.
 !!
 !!    In particular,
 !!
@@ -3524,6 +3537,22 @@ contains
    end subroutine prepare_for_jacobian_transpose_ccs
 !
 !
+   subroutine prepare_for_multiplier_equation_ccs(wf)
+!!
+!!    Prepare for the construction of the multipliers
+!!    Written by Alexander Paul, July 2019
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+!     For now, do nothing.
+!
+      write(output%unit,'(/t3,a,a,a,a,a)') 'No preparation for ', trim(wf%name_), ' multiplier equation.'
+!
+   end subroutine prepare_for_multiplier_equation_ccs
+!
+!
    subroutine set_cvs_start_indices_ccs(wf, n_cores, core_MOs, n_start_indices, start_indices)
 !!
 !!    Set CVS start indices
@@ -3575,7 +3604,46 @@ contains
    end subroutine set_cvs_start_indices_ccs
 !
 !
-   subroutine one_el_density_ccs_oo_ccs(wf)
+   subroutine prepare_for_density_ccs(wf)
+!!
+!!    Prepare for the construction of density matrices
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+!     For now, do nothing.
+!
+      write(output%unit,'(/t3,a,a,a)') 'No preparations for the density for ', &
+                                       trim(wf%name_), ' wavefunction.'
+!
+   end subroutine prepare_for_density_ccs
+!
+!
+   subroutine construct_gs_density_ccs(wf)
+!!
+!!    Construct one-electron density
+!!    Written by Sarai Dery Folkestad
+!!
+!!    Constructs the one-electron density 
+!!    matrix in the T1 basis
+!!
+!!    D_pq = < Λ | E_pq | CC >
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      call zero_array(wf%density, (wf%n_mo)**2)
+!
+      call wf%gs_one_el_density_ccs_oo(wf%density)
+      call wf%gs_one_el_density_ccs_vo(wf%density, wf%t1bar)
+!
+   end subroutine construct_gs_density_ccs
+!
+!
+   subroutine gs_one_el_density_ccs_oo_ccs(wf, density)
 !!
 !!    One electron density oo
 !!    Written by Sarai D. Folkestad
@@ -3586,20 +3654,22 @@ contains
 !
       class(ccs) :: wf
 !
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
+!
       integer :: i
 !
 !$omp parallel do private(i)
       do i = 1, wf%n_o
 !
-         wf%density(i,i) = wf%density(i,i) + two  
+         density(i,i) = density(i,i) + two  
 !
       enddo
 !$omp end parallel do
 !
-   end subroutine one_el_density_ccs_oo_ccs
+   end subroutine gs_one_el_density_ccs_oo_ccs
 !
 !
-   subroutine one_el_density_ccs_vo_ccs(wf)
+   subroutine gs_one_el_density_ccs_vo_ccs(wf, density, tbar_ai)
 !!
 !!    One electron density vo
 !!    Written by Sarai D. Folkestad
@@ -3610,42 +3680,25 @@ contains
 !
       class(ccs) :: wf
 !
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
+      real(dp), dimension(wf%n_v, wf%n_o) :: tbar_ai
+!
       integer :: i, a
 !
 !$omp parallel do private(a, i)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !        
-            wf%density(wf%n_o + a, i) = wf%density(wf%n_o + a, i) + wf%t1bar(a, i)
+            density(wf%n_o + a, i) = density(wf%n_o + a, i) + tbar_ai(a, i)
 !
          enddo
       enddo
 !$omp end parallel do
 !
-   end subroutine one_el_density_ccs_vo_ccs
+   end subroutine gs_one_el_density_ccs_vo_ccs
 !
 !
-   subroutine construct_density_ccs(wf)
-!!
-!!    Construct one-electron density
-!!    Written by Sarai Dery Folkestad
-!!
-!!    Constructs the one-electron density 
-!!    matrix in the T1 basis
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      call zero_array(wf%density, (wf%n_mo)**2)
-!
-      call wf%one_el_density_ccs_oo()
-      call wf%one_el_density_ccs_vo()
-!
-   end subroutine construct_density_ccs
-!
-!
-   subroutine initialize_density_ccs(wf)
+   subroutine initialize_gs_density_ccs(wf)
 !!
 !!    Initialize density
 !!    Written by Sarai D. Folkestad, Apr 2019
@@ -3656,10 +3709,10 @@ contains
 !
       if (.not. allocated(wf%density)) call mem%alloc(wf%density, wf%n_mo, wf%n_mo)
 !
-   end subroutine initialize_density_ccs
+   end subroutine initialize_gs_density_ccs
 !
 !
-   subroutine destruct_density_ccs(wf)
+   subroutine destruct_gs_density_ccs(wf)
 !!
 !!    Destruct density
 !!    Written by Sarai D. Folkestad, Apr 2019
@@ -3670,21 +3723,79 @@ contains
 !
       if (allocated(wf%density)) call mem%dealloc(wf%density, wf%n_mo, wf%n_mo)
 !
-   end subroutine destruct_density_ccs
+   end subroutine destruct_gs_density_ccs
 !
 !
-   function calculate_expectation_value_ccs(wf, A) result(expectation_value)
+   subroutine binormalize_L_wrt_R_ccs(wf, L, R, state)
+!!
+!!    Calculates the overlap of the left and right states 
+!!    and scales the left amplitudes by it
+!!    Written by Josefine Andersen, Apr 2019
+!!
+!!    Consistency/sanity check: Eirik F. Kjønstad, Aug 2019
+!!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: L, R
+!
+      integer, intent(in) :: state
+!
+      real(dp) :: ddot, LT_R
+      real(dp) :: energy_threshold
+!
+!     Sanity check in case roots are ordered incorrectly
+!
+      if (input%requested_keyword_in_section('energy threshold', 'solver cc es')) then 
+!
+        call input%get_keyword_in_section('energy threshold', 'solver cc es', energy_threshold)
+!
+      elseif (input%requested_keyword_in_section('residual threshold', 'solver cc es')) then 
+!
+        call input%get_keyword_in_section('residual threshold', 'solver cc es', energy_threshold)
+!
+      else
+!
+        call output%printf('Note: assuming default energy threshold (1.0d-6) when testing root consistency.', fs='(t6,a)')
+!
+        energy_threshold = 1.0d-6
+!
+      endif 
+!
+      if (abs(wf%left_excitation_energies(state) - wf%right_excitation_energies(state)) > energy_threshold) then 
+!
+          call output%printf('Eigenvector (i0) is not left-right consistent to threshold (e8.2).', &
+                              ints=[state], reals=[energy_threshold], fs='(/t6,a)')
+!
+          call output%printf('Energies (left, right): (f19.12) (f19.12)', &
+                reals=[wf%left_excitation_energies(state), wf%right_excitation_energies(state)], fs='(/t6,a)')
+!
+          call output%error_msg('while calculating transition strength.')
+!
+      !  else
+!
+         ! Note: consider to add in verbose mode
+         ! call output%printf('The left and right states corresponding to root (i0) are consistent', ints=[state])
+!
+      endif 
+!
+      LT_R = ddot(wf%n_es_amplitudes, L, 1, R, 1)
+      call dscal(wf%n_es_amplitudes, one/LT_R, L, 1)
+!
+   end subroutine binormalize_L_wrt_R_ccs 
+!
+!
+   function calculate_expectation_value_ccs(wf, A, density) result(expectation_value)
 !!
 !!    Calculate expectation value
 !!    Written by Sarai D. Folkestad
 !!
-!!    Calculate the expectation value of one-electron
+!!    Calculate the expectation value of a one-electron
 !!    operator Â
 !!
 !!       < A > = < Λ | Â | CC > = sum_pq A_pq D_pq
 !!
 !!    where A_pq are the T1-transformed integrals
-!!    and D_pq is the one-electron density matrix
+!!    and D_pq is the a one-electron density matrix
 !!    in the T1-basis
 !!
       implicit none
@@ -3693,11 +3804,13 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: A
 !
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: density
+!
       real(dp) :: expectation_value
 !
       real(dp) :: ddot
 !
-      expectation_value = ddot(wf%n_mo**2, A, 1, wf%density, 1)
+      expectation_value = ddot(wf%n_mo**2, A, 1, density, 1)
 !
    end function calculate_expectation_value_ccs
 !

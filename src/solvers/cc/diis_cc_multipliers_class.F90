@@ -196,6 +196,8 @@ contains
 !
       integer :: iteration
 !
+      call wf%prepare_for_multiplier_equation
+!
       diis = diis_tool('cc_multipliers_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
       call mem%alloc(residual, wf%n_gs_amplitudes)
@@ -339,7 +341,7 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: X
 !
-      write(output%unit, '(/t3,a)') '- Multipliers vector amplitudes:'
+      write(output%unit, '(/t3,a)') '- DIIS CC multipliers solver summary:'
       flush(output%unit)      
 !
       call wf%print_dominant_x_amplitudes(X, 'r')

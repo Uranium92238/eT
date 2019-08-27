@@ -26,15 +26,16 @@ submodule (ccs_class) fop_ccs
 !!    Adapted by Sarai D. Folkestad
 !!
 !!    Routines for construction of the right-hand-side, η^X, and left-hand-side, ξ^X
-!!    vectors for transition moments.
+!!    vectors and the left-hand-side (ρ^L) and right-hand-side (ρ^R) transition densities
+!!    for transition moments.
 !!
 !!    Equation-of-motion (EOM):
 !!
-!!   (Following Koch, H., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
+!!    (Following Koch, H., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
 !!    J. Chem. Phys. 100, 4393 (1994))
 !!
 !!       η_μ^X,EOM =  < Λ | [X, τ_μ] | CC > + (< Λ | τ_μ X | CC >  - tbar_μ < Λ | X | CC > )
-!!
+!!                 = η^{X,0} + η^{X,corr}
 !!
 !!    Where the last two terms are called the EOM-corrections and the first term also 
 !!    appears in LR-CC.
@@ -43,6 +44,17 @@ submodule (ccs_class) fop_ccs
 !!
 !!       ξ^X_μ = < μ | exp(-T) X exp(T)| R >
 !!
+!!    The transition density matrices are construct as follows:
+!!
+!!       ρ^L_pq = < k | E_pq | CC >
+!!       ρ^R_pq = < Λ | E_pq | k >
+!!
+!!    where |k> and <k| are the eigenvectors of the Jacobian with amplitudes R_μ, L_μ
+!!
+!!       | k > = sum_μ (τ_μ | CC > R_{k,μ} - tbar_μ | CC > R_{k,μ})
+!!       < k | = sum_μ L_{k,μ} < μ | e^-T
+!!
+!!
 !
    implicit none
 !
@@ -50,24 +62,220 @@ submodule (ccs_class) fop_ccs
 contains
 !
 !
-  module subroutine prepare_for_eom_fop_ccs(wf)
+   module subroutine initialize_transition_densities_ccs(wf)
 !!
-!!    Prepare for eom fop
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!    Initialize left and right transition densities
+!!    Written by Alexander Paul, June 2019
 !!
       implicit none
 !
-      class(ccs), intent(inout) :: wf
+      class(ccs) :: wf
 !
-!     For now, do nothing.
+      if (.not. allocated(wf%left_transition_density))               &
+         call mem%alloc(wf%left_transition_density, wf%n_mo, wf%n_mo)
 !
-      write(output%unit,'(/t3,a,a,a)') 'No EOM preparations for ', &
-                                       trim(wf%name_), ' wavefunction.'
+      if (.not. allocated(wf%right_transition_density))              &
+         call mem%alloc(wf%right_transition_density, wf%n_mo, wf%n_mo)
 !
-  end subroutine prepare_for_eom_fop_ccs
+   end subroutine initialize_transition_densities_ccs
 !
 !
-  module subroutine construct_eom_etaX_ccs(wf, X, csiX, etaX)
+   module subroutine destruct_transition_densities_ccs(wf)
+!!
+!!    Destruct left and right transition densities
+!!    Written by Alexander Paul, June 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%left_transition_density))                        &
+         call mem%dealloc(wf%left_transition_density, wf%n_mo, wf%n_mo)
+!
+      if (allocated(wf%right_transition_density))                       &
+         call mem%dealloc(wf%right_transition_density, wf%n_mo, wf%n_mo)
+!
+   end subroutine destruct_transition_densities_ccs
+!
+!
+   module subroutine construct_right_transition_density_ccs(wf, R_k)
+!!
+!!    Construct right one-electron transition density for the state k
+!!    Written by Alexander Paul, June 2019
+!!
+!!          ρ^R_pq = < Λ | E_pq | k >
+!!
+!!    where |k> is the right eigenvector of the Jacobian
+!!    with amplitudes R_μ
+!!
+!!          | k > = sum_μ (τ_μ | CC > R_{k,μ} - tbar_μ | CC > R_{k,μ}) 
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: R_k
+!
+      call zero_array(wf%right_transition_density, (wf%n_mo)**2)
+!
+      call wf%right_transition_density_ccs_oo(wf%t1bar, R_k)
+      call wf%right_transition_density_ccs_ov(R_k)
+      call wf%right_transition_density_ccs_vv(wf%t1bar, R_k)
+      call wf%right_transition_density_ccs_gs_contr(wf%t1bar, R_k)
+!
+   end subroutine construct_right_transition_density_ccs
+!
+!
+   module subroutine right_transition_density_ccs_oo_ccs(wf, tbar_ai, R_ai)
+!!
+!!    Right transition density oo contribution
+!!    Written by Alexander Paul, June 2019
+!!
+!!    ρ^R_ij = -sum_a R_ai tbar_aj
+!!      
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+      call dgemm('T', 'N', &
+                  wf%n_o,  &
+                  wf%n_o,  &
+                  wf%n_v,  &
+                  -one,    &
+                  R_ai,    & ! R_a_i
+                  wf%n_v,  &
+                  tbar_ai, & ! tbar_a_j
+                  wf%n_v,  &
+                  one,     &
+                  wf%right_transition_density,  &
+                  wf%n_mo)
+!
+   end subroutine right_transition_density_ccs_oo_ccs
+!
+!
+   module subroutine right_transition_density_ccs_ov_ccs(wf, R_ai)
+!!
+!!    Right transition density ov
+!!    Written by Alexander Paul, June 2019
+!!
+!!    ρ^R_pq = 2*R_ai 
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+      integer :: i, a
+!
+!$omp parallel do private(a, i)
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            wf%right_transition_density(i, wf%n_o + a) = two*R_ai(a, i) &
+                           + wf%right_transition_density(i, wf%n_o + a)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine right_transition_density_ccs_ov_ccs
+!
+!
+   module subroutine right_transition_density_ccs_vv_ccs(wf, tbar_ai, R_ai)
+!!
+!!    Right transition density vv contribution
+!!    Written by Alexander Paul, June 2019
+!!
+!!    ρ^R_ab = sum_i R_bi tbar_ai
+!!      
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+      call dgemm('N', 'T', &
+                  wf%n_v,  &
+                  wf%n_v,  &
+                  wf%n_o,  &
+                  one,     &
+                  tbar_ai, & ! tbar_a_i
+                  wf%n_v,  &
+                  R_ai,    & ! R_b_i
+                  wf%n_v,  &
+                  one,     &
+                  wf%right_transition_density(wf%n_o+1, wf%n_o+1),  &
+                  wf%n_mo)
+!
+   end subroutine right_transition_density_ccs_vv_ccs
+!
+!
+   module subroutine right_transition_density_ccs_gs_contr_ccs(wf, tbar_ai, R_ai)
+!!
+!!    Right transition density, contribution from the ground state density
+!!    ρ^R_pq -= sum_μν R_{k,μ}tbar_μ tbar_ν < ν |e^-T E_pq e^T| HF >
+!!           -= sum_μ R_{k,μ}tbar_μ (D_GS - D_HF)
+!!    CCS:
+!!    ρ^R_pq = ρ^R_ai = sum_bj R^b_j tbar^b_j tbar^a_i
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+      real(dp) :: ddot, scaling_factor
+!
+      integer :: i, a
+!
+      scaling_factor = ddot(wf%n_v*wf%n_o, tbar_ai, 1, R_ai, 1)
+!
+!$omp parallel do private(a, i)
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            wf%right_transition_density(wf%n_o + a, i) = scaling_factor*tbar_ai(a, i)  &
+                     + wf%right_transition_density(wf%n_o + a, i)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine right_transition_density_ccs_gs_contr_ccs
+!
+!
+   module subroutine construct_left_transition_density_ccs(wf, L_k)
+!!
+!!    Construct left one-electron transition density for the state k
+!!    Written by Alexander Paul, June 2019
+!!
+!!          ρ^L_pq = < k | E_pq | CC >
+!!
+!!    where <k| is the left eigenvector of the Jacobian
+!!    with amplitudes L_μ
+!!
+!!          < k | = sum_μ L_{k,μ} < μ | e^-T
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: L_k
+!
+      call zero_array(wf%left_transition_density, (wf%n_mo)**2)
+!
+      call wf%gs_one_el_density_ccs_vo(wf%left_transition_density, L_k)
+!
+   end subroutine construct_left_transition_density_ccs
+!
+!
+   module subroutine construct_eom_etaX_ccs(wf, X, csiX, etaX)
 !!
 !!    Construct EOM etaX
 !!    Written by Sarai D. Folkestad, May 2019
@@ -88,7 +296,7 @@ contains
 !
       call wf%etaX_eom_a(etaX, csiX)
 !
-  end subroutine construct_eom_etaX_ccs
+   end subroutine construct_eom_etaX_ccs
 !
 !
    module subroutine construct_etaX_ccs(wf, X, etaX)
@@ -110,7 +318,7 @@ contains
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
-      etaX = zero
+      call zero_array(etaX, wf%n_es_amplitudes)
 !
       call wf%etaX_ccs_a1(X, etaX)
       call wf%etaX_ccs_b1(X, etaX)
@@ -258,7 +466,7 @@ contains
 !      
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
 !
-      csiX = zero
+      call zero_array(csiX, wf%n_es_amplitudes)
 !
       call wf%csiX_ccs_a1(X, csiX)
 !
@@ -358,56 +566,14 @@ contains
 !
       real(dp), dimension(:), allocatable :: L, R
 !
-      real(dp) :: ddot, LT_R
-!
-      real(dp) :: energy_threshold
-!
-!     Sanity check in case roots are ordered incorrectly
-!
-      if (input%requested_keyword_in_section('energy threshold', 'solver cc es')) then 
-!
-        call input%get_keyword_in_section('energy threshold', 'solver cc es', energy_threshold)
-!
-      elseif (input%requested_keyword_in_section('residual threshold', 'solver cc es')) then 
-!
-        call input%get_keyword_in_section('residual threshold', 'solver cc es', energy_threshold)
-!
-      else
-!
-        call output%printf('Note: assuming default energy threshold (1.0d-6) when testing root consistency.', fs='(t6,a)')
-!
-        energy_threshold = 1.0d-6
-!
-      endif 
-!
-      if (abs(wf%left_excitation_energies(state) - wf%right_excitation_energies(state)) > energy_threshold) then 
-!
-          call output%printf('Eigenvector (i0) is not left-right consistent to threshold (e8.2).', &
-                              ints=[state], reals=[energy_threshold], fs='(/t6,a)')
-!
-          call output%printf('Energies (left, right): (f19.12) (f19.12)', &
-                reals=[wf%left_excitation_energies(state), wf%right_excitation_energies(state)], fs='(/t6,a)')
-!
-          call output%error_msg('while calculating transition strength.')
-!
-      !  else
-!
-         ! Note: consider to add in verbose mode
-         ! call output%printf('The left and right states corresponding to root (i0) are consistent', ints=[state])
-!
-      endif 
-!
+      real(dp) :: ddot
 !
 !     Read states and make them binormal by scaling the left vector 
 !
       call mem%alloc(L, wf%n_es_amplitudes)
       call mem%alloc(R, wf%n_es_amplitudes)
 !
-      call wf%read_excited_state(L, state, 'left')
-      call wf%read_excited_state(R, state, 'right')
-!
-      LT_R = ddot(wf%n_es_amplitudes, L, 1, R, 1)
-      call dscal(wf%n_es_amplitudes, one/LT_R, L, 1)
+      call wf%binormalize_L_wrt_R(L, R, state)
 !
 !     Left and right transition moments
 !

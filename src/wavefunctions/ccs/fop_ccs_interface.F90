@@ -18,16 +18,138 @@
 !
 !
 !
-  module subroutine prepare_for_eom_fop_ccs(wf)
+   module subroutine initialize_transition_densities_ccs(wf)
 !!
-!!    Prepare for eom fop
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!    Initialize left and right transition densities
+!!    Written by Alexander Paul, June 2019
 !!
       implicit none
 !
-      class(ccs), intent(inout) :: wf
+      class(ccs) :: wf
 !
-  end subroutine prepare_for_eom_fop_ccs
+   end subroutine initialize_transition_densities_ccs
+!
+!
+   module subroutine destruct_transition_densities_ccs(wf)
+!!
+!!    Destruct left and right transition densities
+!!    Written by Alexander Paul, June 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+   end subroutine destruct_transition_densities_ccs
+!
+!
+   module subroutine construct_right_transition_density_ccs(wf, R_k)
+!!
+!!    Construct right one-electron transition density for the state k
+!!    Written by Alexander Paul, June 2019
+!!
+!!          ρ^R_pq = < Λ | E_pq | k >
+!!
+!!    where |k> is the right eigenvector of the Jacobian
+!!    with amplitudes R_μ
+!!
+!!          | k > = sum_μ (τ_μ | CC > R_{k,μ} - tbar_μ | CC > R_{k,μ}) 
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: R_k
+!
+   end subroutine construct_right_transition_density_ccs
+!
+!
+   module subroutine right_transition_density_ccs_oo_ccs(wf, tbar_ai, R_ai)
+!!
+!!    Right transition density oo contribution
+!!    Written by Alexander Paul, June 2019
+!!
+!!    ρ^R_ij = -sum_a R_ai tbar_aj
+!!      
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+   end subroutine right_transition_density_ccs_oo_ccs
+!
+!
+   module subroutine right_transition_density_ccs_ov_ccs(wf, R_ai)
+!!
+!!    Right transition density ov
+!!    Written by Alexander Paul, June 2019
+!!
+!!    ρ^R_pq = 2*R_ai 
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+   end subroutine right_transition_density_ccs_ov_ccs
+!
+!
+   module subroutine right_transition_density_ccs_vv_ccs(wf, tbar_ai, R_ai)
+!!
+!!    Right transition density vv contribution
+!!    Written by Alexander Paul, June 2019
+!!
+!!    ρ^R_ab = sum_i R_bi tbar_ai
+!!      
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+   end subroutine right_transition_density_ccs_vv_ccs
+!
+!
+   module subroutine right_transition_density_ccs_gs_contr_ccs(wf, tbar_ai, R_ai)
+!!
+!!    Right transition density, contribution from the ground state density
+!!    ρ^R_pq -= sum_μν R_{k,μ}tbar_μ tbar_ν < ν |e^-T E_pq e^T| HF >
+!!           -= sum_μ R_{k,μ}tbar_μ (D_GS - D_HF)
+!!    CCS:
+!!    ρ^R_pq = ρ^R_ai = sum_bj R^b_j tbar^b_j tbar^a_i
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+   end subroutine right_transition_density_ccs_gs_contr_ccs
+!
+!
+   module subroutine construct_left_transition_density_ccs(wf, L_k)
+!!
+!!    Construct left one-electron transition density for the state k
+!!    Written by Alexander Paul, June 2019
+!!
+!!          ρ^L_pq = < k | E_pq | CC >
+!!
+!!    where <k| is the left eigenvector of the Jacobian
+!!    with amplitudes L_μ
+!!
+!!          < k | = sum_μ L_{k,μ} < μ | e^-T
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: L_k
+!
+   end subroutine construct_left_transition_density_ccs
 !
 !
    module subroutine construct_eom_etaX_ccs(wf, X, csiX, etaX)

@@ -72,7 +72,7 @@ contains
       type(fop_engine) :: engine
 !
       engine%name_       = 'First order coupled cluster properties engine'
-      engine%author      = 'J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, 2019'
+      engine%author      = 'J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, A. Paul 2019'
 !
       engine%timer = timings(trim(engine%name_))
       call engine%timer%turn_on()
@@ -125,7 +125,19 @@ contains
 !
 !     EOM properties if requested
 !
-      if (engine%eom) call engine%do_eom(wf)
+      if (engine%eom) then
+!
+         call wf%prepare_for_density()
+         call wf%initialize_gs_density()
+         call wf%construct_gs_density()
+!
+!        TODO: calculate ground state dipole moment as well
+!
+         call wf%initialize_transition_densities()
+         call engine%do_eom(wf)
+         call wf%destruct_transition_densities()
+!
+      end if
 !
    end subroutine run_fop_engine
 !
@@ -166,12 +178,13 @@ contains
       if (.not. engine%eom .and. .not. engine%lr) call output%error_msg('specify either eom og lr for fop.')
 !
    end subroutine read_fop_settings_fop_engine
-!
-!
+
+
    subroutine do_eom_fop_engine(engine, wf)
 !!
 !!    Do EOM
-!!    Written by Josefine H. Andersen and Sarai D. Folkestad, Apr 2019
+!!    Written by Written by Josefine H. Andersen, Sarai D. Folkestad 
+!!    and Alexander Paul, June 2019
 !!
       implicit none
 !
@@ -180,75 +193,100 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable :: operator
 !
-      character(len=1), dimension(3) :: components = ['X', 'Y', 'Z']
+   !   character(len=1), dimension(3) :: components = ['X', 'Y', 'Z']
 !
-      real(dp), dimension(:,:), allocatable :: transition_strength, transition_moment_left, transition_moment_right
+      real(dp), dimension(3) :: transition_strength, transition_moment_left, transition_moment_right
 !
-      real(dp), dimension(:), allocatable :: etaX, csiX, excitation_energies
+      real(dp), dimension(:), allocatable :: excitation_energies, L, R
 !
-      integer :: component, n_states, state
+      integer :: n_states, state, k
 !
-      call wf%prepare_for_eom_fop()
+      type(timings) :: L_TDM_timer, R_TDM_timer, EOM_timer
+!
+      L_TDM_timer = new_timer('Time for left transition density')
+      R_TDM_timer = new_timer('Time for right transition density')
+      EOM_timer = new_timer('Total time for EOM FOP')
+!
+      call EOM_timer%turn_on()
 !
       call output%long_string_print('EOM first order properties calculation','(/t3,a)',.true.)
       call output%long_string_print(engine%author,'(t3,a/)',.true.)
-!
-      call mem%alloc(etaX, wf%n_es_amplitudes)
-      call mem%alloc(csiX, wf%n_es_amplitudes)
 !
       call input%get_required_keyword_in_section('singlet states', 'solver cc es', n_states)
       call mem%alloc(excitation_energies, n_states)
 !
       call wf%read_excitation_energies(n_states, excitation_energies)
 !
-      call mem%alloc(transition_strength, 3, n_states)
-      call mem%alloc(transition_moment_left, 3, n_states)
-      call mem%alloc(transition_moment_right, 3, n_states)
-!
       transition_strength     = zero
       transition_moment_right = zero
       transition_moment_left  = zero
+!
+      call mem%alloc(L, wf%n_es_amplitudes)
+      call mem%alloc(R, wf%n_es_amplitudes)
 !
       if (engine%dipole_length) then
 !
          call mem%alloc(operator, wf%n_mo, wf%n_mo, 3)
 !
-         call wf%construct_mu(operator)  ! Constructs dipole operator in t1-transformed basis.
+!        Constructs dipole operator in t1-transformed basis.
+         call wf%construct_mu(operator)
 !
-         do component = 1, size(components)
+!        Loop over excited states, construct transition density
+!        and calculate transition strength
 !
-            call wf%construct_csiX(operator(:,:,component), csiX)
+         call output%printf('- Summary of EOM first order properties calculation:', fs='(/t3,a)')
 !
-            call wf%construct_eom_etaX(operator(:,:,component), csiX, etaX)
+         do state = 1, n_states
 !
-!           Loop over excited states and calculate transition strength
+            call R_TDM_timer%turn_on()
 !
-            do state = 1, n_states
+            call wf%read_excited_state(R, state, 'right')
+            call wf%construct_right_transition_density(R)
 !
-               call output%printf('Computing transition moment from ground state to state (i0), (a0) component', &
-                                    ints=[state], chars=[components(component)], fs='(t6,a)')
+            call R_TDM_timer%turn_off()
+            call R_TDM_timer%reset()
 !
-               call wf%calculate_transition_strength(transition_strength(component, state), etaX, &
-                   csiX, state, transition_moment_left(component, state), transition_moment_right(component, state))
+!           Read left states and make them binormal to the right vectors
+!
+            call L_TDM_timer%turn_on()
+!
+            call wf%read_excited_state(L, state, 'left')
+            call wf%binormalize_L_wrt_R(L, R, state)
+!
+            call wf%construct_left_transition_density(L)
+!
+            call L_TDM_timer%turn_off()
+            call L_TDM_timer%reset()
+!
+            do k = 1, 3
+!
+               transition_moment_left(k) = wf%calculate_expectation_value(operator(:,:,k),   &
+                                             wf%left_transition_density)
+!
+               transition_moment_right(k) = wf%calculate_expectation_value(operator(:,:,k),  &
+                                             wf%right_transition_density)
+!
+               transition_strength(k) = transition_moment_left(k)*transition_moment_right(k)
 !
             enddo
 !
-         enddo
+            call engine%print_summary_eom(transition_strength, transition_moment_left, &
+                                          transition_moment_right, state, excitation_energies(state))
 !
-         call engine%print_summary_eom(transition_strength, transition_moment_left, &
-                                    transition_moment_right, n_states, excitation_energies)
+         enddo
 !
       endif
 !
-      call mem%dealloc(transition_strength, 3, n_states)
-      call mem%dealloc(transition_moment_left, 3, n_states)
-      call mem%dealloc(transition_moment_right, 3, n_states)
+      call mem%dealloc(L, wf%n_es_amplitudes)
+      call mem%dealloc(R, wf%n_es_amplitudes)
+!
+      call EOM_timer%turn_off()
 !
    end subroutine do_eom_fop_engine
 !
 !
    subroutine print_summary_eom_fop_engine(transition_strength, transition_moment_left, &
-                                    transition_moment_right, n_states, excitation_energies)
+                                       transition_moment_right, state, excitation_energy)
 !!
 !!    Print summary
 !!    Written by Josefine H. Andersen
@@ -257,52 +295,46 @@ contains
 !!
       implicit none
 !
-      integer, intent(in)  :: n_states
+      integer, intent(in)  :: state
 !
-      real(dp), dimension(3, n_states), intent(in) :: transition_strength, transition_moment_left, transition_moment_right
-      real(dp), dimension(n_states), intent(in) :: excitation_energies
+      real(dp), dimension(3), intent(in) :: transition_strength, transition_moment_left, transition_moment_right
+      real(dp), intent(in) :: excitation_energy
 !
       character(len=1), dimension(3) :: components = ['X', 'Y', 'Z']
 !
-      integer :: component, state
+      integer :: component
 !
       real(dp) :: sum_strength
 !
-      write(output%unit, '(/t3,a)') '- Summary of EOM first order properties calculation:'
+      write(output%unit, '(/t6, a6 ,i3, a1)') 'State ', state, ':'
+      write(output%unit, '(t6, a)') '----------'
+      write(output%unit, '(t6, a30, f19.12)') 'Excitation energy [E_h]:      ', excitation_energy
+      write(output%unit, '(t6, a30, f19.12)') 'Excitation energy [eV]:       ', excitation_energy*Hartree_to_eV
 !
-      do state = 1, n_states
+      write(output%unit, '(t6, a30, f19.8)')  'Hartree-to-eV (CODATA 2014):  ', Hartree_to_eV
 !
-         write(output%unit, '(/t6, a6 ,i3, a1)') 'State ', state, ':'
-         write(output%unit, '(t6, a)') '----------'
-         write(output%unit, '(t6, a30, f19.12)') 'Excitation energy [E_h]:      ', excitation_energies(state)
-         write(output%unit, '(t6, a30, f19.12)') 'Excitation energy [eV]:       ', excitation_energies(state)*Hartree_to_eV
+      write(output%unit, '(/t6,a)')  '              Transition moments [a.u.]         Transition strength [a.u.]'
+      write(output%unit, '(t6,a)')   '--------------------------------------------------------------------------'
+      write(output%unit, '(t6,a)')   'Comp. q     < k |q| 0 >       < 0 |q| k >        < k |q| 0 > < 0 |q| k >  '
+      write(output%unit, '(t6,a)')   '--------------------------------------------------------------------------'
 !
-         write(output%unit, '(t6, a30, f19.8)')  'Hartree-to-eV (CODATA 2014):  ', Hartree_to_eV
+      sum_strength = zero
 !
-         write(output%unit, '(/t6,a)')  '                 Transition moments               Transition strength   '
-         write(output%unit, '(t6,a)')   '------------------------------------------------------------------------'
-         write(output%unit, '(t6,a)')   'Comp. q     < k |q| 0 >       < 0 |q| k >       < k |q| 0 > < 0 |q| k > '
-         write(output%unit, '(t6,a)')   '------------------------------------------------------------------------'
+      do component = 1, 3
 !
-         sum_strength = zero
+         write(output%unit, '(t6,a1,6x,f17.10,1x,f17.10,7x,f17.10)') components(component),              &
+                                                                     transition_moment_left(component),  &
+                                                                     transition_moment_right(component), &
+                                                                     transition_strength(component)
 !
-         do component = 1, 3
-!
-            write(output%unit, '(t6,a1,6x,f17.10,1x,f17.10,6x,f17.10)') components(component),                       &
-                                                                        transition_moment_left(component, state),    &
-                                                                        transition_moment_right(component, state),   &
-                                                                        transition_strength(component, state)
-!
-            sum_strength = sum_strength + transition_strength(component, state)
-!
-         enddo
-!
-         write(output%unit, '(t6,a)')   '-------------------------------------------------------------------------'
-!
-         write(output%unit, '(t6, a21, f19.12)') 'Oscillator strength: ', (two/three)*excitation_energies(state)*sum_strength
-!
+         sum_strength = sum_strength + transition_strength(component)
 !
       enddo
+!
+      write(output%unit, '(t6,a)')   '--------------------------------------------------------------------------'
+!
+      write(output%unit, '(t6, a28, f19.12)') 'Oscillator strength [a.u.]: ', (two/three)*excitation_energy*sum_strength
+      flush(output%unit)
 !
    end subroutine print_summary_eom_fop_engine
 !

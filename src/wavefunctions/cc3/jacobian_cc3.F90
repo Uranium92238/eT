@@ -46,16 +46,16 @@ contains
 !!
 !!    Directs the transformation by the CC3 Jacobi matrix,
 !!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >,
+!!       A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >,
 !!
 !!    where the basis employed for the brackets is biorthonormal.
-!!    The transformation is rho = A c, i.e.,
+!!    The transformation is ρ = A c, i.e.,
 !!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck
-!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl)
+!!       ρ_μ = (A c)_μ = sum_ck A_μ,ck c_ck
+!!                  + 1/2 sum_ckdl A_μ,ckdl c_ckdl (1 + δ_ck,dl)
 !!
-!!    On exit, c is overwritten by rho. That is, c(ai) = rho_a_i,
-!!    and c(aibj) = rho_aibj.
+!!    On exit, c is overwritten by ρ. That is, c(ai) = ρ_a_i,
+!!    and c(aibj) = ρ_aibj.
 !!
       implicit none
 !
@@ -84,7 +84,7 @@ contains
 !     Allocate and zero the transformed vector (singles part)
 !
       call mem%alloc(rho_ai, wf%n_v, wf%n_o)
-      rho_ai = zero
+      call zero_array(rho_ai, wf%n_v*wf%n_o)
 !
       call mem%alloc(c_ai, wf%n_v, wf%n_o)
 !
@@ -144,8 +144,8 @@ contains
       enddo
 !$omp end parallel do
 !
-!     Scale the doubles vector by 1 + delta_ai,bj, i.e.
-!     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
+!     Scale the doubles vector by 1 + δ_ai,bj, i.e.
+!     redefine to c_ckdl = c_ckdl (1 + δ_ck,dl)
 !
 !$omp parallel do schedule(static) private(a,i)
       do i = 1, wf%n_o
@@ -166,7 +166,7 @@ contains
 !     Allocate unpacked transformed vector
 !
       call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      rho_aibj = zero
+      call zero_array(rho_aibj, (wf%n_v*wf%n_o)**2)
 !
 !     Contributions from singles vector c
 !
@@ -250,7 +250,7 @@ contains
 !
       call ccsd_timer%turn_off()
 !
-!     divide by the biorthonormal factor 1 + delta_ai,bj and
+!     divide by the biorthonormal factor 1 + δ_ai,bj and
 !     overwrite the incoming, packed doubles c vector for exit
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj, b_end)
@@ -289,13 +289,13 @@ contains
 !
    module subroutine jacobian_cc3_t3_a2_cc3(wf, c_ai, rho_abij)
 !!
-!!    Computes the first contribution of the T3 amplitudes to rho_2
+!!    Computes the first contribution of the T3 amplitudes to ρ_2
 !!
 !!    Reads in the intermediates X_abid and X_ajil prepared in 
-!!    prepare_jacobian_transform contracts with c_ai and adds to rho_abij
+!!    prepare_jacobian_transform contracts with c_ai and adds to ρ_abij
 !!
-!!    rho_abil += sum_abi X_abid * C_dl
-!!    rho_daji += sum_aik C_dl * X_ajil
+!!    ρ_abil += sum_abi X_abid * C_dl
+!!    ρ_daji += sum_aik C_dl * X_ajil
 !!
 !!    where: X_abid = - sum_jck (2 t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_kcjd
 !!           X_ajil = - sum_bck (2 t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_lbkc
@@ -440,7 +440,6 @@ contains
       type(batching_index) :: batch_i, batch_j, batch_k
       integer              :: i_batch, j_batch, k_batch
       integer              :: req_0, req_1, req_2, req_3
-      real(dp)             :: batch_buff = 0.0
 !
       logical :: ijk_core
       integer :: i_cvs
@@ -465,7 +464,7 @@ contains
       call batch_k%init(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                                 req_0, req_1, req_2, req_3, batch_buff)
+                                 req_0, req_1, req_2, req_3, zero)
 !
 !     Allocate integral arrays
 !
@@ -685,10 +684,11 @@ contains
 !!    to the singles and doubles part of the outgoing vector
 !!
 !!    The triples amplitudes are expressed in terms of doubles amplitudes:
-!!    C_3 = (ω - ε^abc_ijk)^-1 (< μ3 | [H,C_2] | HF > + < μ3 | [[H,C_1],T_2] | HF >)
+!!
+!!    C_3 = (ω - ε_μ3)^-1 (< μ3 | [H,C_2] | HF > + < μ3 | [[H,C_1],T_2] | HF >)
 !!
 !!    c^abc = (ω - ε^abc_ijk)^-1 * P^abc_ijk (sum_d c^ad_ij g_ckbd - sum_l c^ab_il g_cklj
-!!             + sum_d t^ad_ij g'_bdck - sum_l t^ab_il g'_cklj)
+!!             + sum_d t^ad_ij g'_bdck - sum_l t^ab_il g'_cklj
 !!
 !!    rho1 += < μ1 | [H,C_3] | R >
 !!    rho2 += < μ2 | [H,C_3] | R >
@@ -801,7 +801,6 @@ contains
       type(batching_index) :: batch_i, batch_j, batch_k
       integer              :: i_batch, j_batch, k_batch
       integer              :: req_0, req_1, req_2, req_3
-      real(dp)             :: batch_buff = 0.0
 !
       logical :: ijk_core
       integer :: i_cvs
@@ -825,7 +824,7 @@ contains
       req_3 = 0
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                           req_0, req_1, req_2, req_3, batch_buff)
+                           req_0, req_1, req_2, req_3, zero)
 !
 !     Allocate integral arrays
 !
@@ -1320,12 +1319,13 @@ contains
 !
          call batch_k%determine_limits(k_batch)
 !
-!        :: Term 1: g_b'dck = sum_J L_J_bd L_J_ck ::
+!        :: Term 1: g_b'dck = sum_J L_J_b'd L_J_ck ::
+!
+!        here L_J_bd is used for the c1-transformed cholesky vector
+         call wf%integrals%construct_cholesky_ab_c1(L_J_bd, c_ai, 1, wf%n_v, 1, wf%n_v)
 !
          call mem%alloc(L_J_ck, wf%integrals%n_J, wf%n_v, batch_k%length)
          call wf%integrals%read_cholesky_t1(L_J_ck, wf%n_o + 1, wf%n_o + wf%n_v, batch_k%first, batch_k%last)
-!
-         call wf%integrals%construct_cholesky_ab_c1(L_J_bd, c_ai, 1, wf%n_v, 1, wf%n_v)
 !
          call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
@@ -1344,7 +1344,7 @@ contains
 !
          call mem%dealloc(L_J_ck, wf%integrals%n_J, wf%n_v, batch_k%length)
 !
-!        :: Term 2: g_bdc'k = sum_J L_J_bd L_J_ck_c1 ::
+!        :: Term 2: g_bdc'k = sum_J L_J_bd L_J_c'k_c1 ::
 !
          call mem%alloc(L_J_ck_c1, wf%integrals%n_J, wf%n_v, batch_k%length)
          call wf%integrals%construct_cholesky_ai_a_c1(L_J_ck_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
@@ -1530,7 +1530,7 @@ contains
 !
       integer :: i, a, j
 !
-      F_ia_c1 = zero
+      call zero_array(F_ia_c1, wf%n_v*wf%n_o)
 !
 !     Construct the integrals from the Cholesky Vectors
 !

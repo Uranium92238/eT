@@ -20,28 +20,26 @@ assert version_info.major == 2
 
 # construct filter(s)
 f = [
-    get_filter(from_string='State                (Hartree)             (eV)',
-               num_lines=4,
-               abs_tolerance=1.0e-10,
-               mask=[2]), 
-    get_filter(from_string='Comp. q     < k |q| 0 >       < 0 |q| k >        < k |q| 0 > < 0 |q| k >  ',
-               num_lines=4,
-               abs_tolerance=1.0e-10,
-               mask=[1,2],
-               ignore_sign=True),
-    get_filter(from_string='Comp. q     < k |q| 0 >       < 0 |q| k >        < k |q| 0 > < 0 |q| k >  ',
-               num_lines=4,
-               abs_tolerance=1.0e-10,
-               mask=[3]),
     get_filter(string='Final ground state energy (a.u.):',
-               abs_tolerance=1.0e-10)
+               abs_tolerance=1.0e-10),
+    get_filter(string=' x ',
+               abs_tolerance=1.0e-10),
+    get_filter(string=' y ',
+               abs_tolerance=1.0e-10),
+    get_filter(string=' z ',
+               abs_tolerance=1.0e-10),
+    get_filter(from_string='- DIIS CC multipliers solver summary:',
+               num_lines=10,
+               abs_tolerance=1.0e-10,
+               mask=[3],
+               ignore_sign=True)
 ]
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['cc2_oscillator_strength_eom.inp']:
+for inp in ['cc3_dipole.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

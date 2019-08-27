@@ -63,7 +63,7 @@ contains
 !     Allocate and zero the transformed vector (singles part)
 !
       call mem%alloc(rho_a_i, wf%n_v, wf%n_o)
-      rho_a_i = zero
+      call zero_array(rho_a_i, wf%n_o*wf%n_v)
 !
       call mem%alloc(c_a_i, wf%n_v, wf%n_o)
       call dcopy(wf%n_t1, c, 1, c_a_i, 1)
@@ -345,7 +345,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
             call mem%alloc(L_kcbj, batch_k%length, wf%n_v, wf%n_v, batch_j%length)
 !
-            L_kcbj = zero
+            call zero_array(L_kcbj, batch_k%length*batch_j%length*wf%n_v**2)
 !
             call add_1243_to_1234(two, g_kcjb, L_kcbj, batch_k%length, wf%n_v, wf%n_v, batch_j%length)
             call add_1342_to_1234(-one, g_kcjb, L_kcbj, batch_k%length, wf%n_v, wf%n_v, batch_j%length)
@@ -483,7 +483,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !     :: Term 2: - L_kcjb t^cb_ki c_aj ::
 !
       call mem%alloc(X_ji, wf%n_o, wf%n_o)
-      X_ji = zero
+      call zero_array(X_ji, wf%n_o**2)
 !
       req0 = 0
 !
@@ -603,7 +603,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !     X_ab = t_akcj L_kcjb
 !
       call mem%alloc(X_ab, (wf%n_v), (wf%n_v))
-      X_ab = zero
+      call zero_array(X_ab, wf%n_v**2)
 !
       req0 = 0
 !
@@ -1212,7 +1212,8 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
                call mem%alloc(L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length)
 !
-               L_kjbi = zero
+               call zero_array(L_kjbi, wf%n_v*wf%n_o**3)
+!
                call add_1423_to_1234(two, g_kijb, L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length)
                call add_2413_to_1234(-one, g_kijb, L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length)
 !
@@ -1771,7 +1772,8 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
                call mem%alloc(L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
 !
-               L_abck = zero
+               call zero_array(L_abck, wf%n_o*wf%n_v**3)
+!
                call add_1243_to_1234(two, g_abkc, L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
                call add_1342_to_1234(-one, g_abkc, L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
 !

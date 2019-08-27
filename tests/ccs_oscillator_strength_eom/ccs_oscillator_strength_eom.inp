@@ -1,5 +1,5 @@
 system
-   name: H2O-He
+   name: HOF-He
    charge: 0
 end system
 
@@ -7,9 +7,13 @@ do
    fop
 end do
 
+memory
+   available: 8
+end memory
+
 method
    hf
-   cc2
+   ccs
 end method
 
 cc fop
@@ -18,6 +22,7 @@ cc fop
 end cc fop
 
 solver hf
+   energy threshold:   1.0d-11
    gradient threshold: 1.0d-11
 end solver hf
 
@@ -26,16 +31,17 @@ solver cholesky
 end solver cholesky
 
 solver cc gs
-   omega threshold: 1.0d-11
+   energy threshold: 1.0d-11
+   omega threshold:  1.0d-11
 end solver cc gs
 
 solver cc multipliers
-   threshold: 1.0d-11
+   threshold: 1.0d-12
 end solver cc multipliers
 
 solver cc es
+   singlet states: 2
    residual threshold: 1.0d-11
-   singlet states: 1
 end solver cc es
 
 geometry

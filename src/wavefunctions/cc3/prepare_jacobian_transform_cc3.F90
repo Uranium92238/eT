@@ -54,7 +54,7 @@ contains
 !!
 !!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
-   implicit none
+      implicit none
 !
       class(cc3) :: wf
 !
@@ -358,7 +358,6 @@ contains
       type(batching_index) :: batch_i, batch_j, batch_k
       integer :: i_batch, j_batch, k_batch ! used for the current batch
       integer :: req_0, req_1, req_2, req_3
-      real(dp) :: batch_buff = 0.0
 !
 !     Construct the g_lbkc_t file (only needed for the intermediates)
 !     g_ljck_t and g_bdck_t are already on disk from the ground state calculation
@@ -381,7 +380,7 @@ contains
       call batch_k%init(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                                 req_0, req_1, req_2, req_3, batch_buff)
+                                 req_0, req_1, req_2, req_3, zero)
 !
 !     Allocate integral arrays
 !     Split up so that the integral and amplitude arrays are closer in mem
@@ -437,7 +436,7 @@ contains
 !
 !     Array for the whole intermediate X_alij
       call mem%alloc(X_alij, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      X_alij = zero
+      call zero_array(X_alij, wf%n_v*wf%n_o**3)
 !
       call wf%g_bdck_t%open_('read')
       call wf%g_ljck_t%open_('read')
@@ -454,7 +453,7 @@ contains
          g_bdci_p => g_bdci
          g_lbic_p => g_lbic
 !
-         X_abdi = zero
+         call zero_array(X_abdi, wf%n_o*wf%n_v**3)
          X_abdi_p => X_abdi
 !
          do j_batch = 1, i_batch

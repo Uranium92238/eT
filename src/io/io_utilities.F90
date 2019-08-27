@@ -45,7 +45,8 @@ module io_utilities
                   read_2_arrays_compound_record_2batches,   &
                   read_3_arrays_compound_record_2batches,   &
                   read_4_arrays_compound_record_2batches,   &
-                  read_1_array_compound_record_1batch
+                  read_1_array_compound_record_1batch,      &
+                  read_1_array_compound_record_0batches
 !
    end interface
 !
@@ -218,6 +219,39 @@ contains
       enddo
 !
    end subroutine read_3_arrays_single_record_batch
+!
+!
+   subroutine read_1_array_compound_record_0batches(dim_z, dim_y, file_1, g_pqzy)
+!!
+!!    Read the direct access file "file_1" with records of zy into g_pqzy
+!!    NB: It is assumed that the batching indices are sorted at the end of the array
+!!        in z,y order and that the record is equal to the compound index zy
+!!
+!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_z
+      integer, intent(in) :: dim_y
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_pqzy
+!
+      type(direct_file), intent(in) :: file_1
+!
+      integer :: record
+      integer :: z, y
+!
+      do y = 1, dim_y
+         do z = 1, dim_z
+!
+            record = dim_z*(y - 1) + z
+!
+            call file_1%read_(g_pqzy(:,:,z,y), record)
+!
+         enddo
+      enddo
+!
+   end subroutine read_1_array_compound_record_0batches
 !
 !
    subroutine read_1_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)

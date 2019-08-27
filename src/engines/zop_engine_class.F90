@@ -136,12 +136,13 @@ contains
 !
 !     Compute the one-electron density
 !
-      call wf%initialize_density()
-      call wf%construct_density()
+      call wf%prepare_for_density()
+      call wf%initialize_gs_density()
+      call wf%construct_gs_density()
 !
       call engine%calculate_expectation_values(wf)
 !
-      call wf%destruct_density()
+      call wf%destruct_gs_density()
 !
    end subroutine run_zop_engine
 !
@@ -234,7 +235,7 @@ contains
 !
       integer :: k
 !
-      write(output%unit, '(/t3,a,a)') '- Operator: ', trim(operator_)
+      write(output%unit, '(/t3,a,a,a)') '- Operator: ', trim(operator_), ' [a.u.]'
 !
       write(output%unit, '(/t6, a)') 'Cart. comp.  Electronic         Nuclear             Total           '
       write(output%unit, '(t6, a)')  '--------------------------------------------------------------------'
