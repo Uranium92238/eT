@@ -33,6 +33,12 @@ module cc3_class
 !
    type, extends(ccsd) :: cc3
 !
+!     CVS
+!
+      logical :: cvs_cc3
+      integer :: n_cores
+      integer, allocatable :: core_MOs(:)
+!
 !     Ground state integral files
 !
       type(direct_file)  :: g_bdck_t
@@ -83,6 +89,10 @@ module cc3_class
       procedure :: prepare_for_jacobian            => prepare_for_jacobian_cc3
       procedure :: prepare_for_jacobian_transpose  => prepare_for_jacobian_transpose_cc3
 !
+!     Routines for CVS
+      procedure :: get_cvs_projector   => get_cvs_projector_cc3 
+      procedure :: prepare_for_cvs     => prepare_for_cvs_cc3
+!
 !     Both
       procedure :: prep_cc3_g_lbkc_t_file          => prep_cc3_g_lbkc_t_file_cc3
       procedure :: prep_cc3_jacobian_intermediates => prep_cc3_jacobian_intermediates_cc3
@@ -112,7 +122,7 @@ module cc3_class
 !     Routines related to the transpose of the jacobian
 !
       procedure :: effective_jacobian_transpose_transformation  &
-                                                   => effective_jacobian_transpose_transformation_cc3
+                                                => effective_jacobian_transpose_transformation_cc3
 !
       procedure :: jacobian_transpose_cc3_t3_a1 => jacobian_transpose_cc3_t3_a1_cc3
 !
@@ -184,6 +194,8 @@ contains
       call wf%initialize_fock_ia()
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
+!
+      wf%cvs_cc3 = .false.
 !
    end function new_cc3
 !
@@ -316,6 +328,77 @@ contains
       call timing%flush_()
 !
    end subroutine prepare_for_jacobian_transpose_cc3
+!
+!
+   subroutine get_cvs_projector_cc3(wf, projector, n_cores, core_MOs)
+!!
+!!    Get CVS projector
+!!    Written by Sarai D. Folkestad, Oct 2018
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
+!
+      integer, intent(in) :: n_cores
+!
+      integer, dimension(n_cores), intent(in) :: core_MOs
+!
+      integer :: core, i, a, ai, j, b, bj, aibj
+!
+      call wf%prepare_for_cvs(n_cores, core_MOs)
+!
+      projector = zero
+!
+      do core = 1, n_cores
+!
+        i = core_MOs(core)
+!
+!$omp parallel do private (a, ai, j, b, bj, aibj)
+        do a = 1, wf%n_v
+!
+           ai = wf%n_v*(i - 1) + a
+           projector(ai) = one
+!
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v
+!
+                  bj = wf%n_v*(j - 1) + b
+                  aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
+!
+                  projector(aibj + (wf%n_o)*(wf%n_v)) = one
+!
+               enddo
+            enddo
+        enddo
+!$omp end parallel do
+!
+     enddo
+!
+   end subroutine get_cvs_projector_cc3
+!
+!
+   subroutine prepare_for_cvs_cc3(wf, n_cores, core_MOs)
+!!
+!!    Prepares for CVS by copying the core orbitals to CC3 wavefunction
+!!    Written by Alexander Paul, June 2019
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      integer, intent(in) :: n_cores
+!
+      integer, dimension(n_cores), intent(in) :: core_MOs
+!
+      call mem%alloc(wf%core_MOs, n_cores)
+!
+      wf%cvs_cc3 = .true.
+      wf%n_cores = n_cores
+      wf%core_MOs = core_MOs
+!
+   end subroutine prepare_for_cvs_cc3
 !
 !
 end module cc3_class

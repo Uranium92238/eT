@@ -31,9 +31,8 @@ module davidson_cvs_cc_es_class
 !
    type, extends(davidson_cc_es) :: davidson_cvs_cc_es
 !
-      integer :: n_cores
+      integer :: n_core_Mos
 !
-      integer, dimension(:), allocatable :: cores
       integer, dimension(:), allocatable :: core_MOs
 !
    contains
@@ -45,10 +44,8 @@ module davidson_cvs_cc_es_class
       procedure :: set_projection_vector  => set_projection_vector_davidson_cvs_cc_es
 !
       procedure :: initialize_core_MOs    => initialize_core_MOs_davidson_cvs_cc_es
-      procedure :: initialize_cores       => initialize_cores_davidson_cvs_cc_es
 !
       procedure :: destruct_core_MOs      => destruct_core_MOs_davidson_cvs_cc_es
-      procedure :: destruct_cores         => destruct_cores_davidson_cvs_cc_es
 !
    end type davidson_cvs_cc_es
 !
@@ -147,19 +144,19 @@ contains
 !
       if (input%requested_keyword_in_section('core excitation', 'solver cc es')) then 
 !  
-!        Determine the number of cores 
+!        Determine the number of core MOs 
 !
-         solver%n_cores = input%get_n_elements_for_keyword_in_section('core excitation', 'solver cc es')
+         solver%n_core_MOs = input%get_n_elements_for_keyword_in_section('core excitation', 'solver cc es')
 !
-!        Then read the core vector
+!        Then read the vector of core MOs for CVS
 !
-         call solver%initialize_cores()
+         call solver%initialize_core_MOs()
 !
-         call input%get_array_for_keyword_in_section('core excitation', 'solver cc es', solver%n_cores, solver%cores)
+         call input%get_array_for_keyword_in_section('core excitation', 'solver cc es', solver%n_core_MOs, solver%core_MOs)
 !
       else
 !
-         call output%error_msg('found no specified cores in input for cvs calculation')
+         call output%error_msg('found no specified core MOs in input for cvs calculation')
 !
       endif 
 !
@@ -185,17 +182,7 @@ contains
 !
       integer, dimension(:), allocatable :: start_indices
 !
-      integer :: trial, i, j, k, l, first_ao_on_atom, last_ao_on_atom
-      integer :: n_MOs_found, n_solutions_on_file
-!
-      real(dp) :: mix_factor
-!
-      logical :: used
-!
-      integer, dimension(:), allocatable :: cores
-!
-      if (solver%n_cores .gt. solver%n_singlet_states) &
-         call output%error_msg('number of roots requested should be equal or greater than the number of cores.')
+      integer :: trial, n_solutions_on_file
 !
       if (solver%restart) then 
 !
@@ -226,73 +213,11 @@ contains
 !
       endif 
 !
-!     Calculate the mixing factor of equal mix 
-!
-      mix_factor = 1.0d0/(sqrt(real(solver%n_cores, kind=dp)))*0.9
-!
-!     Loop through the occupied MOs and determine if they are core mos
-!
-      n_MOs_found = 0
-!
-      call solver%initialize_core_MOs()
-      solver%core_MOs = 0
-!
-!     Translate cores to correct ordering (see molecular system for a description of eT ordering of atoms)
-!
-      call mem%alloc(cores, solver%n_cores)
-      cores = solver%cores
-!
-      call wf%system%translate_from_input_order_to_eT_order(solver%n_cores, cores, solver%cores)
-      call mem%dealloc(cores, solver%n_cores)
-!
-      do j = 1, solver%n_cores
-!
-         first_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(1)%first
-         last_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(wf%system%atoms(solver%cores(j))%n_shells)%last
-!
-         do k = first_ao_on_atom, last_ao_on_atom
-
-            do i = 1, wf%n_o
-!
-               if (abs(wf%orbital_coefficients(k, i)) .ge. mix_factor) then
-!
-                  used =  .false.
-!
-                  do l = 1, n_MOs_found
-!
-                     if (solver%core_MOs(l) == i) used = .true.
-!
-                  enddo
-!
-                  if (.not. used) then
-!
-                     n_MOs_found = n_MOs_found + 1
-!
-                     if (n_MOs_found .gt. solver%n_cores) &
-                        call output%error_msg('something went wrong in the selection of core MOs.')
-!
-                     solver%core_MOs(n_MOs_found) = i
-                     exit
-!
-                  else
-!
-                     cycle
-!
-                  endif
-!
-               endif
-!
-            enddo
-!
-         enddo
-!
-      enddo
-!
       if (n_solutions_on_file .lt. solver%n_singlet_states) then ! Koopman for the rest
 
          call mem%alloc(start_indices, solver%n_singlet_states)
 !
-         call wf%set_cvs_start_indices(solver%n_cores, solver%core_MOs, solver%n_singlet_states, start_indices)
+         call wf%set_cvs_start_indices(solver%n_core_MOs, solver%core_MOs, solver%n_singlet_states, start_indices)
 !
          call mem%alloc(c_i, wf%n_es_amplitudes)
 !
@@ -334,7 +259,7 @@ contains
       call mem%alloc(projector, wf%n_es_amplitudes)
       davidson%do_projection = .true.
 !
-      call wf%get_cvs_projector(projector, solver%n_cores, solver%core_MOs)
+      call wf%get_cvs_projector(projector, solver%n_core_MOs, solver%core_MOs)
 !
       call davidson%set_projector(projector)
       call mem%dealloc(projector, wf%n_es_amplitudes)
@@ -351,7 +276,7 @@ contains
 !
       class(davidson_cvs_cc_es) :: solver
 !
-      if (.not. allocated(solver%core_MOs)) call mem%alloc(solver%core_MOs, solver%n_cores)
+      if (.not. allocated(solver%core_MOs)) call mem%alloc(solver%core_MOs, solver%n_core_MOs)
 !
    end subroutine initialize_core_MOs_davidson_cvs_cc_es
 !
@@ -365,37 +290,9 @@ contains
 !
       class(davidson_cvs_cc_es) :: solver
 !
-      if (allocated(solver%core_MOs)) call mem%dealloc(solver%core_MOs, solver%n_cores)
+      if (allocated(solver%core_MOs)) call mem%dealloc(solver%core_MOs, solver%n_core_MOs)
 !
    end subroutine destruct_core_MOs_davidson_cvs_cc_es
-!
-!
-   subroutine initialize_cores_davidson_cvs_cc_es(solver)
-!!
-!!    Initialize cores
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
-!!
-      implicit none
-!
-      class(davidson_cvs_cc_es) :: solver
-!
-      if (.not. allocated(solver%cores)) call mem%alloc(solver%cores, solver%n_cores)
-!
-   end subroutine initialize_cores_davidson_cvs_cc_es
-!
-!
-   subroutine destruct_cores_davidson_cvs_cc_es(solver)
-!!
-!!    Destruct cores
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
-!!
-      implicit none
-!
-      class(davidson_cvs_cc_es) :: solver
-!
-      if (allocated(solver%cores)) call mem%dealloc(solver%cores, solver%n_cores)
-!
-   end subroutine destruct_cores_davidson_cvs_cc_es
 !
 !
 end module davidson_cvs_cc_es_class

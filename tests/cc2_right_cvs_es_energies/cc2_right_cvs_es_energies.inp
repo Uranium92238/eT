@@ -38,7 +38,7 @@ solver cc es
    residual threshold: 1.0d-10
    energy threshold:   1.0d-10
    right eigenvectors
-   core excitation: {3}
+   core excitation: {1}
 end solver cc es
 
 geometry

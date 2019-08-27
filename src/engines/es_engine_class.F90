@@ -152,9 +152,10 @@ contains
 !!
       use davidson_cc_es_class
       use davidson_cvs_cc_es_class
-      use diis_cc_gs_class
-      use diis_cc_es_class
-      use diis_A_inv_cc_es_class
+      use diis_cc_gs_class, only: diis_cc_gs
+      use diis_cc_es_class, only: diis_cc_es
+      use diis_cvs_cc_es_class, only: diis_cvs_cc_es
+      use diis_A_inv_cc_es_class, only: diis_A_inv_cc_es
 !
       implicit none
 !
@@ -163,7 +164,7 @@ contains
 !
       character(len=*), intent(in) :: transformation
 !
-      type(diis_cc_es), allocatable :: cc_es_solver_diis
+      class(diis_cc_es), allocatable :: cc_es_solver_diis
 !
       type(diis_A_inv_cc_es), allocatable :: cc_es_solver_A_inv
 !
@@ -171,11 +172,26 @@ contains
 !
 !     Prepare for excited state
 !
-      if (engine%es_algorithm == 'diis' .or. wf%name_ == 'low memory cc2' .or. wf%name_ == 'cc3') then
+      if (engine%es_algorithm == 'diis' .or. trim(wf%name_) == 'low memory cc2' .or. trim(wf%name_) == 'cc3') then
 !
-         cc_es_solver_diis = diis_cc_es(transformation, wf)
-         call cc_es_solver_diis%run(wf)
-         call cc_es_solver_diis%cleanup(wf)
+         if (trim(engine%es_algorithm) == 'davidson' .and. (trim(wf%name_) == 'low memory cc2' .or. trim(wf%name_) == 'cc3')) then
+            write(output%unit, '(/t3,3a)') 'Warning: For ', trim(wf%name_),' excited states the DIIS algorithm will be used'
+            write(output%unit, '(t12,a)') 'even though "davidson" was specified in the input.'
+         endif
+!
+         if (engine%es_type == 'core') then
+!
+            cc_es_solver_diis = diis_cvs_cc_es(transformation, wf)
+            call cc_es_solver_diis%run(wf)
+            call cc_es_solver_diis%cleanup(wf)
+!
+         else ! es_type = valence
+!
+            cc_es_solver_diis = diis_cc_es(transformation, wf)
+            call cc_es_solver_diis%run(wf)
+            call cc_es_solver_diis%cleanup(wf)
+!
+         endif
 !
       elseif (engine%es_algorithm == 'diis a inverse') then
 !

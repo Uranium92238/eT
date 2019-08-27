@@ -3357,7 +3357,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
 !

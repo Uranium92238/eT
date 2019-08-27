@@ -36,6 +36,10 @@ module diis_cc_es_class
 !
       integer :: diis_dimension
 !
+      logical :: do_projection
+!
+      real(dp), dimension(:), allocatable :: projector
+!
    contains
 !     
       procedure, non_overridable :: run            => run_diis_cc_es
@@ -46,6 +50,9 @@ module diis_cc_es_class
       procedure :: read_diis_settings              => read_diis_settings_diis_cc_es
 !
       procedure :: print_settings                  => print_settings_diis_cc_es
+!
+      procedure :: set_projection_vector           => set_projection_vector_diis_cc_es
+      procedure :: project                         => project_diis_cc_es
 !
    end type diis_cc_es
 !
@@ -101,6 +108,8 @@ contains
       solver%diis_dimension       = 20
       solver%restart              = .false.
       solver%transformation       = trim(transformation)
+!
+      solver%do_projection = .false.
 !
       call solver%read_settings()
       call solver%print_settings()
@@ -191,6 +200,7 @@ contains
       real(dp), dimension(:,:), allocatable :: X, R
 !
       call solver%prepare_wf_for_excited_state(wf)
+      call solver%set_projection_vector(wf)
 !
 !     Initialize energies, residual norms, and convergence arrays 
 !
@@ -273,6 +283,8 @@ contains
 !
                call wf%construct_excited_state_equation(X(:,state), R(:,state), solver%energies(state), &
                                                         solver%transformation)
+!
+               if (solver%do_projection) call solver%project(R(:,state), wf%n_es_amplitudes)
 !
                residual_norms(state) = get_l2_norm(R(:, state), wf%n_es_amplitudes)
 !
@@ -422,6 +434,57 @@ contains
       call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states)      
 !
    end subroutine set_start_vectors_diis_cc_es
+!
+!
+   subroutine set_projection_vector_diis_cc_es(solver, wf)
+!!
+!!    Set projection vector
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
+!!
+!!    Sets projection vector to orbital differences 
+!!
+      implicit none
+!
+      class(diis_cc_es) :: solver
+!
+      class(ccs) :: wf
+!
+!     Do nothing for regular excited states, but will be used in descendants
+!     CVS and IP
+!
+      solver%do_projection = .false.
+!
+      if (.false.) write(output%unit, *) wf%name_ ! Hack to suppress unavoidable compiler warnings
+!
+   end subroutine set_projection_vector_diis_cc_es
+!
+!
+   subroutine project_diis_cc_es(solver, R, n_parameters)
+!!
+!!    Project
+!!    Written by Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(diis_cc_es) :: solver
+!
+      integer, intent(in) :: n_parameters
+!
+      real(dp), dimension(n_parameters), intent(inout) :: R 
+!
+      integer :: i
+!
+      if(.not. allocated(solver%projector)) call output%error_msg('can not project in '// trim(solver%tag)// ' without projector.')
+!
+!$omp parallel do private(i)
+      do i = 1, n_parameters
+!
+         R(i) = R(i)*solver%projector(i)
+!
+      enddo  
+!$omp end parallel do
+!
+   end subroutine project_diis_cc_es
 !
 !
 end module diis_cc_es_class

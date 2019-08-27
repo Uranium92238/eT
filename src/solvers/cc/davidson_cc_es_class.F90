@@ -206,12 +206,12 @@ contains
       davidson = eigen_davidson_tool('cc_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
                                        solver%residual_threshold, solver%eigenvalue_threshold)
 !
+      call solver%set_precondition_vector(wf, davidson)
+      call solver%set_projection_vector(wf, davidson)
+!
 !     Construct first trial vectors
 !
       call solver%set_start_vectors(wf, davidson)
-!
-      call solver%set_precondition_vector(wf, davidson)
-      call solver%set_projection_vector(wf, davidson)
 !
 !     Enter iterative loop
 !
@@ -351,9 +351,12 @@ contains
          do solution = 1, solver%n_singlet_states
 !
             call davidson%construct_X(X, solution)
+!
             call wf%save_excited_state(X, solution, solver%transformation)
 !
          enddo
+!
+         call mem%dealloc(X, wf%n_es_amplitudes)
 !
          call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
 !
