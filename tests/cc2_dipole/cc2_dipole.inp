@@ -1,42 +1,45 @@
 system
-   name: H2O-He
-   charge: 0
+   name: hypofluorous_acid
 end system
 
 do
-   fop
+  ground state
+  zop
 end do
+
+cc zop
+   dipole
+end cc zop
+
+memory
+   available: 8
+end memory
 
 method
    hf
-   ccsd
+   cc2
 end method
 
-cc fop
-   eom
-   dipole length
-end cc fop
+! Solver settings:
 
 solver hf
+   algorithm: scf-diis
    gradient threshold: 1.0d-11
+   energy threshold: 1.0d-11
 end solver hf
-
-solver cholesky
-   threshold: 1.0d-11
-end solver cholesky
 
 solver cc gs
    omega threshold: 1.0d-11
+   energy threshold: 1.0d-11
 end solver cc gs
 
 solver cc multipliers
    threshold: 1.0d-11
 end solver cc multipliers
 
-solver cc es
-   residual threshold: 1.0d-11
-   singlet states: 1
-end solver cc es
+solver cholesky
+   threshold: 1.0d-11
+end solver cholesky
 
 geometry
 basis: cc-pVDZ

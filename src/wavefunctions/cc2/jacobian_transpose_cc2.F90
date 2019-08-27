@@ -529,7 +529,7 @@ contains
 !
 !     Term 1: (2F_jb c_ai - F_ib c_aj)
 !
-      sigma_aibj = zero
+      call zero_array(sigma_aibj, (wf%n_o*wf%n_v)**2)
 !
 !$omp parallel do private(a, i, b, j)
       do j = 1, wf%n_o

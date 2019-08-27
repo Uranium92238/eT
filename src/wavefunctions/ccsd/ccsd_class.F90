@@ -194,11 +194,17 @@ module ccsd_class
 !
 !     One-electron density 
 !
-      procedure :: construct_density                           => construct_density_ccsd
+      procedure :: construct_gs_density                        => construct_gs_density_ccsd
 !
-      procedure :: one_el_density_ccsd_oo                      => one_el_density_ccsd_oo_ccsd
-      procedure :: one_el_density_ccsd_vv                      => one_el_density_ccsd_vv_ccsd
-      procedure :: one_el_density_ccsd_ov                      => one_el_density_ccsd_ov_ccsd
+      procedure :: gs_one_el_density_ccsd_oo                   => gs_one_el_density_ccsd_oo_ccsd
+      procedure :: gs_one_el_density_ccsd_vv                   => gs_one_el_density_ccsd_vv_ccsd
+      procedure :: gs_one_el_density_ccsd_ov                   => gs_one_el_density_ccsd_ov_ccsd
+!
+      procedure :: construct_left_transition_density           => construct_left_transition_density_ccsd
+      procedure :: construct_right_transition_density          => construct_right_transition_density_ccsd
+!
+      procedure :: right_transition_density_ccsd_ov            => right_transition_density_ccsd_ov_ccsd
+      procedure :: right_transition_density_ccsd_vo            => right_transition_density_ccsd_vo_ccsd
 !
    end type ccsd
 !
@@ -351,7 +357,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      wf%t1 = zero
+      call zero_array(wf%t1, wf%n_o*wf%n_v)
 !
       call wf%set_t2_to_mp2_guess()
 !
@@ -535,7 +541,7 @@ contains
       integer :: i = 0, a = 0, j = 0, b = 0, aibj = 0
       integer :: bj = 0, ai = 0
 !
-      eta = zero
+      call zero_array(eta, wf%n_gs_amplitudes)
 !
 !$omp parallel do private(i,a)
       do i = 1, wf%n_o
@@ -555,7 +561,7 @@ contains
       call wf%get_ovov(g_iajb)
 !
       call mem%alloc(eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      eta_aibj = zero
+      call zero_array(eta_aibj, (wf%n_o*wf%n_v)**2)
 !
       call add_2143_to_1234(four, g_iajb, eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2341_to_1234(-two, g_iajb, eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -762,7 +768,7 @@ contains
       call mem%alloc(dominant_values, n_elements)
 !
       dominant_indices = 0
-      dominant_values  = zero
+      call zero_array(dominant_values, n_elements)
       call get_n_highest(n_elements, wf%n_t2, abs_x2, dominant_values, dominant_indices)
 !
 !     Print largest contributions
@@ -808,7 +814,7 @@ contains
 !
       integer :: core, i, a, ai, j, b, bj, aibj
 !
-      projector = zero
+      call zero_array(projector, wf%n_es_amplitudes)
 !
       do core = 1, n_cores
 !
@@ -838,7 +844,46 @@ contains
    end subroutine get_cvs_projector_ccsd
 !
 !
-   subroutine one_el_density_ccsd_oo_ccsd(wf)
+   subroutine construct_gs_density_ccsd(wf)
+!!
+!!    Construct one-electron density
+!!    Written by Sarai Dery Folkestad
+!!
+!!    Constructs the one-electron density 
+!!    matrix in the T1 basis
+!!
+!!    D_pq = < Λ | E_pq | CC >
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(:,:,:,:), allocatable :: tbar_aibj
+      real(dp), dimension(:,:,:,:), allocatable :: t_aibj
+!
+      call zero_array(wf%density, (wf%n_mo)**2)
+!
+      call wf%gs_one_el_density_ccs_oo(wf%density)
+      call wf%gs_one_el_density_ccs_vo(wf%density, wf%t1bar)
+!
+      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
+!
+      call wf%gs_one_el_density_ccsd_ov(wf%density, wf%t1bar, t_aibj)
+!
+      call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2bar, tbar_aibj, (wf%n_v)*(wf%n_o))
+!
+      call wf%gs_one_el_density_ccsd_oo(wf%density, tbar_aibj, t_aibj)
+      call wf%gs_one_el_density_ccsd_vv(wf%density, tbar_aibj, t_aibj)
+!
+      call mem%dealloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+   end subroutine construct_gs_density_ccsd
+!
+!
+   subroutine gs_one_el_density_ccsd_oo_ccsd(wf, density, tbar_akbj, t_akbi)
 !!
 !!    One electron density oo
 !!    Written by Sarai D. Folkestad
@@ -849,13 +894,10 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(:,:,:,:), allocatable :: tbar_akbj, t_akbi
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
-      call mem%alloc(tbar_akbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%alloc(t_akbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call squareup(wf%t2bar, tbar_akbj, (wf%n_v)*(wf%n_o))
-      call squareup(wf%t2, t_akbi, (wf%n_v)*(wf%n_o))
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_akbj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_akbi
 !
       call dgemm('T', 'N',                &
                   wf%n_o,                 &
@@ -867,18 +909,15 @@ contains
                   tbar_akbj,              & ! tbar_akb_j
                   (wf%n_v**2)*(wf%n_o),   &
                   one,                    &
-                  wf%density,             &
+                  density,                &
                   wf%n_mo)
 !
-      call mem%dealloc(tbar_akbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(t_akbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-   end subroutine one_el_density_ccsd_oo_ccsd
+   end subroutine gs_one_el_density_ccsd_oo_ccsd
 !
 !
-   subroutine one_el_density_ccsd_vv_ccsd(wf)
+   subroutine gs_one_el_density_ccsd_vv_ccsd(wf, density, tbar_ajci, t_bjci)
 !!
-!!    One electron density oo
+!!    One electron density vv
 !!    Written by Sarai D. Folkestad
 !!
 !!    D_ab += sum_jci tbar_a,jci t_b,jci
@@ -887,116 +926,87 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(:,:,:,:), allocatable :: tbar_ajci, t_bjci
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
-      call mem%alloc(tbar_ajci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%alloc(t_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_ajci
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_bjci
 !
-      call squareup(wf%t2bar, tbar_ajci, (wf%n_v)*(wf%n_o))
-      call squareup(wf%t2, t_bjci, (wf%n_v)*(wf%n_o))
-!
-      call dgemm('N', 'T',                            &
-                  wf%n_v,                             &
-                  wf%n_v,                             &
-                  (wf%n_o**2)*(wf%n_v),               &
-                  one,                                &
-                  tbar_ajci,                          & ! tbar_a_jci
-                  wf%n_v,                             &
-                  t_bjci,                             & ! t_b_jci
-                  wf%n_v,                             &
-                  one,                                &
-                  wf%density(wf%n_o + 1, wf%n_o + 1), &
+      call dgemm('N', 'T',                         &
+                  wf%n_v,                          &
+                  wf%n_v,                          &
+                  (wf%n_o**2)*(wf%n_v),            &
+                  one,                             &
+                  tbar_ajci,                       & ! tbar_a_jci
+                  wf%n_v,                          &
+                  t_bjci,                          & ! t_b_jci
+                  wf%n_v,                          &
+                  one,                             &
+                  density(wf%n_o + 1, wf%n_o + 1), &
                   wf%n_mo)
 !
-      call mem%dealloc(tbar_ajci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(t_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-   end subroutine one_el_density_ccsd_vv_ccsd
+   end subroutine gs_one_el_density_ccsd_vv_ccsd
 !
 !
-   subroutine one_el_density_ccsd_ov_ccsd(wf)
+   subroutine gs_one_el_density_ccsd_ov_ccsd(wf, density, tbar_ai, t_aibj)
 !!
-!!    One electron density vo
+!!    One electron density ov
 !!    Written by Sarai D. Folkestad
 !!
 !!    D_ia += sum_bj u^{ab}_ij tbar_bj = sum_bj u_ia,bj tbar_bj 
 !!
-!!    u^{ab}_ij = 2t_aibj - t_ajbi = u_iabj 
+!!    u^{ab}_ij = 2t_aibj - t_ajbi
 !!
       implicit none
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(:,:,:,:), allocatable :: u_iabj, t_aibj
-      real(dp), dimension(:,:), allocatable :: D_ia
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_aibj
+!
+      real(dp), dimension(:,:,:,:), allocatable :: u_aibj
+!
+      real(dp), dimension(:,:), allocatable :: D_ov
 !
       integer :: i, a
 !
-      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%alloc(u_iabj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
 !
-      call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
+      call dcopy((wf%n_v)**2*(wf%n_o)**2, t_aibj, 1, u_aibj, 1)
+      call dscal((wf%n_v)**2*(wf%n_o)**2, two, u_aibj, 1)
 !
-      u_iabj = zero
-      call add_2134_to_1234(two, t_aibj, u_iabj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-      call add_2431_to_1234(-one, t_aibj, u_iabj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call add_1432_to_1234(-one, t_aibj, u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(D_ov, wf%n_v, wf%n_o) ! ordered v,o
 !
-      call mem%alloc(D_ia, wf%n_o, wf%n_v)
+      call dgemv('T',            &
+                  wf%n_o*wf%n_v, &
+                  wf%n_o*wf%n_v, &
+                  one,           &
+                  u_aibj,        & ! u_bj_ai
+                  wf%n_o*wf%n_v, &
+                  tbar_ai,       & ! tbar_ai
+                  1,             &
+                  zero,          &
+                  D_ov,          & ! D_bj
+                  1)
 !
-      call dgemm('N', 'N',             &
-                  (wf%n_o)*(wf%n_v),   &
-                  1,                   &
-                  (wf%n_o)*(wf%n_v),   &
-                  one,                 &
-                  u_iabj,              & ! u_ia_bj
-                  (wf%n_o)*(wf%n_v),   &
-                  wf%t1bar,            & ! tbar_bj
-                  (wf%n_o)*(wf%n_v),   &
-                  zero,                &
-                  D_ia,                &
-                  (wf%n_o)*(wf%n_v))
-
-      call mem%dealloc(u_iabj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call mem%dealloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
 !
 !$omp parallel do private(a, i)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
-            wf%density(i, wf%n_o + a) = wf%density(i, wf%n_o + a) + D_ia(i, a)
+            density(i, wf%n_o + a) = density(i, wf%n_o + a) + D_ov(a, i)
 !
          enddo
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(D_ia, wf%n_o, wf%n_v)
+      call mem%dealloc(D_ov, wf%n_v, wf%n_o)
 !
-   end subroutine one_el_density_ccsd_ov_ccsd
-!
-!
-   subroutine construct_density_ccsd(wf)
-!!
-!!    Construct one-electron density
-!!    Written by Sarai Dery Folkestad
-!!
-!!    Constructs the one-electron density 
-!!    matrix in the T1 basis
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      wf%density = zero
-!
-      call wf%one_el_density_ccs_oo()
-      call wf%one_el_density_ccs_vo()
-!      
-      call wf%one_el_density_ccsd_oo()
-      call wf%one_el_density_ccsd_vv()
-      call wf%one_el_density_ccsd_ov()
-!
-   end subroutine construct_density_ccsd
+   end subroutine gs_one_el_density_ccsd_ov_ccsd
 !
 !
    subroutine from_biorthogonal_to_biorthonormal_ccsd(wf, X)

@@ -1,5 +1,4 @@
 !
-!
 !  eT - a coupled cluster program
 !  Copyright (C) 2016-2019 the authors of eT
 !
@@ -26,11 +25,12 @@ submodule (ccsd_class) fop_ccsd
 !!    Adapted by Sarai D. Folkestad
 !!
 !!    Routines for construction of the right-hand-side, η^X, and left-hand-side, ξ^X
-!!    vectors for transition moments.
+!!    vectors and the left-hand-side (ρ^L) and right-hand-side (ρ^R) transition densities
+!!    for transition moments.
 !!
 !!    Equation-of-motion (EOM):
 !!
-!!   (Following Koch, H., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
+!!    (Following Koch, H., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
 !!    J. Chem. Phys. 100, 4393 (1994))
 !!
 !!       η_μ^X,EOM =  < Λ | [X, τ_μ] | CC > + (< Λ | τ_μ X | CC >  - tbar_μ < Λ | X | CC > )
@@ -43,11 +43,457 @@ submodule (ccsd_class) fop_ccsd
 !!
 !!       ξ^X_μ = < μ | exp(-T) X exp(T)| R >
 !!
+!!    The transition density matrices are construct as follows:
+!!
+!!       ρ^L_pq = < k | E_pq | CC >
+!!       ρ^R_pq = < Λ | E_pq | k >
+!!
+!!    where |k> and <k| are the eigenvectors of the Jacobian with amplitudes R_μ, L_μ
+!!
+!!       | k > = sum_μ (τ_μ | CC > R_{k,μ} - tbar_μ | CC > R_{k,μ})
+!!       < k | = sum_μ L_{k,μ} < μ | e^-T
+!!
+!!
 !
    implicit none
 !
 !
 contains
+!
+!
+   module subroutine construct_left_transition_density_ccsd(wf, L_k)
+!!
+!!    Construct left one-electron transition density for the state k
+!!    Written by Alexander Paul, June 2019
+!!
+!!          ρ^L_pq = < k | E_pq | CC >
+!!
+!!    where <k| is the left eigenvector of the Jacobian
+!!    with amplitudes L_μ
+!!
+!!          < k | = sum_μ L_{k,μ} < μ | e^-T
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: L_k
+!
+      real(dp), dimension(:,:), allocatable :: L_ai
+      real(dp), dimension(:,:,:,:), allocatable :: L_aibj
+!
+      real(dp), dimension(:,:,:,:), allocatable :: t_aibj
+!
+      integer :: i, j, a, b, ai, bj, aibj, b_end
+!
+      call zero_array(wf%left_transition_density, wf%n_mo**2)
+!
+!     Allocate the singles part of the excitation vector
+!
+      call mem%alloc(L_ai, wf%n_v, wf%n_o)
+!
+!$omp parallel do schedule(static) private(a, i, ai)
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            L_ai(a, i) = L_k(ai)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call wf%gs_one_el_density_ccs_vo(wf%left_transition_density, L_ai)
+!
+      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
+!
+      call wf%gs_one_el_density_ccsd_ov(wf%left_transition_density, L_ai, t_aibj)
+!
+      call mem%dealloc(L_ai, wf%n_v, wf%n_o)
+!
+!     Allocate and unpack doubles part of the excitation vector
+!
+      call mem%alloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj, b_end)
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            do j = 1, i
+!
+               if (i .ne. j) then
+                  b_end = wf%n_v
+               else
+                  b_end = a
+               endif
+!
+               do b = 1, b_end
+!
+                  bj = wf%n_v*(j - 1) + b
+!
+                  aibj = ai*(ai-3)/2 + ai + bj
+!
+                  L_aibj(a,i,b,j) = L_k(wf%n_t1 + aibj)
+                  L_aibj(b,j,a,i) = L_k(wf%n_t1 + aibj)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call wf%gs_one_el_density_ccsd_oo(wf%left_transition_density, L_aibj, t_aibj)
+      call wf%gs_one_el_density_ccsd_vv(wf%left_transition_density, L_aibj, t_aibj)
+!
+      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!      
+   end subroutine construct_left_transition_density_ccsd
+!
+!
+   module subroutine construct_right_transition_density_ccsd(wf, R_k)
+!!
+!!    Construct right one-electron transition density for the state k
+!!    Written by Alexander Paul, June 2019
+!!
+!!          ρ^R_pq = < Λ | E_pq | k >
+!!
+!!    where |k> is the right eigenvector of the Jacobian
+!!    with amplitudes R_μ
+!!
+!!          | k > = sum_μ (τ_μ | CC > R_{k,μ} - tbar_μ | CC > R_{k,μ}) 
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: R_k
+!
+      real(dp), dimension(:,:), allocatable :: R_ai
+      real(dp), dimension(:,:,:,:), allocatable :: R_aibj
+!
+      real(dp), dimension(:,:,:,:), allocatable :: tbar_aibj
+!
+      real(dp), dimension(:,:), allocatable :: rho_corr
+!
+      real(dp) :: scaling_factor
+      real(dp) :: ddot
+!
+      integer :: i, j, a, b, ai, bj, aibj, b_end
+!
+      call zero_array(wf%right_transition_density, (wf%n_mo)**2)
+!
+      call mem%alloc(R_ai, wf%n_v, wf%n_o)
+!
+!$omp parallel do schedule(static) private(a, i, ai)
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            R_ai(a, i) = R_k(ai)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+      scaling_factor = -one*ddot(wf%n_v*wf%n_o, R_ai, 1, wf%t1bar, 1)
+!
+      call wf%right_transition_density_ccs_oo(wf%t1bar, R_ai)
+      call wf%right_transition_density_ccs_ov(R_ai)
+      call wf%right_transition_density_ccs_vv(wf%t1bar, R_ai)
+!
+      call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2bar, tbar_aibj, (wf%n_v)*(wf%n_o))
+!
+      call wf%right_transition_density_ccsd_ov(tbar_aibj, R_ai)
+      call wf%right_transition_density_ccsd_vo(tbar_aibj, R_ai)
+!
+      call mem%dealloc(R_ai, wf%n_v, wf%n_o)
+!
+!     Allocate and unpack doubles part of the excitation vector
+!
+      call mem%alloc(R_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj, b_end)
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            do j = 1, i
+!
+               if (i .ne. j) then
+                  b_end = wf%n_v
+               else
+                  b_end = a
+               endif
+!
+               do b = 1, b_end
+!
+                  bj = wf%n_v*(j - 1) + b
+!
+                  aibj = ai*(ai-3)/2 + ai + bj
+!
+                  R_aibj(a,i,b,j) = R_k(wf%n_t1 + aibj)
+                  R_aibj(b,j,a,i) = R_k(wf%n_t1 + aibj)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+!     Scale the doubles vector by 1 + δ_ai,bj, i.e.
+!     redefine to c_ckdl = c_ckdl (1 + δ_ck,dl)
+!
+!$omp parallel do schedule(static) private(a,i)
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            R_aibj(a,i,a,i) = two*R_aibj(a,i,a,i)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+      scaling_factor = scaling_factor &
+                        - half * ddot((wf%n_v)**2*(wf%n_o)**2, R_aibj, 1, tbar_aibj, 1)
+!
+      call wf%gs_one_el_density_ccsd_oo(wf%right_transition_density, tbar_aibj, R_aibj)
+      call wf%gs_one_el_density_ccsd_vv(wf%right_transition_density, tbar_aibj, R_aibj)
+!
+      call mem%dealloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call wf%gs_one_el_density_ccsd_ov(wf%right_transition_density, wf%t1bar, R_aibj)
+!
+      call mem%dealloc(R_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Right transition density, contribution from the ground state density
+!     ρ^R_pq -= sum_μν R_{k,μ}tbar_μ tbar_ν < ν |e^-T E_pq e^T| HF >
+!            -= sum_μ R_{k,μ} tbar_μ (D_GS - D_HF)
+!            -= sum_μ R_{k,μ} tbar_μ ρ_corr
+!
+      call mem%alloc(rho_corr, wf%n_mo, wf%n_mo)
+      call dcopy(wf%n_mo**2, wf%density, 1, rho_corr, 1)
+!
+!$omp parallel do private(i)
+      do i = 1, wf%n_o
+!
+         rho_corr(i,i) = rho_corr(i,i) - two  
+!
+      enddo
+!$omp end parallel do
+!
+      call daxpy(wf%n_mo**2, scaling_factor, rho_corr, 1, wf%right_transition_density, 1)
+!
+      call mem%dealloc(rho_corr, wf%n_mo, wf%n_mo)
+!
+   end subroutine construct_right_transition_density_ccsd
+!
+!
+   module subroutine right_transition_density_ccsd_ov_ccsd(wf, tbar_aibj, R_ai)
+!!
+!!    Right transition density ov contribution (CCSD)
+!!    from the singles part of the excitation vector
+!!    Written by Alexander Paul, June 2019
+!!
+!!    ρ^R_kc += sum_abij R^a_i tbar^ab_ij (2t^bc_jk - t^bc_kj)
+!!             -sum_abij tbar^ab_ij (R^b_k t^ac_ij + R^c_j t^ab_ik)
+!!      
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+      real(dp), dimension(:,:,:,:), allocatable :: u_bjck, t_aick, t_aicj
+      real(dp), dimension(:,:), allocatable :: X_bj, X_ck, X_jk, X_bc
+!
+      integer :: k, c
+!
+!     :: Term 1: sum_abij R^a_i tbar^ab_ij (2t^bc_jk - t^bc_kj) ::
+!
+      call mem%alloc(X_bj, wf%n_v, wf%n_o)
+!
+      call dgemv('T',            &
+                  wf%n_o*wf%n_v, &
+                  wf%n_o*wf%n_v, &
+                  one,           &
+                  tbar_aibj,     & ! tbar_bj_ai
+                  wf%n_o*wf%n_v, &
+                  R_ai,          & ! R_ai
+                  1,             &
+                  zero,          &
+                  X_bj,          &
+                  1)
+!
+      call mem%alloc(t_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_aick, wf%n_v*wf%n_o)
+!
+      call mem%alloc(u_bjck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dcopy((wf%n_v)**2*(wf%n_o)**2, t_aick, 1, u_bjck, 1)
+      call dscal((wf%n_v)**2*(wf%n_o)**2, two, u_bjck, 1)
+      call add_1432_to_1234(-one, t_aick, u_bjck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(t_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(X_ck, wf%n_v, wf%n_o)
+!
+      call dgemv('T',            &
+                  wf%n_o*wf%n_v, &
+                  wf%n_o*wf%n_v, &
+                  one,           &
+                  u_bjck,        & ! u_ck_bj
+                  wf%n_o*wf%n_v, &
+                  X_bj,          & ! X_bj
+                  1,             &
+                  zero,          &
+                  X_ck,          &
+                  1)
+!
+      call mem%dealloc(X_bj, wf%n_v, wf%n_o)
+      call mem%dealloc(u_bjck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     :: Term 2: -sum_abij tbar^ab_ij (R^b_k t^ac_ij + R^c_j t^ab_ik) ::
+!
+      call mem%alloc(t_aicj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_aicj, wf%n_v*wf%n_o)
+!
+      call mem%alloc(X_bc, wf%n_v, wf%n_v)
+!
+!     X_bc = sum_aij tbar_aibj t_aicj = sum_abi tbar_bjai t_cjai
+!
+      call dgemm('N', 'T',          &
+                  wf%n_v,           &
+                  wf%n_v,           &
+                  wf%n_v*wf%n_o**2, &
+                  one,              &
+                  tbar_aibj,        & ! tbar_b_jai
+                  wf%n_v,           &
+                  t_aicj,           & ! t_c_jai
+                  wf%n_v,           &
+                  zero,             &
+                  X_bc,             &
+                  wf%n_v)
+!
+!     X_jk = sum_aib tbar_aibj t_aibk
+!
+      call mem%alloc(X_jk, wf%n_o, wf%n_o)
+!
+      call dgemm('T', 'N',          &
+                  wf%n_o,           &
+                  wf%n_o,           &
+                  wf%n_o*wf%n_v**2, &
+                  one,              &
+                  tbar_aibj,        & ! tbar_aib_j
+                  wf%n_o*wf%n_v**2, &
+                  t_aicj,           & ! t_aib_k
+                  wf%n_o*wf%n_v**2, &
+                  zero,             &
+                  X_jk,             &
+                  wf%n_o)
+!
+      call mem%dealloc(t_aicj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('T','N',  &
+                  wf%n_v,  &
+                  wf%n_o,  &
+                  wf%n_v,  &
+                  -one,    &
+                  X_bc,    & ! X_c_b
+                  wf%n_v,  &
+                  R_ai,    & ! R_b_k
+                  wf%n_v,  &
+                  one,     &
+                  X_ck,    &
+                  wf%n_v)
+!
+      call mem%dealloc(X_bc, wf%n_v, wf%n_v)
+!
+      call dgemm('N','N',  &
+                  wf%n_v,  &
+                  wf%n_o,  &
+                  wf%n_o,  &
+                  -one,    &
+                  R_ai,    & ! R_c_j
+                  wf%n_v,  &
+                  X_jk,    & ! X_j_k
+                  wf%n_o,  &
+                  one,     &
+                  X_ck,    &
+                  wf%n_v)
+!
+      call mem%dealloc(X_jk, wf%n_o, wf%n_o)
+!
+!$omp parallel do private(c, k)
+      do c = 1, wf%n_v
+         do k = 1, wf%n_o
+!
+            wf%right_transition_density(k, wf%n_o + c) = X_ck(c, k) &
+                        + wf%right_transition_density(k, wf%n_o + c)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call mem%dealloc(X_ck, wf%n_v, wf%n_o)
+!
+   end subroutine right_transition_density_ccsd_ov_ccsd
+!
+!
+   module subroutine right_transition_density_ccsd_vo_ccsd(wf, tbar_aibj, R_ai)
+!!
+!!    Right transition density ov contribution (CCSD)
+!!    Written by Alexander Paul, June 2019
+!!
+!!    ρ^R_bj += sum_ai R^a_i tbar^ab_ij
+!!      
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+      real(dp), dimension(:,:), allocatable :: rho_vo
+!
+      integer :: i, a
+!
+      call mem%alloc(rho_vo, wf%n_v, wf%n_o)
+!
+      call dgemv('T',            &
+                  wf%n_o*wf%n_v, &
+                  wf%n_o*wf%n_v, &
+                  one,           &
+                  tbar_aibj,     & ! tbar_bj_ai
+                  wf%n_o*wf%n_v, &
+                  R_ai,          & ! R_ai
+                  1,             &
+                  zero,          &
+                  rho_vo,        &
+                  1)
+!
+!$omp parallel do private(a, i)
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            wf%right_transition_density(wf%n_o + a, i) = rho_vo(a, i) &
+                        + wf%right_transition_density(wf%n_o + a, i)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call mem%dealloc(rho_vo, wf%n_v, wf%n_o)
+!
+   end subroutine right_transition_density_ccsd_vo_ccsd
 !
 !
    module subroutine construct_eom_etaX_ccsd(wf, X, csiX, etaX)
@@ -100,12 +546,12 @@ contains
 !
       integer :: a, i, ai
 !
-      etaX = zero
+      call zero_array(etaX, wf%n_es_amplitudes)
 !
 !     etaX_ai:
 !
       call mem%alloc(etaX_ai, wf%n_v, wf%n_o)
-      etaX_ai = zero
+      call zero_array(etaX_ai, (wf%n_o*wf%n_v))
 !
       call wf%etaX_ccs_a1(X, etaX_ai)
       call wf%etaX_ccs_b1(X, etaX_ai)
@@ -129,7 +575,7 @@ contains
 !     etaX_aibj:
 !
       call mem%alloc(etaX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      etaX_aibj = zero
+      call zero_array(etaX_aibj, (wf%n_o*wf%n_v)**2)
 !
       call wf%etaX_ccsd_a2(X, etaX_aibj)
       call wf%etaX_ccsd_b2(X, etaX_aibj)
@@ -390,7 +836,7 @@ contains
 !
       call mem%alloc(X_jk, wf%n_o, wf%n_o)
 !
-!$omp parallel do private(b, c)
+!$omp parallel do private(j, k)
       do k = 1, wf%n_o
          do j = 1, wf%n_o
 !
@@ -443,12 +889,12 @@ contains
 !
       integer :: a, i, ai
 !
-      csiX = zero
+      call zero_array(csiX, wf%n_es_amplitudes)
 !
 !     csiX_ai
 !
       call mem%alloc(csiX_ai, wf%n_v, wf%n_o)
-      csiX_ai = zero
+      call zero_array(csiX_ai, (wf%n_o*wf%n_v))
 !
       call wf%csiX_ccs_a1(X, csiX_ai)
       call wf%csiX_ccsd_a1(X, csiX_ai)
@@ -468,7 +914,7 @@ contains
 !     csiX_aibj
 !      
       call mem%alloc(csiX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      csiX_aibj = zero     
+      call zero_array(csiX_aibj, (wf%n_o*wf%n_v)**2)
 !
       call wf%csiX_ccsd_a2(X, csiX_aibj)
 !
@@ -535,7 +981,7 @@ contains
 !     Form u_aick = 2 t_ai_ck - t_ak_ci
 !
       call mem%alloc(u_aick, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
-      u_aick = zero
+      call zero_array(u_aick, (wf%n_o*wf%n_v)**2)
 !
       call add_1432_to_1234(-one, t_aick, u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o) 
       call daxpy((wf%n_o)**2 * (wf%n_v)**2, two, t_aick, 1, u_aick, 1)
@@ -740,7 +1186,7 @@ contains
       call squareup(wf%t2, t_ckdl, wf%n_v*wf%n_o)
 !
       call mem%alloc(u_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      u_ckdl = zero
+      call zero_array(u_ckdl, (wf%n_o*wf%n_v)**2)
 !
       call add_1432_to_1234(-one, t_ckdl, u_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ckdl, 1, u_ckdl, 1)

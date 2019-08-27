@@ -57,16 +57,16 @@ contains
       type(timings) :: cc3_timer
       type(timings) :: ccsd_timer
 !
-      cc3_timer = new_timer('CC3 contribution)')
-      ccsd_timer = new_timer('CCSD contribution)')
+      cc3_timer = new_timer('CC3 contribution')
+      ccsd_timer = new_timer('CCSD contribution')
 !
       call mem%alloc(omega1, wf%n_v, wf%n_o)
       call mem%alloc(omega2, wf%n_t2)
 !
 !     Set the omega vector to zero
 !
-      omega1 = zero
-      omega2 = zero
+      call zero_array(omega1, wf%n_v*wf%n_o)
+      call zero_array(omega2, wf%n_t2)
 !
 !     Construct CCSD singles contributions
 !
@@ -93,7 +93,7 @@ contains
       call mem%dealloc(omega2, wf%n_t2)
       call mem%alloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      omega_abij = zero
+      call zero_array(omega_abij, (wf%n_v*wf%n_o)**2)
 !
       call cc3_timer%turn_on()
       call wf%omega_cc3_a(omega1,omega_abij)
@@ -219,7 +219,6 @@ contains
       type(batching_index) :: batch_i, batch_j, batch_k
       integer :: i_batch, j_batch, k_batch
       integer :: req_0, req_1, req_2, req_3
-      real(dp)     :: batch_buff = 0.0
 !
 !     Set up required integrals on disk
       call wf%omega_cc3_integrals()
@@ -237,7 +236,7 @@ contains
       call batch_k%init(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                           req_0, req_1, req_2, req_3, batch_buff)
+                           req_0, req_1, req_2, req_3, zero)
 !
 !     Allocate integral arrays and assign pointers.
 !     Without pointers we'll have to use three times as much
@@ -580,8 +579,6 @@ contains
       integer :: req_0, req_k
       integer :: current_k_batch
 !
-      call mem%alloc(v2_help,wf%n_v,wf%n_v)
-!
       call batch_k%init(wf%n_o)
 !
 !     (bd|ck)
@@ -717,6 +714,8 @@ contains
 !
 !     (jb|kc)
 !
+      call mem%alloc(v2_help,wf%n_v,wf%n_v)
+!
       req_0 = wf%integrals%n_J*wf%n_o*wf%n_v
       req_k = 2*wf%n_v**2*wf%n_o + wf%integrals%n_J*wf%n_v
 !
@@ -762,6 +761,9 @@ contains
 !
       call batch_k%determine_limits(1)
       call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+!
+      call mem%dealloc(v2_help, wf%n_v, wf%n_v)
+!
       call wf%L_jbkc_t%close_()
 !
 !
@@ -860,7 +862,7 @@ contains
                  wf%n_v,          &
                  wf%n_v,          &
                  one,             &
-                 g_bdcj,          & !g_d_bc,j
+                 g_bdcj,          & !g_d_ab,j
                  wf%n_v,          &
                  t_abij(:,:,k,i), & !t_c_d,ki
                  wf%n_v,          &
@@ -1037,10 +1039,10 @@ contains
 !
    module subroutine omega_cc3_eps_cc3(wf, i, j, k, t_abc, omega)
 !!
-!!    Divide W^abc_ijk with -epsilon^abc_ijk to obtain T^abc_ijk
+!!    Divide W^abc_ijk by -epsilon^abc_ijk to obtain T^abc_ijk
 !!    Optional argument omega for jacobian transformations
 !!
-!!    t^abv_ijk = -W^abc_ijk/epsilon^abc_ijk
+!!    t^abc_ijk = -W^abc_ijk/epsilon^abc_ijk
 !!
 !!    Written by Rolf H. Myhre, January 2019
 !!

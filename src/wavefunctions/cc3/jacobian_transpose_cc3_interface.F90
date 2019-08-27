@@ -112,10 +112,10 @@
 !!    1 array for each Permutation of C_abc will be used 
 !!    to reduce the amount of N^7-contractions and sorting
 !!
-!!    c_μ3 = (ω - ε^abc_ijk)^-1 (c_μ1 < μ1 | [H,tau_ν3] | R > + c_μ2 < μ2 | [H,tau_ν3] | R >
+!!    c_μ3 = (ω - ε^abc_ijk)^-1 (c_μ1 < μ1 | [H,τ_ν3] | R > + c_μ2 < μ2 | [H,τ_ν3] | R >
 !!
-!!    σ1 += c_μ3 < μ3 | [[H,T_2],tau_ν1] | R >
-!!    σ2 += c_μ3 < μ3 | [H,tau_ ν2] | R >
+!!    σ1 += c_μ3 < μ3 | [[H,T_2],τ_ν1] | R >
+!!    σ2 += c_μ3 < μ3 | [H,τ_ ν2] | R >
 !!
 !!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
@@ -262,7 +262,7 @@
    end subroutine construct_Y_intermediates_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_c3_a_y_o_cc3(wf, sigma_ai, Y_cmjk)
+   module subroutine jacobian_transpose_cc3_c3_a1_y_o_cc3(wf, sigma_ai, Y_cmjk)
 !!
 !!    Computes the contribution of the intermediate Y_cmjk to sigma_1
 !!
@@ -280,10 +280,10 @@
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(in) :: Y_cmjk
 !
-   end subroutine jacobian_transpose_cc3_c3_a_y_o_cc3
+   end subroutine jacobian_transpose_cc3_c3_a1_y_o_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_c3_a_y_v_cc3(wf, sigma_ai)
+   module subroutine jacobian_transpose_cc3_c3_b1_y_v_cc3(wf, sigma_ai)
 !!
 !!    Computes the contribution of the intermediate X_bcek to sigma_1
 !!
@@ -299,5 +299,5 @@
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
 !
-   end subroutine jacobian_transpose_cc3_c3_a_y_v_cc3
+   end subroutine jacobian_transpose_cc3_c3_b1_y_v_cc3
 !

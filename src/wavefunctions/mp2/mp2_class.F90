@@ -90,7 +90,7 @@ contains
       call wf%read_orbital_energies()
 !
       call wf%initialize_amplitudes()
-      wf%t1 = zero
+      call zero_array(wf%t1, wf%n_o*wf%n_v)
 !
    end function new_mp2
 !

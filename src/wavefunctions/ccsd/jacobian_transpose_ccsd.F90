@@ -98,7 +98,7 @@ contains
       call jacobian_transpose_timer%turn_on()
 !
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
-      sigma_ai = zero
+      call zero_array(sigma_ai, (wf%n_o*wf%n_v))
 !
       call mem%alloc(b_ai, wf%n_v, wf%n_o)
 !
@@ -132,7 +132,7 @@ contains
 !     the incoming singles vector
 !
       call mem%alloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      sigma_aibj = zero
+      call zero_array(sigma_aibj, (wf%n_o*wf%n_v)**2)
 !
       call wf%jacobian_transpose_ccsd_a2(sigma_aibj, b_ai)
 !
@@ -157,7 +157,7 @@ contains
       call mem%dealloc(b_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      sigma_abij = zero
+      call zero_array(sigma_abij, (wf%n_o*wf%n_v)**2)
 !
 !     Add the last two terms
 !
@@ -215,7 +215,7 @@ contains
       call squareup_and_sort_1234_to_4312(wf%t2, t_ldck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(u_ldck, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-      u_ldck = zero
+      call zero_array(u_ldck, (wf%n_o*wf%n_v)**2)
 !
       call daxpy((wf%n_v**2)*(wf%n_o**2), two, t_ldck, 1, u_ldck, 1)
       call add_4231_to_1234(-one, t_ldck, u_ldck, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
@@ -249,7 +249,7 @@ contains
       call wf%get_ovov(g_iald)
 !
       call mem%alloc(L_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      L_aild = zero
+      call zero_array(L_aild, (wf%n_o*wf%n_v)**2)
 !
       call add_2134_to_1234(two, g_iald, L_aild, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2431_to_1234(-one, g_iald, L_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
@@ -318,7 +318,7 @@ contains
       call wf%get_ovov(g_kcid)
 !
       call mem%alloc(L_kcdi, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-      L_kcdi = zero
+      call zero_array(L_kcdi, (wf%n_o*wf%n_v)**2)
 !
       call add_1243_to_1234(two, g_kcid, L_kcdi, wf%n_o, wf%n_v, wf%n_v, wf% n_o)
       call add_1342_to_1234(-one, g_kcid, L_kcdi, wf%n_o, wf%n_v, wf%n_v, wf% n_o)
@@ -703,7 +703,7 @@ contains
 !                          = 2 * g_ilmd(i,l,m,d) - g_ilmd(m,l,i,d)
 !
       call mem%alloc(L_ildm, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-      L_ildm = zero
+      call zero_array(L_ildm, wf%n_v*wf%n_o**3)
 !
       call add_1243_to_1234(two, g_ilmd, L_ildm, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
       call add_4213_to_1234(-one, g_ilmd, L_ildm, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
@@ -780,7 +780,7 @@ contains
 !                          = 2 * g_mlia - g_ilma
 !
       call mem%alloc(L_aiml, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      L_aiml = zero
+      call zero_array(L_aiml, wf%n_v*wf%n_o**3)
 !
       call add_3421_to_1234(two, g_mlia, L_aiml, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       call add_2431_to_1234(-one, g_mlia, L_aiml, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
@@ -861,7 +861,7 @@ contains
 !                              = 2 * g_dale(d,a,l,e) - g_dale(d,e,l,a)
 !
             call mem%alloc(L_aeld, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
-            L_aeld = zero
+            call zero_array(L_aeld, wf%n_o*wf%n_v**3)
 !
             call add_4132_to_1234(two, g_dale, L_aeld, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
 !
@@ -952,7 +952,7 @@ contains
 !                             = 2 * g_deia(d,e,i,a) - g_deia(d,a,i,e)
 !
          call mem%alloc(L_aied, wf%n_v, wf%n_o, wf%n_v, batch_d%length)
-         L_aied = zero
+         call zero_array(L_aied, wf%n_o*wf%n_v**3)
 !
          call add_4321_to_1234(two, g_deia, L_aied, wf%n_v, wf%n_o, wf%n_v, batch_d%length)
          call add_4123_to_1234(-one, g_deia, L_aied, wf%n_v, wf%n_o, wf%n_v, batch_d%length)
@@ -1464,7 +1464,7 @@ contains
       call squareup_and_sort_1234_to_1324(wf%t2, t_cekl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(X_idkl, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      X_idkl = zero
+      call zero_array(X_idkl, wf%n_v*wf%n_o**3)
 !
 !     Prepare for batching over d
 !
@@ -1614,7 +1614,7 @@ contains
 !                          = 2 * g_ikjb(i,k,j,b) - g_ikjb(j,k,i,b)
 !
       call mem%alloc(L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-      L_kibj = zero
+      call zero_array(L_kibj, wf%n_v*wf%n_o**3)
 !
       call add_2143_to_1234(two, g_ikjb, L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
       call add_4123_to_1234(-one, g_ikjb, L_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
@@ -1825,7 +1825,7 @@ contains
 !     Reorder to b_aijc = b_aicj
 !
       call mem%alloc(b_aijc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      b_aijc = zero
+      call zero_array(b_aijc, (wf%n_o*wf%n_v)**2)
 !
       call sort_1234_to_1243(b_aibj, b_aijc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1904,7 +1904,7 @@ contains
 !
 !     Prepare to batch over b to make g_cb_jk = g_cbjk successively
 !
-      g_ckbj = zero ! g_cbjk reordered
+      call zero_array(g_ckbj, (wf%n_o*wf%n_v)**2) ! g_cbjk reordered
 !
       rec0 = wf%n_o**2*wf%integrals%n_J
       rec1 = wf%n_v*wf%integrals%n_J  + (wf%n_o**2)*(wf%n_v)
@@ -2049,7 +2049,7 @@ contains
 !     Make g_ckbi = g_cbik in batches over b
 !
       call mem%alloc(g_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      g_ckbi = zero
+      call zero_array(g_ckbi, (wf%n_o*wf%n_v)**2)
 !
       rec0 = wf%n_o**2*wf%integrals%n_J
       rec1 = wf%n_v*wf%integrals%n_J  + (wf%n_o**2)*(wf%n_v)
@@ -2169,7 +2169,7 @@ contains
 !                          = 2 * g_jbld(j,b,l,d) - g_jbld(j,d,l,b)
 !
       call mem%alloc(L_dlbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      L_dlbj = zero
+      call zero_array(L_dlbj, (wf%n_o*wf%n_v)**2)
 !
       call add_4321_to_1234(two, g_jbld, L_dlbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_4123_to_1234(-one, g_jbld, L_dlbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -2179,7 +2179,7 @@ contains
 !     Form t_ckdl = t_kl^cd
 !
       call mem%alloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      t_ckdl = zero
+      call zero_array(t_ckdl, (wf%n_o*wf%n_v)**2)
 !
       call squareup(wf%t2, t_ckdl, (wf%n_o)*(wf%n_v))
 !
@@ -2270,7 +2270,7 @@ contains
 !                          = 2 * g_kcjd(k,c,j,d) - g_kcjd(k,d,j,c)
 !
       call mem%alloc(L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-         L_jckd = zero
+      call zero_array(L_jckd, (wf%n_o*wf%n_v)**2)
 !
       call add_3214_to_1234(two, g_kcjd, L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call add_3412_to_1234(-one, g_kcjd, L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -2516,7 +2516,7 @@ contains
 !                          = 2 * g_jbid(j,b,i,d) - g_jbid(j,d,i,b)
 !
       call mem%alloc(L_dibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      L_dibj = zero
+      call zero_array(L_dibj, (wf%n_o*wf%n_v)**2)
 !
       call add_4321_to_1234(two, g_jbid, L_dibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_4123_to_1234(-one, g_jbid, L_dibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -2558,7 +2558,7 @@ contains
 !     Form L_dlbi = L_ldib = L_dibj(b,i,d,l)
 !
       call mem%alloc(L_dlbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      L_dlbi = zero
+      call zero_array(L_dlbi, (wf%n_o*wf%n_v)**2)
 !
       call sort_1234_to_3412(L_dibj, L_dlbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -3069,7 +3069,7 @@ contains
 !     Reorder to g_abkl = g_kalb
 !
       call mem%alloc(g_abkl, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      g_abkl = zero
+      call zero_array(g_abkl, (wf%n_o*wf%n_v)**2)
 !
       call sort_1234_to_2413(g_kalb, g_abkl, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !

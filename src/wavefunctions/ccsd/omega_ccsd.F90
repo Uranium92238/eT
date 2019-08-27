@@ -59,8 +59,8 @@ contains
 !
 !     Set the omega vector to zero
 !
-      omega1 = zero
-      omega2 = zero
+      call zero_array(omega1, wf%n_o*wf%n_v)
+      call zero_array(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2)
 !
 !     Construct singles contributions
 !
@@ -219,7 +219,7 @@ contains
       call squareup(wf%t2, t_alck, (wf%n_v)*(wf%n_o))
 !
       call mem%alloc(u_alck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      u_alck = zero
+      call zero_array(u_alck, (wf%n_o*wf%n_v)**2)
       call daxpy(((wf%n_v)*(wf%n_o))**2, -one, t_alck, 1, u_alck, 1)
 !
       call add_1432_to_1234(two, t_alck, u_alck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -283,7 +283,7 @@ contains
       call squareup(wf%t2, t_aick, (wf%n_o)*(wf%n_v))
 !
       call mem%alloc(u_aick,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      u_aick = zero
+      call zero_array(u_aick, (wf%n_o*wf%n_v)**2)
 !
       call add_1432_to_1234(-one, t_aick, u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_aick, 1, u_aick, 1)
@@ -987,7 +987,8 @@ contains
       call squareup(wf%t2, t_ckbj, (wf%n_o)*(wf%n_v))
 !
       call mem%alloc(u_ckbj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      u_ckbj = zero
+!
+      call zero_array(u_ckbj, (wf%n_o*wf%n_v)**2)
 !
       call add_1432_to_1234(-one, t_ckbj, u_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ckbj, 1, u_ckbj, 1)
@@ -998,7 +999,7 @@ contains
 !     constructed in batches over the a index below
 !
       call mem%alloc(omega2_aibj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      omega2_aibj = zero
+      call zero_array(omega2_aibj, (wf%n_o*wf%n_v)**2)
 !
 !     Constructing g_kiac
 !
@@ -1220,7 +1221,7 @@ contains
       call wf%get_ovov(g_ldkc)
 !
       call mem%alloc(L_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      L_ldkc = zero
+      call zero_array(L_ldkc, (wf%n_o*wf%n_v)**2)
 !
       call add_1432_to_1234(-one, g_ldkc, L_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, g_ldkc, 1, L_ldkc, 1)
@@ -1233,7 +1234,7 @@ contains
       call squareup(wf%t2, t_aidl, (wf%n_o)*(wf%n_v))
 !
       call mem%alloc(u_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      u_aidl = zero
+      call zero_array(u_aidl, (wf%n_o*wf%n_v)**2)
 !
       call add_1432_to_1234(-one, t_aidl, u_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_aidl, 1, u_aidl, 1)
@@ -1379,7 +1380,7 @@ contains
       call squareup(wf%t2, t_bkdl, (wf%n_v)*(wf%n_o))
 !
       call mem%alloc(u_bkdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      u_bkdl = zero
+      call zero_array(u_bkdl, (wf%n_o*wf%n_v)**2)
 !
       call add_1432_to_1234(-one, t_bkdl, u_bkdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_v)**2*(wf%n_o)**2, two, t_bkdl, 1, u_bkdl, 1)

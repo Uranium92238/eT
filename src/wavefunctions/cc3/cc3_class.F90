@@ -41,31 +41,51 @@ module cc3_class
 !
 !     Ground state integral files
 !
-      type(direct_file)  :: g_bdck_t
-      type(direct_file)  :: g_ljck_t
-      type(direct_file)  :: g_dbkc_t
-      type(direct_file)  :: g_jlkc_t
-      type(direct_file)  :: L_jbkc_t
+      type(direct_file) :: g_bdck_t
+      type(direct_file) :: g_ljck_t
+      type(direct_file) :: g_dbkc_t
+      type(direct_file) :: g_jlkc_t
+      type(direct_file) :: L_jbkc_t
 !
 !     Right Jacobian integral files
 !
-      type(direct_file)  :: g_bdck_c1
-      type(direct_file)  :: g_ljck_c1
+      type(direct_file) :: g_bdck_c1
+      type(direct_file) :: g_ljck_c1
 !
 !     Left Jacobian integral files
 !
-      type(direct_file)  :: g_becd_t
-      type(direct_file)  :: g_mjlk_t
-      type(direct_file)  :: g_ckld_t
-      type(direct_file)  :: g_cdlk_t
+      type(direct_file) :: g_becd_t
+      type(direct_file) :: g_mjlk_t
+      type(direct_file) :: g_ckld_t
+      type(direct_file) :: g_cdlk_t
 !
 !     Jacobian intermediates files
 !
-      type(direct_file)  :: g_lbkc_t
-      type(direct_file)  :: X_abdi
-      type(direct_file)  :: X_abid
-      type(direct_file)  :: Y_bcek
-      type(direct_file)  :: X_ajil
+      type(direct_file) :: g_lbkc_t
+      type(direct_file) :: X_abdi
+      type(direct_file) :: X_abid
+      type(direct_file) :: Y_bcek
+      type(direct_file) :: X_ajil
+!
+!     Files for batching of the virtual indices
+!
+      type(direct_file) :: g_bdck_t_v
+      type(direct_file) :: g_ljck_t_v
+      type(direct_file) :: g_dbkc_t_v
+      type(direct_file) :: g_jlkc_t_v
+      type(direct_file) :: L_jbkc_t_v
+!
+      type(direct_file) :: g_bdck_c1_v
+      type(direct_file) :: g_ljck_c1_v
+!
+!     Density intermediates files
+!
+      type(direct_file) :: Y_clik_tbar
+!
+      real(dp), dimension(:,:), allocatable :: GS_cc3_density_oo
+      real(dp), dimension(:,:), allocatable :: GS_cc3_density_vv
+!
+      real(dp) :: excitation_energy
 !
    contains
 !
@@ -100,7 +120,7 @@ module cc3_class
       procedure :: sort_x_to_abid_and_write        => sort_x_to_abid_and_write_cc3
 !
 !     Only left
-      procedure :: prep_cc3_jacobian_trans_integrals => prep_cc3_jacobian_trans_integrals_cc3
+      procedure :: prep_cc3_jacobian_trans_integrals  => prep_cc3_jacobian_trans_integrals_cc3
 !
 !     Routines related to the jacobian
 !
@@ -116,8 +136,8 @@ module cc3_class
       procedure :: construct_c1_fock      => construct_c1_fock_cc3
       procedure :: jacobian_cc3_b2_fock   => jacobian_cc3_b2_fock_cc3
 !
-      procedure :: jacobian_cc3_c3_a         => jacobian_cc3_c3_a_cc3
-      procedure :: construct_c1_integrals    => construct_c1_integrals_cc3
+      procedure :: jacobian_cc3_c3_a      => jacobian_cc3_c3_a_cc3
+      procedure :: construct_c1_integrals => construct_c1_integrals_cc3
 !
 !     Routines related to the transpose of the jacobian
 !
@@ -129,12 +149,43 @@ module cc3_class
       procedure :: jacobian_transpose_cc3_t3_b1 => jacobian_transpose_cc3_t3_b1_cc3
       procedure :: construct_x_ai_intermediate  => construct_x_ai_intermediate_cc3
 !
-      procedure :: jacobian_transpose_cc3_c3_a     => jacobian_transpose_cc3_c3_a_cc3
-      procedure :: jacobian_transpose_cc3_c3_calc  => jacobian_transpose_cc3_c3_calc_cc3
-      procedure :: jacobian_transpose_cc3_a_n7     => jacobian_transpose_cc3_a_n7_cc3
-      procedure :: construct_y_intermediates       => construct_y_intermediates_cc3
-      procedure :: jacobian_transpose_cc3_c3_a_y_o => jacobian_transpose_cc3_c3_a_y_o_cc3
-      procedure :: jacobian_transpose_cc3_c3_a_y_v => jacobian_transpose_cc3_c3_a_y_v_cc3
+      procedure :: jacobian_transpose_cc3_c3_a        => jacobian_transpose_cc3_c3_a_cc3
+      procedure :: jacobian_transpose_cc3_c3_calc     => jacobian_transpose_cc3_c3_calc_cc3
+      procedure :: jacobian_transpose_cc3_a_n7        => jacobian_transpose_cc3_a_n7_cc3
+      procedure :: construct_y_intermediates          => construct_y_intermediates_cc3
+      procedure :: jacobian_transpose_cc3_c3_a1_y_o   => jacobian_transpose_cc3_c3_a1_y_o_cc3
+      procedure :: jacobian_transpose_cc3_c3_b1_y_v   => jacobian_transpose_cc3_c3_b1_y_v_cc3
+!
+!     Routines related to the multipliers
+!
+      procedure :: prepare_for_multiplier_equation => prepare_for_multiplier_equation_cc3
+      procedure :: construct_multiplier_equation   => construct_multiplier_equation_cc3
+!
+!     Routines to construct triples amplitudes in batches of a,b,c
+!
+      procedure :: prep_cc3_integrals_t3_abc_batch => prep_cc3_integrals_t3_abc_batch_cc3
+      procedure :: prep_cc3_integrals_R3_abc_batch => prep_cc3_integrals_R3_abc_batch_cc3
+      procedure :: prep_cc3_integrals_L3_abc_batch => prep_cc3_integrals_L3_abc_batch_cc3
+      procedure :: omega_cc3_W_calc_abc_batch      => omega_cc3_W_calc_abc_batch_cc3
+      procedure :: omega_cc3_eps_abc_batch         => omega_cc3_eps_abc_batch_cc3
+      procedure :: jacobian_transpose_cc3_c3_calc_abc_batch &
+                                                   => jacobian_transpose_cc3_c3_calc_abc_batch_cc3
+!
+!     Routines related to the ground state density matrix
+!
+      procedure :: initialize_gs_density  => initialize_gs_density_cc3
+      procedure :: destruct_gs_density    => destruct_gs_density_cc3
+!
+      procedure :: prepare_for_density    => prepare_for_density_cc3
+      procedure :: construct_gs_density   => construct_gs_density_cc3
+!
+      procedure :: gs_one_el_density_cc3_abc => gs_one_el_density_cc3_abc_cc3
+      procedure :: one_el_density_cc3_oo_N7  => one_el_density_cc3_oo_N7_cc3
+!
+      procedure :: gs_one_el_density_cc3_ijk     => gs_one_el_density_cc3_ijk_cc3
+      procedure :: one_el_density_cc3_vv_N7     => one_el_density_cc3_vv_N7_cc3
+!
+      procedure :: construct_y_intermediate_vo3 => construct_y_intermediate_vo3_cc3
 !
    end type cc3
 !
@@ -145,6 +196,8 @@ module cc3_class
       include "prepare_jacobian_transform_cc3_interface.F90"
       include "jacobian_cc3_interface.F90"
       include "jacobian_transpose_cc3_interface.F90"
+      include "cc3_batching_abc_interface.F90"
+      include "gs_density_cc3_interface.F90"
 !
    end interface
 !
@@ -259,7 +312,7 @@ contains
 !
       if (r_or_l .eq. "right") then
          call wf%effective_jacobian_transformation(w, X_copy) ! X_copy <- AX
-      else
+      else ! "left"
          call wf%effective_jacobian_transpose_transformation(w, X_copy) ! X_copy <- AX
       end if
 !
@@ -307,22 +360,22 @@ contains
 !
    subroutine prepare_for_jacobian_transpose_cc3(wf)
 !!
-!!    Prepare for jacobian
+!!    Prepare for jacobian transpose transformation
 !!    Written by Rolf Heilemann Myhre, April 2019
 !!
       implicit none
 !
       class(cc3), intent(inout) :: wf
 !
-      type(timings) :: prep_timer      
+      type(timings) :: prep_timer
 !
       prep_timer = new_timer("Time preparing for Jacobian")
       call prep_timer%turn_on()
 !
       call output%printf('Preparing for (a0) left excited state equations', chars=[trim(wf%name_)], fs='(/t3,a)')
 !
-      call wf%prep_cc3_jacobian_intermediates()
-      call wf%prep_cc3_jacobian_trans_integrals()
+      if (.not. wf%X_ajil%exists()) call wf%prep_cc3_jacobian_intermediates()
+      if (.not. wf%g_cdlk_t%exists()) call wf%prep_cc3_jacobian_trans_integrals()
 !
       call prep_timer%turn_off()
       call timing%flush_()
@@ -330,6 +383,74 @@ contains
    end subroutine prepare_for_jacobian_transpose_cc3
 !
 !
+   subroutine prepare_for_multiplier_equation_cc3(wf)
+!!
+!!    Prepare for jacobian transpose transformation
+!!    Written by Alexander Paul, July 2019
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      type(timings) :: prep_timer
+!
+      prep_timer = new_timer("Time preparing for multiplier equation")
+      call prep_timer%turn_on()
+!
+      call output%printf('Preparing for (a0) multiplier equations', chars=[trim(wf%name_)], fs='(/t3,a)')
+!
+      if (.not. wf%X_ajil%exists()) call wf%prep_cc3_jacobian_intermediates()
+      if (.not. wf%g_cdlk_t%exists()) call wf%prep_cc3_jacobian_trans_integrals()
+!
+      call prep_timer%turn_off()
+      call timing%flush_()
+!
+   end subroutine prepare_for_multiplier_equation_cc3
+!
+!
+   subroutine construct_multiplier_equation_cc3(wf, equation)
+!!
+!!    Construct multiplier equation
+!!    Written by Eirik F. Kjønstad, Nov 2018
+!!
+!!    Adapted by Alexander Paul, June 2019
+!!
+!!    Constructs
+!!
+!!       t-bar^T A + eta,
+!!
+!!    and places the result in 'equation'.
+!!
+      implicit none
+!
+      class(cc3), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
+!
+      real(dp), dimension(:), allocatable :: eta
+!
+!     Copy the multipliers, eq. = t-bar
+!
+      call dcopy(wf%n_t1, wf%t1bar, 1, equation, 1)
+      call dcopy(wf%n_t2, wf%t2bar, 1, equation(wf%n_t1 + 1), 1)
+!
+!     Transform the multipliers by A^T, eq. = t-bar^T A
+!
+      call wf%effective_jacobian_transpose_transformation(zero, equation) ! frequency ω = 0
+!
+!     No triples contributions to η
+!     Construct eta(CCSD) and add, eq. = t-bar^T A + eta
+!
+      call mem%alloc(eta, wf%n_gs_amplitudes)
+      call wf%construct_eta(eta)
+!
+      call daxpy(wf%n_gs_amplitudes, one, eta, 1, equation, 1)
+!
+      call mem%dealloc(eta, wf%n_gs_amplitudes)
+!
+   end subroutine construct_multiplier_equation_cc3
+
+
    subroutine get_cvs_projector_cc3(wf, projector, n_cores, core_MOs)
 !!
 !!    Get CVS projector

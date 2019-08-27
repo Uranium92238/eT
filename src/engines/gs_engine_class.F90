@@ -212,11 +212,14 @@ contains
       type(diis_cc_multipliers), allocatable     :: diis_solver
       type(davidson_cc_multipliers), allocatable :: davidson_solver
 !
-      if (trim(wf%name_) == 'cc2') engine%multipliers_algorithm = 'diis'
+      if (trim(engine%multipliers_algorithm) == 'davidson' .and. (trim(wf%name_) == 'cc2' .or. trim(wf%name_) == 'cc3')) then
+         write(output%unit, '(/t3,3a)') 'Warning: For ', trim(wf%name_),' multipliers the DIIS algorithm will be used'
+         write(output%unit, '(t12,a)') 'even though "davidson" was specified in the input.'
+      end if
+!
+      if (trim(wf%name_) == 'cc2' .or. trim(wf%name_) == 'cc3') engine%multipliers_algorithm = 'diis'
 !
       if (trim(engine%multipliers_algorithm) == 'davidson') then 
-!
-         if (trim(wf%name_) == 'cc2') call output%error_msg('For CC2 multipliers the DIIS algorithm must be specified.')
 !
          davidson_solver = davidson_cc_multipliers(wf)
          call davidson_solver%run(wf)
@@ -267,7 +270,7 @@ contains
 !
       do k = 1, 3
 !
-         electronic(k) = wf%calculate_expectation_value(mu_pqk(:,:,k))
+         electronic(k) = wf%calculate_expectation_value(mu_pqk(:,:,k), wf%density)
 !
       enddo
 !
@@ -312,7 +315,7 @@ contains
 !
       do k = 1, 6
 !
-         electronic(k) = wf%calculate_expectation_value(q_pqk(:,:,k))
+         electronic(k) = wf%calculate_expectation_value(q_pqk(:,:,k), wf%density)
 !
       enddo
 !

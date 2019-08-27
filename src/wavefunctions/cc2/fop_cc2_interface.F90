@@ -17,16 +17,82 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine prepare_for_eom_fop_cc2(wf)
+   module subroutine construct_left_transition_density_cc2(wf, L_k)
 !!
-!!    Prepare for EOM first order properties
-!!    Written by Sarai D. Folekstad, May 2019
+!!    Construct left one-electron transition density for the state k
+!!    Written by Alexander Paul, June 2019
+!!
+!!          ρ^L_pq = < k | E_pq | CC >
+!!
+!!    where <k| is the left eigenvector of the Jacobian
+!!    with amplitudes L_μ
+!!
+!!          < k | = sum_μ L_{k,μ} < μ | e^-T
 !!
       implicit none
 !
-      class(cc2), intent(inout)  :: wf
+      class(cc2) :: wf
 !
-   end subroutine prepare_for_eom_fop_cc2
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: L_k
+!      
+   end subroutine construct_left_transition_density_cc2
+!
+!
+   module subroutine construct_right_transition_density_cc2(wf, R_k)
+!!
+!!    Construct right one-electron transition density for the state k
+!!    Written by Alexander Paul, June 2019
+!!
+!!          ρ^R_pq = < Λ | E_pq | k >
+!!
+!!    where |k> is the right eigenvector of the Jacobian
+!!    with amplitudes R_μ
+!!
+!!          | k > = sum_μ (τ_μ | CC > R_{k,μ} - tbar_μ | CC > R_{k,μ}) 
+!!
+      implicit none
+!
+      class(cc2) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: R_k
+!
+   end subroutine construct_right_transition_density_cc2
+!
+!
+   module subroutine right_transition_density_cc2_ov_cc2(wf, tbar_aibj, R_ai)
+!!
+!!    Right transition density ov contribution (cc2)
+!!    from the singles part of the excitation vector
+!!    Written by Alexander Paul, June 2019
+!!
+!!    ρ^R_IA = sum_abij R^a_i tbar^ab_ij (2t^bA_jI - t^bA_Ij)
+!!             -sum_abij tbar^ab_ij (R^b_I t^aA_ij + R^A_j t^ab_iI)
+!!      
+      implicit none
+!
+      class(cc2) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+   end subroutine right_transition_density_cc2_ov_cc2
+!
+!
+   module subroutine right_transition_density_cc2_vo_cc2(wf, tbar_aibj, R_ai)
+!!
+!!    Right transition density ov contribution (cc2)
+!!    Written by Alexander Paul, June 2019
+!!
+!!    ρ^R_AI = sum_ai R^a_i tbar^aA_iI
+!!      
+      implicit none
+!
+      class(cc2) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+   end subroutine right_transition_density_cc2_vo_cc2
 !
 !
    module subroutine construct_eom_etaX_cc2(wf, X, csiX, etaX)
