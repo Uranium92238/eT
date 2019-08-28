@@ -47,6 +47,9 @@ module wavefunction_class
       real(dp), dimension(:,:), allocatable :: orbital_coefficients
       real(dp), dimension(:), allocatable :: orbital_energies
 !
+!     stuff for QM/MM
+!  
+!
       type(file) :: orbital_coefficients_file
       type(file) :: orbital_energies_file
 !
@@ -66,6 +69,7 @@ module wavefunction_class
 !
       procedure :: get_ao_mu_wx                    => get_ao_mu_wx_wavefunction
       procedure :: get_ao_q_wx                     => get_ao_q_wx_wavefunction
+      procedure :: get_ao_v_wx                     => get_ao_v_wx_wavefunction
 !
       procedure :: get_mo_mu                       => get_mo_mu_wavefunction
       procedure :: get_mo_h                        => get_mo_h_wavefunction
@@ -84,6 +88,9 @@ module wavefunction_class
       procedure(gradient_function), deferred :: &
                construct_molecular_gradient        
 !
+      procedure :: construct_ao_electrostatics              => construct_ao_electrostatics_wavefunction       ! V_αβ, E_αβ, V(D), E(D)
+      procedure :: update_h_wx_mm                           => update_h_wx_mm_hf
+!      
    end type wavefunction 
 !
 !
@@ -765,8 +772,9 @@ contains
 !
    subroutine get_mo_h_wavefunction(wf, h)
 !!
-!!    Get MO h
+!!    Get MO h (also for QM/MM calculations)
 !!    Written by Sarai D. Folekstad, Apr 2019
+!!    Modified by Tommaso Giovannini, July 2019 
 !!
       implicit none
 !      
@@ -778,12 +786,282 @@ contains
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
 !
       call wf%get_ao_h_wx(h_wx)
+!      
+      if(wf%system%mm_calculation.and.wf%system%mm%forcefield.eq.'non-polarizable') &
+         h_wx = h_wx + half*wf%system%mm%nopol_h_wx
+!         
+      if(wf%system%mm_calculation.and.wf%system%mm%forcefield.ne.'non-polarizable') &
+         h_wx = h_wx + half*wf%system%mm%pol_emb_fock
 !
       call wf%mo_transform(h_wx, h)
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
    end subroutine get_mo_h_wavefunction
+!
+!
+   subroutine get_ao_v_wx_wavefunction(wf, V)
+!!
+!!    Get AO h 
+!!    Written by Tommaso Giovannini, May 2019
+!!
+!!    Uses the integral tool to construct the elecrostatic potential
+!!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: V
+!
+      type(interval) :: A_interval, B_interval
+!
+      integer :: x, y, A, B
+!
+      real(dp), dimension(:,:), allocatable :: V_AB 
+!
+!$omp parallel do &
+!$omp private(A, B, V_AB, A_interval, B_interval, x, y) schedule(static)
+      do A = 1, wf%system%n_s
+!
+         A_interval = wf%system%shell_limits(A)
+!
+         do B = 1, A
+!
+            B_interval = wf%system%shell_limits(B)
+!
+            call mem%alloc(V_AB, A_interval%size, B_interval%size)
+            call wf%system%construct_ao_v_wx(V_AB, A, B)
+!
+             do x = 1, A_interval%size
+                do y = 1, B_interval%size
+!
+                   V(A_interval%first - 1 + x, B_interval%first - 1 + y) = two * V_AB(x, y)
+                   V(B_interval%first - 1 + y, A_interval%first - 1 + x) = two * V_AB(x, y)
+!
+                enddo
+             enddo
+!
+            call mem%dealloc(V_AB, A_interval%size, B_interval%size)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine get_ao_v_wx_wavefunction
+!
+!
+   subroutine construct_ao_electrostatics_wavefunction(wf,multipole,elec_nucl,what,elec_fock,property_points,ao_density)
+!!
+!!    Construct electrostatic properties
+!!    Written by Tommaso Giovannini, April 2019 
+!!
+!!-------------------------------------------------------------------------------
+!!
+!!    multipole       = 0          potential 
+!!                      1          electric field
+!!                                 
+!!    elec_nucl       = 0          do only electronic contribution to property
+!!                      1          do both electronic and nuclear contribution 
+!!                    
+!!    what            = 'fock'     fock contribution, i.e. q*V_αβ or mu*E_αβ
+!!                      'prop'     requested property calculated at MM points V(D) or E(D)
+!!
+!!-------------------------------------------------------------------------------
+!!    optional arguments
+!!
+!!    elec_fock       = matrix for fock contribution (dimension wf%n_ao, wf%n_ao)
+!!                      MANDATORY if what.eq.'fock'
+!!
+!!    property_points = array for property contribution 
+!!                      (dimension wf%system%mm%n_atoms if multipole = 0 or 
+!!                       dimension 3*wf%system%mm%n_atoms if multipole = 1)
+!!                      MANDATORY if what.eq.'prop'
+!!
+!!-------------------------------------------------------------------------------
+!!
+!!    Implementation through LibInt interface
+!!
+      implicit none 
+!       
+!     input variables
+! 
+      class(wavefunction) :: wf
+      integer :: multipole
+      integer :: elec_nucl
+      character(len=4) :: what
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout), optional :: elec_fock
+      real(dp), dimension(:), intent(inout), optional :: property_points
+      real(dp), dimension(:,:), intent(inout), optional :: ao_density
+! 
+!     stuff for libint
+! 
+      integer(i6) :: n_variables_i6
+      real(dp), dimension(1) :: fake_charge
+! 
+!     internal variables
+! 
+      integer  :: mm_atom
+      integer  :: qm_atom
+!
+      real(dp) :: ddot
+      real(dp) :: distQMMM
+      real(dp), dimension(wf%n_ao,wf%n_ao) :: fock_internal_ao
+!     
+!     Sanity check for Fock creation 
+!       
+      if(elec_nucl.eq.1.and.what.eq.'fock') &
+         call output%error_msg('Do both electronic and nuclear and what = fock')
+! 
+!     checking informations on elec_fock and property_points
+! 
+      if(what.eq.'fock') then
+!      
+         if(.not.present(elec_fock)) &
+            call output%error_msg('Error in call electrostatic fock creation')
+!      
+      else if(what.eq.'prop') then
+!      
+         if(.not.present(property_points)) then 
+!         
+            call output%error_msg('Error in call electrostatic property points creation')
+!            
+         else 
+!         
+            if (.not.present(ao_density)) &
+               call output%error_msg('Error in call electrostatic property points creation: no ao density')
+!               
+         endif
+!         
+         if(multipole.eq.0) then
+!         
+            if(size(property_points).ne.wf%system%mm%n_atoms) &
+               call output%error_msg('Wrong dimension of property points in electrostatics integral')
+!               
+         else if(multipole.ge.1) then
+!         
+            call output%error_msg('Multipoles integral greater than 1 NYI')
+!           
+         endif
+!         
+      endif
+!               
+! 
+!     Interface with LibInt for calculation of Fock
+! 
+      if(what.eq.'fock') then
+! 
+         if(multipole.eq.0) then 
+!
+            n_variables_i6 = int(size(wf%system%mm%charge),kind=i6)
+!            
+            call initialize_potential_c(wf%system%mm%charge, &
+                                        wf%system%mm%coordinates*angstrom_to_bohr, &
+                                        n_variables_i6)
+            call wf%get_ao_v_wx(elec_fock)
+!            
+         else if(multipole.ge.1) then 
+!            
+            call output%error_msg('Multipole greater than 1 NYI')
+!
+         endif
+! 
+!     Calculation of properties @ points
+! 
+!     Electronic part: interface to LibInt
+!     Nuclear part   : explicit calculation
+!      
+      else if(what.eq.'prop') then
+!      
+         if(multipole.eq.0) then
+!      
+            call zero_array(property_points,wf%system%mm%n_atoms)
+!      
+            do mm_atom = 1, wf%system%mm%n_atoms
+!      
+               call zero_array(fock_internal_ao,wf%n_ao*wf%n_ao)
+!               
+               n_variables_i6 = int(1,kind=i6)
+               fake_charge(1) = 1.0d0
+!               
+               call initialize_potential_c(fake_charge, &
+                                           wf%system%mm%coordinates(:,mm_atom)*angstrom_to_bohr, &
+                                           n_variables_i6)
+               call wf%get_ao_v_wx(fock_internal_ao)
+!      
+               property_points(mm_atom) = -one/two * ddot((wf%n_ao)**2,ao_density,1,fock_internal_ao,1)
+!      
+               if(elec_nucl.eq.1) then
+!      
+                  do qm_atom = 1, wf%system%n_atoms
+!      
+                     distQMMM =  dsqrt((wf%system%atoms(qm_atom)%x - wf%system%mm%coordinates(1,mm_atom))**2 + &
+                                       (wf%system%atoms(qm_atom)%y - wf%system%mm%coordinates(2,mm_atom))**2 + &
+                                       (wf%system%atoms(qm_atom)%z - wf%system%mm%coordinates(3,mm_atom))**2)
+!      
+                     distQMMM = angstrom_to_bohr*distQMMM
+!      
+                     property_points(mm_atom) = property_points(mm_atom) - (wf%system%atoms(qm_atom)%number_)/distQMMM
+!      
+                  enddo
+!      
+               endif
+!      
+            enddo
+!      
+         else if (multipole.ge.1) then 
+!         
+            call output%error_msg('Multipole greater than 1 NYI')
+!            
+         endif
+!      
+      endif
+!
+!
+   end subroutine construct_ao_electrostatics_wavefunction
+!
+!
+   subroutine update_h_wx_mm_hf(wf, h_wx_eff)
+!!
+!!    Update one-electron Hamiltonian with fixed charges
+!!    for non-polarizable QM/MM
+!!    Written by Tommaso Giovannini, July 2019 for QM/MM
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: h_wx_eff
+!
+      if(.not.allocated(wf%system%mm%nopol_h_wx)) then 
+!      
+         call mem%alloc(wf%system%mm%nopol_h_wx, wf%n_ao, wf%n_ao)
+!         
+         call zero_array(wf%system%mm%nopol_h_wx, wf%n_ao*wf%n_ao)
+!
+         call wf%construct_ao_electrostatics(0,0,'fock',elec_fock=wf%system%mm%nopol_h_wx)
+!         
+         if(wf%system%mm%verbose.ge.3) then 
+!          
+            call print_matrix('Electrostatic Embedding h:',wf%system%mm%nopol_h_wx,wf%n_ao,wf%n_ao)
+!         
+            flush(output%unit)
+!
+         endif
+!         
+      endif
+!         
+      h_wx_eff = h_wx_eff + half * wf%system%mm%nopol_h_wx
+!         
+      if(wf%system%mm%verbose.ge.3) then 
+!      
+        call print_matrix('h_eff (QM + Electrostatic Embedding)',h_wx_eff,wf%n_ao,wf%n_ao) 
+!         
+        flush(output%unit)
+!         
+      endif
+!
+!
+   end subroutine update_h_wx_mm_hf
 !
 !
 end module wavefunction_class

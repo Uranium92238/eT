@@ -27,10 +27,14 @@ module shell_class
    use kinds
    use output_file_class
    use disk_manager_class
+   use shell_details_class
 !
    implicit none
 !
    type :: shell
+   type(shell_details) :: basis_details
+!
+      integer    :: size_cart = -1 ! The number of basis functions in cartesian
 !
       integer    :: size  = -1  ! The number of basis functions
       integer    :: first = -1  ! The first AO index
@@ -67,7 +71,7 @@ contains
 !
       do while (i .lt. 10)
 !
-         if ((2*i + 1) .eq. sh%size) then
+         if ((2*i + 1) .eq. sh%size .or. (((i+1)*(i+2))/2) .eq. sh%size ) then
 !
             sh%l = i
 !

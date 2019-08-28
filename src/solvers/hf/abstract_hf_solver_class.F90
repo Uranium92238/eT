@@ -153,7 +153,7 @@ contains
       implicit none 
 !
       class(abstract_hf_solver) :: solver
-      class(hf), intent(in) :: wf
+      class(hf), intent(inout) :: wf
 !
       write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(convert_to_uppercase(wf%name_)),&
              ' wavefunction energetics (a.u.):'
@@ -162,7 +162,7 @@ contains
       call wf%print_orbital_energies('3')
 !
       if (allocated(solver%orbitals_to_print)) then
-      
+!      
          call wf%print_orbitals(size(solver%orbitals_to_print), solver%orbitals_to_print)
 !
       else

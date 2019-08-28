@@ -76,6 +76,7 @@ program eT_program
    write(output%unit,'(t4, a, a)')    'Sarai D. Folkestad     ','Program design, HF, CCS, CC2, CCSD, Libint-interface,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS, DIIS-tool'
    write(output%unit,'(t4, a, a)')    '                       ','Zeroth order properties, First order properties'
+   write(output%unit,'(t4, a, a)')    'Tommaso Giovannini     ','QM/MM'
    write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
    write(output%unit,'(t4, a, a)')    'Eirik F. Kjønstad      ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
@@ -127,6 +128,8 @@ program eT_program
    call finalize_libint()
 !
    call eT_timer%turn_off()
+!
+   call system%cleanup()
 !
    call mem%check_for_leak()
 !

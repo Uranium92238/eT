@@ -63,6 +63,7 @@ set(eT_fortran_sources
    src/tools/reordering.F90
    src/tools/timings_class.F90
    src/tools/array_utilities.F90
+   src/tools/math_utilities.F90
    src/tools/array_analysis.F90
    src/tools/linked_list/array_list_class.F90
    src/tools/linked_list/array_node_class.F90
@@ -77,9 +78,11 @@ set(eT_fortran_sources
    src/wavefunctions/mp2/mp2_class.F90
    src/molecule/atomic_class.F90
    src/molecule/molecular_system/molecular_system_class.F90
+   src/molecule/mm_class.F90
    src/molecule/molecular_system/ao_integrals.F90
    src/molecule/periodic_table.F90
    src/molecule/shell_class.F90
+   src/molecule/shell_details_class.F90
    src/libint/libint_initialization.F90
    src/solver_tools/bfgs_tool_class.F90
    src/solver_tools/diis_tool_class.F90

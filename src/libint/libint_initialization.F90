@@ -159,4 +159,16 @@ contains
 !
    end subroutine initialize_basis
 !
+   subroutine initialize_potential(charges,coordinates,n_points)
+!
+      use iso_c_binding
+      implicit none
+      real(dp) :: charges(*)
+      real(dp) :: coordinates(*)
+      integer(i6) :: n_points
+!
+      call initialize_potential_c(charges,coordinates,n_points)
+!
+   end subroutine initialize_potential
+!
 end module libint_initialization

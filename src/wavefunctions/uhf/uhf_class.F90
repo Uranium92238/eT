@@ -60,75 +60,77 @@ module uhf_class
 !
 !     Preparation routines
 !
-      procedure :: determine_n_alpha_and_n_beta      => determine_n_alpha_and_n_beta_uhf
-      procedure :: read_settings                     => read_settings_uhf
-      procedure :: read_uhf_settings                 => read_uhf_settings_uhf
+      procedure :: determine_n_alpha_and_n_beta         => determine_n_alpha_and_n_beta_uhf
+      procedure :: read_settings                        => read_settings_uhf
+      procedure :: read_uhf_settings                    => read_uhf_settings_uhf
 !
 !     AO Fock and energy related routines
 !
-      procedure :: initialize_fock                   => initialize_fock_uhf
-      procedure :: destruct_fock                     => destruct_fock_uhf
-      procedure :: construct_ao_spin_fock            => construct_ao_spin_fock_uhf
-      procedure :: calculate_uhf_energy              => calculate_uhf_energy_uhf
-      procedure :: update_fock_and_energy            => update_fock_and_energy_uhf
-      procedure :: update_fock_and_energy_cumulative => update_fock_and_energy_cumulative_uhf
-      procedure :: set_ao_fock                       => set_ao_fock_uhf
-      procedure :: get_ao_fock                       => get_ao_fock_uhf
+      procedure :: initialize_fock                      => initialize_fock_uhf
+      procedure :: destruct_fock                        => destruct_fock_uhf
+      procedure :: construct_ao_spin_fock               => construct_ao_spin_fock_uhf
+      procedure :: calculate_uhf_energy                 => calculate_uhf_energy_uhf
+      procedure :: update_fock_and_energy_no_cumulative => update_fock_and_energy_no_cumulative_uhf
+      procedure :: update_fock_and_energy_cumulative    => update_fock_and_energy_cumulative_uhf
+      procedure :: update_fock_and_energy               => update_fock_and_energy_uhf
+      procedure :: update_fock_mm                       => update_fock_mm_uhf
+      procedure :: set_ao_fock                          => set_ao_fock_uhf
+      procedure :: get_ao_fock                          => get_ao_fock_uhf
 !
 !     AO Density related routines
 !
-      procedure :: initialize_density                => initialize_density_uhf
-      procedure :: set_initial_ao_density_guess      => set_initial_ao_density_guess_uhf
-      procedure :: save_ao_density                   => save_ao_density_uhf
-      procedure :: update_ao_density                 => update_ao_density_uhf
-      procedure :: form_ao_density                   => form_ao_density_uhf
-      procedure :: construct_ao_spin_density         => construct_ao_spin_density_uhf
-      procedure :: set_ao_density_to_core_guess      => set_ao_density_to_core_guess_uhf
-      procedure :: get_homo_degeneracy               => get_homo_degeneracy_uhf
-      procedure :: get_ao_density_sq                 => get_ao_density_sq_uhf
+      procedure :: initialize_density                   => initialize_density_uhf
+      procedure :: set_initial_ao_density_guess         => set_initial_ao_density_guess_uhf
+      procedure :: save_ao_density                      => save_ao_density_uhf
+      procedure :: update_ao_density                    => update_ao_density_uhf
+      procedure :: form_ao_density                      => form_ao_density_uhf
+      procedure :: construct_ao_spin_density            => construct_ao_spin_density_uhf
+      procedure :: set_ao_density_to_core_guess         => set_ao_density_to_core_guess_uhf
+      procedure :: get_homo_degeneracy                  => get_homo_degeneracy_uhf
+      procedure :: get_ao_density_sq                    => get_ao_density_sq_uhf
 !
-      procedure :: construct_mo_fock                 => construct_mo_fock_uhf
+      procedure :: construct_mo_fock                    => construct_mo_fock_uhf
 !
 !     MO orbital related routines
 !
-      procedure :: initialize_orbitals               => initialize_orbitals_uhf
-      procedure :: roothan_hall_update_orbitals      => roothan_hall_update_orbitals_uhf
-      procedure :: print_orbital_energies            => print_orbital_energies_uhf
-      procedure :: print_energy                      => print_energy_uhf
-      procedure :: save_orbital_coefficients         => save_orbital_coefficients_uhf
-      procedure :: read_orbital_coefficients         => read_orbital_coefficients_uhf
-      procedure :: save_orbital_energies             => save_orbital_energies_uhf
-      procedure :: read_orbital_energies             => read_orbital_energies_uhf
+      procedure :: initialize_orbitals                  => initialize_orbitals_uhf
+      procedure :: roothan_hall_update_orbitals         => roothan_hall_update_orbitals_uhf
+      procedure :: print_orbital_energies               => print_orbital_energies_uhf
+      procedure :: print_energy                         => print_energy_uhf
+      procedure :: save_orbital_coefficients            => save_orbital_coefficients_uhf
+      procedure :: read_orbital_coefficients            => read_orbital_coefficients_uhf
+      procedure :: save_orbital_energies                => save_orbital_energies_uhf
+      procedure :: read_orbital_energies                => read_orbital_energies_uhf
 !
 !     Gradients and Hessians (todo)
 !
-      procedure :: get_packed_roothan_hall_gradient  => get_packed_roothan_hall_gradient_uhf
+      procedure :: get_packed_roothan_hall_gradient     => get_packed_roothan_hall_gradient_uhf
 !
 !     Class variable initialize and destruct routines
 !
-      procedure :: initialize_ao_density_a           => initialize_ao_density_a_uhf
-      procedure :: initialize_ao_density_b           => initialize_ao_density_b_uhf
+      procedure :: initialize_ao_density_a              => initialize_ao_density_a_uhf
+      procedure :: initialize_ao_density_b              => initialize_ao_density_b_uhf
 !
-      procedure :: initialize_ao_fock_a              => initialize_ao_fock_a_uhf
-      procedure :: initialize_ao_fock_b              => initialize_ao_fock_b_uhf
+      procedure :: initialize_ao_fock_a                 => initialize_ao_fock_a_uhf
+      procedure :: initialize_ao_fock_b                 => initialize_ao_fock_b_uhf
 !
-      procedure :: initialize_orbital_coefficients_a => initialize_orbital_coefficients_a_uhf
-      procedure :: initialize_orbital_coefficients_b => initialize_orbital_coefficients_b_uhf
+      procedure :: initialize_orbital_coefficients_a    => initialize_orbital_coefficients_a_uhf
+      procedure :: initialize_orbital_coefficients_b    => initialize_orbital_coefficients_b_uhf
 !
-      procedure :: initialize_orbital_energies_a     => initialize_orbital_energies_a_uhf
-      procedure :: initialize_orbital_energies_b     => initialize_orbital_energies_b_uhf
+      procedure :: initialize_orbital_energies_a        => initialize_orbital_energies_a_uhf
+      procedure :: initialize_orbital_energies_b        => initialize_orbital_energies_b_uhf
 !
-      procedure :: destruct_ao_density_a             => destruct_ao_density_a_uhf
-      procedure :: destruct_ao_density_b             => destruct_ao_density_b_uhf
+      procedure :: destruct_ao_density_a                => destruct_ao_density_a_uhf
+      procedure :: destruct_ao_density_b                => destruct_ao_density_b_uhf
 !
-      procedure :: destruct_ao_fock_a                => destruct_ao_fock_a_uhf
-      procedure :: destruct_ao_fock_b                => destruct_ao_fock_b_uhf
+      procedure :: destruct_ao_fock_a                   => destruct_ao_fock_a_uhf
+      procedure :: destruct_ao_fock_b                   => destruct_ao_fock_b_uhf
 !
-      procedure :: destruct_orbital_coefficients_a   => destruct_orbital_coefficients_a_uhf
-      procedure :: destruct_orbital_coefficients_b   => destruct_orbital_coefficients_b_uhf
+      procedure :: destruct_orbital_coefficients_a      => destruct_orbital_coefficients_a_uhf
+      procedure :: destruct_orbital_coefficients_b      => destruct_orbital_coefficients_b_uhf
 !
-      procedure :: destruct_orbital_energies_a       => destruct_orbital_energies_a_uhf
-      procedure :: destruct_orbital_energies_b       => destruct_orbital_energies_b_uhf
+      procedure :: destruct_orbital_energies_a          => destruct_orbital_energies_a_uhf
+      procedure :: destruct_orbital_energies_b          => destruct_orbital_energies_b_uhf
 !
    end type uhf
 !
@@ -153,6 +155,7 @@ contains
       type(uhf) :: wf
 !
       class(molecular_system), target, intent(in) :: system
+!      class(mm_molecular_system), target, intent(in), optional :: mm_system
 !
       wf%name_ = 'UHF'
 !
@@ -541,10 +544,11 @@ contains
    end subroutine destruct_fock_uhf
 !
 !
-   subroutine update_fock_and_energy_uhf(wf, h_wx)
+   subroutine update_fock_and_energy_no_cumulative_uhf(wf, h_wx)
 !!
 !!    Update Fock and energy
 !!    Written by Eirik F. Kjønstad, Sep 2018
+!!    Modified for QM/MM by Tommaso Giovannini, July 2019 
 !!
 !!    This routine guides the construction of the Fock matrix (or matrices for
 !!    unrestricted wavefunctions) from the current AO density (or densities).
@@ -556,12 +560,72 @@ contains
       class(uhf) :: wf
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
+!      
+      real(dp), dimension(:, :), allocatable            :: h_wx_eff
 !
-      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha', h_wx)
+      call mem%alloc(h_wx_eff, wf%n_ao,wf%n_ao)
+!      
+      h_wx_eff = h_wx
+! 
+      if(wf%system%mm_calculation.and.wf%system%mm%forcefield.eq.'non-polarizable') &
+         call wf%update_h_wx_mm(h_wx_eff)
+!         
+      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha', h_wx_eff)
 !
-      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_b, 'beta', h_wx)
+      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_b, 'beta', h_wx_eff)
 !
+      call mem%dealloc(h_wx_eff, wf%n_ao, wf%n_ao) 
+!      
+      if(wf%system%mm_calculation.and.wf%system%mm%forcefield.ne.'non-polarizable') &
+         call wf%update_fock_mm()
+!         
       call wf%calculate_uhf_energy(h_wx)
+!
+   end subroutine update_fock_and_energy_no_cumulative_uhf
+!
+!
+   subroutine update_fock_and_energy_uhf(wf, h_wx, prev_ao_density)
+!!
+!!    Update Fock and energy wrapper
+!!    Written by Tommaso Giovannini, July 2019
+!!
+!!    Wrapper for cumulative or no_cumulative subroutines
+!!    depending on the path
+!!
+      implicit none
+!
+      class(uhf) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
+!
+      real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
+!
+      if (.not.present(prev_ao_density)) then 
+!
+          call wf%update_fock_and_energy_no_cumulative(h_wx)
+!
+      else 
+!      
+         if(.not.wf%system%mm_calculation) then
+!         
+            call wf%update_fock_and_energy_cumulative(prev_ao_density, h_wx)
+!            
+         else
+!         
+            if(wf%system%mm%forcefield.eq.'non-polarizable') then
+!
+               call wf%update_fock_and_energy_cumulative(prev_ao_density, h_wx)
+!
+            else 
+!         
+               call wf%update_fock_and_energy_no_cumulative(h_wx)
+!               
+            endif
+!         
+         endif
+!
+      endif
+!      
 !
    end subroutine update_fock_and_energy_uhf
 !
@@ -668,7 +732,7 @@ contains
 !!
       implicit none
 !
-      class(uhf), intent(in) :: wf
+      class(uhf), intent(inout) :: wf
 !
       real(dp) :: homo_lumo_gap_a
       real(dp) :: homo_lumo_gap_b
@@ -676,11 +740,31 @@ contains
       homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
       homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
 !
-      write(output%unit, '(/t6,a26,f19.12)') 'HOMO-LUMO gap (alpha):    ', homo_lumo_gap_a
-      write(output%unit, '(t6,a26,f19.12)')  'HOMO-LUMO gap (beta):     ', homo_lumo_gap_b
-      write(output%unit, '(t6,a26,f19.12)')  'Nuclear repulsion energy: ', wf%system%get_nuclear_repulsion()
-      write(output%unit, '(t6,a26,f19.12)')  'Electronic energy:        ', wf%energy - wf%system%get_nuclear_repulsion()
-      write(output%unit, '(t6,a26,f19.12)')  'Total energy:             ', wf%energy
+      write(output%unit, '(/t6,a26,f19.12)') 'HOMO-LUMO gap (alpha):     ', homo_lumo_gap_a
+      write(output%unit, '(t6,a26,f19.12)')  'HOMO-LUMO gap (beta):      ', homo_lumo_gap_b
+
+      if(wf%system%mm_calculation.and.wf%system%mm%forcefield.eq.'non-polarizable') then
+!      
+         write(output%unit, '(t6,a26,f19.12)')  'Nuclear repulsion energy:  ', &
+               wf%system%get_nuclear_repulsion() + wf%system%get_nuclear_repulsion_mm()
+!               
+         write(output%unit, '(t6,a26,f19.12)')  'Electronic energy:         ', &
+               wf%energy - wf%system%get_nuclear_repulsion() - wf%system%get_nuclear_repulsion_mm()
+     
+      else
+!      
+         write(output%unit, '(t6,a26,f19.12)')  'Nuclear repulsion energy:  ', &
+              wf%system%get_nuclear_repulsion()
+!              
+         write(output%unit, '(t6,a26,f19.12)')  'Electronic energy:         ', &
+               wf%energy - wf%system%get_nuclear_repulsion()
+!      
+      endif
+!      
+      write(output%unit, '(t6,a26,f19.12)')  'Total energy:              ', wf%energy
+!
+      if(wf%system%mm_calculation) call wf%print_energy_mm()
+!      
 !
    end subroutine print_energy_uhf
 !
@@ -1282,6 +1366,8 @@ contains
 !
       wf%energy = wf%system%get_nuclear_repulsion()
 !
+      if (wf%system%mm_calculation) call wf%calculate_hf_energy_from_fock_mm()
+!      
       wf%energy = wf%energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_a, 1, h_wx, 1)
       wf%energy = wf%energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_a, 1, wf%ao_fock_a, 1)
 !
@@ -1513,6 +1599,117 @@ contains
       if (allocated(wf%orbital_energies_b)) call mem%dealloc(wf%orbital_energies_b, wf%n_mo)
 !
    end subroutine destruct_orbital_energies_b_uhf
+!
+!
+   subroutine update_fock_mm_uhf(wf)
+!!
+!!    Update alpha and beta Fock matrices with polarizable QM/MM terms
+!!    For now: QM/FQ model (see mm_class and output file)
+!!    Written by Tommaso Giovannini, July 2019 for QM/MM
+!!
+      implicit none
+!
+      class(uhf) :: wf
+!
+      character(len=12) :: frmt0
+!      
+      real(dp), dimension(:),    allocatable                  :: potential_points
+      integer :: i
+!     
+      frmt0="(t5,65('='))"
+! 
+      if(wf%system%mm%forcefield.eq.'fq') then
+!      
+         if(.not.allocated(potential_points)) call mem%alloc(potential_points, wf%system%mm%n_atoms)
+         if(.not.allocated(wf%system%mm%pol_emb_rhs))   call mem%alloc(wf%system%mm%pol_emb_rhs, wf%system%mm%n_variables)
+         if(.not.allocated(wf%system%mm%pol_emb_lhs))   call mem%alloc(wf%system%mm%pol_emb_lhs, wf%system%mm%n_variables)
+         if(.not.allocated(wf%system%mm%pol_emb_fock))  call mem%alloc(wf%system%mm%pol_emb_fock, wf%n_ao,wf%n_ao)
+!
+         call zero_array(wf%system%mm%pol_emb_fock,wf%n_ao*wf%n_ao)
+         call zero_array(wf%system%mm%pol_emb_rhs,wf%system%mm%n_variables)
+!         
+!        electrostatic potential contracted with density : \sum_i V_mu(D_mu)(r_i)
+!
+         call wf%construct_ao_electrostatics(0,1,'prop',property_points=potential_points,ao_density=wf%ao_density)
+!
+!        rhs for fq: -chi - V(D)
+!
+         wf%system%mm%pol_emb_rhs(1:wf%system%mm%n_atoms) = -wf%system%mm%chi + potential_points
+!         
+!        solve q=D^-1 (-chi - V(D)) 
+! 
+         call dgemm('N', 'N',                   &
+                     wf%system%mm%n_variables,  &
+                     1,                         &
+                     wf%system%mm%n_variables,  &
+                     one,                       &
+                     wf%system%mm%fq_matrix,    &
+                     wf%system%mm%n_variables,  &
+                     wf%system%mm%pol_emb_rhs,         &
+                     wf%system%mm%n_variables,  &
+                     zero,                      &
+                     wf%system%mm%pol_emb_lhs,            &
+                     wf%system%mm%n_variables)
+!
+         if(wf%system%mm%verbose.ge.1) then 
+!         
+            write(output%unit,frmt0) 
+!            
+            write(output%unit,'(t6,a /)') 'Atom          FQ LHS             FQ RHS        QM Potential@FQs'
+!           
+            do i = 1, wf%system%mm%n_atoms
+!           
+               write(output%unit,'(t6,i4,6x,3(E13.6,6x))') &
+               i, wf%system%mm%pol_emb_lhs(i), wf%system%mm%pol_emb_rhs(i), potential_points(i)
+!           
+            enddo
+!           
+            write(output%unit,frmt0) 
+!           
+            flush(output%unit)
+!           
+         endif
+!
+!        put FQ charges into charge (I am discrading langrangian multipliers)
+!
+         wf%system%mm%charge = wf%system%mm%pol_emb_lhs(1:wf%system%mm%n_atoms)
+!
+!        Fock creation: F_munu = \sum_i q_i V_munu(r_i)
+!
+         call wf%construct_ao_electrostatics(0,0,'fock',elec_fock=wf%system%mm%pol_emb_fock) 
+!
+         wf%ao_fock_a = wf%ao_fock_a + half*wf%system%mm%pol_emb_fock
+         wf%ao_fock_b = wf%ao_fock_b + half*wf%system%mm%pol_emb_fock
+!
+         if(wf%system%mm%verbose.ge.3) then 
+!           
+            call print_matrix('Total QM Density',wf%ao_density,wf%n_ao,wf%n_ao) 
+            flush(output%unit)
+            call print_matrix('QM Density - Spin alpha',wf%ao_density_a,wf%n_ao,wf%n_ao) 
+            flush(output%unit)
+            call print_matrix('QM Density - Spin beta',wf%ao_density_b,wf%n_ao,wf%n_ao) 
+            flush(output%unit)
+!           
+            call print_matrix('FQ Fock - Spin alpha + beta',wf%system%mm%pol_emb_fock,wf%n_ao,wf%n_ao) 
+            flush(output%unit)
+!           
+            call print_matrix('QM/FQ Fock - Spin alpha',wf%ao_fock_a,wf%n_ao,wf%n_ao) 
+            flush(output%unit)
+            call print_matrix('QM/FQ Fock - Spin beta',wf%ao_fock_b,wf%n_ao,wf%n_ao) 
+            flush(output%unit)
+!           
+         endif
+!
+         call mem%dealloc(potential_points, wf%system%mm%n_atoms)
+!         
+      else
+!      
+         call output%error_msg('The only available polarizable force field is fq')
+!         
+      endif
+!
+!
+   end subroutine update_fock_mm_uhf
 !
 !
 end module uhf_class
