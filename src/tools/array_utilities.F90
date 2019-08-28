@@ -883,8 +883,8 @@ contains
 !
       integer, intent(in) :: n
 !
-      real(dp), dimension(n,n), intent(in) :: A
-      real(dp), dimension(n,n), intent(out) :: Ainv
+      real(dp), dimension(n,n), intent(inout) :: A
+      real(dp), dimension(n,n), intent(inout) :: Ainv
 
       real(dp), dimension(n) :: work  ! work array for LAPACK
       integer, dimension(n) :: ipiv   ! pivot indices
@@ -1439,9 +1439,131 @@ contains
    end subroutine copy_and_scale
 !
 !
+   subroutine print_matrix(name,matrix,idim1,idim2)
+!!    
+!!    Print square matrix 
+!!    Written by tommaso giovannini, march 2019
+!!    
+      implicit none
+!
+      character(len=*) :: name
+!      
+      integer :: idim1, idim2, i, j, k, nelmfinal, nvec, start
+!      
+      real(kind=dp), dimension(idim1,idim2)    :: matrix
+      real(kind=dp), dimension(:,:,:), allocatable :: dummy
+      real(kind=dp), dimension(:,:,:), allocatable :: dummy2
+!     
+      character(len=2)  :: start_string
+      character(len=12) :: frmt0
+      character(len=13) :: frmt1
+      character(len=10) :: frmt2
+!
+      call output%warning_msg('Printing all elements below 1.0d-6 as 0.0d0')
+!
+      frmt0="(t5,65('='))"
+      frmt1="(3x,5(7x,i5))"
+!
+!     count how many vectors are there
+!
+      nvec      = ceiling(float(idim2)/5.0d0)
+!         
+      if(mod(idim2,5).eq.0) then 
+!         
+         nelmfinal = 5
+!         
+      else 
+!         
+         nelmfinal = mod(idim2,5)
+!         
+      endif
+!         
+      call mem%alloc(dummy, idim1, nvec-1, 5)
+!      
+      call mem%alloc(dummy2, idim1, 1, nelmfinal)
+!      
+      if(nvec.ne.1) then
+!$omp parallel do collapse(3) 
+         do i = 1, nvec-1
+!         
+            do j = 1, idim1
+!         
+               do k = 1, 5
+!         
+                  if(abs(matrix(j,k+(i-1)*5)).gt.1.0d-6) then
+!         
+                     dummy(j,i,k) = matrix(j,k+(i-1)*5)
+!         
+                  else
+!         
+                     dummy(j,i,k) = 0.0d0
+!         
+                  endif
+!         
+               enddo
+!         
+            enddo
+!         
+         enddo
+!$omp end parallel do
+      endif
+!         
+      do j = 1, idim1
+!         
+         do k = 1, nelmfinal
+!         
+            if(abs(matrix(j,k+(nvec-1)*5)).gt.1.0d-6) then
+!         
+               dummy2(j,1,k) = matrix(j,k+(nvec-1)*5)
+!         
+            else
+!         
+               dummy2(j,1,k) = 0.0d0
+!         
+            endif
+!         
+         enddo
+!         
+      enddo
+!         
+!     place the name in the middle of the string
+!
+      start = 32-len(name)/2
+      write(start_string,'(i2)') start
+      frmt2  ="(t5,"// start_string //"x,a)"
+!      
+      write(output%unit,*)
+      write(output%unit,frmt0 )
+      write(output%unit,frmt2) name
+      write(output%unit,frmt0 )
+!      
+      do i = 1, nvec
+!      
+         if(i.ne.nvec) write(output%unit,frmt1) (k+(i-1)*5,k=1,5)
+         if(i.eq.nvec) write(output%unit,frmt1) (k+(i-1)*5,k=1,nelmfinal)
+!         
+         do j = 1, idim1
+!         
+            if(i.ne.nvec) write(output%unit,'(3x,i4,2x,5(e11.4,1x))') j,(dummy(j,i,k), k = 1, 5 )
+!         
+            if(i.eq.nvec) then 
+!         
+               write(output%unit,'(3x,i4,2x,5(e11.4,1x))') j,(dummy2(j,1,k), k = 1, nelmfinal )
+!         
+            endif   
+!         
+         enddo
+!         
+      enddo
+!         
+      write(output%unit,frmt0 )
+!         
+      call mem%dealloc(dummy, idim1, nvec-1, 5)
+!      
+      call mem%dealloc(dummy2, idim1, 1, nelmfinal)
+!
+!
+   end subroutine print_matrix
+!
+!
 end module array_utilities
-
-
-
-
-

@@ -259,3 +259,24 @@
       real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: q_zz 
 !
    end subroutine construct_ao_q_wx_molecular_system
+!
+!
+   module subroutine construct_ao_v_wx_molecular_system(molecule, V, s1, s2)
+!!
+!!    Construct V_αβ
+!!    Copy of construct_ao_h_wx_molecular_system
+!!    Written by Tommaso Giovannini, May 2019
+!!
+!!    Fortran wrapper for the C++ routine that calculates and
+!!    saves the V_αβ integral in the array V. s1-s4 are 
+!!    the shells that alpha and beta belong to
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      integer, intent(in) :: s1, s2 
+!
+      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: V
+!
+   end subroutine construct_ao_V_wx_molecular_system

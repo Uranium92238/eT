@@ -1,0 +1,53 @@
+system
+   name: H2O
+   charge: 0
+end system
+
+method
+   hf
+   ccsd
+   mm
+end method
+
+memory
+   available: 8
+end memory
+
+solver cholesky
+   threshold: 1.0d-12
+end solver cholesky
+
+solver hf
+   algorithm:          scf-diis
+   energy threshold:   1.0d-10
+   gradient threshold: 1.0d-10
+end solver hf
+
+solver cc gs
+   omega threshold:  1.0d-10
+   energy threshold: 1.0d-10
+end solver cc gs
+
+solver cc multipliers
+   threshold: 1.0d-10
+end solver cc multipliers
+
+molecular mechanics
+   forcefield: fq
+   verbose:    0
+end molecular mechanics
+
+do
+   ground state
+end do
+
+geometry
+basis: cc-pVDZ
+ O          0.009319    1.133156    0.000000
+ H          0.023452    0.185621    0.000000
+ H          0.906315    1.422088    0.000000
+ --
+ O [IMol=   1]         -0.042964   -1.404707   -0.000000      [chi=0.11685879436,eta=0.58485173233]
+ H [IMol=   1]         -0.419020   -1.818953    0.760190      [chi=0.00000000001,eta=0.62501048888]
+ H [IMol=   1]         -0.419020   -1.818953   -0.760190      [chi=0.00000000001,eta=0.62501048888]
+end geometry

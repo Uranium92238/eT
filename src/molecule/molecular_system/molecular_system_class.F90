@@ -24,11 +24,13 @@ module molecular_system_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
+   use string_utilities
    use parameters
    use atomic_class
    use io_utilities
    use interval_class
    use libint_initialization
+   use mm_class
 !
    implicit none
 !
@@ -56,6 +58,16 @@ module molecular_system_class
 !
       integer :: n_active_atoms = 0
       integer :: max_shell_size
+!     
+!     CGTO information                                           
+!                                                              
+      integer :: n_cart_basis = 0                              
+      integer :: n_pure_basis = 0                              
+      integer :: n_primitives_cart = 0                         
+      logical :: cartesian_basis = .false. 
+      logical :: mm_calculation = .false.
+!
+      type(mm) :: mm
 !
    contains
 !
@@ -74,6 +86,8 @@ module molecular_system_class
 !
       procedure :: get_geometry                             => get_geometry_molecular_system
       procedure :: set_geometry                             => set_geometry_molecular_system
+!
+      procedure :: get_total_nuclear_repulsion              => get_total_nuclear_repulsion_molecular_system
 !
       procedure :: get_nuclear_repulsion                    => get_nuclear_repulsion_molecular_system
       procedure :: get_nuclear_repulsion_1der_numerical     => get_nuclear_repulsion_1der_numerical_molecular_system
@@ -106,6 +120,7 @@ module molecular_system_class
 !
       procedure :: translate_from_input_order_to_eT_order   => translate_from_input_order_to_eT_order_molecular_system
 !
+      procedure :: construct_ao_v_wx                        => construct_ao_v_wx_molecular_system      
       procedure :: construct_ao_h_wx                        => construct_ao_h_wx_molecular_system     
       procedure :: construct_ao_h_wx_kinetic_1der           => construct_ao_h_wx_kinetic_1der_molecular_system     
       procedure :: construct_and_add_ao_h_wx_nuclear_1der   => construct_and_add_ao_h_wx_nuclear_1der_molecular_system
@@ -119,6 +134,13 @@ module molecular_system_class
 !   
       procedure :: construct_ao_mu_wx                       => construct_ao_mu_wx_molecular_system     
       procedure :: construct_ao_q_wx                        => construct_ao_q_wx_molecular_system     
+!
+      procedure :: set_basis_info                           => set_basis_info_molecular_system
+      procedure :: set_shell_basis_info                     => set_shell_basis_info_molecular_system
+      procedure :: check_convert_pure_to_cartesian_basis    => check_convert_pure_to_cartesian_basis_molecular_system
+      procedure :: normalize_raw_primitives                 => normalize_raw_primitives_molecular_system
+      procedure :: get_nuclear_repulsion_mm                 => get_nuclear_repulsion_mm_molecular_system
+!
 !
    end type molecular_system
 !
@@ -312,9 +334,20 @@ contains
 !
       enddo
 !
+      call molecule%set_basis_info                           
+      call molecule%check_convert_pure_to_cartesian_basis    
+      call molecule%normalize_raw_primitives                 
+!
       call molecule%print_system()
 !
       call molecule%get_max_shell_size(molecule%max_shell_size)
+!
+      if (input%requested_mm_calculation()) then
+!      
+         molecule%mm_calculation = .true.
+         call molecule%mm%prepare()
+!         
+      endif
 !
       call initialize_shell2atom_c()
 !
@@ -349,6 +382,7 @@ contains
       call molecule%destruct_atoms()
       call molecule%destruct_basis_sets()
       call molecule%destruct_shell_limits()
+      if (molecule%mm_calculation) call molecule%mm%cleanup()
 !
    end subroutine cleanup_molecular_system
 !
@@ -980,6 +1014,32 @@ contains
    end function get_nuclear_repulsion_1der_molecular_system
 !
 !
+   function get_total_nuclear_repulsion_molecular_system(molecule) result(nuclear_repulsion)
+!!
+!!    Get total nuclear repulsion 
+!!    Written by Eirik F. Kjønstad, 2019 
+!!
+!!    Returns the total nuclear repulsion energy, accounting for the MM contribution 
+!!    if QM/MM calculation.
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      real(dp) :: nuclear_repulsion
+!
+      if (molecule%mm_calculation .and. molecule%mm%forcefield .eq. 'non-polarizable') then 
+!
+         nuclear_repulsion = molecule%get_nuclear_repulsion() + molecule%get_nuclear_repulsion_mm()
+!
+      else
+!
+         nuclear_repulsion = molecule%get_nuclear_repulsion()
+!
+      endif 
+!
+   end function get_total_nuclear_repulsion_molecular_system
+!
 !
    function get_nuclear_repulsion_molecular_system(molecule)
 !!
@@ -1381,7 +1441,17 @@ contains
 !
       integer :: I 
 !
-      write(output%unit, '(/t6, a/)')'Geometry (Å):'
+      character(len=12) :: frmt0
+      character(len=46) :: frmt1
+!
+      frmt0="(t5,68('='))"
+      frmt1="(t5,'Atom',9x,'X',16x,'Y',16x,'Z',13x,'Basis')"
+      write(output%unit,'(/)')
+      write(output%unit,frmt0 )
+      write(output%unit,'(t32,a)') 'Geometry (Å)'
+      write(output%unit,frmt0 )
+      write(output%unit,frmt1 )
+      write(output%unit,frmt0 )
 !
       do I = 1, molecule%n_atoms 
 !
@@ -1389,24 +1459,30 @@ contains
                                                                           molecule%atoms(I)%x,      &
                                                                           molecule%atoms(I)%y,      &
                                                                           molecule%atoms(I)%z,      &
-                                                                          molecule%atoms(I)%basis 
+                                                                          adjustr(trim(molecule%atoms(I)%basis))
 !  
          flush(output%unit)
 !
       enddo 
 !
-      write(output%unit, '(/t6, a/)')'Geometry (bohr):'
+      write(output%unit,frmt0 )
+      write(output%unit,'(t30,a)') 'Geometry (a.u.)'
+      write(output%unit,frmt0 )
+      write(output%unit,frmt1 )
+      write(output%unit,frmt0 )
       do I = 1, molecule%n_atoms 
 !
          write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a11)')  molecule%atoms(I)%symbol, &
                                                                           angstrom_to_bohr*molecule%atoms(I)%x,      &
                                                                           angstrom_to_bohr*molecule%atoms(I)%y,      &
                                                                           angstrom_to_bohr*molecule%atoms(I)%z,      &
-                                                                          molecule%atoms(I)%basis 
+                                                                          adjustr(trim(molecule%atoms(I)%basis))
 !  
          flush(output%unit)
 !
       enddo 
+!      
+      write(output%unit,frmt0 )
 !
    end subroutine print_geometry_molecular_system
 !
@@ -1415,6 +1491,7 @@ contains
 !!
 !!    Print geometry 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!    Modified by Tommaso Giovannini, March 2019
 !!
       implicit none 
 !
@@ -1425,6 +1502,11 @@ contains
       write(output%unit, '(/t6,a14,a)')      'Name:         ', trim(molecule%name)
       write(output%unit, '(t6,a14,i1)')      'Charge:       ', molecule%charge 
       write(output%unit, '(t6,a14,i1)')      'Multiplicity: ', molecule%multiplicity 
+!
+!
+      write(output%unit, '(/t6,a27,i5)')     'Pure basis functions:      ', molecule%n_pure_basis
+      write(output%unit, '(t6,a27,i5)')      'Cartesian basis functions: ', molecule%n_cart_basis
+      write(output%unit, '(t6,a27,i5)')      'Primitive basis functions: ', molecule%n_primitives_cart
 !
       write(output%unit, '(/t6,a35,f25.12)') 'Nuclear repulsion energy (a.u.):   ', molecule%get_nuclear_repulsion()
       write(output%unit, '(t6,a35,f25.12)')  'Bohr/angstrom value (CODATA 2010): ', bohr_to_angstrom
@@ -1534,6 +1616,473 @@ contains
       enddo
 !
    end subroutine get_nuclear_quadrupole_molecular_system
+!
+!
+   subroutine set_basis_info_molecular_system(molecule)
+!!
+!!    Set basis info
+!!    Written by Sarai D. Folkestad, Dec 2018
+!!
+!!    Opens and reads the basis set file
+!!    for each atom in the molecule.
+!!
+!!    The information for each shell 
+!!    (n_primitives, exponents, and coefficients)
+!!    is then set by the set_shell_basis_info routine
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      integer :: atom_index, shell
+      character(len=100) :: basis
+      character(len=100) :: libint_path
+!
+      type(file) :: basis_set_file
+!
+!     Loop over atoms 
+!
+      do atom_index = 1, molecule%n_atoms
+!
+         shell = 0
+!
+         if (molecule%atoms(atom_index)%basis(1:3) .ne. 'aug') then
+!
+!           Open the correct basis set file
+!
+            write(basis,'(a)') molecule%atoms(atom_index)%basis
+            call convert_to_lowercase(basis)
+            call get_environment_variable("LIBINT_DATA_PATH",libint_path)
+            call basis_set_file%init(trim(libint_path) // '/' // trim(basis) // '.g94', 'sequential', 'formatted')
+!  
+            call disk%open_file(basis_set_file, 'read')
+!
+            rewind(basis_set_file%unit)
+!
+            call molecule%set_shell_basis_info(basis_set_file, atom_index, shell)
+!
+            call disk%close_file(basis_set_file)
+!
+         else
+!
+!           Open the correct basis set file
+!
+            write(basis,'(a)') molecule%atoms(atom_index)%basis(5:100)
+            call convert_to_lowercase(basis)
+            call get_environment_variable("LIBINT_DATA_PATH",libint_path)
+            call basis_set_file%init(trim(libint_path) // '/' // trim(basis) // '.g94', 'sequential', 'formatted')
+!  
+            call disk%open_file(basis_set_file, 'read')
+!
+            rewind(basis_set_file%unit)
+!
+            call molecule%set_shell_basis_info(basis_set_file, atom_index, shell)
+!
+            call disk%close_file(basis_set_file)
+!
+!           augmentation part
+!
+            write(basis,'(a)') molecule%atoms(atom_index)%basis(4:100)
+            call convert_to_lowercase(basis)
+            call get_environment_variable("LIBINT_DATA_PATH",libint_path)
+            call basis_set_file%init(trim(libint_path) // '/' // 'augmentation' // trim(basis) // &
+                                  '.g94', 'sequential', 'formatted')
+!
+            call disk%open_file(basis_set_file, 'read')
+!
+            rewind(basis_set_file%unit)
+!
+            call molecule%set_shell_basis_info(basis_set_file, atom_index, shell)
+!
+            call disk%close_file(basis_set_file)       
+!
+         endif
+!
+      enddo 
+!
+      flush(output%unit)
+!          
+   end subroutine set_basis_info_molecular_system
+!
+!
+   subroutine set_shell_basis_info_molecular_system(molecule, basis_set_file, atom_index, shell)
+!!
+!!    Set shell basis info
+!!    Written by Sarai D. Folkestad, Dec 2018
+!!
+!!    Sets the number of primitives, and the 
+!!    coefficient and exponents of the primitives in 
+!!    the basis_detail variable for each shell
+!!
+      implicit none
+!
+      class(molecular_system), intent(inout) :: molecule
+!
+      integer, intent(inout)              :: shell
+      integer, intent(in)                 :: atom_index
+!        
+      type(file), intent(in)             :: basis_set_file
+!
+      character(len=200)   :: line
+!
+      integer              :: n_primitive, primitive
+!
+      character(len=1)     :: ang_mom
+!
+      logical              :: elm_found
+!
+      real(dp)             :: coefficient, exponent
+!
+!     Find position of element in file
+!     Look for:  ****
+!     Symbol
+!
+      elm_found = .false.        
+!
+      read(basis_set_file%unit, '(a200)') line
+!
+      do while (.not. elm_found)
+!
+         if (trim(line) == '****') then 
+!
+            read(basis_set_file%unit, '(a200)') line
+!
+            if ((line(1:2)) == molecule%atoms(atom_index)%symbol) then
+!
+               elm_found = .true.
+!
+            endif
+!
+         endif
+!
+         if (.not. elm_found) then 
+!
+            read(basis_set_file%unit, '(a200)') line
+!
+         endif
+!
+      enddo
+!
+!     Read angular momentum and number of primitives
+!
+      read(basis_set_file%unit, '(a200)') line
+!
+      do while (trim(line) .ne. '****') ! Loop over AO
+!
+         shell = shell + 1
+!
+         read(line, *) ang_mom, n_primitive
+!  
+!        Sanity check -> does shell exceede number of shells on atom
+!
+         if (shell .gt. molecule%atoms(atom_index)%n_shells) &
+            call output%error_msg('Mismatch in number of shells in set_shell_basis_info')
+!  
+!        Sanity check -> does shell have the correct angular momentum
+!
+         if (angular_momentum_from_symbol(ang_mom) .ne. molecule%atoms(atom_index)%shells(shell)%l) &
+            call output%error_msg('Mismatch in angular momentum in set_shell_basis_info')
+!
+!        Set number of primitives and initialize exponents and coefficient array
+!
+         call molecule%atoms(atom_index)%shells(shell)%basis_details%set_n_primitives(n_primitive)
+         call molecule%atoms(atom_index)%shells(shell)%basis_details%initialize_exponents()
+         call molecule%atoms(atom_index)%shells(shell)%basis_details%initialize_coefficients()
+!
+!         write(output%unit, *)'Atom ', atom_index, molecule%atoms(atom_index)%symbol, &
+!                                 ang_mom, trim(basis_set_file%name), n_primitive
+!
+!        Loop over primitives and set coefficient and exponent
+!
+         do primitive = 1, n_primitive
+!
+!           Read coefficient and exponent
+!
+            read(basis_set_file%unit, *) exponent, coefficient
+!
+            call molecule%atoms(atom_index)%shells(shell)%basis_details%set_exponent_i(primitive, exponent)
+            call molecule%atoms(atom_index)%shells(shell)%basis_details%set_coefficient_i(primitive, coefficient)
+!                                                 
+         enddo
+!
+         read(basis_set_file%unit, '(a200)') line
+!
+      enddo
+!
+   end subroutine set_shell_basis_info_molecular_system
+!
+!
+   function angular_momentum_from_symbol(angular_momentum_symbol)
+!!
+!!    Angular momentum from symbol
+!!    Written by Sarai D. Folkestad, Dec 2018
+!!
+      implicit none
+!
+      character(len=1), intent(in) :: angular_momentum_symbol
+!
+      integer :: angular_momentum_from_symbol
+!
+      angular_momentum_from_symbol = 0
+!
+      if (angular_momentum_symbol == 'S') then
+!
+         angular_momentum_from_symbol = 0
+!
+      elseif (angular_momentum_symbol == 'P') then
+!
+         angular_momentum_from_symbol = 1
+!
+      elseif (angular_momentum_symbol == 'D') then
+!
+         angular_momentum_from_symbol = 2
+!
+      elseif (angular_momentum_symbol == 'F') then
+!
+         angular_momentum_from_symbol = 3
+!
+      elseif (angular_momentum_symbol == 'G') then
+!
+         angular_momentum_from_symbol = 4
+!
+      elseif (angular_momentum_symbol == 'H') then
+!
+         angular_momentum_from_symbol = 5
+!
+      elseif (angular_momentum_symbol == 'I') then
+!
+         angular_momentum_from_symbol = 6
+!
+      else
+!
+         call output%error_msg('no support for visualization of orbitals with l > 6')
+!
+      endif
+!
+   end function angular_momentum_from_symbol
+!
+!
+   subroutine check_convert_pure_to_cartesian_basis_molecular_system(molecule)
+!!   
+!!    Check convert pure to cartesian
+!!    Written by Tommaso Giovannini, 2019
+!!
+!!    Check if it is necessary to convert from pure to cartesian
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+      integer :: i,j, angmom1, n_prim1, n_func
+!
+      do i = 1, molecule%n_atoms
+!  
+         do j = 1, molecule%atoms(i)%n_shells
+!  
+             angmom1 = molecule%atoms(i)%shells(j)%l
+             n_prim1 = int(molecule%atoms(i)%shells(j)%basis_details%n_primitives,kind(n_prim1))
+             n_func  = molecule%atoms(i)%shells(j)%size
+             molecule%n_pure_basis = molecule%n_pure_basis + n_func 
+!  
+             if(angmom1.ge.1) then
+!  
+                molecule%atoms(i)%shells(j)%size_cart = n_func
+!  
+                if(angmom1.ge.2) then
+!  
+                   if(angmom1.eq.2.and.n_func.eq.6) continue
+!  
+                   if(angmom1.eq.2.and.n_func.eq.5) then
+!  
+                      molecule%atoms(i)%shells(j)%size_cart = n_func + 1
+!  
+                   endIf
+!  
+                   if(angmom1.eq.3.and.n_func.eq.10) continue
+!  
+                   if(angmom1.eq.3.and.n_func.eq.7) then
+!  
+                      molecule%atoms(i)%shells(j)%size_cart = n_func + 3
+!  
+                   endIf
+!  
+                   if(angmom1.eq.4.and.n_func.eq.15) continue
+!  
+                   if(angmom1.eq.4.and.n_func.eq.9) then
+!  
+                      molecule%atoms(i)%shells(j)%size_cart = n_func + 6
+!  
+                   endIf
+!  
+                   if(angmom1.gt.4) then
+!  
+                      write(output%unit,'(a)') 'Cartesian G functions NYI'
+                      Stop
+!  
+                   endIf
+!  
+                endif
+!  
+            else 
+!  
+               molecule%atoms(i)%shells(j)%size_cart = n_func 
+!  
+            endIf
+!  
+            molecule%n_cart_basis      = molecule%n_cart_basis + molecule%atoms(i)%shells(j)%size_cart
+            molecule%n_primitives_cart = molecule%n_primitives_cart + molecule%atoms(i)%shells(j)%size_cart*n_prim1
+!  
+         enddo
+!  
+      enddo
+!  
+      if(molecule%n_cart_basis.eq.molecule%n_pure_basis) molecule%cartesian_basis = .True.
+!  
+!
+   end subroutine check_convert_pure_to_cartesian_basis_molecular_system
+!
+!
+   subroutine normalize_raw_primitives_molecular_system(molecule)
+!!   
+!!    Normalize raw primitives coefficients
+!!    Written by Tommaso Giovannini
+!!
+      use math_utilities, only: double_factorial
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+      integer :: i,j,k,l, angmom, n_prim
+      real(kind=dp) :: alpha1, coeff1, pi, overlap_kk, overlap_kl,alpha2,coeff2
+      real(kind=dp) :: sum_
+!
+!
+         pi = 4.0d0*atan(1.0d0)
+!  
+         do i = 1, molecule%n_atoms
+!  
+            do j = 1, molecule%atoms(i)%n_shells
+!  
+                angmom = molecule%atoms(i)%shells(j)%l
+                n_prim = int(molecule%atoms(i)%shells(j)%basis_details%n_primitives,kind(n_prim))
+!  
+                do k = 1, n_prim
+!  
+                   alpha1 = molecule%atoms(i)%shells(j)%basis_details%exponents(k)
+                   coeff1 = molecule%atoms(i)%shells(j)%basis_details%coefficients(k)
+                   overlap_kk = ((pi/(2*alpha1))**1.5d0)/(4.0d0*(alpha1))**angmom
+                   overlap_kk = double_factorial(2*angmom-1) * overlap_kk
+                   coeff1 = coeff1 / sqrt(overlap_kk)
+                   molecule%atoms(i)%shells(j)%basis_details%coefficients(k) = coeff1
+!  
+                enddo
+!  
+                sum_ = 0.0d0
+!  
+                do k = 1, n_prim
+!  
+                   alpha1 = molecule%atoms(i)%shells(j)%basis_details%exponents(k)
+                   coeff1 = molecule%atoms(i)%shells(j)%basis_details%coefficients(k)
+                   overlap_kk = ((pi/(2*alpha1))**1.5d0)/(4.0d0*(alpha1))**angmom
+                   overlap_kk = double_factorial(2*angmom-1) * overlap_kk
+                   sum_ = sum_ + coeff1*coeff1*overlap_kk
+!  
+                   do l = 1,k-1
+!  
+                      alpha2 = molecule%atoms(i)%shells(j)%basis_details%exponents(l)
+                      coeff2 = molecule%atoms(i)%shells(j)%basis_details%coefficients(l)
+                      overlap_kl = ((pi/(alpha1+alpha2))**1.5d0)/(2.0d0*(alpha1+alpha2))**angmom
+                      overlap_kl = double_factorial(2*angmom-1) * overlap_kl
+                      sum_ = sum_ + 2.0d0*coeff1*coeff2*overlap_kl
+!  
+                   enddo
+!  
+                enddo
+!  
+                do k =1, n_prim
+!  
+                   coeff1 = molecule%atoms(i)%shells(j)%basis_details%coefficients(k)
+                   coeff1 = coeff1/sqrt(sum_)
+                   molecule%atoms(i)%shells(j)%basis_details%coefficients(k) = coeff1
+!  
+                enddo
+!  
+            enddo
+!  
+         enddo
+!  
+!
+   end subroutine normalize_raw_primitives_molecular_system
+!
+!
+   function get_nuclear_repulsion_mm_molecular_system(molecule)
+!!
+!!    Get nuclear repulsion if non-polarizable QM/MM
+!!    Written by Tommaso Giovannini, 2019
+!!
+!!    Calculates, and returns, the nuclear repulsion term for electrostatic
+!!    embedding, in units of Hartree. Makes use of the Ångstrøm to Bohr conversion
+!!    factor defined in the parameters module.
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      real(dp) :: get_nuclear_repulsion_mm_molecular_system
+!
+      integer :: i = 0, j = 0
+!
+      real(dp) :: x_ij, y_ij, z_ij, r_ij
+!
+      get_nuclear_repulsion_mm_molecular_system = zero
+!
+      do i = 1, molecule%mm%n_atoms
+         do j = i + 1, molecule%mm%n_atoms
+!
+            x_ij = molecule%mm%coordinates(1,i) - molecule%mm%coordinates(1,j)
+            y_ij = molecule%mm%coordinates(2,i) - molecule%mm%coordinates(2,j)
+            z_ij = molecule%mm%coordinates(3,i) - molecule%mm%coordinates(3,j)
+!
+            r_ij = sqrt(x_ij**2 + y_ij**2 + z_ij**2)
+!
+            r_ij = angstrom_to_bohr*r_ij
+!
+            if (abs(r_ij) .lt. 1.0D-7) then
+!
+               call output%error_msg('two atoms are placed on top of each other.')
+!
+            endif
+!
+            get_nuclear_repulsion_mm_molecular_system = get_nuclear_repulsion_mm_molecular_system &
+                  + ((molecule%mm%charge(i))*(molecule%mm%charge(j)))/r_ij
+!
+         enddo
+      enddo
+!
+!
+      do i = 1, molecule%n_atoms
+         do j = 1, molecule%mm%n_atoms
+!
+            x_ij = molecule%atoms(i)%x - molecule%mm%coordinates(1,j)
+            y_ij = molecule%atoms(i)%y - molecule%mm%coordinates(2,j)
+            z_ij = molecule%atoms(i)%z - molecule%mm%coordinates(3,j)
+!
+            r_ij = sqrt(x_ij**2 + y_ij**2 + z_ij**2)
+!
+            r_ij = angstrom_to_bohr*r_ij
+!
+            if (abs(r_ij) .lt. 1.0D-7) then
+!
+               call output%error_msg('two atoms are placed on top of each other.')
+!
+            endif
+!
+            get_nuclear_repulsion_mm_molecular_system = get_nuclear_repulsion_mm_molecular_system &
+                  + ((molecule%atoms(i)%number_)*(molecule%mm%charge(j)))/r_ij
+!
+         enddo
+      enddo
+!
+  end function get_nuclear_repulsion_mm_molecular_system
 !
 !
 end module molecular_system_class

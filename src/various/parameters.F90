@@ -55,5 +55,6 @@ module parameters
    real(dp), parameter :: angstrom_to_bohr = one/bohr_to_angstrom
    real(dp), parameter :: Hartree_to_eV    = 27.21138602D0        ! 2014 CODATA
                                                                   ! (https://physics.nist.gov/cgi-bin/cuu/Value?threv)
+   real(dp), parameter :: Hartree_to_kcalmol = 627.509474D0       ! 2019 wikipedia
 !
 end module parameters

@@ -115,4 +115,14 @@ interface
 !
    end subroutine initialize_nuclear_c
 !
+   subroutine initialize_potential_c(charges,coordinates,n_points) bind(C, name='initialize_potential')
+!
+      use iso_c_binding
+      implicit none
+      real(c_double)  :: charges(*)
+      real(c_double)  :: coordinates(*)
+      integer(c_int)  :: n_points
+!
+   end subroutine initialize_potential_c
+!
 end interface

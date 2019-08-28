@@ -175,7 +175,7 @@ contains
 !
       prev_energy = zero
 !
-      write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        Delta E (a.u.)'
+      write(output%unit, '(/t3,a)') 'Iteration       Energy (a.u.)     Delta E (a.u.)'
       write(output%unit, '(t3,a)')  '------------------------------------------------'
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)
@@ -184,7 +184,7 @@ contains
 !
 !        Print current iteration information
 !
-         write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4)') iteration, energy, abs(energy-prev_energy)
+         write(output%unit, '(t3,i4,9x,f17.12,4x,e11.4)') iteration, energy, abs(energy-prev_energy)
          flush(output%unit)
 !
 !        Test for convergence:

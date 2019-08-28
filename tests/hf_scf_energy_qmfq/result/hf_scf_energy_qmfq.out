@@ -1,0 +1,316 @@
+
+
+
+                       eT - a coupled cluster program 
+       Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch
+
+  ----------------------------------------------------------------------------------
+   Author:                Contribution(s):
+  ----------------------------------------------------------------------------------
+   Josefine H. Andersen   First order properties
+   Sarai D. Folkestad     Program design, HF, CCS, CC2, CCSD, Libint-interface,
+                          Cholesky decomposition, Davidson-tool, CVS, DIIS-tool
+                          Zeroth order properties, First order properties
+   Linda Goletto          CC2
+   Eirik F. Kjønstad      Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,
+                          Cholesky decomposition, Libint-interface, Davidson-tool
+                          Zeroth order properties, First order properties
+   Rolf H. Myhre          CC3, Runtest-interface, Launch script
+   Alexander Paul         CC2, CC3
+   Andreas Skeidsvoll     MP2
+  ----------------------------------------------------------------------------------
+   Other contributors: A. Balbi, M. Scavino
+
+  Running on 8 OMP threads
+
+  Memory available for calculation:         8 GB
+  Disk space available for calculation:  3000 GB
+
+  - Molecular system specifications:
+
+     Name:         h2o-h2o-fq
+     Charge:       0
+     Multiplicity: 1
+
+     Pure basis functions:         24
+     Cartesian basis functions:    25
+     Primitive basis functions:    49
+
+     Nuclear repulsion energy (a.u.):              9.307879526626
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+
+    ====================================================================
+                               Geometry (Å)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     O    0.009319000000   1.133156000000   0.000000000000       cc-pvdz
+     H    0.023452000000   0.185621000000   0.000000000000       cc-pvdz
+     H    0.906315000000   1.422088000000   0.000000000000       cc-pvdz
+    ====================================================================
+                             Geometry (a.u.)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     O    0.017610357755   2.141354496408   0.000000000000       cc-pvdz
+     H    0.044317857073   0.350772852968   0.000000000000       cc-pvdz
+     H    1.712687132585   2.687356845030   0.000000000000       cc-pvdz
+    ====================================================================
+
+  - Molecular Mechanics Specifications
+
+     Force Field:  fq
+     Algorithm  :  mat_inversion
+     MM Verbose :  0
+
+     Number of MM atoms:                  3
+     Number of MM molecules:              1
+
+    ====================================================================
+                        MM Geometry (Å) and Parameters
+    ====================================================================
+    Atom    Mol         X          Y          Z         Chi        Eta
+    ====================================================================
+     O        1    -0.042964  -1.404707  -0.000000   0.685392   0.366624
+     H        1    -0.419020  -1.818953   0.760190   0.499339   0.824306
+     H        1    -0.419020  -1.818953  -0.760190   0.499339   0.824306
+    ====================================================================
+
+
+  - Polarizable Embedding : Fluctuating Charges (FQ) Force Field
+
+     Each atom of the MM portion is endowed with a charge which
+     value can vary in agreement with the Electronegativity
+     Equalization Principle (EEP), which states that at the
+     equilibrium each atom has the same electronegativity.
+
+     The force field is defined in terms of electronegativity (Chi)
+     and chemical hardness (Eta), which are specified for each MM
+     atom.
+     The QM/MM electrostatic interaction energy is defined as:
+
+        E^ele_QM/MM = sum_i q_i * V_i(P)
+
+     where V_i(P) is the electrostatic potential due to the QM
+     density calculated at the position of the i-th charge q_i.
+     The values of the charges are obtained by solving a linear
+     equation:
+
+        Dq = -Chi - V(P)
+
+     For further details, see:
+     Lipparini et al. JCTC 2012, 8, 4153–4165.
+
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+     Number of occupied orbitals:         5
+     Number of virtual orbitals:         19
+     Number of molecular orbitals:       24
+     Number of atomic orbitals:          24
+
+
+  :: Self-consistent field solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  Warning: We recommend to use the SCF-DIIS algorithm instead, which supports 
+  a gradient threshold and typically converges much faster. Use only when 
+  absolutely necessary!
+
+  A Roothan-Hall self-consistent field solver. In each iteration, the Roothan-Hall 
+  equation (or equations for unrestricted HF theory) are solved to provide 
+  the next orbital coefficients. From the new orbitals, a new density provides 
+  the next Fock matrix. The cycle repeats until the solution is self-consistent 
+  (as measured by the energy change).
+
+     Coulomb screening threshold:   0.1000E-12
+     Exchange screening threshold:  0.1000E-12
+     ERI integral precision:        0.1000E-25
+
+  - Setting initial AO density to SAD:
+
+     Energy of initial guess:       -76.062236019399
+     Number of electrons in guess:   10.000000000000
+
+  Iteration       Energy (a.u.)     Delta E (a.u.)
+  ------------------------------------------------
+     1          -76.167279705271     0.7617E+02
+     2          -76.197738750644     0.3046E-01
+     3          -76.204219726028     0.6481E-02
+     4          -76.206155768464     0.1936E-02
+     5          -76.206757178469     0.6014E-03
+     6          -76.206945070012     0.1879E-03
+     7          -76.207004005241     0.5894E-04
+     8          -76.207022497209     0.1849E-04
+     9          -76.207028304595     0.5807E-05
+    10          -76.207030128389     0.1824E-05
+    11          -76.207030701289     0.5729E-06
+    12          -76.207030881249     0.1800E-06
+    13          -76.207030937782     0.5653E-07
+    14          -76.207030955542     0.1776E-07
+    15          -76.207030961121     0.5579E-08
+    16          -76.207030962874     0.1753E-08
+    17          -76.207030963424     0.5506E-09
+    18          -76.207030963597     0.1728E-09
+    19          -76.207030963652     0.5444E-10
+  ------------------------------------------------
+
+  Converged criterion met in  19 iterations!
+
+  - Summary of HF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                 0.678598137914
+     Nuclear repulsion energy:      9.307879526626
+     Electronic energy:           -85.514910490278
+     Total energy:                -76.207030963652
+
+  - Summary of QM/MM energetics:
+                                         a.u.             eV     kcal/mol
+     QM/MM SCF Contribution:       -0.185843519235
+     QM/MM Electrostatic Energy    -0.047894628866    -1.30328   -30.054
+
+  - Molecular orbital energies:
+
+    1  -20.467460922236      2   -1.263417162390      3   -0.630400161103
+    4   -0.491026313914      5   -0.420463554942      6    0.258134582972
+    7    0.408028314115      8    0.885758563470      9    0.963763038313
+   10    1.231122207062     11    1.267867255801     12    1.327917364592
+   13    1.545905982834     14    1.558610706092     15    1.780477645528
+   16    1.947041360140     17    2.028726865133     18    2.574577682369
+   19    2.647767915236     20    3.358489904924     21    3.437572703506
+   22    3.590442738262     23    3.984045238652     24    4.227439306633
+
+
+  Printing 15 MOs (out of the total 24 MOs).
+
+  - Printing molecular orbitals: 1, 2, 3, 4
+
+     AO   Atom          1           2           3           4
+    ---------------------------------------------------------------
+     1   1 O (s)   -1.000934    0.010787    0.002078    0.002503
+     2   1 O (s)   -0.001288   -0.439761   -0.015710   -0.135827
+     3   1 O (s)    0.002639   -0.378343   -0.047384   -0.324886
+     4   1 O (p)   -0.001416   -0.064106    0.295189    0.432661
+     5   1 O (p)    0.000855    0.041261    0.397600   -0.345696
+     6   1 O (p)    0.000000   -0.000000    0.000000   -0.000000
+     7   1 O (p)    0.000351    0.015446    0.139761    0.298473
+     8   1 O (p)   -0.000237   -0.009457    0.187361   -0.244869
+     9   1 O (p)    0.000000   -0.000000    0.000000   -0.000000
+    10   1 O (d)   -0.000081   -0.001166    0.008804   -0.011541
+    11   1 O (d)   -0.000000   -0.000000    0.000000   -0.000000
+    12   1 O (d)    0.000159    0.002902   -0.001514   -0.011787
+    13   1 O (d)   -0.000000    0.000000    0.000000   -0.000000
+    14   1 O (d)    0.000032   -0.000296    0.023603    0.004416
+    15   2 H (s)    0.000267   -0.180395   -0.297852    0.194086
+    16   2 H (s)   -0.000419   -0.003315   -0.053172    0.002980
+    17   2 H (p)   -0.000041   -0.005426    0.012033    0.019265
+    18   2 H (p)    0.000708   -0.045584   -0.048137    0.028984
+    19   2 H (p)    0.000000    0.000000   -0.000000   -0.000000
+    20   3 H (s)    0.000330   -0.202529    0.337712    0.194708
+    21   3 H (s)   -0.000438   -0.015415    0.087290    0.044065
+    22   3 H (p)   -0.000777    0.038916   -0.038866   -0.009566
+    23   3 H (p)   -0.000217    0.019426    0.001322   -0.029663
+    24   3 H (p)   -0.000000   -0.000000    0.000000   -0.000000
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 5, 6, 7, 8
+
+     AO   Atom          5           6           7           8
+    ---------------------------------------------------------------
+     1   1 O (s)   -0.000000    0.046825    0.006908   -0.022985
+     2   1 O (s)   -0.000000   -0.067055   -0.070552   -0.097102
+     3   1 O (s)    0.000000   -0.930669   -0.420992    0.129131
+     4   1 O (p)    0.000000   -0.195253    0.096544   -0.243163
+     5   1 O (p)   -0.000000   -0.015139    0.244734   -0.119836
+     6   1 O (p)    0.623600   -0.000000   -0.000000    0.000000
+     7   1 O (p)    0.000000   -0.424907    0.219831   -0.290048
+     8   1 O (p)   -0.000000   -0.082548    0.527068   -0.397264
+     9   1 O (p)    0.505690    0.000000    0.000000    0.000000
+    10   1 O (d)    0.000000   -0.004875    0.005202    0.053847
+    11   1 O (d)   -0.009132    0.000000    0.000000   -0.000000
+    12   1 O (d)    0.000000    0.012930    0.005785   -0.036227
+    13   1 O (d)    0.013911    0.000000    0.000000    0.000000
+    14   1 O (d)   -0.000000   -0.010280    0.016746    0.091210
+    15   2 H (s)    0.000000    0.045392    0.035251   -0.592242
+    16   2 H (s)   -0.000000    0.103882    1.670641    0.369047
+    17   2 H (p)    0.000000   -0.000657   -0.001844   -0.113297
+    18   2 H (p)   -0.000000    0.019443    0.055033    0.020945
+    19   2 H (p)    0.025024    0.000000   -0.000000   -0.000000
+    20   3 H (s)   -0.000000    0.051645    0.009453    1.181958
+    21   3 H (s)    0.000000    1.413265   -0.925727   -0.783250
+    22   3 H (p)    0.000000   -0.041481    0.009393    0.251035
+    23   3 H (p)    0.000000   -0.011076    0.000907    0.051511
+    24   3 H (p)    0.031194    0.000000    0.000000    0.000000
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 9, 10, 11, 12
+
+     AO   Atom          9          10          11          12
+    ---------------------------------------------------------------
+     1   1 O (s)   -0.051869    0.006669   -0.000000   -0.011321
+     2   1 O (s)   -0.226376    0.121202   -0.000000   -0.023750
+     3   1 O (s)    0.208142    0.757018    0.000000    0.057594
+     4   1 O (p)   -0.195582   -0.629300    0.000000   -0.399849
+     5   1 O (p)    0.225480    0.449130    0.000000   -0.616119
+     6   1 O (p)    0.000000    0.000000   -0.971193   -0.000000
+     7   1 O (p)    0.162726    1.093589   -0.000000    1.034189
+     8   1 O (p)    0.239172   -0.728152   -0.000000    1.450941
+     9   1 O (p)   -0.000000    0.000000    1.043221    0.000000
+    10   1 O (d)    0.038963   -0.007641   -0.000000    0.012786
+    11   1 O (d)   -0.000000    0.000000    0.003675   -0.000000
+    12   1 O (d)   -0.085820   -0.001707   -0.000000    0.004772
+    13   1 O (d)    0.000000    0.000000   -0.003770   -0.000000
+    14   1 O (d)   -0.054216    0.001857   -0.000000    0.049874
+    15   2 H (s)    1.140797   -0.527430   -0.000000    0.306447
+    16   2 H (s)   -0.655699   -0.099598   -0.000000    0.901230
+    17   2 H (p)   -0.099533    0.091474   -0.000000    0.033756
+    18   2 H (p)   -0.248669   -0.206526   -0.000000    0.351845
+    19   2 H (p)    0.000000   -0.000000   -0.031519   -0.000000
+    20   3 H (s)    0.343264   -0.580924    0.000000   -0.418296
+    21   3 H (s)   -0.287811   -0.115848    0.000000   -0.854987
+    22   3 H (p)    0.146089    0.248053   -0.000000    0.331983
+    23   3 H (p)    0.235691   -0.034274   -0.000000    0.133203
+    24   3 H (p)   -0.000000   -0.000000   -0.007405   -0.000000
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 13, 14, 15
+
+     AO   Atom         13          14          15
+    ---------------------------------------------------------------
+     1   1 O (s)    0.231915   -0.000000    0.000000
+     2   1 O (s)    0.591484   -0.000000    0.000000
+     3   1 O (s)   -0.710119    0.000000   -0.000000
+     4   1 O (p)   -0.088779    0.000000   -0.000000
+     5   1 O (p)    0.040001   -0.000000   -0.000000
+     6   1 O (p)   -0.000000   -0.004957   -0.059647
+     7   1 O (p)    0.488411   -0.000000    0.000000
+     8   1 O (p)   -0.388226    0.000000    0.000000
+     9   1 O (p)    0.000000    0.094063   -0.599016
+    10   1 O (d)    0.097017   -0.000000    0.000000
+    11   1 O (d)   -0.000000   -0.099235   -0.114782
+    12   1 O (d)    0.058257   -0.000000    0.000000
+    13   1 O (d)   -0.000000   -0.086718    0.119953
+    14   1 O (d)   -0.027561    0.000000   -0.000000
+    15   2 H (s)   -0.309958    0.000000   -0.000000
+    16   2 H (s)    0.272842   -0.000000    0.000000
+    17   2 H (p)   -0.593584    0.000000   -0.000000
+    18   2 H (p)    0.111123   -0.000000    0.000000
+    19   2 H (p)    0.000000    0.585395    0.842603
+    20   3 H (s)   -0.232218    0.000000   -0.000000
+    21   3 H (s)    0.221912   -0.000000   -0.000000
+    22   3 H (p)   -0.319912    0.000000    0.000000
+    23   3 H (p)    0.598209   -0.000000    0.000000
+    24   3 H (p)   -0.000000   -0.772156    0.688752
+    ---------------------------------------------------------------
+
+  - Cleaning up Self-consistent field solver
+
+  Mismatch in memory according to eT and specified on input:
+
+     Memory available (eT):          7.9999 GB
+     Memory available (input):       8.0000 GB
+
+  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
+
+  eT terminated successfully!

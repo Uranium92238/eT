@@ -209,25 +209,47 @@ contains
    end subroutine get_elements_in_string
 !
 !
-   function set_cursor_to_whitespace(string) result(cursor)
+   function set_cursor_to_character(string,final_character) result(cursor)
 !!
-!!    Set cursor to whitespace
+!!    Set cursor to string
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!    Modified by Tommaso Giovannini, May 2019
 !!
-!!    Sets the cursor to the first whitespace in the string
+!!    Sets the cursor to the final character in the string
+!!    More general than previous white space
+!!
+!!    final_character :: optional 
+!!    if present --> look for final_character
+!!    otherwise  --> look for whitespace
 !!
       implicit none
 !
       character(len=200), intent(inout) :: string
 !
-      integer :: cursor
+      character(len=1), intent(in), optional :: final_character
 !
+      integer :: cursor
+!!
+!!    internal variables
+!!
+      character(len=1) :: look_character
+!      
       string = adjustl(string)
+!
+      if (present(final_character)) then
+!      
+         look_character = final_character
+!         
+      else 
+!      
+         look_character = ' '
+!         
+      endif
 !
       cursor = 1
 !
       do while (cursor .lt. 200)
-         if (string(cursor:cursor) .eq. ' ') then
+         if (string(cursor:cursor) .eq. look_character) then
             exit
          else
             cursor = cursor + 1
@@ -235,7 +257,7 @@ contains
          endif
       enddo
 !
-   end function set_cursor_to_whitespace
+   end function set_cursor_to_character
 !
 !
    subroutine convert_to_lowercase(string)

@@ -39,5 +39,6 @@ extern libint2::Engine overlap_1der;                         // The overlap firs
 extern vector<libint2::Engine> overlap;                      // The overlap engine vector
 extern vector<libint2::Engine> dipole;                       // The dipole engine
 extern vector<libint2::Engine> quadrupole;                   // The quadrupole engine
+extern vector<libint2::Engine> potential;                    // The electronic potential engine vector
 extern vector<libint2::Atom> atoms;                          // Atoms vector
 extern vector<int> shell2atom;                               // Shell center vector

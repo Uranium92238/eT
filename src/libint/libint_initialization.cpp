@@ -73,6 +73,9 @@ extern vector<Engine> quadrupole;
 vector<Atom> atoms;
 extern vector<Atom> atoms;
 
+vector<Engine> potential(omp_get_max_threads());
+extern vector<Engine> potential;
+
 vector<int> shell2atom;
 extern vector<int> shell2atom;
 
@@ -219,6 +222,25 @@ void initialize_quadrupole(){
 
     for (int i = 0; i != omp_get_max_threads(); i++){
         quadrupole[i] = temporary; 
+    }
+
+}
+
+void initialize_potential(double *charges, double *coordinates, int *n_points){
+
+    Engine temporary(Operator::nuclear, basis.max_nprim(), basis.max_l());
+      
+    vector<pair<double, array<double, 3>>> points;
+    for (int i = 0; i <= *n_points - 1; i++) {
+      int offset = (i-1)*3 + 3;
+      points.push_back({static_cast<double>(charges[i]),
+                   {{*(coordinates+offset),*(coordinates+offset+1),*(coordinates+offset+2)}}});
+    }
+
+    temporary.set_params(points); // Tell the engine where the atomic charges are
+
+    for (int i = 0; i != omp_get_max_threads(); i++){
+        potential[i] = temporary; 
     }
 
 }

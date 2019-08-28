@@ -35,6 +35,7 @@ module input_file_class
 !
       character(len=21), allocatable :: rf_wfs(:)
       character(len=21), allocatable :: cc_wfs(:)
+      character(len=21), allocatable :: mm_wfs(:)
 !
    contains
 !
@@ -47,15 +48,19 @@ module input_file_class
       procedure :: get_n_elements_for_keyword_in_section                => get_n_elements_for_keyword_in_section_input_file
       procedure :: get_array_for_keyword_in_section                     => get_array_for_keyword_in_section_input_file
       procedure :: get_n_atoms                                          => get_n_atoms_input_file
+      procedure :: get_mm_n_atoms                                       => get_mm_n_atoms_input_file
       procedure :: get_geometry                                         => get_geometry_input_file
+      procedure :: get_mm_geometry                                      => get_mm_geometry_input_file
       procedure :: get_reference_wf                                     => get_reference_wf_input_file
       procedure :: get_cc_wf                                            => get_cc_wf_input_file
 !
       procedure :: requested_reference_calculation                      => requested_reference_calculation_input_file
       procedure :: requested_cc_calculation                             => requested_cc_calculation_input_file
+      procedure :: requested_mm_calculation                             => requested_mm_calculation_input_file
 !
       procedure, private :: get_string_keyword_in_section_wo_safety     => get_string_keyword_in_section_wo_safety_input_file
       procedure, private :: move_to_section                             => move_to_section_input_file
+      procedure, private :: move_to_mm_geometry                         => move_to_mm_geometry_input_file
       procedure, private :: check_section_for_illegal_keywords          => check_section_for_illegal_keywords_input_file
       procedure, private :: check_for_illegal_sections                  => check_for_illegal_sections_input_file
       procedure, private :: print_sections                              => print_sections_input_file
@@ -126,6 +131,7 @@ contains
       type(section) :: solver_cc_es
       type(section) :: solver_cc_multipliers 
       type(section) :: active_atoms
+      type(section) :: mm
 !
 !     Set input file name, access and format 
 !
@@ -146,10 +152,12 @@ contains
                            'ccsd                 ',   &
                            'cc3                  '    /)
 !
+      the_file%mm_wfs = (/ 'mm                   '/)
+!
       method%name_    = 'method'
       method%required = .true.
 !
-      allocate(method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs)))
+      allocate(method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs) + size(the_file%mm_wfs)))
 !
       do k = 1, size(the_file%rf_wfs)
 !
@@ -160,6 +168,12 @@ contains
       do k = 1, size(the_file%cc_wfs)
 !
          method%keywords(size(the_file%rf_wfs) + k) = the_file%cc_wfs(k)
+!
+      enddo 
+!      
+      do k = 1, size(the_file%mm_wfs)
+!
+         method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs) + k) = the_file%mm_wfs(k)
 !
       enddo 
 !
@@ -269,6 +283,12 @@ contains
                                  'hf                   ', &
                                  'active basis         ' /)
 !
+      mm%name_    = 'molecular mechanics'
+      mm%required = .false.
+      mm%keywords = (/ 'forcefield        ', &
+                       'algorithm         ', &
+                       'verbose           ' /)
+!
 !     Gather all sections into the file's section array 
 !
       the_file%sections = [calculations,           &
@@ -284,7 +304,8 @@ contains
                            solver_cc_gs,           &
                            solver_cc_es,           &
                            solver_cc_multipliers,  &
-                           active_atoms]
+                           active_atoms,           &
+                           mm]
 !
    end function new_input_file
 !
@@ -412,7 +433,7 @@ contains
 !
       line = the_file%read_adjustl_lower()
 !
-      do while (trim(line) /= 'end geometry') 
+      do while (trim(line) /= 'end geometry' .and. trim(line) /= '--') 
 !
          if (line(1 : 3) == 'end') then
 !
@@ -701,6 +722,46 @@ contains
       if (.not. recognized) call output%error_msg('Tried to read CC wavefunction, but could not find any.')
 !
    end function get_cc_wf_input_file
+!
+!
+   logical function requested_mm_calculation_input_file(the_file)
+!!
+!!    Requested QM/MM calculation 
+!!    Written by Tommaso Giovannini, May 2019
+!!
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      integer :: n_mm_wfs, k
+!
+      n_mm_wfs = 0
+      do k = 1, size(the_file%mm_wfs)
+!
+         if (the_file%requested_keyword_in_section(the_file%mm_wfs(k), 'method')) then 
+!
+            n_mm_wfs = n_mm_wfs + 1
+!
+         endif 
+!
+      enddo 
+!
+      if (n_mm_wfs == 1) then 
+!
+         requested_mm_calculation_input_file = .true.
+!
+      elseif (n_mm_wfs > 1) then
+!
+         requested_mm_calculation_input_file = .false.
+         call output%error_msg('Requested more than one reference wavefunction.')
+!
+      else
+!
+         requested_mm_calculation_input_file = .false.
+!
+      endif  
+!
+   end function requested_mm_calculation_input_file
 !
 !
    subroutine get_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
@@ -1306,7 +1367,7 @@ contains
 !
       end_record = 1
 !
-      do while (trim(line) /= 'end geometry' .and. trim(line) /= 'end ' // string) 
+      do while (trim(line) /= 'end geometry' .and. trim(line) /= '--' .and. trim(line) /= 'end ' // string) 
 !
          end_record = end_record + 1
 ! 
@@ -1455,6 +1516,27 @@ contains
    end function  get_n_atoms_input_file
 !
 !
+   function get_mm_n_atoms_input_file(the_file) result(n_atoms)
+!!
+!!    Get n atoms 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    Reads the geometry section of the input and
+!!    counts the number of atoms
+!!
+      implicit none
+!
+      class(input_file), intent(in) :: the_file
+!
+      integer :: n_atoms
+!
+      n_atoms = 0
+!
+      call the_file%move_to_mm_geometry('--', n_atoms)
+!
+   end function  get_mm_n_atoms_input_file
+!
+!
    subroutine get_geometry_input_file(the_file, n_atoms, symbols, positions, basis_sets)
 !!
 !!    Get geometry
@@ -1515,14 +1597,14 @@ contains
 !
             string = string(3:200)
 !
-            cursor = set_cursor_to_whitespace(string)
+            cursor = set_cursor_to_character(string)
 !
             coordinate = string(1:cursor)
             read(coordinate, '(f21.16)') positions(current_atom, 1)
 !
             string = string(cursor + 1:200)
 !
-            cursor = set_cursor_to_whitespace(string)
+            cursor = set_cursor_to_character(string)
 !
             coordinate = string(1:cursor)
             read(coordinate, '(f21.16)') positions(current_atom, 2)
@@ -1547,6 +1629,153 @@ contains
    end subroutine get_geometry_input_file
 !
 !
+   subroutine get_mm_geometry_input_file(the_file, n_atoms, symbols, mols, positions, charge, chi, eta)
+!!
+!!    Get MM geometry
+!!    Written by Tommaso Giovanini, May 2019
+!!
+!!    Reads the geometry of the MM portion from the input file and 
+!!    sets it in the list of atoms.
+!!
+!!    Note: In order to be run, you need to know the number of MM atoms
+!!          in the system
+!!
+      implicit none
+!
+      class(input_file), intent(in) :: the_file
+!
+      integer, intent(in) :: n_atoms
+!
+      character(len=2), dimension(n_atoms), intent(out)   :: symbols
+!
+      real(dp), dimension(3, n_atoms), intent(out) :: positions ! x, y, z
+      real(dp), dimension(n_atoms), intent(out), optional :: charge ! charges for non-polarizable QMMM
+      real(dp), dimension(n_atoms), intent(out), optional :: chi ! electronegativity for FQ
+      real(dp), dimension(n_atoms), intent(out), optional :: eta ! chemical hardness for FQ
+!      
+      integer, dimension(n_atoms), intent(out) :: mols
+!
+!     Local variables
+!
+      integer :: n_records, record, cursor, current_atom, i
+!
+      character(len=200) :: string, coordinate, imolecule, charge_read, chi_read, eta_read
+!
+      call the_file%move_to_mm_geometry('--', n_records)
+!
+!     Loop through the rest of the geometry section to get atoms
+!
+      current_atom = 0
+!
+      do record = 1, n_records 
+
+         string = the_file%read_adjustl_lower()
+!
+         current_atom = current_atom + 1
+!
+         symbols(current_atom)    = trim(string(1:2))
+!
+         string = string(3:200)
+!
+         cursor = set_cursor_to_character(string,'=')
+!
+         string = string(cursor+1:200)
+!
+         cursor = set_cursor_to_character(string,']')
+!
+         imolecule = string(1:cursor-1)
+         read(imolecule,'(i4)') mols(current_atom)
+!
+         string = string(cursor+1:200)
+!
+         cursor = set_cursor_to_character(string)
+!         
+         coordinate = string(1:cursor)
+         read(coordinate, '(f21.16)') positions(1, current_atom)
+!
+         string = string(cursor + 1:200)
+!
+         cursor = set_cursor_to_character(string)
+!
+         coordinate = string(1:cursor)
+         read(coordinate, '(f21.16)') positions(2, current_atom)
+!
+         string = string(cursor + 1:200)
+!
+         cursor = set_cursor_to_character(string)
+!
+         coordinate = string(1:cursor)
+         read(coordinate, '(f21.16)') positions(3, current_atom)
+!
+         if (present (charge)) then ! non-polarizable QM/MM [q=value]       
+!
+             string = string(cursor + 1:200)
+!
+             cursor = set_cursor_to_character(string,'q')
+!           
+             string = string(cursor+2:200)
+!
+             cursor = set_cursor_to_character(string,']')
+!             
+             charge_read = string(1:cursor-1)
+             read(charge_read,'(f21.16)') charge(current_atom)
+!             
+             if(abs(charge(current_atom)).lt.1.0d-8) then
+!             
+                write(output%unit,'(/t6,a)') 'Electrostatic Embedding QM/MM '
+                write(output%unit,'(t6,a43,i4)') 'WARNING! You have put zero charge on atom =', current_atom
+!                
+             endif
+!
+         else if (present (chi).and.present(eta)) then ! polarizable QM/FQ [chi=value,eta=value]       
+!
+             string = string(cursor + 1:200)
+!
+             cursor = set_cursor_to_character(string,'=')
+!           
+             string = string(cursor+1:200)
+!
+             cursor = set_cursor_to_character(string,',')
+!             
+             chi_read = string(1:cursor-1)
+             read(chi_read,'(f21.16)') chi(current_atom)
+!             
+             string = string(cursor + 1:200)
+!
+             cursor = set_cursor_to_character(string,'=')
+!           
+             string = string(cursor+1:200)
+!
+             cursor = set_cursor_to_character(string,']')
+!             
+             eta_read = string(1:cursor-1)
+             read(eta_read,'(f21.16)') eta(current_atom)
+!             
+             if(abs(eta(current_atom)).lt.1.0d-8) then
+!             
+                write(output%unit,'(/t6,a)') 'Polarizable QM/FQ '
+                write(output%unit,'(t6,a51,i4)') 'WARNING! You have put zero chem. hardness on atom: ', current_atom
+                write(output%unit,'(t6,a)') 'FATAL ERROR'
+                write(output%unit,'(/t6,a)') 'eT programm will stop.'
+                stop
+!                
+             endif
+!             
+         endif
+!
+      enddo
+!
+!     First character of symbol should be upper case
+!
+      do i = 1, n_atoms
+!
+         symbols(i)(1:1) = convert_char_to_uppercase(symbols(i)(1:1))
+!
+      enddo
+!
+   end subroutine get_mm_geometry_input_file
+!
+!
    function read_adjustl_lower_input_file(the_file) result(line)
 !!
 !!    Read, adjustl and convert to lower case
@@ -1564,6 +1793,93 @@ contains
 !
    end function read_adjustl_lower_input_file
 
+!
+!
+   subroutine move_to_mm_geometry_input_file(the_file, string, n_records)
+!!
+!!    Move to MM geometry section
+!!    Written by Tommaso Giovannini, May 2019
+!!
+!!    Moves cursor to section given by string, and 
+!!    counts & returns the number of records in that section.
+!!
+      implicit none
+!
+      class(input_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: string
+!
+      integer, intent(out) :: n_records
+!
+      character(len=200) :: line 
+!
+      integer :: start_record, end_record 
+!
+      integer :: n_beginnings, n_ends 
+!
+!     Find the number of instances of the section,
+!     stopping with an error if there are any inconsistencies 
+!
+      rewind(the_file%unit)
+!
+      line = repeat(' ', 200)
+!
+      n_ends = 0
+      n_beginnings = 0
+!
+      do while (trim(line) /= 'end geometry')
+!
+         line = the_file%read_adjustl_lower()
+!
+         if (trim(line) == 'end geometry') n_ends = n_ends + 1
+         if (trim(line) == string) n_beginnings = n_beginnings + 1      
+!
+      enddo    
+!
+      if (n_beginnings > 1) call output%error_msg('Tried to move to section "' // string // '" with more than one starting clause.')
+      if (n_ends > 1) call output%error_msg('Tried to move to section "' // string // '" with more than one ending clause.')
+      if (n_ends == 0 .and. n_beginnings == 0) call output%error_msg('Tried to move to non-existent section "' // string // '".')
+      if (n_ends < 1) call output%error_msg('Tried to move to section "' // string // '" with no end.')
+      if (n_beginnings < 1) call output%error_msg('Tried to move to section "' // string // '" with no beginning.')
+!
+!     Find the end of the section 
+!
+      rewind(the_file%unit)
+!
+      line = the_file%read_adjustl_lower()
+!
+      end_record = 1
+!
+      do while (trim(line) /= 'end geometry') 
+!
+         end_record = end_record + 1
+! 
+        line = the_file%read_adjustl_lower()     
+!
+      enddo   
+!
+!     Find the beginning of the section;
+!     this also places the pointer in the correct position
+!
+      rewind(the_file%unit)
+!
+      line = the_file%read_adjustl_lower()
+!
+      start_record = 1
+!
+      do while (trim(line) /= 'end geometry' .and. trim(line) /= string) 
+!
+         start_record = start_record + 1
+! 
+         line = the_file%read_adjustl_lower()       
+!
+      enddo
+!
+!     Set the number of records inside the section 
+!
+      n_records = end_record - start_record - 1
+!
+   end subroutine move_to_mm_geometry_input_file
 !
 !
 end module input_file_class

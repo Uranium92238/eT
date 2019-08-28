@@ -255,8 +255,8 @@ contains
 !
       prev_energy = zero
 !
-      write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        Max(grad.)    Delta E (a.u.)'
-      write(output%unit, '(t3,a)')  '--------------------------------------------------------------'
+      write(output%unit, '(/t3,a)') 'Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)'
+      write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
 !
       iteration = 1
 !
@@ -268,7 +268,7 @@ contains
 !
          energy = wf%energy
 !
-         write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
+         write(output%unit, '(t3,i4,9x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
                                           max_grad, abs(wf%energy-prev_energy)
          flush(output%unit)
 !
@@ -283,7 +283,7 @@ contains
 !
          if (solver%converged) then
 !
-            write(output%unit, '(t3,a)')          '--------------------------------------------------------------'
+            write(output%unit, '(t3,a)')          '---------------------------------------------------------------'
             write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
 !
             if (.not. converged_energy) then
@@ -310,7 +310,9 @@ contains
 !
             if (iteration .ne. 1) call wf%set_ao_fock(ao_fock) ! Restore F
 !
-            call wf%update_fock_and_energy_cumulative(prev_ao_density, h_wx)
+!           calling a wrapper for cumulative or no_cumulative depending on options
+!
+            call wf%update_fock_and_energy(h_wx,prev_ao_density)
 !
             call wf%get_packed_roothan_hall_gradient(G)
 !

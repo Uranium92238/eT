@@ -27,7 +27,7 @@ f = [
     get_filter(string='Energy of initial guess:',
                abs_tolerance=1.0e-10),
 # idempotent SAD
-    get_filter(from_string='Iteration    Energy (a.u.)        Max(grad.)    Delta E (a.u.)',
+    get_filter(from_string='Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)',
                num_lines=3,
                abs_tolerance=1.0e-10,
                mask=[2]) 
