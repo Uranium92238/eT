@@ -4,8 +4,31 @@
 3. Recent (2016-) GNU (gfortran, gcc, g++) or Intel compilers (ifort, icc, icpc) 
 4. BLAS and LAPACK libraries
 5. [Libint 2 library](https://www.etprogram.org/libint/libint-2.7.0-beta.1.tgz) (link: 2.7.0 library configured for eT)
-and the dependencies [Eigen 3](http://eigen.tuxfamily.org/index.php?title=Main_Page) (3.3.5 or newer) and [Boost](https://www.boost.org). To compile the library, see the instructions on the [Libint Wiki](https://github.com/evaleev/libint/wiki).
+and the dependencies [Eigen 3](http://eigen.tuxfamily.org/index.php?title=Main_Page) (3.3.5 or newer) and [Boost](https://www.boost.org). 
+6. To compile the library use the following commands, or see the instructions on the [Libint Wiki](https://github.com/evaleev/libint/wiki).
 
+## Install Libint
+Download the Libint library for eT. Unpack the library:
+```
+tar -xvzf libint-2.7.0-beta.1.tgz
+```
+Enter the generated folder:
+```
+cd libint-2.7.0-beta.1
+```
+Compile:
+```
+cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/libint/libint-2.7.0-beta.1 -DCMAKE_CXX_COMPILER=[C++ compiler] CXXFLAGS=[C++ compiler flags]
+cmake --build .
+```
+In the compilation step, the installation prefix should be provided.
+
+
+Install:
+```
+cmake --build . --target install
+```
+ 
 # Quick install of eT
 Open the terminal and clone the repository:
 ```
