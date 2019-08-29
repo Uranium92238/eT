@@ -676,8 +676,6 @@ contains
 !
       class(wavefunction), intent(inout) :: wf 
 !
-      call wf%is_restart_safe('ground state')
-!
       call disk%open_file(wf%orbital_coefficients_file, 'read', 'rewind')
 !
       read(wf%orbital_coefficients_file%unit) wf%orbital_coefficients
@@ -713,8 +711,6 @@ contains
       implicit none 
 !
       class(wavefunction), intent(inout) :: wf 
-!
-      call wf%is_restart_safe('ground state')
 !
       call disk%open_file(wf%orbital_energies_file, 'read', 'rewind')
 !

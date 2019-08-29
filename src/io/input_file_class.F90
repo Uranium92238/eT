@@ -131,6 +131,7 @@ contains
       type(section) :: solver_cc_es
       type(section) :: solver_cc_multipliers 
       type(section) :: active_atoms
+      type(section) :: cc
       type(section) :: mm
 !
 !     Set input file name, access and format 
@@ -283,6 +284,10 @@ contains
                                  'hf                   ', &
                                  'active basis         ' /)
 !
+      cc%name_    = 'cc'
+      cc%required = .false.
+      cc%keywords = (/ 'bath orbital         ' /)
+!
       mm%name_    = 'molecular mechanics'
       mm%required = .false.
       mm%keywords = (/ 'forcefield        ', &
@@ -305,6 +310,7 @@ contains
                            solver_cc_es,           &
                            solver_cc_multipliers,  &
                            active_atoms,           &
+                           cc,                     &
                            mm]
 !
    end function new_input_file

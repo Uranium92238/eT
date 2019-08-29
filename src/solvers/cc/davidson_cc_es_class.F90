@@ -418,6 +418,8 @@ contains
 !
       integer :: trial, n_solutions_on_file
 !
+      if (wf%bath_orbital) call output%error_msg('Bath orbitals can not be used in valence excitation calculation')
+!
       if (solver%restart) then 
 !
 !        Read the solutions from file & set as initial trial vectors 

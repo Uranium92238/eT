@@ -229,12 +229,6 @@ contains
 !
       call wf%read_hf()
 !
-      wf%n_t1 = (wf%n_o)*(wf%n_v)
-      wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
-!
-      wf%n_gs_amplitudes = wf%n_t1 + wf%n_t2
-      wf%n_es_amplitudes = wf%n_t1 + wf%n_t2
-!
       call wf%initialize_files()
 !
       call wf%initialize_orbital_coefficients()
@@ -242,6 +236,20 @@ contains
 !
       call wf%read_orbital_coefficients()
       call wf%read_orbital_energies()
+!
+      wf%bath_orbital = .false.
+!
+      call wf%read_settings()
+!
+      if (wf%bath_orbital) call wf%make_bath_orbital()
+!
+      wf%n_t1 = (wf%n_o)*(wf%n_v)
+      wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
+!
+      wf%n_gs_amplitudes = wf%n_t1 + wf%n_t2
+      wf%n_es_amplitudes = wf%n_t1 + wf%n_t2
+!
+      call wf%write_cc_restart()
 !
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()

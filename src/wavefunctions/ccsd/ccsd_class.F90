@@ -243,24 +243,26 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
-      type(file) :: hf_restart_file 
-!
       wf%name_ = 'ccsd'
 !
       wf%system => system
+      wf%bath_orbital = .false.
 !
-      call hf_restart_file%init('hf_restart_file', 'sequential', 'unformatted')
+      call wf%read_hf()
 !
-      call disk%open_file(hf_restart_file, 'read', 'rewind')
+      call wf%initialize_orbital_coefficients()
+      call wf%initialize_orbital_energies()
 !
-      read(hf_restart_file%unit) wf%n_ao 
-      read(hf_restart_file%unit) wf%n_mo 
-      read(hf_restart_file%unit) 
-      read(hf_restart_file%unit) wf%n_o  
-      read(hf_restart_file%unit) wf%n_v  
-      read(hf_restart_file%unit) wf%hf_energy  
+      call wf%initialize_files()
 !
-      call disk%close_file(hf_restart_file)
+      call wf%read_orbital_coefficients()
+      call wf%read_orbital_energies()
+!
+      wf%bath_orbital = .false.
+!
+      call wf%read_settings()
+!
+      if (wf%bath_orbital) call wf%make_bath_orbital()
 !
       wf%n_t1 = (wf%n_o)*(wf%n_v)
       wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
@@ -268,13 +270,7 @@ contains
       wf%n_gs_amplitudes = wf%n_t1 + wf%n_t2
       wf%n_es_amplitudes = wf%n_t1 + wf%n_t2
 !
-      call wf%initialize_files()
-!
-      call wf%initialize_orbital_coefficients()
-      call wf%initialize_orbital_energies()
-!
-      call wf%read_orbital_coefficients()
-      call wf%read_orbital_energies()
+      call wf%write_cc_restart()
 !
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()
