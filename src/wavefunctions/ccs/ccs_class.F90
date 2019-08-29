@@ -71,6 +71,10 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: left_transition_density
       real(dp), dimension(:,:), allocatable :: right_transition_density
 !
+      logical :: bath_orbital
+!
+      integer :: n_bath_orbitals
+!
    contains
 !
 !     Preparation and cleanup routines
@@ -246,6 +250,10 @@ module ccs_class
 !
       procedure :: construct_molecular_gradient                => construct_molecular_gradient_ccs
 !
+      procedure :: read_settings                                => read_settings_ccs
+      procedure :: make_bath_orbital                            => make_bath_orbital_ccs
+      procedure :: write_cc_restart                             => write_cc_restart_ccs
+!
    end type ccs
 !
 !
@@ -283,10 +291,6 @@ contains
 !
       call wf%read_hf()
 !
-      wf%n_t1            = (wf%n_o)*(wf%n_v)
-      wf%n_gs_amplitudes = wf%n_t1
-      wf%n_es_amplitudes = wf%n_t1
-!
       call wf%initialize_files()
 !
       call wf%initialize_orbital_coefficients()
@@ -295,12 +299,49 @@ contains
       call wf%read_orbital_coefficients()
       call wf%read_orbital_energies()
 !
+      wf%bath_orbital = .false.
+!
+      call wf%read_settings()
+!
+      if (wf%bath_orbital) call wf%make_bath_orbital()
+!
+      wf%n_t1            = (wf%n_o)*(wf%n_v)
+      wf%n_gs_amplitudes = wf%n_t1
+      wf%n_es_amplitudes = wf%n_t1
+!
+      call wf%write_cc_restart()
+!
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
    end function new_ccs
+!
+!
+   subroutine read_settings_ccs(wf)
+!!
+!!    Read settings 
+!!    Written by Sarai D. Folkestad, Aug 2019
+!!
+!!    Reads the cc-section of the input file 
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      if (input%requested_section('cc')) then
+!
+         if (input%requested_keyword_in_section('bath orbital','cc')) then 
+!
+            wf%bath_orbital = .true.
+            wf%n_bath_orbitals = 1 ! May want to expand the number of bath orbitals later on
+!
+         endif
+!
+      endif
+!
+   end subroutine read_settings_ccs
 !
 !
    subroutine construct_molecular_gradient_ccs(wf, E_qk)
@@ -508,6 +549,18 @@ contains
 !
       call wf%restart_file%init('cc_restart_file', 'sequential', 'unformatted')
 !
+      call wf%excitation_energies_file%init('excitation_energies', 'sequential', 'unformatted')
+!
+   end subroutine initialize_cc_files_ccs
+!
+!
+   subroutine write_cc_restart_ccs(wf)
+!!
+!!    Write CC restart file
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
+!!
+      class(ccs) :: wf 
+!
 !     Write information to restart file 
 !
       call disk%open_file(wf%restart_file, 'write', 'rewind')
@@ -519,11 +572,7 @@ contains
 !
       call disk%close_file(wf%restart_file)
 !
-!
-      call wf%excitation_energies_file%init('excitation_energies', 'sequential', 'unformatted')
-!
-   end subroutine initialize_cc_files_ccs
-!
+   end subroutine write_cc_restart_ccs
 !
    subroutine initialize_amplitudes_ccs(wf)
 !!
@@ -692,8 +741,6 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      call wf%is_restart_safe('ground state')
-!
       call disk%open_file(wf%t1_file, 'read', 'rewind')
 !
       read(wf%t1_file%unit) wf%t1 
@@ -729,8 +776,6 @@ contains
       implicit none 
 !
       class(ccs), intent(inout) :: wf 
-!
-      call wf%is_restart_safe('ground state')
 !
       call disk%open_file(wf%t1bar_file, 'read', 'rewind')
 !
@@ -921,8 +966,6 @@ contains
       integer, intent(in) :: n ! state number 
 !
       character(len=*), intent(in) :: side ! 'left' or 'right' 
-!
-      call wf%is_restart_safe('excited state')
 !
       if (trim(side) == 'right') then 
 !
@@ -3697,6 +3740,52 @@ contains
       call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)
 !
    end subroutine form_newton_raphson_t_estimate_ccs
+!
+!
+   subroutine make_bath_orbital_ccs(wf)
+!!
+!!    Make bath orbital
+!!    Written by Sarai D. Folkestad
+!!
+!!    Makes bath orbital with all corresponding integrals 
+!!    zero
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: orbital_coefficients_copy
+      real(dp), dimension(:), allocatable :: orbital_energies_copy
+!
+      call mem%alloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
+!
+      call copy_and_scale(one, wf%orbital_coefficients, orbital_coefficients_copy, wf%n_mo*wf%n_ao)
+!
+      call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
+!
+      call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo + wf%n_bath_orbitals)
+      call zero_array(wf%orbital_coefficients, wf%n_ao*(wf%n_mo + wf%n_bath_orbitals))
+!
+      wf%orbital_coefficients(1:wf%n_mo, 1:wf%n_mo) = orbital_coefficients_copy(:,:)
+!
+      call mem%dealloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
+!
+      call mem%alloc(orbital_energies_copy, wf%n_mo)
+!
+      call copy_and_scale(one, wf%orbital_energies, orbital_energies_copy, wf%n_mo)
+!
+      call mem%dealloc(wf%orbital_energies, wf%n_mo)
+      call mem%alloc(wf%orbital_energies, wf%n_mo + wf%n_bath_orbitals)
+      call zero_array(wf%orbital_energies, wf%n_mo + wf%n_bath_orbitals)
+!
+      wf%orbital_energies(1:wf%n_mo) = orbital_energies_copy(:)
+!
+      call mem%dealloc(orbital_energies_copy, wf%n_mo)
+!
+      wf%n_mo = wf%n_mo + wf%n_bath_orbitals
+      wf%n_v = wf%n_v + wf%n_bath_orbitals
+!
+   end subroutine make_bath_orbital_ccs
 !
 !
 end module ccs_class

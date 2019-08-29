@@ -169,29 +169,12 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
-      type(file) :: hf_restart_file 
-!
       wf%name_ = 'cc2'
 !
       wf%system => system
+      wf%bath_orbital = .false.
 !
-      call hf_restart_file%init('hf_restart_file', 'sequential', 'unformatted')
-!
-      call disk%open_file(hf_restart_file, 'read', 'rewind')
-!
-      read(hf_restart_file%unit) wf%n_ao 
-      read(hf_restart_file%unit) wf%n_mo 
-      read(hf_restart_file%unit) 
-      read(hf_restart_file%unit) wf%n_o  
-      read(hf_restart_file%unit) wf%n_v  
-      read(hf_restart_file%unit) wf%hf_energy  
-!
-      call disk%close_file(hf_restart_file)
-!
-      wf%n_t1            = (wf%n_o)*(wf%n_v)
-      wf%n_t2            = wf%n_t1*(wf%n_t1+1)/2
-      wf%n_gs_amplitudes = wf%n_t1
-      wf%n_es_amplitudes = wf%n_t1 + wf%n_t2
+      call wf%read_hf()
 !
       call wf%initialize_files()
 !
@@ -200,6 +183,19 @@ contains
 !
       call wf%read_orbital_coefficients()
       call wf%read_orbital_energies()
+!
+      wf%bath_orbital = .false.
+!
+      call wf%read_settings()
+!
+      if (wf%bath_orbital) call wf%make_bath_orbital()
+!
+      wf%n_t1            = (wf%n_o)*(wf%n_v)
+      wf%n_t2            = wf%n_t1*(wf%n_t1+1)/2
+      wf%n_gs_amplitudes = wf%n_t1
+      wf%n_es_amplitudes = wf%n_t1 + wf%n_t2
+!
+      call wf%write_cc_restart()
 !
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()
@@ -761,8 +757,6 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: r2_aibj, l2_aibj
 !
       real(dp), dimension(:), allocatable :: omega
-!
-      call wf%is_restart_safe('excited state')
 !
 !     Check if we have read doubles vectors.
 !     If not, set up doubles.

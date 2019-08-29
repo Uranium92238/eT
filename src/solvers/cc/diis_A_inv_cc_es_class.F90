@@ -142,6 +142,8 @@ contains
 !
       integer :: state
 !
+      if (wf%bath_orbital) call output%error_msg('Bath orbitals can not be used in valence excitation calculation')
+!
       call mem%alloc(lowest_orbital_differences, solver%n_singlet_states)
       call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states)
 !
