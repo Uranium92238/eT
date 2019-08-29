@@ -197,7 +197,7 @@ module cc3_class
       include "jacobian_cc3_interface.F90"
       include "jacobian_transpose_cc3_interface.F90"
       include "cc3_batching_abc_interface.F90"
-      include "gs_density_cc3_interface.F90"
+      include "zop_cc3_interface.F90"
 !
    end interface
 !

@@ -89,24 +89,27 @@ set(eT_fortran_sources
    src/solver_tools/davidson_tool_class.F90
    src/solver_tools/eigen_davidson_tool_class.F90
    src/solver_tools/linear_davidson_tool_class.F90
+   src/wavefunctions/ccs/zop_ccs.F90
    src/wavefunctions/ccs/fop_ccs.F90
+   src/wavefunctions/cc2/zop_cc2.F90
    src/wavefunctions/cc2/fop_cc2.F90
-   src/wavefunctions/ccsd/fop_ccsd.F90
-   src/wavefunctions/ccsd/omega_ccsd.F90
-   src/wavefunctions/ccsd/files_ccsd.F90
-   src/wavefunctions/ccsd/get_set_ccsd.F90
-   src/wavefunctions/ccsd/jacobian_ccsd.F90
-   src/wavefunctions/ccsd/jacobian_transpose_ccsd.F90
    src/wavefunctions/cc2/omega_cc2.F90
    src/wavefunctions/cc2/jacobian_cc2.F90
    src/wavefunctions/cc2/jacobian_transpose_cc2.F90
    src/wavefunctions/lowmem_cc2/omega_lowmem_cc2.F90
    src/wavefunctions/lowmem_cc2/jacobian_lowmem_cc2.F90
    src/wavefunctions/lowmem_cc2/jacobian_transpose_lowmem_cc2.F90
+   src/wavefunctions/ccsd/zop_ccsd.F90
+   src/wavefunctions/ccsd/fop_ccsd.F90
+   src/wavefunctions/ccsd/omega_ccsd.F90
+   src/wavefunctions/ccsd/files_ccsd.F90
+   src/wavefunctions/ccsd/get_set_ccsd.F90
+   src/wavefunctions/ccsd/jacobian_ccsd.F90
+   src/wavefunctions/ccsd/jacobian_transpose_ccsd.F90
+   src/wavefunctions/cc3/zop_cc3.F90
    src/wavefunctions/cc3/omega_cc3.F90
    src/wavefunctions/cc3/jacobian_cc3.F90
    src/wavefunctions/cc3/prepare_jacobian_transform_cc3.F90
    src/wavefunctions/cc3/jacobian_transpose_cc3.F90
    src/wavefunctions/cc3/cc3_batching_abc.F90
-   src/wavefunctions/cc3/gs_density_cc3.F90
 )

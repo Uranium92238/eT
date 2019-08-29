@@ -54,7 +54,6 @@ submodule (ccs_class) fop_ccs
 !!       | k > = sum_μ (τ_μ | CC > R_{k,μ} - tbar_μ | CC > R_{k,μ})
 !!       < k | = sum_μ L_{k,μ} < μ | e^-T
 !!
-!!
 !
    implicit none
 !
