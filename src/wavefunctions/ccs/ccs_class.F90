@@ -244,13 +244,14 @@ module ccs_class
 !
       procedure :: calculate_expectation_value                 => calculate_expectation_value_ccs
 !
-      procedure :: construct_molecular_gradient                 => construct_molecular_gradient_ccs
+      procedure :: construct_molecular_gradient                => construct_molecular_gradient_ccs
 !
    end type ccs
 !
 !
    interface 
 !
+      include "zop_ccs_interface.F90"
       include "fop_ccs_interface.F90"
 !
    end interface
@@ -3604,128 +3605,6 @@ contains
    end subroutine set_cvs_start_indices_ccs
 !
 !
-   subroutine prepare_for_density_ccs(wf)
-!!
-!!    Prepare for the construction of density matrices
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
-!!
-      implicit none
-!
-      class(ccs), intent(inout) :: wf
-!
-!     For now, do nothing.
-!
-      write(output%unit,'(/t3,a,a,a)') 'No preparations for the density for ', &
-                                       trim(wf%name_), ' wavefunction.'
-!
-   end subroutine prepare_for_density_ccs
-!
-!
-   subroutine construct_gs_density_ccs(wf)
-!!
-!!    Construct one-electron density
-!!    Written by Sarai Dery Folkestad
-!!
-!!    Constructs the one-electron density 
-!!    matrix in the T1 basis
-!!
-!!    D_pq = < Λ | E_pq | CC >
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      call zero_array(wf%density, (wf%n_mo)**2)
-!
-      call wf%gs_one_el_density_ccs_oo(wf%density)
-      call wf%gs_one_el_density_ccs_vo(wf%density, wf%t1bar)
-!
-   end subroutine construct_gs_density_ccs
-!
-!
-   subroutine gs_one_el_density_ccs_oo_ccs(wf, density)
-!!
-!!    One electron density oo
-!!    Written by Sarai D. Folkestad
-!!
-!!    D_ii = 2  
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
-!
-      integer :: i
-!
-!$omp parallel do private(i)
-      do i = 1, wf%n_o
-!
-         density(i,i) = density(i,i) + two  
-!
-      enddo
-!$omp end parallel do
-!
-   end subroutine gs_one_el_density_ccs_oo_ccs
-!
-!
-   subroutine gs_one_el_density_ccs_vo_ccs(wf, density, tbar_ai)
-!!
-!!    One electron density vo
-!!    Written by Sarai D. Folkestad
-!!
-!!    D_ai = tbar_ai 
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
-      real(dp), dimension(wf%n_v, wf%n_o) :: tbar_ai
-!
-      integer :: i, a
-!
-!$omp parallel do private(a, i)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!        
-            density(wf%n_o + a, i) = density(wf%n_o + a, i) + tbar_ai(a, i)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine gs_one_el_density_ccs_vo_ccs
-!
-!
-   subroutine initialize_gs_density_ccs(wf)
-!!
-!!    Initialize density
-!!    Written by Sarai D. Folkestad, Apr 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (.not. allocated(wf%density)) call mem%alloc(wf%density, wf%n_mo, wf%n_mo)
-!
-   end subroutine initialize_gs_density_ccs
-!
-!
-   subroutine destruct_gs_density_ccs(wf)
-!!
-!!    Destruct density
-!!    Written by Sarai D. Folkestad, Apr 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (allocated(wf%density)) call mem%dealloc(wf%density, wf%n_mo, wf%n_mo)
-!
-   end subroutine destruct_gs_density_ccs
-!
-!
    subroutine binormalize_L_wrt_R_ccs(wf, L, R, state)
 !!
 !!    Calculates the overlap of the left and right states 
@@ -3736,7 +3615,8 @@ contains
 !!
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: L, R
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: R
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: L
 !
       integer, intent(in) :: state
 !
@@ -3781,38 +3661,7 @@ contains
       LT_R = ddot(wf%n_es_amplitudes, L, 1, R, 1)
       call dscal(wf%n_es_amplitudes, one/LT_R, L, 1)
 !
-   end subroutine binormalize_L_wrt_R_ccs 
-!
-!
-   function calculate_expectation_value_ccs(wf, A, density) result(expectation_value)
-!!
-!!    Calculate expectation value
-!!    Written by Sarai D. Folkestad
-!!
-!!    Calculate the expectation value of a one-electron
-!!    operator Â
-!!
-!!       < A > = < Λ | Â | CC > = sum_pq A_pq D_pq
-!!
-!!    where A_pq are the T1-transformed integrals
-!!    and D_pq is the a one-electron density matrix
-!!    in the T1-basis
-!!
-      implicit none
-!  
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: A
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: density
-!
-      real(dp) :: expectation_value
-!
-      real(dp) :: ddot
-!
-      expectation_value = ddot(wf%n_mo**2, A, 1, density, 1)
-!
-   end function calculate_expectation_value_ccs
+   end subroutine binormalize_L_wrt_R_ccs
 !
 !
    subroutine form_newton_raphson_t_estimate_ccs(wf, t, dt)

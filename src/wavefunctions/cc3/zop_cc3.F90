@@ -17,12 +17,17 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (cc3_class) gs_density
+submodule (cc3_class) zop_cc3
 !
 !!
-!!    Constructs the ground state one-electron density matrix (cc3)
+!!    Zeroth order properties submodule 
 !!    Written by Alexander Paul, July 2019
 !!
+!!    Contains routines related to the mean values, i.e. 
+!!    the construction of density matrices as well as expectation 
+!!    value calculation.
+!!
+!!    Constructs the ground state one-electron density matrix (cc3)
 !!    D_pq = < Λ | E_pq | CC >
 !!
 !!    Routines can be reused for the construction of the transition density
@@ -1566,4 +1571,4 @@ contains
    end subroutine construct_y_intermediate_vo3_cc3
 !
 !
-end submodule
+end submodule zop_cc3
