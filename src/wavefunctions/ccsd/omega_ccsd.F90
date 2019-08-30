@@ -52,44 +52,62 @@ contains
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
       real(dp), dimension(:,:), allocatable :: omega1
-      real(dp), dimension(:), allocatable :: omega2
+      real(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij
+      real(dp), dimension(:,:,:,:), allocatable :: omega_aibj, omega_abij
 !
       call mem%alloc(omega1, wf%n_v, wf%n_o)
-      call mem%alloc(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2)
+      call mem%alloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Set the omega vector to zero
 !
-      call zero_array(omega1, wf%n_o*wf%n_v)
-      call zero_array(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2)
+      call zero_array(omega1, wf%n_t1)
+      call zero_array(omega_aibj, wf%n_t1**2)
+!
+      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_aibj, wf%n_t1)
 !
 !     Construct singles contributions
 !
-      call wf%omega_ccsd_a1(omega1)
-      call wf%omega_ccsd_b1(omega1)
-      call wf%omega_ccsd_c1(omega1)
+      call wf%omega_ccsd_a1(omega1, t_aibj)
+      call wf%omega_ccsd_b1(omega1, t_aibj)
+      call wf%omega_ccsd_c1(omega1, t_aibj)
 !
       call wf%omega_ccs_a1(omega1)
 !
 !     Construct doubles contributions
 !
-      call wf%omega_ccsd_a2(omega2, wf%t2)
-      call wf%omega_ccsd_b2(omega2)
-      call wf%omega_ccsd_c2(omega2)
-      call wf%omega_ccsd_d2(omega2)
-      call wf%omega_ccsd_e2(omega2)
+      call wf%omega_ccsd_c2(omega_aibj, t_aibj)
+      call wf%omega_ccsd_d2(omega_aibj, t_aibj)
+      call wf%omega_ccsd_e2(omega_aibj, t_aibj)
 !
-      call wf%from_biorthogonal_to_biorthonormal(omega2)
+      call symmetric_sum(omega_aibj, wf%n_t1)
+!
+      call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call sort_1234_to_1324(t_aibj, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call zero_array(omega_abij, wf%n_t1**2)
+!
+      call wf%omega_ccsd_a2(omega_abij, t_abij)
+      call wf%omega_ccsd_b2(omega_abij, t_abij)
+      call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call add_1324_to_1234(one, omega_abij, omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call packin(omega((wf%n_o)*(wf%n_v)+1:wf%n_gs_amplitudes), omega_aibj, wf%n_t1)
+!
+      call wf%from_biorthogonal_to_biorthonormal(omega((wf%n_o)*(wf%n_v)+1:wf%n_gs_amplitudes))
 !
       call dcopy((wf%n_o)*(wf%n_v), omega1, 1, omega, 1)
-      call dcopy((wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v)+1)/2, omega2, 1, omega((wf%n_o)*(wf%n_v)+1), 1)
 !
       call mem%dealloc(omega1, wf%n_v, wf%n_o)
-      call mem%dealloc(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2)
 !
    end subroutine construct_omega_ccsd
 !
 !
-   module subroutine omega_ccsd_a1_ccsd(wf, omega1)
+   module subroutine omega_ccsd_a1_ccsd(wf, omega1, t_dkci)
 !!
 !!    Omega A1 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -106,12 +124,13 @@ contains
       class(ccsd) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_dkci
 !
       integer :: current_a_batch = 0
 !
       type(batching_index) :: batch_a
 !
-      real(dp), dimension(:,:,:,:), allocatable :: u_dkci, t_dkci
+      real(dp), dimension(:,:,:,:), allocatable :: u_dkci
       real(dp), dimension(:,:,:,:), allocatable :: g_adkc
 !
       integer :: req0, req1
@@ -123,15 +142,10 @@ contains
 !
 !     u_ki^cd = 2*t_ki^cd - t_ik^cd (ordered as u_dkci)
 !
-      call mem%alloc(t_dkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_dkci, (wf%n_v)*(wf%n_o))
-!
       call mem%alloc(u_dkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      u_dkci = -t_dkci
+      call copy_and_scale(-one, t_dkci, u_dkci, wf%n_t1**2)
       call add_1432_to_1234(two, t_dkci, u_dkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(t_dkci,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Batch over a to hold g_adkc
 !
@@ -179,7 +193,7 @@ contains
    end subroutine omega_ccsd_a1_ccsd
 !
 !
-   module subroutine omega_ccsd_b1_ccsd(wf, omega1)
+   module subroutine omega_ccsd_b1_ccsd(wf, omega1, t_alck)
 !!
 !!    Omega B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -196,9 +210,9 @@ contains
       class(ccsd) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_alck
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_lcki ! g_kilc
-      real(dp), dimension(:,:,:,:), allocatable :: t_alck ! t_kl^ac
       real(dp), dimension(:,:,:,:), allocatable :: u_alck ! u_kl^ac = 2 t_kl^ac - t_lk^ac
 !
       type(timings) :: ccsd_b1_timer 
@@ -215,16 +229,10 @@ contains
 !
 !     u_alck = 2 * t_kl^ac - t_lk^ac = 2 * t_alck(alck) - t_alck(akcl)
 !
-      call mem%alloc(t_alck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_alck, (wf%n_v)*(wf%n_o))
-!
       call mem%alloc(u_alck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(u_alck, (wf%n_o*wf%n_v)**2)
-      call daxpy(((wf%n_v)*(wf%n_o))**2, -one, t_alck, 1, u_alck, 1)
+      call copy_and_scale(-one, t_alck, u_alck, wf%n_t1**2)
 !
       call add_1432_to_1234(two, t_alck, u_alck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(t_alck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call dgemm('N','N',                 &
                   wf%n_v,                 &
@@ -247,7 +255,7 @@ contains
    end subroutine omega_ccsd_b1_ccsd
 !
 !
-   module subroutine omega_ccsd_c1_ccsd(wf, omega1)
+   module subroutine omega_ccsd_c1_ccsd(wf, omega1, t_aick)
 !!
 !!    Omega C1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -266,11 +274,11 @@ contains
       class(ccsd) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_aick
 !
       real(dp), dimension(:,:), allocatable :: F_c_k ! F_kc
 !
       real(dp), dimension(:,:,:,:), allocatable :: u_aick
-      real(dp), dimension(:,:,:,:), allocatable :: t_aick
 !
       type(timings) :: ccsd_c1_timer 
 !
@@ -279,16 +287,10 @@ contains
 !
 !     Form u_aick = u_ik^ac = 2*t_ik^ac - t_ki^ac
 !
-      call mem%alloc(t_aick,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_aick, (wf%n_o)*(wf%n_v))
-!
       call mem%alloc(u_aick,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(u_aick, (wf%n_o*wf%n_v)**2)
+      call copy_and_scale(two, t_aick, u_aick, (wf%n_o)**2*(wf%n_v)**2)
 !
       call add_1432_to_1234(-one, t_aick, u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_aick, 1, u_aick, 1)
-!
-      call mem%dealloc(t_aick,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Reorder the Fock matrix F_ck = F_kc
 !
@@ -296,18 +298,17 @@ contains
 !
       call sort_12_to_21(wf%fock_ia, F_c_k, wf%n_o, wf%n_v)
 !
-      call dgemm('N','N',            &
+      call dgemv('N',                &
                   (wf%n_o)*(wf%n_v), &
-                  1,                 &
                   (wf%n_o)*(wf%n_v), &
                   one,               &
                   u_aick,            &
                   (wf%n_o)*(wf%n_v), &
-                  F_c_k,             & ! Equal to F_kc
-                  (wf%n_o)*(wf%n_v), &
+                  F_c_k,             &
+                  1, &
                   one,               &
                   omega1,            &
-                  (wf%n_o)*(wf%n_v))
+                  1)
 !
       call mem%dealloc(u_aick,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(F_c_k, wf%n_v, wf%n_o)
@@ -317,7 +318,7 @@ contains
    end subroutine omega_ccsd_c1_ccsd
 !
 !
-   module subroutine omega_ccsd_a2_ccsd(wf, omega2, t2)
+   module subroutine omega_ccsd_a2_ccsd(wf, omega_abij, t_abij)
 !!
 !!    Omega A2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -337,8 +338,8 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_t2), intent(inout) :: omega2
-      real(dp), dimension(wf%n_t2), intent(in)    :: t2
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(inout) :: omega_abij
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(in):: t_abij
 !
 !     Integrals
 !
@@ -358,7 +359,7 @@ contains
 !
 !     Indices
 !
-      integer :: a, b, c, d
+      integer :: a, b, c, d, a_full, b_full
       integer :: i, j
 !
       integer :: ab, cd
@@ -471,7 +472,7 @@ contains
                enddo
 !$omp end parallel do
 !
-!$omp parallel do private(i,j,c,d,ij,cd,ci,cj,di,dj,cidj,dicj)
+!$omp parallel do private(i,j,c,d,ij)
               do i = 1, wf%n_o
                  do j = 1, i
 !
@@ -482,16 +483,8 @@ contains
 !
                            cd = (c*(c-3)/2) + c + d
 !
-                           ci = (i-1)*wf%n_v + c
-                           dj = (j-1)*wf%n_v + d
-                           cj = (j-1)*wf%n_v + c
-                           di = (i-1)*wf%n_v + d
-!
-                           cidj = (ci*(ci-3)/2) + ci + dj
-                           dicj = (max(cj,di)*(max(cj,di)-3)/2) + cj + di 
-!
-                           t_p_cdij(cd, ij) = t2(cidj) + t2(dicj)
-                           t_m_cdij(cd, ij) = t2(cidj) - t2(dicj)
+                           t_p_cdij(cd, ij) = t_abij(c, d, i, j) + t_abij(d, c, i, j)
+                           t_m_cdij(cd, ij) = t_abij(c, d, i, j) - t_abij(d, c, i, j)
 !
                        enddo
                     enddo
@@ -551,29 +544,48 @@ contains
 !
                      do a = 1, batch_a%length
 !
-                        ai = (i-1)*wf%n_v + (a + batch_a%first - 1)
-                        aj = (j-1)*wf%n_v + (a + batch_a%first - 1)
+                        
+                        a_full = a + batch_a%first - 1
 !
                         do b = 1, a
 !
-!
-                           bi = (i-1)*wf%n_v + (b + batch_b%first - 1)
-                           bj = (j-1)*wf%n_v + (b + batch_b%first - 1)
-!
                            ab = (a*(a-3)/2) + a + b 
-!
-                           aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
-!
-!                          Reorder into omega2_aibj
-!
-                           omega2(aibj) = omega2(aibj) &
-                                                + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
+                           b_full = b + batch_b%first - 1
 !
                            if (a .ne. b .and. i .ne. j) then
 !
-                              biaj = (max(bi,aj)*(max(bi,aj)-3)/2) + bi + aj 
-                              omega2(biaj) = omega2(biaj) &
+                              omega_abij(a_full, b_full, i, j) = omega_abij(a_full, b_full, i, j) &
+                                          + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
+!
+                              omega_abij(b_full, a_full, i, j) = omega_abij(b_full, a_full, i, j) &
                                            + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
+!
+                              omega_abij(b_full, a_full, j, i) = omega_abij(b_full, a_full, j, i) &
+                                           + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
+!
+                              omega_abij(a_full, b_full, j, i) = omega_abij(a_full, b_full, j, i) &
+                                          + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
+!
+                           elseif (a == b .and. i .ne. j) then
+!
+                              omega_abij(a_full, b_full, i, j) = omega_abij(a_full, b_full, i, j) &
+                                          + omega2_p_abij(ab, ij)
+!
+                              omega_abij(a_full, b_full, j, i) = omega_abij(a_full, b_full, j, i) &
+                                          + omega2_p_abij(ab, ij)
+!
+                           elseif (a .ne. b .and. i == j) then
+!
+                              omega_abij(a_full, b_full, i, j) = omega_abij(a_full, b_full, i, j) &
+                                          + omega2_p_abij(ab, ij)
+!
+                              omega_abij(b_full, a_full, i, j) = omega_abij(b_full, a_full, i, j) &
+                                           + omega2_p_abij(ab, ij)
+!
+                           elseif (a == b .and. i == j) then
+!
+                              omega_abij(a_full, b_full, i, j) = omega_abij(a_full, b_full, i, j) &
+                                          + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
 !
                            endif
 !
@@ -634,16 +646,8 @@ contains
 !
                            cd = (c*(c-3)/2) + c + d
 !
-                           ci = (i-1)*wf%n_v + c
-                           dj = (j-1)*wf%n_v + d
-                           cj = (j-1)*wf%n_v + c
-                           di = (i-1)*wf%n_v + d
-!
-                           cidj = (max(ci,dj)*(max(ci,dj)-3)/2) + ci + dj 
-                           dicj = (max(cj,di)*(max(cj,di)-3)/2) + cj + di 
-!
-                           t_p_cdij(cd, ij) = t2(cidj) + t2(dicj)
-                           t_m_cdij(cd, ij) = t2(cidj) - t2(dicj)
+                           t_p_cdij(cd, ij) = t_abij(c, d, i, j) + t_abij(d, c, i, j)
+                           t_m_cdij(cd, ij) = t_abij(c, d, i, j) - t_abij(d, c, i, j)
 !
                         enddo
                      enddo
@@ -702,29 +706,35 @@ contains
                      ij = (i*(i-3)/2) + i + j
 !
                      do a = 1, batch_a%length
-!
-                        ai = wf%n_v*(i - 1) + a + batch_a%first - 1 ! A is full-space a index
-                        aj = wf%n_v*(j - 1) + a + batch_a%first - 1 ! A is full-space a index
+
+                        a_full = a + batch_a%first - 1
 !
                         do b = 1, batch_b%length
 !
-                           bj = wf%n_v*(j - 1) + b + batch_b%first - 1 ! B is full-space b index
-                           bi = wf%n_v*(i - 1) + b + batch_b%first - 1 ! B is full-space b index
-!
                            ab = batch_a%length*(b - 1) + a
-!
-                           aibj = max(ai, bj)*(max(ai, bj)-3)/2 + ai + bj
-!
-!                          Reorder into omega2_aibj
-!
-                           omega2(aibj) = omega2(aibj) &
-                                        + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
+                           b_full = b + batch_b%first - 1
 !
                            if (i .ne. j) then
 !
-                              biaj = max(bi, aj)*(max(bi, aj)-3)/2 + bi + aj
-                              omega2(biaj) = omega2(biaj) &
+                              omega_abij(a_full, b_full, i, j) = omega_abij(a_full, b_full, i, j) &
+                                          + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
+!
+                              omega_abij(b_full, a_full, i, j) = omega_abij(b_full, a_full, i, j) &
                                            + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
+!
+                              omega_abij(b_full, a_full, j, i) = omega_abij(b_full, a_full, j, i) &
+                                           + omega2_p_abij(ab, ij) + omega2_m_abij(ab, ij)
+!
+                              omega_abij(a_full, b_full, j, i) = omega_abij(a_full, b_full, j, i) &
+                                          + omega2_p_abij(ab, ij) - omega2_m_abij(ab, ij)
+!
+                           elseif (i == j) then
+!
+                              omega_abij(a_full, b_full, i, j) = omega_abij(a_full, b_full, i, j) &
+                                          + omega2_p_abij(ab, ij)
+!
+                              omega_abij(b_full, a_full, i, j) = omega_abij(b_full, a_full, i, j) &
+                                           + omega2_p_abij(ab, ij)
 !
                            endif
 !
@@ -750,12 +760,12 @@ contains
    end subroutine omega_ccsd_a2_ccsd
 !
 !
-   module subroutine omega_ccsd_b2_ccsd(wf, omega2)
+   module subroutine omega_ccsd_b2_ccsd(wf, omega_abij, t_abij)
 !!
 !!    Omega B2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
-!!    Omega B2 = g_aibj + sum_(kl) t_ak_bl*(g_kilj + sum_(cd) t_cidj * g_kcld)
+!!    Omega B2 = g_aibj + sum_(kl) t_akbl*(g_kilj + sum_(cd) t_cidj * g_kcld)
 !!
 !!    Structure: g_kilj is constructed first and reordered as g_klij.
 !!    Then the contraction over cd is performed, and the results added to g_klij.
@@ -765,7 +775,8 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(inout):: omega_abij
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(in):: t_abij
 !
 !     Integrals
 !
@@ -777,12 +788,12 @@ contains
 !
 !     Reordered T2 apmlitudes
 !
-      real(dp), dimension(:,:,:,:), allocatable :: t_cdij
+     ! real(dp), dimension(:,:,:,:), allocatable :: t_cdij
 !
 !     Reordered omega
 !
-      real(dp), dimension(:,:,:,:), allocatable :: omega_abij
-      real(dp), dimension(:,:,:,:), allocatable :: omega_aibj
+   !   real(dp), dimension(:,:,:,:), allocatable :: omega_abij
+   !   real(dp), dimension(:,:,:,:), allocatable :: omega_aibj
 !
       type(timings) :: ccsd_b2_timer
 !
@@ -793,7 +804,7 @@ contains
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call wf%get_vovo(g_aibj)
-      call add_to_packed(omega2, g_aibj, (wf%n_o)*(wf%n_v))
+      call add_1324_to_1234(one, g_aibj, omega_abij,  wf%n_v,  wf%n_v,  wf%n_o,  wf%n_o)
       call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Allocate and construct g_kilj
@@ -824,9 +835,6 @@ contains
 !
 !     Reorder t_cidj as t_cdij
 !
-      call mem%alloc(t_cdij,  wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call squareup_and_sort_1234_to_1324(wf%t2, t_cdij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
       call dgemm('N','N',      &
                   (wf%n_o)**2, &
                   (wf%n_o)**2, &
@@ -834,7 +842,7 @@ contains
                   one,         &
                   g_klcd,      &
                   (wf%n_o)**2, &
-                  t_cdij,      &
+                  t_abij,      &
                   (wf%n_v)**2, &
                   one,         &
                   g_klij,      &
@@ -846,40 +854,29 @@ contains
 !
 !     omega_abij = sum_(kl) t_ab_kl*X_kl_ij
 !
-      call mem%alloc(omega_abij,  wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+    !  call mem%alloc(omega_abij,  wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call dgemm('N','N',      &
                   (wf%n_v)**2, &
                   (wf%n_o)**2, &
                   (wf%n_o)**2, &
                   one,         &
-                  t_cdij,      & ! t_ab_kl
+                  t_abij,      & ! t_ab_kl
                   (wf%n_v)**2, &
                   g_klij,      &
                   (wf%n_o)**2, &
-                  zero,        &
+                  one,         &
                   omega_abij,  &
                   (wf%n_v)**2)
 !
-      call mem%dealloc(t_cdij,  wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(g_klij,  wf%n_o, wf%n_o, wf%n_o, wf%n_o)
-!
-!     Reorder into omega2
-!
-      call mem%alloc(omega_aibj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call sort_1234_to_1324(omega_abij, omega_aibj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call mem%dealloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call add_to_packed(omega2, omega_aibj, (wf%n_o)*(wf%n_v))
-      call mem%dealloc(omega_aibj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call ccsd_b2_timer%turn_off()
 !
    end subroutine omega_ccsd_b2_ccsd
 !
 !
-   module subroutine omega_ccsd_c2_ccsd(wf, omega2)
+   module subroutine omega_ccsd_c2_ccsd(wf, omega_aibj, t_aibj)
 !!
 !!    Omega C2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -892,7 +889,8 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
 !
 !     Integrals
 !
@@ -905,9 +903,8 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_aidl
       real(dp), dimension(:,:,:,:), allocatable :: t_ckbj
-      real(dp), dimension(:,:,:,:), allocatable :: t_bkcj
 !
-!     Intermediates for matrix multiplication
+!    Intermediates for matrix multiplication
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_aick
       real(dp), dimension(:,:,:,:), allocatable :: Y_aibj
@@ -915,17 +912,12 @@ contains
 !     Reordered U2 amplitudes
 !
       real(dp), dimension(:,:,:,:), allocatable :: u_ckbj
-      real(dp), dimension(:,:,:,:), allocatable :: omega2_aibj ! Holds term temporarily
       real(dp), dimension(:,:,:,:), allocatable :: omega_a_batch
 !
 !     Indices
 !
       integer :: a, b, c
       integer :: i, j, k
-!
-      integer :: ai, aj, bi, bj
-!
-      integer :: aibj
 !
 !     Batching and memory handling
 !
@@ -943,7 +935,7 @@ contains
 !
       call mem%alloc(t_aidl,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call squareup_and_sort_1234_to_1432(wf%t2, t_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1432(t_aibj, t_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Get g_kdlc
 !
@@ -976,30 +968,19 @@ contains
                   X_aick,            &
                   (wf%n_o)*(wf%n_v))
 !
-!     Deallocate L_ia_J and g_dlck,
-!
       call mem%dealloc(g_dlck,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(t_aidl,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Form u_ckbj = u_jk^bc = u_kj^cb = 2 * t_jk^bc - t_kj^bc
 !
-      call mem%alloc(t_ckbj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_ckbj, (wf%n_o)*(wf%n_v))
-!
       call mem%alloc(u_ckbj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call copy_and_scale(two, t_aibj, u_ckbj, (wf%n_o)**2*(wf%n_v)**2)
 !
-      call zero_array(u_ckbj, (wf%n_o*wf%n_v)**2)
 !
-      call add_1432_to_1234(-one, t_ckbj, u_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ckbj, 1, u_ckbj, 1)
-!
-      call mem%dealloc(t_ckbj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_1432_to_1234(-one, t_aibj, u_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Allocate a holder for - 1/2 * sum_ck u_jk^bc g_acki,
 !     constructed in batches over the a index below
-!
-      call mem%alloc(omega2_aibj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(omega2_aibj, (wf%n_o*wf%n_v)**2)
 !
 !     Constructing g_kiac
 !
@@ -1080,7 +1061,8 @@ contains
                do i = 1, wf%n_o
                   do a = 1, batch_a%length
 !
-                     omega2_aibj(a + batch_a%first - 1, i, b, j) = omega_a_batch(a, i, b, j)               
+                     omega_aibj(a + batch_a%first - 1, i, b, j) = omega_aibj(a + batch_a%first - 1, i, b, j)&
+                                                                + omega_a_batch(a, i, b, j)               
 !
                   enddo
                enddo
@@ -1098,22 +1080,11 @@ contains
 !
 !     Add the - 1/2 * sum_ck u_jk^bc g_acki term to omega
 !
-!     Omega2(aibj, 1) =+ omega2_aibj(ai,bj) + omega2_bj_ai(bj,ai)
-!
-      call symmetric_sum(omega2_aibj, (wf%n_o)*(wf%n_v))         ! symmetrize
-      call add_to_packed(omega2, omega2_aibj, (wf%n_o)*(wf%n_v)) ! add to packed
-!
-      call mem%dealloc(omega2_aibj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Reorder t_bkcj = t_kj^bc as t_ckbj
 !
-      call mem%alloc(t_bkcj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_bkcj, (wf%n_o)*(wf%n_v))
-!
       call mem%alloc(t_ckbj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call sort_1234_to_3214(t_bkcj, t_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(t_bkcj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_3214(t_aibj, t_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Form intermediate Y_aibj = - sum_(ck) X_aick*t_ckbj
 !
@@ -1137,28 +1108,13 @@ contains
 !
 !     Omega_aibj,1 = P_ai_bj ( 1/2*Y_aibj + Y_aj_bi )
 !
-!$omp parallel do private(i, a, j, b, ai, bj, aj, bi, aibj)
-         do i = 1, wf%n_o
-            do a = 1, wf%n_v
+!$omp parallel do private(i, a, j, b)
+         do j = 1, wf%n_o
+            do b = 1, wf%n_v
+               do i = 1, wf%n_o
+                  do a = 1, wf%n_v
 !
-               ai = wf%n_v*(i - 1) + a
-!
-               do j = 1, wf%n_o
-                  do b = 1, wf%n_v
-!
-                  bj = wf%n_v*(j - 1) + b
-!
-                  if (ai .ge. bj) then
-!
-                     aj = wf%n_v*(j - 1) + a
-                     bi = wf%n_v*(i - 1) + b
-!
-                     aibj = max(ai, bj)*(max(ai, bj)-3)/2 + ai + bj
-!
-                     omega2(aibj) = omega2(aibj) + half*Y_aibj(a, i, b, j) + Y_aibj(a, j, b, i) &
-                                                        + half*Y_aibj(b, j, a, i) + Y_aibj(b, i, a, j)
-!
-                  endif
+                     omega_aibj(a, i, b, j) = omega_aibj(a, i, b, j) + half*Y_aibj(a, i, b, j) + Y_aibj(a, j, b, i) 
 !
                enddo
             enddo
@@ -1173,7 +1129,7 @@ contains
    end subroutine omega_ccsd_c2_ccsd
 !
 !
-   module subroutine omega_ccsd_d2_ccsd(wf, omega2)
+   module subroutine omega_ccsd_d2_ccsd(wf, omega_aibj, t_aibj)
 !!
 !!    Omega D2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -1196,14 +1152,11 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
-!
-      real(dp), dimension(:,:), allocatable :: omega2_aibj ! For storing D2.2 & D2.1
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_ldkc ! g_ldkc
       real(dp), dimension(:,:,:,:), allocatable :: L_ldkc ! L_ldkc = 2 * g_ldkc - g_lckd
-      real(dp), dimension(:,:,:,:), allocatable :: t_aidl ! t_il^ad
-      real(dp), dimension(:,:,:,:), allocatable :: u_aidl ! u_il^ad = 2 * t_il^ad - t_li^ad
       real(dp), dimension(:,:,:,:), allocatable :: u_aild ! u_il^ad = 2 * t_il^ad - t_li^ad
       real(dp), dimension(:,:,:,:), allocatable :: Z_aikc ! An intermediate, see below
       real(dp), dimension(:,:,:,:), allocatable :: g_aikc ! g_aikc
@@ -1221,30 +1174,17 @@ contains
       call wf%get_ovov(g_ldkc)
 !
       call mem%alloc(L_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call zero_array(L_ldkc, (wf%n_o*wf%n_v)**2)
 !
+      call copy_and_scale(two, g_ldkc, L_ldkc, (wf%n_o)**2*(wf%n_v)**2)
       call add_1432_to_1234(-one, g_ldkc, L_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, g_ldkc, 1, L_ldkc, 1)
 !
       call mem%dealloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-!     Form u_aild = u_il^ad = 2 * t_il^ad - t_li^ad
-!
-      call mem%alloc(t_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_aidl, (wf%n_o)*(wf%n_v))
-!
-      call mem%alloc(u_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(u_aidl, (wf%n_o*wf%n_v)**2)
-!
-      call add_1432_to_1234(-one, t_aidl, u_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_aidl, 1, u_aidl, 1)
-!
-      call mem%dealloc(t_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
       call mem%alloc(u_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call sort_1234_to_1243(u_aidl, u_aild, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(u_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      
+      call zero_array(u_aild, wf%n_t1**2)
+      call add_1243_to_1234(two, t_aibj, u_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call add_1342_to_1234(-one, t_aibj, u_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
 !     Form the intermediate Z_aikc = sum_dl u_aild L_ldkc and set it to zero
 !
@@ -1267,8 +1207,6 @@ contains
 !
 !     Form the D2.2 term, 1/4 sum_kc Z_aikc u_kc_bj = 1/4 sum_kc Z_aikc(ai,kc) u_aild(bj,kc)
 !
-      call mem%alloc(omega2_aibj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
       call dgemm('N','T',            &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
@@ -1278,8 +1216,8 @@ contains
                   (wf%n_o)*(wf%n_v), &
                   u_aild,            &
                   (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  omega2_aibj,       &
+                  one,               &
+                  omega_aibj,        &
                   (wf%n_o)*(wf%n_v))
 !
 !     Some justification for the above matrix multiplication. We have
@@ -1308,24 +1246,18 @@ contains
                   u_aild,            &
                   (wf%n_o)*(wf%n_v), &
                   one,               &
-                  omega2_aibj,       &
+                  omega_aibj,        &
                   (wf%n_o)*(wf%n_v))
 !
       call mem%dealloc(u_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call mem%dealloc(g_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-!     Add the D2.1 term to the omega vector
-!
-      call symmetrize_and_add_to_packed(omega2, omega2_aibj, (wf%n_o)*(wf%n_v))
-!
-      call mem%dealloc(omega2_aibj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call ccsd_d2_timer%turn_off()
 !
    end subroutine omega_ccsd_d2_ccsd
 !
 !
-   module subroutine omega_ccsd_e2_ccsd(wf, omega2)
+   module subroutine omega_ccsd_e2_ccsd(wf, omega_aibj, t_aibj)
 !!
 !!    Omega E2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -1349,21 +1281,17 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
 !
 !     Vectors for E2.1 term
 !
-      real(dp), dimension(:,:), allocatable :: omega2_bjai ! For storing the E2.1 term temporarily
       real(dp), dimension(:,:,:,:), allocatable :: g_ldkc      ! g_ldkc
       real(dp), dimension(:,:,:,:), allocatable :: u_bldk      ! u_kl^bd
-      real(dp), dimension(:,:,:,:), allocatable :: t_bkdl      ! t_kl^bd
-      real(dp), dimension(:,:,:,:), allocatable :: u_bkdl      ! u_kl^bd
       real(dp), dimension(:,:), allocatable :: X_b_c           ! An intermediate, see below for definition
-      real(dp), dimension(:,:,:,:), allocatable :: t_cjai      ! t_ij^ac
 !
 !     Vectors for E2.2 term
 !
-      real(dp), dimension(:,:), allocatable :: omega2_aibj ! For storing the E2.2 term temporarily
       real(dp), dimension(:,:), allocatable :: Y_k_j        ! An intermediate, see below for definition
 !
       type(timings) :: ccsd_e2_timer 
@@ -1376,21 +1304,10 @@ contains
 !     Form u_bldk = u_kl^bd = u_bkdl
 !                  = 2 * t_kl^bd - t_lk^bd = 2 * t_bkdl(bk,dl) - t_bkdl(bl, dk)
 !
-      call mem%alloc(t_bkdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_bkdl, (wf%n_v)*(wf%n_o))
-!
-      call mem%alloc(u_bkdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(u_bkdl, (wf%n_o*wf%n_v)**2)
-!
-      call add_1432_to_1234(-one, t_bkdl, u_bkdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call daxpy((wf%n_v)**2*(wf%n_o)**2, two, t_bkdl, 1, u_bkdl, 1)
-!
-      call mem%dealloc(t_bkdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%alloc(u_bldk,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call sort_1234_to_1432(u_bkdl, u_bldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(u_bkdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(u_bldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      
+      call copy_and_scale(-one, t_aibj, u_bldk, (wf%n_v)**2*(wf%n_o)**2)
+      call add_1432_to_1234(two, t_aibj, u_bldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Form g_ldkc = g_ldkc
 !
@@ -1423,12 +1340,7 @@ contains
 !
 !     Form t_cjai = t_ij^ac = t_ji^ca
 !
-      call mem%alloc(t_cjai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_cjai, (wf%n_v)*(wf%n_o))
-!
 !     Form the E2.1 term
-!
-      call mem%alloc(omega2_bjai, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
 !
       call dgemm('N','N',               &
                   wf%n_v,               &
@@ -1437,17 +1349,14 @@ contains
                   one,                  &
                   X_b_c,                &
                   wf%n_v,               &
-                  t_cjai,               & ! t_c_jai
+                  t_aibj,               & ! t_c_jai
                   wf%n_v,               &
-                  zero,                 &
-                  omega2_bjai,          & ! omega2_b_jai
+                  one,                  &
+                  omega_aibj,           & ! omega_bjai But we will symmetrize later
                   wf%n_v)
 !
 !     Add the E2.1 term to the omega vector and deallocations
 !
-      call symmetrize_and_add_to_packed(omega2, omega2_bjai, (wf%n_o)*(wf%n_v))
-!
-      call mem%dealloc(omega2_bjai, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
       call mem%dealloc(X_b_c, wf%n_v, wf%n_v)
 !
 !     :: Calculate E2.2 term of omega ::
@@ -1492,33 +1401,22 @@ contains
 !     Note: t_cjai = t_ji^ca => t_cjai(ai,bk) = t_ik^ab;
 !     thus, we can treat t_cjai as t_aib_k = t_ik^ab.
 !
-      call mem%alloc(omega2_aibj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
       call dgemm('N','N',              &
                  (wf%n_o)*(wf%n_v)**2, &
                  wf%n_o,               &
                  wf%n_o,               &
                  -one,                 &
-                 t_cjai,               & ! t_aib_k
+                 t_aibj,               & ! t_aib_k
                  (wf%n_o)*(wf%n_v)**2, &
                  Y_k_j,                &
                  wf%n_o,               &
-                 zero,                 &
-                 omega2_aibj,          & ! omega2_aib_j
+                 one,                  &
+                 omega_aibj,           & ! omega2_aib_j
                  (wf%n_o)*(wf%n_v)**2)
 !
 !     Deallocate Y_k_j and the amplitudes
 !
       call mem%dealloc(Y_k_j, wf%n_o, wf%n_o)
-      call mem%dealloc(t_cjai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Add the E2.2 term to the omega vector
-!
-      call symmetrize_and_add_to_packed(omega2, omega2_aibj, (wf%n_o)*(wf%n_v))
-!
-!     Deallocate the E2.2 term
-!
-      call mem%dealloc(omega2_aibj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call ccsd_e2_timer%turn_off()
 !

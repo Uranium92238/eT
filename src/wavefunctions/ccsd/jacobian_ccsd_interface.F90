@@ -279,23 +279,6 @@
    end subroutine jacobian_ccsd_k2_ccsd
 !
 !
-   module subroutine jacobian_ccsd_l2_ccsd(wf, rho_aibj, c_aibj)
-!!
-!!    Jacobian CCSD L2
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
-!!
-!!    rho_aibj^L2 = sum_cd g_ac,bd * c_ci,dj 
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o)             :: rho_aibj
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_aibj
-!
-   end subroutine jacobian_ccsd_l2_ccsd
-!
-!
    module subroutine save_jacobian_c2_intermediates_ccsd(wf)
 !!
 !!    Save jacobian c2 intermediates

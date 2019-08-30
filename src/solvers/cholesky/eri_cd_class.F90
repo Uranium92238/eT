@@ -2265,6 +2265,7 @@ contains
 !
                call dscal(n_sig_aop, one/sqrt(D_max), cholesky_new(1, current_qual), 1)
 !
+!$omp parallel do private(xy)
                do xy = 1, n_sig_aop
 !
                   if (D_xy(xy) == zero) then
@@ -2274,12 +2275,15 @@ contains
                   endif
 !
                enddo
+!$omp end parallel do
 !
+!$omp parallel do private(xy)
                do xy = 1, n_sig_aop
 !
                   approx_diagonal_accumulative(xy) = approx_diagonal_accumulative(xy) + cholesky_new(xy, current_qual)**2
 !
                enddo
+!$omp end parallel do
 !
                D_xy(qual_aop(qual_max(current_qual), 3)) = zero
                approx_diagonal_accumulative(qual_aop(qual_max(current_qual), 3))  = zero
@@ -2318,11 +2322,13 @@ contains
 !
          enddo ! End of decomposition
 !
+!$omp parallel do private(xy)
          do xy = 1, n_sig_aop
 !
             D_xy(xy) = D_xy(xy) - approx_diagonal_accumulative(xy)
 !
          enddo
+!$omp end parallel do
 !
          call mem%dealloc(approx_diagonal_accumulative, n_sig_aop)
 !

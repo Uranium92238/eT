@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine omega_ccsd_a1_ccsd(wf, omega1)
+   module subroutine omega_ccsd_a1_ccsd(wf, omega1, t_dkci)
 !!
 !!    Omega A1 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -27,11 +27,13 @@
       class(ccsd) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_dkci
+!
 !
    end subroutine omega_ccsd_a1_ccsd
 !
 !
-   module subroutine omega_ccsd_b1_ccsd(wf, omega1)
+   module subroutine omega_ccsd_b1_ccsd(wf, omega1, t_alck)
 !!
 !!    Omega B1 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -41,11 +43,12 @@
       class(ccsd) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_alck
 !
    end subroutine omega_ccsd_b1_ccsd
 !
 !
-   module subroutine omega_ccsd_c1_ccsd(wf, omega1)
+   module subroutine omega_ccsd_c1_ccsd(wf, omega1, t_aick)
 !!
 !!    Omega C1 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -55,11 +58,12 @@
       class(ccsd) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_aick
 !
    end subroutine omega_ccsd_c1_ccsd
 !
 !
-   module subroutine omega_ccsd_a2_ccsd(wf, omega2, t2)
+   module subroutine omega_ccsd_a2_ccsd(wf, omega_abij, t_abij)
 !!
 !!    Omega A2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -68,13 +72,13 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_t2), intent(inout) :: omega2
-      real(dp), dimension(wf%n_t2), intent(in)    :: t2
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(inout) :: omega_abij
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(in):: t_abij
 !
    end subroutine omega_ccsd_a2_ccsd
 !
 !
-   module subroutine omega_ccsd_b2_ccsd(wf, omega2)
+   module subroutine omega_ccsd_b2_ccsd(wf, omega_abij, t_abij)
 !!
 !!    Omega B2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -83,12 +87,13 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_abij
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(in):: t_abij
 !
    end subroutine omega_ccsd_b2_ccsd
 !
 !
-   module subroutine omega_ccsd_c2_ccsd(wf, omega2)
+   module subroutine omega_ccsd_c2_ccsd(wf, omega_aibj, t_aibj)
 !!
 !!    Omega C2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -97,12 +102,13 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
 !
    end subroutine omega_ccsd_c2_ccsd
 !
 !
-   module subroutine omega_ccsd_d2_ccsd(wf, omega2)
+   module subroutine omega_ccsd_d2_ccsd(wf, omega_aibj, t_aibj)
 !!
 !!    Omega D2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -111,12 +117,13 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
 !
    end subroutine omega_ccsd_d2_ccsd
 !
 !
-   module subroutine omega_ccsd_e2_ccsd(wf, omega2)
+   module subroutine omega_ccsd_e2_ccsd(wf, omega_aibj, t_aibj)
 !!
 !!    Omega E2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -125,7 +132,8 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2), intent(inout):: omega2
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
 !
    end subroutine omega_ccsd_e2_ccsd
 !
