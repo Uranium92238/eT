@@ -49,8 +49,9 @@ contains
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
       real(dp), dimension(:,:), allocatable     :: omega1
-      real(dp), dimension(:), allocatable       :: omega2
       real(dp), dimension(:,:,:,:), allocatable :: omega_abij
+!
+      real(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij, omega_aibj
 !
       integer  :: i,j,a,b,a_end,aibj
 !
@@ -61,43 +62,56 @@ contains
       ccsd_timer = new_timer('CCSD contribution')
 !
       call mem%alloc(omega1, wf%n_v, wf%n_o)
-      call mem%alloc(omega2, wf%n_t2)
+      call mem%alloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Set the omega vector to zero
 !
-      call zero_array(omega1, wf%n_v*wf%n_o)
-      call zero_array(omega2, wf%n_t2)
+      call zero_array(omega1, wf%n_t1)
+      call zero_array(omega_aibj, wf%n_t1**2)
 !
 !     Construct CCSD singles contributions
 !
       call ccsd_timer%turn_on()
+!  
+      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_aibj, wf%n_t1)
 !
-      call wf%omega_ccsd_a1(omega1)
-      call wf%omega_ccsd_b1(omega1)
-      call wf%omega_ccsd_c1(omega1)
+      call wf%omega_ccsd_a1(omega1, t_aibj)
+      call wf%omega_ccsd_b1(omega1, t_aibj)
+      call wf%omega_ccsd_c1(omega1, t_aibj)
 !
       call wf%omega_ccs_a1(omega1)
 !
 !     Construct CCSD doubles contributions
 !
-      call wf%omega_ccsd_a2(omega2, wf%t2)
-      call wf%omega_ccsd_b2(omega2)
-      call wf%omega_ccsd_c2(omega2)
-      call wf%omega_ccsd_d2(omega2)
-      call wf%omega_ccsd_e2(omega2)
+      call wf%omega_ccsd_c2(omega_aibj, t_aibj)
+      call wf%omega_ccsd_d2(omega_aibj, t_aibj)
+      call wf%omega_ccsd_e2(omega_aibj, t_aibj)
 !
-      call dcopy(wf%n_t2, omega2, 1, omega(wf%n_t1+1), 1)
+      call symmetric_sum(omega_aibj, wf%n_t1)
+      call packin(omega(wf%n_t1+1:wf%n_gs_amplitudes), omega_aibj, wf%n_t1)
 !
-      call ccsd_timer%turn_off()
+      call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call sort_1234_to_1324(t_aibj, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(omega2, wf%n_t2)
+      call ccsd_timer%freeze()
+!    
       call mem%alloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call zero_array(omega_abij, (wf%n_v*wf%n_o)**2)
+      call zero_array(omega_abij, wf%n_t1**2)
 !
       call cc3_timer%turn_on()
       call wf%omega_cc3_a(omega1,omega_abij)
       call cc3_timer%turn_off()
+!
+      call symmetrize_12_and_34(omega_abij, wf%n_v, wf%n_o)
+!
+      call ccsd_timer%turn_on()
+      call wf%omega_ccsd_a2(omega_abij, t_abij)
+      call wf%omega_ccsd_b2(omega_abij, t_abij)
+      call ccsd_timer%turn_off()
+!
+      call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call dcopy(wf%n_t1, omega1, 1, omega, 1)
 !
@@ -117,7 +131,7 @@ contains
 !
                   aibj = aibj + 1
 !
-                  omega(wf%n_t1+aibj) = omega(wf%n_t1+aibj) + omega_abij(a,b,i,j) + omega_abij(b,a,j,i)
+                  omega(wf%n_t1+aibj) = omega(wf%n_t1+aibj) + omega_abij(a,b,i,j)
 !
                end do
             end do

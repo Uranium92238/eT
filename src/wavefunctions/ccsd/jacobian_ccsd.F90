@@ -229,7 +229,6 @@ contains
 !     rho_aibj = P_ij^ab rho_aibj now, for convenience
 !
       call symmetric_sum(rho_aibj, (wf%n_v)*(wf%n_o))
-      call wf%jacobian_ccsd_l2(rho_aibj, c_aibj)
 !
 !     In preparation for last two terms, reorder
 !     rho_aibj to rho_abij, and c_aibj to c_abij
@@ -245,6 +244,7 @@ contains
 !
       call wf%jacobian_ccsd_j2(rho_abij, c_abij)
       call wf%jacobian_ccsd_k2(rho_abij, c_abij)
+      call wf%omega_ccsd_a2(rho_abij, c_abij)
 !
 !     Done with reordered doubles c; deallocate
 !
@@ -253,40 +253,34 @@ contains
 !     Order rho_abij back into rho_aibj & divide by
 !     the biorthonormal factor 1 + delta_ai,bj
 !
-      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call sort_1234_to_1324(rho_abij, rho_aibj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
 !$omp parallel do schedule(static) private(a,i)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
-         rho_aibj(a,i,a,i) = half*rho_aibj(a,i,a,i)
+         rho_abij(a,a,i,i) = half*rho_abij(a,a,i,i)
 !
          enddo
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
 !     Overwrite the incoming doubles c vector & pack in
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
-      do a = 1, wf%n_v
+      do j = 1, wf%n_o
          do i = 1, wf%n_o
+            do b = 1, wf%n_v
 !
-            ai = wf%n_v*(i - 1) + a
+               bj = wf%n_v*(j - 1) + b
 !
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
+               do a = 1, wf%n_v
 !
-                  bj = wf%n_v*(j - 1) + b
+                  ai = wf%n_v*(i - 1) + a
 !
                   if (ai .ge. bj) then
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     c((wf%n_o)*(wf%n_v) + aibj) = rho_aibj(a,i,b,j)
+                     c((wf%n_o)*(wf%n_v) + aibj) = rho_abij(a,b,i,j)
 !
                   endif
 !
@@ -298,7 +292,7 @@ contains
 !
 !     Remaining deallocations
 !
-      call mem%dealloc(rho_aibj,wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
    end subroutine jacobian_ccsd_transformation_ccsd
 !
@@ -2410,44 +2404,6 @@ contains
       call jacobian_ccsd_k2_timer%turn_off()
 !
    end subroutine jacobian_ccsd_k2_ccsd
-!
-!
-   module subroutine jacobian_ccsd_l2_ccsd(wf, rho_aibj, c_aibj)
-!!
-!!    Jacobian CCSD L2
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
-!!
-!!    rho_aibj^L2 = sum_cd g_ac,bd * c_ci,dj 
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o)             :: rho_aibj
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_aibj
-!
-      real(dp), dimension(:), allocatable :: c2, rho2 
-!
-      real(dp), dimension(:,:,:,:), allocatable :: rho_aibj_contribution
-!
-      call mem%alloc(c2, wf%n_t2)
-      call packin(c2, c_aibj, wf%n_t1)
-!
-      call mem%alloc(rho2, wf%n_t2)
-      call zero_array(rho2, wf%n_t2)
-!
-      call wf%omega_ccsd_a2(rho2, c2)
-!
-      call mem%alloc(rho_aibj_contribution, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(rho2, rho_aibj_contribution, wf%n_t1)
-!
-      call daxpy((wf%n_v)**2*(wf%n_o)**2, one, rho_aibj_contribution, 1, rho_aibj, 1)
-!
-      call mem%dealloc(rho_aibj_contribution, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(c2, wf%n_t2)
-      call mem%dealloc(rho2, wf%n_t2)
-!
-   end subroutine jacobian_ccsd_l2_ccsd
 !
 !
    module subroutine save_jacobian_c2_intermediates_ccsd(wf)

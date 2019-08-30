@@ -193,9 +193,6 @@ contains
 !
       call sort_1234_to_1324(c_aibj, c_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      c_aibj = half*c_aibj
-      call wf%jacobian_ccsd_l2(rho_aibj, c_aibj)
-!
       call sort_1234_to_1324(rho_aibj, rho_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -245,6 +242,7 @@ contains
 !
       call wf%jacobian_ccsd_j2(rho_abij, c_abij)
       call wf%jacobian_ccsd_k2(rho_abij, c_abij)
+      call wf%omega_ccsd_a2(rho_abij, c_abij)
 !
       call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
