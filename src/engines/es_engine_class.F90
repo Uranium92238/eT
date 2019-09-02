@@ -107,8 +107,14 @@ contains
 !
       call input%get_keyword_in_section('algorithm', 'solver cc es', engine%es_algorithm)
 !
-      if (input%requested_keyword_in_section('core excitation', 'solver cc es')) engine%es_type = 'core'
+      if (input%requested_keyword_in_section('core excitation', 'solver cc es') .and. .not. &
+          input%requested_keyword_in_section('ionization', 'solver cc es')) engine%es_type = 'core'
+!
+      if (input%requested_keyword_in_section('ionization', 'solver cc es') .and. .not. &
+          input%requested_keyword_in_section('core excitation', 'solver cc es')) engine%es_type = 'ionize'
+!
       if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) engine%es_transformation = 'left'
+!
       if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) engine%es_transformation = 'right'
 !
    end subroutine read_es_settings_es_engine
@@ -152,8 +158,10 @@ contains
 !!
       use davidson_cc_es_class
       use davidson_cvs_cc_es_class
+      use davidson_cc_ip_class, only: davidson_cc_ip
       use diis_cc_gs_class, only: diis_cc_gs
       use diis_cc_es_class, only: diis_cc_es
+      use diis_cc_ip_class, only: diis_cc_ip
       use diis_cvs_cc_es_class, only: diis_cvs_cc_es
       use diis_A_inv_cc_es_class, only: diis_A_inv_cc_es
 !
@@ -185,6 +193,16 @@ contains
             call cc_es_solver_diis%run(wf)
             call cc_es_solver_diis%cleanup(wf)
 !
+         elseif(engine%es_type == 'ionize') then
+!
+            if (.not. (trim(wf%name_)=='ccs' .or.   trim(wf%name_)=='ccsd' &
+                .or. trim(wf%name_)=='cc2')) &
+               call output%error_msg('IP not implemented for the selected wavefunction')
+!
+            cc_es_solver_diis = diis_cc_ip(transformation, wf)
+            call cc_es_solver_diis%run(wf)
+            call cc_es_solver_diis%cleanup(wf)
+!
          else ! es_type = valence
 !
             cc_es_solver_diis = diis_cc_es(transformation, wf)
@@ -207,9 +225,15 @@ contains
             call cc_es_solver_davidson%run(wf)
             call cc_es_solver_davidson%cleanup(wf)
 !
-         elseif(engine%es_type == 'valence ionized') then
+         elseif(engine%es_type == 'ionize') then
 !
-            call output%error_msg('valence ionized not implemented yet')
+            if (.not. (trim(wf%name_)=='ccs' .or.   trim(wf%name_)=='ccsd' &
+                .or. trim(wf%name_)=='cc2')) &
+                call output%error_msg('IP not implemented for the selected wavefunction')
+!
+            cc_es_solver_davidson = davidson_cc_ip(transformation, wf)
+            call cc_es_solver_davidson%run(wf)
+            call cc_es_solver_davidson%cleanup(wf)
 !
          elseif(engine%es_type == 'core ionized') then
 !

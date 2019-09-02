@@ -254,6 +254,9 @@ module ccs_class
       procedure :: make_bath_orbital                            => make_bath_orbital_ccs
       procedure :: write_cc_restart                             => write_cc_restart_ccs
 !
+      procedure :: set_ip_start_indices                        => set_ip_start_indices_ccs
+      procedure :: get_ip_projector                            => get_ip_projector_ccs
+!
    end type ccs
 !
 !
@@ -3786,6 +3789,67 @@ contains
       wf%n_v = wf%n_v + wf%n_bath_orbitals
 !
    end subroutine make_bath_orbital_ccs
+!
+!
+   subroutine set_ip_start_indices_ccs(wf, start_indices, n_ip_states)
+!!
+!!    Set IP start indices
+!!    Written by Sarai D. Folkestad, Aug 2019
+!!
+!!    Sets IP start indices for trial vectors 
+!!    from the orbital energies of the 
+!!    occupied. (Koopmans)
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      integer, intent(in) :: n_ip_states
+!
+      integer, dimension(n_ip_states), intent(out) :: start_indices
+!
+      integer :: I
+!
+      do I = 1, n_ip_states
+!
+         start_indices(I) = (wf%n_o - I)*wf%n_v + wf%n_v
+!
+      enddo
+!
+   end subroutine set_ip_start_indices_ccs
+!
+!
+   subroutine get_ip_projector_ccs(wf, projector)
+!!
+!!    Get IP projector 
+!!    Written by Sarai D. Folkestad, Aug 2019
+!!
+!!    Constructs and returns the projector
+!!    for an IP calculation (valence).
+!!
+!!    Only excitations into the last virtual orbital
+!!    (the bath orbital) are allowed.
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes),intent(out) :: projector
+!
+      integer :: A, I, AI
+!
+      call zero_array(projector, wf%n_es_amplitudes)
+!
+      do I = 1, wf%n_o
+         do A = wf%n_v - wf%n_bath_orbitals + 1, wf%n_v
+!
+            AI = wf%n_v*(I-1) + A
+            projector(AI) = one
+!
+         enddo
+      enddo
+!
+   end subroutine get_ip_projector_ccs
 !
 !
 end module ccs_class

@@ -134,6 +134,8 @@ module cc2_class
       procedure :: right_transition_density_cc2_ov             => right_transition_density_cc2_ov_cc2
       procedure :: right_transition_density_cc2_vo             => right_transition_density_cc2_vo_cc2
 !
+      procedure :: get_ip_projector                            => get_ip_projector_cc2
+!
 !
    end type cc2
 !
@@ -1134,6 +1136,47 @@ contains
       endif
 !
    end subroutine read_excited_state_cc2
+!
+!
+   subroutine get_ip_projector_cc2(wf, projector)
+!!
+!!    Get IP projector 
+!!    Written by Sarai D. Folkestad, Aug 2019
+!!
+!!    Constructs and returns the projector
+!!    for an IP calculation (valence).
+!!
+      implicit none
+!
+      class(cc2), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes),intent(out) :: projector
+!
+      integer :: A, I, AI, B, J, BJ, AIBJ
+!
+      call zero_array(projector, wf%n_es_amplitudes)
+!
+      do I = 1, wf%n_o
+         do A = wf%n_v - wf%n_bath_orbitals + 1, wf%n_v
+!
+            AI = wf%n_v*(I-1) + A
+            projector(AI) = one
+!
+            do J = 1, wf%n_o
+               do B = 1, wf%n_v
+!
+                  BJ = wf%n_v*(J-1) + B
+                  AIBJ = max(AI, BJ)*(max(AI, BJ)-3)/2 + AI + BJ
+!
+                  projector(wf%n_t1 + AIBJ) = one
+!
+               enddo
+            enddo 
+!
+         enddo
+      enddo
+!
+   end subroutine get_ip_projector_cc2
 !
 !
 end module cc2_class
