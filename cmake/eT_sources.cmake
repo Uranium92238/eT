@@ -25,9 +25,11 @@ set(eT_fortran_sources
    src/solvers/hf/bfgs_geoopt_hf_class.F90
    src/solvers/cc/diis_cc_gs_class.F90
    src/solvers/cc/diis_cc_es_class.F90
+   src/solvers/cc/diis_cc_ip_class.F90
    src/solvers/cc/diis_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_es_class.F90
+   src/solvers/cc/davidson_cc_ip_class.F90
    src/solvers/cc/abstract_cc_es_class.F90
    src/solvers/cc/davidson_cc_cvs_es_class.F90
    src/solvers/cc/diis_cc_cvs_es_class.F90

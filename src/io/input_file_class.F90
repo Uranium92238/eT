@@ -259,6 +259,7 @@ contains
       solver_cc_es%required = .false.
       solver_cc_es%keywords = (/ 'algorithm            ',   &
                                  'core excitation      ',   &
+                                 'ionization           ',   &
                                  'energy threshold     ',   &
                                  'residual threshold   ',   &
                                  'max iterations       ',   &

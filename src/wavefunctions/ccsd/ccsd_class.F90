@@ -205,6 +205,8 @@ module ccsd_class
       procedure :: right_transition_density_ccsd_ov            => right_transition_density_ccsd_ov_ccsd
       procedure :: right_transition_density_ccsd_vo            => right_transition_density_ccsd_vo_ccsd
 !
+      procedure :: get_ip_projector                            => get_ip_projector_ccsd
+!
    end type ccsd
 !
 !
@@ -921,6 +923,49 @@ contains
       call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)    
 !
    end subroutine form_newton_raphson_t_estimate_ccsd
+!
+!
+   subroutine get_ip_projector_ccsd(wf, projector)
+!!
+!!    Get IP projector 
+!!    Written by Sarai D. Folkestad, Aug 2019
+!!
+!!    Constructs and returns the projector
+!!    for an IP calculation (valence).
+!!
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes),intent(out) :: projector
+!
+      integer :: A, I, AI, B, J, BJ, AIBJ
+!
+      call zero_array(projector, wf%n_es_amplitudes)
+!
+      do I = 1, wf%n_o
+         do A = wf%n_v - wf%n_bath_orbitals + 1, wf%n_v
+!
+            AI = wf%n_v*(I-1) + A
+            projector(AI) = one
+!
+            do J = 1, wf%n_o
+               do B = 1, wf%n_v
+!
+                  BJ = wf%n_v*(J-1) + B
+                  AIBJ = max(AI, BJ)*(max(AI, BJ)-3)/2 + AI + BJ
+!
+                  projector(wf%n_t1 + AIBJ) = one
+!
+               enddo
+            enddo 
+!
+         enddo
+      enddo
+!
+   end subroutine get_ip_projector_ccsd
+!
 !
 !
 end module ccsd_class
