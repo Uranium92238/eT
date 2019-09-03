@@ -46,6 +46,7 @@ module ccs_class
       real(dp) :: hf_energy
 !
       integer :: n_excited_states
+!
       real(dp), dimension(:), allocatable :: left_excitation_energies, right_excitation_energies
 !
       integer  :: n_gs_amplitudes
@@ -123,6 +124,8 @@ module ccs_class
       procedure :: get_multipliers                             => get_multipliers_ccs
       procedure :: save_multipliers                            => save_multipliers_ccs
       procedure :: read_multipliers                            => read_multipliers_ccs
+      procedure :: save_tbar_intermediates                     => save_tbar_intermediates_ccs
+!
       procedure :: is_restart_safe                             => is_restart_safe_ccs
 !
 !     Routines related to the Fock matrix
@@ -400,6 +403,11 @@ contains
       implicit none
 !
       class(ccs) :: wf
+!
+      call wf%destruct_amplitudes()
+      call wf%destruct_multipliers()
+      call wf%destruct_right_excitation_energies()
+      call wf%destruct_left_excitation_energies()
 !
       write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(convert_to_uppercase(wf%name_)), ' wavefunction'
 !
@@ -787,6 +795,21 @@ contains
       call disk%close_file(wf%t1bar_file)
 !
    end subroutine read_multipliers_ccs
+!
+!
+   subroutine save_tbar_intermediates_ccs(wf)
+!!
+!!    Finalize multiplier equation
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+!     For now, do nothing.
+!
+      call output%printf('No intermediates to save in (a0)', chars=[trim(wf%name_)])
+!
+   end subroutine save_tbar_intermediates_ccs
 !
 !
    subroutine is_restart_safe_ccs(wf, task)

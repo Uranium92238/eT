@@ -362,7 +362,7 @@ contains
 !
       elseif (.not. converged ) then
 !
-         write(output%unit,'(/t3,a)') 'Maximal number of iterations performed without reaching convergence!'
+         call output%error_msg("Did not converge in the max number of iterations.")
 !
       endif
 !
