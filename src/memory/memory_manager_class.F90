@@ -57,6 +57,15 @@ module memory_manager_class
    use batching_index_class, only : batching_index
    use io_utilities
 !
+!     Debug option:
+!     Require that batch setup always gives batching 
+!
+#ifdef _FORCED_BATCHING
+      logical, parameter, private :: force_batch = .true.
+#else
+      logical, parameter, private :: force_batch = .false.    
+#endif 
+!
 !  Class definition 
 !
    type :: memory_manager
@@ -74,9 +83,9 @@ module memory_manager_class
 !
 !     Initialization routine (used if user specifies a memory different from standard)
 !
-      procedure :: prepare => prepare_memory_manager
+      procedure :: prepare          => prepare_memory_manager
 !
-      procedure :: check_for_leak => check_for_leak_memory_manager
+      procedure :: check_for_leak   => check_for_leak_memory_manager
 !
 !     Allocation and deallocation routines for arrays
 !
@@ -123,17 +132,17 @@ module memory_manager_class
       procedure :: batch_setup_1_memory_manager
       procedure :: batch_setup_2_memory_manager
       procedure :: batch_setup_3_memory_manager
-      generic   :: batch_setup => batch_setup_1_memory_manager, batch_setup_2_memory_manager, &
-                                  batch_setup_3_memory_manager
+      generic   :: batch_setup         => batch_setup_1_memory_manager, batch_setup_2_memory_manager, &
+                                          batch_setup_3_memory_manager
 !
       procedure :: batch_setup_3_ident_memory_manager
-      generic   :: batch_setup_ident => batch_setup_3_ident_memory_manager
+      generic   :: batch_setup_ident   => batch_setup_3_ident_memory_manager
 !
-      procedure :: read_settings  => read_settings_memory_manager
-      procedure :: print_settings => print_settings_memory_manager
+      procedure :: read_settings       => read_settings_memory_manager
+      procedure :: print_settings      => print_settings_memory_manager
 !
-      procedure :: get_available   => get_available_memory_manager
-      procedure :: print_available => print_available_memory_manager
+      procedure :: get_available       => get_available_memory_manager
+      procedure :: print_available     => print_available_memory_manager
 !
    end type memory_manager
 !
@@ -156,9 +165,9 @@ contains
 !
       class(memory_manager) :: mem
 !
-!     Initially set total in GB
+!     Set standard and read settings 
 !
-      mem%total = 8
+      mem%total = 8 ! GB
 !
       call mem%read_settings()
 !
@@ -1177,6 +1186,8 @@ contains
 !
       endif
 !
+      if (force_batch) call batch_p%force_batch()
+!
    end subroutine batch_setup_1_memory_manager
 !
 !
@@ -1360,6 +1371,13 @@ contains
          batch_q%num_batches = (batch_q%index_dimension-1)/(batch_q%max_length)+1
 !
       endif
+!
+      if (force_batch) then 
+!
+         call batch_p%force_batch()
+         call batch_q%force_batch()
+!
+      endif 
 !
    end subroutine batch_setup_2_memory_manager
 !
@@ -1558,6 +1576,14 @@ contains
 !
       endif
 !
+      if (force_batch) then 
+!
+         call batch_p%force_batch()
+         call batch_q%force_batch()
+         call batch_r%force_batch()
+!
+      endif 
+!
    end subroutine batch_setup_3_memory_manager
 !
 !
@@ -1731,6 +1757,18 @@ contains
          batch_r%num_batches = (batch_r%index_dimension-1)/(batch_r%max_length)+1
 !
       endif
+!
+      if (force_batch) then 
+!
+         call batch_p%force_batch()
+!
+         batch_q%max_length  = batch_p%max_length
+         batch_q%num_batches = batch_p%num_batches
+!
+         batch_r%max_length  = batch_p%max_length
+         batch_r%num_batches = batch_p%num_batches
+!
+      endif 
 !
    end subroutine batch_setup_3_ident_memory_manager
 !

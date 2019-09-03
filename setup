@@ -56,9 +56,12 @@ def input_parser():
                          help="Add profiling flag to compilation",
                          action='store_true',
                          default=False)
-
     parser.add_argument('--runtime_checks',
                          help="Add runtime checks flag to Fortran compiler",
+                         action='store_true',
+                         default=False)
+    parser.add_argument('--forced_batching',
+                         help="Performs batching everywhere regardless of memory (expert)",
                          action='store_true',
                          default=False)
 
@@ -131,6 +134,7 @@ def construct_command(args):
     command += " -DENABLE_THREADED_MKL=" + cmake_translator(args.omp)
     command += " -DENABLE_PROFILING=" + cmake_translator(args.profiling)
     command += " -DENABLE_RUNTIME_CHECKS=" + cmake_translator(args.runtime_checks)
+    command += " -DENABLE_FORCED_BATCHING=" + cmake_translator(args.forced_batching)
 
     if (args.libint_lib):
         command += " -DLIBINT2_ROOT=" + args.libint_lib   

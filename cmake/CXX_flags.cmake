@@ -94,7 +94,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
     endif()
 endif()
 
-# Needed on Dirac: -I/usr/local/include/c++/8.2.0 -gcc-version=8.2
 if(DEFINED EXTRA_CXX_FLAGS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EXTRA_CXX_FLAGS}")
 endif()

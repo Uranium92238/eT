@@ -33,13 +33,14 @@ set(CMAKE_MODULE_PATH
     )
 
 # Set options with standard values 
-option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"      	                    ON)
-option(ENABLE_AUTO_BLAS      "Enable CMake to autodetect BLAS"                  ON)
-option(ENABLE_AUTO_LAPACK    "Enable CMake to autodetect LAPACK"                ON)
-option(ENABLE_OMP            "Enable OpenMP parallelization"                    ON)
-option(ENABLE_THREADED_MKL   "Enable OpenMP parallelization"                    ON)
-option(ENABLE_PROFILING      "Enable profiling of code"                         OFF)
-option(ENABLE_RUNTIME_CHECKS "Enable all runtime checks (for debug purposes)"   OFF)
+option(ENABLE_64BIT_INTEGERS  "Enable 64-bit integers"      	                         ON)
+option(ENABLE_AUTO_BLAS       "Enable CMake to autodetect BLAS"                          ON)
+option(ENABLE_AUTO_LAPACK     "Enable CMake to autodetect LAPACK"                        ON)
+option(ENABLE_OMP             "Enable OpenMP parallelization"                            ON)
+option(ENABLE_THREADED_MKL    "Enable OpenMP parallelization"                            ON)
+option(ENABLE_PROFILING       "Enable profiling of code"                                 OFF)
+option(ENABLE_RUNTIME_CHECKS  "Enable all runtime checks (for debug purposes)"           OFF)
+option(ENABLE_FORCED_BATCHING "Enable batching in every batch loop (for debug purposes)" OFF)
 
 # Find packages needed for libint 
 find_package(Libint2 REQUIRED)
@@ -60,7 +61,6 @@ include(eT_CXX_sources)
 include(CXX_flags)
 include(ConfigTesting)
 
-
 # Math detection
 set(BLAS_LANG "Fortran")
 set(LAPACK_LANG "Fortran")
@@ -69,7 +69,7 @@ include(ConfigMath)
 
 # Set lapack and blas libraries 
 if(LAPACK_FOUND AND BLAS_FOUND)
-  set(lapackblas_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+    set(lapackblas_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 endif()
 
 set(eT_fortran_sources
@@ -85,6 +85,11 @@ add_executable(eT ${eT_fortran_sources} ${eT_CXX_sources})
 target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY})
 
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
+
+# Set compiler definition if forced batching is enabled 
+if(ENABLE_FORCED_BATCHING)
+    target_compile_definitions(eT PUBLIC _FORCED_BATCHING)
+endif()
 
 file(COPY ${CMAKE_SOURCE_DIR}/tests DESTINATION ${CMAKE_BINARY_DIR})
 
