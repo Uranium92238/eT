@@ -198,6 +198,12 @@ contains
 !
       real(dp), dimension(:), allocatable :: projector
 !
+      if (.false.) then
+!
+         call output%printf(solver%name_) ! Stupid hack to disable warning
+!
+      endif
+!
       call mem%alloc(projector, wf%n_es_amplitudes)
       davidson%do_projection = .true.
 !
