@@ -63,7 +63,7 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
 # 
 #   Set standard flags 
 # 
-    set(CMAKE_Fortran_FLAGS "-std=f2008 -O3 -Wall -march=native")
+    set(CMAKE_Fortran_FLAGS "-std=f2008 -O3 -Wall -march=native -cpp")
 # 
 #   Testing processor 32-bit or 64-bit
 # 

@@ -97,6 +97,12 @@ module batching_index_class
 !
       procedure :: determine_limits => determine_limits_batching_index
 !
+!     Debug option:
+!     Forced batching routine called by memory manager to ensure 
+!     batching regardless of available memory. Batch size is randomly generated.
+!
+      procedure :: force_batch => force_batch_batching_index
+!
    end type batching_index
 !
 !
@@ -157,6 +163,28 @@ contains
       batch_p%length = batch_p%last - batch_p%first + 1
 !
    end subroutine determine_limits_batching_index
+!
+!
+   subroutine force_batch_batching_index(batch_p)
+!!
+!!    Force batch
+!!    Written by Eirik F. Kjønstad, Sep 2019
+!!
+      implicit none
+!
+      class(batching_index) :: batch_p
+!
+      real(dp) :: some_number_between_0_and_1 ! [0, 1)
+!
+      call random_number(some_number_between_0_and_1)
+! 
+      batch_p%max_length = 1 + floor((batch_p%index_dimension - 1)*some_number_between_0_and_1) ! 1, 2, 3, ..., index_dimension - 1
+      batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
+!
+      call output%printf('Forced batch of index. Number of batches: (i0), Max length of batch: (i0)', &
+                                 ints=[batch_p%num_batches, batch_p%max_length])
+!
+   end subroutine force_batch_batching_index
 !
 !
 end module batching_index_class
