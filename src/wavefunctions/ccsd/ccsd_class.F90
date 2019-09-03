@@ -143,11 +143,14 @@ module ccsd_class
 !
    interface
 !
-      include "files_ccsd_interface.F90"
+      include "file_handling_ccsd_interface.F90"
+      include "initialize_destruct_ccsd_interface.F90"
+      include "set_get_ccsd_interface.F90"
       include "omega_ccsd_interface.F90"
-      include "get_set_ccsd_interface.F90"
+      include "multiplier_equation_ccsd_interface.F90"
       include "jacobian_ccsd_interface.F90"
       include "jacobian_transpose_ccsd_interface.F90"
+      include "zop_ccsd_interface.F90"
 !
    end interface
 !
@@ -227,24 +230,6 @@ contains
    end function need_g_abcd_ccsd
 !
 !
-   subroutine initialize_amplitudes_ccsd(wf)
-!!
-!!    Initialize amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-!!    Allocates the amplitudes. This routine must be overwritten in
-!!    descendants which have more amplitudes.
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      call wf%initialize_t1()
-      call wf%initialize_t2()
-!
-   end subroutine initialize_amplitudes_ccsd
-!
-!
    subroutine set_initial_amplitudes_guess_ccsd(wf)
 !!
 !!    Set initial amplitudes guess
@@ -312,63 +297,6 @@ contains
    end subroutine set_t2_to_mp2_guess_ccsd
 !
 !
-   subroutine calculate_energy_ccsd(wf)
-!!
-!!    Calculate energy (CCSD)
-!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
-!!    Andreas Skeidsvoll, 2018
-!!
-!!    Calculates the CCSD energy. This is only equal to the actual
-!!    energy when the ground state equations are solved, of course.
-!!
-!!       E = E_hf + sum_aibj (t_ij^ab + t_i^a t_j^b) L_iajb
-!!
-      implicit none
-!
-      class(ccsd), intent(inout) :: wf
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_iajb ! g_iajb
-!
-      real(dp) :: correlation_energy
-!
-      integer :: a, i, b, j, ai, bj, aibj
-!
-      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call wf%get_ovov(g_iajb)
-!
-      correlation_energy = zero
-!
-!$omp parallel do private(a,i,ai,bj,j,b,aibj) reduction(+:correlation_energy)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            ai = (i-1)*wf%n_v + a
-!
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
-!
-                  bj = wf%n_v*(j - 1) + b
-!
-                  aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
-!
-                  correlation_energy = correlation_energy +                 &
-                                 (wf%t2(aibj) + (wf%t1(a,i))*(wf%t1(b,j)))* &
-                                 (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      wf%energy = wf%hf_energy + correlation_energy
-!
-   end subroutine calculate_energy_ccsd
-!
-!
    subroutine get_gs_orbital_differences_ccsd(wf, orbital_differences, N)
 !!
 !!    Get orbital differences
@@ -416,157 +344,6 @@ contains
 !$omp end parallel do
 !
    end subroutine get_gs_orbital_differences_ccsd
-!
-!
-   subroutine construct_eta_ccsd(wf, eta)
-!!
-!!    Construct eta (CCSD)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-!!    Note: the routine assumes that eta is initialized and that the Fock matrix
-!!    has been constructed.
-!!
-      implicit none
-!
-      class(ccsd), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: eta
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_iajb
-      real(dp), dimension(:,:,:,:), allocatable :: eta_aibj
-!
-      integer :: i = 0, a = 0, j = 0, b = 0, aibj = 0
-      integer :: bj = 0, ai = 0
-!
-      call zero_array(eta, wf%n_gs_amplitudes)
-!
-!$omp parallel do private(i,a)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-            eta(ai) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-!     eta_ai_bj = 2* L_iajb = 4 * g_iajb(i,a,j,b) - 2 * g_iajb(i,b,j,a)
-!
-      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call wf%get_ovov(g_iajb)
-!
-      call mem%alloc(eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(eta_aibj, (wf%n_o*wf%n_v)**2)
-!
-      call add_2143_to_1234(four, g_iajb, eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call add_2341_to_1234(-two, g_iajb, eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-!     Pack vector into doubles eta
-!
-!$omp parallel do private(j,b,bj,i,a,ai,aibj)
-      do j = 1, wf%n_o
-         do b = 1, wf%n_v
-!
-            bj = wf%n_v*(j - 1) + b
-!
-            do i = 1, wf%n_o
-               do a = 1, wf%n_v
-!
-                  ai = wf%n_v*(i - 1) + a
-!
-                  aibj = max(ai, bj)*(max(ai,bj)-3)/2 + ai + bj
-!
-                  eta(wf%n_t1 + aibj) = eta_aibj(a, i, b, j)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call mem%dealloc(eta_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-   end subroutine construct_eta_ccsd
-!
-!
-   subroutine initialize_multipliers_ccsd(wf)
-!!
-!!    Initialize multipliers
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-!!    Allocates the multipliers. This routine must be overwritten in
-!!    descendants which have more multipliers.
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      call wf%initialize_t1bar()
-      call wf%initialize_t2bar()
-!
-   end subroutine initialize_multipliers_ccsd
-!
-!
-   subroutine construct_multiplier_equation_ccsd(wf, equation)
-!!
-!!    Construct multiplier equation
-!!    Written by Eirik F. Kjønstad, Nov 2018
-!!
-!!    Constructs
-!!
-!!       t-bar^T A + eta,
-!!
-!!    and places the result in 'equation'.
-!!
-      implicit none
-!
-      class(ccsd), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
-!
-      real(dp), dimension(:), allocatable :: eta
-!
-!     Copy the multipliers, eq. = t-bar
-!
-      call dcopy(wf%n_t1, wf%t1bar, 1, equation, 1)
-      call dcopy(wf%n_t2, wf%t2bar, 1, equation(wf%n_t1 + 1), 1)
-!
-!     Transform the multipliers by A^T, eq. = t-bar^T A
-!
-      call wf%jacobian_transpose_ccsd_transformation(equation)
-!
-!     Add eta, eq. = t-bar^T A + eta
-!
-      call mem%alloc(eta, wf%n_gs_amplitudes)
-      call wf%construct_eta(eta)
-!
-      call daxpy(wf%n_gs_amplitudes, one, eta, 1, equation, 1)
-!
-      call mem%dealloc(eta, wf%n_gs_amplitudes)
-!
-   end subroutine construct_multiplier_equation_ccsd
-!
-!
-   subroutine destruct_multipliers_ccsd(wf)
-!!
-!!    Destruct multipliers
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
-!!
-!!    Deallocates the multipliers. This routine must be overwritten in
-!!    descendants which have more multipliers.
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      call wf%destruct_t1bar()
-      call wf%destruct_t2bar()
-!
-   end subroutine destruct_multipliers_ccsd
 !
 !
    subroutine print_dominant_amplitudes_ccsd(wf)
@@ -664,53 +441,6 @@ contains
       call mem%dealloc(abs_x2, wf%n_t2)
 !
    end subroutine print_dominant_x2_ccsd
-!
-!
-   subroutine get_cvs_projector_ccsd(wf, projector, n_cores, core_MOs)
-!!
-!!    Get CVS projector
-!!    Written by Sarai D. Folkestad, Oct 2018
-!!
-      implicit none
-!
-      class(ccsd), intent(inout) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
-!
-      integer, intent(in) :: n_cores
-!
-      integer, dimension(n_cores), intent(in) :: core_MOs
-!
-      integer :: core, i, a, ai, j, b, bj, aibj
-!
-      call zero_array(projector, wf%n_es_amplitudes)
-!
-      do core = 1, n_cores
-!
-        i = core_MOs(core)
-!
-!$omp parallel do private (a, ai, j, b, bj, aibj)
-        do a = 1, wf%n_v
-!
-           ai = wf%n_v*(i - 1) + a
-           projector(ai) = one
-!
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
-!
-                  bj = wf%n_v*(j - 1) + b
-                  aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
-!
-                  projector(aibj + (wf%n_o)*(wf%n_v)) = one
-!
-               enddo
-            enddo
-        enddo
-!$omp end parallel do
-!
-     enddo
-!
-   end subroutine get_cvs_projector_ccsd
 !
 !
    subroutine from_biorthogonal_to_biorthonormal_ccsd(wf, X)

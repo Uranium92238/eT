@@ -17,21 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (ccsd_class) get_set_ccsd
-!
-!!
-!!    Get-set submodule (CCSD)
-!!    Set up by Eirik F. Kjønstad, May 2019
-!!
-!!    Gathers routines that get and set wavefunction parameters.
-!!
-!
-   implicit none
-!
-!
-contains
-!
-!
    module subroutine set_amplitudes_ccsd(wf, amplitudes)
 !!
 !!    Set amplitudes
@@ -43,27 +28,7 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: amplitudes
 !
-      call dcopy(wf%n_t1, amplitudes, 1, wf%t1, 1)
-      call dcopy(wf%n_t2, amplitudes(wf%n_t1 + 1), 1, wf%t2, 1)
-!
    end subroutine set_amplitudes_ccsd
-!
-!
-   module subroutine set_multipliers_ccsd(wf, multipliers)
-!!
-!!    Set multipliers
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: multipliers
-!
-      call dcopy(wf%n_t1, multipliers, 1, wf%t1bar, 1)
-      call dcopy(wf%n_t2, multipliers(wf%n_t1 + 1), 1, wf%t2bar, 1)
-!
-   end subroutine set_multipliers_ccsd
 !
 !
    module subroutine get_amplitudes_ccsd(wf, amplitudes)
@@ -77,10 +42,21 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes) :: amplitudes
 !
-      call dcopy(wf%n_t1, wf%t1, 1, amplitudes, 1)
-      call dcopy(wf%n_t2, wf%t2, 1,  amplitudes(wf%n_t1 + 1), 1)
-!
    end subroutine get_amplitudes_ccsd
+!
+!
+   module subroutine set_multipliers_ccsd(wf, multipliers)
+!!
+!!    Set multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: multipliers
+!
+   end subroutine set_multipliers_ccsd
 !
 !
    module subroutine get_multipliers_ccsd(wf, multipliers)
@@ -94,10 +70,4 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes) :: multipliers
 !
-      call dcopy(wf%n_t1, wf%t1bar, 1, multipliers, 1)
-      call dcopy(wf%n_t2, wf%t2bar, 1, multipliers(wf%n_t1 + 1), 1)
-!
    end subroutine get_multipliers_ccsd
-!
-!
-end submodule get_set_ccsd 

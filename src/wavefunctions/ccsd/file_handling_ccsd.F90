@@ -17,11 +17,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (ccsd_class) files_ccsd
+submodule (ccsd_class) file_handling_ccsd
 !
 !!
-!!    Files submodule (CCSD)
-!!    Set up by Eirik F. Kjønstad, May 2019
+!!    File handling submodule (CCSD)
 !!
 !!    Gathers routines that save wavefunction parameters to file,
 !!    and reads them from file, plus other routines related to the 
@@ -159,4 +158,63 @@ contains
    end subroutine read_multipliers_ccsd
 !
 !
-end submodule files_ccsd 
+   module subroutine read_excited_state_ccsd(wf, X, n, side)
+!!
+!!    Read excited state 
+!!    Written by Sarai D. Fokestad, Mar 2019 
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X
+!
+      integer, intent(in) :: n ! state number 
+!
+      character(len=*), intent(in) :: side ! 'left' or 'right' 
+!
+      if (trim(side) == 'right') then
+!
+         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
+         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
+!
+      elseif (trim(side) == 'left') then
+!
+         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
+         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
+!
+      endif
+!
+   end subroutine read_excited_state_ccsd
+!
+!
+   module subroutine read_doubles_vector_ccsd(wf, X, n, file_)
+!!
+!!    Read doubles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
+!!
+!!    Reads doubles vector "X" from the "n"'th line
+!!    of the sequential and unformatted file "file_".
+!!
+      implicit none 
+!
+      class(ccsd), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_t2), intent(out) :: X 
+!
+      integer, intent(in) :: n ! state number 
+!
+      type(file) :: file_
+!
+      call disk%open_file(file_, 'read')
+!
+      call file_%prepare_to_read_line(n)
+!
+      read(file_%unit) X
+!
+      call disk%close_file(file_, 'keep')
+!
+   end subroutine read_doubles_vector_ccsd
+!
+!
+end submodule file_handling_ccsd 

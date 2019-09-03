@@ -17,30 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine initialize_gs_density_ccs(wf)
-!!
-!!    Initialize density
-!!    Written by Sarai D. Folkestad, Apr 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-   end subroutine initialize_gs_density_ccs
-!
-!
-   module subroutine destruct_gs_density_ccs(wf)
-!!
-!!    Destruct density
-!!    Written by Sarai D. Folkestad, Apr 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-   end subroutine destruct_gs_density_ccs
-!
-!
    module subroutine prepare_for_density_ccs(wf)
 !!
 !!    Prepare for the construction of density matrices
@@ -112,3 +88,13 @@
    end function calculate_expectation_value_ccs
 !
 !
+   module subroutine calculate_energy_ccs(wf)
+!!
+!!    Calculate energy
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+   end subroutine calculate_energy_ccs

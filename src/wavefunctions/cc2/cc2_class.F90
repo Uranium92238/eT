@@ -35,7 +35,7 @@ module cc2_class
    contains
 !
 !     Ground state
-
+!
       procedure :: construct_omega                             => construct_omega_cc2
       procedure :: calculate_energy                            => calculate_energy_cc2
       procedure :: construct_multiplier_equation               => construct_multiplier_equation_cc2
@@ -89,17 +89,20 @@ module cc2_class
 !
    interface
 !
+      include "file_handling_cc2_interface.F90"
+      include "initialize_destruct_cc2_interface.F90"
       include "omega_cc2_interface.F90"
+      include "multiplier_equation_cc2_interface.F90"
       include "jacobian_cc2_interface.F90"
       include "jacobian_transpose_cc2_interface.F90"
       include "zop_cc2_interface.F90"
 !
-   end interface 
+   end interface
 !
 !
    interface cc2
 !
-      procedure :: new_cc2 
+      procedure :: new_cc2
 !
    end interface cc2
 !
@@ -116,7 +119,7 @@ contains
 !
       type(cc2) :: wf
 !
-      class(molecular_system), target, intent(in) :: system 
+      class(molecular_system), target, intent(in) :: system
 !
       wf%name_ = 'cc2'
 !
@@ -154,55 +157,117 @@ contains
    end function new_cc2
 !
 !
-   subroutine calculate_energy_cc2(wf)
+   subroutine construct_t2_cc2(wf)
 !!
-!!    Calculate energy 
+!!    Construct t2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
 !!
-!!    E = E_HF + sum_aibj (t_i^a*t_j^b + t_ij^ab) L_iajb
+!!    Construct
 !!
-      class(cc2), intent(inout) :: wf 
+!!       t_aibj = - g_aibj/ε_aibj
+!!
+!!    where
+!!
+!!       ε_aibj = ε_a - ε_i + ε_b - ε_j 
+!!
+!!    and ε_r is the r'th orbital energy.
+!!
+      implicit none
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb 
+      class(cc2), intent(inout) :: wf
 !
-      real(dp) :: correlation_energy
+      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, t_aibj
 !
       integer :: a, i, b, j
 !
-      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
+      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
 !
       call wf%get_vovo(g_aibj)
-      call wf%get_ovov(g_iajb)
 !
-      correlation_energy = zero 
-!
-!$omp parallel do private(a,i,b,j) reduction(+:correlation_energy)
-      do b = 1, wf%n_v
-         do i = 1, wf%n_o 
-            do j = 1, wf%n_o 
+!$omp parallel do private(a, i, b, j)
+      do j = 1, wf%n_o 
+         do b = 1, wf%n_v 
+            do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
-                  correlation_energy = correlation_energy +                                &
-                                       (wf%t1(a, i)*wf%t1(b, j) -                          &
-                                       (g_aibj(a,i,b,j))/(wf%orbital_energies(wf%n_o + a)  &
-                                                         + wf%orbital_energies(wf%n_o + b) &
-                                                         - wf%orbital_energies(i)           &
-                                                         - wf%orbital_energies(j)))         &
-                                       *(two*g_iajb(i,a,j,b)-g_iajb(i,b,j,a))
+                  t_aibj(a, i, b, j) = (g_aibj(a, i, b, j))/ &
+                                   (wf%orbital_energies(i) &
+                                  + wf%orbital_energies(j) &
+                                  - wf%orbital_energies(wf%n_o + a) &
+                                  - wf%orbital_energies(wf%n_o + b))
+
+!
+               enddo
+            enddo
+         enddo 
+      enddo
+!$omp end parallel do
+!
+      call packin(wf%t2, t_aibj, wf%n_t1)    
+!
+      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
+      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
+!
+   end subroutine construct_t2_cc2
+!
+!
+   subroutine construct_t2bar_cc2(wf)
+!!
+!!    Construct t2bar
+!!    Written by Sarai D. Folkestad, May, 2019
+!!
+!!
+      implicit none
+!
+      class(cc2) :: wf
+!
+      real(dp), dimension(:,:,:,:), allocatable :: t2bar, g_iajb
+!
+      integer :: a, i, b, j
+!
+      call mem%alloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call zero_array(t2bar, (wf%n_o*wf%n_v)**2)
+!
+!     t2bar = sum_ai tbar_ai A_ai,aibj
+!
+      call wf%jacobian_transpose_doubles_a2(t2bar, wf%t1bar)
+      call symmetric_sum(t2bar, wf%n_t1)
+!
+      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call wf%get_ovov(g_iajb)
+!
+!     t2bar += η_aibj
+!
+      call add_2143_to_1234(four, g_iajb, t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_2341_to_1234(-two, g_iajb, t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+!     t2bar = t2bar/(-ε_aibj)
+!
+!$omp parallel do private(a, b, i, j)
+      do b = 1, wf%n_v
+         do j = 1, wf%n_o
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  t2bar(a, i, b, j) = t2bar(a, i, b, j)/(- wf%orbital_energies(a + wf%n_o) &
+                                                         -  wf%orbital_energies(b + wf%n_o) &
+                                                         +  wf%orbital_energies(i) &
+                                                         +  wf%orbital_energies(j))
 !
                enddo
             enddo
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
-      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call packin(wf%t2bar, t2bar, wf%n_t1)
 !
-      wf%energy = wf%hf_energy + correlation_energy
+      call mem%dealloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine calculate_energy_cc2
+   end subroutine construct_t2bar_cc2
 !
 !
    subroutine construct_u_cc2(wf)
@@ -265,119 +330,6 @@ contains
    end subroutine construct_u_cc2
 !
 !
-   subroutine construct_t2_cc2(wf)
-!!
-!!    Construct t2 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
-!!
-!!    Construct
-!!
-!!       t_aibj = - g_aibj/ε_aibj
-!!
-!!    where
-!!
-!!       ε_aibj = ε_a - ε_i + ε_b - ε_j 
-!!
-!!    and ε_r is the r'th orbital energy.
-!!
-      implicit none
-!
-      class(cc2), intent(inout) :: wf
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, t_aibj
-!
-      integer :: a, i, b, j
-!
-      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
-      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
-!
-      call wf%get_vovo(g_aibj)
-!
-!$omp parallel do private(a, i, b, j)
-      do j = 1, wf%n_o 
-         do b = 1, wf%n_v 
-            do i = 1, wf%n_o
-               do a = 1, wf%n_v
-!
-                  t_aibj(a, i, b, j) = (g_aibj(a, i, b, j))/ &
-                                   (wf%orbital_energies(i) &
-                                  + wf%orbital_energies(j) &
-                                  - wf%orbital_energies(wf%n_o + a) &
-                                  - wf%orbital_energies(wf%n_o + b))
-
-!
-               enddo
-            enddo
-         enddo 
-      enddo
-!$omp end parallel do
-!
-      call packin(wf%t2, t_aibj, wf%n_t1)    
-!
-      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
-      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
-!
-   end subroutine construct_t2_cc2
-!
-!
-   subroutine initialize_u_cc2(wf)
-!!
-!!    Initialize u 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      if (.not. allocated(wf%u)) call mem%alloc(wf%u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-   end subroutine initialize_u_cc2
-!
-!
-   subroutine destruct_u_cc2(wf)
-!!
-!!    Initialize u 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      if (allocated(wf%u)) call mem%dealloc(wf%u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-   end subroutine destruct_u_cc2
-!
-!
-   subroutine initialize_amplitudes_cc2(wf)
-!!
-!!    Initialize amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      call wf%initialize_t1()
-      call wf%initialize_u()
-!
-   end subroutine initialize_amplitudes_cc2
-!
-!
-   subroutine destruct_amplitudes_cc2(wf)
-!!
-!!    Destruct amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      call wf%destruct_t1()
-      call wf%destruct_u()
-!
-   end subroutine destruct_amplitudes_cc2
-!
-!
    subroutine get_es_orbital_differences_cc2(wf, orbital_differences, N)
 !!
 !!    Get orbital differences 
@@ -425,108 +377,6 @@ contains
 !$omp end parallel do
 !
    end subroutine get_es_orbital_differences_cc2
-!
-!
-   subroutine construct_multiplier_equation_cc2(wf, equation)
-!!
-!!    Construct multiplier equation 
-!!    Written by Sarai D. Folkestad, Feb 2019
-!!
-!!    Constructs 
-!!
-!!       t-bar^T A + eta,
-!!
-!!    and places the result in 'equation'.
-!!
-!!    Solves analytically for tbar_aibj
-!!
-!!       tbar_aibj = - (η_aibj + sum_ai tbar_ai A_ai,aibj)/ε_aibj
-!!
-!!    where
-!!
-!!       η_aibj = 2 L_iajb       
-!!
-!!    and uses this to set up 'equation'
-!!
-!!       η_ai + sum_bj tbar_bj A_bj,ai + sum_bjck tbar_bjck A_{bjck,ai}
-!!
-      implicit none 
-!
-      class(cc2), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation 
-!
-      real(dp), dimension(:), allocatable :: eta 
-      real(dp), dimension(:,:,:,:), allocatable :: t2bar
-      real(dp), dimension(:,:,:,:), allocatable :: g_iajb
-!
-      integer :: a, b, i, j
-!
-!     Construct t2bar
-!
-      call mem%alloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(t2bar, (wf%n_o*wf%n_v)**2)
-!
-!     t2bar = sum_ai tbar_ai A_ai,aibj
-!
-      call wf%jacobian_transpose_doubles_a2(t2bar, wf%t1bar)
-      call symmetric_sum(t2bar, wf%n_t1)
-!
-      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%get_ovov(g_iajb)
-!
-!     t2bar += η_aibj
-!
-      call add_2143_to_1234(four, g_iajb, t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call add_2341_to_1234(-two, g_iajb, t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-!     t2bar = t2bar/(-ε_aibj)
-!
-!$omp parallel do private(a, b, i, j)
-      do b = 1, wf%n_v
-         do j = 1, wf%n_o
-            do i = 1, wf%n_o
-               do a = 1, wf%n_v
-!
-                  t2bar(a, i, b, j) = t2bar(a, i, b, j)/(- wf%orbital_energies(a + wf%n_o) &
-                                                         -  wf%orbital_energies(b + wf%n_o) &
-                                                         +  wf%orbital_energies(i) &
-                                                         +  wf%orbital_energies(j))
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-!     Set up the multipliers equation
-!
-!     equation = sum_bj tbar_bj A_bj,ai
-!
-      call zero_array(equation, wf%n_gs_amplitudes)
-!  
-      call wf%jacobian_transpose_ccs_a1(equation, wf%t1bar)
-      call wf%jacobian_transpose_ccs_b1(equation, wf%t1bar)
-      call wf%jacobian_transpose_doubles_a1(equation, wf%t1bar, wf%u)
-!
-!     equation += sum_bjck tbar_bjck A_{bjck,ai}
-!
-      call wf%jacobian_transpose_doubles_b1(equation, t2bar)
-!
-      call mem%dealloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Add eta, equation = t-bar^T A + eta 
-!
-      call mem%alloc(eta, wf%n_gs_amplitudes)
-      call wf%construct_eta(eta)
-!
-      call daxpy(wf%n_gs_amplitudes, one, eta, 1, equation, 1)
-!
-      call mem%dealloc(eta, wf%n_gs_amplitudes)
-!
-   end subroutine construct_multiplier_equation_cc2
 !
 !
    subroutine is_restart_safe_cc2(wf, task)
@@ -583,95 +433,6 @@ contains
       endif   
 !
    end subroutine is_restart_safe_cc2
-!
-!
-   subroutine initialize_files_cc2(wf)
-!!
-!!    Initialize files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
-!!
-!!    Initializes the wavefucntion files for wavefunction parameters.
-!!
-      class(cc2) :: wf 
-!
-      call wf%initialize_wavefunction_files()
-      call wf%initialize_cc_files()
-      call wf%initialize_singles_files()
-      call wf%initialize_doubles_files()
-!
-   end subroutine initialize_files_cc2
-!
-!
-   subroutine initialize_doubles_files_cc2(wf)
-!!
-!!    Initialize doubles files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
-!!
-      class(cc2) :: wf 
-!
-      call wf%l2_file%init('l2', 'sequential', 'unformatted')
-!
-      call wf%r2_file%init('r2', 'sequential', 'unformatted')
-!
-   end subroutine initialize_doubles_files_cc2
-!
-!
-   subroutine construct_t2bar_cc2(wf)
-!!
-!!    Construct t2bar
-!!    Written by Sarai D. Folkestad, May, 2019
-!!
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      real(dp), dimension(:,:,:,:), allocatable :: t2bar, g_iajb
-!
-      integer :: a, i, b, j
-!
-      call mem%alloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(t2bar, (wf%n_o*wf%n_v)**2)
-!
-!     t2bar = sum_ai tbar_ai A_ai,aibj
-!
-      call wf%jacobian_transpose_doubles_a2(t2bar, wf%t1bar)
-      call symmetric_sum(t2bar, wf%n_t1)
-!
-      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%get_ovov(g_iajb)
-!
-!     t2bar += η_aibj
-!
-      call add_2143_to_1234(four, g_iajb, t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call add_2341_to_1234(-two, g_iajb, t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-!     t2bar = t2bar/(-ε_aibj)
-!
-!$omp parallel do private(a, b, i, j)
-      do b = 1, wf%n_v
-         do j = 1, wf%n_o
-            do i = 1, wf%n_o
-               do a = 1, wf%n_v
-!
-                  t2bar(a, i, b, j) = t2bar(a, i, b, j)/(- wf%orbital_energies(a + wf%n_o) &
-                                                         -  wf%orbital_energies(b + wf%n_o) &
-                                                         +  wf%orbital_energies(i) &
-                                                         +  wf%orbital_energies(j))
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call packin(wf%t2bar, t2bar, wf%n_t1)
-!
-      call mem%dealloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-   end subroutine construct_t2bar_cc2
 !
 !
 end module cc2_class

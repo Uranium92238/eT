@@ -17,27 +17,29 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine prepare_for_density_cc2(wf)
+   module subroutine construct_multiplier_equation_ccsd(wf, equation)
 !!
-!!    Prepare for the construction of density matrices
-!!    Written by Sarai D. Folekstad, May 2019
+!!    Construct multiplier equation
+!!    Written by Eirik F. Kjønstad, Nov 2018
 !!
       implicit none
 !
-      class(cc2), intent(inout) :: wf
+      class(ccsd), intent(in) :: wf
 !
-   end subroutine prepare_for_density_cc2
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
+!
+   end subroutine construct_multiplier_equation_ccsd
 !
 !
-   module subroutine calculate_energy_cc2(wf)
+   module subroutine construct_eta_ccsd(wf, eta)
 !!
-!!    Calculate energy 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
+!!    Construct eta (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-      class(cc2), intent(inout) :: wf 
+      implicit none
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb 
+      class(ccsd), intent(in) :: wf
 !
-      real(dp) :: correlation_energy
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: eta
 !
-   end subroutine calculate_energy_cc2
+   end subroutine construct_eta_ccsd

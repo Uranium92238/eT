@@ -17,27 +17,25 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine prepare_for_density_cc2(wf)
+   module subroutine initialize_gs_density_cc3(wf)
 !!
-!!    Prepare for the construction of density matrices
-!!    Written by Sarai D. Folekstad, May 2019
+!!    Initialize GS density and CC3 corrections to the GS-density
+!!    Written by Sarai D. Folkestad, Apr 2019
 !!
       implicit none
 !
-      class(cc2), intent(inout) :: wf
+      class(cc3) :: wf
 !
-   end subroutine prepare_for_density_cc2
+   end subroutine initialize_gs_density_cc3
 !
 !
-   module subroutine calculate_energy_cc2(wf)
+   module subroutine destruct_gs_density_cc3(wf)
 !!
-!!    Calculate energy 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
+!!    Destruct GS density amd CC3 correctoins to the GS-density
+!!    Written by Sarai D. Folkestad, Apr 2019
 !!
-      class(cc2), intent(inout) :: wf 
+      implicit none
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb 
+      class(cc3) :: wf
 !
-      real(dp) :: correlation_energy
-!
-   end subroutine calculate_energy_cc2
+   end subroutine destruct_gs_density_cc3

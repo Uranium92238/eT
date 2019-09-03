@@ -39,42 +39,6 @@ submodule (cc3_class) zop_cc3
 contains
 !
 !
-   module subroutine initialize_gs_density_cc3(wf)
-!!
-!!    Initialize density and CC3 corrections to the GS-density
-!!    Written by Sarai D. Folkestad, Apr 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      if (.not. allocated(wf%density)) call mem%alloc(wf%density, wf%n_mo, wf%n_mo)
-!
-!     CC3 corrections to the GS-density are needed for the right transition density
-      if (.not. allocated(wf%GS_cc3_density_oo)) call mem%alloc(wf%GS_cc3_density_oo, wf%n_o, wf%n_o)
-      if (.not. allocated(wf%GS_cc3_density_vv)) call mem%alloc(wf%GS_cc3_density_vv, wf%n_v, wf%n_v)
-!
-   end subroutine initialize_gs_density_cc3
-!
-!
-   module subroutine destruct_gs_density_cc3(wf)
-!!
-!!    Destruct density
-!!    Written by Sarai D. Folkestad, Apr 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-      if (allocated(wf%density)) call mem%dealloc(wf%density, wf%n_mo, wf%n_mo)
-!
-!     CC3 corrections to the GS-density are needed for the right transition density
-      if (.not. allocated(wf%GS_cc3_density_oo)) call mem%dealloc(wf%GS_cc3_density_oo, wf%n_o, wf%n_o)
-      if (.not. allocated(wf%GS_cc3_density_vv)) call mem%dealloc(wf%GS_cc3_density_vv, wf%n_v, wf%n_v)
-!
-   end subroutine destruct_gs_density_cc3
-!
-!
    module subroutine prepare_for_density_cc3(wf)
 !!
 !!    Prepare the construction of the CC3 contribution to the GS density

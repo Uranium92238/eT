@@ -17,27 +17,16 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine prepare_for_density_cc2(wf)
+   module subroutine calculate_energy_ccsd(wf)
 !!
-!!    Prepare for the construction of density matrices
-!!    Written by Sarai D. Folekstad, May 2019
+!!    Calculate energy (CCSD)
+!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
+!!    Andreas Skeidsvoll, 2018
 !!
       implicit none
 !
-      class(cc2), intent(inout) :: wf
+      class(ccsd), intent(inout) :: wf
 !
-   end subroutine prepare_for_density_cc2
+   end subroutine calculate_energy_ccsd
 !
 !
-   module subroutine calculate_energy_cc2(wf)
-!!
-!!    Calculate energy 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
-!!
-      class(cc2), intent(inout) :: wf 
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb 
-!
-      real(dp) :: correlation_energy
-!
-   end subroutine calculate_energy_cc2

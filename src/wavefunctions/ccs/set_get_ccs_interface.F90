@@ -17,57 +17,71 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine set_amplitudes_ccsd(wf, amplitudes)
+   module subroutine set_amplitudes_ccs(wf, amplitudes)
 !!
 !!    Set amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
       implicit none
 !
-      class(ccsd) :: wf
+      class(ccs) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: amplitudes
 !
-   end subroutine set_amplitudes_ccsd
+   end subroutine set_amplitudes_ccs
 !
 !
-   module subroutine set_multipliers_ccsd(wf, multipliers)
-!!
-!!    Set multipliers
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: multipliers
-!
-   end subroutine set_multipliers_ccsd
-!
-!
-   module subroutine get_amplitudes_ccsd(wf, amplitudes)
+   module subroutine get_amplitudes_ccs(wf, amplitudes)
 !!
 !!    Get amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(ccs), intent(in) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes) :: amplitudes
 !
-   end subroutine get_amplitudes_ccsd
+   end subroutine get_amplitudes_ccs
 !
 !
-   module subroutine get_multipliers_ccsd(wf, multipliers)
+   module subroutine set_multipliers_ccs(wf, multipliers)
 !!
-!!    Get multipliers
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
+!!    Set multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: multipliers
+!
+   end subroutine set_multipliers_ccs
+!
+!
+   module subroutine get_multipliers_ccs(wf, multipliers)
+!!
+!!    Get multipliers
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
 !
       real(dp), dimension(wf%n_gs_amplitudes) :: multipliers
 !
-   end subroutine get_multipliers_ccsd
+   end subroutine get_multipliers_ccs
+!
+!
+   module subroutine set_fock_ccs(wf, F_pq)
+!!
+!!    Set Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_pq
+!
+   end subroutine set_fock_ccs
