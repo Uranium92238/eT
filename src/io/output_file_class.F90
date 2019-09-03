@@ -20,7 +20,7 @@
 module output_file_class
 !
 !!
-!!    Output ile class module
+!!    Output file class module
 !!    Written by Rolf H. Myhre, May 2019
 !!
 !!
@@ -42,7 +42,8 @@ module output_file_class
 !
       procedure, public :: printf         => printf_output_file
       procedure, public :: printd         => printd_output_file
-      procedure, public :: author         => author_output_file
+!
+      procedure, private :: get_format_length
 !
       procedure :: long_string_print      => long_string_print_output_file
 !
@@ -53,8 +54,6 @@ module output_file_class
       procedure new_output_file
 !
    end interface output_file
-!
-   type(output_file) :: output
 !
 contains
 !
@@ -78,10 +77,13 @@ contains
       the_file%access_ = 'sequential'
       the_file%format_ = 'formatted'
 !
+      the_file%is_open = .false.
+      the_file%unit = -1
+!
    end function new_output_file
 !
 !
-   subroutine open_output_file(the_file)
+   subroutine open_output_file(the_file, position_)
 !!
 !!    Open the output file
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -92,9 +94,26 @@ contains
 !
       integer              :: io_error
       character(len=100)   :: io_msg
+      character(len=*), optional, intent(in) :: position_
+      character(len=20)    :: pos
+!
+!
+      if(present(position_)) then
+         pos = trim(position_)
+      else
+         pos = 'rewind'
+      endif 
+!
+      if (the_file%is_open) then
+!
+         print *, trim(the_file%name_)//' is already open'
+         stop 
+!
+      endif
 !
       open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
-           action='write', status='unknown', form=the_file%format_, iostat=io_error, iomsg=io_msg)
+           action='write', status='unknown', form=the_file%format_, position=pos, &
+           iostat=io_error, iomsg=io_msg)
 !
       if (io_error /= 0) then
 !
@@ -104,7 +123,7 @@ contains
 !
       endif 
 !
-      the_file%opened = .true.
+      the_file%is_open = .true.
 !
       call the_file%set_open_size()
 !
@@ -123,6 +142,10 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
+      if (.not. the_file%is_open) then
+         print *, trim(the_file%name_)//' already closed'
+      end if
+!
       close(the_file%unit, iostat=io_error, iomsg=io_msg, status='keep')
 !
       if (io_error.ne. 0) then
@@ -133,7 +156,8 @@ contains
 !
       endif
 !
-      the_file%opened = .false.
+      the_file%is_open = .false.
+      the_file%unit = -1
 !
    end subroutine close_output_file
 !
@@ -259,7 +283,7 @@ contains
       character(len=1000)  :: pstring 
       character(len=20)    :: fstring 
 !
-      integer :: i, p_pos, int_check, i_err
+      integer :: i, p_pos, int_check, i_err, add_pos
       integer :: int_len, real_len, log_len, char_len, string_len
       integer :: int_count, real_count, log_count, char_count
       integer :: print_pos, printed
@@ -444,8 +468,10 @@ contains
                   fstring = string(p_pos:i)
                   if (fstring(2:3) .eq. 'l0') then
                      fstring = '(a)'
+                     add_pos = len_trim(chars(char_count))
                   else
                      fstring(2:2) = 'a'
+                     add_pos = the_file%get_format_length(fstring)
                   endif
 !
                   if(logs(log_count)) then
@@ -455,7 +481,7 @@ contains
                   endif
 !
 !                 Set next position to print
-                  print_pos = len_trim(pstring) + 1
+                  print_pos = print_pos + add_pos
 !
                endif
 !  
@@ -465,6 +491,7 @@ contains
 !              Is it followed by a number, if so, assume a format string
                read(string(i+2:),'(i1)',iostat=i_err) int_check
                if (i_err .eq. 0) then
+!
 !
                   char_count = char_count + 1
                   if (char_count .gt. char_len) call the_file%error_msg('Not enough chars in printf')
@@ -485,12 +512,15 @@ contains
                   fstring = string(p_pos:i)
                   if (fstring(2:3) .eq. 'a0') then
                      fstring = '(a)'
+                     add_pos = len_trim(chars(char_count))
+                  else
+                     add_pos = the_file%get_format_length(fstring)
                   endif
 !
                   write(pstring(print_pos:), fstring) trim(chars(char_count))
 !
 !                 Set next position to print
-                  print_pos = print_pos + len_trim(chars(char_count))
+                  print_pos = print_pos + add_pos
 !
                endif
             endif
@@ -552,30 +582,6 @@ contains
 !
    end subroutine printd_output_file
 !
-!  
-   subroutine author_output_file(the_file, author, contribution)
-!!
-!!    Print formatted
-!!    Written by Rolf Heilemann Myhre, May 2019
-!!
-      implicit none
-!
-      class(output_file), intent(in) :: the_file
-!
-      character(len=*), intent(in) :: author
-      character(len=*), intent(in) :: contribution
-!
-      character(len=100) :: d_author
-      character(len=100) :: d_contribution
-!
-      d_author = author
-      d_contribution = contribution
-!
-      write(the_file%unit,'(t4,a23,a54)') d_author, d_contribution
-!
-   end subroutine author_output_file
-!
-!  
    subroutine long_string_print_output_file(the_file, string, fs, colons, &
                                             ffs, lfs, ll, adv)
 !!
@@ -708,4 +714,52 @@ contains
    end subroutine long_string_print_output_file
 !
 !
+   function get_format_length(the_file,fstring) result(length)
+!
+      implicit none
+!
+      class(output_file), intent(in) :: the_file
+      character(len=*), intent(in)  :: fstring
+!
+      integer i, length, string_len, stat
+!
+      string_len = len_trim(fstring)
+!
+      if(fstring(1:1) .eq. '(') then
+         if(fstring(2:2) .eq. 'a' .or. fstring(2:2) .eq. 'A' .or. &
+            fstring(2:2) .eq. 'l' .or. fstring(2:2) .eq. 'L' .or. &
+            fstring(2:2) .eq. 'i' .or. fstring(2:2) .eq. 'I') then
+!
+            i = 3
+            do while (fstring(i+1:i+1) .ne. ")" .and. i .lt. string_len)
+               i = i + 1
+            enddo
+!
+            read(fstring(3:i),*,iostat=stat) length
+!
+            if(stat .ne. 0) then
+               call the_file%error_msg(fstring//' is not an acceptable format string')
+            endif 
+!
+         elseif(fstring(2:2) .eq. 'f' .or. fstring(2:2) .eq. 'F' .or. &
+                fstring(2:2) .eq. 'e' .or. fstring(2:2) .eq. 'E') then
+!
+            i = 3
+            do while (fstring(i+1:i+1) .ne. "." .and. i .lt. string_len)
+               i = i + 1
+            enddo
+!
+            read(fstring(3:i),*,iostat=stat) length
+!
+            if(stat .ne. 0) then
+               call the_file%error_msg(fstring//' is not an acceptable format string')
+            endif 
+!
+         endif
+      else
+         call the_file%error_msg(fstring//' is not an acceptable format string')
+      endif
+!
+   end function get_format_length
+!  
 end module output_file_class

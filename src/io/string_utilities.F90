@@ -25,7 +25,7 @@ module string_utilities
 !!
 !
    use kinds
-   use output_file_class, only : output
+   use global_out, only: output
 !
 contains
 !

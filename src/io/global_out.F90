@@ -17,15 +17,14 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module global_files
+module global_out
 !
-   use input_file_class, only : input_file
    use output_file_class, only : output_file
 !
    implicit none
 !
-   type(input_file) :: input
    type(output_file) :: timing
+   type(output_file) :: output
 !
-end module global_files
+end module global_out
 !

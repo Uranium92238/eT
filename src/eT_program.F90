@@ -27,12 +27,13 @@ program eT_program
    use kinds
    use direct_file_class, only : direct_file
    use sequential_file_class, only : sequential_file
-   use global_files, only : input
+   use global_in 
+   use global_out
    use timings_class, only : timings
    use disk_manager_class, only : disk
-   use memory_manager_class
-   use libint_initialization
-   use molecular_system_class
+   use memory_manager_class, only : mem
+   use libint_initialization, only : initialize_libint, finalize_libint
+   use molecular_system_class, only : molecular_system
 !
    use omp_lib
 !
@@ -82,7 +83,7 @@ program eT_program
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
    write(output%unit,'(t4, a, a)')    '                       ','Zeroth order properties, First order properties,       '
    write(output%unit,'(t4, a, a)')    '                       ','BFGS-tool                                              '
-   write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, Launch script'
+   write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, Launch script, file system'
    write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2, CC3, First order properties'
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
    write(output%unit,'(t4, a, a)')    'Åsmund H. Tveten       ','HF'
@@ -151,8 +152,8 @@ subroutine reference_calculation(system)
 !!
    use molecular_system_class, only: molecular_system
 !
-   use global_files, only: input 
-   use output_file_class, only: output
+   use global_in,  only: input 
+   use global_out, only: output
 !
    use hf_class, only: hf 
    use uhf_class, only: uhf 
@@ -212,8 +213,8 @@ subroutine cc_calculation(system)
 !!
 !! Directs the coupled cluster calculation for eT
 !!
-   use global_files, only: input
-   use output_file_class, only: output 
+   use global_in,  only: input
+   use global_out, only: output 
 !
    use molecular_system_class, only: molecular_system
 !

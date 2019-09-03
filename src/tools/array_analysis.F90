@@ -29,7 +29,6 @@ module array_analysis
 !!    for X_aibj), though indices can be general (X_pq, X_pqrs).
 !!
 !
-   use file_class
    use kinds
    use parameters
    use memory_manager_class

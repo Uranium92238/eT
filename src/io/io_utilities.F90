@@ -26,7 +26,7 @@ module io_utilities
 !
    use kinds
    use direct_file_class, only : direct_file
-   use output_file_class, only : output
+   use global_out, only : output
    use batching_index_class, only : batching_index
 !
    interface single_record_reader

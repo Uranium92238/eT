@@ -79,8 +79,7 @@ module timings_class
 !!
 !
    use parameters
-   use global_files
-   use output_file_class
+   use global_out, only: output, timing
 !
    implicit none
 !
@@ -247,7 +246,8 @@ contains
       write(timing%unit, '(t3,a17,f20.2)')  'cpu time (sec):  ', timer%elapsed_cpu_time
 !
       if (timer%elapsed_wall_time .gt. 1.0d-8) &
-         write(timing%unit, '(t3,a17,f20.2)')  'cpu/wall ratio:  ', timer%elapsed_cpu_time/timer%elapsed_wall_time
+         write(timing%unit, '(t3,a17,f20.2)')  'cpu/wall ratio:  ', &
+         & timer%elapsed_cpu_time/timer%elapsed_wall_time
 !
    end subroutine print_times_timings
 !

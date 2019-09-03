@@ -24,10 +24,14 @@ module wavefunction_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-   use kinds
-   use file_class
-   use disk_manager_class
-   use molecular_system_class
+   use parameters
+   use array_utilities, only : zero_array, print_matrix
+   use global_out, only : output
+   use sequential_file_class, only : sequential_file
+   use memory_manager_class, only : mem
+   use molecular_system_class, only : molecular_system
+   use interval_class, only : interval
+   use libint_initialization
 !
    implicit none
 !
@@ -50,8 +54,8 @@ module wavefunction_class
 !     stuff for QM/MM
 !  
 !
-      type(file) :: orbital_coefficients_file
-      type(file) :: orbital_energies_file
+      type(sequential_file) :: orbital_coefficients_file
+      type(sequential_file) :: orbital_energies_file
 !
    contains
 !
@@ -137,8 +141,8 @@ contains
 !
       class(wavefunction) :: wf 
 !
-      call wf%orbital_coefficients_file%init('orbital_coefficients', 'sequential', 'unformatted')
-      call wf%orbital_energies_file%init('orbital_energies', 'sequential', 'unformatted')
+      wf%orbital_coefficients_file = sequential_file('orbital_coefficients')
+      wf%orbital_energies_file = sequential_file('orbital_energies')
 !
    end subroutine initialize_wavefunction_files_wavefunction
 !
@@ -658,11 +662,11 @@ contains
 !
       class(wavefunction), intent(inout) :: wf 
 !
-      call disk%open_file(wf%orbital_coefficients_file, 'write', 'rewind')
+      call wf%orbital_coefficients_file%open_('write', 'rewind')
 !
-      write(wf%orbital_coefficients_file%unit) wf%orbital_coefficients
+      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
 !
-      call disk%close_file(wf%orbital_coefficients_file)
+      call wf%orbital_coefficients_file%close_
 !
    end subroutine save_orbital_coefficients_wavefunction
 !
@@ -676,11 +680,11 @@ contains
 !
       class(wavefunction), intent(inout) :: wf 
 !
-      call disk%open_file(wf%orbital_coefficients_file, 'read', 'rewind')
+      call wf%orbital_coefficients_file%open_('read', 'rewind')
 !
-      read(wf%orbital_coefficients_file%unit) wf%orbital_coefficients
+      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
 !
-      call disk%close_file(wf%orbital_coefficients_file)
+      call wf%orbital_coefficients_file%close_
 !
    end subroutine read_orbital_coefficients_wavefunction
 !
@@ -694,11 +698,11 @@ contains
 !
       class(wavefunction), intent(inout) :: wf 
 !
-      call disk%open_file(wf%orbital_energies_file, 'write', 'rewind')
+      call wf%orbital_energies_file%open_('write', 'rewind')
 !
-      write(wf%orbital_energies_file%unit) wf%orbital_energies
+      call wf%orbital_energies_file%write_(wf%orbital_energies, wf%n_mo)
 !
-      call disk%close_file(wf%orbital_energies_file)
+      call wf%orbital_energies_file%close_
 !
    end subroutine save_orbital_energies_wavefunction
 !
@@ -712,11 +716,11 @@ contains
 !
       class(wavefunction), intent(inout) :: wf 
 !
-      call disk%open_file(wf%orbital_energies_file, 'read', 'rewind')
+      call wf%orbital_energies_file%open_('read', 'rewind')
 !
-      read(wf%orbital_energies_file%unit) wf%orbital_energies
+      call wf%orbital_energies_file%read_(wf%orbital_energies, wf%n_mo)
 !
-      call disk%close_file(wf%orbital_energies_file)
+      call wf%orbital_energies_file%close_
 !
    end subroutine read_orbital_energies_wavefunction
 !
@@ -846,7 +850,8 @@ contains
    end subroutine get_ao_v_wx_wavefunction
 !
 !
-   subroutine construct_ao_electrostatics_wavefunction(wf,multipole,elec_nucl,what,elec_fock,property_points,ao_density)
+   subroutine construct_ao_electrostatics_wavefunction(wf, multipole, elec_nucl, what, elec_fock, &
+                                                     & property_points, ao_density)
 !!
 !!    Construct electrostatic properties
 !!    Written by Tommaso Giovannini, April 2019 
@@ -996,7 +1001,8 @@ contains
 !      
                      distQMMM = angstrom_to_bohr*distQMMM
 !      
-                     property_points(mm_atom) = property_points(mm_atom) - (wf%system%atoms(qm_atom)%number_)/distQMMM
+                     property_points(mm_atom) = property_points(mm_atom) &
+                                              - (wf%system%atoms(qm_atom)%number_)/distQMMM
 !      
                   enddo
 !      

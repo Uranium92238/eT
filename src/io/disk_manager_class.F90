@@ -25,8 +25,8 @@ module disk_manager_class
 !!
 !
    use kinds
-   use global_files , only : input
-   use output_file_class, only : output
+   use global_in , only : input
+   use global_out, only : output
    use file_class
 !
    type :: disk_manager
@@ -256,7 +256,7 @@ contains
 !
 !     Tell the file that it is now open, and ask it to calculate its own size
 !
-      the_file%opened = .true.
+      the_file%is_open = .true.
 !
       call the_file%set_current_size()
 !
@@ -334,7 +334,7 @@ contains
 !
 !     Tell the file that it is now open, and ask it to calculate its own size
 !
-      the_file%opened = .true.
+      the_file%is_open = .true.
 !
       call the_file%set_current_size()
 !
@@ -373,7 +373,7 @@ contains
 !
 !     Sanity check
 !
-      if (.not. the_file%opened) then
+      if (.not. the_file%is_open) then
 !
          call output%error_msg('tried to close a file that has not been opened.')
 !
@@ -443,7 +443,7 @@ contains
 !
 !     Set the status for the file to 'closed'
 !
-      the_file%opened = .false.
+      the_file%is_open = .false.
 !
    end subroutine close_file_disk_manager
 !

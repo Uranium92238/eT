@@ -2270,7 +2270,7 @@ contains
       call batch_d%determine_limits(1)
       call mem%dealloc(g_cdmj, wf%n_v, wf%n_o, wf%n_o, batch_d%length) ! cmj#d
 !
-      call wf%g_ckld_t%close_()
+      call wf%g_cdlk_t%close_()
 !
 !
 !     :: Term 3: sigma_dk += - sum_cmj g_cjmd * Y_cmkj ::
