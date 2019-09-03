@@ -24,50 +24,47 @@ module cc2_class
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
 !!
 !
-   use ccs_class
+   use abstract_doubles_class
 !
    implicit none
 !
-   type, extends(ccs) :: cc2
-!
-      integer :: n_t2
+   type, extends(abstract_doubles) :: cc2
 !
       real(dp), dimension(:,:,:,:), allocatable :: u
 !
-      real(dp), dimension(:), allocatable :: t2    ! Used for properties only
-      real(dp), dimension(:), allocatable :: t2bar ! Used for properties only
-!
-      type(file) :: r2_file, l2_file
-!
    contains
 !
-      procedure :: construct_u                                 => construct_u_cc2
-!
+!     Ground state
+
       procedure :: construct_omega                             => construct_omega_cc2
-!
-      procedure :: omega_cc2_a1                                => omega_cc2_a1_cc2
-      procedure :: omega_cc2_b1                                => omega_cc2_b1_cc2
-      procedure :: omega_cc2_c1                                => omega_cc2_c1_cc2
-!
       procedure :: calculate_energy                            => calculate_energy_cc2
+      procedure :: construct_multiplier_equation               => construct_multiplier_equation_cc2
 !
+!     Amplitudes and multipliers
+!
+      procedure :: construct_u                                 => construct_u_cc2
+      procedure :: construct_t2                                => construct_t2_cc2
+      procedure :: construct_t2bar                             => construct_t2bar_cc2
+!
+!     Excited state 
+!
+      procedure :: get_es_orbital_differences                  => get_es_orbital_differences_cc2
+!
+!     Jacobian
+!
+      procedure :: prepare_for_jacobian                        => prepare_for_jacobian_cc2
       procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_cc2
       procedure :: jacobian_cc2_transformation                 => jacobian_cc2_transformation_cc2
-!
-      procedure :: jacobian_cc2_a1                             => jacobian_cc2_a1_cc2
-      procedure :: jacobian_cc2_b1                             => jacobian_cc2_b1_cc2
-      procedure :: jacobian_cc2_a2                             => jacobian_cc2_a2_cc2
       procedure :: jacobian_cc2_b2                             => jacobian_cc2_b2_cc2
 !
-      procedure :: prepare_for_jacobian_transpose              => prepare_for_jacobian_transpose_cc2
+!     Jacobian transpose
 !
+      procedure :: prepare_for_jacobian_transpose              => prepare_for_jacobian_transpose_cc2
       procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_cc2
       procedure :: jacobian_transpose_cc2_transformation       => jacobian_transpose_cc2_transformation_cc2
-!
-      procedure :: jacobian_transpose_cc2_a1                   => jacobian_transpose_cc2_a1_cc2
-      procedure :: jacobian_transpose_cc2_b1                   => jacobian_transpose_cc2_b1_cc2
-      procedure :: jacobian_transpose_cc2_a2                   => jacobian_transpose_cc2_a2_cc2
       procedure :: jacobian_transpose_cc2_b2                   => jacobian_transpose_cc2_b2_cc2
+!
+!     Initialize and destruct
 !
       procedure :: initialize_u                                => initialize_u_cc2 
       procedure :: destruct_u                                  => destruct_u_cc2 
@@ -75,67 +72,18 @@ module cc2_class
       procedure :: initialize_amplitudes                       => initialize_amplitudes_cc2 
       procedure :: destruct_amplitudes                         => destruct_amplitudes_cc2 
 !
-      procedure :: get_es_orbital_differences                  => get_es_orbital_differences_cc2
-!
-      procedure :: construct_multiplier_equation               => construct_multiplier_equation_cc2
-!
-      procedure :: get_cvs_projector                           => get_cvs_projector_cc2
+!     File handling
 !
       procedure :: initialize_files                            => initialize_files_cc2
       procedure :: initialize_doubles_files                    => initialize_doubles_files_cc2
 !
-      procedure :: save_doubles_vector                         => save_doubles_vector_cc2
-      procedure :: read_doubles_vector                         => read_doubles_vector_cc2
+!     Restart
 !
-      procedure :: read_excited_state                          => read_excited_state_cc2
-!
-      procedure :: restart_excited_state                       => restart_excited_state_cc2
-      procedure :: save_excited_state                          => save_excited_state_cc2
       procedure :: is_restart_safe                             => is_restart_safe_cc2
 !
-      procedure :: initialize_t2                               => initialize_t2_cc2
-      procedure :: initialize_t2bar                            => initialize_t2bar_cc2
-      procedure :: destruct_t2                                 => destruct_t2_cc2
-      procedure :: destruct_t2bar                              => destruct_t2bar_cc2
-!
-!     Routines related to property calculations
-!
-      procedure :: construct_eom_etaX                          => construct_eom_etaX_cc2
-!
-      procedure :: construct_etaX                              => construct_etaX_cc2 
-!
-      procedure :: etaX_eom_a                                  => etaX_eom_a_cc2    
-      procedure :: etaX_cc2_a1                                 => etaX_cc2_a1_cc2    
-      procedure :: etaX_cc2_a2                                 => etaX_cc2_a2_cc2    
-      procedure :: etaX_cc2_b2                                 => etaX_cc2_b2_cc2    
-!     
-      procedure :: construct_csiX                              => construct_csiX_cc2  
-      procedure :: csiX_cc2_a1                                 => csiX_cc2_a1_cc2    
-      procedure :: csiX_cc2_a2                                 => csiX_cc2_a2_cc2    
-!
-      procedure :: etaX_eom_cc2_a1                             => etaX_eom_cc2_a1_cc2
-!
-      procedure :: construct_t2                                => construct_t2_cc2
-      procedure :: construct_t2bar                             => construct_t2bar_cc2
-!
-!     One-electron density 
+!     Ground state density 
 !
       procedure :: prepare_for_density                         => prepare_for_density_cc2
-!
-      procedure :: construct_gs_density                        => construct_gs_density_cc2
-!
-      procedure :: gs_one_el_density_cc2_oo                    => gs_one_el_density_cc2_oo_cc2
-      procedure :: gs_one_el_density_cc2_vv                    => gs_one_el_density_cc2_vv_cc2
-      procedure :: gs_one_el_density_cc2_ov                    => gs_one_el_density_cc2_ov_cc2
-!
-      procedure :: construct_left_transition_density           => construct_left_transition_density_cc2
-      procedure :: construct_right_transition_density          => construct_right_transition_density_cc2
-!
-      procedure :: right_transition_density_cc2_ov             => right_transition_density_cc2_ov_cc2
-      procedure :: right_transition_density_cc2_vo             => right_transition_density_cc2_vo_cc2
-!
-      procedure :: get_ip_projector                            => get_ip_projector_cc2
-!
 !
    end type cc2
 !
@@ -145,7 +93,6 @@ module cc2_class
       include "jacobian_cc2_interface.F90"
       include "jacobian_transpose_cc2_interface.F90"
       include "zop_cc2_interface.F90"
-      include "fop_cc2_interface.F90"
 !
    end interface 
 !
@@ -522,7 +469,8 @@ contains
 !
 !     t2bar = sum_ai tbar_ai A_ai,aibj
 !
-      call wf%jacobian_transpose_cc2_a2(t2bar, wf%t1bar)
+      call wf%jacobian_transpose_doubles_a2(t2bar, wf%t1bar)
+      call symmetric_sum(t2bar, wf%n_t1)
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%get_ovov(g_iajb)
@@ -561,11 +509,11 @@ contains
 !  
       call wf%jacobian_transpose_ccs_a1(equation, wf%t1bar)
       call wf%jacobian_transpose_ccs_b1(equation, wf%t1bar)
-      call wf%jacobian_transpose_cc2_a1(equation, wf%t1bar)
+      call wf%jacobian_transpose_doubles_a1(equation, wf%t1bar, wf%u)
 !
 !     equation += sum_bjck tbar_bjck A_{bjck,ai}
 !
-      call wf%jacobian_transpose_cc2_b1(equation, t2bar)
+      call wf%jacobian_transpose_doubles_b1(equation, t2bar)
 !
       call mem%dealloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -579,319 +527,6 @@ contains
       call mem%dealloc(eta, wf%n_gs_amplitudes)
 !
    end subroutine construct_multiplier_equation_cc2
-!
-!
-   subroutine get_cvs_projector_cc2(wf, projector, n_cores, core_MOs)
-!!
-!!    Get CVS projector
-!!    Written by Sarai D. Folkestad, Oct 2018
-!!
-      implicit none
-!
-      class(cc2), intent(inout) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: projector
-!
-      integer, intent(in) :: n_cores
-!
-      integer, dimension(n_cores), intent(in) :: core_MOs
-!
-      integer :: core, i, a, ai, j, b, bj, aibj
-!
-      call zero_array(projector, wf%n_es_amplitudes)
-!
-      do core = 1, n_cores
-!
-        i = core_MOs(core)
-!
-!$omp parallel do private (a, ai, j, b, bj, aibj)
-        do a = 1, wf%n_v
-!
-           ai = wf%n_v*(i - 1) + a
-           projector(ai) = one
-!
-            do j = 1, wf%n_o 
-               do b = 1, wf%n_v
-!
-                  bj = wf%n_v*(j - 1) + b
-                  aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
-!                  
-                  projector(aibj + (wf%n_o)*(wf%n_v)) = one
-!
-               enddo
-            enddo
-        enddo
-!$omp end parallel do
-!
-     enddo
-!
-   end subroutine get_cvs_projector_cc2
-!
-!
-   subroutine save_doubles_vector_cc2(wf, X, n, file_)
-!!
-!!    Save doubles vector state 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
-!!
-!!    Writes doubles vector "X" to the sequential
-!!    and unformatted file "file_".
-!!    
-!!    NB! If n = 1, then the routine WILL REWIND the file before writing,
-!!    thus DELETING every record in the file. For n >=2, we just append to
-!!    the file. The purpose of this setup is that the files should be saved in 
-!!    the correct order, from n = 1 to n = # states.
-!!
-      implicit none 
-!
-      class(cc2), intent(inout) :: wf 
-!
-      real(dp), dimension(wf%n_t2), intent(in) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      type(file) :: file_
-!
-      call disk%open_file(file_, 'write', 'append')
-!
-      if (n .eq. 1) rewind(file_%unit)
-!
-      write(file_%unit) X
-!
-      call disk%close_file(file_, 'keep')
-!
-   end subroutine save_doubles_vector_cc2
-!
-!
-   subroutine read_doubles_vector_cc2(wf, X, n, file_)
-!!
-!!    Read doubles vector state 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
-!!
-!!    Reads doubles vector "X" from the "n"'th line
-!!    of the sequential and unformatted file "file_".
-!!
-      implicit none 
-!
-      class(cc2), intent(inout) :: wf 
-!
-      real(dp), dimension(wf%n_t2), intent(out) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      type(file) :: file_
-!
-      call disk%open_file(file_, 'read')
-!
-      call file_%prepare_to_read_line(n)
-!
-      read(file_%unit) X
-!
-      call disk%close_file(file_, 'keep')
-!
-   end subroutine read_doubles_vector_cc2
-!
-!
-   subroutine save_excited_state_cc2(wf, X, n, side)
-!!
-!!    Save excited state 
-!!    Written by Eirik F. Kjønstad, Mar 2019 
-!!
-!!    Saves an excited state to disk. Since the solvers 
-!!    keep these vectors in full length, we receive a vector 
-!!    in full length (n_es_amplitudes), and then distribute 
-!!    the different parts of that vector to singles, doubles, etc.,
-!!    files (if there are doubles, etc.).
-!!
-!!    NB! If n = 1, then the routine WILL REWIND the files before writing,
-!!    thus DELETING every record in the file. For n >=2, we just append to
-!!    the file. The purpose of this setup is that the files should be saved in 
-!!    the correct order, from n = 1 to n = # states. 
-!!
-      implicit none 
-!
-      class(cc2), intent(inout) :: wf 
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
-!
-      if (trim(side) == 'right') then 
-!
-         call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
-         call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
-!
-      elseif (trim(side) == 'left') then 
-!
-         call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
-         call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
-!
-      else
-!
-         call output%error_msg('Tried to save an excited state, but argument side not recognized: ' // side)
-!
-      endif
-!
-   end subroutine save_excited_state_cc2
-!
-!
-   subroutine restart_excited_state_cc2(wf, X, n, side)
-!!
-!!    Restart excited state 
-!!    Written by Sarai D. Fokestad, Mar 2019 
-!!
-!!    Wrapper for setting trial vectors to excited states on file
-!!
-      implicit none 
-!
-      class(cc2), intent(inout) :: wf 
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
-!
-      integer :: a, i, b, j, ai, bj, aibj
-      integer :: n_excited_states
-!
-      real(dp), dimension(:,:,:,:), allocatable :: r2_aibj, l2_aibj
-!
-      real(dp), dimension(:), allocatable :: omega
-!
-!     Check if we have read doubles vectors.
-!     If not, set up doubles.
-!
-      if (trim(side) == 'right') then 
-!
-!        Read singles vector
-!
-         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
-!
-!        Read or construct doubles vector
-!
-         if (wf%r2_file%exists()) then
-!
-            call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
-!
-         else
-!
-!           Construct r2 from r1
-!
-!           r2_aibj = (A_aibj,ck r1_ck)/(- ε_aibj + omega)
-!
-            call mem%alloc(r2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-            call zero_array(r2_aibj, (wf%n_o*wf%n_v)**2)
-!
-            call wf%jacobian_cc2_a2(r2_aibj, X(1:(wf%n_o)*(wf%n_v)))
-!
-            n_excited_states = wf%get_n_excitation_energies_on_file()
-!
-            call mem%alloc(omega, n_excited_states)
-!
-            call wf%read_excitation_energies(n_excited_states, omega)
-!
-!$omp parallel do private(a, i, b, j, aibj, ai, bj)
-            do a = 1, wf%n_v
-               do i = 1, wf%n_o 
-!
-                  ai = wf%n_v*(i - 1) + a
-!
-                  do b = 1, wf%n_v
-                     do j = 1, wf%n_o
-!
-                        bj = wf%n_v*(j - 1) + b
-!
-                        if (ai .ge. bj) then
-!
-                           aibj = ai*(ai - 3)/2 + ai + bj
-!
-                           X(aibj + (wf%n_v)*(wf%n_o)) = r2_aibj(a, i, b, j)&
-                                                     /(omega(n) - wf%orbital_energies(a + wf%n_o) &
-                                                                - wf%orbital_energies(b + wf%n_o) &
-                                                                + wf%orbital_energies(i) &
-                                                                + wf%orbital_energies(j) )
-!
-                        endif
-!
-                     enddo
-                  enddo
-               enddo
-            enddo
-!$omp end parallel do
-!
-            call mem%dealloc(omega, n_excited_states)
-            call mem%dealloc(r2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-         endif
-!
-      elseif (trim(side) == 'left') then
-!
-!        Read singles vector
-!
-         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
-!
-!        Read or construct doubles vector
-!
-         if (wf%l2_file%exists()) then
-!
-            call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
-!
-         else
-!
-!           Construct l2 from l1
-!
-!           r2_aibj = (A^T_aibj,ck r1_ck)/(- ε_aibj + omega)
-!
-            call mem%alloc(l2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-            call zero_array(l2_aibj, (wf%n_o*wf%n_v)**2)
-!
-            call wf%jacobian_transpose_cc2_a2(l2_aibj, X(1:(wf%n_o)*(wf%n_v)))
-!
-            n_excited_states = wf%get_n_excitation_energies_on_file()
-!
-            call mem%alloc(omega, n_excited_states)
-!
-            call wf%read_excitation_energies(n_excited_states, omega)
-!
-!$omp parallel do private(a, i, b, j, aibj, ai, bj)
-            do b = 1, wf%n_v
-               do j = 1, wf%n_o 
-!
-                  bj = wf%n_v*(j - 1) + b
-!
-                  do i = 1, wf%n_o
-                     do a = 1, wf%n_v
-!
-                        ai = wf%n_v*(i - 1) + a
-!
-                        if (ai .ge. bj) then
-!
-                           aibj = ai*(ai - 3)/2 + ai + bj
-!
-                           X(aibj + (wf%n_v)*(wf%n_o)) = l2_aibj(a, i, b, j)&
-                                                     /(omega(n) - wf%orbital_energies(a + wf%n_o) &
-                                                                - wf%orbital_energies(b + wf%n_o) &
-                                                                + wf%orbital_energies(i) &
-                                                                + wf%orbital_energies(j) )
-!
-                        endif
-!
-                     enddo
-                  enddo
-               enddo
-            enddo
-!$omp end parallel do
-!
-            call mem%dealloc(omega, n_excited_states)
-            call mem%dealloc(l2_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-         endif
-!
-      endif
-!
-   end subroutine restart_excited_state_cc2
 !
 !
    subroutine is_restart_safe_cc2(wf, task)
@@ -981,62 +616,6 @@ contains
    end subroutine initialize_doubles_files_cc2
 !
 !
-   subroutine initialize_t2_cc2(wf)
-!!
-!!    Initialize t2 amplitudes
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      if (.not. allocated(wf%t2)) call mem%alloc(wf%t2, wf%n_t2)
-!
-   end subroutine initialize_t2_cc2
-!
-!
-   subroutine initialize_t2bar_cc2(wf)
-!!
-!!    Initialize t2bar amplitudes
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      if (.not. allocated(wf%t2bar)) call mem%alloc(wf%t2bar, wf%n_t2)
-!
-   end subroutine initialize_t2bar_cc2
-!
-!
-   subroutine destruct_t2_cc2(wf)
-!!
-!!    Destruct t2 amplitudes
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      if (allocated(wf%t2)) call mem%dealloc(wf%t2, wf%n_t2)
-!
-   end subroutine destruct_t2_cc2
-!
-!
-   subroutine destruct_t2bar_cc2(wf)
-!!
-!!    Destruct t2bar amplitudes
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_t2)
-!
-   end subroutine destruct_t2bar_cc2
-!
-!
    subroutine construct_t2bar_cc2(wf)
 !!
 !!    Construct t2bar
@@ -1056,7 +635,8 @@ contains
 !
 !     t2bar = sum_ai tbar_ai A_ai,aibj
 !
-      call wf%jacobian_transpose_cc2_a2(t2bar, wf%t1bar)
+      call wf%jacobian_transpose_doubles_a2(t2bar, wf%t1bar)
+      call symmetric_sum(t2bar, wf%n_t1)
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%get_ovov(g_iajb)
@@ -1092,91 +672,6 @@ contains
       call mem%dealloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine construct_t2bar_cc2
-!
-!
-   subroutine read_excited_state_cc2(wf, X, n, side)
-!!
-!!    Restart excited state 
-!!    Written by Eirik F. Kjønstad, Mar 2019
-!!
-!!    Reads an excited state to disk. Since this routine is used by 
-!!    solvers, it returns the vector in the full space. Thus, we open 
-!!    files for singles, doubles, etc., paste them together, and return 
-!!    the result in X.
-!!
-!!    NB! This will place the cursor of the file at position n + 1.
-!!    Be cautious when using this in combination with writing to the files.
-!!    We recommend to separate these tasks---write all states or read all
-!!    states; don't mix if you can avoid it.
-!!
-      implicit none
-!
-      class(cc2), intent(inout) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X
-!
-      integer, intent(in) :: n ! state number 
-!
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
-!
-      if (trim(side) == 'right') then
-!
-         call wf%read_singles_vector(X(1:wf%n_t1), n, wf%r1_file)
-         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
-!
-      elseif (trim(side) == 'left') then
-!
-         call wf%read_singles_vector(X(1:wf%n_t1), n, wf%l1_file)
-         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
-!
-      else
-!
-         call output%error_msg('Tried to read an excited state, but argument side not recognized: ' // side)
-!
-      endif
-!
-   end subroutine read_excited_state_cc2
-!
-!
-   subroutine get_ip_projector_cc2(wf, projector)
-!!
-!!    Get IP projector 
-!!    Written by Sarai D. Folkestad, Aug 2019
-!!
-!!    Constructs and returns the projector
-!!    for an IP calculation (valence).
-!!
-      implicit none
-!
-      class(cc2), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes),intent(out) :: projector
-!
-      integer :: A, I, AI, B, J, BJ, AIBJ
-!
-      call zero_array(projector, wf%n_es_amplitudes)
-!
-      do I = 1, wf%n_o
-         do A = wf%n_v - wf%n_bath_orbitals + 1, wf%n_v
-!
-            AI = wf%n_v*(I-1) + A
-            projector(AI) = one
-!
-            do J = 1, wf%n_o
-               do B = 1, wf%n_v
-!
-                  BJ = wf%n_v*(J-1) + B
-                  AIBJ = max(AI, BJ)*(max(AI, BJ)-3)/2 + AI + BJ
-!
-                  projector(wf%n_t1 + AIBJ) = one
-!
-               enddo
-            enddo 
-!
-         enddo
-      enddo
-!
-   end subroutine get_ip_projector_cc2
 !
 !
 end module cc2_class

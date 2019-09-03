@@ -51,7 +51,7 @@ contains
       real(dp), dimension(:,:), allocatable     :: omega1
       real(dp), dimension(:,:,:,:), allocatable :: omega_abij
 !
-      real(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij, omega_aibj
+      real(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij, omega_aibj, u_aibj
 !
       integer  :: i,j,a,b,a_end,aibj
 !
@@ -75,10 +75,16 @@ contains
 !  
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_aibj, wf%n_t1)
+
+      call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call copy_and_scale(two, t_aibj, u_aibj, wf%n_t1**2)
+      call add_1432_to_1234(-one, t_aibj, u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%omega_ccsd_a1(omega1, t_aibj)
-      call wf%omega_ccsd_b1(omega1, t_aibj)
-      call wf%omega_ccsd_c1(omega1, t_aibj)
+      call wf%omega_doubles_a1(omega1, u_aibj)
+      call wf%omega_doubles_b1(omega1, u_aibj)
+      call wf%omega_doubles_c1(omega1, u_aibj)
+!
+      call mem%dealloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call wf%omega_ccs_a1(omega1)
 !

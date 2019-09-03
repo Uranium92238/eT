@@ -52,7 +52,7 @@ contains
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
       real(dp), dimension(:,:), allocatable :: omega1
-      real(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij
+      real(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij, u_aibj
       real(dp), dimension(:,:,:,:), allocatable :: omega_aibj, omega_abij
 !
       call mem%alloc(omega1, wf%n_v, wf%n_o)
@@ -66,11 +66,17 @@ contains
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_aibj, wf%n_t1)
 !
+      call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call copy_and_scale(two, t_aibj, u_aibj, wf%n_t1**2)
+      call add_1432_to_1234(-one, t_aibj, u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
 !     Construct singles contributions
 !
-      call wf%omega_ccsd_a1(omega1, t_aibj)
-      call wf%omega_ccsd_b1(omega1, t_aibj)
-      call wf%omega_ccsd_c1(omega1, t_aibj)
+      call wf%omega_doubles_a1(omega1, u_aibj)
+      call wf%omega_doubles_b1(omega1, u_aibj)
+      call wf%omega_doubles_c1(omega1, u_aibj)
+!
+      call mem%dealloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call wf%omega_ccs_a1(omega1)
 !
@@ -105,217 +111,6 @@ contains
       call mem%dealloc(omega1, wf%n_v, wf%n_o)
 !
    end subroutine construct_omega_ccsd
-!
-!
-   module subroutine omega_ccsd_a1_ccsd(wf, omega1, t_dkci)
-!!
-!!    Omega A1 term
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
-!!
-!!    Calculates the A1 term,
-!!
-!!       A1: sum_ckd g_adkc * u_ki^cd,
-!!
-!!    and adds it to the singles projection vector (omega1) of
-!!    the wavefunction object wf.
-!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_dkci
-!
-      integer :: current_a_batch = 0
-!
-      type(batching_index) :: batch_a
-!
-      real(dp), dimension(:,:,:,:), allocatable :: u_dkci
-      real(dp), dimension(:,:,:,:), allocatable :: g_adkc
-!
-      integer :: req0, req1
-!
-      type(timings) :: ccsd_a1_timer
-!
-      ccsd_a1_timer = new_timer('omega ccsd a1')
-      call ccsd_a1_timer%turn_on()
-!
-!     u_ki^cd = 2*t_ki^cd - t_ik^cd (ordered as u_dkci)
-!
-      call mem%alloc(u_dkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call copy_and_scale(-one, t_dkci, u_dkci, wf%n_t1**2)
-      call add_1432_to_1234(two, t_dkci, u_dkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Batch over a to hold g_adkc
-!
-      req0 = wf%n_o*wf%integrals%n_J*wf%n_v
-!
-      req1 = wf%n_v*wf%integrals%n_J + wf%n_v**2*(wf%n_o)
-!
-      call batch_a%init(wf%n_v)
-!
-      call mem%batch_setup(batch_a, req0, req1)
-!
-      do current_a_batch = 1, batch_a%num_batches
-!
-         call batch_a%determine_limits(current_a_batch)
-!
-         call mem%alloc(g_adkc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
-!
-         call wf%get_vvov(g_adkc,                        &
-                           batch_a%first, batch_a%last,  &
-                           1, wf%n_v,                    &
-                           1, wf%n_o,                    &
-                           1, wf%n_v)
-!
-         call dgemm('N','N',                     &
-                     batch_a%length,             &
-                     wf%n_o,                     &
-                     (wf%n_o)*(wf%n_v)**2,       &
-                     one,                        &
-                     g_adkc,                     & ! g_a_dkc
-                     batch_a%length,             &
-                     u_dkci,                     & ! u_dkc_i
-                     (wf%n_o)*(wf%n_v)**2,       &
-                     one,                        &
-                     omega1(batch_a%first, 1),   &
-                     wf%n_v)
-!
-         call mem%dealloc(g_adkc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
-!
-      enddo ! End of batches of the index a
-!
-      call mem%dealloc(u_dkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call ccsd_a1_timer%turn_off()
-!
-   end subroutine omega_ccsd_a1_ccsd
-!
-!
-   module subroutine omega_ccsd_b1_ccsd(wf, omega1, t_alck)
-!!
-!!    Omega B1
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
-!!
-!!    Calculates the B1 term,
-!!
-!!       B1:   - sum_ckl u_kl^ac * g_kilc,
-!!
-!!    and adds it to the singles projection vector (omega1) of
-!!    the wavefunction object wf
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_alck
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_lcki ! g_kilc
-      real(dp), dimension(:,:,:,:), allocatable :: u_alck ! u_kl^ac = 2 t_kl^ac - t_lk^ac
-!
-      type(timings) :: ccsd_b1_timer 
-!  
-      ccsd_b1_timer = new_timer('omega ccsd b1')
-      call ccsd_b1_timer%turn_on()
-!
-!     Form u_alck = u_kl^ac = 2 * t_kl^ac - t_lk^ac
-!     Square up amplitudes and reorder: t_akcl to t_alck
-!
-      call mem%alloc(g_lcki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!
-      call wf%get_ovoo(g_lcki)
-!
-!     u_alck = 2 * t_kl^ac - t_lk^ac = 2 * t_alck(alck) - t_alck(akcl)
-!
-      call mem%alloc(u_alck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call copy_and_scale(-one, t_alck, u_alck, wf%n_t1**2)
-!
-      call add_1432_to_1234(two, t_alck, u_alck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call dgemm('N','N',                 &
-                  wf%n_v,                 &
-                  wf%n_o,                 &
-                  (wf%n_v)*((wf%n_o)**2), &
-                  -one,                   &
-                  u_alck,                 & ! u_a_lck
-                  wf%n_v,                 &
-                  g_lcki,                 & ! g_lck_i
-                  (wf%n_v)*((wf%n_o)**2), &
-                  one,                    &
-                  omega1,                 &
-                  wf%n_v)
-!
-      call mem%dealloc(u_alck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(g_lcki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!
-      call ccsd_b1_timer%turn_off()
-!
-   end subroutine omega_ccsd_b1_ccsd
-!
-!
-   module subroutine omega_ccsd_c1_ccsd(wf, omega1, t_aick)
-!!
-!!    Omega C1
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
-!!
-!!    Calculates the C1 term of omega,
-!!
-!!       C1: sum_ck F_kc*u_aick,
-!!
-!!    and adds it to the projection vector (omega1) of
-!!    the wavefunction object wf
-!!
-!!    u_aikc = 2*t_ckai - t_ciak
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_aick
-!
-      real(dp), dimension(:,:), allocatable :: F_c_k ! F_kc
-!
-      real(dp), dimension(:,:,:,:), allocatable :: u_aick
-!
-      type(timings) :: ccsd_c1_timer 
-!
-      ccsd_c1_timer = new_timer('omega ccsd c1')
-      call ccsd_c1_timer%turn_on()
-!
-!     Form u_aick = u_ik^ac = 2*t_ik^ac - t_ki^ac
-!
-      call mem%alloc(u_aick,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call copy_and_scale(two, t_aick, u_aick, (wf%n_o)**2*(wf%n_v)**2)
-!
-      call add_1432_to_1234(-one, t_aick, u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Reorder the Fock matrix F_ck = F_kc
-!
-      call mem%alloc(F_c_k, wf%n_v, wf%n_o)
-!
-      call sort_12_to_21(wf%fock_ia, F_c_k, wf%n_o, wf%n_v)
-!
-      call dgemv('N',                &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  u_aick,            &
-                  (wf%n_o)*(wf%n_v), &
-                  F_c_k,             &
-                  1, &
-                  one,               &
-                  omega1,            &
-                  1)
-!
-      call mem%dealloc(u_aick,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(F_c_k, wf%n_v, wf%n_o)
-!
-      call ccsd_c1_timer%turn_off()
-!
-   end subroutine omega_ccsd_c1_ccsd
 !
 !
    module subroutine omega_ccsd_a2_ccsd(wf, omega_abij, t_abij)

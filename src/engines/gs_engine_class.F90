@@ -170,7 +170,6 @@ contains
          write(output%unit, '(t3,a26,f19.12)')  'MP2 correction:           ', (wf%energy)-(wf%hf_energy)
          write(output%unit, '(t3,a26,f19.12)')  'MP2 energy:               ', wf%energy
 !
-!
       elseif (trim(engine%gs_algorithm) == 'diis') then
 !
          diis_solver = diis_cc_gs(wf)

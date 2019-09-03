@@ -24,19 +24,13 @@ module ccsd_class
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
 !!
 !
-   use ccs_class
+   use abstract_doubles_class
 !
    implicit none
 !
-   type, extends(ccs) :: ccsd
-!
-      real(dp), dimension(:), allocatable :: t2
-      real(dp), dimension(:), allocatable :: t2bar
+   type, extends(abstract_doubles) :: ccsd
 !
       type(file) :: t2_file, t2bar_file
-      type(file) :: r2_file, l2_file
-!
-      integer :: n_t2  
 !
 !     Intermediate files 
 !
@@ -45,8 +39,6 @@ module ccsd_class
       type(sequential_file) :: jacobian_c2_intermediate_oovo_3
       type(sequential_file) :: jacobian_d2_intermediate
       type(sequential_file) :: jacobian_e2_intermediate
-      type(sequential_file) :: jacobian_g2_intermediate_vv
-      type(sequential_file) :: jacobian_g2_intermediate_oo
       type(sequential_file) :: jacobian_g2_intermediate_vovo
       type(sequential_file) :: jacobian_h2_intermediate_voov_1
       type(sequential_file) :: jacobian_h2_intermediate_voov_2
@@ -62,8 +54,6 @@ module ccsd_class
 !     Routines related to the amplitudes
 !
       procedure :: initialize_amplitudes                       => initialize_amplitudes_ccsd
-      procedure :: initialize_t2                               => initialize_t2_ccsd
-      procedure :: destruct_t2                                 => destruct_t2_ccsd
       procedure :: set_initial_amplitudes_guess                => set_initial_amplitudes_guess_ccsd
       procedure :: set_t2_to_mp2_guess                         => set_t2_to_mp2_guess_ccsd
       procedure :: set_amplitudes                              => set_amplitudes_ccsd
@@ -76,20 +66,9 @@ module ccsd_class
 !
       procedure :: from_biorthogonal_to_biorthonormal          => from_biorthogonal_to_biorthonormal_ccsd
 !
-      procedure :: save_doubles_vector                         => save_doubles_vector_ccsd
-      procedure :: read_doubles_vector                         => read_doubles_vector_ccsd
-!
-      procedure :: read_excited_state                          => read_excited_state_ccsd
-!
-      procedure :: save_excited_state                          => save_excited_state_ccsd 
-!
 !     Routines related to omega
 !
       procedure :: construct_omega                             => construct_omega_ccsd
-!
-      procedure :: omega_ccsd_a1                               => omega_ccsd_a1_ccsd
-      procedure :: omega_ccsd_b1                               => omega_ccsd_b1_ccsd
-      procedure :: omega_ccsd_c1                               => omega_ccsd_c1_ccsd
 !
       procedure :: omega_ccsd_a2                               => omega_ccsd_a2_ccsd
       procedure :: omega_ccsd_b2                               => omega_ccsd_b2_ccsd
@@ -104,12 +83,6 @@ module ccsd_class
       procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_ccsd
       procedure :: jacobian_ccsd_transformation                => jacobian_ccsd_transformation_ccsd
 !
-      procedure :: jacobian_ccsd_a1                            => jacobian_ccsd_a1_ccsd
-      procedure :: jacobian_ccsd_b1                            => jacobian_ccsd_b1_ccsd
-      procedure :: jacobian_ccsd_c1                            => jacobian_ccsd_c1_ccsd
-      procedure :: jacobian_ccsd_d1                            => jacobian_ccsd_d1_ccsd
-!
-      procedure :: jacobian_ccsd_a2                            => jacobian_ccsd_a2_ccsd
       procedure :: jacobian_ccsd_b2                            => jacobian_ccsd_b2_ccsd
       procedure :: jacobian_ccsd_c2                            => jacobian_ccsd_c2_ccsd
       procedure :: jacobian_ccsd_d2                            => jacobian_ccsd_d2_ccsd
@@ -135,15 +108,11 @@ module ccsd_class
       procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_ccsd
       procedure :: jacobian_transpose_ccsd_transformation      => jacobian_transpose_ccsd_transformation_ccsd
 !
-      procedure :: jacobian_transpose_ccsd_a1                  => jacobian_transpose_ccsd_a1_ccsd
-      procedure :: jacobian_transpose_ccsd_b1                  => jacobian_transpose_ccsd_b1_ccsd
-      procedure :: jacobian_transpose_ccsd_c1                  => jacobian_transpose_ccsd_c1_ccsd
       procedure :: jacobian_transpose_ccsd_d1                  => jacobian_transpose_ccsd_d1_ccsd
       procedure :: jacobian_transpose_ccsd_e1                  => jacobian_transpose_ccsd_e1_ccsd
       procedure :: jacobian_transpose_ccsd_f1                  => jacobian_transpose_ccsd_f1_ccsd
       procedure :: jacobian_transpose_ccsd_g1                  => jacobian_transpose_ccsd_g1_ccsd
 !
-      procedure :: jacobian_transpose_ccsd_a2                  => jacobian_transpose_ccsd_a2_ccsd
       procedure :: jacobian_transpose_ccsd_b2                  => jacobian_transpose_ccsd_b2_ccsd
       procedure :: jacobian_transpose_ccsd_c2                  => jacobian_transpose_ccsd_c2_ccsd
       procedure :: jacobian_transpose_ccsd_d2                  => jacobian_transpose_ccsd_d2_ccsd
@@ -159,7 +128,6 @@ module ccsd_class
 !
       procedure :: construct_eta                               => construct_eta_ccsd
 !
-      procedure :: initialize_t2bar                            => initialize_t2bar_ccsd
       procedure :: get_multipliers                             => get_multipliers_ccsd
       procedure :: set_multipliers                             => set_multipliers_ccsd
       procedure :: initialize_multipliers                      => initialize_multipliers_ccsd
@@ -167,53 +135,14 @@ module ccsd_class
       procedure :: save_multipliers                            => save_multipliers_ccsd
       procedure :: read_multipliers                            => read_multipliers_ccsd
       procedure :: destruct_multipliers                        => destruct_multipliers_ccsd
-      procedure :: destruct_t2bar                              => destruct_t2bar_ccsd
-!
-      procedure :: get_cvs_projector                           => get_cvs_projector_ccsd
-!
-!     Routines related to property calculations
-!
-      procedure :: construct_etaX                              => construct_etaX_ccsd  
-!
-      procedure :: etaX_eom_a                                  => etaX_eom_a_ccsd    
-!
-      procedure :: construct_eom_etaX                          => construct_eom_etaX_ccsd  
-
-      procedure :: etaX_ccsd_a1                                => etaX_ccsd_a1_ccsd    
-      procedure :: etaX_ccsd_a2                                => etaX_ccsd_a2_ccsd    
-      procedure :: etaX_ccsd_b2                                => etaX_ccsd_b2_ccsd    
-!     
-      procedure :: construct_csiX                              => construct_csiX_ccsd  
-      procedure :: csiX_ccsd_a1                                => csiX_ccsd_a1_ccsd    
-      procedure :: csiX_ccsd_a2                                => csiX_ccsd_a2_ccsd    
-!
-      procedure :: etaX_eom_ccsd_a1                            => etaX_eom_ccsd_a1_ccsd
 !
       procedure, nopass :: need_g_abcd                         => need_g_abcd_ccsd
-!
-!     One-electron density 
-!
-      procedure :: construct_gs_density                        => construct_gs_density_ccsd
-!
-      procedure :: gs_one_el_density_ccsd_oo                   => gs_one_el_density_ccsd_oo_ccsd
-      procedure :: gs_one_el_density_ccsd_vv                   => gs_one_el_density_ccsd_vv_ccsd
-      procedure :: gs_one_el_density_ccsd_ov                   => gs_one_el_density_ccsd_ov_ccsd
-!
-      procedure :: construct_left_transition_density           => construct_left_transition_density_ccsd
-      procedure :: construct_right_transition_density          => construct_right_transition_density_ccsd
-!
-      procedure :: right_transition_density_ccsd_ov            => right_transition_density_ccsd_ov_ccsd
-      procedure :: right_transition_density_ccsd_vo            => right_transition_density_ccsd_vo_ccsd
-!
-      procedure :: get_ip_projector                            => get_ip_projector_ccsd
 !
    end type ccsd
 !
 !
    interface
 !
-      include "zop_ccsd_interface.F90"
-      include "fop_ccsd_interface.F90"
       include "files_ccsd_interface.F90"
       include "omega_ccsd_interface.F90"
       include "get_set_ccsd_interface.F90"
@@ -314,36 +243,6 @@ contains
       call wf%initialize_t2()
 !
    end subroutine initialize_amplitudes_ccsd
-!
-!
-   subroutine initialize_t2_ccsd(wf)
-!!
-!!    Initialize t2 amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      if (.not. allocated(wf%t2)) call mem%alloc(wf%t2, wf%n_t2)
-!
-   end subroutine initialize_t2_ccsd
-!
-!
-   subroutine destruct_t2_ccsd(wf)
-!!
-!!    Destruct t2 amplitudes
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      if (allocated(wf%t2)) call mem%dealloc(wf%t2, wf%n_t2)
-!
-   end subroutine destruct_t2_ccsd
 !
 !
    subroutine set_initial_amplitudes_guess_ccsd(wf)
@@ -612,20 +511,6 @@ contains
    end subroutine initialize_multipliers_ccsd
 !
 !
-   subroutine initialize_t2bar_ccsd(wf)
-!!
-!!    Initialize T2-bar
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      if (.not. allocated(wf%t2bar)) call mem%alloc(wf%t2bar, wf%n_t2)
-!
-   end subroutine initialize_t2bar_ccsd
-!
-!
    subroutine construct_multiplier_equation_ccsd(wf, equation)
 !!
 !!    Construct multiplier equation
@@ -682,20 +567,6 @@ contains
       call wf%destruct_t2bar()
 !
    end subroutine destruct_multipliers_ccsd
-!
-!
-   subroutine destruct_t2bar_ccsd(wf)
-!!
-!!    Destruct T2-bar
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_gs_amplitudes)
-!
-   end subroutine destruct_t2bar_ccsd
 !
 !
    subroutine print_dominant_amplitudes_ccsd(wf)
@@ -923,49 +794,6 @@ contains
       call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)    
 !
    end subroutine form_newton_raphson_t_estimate_ccsd
-!
-!
-   subroutine get_ip_projector_ccsd(wf, projector)
-!!
-!!    Get IP projector 
-!!    Written by Sarai D. Folkestad, Aug 2019
-!!
-!!    Constructs and returns the projector
-!!    for an IP calculation (valence).
-!!
-!!
-      implicit none
-!
-      class(ccsd), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes),intent(out) :: projector
-!
-      integer :: A, I, AI, B, J, BJ, AIBJ
-!
-      call zero_array(projector, wf%n_es_amplitudes)
-!
-      do I = 1, wf%n_o
-         do A = wf%n_v - wf%n_bath_orbitals + 1, wf%n_v
-!
-            AI = wf%n_v*(I-1) + A
-            projector(AI) = one
-!
-            do J = 1, wf%n_o
-               do B = 1, wf%n_v
-!
-                  BJ = wf%n_v*(J-1) + B
-                  AIBJ = max(AI, BJ)*(max(AI, BJ)-3)/2 + AI + BJ
-!
-                  projector(wf%n_t1 + AIBJ) = one
-!
-               enddo
-            enddo 
-!
-         enddo
-      enddo
-!
-   end subroutine get_ip_projector_ccsd
-!
 !
 !
 end module ccsd_class

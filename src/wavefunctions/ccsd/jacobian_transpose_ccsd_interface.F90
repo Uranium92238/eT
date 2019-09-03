@@ -54,69 +54,6 @@
    end subroutine jacobian_transpose_ccsd_transformation_ccsd
 !
 !
-   module subroutine jacobian_transpose_ccsd_a1_ccsd(wf, sigma_ai, b_ai)
-!!
-!!    Jacobian transpose CCSD A1
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
-!!
-!!    Calculates the A1 term,
-!!
-!!       sum_ckdl b_ck L_iald u_kl^cd,
-!!
-!!    abd adds it to the transformed vector sigma_ai.
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)     :: b_ai
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)  :: sigma_ai
-!
-   end subroutine jacobian_transpose_ccsd_a1_ccsd
-!
-!
-   module subroutine jacobian_transpose_ccsd_b1_ccsd(wf, sigma_ai, b_ai)
-!!
-!!    Jacobian transpose CCSD B1
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
-!!
-!!    Calculates the B1 term,
-!!
-!!       - sum_ckdl (b_al L_kcid t_kl^cd + b_ci L_ldka t_kl^cd),
-!!
-!!    abd adds it to the transformed vector sigma_ai.
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_ai
-!
-   end subroutine jacobian_transpose_ccsd_b1_ccsd
-!
-!
-   module subroutine jacobian_transpose_ccsd_c1_ccsd(wf, sigma_ai, b_aibj)
-!!
-!!    Jacobian transpose CCSD C1
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
-!!
-!!    Calculates the C1 term,
-!!
-!!       sum_cdl b_cidl g_dlca - sum_kdl b_akdl g_dlik,
-!!
-!!    and adds it to the transformed vector sigma_ai.
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o)                 :: sigma_ai
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
-!
-   end subroutine jacobian_transpose_ccsd_c1_ccsd
-!
-!
    module subroutine jacobian_transpose_ccsd_d1_ccsd(wf, sigma_ai, b_aibj)
 !!
 !!    Jacobian transpose CCSD D1
@@ -203,27 +140,6 @@
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
 !
    end subroutine jacobian_transpose_ccsd_g1_ccsd
-!
-!
-   module subroutine jacobian_transpose_ccsd_a2_ccsd(wf, sigma_aibj, b_ai)
-!!
-!!    Jacobian transpose CCSD A2
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
-!!
-!!    Calculates the A2 term,
-!!
-!!       2 F_jb b_ai - F_ib b_aj - sum_k L_ikjb b_ak + sum_c L_cajb b_ci
-!!
-!!    and adds it to the transformed vector sigma_aibj.
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: sigma_aibj
-      real(dp), dimension(wf%n_v, wf%n_o)                 :: b_ai
-!
-   end subroutine jacobian_transpose_ccsd_a2_ccsd
 !
 !
    module subroutine jacobian_transpose_ccsd_b2_ccsd(wf, sigma_aibj, b_aibj)
