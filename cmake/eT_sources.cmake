@@ -93,8 +93,18 @@ set(eT_fortran_sources
    src/solver_tools/davidson_tool_class.F90
    src/solver_tools/eigen_davidson_tool_class.F90
    src/solver_tools/linear_davidson_tool_class.F90
+   src/wavefunctions/ccs/oei_ccs.F90
+   src/wavefunctions/ccs/tei_ccs.F90
+   src/wavefunctions/ccs/fock_ccs.F90
    src/wavefunctions/ccs/zop_ccs.F90
    src/wavefunctions/ccs/fop_ccs.F90
+   src/wavefunctions/ccs/omega_ccs.F90
+   src/wavefunctions/ccs/jacobian_ccs.F90
+   src/wavefunctions/ccs/jacobian_transpose_ccs.F90
+   src/wavefunctions/ccs/multiplier_equation_ccs.F90
+   src/wavefunctions/ccs/initialize_destruct_ccs.F90
+   src/wavefunctions/ccs/set_get_ccs.F90
+   src/wavefunctions/ccs/file_handling_ccs.F90
    src/wavefunctions/abstract_doubles/omega_abstract_doubles.F90
    src/wavefunctions/abstract_doubles/jacobian_abstract_doubles.F90
    src/wavefunctions/abstract_doubles/jacobian_transpose_abstract_doubles.F90
@@ -106,18 +116,28 @@ set(eT_fortran_sources
    src/wavefunctions/cc2/omega_cc2.F90
    src/wavefunctions/cc2/jacobian_cc2.F90
    src/wavefunctions/cc2/jacobian_transpose_cc2.F90
+   src/wavefunctions/cc2/multiplier_equation_cc2.F90
+   src/wavefunctions/cc2/initialize_destruct_cc2.F90
+   src/wavefunctions/cc2/file_handling_cc2.F90
    src/wavefunctions/lowmem_cc2/omega_lowmem_cc2.F90
    src/wavefunctions/lowmem_cc2/jacobian_lowmem_cc2.F90
    src/wavefunctions/lowmem_cc2/jacobian_transpose_lowmem_cc2.F90
+   src/wavefunctions/lowmem_cc2/zop_lowmem_cc2.F90
+   src/wavefunctions/ccsd/zop_ccsd.F90
    src/wavefunctions/ccsd/omega_ccsd.F90
-   src/wavefunctions/ccsd/files_ccsd.F90
-   src/wavefunctions/ccsd/get_set_ccsd.F90
+   src/wavefunctions/ccsd/file_handling_ccsd.F90
+   src/wavefunctions/ccsd/initialize_destruct_ccsd.F90
+   src/wavefunctions/ccsd/set_get_ccsd.F90
    src/wavefunctions/ccsd/jacobian_ccsd.F90
    src/wavefunctions/ccsd/jacobian_transpose_ccsd.F90
+   src/wavefunctions/ccsd/multiplier_equation_ccsd.F90
    src/wavefunctions/cc3/zop_cc3.F90
    src/wavefunctions/cc3/omega_cc3.F90
    src/wavefunctions/cc3/jacobian_cc3.F90
    src/wavefunctions/cc3/prepare_jacobian_transform_cc3.F90
    src/wavefunctions/cc3/jacobian_transpose_cc3.F90
    src/wavefunctions/cc3/cc3_batching_abc.F90
+   src/wavefunctions/cc3/multiplier_equation_cc3.F90
+   src/wavefunctions/cc3/initialize_destruct_cc3.F90
+   src/wavefunctions/mp2/zop_mp2.F90
 )

@@ -39,6 +39,31 @@ submodule (cc3_class) jacobian_transpose
 contains
 !
 !
+   module subroutine prepare_for_jacobian_transpose_cc3(wf)
+!!
+!!    Prepare for jacobian transpose transformation
+!!    Written by Rolf Heilemann Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      type(timings) :: prep_timer
+!
+      prep_timer = new_timer("Time preparing for Jacobian")
+      call prep_timer%turn_on()
+!
+      call output%printf('Preparing for (a0) left excited state equations', chars=[trim(wf%name_)], fs='(/t3,a)')
+!
+      if (.not. wf%X_ajil%exists()) call wf%prep_cc3_jacobian_intermediates()
+      if (.not. wf%g_cdlk_t%exists()) call wf%prep_cc3_jacobian_trans_integrals()
+!
+      call prep_timer%turn_off()
+      call timing%flush_()
+!
+   end subroutine prepare_for_jacobian_transpose_cc3
+!
+!
    module subroutine effective_jacobian_transpose_transformation_cc3(wf, omega, c)
 !!
 !!    Effective Jacobian transpose transformation (CC3)

@@ -17,30 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine initialize_gs_density_cc3(wf)
-!!
-!!    Initialize GS density and CC3 corrections to the GS-density
-!!    Written by Sarai D. Folkestad, Apr 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-   end subroutine initialize_gs_density_cc3
-!
-!
-   module subroutine destruct_gs_density_cc3(wf)
-!!
-!!    Destruct GS density amd CC3 correctoins to the GS-density
-!!    Written by Sarai D. Folkestad, Apr 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-!
-   end subroutine destruct_gs_density_cc3
-!
-!
    module subroutine prepare_for_density_cc3(wf)
 !!
 !!    Prepare the construction of the CC3 contribution to the GS density

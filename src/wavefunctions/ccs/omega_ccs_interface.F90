@@ -17,27 +17,33 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine prepare_for_density_cc2(wf)
+   module subroutine construct_omega_ccs(wf, omega)
 !!
-!!    Prepare for the construction of density matrices
-!!    Written by Sarai D. Folekstad, May 2019
+!!    Construct Omega (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
       implicit none
 !
-      class(cc2), intent(inout) :: wf
+      class(ccs), intent(inout) :: wf
 !
-   end subroutine prepare_for_density_cc2
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+!
+   end subroutine construct_omega_ccs
 !
 !
-   module subroutine calculate_energy_cc2(wf)
+   module subroutine omega_ccs_a1_ccs(wf, omega)
 !!
-!!    Calculate energy 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
+!!    Omega A1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, March 2017
 !!
-      class(cc2), intent(inout) :: wf 
+!!    Adds the A1 contribution to omega,
+!!
+!!       Omega_ai^A1 =+ F_ai_T1.
+!!
+      implicit none
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb 
+      class(ccs), intent(in) :: wf
 !
-      real(dp) :: correlation_energy
+      real(dp), dimension(wf%n_gs_amplitudes) :: omega
 !
-   end subroutine calculate_energy_cc2
+   end subroutine omega_ccs_a1_ccs

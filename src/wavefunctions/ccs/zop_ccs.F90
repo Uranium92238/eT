@@ -33,34 +33,6 @@ submodule (ccs_class) zop_ccs
 contains
 !
 !
-   module subroutine initialize_gs_density_ccs(wf)
-!!
-!!    Initialize density
-!!    Written by Sarai D. Folkestad, Apr 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (.not. allocated(wf%density)) call mem%alloc(wf%density, wf%n_mo, wf%n_mo)
-!
-   end subroutine initialize_gs_density_ccs
-!
-!
-   module subroutine destruct_gs_density_ccs(wf)
-!!
-!!    Destruct density
-!!    Written by Sarai D. Folkestad, Apr 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (allocated(wf%density)) call mem%dealloc(wf%density, wf%n_mo, wf%n_mo)
-!
-   end subroutine destruct_gs_density_ccs
-!
-!
    module subroutine prepare_for_density_ccs(wf)
 !!
 !!    Prepare for the construction of density matrices
@@ -184,6 +156,61 @@ contains
       expectation_value = ddot(wf%n_mo**2, A, 1, density, 1)
 !
    end function calculate_expectation_value_ccs
+!
+!
+   module subroutine calculate_energy_ccs(wf)
+!!
+!!    Calculate energy
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+!!    Calculates the CCSD energy. This is only equal to the actual
+!!    energy when the ground state equations are solved, of course.
+!!
+!!       E = E_hf + sum_aibj t_i^a t_j^b L_iajb
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajb
+!
+      real(dp) :: correlation_energy 
+!
+      integer :: a, i, b, j, ai, bj, aibj
+!
+      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+      call wf%get_ovov(g_iajb)
+!
+      correlation_energy = zero 
+!
+!$omp parallel do private(a,i,ai,bj,j,b,aibj) reduction(+:correlation_energy)
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            ai = (i-1)*wf%n_v + a
+!
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v
+!
+                  bj = wf%n_v*(j - 1) + b
+!
+                  aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
+!
+                  correlation_energy = correlation_energy + (wf%t1(a,i))*(wf%t1(b,j))* &
+                                                      (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+      wf%energy = wf%hf_energy + correlation_energy
+!
+   end subroutine calculate_energy_ccs
 !
 !
 end submodule zop_ccs

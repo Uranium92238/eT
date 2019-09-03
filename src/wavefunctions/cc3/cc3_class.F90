@@ -82,10 +82,12 @@ module cc3_class
 !
       type(direct_file) :: Y_clik_tbar
 !
-      real(dp), dimension(:,:), allocatable :: GS_cc3_density_oo
-      real(dp), dimension(:,:), allocatable :: GS_cc3_density_vv
+!     Real wavefunction variables
 !
       real(dp) :: excitation_energy
+!
+      real(dp), dimension(:,:), allocatable :: GS_cc3_density_oo
+      real(dp), dimension(:,:), allocatable :: GS_cc3_density_vv
 !
    contains
 !
@@ -192,7 +194,9 @@ module cc3_class
 !
    interface
 !
+      include "initialize_destruct_cc3_interface.F90"
       include "omega_cc3_interface.F90"
+      include "multiplier_equation_cc3_interface.F90"
       include "prepare_jacobian_transform_cc3_interface.F90"
       include "jacobian_cc3_interface.F90"
       include "jacobian_transpose_cc3_interface.F90"
@@ -335,131 +339,6 @@ contains
    end subroutine construct_excited_state_equation_cc3
 !
 !
-   subroutine prepare_for_jacobian_cc3(wf)
-!!
-!!    Prepare for jacobian
-!!    Written by Rolf Heilemann Myhre, April 2019
-!!
-      implicit none
-!
-      class(cc3), intent(inout) :: wf
-!  
-!
-      type(timings) :: prep_timer      
-!
-      prep_timer = new_timer("Time preparing for Jacobian")
-      call prep_timer%turn_on()
-!
-      call output%printf('Preparing for (a0) right excited state equations', chars=[trim(wf%name_)], fs='(/t3,a)')
-!
-      call wf%prep_cc3_jacobian_intermediates()
-      call wf%save_jacobian_a1_intermediates()
-      call wf%save_jacobian_c2_intermediates()
-      call wf%save_jacobian_d2_intermediate()
-      call wf%save_jacobian_e2_intermediate()
-      call wf%save_jacobian_g2_intermediates()
-      call wf%save_jacobian_h2_intermediates()
-      call wf%save_jacobian_j2_intermediate()
-!
-      call prep_timer%turn_off()
-      call timing%flush_()
-!
-   end subroutine prepare_for_jacobian_cc3
-!
-!
-   subroutine prepare_for_jacobian_transpose_cc3(wf)
-!!
-!!    Prepare for jacobian transpose transformation
-!!    Written by Rolf Heilemann Myhre, April 2019
-!!
-      implicit none
-!
-      class(cc3), intent(inout) :: wf
-!
-      type(timings) :: prep_timer
-!
-      prep_timer = new_timer("Time preparing for Jacobian")
-      call prep_timer%turn_on()
-!
-      call output%printf('Preparing for (a0) left excited state equations', chars=[trim(wf%name_)], fs='(/t3,a)')
-!
-      if (.not. wf%X_ajil%exists()) call wf%prep_cc3_jacobian_intermediates()
-      if (.not. wf%g_cdlk_t%exists()) call wf%prep_cc3_jacobian_trans_integrals()
-!
-      call prep_timer%turn_off()
-      call timing%flush_()
-!
-   end subroutine prepare_for_jacobian_transpose_cc3
-!
-!
-   subroutine prepare_for_multiplier_equation_cc3(wf)
-!!
-!!    Prepare for jacobian transpose transformation
-!!    Written by Alexander Paul, July 2019
-!!
-      implicit none
-!
-      class(cc3), intent(inout) :: wf
-!
-      type(timings) :: prep_timer
-!
-      prep_timer = new_timer("Time preparing for multiplier equation")
-      call prep_timer%turn_on()
-!
-      call output%printf('Preparing for (a0) multiplier equations', chars=[trim(wf%name_)], fs='(/t3,a)')
-!
-      if (.not. wf%X_ajil%exists()) call wf%prep_cc3_jacobian_intermediates()
-      if (.not. wf%g_cdlk_t%exists()) call wf%prep_cc3_jacobian_trans_integrals()
-!
-      call prep_timer%turn_off()
-      call timing%flush_()
-!
-   end subroutine prepare_for_multiplier_equation_cc3
-!
-!
-   subroutine construct_multiplier_equation_cc3(wf, equation)
-!!
-!!    Construct multiplier equation
-!!    Written by Eirik F. Kjønstad, Nov 2018
-!!
-!!    Adapted by Alexander Paul, June 2019
-!!
-!!    Constructs
-!!
-!!       t-bar^T A + eta,
-!!
-!!    and places the result in 'equation'.
-!!
-      implicit none
-!
-      class(cc3), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
-!
-      real(dp), dimension(:), allocatable :: eta
-!
-!     Copy the multipliers, eq. = t-bar
-!
-      call dcopy(wf%n_t1, wf%t1bar, 1, equation, 1)
-      call dcopy(wf%n_t2, wf%t2bar, 1, equation(wf%n_t1 + 1), 1)
-!
-!     Transform the multipliers by A^T, eq. = t-bar^T A
-!
-      call wf%effective_jacobian_transpose_transformation(zero, equation) ! frequency ω = 0
-!
-!     No triples contributions to η
-!     Construct eta(CCSD) and add, eq. = t-bar^T A + eta
-!
-      call mem%alloc(eta, wf%n_gs_amplitudes)
-      call wf%construct_eta(eta)
-!
-      call daxpy(wf%n_gs_amplitudes, one, eta, 1, equation, 1)
-!
-      call mem%dealloc(eta, wf%n_gs_amplitudes)
-!
-   end subroutine construct_multiplier_equation_cc3
-
-
    subroutine get_cvs_projector_cc3(wf, projector, n_cores, core_MOs)
 !!
 !!    Get CVS projector

@@ -17,31 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-!
-   module subroutine initialize_transition_densities_ccs(wf)
-!!
-!!    Initialize left and right transition densities
-!!    Written by Alexander Paul, June 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-   end subroutine initialize_transition_densities_ccs
-!
-!
-   module subroutine destruct_transition_densities_ccs(wf)
-!!
-!!    Destruct left and right transition densities
-!!    Written by Alexander Paul, June 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-   end subroutine destruct_transition_densities_ccs
-!
-!
    module subroutine construct_right_transition_density_ccs(wf, R_k)
 !!
 !!    Construct right one-electron transition density for the state k

@@ -17,27 +17,29 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine prepare_for_density_cc2(wf)
+   module subroutine prepare_for_multiplier_equation_cc3(wf)
 !!
-!!    Prepare for the construction of density matrices
-!!    Written by Sarai D. Folekstad, May 2019
+!!    Prepare for jacobian transpose transformation
+!!    Written by Alexander Paul, July 2019
 !!
       implicit none
 !
-      class(cc2), intent(inout) :: wf
+      class(cc3), intent(inout) :: wf
 !
-   end subroutine prepare_for_density_cc2
+   end subroutine prepare_for_multiplier_equation_cc3
 !
 !
-   module subroutine calculate_energy_cc2(wf)
+   module subroutine construct_multiplier_equation_cc3(wf, equation)
 !!
-!!    Calculate energy 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
+!!    Construct multiplier equation
+!!    Written by Eirik F. Kjønstad, Nov 2018
 !!
-      class(cc2), intent(inout) :: wf 
+!!    Adapted by Alexander Paul, June 2019
+!!
+      implicit none
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb 
+      class(cc3), intent(in) :: wf
 !
-      real(dp) :: correlation_energy
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
 !
-   end subroutine calculate_energy_cc2
+   end subroutine construct_multiplier_equation_cc3
