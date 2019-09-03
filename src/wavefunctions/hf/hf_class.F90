@@ -29,7 +29,6 @@ module hf_class
    use timings_class
    use array_utilities
    use array_analysis
-   use interval_class
    use libint_initialization
 !
    use omp_lib
@@ -49,7 +48,7 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: pivot_matrix_ao_overlap
 !
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz
-      integer, dimension(:,:), allocatable  :: sp_eri_schwarz_list
+      integer,  dimension(:,:), allocatable :: sp_eri_schwarz_list
 ! 
 !     Declarations for QM/MM
 ! 
@@ -64,7 +63,7 @@ module hf_class
       real(dp) :: libint_epsilon       = 1.0D-20   ! ε for libint, integral precision given
                                                    ! approximately by sqrt(ε)
 !
-      type(file) :: restart_file
+      type(sequential_file) :: restart_file
 !
       integer :: n_densities
 !
@@ -207,17 +206,17 @@ contains
       call wf%set_n_mo()
 !
       call wf%initialize_wavefunction_files()
-      call wf%restart_file%init('hf_restart_file', 'sequential', 'unformatted')
+      wf%restart_file = sequential_file('hf_restart_file')
 !
-      call disk%open_file(wf%restart_file, 'readwrite', 'rewind')
+      call wf%restart_file%open_('write', 'rewind')
 !
-      write(wf%restart_file%unit) wf%n_ao
-      write(wf%restart_file%unit) wf%n_mo
-      write(wf%restart_file%unit) wf%n_densities
-      write(wf%restart_file%unit) wf%n_o
-      write(wf%restart_file%unit) wf%n_v
+      call wf%restart_file%write_(wf%n_ao)
+      call wf%restart_file%write_(wf%n_mo)
+      call wf%restart_file%write_(wf%n_densities)
+      call wf%restart_file%write_(wf%n_o)
+      call wf%restart_file%write_(wf%n_v)
 !
-      call disk%close_file(wf%restart_file)
+      call wf%restart_file%close_
 !
    end function new_hf
 !
@@ -235,22 +234,29 @@ contains
 !
       integer :: n_ao, n_mo, n_densities
 !
-      call disk%open_file(wf%restart_file, 'read', 'rewind')
+      call wf%restart_file%open_('read', 'rewind')
 !
-      read(wf%restart_file%unit) n_ao
-      read(wf%restart_file%unit) n_mo
-      read(wf%restart_file%unit) n_densities
+      call wf%restart_file%read_(n_ao)
+      call wf%restart_file%read_(n_mo)
+      call wf%restart_file%read_(n_densities)
 !
-      call disk%close_file(wf%restart_file)
+      call wf%restart_file%close_
 !
-      if (n_ao .ne. wf%n_ao) call output%error_msg('attempted to restart HF with an inconsistent number ' // &
-                                                   'of atomic orbitals for task ' // trim(task))
+      if (n_ao .ne. wf%n_ao) then
+         call output%error_msg('attempted to restart HF with an inconsistent number ' // &
+                               'of atomic orbitals for task ' // trim(task))
+      endif
 !
-      if (n_mo .ne. wf%n_mo) call output%error_msg('attempted to restart HF with an inconsistent number ' // &
-                                                   'of molecular orbitals for task ' // trim(task))
+      if (n_mo .ne. wf%n_mo) then 
+         call output%error_msg('attempted to restart HF with an inconsistent number ' // &
+                               'of molecular orbitals for task ' // trim(task))
+      endif
 !
-      if (n_densities .ne. wf%n_densities) call output%error_msg('attempted to restart HF with an inconsistent number ' // &
-                                                   'of atomic densities (likely a HF/UHF inconsistency) for task ' // trim(task))
+      if (n_densities .ne. wf%n_densities) then 
+         call output%error_msg('attempted to restart HF with an inconsistent number ' // &
+                               'of atomic densities (likely a HF/UHF inconsistency) for task ' // &
+                               trim(task))
+      endif
 !
    end subroutine is_restart_safe_hf
 !
@@ -853,21 +859,21 @@ contains
 !!    Save AO density
 !!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Save the AO density (or densities, if unrestricted) based
+!!    Save the AO density based
 !!    on the current orbital coefficient matrix (or matrices).
 !!
       implicit none
 !
       class(hf) :: wf
 !
-      type(file) :: ao_density
+      type(sequential_file) :: ao_density_file
 !
-      call ao_density%init('ao_density', 'sequential', 'formatted')
-      call disk%open_file(ao_density, 'readwrite', 'rewind')
+      ao_density_file = sequential_file('ao_density')
+      call ao_density_file%open_('write', 'rewind')
 !
-      write(ao_density%unit, *) wf%ao_density
+      call ao_density_file%write_(wf%ao_density, wf%n_ao*wf%n_ao)
 !
-      call disk%close_file(ao_density)
+      call ao_density_file%close_
 !
    end subroutine save_ao_density_hf
 !
@@ -900,11 +906,11 @@ contains
 !
       class(hf) :: wf
 !
-      call disk%open_file(wf%restart_file, 'readwrite', 'append')
+      call wf%restart_file%open_('write', 'append')
 !
-      write(wf%restart_file%unit) wf%energy
+      call wf%restart_file%write_(wf%energy)
 !
-      call disk%close_file(wf%restart_file)
+      call wf%restart_file%close_
 !
       call wf%destruct_orbital_energies()
       call wf%destruct_ao_overlap()
@@ -912,7 +918,6 @@ contains
       call wf%destruct_ao_density()
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
-!      call wf%destruct_mm()
 !
    end subroutine cleanup_hf
 !

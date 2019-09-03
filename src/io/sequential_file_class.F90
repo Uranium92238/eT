@@ -27,12 +27,10 @@ module sequential_file_class
 !
    use kinds    
    use abstract_file_class, only : abstract_file
-   use output_file_class, only : output
+   use global_out, only : output
    use disk_manager_class, only : disk
 !
    type, extends(abstract_file) :: sequential_file
-!
-      integer, private  :: word_size      ! Size of a word, default is double precision
 !
    contains
 !
@@ -40,6 +38,7 @@ module sequential_file_class
 !
       procedure, public :: open_   => open_sequential_file
       procedure, public :: close_  => close_sequential_file
+      procedure, public :: delete_ => delete_sequential_file
       procedure, public :: rewind_ => rewind_sequential_file
       procedure, public :: skip    => skip_sequential_file
 !
@@ -100,7 +99,7 @@ module sequential_file_class
 contains
 !
 !
-   function new_sequential_file(name_) result(the_file)
+   function new_sequential_file(name_, format_) result(the_file)
 !!
 !!    Sequential file constructer
 !!    Writen by Rolf H. Myhre, May 2019
@@ -114,16 +113,30 @@ contains
       type(sequential_file) :: the_file
 !
       character(len=*), intent(in) :: name_
+      character(len=*), optional, intent(in) :: format_
 !
       the_file%name_ = name_
 !
       the_file%access_ = 'sequential'
-      the_file%format_ = 'unformatted'
+!
+      if(present(format_)) then
+         if(format_ .eq. 'formatted' .or. format_ .eq. 'unformatted') then
+            the_file%format_ = format_
+         else
+            call output%error_msg('Wrong format specifier in eT sequential file '//the_file%name_ // &
+                                 & ' ,format specifier: '//format_)
+         endif
+      else
+         the_file%format_ = 'unformatted'
+      endif
+!
+      the_file%is_open = .false.
+      the_file%unit = -1
 !
    end function new_sequential_file
 !
 !
-   subroutine open_sequential_file(the_file, file_action, file_pos)
+   subroutine open_sequential_file(the_file, file_action, position_)
 !!
 !!    Open eT sequential file
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -132,7 +145,7 @@ contains
 !
       class(sequential_file)                 :: the_file
       character(len=*), optional, intent(in) :: file_action
-      character(len=*), optional, intent(in) :: file_pos
+      character(len=*), optional, intent(in) :: position_
 !
       integer              :: io_error
       character(len=100)   :: io_msg
@@ -145,11 +158,17 @@ contains
          act = 'readwrite'
       endif 
 !
-      if(present(file_pos)) then
-         pos = trim(file_pos)
+      if(present(position_)) then
+         pos = trim(position_)
       else
          pos = 'rewind'
       endif 
+!
+      if (the_file%is_open) then
+!
+         call output%error_msg(trim(the_file%name_)//' is already open')
+!
+      endif
 !
       open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
            action=trim(act), status='unknown', form=the_file%format_, position=pos, &
@@ -160,7 +179,7 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-      the_file%opened = .true.
+      the_file%is_open = .true.
 !
       call the_file%set_open_size()
 !
@@ -190,17 +209,22 @@ contains
          stat = 'keep'
       endif 
 !
+      if (.not. the_file%is_open) then
+         call output%error_msg(trim(the_file%name_)//' already closed')
+      end if
+!
       close(the_file%unit, iostat=io_error, iomsg=io_msg, status=trim(stat))
 !
       if (io_error .ne. 0) then 
-         call output%error_msg('Error: could not close eT file '//trim(the_file%name_)//&
+         call output%error_msg('could not close eT file '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
       endif
 !
-      the_file%opened = .false.
-!
       file_change = the_file%get_change()
       call disk%update(file_change, the_file%name_)
+!
+      the_file%is_open = .false.
+      the_file%unit = -1
 !
    end subroutine close_sequential_file
 !
@@ -262,6 +286,49 @@ contains
    end subroutine skip_sequential_file
 !
 !
+   subroutine delete_sequential_file(the_file)
+!!
+!!    Delete file
+!!    Written by Rolf Heilemann Myhre, Aug 2019
+!!
+      implicit none
+!
+      class(sequential_file) :: the_file
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      if(the_file%is_open) then
+!
+         close(the_file%unit, iostat=io_error, iomsg=io_msg, status='delete')
+!
+         if (io_error .ne. 0) then 
+            call output%error_msg('Error: could not delete eT file '//trim(the_file%name_)//&
+                                 &'. Error message: '//trim(io_msg))
+         endif
+!
+      else
+!
+         open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
+              action='write', iostat=io_error, iomsg=io_msg)
+!
+         if (io_error .ne. 0) then 
+            call output%error_msg('Error: could not open eT file '//trim(the_file%name_)//&
+                                 &'. Error message: '//trim(io_msg))
+         endif
+!
+         close(the_file%unit, iostat=io_error, iomsg=io_msg, status='delete')
+!
+         if (io_error .ne. 0) then 
+            call output%error_msg('Error: could not delete eT file '//trim(the_file%name_)//&
+                                 &'. Error message: '//trim(io_msg))
+         endif
+!
+      endif
+!
+   end subroutine delete_sequential_file
+!
+!
    subroutine write_dp_sequential_file(the_file, scalar)
 !!
 !!    Sequential file write, real(dp0 scalar
@@ -276,7 +343,11 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+      if (the_file%format_ .eq. 'unformatted') then
+         write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+      else
+         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar
+      endif
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//the_file%name_//&
@@ -301,7 +372,11 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, iostat=io_error, iomsg=io_msg) array
+      if (the_file%format_ .eq. 'unformatted') then
+         write(the_file%unit, iostat=io_error, iomsg=io_msg) array
+      else
+         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) array
+      endif
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//the_file%name_//&
@@ -370,7 +445,13 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+      if (the_file%format_ .eq. 'unformatted') then
+         call output%printf('unformatted')
+         write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+      else
+         call output%printf('formatted')
+         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar
+      endif
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//the_file%name_//&
@@ -395,7 +476,11 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, iostat=io_error, iomsg=io_msg) array
+      if (the_file%format_ .eq. 'unformatted') then
+         write(the_file%unit, iostat=io_error, iomsg=io_msg) array
+      else
+         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) array
+      endif
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//trim(the_file%name_)//&
@@ -464,7 +549,11 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      read(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+      if (the_file%format_ .eq. 'unformatted') then
+         read(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+      else
+         read(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar
+      endif
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
@@ -489,7 +578,11 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      read(the_file%unit, iostat=io_error, iomsg=io_msg) array
+      if (the_file%format_ .eq. 'unformatted') then
+         read(the_file%unit, iostat=io_error, iomsg=io_msg) array
+      else
+         read(the_file%unit, *, iostat=io_error, iomsg=io_msg) array
+      endif
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
@@ -558,7 +651,11 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      read(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+      if (the_file%format_ .eq. 'unformatted') then
+         read(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+      else
+         read(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar
+      endif
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
@@ -583,7 +680,11 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      read(the_file%unit, iostat=io_error, iomsg=io_msg) array
+      if (the_file%format_ .eq. 'unformatted') then
+         read(the_file%unit, iostat=io_error, iomsg=io_msg) array
+      else
+         read(the_file%unit, *, iostat=io_error, iomsg=io_msg) array
+      endif
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&

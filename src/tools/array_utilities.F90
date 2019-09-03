@@ -28,8 +28,9 @@ module array_utilities
 !!    where all such routines are gathered for convenience).
 !!
 !
-   use kinds
-   use memory_manager_class
+   use parameters
+   use global_out, only : output
+   use memory_manager_class, only : mem
 !
    implicit none
 !
@@ -1439,14 +1440,14 @@ contains
    end subroutine copy_and_scale
 !
 !
-   subroutine print_matrix(name,matrix,idim1,idim2)
+   subroutine print_matrix(name_, matrix, idim1, idim2)
 !!    
 !!    Print square matrix 
 !!    Written by tommaso giovannini, march 2019
 !!    
       implicit none
 !
-      character(len=*) :: name
+      character(len=*) :: name_
 !      
       integer :: idim1, idim2, i, j, k, nelmfinal, nvec, start
 !      
@@ -1528,13 +1529,13 @@ contains
 !         
 !     place the name in the middle of the string
 !
-      start = 32-len(name)/2
+      start = 32-len(name_)/2
       write(start_string,'(i2)') start
       frmt2  ="(t5,"// start_string //"x,a)"
 !      
       write(output%unit,*)
       write(output%unit,frmt0 )
-      write(output%unit,frmt2) name
+      write(output%unit,frmt2) name_
       write(output%unit,frmt0 )
 !      
       do i = 1, nvec

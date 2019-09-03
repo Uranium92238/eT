@@ -26,7 +26,7 @@ module file_class
 !!
 !
    use kinds    
-   use output_file_class, only : output
+   use global_out, only: output
    use abstract_file_class      
 !
    type, extends(abstract_file) :: file
@@ -92,7 +92,7 @@ contains
 !
       endif
 !
-      the_file%opened = .false.
+      the_file%is_open = .false.
 !
       the_file%access_ = access_
       the_file%format_ = format_
@@ -130,7 +130,7 @@ contains
 !
 !     Sanity checks
 !
-      if (.not. the_file%opened) then
+      if (.not. the_file%is_open) then
 !
          call output%error_msg('attempted to read unopened file:' // trim(the_file%name_))
 !

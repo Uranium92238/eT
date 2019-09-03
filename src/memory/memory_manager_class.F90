@@ -52,8 +52,9 @@ module memory_manager_class
 !
    use kinds
    use parameters
-   use global_files
-   use batching_index_class
+   use global_out, only : output
+   use global_in, only : input
+   use batching_index_class, only : batching_index
    use io_utilities
 !
 !  Class definition 

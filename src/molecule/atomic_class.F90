@@ -24,12 +24,11 @@ module atomic_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-   use kinds
    use parameters
-   use file_class
-   use shell_class
-   use memory_manager_class
-   use disk_manager_class
+   use global_out, only : output
+   use sequential_file_class, only : sequential_file
+   use shell_class, only : shell
+   use memory_manager_class, only : mem
 !
    implicit none
 !
@@ -187,35 +186,36 @@ contains
 !
       character(len=255) :: sad_directory
 !
-      type(file) :: alpha_density
-      type(file) :: beta_density
-!
-      integer :: i, j, ioerror
+      type(sequential_file) :: alpha_density_file
+      type(sequential_file) :: beta_density_file
 !
       atomic_density = zero   
 !
       call get_environment_variable("SAD_ET_DIR", sad_directory)
 !
-      alpha_fname = trim(sad_directory) // '/' // trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'alpha' // '.inp'
-      beta_fname  = trim(sad_directory) // '/' //trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'beta' // '.inp'
+      alpha_fname = trim(sad_directory) // '/' // trim(atom%basis) // '/' // &
+                  & trim(atom%symbol) // '_' // 'alpha' // '.inp'
+      beta_fname  = trim(sad_directory) // '/' // trim(atom%basis) // '/' // &
+                  & trim(atom%symbol) // '_' // 'beta' // '.inp'
 !
-      call alpha_density%init(trim(alpha_fname), 'sequential', 'formatted')
-      call beta_density%init(trim(beta_fname), 'sequential', 'formatted')
+      alpha_density_file = sequential_file(trim(alpha_fname), 'formatted')
+      beta_density_file  = sequential_file(trim(beta_fname), 'formatted')
 !
-      call disk%open_file(alpha_density, 'read', 'rewind')
-      call disk%open_file(beta_density, 'read', 'rewind')
+      call alpha_density_file%open_('read', 'rewind')
+      call beta_density_file%open_( 'read', 'rewind')
 !
       call mem%alloc(temporary, atom%n_ao, atom%n_ao)
-      read(alpha_density%unit, *, iostat=ioerror) ((temporary(i,j), j = 1, atom%n_ao), i = 1, atom%n_ao)
+!
+      call alpha_density_file%read_(temporary, atom%n_ao*atom%n_ao)
       atomic_density = atomic_density + temporary
 !
-      read(beta_density%unit, *, iostat=ioerror) ((temporary(i,j), j = 1, atom%n_ao), i = 1, atom%n_ao)
+      call beta_density_file%read_(temporary, atom%n_ao*atom%n_ao)
       atomic_density = atomic_density + temporary
 !
       call mem%dealloc(temporary, atom%n_ao, atom%n_ao)
 !
-      call disk%close_file(alpha_density)
-      call disk%close_file(beta_density)
+      call alpha_density_file%close_
+      call beta_density_file%close_
 !
    end subroutine read_atomic_density_atomic
 !

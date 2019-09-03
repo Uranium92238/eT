@@ -30,9 +30,7 @@ module reordering
 !!    related routines.
 !!
 !
-   use kinds
    use parameters
-   use file_class
 !
    implicit none
 !

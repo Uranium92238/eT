@@ -26,11 +26,14 @@ module molecular_system_class
 !
    use string_utilities
    use parameters
-   use atomic_class
+   use atomic_class, only : atomic
    use io_utilities
-   use interval_class
+   use interval_class, only : interval
    use libint_initialization
    use mm_class
+   use file_class
+   use output_file_class, only : output_file
+   use disk_manager_class, only : disk
 !
    implicit none
 !
@@ -38,7 +41,7 @@ module molecular_system_class
 !
    type :: molecular_system
 !
-      character(len=200) :: name
+      character(len=200) :: name_
       character(len=100), dimension(:), allocatable :: basis_sets
 !
       integer :: n_atoms
@@ -186,13 +189,13 @@ contains
 !
       call molecule%write_libint_files()
 !
-      call initialize_atoms(molecule%name)
+      call initialize_atoms(molecule%name_)
 !
       call reset_basis_c()
 !
       do i = 1, molecule%n_basis_sets
 !
-         write(temp_name, '(a, a1, i4.4)') trim(molecule%name), '_', i
+         write(temp_name, '(a, a1, i4.4)') trim(molecule%name_), '_', i
 !
          call initialize_basis(molecule%basis_sets(i), temp_name)
 !
@@ -399,7 +402,7 @@ contains
       class(molecular_system) :: molecule
 !
 !
-      call input%get_required_keyword_in_section('name', 'system', molecule%name)
+      call input%get_required_keyword_in_section('name', 'system', molecule%name_)
 !
       call input%get_keyword_in_section('charge', 'system', molecule%charge)
       call input%get_keyword_in_section('multiplicity', 'system', molecule%multiplicity)
@@ -629,7 +632,8 @@ contains
       character(len=100) temp_name
       character(len=100) current_basis
 !
-      type(file) :: mol_file, basis_file
+      type(output_file) :: mol_file
+      type(output_file) :: basis_file
 !
       integer :: basis_set_counter, atom_offset, current_basis_nbr, i
 !
@@ -637,22 +641,23 @@ contains
 !
 !     Write atom file
 !
-      call mol_file%init(trim(molecule%name) // '.xyz', 'sequential', 'formatted')
-      call disk%open_file(mol_file, 'write', 'rewind')
+      mol_file = output_file(trim(molecule%name_) // '.xyz')
+      call mol_file%open_('rewind')
 !
-      write(mol_file%unit, '(i5/)') molecule%n_atoms
+      call mol_file%printf('(i5)',ints=[molecule%n_atoms], fs='(a/)')
 !
       do atom = 1, molecule%n_atoms
 !
-         write(mol_file%unit, '(a2, 3x, f21.16, 3x, f21.16, 3x, f21.16)')  &
-                                    molecule%atoms(atom)%symbol,           &
-                                    molecule%atoms(atom)%x,                &
-                                    molecule%atoms(atom)%y,                &
-                                    molecule%atoms(atom)%z
+         call mol_file%printf('(a2)   (f21.16)   (f21.16)   (f21.16)', &
+                              chars = [molecule%atoms(atom)%symbol],   &
+                              reals = [molecule%atoms(atom)%x,         &
+                                       molecule%atoms(atom)%y,         &
+                                       molecule%atoms(atom)%z],        &
+                              fs ='(a)', ll=80)
 !
       enddo
 !
-      call disk%close_file(mol_file)
+      call mol_file%close_
 !
 !     Count number of basis sets
 !
@@ -699,26 +704,27 @@ contains
 !
       do current_basis_nbr = 1, molecule%n_basis_sets
 !
-         write(temp_name, '(a, a1, i4.4, a4)')trim(molecule%name), '_', current_basis_nbr,  '.xyz'
+         write(temp_name, '(a, a1, i4.4, a4)')trim(molecule%name_), '_', current_basis_nbr,  '.xyz'
 !
-         call basis_file%init(trim(temp_name), 'sequential', 'formatted')
-         call disk%open_file(basis_file, 'write', 'rewind')
+         basis_file = output_file(trim(temp_name))
+         call basis_file%open_('rewind')
 !
-         write(basis_file%unit, '(i5/)') n_atoms_in_basis(current_basis_nbr)
+         call basis_file%printf('(i5)',ints=[n_atoms_in_basis(current_basis_nbr)], fs='(a/)')
 !
          do i = 1, n_atoms_in_basis(current_basis_nbr)
 !
             atom = i + atom_offset
 !
-            write(basis_file%unit, '(a2, 3x, f21.16, 3x, f21.16, 3x, f21.16)') &
-                                       molecule%atoms(atom)%symbol,           &
-                                       molecule%atoms(atom)%x,                &
-                                       molecule%atoms(atom)%y,                &
-                                       molecule%atoms(atom)%z
+            call basis_file%printf('(a2)   (f21.16)   (f21.16)   (f21.16)', &
+                                   chars = [molecule%atoms(atom)%symbol],   &
+                                   reals = [molecule%atoms(atom)%x,         &
+                                            molecule%atoms(atom)%y,         &
+                                            molecule%atoms(atom)%z],        &
+                                   fs ='(a)', ll=80)
 !
          enddo
 !
-         call disk%close_file(basis_file)
+         call basis_file%close_
 !
          atom_offset = atom_offset + n_atoms_in_basis(current_basis_nbr)
 !
@@ -1499,7 +1505,7 @@ contains
 !
       write(output%unit, '(/t3,a)')       '- Molecular system specifications:'
 !
-      write(output%unit, '(/t6,a14,a)')      'Name:         ', trim(molecule%name)
+      write(output%unit, '(/t6,a14,a)')      'Name:         ', trim(molecule%name_)
       write(output%unit, '(t6,a14,i1)')      'Charge:       ', molecule%charge 
       write(output%unit, '(t6,a14,i1)')      'Multiplicity: ', molecule%multiplicity 
 !
@@ -1788,9 +1794,6 @@ contains
          call molecule%atoms(atom_index)%shells(shell)%basis_details%set_n_primitives(n_primitive)
          call molecule%atoms(atom_index)%shells(shell)%basis_details%initialize_exponents()
          call molecule%atoms(atom_index)%shells(shell)%basis_details%initialize_coefficients()
-!
-!         write(output%unit, *)'Atom ', atom_index, molecule%atoms(atom_index)%symbol, &
-!                                 ang_mom, trim(basis_set_file%name), n_primitive
 !
 !        Loop over primitives and set coefficient and exponent
 !

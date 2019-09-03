@@ -26,6 +26,7 @@ module section_class
 !
    use kinds    
    use string_utilities  
+   use global_out, only: output
 !
    type :: section
 !

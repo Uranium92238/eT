@@ -26,7 +26,7 @@ module direct_file_class
 !
    use kinds    
    use abstract_file_class, only : abstract_file
-   use output_file_class, only : output
+   use global_out, only : output
    use disk_manager_class, only : disk
 !
    type, extends(abstract_file) :: direct_file
@@ -142,6 +142,9 @@ contains
       the_file%record_dim = rec_dim
       the_file%record_length = rec_dim*the_file%word_size
 !
+      the_file%is_open = .false.
+      the_file%unit = -1
+!
    end function new_direct_file
 !
 !
@@ -166,6 +169,12 @@ contains
          act = 'readwrite'
       endif 
 !
+      if (the_file%is_open) then
+!
+         call output%error_msg(trim(the_file%name_)//' is already open')
+!
+      endif
+!
       open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
            action=trim(act), recl=the_file%record_length, status='unknown', form=the_file%format_, &
            iostat=io_error, iomsg=io_msg)
@@ -175,7 +184,7 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-      the_file%opened = .true.
+      the_file%is_open = .true.
 !
       call the_file%set_open_size()
 !
@@ -205,7 +214,7 @@ contains
 !
       logical :: file_was_open
 !
-      file_was_open = the_file%opened
+      file_was_open = the_file%is_open
       if (.not. file_was_open) call the_file%open_('read')
 !
       copy = direct_file(filename, the_file%record_dim, the_file%word_size)
@@ -279,6 +288,10 @@ contains
          stat = 'keep'
       endif 
 !
+      if (.not. the_file%is_open) then
+         call output%error_msg(trim(the_file%name_)//' already closed')
+      end if
+!
       close(the_file%unit, iostat=io_error, iomsg=io_msg, status=trim(stat))
 !
       if (io_error .ne. 0) then 
@@ -286,10 +299,11 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-      the_file%opened = .false.
-!
       file_change = the_file%get_change()
       call disk%update(file_change, the_file%name_)
+!
+      the_file%is_open = .false.
+      the_file%unit = -1
 !
    end subroutine close_direct_file
 !

@@ -26,11 +26,6 @@ module uhf_class
 !
    use hf_class
 !
-   use reordering
-   use array_utilities
-   use array_analysis
-   use interval_class
-!
    use omp_lib
 !
    implicit none
@@ -155,7 +150,6 @@ contains
       type(uhf) :: wf
 !
       class(molecular_system), target, intent(in) :: system
-!      class(mm_molecular_system), target, intent(in), optional :: mm_system
 !
       wf%name_ = 'UHF'
 !
@@ -176,9 +170,9 @@ contains
 !
       endif
 !
-      call wf%orbital_coefficients_file%init('orbital_coefficients', 'sequential', 'unformatted')
-      call wf%orbital_energies_file%init('orbital_energies', 'sequential', 'unformatted')
-      call wf%restart_file%init('hf_restart_file', 'sequential', 'unformatted')
+      wf%orbital_coefficients_file = sequential_file('orbital_coefficients')
+      wf%orbital_energies_file = sequential_file('orbital_energies')
+      wf%restart_file = sequential_file('hf_restart_file')
 !
    end function new_uhf
 !
@@ -280,12 +274,13 @@ contains
 !
       class(uhf), intent(inout) :: wf
 !
-      call disk%open_file(wf%orbital_coefficients_file, 'write', 'rewind')
 !
-      write(wf%orbital_coefficients_file%unit) wf%orbital_coefficients_a
-      write(wf%orbital_coefficients_file%unit) wf%orbital_coefficients_b
+      call wf%orbital_coefficients_file%open_('write', 'rewind')
 !
-      call disk%close_file(wf%orbital_coefficients_file)
+      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients_a, wf%n_ao*wf%n_mo)
+      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients_b, wf%n_ao*wf%n_mo)
+!
+      call wf%orbital_coefficients_file%close_
 !
    end subroutine save_orbital_coefficients_uhf
 !
@@ -301,12 +296,12 @@ contains
 !
       call wf%is_restart_safe('ground state')
 !
-      call disk%open_file(wf%orbital_coefficients_file, 'read', 'rewind')
+      call wf%orbital_coefficients_file%open_('read', 'rewind')
 !
-      read(wf%orbital_coefficients_file%unit) wf%orbital_coefficients_a
-      read(wf%orbital_coefficients_file%unit) wf%orbital_coefficients_b
+      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients_a, wf%n_ao*wf%n_mo)
+      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients_b, wf%n_ao*wf%n_mo)
 !
-      call disk%close_file(wf%orbital_coefficients_file)
+      call wf%orbital_coefficients_file%close_
 !
    end subroutine read_orbital_coefficients_uhf
 !
@@ -320,12 +315,12 @@ contains
 !
       class(uhf), intent(inout) :: wf
 !
-      call disk%open_file(wf%orbital_energies_file, 'write', 'rewind')
+      call wf%orbital_energies_file%open_('write', 'rewind')
 !
-      write(wf%orbital_energies_file%unit) wf%orbital_energies_a
-      write(wf%orbital_energies_file%unit) wf%orbital_energies_b
+      call wf%orbital_energies_file%write_(wf%orbital_energies_a, wf%n_mo)
+      call wf%orbital_energies_file%write_(wf%orbital_energies_b, wf%n_mo)
 !
-      call disk%close_file(wf%orbital_energies_file)
+      call wf%orbital_energies_file%close_
 !
    end subroutine save_orbital_energies_uhf
 !
@@ -341,12 +336,12 @@ contains
 !
       call wf%is_restart_safe('ground state')
 !
-      call disk%open_file(wf%orbital_energies_file, 'read', 'rewind')
+      call wf%orbital_energies_file%open_('read', 'rewind')
 !
-      read(wf%orbital_energies_file%unit) wf%orbital_energies_a
-      read(wf%orbital_energies_file%unit) wf%orbital_energies_b
+      call wf%orbital_energies_file%read_(wf%orbital_energies_a, wf%n_mo)
+      call wf%orbital_energies_file%read_(wf%orbital_energies_b, wf%n_mo)
 !
-      call disk%close_file(wf%orbital_energies_file)
+      call wf%orbital_energies_file%close_
 !
    end subroutine read_orbital_energies_uhf
 !
@@ -801,26 +796,25 @@ contains
 !
       class(uhf) :: wf
 !
-      type(file) :: ao_density
+      type(sequential_file) :: ao_density_file
+      type(sequential_file) :: ao_density_file_a
+      type(sequential_file) :: ao_density_file_b
 !
-      type(file) :: ao_density_a
-      type(file) :: ao_density_b
+      ao_density_file   = sequential_file('ao_density')
+      ao_density_file_a = sequential_file('ao_density_a')
+      ao_density_file_b = sequential_file('ao_density_b')
 !
-      call ao_density%init('ao_density', 'sequential', 'formatted')
-      call ao_density_a%init('ao_density_a', 'sequential', 'formatted')
-      call ao_density_b%init('ao_density_b', 'sequential', 'formatted')
+      call ao_density_file%open_('write', 'rewind')
+      call ao_density_file%write_(wf%ao_density, wf%n_ao*wf%n_ao)
+      call ao_density_file%close_
 !
-      call disk%open_file(ao_density, 'readwrite', 'rewind')
-      write(ao_density%unit, *) wf%ao_density
-      call disk%close_file(ao_density)
+      call ao_density_file_a%open_('write', 'rewind')
+      call ao_density_file_a%write_(wf%ao_density_a, wf%n_ao*wf%n_ao)
+      call ao_density_file_a%close_
 !
-      call disk%open_file(ao_density_a, 'readwrite', 'rewind')
-      write(ao_density_a%unit, *) wf%ao_density_a
-      call disk%close_file(ao_density_a)
-!
-      call disk%open_file(ao_density_b, 'readwrite', 'rewind')
-      write(ao_density_b%unit, *) wf%ao_density_b
-      call disk%close_file(ao_density_b)
+      call ao_density_file_b%open_('write', 'rewind')
+      call ao_density_file_b%write_(wf%ao_density_b, wf%n_ao*wf%n_ao)
+      call ao_density_file_b%close_
 !
    end subroutine save_ao_density_uhf
 !

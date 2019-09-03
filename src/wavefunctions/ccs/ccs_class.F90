@@ -38,6 +38,7 @@ module ccs_class
    use index_invert
    use batching_index_class
    use timings_class
+   use file_class
 !
    implicit none
 !

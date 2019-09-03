@@ -61,7 +61,7 @@ module batching_index_class
 !
    use kinds
    use parameters
-   use file_class
+   use global_out, only : output
 !
    type :: batching_index
 !

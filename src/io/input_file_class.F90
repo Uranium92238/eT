@@ -27,7 +27,8 @@ module input_file_class
    use kinds   
    use section_class, only : section
    use string_utilities 
-   use abstract_file_class, only : abstract_file
+   use abstract_file_class, only: abstract_file
+   use global_out, only: output
 !
    type, extends(abstract_file) :: input_file 
 !
@@ -314,6 +315,9 @@ contains
                            cc,                     &
                            mm]
 !
+      the_file%is_open = .false.
+      the_file%unit = -1
+!
    end function new_input_file
 !
 !
@@ -329,18 +333,22 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
+      if (the_file%is_open) then
+!
+         call output%error_msg(trim(the_file%name_)//' is already open')
+!
+      endif
+!
       open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
            action='read', status='unknown', form=the_file%format_, iostat=io_error, iomsg=io_msg)
 !
-      if (io_error /= 0) then 
+      if (io_error .ne. 0) then 
 !
-         print *, 'Error: could not open eT input file '//trim(the_file%name_)//&
-                             &'error message: '//trim(io_msg)
-         stop 
-!
+         call output%error_msg('could not open eT input file '//trim(the_file%name_)//&
+                              &'error message: '//trim(io_msg))
       endif 
 !
-      the_file%opened = .true.
+      the_file%is_open = .true.
 !
    end subroutine open_input_file
 !
@@ -357,17 +365,20 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
+      if (.not. the_file%is_open) then
+         call output%error_msg(trim(the_file%name_)//' already closed')
+      end if
+!
       close(the_file%unit, iostat=io_error, iomsg=io_msg, status='keep')
 !
-      if (io_error /= 0) then 
+      if (io_error .ne. 0) then 
 !
-         print *, 'Error: could not close eT input file '//trim(the_file%name_)//&
-                             &'error message: '//trim(io_msg)
-         stop
+         call output%error_msg('could not close eT input file '//trim(the_file%name_)//&
+                              &'error message: '//trim(io_msg))
+      endif 
 !
-      endif  
-!
-      the_file%opened = .false.
+      the_file%is_open = .false.
+      the_file%unit = -1
 !
    end subroutine close_input_file
 !
