@@ -353,6 +353,7 @@ contains
       call output%printf('Preparing for (a0) right excited state equations', chars=[trim(wf%name_)], fs='(/t3,a)')
 !
       call wf%prep_cc3_jacobian_intermediates()
+      call wf%save_jacobian_a1_intermediates()
       call wf%save_jacobian_c2_intermediates()
       call wf%save_jacobian_d2_intermediate()
       call wf%save_jacobian_e2_intermediate()

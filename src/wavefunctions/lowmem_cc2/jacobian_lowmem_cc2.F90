@@ -186,7 +186,7 @@ contains
                         c_jb,                      & ! c_jb
                         (batch_j%length)*(wf%n_v), &
                         one,                       &
-                        rho_ai(rho_offset, 1),     &
+                        rho_ai(1, batch_i%first),  & !HALLO
                         (wf%n_v)*(wf%n_o))
 !
             call mem%dealloc(c_jb, (batch_j%length), wf%n_v)
@@ -255,8 +255,8 @@ contains
                         (wf%n_v)*(batch_i%length), &
                         c_jb,                      & ! c_jb
                         (wf%n_o)*(batch_b%length), &
-                        one,                       & ! rho_ai
-                        rho_ai(rho_offset, 1),     &
+                        one,                       & 
+                        rho_ai(1, batch_i%first),  & ! HALLO
                         (wf%n_v)*(wf%n_o))
 !
             call mem%dealloc(g_aijb, wf%n_v, (batch_i%length), wf%n_o,(batch_b%length))
@@ -365,7 +365,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
                         one,                       &
                         L_kcbj,                    & ! L_kc_bj
                         (batch_k%length)*(wf%n_v), &
-                        c_bj(bj_offset, 1),        & ! c_bj
+                        c_bj(1, batch_j%first),    & ! c_bj ! HALLO
                         (wf%n_v)*(wf%n_o),         &
                         zero,                      &
                         X_kc_batch,                & ! X_kc
@@ -454,7 +454,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
                         one,                       &
                         u_aikc,                    & ! u_ai_kc
                         (batch_a%length)*(wf%n_o), &
-                        X_kc(kc_offset, 1),        & ! X_kc
+                        X_kc(1, batch_c%first),    & ! X_kc ! HALLO
                         (wf%n_o)*(wf%n_v),         &
                         zero,                      &
                         rho_ai_batch,              & ! rho_ai

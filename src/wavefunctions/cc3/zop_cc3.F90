@@ -147,13 +147,13 @@ contains
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
 !
-      call wf%gs_one_el_density_ccsd_ov(wf%density, wf%t1bar, t_aibj)
+      call wf%gs_one_el_density_doubles_ov(wf%density, wf%t1bar, t_aibj)
 !
       call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2bar, tbar_aibj, (wf%n_v)*(wf%n_o))
 !
-      call wf%gs_one_el_density_ccsd_oo(wf%density, tbar_aibj, t_aibj)
-      call wf%gs_one_el_density_ccsd_vv(wf%density, tbar_aibj, t_aibj)
+      call wf%gs_one_el_density_doubles_oo(wf%density, tbar_aibj, t_aibj)
+      call wf%gs_one_el_density_doubles_vv(wf%density, tbar_aibj, t_aibj)
 !
       call ccsd_timer%turn_off()
 !

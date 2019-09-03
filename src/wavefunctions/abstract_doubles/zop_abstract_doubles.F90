@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (ccsd_class) zop_ccsd
+submodule (abstract_doubles_class) zop_abstract_doubles
 !
 !!
 !!    Zeroth order properties submodule 
@@ -33,7 +33,8 @@ submodule (ccsd_class) zop_ccsd
 contains
 !
 !
-   module subroutine construct_gs_density_ccsd(wf)
+
+   module subroutine construct_gs_density_abstract_doubles(wf)
 !!
 !!    Construct one-electron density
 !!    Written by Sarai Dery Folkestad, 2019
@@ -45,7 +46,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd) :: wf
+      class(abstract_doubles) :: wf
 !
       real(dp), dimension(:,:,:,:), allocatable :: tbar_aibj
       real(dp), dimension(:,:,:,:), allocatable :: t_aibj
@@ -58,21 +59,21 @@ contains
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
 !
-      call wf%gs_one_el_density_ccsd_ov(wf%density, wf%t1bar, t_aibj)
+      call wf%gs_one_el_density_doubles_ov(wf%density, wf%t1bar, t_aibj)
 !
       call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2bar, tbar_aibj, (wf%n_v)*(wf%n_o))
 !
-      call wf%gs_one_el_density_ccsd_oo(wf%density, tbar_aibj, t_aibj)
-      call wf%gs_one_el_density_ccsd_vv(wf%density, tbar_aibj, t_aibj)
+      call wf%gs_one_el_density_doubles_oo(wf%density, tbar_aibj, t_aibj)
+      call wf%gs_one_el_density_doubles_vv(wf%density, tbar_aibj, t_aibj)
 !
       call mem%dealloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine construct_gs_density_ccsd
+   end subroutine construct_gs_density_abstract_doubles
 !
 !
-   module subroutine gs_one_el_density_ccsd_oo_ccsd(wf, density, tbar_akbj, t_akbi)
+   module subroutine gs_one_el_density_doubles_oo_abstract_doubles(wf, density, tbar_akbj, t_akbi)
 !!
 !!    One electron density oo
 !!    Written by Sarai D. Folkestad, 2019
@@ -81,7 +82,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd) :: wf
+      class(abstract_doubles) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
@@ -101,10 +102,10 @@ contains
                   density,                &
                   wf%n_mo)
 !
-   end subroutine gs_one_el_density_ccsd_oo_ccsd
+   end subroutine gs_one_el_density_doubles_oo_abstract_doubles
 !
 !
-   module subroutine gs_one_el_density_ccsd_vv_ccsd(wf, density, tbar_ajci, t_bjci)
+   module subroutine gs_one_el_density_doubles_vv_abstract_doubles(wf, density, tbar_ajci, t_bjci)
 !!
 !!    One electron density vv
 !!    Written by Sarai D. Folkestad, 2019
@@ -113,7 +114,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd) :: wf
+      class(abstract_doubles) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
@@ -133,10 +134,10 @@ contains
                   density(wf%n_o + 1, wf%n_o + 1), &
                   wf%n_mo)
 !
-   end subroutine gs_one_el_density_ccsd_vv_ccsd
+   end subroutine gs_one_el_density_doubles_vv_abstract_doubles
 !
 !
-   module subroutine gs_one_el_density_ccsd_ov_ccsd(wf, density, tbar_ai, t_aibj)
+   module subroutine gs_one_el_density_doubles_ov_abstract_doubles(wf, density, tbar_ai, t_aibj)
 !!
 !!    One electron density ov
 !!    Written by Sarai D. Folkestad, 2019
@@ -147,7 +148,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd) :: wf
+      class(abstract_doubles) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
@@ -195,7 +196,7 @@ contains
 !
       call mem%dealloc(D_ov, wf%n_v, wf%n_o)
 !
-   end subroutine gs_one_el_density_ccsd_ov_ccsd
+   end subroutine gs_one_el_density_doubles_ov_abstract_doubles
 !
 !
-end submodule zop_ccsd
+end submodule zop_abstract_doubles

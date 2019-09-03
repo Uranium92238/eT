@@ -63,7 +63,7 @@ contains
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_ai
-      real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij
+      real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij, t_aibj, u_aibj
 !
       real(dp), dimension(:,:), allocatable :: sigma_ai
       real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj, sigma_abij
@@ -105,8 +105,17 @@ contains
 !
 !     :: CCSD contributions to the transformed singles vector ::
 !
-      call wf%jacobian_transpose_ccsd_a1(sigma_ai, c_ai)
-      call wf%jacobian_transpose_ccsd_b1(sigma_ai, c_ai)
+      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_aibj, wf%n_t1)
+!
+      call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call copy_and_scale(two, t_aibj, u_aibj, wf%n_t1**2)
+      call add_1432_to_1234(-one, t_aibj, u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call wf%jacobian_transpose_doubles_a1(sigma_ai, c_ai, u_aibj)
+!
+      call mem%dealloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Allocate the incoming unpacked doubles vector
 !
@@ -141,7 +150,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call wf%jacobian_transpose_ccsd_c1(sigma_ai, c_aibj)
+      call wf%jacobian_transpose_doubles_b1(sigma_ai, c_aibj)
       call wf%jacobian_transpose_ccsd_d1(sigma_ai, c_aibj)
       call wf%jacobian_transpose_ccsd_e1(sigma_ai, c_aibj)
       call wf%jacobian_transpose_ccsd_f1(sigma_ai, c_aibj)
@@ -155,7 +164,8 @@ contains
 !
 !     Contributions from singles vector c
 !
-      call wf%jacobian_transpose_ccsd_a2(sigma_aibj, c_ai)
+      !call wf%jacobian_transpose_ccsd_a2(sigma_aibj, c_ai)
+      call wf%jacobian_transpose_doubles_a2(sigma_aibj, c_ai)
 !
 !     Contributions from doubles vector c
 !

@@ -109,7 +109,7 @@ contains
 !
 !     :: CCSD contributions to the transformed singles vector ::
 !
-      call wf%jacobian_ccsd_a1(rho_ai, c_ai)
+      call wf%jacobian_doubles_a1(rho_ai, c_ai)
 !
 !     Allocate the incoming unpacked doubles vector
 !
@@ -158,9 +158,9 @@ contains
 !$omp end parallel do
 !
 !
-      call wf%jacobian_ccsd_b1(rho_ai, c_aibj)
-      call wf%jacobian_ccsd_c1(rho_ai, c_aibj)
-      call wf%jacobian_ccsd_d1(rho_ai, c_aibj)
+      call wf%jacobian_doubles_b1(rho_ai, c_aibj)
+      call wf%jacobian_doubles_c1(rho_ai, c_aibj)
+      call wf%jacobian_doubles_d1(rho_ai, c_aibj)
 !
 !     :: CCSD contributions to the transformed doubles vector ::
 !     Allocate unpacked transformed vector
@@ -170,7 +170,7 @@ contains
 !
 !     Contributions from singles vector c
 !
-      call wf%jacobian_ccsd_a2(rho_aibj, c_ai)
+      call wf%jacobian_doubles_a2(rho_aibj, c_ai)
       call wf%jacobian_ccsd_b2(rho_aibj, c_ai)
       call wf%jacobian_ccsd_c2(rho_aibj, c_ai)
       call wf%jacobian_ccsd_d2(rho_aibj, c_ai)
