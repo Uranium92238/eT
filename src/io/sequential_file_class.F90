@@ -446,10 +446,8 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         call output%printf('unformatted')
          write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
       else
-         call output%printf('formatted')
          write(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar
       endif
 !
