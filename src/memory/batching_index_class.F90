@@ -183,6 +183,7 @@ contains
 !
       call output%printf('Forced batch of index. Number of batches: (i0), Max length of batch: (i0)', &
                                  ints=[batch_p%num_batches, batch_p%max_length])
+      call output%flush_()
 !
    end subroutine force_batch_batching_index
 !

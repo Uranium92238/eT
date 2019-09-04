@@ -106,7 +106,7 @@ contains
 !
 !     Calculate and add the CCS contributions to the
 !     singles transformed vector
-
+!
       call wf%jacobian_transpose_ccs_a1(sigma_ai, b_ai)
       call wf%jacobian_transpose_ccs_b1(sigma_ai, b_ai)
 !
@@ -525,7 +525,7 @@ contains
 !                              = 2 * g_dale(d,a,l,e) - g_dale(d,e,l,a)
 !
             call mem%alloc(L_aeld, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
-            call zero_array(L_aeld, wf%n_o*wf%n_v**3)
+            call zero_array(L_aeld, wf%n_o*wf%n_v**2*batch_d%length)
 !
             call add_4132_to_1234(two, g_dale, L_aeld, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
 !
@@ -616,7 +616,7 @@ contains
 !                             = 2 * g_deia(d,e,i,a) - g_deia(d,a,i,e)
 !
          call mem%alloc(L_aied, wf%n_v, wf%n_o, wf%n_v, batch_d%length)
-         call zero_array(L_aied, wf%n_o*wf%n_v**3)
+         call zero_array(L_aied, wf%n_o*wf%n_v**2*batch_d%length)
 !
          call add_4321_to_1234(two, g_deia, L_aied, wf%n_v, wf%n_o, wf%n_v, batch_d%length)
          call add_4123_to_1234(-one, g_deia, L_aied, wf%n_v, wf%n_o, wf%n_v, batch_d%length)
