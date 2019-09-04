@@ -203,6 +203,12 @@ contains
 !
       call mem%batch_setup(batch_a, batch_b, req0, req1_a, req1_b, rec2)
 !
+      if (batch_a%num_batches /= batch_b%num_batches) then ! Should not happen, but just to be safe 
+!
+        call output%error_msg('Expected same-sized batches in omega_ccsd_a2 but something went wrong in mem%batch_setup.')
+!
+      endif 
+!
 !     Start looping over a-batches
 !
       do current_a_batch = 1, batch_a%num_batches
@@ -253,7 +259,7 @@ contains
                         diag_factor = one
                      endif
 !
-                     do  b = 1, batch_b%length
+                     do b = 1, batch_b%length
                         do a = 1, b
 !
                            ab = (b*(b-3)/2) + a + b

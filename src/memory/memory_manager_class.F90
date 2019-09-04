@@ -1203,8 +1203,8 @@ contains
 !!
 !!    req0: required memory that does not scale with batch size
 !!
-!!    req1: required memory that scales linearly with p batch size
-!!    req1: required memory that scales linearly with q batch size
+!!    req1_p: required memory that scales linearly with p batch size
+!!    req1_q: required memory that scales linearly with q batch size
 !!
 !!    req2: required memory that scales quadratically with batch size
 !!
@@ -1234,7 +1234,7 @@ contains
 !
       integer, intent(in), optional :: element_size
 !
-      logical :: figgered_out
+      logical :: figured_out
 !
       integer :: req0_tot
       integer :: req1_p_min
@@ -1297,8 +1297,8 @@ contains
          p_elements = 1
          q_elements = 1
 !
-         figgered_out = .false.
-         do while (.not. figgered_out                              &
+         figured_out = .false.
+         do while (.not. figured_out                              &
                      .and. p_elements .lt. batch_p%index_dimension &
                      .and. q_elements .lt. batch_q%index_dimension)
 !
@@ -1312,18 +1312,19 @@ contains
 !
             else
 !
-               figgered_out = .true.       ! cannot hold +1 batch size
+               figured_out = .true.       ! cannot hold +1 batch size
 !
             endif
 !
          enddo
 !
-!        II. If simultaneous incrementation was not sufficient,
-!            then try to increment the largest index further. This is
-!            guaranteed to work, so let's just go ahead and increment
-!            with no safeguards in place.
 !
-         if (.not. figgered_out) then
+!        II. If simultaneous incrementation was not sufficient,
+!             then try to increment the largest index further. This is
+!             guaranteed to work, so let's just go ahead and increment
+!             with no safeguards in place.
+!
+         if (.not. figured_out) then
 !
             if (batch_p%index_dimension .gt. batch_q%index_dimension) then
 !
@@ -1358,7 +1359,7 @@ contains
 !
             endif
 !
-            figgered_out = .true.
+            figured_out = .true.
 !
          endif
 !
@@ -1372,10 +1373,23 @@ contains
 !
       endif
 !
+!     Debug feature: enforced random batching 
+!
       if (force_batch) then 
 !
-         call batch_p%force_batch()
-         call batch_q%force_batch()
+         if (batch_p%index_dimension == batch_q%index_dimension) then 
+!
+            call batch_p%force_batch()
+!
+            batch_q%max_length  = batch_p%max_length
+            batch_q%num_batches = batch_p%num_batches
+!
+         else 
+!
+            call batch_p%force_batch()
+            call batch_q%force_batch()
+!
+         endif 
 !
       endif 
 !
@@ -1578,9 +1592,9 @@ contains
 !
       if (force_batch) then 
 !
-         call batch_p%force_batch()
-         call batch_q%force_batch()
-         call batch_r%force_batch()
+        call batch_p%force_batch()
+        call batch_q%force_batch()
+        call batch_r%force_batch()
 !
       endif 
 !
@@ -1760,13 +1774,13 @@ contains
 !
       if (force_batch) then 
 !
-         call batch_p%force_batch()
-!
-         batch_q%max_length  = batch_p%max_length
-         batch_q%num_batches = batch_p%num_batches
-!
-         batch_r%max_length  = batch_p%max_length
-         batch_r%num_batches = batch_p%num_batches
+        call batch_p%force_batch()
+
+        batch_q%max_length  = batch_p%max_length
+        batch_q%num_batches = batch_p%num_batches
+
+        batch_r%max_length  = batch_p%max_length
+        batch_r%num_batches = batch_p%num_batches
 !
       endif 
 !

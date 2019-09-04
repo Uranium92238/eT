@@ -88,6 +88,7 @@ set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
 
 # Set compiler definition if forced batching is enabled 
 if(ENABLE_FORCED_BATCHING)
+    message("-- Forced batching enabled (expert option)")
     target_compile_definitions(eT PUBLIC _FORCED_BATCHING)
 endif()
 
