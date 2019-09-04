@@ -134,7 +134,7 @@ contains
 !
       call eri_chol_solver%construct_mo_cholesky_vectors(wf%system, wf%n_mo, orbital_coefficients)
 !
-      call wf%integrals%prepare(wf%n_o, wf%n_v, eri_chol_solver)
+      wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, eri_chol_solver)
 !
       call eri_chol_solver%cleanup()
 !

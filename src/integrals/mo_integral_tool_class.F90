@@ -54,7 +54,6 @@ module mo_integral_tool_class
 !
    contains
 !
-      procedure :: prepare                      => prepare_mo_integral_tool
       procedure :: cleanup                      => cleanup_mo_integral_tool
 !
 !     Read MO Cholesky vectors
@@ -83,12 +82,19 @@ module mo_integral_tool_class
    end type mo_integral_tool
 !
 !
+   interface mo_integral_tool 
+!
+      procedure :: new_mo_integral_tool
+      procedure :: new_mo_integral_tool_from_template
+!
+   end interface mo_integral_tool
+!
 contains
 !
 !
-   subroutine prepare_mo_integral_tool(integrals, n_o, n_v, eri_cholesky)
+   function new_mo_integral_tool(n_o, n_v, eri_cholesky) result(integrals)
 !!
-!!    Prepare
+!!    New MO integral tool
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    Initializes the integral tool. Note that the integral tool
@@ -101,7 +107,7 @@ contains
 !!
       implicit none
 !
-      class(mo_integral_tool) :: integrals
+      type(mo_integral_tool) :: integrals
 !
       integer, intent(in) :: n_o
       integer, intent(in) :: n_v
@@ -123,7 +129,44 @@ contains
       integrals%cholesky_t1_file   = .false.
       integrals%eri_t1_mem         = .false.
 !
-   end subroutine prepare_mo_integral_tool
+   end function new_mo_integral_tool
+!
+!
+   function new_mo_integral_tool_from_template(integrals_template) result(integrals)
+!!
+!!    New MO integral tool from template
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    Initializes the integral tool. Note that the integral tool
+!!    needs to know the number of occupied and virtual orbitals,
+!!    which are also stored in the wavefunction.
+!!
+!!    n_o: number of occupied orbitals
+!!    n_v: number of virtual orbitals
+!!    n_J: number of Cholesky vectors
+!!
+      implicit none
+!
+      type(mo_integral_tool) :: integrals
+!
+      type(mo_integral_tool) :: integrals_template
+!
+      integrals%n_J  = integrals_template%n_J
+      integrals%n_o  = integrals_template%n_o
+      integrals%n_v  = integrals_template%n_v
+      integrals%n_mo = integrals_template%n_o + integrals_template%n_v
+!
+      call integrals%cholesky_mo%init(integrals_template%cholesky_mo%name_, 'direct', 'unformatted', dp*integrals%n_J)
+      call integrals%cholesky_mo_t1%init('cholesky_mo_t1_vectors', 'direct', 'unformatted', dp*integrals%n_J)
+!
+!     Initially MO cholesky on file, and not T1-transformed cholesky
+!     nor full T1-ERI matrix
+!
+      integrals%cholesky_file      = .true.
+      integrals%cholesky_t1_file   = .false.
+      integrals%eri_t1_mem         = .false.
+!
+   end function new_mo_integral_tool_from_template
 !
 !
    subroutine cleanup_mo_integral_tool(integrals)
