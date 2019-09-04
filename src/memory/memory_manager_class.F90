@@ -1774,13 +1774,13 @@ contains
 !
       if (force_batch) then 
 !
-        call batch_p%force_batch()
-
-        batch_q%max_length  = batch_p%max_length
-        batch_q%num_batches = batch_p%num_batches
-
-        batch_r%max_length  = batch_p%max_length
-        batch_r%num_batches = batch_p%num_batches
+         call batch_p%force_batch()
+!
+         batch_q%max_length  = batch_p%max_length
+         batch_q%num_batches = batch_p%num_batches
+!
+         batch_r%max_length  = batch_p%max_length
+         batch_r%num_batches = batch_p%num_batches
 !
       endif 
 !

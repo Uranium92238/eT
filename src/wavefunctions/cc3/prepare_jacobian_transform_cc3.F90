@@ -44,6 +44,64 @@ submodule (cc3_class) prepare_jacobian_transform
 contains
 !
 !
+   module subroutine prepare_for_jacobian_cc3(wf)
+!!
+!!    Prepare for jacobian
+!!    Written by Rolf Heilemann Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      type(timings) :: prep_timer      
+!
+      prep_timer = new_timer("Time preparing for Jacobian")
+      call prep_timer%turn_on()
+!
+      call output%printf('Preparing for (a0) right excited state equations',  &
+                          chars=[trim(wf%name_)], fs='(/t3,a)')
+!
+      call wf%prep_cc3_jacobian_intermediates()
+      call wf%save_jacobian_a1_intermediates()
+      call wf%save_jacobian_c2_intermediates()
+      call wf%save_jacobian_d2_intermediate()
+      call wf%save_jacobian_e2_intermediate()
+      call wf%save_jacobian_g2_intermediates()
+      call wf%save_jacobian_h2_intermediates()
+      call wf%save_jacobian_j2_intermediate()
+!
+      call prep_timer%turn_off()
+      call timing%flush_()
+!
+   end subroutine prepare_for_jacobian_cc3
+!
+!
+   module subroutine prepare_for_jacobian_transpose_cc3(wf)
+!!
+!!    Prepare for jacobian transpose transformation
+!!    Written by Rolf Heilemann Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+      type(timings) :: prep_timer
+!
+      prep_timer = new_timer("Time preparing for Jacobian")
+      call prep_timer%turn_on()
+!
+      call output%printf('Preparing for (a0) left excited state equations',   &
+                          chars=[trim(wf%name_)], fs='(/t3,a)')
+!
+      if (.not. wf%X_ajil%exists()) call wf%prep_cc3_jacobian_intermediates()
+      if (.not. wf%g_cdlk_t%exists()) call wf%prep_cc3_jacobian_trans_integrals()
+!
+      call prep_timer%turn_off()
+      call timing%flush_()
+!
+   end subroutine prepare_for_jacobian_transpose_cc3
+!
+!
    module subroutine prep_cc3_jacobian_trans_integrals_cc3(wf)
 !!
 !!    Construct integrals needed in CC3 jacobian transpose and store on disk
@@ -72,6 +130,7 @@ contains
       req_d = req_d + 2*wf%n_v**3
 !
       call batch_d%init(wf%n_v)
+!
       call mem%batch_setup(batch_d,req_0,req_d)
       call batch_d%determine_limits(1)
 !
@@ -110,6 +169,7 @@ contains
       req_l = req_l + 2*wf%n_o**3
 !
       call batch_l%init(wf%n_o)
+!
       call mem%batch_setup(batch_l,req_0,req_l)
       call batch_l%determine_limits(1)
 !
@@ -150,6 +210,7 @@ contains
       req_d = req_d + wf%n_v*wf%n_o**2
 !
       call batch_d%init(wf%n_v)
+!
       call mem%batch_setup(batch_d,req_0,req_d)
       call batch_d%determine_limits(1)
 !
@@ -187,6 +248,7 @@ contains
       req_d = req_d + 2*wf%n_v*wf%n_o**2
 !
       call batch_d%init(wf%n_v)
+!
       call mem%batch_setup(batch_d,req_0,req_d)
       call batch_d%determine_limits(1)
 !
@@ -252,6 +314,7 @@ contains
       req_k = req_k + 2*wf%n_v**2*wf%n_o
 !
       call batch_k%init(wf%n_o)
+!
       call mem%batch_setup(batch_k,req_0,req_k)
       call batch_k%determine_limits(1)
 !
@@ -453,7 +516,7 @@ contains
          g_bdci_p => g_bdci
          g_lbic_p => g_lbic
 !
-         call zero_array(X_abdi, wf%n_o*wf%n_v**3)
+         call zero_array(X_abdi, batch_i%length*wf%n_v**3)
          X_abdi_p => X_abdi
 !
          do j_batch = 1, i_batch
@@ -953,18 +1016,18 @@ contains
 !
       call batch_i%init(wf%n_o)
 !
+!
       call mem%batch_setup(batch_i, req_0, req_i)
 !
       wf%X_abid = direct_file('X_abid',wf%n_v**2)
       call wf%X_abid%open_('write')
 !
-      call batch_i%determine_limits(1)
-      call mem%alloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
-      call mem%alloc(X_abid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
-!
       do i_batch = 1, batch_i%num_batches
 !
          call batch_i%determine_limits(i_batch)
+!
+         call mem%alloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+         call mem%alloc(X_abid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
 !
 !        Read from file
 !
@@ -978,11 +1041,10 @@ contains
 !
          call compound_record_writer(wf%n_v, batch_i, wf%X_abid, X_abid, .true.)
 !
-      enddo ! batch_i
+         call mem%dealloc(X_abid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
+         call mem%dealloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
-      call batch_i%determine_limits(1)
-      call mem%dealloc(X_abid, wf%n_v, wf%n_v, batch_i%length, wf%n_v)
-      call mem%dealloc(X_abdi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
+      enddo ! batch_i
 !
       call wf%X_abid%close_()
 !
