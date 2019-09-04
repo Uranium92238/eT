@@ -17,6 +17,30 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
+   module subroutine prepare_for_jacobian_cc3(wf)
+!!
+!!    Prepare for jacobian
+!!    Written by Rolf Heilemann Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+   end subroutine prepare_for_jacobian_cc3
+!
+!
+   module subroutine prepare_for_jacobian_transpose_cc3(wf)
+!!
+!!    Prepare for jacobian transpose transformation
+!!    Written by Rolf Heilemann Myhre, April 2019
+!!
+      implicit none
+!
+      class(cc3), intent(inout) :: wf
+!
+   end subroutine prepare_for_jacobian_transpose_cc3
+!
+!
    module subroutine prep_cc3_jacobian_trans_integrals_cc3(wf)
 !!
 !!    Construct integrals needed in CC3 jacobian transpose and store on disk

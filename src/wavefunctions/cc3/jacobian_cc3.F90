@@ -39,37 +39,6 @@ submodule (cc3_class) jacobian
 contains
 !
 !
-   module subroutine prepare_for_jacobian_cc3(wf)
-!!
-!!    Prepare for jacobian
-!!    Written by Rolf Heilemann Myhre, April 2019
-!!
-      implicit none
-!
-      class(cc3), intent(inout) :: wf
-!
-      type(timings) :: prep_timer      
-!
-      prep_timer = new_timer("Time preparing for Jacobian")
-      call prep_timer%turn_on()
-!
-      call output%printf('Preparing for (a0) right excited state equations', chars=[trim(wf%name_)], fs='(/t3,a)')
-!
-      call wf%prep_cc3_jacobian_intermediates()
-      call wf%save_jacobian_a1_intermediates()
-      call wf%save_jacobian_c2_intermediates()
-      call wf%save_jacobian_d2_intermediate()
-      call wf%save_jacobian_e2_intermediate()
-      call wf%save_jacobian_g2_intermediates()
-      call wf%save_jacobian_h2_intermediates()
-      call wf%save_jacobian_j2_intermediate()
-!
-      call prep_timer%turn_off()
-      call timing%flush_()
-!
-   end subroutine prepare_for_jacobian_cc3
-!
-!
    module subroutine effective_jacobian_transformation_cc3(wf, omega, c)
 !!
 !!    Effective Jacobian transformation (CC3)
@@ -1328,7 +1297,6 @@ contains
 !
       integer :: req_0, req_k
       integer :: k_batch
-!
 !
       call batch_k%init(wf%n_o)
 !

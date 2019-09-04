@@ -17,18 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine prepare_for_jacobian_transpose_cc3(wf)
-!!
-!!    Prepare for jacobian transpose transformation
-!!    Written by Rolf Heilemann Myhre, April 2019
-!!
-      implicit none
-!
-      class(cc3), intent(inout) :: wf
-!
-   end subroutine prepare_for_jacobian_transpose_cc3
-!
-!
    module subroutine effective_jacobian_transpose_transformation_cc3(wf, omega, c)
 !!
 !!    Jacobian transpose transformation (CC3)
