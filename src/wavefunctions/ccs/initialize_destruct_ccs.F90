@@ -265,7 +265,7 @@ contains
 !
       class(ccs) :: wf
 !
-      if (allocated(wf%fock_ab)) call mem%dealloc(wf%fock_ij, wf%n_v, wf%n_v)
+      if (allocated(wf%fock_ab)) call mem%dealloc(wf%fock_ab, wf%n_v, wf%n_v)
 !
    end subroutine destruct_fock_ab_ccs
 !
