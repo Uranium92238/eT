@@ -24,7 +24,6 @@ module abstract_hf_solver_class
 !!
    use kinds 
    use parameters   
-   use file_class
    use disk_manager_class
    use io_utilities
 !

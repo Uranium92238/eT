@@ -33,7 +33,6 @@ module scf_diis_hf_class
    use kinds
    use diis_tool_class
    use timings_class
-   use file_class
    use hf_class
    use disk_manager_class
    use abstract_hf_solver_class
@@ -46,7 +45,6 @@ module scf_diis_hf_class
 !
       logical :: converged
 !
-      type(file) :: restart_file
       logical    :: restart
 !
    contains

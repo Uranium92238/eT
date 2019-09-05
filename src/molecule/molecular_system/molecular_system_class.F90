@@ -24,16 +24,18 @@ module molecular_system_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-   use string_utilities
    use parameters
-   use atomic_class, only : atomic
-   use io_utilities
-   use interval_class, only : interval
    use libint_initialization
-   use mm_class
-   use file_class
+!
+   use global_in, only : input
+   use global_out, only : output
+   use sequential_file_class, only : sequential_file
    use output_file_class, only : output_file
-   use disk_manager_class, only : disk
+   use memory_manager_class, only : mem
+   use string_utilities, only : convert_to_lowercase
+   use interval_class, only : interval
+   use atomic_class, only : atomic
+   use mm_class, only : mm
 !
    implicit none
 !
@@ -1644,7 +1646,7 @@ contains
       character(len=100) :: basis
       character(len=100) :: libint_path
 !
-      type(file) :: basis_set_file
+      type(sequential_file), allocatable :: basis_set_file
 !
 !     Loop over atoms 
 !
@@ -1652,62 +1654,40 @@ contains
 !
          shell = 0
 !
+!        Deal with non-augmented part first
+!
          if (molecule%atoms(atom_index)%basis(1:3) .ne. 'aug') then
-!
-!           Open the correct basis set file
-!
             write(basis,'(a)') molecule%atoms(atom_index)%basis
-            call convert_to_lowercase(basis)
-            call get_environment_variable("LIBINT_DATA_PATH",libint_path)
-            call basis_set_file%init(trim(libint_path) // '/' // trim(basis) // '.g94', 'sequential', 'formatted')
-!  
-            call disk%open_file(basis_set_file, 'read')
-!
-            rewind(basis_set_file%unit)
-!
-            call molecule%set_shell_basis_info(basis_set_file, atom_index, shell)
-!
-            call disk%close_file(basis_set_file)
-!
          else
-!
-!           Open the correct basis set file
-!
             write(basis,'(a)') molecule%atoms(atom_index)%basis(5:100)
-            call convert_to_lowercase(basis)
-            call get_environment_variable("LIBINT_DATA_PATH",libint_path)
-            call basis_set_file%init(trim(libint_path) // '/' // trim(basis) // '.g94', 'sequential', 'formatted')
-!  
-            call disk%open_file(basis_set_file, 'read')
+         endif
 !
-            rewind(basis_set_file%unit)
+         call convert_to_lowercase(basis)
+         call get_environment_variable("LIBINT_DATA_PATH",libint_path)
+         basis_set_file = sequential_file(trim(libint_path) // '/' // trim(basis) // '.g94', 'formatted')
 !
-            call molecule%set_shell_basis_info(basis_set_file, atom_index, shell)
+         call basis_set_file%open_('read', 'rewind')  
 !
-            call disk%close_file(basis_set_file)
+         call molecule%set_shell_basis_info(basis_set_file, atom_index, shell)
 !
-!           augmentation part
+         call basis_set_file%close_
 !
-            write(basis,'(a)') molecule%atoms(atom_index)%basis(4:100)
-            call convert_to_lowercase(basis)
-            call get_environment_variable("LIBINT_DATA_PATH",libint_path)
-            call basis_set_file%init(trim(libint_path) // '/' // 'augmentation' // trim(basis) // &
-                                  '.g94', 'sequential', 'formatted')
+!        Get the augmented part
+         if (molecule%atoms(atom_index)%basis(1:3) .eq. 'aug') then
 !
-            call disk%open_file(basis_set_file, 'read')
+            basis = 'augmentation-'//trim(basis)
+            basis_set_file = sequential_file(trim(libint_path) // '/' // trim(basis) // '.g94', 'formatted')
 !
-            rewind(basis_set_file%unit)
+            call basis_set_file%open_('read', 'rewind')  
 !
             call molecule%set_shell_basis_info(basis_set_file, atom_index, shell)
 !
-            call disk%close_file(basis_set_file)       
+            call basis_set_file%close_
 !
          endif
 !
       enddo 
 !
-      flush(output%unit)
-!          
    end subroutine set_basis_info_molecular_system
 !
 !
@@ -1727,7 +1707,7 @@ contains
       integer, intent(inout)              :: shell
       integer, intent(in)                 :: atom_index
 !        
-      type(file), intent(in)             :: basis_set_file
+      type(sequential_file), intent(in)             :: basis_set_file
 !
       character(len=200)   :: line
 !
@@ -1737,7 +1717,7 @@ contains
 !
       logical              :: elm_found
 !
-      real(dp)             :: coefficient, exponent
+      real(dp)             :: coefficient, exponent_
 !
 !     Find position of element in file
 !     Look for:  ****
@@ -1745,13 +1725,13 @@ contains
 !
       elm_found = .false.        
 !
-      read(basis_set_file%unit, '(a200)') line
+      call basis_set_file%read_(line,'(a200)')
 !
       do while (.not. elm_found)
 !
          if (trim(line) == '****') then 
 !
-            read(basis_set_file%unit, '(a200)') line
+            call basis_set_file%read_(line,'(a200)')
 !
             if ((line(1:2)) == molecule%atoms(atom_index)%symbol) then
 !
@@ -1763,7 +1743,7 @@ contains
 !
          if (.not. elm_found) then 
 !
-            read(basis_set_file%unit, '(a200)') line
+            call basis_set_file%read_(line,'(a200)')
 !
          endif
 !
@@ -1771,7 +1751,7 @@ contains
 !
 !     Read angular momentum and number of primitives
 !
-      read(basis_set_file%unit, '(a200)') line
+      call basis_set_file%read_(line,'(a200)')
 !
       do while (trim(line) .ne. '****') ! Loop over AO
 !
@@ -1801,14 +1781,15 @@ contains
 !
 !           Read coefficient and exponent
 !
-            read(basis_set_file%unit, *) exponent, coefficient
+            call basis_set_file%read_(line,'(a200)')
+            read(line, *) exponent_, coefficient
 !
-            call molecule%atoms(atom_index)%shells(shell)%basis_details%set_exponent_i(primitive, exponent)
+            call molecule%atoms(atom_index)%shells(shell)%basis_details%set_exponent_i(primitive, exponent_)
             call molecule%atoms(atom_index)%shells(shell)%basis_details%set_coefficient_i(primitive, coefficient)
 !                                                 
          enddo
 !
-         read(basis_set_file%unit, '(a200)') line
+         call basis_set_file%read_(line,'(a200)')
 !
       enddo
 !

@@ -25,7 +25,6 @@ module abstract_cc_es_class
 !!   
 !
    use kinds
-   use file_class
    use ccs_class
 !
    implicit none

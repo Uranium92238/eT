@@ -25,7 +25,6 @@ module davidson_cc_multipliers_class
 !!  
 !
    use kinds
-   use file_class
    use ccs_class
    use linear_davidson_tool_class
 !

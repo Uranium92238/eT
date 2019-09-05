@@ -25,7 +25,6 @@ module davidson_cc_es_class
 !!   
 !
    use kinds
-   use file_class
    use ccs_class
    use eigen_davidson_tool_class
    use abstract_cc_es_class, only: abstract_cc_es

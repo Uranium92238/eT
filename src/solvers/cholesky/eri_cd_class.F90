@@ -31,6 +31,7 @@ module eri_cd_class
    use array_utilities
    use array_analysis
 !
+   use sequential_file_class, only : sequential_file
    use file_class
    use disk_manager_class
 !
@@ -1038,7 +1039,7 @@ contains
 !
       type(interval) :: A_interval, B_interval
 !
-      type(file) :: batch_file
+      type(sequential_file) :: batch_file
 !
       integer :: A, B, batch, batch_first, batch_last, batch_size, current_batch_size
       integer :: xy_first, xy_last
@@ -1136,25 +1137,23 @@ contains
 !        4. Screening vector
 !
          write(temp_name, '(a14, i4.4)')'diagonal_info_', batch
-         call batch_file%init(trim(temp_name), 'sequential', 'unformatted')
+         batch_file = sequential_file(trim(temp_name))
 !
-         call disk%open_file(batch_file, 'write', 'rewind')
-         rewind(batch_file%unit)
+         call batch_file%open_('write', 'rewind')
 !
-         write(output%unit, '(/t6, a40, i3, a1)')         'Significant AO and shell pairs in batch ', batch, ':'
-!
-         write(output%unit, '(/t9, a33, 2x, i11)')  'Significant shell pairs:         ', n_sig_sp_batch
+         write(output%unit, '(/t6, a40, i3, a1)')  'Significant AO and shell pairs in batch ', batch, ':'
+         write(output%unit, '(/t9, a33, 2x, i11)') 'Significant shell pairs:         ', n_sig_sp_batch
          write(output%unit, '(t9, a33, 2x, i11)')  'Significant AO pairs:            ', current_batch_size
 !
          flush(output%unit)
 !
 !
-         write(batch_file%unit) n_sig_sp_batch, current_batch_size
-         write(batch_file%unit) sig_sp_batch
-         write(batch_file%unit) D_batch
-         write(batch_file%unit) screening_vector_batch
+         call batch_file%write_(n_sig_sp_batch, current_batch_size)
+         call batch_file%write_(sig_sp_batch, solver%n_sp)
+         call batch_file%write_(D_batch, current_batch_size)
+         call batch_file%write_(screening_vector_batch, current_batch_size)
 !
-         call disk%close_file(batch_file)
+         call batch_file%close_()
 !
          call mem%dealloc(D_batch, current_batch_size)
          call mem%dealloc(screening_vector_batch, current_batch_size)
@@ -1198,7 +1197,7 @@ contains
       integer :: n_basis_aop_in_AB_total, n_basis_aop_in_AB_offset, current_offset, current_offset_old
       integer :: count_sig, n_cholesky_offset, n_sig_aop_old, n_sig_sp_old, n_sp_in_basis_offset
 !
-      type(file) :: batch_file
+      type(sequential_file) :: batch_file
 !
       integer, dimension(:), allocatable :: alpha, beta, alpha_beta, sorted_alpha, sorted_beta, sorted_alpha_beta
       integer, dimension(:), allocatable :: index_alpha_beta, alpha_beta_offset, alpha_beta_offset_old
@@ -1249,19 +1248,18 @@ contains
 !           3. cholesky_basis
          
          write(temp_name, '(a11, i4.4)') 'basis_info_', batch
-         call batch_file%init(trim(temp_name), 'sequential', 'unformatted')
+         batch_file = sequential_file(trim(temp_name))
 !  
-         call disk%open_file(batch_file, 'read')
-         rewind(batch_file%unit)
+         call batch_file%open_('read', 'rewind')
 !
          call mem%alloc(basis_shell_info, n_sp_in_basis_batches(batch), 4)
          call mem%alloc(cholesky_basis, n_cholesky_batches(batch), 3)
-!  
-         read(batch_file%unit) 
-         read(batch_file%unit) basis_shell_info
-         read(batch_file%unit) cholesky_basis
-!  
-         call disk%close_file(batch_file)
+!
+         call batch_file%read_()  
+         call batch_file%read_(basis_shell_info, n_sp_in_basis_batches(batch)*4)  
+         call batch_file%read_(cholesky_basis, n_cholesky_batches(batch)*3)  
+!
+         call batch_file%close_()
 !
          do J = 1, n_cholesky_batches(batch)
 !

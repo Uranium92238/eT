@@ -38,7 +38,8 @@ module ccs_class
    use index_invert
    use batching_index_class
    use timings_class
-   use file_class
+   use file_class, only : file
+   use disk_manager_class, only : disk
 !
    implicit none
 !
