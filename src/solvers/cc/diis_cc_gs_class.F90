@@ -25,7 +25,6 @@ module diis_cc_gs_class
 !!  
 !
    use kinds
-   use file_class
    use ccs_class
    use diis_tool_class
 !

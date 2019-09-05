@@ -29,7 +29,6 @@ module diis_A_inv_cc_es_class
 !!
 !
    use kinds
-   use file_class
    use ccs_class
    use diis_tool_class
    use abstract_cc_es_class, only: abstract_cc_es

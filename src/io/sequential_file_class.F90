@@ -44,49 +44,74 @@ module sequential_file_class
 !
 !     Write routines
 !
+      procedure, public :: write_blank_sequential_file
+!
       procedure, public :: write_dp_sequential_file
       procedure, public :: write_dp_1_sequential_file
       procedure, public :: write_dp_2_sequential_file
       procedure, public :: write_dp_3_sequential_file
       procedure, public :: write_dp_4_sequential_file
+!
       procedure, public :: write_i_sequential_file
+      procedure, public :: write_i_i_sequential_file
       procedure, public :: write_i_1_sequential_file
       procedure, public :: write_i_2_sequential_file
       procedure, public :: write_i_3_sequential_file
       procedure, public :: write_i_4_sequential_file
-      generic           :: write_ => write_dp_sequential_file,   &
-                                     write_dp_1_sequential_file, &
-                                     write_dp_2_sequential_file, &
-                                     write_dp_3_sequential_file, &
-                                     write_dp_4_sequential_file, &
-                                     write_i_sequential_file,    &
-                                     write_i_1_sequential_file,  &
-                                     write_i_2_sequential_file,  &
-                                     write_i_3_sequential_file,  &
-                                     write_i_4_sequential_file
+!
+      procedure, public :: write_l_sequential_file
+      procedure, public :: write_l_1_sequential_file
+!
+      procedure, public :: write_char_sequential_file
+!
+      generic           :: write_ => write_blank_sequential_file, &
+                                     write_dp_sequential_file,    &
+                                     write_dp_1_sequential_file,  &
+                                     write_dp_2_sequential_file,  &
+                                     write_dp_3_sequential_file,  &
+                                     write_dp_4_sequential_file,  &
+                                     write_i_sequential_file,     &
+                                     write_i_i_sequential_file,   &
+                                     write_i_1_sequential_file,   &
+                                     write_i_2_sequential_file,   &
+                                     write_i_3_sequential_file,   &
+                                     write_i_4_sequential_file,   &
+                                     write_l_sequential_file,     &
+                                     write_l_1_sequential_file,   &
+                                     write_char_sequential_file
 !
 !     Read routines
+!
+      procedure, public :: read_blank_sequential_file
 !
       procedure, public :: read_dp_sequential_file
       procedure, public :: read_dp_1_sequential_file
       procedure, public :: read_dp_2_sequential_file
       procedure, public :: read_dp_3_sequential_file
       procedure, public :: read_dp_4_sequential_file
+!
       procedure, public :: read_i_sequential_file
+      procedure, public :: read_i_i_sequential_file
       procedure, public :: read_i_1_sequential_file
       procedure, public :: read_i_2_sequential_file
       procedure, public :: read_i_3_sequential_file
       procedure, public :: read_i_4_sequential_file
-      generic           :: read_ => read_dp_sequential_file, &
-                                     read_dp_1_sequential_file, &
-                                     read_dp_2_sequential_file, &
-                                     read_dp_3_sequential_file, &
-                                     read_dp_4_sequential_file, &
-                                     read_i_sequential_file, &
-                                     read_i_1_sequential_file, &
-                                     read_i_2_sequential_file, &
-                                     read_i_3_sequential_file, &
-                                     read_i_4_sequential_file
+!
+      procedure, public :: read_char_sequential_file
+!
+      generic           :: read_ => read_blank_sequential_file, &
+                                    read_dp_sequential_file,    &
+                                    read_dp_1_sequential_file,  &
+                                    read_dp_2_sequential_file,  &
+                                    read_dp_3_sequential_file,  &
+                                    read_dp_4_sequential_file,  &
+                                    read_i_sequential_file,     &
+                                    read_i_i_sequential_file,   &
+                                    read_i_1_sequential_file,   &
+                                    read_i_2_sequential_file,   &
+                                    read_i_3_sequential_file,   &
+                                    read_i_4_sequential_file,   &
+                                    read_char_sequential_file
 !
    end type sequential_file
 !
@@ -329,9 +354,35 @@ contains
    end subroutine delete_sequential_file
 !
 !
+   subroutine write_blank_sequential_file(the_file)
+!!
+!!    Sequential file write, blank line
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(sequential_file), intent(in) :: the_file
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      if (the_file%format_ .eq. 'unformatted') then
+         write(the_file%unit, iostat=io_error, iomsg=io_msg) 
+      else
+         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) 
+      endif
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to write to file: '//the_file%name_//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine write_blank_sequential_file
+!
+!
    subroutine write_dp_sequential_file(the_file, scalar)
 !!
-!!    Sequential file write, real(dp0 scalar
+!!    Sequential file write, real(dp) scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -459,6 +510,34 @@ contains
    end subroutine write_i_sequential_file
 !
 !
+   subroutine write_i_i_sequential_file(the_file, scalar1, scalar2)
+!!
+!!    Sequential file write, two integer scalars
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(sequential_file), intent(in) :: the_file
+!
+      integer, intent(in)  :: scalar1, scalar2
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      if (the_file%format_ .eq. 'unformatted') then
+         write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar1, scalar2
+      else
+         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar1, scalar2
+      endif
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to write to file: '//the_file%name_//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine write_i_i_sequential_file
+!
+!
    subroutine write_i_1_sequential_file(the_file, array, n)
 !!
 !!    Sequential file write, integer array
@@ -531,6 +610,130 @@ contains
       call the_file%write_i_1_sequential_file(array, n)
 !
    end subroutine write_i_4_sequential_file
+!
+!
+   subroutine write_l_sequential_file(the_file, scalar)
+!!
+!!    Sequential file write, logical scalar
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(sequential_file), intent(in) :: the_file
+!
+      logical, intent(in)  :: scalar
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      if (the_file%format_ .eq. 'unformatted') then
+         write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+      else
+         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar
+      endif
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to write to file: '//the_file%name_//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine write_l_sequential_file
+!
+!
+   subroutine write_l_1_sequential_file(the_file, array, n)
+!!
+!!    Sequential file write, logical array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(sequential_file), intent(in)  :: the_file
+!
+      integer, intent(in)                 :: n
+      logical, dimension(n), intent(in)   :: array
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      if (the_file%format_ .eq. 'unformatted') then
+         write(the_file%unit, iostat=io_error, iomsg=io_msg) array
+      else
+         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) array
+      endif
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to write to file: '//trim(the_file%name_)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine write_l_1_sequential_file
+!
+!
+   subroutine write_char_sequential_file(the_file, string, format_string)
+!!
+!!    Sequential file write, character
+!!    Written by Rolf H. Myhre, May 2019
+!!    string:  character string to write from
+!!    format_string: optional format string
+!!
+      implicit none
+!
+      class(sequential_file), intent(in) :: the_file
+!
+      character(len=*), intent(in)           :: string
+      character(len=*), intent(in), optional :: format_string
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+      character(len=100)   :: fstring
+!
+      if(present(format_string)) then
+         if (the_file%format_ .eq. 'unformatted') then
+            call output%error_msg(trim(the_file%name_)//' is unformatted')
+         endif
+         fstring = trim(format_string)
+      else
+         fstring = '*'
+      endif
+!
+      if (the_file%format_ .eq. 'unformatted') then
+         write(the_file%unit, iostat=io_error, iomsg=io_msg) string
+      else
+         write(the_file%unit, trim(fstring), iostat=io_error, iomsg=io_msg) string
+      endif
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to write to file: '//trim(the_file%name_)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine write_char_sequential_file
+!
+!
+   subroutine read_blank_sequential_file(the_file)
+!!
+!!    Sequential file read, blank line
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(sequential_file), intent(in)  :: the_file
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      if (the_file%format_ .eq. 'unformatted') then
+         read(the_file%unit, iostat=io_error, iomsg=io_msg)
+      else
+         read(the_file%unit, *, iostat=io_error, iomsg=io_msg)
+      endif
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine read_blank_sequential_file
 !
 !
    subroutine read_dp_sequential_file(the_file, scalar)
@@ -663,6 +866,34 @@ contains
    end subroutine read_i_sequential_file
 !
 !
+   subroutine read_i_i_sequential_file(the_file, scalar1, scalar2)
+!!
+!!    Sequential file read, two integer scalars
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(sequential_file), intent(in) :: the_file
+!
+      integer, intent(out) :: scalar1, scalar2
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      if (the_file%format_ .eq. 'unformatted') then
+         read(the_file%unit, iostat=io_error, iomsg=io_msg) scalar1, scalar2
+      else
+         read(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar1, scalar2
+      endif
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine read_i_i_sequential_file
+!
+!
    subroutine read_i_1_sequential_file(the_file, array, n)
 !!
 !!    Sequential file read, integer array
@@ -735,6 +966,47 @@ contains
       call the_file%read_i_1_sequential_file(array, n)
 !
    end subroutine read_i_4_sequential_file
+!
+!
+   subroutine read_char_sequential_file(the_file, string, format_string)
+!!
+!!    Sequential file read, character
+!!    Written by Rolf H. Myhre, May 2019
+!!    string:  character string to read in to
+!!    format_string: optional format string
+!!
+      implicit none
+!
+      class(sequential_file), intent(in) :: the_file
+!
+      character(len=*), intent(out)          :: string
+      character(len=*), intent(in), optional :: format_string
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+      character(len=100)   :: fstring
+!
+      if(present(format_string)) then
+         if (the_file%format_ .eq. 'unformatted') then
+            call output%error_msg(trim(the_file%name_)//' is unformatted')
+         endif
+         fstring = trim(format_string)
+      else
+         fstring = '*'
+      endif
+!
+      if (the_file%format_ .eq. 'unformatted') then
+         read(the_file%unit, iostat=io_error, iomsg=io_msg) string
+      else
+         read(the_file%unit, trim(fstring), iostat=io_error, iomsg=io_msg) string
+      endif
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine read_char_sequential_file
 !
 !
 end module sequential_file_class

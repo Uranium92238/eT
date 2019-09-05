@@ -52,7 +52,7 @@ set(eT_fortran_sources
    src/io/section_class.F90
    src/io/output_file_class.F90
    src/io/io_utilities.F90
-   src/io/string_utilities.F90
+   src/tools/string_utilities.F90
    src/io/global_out.F90
    src/io/global_in.F90
    src/integrals/mo_integral_tool_class.F90

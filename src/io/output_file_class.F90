@@ -716,6 +716,11 @@ contains
 !
    function get_format_length(the_file,fstring) result(length)
 !
+!!    Get printed length of format
+!!    Written by Rolf H. Myhre, Sep 2019
+!!
+!!    Figure out how many printed characters a format string corresponds to
+!
       implicit none
 !
       class(output_file), intent(in) :: the_file
@@ -725,7 +730,8 @@ contains
 !
       string_len = len_trim(fstring)
 !
-      if(fstring(1:1) .eq. '(') then
+!     If character, integer or logical
+      if(fstring(1:1) .eq. '(') then 
          if(fstring(2:2) .eq. 'a' .or. fstring(2:2) .eq. 'A' .or. &
             fstring(2:2) .eq. 'l' .or. fstring(2:2) .eq. 'L' .or. &
             fstring(2:2) .eq. 'i' .or. fstring(2:2) .eq. 'I') then
@@ -741,6 +747,7 @@ contains
                call the_file%error_msg(fstring//' is not an acceptable format string')
             endif 
 !
+!        If float
          elseif(fstring(2:2) .eq. 'f' .or. fstring(2:2) .eq. 'F' .or. &
                 fstring(2:2) .eq. 'e' .or. fstring(2:2) .eq. 'E') then
 !

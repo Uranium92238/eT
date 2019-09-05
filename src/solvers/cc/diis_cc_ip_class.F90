@@ -28,7 +28,6 @@ module diis_cc_ip_class
 !
    use diis_cc_es_class, only: diis_cc_es
    use kinds
-   use file_class
    use ccs_class
 !
    implicit none

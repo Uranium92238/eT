@@ -24,12 +24,14 @@ module mo_integral_tool_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-   use file_class
-   use disk_manager_class
-   use memory_manager_class
-   use timings_class
+   use global_out, only : output
+   use memory_manager_class, only : mem
+   use direct_file_class, only : direct_file
+   use timings_class, only : timings
+   use eri_cd_class, only : eri_cd
+   use batching_index_class, only : batching_index
+!
    use reordering
-   use eri_cd_class
 !
    implicit none
 !
@@ -42,8 +44,8 @@ module mo_integral_tool_class
 !
       integer :: n_J
 !
-      type(file) :: cholesky_mo
-      type(file) :: cholesky_mo_t1
+      type(direct_file) :: cholesky_mo
+      type(direct_file) :: cholesky_mo_t1
 !
       integer, private :: n_o
       integer, private :: n_v
@@ -119,8 +121,8 @@ contains
       integrals%n_v  = n_v
       integrals%n_mo = n_o + n_v
 !
-      call integrals%cholesky_mo%init(eri_cholesky%cholesky_mo_vectors%name_, 'direct', 'unformatted', dp*integrals%n_J)
-      call integrals%cholesky_mo_t1%init('cholesky_mo_t1_vectors', 'direct', 'unformatted', dp*integrals%n_J)
+      integrals%cholesky_mo = direct_file(eri_cholesky%cholesky_mo_vectors%name_, integrals%n_J)
+      integrals%cholesky_mo_t1 = direct_file('cholesky_mo_t1_vectors', integrals%n_J)
 !
 !     Initially MO cholesky on file, and not T1-transformed cholesky
 !     nor full T1-ERI matrix
@@ -156,8 +158,8 @@ contains
       integrals%n_v  = integrals_template%n_v
       integrals%n_mo = integrals_template%n_o + integrals_template%n_v
 !
-      call integrals%cholesky_mo%init(integrals_template%cholesky_mo%name_, 'direct', 'unformatted', dp*integrals%n_J)
-      call integrals%cholesky_mo_t1%init('cholesky_mo_t1_vectors', 'direct', 'unformatted', dp*integrals%n_J)
+      integrals%cholesky_mo = direct_file(integrals_template%cholesky_mo%name_, integrals%n_J)
+      integrals%cholesky_mo_t1 = direct_file('cholesky_mo_t1_vectors', integrals%n_J)
 !
 !     Initially MO cholesky on file, and not T1-transformed cholesky
 !     nor full T1-ERI matrix
@@ -274,7 +276,7 @@ contains
 !
       integer :: p, q, pq_rec
 !
-      call disk%open_file(integrals%cholesky_mo, 'read')
+      call integrals%cholesky_mo%open_('read')
 !
       do q = 1, last_q - first_q + 1
          do p = 1, last_p - first_p + 1
@@ -282,12 +284,12 @@ contains
             pq_rec = (max(p + first_p - 1, q + first_q - 1)*(max(p + first_p - 1, q + first_q - 1)-3)/2) &
                          + (p + first_p - 1) + (q + first_q - 1)
 !
-            read(integrals%cholesky_mo%unit, rec=pq_rec) L_J_pq(:, p, q)
+            call integrals%cholesky_mo%read_(L_J_pq(:, p, q), pq_rec)
 !
          enddo
       enddo
 !
-      call disk%close_file(integrals%cholesky_mo)
+      call integrals%cholesky_mo%close_()
 !
    end subroutine read_cholesky_mo_integral_tool
 !
@@ -311,19 +313,19 @@ contains
 !
       integer :: p, q, pq_rec
 !
-      call disk%open_file(integrals%cholesky_mo_t1, 'read')
+      call integrals%cholesky_mo_t1%open_('read')
 !
       do q = 1, last_q - first_q + 1
          do p = 1, last_p - first_p + 1
 !
             pq_rec = integrals%n_mo*(q + first_q - 2) + p + first_p - 1
 !
-            read(integrals%cholesky_mo_t1%unit, rec=pq_rec) L_J_pq(:, p, q)
+            call integrals%cholesky_mo_t1%read_(L_J_pq(:, p, q), pq_rec)
 !
          enddo
       enddo
 !
-      call disk%close_file(integrals%cholesky_mo_t1)
+      call integrals%cholesky_mo_t1%close_()
 !
    end subroutine read_cholesky_t1_mo_integral_tool
 !
@@ -790,7 +792,8 @@ contains
    end subroutine construct_cholesky_ij_c1_mo_integral_tool
 !
 !
-   subroutine construct_cholesky_ab_c1_mo_integral_tool(integrals, L_J_ab_c1, c_ai, first_a, last_a, first_b, last_b)
+   subroutine construct_cholesky_ab_c1_mo_integral_tool(integrals, L_J_ab_c1, c_ai, &
+                                                        first_a, last_a, first_b, last_b)
 !!
 !!    Construct the C1-transformed Cholesky Vector ab from the T1-transformed Cholesky Vector
 !!
@@ -869,7 +872,8 @@ contains
    end subroutine construct_cholesky_ab_c1_mo_integral_tool
 !
 !
-   subroutine construct_cholesky_ai_a_c1_mo_integral_tool(integrals, L_J_ai_c1, c_aj, first_a, last_a, first_i, last_i)
+   subroutine construct_cholesky_ai_a_c1_mo_integral_tool(integrals, L_J_ai_c1, c_aj, &
+                                                          first_a, last_a, first_i, last_i)
 !!
 !!    Construct the C1-transformed Cholesky Vector ai from the T1-transformed Cholesky Vector
 !!
@@ -945,7 +949,8 @@ contains
    end subroutine construct_cholesky_ai_a_c1_mo_integral_tool
 !
 !
-   subroutine construct_cholesky_ai_i_c1_mo_integral_tool(integrals, L_J_ai_c1, c_bi, first_a, last_a, first_i, last_i)
+   subroutine construct_cholesky_ai_i_c1_mo_integral_tool(integrals, L_J_ai_c1, c_bi, & 
+                                                          first_a, last_a, first_i, last_i)
 !!
 !!    Construct the C1-transformed Cholesky Vector ai from the T1-transformed Cholesky Vector
 !!
@@ -1119,10 +1124,10 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
       type(timings) :: write_t1_cholesky_timer
 !
-      write_t1_cholesky_timer = new_timer('transform and write t1 cholesky to file')
+      write_t1_cholesky_timer = timings('transform and write t1 cholesky to file')
       call write_t1_cholesky_timer%turn_on()
 !
-      call disk%open_file(integrals%cholesky_mo_t1, 'write')
+      call integrals%cholesky_mo_t1%open_('write')
 !
 !     occupied-occupied block
 !
@@ -1151,7 +1156,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
                ij_rec = integrals%n_mo*(j - 1) + i + batch_i%first - 1
 !
-               write(integrals%cholesky_mo_t1%unit, rec=ij_rec) L_J_ij(:, i, j)
+               call integrals%cholesky_mo_t1%write_(L_J_ij(:, i, j), ij_rec)
 !
             enddo
          enddo
@@ -1183,7 +1188,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
                ia_rec = integrals%n_mo*(a + batch_a%first + integrals%n_o - 2) + i
 !
-               write(integrals%cholesky_mo_t1%unit, rec=ia_rec) L_J_ia(:, i, a)
+               call integrals%cholesky_mo_t1%write_(L_J_ia(:, i, a), ia_rec)
 !
             enddo
          enddo
@@ -1227,7 +1232,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
                   ai_rec = integrals%n_mo*(i + batch_i%first - 2) + a + batch_a%first - 1 + integrals%n_o
 !
-                  write(integrals%cholesky_mo_t1%unit, rec=ai_rec) L_J_ai(:, a, i)
+                  call integrals%cholesky_mo_t1%write_(L_J_ai(:, a, i), ai_rec)
 !
                enddo
             enddo
@@ -1265,7 +1270,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
                ab_rec = integrals%n_mo*((integrals%n_o + b + batch_b%first) - 2) + (a + integrals%n_o)
 !
-               write(integrals%cholesky_mo_t1%unit, rec=ab_rec) L_J_ab(:, a, b)
+               call integrals%cholesky_mo_t1%write_(L_J_ab(:, a, b), ab_rec)
 !
             enddo
          enddo
@@ -1276,7 +1281,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
       integrals%cholesky_t1_file = .true.
 !
-      call disk%close_file(integrals%cholesky_mo_t1)
+      call integrals%cholesky_mo_t1%close_()
 !
       call write_t1_cholesky_timer%turn_off()
 !

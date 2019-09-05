@@ -34,7 +34,6 @@ module scf_hf_class
 !!
 !
    use kinds
-   use file_class
    use hf_class
    use disk_manager_class
    use abstract_hf_solver_class
