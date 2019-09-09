@@ -22,6 +22,7 @@ module abstract_file_class
 !!
 !!    Abstract file class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
+!!    Reqwritten by Rolf H. Myhre, Nov 2018
 !!
 !!
 !
@@ -48,6 +49,7 @@ module abstract_file_class
 !
       character(len=40) :: access_ = 'unknown'
       character(len=40) :: format_ = 'unknown'
+      character(len=40) :: action_ = 'unknown'
 !
    contains
 !
@@ -56,6 +58,7 @@ module abstract_file_class
       procedure :: get_size               => get_size_abstract_file
       procedure :: get_change             => get_change_abstract_file
       procedure :: exists                 => exists_abstract_file
+      procedure :: copy                   => copy_abstract_file
 !
    end type abstract_file
 !
@@ -162,4 +165,55 @@ contains
    end function exists_abstract_file
 !
 !  
+   subroutine copy_abstract_file(the_file, filename)
+!!
+!!    Copy eT file
+!!    Written by Alexander Paul and Rolf H. Myhre, September 2019
+!!
+      implicit none
+!
+      class(abstract_file) :: the_file
+!
+      character(*), intent(in) :: filename
+!
+      integer              :: copy_unit
+!
+!     Character to hold a byte
+      character :: byte
+!
+!     Check that file is closed
+      if(the_file%is_open) then 
+!
+         print *, 'Error in copy: '//the_file%name_//' is not closed'
+         stop
+!
+      endif
+!
+!     Open the file with stream unformatted access
+      open(newunit=the_file%unit, file=the_file%name_, access='stream', &
+           form='unformatted', action='read')
+!
+!     Open a new file
+      open(newunit=copy_unit, file=trim(filename), access='stream', &
+           form='unformatted', action='write')
+!
+!
+!     Read byte by byte and write it to the new file
+!
+      do
+!
+         read(the_file%unit, end=200) byte !Read until end of file, then go to 200
+         write(copy_unit) byte             !Write whatever you just read
+!
+      enddo
+      200 continue !End of file reached, should be done
+!
+!     Close the files
+      close(copy_unit, status='keep')
+      close(the_file%unit, status='keep')
+!
+!
+   end subroutine copy_abstract_file
+!
+!
 end module abstract_file_class

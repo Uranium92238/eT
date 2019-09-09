@@ -46,6 +46,7 @@ set(eT_fortran_sources
    src/io/sequential_file_class.F90
    src/io/input_file_class.F90
    src/io/section_class.F90
+   src/io/abstract_out_file_class.F90
    src/io/output_file_class.F90
    src/io/io_utilities.F90
    src/tools/string_utilities.F90
