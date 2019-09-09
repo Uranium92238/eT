@@ -26,10 +26,14 @@ module output_file_class
 !!
 !
    use kinds    
-   use abstract_file_class, only : abstract_file 
+   use abstract_out_file_class
 !
-   type, extends(abstract_file) :: output_file
+   type, extends(abstract_out_file) :: output_file
 !
+!
+      character(len=10), private :: global_print_level
+      character(len=10), private :: local_print_level
+      logical, private :: is_mute
 !
    contains
 !
@@ -41,11 +45,14 @@ module output_file_class
       procedure :: warning_msg            => warning_msg_output_file
 !
       procedure, public :: printf         => printf_output_file
-      procedure, public :: printd         => printd_output_file
 !
-      procedure, private :: get_format_length
+      procedure, public :: set_global_print_level  => set_global_print_level_output_file 
+      procedure, public :: set_local_print_level   => set_local_print_level_output_file  
+      procedure, public :: reset_local_print_level => reset_local_print_level_output_file  
+      procedure, public :: check_print_level       => check_print_level_output_file  
 !
-      procedure :: long_string_print      => long_string_print_output_file
+      procedure, public :: mute   => mute_output_file
+      procedure, public :: unmute => unmute_output_file
 !
    end type output_file
 !
@@ -76,11 +83,136 @@ contains
 !
       the_file%access_ = 'sequential'
       the_file%format_ = 'formatted'
+      the_file%action_ = 'write'
+!
+      the_file%global_print_level='normal'
+      the_file%local_print_level='normal'
+      the_file%is_mute = .false.
 !
       the_file%is_open = .false.
       the_file%unit = -1
 !
    end function new_output_file
+!
+!
+   subroutine set_global_print_level_output_file(the_file, print_level)
+!!
+!!    Set the global print level
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file) :: the_file
+!
+      character(len=*), intent(in) :: print_level
+!
+      if (trim(print_level) .eq. 'normal') then
+         the_file%global_print_level='normal'
+!
+      elseif (trim(print_level) .eq. 'minimal') then
+         the_file%global_print_level='minimal'
+!
+      elseif (trim(print_level) .eq. 'verbose') then
+         the_file%global_print_level='verbose'
+!
+      elseif (trim(print_level) .eq. 'debug') then
+         the_file%global_print_level='debug'
+!
+      else
+         print *, 'Error: Print level not normal, minimal, verbose or debug'
+         stop
+      endif
+!
+   end subroutine set_global_print_level_output_file
+!
+!
+   subroutine set_local_print_level_output_file(the_file, print_level)
+!!
+!!    Set the local print level
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file) :: the_file
+!
+      character(len=*), intent(in) :: print_level
+!
+      if (trim(print_level) .eq. 'normal') then
+         the_file%global_print_level='normal'
+!
+      elseif (trim(print_level) .eq. 'minimal') then
+         the_file%global_print_level='minimal'
+!
+      elseif (trim(print_level) .eq. 'verbose') then
+         the_file%global_print_level='verbose'
+!
+      elseif (trim(print_level) .eq. 'debug') then
+         the_file%global_print_level='debug'
+!
+      else
+         print *, 'Error: Print level not normal, minimal, verbose or debug'
+         stop
+      endif
+!
+   end subroutine set_local_print_level_output_file
+!
+!
+   subroutine reset_local_print_level_output_file(the_file)
+!!
+!!    Set the local print level to global
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file) :: the_file
+!
+      the_file%local_print_level = the_file%global_print_level
+!
+   end subroutine reset_local_print_level_output_file
+!
+!
+   subroutine check_print_level_output_file(the_file)
+!!
+!!    Check if local and global print level is the same
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file) :: the_file
+!
+      if (the_file%local_print_level .ne. the_file%global_print_level) then
+         print *, 'Warning: global and local print levels are not the same'
+      endif
+!
+   end subroutine check_print_level_output_file
+!
+!
+   subroutine mute_output_file(the_file)
+!!
+!!    Set the file to mute
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file) :: the_file
+!
+      the_file%is_mute = .true.
+!
+   end subroutine mute_output_file
+!
+!
+   subroutine unmute_output_file(the_file)
+!!
+!!    Set the file to unmute
+!!    Written by Rolf Heilemann Myhre, May 2019
+!!
+      implicit none
+!
+      class(output_file) :: the_file
+!
+      the_file%is_mute = .false.
+!
+   end subroutine unmute_output_file
 !
 !
    subroutine open_output_file(the_file, position_)
@@ -235,12 +367,24 @@ contains
    end subroutine warning_msg_output_file
 !
 !  
-   subroutine printf_output_file(the_file, string, reals, ints, chars, logs, fs, ffs, lfs, ll, adv)
+   subroutine printf_output_file(the_file, string, reals, ints, chars, logs, fs, ffs, lfs, ll, adv, pl)
 !!
-!!    Printf 
+!!    printf
 !!    Written by Rolf Heilemann Myhre, May 2019
 !!
+!!    Printf output_file wrapper that checks for print level and silence
 !!    Prints any number of reals and integers formatted Python style.
+!!
+!!    pl:       print level
+!!              compared to stored print level variable and four allowed levels
+!!              'minimal' or 'm' : Will always be printed. Only final results like total energies
+!!                                 or excitation energies
+!!              'normal' or 'n'  : Will normally be printed, for example convergence iterations
+!!              'verbose' or 'v' : Will only be printed unless explicitly asked for, for example 
+!!                                 extra norms and MO coefficients 
+!!              'debug'          : Print information only useful for developers such as extra tests 
+!!                                 and index dimensions, default
+!!
 !!
 !!    string:   String of character that should be printed, 
 !!              including formatting of reals and integers 
@@ -259,7 +403,8 @@ contains
 !!    ll:       Integer specifying number of characters per line of print.
 !!    adv:      Logical specifies whether advance is 'yes' or 'no', default = 'yes'
 !!
-!!    Example: call output%printf('Energy (a.u.): (f19.12)', reals=[wf%energy], fs='(/t6,a)')
+!!    Example: call output%printf('Energy (a.u.): (f19.12)', pl='minimal', reals=[wf%energy], fs='(/t6,a)')
+!!
 !!
       implicit none
 !
@@ -267,6 +412,7 @@ contains
 !
 !     Data to print
       character(len=*), intent(in)                          :: string 
+      character(len=*), intent(in), optional                :: pl
       real(dp), dimension(:), intent(in), optional          :: reals 
       integer, dimension(:), intent(in), optional           :: ints
       character(len=*), dimension(:), intent(in), optional  :: chars
@@ -280,493 +426,57 @@ contains
 !
       logical, intent(in), optional :: adv
 !
-      character(len=1000)  :: pstring 
-      character(len=20)    :: fstring 
+      character(len=10) :: plvl
 !
-      integer :: i, p_pos, int_check, i_err, add_pos
-      integer :: int_len, real_len, log_len, char_len, string_len
-      integer :: int_count, real_count, log_count, char_count
-      integer :: print_pos, printed
+      if(present(pl)) then !Check if pl makes sense and set internal plvl
+         if (trim(pl) .eq. 'minimal' .or. trim(pl) .eq. 'm') then
+            plvl = 'minimal'
+         elseif (trim(pl) .eq. 'normal'  .or. trim(pl) .eq. 'n') then
+            plvl = 'normal'
+         elseif (trim(pl) .eq. 'verbose' .or. trim(pl) .eq. 'v') then
+            plvl = 'verbose'
+         elseif (trim(pl) .eq. 'debug') then 
+            plvl = 'debug'
+         else
 !
-      integer           :: l_length
-      character(len=20) :: f_string
-      character(len=20) :: ff_string
-      character(len=20) :: lf_string
-      logical           :: adva
-!
-!     Set print string and format string blank
-      pstring = ' '
-      fstring = ' '
-!
-      string_len = len_trim(string)
-!
-!     Check how many reals are present
-      if(present(reals)) then
-         real_len = size(reals)
-      else
-         real_len = 0
-      endif
-!
-!     Check how many ints are present
-      if(present(ints)) then
-         int_len = size(ints)
-      else
-         int_len = 0
-      endif
-!
-!     Check how many logicals are present
-      if(present(logs)) then
-         log_len = size(logs)
-      else
-         log_len = 0
-      endif
-!
-!     Check how many chars are present
-      if(present(chars)) then
-         char_len = size(chars)
-      else
-         char_len = 0
-      endif
-!
-!     Line length to send to long_string_print
-      if(present(ll)) then
-         l_length = ll
-      else
-         l_length = 70
-      endif
-!
-!     Format string to send to long_string_print
-      if(present(fs)) then
-         f_string = fs
-      else
-         f_string = '(t3,a)'
-      endif
-!
-!     First line format string to send to long_string_print
-      if(present(ffs)) then
-         ff_string = ffs
-      else
-         ff_string = f_string
-      endif
-!
-!     Last line format string to send to long_string_print
-      if(present(lfs)) then
-         lf_string = lfs
-      else
-         lf_string = f_string
-      endif
-!
-!     Advance write?
-      if(present(adv)) then
-         adva = adv
-      else
-         adva = .True.
-      endif
-!
-      real_count = 0
-      int_count  = 0
-      log_count  = 0
-      char_count  = 0
-!
-      print_pos = 1
-      printed = 1
-      i = 0
-!
-      do while (i .lt. string_len)
-!
-         i = i + 1
-!
-!        Look for (
-         if(string(i:i) .eq. "(") then
-!
-!           Is ( followed by f, F, e or E?
-            if(string(i+1:i+1) .eq. "f" .or. string(i+1:i+1) .eq. "F" .or. &
-               string(i+1:i+1) .eq. "e" .or. string(i+1:i+1) .eq. "E") then
-!
-!              Is it followed by a number, if so, assume a format string
-               read(string(i+2:),'(i1)',iostat=i_err) int_check
-               if (i_err .eq. 0) then
-!
-                  real_count = real_count + 1
-                  if (real_count .gt. real_len) call the_file%error_msg('Not enough reals in printf')
-!
-!                 Print everything between previous print and (
-                  write(pstring(print_pos:),'(a)') string(printed:i-1)
-                  print_pos = print_pos + i - printed
-                  p_pos = i
-!
-!                 Get length of format string
-                  do while (string(i:i) .ne. ")" .and. i .le. string_len)
-                     i = i + 1
-                  enddo
-!
-                  printed = i+1
-!
-!                 Copy format string to fstring and write the next real to pstring
-                  fstring = string(p_pos:i)
-                  write(pstring(print_pos:),fstring) reals(real_count)
-!
-!                 Set next position to print
-                  print_pos = len_trim(pstring) + 1
-!
-               endif
-!
-!           Is ( followed by i or I?
-            elseif(string(i+1:i+1) .eq. "i" .or. string(i+1:i+1) .eq. "I") then
-!
-!              Is it followed by a number, if so, assume a format string
-               read(string(i+2:),'(i1)',iostat=i_err) int_check
-               if (i_err .eq. 0) then
-!
-                  int_count = int_count + 1
-                  if (int_count .gt. int_len) call the_file%error_msg('Not enough ints in printf')
-!
-!                 Print everything between previous print and (
-                  write(pstring(print_pos:),'(a)') string(printed:i-1)
-                  print_pos = print_pos + i - printed
-                  p_pos = i
-!
-!                 Get length of format string
-                  do while (string(i:i) .ne. ")" .and. i .le. string_len)
-                     i = i + 1
-                  enddo
-!
-                  printed = i + 1
-!
-!                 Copy format string to fstring and write the next real to pstring
-                  fstring = string(p_pos:i)
-                  write(pstring(print_pos:),fstring) ints(int_count)
-!
-!                 Set next position to print
-                  print_pos = len_trim(pstring) + 1
-!
-               endif
-!  
-!           Is ( followed by l or L?
-            elseif(string(i+1:i+1) .eq. "l" .or. string(i+1:i+1) .eq. "L") then
-!
-!              Is it followed by a number, if so, assume a format string
-               read(string(i+2:),'(i1)',iostat=i_err) int_check
-               if (i_err .eq. 0) then
-!
-                  log_count = log_count + 1
-                  if (log_count .gt. log_len) call the_file%error_msg('Not enough ints in printf')
-!
-!                 Print everything between previous print and (
-                  write(pstring(print_pos:),'(a)') string(printed:i-1)
-                  print_pos = print_pos + i - printed
-                  p_pos = i
-!
-!                 Get length of format string
-                  do while (string(i:i) .ne. ")" .and. i .le. string_len)
-                     i = i + 1
-                  enddo
-!
-                  printed = i + 1
-!
-!                 Copy format string to fstring and write the next real to pstring
-                  fstring = string(p_pos:i)
-                  if (fstring(2:3) .eq. 'l0') then
-                     fstring = '(a)'
-                     add_pos = len_trim(chars(char_count))
-                  else
-                     fstring(2:2) = 'a'
-                     add_pos = the_file%get_format_length(fstring)
-                  endif
-!
-                  if(logs(log_count)) then
-                     write(pstring(print_pos:), fstring) 'True'     
-                  else
-                     write(pstring(print_pos:), fstring) 'False'     
-                  endif
-!
-!                 Set next position to print
-                  print_pos = print_pos + add_pos
-!
-               endif
-!  
-!           Is ( followed by a or A?
-            elseif(string(i+1:i+1) .eq. "a" .or. string(i+1:i+1) .eq. "A") then
-!
-!              Is it followed by a number, if so, assume a format string
-               read(string(i+2:),'(i1)',iostat=i_err) int_check
-               if (i_err .eq. 0) then
-!
-!
-                  char_count = char_count + 1
-                  if (char_count .gt. char_len) call the_file%error_msg('Not enough chars in printf')
-!
-!                 Print everything between previous print and (
-                  write(pstring(print_pos:),'(a)') string(printed:i-1)
-                  print_pos = print_pos + i - printed
-                  p_pos = i
-!
-!                 Get length of format string
-                  do while (string(i:i) .ne. ")" .and. i .le. string_len)
-                     i = i + 1
-                  enddo
-!
-                  printed = i + 1
-!
-!                 Copy format string to fstring and check if a0
-                  fstring = string(p_pos:i)
-                  if (fstring(2:3) .eq. 'a0') then
-                     fstring = '(a)'
-                     add_pos = len_trim(chars(char_count))
-                  else
-                     add_pos = the_file%get_format_length(fstring)
-                  endif
-!
-                  write(pstring(print_pos:), fstring) trim(chars(char_count))
-!
-!                 Set next position to print
-                  print_pos = print_pos + add_pos
-!
-               endif
-            endif
-!  
-         elseif (i .eq. string_len) then
-!
-!           Reached the end, print the rest
-            write(pstring(print_pos:),'(a)') string(printed:i)
+            print *, trim(pl)// ' is not an acceptable print level'
+            stop
 !
          endif
 !
-      enddo 
+      else !Else default
+         plvl = 'normal'
+      endif
 !
-      call the_file%long_string_print(pstring, fs=f_string, ffs=ff_string, lfs=lf_string, & 
-                                      ll=l_length, adv=adva)
+      if (the_file%is_mute) then !File is muted, make a quiet return
+!
+         return 
+!
+      endif
+!
+      if(trim(plvl) .eq. 'minimal' &                                 !Print if plvl minimal
+        .or. (trim(plvl) .eq. 'normal' &                             !Print if plvl is normal 
+             .and. the_file%local_print_level .ne. 'minimal') &      !and local print level is not minimal
+        .or. (trim(plvl) .eq. 'verbose' &                            !Print if plvl is verbose
+             .and. (the_file%local_print_level .eq. 'verbose' &      !and local print level is vebose
+                    .or. the_file%local_print_level .eq. 'debug')) & !or local print level is debug
+        .or. (trim(plvl) .eq. 'debug' &                              !Print if plvl is debug
+             .and. the_file%local_print_level .eq. 'debug')) then    !and local print level is debug
+!
+         call the_file%formprint(string, reals, ints, chars, logs, fs, ffs, lfs, ll, adv)
+!
+         if (trim(plvl) .eq. 'minimal' &
+            .or. trim(plvl) .eq. 'normal' &
+            .or. trim(plvl) .eq. 'debug') then !Flush if print at least normal or debugging
+!
+            call the_file%flush_()
+!
+         endif 
+!
+      endif
+      
 !
    end subroutine printf_output_file
 !
-!  
-   subroutine printd_output_file(the_file, string, adv)
-!!
-!!    Print with default format
-!!    Written by Rolf Heilemann Myhre, May 2019
-!!
-!!    string:   String to print
-!!    adv:      Logical specifies whether advance is 'yes' or 'no', default = 'yes'
-!!
-      implicit none
 !
-      class(output_file), intent(in) :: the_file
-!
-      character(len=*), intent(in) :: string
-!
-      logical, intent(in), optional :: adv
-!
-      character(len=3) :: adva
-!
-      integer              :: io_error
-      character(len=100)   :: io_msg
-!
-      adva = 'yes'
-      if(present(adv)) then
-         if(adv) then
-            adva = 'yes'
-         else
-            adva = 'no'
-         endif
-      endif
-!
-      write(the_file%unit, '(t3,a)', iostat=io_error, iomsg=io_msg, advance=trim(adva)) string
-!
-      if (io_error /= 0) then 
-!
-         print *, 'Error: could not print to eT output file '//trim(the_file%name_)//&
-                             &'error message: '//trim(io_msg)
-         stop 
-!
-      endif 
-!
-   end subroutine printd_output_file
-!
-   subroutine long_string_print_output_file(the_file, string, fs, colons, &
-                                            ffs, lfs, ll, adv)
-!!
-!!    Long string print
-!!    Written by Rolf H. Myhre, Nov 2018
-!!
-!!    Prints a reasonbly formatted long string over several lines
-!!    fs: optional format string
-!!    ffs: optional format string for first printed line, 
-!!                    will be used for single line if present
-!!    lfs: optional format string for last printed line
-!!    ll: optional argument for length printed lines, 
-!!                 routine adds extra length to not split up words
-!!
-!!
-      implicit none
-!
-      class(output_file), intent(in) :: the_file
-!
-      character(len=*), intent(in) :: string
-      character(len=*), intent(in), optional :: fs, ffs, lfs
-      integer, intent(in), optional :: ll
-      logical, intent(in), optional :: colons
-      logical, intent(in), optional :: adv
-!
-      character(90)  :: temp
-      integer        :: l, l_left, lines, l_length
-      integer        :: i,j, padd, printed 
-      character(20)  :: f_s,fstring,ffstring,lfstring
-      logical        :: col 
-!
-      character(len=3) :: adva
-!
-!     Default line length
-      l_length = 70
-      if(present(ll)) then
-         l_length = ll
-      endif
-!
-!     Figure out the formatting
-      fstring = '(t3,a)'
-      if(present(fs)) then
-         fstring = fs
-      endif
-!
-      ffstring = fstring
-      if(present(ffs)) then
-         ffstring = ffs
-      endif
-!
-      lfstring = fstring
-      if(present(lfs)) then
-         lfstring = lfs
-      endif
-!
-!     First line format
-      f_s = ffstring
-!
-!     Fancy colons for banner headings
-      col = .false.
-      if(present(colons)) then
-         col = colons
-      endif
-      if(col) then
-         l_length = l_length - 3
-      endif
-!
-      adva = 'yes'
-      if(present(adv)) then
-         if(adv) then
-            adva = 'yes'
-         else
-            adva = 'no'
-         endif
-      endif
-!
-      l = len_trim(string)      
-      l_left = l
-      lines = (l-1)/l_length + 1
-      printed = 1
-!
-      do i = 1,lines
-!
-         if(i .ne. lines) then
-!
-            if(i .ne. 1) then
-               f_s = fstring
-            endif
-!
-!           Add some extra padding to not split words
-            do j = 1,18
-               padd = j
-               if(string(printed+l_length+j:printed+l_length+j) == ' ') then
-                  exit
-               endif
-            enddo
-!
-!           Copy string to be printed. Add hyphen if word must be split
-            if(padd == 18) then
-               temp(1:l_length+padd+1) = string(printed:printed+l_length+padd)
-               temp(l_length+padd+1:l_length+padd+1) = '-'
-               printed = printed + l_length + padd
-            else
-               temp(1:l_length+padd+1) = string(printed:printed+l_length+padd+1)
-               printed = printed + l_length + padd + 1
-            endif
-!
-!           Print
-            if(col) then
-               write(the_file%unit,f_s) ':: '//temp(1:l_length+padd+1)
-            else
-               write(the_file%unit,f_s) temp(1:l_length+padd+1)
-            endif
-!
-         else
-!           Print the remaining string
-            f_s = lfstring
-            if(col) then
-               write(the_file%unit,f_s, advance=trim(adva)) ':: '//string(printed:l)
-            else
-               write(the_file%unit,f_s, advance=trim(adva)) string(printed:l)
-            endif
-            printed = l
-         endif
-!
-      enddo
-!
-      call the_file%flush_()
-!
-   end subroutine long_string_print_output_file
-!
-!
-   function get_format_length(the_file,fstring) result(length)
-!
-!!    Get printed length of format
-!!    Written by Rolf H. Myhre, Sep 2019
-!!
-!!    Figure out how many printed characters a format string corresponds to
-!
-      implicit none
-!
-      class(output_file), intent(in) :: the_file
-      character(len=*), intent(in)  :: fstring
-!
-      integer i, length, string_len, stat
-!
-      string_len = len_trim(fstring)
-!
-!     If character, integer or logical
-      if(fstring(1:1) .eq. '(') then 
-         if(fstring(2:2) .eq. 'a' .or. fstring(2:2) .eq. 'A' .or. &
-            fstring(2:2) .eq. 'l' .or. fstring(2:2) .eq. 'L' .or. &
-            fstring(2:2) .eq. 'i' .or. fstring(2:2) .eq. 'I') then
-!
-            i = 3
-            do while (fstring(i+1:i+1) .ne. ")" .and. i .lt. string_len)
-               i = i + 1
-            enddo
-!
-            read(fstring(3:i),*,iostat=stat) length
-!
-            if(stat .ne. 0) then
-               call the_file%error_msg(fstring//' is not an acceptable format string')
-            endif 
-!
-!        If float
-         elseif(fstring(2:2) .eq. 'f' .or. fstring(2:2) .eq. 'F' .or. &
-                fstring(2:2) .eq. 'e' .or. fstring(2:2) .eq. 'E') then
-!
-            i = 3
-            do while (fstring(i+1:i+1) .ne. "." .and. i .lt. string_len)
-               i = i + 1
-            enddo
-!
-            read(fstring(3:i),*,iostat=stat) length
-!
-            if(stat .ne. 0) then
-               call the_file%error_msg(fstring//' is not an acceptable format string')
-            endif 
-!
-         endif
-      else
-         call the_file%error_msg(fstring//' is not an acceptable format string')
-      endif
-!
-   end function get_format_length
-!  
 end module output_file_class

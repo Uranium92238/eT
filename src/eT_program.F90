@@ -25,8 +25,6 @@ program eT_program
 !!
 !
    use kinds
-   use direct_file_class, only : direct_file
-   use sequential_file_class, only : sequential_file
    use global_in 
    use global_out
    use timings_class, only : timings

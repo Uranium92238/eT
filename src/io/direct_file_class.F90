@@ -42,54 +42,76 @@ module direct_file_class
       procedure, public :: open_    => open_direct_file
       procedure, public :: close_   => close_direct_file
 !
-!     Copy a file
-!
-      procedure, public :: copy  => copy_direct_file
 !
 !     Write routines
 !
-      procedure, public :: write_dp_direct_file
-      procedure, public :: write_dp_1_direct_file
-      procedure, public :: write_dp_2_direct_file
-      procedure, public :: write_dp_3_direct_file
-      procedure, public :: write_dp_4_direct_file
+      procedure, public :: write_r_direct_file
+      procedure, public :: write_r_1_direct_file
+      procedure, public :: write_r_2_direct_file
+      procedure, public :: write_r_3_direct_file
+      procedure, public :: write_r_4_direct_file
+!
+      procedure, public :: write_c_direct_file
+      procedure, public :: write_c_1_direct_file
+      procedure, public :: write_c_2_direct_file
+      procedure, public :: write_c_3_direct_file
+      procedure, public :: write_c_4_direct_file
+!
       procedure, public :: write_i_direct_file
       procedure, public :: write_i_1_direct_file
       procedure, public :: write_i_2_direct_file
       procedure, public :: write_i_3_direct_file
       procedure, public :: write_i_4_direct_file
-      generic           :: write_ => write_dp_direct_file,    &
-                                     write_dp_1_direct_file,  &
-                                     write_dp_2_direct_file,  &
-                                     write_dp_3_direct_file,  &
-                                     write_dp_4_direct_file,  &
-                                     write_i_direct_file,     &
-                                     write_i_1_direct_file,   &
-                                     write_i_2_direct_file,   &
-                                     write_i_3_direct_file,   &
+!
+      generic           :: write_ => write_r_direct_file,   &
+                                     write_r_1_direct_file, &
+                                     write_r_2_direct_file, &
+                                     write_r_3_direct_file, &
+                                     write_r_4_direct_file, &
+                                     write_c_direct_file,   &
+                                     write_c_1_direct_file, &
+                                     write_c_2_direct_file, &
+                                     write_c_3_direct_file, &
+                                     write_c_4_direct_file, &
+                                     write_i_direct_file,   &
+                                     write_i_1_direct_file, &
+                                     write_i_2_direct_file, &
+                                     write_i_3_direct_file, &
                                      write_i_4_direct_file
 !
 !     Read routines
 !
-      procedure, public :: read_dp_direct_file
-      procedure, public :: read_dp_1_direct_file
-      procedure, public :: read_dp_2_direct_file
-      procedure, public :: read_dp_3_direct_file
-      procedure, public :: read_dp_4_direct_file
+      procedure, public :: read_r_direct_file
+      procedure, public :: read_r_1_direct_file
+      procedure, public :: read_r_2_direct_file
+      procedure, public :: read_r_3_direct_file
+      procedure, public :: read_r_4_direct_file
+!
+      procedure, public :: read_c_direct_file
+      procedure, public :: read_c_1_direct_file
+      procedure, public :: read_c_2_direct_file
+      procedure, public :: read_c_3_direct_file
+      procedure, public :: read_c_4_direct_file
+!
       procedure, public :: read_i_direct_file
       procedure, public :: read_i_1_direct_file
       procedure, public :: read_i_2_direct_file
       procedure, public :: read_i_3_direct_file
       procedure, public :: read_i_4_direct_file
-      generic           :: read_ => read_dp_direct_file,    &
-                                    read_dp_1_direct_file,  &
-                                    read_dp_2_direct_file,  &
-                                    read_dp_3_direct_file,  &
-                                    read_dp_4_direct_file,  &
-                                    read_i_direct_file,     &
-                                    read_i_1_direct_file,   &
-                                    read_i_2_direct_file,   &
-                                    read_i_3_direct_file,   &
+      generic           :: read_ => read_r_direct_file,   &
+                                    read_r_1_direct_file, &
+                                    read_r_2_direct_file, &
+                                    read_r_3_direct_file, &
+                                    read_r_4_direct_file, &
+                                    read_c_direct_file,   &
+                                    read_c_1_direct_file, &
+                                    read_c_2_direct_file, &
+                                    read_c_3_direct_file, &
+                                    read_c_4_direct_file, &
+                                    read_i_direct_file,   &
+                                    read_i_1_direct_file, &
+                                    read_i_2_direct_file, &
+                                    read_i_3_direct_file, &
                                     read_i_4_direct_file
 !
    end type direct_file
@@ -161,12 +183,10 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      character(len=20)    :: act
-!
       if(present(file_action)) then
-         act = trim(file_action)
+         the_file%action_ = trim(file_action)
       else
-         act = 'readwrite'
+         the_file%action_ = 'readwrite'
       endif 
 !
       if (the_file%is_open) then
@@ -176,8 +196,8 @@ contains
       endif
 !
       open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
-           action=trim(act), recl=the_file%record_length, status='unknown', form=the_file%format_, &
-           iostat=io_error, iomsg=io_msg)
+           action=the_file%action_, recl=the_file%record_length, status='unknown', &
+           form=the_file%format_, iostat=io_error, iomsg=io_msg)
 !
       if (io_error .ne. 0) then 
          call output%error_msg('Error: could not open eT direct file '//trim(the_file%name_)//&
@@ -189,80 +209,6 @@ contains
       call the_file%set_open_size()
 !
    end subroutine open_direct_file
-!
-!
-   subroutine copy_direct_file(the_file, filename)
-!!
-!!    Copy eT direct file
-!!    Written by Alexander Paul and Rolf H. Myhre, August 2019
-!!
-      implicit none
-!
-      class(direct_file) :: the_file
-!
-      character(*), intent(in) :: filename
-!
-      type(direct_file) :: copy
-!
-      integer              :: io_error_1, io_error_2 
-      character(len=100)   :: io_msg_1, io_msg_2
-!
-!     Assumes 1 character is 1 byte
-      character(len=the_file%record_length) :: line
-!
-      integer :: record, next_record
-!
-      logical :: file_was_open
-!
-      file_was_open = the_file%is_open
-      if (.not. file_was_open) call the_file%open_('read')
-!
-      copy = direct_file(filename, the_file%record_dim, the_file%word_size)
-      call copy%open_('write')
-!
-      record = 1
-!
-!     Read record by record and write it to the new file
-!
-      do
-!
-         read(the_file%unit, rec=record, iostat=io_error_1, iomsg=io_msg_1) line
-!
-!        Direct access files don't recognize end of file
-!        Therefore check number of the next record
-!        if the current record is equal to the next then EOF -> exit
-!
-         inquire(the_file%unit, nextrec=next_record)
-!
-         if (next_record .eq. record) then
-!
-            exit 
-!
-         else if (io_error_1 .ne. 0) then
-!
-            call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
-                                 &'. Error message: '//trim(io_msg_1))
-!
-         end if
-!
-         write(copy%unit, rec=record, iostat=io_error_2, iomsg=io_msg_2) line
-!
-         if(io_error_2 .ne. 0) then
-            call output%error_msg('Failed to write to file: '//trim(copy%name_)//&
-                              &'. Error message: '//trim(io_msg_2))
-         endif
-!
-         record = record + 1
-!
-      enddo
-!
-      call copy%close_()
-!
-!     Close copied file again if it was closed in the beginning
-!
-      if (.not. file_was_open) call the_file%close_()
-!
-   end subroutine copy_direct_file
 !
 !
    subroutine close_direct_file(the_file, file_status)
@@ -304,13 +250,14 @@ contains
 !
       the_file%is_open = .false.
       the_file%unit = -1
+      the_file%action_ = 'unknown'
 !
    end subroutine close_direct_file
 !
 !
-   subroutine write_dp_direct_file(the_file, scalar, record)
+   subroutine write_r_direct_file(the_file, scalar, record)
 !!
-!!    Direct file write_, real(dp) scalar
+!!    Direct file write, real(dp) scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -330,12 +277,12 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine write_dp_direct_file
+   end subroutine write_r_direct_file
 !
 !
-   subroutine write_dp_1_direct_file(the_file, array, record)
+   subroutine write_r_1_direct_file(the_file, array, record)
 !!
-!!    Direct file write_, real(dp) array
+!!    Direct file write, real(dp) 1 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -355,12 +302,12 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine write_dp_1_direct_file
+   end subroutine write_r_1_direct_file
 !
 !
-   subroutine write_dp_2_direct_file(the_file, array, record)
+   subroutine write_r_2_direct_file(the_file, array, record)
 !!
-!!    Direct file write_, real(dp) array
+!!    Direct file write, real(dp) 2 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -368,14 +315,14 @@ contains
       real(dp), dimension(:,:), intent(in)   :: array
       integer, intent(in)                    :: record
 !
-      call the_file%write_dp_1_direct_file(array, record)
+      call the_file%write_r_1_direct_file(array, record)
 !
-   end subroutine write_dp_2_direct_file
+   end subroutine write_r_2_direct_file
 !
 !
-   subroutine write_dp_3_direct_file(the_file, array, record)
+   subroutine write_r_3_direct_file(the_file, array, record)
 !!
-!!    Direct file write_, real(dp) array
+!!    Direct file write, real(dp) 3 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -383,14 +330,14 @@ contains
       real(dp), dimension(:,:,:), intent(in) :: array
       integer, intent(in)                    :: record
 !
-      call the_file%write_dp_1_direct_file(array, record)
+      call the_file%write_r_1_direct_file(array, record)
 !
-   end subroutine write_dp_3_direct_file
+   end subroutine write_r_3_direct_file
 !
 !
-   subroutine write_dp_4_direct_file(the_file, array, record)
+   subroutine write_r_4_direct_file(the_file, array, record)
 !!
-!!    Direct file write_, real(dp) array
+!!    Direct file write, real(dp) 4 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -398,14 +345,109 @@ contains
       real(dp), dimension(:,:,:,:), intent(in)  :: array
       integer, intent(in)                       :: record
 !
-      call the_file%write_dp_1_direct_file(array, record)
+      call the_file%write_r_1_direct_file(array, record)
 !
-   end subroutine write_dp_4_direct_file
+   end subroutine write_r_4_direct_file
+!
+!
+   subroutine write_c_direct_file(the_file, scalar, record)
+!!
+!!    Direct file write, complex(dp) scalar
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file), intent(in) :: the_file
+!
+      complex(dp), intent(in) :: scalar
+      integer, intent(in)  :: record
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) scalar
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to write to file: '//trim(the_file%name_)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine write_c_direct_file
+!
+!
+   subroutine write_c_1_direct_file(the_file, array, record)
+!!
+!!    Direct file write, complex(dp) 1 dimensional array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file), intent(in) :: the_file
+!
+      complex(dp), dimension(the_file%record_dim), intent(in) :: array
+      integer, intent(in) :: record
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to write to file: '//trim(the_file%name_)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine write_c_1_direct_file
+!
+!
+   subroutine write_c_2_direct_file(the_file, array, record)
+!!
+!!    Direct file write, complex(dp) 2 dimensional array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(direct_file), intent(in)          :: the_file
+      complex(dp), dimension(:,:), intent(in) :: array
+      integer, intent(in)                     :: record
+!
+      call the_file%write_c_1_direct_file(array, record)
+!
+   end subroutine write_c_2_direct_file
+!
+!
+   subroutine write_c_3_direct_file(the_file, array, record)
+!!
+!!    Direct file write, complex(dp) 3 dimensional array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(direct_file), intent(in)            :: the_file
+      complex(dp), dimension(:,:,:), intent(in) :: array
+      integer, intent(in)                       :: record
+!
+      call the_file%write_c_1_direct_file(array, record)
+!
+   end subroutine write_c_3_direct_file
+!
+!
+   subroutine write_c_4_direct_file(the_file, array, record)
+!!
+!!    Direct file write, complex(dp) 4 dimensional array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(direct_file), intent(in)              :: the_file
+      complex(dp), dimension(:,:,:,:), intent(in) :: array
+      integer, intent(in)                         :: record
+!
+      call the_file%write_c_1_direct_file(array, record)
+!
+   end subroutine write_c_4_direct_file
 !
 !
    subroutine write_i_direct_file(the_file, scalar, record)
 !!
-!!    Direct file write_, integer scalar
+!!    Direct file write, integer scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -430,7 +472,7 @@ contains
 !
    subroutine write_i_1_direct_file(the_file, array, record)
 !!
-!!    Direct file write_, integer array
+!!    Direct file write, integer 1 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -455,7 +497,7 @@ contains
 !
    subroutine write_i_2_direct_file(the_file, array, record)
 !!
-!!    Direct file write_, integer array
+!!    Direct file write, integer 2 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -470,7 +512,7 @@ contains
 !
    subroutine write_i_3_direct_file(the_file, array, record)
 !!
-!!    Direct file write_, integer array
+!!    Direct file write, integer 3 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -485,7 +527,7 @@ contains
 !
    subroutine write_i_4_direct_file(the_file, array, record)
 !!
-!!    Direct file write_, integer array
+!!    Direct file write, integer 4 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -498,9 +540,9 @@ contains
    end subroutine write_i_4_direct_file
 !
 !
-   subroutine read_dp_direct_file(the_file, scalar, record)
+   subroutine read_r_direct_file(the_file, scalar, record)
 !!
-!!    Direct file read_, real(dp) scalar
+!!    Direct file read, real(dp) scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -520,12 +562,12 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine read_dp_direct_file
+   end subroutine read_r_direct_file
 !
 !
-   subroutine read_dp_1_direct_file(the_file, array, record)
+   subroutine read_r_1_direct_file(the_file, array, record)
 !!
-!!    Direct file read_, real(dp) array
+!!    Direct file read, real(dp) 1 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -545,12 +587,12 @@ contains
                               &'. Error message: '//trim(io_msg))
       endif
 !
-   end subroutine read_dp_1_direct_file
+   end subroutine read_r_1_direct_file
 !
 !
-   subroutine read_dp_2_direct_file(the_file, array, record)
+   subroutine read_r_2_direct_file(the_file, array, record)
 !!
-!!    Direct file read_, real(dp) array
+!!    Direct file read, real(dp) 2 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -558,14 +600,14 @@ contains
       real(dp), dimension(:,:), intent(out)  :: array
       integer, intent(in)                    :: record
 !
-      call the_file%read_dp_1_direct_file(array,record)
+      call the_file%read_r_1_direct_file(array,record)
 !
-   end subroutine read_dp_2_direct_file
+   end subroutine read_r_2_direct_file
 !
 !
-   subroutine read_dp_3_direct_file(the_file, array, record)
+   subroutine read_r_3_direct_file(the_file, array, record)
 !!
-!!    Direct file read_, real(dp) array
+!!    Direct file read, real(dp) 3 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -573,14 +615,14 @@ contains
       real(dp), dimension(:,:,:), intent(out)   :: array
       integer, intent(in)                       :: record
 !
-      call the_file%read_dp_1_direct_file(array,record)
+      call the_file%read_r_1_direct_file(array,record)
 !
-   end subroutine read_dp_3_direct_file
+   end subroutine read_r_3_direct_file
 !
 !
-   subroutine read_dp_4_direct_file(the_file, array, record)
+   subroutine read_r_4_direct_file(the_file, array, record)
 !!
-!!    Direct file read_, real(dp) array
+!!    Direct file read, real(dp) 4 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -588,14 +630,109 @@ contains
       real(dp), dimension(:,:,:,:), intent(out) :: array
       integer, intent(in)                       :: record
 !
-      call the_file%read_dp_1_direct_file(array,record)
+      call the_file%read_r_1_direct_file(array,record)
 !
-   end subroutine read_dp_4_direct_file
+   end subroutine read_r_4_direct_file
+!
+!
+   subroutine read_c_direct_file(the_file, scalar, record)
+!!
+!!    Direct file read, complex(dp) scalar
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file), intent(in) :: the_file
+!
+      complex(dp), intent(out) :: scalar
+      integer, intent(in)      :: record
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) scalar
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine read_c_direct_file
+!
+!
+   subroutine read_c_1_direct_file(the_file, array, record)
+!!
+!!    Direct file read, complex(dp) 1 dimensional array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+!
+      class(direct_file), intent(in) :: the_file
+!
+      complex(dp), dimension(the_file%record_dim), intent(out) :: array
+      integer, intent(in) :: record
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine read_c_1_direct_file
+!
+!
+   subroutine read_c_2_direct_file(the_file, array, record)
+!!
+!!    Direct file read, complex(dp) 2 dimensional array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(direct_file), intent(in)           :: the_file
+      complex(dp), dimension(:,:), intent(out) :: array
+      integer, intent(in)                      :: record
+!
+      call the_file%read_c_1_direct_file(array,record)
+!
+   end subroutine read_c_2_direct_file
+!
+!
+   subroutine read_c_3_direct_file(the_file, array, record)
+!!
+!!    Direct file read, complex(dp) 3 dimensional array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(direct_file), intent(in)             :: the_file
+      complex(dp), dimension(:,:,:), intent(out) :: array
+      integer, intent(in)                        :: record
+!
+      call the_file%read_c_1_direct_file(array,record)
+!
+   end subroutine read_c_3_direct_file
+!
+!
+   subroutine read_c_4_direct_file(the_file, array, record)
+!!
+!!    Direct file read, complex(dp) 4 dimensional array
+!!    Written by Rolf H. Myhre, May 2019
+!!
+      implicit none
+      class(direct_file), intent(in)               :: the_file
+      complex(dp), dimension(:,:,:,:), intent(out) :: array
+      integer, intent(in)                          :: record
+!
+      call the_file%read_c_1_direct_file(array,record)
+!
+   end subroutine read_c_4_direct_file
 !
 !
    subroutine read_i_direct_file(the_file, scalar, record)
 !!
-!!    Direct file read_, integer scalar
+!!    Direct file read, integer scalar
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -620,7 +757,7 @@ contains
 !
    subroutine read_i_1_direct_file(the_file, array, record)
 !!
-!!    Direct file read_, integer array
+!!    Direct file read, integer 1 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -645,7 +782,7 @@ contains
 !
    subroutine read_i_2_direct_file(the_file, array, record)
 !!
-!!    Direct file read_, integer array
+!!    Direct file read, integer 2 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -660,7 +797,7 @@ contains
 !
    subroutine read_i_3_direct_file(the_file, array, record)
 !!
-!!    Direct file read_, integer array
+!!    Direct file read, integer 3 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -675,7 +812,7 @@ contains
 !
    subroutine read_i_4_direct_file(the_file, array, record)
 !!
-!!    Direct file read_, integer array
+!!    Direct file read, integer 4 dimensional array
 !!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
@@ -686,6 +823,64 @@ contains
       call the_file%read_i_1_direct_file(array, record)
 !
    end subroutine read_i_4_direct_file
+!
+!
+   subroutine write_chimera_direct_file(the_file, n_z, n_y, n_x, &
+                                      & min_z, max_z, min_y, max_y, min_x, max_x, &
+                                      & vector)
+!!
+!!    Direct file write chimera
+!!    Written by Rolf H. Myhre, September 2019
+!!
+!!    Specialized routine to write density grids 
+!!    in the plt format readable by chimera
+!!
+      implicit none
+!
+      class(direct_file), intent(in) :: the_file
+!
+      integer, intent(in)  :: n_z, n_y, n_x !Number of grid points in each direction
+      real(dp), intent(in) :: min_z, max_z, min_y, max_y, min_x, max_x !Min and max in each direction
+!
+      real(kind=4), dimension(:), intent(in) :: vector
+!
+      integer(i6) :: int1, int2
+      integer(i6) :: n_z_sp, n_y_sp, n_x_sp !Single precision 
+!
+      real(kind=4) :: min_z_sp, max_z_sp, min_y_sp, max_y_sp, min_x_sp, max_x_sp !Single precision
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      int1 = 3 !Required integer that must always be 3
+      int2 = 200 !Required integer that can be anything
+!
+      n_z_sp = int(n_z,i6)
+      n_y_sp = int(n_y,i6)
+      n_x_sp = int(n_x,i6)
+!
+      min_z_sp = real(min_z,4)
+      max_z_sp = real(max_z,4)
+      min_y_sp = real(min_y,4)
+      max_y_sp = real(max_y,4)
+      min_x_sp = real(min_x,4)
+      max_x_sp = real(max_x,4)
+!
+      write(the_file%unit, rec=1, &
+            iostat=io_error, iomsg=io_msg) int1, &
+                                           int2, &
+                                           n_z_sp, n_y_sp, n_x_sp, &
+                                           min_z_sp, max_z_sp, &
+                                           min_y_sp, max_y_sp, &
+                                           min_x_sp, max_x_sp, &
+                                           vector
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to write to file: '//trim(the_file%name_)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+   end subroutine write_chimera_direct_file
 !
 !
 end module direct_file_class

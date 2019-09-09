@@ -141,6 +141,7 @@ contains
 !
       the_file%access_ = 'sequential'
       the_file%format_ = 'formatted'
+      the_file%action_ = 'read'
 !
 !     Set method section 
 !
