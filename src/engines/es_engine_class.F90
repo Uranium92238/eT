@@ -156,13 +156,9 @@ contains
 !!    Solves the excited state (valence or cvs) using
 !!    either a DIIS or Davidson solver
 !!
-      use davidson_cc_es_class
-      use davidson_cvs_cc_es_class
-      use davidson_cc_ip_class, only: davidson_cc_ip
+      use davidson_cc_es_class, only: davidson_cc_es
       use diis_cc_gs_class, only: diis_cc_gs
       use diis_cc_es_class, only: diis_cc_es
-      use diis_cc_ip_class, only: diis_cc_ip
-      use diis_cvs_cc_es_class, only: diis_cvs_cc_es
       use diis_A_inv_cc_es_class, only: diis_A_inv_cc_es
 !
       implicit none
@@ -182,34 +178,16 @@ contains
 !
       if (engine%es_algorithm == 'diis' .or. trim(wf%name_) == 'low memory cc2' .or. trim(wf%name_) == 'cc3') then
 !
-         if (trim(engine%es_algorithm) == 'davidson' .and. (trim(wf%name_) == 'low memory cc2' .or. trim(wf%name_) == 'cc3')) then
-            write(output%unit, '(/t3,3a)') 'Warning: For ', trim(wf%name_),' excited states the DIIS algorithm will be used'
-            write(output%unit, '(t12,a)') 'even though "davidson" was specified in the input.'
-         endif
+        if (trim(engine%es_algorithm) == 'davidson' .and. (trim(wf%name_) == 'low memory cc2' .or. trim(wf%name_) == 'cc3')) then
+!            
+            call output%warning_msg("for " // trim(wf%name_) // "excited states, the DIIS algorithm will be used, " // &
+                                    "even though 'davidson' is default or was specified.")
 !
-         if (engine%es_type == 'core') then
+        endif
 !
-            cc_es_solver_diis = diis_cvs_cc_es(transformation, wf)
-            call cc_es_solver_diis%run(wf)
-            call cc_es_solver_diis%cleanup(wf)
-!
-         elseif(engine%es_type == 'ionize') then
-!
-            if (.not. (trim(wf%name_)=='ccs' .or.   trim(wf%name_)=='ccsd' &
-                .or. trim(wf%name_)=='cc2')) &
-               call output%error_msg('IP not implemented for the selected wavefunction')
-!
-            cc_es_solver_diis = diis_cc_ip(transformation, wf)
-            call cc_es_solver_diis%run(wf)
-            call cc_es_solver_diis%cleanup(wf)
-!
-         else ! es_type = valence
-!
-            cc_es_solver_diis = diis_cc_es(transformation, wf)
-            call cc_es_solver_diis%run(wf)
-            call cc_es_solver_diis%cleanup(wf)
-!
-         endif
+        cc_es_solver_diis = diis_cc_es(transformation, wf)
+        call cc_es_solver_diis%run(wf)
+        call cc_es_solver_diis%cleanup(wf)
 !
       elseif (engine%es_algorithm == 'diis a inverse') then
 !
@@ -219,33 +197,9 @@ contains
 !
       elseif (engine%es_algorithm == 'davidson') then
 !
-         if (engine%es_type == 'core') then
-!
-            cc_es_solver_davidson = davidson_cvs_cc_es(transformation, wf)
-            call cc_es_solver_davidson%run(wf)
-            call cc_es_solver_davidson%cleanup(wf)
-!
-         elseif(engine%es_type == 'ionize') then
-!
-            if (.not. (trim(wf%name_)=='ccs' .or.   trim(wf%name_)=='ccsd' &
-                .or. trim(wf%name_)=='cc2')) &
-                call output%error_msg('IP not implemented for the selected wavefunction')
-!
-            cc_es_solver_davidson = davidson_cc_ip(transformation, wf)
-            call cc_es_solver_davidson%run(wf)
-            call cc_es_solver_davidson%cleanup(wf)
-!
-         elseif(engine%es_type == 'core ionized') then
-!
-            call output%error_msg('core ionized not implemented yet')
-!
-         else ! es_type = valence
-!
-            cc_es_solver_davidson = davidson_cc_es(transformation, wf)
-            call cc_es_solver_davidson%run(wf)
-            call cc_es_solver_davidson%cleanup(wf)
-!
-         endif
+         cc_es_solver_davidson = davidson_cc_es(transformation, wf)
+         call cc_es_solver_davidson%run(wf)
+         call cc_es_solver_davidson%cleanup(wf)
 !
       else
 !

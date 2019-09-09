@@ -25,14 +25,10 @@ set(eT_fortran_sources
    src/solvers/hf/bfgs_geoopt_hf_class.F90
    src/solvers/cc/diis_cc_gs_class.F90
    src/solvers/cc/diis_cc_es_class.F90
-   src/solvers/cc/diis_cc_ip_class.F90
    src/solvers/cc/diis_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_es_class.F90
-   src/solvers/cc/davidson_cc_ip_class.F90
    src/solvers/cc/abstract_cc_es_class.F90
-   src/solvers/cc/davidson_cc_cvs_es_class.F90
-   src/solvers/cc/diis_cc_cvs_es_class.F90
    src/solvers/cc/newton_raphson_cc_gs_class.F90
    src/solvers/cc/diis_A_inv_cc_es_class.F90
    src/solvers/cholesky/eri_cd_class.F90
@@ -93,6 +89,14 @@ set(eT_fortran_sources
    src/solver_tools/davidson_tool_class.F90
    src/solver_tools/eigen_davidson_tool_class.F90
    src/solver_tools/linear_davidson_tool_class.F90
+   src/solver_tools/es_start_vectors/es_start_vector_tool_class.F90
+   src/solver_tools/es_start_vectors/es_valence_start_vector_tool_class.F90
+   src/solver_tools/es_start_vectors/es_cvs_start_vector_tool_class.F90
+   src/solver_tools/es_start_vectors/es_ip_start_vector_tool_class.F90
+   src/solver_tools/es_projectors/es_projection_tool_class.F90
+   src/solver_tools/es_projectors/es_cvs_projection_tool_class.F90
+   src/solver_tools/es_projectors/es_valence_projection_tool_class.F90
+   src/solver_tools/es_projectors/es_ip_projection_tool_class.F90
    src/wavefunctions/ccs/oei_ccs.F90
    src/wavefunctions/ccs/tei_ccs.F90
    src/wavefunctions/ccs/fock_ccs.F90

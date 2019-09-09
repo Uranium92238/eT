@@ -115,6 +115,7 @@ contains
       call wf%read_orbital_energies()
 !
       wf%bath_orbital = .false.
+      wf%cvs = .false.
 !
       call wf%read_settings()
 !

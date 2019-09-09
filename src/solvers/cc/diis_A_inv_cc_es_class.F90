@@ -107,16 +107,24 @@ contains
       solver%max_micro_iterations = 100
       solver%restart              = .false.
       solver%transformation       = trim(transformation)
+      solver%es_type              = 'valence'
 !
       call solver%read_settings()
       call solver%print_settings()
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
-      call mem%alloc(solver%energies, solver%n_singlet_states)
+      if (trim(solver%es_type) /= 'valence') call output%error_msg('diis a inv can only run valence excitations')
+!
+      call solver%initialize_energies()
       solver%energies = zero
 !
       wf%n_excited_states = solver%n_singlet_states
+!
+      call solver%initialize_start_vector_tool(wf)
+      call solver%initialize_projection_tool(wf)
+!
+      call solver%prepare_wf_for_excited_state(wf)
 !
    end function new_diis_A_inv_cc_es
 !
@@ -349,8 +357,6 @@ contains
    end subroutine do_micro_iterations_diis_A_inv_cc_es
 !
 !
-!
-!
    subroutine run_diis_A_inv_cc_es(solver, wf)
 !!
 !!    Run 
@@ -380,8 +386,6 @@ contains
 !
       real(dp), dimension(:), allocatable   :: eps, dX
       real(dp), dimension(:,:), allocatable :: X, R
-!
-      call solver%prepare_wf_for_excited_state(wf)
 !
 !     Initialize energies, residual norms, and convergence arrays 
 !

@@ -588,11 +588,11 @@ contains
 !
 !                       Check if at least one index i,j,k is a core orbital
 !                       i,j,k contribute to rho2 and thus have to be restricted as well
-                        if(wf%cvs_cc3) then
+                        if(wf%cvs) then
 !
                            ijk_core = .false.
 !
-                           do i_cvs = 1, wf%n_cores
+                           do i_cvs = 1, wf%n_core_MOs
 !
                               if(     i .eq. wf%core_MOs(i_cvs)   &
                                  .or. j .eq. wf%core_MOs(i_cvs)   &
@@ -1102,11 +1102,11 @@ contains
                         end if
 !
 !                       Check if at least one index i,j,k is a core orbital
-                        if(wf%cvs_cc3) then
+                        if(wf%cvs) then
 !
                            ijk_core = .false.
 !
-                           do i_cvs = 1, wf%n_cores
+                           do i_cvs = 1, wf%n_core_MOs
 !
                               if(     i .eq. wf%core_MOs(i_cvs)   &
                                  .or. j .eq. wf%core_MOs(i_cvs)   &
