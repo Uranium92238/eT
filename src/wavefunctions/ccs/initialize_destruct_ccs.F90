@@ -390,4 +390,32 @@ contains
    end subroutine destruct_left_excitation_energies_ccs
 !
 !
+   module subroutine initialize_core_MOs_ccs(wf)
+!!
+!!    Initialize core MOs
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (.not. allocated(wf%core_MOs)) call mem%alloc(wf%core_MOs, wf%n_core_MOs)
+!
+   end subroutine initialize_core_MOs_ccs
+!
+!
+   module subroutine destruct_core_MOs_ccs(wf)
+!!
+!!    Destruct core MOs
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%core_MOs)) call mem%dealloc(wf%core_MOs, wf%n_core_MOs)
+!
+   end subroutine destruct_core_MOs_ccs
+!
+!
 end submodule initialize_desctruct_ccs

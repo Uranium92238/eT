@@ -28,6 +28,8 @@ module diis_cc_es_class
    use ccs_class
    use diis_tool_class
    use abstract_cc_es_class, only: abstract_cc_es
+   use es_valence_start_vector_tool_class, only: es_valence_start_vector_tool
+   use es_valence_projection_tool_class, only: es_valence_projection_tool
 !
    implicit none
 !
@@ -35,23 +37,14 @@ module diis_cc_es_class
 !
       integer :: diis_dimension
 !
-      logical :: do_projection
-!
-      real(dp), dimension(:), allocatable :: projector
-!
    contains
 !     
       procedure, non_overridable :: run            => run_diis_cc_es
-!
-      procedure :: set_start_vectors               => set_start_vectors_diis_cc_es
 !
       procedure :: read_settings                   => read_settings_diis_cc_es
       procedure :: read_diis_settings              => read_diis_settings_diis_cc_es
 !
       procedure :: print_settings                  => print_settings_diis_cc_es
-!
-      procedure :: set_projection_vector           => set_projection_vector_diis_cc_es
-      procedure :: project                         => project_diis_cc_es
 !
    end type diis_cc_es
 !
@@ -107,18 +100,22 @@ contains
       solver%diis_dimension       = 20
       solver%restart              = .false.
       solver%transformation       = trim(transformation)
-!
-      solver%do_projection = .false.
+      solver%es_type              = 'valence'
 !
       call solver%read_settings()
       call solver%print_settings()
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
-      call mem%alloc(solver%energies, solver%n_singlet_states)
+      call solver%initialize_energies()
       solver%energies = zero
 !
       wf%n_excited_states = solver%n_singlet_states
+!
+      call solver%initialize_start_vector_tool(wf)
+      call solver%initialize_projection_tool(wf)
+!
+      call solver%prepare_wf_for_excited_state(wf)
 !
    end function new_diis_cc_es
 !
@@ -198,9 +195,6 @@ contains
       real(dp), dimension(:), allocatable   :: eps
       real(dp), dimension(:,:), allocatable :: X, R
 !
-      call solver%prepare_wf_for_excited_state(wf)
-      call solver%set_projection_vector(wf)
-!
 !     Initialize energies, residual norms, and convergence arrays 
 !
       call mem%alloc(prev_energies, solver%n_singlet_states)
@@ -235,7 +229,11 @@ contains
 !
       call mem%alloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
 !
-      call solver%set_start_vectors(wf, X, eps) ! Use orbital differences (Koopman)
+      do state = 1, solver%n_singlet_states
+!
+         call solver%start_vector_tool%get_vector(X(:,state), state)
+!
+      enddo 
 !
       if (solver%restart) then ! Overwrite all or some of the orbital differences 
 !
@@ -283,7 +281,7 @@ contains
                call wf%construct_excited_state_equation(X(:,state), R(:,state), solver%energies(state), &
                                                         solver%transformation)
 !
-               if (solver%do_projection) call solver%project(R(:,state), wf%n_es_amplitudes)
+               if (solver%projection_tool%active) call solver%projection_tool%project(R(:,state))
 !
                residual_norms(state) = get_l2_norm(R(:, state), wf%n_es_amplitudes)
 !
@@ -393,99 +391,6 @@ contains
       call mem%dealloc(R, wf%n_es_amplitudes, solver%n_singlet_states)
 !
    end subroutine run_diis_cc_es
-!
-!
-   subroutine set_start_vectors_diis_cc_es(solver, wf, R, orbital_differences)
-!!
-!!    Set start vectors 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2018 
-!!
-      implicit none 
-!
-      class(diis_cc_es), intent(in) :: solver 
-!
-      class(ccs), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_es_amplitudes, solver%n_singlet_states), intent(inout) :: R 
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)                             :: orbital_differences 
-!
-      real(dp), dimension(:), allocatable :: lowest_orbital_differences
-!
-      integer, dimension(:), allocatable :: lowest_orbital_differences_index
-!
-      integer :: state
-!
-      if (wf%bath_orbital) call output%error_msg('Bath orbitals can not be used in valence excitation calculation')
-!
-      call mem%alloc(lowest_orbital_differences, solver%n_singlet_states)
-      call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states)
-!
-      call get_n_lowest(solver%n_singlet_states, wf%n_es_amplitudes, orbital_differences, &
-                           lowest_orbital_differences, lowest_orbital_differences_index)
-!
-      call zero_array(R, (solver%n_singlet_states)*(wf%n_es_amplitudes))
-!
-      do state = 1, solver%n_singlet_states
-!
-         R(lowest_orbital_differences_index(state), state) = one
-!
-      enddo 
-!
-      call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states)
-      call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states)      
-!
-   end subroutine set_start_vectors_diis_cc_es
-!
-!
-   subroutine set_projection_vector_diis_cc_es(solver, wf)
-!!
-!!    Set projection vector
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
-!!
-!!    Sets projection vector to orbital differences 
-!!
-      implicit none
-!
-      class(diis_cc_es) :: solver
-!
-      class(ccs) :: wf
-!
-!     Do nothing for regular excited states, but will be used in descendants
-!     CVS and IP
-!
-      solver%do_projection = .false.
-!
-      if (.false.) write(output%unit, *) wf%name_ ! Hack to suppress unavoidable compiler warnings
-!
-   end subroutine set_projection_vector_diis_cc_es
-!
-!
-   subroutine project_diis_cc_es(solver, R, n_parameters)
-!!
-!!    Project
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(diis_cc_es) :: solver
-!
-      integer, intent(in) :: n_parameters
-!
-      real(dp), dimension(n_parameters), intent(inout) :: R 
-!
-      integer :: i
-!
-      if(.not. allocated(solver%projector)) call output%error_msg('can not project in '// trim(solver%tag)// ' without projector.')
-!
-!$omp parallel do private(i)
-      do i = 1, n_parameters
-!
-         R(i) = R(i)*solver%projector(i)
-!
-      enddo  
-!$omp end parallel do
-!
-   end subroutine project_diis_cc_es
 !
 !
 end module diis_cc_es_class

@@ -33,12 +33,6 @@ module cc3_class
 !
    type, extends(ccsd) :: cc3
 !
-!     CVS
-!
-      logical :: cvs_cc3
-      integer :: n_cores
-      integer, allocatable :: core_MOs(:)
-!
 !     Ground state integral files
 !
       type(direct_file) :: g_bdck_t
@@ -113,7 +107,6 @@ module cc3_class
 !
 !     Routines for CVS
       procedure :: get_cvs_projector   => get_cvs_projector_cc3 
-      procedure :: prepare_for_cvs     => prepare_for_cvs_cc3
 !
 !     Both
       procedure :: prep_cc3_g_lbkc_t_file          => prep_cc3_g_lbkc_t_file_cc3
@@ -260,7 +253,7 @@ contains
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
-      wf%cvs_cc3 = .false.
+      wf%cvs = .false.
 !
    end function new_cc3
 !
@@ -356,8 +349,6 @@ contains
 !
       integer :: core, i, a, ai, j, b, bj, aibj
 !
-      call wf%prepare_for_cvs(n_cores, core_MOs)
-!
       projector = zero
 !
       do core = 1, n_cores
@@ -386,28 +377,6 @@ contains
      enddo
 !
    end subroutine get_cvs_projector_cc3
-!
-!
-   subroutine prepare_for_cvs_cc3(wf, n_cores, core_MOs)
-!!
-!!    Prepares for CVS by copying the core orbitals to CC3 wavefunction
-!!    Written by Alexander Paul, June 2019
-!!
-      implicit none
-!
-      class(cc3), intent(inout) :: wf
-!
-      integer, intent(in) :: n_cores
-!
-      integer, dimension(n_cores), intent(in) :: core_MOs
-!
-      call mem%alloc(wf%core_MOs, n_cores)
-!
-      wf%cvs_cc3 = .true.
-      wf%n_cores = n_cores
-      wf%core_MOs = core_MOs
-!
-   end subroutine prepare_for_cvs_cc3
 !
 !
 end module cc3_class

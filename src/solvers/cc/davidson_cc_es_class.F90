@@ -29,18 +29,24 @@ module davidson_cc_es_class
    use eigen_davidson_tool_class
    use abstract_cc_es_class, only: abstract_cc_es
 !
+   use es_projection_tool_class
+   use es_valence_projection_tool_class, only: es_valence_projection_tool
+   use es_cvs_projection_tool_class, only: es_cvs_projection_tool
+   use es_ip_projection_tool_class, only: es_ip_projection_tool
+!
    implicit none
 !
    type, extends(abstract_cc_es) :: davidson_cc_es
 !
       integer :: max_dim_red
 !
+      type(eigen_davidson_tool) :: davidson 
+!
    contains
 !     
       procedure, non_overridable :: run              => run_davidson_cc_es
 !
-      procedure, nopass :: set_precondition_vector   => set_precondition_vector_davidson_cc_es
-      procedure :: set_projection_vector             => set_projection_vector_davidson_cc_es
+      procedure :: set_precondition_vector           => set_precondition_vector_davidson_cc_es
 !
       procedure :: read_settings                     => read_settings_davidson_cc_es
       procedure :: read_davidson_settings            => read_davidson_settings_davidson_cc_es
@@ -50,8 +56,7 @@ module davidson_cc_es_class
       procedure :: set_start_vectors                 => set_start_vectors_davidson_cc_es
       procedure :: transform_trial_vector            => transform_trial_vector_davidson_cc_es
 !       
-      procedure :: initialize_energies               => initialize_energies_davidson_cc_es
-      procedure :: destruct_energies                 => destruct_energies_davidson_cc_es   
+      procedure :: initialize_projection_tool        => initialize_projection_tool_davidson_cc_es
 !
    end type davidson_cc_es
 !
@@ -105,6 +110,7 @@ contains
       solver%restart              = .false.
       solver%max_dim_red          = 100 
       solver%transformation       = trim(transformation)
+      solver%es_type              = 'valence'
 !
       call solver%read_settings()
       call solver%print_settings()
@@ -116,41 +122,15 @@ contains
 !
       wf%n_excited_states = solver%n_singlet_states
 !
+      solver%davidson = eigen_davidson_tool('cc_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
+                                       solver%residual_threshold, solver%eigenvalue_threshold)
+!
+      call solver%initialize_start_vector_tool(wf)
+      call solver%initialize_projection_tool(wf)
+!
+      call solver%prepare_wf_for_excited_state(wf)
+!
    end function new_davidson_cc_es
-!
-!
-   subroutine initialize_energies_davidson_cc_es(solver)
-!!
-!!    Initialize energies
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Initialize excitation energies
-!!
-      implicit none
-!
-      class(davidson_cc_es) :: solver
-!
-      if (.not. allocated(solver%energies)) &
-            call mem%alloc(solver%energies, solver%n_singlet_states)
-!
-   end subroutine initialize_energies_davidson_cc_es
-!
-!
-   subroutine destruct_energies_davidson_cc_es(solver)
-!!
-!!    Destruct energies
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Destruct excitation energies
-!!
-      implicit none
-!
-      class(davidson_cc_es) :: solver
-!
-      if (allocated(solver%energies)) &
-            call mem%dealloc(solver%energies, solver%n_singlet_states)
-!
-   end subroutine destruct_energies_davidson_cc_es
 !
 !
    subroutine print_settings_davidson_cc_es(solver)
@@ -184,8 +164,6 @@ contains
       logical :: converged_eigenvalue
       logical :: converged_residual
 !
-      type(eigen_davidson_tool) :: davidson
-!
       integer :: iteration, trial, solution, state
 !
       real(dp) :: residual_norm
@@ -194,30 +172,24 @@ contains
       real(dp), dimension(:), allocatable :: X
       real(dp), dimension(:,:), allocatable :: r
 !
-      call solver%prepare_wf_for_excited_state(wf)
-!
       converged            = .false. 
       converged_eigenvalue = .false. 
       converged_residual   = .false. 
 !
       iteration = 1
 !
-      davidson = eigen_davidson_tool('cc_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
-                                       solver%residual_threshold, solver%eigenvalue_threshold)
-!
-      call solver%set_precondition_vector(wf, davidson)
-      call solver%set_projection_vector(wf, davidson)
+      call solver%set_precondition_vector(wf)
 !
 !     Construct first trial vectors
 !
-      call solver%set_start_vectors(wf, davidson)
+      call solver%set_start_vectors(wf)
 !
 !     Enter iterative loop
 !
       do while (.not. converged .and. (iteration .le. solver%max_iterations))
 !
          write(output%unit,'(/t3,a25,i4)') 'Iteration:               ', iteration
-         write(output%unit,'(t3,a25,i4/)') 'Reduced space dimension: ', davidson%dim_red
+         write(output%unit,'(t3,a25,i4/)') 'Reduced space dimension: ', solver%davidson%dim_red
          flush(output%unit)
 !
          write(output%unit,'(t3,a)') 'Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm'
@@ -229,15 +201,15 @@ contains
 !
          call mem%alloc(c_i, wf%n_es_amplitudes)
 !
-         do trial = davidson%dim_red - davidson%n_new_trials + 1, davidson%dim_red
+         do trial = solver%davidson%dim_red - solver%davidson%n_new_trials + 1, solver%davidson%dim_red
 !
-            call davidson%read_trial(c_i, trial)
+            call solver%davidson%read_trial(c_i, trial)
 !
             call solver%transform_trial_vector(wf, c_i)
 !
-            call davidson%projection(c_i)
+            call solver%davidson%projection(c_i)
 !
-            call davidson%write_transform(c_i)
+            call solver%davidson%write_transform(c_i)
 !
          enddo
 !
@@ -245,25 +217,25 @@ contains
 !
 !        Solve problem in reduced space
 !
-         call davidson%construct_reduced_matrix()
-         call davidson%solve_reduced_problem()
+         call solver%davidson%construct_reduced_matrix()
+         call solver%davidson%solve_reduced_problem()
 !
 !        Construct new trials and check if convergence criterion on residual is satisfied
 !
          converged_residual = .true.
 !
-         davidson%n_new_trials = 0
+         solver%davidson%n_new_trials = 0
 !
          call mem%alloc(X, wf%n_es_amplitudes)
 !
          do solution = 1, solver%n_singlet_states
 !
-            call davidson%construct_next_trial_vec(residual_norm, solution)
-            call davidson%construct_X(X, solution)
+            call solver%davidson%construct_next_trial_vec(residual_norm, solution)
+            call solver%davidson%construct_X(X, solution)
             call wf%save_excited_state(X, solution, solver%transformation)
 !
             write(output%unit,'(t3,i2,5x,f16.12,7x,f16.12,11x,e11.4)') &
-            solution, davidson%omega_re(solution), davidson%omega_im(solution), residual_norm
+            solution, solver%davidson%omega_re(solution), solver%davidson%omega_im(solution), residual_norm
             flush(output%unit)
 !
             if (residual_norm .gt. solver%residual_threshold) converged_residual = .false.
@@ -280,24 +252,24 @@ contains
 !
          do solution = 1, solver%n_singlet_states
 !
-            if (abs(davidson%omega_re(solution) - solver%energies(solution)) &
+            if (abs(solver%davidson%omega_re(solution) - solver%energies(solution)) &
                .gt. solver%eigenvalue_threshold) converged_eigenvalue = .false.
 !
          enddo
 !
-         if (davidson%dim_red .ge. solver%max_dim_red) then
+         if (solver%davidson%dim_red .ge. solver%max_dim_red) then
 !
-            call davidson%set_trials_to_solutions()
+            call solver%davidson%set_trials_to_solutions()
 !
          else
 !
-            davidson%dim_red = davidson%dim_red + davidson%n_new_trials
+            solver%davidson%dim_red = solver%davidson%dim_red + solver%davidson%n_new_trials
 !
          endif
 !
 !        Update energies and save them
 !
-         solver%energies = davidson%omega_re
+         solver%energies = solver%davidson%omega_re
 !
          call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
 !
@@ -335,7 +307,7 @@ contains
 !
          do state = 1, solver%n_singlet_states
 !
-            call davidson%construct_X(r(:,state), state)   
+            call solver%davidson%construct_X(r(:,state), state)   
 !
          enddo 
 !
@@ -349,7 +321,7 @@ contains
 !
          do solution = 1, solver%n_singlet_states
 !
-            call davidson%construct_X(X, solution)
+            call solver%davidson%construct_X(X, solution)
 !
             call wf%save_excited_state(X, solution, solver%transformation)
 !
@@ -394,7 +366,7 @@ contains
    end subroutine transform_trial_vector_davidson_cc_es
 !
 !
-   subroutine set_start_vectors_davidson_cc_es(solver, wf, davidson)
+   subroutine set_start_vectors_davidson_cc_es(solver, wf)
 !!
 !!    Set start vectors 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
@@ -407,17 +379,9 @@ contains
 !
       class(ccs) :: wf
 !
-      type(eigen_davidson_tool) :: davidson
-!
       real(dp), dimension(:), allocatable :: c_i
-      real(dp), dimension(:), allocatable :: orbital_differences
-      real(dp), dimension(:), allocatable :: lowest_orbital_differences
-!
-      integer, dimension(:), allocatable :: lowest_orbital_differences_index
 !
       integer :: trial, n_solutions_on_file
-!
-      if (wf%bath_orbital) call output%error_msg('Bath orbitals can not be used in valence excitation calculation')
 !
       if (solver%restart) then 
 !
@@ -436,7 +400,7 @@ contains
          do trial = 1, n_solutions_on_file
 !
             call wf%read_excited_state(c_i, trial, solver%restart_transformation)
-            call davidson%write_trial(c_i)
+            call solver%davidson%write_trial(c_i)
 !
          enddo 
 !
@@ -448,63 +412,44 @@ contains
 !
       endif 
 !
+!     Sets whatever remains using the start vector tool 
+!
       if (n_solutions_on_file .lt. solver%n_singlet_states) then 
-!
-!        Compute the remaining start vectors using Koopman
-!
-         call mem%alloc(orbital_differences, wf%n_es_amplitudes)
-         call wf%get_es_orbital_differences(orbital_differences, wf%n_es_amplitudes)
-!
-         call mem%alloc(lowest_orbital_differences, solver%n_singlet_states)
-         call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states)
-!
-         call get_n_lowest(solver%n_singlet_states, wf%n_es_amplitudes, orbital_differences, &
-                        lowest_orbital_differences, lowest_orbital_differences_index)
-!
-         call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states)
-         call mem%dealloc(orbital_differences, wf%n_es_amplitudes)
 !
          call mem%alloc(c_i, wf%n_es_amplitudes)
 !
          do trial = n_solutions_on_file + 1, solver%n_singlet_states
 !
-            call zero_array(c_i, wf%n_es_amplitudes)
-            c_i(lowest_orbital_differences_index(trial)) = one
-!
-            call davidson%write_trial(c_i)
+            call solver%start_vector_tool%get_vector(c_i, trial)
+            call solver%davidson%write_trial(c_i)
 !
          enddo 
-!
-         call mem%dealloc(c_i, wf%n_es_amplitudes)
-         call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states)
 !     
       endif
 !
-      call davidson%orthonormalize_trial_vecs()
+      call solver%davidson%orthonormalize_trial_vecs()
 !
    end subroutine set_start_vectors_davidson_cc_es
 !
 !
-   subroutine set_precondition_vector_davidson_cc_es(wf, davidson)
+   subroutine set_precondition_vector_davidson_cc_es(solver, wf)
 !!
 !!    Set precondition vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
 !!
-!!    Sets precondition vector to orbital differences 
+!!    Sets precondition vector to orbital differences.
 !!
       implicit none
 !
-!      class(davidson_cc_es) :: solver
+      class(davidson_cc_es) :: solver
 !
       class(ccs) :: wf
-!
-      type(eigen_davidson_tool) :: davidson
 !
       real(dp), dimension(:), allocatable :: preconditioner
 !
       call mem%alloc(preconditioner, wf%n_es_amplitudes)
       call wf%get_es_orbital_differences(preconditioner, wf%n_es_amplitudes)
-      call davidson%set_preconditioner(preconditioner)
+      call solver%davidson%set_preconditioner(preconditioner)
       call mem%dealloc(preconditioner, wf%n_es_amplitudes)
 !
    end subroutine set_precondition_vector_davidson_cc_es
@@ -520,7 +465,6 @@ contains
       class(davidson_cc_es) :: solver 
 !
       call solver%read_es_settings()
-!
       call solver%read_davidson_settings()
 !
    end subroutine read_settings_davidson_cc_es
@@ -540,29 +484,36 @@ contains
    end subroutine read_davidson_settings_davidson_cc_es
 !
 !
-   subroutine set_projection_vector_davidson_cc_es(solver, wf, davidson)
+   subroutine initialize_projection_tool_davidson_cc_es(solver, wf)
 !!
-!!    Set projection vector
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
-!!
-!!    Sets projection vector to orbital differences 
+!!    Initialize projection tool 
+!!    Written by Eirik F. Kjønstad, Sep 2019 
 !!
       implicit none
 !
-      class(davidson_cc_es) :: solver
+      class(davidson_cc_es) :: solver 
 !
-      class(ccs) :: wf
+      class(ccs) :: wf 
 !
-      type(eigen_davidson_tool) :: davidson
+      if (trim(solver%es_type) == 'valence') then 
 !
-!     Do nothing for regular excited states, but will be used in descendants
-!     CVS and IP
+         solver%projection_tool = es_valence_projection_tool()
 !
-      davidson%do_projection = .false.
+      elseif (trim(solver%es_type) == 'core') then 
 !
-      if (.false.) write(output%unit, *) wf%name_, solver%tag ! Hack to suppress unavoidable compiler warnings
+         solver%projection_tool = es_cvs_projection_tool(wf, solver%davidson)
 !
-   end subroutine set_projection_vector_davidson_cc_es
+      elseif (trim(solver%es_type) == 'ionize') then 
+!
+         solver%projection_tool = es_ip_projection_tool(wf, solver%davidson)
+!
+      else 
+!
+         call output%error_msg('could not recognize excited state type in abstract_cc_es')
+!
+      endif
+!
+   end subroutine initialize_projection_tool_davidson_cc_es
 !
 !
 end module davidson_cc_es_class

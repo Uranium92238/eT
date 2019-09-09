@@ -51,6 +51,9 @@ module ccs_class
       integer :: n_excited_states
       integer :: n_bath_orbitals
 !
+      integer :: n_core_MOs
+      logical :: cvs 
+!
       real(dp), dimension(:), allocatable :: left_excitation_energies, right_excitation_energies
 !
       logical :: bath_orbital
@@ -76,6 +79,7 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: left_transition_density
       real(dp), dimension(:,:), allocatable :: right_transition_density
 !
+      integer, dimension(:), allocatable :: core_MOs
 !
    contains
 !
@@ -168,6 +172,7 @@ module ccs_class
       procedure :: construct_eta                               => construct_eta_ccs
 !
       procedure :: get_cvs_projector                           => get_cvs_projector_ccs
+      procedure :: read_cvs_settings                           => read_cvs_settings_ccs
 !
       procedure :: set_cvs_start_indices                       => set_cvs_start_indices_ccs
 !
@@ -204,6 +209,7 @@ module ccs_class
       procedure :: initialize_t1bar                            => initialize_t1bar_ccs
       procedure :: initialize_gs_density                       => initialize_gs_density_ccs
       procedure :: initialize_transition_densities             => initialize_transition_densities_ccs
+      procedure :: initialize_core_MOs                         => initialize_core_MOs_ccs 
 !
       procedure :: destruct_fock_ij                            => destruct_fock_ij_ccs
       procedure :: destruct_fock_ia                            => destruct_fock_ia_ccs
@@ -213,6 +219,7 @@ module ccs_class
       procedure :: destruct_t1bar                              => destruct_t1bar_ccs
       procedure :: destruct_gs_density                         => destruct_gs_density_ccs
       procedure :: destruct_transition_densities               => destruct_transition_densities_ccs
+      procedure :: destruct_core_MOs                           => destruct_core_MOs_ccs 
 !
 !     Routines related to EOM first order property calculations
 !
@@ -319,6 +326,7 @@ contains
       call wf%read_orbital_energies()
 !
       wf%bath_orbital = .false.
+      wf%cvs = .false.
 !
       call wf%read_settings()
 !
@@ -749,7 +757,7 @@ contains
    end function get_t1_diagnostic_ccs
 !
 !
-   subroutine set_cvs_start_indices_ccs(wf, n_cores, core_MOs, n_start_indices, start_indices)
+   subroutine set_cvs_start_indices_ccs(wf, start_indices)
 !!
 !!    Set CVS start indices
 !!    Written by Sarai D. Folkestad
@@ -758,10 +766,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      integer :: n_cores, n_start_indices
-!
-      integer, dimension(n_cores)          :: core_MOs
-      integer, dimension(n_start_indices)  :: start_indices
+      integer, dimension(wf%n_excited_states) :: start_indices
 !
 !     Local variables
 !
@@ -779,14 +784,14 @@ contains
 !
          a = a + 1
 !
-         do core = 1, n_cores
+         do core = 1, wf%n_core_MOs
 !
-            i = core_MOs(core)
+            i = wf%core_MOs(core)
 !
             current_root = current_root + 1
             start_indices(current_root) = wf%n_v*( i - 1) + a
 !
-            if (current_root .eq. n_start_indices) then
+            if (current_root .eq. wf%n_excited_states) then
 !
                all_selected = .true.
                exit
@@ -940,7 +945,7 @@ contains
    end subroutine make_bath_orbital_ccs
 !
 !
-   subroutine set_ip_start_indices_ccs(wf, start_indices, n_ip_states)
+   subroutine set_ip_start_indices_ccs(wf, start_indices)
 !!
 !!    Set IP start indices
 !!    Written by Sarai D. Folkestad, Aug 2019
@@ -953,13 +958,11 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      integer, intent(in) :: n_ip_states
-!
-      integer, dimension(n_ip_states), intent(out) :: start_indices
+      integer, dimension(wf%n_excited_states), intent(out) :: start_indices
 !
       integer :: I
 !
-      do I = 1, n_ip_states
+      do I = 1, wf%n_excited_states
 !
          start_indices(I) = (wf%n_o - I)*wf%n_v + wf%n_v
 !
@@ -999,6 +1002,38 @@ contains
       enddo
 !
    end subroutine get_ip_projector_ccs
+!
+!
+   subroutine read_cvs_settings_ccs(wf)
+!!
+!!    Read settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      if (input%requested_keyword_in_section('core excitation', 'solver cc es')) then 
+!  
+!        Determine the number of core MOs 
+!
+         wf%n_core_MOs = input%get_n_elements_for_keyword_in_section('core excitation', 'solver cc es')
+!
+!        Then read the vector of core MOs
+!
+         call wf%initialize_core_MOs()
+!
+         call input%get_array_for_keyword_in_section('core excitation', 'solver cc es', wf%n_core_MOs, wf%core_MOs)
+!
+      else
+!
+         call output%error_msg('found no specified core MOs in input for CVS calculation')
+!
+      endif 
+!
+      wf%cvs = .true.
+!
+   end subroutine read_cvs_settings_ccs
 !
 !
 end module ccs_class

@@ -27,6 +27,16 @@ module abstract_cc_es_class
    use kinds
    use ccs_class
 !
+   use es_start_vector_tool_class
+   use es_valence_start_vector_tool_class, only: es_valence_start_vector_tool
+   use es_cvs_start_vector_tool_class, only: es_cvs_start_vector_tool
+   use es_ip_start_vector_tool_class, only: es_ip_start_vector_tool
+!
+   use es_projection_tool_class
+   use es_valence_projection_tool_class, only: es_valence_projection_tool
+   use es_cvs_projection_tool_class, only: es_cvs_projection_tool
+   use es_ip_projection_tool_class, only: es_ip_projection_tool
+!
    implicit none
 !
    type, abstract :: abstract_cc_es
@@ -49,10 +59,14 @@ module abstract_cc_es_class
 !
       character(len=40) :: transformation 
       character(len=40) :: restart_transformation 
+      character(len=40) :: es_type 
 !
       real(dp), dimension(:), allocatable :: energies
 !
       type(timings) :: timer
+!
+      class(es_start_vector_tool), allocatable  :: start_vector_tool
+      class(es_projection_tool), allocatable    :: projection_tool
 !
    contains
 !
@@ -67,12 +81,51 @@ module abstract_cc_es_class
       procedure, non_overridable :: prepare_wf_for_excited_state     => prepare_wf_for_excited_state_abstract_cc_es
 !
       procedure, non_overridable :: determine_restart_transformation => determine_restart_transformation_abstract_cc_es 
-
+!
+      procedure, non_overridable :: initialize_start_vector_tool     => initialize_start_vector_tool_abstract_cc_es
+      procedure                  :: initialize_projection_tool       => initialize_projection_tool_abstract_cc_es
+!
+      procedure, non_overridable :: initialize_energies              => initialize_energies_abstract_cc_es
+      procedure, non_overridable :: destruct_energies                => destruct_energies_abstract_cc_es
 !
    end type abstract_cc_es
 !
 !
 contains
+!
+!
+   subroutine initialize_energies_abstract_cc_es(solver)
+!!
+!!    Initialize energies
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Initialize excitation energies
+!!
+      implicit none
+!
+      class(abstract_cc_es) :: solver
+!
+      if (.not. allocated(solver%energies)) &
+            call mem%alloc(solver%energies, solver%n_singlet_states)
+!
+   end subroutine initialize_energies_abstract_cc_es
+!
+!
+   subroutine destruct_energies_abstract_cc_es(solver)
+!!
+!!    Destruct energies
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Destruct excitation energies
+!!
+      implicit none
+!
+      class(abstract_cc_es) :: solver
+!
+      if (allocated(solver%energies)) &
+            call mem%dealloc(solver%energies, solver%n_singlet_states)
+!
+   end subroutine destruct_energies_abstract_cc_es
 !
 !
    subroutine print_banner_abstract_cc_es(solver)
@@ -111,6 +164,12 @@ contains
       if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) solver%transformation = 'left'    
       if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) solver%transformation = 'right'    
 !
+      if (input%requested_keyword_in_section('core excitation', 'solver cc es') .and. .not. &
+          input%requested_keyword_in_section('ionization', 'solver cc es')) solver%es_type = 'core'
+!
+      if (input%requested_keyword_in_section('ionization', 'solver cc es') .and. .not. &
+          input%requested_keyword_in_section('core excitation', 'solver cc es')) solver%es_type = 'ionize'
+!
    end subroutine read_es_settings_abstract_cc_es
 !
 !
@@ -129,6 +188,7 @@ contains
       write(output%unit,'(t6,a20,e9.2)')  'Residual threshold: ', solver%residual_threshold
       write(output%unit,'(/t6,a,i3,a)')   'Number of singlet states: ', solver%n_singlet_states
       write(output%unit, '(t6,a26,i3)')   'Max number of iterations: ', solver%max_iterations
+      write(output%unit, '(t6,a26,a)')    'Calculation type:         ', trim(solver%es_type)
       flush(output%unit)
 !
       call output%printf('Solving for the (a0) eigenvectors.', chars=[trim(solver%transformation)], fs='(/t6,a)')
@@ -146,7 +206,7 @@ contains
       class(abstract_cc_es) :: solver
       class(ccs), intent(in) :: wf
 !
-      call mem%dealloc(solver%energies, solver%n_singlet_states)
+      call solver%destruct_energies()
 !
       call solver%timer%turn_off()
 !
@@ -289,6 +349,71 @@ contains
       endif  
 !
    end subroutine determine_restart_transformation_abstract_cc_es
+!
+!
+   subroutine initialize_start_vector_tool_abstract_cc_es(solver, wf) 
+!!
+!!    Initialize start vector tool 
+!!    Written by Eirik F. Kjønstad, Sep 2019 
+!!
+      implicit none
+!
+      class(abstract_cc_es) :: solver 
+!
+      class(ccs) :: wf 
+!
+      if (trim(solver%es_type) == 'valence') then 
+!
+         solver%start_vector_tool = es_valence_start_vector_tool(wf)
+!
+      elseif (trim(solver%es_type) == 'core') then 
+!
+         call wf%read_cvs_settings()
+         solver%start_vector_tool = es_cvs_start_vector_tool(wf)
+!
+      elseif (trim(solver%es_type) == 'ionize') then 
+!
+         solver%start_vector_tool = es_ip_start_vector_tool(wf)
+!
+      else 
+!
+         call output%error_msg('could not recognize excited state type in abstract_cc_es')
+!
+      endif
+!
+   end subroutine initialize_start_vector_tool_abstract_cc_es
+!
+!
+   subroutine initialize_projection_tool_abstract_cc_es(solver, wf)
+!!
+!!    Initialize projection tool 
+!!    Written by Eirik F. Kjønstad, Sep 2019 
+!!
+      implicit none
+!
+      class(abstract_cc_es) :: solver 
+!
+      class(ccs) :: wf 
+!
+      if (trim(solver%es_type) == 'valence') then 
+!
+         solver%projection_tool = es_valence_projection_tool()
+!
+      elseif (trim(solver%es_type) == 'core') then 
+!
+         solver%projection_tool = es_cvs_projection_tool(wf)
+!
+      elseif (trim(solver%es_type) == 'ionize') then 
+!
+         solver%projection_tool = es_ip_projection_tool(wf)
+!
+      else 
+!
+         call output%error_msg('could not recognize excited state type in abstract_cc_es')
+!
+      endif
+!
+   end subroutine initialize_projection_tool_abstract_cc_es
 !
 !
 end module abstract_cc_es_class

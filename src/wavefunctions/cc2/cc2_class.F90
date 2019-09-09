@@ -125,6 +125,7 @@ contains
 !
       wf%system => system
       wf%bath_orbital = .false.
+      wf%cvs = .false.
 !
       call wf%read_hf()
 !
