@@ -1037,7 +1037,45 @@ contains
       enddo
 !
    end function get_abs_max
-
+!
+!
+   subroutine get_abs_max_w_index(X, n, abs_max, index_)
+!!
+!!    Get absolute maximum value and index of vector
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Returns the largest element of |X|, i.e. the largest 
+!!    element in terms of absolute value
+!!
+!!    The routine is a copy of the function get_abs_max 
+!!    written by Eirik F. Kjønstad. S.D.F added the
+!!    index_ stuff
+!!
+      implicit none 
+!
+      integer, intent(in) :: n
+!
+      real(dp), dimension(n), intent(in) :: X
+!
+      real(dp) :: abs_max
+!
+      integer :: index_
+!
+      integer :: i
+!
+      abs_max = zero
+      index_ = 0
+!
+      do i = 1, n
+!
+         if (abs(X(i)) .gt. abs_max) then
+            abs_max = abs(X(i))
+            index_ = i
+         endif
+!
+      enddo
+!
+   end subroutine get_abs_max_w_index
 !
 !
    subroutine sandwich(X, A, B, n, left)

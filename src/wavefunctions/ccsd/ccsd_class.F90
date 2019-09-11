@@ -138,6 +138,8 @@ module ccsd_class
 !
       procedure, nopass :: need_g_abcd                         => need_g_abcd_ccsd
 !
+      procedure :: normalization_for_jacobian_debug            => normalization_for_jacobian_debug_ccsd
+!
    end type ccsd
 !
 !
@@ -151,6 +153,7 @@ module ccsd_class
       include "jacobian_ccsd_interface.F90"
       include "jacobian_transpose_ccsd_interface.F90"
       include "zop_ccsd_interface.F90"
+      include "debug_jacobian_ccsd_interface.F90"
 !
    end interface
 !

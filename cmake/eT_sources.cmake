@@ -110,6 +110,7 @@ set(eT_fortran_sources
    src/wavefunctions/ccs/initialize_destruct_ccs.F90
    src/wavefunctions/ccs/set_get_ccs.F90
    src/wavefunctions/ccs/file_handling_ccs.F90
+   src/wavefunctions/ccs/debug_jacobian_ccs.F90
    src/wavefunctions/abstract_doubles/omega_abstract_doubles.F90
    src/wavefunctions/abstract_doubles/jacobian_abstract_doubles.F90
    src/wavefunctions/abstract_doubles/jacobian_transpose_abstract_doubles.F90
@@ -136,6 +137,7 @@ set(eT_fortran_sources
    src/wavefunctions/ccsd/jacobian_ccsd.F90
    src/wavefunctions/ccsd/jacobian_transpose_ccsd.F90
    src/wavefunctions/ccsd/multiplier_equation_ccsd.F90
+   src/wavefunctions/ccsd/debug_jacobian_ccsd.F90
    src/wavefunctions/cc3/zop_cc3.F90
    src/wavefunctions/cc3/omega_cc3.F90
    src/wavefunctions/cc3/jacobian_cc3.F90
