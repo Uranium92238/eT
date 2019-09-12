@@ -50,12 +50,10 @@ module memory_manager_class
 !!    index class) or set of such indices (see the batch_setup routines below).
 !!
 !
-   use kinds
    use parameters
    use global_out, only : output
    use global_in, only : input
    use batching_index_class, only : batching_index
-   use io_utilities
 !
 !     Debug option:
 !     Require that batch setup always gives batching 
@@ -94,15 +92,20 @@ module memory_manager_class
       procedure :: alloc_3_memory_manager
       procedure :: alloc_4_memory_manager
       procedure :: alloc_5_memory_manager
+!
+      procedure :: alloc_log_1_memory_manager
+!
       procedure :: alloc_int_1_memory_manager
       procedure :: alloc_int_2_memory_manager
       procedure :: alloc_int_3_memory_manager
       procedure :: alloc_int_4_memory_manager
+!
       generic   :: alloc => alloc_1_memory_manager, &
                             alloc_2_memory_manager, &
                             alloc_3_memory_manager, &
                             alloc_4_memory_manager, &
                             alloc_5_memory_manager, &
+                            alloc_log_1_memory_manager, &
                             alloc_int_1_memory_manager, &
                             alloc_int_2_memory_manager, &
                             alloc_int_3_memory_manager, &
@@ -113,15 +116,20 @@ module memory_manager_class
       procedure :: dealloc_3_memory_manager
       procedure :: dealloc_4_memory_manager
       procedure :: dealloc_5_memory_manager
+!
+      procedure :: dealloc_log_1_memory_manager
+!
       procedure :: dealloc_int_1_memory_manager
       procedure :: dealloc_int_2_memory_manager
       procedure :: dealloc_int_3_memory_manager
       procedure :: dealloc_int_4_memory_manager
+!
       generic   :: dealloc => dealloc_1_memory_manager, &
                               dealloc_2_memory_manager, &
                               dealloc_3_memory_manager, &
                               dealloc_4_memory_manager, &
                               dealloc_5_memory_manager, &
+                              dealloc_log_1_memory_manager, &
                               dealloc_int_1_memory_manager, &
                               dealloc_int_2_memory_manager, &
                               dealloc_int_3_memory_manager, &
@@ -694,6 +702,97 @@ contains
       mem%available = mem%available + dp*size_array
 !
    end subroutine dealloc_5_memory_manager
+!
+!
+   subroutine alloc_log_1_memory_manager(mem, array, M)
+!!
+!!    Alloc log (memory manager)
+!!    Written by Rolf H. Myhre, September 2019
+!!
+!!    Allocates a one dimensional logical array and updates the available
+!!    memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      logical, dimension(:), allocatable :: array
+!
+      integer, intent(in) :: M ! Dimension of array 
+!
+      integer :: size_array ! Total size of array (M)
+      integer :: error = 0
+      integer :: log_size
+!
+      size_array = M
+!
+!     Allocate array and check whether allocation was successful
+!
+      allocate(array(M), stat = error)
+!
+      if (error .ne. 0) then
+!
+         call output%error_msg('Error: could not allocate array with #elements =', size_array)
+!
+      endif
+!
+!     Update the available memory
+!
+!     Figure out how big a logical is.
+!
+      log_size = storage_size(array(1))/8
+      mem%available = mem%available - log_size*size_array
+!
+!     Check if there is no more memory (defined as being no more memory
+!     left of what was specified by user as available)
+!
+      if (mem%available .lt. 0) then
+!
+         call output%error_msg('user-specified memory insufficient.')
+!
+      endif
+!
+   end subroutine alloc_log_1_memory_manager
+!
+!
+   subroutine dealloc_log_1_memory_manager(mem, array, M)
+!!
+!!    Dealloc log (memory manager)
+!!    Written by Rolf H. Myhre, September 2019
+!!
+!!    Deallocates a one dimensional logical array and updates the available
+!!    memory accordingly.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      logical, dimension(:), allocatable :: array
+!
+      integer, intent(in) :: M ! Dimension of array 
+!
+      integer :: size_array ! Total size of array (M*N)
+      integer :: error = 0
+      integer :: log_size
+!
+      size_array = M
+!
+!     Deallocate array and check whether deallocation was successful
+!
+      deallocate(array, stat = error)
+!
+      if (error .ne. 0) then
+!
+         call output%error_msg('could not deallocate array with #elements =', size_array)
+!
+      endif
+!
+!     Update the available memory
+!
+      log_size = storage_size(array(1))/8
+      mem%available = mem%available + log_size*size_array
+!
+   end subroutine dealloc_log_1_memory_manager
 !
 !
    subroutine alloc_int_1_memory_manager(mem, array, M)
