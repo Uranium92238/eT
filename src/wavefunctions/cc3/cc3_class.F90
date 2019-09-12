@@ -28,6 +28,8 @@ module cc3_class
    use ccsd_class
    use direct_file_class, only : direct_file
    use sequential_file_class, only : sequential_file
+   use io_utilities, only : single_record_reader, compound_record_reader 
+   use io_utilities, only : single_record_writer, compound_record_writer 
 !
    implicit none
 !
