@@ -141,6 +141,9 @@ contains
       call wf%integrals%write_t1_cholesky(wf%t1)
       call wf%integrals%can_we_keep_g_pqrs_t1()
 !
+      call wf%numerical_test_jacobian()
+      stop
+!
 !     Excited state solutions
 !
       call engine%do_excited_state(wf, engine%es_transformation)

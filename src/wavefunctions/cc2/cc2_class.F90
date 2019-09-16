@@ -90,6 +90,7 @@ module cc2_class
       procedure :: omega_for_jacobian_debug                    => omega_for_jacobian_debug_cc2
       procedure :: amplitudes_for_jacobian_debug               => amplitudes_for_jacobian_debug_cc2
       procedure :: normalization_for_jacobian_debug            => normalization_for_jacobian_debug_cc2
+      procedure :: construct_omega2                            => construct_omega2_cc2
 !
    end type cc2
 !

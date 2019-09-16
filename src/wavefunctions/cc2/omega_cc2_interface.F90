@@ -34,3 +34,18 @@
    end subroutine construct_omega_cc2
 !
 !
+   module subroutine construct_omega2_cc2(wf, omega2, t)
+!!
+!!    Construct Omega2
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Constructs the doubles part of omega for MLCC2
+!!
+      implicit none
+!
+      class(cc2) :: wf
+!
+      real(dp), dimension(wf%n_t2), intent(out) :: omega2
+      real(dp), dimension(wf%n_t2), intent(in) :: t
+!
+   end subroutine construct_omega2_cc2

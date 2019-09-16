@@ -170,8 +170,6 @@ contains
 !
       type(sequential_file) :: A_file, A_numerical_file
 !
-      if (wf%name_ == 'cc2') call output%error_msg('Numerical Jacobian not yet implemented for CC2')
-!
       store_on_file_local = .false.
 !
       if (present(store_on_file)) store_on_file_local = store_on_file
@@ -250,6 +248,7 @@ contains
 !
          if (abs_max .gt. tolerance) then
             call output%warning_msg('Numerical and analytical Jacobian matrices do not match!')
+            write(*,*)nu, abs_max, abs_max_index, A_numerical_mu_nu(abs_max_index), e(abs_max_index)
          endif
 !
       enddo

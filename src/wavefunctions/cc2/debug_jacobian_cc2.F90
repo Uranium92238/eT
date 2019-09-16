@@ -54,6 +54,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: t_copy
       real(dp), dimension(:,:,:,:), allocatable :: u
+      real(dp), dimension(:,:,:,:), allocatable :: t_unpacked
 !
       call mem%alloc(t_copy, wf%n_gs_amplitudes)
 !
@@ -69,20 +70,28 @@ contains
 !
       call wf%omega_ccs_a1(omega(1:wf%n_gs_amplitudes))
 !
-      call mem%alloc(u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+     ! call mem%alloc(u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call squareup(t(wf%n_gs_amplitudes+1:wf%n_es_amplitudes), u, wf%n_t1)
+      !call squareup(t(wf%n_t1+1:wf%n_es_amplitudes), u, wf%n_t1)
 !
-      call dscal(wf%n_t1**2, two, u, 1)
-      call add_packed_1432_to_unpacked_1234(-one, t(wf%n_gs_amplitudes+1:wf%n_es_amplitudes), u, wf%n_v, wf%n_o)
+      !call dscal(wf%n_t1**2, two, u, 1)
+      !call add_packed_1432_to_unpacked_1234(-one, t(wf%n_gs_amplitudes+1:wf%n_es_amplitudes), u, wf%n_v, wf%n_o)
 !
-      call wf%omega_doubles_a1(omega(1:wf%n_gs_amplitudes), u)
-      call wf%omega_doubles_b1(omega(1:wf%n_gs_amplitudes), u)
-      call wf%omega_doubles_c1(omega(1:wf%n_gs_amplitudes), u)
+   !   call mem%alloc(t_unpacked, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!!
+   !   call squareup(t(wf%n_t1+1:wf%n_es_amplitudes), t_unpacked, wf%n_t1)
+   !   call copy_and_scale(two, t_unpacked, u, wf%n_t1**2)
+   !   call add_1432_to_1234(-one,  t_unpacked, u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+   !   call mem%dealloc(t_unpacked, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call wf%construct_u()
+      call wf%omega_doubles_a1(omega(1:wf%n_gs_amplitudes), wf%u)
+      call wf%omega_doubles_b1(omega(1:wf%n_gs_amplitudes), wf%u)
+      call wf%omega_doubles_c1(omega(1:wf%n_gs_amplitudes), wf%u)
 !
-      call wf%omega2_cc2(omega(wf%n_gs_amplitudes+1:wf%n_es_amplitudes), t(wf%n_gs_amplitudes+1:wf%n_es_amplitudes))
+   !   call mem%dealloc(u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+   !   call wf%construct_omega2(omega(wf%n_gs_amplitudes+1:wf%n_es_amplitudes), t(wf%n_gs_amplitudes+1:wf%n_es_amplitudes))
 !
       call wf%set_amplitudes(t_copy)
       call mem%dealloc(t_copy, wf%n_gs_amplitudes)
@@ -109,9 +118,11 @@ contains
 !
       call wf%get_amplitudes(t(1:wf%n_gs_amplitudes))
 !
-      call wf%construct_t2()
+   !   call wf%initialize_t2()
+   !   call wf%construct_t2()
 !
-      call dcopy(wf%n_t2, wf%t2, 1, t(wf%n_gs_amplitudes+1:wf%n_es_amplitudes), 1)
+   !   call dcopy(wf%n_t2, wf%t2, 1, t(wf%n_t1+1), 1)
+   !   call wf%destruct_t2()
 !
    end subroutine amplitudes_for_jacobian_debug_cc2
 !
