@@ -54,7 +54,6 @@ contains
 !
       real(dp), dimension(:), allocatable :: t_copy
       real(dp), dimension(:,:,:,:), allocatable :: u
-      real(dp), dimension(:,:,:,:), allocatable :: t_unpacked
 !
       call mem%alloc(t_copy, wf%n_gs_amplitudes)
 !
@@ -62,7 +61,6 @@ contains
       call wf%set_amplitudes(t(1:wf%n_gs_amplitudes))
 !
       call wf%integrals%write_t1_cholesky(wf%t1)
-      if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
 !
       call wf%construct_fock()
 !
@@ -70,28 +68,19 @@ contains
 !
       call wf%omega_ccs_a1(omega(1:wf%n_gs_amplitudes))
 !
-     ! call mem%alloc(u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      !call squareup(t(wf%n_t1+1:wf%n_es_amplitudes), u, wf%n_t1)
+      call squareup(t(wf%n_t1+1:wf%n_es_amplitudes), u, wf%n_t1)
+      call dscal(wf%n_t1**2, two, u, 1)
+      call add_packed_1432_to_unpacked_1234(-one, t(wf%n_t1+1:wf%n_es_amplitudes), u, wf%n_v, wf%n_o)
 !
-      !call dscal(wf%n_t1**2, two, u, 1)
-      !call add_packed_1432_to_unpacked_1234(-one, t(wf%n_gs_amplitudes+1:wf%n_es_amplitudes), u, wf%n_v, wf%n_o)
+      call wf%omega_doubles_a1(omega(1:wf%n_gs_amplitudes), u)
+      call wf%omega_doubles_b1(omega(1:wf%n_gs_amplitudes), u)
+      call wf%omega_doubles_c1(omega(1:wf%n_gs_amplitudes), u)
 !
-   !   call mem%alloc(t_unpacked, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!!
-   !   call squareup(t(wf%n_t1+1:wf%n_es_amplitudes), t_unpacked, wf%n_t1)
-   !   call copy_and_scale(two, t_unpacked, u, wf%n_t1**2)
-   !   call add_1432_to_1234(-one,  t_unpacked, u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-   !   call mem%dealloc(t_unpacked, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%construct_u()
-      call wf%omega_doubles_a1(omega(1:wf%n_gs_amplitudes), wf%u)
-      call wf%omega_doubles_b1(omega(1:wf%n_gs_amplitudes), wf%u)
-      call wf%omega_doubles_c1(omega(1:wf%n_gs_amplitudes), wf%u)
-!
-   !   call mem%dealloc(u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-   !   call wf%construct_omega2(omega(wf%n_gs_amplitudes+1:wf%n_es_amplitudes), t(wf%n_gs_amplitudes+1:wf%n_es_amplitudes))
+      call wf%construct_omega2(omega(wf%n_gs_amplitudes+1:wf%n_es_amplitudes), t(wf%n_gs_amplitudes+1:wf%n_es_amplitudes))
 !
       call wf%set_amplitudes(t_copy)
       call mem%dealloc(t_copy, wf%n_gs_amplitudes)
@@ -116,13 +105,13 @@ contains
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: t
 !
-      call wf%get_amplitudes(t(1:wf%n_gs_amplitudes))
+      call wf%get_amplitudes(t(1:wf%n_t1))
 !
-   !   call wf%initialize_t2()
-   !   call wf%construct_t2()
+      call wf%initialize_t2()
+      call wf%construct_t2()
 !
-   !   call dcopy(wf%n_t2, wf%t2, 1, t(wf%n_t1+1), 1)
-   !   call wf%destruct_t2()
+      call dcopy(wf%n_t2, wf%t2, 1, t(wf%n_t1+1), 1)
+      call wf%destruct_t2()
 !
    end subroutine amplitudes_for_jacobian_debug_cc2
 !
@@ -134,17 +123,21 @@ contains
 !!
 !!    Differentiation wrt. doubles amplitudes (nu > wf%n_t1)
 !!    will yield factor one half on the diagonal nu = aiai
+!!
+!!    This routine scales these diagonal elements 
+!!    by factor two
+!!
+!!    Differentiation of wrt. doubles amplitudes dΩ_μ2
 !!    and factor two on the off-diagonal aibj, ai .ne. bj
 !!
-!!    A_numerical_μ_aiai = dΩ_μ/dt_aiai = 1/2 ε_mu,aiai δ_μ,aiai
-!!    A_numerical_μ_aibj = dΩ_μ/dt_aibj = 2 ε_mu,aibj δ_μ,aibj
+!!    A_numerical_μ2_aibj = dΩ_μ2/dt_aibj = 2 ε_μ2,aibj δ_μ2,aibj
 !!
-!!    For CC2 the doubles-doubles block of A is defined as
+!!    For CC2, the doubles-doubles block of A is defined as
 !!
 !!    A_μ2,ν2 = delta_μ2,ν2 ε_ν2
 !!
-!!    This routine scales the diagonal elements by factor two
-!!    and the off-diagonal elements by factor one half
+!!    This routine scales these off-diagonal elements 
+!!    by factor half
 !!
       implicit none
 !
@@ -177,7 +170,7 @@ contains
 !
       else     
 !
-         call dscal(wf%n_es_amplitudes, half, A_numerical_mu_nu, 1)  
+         call dscal(wf%n_t2, half, A_numerical_mu_nu(wf%n_t1+1), 1)  
 ! 
       endif
 !

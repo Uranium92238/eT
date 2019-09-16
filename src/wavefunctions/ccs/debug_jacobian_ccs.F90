@@ -66,13 +66,13 @@ contains
       call mem%alloc(t_copy, wf%n_gs_amplitudes)
 !
       call wf%get_amplitudes(t_copy)
-      call wf%set_amplitudes(t(1:wf%n_gs_amplitudes))
+      call wf%set_amplitudes(t)
 !
       call wf%integrals%write_t1_cholesky(wf%t1)
       if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
 !
       call wf%construct_fock()
-      call wf%construct_omega(omega(1:wf%n_gs_amplitudes))
+      call wf%construct_omega(omega)
 !
       call wf%set_amplitudes(t_copy)
       call mem%dealloc(t_copy, wf%n_gs_amplitudes)
@@ -227,7 +227,9 @@ contains
          e(nu) = one
 !
          call wf%integrals%write_t1_cholesky(wf%t1)
+!
          if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
+
          call wf%construct_fock()
 !
          call wf%jacobian_transform_trial_vector(e)
@@ -248,7 +250,6 @@ contains
 !
          if (abs_max .gt. tolerance) then
             call output%warning_msg('Numerical and analytical Jacobian matrices do not match!')
-            write(*,*)nu, abs_max, abs_max_index, A_numerical_mu_nu(abs_max_index), e(abs_max_index)
          endif
 !
       enddo
@@ -270,7 +271,7 @@ contains
 !
       endif
 !
-      call output%printf('Exited numerical test for jacobian without errors.', fs='(/t3, a)',pl='verbose')
+      call output%printf('Exited numerical test for jacobian without errors.', fs='(/t3, a)',pl='normal')
 !
    end subroutine numerical_test_jacobian_ccs
 !
