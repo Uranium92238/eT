@@ -17,63 +17,52 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine omega_for_jacobian_debug_ccs(wf, omega, t)
+!
+   module subroutine omega_for_jacobian_debug_cc2(wf, omega, t)
 !!
-!!    Omega for jacoboan debug
-!!    Written by Sarai D. Folkestad
+!!    Omega for Jacobian debug
+!!    Written by Sarai D. Folkestad, Sep. 2019
+!!
 !!
       implicit none
 !
-      class(ccs), intent(inout) :: wf
+      class(cc2), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: omega
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: t
 !
-   end subroutine omega_for_jacobian_debug_ccs
+   end subroutine omega_for_jacobian_debug_cc2
 !
 !
-   module subroutine amplitudes_for_jacobian_debug_ccs(wf, t)
+   module subroutine amplitudes_for_jacobian_debug_cc2(wf, t)
 !!
-!!    Amplitudes for jacobian debug
-!!    Written by Sarai D. Folkestad
-!!
-      implicit none
-!
-      class(ccs), intent(inout) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: t
-!
-   end subroutine amplitudes_for_jacobian_debug_ccs
-!
-!
-   module subroutine numerical_test_jacobian_ccs(wf, store_on_file)
-!!
-!!    Numerical test for Jacobian
+!!    Amplitudes for Jacobian debug
 !!    Written by Sarai D. Folkestad, Sep 2019
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(cc2), intent(inout) :: wf
 !
-      logical, optional :: store_on_file
-!
-   end subroutine numerical_test_jacobian_ccs
+      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: t
 !
 !
-   module subroutine normalization_for_jacobian_debug_ccs(wf, A_numerical_mu_nu, nu)
+   end subroutine amplitudes_for_jacobian_debug_cc2
+!
+!
+   module subroutine normalization_for_jacobian_debug_cc2(wf, A_numerical_mu_nu, nu)
 !!
-!!    Normalization for jacobian debug
-!!    Written by Sarai D. Folkestad
+!!    Normalization for Jacobian debug
+!!    Written by Sarai D. Folkestad, Sep 2019
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: A_numerical_mu_nu
 !
       integer, intent(in) :: nu
 !
-   end subroutine normalization_for_jacobian_debug_ccs
+   end subroutine normalization_for_jacobian_debug_cc2
 !
 !

@@ -125,6 +125,7 @@ set(eT_fortran_sources
    src/wavefunctions/cc2/multiplier_equation_cc2.F90
    src/wavefunctions/cc2/initialize_destruct_cc2.F90
    src/wavefunctions/cc2/file_handling_cc2.F90
+   src/wavefunctions/cc2/debug_jacobian_cc2.F90
    src/wavefunctions/lowmem_cc2/omega_lowmem_cc2.F90
    src/wavefunctions/lowmem_cc2/jacobian_lowmem_cc2.F90
    src/wavefunctions/lowmem_cc2/jacobian_transpose_lowmem_cc2.F90
