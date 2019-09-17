@@ -43,6 +43,18 @@ contains
 !!    Omega for Jacobian debug
 !!    Written by Sarai D. Folkestad, Sep. 2019
 !!
+!!    Constructs Ω for CC2, both singles and
+!!    doubles part. 
+!!
+!!    The construct omega routine in CC2
+!!    calculates u from the integrals, hence 
+!!    it is not called directly (as is done 
+!!    for CCS and CCSD), but u is constructed and 
+!!    the individual terms are called (ccs_a1, 
+!!    doubles_a1-doubles_c1). Additionally, the 
+!!    doubles part of Ω is constructed. This routine 
+!!    is only used in this debug procedure.
+!!
 !!
       implicit none
 !
@@ -55,14 +67,20 @@ contains
       real(dp), dimension(:), allocatable :: t_copy
       real(dp), dimension(:,:,:,:), allocatable :: u
 !
+!     Set the perturbed amplitudes
+!
       call mem%alloc(t_copy, wf%n_gs_amplitudes)
 !
       call wf%get_amplitudes(t_copy)
       call wf%set_amplitudes(t(1:wf%n_gs_amplitudes))
 !
+!     Prepare T1 integrals and Fock 
+!
       call wf%integrals%write_t1_cholesky(wf%t1)
 !
       call wf%construct_fock()
+!
+!     Ω construction
 !
       call zero_array(omega, wf%n_es_amplitudes)
 !
@@ -81,6 +99,8 @@ contains
       call mem%dealloc(u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call wf%construct_omega2(omega(wf%n_gs_amplitudes+1:wf%n_es_amplitudes), t(wf%n_gs_amplitudes+1:wf%n_es_amplitudes))
+!
+!     Reset amplitudes
 !
       call wf%set_amplitudes(t_copy)
       call mem%dealloc(t_copy, wf%n_gs_amplitudes)
@@ -127,8 +147,8 @@ contains
 !!    This routine scales these diagonal elements 
 !!    by factor two
 !!
-!!    Differentiation of wrt. doubles amplitudes dΩ_μ2
-!!    and factor two on the off-diagonal aibj, ai .ne. bj
+!!    Differentiation of Ω_μ2 wrt. doubles amplitudes
+!!    gives factor two on the off-diagonal aibj, ai .ne. bj
 !!
 !!    A_numerical_μ2_aibj = dΩ_μ2/dt_aibj = 2 ε_μ2,aibj δ_μ2,aibj
 !!
