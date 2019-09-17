@@ -81,6 +81,8 @@ module mo_integral_tool_class
       procedure :: set_full_index               => set_full_index_mo_integral_tool
       procedure :: can_we_keep_g_pqrs_t1        => can_we_keep_g_pqrs_t1_mo_integral_tool
 !
+      procedure :: get_eri_t1_mem               => get_eri_t1_mem_mo_integral_tool
+!
    end type mo_integral_tool
 !
 !
@@ -1286,6 +1288,23 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
       call write_t1_cholesky_timer%turn_off()
 !
    end subroutine write_t1_cholesky_mo_integral_tool
+!
+!
+   logical function get_eri_t1_mem_mo_integral_tool(integrals)
+!!
+!!    Get ERI T1 mem 
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Returns the logical eri_t1_mem
+!!
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!
+      get_eri_t1_mem_mo_integral_tool = integrals%eri_t1_mem
+!
+   end function get_eri_t1_mem_mo_integral_tool
 !
 !
 end module mo_integral_tool_class
