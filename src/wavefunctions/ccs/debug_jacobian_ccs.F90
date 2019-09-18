@@ -66,13 +66,13 @@ contains
       call mem%alloc(t_copy, wf%n_gs_amplitudes)
 !
       call wf%get_amplitudes(t_copy)
-      call wf%set_amplitudes(t(1:wf%n_gs_amplitudes))
+      call wf%set_amplitudes(t)
 !
       call wf%integrals%write_t1_cholesky(wf%t1)
-      if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
+      if (wf%integrals%get_eri_t1_mem()) call wf%integrals%can_we_keep_g_pqrs_t1()
 !
       call wf%construct_fock()
-      call wf%construct_omega(omega(1:wf%n_gs_amplitudes))
+      call wf%construct_omega(omega)
 !
       call wf%set_amplitudes(t_copy)
       call mem%dealloc(t_copy, wf%n_gs_amplitudes)
@@ -99,7 +99,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: t
 !
@@ -170,8 +170,6 @@ contains
 !
       type(sequential_file) :: A_file, A_numerical_file
 !
-      if (wf%name_ == 'cc2') call output%error_msg('Numerical Jacobian not yet implemented for CC2')
-!
       store_on_file_local = .false.
 !
       if (present(store_on_file)) store_on_file_local = store_on_file
@@ -229,7 +227,9 @@ contains
          e(nu) = one
 !
          call wf%integrals%write_t1_cholesky(wf%t1)
-         if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
+!
+         if (wf%integrals%get_eri_t1_mem()) call wf%integrals%can_we_keep_g_pqrs_t1()
+
          call wf%construct_fock()
 !
          call wf%jacobian_transform_trial_vector(e)
@@ -271,7 +271,7 @@ contains
 !
       endif
 !
-      call output%printf('Exited numerical test for jacobian without errors.', fs='(/t3, a)',pl='verbose')
+      call output%printf('Exited numerical test for jacobian without errors.', fs='(/t3, a)',pl='normal')
 !
    end subroutine numerical_test_jacobian_ccs
 !

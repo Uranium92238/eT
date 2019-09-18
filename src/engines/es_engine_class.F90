@@ -139,7 +139,8 @@ contains
       call engine%do_ground_state(wf)
 !
       call wf%integrals%write_t1_cholesky(wf%t1)
-      call wf%integrals%can_we_keep_g_pqrs_t1()
+!      
+      if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
 !
 !     Excited state solutions
 !

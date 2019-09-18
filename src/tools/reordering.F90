@@ -3198,6 +3198,52 @@ subroutine add_2413_to_1234(scalar, x_qspr, y_pqrs, dim_p, dim_q, dim_r, dim_s)
 !
    end subroutine sort_1234_to_1243
 !
+   subroutine add_packed_1432_to_unpacked_1234(scalar, x_psrq_pack, y_pqrs_unpack, dim_p, dim_q)
+!!
+!!    Add packed 1432 to unpacked 1234
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Made by modifying "add_1432_to_1234" for packed x
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pqrs(p,q,r,s) = y_pqrs(p,q,r,s) + scalar * x(psrq)
+!!
+!!    Note that this routine requires dim_p = dim_r and dim_q = dim_s
+!!
+      implicit none
+!
+      real(dp), intent(in) :: scalar
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      real(dp), dimension(dim_p, dim_q, dim_p, dim_q), intent(inout)    :: y_pqrs_unpack
+      real(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(in)    :: x_psrq_pack
+!
+      integer :: p, q, r, s, ps, rq, psrq
+!
+!$omp parallel do schedule(static) private(s,r,q,p,ps,rq,psrq)
+      do s = 1, dim_q
+         do r = 1, dim_p
+            do q = 1, dim_q
+               do p = 1, dim_p
+!
+                  ps = dim_p*(s-1)+p
+                  rq = dim_p*(q-1)+r
+                  psrq = max(ps,rq)*(max(ps,rq)-3)/2 + ps + rq
+!
+                  y_pqrs_unpack(p,q,r,s) = y_pqrs_unpack(p,q,r,s) + scalar*x_psrq_pack(psrq)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_packed_1432_to_unpacked_1234
+!
+!
 !
 !     -::- Squareup and packin and related routines -::-
 !     --------------------------------------------------
