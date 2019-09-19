@@ -30,6 +30,7 @@ module molecular_system_class
    use global_in, only : input
    use global_out, only : output
    use sequential_file_class, only : sequential_file
+   use direct_file_class, only : direct_file
    use output_file_class, only : output_file
    use memory_manager_class, only : mem
    use string_utilities, only : convert_to_lowercase
@@ -73,6 +74,8 @@ module molecular_system_class
       logical :: mm_calculation = .false.
 !
       type(mm) :: mm
+!
+      type(direct_file) :: ao_cholesky_file
 !
    contains
 !

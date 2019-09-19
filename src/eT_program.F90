@@ -71,18 +71,19 @@ program eT_program
    write(output%unit,'(/t3, a)')     '----------------------------------------------------------------------------------'
    write(output%unit,'(t4, a, a)')    'Author:                ','Contribution(s):'
    write(output%unit,'(t3, a)')      '----------------------------------------------------------------------------------'
-   write(output%unit,'(t4, a, a)')    'Josefine H. Andersen   ','First order properties'
-   write(output%unit,'(t4, a, a)')    'Sarai D. Folkestad     ','Program design, HF, CCS, CC2, CCSD, Libint-interface,'
+   write(output%unit,'(t4, a, a)')    'Josefine H. Andersen   ','first order properties'
+   write(output%unit,'(t4, a, a)')    'Sarai D. Folkestad     ','program design, HF, CCS, CC2, CCSD, libint-interface,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS, DIIS-tool'
-   write(output%unit,'(t4, a, a)')    '                       ','Zeroth order properties, First order properties'
+   write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties, IP'
+   write(output%unit,'(t4, a, a)')    '                       ','frozen core'
    write(output%unit,'(t4, a, a)')    'Tommaso Giovannini     ','QM/MM'
    write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
-   write(output%unit,'(t4, a, a)')    'Eirik F. Kjønstad      ','Program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
+   write(output%unit,'(t4, a, a)')    'Eirik F. Kjønstad      ','program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
-   write(output%unit,'(t4, a, a)')    '                       ','Zeroth order properties, First order properties,       '
+   write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties,       '
    write(output%unit,'(t4, a, a)')    '                       ','BFGS-tool                                              '
-   write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, Launch script, file system'
-   write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2, CC3, First order properties'
+   write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, launch script, file system'
+   write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2, CC3, first order properties'
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
    write(output%unit,'(t4, a, a)')    'Åsmund H. Tveten       ','HF'
    write(output%unit,'(t3,a)')       '----------------------------------------------------------------------------------'
@@ -168,7 +169,7 @@ subroutine reference_calculation(system)
    type(hf_engine)         :: ref_engine
    type(hf_geoopt_engine)  :: ref_geoopt_engine 
 !
-   character(len=21) :: ref_wf_name
+   character(len=25) :: ref_wf_name
 !
    ref_wf_name = input%get_reference_wf()
 !
@@ -236,7 +237,7 @@ subroutine cc_calculation(system)
    class(ccs), allocatable :: cc_wf
    class(abstract_engine), allocatable :: cc_engine 
 !
-   character(len=21) :: cc_wf_name
+   character(len=25) :: cc_wf_name
 !
    if (.not. input%requested_reference_calculation()) &
       call output%error_msg('to run CC calculation reference wavefunction must be specified.')

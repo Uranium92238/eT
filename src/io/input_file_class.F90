@@ -34,9 +34,9 @@ module input_file_class
 !
       type(section), allocatable :: sections(:)
 !
-      character(len=21), allocatable :: rf_wfs(:)
-      character(len=21), allocatable :: cc_wfs(:)
-      character(len=21), allocatable :: mm_wfs(:)
+      character(len=25), allocatable :: rf_wfs(:)
+      character(len=25), allocatable :: cc_wfs(:)
+      character(len=25), allocatable :: mm_wfs(:)
 !
    contains
 !
@@ -145,17 +145,16 @@ contains
 !
 !     Set method section 
 !
-      the_file%rf_wfs = (/ 'hf                   ',   &
-                           'uhf                  '    /)
+      the_file%rf_wfs = [character(len=25) ::'hf','uhf']
 !
-      the_file%cc_wfs = (/ 'ccs                  ',   &
-                           'mp2                  ',   &
-                           'cc2                  ',   &
-                           'lowmem-cc2           ',   &
-                           'ccsd                 ',   &
-                           'cc3                  '    /)
+      the_file%cc_wfs = [character(len=25) :: 'ccs',        &
+                                              'mp2',        &
+                                              'cc2',        &
+                                              'lowmem-cc2', &
+                                              'ccsd',       &
+                                              'cc3']
 !
-      the_file%mm_wfs = (/ 'mm                   '/)
+      the_file%mm_wfs = [character(len=25) :: 'mm']
 !
       method%name_    = 'method'
       method%required = .true.
@@ -184,94 +183,98 @@ contains
 !
       calculations%name_    = 'do'
       calculations%required = .true.
-      calculations%keywords = (/ 'ground state         ',   &
-                                 'ground state geoopt  ',   &
-                                 'excited state        ',   &
-                                 'zop                  ',   &
-                                 'fop                  ',   &
-                                 'cholesky eri         ',   &
-                                 'multipliers          '   /)
+      calculations%keywords = [character(len=25) ::'ground state',   &
+                                 'ground state geoopt',     &
+                                 'excited state',           &
+                                 'zop',                     &
+                                 'fop',                     &
+                                 'cholesky eri',            &
+                                 'multipliers']
 !
       system%name_    = 'system'
       system%required = .true.
-      system%keywords = (/ 'name                 ',   &
-                           'charge               ',   &
-                           'multiplicity         '    /)
+      system%keywords = [character(len=25) ::'name',  &
+                           'charge',                  &
+                           'multiplicity']
 !
       memory%name_    = 'memory'
       memory%required = .false.
-      memory%keywords = (/ 'available            ' /)
+      memory%keywords = [character(len=25) ::'available']
 !
       disk%name_    = 'disk'
       disk%required = .false.
-      disk%keywords = (/ 'available            ' /)
+      disk%keywords = [character(len=25) ::'available']
 !
       cc_zop%name_    = 'cc zop'
       cc_zop%required = .false.
-      cc_zop%keywords = (/ 'dipole               ',   &
-                           'quadrupole           ' /)
+      cc_zop%keywords = [character(len=25) ::'dipole', 'quadrupole']
 !
       cc_fop%name_    = 'cc fop'
       cc_fop%required = .false.
-      cc_fop%keywords = (/ 'dipole length        ',   &
-                           'lr                   ',   &
-                           'eom                  ' /)
+      cc_fop%keywords = [character(len=25) ::'dipole length',   &
+                                             'lr',              &
+                                             'eom']
 !
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%required = .false.
-      solver_cholesky%keywords = (/ 'threshold           ',    &
-                                    'span                ',    &
-                                    'batches             ',    &
-                                    'qualified           ',    &
-                                    'one center          ',    &
-                                    'no vectors          '     /)
+      solver_cholesky%keywords =  [character(len=25) ::&
+                                    'threshold',     &
+                                    'span',          &
+                                    'batches',       &
+                                    'qualified',     &
+                                    'one center',    &
+                                    'no vectors']
 !
       solver_hf%name_    = 'solver hf'
       solver_hf%required = .false.
-      solver_hf%keywords = (/ 'algorithm            ',   &
-                              'energy threshold     ',   &
-                              'gradient threshold   ',   &
-                              'max iterations       ',   &
-                              'diis dimension       ',   &
-                              'restart              ',   &
-                              'ao density guess     ',   &
-                              'print orbitals       '    /)
+      solver_hf%keywords =  [character(len=25) ::     &
+                              'algorithm',            &
+                              'energy threshold',     &
+                              'gradient threshold',   &
+                              'max iterations',       &
+                              'diis dimension',       &
+                              'restart',              &
+                              'ao density guess',     &
+                              'print orbitals']
 !
       solver_hf_geoopt%name_    = 'solver hf geoopt'
       solver_hf_geoopt%required = .false.
-      solver_hf_geoopt%keywords = (/ 'algorithm            ',   &
-                                     'max step             ',   &
-                                     'energy threshold     ',   &
-                                     'gradient threshold   ',   &
-                                     'max iterations       ',   &
-                                     'restart              ' /)
+      solver_hf_geoopt%keywords = [character(len=25) ::     &
+                                    'algorithm',            &
+                                     'max step',            &
+                                     'energy threshold',    &
+                                     'gradient threshold',  &
+                                     'max iterations',      &
+                                     'restart']
 !
       solver_cc_gs%name_    = 'solver cc gs'
       solver_cc_gs%required = .false.
-      solver_cc_gs%keywords = (/ 'algorithm            ',   &
-                                 'energy threshold     ',   &
-                                 'omega threshold      ',   &
-                                 'max micro iterations ',   &
-                                 'rel micro threshold  ',   &
-                                 'max iterations       ',   &
-                                 'diis dimension       ',   &
-                                 'restart              '    /)
+      solver_cc_gs%keywords = [character(len=25) ::      &
+                                 'algorithm',            &
+                                 'energy threshold',     &
+                                 'omega threshold',      &
+                                 'max micro iterations', &
+                                 'rel micro threshold',  &
+                                 'max iterations',       &
+                                 'diis dimension',       &
+                                 'restart' ]
 !
       solver_cc_es%name_    = 'solver cc es'
       solver_cc_es%required = .false.
-      solver_cc_es%keywords = (/ 'algorithm            ',   &
-                                 'core excitation      ',   &
-                                 'ionization           ',   &
-                                 'energy threshold     ',   &
-                                 'residual threshold   ',   &
-                                 'max iterations       ',   &
-                                 'restart              ',   &
-                                 'left eigenvectors    ',   &
-                                 'right eigenvectors   ',   &
-                                 'singlet states       ',   &
-                                 'diis dimension       ',   &
-                                 'max micro iterations ',   &
-                                 'max reduced dimension' /)
+      solver_cc_es%keywords = [character(len=25) ::      &
+                                 'algorithm',            &
+                                 'core excitation',      &
+                                 'ionization',           &
+                                 'energy threshold ',    &
+                                 'residual threshold',   &
+                                 'max iterations',       &
+                                 'restart',              &
+                                 'left eigenvectors',    &
+                                 'right eigenvectors',   &
+                                 'singlet states',       &
+                                 'diis dimension',       &
+                                 'max micro iterations', &
+                                 'max reduced dimension']
 !
       solver_cc_multipliers%name_    = 'solver cc multipliers'
       solver_cc_multipliers%required = .false.
@@ -282,20 +285,22 @@ contains
 !
       active_atoms%name_    = 'active atoms'
       active_atoms%required = .false.
-      active_atoms%keywords = (/ 'selection type       ', &
-                                 'central atom         ', &
-                                 'hf                   ', &
-                                 'active basis         ' /)
+      active_atoms%keywords = [character(len=25) :: &
+                              'selection type',     &
+                              'central atom',       &
+                              'hf',                 &
+                              'active basis']
 !
       cc%name_    = 'cc'
       cc%required = .false.
-      cc%keywords = (/ 'bath orbital         ' /)
+      cc%keywords = [character(len=25) :: 'bath orbital', 'frozen core']
 !
       mm%name_    = 'molecular mechanics'
       mm%required = .false.
-      mm%keywords = (/ 'forcefield        ', &
-                       'algorithm         ', &
-                       'verbose           ' /)
+      mm%keywords = [character(len=25) :: &
+                     'forcefield', &
+                     'algorithm ', &
+                     'verbose']
 !
 !     Gather all sections into the file's section array 
 !
@@ -641,7 +646,7 @@ contains
    end function requested_reference_calculation_input_file
 !
 !
-   character(len=21) function get_reference_wf_input_file(the_file)
+   character(len=25) function get_reference_wf_input_file(the_file)
 !!
 !!    Get reference wavefunction 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
@@ -712,7 +717,7 @@ contains
    end function requested_cc_calculation_input_file
 !
 !
-   character(len=21) function get_cc_wf_input_file(the_file)
+   character(len=25) function get_cc_wf_input_file(the_file)
 !!
 !!    Get CC wavefunction 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 

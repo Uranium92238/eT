@@ -56,7 +56,7 @@
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: h_pq 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: h_pq 
 !
    end subroutine construct_h_ccs
 !

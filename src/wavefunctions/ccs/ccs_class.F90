@@ -57,6 +57,7 @@ module ccs_class
       real(dp), dimension(:), allocatable :: left_excitation_energies, right_excitation_energies
 !
       logical :: bath_orbital
+      logical :: frozen_core
 !
       type(file) :: t1_file, t1bar_file 
       type(file) :: r1_file, l1_file
@@ -80,6 +81,13 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: right_transition_density
 !
       integer, dimension(:), allocatable :: core_MOs
+!
+!     Frozen core variables (FC)
+!
+      real(dp), dimension(:,:), allocatable :: mo_fock_fc_contribution 
+      real(dp), dimension(:,:), allocatable :: orbital_coefficients_fc
+!
+      integer :: n_frozen_orbitals
 !
    contains
 !
@@ -270,6 +278,19 @@ module ccs_class
       procedure :: set_ip_start_indices                        => set_ip_start_indices_ccs
       procedure :: get_ip_projector                            => get_ip_projector_ccs
 !
+!     Frozen core
+!
+      procedure :: initialize_mo_fock_fc_contribution          => initialize_mo_fock_fc_contribution_ccs                
+      procedure :: destruct_mo_fock_fc_contribution            => destruct_mo_fock_fc_contribution_ccs                
+      procedure :: initialize_orbital_coefficients_fc          => initialize_orbital_coefficients_fc_ccs
+      procedure :: destruct_orbital_coefficients_fc            => destruct_orbital_coefficients_fc_ccs
+!
+      procedure :: coulomb_contribution_fock_fc                => coulomb_contribution_fock_fc_ccs
+      procedure :: exchange_contribution_fock_fc               => exchange_contribution_fock_fc_ccs
+      procedure :: remove_core_orbitals                        => remove_core_orbitals_ccs
+      procedure :: construct_mo_fock_fc_contribution           => construct_mo_fock_fc_contribution_ccs
+      procedure :: construct_t1_fock_fc_contribution           => construct_t1_fock_fc_contribution_ccs
+!
 !     Debug 
 !
       procedure :: omega_for_jacobian_debug                    => omega_for_jacobian_debug_ccs
@@ -334,11 +355,13 @@ contains
       call wf%read_orbital_energies()
 !
       wf%bath_orbital = .false.
+      wf%frozen_core = .false.
       wf%cvs = .false.
 !
       call wf%read_settings()
 !
       if (wf%bath_orbital) call wf%make_bath_orbital()
+      if (wf%frozen_core) call wf%remove_core_orbitals()
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
@@ -368,6 +391,7 @@ contains
       call wf%destruct_multipliers()
       call wf%destruct_right_excitation_energies()
       call wf%destruct_left_excitation_energies()
+      call wf%destruct_mo_fock_fc_contribution()
 !
       write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(convert_to_uppercase(wf%name_)), ' wavefunction'
 !
@@ -393,6 +417,8 @@ contains
             wf%n_bath_orbitals = 1 ! May want to expand the number of bath orbitals later on
 !
          endif
+!
+         if (input%requested_keyword_in_section('frozen core', 'cc')) wf%frozen_core = .true.
 !
       endif
 !
@@ -931,7 +957,7 @@ contains
       call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo + wf%n_bath_orbitals)
       call zero_array(wf%orbital_coefficients, wf%n_ao*(wf%n_mo + wf%n_bath_orbitals))
 !
-      wf%orbital_coefficients(1:wf%n_mo, 1:wf%n_mo) = orbital_coefficients_copy(:,:)
+      wf%orbital_coefficients(1:wf%n_ao, 1:wf%n_mo) = orbital_coefficients_copy(:,:)
 !
       call mem%dealloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
 !
@@ -1042,6 +1068,73 @@ contains
       wf%cvs = .true.
 !
    end subroutine read_cvs_settings_ccs
+!
+!
+   subroutine remove_core_orbitals_ccs(wf)
+!!
+!!    Remove core orbitals
+!!    Written by Sarai D. Folkestad, Sep 2018 
+!!
+!!    Removes 1s orbitals for C and heavier atoms
+!!    from orbital coefficient matrix
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      real(dp), dimension(:,:), allocatable :: orbital_coefficients_copy
+      real(dp), dimension(:), allocatable :: orbital_energies_copy
+!
+      integer :: I
+!
+!     Figure out how many core orbitals we have
+!
+!     Number of atoms heavier than B (atomic number larger than 5)
+!
+      wf%n_frozen_orbitals = 0
+!
+      do I = 1, wf%system%n_atoms
+!
+         if (wf%system%atoms(I)%number_ > 5) wf%n_frozen_orbitals = wf%n_frozen_orbitals + 1
+!
+      enddo
+!
+      call mem%alloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
+!
+      call copy_and_scale(one, wf%orbital_coefficients, orbital_coefficients_copy, wf%n_mo*wf%n_ao)
+!
+      call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
+!
+      call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo - wf%n_frozen_orbitals)
+!
+      wf%orbital_coefficients(1:wf%n_ao, 1:wf%n_mo - wf%n_frozen_orbitals) = &
+            orbital_coefficients_copy(1:wf%n_ao, wf%n_frozen_orbitals + 1:wf%n_mo)
+!
+!     Keep frozen core orbital orbital coefficients
+!
+      call wf%initialize_orbital_coefficients_fc()
+!
+      wf%orbital_coefficients_fc(1:wf%n_ao, 1:wf%n_frozen_orbitals) = &
+            orbital_coefficients_copy(1:wf%n_ao, 1:wf%n_frozen_orbitals)   
+!
+      call mem%dealloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
+!
+     call mem%alloc(orbital_energies_copy, wf%n_mo)
+!
+     call copy_and_scale(one, wf%orbital_energies, orbital_energies_copy, wf%n_mo)
+!
+     call mem%dealloc(wf%orbital_energies, wf%n_mo)
+     call mem%alloc(wf%orbital_energies, wf%n_mo - wf%n_frozen_orbitals)
+!
+     wf%orbital_energies(1:wf%n_mo - wf%n_frozen_orbitals) = &
+            orbital_energies_copy(wf%n_frozen_orbitals + 1: wf%n_mo)
+!
+     call mem%dealloc(orbital_energies_copy, wf%n_mo)
+!
+     wf%n_mo = wf%n_mo  - wf%n_frozen_orbitals
+     wf%n_o = wf%n_o  - wf%n_frozen_orbitals     
+!
+   end subroutine remove_core_orbitals_ccs
 !
 !
 end module ccs_class
