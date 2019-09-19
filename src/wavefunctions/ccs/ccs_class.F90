@@ -288,6 +288,10 @@ module ccs_class
       procedure :: construct_mo_fock_fc_contribution           => construct_mo_fock_fc_contribution_ccs
       procedure :: construct_t1_fock_fc_contribution           => construct_t1_fock_fc_contribution_ccs
 !
+!     MO preparations
+!
+      procedure :: mo_preparations                             => mo_preparations_ccs
+!   
 !     Debug 
 !
       procedure :: omega_for_jacobian_debug                    => omega_for_jacobian_debug_ccs
@@ -1114,7 +1118,7 @@ contains
       wf%orbital_coefficients_fc(1:wf%n_ao, 1:wf%n_frozen_orbitals) = &
             orbital_coefficients_copy(1:wf%n_ao, 1:wf%n_frozen_orbitals)   
 !
-      call mem%dealloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
+     call mem%dealloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
 !
      call mem%alloc(orbital_energies_copy, wf%n_mo)
 !
@@ -1132,6 +1136,33 @@ contains
      wf%n_o = wf%n_o  - wf%n_frozen_orbitals     
 !
    end subroutine remove_core_orbitals_ccs
+!
+!
+   subroutine mo_preparations_ccs(wf)
+!!
+!!    MO preparations
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Routine which initializes the MO integral tool,
+!!    MO transforms the Cholesky vectors, and does other
+!!    preparations related to modifications of the MOs,
+!!    such as frozen core, change of basis from canonical
+!!    orbitals and shifting of bath orbitals (not implemented).
+!!
+!!    This routine is not overwritten for 
+!!    descendants of standard CC-type (e.g., CCSD, CC2, CC3)
+!!    but will be so for MLCC methods.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, wf%system%n_J)
+      call wf%construct_and_write_mo_cholesky(wf%n_mo, wf%orbital_coefficients, wf%integrals%cholesky_mo)
+!
+      if (wf%frozen_core) call wf%construct_mo_fock_fc_contribution()
+!
+   end subroutine mo_preparations_ccs
 !
 !
 end module ccs_class

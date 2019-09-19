@@ -103,7 +103,9 @@ contains
 !
 !     Cholesky decomposition
 !
-      call engine%do_cholesky(wf, wf%orbital_coefficients)
+      call engine%do_cholesky(wf)
+!
+      call wf%mo_preparations()
 !
 !     Ground state solution
 !

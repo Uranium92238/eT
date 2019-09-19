@@ -96,7 +96,7 @@ module mo_integral_tool_class
 contains
 !
 !
-   function new_mo_integral_tool(n_o, n_v, eri_cholesky) result(integrals)
+   function new_mo_integral_tool(n_o, n_v, n_J) result(integrals)
 !!
 !!    New MO integral tool
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -115,18 +115,17 @@ contains
 !
       integer, intent(in) :: n_o
       integer, intent(in) :: n_v
+      integer, intent(in) :: n_J
 !
-      type(eri_cd), intent(in) :: eri_cholesky
-!
-      integrals%n_J  = eri_cholesky%n_cholesky
+      integrals%n_J  = n_J
       integrals%n_o  = n_o
       integrals%n_v  = n_v
       integrals%n_mo = n_o + n_v
 !
-      integrals%cholesky_mo = direct_file(eri_cholesky%cholesky_mo_vectors%name_, integrals%n_J)
+      integrals%cholesky_mo = direct_file('cholesky_mo_vectors', integrals%n_J)
       integrals%cholesky_mo_t1 = direct_file('cholesky_mo_t1_vectors', integrals%n_J)
 !
-!     Initially MO cholesky on file, and not T1-transformed cholesky
+!     Initially MO Cholesky on file, and not T1-transformed Cholesky
 !     nor full T1-ERI matrix
 !
       integrals%cholesky_file      = .true.

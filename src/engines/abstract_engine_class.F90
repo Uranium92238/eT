@@ -108,7 +108,7 @@ contains
    end subroutine ignite_abstract_engine
 !
 !
-   subroutine do_cholesky_abstract_engine(wf, orbital_coefficients)
+   subroutine do_cholesky_abstract_engine(wf)
 !!
 !!    Do Cholesky
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
@@ -121,8 +121,6 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_mo), intent(in) :: orbital_coefficients
-!
       type(eri_cd) :: eri_chol_solver
 !
 !     Cholesky decoposition 
@@ -131,10 +129,6 @@ contains
       call eri_chol_solver%run(wf%system)
 !
       call eri_chol_solver%diagonal_test(wf%system)
-!
-      call eri_chol_solver%construct_mo_cholesky_vectors(wf%system, wf%n_mo, orbital_coefficients)
-!
-      wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, eri_chol_solver)
 !
       call eri_chol_solver%cleanup(wf%system)
 !
