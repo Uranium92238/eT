@@ -75,7 +75,11 @@ module molecular_system_class
 !
       type(mm) :: mm
 !
+!     AO Cholesky vectors
+!
       type(direct_file) :: ao_cholesky_file
+!
+      integer :: n_J = 0
 !
    contains
 !

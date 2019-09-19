@@ -122,7 +122,7 @@ module eri_cd_class
       procedure :: construct_diagonal_from_batch_bases    => construct_diagonal_from_batch_bases_eri_cd
       procedure :: append_bases                           => append_bases_eri_cd
 !
-      procedure :: write_ao_cholesky_to_direct_file   => write_ao_cholesky_to_direct_file_cd_eri_solver
+      procedure :: write_ao_cholesky_to_direct_file       => write_ao_cholesky_to_direct_file_cd_eri_solver
 !
    end type eri_cd
 !
@@ -286,11 +286,12 @@ contains
 !!
       implicit none
 !
-      class(eri_cd) :: solver
+      class(eri_cd), intent(inout) :: solver
 !
-      type(molecular_system) :: system
+      type(molecular_system), intent(inout) :: system
 !
       call solver%write_ao_cholesky_to_direct_file(system)
+      system%n_J = solver%n_cholesky
 !
       call solver%cholesky_ao_vectors_info%delete_()
       call solver%cholesky_ao_vectors%delete_()

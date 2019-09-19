@@ -127,7 +127,9 @@ contains
 !
 !     Cholesky decoposition of the electron repulsion integrals
 !
-      call engine%do_cholesky(wf, wf%orbital_coefficients)
+      call engine%do_cholesky(wf)
+!
+      call wf%mo_preparations()
 !
 !     Determine ground state
 !
@@ -158,8 +160,6 @@ contains
 !
       type(diis_cc_gs), allocatable :: diis_solver
       type(newton_raphson_cc_gs), allocatable :: newton_raphson_solver
-!
-      if (wf%frozen_core) call wf%construct_mo_fock_fc_contribution()
 !
       if (trim(wf%name_) == 'mp2') then
 !
