@@ -115,11 +115,13 @@ contains
       call wf%read_orbital_energies()
 !
       wf%bath_orbital = .false.
+      wf%frozen_core = .false.
       wf%cvs = .false.
 !
       call wf%read_settings()
 !
       if (wf%bath_orbital) call wf%make_bath_orbital()
+      if (wf%frozen_core) call wf%remove_core_orbitals()
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1

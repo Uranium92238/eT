@@ -136,7 +136,7 @@ contains
 !
       wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, eri_chol_solver)
 !
-      call eri_chol_solver%cleanup()
+      call eri_chol_solver%cleanup(wf%system)
 !
    end subroutine do_cholesky_abstract_engine
 !

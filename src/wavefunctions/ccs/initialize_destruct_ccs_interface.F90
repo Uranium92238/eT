@@ -334,3 +334,50 @@
 !
    end subroutine destruct_core_MOs_ccs
 !
+!
+   module subroutine initialize_mo_fock_fc_contribution_ccs(wf)
+!!
+!!    Initialize Fock frozen core
+!!    Written by Sarai D. Folkestad, Sep. 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+   end subroutine initialize_mo_fock_fc_contribution_ccs
+!
+!
+   module subroutine destruct_mo_fock_fc_contribution_ccs(wf)
+!!
+!!    Destruct Fock frozen core
+!!    Written by Sarai D. Folkestad, Sep. 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+   end subroutine destruct_mo_fock_fc_contribution_ccs
+!
+!
+   module subroutine initialize_orbital_coefficients_fc_ccs(wf)
+!!
+!!    Initialize orbital coefficients frozen core
+!!    Written by Sarai D. Folkestad, Sep. 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+   end subroutine initialize_orbital_coefficients_fc_ccs
+!
+!
+   module subroutine destruct_orbital_coefficients_fc_ccs(wf)
+!!
+!!    Destruct orbital coefficients frozen core
+!!    Written by Sarai D. Folkestad, Sep. 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+   end subroutine destruct_orbital_coefficients_fc_ccs

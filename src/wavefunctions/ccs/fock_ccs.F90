@@ -53,6 +53,7 @@ contains
       class(ccs) :: wf
 !
       real(dp), dimension(:,:), allocatable :: F_pq
+      real(dp), dimension(:,:), allocatable :: F_pq_core
 !
       integer :: i, j, k, a, b
 !
@@ -66,6 +67,17 @@ contains
 !
       call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
       call wf%construct_h(F_pq)
+!
+      if (wf%frozen_core) then
+!
+         call mem%alloc(F_pq_core, wf%n_mo, wf%n_mo)
+!
+         call wf%construct_t1_fock_fc_contribution(F_pq_core)
+         call daxpy(wf%n_mo**2, one, F_pq_core, 1, F_pq, 1)
+!
+         call mem%dealloc(F_pq_core, wf%n_mo, wf%n_mo)
+!
+      endif
 !
 !     Occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
@@ -139,6 +151,306 @@ contains
       call mem%dealloc(F_pq, wf%n_mo, wf%n_mo)
 !
    end subroutine construct_fock_ccs
+!
+!
+   module subroutine coulomb_contribution_fock_fc_ccs(wf)
+!!
+!!    Coulomb contribution to frozen core fock
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Calculates the Coulomb contribution to Fock matrix
+!!    from the frozen cores. The contribution is
+!!
+!!       sum_I 2 g_pqII = sum_I sum_J sum_αβ L_pq^J L_αβ^J C_αI C_βI
+!!
+!!    where I is core orbital which has been frozen
+!!
+      implicit none
+!
+      class(ccs) :: wf 
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_xy, L_J_pq
+      real(dp), dimension(:,:), allocatable :: D_core_xy
+      real(dp), dimension(:), allocatable :: X_J
+!
+      integer :: x, y, xy
+      integer :: req0, req1, current_y_batch, current_q_batch
+!
+      type(batching_index) :: batch_y, batch_q
+!
+      call mem%alloc(D_core_xy, wf%n_ao, wf%n_ao)
+!
+      call dgemm('N', 'T',                &
+                  wf%n_ao,                &
+                  wf%n_ao,                &
+                  wf%n_frozen_orbitals,   &
+                  one,                    &
+                  wf%orbital_coefficients_fc, &
+                  wf%n_ao,                &
+                  wf%orbital_coefficients_fc, &
+                  wf%n_ao,                &
+                  zero,                   &
+                  D_core_xy,              &
+                  wf%n_ao)
+!
+      call mem%alloc(X_J, wf%integrals%n_J)
+      call zero_array(X_J, wf%integrals%n_J)
+!
+      req0 = 0
+      req1 = (wf%integrals%n_J)*(wf%n_ao)
+!
+      call batch_y%init(wf%n_ao)
+!
+      call mem%batch_setup(batch_y, req0, req1)
+!
+!     Loop over the number of y batches
+!
+      do current_y_batch = 1, batch_y%num_batches
+!
+         call batch_y%determine_limits(current_y_batch) 
+!
+         call wf%system%ao_cholesky_file%open_('read')
+!
+         call mem%alloc(L_J_xy, wf%integrals%n_J, wf%n_ao, batch_y%length) 
+!
+         do x = 1, wf%n_ao
+            do y = 1, batch_y%length
+!
+               xy = max(x,y+batch_y%first-1)*(max(x,y+batch_y%first-1)-3)/2 + x + y+batch_y%first-1
+!
+               call wf%system%ao_cholesky_file%read_(L_J_xy(:, x, y),xy)
+!
+            enddo
+         enddo
+!
+         call wf%system%ao_cholesky_file%close_('keep')
+!
+!        X_J = L_J_xy * D_core_xy
+!
+         call dgemv('N', &
+                     wf%integrals%n_J,             &
+                     wf%n_ao*batch_y%length,       &
+                     one,                          &
+                     L_J_xy,                       &
+                     wf%integrals%n_J,             &
+                     D_core_xy(1,batch_y%first),   &
+                     1,                            &
+                     one,                          &
+                     X_J,                          &
+                     1)
+!
+         call mem%dealloc(L_J_xy, wf%integrals%n_J, wf%n_ao,  batch_y%length) 
+!
+      enddo ! Batch over y
+!
+      call mem%dealloc(D_core_xy, wf%n_ao, wf%n_ao)
+!
+      req0 = 0
+      req1 = (wf%integrals%n_J)*(wf%n_mo)
+!
+      call batch_q%init(wf%n_mo)
+!
+      call mem%batch_setup(batch_q, req0, req1)
+!
+!     Loop over the number of q batches
+
+      do current_q_batch = 1, batch_q%num_batches
+!
+         call batch_q%determine_limits(current_q_batch) 
+!
+         call mem%alloc(L_J_pq, wf%integrals%n_J, wf%n_mo, batch_q%length)
+!
+         call wf%integrals%read_cholesky(L_J_pq, 1, wf%n_mo, batch_q%first, batch_q%last)
+!
+         call dgemv('T',                                             &
+                     wf%integrals%n_J,                               &
+                     wf%n_mo*batch_q%length,                         &
+                     two,                                            &
+                     L_J_pq,                                         &
+                     wf%integrals%n_J,                               &
+                     X_J,                                            &
+                     1,                                              &
+                     one,                                            &
+                     wf%mo_fock_fc_contribution(1,batch_q%first),    &
+                     1)
+!
+         call mem%dealloc(L_J_pq, wf%integrals%n_J, wf%n_mo, batch_q%length)
+!
+      enddo ! Batch over q
+!
+      call mem%dealloc(X_J, wf%integrals%n_J)
+!
+   end subroutine coulomb_contribution_fock_fc_ccs
+!
+!
+   module subroutine exchange_contribution_fock_fc_ccs(wf)
+!!
+!!    Exchange contribution to frozen core Fock
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Calculates the exchange contribution to Fock matrix
+!!    from the frozen cores. The contribution is
+!! 
+!!       - sum_I g_pIIq = sum_I sum_J sum_αβγδ L_γδ^J L_αβ^J C_γI C_βI C_αp C_δq 
+!!
+!!       X_Iδ^J = L_γδ^J C_γI
+!!
+!!       Y_Iq^J = X_Iδ^J C_δq
+!!
+!!       F_pq -= sum_I sum_J Y_Iq^J Y_Ip^J
+!!
+!!    where I is core orbital which has been frozen
+!!
+      implicit none
+!
+      class(ccs) :: wf 
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_xy, X_J_xI, X_J_Ix, Y_J_Ip
+!
+      integer :: x, y, xy      
+      integer :: req0, req1, current_y_batch
+!
+      type(batching_index) :: batch_y
+!
+      call mem%alloc(X_J_xI, wf%integrals%n_J, wf%n_ao, wf%n_frozen_orbitals)
+      call zero_array(X_J_xI, (wf%integrals%n_J)*(wf%n_ao)*(wf%n_frozen_orbitals))
+!
+      req0 = 0
+      req1 = (wf%integrals%n_J)*(wf%n_ao)
+!
+      call batch_y%init(wf%n_ao)
+!
+      call mem%batch_setup(batch_y, req0, req1)
+!
+!     Loop over the number of y batches
+!
+      do current_y_batch = 1, batch_y%num_batches
+!
+         call batch_y%determine_limits(current_y_batch) 
+!
+         call wf%system%ao_cholesky_file%open_('read')
+!
+         call mem%alloc(L_J_xy, wf%integrals%n_J, wf%n_ao, batch_y%length) 
+!
+         do x = 1, wf%n_ao
+            do y = 1, batch_y%length
+!
+               xy = max(x,y + batch_y%first - 1)*(max(x,y + batch_y%first - 1)-3)/2 + x + y + batch_y%first - 1
+!
+               call wf%system%ao_cholesky_file%read_(L_J_xy(:, x, y),xy)
+!
+            enddo
+         enddo
+!
+         call wf%system%ao_cholesky_file%close_('keep')
+!
+!        X_Iδ^J = L_γδ^J C_γI
+!
+         call dgemm('N', 'N',                               &
+                     (wf%integrals%n_J)*(wf%n_ao),          &
+                     wf%n_frozen_orbitals,                  &
+                     batch_y%length,                        &
+                     one,                                   &
+                     L_J_xy,                                &
+                     (wf%integrals%n_J)*(wf%n_ao),          &
+                     wf%orbital_coefficients_fc(batch_y%first,1),   &
+                     wf%n_ao,                               &
+                     one,                                   &
+                     X_J_xI,                                &
+                     (wf%integrals%n_J)*(wf%n_ao))
+!
+         call mem%dealloc(L_J_xy, wf%integrals%n_J, wf%n_ao, batch_y%length) 
+!
+      enddo ! Batches of y
+!
+      call mem%alloc(X_J_Ix, wf%integrals%n_J, wf%n_frozen_orbitals, wf%n_ao)
+!
+      call sort_123_to_132(X_J_xI, X_J_Ix, wf%integrals%n_J, wf%n_ao, wf%n_frozen_orbitals)     
+!
+      call mem%dealloc(X_J_xI, wf%integrals%n_J, wf%n_ao, wf%n_frozen_orbitals)
+!
+!     Y_Iq^J = X_Iδ^J C_δq
+!
+      call mem%alloc(Y_J_Ip, wf%integrals%n_J, wf%n_frozen_orbitals, wf%n_mo)
+!
+      call dgemm('N', 'N',                                  &
+                  wf%integrals%n_J*(wf%n_frozen_orbitals),  &
+                  wf%n_mo,                                  &
+                  wf%n_ao,                                  &
+                  one,                                      &
+                  X_J_Ix,                                   &
+                  wf%integrals%n_J*(wf%n_frozen_orbitals),  &
+                  wf%orbital_coefficients,                  &
+                  wf%n_ao,                                  &
+                  zero,                                     &
+                  Y_J_Ip,                                   &
+                  wf%integrals%n_J*(wf%n_frozen_orbitals))
+!
+      call mem%dealloc(X_J_Ix, wf%integrals%n_J, wf%n_frozen_orbitals, wf%n_ao)
+!
+!     F_pq -=  Y_J_Ip * Y_J_Iq
+!
+      call dgemm('T', 'N',                                  &
+                  wf%n_mo,                                  &
+                  wf%n_mo,                                  &
+                  wf%integrals%n_J*(wf%n_frozen_orbitals),  &
+                  -one,                                     &
+                  Y_J_Ip,                                   &
+                  wf%integrals%n_J*(wf%n_frozen_orbitals),  &
+                  Y_J_Ip,                                   &
+                  wf%integrals%n_J*(wf%n_frozen_orbitals),  &
+                  one,                                      &
+                  wf%mo_fock_fc_contribution,               &
+                  wf%n_mo)
+!
+      call mem%dealloc(Y_J_Ip, wf%integrals%n_J, wf%n_frozen_orbitals, wf%n_mo)
+!
+   end subroutine exchange_contribution_fock_fc_ccs
+!
+!
+   module subroutine construct_mo_fock_fc_contribution_ccs(wf)
+!!
+!!    Calculate MO Fock frozen core contribution
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf 
+!
+      
+      call output%printf(':: Frozen core approximation is used', &
+                        ints=[wf%n_frozen_orbitals], fs='(/t3,a)',pl='minimal')
+      call output%printf('There are (i0) frozen 1s orbitals.', &
+                        ints=[wf%n_frozen_orbitals],pl='minimal',fs='(t6,a)')
+!
+      call wf%initialize_mo_fock_fc_contribution()
+!
+      call zero_array(wf%mo_fock_fc_contribution, wf%n_mo**2)
+!
+      call wf%coulomb_contribution_fock_fc()
+      call wf%exchange_contribution_fock_fc()
+!
+      call wf%destruct_orbital_coefficients_fc()
+!
+   end subroutine construct_mo_fock_fc_contribution_ccs
+!
+!
+   module subroutine construct_t1_fock_fc_contribution_ccs(wf, F_pq)
+!!
+!!    Calculate T1 Fock frozen core contribution
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf 
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
+!
+      call dcopy(wf%n_mo**2, wf%mo_fock_fc_contribution, 1, F_pq, 1)
+!
+      call wf%t1_transform(F_pq)
+!
+   end subroutine construct_t1_fock_fc_contribution_ccs
 !
 !
 end submodule fock_ccs

@@ -1,0 +1,50 @@
+system
+   name: HOF-He
+   charge: 0
+end system
+
+do
+   excited state
+end do
+
+memory
+   available: 8
+end memory
+
+method
+   hf
+   lowmem-cc2
+end method
+
+cc
+   frozen core
+end cc
+
+solver hf
+   energy threshold:   1.0d-11
+   gradient threshold: 1.0d-11
+end solver hf
+
+solver cholesky
+   threshold: 1.0d-11
+end solver cholesky
+
+solver cc gs
+   energy threshold: 1.0d-11
+   omega threshold:  1.0d-11
+end solver cc gs
+
+solver cc es
+   singlet states: 2
+   residual threshold: 1.0d-11
+   right eigenvectors
+end solver cc es
+
+geometry
+basis: cc-pVDZ
+ H          0.86681        0.60144        5.00000
+ F         -0.86681        0.60144        5.00000
+ O          0.00000       -0.07579        5.00000
+ He         0.00000        0.00000        7.50000
+end geometry
+

@@ -174,7 +174,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: h_pq 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: h_pq 
 !
       call wf%get_mo_h(h_pq)
       call wf%t1_transform(h_pq)

@@ -122,6 +122,8 @@ module eri_cd_class
       procedure :: construct_diagonal_from_batch_bases    => construct_diagonal_from_batch_bases_eri_cd
       procedure :: append_bases                           => append_bases_eri_cd
 !
+      procedure :: write_ao_cholesky_to_direct_file   => write_ao_cholesky_to_direct_file_cd_eri_solver
+!
    end type eri_cd
 !
 !
@@ -277,7 +279,7 @@ contains
    end subroutine run_eri_cd
 !
 !
-   subroutine cleanup_eri_cd(solver)
+   subroutine cleanup_eri_cd(solver, system)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -286,7 +288,12 @@ contains
 !
       class(eri_cd) :: solver
 !
+      type(molecular_system) :: system
+!
+      call solver%write_ao_cholesky_to_direct_file(system)
+!
       call solver%cholesky_ao_vectors_info%delete_()
+      call solver%cholesky_ao_vectors%delete_()
 !
       call solver%timer%turn_off()
 !
@@ -4215,6 +4222,177 @@ contains
       flush(output%unit)
 !
    end subroutine print_settings_eri_cd
+!
+!
+   subroutine write_ao_cholesky_to_direct_file_cd_eri_solver(solver, system)
+!!
+!!    Write AO Cholesky vectors to direct file
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Rewrites the AO Cholesky vectors file to direct access
+!!    file with record length n_cholesky and record number
+!!    given by the packed index of the ao pair.
+!!
+!
+      use array_utilities, only: zero_array
+!
+      implicit none
+!
+      class(eri_cd) :: solver
+!
+      type(molecular_system) :: system
+!
+     real(dp), dimension(:,:), allocatable :: L_AB_J
+     real(dp), dimension(:), allocatable :: L_J
+!
+     integer :: A, B, sp, x, xy_packed_full
+     integer :: y, xy_packed, xy, y_full, x_full
+     integer :: n_construct_aop, n_construct_sp
+!
+     type(interval) :: A_interval, B_interval
+!  
+     integer :: size_AB, current_size_AB, io_stat
+!
+     logical, dimension(:), allocatable :: construct_sp 
+!
+      system%ao_cholesky_file = direct_file('AO_cholesky_vectors', solver%n_cholesky)
+      call system%ao_cholesky_file%open_('write')
+!
+!     Read information about for which shell pairs 
+!     the AO Cholesky vectors were constructed (the rest screened out)
+!
+      call mem%alloc(construct_sp, solver%n_sp)
+!
+      call solver%diagonal_info_cauchy_schwarz%open_('read', 'rewind')
+!
+      call solver%diagonal_info_cauchy_schwarz%read_(n_construct_sp)
+      call solver%diagonal_info_cauchy_schwarz%read_(n_construct_aop)
+      call solver%diagonal_info_cauchy_schwarz%read_(construct_sp, solver%n_sp)
+!
+      call solver%diagonal_info_cauchy_schwarz%close_()
+!
+!     Set Zeros for vectors that have not been constructed
+!
+      call mem%alloc(L_J, solver%n_cholesky)
+      call zero_array(L_J, solver%n_cholesky)
+!
+      sp = 0
+!
+      do B = 1, solver%n_s
+!
+         B_interval = system%shell_limits(B)
+!
+         do A = B, solver%n_s
+!
+            A_interval = system%shell_limits(A)
+!
+            sp = sp + 1
+!
+            if (.not. construct_sp(sp)) then
+!
+               do x = A_interval%first, A_interval%last
+                  do y = B_interval%first, B_interval%last
+!  
+                     xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
+                     call system%AO_cholesky_file%write_(L_J, xy_packed)
+!
+                  enddo
+               enddo
+            endif
+!
+         enddo
+      enddo
+!
+!     Read and write AO vectors
+!
+      call solver%cholesky_ao_vectors_info%open_('read', 'rewind')
+      call solver%cholesky_ao_vectors%open_('read', 'rewind')
+!
+      call solver%cholesky_ao_vectors_info%read_(size_AB, io_stat)
+!
+      do while (io_stat .ge. 0)
+!
+!        Read for the particular shell pair 
+!
+         call mem%alloc(L_AB_J, size_AB, solver%n_cholesky)
+!
+         call solver%cholesky_ao_vectors%read_(L_AB_J, size_AB*solver%n_cholesky)
+!
+         current_size_AB = 0
+         sp = 0
+!
+         do B = 1, solver%n_s
+!
+            B_interval = system%shell_limits(B)
+!
+            do A = B, solver%n_s
+!
+               A_interval = system%shell_limits(A)
+!
+               sp = sp + 1
+!
+               if (construct_sp(sp)) then
+!
+                  if (current_size_AB .lt. size_AB) then
+!
+                     if (A .ne. B) then 
+!
+                        do x = 1, A_interval%size
+                           do y = 1, B_interval%size
+!  
+                              x_full = x + A_interval%first - 1
+                              y_full = y + B_interval%first - 1
+!
+                              xy = A_interval%size*(y-1) + x    
+                              xy_packed_full = (max(x_full,y_full)*(max(x_full,y_full)-3)/2) + x_full + y_full
+                              L_J(:) = L_AB_J(xy + current_size_AB,:)
+!
+                              call system%AO_cholesky_file%write_(L_J, xy_packed_full)
+!  
+                           enddo
+                        enddo
+!
+                     else
+! 
+                        do x = 1, A_interval%size
+                           do y = 1, B_interval%size
+!  
+                              x_full = x + A_interval%first - 1
+                              y_full = y + B_interval%first - 1
+!
+                              xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
+                              xy_packed_full = (max(x_full,y_full)*(max(x_full,y_full)-3)/2) + x_full + y_full
+!  
+                              L_J(:) =  L_AB_J(xy_packed + current_size_AB,:)
+                              call system%AO_cholesky_file%write_(L_J, xy_packed_full)
+!  
+                           enddo
+                        enddo
+
+                     endif
+!
+                     current_size_AB = current_size_AB + get_size_sp(A_interval, B_interval)
+!
+                  endif
+!
+               endif
+
+            enddo
+         enddo
+!
+         call mem%dealloc(L_AB_J, size_AB, solver%n_cholesky)
+!
+         call solver%cholesky_ao_vectors_info%read_(size_AB, io_stat)
+!
+      enddo
+!
+      call mem%dealloc(L_J, solver%n_cholesky)
+      call system%ao_cholesky_file%close_('keep')
+!
+      call solver%cholesky_ao_vectors_info%close_()
+      call solver%cholesky_ao_vectors%close_()
+!
+   end subroutine write_ao_cholesky_to_direct_file_cd_eri_solver
 !
 !
 end module eri_cd_class

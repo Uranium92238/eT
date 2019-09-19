@@ -159,6 +159,8 @@ contains
       type(diis_cc_gs), allocatable :: diis_solver
       type(newton_raphson_cc_gs), allocatable :: newton_raphson_solver
 !
+      if (wf%frozen_core) call wf%construct_mo_fock_fc_contribution()
+!
       if (trim(wf%name_) == 'mp2') then
 !
          call wf%integrals%write_t1_cholesky(wf%t1)
