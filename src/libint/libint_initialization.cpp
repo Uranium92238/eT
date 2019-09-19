@@ -96,7 +96,7 @@ void reset_basis(){
 
 }
 
-void initialize_basis(char *basisset, char *filename){
+void initialize_basis(char *basisset, char *filename, bool *cartesian_gaussians){
     
     string xyzfilename(strcat(filename,".xyz"));
 
@@ -108,6 +108,7 @@ void initialize_basis(char *basisset, char *filename){
     BasisSet temporary(basisset, temporary_atoms);
     cout.clear();
 
+    temporary.set_pure(!(*cartesian_gaussians));
     basis.add(temporary);
 
 }

@@ -194,6 +194,7 @@ contains
       system%name_    = 'system'
       system%required = .true.
       system%keywords = [character(len=25) ::'name',  &
+                           'cartesian gaussians',     &
                            'charge',                  &
                            'multiplicity']
 !

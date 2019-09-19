@@ -54,6 +54,8 @@ module molecular_system_class
       integer :: n_electrons 
       integer :: n_s
 !
+      logical(kind=1) :: cartesian_gaussians
+!
       type(atomic), dimension(:), allocatable :: atoms
 !
       type(interval), dimension(:), allocatable :: shell_limits 
@@ -202,7 +204,7 @@ contains
 !
          write(temp_name, '(a, a1, i4.4)') trim(molecule%name_), '_', i
 !
-         call initialize_basis(molecule%basis_sets(i), temp_name)
+         call initialize_basis(molecule%basis_sets(i), temp_name, molecule%cartesian_gaussians)
 !
       enddo
 !
@@ -230,6 +232,7 @@ contains
 !
 !     Read eT.inp 
 !
+      molecule%cartesian_gaussians = .false.
       molecule%charge = 0
       molecule%multiplicity = 1
 !
@@ -406,11 +409,16 @@ contains
 !
       class(molecular_system) :: molecule
 !
-!
       call input%get_required_keyword_in_section('name', 'system', molecule%name_)
 !
       call input%get_keyword_in_section('charge', 'system', molecule%charge)
       call input%get_keyword_in_section('multiplicity', 'system', molecule%multiplicity)
+!
+      if (input%requested_keyword_in_section('cartesian gaussians', 'system')) then 
+!
+         molecule%cartesian_gaussians = .true.
+!
+      endif 
 !
    end subroutine read_system_molecular_system
 !
@@ -1514,6 +1522,7 @@ contains
       write(output%unit, '(t6,a14,i1)')      'Charge:       ', molecule%charge 
       write(output%unit, '(t6,a14,i1)')      'Multiplicity: ', molecule%multiplicity 
 !
+      if (molecule%cartesian_gaussians) call output%printf('Using Cartesian gaussians.', pl='m', fs='(/t6,a)')
 !
       write(output%unit, '(/t6,a27,i5)')     'Pure basis functions:      ', molecule%n_pure_basis
       write(output%unit, '(t6,a27,i5)')      'Cartesian basis functions: ', molecule%n_cart_basis
