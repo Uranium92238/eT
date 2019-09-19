@@ -367,7 +367,7 @@ contains
    end subroutine warning_msg_output_file
 !
 !  
-   subroutine printf_output_file(the_file, string, reals, ints, chars, logs, fs, ffs, lfs, ll, adv, pl)
+   subroutine printf_output_file(the_file, string, pl, reals, ints, chars, logs, fs, ffs, lfs, ll, adv)
 !!
 !!    printf
 !!    Written by Rolf Heilemann Myhre, May 2019
@@ -377,8 +377,8 @@ contains
 !!
 !!    pl:       print level
 !!              compared to stored print level variable and four allowed levels
-!!              'minimal' or 'm' : Will always be printed. Only final results like total energies
-!!                                 or excitation energies
+!!              'minimal' or 'm' : Will always be printed. Only banners, final results like total energies
+!!                                 or excitation energies, and solver settings or other essential information 
 !!              'normal' or 'n'  : Will normally be printed, for example convergence iterations
 !!              'verbose' or 'v' : Will only be printed unless explicitly asked for, for example 
 !!                                 extra norms and MO coefficients 

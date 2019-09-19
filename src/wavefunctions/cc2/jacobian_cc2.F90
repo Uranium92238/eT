@@ -54,23 +54,10 @@ contains
 !
    end subroutine prepare_for_jacobian_cc2
 !
-   module subroutine jacobian_transform_trial_vector_cc2(wf, c_i)
+!
+   module subroutine jacobian_transformation_cc2(wf, c)
 !!
-!!    Jacobian transform trial vector 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2018
-!!
-      class(cc2), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_es_amplitudes) :: c_i
-!
-      call wf%jacobian_cc2_transformation(c_i)
-!
-   end subroutine jacobian_transform_trial_vector_cc2
-!
-!
-   module subroutine jacobian_cc2_transformation_cc2(wf, c)
-!!
-!!    Jacobian transformation (cc2)
+!!    Jacobian transformation
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
 !!
 !!    Directs the transformation by the cc2 Jacobi matrix,
@@ -88,9 +75,9 @@ contains
 !!
       implicit none
 !
-      class(cc2) :: wf
+      class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes)   :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
       real(dp), dimension(:,:), allocatable     :: c_ai
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj
@@ -260,7 +247,7 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_cc2_transformation_cc2
+   end subroutine jacobian_transformation_cc2
 !
 !
    module subroutine jacobian_cc2_b2_cc2(wf, rho_aibj, c_aibj)

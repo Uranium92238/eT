@@ -232,7 +232,7 @@ contains
 
          call wf%construct_fock()
 !
-         call wf%jacobian_transform_trial_vector(e)
+         call wf%jacobian_transformation(e)
 !
          call dcopy(wf%n_es_amplitudes, e, 1, A_mu_nu_diff, 1)
          call daxpy(wf%n_es_amplitudes, -one, A_numerical_mu_nu, 1, A_mu_nu_diff, 1)

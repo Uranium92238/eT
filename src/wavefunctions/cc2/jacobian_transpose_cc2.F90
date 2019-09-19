@@ -55,24 +55,9 @@ contains
    end subroutine prepare_for_jacobian_transpose_cc2
 !
 !
-!
-   module subroutine jacobian_transpose_transform_trial_vector_cc2(wf, c_i)
+   module subroutine jacobian_transpose_transformation_cc2(wf, b)
 !!
-!!    Jacobian transform trial vector
-!!    Written by Sarai D. Folkestad and Alexander Paul, Feb 2019
-!!
-      class(cc2), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes) :: c_i
-!
-      call wf%jacobian_transpose_cc2_transformation(c_i)
-!
-   end subroutine jacobian_transpose_transform_trial_vector_cc2
-!
-!
-   module subroutine jacobian_transpose_cc2_transformation_cc2(wf, c)
-!!
-!!    Jacobian transpose transformation (CC2)
+!!    Jacobian transpose transformation
 !!    Written by Sarai D. Folkestad and Alexander Paul, Feb 2019
 !!
 !!    Calculates the transpose Jacobian transformation, i.e., the transformation
@@ -86,17 +71,17 @@ contains
 !!
       implicit none
 !
-      class(cc2) :: wf
+      class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes) :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
 !
-      real(dp), dimension(:,:), allocatable :: c_ai
-      real(dp), dimension(:,:,:,:), allocatable :: c_aibj
+      real(dp), dimension(:,:), allocatable :: b_ai
+      real(dp), dimension(:,:,:,:), allocatable :: b_aibj
 !
       real(dp), dimension(:,:), allocatable :: sigma_ai
       real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj
 !
-      integer :: i, j, a, b, ai, bj, aibj ! Index
+      integer :: i, j, a, bb, ai, bj, aibj ! Index
 !
       type(timings) :: timer
 !
@@ -108,7 +93,7 @@ contains
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
       call zero_array(sigma_ai, wf%n_t1)
 !
-      call mem%alloc(c_ai, wf%n_v, wf%n_o)
+      call mem%alloc(b_ai, wf%n_v, wf%n_o)
 !
 !$omp parallel do schedule(static) private(a, i, ai)
       do i = 1, wf%n_o
@@ -116,42 +101,42 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            c_ai(a, i) = c(ai)
+            b_ai(a, i) = b(ai)
 !
          enddo
       enddo
 !$omp end parallel do
 !
-!     :: CCS contributions to the singles c vector ::
+!     :: CCS contributions to the singles b vector ::
 !
-      call wf%jacobian_transpose_ccs_a1(sigma_ai, c_ai)
-      call wf%jacobian_transpose_ccs_b1(sigma_ai, c_ai)
+      call wf%jacobian_transpose_ccs_a1(sigma_ai, b_ai)
+      call wf%jacobian_transpose_ccs_b1(sigma_ai, b_ai)
 !
 !     :: CC2 contributions to the transformed singles vector ::
 !
-      call wf%jacobian_transpose_doubles_a1(sigma_ai, c_ai, wf%u)
+      call wf%jacobian_transpose_doubles_a1(sigma_ai, b_ai, wf%u)
 !
 !     Allocate the incoming unpacked doubles vector
 !
-      call mem%alloc(c_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
+      call mem%alloc(b_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
+!$omp parallel do schedule(static) private(a, i, bb, j, ai, bj, aibj)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
             ai = wf%n_v*(i - 1) + a
 !
             do j = 1, wf%n_o
-               do b = 1, wf%n_v
+               do bb = 1, wf%n_v
 !
-                  bj = wf%n_v*(j - 1) + b
+                  bj = wf%n_v*(j - 1) + bb
 !
                   if (ai .ge. bj) then
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     c_aibj(a, i, b, j) = c(wf%n_o*wf%n_v + aibj)
-                     c_aibj(b, j, a, i) = c(wf%n_o*wf%n_v + aibj)
+                     b_aibj(a, i, bb, j) = b(wf%n_o*wf%n_v + aibj)
+                     b_aibj(bb, j, a, i) = b(wf%n_o*wf%n_v + aibj)
 !
                   endif
 !
@@ -161,7 +146,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call wf%jacobian_transpose_doubles_b1(sigma_ai, c_aibj)
+      call wf%jacobian_transpose_doubles_b1(sigma_ai, b_aibj)
 !
 !     Done with singles vector c; overwrite it with
 !     transformed vector for exit
@@ -172,7 +157,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            c(ai) = sigma_ai(a, i)
+            b(ai) = sigma_ai(a, i)
 !
          enddo
       enddo
@@ -187,26 +172,26 @@ contains
       call mem%alloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(sigma_aibj, wf%n_t1**2)
 !
-!     Contributions from singles vector c
+!     Contributions from singles vector b
 !
-      call wf%jacobian_transpose_doubles_a2(sigma_aibj, c_ai)
+      call wf%jacobian_transpose_doubles_a2(sigma_aibj, b_ai)
       call symmetric_sum(sigma_aibj, wf%n_t1)
 !
-      call mem%dealloc(c_ai, wf%n_v, wf%n_o)
+      call mem%dealloc(b_ai, wf%n_v, wf%n_o)
 !
-!     Contributions from doubles vector c
+!     Contributions from doubles vector b
 !
-      call wf%jacobian_transpose_cc2_b2(sigma_aibj, c_aibj)
+      call wf%jacobian_transpose_cc2_b2(sigma_aibj, b_aibj)
 !
-      call mem%dealloc(c_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
+      call mem%dealloc(b_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
 !
-!     Overwrite the incoming doubles c vector & pack in
+!     Overwrite the incoming doubles b vector & pack in
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
+!$omp parallel do schedule(static) private(a, i, bb, j, ai, bj, aibj)
       do j = 1, wf%n_o
-         do b = 1, wf%n_v
+         do bb = 1, wf%n_v
 !
-            bj = wf%n_v*(j - 1) + b
+            bj = wf%n_v*(j - 1) + bb
 !
             do i = 1, wf%n_o
                do a = 1, wf%n_v
@@ -217,7 +202,7 @@ contains
 !
                      aibj = ai*(ai-3)/2 + ai + bj
 !
-                     c((wf%n_o)*(wf%n_v) + aibj) = sigma_aibj(a, i, b, j)
+                     b((wf%n_o)*(wf%n_v) + aibj) = sigma_aibj(a, i, bb, j)
 !
                   endif
 !
@@ -231,7 +216,7 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine jacobian_transpose_cc2_transformation_cc2
+   end subroutine jacobian_transpose_transformation_cc2
 !
 !
    module subroutine jacobian_transpose_cc2_b2_cc2(wf, sigma_aibj, c_aibj)

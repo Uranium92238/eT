@@ -80,8 +80,7 @@ module ccsd_class
 !
 !     Routines related to Jacobian transformation
 !
-      procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_ccsd
-      procedure :: jacobian_ccsd_transformation                => jacobian_ccsd_transformation_ccsd
+      procedure :: jacobian_transformation                     => jacobian_transformation_ccsd
 !
       procedure :: jacobian_ccsd_b2                            => jacobian_ccsd_b2_ccsd
       procedure :: jacobian_ccsd_c2                            => jacobian_ccsd_c2_ccsd
@@ -105,8 +104,7 @@ module ccsd_class
 !
 !     Routines related to Jacobian transpose transformation
 !
-      procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_ccsd
-      procedure :: jacobian_transpose_ccsd_transformation      => jacobian_transpose_ccsd_transformation_ccsd
+      procedure :: jacobian_transpose_transformation           => jacobian_transpose_transformation_ccsd
 !
       procedure :: jacobian_transpose_ccsd_d1                  => jacobian_transpose_ccsd_d1_ccsd
       procedure :: jacobian_transpose_ccsd_e1                  => jacobian_transpose_ccsd_e1_ccsd
@@ -131,7 +129,6 @@ module ccsd_class
       procedure :: get_multipliers                             => get_multipliers_ccsd
       procedure :: set_multipliers                             => set_multipliers_ccsd
       procedure :: initialize_multipliers                      => initialize_multipliers_ccsd
-      procedure :: construct_multiplier_equation               => construct_multiplier_equation_ccsd
       procedure :: save_multipliers                            => save_multipliers_ccsd
       procedure :: read_multipliers                            => read_multipliers_ccsd
       procedure :: destruct_multipliers                        => destruct_multipliers_ccsd

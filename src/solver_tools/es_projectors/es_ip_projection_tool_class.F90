@@ -20,7 +20,7 @@
 module es_ip_projection_tool_class
 !
 !!
-!!    Excited state ip projection tool class module
+!!    Excited state IP projection tool class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
 !!
 !
@@ -43,7 +43,6 @@ module es_ip_projection_tool_class
    interface es_ip_projection_tool
 !
       procedure :: new_es_ip_projection_tool
-      procedure :: new_es_ip_projection_tool_davidson 
 !
    end interface es_ip_projection_tool
 !
@@ -69,34 +68,6 @@ contains
       call wf%get_ip_projector(tool%projector)
 !
    end function new_es_ip_projection_tool
-!
-!
-   function new_es_ip_projection_tool_davidson(wf, davidson) result(tool)
-!!
-!!    New ES IP projection tool 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
-!!
-!!    For Davidson solvers, projection is done inside Davidson tool.
-!!
-      implicit none 
-!
-      type(es_ip_projection_tool) :: tool 
-!
-      class(eigen_davidson_tool) :: davidson 
-!
-      class(ccs) :: wf 
-!
-      tool%vector_length = wf%n_es_amplitudes
-      call mem%alloc(tool%projector, tool%vector_length)
-!
-      call wf%get_ip_projector(tool%projector)
-!
-      call davidson%set_projector(tool%projector)
-      call mem%dealloc(tool%projector, wf%n_es_amplitudes)
-!
-      tool%active = .false.
-!
-   end function new_es_ip_projection_tool_davidson
 !
 !
    subroutine destructor(tool)

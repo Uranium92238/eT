@@ -17,21 +17,9 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine jacobian_transpose_transform_trial_vector_ccsd(wf, c_i)
+   module subroutine jacobian_transpose_transformation_ccsd(wf, b)
 !!
-!!    Jacobian transform trial vector
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2018
-!!
-      class(ccsd), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes) :: c_i
-!
-   end subroutine jacobian_transpose_transform_trial_vector_ccsd
-!
-!
-   module subroutine jacobian_transpose_ccsd_transformation_ccsd(wf, b)
-!!
-!!    Jacobian transpose transformation (CCSD)
+!!    Jacobian transpose transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the transpose Jacobian transformation, i.e., the transformation
@@ -45,13 +33,11 @@
 !!
       implicit none
 !
-      class(ccsd) :: wf
+      class(ccsd), intent(in) :: wf
 !
-!     Incoming vector b
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
 !
-      real(dp), dimension(wf%n_es_amplitudes) :: b
-!
-   end subroutine jacobian_transpose_ccsd_transformation_ccsd
+   end subroutine jacobian_transpose_transformation_ccsd
 !
 !
    module subroutine jacobian_transpose_ccsd_d1_ccsd(wf, sigma_ai, b_aibj)

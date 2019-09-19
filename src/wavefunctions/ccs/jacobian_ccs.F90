@@ -46,23 +46,9 @@ contains
    end subroutine prepare_for_jacobian_ccs
 !
 !
-   module subroutine jacobian_transform_trial_vector_ccs(wf, c_i)
+   module subroutine jacobian_transformation_ccs(wf, c)
 !!
-!!    Jacobian transform trial vector
-!!    Written by Sarai D. Folkestad, Sep 2018
-!!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes) :: c_i
-!
-      call wf%jacobian_ccs_transformation(c_i)
-!
-   end subroutine jacobian_transform_trial_vector_ccs
-!
-!
-   module subroutine jacobian_ccs_transformation_ccs(wf, c_ai)
-!!
-!!    Jacobian CCS transformation
+!!    Jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!    Directs the transformation by the CCSD Jacobi matrix,
@@ -79,24 +65,24 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: c_ai
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
-      real(dp), dimension(:,:), allocatable :: rho_ai
+      real(dp), dimension(:,:), allocatable :: rho
 !
 !     Allocate the transformed vector & add the terms to it
 !
-      call mem%alloc(rho_ai, wf%n_v, wf%n_o)
-      call zero_array(rho_ai, wf%n_t1)
+      call mem%alloc(rho, wf%n_v, wf%n_o)
+      call zero_array(rho, wf%n_t1)
 !
-      call wf%jacobian_ccs_a1(rho_ai, c_ai)
-      call wf%jacobian_ccs_b1(rho_ai, c_ai)
+      call wf%jacobian_ccs_a1(rho, c)
+      call wf%jacobian_ccs_b1(rho, c)
 !
 !     Then overwrite the c vector with the transformed vector
 !
-      call dcopy((wf%n_o)*(wf%n_v), rho_ai, 1, c_ai, 1)
-      call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
+      call dcopy((wf%n_o)*(wf%n_v), rho, 1, c, 1)
+      call mem%dealloc(rho, wf%n_v, wf%n_o)
 !
-   end subroutine jacobian_ccs_transformation_ccs
+   end subroutine jacobian_transformation_ccs
 !
 !
    module subroutine jacobian_ccs_a1_ccs(wf, rho1, c1)

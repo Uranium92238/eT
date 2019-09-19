@@ -38,6 +38,7 @@ module diis_A_inv_cc_es_class
    type, extends(abstract_cc_es) :: diis_A_inv_cc_es
 !
       integer :: max_micro_iterations
+      integer :: max_micro_dim_red
 !
    contains
 !     
@@ -108,6 +109,7 @@ contains
       solver%restart              = .false.
       solver%transformation       = trim(transformation)
       solver%es_type              = 'valence'
+      solver%max_micro_dim_red    = 50
 !
       call solver%read_settings()
       call solver%print_settings()
@@ -237,7 +239,7 @@ contains
 !
       integer, intent(out) :: final_micro_iteration
 !
-      real(dp), dimension(:), allocatable :: eps, first_trial, c_i, rho_i
+      real(dp), dimension(:), allocatable :: eps, first_trial, c, residual 
 !
       real(dp) :: norm_trial, residual_norm
 !
@@ -252,7 +254,8 @@ contains
       call mem%alloc(eps, wf%n_es_amplitudes)
       call wf%get_es_orbital_differences(eps, wf%n_es_amplitudes)
 !
-      davidson = linear_davidson_tool('cc_es_NR', wf%n_es_amplitudes, micro_threshold, -R)
+      davidson = linear_davidson_tool('cc_es_NR', wf%n_es_amplitudes, &
+                  micro_threshold, solver%max_micro_dim_red, -R)
 !
       call davidson%set_preconditioner(eps)
       call mem%dealloc(eps, wf%n_es_amplitudes)
@@ -273,83 +276,73 @@ contains
 !
 !     Enter iterative loop
 !
-   !   write(output%unit,'(/t6,a)') 'Micro-iter.  Residual norm'
-   !   write(output%unit,'(t6,a)')  '--------------------------'
-   !   flush(output%unit)
+      call output%printf('Micro-iter.  Residual norm', pl='v', fs='(/t6,a)')
+      call output%printf('--------------------------', pl='v', fs='(t6,a)')
 !
-      micro_iteration = 1
+      micro_iteration = 0
       converged_residual = .false.
 !
       do while (.not. converged_residual .and. (micro_iteration .le. solver%max_micro_iterations))
 !
+         micro_iteration = micro_iteration + 1
+         call davidson%iterate()
+!
 !        Transform new trial vectors and write to file
 !
-         call mem%alloc(c_i, davidson%n_parameters)
-         call mem%alloc(rho_i, davidson%n_parameters)
+         call mem%alloc(c, davidson%n_parameters)
 !
-         call davidson%read_trial(c_i, davidson%dim_red)
-         call dcopy(davidson%n_parameters, c_i, 1, rho_i, 1)
+         call davidson%read_trial(c, davidson%dim_red)
 !
          if (solver%transformation == 'right') then
 !
-            call wf%jacobian_transform_trial_vector(rho_i)
+            call wf%jacobian_transformation(c)
 !
          elseif (solver%transformation == 'left') then
 !
-            call wf%jacobian_transpose_transform_trial_vector(rho_i)
+            call wf%jacobian_transpose_transformation(c)
 !
          endif
 !
-         if (micro_iteration == 1) then
+         call davidson%write_transform(c)
 !
-            call davidson%write_transform(rho_i, 'rewind')
-!
-         else
-!
-            call davidson%write_transform(rho_i, 'append')
-!
-         endif
-!
-         call mem%dealloc(c_i, davidson%n_parameters)
-         call mem%dealloc(rho_i, davidson%n_parameters)
+         call mem%dealloc(c, davidson%n_parameters)
 !
 !        Solve problem in reduced space
 !
-         call davidson%construct_reduced_matrix()
-         call davidson%construct_reduced_gradient()
          call davidson%solve_reduced_problem()
 !
 !        Construct new trials and check if convergence criterion on residual is satisfied
 !
-         davidson%n_new_trials = 0
+         call mem%alloc(residual, davidson%n_parameters)
 !
-         call davidson%construct_next_trial_vec(residual_norm)
-!
-      !   write(output%unit,'(t6,2x,i3,8x,e11.4)') micro_iteration, residual_norm
-      !   flush(output%unit)
+         call davidson%construct_residual(residual, 1)
+         residual_norm = get_l2_norm(residual, wf%n_gs_amplitudes)
 !
          converged_residual = .true.
+         if (residual_norm >= micro_threshold) then 
 !
-         if (residual_norm .gt. micro_threshold) converged_residual = .false.
-!   
-         davidson%dim_red = davidson%dim_red + davidson%n_new_trials
+            converged_residual = .false.
+            call davidson%construct_next_trial(residual)
 !
-         if (.not. converged_residual) micro_iteration = micro_iteration + 1       
+         endif 
+!
+         call mem%dealloc(residual, davidson%n_parameters)
+!
+         call output%printf('(i4)        (e11.4)', pl='v', &
+                  ints=[micro_iteration], reals=[residual_norm], fs='(t7,a)')
 !
       enddo
 !
-   !   write(output%unit,'(t6,a/)')  '--------------------------'
-   !   flush(output%unit)
+      call output%printf('--------------------------', pl='v', fs='(t6,a)')
 !
       if (.not. converged_residual) then
 !
-         write(output%unit, '(/t6,a)')  'Warning: was not able to converge the equations in the given'
-         write(output%unit, '(t6,a/)')  'number of maximum micro-iterations.'
-         flush(output%unit)
+         call output%error_msg('Was not able to converge micro-iterations in the ' // &
+                           'given number of max iterations in do_micro_iterations_diis_A_inv_cc_es')
 !
-      endif
+      endif 
 !
-      call davidson%construct_X(dX, 1)
+      call davidson%construct_solution(dX, 1)
       call davidson%cleanup()
 !
       final_micro_iteration = micro_iteration
@@ -448,15 +441,16 @@ contains
 !
       call mem%alloc(R, wf%n_es_amplitudes, solver%n_singlet_states)
 !
-      iteration = 1
+      iteration = 0
 !
       do while (.not. all(converged) .and. (iteration .le. solver%max_iterations))   
 !
-         write(output%unit,'(/t3,a25,i4)') 'Iteration:               ', iteration
+         iteration = iteration + 1
 !
-         write(output%unit,'(/t3,a)') 'Root  Eigenvalue (Re)  Residual norm   # micro iter '
-         write(output%unit,'(t3,a)')  '----------------------------------------------------'
-         flush(output%unit)
+         call output%printf('Iteration: (i0)', pl='n', ints=[iteration], fs='(/t3,a)')
+!
+         call output%printf('Root        Eigenvalue (Re)    Residual norm    # micro iter ', pl='n', fs='(/t3,a)')
+         call output%printf('-------------------------------------------------------------', pl='n', fs='(t3,a)')
 !
          do state = 1, solver%n_singlet_states
 !
@@ -508,13 +502,10 @@ contains
 !
             endif 
 !
-            write(output%unit, '(i3,6x,f12.8,6x,e11.4,5x,i3)') state, solver%energies(state), residual_norms(state), micro_iteration
-            flush(output%unit)
-            flush(timing%unit)
+            call output%printf('(i3)    (f19.12)    (e11.4)     (i3)', pl='n', fs='(t3,a)', &
+                        ints=[state, micro_iteration], reals=[solver%energies(state), residual_norms(state)])
 !
          enddo
-!
-         if (.not. all(converged)) iteration = iteration + 1
 !
 !        Save excited states and excitation energies
 !
@@ -527,7 +518,7 @@ contains
          call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
          prev_energies = solver%energies 
 !
-         write(output%unit,'(t3,a)')  '----------------------------------------------------'
+         call output%printf('-------------------------------------------------------------', pl='n', fs='(t3,a)')
 !
       enddo 
 !
@@ -535,23 +526,14 @@ contains
 !
          if (iteration .eq. 1) then 
 !
-            write(output%unit, '(/t3,a)')  'Note: residual of all states converged in first iteration.'
-            write(output%unit, '(t3,a/)')  'Energy convergence has not been tested.'
+            call output%printf('Note: residual of all states converged in first iteration. ' // &
+                                 'Energy convergence has not been tested.', pl='n', fs='(t3,a)')
 !
          endif
 !
-         write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
+         call output%printf('Convergence criterion met in (i0) iterations!', pl='m', fs='(/t3,a)', ints=[iteration])
+!
          call solver%print_summary(wf, X) 
-!
-         write(output%unit, '(/t3,a)') '- Storing converged states to file.'       
-!
-         do state = 1, solver%n_singlet_states
-!
-            call wf%save_excited_state(X(:,state), state, solver%transformation)
-!
-         enddo 
-!
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
 !
       endif 
 !
