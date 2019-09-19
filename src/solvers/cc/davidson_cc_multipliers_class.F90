@@ -23,6 +23,16 @@ module davidson_cc_multipliers_class
 !!    Davidson coupled cluster multipliers solver class module
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!  
+!!    Solves the multiplier or left CC ground state equation 
+!!
+!!       t-bar^T A = - eta^T
+!!
+!!    for t-bar. The solutions are determined using the 
+!!    Davidson reduced space algorithm, where the eigenvalue problem 
+!!    is solved in a subspace generated from the residuals obtained
+!!    in the preceding iterations. See E. R. Davidson, J. Comput. Phys. 
+!!    17, 87 (1975) for more details.
+!!
 !
    use kinds
    use ccs_class
@@ -32,17 +42,14 @@ module davidson_cc_multipliers_class
 !
    type :: davidson_cc_multipliers
 !
-      character(len=100) :: tag = 'Davidson coupled cluster multipliers solver'
+      character(len=100) :: name_ = 'Davidson coupled cluster multipliers solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
-      character(len=500) :: description1 = 'A Davidson solver that solves the multiplier equation: t-bar^T A = -η. The linear &
-                                           & problem is solved in a reduced space, the dimension of which is &
-                                           & expanded until the convergence criteria are met.'
+      character(len=500) :: description = 'A Davidson solver that solves the multiplier equation: t-bar^T A = -η. This linear &
+                                            &equation is solved in a reduced space. A description of the algorithm can be &  
+                                            &found in E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
-      character(len=500) :: description2 = 'A complete description of the algorithm can be found in &
-                                          & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
-!
-      integer :: max_iterations
+      integer :: max_iterations, max_dim_red
 !
       real(dp) :: residual_threshold
 !
@@ -57,15 +64,11 @@ module davidson_cc_multipliers_class
       procedure :: print_banner                    => print_banner_davidson_cc_multipliers
       procedure :: print_settings                  => print_settings_davidson_cc_multipliers
 !
-      procedure, nopass :: print_summary           => print_summary_davidson_cc_multipliers
-!
       procedure :: read_settings                   => read_settings_davidson_cc_multipliers
 !
       procedure :: run                             => run_davidson_cc_multipliers
 !
       procedure, nopass :: set_precondition_vector => set_precondition_vector_davidson_cc_multipliers     
-!
-      procedure, nopass :: transform_trial_vector  => transform_trial_vector_davidson_cc_multipliers 
 !
    end type davidson_cc_multipliers
 !
@@ -98,19 +101,15 @@ contains
 !
       call solver%print_banner()
 !
-!     Set default settings
+!     Set default settings, read, & print 
 !
       solver%max_iterations      = 100
       solver%residual_threshold  = 1.0d-6
       solver%restart             = .false.
+      solver%max_dim_red         = 50
 !
       call solver%read_settings()
-!
       call solver%print_settings()
-!
-      call wf%construct_fock()
-!
-      call wf%initialize_multipliers()
 !
    end function new_davidson_cc_multipliers
 !
@@ -124,11 +123,10 @@ contains
 !
       class(davidson_cc_multipliers) :: solver 
 !
-      write(output%unit, '(/t3,a)')      '- Davidson CC multipliers solver settings:'
+      call output%printf('- Davidson CC multipliers solver settings:', pl='m', fs='(/t3,a)')
 !
-      write(output%unit, '(/t6,a26,e9.2)') 'Residual threshold:       ', solver%residual_threshold
-!
-      write(output%unit, '(t6,a26,i9)')    'Max number of iterations: ', solver%max_iterations
+      call output%printf('Residual threshold:       (e9.2)', pl='m', fs='(/t6,a)', reals=[solver%residual_threshold])
+      call output%printf('Max number of iterations: (i9)', pl='m', fs='(t6,a)', ints=[solver%max_iterations])
 !
    end subroutine print_settings_davidson_cc_multipliers
 !
@@ -148,34 +146,35 @@ contains
 !
       logical :: converged_residual
 !
-      real(dp), dimension(:), allocatable :: eta, c_i, multipliers
+      real(dp), dimension(:), allocatable :: eta, c, multipliers, residual 
 !
       integer :: iteration
 !
       real(dp) :: residual_norm, ddot, norm_trial
 !
-!     Initialize solver tool and set preconditioner 
+!     :: Initialize solver tool and set preconditioner ::
 !
       call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
 !
-      davidson = linear_davidson_tool('multipliers', wf%n_gs_amplitudes, solver%residual_threshold, -eta)
+      davidson = linear_davidson_tool('multipliers', wf%n_gs_amplitudes, &
+                  solver%residual_threshold, solver%max_dim_red, -eta)
 !
       call solver%set_precondition_vector(wf, davidson)
 !
-!     Set start vector / initial guess 
+!     :: Set start vector / initial guess ::
 !
-      if (solver%restart) then 
+      if (solver%restart) then ! Read multiplier vector from file
 !
-!        Read multiplier vector from file and use it as first trial
-!
-         write(output%unit, '(/t3,a)') 'Requested restart. Reading multipliers from file.'
+         call output%printf('Requested restart. Reading multipliers from file.', pl='m', fs='(/t3,a)')
 !
          call wf%is_restart_safe('ground state')
+         call wf%initialize_multipliers()
          call wf%read_multipliers()
 !
          call mem%alloc(multipliers, wf%n_gs_amplitudes)
          call wf%get_multipliers(multipliers)
+         call wf%destruct_multipliers()
 !
          norm_trial = sqrt(ddot(wf%n_gs_amplitudes, multipliers, 1, multipliers, 1))
          call dscal(wf%n_gs_amplitudes, one/norm_trial, multipliers, 1)
@@ -183,9 +182,7 @@ contains
          call davidson%write_trial(multipliers, 'rewind')
          call mem%dealloc(multipliers, wf%n_gs_amplitudes)
 !
-      else 
-!
-!        Use - eta_mu / eps_mu as first guess 
+      else ! Use - eta_mu / eps_mu as first trial 
 !
          call dscal(wf%n_gs_amplitudes, -one, eta, 1)
          call davidson%precondition(eta)
@@ -199,84 +196,89 @@ contains
 !
       call mem%dealloc(eta, wf%n_gs_amplitudes)
 !
-!     Enter iterative loop
+!     :: Iterative loop ::
 !
-      iteration = 1
+      call output%printf('Iteration     Residual norm', pl='n', fs='(/t3,a)')
+      call output%printf('---------------------------', pl='n')
 !
-      write(output%unit,'(/t3,a)') 'Iteration     Residual norm'
-      write(output%unit,'(t3,a)')  '---------------------------'
-      flush(output%unit)
-!
+      iteration = 0
       converged_residual = .false.
 !
       do while (.not. converged_residual .and. (iteration .le. solver%max_iterations))
 !
-!        Transform new trial vectors and write to file
+         iteration = iteration + 1       
+         call davidson%iterate()
 !
-         call mem%alloc(c_i, davidson%n_parameters)
+!        Transform new trial vector and write to file
 !
-         call davidson%read_trial(c_i, davidson%dim_red)
-         call solver%transform_trial_vector(wf, c_i)
+         call mem%alloc(c, davidson%n_parameters)
 !
-         if (iteration == 1) then
+         call davidson%read_trial(c, davidson%dim_red)
 !
-            call davidson%write_transform(c_i, 'rewind')
+         call wf%jacobian_transpose_transformation(c)
 !
-         else
+         call davidson%write_transform(c)
 !
-            call davidson%write_transform(c_i, 'append')
-!
-         endif
-!
-         call mem%dealloc(c_i, davidson%n_parameters)
+         call mem%dealloc(c, davidson%n_parameters)
 !
 !        Solve problem in reduced space
 !
-         call davidson%construct_reduced_matrix()
-         call davidson%construct_reduced_gradient()
          call davidson%solve_reduced_problem()
 !
-!        Construct new trials and check if convergence criterion on residual is satisfied
+!        Check if convergence criterion on residual is satisfied,
+!        and, if not, construct a new trial vector using the residual vector
 !
-         davidson%n_new_trials = 0
+         call mem%alloc(residual, wf%n_gs_amplitudes)
 !
-         call davidson%construct_next_trial_vec(residual_norm)
-!
-         write(output%unit,'(t3,i3,12x,e11.4)') iteration, residual_norm
-         flush(output%unit)
+         call davidson%construct_residual(residual, 1)
+         residual_norm = get_l2_norm(residual, wf%n_gs_amplitudes)
 !
          converged_residual = .true.
+         if (residual_norm >= solver%residual_threshold) then 
 !
-         if (residual_norm .gt. solver%residual_threshold) converged_residual = .false.
-!   
-         davidson%dim_red = davidson%dim_red + davidson%n_new_trials
+            converged_residual = .false.
+            call davidson%construct_next_trial(residual)
 !
-         iteration = iteration + 1       
+         endif 
 !
-      enddo
+         call mem%dealloc(residual, wf%n_gs_amplitudes)
 !
-      write(output%unit,'(t3,a)') '---------------------------'
-      flush(output%unit)
+!        Print iteration and residual norm
+!
+         call output%printf('(i3)            (e11.4)', pl='n', &
+                              ints=[iteration], reals=[residual_norm])
+!
+      enddo ! End of iterative loop 
+!
+      call output%printf('---------------------------', pl='n')
+!
+!     :: Summary of calculation :: 
 !
       if (converged_residual) then
 !
-         call solver%print_summary(davidson, wf)
+         call output%printf('Convergence criterion met in (i0) iterations!', pl='m', &
+                              ints=[iteration], fs='(/t3,a)')
+!
+         call output%printf('- Davidson CC multipliers solver summary:', pl='n', fs='(/t3,a)')
+!
+         call mem%alloc(multipliers, wf%n_gs_amplitudes)
+         call davidson%construct_solution(multipliers, 1)
+!
+         call wf%print_dominant_x_amplitudes(multipliers, 'tbar')
+!
+         call wf%initialize_multipliers()
+         call wf%set_multipliers(multipliers)
+!
+         call mem%dealloc(multipliers, wf%n_gs_amplitudes)
 !
       else
 !
-         write(output%unit, '(/t3,a)')  'Warning: was not able to converge the equations in the given'
-         write(output%unit, '(t3,a/)')  'number of maximum iterations.'
-         flush(output%unit)
+         call output%error_msg('was not able to converge the equations in the given ' //&
+                                 'number of iterations in run_davidson_cc_multipliers.')
 !
       endif
 !
-      call mem%alloc(multipliers, wf%n_gs_amplitudes)
-!
-      call davidson%construct_X(multipliers, 1)
-!
-      call wf%set_multipliers(multipliers)
-!
-      call mem%dealloc(multipliers, wf%n_gs_amplitudes)
+      call davidson%cleanup()
 !
    end subroutine run_davidson_cc_multipliers
 !
@@ -295,11 +297,14 @@ contains
 !
       call solver%timer%turn_off()
 !
-      write(output%unit, '(/t3, a)') '- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) // &
-                                       ' multipliers equations'
+      call output%printf('- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) // &
+                           ' multipliers equations', pl='m', fs='(/t3,a)')
 !
-      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
-      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
+      call output%printf('Total wall time (sec):  (f20.5)', pl='m', &
+                           reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+!
+      call output%printf('Total cpu time (sec):   (f20.5)', pl='m', &
+                           reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cleanup_davidson_cc_multipliers
 !
@@ -313,28 +318,11 @@ contains
 !
       class(davidson_cc_multipliers) :: solver 
 !
-      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
-      call output%long_string_print(solver%author,'(t3,a/)',.true.)
-      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
-      call output%long_string_print(solver%description2)
+      call output%printf(':: ' // solver%name_, pl='m', fs='(//t3,a)')
+      call output%printf(':: ' // solver%author, pl='m', fs='(t3,a)')
+      call output%printf(solver%description, pl='n', ffs='(/t3,a)', fs='(t3,a)', lfs='(t3,a)')
 !
    end subroutine print_banner_davidson_cc_multipliers
-!
-!
-   subroutine transform_trial_vector_davidson_cc_multipliers(wf, c_i)
-!!
-!!    Transform trial vector 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
-!!
-!!    Transforms the trial vector according to specified transformation routine.
-!!
-      class(ccs), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: c_i
-!
-      call wf%jacobian_transpose_transform_trial_vector(c_i) 
-!
-   end subroutine transform_trial_vector_davidson_cc_multipliers
 !
 !
    subroutine set_precondition_vector_davidson_cc_multipliers(wf, davidson)
@@ -358,30 +346,6 @@ contains
       call mem%dealloc(preconditioner, wf%n_gs_amplitudes)
 !
    end subroutine set_precondition_vector_davidson_cc_multipliers
-!
-!
-   subroutine print_summary_davidson_cc_multipliers(davidson, wf)
-!!
-!!    Print summary 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
-!!
-      implicit none 
-!
-      class(linear_davidson_tool) :: davidson
-!
-      class(ccs), intent(in) :: wf 
-!
-      real(dp), dimension(:), allocatable :: X
-!
-      write(output%unit, '(/t3,a)') '- Davidson CC multipliers solver summary:'
-!
-      call mem%alloc(X, wf%n_gs_amplitudes)
-!
-      call davidson%construct_X(X, 1)
-!
-      call wf%print_dominant_x_amplitudes(X, 'r')
-!
-   end subroutine print_summary_davidson_cc_multipliers
 !
 !
    subroutine read_settings_davidson_cc_multipliers(solver)

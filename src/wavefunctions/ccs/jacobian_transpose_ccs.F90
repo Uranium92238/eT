@@ -46,23 +46,9 @@ contains
    end subroutine prepare_for_jacobian_transpose_ccs
 !
 !
-   module subroutine jacobian_transpose_transform_trial_vector_ccs(wf, c_i)
+   module subroutine jacobian_transpose_transformation_ccs(wf, b)
 !!
-!!    Jacobian transpose transform trial vector
-!!    Written by Sarai D. Folkestad, Sep 2018
-!!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes) :: c_i
-!
-      call wf%jacobian_transpose_ccs_transformation(c_i)
-!
-   end subroutine jacobian_transpose_transform_trial_vector_ccs
-!
-!
-   module subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_ai)
-!!
-!!    Jacobian transpose transformation (CCS)
+!!    Jacobian transpose transformation 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
 !!    Calculates the transpose Jacobian transformation, i.e., the transformation
@@ -78,9 +64,9 @@ contains
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: b_ai
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
 !
       real(dp), dimension(:,:), allocatable :: sigma_ai
 !
@@ -89,15 +75,15 @@ contains
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
       call zero_array(sigma_ai, wf%n_t1)
 !
-      call wf%jacobian_transpose_ccs_a1(sigma_ai, b_ai)
-      call wf%jacobian_transpose_ccs_b1(sigma_ai, b_ai)
+      call wf%jacobian_transpose_ccs_a1(sigma_ai, b)
+      call wf%jacobian_transpose_ccs_b1(sigma_ai, b)
 !
 !     Then overwrite the b vector with the transformed vector
 !
-      call dcopy((wf%n_o)*(wf%n_v), sigma_ai, 1, b_ai, 1)
+      call dcopy((wf%n_o)*(wf%n_v), sigma_ai, 1, b, 1)
       call mem%dealloc(sigma_ai, wf%n_v, wf%n_o)
 !
-   end subroutine jacobian_transpose_ccs_transformation_ccs
+   end subroutine jacobian_transpose_transformation_ccs
 !
 !
    module subroutine jacobian_transpose_ccs_a1_ccs(wf, sigma_ai, b_ai)

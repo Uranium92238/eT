@@ -21,7 +21,18 @@ module davidson_cc_es_class
 !
 !!
 !!    Davidson coupled cluster excited state solver class module
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018-2019
+!!
+!!    Solves the CC excited state eigenvalue equation
+!!
+!!       A R = omega R   or  L^T A = omega L^T
+!!
+!!    for a set of right or left states (R, L) and the associated
+!!    excitation energies omega. The solutions are determined using the 
+!!    Davidson reduced space algorithm, where the eigenvalue problem 
+!!    is solved in a subspace generated from the residuals obtained
+!!    in the preceding iterations. See E. R. Davidson, J. Comput. Phys. 
+!!    17, 87 (1975) for more details.
 !!   
 !
    use kinds
@@ -40,13 +51,11 @@ module davidson_cc_es_class
 !
       integer :: max_dim_red
 !
-      type(eigen_davidson_tool) :: davidson 
-!
    contains
 !     
       procedure, non_overridable :: run              => run_davidson_cc_es
 !
-      procedure :: set_precondition_vector           => set_precondition_vector_davidson_cc_es
+      procedure, nopass :: set_precondition_vector   => set_precondition_vector_davidson_cc_es
 !
       procedure :: read_settings                     => read_settings_davidson_cc_es
       procedure :: read_davidson_settings            => read_davidson_settings_davidson_cc_es
@@ -54,10 +63,7 @@ module davidson_cc_es_class
       procedure :: print_settings                    => print_settings_davidson_cc_es
 !
       procedure :: set_start_vectors                 => set_start_vectors_davidson_cc_es
-      procedure :: transform_trial_vector            => transform_trial_vector_davidson_cc_es
 !       
-      procedure :: initialize_projection_tool        => initialize_projection_tool_davidson_cc_es
-!
    end type davidson_cc_es
 !
 !
@@ -96,7 +102,7 @@ contains
                & expanded until the convergence criteria are met.'
 !
       solver%description2 = 'A complete description of the algorithm can be found in &
-                                          & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
+                                 & E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
       call solver%print_banner()
 !
@@ -122,9 +128,6 @@ contains
 !
       wf%n_excited_states = solver%n_singlet_states
 !
-      solver%davidson = eigen_davidson_tool('cc_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
-                                       solver%residual_threshold, solver%eigenvalue_threshold)
-!
       call solver%initialize_start_vector_tool(wf)
       call solver%initialize_projection_tool(wf)
 !
@@ -146,7 +149,7 @@ contains
 !
       call solver%print_es_settings()
 !
-      call output%printf('Max reduced space dimension: (i4)',  ints=[solver%max_dim_red], fs='(/t6,a)')
+      call output%printf('Max reduced space dimension: (i4)',  ints=[solver%max_dim_red], pl='m', fs='(/t6,a)')
 !
    end subroutine print_settings_davidson_cc_es
 !
@@ -166,150 +169,155 @@ contains
       logical :: converged_eigenvalue
       logical :: converged_residual
 !
-      integer :: iteration, trial, solution, state
+      integer :: iteration, trial, n, state
 !
       real(dp) :: residual_norm
 !
-      real(dp), dimension(:), allocatable :: c_i
-      real(dp), dimension(:), allocatable :: X
+      real(dp), dimension(:), allocatable :: c
       real(dp), dimension(:,:), allocatable :: r
+!
+      real(dp), dimension(:), allocatable :: residual
+      real(dp), dimension(:), allocatable :: solution 
+!
+      type(eigen_davidson_tool) :: davidson 
+!
+!     :: Preparations ::
+!
+      davidson = eigen_davidson_tool('cc_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
+                                       solver%residual_threshold, solver%max_dim_red)
+!
+      call solver%set_precondition_vector(wf, davidson)
+      call solver%set_start_vectors(wf, davidson)
+!
+!     :: Iterative loop :: 
 !
       converged            = .false. 
       converged_eigenvalue = .false. 
       converged_residual   = .false. 
 !
-      iteration = 1
-!
-      call solver%set_precondition_vector(wf)
-!
-!     Construct first trial vectors
-!
-      call solver%set_start_vectors(wf)
-!
-!     Enter iterative loop
+      iteration = 0
 !
       do while (.not. converged .and. (iteration .le. solver%max_iterations))
 !
-         write(output%unit,'(/t3,a25,i4)') 'Iteration:               ', iteration
-         write(output%unit,'(t3,a25,i4/)') 'Reduced space dimension: ', solver%davidson%dim_red
-         flush(output%unit)
+         iteration = iteration + 1
+         call davidson%iterate()
 !
-         write(output%unit,'(t3,a)') 'Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm'
-         write(output%unit,'(t3,a)') '-------------------------------------------------------------------'
+         call output%printf('Iteration:               (i4)', pl='n', ints=[iteration], fs='(/t3,a)')
+         call output%printf('Reduced space dimension: (i4)', pl='n', ints=[davidson%dim_red])
 !
-         flush(output%unit)
+!        Transform new trial vectors and write them to file
 !
-!        Transform new trial vectors and write to file
+         call mem%alloc(c, wf%n_es_amplitudes)
 !
-         call mem%alloc(c_i, wf%n_es_amplitudes)
+         do trial = davidson%first_trial(), davidson%last_trial()
 !
-         do trial = solver%davidson%dim_red - solver%davidson%n_new_trials + 1, solver%davidson%dim_red
+            call davidson%read_trial(c, trial)
 !
-            call solver%davidson%read_trial(c_i, trial)
+            if (trim(solver%transformation) == 'right') then 
 !
-            call solver%transform_trial_vector(wf, c_i)
+               call wf%jacobian_transformation(c)
 !
-            call solver%davidson%projection(c_i)
+            elseif (trim(solver%transformation) == 'left') then 
 !
-            call solver%davidson%write_transform(c_i)
+               call wf%jacobian_transpose_transformation(c)
 !
-         enddo
+            endif
 !
-         call mem%dealloc(c_i, wf%n_es_amplitudes)
+            if (solver%projection_tool%active) call solver%projection_tool%project(c)
 !
-!        Solve problem in reduced space
+            call davidson%write_transform(c)
 !
-         call solver%davidson%construct_reduced_matrix()
-         call solver%davidson%solve_reduced_problem()
+         enddo ! Done transforming new trials 
 !
-!        Construct new trials and check if convergence criterion on residual is satisfied
+         call mem%dealloc(c, wf%n_es_amplitudes)
 !
-         converged_residual = .true.
+!        Solve problem in the reduced space
 !
-         solver%davidson%n_new_trials = 0
+         call davidson%solve_reduced_problem()
 !
-         call mem%alloc(X, wf%n_es_amplitudes)
+!        Construct the full space solutions, test for convergence, 
+!        and use the residuals to construct the next trial vectors 
 !
-         do solution = 1, solver%n_singlet_states
+         call mem%alloc(residual, wf%n_es_amplitudes)
+         call mem%alloc(solution, wf%n_es_amplitudes)
 !
-            call solver%davidson%construct_next_trial_vec(residual_norm, solution)
-            call solver%davidson%construct_X(X, solution)
-            call wf%save_excited_state(X, solution, solver%transformation)
+         call output%printf('Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm', pl='n', fs='(/t3,a)')
+         call output%printf('--------------------------------------------------------------------', pl='n')
 !
-            write(output%unit,'(t3,i2,5x,f16.12,7x,f16.12,11x,e11.4)') &
-            solution, solver%davidson%omega_re(solution), solver%davidson%omega_im(solution), residual_norm
-            flush(output%unit)
-!
-            if (residual_norm .gt. solver%residual_threshold) converged_residual = .false.
-!
-         enddo
-!
-         call mem%dealloc(X, wf%n_es_amplitudes)
-!
-         write(output%unit,'(t3,a)') '-------------------------------------------------------------------'
-!
-!        Check if convergence criterion on energy is satisfied
-!
+         converged_residual   = .true.
          converged_eigenvalue = .true.
 !
-         do solution = 1, solver%n_singlet_states
+         do n = 1, solver%n_singlet_states
 !
-            if (abs(solver%davidson%omega_re(solution) - solver%energies(solution)) &
-               .gt. solver%eigenvalue_threshold) converged_eigenvalue = .false.
+            call davidson%construct_solution(solution, n)
 !
-         enddo
+            call wf%save_excited_state(solution, n, solver%transformation)
 !
-         if (solver%davidson%dim_red .ge. solver%max_dim_red) then
+            call davidson%construct_residual(residual, solution, n)
 !
-            call solver%davidson%set_trials_to_solutions()
+            if (solver%projection_tool%active) call solver%projection_tool%project(residual)
 !
-         else
+            residual_norm = get_l2_norm(residual, wf%n_es_amplitudes)
 !
-            solver%davidson%dim_red = solver%davidson%dim_red + solver%davidson%n_new_trials
+            if (residual_norm >= solver%residual_threshold) then
 !
-         endif
+               converged_residual = .false.
+               call davidson%construct_next_trial(residual, n)
+!
+            endif 
+!
+            if (abs(davidson%omega_re(n) - solver%energies(n)) >= solver%eigenvalue_threshold) then
+!
+               converged_eigenvalue = .false.               
+!
+            endif 
+!
+            call output%printf('(i2)     (f16.12)       (f16.12)           (e11.4)', pl='n', &
+                        ints=[n], reals=[davidson%omega_re(n), davidson%omega_im(n), residual_norm])
+!
+         enddo ! Done constructing new trials from residuals
+!
+         call output%printf('--------------------------------------------------------------------', pl='n')
+!
+         call mem%dealloc(residual, wf%n_es_amplitudes)
+         call mem%dealloc(solution, wf%n_es_amplitudes)
 !
 !        Update energies and save them
 !
-         solver%energies = solver%davidson%omega_re
-!
+         solver%energies = davidson%omega_re
          call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
 !
 !        Test for total convergence
 !
-         if (converged_residual) then 
+         converged = converged_residual .and. converged_eigenvalue
 !
-!           Tests for convergence of energy or restart
+         if (converged_residual .and. iteration == 1) then 
 !
-            if (converged_eigenvalue) then
+            converged = .true.
+            call output%printf('Note: Residual(s) converged in first iteration. ' // &
+                  'Energy convergence therefore not tested in this calculation.', pl='m')
 !
-              converged = .true.
+         endif
 !
-            elseif (iteration .eq. 1) then
+      enddo ! End of iterative loop
 !
-               converged = .true.
-               write(output%unit,'(/t3,a,/t3,a)') 'Note: residual(s) converged in first iteration.', &
-                                                   'Energy convergence therefore not tested in this calculation.'
+!     :: Calculation summary :: 
 !
-            endif
+      if (.not. converged) then
 !
-            flush(output%unit)
+         call output%error_msg("Did not converge in the max number of " // & 
+                                 "iterations in run_davidson_cc_es.")
 !
-         endif ! Not yet converged
+      else 
 !
-         iteration = iteration + 1       
-!
-      enddo
-!
-      if (converged) then
-!
-         write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration - 1, ' iterations!'
+         call output%printf('Convergence criterion met in (i0) iterations!', pl='m', &
+                              ints=[iteration], fs='(/t3,a)')
 !
          call mem%alloc(r, wf%n_es_amplitudes, solver%n_singlet_states)
 !
          do state = 1, solver%n_singlet_states
 !
-            call solver%davidson%construct_X(r(:,state), state)   
+            call davidson%construct_solution(r(:,state), state)   
 !
          enddo 
 !
@@ -317,58 +325,12 @@ contains
 !
          call mem%dealloc(r, wf%n_es_amplitudes, solver%n_singlet_states)
 !
-         write(output%unit,'(/t3,a)') '- Storing excited states to file.'
-!
-         call mem%alloc(X, wf%n_es_amplitudes)
-!
-         do solution = 1, solver%n_singlet_states
-!
-            call solver%davidson%construct_X(X, solution)
-!
-            call wf%save_excited_state(X, solution, solver%transformation)
-!
-         enddo
-!
-         call mem%dealloc(X, wf%n_es_amplitudes)
-!
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
-!
-      elseif (.not. converged ) then
-!
-         call output%error_msg("Did not converge in the max number of iterations.")
-!
       endif
 !
    end subroutine run_davidson_cc_es
 !
 !
-   subroutine transform_trial_vector_davidson_cc_es(solver, wf, c_i)
-!!
-!!    Transform trial vector 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
-!!
-!!    Transforms the trial vector according to specified transformation routine.
-!!
-      class(davidson_cc_es), intent(in) :: solver 
-!
-      class(ccs), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c_i
-!
-      if (trim(solver%transformation) == 'right') then 
-!
-         call wf%jacobian_transform_trial_vector(c_i)
-!
-      elseif (trim(solver%transformation) == 'left') then 
-!
-         call wf%jacobian_transpose_transform_trial_vector(c_i)
-!
-      endif 
-!
-   end subroutine transform_trial_vector_davidson_cc_es
-!
-!
-   subroutine set_start_vectors_davidson_cc_es(solver, wf)
+   subroutine set_start_vectors_davidson_cc_es(solver, wf, davidson)
 !!
 !!    Set start vectors 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
@@ -381,7 +343,9 @@ contains
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(:), allocatable :: c_i
+      class(eigen_davidson_tool) :: davidson
+!
+      real(dp), dimension(:), allocatable :: c
 !
       integer :: trial, n_solutions_on_file
 !
@@ -394,19 +358,19 @@ contains
          call solver%determine_restart_transformation(wf) ! Read right or left?
          n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
 !
-         call output%printf('Requested restart - there are (i0) (a0) eigenvectors on file.', &
-                              ints=[n_solutions_on_file], chars=[solver%restart_transformation])
+         call output%printf('Requested restart - there are (i0) (a0) eigenvectors on file.', pl='m', &
+                  ints=[n_solutions_on_file], chars=[solver%restart_transformation], fs='(/t3,a)')
 !
-         call mem%alloc(c_i, wf%n_es_amplitudes)
+         call mem%alloc(c, wf%n_es_amplitudes)
 !
          do trial = 1, n_solutions_on_file
 !
-            call wf%read_excited_state(c_i, trial, solver%restart_transformation)
-            call solver%davidson%write_trial(c_i)
+            call wf%read_excited_state(c, trial, solver%restart_transformation)
+            call davidson%write_trial(c)
 !
          enddo 
 !
-         call mem%dealloc(c_i, wf%n_es_amplitudes)
+         call mem%dealloc(c, wf%n_es_amplitudes)
 !
       else
 !
@@ -418,23 +382,23 @@ contains
 !
       if (n_solutions_on_file .lt. solver%n_singlet_states) then 
 !
-         call mem%alloc(c_i, wf%n_es_amplitudes)
+         call mem%alloc(c, wf%n_es_amplitudes)
 !
          do trial = n_solutions_on_file + 1, solver%n_singlet_states
 !
-            call solver%start_vector_tool%get_vector(c_i, trial)
-            call solver%davidson%write_trial(c_i)
+            call solver%start_vector_tool%get_vector(c, trial)
+            call davidson%write_trial(c)
 !
          enddo 
 !     
       endif
 !
-      call solver%davidson%orthonormalize_trial_vecs()
+      call davidson%orthonormalize_trial_vecs()
 !
    end subroutine set_start_vectors_davidson_cc_es
 !
 !
-   subroutine set_precondition_vector_davidson_cc_es(solver, wf)
+   subroutine set_precondition_vector_davidson_cc_es(wf, davidson)
 !!
 !!    Set precondition vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
@@ -443,7 +407,7 @@ contains
 !!
       implicit none
 !
-      class(davidson_cc_es) :: solver
+      class(eigen_davidson_tool) :: davidson
 !
       class(ccs) :: wf
 !
@@ -451,7 +415,7 @@ contains
 !
       call mem%alloc(preconditioner, wf%n_es_amplitudes)
       call wf%get_es_orbital_differences(preconditioner, wf%n_es_amplitudes)
-      call solver%davidson%set_preconditioner(preconditioner)
+      call davidson%set_preconditioner(preconditioner)
       call mem%dealloc(preconditioner, wf%n_es_amplitudes)
 !
    end subroutine set_precondition_vector_davidson_cc_es
@@ -484,38 +448,6 @@ contains
       call input%get_keyword_in_section('max reduced dimension', 'solver cc es', solver%max_dim_red)
 !
    end subroutine read_davidson_settings_davidson_cc_es
-!
-!
-   subroutine initialize_projection_tool_davidson_cc_es(solver, wf)
-!!
-!!    Initialize projection tool 
-!!    Written by Eirik F. Kjønstad, Sep 2019 
-!!
-      implicit none
-!
-      class(davidson_cc_es) :: solver 
-!
-      class(ccs) :: wf 
-!
-      if (trim(solver%es_type) == 'valence') then 
-!
-         solver%projection_tool = es_valence_projection_tool()
-!
-      elseif (trim(solver%es_type) == 'core') then 
-!
-         solver%projection_tool = es_cvs_projection_tool(wf, solver%davidson)
-!
-      elseif (trim(solver%es_type) == 'ionize') then 
-!
-         solver%projection_tool = es_ip_projection_tool(wf, solver%davidson)
-!
-      else 
-!
-         call output%error_msg('could not recognize excited state type in abstract_cc_es')
-!
-      endif
-!
-   end subroutine initialize_projection_tool_davidson_cc_es
 !
 !
 end module davidson_cc_es_class

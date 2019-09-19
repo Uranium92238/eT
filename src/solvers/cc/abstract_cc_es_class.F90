@@ -137,10 +137,10 @@ contains
 !
       class(abstract_cc_es) :: solver 
 !
-      call output%long_string_print(solver%name_,'(//t3,a)',.true.)
-      call output%long_string_print(solver%author,'(t3,a/)',.true.)
-      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
-      call output%long_string_print(solver%description2)
+      call output%printf(':: ' // solver%name_, pl='m', fs='(//t3,a)')
+      call output%printf(':: ' // solver%author, pl='m', fs='(t3,a)')
+      call output%printf(solver%description1, pl='n', ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf(solver%description2, pl='n', ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_abstract_cc_es
 !
@@ -182,16 +182,17 @@ contains
 !
       class(abstract_cc_es) :: solver 
 !
-      write(output%unit, '(/t3,a)') '- Settings for coupled cluster excited state solver (' //trim(solver%tag) // '):'
+      call output%printf('- Settings for coupled cluster excited state solver (' //trim(solver%tag) // '):', &
+                              pl='m', fs='(/t3,a)')
 !
-      write(output%unit,'(/t6,a20,e9.2)') 'Energy threshold:   ', solver%eigenvalue_threshold
-      write(output%unit,'(t6,a20,e9.2)')  'Residual threshold: ', solver%residual_threshold
-      write(output%unit,'(/t6,a,i3,a)')   'Number of singlet states: ', solver%n_singlet_states
-      write(output%unit, '(t6,a26,i3)')   'Max number of iterations: ', solver%max_iterations
-      write(output%unit, '(t6,a26,a)')    'Calculation type:         ', trim(solver%es_type)
-      flush(output%unit)
+      call output%printf('Energy threshold:     (e9.2)', reals=[solver%eigenvalue_threshold], pl='m', fs='(/t6,a)')
+      call output%printf('Residual threshold:   (e9.2)', reals=[solver%residual_threshold], pl='m', fs='(/t6,a)')
 !
-      call output%printf('Solving for the (a0) eigenvectors.', chars=[trim(solver%transformation)], fs='(/t6,a)')
+      call output%printf('Number of singlet states:  (i6)', ints=[solver%n_singlet_states], pl='m', fs='(/t6,a)')
+      call output%printf('Max number of iterations:  (i6)', ints=[solver%max_iterations], pl='m', fs='(t6,a)')
+      call output%printf('Calculation type:          (a0)', chars=[trim(solver%es_type)], pl='m', fs='(t6,a)')
+!
+      call output%printf('Solving for the (a0) eigenvectors.', chars=[trim(solver%transformation)], pl='m', fs='(/t6,a)')
 !
    end subroutine print_es_settings_abstract_cc_es
 !
@@ -210,12 +211,11 @@ contains
 !
       call solver%timer%turn_off()
 !
-      write(output%unit, '(/t3, a)') '- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) &
-                                       // ' excited state equations ('// &
-                                       trim(solver%transformation) //')'
+     call output%printf('- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) &
+                 // ' excited state equations ('// trim(solver%transformation) //')', pl='m', fs='(/t3,a)')
 !
-      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
-      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
+      call output%printf('Total wall time (sec): (f20.5)', reals=[solver%timer%get_elapsed_time('wall')], pl='m', fs='(/t6,a)')
+      call output%printf('Total cpu time (sec):  (f20.5)', reals=[solver%timer%get_elapsed_time('cpu')], pl='m', fs='(t6,a)')
 !
    end subroutine cleanup_abstract_cc_es
 !
@@ -239,40 +239,39 @@ contains
 !
       label = trim(adjustl(convert_to_uppercase(solver%transformation(1:1))))
 !
-      write(output%unit, '(/t3,a)') '- Excitation vector amplitudes:'
-      flush(output%unit)
+      call output%printf('- Excitation vector amplitudes:', pl='n', fs='(/t3,a)')
 !
       do state = 1, solver%n_singlet_states
 !
-         write(output%unit, '(/t6,a21,i2)')    'Electronic state nr. ', state
-         flush(output%unit)       
+         call output%printf('Electronic state nr. (i0)', pl='n', ints=[state], fs='(/t6,a)')
 !
-         write(output%unit, '(/t6,a30,f15.12)')  'Energy (Hartree):             ', solver%energies(state)
-         flush(output%unit)
-         write(output%unit, '(t6,a30,f15.12)') 'Fraction singles (|' // label // '1|/|' // label // '|):  ', &
-                        get_l2_norm(X(1:wf%n_t1,state),wf%n_t1)/get_l2_norm(X(:,state),wf%n_es_amplitudes)   
-         flush(output%unit)
+         call output%printf('Energy (Hartree):             (f19.12)', pl='n', &
+                                 reals=[solver%energies(state)], fs='(/t6,a)')
+!
+         call output%printf('Fraction singles (|(a0)1|/|(a0)|):  (f19.12)', pl='n', &
+            reals=[get_l2_norm(X(1:wf%n_t1,state),wf%n_t1)/get_l2_norm(X(:,state),wf%n_es_amplitudes)], &
+            chars=[label, label], fs='(t6,a)')
 !
          call wf%print_dominant_x_amplitudes(X(1,state), label)
 !
       enddo 
 !
-      write(output%unit, '(/t3,a)') '- Electronic excitation energies:'
+      call output%printf('- Electronic excitation energies:', pl='m', fs='(/t6,a)')
 !
-      write(output%unit, '(/t6,a)') '                                 Excitation energy            '
-      write(output%unit, '(t6,a)')  '                     ------------------------------------------'
-      write(output%unit, '(t6,a)')  'State                (Hartree)             (eV)                '
-      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+      call output%printf('                                 Excitation energy             ', pl='m', fs='(/t6,a)')
+      call output%printf('                     ------------------------------------------', pl='m', fs='(t6,a)')
+      call output%printf('State                (Hartree)             (eV)                ', pl='m', fs='(t6,a)')
+      call output%printf('---------------------------------------------------------------', pl='m', fs='(t6,a)')
 !
       do state = 1, solver%n_singlet_states
 !
-         write(output%unit, '(t6,i2,14x,f19.12,4x,f19.12)') state, solver%energies(state), &
-                                                            solver%energies(state)*Hartree_to_eV
+         call output%printf('(i2)              (f19.12)    (f19.12)', pl='m', fs='(t6,a)', &
+                     ints=[state], reals=[solver%energies(state), solver%energies(state)*Hartree_to_eV])
 !
       enddo 
 !
-      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
-      write(output%unit, '(t6,a26,f11.8)') 'eV/Hartree (CODATA 2014): ', Hartree_to_eV
+      call output%printf('---------------------------------------------------------------', pl='m', fs='(t6,a)')
+      call output%printf('eV/Hartree (CODATA 2014): (f11.8)', pl='m', fs='(t6,a)', reals=[Hartree_to_eV])
 !
    end subroutine print_summary_abstract_cc_es
 !

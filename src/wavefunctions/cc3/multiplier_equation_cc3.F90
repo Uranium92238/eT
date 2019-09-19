@@ -80,8 +80,7 @@ contains
 !
 !     Copy the multipliers, eq. = t-bar
 !
-      call dcopy(wf%n_t1, wf%t1bar, 1, equation, 1)
-      call dcopy(wf%n_t2, wf%t2bar, 1, equation(wf%n_t1 + 1), 1)
+      call wf%get_multipliers(equation)
 !
 !     Transform the multipliers by A^T, eq. = t-bar^T A
 !

@@ -69,20 +69,20 @@ contains
 !
 !     Copy the multipliers, eq. = t-bar
 !
-      call dcopy(wf%n_t1, wf%t1bar, 1, equation, 1)
+      call wf%get_multipliers(equation)
 !
 !     Transform the multipliers by A^T, eq. = t-bar^T A
 !
-      call wf%jacobian_transpose_ccs_transformation(equation)
+      call wf%jacobian_transpose_transformation(equation)
 !
 !     Add eta, eq. = t-bar^T A + eta
 !
-      call mem%alloc(eta, wf%n_t1)
+      call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
 !
-      call daxpy(wf%n_t1, one, eta, 1, equation, 1)
+      call daxpy(wf%n_gs_amplitudes, one, eta, 1, equation, 1)
 !
-      call mem%dealloc(eta, wf%n_t1)
+      call mem%dealloc(eta, wf%n_gs_amplitudes)
 !
    end subroutine construct_multiplier_equation_ccs
 !

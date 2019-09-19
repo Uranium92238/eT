@@ -20,7 +20,7 @@
 module linear_davidson_tool_class
 !
 !!
-!!    Eigenvalue davidson tool class module
+!!    Linear davidson tool class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
 !!
 !!    A tool to help solve an eigenvalue equation A X_n = F X_n
@@ -28,16 +28,49 @@ module linear_davidson_tool_class
 !!    be usable also in cases where A cannot be stored, but where the 
 !!    transformation X -> A X is implemented. 
 !!
+!!    Using the tool: after using the constructor, 
+!!
+!!       1. Set the initial set of trial vectors by constructing 
+!!          them and calling davidson%write_trial(c). When you are 
+!!          done writing trials, call davidson%orthonormalize_trial_vecs() 
+!!          to make sure the trial vectors are orthonormalized.
+!!
+!!       2. (optional) Set preconditioner by call davidson%set_preconditioner(P),
+!!          where P^-1 is a diagonal preconditioner for A. For the CC Jacobian, P
+!!          is the vector of orbital differences.
+!!
+!!       3. Set up the iterative loop, which consists of four stages:
+!!
+!!          do while (.not. converged ...)
+!!    
+!!             I. Let the tool know a new iteration has begun 
+!!
+!!             call davidson%iterate()
+!!
+!!             II. Read new trial, transform it, & store the result 
+!!
+!!             call davidson%read_trial(c, davidson%dim_red)
+!!             Transform: c <- A c 
+!!             call davidson%write_transform(c)
+!!
+!!             III. Solve reduced problem 
+!!             
+!!             call davidson%solve_reduced_problem()
+!!
+!!             IV. Construct residual and use it to generate new trial vectors 
+!!
+!!             call davidson%construct_residual(R)
+!!                
+!!             ...
+!!
+!!             if (residual_norm >= thr) call davidson%construct_next_trial(R)
+!!
+!!          enddo ! end of iterative loop 
+!!
 !
-   use kinds
-   use parameters
-!
-   use file_class
-   use disk_manager_class
-   use memory_manager_class
    use davidson_tool_class
-   use array_utilities
-   use array_analysis
+!
+   use memory_manager_class, only: mem 
 !
    type, extends(davidson_tool) :: linear_davidson_tool 
 !
@@ -52,9 +85,9 @@ module linear_davidson_tool_class
 !
 !     Linear Davidson specific routines
 !
-      procedure :: construct_next_trial_vec     => construct_next_trial_vec_linear_davidson_tool
-      procedure :: solve_reduced_problem        => solve_reduced_problem_linear_davidson_tool
+      procedure :: construct_next_trial         => construct_next_trial_linear_davidson_tool
       procedure :: construct_residual           => construct_residual_linear_davidson_tool
+      procedure :: solve_reduced_problem        => solve_reduced_problem_linear_davidson_tool
 !
       procedure :: construct_reduced_gradient   => construct_reduced_gradient_linear_davidson_tool
 !
@@ -71,7 +104,7 @@ module linear_davidson_tool_class
 contains
 !
 !
-   function new_linear_davidson_tool(name, n_parameters, residual_threshold, F) result(davidson)
+   function new_linear_davidson_tool(name_, n_parameters, add_trial_threshold, max_dim_red, F) result(davidson)
 !!
 !!    New linear Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -80,13 +113,13 @@ contains
 !
       type(linear_davidson_tool) :: davidson 
 !
-      character(len=*), intent(in) :: name
+      character(len=*), intent(in) :: name_
 !
-      integer, intent(in) :: n_parameters 
+      integer, intent(in) :: n_parameters, max_dim_red 
 !
       real(dp), dimension(n_parameters) :: F 
 !
-      real(dp), intent(in)     :: residual_threshold
+      real(dp), intent(in) :: add_trial_threshold
 !
       call mem%alloc(davidson%F, n_parameters)
       davidson%F = F
@@ -94,25 +127,24 @@ contains
       davidson%n_parameters = n_parameters
       davidson%n_solutions  = 1
 !
-      davidson%residual_threshold   = residual_threshold
+      davidson%add_trial_threshold = add_trial_threshold
+      davidson%max_dim_red = max_dim_red
 !
-      davidson%name = trim(name)
+      davidson%name_ = trim(name_)
 !
-      call davidson%trials%init(trim(davidson%name) // '_trials', 'sequential', 'unformatted')
-      call davidson%transforms%init(trim(davidson%name) // '_transforms', 'sequential', 'unformatted')
-      call davidson%preconditioner%init(trim(davidson%name) // '_preconditioner', 'sequential', 'unformatted')
+      davidson%trials         = sequential_file(trim(davidson%name_) // '_trials', 'unformatted')
+      davidson%transforms     = sequential_file(trim(davidson%name_) // '_transforms', 'unformatted')
+      davidson%preconditioner = sequential_file(trim(davidson%name_) // '_preconditioner', 'unformatted')
 !
 !     For safety, delete old files if they are on disk
 !
-      call disk%delete(davidson%trials)
-      call disk%delete(davidson%transforms)
+      call davidson%trials%delete_()
+      call davidson%transforms%delete_()
 !
       davidson%do_precondition   = .false.         ! Switches to true if 'set_preconditioner' is called
 !
-      davidson%dim_red           = davidson%n_solutions     ! Initial dimension equal to number of solutions
-      davidson%n_new_trials      = davidson%n_solutions 
-!
-      davidson%current_n_trials = 0  
+      davidson%dim_red      = 0    
+      davidson%n_new_trials = davidson%n_solutions 
 !
    end function new_linear_davidson_tool
 !
@@ -143,18 +175,17 @@ contains
       call mem%alloc(davidson%F_red, davidson%dim_red)
       call mem%alloc(c_i, davidson%n_parameters)
 !
-      call disk%open_file(davidson%trials, 'read')
-      rewind(davidson%trials%unit)
+      call davidson%trials%open_('read', 'rewind')
 !
       do i = 1, davidson%dim_red 
 !
-         read(davidson%trials%unit)c_i
+         call davidson%trials%read_(c_i, davidson%n_parameters)
 !
          davidson%F_red(i) = ddot(davidson%n_parameters, c_i, 1, davidson%F, 1)
 !
       enddo
 !
-      call disk%close_file(davidson%trials)
+      call davidson%trials%close_()
 !
       call mem%dealloc(c_i, davidson%n_parameters)
 !
@@ -172,6 +203,11 @@ contains
 !!    where the real and imaginary parts of eigenvalue n is stored in the nth 
 !!    row of these vectors.
 !!
+!!    The routine performs three actions: 1) constructs the reduced space quantities,
+!!    2) uses these to solve the reduced space problem, and 3) sets number of new trials 
+!!    to zero (prepares the tool for the next task, which is the receiving of new residuals
+!!    to make another new set of trial vectors).
+!!
       implicit none 
 !
       class(linear_davidson_tool) :: davidson 
@@ -181,6 +217,11 @@ contains
       real(dp), dimension(:,:), allocatable :: A_red_copy
 !
       integer :: info = -1 ! Error integer for dgesv routine (LU factorization)
+!
+!     Construct reduced space quantities 
+!
+      call davidson%construct_reduced_matrix()
+      call davidson%construct_reduced_gradient()
 !
 !     Solve the linear problem
 !
@@ -217,6 +258,8 @@ contains
 !
       endif 
 !
+      davidson%n_new_trials = 0
+!
    end subroutine solve_reduced_problem_linear_davidson_tool
 !
 !
@@ -231,15 +274,15 @@ contains
 !!
       implicit none 
 !
-      class(linear_davidson_tool), intent(in) :: davidson 
+      class(linear_davidson_tool), intent(inout) :: davidson 
 !
       real(dp), dimension(davidson%n_parameters) :: R 
 !
       integer, intent(in) :: n
 !
-      if (n .ne. 1) then
+      if (n /= 1) then
 !
-         call output%error_msg('for linear equations with davidson n = 1')
+         call output%error_msg('for linear equations, n must be 1 in construct_residual_linear_davidson_tool')
 !
       endif
 !
@@ -249,88 +292,77 @@ contains
    end subroutine construct_residual_linear_davidson_tool
 !
 !
-   subroutine construct_next_trial_vec_linear_davidson_tool(davidson, residual_norm, alpha)
+   subroutine construct_next_trial_linear_davidson_tool(davidson, R, alpha)
 !!
-!!    Construct next trial vector  
+!!    Construct next trial  
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
-!!    This routine decides whether to construct a new trial vector based on 
-!!    the current residual norm. The new trial vector is a preconditioned 
-!!    residual orthogonalized against the search space (the existing trial
-!!    vectors). If it turns out that the root is not converged and the 
-!!    new trial vector contains no new components (linear dependence),
-!!    the routine terminates in an error. 
+!!    R:     residual, AX - F
+!!    alpha: shift in preconditioner (optional with deafult value 0)
 !!
-!!    Note that the residual norm is set on exit and need not to be 
-!!    calculated beforehand. 
+!!    The routine constructs a new trial vector from the residual R by 
+!!    1) preconditioning it and 2) orthonormalizing the result with respect 
+!!    to previous trial vectors. If the trial vector thus generated is 
+!!    too close to zero, the routine exits with an error. Otherwise,
+!!    a new trial vector has been added to the search space.
 !!    
       implicit none 
 !
       class(linear_davidson_tool) :: davidson 
 !
-      real(dp), intent(out) :: residual_norm 
+      real(dp), dimension(davidson%n_parameters), intent(in) :: R 
 !
       real(dp), optional :: alpha
 !
-      real(dp) :: norm_X, norm_new_trial, norm_residual, norm_precond_residual, alpha_local
+      real(dp) :: norm_new_trial, norm_precond_residual, alpha_local
+      real(dp), dimension(:), allocatable :: trial 
 !
-      real(dp), dimension(:), allocatable :: R, X 
+!     Precondition the residual, then remove components already 
+!     in the search space by orthogonalizing it against existing 
+!     trial vectors.
+!
+!     If the vector is not too small, then a new trial vector 
+!     was successfully constructed and is added to the search
+!     space.
+!
+!     Precondition 
 !
       alpha_local = zero
-!
       if (present(alpha)) alpha_local = alpha
 !
-!     Construct full space solution vector X, 
-!     and the associated residual R 
+      call mem%alloc(trial, davidson%n_parameters)
+      call dcopy(davidson%n_parameters, R, 1, trial, 1)
 !
-      call mem%alloc(X, davidson%n_parameters)
-      call mem%alloc(R, davidson%n_parameters)
+      call davidson%precondition(trial, alpha_local)
 !
-      call davidson%construct_X(X, 1) 
-      norm_X = get_l2_norm(X, davidson%n_parameters) 
+!     Renormalize 
 !
-      call davidson%construct_residual(R, 1)
+      norm_precond_residual = get_l2_norm(trial, davidson%n_parameters)
+      call dscal(davidson%n_parameters, one/norm_precond_residual, trial, 1)
 !
-      call dscal(davidson%n_parameters, one/norm_X, X, 1)
+!     Orthogonalize against existing search space 
 !
-      call mem%dealloc(X, davidson%n_parameters)
+      call davidson%orthogonalize_against_trial_vecs(trial)
+      norm_new_trial = get_l2_norm(trial, davidson%n_parameters)
+!  
+!     Add to search space if significant
 !
-!     Calculate the norm of the residual and test for convergence. If not
-!     converged, the residual is preconditioned & we remove components already 
-!     in the search space by orthogonalizing it against existing trial vectors.
+      if (norm_new_trial > davidson%add_trial_threshold) then
 !
-      norm_residual = get_l2_norm(R, davidson%n_parameters)
-      residual_norm = norm_residual
+         davidson%n_new_trials = davidson%n_new_trials + 1
+         call dscal(davidson%n_parameters, one/norm_new_trial, trial, 1)
 !
-      if (norm_residual .gt. davidson%residual_threshold) then 
+         call davidson%write_trial(trial, 'append')
 !
-         call davidson%precondition(R, alpha_local)
+      else
 !
-         norm_precond_residual = get_l2_norm(R, davidson%n_parameters)
-         call dscal(davidson%n_parameters, one/norm_precond_residual, R, 1)
-!
-         call davidson%orthogonalize_against_trial_vecs(R)
-!
-         norm_new_trial = get_l2_norm(R, davidson%n_parameters)
-!
-         if (norm_new_trial .gt. davidson%residual_threshold) then
-!
-            davidson%n_new_trials = davidson%n_new_trials + 1
-            call dscal(davidson%n_parameters, one/norm_new_trial, R, 1)
-!
-            call davidson%write_trial(R, 'append')
-!
-         else
-!
-            call output%error_msg('did not find any new trials.')
-!
-         endif 
+         call output%error_msg('did not find any new trials.')
 !
       endif 
 !
-      call mem%dealloc(R, davidson%n_parameters)
+      call mem%dealloc(trial, davidson%n_parameters)
 !
-   end subroutine construct_next_trial_vec_linear_davidson_tool
+   end subroutine construct_next_trial_linear_davidson_tool
 !
 !
    subroutine cleanup_linear_davidson_tool(davidson)
@@ -342,13 +374,9 @@ contains
 !
       class(linear_davidson_tool) :: davidson 
 !
-      call disk%open_file(davidson%trials, 'write', 'rewind')
-      call disk%open_file(davidson%transforms, 'write', 'rewind')
-      call disk%open_file(davidson%preconditioner, 'write', 'rewind')
-!
-      call disk%close_file(davidson%trials, 'delete')
-      call disk%close_file(davidson%transforms, 'delete')
-      call disk%close_file(davidson%preconditioner, 'delete')
+      call davidson%trials%delete_()
+      call davidson%transforms%delete_()
+      call davidson%preconditioner%delete_()
 !
       if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
       if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)

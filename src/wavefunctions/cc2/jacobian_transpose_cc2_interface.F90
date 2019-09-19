@@ -29,21 +29,9 @@
    end subroutine prepare_for_jacobian_transpose_cc2
 !
 !
-   module subroutine jacobian_transpose_transform_trial_vector_cc2(wf, c_i)
+   module subroutine jacobian_transpose_transformation_cc2(wf, b)
 !!
-!!    Jacobian transpose transform trial vector
-!!    Written by Sarai D. Folkestad and Alexander Paul, Feb 2019
-!!
-      class(cc2), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes) :: c_i
-!
-   end subroutine jacobian_transpose_transform_trial_vector_cc2
-!
-!
-   module subroutine jacobian_transpose_cc2_transformation_cc2(wf, c)
-!!
-!!    Jacobian transpose transformation (CC2)
+!!    Jacobian transpose transformation
 !!    Written by Sarai D. Folkestad and Alexander Paul, Feb 2019
 !!
 !!    Calculates the transpose Jacobian transformation, i.e., the transformation
@@ -57,12 +45,11 @@
 !!
       implicit none
 !
-      class(cc2) :: wf
+      class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes) :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
 !
-!
-   end subroutine jacobian_transpose_cc2_transformation_cc2
+   end subroutine jacobian_transpose_transformation_cc2
 !
 !
    module subroutine jacobian_transpose_cc2_b2_cc2(wf, sigma_aibj, c_aibj)

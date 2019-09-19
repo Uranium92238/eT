@@ -141,7 +141,7 @@ module ccs_class
       procedure :: save_tbar_intermediates                     => save_tbar_intermediates_ccs
 !
       procedure :: is_restart_safe                             => is_restart_safe_ccs
-      procedure :: write_cc_restart                             => write_cc_restart_ccs
+      procedure :: write_cc_restart                            => write_cc_restart_ccs
 !
 !     Routines related to the Fock matrix
 !
@@ -164,14 +164,11 @@ module ccs_class
       procedure :: prepare_for_jacobian_transpose              => prepare_for_jacobian_transpose_ccs
       procedure :: prepare_for_multiplier_equation             => prepare_for_multiplier_equation_ccs
 !
-      procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_ccs
-      procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_ccs
-!
-      procedure :: jacobian_ccs_transformation                 => jacobian_ccs_transformation_ccs
+      procedure :: jacobian_transformation                     => jacobian_transformation_ccs 
       procedure :: jacobian_ccs_a1                             => jacobian_ccs_a1_ccs
       procedure :: jacobian_ccs_b1                             => jacobian_ccs_b1_ccs
 !
-      procedure :: jacobian_transpose_ccs_transformation       => jacobian_transpose_ccs_transformation_ccs
+      procedure :: jacobian_transpose_transformation           => jacobian_transpose_transformation_ccs
       procedure :: jacobian_transpose_ccs_a1                   => jacobian_transpose_ccs_a1_ccs
       procedure :: jacobian_transpose_ccs_b1                   => jacobian_transpose_ccs_b1_ccs
 !
@@ -272,8 +269,8 @@ module ccs_class
 !
       procedure :: construct_molecular_gradient                => construct_molecular_gradient_ccs
 !
-      procedure :: read_settings                                => read_settings_ccs
-      procedure :: make_bath_orbital                            => make_bath_orbital_ccs
+      procedure :: read_settings                               => read_settings_ccs
+      procedure :: make_bath_orbital                           => make_bath_orbital_ccs
 !
       procedure :: set_ip_start_indices                        => set_ip_start_indices_ccs
       procedure :: get_ip_projector                            => get_ip_projector_ccs
@@ -627,11 +624,11 @@ contains
 !
       if (r_or_l .eq. "right") then
 !
-         call wf%jacobian_transform_trial_vector(X_copy) ! X_copy <- AX
+         call wf%jacobian_transformation(X_copy) ! X_copy <- AX
 !
       elseif (r_or_l .eq. 'left') then
 !
-         call wf%jacobian_transpose_transform_trial_vector(X_copy) ! X_copy <- XA
+         call wf%jacobian_transpose_transformation(X_copy) ! X_copy <- XA
 !
       else
 !

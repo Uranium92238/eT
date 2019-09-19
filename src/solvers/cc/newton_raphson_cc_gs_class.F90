@@ -46,6 +46,7 @@ module newton_raphson_cc_gs_class
       real(dp) :: energy_threshold
 !
       integer  :: max_micro_iterations
+      integer  :: max_micro_dim_red
       real(dp) :: micro_residual_threshold
       real(dp) :: relative_micro_residual_threshold
 !
@@ -100,6 +101,7 @@ contains
       solver%energy_threshold                   = 1.0d-6
       solver%omega_threshold                    = 1.0d-6
       solver%restart                            = .false.
+      solver%max_micro_dim_red                  = 50
 !
 !     Read & print settings (thresholds, etc.)
 !
@@ -288,7 +290,7 @@ contains
 !
       integer, intent(out) :: final_iteration
 !
-      real(dp), dimension(:), allocatable :: epsilon, first_trial, c_i
+      real(dp), dimension(:), allocatable :: epsilon, first_trial, c, residual 
 !
       real(dp) :: norm_trial, residual_norm, ddot
 !
@@ -303,7 +305,8 @@ contains
       call mem%alloc(epsilon, wf%n_gs_amplitudes)
       call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
 !
-      davidson = linear_davidson_tool('cc_gs_newton_raphson', wf%n_gs_amplitudes, solver%micro_residual_threshold, -omega)
+      davidson = linear_davidson_tool('cc_gs_newton_raphson', wf%n_gs_amplitudes, &
+            solver%micro_residual_threshold, solver%max_micro_dim_red, -omega)
 !
       call davidson%set_preconditioner(epsilon)
       call mem%dealloc(epsilon, wf%n_gs_amplitudes)
@@ -328,74 +331,65 @@ contains
 !
       call wf%prepare_for_jacobian()
 !
-!
 !     Enter iterative loop
 !
       write(output%unit,'(/t6,a)') 'Micro-iter.  Residual norm'
       write(output%unit,'(t6,a)')  '--------------------------'
       flush(output%unit)
 !
-      micro_iteration = 1
+      micro_iteration = 0
       converged_residual = .false.
 !
       do while (.not. converged_residual .and. (micro_iteration .le. solver%max_micro_iterations))
 !
+         micro_iteration = micro_iteration + 1
+         call davidson%iterate()
+!
 !        Transform new trial vectors and write to file
 !
-         call mem%alloc(c_i, davidson%n_parameters)
+         call mem%alloc(c, davidson%n_parameters)
 !
-         call davidson%read_trial(c_i, davidson%dim_red)
-         call wf%jacobian_transform_trial_vector(c_i) 
+         call davidson%read_trial(c, davidson%dim_red)
+         call wf%jacobian_transformation(c) 
+         call davidson%write_transform(c)
 !
-         if (micro_iteration == 1) then
-!
-            call davidson%write_transform(c_i, 'rewind')
-!
-         else
-!
-            call davidson%write_transform(c_i, 'append')
-!
-         endif
-!
-         call mem%dealloc(c_i, davidson%n_parameters)
+         call mem%dealloc(c, davidson%n_parameters)
 !
 !        Solve problem in reduced space
 !
-         call davidson%construct_reduced_matrix()
-         call davidson%construct_reduced_gradient()
          call davidson%solve_reduced_problem()
 !
 !        Construct new trials and check if convergence criterion on residual is satisfied
 !
-         davidson%n_new_trials = 0
+         call mem%alloc(residual, davidson%n_parameters)
 !
-         call davidson%construct_next_trial_vec(residual_norm)
-!
-          write(output%unit,'(t6,2x,i3,8x,e11.4)') micro_iteration, residual_norm
-          flush(output%unit)
+         call davidson%construct_residual(residual, 1)
+         residual_norm = get_l2_norm(residual, wf%n_gs_amplitudes)
 !
          converged_residual = .true.
+         if (residual_norm >= solver%micro_residual_threshold) then 
 !
-         if (residual_norm .gt. solver%micro_residual_threshold) converged_residual = .false.
-!   
-         davidson%dim_red = davidson%dim_red + davidson%n_new_trials
+            converged_residual = .false.
+            call davidson%construct_next_trial(residual)
 !
-         micro_iteration = micro_iteration + 1       
+         endif 
+!
+         call mem%dealloc(residual, davidson%n_parameters)
+!
+         call output%printf('(i3)          (e11.4)', pl='n', ints=[micro_iteration], reals=[residual_norm], fs='(t6,a)')
 !
       enddo
 !
-      write(output%unit,'(t6,a/)')  '--------------------------'
-       flush(output%unit)
+      call output%printf('--------------------------', pl='n', fs='(t6,a)')
 !
       if (.not. converged_residual) then
 !
-         write(output%unit, '(/t6,a)')  'Warning: was not able to converge the equations in the given'
-         write(output%unit, '(t6,a/)')  'number of maximum micro-iterations.'
-         flush(output%unit)
+         call output%error_msg('was not able to converge the equations in the given ' // &
+                                'max number of iterations in do_micro_iterations_newton_raphson_cc_gs.')
 !
       endif
 !
-      call davidson%construct_X(dt, 1)
+      call davidson%construct_solution(dt, 1)
       call davidson%cleanup()
 !
       final_iteration = micro_iteration
@@ -465,13 +459,14 @@ contains
 !
       real(dp) :: t1_diagnostic 
 !
-      write(output%unit, '(/t3,a)') '- DIIS accelerated Newton-Raphson CC ground state solver summary:'
+      call output%printf('- DIIS accelerated Newton-Raphson CC ground state solver summary:', pl='n', fs='(/t3,a)')
 !
-      write(output%unit, '(/t6,a33,f18.12)') 'Final ground state energy (a.u.):', wf%energy 
+      call output%printf('Final ground state energy (a.u.): (f18.12)', pl='n', reals=[wf%energy], fs='(/t6,a)')
+!
       call wf%print_dominant_amplitudes()
 !
       t1_diagnostic = wf%get_t1_diagnostic() 
-      write(output%unit, '(/t6,a32,f14.12)') 'T1 diagnostic (|T1|/sqrt(N_e)): ', t1_diagnostic
+      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', pl='n', reals=[t1_diagnostic], fs='(/t6,a)')
 !
    end subroutine print_summary_newton_raphson_cc_gs
 !

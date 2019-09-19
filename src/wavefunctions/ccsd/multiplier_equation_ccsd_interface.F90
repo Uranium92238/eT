@@ -17,20 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine construct_multiplier_equation_ccsd(wf, equation)
-!!
-!!    Construct multiplier equation
-!!    Written by Eirik F. Kjønstad, Nov 2018
-!!
-      implicit none
-!
-      class(ccsd), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
-!
-   end subroutine construct_multiplier_equation_ccsd
-!
-!
    module subroutine construct_eta_ccsd(wf, eta)
 !!
 !!    Construct eta (CCSD)

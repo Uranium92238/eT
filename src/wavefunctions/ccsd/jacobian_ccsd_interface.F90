@@ -28,30 +28,19 @@
 !
    end subroutine prepare_for_jacobian_ccsd
 !
-   module subroutine jacobian_transform_trial_vector_ccsd(wf, c_i)
+!
+   module subroutine jacobian_transformation_ccsd(wf, c)
 !!
-!!    Jacobian transform trial vector
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
-!!
-      class(ccsd), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes) :: c_i
-!
-   end subroutine jacobian_transform_trial_vector_ccsd
-!
-!
-   module subroutine jacobian_ccsd_transformation_ccsd(wf, c)
-!!
-!!    Jacobian transformation (CCSD)
+!!    Jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
       implicit none
 !
-      class(ccsd) :: wf
+      class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes) :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
-   end subroutine jacobian_ccsd_transformation_ccsd
+   end subroutine jacobian_transformation_ccsd
 !
 !
    module subroutine jacobian_ccsd_b2_ccsd(wf, rho_aibj, c_ai)

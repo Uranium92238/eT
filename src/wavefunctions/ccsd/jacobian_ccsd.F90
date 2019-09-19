@@ -63,23 +63,10 @@ contains
 !
    end subroutine prepare_for_jacobian_ccsd
 !
-   module subroutine jacobian_transform_trial_vector_ccsd(wf, c_i)
+!
+   module subroutine jacobian_transformation_ccsd(wf, c)
 !!
-!!    Jacobian transform trial vector
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2018
-!!
-      class(ccsd), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes) :: c_i
-!
-      call wf%jacobian_ccsd_transformation(c_i)
-!
-   end subroutine jacobian_transform_trial_vector_ccsd
-!
-!
-   module subroutine jacobian_ccsd_transformation_ccsd(wf, c)
-!!
-!!    Jacobian transformation (CCSD)
+!!    Jacobian transformation 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !!    Directs the transformation by the CCSD Jacobi matrix,
@@ -97,9 +84,9 @@ contains
 !!
       implicit none
 !
-      class(ccsd) :: wf
+      class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes) :: c
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_ai
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij
@@ -294,7 +281,7 @@ contains
 !
       call mem%dealloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-   end subroutine jacobian_ccsd_transformation_ccsd
+   end subroutine jacobian_transformation_ccsd
 !
 !
    module subroutine jacobian_ccsd_b2_ccsd(wf, rho_aibj, c_ai)

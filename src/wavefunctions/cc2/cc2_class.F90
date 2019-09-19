@@ -53,15 +53,13 @@ module cc2_class
 !     Jacobian
 !
       procedure :: prepare_for_jacobian                        => prepare_for_jacobian_cc2
-      procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_cc2
-      procedure :: jacobian_cc2_transformation                 => jacobian_cc2_transformation_cc2
+      procedure :: jacobian_transformation                     => jacobian_transformation_cc2
       procedure :: jacobian_cc2_b2                             => jacobian_cc2_b2_cc2
 !
 !     Jacobian transpose
 !
       procedure :: prepare_for_jacobian_transpose              => prepare_for_jacobian_transpose_cc2
-      procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_cc2
-      procedure :: jacobian_transpose_cc2_transformation       => jacobian_transpose_cc2_transformation_cc2
+      procedure :: jacobian_transpose_transformation           => jacobian_transpose_transformation_cc2
       procedure :: jacobian_transpose_cc2_b2                   => jacobian_transpose_cc2_b2_cc2
 !
 !     Initialize and destruct
@@ -227,7 +225,6 @@ contains
 !!
 !!    Construct t2bar
 !!    Written by Sarai D. Folkestad, May, 2019
-!!
 !!
       implicit none
 !

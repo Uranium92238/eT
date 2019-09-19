@@ -32,46 +32,6 @@ submodule (ccsd_class) multiplier_equation_ccsd
 contains
 !
 !
-   module subroutine construct_multiplier_equation_ccsd(wf, equation)
-!!
-!!    Construct multiplier equation
-!!    Written by Eirik F. Kjønstad, Nov 2018
-!!
-!!    Constructs
-!!
-!!       t-bar^T A + eta,
-!!
-!!    and places the result in 'equation'.
-!!
-      implicit none
-!
-      class(ccsd), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
-!
-      real(dp), dimension(:), allocatable :: eta
-!
-!     Copy the multipliers, eq. = t-bar
-!
-      call dcopy(wf%n_t1, wf%t1bar, 1, equation, 1)
-      call dcopy(wf%n_t2, wf%t2bar, 1, equation(wf%n_t1 + 1), 1)
-!
-!     Transform the multipliers by A^T, eq. = t-bar^T A
-!
-      call wf%jacobian_transpose_ccsd_transformation(equation)
-!
-!     Add eta, eq. = t-bar^T A + eta
-!
-      call mem%alloc(eta, wf%n_gs_amplitudes)
-      call wf%construct_eta(eta)
-!
-      call daxpy(wf%n_gs_amplitudes, one, eta, 1, equation, 1)
-!
-      call mem%dealloc(eta, wf%n_gs_amplitudes)
-!
-   end subroutine construct_multiplier_equation_ccsd
-!
-!
    module subroutine construct_eta_ccsd(wf, eta)
 !!
 !!    Construct eta (CCSD)

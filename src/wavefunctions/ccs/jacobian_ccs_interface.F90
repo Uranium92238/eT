@@ -29,21 +29,9 @@
    end subroutine prepare_for_jacobian_ccs
 !
 !
-   module subroutine jacobian_transform_trial_vector_ccs(wf, c_i)
+   module subroutine jacobian_transformation_ccs(wf, c)
 !!
-!!    Jacobian transform trial vector
-!!    Written by Sarai D. Folkestad, Sep 2018
-!!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes) :: c_i
-!
-   end subroutine jacobian_transform_trial_vector_ccs
-!
-!
-   module subroutine jacobian_ccs_transformation_ccs(wf, c_ai)
-!!
-!!    Jacobian CCS transformation
+!!    Jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!    Directs the transformation by the CCSD Jacobi matrix,
@@ -60,9 +48,9 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: c_ai
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
-   end subroutine jacobian_ccs_transformation_ccs
+   end subroutine jacobian_transformation_ccs
 !
 !
    module subroutine jacobian_ccs_a1_ccs(wf, rho1, c1)

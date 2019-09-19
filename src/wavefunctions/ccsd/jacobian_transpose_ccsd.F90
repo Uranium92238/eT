@@ -20,7 +20,7 @@
 submodule (ccsd_class) jacobian_transpose_ccsd
 !
 !!
-!!    Jacobian transpose submodule (CCSD)
+!!    Jacobian transpose submodule 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Routines for the linear transform of trial
@@ -42,23 +42,9 @@ submodule (ccsd_class) jacobian_transpose_ccsd
 contains
 !
 !
-   module subroutine jacobian_transpose_transform_trial_vector_ccsd(wf, c_i)
+   module subroutine jacobian_transpose_transformation_ccsd(wf, b)
 !!
-!!    Jacobian transform trial vector
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2018
-!!
-      class(ccsd), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes) :: c_i
-!
-      call wf%jacobian_transpose_ccsd_transformation(c_i)
-!
-   end subroutine jacobian_transpose_transform_trial_vector_ccsd
-!
-!
-   module subroutine jacobian_transpose_ccsd_transformation_ccsd(wf, b)
-!!
-!!    Jacobian transpose transformation (CCSD)
+!!    Jacobian transpose transformation 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !!    Calculates the transpose Jacobian transformation, i.e., the transformation
@@ -72,11 +58,11 @@ contains
 !!
       implicit none
 !
-      class(ccsd) :: wf
+      class(ccsd), intent(in) :: wf
 !
 !     Incoming vector b
 !
-      real(dp), dimension(wf%n_es_amplitudes) :: b
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
 !
       real(dp), dimension(:,:), allocatable :: b_ai
 !
@@ -188,7 +174,7 @@ contains
 !
       call jacobian_transpose_timer%turn_off()
 !
-   end subroutine jacobian_transpose_ccsd_transformation_ccsd
+   end subroutine jacobian_transpose_transformation_ccsd
 !
 !
    module subroutine jacobian_transpose_ccsd_d1_ccsd(wf, sigma_ai, b_aibj)
