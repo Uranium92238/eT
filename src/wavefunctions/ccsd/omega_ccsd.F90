@@ -104,6 +104,8 @@ contains
 !
       call packin(omega((wf%n_o)*(wf%n_v)+1:wf%n_gs_amplitudes), omega_aibj, wf%n_t1)
 !
+      call mem%dealloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
       call wf%from_biorthogonal_to_biorthonormal(omega((wf%n_o)*(wf%n_v)+1:wf%n_gs_amplitudes))
 !
       call dcopy((wf%n_o)*(wf%n_v), omega1, 1, omega, 1)
@@ -194,7 +196,7 @@ contains
       req1_a = wf%integrals%n_J*wf%n_v 
       req1_b = wf%integrals%n_J*wf%n_v 
 !
-      rec2 = 2*wf%n_v**2 + 2*(n_o_packed)
+      rec2 = wf%n_v**2 + 2*(n_o_packed) + 2*(n_v_packed)
 !
 !     Initialize batching variables
 !
