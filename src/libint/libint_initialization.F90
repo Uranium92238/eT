@@ -137,7 +137,7 @@ contains
       character(kind=c_char),dimension(40) :: cpp_temp_basis
       character(kind=c_char),dimension(40) :: cpp_temp_file
 !
-      logical(kind=c_bool) :: cartesian_gaussians
+      logical(kind=c_bool), value :: cartesian_gaussians
 !
       integer :: j
 !

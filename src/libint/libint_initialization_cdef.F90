@@ -35,7 +35,7 @@ interface
 !
       character(kind = c_char) :: basisset(*)
       character(kind = c_char) :: filename(*)
-      logical(kind = c_bool)   :: cartesian_gaussians
+      logical(kind = c_bool), value :: cartesian_gaussians
 !
    end subroutine initialize_basis_c
 !
