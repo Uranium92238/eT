@@ -108,7 +108,7 @@ void initialize_basis(char *basisset, char *filename, bool *cartesian_gaussians)
     BasisSet temporary(basisset, temporary_atoms);
     cout.clear();
 
-    temporary.set_pure(!(*cartesian_gaussians));
+    temporary.set_pure(!*(cartesian_gaussians));
     basis.add(temporary);
 
 }
