@@ -45,8 +45,6 @@ module bfgs_tool_class
    use kinds
    use parameters
 !
-   use file_class
-   use disk_manager_class
    use memory_manager_class
    use array_utilities
 !

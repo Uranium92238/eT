@@ -22,10 +22,10 @@ module abstract_hf_solver_class
 !!    Abstract HF solver class module 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-   use kinds 
+   use global_in,  only : input
+   use global_out, only : output
+!
    use parameters   
-   use disk_manager_class
-   use io_utilities
 !
    implicit none 
 !

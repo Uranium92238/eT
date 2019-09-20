@@ -91,7 +91,7 @@ contains
 !
       class(ccs) :: wf
 !
-      solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' multipliers')
+      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' multipliers')
       call solver%timer%turn_on()
 !
 !     Print solver banner

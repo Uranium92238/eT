@@ -25,9 +25,10 @@ module shell_class
 !!
 !
    use kinds
-   use output_file_class
-   use disk_manager_class
-   use shell_details_class
+!
+   use global_out, only : output
+!
+   use shell_details_class, only : shell_details
 !
    implicit none
 !

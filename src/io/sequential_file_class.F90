@@ -26,19 +26,17 @@ module sequential_file_class
 !!
 !
    use kinds    
-   use abstract_file_class, only : abstract_file
+   use abstract_other_file_class, only : abstract_other_file
    use global_out, only : output
    use disk_manager_class, only : disk
 !
-   type, extends(abstract_file) :: sequential_file
+   type, extends(abstract_other_file) :: sequential_file
 !
    contains
 !
-!     Open and close
+!     Open, skip and rewind
 !
       procedure, public :: open_   => open_sequential_file
-      procedure, public :: close_  => close_sequential_file
-      procedure, public :: delete_ => delete_sequential_file
       procedure, public :: rewind_ => rewind_sequential_file
       procedure, public :: skip    => skip_sequential_file
 !
@@ -228,50 +226,6 @@ contains
    end subroutine open_sequential_file
 !
 !
-   subroutine close_sequential_file(the_file, file_status)
-!!
-!!    Open the sequential file
-!!    Written by Rolf Heilemann Myhre, May 2019
-!!
-      implicit none
-!
-      class(sequential_file)                 :: the_file
-      character(len=*), optional, intent(in) :: file_status
-!
-      integer  :: file_change
-!
-      integer              :: io_error
-      character(len=100)   :: io_msg
-!
-      character(len=20)    :: stat
-!
-      if(present(file_status)) then
-         stat = trim(file_status)
-      else
-         stat = 'keep'
-      endif 
-!
-      if (.not. the_file%is_open) then
-         call output%error_msg(trim(the_file%name_)//' already closed')
-      end if
-!
-      close(the_file%unit, iostat=io_error, iomsg=io_msg, status=trim(stat))
-!
-      if (io_error .ne. 0) then 
-         call output%error_msg('could not close eT file '//trim(the_file%name_)//&
-                              &'. Error message: '//trim(io_msg))
-      endif
-!
-      file_change = the_file%get_change()
-      call disk%update(file_change, the_file%name_)
-!
-      the_file%is_open = .false.
-      the_file%unit = -1
-      the_file%action_ = 'unknown'
-!
-   end subroutine close_sequential_file
-!
-!
    subroutine rewind_sequential_file(the_file)
 !!
 !!    Rewind the sequential file
@@ -327,49 +281,6 @@ contains
       enddo
 !
    end subroutine skip_sequential_file
-!
-!
-   subroutine delete_sequential_file(the_file)
-!!
-!!    Delete file
-!!    Written by Rolf Heilemann Myhre, Aug 2019
-!!
-      implicit none
-!
-      class(sequential_file) :: the_file
-!
-      integer              :: io_error
-      character(len=100)   :: io_msg
-!
-      if(the_file%is_open) then
-!
-         close(the_file%unit, iostat=io_error, iomsg=io_msg, status='delete')
-!
-         if (io_error .ne. 0) then 
-            call output%error_msg('Error: could not delete eT file '//trim(the_file%name_)//&
-                                 &'. Error message: '//trim(io_msg))
-         endif
-!
-      else
-!
-         open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
-              action='write', iostat=io_error, iomsg=io_msg)
-!
-         if (io_error .ne. 0) then 
-            call output%error_msg('Error: could not open eT file '//trim(the_file%name_)//&
-                                 &'. Error message: '//trim(io_msg))
-         endif
-!
-         close(the_file%unit, iostat=io_error, iomsg=io_msg, status='delete')
-!
-         if (io_error .ne. 0) then 
-            call output%error_msg('Error: could not delete eT file '//trim(the_file%name_)//&
-                                 &'. Error message: '//trim(io_msg))
-         endif
-!
-      endif
-!
-   end subroutine delete_sequential_file
 !
 !
    subroutine write_blank_sequential_file(the_file)

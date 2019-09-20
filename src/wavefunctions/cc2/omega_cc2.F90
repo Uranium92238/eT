@@ -49,7 +49,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = new_timer('omega CC2')
+      timer = timings('omega CC2')
       call timer%turn_on()
 !
       call zero_array(omega, wf%n_gs_amplitudes)

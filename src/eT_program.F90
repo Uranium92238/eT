@@ -27,7 +27,7 @@ program eT_program
    use kinds
    use global_in 
    use global_out
-   use timings_class, only : timings
+   use timings_class, only : timings, timing
    use disk_manager_class, only : disk
    use memory_manager_class, only : mem
    use libint_initialization, only : initialize_libint, finalize_libint

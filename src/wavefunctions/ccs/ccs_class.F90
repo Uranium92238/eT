@@ -24,22 +24,20 @@ module ccs_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-   use wavefunction_class
    use hf_class
 !
-   use mo_integral_tool_class
+   use mo_integral_tool_class, only : mo_integral_tool
+!
+   use reordering
 !
    use sequential_file_class, only : sequential_file
-   use reordering
-   use string_utilities
-   use array_utilities
-   use array_analysis
-   use interval_class
-   use index_invert
-   use batching_index_class
-   use timings_class
-   use file_class, only : file
-   use disk_manager_class, only : disk
+   use string_utilities, only : convert_to_uppercase
+   use array_utilities, only : get_l2_norm, copy_and_scale
+   use array_utilities, only : get_abs_max_w_index
+   use array_analysis, only : get_n_lowest
+   use index_invert, only : invert_compound_index, invert_packed_index
+   use batching_index_class, only : batching_index
+   use timings_class, only : timings
 !
    implicit none
 !
@@ -59,10 +57,10 @@ module ccs_class
       logical :: bath_orbital
       logical :: frozen_core
 !
-      type(file) :: t1_file, t1bar_file 
-      type(file) :: r1_file, l1_file
-      type(file) :: excitation_energies_file
-      type(file) :: restart_file
+      type(sequential_file) :: t1_file, t1bar_file
+      type(sequential_file) :: r1_file, l1_file
+      type(sequential_file) :: excitation_energies_file
+      type(sequential_file) :: restart_file
 !
       type(mo_integral_tool) :: integrals
 !
@@ -464,14 +462,14 @@ contains
 !
 !     Write information to restart file 
 !
-      call disk%open_file(wf%restart_file, 'write', 'rewind')
+      call wf%restart_file%open_('write', 'rewind')
 !
-      write(wf%restart_file%unit) wf%n_o 
-      write(wf%restart_file%unit) wf%n_v 
-      write(wf%restart_file%unit) wf%n_gs_amplitudes 
-      write(wf%restart_file%unit) wf%n_es_amplitudes 
+      call wf%restart_file%write_(wf%n_o)
+      call wf%restart_file%write_(wf%n_v)
+      call wf%restart_file%write_(wf%n_gs_amplitudes)
+      call wf%restart_file%write_(wf%n_es_amplitudes)
 !
-      call disk%close_file(wf%restart_file)
+      call wf%restart_file%close_()
 !
    end subroutine write_cc_restart_ccs
 !
@@ -507,14 +505,14 @@ contains
 !
       integer :: n_o, n_v, n_gs_amplitudes, n_es_amplitudes
 !
-      call disk%open_file(wf%restart_file, 'read', 'rewind')
+      call wf%restart_file%open_('read', 'rewind')
 !
-      read(wf%restart_file%unit) n_o
-      read(wf%restart_file%unit) n_v
-      read(wf%restart_file%unit) n_gs_amplitudes
-      read(wf%restart_file%unit) n_es_amplitudes
+      call wf%restart_file%read_(n_o)
+      call wf%restart_file%read_(n_v)
+      call wf%restart_file%read_(n_gs_amplitudes)
+      call wf%restart_file%read_(n_es_amplitudes)
 !
-      call disk%close_file(wf%restart_file)
+      call wf%restart_file%close_()
 !
       if (n_o .ne. wf%n_o) call output%error_msg('attempted to restart from inconsistent number ' // &
                                                    'of occupied orbitals.')

@@ -30,7 +30,7 @@ module ccsd_class
 !
    type, extends(abstract_doubles) :: ccsd
 !
-      type(file) :: t2_file, t2bar_file
+      type(sequential_file) :: t2_file, t2bar_file
 !
 !     Intermediate files 
 !

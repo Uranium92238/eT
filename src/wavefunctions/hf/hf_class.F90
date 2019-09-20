@@ -25,11 +25,15 @@ module hf_class
 !
    use wavefunction_class
 !
+   use global_in, only : input
+!
    use reordering
-   use timings_class
-   use array_utilities
-   use array_analysis
-   use libint_initialization
+   use timings_class, only : timings
+   use array_utilities, only : get_abs_max, sandwich, print_vector
+   use array_utilities, only : full_cholesky_decomposition_system
+   use array_analysis, only : get_n_highest
+!
+   use libint_initialization, only : set_coulomb_precision_c
 !
    use omp_lib
 !
@@ -1631,7 +1635,7 @@ contains
 !
      ! n_s = wf%system%get_n_shells()
 !
-      ao_fock_timer = new_timer('AO Fock construction')
+      ao_fock_timer = timings('AO Fock construction')
       call ao_fock_timer%turn_on()
 !
 !     Set thresholds to ignore Coulomb and exchange terms,

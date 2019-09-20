@@ -205,9 +205,9 @@ contains
 !
       type(timings) :: L_TDM_timer, R_TDM_timer, EOM_timer
 !
-      L_TDM_timer = new_timer('Time for left transition density')
-      R_TDM_timer = new_timer('Time for right transition density')
-      EOM_timer = new_timer('Total time for EOM FOP')
+      L_TDM_timer = timings('Time for left transition density')
+      R_TDM_timer = timings('Time for right transition density')
+      EOM_timer = timings('Total time for EOM FOP')
 !
       call EOM_timer%turn_on()
 !

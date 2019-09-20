@@ -78,7 +78,7 @@ contains
 !
       character(len=*), intent(in) :: transformation
 !
-      solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
+      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
       call solver%timer%turn_on()
 !
 !     Set printables

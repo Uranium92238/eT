@@ -58,7 +58,7 @@ contains
 !
       type(timings) :: jacobian_doubles_b1_timer
 !
-      jacobian_doubles_b1_timer = new_timer('jacobian doubles b1')
+      jacobian_doubles_b1_timer = timings('jacobian doubles b1')
       call jacobian_doubles_b1_timer%turn_on()
 !
 !     Construct v_aibj = 2*c_aibj - c_ajbi ordered as
@@ -112,7 +112,7 @@ contains
 !
       type(timings) :: jacobian_doubles_c1_timer
 !
-      jacobian_doubles_c1_timer = new_timer('jacobian doubles c1')
+      jacobian_doubles_c1_timer = timings('jacobian doubles c1')
       call jacobian_doubles_c1_timer%turn_on()
 !
 !     Construct L_jikb = 2*g_jikb - g_kijb as
@@ -178,7 +178,7 @@ contains
 !
       integer :: rec0, rec1
 !
-      jacobian_doubles_d1_timer = new_timer('jacobian doubles d1')
+      jacobian_doubles_d1_timer = timings('jacobian doubles d1')
       call jacobian_doubles_d1_timer%turn_on()
 !
 !     Prepare for batching over index a
@@ -273,7 +273,7 @@ contains
       real(dp), dimension(:,:), allocatable :: Y_bd
       real(dp), dimension(:,:), allocatable :: Y_jl
 !
-      jacobian_a1_intermediate_timer = new_timer('Jacobian CCSD G2 intermediate construction')
+      jacobian_a1_intermediate_timer = timings('Jacobian CCSD G2 intermediate construction')
       call jacobian_a1_intermediate_timer%turn_on()
 !
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -383,7 +383,7 @@ contains
 !
       type(timings) :: jacobian_doubles_a1_timer
 !
-      jacobian_doubles_a1_timer = new_timer('jacobian doubles a1')
+      jacobian_doubles_a1_timer = timings('jacobian doubles a1')
       call jacobian_doubles_a1_timer%turn_on()
 !
 !     Term 1: sum_ckdl L_kcld u_ki^ca c_dl ::
@@ -534,7 +534,7 @@ contains
 !
       integer :: rec0, rec1
 !
-      jacobian_doubles_a2_timer = new_timer('jacobian doubles a2')
+      jacobian_doubles_a2_timer = timings('jacobian doubles a2')
       call jacobian_doubles_a2_timer%turn_on()
 !
 !     :: Term 1. - sum_k g_aikj c_bk ::

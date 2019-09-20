@@ -85,7 +85,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = new_timer('Jacobian transpose transformation CC2')
+      timer = timings('Jacobian transpose transformation CC2')
       call timer%turn_on()
 !
 !     Allocate and zero the transformed vecotr (singles part)
@@ -239,7 +239,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = new_timer('jacobian transpose b2 cc2')
+      timer = timings('jacobian transpose b2 cc2')
       call timer%turn_on()
 !
 !$omp parallel do private(a, i, b, j)

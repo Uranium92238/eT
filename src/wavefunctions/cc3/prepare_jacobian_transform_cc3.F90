@@ -55,7 +55,7 @@ contains
 !
       type(timings) :: prep_timer      
 !
-      prep_timer = new_timer("Time preparing for Jacobian")
+      prep_timer = timings("Time preparing for Jacobian")
       call prep_timer%turn_on()
 !
       call output%printf('Preparing for (a0) right excited state equations',  &
@@ -71,7 +71,6 @@ contains
       call wf%save_jacobian_j2_intermediate()
 !
       call prep_timer%turn_off()
-      call timing%flush_()
 !
    end subroutine prepare_for_jacobian_cc3
 !
@@ -87,7 +86,7 @@ contains
 !
       type(timings) :: prep_timer
 !
-      prep_timer = new_timer("Time preparing for Jacobian")
+      prep_timer = timings("Time preparing for Jacobian")
       call prep_timer%turn_on()
 !
       call output%printf('Preparing for (a0) left excited state equations',   &
@@ -97,7 +96,6 @@ contains
       if (.not. wf%g_cdlk_t%exists()) call wf%prep_cc3_jacobian_trans_integrals()
 !
       call prep_timer%turn_off()
-      call timing%flush_()
 !
    end subroutine prepare_for_jacobian_transpose_cc3
 !

@@ -57,13 +57,11 @@ contains
 !!
       class(ccs) :: wf 
 !
-      call wf%t1_file%init('t1', 'sequential', 'unformatted')
-      call wf%t1bar_file%init('t1bar', 'sequential', 'unformatted')
+      wf%t1_file = sequential_file('t1')
+      wf%t1bar_file = sequential_file('t1bar')
 !
-      call wf%r1_file%init('r1', 'sequential', 'unformatted')
-      call wf%l1_file%init('l1', 'sequential', 'unformatted')
-!
-      call wf%excitation_energies_file%init('excitation_energies', 'sequential', 'unformatted')
+      wf%r1_file = sequential_file('r1')
+      wf%l1_file = sequential_file('l1')
 !
    end subroutine initialize_singles_files_ccs
 !
@@ -75,9 +73,9 @@ contains
 !!
       class(ccs) :: wf 
 !
-      call wf%restart_file%init('cc_restart_file', 'sequential', 'unformatted')
+      wf%restart_file = sequential_file('cc_restart_file')
 !
-      call wf%excitation_energies_file%init('excitation_energies', 'sequential', 'unformatted')
+      wf%excitation_energies_file = sequential_file('excitation_energies')
 !
    end subroutine initialize_cc_files_ccs
 !
@@ -91,12 +89,11 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      call disk%open_file(wf%t1_file, 'write')
-      rewind(wf%t1_file%unit)
+      call wf%t1_file%open_('write', 'rewind')
 !
-      write(wf%t1_file%unit) wf%t1 
+      call wf%t1_file%write_(wf%t1, wf%n_t1)
 !
-      call disk%close_file(wf%t1_file)
+      call wf%t1_file%close_()
 !
    end subroutine save_amplitudes_ccs
 !
@@ -110,11 +107,11 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      call disk%open_file(wf%t1_file, 'read', 'rewind')
+      call wf%t1_file%open_('read', 'rewind')
 !
-      read(wf%t1_file%unit) wf%t1 
+      call wf%t1_file%read_(wf%t1, wf%n_t1)
 !
-      call disk%close_file(wf%t1_file)
+      call wf%t1_file%close_()
 !
    end subroutine read_amplitudes_ccs
 !
@@ -128,11 +125,11 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      call disk%open_file(wf%t1bar_file, 'write', 'rewind')
+      call wf%t1bar_file%open_('write', 'rewind')
 !
-      write(wf%t1bar_file%unit) wf%t1bar 
+      call wf%t1bar_file%write_(wf%t1bar, wf%n_t1)
 !
-      call disk%close_file(wf%t1bar_file)
+      call wf%t1bar_file%close_()
 !
    end subroutine save_multipliers_ccs
 !
@@ -146,11 +143,11 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      call disk%open_file(wf%t1bar_file, 'read', 'rewind')
+      call wf%t1bar_file%open_('read', 'rewind')
 !
-      read(wf%t1bar_file%unit) wf%t1bar
+      call wf%t1bar_file%read_(wf%t1bar, wf%n_t1)
 !
-      call disk%close_file(wf%t1bar_file)
+      call wf%t1bar_file%close_()
 !
    end subroutine read_multipliers_ccs
 !
@@ -176,15 +173,17 @@ contains
 !
       integer, intent(in) :: n ! state number 
 !
-      type(file) :: file_
+      type(sequential_file) :: file_
 !
-      call disk%open_file(file_, 'write', 'append')
+      call file_%open_('write', 'append')
 !
-      if (n .eq. 1) rewind(file_%unit)
+      if (n .eq. 1) then
+         call file_%rewind_()
+      endif
 !
-      write(file_%unit) X
+      call file_%write_(X, wf%n_t1)
 !
-      call disk%close_file(file_, 'keep')
+      call file_%close_()
 !
    end subroutine save_singles_vector_ccs
 !
@@ -205,15 +204,15 @@ contains
 !
       integer, intent(in) :: n ! state number 
 !
-      type(file) :: file_
+      type(sequential_file) :: file_
 !
-      call disk%open_file(file_, 'read')
+      call file_%open_('read', 'rewind')
 !
-      call file_%prepare_to_read_line(n)
+      call file_%skip(n-1)
 !
-      read(file_%unit) X
+      call file_%read_(X, wf%n_t1)
 !
-      call disk%close_file(file_, 'keep')
+      call file_%close_()
 !
    end subroutine read_singles_vector_ccs
 !
@@ -337,14 +336,12 @@ contains
 !
       endif 
 !
-      call disk%open_file(wf%excitation_energies_file, 'write', 'rewind')
+      call wf%excitation_energies_file%open_('write', 'rewind')
 !
-      rewind(wf%excitation_energies_file%unit)
+      call wf%excitation_energies_file%write_(n_states)
+      call wf%excitation_energies_file%write_(energies, n_states)
 !
-      write(wf%excitation_energies_file%unit) n_states
-      write(wf%excitation_energies_file%unit) energies
-!
-      call disk%close_file(wf%excitation_energies_file, 'keep')
+      call wf%excitation_energies_file%close_()
 !     
    end subroutine save_excitation_energies_ccs
 !
@@ -373,10 +370,9 @@ contains
 !
       integer :: local_n_states
 !
-      call disk%open_file(wf%excitation_energies_file, 'read')
-      rewind(wf%excitation_energies_file%unit)
+      call wf%excitation_energies_file%open_('read', 'rewind')
 !
-      read(wf%excitation_energies_file%unit) local_n_states
+      call wf%excitation_energies_file%read_(local_n_states)
 !
       if (local_n_states .ne. n_states) then
 !
@@ -384,9 +380,9 @@ contains
 !
       endif
 !
-      read(wf%excitation_energies_file%unit) energies
+      call wf%excitation_energies_file%read_(energies, n_states)
 !
-      call disk%close_file(wf%excitation_energies_file, 'keep')
+      call wf%excitation_energies_file%close_()
 !     
    end subroutine read_excitation_energies_ccs
 !
@@ -402,12 +398,11 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      call disk%open_file(wf%excitation_energies_file, 'read')
-      rewind(wf%excitation_energies_file%unit)
+      call wf%excitation_energies_file%open_('read', 'rewind')
 !
-      read(wf%excitation_energies_file%unit) get_n_excitation_energies_on_file_ccs
+      call wf%excitation_energies_file%read_(get_n_excitation_energies_on_file_ccs)
 !
-      call disk%close_file(wf%excitation_energies_file, 'keep')
+      call wf%excitation_energies_file%close_()
 !     
    end function get_n_excitation_energies_on_file_ccs
 !

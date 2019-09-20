@@ -80,7 +80,7 @@ contains
 !
       type(timings) :: jacobian_transpose_timer
 !
-      jacobian_transpose_timer = new_timer('jacobian transpose')
+      jacobian_transpose_timer = timings('jacobian transpose')
       call jacobian_transpose_timer%turn_on()
 !
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
