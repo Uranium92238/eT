@@ -40,46 +40,52 @@ module input_file_class
 !
    contains
 !
-      procedure :: open_                                                => open_input_file
-      procedure :: close_                                               => close_input_file
+      procedure :: open_                                 => open_input_file
+      procedure :: close_                                => close_input_file
 !
-      procedure :: check_for_errors                                     => check_for_errors_input_file
-      procedure :: requested_section                                    => requested_section_input_file
-      procedure :: requested_keyword_in_section                         => requested_keyword_in_section_input_file
-      procedure :: get_n_elements_for_keyword_in_section                => get_n_elements_for_keyword_in_section_input_file
-      procedure :: get_array_for_keyword_in_section                     => get_array_for_keyword_in_section_input_file
-      procedure :: get_n_atoms                                          => get_n_atoms_input_file
-      procedure :: get_mm_n_atoms                                       => get_mm_n_atoms_input_file
-      procedure :: get_geometry                                         => get_geometry_input_file
-      procedure :: get_mm_geometry                                      => get_mm_geometry_input_file
-      procedure :: get_reference_wf                                     => get_reference_wf_input_file
-      procedure :: get_cc_wf                                            => get_cc_wf_input_file
+      procedure :: check_for_errors                      => check_for_errors_input_file
+      procedure :: requested_section                     => requested_section_input_file
+      procedure :: requested_keyword_in_section          => requested_keyword_in_section_input_file
+      procedure :: get_n_elements_for_keyword_in_section => get_n_elements_for_keyword_in_section_input_file
+      procedure :: get_array_for_keyword_in_section      => get_array_for_keyword_in_section_input_file
+      procedure :: get_n_atoms                           => get_n_atoms_input_file
+      procedure :: get_mm_n_atoms                        => get_mm_n_atoms_input_file
+      procedure :: get_geometry                          => get_geometry_input_file
+      procedure :: get_mm_geometry                       => get_mm_geometry_input_file
+      procedure :: get_reference_wf                      => get_reference_wf_input_file
+      procedure :: get_cc_wf                             => get_cc_wf_input_file
 !
-      procedure :: requested_reference_calculation                      => requested_reference_calculation_input_file
-      procedure :: requested_cc_calculation                             => requested_cc_calculation_input_file
-      procedure :: requested_mm_calculation                             => requested_mm_calculation_input_file
+      procedure :: requested_reference_calculation       => requested_reference_calculation_input_file
+      procedure :: requested_cc_calculation              => requested_cc_calculation_input_file
+      procedure :: requested_mm_calculation              => requested_mm_calculation_input_file
 !
-      procedure, private :: get_string_keyword_in_section_wo_safety     => get_string_keyword_in_section_wo_safety_input_file
-      procedure, private :: move_to_section                             => move_to_section_input_file
-      procedure, private :: move_to_mm_geometry                         => move_to_mm_geometry_input_file
-      procedure, private :: check_section_for_illegal_keywords          => check_section_for_illegal_keywords_input_file
-      procedure, private :: check_for_illegal_sections                  => check_for_illegal_sections_input_file
-      procedure, private :: print_sections                              => print_sections_input_file
-      procedure, private :: read_adjustl_lower                          => read_adjustl_lower_input_file
+      procedure, private :: get_string_keyword_in_section_wo_safety &
+                         => get_string_keyword_in_section_wo_safety_input_file
 !
-      procedure, nopass, private :: string_is_comment                   => string_is_comment_input_file
-      procedure, nopass, private :: extract_keyword_from_string         => extract_keyword_from_string_input_file
-      procedure, nopass, private :: extract_keyword_value_from_string   => extract_keyword_value_from_string_input_file
+      procedure, private :: move_to_section                     => move_to_section_input_file
+      procedure, private :: move_to_mm_geometry                 => move_to_mm_geometry_input_file
 !
-      generic :: get_keyword_in_section                                 => get_integer_keyword_in_section_input_file,   &
-                                                                           get_integer8_keyword_in_section_input_file,  &
-                                                                           get_string_keyword_in_section_input_file,    &
-                                                                           get_dp_keyword_in_section_input_file
+      procedure, private :: check_section_for_illegal_keywords  &
+                         => check_section_for_illegal_keywords_input_file
+      procedure, private :: check_for_illegal_sections          => check_for_illegal_sections_input_file
 !
-      generic :: get_required_keyword_in_section                        => get_required_string_keyword_in_section_input_file,    &
-                                                                           get_required_integer_keyword_in_section_input_file,   &
-                                                                           get_required_integer8_keyword_in_section_input_file,  &
-                                                                           get_required_dp_keyword_in_section_input_file
+      procedure, private :: print_sections                      => print_sections_input_file
+      procedure, private :: read_adjustl_lower                  => read_adjustl_lower_input_file
+!
+      procedure, nopass, private :: string_is_comment           => string_is_comment_input_file
+      procedure, nopass, private :: extract_keyword_from_string => extract_keyword_from_string_input_file
+      procedure, nopass, private :: extract_keyword_value_from_string &
+                                 => extract_keyword_value_from_string_input_file
+!
+      generic :: get_keyword_in_section            => get_integer_keyword_in_section_input_file,   &
+                                                      get_integer8_keyword_in_section_input_file,  &
+                                                      get_string_keyword_in_section_input_file,    &
+                                                      get_dp_keyword_in_section_input_file
+!
+      generic :: get_required_keyword_in_section   => get_required_string_keyword_in_section_input_file,    &
+                                                      get_required_integer_keyword_in_section_input_file,   &
+                                                      get_required_integer8_keyword_in_section_input_file,  &
+                                                      get_required_dp_keyword_in_section_input_file
 !
       procedure :: get_integer_keyword_in_section_input_file
       procedure :: get_integer8_keyword_in_section_input_file
@@ -1860,11 +1866,16 @@ contains
 !
       enddo    
 !
-      if (n_beginnings > 1) call output%error_msg('Tried to move to section "' // string // '" with more than one starting clause.')
-      if (n_ends > 1) call output%error_msg('Tried to move to section "' // string // '" with more than one ending clause.')
-      if (n_ends == 0 .and. n_beginnings == 0) call output%error_msg('Tried to move to non-existent section "' // string // '".')
+      if (n_beginnings > 1) call output%error_msg('Tried to move to section "' // string // &
+                                                & '" with more than one starting clause.')
+      if (n_ends > 1) call output%error_msg('Tried to move to section "' // string // &
+                                          & '" with more than one ending clause.')
+      if (n_ends == 0 .and. n_beginnings == 0) then
+         call output%error_msg('Tried to move to non-existent section "' // string // '".')
+      endif
       if (n_ends < 1) call output%error_msg('Tried to move to section "' // string // '" with no end.')
-      if (n_beginnings < 1) call output%error_msg('Tried to move to section "' // string // '" with no beginning.')
+      if (n_beginnings < 1) call output%error_msg('Tried to move to section "' // string // &
+                                                & '" with no beginning.')
 !
 !     Find the end of the section 
 !

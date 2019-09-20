@@ -24,9 +24,17 @@ module diis_cc_gs_class
 !!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!  
 !
-   use kinds
-   use ccs_class
-   use diis_tool_class
+   use parameters
+!
+   use global_in, only : input
+   use global_out, only : output
+!
+   use string_utilities, only : convert_to_uppercase
+   use array_utilities, only : get_l2_norm
+   use memory_manager_class, only : mem
+   use ccs_class, only : ccs
+   use diis_tool_class, only : diis_tool
+   use timings_class, only : timings
 !
    implicit none
 !
@@ -88,7 +96,7 @@ contains
 !
       class(ccs) :: wf
 !
-      solver%timer = new_timer(trim(convert_to_uppercase(wf%name_)) // ' ground state')
+      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' ground state')
       call solver%timer%turn_on()
 !
 !     Print solver banner
@@ -245,7 +253,6 @@ contains
          write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
                                           omega_norm, abs(wf%energy-prev_energy)
          flush(output%unit)
-         flush(timing%unit)
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !

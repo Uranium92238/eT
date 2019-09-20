@@ -31,11 +31,13 @@ module scf_diis_hf_class
 !!
 !
    use kinds
-   use diis_tool_class
-   use timings_class
-   use hf_class
-   use disk_manager_class
    use abstract_hf_solver_class
+!
+   use diis_tool_class, only : diis_tool
+   use timings_class, only : timings
+   use hf_class, only : hf
+   use memory_manager_class, only : mem
+   use array_utilities, only : get_abs_max
 !
    implicit none
 !
@@ -186,8 +188,8 @@ contains
 !
 !     :: Part I. Preparations.
 !
-      iteration_timer = new_timer('SCF DIIS iteration time')
-      solver_timer = new_timer('SCF DIIS solver time')
+      iteration_timer = timings('SCF DIIS iteration time')
+      solver_timer = timings('SCF DIIS solver time')
 !
       call solver_timer%turn_on()
 !
@@ -330,9 +332,6 @@ contains
          iteration = iteration + 1
 !
       enddo
-!
-   !   call mem%dealloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-   !   call mem%dealloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call mem%dealloc(G, wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities)
       call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)

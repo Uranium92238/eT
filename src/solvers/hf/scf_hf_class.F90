@@ -34,9 +34,10 @@ module scf_hf_class
 !!
 !
    use kinds
-   use hf_class
-   use disk_manager_class
    use abstract_hf_solver_class
+!
+   use memory_manager_class, only : mem
+   use hf_class, only : hf
 !
    implicit none
 !

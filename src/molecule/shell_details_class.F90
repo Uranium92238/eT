@@ -6,9 +6,8 @@
 !!
 !
    use kinds
-   use output_file_class
-   use disk_manager_class
-   use memory_manager_class
+!
+   use global_out, only : output
 !
    implicit none
 !

@@ -67,7 +67,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = new_timer('jacobian transpose doubles a1')
+      timer = timings('jacobian transpose doubles a1')
       call timer%turn_on()
 !
 !     :: Term 1: sigma_ai =+ sum_bjck c_bj u^bc_jk L_iakc
@@ -231,7 +231,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = new_timer('jacobian transpose doubles b1')
+      timer = timings('jacobian transpose doubles b1')
       call timer%turn_on()
 !
 !     :: Term 1: sigma_ai =+ sum_bjc c_bjci g_bjca = sum_bjc (g_bjca)^T c_bjci
@@ -332,7 +332,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = new_timer('jacobian transpose doubles a2')
+      timer = timings('jacobian transpose doubles a2')
       call timer%turn_on()
 !
 !     Term 1: (2F_jb c_ai - F_ib c_aj)

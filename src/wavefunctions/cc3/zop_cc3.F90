@@ -94,10 +94,10 @@ contains
       type(timings) :: cc3_timer, ccsd_timer
       type(timings) :: cc3_ijk_timer, cc3_abc_timer
 !
-      cc3_ijk_timer   = new_timer('Time in CC3 GS density ijk batching')
-      cc3_abc_timer   = new_timer('Time in CC3 GS density abc batching')
-      cc3_timer      = new_timer('Total CC3 contribution GS density')
-      ccsd_timer     = new_timer('Total CCSD contribution GS density')
+      cc3_ijk_timer   = timings('Time in CC3 GS density ijk batching')
+      cc3_abc_timer   = timings('Time in CC3 GS density abc batching')
+      cc3_timer      = timings('Total CC3 contribution GS density')
+      ccsd_timer     = timings('Total CCSD contribution GS density')
 !
       call ccsd_timer%turn_on()
 !

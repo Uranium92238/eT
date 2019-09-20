@@ -31,7 +31,7 @@ module wavefunction_class
    use memory_manager_class, only : mem
    use molecular_system_class, only : molecular_system
    use interval_class, only : interval
-   use libint_initialization
+   use libint_initialization, only : initialize_potential_c
 !
    implicit none
 !

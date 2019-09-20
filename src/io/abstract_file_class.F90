@@ -22,7 +22,7 @@ module abstract_file_class
 !!
 !!    Abstract file class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
-!!    Reqwritten by Rolf H. Myhre, Nov 2018
+!!    Rewritten by Rolf H. Myhre, November 2018 and September 2019
 !!
 !!
 !
@@ -167,7 +167,7 @@ contains
 !  
    subroutine copy_abstract_file(the_file, filename)
 !!
-!!    Copy eT file
+!!    Copy abstract file
 !!    Written by Alexander Paul and Rolf H. Myhre, September 2019
 !!
       implicit none
@@ -195,7 +195,7 @@ contains
 !
 !     Open a new file
       open(newunit=copy_unit, file=trim(filename), access='stream', &
-           form='unformatted', action='write')
+           form='unformatted', action='write', status='new')
 !
 !
 !     Read byte by byte and write it to the new file

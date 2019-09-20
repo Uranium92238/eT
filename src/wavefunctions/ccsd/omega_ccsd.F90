@@ -181,8 +181,8 @@ contains
 !
       type(timings) :: ccsd_a2_timer, ccsd_a2_integral_timer
 !
-      ccsd_a2_timer = new_timer('omega ccsd a2')
-      ccsd_a2_integral_timer = new_timer('omega ccsd a2 g_abcd')
+      ccsd_a2_timer = timings('omega ccsd a2')
+      ccsd_a2_integral_timer = timings('omega ccsd a2 g_abcd')
 !      
       call ccsd_a2_timer%turn_on()
 !
@@ -600,7 +600,7 @@ contains
 !
       type(timings) :: ccsd_b2_timer
 !
-      ccsd_b2_timer = new_timer('omega ccsd b2')
+      ccsd_b2_timer = timings('omega ccsd b2')
       call ccsd_b2_timer%turn_on()
 !
 !     Construct g_aibj and add to omega2 
@@ -731,7 +731,7 @@ contains
 !
       type(timings) :: ccsd_c2_timer
 !
-      ccsd_c2_timer = new_timer('omega ccsd c2')
+      ccsd_c2_timer = timings('omega ccsd c2')
       call ccsd_c2_timer%turn_on()
 !
 !     Sort t_al_di = t_li^ad as t_aidl (1234 to 1432)
@@ -966,7 +966,7 @@ contains
 !
       type(timings) :: ccsd_d2_timer
 !
-      ccsd_d2_timer = new_timer('omega ccsd d2')
+      ccsd_d2_timer = timings('omega ccsd d2')
       call ccsd_d2_timer%turn_on()
 !
 !     :: Calculate the D2.2 term of omega ::
@@ -1099,7 +1099,7 @@ contains
 !
       type(timings) :: ccsd_e2_timer 
 !
-      ccsd_e2_timer = new_timer('omega ccsd e2')
+      ccsd_e2_timer = timings('omega ccsd e2')
       call ccsd_e2_timer%turn_on()
 !
 !     :: Calculate the E2.1 term of omega ::
