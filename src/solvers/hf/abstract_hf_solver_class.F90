@@ -69,8 +69,11 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      write(output%unit, '(t6,a30,e11.4)') 'Energy threshold:             ', solver%energy_threshold
-      write(output%unit, '(t6,a30,e11.4)') 'Gradient threshold:           ', solver%gradient_threshold
+      call output%printf('Energy threshold:             (e11.4)',&
+         reals=[solver%energy_threshold], fs='(t6,a)', pl='minimal')
+!
+      call output%printf('Gradient threshold:           (e11.4)',&
+         reals=[solver%gradient_threshold], fs='(t6,a)', pl='minimal')
 !
    end subroutine print_hf_solver_settings_hf_solver
 !
@@ -154,8 +157,8 @@ contains
       class(abstract_hf_solver) :: solver
       class(hf), intent(inout) :: wf
 !
-      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(convert_to_uppercase(wf%name_)),&
-             ' wavefunction energetics (a.u.):'
+      call output%printf('- Summary of '// trim(convert_to_uppercase(wf%name_))//&
+             ' wavefunction energetics (a.u.):', fs='(/t3,a)', pl='minimal')
 !
       call wf%print_energy()
       call wf%print_orbital_energies('3')
