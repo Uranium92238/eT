@@ -381,3 +381,15 @@
       class(ccs) :: wf
 !
    end subroutine destruct_orbital_coefficients_fc_ccs
+!
+!
+   module subroutine initialize_fock_ccs(wf)
+!!
+!!    Initialize Fock
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+   end subroutine initialize_fock_ccs

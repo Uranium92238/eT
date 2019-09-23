@@ -476,4 +476,22 @@ contains
    end subroutine destruct_orbital_coefficients_fc_ccs
 !
 !
+   module subroutine initialize_fock_ccs(wf)
+!!
+!!    Initialize Fock
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Initializes all Fock matrix blocks
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      call wf%initialize_fock_ij()
+      call wf%initialize_fock_ia()
+      call wf%initialize_fock_ai()
+      call wf%initialize_fock_ab()
+!
+   end subroutine initialize_fock_ccs
+!
 end submodule initialize_desctruct_ccs
