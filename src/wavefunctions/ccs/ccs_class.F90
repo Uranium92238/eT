@@ -92,6 +92,7 @@ module ccs_class
 !     Preparation and cleanup routines
 !
       procedure :: cleanup                                     => cleanup_ccs
+      procedure :: general_cc_preparations                     => general_cc_preparations_ccs
 !
       procedure :: read_hf                                     => read_hf_ccs
       procedure :: initialize_files                            => initialize_files_ccs
@@ -204,6 +205,7 @@ module ccs_class
 !
 !     Routines to initialize and destruct arrays
 !
+      procedure :: initialize_fock                             => initialize_fock_ccs
       procedure :: initialize_fock_ij                          => initialize_fock_ij_ccs
       procedure :: initialize_fock_ia                          => initialize_fock_ia_ccs
       procedure :: initialize_fock_ai                          => initialize_fock_ai_ccs
@@ -341,26 +343,8 @@ contains
       class(molecular_system), target, intent(in) :: system 
 !
       wf%name_ = 'ccs'
-      wf%system => system
 !
-      call wf%read_hf()
-!
-      call wf%initialize_files()
-!
-      call wf%initialize_orbital_coefficients()
-      call wf%initialize_orbital_energies()
-!
-      call wf%read_orbital_coefficients()
-      call wf%read_orbital_energies()
-!
-      wf%bath_orbital = .false.
-      wf%frozen_core = .false.
-      wf%cvs = .false.
-!
-      call wf%read_settings()
-!
-      if (wf%bath_orbital) call wf%make_bath_orbital()
-      if (wf%frozen_core) call wf%remove_core_orbitals()
+      call wf%general_cc_preparations(system)
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
@@ -368,12 +352,57 @@ contains
 !
       call wf%write_cc_restart()
 !
-      call wf%initialize_fock_ij()
-      call wf%initialize_fock_ia()
-      call wf%initialize_fock_ai()
-      call wf%initialize_fock_ab()
+      call wf%initialize_fock()
 !
    end function new_ccs
+!
+!
+   subroutine general_cc_preparations_ccs(wf, system)
+!!
+!!    General CC preparations
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      class(molecular_system), target, intent(in) :: system 
+!
+      wf%system => system
+!
+!     Initialize CC files
+!
+      call wf%initialize_files()
+!
+!     Read necessary information from HF
+!
+      call wf%read_hf()
+!
+!     Set orbital coefficients and energies
+!
+      call wf%initialize_orbital_coefficients()
+      call wf%initialize_orbital_energies()
+!
+      call wf%read_orbital_coefficients()
+      call wf%read_orbital_energies()
+!
+!     Logicals for special methods
+!
+      wf%bath_orbital = .false.
+      wf%frozen_core = .false.
+      wf%cvs = .false.
+!
+!     Read CC settings from eT.inp (from cc section)
+!
+      call wf%read_settings()
+!
+!     Handle changes in the number of MOs as a result of 
+!     special methods
+!
+      if (wf%bath_orbital) call wf%make_bath_orbital()
+      if (wf%frozen_core) call wf%remove_core_orbitals()
+!
+   end subroutine general_cc_preparations_ccs
 !
 !
    subroutine cleanup_ccs(wf)
