@@ -110,7 +110,7 @@ contains
       call solver%read_settings()
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
 !
-      write(output%unit, '(/t3,a/)') '- Hartree-Fock solver settings:'
+      call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
 !
       call solver%print_scf_diis_settings()
       call solver%print_hf_solver_settings()
@@ -124,7 +124,7 @@ contains
 !
       if (solver%restart) then
 !
-         write(output%unit, '(/t3,a)') '- Requested restart. Reading orbitals from file:'
+         call output%printf('- Requested restart. Reading orbitals from file',fs='(/t3,a)', pl='minimal')
 !
          call wf%read_orbital_coefficients()
          call wf%update_ao_density()
@@ -132,7 +132,9 @@ contains
 !
       else
 !
-         write(output%unit, '(/t3,a,a,a)') '- Setting initial AO density to ', trim(solver%ao_density_guess), ':'
+         call output%printf('- Setting initial AO density to (a0)',&
+            chars=[solver%ao_density_guess], &
+            fs='(/t3,a)', pl='minimal')
          call wf%set_initial_ao_density_guess(solver%ao_density_guess)
 !
       endif
@@ -149,7 +151,8 @@ contains
 !
       class(scf_diis_hf) :: solver
 !
-      write(output%unit, '(t6,a29,i3)') 'DIIS dimension:               ', solver%diis_dimension
+      call output%printf('DIIS dimension:                (i0)', &
+         ints=[solver%diis_dimension],fs='(t6,a)', pl='minimal')
 !
    end subroutine print_scf_diis_settings_scf_diis_hf
 !
@@ -218,8 +221,8 @@ contains
 !
       call wf%get_n_electrons_in_density(n_electrons)
 !
-      write(output%unit, '(/t6,a30,f17.12)') 'Energy of initial guess:      ', wf%energy
-      write(output%unit, '(t6,a30,f17.12)')  'Number of electrons in guess: ', n_electrons
+      call output%printf('Energy of initial guess:      (f25.12)', reals=[wf%energy], fs='(/t6, a)',pl='minimal')
+      call output%printf('Number of electrons in guess: (f25.12)', reals=[n_electrons], fs='(t6, a)',pl='minimal')
 !
 !     Do a Roothan-Hall update to ensure idempotentency of densities,
 !     and use it to construct the first proper Fock matrix from which
@@ -255,8 +258,8 @@ contains
 !
       prev_energy = zero
 !
-      write(output%unit, '(/t3,a)') 'Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)'
-      write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
+      call output%printf('Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)',fs='(/t3,a)',pl='normal') 
+      call output%printf('---------------------------------------------------------------',fs='(t3,a)',pl='normal') 
 !
       iteration = 1
 !
@@ -268,9 +271,10 @@ contains
 !
          energy = wf%energy
 !
-         write(output%unit, '(t3,i4,9x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
-                                          max_grad, abs(wf%energy-prev_energy)
-         flush(output%unit)
+         call output%printf('(i4)  (f25.12)    (e11.4)    (e11.4)', &
+               ints=[iteration], &
+               reals=[wf%energy, max_grad, abs(wf%energy-prev_energy)], &
+               fs='(t3,a)', pl='normal')
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !
@@ -283,13 +287,15 @@ contains
 !
          if (solver%converged) then
 !
-            write(output%unit, '(t3,a)')          '---------------------------------------------------------------'
-            write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
+            call output%printf('---------------------------------------------------------------', &
+                              pl='normal',fs='(t3,a)') 
+            call output%printf('Convergence criterion met in (i0) iterations!',fs='(/t3,a)', pl='normal') 
 !
             if (.not. converged_energy) then
 !
-               write(output%unit, '(/t3,a,/t9,a)') 'Note: the gradient converged in the first iteration,', &
-                                                          'so the energy convergence has not been tested!'
+               call output%printf('Note: the gradient converged in the first iteration, &
+                                 & so the energy convergence has not been tested!', &
+                                 ffs='(/t3,a)', pl='normal')
 !
             endif
 !
@@ -345,10 +351,9 @@ contains
 !
       if (.not. solver%converged) then
 !
-         write(output%unit, '(t3,a)')   '---------------------------------------------------'
-         write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given'
-         write(output%unit, '(t3,a/)')  'number of maximum iterations.'
-         stop
+          call output%printf('---------------------------------------------------------------', &
+                              pl='normal',fs='(t3,a)') 
+         call output%error_msg('Was not able to converge the equations in the given number of maximum iterations.')
 !
       endif
 !
@@ -368,7 +373,7 @@ contains
 !
       class(hf) :: wf
 !
-      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
+      call output%printf('- Cleaning up (a0)',chars=[solver%tag], fs='(/t3, a)', pl='verbose')
 !
 !     MO transform the AO Fock matrix
 !

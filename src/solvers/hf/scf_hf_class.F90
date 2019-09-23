@@ -109,7 +109,9 @@ contains
 !
 !     Set initial AO density guess
 !
-      write(output%unit, '(/t3,a,a,a)') '- Setting initial AO density to ', trim(solver%ao_density_guess), ':'
+      call output%printf('- Setting initial AO density to '//trim(solver%ao_density_guess),&
+         fs='(/t3,a)',pl='minimal')
+!
       call wf%set_initial_ao_density_guess(solver%ao_density_guess)
 !
    end function new_scf_hf
@@ -155,8 +157,8 @@ contains
 !
       call wf%get_n_electrons_in_density(n_electrons)
 !
-      write(output%unit, '(/t6,a30,f17.12)') 'Energy of initial guess:      ', wf%energy
-      write(output%unit, '(t6,a30,f17.12)')  'Number of electrons in guess: ', n_electrons
+      call output%printf('Energy of initial guess:      (f25.12)', reals=[wf%energy], fs='(/t6, a)',pl='minimal')
+      call output%printf('Number of electrons in guess: (f25.12)', reals=[n_electrons], fs='(t6, a)',pl='minimal')
 !
 !     Update the orbitals and density to make sure the density is idempotent
 !     (not the case for the standard atomic superposition density)
@@ -175,8 +177,8 @@ contains
 !
       prev_energy = zero
 !
-      write(output%unit, '(/t3,a)') 'Iteration       Energy (a.u.)     Delta E (a.u.)'
-      write(output%unit, '(t3,a)')  '------------------------------------------------'
+      call output%printf('Iteration       Energy (a.u.)     Delta E (a.u.)',fs='(/t3,a)',pl='normal')
+      call output%printf('------------------------------------------------',fs='(t3,a)',pl='normal')
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)
 !
@@ -184,8 +186,10 @@ contains
 !
 !        Print current iteration information
 !
-         write(output%unit, '(t3,i4,9x,f17.12,4x,e11.4)') iteration, energy, abs(energy-prev_energy)
-         flush(output%unit)
+         call output%printf('(i4)  (f25.12)    (e11.4)', &
+               ints=[iteration], &
+               reals=[wf%energy, abs(wf%energy-prev_energy)], &
+               fs='(t3,a)', pl='normal')
 !
 !        Test for convergence:
 !
@@ -194,10 +198,9 @@ contains
 !
          if (converged) then
 !
-            write(output%unit, '(t3,a)') '------------------------------------------------'
-            write(output%unit, '(/t3,a27,i3,a12)') 'Converged criterion met in ', iteration, ' iterations!'
+            call output%printf('------------------------------------------------',fs='(t3,a)',pl='normal')
+            call output%printf('Convergence criterion met in (i0) iterations!',fs='(/t3,a)', pl='normal')
 !
-            !call wf%print_wavefunction_summary(10)
             call solver%print_summary(wf)
             flush(output%unit)
 !
@@ -225,10 +228,11 @@ contains
 !
       if (.not. converged) then
 !
-         write(output%unit, '(t3,a)')   '---------------------------------------------------'
-         write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given'
-         write(output%unit, '(t3,a/)')  'number of maximum iterations.'
-         stop
+!
+          call output%printf('---------------------------------------------------------------', &
+                              pl='normal',fs='(t3,a)') 
+!
+         call output%error_msg('Was not able to converge the equations in the given number of maximum iterations.')
 !
       endif
 !

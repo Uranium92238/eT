@@ -126,7 +126,7 @@ contains
 !
          call wf%is_restart_safe('ground state')
 !
-         write(output%unit, '(/t3,a)') 'Requested restart. Reading in solution from file.'
+         call output%printf('Requested restart. Reading in solution from file.', fs='(/t3,a)', pl='minimal')
 !
          call wf%read_amplitudes()
          call wf%integrals%write_t1_cholesky(wf%t1) 
@@ -150,15 +150,15 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      write(output%unit, '(/t3,a)')      '- DIIS CC ground state solver settings:'
+      call output%printf('- DIIS CC ground state solver settings:', fs='(/t3,a)', pl='minimal')
 !
-      write(output%unit, '(/t6,a26,e9.2)') 'Omega threshold:          ', solver%omega_threshold
-      write(output%unit, '(t6,a26,e9.2)')  'Energy threshold:         ', solver%energy_threshold
-
-      write(output%unit, '(/t6,a26,i9)')   'DIIS dimension:           ', solver%diis_dimension
-      write(output%unit, '(t6,a26,i9)')    'Max number of iterations: ', solver%max_iterations
+      call output%printf('Omega threshold:          (e9.2)', reals=[solver%omega_threshold], fs='(/t6, a)', pl='minimal')
+      call output%printf('Energy threshold:         (e9.2)', reals=[solver%energy_threshold], fs='(t6, a)', pl='minimal')
 !
-      flush(output%unit)
+      call output%printf('DIIS dimension:           (i9)', ints=[solver%diis_dimension], fs='(/t6, a)', pl='minimal')
+      call output%printf('Max number of iterations: (i9)', ints=[solver%max_iterations], fs='(t6, a)', pl='minimal')
+!
+      call output%flush_()
 !
    end subroutine print_settings_diis_cc_gs
 !
@@ -230,9 +230,8 @@ contains
       converged_energy   = .false.
       converged_omega    = .false.
 !
-      write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) '
-      write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
-      flush(output%unit)
+      call output%printf('Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) ', fs='(/t3,a)', pl='normal')
+      call output%printf('---------------------------------------------------------------', fs='(t3,a)', pl='normal')
 !
       prev_energy = zero
       iteration   = 1
@@ -250,9 +249,10 @@ contains
 !
          omega_norm = get_l2_norm(omega, wf%n_gs_amplitudes)
 !
-         write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
-                                          omega_norm, abs(wf%energy-prev_energy)
-         flush(output%unit)
+         call output%printf('(i3)  (f25.12)    (e11.4)    (e11.4)', &
+            ints=[iteration], &
+            reals=[wf%energy, omega_norm, abs(wf%energy-prev_energy)], &
+            fs='(t3, a)', pl='normal')
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !
@@ -265,13 +265,17 @@ contains
 !
          if (converged) then
 !
-            write(output%unit, '(t3,a)')           '--------------------------------------------------------------'
-            write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
+            call output%printf('---------------------------------------------------------------', &
+               fs='(t3,a)', pl='normal')
+!
+           call output%printf('Convergence criterion met in (i0) iterations!',fs='(/t3,a)', pl='normal') 
 !
             if (.not. converged_energy) then 
 !
-               write(output%unit, '(/t3,a,/t9,a)') 'Note: the omega vector converged in the first iteration,', &
-                                                         'so the energy convergence has not been tested!'
+!
+               call output%printf('Note: the omega vector converged in the first iteration, &
+                                 & so the energy convergence has not been tested!', &
+                                 ffs='(/t3,a)', pl='normal')
 !
             endif
 !
@@ -316,9 +320,10 @@ contains
 !
       if (.not. converged) then 
 !   
-         write(output%unit, '(t3,a)')   '---------------------------------------------------------------'
-         write(output%unit, '(/t3,a)')  'Warning: was not able to converge the equations in the given'
-         write(output%unit, '(t3,a/)')  'number of maximum iterations.'
+         call output%printf('---------------------------------------------------------------', &
+            fs='(t3,a)', pl='normal')
+!
+         call output%error_msg('Did not converge in the max number of iterations.')
 !
       else
 !
@@ -345,11 +350,14 @@ contains
 !
       call solver%timer%turn_off()
 !
-      write(output%unit, '(/t3, a)') '- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) // &
-                                       ' ground state equations'
+      call output%printf('- Finished solving the (a0) ground state equations', & 
+                        chars=[convert_to_uppercase(wf%name_)], &
+                        fs='(/t3, a)', pl='minimal')
 !
-      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
-      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
+      call output%printf('Total wall time (sec): (f20.5)', &
+            reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6, a)', pl='minimal')
+      call output%printf('Total cpu time (sec):  (f20.5)', &
+            reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6, a)', pl='minimal')
 !
    end subroutine cleanup_diis_cc_gs
 !
@@ -400,14 +408,14 @@ contains
 !
       real(dp) :: t1_diagnostic 
 !
-      write(output%unit, '(/t3,a)') '- DIIS CC ground state solver summary:'
+      call output%printf('- DIIS CC ground state solver summary:', fs='(/t3,a)', pl='minimal')
 !
-      call output%printf('Final ground state energy (a.u.): (f18.12)', reals=[wf%energy], fs='(/t6,a)')
+      call output%printf('Final ground state energy (a.u.): (f18.12)', reals=[wf%energy], fs='(/t6,a)', pl='minimal')
 !
       call wf%print_dominant_amplitudes()
 !
       t1_diagnostic = wf%get_t1_diagnostic() 
-      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', reals=[t1_diagnostic], fs='(/t6,a)')
+      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', reals=[t1_diagnostic], fs='(/t6,a)', pl='minimal')
 !
    end subroutine print_summary_diis_cc_gs
 !
