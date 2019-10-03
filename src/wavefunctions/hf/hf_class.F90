@@ -282,15 +282,12 @@ contains
       real(dp) :: homo_lumo_gap, nuclear_repulsion
 !
       homo_lumo_gap = wf%orbital_energies(wf%n_o + 1) - wf%orbital_energies(wf%n_o)
-!
-      write(output%unit, '(/t6,a26,f19.12)') 'HOMO-LUMO gap:             ', homo_lumo_gap
-!
       nuclear_repulsion = wf%system%get_total_nuclear_repulsion()
-!      
-      write(output%unit, '(t6,a26,f19.12)')  'Nuclear repulsion energy:  ', nuclear_repulsion
-      write(output%unit, '(t6,a26,f19.12)')  'Electronic energy:         ', wf%energy - nuclear_repulsion
-!      
-      write(output%unit, '(t6,a26,f19.12)')  'Total energy:              ', wf%energy
+!
+      call output%printf('HOMO-LUMO gap:             (f19.12)', pl='normal', fs='(/t6,a)', reals=[homo_lumo_gap])
+      call output%printf('Nuclear repulsion energy:  (f19.12)', pl='normal', fs='(t6,a)',  reals=[nuclear_repulsion])
+      call output%printf('Electronic energy:         (f19.12)', pl='normal', fs='(t6,a)',  reals=[wf%energy - nuclear_repulsion])
+      call output%printf('Total energy:              (f19.12)', pl='normal', fs='(t6,a)',  reals=[wf%energy])
 !      
       if(wf%system%mm_calculation) call wf%print_energy_mm()
 

@@ -55,6 +55,7 @@ module uhf_class
 !
 !     Preparation routines
 !
+      procedure, private :: prepare                     => prepare_uhf
       procedure :: determine_n_alpha_and_n_beta         => determine_n_alpha_and_n_beta_uhf
       procedure :: read_settings                        => read_settings_uhf
       procedure :: read_uhf_settings                    => read_uhf_settings_uhf
@@ -133,6 +134,7 @@ module uhf_class
    interface uhf 
 !
       procedure :: new_uhf 
+      procedure :: new_uhf_from_parameters
 !
    end interface uhf 
 !
@@ -151,9 +153,46 @@ contains
 !
       class(molecular_system), target, intent(in) :: system
 !
-      wf%name_ = 'UHF'
+      wf%system => system
+!
+      call wf%read_settings()
+!
+      call wf%prepare()
+!
+   end function new_uhf
+!
+!
+   function new_uhf_from_parameters(system, fractional_uniform_valence) result(wf)
+!!
+!!    New UHF from parameters
+!!    Written by Tor S. Haugland, 2019
+!!
+      implicit none
+!
+      type(uhf) :: wf
+!
+      class(molecular_system), target, intent(in) :: system
+      logical,                         intent(in) :: fractional_uniform_valence
 !
       wf%system => system
+!
+      wf%fractional_uniform_valence = fractional_uniform_valence
+!
+      call wf%prepare()
+!
+   end function new_uhf_from_parameters
+!
+!
+   subroutine prepare_uhf(wf)
+!!
+!!    Prepare
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf
+!
+      wf%name_ = 'UHF'
 !
       wf%n_ao = wf%system%get_n_aos()
 !
@@ -161,7 +200,6 @@ contains
       wf%n_densities = 2
 !
       call wf%determine_n_alpha_and_n_beta()
-      call wf%read_settings()
 !
       if (wf%fractional_uniform_valence) then
 !
@@ -174,7 +212,7 @@ contains
       wf%orbital_energies_file = sequential_file('orbital_energies')
       wf%restart_file = sequential_file('hf_restart_file')
 !
-   end function new_uhf
+   end subroutine prepare_uhf
 !
 !
    subroutine set_initial_ao_density_guess_uhf(wf, guess)
@@ -421,11 +459,7 @@ contains
 !
       class(uhf) :: wf
 !
-      if (input%requested_section('hf')) then
-!
-         if (input%requested_keyword_in_section('fractional uniform valence', 'hf')) wf%fractional_uniform_valence = .true.
-!
-      endif
+      wf%fractional_uniform_valence = input%requested_keyword_in_section('fractional uniform valence', 'hf')
 !
    end subroutine read_uhf_settings_uhf
 !
@@ -731,32 +765,24 @@ contains
 !
       real(dp) :: homo_lumo_gap_a
       real(dp) :: homo_lumo_gap_b
+      real(dp) :: nuclear_repulsion
 !
       homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
       homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
 !
-      write(output%unit, '(/t6,a26,f19.12)') 'HOMO-LUMO gap (alpha):     ', homo_lumo_gap_a
-      write(output%unit, '(t6,a26,f19.12)')  'HOMO-LUMO gap (beta):      ', homo_lumo_gap_b
-
+      nuclear_repulsion = wf%system%get_nuclear_repulsion()
+!
       if(wf%system%mm_calculation.and.wf%system%mm%forcefield.eq.'non-polarizable') then
-!      
-         write(output%unit, '(t6,a26,f19.12)')  'Nuclear repulsion energy:  ', &
-               wf%system%get_nuclear_repulsion() + wf%system%get_nuclear_repulsion_mm()
-!               
-         write(output%unit, '(t6,a26,f19.12)')  'Electronic energy:         ', &
-               wf%energy - wf%system%get_nuclear_repulsion() - wf%system%get_nuclear_repulsion_mm()
-     
-      else
-!      
-         write(output%unit, '(t6,a26,f19.12)')  'Nuclear repulsion energy:  ', &
-              wf%system%get_nuclear_repulsion()
-!              
-         write(output%unit, '(t6,a26,f19.12)')  'Electronic energy:         ', &
-               wf%energy - wf%system%get_nuclear_repulsion()
-!      
+!
+         nuclear_repulsion = nuclear_repulsion + wf%system%get_nuclear_repulsion_mm()
+!
       endif
-!      
-      write(output%unit, '(t6,a26,f19.12)')  'Total energy:              ', wf%energy
+!
+      call output%printf('HOMO-LUMO gap (alpha):     (f19.12)', pl='normal', fs='(/t6,a)', reals=[homo_lumo_gap_a])
+      call output%printf('HOMO-LUMO gap (beta):      (f19.12)', pl='normal', fs='(t6,a)',  reals=[homo_lumo_gap_b])
+      call output%printf('Nuclear repulsion energy:  (f19.12)', pl='normal', fs='(t6,a)',  reals=[nuclear_repulsion])
+      call output%printf('Electronic energy:         (f19.12)', pl='normal', fs='(t6,a)',  reals=[wf%energy - nuclear_repulsion])
+      call output%printf('Total energy:              (f19.12)', pl='normal', fs='(t6,a)',  reals=[wf%energy])
 !
       if(wf%system%mm_calculation) call wf%print_energy_mm()
 !      

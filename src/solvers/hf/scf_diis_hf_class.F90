@@ -47,10 +47,11 @@ module scf_diis_hf_class
 !
       logical :: converged
 !
-      logical    :: restart
+      logical :: restart
 !
    contains
 !
+      procedure, private :: prepare       => prepare_scf_diis_hf
       procedure :: run                    => run_scf_diis_hf
       procedure :: cleanup                => cleanup_scf_diis_hf
 !
@@ -65,6 +66,7 @@ module scf_diis_hf_class
    interface scf_diis_hf 
 !
       procedure :: new_scf_diis_hf
+      procedure :: new_scf_diis_hf_from_parameters
 !
    end interface scf_diis_hf
 !
@@ -85,15 +87,6 @@ contains
 !
       logical, intent(in) :: restart 
 !
-      solver%tag = 'Self-consistent field DIIS Hartree-Fock solver'
-      solver%author = 'E. F. Kjønstad and S, D. Folkestad, 2018'
-      solver%description = 'A DIIS-accelerated Roothan-Hall self-consistent field solver. &
-                                  &A least-square DIIS fit is performed on the previous Fock matrices and &
-                                  &associated gradients. Following the Roothan-Hall update of the density, &
-                                  &the DIIS-fitted Fock matrix is used to get the next orbital coefficients.'
-!
-      call solver%print_banner()
-!
 !     Set standard settings
 !
       solver%restart             = restart
@@ -103,11 +96,74 @@ contains
       solver%energy_threshold    = 1.0D-6
       solver%gradient_threshold  = 1.0D-6
 !
-!     Read user's specified settings & set wavefunction screening based on them
+      call solver%read_settings()
+!
+      call solver%prepare(wf)
+!
+   end function new_scf_diis_hf
+!
+!
+   function new_scf_diis_hf_from_parameters(wf, restart,          &
+                                                diis_dimension,   &
+                                                max_iterations,   &
+                                                ao_density_guess, &
+                                                energy_threshold, &
+                                                gradient_threshold) result(solver)
+!!
+!!    New SCF DIIS from parameters
+!!    Written by Tor S. Haugland, 2019
+!!
+      implicit none
+!
+      type(scf_diis_hf) :: solver
+!
+      class(hf) :: wf
+!
+      logical,            intent(in) :: restart 
+      integer,            intent(in) :: diis_dimension
+      integer,            intent(in) :: max_iterations
+      character(len=200), intent(in) :: ao_density_guess
+      real(dp),           intent(in) :: energy_threshold
+      real(dp),           intent(in) :: gradient_threshold
+!
+!     Set settings from parameters
+!
+      solver%restart             = restart
+      solver%diis_dimension      = diis_dimension
+      solver%max_iterations      = max_iterations
+      solver%ao_density_guess    = ao_density_guess
+      solver%energy_threshold    = energy_threshold
+      solver%gradient_threshold  = gradient_threshold
+!
+      call solver%prepare(wf)
+!
+   end function new_scf_diis_hf_from_parameters
+!
+!
+   subroutine prepare_scf_diis_hf(solver, wf)
+!!
+!!    Prepare SCF-DIIS
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(scf_diis_hf) :: solver
+!
+      class(hf) :: wf
+!
+      solver%tag         = 'Self-consistent field DIIS Hartree-Fock solver'
+      solver%author      = 'E. F. Kjønstad and S, D. Folkestad, 2018'
+      solver%description = 'A DIIS-accelerated Roothan-Hall self-consistent field solver. &
+                           &A least-square DIIS fit is performed on the previous Fock matrices and &
+                           &associated gradients. Following the Roothan-Hall update of the density, &
+                           &the DIIS-fitted Fock matrix is used to get the next orbital coefficients.'
+!
+      call solver%print_banner()
+!
+!     Set wavefunction screenings
 !     (note that the screenings must be tighter for tighter gradient thresholds)
 !     & print settings to output
 !
-      call solver%read_settings()
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
 !
       call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
@@ -139,7 +195,7 @@ contains
 !
       endif
 !
-   end function new_scf_diis_hf
+   end subroutine prepare_scf_diis_hf
 !
 !
    subroutine print_scf_diis_settings_scf_diis_hf(solver)
@@ -289,7 +345,7 @@ contains
 !
             call output%printf('---------------------------------------------------------------', &
                               pl='normal',fs='(t3,a)') 
-            call output%printf('Convergence criterion met in (i0) iterations!',fs='(/t3,a)', pl='normal') 
+            call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
 !
             if (.not. converged_energy) then
 !
@@ -300,7 +356,6 @@ contains
             endif
 !
             call solver%print_summary(wf)
-
 !
          else
 !
@@ -351,7 +406,7 @@ contains
 !
       if (.not. solver%converged) then
 !
-          call output%printf('---------------------------------------------------------------', &
+         call output%printf('---------------------------------------------------------------', &
                               pl='normal',fs='(t3,a)') 
          call output%error_msg('Was not able to converge the equations in the given number of maximum iterations.')
 !

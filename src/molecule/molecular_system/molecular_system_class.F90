@@ -83,10 +83,11 @@ module molecular_system_class
 !
    contains
 !
-      procedure :: prepare                                  => prepare_molecular_system
+      procedure, private :: prepare                         => prepare_molecular_system
       procedure :: cleanup                                  => cleanup_molecular_system
 !
       procedure, private :: write_libint_files              => write_libint_files_molecular_system
+      procedure, private :: delete_libint_files             => delete_libint_files_molecular_system
 !
       procedure, private :: read_settings                   => read_settings_molecular_system
       procedure, private :: read_system                     => read_system_molecular_system
@@ -164,7 +165,63 @@ module molecular_system_class
    end interface 
 !
 !
+   interface molecular_system
+!
+      procedure :: new_molecular_system
+      procedure :: new_molecular_system_from_parameters
+!
+   end interface
+!
+!
 contains
+!
+!
+   function new_molecular_system() result(molecule)
+!!
+!!    Initialize
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      type(molecular_system) :: molecule
+!
+      molecule%charge = 0
+      molecule%multiplicity = 1
+!
+      call molecule%read_settings()
+!
+      call molecule%prepare()
+!
+   end function new_molecular_system
+!
+!
+   function new_molecular_system_from_parameters(atoms, name, charge, multiplicity, mm_calculation) result(molecule)
+!!
+!!    Initialize From Parameters
+!!    Written by Tor S. Haugland, 2019
+!!
+      implicit none
+!
+      type(molecular_system) :: molecule
+!
+      type(atomic), dimension(:), intent(in) :: atoms
+      character(len=100),         intent(in) :: name
+      integer,                    intent(in) :: charge
+      integer,                    intent(in) :: multiplicity
+      logical,                    intent(in) :: mm_calculation
+!
+      allocate(molecule%atoms(size(atoms)))
+!
+      molecule%atoms          = atoms
+      molecule%n_atoms        = size(atoms)
+      molecule%name_          = name
+      molecule%charge         = charge
+      molecule%multiplicity   = multiplicity
+      molecule%mm_calculation = mm_calculation
+!
+      call molecule%prepare()
+!
+   end function new_molecular_system_from_parameters
 !
 !
    subroutine read_settings_molecular_system(molecule)
@@ -180,42 +237,14 @@ contains
       call molecule%read_geometry()
       call molecule%read_active_atoms()
 !
+      molecule%mm_calculation = input%requested_mm_calculation()
+!
    end subroutine read_settings_molecular_system
-!
-!
-   subroutine initialize_libint_atoms_and_bases_molecular_system(molecule)
-!!
-!!    Initialize Libint atoms and bases 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad 2018-2019
-!!
-      implicit none 
-!
-      class(molecular_system) :: molecule 
-!           
-      character(len=100) :: temp_name
-!
-      integer :: i
-!
-      call molecule%write_libint_files()
-!
-      call initialize_atoms(molecule%name_)
-!
-      call reset_basis_c()
-!
-      do i = 1, molecule%n_basis_sets
-!
-         write(temp_name, '(a, a1, i4.4)') trim(molecule%name_), '_', i
-!
-         call initialize_basis(molecule%basis_sets(i), temp_name)
-!
-      enddo
-!
-   end subroutine initialize_libint_atoms_and_bases_molecular_system
 !
 !
    subroutine prepare_molecular_system(molecule)
 !!
-!!    Initialize
+!!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -231,13 +260,6 @@ contains
       integer(i6), dimension(:), allocatable :: n_basis_in_shells
       integer(i6), dimension(:), allocatable :: first_ao_in_shells
       integer(i6), dimension(:), allocatable :: shell_numbers
-!
-!     Read eT.inp 
-!
-      molecule%charge = 0
-      molecule%multiplicity = 1
-!
-      call molecule%read_settings()
 !
 !     Initialize libint with atoms and basis sets,
 !     then initialize the integral engines 
@@ -354,9 +376,8 @@ contains
 !
       call molecule%get_max_shell_size(molecule%max_shell_size)
 !
-      if (input%requested_mm_calculation()) then
-!      
-         molecule%mm_calculation = .true.
+      if (molecule%mm_calculation) then
+!
          call molecule%mm%prepare()
 !         
       endif
@@ -370,6 +391,7 @@ contains
          molecule%shell2atom(i) = molecule%shell_to_atom(i)
 !
       enddo
+!
 !
    end subroutine prepare_molecular_system
 !
@@ -394,9 +416,41 @@ contains
       call molecule%destruct_atoms()
       call molecule%destruct_basis_sets()
       call molecule%destruct_shell_limits()
+      call molecule%destruct_shell2atom()
+      call molecule%delete_libint_files()
       if (molecule%mm_calculation) call molecule%mm%cleanup()
 !
    end subroutine cleanup_molecular_system
+!
+!
+   subroutine initialize_libint_atoms_and_bases_molecular_system(molecule)
+!!
+!!    Initialize Libint atoms and bases 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad 2018-2019
+!!
+      implicit none 
+!
+      class(molecular_system) :: molecule 
+!           
+      character(len=100) :: temp_name
+!
+      integer :: i
+!
+      call molecule%write_libint_files()
+!
+      call initialize_atoms(molecule%name_)
+!
+      call reset_basis_c()
+!
+      do i = 1, molecule%n_basis_sets
+!
+         write(temp_name, '(a, a1, i4.4)') trim(molecule%name_), '_', i
+!
+         call initialize_basis(molecule%basis_sets(i), temp_name)
+!
+      enddo
+!
+   end subroutine initialize_libint_atoms_and_bases_molecular_system
 !
 !
    subroutine read_system_molecular_system(molecule)
@@ -742,6 +796,38 @@ contains
       call mem%dealloc(n_atoms_in_basis, molecule%n_basis_sets)
 !
    end subroutine write_libint_files_molecular_system
+!
+!
+   subroutine delete_libint_files_molecular_system(molecule)
+!!
+!!    Delete LibInt Files
+!!    Written by Tor S. Haugland, 2019
+!!
+!!    Deletes .xyz files used by LibInt to generate integrals.
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      type(sequential_file) :: xyz_file
+      integer :: current_basis_nbr
+      character(len=100) temp_name
+!
+      xyz_file = sequential_file(trim(molecule%name_) // '.xyz', 'formatted')
+!
+      call xyz_file%delete_()
+!
+      do current_basis_nbr = 1, molecule%n_basis_sets
+!
+         write(temp_name, '(a, a1, i4.4, a4)') trim(molecule%name_), '_', current_basis_nbr, '.xyz'
+!
+         xyz_file = sequential_file(trim(temp_name), 'formatted')
+!
+         call xyz_file%delete_()
+!
+      enddo
+!
+   end subroutine delete_libint_files_molecular_system
 !
 !
    subroutine read_active_atoms_molecular_system(molecule)

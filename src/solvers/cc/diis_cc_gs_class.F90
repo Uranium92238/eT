@@ -268,7 +268,7 @@ contains
             call output%printf('---------------------------------------------------------------', &
                fs='(t3,a)', pl='normal')
 !
-           call output%printf('Convergence criterion met in (i0) iterations!',fs='(/t3,a)', pl='normal') 
+           call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
 !
             if (.not. converged_energy) then 
 !
