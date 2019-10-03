@@ -808,7 +808,7 @@ contains
       character(len=*), intent(in) :: keyword 
       character(len=*), intent(in) :: section  
 !
-      integer(i6), intent(out) :: keyword_value 
+      integer(i6), intent(inout) :: keyword_value 
 !
       character(len=200) :: keyword_value_string
 !
@@ -841,7 +841,7 @@ contains
       character(len=*), intent(in) :: keyword 
       character(len=*), intent(in) :: section  
 !
-      integer(i15), intent(out) :: keyword_value 
+      integer(i15), intent(inout) :: keyword_value 
 !
       character(len=200) :: keyword_value_string
 !
@@ -876,7 +876,7 @@ contains
       character(len=*), intent(in) :: keyword 
       character(len=*), intent(in) :: section  
 !
-      integer(i6), intent(out) :: keyword_value 
+      integer(i6), intent(inout) :: keyword_value 
 !
       character(len=200) :: keyword_value_string
 !
@@ -948,7 +948,7 @@ contains
       character(len=*), intent(in) :: keyword 
       character(len=*), intent(in) :: section  
 !
-      real(dp), intent(out) :: keyword_value 
+      real(dp), intent(inout) :: keyword_value 
 !
       character(len=200) :: keyword_value_string
 !

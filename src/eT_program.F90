@@ -78,9 +78,10 @@ program eT_program
    write(output%unit,'(t4, a, a)')    '                       ','frozen core'
    write(output%unit,'(t4, a, a)')    'Tommaso Giovannini     ','QM/MM'
    write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
+   write(output%unit,'(t4, a, a)')    'Tor S. Haugland        ','SAD'
    write(output%unit,'(t4, a, a)')    'Eirik F. Kjønstad      ','program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
-   write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties,       '
+   write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties, SAD   '
    write(output%unit,'(t4, a, a)')    '                       ','BFGS-tool                                              '
    write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, launch script, file system'
    write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2, CC3, first order properties'
@@ -115,7 +116,7 @@ program eT_program
 !
 !  Prepare molecular system 
 !
-   call system%prepare()
+   system = molecular_system()
 !
 !  Hartree-Fock calculation
 !

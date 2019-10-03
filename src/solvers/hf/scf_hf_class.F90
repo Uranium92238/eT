@@ -38,6 +38,7 @@ module scf_hf_class
 !
    use memory_manager_class, only : mem
    use hf_class, only : hf
+   use array_utilities, only: get_abs_max
 !
    implicit none
 !
@@ -51,6 +52,7 @@ module scf_hf_class
       procedure :: cleanup       => cleanup_scf_hf
 !
       procedure :: print_banner  => print_banner_scf_hf
+      procedure :: prepare       => prepare_scf_hf
 !
    end type scf_hf
 !
@@ -58,6 +60,7 @@ module scf_hf_class
    interface scf_hf
 !
       procedure :: new_scf_hf
+      procedure :: new_scf_hf_from_parameters
 !
    end interface scf_hf 
 !
@@ -73,6 +76,64 @@ contains
       implicit none
 !
       type(scf_hf) :: solver
+!
+      class(hf) :: wf
+! 
+!     Set standards 
+!
+      solver%max_iterations      = 100
+      solver%ao_density_guess    = 'SAD'
+      solver%energy_threshold    = 1.0D-6
+      solver%gradient_threshold  = 1.0D-6
+!
+!     Read settings (thresholds, etc.)
+!
+      call solver%read_settings()
+!
+      call solver%prepare(wf)
+!
+   end function new_scf_hf
+!
+!
+   function new_scf_hf_from_parameters(wf, max_iterations,     &
+                                        ao_density_guess,      &
+                                        energy_threshold,      &
+                                        gradient_threshold) result(solver)
+!!
+!!    New SCF from parameters
+!!    Written by Tor S. Haugland, 2019
+!!
+      implicit none
+!
+      type(scf_hf) :: solver
+!
+      class(hf) :: wf
+!
+      integer,            intent(in) :: max_iterations
+      character(len=200), intent(in) :: ao_density_guess
+      real(dp),           intent(in) :: energy_threshold
+      real(dp),           intent(in) :: gradient_threshold
+!
+!     Set settings from parameters
+!
+      solver%max_iterations      = max_iterations
+      solver%ao_density_guess    = ao_density_guess
+      solver%energy_threshold    = energy_threshold
+      solver%gradient_threshold  = gradient_threshold
+!
+      call solver%prepare(wf)
+!
+   end function new_scf_hf_from_parameters
+!
+!
+   subroutine prepare_scf_hf(solver, wf)
+!!
+!!    Prepare SCF
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(scf_hf) :: solver
 !
       class(hf) :: wf
 !
@@ -94,10 +155,6 @@ contains
 !
       call solver%print_banner()
 !
-!     Read settings (thresholds, etc.)
-!
-      call solver%read_settings()
-!
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
       call wf%print_screening_settings()
 !
@@ -114,7 +171,7 @@ contains
 !
       call wf%set_initial_ao_density_guess(solver%ao_density_guess)
 !
-   end function new_scf_hf
+   end subroutine prepare_scf_hf
 !
 !
    subroutine run_scf_hf(solver, wf)
@@ -129,13 +186,15 @@ contains
       class(hf) :: wf
 !
       logical :: converged
-      logical :: converged_energy
+      logical :: converged_energy, converged_gradient 
 !
-      real(dp) :: energy, prev_energy, n_electrons
+      real(dp) :: energy, prev_energy, n_electrons, max_grad 
 !
-      integer :: iteration
+      integer :: iteration, dim_gradient
 !
       real(dp), dimension(:,:), allocatable :: h_wx
+!
+      real(dp), dimension(:), allocatable :: G 
 !
       integer :: n_s
 !
@@ -172,34 +231,46 @@ contains
 !
       iteration = 1
 !
-      converged        = .false.
-      converged_energy = .false.
+      converged            = .false.
+      converged_energy     = .false.
+      converged_gradient   = .false.
 !
       prev_energy = zero
 !
-      call output%printf('Iteration       Energy (a.u.)     Delta E (a.u.)',fs='(/t3,a)',pl='normal')
-      call output%printf('------------------------------------------------',fs='(t3,a)',pl='normal')
+      dim_gradient = wf%n_densities*wf%n_ao*(wf%n_ao - 1)/2
+      call mem%alloc(G, dim_gradient)
+!
+      call output%printf('Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)',fs='(/t3,a)',pl='normal') 
+      call output%printf('---------------------------------------------------------------',fs='(t3,a)',pl='normal') 
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)
 !
          energy = wf%energy
 !
+         call wf%get_packed_roothan_hall_gradient(G)
+         max_grad = get_abs_max(G, dim_gradient)
+!
 !        Print current iteration information
 !
-         call output%printf('(i4)  (f25.12)    (e11.4)', &
+         call output%printf('(i4)  (f25.12)    (e11.4)    (e11.4)', &
                ints=[iteration], &
-               reals=[wf%energy, abs(wf%energy-prev_energy)], &
+               reals=[wf%energy, max_grad, abs(wf%energy-prev_energy)], &
                fs='(t3,a)', pl='normal')
 !
 !        Test for convergence:
 !
-         converged_energy = abs(energy-prev_energy) .lt. solver%energy_threshold
-         converged        = converged_energy
+         converged_energy     = abs(energy-prev_energy) .lt. solver%energy_threshold
+         converged_gradient   = max_grad                .lt. solver%gradient_threshold
+!
+         converged            = converged_energy .and. converged_gradient
+!
+         if (converged_gradient .and. iteration .eq. 1) converged = .true.
 !
          if (converged) then
 !
-            call output%printf('------------------------------------------------',fs='(t3,a)',pl='normal')
-            call output%printf('Convergence criterion met in (i0) iterations!',fs='(/t3,a)', pl='normal')
+            call output%printf('---------------------------------------------------------------', &
+                              pl='normal',fs='(t3,a)') 
+            call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
 !
             call solver%print_summary(wf)
             flush(output%unit)
@@ -225,9 +296,9 @@ contains
       call mem%dealloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(G, dim_gradient)
 !
       if (.not. converged) then
-!
 !
           call output%printf('---------------------------------------------------------------', &
                               pl='normal',fs='(t3,a)') 
