@@ -276,7 +276,7 @@ contains
 !
          call output%unmute()
 !
-         call output%printf('Generated SAD in (a0) for (a0)', chars=[atom%basis,atom%symbol], &
+         call output%printf('Generated SAD in (a0) for (a0)', chars=[character(len=100) :: atom%basis, atom%symbol], &
                                              pl='normal', ffs='(/t6,a)', fs='(t6,a)')
 !
          call output%mute()

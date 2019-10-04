@@ -767,8 +767,19 @@ contains
       real(dp) :: homo_lumo_gap_b
       real(dp) :: nuclear_repulsion
 !
-      homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
-      homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
+      if (wf%n_alpha > 0 .and. wf%n_alpha < wf%n_mo) then 
+!
+         homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
+         call output%printf('HOMO-LUMO gap (alpha):     (f19.12)', pl='normal', fs='(/t6,a)', reals=[homo_lumo_gap_a])
+!
+      endif 
+!
+      if (wf%n_beta > 0 .and. wf%n_beta < wf%n_mo) then 
+!
+         homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
+         call output%printf('HOMO-LUMO gap (beta):      (f19.12)', pl='normal', fs='(t6,a)',  reals=[homo_lumo_gap_b])
+!
+      endif
 !
       nuclear_repulsion = wf%system%get_nuclear_repulsion()
 !
@@ -778,8 +789,6 @@ contains
 !
       endif
 !
-      call output%printf('HOMO-LUMO gap (alpha):     (f19.12)', pl='normal', fs='(/t6,a)', reals=[homo_lumo_gap_a])
-      call output%printf('HOMO-LUMO gap (beta):      (f19.12)', pl='normal', fs='(t6,a)',  reals=[homo_lumo_gap_b])
       call output%printf('Nuclear repulsion energy:  (f19.12)', pl='normal', fs='(t6,a)',  reals=[nuclear_repulsion])
       call output%printf('Electronic energy:         (f19.12)', pl='normal', fs='(t6,a)',  reals=[wf%energy - nuclear_repulsion])
       call output%printf('Total energy:              (f19.12)', pl='normal', fs='(t6,a)',  reals=[wf%energy])
@@ -1098,7 +1107,7 @@ contains
 !
       integer :: homo, n_below, n_above, I
 !
-      real(dp), parameter :: threshold = 1.0D-6
+      real(dp), parameter :: threshold = 1.0D-12
 !
 !     Set standard non-degenerate values
 !
@@ -1110,37 +1119,32 @@ contains
 !
       if (n_electrons .eq. 0) return
 !
-      if (abs(energies(homo) - energies(homo + 1)) .le. threshold .or. &
-          abs(energies(homo) - energies(homo - 1)) .le. threshold) then ! HOMO is degenerate
+      n_below = 0
+      do I = 1, homo - 1
 !
-         n_below = 0
-         do I = 1, homo - 1
+         if (abs(energies(homo) - energies(I)) .le. threshold) then
 !
-            if (abs(energies(homo) - energies(I)) .le. threshold) then
+            n_below = n_below + 1
 !
-               n_below = n_below + 1
+         endif
 !
-            endif
+      enddo
 !
-         enddo
+      n_above = 0
+      do I = homo + 1, wf%n_mo
 !
-         n_above = 0
-         do I = homo + 1, wf%n_mo
+         if (abs(energies(homo) - energies(I)) .le. threshold) then
 !
-            if (abs(energies(homo) - energies(I)) .le. threshold) then
+            n_above = n_above + 1
 !
-               n_above = n_above + 1
+         endif
 !
-            endif
+      enddo
 !
-         enddo
-!
-         n_homo_orbitals  = n_below + n_above + 1
-         n_homo_electrons = n_below + 1
-         homo_first = homo - n_below
-         homo_last  = homo + n_above
-!
-      endif
+      n_homo_orbitals  = n_below + n_above + 1
+      n_homo_electrons = n_below + 1
+      homo_first = homo - n_below
+      homo_last  = homo + n_above
 !
    end subroutine get_homo_degeneracy_uhf
 !
