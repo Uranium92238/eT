@@ -420,7 +420,8 @@ contains
       
       call output%printf(':: Frozen core approximation is used', &
                         ints=[wf%n_frozen_orbitals], fs='(/t3,a)',pl='minimal')
-      call output%printf('There are (i0) frozen 1s orbitals.', &
+!
+      call output%printf('There are (i0) frozen orbitals.', &
                         ints=[wf%n_frozen_orbitals],pl='minimal',fs='(t6,a)')
 !
       call wf%initialize_mo_fock_fc_contribution()
