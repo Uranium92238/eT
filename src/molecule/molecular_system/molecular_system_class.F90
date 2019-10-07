@@ -154,6 +154,8 @@ module molecular_system_class
       procedure :: normalize_raw_primitives                 => normalize_raw_primitives_molecular_system
       procedure :: get_nuclear_repulsion_mm                 => get_nuclear_repulsion_mm_molecular_system
 !
+      procedure :: basis2atom                               => basis2atom_molecular_system
+!
 !
    end type molecular_system
 !
@@ -1368,6 +1370,41 @@ contains
       if (basis2shell_molecular_system == 0) call output%error_msg('in basis2shell.')
 !
    end function basis2shell_molecular_system
+!
+!
+   function basis2atom_molecular_system(molecule, basis_function)
+!!
+!!    Basis2atom
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      integer, intent(in) :: basis_function
+!
+      integer :: basis2atom_molecular_system
+!
+      integer :: I, J
+!
+      basis2atom_molecular_system = 0
+!
+      do I = 1, molecule%n_atoms
+         do J = 1, molecule%atoms(I)%n_shells
+!
+            if (molecule%atoms(I)%shells(J)%last  .ge. basis_function .and. &
+                molecule%atoms(I)%shells(J)%first .le. basis_function) then
+!
+               basis2atom_molecular_system = I
+!
+            endif
+!
+         enddo
+      enddo
+!
+      if (basis2atom_molecular_system == 0) call output%error_msg('in basis2atom.')
+!
+   end function basis2atom_molecular_system
 !
 !
    function shell_to_atom_molecular_system(molecule, shell)

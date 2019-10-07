@@ -1115,15 +1115,37 @@ contains
 !
       integer :: I
 !
+      logical, dimension(:), allocatable :: freeze_atom
+!
+      integer :: index_max
+      real(dp) :: max_
+!
+      call mem%alloc(freeze_atom, wf%system%n_atoms)
+      freeze_atom = .false.
+!
 !     Figure out how many core orbitals we have
 !
-!     Number of atoms heavier than B (atomic number larger than 5)
+!     Number of atoms heavier than Be (atomic number larger than 4)
 !
       wf%n_frozen_orbitals = 0
 !
       do I = 1, wf%system%n_atoms
 !
-         if (wf%system%atoms(I)%number_ > 5) wf%n_frozen_orbitals = wf%n_frozen_orbitals + 1
+         if (wf%system%atoms(I)%number_ .ge. 5 .and. wf%system%atoms(I)%number_ .le. 12) then
+!
+            wf%n_frozen_orbitals = wf%n_frozen_orbitals + 1
+            freeze_atom(I) = .true.
+!
+         elseif (wf%system%atoms(I)%number_ .ge. 13 .and. wf%system%atoms(I)%number_ .le. 30) then
+!
+            wf%n_frozen_orbitals = wf%n_frozen_orbitals + 5
+            freeze_atom(I) = .true.
+!
+         elseif (wf%system%atoms(I)%number_ .gt. 30) then
+!
+            call output%error_msg('No frozen core for Z > 30.')
+!
+         endif
 !
       enddo
 !
@@ -1143,7 +1165,21 @@ contains
       call wf%initialize_orbital_coefficients_fc()
 !
       wf%orbital_coefficients_fc(1:wf%n_ao, 1:wf%n_frozen_orbitals) = &
-            orbital_coefficients_copy(1:wf%n_ao, 1:wf%n_frozen_orbitals)   
+            orbital_coefficients_copy(1:wf%n_ao, 1:wf%n_frozen_orbitals) 
+!
+!     Check for crossover:  
+!
+!     If the largest AO weight on a frozen MO does not belong to an 
+!     atom we are supposed to freeze, then we stop.
+!
+      do i = 1, wf%n_frozen_orbitals
+!
+         call get_abs_max_w_index(wf%orbital_coefficients_fc(:,i), wf%n_ao, max_, index_max)
+!
+         if (.not. freeze_atom(wf%system%basis2atom(index_max))) &
+            call output%error_msg('Detected crossover in frozen core.')
+!
+      enddo
 !
      call mem%dealloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
 !
