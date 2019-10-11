@@ -354,12 +354,6 @@ contains
 !
 !     Some sanity checks and stops
 !
-      if (molecule%charge .ne. 0) then
-!
-         call output%error_msg('SAD not yet implemented for charged species!')
-!
-      endif
-!
       do i = 1, molecule%n_atoms
 !
          if (molecule%atoms(i)%n_ao == 0) then
