@@ -32,7 +32,7 @@
 !
       integer, intent(in) :: s1, s2 
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h 
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(out) :: h 
 !
    end subroutine construct_ao_h_wx_molecular_system
 !
@@ -48,12 +48,12 @@
 !
       integer, intent(in) :: s1, s2
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_1x
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_1y
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_1z
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_2x
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_2y
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: h_2z
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(out) :: h_1x
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(out) :: h_1y
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(out) :: h_1z
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(out) :: h_2x
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(out) :: h_2y
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(out) :: h_2z
 !
    end subroutine construct_ao_h_wx_kinetic_1der_molecular_system
 !
@@ -99,8 +99,8 @@
 !
       integer, intent(in) :: s1, s2, s3, s4
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size, &
-                           molecule%shell_limits(s3)%size, molecule%shell_limits(s4)%size), intent(out) :: g
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length, &
+                           molecule%shell_limits(s3)%length, molecule%shell_limits(s4)%length), intent(out) :: g
 !
    end subroutine construct_ao_g_wxyz_molecular_system
 !
@@ -120,8 +120,8 @@
 !
       integer, intent(in) :: s1, s2, s3, s4 ! Shells 
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size,    &
-                           molecule%shell_limits(s3)%size, molecule%shell_limits(s4)%size,   &
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length,    &
+                           molecule%shell_limits(s3)%length, molecule%shell_limits(s4)%length,   &
                            3, 4), intent(out) :: g_wxyzqk
 !
    end subroutine construct_ao_g_wxyz_1der_molecular_system
@@ -185,7 +185,7 @@
 !
       integer, intent(in) :: s1, s2
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size), intent(out) :: s
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s1)%length), intent(out) :: s
 !
    end subroutine construct_ao_s_wx_molecular_system
 !
@@ -210,12 +210,12 @@
 !
       integer, intent(in) :: s1, s2
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size) :: s_1x
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size) :: s_1y
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size) :: s_1z
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size) :: s_2x
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size) :: s_2y
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s1)%size) :: s_2z
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s1)%length) :: s_1x
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s1)%length) :: s_1y
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s1)%length) :: s_1z
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s1)%length) :: s_2x
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s1)%length) :: s_2y
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s1)%length) :: s_2z
 !
    end subroutine construct_ao_s_wx_1der_molecular_system
 !
@@ -231,9 +231,9 @@
 !
       integer, intent(in) :: s1, s2
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: mu_X ! x component
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: mu_Y ! y component 
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: mu_Z ! z component
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(inout) :: mu_X ! x component
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(inout) :: mu_Y ! y component 
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(inout) :: mu_Z ! z component
 !
       integer(i6) :: s1_4, s2_4
 !
@@ -251,12 +251,12 @@
 !
       integer, intent(in) :: s1, s2
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: q_xx 
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: q_xy 
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: q_xz 
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: q_yy 
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: q_yz 
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(inout) :: q_zz 
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(inout) :: q_xx 
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(inout) :: q_xy 
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(inout) :: q_xz 
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(inout) :: q_yy 
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(inout) :: q_yz 
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(inout) :: q_zz 
 !
    end subroutine construct_ao_q_wx_molecular_system
 !
@@ -277,6 +277,6 @@
 !
       integer, intent(in) :: s1, s2 
 !
-      real(dp), dimension(molecule%shell_limits(s1)%size, molecule%shell_limits(s2)%size), intent(out) :: V
+      real(dp), dimension(molecule%shell_limits(s1)%length, molecule%shell_limits(s2)%length), intent(out) :: V
 !
    end subroutine construct_ao_V_wx_molecular_system

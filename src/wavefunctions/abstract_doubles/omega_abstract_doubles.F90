@@ -75,7 +75,7 @@ contains
       req0 = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
       req1 = (wf%n_v)**2*(wf%n_o) + (wf%n_v)*(wf%integrals%n_J)
 !
-      call batch_a%init(wf%n_v)
+      batch_a = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_a, req0, req1)
 !

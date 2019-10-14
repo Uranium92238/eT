@@ -239,7 +239,7 @@ contains
       req0 = (wf%n_v)*(wf%n_o)*(wf%integrals%n_J)
       req1 = max((wf%n_v)*(wf%integrals%n_J) + (wf%n_o)*(wf%n_v)**2, 2*(wf%n_o)*(wf%n_v)**2)
 !
-      call batch_a%init(wf%n_v)
+      batch_a = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_a, req0, req1)
 !
@@ -394,7 +394,7 @@ contains
       req0 = (wf%n_v)*(wf%n_o)*(wf%integrals%n_J)
       req1 = (wf%n_v)*(wf%integrals%n_J) + (wf%n_o)*(wf%n_v)**2
 !
-      call batch_c%init(wf%n_v)
+      batch_c = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_c, req0, req1)
 !

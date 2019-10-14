@@ -200,8 +200,8 @@ contains
 !
 !     Initialize batching variables
 !
-      call batch_a%init(wf%n_v)
-      call batch_b%init(wf%n_v)
+      batch_a = batching_index(wf%n_v)
+      batch_b = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_a, batch_b, req0, req1_a, req1_b, rec2)
 !
@@ -793,7 +793,7 @@ contains
 !
       req1 = wf%n_v*wf%integrals%n_J + (wf%n_o)*(wf%n_v**2)
 !
-      call batch_a%init(wf%n_v)
+      batch_a = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_a, req0, req1)
 !

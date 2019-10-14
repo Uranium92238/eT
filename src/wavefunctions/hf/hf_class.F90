@@ -1162,7 +1162,7 @@ contains
 !
             call wf%system%construct_ao_g_wxyz(g, s1, s2, s1, s2)
 !
-            maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
+            maximum = get_abs_max(g, ((A_interval%length)*(B_interval%length))**2)
 !
             wf%sp_eri_schwarz(s1s2, 1) = sqrt(maximum)
 !
@@ -1235,11 +1235,11 @@ contains
             A_interval = wf%system%shell_limits(s1)
             B_interval = wf%system%shell_limits(s2)
 !
-            D_red_p(1:A_interval%size,1:B_interval%size) => D_red(1:A_interval%size*B_interval%size,thread+1)
+            D_red_p(1:A_interval%length,1:B_interval%length) => D_red(1:A_interval%length*B_interval%length,thread+1)
 !
             D_red_p = D(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
 !
-            maximum = get_abs_max(D_red_p, (A_interval%size)*(B_interval%size))
+            maximum = get_abs_max(D_red_p, (A_interval%length)*(B_interval%length))
 !
             nullify(D_red_p)
 !
@@ -1357,7 +1357,7 @@ contains
 !
             call wf%system%construct_ao_g_wxyz(g, A, B, A, B)
 !
-            maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
+            maximum = get_abs_max(g, ((A_interval%length)*(B_interval%length))**2)
 !
             sp_eri_schwarz(A, B) = sqrt(maximum)
             sp_eri_schwarz(B, A) = sqrt(maximum)
@@ -1391,12 +1391,12 @@ contains
 !
                B_interval = wf%system%shell_limits(B)
 !
-               D_yz_p(1 : A_interval%size, 1 : B_interval%size) => D_yz(1 : A_interval%size*B_interval%size)
+               D_yz_p(1 : A_interval%length, 1 : B_interval%length) => D_yz(1 : A_interval%length*B_interval%length)
 
                D_yz_p = wf%ao_density(A_interval%first : A_interval%last, &
                                     B_interval%first : B_interval%last)
 !
-               maximum = get_abs_max(D_yz, (A_interval%size)*(B_interval%size))
+               maximum = get_abs_max(D_yz, (A_interval%length)*(B_interval%length))
 !
                sp_density_schwarz(A, B) = maximum
 !
@@ -1438,8 +1438,8 @@ contains
 !
                      call wf%system%construct_ao_g_wxyz(g_C, A, B, C, D)
 
-                     g_C_p(1 : A_interval%size, 1 : B_interval%size, 1 : C_interval%size, 1 : D_interval%size) &
-                                 => g_C(1 : A_interval%size*B_interval%size*C_interval%size*D_interval%size)
+                     g_C_p(1 : A_interval%length, 1 : B_interval%length, 1 : C_interval%length, 1 : D_interval%length) &
+                                 => g_C(1 : A_interval%length*B_interval%length*C_interval%length*D_interval%length)
 !
 !                    Add Fock matrix contributions
 !
@@ -1504,8 +1504,8 @@ contains
 !
                      call wf%system%construct_ao_g_wxyz(g_K, A, D, C, B)
 
-                     g_K_p(1 : A_interval%size, 1 : D_interval%size, 1 : C_interval%size, 1 : B_interval%size) &
-                                    => g_K(1 : A_interval%size*B_interval%size*C_interval%size*D_interval%size)
+                     g_K_p(1 : A_interval%length, 1 : D_interval%length, 1 : C_interval%length, 1 : B_interval%length) &
+                                    => g_K(1 : A_interval%length*B_interval%length*C_interval%length*D_interval%length)
 !
 !                   Add Fock matrix contributions
 !
@@ -1804,12 +1804,12 @@ contains
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
                call wf%system%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,         &
-                  precision_thr/max(temp7,temp8), thread, skip, shells(s1)%size, shells(s2)%size, &
-                  shells(s3)%size, shells(s4)%size)
+                  precision_thr/max(temp7,temp8), thread, skip, shells(s1)%length, shells(s2)%length, &
+                  shells(s3)%length, shells(s4)%length)
 !
                if (skip == 1) cycle
 !
-               tot_dim = (shells(s1)%size)*(shells(s2)%size)*(shells(s3)%size)*(shells(s4)%size)
+               tot_dim = (shells(s1)%length)*(shells(s2)%length)*(shells(s3)%length)*(shells(s4)%length)
 !
                g(1:tot_dim) = deg*g(1:tot_dim)
 !
@@ -1838,7 +1838,7 @@ contains
 !
                            w_red = w - shells(s1)%first + 1
 !
-                           wxyz = shells(s1)%size*(shells(s2)%size*(shells(s3)%size*(z_red-1)+y_red-1)+x_red-1)+w_red
+                           wxyz = shells(s1)%length*(shells(s2)%length*(shells(s3)%length*(z_red-1)+y_red-1)+x_red-1)+w_red
 !
                            temp = g(wxyz)
 !
@@ -1966,12 +1966,12 @@ contains
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
                call wf%system%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, &
-                  precision_thr/temp7, thread, skip, shells(s1)%size, shells(s2)%size,    &
-                  shells(s3)%size, shells(s4)%size)
+                  precision_thr/temp7, thread, skip, shells(s1)%length, shells(s2)%length,    &
+                  shells(s3)%length, shells(s4)%length)
 !
                if (skip == 1) cycle
 !
-               tot_dim = (shells(s1)%size)*(shells(s2)%size)*(shells(s3)%size)*(shells(s4)%size)
+               tot_dim = (shells(s1)%length)*(shells(s2)%length)*(shells(s3)%length)*(shells(s4)%length)
 !
                g(1:tot_dim) = deg*g(1:tot_dim)
 !
@@ -1995,7 +1995,7 @@ contains
 !
                            w_red = w - shells(s1)%first + 1
 !
-                           wxyz = shells(s1)%size*(shells(s2)%size*(shells(s3)%size*(z_red-1)+y_red-1)+x_red-1)+w_red
+                           wxyz = shells(s1)%length*(shells(s2)%length*(shells(s3)%length*(z_red-1)+y_red-1)+x_red-1)+w_red
 !
                            temp = g(wxyz)
 !
@@ -2113,12 +2113,12 @@ contains
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
                call wf%system%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, &
-                  precision_thr/temp8, thread, skip, shells(s1)%size, shells(s2)%size,    &
-                  shells(s3)%size, shells(s4)%size)
+                  precision_thr/temp8, thread, skip, shells(s1)%length, shells(s2)%length,    &
+                  shells(s3)%length, shells(s4)%length)
 !
                if (skip == 1) cycle
 !
-               tot_dim = (shells(s1)%size)*(shells(s2)%size)*(shells(s3)%size)*(shells(s4)%size)
+               tot_dim = (shells(s1)%length)*(shells(s2)%length)*(shells(s3)%length)*(shells(s4)%length)
 !
                g(1:tot_dim) = deg*g(1:tot_dim)
 !
@@ -2144,7 +2144,7 @@ contains
 !
                            w_red = w - shells(s1)%first + 1
 !
-                           wxyz = shells(s1)%size*(shells(s2)%size*(shells(s3)%size*(z_red-1)+y_red-1)+x_red-1)+w_red
+                           wxyz = shells(s1)%length*(shells(s2)%length*(shells(s3)%length*(z_red-1)+y_red-1)+x_red-1)+w_red
 !
                            temp = g(wxyz)
 !
@@ -2316,14 +2316,14 @@ contains
 !
                   call wf%system%construct_ao_g_wxyz_1der(g_ABCDqk, A, B, C, D)                 
 !
-                  tot_dim = (wf%system%shell_limits(A)%size)*(wf%system%shell_limits(B)%size)&
-                              *(wf%system%shell_limits(C)%size)*(wf%system%shell_limits(D)%size)&
+                  tot_dim = (wf%system%shell_limits(A)%length)*(wf%system%shell_limits(B)%length)&
+                              *(wf%system%shell_limits(C)%length)*(wf%system%shell_limits(D)%length)&
                               *3*4
 !
                   g_ABCDqk(1:tot_dim) = deg*g_ABCDqk(1:tot_dim)
 !
-                  g_ABCDqk_p(1 : wf%system%shell_limits(A)%size, 1 : wf%system%shell_limits(B)%size, &
-                             1 : wf%system%shell_limits(C)%size, 1 : wf%system%shell_limits(D)%size, &
+                  g_ABCDqk_p(1 : wf%system%shell_limits(A)%length, 1 : wf%system%shell_limits(B)%length, &
+                             1 : wf%system%shell_limits(C)%length, 1 : wf%system%shell_limits(D)%length, &
                              1 : 3, 1 : 4) => g_ABCDqk(1 : tot_dim)
 !
                   do z = wf%system%shell_limits(D)%first, wf%system%shell_limits(D)%last

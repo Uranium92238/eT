@@ -65,10 +65,10 @@ contains
       req1_i = (wf%n_v)*(wf%integrals%n_J)
       req1_j = (wf%n_v)*(wf%integrals%n_J)
 !
-      req2 =  2*(wf%n_v**2)
+      req2 = 2*(wf%n_v**2)
 !
-      call batch_i%init(wf%n_o)
-      call batch_j%init(wf%n_o)
+      batch_i = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
 !

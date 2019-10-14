@@ -163,7 +163,7 @@ contains
 !
       integer :: req0, req1, j, b, b_red, current_b_batch
 !
-      call batch_b%init(wf%n_v)
+      batch_b = batching_index(wf%n_v)
 !
       req0 = wf%n_o*wf%n_v*wf%integrals%n_J ! L_ai^J
       req1 = 2*wf%n_v*wf%n_o**2 + & ! L_aijb and g_abji

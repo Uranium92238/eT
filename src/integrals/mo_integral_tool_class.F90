@@ -611,7 +611,7 @@ contains
       call sort_12_to_21(L_J_ai, L_ai_J, integrals%n_J, length_a*length_i)
       call mem%dealloc(L_J_ai, integrals%n_J, length_a, length_i)
 !
-      call batch_j%init(integrals%n_o)
+      batch_j = batching_index(integrals%n_o)
 !
       req0 = 0
       req1 = (integrals%n_o)*(integrals%n_J) & ! X_i_jJ
@@ -1132,7 +1132,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
 !     occupied-occupied block
 !
-      call batch_i%init(integrals%n_o)
+      batch_i = batching_index(integrals%n_o)
 !
       req0 = 0
 !
@@ -1168,7 +1168,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
 !     occupied-virtual block
 !
-      call batch_a%init(integrals%n_v)
+      batch_a = batching_index(integrals%n_v)
 !
       req0 = 0
 !
@@ -1207,8 +1207,8 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
       req2 = 2*(integrals%n_J) ! 2 x L_ai^J
 !
-      call batch_i%init(integrals%n_o)
-      call batch_a%init(integrals%n_v)
+      batch_i = batching_index(integrals%n_o)
+      batch_a = batching_index(integrals%n_v)
 !
       call mem%batch_setup(batch_a, batch_i, req0, req1_a, req1_i, req2)
 !
@@ -1245,7 +1245,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
 !     virtual-virtual block
 !
-      call batch_b%init(integrals%n_v)
+      batch_b = batching_index(integrals%n_v)
 !
       req0 = 0
 !

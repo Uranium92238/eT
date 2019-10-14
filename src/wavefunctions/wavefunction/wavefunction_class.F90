@@ -273,10 +273,10 @@ contains
 !
             call wf%system%construct_ao_h_wx(h_AB, A, B)
 !
-            h_AB_p(1 : A_interval%size, 1 : B_interval%size) => h_AB(1 : A_interval%size*B_interval%size)
+            h_AB_p(1 : A_interval%length, 1 : B_interval%length) => h_AB(1 : A_interval%length*B_interval%length)
 !
-            do x = 1, A_interval%size
-               do y = 1, B_interval%size
+            do x = 1, A_interval%length
+               do y = 1, B_interval%length
 !
                   h(A_interval%first - 1 + x, B_interval%first - 1 + y) = h_AB_p(x, y)
                   h(B_interval%first - 1 + y, A_interval%first - 1 + x) = h_AB_p(x, y)
@@ -322,10 +322,10 @@ contains
 !
             call wf%system%construct_ao_s_wx(s_AB, A, B)
 !
-            s_AB_p(1 : A_interval%size, 1 : B_interval%size) => s_AB(1 : A_interval%size*B_interval%size)
+            s_AB_p(1 : A_interval%length, 1 : B_interval%length) => s_AB(1 : A_interval%length*B_interval%length)
 !
-            do x = 1, A_interval%size
-               do y = 1, B_interval%size
+            do x = 1, A_interval%length
+               do y = 1, B_interval%length
 !
                   s(A_interval%first - 1 + x, B_interval%first - 1 + y) = s_AB_p(x, y)
                   s(B_interval%first - 1 + y, A_interval%first - 1 + x) = s_AB_p(x, y)
@@ -375,8 +375,8 @@ contains
             B_atom     = wf%system%shell2atom(B)
             B_interval = wf%system%shell_limits(B)
 !
-            s_ABqk_p(1 : A_interval%size, 1 : B_interval%size, 1 : 3, 1 : 2) &
-                                 => s_ABqk(1 : (A_interval%size)*(B_interval%size)*6)
+            s_ABqk_p(1 : A_interval%length, 1 : B_interval%length, 1 : 3, 1 : 2) &
+                                 => s_ABqk(1 : (A_interval%length)*(B_interval%length)*6)
 !
             call wf%system%construct_ao_s_wx_1der(s_ABqk_p(:,:,1,1),    &
                                                    s_ABqk_p(:,:,2,1),   &
@@ -387,8 +387,8 @@ contains
                                                    A, B)
 !
             do q = 1, 3
-               do w = 1, A_interval%size
-                  do x = 1, B_interval%size
+               do w = 1, A_interval%length
+                  do x = 1, B_interval%length
 !
                      w_f = A_interval%first - 1 + w
                      x_f = B_interval%first - 1 + x
@@ -444,8 +444,8 @@ contains
             B_atom     = wf%system%shell2atom(B)
             B_interval = wf%system%shell_limits(B)
 !
-            h_ABqk_p(1 : A_interval%size, 1 : B_interval%size, 1 : 3, 1 : 2) &
-                                 => h_ABqk(1 : A_interval%size*B_interval%size*3*2)
+            h_ABqk_p(1 : A_interval%length, 1 : B_interval%length, 1 : 3, 1 : 2) &
+                                 => h_ABqk(1 : A_interval%length*B_interval%length*3*2)
 !
             call wf%system%construct_ao_h_wx_kinetic_1der(h_ABqk_p(:,:,1,1),     &
                                                             h_ABqk_p(:,:,2,1),   &
@@ -456,8 +456,8 @@ contains
                                                             A, B)
 !
             do q = 1, 3
-               do w = 1, A_interval%size
-                  do x = 1, B_interval%size
+               do w = 1, A_interval%length
+                  do x = 1, B_interval%length
 !
                      w_f = A_interval%first - 1 + w
                      x_f = B_interval%first - 1 + x
@@ -472,8 +472,8 @@ contains
             if (A .ne. B) then 
 !
                do q = 1, 3
-                  do w = 1, A_interval%size
-                     do x = 1, B_interval%size
+                  do w = 1, A_interval%length
+                     do x = 1, B_interval%length
    !
                         w_f = A_interval%first - 1 + w
                         x_f = B_interval%first - 1 + x
@@ -543,12 +543,12 @@ contains
 !
             call wf%system%construct_ao_mu_wx(mu_AB_X, mu_AB_Y, mu_AB_Z, A, B)
 !
-            mu_AB_X_p(1 : A_interval%size, 1 : B_interval%size) => mu_AB_X(1 : A_interval%size*B_interval%size)
-            mu_AB_Y_p(1 : A_interval%size, 1 : B_interval%size) => mu_AB_Y(1 : A_interval%size*B_interval%size)
-            mu_AB_Z_p(1 : A_interval%size, 1 : B_interval%size) => mu_AB_Z(1 : A_interval%size*B_interval%size)
+            mu_AB_X_p(1 : A_interval%length, 1 : B_interval%length) => mu_AB_X(1 : A_interval%length*B_interval%length)
+            mu_AB_Y_p(1 : A_interval%length, 1 : B_interval%length) => mu_AB_Y(1 : A_interval%length*B_interval%length)
+            mu_AB_Z_p(1 : A_interval%length, 1 : B_interval%length) => mu_AB_Z(1 : A_interval%length*B_interval%length)
 !
-            do x = 1, A_interval%size
-               do y = 1, B_interval%size
+            do x = 1, A_interval%length
+               do y = 1, B_interval%length
 !
                   mu_X(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_X_p(x, y)
                   mu_X(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_X_p(x, y)
@@ -617,15 +617,15 @@ contains
 !
             call wf%system%construct_ao_q_wx(q_AB_xx, q_AB_xy, q_AB_xz, q_AB_yy, q_AB_yz, q_AB_zz, A, B)
 !
-            q_AB_xx_p(1 : A_interval%size, 1 : B_interval%size) => q_AB_xx(1 : A_interval%size*B_interval%size)
-            q_AB_xy_p(1 : A_interval%size, 1 : B_interval%size) => q_AB_xy(1 : A_interval%size*B_interval%size)
-            q_AB_xz_p(1 : A_interval%size, 1 : B_interval%size) => q_AB_xz(1 : A_interval%size*B_interval%size)
-            q_AB_yy_p(1 : A_interval%size, 1 : B_interval%size) => q_AB_yy(1 : A_interval%size*B_interval%size)
-            q_AB_yz_p(1 : A_interval%size, 1 : B_interval%size) => q_AB_yz(1 : A_interval%size*B_interval%size)
-            q_AB_zz_p(1 : A_interval%size, 1 : B_interval%size) => q_AB_zz(1 : A_interval%size*B_interval%size)
+            q_AB_xx_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_xx(1 : A_interval%length*B_interval%length)
+            q_AB_xy_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_xy(1 : A_interval%length*B_interval%length)
+            q_AB_xz_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_xz(1 : A_interval%length*B_interval%length)
+            q_AB_yy_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_yy(1 : A_interval%length*B_interval%length)
+            q_AB_yz_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_yz(1 : A_interval%length*B_interval%length)
+            q_AB_zz_p(1 : A_interval%length, 1 : B_interval%length) => q_AB_zz(1 : A_interval%length*B_interval%length)
 !
-             do x = 1, A_interval%size
-                do y = 1, B_interval%size
+             do x = 1, A_interval%length
+                do y = 1, B_interval%length
 !
                    q_xx(A_interval%first - 1 + x, B_interval%first - 1 + y) = q_AB_xx_p(x, y)
                    q_xx(B_interval%first - 1 + y, A_interval%first - 1 + x) = q_AB_xx_p(x, y)
@@ -831,11 +831,11 @@ contains
 !
             B_interval = wf%system%shell_limits(B)
 !
-            call mem%alloc(V_AB, A_interval%size, B_interval%size)
+            call mem%alloc(V_AB, A_interval%length, B_interval%length)
             call wf%system%construct_ao_v_wx(V_AB, A, B)
 !
-             do x = 1, A_interval%size
-                do y = 1, B_interval%size
+             do x = 1, A_interval%length
+                do y = 1, B_interval%length
 !
                    V(A_interval%first - 1 + x, B_interval%first - 1 + y) = two * V_AB(x, y)
                    V(B_interval%first - 1 + y, A_interval%first - 1 + x) = two * V_AB(x, y)
@@ -843,7 +843,7 @@ contains
                 enddo
              enddo
 !
-            call mem%dealloc(V_AB, A_interval%size, B_interval%size)
+            call mem%dealloc(V_AB, A_interval%length, B_interval%length)
 !
          enddo
       enddo
@@ -1127,8 +1127,8 @@ contains
 !
 !     Initialize batching variables
 !
-      call batch_p%init(n_mo)
-      call batch_y%init(wf%n_ao)
+      batch_p = batching_index(n_mo)
+      batch_y = batching_index(wf%n_ao)
 !
       call mem%batch_setup(batch_p, batch_y, req0, req1_p, req1_y, req2)
 !
