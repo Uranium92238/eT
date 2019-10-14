@@ -402,7 +402,7 @@ contains
    end subroutine construct_ao_q_wx_molecular_system
 !
 !
-   subroutine construct_ao_v_wx_molecular_system(molecule, V, s1, s2)
+   module subroutine construct_ao_v_wx_molecular_system(molecule, V, s1, s2)
 !!
 !!    Construct V_αβ
 !!    Copy of construct_ao_h_wx_ao_molecular_system
