@@ -173,7 +173,7 @@ contains
       call mem%alloc(L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(L_aick, (wf%n_o)**2*(wf%n_v)**2)
 !
-      call batch_a%init(wf%n_v)
+      batch_a = batching_index(wf%n_v)
 !
       req0 = wf%integrals%n_J*wf%n_o**2 ! L_ik^J
       req1 = wf%n_v*wf%n_o**2 + wf%integrals%n_J*wf%n_v ! g_caik

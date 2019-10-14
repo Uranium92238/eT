@@ -127,7 +127,7 @@ contains
       call wf%get_g_pqrs_required(req_0, req_d, wf%n_v, wf%n_v, wf%n_v, 1)
       req_d = req_d + 2*wf%n_v**3
 !
-      call batch_d%init(wf%n_v)
+      batch_d = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_d,req_0,req_d)
       call batch_d%determine_limits(1)
@@ -166,7 +166,7 @@ contains
       call wf%get_g_pqrs_required(req_0,req_l,wf%n_o,wf%n_o,1,wf%n_o)
       req_l = req_l + 2*wf%n_o**3
 !
-      call batch_l%init(wf%n_o)
+      batch_l = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_l,req_0,req_l)
       call batch_l%determine_limits(1)
@@ -207,7 +207,7 @@ contains
       call wf%get_g_pqrs_required(req_0, req_d, wf%n_v, wf%n_o, wf%n_o, 1)
       req_d = req_d + wf%n_v*wf%n_o**2
 !
-      call batch_d%init(wf%n_v)
+      batch_d = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_d,req_0,req_d)
       call batch_d%determine_limits(1)
@@ -245,7 +245,7 @@ contains
       call wf%get_g_pqrs_required(req_0, req_d, wf%n_v, 1, wf%n_o, wf%n_o)
       req_d = req_d + 2*wf%n_v*wf%n_o**2
 !
-      call batch_d%init(wf%n_v)
+      batch_d = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_d,req_0,req_d)
       call batch_d%determine_limits(1)
@@ -311,7 +311,7 @@ contains
       call wf%get_g_pqrs_required(req_0,req_k,wf%n_o,wf%n_v,1,wf%n_v)
       req_k = req_k + 2*wf%n_v**2*wf%n_o
 !
-      call batch_k%init(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_k,req_0,req_k)
       call batch_k%determine_limits(1)
@@ -436,9 +436,9 @@ contains
       req_2 = wf%n_o*wf%n_v
       req_3 = 0
 !
-      call batch_i%init(wf%n_o)
-      call batch_j%init(wf%n_o)
-      call batch_k%init(wf%n_o)
+      batch_i = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                                  req_0, req_1, req_2, req_3, zero)
@@ -1012,7 +1012,7 @@ contains
       req_0 = 0
       req_i = 2*wf%n_v**3
 !
-      call batch_i%init(wf%n_o)
+      batch_i = batching_index(wf%n_o)
 !
 !
       call mem%batch_setup(batch_i, req_0, req_i)

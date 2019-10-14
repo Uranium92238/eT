@@ -768,7 +768,7 @@ contains
                2*(wf%n_o)*(wf%n_v**2), 2*(wf%n_o**2)*(wf%n_v) )
 
 !
-      call batch_b%init(wf%n_v)
+      batch_b = batching_index(wf%n_v)
       call mem%batch_setup(batch_b, rec0, rec1)
 !
 !     Start looping over b-batches
@@ -2110,7 +2110,7 @@ contains
       req0 = wf%n_v*wf%n_o*wf%integrals%n_J
       req1 = wf%n_v*wf%integrals%n_J + 2*(wf%n_o)*(wf%n_v)**2 + 2*(wf%n_o)**3
 !
-      call batch_b%init(wf%n_v)
+      batch_b = batching_index(wf%n_v)
       call mem%batch_setup(batch_b, req0, req1)
 !
 !     Start looping over b-batches

@@ -328,7 +328,7 @@ contains
 !
 !     Fake a batching_index with full dimensions and call 2batches_reader
 !
-      call batch_z%init(dim_z)
+      batch_z = batching_index(dim_z)
 !
       batch_z%first = 1
       batch_z%last = dim_z
@@ -710,7 +710,7 @@ contains
 !
 !     Fake a batching_index with full dimensions and call 2batches_writer
 !
-      call batch_z%init(dim_z)
+      batch_z = batching_index(dim_z)
 !
       batch_z%first = 1
       batch_z%last = dim_z

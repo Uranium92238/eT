@@ -30,10 +30,37 @@ module interval_class
 !
       integer :: first = -1
       integer :: last  = -1
-      integer :: size  = -1
+      integer :: length = -1
 !
    contains
 !
    end type interval
+!
+   interface interval
+!
+      procedure :: new_interval 
+!
+   end interface interval 
+!
+contains 
+!
+!
+   function new_interval(first, last) result(intval)
+!!
+!!    New interval 
+!!    Written by Eirik F. Kjønstad, 2019 
+!!
+      implicit none 
+!
+      integer, intent(in) :: first, last 
+!
+      type(interval) :: intval 
+!
+      intval%first = first 
+      intval%last  = last 
+      intval%length = last - first + 1
+!
+   end function new_interval
+!
 !
 end module interval_class

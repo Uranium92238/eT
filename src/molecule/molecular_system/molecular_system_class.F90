@@ -249,6 +249,8 @@ contains
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+      use shell_class, only: shell
+!
       implicit none
 !
       class(molecular_system) :: molecule
@@ -289,54 +291,29 @@ contains
 !        and save number of AOs per atom
 !
          allocate(n_basis_in_shells(n_shells_on_atoms(k)))
+         allocate(shell_numbers(n_shells_on_atoms(k)))
+         allocate(first_ao_in_shells(n_shells_on_atoms(k)))
+!
          call get_n_basis_in_shells_c(k, n_basis_in_shells)
+         call get_shell_numbers_c(k, shell_numbers)
+         call get_first_ao_in_shells_c(k, first_ao_in_shells)
 !
          molecule%atoms(k)%n_ao = 0
 !
-         do j = 1, n_shells_on_atoms(k)
-
-            molecule%atoms(k)%shells(j)%size = n_basis_in_shells(j)
+         do j = 1, n_shells_on_atoms(k) 
 !
-            molecule%atoms(k)%n_ao = molecule%atoms(k)%n_ao + n_basis_in_shells(j)
-
+            molecule%atoms(k)%shells(j) = shell(first=first_ao_in_shells(j), &
+                                                length=n_basis_in_shells(j), &
+                                                number_=shell_numbers(j))
+!
+            molecule%atoms(k)%n_ao = molecule%atoms(k)%n_ao + &
+                                       molecule%atoms(k)%shells(j)%length
+!
          enddo
 !
          deallocate(n_basis_in_shells)
-!
-!        Get shell numbers
-!
-         allocate(shell_numbers(n_shells_on_atoms(k)))
-         call get_shell_numbers_c(k, shell_numbers)
-!
-         do j = 1, n_shells_on_atoms(k)
-!
-            molecule%atoms(k)%shells(j)%number_ = shell_numbers(j)
-!
-         enddo
-!
          deallocate(shell_numbers)
-!
-!        And the first AO index in each shell
-!
-         allocate(first_ao_in_shells(n_shells_on_atoms(k)))
-         call get_first_ao_in_shells_c(k, first_ao_in_shells)
-!
-         do j = 1, n_shells_on_atoms(k)
-
-            molecule%atoms(k)%shells(j)%first = first_ao_in_shells(j)
-!
-         enddo
-!
          deallocate(first_ao_in_shells)
-!
-!        Then determine the angular momentum of shells & the last AO index
-!
-         do j = 1, n_shells_on_atoms(k)
-!
-            call molecule%atoms(k)%shells(j)%determine_angular_momentum()
-            call molecule%atoms(k)%shells(j)%determine_last_ao_index()
-!
-         enddo
 !
       enddo
 !
@@ -1253,7 +1230,7 @@ contains
          do J = 1, molecule%atoms(I)%n_shells
 !
             get_n_aos_molecular_system = get_n_aos_molecular_system &
-                           + molecule%atoms(I)%shells(J)%size
+                           + molecule%atoms(I)%shells(J)%length
 !
          enddo
 !
@@ -1278,19 +1255,23 @@ contains
 !
       integer, intent(inout) :: max_shell_size
 !
-      integer :: s1 
+      integer :: s
 !
       max_shell_size = 0
-      do s1 = 1, molecule%n_s 
+      do s = 1, molecule%n_s 
 !
-         if (max_shell_size .lt. molecule%shell_limits(s1)%size) max_shell_size = molecule%shell_limits(s1)%size
+         if (max_shell_size .lt. molecule%shell_limits(s)%length) then
+! 
+            max_shell_size = molecule%shell_limits(s)%length
+!
+         endif
 !
       enddo
 !
    end subroutine get_max_shell_size_molecular_system
 !
 !
-   function get_shell_limits_molecular_system(molecule, A)
+   function get_shell_limits_molecular_system(molecule, A) result(the_interval)
 !!
 !!    Get shell limits
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1303,29 +1284,22 @@ contains
 !
       integer :: I, J
 !
-      type(interval) :: get_shell_limits_molecular_system
-!
-      get_shell_limits_molecular_system%first = 0
-      get_shell_limits_molecular_system%last  = 0
-      get_shell_limits_molecular_system%size  = 0
+      type(interval) :: the_interval
 !
       do I = 1, molecule%n_atoms
-!
          do J = 1, molecule%atoms(I)%n_shells
 !
             if (A .eq. molecule%atoms(I)%shells(J)%number_) then
 !
-               get_shell_limits_molecular_system%first = molecule%atoms(I)%shells(J)%first
-               get_shell_limits_molecular_system%last  = molecule%atoms(I)%shells(J)%last
-               get_shell_limits_molecular_system%size  = molecule%atoms(I)%shells(J)%size
+               the_interval = interval(molecule%atoms(I)%shells(J)%first, &
+                                       molecule%atoms(I)%shells(J)%last)
 !
             endif
 !
          enddo
-!
       enddo
 !
-       if (get_shell_limits_molecular_system%size == 0) call output%error_msg('in get_shell_limits.')
+       if (the_interval%length == 0) call output%error_msg('in get_shell_limits.')
 !
    end function get_shell_limits_molecular_system
 !
@@ -1988,7 +1962,7 @@ contains
 !  
              angmom1 = molecule%atoms(i)%shells(j)%l
              n_prim1 = int(molecule%atoms(i)%shells(j)%basis_details%n_primitives,kind(n_prim1))
-             n_func  = molecule%atoms(i)%shells(j)%size
+             n_func  = molecule%atoms(i)%shells(j)%length
              molecule%n_pure_basis = molecule%n_pure_basis + n_func 
 !  
              if(angmom1.ge.1) then

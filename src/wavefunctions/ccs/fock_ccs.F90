@@ -199,7 +199,7 @@ contains
       req0 = 0
       req1 = (wf%system%n_J)*(wf%n_ao)
 !
-      call batch_y%init(wf%n_ao)
+      batch_y = batching_index(wf%n_ao)
 !
       call mem%batch_setup(batch_y, req0, req1)
 !
@@ -248,7 +248,7 @@ contains
       req0 = 0
       req1 = (wf%system%n_J)*(wf%n_mo)
 !
-      call batch_q%init(wf%n_mo)
+      batch_q = batching_index(wf%n_mo)
 !
       call mem%batch_setup(batch_q, req0, req1)
 !
@@ -318,7 +318,7 @@ contains
       req0 = 0
       req1 = (wf%system%n_J)*(wf%n_ao)
 !
-      call batch_y%init(wf%n_ao)
+      batch_y = batching_index(wf%n_ao)
 !
       call mem%batch_setup(batch_y, req0, req1)
 !

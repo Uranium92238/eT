@@ -57,7 +57,7 @@ contains
       integer :: req_0, req_c
       integer :: c_batch
 !
-      call batch_c%init(wf%n_v)
+      batch_c = batching_index(wf%n_v)
 !
 !     (bd|ck) stored dk,bc
 !
@@ -161,7 +161,7 @@ contains
       integer :: req_0, req_c
       integer :: c_batch
 !
-      call batch_c%init(wf%n_v)
+      batch_c = batching_index(wf%n_v)
 !
 !     g'_bdck = (b'd|ck) + (bd|c'k) + (bd|ck') ordered dk,bc
 !
@@ -318,7 +318,7 @@ contains
       integer :: req_0, req_c
       integer :: c_batch
 !
-      call batch_c%init(wf%n_v)
+      batch_c = batching_index(wf%n_v)
 !
 !     (db|kc) stored as kd,bc
 !

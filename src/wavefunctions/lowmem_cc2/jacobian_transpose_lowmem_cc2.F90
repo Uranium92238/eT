@@ -140,8 +140,8 @@ contains
 !
       req2 = (wf%n_o)*(wf%n_v)*2
 !
-      call batch_a%init(wf%n_v)
-      call batch_j%init(wf%n_o)
+      batch_a = batching_index(wf%n_v)
+      batch_j = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_a, batch_j, req0, req1_a, req1_j, req2)
 !
@@ -261,8 +261,8 @@ contains
 !
       req2 = 2*wf%n_v**2
 !
-      call batch_j%init(wf%n_o)
-      call batch_k%init(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !  
       call mem%alloc(X_ck, wf%n_v, wf%n_o)
       call zero_array(X_ck, wf%n_v*wf%n_o)
@@ -394,8 +394,8 @@ contains
 !
       req2 =  2*wf%n_v**2
 !
-      call batch_i%init(wf%n_o)
-      call batch_k%init(wf%n_o)
+      batch_i = batching_index(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2)
 !
@@ -497,8 +497,8 @@ contains
       call mem%alloc(X_ij, wf%n_o, wf%n_o)
       call zero_array(X_ij, wf%n_o**2)
 !
-      call batch_b%init(wf%n_v)
-      call batch_c%init(wf%n_v)
+      batch_b = batching_index(wf%n_v)
+      batch_c = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2)
 !
@@ -628,8 +628,8 @@ contains
 !
       req2 = 2*(wf%n_v)*(wf%n_o)
 !
-      call batch_b%init(wf%n_v)
-      call batch_c%init(wf%n_v)
+      batch_b = batching_index(wf%n_v)
+      batch_c = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2)
 !
@@ -730,8 +730,8 @@ contains
 !
      req2 = 3*(wf%n_v)*(wf%n_o)
 !
-      call batch_b%init(wf%n_v)
-      call batch_c%init(wf%n_v)
+      batch_b = batching_index(wf%n_v)
+      batch_c = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2)
 !
@@ -896,9 +896,9 @@ contains
 !
       req3 = 0
 !
-      call batch_k%init(wf%n_o)
-      call batch_b%init(wf%n_v)
-      call batch_c%init(wf%n_v)
+      batch_k = batching_index(wf%n_o)
+      batch_b = batching_index(wf%n_v)
+      batch_c = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_k, batch_b, batch_c, req0, req1_k, req1_b, req1_c, &
                            req2_kb, req2_kc, req2_bc, req3)
@@ -1082,8 +1082,8 @@ contains
 !
       req2 = 2*(wf%n_v)*(wf%n_o)
 !
-      call batch_j%init(wf%n_o)
-      call batch_k%init(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_j, batch_k, req0, req1_j, req1_k, req2)
 !
@@ -1184,8 +1184,8 @@ contains
 !
       req2 = 2*(wf%n_v)*(wf%n_o)
 !
-      call batch_j%init(wf%n_o)
-      call batch_k%init(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup(batch_j, batch_k, req0, req1_j, req1_k, req2)
 !
@@ -1348,9 +1348,9 @@ contains
 !
       req3 = 0
 !
-      call batch_k%init(wf%n_o)
-      call batch_j%init(wf%n_o)
-      call batch_c%init(wf%n_v)
+      batch_k = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+      batch_c = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_k, batch_j, batch_c, req0, req1_k, req1_j, req1_c, &
                            req2_kj, req2_kj, req2_jc, req3)

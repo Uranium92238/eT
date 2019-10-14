@@ -32,11 +32,11 @@ module batching_index_class
 !!
 !!       type(batching_index) :: batch_a
 !!
-!!       call batch_a%init(wf%n_v) -> initializes batching object for an index of dimension
-!!                                    equal to the number of virtual orbitals
+!!       batch_a = batching_index(wf%n_v) -> initializes batching object for an index of dimension
+!!                                            equal to the number of virtual orbitals
 !!
-!!       call mem%num_batch(batch_a, required) -> determines the number of batches and
-!!                                                   and the largest batching length, saving
+!!       call mem%batch_setup(batch_a, req0, req1) -> determines the number of batches and
+!!                                                   and the largest batching length & saves
 !!                                                   that information in the batch_a object
 !!
 !!       do current_a_batch = 1, batch_a%num_batches
@@ -54,43 +54,32 @@ module batching_index_class
 !!
 !!       enddo
 !!
-!!    The case is similar for a two-batching process, which can also be handled
-!!    by the wavefunction's memory manager object 'mem'.
+!!    The case is similar for a batching over several indices simultaneously. See 
+!!    the memory manager "batch_setup" routines for details.
 !!
 !!
 !
    use kinds
    use parameters
    use global_out, only : output
+   use interval_class
 !
-   type :: batching_index
+   type, extends(interval) :: batching_index
 !
-!     Values relating the limits and length of the current batch
-!     (set by determine_limits procedure for a given batch)
+!     Values determined by the memory manager 
 !
-      integer :: first  = 0 ! Current first value of index
-      integer :: last   = 0 ! Current last value of index
-      integer :: length = 0 ! Current length of batch (last - first + 1)
-!
-!     Values relating the the size of the batch and the total number of batches
-!     (set by memory manager routines)
-!
-      integer :: max_length = 0  ! Maximum length of batch (most batches will be of this size, but typically not all)
-      integer :: num_batches = 0 ! The number of batches in total for the index
+      integer :: max_length      ! Maximum length of a batch
+      integer :: num_batches     ! The number of batches in total for the index
 !
 !     Value that must be initialized by user
 !
-      integer :: index_dimension = 0 ! Full length of index (e.g., typically n_vir for virtual index)
+      integer :: index_dimension ! Full length of index (e.g., typically n_vir for virtual index)
 !
-!     Logical for initialization (for sanity check)
+!     Logical for sanity check
 !
       logical :: initialized = .false.
 !
    contains
-!
-!     Initialization routine (sets the index dimension)
-!
-      procedure :: init => init_batching_index
 !
 !     Routine that sets the batch dependent variables,
 !     first, last and length, based on which batch it is
@@ -106,12 +95,19 @@ module batching_index_class
    end type batching_index
 !
 !
+   interface batching_index 
+!
+      procedure :: new_batching_index
+!
+   end interface batching_index 
+!
+!
 contains
 !
 !
-   subroutine init_batching_index(batch_p, dimension)
+   function new_batching_index(dimension) result(batch_p)
 !!
-!!    Init (batching index)
+!!    New batching index 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
 !!    Note: every batching index must be initialized!
@@ -120,14 +116,18 @@ contains
 !!
       implicit none
 !
-      class(batching_index) :: batch_p
+      type(batching_index) :: batch_p
 !
       integer, intent(in) :: dimension
 !
       batch_p%index_dimension = dimension
+!
       batch_p%initialized = .true.
 !
-   end subroutine init_batching_index
+      batch_p%max_length  = 0
+      batch_p%num_batches = 0
+!
+   end function new_batching_index
 !
 !
    subroutine determine_limits_batching_index(batch_p, batch_number)
