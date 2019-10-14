@@ -302,9 +302,9 @@ contains
 !
          do j = 1, n_shells_on_atoms(k) 
 !
-            molecule%atoms(k)%shells(j) = shell(first=first_ao_in_shells(j), &
-                                                length=n_basis_in_shells(j), &
-                                                number_=shell_numbers(j))
+            molecule%atoms(k)%shells(j) = shell(first=int(first_ao_in_shells(j)), &
+                                                length=int(n_basis_in_shells(j)), &
+                                                number_=int(shell_numbers(j)))
 !
             molecule%atoms(k)%n_ao = molecule%atoms(k)%n_ao + &
                                        molecule%atoms(k)%shells(j)%length
