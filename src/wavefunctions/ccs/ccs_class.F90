@@ -34,7 +34,7 @@ module ccs_class
    use string_utilities, only : convert_to_uppercase
    use array_utilities, only : get_l2_norm, copy_and_scale
    use array_utilities, only : get_abs_max_w_index
-   use array_analysis, only : get_n_lowest
+   use array_utilities, only : get_n_lowest
    use index_invert, only : invert_compound_index, invert_packed_index
    use batching_index_class, only : batching_index
    use timings_class, only : timings

@@ -31,7 +31,7 @@ module hf_class
    use timings_class, only : timings
    use array_utilities, only : get_abs_max, sandwich, print_vector
    use array_utilities, only : full_cholesky_decomposition_system
-   use array_analysis, only : get_n_highest
+   use array_utilities, only : get_n_highest
 !
    use libint_initialization, only : set_coulomb_precision_c
 !

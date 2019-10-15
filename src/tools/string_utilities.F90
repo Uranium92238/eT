@@ -21,7 +21,8 @@ module string_utilities
 !
 !!
 !!    String utilities module
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, Mar 2019
+!!
+!!    Routines that manipulate and analyze strings.
 !!
 !
    use kinds
