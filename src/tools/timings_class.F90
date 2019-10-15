@@ -27,7 +27,7 @@ module timings_class
 !!
 !!       type(timings) :: A1_timer
 !!
-!!       A1_timer = new_timer('name')
+!!       A1_timer = timings('name')
 !!       call A1_timer%turn_on()
 !!
 !!       ... do stuff ...

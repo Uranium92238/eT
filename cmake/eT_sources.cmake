@@ -64,7 +64,6 @@ set(eT_fortran_sources
    src/tools/timings_class.F90
    src/tools/array_utilities.F90
    src/tools/math_utilities.F90
-   src/tools/array_analysis.F90
    src/tools/linked_list/array_list_class.F90
    src/tools/linked_list/array_node_class.F90
    src/wavefunctions/wavefunction/wavefunction_class.F90

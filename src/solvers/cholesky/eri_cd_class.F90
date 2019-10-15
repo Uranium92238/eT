@@ -35,12 +35,12 @@ module eri_cd_class
 !
    use reordering
    use interval_class
-   use array_analysis, only : quicksort_with_index_ascending_int
-   use array_analysis, only : quicksort_with_index_descending_int
-   use array_analysis, only : quicksort_with_index_descending
-   use array_analysis, only : get_n_highest
+   use array_utilities, only : quicksort_with_index_ascending_int
+   use array_utilities, only : quicksort_with_index_descending_int
+   use array_utilities, only : quicksort_with_index_descending
+   use array_utilities, only : get_n_highest
 !
-   use array_utilities, only : get_abs_max, is_significant, reduce_array_int, reduce_vector, trans
+   use array_utilities, only : get_abs_max, is_significant, reduce_array_int, reduce_vector, transpose_
 !
    use sequential_file_class, only : sequential_file
    use direct_file_class, only : direct_file
@@ -3108,7 +3108,7 @@ contains
 !
       call mem%alloc(aux_chol_inverse_transpose, solver%n_cholesky, solver%n_cholesky)
 !
-      call trans(aux_chol_inverse, aux_chol_inverse_transpose, solver%n_cholesky)
+      call transpose_(aux_chol_inverse, aux_chol_inverse_transpose, solver%n_cholesky)
 !
       call mem%dealloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
 !
