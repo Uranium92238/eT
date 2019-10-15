@@ -90,6 +90,31 @@ contains
    end subroutine zero_array
 !
 !
+   subroutine zero_array_complex(X, n)
+!!
+!!    Zero array 
+!!    Written by Eirik F. Kjønstad, 2018
+!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
+!!
+      implicit none 
+!
+      integer, intent(in) :: n 
+!
+      complex(dp), dimension(n), intent(out) :: X 
+!
+      integer :: I 
+!
+!$omp parallel do private(I) schedule(static)
+      do I = 1, n 
+!
+         X(I) = zero_complex
+!
+      enddo
+!$omp end parallel do
+!
+   end subroutine zero_array_complex
+!
+!
    logical function is_significant(vec, n, threshold, screening)
 !!
 !!    Is vector significant ?
@@ -1476,6 +1501,36 @@ contains
 !$omp end parallel do 
 !
    end subroutine copy_and_scale
+!
+!
+   subroutine copy_and_scale_complex(alpha, X, Y, n)
+!!
+!!    Copy and scale
+!!    Written by Sarai D. Folkestad, May 2019
+!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
+!!
+!!    Y = alpha*X
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+!
+      complex(dp), dimension(n), intent(out) :: Y
+      complex(dp), dimension(n), intent(in) :: X
+!
+      complex(dp), intent(in) :: alpha
+!
+      integer :: i
+!
+!$omp parallel do private(i)
+      do i = 1, n
+!
+         Y(i) = alpha*X(i)
+!
+      enddo
+!$omp end parallel do 
+!
+   end subroutine copy_and_scale_complex
 !
 !
    subroutine print_matrix(name_, matrix, idim1, idim2)
