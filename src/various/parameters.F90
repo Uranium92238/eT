@@ -33,21 +33,39 @@ module parameters
 !
 !  Integers 
 !
-   real(dp), parameter :: zero    = 0.0D0
-   real(dp), parameter :: one     = 1.0D0
-   real(dp), parameter :: two     = 2.0D0
-   real(dp), parameter :: three   = 3.0D0
-   real(dp), parameter :: four    = 4.0D0
-   real(dp), parameter :: five    = 5.0D0
-   real(dp), parameter :: six     = 6.0D0
-   real(dp), parameter :: seven   = 7.0D0
-   real(dp), parameter :: eight   = 8.0D0
+   real(dp), parameter :: zero  = 0.0D0
+   real(dp), parameter :: one   = 1.0D0
+   real(dp), parameter :: two   = 2.0D0
+   real(dp), parameter :: three = 3.0D0
+   real(dp), parameter :: four  = 4.0D0
+   real(dp), parameter :: five  = 5.0D0
+   real(dp), parameter :: six   = 6.0D0
+   real(dp), parameter :: seven = 7.0D0
+   real(dp), parameter :: eight = 8.0D0
 !
 !  Fractions
 !
    real(dp), parameter :: half           = 0.5D0
    real(dp), parameter :: quarter        = 0.25D0
    real(dp), parameter :: one_over_eight = one/eight
+!
+!  Complex integers
+!
+   complex(dp), parameter :: zero_complex  = cmplx(zero, zero, dp)
+   complex(dp), parameter :: one_complex   = cmplx(one, zero, dp)
+   complex(dp), parameter :: two_complex   = cmplx(two, zero, dp)
+   complex(dp), parameter :: three_complex = cmplx(three, zero, dp)
+   complex(dp), parameter :: four_complex  = cmplx(four, zero, dp)
+   complex(dp), parameter :: five_complex  = cmplx(five, zero, dp)
+   complex(dp), parameter :: six_complex   = cmplx(six, zero, dp)
+   complex(dp), parameter :: seven_complex = cmplx(seven, zero, dp)
+   complex(dp), parameter :: eight_complex = cmplx(eight, zero, dp)
+!
+!  Complex fractions
+!
+   complex(dp), parameter :: half_complex           = cmplx(half, zero, dp)
+   complex(dp), parameter :: quarter_complex        = cmplx(quarter, zero, dp)
+   complex(dp), parameter :: one_over_eight_complex = cmplx(one_over_eight, zero, dp)
 !
 !  Conversion factors
 !
