@@ -27,7 +27,6 @@ module direct_file_class
    use kinds    
    use abstract_other_file_class, only : abstract_other_file
    use global_out, only : output
-   use disk_manager_class, only : disk
 !
    type, extends(abstract_other_file) :: direct_file
 !
@@ -206,8 +205,6 @@ contains
       endif
 !
       the_file%is_open = .true.
-!
-      call the_file%set_open_size()
 !
    end subroutine open_direct_file
 !

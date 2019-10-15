@@ -28,7 +28,6 @@ module sequential_file_class
    use kinds    
    use abstract_other_file_class, only : abstract_other_file
    use global_out, only : output
-   use disk_manager_class, only : disk
 !
    type, extends(abstract_other_file) :: sequential_file
 !
@@ -83,7 +82,7 @@ module sequential_file_class
 !
 !     Read routines
 !
-      procedure, public :: read_blank_sequential_file
+      procedure, public :: read_blank => read_blank_sequential_file
 !
       procedure, public :: read_r_sequential_file
       procedure, public :: read_r_1_sequential_file
@@ -108,8 +107,7 @@ module sequential_file_class
 !
       procedure, public :: read_char_sequential_file
 !
-      generic           :: read_ => read_blank_sequential_file, &
-                                    read_r_sequential_file,     &
+      generic           :: read_ => read_r_sequential_file,     &
                                     read_r_1_sequential_file,   &
                                     read_r_2_sequential_file,   &
                                     read_r_3_sequential_file,   &
@@ -127,6 +125,8 @@ module sequential_file_class
                                     read_l_sequential_file,     &
                                     read_l_1_sequential_file,   &
                                     read_char_sequential_file
+!
+      procedure, public :: number_of_records => number_of_records_sequential_file
 !
    end type sequential_file
 !
@@ -221,9 +221,40 @@ contains
 !
       the_file%is_open = .true.
 !
-      call the_file%set_open_size()
-!
    end subroutine open_sequential_file
+!
+!
+   function number_of_records_sequential_file(the_file) result(n_lines)
+!!
+!!    Number of records 
+!!    Written by Eirik F. Kjønstad, 2019 
+!!
+!!    Returns the number of records in the file. 
+!!
+!!    Works by doing empty reads until end-of-file is reached, 
+!!    giving back the number of successful reads. 
+!!
+      implicit none 
+!
+      class(sequential_file) :: the_file
+!
+      integer :: n_lines 
+!
+      integer :: io_stat 
+!
+      call the_file%rewind_() ! Make sure the file is rewinded
+!
+      n_lines = -1
+      io_stat = 0
+!
+      do while (io_stat .eq. 0)
+!
+         n_lines = n_lines + 1
+         call the_file%read_blank(io_stat)
+!
+      enddo 
+!
+   end function number_of_records_sequential_file
 !
 !
    subroutine rewind_sequential_file(the_file)
@@ -713,7 +744,7 @@ contains
    end subroutine write_char_sequential_file
 !
 !
-   subroutine read_blank_sequential_file(the_file)
+   subroutine read_blank_sequential_file(the_file, io_stat)
 !!
 !!    Sequential file read, blank line
 !!    Written by Rolf H. Myhre, May 2019
@@ -721,6 +752,8 @@ contains
       implicit none
 !
       class(sequential_file), intent(in)  :: the_file
+!
+      integer, optional :: io_stat 
 !
       integer              :: io_error
       character(len=100)   :: io_msg
@@ -731,9 +764,15 @@ contains
          read(the_file%unit, *, iostat=io_error, iomsg=io_msg)
       endif
 !
-      if(io_error .ne. 0) then
+      if (present(io_stat) .and. io_error .le. 0) then 
+!
+         io_stat = io_error
+!  
+      elseif (io_error .ne. 0) then
+!
          call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
+!
       endif
 !
    end subroutine read_blank_sequential_file

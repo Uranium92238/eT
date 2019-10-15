@@ -28,7 +28,6 @@ program eT_program
    use global_in 
    use global_out
    use timings_class, only : timings, timing
-   use disk_manager_class, only : disk
    use memory_manager_class, only : mem
    use libint_initialization, only : initialize_libint, finalize_libint
    use molecular_system_class, only : molecular_system
@@ -110,7 +109,6 @@ program eT_program
 !  Prepare memory manager and disk manager
 !
    call mem%prepare()
-   call disk%prepare()
 !
    call initialize_libint()
 !

@@ -127,7 +127,6 @@ contains
       type(section) :: calculations
       type(section) :: system 
       type(section) :: memory 
-      type(section) :: disk 
       type(section) :: cc_zop 
       type(section) :: cc_fop 
       type(section) :: method 
@@ -206,10 +205,6 @@ contains
       memory%name_    = 'memory'
       memory%required = .false.
       memory%keywords = [character(len=25) ::'available']
-!
-      disk%name_    = 'disk'
-      disk%required = .false.
-      disk%keywords = [character(len=25) ::'available']
 !
       cc_zop%name_    = 'cc zop'
       cc_zop%required = .false.
@@ -313,7 +308,6 @@ contains
       the_file%sections = [calculations,           &
                            system,                 &
                            memory,                 &
-                           disk,                   &
                            method,                 &
                            cc_zop,                 &
                            cc_fop,                 &
