@@ -427,13 +427,15 @@ contains
 !
       if (trim(side) == 'right') then 
 !
-         n_states = wf%r1_file%get_size()
-         n_states = n_states/(dp*wf%n_t1)
+         call wf%r1_file%open_('read', 'rewind')
+         n_states = wf%r1_file%number_of_records()
+         call wf%r1_file%close_()
 !
       elseif (trim(side) == 'left') then 
 !
-         n_states = wf%l1_file%get_size()
-         n_states = n_states/(dp*wf%n_t1)
+         call wf%l1_file%open_('read', 'rewind')
+         n_states = wf%l1_file%number_of_records()
+         call wf%l1_file%close_()
 !
       else
 !

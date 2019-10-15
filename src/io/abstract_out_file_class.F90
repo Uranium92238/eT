@@ -90,8 +90,6 @@ contains
 !
       the_file%is_open = .true.
 !
-      call the_file%set_open_size()
-!
    end subroutine open_abstract_out_file
 !
 !

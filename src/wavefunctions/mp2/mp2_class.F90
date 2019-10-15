@@ -79,7 +79,7 @@ contains
 !
       call hf_restart_file%read_(wf%n_ao)
       call hf_restart_file%read_(wf%n_mo)
-      call hf_restart_file%read_()
+      call hf_restart_file%read_blank()
       call hf_restart_file%read_(wf%n_o)
       call hf_restart_file%read_(wf%n_v)
       call hf_restart_file%read_(wf%hf_energy)

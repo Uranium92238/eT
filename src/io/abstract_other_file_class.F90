@@ -34,8 +34,6 @@ module abstract_other_file_class
 !
    use abstract_file_class, only : abstract_file
 !
-   use disk_manager_class, only : disk
-!
    type, abstract, extends(abstract_file) :: abstract_other_file 
 !
    contains
@@ -60,8 +58,6 @@ contains
       class(abstract_other_file)             :: the_file
       character(len=*), optional, intent(in) :: file_status
 !
-      integer  :: file_change
-!
       integer              :: io_error
       character(len=100)   :: io_msg
 !
@@ -84,9 +80,6 @@ contains
          print *, 'Error message: '//trim(io_msg)
          stop
       endif
-!
-      file_change = the_file%get_change()
-      call disk%update(file_change, the_file%name_)
 !
       the_file%is_open = .false.
       the_file%unit = -1

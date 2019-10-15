@@ -1271,7 +1271,7 @@ contains
          call mem%alloc(basis_shell_info, n_sp_in_basis_batches(batch), 4)
          call mem%alloc(cholesky_basis, n_cholesky_batches(batch), 3)
 !
-         call batch_file%read_()  
+         call batch_file%read_blank()  
          call batch_file%read_(basis_shell_info, n_sp_in_basis_batches(batch)*4)  
          call batch_file%read_(cholesky_basis, n_cholesky_batches(batch)*3)  
 !
@@ -1597,7 +1597,7 @@ contains
          call mem%alloc(basis_shell_info, n_sp_in_basis_batches(batch), 4)
          call mem%alloc(cholesky_basis, n_cholesky_batches(batch), 3)
 !  
-         call batch_file%read_()
+         call batch_file%read_blank()
          call batch_file%read_(basis_shell_info, 4*n_sp_in_basis_batches(batch))
          call batch_file%read_(cholesky_basis, 3*n_cholesky_batches(batch))
 !  

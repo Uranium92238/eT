@@ -6,10 +6,6 @@ memory
   available: 8
 end memory
 
-disk
-  available: 8
-end disk
-
 do
   excited state
 end do
