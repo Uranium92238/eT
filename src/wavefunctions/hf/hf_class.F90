@@ -903,6 +903,7 @@ contains
       call wf%restart_file%open_('write', 'append')
 !
       call wf%restart_file%write_(wf%energy)
+      call wf%restart_file%write_(wf%ao_fock, wf%n_ao**2)
 !
       call wf%restart_file%close_
 !

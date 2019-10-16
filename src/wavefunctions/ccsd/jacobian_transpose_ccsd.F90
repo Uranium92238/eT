@@ -1376,7 +1376,7 @@ contains
                   (wf%n_o)*(wf%n_v), &
                   -one,              &
                   b_aibj,            & ! "b_ai_ck"
-                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &   
                   g_ckbj,            & ! g_ck_bj
                   (wf%n_o)*(wf%n_v), &
                   one,               &

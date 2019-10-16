@@ -74,7 +74,7 @@ program eT_program
    write(output%unit,'(t4, a, a)')    'Sarai D. Folkestad     ','program design, HF, CCS, CC2, CCSD, libint-interface,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS, DIIS-tool'
    write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties, IP'
-   write(output%unit,'(t4, a, a)')    '                       ','frozen core'
+   write(output%unit,'(t4, a, a)')    '                       ','frozen core, MLCC2'
    write(output%unit,'(t4, a, a)')    'Tommaso Giovannini     ','QM/MM'
    write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
    write(output%unit,'(t4, a, a)')    'Tor S. Haugland        ','SAD'
@@ -221,6 +221,7 @@ subroutine cc_calculation(system)
    use ccsd_class, only: ccsd
    use cc3_class, only: cc3
    use mp2_class, only: mp2 
+   use mlcc2_class, only: mlcc2
 !
    use abstract_cc_engine_class, only: abstract_cc_engine
    use gs_engine_class, only: gs_engine
@@ -268,6 +269,10 @@ subroutine cc_calculation(system)
 !
          cc_wf = mp2(system)
 !
+      case ('mlcc2')
+!
+         cc_wf = mlcc2(system)
+!
       case default
 !
          call output%error_msg('could not recognize CC method ' // trim(cc_wf_name) // '.')
@@ -300,3 +305,4 @@ subroutine cc_calculation(system)
    call cc_wf%cleanup()
 !
 end subroutine cc_calculation
+!

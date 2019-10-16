@@ -17,7 +17,14 @@
 //  along with this program. If not, see <https://www.gnu.org/licenses/>.
 //
 // -----------------------------------------------------------------------
+/*
+ 
+    eT basis
+    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 
+    Enables different basis sets for different atoms
+
+*/
 #include <libint2.hpp>
 #include <iostream>
 #include <fstream>
@@ -35,7 +42,6 @@ class eTBasis: public vector<BasisSet> {
       eTBasis(){}
       void add(BasisSet new_basis){
          this->push_back(new_basis);
-        // cout << new_basis.nbf() << endl;
       }
 
       int nbf(){

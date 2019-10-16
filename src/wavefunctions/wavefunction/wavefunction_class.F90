@@ -92,6 +92,10 @@ module wavefunction_class
       procedure(gradient_function), deferred :: &
                construct_molecular_gradient        
 !
+      procedure :: projected_atomic_orbitals => projected_atomic_orbitals_wavefunction
+      procedure :: get_orbital_overlap       => get_orbital_overlap_wavefunction
+      procedure :: lovdin_orthonormalization => lovdin_orthonormalization_wavefunction
+!
       procedure :: construct_ao_electrostatics              => construct_ao_electrostatics_wavefunction       ! V_αβ, E_αβ, V(D), E(D)
       procedure :: update_h_wx_mm                           => update_h_wx_mm_hf
 !  
@@ -800,6 +804,274 @@ contains
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
    end subroutine get_mo_h_wavefunction
+!
+!
+   subroutine projected_atomic_orbitals_wavefunction(wf, D, PAO_coeff, n_orbitals, first_ao)
+!!
+!!    Projected atomic orbitals
+!!    Written by Linda Goletto and Sarai D. Folkestad, Jun 2019
+!!
+!!    Constructs the projected atomic orbitals (PAOs)
+!!
+!!       C^PAO = I - DS
+!!
+!!    NOTE: n_orbitals must be equal to n_ao unless
+!!    a restricted orbital space is requested.
+!! 
+!!    For restricted space optional argument first_ao   
+!!    may be used.
+!!
+      use array_utilities, only: zero_array
+!
+      implicit none
+!
+      class(wavefunction), intent(in) :: wf
+!
+      integer, intent(in) :: n_orbitals
+!  
+      real(dp), dimension(wf%n_ao,wf%n_ao), intent(in)      :: D
+      real(dp), dimension(wf%n_ao,n_orbitals), intent(out)  :: PAO_coeff
+!
+      integer, intent(in), optional :: first_ao
+! 
+      integer :: local_first, local_last
+!
+      integer :: i
+!
+      real(dp), dimension(:,:), allocatable :: S
+!
+!     Set offsets
+!
+      local_first = 1
+      if (present(first_ao)) local_first = first_ao  
+!
+      local_last = local_first + n_orbitals - 1
+!
+!     Sanity checks and safety guards
+!
+      if (n_orbitals .gt. wf%n_ao) call output%error_msg('number of orbitals for PAOs exceeds number of AOs')
+      if ((local_first .lt. 1) .or. (local_first .gt. wf%n_ao)) call output%error_msg('First PAO exceeds number of AOs')
+      if ((local_last .lt. 1) .or. (local_last .gt. wf%n_ao)) call output%error_msg('Last PAO exceeds number of AOs')
+!
+!     Construct PAO coefficients
+!
+      call zero_array(PAO_coeff, (wf%n_ao)*(n_orbitals))
+!
+!$omp parallel do private(i)
+      do i = 1, n_orbitals
+!
+         PAO_coeff(i + local_first - 1,i) = one
+!
+      enddo
+!$omp end parallel do
+!  
+      call mem%alloc(S, wf%n_ao, wf%n_ao)
+      S = zero
+!
+      call wf%get_ao_s_wx(S)
+!
+      call dgemm('N', 'N',             &
+                  wf%n_ao,             &
+                  n_orbitals,          &
+                  wf%n_ao,             &
+                  -one,                &
+                  D,                   &
+                  wf%n_ao,             &
+                  S(1,local_first),    &
+                  wf%n_ao,             &
+                  one,                 &
+                  PAO_coeff,           &
+                  wf%n_ao)
+!
+      call mem%dealloc(S, wf%n_ao, wf%n_ao)
+!
+   end subroutine projected_atomic_orbitals_wavefunction
+!
+!
+   subroutine get_orbital_overlap_wavefunction(wf, orbital_coeff, n_orbitals, S)
+!!
+!!    Get orbital overlap
+!!    Written by Sarai D. Folkestad and Linda Goletto, Jun 2019
+!!
+!!    Construct the orbital overlap
+!!
+!!       S = C^T S_AO C
+!!
+!!    for some set of orbital coefficients.
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      integer, intent(in) :: n_orbitals
+!
+      real(dp), dimension(wf%n_ao, n_orbitals), intent(in) :: orbital_coeff
+!
+      real(dp), dimension(n_orbitals, n_orbitals), intent(out) :: S
+!
+      real(dp), dimension(:,:), allocatable :: S_ao, X
+!
+      call mem%alloc(S_ao, wf%n_ao, wf%n_ao)
+      call wf%get_ao_s_wx(S_ao)
+!
+      call mem%alloc(X, n_orbitals, wf%n_ao)
+!
+      call dgemm('T', 'N',       &
+                  n_orbitals,    &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  one,           &
+                  orbital_coeff, &
+                  wf%n_ao,       &
+                  S_ao,          &
+                  wf%n_ao,       &
+                  zero,          &
+                  X,             &
+                  n_orbitals)
+!
+      call mem%dealloc(S_ao, wf%n_ao, wf%n_ao)
+!
+      call dgemm('N', 'N',       &
+                  n_orbitals,    &
+                  n_orbitals,    &
+                  wf%n_ao,       &
+                  one,           &
+                  X,             &
+                  n_orbitals,    &
+                  orbital_coeff, &
+                  wf%n_ao,       &
+                  zero,          &
+                  S,             &
+                  n_orbitals)
+!
+      call mem%dealloc(X, n_orbitals, wf%n_ao)
+!
+   end subroutine get_orbital_overlap_wavefunction
+!
+!
+   subroutine lovdin_orthonormalization_wavefunction(wf, orbital_coeff, S, n_orbitals, rank)
+!!
+!!    Lövdin orthonormalization 
+!!    Written by Linda Goletto and sarai D. Folkestad, Jun 2019
+!!
+!!    Orthonormalizes the orbital_coeff using Lövdin 
+!!    orthonormalization
+!!
+!!    The orbital overlap
+!!
+!!       S = C^T S_AO C
+!!
+!!    is diagonalized
+!!
+!!       S = U λ U^T
+!!
+!!    and the orbitals are updated according to
+!!
+!!       C = C U λ^(-1/2).
+!!
+!!    Linear dependence is removed by screening on the eigenvalues
+!!    with a threshold of 1.0 * 10^-6
+!!
+      use array_utilities, only: copy_and_scale
+!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      integer, intent(in)  :: n_orbitals
+      integer, intent(out) :: rank
+!
+      real(dp), dimension(wf%n_ao, n_orbitals), intent(in)     :: orbital_coeff
+      real(dp), dimension(n_orbitals, n_orbitals), intent(inout)  :: S
+!
+      real(dp), dimension(:), allocatable :: eigenvalues, work, inv_sqrt_eig
+      real(dp), dimension(:,:), allocatable :: orbital_coeff_copy
+!
+      integer :: i, info
+!
+      real(dp), parameter :: threshold = 1.0d-6
+!
+!     Diagonalize S
+!
+      call mem%alloc(eigenvalues, n_orbitals)
+!
+      call mem%alloc(work, 3*n_orbitals-1)
+!
+      call dscal(n_orbitals**2, -one, S, 1)
+!
+      call dsyev('V', 'L',       &
+               n_orbitals,       &
+               S,                &
+               n_orbitals,       &
+               eigenvalues,      &
+               work,             &
+               3*n_orbitals-1,   &
+               info)
+!
+      call mem%dealloc(work, 3*n_orbitals-1)
+!
+!     Find the rank of S
+!
+      rank = 0
+!
+      do i = 1, n_orbitals
+!
+         if (abs(eigenvalues(i)) .lt. threshold) exit
+!
+         rank = rank + 1
+!
+      enddo
+!
+!     Invert and square-root the eigenvalues (screening done here)
+!
+      call mem%alloc(inv_sqrt_eig, rank)
+!
+      do i = 1, rank
+!
+         inv_sqrt_eig(i) = 1/(sqrt(abs(eigenvalues(i))))
+!
+      enddo
+!
+      call mem%dealloc(eigenvalues, n_orbitals)
+!
+!     S = U λ^(-1/2)
+!
+      do i = 1, rank
+!
+         S(:, i) = S(:, i)*inv_sqrt_eig(i)
+!
+      enddo
+!
+      call mem%dealloc(inv_sqrt_eig, rank)
+!
+      do i = rank + 1, n_orbitals
+!
+         S(:,i) = zero
+!
+      enddo
+!
+!     Transform orbital coefficients
+!
+      call mem%alloc(orbital_coeff_copy, wf%n_ao, n_orbitals)
+!
+      call copy_and_scale(one, orbital_coeff, orbital_coeff_copy, (n_orbitals)*(wf%n_ao))
+!
+      call dgemm('N', 'N',                   &
+                  wf%n_ao,                   &
+                  rank,                      &
+                  n_orbitals,                &
+                  one,                       &
+                  orbital_coeff_copy,        &
+                  wf%n_ao,                   &
+                  S,                         &
+                  n_orbitals,                &
+                  zero,                      &
+                  orbital_coeff,             &
+                  wf%n_ao)
+!
+      call mem%dealloc(orbital_coeff_copy, wf%n_ao, n_orbitals)
+!
+   end subroutine lovdin_orthonormalization_wavefunction
 !
 !
    subroutine get_ao_v_wx_wavefunction(wf, V)

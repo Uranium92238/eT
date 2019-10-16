@@ -35,18 +35,6 @@
 !!    Jacobian transformation
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
 !!
-!!    Directs the transformation by the cc2 Jacobi matrix,
-!!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >,
-!!
-!!    where the basis employed for the brackets is biorthonormal.
-!!    The transformation is rho = A c, i.e.,
-!!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck
-!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
-!!
-!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
-!!    and c_aibj = rho_aibj.
 !!
       implicit none
 !
@@ -61,8 +49,6 @@
 !!
 !!    Jacobian CC2 B2
 !!    Written by Sarai D. Folkestad Eirik F. Kjønstad Jan 2019
-!!
-!!    rho_aibj^B2 = ε_aibj c_aibj/(1/Δ_aibj) 
 !!
       implicit none
 !

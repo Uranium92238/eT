@@ -149,13 +149,13 @@ contains
 !
       class(ccs), intent(in)                 :: wf
 !
-      write(output%unit, '(/t3, a)') '- Finalizing the ' // trim(convert_to_uppercase(wf%name_)) // &
-                                       ' ' // trim(engine%tag) // ' calculation'
+      call output%printf('- Finalizing the ' // trim(convert_to_uppercase(wf%name_)) // &
+                                       ' ' // trim(engine%tag) // ' calculation', fs='(/t3, a)',pl='minimal')
 !
       call engine%timer%turn_off()
 !
-      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', engine%timer%get_elapsed_time('wall')
-      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', engine%timer%get_elapsed_time('cpu')
+      call output%printf('Total wall time (sec): (f20.5)', reals=[engine%timer%get_elapsed_time('wall')],pl='minimal')
+      call output%printf('Total cpu time (sec):  (f20.5)', reals=[engine%timer%get_elapsed_time('cpu')],pl='minimal')
 !
    end subroutine cleanup_abstract_cc_engine
 !
@@ -201,7 +201,7 @@ contains
 !
       do task = 1, size(engine%tasks)
 !
-         write(output%unit, '(t6, a2, a)') '- ', trim(engine%tasks(task))
+         call output%printf('- ' // trim(engine%tasks(task)), fs='(t3,a)', pl='normal')
 !
       enddo
 !

@@ -803,6 +803,7 @@ contains
       logical :: ijk_core
       integer :: i_cvs
 !
+!
 !     Set up required c1-transformed integrals
       call wf%construct_c1_integrals(c_ai)
 !

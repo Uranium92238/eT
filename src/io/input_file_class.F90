@@ -40,52 +40,46 @@ module input_file_class
 !
    contains
 !
-      procedure :: open_                                 => open_input_file
-      procedure :: close_                                => close_input_file
+      procedure :: open_                                                => open_input_file
+      procedure :: close_                                               => close_input_file
 !
-      procedure :: check_for_errors                      => check_for_errors_input_file
-      procedure :: requested_section                     => requested_section_input_file
-      procedure :: requested_keyword_in_section          => requested_keyword_in_section_input_file
-      procedure :: get_n_elements_for_keyword_in_section => get_n_elements_for_keyword_in_section_input_file
-      procedure :: get_array_for_keyword_in_section      => get_array_for_keyword_in_section_input_file
-      procedure :: get_n_atoms                           => get_n_atoms_input_file
-      procedure :: get_mm_n_atoms                        => get_mm_n_atoms_input_file
-      procedure :: get_geometry                          => get_geometry_input_file
-      procedure :: get_mm_geometry                       => get_mm_geometry_input_file
-      procedure :: get_reference_wf                      => get_reference_wf_input_file
-      procedure :: get_cc_wf                             => get_cc_wf_input_file
+      procedure :: check_for_errors                                     => check_for_errors_input_file
+      procedure :: requested_section                                    => requested_section_input_file
+      procedure :: requested_keyword_in_section                         => requested_keyword_in_section_input_file
+      procedure :: get_n_elements_for_keyword_in_section                => get_n_elements_for_keyword_in_section_input_file
+      procedure :: get_array_for_keyword_in_section                     => get_array_for_keyword_in_section_input_file
+      procedure :: get_n_atoms                                          => get_n_atoms_input_file
+      procedure :: get_mm_n_atoms                                       => get_mm_n_atoms_input_file
+      procedure :: get_geometry                                         => get_geometry_input_file
+      procedure :: get_mm_geometry                                      => get_mm_geometry_input_file
+      procedure :: get_reference_wf                                     => get_reference_wf_input_file
+      procedure :: get_cc_wf                                            => get_cc_wf_input_file
 !
-      procedure :: requested_reference_calculation       => requested_reference_calculation_input_file
-      procedure :: requested_cc_calculation              => requested_cc_calculation_input_file
-      procedure :: requested_mm_calculation              => requested_mm_calculation_input_file
+      procedure :: requested_reference_calculation                      => requested_reference_calculation_input_file
+      procedure :: requested_cc_calculation                             => requested_cc_calculation_input_file
+      procedure :: requested_mm_calculation                             => requested_mm_calculation_input_file
 !
-      procedure, private :: get_string_keyword_in_section_wo_safety &
-                         => get_string_keyword_in_section_wo_safety_input_file
+      procedure, private :: get_string_keyword_in_section_wo_safety     => get_string_keyword_in_section_wo_safety_input_file
+      procedure, private :: move_to_section                             => move_to_section_input_file
+      procedure, private :: move_to_mm_geometry                         => move_to_mm_geometry_input_file
+      procedure, private :: check_section_for_illegal_keywords          => check_section_for_illegal_keywords_input_file
+      procedure, private :: check_for_illegal_sections                  => check_for_illegal_sections_input_file
+      procedure, private :: print_sections                              => print_sections_input_file
+      procedure, private :: read_adjustl_lower                          => read_adjustl_lower_input_file
 !
-      procedure, private :: move_to_section                     => move_to_section_input_file
-      procedure, private :: move_to_mm_geometry                 => move_to_mm_geometry_input_file
+      procedure, nopass, private :: string_is_comment                   => string_is_comment_input_file
+      procedure, nopass, private :: extract_keyword_from_string         => extract_keyword_from_string_input_file
+      procedure, nopass, private :: extract_keyword_value_from_string   => extract_keyword_value_from_string_input_file
 !
-      procedure, private :: check_section_for_illegal_keywords  &
-                         => check_section_for_illegal_keywords_input_file
-      procedure, private :: check_for_illegal_sections          => check_for_illegal_sections_input_file
+      generic :: get_keyword_in_section                                 => get_integer_keyword_in_section_input_file,   &
+                                                                           get_integer8_keyword_in_section_input_file,  &
+                                                                           get_string_keyword_in_section_input_file,    &
+                                                                           get_dp_keyword_in_section_input_file
 !
-      procedure, private :: print_sections                      => print_sections_input_file
-      procedure, private :: read_adjustl_lower                  => read_adjustl_lower_input_file
-!
-      procedure, nopass, private :: string_is_comment           => string_is_comment_input_file
-      procedure, nopass, private :: extract_keyword_from_string => extract_keyword_from_string_input_file
-      procedure, nopass, private :: extract_keyword_value_from_string &
-                                 => extract_keyword_value_from_string_input_file
-!
-      generic :: get_keyword_in_section            => get_integer_keyword_in_section_input_file,   &
-                                                      get_integer8_keyword_in_section_input_file,  &
-                                                      get_string_keyword_in_section_input_file,    &
-                                                      get_dp_keyword_in_section_input_file
-!
-      generic :: get_required_keyword_in_section   => get_required_string_keyword_in_section_input_file,    &
-                                                      get_required_integer_keyword_in_section_input_file,   &
-                                                      get_required_integer8_keyword_in_section_input_file,  &
-                                                      get_required_dp_keyword_in_section_input_file
+      generic :: get_required_keyword_in_section                        => get_required_string_keyword_in_section_input_file,    &
+                                                                           get_required_integer_keyword_in_section_input_file,   &
+                                                                           get_required_integer8_keyword_in_section_input_file,  &
+                                                                           get_required_dp_keyword_in_section_input_file
 !
       procedure :: get_integer_keyword_in_section_input_file
       procedure :: get_integer8_keyword_in_section_input_file
@@ -138,6 +132,7 @@ contains
       type(section) :: solver_cc_multipliers 
       type(section) :: active_atoms
       type(section) :: cc
+      type(section) :: mlcc
       type(section) :: mm
 !
 !     Set input file name, access and format 
@@ -150,21 +145,26 @@ contains
 !
 !     Set method section 
 !
-      the_file%rf_wfs = [character(len=25) ::'hf','uhf']
+      the_file%rf_wfs = [character(len=25) :: &
+                           'hf',   &
+                           'uhf']
 !
-      the_file%cc_wfs = [character(len=25) :: 'ccs',        &
-                                              'mp2',        &
-                                              'cc2',        &
-                                              'lowmem-cc2', &
-                                              'ccsd',       &
-                                              'cc3']
+      the_file%cc_wfs = [character(len=25) ::   &
+                           'ccs',               &
+                           'mp2',               &
+                           'cc2',               &
+                           'lowmem-cc2',        &
+                           'ccsd',              &
+                           'cc3',               &
+                           'mlcc2']
 !
       the_file%mm_wfs = [character(len=25) :: 'mm']
 !
       method%name_    = 'method'
       method%required = .true.
 !
-      allocate(method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs) + size(the_file%mm_wfs)))
+      allocate(method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs) &
+            + size(the_file%mm_wfs) ))
 !
       do k = 1, size(the_file%rf_wfs)
 !
@@ -177,10 +177,11 @@ contains
          method%keywords(size(the_file%rf_wfs) + k) = the_file%cc_wfs(k)
 !
       enddo 
-!      
+!
       do k = 1, size(the_file%mm_wfs)
 !
-         method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs) + k) = the_file%mm_wfs(k)
+         method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs) + k) &
+            = the_file%mm_wfs(k)
 !
       enddo 
 !
@@ -188,7 +189,9 @@ contains
 !
       calculations%name_    = 'do'
       calculations%required = .true.
-      calculations%keywords = [character(len=25) ::'ground state',   &
+!
+      calculations%keywords = [character(len=25) ::         &
+                                 'ground state',            &
                                  'ground state geoopt',     &
                                  'excited state',           &
                                  'zop',                     &
@@ -198,45 +201,49 @@ contains
 !
       system%name_    = 'system'
       system%required = .true.
-      system%keywords = [character(len=25) ::'name',  &
-                           'charge',                  &
-                           'multiplicity']
+      system%keywords = [character(len=25) ::         &
+                           'name                 ',   &
+                           'charge               ',   &
+                           'multiplicity         ']
 !
       memory%name_    = 'memory'
       memory%required = .false.
-      memory%keywords = [character(len=25) ::'available']
+      memory%keywords = [character(len=25) :: 'available']
 !
       cc_zop%name_    = 'cc zop'
       cc_zop%required = .false.
-      cc_zop%keywords = [character(len=25) ::'dipole', 'quadrupole']
+      cc_zop%keywords = [character(len=25) ::         &
+                           'dipole               ',   &
+                           'quadrupole           ']
 !
       cc_fop%name_    = 'cc fop'
       cc_fop%required = .false.
-      cc_fop%keywords = [character(len=25) ::'dipole length',   &
-                                             'lr',              &
-                                             'eom']
+      cc_fop%keywords = [character(len=25) ::         &
+                           'dipole length        ',   &
+                           'lr                   ',   &
+                           'eom                  ']
 !
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%required = .false.
-      solver_cholesky%keywords =  [character(len=25) ::&
-                                    'threshold',     &
-                                    'span',          &
-                                    'batches',       &
-                                    'qualified',     &
-                                    'one center',    &
-                                    'no vectors']
+      solver_cholesky%keywords = [character(len=25) ::         &
+                                    'threshold           ',    &
+                                    'span                ',    &
+                                    'batches             ',    &
+                                    'qualified           ',    &
+                                    'one center          ',    &
+                                    'no vectors          ']
 !
       solver_hf%name_    = 'solver hf'
       solver_hf%required = .false.
-      solver_hf%keywords =  [character(len=25) ::     &
-                              'algorithm',            &
-                              'energy threshold',     &
-                              'gradient threshold',   &
-                              'max iterations',       &
-                              'diis dimension',       &
-                              'restart',              &
-                              'ao density guess',     &
-                              'print orbitals']
+      solver_hf%keywords = [character(len=25) ::       &
+                              'algorithm            ',   &
+                              'energy threshold     ',   &
+                              'gradient threshold   ',   &
+                              'max iterations       ',   &
+                              'diis dimension       ',   &
+                              'restart              ',   &
+                              'ao density guess     ',   &
+                              'print orbitals       ' ]
 !
       solver_hf_geoopt%name_    = 'solver hf geoopt'
       solver_hf_geoopt%required = .false.
@@ -250,6 +257,7 @@ contains
 !
       solver_cc_gs%name_    = 'solver cc gs'
       solver_cc_gs%required = .false.
+!
       solver_cc_gs%keywords = [character(len=25) ::      &
                                  'algorithm',            &
                                  'energy threshold',     &
@@ -279,18 +287,39 @@ contains
 !
       solver_cc_multipliers%name_    = 'solver cc multipliers'
       solver_cc_multipliers%required = .false.
-      solver_cc_multipliers%keywords = (/ 'algorithm            ',   &
+      solver_cc_multipliers%keywords = [character(len=25) ::         &
+                                          'algorithm            ',   &
                                           'threshold            ',   &
                                           'restart              ',   &
-                                          'max iterations       '    /)
+                                          'max iterations       ']
 !
       active_atoms%name_    = 'active atoms'
       active_atoms%required = .false.
-      active_atoms%keywords = [character(len=25) :: &
-                              'selection type',     &
-                              'central atom',       &
-                              'hf',                 &
-                              'active basis']
+      active_atoms%keywords = [character(len=25) ::       &
+                                 'selection type       ', &
+                                 'central atom         ', &
+                                 'hf                   ', &
+                                 'ccs                  ', &
+                                 'cc2                  ', &
+                                 'inactive basis       ', &
+                                 'hf basis             ', &
+                                 'ccs basis            ', &
+                                 'cc2 basis            ']
+!
+      mlcc%name_    = 'mlcc'
+      mlcc%required = .false.
+      mlcc%keywords = [character(len=25) ::        &
+                        'levels',                  &
+                        'cc2 orbitals',            &
+                        'cholesky threshold',      &
+                        'cnto restart',            &
+                        'cnto occupied cc2',       &
+                        'cnto virtual cc2',        &
+                        'cnto states',             &
+                        'nto states',              &
+                        'nto occupied cc2',        &
+                        'canonical virtual cc2',   &
+                        'print ccs calculation']
 !
       cc%name_    = 'cc'
       cc%required = .false.
@@ -318,6 +347,7 @@ contains
                            solver_cc_es,           &
                            solver_cc_multipliers,  &
                            active_atoms,           &
+                           mlcc,                   &
                            cc,                     &
                            mm]
 !
@@ -1451,6 +1481,10 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
+      n_elements = 0
+!
+      if (.not. the_file%requested_keyword_in_section(keyword, section)) return
+!
 !     Get the keyword value in string format 
 !
       call the_file%get_keyword_in_section(keyword, section, keyword_value_string)
@@ -1493,6 +1527,8 @@ contains
       integer, dimension(n_elements) :: array_
 !
       character(len=200) :: keyword_value_string
+!
+      if (.not. the_file%requested_keyword_in_section(keyword, section)) return
 !
 !     Get the keyword value in string format 
 !
@@ -1624,19 +1660,19 @@ contains
             cursor = set_cursor_to_character(string)
 !
             coordinate = string(1:cursor)
-            read(coordinate, '(f21.16)') positions(current_atom, 1)
+            read(coordinate, '(f25.16)') positions(current_atom, 1)
 !
             string = string(cursor + 1:200)
 !
             cursor = set_cursor_to_character(string)
 !
             coordinate = string(1:cursor)
-            read(coordinate, '(f21.16)') positions(current_atom, 2)
+            read(coordinate, '(f25.16)') positions(current_atom, 2)
 !
             coordinate = string(cursor + 1:200)
             coordinate = adjustl(coordinate)
 !
-            read(coordinate, '(f21.16)') positions(current_atom, 3)
+            read(coordinate, '(f25.16)') positions(current_atom, 3)
 !
          endif
 !
