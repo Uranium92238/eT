@@ -96,9 +96,7 @@ contains
 !
       elseif (trim(engine%algorithm) == 'scf') then 
 !
-         if (engine%restart) call output%error_msg('SCF does not support restart.')
-!
-         scf = scf_hf(wf)
+         scf = scf_hf(wf, engine%restart)
          call scf%run(wf)
          call scf%cleanup(wf)
 !

@@ -3552,13 +3552,13 @@ contains
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-      write(output%unit, '(/t6,a30,i8)') 'Number of occupied orbitals:  ', wf%n_o
-      write(output%unit, '(t6,a30,i8)')  'Number of virtual orbitals:   ', wf%n_v
-      write(output%unit, '(t6,a30,i8)')  'Number of molecular orbitals: ', wf%n_mo
-      write(output%unit, '(t6,a30,i8)')  'Number of atomic orbitals:    ', wf%n_ao
+      call output%printf('Number of occupied orbitals:  (i8)', ints=[wf%n_o], fs='(/t6,a)', pl='minimal')
+      call output%printf('Number of virtual orbitals:   (i8)', ints=[wf%n_v], fs='(t6,a)', pl='minimal')
+      call output%printf('Number of molecular orbitals: (i8)', ints=[wf%n_mo], fs='(t6,a)', pl='minimal')
+      call output%printf('Number of atomic orbitals:    (i8)', ints=[wf%n_ao], fs='(t6,a)', pl='minimal')
 !
-     if (wf%n_mo .lt. wf%n_ao) &
-            write(output%unit, '(/t6, a, i4, a)')'Removed ', wf%n_ao - wf%n_mo, ' AOs due to linear dep.'
+      if (wf%n_mo .lt. wf%n_ao) &
+         call output%printf('Removed (i0) AOs due to linear dep.', ints=[wf%n_ao - wf%n_mo], fs='(/t6,a)', pl='minimal')
 !
    end subroutine set_n_mo_hf
 !
@@ -3941,8 +3941,6 @@ contains
 !
       call wf%roothan_hall_update_orbitals() ! F => C
       call wf%update_ao_density()            ! C => D
-!
-      call wf%update_fock_and_energy(h_wx)
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
