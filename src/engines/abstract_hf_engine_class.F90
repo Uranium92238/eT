@@ -211,7 +211,8 @@ contains
 !
 !        Prepare and run solver
 !
-         sad_solver = scf_hf(wf=sad_wf, &
+         sad_solver = scf_hf(wf=sad_wf,                       &
+                           restart=.false.,                   &
                            ao_density_guess=ao_density_guess, &
                            energy_threshold=energy_threshold, &
                            max_iterations=max_iterations,     &

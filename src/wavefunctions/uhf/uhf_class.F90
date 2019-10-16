@@ -128,6 +128,8 @@ module uhf_class
       procedure :: destruct_orbital_energies_a          => destruct_orbital_energies_a_uhf
       procedure :: destruct_orbital_energies_b          => destruct_orbital_energies_b_uhf
 !
+      procedure :: set_n_mo                              => set_n_mo_uhf
+!
    end type uhf
 !
 !
@@ -197,9 +199,6 @@ contains
       wf%n_ao = wf%system%get_n_aos()
 !
       call wf%set_n_mo()
-      wf%n_densities = 2
-!
-      call wf%determine_n_alpha_and_n_beta()
 !
       if (wf%fractional_uniform_valence) then
 !
@@ -1740,5 +1739,38 @@ contains
 !
    end subroutine update_fock_mm_uhf
 !
+!
+   subroutine set_n_mo_uhf(wf)
+!!
+!!    Set number of molecular orbitals
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf
+!
+      write(output%unit, '(/t3,a)') '- Cholesky decomposition of AO overlap to get linearly independent orbitals:'
+!
+      call wf%initialize_ao_overlap()
+      call wf%construct_ao_overlap()
+      call wf%decompose_ao_overlap()
+!
+      wf%n_densities = 2
+!
+      call wf%determine_n_alpha_and_n_beta()
+!
+      call output%printf('Number of alpha electrons:        (i8)', ints=[wf%n_alpha], fs='(/t6,a)',pl='minimal')
+      call output%printf('Number of beta electrons:         (i8)', ints=[wf%n_beta], fs='(t6,a)',pl='minimal')
+!
+      call output%printf('Number of virtual alpha orbitals: (i8)', ints=[wf%n_mo - wf%n_alpha], fs='(t6,a)',pl='minimal')
+      call output%printf('Number of virtual beta orbitals:  (i8)', ints=[wf%n_mo - wf%n_beta], fs='(t6,a)',pl='minimal')
+!
+      call output%printf('Number of molecular orbitals:     (i8)', ints=[wf%n_mo], fs='(t6,a)',pl='minimal')
+      call output%printf('Number of atomic orbitals:        (i8)', ints=[wf%n_ao], fs='(t6,a)',pl='minimal')
+!
+      if (wf%n_mo .lt. wf%n_ao) &
+         call output%printf('Removed (i0) AOs due to linear dep.', ints=[wf%n_ao - wf%n_mo], fs='(/t6,a)', pl='minimal')
+!
+   end subroutine set_n_mo_uhf
 !
 end module uhf_class

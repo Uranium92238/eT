@@ -192,6 +192,7 @@ contains
             chars=[solver%ao_density_guess], &
             fs='(/t3,a)', pl='minimal')
          call wf%set_initial_ao_density_guess(solver%ao_density_guess)
+         call wf%construct_idempotent_density_and_fock()
 !
       endif
 !
@@ -229,7 +230,7 @@ contains
       logical :: converged_energy
       logical :: converged_gradient
 !
-      real(dp) :: max_grad, energy, prev_energy, n_electrons
+      real(dp) :: max_grad, energy, prev_energy
 !
       integer :: iteration
 !
@@ -263,24 +264,6 @@ contains
       call wf%get_ao_h_wx(h_wx)
 !
       call wf%update_fock_and_energy(h_wx)
-!
-      call wf%get_n_electrons_in_density(n_electrons)
-!
-      call output%printf('Energy of initial guess:      (f25.12)', reals=[wf%energy], fs='(/t6, a)',pl='minimal')
-      call output%printf('Number of electrons in guess: (f25.12)', reals=[n_electrons], fs='(t6, a)',pl='minimal')
-!
-!     Do a Roothan-Hall update to ensure idempotentency of densities,
-!     and use it to construct the first proper Fock matrix from which
-!     to begin cumulative construction
-!
-      if (.not. solver%restart) then
-!
-         call wf%roothan_hall_update_orbitals() ! F => C
-         call wf%update_ao_density()            ! C => D
-!
-         call wf%update_fock_and_energy(h_wx)
-!
-      endif
 !
       call mem%alloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
       call mem%alloc(prev_ao_density, wf%n_ao**2, wf%n_densities)

@@ -46,6 +46,8 @@ module scf_hf_class
 !
       character(len=400) :: warning
 !
+      logical :: restart
+!
    contains
 !
       procedure :: run           => run_scf_hf
@@ -68,7 +70,7 @@ module scf_hf_class
 contains
 !
 !
-   function new_scf_hf(wf) result(solver)
+   function new_scf_hf(wf, restart) result(solver)
 !!
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -78,6 +80,8 @@ contains
       type(scf_hf) :: solver
 !
       class(hf) :: wf
+!
+      logical, intent(in) :: restart
 ! 
 !     Set standards 
 !
@@ -85,6 +89,7 @@ contains
       solver%ao_density_guess    = 'SAD'
       solver%energy_threshold    = 1.0D-6
       solver%gradient_threshold  = 1.0D-6
+      solver%restart             = restart
 !
 !     Read settings (thresholds, etc.)
 !
@@ -95,7 +100,8 @@ contains
    end function new_scf_hf
 !
 !
-   function new_scf_hf_from_parameters(wf, max_iterations,     &
+   function new_scf_hf_from_parameters(wf, restart,            &
+                                        max_iterations,        &
                                         ao_density_guess,      &
                                         energy_threshold,      &
                                         gradient_threshold) result(solver)
@@ -109,6 +115,7 @@ contains
 !
       class(hf) :: wf
 !
+      logical,            intent(in) :: restart
       integer,            intent(in) :: max_iterations
       character(len=200), intent(in) :: ao_density_guess
       real(dp),           intent(in) :: energy_threshold
@@ -120,6 +127,7 @@ contains
       solver%ao_density_guess    = ao_density_guess
       solver%energy_threshold    = energy_threshold
       solver%gradient_threshold  = gradient_threshold
+      solver%restart             = restart
 !
       call solver%prepare(wf)
 !
@@ -156,6 +164,10 @@ contains
       call solver%print_banner()
 !
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
+!
+      call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
+!
+      call solver%print_hf_solver_settings()
       call wf%print_screening_settings()
 !
 !     Initialize orbital coefficients, densities, and Fock matrices (plural for unrestricted methods)
@@ -164,14 +176,26 @@ contains
       call wf%initialize_density()
       call wf%initialize_fock()
 !
-!     Set initial AO density guess
+!     The initial (idempotent) density is obtained either from one Roothan-Hall step, or
+!     by reading orbital coefficients (restart)
 !
-      call output%printf('- Setting initial AO density to '//trim(solver%ao_density_guess),&
-         fs='(/t3,a)',pl='minimal')
+      if (solver%restart) then
 !
-      call wf%set_initial_ao_density_guess(solver%ao_density_guess)
+         call output%printf('- Requested restart. Reading orbitals from file',fs='(/t3,a)', pl='minimal')
 !
-      call wf%construct_idempotent_density_and_fock()
+         call wf%read_orbital_coefficients()
+         call wf%update_ao_density()
+         call wf%read_orbital_energies()
+!
+      else 
+!
+         call output%printf('- Setting initial AO density to '//trim(solver%ao_density_guess),&
+            fs='(/t3,a)',pl='minimal')
+!
+         call wf%set_initial_ao_density_guess(solver%ao_density_guess)
+         call wf%construct_idempotent_density_and_fock()
+!
+      endif
 !
    end subroutine prepare_scf_hf
 !
@@ -201,7 +225,11 @@ contains
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
 !
-!     :: Part II. Iterative SCF loop.
+!     Construct first Fock from initial idempotent density 
+!
+      call wf%update_fock_and_energy(h_wx)
+!
+!     :: Part I. Iterative SCF loop.
 !
       iteration = 1
 !
@@ -265,9 +293,6 @@ contains
          iteration = iteration + 1
 !
       enddo
-!
-      !call mem%dealloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      !call mem%dealloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
       call mem%dealloc(G, dim_gradient)
