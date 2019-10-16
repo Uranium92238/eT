@@ -720,6 +720,18 @@ contains
 !
             do j = 1, dim_
 !
+            call dgemm('N', 'T',          &
+                        dim_,             &
+                        dim_,             &
+                        n_vectors,        &
+                        -one,             &
+                        cholesky_vectors, &
+                        dim_,             &
+                        cholesky_vectors, &
+                        dim_,             &
+                        one,              &
+                        matrix,           &
+                        dim_)
                if (diagonal(j) .lt. min_diagonal) min_diagonal = diagonal(j)
 
 !

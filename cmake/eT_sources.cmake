@@ -81,6 +81,7 @@ set(eT_fortran_sources
    src/molecule/molecular_system/ao_integrals.F90
    src/molecule/periodic_table.F90
    src/molecule/shell_class.F90
+   src/molecule/active_atoms_class.F90
    src/molecule/shell_details_class.F90
    src/libint/libint_initialization.F90
    src/solver_tools/bfgs_tool_class.F90
@@ -146,4 +147,12 @@ set(eT_fortran_sources
    src/wavefunctions/cc3/multiplier_equation_cc3.F90
    src/wavefunctions/cc3/initialize_destruct_cc3.F90
    src/wavefunctions/mp2/zop_mp2.F90
+   src/wavefunctions/mlcc2/mlcc2_class.F90
+   src/wavefunctions/mlcc2/orbitals_mlcc2.F90
+   src/wavefunctions/mlcc2/omega_mlcc2.F90
+   src/wavefunctions/mlcc2/jacobian_mlcc2.F90
+   src/wavefunctions/mlcc2/jacobian_transpose_mlcc2.F90
+   src/wavefunctions/mlcc2/initialize_destruct_mlcc2.F90
+   src/wavefunctions/mlcc2/file_handling_mlcc2.F90
+   src/wavefunctions/mlcc2/debug_jacobian_mlcc2.F90
 )

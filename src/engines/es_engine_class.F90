@@ -144,6 +144,8 @@ contains
 !      
       if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
 !
+      if(wf%integrals%get_eri_t1_mem()) call output%printf('Note: All T1-integrals are stored in memory',fs='(/t3, a)',pl='normal')
+!
 !     Excited state solutions
 !
       call engine%do_excited_state(wf, engine%es_transformation)

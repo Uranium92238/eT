@@ -93,7 +93,7 @@ contains
       call solver%timer%turn_on()
 !
       solver%name_ = 'Davidson coupled cluster excited state solver'
-      solver%tag = 'Davidson'
+      solver%tag   = 'Davidson'
       solver%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       solver%description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
@@ -112,7 +112,6 @@ contains
       solver%max_iterations       = 100
       solver%eigenvalue_threshold = 1.0d-6
       solver%residual_threshold   = 1.0d-6
-      solver%transformation       = 'right'
       solver%restart              = .false.
       solver%max_dim_red          = 100 
       solver%transformation       = trim(transformation)

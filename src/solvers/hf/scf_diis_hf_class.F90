@@ -334,6 +334,7 @@ contains
 !
             call output%printf('---------------------------------------------------------------', &
                               pl='normal',fs='(t3,a)') 
+!
             call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
 !
             if (.not. converged_energy) then

@@ -729,7 +729,7 @@ contains
 !
                R(i) = R(i)/preconditioner(i)
 !
-            enddo 
+            enddo
 !$omp end parallel do
 !
          else

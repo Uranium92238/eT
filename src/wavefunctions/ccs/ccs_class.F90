@@ -24,7 +24,9 @@ module ccs_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-   use hf_class
+   use wavefunction_class
+!
+   use global_in, only: input
 !
    use mo_integral_tool_class, only : mo_integral_tool
 !
@@ -34,7 +36,7 @@ module ccs_class
    use string_utilities, only : convert_to_uppercase
    use array_utilities, only : get_l2_norm, copy_and_scale
    use array_utilities, only : get_abs_max_w_index
-   use array_utilities, only : get_n_lowest
+   use array_utilities, only : get_n_highest, get_n_lowest
    use index_invert, only : invert_compound_index, invert_packed_index
    use batching_index_class, only : batching_index
    use timings_class, only : timings
@@ -275,6 +277,8 @@ module ccs_class
       procedure :: set_ip_start_indices                        => set_ip_start_indices_ccs
       procedure :: get_ip_projector                            => get_ip_projector_ccs
 !
+      procedure :: approximate_double_excitation_vectors       => approximate_double_excitation_vectors_ccs
+!
 !     Frozen core
 !
       procedure :: initialize_mo_fock_fc_contribution          => initialize_mo_fock_fc_contribution_ccs                
@@ -473,7 +477,7 @@ contains
       call hf_restart_file%skip()     
       call hf_restart_file%read_(wf%n_o)     
       call hf_restart_file%read_(wf%n_v)     
-      call hf_restart_file%read_(wf%hf_energy)     
+      call hf_restart_file%read_(wf%hf_energy)    
 !
       call hf_restart_file%close_()
 !
@@ -1064,6 +1068,199 @@ contains
       enddo
 !
    end subroutine get_ip_projector_ccs
+!
+!
+   subroutine approximate_double_excitation_vectors_ccs(wf, R_ai, R_aibj, omega)
+!!
+!!    Construct approximate double excitation vectors
+!!    Sarai D. Folkestad, May 2019
+!!
+!!    Approximate double excitation vectors:
+!!
+!!       R_aibj = 1/Δ_aibj * (P_ai,bj(sum_c R_ci g_bjac - sum_k R_bk g_kjai))/(-ε_aibj + ω^CCS) 
+!!              = 1/Δ_aibj * X_aibj/(-ε_aibj + ω^CCS)
+!!
+!!    Used for CNTOs from CCS. 
+!!
+!!    For further information see Baudin, P. and Kristensen, K., J. Chem. Phys. 2017, 146, 214114
+!!
+!!    OBS! Renormalizes R !
+!!
+!!    OBS! Integrals are in MO basis not T1 basis
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(out) :: R_aibj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                  :: R_ai
+!
+      real(dp), intent(in) :: omega
+!
+      real(dp), dimension(:,:,:), allocatable :: L_Jai, L_Jkj, L_Jac
+      real(dp), dimension(:,:,:), allocatable :: X_Jai
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_kjai
+      real(dp), dimension(:), allocatable :: R_aibj_packed
+!
+      integer :: current_c_batch, req0, req1
+!
+      type(batching_index) :: batch_c
+!
+      real(dp) :: R_d_norm_sq, R_s_norm_sq, R_norm, ddot
+!
+      integer :: a, b, i, j
+!
+!     Read Cholesky vectors in MO basis
+!
+      call mem%alloc(L_Jai, wf%integrals%n_J, wf%n_v, wf%n_o)
+      call mem%alloc(L_Jkj, wf%integrals%n_J, wf%n_o, wf%n_o)
+!
+      call wf%integrals%read_cholesky(L_Jai, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
+      call wf%integrals%read_cholesky(L_Jkj, 1, wf%n_o, 1, wf%n_o)
+!
+!     Construct g_kjai integrals in MO basis
+!
+      call mem%alloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('T', 'N',            &
+                 (wf%n_o**2),         &
+                 (wf%n_v)*(wf%n_o),   &
+                 wf%integrals%n_J,    &
+                 one,                 &
+                 L_Jkj,               &
+                 wf%integrals%n_J,    &
+                 L_Jai,               &
+                 wf%integrals%n_J,    &
+                 zero,                &
+                 g_kjai,              &
+                 (wf%n_o**2))
+!
+      call mem%dealloc(L_Jkj, wf%integrals%n_J, wf%n_o, wf%n_o)
+!
+!     - sum_k R_bk g_kjai
+!
+      call dgemm('N', 'N',                &
+                  wf%n_v,                 &
+                  (wf%n_o**2)*(wf%n_v),   &
+                  wf%n_o,                 &
+                  -one,                   &
+                  R_ai,                   & ! R_bk
+                  wf%n_v,                 &
+                  g_kjai,                 &
+                  wf%n_o,                 &
+                  zero,                   &
+                  R_aibj,                 & ! R_bjai but we will symmetrize anyhow
+                  wf%n_v)
+!
+      call mem%dealloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(X_Jai, wf%integrals%n_J, wf%n_v, wf%n_o)
+      call zero_array(X_Jai, (wf%integrals%n_J)*(wf%n_v)*(wf%n_o))
+!
+      req0 = 0
+      req1 = (wf%n_v)*(wf%integrals%n_J)
+!
+      batch_c = batching_index(wf%n_v)
+!
+      call mem%batch_setup(batch_c, req0, req1)
+!
+      do current_c_batch = 1, batch_c%num_batches
+!
+         call batch_c%determine_limits(current_c_batch)
+!
+         call mem%alloc(L_Jac, wf%integrals%n_J, wf%n_v, batch_c%length)
+!
+         call wf%integrals%read_cholesky(L_Jac, wf%n_o + 1, wf%n_mo, wf%n_o + batch_c%first, wf%n_o + batch_c%last)
+!
+!        X_ai_J = sum_c R_ci L_ac_J
+!
+         call dgemm('N', 'N',                   &
+                     wf%n_v*(wf%integrals%n_J), &
+                     wf%n_o,                    &
+                     batch_c%length,            &
+                     one,                       &
+                     L_Jac,                     &
+                     wf%n_v*(wf%integrals%n_J), &
+                     R_ai(batch_c%first, 1),    & ! R_ci
+                     wf%n_v,                    &
+                     one,                       &
+                     X_Jai,                     &
+                     wf%n_v*(wf%integrals%n_J))
+!
+         call mem%dealloc(L_Jac, wf%integrals%n_J, wf%n_v, batch_c%length)
+!
+      enddo
+!
+!     sum_J X_ai_J L_bj_J
+!
+      call dgemm('T', 'N',             &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  wf%integrals%n_J,    &
+                  one,                 &
+                  X_Jai,               &
+                  wf%integrals%n_J,    &
+                  L_Jai,               & ! L_Jbj
+                  wf%integrals%n_J,    &
+                  one,                 &
+                  R_aibj,              &
+                  (wf%n_v)*(wf%n_o))
+
+!
+      call mem%dealloc(L_Jai, wf%integrals%n_J, wf%n_v, wf%n_o)
+      call mem%dealloc(X_Jai, wf%integrals%n_J, wf%n_v, wf%n_o)
+!
+!     Symmetrize
+!
+      call symmetric_sum(R_aibj, wf%n_o*wf%n_v)
+!
+!     Binormalization factor
+!
+!$omp parallel do private(a, i)
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            R_aibj(a, i, a, i) = half*R_aibj(a, i, a, i)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+!     Divide by orbital differences and CCS excitation energy
+!
+!$omp parallel do private(a, i, b, j)
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  R_aibj(a, i, b, j) = R_aibj(a, i, b, j)/(- wf%orbital_energies(a + wf%n_o) - &
+                                                            wf%orbital_energies(b + wf%n_o) + &
+                                                            wf%orbital_energies(i) + wf%orbital_energies(j) + omega)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+!     Normalize full excitation vector with singles and doubles part.
+!
+      call mem%alloc(R_aibj_packed, wf%n_o*wf%n_v*(wf%n_o*wf%n_v+1)/2)
+      call packin(R_aibj_packed, R_aibj, wf%n_o*wf%n_v)
+!
+      R_d_norm_sq = ddot(wf%n_o*wf%n_v*(wf%n_o*wf%n_v+1)/2, R_aibj_packed, 1, R_aibj_packed, 1)
+      R_s_norm_sq = ddot(wf%n_o*wf%n_v, R_ai, 1, R_ai, 1)
+!
+      R_norm = sqrt(R_s_norm_sq + R_d_norm_sq)
+!
+      call dscal(wf%n_o*wf%n_v, one/R_norm, R_ai, 1)
+      call dscal((wf%n_o*wf%n_v)**2, one/R_norm, R_aibj, 1)
+!
+      call mem%dealloc(R_aibj_packed, wf%n_o*wf%n_v*(wf%n_o*wf%n_v+1)/2)
+!
+   end subroutine approximate_double_excitation_vectors_ccs
 !
 !
    subroutine read_cvs_settings_ccs(wf)
