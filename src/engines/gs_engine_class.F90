@@ -23,9 +23,9 @@ module gs_engine_class
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
    use ccs_class
-   use abstract_engine_class
+   use abstract_cc_engine_class
 !
-   type, extends(abstract_engine) :: gs_engine 
+   type, extends(abstract_cc_engine) :: gs_engine 
 !
       character(len=200) :: multipliers_algorithm
 !
