@@ -239,8 +239,6 @@ contains
       real(dp), dimension(:,:), allocatable :: h_wx
       real(dp), dimension(:,:), allocatable :: prev_ao_density
 !
-      integer :: n_s
-!
       integer :: dim_gradient, dim_fock
 !
       type(timings) :: iteration_timer, solver_timer
@@ -251,15 +249,6 @@ contains
       solver_timer = timings('SCF DIIS solver time')
 !
       call solver_timer%turn_on()
-!
-!     Construct screening vectors for efficient Fock construction
-!
-      n_s = wf%system%get_n_shells()
-!
-      if (.not. allocated(wf%sp_eri_schwarz)) call mem%alloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      if (.not. allocated(wf%sp_eri_schwarz_list)) call mem%alloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
-!
-      call wf%construct_sp_eri_schwarz()
 !
 !     Initialize the DIIS manager object
 !
