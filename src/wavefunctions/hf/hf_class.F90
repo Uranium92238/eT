@@ -166,6 +166,12 @@ module hf_class
 !
 !     Integral related routines
 !
+      procedure :: initialize_sp_eri_schwarz                => initialize_sp_eri_schwarz_hf
+      procedure :: destruct_sp_eri_schwarz                  => destruct_sp_eri_schwarz_hf
+!
+      procedure :: initialize_sp_eri_schwarz_list           => initialize_sp_eri_schwarz_list_hf
+      procedure :: destruct_sp_eri_schwarz_list             => destruct_sp_eri_schwarz_list_hf
+!
       procedure :: construct_sp_eri_schwarz                 => construct_sp_eri_schwarz_hf
       procedure :: get_n_sig_eri_sp                         => get_n_sig_eri_sp_hf
 !
@@ -173,6 +179,9 @@ module hf_class
 !
       procedure :: set_screening_and_precision_thresholds   => set_screening_and_precision_thresholds_hf
       procedure :: print_screening_settings                 => print_screening_settings_hf
+!
+      procedure :: construct_idempotent_density_and_fock => construct_idempotent_density_and_fock_hf
+      procedure :: prepare                               => prepare_hf
 !
    end type hf
 !
@@ -204,23 +213,7 @@ contains
 !
       call wf%read_settings()
 !
-      wf%n_ao        = wf%system%get_n_aos()
-      wf%n_densities = 1
-!
-      call wf%set_n_mo()
-!
-      call wf%initialize_wavefunction_files()
-      wf%restart_file = sequential_file('hf_restart_file')
-!
-      call wf%restart_file%open_('write', 'rewind')
-!
-      call wf%restart_file%write_(wf%n_ao)
-      call wf%restart_file%write_(wf%n_mo)
-      call wf%restart_file%write_(wf%n_densities)
-      call wf%restart_file%write_(wf%n_o)
-      call wf%restart_file%write_(wf%n_v)
-!
-      call wf%restart_file%close_
+      call wf%prepare()
 !
    end function new_hf
 !
@@ -920,6 +913,9 @@ contains
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
 !
+      call wf%destruct_sp_eri_schwarz()
+      call wf%destruct_sp_eri_schwarz_list()
+!
    end subroutine cleanup_hf
 !
 !
@@ -1005,6 +1001,66 @@ contains
       if (.not. allocated(wf%cholesky_ao_overlap)) call mem%alloc(wf%cholesky_ao_overlap, wf%n_mo, wf%n_mo)
 !
    end subroutine initialize_cholesky_ao_overlap_hf
+!
+!
+   subroutine initialize_sp_eri_schwarz_hf(wf)
+!!
+!!    Initialize shell pair eri schwarz
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (.not. allocated(wf%sp_eri_schwarz)) &
+         call mem%alloc(wf%sp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2, 2)
+!
+   end subroutine initialize_sp_eri_schwarz_hf
+!
+!
+   subroutine destruct_sp_eri_schwarz_hf(wf)
+!!
+!!    Destruct shell pair eri schwarz
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (allocated(wf%sp_eri_schwarz)) &
+         call mem%dealloc(wf%sp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2, 2)
+!
+   end subroutine destruct_sp_eri_schwarz_hf
+!
+!
+   subroutine initialize_sp_eri_schwarz_list_hf(wf)
+!!
+!!    Initialize shell pair eri schwarz list
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (.not. allocated(wf%sp_eri_schwarz_list)) &
+         call mem%alloc(wf%sp_eri_schwarz_list,wf%system%n_s*(wf%system%n_s + 1)/2, 3)
+!
+   end subroutine initialize_sp_eri_schwarz_list_hf
+!
+!
+   subroutine destruct_sp_eri_schwarz_list_hf(wf)
+!!
+!!    Destruct shell pair eri schwarz list
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (allocated(wf%sp_eri_schwarz_list)) &
+         call mem%dealloc(wf%sp_eri_schwarz_list, wf%system%n_s*(wf%system%n_s + 1)/2, 3)
+!
+   end subroutine destruct_sp_eri_schwarz_list_hf
 !
 !
    subroutine destruct_ao_overlap_hf(wf)
@@ -3847,6 +3903,84 @@ contains
       call mem%dealloc(s_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)   
 !
    end subroutine construct_molecular_gradient_hf
+!
+!
+   subroutine construct_idempotent_density_and_fock_hf(wf)
+!!
+!!    Construct idempotent density and Fock 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the Fock matrix and
+!!    performs a Roothan-Hall step to get the
+!!    initial idempotent density. 
+!!
+!!    Upon exit the Fock matrix is reconstructed
+!!    and the energy calculated.
+!!
+      implicit none 
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: h_wx
+
+      real(dp) :: n_electrons
+!
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      call wf%get_ao_h_wx(h_wx)
+!
+      call wf%update_fock_and_energy(h_wx)
+!
+      call wf%get_n_electrons_in_density(n_electrons)
+!
+      call output%printf('Energy of initial guess:      (f25.12)', reals=[wf%energy], fs='(/t6, a)',pl='minimal')
+      call output%printf('Number of electrons in guess: (f25.12)', reals=[n_electrons], fs='(t6, a)',pl='minimal')
+!
+!     Update the orbitals and density to make sure the density is idempotent
+!     (not the case for the standard atomic superposition density)
+!
+      call wf%roothan_hall_update_orbitals() ! F => C
+      call wf%update_ao_density()            ! C => D
+!
+      call wf%update_fock_and_energy(h_wx)
+!
+      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+!
+   end subroutine construct_idempotent_density_and_fock_hf
+!
+!
+   subroutine prepare_hf(wf)
+!!
+!!    Prepare
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      wf%n_ao        = wf%system%get_n_aos()
+      wf%n_densities = 1
+!
+      call wf%set_n_mo()
+!
+      call wf%initialize_wavefunction_files()
+      wf%restart_file = sequential_file('hf_restart_file')
+!
+      call wf%restart_file%open_('write', 'rewind')
+!
+      call wf%restart_file%write_(wf%n_ao)
+      call wf%restart_file%write_(wf%n_mo)
+      call wf%restart_file%write_(wf%n_densities)
+      call wf%restart_file%write_(wf%n_o)
+      call wf%restart_file%write_(wf%n_v)
+!
+      call wf%restart_file%close_
+!
+      call wf%initialize_sp_eri_schwarz()
+      call wf%initialize_sp_eri_schwarz_list()
+!
+      call wf%construct_sp_eri_schwarz()
+!
+   end subroutine prepare_hf
 !
 !
 end module hf_class

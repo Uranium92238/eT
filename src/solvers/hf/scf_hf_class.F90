@@ -171,6 +171,8 @@ contains
 !
       call wf%set_initial_ao_density_guess(solver%ao_density_guess)
 !
+      call wf%construct_idempotent_density_and_fock()
+!
    end subroutine prepare_scf_hf
 !
 !
@@ -188,7 +190,7 @@ contains
       logical :: converged
       logical :: converged_energy, converged_gradient 
 !
-      real(dp) :: energy, prev_energy, n_electrons, max_grad 
+      real(dp) :: energy, prev_energy, max_grad 
 !
       integer :: iteration, dim_gradient
 !
@@ -196,36 +198,8 @@ contains
 !
       real(dp), dimension(:), allocatable :: G 
 !
-      integer :: n_s
-!
-!     :: Part I. Preparations
-!
-!     Construct ERI screening vector for efficient Fock construction
-!
-      n_s = wf%system%n_s
-!
-      call mem%alloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%alloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
-!
-      call wf%construct_sp_eri_schwarz()
-!
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
-!
-      call wf%update_fock_and_energy(h_wx)
-!
-      call wf%get_n_electrons_in_density(n_electrons)
-!
-      call output%printf('Energy of initial guess:      (f25.12)', reals=[wf%energy], fs='(/t6, a)',pl='minimal')
-      call output%printf('Number of electrons in guess: (f25.12)', reals=[n_electrons], fs='(t6, a)',pl='minimal')
-!
-!     Update the orbitals and density to make sure the density is idempotent
-!     (not the case for the standard atomic superposition density)
-!
-      call wf%roothan_hall_update_orbitals() ! F => C
-      call wf%update_ao_density()            ! C => D
-!
-      call wf%update_fock_and_energy(h_wx)
 !
 !     :: Part II. Iterative SCF loop.
 !
@@ -292,8 +266,8 @@ contains
 !
       enddo
 !
-      call mem%dealloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%dealloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      !call mem%dealloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
+      !call mem%dealloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
       call mem%dealloc(G, dim_gradient)

@@ -55,7 +55,7 @@ module uhf_class
 !
 !     Preparation routines
 !
-      procedure, private :: prepare                     => prepare_uhf
+      procedure :: prepare                              => prepare_uhf
       procedure :: determine_n_alpha_and_n_beta         => determine_n_alpha_and_n_beta_uhf
       procedure :: read_settings                        => read_settings_uhf
       procedure :: read_uhf_settings                    => read_uhf_settings_uhf
@@ -211,6 +211,11 @@ contains
       wf%orbital_coefficients_file = sequential_file('orbital_coefficients')
       wf%orbital_energies_file = sequential_file('orbital_energies')
       wf%restart_file = sequential_file('hf_restart_file')
+!
+      call wf%initialize_sp_eri_schwarz() 
+      call wf%initialize_sp_eri_schwarz_list()
+!
+      call wf%construct_sp_eri_schwarz()
 !
    end subroutine prepare_uhf
 !

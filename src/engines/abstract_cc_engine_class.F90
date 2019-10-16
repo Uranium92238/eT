@@ -46,7 +46,7 @@ module abstract_cc_engine_class
       procedure(run_abstract_cc_engine),            deferred :: run 
       procedure(set_printables_abstract_cc_engine), deferred :: set_printables 
 !
-      procedure :: ignite => ignite_abstract_cc_engine
+      procedure :: ignite                          => ignite_abstract_cc_engine
 !
       procedure, non_overridable :: cleanup        => cleanup_abstract_cc_engine
 !
