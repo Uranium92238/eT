@@ -130,33 +130,20 @@ contains
 !!
 !!    Construct mu
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
-!!    
-      use libint_initialization
-!
+!!
+!!    Constructs 
+!!
+!!       mu_pqk, k = 1, 2, 3 (x, y, z)
+!!
+!!    in the T1 transformed basis.
+!!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(inout) :: mu_pqk 
+      real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(out) :: mu_pqk 
 !
-      real(dp), dimension(:,:,:), allocatable :: mu_wxk
-!
-!     Get the AO integrals from Libint 
-!
-      call mem%alloc(mu_wxk, wf%n_ao, wf%n_ao, 3)
-!
-      call initialize_dipole()
-      call wf%get_ao_mu_wx(mu_wxk(:,:,1), mu_wxk(:,:,2), mu_wxk(:,:,3))
-!
-!     MO transform the AO integrals 
-!
-      call wf%mo_transform(mu_wxk(:,:,1), mu_pqk(:,:,1))
-      call wf%mo_transform(mu_wxk(:,:,2), mu_pqk(:,:,2))
-      call wf%mo_transform(mu_wxk(:,:,3), mu_pqk(:,:,3))
-!
-      call mem%dealloc(mu_wxk, wf%n_ao, wf%n_ao, 3)
-!
-!     T1 transform the MO integrals 
+      call wf%get_mo_mu(mu_pqk)
 !
       call wf%t1_transform(mu_pqk(:,:,1))
       call wf%t1_transform(mu_pqk(:,:,2))
@@ -170,6 +157,9 @@ contains
 !!    Construct h
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!    
+!!    Constructs the one-electron Hamiltonian integrals h_pq 
+!!    in the T1 transformed basis.
+!!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
@@ -177,6 +167,7 @@ contains
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: h_pq 
 !
       call wf%get_mo_h(h_pq)
+!
       call wf%t1_transform(h_pq)
 !
    end subroutine construct_h_ccs
@@ -187,37 +178,19 @@ contains
 !!    Construct q
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!    
-!!    xx, xy, xz, yy, yz, and zz.
+!!    Constructs 
 !!
-      use libint_initialization
-!
+!!       q_pqk, k = 1, 2, 3, 4, 5, 6 (xx, xy, xz, yy, yz, and zz)
+!!
+!!    in the T1 transformed basis.
+!!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo, 6), intent(inout) :: q_pqk 
+      real(dp), dimension(wf%n_mo, wf%n_mo, 6), intent(out) :: q_pqk 
 !
-      real(dp), dimension(:,:,:), allocatable :: q_wxk
-!
-!     Get the AO integrals from Libint 
-!
-      call mem%alloc(q_wxk, wf%n_ao, wf%n_ao, 6)
-!
-      call initialize_quadrupole()
-      call wf%get_ao_q_wx(q_wxk(:,:,1), q_wxk(:,:,2), q_wxk(:,:,3), q_wxk(:,:,4), q_wxk(:,:,5), q_wxk(:,:,6))
-!
-!     MO transform the AO integrals 
-!
-      call wf%mo_transform(q_wxk(:,:,1), q_pqk(:,:,1))
-      call wf%mo_transform(q_wxk(:,:,2), q_pqk(:,:,2))
-      call wf%mo_transform(q_wxk(:,:,3), q_pqk(:,:,3))
-      call wf%mo_transform(q_wxk(:,:,4), q_pqk(:,:,4))
-      call wf%mo_transform(q_wxk(:,:,5), q_pqk(:,:,5))
-      call wf%mo_transform(q_wxk(:,:,6), q_pqk(:,:,6))
-!
-      call mem%dealloc(q_wxk, wf%n_ao, wf%n_ao, 6)
-!
-!     T1 transform the MO integrals 
+      call wf%get_mo_q(q_pqk)
 !
       call wf%t1_transform(q_pqk(:,:,1))
       call wf%t1_transform(q_pqk(:,:,2))
@@ -229,4 +202,4 @@ contains
    end subroutine construct_q_ccs
 !
 !
-   end submodule oei_ccs
+end submodule oei_ccs
