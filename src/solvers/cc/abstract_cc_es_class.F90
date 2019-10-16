@@ -24,15 +24,24 @@ module abstract_cc_es_class
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, June 2019
 !!   
 !
-   use kinds
-   use ccs_class
+   use parameters
 !
-   use es_start_vector_tool_class
+   use global_out, only : output
+   use global_in,  only :input
+!
+   use memory_manager_class, only : mem
+   use timings_class, only : timings
+   use array_utilities, only : get_l2_norm
+   use string_utilities, only : convert_to_uppercase
+!
+   use ccs_class, only : ccs
+!
+   use es_start_vector_tool_class, only : es_start_vector_tool
    use es_valence_start_vector_tool_class, only: es_valence_start_vector_tool
    use es_cvs_start_vector_tool_class, only: es_cvs_start_vector_tool
    use es_ip_start_vector_tool_class, only: es_ip_start_vector_tool
 !
-   use es_projection_tool_class
+   use es_projection_tool_class, only : es_projection_tool
    use es_valence_projection_tool_class, only: es_valence_projection_tool
    use es_cvs_projection_tool_class, only: es_cvs_projection_tool
    use es_ip_projection_tool_class, only: es_ip_projection_tool
@@ -68,7 +77,10 @@ module abstract_cc_es_class
       class(es_start_vector_tool), allocatable  :: start_vector_tool
       class(es_projection_tool), allocatable    :: projection_tool
 !
+!
    contains
+!
+      procedure(run_abstract_cc_es), deferred :: run
 !
       procedure, non_overridable :: print_banner                     => print_banner_abstract_cc_es
 !
@@ -89,6 +101,21 @@ module abstract_cc_es_class
       procedure, non_overridable :: destruct_energies                => destruct_energies_abstract_cc_es
 !
    end type abstract_cc_es
+!
+!
+   abstract interface
+      subroutine run_abstract_cc_es(solver, wf)
+!
+         import abstract_cc_es, ccs
+!
+         implicit none
+!
+         class(abstract_cc_es) :: solver
+!
+         class(ccs) :: wf
+!
+      end subroutine
+   end interface
 !
 !
 contains
