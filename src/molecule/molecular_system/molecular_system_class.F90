@@ -139,7 +139,7 @@ module molecular_system_class
       procedure :: construct_ao_v_wx                        => construct_ao_v_wx_molecular_system      
       procedure :: construct_ao_h_wx                        => construct_ao_h_wx_molecular_system     
       procedure :: construct_ao_h_wx_kinetic_1der           => construct_ao_h_wx_kinetic_1der_molecular_system     
-      procedure :: construct_and_add_ao_h_wx_nuclear_1der   => construct_and_add_ao_h_wx_nuclear_1der_molecular_system
+      procedure :: construct_ao_h_wx_nuclear_1der           => construct_ao_h_wx_nuclear_1der_molecular_system
 ! 
       procedure :: construct_ao_g_wxyz_1der                 => construct_ao_g_wxyz_1der_molecular_system
       procedure :: construct_ao_g_wxyz                      => construct_ao_g_wxyz_molecular_system  
@@ -532,6 +532,7 @@ contains
       call initialize_nuclear_c()
       call initialize_overlap_c()
       call initialize_dipole_c()
+      call initialize_quadrupole_c()
 !
    end subroutine initialize_libint_integral_engines_molecular_system
 !

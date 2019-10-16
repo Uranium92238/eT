@@ -51,9 +51,6 @@ module wavefunction_class
       real(dp), dimension(:,:), allocatable :: orbital_coefficients
       real(dp), dimension(:), allocatable :: orbital_energies
 !
-!     stuff for QM/MM
-!  
-!
       type(sequential_file) :: orbital_coefficients_file
       type(sequential_file) :: orbital_energies_file
 !
@@ -64,6 +61,9 @@ module wavefunction_class
 !
       procedure :: destruct_orbital_coefficients   => destruct_orbital_coefficients_wavefunction
       procedure :: destruct_orbital_energies       => destruct_orbital_energies_wavefunction
+!
+      procedure :: get_ao_x_wx                     => get_ao_x_wx_wavefunction
+      procedure :: get_ao_x_wx_1der                => get_ao_x_wx_1der_wavefunction
 !
       procedure :: get_ao_h_wx                     => get_ao_h_wx_wavefunction
       procedure :: get_ao_h_wx_1der                => get_ao_h_wx_1der_wavefunction
@@ -77,6 +77,7 @@ module wavefunction_class
 !
       procedure :: get_mo_mu                       => get_mo_mu_wavefunction
       procedure :: get_mo_h                        => get_mo_h_wavefunction
+      procedure :: get_mo_q                        => get_mo_q_wavefunction
 !
       procedure :: mo_transform                    => mo_transform_wavefunction
 !
@@ -107,7 +108,15 @@ module wavefunction_class
    abstract interface 
 !
       subroutine gradient_function(wf, E_qk)
-!
+!!
+!!       Gradient function
+!!       Written by Eirik F. Kjønstad, 2019
+!!
+!!       Deferred routine to compute molecular derivative E_qk of the energy E.
+!!
+!!       q refers to x, y, z (q = 1,2,3)
+!!       k refers to atom number (k = 1,2,3,...,n_atoms) 
+!!
          import :: wavefunction, dp
 !
          implicit none 
@@ -118,10 +127,201 @@ module wavefunction_class
 !
       end subroutine gradient_function
 !
+!
+      subroutine construct_ao_x_wx(molecule, X, A, B)
+!!
+!!       Construct AO x_wx 
+!!       Written by Eirik F. Kjønstad, 2019
+!!
+!!       Abstract interface for routines, belonging to molecular system,
+!!       that calculates integrals X for the shell pair (A, B).
+!!
+         use kinds, only: dp 
+         use molecular_system_class, only: molecular_system
+!
+         implicit none 
+!
+         class(molecular_system), intent(in) :: molecule
+!
+         integer, intent(in) :: A, B 
+!
+         real(dp), dimension(molecule%shell_limits(A)%length, &
+                     molecule%shell_limits(B)%length), intent(out) :: X
+!
+      end subroutine construct_ao_x_wx
+!
+!
+      subroutine construct_ao_x_wx_1der(molecule, X_Ax, X_Ay, X_Az, X_Bx, X_By, X_Bz, A, B)
+!!
+!!       Construct AO x_wx_1der 
+!!       Written by Eirik F. Kjønstad, 2019
+!!
+!!       Abstract interface for routines, belonging to molecular system,
+!!       that calculates first-derivative integral contributions X for the shell pair (A, B).
+!!
+!!       Ax: derivative with respect to the x coordinate of the nuclei that shell A is centered on
+!!       Ay: derivative with respect to the y coordinate of the nuclei that shell A is centered on
+!!       Az: derivative with respect to the z coordinate of the nuclei that shell A is centered on
+!!       Bx: derivative with respect to the x coordinate of the nuclei that shell B is centered on
+!!       By: derivative with respect to the y coordinate of the nuclei that shell B is centered on
+!!       Bz: derivative with respect to the z coordinate of the nuclei that shell B is centered on
+!!
+         use kinds, only: dp 
+         use molecular_system_class, only: molecular_system 
+!
+         implicit none 
+!
+         class(molecular_system), intent(in) :: molecule
+!
+         integer, intent(in) :: A, B 
+!
+         real(dp), dimension(molecule%shell_limits(A)%length, molecule%shell_limits(B)%length), intent(out) :: X_Ax
+         real(dp), dimension(molecule%shell_limits(A)%length, molecule%shell_limits(B)%length), intent(out) :: X_Ay
+         real(dp), dimension(molecule%shell_limits(A)%length, molecule%shell_limits(B)%length), intent(out) :: X_Az
+         real(dp), dimension(molecule%shell_limits(A)%length, molecule%shell_limits(B)%length), intent(out) :: X_Bx
+         real(dp), dimension(molecule%shell_limits(A)%length, molecule%shell_limits(B)%length), intent(out) :: X_By
+         real(dp), dimension(molecule%shell_limits(A)%length, molecule%shell_limits(B)%length), intent(out) :: X_Bz
+!
+      end subroutine construct_ao_x_wx_1der
+!
    end interface 
 !
 !
 contains
+!
+!
+   subroutine get_ao_x_wx_wavefunction(wf, construct_ao_x_AB, x_wx)
+!!
+!!    Get AO X 
+!!    Written by Eirik F. Kjønstad, 2019 
+!!
+!!    Computes the AO integral matrix x_wx using  
+!!    the construction routine construct_ao_x_AB. This routine
+!!    constructs the x_AB contributions to x_wx for the shells A and B
+!!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      procedure(construct_ao_x_wx) :: construct_ao_x_AB
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: x_wx  
+!
+      type(interval) :: A_interval, B_interval
+!
+      integer :: x, y, A, B 
+!
+      real(dp), dimension(:,:), pointer                        :: x_AB_p 
+      real(dp), dimension(wf%system%max_shell_size**2), target :: x_AB
+!
+!$omp parallel do private(A, B, x_AB, x_AB_p, A_interval, B_interval, x, y) schedule(static)
+      do A = 1, wf%system%n_s
+!
+         A_interval = wf%system%shell_limits(A)
+!
+         do B = 1, A
+!
+            B_interval = wf%system%shell_limits(B)
+!
+            call construct_ao_x_AB(wf%system, x_AB, A, B)
+!
+            x_AB_p(1 : A_interval%length, 1 : B_interval%length) => x_AB(1 : A_interval%length*B_interval%length)
+!
+            do x = 1, A_interval%length
+               do y = 1, B_interval%length
+!
+                  x_wx(A_interval%first - 1 + x, B_interval%first - 1 + y) = x_AB_p(x, y)
+                  x_wx(B_interval%first - 1 + y, A_interval%first - 1 + x) = x_AB_p(x, y)
+!
+               enddo
+            enddo
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine get_ao_x_wx_wavefunction
+!
+!
+   subroutine get_ao_x_wx_1der_wavefunction(wf, construct_ao_x_AB_1der, x_wxqk)
+!!
+!!    Get AO X 1der 
+!!    Written by Eirik F. Kjønstad, 2019 
+!!
+!!    Computes the geometrically differentiated AO integral matrix x_wxqk using  
+!!    the construction routine construct_ao_x_AB_1der. This routine
+!!    constructs the x_ABqk contributions to x_wxqk for the shells A and B.
+!!
+!!    The derivative indices for the nuclei are:
+!! 
+!!    q = 1, 2, 3 (x, y, z)
+!!    k = 1, 2, 3, ..., n_atoms 
+!!
+!!    w and x are AO indices.
+!!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+      procedure(construct_ao_x_wx_1der) :: construct_ao_x_AB_1der
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms) :: x_wxqk 
+!
+      integer :: A, B, A_atom, B_atom, w, x, q, w_f, x_f 
+!
+      real(dp), dimension((wf%system%max_shell_size**2)*6), target :: x_ABqk 
+!
+      real(dp), dimension(:,:,:,:), pointer, contiguous :: x_ABqk_p 
+!
+      type(interval) :: A_interval, B_interval 
+!     
+      call zero_array(x_wxqk, 3*(wf%system%n_atoms)*(wf%n_ao)**2)
+!
+      do A = 1, wf%system%n_s
+!
+         A_atom     = wf%system%shell2atom(A)
+         A_interval = wf%system%shell_limits(A)
+!
+         do B = 1, A
+!
+            B_atom     = wf%system%shell2atom(B)
+            B_interval = wf%system%shell_limits(B)
+!
+            x_ABqk_p(1 : A_interval%length, 1 : B_interval%length, 1 : 3, 1 : 2) &
+                                 => x_ABqk(1 : (A_interval%length)*(B_interval%length)*6)
+!
+            call construct_ao_x_AB_1der(wf%system,            &
+                                       x_ABqk_p(:,:,1,1),   &
+                                       x_ABqk_p(:,:,2,1),   &
+                                       x_ABqk_p(:,:,3,1),   &
+                                       x_ABqk_p(:,:,1,2),   &
+                                       x_ABqk_p(:,:,2,2),   &
+                                       x_ABqk_p(:,:,3,2),   &
+                                       A, B)
+!
+            do q = 1, 3
+               do w = 1, A_interval%length
+                  do x = 1, B_interval%length
+!
+                     w_f = A_interval%first - 1 + w
+                     x_f = B_interval%first - 1 + x
+!
+                     x_wxqk(w_f, x_f, q, A_atom) = x_wxqk(w_f, x_f, q, A_atom) + x_ABqk_p(w, x, q, 1)
+                     x_wxqk(x_f, w_f, q, A_atom) = x_wxqk(x_f, w_f, q, A_atom) + x_ABqk_p(w, x, q, 1)
+!
+                     x_wxqk(w_f, x_f, q, B_atom) = x_wxqk(w_f, x_f, q, B_atom) + x_ABqk_p(w, x, q, 2)
+                     x_wxqk(x_f, w_f, q, B_atom) = x_wxqk(x_f, w_f, q, B_atom) + x_ABqk_p(w, x, q, 2)
+!
+                  enddo
+               enddo
+            enddo
+!
+            nullify(x_ABqk_p)
+!
+         enddo
+      enddo
+!
+   end subroutine get_ao_x_wx_1der_wavefunction
 !
 !
    subroutine initialize_orbital_coefficients_wavefunction(wf)
@@ -251,46 +451,38 @@ contains
 !!    Get AO h 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
-!!    Constructs the full one-electron h matrix.
+!!    Constructs the one-electron Hamiltonian integrals h_pq 
+!!    in the AO basis. 
 !!
+!!    Modification moved by Eirik F. Kjønstad from get_mo_h 
+!!    for QM / MM  (Tommaso Giovannini, July 2019). Will be fixed 
+!!    ASAP. 
+!!
+      use molecular_system_class, only: construct_ao_h_wx_molecular_system
+!
       implicit none 
 !
       class(wavefunction), intent(in) :: wf 
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: h 
 !
-      type(interval) :: A_interval, B_interval
+      call wf%get_ao_x_wx(construct_ao_h_wx_molecular_system, h)
 !
-      integer :: x, y, A, B 
+!     Ugly hacks for QM / MM to work (to be fixed soon)
 !
-      real(dp), dimension(:,:), pointer                        :: h_AB_p 
-      real(dp), dimension(wf%system%max_shell_size**2), target :: h_AB
+      if(wf%system%mm_calculation .and. wf%system%mm%forcefield.eq.'non-polarizable' &
+            .and. allocated(wf%system%mm%nopol_h_wx)) then 
 !
-!$omp parallel do private(A, B, h_AB, h_AB_p, A_interval, B_interval, x, y) schedule(static)
-      do A = 1, wf%system%n_s
+         h = h + half*wf%system%mm%nopol_h_wx
 !
-         A_interval = wf%system%shell_limits(A)
+      endif
+!         
+      if(wf%system%mm_calculation .and. wf%system%mm%forcefield .ne. 'non-polarizable' &
+            .and. allocated(wf%system%mm%pol_emb_fock)) then
 !
-         do B = 1, A
+         h = h + half*wf%system%mm%pol_emb_fock
 !
-            B_interval = wf%system%shell_limits(B)
-!
-            call wf%system%construct_ao_h_wx(h_AB, A, B)
-!
-            h_AB_p(1 : A_interval%length, 1 : B_interval%length) => h_AB(1 : A_interval%length*B_interval%length)
-!
-            do x = 1, A_interval%length
-               do y = 1, B_interval%length
-!
-                  h(A_interval%first - 1 + x, B_interval%first - 1 + y) = h_AB_p(x, y)
-                  h(B_interval%first - 1 + y, A_interval%first - 1 + x) = h_AB_p(x, y)
-!
-               enddo
-            enddo
-!
-         enddo
-      enddo
-!$omp end parallel do
+      endif 
 !
    end subroutine get_ao_h_wx_wavefunction
 !
@@ -300,48 +492,18 @@ contains
 !!    Get AO s
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
-!!    Constructs the full one-electron overlap matrix s.
+!!    Constructs the one-electron overlap matrix s
+!!    in the AO basis. 
 !!
+      use molecular_system_class, only: construct_ao_s_wx_molecular_system
+!
       implicit none 
 !
       class(wavefunction), intent(in) :: wf 
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: s 
 !
-      type(interval) :: A_interval, B_interval
-!
-      integer :: x, y, A, B
-!
-      real(dp), dimension(:,:), pointer                        :: s_AB_p 
-      real(dp), dimension(wf%system%max_shell_size**2), target :: s_AB 
-!
-!$omp parallel do private(A, B, A_interval, B_interval, s_AB, s_AB_p, x, y)
-      do A = 1, wf%system%n_s
-!
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, A
-!
-            B_interval = wf%system%shell_limits(B)
-!
-            call wf%system%construct_ao_s_wx(s_AB, A, B)
-!
-            s_AB_p(1 : A_interval%length, 1 : B_interval%length) => s_AB(1 : A_interval%length*B_interval%length)
-!
-            do x = 1, A_interval%length
-               do y = 1, B_interval%length
-!
-                  s(A_interval%first - 1 + x, B_interval%first - 1 + y) = s_AB_p(x, y)
-                  s(B_interval%first - 1 + y, A_interval%first - 1 + x) = s_AB_p(x, y)
-!
-               enddo
-            enddo
-!
-            nullify(s_AB_p)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call wf%get_ao_x_wx(construct_ao_s_wx_molecular_system, s)
 !
    end subroutine get_ao_s_wx_wavefunction
 !
@@ -353,64 +515,15 @@ contains
 !!
 !!    Constructs the derivative of the AO overlap matrix.
 !!
+      use molecular_system_class, only: construct_ao_s_wx_1der_molecular_system
+!     
       implicit none 
 !
       class(wavefunction), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms) :: s_wxqk
-!
-      integer :: A, B, A_atom, B_atom, w, x, q, w_f, x_f 
-!
-      real(dp), dimension((wf%system%max_shell_size**2)*6), target :: s_ABqk 
-!
-      real(dp), dimension(:,:,:,:), pointer, contiguous :: s_ABqk_p 
-!
-      type(interval) :: A_interval, B_interval 
-!     
-      s_wxqk = zero
-!
-      do A = 1, wf%system%n_s
-!
-         A_atom     = wf%system%shell2atom(A)
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, A
-!
-            B_atom     = wf%system%shell2atom(B)
-            B_interval = wf%system%shell_limits(B)
-!
-            s_ABqk_p(1 : A_interval%length, 1 : B_interval%length, 1 : 3, 1 : 2) &
-                                 => s_ABqk(1 : (A_interval%length)*(B_interval%length)*6)
-!
-            call wf%system%construct_ao_s_wx_1der(s_ABqk_p(:,:,1,1),    &
-                                                   s_ABqk_p(:,:,2,1),   &
-                                                   s_ABqk_p(:,:,3,1),   &
-                                                   s_ABqk_p(:,:,1,2),   &
-                                                   s_ABqk_p(:,:,2,2),   &
-                                                   s_ABqk_p(:,:,3,2),   &
-                                                   A, B)
-!
-            do q = 1, 3
-               do w = 1, A_interval%length
-                  do x = 1, B_interval%length
-!
-                     w_f = A_interval%first - 1 + w
-                     x_f = B_interval%first - 1 + x
-!
-                     s_wxqk(w_f, x_f, q, A_atom) = s_wxqk(w_f, x_f, q, A_atom) + s_ABqk_p(w, x, q, 1)
-                     s_wxqk(x_f, w_f, q, A_atom) = s_wxqk(x_f, w_f, q, A_atom) + s_ABqk_p(w, x, q, 1)
-!
-                     s_wxqk(w_f, x_f, q, B_atom) = s_wxqk(w_f, x_f, q, B_atom) + s_ABqk_p(w, x, q, 2)
-                     s_wxqk(x_f, w_f, q, B_atom) = s_wxqk(x_f, w_f, q, B_atom) + s_ABqk_p(w, x, q, 2)
-!
-                  enddo
-               enddo
-            enddo
-!
-            nullify(s_ABqk_p)
-!
-         enddo
-      enddo
+      real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms), intent(out) :: s_wxqk
+! 
+      call wf%get_ao_x_wx_1der(construct_ao_s_wx_1der_molecular_system, s_wxqk)
 !
    end subroutine get_ao_s_wx_1der_wavefunction
 !
@@ -422,87 +535,25 @@ contains
 !!
 !!    Constructs the 1st derivative of the nuclear-electron attraction integrals.
 !!
+      use molecular_system_class, only: construct_ao_h_wx_kinetic_1der_molecular_system
+!
       implicit none 
 !
       class(wavefunction), intent(in) :: wf 
 !
       real(dp), dimension(wf%n_ao, wf%n_ao, 3, wf%system%n_atoms), intent(out) :: h_wxqk
 !
-      integer :: A, B, A_atom, B_atom, w, x, q, w_f, x_f 
+      real(dp), dimension(:,:,:,:), allocatable :: h_wxqk_nuclear 
 !
-      real(dp), dimension((wf%system%max_shell_size**2)*3*2), target :: h_ABqk 
+      call wf%get_ao_x_wx_1der(construct_ao_h_wx_kinetic_1der_molecular_system, h_wxqk)
 !
-      real(dp), dimension(:,:,:,:), pointer, contiguous :: h_ABqk_p 
+      call mem%alloc(h_wxqk_nuclear, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
 !
-      type(interval) :: A_interval, B_interval 
+      call wf%system%construct_ao_h_wx_nuclear_1der(h_wxqk_nuclear, wf%n_ao)
 !
-      h_wxqk = zero
+      call daxpy(3*(wf%system%n_atoms)*wf%n_ao**2, one, h_wxqk_nuclear, 1, h_wxqk, 1)
 !
-      do A = 1, wf%system%n_s
-!
-         A_atom     = wf%system%shell2atom(A)
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, A
-!
-            B_atom     = wf%system%shell2atom(B)
-            B_interval = wf%system%shell_limits(B)
-!
-            h_ABqk_p(1 : A_interval%length, 1 : B_interval%length, 1 : 3, 1 : 2) &
-                                 => h_ABqk(1 : A_interval%length*B_interval%length*3*2)
-!
-            call wf%system%construct_ao_h_wx_kinetic_1der(h_ABqk_p(:,:,1,1),     &
-                                                            h_ABqk_p(:,:,2,1),   &
-                                                            h_ABqk_p(:,:,3,1),   &
-                                                            h_ABqk_p(:,:,1,2),   &
-                                                            h_ABqk_p(:,:,2,2),   &
-                                                            h_ABqk_p(:,:,3,2),   &
-                                                            A, B)
-!
-            do q = 1, 3
-               do w = 1, A_interval%length
-                  do x = 1, B_interval%length
-!
-                     w_f = A_interval%first - 1 + w
-                     x_f = B_interval%first - 1 + x
-!
-                     h_wxqk(w_f, x_f, q, A_atom) = h_wxqk(w_f, x_f, q, A_atom) + h_ABqk_p(w, x, q, 1)
-                     h_wxqk(w_f, x_f, q, B_atom) = h_wxqk(w_f, x_f, q, B_atom) + h_ABqk_p(w, x, q, 2)
-!
-                  enddo
-               enddo
-            enddo
-!
-            if (A .ne. B) then 
-!
-               do q = 1, 3
-                  do w = 1, A_interval%length
-                     do x = 1, B_interval%length
-   !
-                        w_f = A_interval%first - 1 + w
-                        x_f = B_interval%first - 1 + x
-   !
-                        h_wxqk(x_f, w_f, q, A_atom) = h_wxqk(x_f, w_f, q, A_atom) + h_ABqk_p(w, x, q, 1)
-                        h_wxqk(x_f, w_f, q, B_atom) = h_wxqk(x_f, w_f, q, B_atom) + h_ABqk_p(w, x, q, 2)
-   !
-                     enddo
-                  enddo
-               enddo
-!
-            endif 
-!
-            nullify(h_ABqk_p)
-!
-         enddo
-      enddo
-!
-      do A = 1, wf%system%n_s 
-         do B = 1, A
-!
-            call wf%system%construct_and_add_ao_h_wx_nuclear_1der(h_wxqk, A, B, wf%n_ao)
-!
-         enddo
-      enddo
+      call mem%dealloc(h_wxqk_nuclear, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
 !
    end subroutine get_ao_h_wx_1der_wavefunction
 !
@@ -747,40 +798,77 @@ contains
    end subroutine is_restart_safe_wavefunction
 !
 !
-   subroutine get_mo_mu_wavefunction(wf, mu)
+   subroutine get_mo_mu_wavefunction(wf, mu_pqk)
 !!
 !!    Get MO dipole operator
 !!    Written by Sarai D. Folekstad, Apr 2019
+!!
+!!    Constructs 
+!!
+!!       mu_pqk, k = 1, 2, 3 (x, y, z)
+!!
+!!    in the MO basis.
 !!
       implicit none
 !      
       class(wavefunction), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo, 3) :: mu
-      real(dp), dimension(:,:), allocatable :: mu_X_wx, mu_Y_wx, mu_Z_wx
+      real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(out) :: mu_pqk
 !
-      call mem%alloc(mu_X_wx, wf%n_ao, wf%n_ao)
-      call mem%alloc(mu_Y_wx, wf%n_ao, wf%n_ao)
-      call mem%alloc(mu_Z_wx, wf%n_ao, wf%n_ao)
+      real(dp), dimension(:,:,:), allocatable :: mu_wxk
 !
-      call wf%get_ao_mu_wx(mu_X_wx, mu_Y_wx, mu_Z_wx)
+      call mem%alloc(mu_wxk, wf%n_ao, wf%n_ao, 3)
 !
-      call wf%mo_transform(mu_X_wx, mu(1,1,1))
-      call wf%mo_transform(mu_Y_wx, mu(1,1,2))
-      call wf%mo_transform(mu_Z_wx, mu(1,1,3))
+      call wf%get_ao_mu_wx(mu_wxk(:,:,1), mu_wxk(:,:,2), mu_wxk(:,:,3))
 !
-      call mem%dealloc(mu_X_wx, wf%n_ao, wf%n_ao)
-      call mem%dealloc(mu_Y_wx, wf%n_ao, wf%n_ao)
-      call mem%dealloc(mu_Z_wx, wf%n_ao, wf%n_ao)
+      call wf%mo_transform(mu_wxk(:,:,1), mu_pqk(:,:,1))
+      call wf%mo_transform(mu_wxk(:,:,2), mu_pqk(:,:,2))
+      call wf%mo_transform(mu_wxk(:,:,3), mu_pqk(:,:,3))
+!
+      call mem%dealloc(mu_wxk, wf%n_ao, wf%n_ao, 3)
 !
    end subroutine get_mo_mu_wavefunction
 !
 !
+   subroutine get_mo_q_wavefunction(wf, q_pqk)
+!!
+!!    Get MO quadrupole operator
+!!    Written by Eirik F. Kjønstad, 2019
+!!
+!!    Constructs 
+!!
+!!       q_pqk, k = 1, 2, 3, 4, 5, 6 (xx, xy, xz, yy, yz, and zz)
+!!
+!!    in the MO basis.
+!!
+      implicit none
+!      
+      class(wavefunction), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo, 6) :: q_pqk
+!
+      real(dp), dimension(:,:,:), allocatable :: q_wxk
+!
+      call mem%alloc(q_wxk, wf%n_ao, wf%n_ao, 6)
+!
+      call wf%get_ao_q_wx(q_wxk(:,:,1), q_wxk(:,:,2), q_wxk(:,:,3), q_wxk(:,:,4), q_wxk(:,:,5), q_wxk(:,:,6))
+!
+      call wf%mo_transform(q_wxk(:,:,1), q_pqk(:,:,1))
+      call wf%mo_transform(q_wxk(:,:,2), q_pqk(:,:,2))
+      call wf%mo_transform(q_wxk(:,:,3), q_pqk(:,:,3))
+      call wf%mo_transform(q_wxk(:,:,4), q_pqk(:,:,4))
+      call wf%mo_transform(q_wxk(:,:,5), q_pqk(:,:,5))
+      call wf%mo_transform(q_wxk(:,:,6), q_pqk(:,:,6))
+!
+      call mem%dealloc(q_wxk, wf%n_ao, wf%n_ao, 6)
+!
+   end subroutine get_mo_q_wavefunction
+!
+!
    subroutine get_mo_h_wavefunction(wf, h)
 !!
-!!    Get MO h (also for QM/MM calculations)
+!!    Get MO h 
 !!    Written by Sarai D. Folekstad, Apr 2019
-!!    Modified by Tommaso Giovannini, July 2019 
 !!
       implicit none
 !      
@@ -792,12 +880,6 @@ contains
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
 !
       call wf%get_ao_h_wx(h_wx)
-!      
-      if(wf%system%mm_calculation.and.wf%system%mm%forcefield.eq.'non-polarizable') &
-         h_wx = h_wx + half*wf%system%mm%nopol_h_wx
-!         
-      if(wf%system%mm_calculation.and.wf%system%mm%forcefield.ne.'non-polarizable') &
-         h_wx = h_wx + half*wf%system%mm%pol_emb_fock
 !
       call wf%mo_transform(h_wx, h)
 !
@@ -1076,50 +1158,21 @@ contains
 !
    subroutine get_ao_v_wx_wavefunction(wf, V)
 !!
-!!    Get AO h 
+!!    Get AO v
 !!    Written by Tommaso Giovannini, May 2019
 !!
-!!    Uses the integral tool to construct the elecrostatic potential
+!!    Constructs the elecrostatic potential integral matrix v.
 !!
+      use molecular_system_class
+!
       implicit none 
 !
       class(wavefunction), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: V
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: V
 !
-      type(interval) :: A_interval, B_interval
-!
-      integer :: x, y, A, B
-!
-      real(dp), dimension(:,:), allocatable :: V_AB 
-!
-!$omp parallel do &
-!$omp private(A, B, V_AB, A_interval, B_interval, x, y) schedule(static)
-      do A = 1, wf%system%n_s
-!
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, A
-!
-            B_interval = wf%system%shell_limits(B)
-!
-            call mem%alloc(V_AB, A_interval%length, B_interval%length)
-            call wf%system%construct_ao_v_wx(V_AB, A, B)
-!
-             do x = 1, A_interval%length
-                do y = 1, B_interval%length
-!
-                   V(A_interval%first - 1 + x, B_interval%first - 1 + y) = two * V_AB(x, y)
-                   V(B_interval%first - 1 + y, A_interval%first - 1 + x) = two * V_AB(x, y)
-!
-                enddo
-             enddo
-!
-            call mem%dealloc(V_AB, A_interval%length, B_interval%length)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call wf%get_ao_x_wx(construct_ao_v_wx_molecular_system, V)
+      call dscal(wf%n_ao**2, two, V, 1)
 !
    end subroutine get_ao_v_wx_wavefunction
 !

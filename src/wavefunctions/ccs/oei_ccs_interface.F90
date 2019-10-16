@@ -36,13 +36,11 @@
 !!    Construct mu
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!    
-      use libint_initialization
-!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(inout) :: mu_pqk 
+      real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(out) :: mu_pqk 
 !
    end subroutine construct_mu_ccs
 !
@@ -66,14 +64,10 @@
 !!    Construct q
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!    
-!!    xx, xy, xz, yy, yz, and zz.
-!!
-      use libint_initialization
-!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo, 6), intent(inout) :: q_pqk 
+      real(dp), dimension(wf%n_mo, wf%n_mo, 6), intent(out) :: q_pqk 
 !
    end subroutine construct_q_ccs
