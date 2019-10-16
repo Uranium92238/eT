@@ -22,22 +22,17 @@ module hf_geoopt_engine_class
 !!    Hartree-Fock geometry optimization engine class module 
 !!    Written by Eirik F. Kjønstad, 2019 
 !!
-   use hf_class 
+   use abstract_hf_engine_class
 !
-   use bfgs_geoopt_hf_class
+   use bfgs_geoopt_hf_class, only: bfgs_geoopt_hf
 !
-   type hf_geoopt_engine
-!
-      character(len=200) :: algorithm 
-      logical :: restart 
+   type, extends(abstract_hf_engine) :: hf_geoopt_engine
 !
    contains 
 !
-      procedure :: ignite                    => ignite_hf_geoopt_engine
+      procedure :: run              => run_hf_geoopt_engine
 !
-      procedure, private :: run              => run_hf_geoopt_engine
-!
-      procedure, private :: read_settings    => read_settings_hf_geoopt_engine
+      procedure :: read_settings    => read_settings_hf_geoopt_engine
 !
    end type hf_geoopt_engine 
 !
@@ -109,21 +104,6 @@ contains
       if (input%requested_keyword_in_section('restart', 'solver hf geoopt')) engine%restart = .true.
 !
    end subroutine read_settings_hf_geoopt_engine
-!
-!
-   subroutine ignite_hf_geoopt_engine(engine, wf)
-!!
-!!    Ignite
-!!    Written by Eirik F. Kjønstad, 2019 
-!!
-      implicit none 
-!
-      class(hf_geoopt_engine) :: engine 
-      class(hf)        :: wf 
-!
-      call engine%run(wf)
-!
-   end subroutine ignite_hf_geoopt_engine
 !
 !
 end module hf_geoopt_engine_class

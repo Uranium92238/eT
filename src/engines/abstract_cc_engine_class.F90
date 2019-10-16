@@ -17,10 +17,10 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module abstract_engine_class
+module abstract_cc_engine_class
 !
 !!
-!!    Abstract engine class module
+!!    Abstract CC engine class module
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
@@ -29,7 +29,7 @@ module abstract_engine_class
 !
    implicit none
 !
-   type, abstract :: abstract_engine
+   type, abstract :: abstract_cc_engine
 !
       character(len=200) :: name_
       character(len=200) :: tag
@@ -43,44 +43,44 @@ module abstract_engine_class
 !
    contains
 !
-      procedure :: ignite => ignite_abstract_engine
+      procedure(run_abstract_cc_engine),            deferred :: run 
+      procedure(set_printables_abstract_cc_engine), deferred :: set_printables 
 !
-      procedure(essential_engine_w_wf), deferred   :: run 
-      procedure(essential_engine), deferred        :: set_printables 
+      procedure :: ignite => ignite_abstract_cc_engine
 !
-      procedure, non_overridable :: cleanup        => cleanup_abstract_engine
+      procedure, non_overridable :: cleanup        => cleanup_abstract_cc_engine
 !
-      procedure, nopass :: do_cholesky             => do_cholesky_abstract_engine       
+      procedure, nopass :: do_cholesky             => do_cholesky_abstract_cc_engine       
 !
-      procedure, non_overridable :: print_banner   => print_banner_abstract_engine
+      procedure, non_overridable :: print_banner   => print_banner_abstract_cc_engine
 !
-   end type abstract_engine
+   end type abstract_cc_engine
 !
 !
    abstract interface
 !
-      subroutine essential_engine(engine)
+      subroutine set_printables_abstract_cc_engine(engine)
 !
-         import :: abstract_engine
-!
-         implicit none 
-!
-         class(abstract_engine) :: engine
-!
-      end subroutine essential_engine
-!
-!
-      subroutine essential_engine_w_wf(engine, wf)
-!
-         import :: abstract_engine, ccs
+         import :: abstract_cc_engine
 !
          implicit none 
 !
-         class(abstract_engine) :: engine
+         class(abstract_cc_engine) :: engine
+!
+      end subroutine set_printables_abstract_cc_engine
+!
+!
+      subroutine run_abstract_cc_engine(engine, wf)
+!
+         import :: abstract_cc_engine, ccs
+!
+         implicit none 
+!
+         class(abstract_cc_engine) :: engine
 !
          class(ccs) :: wf
 !
-      end subroutine essential_engine_w_wf
+      end subroutine run_abstract_cc_engine
 !
 !
    end interface
@@ -88,7 +88,7 @@ module abstract_engine_class
 contains
 !
 !
-   subroutine ignite_abstract_engine(engine, wf)
+   subroutine ignite_abstract_cc_engine(engine, wf)
 !!
 !!    Ignite
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
@@ -97,7 +97,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_engine) :: engine
+      class(abstract_cc_engine) :: engine
 !
       class(ccs) :: wf
 !
@@ -105,10 +105,10 @@ contains
       call engine%run(wf)
       call engine%cleanup(wf)
 !
-   end subroutine ignite_abstract_engine
+   end subroutine ignite_abstract_cc_engine
 !
 !
-   subroutine do_cholesky_abstract_engine(wf)
+   subroutine do_cholesky_abstract_cc_engine(wf)
 !!
 !!    Do Cholesky
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
@@ -132,10 +132,10 @@ contains
 !
       call eri_chol_solver%cleanup(wf%system)
 !
-   end subroutine do_cholesky_abstract_engine
+   end subroutine do_cholesky_abstract_cc_engine
 !
 !
-   subroutine cleanup_abstract_engine(engine, wf)
+   subroutine cleanup_abstract_cc_engine(engine, wf)
 !!
 !!    Cleanup
 !!    Written by Sarai D. Folkestad, May 2019
@@ -145,7 +145,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_engine), intent(inout)  :: engine
+      class(abstract_cc_engine), intent(inout)  :: engine
 !
       class(ccs), intent(in)                 :: wf
 !
@@ -157,10 +157,10 @@ contains
       write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', engine%timer%get_elapsed_time('wall')
       write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', engine%timer%get_elapsed_time('cpu')
 !
-   end subroutine cleanup_abstract_engine
+   end subroutine cleanup_abstract_cc_engine
 !
 !
-   subroutine print_banner_abstract_engine(engine, wf)
+   subroutine print_banner_abstract_cc_engine(engine, wf)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad, May 2019
@@ -178,7 +178,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_engine), intent(in)  :: engine
+      class(abstract_cc_engine), intent(in)  :: engine
 !
       class(ccs), intent(in)              :: wf
 !
@@ -205,8 +205,8 @@ contains
 !
       enddo
 !
-   end subroutine print_banner_abstract_engine
+   end subroutine print_banner_abstract_cc_engine
 !
 !
-end module abstract_engine_class
+end module abstract_cc_engine_class
 !
