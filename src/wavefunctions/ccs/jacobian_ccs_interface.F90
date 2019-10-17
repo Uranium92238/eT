@@ -34,16 +34,6 @@
 !!    Jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!    Directs the transformation by the CCSD Jacobi matrix,
-!!
-!!       A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
-!!
-!!    In particular,
-!!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
-!!
-!!    On exit, c is overwritten by rho.
-!!
       implicit none
 !
       class(ccs), intent(in) :: wf
@@ -58,11 +48,6 @@
 !!    Jacobian CCS A1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!    Calculates the A1 term,
-!!
-!!       sum_b F_ab c_bi - sum_j F_ji c_aj,
-!!
-!!    and adds it to the rho vector.
 !!
       implicit none
 !
@@ -79,11 +64,6 @@
 !!    Jacobian CCS B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!    Calculates the B1 term,
-!!
-!!       sum_bj L_aijb c_bj = sum_bj (2 g_aijb - g_abji) c_bj,
-!!
-!!    and adds it to the rho1 vector.
 !!
       implicit none
 !

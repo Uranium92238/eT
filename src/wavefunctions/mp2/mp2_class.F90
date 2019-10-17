@@ -24,8 +24,6 @@ module mp2_class
 !!    Written by Andreas Skeidsvoll, 2018
 !!
 !
-   use wavefunction_class
-   use hf_class
    use ccs_class
 !
    implicit none
@@ -69,24 +67,24 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
-      type(file) :: hf_restart_file 
+      type(sequential_file) :: hf_restart_file 
 !
       wf%name_ = 'mp2'
 !
       wf%system => system
 !
-      call hf_restart_file%init('hf_restart_file', 'sequential', 'unformatted')
+      hf_restart_file = sequential_file('hf_restart_file')
 !
-      call disk%open_file(hf_restart_file, 'read', 'rewind')
+      call hf_restart_file%open_('read', 'rewind')
 !
-      read(hf_restart_file%unit) wf%n_ao 
-      read(hf_restart_file%unit) wf%n_mo 
-      read(hf_restart_file%unit) 
-      read(hf_restart_file%unit) wf%n_o  
-      read(hf_restart_file%unit) wf%n_v  
-      read(hf_restart_file%unit) wf%hf_energy  
+      call hf_restart_file%read_(wf%n_ao)
+      call hf_restart_file%read_(wf%n_mo)
+      call hf_restart_file%read_blank()
+      call hf_restart_file%read_(wf%n_o)
+      call hf_restart_file%read_(wf%n_v)
+      call hf_restart_file%read_(wf%hf_energy)
 !
-      call disk%close_file(hf_restart_file)
+      call hf_restart_file%close_()
 !
       call wf%initialize_files()
 !

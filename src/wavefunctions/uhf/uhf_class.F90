@@ -55,6 +55,7 @@ module uhf_class
 !
 !     Preparation routines
 !
+      procedure :: prepare                              => prepare_uhf
       procedure :: determine_n_alpha_and_n_beta         => determine_n_alpha_and_n_beta_uhf
       procedure :: read_settings                        => read_settings_uhf
       procedure :: read_uhf_settings                    => read_uhf_settings_uhf
@@ -127,12 +128,15 @@ module uhf_class
       procedure :: destruct_orbital_energies_a          => destruct_orbital_energies_a_uhf
       procedure :: destruct_orbital_energies_b          => destruct_orbital_energies_b_uhf
 !
+      procedure :: set_n_mo                              => set_n_mo_uhf
+!
    end type uhf
 !
 !
    interface uhf 
 !
       procedure :: new_uhf 
+      procedure :: new_uhf_from_parameters
 !
    end interface uhf 
 !
@@ -151,17 +155,50 @@ contains
 !
       class(molecular_system), target, intent(in) :: system
 !
-      wf%name_ = 'UHF'
+      wf%system => system
+!
+      call wf%read_settings()
+!
+      call wf%prepare()
+!
+   end function new_uhf
+!
+!
+   function new_uhf_from_parameters(system, fractional_uniform_valence) result(wf)
+!!
+!!    New UHF from parameters
+!!    Written by Tor S. Haugland, 2019
+!!
+      implicit none
+!
+      type(uhf) :: wf
+!
+      class(molecular_system), target, intent(in) :: system
+      logical,                         intent(in) :: fractional_uniform_valence
 !
       wf%system => system
+!
+      wf%fractional_uniform_valence = fractional_uniform_valence
+!
+      call wf%prepare()
+!
+   end function new_uhf_from_parameters
+!
+!
+   subroutine prepare_uhf(wf)
+!!
+!!    Prepare
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf
+!
+      wf%name_ = 'UHF'
 !
       wf%n_ao = wf%system%get_n_aos()
 !
       call wf%set_n_mo()
-      wf%n_densities = 2
-!
-      call wf%determine_n_alpha_and_n_beta()
-      call wf%read_settings()
 !
       if (wf%fractional_uniform_valence) then
 !
@@ -174,7 +211,12 @@ contains
       wf%orbital_energies_file = sequential_file('orbital_energies')
       wf%restart_file = sequential_file('hf_restart_file')
 !
-   end function new_uhf
+      call wf%initialize_sp_eri_schwarz() 
+      call wf%initialize_sp_eri_schwarz_list()
+!
+      call wf%construct_sp_eri_schwarz()
+!
+   end subroutine prepare_uhf
 !
 !
    subroutine set_initial_ao_density_guess_uhf(wf, guess)
@@ -421,11 +463,7 @@ contains
 !
       class(uhf) :: wf
 !
-      if (input%requested_section('hf')) then
-!
-         if (input%requested_keyword_in_section('fractional uniform valence', 'hf')) wf%fractional_uniform_valence = .true.
-!
-      endif
+      wf%fractional_uniform_valence = input%requested_keyword_in_section('fractional uniform valence', 'hf')
 !
    end subroutine read_uhf_settings_uhf
 !
@@ -731,32 +769,33 @@ contains
 !
       real(dp) :: homo_lumo_gap_a
       real(dp) :: homo_lumo_gap_b
+      real(dp) :: nuclear_repulsion
 !
-      homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
-      homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
+      if (wf%n_alpha > 0 .and. wf%n_alpha < wf%n_mo) then 
 !
-      write(output%unit, '(/t6,a26,f19.12)') 'HOMO-LUMO gap (alpha):     ', homo_lumo_gap_a
-      write(output%unit, '(t6,a26,f19.12)')  'HOMO-LUMO gap (beta):      ', homo_lumo_gap_b
-
-      if(wf%system%mm_calculation.and.wf%system%mm%forcefield.eq.'non-polarizable') then
-!      
-         write(output%unit, '(t6,a26,f19.12)')  'Nuclear repulsion energy:  ', &
-               wf%system%get_nuclear_repulsion() + wf%system%get_nuclear_repulsion_mm()
-!               
-         write(output%unit, '(t6,a26,f19.12)')  'Electronic energy:         ', &
-               wf%energy - wf%system%get_nuclear_repulsion() - wf%system%get_nuclear_repulsion_mm()
-     
-      else
-!      
-         write(output%unit, '(t6,a26,f19.12)')  'Nuclear repulsion energy:  ', &
-              wf%system%get_nuclear_repulsion()
-!              
-         write(output%unit, '(t6,a26,f19.12)')  'Electronic energy:         ', &
-               wf%energy - wf%system%get_nuclear_repulsion()
-!      
+         homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
+         call output%printf('HOMO-LUMO gap (alpha):     (f19.12)', pl='normal', fs='(/t6,a)', reals=[homo_lumo_gap_a])
+!
+      endif 
+!
+      if (wf%n_beta > 0 .and. wf%n_beta < wf%n_mo) then 
+!
+         homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
+         call output%printf('HOMO-LUMO gap (beta):      (f19.12)', pl='normal', fs='(t6,a)',  reals=[homo_lumo_gap_b])
+!
       endif
-!      
-      write(output%unit, '(t6,a26,f19.12)')  'Total energy:              ', wf%energy
+!
+      nuclear_repulsion = wf%system%get_nuclear_repulsion()
+!
+      if(wf%system%mm_calculation.and.wf%system%mm%forcefield.eq.'non-polarizable') then
+!
+         nuclear_repulsion = nuclear_repulsion + wf%system%get_nuclear_repulsion_mm()
+!
+      endif
+!
+      call output%printf('Nuclear repulsion energy:  (f19.12)', pl='normal', fs='(t6,a)',  reals=[nuclear_repulsion])
+      call output%printf('Electronic energy:         (f19.12)', pl='normal', fs='(t6,a)',  reals=[wf%energy - nuclear_repulsion])
+      call output%printf('Total energy:              (f19.12)', pl='normal', fs='(t6,a)',  reals=[wf%energy])
 !
       if(wf%system%mm_calculation) call wf%print_energy_mm()
 !      
@@ -1072,7 +1111,7 @@ contains
 !
       integer :: homo, n_below, n_above, I
 !
-      real(dp), parameter :: threshold = 1.0D-6
+      real(dp), parameter :: threshold = 1.0D-12
 !
 !     Set standard non-degenerate values
 !
@@ -1084,37 +1123,32 @@ contains
 !
       if (n_electrons .eq. 0) return
 !
-      if (abs(energies(homo) - energies(homo + 1)) .le. threshold .or. &
-          abs(energies(homo) - energies(homo - 1)) .le. threshold) then ! HOMO is degenerate
+      n_below = 0
+      do I = 1, homo - 1
 !
-         n_below = 0
-         do I = 1, homo - 1
+         if (abs(energies(homo) - energies(I)) .le. threshold) then
 !
-            if (abs(energies(homo) - energies(I)) .le. threshold) then
+            n_below = n_below + 1
 !
-               n_below = n_below + 1
+         endif
 !
-            endif
+      enddo
 !
-         enddo
+      n_above = 0
+      do I = homo + 1, wf%n_mo
 !
-         n_above = 0
-         do I = homo + 1, wf%n_mo
+         if (abs(energies(homo) - energies(I)) .le. threshold) then
 !
-            if (abs(energies(homo) - energies(I)) .le. threshold) then
+            n_above = n_above + 1
 !
-               n_above = n_above + 1
+         endif
 !
-            endif
+      enddo
 !
-         enddo
-!
-         n_homo_orbitals  = n_below + n_above + 1
-         n_homo_electrons = n_below + 1
-         homo_first = homo - n_below
-         homo_last  = homo + n_above
-!
-      endif
+      n_homo_orbitals  = n_below + n_above + 1
+      n_homo_electrons = n_below + 1
+      homo_first = homo - n_below
+      homo_last  = homo + n_above
 !
    end subroutine get_homo_degeneracy_uhf
 !
@@ -1705,5 +1739,38 @@ contains
 !
    end subroutine update_fock_mm_uhf
 !
+!
+   subroutine set_n_mo_uhf(wf)
+!!
+!!    Set number of molecular orbitals
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf
+!
+      write(output%unit, '(/t3,a)') '- Cholesky decomposition of AO overlap to get linearly independent orbitals:'
+!
+      call wf%initialize_ao_overlap()
+      call wf%construct_ao_overlap()
+      call wf%decompose_ao_overlap()
+!
+      wf%n_densities = 2
+!
+      call wf%determine_n_alpha_and_n_beta()
+!
+      call output%printf('Number of alpha electrons:        (i8)', ints=[wf%n_alpha], fs='(/t6,a)',pl='minimal')
+      call output%printf('Number of beta electrons:         (i8)', ints=[wf%n_beta], fs='(t6,a)',pl='minimal')
+!
+      call output%printf('Number of virtual alpha orbitals: (i8)', ints=[wf%n_mo - wf%n_alpha], fs='(t6,a)',pl='minimal')
+      call output%printf('Number of virtual beta orbitals:  (i8)', ints=[wf%n_mo - wf%n_beta], fs='(t6,a)',pl='minimal')
+!
+      call output%printf('Number of molecular orbitals:     (i8)', ints=[wf%n_mo], fs='(t6,a)',pl='minimal')
+      call output%printf('Number of atomic orbitals:        (i8)', ints=[wf%n_ao], fs='(t6,a)',pl='minimal')
+!
+      if (wf%n_mo .lt. wf%n_ao) &
+         call output%printf('Removed (i0) AOs due to linear dep.', ints=[wf%n_ao - wf%n_mo], fs='(/t6,a)', pl='minimal')
+!
+   end subroutine set_n_mo_uhf
 !
 end module uhf_class

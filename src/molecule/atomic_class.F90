@@ -48,7 +48,7 @@ module atomic_class
       real(dp) :: y
       real(dp) :: z
 !
-      integer :: input_nbr ! Index of atom on input
+      integer :: input_number ! Index of atom on input
 !
    contains
 !
@@ -61,6 +61,8 @@ module atomic_class
       procedure :: destruct_shells           => destruct_shells_atomic
 !
       procedure :: cleanup                   => cleanup_atomic
+!
+      procedure :: get_multiplicity     => get_multiplicity_atomic
 !
    end type atomic
 !
@@ -184,22 +186,18 @@ contains
       real(dp), dimension(:,:), allocatable :: temporary
       character(len=100)                    :: alpha_fname, beta_fname
 !
-      character(len=255) :: sad_directory
-!
       type(sequential_file) :: alpha_density_file
       type(sequential_file) :: beta_density_file
 !
       atomic_density = zero   
 !
-      call get_environment_variable("SAD_ET_DIR", sad_directory)
+      alpha_fname = 'sad_' // trim(atom%basis) // '_' // &
+                  & trim(atom%symbol) // '_' // 'alpha'
+      beta_fname  = 'sad_' // trim(atom%basis) // '_' // &
+                  & trim(atom%symbol) // '_' // 'beta'
 !
-      alpha_fname = trim(sad_directory) // '/' // trim(atom%basis) // '/' // &
-                  & trim(atom%symbol) // '_' // 'alpha' // '.inp'
-      beta_fname  = trim(sad_directory) // '/' // trim(atom%basis) // '/' // &
-                  & trim(atom%symbol) // '_' // 'beta' // '.inp'
-!
-      alpha_density_file = sequential_file(trim(alpha_fname), 'formatted')
-      beta_density_file  = sequential_file(trim(beta_fname), 'formatted')
+      alpha_density_file = sequential_file(trim(alpha_fname))
+      beta_density_file  = sequential_file(trim(beta_fname))
 !
       call alpha_density_file%open_('read', 'rewind')
       call beta_density_file%open_( 'read', 'rewind')
@@ -218,6 +216,31 @@ contains
       call beta_density_file%close_
 !
    end subroutine read_atomic_density_atomic
+!
+!
+   integer function get_multiplicity_atomic(atom) result(multiplicity)
+!!
+!!    Get multiplicity
+!!    Written by Tor S. Haugland, 2019
+!!
+!!    Returns the multiplicity from the atomic number.
+!!    Based on the table 5.1 in Griffith's "Introduction to Quantum Mechanics", 2. ed
+!!
+      implicit none
+      class(atomic) :: atom
+      integer, dimension(36) :: multiplicity_list
+!
+      if (atom%number_ > 36) call output%error_msg("Atom multiplicity not supported for Z > 36")
+!
+      multiplicity_list = (/2,1,2,1,2,3,4,3,2,1, &
+                            2,1,2,3,4,3,2,1,2,1, &
+                            2,3,4,7,6,5,4,3,2,1, &
+                            2,3,4,3,2,1          &
+                              /)
+!
+      multiplicity = multiplicity_list(atom%number_)
+!
+   end function get_multiplicity_atomic
 !
 !
 end module atomic_class

@@ -132,7 +132,9 @@ contains
 !
 !     Cholesky decomposition
 !
-      call engine%do_cholesky(wf, wf%orbital_coefficients)
+      call engine%do_cholesky(wf)
+!
+      call wf%mo_preparations()
 !
 !     Ground state solution
 !
@@ -141,6 +143,8 @@ contains
       call wf%integrals%write_t1_cholesky(wf%t1)
 !      
       if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
+!
+      if(wf%integrals%get_eri_t1_mem()) call output%printf('Note: All T1-integrals are stored in memory',fs='(/t3, a)',pl='normal')
 !
 !     Excited state solutions
 !
@@ -157,10 +161,9 @@ contains
 !!    Solves the excited state (valence or cvs) using
 !!    either a DIIS or Davidson solver
 !!
+      use abstract_cc_es_class, only: abstract_cc_es
       use davidson_cc_es_class, only: davidson_cc_es
-      use diis_cc_gs_class, only: diis_cc_gs
       use diis_cc_es_class, only: diis_cc_es
-      use diis_A_inv_cc_es_class, only: diis_A_inv_cc_es
 !
       implicit none
 !
@@ -169,38 +172,23 @@ contains
 !
       character(len=*), intent(in) :: transformation
 !
-      class(diis_cc_es), allocatable :: cc_es_solver_diis
-!
-      type(diis_A_inv_cc_es), allocatable :: cc_es_solver_A_inv
-!
-      class(davidson_cc_es), allocatable :: cc_es_solver_davidson
+      class(abstract_cc_es), allocatable :: cc_es_solver
 !
 !     Prepare for excited state
 !
-      if (engine%es_algorithm == 'diis' .or. trim(wf%name_) == 'low memory cc2' .or. trim(wf%name_) == 'cc3') then
+      if (engine%es_algorithm == 'diis') then
 !
-        if (trim(engine%es_algorithm) == 'davidson' .and. (trim(wf%name_) == 'low memory cc2' .or. trim(wf%name_) == 'cc3')) then
-!            
-            call output%warning_msg("for " // trim(wf%name_) // "excited states, the DIIS algorithm will be used, " // &
-                                    "even though 'davidson' is default or was specified.")
-!
-        endif
-!
-        cc_es_solver_diis = diis_cc_es(transformation, wf)
-        call cc_es_solver_diis%run(wf)
-        call cc_es_solver_diis%cleanup(wf)
-!
-      elseif (engine%es_algorithm == 'diis a inverse') then
-!
-         cc_es_solver_A_inv = diis_A_inv_cc_es(transformation, wf)
-         call cc_es_solver_A_inv%run(wf)
-         call cc_es_solver_A_inv%cleanup(wf)
+         cc_es_solver = diis_cc_es(transformation, wf)
 !
       elseif (engine%es_algorithm == 'davidson') then
 !
-         cc_es_solver_davidson = davidson_cc_es(transformation, wf)
-         call cc_es_solver_davidson%run(wf)
-         call cc_es_solver_davidson%cleanup(wf)
+         if (trim(wf%name_) == 'low memory cc2' .or. trim(wf%name_) == 'cc3') then
+!
+            call output%error_msg('Davidson not implemented for CC3 and lowmem CC2')
+!
+         end if
+!
+         cc_es_solver = davidson_cc_es(transformation, wf)
 !
       else
 !
@@ -208,6 +196,9 @@ contains
                                  &algorithm is not implemented for the method specified.')
 !
       endif
+!
+      call cc_es_solver%run(wf)
+      call cc_es_solver%cleanup(wf)
 !
    end subroutine do_excited_state_es_engine
 !

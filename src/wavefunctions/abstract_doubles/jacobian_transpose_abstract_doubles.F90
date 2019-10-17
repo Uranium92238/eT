@@ -67,7 +67,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = new_timer('jacobian transpose doubles a1')
+      timer = timings('jacobian transpose doubles a1')
       call timer%turn_on()
 !
 !     :: Term 1: sigma_ai =+ sum_bjck c_bj u^bc_jk L_iakc
@@ -231,7 +231,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = new_timer('jacobian transpose doubles b1')
+      timer = timings('jacobian transpose doubles b1')
       call timer%turn_on()
 !
 !     :: Term 1: sigma_ai =+ sum_bjc c_bjci g_bjca = sum_bjc (g_bjca)^T c_bjci
@@ -239,7 +239,7 @@ contains
       req0 = (wf%n_v)*(wf%n_o)*(wf%integrals%n_J)
       req1 = max((wf%n_v)*(wf%integrals%n_J) + (wf%n_o)*(wf%n_v)**2, 2*(wf%n_o)*(wf%n_v)**2)
 !
-      call batch_a%init(wf%n_v)
+      batch_a = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_a, req0, req1)
 !
@@ -332,7 +332,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = new_timer('jacobian transpose doubles a2')
+      timer = timings('jacobian transpose doubles a2')
       call timer%turn_on()
 !
 !     Term 1: (2F_jb c_ai - F_ib c_aj)
@@ -394,7 +394,7 @@ contains
       req0 = (wf%n_v)*(wf%n_o)*(wf%integrals%n_J)
       req1 = (wf%n_v)*(wf%integrals%n_J) + (wf%n_o)*(wf%n_v)**2
 !
-      call batch_c%init(wf%n_v)
+      batch_c = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_c, req0, req1)
 !

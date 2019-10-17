@@ -23,7 +23,6 @@ module global_out
 !
    implicit none
 !
-   type(output_file) :: timing
    type(output_file) :: output
 !
 end module global_out

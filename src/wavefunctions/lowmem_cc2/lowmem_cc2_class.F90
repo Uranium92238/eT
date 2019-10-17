@@ -102,26 +102,7 @@ contains
 !
       wf%name_ = 'low memory cc2'
 !
-      wf%system => system
-!
-      call wf%read_hf()
-!
-      call wf%initialize_files()
-!
-      call wf%initialize_orbital_coefficients()
-      call wf%initialize_orbital_energies()
-!
-      call wf%read_orbital_coefficients()
-      call wf%read_orbital_energies()
-!
-      wf%bath_orbital = .false.
-      wf%frozen_core = .false.
-      wf%cvs = .false.
-!
-      call wf%read_settings()
-!
-      if (wf%bath_orbital) call wf%make_bath_orbital()
-      if (wf%frozen_core) call wf%remove_core_orbitals()
+      call wf%general_cc_preparations(system)
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
@@ -129,10 +110,7 @@ contains
 !
       call wf%write_cc_restart()
 !
-      call wf%initialize_fock_ij()
-      call wf%initialize_fock_ia()
-      call wf%initialize_fock_ai()
-      call wf%initialize_fock_ab()
+      call wf%initialize_fock()
 !
    end function new_lowmem_cc2
 !

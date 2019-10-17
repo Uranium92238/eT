@@ -26,7 +26,7 @@ module es_valence_start_vector_tool_class
 !
    use ccs_class, only: ccs 
 !
-   use array_analysis, only: get_n_lowest
+   use array_utilities, only: get_n_lowest
    use es_start_vector_tool_class
    use memory_manager_class, only: mem 
    use global_out, only: output 

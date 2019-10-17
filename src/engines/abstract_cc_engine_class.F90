@@ -1,0 +1,212 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
+module abstract_cc_engine_class
+!
+!!
+!!    Abstract CC engine class module
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+!
+   use kinds
+   use ccs_class
+!
+   implicit none
+!
+   type, abstract :: abstract_cc_engine
+!
+      character(len=200) :: name_
+      character(len=200) :: tag
+      character(len=200) :: description  
+      character(len=200) :: author
+!
+      type(timings) :: timer ! Timer for engine. Obs! must be turned on in prepare, off in cleanup. 
+!
+      character(len=150), dimension(:), allocatable :: tasks   ! The printed tasks of the engine. 
+                                                               ! Should be set in prepare.
+!
+   contains
+!
+      procedure(run_abstract_cc_engine),            deferred :: run 
+      procedure(set_printables_abstract_cc_engine), deferred :: set_printables 
+!
+      procedure :: ignite                          => ignite_abstract_cc_engine
+!
+      procedure, non_overridable :: cleanup        => cleanup_abstract_cc_engine
+!
+      procedure, nopass :: do_cholesky             => do_cholesky_abstract_cc_engine       
+!
+      procedure, non_overridable :: print_banner   => print_banner_abstract_cc_engine
+!
+   end type abstract_cc_engine
+!
+!
+   abstract interface
+!
+      subroutine set_printables_abstract_cc_engine(engine)
+!
+         import :: abstract_cc_engine
+!
+         implicit none 
+!
+         class(abstract_cc_engine) :: engine
+!
+      end subroutine set_printables_abstract_cc_engine
+!
+!
+      subroutine run_abstract_cc_engine(engine, wf)
+!
+         import :: abstract_cc_engine, ccs
+!
+         implicit none 
+!
+         class(abstract_cc_engine) :: engine
+!
+         class(ccs) :: wf
+!
+      end subroutine run_abstract_cc_engine
+!
+!
+   end interface
+!
+contains
+!
+!
+   subroutine ignite_abstract_cc_engine(engine, wf)
+!!
+!!    Ignite
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
+!!
+!!    Banner, run & cleanup
+!!
+      implicit none
+!
+      class(abstract_cc_engine) :: engine
+!
+      class(ccs) :: wf
+!
+      call engine%print_banner(wf)
+      call engine%run(wf)
+      call engine%cleanup(wf)
+!
+   end subroutine ignite_abstract_cc_engine
+!
+!
+   subroutine do_cholesky_abstract_cc_engine(wf)
+!!
+!!    Do Cholesky
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
+!!
+!!    Cholesky decomposition of electronic repiulsion integrals
+!!
+      use eri_cd_class
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      type(eri_cd) :: eri_chol_solver
+!
+!     Cholesky decoposition 
+!
+      eri_chol_solver = eri_cd(wf%system)
+      call eri_chol_solver%run(wf%system)
+!
+      call eri_chol_solver%diagonal_test(wf%system)
+!
+      call eri_chol_solver%cleanup(wf%system)
+!
+   end subroutine do_cholesky_abstract_cc_engine
+!
+!
+   subroutine cleanup_abstract_cc_engine(engine, wf)
+!!
+!!    Cleanup
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Prints the timings of the engine. For now
+!!    non-overridable procedure
+!!
+      implicit none
+!
+      class(abstract_cc_engine), intent(inout)  :: engine
+!
+      class(ccs), intent(in)                 :: wf
+!
+      call output%printf('- Finalizing the ' // trim(convert_to_uppercase(wf%name_)) // &
+                                       ' ' // trim(engine%tag) // ' calculation', fs='(/t3, a)',pl='minimal')
+!
+      call engine%timer%turn_off()
+!
+      call output%printf('Total wall time (sec): (f20.5)', reals=[engine%timer%get_elapsed_time('wall')],pl='minimal')
+      call output%printf('Total cpu time (sec):  (f20.5)', reals=[engine%timer%get_elapsed_time('cpu')],pl='minimal')
+!
+   end subroutine cleanup_abstract_cc_engine
+!
+!
+   subroutine print_banner_abstract_cc_engine(engine, wf)
+!!
+!!    Print banner
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Prints: 
+!!    
+!!       - Engine name
+!!       - Authors and date
+!!       - Wavefunction type
+!!       - Engine tasks
+!!
+!!    Dependancies:
+!!
+!!       - The printables of the engine must be set for each decendant (set_printables and prepare)
+!!
+      implicit none
+!
+      class(abstract_cc_engine), intent(in)  :: engine
+!
+      class(ccs), intent(in)              :: wf
+!
+      integer :: task
+!
+      character(len=500) :: calculation_type
+!
+      call engine%set_printables()
+!
+      if (.not. allocated(engine%tasks)) call output%error_msg('Tasks of engine was not set. Do this in prepare.')
+!
+      calculation_type  = 'This is a '// trim(convert_to_uppercase(wf%name_)) // ' ' // trim(engine%tag) // ' calculation.&
+                           & The following tasks will be performed:'
+!     
+      call output%long_string_print(engine%name_,'(//t3,a)',.true.)
+      call output%long_string_print(engine%author,'(t3,a/)',.true.)
+      call output%long_string_print(engine%description,'(/t3,a)',.false.,'(t3,a)','(t3,a)') 
+!
+      write(output%unit, '(/t3,a/)') trim(calculation_type)
+!
+      do task = 1, size(engine%tasks)
+!
+         call output%printf('- ' // trim(engine%tasks(task)), fs='(t3,a)', pl='normal')
+!
+      enddo
+!
+   end subroutine print_banner_abstract_cc_engine
+!
+!
+end module abstract_cc_engine_class
+!

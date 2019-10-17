@@ -27,7 +27,7 @@ module timings_class
 !!
 !!       type(timings) :: A1_timer
 !!
-!!       A1_timer = new_timer('name')
+!!       A1_timer = timings('name')
 !!       call A1_timer%turn_on()
 !!
 !!       ... do stuff ...
@@ -79,7 +79,9 @@ module timings_class
 !!
 !
    use parameters
-   use global_out, only: output, timing
+   use global_out, only: output
+   use output_file_class, only : output_file
+!
 !
    implicit none
 !
@@ -113,13 +115,14 @@ module timings_class
 !
    end type timings 
 !
-!
    interface timings
 !
       procedure :: new_timer
 !
    end interface timings 
 !
+!
+   type(output_file) :: timing
 !
 contains
 !

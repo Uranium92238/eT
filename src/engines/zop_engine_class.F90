@@ -124,7 +124,9 @@ contains
 !
 !     Cholesky decoposition of the electron repulsion integrals
 !
-      call engine%do_cholesky(wf, wf%orbital_coefficients)
+      call engine%do_cholesky(wf)
+!
+      call wf%mo_preparations()
 !
 !     Determine ground state | CC >
 !

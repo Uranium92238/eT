@@ -25,11 +25,15 @@ module hf_class
 !
    use wavefunction_class
 !
+   use global_in, only : input
+!
    use reordering
-   use timings_class
-   use array_utilities
-   use array_analysis
-   use libint_initialization
+   use timings_class, only : timings
+   use array_utilities, only : get_abs_max, sandwich, print_vector
+   use array_utilities, only : full_cholesky_decomposition_system
+   use array_utilities, only : get_n_highest
+!
+   use libint_initialization, only : set_coulomb_precision_c
 !
    use omp_lib
 !
@@ -162,6 +166,12 @@ module hf_class
 !
 !     Integral related routines
 !
+      procedure :: initialize_sp_eri_schwarz                => initialize_sp_eri_schwarz_hf
+      procedure :: destruct_sp_eri_schwarz                  => destruct_sp_eri_schwarz_hf
+!
+      procedure :: initialize_sp_eri_schwarz_list           => initialize_sp_eri_schwarz_list_hf
+      procedure :: destruct_sp_eri_schwarz_list             => destruct_sp_eri_schwarz_list_hf
+!
       procedure :: construct_sp_eri_schwarz                 => construct_sp_eri_schwarz_hf
       procedure :: get_n_sig_eri_sp                         => get_n_sig_eri_sp_hf
 !
@@ -169,6 +179,9 @@ module hf_class
 !
       procedure :: set_screening_and_precision_thresholds   => set_screening_and_precision_thresholds_hf
       procedure :: print_screening_settings                 => print_screening_settings_hf
+!
+      procedure :: construct_idempotent_density_and_fock => construct_idempotent_density_and_fock_hf
+      procedure :: prepare                               => prepare_hf
 !
    end type hf
 !
@@ -200,23 +213,7 @@ contains
 !
       call wf%read_settings()
 !
-      wf%n_ao        = wf%system%get_n_aos()
-      wf%n_densities = 1
-!
-      call wf%set_n_mo()
-!
-      call wf%initialize_wavefunction_files()
-      wf%restart_file = sequential_file('hf_restart_file')
-!
-      call wf%restart_file%open_('write', 'rewind')
-!
-      call wf%restart_file%write_(wf%n_ao)
-      call wf%restart_file%write_(wf%n_mo)
-      call wf%restart_file%write_(wf%n_densities)
-      call wf%restart_file%write_(wf%n_o)
-      call wf%restart_file%write_(wf%n_v)
-!
-      call wf%restart_file%close_
+      call wf%prepare()
 !
    end function new_hf
 !
@@ -278,15 +275,12 @@ contains
       real(dp) :: homo_lumo_gap, nuclear_repulsion
 !
       homo_lumo_gap = wf%orbital_energies(wf%n_o + 1) - wf%orbital_energies(wf%n_o)
-!
-      write(output%unit, '(/t6,a26,f19.12)') 'HOMO-LUMO gap:             ', homo_lumo_gap
-!
       nuclear_repulsion = wf%system%get_total_nuclear_repulsion()
-!      
-      write(output%unit, '(t6,a26,f19.12)')  'Nuclear repulsion energy:  ', nuclear_repulsion
-      write(output%unit, '(t6,a26,f19.12)')  'Electronic energy:         ', wf%energy - nuclear_repulsion
-!      
-      write(output%unit, '(t6,a26,f19.12)')  'Total energy:              ', wf%energy
+!
+      call output%printf('HOMO-LUMO gap:             (f19.12)', pl='normal', fs='(/t6,a)', reals=[homo_lumo_gap])
+      call output%printf('Nuclear repulsion energy:  (f19.12)', pl='normal', fs='(t6,a)',  reals=[nuclear_repulsion])
+      call output%printf('Electronic energy:         (f19.12)', pl='normal', fs='(t6,a)',  reals=[wf%energy - nuclear_repulsion])
+      call output%printf('Total energy:              (f19.12)', pl='normal', fs='(t6,a)',  reals=[wf%energy])
 !      
       if(wf%system%mm_calculation) call wf%print_energy_mm()
 
@@ -909,6 +903,7 @@ contains
       call wf%restart_file%open_('write', 'append')
 !
       call wf%restart_file%write_(wf%energy)
+      call wf%restart_file%write_(wf%ao_fock, wf%n_ao**2)
 !
       call wf%restart_file%close_
 !
@@ -918,6 +913,9 @@ contains
       call wf%destruct_ao_density()
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
+!
+      call wf%destruct_sp_eri_schwarz()
+      call wf%destruct_sp_eri_schwarz_list()
 !
    end subroutine cleanup_hf
 !
@@ -1004,6 +1002,66 @@ contains
       if (.not. allocated(wf%cholesky_ao_overlap)) call mem%alloc(wf%cholesky_ao_overlap, wf%n_mo, wf%n_mo)
 !
    end subroutine initialize_cholesky_ao_overlap_hf
+!
+!
+   subroutine initialize_sp_eri_schwarz_hf(wf)
+!!
+!!    Initialize shell pair eri schwarz
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (.not. allocated(wf%sp_eri_schwarz)) &
+         call mem%alloc(wf%sp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2, 2)
+!
+   end subroutine initialize_sp_eri_schwarz_hf
+!
+!
+   subroutine destruct_sp_eri_schwarz_hf(wf)
+!!
+!!    Destruct shell pair eri schwarz
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (allocated(wf%sp_eri_schwarz)) &
+         call mem%dealloc(wf%sp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2, 2)
+!
+   end subroutine destruct_sp_eri_schwarz_hf
+!
+!
+   subroutine initialize_sp_eri_schwarz_list_hf(wf)
+!!
+!!    Initialize shell pair eri schwarz list
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (.not. allocated(wf%sp_eri_schwarz_list)) &
+         call mem%alloc(wf%sp_eri_schwarz_list,wf%system%n_s*(wf%system%n_s + 1)/2, 3)
+!
+   end subroutine initialize_sp_eri_schwarz_list_hf
+!
+!
+   subroutine destruct_sp_eri_schwarz_list_hf(wf)
+!!
+!!    Destruct shell pair eri schwarz list
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (allocated(wf%sp_eri_schwarz_list)) &
+         call mem%dealloc(wf%sp_eri_schwarz_list, wf%system%n_s*(wf%system%n_s + 1)/2, 3)
+!
+   end subroutine destruct_sp_eri_schwarz_list_hf
 !
 !
    subroutine destruct_ao_overlap_hf(wf)
@@ -1161,7 +1219,7 @@ contains
 !
             call wf%system%construct_ao_g_wxyz(g, s1, s2, s1, s2)
 !
-            maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
+            maximum = get_abs_max(g, ((A_interval%length)*(B_interval%length))**2)
 !
             wf%sp_eri_schwarz(s1s2, 1) = sqrt(maximum)
 !
@@ -1234,11 +1292,11 @@ contains
             A_interval = wf%system%shell_limits(s1)
             B_interval = wf%system%shell_limits(s2)
 !
-            D_red_p(1:A_interval%size,1:B_interval%size) => D_red(1:A_interval%size*B_interval%size,thread+1)
+            D_red_p(1:A_interval%length,1:B_interval%length) => D_red(1:A_interval%length*B_interval%length,thread+1)
 !
             D_red_p = D(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
 !
-            maximum = get_abs_max(D_red_p, (A_interval%size)*(B_interval%size))
+            maximum = get_abs_max(D_red_p, (A_interval%length)*(B_interval%length))
 !
             nullify(D_red_p)
 !
@@ -1356,7 +1414,7 @@ contains
 !
             call wf%system%construct_ao_g_wxyz(g, A, B, A, B)
 !
-            maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
+            maximum = get_abs_max(g, ((A_interval%length)*(B_interval%length))**2)
 !
             sp_eri_schwarz(A, B) = sqrt(maximum)
             sp_eri_schwarz(B, A) = sqrt(maximum)
@@ -1390,12 +1448,12 @@ contains
 !
                B_interval = wf%system%shell_limits(B)
 !
-               D_yz_p(1 : A_interval%size, 1 : B_interval%size) => D_yz(1 : A_interval%size*B_interval%size)
+               D_yz_p(1 : A_interval%length, 1 : B_interval%length) => D_yz(1 : A_interval%length*B_interval%length)
 
                D_yz_p = wf%ao_density(A_interval%first : A_interval%last, &
                                     B_interval%first : B_interval%last)
 !
-               maximum = get_abs_max(D_yz, (A_interval%size)*(B_interval%size))
+               maximum = get_abs_max(D_yz, (A_interval%length)*(B_interval%length))
 !
                sp_density_schwarz(A, B) = maximum
 !
@@ -1437,8 +1495,8 @@ contains
 !
                      call wf%system%construct_ao_g_wxyz(g_C, A, B, C, D)
 
-                     g_C_p(1 : A_interval%size, 1 : B_interval%size, 1 : C_interval%size, 1 : D_interval%size) &
-                                 => g_C(1 : A_interval%size*B_interval%size*C_interval%size*D_interval%size)
+                     g_C_p(1 : A_interval%length, 1 : B_interval%length, 1 : C_interval%length, 1 : D_interval%length) &
+                                 => g_C(1 : A_interval%length*B_interval%length*C_interval%length*D_interval%length)
 !
 !                    Add Fock matrix contributions
 !
@@ -1503,8 +1561,8 @@ contains
 !
                      call wf%system%construct_ao_g_wxyz(g_K, A, D, C, B)
 
-                     g_K_p(1 : A_interval%size, 1 : D_interval%size, 1 : C_interval%size, 1 : B_interval%size) &
-                                    => g_K(1 : A_interval%size*B_interval%size*C_interval%size*D_interval%size)
+                     g_K_p(1 : A_interval%length, 1 : D_interval%length, 1 : C_interval%length, 1 : B_interval%length) &
+                                    => g_K(1 : A_interval%length*B_interval%length*C_interval%length*D_interval%length)
 !
 !                   Add Fock matrix contributions
 !
@@ -1631,7 +1689,7 @@ contains
 !
      ! n_s = wf%system%get_n_shells()
 !
-      ao_fock_timer = new_timer('AO Fock construction')
+      ao_fock_timer = timings('AO Fock construction')
       call ao_fock_timer%turn_on()
 !
 !     Set thresholds to ignore Coulomb and exchange terms,
@@ -1803,12 +1861,12 @@ contains
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
                call wf%system%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,         &
-                  precision_thr/max(temp7,temp8), thread, skip, shells(s1)%size, shells(s2)%size, &
-                  shells(s3)%size, shells(s4)%size)
+                  precision_thr/max(temp7,temp8), thread, skip, shells(s1)%length, shells(s2)%length, &
+                  shells(s3)%length, shells(s4)%length)
 !
                if (skip == 1) cycle
 !
-               tot_dim = (shells(s1)%size)*(shells(s2)%size)*(shells(s3)%size)*(shells(s4)%size)
+               tot_dim = (shells(s1)%length)*(shells(s2)%length)*(shells(s3)%length)*(shells(s4)%length)
 !
                g(1:tot_dim) = deg*g(1:tot_dim)
 !
@@ -1837,7 +1895,7 @@ contains
 !
                            w_red = w - shells(s1)%first + 1
 !
-                           wxyz = shells(s1)%size*(shells(s2)%size*(shells(s3)%size*(z_red-1)+y_red-1)+x_red-1)+w_red
+                           wxyz = shells(s1)%length*(shells(s2)%length*(shells(s3)%length*(z_red-1)+y_red-1)+x_red-1)+w_red
 !
                            temp = g(wxyz)
 !
@@ -1965,12 +2023,12 @@ contains
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
                call wf%system%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, &
-                  precision_thr/temp7, thread, skip, shells(s1)%size, shells(s2)%size,    &
-                  shells(s3)%size, shells(s4)%size)
+                  precision_thr/temp7, thread, skip, shells(s1)%length, shells(s2)%length,    &
+                  shells(s3)%length, shells(s4)%length)
 !
                if (skip == 1) cycle
 !
-               tot_dim = (shells(s1)%size)*(shells(s2)%size)*(shells(s3)%size)*(shells(s4)%size)
+               tot_dim = (shells(s1)%length)*(shells(s2)%length)*(shells(s3)%length)*(shells(s4)%length)
 !
                g(1:tot_dim) = deg*g(1:tot_dim)
 !
@@ -1994,7 +2052,7 @@ contains
 !
                            w_red = w - shells(s1)%first + 1
 !
-                           wxyz = shells(s1)%size*(shells(s2)%size*(shells(s3)%size*(z_red-1)+y_red-1)+x_red-1)+w_red
+                           wxyz = shells(s1)%length*(shells(s2)%length*(shells(s3)%length*(z_red-1)+y_red-1)+x_red-1)+w_red
 !
                            temp = g(wxyz)
 !
@@ -2112,12 +2170,12 @@ contains
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
                call wf%system%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, &
-                  precision_thr/temp8, thread, skip, shells(s1)%size, shells(s2)%size,    &
-                  shells(s3)%size, shells(s4)%size)
+                  precision_thr/temp8, thread, skip, shells(s1)%length, shells(s2)%length,    &
+                  shells(s3)%length, shells(s4)%length)
 !
                if (skip == 1) cycle
 !
-               tot_dim = (shells(s1)%size)*(shells(s2)%size)*(shells(s3)%size)*(shells(s4)%size)
+               tot_dim = (shells(s1)%length)*(shells(s2)%length)*(shells(s3)%length)*(shells(s4)%length)
 !
                g(1:tot_dim) = deg*g(1:tot_dim)
 !
@@ -2143,7 +2201,7 @@ contains
 !
                            w_red = w - shells(s1)%first + 1
 !
-                           wxyz = shells(s1)%size*(shells(s2)%size*(shells(s3)%size*(z_red-1)+y_red-1)+x_red-1)+w_red
+                           wxyz = shells(s1)%length*(shells(s2)%length*(shells(s3)%length*(z_red-1)+y_red-1)+x_red-1)+w_red
 !
                            temp = g(wxyz)
 !
@@ -2315,14 +2373,14 @@ contains
 !
                   call wf%system%construct_ao_g_wxyz_1der(g_ABCDqk, A, B, C, D)                 
 !
-                  tot_dim = (wf%system%shell_limits(A)%size)*(wf%system%shell_limits(B)%size)&
-                              *(wf%system%shell_limits(C)%size)*(wf%system%shell_limits(D)%size)&
+                  tot_dim = (wf%system%shell_limits(A)%length)*(wf%system%shell_limits(B)%length)&
+                              *(wf%system%shell_limits(C)%length)*(wf%system%shell_limits(D)%length)&
                               *3*4
 !
                   g_ABCDqk(1:tot_dim) = deg*g_ABCDqk(1:tot_dim)
 !
-                  g_ABCDqk_p(1 : wf%system%shell_limits(A)%size, 1 : wf%system%shell_limits(B)%size, &
-                             1 : wf%system%shell_limits(C)%size, 1 : wf%system%shell_limits(D)%size, &
+                  g_ABCDqk_p(1 : wf%system%shell_limits(A)%length, 1 : wf%system%shell_limits(B)%length, &
+                             1 : wf%system%shell_limits(C)%length, 1 : wf%system%shell_limits(D)%length, &
                              1 : 3, 1 : 4) => g_ABCDqk(1 : tot_dim)
 !
                   do z = wf%system%shell_limits(D)%first, wf%system%shell_limits(D)%last
@@ -3494,13 +3552,13 @@ contains
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-      write(output%unit, '(/t6,a30,i8)') 'Number of occupied orbitals:  ', wf%n_o
-      write(output%unit, '(t6,a30,i8)')  'Number of virtual orbitals:   ', wf%n_v
-      write(output%unit, '(t6,a30,i8)')  'Number of molecular orbitals: ', wf%n_mo
-      write(output%unit, '(t6,a30,i8)')  'Number of atomic orbitals:    ', wf%n_ao
+      call output%printf('Number of occupied orbitals:  (i8)', ints=[wf%n_o], fs='(/t6,a)', pl='minimal')
+      call output%printf('Number of virtual orbitals:   (i8)', ints=[wf%n_v], fs='(t6,a)', pl='minimal')
+      call output%printf('Number of molecular orbitals: (i8)', ints=[wf%n_mo], fs='(t6,a)', pl='minimal')
+      call output%printf('Number of atomic orbitals:    (i8)', ints=[wf%n_ao], fs='(t6,a)', pl='minimal')
 !
-     if (wf%n_mo .lt. wf%n_ao) &
-            write(output%unit, '(/t6, a, i4, a)')'Removed ', wf%n_ao - wf%n_mo, ' AOs due to linear dep.'
+      if (wf%n_mo .lt. wf%n_ao) &
+         call output%printf('Removed (i0) AOs due to linear dep.', ints=[wf%n_ao - wf%n_mo], fs='(/t6,a)', pl='minimal')
 !
    end subroutine set_n_mo_hf
 !
@@ -3846,6 +3904,82 @@ contains
       call mem%dealloc(s_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)   
 !
    end subroutine construct_molecular_gradient_hf
+!
+!
+   subroutine construct_idempotent_density_and_fock_hf(wf)
+!!
+!!    Construct idempotent density and Fock 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the Fock matrix and
+!!    performs a Roothan-Hall step to get the
+!!    initial idempotent density. 
+!!
+!!    Upon exit the Fock matrix is reconstructed
+!!    and the energy calculated.
+!!
+      implicit none 
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: h_wx
+
+      real(dp) :: n_electrons
+!
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      call wf%get_ao_h_wx(h_wx)
+!
+      call wf%update_fock_and_energy(h_wx)
+!
+      call wf%get_n_electrons_in_density(n_electrons)
+!
+      call output%printf('Energy of initial guess:      (f25.12)', reals=[wf%energy], fs='(/t6, a)',pl='minimal')
+      call output%printf('Number of electrons in guess: (f25.12)', reals=[n_electrons], fs='(t6, a)',pl='minimal')
+!
+!     Update the orbitals and density to make sure the density is idempotent
+!     (not the case for the standard atomic superposition density)
+!
+      call wf%roothan_hall_update_orbitals() ! F => C
+      call wf%update_ao_density()            ! C => D
+!
+      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+!
+   end subroutine construct_idempotent_density_and_fock_hf
+!
+!
+   subroutine prepare_hf(wf)
+!!
+!!    Prepare
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      wf%n_ao        = wf%system%get_n_aos()
+      wf%n_densities = 1
+!
+      call wf%set_n_mo()
+!
+      call wf%initialize_wavefunction_files()
+      wf%restart_file = sequential_file('hf_restart_file')
+!
+      call wf%restart_file%open_('write', 'rewind')
+!
+      call wf%restart_file%write_(wf%n_ao)
+      call wf%restart_file%write_(wf%n_mo)
+      call wf%restart_file%write_(wf%n_densities)
+      call wf%restart_file%write_(wf%n_o)
+      call wf%restart_file%write_(wf%n_v)
+!
+      call wf%restart_file%close_
+!
+      call wf%initialize_sp_eri_schwarz()
+      call wf%initialize_sp_eri_schwarz_list()
+!
+      call wf%construct_sp_eri_schwarz()
+!
+   end subroutine prepare_hf
 !
 !
 end module hf_class

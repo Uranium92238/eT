@@ -25,21 +25,21 @@ module ccs_class
 !!
 !
    use wavefunction_class
-   use hf_class
 !
-   use mo_integral_tool_class
+   use global_in, only: input
+!
+   use mo_integral_tool_class, only : mo_integral_tool
+!
+   use reordering
 !
    use sequential_file_class, only : sequential_file
-   use reordering
-   use string_utilities
-   use array_utilities
-   use array_analysis
-   use interval_class
-   use index_invert
-   use batching_index_class
-   use timings_class
-   use file_class, only : file
-   use disk_manager_class, only : disk
+   use string_utilities, only : convert_to_uppercase
+   use array_utilities, only : get_l2_norm, copy_and_scale
+   use array_utilities, only : get_abs_max_w_index
+   use array_utilities, only : get_n_highest, get_n_lowest
+   use index_invert, only : invert_compound_index, invert_packed_index
+   use batching_index_class, only : batching_index
+   use timings_class, only : timings
 !
    implicit none
 !
@@ -59,10 +59,10 @@ module ccs_class
       logical :: bath_orbital
       logical :: frozen_core
 !
-      type(file) :: t1_file, t1bar_file 
-      type(file) :: r1_file, l1_file
-      type(file) :: excitation_energies_file
-      type(file) :: restart_file
+      type(sequential_file) :: t1_file, t1bar_file
+      type(sequential_file) :: r1_file, l1_file
+      type(sequential_file) :: excitation_energies_file
+      type(sequential_file) :: restart_file
 !
       type(mo_integral_tool) :: integrals
 !
@@ -94,6 +94,7 @@ module ccs_class
 !     Preparation and cleanup routines
 !
       procedure :: cleanup                                     => cleanup_ccs
+      procedure :: general_cc_preparations                     => general_cc_preparations_ccs
 !
       procedure :: read_hf                                     => read_hf_ccs
       procedure :: initialize_files                            => initialize_files_ccs
@@ -206,6 +207,7 @@ module ccs_class
 !
 !     Routines to initialize and destruct arrays
 !
+      procedure :: initialize_fock                             => initialize_fock_ccs
       procedure :: initialize_fock_ij                          => initialize_fock_ij_ccs
       procedure :: initialize_fock_ia                          => initialize_fock_ia_ccs
       procedure :: initialize_fock_ai                          => initialize_fock_ai_ccs
@@ -275,6 +277,8 @@ module ccs_class
       procedure :: set_ip_start_indices                        => set_ip_start_indices_ccs
       procedure :: get_ip_projector                            => get_ip_projector_ccs
 !
+      procedure :: approximate_double_excitation_vectors       => approximate_double_excitation_vectors_ccs
+!
 !     Frozen core
 !
       procedure :: initialize_mo_fock_fc_contribution          => initialize_mo_fock_fc_contribution_ccs                
@@ -288,6 +292,10 @@ module ccs_class
       procedure :: construct_mo_fock_fc_contribution           => construct_mo_fock_fc_contribution_ccs
       procedure :: construct_t1_fock_fc_contribution           => construct_t1_fock_fc_contribution_ccs
 !
+!     MO preparations
+!
+      procedure :: mo_preparations                             => mo_preparations_ccs
+!   
 !     Debug 
 !
       procedure :: omega_for_jacobian_debug                    => omega_for_jacobian_debug_ccs
@@ -339,26 +347,8 @@ contains
       class(molecular_system), target, intent(in) :: system 
 !
       wf%name_ = 'ccs'
-      wf%system => system
 !
-      call wf%read_hf()
-!
-      call wf%initialize_files()
-!
-      call wf%initialize_orbital_coefficients()
-      call wf%initialize_orbital_energies()
-!
-      call wf%read_orbital_coefficients()
-      call wf%read_orbital_energies()
-!
-      wf%bath_orbital = .false.
-      wf%frozen_core = .false.
-      wf%cvs = .false.
-!
-      call wf%read_settings()
-!
-      if (wf%bath_orbital) call wf%make_bath_orbital()
-      if (wf%frozen_core) call wf%remove_core_orbitals()
+      call wf%general_cc_preparations(system)
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
@@ -366,12 +356,57 @@ contains
 !
       call wf%write_cc_restart()
 !
-      call wf%initialize_fock_ij()
-      call wf%initialize_fock_ia()
-      call wf%initialize_fock_ai()
-      call wf%initialize_fock_ab()
+      call wf%initialize_fock()
 !
    end function new_ccs
+!
+!
+   subroutine general_cc_preparations_ccs(wf, system)
+!!
+!!    General CC preparations
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      class(molecular_system), target, intent(in) :: system 
+!
+      wf%system => system
+!
+!     Initialize CC files
+!
+      call wf%initialize_files()
+!
+!     Read necessary information from HF
+!
+      call wf%read_hf()
+!
+!     Set orbital coefficients and energies
+!
+      call wf%initialize_orbital_coefficients()
+      call wf%initialize_orbital_energies()
+!
+      call wf%read_orbital_coefficients()
+      call wf%read_orbital_energies()
+!
+!     Logicals for special methods
+!
+      wf%bath_orbital = .false.
+      wf%frozen_core = .false.
+      wf%cvs = .false.
+!
+!     Read CC settings from eT.inp (from cc section)
+!
+      call wf%read_settings()
+!
+!     Handle changes in the number of MOs as a result of 
+!     special methods
+!
+      if (wf%bath_orbital) call wf%make_bath_orbital()
+      if (wf%frozen_core) call wf%remove_core_orbitals()
+!
+   end subroutine general_cc_preparations_ccs
 !
 !
    subroutine cleanup_ccs(wf)
@@ -442,7 +477,7 @@ contains
       call hf_restart_file%skip()     
       call hf_restart_file%read_(wf%n_o)     
       call hf_restart_file%read_(wf%n_v)     
-      call hf_restart_file%read_(wf%hf_energy)     
+      call hf_restart_file%read_(wf%hf_energy)    
 !
       call hf_restart_file%close_()
 !
@@ -460,14 +495,14 @@ contains
 !
 !     Write information to restart file 
 !
-      call disk%open_file(wf%restart_file, 'write', 'rewind')
+      call wf%restart_file%open_('write', 'rewind')
 !
-      write(wf%restart_file%unit) wf%n_o 
-      write(wf%restart_file%unit) wf%n_v 
-      write(wf%restart_file%unit) wf%n_gs_amplitudes 
-      write(wf%restart_file%unit) wf%n_es_amplitudes 
+      call wf%restart_file%write_(wf%n_o)
+      call wf%restart_file%write_(wf%n_v)
+      call wf%restart_file%write_(wf%n_gs_amplitudes)
+      call wf%restart_file%write_(wf%n_es_amplitudes)
 !
-      call disk%close_file(wf%restart_file)
+      call wf%restart_file%close_()
 !
    end subroutine write_cc_restart_ccs
 !
@@ -503,14 +538,14 @@ contains
 !
       integer :: n_o, n_v, n_gs_amplitudes, n_es_amplitudes
 !
-      call disk%open_file(wf%restart_file, 'read', 'rewind')
+      call wf%restart_file%open_('read', 'rewind')
 !
-      read(wf%restart_file%unit) n_o
-      read(wf%restart_file%unit) n_v
-      read(wf%restart_file%unit) n_gs_amplitudes
-      read(wf%restart_file%unit) n_es_amplitudes
+      call wf%restart_file%read_(n_o)
+      call wf%restart_file%read_(n_v)
+      call wf%restart_file%read_(n_gs_amplitudes)
+      call wf%restart_file%read_(n_es_amplitudes)
 !
-      call disk%close_file(wf%restart_file)
+      call wf%restart_file%close_()
 !
       if (n_o .ne. wf%n_o) call output%error_msg('attempted to restart from inconsistent number ' // &
                                                    'of occupied orbitals.')
@@ -1035,6 +1070,199 @@ contains
    end subroutine get_ip_projector_ccs
 !
 !
+   subroutine approximate_double_excitation_vectors_ccs(wf, R_ai, R_aibj, omega)
+!!
+!!    Construct approximate double excitation vectors
+!!    Sarai D. Folkestad, May 2019
+!!
+!!    Approximate double excitation vectors:
+!!
+!!       R_aibj = 1/Δ_aibj * (P_ai,bj(sum_c R_ci g_bjac - sum_k R_bk g_kjai))/(-ε_aibj + ω^CCS) 
+!!              = 1/Δ_aibj * X_aibj/(-ε_aibj + ω^CCS)
+!!
+!!    Used for CNTOs from CCS. 
+!!
+!!    For further information see Baudin, P. and Kristensen, K., J. Chem. Phys. 2017, 146, 214114
+!!
+!!    OBS! Renormalizes R !
+!!
+!!    OBS! Integrals are in MO basis not T1 basis
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(out) :: R_aibj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                  :: R_ai
+!
+      real(dp), intent(in) :: omega
+!
+      real(dp), dimension(:,:,:), allocatable :: L_Jai, L_Jkj, L_Jac
+      real(dp), dimension(:,:,:), allocatable :: X_Jai
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_kjai
+      real(dp), dimension(:), allocatable :: R_aibj_packed
+!
+      integer :: current_c_batch, req0, req1
+!
+      type(batching_index) :: batch_c
+!
+      real(dp) :: R_d_norm_sq, R_s_norm_sq, R_norm, ddot
+!
+      integer :: a, b, i, j
+!
+!     Read Cholesky vectors in MO basis
+!
+      call mem%alloc(L_Jai, wf%integrals%n_J, wf%n_v, wf%n_o)
+      call mem%alloc(L_Jkj, wf%integrals%n_J, wf%n_o, wf%n_o)
+!
+      call wf%integrals%read_cholesky(L_Jai, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
+      call wf%integrals%read_cholesky(L_Jkj, 1, wf%n_o, 1, wf%n_o)
+!
+!     Construct g_kjai integrals in MO basis
+!
+      call mem%alloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('T', 'N',            &
+                 (wf%n_o**2),         &
+                 (wf%n_v)*(wf%n_o),   &
+                 wf%integrals%n_J,    &
+                 one,                 &
+                 L_Jkj,               &
+                 wf%integrals%n_J,    &
+                 L_Jai,               &
+                 wf%integrals%n_J,    &
+                 zero,                &
+                 g_kjai,              &
+                 (wf%n_o**2))
+!
+      call mem%dealloc(L_Jkj, wf%integrals%n_J, wf%n_o, wf%n_o)
+!
+!     - sum_k R_bk g_kjai
+!
+      call dgemm('N', 'N',                &
+                  wf%n_v,                 &
+                  (wf%n_o**2)*(wf%n_v),   &
+                  wf%n_o,                 &
+                  -one,                   &
+                  R_ai,                   & ! R_bk
+                  wf%n_v,                 &
+                  g_kjai,                 &
+                  wf%n_o,                 &
+                  zero,                   &
+                  R_aibj,                 & ! R_bjai but we will symmetrize anyhow
+                  wf%n_v)
+!
+      call mem%dealloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(X_Jai, wf%integrals%n_J, wf%n_v, wf%n_o)
+      call zero_array(X_Jai, (wf%integrals%n_J)*(wf%n_v)*(wf%n_o))
+!
+      req0 = 0
+      req1 = (wf%n_v)*(wf%integrals%n_J)
+!
+      batch_c = batching_index(wf%n_v)
+!
+      call mem%batch_setup(batch_c, req0, req1)
+!
+      do current_c_batch = 1, batch_c%num_batches
+!
+         call batch_c%determine_limits(current_c_batch)
+!
+         call mem%alloc(L_Jac, wf%integrals%n_J, wf%n_v, batch_c%length)
+!
+         call wf%integrals%read_cholesky(L_Jac, wf%n_o + 1, wf%n_mo, wf%n_o + batch_c%first, wf%n_o + batch_c%last)
+!
+!        X_ai_J = sum_c R_ci L_ac_J
+!
+         call dgemm('N', 'N',                   &
+                     wf%n_v*(wf%integrals%n_J), &
+                     wf%n_o,                    &
+                     batch_c%length,            &
+                     one,                       &
+                     L_Jac,                     &
+                     wf%n_v*(wf%integrals%n_J), &
+                     R_ai(batch_c%first, 1),    & ! R_ci
+                     wf%n_v,                    &
+                     one,                       &
+                     X_Jai,                     &
+                     wf%n_v*(wf%integrals%n_J))
+!
+         call mem%dealloc(L_Jac, wf%integrals%n_J, wf%n_v, batch_c%length)
+!
+      enddo
+!
+!     sum_J X_ai_J L_bj_J
+!
+      call dgemm('T', 'N',             &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  wf%integrals%n_J,    &
+                  one,                 &
+                  X_Jai,               &
+                  wf%integrals%n_J,    &
+                  L_Jai,               & ! L_Jbj
+                  wf%integrals%n_J,    &
+                  one,                 &
+                  R_aibj,              &
+                  (wf%n_v)*(wf%n_o))
+
+!
+      call mem%dealloc(L_Jai, wf%integrals%n_J, wf%n_v, wf%n_o)
+      call mem%dealloc(X_Jai, wf%integrals%n_J, wf%n_v, wf%n_o)
+!
+!     Symmetrize
+!
+      call symmetric_sum(R_aibj, wf%n_o*wf%n_v)
+!
+!     Binormalization factor
+!
+!$omp parallel do private(a, i)
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            R_aibj(a, i, a, i) = half*R_aibj(a, i, a, i)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+!     Divide by orbital differences and CCS excitation energy
+!
+!$omp parallel do private(a, i, b, j)
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  R_aibj(a, i, b, j) = R_aibj(a, i, b, j)/(- wf%orbital_energies(a + wf%n_o) - &
+                                                            wf%orbital_energies(b + wf%n_o) + &
+                                                            wf%orbital_energies(i) + wf%orbital_energies(j) + omega)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+!     Normalize full excitation vector with singles and doubles part.
+!
+      call mem%alloc(R_aibj_packed, wf%n_o*wf%n_v*(wf%n_o*wf%n_v+1)/2)
+      call packin(R_aibj_packed, R_aibj, wf%n_o*wf%n_v)
+!
+      R_d_norm_sq = ddot(wf%n_o*wf%n_v*(wf%n_o*wf%n_v+1)/2, R_aibj_packed, 1, R_aibj_packed, 1)
+      R_s_norm_sq = ddot(wf%n_o*wf%n_v, R_ai, 1, R_ai, 1)
+!
+      R_norm = sqrt(R_s_norm_sq + R_d_norm_sq)
+!
+      call dscal(wf%n_o*wf%n_v, one/R_norm, R_ai, 1)
+      call dscal((wf%n_o*wf%n_v)**2, one/R_norm, R_aibj, 1)
+!
+      call mem%dealloc(R_aibj_packed, wf%n_o*wf%n_v*(wf%n_o*wf%n_v+1)/2)
+!
+   end subroutine approximate_double_excitation_vectors_ccs
+!
+!
    subroutine read_cvs_settings_ccs(wf)
 !!
 !!    Read settings 
@@ -1084,15 +1312,37 @@ contains
 !
       integer :: I
 !
+      logical, dimension(:), allocatable :: freeze_atom
+!
+      integer :: index_max
+      real(dp) :: max_
+!
+      call mem%alloc(freeze_atom, wf%system%n_atoms)
+      freeze_atom = .false.
+!
 !     Figure out how many core orbitals we have
 !
-!     Number of atoms heavier than B (atomic number larger than 5)
+!     Number of atoms heavier than Be (atomic number larger than 4)
 !
       wf%n_frozen_orbitals = 0
 !
       do I = 1, wf%system%n_atoms
 !
-         if (wf%system%atoms(I)%number_ > 5) wf%n_frozen_orbitals = wf%n_frozen_orbitals + 1
+         if (wf%system%atoms(I)%number_ .ge. 5 .and. wf%system%atoms(I)%number_ .le. 12) then
+!
+            wf%n_frozen_orbitals = wf%n_frozen_orbitals + 1
+            freeze_atom(I) = .true.
+!
+         elseif (wf%system%atoms(I)%number_ .ge. 13 .and. wf%system%atoms(I)%number_ .le. 30) then
+!
+            wf%n_frozen_orbitals = wf%n_frozen_orbitals + 5
+            freeze_atom(I) = .true.
+!
+         elseif (wf%system%atoms(I)%number_ .gt. 30) then
+!
+            call output%error_msg('No frozen core for Z > 30.')
+!
+         endif
 !
       enddo
 !
@@ -1112,9 +1362,23 @@ contains
       call wf%initialize_orbital_coefficients_fc()
 !
       wf%orbital_coefficients_fc(1:wf%n_ao, 1:wf%n_frozen_orbitals) = &
-            orbital_coefficients_copy(1:wf%n_ao, 1:wf%n_frozen_orbitals)   
+            orbital_coefficients_copy(1:wf%n_ao, 1:wf%n_frozen_orbitals) 
 !
-      call mem%dealloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
+!     Check for crossover:  
+!
+!     If the largest AO weight on a frozen MO does not belong to an 
+!     atom we are supposed to freeze, then we stop.
+!
+      do i = 1, wf%n_frozen_orbitals
+!
+         call get_abs_max_w_index(wf%orbital_coefficients_fc(:,i), wf%n_ao, max_, index_max)
+!
+         if (.not. freeze_atom(wf%system%basis2atom(index_max))) &
+            call output%error_msg('Detected crossover in frozen core.')
+!
+      enddo
+!
+     call mem%dealloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
 !
      call mem%alloc(orbital_energies_copy, wf%n_mo)
 !
@@ -1132,6 +1396,33 @@ contains
      wf%n_o = wf%n_o  - wf%n_frozen_orbitals     
 !
    end subroutine remove_core_orbitals_ccs
+!
+!
+   subroutine mo_preparations_ccs(wf)
+!!
+!!    MO preparations
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Routine which initializes the MO integral tool,
+!!    MO transforms the Cholesky vectors, and does other
+!!    preparations related to modifications of the MOs,
+!!    such as frozen core, change of basis from canonical
+!!    orbitals and shifting of bath orbitals (not implemented).
+!!
+!!    This routine is not overwritten for 
+!!    descendants of standard CC-type (e.g., CCSD, CC2, CC3)
+!!    but will be so for MLCC methods.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, wf%system%n_J)
+      call wf%construct_and_write_mo_cholesky(wf%n_mo, wf%orbital_coefficients, wf%integrals%cholesky_mo)
+!
+      if (wf%frozen_core) call wf%construct_mo_fock_fc_contribution()
+!
+   end subroutine mo_preparations_ccs
 !
 !
 end module ccs_class

@@ -43,7 +43,7 @@ contains
 !
       type(timings) :: prep_timer
 !
-      prep_timer = new_timer("Time preparing for multiplier equation")
+      prep_timer = timings("Time preparing for multiplier equation")
       call prep_timer%turn_on()
 !
       call output%printf('Preparing for (a0) multiplier equations', chars=[trim(wf%name_)], fs='(/t3,a)')
@@ -52,7 +52,6 @@ contains
       if (.not. wf%g_cdlk_t%exists()) call wf%prep_cc3_jacobian_trans_integrals()
 !
       call prep_timer%turn_off()
-      call timing%flush_()
 !
    end subroutine prepare_for_multiplier_equation_cc3
 !

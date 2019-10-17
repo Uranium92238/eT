@@ -98,15 +98,17 @@ contains
 !
       integer, intent(in) :: n ! state number 
 !
-      type(file) :: file_
+      type(sequential_file) :: file_
 !
-      call disk%open_file(file_, 'write', 'append')
+      call file_%open_('write', 'append')
 !
-      if (n .eq. 1) rewind(file_%unit)
+      if (n .eq. 1) then
+         call file_%rewind_()
+      endif
 !
-      write(file_%unit) X
+      call file_%write_(X, wf%n_t2)
 !
-      call disk%close_file(file_, 'keep')
+      call file_%close_()
 !
    end subroutine save_doubles_vector_abstract_doubles
 !
@@ -157,15 +159,15 @@ contains
 !
       integer, intent(in) :: n ! state number 
 !
-      type(file) :: file_
+      type(sequential_file) :: file_
 !
-      call disk%open_file(file_, 'read')
+      call file_%open_('read', 'rewind')
 !
-      call file_%prepare_to_read_line(n)
+      call file_%skip(n-1)
 !
-      read(file_%unit) X
+      call file_%read_(X, wf%n_t2)
 !
-      call disk%close_file(file_, 'keep')
+      call file_%close_()
 !
    end subroutine read_doubles_vector_abstract_doubles
 !

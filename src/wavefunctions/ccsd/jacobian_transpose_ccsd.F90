@@ -80,7 +80,7 @@ contains
 !
       type(timings) :: jacobian_transpose_timer
 !
-      jacobian_transpose_timer = new_timer('jacobian transpose')
+      jacobian_transpose_timer = timings('jacobian transpose')
       call jacobian_transpose_timer%turn_on()
 !
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
@@ -488,7 +488,7 @@ contains
 !
       rec1 = wf%n_v*wf%integrals%n_J + wf%n_v**2*wf%n_o
 !
-      call batch_d%init(wf%n_v)
+      batch_d = batching_index(wf%n_v)
       call mem%batch_setup(batch_d, rec0, rec1)
 !
       do current_d_batch = 1, batch_d%num_batches
@@ -575,7 +575,7 @@ contains
       rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
       rec1 = (wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
 !
-      call batch_d%init(wf%n_v)
+      batch_d = batching_index(wf%n_v)
       call mem%batch_setup(batch_d, rec0, rec1)
 !
       do current_d_batch = 1, batch_d%num_batches
@@ -971,7 +971,7 @@ contains
 !
 !     Initialize batching variable
 !
-      call batch_e%init(wf%n_v)
+      batch_e = batching_index(wf%n_v)
       call mem%batch_setup(batch_e, rec0, rec1)
 !
 !     Loop over the e-batches
@@ -1060,7 +1060,7 @@ contains
 !
 !     Initialize batching variable
 !
-      call batch_a%init(wf%n_v)
+      batch_a = batching_index(wf%n_v)
       call mem%batch_setup(batch_a, rec0, rec1)
 !
 !     Loop over the a-batches
@@ -1121,7 +1121,7 @@ contains
       rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
       rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
 !
-      call batch_d%init(wf%n_v)
+      batch_d = batching_index(wf%n_v)
       call mem%batch_setup(batch_d, rec0, rec1)
 !
 !     Loop over the d-batches
@@ -1323,7 +1323,7 @@ contains
 !
 !     Initialize batching variable
 !
-      call batch_b%init(wf%n_v)
+      batch_b = batching_index(wf%n_v)
       call mem%batch_setup(batch_b, rec0, rec1)
 !
 !     Loop over the number of b batches
@@ -1376,7 +1376,7 @@ contains
                   (wf%n_o)*(wf%n_v), &
                   -one,              &
                   b_aibj,            & ! "b_ai_ck"
-                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &   
                   g_ckbj,            & ! g_ck_bj
                   (wf%n_o)*(wf%n_v), &
                   one,               &
@@ -1468,7 +1468,7 @@ contains
 !
 !     Initialize batching variable
 !
-      call batch_b%init(wf%n_v)
+      batch_b = batching_index(wf%n_v)
       call mem%batch_setup(batch_b, rec0, rec1)
 !
 !     Loop over the b-batches
@@ -2328,8 +2328,8 @@ contains
 !
 !     Initialize batching indices
 !
-      call batch_a%init(wf%n_v)
-      call batch_b%init(wf%n_v)
+      batch_a = batching_index(wf%n_v)
+      batch_b = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_a, batch_b, rec0, rec1_a, rec1_b, rec2)
 !

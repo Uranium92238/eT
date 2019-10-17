@@ -31,11 +31,13 @@ module scf_diis_hf_class
 !!
 !
    use kinds
-   use diis_tool_class
-   use timings_class
-   use hf_class
-   use disk_manager_class
    use abstract_hf_solver_class
+!
+   use diis_tool_class, only : diis_tool
+   use timings_class, only : timings
+   use hf_class, only : hf
+   use memory_manager_class, only : mem
+   use array_utilities, only : get_abs_max
 !
    implicit none
 !
@@ -45,10 +47,11 @@ module scf_diis_hf_class
 !
       logical :: converged
 !
-      logical    :: restart
+      logical :: restart
 !
    contains
 !
+      procedure, private :: prepare       => prepare_scf_diis_hf
       procedure :: run                    => run_scf_diis_hf
       procedure :: cleanup                => cleanup_scf_diis_hf
 !
@@ -63,6 +66,7 @@ module scf_diis_hf_class
    interface scf_diis_hf 
 !
       procedure :: new_scf_diis_hf
+      procedure :: new_scf_diis_hf_from_parameters
 !
    end interface scf_diis_hf
 !
@@ -83,15 +87,6 @@ contains
 !
       logical, intent(in) :: restart 
 !
-      solver%tag = 'Self-consistent field DIIS Hartree-Fock solver'
-      solver%author = 'E. F. Kjønstad and S, D. Folkestad, 2018'
-      solver%description = 'A DIIS-accelerated Roothan-Hall self-consistent field solver. &
-                                  &A least-square DIIS fit is performed on the previous Fock matrices and &
-                                  &associated gradients. Following the Roothan-Hall update of the density, &
-                                  &the DIIS-fitted Fock matrix is used to get the next orbital coefficients.'
-!
-      call solver%print_banner()
-!
 !     Set standard settings
 !
       solver%restart             = restart
@@ -101,14 +96,77 @@ contains
       solver%energy_threshold    = 1.0D-6
       solver%gradient_threshold  = 1.0D-6
 !
-!     Read user's specified settings & set wavefunction screening based on them
+      call solver%read_settings()
+!
+      call solver%prepare(wf)
+!
+   end function new_scf_diis_hf
+!
+!
+   function new_scf_diis_hf_from_parameters(wf, restart,          &
+                                                diis_dimension,   &
+                                                max_iterations,   &
+                                                ao_density_guess, &
+                                                energy_threshold, &
+                                                gradient_threshold) result(solver)
+!!
+!!    New SCF DIIS from parameters
+!!    Written by Tor S. Haugland, 2019
+!!
+      implicit none
+!
+      type(scf_diis_hf) :: solver
+!
+      class(hf) :: wf
+!
+      logical,            intent(in) :: restart 
+      integer,            intent(in) :: diis_dimension
+      integer,            intent(in) :: max_iterations
+      character(len=200), intent(in) :: ao_density_guess
+      real(dp),           intent(in) :: energy_threshold
+      real(dp),           intent(in) :: gradient_threshold
+!
+!     Set settings from parameters
+!
+      solver%restart             = restart
+      solver%diis_dimension      = diis_dimension
+      solver%max_iterations      = max_iterations
+      solver%ao_density_guess    = ao_density_guess
+      solver%energy_threshold    = energy_threshold
+      solver%gradient_threshold  = gradient_threshold
+!
+      call solver%prepare(wf)
+!
+   end function new_scf_diis_hf_from_parameters
+!
+!
+   subroutine prepare_scf_diis_hf(solver, wf)
+!!
+!!    Prepare SCF-DIIS
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(scf_diis_hf) :: solver
+!
+      class(hf) :: wf
+!
+      solver%tag         = 'Self-consistent field DIIS Hartree-Fock solver'
+      solver%author      = 'E. F. Kjønstad and S, D. Folkestad, 2018'
+      solver%description = 'A DIIS-accelerated Roothan-Hall self-consistent field solver. &
+                           &A least-square DIIS fit is performed on the previous Fock matrices and &
+                           &associated gradients. Following the Roothan-Hall update of the density, &
+                           &the DIIS-fitted Fock matrix is used to get the next orbital coefficients.'
+!
+      call solver%print_banner()
+!
+!     Set wavefunction screenings
 !     (note that the screenings must be tighter for tighter gradient thresholds)
 !     & print settings to output
 !
-      call solver%read_settings()
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
 !
-      write(output%unit, '(/t3,a/)') '- Hartree-Fock solver settings:'
+      call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
 !
       call solver%print_scf_diis_settings()
       call solver%print_hf_solver_settings()
@@ -122,7 +180,7 @@ contains
 !
       if (solver%restart) then
 !
-         write(output%unit, '(/t3,a)') '- Requested restart. Reading orbitals from file:'
+         call output%printf('- Requested restart. Reading orbitals from file',fs='(/t3,a)', pl='minimal')
 !
          call wf%read_orbital_coefficients()
          call wf%update_ao_density()
@@ -130,12 +188,15 @@ contains
 !
       else
 !
-         write(output%unit, '(/t3,a,a,a)') '- Setting initial AO density to ', trim(solver%ao_density_guess), ':'
+         call output%printf('- Setting initial AO density to (a0)',&
+            chars=[solver%ao_density_guess], &
+            fs='(/t3,a)', pl='minimal')
          call wf%set_initial_ao_density_guess(solver%ao_density_guess)
+         call wf%construct_idempotent_density_and_fock()
 !
       endif
 !
-   end function new_scf_diis_hf
+   end subroutine prepare_scf_diis_hf
 !
 !
    subroutine print_scf_diis_settings_scf_diis_hf(solver)
@@ -147,7 +208,8 @@ contains
 !
       class(scf_diis_hf) :: solver
 !
-      write(output%unit, '(t6,a29,i3)') 'DIIS dimension:               ', solver%diis_dimension
+      call output%printf('DIIS dimension:                (i0)', &
+         ints=[solver%diis_dimension],fs='(t6,a)', pl='minimal')
 !
    end subroutine print_scf_diis_settings_scf_diis_hf
 !
@@ -168,7 +230,7 @@ contains
       logical :: converged_energy
       logical :: converged_gradient
 !
-      real(dp) :: max_grad, energy, prev_energy, n_electrons
+      real(dp) :: max_grad, energy, prev_energy
 !
       integer :: iteration
 !
@@ -178,27 +240,16 @@ contains
       real(dp), dimension(:,:), allocatable :: h_wx
       real(dp), dimension(:,:), allocatable :: prev_ao_density
 !
-      integer :: n_s
-!
       integer :: dim_gradient, dim_fock
 !
       type(timings) :: iteration_timer, solver_timer
 !
 !     :: Part I. Preparations.
 !
-      iteration_timer = new_timer('SCF DIIS iteration time')
-      solver_timer = new_timer('SCF DIIS solver time')
+      iteration_timer = timings('SCF DIIS iteration time')
+      solver_timer = timings('SCF DIIS solver time')
 !
       call solver_timer%turn_on()
-!
-!     Construct screening vectors for efficient Fock construction
-!
-      n_s = wf%system%get_n_shells()
-!
-      if (.not. allocated(wf%sp_eri_schwarz)) call mem%alloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      if (.not. allocated(wf%sp_eri_schwarz_list)) call mem%alloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
-!
-      call wf%construct_sp_eri_schwarz()
 !
 !     Initialize the DIIS manager object
 !
@@ -213,24 +264,6 @@ contains
       call wf%get_ao_h_wx(h_wx)
 !
       call wf%update_fock_and_energy(h_wx)
-!
-      call wf%get_n_electrons_in_density(n_electrons)
-!
-      write(output%unit, '(/t6,a30,f17.12)') 'Energy of initial guess:      ', wf%energy
-      write(output%unit, '(t6,a30,f17.12)')  'Number of electrons in guess: ', n_electrons
-!
-!     Do a Roothan-Hall update to ensure idempotentency of densities,
-!     and use it to construct the first proper Fock matrix from which
-!     to begin cumulative construction
-!
-      if (.not. solver%restart) then
-!
-         call wf%roothan_hall_update_orbitals() ! F => C
-         call wf%update_ao_density()            ! C => D
-!
-         call wf%update_fock_and_energy(h_wx)
-!
-      endif
 !
       call mem%alloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
       call mem%alloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
@@ -253,8 +286,8 @@ contains
 !
       prev_energy = zero
 !
-      write(output%unit, '(/t3,a)') 'Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)'
-      write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
+      call output%printf('Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)',fs='(/t3,a)',pl='normal') 
+      call output%printf('---------------------------------------------------------------',fs='(t3,a)',pl='normal') 
 !
       iteration = 1
 !
@@ -266,9 +299,10 @@ contains
 !
          energy = wf%energy
 !
-         write(output%unit, '(t3,i4,9x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
-                                          max_grad, abs(wf%energy-prev_energy)
-         flush(output%unit)
+         call output%printf('(i4)  (f25.12)    (e11.4)    (e11.4)', &
+               ints=[iteration], &
+               reals=[wf%energy, max_grad, abs(wf%energy-prev_energy)], &
+               fs='(t3,a)', pl='normal')
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !
@@ -281,18 +315,20 @@ contains
 !
          if (solver%converged) then
 !
-            write(output%unit, '(t3,a)')          '---------------------------------------------------------------'
-            write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
+            call output%printf('---------------------------------------------------------------', &
+                              pl='normal',fs='(t3,a)') 
+!
+            call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
 !
             if (.not. converged_energy) then
 !
-               write(output%unit, '(/t3,a,/t9,a)') 'Note: the gradient converged in the first iteration,', &
-                                                          'so the energy convergence has not been tested!'
+               call output%printf('Note: the gradient converged in the first iteration, &
+                                 & so the energy convergence has not been tested!', &
+                                 ffs='(/t3,a)', pl='normal')
 !
             endif
 !
             call solver%print_summary(wf)
-
 !
          else
 !
@@ -331,9 +367,6 @@ contains
 !
       enddo
 !
-   !   call mem%dealloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-   !   call mem%dealloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
-!
       call mem%dealloc(G, wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities)
       call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
 !
@@ -346,10 +379,9 @@ contains
 !
       if (.not. solver%converged) then
 !
-         write(output%unit, '(t3,a)')   '---------------------------------------------------'
-         write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given'
-         write(output%unit, '(t3,a/)')  'number of maximum iterations.'
-         stop
+         call output%printf('---------------------------------------------------------------', &
+                              pl='normal',fs='(t3,a)') 
+         call output%error_msg('Was not able to converge the equations in the given number of maximum iterations.')
 !
       endif
 !
@@ -369,7 +401,7 @@ contains
 !
       class(hf) :: wf
 !
-      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
+      call output%printf('- Cleaning up (a0)',chars=[solver%tag], fs='(/t3, a)', pl='verbose')
 !
 !     MO transform the AO Fock matrix
 !

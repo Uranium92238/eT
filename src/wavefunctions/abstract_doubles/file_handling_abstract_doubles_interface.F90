@@ -49,7 +49,7 @@
 !
       integer, intent(in) :: n ! state number 
 !
-      type(file) :: file_
+      type(sequential_file) :: file_
 !
    end subroutine save_doubles_vector_abstract_doubles
 !
@@ -86,7 +86,7 @@
 !
       integer, intent(in) :: n ! state number 
 !
-      type(file) :: file_
+      type(sequential_file) :: file_
 !
    end subroutine read_doubles_vector_abstract_doubles
 !

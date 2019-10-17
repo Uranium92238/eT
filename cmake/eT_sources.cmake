@@ -30,23 +30,22 @@ set(eT_fortran_sources
    src/solvers/cc/davidson_cc_es_class.F90
    src/solvers/cc/abstract_cc_es_class.F90
    src/solvers/cc/newton_raphson_cc_gs_class.F90
-   src/solvers/cc/diis_A_inv_cc_es_class.F90
    src/solvers/cholesky/eri_cd_class.F90
+   src/engines/abstract_hf_engine_class.F90
    src/engines/hf_engine_class.F90
    src/engines/hf_geoopt_engine_class.F90
-   src/engines/abstract_engine_class.F90
+   src/engines/abstract_cc_engine_class.F90
    src/engines/gs_engine_class.F90
    src/engines/es_engine_class.F90
    src/engines/zop_engine_class.F90
    src/engines/fop_engine_class.F90
-   src/io/disk_manager_class.F90
    src/io/abstract_file_class.F90
-   src/io/file_class.F90
+   src/io/abstract_out_file_class.F90
+   src/io/abstract_other_file_class.F90
    src/io/direct_file_class.F90
    src/io/sequential_file_class.F90
    src/io/input_file_class.F90
    src/io/section_class.F90
-   src/io/abstract_out_file_class.F90
    src/io/output_file_class.F90
    src/io/io_utilities.F90
    src/tools/string_utilities.F90
@@ -64,7 +63,6 @@ set(eT_fortran_sources
    src/tools/timings_class.F90
    src/tools/array_utilities.F90
    src/tools/math_utilities.F90
-   src/tools/array_analysis.F90
    src/tools/linked_list/array_list_class.F90
    src/tools/linked_list/array_node_class.F90
    src/wavefunctions/wavefunction/wavefunction_class.F90
@@ -83,6 +81,7 @@ set(eT_fortran_sources
    src/molecule/molecular_system/ao_integrals.F90
    src/molecule/periodic_table.F90
    src/molecule/shell_class.F90
+   src/molecule/active_atoms_class.F90
    src/molecule/shell_details_class.F90
    src/libint/libint_initialization.F90
    src/solver_tools/bfgs_tool_class.F90
@@ -148,4 +147,12 @@ set(eT_fortran_sources
    src/wavefunctions/cc3/multiplier_equation_cc3.F90
    src/wavefunctions/cc3/initialize_destruct_cc3.F90
    src/wavefunctions/mp2/zop_mp2.F90
+   src/wavefunctions/mlcc2/mlcc2_class.F90
+   src/wavefunctions/mlcc2/orbitals_mlcc2.F90
+   src/wavefunctions/mlcc2/omega_mlcc2.F90
+   src/wavefunctions/mlcc2/jacobian_mlcc2.F90
+   src/wavefunctions/mlcc2/jacobian_transpose_mlcc2.F90
+   src/wavefunctions/mlcc2/initialize_destruct_mlcc2.F90
+   src/wavefunctions/mlcc2/file_handling_mlcc2.F90
+   src/wavefunctions/mlcc2/debug_jacobian_mlcc2.F90
 )

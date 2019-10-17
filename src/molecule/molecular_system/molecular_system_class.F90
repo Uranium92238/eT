@@ -26,6 +26,7 @@ module molecular_system_class
 !
    use parameters
    use libint_initialization
+   use active_atoms_class, only : active_atoms
 !
    use global_in, only : input
    use global_out, only : output
@@ -60,11 +61,13 @@ module molecular_system_class
 !
       type(interval), dimension(:), allocatable :: shell_limits 
 !
+      integer :: n_active_atoms_spaces
+      type(active_atoms), dimension(:),allocatable :: active_atoms_spaces
+!
       integer, dimension(:), allocatable :: shell2atom 
 !
       logical :: active_atoms = .false.
 !
-      integer :: n_active_atoms = 0
       integer :: max_shell_size
 !     
 !     CGTO information                                           
@@ -77,14 +80,19 @@ module molecular_system_class
 !
       type(mm) :: mm
 !
+!     AO Cholesky vectors
+!
       type(direct_file) :: ao_cholesky_file
+!
+      integer :: n_J = 0
 !
    contains
 !
-      procedure :: prepare                                  => prepare_molecular_system
+      procedure, private :: prepare                         => prepare_molecular_system
       procedure :: cleanup                                  => cleanup_molecular_system
 !
       procedure, private :: write_libint_files              => write_libint_files_molecular_system
+      procedure, private :: delete_libint_files             => delete_libint_files_molecular_system
 !
       procedure, private :: read_settings                   => read_settings_molecular_system
       procedure, private :: read_system                     => read_system_molecular_system
@@ -133,7 +141,7 @@ module molecular_system_class
       procedure :: construct_ao_v_wx                        => construct_ao_v_wx_molecular_system      
       procedure :: construct_ao_h_wx                        => construct_ao_h_wx_molecular_system     
       procedure :: construct_ao_h_wx_kinetic_1der           => construct_ao_h_wx_kinetic_1der_molecular_system     
-      procedure :: construct_and_add_ao_h_wx_nuclear_1der   => construct_and_add_ao_h_wx_nuclear_1der_molecular_system
+      procedure :: construct_ao_h_wx_nuclear_1der           => construct_ao_h_wx_nuclear_1der_molecular_system
 ! 
       procedure :: construct_ao_g_wxyz_1der                 => construct_ao_g_wxyz_1der_molecular_system
       procedure :: construct_ao_g_wxyz                      => construct_ao_g_wxyz_molecular_system  
@@ -143,13 +151,19 @@ module molecular_system_class
       procedure :: construct_ao_s_wx_1der                   => construct_ao_s_wx_1der_molecular_system
 !   
       procedure :: construct_ao_mu_wx                       => construct_ao_mu_wx_molecular_system     
-      procedure :: construct_ao_q_wx                        => construct_ao_q_wx_molecular_system     
+      procedure :: construct_ao_q_wx                        => construct_ao_q_wx_molecular_system   
+!
+      procedure :: read_n_active_atoms_for_method           => read_n_active_atoms_for_method_molecular_system 
+!
+      procedure :: first_and_last_ao_active_space           => first_and_last_ao_active_space_molecular_system 
 !
       procedure :: set_basis_info                           => set_basis_info_molecular_system
       procedure :: set_shell_basis_info                     => set_shell_basis_info_molecular_system
       procedure :: check_convert_pure_to_cartesian_basis    => check_convert_pure_to_cartesian_basis_molecular_system
       procedure :: normalize_raw_primitives                 => normalize_raw_primitives_molecular_system
       procedure :: get_nuclear_repulsion_mm                 => get_nuclear_repulsion_mm_molecular_system
+!
+      procedure :: basis2atom                               => basis2atom_molecular_system
 !
 !
    end type molecular_system
@@ -162,7 +176,66 @@ module molecular_system_class
    end interface 
 !
 !
+   interface molecular_system
+!
+      procedure :: new_molecular_system
+      procedure :: new_molecular_system_from_parameters
+!
+   end interface
+!
+!
 contains
+!
+!
+   function new_molecular_system() result(molecule)
+!!
+!!    Initialize
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      type(molecular_system) :: molecule
+!
+      molecule%charge = 0
+      molecule%multiplicity = 1
+      molecule%cartesian_gaussians = .false.
+!
+      call molecule%read_settings()
+!
+      call molecule%prepare()
+!
+   end function new_molecular_system
+!
+!
+   function new_molecular_system_from_parameters(atoms, name, charge, multiplicity, mm_calculation) result(molecule)
+!!
+!!    Initialize From Parameters
+!!    Written by Tor S. Haugland, 2019
+!!
+      implicit none
+!
+      type(molecular_system) :: molecule
+!
+      type(atomic), dimension(:), intent(in) :: atoms
+      character(len=100),         intent(in) :: name
+      integer,                    intent(in) :: charge
+      integer,                    intent(in) :: multiplicity
+      logical,                    intent(in) :: mm_calculation
+!
+      allocate(molecule%atoms(size(atoms)))
+!
+      molecule%atoms          = atoms
+      molecule%n_atoms        = size(atoms)
+      molecule%name_          = name
+      molecule%charge         = charge
+      molecule%multiplicity   = multiplicity
+      molecule%mm_calculation = mm_calculation
+!
+      molecule%n_active_atoms_spaces = 0
+!
+      call molecule%prepare()
+!
+   end function new_molecular_system_from_parameters
 !
 !
    subroutine read_settings_molecular_system(molecule)
@@ -178,7 +251,161 @@ contains
       call molecule%read_geometry()
       call molecule%read_active_atoms()
 !
+      molecule%mm_calculation = input%requested_mm_calculation()
+!
    end subroutine read_settings_molecular_system
+!
+!
+   subroutine prepare_molecular_system(molecule)
+!!
+!!    Prepare
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      use shell_class, only: shell
+!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      integer :: s 
+!
+      integer :: n_s, i, j
+      integer(i6) :: k
+!
+      integer(i6), dimension(:), allocatable :: n_shells_on_atoms
+      integer(i6), dimension(:), allocatable :: n_basis_in_shells
+      integer(i6), dimension(:), allocatable :: first_ao_in_shells
+      integer(i6), dimension(:), allocatable :: shell_numbers
+!
+!     Initialize libint with atoms and basis sets,
+!     then initialize the integral engines 
+!
+      call molecule%initialize_libint_atoms_and_bases()
+      call molecule%initialize_libint_integral_engines()
+!
+!     Initialize atoms and shells for eT
+!
+      allocate(n_shells_on_atoms(molecule%n_atoms))
+      n_shells_on_atoms = 0
+!
+      call get_n_shells_on_atoms_c(n_shells_on_atoms)
+!
+      do k = 1, int(molecule%n_atoms,4) ! Loop over atoms
+!
+         call molecule%atoms(k)%set_number()
+!
+!        Allocate and initialize the corresponding shells
+!
+         molecule%atoms(k)%n_shells = n_shells_on_atoms(k)
+         call molecule%atoms(k)%initialize_shells()
+!
+!        Then determine the number of basis functions in each shell
+!        and save number of AOs per atom
+!
+         allocate(n_basis_in_shells(n_shells_on_atoms(k)))
+         allocate(shell_numbers(n_shells_on_atoms(k)))
+         allocate(first_ao_in_shells(n_shells_on_atoms(k)))
+!
+         call get_n_basis_in_shells_c(k, n_basis_in_shells)
+         call get_shell_numbers_c(k, shell_numbers)
+         call get_first_ao_in_shells_c(k, first_ao_in_shells)
+!
+         molecule%atoms(k)%n_ao = 0
+!
+         do j = 1, n_shells_on_atoms(k) 
+!
+            molecule%atoms(k)%shells(j) = shell(first=int(first_ao_in_shells(j)), &
+                                                length=int(n_basis_in_shells(j)), &
+                                                number_=int(shell_numbers(j)))
+!
+            molecule%atoms(k)%n_ao = molecule%atoms(k)%n_ao + &
+                                       molecule%atoms(k)%shells(j)%length
+!
+         enddo
+!
+         deallocate(n_basis_in_shells)
+         deallocate(shell_numbers)
+         deallocate(first_ao_in_shells)
+!
+      enddo
+!
+      call molecule%initialize_shell_limits()
+!
+      n_s = molecule%get_n_shells()
+      do s = 1, n_s 
+!  
+         molecule%shell_limits(s) = molecule%get_shell_limits(s)
+!
+      enddo
+!
+      molecule%n_electrons = molecule%get_n_electrons()
+      molecule%n_s         = molecule%get_n_shells()
+!
+!     Some sanity checks and stops
+!
+      do i = 1, molecule%n_atoms
+!
+         if (molecule%atoms(i)%n_ao == 0) then
+!   
+            call output%error_msg('Is basis defined for all atoms in input?')
+!
+         endif
+!
+      enddo
+!
+      call molecule%set_basis_info                           
+      call molecule%check_convert_pure_to_cartesian_basis    
+      call molecule%normalize_raw_primitives                 
+!
+      call molecule%print_system()
+!
+      call molecule%get_max_shell_size(molecule%max_shell_size)
+!
+      if (molecule%mm_calculation) then
+!
+         call molecule%mm%prepare()
+!         
+      endif
+!
+      call initialize_shell2atom_c()
+!
+      call molecule%initialize_shell2atom()
+!
+      do i = 1, molecule%n_s 
+!
+         molecule%shell2atom(i) = molecule%shell_to_atom(i)
+!
+      enddo
+!
+!
+   end subroutine prepare_molecular_system
+!
+!
+   subroutine cleanup_molecular_system(molecule)
+!!
+!!    Cleanup
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      integer :: i
+!
+      do i = 1, molecule%n_atoms 
+!
+         call molecule%atoms(i)%cleanup()
+!
+      enddo
+!
+      call molecule%destruct_atoms()
+      call molecule%destruct_basis_sets()
+      call molecule%destruct_shell_limits()
+      call molecule%destruct_shell2atom()
+      call molecule%delete_libint_files()
+      if (molecule%mm_calculation) call molecule%mm%cleanup()
+!
+   end subroutine cleanup_molecular_system
 !
 !
    subroutine initialize_libint_atoms_and_bases_molecular_system(molecule)
@@ -209,193 +436,6 @@ contains
       enddo
 !
    end subroutine initialize_libint_atoms_and_bases_molecular_system
-!
-!
-   subroutine prepare_molecular_system(molecule)
-!!
-!!    Initialize
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(molecular_system) :: molecule
-!
-      integer :: s 
-!
-      integer :: n_s, i, j
-      integer(i6) :: k
-!
-      integer(i6), dimension(:), allocatable :: n_shells_on_atoms
-      integer(i6), dimension(:), allocatable :: n_basis_in_shells
-      integer(i6), dimension(:), allocatable :: first_ao_in_shells
-      integer(i6), dimension(:), allocatable :: shell_numbers
-!
-!     Read eT.inp 
-!
-      molecule%cartesian_gaussians = .false.
-      molecule%charge = 0
-      molecule%multiplicity = 1
-!
-      call molecule%read_settings()
-!
-!     Initialize libint with atoms and basis sets,
-!     then initialize the integral engines 
-!
-      call molecule%initialize_libint_atoms_and_bases()
-      call molecule%initialize_libint_integral_engines()
-!
-!     Initialize atoms and shells for eT
-!
-      allocate(n_shells_on_atoms(molecule%n_atoms))
-      n_shells_on_atoms = 0
-!
-      call get_n_shells_on_atoms_c(n_shells_on_atoms)
-!
-      do k = 1, int(molecule%n_atoms,4) ! Loop over atoms
-!
-         call molecule%atoms(k)%set_number()
-!
-!        Allocate and initialize the corresponding shells
-!
-         molecule%atoms(k)%n_shells = n_shells_on_atoms(k)
-         call molecule%atoms(k)%initialize_shells()
-!
-!        Then determine the number of basis functions in each shell
-!        and save number of AOs per atom
-!
-         allocate(n_basis_in_shells(n_shells_on_atoms(k)))
-         call get_n_basis_in_shells_c(k, n_basis_in_shells)
-!
-         molecule%atoms(k)%n_ao = 0
-!
-         do j = 1, n_shells_on_atoms(k)
-
-            molecule%atoms(k)%shells(j)%size = n_basis_in_shells(j)
-!
-            molecule%atoms(k)%n_ao = molecule%atoms(k)%n_ao + n_basis_in_shells(j)
-
-         enddo
-!
-         deallocate(n_basis_in_shells)
-!
-!        Get shell numbers
-!
-         allocate(shell_numbers(n_shells_on_atoms(k)))
-         call get_shell_numbers_c(k, shell_numbers)
-!
-         do j = 1, n_shells_on_atoms(k)
-!
-            molecule%atoms(k)%shells(j)%number_ = shell_numbers(j)
-!
-         enddo
-!
-         deallocate(shell_numbers)
-!
-!        And the first AO index in each shell
-!
-         allocate(first_ao_in_shells(n_shells_on_atoms(k)))
-         call get_first_ao_in_shells_c(k, first_ao_in_shells)
-!
-         do j = 1, n_shells_on_atoms(k)
-
-            molecule%atoms(k)%shells(j)%first = first_ao_in_shells(j)
-!
-         enddo
-!
-         deallocate(first_ao_in_shells)
-!
-!        Then determine the angular momentum of shells & the last AO index
-!
-         do j = 1, n_shells_on_atoms(k)
-!
-            call molecule%atoms(k)%shells(j)%determine_angular_momentum()
-            call molecule%atoms(k)%shells(j)%determine_last_ao_index()
-!
-         enddo
-!
-      enddo
-!
-      call molecule%initialize_shell_limits()
-!
-      n_s = molecule%get_n_shells()
-      do s = 1, n_s 
-!  
-         molecule%shell_limits(s) = molecule%get_shell_limits(s)
-!
-      enddo
-!
-      molecule%n_electrons = molecule%get_n_electrons()
-      molecule%n_s         = molecule%get_n_shells()
-!
-!     Some sanity checks and stops
-!
-      if (molecule%charge .ne. 0) then
-!
-         call output%error_msg('SAD not yet implemented for charged species!')
-!
-      endif
-!
-      do i = 1, molecule%n_atoms
-!
-         if (molecule%atoms(i)%n_ao == 0) then
-!   
-            call output%error_msg('Is basis defined for all atoms in input?')
-!
-         endif
-!
-      enddo
-!
-      call molecule%set_basis_info                           
-      call molecule%check_convert_pure_to_cartesian_basis    
-      call molecule%normalize_raw_primitives                 
-!
-      call molecule%print_system()
-!
-      call molecule%get_max_shell_size(molecule%max_shell_size)
-!
-      if (input%requested_mm_calculation()) then
-!      
-         molecule%mm_calculation = .true.
-         call molecule%mm%prepare()
-!         
-      endif
-!
-      call initialize_shell2atom_c()
-!
-      call molecule%initialize_shell2atom()
-!
-      do i = 1, molecule%n_s 
-!
-         molecule%shell2atom(i) = molecule%shell_to_atom(i)
-!
-      enddo
-!
-   end subroutine prepare_molecular_system
-!
-!
-   subroutine cleanup_molecular_system(molecule)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(molecular_system) :: molecule
-!
-      integer :: i
-!
-      do i = 1, molecule%n_atoms 
-!
-         call molecule%atoms(i)%cleanup()
-!
-      enddo
-!
-      call molecule%destruct_atoms()
-      call molecule%destruct_basis_sets()
-      call molecule%destruct_shell_limits()
-      if (molecule%mm_calculation) call molecule%mm%cleanup()
-!
-   end subroutine cleanup_molecular_system
 !
 !
    subroutine read_system_molecular_system(molecule)
@@ -500,6 +540,7 @@ contains
       call initialize_nuclear_c()
       call initialize_overlap_c()
       call initialize_dipole_c()
+      call initialize_quadrupole_c()
 !
    end subroutine initialize_libint_integral_engines_molecular_system
 !
@@ -560,7 +601,7 @@ contains
       molecule%atoms(current_atom)%y            = positions(current_atom,2)
       molecule%atoms(current_atom)%z            = positions(current_atom,3)
 !
-      molecule%atoms(current_atom)%input_nbr = current_atom
+      molecule%atoms(current_atom)%input_number = current_atom
 !
       current_basis = molecule%atoms(current_atom)%basis
 !
@@ -585,7 +626,7 @@ contains
                molecule%atoms(current_atom)%y            = positions(atom,2)
                molecule%atoms(current_atom)%z            = positions(atom,3)
 !
-               molecule%atoms(current_atom)%input_nbr = atom
+               molecule%atoms(current_atom)%input_number = atom
 !
                selected_atom(atom) = .true.      
 !
@@ -605,7 +646,7 @@ contains
                molecule%atoms(current_atom)%y            = positions(atom,2)
                molecule%atoms(current_atom)%z            = positions(atom,3)
 !
-               molecule%atoms(current_atom)%input_nbr = atom
+               molecule%atoms(current_atom)%input_number = atom
 !
                current_basis = molecule%atoms(current_atom)%basis
 !
@@ -748,6 +789,38 @@ contains
    end subroutine write_libint_files_molecular_system
 !
 !
+   subroutine delete_libint_files_molecular_system(molecule)
+!!
+!!    Delete LibInt Files
+!!    Written by Tor S. Haugland, 2019
+!!
+!!    Deletes .xyz files used by LibInt to generate integrals.
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      type(sequential_file) :: xyz_file
+      integer :: current_basis_nbr
+      character(len=100) temp_name
+!
+      xyz_file = sequential_file(trim(molecule%name_) // '.xyz', 'formatted')
+!
+      call xyz_file%delete_()
+!
+      do current_basis_nbr = 1, molecule%n_basis_sets
+!
+         write(temp_name, '(a, a1, i4.4, a4)') trim(molecule%name_), '_', current_basis_nbr, '.xyz'
+!
+         xyz_file = sequential_file(trim(temp_name), 'formatted')
+!
+         call xyz_file%delete_()
+!
+      enddo
+!
+   end subroutine delete_libint_files_molecular_system
+!
+!
    subroutine read_active_atoms_molecular_system(molecule)
 !!
 !!    Read_active_atoms
@@ -767,164 +840,287 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      character(len=200) :: active_basis, selection_type
+      integer :: method, offset, atom, lower_level_method, space
 !
-      integer :: i, j, active_atom_counter, atom_counter !ioerror = 0, first, last
-      integer :: central_atom
+      integer :: n_total, central_atom, i, j
 !
-      integer, dimension(:), allocatable :: active_atoms, active_atoms_copy
+      integer, dimension(:), allocatable :: n_active
+      real(dp), dimension(:), allocatable :: radius
+!
+      integer, dimension(:), allocatable :: active_atoms, atoms_tmp, counter
+!
+      character(len=4), dimension(:), allocatable :: methods
+!
+      character(len=200), dimension(:), allocatable :: basis
+!
+      character(len=200) :: selection_type, inactive_basis
+!
+      real(dp) :: x, y, z
 !
       type(atomic), dimension(:), allocatable :: atoms_copy
 !
-      logical :: found
-!
-      real(dp) :: hf_radius, x, y, z
-!
-!     Do nothing if active atoms not requsted
+      logical :: found, inactive_basis_found
 !
       if (.not. input%requested_section('active atoms')) return
 !
-!     Find selection type
+!     Possible methods for active atoms ( ordered after level !! )
+!
+      methods = (/   'ccsd', &
+                     'cc2 ', &
+                     'ccs ', &
+                     'hf  '/)  
+!
+      call mem%alloc(n_active, size(methods))
+!
+      n_active = 0
+      n_total  = 0
+!
+!     Based on 'selection type' different approaches are used to construct the 
+!     active atoms array
+!
+!     Determine selection type
 ! 
       call input%get_keyword_in_section('selection type', 'active atoms', selection_type)
 !
-!     For the given selection type get the active atoms
-!
       if (trim(selection_type) == 'range' .or. trim(selection_type) == 'list') then
 !
-!        Get the nuumber of elements in the list/range
+!        Set the number of actives for each method
 !
-         molecule%n_active_atoms = input%get_n_elements_for_keyword_in_section('hf', 'active atoms')
+         do method = 1, size(methods)
 !
-         call mem%alloc(active_atoms, molecule%n_active_atoms)
+            n_active(method) = input%get_n_elements_for_keyword_in_section(trim(methods(method)), 'active atoms')
+            n_total = n_total + n_active(method)
 !
-!        Get the active atoms
+         enddo
 !
-         call input%get_array_for_keyword_in_section('hf', 'active atoms', &
-                                                      molecule%n_active_atoms, active_atoms)
+         call mem%alloc(active_atoms, n_total)
 !
-!        Translate atom list to current eT ordering (based on basis set)
+         offset = 0
 !
-         call mem%alloc(active_atoms_copy, molecule%n_active_atoms)
-         active_atoms_copy = active_atoms
+         do method = 1, size(methods)
 !
-         call molecule%translate_from_input_order_to_eT_order(molecule%n_active_atoms, active_atoms_copy, active_atoms)
+            if (n_active(method) == 0) cycle
 !
-         call mem%dealloc(active_atoms_copy, molecule%n_active_atoms)
+            call mem%alloc(atoms_tmp, n_active(method))
 !
-      elseif (selection_type == 'central atom') then
+            call input%get_array_for_keyword_in_section(trim(methods(method)), 'active atoms', n_active(method), atoms_tmp)
+!
+!           Translate atom list to current eT ordering (based on basis set)
+!
+            call molecule%translate_from_input_order_to_eT_order(n_active(method), atoms_tmp, &
+                                                      active_atoms(offset + 1: offset + n_active(method)))
+!
+            call mem%dealloc(atoms_tmp, n_active(method))
+!
+            offset = offset + n_active(method)
+!
+         enddo
+!
+!        Sanity check for duplicates
+!
+         do i = 1, n_total
+            do j = i + 1, n_total
+!
+             if (active_atoms(i) == active_atoms(j)) &
+                call output%error_msg('duplicate in active atoms, check input for overlapping lists or ranges.')
+!
+            enddo
+         enddo
+!
+      elseif  (trim(selection_type) == 'central atom') then
+!
+!        Set central atom (using current eT ordering)
 !
          call input%get_keyword_in_section('central atom', 'active atoms', central_atom)
-         call input%get_keyword_in_section('hf', 'active atoms', hf_radius)
 !
-!        Central atom in current eT ordering:
+         do atom = 1, molecule%n_atoms
 !
-         do i = 1, molecule%n_atoms
+            if (molecule%atoms(atom)%input_number == central_atom) then
 !
-            if (molecule%atoms(i)%input_nbr == central_atom) then
-!
-               central_atom = i
+               central_atom = atom
                exit
 !
             endif
 !
          enddo
 !
-!        Set active atoms
+         call mem%alloc(radius, size(methods))
 !
-         molecule%n_active_atoms = 0
+!        Set radius
 !
-         do i = 1, molecule%n_atoms 
+         radius = zero
 !
-            x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
-            y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
-            z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
+         do method = 1, size(methods)
 !
-            if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) &
-                     molecule%n_active_atoms = molecule%n_active_atoms + 1
+            call input%get_keyword_in_section(trim(methods(method)), 'active atoms', radius(method))
 !
          enddo
 !
-         call mem%alloc(active_atoms, molecule%n_active_atoms)
+!        Sanity check on radii ( r_cc3 < r_ccsd < r_cc2 < r_ccs < r_hf)
 !
-         active_atom_counter = 0
+         do method = 1, size(methods) - 1
 !
-         do i = 1, molecule%n_atoms 
+            if (radius(method) == zero) cycle
 !
-           x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
-           y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
-           z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
+            do lower_level_method = method + 1, size(methods)
 !
-           if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) then 
+               if (radius(lower_level_method) == 0) cycle
 !
-              active_atom_counter = active_atom_counter + 1
+               if (radius(method) .gt. radius(lower_level_method)) &
+                  call output%error_msg('Active atoms by radius, but ' // trim(methods(method)) //&
+                     ' radius is greater than '// trim(methods(lower_level_method)) //' radius.')
 !
-              active_atoms(active_atom_counter) = i
-!
-           endif
+            enddo
 !
          enddo
 !
-      else
+!        Get number of active atoms
 !
-         call output%error_msg('did not recognize selection type for active atoms.')
+         do atom = 1, molecule%n_atoms 
+!
+            x = (molecule%atoms(central_atom)%x - molecule%atoms(atom)%x)
+            y = (molecule%atoms(central_atom)%y - molecule%atoms(atom)%y)
+            z = (molecule%atoms(central_atom)%z - molecule%atoms(atom)%z)
+!
+            do method = 1, size(methods)
+!
+               if (radius(method) == zero) cycle
+!
+               if (sqrt(x**2 + y**2 + z**2) .lt. radius(method)) then 
+!
+                  n_active(method) = n_active(method) + 1
+                  exit 
+!
+               endif
+!
+            enddo
+!
+         enddo
+!
+         do method = 1, size(methods)
+!
+            n_total = n_total + n_active(method)
+!
+         enddo
+!
+         call mem%alloc(active_atoms, n_total)
+!
+         call mem%alloc(counter, size(methods))
+         counter = 0
+!
+         do atom = 1, molecule%n_atoms 
+!
+            x = (molecule%atoms(central_atom)%x - molecule%atoms(atom)%x)
+            y = (molecule%atoms(central_atom)%y - molecule%atoms(atom)%y)
+            z = (molecule%atoms(central_atom)%z - molecule%atoms(atom)%z)
+!
+            offset = 0
+!
+            do method = 1, size(methods)
+!
+               if (radius(method) == zero) cycle
+!
+               if (sqrt(x**2 + y**2 + z**2) .lt. radius(method)) then 
+!
+                  counter(method) = counter(method) + 1
+                  active_atoms(offset + counter(method)) = atom
+
+                  exit 
+!
+               endif
+!
+               offset = offset + n_active(method)
+!
+            enddo
+!
+         enddo
+!
+         call mem%dealloc(counter, size(methods))
 !
       endif
 !
-!     Find and set active basis
+      allocate(basis(size(methods)))
 !
-      if (input%requested_keyword_in_section('active basis', 'active atoms')) then
+      do method = 1, size(methods)
 !
-         call input%get_keyword_in_section('active basis', 'active atoms', active_basis)
-!
-         do i = 1, molecule%n_active_atoms
-!
-            molecule%atoms(active_atoms(i))%basis = trim(active_basis)
-!
-         enddo
-!
-      endif
-!
-!     Print active atoms
-!
-      
-      write(output%unit, '(/t6, a)')'Active atoms:'
-!
-      write(output%unit, '(t6, a18)')'------------------'
-      write(output%unit, '(t6, a18)')' Atom      Symbol '
-      write(output%unit, '(t6, a18)')'------------------'
-!
-      do i = 1, molecule%n_active_atoms
-!
-         write(output%unit, '(t6, i5, 11x, a2)') molecule%atoms(active_atoms(i))%input_nbr, molecule%atoms(active_atoms(i))%symbol
+         basis(method) = repeat(' ', 200)
+         call input%get_keyword_in_section(trim(methods(method))// ' basis', 'active atoms', basis(method))
 !
       enddo
 !
-      write(output%unit, '(t6, a18)')'------------------'
-      write(output%unit, '(t6, a30, i4)')'Total number of active atoms: ', molecule%n_active_atoms
-      write(output%unit, '(t6, a/)')'OBS: Atoms will be reordered, active atoms first.'
-      flush(output%unit)
+      molecule%n_active_atoms_spaces = 0
+!
+      do method = 1, size(methods)
+!
+         if (n_active(method) > 0) molecule%n_active_atoms_spaces = molecule%n_active_atoms_spaces + 1
+!
+      enddo
+!
+      if (molecule%n_active_atoms_spaces == 0) call output%error_msg('Requested active atoms, but no active spaces found.')
+!
+      allocate(molecule%active_atoms_spaces(molecule%n_active_atoms_spaces))
+!
+      call output%printf('Active atoms:', fs='(/t6, a)', pl='minimal')
+!
+      call output%printf('--------------------------------------', fs='(t6, a)', pl='minimal')
+      call output%printf(' Atom   Symbol       Basis     Method', fs='(t6, a)', pl='minimal')
+      call output%printf('--------------------------------------', fs='(t6, a)', pl='minimal')
 !
 !     Reorder atoms
 !
       allocate(atoms_copy(molecule%n_atoms))
       atoms_copy = molecule%atoms
 !
-      do i = 1, molecule%n_active_atoms
+      atom  = 0
+      space = 0
+      offset = 0
 !
-         molecule%atoms(i) = atoms_copy(active_atoms(i))
+      do method = 1, size(methods)
+         do i = 1, n_active(method)
+!
+            atom = atom + 1
+            molecule%atoms(atom) = atoms_copy(active_atoms(atom))
+!
+            if (adjustl(basis(method)) /= '') molecule%atoms(atom)%basis = trim(adjustl(basis(method)))
+!
+            call output%printf('(i4)      '// molecule%atoms(atom)%symbol //'      '                     &
+                               // trim(molecule%atoms(atom)%basis)// '       '// trim(methods(method)),  &
+                     ints=[molecule%atoms(atom)%input_number], fs='(t6,a)', pl='minimal')
+!
+         enddo        
+!
+         if (n_active(method) > 0) then
+! 
+            space = space + 1
+!
+            molecule%active_atoms_spaces(space)%level = trim(methods(method))
+!
+            molecule%active_atoms_spaces(space)%first_atom = offset + 1
+            molecule%active_atoms_spaces(space)%last_atom = offset + n_active(method)
+!
+            offset = offset + n_active(method)
+!
+         endif
 !
       enddo
 !
-      atom_counter = molecule%n_active_atoms + 1
+      inactive_basis_found = input%requested_keyword_in_section('inactive basis', 'active atoms')
+!
+      if (inactive_basis_found) then
+!
+         call input%get_keyword_in_section('inactive basis', 'active atoms', inactive_basis)
+!
+      endif 
+!
+      atom = n_total + 1
 !
       do i = 1, molecule%n_atoms
 !
          found = .false.
 !
-         do j = 1, molecule%n_active_atoms
+         do j = 1, n_total
 !
-            if(i == active_atoms(j)) then
+            if (i == active_atoms(j)) then
 !
                found = .true.
                exit
@@ -935,14 +1131,25 @@ contains
 !
          if (.not. found) then
 !
-            molecule%atoms(atom_counter) = atoms_copy(i)
-            atom_counter = atom_counter + 1
+            molecule%atoms(atom) = atoms_copy(i)
+!
+            if (inactive_basis_found) molecule%atoms(atom)%basis = trim(adjustl(inactive_basis))
+!
+            atom = atom + 1
 !
          endif 
 !
       enddo
 !
+      call output%printf('--------------------------------------', fs='(t6, a)', pl='minimal')
+      call output%printf('Total number of active atoms: ', ints=[n_total], fs='(t6, a)', pl='minimal')
+      call output%printf('OBS: Atoms will be reordered, active atoms first', fs='(t6, a)', pl='minimal')
+!
       deallocate(atoms_copy)
+!
+      call mem%dealloc(n_active, size(methods))
+      call mem%dealloc(active_atoms, n_total)
+      deallocate(basis)
 !
    end subroutine read_active_atoms_molecular_system
 !
@@ -1175,7 +1382,7 @@ contains
          do J = 1, molecule%atoms(I)%n_shells
 !
             get_n_aos_molecular_system = get_n_aos_molecular_system &
-                           + molecule%atoms(I)%shells(J)%size
+                           + molecule%atoms(I)%shells(J)%length
 !
          enddo
 !
@@ -1200,19 +1407,23 @@ contains
 !
       integer, intent(inout) :: max_shell_size
 !
-      integer :: s1 
+      integer :: s
 !
       max_shell_size = 0
-      do s1 = 1, molecule%n_s 
+      do s = 1, molecule%n_s 
 !
-         if (max_shell_size .lt. molecule%shell_limits(s1)%size) max_shell_size = molecule%shell_limits(s1)%size
+         if (max_shell_size .lt. molecule%shell_limits(s)%length) then
+! 
+            max_shell_size = molecule%shell_limits(s)%length
+!
+         endif
 !
       enddo
 !
    end subroutine get_max_shell_size_molecular_system
 !
 !
-   function get_shell_limits_molecular_system(molecule, A)
+   function get_shell_limits_molecular_system(molecule, A) result(the_interval)
 !!
 !!    Get shell limits
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1225,29 +1436,22 @@ contains
 !
       integer :: I, J
 !
-      type(interval) :: get_shell_limits_molecular_system
-!
-      get_shell_limits_molecular_system%first = 0
-      get_shell_limits_molecular_system%last  = 0
-      get_shell_limits_molecular_system%size  = 0
+      type(interval) :: the_interval
 !
       do I = 1, molecule%n_atoms
-!
          do J = 1, molecule%atoms(I)%n_shells
 !
             if (A .eq. molecule%atoms(I)%shells(J)%number_) then
 !
-               get_shell_limits_molecular_system%first = molecule%atoms(I)%shells(J)%first
-               get_shell_limits_molecular_system%last  = molecule%atoms(I)%shells(J)%last
-               get_shell_limits_molecular_system%size  = molecule%atoms(I)%shells(J)%size
+               the_interval = interval(molecule%atoms(I)%shells(J)%first, &
+                                       molecule%atoms(I)%shells(J)%last)
 !
             endif
 !
          enddo
-!
       enddo
 !
-       if (get_shell_limits_molecular_system%size == 0) call output%error_msg('in get_shell_limits.')
+       if (the_interval%length == 0) call output%error_msg('in get_shell_limits.')
 !
    end function get_shell_limits_molecular_system
 !
@@ -1286,6 +1490,41 @@ contains
       if (basis2shell_molecular_system == 0) call output%error_msg('in basis2shell.')
 !
    end function basis2shell_molecular_system
+!
+!
+   function basis2atom_molecular_system(molecule, basis_function)
+!!
+!!    Basis2atom
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      integer, intent(in) :: basis_function
+!
+      integer :: basis2atom_molecular_system
+!
+      integer :: I, J
+!
+      basis2atom_molecular_system = 0
+!
+      do I = 1, molecule%n_atoms
+         do J = 1, molecule%atoms(I)%n_shells
+!
+            if (molecule%atoms(I)%shells(J)%last  .ge. basis_function .and. &
+                molecule%atoms(I)%shells(J)%first .le. basis_function) then
+!
+               basis2atom_molecular_system = I
+!
+            endif
+!
+         enddo
+      enddo
+!
+      if (basis2atom_molecular_system == 0) call output%error_msg('in basis2atom.')
+!
+   end function basis2atom_molecular_system
 !
 !
    function shell_to_atom_molecular_system(molecule, shell)
@@ -1571,7 +1810,7 @@ contains
       do i = 1, n_elements
          do j = 1, molecule%n_atoms
 !
-            if (array_input_ordering(i) == molecule%atoms(j)%input_nbr) then
+            if (array_input_ordering(i) == molecule%atoms(j)%input_number) then
 !
                array_eT_ordering(i) = j
 ! 
@@ -1638,7 +1877,126 @@ contains
    end subroutine get_nuclear_quadrupole_molecular_system
 !
 !
-   subroutine set_basis_info_molecular_system(molecule)
+   function read_n_active_atoms_for_method_molecular_system(molecule, method) result(number_)
+!!
+!!    Read number of active for method
+!!    Written by Sarai D. Folkestad, Apr 2019
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      character(len=*) :: method
+!
+      integer :: number_
+!
+!     Local variables
+!
+      character(len=200) :: selection_type
+!
+      integer :: central_atom, i
+!
+      real(dp) :: radius, x, y, z
+!
+      number_ = 0
+!
+      call input%get_keyword_in_section('selection type', 'active atoms', selection_type)
+!
+      if (trim(selection_type) == 'range' .or. trim(selection_type) == 'list') then
+!
+         number_ = input%get_n_elements_for_keyword_in_section(trim(method), 'active atoms')
+!
+      elseif (trim(selection_type) == 'central atom') then
+!
+         call input%get_keyword_in_section('central atom', 'active atoms', central_atom)
+         call input%get_keyword_in_section(trim(method), 'active atoms', radius)
+!
+         do i = 1, molecule%n_atoms
+!
+            if (molecule%atoms(i)%input_number == central_atom) then
+!
+               central_atom = i
+               exit
+!
+            endif
+!
+         enddo
+!
+!        Set active atoms
+!
+         number_ = 0
+!
+         do i = 1, molecule%n_atoms 
+!
+            x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
+            y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
+            z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
+!
+            if (sqrt(x**2 + y**2 + z**2) .lt. radius) number_ = number_ + 1
+!
+         enddo
+!
+      else
+!
+         call output%error_msg('Could not recognize active atom selection type.')
+!
+      endif
+!
+   end function read_n_active_atoms_for_method_molecular_system
+!
+!
+   subroutine first_and_last_ao_active_space_molecular_system(molecule, level, first, last)
+!!
+!!    First and last ao in active space
+!!    Written by Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      character(len=*), intent(in) :: level
+!
+      integer, intent(out) :: first, last
+!
+      integer :: i, first_atom, last_atom
+!
+      first_atom = 0
+      last_atom = 0 
+!
+      do i = 1, molecule%n_active_atoms_spaces
+!
+         if (trim(molecule%active_atoms_spaces(i)%level) == trim(level)) then
+!
+            first_atom = molecule%active_atoms_spaces(i)%first_atom
+            last_atom = molecule%active_atoms_spaces(i)%last_atom
+            exit
+!
+         endif
+!
+      enddo
+!
+      if (first_atom == 0 .or. last_atom == 0) &
+         call output%warning_msg('Could not find the requested active space in molecular system.')
+!
+      first = 1
+!
+      do i = 1, first_atom - 1
+!
+         first = first + molecule%atoms(i)%n_ao
+!
+      enddo
+!
+      last = first - 1
+!
+      do i = first_atom, last_atom
+!
+         last = last + molecule%atoms(i)%n_ao
+!
+      enddo
+!
+   end subroutine first_and_last_ao_active_space_molecular_system
+!
+  subroutine set_basis_info_molecular_system(molecule)
 !!
 !!    Set basis info
 !!    Written by Sarai D. Folkestad, Dec 2018
@@ -1653,7 +2011,6 @@ contains
       implicit none
 !
       class(molecular_system) :: molecule
-!
       integer :: atom_index, shell
       character(len=100) :: basis
       character(len=100) :: libint_path
@@ -1876,7 +2233,7 @@ contains
 !  
              angmom1 = molecule%atoms(i)%shells(j)%l
              n_prim1 = int(molecule%atoms(i)%shells(j)%basis_details%n_primitives,kind(n_prim1))
-             n_func  = molecule%atoms(i)%shells(j)%size
+             n_func  = molecule%atoms(i)%shells(j)%length
              molecule%n_pure_basis = molecule%n_pure_basis + n_func 
 !  
              if(angmom1.ge.1) then

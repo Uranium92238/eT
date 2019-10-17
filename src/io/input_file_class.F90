@@ -121,7 +121,6 @@ contains
       type(section) :: calculations
       type(section) :: system 
       type(section) :: memory 
-      type(section) :: disk 
       type(section) :: cc_zop 
       type(section) :: cc_fop 
       type(section) :: method 
@@ -133,6 +132,7 @@ contains
       type(section) :: solver_cc_multipliers 
       type(section) :: active_atoms
       type(section) :: cc
+      type(section) :: mlcc
       type(section) :: mm
 !
 !     Set input file name, access and format 
@@ -145,21 +145,26 @@ contains
 !
 !     Set method section 
 !
-      the_file%rf_wfs = [character(len=25) ::'hf','uhf']
+      the_file%rf_wfs = [character(len=25) :: &
+                           'hf',   &
+                           'uhf']
 !
-      the_file%cc_wfs = [character(len=25) :: 'ccs',        &
-                                              'mp2',        &
-                                              'cc2',        &
-                                              'lowmem-cc2', &
-                                              'ccsd',       &
-                                              'cc3']
+      the_file%cc_wfs = [character(len=25) ::   &
+                           'ccs',               &
+                           'mp2',               &
+                           'cc2',               &
+                           'lowmem-cc2',        &
+                           'ccsd',              &
+                           'cc3',               &
+                           'mlcc2']
 !
       the_file%mm_wfs = [character(len=25) :: 'mm']
 !
       method%name_    = 'method'
       method%required = .true.
 !
-      allocate(method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs) + size(the_file%mm_wfs)))
+      allocate(method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs) &
+            + size(the_file%mm_wfs) ))
 !
       do k = 1, size(the_file%rf_wfs)
 !
@@ -172,10 +177,11 @@ contains
          method%keywords(size(the_file%rf_wfs) + k) = the_file%cc_wfs(k)
 !
       enddo 
-!      
+!
       do k = 1, size(the_file%mm_wfs)
 !
-         method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs) + k) = the_file%mm_wfs(k)
+         method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs) + k) &
+            = the_file%mm_wfs(k)
 !
       enddo 
 !
@@ -183,7 +189,9 @@ contains
 !
       calculations%name_    = 'do'
       calculations%required = .true.
-      calculations%keywords = [character(len=25) ::'ground state',   &
+!
+      calculations%keywords = [character(len=25) ::         &
+                                 'ground state',            &
                                  'ground state geoopt',     &
                                  'excited state',           &
                                  'zop',                     &
@@ -200,43 +208,42 @@ contains
 !
       memory%name_    = 'memory'
       memory%required = .false.
-      memory%keywords = [character(len=25) ::'available']
-!
-      disk%name_    = 'disk'
-      disk%required = .false.
-      disk%keywords = [character(len=25) ::'available']
+      memory%keywords = [character(len=25) :: 'available']
 !
       cc_zop%name_    = 'cc zop'
       cc_zop%required = .false.
-      cc_zop%keywords = [character(len=25) ::'dipole', 'quadrupole']
+      cc_zop%keywords = [character(len=25) ::         &
+                           'dipole               ',   &
+                           'quadrupole           ']
 !
       cc_fop%name_    = 'cc fop'
       cc_fop%required = .false.
-      cc_fop%keywords = [character(len=25) ::'dipole length',   &
-                                             'lr',              &
-                                             'eom']
+      cc_fop%keywords = [character(len=25) ::         &
+                           'dipole length        ',   &
+                           'lr                   ',   &
+                           'eom                  ']
 !
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%required = .false.
-      solver_cholesky%keywords =  [character(len=25) ::&
-                                    'threshold',     &
-                                    'span',          &
-                                    'batches',       &
-                                    'qualified',     &
-                                    'one center',    &
-                                    'no vectors']
+      solver_cholesky%keywords = [character(len=25) ::         &
+                                    'threshold           ',    &
+                                    'span                ',    &
+                                    'batches             ',    &
+                                    'qualified           ',    &
+                                    'one center          ',    &
+                                    'no vectors          ']
 !
       solver_hf%name_    = 'solver hf'
       solver_hf%required = .false.
-      solver_hf%keywords =  [character(len=25) ::     &
-                              'algorithm',            &
-                              'energy threshold',     &
-                              'gradient threshold',   &
-                              'max iterations',       &
-                              'diis dimension',       &
-                              'restart',              &
-                              'ao density guess',     &
-                              'print orbitals']
+      solver_hf%keywords = [character(len=25) ::       &
+                              'algorithm            ',   &
+                              'energy threshold     ',   &
+                              'gradient threshold   ',   &
+                              'max iterations       ',   &
+                              'diis dimension       ',   &
+                              'restart              ',   &
+                              'ao density guess     ',   &
+                              'print orbitals       ' ]
 !
       solver_hf_geoopt%name_    = 'solver hf geoopt'
       solver_hf_geoopt%required = .false.
@@ -250,6 +257,7 @@ contains
 !
       solver_cc_gs%name_    = 'solver cc gs'
       solver_cc_gs%required = .false.
+!
       solver_cc_gs%keywords = [character(len=25) ::      &
                                  'algorithm',            &
                                  'energy threshold',     &
@@ -279,18 +287,39 @@ contains
 !
       solver_cc_multipliers%name_    = 'solver cc multipliers'
       solver_cc_multipliers%required = .false.
-      solver_cc_multipliers%keywords = (/ 'algorithm            ',   &
+      solver_cc_multipliers%keywords = [character(len=25) ::         &
+                                          'algorithm            ',   &
                                           'threshold            ',   &
                                           'restart              ',   &
-                                          'max iterations       '    /)
+                                          'max iterations       ']
 !
       active_atoms%name_    = 'active atoms'
       active_atoms%required = .false.
-      active_atoms%keywords = [character(len=25) :: &
-                              'selection type',     &
-                              'central atom',       &
-                              'hf',                 &
-                              'active basis']
+      active_atoms%keywords = [character(len=25) ::       &
+                                 'selection type       ', &
+                                 'central atom         ', &
+                                 'hf                   ', &
+                                 'ccs                  ', &
+                                 'cc2                  ', &
+                                 'inactive basis       ', &
+                                 'hf basis             ', &
+                                 'ccs basis            ', &
+                                 'cc2 basis            ']
+!
+      mlcc%name_    = 'mlcc'
+      mlcc%required = .false.
+      mlcc%keywords = [character(len=25) ::        &
+                        'levels',                  &
+                        'cc2 orbitals',            &
+                        'cholesky threshold',      &
+                        'cnto restart',            &
+                        'cnto occupied cc2',       &
+                        'cnto virtual cc2',        &
+                        'cnto states',             &
+                        'nto states',              &
+                        'nto occupied cc2',        &
+                        'canonical virtual cc2',   &
+                        'print ccs calculation']
 !
       cc%name_    = 'cc'
       cc%required = .false.
@@ -308,7 +337,6 @@ contains
       the_file%sections = [calculations,           &
                            system,                 &
                            memory,                 &
-                           disk,                   &
                            method,                 &
                            cc_zop,                 &
                            cc_fop,                 &
@@ -319,6 +347,7 @@ contains
                            solver_cc_es,           &
                            solver_cc_multipliers,  &
                            active_atoms,           &
+                           mlcc,                   &
                            cc,                     &
                            mm]
 !
@@ -803,7 +832,7 @@ contains
       character(len=*), intent(in) :: keyword 
       character(len=*), intent(in) :: section  
 !
-      integer(i6), intent(out) :: keyword_value 
+      integer(i6), intent(inout) :: keyword_value 
 !
       character(len=200) :: keyword_value_string
 !
@@ -836,7 +865,7 @@ contains
       character(len=*), intent(in) :: keyword 
       character(len=*), intent(in) :: section  
 !
-      integer(i15), intent(out) :: keyword_value 
+      integer(i15), intent(inout) :: keyword_value 
 !
       character(len=200) :: keyword_value_string
 !
@@ -871,7 +900,7 @@ contains
       character(len=*), intent(in) :: keyword 
       character(len=*), intent(in) :: section  
 !
-      integer(i6), intent(out) :: keyword_value 
+      integer(i6), intent(inout) :: keyword_value 
 !
       character(len=200) :: keyword_value_string
 !
@@ -943,7 +972,7 @@ contains
       character(len=*), intent(in) :: keyword 
       character(len=*), intent(in) :: section  
 !
-      real(dp), intent(out) :: keyword_value 
+      real(dp), intent(inout) :: keyword_value 
 !
       character(len=200) :: keyword_value_string
 !
@@ -1452,6 +1481,10 @@ contains
 !
       character(len=200) :: keyword_value_string
 !
+      n_elements = 0
+!
+      if (.not. the_file%requested_keyword_in_section(keyword, section)) return
+!
 !     Get the keyword value in string format 
 !
       call the_file%get_keyword_in_section(keyword, section, keyword_value_string)
@@ -1494,6 +1527,8 @@ contains
       integer, dimension(n_elements) :: array_
 !
       character(len=200) :: keyword_value_string
+!
+      if (.not. the_file%requested_keyword_in_section(keyword, section)) return
 !
 !     Get the keyword value in string format 
 !
@@ -1625,19 +1660,19 @@ contains
             cursor = set_cursor_to_character(string)
 !
             coordinate = string(1:cursor)
-            read(coordinate, '(f21.16)') positions(current_atom, 1)
+            read(coordinate, '(f25.16)') positions(current_atom, 1)
 !
             string = string(cursor + 1:200)
 !
             cursor = set_cursor_to_character(string)
 !
             coordinate = string(1:cursor)
-            read(coordinate, '(f21.16)') positions(current_atom, 2)
+            read(coordinate, '(f25.16)') positions(current_atom, 2)
 !
             coordinate = string(cursor + 1:200)
             coordinate = adjustl(coordinate)
 !
-            read(coordinate, '(f21.16)') positions(current_atom, 3)
+            read(coordinate, '(f25.16)') positions(current_atom, 3)
 !
          endif
 !
@@ -1861,11 +1896,16 @@ contains
 !
       enddo    
 !
-      if (n_beginnings > 1) call output%error_msg('Tried to move to section "' // string // '" with more than one starting clause.')
-      if (n_ends > 1) call output%error_msg('Tried to move to section "' // string // '" with more than one ending clause.')
-      if (n_ends == 0 .and. n_beginnings == 0) call output%error_msg('Tried to move to non-existent section "' // string // '".')
+      if (n_beginnings > 1) call output%error_msg('Tried to move to section "' // string // &
+                                                & '" with more than one starting clause.')
+      if (n_ends > 1) call output%error_msg('Tried to move to section "' // string // &
+                                          & '" with more than one ending clause.')
+      if (n_ends == 0 .and. n_beginnings == 0) then
+         call output%error_msg('Tried to move to non-existent section "' // string // '".')
+      endif
       if (n_ends < 1) call output%error_msg('Tried to move to section "' // string // '" with no end.')
-      if (n_beginnings < 1) call output%error_msg('Tried to move to section "' // string // '" with no beginning.')
+      if (n_beginnings < 1) call output%error_msg('Tried to move to section "' // string // &
+                                                & '" with no beginning.')
 !
 !     Find the end of the section 
 !

@@ -39,209 +39,6 @@ submodule (abstract_doubles_class) jacobian_abstract_doubles
 contains
 !
 !
-   module subroutine jacobian_doubles_b1_abstract_doubles(wf, rho_ai, c_aibj)
-!!
-!!    Jacobian doubles B1
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!
-!!    rho_ai^B1 = sum_bj F_jb (2*c_aibj - c_ajbi)
-!!              = sum_bj F_jb v_aijb
-!!
-      implicit none
-!
-      class(abstract_doubles) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_aibj
-      real(dp), dimension(wf%n_v, wf%n_o) :: rho_ai
-!
-      real(dp), dimension(:,:,:,:), allocatable :: v_aijb
-!
-      type(timings) :: jacobian_doubles_b1_timer
-!
-      jacobian_doubles_b1_timer = new_timer('jacobian doubles b1')
-      call jacobian_doubles_b1_timer%turn_on()
-!
-!     Construct v_aibj = 2*c_aibj - c_ajbi ordered as
-!
-!        v_ai_jb(a,i,j,b) = 2*c_aibj(a,i,b,j) - c_aibj(a,j,b,i)
-!
-!     and do the matrix multiplication with F_jb
-!
-      call mem%alloc(v_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call zero_array(v_aijb, wf%n_t1**2)
-!
-      call add_1243_to_1234(two, c_aibj, v_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call add_1342_to_1234(-one, c_aibj, v_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-      call dgemv('N',                &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  v_aijb,            & ! v_ai,jb
-                  (wf%n_o)*(wf%n_v), &
-                  wf%fock_ia,        & ! F_jb
-                  1,                 &
-                  one,               &
-                  rho_ai,            & ! rho_ai
-                  1)
-!
-      call mem%dealloc(v_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-      call jacobian_doubles_b1_timer%turn_off()
-!
-   end subroutine jacobian_doubles_b1_abstract_doubles
-!
-!
-   module subroutine jacobian_doubles_c1_abstract_doubles(wf, rho_ai, c_aibj)
-!!
-!!    Jacobian doubles C1
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
-!!
-!!    rho_ai^C1 = - sum_bjk L_jikb c_ajbk
-!!              = - sum_bjk (2*g_jikb - g_kijb) c_ajbk
-!!
-      implicit none
-!
-      class(abstract_doubles) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_aibj
-      real(dp), dimension(wf%n_v, wf%n_o) :: rho_ai
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_jikb
-      real(dp), dimension(:,:,:,:), allocatable :: L_jbki
-!
-      type(timings) :: jacobian_doubles_c1_timer
-!
-      jacobian_doubles_c1_timer = new_timer('jacobian doubles c1')
-      call jacobian_doubles_c1_timer%turn_on()
-!
-!     Construct L_jikb = 2*g_jikb - g_kijb as
-!
-!        L_jb_ki(jb,ki) = 2*g_ji_kb(ji,kb) - g_ji_kb(ki,jb)
-!
-!     and then contract with c_ajbk = c_aibj(aj,bk).
-!
-      call mem%alloc(g_jikb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-      call wf%get_ooov(g_jikb)
-!
-      call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call zero_array(L_jbki, (wf%n_o**3)*wf%n_v)
-!
-      call add_1432_to_1234(two, g_jikb, L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call add_3412_to_1234(-one, g_jikb, L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!
-      call mem%dealloc(g_jikb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-!
-      call dgemm('N', 'N',                &
-                  wf%n_v,                 &
-                  wf%n_o,                 &
-                  (wf%n_v)*((wf%n_o)**2), &
-                  -one,                   &
-                  c_aibj,                 & ! c_a,jbk
-                  wf%n_v,                 &
-                  L_jbki,                 & ! L_jbk,i
-                  (wf%n_v)*((wf%n_o)**2), &
-                  one,                    &
-                  rho_ai,                 & ! rho_ai
-                  wf%n_v)
-!
-      call mem%dealloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!
-      call jacobian_doubles_c1_timer%turn_off()
-!
-   end subroutine jacobian_doubles_c1_abstract_doubles
-!
-!
-   module subroutine jacobian_doubles_d1_abstract_doubles(wf, rho_ai, c_bicj)
-!!
-!!    Jacobian doubles D1
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
-!!
-!!    rho_ai^D1 =  sum_bcj L_abjc c_bicj
-!!
-      implicit none
-!
-      class(abstract_doubles) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_bicj
-      real(dp), dimension(wf%n_v, wf%n_o) :: rho_ai
-!
-      integer :: current_a_batch
-!
-      type(batching_index) :: batch_a
-!
-      real(dp), dimension(:,:,:,:), allocatable :: c_bjci
-      real(dp), dimension(:,:,:,:), allocatable :: g_abjc
-      real(dp), dimension(:,:,:,:), allocatable :: L_abjc
-!
-      type(timings) :: jacobian_doubles_d1_timer
-!
-      integer :: rec0, rec1
-!
-      jacobian_doubles_d1_timer = new_timer('jacobian doubles d1')
-      call jacobian_doubles_d1_timer%turn_on()
-!
-!     Prepare for batching over index a
-!
-      rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
-!
-      rec1 = wf%n_v*wf%integrals%n_J + (wf%n_v**2)*(wf%n_o)
-!
-      call batch_a%init(wf%n_v)
-!
-      call mem%batch_setup(batch_a, rec0, rec1)
-!
-      do current_a_batch = 1, batch_a%num_batches
-!
-!        Determine the limits for the current a-batch
-!
-         call batch_a%determine_limits(current_a_batch)
-!
-!        Construct L_abjc = 2 g_abjc - g_acjb
-!
-         call mem%alloc(g_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
-!
-         call wf%get_vvov(g_abjc,                        &
-                           batch_a%first, batch_a%last,  &
-                           1, wf%n_v,                    &
-                           1, wf%n_o,                    &
-                           1, wf%n_v)
-!
-         call mem%alloc(L_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
-!
-         call copy_and_scale(two, g_abjc, L_abjc, (wf%n_v**2)*wf%n_o*batch_a%length)
-         call add_1432_to_1234(-one, g_abjc, L_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
-!
-!        Reorder c_bicj to c_bjci
-!
-         call mem%alloc(c_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-         call sort_1234_to_1432(c_bicj, c_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-         call mem%dealloc(g_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
-!
-         call dgemm('N', 'N',                   &
-                     batch_a%length,            &
-                     wf%n_o,                    &
-                     (wf%n_o)*(wf%n_v)**2,      &
-                     one,                       &
-                     L_abjc,                    & ! L_a,bjc
-                     batch_a%length,            &
-                     c_bjci,                    & ! c_bjc,i
-                     (wf%n_o)*(wf%n_v)**2,      &
-                     one,                       &
-                     rho_ai(batch_a%first, 1),  &
-                     wf%n_v)
-!
-         call mem%dealloc(L_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
-         call mem%dealloc(c_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      enddo ! End batching over a
-!
-      call jacobian_doubles_d1_timer%turn_off()
-!
-   end subroutine jacobian_doubles_d1_abstract_doubles
-!
-!
    module subroutine save_jacobian_a1_intermediates_abstract_doubles(wf)
 !!
 !!    Save jacobian a1 intermediates
@@ -273,7 +70,7 @@ contains
       real(dp), dimension(:,:), allocatable :: Y_bd
       real(dp), dimension(:,:), allocatable :: Y_jl
 !
-      jacobian_a1_intermediate_timer = new_timer('Jacobian CCSD G2 intermediate construction')
+      jacobian_a1_intermediate_timer = timings('Jacobian CCSD G2 intermediate construction')
       call jacobian_a1_intermediate_timer%turn_on()
 !
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -383,7 +180,7 @@ contains
 !
       type(timings) :: jacobian_doubles_a1_timer
 !
-      jacobian_doubles_a1_timer = new_timer('jacobian doubles a1')
+      jacobian_doubles_a1_timer = timings('jacobian doubles a1')
       call jacobian_doubles_a1_timer%turn_on()
 !
 !     Term 1: sum_ckdl L_kcld u_ki^ca c_dl ::
@@ -507,6 +304,209 @@ contains
    end subroutine jacobian_doubles_a1_abstract_doubles
 !
 !
+ module subroutine jacobian_doubles_b1_abstract_doubles(wf, rho_ai, c_aibj)
+!!
+!!    Jacobian doubles B1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+!!    rho_ai^B1 = sum_bj F_jb (2*c_aibj - c_ajbi)
+!!              = sum_bj F_jb v_aijb
+!!
+      implicit none
+!
+      class(abstract_doubles) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_aibj
+      real(dp), dimension(wf%n_v, wf%n_o) :: rho_ai
+!
+      real(dp), dimension(:,:,:,:), allocatable :: v_aijb
+!
+      type(timings) :: jacobian_doubles_b1_timer
+!
+      jacobian_doubles_b1_timer = timings('jacobian doubles b1')
+      call jacobian_doubles_b1_timer%turn_on()
+!
+!     Construct v_aibj = 2*c_aibj - c_ajbi ordered as
+!
+!        v_ai_jb(a,i,j,b) = 2*c_aibj(a,i,b,j) - c_aibj(a,j,b,i)
+!
+!     and do the matrix multiplication with F_jb
+!
+      call mem%alloc(v_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call zero_array(v_aijb, wf%n_t1**2)
+!
+      call add_1243_to_1234(two, c_aibj, v_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call add_1342_to_1234(-one, c_aibj, v_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+      call dgemv('N',                &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  v_aijb,            & ! v_ai,jb
+                  (wf%n_o)*(wf%n_v), &
+                  wf%fock_ia,        & ! F_jb
+                  1,                 &
+                  one,               &
+                  rho_ai,            & ! rho_ai
+                  1)
+!
+      call mem%dealloc(v_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+      call jacobian_doubles_b1_timer%turn_off()
+!
+   end subroutine jacobian_doubles_b1_abstract_doubles
+!
+!
+   module subroutine jacobian_doubles_c1_abstract_doubles(wf, rho_ai, c_aibj)
+!!
+!!    Jacobian doubles C1
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
+!!
+!!    rho_ai^C1 = - sum_bjk L_jikb c_ajbk
+!!              = - sum_bjk (2*g_jikb - g_kijb) c_ajbk
+!!
+      implicit none
+!
+      class(abstract_doubles) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_aibj
+      real(dp), dimension(wf%n_v, wf%n_o) :: rho_ai
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_jikb
+      real(dp), dimension(:,:,:,:), allocatable :: L_jbki
+!
+      type(timings) :: jacobian_doubles_c1_timer
+!
+      jacobian_doubles_c1_timer = timings('jacobian doubles c1')
+      call jacobian_doubles_c1_timer%turn_on()
+!
+!     Construct L_jikb = 2*g_jikb - g_kijb as
+!
+!        L_jb_ki(jb,ki) = 2*g_ji_kb(ji,kb) - g_ji_kb(ki,jb)
+!
+!     and then contract with c_ajbk = c_aibj(aj,bk).
+!
+      call mem%alloc(g_jikb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call wf%get_ooov(g_jikb)
+!
+      call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call zero_array(L_jbki, (wf%n_o**3)*wf%n_v)
+!
+      call add_1432_to_1234(two, g_jikb, L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call add_3412_to_1234(-one, g_jikb, L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call mem%dealloc(g_jikb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+      call dgemm('N', 'N',                &
+                  wf%n_v,                 &
+                  wf%n_o,                 &
+                  (wf%n_v)*((wf%n_o)**2), &
+                  -one,                   &
+                  c_aibj,                 & ! c_a,jbk
+                  wf%n_v,                 &
+                  L_jbki,                 & ! L_jbk,i
+                  (wf%n_v)*((wf%n_o)**2), &
+                  one,                    &
+                  rho_ai,                 & ! rho_ai
+                  wf%n_v)
+!
+      call mem%dealloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call jacobian_doubles_c1_timer%turn_off()
+!
+   end subroutine jacobian_doubles_c1_abstract_doubles
+!
+!
+   module subroutine jacobian_doubles_d1_abstract_doubles(wf, rho_ai, c_bicj)
+!!
+!!    Jacobian doubles D1
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
+!!
+!!    rho_ai^D1 =  sum_bcj L_abjc c_bicj
+!!
+      implicit none
+!
+      class(abstract_doubles) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_bicj
+      real(dp), dimension(wf%n_v, wf%n_o) :: rho_ai
+!
+      integer :: current_a_batch
+!
+      type(batching_index) :: batch_a
+!
+      real(dp), dimension(:,:,:,:), allocatable :: c_bjci
+      real(dp), dimension(:,:,:,:), allocatable :: g_abjc
+      real(dp), dimension(:,:,:,:), allocatable :: L_abjc
+!
+      type(timings) :: jacobian_doubles_d1_timer
+!
+      integer :: rec0, rec1
+!
+      jacobian_doubles_d1_timer = timings('jacobian doubles d1')
+      call jacobian_doubles_d1_timer%turn_on()
+!
+!     Prepare for batching over index a
+!
+      rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
+!
+      rec1 = wf%n_v*wf%integrals%n_J + (wf%n_v**2)*(wf%n_o)
+!
+      batch_a = batching_index(wf%n_v)
+!
+      call mem%batch_setup(batch_a, rec0, rec1)
+!
+      do current_a_batch = 1, batch_a%num_batches
+!
+!        Determine the limits for the current a-batch
+!
+         call batch_a%determine_limits(current_a_batch)
+!
+!        Construct L_abjc = 2 g_abjc - g_acjb
+!
+         call mem%alloc(g_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+!
+         call wf%get_vvov(g_abjc,                        &
+                           batch_a%first, batch_a%last,  &
+                           1, wf%n_v,                    &
+                           1, wf%n_o,                    &
+                           1, wf%n_v)
+!
+         call mem%alloc(L_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+!
+         call copy_and_scale(two, g_abjc, L_abjc, (wf%n_v**2)*wf%n_o*batch_a%length)
+         call add_1432_to_1234(-one, g_abjc, L_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+!
+!        Reorder c_bicj to c_bjci
+!
+         call mem%alloc(c_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+         call sort_1234_to_1432(c_bicj, c_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+         call mem%dealloc(g_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+!
+         call dgemm('N', 'N',                   &
+                     batch_a%length,            &
+                     wf%n_o,                    &
+                     (wf%n_o)*(wf%n_v)**2,      &
+                     one,                       &
+                     L_abjc,                    & ! L_a,bjc
+                     batch_a%length,            &
+                     c_bjci,                    & ! c_bjc,i
+                     (wf%n_o)*(wf%n_v)**2,      &
+                     one,                       &
+                     rho_ai(batch_a%first, 1),  &
+                     wf%n_v)
+!
+         call mem%dealloc(L_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+         call mem%dealloc(c_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      enddo ! End batching over a
+!
+      call jacobian_doubles_d1_timer%turn_off()
+!
+   end subroutine jacobian_doubles_d1_abstract_doubles
+!
+!
    module subroutine jacobian_doubles_a2_abstract_doubles(wf, rho_aibj, c_ai)
 !!
 !!    Jacobian doubles A2
@@ -534,7 +534,7 @@ contains
 !
       integer :: rec0, rec1
 !
-      jacobian_doubles_a2_timer = new_timer('jacobian doubles a2')
+      jacobian_doubles_a2_timer = timings('jacobian doubles a2')
       call jacobian_doubles_a2_timer%turn_on()
 !
 !     :: Term 1. - sum_k g_aikj c_bk ::
@@ -582,7 +582,7 @@ contains
 !
       rec1 = wf%n_v*wf%integrals%n_J + (wf%n_v**2)*(wf%n_o)
 !
-      call batch_b%init(wf%n_v)
+      batch_b = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_b, rec0, rec1)
 !

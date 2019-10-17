@@ -35,7 +35,7 @@ solver cc gs
 end solver cc gs
 
 solver cc es
-   singlet states: 2
+   singlet states:     2
    residual threshold: 1.0d-11
    right eigenvectors
 end solver cc es

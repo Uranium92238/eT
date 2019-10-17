@@ -22,23 +22,17 @@ module hf_engine_class
 !!    Hartree-Fock engine class module 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
-   use hf_class 
+   use abstract_hf_engine_class
 !
-   use scf_diis_hf_class
-   use scf_hf_class
+   use scf_hf_class,      only: scf_hf
+   use scf_diis_hf_class, only: scf_diis_hf
 !
-   type hf_engine 
 !
-      character(len=200) :: algorithm 
-      logical :: restart 
+   type, extends(abstract_hf_engine) :: hf_engine
 !
    contains 
 !
-      procedure :: ignite                    => ignite_hf_engine
-!
-      procedure, private :: run              => run_hf_engine
-!
-      procedure, private :: read_settings    => read_settings_hf_engine
+      procedure :: run    => run_hf_engine
 !
    end type hf_engine 
 !
@@ -62,8 +56,9 @@ contains
 !
       type(hf_engine) :: engine
 !
-      engine%algorithm = 'scf-diis'
-      engine%restart = .false.
+      engine%ao_density_guess = 'sad'
+      engine%algorithm        = 'scf-diis'
+      engine%restart          = .false.
 !
       call engine%read_settings()
 !
@@ -73,7 +68,7 @@ contains
    subroutine run_hf_engine(engine, wf)
 !!
 !!    Run 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none 
 !
@@ -83,6 +78,16 @@ contains
       type(scf_hf), allocatable :: scf
       type(scf_diis_hf), allocatable :: scf_diis
 !
+!     Generate SAD if requested
+!
+      if (.not. engine%restart .and. (trim(engine%ao_density_guess) == 'sad')) then
+!
+         call engine%generate_sad_density(wf)
+!
+      endif
+!
+!     Choose solver
+!
       if (trim(engine%algorithm) == 'scf-diis') then
 !
          scf_diis = scf_diis_hf(wf, engine%restart)
@@ -91,9 +96,7 @@ contains
 !
       elseif (trim(engine%algorithm) == 'scf') then 
 !
-         if (engine%restart) call output%error_msg('SCF does not support restart.')
-!
-         scf = scf_hf(wf)
+         scf = scf_hf(wf, engine%restart)
          call scf%run(wf)
          call scf%cleanup(wf)
 !
@@ -104,36 +107,6 @@ contains
       endif
 !
    end subroutine run_hf_engine
-!
-!
-   subroutine read_settings_hf_engine(engine)
-!!
-!!    Read settings 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
-!!
-      implicit none
-!
-      class(hf_engine) :: engine 
-!
-      call input%get_keyword_in_section('algorithm', 'solver hf', engine%algorithm)
-      if (input%requested_keyword_in_section('restart', 'solver hf')) engine%restart = .true.
-!
-   end subroutine read_settings_hf_engine
-!
-!
-   subroutine ignite_hf_engine(engine, wf)
-!!
-!!    Ignite
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
-!!
-      implicit none 
-!
-      class(hf_engine) :: engine 
-      class(hf)        :: wf 
-!
-      call engine%run(wf)
-!
-   end subroutine ignite_hf_engine
 !
 !
 end module hf_engine_class

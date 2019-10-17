@@ -25,22 +25,19 @@ module shell_class
 !!
 !
    use kinds
-   use output_file_class
-   use disk_manager_class
-   use shell_details_class
+   use interval_class
+   use global_out, only : output
+   use shell_details_class, only : shell_details
 !
    implicit none
 !
-   type :: shell
-   type(shell_details) :: basis_details
+   type, extends(interval) :: shell ! interval: AO index range of the shell 
+!
+      type(shell_details) :: basis_details
 !
       integer    :: size_cart = -1 ! The number of basis functions in cartesian
-!
-      integer    :: size  = -1  ! The number of basis functions
-      integer    :: first = -1  ! The first AO index
-      integer    :: last  = -1  ! The last AO index
-      integer    :: l     = -1  ! The angular momentum
-      integer    :: number_ = -1 ! The shell number (according to the ordering given by Libint)
+      integer    :: l         = -1 ! The angular momentum
+      integer    :: number_   = -1 ! The shell number (according to the ordering given by Libint)
 !
    contains
 !
@@ -49,7 +46,44 @@ module shell_class
 !
    end type shell
 !
+!
+   interface shell 
+!
+      procedure :: new_shell 
+!
+   end interface shell 
+!
+!
 contains
+!
+!
+   function new_shell(first, length, number_) result(sh)
+!!
+!!    New shell 
+!!    Written by Eirik F. Kjønstad, 2019 
+!!
+!!    first:   the first AO index of the shell 
+!!    length:  the number of AOs in the shell 
+!!    number_: the shell number in the full list of shells (according to Libint)
+!!
+      implicit none 
+!
+      integer, intent(in) :: first, length 
+!
+      integer, intent(in) :: number_ 
+!
+      type(shell) :: sh 
+!
+      sh%first = first 
+      sh%length = length 
+!
+      call sh%determine_last_ao_index()
+      call sh%determine_angular_momentum()
+!
+      sh%number_ = number_
+!
+   end function new_shell
+!
 !
    subroutine determine_angular_momentum_shell(sh)
 !!
@@ -71,7 +105,7 @@ contains
 !
       do while (i .lt. 10)
 !
-         if ((2*i + 1) .eq. sh%size .or. (((i+1)*(i+2))/2) .eq. sh%size ) then
+         if ((2*i + 1) .eq. sh%length .or. (((i+1)*(i+2))/2) .eq. sh%length) then
 !
             sh%l = i
 !
@@ -99,9 +133,9 @@ contains
 !
       class(shell) :: sh
 !
-      sh%last = sh%first + sh%size - 1
+      sh%last = sh%first + sh%length - 1
 !
    end subroutine determine_last_ao_index_shell
 !
 !
-end module
+end module shell_class

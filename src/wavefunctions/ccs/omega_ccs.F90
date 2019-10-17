@@ -64,7 +64,7 @@ contains
 !
       type(timings) :: omega_ccs_a1_timer
 !
-      omega_ccs_a1_timer = new_timer('omega ccs a1')
+      omega_ccs_a1_timer = timings('omega ccs a1')
       call omega_ccs_a1_timer%turn_on()
 !
       call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, omega, 1)

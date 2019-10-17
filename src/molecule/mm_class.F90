@@ -405,9 +405,9 @@ contains
 !
       if(trim(molecule%algorithm).eq.'mat_inversion') then
 !
-         call inv(molecule%fq_matrix, &
-                  molecule%fq_matrix, &
-                  molecule%n_variables) 
+         call invert(molecule%fq_matrix, &
+                     molecule%fq_matrix, &
+                     molecule%n_variables) 
 !
          if(molecule%verbose.ge.3) &
             Call print_matrix('pol_matrix_inv',                     &

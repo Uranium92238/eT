@@ -308,7 +308,7 @@ contains
 !
       type(timings) :: jacobian_ccsd_b2_timer
 !
-      jacobian_ccsd_b2_timer = new_timer('jacobian ccsd b2')
+      jacobian_ccsd_b2_timer = timings('jacobian ccsd b2')
       call jacobian_ccsd_b2_timer%turn_on()
 !
 !     :: Term 1. - sum_kc F_kc t_ij^ac c_bk ::
@@ -445,7 +445,7 @@ contains
 !
       type(timings) :: jacobian_ccsd_c2_timer
 !
-      jacobian_ccsd_c2_timer = new_timer('jacobian ccsd c2')
+      jacobian_ccsd_c2_timer = timings('jacobian ccsd c2')
       call jacobian_ccsd_c2_timer%turn_on()
 !
 !     :: Term 1. sum_kcl g_ljkc t_ki^ac c_bl ::
@@ -730,7 +730,7 @@ contains
 !
       type(timings) :: jacobian_ccsd_d2_timer
 !
-      jacobian_ccsd_d2_timer = new_timer('jacobian ccsd d2')
+      jacobian_ccsd_d2_timer = timings('jacobian ccsd d2')
       call jacobian_ccsd_d2_timer%turn_on()
 !
 !     Use intermediate to form term 1
@@ -768,7 +768,7 @@ contains
                2*(wf%n_o)*(wf%n_v**2), 2*(wf%n_o**2)*(wf%n_v) )
 
 !
-      call batch_b%init(wf%n_v)
+      batch_b = batching_index(wf%n_v)
       call mem%batch_setup(batch_b, rec0, rec1)
 !
 !     Start looping over b-batches
@@ -1144,7 +1144,7 @@ contains
 !
       type(timings) :: jacobian_ccsd_e2_timer
 !
-      jacobian_ccsd_e2_timer = new_timer('jacobian ccsd e2')
+      jacobian_ccsd_e2_timer = timings('jacobian ccsd e2')
       call jacobian_ccsd_e2_timer%turn_on()
 !
       call mem%alloc(Y_bjck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -1209,7 +1209,7 @@ contains
 !
       type(timings) :: jacobian_ccsd_f2_timer
 !
-      jacobian_ccsd_f2_timer = new_timer('jacobian ccsd f2')
+      jacobian_ccsd_f2_timer = timings('jacobian ccsd f2')
       call jacobian_ccsd_f2_timer%turn_on()
 !
 !     :: Term 1: - sum_ckdl t_aidj * L_kcld * c_blck
@@ -1362,7 +1362,7 @@ contains
 !
       type(timings) :: jacobian_ccsd_g2_timer
 !
-      jacobian_ccsd_g2_timer = new_timer('jacobian ccsd g2')
+      jacobian_ccsd_g2_timer = timings('jacobian ccsd g2')
       call jacobian_ccsd_g2_timer%turn_on()
 !
 !     Term 1: - Y_bjck c_aick
@@ -1471,7 +1471,7 @@ contains
 !
       type(timings) :: jacobian_ccsd_h2_timer
 !
-      jacobian_ccsd_h2_timer = new_timer('jacobian ccsd h2')
+      jacobian_ccsd_h2_timer = timings('jacobian ccsd h2')
       call jacobian_ccsd_h2_timer%turn_on()
 !
 !     Term 1: Y_aild c_bldj
@@ -1573,7 +1573,7 @@ contains
 !
       type(timings) :: jacobian_ccsd_i2_timer
 !
-      jacobian_ccsd_i2_timer = new_timer('jacobian ccsd i2')
+      jacobian_ccsd_i2_timer = timings('jacobian ccsd i2')
       call jacobian_ccsd_i2_timer%turn_on()
 !
 !     :: sum_c F_bc * c_ai,cj ::
@@ -1770,7 +1770,7 @@ contains
 !
       type(timings) :: jacobian_ccsd_j2_timer
 !
-      jacobian_ccsd_j2_timer = new_timer('jacobian ccsd j2')
+      jacobian_ccsd_j2_timer = timings('jacobian ccsd j2')
       call jacobian_ccsd_j2_timer%turn_on()
 !
 !     Constructing g_kcld
@@ -1875,7 +1875,7 @@ contains
 !
       type(timings) :: jacobian_ccsd_k2_timer
 !
-      jacobian_ccsd_k2_timer = new_timer('jacobian ccsd k2')
+      jacobian_ccsd_k2_timer = timings('jacobian ccsd k2')
       call jacobian_ccsd_k2_timer%turn_on()
 !
       call mem%alloc(g_kilj, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
@@ -1939,7 +1939,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_ljkc, t_akci, t_kcai, g_kjlc, L_ljkc
 !
-      jacobian_c2_intermediates_timer = new_timer('Jacobian CCSD C2 intermediates construction')
+      jacobian_c2_intermediates_timer = timings('Jacobian CCSD C2 intermediates construction')
       call jacobian_c2_intermediates_timer%turn_on()
 !
 !     Intermediate X_ljai 
@@ -2073,6 +2073,7 @@ contains
 !!    Save jacobian d2 intermediate
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2019
 !!
+!!
 !!    Constructs the intermediate 
 !!
 !!       X_kbij = sum_dl g_kcbd t_ij^cd 
@@ -2094,7 +2095,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_bdkc, g_cdkb, X_ij_kb, X_k_ijb, X_kijb_full, t_ijcd
 !
-      jacobian_d2_intermediate_timer = new_timer('Jacobian CCSD D2 intermediate construction')
+      jacobian_d2_intermediate_timer = timings('Jacobian CCSD D2 intermediate construction')
       call jacobian_d2_intermediate_timer%turn_on()
 !
       call mem%alloc(X_kijb_full, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
@@ -2110,7 +2111,7 @@ contains
       req0 = wf%n_v*wf%n_o*wf%integrals%n_J
       req1 = wf%n_v*wf%integrals%n_J + 2*(wf%n_o)*(wf%n_v)**2 + 2*(wf%n_o)**3
 !
-      call batch_b%init(wf%n_v)
+      batch_b = batching_index(wf%n_v)
       call mem%batch_setup(batch_b, req0, req1)
 !
 !     Start looping over b-batches
@@ -2212,7 +2213,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: t_bjdl
       real(dp), dimension(:,:,:,:), allocatable :: Y_bjck
 !
-      jacobian_e2_intermediate_timer = new_timer('Jacobian CCSD E2 intermediate construction')
+      jacobian_e2_intermediate_timer = timings('Jacobian CCSD E2 intermediate construction')
       call jacobian_e2_intermediate_timer%turn_on()
 !
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -2300,7 +2301,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: t_blck
       real(dp), dimension(:,:,:,:), allocatable :: t_bjdl
 !
-      jacobian_g2_intermediate_timer = new_timer('Jacobian CCSD G2 intermediate construction')
+      jacobian_g2_intermediate_timer = timings('Jacobian CCSD G2 intermediate construction')
       call jacobian_g2_intermediate_timer%turn_on()
 !
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -2386,7 +2387,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: Y_aild
       real(dp), dimension(:,:,:,:), allocatable :: Y_ajkd
      
-      jacobian_h2_intermediate_timer = new_timer('Jacobian CCSD H2 intermediate construction')
+      jacobian_h2_intermediate_timer = timings('Jacobian CCSD H2 intermediate construction')
       call jacobian_h2_intermediate_timer%turn_on()
 !
       call mem%alloc(t_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
@@ -2488,7 +2489,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: t_cdij
       real(dp), dimension(:,:,:,:), allocatable :: Y_klij
      
-      jacobian_j2_intermediate_timer = new_timer('Jacobian CCSD J2 intermediate construction')
+      jacobian_j2_intermediate_timer = timings('Jacobian CCSD J2 intermediate construction')
       call jacobian_j2_intermediate_timer%turn_on()
 !
       call mem%alloc(g_kcld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)

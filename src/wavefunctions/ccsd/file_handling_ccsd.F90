@@ -57,10 +57,11 @@ contains
 !!
       class(ccsd) :: wf 
 !
-      call wf%t2_file%init('t2', 'sequential', 'unformatted')
-      call wf%t2bar_file%init('t2bar', 'sequential', 'unformatted')
-      call wf%l2_file%init('l2', 'sequential', 'unformatted')
-      call wf%r2_file%init('r2', 'sequential', 'unformatted')
+      wf%t2_file = sequential_file('t2')
+      wf%t2bar_file = sequential_file('t2bar') 
+!
+      wf%r2_file = sequential_file('r2')
+      wf%l2_file = sequential_file('l2') 
 !
    end subroutine initialize_doubles_files_ccsd
 !
@@ -74,17 +75,14 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      call disk%open_file(wf%t1_file, 'write')
-      call disk%open_file(wf%t2_file, 'write')
+      call wf%t1_file%open_('write', 'rewind')
+      call wf%t2_file%open_('write', 'rewind')
 !
-      rewind(wf%t1_file%unit)
-      rewind(wf%t2_file%unit)
+      call wf%t1_file%write_(wf%t1, wf%n_t1)
+      call wf%t2_file%write_(wf%t2, wf%n_t2)
 !
-      write(wf%t1_file%unit) wf%t1  
-      write(wf%t2_file%unit) wf%t2
-!
-      call disk%close_file(wf%t1_file) 
-      call disk%close_file(wf%t2_file) 
+      call wf%t1_file%close_()
+      call wf%t2_file%close_()
 !
    end subroutine save_amplitudes_ccsd
 !
@@ -98,17 +96,14 @@ contains
 !
       class(ccsd), intent(inout) :: wf 
 !
-      call disk%open_file(wf%t1bar_file, 'write')
-      call disk%open_file(wf%t2bar_file, 'write')
+      call wf%t1bar_file%open_('write', 'rewind')
+      call wf%t2bar_file%open_('write', 'rewind')
 !
-      rewind(wf%t1bar_file%unit)
-      rewind(wf%t2bar_file%unit)
+      call wf%t1bar_file%write_(wf%t1bar, wf%n_t1)
+      call wf%t2bar_file%write_(wf%t2bar, wf%n_t2)
 !
-      write(wf%t1bar_file%unit) wf%t1bar  
-      write(wf%t2bar_file%unit) wf%t2bar
-!
-      call disk%close_file(wf%t1bar_file) 
-      call disk%close_file(wf%t2bar_file) 
+      call wf%t1bar_file%close_()
+      call wf%t2bar_file%close_()
 !
    end subroutine save_multipliers_ccsd
 !
@@ -122,14 +117,14 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      call disk%open_file(wf%t1_file, 'read', 'rewind')
-      call disk%open_file(wf%t2_file, 'read', 'rewind')
+      call wf%t1_file%open_('read', 'rewind')
+      call wf%t2_file%open_('read', 'rewind')
 !
-      read(wf%t1_file%unit) wf%t1  
-      read(wf%t2_file%unit) wf%t2
+      call wf%t1_file%read_(wf%t1, wf%n_t1)
+      call wf%t2_file%read_(wf%t2, wf%n_t2)
 !
-      call disk%close_file(wf%t1_file) 
-      call disk%close_file(wf%t2_file) 
+      call wf%t1_file%close_()
+      call wf%t2_file%close_()
 !
    end subroutine read_amplitudes_ccsd
 !
@@ -143,78 +138,16 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      call disk%open_file(wf%t1bar_file, 'read')
-      call disk%open_file(wf%t2bar_file, 'read')
+      call wf%t1bar_file%open_('read', 'rewind')
+      call wf%t2bar_file%open_('read', 'rewind')
 !
-      rewind(wf%t1bar_file%unit)
-      rewind(wf%t2bar_file%unit)
+      call wf%t1bar_file%read_(wf%t1bar, wf%n_t1)
+      call wf%t2bar_file%read_(wf%t2bar, wf%n_t2)
 !
-      read(wf%t1bar_file%unit) wf%t1bar  
-      read(wf%t2bar_file%unit) wf%t2bar
-!
-      call disk%close_file(wf%t1bar_file) 
-      call disk%close_file(wf%t2bar_file) 
+      call wf%t1bar_file%close_()
+      call wf%t2bar_file%close_()
 !
    end subroutine read_multipliers_ccsd
-!
-!
-   module subroutine read_excited_state_ccsd(wf, X, n, side)
-!!
-!!    Read excited state 
-!!    Written by Sarai D. Fokestad, Mar 2019 
-!!
-      implicit none
-!
-      class(ccsd), intent(inout) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X
-!
-      integer, intent(in) :: n ! state number 
-!
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
-!
-      if (trim(side) == 'right') then
-!
-         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
-         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
-!
-      elseif (trim(side) == 'left') then
-!
-         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
-         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
-!
-      endif
-!
-   end subroutine read_excited_state_ccsd
-!
-!
-   module subroutine read_doubles_vector_ccsd(wf, X, n, file_)
-!!
-!!    Read doubles vector state 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
-!!
-!!    Reads doubles vector "X" from the "n"'th line
-!!    of the sequential and unformatted file "file_".
-!!
-      implicit none 
-!
-      class(ccsd), intent(inout) :: wf 
-!
-      real(dp), dimension(wf%n_t2), intent(out) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      type(file) :: file_
-!
-      call disk%open_file(file_, 'read')
-!
-      call file_%prepare_to_read_line(n)
-!
-      read(file_%unit) X
-!
-      call disk%close_file(file_, 'keep')
-!
-   end subroutine read_doubles_vector_ccsd
 !
 !
 end submodule file_handling_ccsd 

@@ -193,13 +193,13 @@ contains
                   D_core_xy,              &
                   wf%n_ao)
 !
-      call mem%alloc(X_J, wf%integrals%n_J)
-      call zero_array(X_J, wf%integrals%n_J)
+      call mem%alloc(X_J, wf%system%n_J)
+      call zero_array(X_J, wf%system%n_J)
 !
       req0 = 0
-      req1 = (wf%integrals%n_J)*(wf%n_ao)
+      req1 = (wf%system%n_J)*(wf%n_ao)
 !
-      call batch_y%init(wf%n_ao)
+      batch_y = batching_index(wf%n_ao)
 !
       call mem%batch_setup(batch_y, req0, req1)
 !
@@ -211,7 +211,7 @@ contains
 !
          call wf%system%ao_cholesky_file%open_('read')
 !
-         call mem%alloc(L_J_xy, wf%integrals%n_J, wf%n_ao, batch_y%length) 
+         call mem%alloc(L_J_xy, wf%system%n_J, wf%n_ao, batch_y%length) 
 !
          do x = 1, wf%n_ao
             do y = 1, batch_y%length
@@ -228,27 +228,27 @@ contains
 !        X_J = L_J_xy * D_core_xy
 !
          call dgemv('N', &
-                     wf%integrals%n_J,             &
+                     wf%system%n_J,                &
                      wf%n_ao*batch_y%length,       &
                      one,                          &
                      L_J_xy,                       &
-                     wf%integrals%n_J,             &
+                     wf%system%n_J,                &
                      D_core_xy(1,batch_y%first),   &
                      1,                            &
                      one,                          &
                      X_J,                          &
                      1)
 !
-         call mem%dealloc(L_J_xy, wf%integrals%n_J, wf%n_ao,  batch_y%length) 
+         call mem%dealloc(L_J_xy, wf%system%n_J, wf%n_ao,  batch_y%length) 
 !
       enddo ! Batch over y
 !
       call mem%dealloc(D_core_xy, wf%n_ao, wf%n_ao)
 !
       req0 = 0
-      req1 = (wf%integrals%n_J)*(wf%n_mo)
+      req1 = (wf%system%n_J)*(wf%n_mo)
 !
-      call batch_q%init(wf%n_mo)
+      batch_q = batching_index(wf%n_mo)
 !
       call mem%batch_setup(batch_q, req0, req1)
 !
@@ -258,27 +258,27 @@ contains
 !
          call batch_q%determine_limits(current_q_batch) 
 !
-         call mem%alloc(L_J_pq, wf%integrals%n_J, wf%n_mo, batch_q%length)
+         call mem%alloc(L_J_pq, wf%system%n_J, wf%n_mo, batch_q%length)
 !
          call wf%integrals%read_cholesky(L_J_pq, 1, wf%n_mo, batch_q%first, batch_q%last)
 !
          call dgemv('T',                                             &
-                     wf%integrals%n_J,                               &
+                     wf%system%n_J,                                  &
                      wf%n_mo*batch_q%length,                         &
                      two,                                            &
                      L_J_pq,                                         &
-                     wf%integrals%n_J,                               &
+                     wf%system%n_J,                                  &
                      X_J,                                            &
                      1,                                              &
                      one,                                            &
                      wf%mo_fock_fc_contribution(1,batch_q%first),    &
                      1)
 !
-         call mem%dealloc(L_J_pq, wf%integrals%n_J, wf%n_mo, batch_q%length)
+         call mem%dealloc(L_J_pq, wf%system%n_J, wf%n_mo, batch_q%length)
 !
       enddo ! Batch over q
 !
-      call mem%dealloc(X_J, wf%integrals%n_J)
+      call mem%dealloc(X_J, wf%system%n_J)
 !
    end subroutine coulomb_contribution_fock_fc_ccs
 !
@@ -312,13 +312,13 @@ contains
 !
       type(batching_index) :: batch_y
 !
-      call mem%alloc(X_J_xI, wf%integrals%n_J, wf%n_ao, wf%n_frozen_orbitals)
-      call zero_array(X_J_xI, (wf%integrals%n_J)*(wf%n_ao)*(wf%n_frozen_orbitals))
+      call mem%alloc(X_J_xI, wf%system%n_J, wf%n_ao, wf%n_frozen_orbitals)
+      call zero_array(X_J_xI, (wf%system%n_J)*(wf%n_ao)*(wf%n_frozen_orbitals))
 !
       req0 = 0
-      req1 = (wf%integrals%n_J)*(wf%n_ao)
+      req1 = (wf%system%n_J)*(wf%n_ao)
 !
-      call batch_y%init(wf%n_ao)
+      batch_y = batching_index(wf%n_ao)
 !
       call mem%batch_setup(batch_y, req0, req1)
 !
@@ -330,7 +330,7 @@ contains
 !
          call wf%system%ao_cholesky_file%open_('read')
 !
-         call mem%alloc(L_J_xy, wf%integrals%n_J, wf%n_ao, batch_y%length) 
+         call mem%alloc(L_J_xy, wf%system%n_J, wf%n_ao, batch_y%length) 
 !
          do x = 1, wf%n_ao
             do y = 1, batch_y%length
@@ -347,63 +347,63 @@ contains
 !        X_Iδ^J = L_γδ^J C_γI
 !
          call dgemm('N', 'N',                               &
-                     (wf%integrals%n_J)*(wf%n_ao),          &
+                     (wf%system%n_J)*(wf%n_ao),             &
                      wf%n_frozen_orbitals,                  &
                      batch_y%length,                        &
                      one,                                   &
                      L_J_xy,                                &
-                     (wf%integrals%n_J)*(wf%n_ao),          &
+                     (wf%system%n_J)*(wf%n_ao),             &
                      wf%orbital_coefficients_fc(batch_y%first,1),   &
                      wf%n_ao,                               &
                      one,                                   &
                      X_J_xI,                                &
-                     (wf%integrals%n_J)*(wf%n_ao))
+                     (wf%system%n_J)*(wf%n_ao))
 !
-         call mem%dealloc(L_J_xy, wf%integrals%n_J, wf%n_ao, batch_y%length) 
+         call mem%dealloc(L_J_xy, wf%system%n_J, wf%n_ao, batch_y%length) 
 !
       enddo ! Batches of y
 !
-      call mem%alloc(X_J_Ix, wf%integrals%n_J, wf%n_frozen_orbitals, wf%n_ao)
+      call mem%alloc(X_J_Ix, wf%system%n_J, wf%n_frozen_orbitals, wf%n_ao)
 !
-      call sort_123_to_132(X_J_xI, X_J_Ix, wf%integrals%n_J, wf%n_ao, wf%n_frozen_orbitals)     
+      call sort_123_to_132(X_J_xI, X_J_Ix, wf%system%n_J, wf%n_ao, wf%n_frozen_orbitals)     
 !
-      call mem%dealloc(X_J_xI, wf%integrals%n_J, wf%n_ao, wf%n_frozen_orbitals)
+      call mem%dealloc(X_J_xI, wf%system%n_J, wf%n_ao, wf%n_frozen_orbitals)
 !
 !     Y_Iq^J = X_Iδ^J C_δq
 !
-      call mem%alloc(Y_J_Ip, wf%integrals%n_J, wf%n_frozen_orbitals, wf%n_mo)
+      call mem%alloc(Y_J_Ip, wf%system%n_J, wf%n_frozen_orbitals, wf%n_mo)
 !
       call dgemm('N', 'N',                                  &
-                  wf%integrals%n_J*(wf%n_frozen_orbitals),  &
+                  wf%system%n_J*(wf%n_frozen_orbitals),     &
                   wf%n_mo,                                  &
                   wf%n_ao,                                  &
                   one,                                      &
                   X_J_Ix,                                   &
-                  wf%integrals%n_J*(wf%n_frozen_orbitals),  &
+                  wf%system%n_J*(wf%n_frozen_orbitals),     &
                   wf%orbital_coefficients,                  &
                   wf%n_ao,                                  &
                   zero,                                     &
                   Y_J_Ip,                                   &
-                  wf%integrals%n_J*(wf%n_frozen_orbitals))
+                  wf%system%n_J*(wf%n_frozen_orbitals))
 !
-      call mem%dealloc(X_J_Ix, wf%integrals%n_J, wf%n_frozen_orbitals, wf%n_ao)
+      call mem%dealloc(X_J_Ix, wf%system%n_J, wf%n_frozen_orbitals, wf%n_ao)
 !
 !     F_pq -=  Y_J_Ip * Y_J_Iq
 !
       call dgemm('T', 'N',                                  &
                   wf%n_mo,                                  &
                   wf%n_mo,                                  &
-                  wf%integrals%n_J*(wf%n_frozen_orbitals),  &
+                  wf%system%n_J*(wf%n_frozen_orbitals),     &
                   -one,                                     &
                   Y_J_Ip,                                   &
-                  wf%integrals%n_J*(wf%n_frozen_orbitals),  &
+                  wf%system%n_J*(wf%n_frozen_orbitals),     &
                   Y_J_Ip,                                   &
-                  wf%integrals%n_J*(wf%n_frozen_orbitals),  &
+                  wf%system%n_J*(wf%n_frozen_orbitals),     &
                   one,                                      &
                   wf%mo_fock_fc_contribution,               &
                   wf%n_mo)
 !
-      call mem%dealloc(Y_J_Ip, wf%integrals%n_J, wf%n_frozen_orbitals, wf%n_mo)
+      call mem%dealloc(Y_J_Ip, wf%system%n_J, wf%n_frozen_orbitals, wf%n_mo)
 !
    end subroutine exchange_contribution_fock_fc_ccs
 !
@@ -420,7 +420,8 @@ contains
       
       call output%printf(':: Frozen core approximation is used', &
                         ints=[wf%n_frozen_orbitals], fs='(/t3,a)',pl='minimal')
-      call output%printf('There are (i0) frozen 1s orbitals.', &
+!
+      call output%printf('There are (i0) frozen orbitals.', &
                         ints=[wf%n_frozen_orbitals],pl='minimal',fs='(t6,a)')
 !
       call wf%initialize_mo_fock_fc_contribution()

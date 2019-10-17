@@ -110,7 +110,7 @@
 !
       integer, intent(in) :: n ! state number 
 !
-      type(file) :: file_
+      type(sequential_file) :: file_
 !
    end subroutine save_singles_vector_ccs
 !
@@ -128,7 +128,7 @@
 !
       integer, intent(in) :: n ! state number 
 !
-      type(file) :: file_
+      type(sequential_file) :: file_
 !
    end subroutine read_singles_vector_ccs
 !

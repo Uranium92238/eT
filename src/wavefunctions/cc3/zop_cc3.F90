@@ -94,10 +94,10 @@ contains
       type(timings) :: cc3_timer, ccsd_timer
       type(timings) :: cc3_ijk_timer, cc3_abc_timer
 !
-      cc3_ijk_timer   = new_timer('Time in CC3 GS density ijk batching')
-      cc3_abc_timer   = new_timer('Time in CC3 GS density abc batching')
-      cc3_timer      = new_timer('Total CC3 contribution GS density')
-      ccsd_timer     = new_timer('Total CCSD contribution GS density')
+      cc3_ijk_timer   = timings('Time in CC3 GS density ijk batching')
+      cc3_abc_timer   = timings('Time in CC3 GS density abc batching')
+      cc3_timer      = timings('Total CC3 contribution GS density')
+      ccsd_timer     = timings('Total CCSD contribution GS density')
 !
       call ccsd_timer%turn_on()
 !
@@ -307,9 +307,9 @@ contains
       req_2 = 2*(wf%n_o)*(wf%n_v) + wf%n_o**2!
       req_3 = 0
 !
-      call batch_a%init(wf%n_v)
-      call batch_b%init(wf%n_v)
-      call batch_c%init(wf%n_v)
+      batch_a = batching_index(wf%n_v)
+      batch_b = batching_index(wf%n_v)
+      batch_c = batching_index(wf%n_v)
 !
       call mem%batch_setup_ident(batch_a, batch_b, batch_c, &
                            req_0, req_1, req_2, req_3, zero)
@@ -878,9 +878,9 @@ contains
       req_2 = 2*(wf%n_o)*(wf%n_v) + (wf%n_v)**2
       req_3 = 0
 !
-      call batch_i%init(wf%n_o)
-      call batch_j%init(wf%n_o)
-      call batch_k%init(wf%n_o)
+      batch_i = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                            req_0, req_1, req_2, req_3, zero)

@@ -80,6 +80,5 @@ contains
 !
    end subroutine normalization_for_jacobian_debug_ccsd
 !
-
 !
 end submodule debug_jacobian_ccsd

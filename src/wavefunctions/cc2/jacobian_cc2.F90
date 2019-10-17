@@ -90,7 +90,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = new_timer('Jacobian transformation CC2')
+      timer = timings('Jacobian transformation CC2')
       call timer%turn_on()
 !
 !     Allocate and zero the transformed vector (singles part)
@@ -268,7 +268,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = new_timer('jacobian cc2 b2')
+      timer = timings('jacobian cc2 b2')
       call timer%turn_on()
 !
 !     c_aibj/(1/Δ_aibj) 

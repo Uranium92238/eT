@@ -21,7 +21,8 @@ module string_utilities
 !
 !!
 !!    String utilities module
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, Mar 2019
+!!
+!!    Routines that manipulate and analyze strings.
 !!
 !
    use kinds
@@ -207,6 +208,75 @@ contains
       endif
 !
    end subroutine get_elements_in_string
+!
+!
+   subroutine get_reals_in_string(string, n_elements, elements)
+!!
+!!    Get reals
+!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, Mar 2019
+!!    Modified by Andreas Skeidsvoll, Sep 2019: Reads reals instead of integers
+!!
+!!    Gets the reals from list.
+!!    To be used for reading of input.
+!!
+!!    Lists should always be given as {a, b, c, d},
+!!    that is, in set notation.
+!!
+      implicit none
+!
+      character(len=200), intent(inout) :: string
+!
+      integer, intent(in) :: n_elements
+!
+      real(dp), dimension(n_elements), intent(out) :: elements
+!
+!     Local variables
+!
+      integer :: first, n_characters, n_elements_found
+      integer :: i, j
+!
+      string = adjustl(string)
+!
+      n_characters = len_trim(string)
+!
+      if (string(1:1)=='{') then ! list given
+!
+!        Sanity check - Is set closed?
+!
+         if (string(n_characters:n_characters) /= '}') call output%error_msg('found open set in input file.')
+!
+!        Loop through and set the elements
+!
+         first            = 2
+         n_elements_found = 0
+!
+         do j = 1, n_elements
+!
+            do i = first, n_characters - 1
+!
+               if (string(i:i) == ',') exit
+!
+            enddo
+!
+            read(string(first:i-1), *) elements(j)
+!
+            n_elements_found = n_elements_found + 1
+!
+            first = i + 1
+!
+            if (first == n_characters) exit
+!
+         enddo
+!
+         if (n_elements_found .ne. n_elements) call output%error_msg('Mismatch in number of elements to be read.')
+!
+      else ! Did not find list or 
+!
+         call output%error_msg('neither list nor range was found.')
+!
+      endif
+!
+   end subroutine get_reals_in_string
 !
 !
    function set_cursor_to_character(string,final_character) result(cursor)

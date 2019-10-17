@@ -1,11 +1,9 @@
 module index_invert
+!
 !!
-!!    Index module
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
+!!    Index invert module
 !!
-!!    This module contains routines to calculate compound indices, such as pq, or pqr,
-!!    along with routines to calculate packed indices for symmetric matrices, and also,
-!!    inversion of indices (from compound indices to individual indices).
+!!    Routines to invert compound and packed compound indices.
 !!
 !
    use kinds

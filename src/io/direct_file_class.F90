@@ -25,11 +25,10 @@ module direct_file_class
 !!
 !
    use kinds    
-   use abstract_file_class, only : abstract_file
+   use abstract_other_file_class, only : abstract_other_file
    use global_out, only : output
-   use disk_manager_class, only : disk
 !
-   type, extends(abstract_file) :: direct_file
+   type, extends(abstract_other_file) :: direct_file
 !
       integer, private  :: record_dim     ! Number of words per record
       integer, private  :: word_size      ! Size of a word, default is double precision
@@ -40,7 +39,6 @@ module direct_file_class
 !     Open and close
 !
       procedure, public :: open_    => open_direct_file
-      procedure, public :: close_   => close_direct_file
 !
 !
 !     Write routines
@@ -113,6 +111,8 @@ module direct_file_class
                                     read_i_2_direct_file, &
                                     read_i_3_direct_file, &
                                     read_i_4_direct_file
+!
+      final :: destructor
 !
    end type direct_file
 !
@@ -206,53 +206,7 @@ contains
 !
       the_file%is_open = .true.
 !
-      call the_file%set_open_size()
-!
    end subroutine open_direct_file
-!
-!
-   subroutine close_direct_file(the_file, file_status)
-!!
-!!    Close the output file
-!!    Written by Rolf Heilemann Myhre, May 2019
-!!
-      implicit none
-!
-      class(direct_file)                     :: the_file
-      character(len=*), optional, intent(in) :: file_status
-!
-      integer  :: file_change
-!
-      integer              :: io_error
-      character(len=100)   :: io_msg
-!
-      character(len=20)    :: stat
-!
-      if(present(file_status)) then
-         stat = trim(file_status)
-      else
-         stat = 'keep'
-      endif 
-!
-      if (.not. the_file%is_open) then
-         call output%error_msg(trim(the_file%name_)//' already closed')
-      end if
-!
-      close(the_file%unit, iostat=io_error, iomsg=io_msg, status=trim(stat))
-!
-      if (io_error .ne. 0) then 
-         call output%error_msg('Error: could not close eT file '//trim(the_file%name_)//&
-                              &'. Error message: '//trim(io_msg))
-      endif
-!
-      file_change = the_file%get_change()
-      call disk%update(file_change, the_file%name_)
-!
-      the_file%is_open = .false.
-      the_file%unit = -1
-      the_file%action_ = 'unknown'
-!
-   end subroutine close_direct_file
 !
 !
    subroutine write_r_direct_file(the_file, scalar, record)
@@ -881,6 +835,24 @@ contains
       endif
 !
    end subroutine write_chimera_direct_file
+!
+!
+   subroutine destructor(the_file)
+!!
+!!    Destructor 
+!!    Written by Rolf H. Myhre, Sep 2019 
+!!
+      implicit none 
+!
+      type(direct_file) :: the_file
+!
+      if (the_file%is_open) then
+         print *, 'Error in '//the_file%name_
+         print *, 'The file is open and out of scope'
+         stop
+      endif
+!
+   end subroutine destructor
 !
 !
 end module direct_file_class

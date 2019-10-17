@@ -73,11 +73,11 @@ contains
       type(timings) :: cc3_timer, cc3_timer_t3_a1, cc3_timer_t3_b1, cc3_timer_c3
       type(timings) :: ccsd_timer
 !
-      cc3_timer_t3_a1 = new_timer('Time in CC3 T3 a1')
-      cc3_timer_t3_b1 = new_timer('Time in CC3 T3 b1')
-      cc3_timer_c3   = new_timer('Time in CC3 C3')
-      cc3_timer      = new_timer('Total CC3 contribution')
-      ccsd_timer     = new_timer('Total CCSD contribution')
+      cc3_timer_t3_a1 = timings('Time in CC3 T3 a1')
+      cc3_timer_t3_b1 = timings('Time in CC3 T3 b1')
+      cc3_timer_c3   = timings('Time in CC3 C3')
+      cc3_timer      = timings('Total CC3 contribution')
+      ccsd_timer     = timings('Total CCSD contribution')
 !
 !     Allocate and zero the transformed singles vector
 !
@@ -304,7 +304,7 @@ contains
 !
 !     :: X_abid term ::
 !
-      call batch_d%init(wf%n_v)
+      batch_d = batching_index(wf%n_v)
 !
       req_0 = 0
       req_d = wf%n_o * wf%n_v**2
@@ -446,9 +446,9 @@ contains
       req_2 = wf%n_o*wf%n_v
       req_3 = 0
 !
-      call batch_i%init(wf%n_o)
-      call batch_j%init(wf%n_o)
-      call batch_k%init(wf%n_o)
+      batch_i = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                                  req_0, req_1, req_2, req_3, zero)
@@ -672,7 +672,7 @@ contains
 !
       call wf%L_jbkc_t%open_('read')
 !
-      call batch_l%init(wf%n_o)
+      batch_l = batching_index(wf%n_o)
       call mem%batch_setup(batch_l, req_0, req_1)
       call batch_l%determine_limits(1)
 !
@@ -959,9 +959,9 @@ contains
       req_2 = 2*(wf%n_o)*(wf%n_v) + (wf%n_v)**2
       req_3 = 0
 !
-      call batch_i%init(wf%n_o)
-      call batch_j%init(wf%n_o)
-      call batch_k%init(wf%n_o)
+      batch_i = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                            req_0, req_1, req_2, req_3, zero)
@@ -2204,7 +2204,7 @@ contains
 !
       call wf%g_mjlk_t%open_('read')
 !
-      call batch_l%init(wf%n_o)
+      batch_l = batching_index(wf%n_o)
 !
       req_0 = 0
       req_1 = wf%n_o**3
@@ -2245,7 +2245,7 @@ contains
 !
       call wf%g_cdlk_t%open_('read')
 !
-      call batch_d%init(wf%n_v)
+      batch_d = batching_index(wf%n_v)
 !
       req_0 = 0
       req_1 = 2*wf%n_v*wf%n_o**2
@@ -2290,7 +2290,7 @@ contains
 !
       call wf%g_ckld_t%open_('read')
 !
-      call batch_d%init(wf%n_v)
+      batch_d = batching_index(wf%n_v)
 !
       req_0 = 0
       req_1 = wf%n_v*wf%n_o**2
@@ -2366,8 +2366,8 @@ contains
 !
       call wf%g_becd_t%open_('read')
 !
-      call batch_k%init(wf%n_o)
-      call batch_d%init(wf%n_v)
+      batch_k = batching_index(wf%n_o)
+      batch_d = batching_index(wf%n_v)
 !
       req_0 = 0
       req_k = wf%n_v**3
@@ -2421,7 +2421,7 @@ contains
 !
 !     :: Term 2: sigma_bl += - sum_cek Y_bcek * g_ckle ::
 !
-      call batch_k%init(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !
       req_0 = 0
       req_k = wf%n_v**3 + 2*wf%n_o*wf%n_v**2

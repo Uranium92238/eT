@@ -27,8 +27,7 @@ program eT_program
    use kinds
    use global_in 
    use global_out
-   use timings_class, only : timings
-   use disk_manager_class, only : disk
+   use timings_class, only : timings, timing
    use memory_manager_class, only : mem
    use libint_initialization, only : initialize_libint, finalize_libint
    use molecular_system_class, only : molecular_system
@@ -75,12 +74,13 @@ program eT_program
    write(output%unit,'(t4, a, a)')    'Sarai D. Folkestad     ','program design, HF, CCS, CC2, CCSD, libint-interface,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS, DIIS-tool'
    write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties, IP'
-   write(output%unit,'(t4, a, a)')    '                       ','frozen core'
+   write(output%unit,'(t4, a, a)')    '                       ','frozen core, MLCC2'
    write(output%unit,'(t4, a, a)')    'Tommaso Giovannini     ','QM/MM'
    write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
+   write(output%unit,'(t4, a, a)')    'Tor S. Haugland        ','SAD'
    write(output%unit,'(t4, a, a)')    'Eirik F. Kjønstad      ','program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
-   write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties,       '
+   write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties, SAD   '
    write(output%unit,'(t4, a, a)')    '                       ','BFGS-tool                                              '
    write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, launch script, file system'
    write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2, CC3, first order properties'
@@ -109,13 +109,12 @@ program eT_program
 !  Prepare memory manager and disk manager
 !
    call mem%prepare()
-   call disk%prepare()
 !
    call initialize_libint()
 !
 !  Prepare molecular system 
 !
-   call system%prepare()
+   system = molecular_system()
 !
 !  Hartree-Fock calculation
 !
@@ -156,8 +155,9 @@ subroutine reference_calculation(system)
 !
    use hf_class, only: hf 
    use uhf_class, only: uhf 
-   use hf_engine_class, only: hf_engine 
 !
+   use abstract_hf_engine_class, only: abstract_hf_engine
+   use hf_engine_class, only: hf_engine 
    use hf_geoopt_engine_class, only: hf_geoopt_engine 
 !
    implicit none
@@ -166,8 +166,7 @@ subroutine reference_calculation(system)
 !
    class(hf), allocatable  :: ref_wf
 !
-   type(hf_engine)         :: ref_engine
-   type(hf_geoopt_engine)  :: ref_geoopt_engine 
+   class(abstract_hf_engine), allocatable :: ref_engine
 !
    character(len=25) :: ref_wf_name
 !
@@ -190,16 +189,15 @@ subroutine reference_calculation(system)
 !
    if (input%requested_keyword_in_section('ground state geoopt', 'do')) then 
 !
-      ref_geoopt_engine = hf_geoopt_engine()
-      call ref_geoopt_engine%ignite(ref_wf)
+      ref_engine = hf_geoopt_engine()
 !
    else 
 !
       ref_engine = hf_engine()
-      call ref_engine%ignite(ref_wf)
 !
    endif 
 !
+   call ref_engine%ignite(ref_wf)
    call ref_wf%cleanup()
 !
 end subroutine reference_calculation
@@ -223,8 +221,9 @@ subroutine cc_calculation(system)
    use ccsd_class, only: ccsd
    use cc3_class, only: cc3
    use mp2_class, only: mp2 
+   use mlcc2_class, only: mlcc2
 !
-   use abstract_engine_class, only: abstract_engine
+   use abstract_cc_engine_class, only: abstract_cc_engine
    use gs_engine_class, only: gs_engine
    use es_engine_class, only: es_engine
    use zop_engine_class, only: zop_engine 
@@ -235,7 +234,7 @@ subroutine cc_calculation(system)
    type(molecular_system) :: system
 !
    class(ccs), allocatable :: cc_wf
-   class(abstract_engine), allocatable :: cc_engine 
+   class(abstract_cc_engine), allocatable :: cc_engine 
 !
    character(len=25) :: cc_wf_name
 !
@@ -270,6 +269,10 @@ subroutine cc_calculation(system)
 !
          cc_wf = mp2(system)
 !
+      case ('mlcc2')
+!
+         cc_wf = mlcc2(system)
+!
       case default
 !
          call output%error_msg('could not recognize CC method ' // trim(cc_wf_name) // '.')
@@ -302,3 +305,4 @@ subroutine cc_calculation(system)
    call cc_wf%cleanup()
 !
 end subroutine cc_calculation
+!

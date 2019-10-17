@@ -79,7 +79,7 @@ module eigen_davidson_tool_class
    use davidson_tool_class
 !
    use memory_manager_class, only: mem 
-   use array_analysis, only: get_n_lowest
+   use array_utilities, only: get_n_lowest
 !
    type, extends(davidson_tool) :: eigen_davidson_tool 
 !

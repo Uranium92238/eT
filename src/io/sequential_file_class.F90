@@ -26,19 +26,16 @@ module sequential_file_class
 !!
 !
    use kinds    
-   use abstract_file_class, only : abstract_file
+   use abstract_other_file_class, only : abstract_other_file
    use global_out, only : output
-   use disk_manager_class, only : disk
 !
-   type, extends(abstract_file) :: sequential_file
+   type, extends(abstract_other_file) :: sequential_file
 !
    contains
 !
-!     Open and close
+!     Open, skip and rewind
 !
       procedure, public :: open_   => open_sequential_file
-      procedure, public :: close_  => close_sequential_file
-      procedure, public :: delete_ => delete_sequential_file
       procedure, public :: rewind_ => rewind_sequential_file
       procedure, public :: skip    => skip_sequential_file
 !
@@ -85,7 +82,7 @@ module sequential_file_class
 !
 !     Read routines
 !
-      procedure, public :: read_blank_sequential_file
+      procedure, public :: read_blank => read_blank_sequential_file
 !
       procedure, public :: read_r_sequential_file
       procedure, public :: read_r_1_sequential_file
@@ -110,8 +107,7 @@ module sequential_file_class
 !
       procedure, public :: read_char_sequential_file
 !
-      generic           :: read_ => read_blank_sequential_file, &
-                                    read_r_sequential_file,     &
+      generic           :: read_ => read_r_sequential_file,     &
                                     read_r_1_sequential_file,   &
                                     read_r_2_sequential_file,   &
                                     read_r_3_sequential_file,   &
@@ -129,6 +125,8 @@ module sequential_file_class
                                     read_l_sequential_file,     &
                                     read_l_1_sequential_file,   &
                                     read_char_sequential_file
+!
+      procedure, public :: number_of_records => number_of_records_sequential_file
 !
    end type sequential_file
 !
@@ -223,53 +221,40 @@ contains
 !
       the_file%is_open = .true.
 !
-      call the_file%set_open_size()
-!
    end subroutine open_sequential_file
 !
 !
-   subroutine close_sequential_file(the_file, file_status)
+   function number_of_records_sequential_file(the_file) result(n_lines)
 !!
-!!    Open the sequential file
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Number of records 
+!!    Written by Eirik F. Kjønstad, 2019 
 !!
-      implicit none
+!!    Returns the number of records in the file. 
+!!
+!!    Works by doing empty reads until end-of-file is reached, 
+!!    giving back the number of successful reads. 
+!!
+      implicit none 
 !
-      class(sequential_file)                 :: the_file
-      character(len=*), optional, intent(in) :: file_status
+      class(sequential_file) :: the_file
 !
-      integer  :: file_change
+      integer :: n_lines 
 !
-      integer              :: io_error
-      character(len=100)   :: io_msg
+      integer :: io_stat 
 !
-      character(len=20)    :: stat
+      call the_file%rewind_() ! Make sure the file is rewinded
 !
-      if(present(file_status)) then
-         stat = trim(file_status)
-      else
-         stat = 'keep'
-      endif 
+      n_lines = -1
+      io_stat = 0
 !
-      if (.not. the_file%is_open) then
-         call output%error_msg(trim(the_file%name_)//' already closed')
-      end if
+      do while (io_stat .eq. 0)
 !
-      close(the_file%unit, iostat=io_error, iomsg=io_msg, status=trim(stat))
+         n_lines = n_lines + 1
+         call the_file%read_blank(io_stat)
 !
-      if (io_error .ne. 0) then 
-         call output%error_msg('could not close eT file '//trim(the_file%name_)//&
-                              &'. Error message: '//trim(io_msg))
-      endif
+      enddo 
 !
-      file_change = the_file%get_change()
-      call disk%update(file_change, the_file%name_)
-!
-      the_file%is_open = .false.
-      the_file%unit = -1
-      the_file%action_ = 'unknown'
-!
-   end subroutine close_sequential_file
+   end function number_of_records_sequential_file
 !
 !
    subroutine rewind_sequential_file(the_file)
@@ -327,49 +312,6 @@ contains
       enddo
 !
    end subroutine skip_sequential_file
-!
-!
-   subroutine delete_sequential_file(the_file)
-!!
-!!    Delete file
-!!    Written by Rolf Heilemann Myhre, Aug 2019
-!!
-      implicit none
-!
-      class(sequential_file) :: the_file
-!
-      integer              :: io_error
-      character(len=100)   :: io_msg
-!
-      if(the_file%is_open) then
-!
-         close(the_file%unit, iostat=io_error, iomsg=io_msg, status='delete')
-!
-         if (io_error .ne. 0) then 
-            call output%error_msg('Error: could not delete eT file '//trim(the_file%name_)//&
-                                 &'. Error message: '//trim(io_msg))
-         endif
-!
-      else
-!
-         open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
-              action='write', iostat=io_error, iomsg=io_msg)
-!
-         if (io_error .ne. 0) then 
-            call output%error_msg('Error: could not open eT file '//trim(the_file%name_)//&
-                                 &'. Error message: '//trim(io_msg))
-         endif
-!
-         close(the_file%unit, iostat=io_error, iomsg=io_msg, status='delete')
-!
-         if (io_error .ne. 0) then 
-            call output%error_msg('Error: could not delete eT file '//trim(the_file%name_)//&
-                                 &'. Error message: '//trim(io_msg))
-         endif
-!
-      endif
-!
-   end subroutine delete_sequential_file
 !
 !
    subroutine write_blank_sequential_file(the_file)
@@ -802,7 +744,7 @@ contains
    end subroutine write_char_sequential_file
 !
 !
-   subroutine read_blank_sequential_file(the_file)
+   subroutine read_blank_sequential_file(the_file, io_stat)
 !!
 !!    Sequential file read, blank line
 !!    Written by Rolf H. Myhre, May 2019
@@ -810,6 +752,8 @@ contains
       implicit none
 !
       class(sequential_file), intent(in)  :: the_file
+!
+      integer, optional :: io_stat 
 !
       integer              :: io_error
       character(len=100)   :: io_msg
@@ -820,9 +764,15 @@ contains
          read(the_file%unit, *, iostat=io_error, iomsg=io_msg)
       endif
 !
-      if(io_error .ne. 0) then
+      if (present(io_stat) .and. io_error .le. 0) then 
+!
+         io_stat = io_error
+!  
+      elseif (io_error .ne. 0) then
+!
          call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
                               &'. Error message: '//trim(io_msg))
+!
       endif
 !
    end subroutine read_blank_sequential_file

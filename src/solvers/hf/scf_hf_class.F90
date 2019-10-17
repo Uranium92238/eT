@@ -34,9 +34,11 @@ module scf_hf_class
 !!
 !
    use kinds
-   use hf_class
-   use disk_manager_class
    use abstract_hf_solver_class
+!
+   use memory_manager_class, only : mem
+   use hf_class, only : hf
+   use array_utilities, only: get_abs_max
 !
    implicit none
 !
@@ -44,12 +46,15 @@ module scf_hf_class
 !
       character(len=400) :: warning
 !
+      logical :: restart
+!
    contains
 !
       procedure :: run           => run_scf_hf
       procedure :: cleanup       => cleanup_scf_hf
 !
       procedure :: print_banner  => print_banner_scf_hf
+      procedure :: prepare       => prepare_scf_hf
 !
    end type scf_hf
 !
@@ -57,6 +62,7 @@ module scf_hf_class
    interface scf_hf
 !
       procedure :: new_scf_hf
+      procedure :: new_scf_hf_from_parameters
 !
    end interface scf_hf 
 !
@@ -64,7 +70,7 @@ module scf_hf_class
 contains
 !
 !
-   function new_scf_hf(wf) result(solver)
+   function new_scf_hf(wf, restart) result(solver)
 !!
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -72,6 +78,70 @@ contains
       implicit none
 !
       type(scf_hf) :: solver
+!
+      class(hf) :: wf
+!
+      logical, intent(in) :: restart
+! 
+!     Set standards 
+!
+      solver%max_iterations      = 100
+      solver%ao_density_guess    = 'SAD'
+      solver%energy_threshold    = 1.0D-6
+      solver%gradient_threshold  = 1.0D-6
+      solver%restart             = restart
+!
+!     Read settings (thresholds, etc.)
+!
+      call solver%read_settings()
+!
+      call solver%prepare(wf)
+!
+   end function new_scf_hf
+!
+!
+   function new_scf_hf_from_parameters(wf, restart,            &
+                                        max_iterations,        &
+                                        ao_density_guess,      &
+                                        energy_threshold,      &
+                                        gradient_threshold) result(solver)
+!!
+!!    New SCF from parameters
+!!    Written by Tor S. Haugland, 2019
+!!
+      implicit none
+!
+      type(scf_hf) :: solver
+!
+      class(hf) :: wf
+!
+      logical,            intent(in) :: restart
+      integer,            intent(in) :: max_iterations
+      character(len=200), intent(in) :: ao_density_guess
+      real(dp),           intent(in) :: energy_threshold
+      real(dp),           intent(in) :: gradient_threshold
+!
+!     Set settings from parameters
+!
+      solver%max_iterations      = max_iterations
+      solver%ao_density_guess    = ao_density_guess
+      solver%energy_threshold    = energy_threshold
+      solver%gradient_threshold  = gradient_threshold
+      solver%restart             = restart
+!
+      call solver%prepare(wf)
+!
+   end function new_scf_hf_from_parameters
+!
+!
+   subroutine prepare_scf_hf(solver, wf)
+!!
+!!    Prepare SCF
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(scf_hf) :: solver
 !
       class(hf) :: wf
 !
@@ -93,11 +163,11 @@ contains
 !
       call solver%print_banner()
 !
-!     Read settings (thresholds, etc.)
-!
-      call solver%read_settings()
-!
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
+!
+      call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
+!
+      call solver%print_hf_solver_settings()
       call wf%print_screening_settings()
 !
 !     Initialize orbital coefficients, densities, and Fock matrices (plural for unrestricted methods)
@@ -106,12 +176,28 @@ contains
       call wf%initialize_density()
       call wf%initialize_fock()
 !
-!     Set initial AO density guess
+!     The initial (idempotent) density is obtained either from one Roothan-Hall step, or
+!     by reading orbital coefficients (restart)
 !
-      write(output%unit, '(/t3,a,a,a)') '- Setting initial AO density to ', trim(solver%ao_density_guess), ':'
-      call wf%set_initial_ao_density_guess(solver%ao_density_guess)
+      if (solver%restart) then
 !
-   end function new_scf_hf
+         call output%printf('- Requested restart. Reading orbitals from file',fs='(/t3,a)', pl='minimal')
+!
+         call wf%read_orbital_coefficients()
+         call wf%update_ao_density()
+         call wf%read_orbital_energies()
+!
+      else 
+!
+         call output%printf('- Setting initial AO density to '//trim(solver%ao_density_guess),&
+            fs='(/t3,a)',pl='minimal')
+!
+         call wf%set_initial_ao_density_guess(solver%ao_density_guess)
+         call wf%construct_idempotent_density_and_fock()
+!
+      endif
+!
+   end subroutine prepare_scf_hf
 !
 !
    subroutine run_scf_hf(solver, wf)
@@ -126,77 +212,68 @@ contains
       class(hf) :: wf
 !
       logical :: converged
-      logical :: converged_energy
+      logical :: converged_energy, converged_gradient 
 !
-      real(dp) :: energy, prev_energy, n_electrons
+      real(dp) :: energy, prev_energy, max_grad 
 !
-      integer :: iteration
+      integer :: iteration, dim_gradient
 !
       real(dp), dimension(:,:), allocatable :: h_wx
 !
-      integer :: n_s
-!
-!     :: Part I. Preparations
-!
-!     Construct ERI screening vector for efficient Fock construction
-!
-      n_s = wf%system%n_s
-!
-      call mem%alloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%alloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
-!
-      call wf%construct_sp_eri_schwarz()
+      real(dp), dimension(:), allocatable :: G 
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
 !
-      call wf%update_fock_and_energy(h_wx)
-!
-      call wf%get_n_electrons_in_density(n_electrons)
-!
-      write(output%unit, '(/t6,a30,f17.12)') 'Energy of initial guess:      ', wf%energy
-      write(output%unit, '(t6,a30,f17.12)')  'Number of electrons in guess: ', n_electrons
-!
-!     Update the orbitals and density to make sure the density is idempotent
-!     (not the case for the standard atomic superposition density)
-!
-      call wf%roothan_hall_update_orbitals() ! F => C
-      call wf%update_ao_density()            ! C => D
+!     Construct first Fock from initial idempotent density 
 !
       call wf%update_fock_and_energy(h_wx)
 !
-!     :: Part II. Iterative SCF loop.
+!     :: Part I. Iterative SCF loop.
 !
       iteration = 1
 !
-      converged        = .false.
-      converged_energy = .false.
+      converged            = .false.
+      converged_energy     = .false.
+      converged_gradient   = .false.
 !
       prev_energy = zero
 !
-      write(output%unit, '(/t3,a)') 'Iteration       Energy (a.u.)     Delta E (a.u.)'
-      write(output%unit, '(t3,a)')  '------------------------------------------------'
+      dim_gradient = wf%n_densities*wf%n_ao*(wf%n_ao - 1)/2
+      call mem%alloc(G, dim_gradient)
+!
+      call output%printf('Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)',fs='(/t3,a)',pl='normal') 
+      call output%printf('---------------------------------------------------------------',fs='(t3,a)',pl='normal') 
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)
 !
          energy = wf%energy
 !
+         call wf%get_packed_roothan_hall_gradient(G)
+         max_grad = get_abs_max(G, dim_gradient)
+!
 !        Print current iteration information
 !
-         write(output%unit, '(t3,i4,9x,f17.12,4x,e11.4)') iteration, energy, abs(energy-prev_energy)
-         flush(output%unit)
+         call output%printf('(i4)  (f25.12)    (e11.4)    (e11.4)', &
+               ints=[iteration], &
+               reals=[wf%energy, max_grad, abs(wf%energy-prev_energy)], &
+               fs='(t3,a)', pl='normal')
 !
 !        Test for convergence:
 !
-         converged_energy = abs(energy-prev_energy) .lt. solver%energy_threshold
-         converged        = converged_energy
+         converged_energy     = abs(energy-prev_energy) .lt. solver%energy_threshold
+         converged_gradient   = max_grad                .lt. solver%gradient_threshold
+!
+         converged            = converged_energy .and. converged_gradient
+!
+         if (converged_gradient .and. iteration .eq. 1) converged = .true.
 !
          if (converged) then
 !
-            write(output%unit, '(t3,a)') '------------------------------------------------'
-            write(output%unit, '(/t3,a27,i3,a12)') 'Converged criterion met in ', iteration, ' iterations!'
+            call output%printf('---------------------------------------------------------------', &
+                              pl='normal',fs='(t3,a)') 
+            call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
 !
-            !call wf%print_wavefunction_summary(10)
             call solver%print_summary(wf)
             flush(output%unit)
 !
@@ -217,17 +294,15 @@ contains
 !
       enddo
 !
-      call mem%dealloc(wf%sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%dealloc(wf%sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
-!
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(G, dim_gradient)
 !
       if (.not. converged) then
 !
-         write(output%unit, '(t3,a)')   '---------------------------------------------------'
-         write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given'
-         write(output%unit, '(t3,a/)')  'number of maximum iterations.'
-         stop
+          call output%printf('---------------------------------------------------------------', &
+                              pl='normal',fs='(t3,a)') 
+!
+         call output%error_msg('Was not able to converge the equations in the given number of maximum iterations.')
 !
       endif
 !

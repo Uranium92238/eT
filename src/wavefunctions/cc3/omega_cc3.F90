@@ -58,8 +58,8 @@ contains
       type(timings) :: cc3_timer
       type(timings) :: ccsd_timer
 !
-      cc3_timer = new_timer('CC3 contribution')
-      ccsd_timer = new_timer('CCSD contribution')
+      cc3_timer = timings('CC3 contribution')
+      ccsd_timer = timings('CCSD contribution')
 !
       call mem%alloc(omega1, wf%n_v, wf%n_o)
       call mem%alloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -251,9 +251,9 @@ contains
       req_2 = 2*wf%n_o*wf%n_v + wf%n_v**2
       req_3 = 0
 !
-      call batch_i%init(wf%n_o)
-      call batch_j%init(wf%n_o)
-      call batch_k%init(wf%n_o)
+      batch_i = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                            req_0, req_1, req_2, req_3, zero)
@@ -599,7 +599,7 @@ contains
       integer :: req_0, req_k
       integer :: current_k_batch
 !
-      call batch_k%init(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !
 !     (bd|ck)
 !

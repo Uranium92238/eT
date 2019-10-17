@@ -75,11 +75,11 @@ contains
       type(timings) :: cc3_timer, cc3_timer_t3_a2, cc3_timer_t3_b2, cc3_timer_c3
       type(timings) :: ccsd_timer
 !
-      cc3_timer_t3_a2 = new_timer('Time in CC3 T3 a2')
-      cc3_timer_t3_b2 = new_timer('Time in CC3 T3 b2')
-      cc3_timer_c3    = new_timer('Time in CC3 C3')
-      cc3_timer       = new_timer('Total CC3 contribution')
-      ccsd_timer      = new_timer('Total CCSD contribution')
+      cc3_timer_t3_a2 = timings('Time in CC3 T3 a2')
+      cc3_timer_t3_b2 = timings('Time in CC3 T3 b2')
+      cc3_timer_c3    = timings('Time in CC3 C3')
+      cc3_timer       = timings('Total CC3 contribution')
+      ccsd_timer      = timings('Total CCSD contribution')
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -317,7 +317,7 @@ contains
 !
 !     :: X_abid term ::
 !
-      call batch_d%init(wf%n_v)
+      batch_d = batching_index(wf%n_v)
 !
       req_0 = 0
       req_d = wf%n_o * wf%n_v**2
@@ -457,9 +457,9 @@ contains
       req_2 = (wf%n_o)*(wf%n_v)
       req_3 = 0
 !
-      call batch_i%init(wf%n_o)
-      call batch_j%init(wf%n_o)
-      call batch_k%init(wf%n_o)
+      batch_i = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                                  req_0, req_1, req_2, req_3, zero)
@@ -803,6 +803,7 @@ contains
       logical :: ijk_core
       integer :: i_cvs
 !
+!
 !     Set up required c1-transformed integrals
       call wf%construct_c1_integrals(c_ai)
 !
@@ -810,9 +811,9 @@ contains
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call batch_i%init(wf%n_o)
-      call batch_j%init(wf%n_o)
-      call batch_k%init(wf%n_o)
+      batch_i = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !
 !     Setup and Batching loops for the C3-contributions to rho1 and rho2
 !
@@ -1298,7 +1299,7 @@ contains
       integer :: req_0, req_k
       integer :: k_batch
 !
-      call batch_k%init(wf%n_o)
+      batch_k = batching_index(wf%n_o)
 !
 !     g'_bdck = (b'd|ck) + (bd|c'k) + (bd|ck')
 !

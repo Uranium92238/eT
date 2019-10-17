@@ -63,7 +63,7 @@ contains
 !
       type(timings) :: timer 
 !  
-      timer = new_timer('omega doubles a1')
+      timer = timings('omega doubles a1')
       call timer%turn_on()
 !
       call mem%alloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -75,7 +75,7 @@ contains
       req0 = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
       req1 = (wf%n_v)**2*(wf%n_o) + (wf%n_v)*(wf%integrals%n_J)
 !
-      call batch_a%init(wf%n_v)
+      batch_a = batching_index(wf%n_v)
 !
       call mem%batch_setup(batch_a, req0, req1)
 !
@@ -157,7 +157,7 @@ contains
 !
       type(timings) :: timer 
 !  
-      timer = new_timer('omega doubles b1')
+      timer = timings('omega doubles b1')
       call timer%turn_on()
 !
 !     g_kbji ordered as g_jbki
@@ -219,7 +219,7 @@ contains
 !
       type(timings) :: timer
 !  
-      timer = new_timer('omega doubles c1')
+      timer = timings('omega doubles c1')
       call timer%turn_on()
 !
       call mem%alloc(F_bj, wf%n_o, wf%n_v)

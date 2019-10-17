@@ -21,11 +21,9 @@ module array_utilities
 !
 !!
 !!    Array utilities module
-!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, May 2018
 !!
-!!    This module contains routines that perform various operations on arrays
-!!    and that do not belong elsewhere (such as in the reordering module,
-!!    where all such routines are gathered for convenience).
+!!    Routines that perform various operations on arrays.
+!!    Reordering routines are gathered in a separate module (see reordering.F90).
 !!
 !
    use parameters
@@ -37,52 +35,25 @@ module array_utilities
 contains
 !
 !
-   integer function get_max_index(x, n)
-!!
-!!    Get max index
-!!    Written by Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      integer, intent(in) :: n
-      real(dp), dimension(n), intent(in) :: X
-!
-      integer :: I
-      real(dp)     :: max_val
-!
-      get_max_index = 1
-      max_val = X(1)
-      do I = 2, n
-!
-         if (X(I) .gt. max_val) then
-!
-            get_max_index = I
-            max_val = X(I)
-!
-         endif
-!
-      enddo
-!
-   end function get_max_index
-!
-!
-   subroutine zero_array(X, n)
+   subroutine zero_array(x, n)
 !!
 !!    Zero array 
 !!    Written by Eirik F. Kjønstad, 2018 
+!!
+!!    Sets the array x of length n to zero.
 !!
       implicit none 
 !
       integer, intent(in) :: n 
 !
-      real(dp), dimension(n), intent(out) :: X 
+      real(dp), dimension(n), intent(out) :: x 
 !
       integer :: I 
 !
 !$omp parallel do private(I) schedule(static)
       do I = 1, n 
 !
-         X(I) = zero 
+         x(I) = zero 
 !
       enddo
 !$omp end parallel do
@@ -90,18 +61,47 @@ contains
    end subroutine zero_array
 !
 !
-   logical function is_significant(vec, n, threshold, screening)
+   subroutine zero_array_complex(X, n)
 !!
-!!    Is vector significant ?
+!!    Zero array 
+!!    Written by Eirik F. Kjønstad, 2018
+!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
+!!
+      implicit none 
+!
+      integer, intent(in) :: n 
+!
+      complex(dp), dimension(n), intent(out) :: X 
+!
+      integer :: I 
+!
+!$omp parallel do private(I) schedule(static)
+      do I = 1, n 
+!
+         X(I) = zero_complex
+!
+      enddo
+!$omp end parallel do
+!
+   end subroutine zero_array_complex
+!
+!
+   logical function is_significant(x, n, threshold, screening)
+!!
+!!    Is significant
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
 !!
-!!    Returns true if all elements are below threshold
+!!    Returns true if one element of x (of length n) is greater, in absolute value,
+!!    than "threshold": abs(x(i)) > threshold.
+!!
+!!    screening (optional): if a screening vector is passed to the routine,
+!!    then the testing criterion is abs(x(i)*screening(i)) > threshold.
 !!
       implicit none
 !
       integer, intent(in) :: n
 !
-      real(dp), dimension(n), intent(in)  :: vec
+      real(dp), dimension(n), intent(in)  :: x
       real(dp), dimension(n), intent(in), optional  :: screening
 !
       real(dp), intent(in)  :: threshold
@@ -111,9 +111,10 @@ contains
       is_significant = .false.
 !
       if (present(screening)) then
+!
          do i = 1, n
 !
-            if (abs(vec(i)*screening(i)) .gt. threshold) then
+            if (abs(x(i)*screening(i)) .gt. threshold) then
 !
                is_significant = .true.
                return
@@ -125,7 +126,7 @@ contains
 !
          do i = 1, n
 !
-            if (abs(vec(i)) .gt. threshold) then
+            if (abs(x(i)) .gt. threshold) then
 !
                is_significant = .true.
                return
@@ -138,18 +139,19 @@ contains
    end function is_significant
 !
 !
-   integer function n_significant(vec, n, threshold)
+   integer function n_significant(x, n, threshold)
 !!
-!!    Number of significant in vector
+!!    Number of significant
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
 !!
-!!    Returns the number of elements in vector larger than threshold
+!!    Returns the number of elements in a vector x (of dimension n) larger, 
+!!    in absolute value, than "threshold": #i such that abs(x(i)) > threshold.
 !!
       implicit none
 !
       integer, intent(in) :: n
 !
-      real(dp), dimension(n), intent(in)  :: vec
+      real(dp), dimension(n), intent(in)  :: x
 !
       real(dp), intent(in)  :: threshold
 !
@@ -159,7 +161,7 @@ contains
 !
       do i = 1, n
 !
-         if (abs(vec(i)) .gt. threshold) then
+         if (abs(x(i)) .gt. threshold) then
 !
             n_significant = n_significant + 1
 !
@@ -175,8 +177,18 @@ contains
 !!    Reduce vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Cuts the significant blocks out of a vector and places them in a reduced size
-!!    vector
+!!    Cuts the significant blocks out of a vector and places them in a reduced size vector
+!!
+!!    vec:  vector to cut out blocks from
+!!    dim_: dimension of vec 
+!!
+!!    vec_reduced: vector to place the cut-out blocks into (intent: out)
+!!    dim_reduced: dimension of vec_reduced 
+!!
+!!    n_blocks:          total number of blocks 
+!!    block_significant: a logical array, block_significant(i) == .true. means that i is a significant block 
+!!    block_firsts:      an integer array, of dimension n_blocks + 1, containing the first index of each significant block;
+!!                       the (n_blocks)+1-th element equals (last element of the final block) + 1.
 !!
       implicit none
 !
@@ -212,11 +224,21 @@ contains
 !
    subroutine reduce_vector_int(vec, vec_reduced, block_firsts, block_significant, n_blocks, dim_, dim_reduced)
 !!
-!!    Reduce vector
+!!    Reduce vector int
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Cuts the significant blocks out of a vector and places them in a reduced size
-!!    vector
+!!    Cuts the significant blocks out of a vector and places them in a reduced size vector
+!!
+!!    vec:  vector to cut out blocks from
+!!    dim_: dimension of vec 
+!!
+!!    vec_reduced: vector to place the cut-out blocks into (intent: out)
+!!    dim_reduced: dimension of vec_reduced 
+!!
+!!    n_blocks:          total number of blocks 
+!!    block_significant: a logical array, block_significant(i) == .true. means that i is a significant block 
+!!    block_firsts:      an integer array, of dimension n_blocks + 1, containing the first index of each significant block;
+!!                       the (n_blocks)+1-th element equals (last element of the final block) + 1.
 !!
       implicit none
 !
@@ -255,8 +277,20 @@ contains
 !!    Reduce array
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Cuts the significant row blocks out of a array and places them in a reduced size
-!!    array
+!!    Cuts the significant row blocks out of a array and places them in a reduced size array 
+!!
+!!    array:   array to cut out blocks from
+!!    dim_:    number of rows in array 
+!!
+!!    array_reduced: array to place the cut-out blocks into (intent: out)
+!!    dim_reduced:   number of rows in array_reduced
+!!
+!!    columns: number of columns in array and array_reduced 
+!!
+!!    n_blocks:          total number of blocks 
+!!    block_significant: a logical array, block_significant(i) == .true. means that i is a significant block 
+!!    block_firsts:      an integer array, of dimension n_blocks + 1, containing the first index of each significant block;
+!!                       the (n_blocks)+1-th element equals (last element of the final block) + 1.
 !!
       implicit none
 !
@@ -296,53 +330,25 @@ contains
    end subroutine reduce_array
 !
 !
-   subroutine reduce_array_column(array, array_reduced, block_firsts, block_significant, n_blocks, dim_, dim_reduced, rows)
-!!
-!!    Reduce array column
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Cuts the significant column blocks out of an array and places them in a reduced size array
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_, dim_reduced, n_blocks, rows
-!
-      logical, dimension(n_blocks), intent(in) :: block_significant
-      integer, dimension(n_blocks + 1), intent(in) :: block_firsts
-!
-      real(dp), dimension(rows, dim_), intent(in) :: array
-      real(dp), dimension(rows, dim_reduced), intent(out) :: array_reduced
-!
-      integer :: block_, current_pos, first, last, size_
-!
-      current_pos = 1
-!
-      do block_ = 1, n_blocks
-!
-         if (block_significant(block_)) then
-!
-            first = block_firsts(block_)
-            last  = block_firsts(block_ + 1) - 1
-            size_ = last - first + 1
-!
-            array_reduced(:, current_pos : current_pos + size_ - 1) = array(:, first : last)
-!
-            current_pos = current_pos + size_
-!
-         endif
-!
-      enddo
-!
-   end subroutine reduce_array_column
-!
-!
    subroutine reduce_array_int(array, array_reduced, block_firsts, block_significant, n_blocks, dim_, dim_reduced, columns)
 !!
 !!    Reduce array
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Cuts the significant row blocks out of a array and places them in a reduced size
-!!    array
+!!    Cuts the significant row blocks out of a array and places them in a reduced size array
+!!
+!!    array:   array to cut out blocks from
+!!    dim_:    number of rows in array 
+!!
+!!    array_reduced: array to place the cut-out blocks into (intent: out)
+!!    dim_reduced:   number of rows in array_reduced
+!!
+!!    columns: number of columns in array and array_reduced 
+!!
+!!    n_blocks:          total number of blocks 
+!!    block_significant: a logical array, block_significant(i) == .true. means that i is a significant block 
+!!    block_firsts:      an integer array, of dimension n_blocks + 1, containing the first index of each significant block;
+!!                       the (n_blocks)+1-th element equals (last element of the final block) + 1.
 !!
       implicit none
 !
@@ -354,282 +360,32 @@ contains
       integer, dimension(dim_, columns), intent(in) :: array
       integer, dimension(dim_reduced, columns), intent(out) :: array_reduced
 !
-      integer :: block_, current_pos, first, last, size_
+      integer :: block_, current_pos, first, last, size_, I
 !
-      current_pos = 1
+!$omp parallel do schedule(static) private(I, current_pos, block_, first, last, size_)
+      do I = 1, columns
 !
-      do block_ = 1, n_blocks
+         current_pos = 1
 !
-         if (block_significant(block_)) then
+         do block_ = 1, n_blocks
 !
-            first = block_firsts(block_)
-            last  = block_firsts(block_ + 1) - 1
-            size_ = last - first + 1
+            if (block_significant(block_)) then
 !
-            array_reduced(current_pos : (current_pos + size_ - 1), :) = array(first : last, :)
+               first = block_firsts(block_)
+               last  = block_firsts(block_ + 1) - 1
+               size_ = last - first + 1
 !
-            current_pos = current_pos + size_
+               array_reduced(current_pos : (current_pos + size_ - 1), I) = array(first : last, I)
 !
-         endif
+               current_pos = current_pos + size_
 !
+            endif
+!
+         enddo
       enddo
+!$omp end parallel do
 !
    end subroutine reduce_array_int
-!
-!
-   subroutine full_cholesky_decomposition(matrix, cholesky_vectors, dim_, n_vectors,&
-                                        threshold, used_diag)
-!!
-!!    Cholesky decomposition,
-!!    Written by Sarai Dery Folkestad, June 2017
-!!
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-      integer, intent(out) :: n_vectors
-!
-      real(dp), intent(in) :: threshold
-!
-      real(dp), dimension(dim_, dim_), intent(inout) :: matrix
-      real(dp), dimension(dim_, dim_), intent(out) :: cholesky_vectors
-!
-      integer, dimension(dim_), optional, intent(out) :: used_diag
-!
-      integer :: i, j, k, index_max
-      real(dp) :: max_diagonal
-!
-      real(dp), parameter :: tolerance = 1.0d-10
-!
-      if (present(used_diag)) used_diag = 0
-!
-!     Looping over the number of cholesky vectors
-!
-      do i = 1, dim_
-         n_vectors = i
-!
-!        Find the maximum diagonal
-!
-         index_max = 0
-         max_diagonal = 0.0d0
-!
-         do j = 1, dim_
-!
-            if (abs(matrix(j, j)) .gt. abs(max_diagonal)) then
-!
-               max_diagonal = matrix(j,j)
-               index_max    = j
-!
-            endif
-!
-         enddo
-!
-!        Check against threshold and whether diagonal is negative
-!
-         if (max_diagonal .lt. 0.0d0) then
-            if (abs(max_diagonal) .gt. tolerance) then
-!
-               write(output%unit,*)'Error: Found negative diagonal in cholesky decomposition.'
-               stop
-!
-            endif
-         endif
-!
-         if (abs(max_diagonal) .lt. threshold) then
-!
-            n_vectors = n_vectors - 1
-            return
-         else
-            if (present(used_diag)) used_diag(n_vectors) = index_max
-         endif
-!
-!        Cholesky vectors
-!
-         do j = 1, dim_
-!
-            cholesky_vectors(j,i) = matrix(j, index_max)/sqrt(max_diagonal)
-!
-         enddo
-!
-!        Subtract from matrix
-!
-         do j = 1, dim_
-            do k = 1, dim_
-!
-               matrix(k,j) = matrix(k,j) - cholesky_vectors(k,i)*cholesky_vectors(j,i)
-!
-            enddo
-         enddo
-!
-         do j = 1, dim_
-            matrix(j,index_max) = 0.0D0
-            matrix(index_max,j) = 0.0D0
-         enddo
-!
-      enddo
-
-   end subroutine full_cholesky_decomposition
-!
-!
-   subroutine full_cholesky_decomposition_effective(matrix, cholesky_vectors, dim_, n_vectors,&
-                                        threshold, used_diag)
-!!
-!!    Cholesky decomposition,
-!!    Written by Sarai Dery Folkestad, June 2017.
-!!
-!!
-      implicit none
-!
-      integer, intent(in) :: dim_
-      integer, intent(out) :: n_vectors
-!
-      real(dp), intent(in) :: threshold
-!
-      real(dp), dimension(dim_, dim_), intent(inout) :: matrix
-      real(dp), dimension(dim_, dim_), intent(out) :: cholesky_vectors
-!
-      integer, dimension(dim_), intent(out) :: used_diag
-!
-      integer :: i, j, index_max
-      real(dp) :: max_diagonal, min_diagonal
-!
-      real(dp), dimension(:), allocatable :: diagonal
-      real(dp), dimension(:), allocatable :: temp_cholesky_vector
-!
-      real(dp), parameter :: tolerance = 1.0d-10
-!
-      used_diag = 0
-!
-!     Looping over the number of cholesky vectors
-!
-      call mem%alloc(diagonal, dim_)
-!
-      do i = 1, dim_
-!
-         diagonal(i) = matrix(i, i)
-!
-      enddo
-!
-      do i = 1, dim_
-!
-         n_vectors = i
-!
-!        Find the maximum diagonal
-!
-         index_max = 0
-         max_diagonal = 0.0d0
-!
-         do j = 1, dim_
-!
-            if (abs(diagonal(j)) .gt. abs(max_diagonal)) then
-!
-               max_diagonal = diagonal(j)
-               index_max    = j
-!
-            endif
-!
-         enddo
-!
-!        Check against threshold and whether diagonal is negative
-!
-         if (max_diagonal .lt. 0.0d0) then
-            if (abs(max_diagonal) .gt. tolerance) then
-!
-               write(output%unit,*)'Error: Found negative diagonal in cholesky decomposition.'
-               stop
-!
-            endif
-         endif
-!
-         if (abs(max_diagonal) .lt. threshold) then
-!
-            n_vectors = n_vectors - 1
-!
-            min_diagonal = 1.0D10
-!
-            do j = 1, dim_
-!
-               if (diagonal(j) .lt. min_diagonal) min_diagonal = diagonal(j)
-
-!
-            enddo
-!
-            write(output%unit, '(t3, a46, e12.4)') 'The smallest diagonal after decomposition is: ', min_diagonal
-            call mem%dealloc(diagonal, dim_)
-!
-            return
-!
-         else
-!
-            used_diag(n_vectors) = index_max
-!
-         endif
-!
-!        Cholesky vectors
-!
-         cholesky_vectors(:, n_vectors) = matrix(:, index_max)
-!
-         if (n_vectors .gt. 1) then
-!
-            call mem%alloc(temp_cholesky_vector, n_vectors - 1)
-            temp_cholesky_vector(:) = cholesky_vectors(index_max, 1 : n_vectors - 1)
-!
-            call dgemm('N', 'T',                         &
-                        dim_,                            &
-                        1,                               &
-                        n_vectors - 1,                   &
-                        -one,                            &
-                        cholesky_vectors,                &
-                        dim_,                            &
-                        temp_cholesky_vector,            &
-                        1,                               &
-                        one,                             &
-                        cholesky_vectors(1, n_vectors),  &
-                        dim_)
-!
-            call mem%dealloc(temp_cholesky_vector, n_vectors - 1)
-!
-         endif
-!
-         do j = 1, n_vectors - 1
-!
-            cholesky_vectors(used_diag(j), n_vectors) = zero
-!
-         enddo
-!
-         call dscal(dim_, one/sqrt(max_diagonal), cholesky_vectors(1, n_vectors), 1)
-!
-         do j = 1, dim_
-!
-            diagonal(j) = diagonal(j) - cholesky_vectors(j, n_vectors)**2
-!
-         enddo
-!
-         diagonal(index_max) = zero
-!
-         do j = 1, dim_
-!
-            matrix(j,index_max) = 0.0D0
-            matrix(index_max,j) = 0.0D0
-!
-         enddo
-!
-      enddo
-!
-      min_diagonal = 1.0D10
-!
-      do j = 1, dim_
-!
-            if (diagonal(j) .lt. min_diagonal) min_diagonal = diagonal(j)
-
-!
-      enddo
-!
-      write(output%unit, '(t3, a46, e12.4)') 'The smallest diagonal after decomposition is: ', min_diagonal
-!
-      call mem%dealloc(diagonal, dim_)
-!
-   end subroutine full_cholesky_decomposition_effective
 !
 !
    subroutine cholesky_decomposition_limited_diagonal(matrix, cholesky_vectors, dim_, &
@@ -641,14 +397,12 @@ contains
 !!
 !!    Cholesky decomposition with pivots selected from a subset of the diagonals.
 !!
-!!    Routine is used for decomposition of density to construct active
-!!    orbitals.
+!!    Routine is used for decomposition of density to construct active orbitals.
 !!
 !!    The number of pivots may specified through the optional
 !!    argument n_vectors_requested  
 !!
 !!    On exit matrix_xy = matrix_xy - sum_J L_xJ*LyJ
-!!
 !!
       implicit none
 !
@@ -735,12 +489,12 @@ contains
                         dim_,             &
                         dim_,             &
                         n_vectors,        &
-                        one,              &
-                        cholesky_vectors, &
-                        dim_,             &
-                        cholesky_vectors, &
-                        dim_,             &
                         -one,             &
+                        cholesky_vectors, &
+                        dim_,             &
+                        cholesky_vectors, &
+                        dim_,             &
+                        one,              &
                         matrix,           &
                         dim_)
 !
@@ -817,13 +571,25 @@ contains
    end subroutine cholesky_decomposition_limited_diagonal
 !
 !
- subroutine full_cholesky_decomposition_system(matrix, cholesky_vectors, dim_, n_vectors, &
-                                                   threshold, used_diag)
+ subroutine full_cholesky_decomposition_system(matrix, cholesky_vectors, dim_, &
+                                                n_vectors, threshold, used_diag)
 !!
-!!    Cholesky decomposition,
+!!    Cholesky decomposition
 !!    Written by Sarai Dery Folkestad, June 2017.
 !!
+!!    Wrapper for Lapack decomposition routine dpstrf.
 !!
+!!    matrix:                          matrix M we want to decompose, P^T M P = L L^T 
+!!    cholesky_vectors (intent: out):  L 
+!!    dim_:                            M and L are (dim) x (dim) arrays
+!!
+!!    used_diag (intent: out):         Vector (of dimension dim) containing the information in P:
+!!                                     P(used_diag(j), j) = one. Other elements of P are zero.
+!!                      
+!!    threshold:                       Threshold to use in the Cholesky decomposition.
+!!    
+!!    n_vectors:                       Number of Cholesky vectors
+!! 
       implicit none
 !
       integer, intent(in) :: dim_
@@ -876,9 +642,185 @@ contains
    end subroutine full_cholesky_decomposition_system
 !
 !
-   subroutine inv(Ainv, A, n)
+   subroutine full_cholesky_decomposition_effective(matrix, cholesky_vectors, dim_, n_vectors,&
+                                        threshold, used_diag)
+!!
+!!    Cholesky decomposition,
+!!    Written by Sarai Dery Folkestad, June 2017.
+!!
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+      integer, intent(out) :: n_vectors
+!
+      real(dp), intent(in) :: threshold
+!
+      real(dp), dimension(dim_, dim_), intent(inout) :: matrix
+      real(dp), dimension(dim_, dim_), intent(out) :: cholesky_vectors
+!
+      integer, dimension(dim_), intent(out) :: used_diag
+!
+      integer :: i, j, index_max
+      real(dp) :: max_diagonal, min_diagonal
+!
+      real(dp), dimension(:), allocatable :: diagonal
+      real(dp), dimension(:), allocatable :: temp_cholesky_vector
+!
+      real(dp), parameter :: tolerance = 1.0d-10
+!
+      used_diag = 0
+!
+!     Looping over the number of cholesky vectors
+!
+      call mem%alloc(diagonal, dim_)
+!
+      do i = 1, dim_
+!
+         diagonal(i) = matrix(i, i)
+!
+      enddo
+!
+      do i = 1, dim_
+!
+         n_vectors = i
+!
+!        Find the maximum diagonal
+!
+         index_max = 0
+         max_diagonal = 0.0d0
+!
+         do j = 1, dim_
+!
+            if (abs(diagonal(j)) .gt. abs(max_diagonal)) then
+!
+               max_diagonal = diagonal(j)
+               index_max    = j
+!
+            endif
+!
+         enddo
+!
+!        Check against threshold and whether diagonal is negative
+!
+         if (max_diagonal .lt. 0.0d0) then
+            if (abs(max_diagonal) .gt. tolerance) then
+!
+               write(output%unit,*)'Error: Found negative diagonal in cholesky decomposition.'
+               stop
+!
+            endif
+         endif
+!
+         if (abs(max_diagonal) .lt. threshold) then
+!
+            n_vectors = n_vectors - 1
+!
+            min_diagonal = 1.0D10
+!
+            do j = 1, dim_
+!
+            call dgemm('N', 'T',          &
+                        dim_,             &
+                        dim_,             &
+                        n_vectors,        &
+                        -one,             &
+                        cholesky_vectors, &
+                        dim_,             &
+                        cholesky_vectors, &
+                        dim_,             &
+                        one,              &
+                        matrix,           &
+                        dim_)
+               if (diagonal(j) .lt. min_diagonal) min_diagonal = diagonal(j)
+
+!
+            enddo
+!
+            write(output%unit, '(t3, a46, e12.4)') 'The smallest diagonal after decomposition is: ', min_diagonal
+            call mem%dealloc(diagonal, dim_)
+!
+            return
+!
+         else
+!
+            used_diag(n_vectors) = index_max
+!
+         endif
+!
+!        Cholesky vectors
+!
+         cholesky_vectors(:, n_vectors) = matrix(:, index_max)
+!
+         if (n_vectors .gt. 1) then
+!
+            call mem%alloc(temp_cholesky_vector, n_vectors - 1)
+            temp_cholesky_vector(:) = cholesky_vectors(index_max, 1 : n_vectors - 1)
+!
+            call dgemm('N', 'T',                         &
+                        dim_,                            &
+                        1,                               &
+                        n_vectors - 1,                   &
+                        -one,                            &
+                        cholesky_vectors,                &
+                        dim_,                            &
+                        temp_cholesky_vector,            &
+                        1,                               &
+                        one,                             &
+                        cholesky_vectors(1, n_vectors),  &
+                        dim_)
+!
+            call mem%dealloc(temp_cholesky_vector, n_vectors - 1)
+!
+         endif
+!
+         do j = 1, n_vectors - 1
+!
+            cholesky_vectors(used_diag(j), n_vectors) = zero
+!
+         enddo
+!
+         call dscal(dim_, one/sqrt(max_diagonal), cholesky_vectors(1, n_vectors), 1)
+!
+         do j = 1, dim_
+!
+            diagonal(j) = diagonal(j) - cholesky_vectors(j, n_vectors)**2
+!
+         enddo
+!
+         diagonal(index_max) = zero
+!
+         do j = 1, dim_
+!
+            matrix(j,index_max) = 0.0D0
+            matrix(index_max,j) = 0.0D0
+!
+         enddo
+!
+      enddo
+!
+      min_diagonal = 1.0D10
+!
+      do j = 1, dim_
+!
+            if (diagonal(j) .lt. min_diagonal) min_diagonal = diagonal(j)
+
+!
+      enddo
+!
+      write(output%unit, '(t3, a46, e12.4)') 'The smallest diagonal after decomposition is: ', min_diagonal
+!
+      call mem%dealloc(diagonal, dim_)
+!
+   end subroutine full_cholesky_decomposition_effective
+!
+!
+   subroutine invert(Ainv, A, n)
 !!
 !!    Invert matrix A
+!!    Written by Sarai D. Folkestad, 2018
+!!
+!!    Inverts n x n - matrix A and places the result in Ainv.
 !!
       implicit none
 !
@@ -913,12 +855,15 @@ contains
          stop 'Matrix inversion failed!'
       end if
 !
-   end subroutine inv
+   end subroutine invert
 !
 !
-   subroutine inv_lower_tri(Ainv, A, n)
+   subroutine invert_lower_triangular(Ainv, A, n)
 !!
-!!    Invert lower triagonal matrix A
+!!    Invert lower triagonal
+!!    Written by Sarai D. Folkestad, 2018
+!!
+!!    Inverts lower triangular n x n - matrix A and places the result in Ainv.
 !!
       implicit none
 !
@@ -943,7 +888,7 @@ contains
          stop
       end if
 !
-   end subroutine inv_lower_tri
+   end subroutine invert_lower_triangular
 !
 !
    subroutine symmetrize(M, n)
@@ -951,7 +896,9 @@ contains
 !!    Symmetrize matrix
 !!    Written by Eirik F. Kjønstad, 2018
 !!
-!!     M <- 1/2 * (M + M^T)
+!!    Symmetrize n x n - matrix M:
+!!
+!!       M <- 1/2 * (M + M^T)
 !!
       implicit none
 !
@@ -984,7 +931,9 @@ contains
 !!    Antisymmetrize matrix
 !!    Written by Eirik F. Kjønstad, 2018
 !!
-!!     M <- 1/2 * (M - M^T)
+!!    Antisymmetrize n x n - matrix M:
+!!
+!!       M <- 1/2 * (M - M^T)
 !!
       implicit none
 !
@@ -1017,8 +966,7 @@ contains
 !!    Get absolute maximum value of vector
 !!    Written by Eirik F. Kjønstad, 2018
 !!
-!!    Returns the largest element of |X|, i.e. the largest 
-!!    element in terms of absolute value
+!!    Returns the largest element, in absolute valute value, of X (length: n)
 !!
       implicit none 
 !
@@ -1044,12 +992,12 @@ contains
 !!    Get absolute maximum value and index of vector
 !!    Written by Sarai D. Folkestad, Sep 2019
 !!
-!!    Returns the largest element of |X|, i.e. the largest 
-!!    element in terms of absolute value
+!!    Computes the largest element, in absolute valute value, of X (length: n),
+!!    and the index of X associated with that value. 
 !!
 !!    The routine is a copy of the function get_abs_max 
 !!    written by Eirik F. Kjønstad. S.D.F added the
-!!    index_ stuff
+!!    index_ stuff.
 !!
       implicit none 
 !
@@ -1086,6 +1034,10 @@ contains
 !!    Overwrites the n-by-n matrix X with a sandwich-ed X:
 !!
 !!       X <- A^T X B
+!!
+!!    All matrices are n x n.
+!!
+!!    left (optional): if true, transpose the left factor, A (standard); if false, tranpose the right factor, B. 
 !!
       implicit none
 !
@@ -1310,8 +1262,8 @@ contains
 !!    Commute 
 !!    Written by Eirik F. Kjønstad, 2018
 !!
-!!    Calculates the commutator of A and B, two square matrices 
-!!    of dimension n, and places the result in AB. 
+!!    Calculates the commutator of A and B, two n x n matrices, 
+!!    and places the result in AcB. 
 !!
       implicit none 
 !
@@ -1356,7 +1308,7 @@ contains
 !!    Get L^2 norm 
 !!    Written by Eirik F. Kjønstad, Aug 2018 
 !!
-!!    Returns the L^2 norm of the n-dimensional X vector, 
+!!    Returns the L^2 norm of the n-dimensional vector X: 
 !!
 !!       sqrt( sum_i=1^n X_i^2 )
 !!
@@ -1378,7 +1330,8 @@ contains
 !!    Print vector 
 !!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Suitable to print vector of size < 1000.
+!!    Prints the vector A (of length n), using five columns and the indentation 
+!!    specified by "indent", to the output file. 
 !!
       implicit none 
 !
@@ -1424,10 +1377,13 @@ contains
    end subroutine print_vector
 !
 !
-   subroutine trans(A, A_trans, dim_)
+   subroutine transpose_(A, A_trans, dim_)
 !!
 !!    Transpose 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Saves the transpose of A in A_trans. The matrices are assumed to 
+!!    be dim_ x dim_.
 !!
       implicit none
 !
@@ -1446,7 +1402,7 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine trans
+   end subroutine transpose_
 !
 !
    subroutine copy_and_scale(alpha, X, Y, n)
@@ -1454,7 +1410,11 @@ contains
 !!    Copy and scale
 !!    Written by Sarai D. Folkestad, May 2019
 !!
-!!    Y = alpha*X
+!!    Sets Y as:
+!!
+!!       Y = alpha*X
+!!
+!!    X and Y are vectors of length n, and alpha is a real number.
 !!
       implicit none
 !
@@ -1478,11 +1438,50 @@ contains
    end subroutine copy_and_scale
 !
 !
+   subroutine copy_and_scale_complex(alpha, X, Y, n)
+!!
+!!    Copy and scale
+!!    Written by Sarai D. Folkestad, May 2019
+!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
+!!
+!!    Y = alpha*X
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+!
+      complex(dp), dimension(n), intent(out) :: Y
+      complex(dp), dimension(n), intent(in) :: X
+!
+      complex(dp), intent(in) :: alpha
+!
+      integer :: i
+!
+!$omp parallel do private(i)
+      do i = 1, n
+!
+         Y(i) = alpha*X(i)
+!
+      enddo
+!$omp end parallel do 
+!
+   end subroutine copy_and_scale_complex
+!
+!
    subroutine print_matrix(name_, matrix, idim1, idim2)
 !!    
 !!    Print square matrix 
-!!    Written by tommaso giovannini, march 2019
+!!    Written by Tommaso Giovannini, march 2019
 !!    
+!!    Prints a square matrix to the output file.
+!!
+!!    name_:   name of matrix 
+!!    matrix:  (idim1 x idim2) - matrix to print
+!!
+!!    Warning: elements whose absolute value is smaller than 1.0d-6 
+!!             are printed as zero.
+!! 
+!!
       implicit none
 !
       character(len=*) :: name_
@@ -1601,8 +1600,577 @@ contains
 !      
       call mem%dealloc(dummy2, idim1, 1, nelmfinal)
 !
-!
    end subroutine print_matrix
+!
+!
+   subroutine get_n_lowest(n, size, vec, sorted_short_vec, index_list)
+!!
+!!    Get n lowest elements
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Finds the n lowest values of "vec" (of length "size"), sorts them, and returns them
+!!    in "sorted_short_vec", together with an index list (of length "n") refering to the 
+!!    indices of the lowest elements in the original vector "vec".
+!!
+      implicit none
+!
+      integer :: n    ! Number of elements wanted
+      integer :: size ! Size of original vector
+!
+      real(dp), dimension(size) :: vec
+      real(dp), dimension(n)    :: sorted_short_vec
+!
+      integer, dimension(n) :: index_list
+!
+!     Variables for sorting
+!
+      real(dp)     :: max
+      integer :: max_pos
+!
+      real(dp)     :: swap     = zero
+      integer :: swap_int = 0
+!
+      integer :: i = 0, j = 0
+!
+!        Placing the n first elements of vec into sorted_short_vec
+!
+         sorted_short_vec(1) = vec(1)
+         index_list(1) = 1
+!
+         max = sorted_short_vec(1)
+         max_pos = 1
+!
+         do i = 2, n
+!
+            sorted_short_vec(i) = vec(i)
+            index_list(i) = i
+!
+            if (sorted_short_vec(i) .ge. max) then
+!
+               max = sorted_short_vec(i)
+               max_pos = i
+!
+            endif
+         enddo
+!
+!        Looping through the rest of vec to find lowest values
+!
+         do i = n + 1, size
+            if (vec(i) .lt. max) then
+!
+               sorted_short_vec(max_pos) = vec(i)
+               index_list(max_pos) = i
+               max = vec(i)
+!
+               do j = 1, n
+                  if (sorted_short_vec(j) .gt. max) then
+!
+                     max = sorted_short_vec(j)
+                     max_pos = j
+!
+                  endif
+               enddo
+            endif
+         enddo
+!
+!        Sorting sorted_short_vec
+!
+         do i = 1, n
+            do j = 1, n - 1
+               if (sorted_short_vec(j) .gt. sorted_short_vec(j+1)) then
+!
+                  swap = sorted_short_vec(j)
+                  sorted_short_vec(j) = sorted_short_vec(j+1)
+                  sorted_short_vec(j+1) = swap
+!
+                  swap_int = index_list(j)
+                  index_list(j) = index_list(j + 1)
+                  index_list(j + 1) = swap_int
+!
+               endif
+            enddo
+         enddo
+!
+   end subroutine get_n_lowest
+!
+!
+   subroutine get_n_highest(n, size, vec, sorted_short_vec, index_list)
+!!
+!!    Get n highest elements
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Finds the n highest values of "vec" (of length "size"), sorts them, and returns them
+!!    in "sorted_short_vec", together with an index list (of length "n") refering to the 
+!!    indices of the lowest elements in the original vector "vec".
+!!
+      implicit none
+!
+      integer :: n    ! Number of elements wanted
+      integer :: size ! Size of original vector
+!
+      real(dp), dimension(size) :: vec
+      real(dp), dimension(n)    :: sorted_short_vec
+!
+      integer, dimension(n) :: index_list
+!
+!     Variables for sorting
+!
+      real(dp)     :: min
+      integer :: min_pos
+!
+      real(dp)     :: swap     = zero
+      integer :: swap_int = 0
+!
+      integer :: i = 0, j = 0
+!
+!        Placing the n first elements of vec into sorted_short_vec
+!
+         sorted_short_vec = zero
+         sorted_short_vec(1) = vec(1)
+         index_list(1) = 1
+!
+         min = sorted_short_vec(1)
+         min_pos = 1
+!
+         do i = 2, n
+!
+            sorted_short_vec(i) = vec(i)
+            index_list(i) = i
+!
+            if (sorted_short_vec(i) .le. min) then
+!
+               min = sorted_short_vec(i)
+               min_pos = i
+!
+            endif
+         enddo
+!
+!        Looping through the rest of vec to find lowest values
+!
+         do i = n + 1, size
+            if (vec(i) .gt. min) then
+!
+               sorted_short_vec(min_pos) = vec(i)
+               index_list(min_pos) = i
+               min = vec(i)
+!
+               do j = 1, n
+                  if (sorted_short_vec(j) .lt. min) then
+!
+                     min = sorted_short_vec(j)
+                     min_pos = j
+!
+                  endif
+               enddo
+            endif
+         enddo
+!
+!        Sorting sorted_short_vec
+!
+         do i = 1, n
+            do j = 1, n - 1
+               if (sorted_short_vec(j) .lt. sorted_short_vec(j+1)) then
+!
+                  swap = sorted_short_vec(j)
+                  sorted_short_vec(j) = sorted_short_vec(j+1)
+                  sorted_short_vec(j+1) = swap
+!
+                  swap_int = index_list(j)
+                  index_list(j) = index_list(j + 1)
+                  index_list(j + 1) = swap_int
+!
+               endif
+            enddo
+         enddo
+!
+   end subroutine get_n_highest
+!
+!
+   recursive subroutine quicksort_recursive(vec, first, last)
+!!
+!!    Recursive implementation of quicksort (descending order)
+!!
+!!    Adapted from quicksort.f by "t-nissie" (https://gist.github.com/t-nissie/479f0f16966925fa29ea)
+!!    licensed under GPLv3.
+!!
+!!    Modified by Sarai D. Folkestad, 6. Aug. 2018
+!!
+!!    - Type real*8 changed to real(dp)       
+!!    - Variable x renamed to pivot
+!!    - Variable t renamed to temp
+!!
+!     quicksort.f -*-f90-*-
+!     Author: t-nissie
+!     License: GPLv3
+!     Gist: https://gist.github.com/t-nissie/479f0f16966925fa29ea
+!
+      implicit none
+!
+      real(dp), dimension(:), intent(inout) :: vec
+      integer, intent(in) :: first, last
+!
+      real(dp) :: pivot, temp
+      integer :: i, j
+
+      pivot = vec((first+last)/2)
+!
+      i = first
+      j = last
+!
+      do
+!
+         do while (vec(i) > pivot)
+!
+            i = i + 1
+!
+         end do
+!
+         do while (pivot > vec(j))
+!
+            j = j - 1
+!
+         end do
+!
+         if (i >= j) exit
+!
+         temp = vec(i)
+         vec(i) = vec(j)
+         vec(j) = temp
+!
+         i = i + 1
+         j = j - 1
+!
+      end do
+!
+      if (first < i - 1) call quicksort_recursive(vec, first, i-1)
+      if (j + 1 < last)  call quicksort_recursive(vec, j+1, last)
+!
+   end subroutine quicksort_recursive
+!
+!
+   recursive subroutine quicksort_with_index_recursive(vec, index_list, first, last)
+!!
+!!    Recursive implementation of quicksort with index list (descending order)
+!!
+!!    Adapted from quicksort.f by "t-nissie" (https://gist.github.com/t-nissie/479f0f16966925fa29ea)
+!!    licensed under GPLv3.
+!!
+!!    "index_list" : integer array which stores the original index of ordered elements
+!!                   e.g., in index_list(1) is the original index of the largest element
+!!
+!!
+!!    Modified by Sarai D. Folkestad, 11. Nov. 2018
+!!
+!!    - Type real*8 changed to real(dp)       
+!!    - Variable x renamed to pivot
+!!    - Variable t renamed to temp
+!!    - Added index_list
+!!
+!     quicksort.f -*-f90-*-
+!     Author: t-nissie
+!     License: GPLv3
+!     Gist: https://gist.github.com/t-nissie/479f0f16966925fa29ea
+!
+      implicit none
+!
+      real(dp), dimension(:), intent(inout) :: vec
+      integer, dimension(:), intent(inout) :: index_list
+      integer, intent(in) :: first, last
+!
+      real(dp) :: pivot, temp
+      integer :: temp_index
+      integer :: i, j
+
+      pivot = vec((first+last)/2)
+!
+      i = first
+      j = last
+!
+      do
+!
+         do while (vec(i) > pivot)
+!
+            i = i + 1
+!
+         end do
+!
+         do while (pivot > vec(j))
+!
+            j = j - 1
+!
+         end do
+!
+         if (i >= j) exit
+!
+         temp = vec(i)
+         temp_index = index_list(i)
+!
+         vec(i) = vec(j)
+         vec(j) = temp
+!
+         index_list(i) = index_list(j)
+         index_list(j) = temp_index
+!
+         i = i + 1
+         j = j - 1
+!
+      end do
+!
+      if (first < i - 1) call quicksort_with_index_recursive(vec, index_list, first, i-1)
+      if (j + 1 < last)  call quicksort_with_index_recursive(vec, index_list, j+1, last)
+!
+   end subroutine quicksort_with_index_recursive
+!
+!
+   subroutine quicksort_descending(vec, dim)
+!!
+!!    Wrapper for recursive quicksort routine
+!!
+      implicit none
+!
+      integer, intent(in) :: dim
+      real(dp), dimension(dim), intent(inout) :: vec
+!
+      call quicksort_recursive(vec, 1, dim)
+!
+   end subroutine quicksort_descending
+!
+!
+   subroutine quicksort_with_index_descending(vec, index_list, dim)
+!!
+!!    Wrapper for recursive quicksort with index list
+!!
+      implicit none
+!
+      integer, intent(in) :: dim
+      real(dp), dimension(dim), intent(inout) :: vec
+      integer, dimension(dim), intent(inout) :: index_list
+!
+      integer :: i
+!
+      do i = 1, dim
+         index_list(i) = i
+      enddo
+!
+      call quicksort_with_index_recursive(vec, index_list, 1, dim)
+!
+   end subroutine quicksort_with_index_descending
+!
+!
+   subroutine quicksort_with_index_ascending(vec, index_list, dim)
+!!
+!!    Wrapper for recursive quicksort with index list ascending order
+!!
+      implicit none
+!
+      integer, intent(in) :: dim
+      real(dp), dimension(dim), intent(inout) :: vec
+      integer, dimension(dim), intent(inout) :: index_list
+!
+      call dscal(dim, -one, vec, 1)
+!
+      call quicksort_with_index_descending(vec, index_list, dim)
+!
+      call dscal(dim, -one, vec, 1)
+!
+   end subroutine quicksort_with_index_ascending
+!
+!
+   recursive subroutine quicksort_recursive_int(vec, first, last)
+!!
+!!    Recursive implementation of quicksort (descending order)
+!!
+!!    Adapted from quicksort.f by "t-nissie" (https://gist.github.com/t-nissie/479f0f16966925fa29ea)
+!!    licensed under GPLv3.
+!!
+!!    Modified by Sarai D. Folkestad, 6. Aug. 2018
+!!   
+!!    - Variable x renamed to pivot
+!!    - Variable t renamed to temp
+!!    - Added index_list
+!!
+!!    Modified by Andreas Skeidsvoll, 26. Feb. 2019
+!!
+!!    - Type real*8 changed to integer    
+!!
+!     quicksort.f -*-f90-*-
+!     Author: t-nissie
+!     License: GPLv3
+!     Gist: https://gist.github.com/t-nissie/479f0f16966925fa29ea
+!
+      implicit none
+!
+      integer, dimension(:), intent(inout) :: vec
+      integer, intent(in) :: first, last
+!
+      integer :: pivot, temp
+      integer :: i, j
+
+      pivot = vec((first+last)/2)
+!
+      i = first
+      j = last
+!
+      do
+!
+         do while (vec(i) > pivot)
+!
+            i = i + 1
+!
+         end do
+!
+         do while (pivot > vec(j))
+!
+            j = j - 1
+!
+         end do
+!
+         if (i >= j) exit
+!
+         temp = vec(i)
+         vec(i) = vec(j)
+         vec(j) = temp
+!
+         i = i + 1
+         j = j - 1
+!
+      end do
+!
+      if (first < i - 1) call quicksort_recursive_int(vec, first, i-1)
+      if (j + 1 < last)  call quicksort_recursive_int(vec, j+1, last)
+!
+   end subroutine quicksort_recursive_int
+!
+!
+   recursive subroutine quicksort_with_index_recursive_int(vec, index_list, first, last)
+!!
+!!    Recursive implementation of quicksort with index list (descending order)
+!!
+!!    Adapted from quicksort.f by "t-nissie" (https://gist.github.com/t-nissie/479f0f16966925fa29ea)
+!!    licensed under GPLv3.
+!!
+!!    "index_list" : integer array which stores the original index of ordered elements
+!!                   e.g., in index_list(1) is the original index of the largest element
+!!
+!!
+!!    Modified by Sarai D. Folkestad, 11. Nov. 2018
+!!   
+!!    - Variable x renamed to pivot
+!!    - Variable t renamed to temp
+!!    - Added index_list
+!!
+!!    Modified by Andreas Skeidsvoll, 26. Feb. 2019
+!!
+!!    - Type real*8 changed to integer    
+!!
+!     quicksort.f -*-f90-*-
+!     Author: t-nissie
+!     License: GPLv3
+!     Gist: https://gist.github.com/t-nissie/479f0f16966925fa29ea
+!
+      implicit none
+!
+      integer, dimension(:), intent(inout) :: vec
+      integer, dimension(:), intent(inout) :: index_list
+      integer, intent(in) :: first, last
+!
+      integer :: pivot, temp
+      integer :: temp_index
+      integer :: i, j
+
+      pivot = vec((first+last)/2)
+!
+      i = first
+      j = last
+!
+      do
+!
+         do while (vec(i) > pivot)
+!
+            i = i + 1
+!
+         end do
+!
+         do while (pivot > vec(j))
+!
+            j = j - 1
+!
+         end do
+!
+         if (i >= j) exit
+!
+         temp = vec(i)
+         temp_index = index_list(i)
+!
+         vec(i) = vec(j)
+         vec(j) = temp
+!
+         index_list(i) = index_list(j)
+         index_list(j) = temp_index
+!
+         i = i + 1
+         j = j - 1
+!
+      end do
+!
+      if (first < i - 1) call quicksort_with_index_recursive_int(vec, index_list, first, i-1)
+      if (j + 1 < last)  call quicksort_with_index_recursive_int(vec, index_list, j+1, last)
+!
+   end subroutine quicksort_with_index_recursive_int
+!
+!
+   subroutine quicksort_descending_int(vec, dim)
+!!
+!!    Wrapper for recursive quicksort routine
+!!
+      implicit none
+!
+      integer, intent(in) :: dim
+      integer, dimension(dim), intent(inout) :: vec
+!
+      call quicksort_recursive_int(vec, 1, dim)
+!
+   end subroutine quicksort_descending_int
+!
+!
+   subroutine quicksort_with_index_descending_int(vec, index_list, dim)
+!!
+!!    Wrapper for recursive quicksort with index list
+!!
+      implicit none
+!
+      integer, intent(in) :: dim
+      integer, dimension(dim), intent(inout) :: vec
+      integer, dimension(dim), intent(inout) :: index_list
+!
+      integer :: i
+!
+      do i = 1, dim
+         index_list(i) = i
+      enddo
+!
+      call quicksort_with_index_recursive_int(vec, index_list, 1, dim)
+!
+   end subroutine quicksort_with_index_descending_int
+!
+!
+   subroutine quicksort_with_index_ascending_int(vec, index_list, dim)
+!!
+!!    Wrapper for recursive quicksort with index list ascending order
+!!
+      implicit none
+!
+      integer, intent(in) :: dim
+      integer, dimension(dim), intent(inout) :: vec
+      integer, dimension(dim), intent(inout) :: index_list
+!
+      vec = -1*vec
+!
+      call quicksort_with_index_descending_int(vec, index_list, dim)
+!
+      vec = -1*vec
+!
+   end subroutine quicksort_with_index_ascending_int
 !
 !
 end module array_utilities

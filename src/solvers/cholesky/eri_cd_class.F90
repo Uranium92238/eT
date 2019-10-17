@@ -35,12 +35,12 @@ module eri_cd_class
 !
    use reordering
    use interval_class
-   use array_analysis, only : quicksort_with_index_ascending_int
-   use array_analysis, only : quicksort_with_index_descending_int
-   use array_analysis, only : quicksort_with_index_descending
-   use array_analysis, only : get_n_highest
+   use array_utilities, only : quicksort_with_index_ascending_int
+   use array_utilities, only : quicksort_with_index_descending_int
+   use array_utilities, only : quicksort_with_index_descending
+   use array_utilities, only : get_n_highest
 !
-   use array_utilities, only : get_abs_max, is_significant, reduce_array_int, reduce_vector, trans
+   use array_utilities, only : get_abs_max, is_significant, reduce_array_int, reduce_vector, transpose_
 !
    use sequential_file_class, only : sequential_file
    use direct_file_class, only : direct_file
@@ -122,7 +122,7 @@ module eri_cd_class
       procedure :: construct_diagonal_from_batch_bases    => construct_diagonal_from_batch_bases_eri_cd
       procedure :: append_bases                           => append_bases_eri_cd
 !
-      procedure :: write_ao_cholesky_to_direct_file   => write_ao_cholesky_to_direct_file_cd_eri_solver
+      procedure :: write_ao_cholesky_to_direct_file       => write_ao_cholesky_to_direct_file_cd_eri_solver
 !
    end type eri_cd
 !
@@ -286,11 +286,12 @@ contains
 !!
       implicit none
 !
-      class(eri_cd) :: solver
+      class(eri_cd), intent(inout) :: solver
 !
-      type(molecular_system) :: system
+      type(molecular_system), intent(inout) :: system
 !
       call solver%write_ao_cholesky_to_direct_file(system)
+      system%n_J = solver%n_cholesky
 !
       call solver%cholesky_ao_vectors_info%delete_()
       call solver%cholesky_ao_vectors%delete_()
@@ -405,13 +406,13 @@ contains
 !
          call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
-         g_ABAB_p(1 : A_interval%size, 1 : B_interval%size, &
-                  1 : A_interval%size, 1 : B_interval%size) &
-                  => g_ABAB(1 : (A_interval%size)**2*(B_interval%size)**2)
+         g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
+                  1 : A_interval%length, 1 : B_interval%length) &
+                  => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
 !
          K = 0
-         do x = 1, (A_interval%size)
-            do y = 1, (B_interval%size)
+         do x = 1, (A_interval%length)
+            do y = 1, (B_interval%length)
 !
                K = K + 1
                D_AB_screen(K) = g_ABAB_p(x, y, x, y)&
@@ -425,10 +426,10 @@ contains
 !
 !        Determine whether shell pair is significant
 !
-         sig_sp(I) = (is_significant(D_AB, (A_interval%size)*(B_interval%size), solver%threshold) .and. &
-                      is_significant(D_AB_screen, (A_interval%size)*(B_interval%size), solver%threshold))
+         sig_sp(I) = (is_significant(D_AB, (A_interval%length)*(B_interval%length), solver%threshold) .and. &
+                      is_significant(D_AB_screen, (A_interval%length)*(B_interval%length), solver%threshold))
 !
-         max_in_sp_diagonal(I) = get_abs_max(D_AB, (A_interval%size)*(B_interval%size))
+         max_in_sp_diagonal(I) = get_abs_max(D_AB, (A_interval%length)*(B_interval%length))
 !
       enddo
 !$omp end parallel do
@@ -458,13 +459,13 @@ contains
 !
          call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
-         g_ABAB_p(1 : A_interval%size, 1 : B_interval%size, &
-                  1 : A_interval%size, 1 : B_interval%size) &
-                  => g_ABAB(1 : (A_interval%size)**2*(B_interval%size)**2)
+         g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
+                  1 : A_interval%length, 1 : B_interval%length) &
+                  => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
 !
          K = 0
-         do x = 1, (A_interval%size)
-            do y = 1, (B_interval%size)
+         do x = 1, (A_interval%length)
+            do y = 1, (B_interval%length)
 !
                K = K + 1
                construct_test(K) = sqrt(g_ABAB_p(x, y, x, y)*max_diagonal)
@@ -474,7 +475,7 @@ contains
 !
 !        Determine whether shell pair should be constructed
 !
-         construct_sp(I) = is_significant(construct_test, (A_interval%size)*(B_interval%size), min(solver%threshold,1.0d-8))
+         construct_sp(I) = is_significant(construct_test, (A_interval%length)*(B_interval%length), min(solver%threshold,1.0d-8))
 !
       enddo
 !$omp end parallel do
@@ -592,14 +593,14 @@ contains
 !
          call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
-         g_ABAB_p(1 : A_interval%size, 1 : B_interval%size, &
-                  1 : A_interval%size, 1 : B_interval%size) &
-                  => g_ABAB(1 : (A_interval%size)**2*(B_interval%size)**2)
+         g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
+                  1 : A_interval%length, 1 : B_interval%length) &
+                  => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
 !
          if (A .eq. B) then
 !
-            do x = 1, A_interval%size
-               do y = x, B_interval%size
+            do x = 1, A_interval%length
+               do y = x, B_interval%length
 !
                   xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
@@ -612,10 +613,10 @@ contains
 !
          else ! A ≠ B
 !
-            do x = 1, (A_interval%size)
-               do y = 1, (B_interval%size)
+            do x = 1, (A_interval%length)
+               do y = 1, (B_interval%length)
 !
-                  xy = A_interval%size*(y - 1) + x
+                  xy = A_interval%length*(y - 1) + x
                   D_xy(xy + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
                   screening_vector_reduced(xy + ao_offsets(I)) = &
                                       screening_vector_local(x + A_interval%first - 1)*&
@@ -762,13 +763,13 @@ contains
 !
             call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
-            g_ABAB_p(1 : A_interval%size, 1 : B_interval%size, &
-                     1 : A_interval%size, 1 : B_interval%size) &
-                     => g_ABAB(1 : (A_interval%size)**2*(B_interval%size)**2)
+            g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
+                     1 : A_interval%length, 1 : B_interval%length) &
+                     => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
 !
             K = 0
-            do x = 1, (A_interval%size)
-               do y = 1, (B_interval%size)
+            do x = 1, (A_interval%length)
+               do y = 1, (B_interval%length)
 !
                   K = K + 1
                   D_AB_screen(K) = g_ABAB_p(x, y, x, y)&
@@ -782,10 +783,10 @@ contains
 !
 !           Determine whether shell pair is significant
 !
-            sig_sp(I) = (is_significant(D_AB, (A_interval%size)*(B_interval%size), solver%threshold) .and. &
-                         is_significant(D_AB_screen, (A_interval%size)*(B_interval%size), solver%threshold))
+            sig_sp(I) = (is_significant(D_AB, (A_interval%length)*(B_interval%length), solver%threshold) .and. &
+                         is_significant(D_AB_screen, (A_interval%length)*(B_interval%length), solver%threshold))
 !
-            max_in_sp_diagonal(I) = get_abs_max(D_AB, (A_interval%size)*(B_interval%size))
+            max_in_sp_diagonal(I) = get_abs_max(D_AB, (A_interval%length)*(B_interval%length))
 !
          endif
 !
@@ -817,13 +818,13 @@ contains
 !
          call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
-         g_ABAB_p(1 : A_interval%size, 1 : B_interval%size, &
-                  1 : A_interval%size, 1 : B_interval%size) &
-                  => g_ABAB(1 : (A_interval%size)**2*(B_interval%size)**2)
+         g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
+                  1 : A_interval%length, 1 : B_interval%length) &
+                  => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
 !
          K = 0
-         do x = 1, (A_interval%size)
-            do y = 1, (B_interval%size)
+         do x = 1, (A_interval%length)
+            do y = 1, (B_interval%length)
 !
                K = K + 1
                construct_test(K) = sqrt(g_ABAB_p(x, y, x, y)*max_diagonal)
@@ -833,7 +834,7 @@ contains
 !
 !        Determine whether shell pair should be constructed
 !
-         construct_sp(I) = is_significant(construct_test, (A_interval%size)*(B_interval%size), min(solver%threshold,1.0d-8))
+         construct_sp(I) = is_significant(construct_test, (A_interval%length)*(B_interval%length), min(solver%threshold,1.0d-8))
 !
       enddo
 !$omp end parallel do
@@ -949,16 +950,16 @@ contains
 !
          call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
-         g_ABAB_p(1 : A_interval%size, 1 : B_interval%size, &
-                  1 : A_interval%size, 1 : B_interval%size) &
-                  => g_ABAB(1 : (A_interval%size)**2*(B_interval%size)**2)
+         g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, &
+                  1 : A_interval%length, 1 : B_interval%length) &
+                  => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
 !
          if (A .eq. B) then
 !
-            do x = 1, A_interval%size
-               do y = x, B_interval%size
+            do x = 1, A_interval%length
+               do y = x, B_interval%length
 !
-                  xy = A_interval%size*(y - 1) + x
+                  xy = A_interval%length*(y - 1) + x
                   xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
                   D_xy(xy_packed + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
@@ -971,10 +972,10 @@ contains
 !
          else ! A ≠ B
 !
-            do x = 1, (A_interval%size)
-               do y = 1, (B_interval%size)
+            do x = 1, (A_interval%length)
+               do y = 1, (B_interval%length)
 !
-                  xy = A_interval%size*(y - 1) + x
+                  xy = A_interval%length*(y - 1) + x
                   D_xy(xy + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
                   screening_vector_reduced(xy + ao_offsets(I)) = &
                                       screening_vector_local(x + A_interval%first - 1)*&
@@ -1270,7 +1271,7 @@ contains
          call mem%alloc(basis_shell_info, n_sp_in_basis_batches(batch), 4)
          call mem%alloc(cholesky_basis, n_cholesky_batches(batch), 3)
 !
-         call batch_file%read_()  
+         call batch_file%read_blank()  
          call batch_file%read_(basis_shell_info, n_sp_in_basis_batches(batch)*4)  
          call batch_file%read_(cholesky_basis, n_cholesky_batches(batch)*3)  
 !
@@ -1473,7 +1474,7 @@ contains
 !
             else
 !
-               alpha_beta_in_AB = A_interval%size*(beta_in_B - 1) + alpha_in_A
+               alpha_beta_in_AB = A_interval%length*(beta_in_B - 1) + alpha_in_A
 !
             endif
 !
@@ -1596,7 +1597,7 @@ contains
          call mem%alloc(basis_shell_info, n_sp_in_basis_batches(batch), 4)
          call mem%alloc(cholesky_basis, n_cholesky_batches(batch), 3)
 !  
-         call batch_file%read_()
+         call batch_file%read_blank()
          call batch_file%read_(basis_shell_info, 4*n_sp_in_basis_batches(batch))
          call batch_file%read_(cholesky_basis, 3*n_cholesky_batches(batch))
 !  
@@ -1869,10 +1870,10 @@ contains
 !
                if (A .eq. B) then
 !
-                  do x = 1, A_interval%size
-                     do y = 1, B_interval%size
+                  do x = 1, A_interval%length
+                     do y = 1, B_interval%length
 !
-                        xy = A_interval%size*(y - 1) + x
+                        xy = A_interval%length*(y - 1) + x
                         xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
                         sig_aop_to_aos(xy_packed + first_sig_aop - 1, 1) = &
@@ -1886,10 +1887,10 @@ contains
 !
                else ! A ≠ B
 !
-                  do x = 1, (A_interval%size)
-                     do y = 1, (B_interval%size)
+                  do x = 1, (A_interval%length)
+                     do y = 1, (B_interval%length)
 !
-                        xy = A_interval%size*(y - 1) + x
+                        xy = A_interval%length*(y - 1) + x
 !
                         sig_aop_to_aos(xy + first_sig_aop - 1, 1) = A_interval%first + x - 1
                         sig_aop_to_aos(xy + first_sig_aop - 1, 2) = B_interval%first + y - 1
@@ -2112,9 +2113,9 @@ contains
 !
                call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
 !
-               g_ABCD_p(1 : A_interval%size, 1 : B_interval%size, &
-                        1 : C_interval%size, 1 : D_interval%size) &
-                        => g_ABCD(1 : (A_interval%size)*(B_interval%size)*(C_interval%size)*(D_interval%size))
+               g_ABCD_p(1 : A_interval%length, 1 : B_interval%length, &
+                        1 : C_interval%length, 1 : D_interval%length) &
+                        => g_ABCD(1 : (A_interval%length)*(B_interval%length)*(C_interval%length)*(D_interval%length))
 !
                do aop = 1, n_qual_aop_in_sp
 !
@@ -2123,8 +2124,8 @@ contains
 !
                   if (A == B) then
 !
-                     do w = 1, A_interval%size
-                        do x = w, B_interval%size
+                     do w = 1, A_interval%length
+                        do x = w, B_interval%length
 !
                            wx_packed = (max(w,x)*(max(w,x)-3)/2) + w + x
 !
@@ -2136,10 +2137,10 @@ contains
 !
                   else
 !
-                     do w = 1, A_interval%size
-                        do x = 1, B_interval%size
+                     do w = 1, A_interval%length
+                        do x = 1, B_interval%length
 !
-                           wx = A_interval%size*(x-1) + w
+                           wx = A_interval%length*(x-1) + w
 !
                            g_wxyz(sig_sp_to_first_sig_aop(AB_sp) + wx - 1, aop + n_qual_aop_in_prev_sps(CD_sp)) &
                                    = g_ABCD_p(w, x, y - C_interval%first + 1, z - D_interval%first + 1)
@@ -2793,9 +2794,9 @@ contains
 !
             call system%construct_ao_g_wxyz(g_AB_CD, A, B, C, D)
 !
-            g_AB_CD_p(1 : A_interval%size*B_interval%size, &
-                        1 : C_interval%size*D_interval%size) &
-                        => g_AB_CD(1 : A_interval%size*B_interval%size*C_interval%size*D_interval%size)
+            g_AB_CD_p(1 : A_interval%length*B_interval%length, &
+                        1 : C_interval%length*D_interval%length) &
+                        => g_AB_CD(1 : A_interval%length*B_interval%length*C_interval%length*D_interval%length)
 !
 !           Only keep those that correspond to elements of the basis
 !
@@ -2804,11 +2805,11 @@ contains
 !
                   y = basis_aops_in_CD_sp_p(J, 1)
                   z = basis_aops_in_CD_sp_p(J, 2)
-                  yz = C_interval%size*(z-1)+y
+                  yz = C_interval%length*(z-1)+y
 !
                   w = basis_aops_in_AB_sp_p(I, 1)
                   x = basis_aops_in_AB_sp_p(I, 2)
-                  wx = A_interval%size*(x-1)+w
+                  wx = A_interval%length*(x-1)+w
 !
                   K = basis_aops_in_AB_sp_p(I, 3)
                   L = basis_aops_in_CD_sp_p(J, 3)
@@ -3107,7 +3108,7 @@ contains
 !
       call mem%alloc(aux_chol_inverse_transpose, solver%n_cholesky, solver%n_cholesky)
 !
-      call trans(aux_chol_inverse, aux_chol_inverse_transpose, solver%n_cholesky)
+      call transpose_(aux_chol_inverse, aux_chol_inverse_transpose, solver%n_cholesky)
 !
       call mem%dealloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
 !
@@ -3269,14 +3270,14 @@ contains
 !
                call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
 !
-               g_ABCD_p(1 : A_interval%size, 1 : B_interval%size, &
-                        1 : C_interval%size, 1 : D_interval%size) &
-                        => g_ABCD(1 : A_interval%size*B_interval%size*C_interval%size*D_interval%size)               
+               g_ABCD_p(1 : A_interval%length, 1 : B_interval%length, &
+                        1 : C_interval%length, 1 : D_interval%length) &
+                        => g_ABCD(1 : A_interval%length*B_interval%length*C_interval%length*D_interval%length)               
 !
                if (A == B) then
 !
-                  do w = 1, A_interval%size
-                     do x = w, B_interval%size
+                  do w = 1, A_interval%length
+                     do x = w, B_interval%length
 !
                         wx_packed = (max(w,x)*(max(w,x)-3)/2) + w + x
 !
@@ -3294,15 +3295,15 @@ contains
 !
                else
 !
-                  do w = 1, A_interval%size
-                     do x = 1, B_interval%size
+                  do w = 1, A_interval%length
+                     do x = 1, B_interval%length
                         do J = 1, basis_shell_info(CD_sp, 4)
 !
                            y = basis_aops_in_CD_sp_p(J, 1)
                            z = basis_aops_in_CD_sp_p(J, 2)
                            L = basis_aops_in_CD_sp_p(J, 3)
 !
-                           wx = A_interval%size*(x-1) + w
+                           wx = A_interval%length*(x-1) + w
 !
                            g_wx_L(wx + AB_info(AB_sp, 1), L) = g_ABCD_p(w, x, y, z)
 !
@@ -3482,12 +3483,12 @@ contains
 !
          call system%construct_ao_g_wxyz(g_ABAB, A, B, A, B)
 !
-         g_ABAB_p(1 : A_interval%size, 1 : B_interval%size, 1 : A_interval%size, 1 : B_interval%size) &
-                        => g_ABAB(1 : (A_interval%size)**2*(B_interval%size)**2)
+         g_ABAB_p(1 : A_interval%length, 1 : B_interval%length, 1 : A_interval%length, 1 : B_interval%length) &
+                        => g_ABAB(1 : (A_interval%length)**2*(B_interval%length)**2)
          if (A .eq. B) then
 !
-            do x = 1, A_interval%size
-               do y = x, B_interval%size
+            do x = 1, A_interval%length
+               do y = x, B_interval%length
 !
                   xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
@@ -3498,10 +3499,10 @@ contains
 !
          else ! A ≠ B
 !
-            do x = 1, (A_interval%size)
-               do y = 1, (B_interval%size)
+            do x = 1, (A_interval%length)
+               do y = 1, (B_interval%length)
 !
-                  xy = A_interval%size*(y - 1) + x
+                  xy = A_interval%length*(y - 1) + x
                   D_xy(xy + ao_offsets(I)) = g_ABAB_p(x, y, x, y)
 !
                enddo
@@ -3657,7 +3658,7 @@ contains
                     do y = B_interval%first, B_interval%last
 ! 
                         sig_aop_counter = AB_offset + &
-                              A_interval%size*(y - B_interval%first) + x - A_interval%first + 1
+                              A_interval%length*(y - B_interval%first) + x - A_interval%first + 1
 !
                         index_full(sig_aop_counter, 1) = x
                         index_full(sig_aop_counter, 2) = y
@@ -3716,14 +3717,14 @@ contains
                   C_interval = system%shell_limits(C)
                   D_interval = system%shell_limits(D)
 !
-                  call mem%alloc(g_ABCD, A_interval%size, B_interval%size, C_interval%size, D_interval%size) 
+                  call mem%alloc(g_ABCD, A_interval%length, B_interval%length, C_interval%length, D_interval%length) 
 !
                   call system%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
 !
-                  do w = 1, A_interval%size
-                     do x = 1, B_interval%size
-                        do y = 1, C_interval%size
-                           do z = 1, D_interval%size 
+                  do w = 1, A_interval%length
+                     do x = 1, B_interval%length
+                        do y = 1, C_interval%length
+                           do z = 1, D_interval%length 
 !
                               g_wxyz(w + A_interval%first - 1, x + B_interval%first - 1,&
                                      y + C_interval%first - 1, z + D_interval%first - 1) = g_ABCD(w, x, y, z)
@@ -3733,7 +3734,7 @@ contains
                      enddo
                   enddo
 !
-                  call mem%dealloc(g_ABCD, A_interval%size, B_interval%size, C_interval%size, D_interval%size)
+                  call mem%dealloc(g_ABCD, A_interval%length, B_interval%length, C_interval%length, D_interval%length)
 !
                enddo
             enddo
@@ -3779,11 +3780,11 @@ contains
 !
       if (A_interval%first == B_interval%first) then
 !
-         get_size_sp = A_interval%size*(A_interval%size + 1)/2
+         get_size_sp = A_interval%length*(A_interval%length + 1)/2
 !
       else
 !
-         get_size_sp = (A_interval%size)*(B_interval%size)
+         get_size_sp = (A_interval%length)*(B_interval%length)
 !
       endif
 !
@@ -3929,7 +3930,7 @@ contains
 !
       enddo
 !
-      call batch_J%init(solver%n_cholesky)
+      batch_J = batching_index(solver%n_cholesky)
 !
       call system%get_max_shell_size(max_shell_size)
 !
@@ -4016,10 +4017,10 @@ contains
 !
 !$omp parallel do private(J,x,y,xy)
                      do J = 1, batch_J%length 
-                        do x = 1, A_interval%size
-                           do y = 1, B_interval%size
+                        do x = 1, A_interval%length
+                           do y = 1, B_interval%length
 !  
-                              xy = A_interval%size*(y-1) + x
+                              xy = A_interval%length*(y-1) + x
                               L_wx_J_full(x + A_interval%first - 1, y + B_interval%first - 1, J) = L_wx_J(xy + AB_offset, J)
                               L_wx_J_full(y + B_interval%first - 1, x + A_interval%first - 1, J) = L_wx_J(xy + AB_offset, J)
 !  
@@ -4032,8 +4033,8 @@ contains
 !
 !$omp parallel do private(J,x,y,xy_packed)
                      do J = 1, batch_J%length 
-                        do x = 1, A_interval%size
-                           do y = 1, B_interval%size
+                        do x = 1, A_interval%length
+                           do y = 1, B_interval%length
 !  
                               xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
                               L_wx_J_full(x + A_interval%first - 1, y + B_interval%first - 1, J) = L_wx_J(xy_packed + AB_offset, J)
@@ -4337,13 +4338,13 @@ contains
 !
                      if (A .ne. B) then 
 !
-                        do x = 1, A_interval%size
-                           do y = 1, B_interval%size
+                        do x = 1, A_interval%length
+                           do y = 1, B_interval%length
 !  
                               x_full = x + A_interval%first - 1
                               y_full = y + B_interval%first - 1
 !
-                              xy = A_interval%size*(y-1) + x    
+                              xy = A_interval%length*(y-1) + x    
                               xy_packed_full = (max(x_full,y_full)*(max(x_full,y_full)-3)/2) + x_full + y_full
                               L_J(:) = L_AB_J(xy + current_size_AB,:)
 !
@@ -4354,8 +4355,8 @@ contains
 !
                      else
 ! 
-                        do x = 1, A_interval%size
-                           do y = 1, B_interval%size
+                        do x = 1, A_interval%length
+                           do y = 1, B_interval%length
 !  
                               x_full = x + A_interval%first - 1
                               y_full = y + B_interval%first - 1

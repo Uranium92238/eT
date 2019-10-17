@@ -38,8 +38,6 @@ module output_file_class
    contains
 !
       procedure :: open_                  => open_output_file
-      procedure :: close_                 => close_output_file
-      procedure :: flush_                 => flush_output_file
 !
       procedure :: error_msg              => error_msg_output_file
       procedure :: warning_msg            => warning_msg_output_file
@@ -257,66 +255,7 @@ contains
 !
       the_file%is_open = .true.
 !
-      call the_file%set_open_size()
-!
    end subroutine open_output_file
-!
-!
-   subroutine close_output_file(the_file)
-!!
-!!    Close the output file
-!!    Written by Rolf Heilemann Myhre, May 2019
-!!
-      implicit none
-!
-      class(output_file) :: the_file
-!
-      integer              :: io_error
-      character(len=100)   :: io_msg
-!
-      if (.not. the_file%is_open) then
-         print *, trim(the_file%name_)//' already closed'
-      end if
-!
-      close(the_file%unit, iostat=io_error, iomsg=io_msg, status='keep')
-!
-      if (io_error.ne. 0) then
-!
-         print *, 'Error: could not close eT output file '//trim(the_file%name_)//&
-              &'error message: '//trim(io_msg)
-         stop 
-!
-      endif
-!
-      the_file%is_open = .false.
-      the_file%unit = -1
-!
-   end subroutine close_output_file
-!
-!
-   subroutine flush_output_file(the_file)
-!!
-!!    Flush the output file
-!!    Written by Rolf Heilemann Myhre, May 2019
-!!
-      implicit none
-!
-      class(output_file) :: the_file
-!
-      integer              :: io_error
-      character(len=100)   :: io_msg
-!
-      flush(the_file%unit, iostat=io_error, iomsg=io_msg)
-!
-      if (io_error /= 0) then 
-!
-         print *, 'Error: could not flush eT output file '//trim(the_file%name_)//&
-                             &'error message: '//trim(io_msg)
-         stop 
-!
-      endif
-!
-   end subroutine flush_output_file
 !
 !
    subroutine error_msg_output_file(out_file, error_specs, error_int)

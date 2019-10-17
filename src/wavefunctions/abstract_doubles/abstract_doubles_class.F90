@@ -22,7 +22,7 @@ module abstract_doubles_class
 !!
 !!    Abstract doubles class module
 !!
-!!    Abstract doubles class which both abstract_doubles and abstract_doubles inherit from.
+!!    Abstract doubles class which both cc2 and ccsd inherit from.
 !!
 !
    use ccs_class
@@ -36,7 +36,8 @@ module abstract_doubles_class
 !
       integer :: n_t2
 !
-      type(file) :: r2_file, l2_file
+      type(sequential_file) :: r2_file
+      type(sequential_file) :: l2_file
 !
       type(sequential_file) :: jacobian_a1_intermediate_vv
       type(sequential_file) :: jacobian_a1_intermediate_oo

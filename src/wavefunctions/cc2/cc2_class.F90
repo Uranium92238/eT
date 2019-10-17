@@ -129,27 +129,7 @@ contains
 !
       wf%name_ = 'cc2'
 !
-      wf%system => system
-      wf%bath_orbital = .false.
-      wf%cvs = .false.
-!
-      call wf%read_hf()
-!
-      call wf%initialize_files()
-!
-      call wf%initialize_orbital_coefficients()
-      call wf%initialize_orbital_energies()
-!
-      call wf%read_orbital_coefficients()
-      call wf%read_orbital_energies()
-!
-      wf%bath_orbital = .false.
-      wf%frozen_core = .false.
-!
-      call wf%read_settings()
-!
-      if (wf%bath_orbital) call wf%make_bath_orbital()
-      if (wf%frozen_core) call wf%remove_core_orbitals()
+      call wf%general_cc_preparations(system)
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_t2            = wf%n_t1*(wf%n_t1+1)/2
@@ -158,10 +138,7 @@ contains
 !
       call wf%write_cc_restart()
 !
-      call wf%initialize_fock_ij()
-      call wf%initialize_fock_ia()
-      call wf%initialize_fock_ai()
-      call wf%initialize_fock_ab()
+      call wf%initialize_fock()
 !
    end function new_cc2
 !
@@ -307,7 +284,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = new_timer('Construct u CC2')
+      timer = timings('Construct u CC2')
       call timer%turn_on()
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
@@ -400,14 +377,14 @@ contains
 !
       integer :: n_o, n_v, n_gs_amplitudes, n_es_amplitudes
 !
-      call disk%open_file(wf%restart_file, 'read', 'rewind')
+      call wf%restart_file%open_('read', 'rewind')
 !
-      read(wf%restart_file%unit) n_o
-      read(wf%restart_file%unit) n_v
-      read(wf%restart_file%unit) n_gs_amplitudes
-      read(wf%restart_file%unit) n_es_amplitudes
+      call wf%restart_file%read_(n_o)
+      call wf%restart_file%read_(n_v)
+      call wf%restart_file%read_(n_gs_amplitudes)
+      call wf%restart_file%read_(n_es_amplitudes)
 !
-      call disk%close_file(wf%restart_file)
+      call wf%restart_file%close_()
 !
       if (n_o .ne. wf%n_o) call output%error_msg('attempted to restart from inconsistent number ' // &
                                                    'of occupied orbitals.')
