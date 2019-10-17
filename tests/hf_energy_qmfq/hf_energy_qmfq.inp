@@ -24,7 +24,6 @@ end molecular mechanics
 
 method
    hf
-   mm
 end method
 
 geometry
