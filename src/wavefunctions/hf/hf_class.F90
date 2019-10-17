@@ -520,7 +520,7 @@ contains
 !
       enddo 
 !
-      call mem%dealloc(orbital_list_local, n_orbitals)
+      call mem%dealloc(orbital_list_local, mos_to_print)
 
 !
    end subroutine print_orbitals_hf

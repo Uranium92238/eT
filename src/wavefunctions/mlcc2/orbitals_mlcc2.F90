@@ -1282,6 +1282,7 @@ contains
       call dscal(wf%n_v**2, -one, T_v, 1)
 !
       call mem%alloc(work, 1)
+      call mem%alloc(eigenvalues, wf%n_o)
 !
       call dsyev('V','U',        &
                   wf%n_o,        &
@@ -1296,8 +1297,6 @@ contains
 !
       call mem%dealloc(work, 1)
       call mem%alloc(work, work_size)
-!
-      call mem%alloc(eigenvalues, wf%n_o)
 !
       call dsyev('V','U',        &
                   wf%n_o,        &
@@ -1325,8 +1324,8 @@ contains
 !
       if (info .ne. 0) call output%error_msg('Diagonalization of M failed')
 !
-!
       call mem%alloc(work, 1)
+      call mem%alloc(eigenvalues, wf%n_v)
 !
       call dsyev('V','U',        &
                   wf%n_v,        &
@@ -1341,8 +1340,6 @@ contains
 !
       call mem%dealloc(work, 1)
       call mem%alloc(work, work_size)
-!
-      call mem%alloc(eigenvalues, wf%n_v)
 !
       call dsyev('V','U',        &
                   wf%n_v,        &
