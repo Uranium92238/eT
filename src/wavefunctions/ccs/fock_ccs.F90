@@ -35,18 +35,24 @@ contains
    module subroutine construct_fock_ccs(wf)
 !!
 !!    Construct Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad,
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Constructs the Fock matrix in the t1-transformed MO
 !!    basis using the MO integrals and the current single
 !!    amplitudes:
 !!
-!!       F_pq = h_pq + sum_k (2*g_pqkk - g_pkkq)
+!!       F_pq = h_pq + sum_k (2*g_pqkk - g_pkkq) 
+!!                   + (effective Fock contributions)
 !!
 !!    Since the two-electron ERIs are available already
 !!    t1-transformed, our task is to transform the one-
 !!    electron term, which we assume is on file in the
 !!    MO basis.
+!!
+!!    Additional effective Fock contributions:
+!!
+!!    Frozen core by Sarai D. Folkestad, 2019
+!!    QM/MM by Tommaso Giovannini, 2019
 !!
       implicit none
 !
@@ -63,10 +69,42 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_iajk
       real(dp), dimension(:,:,:,:), allocatable :: g_aijk
 !
+      real(dp), dimension(:,:), allocatable :: h_mm_t1
+!
 !     Get T1-transformed h integrals, put them in F_pq 
 !
       call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
       call wf%construct_h(F_pq)
+!
+!     Add QM/MM contributions
+!
+      if(wf%system%mm_calculation .and. wf%system%mm%forcefield.eq.'non-polarizable') then
+!
+         call mem%alloc(h_mm_t1, wf%n_mo, wf%n_mo) 
+!
+         call wf%mo_transform(half*wf%system%mm%nopol_h_wx, h_mm_t1)
+         call wf%t1_transform(h_mm_t1)
+!
+         F_pq = F_pq + h_mm_t1 
+!
+         call mem%dealloc(h_mm_t1, wf%n_mo, wf%n_mo) 
+!
+      endif
+!
+      if(wf%system%mm_calculation .and. wf%system%mm%forcefield.ne.'non-polarizable') then
+!
+         call mem%alloc(h_mm_t1, wf%n_mo, wf%n_mo) 
+!
+         call wf%mo_transform(half*wf%system%mm%pol_emb_fock, h_mm_t1)
+         call wf%t1_transform(h_mm_t1)
+!
+         F_pq = F_pq + h_mm_t1 
+!
+         call mem%dealloc(h_mm_t1, wf%n_mo, wf%n_mo) 
+!
+      endif
+!
+!     Add frozen core contributions
 !
       if (wf%frozen_core) then
 !
