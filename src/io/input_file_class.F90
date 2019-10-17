@@ -36,7 +36,6 @@ module input_file_class
 !
       character(len=25), allocatable :: rf_wfs(:)
       character(len=25), allocatable :: cc_wfs(:)
-      character(len=25), allocatable :: mm_wfs(:)
 !
    contains
 !
@@ -57,7 +56,6 @@ module input_file_class
 !
       procedure :: requested_reference_calculation                      => requested_reference_calculation_input_file
       procedure :: requested_cc_calculation                             => requested_cc_calculation_input_file
-      procedure :: requested_mm_calculation                             => requested_mm_calculation_input_file
 !
       procedure, private :: get_string_keyword_in_section_wo_safety     => get_string_keyword_in_section_wo_safety_input_file
       procedure, private :: move_to_section                             => move_to_section_input_file
@@ -116,8 +114,6 @@ contains
 !
       character(len=*), intent(in) :: name_
 !
-      integer :: k
-!
       type(section) :: calculations
       type(section) :: system 
       type(section) :: memory 
@@ -158,32 +154,13 @@ contains
                            'cc3',               &
                            'mlcc2']
 !
-      the_file%mm_wfs = [character(len=25) :: 'mm']
-!
       method%name_    = 'method'
       method%required = .true.
 !
-      allocate(method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs) &
-            + size(the_file%mm_wfs) ))
+      allocate(method%keywords(size(the_file%rf_wfs) &
+                             + size(the_file%cc_wfs)))
 !
-      do k = 1, size(the_file%rf_wfs)
-!
-         method%keywords(k) = the_file%rf_wfs(k)
-!
-      enddo 
-!
-      do k = 1, size(the_file%cc_wfs)
-!
-         method%keywords(size(the_file%rf_wfs) + k) = the_file%cc_wfs(k)
-!
-      enddo 
-!
-      do k = 1, size(the_file%mm_wfs)
-!
-         method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs) + k) &
-            = the_file%mm_wfs(k)
-!
-      enddo 
+      method%keywords = [the_file%rf_wfs, the_file%cc_wfs]
 !
 !     Set other sections
 !
@@ -776,46 +753,6 @@ contains
       if (.not. recognized) call output%error_msg('Tried to read CC wavefunction, but could not find any.')
 !
    end function get_cc_wf_input_file
-!
-!
-   logical function requested_mm_calculation_input_file(the_file)
-!!
-!!    Requested QM/MM calculation 
-!!    Written by Tommaso Giovannini, May 2019
-!!
-      implicit none 
-!
-      class(input_file), intent(in) :: the_file
-!
-      integer :: n_mm_wfs, k
-!
-      n_mm_wfs = 0
-      do k = 1, size(the_file%mm_wfs)
-!
-         if (the_file%requested_keyword_in_section(the_file%mm_wfs(k), 'method')) then 
-!
-            n_mm_wfs = n_mm_wfs + 1
-!
-         endif 
-!
-      enddo 
-!
-      if (n_mm_wfs == 1) then 
-!
-         requested_mm_calculation_input_file = .true.
-!
-      elseif (n_mm_wfs > 1) then
-!
-         requested_mm_calculation_input_file = .false.
-         call output%error_msg('Requested more than one reference wavefunction.')
-!
-      else
-!
-         requested_mm_calculation_input_file = .false.
-!
-      endif  
-!
-   end function requested_mm_calculation_input_file
 !
 !
    subroutine get_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)

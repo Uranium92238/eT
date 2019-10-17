@@ -248,7 +248,7 @@ contains
       call molecule%read_geometry()
       call molecule%read_active_atoms()
 !
-      molecule%mm_calculation = input%requested_mm_calculation()
+      molecule%mm_calculation = input%requested_section('molecular mechanics')
 !
    end subroutine read_settings_molecular_system
 !

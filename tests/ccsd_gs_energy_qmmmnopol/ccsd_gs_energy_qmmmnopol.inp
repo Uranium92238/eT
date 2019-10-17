@@ -6,7 +6,6 @@ end system
 method
    hf
    ccsd
-   mm
 end method
 
 memory
