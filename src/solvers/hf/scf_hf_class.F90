@@ -183,9 +183,7 @@ contains
 !
          call output%printf('- Requested restart. Reading orbitals from file',fs='(/t3,a)', pl='minimal')
 !
-         call wf%read_orbital_coefficients()
-         call wf%update_ao_density()
-         call wf%read_orbital_energies()
+         call wf%read_for_scf_restart()
 !
       else 
 !
