@@ -98,6 +98,8 @@ contains
 !!    Set the global print level
 !!    Written by Rolf Heilemann Myhre, May 2019
 !!
+!!    Also sets the local print level
+!!
       implicit none
 !
       class(output_file) :: the_file
@@ -105,16 +107,20 @@ contains
       character(len=*), intent(in) :: print_level
 !
       if (trim(print_level) .eq. 'normal') then
-         the_file%global_print_level='normal'
+         the_file%global_print_level = 'normal'
+         the_file%local_print_level  = 'normal'
 !
       elseif (trim(print_level) .eq. 'minimal') then
-         the_file%global_print_level='minimal'
+         the_file%global_print_level = 'minimal'
+         the_file%local_print_level  = 'minimal'
 !
       elseif (trim(print_level) .eq. 'verbose') then
-         the_file%global_print_level='verbose'
+         the_file%global_print_level = 'verbose'
+         the_file%local_print_level  = 'verbose'
 !
       elseif (trim(print_level) .eq. 'debug') then
-         the_file%global_print_level='debug'
+         the_file%global_print_level = 'debug'
+         the_file%local_print_level  = 'debug'
 !
       else
          print *, 'Error: Print level not normal, minimal, verbose or debug'
@@ -136,16 +142,16 @@ contains
       character(len=*), intent(in) :: print_level
 !
       if (trim(print_level) .eq. 'normal') then
-         the_file%global_print_level='normal'
+         the_file%local_print_level='normal'
 !
       elseif (trim(print_level) .eq. 'minimal') then
-         the_file%global_print_level='minimal'
+         the_file%local_print_level='minimal'
 !
       elseif (trim(print_level) .eq. 'verbose') then
-         the_file%global_print_level='verbose'
+         the_file%local_print_level='verbose'
 !
       elseif (trim(print_level) .eq. 'debug') then
-         the_file%global_print_level='debug'
+         the_file%local_print_level='debug'
 !
       else
          print *, 'Error: Print level not normal, minimal, verbose or debug'
