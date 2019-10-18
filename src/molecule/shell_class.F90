@@ -90,20 +90,35 @@ contains
 !!    Determine angular momentum
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Determines the angular momentum as length = 2l + 1. 
+!!    Determines the angular momentum by counting the number of basis
+!!    functions in the shell (l < 10)
 !!
       implicit none
 !
       class(shell) :: sh
 !
-      sh%l = (sh%length - 1)/2
+      integer :: i
 !
-      if ((2*sh%l + 1) .ne. sh%length) then 
+      i = 0
+      sh%l = -1
 !
-         call output%error_msg('could not determine angular momentum of shell.' // &
-                                 'length of shell is an even number', sh%length)
+      do while (i .lt. 10)
 !
-      endif 
+         if ((2*i + 1) .eq. sh%length .or. (((i+1)*(i+2))/2) .eq. sh%length) then
+!
+            sh%l = i
+!
+         endif
+!
+         i = i + 1
+!
+      enddo
+!
+      if (sh%l .eq. -1) then
+!
+         call output%error_msg('could not determine angular momentum of shell.')
+!
+      endif
 !
    end subroutine determine_angular_momentum_shell
 !
