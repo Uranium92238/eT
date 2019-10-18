@@ -77,6 +77,7 @@ module hf_class
 !
       procedure :: cleanup                                  => cleanup_hf
 !
+      procedure :: read_for_scf_restart                              => read_for_scf_restart_hf
       procedure :: is_restart_safe                          => is_restart_safe_hf
 !
       procedure :: read_settings                            => read_settings_hf
@@ -216,6 +217,22 @@ contains
       call wf%prepare()
 !
    end function new_hf
+!
+!
+   subroutine read_for_scf_restart_hf(wf)
+!!
+!!    SCF restart
+!!    Written by Sarai D. Folkestad and Linda Goletto, Oct 2019
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call wf%read_orbital_coefficients()
+      call wf%update_ao_density()
+      call wf%read_orbital_energies()
+!
+   end subroutine read_for_scf_restart_hf
 !
 !
    subroutine is_restart_safe_hf(wf, task)
