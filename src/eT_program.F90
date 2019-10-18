@@ -106,6 +106,9 @@ program eT_program
 !
    call input%check_for_errors()
 !
+!  Set print level in output and timing files
+   call set_global_print_levels()
+!
 !  Prepare memory manager and disk manager
 !
    call mem%prepare()
@@ -305,4 +308,40 @@ subroutine cc_calculation(system)
    call cc_wf%cleanup()
 !
 end subroutine cc_calculation
+!
+!
+subroutine set_global_print_levels()
+!!
+!! Set global print levels
+!! Written by Rolf H. Myhre, Oct. 2019
+!!
+!! Reads and sets the global print levels for the output file
+!! and the timing file from input.
+!!
+   use global_out, only: output 
+   use global_in, only: input
+   use timings_class, only : timing
+!
+   character(len=200) :: print_level
+!
+!  Set default
+   print_level = 'normal' 
+!
+!  Overwrite print_level if keyword is present
+   call input%get_keyword_in_section('output print level', 'print', print_level)
+!
+!  This is the only place this routine is allowed to be called
+   call output%set_global_print_level(print_level)
+!
+!  Repeat for timing file
+!  Set default
+   print_level = 'normal' 
+!
+!  Overwrite print_level if keyword is present
+   call input%get_keyword_in_section('timing print level', 'print', print_level)
+!
+!  This is the only place this routine is allowed to be called
+   call timing%set_global_print_level(print_level)
+!
+end subroutine set_global_print_levels
 !

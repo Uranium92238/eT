@@ -69,15 +69,15 @@ module input_file_class
       procedure, nopass, private :: extract_keyword_from_string         => extract_keyword_from_string_input_file
       procedure, nopass, private :: extract_keyword_value_from_string   => extract_keyword_value_from_string_input_file
 !
-      generic :: get_keyword_in_section                                 => get_integer_keyword_in_section_input_file,   &
-                                                                           get_integer8_keyword_in_section_input_file,  &
-                                                                           get_string_keyword_in_section_input_file,    &
-                                                                           get_dp_keyword_in_section_input_file
+      generic :: get_keyword_in_section            => get_integer_keyword_in_section_input_file,   &
+                                                      get_integer8_keyword_in_section_input_file,  &
+                                                      get_string_keyword_in_section_input_file,    &
+                                                      get_dp_keyword_in_section_input_file
 !
-      generic :: get_required_keyword_in_section                        => get_required_string_keyword_in_section_input_file,    &
-                                                                           get_required_integer_keyword_in_section_input_file,   &
-                                                                           get_required_integer8_keyword_in_section_input_file,  &
-                                                                           get_required_dp_keyword_in_section_input_file
+      generic :: get_required_keyword_in_section   => get_required_string_keyword_in_section_input_file,    &
+                                                      get_required_integer_keyword_in_section_input_file,   &
+                                                      get_required_integer8_keyword_in_section_input_file,  &
+                                                      get_required_dp_keyword_in_section_input_file
 !
       procedure :: get_integer_keyword_in_section_input_file
       procedure :: get_integer8_keyword_in_section_input_file
@@ -130,6 +130,7 @@ contains
       type(section) :: cc
       type(section) :: mlcc
       type(section) :: mm
+      type(section) :: global_print
 !
 !     Set input file name, access and format 
 !
@@ -309,6 +310,12 @@ contains
                      'algorithm ', &
                      'verbose']
 !
+      global_print%name_    = 'print'
+      global_print%required = .false.
+      global_print%keywords = [character(len=25) :: &
+                              'output print level ', &
+                              'timing print level ']
+!
 !     Gather all sections into the file's section array 
 !
       the_file%sections = [calculations,           &
@@ -326,7 +333,8 @@ contains
                            active_atoms,           &
                            mlcc,                   &
                            cc,                     &
-                           mm]
+                           mm,                     &
+                           global_print]
 !
       the_file%is_open = .false.
       the_file%unit = -1
