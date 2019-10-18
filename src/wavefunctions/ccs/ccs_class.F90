@@ -107,6 +107,7 @@ module ccs_class
       procedure :: destruct_amplitudes                         => destruct_amplitudes_ccs
       procedure :: set_initial_amplitudes_guess                => set_initial_amplitudes_guess_ccs
       procedure :: t1_transform                                => t1_transform_ccs
+      procedure :: ao_to_t1_transformation                     => ao_to_t1_transformation_ccs
       procedure :: set_amplitudes                              => set_amplitudes_ccs
       procedure :: get_amplitudes                              => get_amplitudes_ccs
       procedure :: save_amplitudes                             => save_amplitudes_ccs
@@ -148,6 +149,8 @@ module ccs_class
 !
       procedure :: set_fock                                    => set_fock_ccs
       procedure :: construct_fock                              => construct_fock_ccs
+      procedure :: add_frozen_core_fock_contribution           => add_frozen_core_fock_contribution_ccs
+      procedure :: add_molecular_mechanics_fock_contribution   => add_molecular_mechanics_fock_contribution_ccs
 !
       procedure :: get_gs_orbital_differences                  => get_gs_orbital_differences_ccs
       procedure :: get_es_orbital_differences                  => get_gs_orbital_differences_ccs
