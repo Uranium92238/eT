@@ -29,6 +29,34 @@
    end subroutine construct_fock_ccs
 !
 !
+   module subroutine add_molecular_mechanics_fock_contribution_ccs(wf, F_pq)
+!!
+!!    Add molecular mechanics Fock contribution 
+!!    Written by Tommaso Giovannini, 2019 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
+!
+   end subroutine add_molecular_mechanics_fock_contribution_ccs
+!
+!
+   module subroutine add_frozen_core_fock_contribution_ccs(wf, F_pq)
+!!
+!!    Add frozen core Fock contribution 
+!!    Written by Sarai D. Folkestad, 2019 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq    
+!
+   end subroutine add_frozen_core_fock_contribution_ccs
+!
+!
    module subroutine coulomb_contribution_fock_fc_ccs(wf)
 !!
 !!    Coulomb contribution to frozen core Fock

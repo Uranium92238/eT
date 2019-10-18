@@ -41,25 +41,18 @@ contains
 !!    basis using the MO integrals and the current single
 !!    amplitudes:
 !!
-!!       F_pq = h_pq + sum_k (2*g_pqkk - g_pkkq) 
-!!                   + (effective Fock contributions)
+!!       F_pq = h_pq + sum_k (2*g_pqkk - g_pkkq) + (effective Fock contributions)
 !!
-!!    Since the two-electron ERIs are available already
-!!    t1-transformed, our task is to transform the one-
-!!    electron term, which we assume is on file in the
-!!    MO basis.
+!!    Effective Fock contributions:
 !!
-!!    Additional effective Fock contributions:
-!!
-!!    Frozen core by Sarai D. Folkestad, 2019
-!!    QM/MM by Tommaso Giovannini, 2019
+!!       Frozen core by Sarai D. Folkestad, 2019
+!!       QM/MM by Tommaso Giovannini, 2019
 !!
       implicit none
 !
       class(ccs) :: wf
 !
       real(dp), dimension(:,:), allocatable :: F_pq
-      real(dp), dimension(:,:), allocatable :: F_pq_core
 !
       integer :: i, j, k, a, b
 !
@@ -69,55 +62,17 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_iajk
       real(dp), dimension(:,:,:,:), allocatable :: g_aijk
 !
-      real(dp), dimension(:,:), allocatable :: h_mm_t1
-!
-!     Get T1-transformed h integrals, put them in F_pq 
+!     Set F_pq = h_pq (t1-transformed) 
 !
       call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
       call wf%construct_h(F_pq)
 !
-!     Add QM/MM contributions
+!     Add effective contributions to Fock matrix 
 !
-      if(wf%system%mm_calculation .and. wf%system%mm%forcefield.eq.'non-polarizable') then
+      if (wf%frozen_core) call wf%add_frozen_core_fock_contribution(F_pq)
+      if (wf%system%mm_calculation) call wf%add_molecular_mechanics_fock_contribution(F_pq)
 !
-         call mem%alloc(h_mm_t1, wf%n_mo, wf%n_mo) 
-!
-         call wf%mo_transform(half*wf%system%mm%nopol_h_wx, h_mm_t1)
-         call wf%t1_transform(h_mm_t1)
-!
-         F_pq = F_pq + h_mm_t1 
-!
-         call mem%dealloc(h_mm_t1, wf%n_mo, wf%n_mo) 
-!
-      endif
-!
-      if(wf%system%mm_calculation .and. wf%system%mm%forcefield.ne.'non-polarizable') then
-!
-         call mem%alloc(h_mm_t1, wf%n_mo, wf%n_mo) 
-!
-         call wf%mo_transform(half*wf%system%mm%pol_emb_fock, h_mm_t1)
-         call wf%t1_transform(h_mm_t1)
-!
-         F_pq = F_pq + h_mm_t1 
-!
-         call mem%dealloc(h_mm_t1, wf%n_mo, wf%n_mo) 
-!
-      endif
-!
-!     Add frozen core contributions
-!
-      if (wf%frozen_core) then
-!
-         call mem%alloc(F_pq_core, wf%n_mo, wf%n_mo)
-!
-         call wf%construct_t1_fock_fc_contribution(F_pq_core)
-         call daxpy(wf%n_mo**2, one, F_pq_core, 1, F_pq, 1)
-!
-         call mem%dealloc(F_pq_core, wf%n_mo, wf%n_mo)
-!
-      endif
-!
-!     Occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
+!     Add occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
       call mem%alloc(g_ijkl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
       call wf%get_oooo(g_ijkl)
@@ -136,8 +91,8 @@ contains
 !
       call mem%dealloc(g_ijkl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
-!     Occupied-virtual contributions: F_ia = F_ia + sum_j (2*g_iajj - g_ijja)
-!                                     F_ai = F_ai + sum_j (2*g_aijj - g_ajji)
+!     Add occupied-virtual contributions: F_ia = F_ia + sum_j (2*g_iajj - g_ijja)
+!                                         F_ai = F_ai + sum_j (2*g_aijj - g_ajji)
 !
       call mem%alloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
       call wf%get_ovoo(g_iajk)
@@ -162,7 +117,7 @@ contains
       call mem%dealloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-!     Virtual-virtual contributions: F_ab = h_ab + sum_i (2*g_abii - g_aiib) ::
+!     Add virtual-virtual contributions: F_ab = h_ab + sum_i (2*g_abii - g_aiib) 
 !
       call mem%alloc(g_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call wf%get_vvoo(g_abij)
@@ -185,10 +140,75 @@ contains
       call mem%dealloc(g_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call wf%set_fock(F_pq)
+      call wf%set_fock(F_pq) 
       call mem%dealloc(F_pq, wf%n_mo, wf%n_mo)
 !
    end subroutine construct_fock_ccs
+!
+!
+   module subroutine add_frozen_core_fock_contribution_ccs(wf, F_pq)
+!!
+!!    Add frozen core Fock contribution 
+!!    Written by Sarai D. Folkestad, 2019 
+!!
+!!    Adds the frozen core contributions to
+!!    the effective T1-transformed Fock matrix.
+!!
+!!    Isolated into subroutine by Eirik F. Kjønstad, 2019    
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
+!
+      real(dp), dimension(:,:), allocatable :: F_pq_core
+!
+      call mem%alloc(F_pq_core, wf%n_mo, wf%n_mo)
+!
+      call wf%construct_t1_fock_fc_contribution(F_pq_core)
+      call daxpy(wf%n_mo**2, one, F_pq_core, 1, F_pq, 1)
+!
+      call mem%dealloc(F_pq_core, wf%n_mo, wf%n_mo)      
+!
+   end subroutine add_frozen_core_fock_contribution_ccs
+!
+!
+   module subroutine add_molecular_mechanics_fock_contribution_ccs(wf, F_pq)
+!!
+!!    Add molecular mechanics Fock contribution 
+!!    Written by Tommaso Giovannini, 2019 
+!!
+!!    Adds the molecular mechanics contributions to  
+!!    the effective T1-transformed Fock matrix. 
+!!
+!!    Isolated into subroutine by Eirik F. Kjønstad, 2019
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
+!
+      real(dp), dimension(:,:), allocatable :: h_mm_t1
+!
+      call mem%alloc(h_mm_t1, wf%n_mo, wf%n_mo) 
+!
+      if (wf%system%mm%forcefield == 'non-polarizable') then
+!
+         call wf%ao_to_t1_transformation(wf%system%mm%nopol_h_wx, h_mm_t1)
+         call daxpy(wf%n_mo**2, half, h_mm_t1, 1, F_pq, 1)
+!
+      else
+!
+         call wf%ao_to_t1_transformation(wf%system%mm%pol_emb_fock, h_mm_t1)
+         call daxpy(wf%n_mo**2, half, h_mm_t1, 1, F_pq, 1)
+!
+      endif    
+!
+      call mem%dealloc(h_mm_t1, wf%n_mo, wf%n_mo) 
+!
+   end subroutine add_molecular_mechanics_fock_contribution_ccs
 !
 !
    module subroutine coulomb_contribution_fock_fc_ccs(wf)
