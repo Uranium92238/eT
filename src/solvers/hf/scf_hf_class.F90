@@ -220,6 +220,14 @@ contains
 !
       real(dp), dimension(:), allocatable :: G 
 !
+      if (wf%n_ao == 1) then 
+!
+         call solver%run_single_ao(wf)
+         call solver%print_summary(wf)
+         return
+!
+      endif 
+!
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
 !

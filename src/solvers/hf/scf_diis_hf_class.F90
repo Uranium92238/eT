@@ -242,6 +242,14 @@ contains
 !
       type(timings) :: iteration_timer, solver_timer
 !
+      if (wf%n_ao == 1) then 
+!
+         call solver%run_single_ao(wf)
+         call solver%print_summary(wf)
+         return
+!
+      endif 
+!
 !     :: Part I. Preparations.
 !
       iteration_timer = timings('SCF DIIS iteration time')
