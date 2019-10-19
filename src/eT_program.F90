@@ -57,7 +57,7 @@ program eT_program
    timing = output_file('timing.out')
    call timing%open_()
 !
-   eT_timer = timings("Total time in eT")
+   eT_timer = timings("Total time in eT", pl='minimal')
    call eT_timer%turn_on()
 !
 !

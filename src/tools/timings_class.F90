@@ -61,7 +61,7 @@ module timings_class
 !!       cpu_time  = A1_timer%get_elapsed_time('cpu')
 !!
 !!    A timer that has been turned off may be reused,
-!!    though the tag will be the same (indistinguishable
+!!    though the name_ will be the same (indistinguishable
 !!    in output). Iteration timers in solvers are an 
 !!    example where this is useful. In that case, do a 
 !!    reset to zero out the timings of a turned off timer:
@@ -88,7 +88,8 @@ module timings_class
    type timings 
 !
       private 
-      character(len=100) :: tag 
+      character(len=100) :: name_ 
+      character(len=100) :: pl     ! print level 
 !
       logical :: on
 !
@@ -127,23 +128,34 @@ module timings_class
 contains
 !
 !
-   function new_timer(tag) result(timer)
+   function new_timer(name_, pl) result(timer)
 !!
 !!    Timer constructor routine 
 !!    Written by Eirik F. Kjønstad, Dec 2018 
 !!
-!!    Initializes timer. Tag is the name of the timer,
+!!    Initializes timer. name_ is the name of the timer,
 !!    as shown in the timing output file when turn_off()
 !!    is called.
 !!
       type(timings) :: timer 
 !
-      character(len=*), intent(in) :: tag 
+      character(len=*), intent(in) :: name_ 
 !
-!     Set name & then set all times to zero 
+      character(len=*), optional, intent(in) :: pl ! print level 
 !
-      timer%tag = tag
-      call timer%reset()
+      timer%name_ = trim(name_)
+!
+      if (present(pl)) then 
+!
+         timer%pl = trim(pl) 
+!
+      else
+!
+         timer%pl = 'normal'
+!
+      endif 
+!
+      call timer%reset() ! Set times to zero 
 !
    end function new_timer
 !
@@ -244,13 +256,20 @@ contains
 !
       class(timings), intent(in) :: timer 
 !
-      write(timing%unit, '(/t3,a)') timer%tag
-      write(timing%unit, '(t3,a17,f20.2)')  'wall time (sec): ', timer%elapsed_wall_time
-      write(timing%unit, '(t3,a17,f20.2)')  'cpu time (sec):  ', timer%elapsed_cpu_time
+      call timing%printf(timer%name_, pl=timer%pl, fs='(/t3,a)')
 !
-      if (timer%elapsed_wall_time .gt. 1.0d-8) &
-         write(timing%unit, '(t3,a17,f20.2)')  'cpu/wall ratio:  ', &
-         & timer%elapsed_cpu_time/timer%elapsed_wall_time
+      call timing%printf('wall time (sec): (f20.2)', pl=timer%pl, fs='(t3,a)', &
+                                                      reals=[timer%elapsed_wall_time])
+!
+      call timing%printf('cpu time (sec):  (f20.2)', pl=timer%pl, fs='(t3,a)', &
+                                                      reals=[timer%elapsed_cpu_time])     
+!
+      if (timer%elapsed_wall_time > 1.0d-8) then 
+!
+         call timing%printf('cpu/wall ratio:  (f20.2)', pl=timer%pl, fs='(t3,a)', &
+                                       reals=[timer%elapsed_cpu_time/timer%elapsed_wall_time])
+!
+      endif 
 !
    end subroutine print_times_timings
 !
@@ -286,7 +305,7 @@ contains
 !
       else
 !
-         call output%error_msg('Did not recognize requested time in timings object ' // timer%tag)
+         call output%error_msg('Did not recognize requested time in timings object ' // timer%name_)
 !
       endif 
 !
