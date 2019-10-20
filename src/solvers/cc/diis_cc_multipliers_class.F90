@@ -32,7 +32,7 @@ module diis_cc_multipliers_class
 !
    type :: diis_cc_multipliers
 !
-      character(len=100) :: tag = 'Diis multipliers solver'
+      character(len=100) :: tag = 'DIIS multipliers solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       character(len=500) :: description1 = 'A DIIS CC multiplier equations solver. It combines a quasi-Newton &
@@ -49,7 +49,8 @@ module diis_cc_multipliers_class
 !
       real(dp) :: residual_threshold
 !
-      logical :: restart
+      character(len=200) :: storage 
+      logical :: restart, records_in_memory 
 !
       type(timings) :: timer
 !
@@ -102,10 +103,9 @@ contains
 !
       solver%diis_dimension = 8
       solver%max_iterations = 100
-!
       solver%residual_threshold  = 1.0d-6
-!
       solver%restart = .false.
+      solver%storage = 'disk'
 !
       call solver%read_settings()
 !
@@ -114,6 +114,23 @@ contains
       call wf%construct_fock()
 !
       call wf%initialize_multipliers()
+!
+!     Determine whether to store records in memory or on file
+!
+      if (trim(solver%storage) == 'memory') then 
+!
+         solver%records_in_memory = .true.
+!
+      elseif (trim(solver%storage) == 'disk') then 
+!
+         solver%records_in_memory = .false.
+!
+      else 
+!
+         call output%error_msg('Could not recognize keyword storage in solver: ' // &
+                                 trim(solver%storage))
+!
+      endif 
 !
    end function new_diis_cc_multipliers
 !
@@ -197,7 +214,8 @@ contains
 !
       call wf%prepare_for_multiplier_equation
 !
-      diis = diis_tool('cc_multipliers_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
+      diis = diis_tool('cc_multipliers_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, &
+                  solver%records_in_memory, dimension_=solver%diis_dimension)
 !
       call mem%alloc(residual, wf%n_gs_amplitudes)
       call mem%alloc(multipliers, wf%n_gs_amplitudes)
@@ -265,8 +283,6 @@ contains
          iteration = iteration + 1
 !
       enddo
-!
-      call diis%cleanup()
 !
       if (.not. converged_residual) then 
 !   
@@ -361,6 +377,8 @@ contains
       call input%get_keyword_in_section('max iterations', 'solver cc multipliers', solver%max_iterations)
 !
       if (input%requested_keyword_in_section('restart', 'solver cc multipliers')) solver%restart = .true.    
+!
+      call input%get_keyword_in_section('storage', 'solver cc multipliers', solver%storage)
 !
    end subroutine read_settings_diis_cc_multipliers
 !

@@ -31,7 +31,7 @@ module eigen_davidson_tool_class
 !!    Using the tool: after using the constructor, 
 !!
 !!       1. Set the initial set of trial vectors by constructing 
-!!          them and calling davidson%write_trial(c). When you are 
+!!          them and calling davidson%set_trial(c). When you are 
 !!          done writing trials, call davidson%orthonormalize_trial_vecs() 
 !!          to make sure the trial vectors are orthonormalized.
 !!
@@ -51,9 +51,9 @@ module eigen_davidson_tool_class
 !!
 !!             do trial = davidson%first_trial(), davidson%last_trial()
 !!
-!!                call davidson%read_trial(c, trial)
+!!                call davidson%get_trial(c, trial)
 !!                Transform: c <- A c 
-!!                call davidson%write_transform(c)
+!!                call davidson%set_transform(c)
 !!
 !!             enddo 
 !!
@@ -121,10 +121,27 @@ contains
 !
 !
    function new_eigen_davidson_tool(name_, n_parameters, n_solutions, &
-                                       add_trial_threshold, max_dim_red) result(davidson)
+                        lindep_threshold, max_dim_red, records_in_memory) result(davidson)
 !!
 !!    New eigen Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    name_ :            Name of solver tool (used for temporary files)
+!!
+!!    n_parameters:      Dimensionality of the full vector space (A is n_parameters x n_parameters)
+!!
+!!    n_solutions:       Number of solutions of the equation to solve for 
+!!
+!!    lindep_threshold:  Norm threshold for new trial vector after being added to the trial 
+!!                       space. If the vector, after orthonormalization against the existing
+!!                       trial space, has a norm below this threshold, then we assume that the 
+!!                       trial basis has become linearly dependent. This causes an error stop. 
+!!
+!!    max_dim_red:       Maximum dimension of the reduced space. When exceeding this dimensionality,
+!!                       the solutions are set as the basis for the new trial space. 
+!!
+!!    records_in_memory: If .true., the trials and transforms are kept in memory. Otherwise they 
+!!                       are stored on file. 
 !!
       implicit none 
 !
@@ -133,29 +150,25 @@ contains
       character(len=*), intent(in) :: name_
 !
       integer, intent(in)  :: n_parameters, n_solutions, max_dim_red 
-      real(dp), intent(in) :: add_trial_threshold  
+      real(dp), intent(in) :: lindep_threshold  
+      logical, intent(in)  :: records_in_memory
 !
       davidson%n_parameters = n_parameters
       davidson%n_solutions  = n_solutions
       davidson%max_dim_red  = max_dim_red
 !
-      davidson%add_trial_threshold = add_trial_threshold  
+      davidson%lindep_threshold = lindep_threshold  
 !
       davidson%name_ = trim(name_)
 !
-      davidson%trials         = sequential_file(trim(davidson%name_) // '_trials', 'unformatted')
-      davidson%transforms     = sequential_file(trim(davidson%name_) // '_transforms', 'unformatted')
-      davidson%preconditioner = sequential_file(trim(davidson%name_) // '_preconditioner', 'unformatted')
-!
-!     For safety, delete old files if they are on disk
-!
-      call davidson%trials%delete_()
-      call davidson%transforms%delete_()
-!
-      davidson%do_precondition   = .false.         ! Switches to true if 'set_preconditioner' is called
+      davidson%do_precondition   = .false. ! Switches to true if 'set_preconditioner' is called
 !
       davidson%dim_red      = 0     
       davidson%n_new_trials = n_solutions   
+!
+!     Set up array/or file array for trials and transforms    
+!
+      call davidson%prepare_trials_and_transforms(records_in_memory)
 !
    end function new_eigen_davidson_tool
 !
@@ -169,9 +182,11 @@ contains
 !
       class(eigen_davidson_tool), intent(inout) :: davidson 
 !
-      call davidson%trials%delete_()
-      call davidson%transforms%delete_()
-      call davidson%preconditioner%delete_()
+      if (davidson%do_precondition) then 
+!
+         call mem%dealloc(davidson%preconditioner, davidson%n_parameters)
+!
+      endif
 !
    end subroutine cleanup_eigen_davidson_tool
 !  
@@ -585,7 +600,7 @@ contains
 !
       integer :: k ! k = n, where k is set to 1 if n is not present 
 !
-      real(dp) :: norm_new_trial, norm_precond_residual
+      real(dp) :: norm_trial
 !
       real(dp), dimension(:), allocatable :: trial 
 !
@@ -599,40 +614,22 @@ contains
 !
       endif  
 !
-!     Precondition the residual, then remove components already 
-!     in the search space by orthogonalizing it against existing 
-!     trial vectors.
-!
-!     If the vector is not too small, then a new trial vector 
-!     was successfully constructed and is added to the search
-!     space.
-!
 !     Precondition 
 !
       call mem%alloc(trial, davidson%n_parameters)
       call dcopy(davidson%n_parameters, R, 1, trial, 1)
 !
-      call davidson%precondition(trial, davidson%omega_re(k))
+      if (davidson%do_precondition) call davidson%precondition(trial, davidson%omega_re(k))
 !
 !     Renormalize 
 !
-      norm_precond_residual = get_l2_norm(trial, davidson%n_parameters)
-      call dscal(davidson%n_parameters, one/norm_precond_residual, trial, 1)
+      norm_trial = get_l2_norm(trial, davidson%n_parameters)
+      call dscal(davidson%n_parameters, one/norm_trial, trial, 1)
 !
-!     Orthogonalize against existing search space 
+!     Add to trial space 
 !
-      call davidson%orthogonalize_against_trial_vecs(trial)
-      norm_new_trial = get_l2_norm(trial, davidson%n_parameters)
-!  
-!     Add to search space if significant
-!
-      if (norm_new_trial > davidson%add_trial_threshold) then
-!
-         davidson%n_new_trials = davidson%n_new_trials + 1
-         call dscal(davidson%n_parameters, one/norm_new_trial, trial, 1)
-         call davidson%write_trial(trial, 'append')
-!
-      endif
+      davidson%n_new_trials = davidson%n_new_trials + 1
+      call davidson%set_trial(trial, davidson%dim_red + davidson%n_new_trials)
 !
       call mem%dealloc(trial, davidson%n_parameters)
 !

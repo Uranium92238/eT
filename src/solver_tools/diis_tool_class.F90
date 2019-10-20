@@ -20,9 +20,8 @@
 module diis_tool_class
 !
 !!
-!!    DIIS solver class module
+!!    DIIS tool class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
-!!
 !!
 !!    Objects of this class can be instantiated in order to solve a non-linear set of equations,
 !!    e(x) = 0, where e and x are vectors of length n_equations and n_parameters.
@@ -33,11 +32,32 @@ module diis_tool_class
 !!
 !!    is minimized with respect to the condition sum_k w_k = 1. The k index
 !!    runs over previous iterations, by default limited to the last 8 iterations
-!!    (determined by diis_dimension).
+!!    (determined by dimension_).
 !!
 !!    The standard update of the parameters is
 !!
-!!       x = sum_k w_k (x + e)_k
+!!       x = sum_k=1^n w_k x_k     (*)
+!!
+!!    Note that the "x_k" sent to the routine may be quasi-Newton update estimates,
+!!    so that the DIIS-extrapolated x in (*) is the optimal combination of previous 
+!!    quasi-Newton estimates (this is, e.g., the case for CC ground and 
+!!    excited states).
+!!
+!!    Typical usage: 
+!!
+!!    do while (.not. converged) 
+!!
+!!       -> Calculate error vector e given the current parameters x
+!!
+!!       -> Overwrite x with the x_n you want to use in the extrapolation 
+!!          step (*). This can, e.g., be a quasi-Newton update estimate based  
+!!          on the current e and x. 
+!!
+!!       call diis%update(e, x)
+!!
+!!       -> now, x contains the extrapolated guess (*)
+!!
+!!    enddo 
 !!
 !
    use global_out, only : output
@@ -46,49 +66,51 @@ module diis_tool_class
    use array_utilities, only : zero_array
 !
    use sequential_file_class, only : sequential_file
+   use record_storer_class, only : record_storer  
+   use sequential_storer_class, only : sequential_storer  
+   use memory_storer_class, only : memory_storer  
 !
    use memory_manager_class, only : mem
 !
 !
    type :: diis_tool
 !
-      character(len=40) :: name_ ! Solver name; determines the prefix of all DIIS files
+      character(len=40) :: name_          ! determines the prefix of all DIIS files
 !
-      type(sequential_file), dimension(:), allocatable, private :: e_files ! Array of files with error vectors
-      type(sequential_file), dimension(:), allocatable, private :: x_files ! Array of files with X vectors
+      type(sequential_file), private    :: diis_matrix 
+      class(record_storer), allocatable :: e_vectors, x_vectors 
 !
-      type(sequential_file), private :: diis_matrix ! File containing the previously computed elements of the DIIS matrix
+      integer, private :: iteration       ! Variable keeping track of the current DIIS iteration
+!                                         ! Note: defined to increment by +1 each time 'update' is called.
 !
-      integer, private :: iteration = 1 ! Variable keeping track of the current DIIS iteration
-!                                       ! Note: defined to increment by +1 each time 'update' is called.
+      integer, private :: dimension_      ! Standard is 8, though it might be useful to change this value
 !
-      integer, private :: diis_dimension = 8 ! Standard is 8, though it might be useful to change this value
+      integer, private :: n_parameters    ! The length of the x vectors
+      integer, private :: n_equations     ! The length of the e vectors
 !
-      integer, private :: n_parameters ! The length of the X vector
-      integer, private :: n_equations  ! The length of the O vector
+      logical :: accumulate               ! Variable keeping track of wether we are  
+!                                         ! cumulatively building the DIIS matrix or not
+!                                         ! Note: default is to accumulate
 !
-      logical :: accumulate = .true. ! Variable keeping track of wether we are cummulatively 
-!                                    ! building the diis history or not
-!                                    ! Note: default is to accumulate
-!
-      logical :: erase_history = .false.  ! (DIIS space) 1,2,3,4,...,8,1,2,3,... if true 
+      logical :: erase_history            ! (DIIS space) 1,2,3,4,...,8,1,2,3,... if true 
                                           ! (DIIS space) 1,2,3,4,...,8,8,8,8,... if false 
 !
    contains
 !
-      procedure :: update     => update_diis_tool   ! Called to perform a DIIS step
-      procedure :: cleanup    => cleanup_diis_tool
+      procedure :: update                          => update_diis_tool   
 !
-      procedure :: get_current_dim => get_current_dim_diis_tool
+      procedure :: get_current_dim                 => get_current_dim_diis_tool
 !
-      procedure :: read_x  => read_x_diis_tool
-      procedure :: read_e  => read_e_diis_tool
+      procedure :: read_x                          => read_x_diis_tool
+      procedure :: read_e                          => read_e_diis_tool
 !
-      procedure :: write_x => write_x_diis_tool
-      procedure :: write_e => write_e_diis_tool
+      procedure :: write_x                         => write_x_diis_tool
+      procedure :: write_e                         => write_e_diis_tool
 !
-      procedure, private :: construct_diis_matrix => construct_diis_matrix_diis_tool
-      procedure, private :: write_current_vecs    => write_current_vecs_diis_tool
+      procedure, private :: construct_diis_matrix  => construct_diis_matrix_diis_tool
+      procedure, private :: write_current_vecs     => write_current_vecs_diis_tool
+!
+      final :: destructor 
 !
    end type diis_tool
 !
@@ -103,113 +125,147 @@ module diis_tool_class
 contains
 !
 !
-   function new_diis_tool(name_, n_parameters, n_equations, diis_dimension, accumulate, erase_history) &
-                          result(solver)
+   function new_diis_tool(name_, n_parameters, n_equations, records_in_memory, &
+                        dimension_, accumulate, erase_history) result(diis)
 !!
 !!    New DIIS tool
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
 !!
-      type(diis_tool) :: solver
+!!    name_:               Name of DIIS tool (used for temporary files)
+!!
+!!    n_parameters:        Number of parameters (dimensionality of the x vectors)
+!!
+!!    n_equations:         Number of equations (dimensionality of the e vectors)
+!!
+!!    records_in_memory:   If true, keep DIIS records (previous x and e vectors) 
+!!                         in memory. Otherwise, they are stored on disk.
+!!
+!!    dimension_:          Number of records to use in the DIIS extrapolation. 
+!!                         Default is to use the previous 8 records. 
+!!
+!!    accumulate:          If true, the parts of the DIIS matrix constructed 
+!!                         on "update" is the parts that have not been calculated
+!!                         previously. If false, the entire DIIS matrix is re-
+!!                         constructed when "update" is called. This is sometimes
+!!                         neccessary because the previous records have to be 
+!!                         updated to a new basis. Default is true.
+!!
+!!    erase_history:       Instead of keeping the previous 8 records 
+!!                         (if DIIS dimension = 8), the history is erased 
+!!                         every 8th call to "update". This usually leads to 
+!!                         slower convergene (or oscillating behavior in the 
+!!                         residuals). Default is false.
+!!
+      type(diis_tool) :: diis
 !
       character(len=*), intent(in) :: name_
 !
       integer, intent(in) :: n_parameters
       integer, intent(in) :: n_equations
+      logical, intent(in) :: records_in_memory 
 !
-      integer, intent(in), optional :: diis_dimension
-!
+      integer, intent(in), optional :: dimension_
       logical, intent(in), optional :: accumulate
       logical, intent(in), optional :: erase_history
 !
-      integer :: i
+      diis%name_            = trim(name_)
+      diis%n_parameters     = n_parameters
+      diis%n_equations      = n_equations
+      diis%iteration        = 1 
+      diis%dimension_       = 8
 !
-      character(len=200) :: name_e, name_x
-!
-      solver%name_ = trim(name_)
-      solver%n_parameters = n_parameters
-      solver%n_equations  = n_equations
-      solver%iteration    = 1 
-!
-      solver%accumulate = .true. 
-      solver%erase_history = .false. 
+      diis%accumulate       = .true. 
+      diis%erase_history    = .false. 
 !
       if (present(accumulate)) then 
 !
-         solver%accumulate = accumulate
+         diis%accumulate = accumulate
 !
       endif
 !
       if (present(erase_history)) then
 !
-         solver%erase_history = erase_history
+         diis%erase_history = erase_history
 !
       endif
 !
-      if (present(diis_dimension)) solver%diis_dimension = diis_dimension
+      if (present(dimension_)) then
 !
-!     File handling
+         diis%dimension_ = dimension_
 !
-      allocate(solver%e_files(solver%diis_dimension))
-      allocate(solver%x_files(solver%diis_dimension))
+      endif 
 !
-      do i = 1, solver%diis_dimension
+!     Set up storers for e and x vectors and the DIIS matrix 
 !
-         write(name_e, '(a, a1, i3.3)') trim(solver%name_) // '_e', '_', i
-         write(name_x, '(a, a1, i3.3)') trim(solver%name_) // '_x', '_', I
+      diis%diis_matrix = sequential_file(trim(diis%name_) // '_matrix')
 !
-         solver%e_files(i) = sequential_file(trim(name_e))
-         solver%x_files(i) = sequential_file(trim(name_x))
+      if (records_in_memory) then 
 !
-      enddo
+         call output%printf('Storing DIIS records in memory.', pl='m', fs='(/t3,a)')
 !
-      solver%diis_matrix = sequential_file(trim(solver%name_) // '_matrix')
+         diis%e_vectors = memory_storer(trim(diis%name_) // '_e', &
+                           diis%n_equations, diis%dimension_)
+!
+         diis%x_vectors = memory_storer(trim(diis%name_) // '_x', &
+                           diis%n_parameters, diis%dimension_)
+!
+      else 
+!
+         call output%printf('Storing DIIS records on file.', pl='m', fs='(/t3,a)')
+!
+         diis%e_vectors = sequential_storer(trim(diis%name_) // '_e', &
+                           diis%n_equations, diis%dimension_, delete=.true.)
+         diis%x_vectors = sequential_storer(trim(diis%name_) // '_x', &
+                           diis%n_parameters, diis%dimension_, delete=.true.)
+!
+      endif 
 !
    end function new_diis_tool
 !
 !
-   subroutine cleanup_diis_tool(solver)
+   subroutine destructor(diis)
 !!
-!!    Cleanup
+!!    Destructor 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, July 2018
 !!
       implicit none
 !
-      class(diis_tool) :: solver
+      type(diis_tool) :: diis
 !
-      integer :: i
+      call diis%diis_matrix%delete_()
 !
-      do i = 1, solver%diis_dimension
-!
-         call solver%x_files(i)%delete_()
-         call solver%e_files(i)%delete_()
-!
-      enddo
-!
-      call solver%diis_matrix%delete_()
-!
-      solver%iteration = 1
-      solver%diis_dimension = 8
-
-   end subroutine cleanup_diis_tool
+   end subroutine destructor
 !
 !
-    subroutine update_diis_tool(solver, e, x)
+    subroutine update_diis_tool(diis, e, x)
 !!
 !!    Update 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
 !!
+!!    Routine to call in each iteration of a DIIS-based diis. The 
+!!    routine stores the current vectors (e and x) sent to the routine. 
+!!    Then it constructs the DIIS matrix G and solves the DIIS equation 
+!!
+!!       G w = H,   G_ij = e_i^T e_j,    H_i = 0 
+!!
+!!    for the DIIS weights w. In practice, G and H are padded 
+!!    (one extra column and row) to enforce 
+!!
+!!       sum_i w_i = 1.
+!!
+!!    On exit, 
+!!
+!!       x = sum_i w_i x_i.
+!!
 !!    Based on the CCSD specific routine written by Sarai D. Folkestad
 !!    and Eirik F. Kjønstad, May 2017.
 !!
-!!    Solves the DIIS problem, as described in the documentation of DIIS class module
-!!    (see the top of this file).
-!!
       implicit none
 !
-      class(diis_tool) :: solver
+      class(diis_tool) :: diis
 !
-      real(dp), dimension(solver%n_equations)  :: e
-      real(dp), dimension(solver%n_parameters) :: x
+      real(dp), dimension(diis%n_equations)  :: e
+      real(dp), dimension(diis%n_parameters) :: x
 !
       real(dp), dimension(:), allocatable :: x_i ! To hold previous x_i temporarily
 !
@@ -223,25 +279,14 @@ contains
 !
       integer, dimension(:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
 !
-!     :: Open DIIS files
-!
-!     Ask disk manager to open the files
-!
-      do i = 1, solver%diis_dimension
-!
-         call solver%e_files(i)%open_()
-         call solver%x_files(i)%open_()
-!
-      enddo
-!
 !     Compute the current dimensionality of the problem 
-!     (1, 2,..., 7, 8, 8, 8, 8,...) for the standard diis_dimension = 8 without erasing history
+!     (1, 2,..., 7, 8, 8, 8, 8,...) for the standard dimension_ = 8 without erasing history
 !
-      current_dim = solver%get_current_dim()
+      current_dim = diis%get_current_dim()
 !
 !     Write current e and x vector to file
 !
-      call solver%write_current_vecs(e, x, current_dim)
+      call diis%write_current_vecs(e, x, current_dim)
 !
 !     :: Solve the least squares problem, G w = H
 !
@@ -263,7 +308,7 @@ contains
 !
       call mem%alloc(diis_matrix, current_dim + 1, current_dim + 1)
 !
-      call solver%construct_diis_matrix(current_dim, diis_matrix, e)
+      call diis%construct_diis_matrix(current_dim, diis_matrix, e)
 !
 !     Solve the DIIS equation G w = H for the DIIS weights w 
 !
@@ -287,154 +332,111 @@ contains
 !
       if (info .ne. 0) call output%error_msg('could not solve DIIS matrix equation!', info)
 !
-!     Update the parameters (place in x on exit)
+!     Update the parameters x
 !
-      call zero_array(x, solver%n_parameters)
+      call zero_array(x, diis%n_parameters)
 !
-      call mem%alloc(x_i, solver%n_parameters)
+      call mem%alloc(x_i, diis%n_parameters)
 !
       do i = 1, current_dim
 !
-!        Read the x_i + Δ x_i vector
+!        Read the x_i vector
 !
-         call solver%x_files(i)%rewind_()
-         call solver%x_files(i)%read_(x_i, solver%n_parameters)
+         call diis%x_vectors%get(x_i, i)
 !
-!        Add w_i (x_i + Δ x_i) to the amplitudes
+!        Add w_i x_i to x 
 !
-         call daxpy(solver%n_parameters, diis_vector(i), x_i, 1, x, 1)
+         call daxpy(diis%n_parameters, diis_vector(i), x_i, 1, x, 1)
 !
       enddo
 !
-      call mem%dealloc(x_i, solver%n_parameters)
+      call mem%dealloc(x_i, diis%n_parameters)
 !
       call mem%dealloc(diis_vector, current_dim + 1)
 !
-!     Close files
-!
-      do i = 1, solver%diis_dimension
-
-         call solver%e_files(i)%close_()
-         call solver%x_files(i)%close_()
-
-      enddo
-!
-      solver%iteration = solver%iteration + 1
+      diis%iteration = diis%iteration + 1
 !
    end subroutine update_diis_tool
 !
 !
-   function get_current_dim_diis_tool(solver)
+   function get_current_dim_diis_tool(diis)
 !!
 !!    Get current dimension 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
       implicit none
 !
-      class(diis_tool) :: solver
+      class(diis_tool) :: diis
 !
       integer :: get_current_dim_diis_tool
 !
-      if (solver%iteration .gt. solver%diis_dimension .and. &
-            .not. solver%erase_history) then 
+      if (diis%iteration .gt. diis%dimension_ .and. &
+            .not. diis%erase_history) then 
 !
-         get_current_dim_diis_tool = solver%diis_dimension
+         get_current_dim_diis_tool = diis%dimension_
 !
       else
 !
-         get_current_dim_diis_tool = solver%iteration - &
-                           solver%diis_dimension*((solver%iteration-1)/solver%diis_dimension) 
+         get_current_dim_diis_tool = diis%iteration - &
+                           diis%dimension_*((diis%iteration-1)/diis%dimension_) 
 !
       endif
 !
    end function get_current_dim_diis_tool
 !
 !
-   subroutine write_current_vecs_diis_tool(solver, e, x, current_dim)
+   subroutine write_current_vecs_diis_tool(diis, e, x, current_dim)
 !!
 !!    Write current vectors 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
 !!    Writes the current e and x to file. Each index 1, 2, ..., diis_dim
-!!    has its own file. If more iterations have passed than we keep on file
-!!    (i.e., solver%iteration > solver%diis_dimension), then we do a first-in/
+!!    has its own record. If more iterations have passed than we keep on file
+!!    (i.e., diis%iteration > diis%dimension_), then we do a first-in/
 !!    last-out replacement unless erase_history is true. 
 !!
       implicit none 
 !
-      class(diis_tool) :: solver
+      class(diis_tool) :: diis
 !
-      real(dp), dimension(solver%n_equations), intent(in)  :: e
-      real(dp), dimension(solver%n_parameters), intent(in) :: x
+      real(dp), dimension(diis%n_equations), intent(in)  :: e
+      real(dp), dimension(diis%n_parameters), intent(in) :: x
 !
       integer, intent(in) :: current_dim
 !
-      integer :: k
+      logical :: cycle_left   
 !
-      type(sequential_file) :: tmp_file
+      cycle_left = (.not. diis%erase_history) .and. &
+                  (current_dim .eq. diis%dimension_) .and. &
+                  (current_dim .ne. diis%iteration)
 !
-      if (current_dim .le. solver%diis_dimension &
-            .and. current_dim .eq. solver%iteration &
-            .or. solver%erase_history) then 
+      if (cycle_left) then 
 !
-!        Just write to the correct file 
+         call diis%e_vectors%cycle_left() 
+         call diis%x_vectors%cycle_left() 
 !
-         call solver%e_files(current_dim)%rewind_()
-         call solver%e_files(current_dim)%write_(e, solver%n_equations)
+      endif 
 !
-         call solver%x_files(current_dim)%rewind_()
-         call solver%x_files(current_dim)%write_(x, solver%n_parameters)
-!
-      else 
-!
-!        Redefine files such that the current entry is the last, 
-!        while all the others move one position up 
-!
-         tmp_file = solver%e_files(1)
-!
-         do k = 1, current_dim - 1 
-!
-            solver%e_files(k) = solver%e_files(k+1)
-!
-         enddo 
-!
-         solver%e_files(current_dim) = tmp_file
-!
-         call solver%e_files(current_dim)%rewind_()
-         call solver%e_files(current_dim)%write_(e, solver%n_equations)
-!
-         tmp_file = solver%x_files(1)
-!
-         do k = 1, current_dim - 1 
-!
-            solver%x_files(k) = solver%x_files(k+1)
-!
-         enddo 
-!
-         solver%x_files(current_dim) = tmp_file
-!
-         call solver%x_files(current_dim)%rewind_()
-         call solver%x_files(current_dim)%write_(x, solver%n_parameters)
-!
-      endif
+      call diis%e_vectors%set(e, current_dim)
+      call diis%x_vectors%set(x, current_dim)
 !
    end subroutine write_current_vecs_diis_tool
 !
 !
-   subroutine construct_diis_matrix_diis_tool(solver, current_dim, diis_matrix, e)
+   subroutine construct_diis_matrix_diis_tool(diis, current_dim, diis_matrix, e)
 !!
 !!    Construct DIIS matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
 !!
       implicit none
 !
-      class(diis_tool) :: solver
+      class(diis_tool) :: diis
 !
       integer, intent(in) :: current_dim
 !
       real(dp), dimension(current_dim + 1, current_dim + 1), intent(inout) :: diis_matrix
 !
-      real(dp), dimension(solver%n_equations), intent(in) :: e
+      real(dp), dimension(diis%n_equations), intent(in) :: e
 !
       real(dp), dimension(:), allocatable :: e_i  ! To hold previous e_i temporarily
       real(dp), dimension(:), allocatable :: e_j  ! To hold previous e_j temporarily
@@ -447,22 +449,22 @@ contains
 !
       diis_matrix = zero
 !
-      if (solver%accumulate) then
+      if (diis%accumulate) then
 !
-         call solver%diis_matrix%open_()
+         call diis%diis_matrix%open_()
 !
-         if (solver%iteration .gt. solver%diis_dimension .and. .not. solver%erase_history) then
+         if (diis%iteration .gt. diis%dimension_ .and. .not. diis%erase_history) then
 !
 !           First entry goes out, eliminating the (old) 1st row & column.
 !
                call mem%alloc(diis_matrix_tmp, current_dim, current_dim)
 !
-               call solver%diis_matrix%rewind_()
+               call diis%diis_matrix%rewind_()
 !
                do j = 1, current_dim
                   do i = 1, current_dim
 !
-                     call solver%diis_matrix%read_(diis_matrix_tmp(i,j))
+                     call diis%diis_matrix%read_(diis_matrix_tmp(i,j))
 !
                   enddo
                enddo
@@ -476,12 +478,12 @@ contains
 !
 !           Still doing the first set of vectors: just read the previous matrix 
 !
-            call solver%diis_matrix%rewind_()
+            call diis%diis_matrix%rewind_()
 !
             do j = 1, current_dim - 1
                do i = 1, current_dim - 1
 !
-                  call solver%diis_matrix%read_(diis_matrix(i,j))
+                  call diis%diis_matrix%read_(diis_matrix(i,j))
 !
                enddo
             enddo
@@ -491,14 +493,13 @@ contains
 !        Get the parts of the DIIS matrix G not constructed in
 !        the previous iterations
 !
-         call mem%alloc(e_i, solver%n_equations)
+         call mem%alloc(e_i, diis%n_equations)
 !
          do i = 1, current_dim
 !
-            call solver%e_files(i)%rewind_()
-            call solver%e_files(i)%read_(e_i, solver%n_equations)
+            call diis%e_vectors%get(e_i, i)
 !
-            diis_matrix(current_dim, i) = ddot(solver%n_equations, e, 1, e_i, 1)
+            diis_matrix(current_dim, i) = ddot(diis%n_equations, e, 1, e_i, 1)
             diis_matrix(i, current_dim) = diis_matrix(current_dim, i)
 !
             diis_matrix(current_dim + 1, i) = -one
@@ -506,38 +507,36 @@ contains
 !
          enddo
 !
-         call mem%dealloc(e_i, solver%n_equations)
+         call mem%dealloc(e_i, diis%n_equations)
 !
 !        Write the current DIIS matrix to file
 !
-         call solver%diis_matrix%rewind_()
+         call diis%diis_matrix%rewind_()
 !
          do j = 1, current_dim
             do i = 1, current_dim
 !
-               call solver%diis_matrix%write_(diis_matrix(i,j))
+               call diis%diis_matrix%write_(diis_matrix(i,j))
 !
             enddo
          enddo
 !
-         call solver%diis_matrix%close_() 
+         call diis%diis_matrix%close_() 
 !
       else ! Non-cumulative diis -> build diis matrix from scratch
 !         
-         call mem%alloc(e_i, solver%n_equations)
-         call mem%alloc(e_j, solver%n_equations)
+         call mem%alloc(e_i, diis%n_equations)
+         call mem%alloc(e_j, diis%n_equations)
 !
          do i = 1, current_dim
 !
-            call solver%e_files(i)%rewind_()
-            call solver%e_files(i)%read_(e_i, solver%n_equations)
+            call diis%e_vectors%get(e_i, i)
 !
             do j = 1, i
 !
-               call solver%e_files(j)%rewind_()
-               call solver%e_files(j)%read_(e_j, solver%n_equations)
+               call diis%e_vectors%get(e_j, j)
 !
-               diis_matrix(i, j) = ddot(solver%n_equations, e_i, 1, e_j, 1)
+               diis_matrix(i, j) = ddot(diis%n_equations, e_i, 1, e_j, 1)
                diis_matrix(j, i) = diis_matrix(i, j)
 !
             enddo
@@ -547,124 +546,108 @@ contains
 !
          enddo 
 !
-         call mem%dealloc(e_i, solver%n_equations)
-         call mem%dealloc(e_j, solver%n_equations)
+         call mem%dealloc(e_i, diis%n_equations)
+         call mem%dealloc(e_j, diis%n_equations)
 !
       endif
 !
    end subroutine construct_diis_matrix_diis_tool
 !
 !
-   subroutine read_x_diis_tool(solver, x_i, i)
+   subroutine read_x_diis_tool(diis, x_i, i)
 !!
 !!    Get x_i 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
 !!
       implicit none
 !
-      class(diis_tool) :: solver
+      class(diis_tool) :: diis
 !
-      real(dp), dimension(solver%n_parameters), intent(out) :: x_i
+      real(dp), dimension(diis%n_parameters), intent(out) :: x_i
 !
       integer, intent(in) :: i
 !
       integer :: current_dim
 !
-      current_dim = solver%get_current_dim()
+      current_dim = diis%get_current_dim()
 !
       if (i .gt. current_dim) call output%error_msg('Asked for an x not in use.')
 !
-      call solver%x_files(i)%open_('read', 'rewind')
-!
-      call solver%x_files(i)%read_(x_i, solver%n_parameters)
-!
-      call solver%x_files(i)%close_()
+      call diis%x_vectors%get(x_i, i)
 !
    end subroutine read_x_diis_tool
 !
 !
-   subroutine read_e_diis_tool(solver, e_i, i)
+   subroutine read_e_diis_tool(diis, e_i, i)
 !!
 !!    Get e_i
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
 !!
       implicit none
 !
-      class(diis_tool) :: solver
+      class(diis_tool) :: diis
 !
-      real(dp), dimension(solver%n_equations), intent(out) :: e_i
+      real(dp), dimension(diis%n_equations), intent(out) :: e_i
 !
       integer, intent(in) :: i
 !
       integer :: current_dim
 !
-      current_dim = solver%get_current_dim()
+      current_dim = diis%get_current_dim()
 !
       if (i .gt. current_dim) call output%error_msg('Asked for an e not in use.')
 !
-      call solver%e_files(i)%open_('read', 'rewind')
-!
-      call solver%e_files(i)%read_(e_i, solver%n_equations)
-!
-      call solver%e_files(i)%close_()
+      call diis%e_vectors%get(e_i, i)
 !
    end subroutine read_e_diis_tool
 !
 !
-   subroutine write_x_diis_tool(solver, x_i, i)
+   subroutine write_x_diis_tool(diis, x_i, i)
 !!
 !!    Set x_i 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
 !!
       implicit none
 !
-      class(diis_tool) :: solver
+      class(diis_tool) :: diis
 !
-      real(dp), dimension(solver%n_parameters), intent(in) :: x_i
+      real(dp), dimension(diis%n_parameters), intent(in) :: x_i
 !
       integer, intent(in) :: i
 !
       integer :: current_dim
 !
-      current_dim = solver%get_current_dim()
+      current_dim = diis%get_current_dim()
 !
-      if (solver%accumulate) call output%error_msg('Can not set x for cumulative diis.')
+      if (diis%accumulate) call output%error_msg('Can not set x for cumulative diis.')
       if (i .gt. current_dim) call output%error_msg('Asked for an x not in use.')
 !
-      call solver%x_files(i)%open_('write', 'rewind')
-!
-      call solver%x_files(i)%write_(x_i, solver%n_parameters)
-!
-      call solver%x_files(i)%close_()
+      call diis%x_vectors%set(x_i, i)
 !
    end subroutine write_x_diis_tool
 !
 !
-   subroutine write_e_diis_tool(solver, e_i, i)
+   subroutine write_e_diis_tool(diis, e_i, i)
 !!
 !!    Set e_i 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019
 !!
       implicit none
 !
-      class(diis_tool) :: solver
+      class(diis_tool) :: diis
 !
-      real(dp), dimension(solver%n_equations), intent(in) :: e_i
+      real(dp), dimension(diis%n_equations), intent(in) :: e_i
 !
       integer, intent(in) :: i
 !
       integer :: current_dim
 !
-      current_dim = solver%get_current_dim()
+      current_dim = diis%get_current_dim()
 !
-      if (solver%accumulate) call output%error_msg('Can not set e for cumulative diis.')
+      if (diis%accumulate) call output%error_msg('Can not set e for cumulative diis.')
       if (i .gt. current_dim) call output%error_msg('Asked for an e not in use.')
 !
-      call solver%e_files(i)%open_('write', 'rewind')
-!
-      call solver%e_files(i)%write_(e_i, solver%n_equations)
-!
-      call solver%e_files(i)%close_()
+      call diis%e_vectors%set(e_i, i)
 !
    end subroutine write_e_diis_tool
 !

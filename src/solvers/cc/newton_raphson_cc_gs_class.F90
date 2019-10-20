@@ -50,7 +50,8 @@ module newton_raphson_cc_gs_class
       real(dp) :: micro_residual_threshold
       real(dp) :: relative_micro_residual_threshold
 !
-      logical :: restart
+      character(len=200) :: storage 
+      logical :: restart, records_in_memory 
 !
    contains
 !     
@@ -102,6 +103,7 @@ contains
       solver%omega_threshold                    = 1.0d-6
       solver%restart                            = .false.
       solver%max_micro_dim_red                  = 50
+      solver%storage                            = 'disk'
 !
 !     Read & print settings (thresholds, etc.)
 !
@@ -126,6 +128,23 @@ contains
          call wf%set_initial_amplitudes_guess()
 !
       endif
+!
+!     Determine whether to store records in memory or on file
+!
+      if (trim(solver%storage) == 'memory') then 
+!
+         solver%records_in_memory = .true.
+!
+      elseif (trim(solver%storage) == 'disk') then 
+!
+         solver%records_in_memory = .false.
+!
+      else 
+!
+         call output%error_msg('Could not recognize keyword storage in solver: ' // &
+                                 trim(solver%storage))
+!
+      endif 
 !
    end function new_newton_raphson_cc_gs
 !
@@ -175,7 +194,8 @@ contains
 !
       real(dp) :: energy, prev_energy, omega_norm
 !
-      diis = diis_tool('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
+      diis = diis_tool('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, &
+                  solver%records_in_memory, dimension_=solver%diis_dimension)
 !
       iteration = 0
       micro_iterations = 0
@@ -263,8 +283,6 @@ contains
 !
       endif 
 !
-      call diis%cleanup()
-!
       call mem%dealloc(omega, wf%n_gs_amplitudes)
       call mem%dealloc(dt, wf%n_gs_amplitudes)
       call mem%dealloc(t, wf%n_gs_amplitudes)
@@ -306,7 +324,7 @@ contains
       call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
 !
       davidson = linear_davidson_tool('cc_gs_newton_raphson', wf%n_gs_amplitudes, &
-            solver%micro_residual_threshold, solver%max_micro_dim_red, -omega)
+         solver%micro_residual_threshold, solver%max_micro_dim_red, -omega, solver%records_in_memory)
 !
       call davidson%set_preconditioner(epsilon)
       call mem%dealloc(epsilon, wf%n_gs_amplitudes)
@@ -324,7 +342,7 @@ contains
       norm_trial = sqrt(ddot(wf%n_gs_amplitudes, first_trial, 1, first_trial, 1))
       call dscal(wf%n_gs_amplitudes, one/norm_trial, first_trial, 1)
 !
-      call davidson%write_trial(first_trial, 'rewind')
+      call davidson%set_trial(first_trial, 1)
       call mem%dealloc(first_trial, wf%n_gs_amplitudes)
 !
 !     Prepare intermediates for Jacobian transformation
@@ -349,9 +367,9 @@ contains
 !
          call mem%alloc(c, davidson%n_parameters)
 !
-         call davidson%read_trial(c, davidson%dim_red)
+         call davidson%get_trial(c, davidson%dim_red)
          call wf%jacobian_transformation(c) 
-         call davidson%write_transform(c)
+         call davidson%set_transform(c, davidson%dim_red)
 !
          call mem%dealloc(c, davidson%n_parameters)
 !
@@ -444,6 +462,8 @@ contains
       call input%get_keyword_in_section('max micro iterations', 'solver cc gs', solver%max_micro_iterations)
 !
       if (input%requested_keyword_in_section('restart', 'solver cc gs')) solver%restart = .true.
+!
+      call input%get_keyword_in_section('storage', 'solver cc gs', solver%storage)
 !
    end subroutine read_settings_newton_raphson_cc_gs
 !

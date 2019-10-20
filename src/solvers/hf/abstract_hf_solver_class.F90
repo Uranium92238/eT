@@ -37,12 +37,12 @@ module abstract_hf_solver_class
       character(len=100) :: author
       character(len=400) :: description
 !
-      real(dp) :: energy_threshold          = 1.0D-6
-      real(dp) :: gradient_threshold        = 1.0D-6
+      real(dp) :: energy_threshold  
+      real(dp) :: gradient_threshold
 !
-      integer :: max_iterations        = 100
+      integer :: max_iterations
 !  
-      character(len=200) :: ao_density_guess = 'SAD'
+      character(len=200) :: ao_density_guess
 !
       integer, dimension(:), allocatable :: orbitals_to_print
 !
