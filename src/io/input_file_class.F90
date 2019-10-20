@@ -213,10 +213,11 @@ contains
 !
       solver_hf%name_    = 'solver hf'
       solver_hf%required = .false.
-      solver_hf%keywords = [character(len=25) ::       &
+      solver_hf%keywords = [character(len=25) ::         &
                               'algorithm            ',   &
                               'energy threshold     ',   &
                               'gradient threshold   ',   &
+                              'storage              ',   &
                               'max iterations       ',   &
                               'diis dimension       ',   &
                               'restart              ',   &
@@ -242,6 +243,7 @@ contains
                                  'omega threshold',      &
                                  'max micro iterations', &
                                  'rel micro threshold',  &
+                                 'storage',              &
                                  'max iterations',       &
                                  'diis dimension',       &
                                  'restart' ]
@@ -258,6 +260,7 @@ contains
                                  'restart',              &
                                  'left eigenvectors',    &
                                  'right eigenvectors',   &
+                                 'storage',              &
                                  'singlet states',       &
                                  'diis dimension',       &
                                  'max micro iterations', &
@@ -268,6 +271,7 @@ contains
       solver_cc_multipliers%keywords = [character(len=25) ::         &
                                           'algorithm            ',   &
                                           'threshold            ',   &
+                                          'storage              ',   &
                                           'restart              ',   &
                                           'max iterations       ']
 !

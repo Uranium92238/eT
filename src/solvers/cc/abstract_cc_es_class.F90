@@ -62,7 +62,10 @@ module abstract_cc_es_class
       real(dp) :: eigenvalue_threshold  
       real(dp) :: residual_threshold  
 !
-      logical  :: restart
+      character(len=200) :: storage 
+      logical :: records_in_memory 
+!
+      logical :: restart
 !
       integer :: n_singlet_states
 !
@@ -77,28 +80,27 @@ module abstract_cc_es_class
       class(es_start_vector_tool), allocatable  :: start_vector_tool
       class(es_projection_tool), allocatable    :: projection_tool
 !
-!
    contains
 !
       procedure(run_abstract_cc_es), deferred :: run
 !
-      procedure, non_overridable :: print_banner                     => print_banner_abstract_cc_es
+      procedure :: print_banner                     => print_banner_abstract_cc_es
 !
-      procedure, non_overridable :: read_es_settings                 => read_es_settings_abstract_cc_es     
-      procedure, non_overridable :: print_es_settings                => print_es_settings_abstract_cc_es
+      procedure :: read_es_settings                 => read_es_settings_abstract_cc_es     
+      procedure :: print_es_settings                => print_es_settings_abstract_cc_es
 !
-      procedure, non_overridable :: cleanup                          => cleanup_abstract_cc_es
-      procedure, non_overridable :: print_summary                    => print_summary_abstract_cc_es
+      procedure :: cleanup                          => cleanup_abstract_cc_es
+      procedure :: print_summary                    => print_summary_abstract_cc_es
 !
-      procedure, non_overridable :: prepare_wf_for_excited_state     => prepare_wf_for_excited_state_abstract_cc_es
+      procedure :: prepare_wf_for_excited_state     => prepare_wf_for_excited_state_abstract_cc_es
 !
-      procedure, non_overridable :: determine_restart_transformation => determine_restart_transformation_abstract_cc_es 
+      procedure :: determine_restart_transformation => determine_restart_transformation_abstract_cc_es 
 !
-      procedure, non_overridable :: initialize_start_vector_tool     => initialize_start_vector_tool_abstract_cc_es
-      procedure                  :: initialize_projection_tool       => initialize_projection_tool_abstract_cc_es
+      procedure :: initialize_start_vector_tool     => initialize_start_vector_tool_abstract_cc_es
+      procedure :: initialize_projection_tool       => initialize_projection_tool_abstract_cc_es
 !
-      procedure, non_overridable :: initialize_energies              => initialize_energies_abstract_cc_es
-      procedure, non_overridable :: destruct_energies                => destruct_energies_abstract_cc_es
+      procedure :: initialize_energies              => initialize_energies_abstract_cc_es
+      procedure :: destruct_energies                => destruct_energies_abstract_cc_es
 !
    end type abstract_cc_es
 !
@@ -196,6 +198,8 @@ contains
 !
       if (input%requested_keyword_in_section('ionization', 'solver cc es') .and. .not. &
           input%requested_keyword_in_section('core excitation', 'solver cc es')) solver%es_type = 'ionize'
+!
+      call input%get_keyword_in_section('storage', 'solver cc es', solver%storage)
 !
    end subroutine read_es_settings_abstract_cc_es
 !

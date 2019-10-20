@@ -46,8 +46,10 @@ module scf_diis_hf_class
       integer :: diis_dimension
 !
       logical :: converged
-!
       logical :: restart
+!
+      logical :: records_in_memory
+      character(len=200) :: storage 
 !
    contains
 !
@@ -93,8 +95,9 @@ contains
       solver%diis_dimension      = 8
       solver%max_iterations      = 100
       solver%ao_density_guess    = 'SAD'
-      solver%energy_threshold    = 1.0D-6
-      solver%gradient_threshold  = 1.0D-6
+      solver%energy_threshold    = 1.0d-6
+      solver%gradient_threshold  = 1.0d-6
+      solver%storage             = 'memory'
 !
       call solver%read_settings()
 !
@@ -103,12 +106,13 @@ contains
    end function new_scf_diis_hf
 !
 !
-   function new_scf_diis_hf_from_parameters(wf, restart,          &
-                                                diis_dimension,   &
-                                                max_iterations,   &
-                                                ao_density_guess, &
-                                                energy_threshold, &
-                                                gradient_threshold) result(solver)
+   function new_scf_diis_hf_from_parameters(wf, restart,             &
+                                                diis_dimension,      &
+                                                max_iterations,      &
+                                                ao_density_guess,    &
+                                                energy_threshold,    &
+                                                gradient_threshold,  &
+                                                storage) result(solver)
 !!
 !!    New SCF DIIS from parameters
 !!    Written by Tor S. Haugland, 2019
@@ -125,6 +129,7 @@ contains
       character(len=200), intent(in) :: ao_density_guess
       real(dp),           intent(in) :: energy_threshold
       real(dp),           intent(in) :: gradient_threshold
+      character(len=200), intent(in) :: storage 
 !
 !     Set settings from parameters
 !
@@ -134,6 +139,7 @@ contains
       solver%ao_density_guess    = ao_density_guess
       solver%energy_threshold    = energy_threshold
       solver%gradient_threshold  = gradient_threshold
+      solver%storage             = storage
 !
       call solver%prepare(wf)
 !
@@ -193,6 +199,23 @@ contains
          call wf%construct_idempotent_density_and_fock()
 !
       endif
+!
+!     Determine whether to store records in memory or on file
+!
+      if (trim(solver%storage) == 'memory') then 
+!
+         solver%records_in_memory = .true.
+!
+      elseif (trim(solver%storage) == 'disk') then 
+!
+         solver%records_in_memory = .false.
+!
+      else 
+!
+         call output%error_msg('Could not recognize keyword storage in solver: ' // &
+                                 trim(solver%storage))
+!
+      endif 
 !
    end subroutine prepare_scf_diis_hf
 !
@@ -262,7 +285,8 @@ contains
       dim_fock     = ((wf%n_ao)*(wf%n_ao + 1)/2)*(wf%n_densities)
       dim_gradient = (wf%n_ao*(wf%n_ao - 1)/2)*(wf%n_densities)
 !
-      diis = diis_tool('hf_diis', dim_fock, dim_gradient, solver%diis_dimension)
+      diis = diis_tool('hf_diis', dim_fock, dim_gradient, &
+         solver%records_in_memory, dimension_=solver%diis_dimension)
 !
 !     Set the initial density guess and Fock matrix
 !
@@ -381,8 +405,6 @@ contains
       call mem%dealloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
       call mem%dealloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
 !
-      call diis%cleanup()
-!
       if (.not. solver%converged) then
 !
          call output%printf('---------------------------------------------------------------', &
@@ -453,6 +475,7 @@ contains
       class(scf_diis_hf) :: solver
 !
       call input%get_keyword_in_section('diis dimension', 'solver hf', solver%diis_dimension)
+      call input%get_keyword_in_section('storage', 'solver hf', solver%storage)
 !
    end subroutine read_scf_diis_settings_scf_diis_hf
 !

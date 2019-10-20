@@ -31,7 +31,7 @@ module linear_davidson_tool_class
 !!    Using the tool: after using the constructor, 
 !!
 !!       1. Set the initial set of trial vectors by constructing 
-!!          them and calling davidson%write_trial(c). When you are 
+!!          them and calling davidson%set_trial(c). When you are 
 !!          done writing trials, call davidson%orthonormalize_trial_vecs() 
 !!          to make sure the trial vectors are orthonormalized.
 !!
@@ -49,9 +49,9 @@ module linear_davidson_tool_class
 !!
 !!             II. Read new trial, transform it, & store the result 
 !!
-!!             call davidson%read_trial(c, davidson%dim_red)
+!!             call davidson%get_trial(c, davidson%dim_red)
 !!             Transform: c <- A c 
-!!             call davidson%write_transform(c)
+!!             call davidson%set_transform(c, davidson%dim_red)
 !!
 !!             III. Solve reduced problem 
 !!             
@@ -104,10 +104,29 @@ module linear_davidson_tool_class
 contains
 !
 !
-   function new_linear_davidson_tool(name_, n_parameters, add_trial_threshold, max_dim_red, F) result(davidson)
+   function new_linear_davidson_tool(name_, n_parameters, &
+            lindep_threshold, max_dim_red, F, records_in_memory) result(davidson)
 !!
 !!    New linear Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    name_ :            Name of solver tool (used for temporary files)
+!!
+!!    n_parameters:      Dimensionality of the full vector space (A is n_parameters x n_parameters)
+!!
+!!    lindep_threshold:  Norm threshold for new trial vector after being added to the trial 
+!!                       space. If the vector, after orthonormalization against the existing
+!!                       trial space, has a norm below this threshold, then we assume that the 
+!!                       trial basis has become linearly dependent. This causes an error stop. 
+!!
+!!    max_dim_red:       Maximum dimension of the reduced space. When exceeding this dimensionality,
+!!                       the solutions are set as the basis for the new trial space. 
+!!
+!!    F:                 The linear equation is A X = F. Here F is n_parameters long. F is passed to 
+!!                       the tool and kept in the tool until the tool is deallocated.
+!!
+!!    records_in_memory: If .true., the trials and transforms are kept in memory. Otherwise they 
+!!                       are stored on file. 
 !!
       implicit none 
 !
@@ -119,7 +138,9 @@ contains
 !
       real(dp), dimension(n_parameters) :: F 
 !
-      real(dp), intent(in) :: add_trial_threshold
+      real(dp), intent(in) :: lindep_threshold
+!
+      logical, intent(in) :: records_in_memory 
 !
       call mem%alloc(davidson%F, n_parameters)
       davidson%F = F
@@ -127,24 +148,19 @@ contains
       davidson%n_parameters = n_parameters
       davidson%n_solutions  = 1
 !
-      davidson%add_trial_threshold = add_trial_threshold
+      davidson%lindep_threshold = lindep_threshold
       davidson%max_dim_red = max_dim_red
 !
       davidson%name_ = trim(name_)
 !
-      davidson%trials         = sequential_file(trim(davidson%name_) // '_trials', 'unformatted')
-      davidson%transforms     = sequential_file(trim(davidson%name_) // '_transforms', 'unformatted')
-      davidson%preconditioner = sequential_file(trim(davidson%name_) // '_preconditioner', 'unformatted')
-!
-!     For safety, delete old files if they are on disk
-!
-      call davidson%trials%delete_()
-      call davidson%transforms%delete_()
-!
-      davidson%do_precondition   = .false.         ! Switches to true if 'set_preconditioner' is called
+      davidson%do_precondition   = .false. ! Switches to true if 'set_preconditioner' is called
 !
       davidson%dim_red      = 0    
       davidson%n_new_trials = davidson%n_solutions 
+!
+!     Set up array/or file array for trials and transforms    
+!
+      call davidson%prepare_trials_and_transforms(records_in_memory)
 !
    end function new_linear_davidson_tool
 !
@@ -175,17 +191,13 @@ contains
       call mem%alloc(davidson%F_red, davidson%dim_red)
       call mem%alloc(c_i, davidson%n_parameters)
 !
-      call davidson%trials%open_('read', 'rewind')
-!
       do i = 1, davidson%dim_red 
 !
-         call davidson%trials%read_(c_i, davidson%n_parameters)
+         call davidson%get_trial(c_i, i)
 !
          davidson%F_red(i) = ddot(davidson%n_parameters, c_i, 1, davidson%F, 1)
 !
       enddo
-!
-      call davidson%trials%close_()
 !
       call mem%dealloc(c_i, davidson%n_parameters)
 !
@@ -314,16 +326,8 @@ contains
 !
       real(dp), optional :: alpha
 !
-      real(dp) :: norm_new_trial, norm_precond_residual, alpha_local
+      real(dp) :: norm_trial, alpha_local
       real(dp), dimension(:), allocatable :: trial 
-!
-!     Precondition the residual, then remove components already 
-!     in the search space by orthogonalizing it against existing 
-!     trial vectors.
-!
-!     If the vector is not too small, then a new trial vector 
-!     was successfully constructed and is added to the search
-!     space.
 !
 !     Precondition 
 !
@@ -333,32 +337,17 @@ contains
       call mem%alloc(trial, davidson%n_parameters)
       call dcopy(davidson%n_parameters, R, 1, trial, 1)
 !
-      call davidson%precondition(trial, alpha_local)
+      if (davidson%do_precondition) call davidson%precondition(trial, alpha_local)
 !
 !     Renormalize 
 !
-      norm_precond_residual = get_l2_norm(trial, davidson%n_parameters)
-      call dscal(davidson%n_parameters, one/norm_precond_residual, trial, 1)
+      norm_trial = get_l2_norm(trial, davidson%n_parameters)
+      call dscal(davidson%n_parameters, one/norm_trial, trial, 1)
 !
-!     Orthogonalize against existing search space 
+!     Add to trial space 
 !
-      call davidson%orthogonalize_against_trial_vecs(trial)
-      norm_new_trial = get_l2_norm(trial, davidson%n_parameters)
-!  
-!     Add to search space if significant
-!
-      if (norm_new_trial > davidson%add_trial_threshold) then
-!
-         davidson%n_new_trials = davidson%n_new_trials + 1
-         call dscal(davidson%n_parameters, one/norm_new_trial, trial, 1)
-!
-         call davidson%write_trial(trial, 'append')
-!
-      else
-!
-         call output%error_msg('did not find any new trials.')
-!
-      endif 
+      davidson%n_new_trials = davidson%n_new_trials + 1
+      call davidson%set_trial(trial, davidson%dim_red + davidson%n_new_trials)
 !
       call mem%dealloc(trial, davidson%n_parameters)
 !
@@ -374,9 +363,11 @@ contains
 !
       class(linear_davidson_tool) :: davidson 
 !
-      call davidson%trials%delete_()
-      call davidson%transforms%delete_()
-      call davidson%preconditioner%delete_()
+      if (davidson%do_precondition) then 
+!
+         call mem%dealloc(davidson%preconditioner, davidson%n_parameters)
+!
+      endif
 !
       if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
       if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
