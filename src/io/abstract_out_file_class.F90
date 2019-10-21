@@ -33,13 +33,17 @@ module abstract_out_file_class
 !
    contains
 !
-      procedure :: open_                  => open_abstract_out_file
-      procedure :: close_                 => close_abstract_out_file
-      procedure :: flush_                 => flush_abstract_out_file
+      procedure :: open_                     => open_abstract_out_file
+      procedure :: close_                    => close_abstract_out_file
+      procedure :: flush_                    => flush_abstract_out_file
 !
-      procedure, public :: formprint      => formprint_abstract_out_file
+      procedure, public :: format_print            => format_print_abstract_out_file
 !     
-      procedure :: long_string_print      => long_string_print_abstract_out_file
+      procedure, public :: format_print_matrix     => format_print_matrix_abstract_out_file
+!
+      procedure, public :: format_print_separator  => format_print_separator_abstract_out_file
+!
+      procedure :: long_string_print         => long_string_print_abstract_out_file
 !
       procedure, nopass, private :: get_format_length
 !
@@ -150,9 +154,9 @@ contains
    end subroutine flush_abstract_out_file
 !
 !
-   subroutine formprint_abstract_out_file(the_file, string, reals, ints, chars, logs, fs, ffs, lfs, ll, adv)
+   subroutine format_print_abstract_out_file(the_file, string, reals, ints, chars, logs, fs, ffs, lfs, ll, adv)
 !!
-!!    Printf 
+!!    Format print 
 !!    Written by Rolf Heilemann Myhre, May 2019
 !!
 !!    Prints any number of reals and integers formatted Python style.
@@ -452,7 +456,7 @@ contains
       call the_file%long_string_print(pstring, fs=f_string, ffs=ff_string, lfs=lf_string, & 
                                       ll=l_length, adv=adva)
 !
-   end subroutine formprint_abstract_out_file
+   end subroutine format_print_abstract_out_file
 !
 !  
    subroutine long_string_print_abstract_out_file(the_file, string, fs, colons, &
@@ -640,5 +644,193 @@ contains
       endif
 !
    end function get_format_length
-!  
+!
+!
+   subroutine format_print_matrix_abstract_out_file(the_file, name_, matrix, dim_1, dim_2, fs, columns)
+!!    
+!!    Format print matrix 
+!!    Written by Tommaso Giovannini, Mar. 2019
+!!    
+!!    Modified by Rolf H. Myhre, Oct. 2019
+!!
+!!    Moved to output file and added format string and number of columns
+!!
+!!    name_: Name to be printed above the matrix
+!!
+!!    Matrix to be printed with dimension dim_1 x dim_2
+!!
+!!    fs:      Optional format string for numbers, default is (f13.8)
+!!    columns: Optional integer specifying number of columns to print per line, default is 5
+!!
+      implicit none
+!
+      class(abstract_out_file), intent(in)            :: the_file
+!
+      character(len=*), intent(in)                    :: name_
+!      
+      integer, intent(in)                             :: dim_1
+      integer, intent(in)                             :: dim_2
+!
+      real(dp), dimension(dim_1, dim_2), intent(in)   :: matrix
+!
+      character(len=*), optional, intent(in)          :: fs
+      integer, intent(in), optional                   :: columns
+!
+      integer :: i, j, k
+      integer :: n_columns, n_prints, columns_printed
+      integer :: form_length, line_length, name_length, print_length
+      integer :: row_int_length, col_int_length, first_col_int_length
+      character(len=20)  :: form_string, print_fs
+      character(len=20)  :: row_index_format, col_index_format, first_col_index_format
+      character(len=400) :: int_string, real_string 
+!
+      integer, dimension(:), allocatable  :: ints_to_print
+      real(dp), dimension(:), allocatable :: reals_to_print
+!
+!     Set format if provided
+      if (present(fs)) then
+         form_string = trim(fs)
+      else
+         form_string = '(f13.8)'
+      endif 
+!
+!
+!     Set number of columns if required
+      if (present(columns)) then
+         n_columns = min(dim_2, columns)
+      else
+         n_columns = min(dim_2, 5)
+      endif
+!
+!     Tiny arrays and mem depends on output
+      allocate(ints_to_print(n_columns))
+      allocate(reals_to_print(n_columns))
+!
+!     Number of prints to devide the columns into
+      n_prints = (dim_2-1)/n_columns + 1
+!
+!     Get various lengths
+      name_length = len_trim(name_)
+      form_length = the_file%get_format_length(form_string) 
+!
+      write(int_string, '(i0)') dim_1
+      row_int_length = len_trim(int_string) 
+!
+      write(int_string, '(i0)') dim_2
+      col_int_length = len_trim(int_string) 
+!
+!     Calculate the line lengths
+      line_length = (row_int_length + 1) + n_columns*(form_length+1)
+!
+!     Calculate the first line length, name should be in the middle
+      print_length = (line_length + name_length)/2
+!
+!     Find format of first line and print name
+      write(print_fs, '(a,i0,a)') '(/a', print_length, ')'
+      call the_file%format_print(name_, fs=print_fs)
+!
+!     Set up string for column indices, assuming form_length .ge. col_int_length
+      first_col_int_length = (row_int_length + 1) + form_length/2 + col_int_length/2 + 1
+      col_int_length = form_length
+!
+      write(first_col_index_format,'(a,i0,a)') '(i', first_col_int_length, ')'
+      write(col_index_format,'(a,i0,a)') '(i', col_int_length, ')'
+      int_string = trim(first_col_index_format) // repeat(' '//trim(col_index_format), n_columns - 1)
+!
+!     Set up string for matrix elements
+      write(row_index_format,'(a,i0,a)') '(i', row_int_length+1, ')'
+      real_string = trim(row_index_format) // repeat(' '//trim(form_string), n_columns)
+!
+!     Print separator
+      call the_file%format_print_separator(line_length+1)
+!
+!     Start iterating over number of prints
+!
+      columns_printed = 0
+!
+      do i = 1,n_prints
+!
+!        Some space between the prints
+         if (i .ne. 1) then
+            call the_file%format_print('')
+         end if
+!
+!        Calculate number of columns if last print and not first print and set up format strings
+         if ((i .eq.  n_prints) .and. (i .ne. 1)) then
+            n_columns = mod(dim_2, n_columns)
+            int_string = trim(first_col_index_format) // &
+                         repeat(' '//trim(col_index_format), n_columns - 1)
+            real_string = trim(row_index_format) // repeat(' '//trim(form_string), n_columns)
+         endif
+!
+!        Set up column indices to print
+         do j = 1, n_columns
+            ints_to_print(j) = columns_printed + j
+         enddo
+!
+         call the_file%format_print(int_string, ints=ints_to_print(1:n_columns), ll=line_length)
+!
+         do k = 1, dim_1
+!
+            do j = 1, n_columns
+               reals_to_print(j) = matrix(k,j)
+            enddo
+!
+            call the_file%format_print(real_string, ints=[k], &
+                                    reals=reals_to_print(1:n_columns), ll=line_length)
+!
+         enddo         
+!
+!
+         columns_printed = columns_printed + n_columns
+!
+      enddo
+!
+!     Print separator
+      call the_file%format_print_separator(line_length+1)
+!
+!
+      deallocate(ints_to_print)
+      deallocate(reals_to_print)
+!
+   end subroutine format_print_matrix_abstract_out_file
+!
+!
+   subroutine format_print_separator_abstract_out_file(the_file, n, symbol, fs)
+!!
+!!    Format print separator
+!!
+!!    Written by Rolf H. Myhre, Oct. 2019
+!!
+!!    n: Number of symbols to print
+!!    symbol: optional, what symbol to print, default is '='
+!!    fs: optional format string
+!!
+      implicit none
+!
+      class(abstract_out_file), intent(in) :: the_file
+!
+      integer, intent(in) :: n
+!
+      character, intent(in), optional :: symbol
+!
+      character(len=*), optional, intent(in) :: fs
+!
+      character :: sym
+!
+      character(len=n) :: separator_line
+!
+      if (present(symbol)) then
+         sym = symbol
+      else
+         sym = '='
+      endif
+!
+      separator_line = repeat(sym, n)
+!
+      call the_file%format_print(separator_line, ll=n, fs=fs)
+!
+   end subroutine format_print_separator_abstract_out_file
+!
+!
 end module abstract_out_file_class

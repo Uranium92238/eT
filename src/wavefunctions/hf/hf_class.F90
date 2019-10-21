@@ -3362,13 +3362,9 @@ contains
 !
       class(hf) :: wf
 !
-      character(len=12) :: frmt0
-!     
       real(dp), dimension(:), allocatable                   :: potential_points
       integer :: i
 !     
-      frmt0="(t5,65('='))"
-! 
       if(wf%system%mm%forcefield.eq.'fq') then
 !      
          if(.not.allocated(potential_points)) call mem%alloc(potential_points, wf%system%mm%n_atoms)
@@ -3402,24 +3398,22 @@ contains
                      wf%system%mm%pol_emb_lhs,  &
                      wf%system%mm%n_variables)
 !
-         if(wf%system%mm%verbose.ge.1) then 
-!         
-            write(output%unit,frmt0) 
+!
+         call output%print_separator('verbose', 67, fs='(/t3,a)')
+!
+         call output%printf('Atom          FQ LHS             FQ RHS        QM Potential@FQs', &
+                            pl='v', fs='(t6,a)')
 !            
-            write(output%unit,'(t6,a /)') 'Atom          FQ LHS             FQ RHS        QM Potential@FQs'
+         do i = 1, wf%system%mm%n_atoms
 !           
-            do i = 1, wf%system%mm%n_atoms
+            call output%printf('(i4)      (e13.6)      (e13.6)      (e13.6)', pl='v', &
+                               fs='(t6,a)', ints=[i], reals=[wf%system%mm%pol_emb_lhs(i), &
+                               wf%system%mm%pol_emb_rhs(i), potential_points(i)])
 !           
-               write(output%unit,'(t6,i4,6x,3(E13.6,6x))') &
-               i, wf%system%mm%pol_emb_lhs(i), wf%system%mm%pol_emb_rhs(i), potential_points(i)
+         enddo
 !           
-            enddo
-!           
-            write(output%unit,frmt0) 
-!           
-            flush(output%unit)
-!           
-         endif
+         call output%print_separator('verbose', 67)
+!
 !
 !        put FQ charges into charge (I am discrading langrangian multipliers)
 !
@@ -3431,18 +3425,12 @@ contains
 !
          wf%ao_fock = wf%ao_fock + half * wf%system%mm%pol_emb_fock
 !
-         if(wf%system%mm%verbose.ge.3) then 
-!           
-            call print_matrix('QM Density',wf%ao_density,wf%n_ao,wf%n_ao) 
-            flush(output%unit)
-!           
-            call print_matrix('FQ Fock',wf%system%mm%pol_emb_fock,wf%n_ao,wf%n_ao) 
-            flush(output%unit)
-!           
-            call print_matrix('QM/FQ Fock',wf%ao_fock,wf%n_ao,wf%n_ao) 
-            flush(output%unit)
-!           
-         endif
+!
+         call output%print_matrix('debug', 'QM Density', wf%ao_density, wf%n_ao, wf%n_ao)
+!
+         call output%print_matrix('debug', 'FQ Fock', wf%system%mm%pol_emb_fock, wf%n_ao, wf%n_ao)
+!
+         call output%print_matrix('debug', 'QM/FQ Fock', wf%ao_fock, wf%n_ao, wf%n_ao)
 !
          call mem%dealloc(potential_points, wf%system%mm%n_atoms)
 !         

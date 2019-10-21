@@ -25,7 +25,7 @@ module wavefunction_class
 !!
 !
    use parameters
-   use array_utilities, only : zero_array, print_matrix
+   use array_utilities, only : zero_array
    use global_out, only : output
    use sequential_file_class, only : sequential_file
    use memory_manager_class, only : mem
@@ -1349,25 +1349,15 @@ contains
 !
          call wf%construct_ao_electrostatics(0,0,'fock',elec_fock=wf%system%mm%nopol_h_wx)
 !         
-         if(wf%system%mm%verbose.ge.3) then 
-!          
-            call print_matrix('Electrostatic Embedding h:',wf%system%mm%nopol_h_wx,wf%n_ao,wf%n_ao)
-!         
-            flush(output%unit)
-!
-         endif
-!         
+         call output%print_matrix('debug', 'Electrostatic Embedding h:', &
+                                  wf%system%mm%nopol_h_wx, wf%n_ao, wf%n_ao)
       endif
 !         
       h_wx_eff = h_wx_eff + half * wf%system%mm%nopol_h_wx
 !         
-      if(wf%system%mm%verbose.ge.3) then 
-!      
-        call print_matrix('h_eff (QM + Electrostatic Embedding)',h_wx_eff,wf%n_ao,wf%n_ao) 
-!         
-        flush(output%unit)
-!         
-      endif
+!
+      call output%print_matrix('debug', 'h_eff (QM + Electrostatic Embedding)', & 
+                               h_wx_eff, wf%n_ao, wf%n_ao)
 !
 !
    end subroutine update_h_wx_mm_hf

@@ -36,7 +36,6 @@ module mm_class
 !
       integer :: n_atoms     ! number of MM atoms
       integer :: max_mm_mol  ! max number of MM molecules
-      integer :: verbose     ! verbose option
       integer :: n_variables ! Total number of FQ variables
 !      
       character(len=200) :: name    
@@ -182,11 +181,9 @@ contains
       class(mm) :: molecule
 !
       molecule%forcefield = 'non-polarizable' ! Standard
-      molecule%verbose    = 0 
       molecule%algorithm  = 'mat_inversion'
 !      
       call input%get_keyword_in_section('forcefield','molecular mechanics',molecule%forcefield)
-      call input%get_keyword_in_section('verbose','molecular mechanics',molecule%verbose)
 !
       if (trim(molecule%forcefield).eq.'fq') then
 !
@@ -215,7 +212,6 @@ contains
       write(output%unit, '(/t6,a14,a)')     'Force Field:  ', trim(molecule%forcefield)
       If(trim(molecule%forcefield).ne.'non-polarizable') &
          write(output%unit, '(t6,a14,a)')      'Algorithm  :  ', trim(molecule%algorithm)
-      write(output%unit, '(t6,a14,i1)')    'MM Verbose :  ', molecule%verbose 
 !
       write(output%unit, '(/t6,a34,i4)')     'Number of MM atoms:                ', molecule%n_atoms
       write(output%unit, '(t6,a34,i4)')      'Number of MM molecules:            ', molecule%max_mm_mol
@@ -397,11 +393,10 @@ contains
 !
       enddo
 !
-      if(molecule%verbose.ge.3) &
-         Call print_matrix('fq_matrix',                        &
-                           molecule%fq_matrix,                 &
-                           molecule%n_variables,&
-                           molecule%n_variables)
+      call output%print_matrix('debug', 'fq_matrix', &
+                               molecule%fq_matrix,   &
+                               molecule%n_variables, &
+                               molecule%n_variables)
 !
       if(trim(molecule%algorithm).eq.'mat_inversion') then
 !
@@ -409,11 +404,10 @@ contains
                      molecule%fq_matrix, &
                      molecule%n_variables) 
 !
-         if(molecule%verbose.ge.3) &
-            Call print_matrix('pol_matrix_inv',                     &
-                              molecule%fq_matrix,                  &
-                              molecule%n_variables,&
-                              molecule%n_variables)
+         call output%print_matrix('debug', 'pol_matrix_inv', &
+                                  molecule%fq_matrix,        &
+                                  molecule%n_variables,      &
+                                  molecule%n_variables)
 !
       endif
 !
