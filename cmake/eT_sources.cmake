@@ -65,6 +65,9 @@ set(eT_fortran_sources
    src/tools/math_utilities.F90
    src/tools/linked_list/array_list_class.F90
    src/tools/linked_list/array_node_class.F90
+   src/tools/fftpack/fftpack_auxiliary_routines.F90
+   src/tools/fftpack/fftpack_complex_forward_1d.F90
+   src/tools/fftpack/fftpack_complex_initialization_routines.F90
    src/tools/record_storer/record_storer_class.F90
    src/tools/record_storer/memory_storer_class.F90
    src/tools/record_storer/sequential_storer_class.F90
