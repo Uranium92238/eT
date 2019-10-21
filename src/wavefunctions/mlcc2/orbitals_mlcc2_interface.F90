@@ -239,16 +239,25 @@
    end subroutine diagonalize_M_and_N_mlcc2
 !
 !
-   module subroutine ccs_calculation_for_cntos_mlcc2(wf,transformation)
+   module subroutine ccs_calculation_for_cntos_mlcc2(wf, transformation, n_cnto_states, &
+                                                         R_ai, cnto_states, omega_ccs)
 !!
 !!    CCS calculation for CNTOs
 !!    Written by Sarai D. Folkestad, Sep 2019
 !!
       implicit none
 !
-      class(mlcc2) :: wf
+      class(mlcc2), intent(inout) :: wf
 !
-      character(len=200) :: transformation
+      character(len=200), intent(in) :: transformation
+!
+      integer, intent(in) :: n_cnto_states
+!
+      real(dp), dimension(wf%n_v, wf%n_o, n_cnto_states), intent(out) :: R_ai
+!
+      integer, dimension(n_cnto_states), intent(in) :: cnto_states
+!
+      real(dp), dimension(n_cnto_states), intent(out), optional :: omega_ccs
 !
    end subroutine ccs_calculation_for_cntos_mlcc2
 !

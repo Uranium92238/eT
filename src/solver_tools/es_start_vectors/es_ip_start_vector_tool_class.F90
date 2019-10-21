@@ -64,7 +64,7 @@ contains
 !
       if (.not. wf%bath_orbital) call output%error_msg('Calculation of IPs requires bath orbitals.')
 !
-      tool%n_vectors = wf%n_excited_states
+      tool%n_vectors = wf%n_singlet_states
       tool%vector_length = wf%n_es_amplitudes
 !
       call mem%alloc(tool%indices, tool%n_vectors)

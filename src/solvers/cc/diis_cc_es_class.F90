@@ -112,7 +112,7 @@ contains
       call solver%initialize_energies()
       solver%energies = zero
 !
-      wf%n_excited_states = solver%n_singlet_states
+      wf%n_singlet_states = solver%n_singlet_states
 !
       call solver%initialize_start_vector_tool(wf)
       call solver%initialize_projection_tool(wf)

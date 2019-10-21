@@ -40,6 +40,7 @@ module ccs_class
    use index_invert, only : invert_compound_index, invert_packed_index
    use batching_index_class, only : batching_index
    use timings_class, only : timings
+   use sequential_storer_class, only: sequential_storer
 !
    implicit none
 !
@@ -48,21 +49,24 @@ module ccs_class
       integer :: n_gs_amplitudes
       integer :: n_es_amplitudes
       integer :: n_t1
-      integer :: n_excited_states
+      integer :: n_singlet_states
       integer :: n_bath_orbitals
 !
       integer :: n_core_MOs
       logical :: cvs 
 !
-      real(dp), dimension(:), allocatable :: left_excitation_energies, right_excitation_energies
+      real(dp), dimension(:), allocatable :: left_excitation_energies 
+      real(dp), dimension(:), allocatable :: right_excitation_energies
 !
       logical :: bath_orbital
       logical :: frozen_core
 !
-      type(sequential_file) :: t1_file, t1bar_file
-      type(sequential_file) :: r1_file, l1_file
+      type(sequential_file) :: t_file, tbar_file
       type(sequential_file) :: excitation_energies_file
       type(sequential_file) :: restart_file
+!
+      type(sequential_storer), allocatable :: r_files
+      type(sequential_storer), allocatable :: l_files
 !
       type(mo_integral_tool) :: integrals
 !
@@ -99,7 +103,8 @@ module ccs_class
       procedure :: read_hf                                     => read_hf_ccs
       procedure :: initialize_files                            => initialize_files_ccs
       procedure :: initialize_cc_files                         => initialize_cc_files_ccs
-      procedure :: initialize_singles_files                    => initialize_singles_files_ccs
+      procedure :: initialize_ground_state_files               => initialize_ground_state_files_ccs
+      procedure :: initialize_excited_state_files              => initialize_excited_state_files_ccs
 !
 !     Routines related to the amplitudes & multipliers
 !
@@ -118,7 +123,6 @@ module ccs_class
       procedure :: print_dominant_x1                           => print_dominant_x1_ccs
       procedure :: get_t1_diagnostic                           => get_t1_diagnostic_ccs
 !
-      procedure :: save_singles_vector                         => save_singles_vector_ccs
       procedure :: read_singles_vector                         => read_singles_vector_ccs
 !
       procedure :: save_excited_state                          => save_excited_state_ccs
@@ -416,7 +420,7 @@ contains
 !!
 !!    Cleanup
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad and
-!!    Alexander Paul , 2018
+!!    Alexander C. Paul , 2018
 !!
       implicit none
 !
@@ -835,7 +839,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      integer, dimension(wf%n_excited_states) :: start_indices
+      integer, dimension(wf%n_singlet_states) :: start_indices
 !
 !     Local variables
 !
@@ -860,7 +864,7 @@ contains
             current_root = current_root + 1
             start_indices(current_root) = wf%n_v*( i - 1) + a
 !
-            if (current_root .eq. wf%n_excited_states) then
+            if (current_root .eq. wf%n_singlet_states) then
 !
                all_selected = .true.
                exit
@@ -1027,11 +1031,11 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      integer, dimension(wf%n_excited_states), intent(out) :: start_indices
+      integer, dimension(wf%n_singlet_states), intent(out) :: start_indices
 !
       integer :: I
 !
-      do I = 1, wf%n_excited_states
+      do I = 1, wf%n_singlet_states
 !
          start_indices(I) = (wf%n_o - I)*wf%n_v + wf%n_v
 !

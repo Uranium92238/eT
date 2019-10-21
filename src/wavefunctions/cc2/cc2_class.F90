@@ -70,11 +70,6 @@ module cc2_class
       procedure :: initialize_amplitudes                       => initialize_amplitudes_cc2 
       procedure :: destruct_amplitudes                         => destruct_amplitudes_cc2 
 !
-!     File handling
-!
-      procedure :: initialize_files                            => initialize_files_cc2
-      procedure :: initialize_doubles_files                    => initialize_doubles_files_cc2
-!
 !     Restart
 !
       procedure :: is_restart_safe                             => is_restart_safe_cc2
@@ -94,7 +89,6 @@ module cc2_class
 !
    interface
 !
-      include "file_handling_cc2_interface.F90"
       include "initialize_destruct_cc2_interface.F90"
       include "omega_cc2_interface.F90"
       include "multiplier_equation_cc2_interface.F90"

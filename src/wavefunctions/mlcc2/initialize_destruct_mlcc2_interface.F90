@@ -17,26 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine initialize_files_mlcc2(wf)
-!!
-!!    Initialize files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
-!!
-      class(mlcc2) :: wf 
-!
-   end subroutine initialize_files_mlcc2
-!
-!
-   module subroutine initialize_doubles_files_mlcc2(wf)
-!!
-!!    Initialize doubles files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
-!!
-      class(mlcc2) :: wf 
-!
-   end subroutine initialize_doubles_files_mlcc2
-!
-!
    module subroutine initialize_u_mlcc2(wf)
 !!
 !!    Initialize u 

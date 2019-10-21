@@ -127,7 +127,7 @@ contains
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
-      wf%n_excited_states = solver%n_singlet_states
+      wf%n_singlet_states = solver%n_singlet_states
 !
       call solver%initialize_start_vector_tool(wf)
       call solver%initialize_projection_tool(wf)

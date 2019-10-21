@@ -68,7 +68,7 @@ contains
 !
       if (wf%bath_orbital) call output%error_msg('Bath orbitals can not be used in valence excitation calculation')
 !
-      tool%n_vectors = wf%n_excited_states
+      tool%n_vectors = wf%n_singlet_states
       tool%vector_length = wf%n_es_amplitudes
 !
       call mem%alloc(eps, tool%vector_length)
@@ -79,7 +79,7 @@ contains
       call mem%alloc(tool%indices, tool%n_vectors)
       call get_n_lowest(tool%n_vectors, tool%vector_length, eps, lowest_eps, tool%indices)
 !
-      call mem%dealloc(lowest_eps, wf%n_excited_states)
+      call mem%dealloc(lowest_eps, wf%n_singlet_states)
       call mem%dealloc(eps, wf%n_es_amplitudes)
 !
    end function new_es_valence_start_vector_tool

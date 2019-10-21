@@ -317,9 +317,19 @@ contains
       class(abstract_cc_es), intent(in)   :: solver 
       class(ccs), intent(inout)           :: wf
 !
-      if (solver%transformation == 'right') call wf%prepare_for_jacobian()
+      if (solver%transformation == 'right') then 
 !
-      if (solver%transformation == 'left') call wf%prepare_for_jacobian_transpose()
+         call wf%prepare_for_jacobian()
+         call wf%initialize_excited_state_files('right')
+!
+      end if
+!
+      if (solver%transformation == 'left') then 
+!
+         call wf%prepare_for_jacobian_transpose()
+         call wf%initialize_excited_state_files('left')
+!
+      end if
 !
    end subroutine prepare_wf_for_excited_state_abstract_cc_es
 !

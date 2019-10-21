@@ -343,7 +343,7 @@ contains
 !
       class(ccs) :: wf
 !
-      if (.not. allocated(wf%right_excitation_energies)) call mem%alloc(wf%right_excitation_energies, wf%n_excited_states)
+      if (.not. allocated(wf%right_excitation_energies)) call mem%alloc(wf%right_excitation_energies, wf%n_singlet_states)
 !
    end subroutine initialize_right_excitation_energies_ccs
 !
@@ -357,7 +357,7 @@ contains
 !
       class(ccs) :: wf
 !
-      if (allocated(wf%right_excitation_energies)) call mem%dealloc(wf%right_excitation_energies, wf%n_excited_states)
+      if (allocated(wf%right_excitation_energies)) call mem%dealloc(wf%right_excitation_energies, wf%n_singlet_states)
 !
    end subroutine destruct_right_excitation_energies_ccs
 !
@@ -371,7 +371,7 @@ contains
 !
       class(ccs) :: wf
 !
-      if (.not. allocated(wf%left_excitation_energies)) call mem%alloc(wf%left_excitation_energies, wf%n_excited_states)
+      if (.not. allocated(wf%left_excitation_energies)) call mem%alloc(wf%left_excitation_energies, wf%n_singlet_states)
 !
    end subroutine initialize_left_excitation_energies_ccs
 !
@@ -385,7 +385,7 @@ contains
 !
       class(ccs) :: wf
 !
-      if (allocated(wf%left_excitation_energies)) call mem%dealloc(wf%left_excitation_energies, wf%n_excited_states)
+      if (allocated(wf%left_excitation_energies)) call mem%dealloc(wf%left_excitation_energies, wf%n_singlet_states)
 !
    end subroutine destruct_left_excitation_energies_ccs
 !
