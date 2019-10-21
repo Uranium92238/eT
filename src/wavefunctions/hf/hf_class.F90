@@ -32,6 +32,7 @@ module hf_class
    use array_utilities, only : get_abs_max, sandwich, print_vector
    use array_utilities, only : full_cholesky_decomposition_system
    use array_utilities, only : get_n_highest
+   use array_utilities, only : identity_array
 !
    use libint_initialization, only : set_coulomb_precision_c
 !
@@ -46,6 +47,7 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: ao_density
       real(dp), dimension(:,:), allocatable :: ao_fock
       real(dp), dimension(:,:), allocatable :: mo_fock
+      real(dp), dimension(:,:), allocatable :: W_mo_update ! Eigenvectors for Roothan-Hall in MO basis
 !
       real(dp), dimension(:,:), allocatable :: ao_overlap
       real(dp), dimension(:,:), allocatable :: cholesky_ao_overlap
@@ -77,7 +79,7 @@ module hf_class
 !
       procedure :: cleanup                                  => cleanup_hf
 !
-      procedure :: read_for_scf_restart                              => read_for_scf_restart_hf
+      procedure :: read_for_scf_restart                     => read_for_scf_restart_hf
       procedure :: is_restart_safe                          => is_restart_safe_hf
 !
       procedure :: read_settings                            => read_settings_hf
@@ -180,10 +182,34 @@ module hf_class
       procedure :: set_screening_and_precision_thresholds   => set_screening_and_precision_thresholds_hf
       procedure :: print_screening_settings                 => print_screening_settings_hf
 !
-      procedure :: construct_idempotent_density_and_fock => construct_idempotent_density_and_fock_hf
-      procedure :: prepare                               => prepare_hf
+      procedure :: prepare_for_roothan_hall                 => prepare_for_roothan_hall_hf
+      procedure :: prepare                                  => prepare_hf
+!
+!     MO scf routines
+!
+      procedure :: get_max_roothan_hall_mo_gradient         => get_max_roothan_hall_mo_gradient_hf
+!
+      procedure :: update_fock_and_energy_mo                => update_fock_and_energy_mo_hf
+      procedure :: get_roothan_hall_mo_gradient             => get_roothan_hall_mo_gradient_hf
+!
+      procedure :: get_mo_fock                              => get_mo_fock_hf
+      procedure :: set_mo_fock                              => set_mo_fock_hf
+!
+      procedure :: do_roothan_hall_mo                       => do_roothan_hall_mo_hf
+!
+      procedure :: initialize_W_mo_update                   => initialize_W_mo_update_hf
+      procedure :: destruct_W_mo_update                     => destruct_W_mo_update_hf
+!
+      procedure :: roothan_hall_update_orbitals_mo          => roothan_hall_update_orbitals_mo_hf
+      procedure :: prepare_for_roothan_hall_mo              => prepare_for_roothan_hall_mo_hf
 !
    end type hf
+!
+   interface 
+!
+      include "mo_hf_interface.F90"
+!
+   end interface
 !
 !
    interface hf 
@@ -230,6 +256,14 @@ contains
       call wf%read_orbital_coefficients()
       call wf%update_ao_density()
       call wf%read_orbital_energies()
+!
+!     Allocate active mo specific arrays
+!     and construct them
+!
+      call wf%initialize_W_mo_update()
+      call wf%initialize_mo_fock()
+!
+      call identity_array(wf%W_mo_update, wf%n_mo)
 !
    end subroutine read_for_scf_restart_hf
 !
@@ -937,6 +971,9 @@ contains
 !
       call wf%destruct_sp_eri_schwarz()
       call wf%destruct_sp_eri_schwarz_list()
+!
+      call wf%destruct_W_mo_update()
+      call wf%destruct_mo_fock()
 !
    end subroutine cleanup_hf
 !
@@ -3626,18 +3663,21 @@ contains
    end subroutine construct_molecular_gradient_hf
 !
 !
-   subroutine construct_idempotent_density_and_fock_hf(wf)
+   subroutine prepare_for_roothan_hall_hf(wf)
 !!
-!!    Construct idempotent density and Fock 
+!!    Prepare for Roothan-Hall 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Constructs the Fock matrix and
+!!    Constructs the ao Fock matrix and
 !!    performs a Roothan-Hall step to get the
 !!    initial idempotent density. 
 !!
-!!    Upon exit the Fock matrix is reconstructed
-!!    and the energy calculated.
+!!    The routine also prints the number of 
+!!    electrons and the energy of the initial guess.
 !!
+!!    NOTE: this routine is overwritten
+!!          for MLHF!  
+!!          
       implicit none 
 !
       class(hf) :: wf
@@ -3664,7 +3704,7 @@ contains
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
-   end subroutine construct_idempotent_density_and_fock_hf
+   end subroutine prepare_for_roothan_hall_hf
 !
 !
    subroutine prepare_hf(wf)

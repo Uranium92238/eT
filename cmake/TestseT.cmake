@@ -46,6 +46,7 @@ add_eT_runtest(hf_energy_3-21g                              "eT;short;hf;sad;pop
 add_eT_runtest(hf_energy_6-31g                              "eT;short;hf;sad;pople")
 add_eT_runtest(hf_geoopt                                    "eT;short;hf;bfgs;gradient")
 add_eT_runtest(hf_scf_energy                                "eT;short;hf;sad")
+add_eT_runtest(hf_mo_energy                    				"eT;short;hf;mo-diis")
 add_eT_runtest(uhf_energy                                   "eT;short;uhf")
 add_eT_runtest(hf_energy_qmmmnopol                          "eT;short;hf;sad;qmmm;mmnopol")
 add_eT_runtest(hf_energy_qmfq                               "eT;short;hf;sad;qmmm;fq")
