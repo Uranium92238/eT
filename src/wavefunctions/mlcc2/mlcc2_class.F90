@@ -48,8 +48,6 @@ module mlcc2_class
 !
    type, extends(ccs) :: mlcc2
 !
-      type(sequential_file) :: l2_file, r2_file
-!
 !     Requested levels
 !
       logical :: do_ccs
@@ -140,18 +138,9 @@ module mlcc2_class
 !
 !     File handling
 !
-      procedure :: initialize_files                                  => initialize_files_mlcc2
-      procedure :: initialize_doubles_files                          => initialize_doubles_files_mlcc2
-!
       procedure :: read_settings                                     => read_settings_mlcc2
       procedure, non_overridable :: read_orbital_settings            => read_orbital_settings_mlcc2
       procedure, non_overridable :: read_cc2_orbital_settings        => read_cc2_orbital_settings_mlcc2
-!
-      procedure :: read_doubles_vector                               => read_doubles_vector_mlcc2
-      procedure :: save_doubles_vector                               => save_doubles_vector_mlcc2
-!
-      procedure :: read_excited_state                                => read_excited_state_mlcc2
-      procedure :: save_excited_state                                => save_excited_state_mlcc2
 !
 !     Orbital routines
 !
@@ -246,7 +235,6 @@ module mlcc2_class
       include "./jacobian_mlcc2_interface.F90"
       include "./jacobian_transpose_mlcc2_interface.F90"
       include "./initialize_destruct_mlcc2_interface.F90"
-      include "./file_handling_mlcc2_interface.F90"
       include "./debug_jacobian_mlcc2_interface.F90"
 !
    end interface 
@@ -973,7 +961,7 @@ contains
 !
       class(mlcc2), intent(in) :: wf
 !
-      integer, dimension(wf%n_excited_states)  :: start_indices
+      integer, dimension(wf%n_singlet_states)  :: start_indices
 !
 !     Local variables
 !

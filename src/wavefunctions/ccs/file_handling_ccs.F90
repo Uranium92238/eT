@@ -44,26 +44,23 @@ contains
       class(ccs) :: wf 
 !
       call wf%initialize_wavefunction_files()
-      call wf%initialize_singles_files()
       call wf%initialize_cc_files()
+      call wf%initialize_ground_state_files()
 !
    end subroutine initialize_files_ccs
 !
 !
-   module subroutine initialize_singles_files_ccs(wf)
+   module subroutine initialize_ground_state_files_ccs(wf)
 !!
 !!    Initialize singles files 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
       class(ccs) :: wf 
 !
-      wf%t1_file = sequential_file('t1')
-      wf%t1bar_file = sequential_file('t1bar')
+      wf%t_file = sequential_file('t')
+      wf%tbar_file = sequential_file('tbar')
 !
-      wf%r1_file = sequential_file('r1')
-      wf%l1_file = sequential_file('l1')
-!
-   end subroutine initialize_singles_files_ccs
+   end subroutine initialize_ground_state_files_ccs
 !
 !
    module subroutine initialize_cc_files_ccs(wf)
@@ -80,6 +77,66 @@ contains
    end subroutine initialize_cc_files_ccs
 !
 !
+   module subroutine initialize_excited_state_files_ccs(wf, transformation)
+!!
+!!    Initialize files for excited state vectors and energies
+!!    Written by Alexander C. Paul, Oct 2019 
+!!
+      class(ccs), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: transformation
+!
+      if((trim(transformation) .eq. 'right') .or. (trim(transformation) .eq. 'both')) then
+!
+         wf%r_files = sequential_storer('r_', wf%n_es_amplitudes, &
+                                         wf%n_singlet_states,     &
+                                         delete=.false.)
+!
+         wf%excitation_energies_file = sequential_file('excitation_energies')
+!
+      end if
+!
+      if((trim(transformation) .eq. 'left') .or. (trim(transformation) .eq. 'both')) then
+!
+         wf%l_files = sequential_storer('l_', wf%n_es_amplitudes, &
+                                         wf%n_singlet_states,     &
+                                         delete=.false.)
+!
+         if(.not. wf%excitation_energies_file%exists()) then
+            wf%excitation_energies_file = sequential_file('excitation_energies')
+         end if
+!
+      end if
+!
+   end subroutine initialize_excited_state_files_ccs
+!
+!
+   module subroutine read_singles_vector_ccs(wf, X, file_)
+!!
+!!    Read singles vector X from a file
+!!    Written by Alexander C. Paul, Oct 2019 
+!!
+!!    Files are written with the singles part in the first record
+!!    and the doubles part in the second. 
+!!    Thus, read wf%n_o*wf%n_v elements.
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      real(dp), dimension(wf%n_t1), intent(out) :: X 
+!
+      type(sequential_file), intent(inout) :: file_
+!
+      call file_%open_('read', 'rewind')
+!
+      call file_%read_(X, wf%n_t1)
+!
+      call file_%close_()
+!
+   end subroutine read_singles_vector_ccs
+!
+!
    module subroutine save_amplitudes_ccs(wf)
 !!
 !!    Save amplitudes
@@ -89,11 +146,11 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      call wf%t1_file%open_('write', 'rewind')
+      call wf%t_file%open_('write', 'rewind')
 !
-      call wf%t1_file%write_(wf%t1, wf%n_t1)
+      call wf%t_file%write_(wf%t1, wf%n_t1)
 !
-      call wf%t1_file%close_()
+      call wf%t_file%close_()
 !
    end subroutine save_amplitudes_ccs
 !
@@ -107,11 +164,11 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      call wf%t1_file%open_('read', 'rewind')
+      call wf%t_file%open_('read', 'rewind')
 !
-      call wf%t1_file%read_(wf%t1, wf%n_t1)
+      call wf%t_file%read_(wf%t1, wf%n_t1)
 !
-      call wf%t1_file%close_()
+      call wf%t_file%close_()
 !
    end subroutine read_amplitudes_ccs
 !
@@ -125,11 +182,11 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      call wf%t1bar_file%open_('write', 'rewind')
+      call wf%tbar_file%open_('write', 'rewind')
 !
-      call wf%t1bar_file%write_(wf%t1bar, wf%n_t1)
+      call wf%tbar_file%write_(wf%t1bar, wf%n_t1)
 !
-      call wf%t1bar_file%close_()
+      call wf%tbar_file%close_()
 !
    end subroutine save_multipliers_ccs
 !
@@ -143,95 +200,26 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      call wf%t1bar_file%open_('read', 'rewind')
+      call wf%tbar_file%open_('read', 'rewind')
 !
-      call wf%t1bar_file%read_(wf%t1bar, wf%n_t1)
+      call wf%tbar_file%read_(wf%t1bar, wf%n_t1)
 !
-      call wf%t1bar_file%close_()
+      call wf%tbar_file%close_()
 !
    end subroutine read_multipliers_ccs
-!
-!
-   module subroutine save_singles_vector_ccs(wf, X, n, file_)
-!!
-!!    Save singles vector state 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
-!!
-!!    Writes singles vector "X" to the sequential
-!!    and unformatted file "file_".
-!!    
-!!    NB! If n = 1, then the routine WILL REWIND the file before writing,
-!!    thus DELETING every record in the file. For n >=2, we just append to
-!!    the file. The purpose of this setup is that the files should be saved in 
-!!    the correct order, from n = 1 to n = # states.
-!!
-      implicit none
-!
-      class(ccs), intent(inout) :: wf 
-!
-      real(dp), dimension(wf%n_t1), intent(in) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      type(sequential_file) :: file_
-!
-      call file_%open_('write', 'append')
-!
-      if (n .eq. 1) then
-         call file_%rewind_()
-      endif
-!
-      call file_%write_(X, wf%n_t1)
-!
-      call file_%close_()
-!
-   end subroutine save_singles_vector_ccs
-!
-!
-   module subroutine read_singles_vector_ccs(wf, X, n, file_)
-!!
-!!    Read singles vector state 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
-!!
-!!    Reads singles vector "X" from the "n"'th line
-!!    of the sequential and unformatted file "file_".
-!!
-      implicit none
-!
-      class(ccs), intent(inout) :: wf
-!
-      real(dp), dimension(wf%n_t1), intent(out) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      type(sequential_file) :: file_
-!
-      call file_%open_('read', 'rewind')
-!
-      call file_%skip(n-1)
-!
-      call file_%read_(X, wf%n_t1)
-!
-      call file_%close_()
-!
-   end subroutine read_singles_vector_ccs
 !
 !
    module subroutine save_excited_state_ccs(wf, X, n, side)
 !!
 !!    Save excited state 
-!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!    Written by Eirik F. Kjønstad, Mar 2019
+!!    modified by Alexander C. Paul, Oct 2019
 !!
 !!    Saves an excited state to disk. 
 !!    Since the solvers  keep these vectors in full length, 
-!!    we receive a vector in full length (n_es_amplitudes), 
-!!    and then distribute the different parts of that vector 
-!!    to singles, doubles, etc., files (if there are doubles, etc.).
+!!    we save the vector in full length (n_es_amplitudes), 
 !!
-!!    NB! If n = 1, then the routine WILL REWIND the file before writing,
-!!    thus DELETING every record in the file. For n >=2, we just append to
-!!    the file. The purpose of this setup is that the files should be saved in 
-!!    the correct order, from n = 1 to n = # states.
+!!    Uses sequential_storer to distinguish different states
 !!
 !!
       implicit none
@@ -244,17 +232,18 @@ contains
 !
       character(len=*), intent(in) :: side ! 'left' or 'right' 
 !
-      if (trim(side) == 'right') then 
+      if (trim(side) .eq. 'right') then 
 !
-         call wf%save_singles_vector(X, n, wf%r1_file)
+         call wf%r_files%set(x, n)
 !
-      elseif (trim(side) == 'left') then 
+      elseif (trim(side) .eq. 'left') then 
 !
-         call wf%save_singles_vector(X, n, wf%l1_file)
+         call wf%l_files%set(x, n)
 !
       else
 !
-         call output%error_msg('Tried to save an excited state, but argument side not recognized: ' // side)
+         call output%error_msg('Tried to save an excited state, &
+                              & but argument side not recognized: ' // side)
 !
       endif
 !
@@ -264,17 +253,13 @@ contains
    module subroutine read_excited_state_ccs(wf, X, n, side)
 !!
 !!    Read excited state 
-!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!    Written by Eirik F. Kjønstad, Mar 2019
+!!    modified by Alexander C. Paul, Oct 2019
 !!
-!!    Reads an excited state to disk. Since this routine is used by 
-!!    solvers, it returns the vector in the full space. Thus, we open 
-!!    files for singles, doubles, etc., paste them together, and return 
-!!    the result in X.
+!!    Reads an excited state from disk. Since this routine is used by 
+!!    solvers, it returns the vector in the full space.
 !!
-!!    NB! This will place the cursor of the file at position n + 1.
-!!    Be cautious when using this in combination with writing to the files.
-!!    We recommend to separate these tasks---write all states or read all
-!!    states; don't mix if you can avoid it.
+!!    Uses sequential_storer to distinguish different states
 !!
       implicit none
 !
@@ -286,13 +271,13 @@ contains
 !
       character(len=*), intent(in) :: side ! 'left' or 'right' 
 !
-      if (trim(side) == 'right') then 
+      if (trim(side) .eq. 'right') then 
 !
-         call wf%read_singles_vector(X, n, wf%r1_file)
+         call wf%r_files%get(x, n)
 !
-      elseif (trim(side) == 'left') then 
+      elseif (trim(side) .eq. 'left') then 
 !
-         call wf%read_singles_vector(X, n, wf%l1_file)
+         call wf%l_files%get(x, n)
 !
       else
 !
@@ -320,12 +305,12 @@ contains
 !
       character(len=*), intent(in) :: r_or_l 
 !
-      if (trim(r_or_l) == 'right') then 
+      if (trim(r_or_l) .eq. 'right') then 
 !
          call wf%initialize_right_excitation_energies()
          wf%right_excitation_energies = energies 
 !
-      elseif (trim(r_or_l) == 'left') then 
+      elseif (trim(r_or_l) .eq. 'left') then 
 !
          call wf%initialize_left_excitation_energies()
          wf%left_excitation_energies = energies 
@@ -421,27 +406,24 @@ contains
 !
       character(len=*), intent(in) :: side 
 !
-      integer :: n_states 
+      integer :: n_states
 !
       n_states = 0
 !
-      if (trim(side) == 'right') then 
+      if (trim(side) .eq. 'right') then
 !
-         call wf%r1_file%open_('read', 'rewind')
-         n_states = wf%r1_file%number_of_records()
-         call wf%r1_file%close_()
+         n_states = wf%r_files%n_records
 !
-      elseif (trim(side) == 'left') then 
+      else if (trim(side) .eq. 'left') then
 !
-         call wf%l1_file%open_('read', 'rewind')
-         n_states = wf%l1_file%number_of_records()
-         call wf%l1_file%close_()
+         n_states = wf%l_files%n_records
 !
-      else
+      else 
 !
-         call output%error_msg('Tried to compute number of excited states. Unrecognized _side_: ' // side)
+         call output%error_msg('Tried to compute number of excited states. &
+                              & Unrecognized _side_: ' // side)
 !
-      endif
+      end if
 !
    end function get_n_excited_states_on_file_ccs
 !
@@ -449,7 +431,7 @@ contains
    module subroutine save_tbar_intermediates_ccs(wf)
 !!
 !!    Save tbar intermediates multiplier equation
-!!    Written by Alexander Paul, Aug 2019
+!!    Written by Alexander C. Paul, Aug 2019
 !!
       implicit none
 !

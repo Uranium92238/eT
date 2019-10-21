@@ -46,11 +46,6 @@ module ccsd_class
 !
    contains
 !
-!     Preparation and cleanup routines
-!
-      procedure :: initialize_files                            => initialize_files_ccsd
-      procedure :: initialize_doubles_files                    => initialize_doubles_files_ccsd
-!
 !     Routines related to the amplitudes
 !
       procedure :: initialize_amplitudes                       => initialize_amplitudes_ccsd

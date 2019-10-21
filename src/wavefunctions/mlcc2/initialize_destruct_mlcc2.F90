@@ -30,38 +30,6 @@ submodule (mlcc2_class) initialize_desctruct_mlcc2
 !
 contains
 !
-!
-!
-   module subroutine initialize_files_mlcc2(wf)
-!!
-!!    Initialize files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
-!!
-!!    Initializes the wavefucntion files for wavefunction parameters.
-!!
-      class(mlcc2) :: wf 
-!
-      call wf%initialize_wavefunction_files()
-      call wf%initialize_cc_files()
-      call wf%initialize_singles_files()
-      call wf%initialize_doubles_files()
-!
-   end subroutine initialize_files_mlcc2
-!
-!
-   module subroutine initialize_doubles_files_mlcc2(wf)
-!!
-!!    Initialize doubles files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
-!!
-      class(mlcc2) :: wf 
-!
-      wf%r2_file = sequential_file('r2', 'unformatted')
-      wf%l2_file = sequential_file('l2', 'unformatted')
-!
-   end subroutine initialize_doubles_files_mlcc2
-!
-!
    module subroutine initialize_u_mlcc2(wf)
 !!
 !!    Initialize u 

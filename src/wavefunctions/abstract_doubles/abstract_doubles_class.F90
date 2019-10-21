@@ -66,13 +66,6 @@ module abstract_doubles_class
       procedure :: jacobian_transpose_doubles_b1   => jacobian_transpose_doubles_b1_abstract_doubles
       procedure :: jacobian_transpose_doubles_a2   => jacobian_transpose_doubles_a2_abstract_doubles
 !
-!     File handling
-!
-      procedure :: save_doubles_vector => save_doubles_vector_abstract_doubles
-      procedure :: read_doubles_vector => read_doubles_vector_abstract_doubles
-      procedure :: read_excited_state  => read_excited_state_abstract_doubles
-      procedure :: save_excited_state  => save_excited_state_abstract_doubles
-!
 !     Initializations and destructions   
 !
       procedure :: initialize_t2 => initialize_t2_abstract_doubles

@@ -29,14 +29,14 @@
    end subroutine initialize_files_ccs
 !
 !
-   module subroutine initialize_singles_files_ccs(wf)
+   module subroutine initialize_ground_state_files_ccs(wf)
 !!
 !!    Initialize singles files 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
 !!
-      class(ccs) :: wf
+      class(ccs) :: wf 
 !
-   end subroutine initialize_singles_files_ccs
+   end subroutine initialize_ground_state_files_ccs
 !
 !
    module subroutine initialize_cc_files_ccs(wf)
@@ -47,6 +47,36 @@
       class(ccs) :: wf 
 !
    end subroutine initialize_cc_files_ccs
+!
+!
+   module subroutine initialize_excited_state_files_ccs(wf, transformation)
+!!
+!!    Initialize singles files for excited state vectors and energies
+!!    Written by Alexander C. Paul, Oct 2019
+!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: transformation
+!
+   end subroutine initialize_excited_state_files_ccs
+!
+!
+   module subroutine read_singles_vector_ccs(wf, X, file_)
+!!
+!!    Read singles vector state 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_t1), intent(out) :: X 
+!
+      type(sequential_file), intent(inout) :: file_
+!
+   end subroutine read_singles_vector_ccs
 !
 !
    module subroutine save_amplitudes_ccs(wf)
@@ -95,42 +125,6 @@
       class(ccs), intent(inout) :: wf
 !
    end subroutine read_multipliers_ccs
-!
-!
-   module subroutine save_singles_vector_ccs(wf, X, n, file_)
-!!
-!!    Save singles vector state 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
-!!
-      implicit none
-!
-      class(ccs), intent(inout) :: wf 
-!
-      real(dp), dimension(wf%n_t1), intent(in) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      type(sequential_file) :: file_
-!
-   end subroutine save_singles_vector_ccs
-!
-!
-   module subroutine read_singles_vector_ccs(wf, X, n, file_)
-!!
-!!    Read singles vector state 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
-!!
-      implicit none
-!
-      class(ccs), intent(inout) :: wf
-!
-      real(dp), dimension(wf%n_t1), intent(out) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      type(sequential_file) :: file_
-!
-   end subroutine read_singles_vector_ccs
 !
 !
    module subroutine save_excited_state_ccs(wf, X, n, side)
@@ -235,7 +229,7 @@
    module subroutine save_tbar_intermediates_ccs(wf)
 !!
 !!    Save tbar intermediates multiplier equation
-!!    Written by Alexander Paul, Aug 2019
+!!    Written by Alexander C. Paul, Aug 2019
 !!
       implicit none
 !
