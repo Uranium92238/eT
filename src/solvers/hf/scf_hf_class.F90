@@ -191,7 +191,7 @@ contains
             fs='(/t3,a)',pl='minimal')
 !
          call wf%set_initial_ao_density_guess(solver%ao_density_guess)
-         call wf%construct_idempotent_density_and_fock()
+         call wf%prepare_for_roothan_hall()
 !
       endif
 !

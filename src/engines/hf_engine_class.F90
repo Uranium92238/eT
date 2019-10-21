@@ -26,6 +26,7 @@ module hf_engine_class
 !
    use scf_hf_class,      only: scf_hf
    use scf_diis_hf_class, only: scf_diis_hf
+   use mo_scf_diis_class, only: mo_scf_diis
 !
 !
    type, extends(abstract_hf_engine) :: hf_engine
@@ -77,6 +78,7 @@ contains
 !
       type(scf_hf), allocatable :: scf
       type(scf_diis_hf), allocatable :: scf_diis
+      type(mo_scf_diis), allocatable :: mo_scf_diis_
 !
 !     Generate SAD if requested
 !
@@ -93,6 +95,12 @@ contains
          scf_diis = scf_diis_hf(wf, engine%restart)
          call scf_diis%run(wf)
          call scf_diis%cleanup(wf)
+!
+      elseif (trim(engine%algorithm) == 'mo-scf-diis') then
+!
+         mo_scf_diis_ = mo_scf_diis(wf, engine%restart)
+         call mo_scf_diis_%run(wf)
+         call mo_scf_diis_%cleanup(wf)
 !
       elseif (trim(engine%algorithm) == 'scf') then 
 !

@@ -86,6 +86,34 @@ contains
    end subroutine zero_array_complex
 !
 !
+   subroutine identity_array(x, n)
+!!
+!!    Identity array 
+!!    Written by Ida-Marie Hoyvik, Oct 2019 
+!!
+!!    Sets the array x of dimension nxn to be the identity matrix.
+!!
+      implicit none 
+!
+      integer, intent(in) :: n 
+!
+      real(dp), dimension(n,n), intent(out) :: x 
+!
+      integer :: i 
+!
+      call zero_array(x,n*n)
+!
+!$omp parallel do private(i) schedule(static)
+      do i = 1, n 
+!
+         x(i,i) = one 
+!
+      enddo
+!$omp end parallel do
+!
+   end subroutine identity_array
+!
+!
    logical function is_significant(x, n, threshold, screening)
 !!
 !!    Is significant

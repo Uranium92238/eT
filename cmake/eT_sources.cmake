@@ -21,6 +21,7 @@ set(eT_fortran_sources
    src/eT_program.F90
    src/solvers/hf/abstract_hf_solver_class.F90
    src/solvers/hf/scf_diis_hf_class.F90
+   src/solvers/hf/mo_scf_diis_class.F90
    src/solvers/hf/scf_hf_class.F90
    src/solvers/hf/bfgs_geoopt_hf_class.F90
    src/solvers/cc/diis_cc_gs_class.F90
@@ -72,7 +73,8 @@ set(eT_fortran_sources
    src/tools/record_storer/memory_storer_class.F90
    src/tools/record_storer/sequential_storer_class.F90
    src/wavefunctions/wavefunction/wavefunction_class.F90
-   src/wavefunctions/hf/hf_class.F90
+   src/wavefunctions/hf/hf_class.F90  
+   src/wavefunctions/hf/mo_hf.F90
    src/wavefunctions/uhf/uhf_class.F90
    src/wavefunctions/ccs/ccs_class.F90
    src/wavefunctions/abstract_doubles/abstract_doubles_class.F90
