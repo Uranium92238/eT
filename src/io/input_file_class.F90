@@ -311,8 +311,7 @@ contains
       mm%required = .false.
       mm%keywords = [character(len=25) :: &
                      'forcefield', &
-                     'algorithm ', &
-                     'verbose']
+                     'algorithm ']
 !
       global_print%name_    = 'print'
       global_print%required = .false.

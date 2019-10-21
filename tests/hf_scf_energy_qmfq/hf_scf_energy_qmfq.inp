@@ -19,7 +19,6 @@ end solver hf
 
 molecular mechanics
    forcefield: fq
-   verbose:    0
 end molecular mechanics
 
 method
