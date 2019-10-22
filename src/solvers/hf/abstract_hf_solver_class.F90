@@ -149,18 +149,18 @@ contains
 !
       integer :: n_orbitals_to_print
 !
-      call input%get_keyword_in_section('energy threshold', 'solver hf', solver%energy_threshold)
-      call input%get_keyword_in_section('gradient threshold', 'solver hf', solver%gradient_threshold)
-      call input%get_keyword_in_section('max iterations', 'solver hf', solver%max_iterations)
-      call input%get_keyword_in_section('ao density guess', 'solver hf', solver%ao_density_guess)
+      call input%get_keyword_in_section('energy threshold', 'solver scf', solver%energy_threshold)
+      call input%get_keyword_in_section('gradient threshold', 'solver scf', solver%gradient_threshold)
+      call input%get_keyword_in_section('max iterations', 'solver scf', solver%max_iterations)
+      call input%get_keyword_in_section('ao density guess', 'solver scf', solver%ao_density_guess)
 !
-      if (input%requested_keyword_in_section('print orbitals', 'solver hf')) then
+      if (input%requested_keyword_in_section('print orbitals', 'solver scf')) then
 !
-         n_orbitals_to_print = input%get_n_elements_for_keyword_in_section('print orbitals', 'solver hf')
+         n_orbitals_to_print = input%get_n_elements_for_keyword_in_section('print orbitals', 'solver scf')
 !
          call mem%alloc(solver%orbitals_to_print, n_orbitals_to_print)
 !
-         call input%get_array_for_keyword_in_section('print orbitals', 'solver hf', n_orbitals_to_print, solver%orbitals_to_print)
+         call input%get_array_for_keyword_in_section('print orbitals', 'solver scf', n_orbitals_to_print, solver%orbitals_to_print)
 !
       endif
 !

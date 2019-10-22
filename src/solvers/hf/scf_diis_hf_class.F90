@@ -474,8 +474,8 @@ contains
 !
       class(scf_diis_hf) :: solver
 !
-      call input%get_keyword_in_section('diis dimension', 'solver hf', solver%diis_dimension)
-      call input%get_keyword_in_section('storage', 'solver hf', solver%storage)
+      call input%get_keyword_in_section('diis dimension', 'solver scf', solver%diis_dimension)
+      call input%get_keyword_in_section('storage', 'solver scf', solver%storage)
 !
    end subroutine read_scf_diis_settings_scf_diis_hf
 !

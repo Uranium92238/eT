@@ -12,11 +12,11 @@ memory
    available: 8
 end memory
 
-solver hf
+solver scf
    algorithm:          scf-diis
    energy threshold:   1.0d-12
    gradient threshold: 1.0d-12
-end solver hf
+end solver scf
 
 do
    ground state
