@@ -345,7 +345,7 @@ contains
 !
             call zero_array(u_ckbj, (wf%n_v**2)*(batch_k%length)*(batch_j%length))
 !
-            call add_21_to_12(two, g_bjck, u_ckbj, wf%n_v*batch_k%length, wf%n_v*batch_j%length)
+            call add_3412_to_1234(two, g_bjck, u_ckbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
             call add_1432_to_1234(-one, g_bjck, u_ckbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
 !
             call mem%dealloc(g_bjck, wf%n_v, batch_j%length, wf%n_v, batch_k%length)

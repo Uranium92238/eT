@@ -177,11 +177,11 @@ contains
 !
 !     Need t2, tbar2 in ijab ordering for the oo term
       call mem%alloc(t_ijab, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
-      call sort_12_to_21(t_abij, t_ijab, wf%n_v**2, wf%n_o**2)
+      call sort_1234_to_3412(t_abij, t_ijab, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%alloc(tbar_ijab, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
-      call sort_12_to_21(tbar_abij, tbar_ijab, wf%n_v**2, wf%n_o**2)
+      call sort_1234_to_3412(tbar_abij, tbar_ijab, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(tbar_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%alloc(tbar_ia, wf%n_o, wf%n_v)

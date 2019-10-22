@@ -2226,7 +2226,7 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(:,:) :: D ! Packed
+      real(dp), dimension(:) :: D ! Packed
 !
       call squareup(D, wf%ao_density, wf%n_ao)
 !
@@ -2246,7 +2246,7 @@ contains
 !
       real(dp), dimension(wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities), intent(in) :: F ! Packed
 !
-      call squareup(F, wf%ao_fock, wf%n_ao)
+      call squareup(F(:,1), wf%ao_fock, wf%n_ao)
 !
    end subroutine set_ao_fock_hf
 !
@@ -2264,7 +2264,7 @@ contains
 !
       real(dp), dimension(wf%n_ao*(wf%n_ao+1)/2, wf%n_densities), intent(inout) :: F ! Packed
 !
-      call packin(F, wf%ao_fock, wf%n_ao)
+      call packin(F(:,1), wf%ao_fock, wf%n_ao)
 !
    end subroutine get_ao_fock_hf
 !
@@ -2391,7 +2391,7 @@ contains
 !
       real(dp), dimension(:,:) :: D
 !
-      call packin(D, wf%ao_density, wf%n_ao)
+      call packin(D(:,1), wf%ao_density, wf%n_ao)
 !
    end subroutine get_ao_density_hf
 !
@@ -2930,7 +2930,7 @@ contains
       call mem%dealloc(Pv, wf%n_ao, wf%n_ao)
 !
       G = zero
-      call packin_anti(G, G_sq, wf%n_ao)
+      call packin_anti(G(:,1), G_sq, wf%n_ao)
 !
       call mem%dealloc(G_sq, wf%n_ao, wf%n_ao)
 !
