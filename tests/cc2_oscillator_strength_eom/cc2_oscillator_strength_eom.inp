@@ -31,6 +31,7 @@ end solver cc gs
 
 solver cc multipliers
    threshold: 1.0d-11
+   algorithm: diis
 end solver cc multipliers
 
 solver cc es

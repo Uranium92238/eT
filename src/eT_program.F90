@@ -159,8 +159,7 @@ subroutine reference_calculation(system)
    use hf_class, only: hf 
    use uhf_class, only: uhf 
 !
-   use abstract_hf_engine_class, only: abstract_hf_engine
-   use hf_engine_class, only: hf_engine 
+   use reference_engine_class, only: reference_engine 
    use hf_geoopt_engine_class, only: hf_geoopt_engine 
 !
    implicit none
@@ -169,7 +168,7 @@ subroutine reference_calculation(system)
 !
    class(hf), allocatable  :: ref_wf
 !
-   class(abstract_hf_engine), allocatable :: ref_engine
+   class(reference_engine), allocatable :: ref_engine
 !
    character(len=25) :: ref_wf_name
 !
@@ -196,7 +195,7 @@ subroutine reference_calculation(system)
 !
    else 
 !
-      ref_engine = hf_engine()
+      ref_engine = reference_engine()
 !
    endif 
 !
@@ -226,7 +225,6 @@ subroutine cc_calculation(system)
    use mp2_class, only: mp2 
    use mlcc2_class, only: mlcc2
 !
-   use abstract_cc_engine_class, only: abstract_cc_engine
    use gs_engine_class, only: gs_engine
    use es_engine_class, only: es_engine
    use zop_engine_class, only: zop_engine 
@@ -237,7 +235,7 @@ subroutine cc_calculation(system)
    type(molecular_system) :: system
 !
    class(ccs), allocatable :: cc_wf
-   class(abstract_cc_engine), allocatable :: cc_engine 
+   class(gs_engine), allocatable :: cc_engine 
 !
    character(len=25) :: cc_wf_name
 !
