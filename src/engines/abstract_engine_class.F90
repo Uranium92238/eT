@@ -93,7 +93,7 @@ contains
 !
       call output%printf('This is a (a0) (a0) calculation. The following tasks will be performed:', &
                          pl='normal', ffs='(/t3,a)', fs='(t3,a)',                                   &
-                         chars=[ convert_to_uppercase(wf%name_), engine%tag ] )
+                         chars=[character(len=500)::convert_to_uppercase(wf%name_), engine%tag] )
 !     
       do task = 1, size(engine%tasks)
 !
@@ -117,7 +117,7 @@ contains
       class(wavefunction),    intent(in)    :: wf
 !
       call output%printf('- Timings for the (a0) (a0) calculation', pl='minimal', fs='(/t3, a)', &
-                         chars=[ convert_to_uppercase(wf%name_), engine%tag ])
+                         chars=[character(len=500)::convert_to_uppercase(wf%name_), engine%tag])
 !
       call engine%timer%turn_off()
 !
