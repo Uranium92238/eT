@@ -70,6 +70,7 @@ module hf_class
                                                    ! approximately by sqrt(ε)
 !
       type(sequential_file) :: restart_file
+      type(sequential_file) :: orbital_information_file
 !
       integer :: n_densities
 !
@@ -81,6 +82,8 @@ module hf_class
 !
       procedure :: read_for_scf_restart                     => read_for_scf_restart_hf
       procedure :: is_restart_safe                          => is_restart_safe_hf
+      procedure :: write_scf_restart                        => write_scf_restart_hf
+      procedure :: write_orbital_information                => write_orbital_information_hf
 !
       procedure :: read_settings                            => read_settings_hf
       procedure :: read_hf_settings                         => read_hf_settings_hf
@@ -279,13 +282,13 @@ contains
 !
       character(len=*), intent(in) :: task
 !
-      integer :: n_ao, n_mo, n_densities
+      integer :: n_ao, n_densities, n_electrons
 !
       call wf%restart_file%open_('read', 'rewind')
 !
       call wf%restart_file%read_(n_ao)
-      call wf%restart_file%read_(n_mo)
       call wf%restart_file%read_(n_densities)
+      call wf%restart_file%read_(n_electrons)
 !
       call wf%restart_file%close_
 !
@@ -294,15 +297,15 @@ contains
                                'of atomic orbitals for task ' // trim(task))
       endif
 !
-      if (n_mo .ne. wf%n_mo) then 
-         call output%error_msg('attempted to restart HF with an inconsistent number ' // &
-                               'of molecular orbitals for task ' // trim(task))
-      endif
-!
       if (n_densities .ne. wf%n_densities) then 
          call output%error_msg('attempted to restart HF with an inconsistent number ' // &
                                'of atomic densities (likely a HF/UHF inconsistency) for task ' // &
                                trim(task))
+      endif
+!
+      if (n_electrons .ne. wf%system%get_n_electrons()) then 
+         call output%error_msg('attempted to restart HF with an inconsistent number ' // &
+                               'of electrons for task ' // trim(task))
       endif
 !
    end subroutine is_restart_safe_hf
@@ -955,12 +958,9 @@ contains
 !
       class(hf) :: wf
 !
-      call wf%restart_file%open_('write', 'append')
+!     Save orbital information in orbital_information_file for CC
 !
-      call wf%restart_file%write_(wf%energy)
-      call wf%restart_file%write_(wf%ao_fock, wf%n_ao**2)
-!
-      call wf%restart_file%close_
+      call wf%write_orbital_information()
 !
       call wf%destruct_orbital_energies()
       call wf%destruct_ao_overlap()
@@ -3710,17 +3710,9 @@ contains
       call wf%set_n_mo()
 !
       call wf%initialize_wavefunction_files()
-      wf%restart_file = sequential_file('hf_restart_file')
+      wf%restart_file = sequential_file('scf_restart_file')
 !
-      call wf%restart_file%open_('write', 'rewind')
-!
-      call wf%restart_file%write_(wf%n_ao)
-      call wf%restart_file%write_(wf%n_mo)
-      call wf%restart_file%write_(wf%n_densities)
-      call wf%restart_file%write_(wf%n_o)
-      call wf%restart_file%write_(wf%n_v)
-!
-      call wf%restart_file%close_
+      call wf%write_scf_restart()   
 !
       call wf%initialize_sp_eri_schwarz()
       call wf%initialize_sp_eri_schwarz_list()
@@ -3728,6 +3720,54 @@ contains
       call wf%construct_sp_eri_schwarz()
 !
    end subroutine prepare_hf
+!
+!
+   subroutine write_scf_restart_hf(wf)
+!!
+!!    Write HF restart file
+!!    Written by Linda Goletto, Oct 2019
+!!
+!!    Writes a file used for consistency checks when restarting
+!!
+      implicit none 
+!
+      class(hf) :: wf
+!
+      call wf%restart_file%open_('write', 'rewind')
+!
+      call wf%restart_file%write_(wf%n_ao)
+      call wf%restart_file%write_(wf%n_densities)
+      call wf%restart_file%write_(wf%system%get_n_electrons())
+!
+      call wf%restart_file%close_
+!
+   end subroutine write_scf_restart_hf
+!
+!
+   subroutine write_orbital_information_hf(wf)
+!!
+!!    Write HF information file
+!!    Written by Linda Goletto, Oct 2019
+!!
+!!    Writes orbital information
+!!    Used for CC and MP2 and for restarting MLHF
+!!
+      implicit none 
+!
+      class(hf) :: wf
+!
+      wf%orbital_information_file = sequential_file('orbital_information')
+      call wf%orbital_information_file%open_('write', 'rewind')
+!
+      call wf%orbital_information_file%write_(wf%n_o)
+      call wf%orbital_information_file%write_(wf%n_v)
+      call wf%orbital_information_file%write_(wf%n_ao)
+      call wf%orbital_information_file%write_(wf%n_mo)
+      call wf%orbital_information_file%write_(wf%energy)
+!
+      call wf%orbital_information_file%close_
+!
+   end subroutine write_orbital_information_hf
 !
 !
 end module hf_class

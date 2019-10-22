@@ -199,6 +199,7 @@ contains
       wf%n_ao = wf%system%get_n_aos()
 !
       call wf%set_n_mo()
+      wf%n_o = 0 ! hack to fix print_orbitals (remove later)
 !
       if (wf%fractional_uniform_valence) then
 !
@@ -209,7 +210,9 @@ contains
 !
       wf%orbital_coefficients_file = sequential_file('orbital_coefficients')
       wf%orbital_energies_file = sequential_file('orbital_energies')
-      wf%restart_file = sequential_file('hf_restart_file')
+      wf%restart_file = sequential_file('scf_restart_file')
+!
+      call wf%write_scf_restart()
 !
       call wf%initialize_sp_eri_schwarz() 
       call wf%initialize_sp_eri_schwarz_list()

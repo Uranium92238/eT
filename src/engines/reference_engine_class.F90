@@ -236,6 +236,7 @@ contains
       type(sequential_file) :: alpha_density_file
       type(sequential_file) :: beta_density_file
       type(sequential_file) :: restart_file
+      type(sequential_file) :: orbital_information_file
       type(sequential_file) :: other_file
 !
       character(len=200) :: alpha_fname
@@ -270,13 +271,22 @@ contains
 !
       call output%mute()
 !
-!     Rename Hartree-Fock restart files so that they are not overwritten
+!     Rename Hartree-Fock restart file and information file so that they are not overwritten:
+!     hf_restart_file used in checking if restart is safe, 
+!     orbital_information used for CC
 !
-      restart_file = sequential_file("hf_restart_file")
+      restart_file = sequential_file("scf_restart_file")
 !
       if (restart_file%exists()) then
          call restart_file%copy("temp_restart_file")
          call restart_file%delete_()
+      endif
+!
+      orbital_information_file = sequential_file("orbital_information")
+!
+      if (orbital_information_file%exists()) then
+         call orbital_information_file%copy("temp_orbital_information")
+         call orbital_information_file%delete_()
       endif
 !
 !     For every unique atom, generate SAD density to file
@@ -358,16 +368,26 @@ contains
       other_file = sequential_file("orbital_energies")
       call other_file%delete_()
 !
-      restart_file = sequential_file('hf_restart_file')
+      restart_file = sequential_file('scf_restart_file')
       call restart_file%delete_()
+!
+      orbital_information_file = sequential_file('orbital_information')
+      call orbital_information_file%delete_()
 !
 !     Rename Hartree-Fock restart files back to their original names
 !
       restart_file = sequential_file('temp_restart_file')
 !
       if (restart_file%exists()) then
-         call restart_file%copy('hf_restart_file')
+         call restart_file%copy('scf_restart_file')
          call restart_file%delete_()
+      endif
+!
+      orbital_information_file = sequential_file('temp_orbital_information')
+!
+      if (orbital_information_file%exists()) then
+         call orbital_information_file%copy('orbital_information')
+         call orbital_information_file%delete_()
       endif
 !
 !     Libint is overwritten by SAD. Re-initialize.
