@@ -121,8 +121,8 @@ contains
       type(section) :: cc_fop 
       type(section) :: method 
       type(section) :: solver_cholesky
-      type(section) :: solver_hf
-      type(section) :: solver_hf_geoopt
+      type(section) :: solver_scf
+      type(section) :: solver_scf_geoopt
       type(section) :: solver_cc_gs
       type(section) :: solver_cc_es
       type(section) :: solver_cc_multipliers 
@@ -211,9 +211,9 @@ contains
                                     'one center          ',    &
                                     'no vectors          ']
 !
-      solver_hf%name_    = 'solver hf'
-      solver_hf%required = .false.
-      solver_hf%keywords = [character(len=25) ::         &
+      solver_scf%name_    = 'solver scf'
+      solver_scf%required = .false.
+      solver_scf%keywords = [character(len=25) ::         &
                               'algorithm            ',   &
                               'energy threshold     ',   &
                               'gradient threshold   ',   &
@@ -224,9 +224,9 @@ contains
                               'ao density guess     ',   &
                               'print orbitals       ' ]
 !
-      solver_hf_geoopt%name_    = 'solver hf geoopt'
-      solver_hf_geoopt%required = .false.
-      solver_hf_geoopt%keywords = [character(len=25) ::     &
+      solver_scf_geoopt%name_    = 'solver scf geoopt'
+      solver_scf_geoopt%required = .false.
+      solver_scf_geoopt%keywords = [character(len=25) ::     &
                                     'algorithm',            &
                                      'max step',            &
                                      'energy threshold',    &
@@ -328,8 +328,8 @@ contains
                            cc_zop,                 &
                            cc_fop,                 &
                            solver_cholesky,        &
-                           solver_hf,              &
-                           solver_hf_geoopt,       &
+                           solver_scf,             &
+                           solver_scf_geoopt,      &
                            solver_cc_gs,           &
                            solver_cc_es,           &
                            solver_cc_multipliers,  &

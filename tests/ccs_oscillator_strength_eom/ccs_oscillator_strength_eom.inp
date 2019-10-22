@@ -21,10 +21,10 @@ cc fop
    dipole length
 end cc fop
 
-solver hf
+solver scf
    energy threshold:   1.0d-11
    gradient threshold: 1.0d-11
-end solver hf
+end solver scf
 
 solver cholesky
    threshold: 1.0d-11

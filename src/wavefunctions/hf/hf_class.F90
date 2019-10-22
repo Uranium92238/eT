@@ -411,9 +411,9 @@ contains
 !
       class(hf) :: wf
 !
-      call input%get_keyword_in_section('coulomb threshold', 'solver hf', wf%coulomb_threshold)
-      call input%get_keyword_in_section('exchange threshold', 'solver hf', wf%exchange_threshold)
-      call input%get_keyword_in_section('integral precision', 'solver hf', wf%libint_epsilon)
+      call input%get_keyword_in_section('coulomb threshold', 'solver scf', wf%coulomb_threshold)
+      call input%get_keyword_in_section('exchange threshold', 'solver scf', wf%exchange_threshold)
+      call input%get_keyword_in_section('integral precision', 'solver scf', wf%libint_epsilon)
 !
    end subroutine read_hf_settings_hf
 !

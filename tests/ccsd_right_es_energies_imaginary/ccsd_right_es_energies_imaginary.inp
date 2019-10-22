@@ -16,10 +16,10 @@ method
    ccsd
 end method
 
-solver hf
+solver scf
    energy threshold:   1.0d-6
    gradient threshold: 1.0d-6
-end solver hf
+end solver scf
 
 solver cholesky
    threshold: 1.0d-6

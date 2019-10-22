@@ -168,10 +168,10 @@ contains
 !
       class(reference_engine) :: engine 
 !
-      call input%get_keyword_in_section('algorithm', 'solver hf', engine%algorithm)
-      if (input%requested_keyword_in_section('restart', 'solver hf')) engine%restart = .true.
+      call input%get_keyword_in_section('algorithm', 'solver scf', engine%algorithm)
+      if (input%requested_keyword_in_section('restart', 'solver scf')) engine%restart = .true.
 !
-      call input%get_keyword_in_section('ao density guess', 'solver hf', engine%ao_density_guess)
+      call input%get_keyword_in_section('ao density guess', 'solver scf', engine%ao_density_guess)
 !
    end subroutine read_settings_reference_engine
 !
@@ -258,11 +258,11 @@ contains
       max_iterations     = 100
 !
       energy_threshold   = 1.0D-6
-      call input%get_keyword_in_section('energy threshold', 'solver hf', energy_threshold)
+      call input%get_keyword_in_section('energy threshold', 'solver scf', energy_threshold)
       energy_threshold   = min(1.0D-6, energy_threshold)
 !
       gradient_threshold = 1.0D-6
-      call input%get_keyword_in_section('gradient threshold', 'solver hf', gradient_threshold)
+      call input%get_keyword_in_section('gradient threshold', 'solver scf', gradient_threshold)
       gradient_threshold = min(1.0D-6, gradient_threshold)
 !
 !     Mute output

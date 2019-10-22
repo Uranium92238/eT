@@ -113,16 +113,16 @@ contains
       class(bfgs_geoopt_hf), intent(inout) :: solver 
 !
       call input%get_keyword_in_section('gradient threshold', &
-                                        'solver hf geoopt', solver%gradient_threshold)
+                                        'solver scf geoopt', solver%gradient_threshold)
 !
       call input%get_keyword_in_section('energy threshold', &
-                                        'solver hf geoopt', solver%energy_threshold)
+                                        'solver scf geoopt', solver%energy_threshold)
 !
       call input%get_keyword_in_section('max iterations', &
-                                        'solver hf geoopt', solver%max_iterations)
+                                        'solver scf geoopt', solver%max_iterations)
 !
       call input%get_keyword_in_section('max step', &
-                                        'solver hf geoopt', solver%max_step)
+                                        'solver scf geoopt', solver%max_step)
 !
    end subroutine read_settings_bfgs_geoopt_hf
 !
