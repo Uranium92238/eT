@@ -180,7 +180,7 @@ module ccs_class
       procedure :: jacobian_transpose_ccs_a1                   => jacobian_transpose_ccs_a1_ccs
       procedure :: jacobian_transpose_ccs_b1                   => jacobian_transpose_ccs_b1_ccs
 !
-      procedure :: construct_excited_state_equation            => construct_excited_state_equation_ccs
+      procedure :: construct_Jacobian_transform                => construct_Jacobian_transform_ccs
       procedure :: construct_multiplier_equation               => construct_multiplier_equation_ccs
       procedure :: construct_eta                               => construct_eta_ccs
 !
@@ -623,68 +623,59 @@ contains
    end subroutine get_gs_orbital_differences_ccs
 !
 !
-   subroutine construct_excited_state_equation_ccs(wf, X, R, w, r_or_l)
+   subroutine construct_Jacobian_transform_ccs(wf, r_or_l, X, w)
 !!
-!!    Construct excited state equation
+!!    Construct Jacobian transform
 !!    Written by Eirik F. Kjønstad, Dec 2018
 !!
-!!    Constructs R = AX - wX, where w = X^T A X and norm(X) = sqrt(X^T X) = 1
+!!    Modified by Rolf H. Myhre, Oct 2019
 !!
-!!    Note I: we assume that X is normalized. If it is not,
-!!    please normalize before calling the routine.
+!!    Constructs R = AX or R = A^T X
 !!
-!!    Note II: this routine constructs the excited state equation
-!!    for standard CC models and the effective (!) excited state
-!!    equation in perturbative models. In the CC2 routine, for
-!!    instance, X and R will be n_o*n_v vectors and A(w) will
-!!    depend on the excitation energy w. See, e.g., Weigend and
-!!    Hättig's RI-CC2 paper for more on this topic. This means
-!!    that w should be the previous w-value when entering the
-!!    routine (so that A(w)X may be constructed approximately)
-!!    in perturbative models.
+!!    Removed calculation of residual, this is now done in the solver
 !!
-!!    Note III: the routine is used by the DIIS excited state solver.
+!!    Wrapper for Jacobian transformations
+!!
+!!    r_or_l: string that should be 'left' or 'right', 
+!!            determines if Jacobian or Jacobian transpose is called
+!!
+!!    X: On input contains the vector to transform, 
+!!       on output contains the transformed vector
+!!
+!!    w: Excitation energy. Only used for debug prints for CCS, CCSD etc.
+!!       but is passed to the effective_jacobian_transform for lowmem_CC2 and CC3
 !!
       implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: X
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: R
-!
       character(len=*), intent(in) :: r_or_l
 !
-      real(dp), intent(inout) :: w
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout)   :: X
 !
-      real(dp), dimension(:), allocatable :: X_copy
+      real(dp), intent(in), optional :: w
 !
-      real(dp) :: ddot
+      if (present(w)) then
+         call output%printf('Calling Jacobian (a0) transform with energy: (f19.12)', &
+                            pl='debug', chars=[r_or_l], reals=[w])
+      endif
 !
-      call mem%alloc(X_copy, wf%n_es_amplitudes)
-      call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
-!
+!     Compute the transformed matrix
       if (r_or_l .eq. "right") then
 !
-         call wf%jacobian_transformation(X_copy) ! X_copy <- AX
+         call wf%jacobian_transformation(X) ! X <- AX
 !
       elseif (r_or_l .eq. 'left') then
 !
-         call wf%jacobian_transpose_transformation(X_copy) ! X_copy <- XA
+         call wf%jacobian_transpose_transformation(X) ! X <- XA
 !
       else
 !
-         call output%error_msg('Neither left nor right in construct_excited_state')
+         call output%error_msg('Neither left nor right in construct_Jacobian_transform')
 !
       endif
 !
-      w = ddot(wf%n_es_amplitudes, X, 1, X_copy, 1)
-!
-      call dcopy(wf%n_es_amplitudes, X_copy, 1, R, 1)
-      call daxpy(wf%n_es_amplitudes, -w, X, 1, R, 1)
-!
-      call mem%dealloc(X_copy, wf%n_es_amplitudes)
-!
-   end subroutine construct_excited_state_equation_ccs
+   end subroutine construct_Jacobian_transform_ccs
 !
 !
    subroutine get_cvs_projector_ccs(wf, projector, n_cores, core_MOs)

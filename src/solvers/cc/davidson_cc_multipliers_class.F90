@@ -235,7 +235,7 @@ contains
 !
          call davidson%get_trial(c, davidson%dim_red)
 !
-         call wf%jacobian_transpose_transformation(c)
+         call wf%construct_Jacobian_transform('left', c, zero)
 !
          call davidson%set_transform(c, davidson%dim_red)
 !

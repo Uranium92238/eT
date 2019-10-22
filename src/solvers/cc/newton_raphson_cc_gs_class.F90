@@ -375,7 +375,7 @@ contains
          call mem%alloc(c, davidson%n_parameters)
 !
          call davidson%get_trial(c, davidson%dim_red)
-         call wf%jacobian_transformation(c) 
+         call wf%construct_Jacobian_transform('right', c)
          call davidson%set_transform(c, davidson%dim_red)
 !
          call mem%dealloc(c, davidson%n_parameters)

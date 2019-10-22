@@ -231,15 +231,7 @@ contains
 !
             call davidson%get_trial(c, trial)
 !
-            if (trim(solver%transformation) == 'right') then 
-!
-               call wf%jacobian_transformation(c)
-!
-            elseif (trim(solver%transformation) == 'left') then 
-!
-               call wf%jacobian_transpose_transformation(c)
-!
-            endif
+            call wf%construct_Jacobian_transform(solver%transformation, c)
 !
             if (solver%projection_tool%active) call solver%projection_tool%project(c)
 !
