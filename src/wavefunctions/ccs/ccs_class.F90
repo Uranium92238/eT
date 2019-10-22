@@ -474,19 +474,18 @@ contains
 !
       class(ccs) :: wf
 !
-      type(sequential_file) :: hf_restart_file 
+      type(sequential_file) :: orbital_information_file 
 !
-      hf_restart_file = sequential_file('hf_restart_file')
-      call hf_restart_file%open_('read', 'rewind')
+      orbital_information_file = sequential_file('orbital_information')
+      call orbital_information_file%open_('read', 'rewind')
 !
-      call hf_restart_file%read_(wf%n_ao)     
-      call hf_restart_file%read_(wf%n_mo)     
-      call hf_restart_file%skip()     
-      call hf_restart_file%read_(wf%n_o)     
-      call hf_restart_file%read_(wf%n_v)     
-      call hf_restart_file%read_(wf%hf_energy)    
+      call orbital_information_file%read_(wf%n_o)     
+      call orbital_information_file%read_(wf%n_v)         
+      call orbital_information_file%read_(wf%n_ao)     
+      call orbital_information_file%read_(wf%n_mo)     
+      call orbital_information_file%read_(wf%hf_energy)    
 !
-      call hf_restart_file%close_()
+      call orbital_information_file%close_()
 !
    end subroutine read_hf_ccs
 !
