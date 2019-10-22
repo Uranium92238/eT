@@ -28,14 +28,14 @@ interface
 !
    end subroutine set_coulomb_precision_c
 !
-   subroutine initialize_basis_c(basisset,filename,cartesian_gaussians) bind(C, name='initialize_basis')
+   subroutine initialize_basis_c(basisset,filename,cartesian_gaussians_int) bind(C, name='initialize_basis')
 !
-      use iso_c_binding, only: C_CHAR, C_LONG, C_BOOL
+      use iso_c_binding, only: C_CHAR, C_LONG, C_INT
       implicit none
 !
       character(kind = c_char) :: basisset(*)
       character(kind = c_char) :: filename(*)
-      logical(kind = c_bool), value :: cartesian_gaussians
+      integer(c_int)    :: cartesian_gaussians_int
 !
    end subroutine initialize_basis_c
 !
