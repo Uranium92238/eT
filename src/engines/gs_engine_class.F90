@@ -22,10 +22,16 @@ module gs_engine_class
 !!    Coupled cluster ground state engine class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-   use ccs_class
-   use abstract_cc_engine_class
+   use abstract_engine_class, only: abstract_engine
 !
-   type, extends(abstract_cc_engine) :: gs_engine 
+   use parameters
+!
+   use ccs_class, only: ccs
+   use global_in, only: input
+   use memory_manager_class, only: mem
+   use timings_class, only: timings
+!
+   type, extends(abstract_engine) :: gs_engine 
 !
       character(len=200) :: multipliers_algorithm
 !
@@ -33,7 +39,13 @@ module gs_engine_class
 !
    contains
 !
+      procedure :: ignite                                => ignite_gs_engine
       procedure :: run                                   => run_gs_engine
+!
+      procedure :: read_settings                         => read_settings_gs_engine
+      procedure :: read_gs_settings                      => read_gs_settings_gs_engine
+!
+      procedure :: set_printables                        => set_printables_gs_engine
 !
       procedure :: do_ground_state                       => do_ground_state_gs_engine
 !
@@ -44,11 +56,7 @@ module gs_engine_class
       procedure, nopass :: calculate_quadrupole_moment   => calculate_quadrupole_moment_gs_engine
       procedure, nopass :: remove_trace                  => remove_trace_gs_engine
 !
-      procedure :: read_settings                         => read_settings_gs_engine
-!
-      procedure :: read_gs_settings                      => read_gs_settings_gs_engine
-!
-      procedure :: set_printables                        => set_printables_gs_engine
+      procedure, nopass :: do_cholesky                   => do_cholesky_gs_engine
 !
    end type gs_engine
 !
@@ -72,18 +80,60 @@ contains
 !
       type(gs_engine) :: engine 
 !
-      engine%name_   = 'Ground state coupled cluster engine'
-      engine%author  = 'E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      engine%timer = timings(trim(engine%name_))
-      call engine%timer%turn_on()
-!
       engine%multipliers_algorithm = 'davidson'
       engine%gs_algorithm          = 'diis'
 !
       call engine%read_settings()
 !
+      call engine%set_printables()
+!
+      engine%timer = timings(trim(engine%name_))
+      call engine%timer%turn_on()
+!
    end function new_gs_engine
+!
+!
+   subroutine ignite_gs_engine(engine, wf)
+!!
+!!    Ignite
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
+!!
+!!    Banner, run & cleanup
+!!
+      implicit none
+!
+      class(gs_engine) :: engine
+!
+      class(ccs) :: wf
+!
+      call engine%print_banner(wf)
+      call engine%run(wf)
+      call engine%print_timings(wf)
+!
+   end subroutine ignite_gs_engine
+!
+!
+   subroutine run_gs_engine(engine, wf)
+!!
+!!    Run
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(gs_engine) :: engine
+      class(ccs)       :: wf
+!
+!     Cholesky decoposition of the electron repulsion integrals
+!
+      call engine%do_cholesky(wf)
+!
+      call wf%mo_preparations()
+!
+!     Determine ground state
+!
+      call engine%do_ground_state(wf)
+!
+   end subroutine run_gs_engine
 !
 !
    subroutine read_settings_gs_engine(engine)
@@ -115,27 +165,29 @@ contains
    end subroutine read_gs_settings_gs_engine
 !
 !
-   subroutine run_gs_engine(engine, wf)
+   subroutine set_printables_gs_engine(engine)
 !!
-!!    Run
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Set Printables
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Should be overwritten by descendants.
 !!
       implicit none
 !
       class(gs_engine) :: engine
-      class(ccs)       :: wf
 !
-!     Cholesky decoposition of the electron repulsion integrals
+      engine%name_       = 'Ground state coupled cluster engine'
+      engine%author      = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
-      call engine%do_cholesky(wf)
+      engine%description = 'Calculates the ground state CC wavefunction | CC > = exp(T) | R >'
+      engine%tag         = 'ground state'
 !
-      call wf%mo_preparations()
+      engine%tasks       = [character(len=150) ::                                                                    &
+                           'Cholesky decomposition of the ERI-matrix',                                               &
+                           'Calculation of the ground state amplitudes ('//trim(engine%gs_algorithm)//'-algorithm)', &
+                           'Calculation of the ground state energy']
 !
-!     Determine ground state
-!
-      call engine%do_ground_state(wf)
-!
-   end subroutine run_gs_engine
+   end subroutine set_printables_gs_engine
 !
 !
    subroutine do_ground_state_gs_engine(engine, wf)
@@ -166,11 +218,12 @@ contains
          call wf%integrals%write_t1_cholesky(wf%t1)
          call wf%calculate_energy()
 !
-         write(output%unit, '(/t3,a,a,a)') ':: Summary of ', trim(convert_to_uppercase(wf%name_)), ' wavefunction energetics (a.u.)'
+         call output%printf(':: Summary of (a0) wavefunction energetics (a.u.)', pl='minimal', fs='(/t3,a)', &
+                             chars=[convert_to_uppercase(wf%name_)])
 !
-         write(output%unit, '(/t3,a26,f19.12)') 'HF energy:                ', wf%hf_energy
-         write(output%unit, '(t3,a26,f19.12)')  'MP2 correction:           ', (wf%energy)-(wf%hf_energy)
-         write(output%unit, '(t3,a26,f19.12)')  'MP2 energy:               ', wf%energy
+         call output%printf('HF energy:                (f19.12)', pl='minimal', reals=[wf%hf_energy], fs='(/t6,a)')
+         call output%printf('MP2 correction:           (f19.12)', pl='minimal', reals=[ (wf%energy - wf%hf_energy) ], fs='(t6,a)')
+         call output%printf('MP2 energy:               (f19.12)', pl='minimal', reals=[wf%energy], fs='(t6,a)')
 !
       elseif (trim(engine%gs_algorithm) == 'diis') then
 !
@@ -178,7 +231,6 @@ contains
          call diis_solver%run(wf)
          call diis_solver%cleanup(wf)
 !
-
       elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
 !
          newton_raphson_solver = newton_raphson_cc_gs(wf)
@@ -213,14 +265,15 @@ contains
       type(diis_cc_multipliers), allocatable     :: diis_solver
       type(davidson_cc_multipliers), allocatable :: davidson_solver
 !
-      if (trim(engine%multipliers_algorithm) == 'davidson' .and. (trim(wf%name_) == 'cc2' .or. trim(wf%name_) == 'cc3')) then
-         write(output%unit, '(/t3,3a)') 'Warning: For ', trim(wf%name_),' multipliers the DIIS algorithm will be used'
-         write(output%unit, '(t12,a)') 'even though "davidson" was specified in the input.'
-      end if
-!
-      if (trim(wf%name_) == 'cc2' .or. trim(wf%name_) == 'cc3') engine%multipliers_algorithm = 'diis'
-!
       if (trim(engine%multipliers_algorithm) == 'davidson') then 
+!
+         if (trim(wf%name_) == 'cc2' .or.            &
+             trim(wf%name_) == 'low memory cc2' .or. &
+             trim(wf%name_) == 'cc3') then
+!
+            call output%error_msg('Davidson not implemented for CC2, lowmem CC2, CC3.')
+!
+         end if
 !
          davidson_solver = davidson_cc_multipliers(wf)
          call davidson_solver%run(wf)
@@ -362,25 +415,31 @@ contains
    end subroutine remove_trace_gs_engine
 !
 !
-   subroutine set_printables_gs_engine(engine)
+   subroutine do_cholesky_gs_engine(wf)
 !!
-!!    Set printables
-!!    Written by sarai D. Folkestad, May 2019
+!!    Do Cholesky
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
 !!
+!!    Cholesky decomposition of electronic repiulsion integrals
+!!
+      use eri_cd_class
+!
       implicit none
 !
-      class(gs_engine) :: engine
+      class(ccs), intent(inout) :: wf
 !
-      engine%tag   = 'ground state'
+      type(eri_cd) :: eri_chol_solver
 !
-      engine%tasks = [character(len=150) ::                                                           &
-            'Cholesky decomposition of the ERI-matrix',                                               &
-            'Calculation of the ground state amplitudes ('//trim(engine%gs_algorithm)//'-algorithm)', &
-            'Calculation of the ground state energy']
+!     Cholesky decoposition 
 !
-      engine%description = 'Calculates the ground state CC wavefunction | CC > = exp(T) | R >'
+      eri_chol_solver = eri_cd(wf%system)
+      call eri_chol_solver%run(wf%system)
 !
-   end subroutine set_printables_gs_engine
+      call eri_chol_solver%diagonal_test(wf%system)
+!
+      call eri_chol_solver%cleanup(wf%system)
+!
+   end subroutine do_cholesky_gs_engine
 !
 !
 end module gs_engine_class

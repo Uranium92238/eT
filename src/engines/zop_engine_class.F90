@@ -25,7 +25,13 @@ module zop_engine_class
 !!    Calculates expectation values < Λ | A | CC > for the operator A,
 !!    where A is the dipole or quadrupole operator.
 !!
-   use gs_engine_class
+   use kinds
+   use global_in,     only: input
+   use global_out,    only: output
+   use timings_class, only: timings
+!
+   use gs_engine_class, only: gs_engine
+   use ccs_class,       only: ccs
 !
    type, extends(gs_engine) :: zop_engine
 !
@@ -34,16 +40,16 @@ module zop_engine_class
 !
    contains
 !
-      procedure :: run                                         => run_zop_engine
+      procedure :: run                          => run_zop_engine
 !
-      procedure :: read_settings                               => read_settings_zop_engine
-      procedure :: read_zop_settings                           => read_zop_settings_zop_engine
+      procedure :: read_settings                => read_settings_zop_engine
+      procedure :: read_zop_settings            => read_zop_settings_zop_engine
 !
-      procedure :: calculate_expectation_values                => calculate_expectation_values_zop_engine
+      procedure :: calculate_expectation_values => calculate_expectation_values_zop_engine
 !
-      procedure :: set_printables                              => set_printables_zop_engine
+      procedure :: set_printables               => set_printables_zop_engine
 !
-      procedure, nopass, private :: print_summary              => print_summary_zop_engine
+      procedure, nopass :: print_operator       => print_operator_zop_engine
 !
    end type zop_engine
 !
@@ -66,18 +72,17 @@ contains
 !
       type(zop_engine) :: engine
 !
-      engine%name_ = 'Zeroth order coupled cluster properties engine'
-      engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      engine%timer = timings(trim(engine%name_))
-      call engine%timer%turn_on()
-!
       engine%dipole                 = .false.
       engine%quadrupole             = .false.
       engine%multipliers_algorithm  = 'davidson'
       engine%gs_algorithm           = 'diis'
 !
       call engine%read_settings()
+!
+      call engine%set_printables()
+!
+      engine%timer = timings(trim(engine%name_))
+      call engine%timer%turn_on()
 !
    end function new_zop_engine
 !
@@ -180,7 +185,7 @@ contains
                         'y   ',&
                         'z   '/)
 !
-         call engine%print_summary('dipole moment', mu_electronic, mu_nuclear, mu_total, &
+         call engine%print_operator('dipole moment', mu_electronic, mu_nuclear, mu_total, &
                                     components, 3)
 !
          deallocate(components)
@@ -200,7 +205,7 @@ contains
                          'yz  ',   &
                          'zz  '    /)
 !
-         call engine%print_summary('quadrupole moment (with trace)', q_electronic, q_nuclear, q_total, &
+         call engine%print_operator('quadrupole moment (with trace)', q_electronic, q_nuclear, q_total, &
                                     components, 6)
 !
          call engine%remove_trace(q_electronic)
@@ -208,7 +213,7 @@ contains
 !
          q_total = q_electronic + q_nuclear
 !
-         call engine%print_summary('traceless quadrupole moment', q_electronic, q_nuclear, q_total, &
+         call engine%print_operator('traceless quadrupole moment', q_electronic, q_nuclear, q_total, &
                                     components, 6)
 !
          deallocate(components)
@@ -218,9 +223,9 @@ contains
    end subroutine calculate_expectation_values_zop_engine
 !
 !
-   subroutine print_summary_zop_engine(operator_, electronic, nuclear, total, components, n_components)
+   subroutine print_operator_zop_engine(operator_, electronic, nuclear, total, components, n_components)
 !!
-!!    Print summary
+!!    Print operator
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
 !!
       implicit none
@@ -237,22 +242,21 @@ contains
 !
       integer :: k
 !
-      write(output%unit, '(/t3,a,a,a)') '- Operator: ', trim(operator_), ' [a.u.]'
+      call output%printf('- Operator: (a0) [a.u.]', pl='minimal', fs='(/t3,a,a,a)', chars=[operator_])
 !
-      write(output%unit, '(/t6, a)') 'Cart. comp.  Electronic         Nuclear             Total           '
-      write(output%unit, '(t6, a)')  '--------------------------------------------------------------------'
+      call output%printf('Cart. comp.  Electronic         Nuclear             Total           ', pl='minimal', fs='(/t6,a)')
+      call output%printf('--------------------------------------------------------------------', pl='minimal', fs='(t6,a)')
 !
       do k = 1, n_components
 !
-         write(output%unit, '(t9, a4, 3x, f19.12, f19.12, f19.12)') components(k), &
-               electronic(k), nuclear(k), total(k)
+         call output%printf('(a4)   (f19.12)(f19.12)(f19.12)', pl='minimal', fs='(t9,a)', &
+                            chars=[components(k)], reals=[electronic(k), nuclear(k), total(k)])
 !
       enddo
 !
-      write(output%unit, '(t6, a)')  '--------------------------------------------------------------------'
-      flush(output%unit)
+      call output%printf('--------------------------------------------------------------------', pl='minimal', fs='(t6,a)')
 !
-   end subroutine print_summary_zop_engine
+   end subroutine print_operator_zop_engine
 !
 !
    subroutine set_printables_zop_engine(engine)
@@ -263,6 +267,9 @@ contains
       implicit none
 !
       class(zop_engine) :: engine
+!
+      engine%name_ = 'Zeroth order coupled cluster properties engine'
+      engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       engine%tag   = 'zeroth order properties'
 !

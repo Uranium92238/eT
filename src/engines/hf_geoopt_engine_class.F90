@@ -22,17 +22,23 @@ module hf_geoopt_engine_class
 !!    Hartree-Fock geometry optimization engine class module 
 !!    Written by Eirik F. Kjønstad, 2019 
 !!
-   use abstract_hf_engine_class
+   use reference_engine_class, only: reference_engine
+!
+   use global_out,    only: output
+   use global_in,     only: input
+   use timings_class, only: timings
+   use hf_class,      only: hf
 !
    use bfgs_geoopt_hf_class, only: bfgs_geoopt_hf
 !
-   type, extends(abstract_hf_engine) :: hf_geoopt_engine
+   type, extends(reference_engine) :: hf_geoopt_engine
 !
    contains 
 !
       procedure :: run              => run_hf_geoopt_engine
 !
       procedure :: read_settings    => read_settings_hf_geoopt_engine
+      procedure :: set_printables   => set_printables_hf_geoopt_engine
 !
    end type hf_geoopt_engine 
 !
@@ -60,6 +66,11 @@ contains
       engine%restart = .false.
 !
       call engine%read_settings()
+!
+      call engine%set_printables()
+!
+      engine%timer = timings(trim(engine%name_))
+      call engine%timer%turn_on()
 !
    end function new_hf_geoopt_engine
 !
@@ -104,6 +115,29 @@ contains
       if (input%requested_keyword_in_section('restart', 'solver hf geoopt')) engine%restart = .true.
 !
    end subroutine read_settings_hf_geoopt_engine
+!
+!
+   subroutine set_printables_hf_geoopt_engine(engine)
+!!
+!!    Set Printables
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Should be overwritten by descendants.
+!!
+      implicit none
+!
+      class(hf_geoopt_engine) :: engine
+!
+      engine%name_       = 'Hartree-Fock geometry optimization engine'
+      engine%author      = 'E. F. Kjønstad, 2019'
+!
+      engine%description = 'Calculates the optimized geometry for the HF wavefunction | HF >.'
+      engine%tag         = 'geometry optimization'
+!
+      engine%tasks       = [character(len=150) ::              &
+                           'Calculation of optimized geometry (' // trim(engine%algorithm) // ')' ]
+!
+   end subroutine set_printables_hf_geoopt_engine
 !
 !
 end module hf_geoopt_engine_class
