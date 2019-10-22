@@ -52,7 +52,10 @@ module mo_integral_tool_class
       integer, private :: n_mo
 !
       logical, private :: eri_t1_mem = .false.
+      logical, private :: eri_t1_mem_complex = .false.
+!
       real(dp), dimension(:,:,:,:), allocatable :: g_pqrs
+      complex(dp), dimension(:,:,:,:), allocatable :: g_pqrs_complex
 !
    contains
 !
@@ -67,7 +70,10 @@ module mo_integral_tool_class
       procedure :: read_cholesky_t1             => read_cholesky_t1_mo_integral_tool
       procedure :: write_t1_cholesky            => write_t1_cholesky_mo_integral_tool
 !
+      procedure :: get_g_pqrs_t1                => get_g_pqrs_t1_mo_integral_tool
       procedure :: construct_g_pqrs_t1          => construct_g_pqrs_t1_mo_integral_tool
+!
+      procedure :: get_g_pqrs_t1_complex        => get_g_pqrs_t1_mo_integral_tool_complex
 !
       procedure :: construct_cholesky_ij        => construct_cholesky_ij_mo_integral_tool
       procedure :: construct_cholesky_ab        => construct_cholesky_ab_mo_integral_tool
@@ -79,9 +85,14 @@ module mo_integral_tool_class
       procedure :: construct_cholesky_ai_i_c1   => construct_cholesky_ai_i_c1_mo_integral_tool
 !
       procedure :: set_full_index               => set_full_index_mo_integral_tool
-      procedure :: can_we_keep_g_pqrs_t1        => can_we_keep_g_pqrs_t1_mo_integral_tool
+      procedure :: room_for_g_pqrs_t1           => room_for_g_pqrs_t1_mo_integral_tool
 !
       procedure :: get_eri_t1_mem               => get_eri_t1_mem_mo_integral_tool
+!
+      procedure :: make_eri_complex             => make_eri_complex_mo_integral_tool
+!
+      procedure :: place_g_pqrs_t1_in_memory    => place_g_pqrs_t1_in_memory_mo_integral_tool
+      procedure :: update_g_pqrs_t1_in_memory   => update_g_pqrs_t1_in_memory_mo_integral_tool
 !
    end type mo_integral_tool
 !
@@ -191,71 +202,72 @@ contains
    end subroutine cleanup_mo_integral_tool
 !
 !
-   subroutine can_we_keep_g_pqrs_t1_mo_integral_tool(integrals)
+   logical function room_for_g_pqrs_t1_mo_integral_tool(integrals)
 !!
-!!    Can we keep g_pqrs
+!!    Room for g_pqrs t1
 !!    Written by Eirik F. Kjønstad, Jan 2019
 !!
 !!    This routine is called to check whether the T1-ERIs can be held in
 !!    memory safely (< 20% of total available). If this is the case, the
-!!    manager will keep a copy of g_pqrs in memory. When an integral is
-!!    requested (e.g. g_abci), the integral will be copied from the g_pqrs
-!!    copy instead of being constructed as g_abci = sum_J L_ab^J L_ci^J.
+!!    manager will keep a copy of g_pqrs in memory. 
 !!
-!!    Note: the routine assumes that the T1-transformed Cholesky vectors
-!!    have been placed on file.
-!!
+!!    
       implicit none
 !
       class(mo_integral_tool) :: integrals
 !
-      real(dp), dimension(:,:,:), allocatable :: L_J_pq
-!
       integer :: required_mem
 !
-      required_mem = (integrals%n_mo)**4 + (integrals%n_mo)**2*(integrals%n_J)
+      integer, parameter :: fraction_of_total_mem = 5
 !
-      if ((required_mem .lt. mem%get_available()/(5*dp)) .or. allocated(integrals%g_pqrs)) then
+      required_mem = (integrals%n_mo)**4
 !
-         integrals%eri_t1_mem = .true.
+      if (required_mem*dp .lt. mem%get_available()/fraction_of_total_mem) &
+         room_for_g_pqrs_t1_mo_integral_tool = .true.
 !
-!        If not allocated, allocate copy of ERI matrix
+   end function room_for_g_pqrs_t1_mo_integral_tool
 !
-         if (.not. allocated(integrals%g_pqrs)) then
 !
-            call mem%alloc(integrals%g_pqrs, integrals%n_mo, integrals%n_mo, &
+   subroutine place_g_pqrs_t1_in_memory_mo_integral_tool(integrals)
+!!
+!!    Place g_pqrs T1 in memory
+!!    Written by Eirik F. Kjønstad, Jan 2019
+!!
+!!    Initializes g_pqrs_t1, constructs it and
+!!    sets the logical eri_t1_mem to true
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(inout) :: integrals
+!
+      if (integrals%eri_t1_mem) call output%error_msg('tried to put T1 g_pqrs in memory, but it is already there.')
+!
+      call mem%alloc(integrals%g_pqrs, integrals%n_mo, integrals%n_mo, &
                                           integrals%n_mo, integrals%n_mo)
 !
-         endif
+      call integrals%construct_g_pqrs_t1(integrals%g_pqrs, 1, integrals%n_mo, 1, integrals%n_mo, &
+                                          1, integrals%n_mo, 1, integrals%n_mo)
 !
-!        Then construct it from the T1-Cholesky vectors
+      integrals%eri_t1_mem = .true.
 !
-         call mem%alloc(L_J_pq, integrals%n_J, integrals%n_mo, integrals%n_mo)
+   end subroutine place_g_pqrs_t1_in_memory_mo_integral_tool
 !
-         call integrals%read_cholesky_t1(L_J_pq, 1, integrals%n_mo, 1, integrals%n_mo)
 !
-         call dgemm('T','N',              &
-                     integrals%n_mo**2,   &
-                     integrals%n_mo**2,   &
-                     integrals%n_J,       &
-                     one,                 &
-                     L_J_pq,              &
-                     integrals%n_J,       &
-                     L_J_pq,              &
-                     integrals%n_J,       &
-                     zero,                &
-                     integrals%g_pqrs,    &
-                     integrals%n_mo**2)
+   subroutine update_g_pqrs_t1_in_memory_mo_integral_tool(integrals)
+!!
+!!    Update g_pqrs T1 in memory
+!!    Written by Eirik F. Kjønstad, Jan 2019
+!!
+!!    Updates g_pqrs_t1 in memory
+!!
+      implicit none
 !
-         call mem%dealloc(L_J_pq, integrals%n_J, integrals%n_mo, integrals%n_mo)
+      class(mo_integral_tool), intent(inout) :: integrals
 !
-      else
+      call integrals%construct_g_pqrs_t1(integrals%g_pqrs, 1, integrals%n_mo, 1, integrals%n_mo, &
+                                          1, integrals%n_mo, 1, integrals%n_mo)
 !
-         integrals%eri_t1_mem = .false.
-!
-      endif
-!
-   end subroutine can_we_keep_g_pqrs_t1_mo_integral_tool
+   end subroutine update_g_pqrs_t1_in_memory_mo_integral_tool
 !
 !
    subroutine read_cholesky_mo_integral_tool(integrals, L_J_pq, first_p, last_p, first_q, last_q)
@@ -331,10 +343,10 @@ contains
    end subroutine read_cholesky_t1_mo_integral_tool
 !
 !
-   subroutine construct_g_pqrs_t1_mo_integral_tool(integrals, g_pqrs, first_p, last_p, first_q, last_q, &
+   subroutine get_g_pqrs_t1_mo_integral_tool(integrals, g_pqrs, first_p, last_p, first_q, last_q, &
                                                                      first_r, last_r, first_s, last_s)
 !!
-!!    Construct g_pqrs T1
+!!    Get g_pqrs T1
 !!    Written by Eirik F. Kjønstad, Mar 2019
 !!
 !!    Assumes that the integrals are in memory or that the Cholesky vectors
@@ -353,8 +365,6 @@ contains
 !
       integer :: p, q, r, s
       integer :: dim_p, dim_q, dim_r, dim_s
-!
-      real(dp), dimension(:,:,:), allocatable :: L_J_pq, L_J_rs
 !
       if (.not. integrals%cholesky_t1_file) call output%error_msg('tried to construct T1-tranformed g_pqrs, but ' &
                                                          // 'the T1-transformed Cholesky vectors are not on file!')
@@ -385,29 +395,118 @@ contains
 !
       else
 !
-         call mem%alloc(L_J_pq, integrals%n_J, dim_p, dim_q)
-         call mem%alloc(L_J_rs, integrals%n_J, dim_r, dim_s)
-!
-         call integrals%read_cholesky_t1(L_J_pq, first_p, last_p, first_q, last_q)
-         call integrals%read_cholesky_t1(L_J_rs, first_r, last_r, first_s, last_s)
-!
-         call dgemm('T', 'N', &
-                     dim_p*dim_q, &
-                     dim_r*dim_s, &
-                     integrals%n_J, &
-                     one, &
-                     L_J_pq, &
-                     integrals%n_J, &
-                     L_J_rs, &
-                     integrals%n_J, &
-                     zero, &
-                     g_pqrs, &
-                     dim_p*dim_q)
-!
-         call mem%dealloc(L_J_pq, integrals%n_J, dim_p, dim_q)
-         call mem%dealloc(L_J_rs, integrals%n_J, dim_r, dim_s)
+         call integrals%construct_g_pqrs_t1(g_pqrs, first_p, last_p, first_q, last_q, &
+                                                    first_r, last_r, first_s, last_s)
 !
       endif
+!
+   end subroutine get_g_pqrs_t1_mo_integral_tool
+!
+!
+   subroutine get_g_pqrs_t1_mo_integral_tool_complex(integrals, g_pqrs, first_p, last_p, first_q, last_q, &
+                                                                              first_r, last_r, first_s, last_s)
+!!
+!!    Get g_pqrs T1 complex
+!!    Written by Eirik F. Kjønstad, Mar 2019
+!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
+!!
+!!    Assumes that the integrals are in memory
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!
+      integer, intent(in) :: first_p, last_p
+      integer, intent(in) :: first_q, last_q
+      integer, intent(in) :: first_r, last_r
+      integer, intent(in) :: first_s, last_s
+!
+      complex(dp), dimension(last_p-first_p+1,last_q-first_q+1,last_r-first_r+1,last_s-first_s+1), intent(out) :: g_pqrs
+!
+      integer :: p, q, r, s
+      integer :: dim_p, dim_q, dim_r, dim_s
+!
+      dim_p = last_p - first_p + 1
+      dim_q = last_q - first_q + 1
+      dim_r = last_r - first_r + 1
+      dim_s = last_s - first_s + 1
+!
+      if (integrals%eri_t1_mem_complex) then
+!
+!$omp parallel do private(s, r, q, p)
+         do s = 1, dim_s
+            do r = 1, dim_r
+               do q = 1, dim_q
+                  do p = 1, dim_p
+!
+                     g_pqrs(p,q,r,s) = integrals%g_pqrs_complex(p + first_p - 1,  &
+                                                                q + first_q - 1,  &
+                                                                r + first_r - 1,  &
+                                                                s + first_s - 1)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+!
+      else
+!
+         call output%error_msg('tried to get complex T1-transformed g_pqrs, but ' &
+                               // 'they were not found in memory!')
+!
+      endif
+!
+   end subroutine get_g_pqrs_t1_mo_integral_tool_complex
+!
+!
+   subroutine construct_g_pqrs_t1_mo_integral_tool(integrals, g_pqrs, first_p, last_p, first_q, last_q, &
+                                                                     first_r, last_r, first_s, last_s)
+!!
+!!    Construct g_pqrs T1
+!!    Written by Eirik F. Kjønstad, Mar 2019
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!
+      integer, intent(in) :: first_p, last_p
+      integer, intent(in) :: first_q, last_q
+      integer, intent(in) :: first_r, last_r
+      integer, intent(in) :: first_s, last_s
+!
+      real(dp), dimension(last_p-first_p+1,last_q-first_q+1,last_r-first_r+1,last_s-first_s+1), intent(out) :: g_pqrs
+!
+      integer :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_pq, L_J_rs
+!
+      dim_p = last_p - first_p + 1
+      dim_q = last_q - first_q + 1
+      dim_r = last_r - first_r + 1
+      dim_s = last_s - first_s + 1
+!
+      call mem%alloc(L_J_pq, integrals%n_J, dim_p, dim_q)
+      call mem%alloc(L_J_rs, integrals%n_J, dim_r, dim_s)
+!
+      call integrals%read_cholesky_t1(L_J_pq, first_p, last_p, first_q, last_q)
+      call integrals%read_cholesky_t1(L_J_rs, first_r, last_r, first_s, last_s)
+!
+      call dgemm('T', 'N',       &
+                  dim_p*dim_q,   &
+                  dim_r*dim_s,   &
+                  integrals%n_J, &
+                  one,           &
+                  L_J_pq,        &
+                  integrals%n_J, &
+                  L_J_rs,        &
+                  integrals%n_J, &
+                  zero,          &
+                  g_pqrs,        &
+                  dim_p*dim_q)
+!
+      call mem%dealloc(L_J_pq, integrals%n_J, dim_p, dim_q)
+      call mem%dealloc(L_J_rs, integrals%n_J, dim_r, dim_s)
 !
    end subroutine construct_g_pqrs_t1_mo_integral_tool
 !
@@ -456,7 +555,7 @@ contains
 !
       call mem%alloc(L_J_ij, integrals%n_J, i_length, j_length)
       call integrals%read_cholesky(L_J_ij, full_first_i, full_last_i, full_first_j, full_last_j)
-      call sort_12_to_21(L_J_ij, L_ij_J, integrals%n_J, i_length*j_length)
+      call sort_123_to_231(L_J_ij, L_ij_J, integrals%n_J, i_length, j_length)
       call mem%dealloc(L_J_ij, integrals%n_J, i_length, j_length)
 !
       call mem%alloc(L_J_ia, integrals%n_J, i_length, integrals%n_v)
@@ -536,12 +635,12 @@ contains
       call integrals%read_cholesky(L_J_ib, 1, integrals%n_o, full_first_b, full_last_b)
 !
       call mem%alloc(L_ib_J, integrals%n_o, b_length, integrals%n_J)
-      call sort_12_to_21(L_J_ib, L_ib_J, integrals%n_J, integrals%n_o*b_length)
+      call sort_123_to_231(L_J_ib, L_ib_J, integrals%n_J, integrals%n_o, b_length)
       call mem%dealloc(L_J_ib, integrals%n_J, integrals%n_o, b_length)
 !
       call mem%alloc(L_J_ab, integrals%n_J, a_length, b_length)
       call integrals%read_cholesky(L_J_ab, full_first_a, full_last_a, full_first_b, full_last_b)
-      call sort_12_to_21(L_J_ab, L_ab_J, integrals%n_J, a_length*b_length)
+      call sort_123_to_231(L_J_ab, L_ab_J, integrals%n_J, a_length, b_length)
       call mem%dealloc(L_J_ab, integrals%n_J, a_length, b_length)
 !
 !     Calculate and add t1-transformed term, - sum_i t_ai L_ib_J
@@ -608,7 +707,7 @@ contains
 !
       call mem%alloc(L_J_ai, integrals%n_J, length_a, length_i)
       call integrals%read_cholesky(L_J_ai, full_first_a, full_last_a, full_first_i, full_last_i)
-      call sort_12_to_21(L_J_ai, L_ai_J, integrals%n_J, length_a*length_i)
+      call sort_123_to_231(L_J_ai, L_ai_J, integrals%n_J, length_a, length_i)
       call mem%dealloc(L_J_ai, integrals%n_J, length_a, length_i)
 !
       batch_j = batching_index(integrals%n_o)
@@ -645,7 +744,7 @@ contains
 !
          call mem%alloc(X_j_iJ, batch_j%length, length_i, integrals%n_J)
 !
-         call sort_12_to_21(X_Jj_i, X_j_iJ, (integrals%n_J), batch_j%length*length_i)
+         call sort_123_to_231(X_Jj_i, X_j_iJ, (integrals%n_J), batch_j%length, length_i)
 !
          call mem%dealloc(X_Jj_i, integrals%n_J, batch_j%length, length_i)
 !
@@ -672,7 +771,7 @@ contains
       call integrals%read_cholesky(L_J_ji, 1, (integrals%n_o), full_first_i, full_last_i)
 !
       call mem%alloc(L_ji_J, integrals%n_o, length_i, integrals%n_J)
-      call sort_12_to_21(L_J_ji, L_ji_J, integrals%n_J, integrals%n_o*length_i)
+      call sort_123_to_231(L_J_ji, L_ji_J, integrals%n_J, integrals%n_o, length_i)
       call mem%dealloc(L_J_ji, integrals%n_J, integrals%n_o, length_i)
 !
        call dgemm('N', 'N',                     &
@@ -717,7 +816,7 @@ contains
 !
       call mem%dealloc(L_J_ab, integrals%n_J, length_a, integrals%n_v)
 !
-      call add_21_to_12(one, X_J_ai, L_ai_J, length_a*length_i, integrals%n_J)
+      call add_312_to_123(one, X_J_ai, L_ai_J, length_a, length_i, integrals%n_J)
 !
       call mem%dealloc(X_J_ai, integrals%n_J, length_a, length_i)
 !
@@ -844,7 +943,7 @@ contains
       call integrals%read_cholesky_t1(L_J_ib, 1, integrals%n_o, full_first_b, full_last_b)
 !
       call mem%alloc(L_ib_J, integrals%n_o, b_length, integrals%n_J)
-      call sort_12_to_21(L_J_ib, L_ib_J, integrals%n_J, integrals%n_o*b_length)
+      call sort_123_to_231(L_J_ib, L_ib_J, integrals%n_J, integrals%n_o, b_length)
       call mem%dealloc(L_J_ib, integrals%n_J, integrals%n_o, b_length)
 !
 !     Calculate and add c1-transformed L_ab_J_c1 = - sum_i c_ai L_ib_J
@@ -866,7 +965,7 @@ contains
 !
       call mem%dealloc(L_ib_J, integrals%n_o, b_length, integrals%n_J)
 !
-      call sort_12_to_21(L_ab_J_c1, L_J_ab_c1, a_length*b_length, integrals%n_J)
+      call sort_123_to_312(L_ab_J_c1, L_J_ab_c1, a_length, b_length, integrals%n_J)
 !
       call mem%dealloc(L_ab_J_c1, a_length, b_length, integrals%n_J)
 !
@@ -923,7 +1022,7 @@ contains
       call integrals%read_cholesky_t1(L_J_ji, 1, integrals%n_o, full_first_i, full_last_i)
 !
       call mem%alloc(L_ji_J, integrals%n_o, length_i, integrals%n_J)
-      call sort_12_to_21(L_J_ji, L_ji_J, integrals%n_J, integrals%n_o*length_i)
+      call sort_123_to_231(L_J_ji, L_ji_J, integrals%n_J, integrals%n_o, length_i)
       call mem%dealloc(L_J_ji, integrals%n_J, integrals%n_o, length_i)
 !
       call mem%alloc(L_ai_J_c1, length_a, length_i, integrals%n_J)
@@ -943,7 +1042,7 @@ contains
 !
       call mem%dealloc(L_ji_J, integrals%n_o, length_i, integrals%n_J)
 !
-      call sort_12_to_21(L_ai_J_c1, L_J_ai_c1, length_a*length_i, integrals%n_J)
+      call sort_123_to_312(L_ai_J_c1, L_J_ai_c1, length_a, length_i, integrals%n_J)
 !
       call mem%dealloc(L_ai_J_c1, length_a, length_i, integrals%n_J)
 !
@@ -1016,7 +1115,7 @@ contains
 !
       call mem%dealloc(L_J_ab, integrals%n_J, length_a, integrals%n_v)
 !
-end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
+   end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
 !
    subroutine set_full_index_mo_integral_tool(integrals, ind, pos, orb_space, red_ind)
@@ -1149,7 +1248,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
          call integrals%construct_cholesky_ij(L_ij_J, t1, batch_i%first, batch_i%last, 1, integrals%n_o)
 !
          call mem%alloc(L_J_ij, integrals%n_J, batch_i%length, integrals%n_o)
-         call sort_12_to_21(L_ij_J, L_J_ij, integrals%n_o*batch_i%length, integrals%n_J)
+         call sort_123_to_312(L_ij_J, L_J_ij, batch_i%length, integrals%n_o, integrals%n_J)
          call mem%dealloc(L_ij_J, batch_i%length, integrals%n_o, integrals%n_J)
 !
          do j = 1, integrals%n_o
@@ -1225,7 +1324,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
             call integrals%construct_cholesky_ai(L_ai_J, t1, batch_a%first, batch_a%last, batch_i%first, batch_i%last)
 !
             call mem%alloc(L_J_ai, integrals%n_J, batch_a%length, batch_i%length)
-            call sort_12_to_21(L_ai_J, L_J_ai, batch_a%length*batch_i%length, integrals%n_J)
+            call sort_123_to_312(L_ai_J, L_J_ai, batch_a%length, batch_i%length, integrals%n_J)
             call mem%dealloc(L_ai_J, batch_a%length, batch_i%length, integrals%n_J)
 !
             do i = 1, batch_i%length
@@ -1263,7 +1362,7 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
          call integrals%construct_cholesky_ab(L_ab_J, t1, 1, integrals%n_v, batch_b%first, batch_b%last)
 !
          call mem%alloc(L_J_ab, integrals%n_J, integrals%n_v, batch_b%length)
-         call sort_12_to_21(L_ab_J, L_J_ab, integrals%n_v*batch_b%length, integrals%n_J)
+         call sort_123_to_312(L_ab_J, L_J_ab, integrals%n_v, batch_b%length, integrals%n_J)
          call mem%dealloc(L_ab_J, integrals%n_v, batch_b%length, integrals%n_J)
 !
          do b = 1, batch_b%length
@@ -1304,6 +1403,43 @@ end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
       get_eri_t1_mem_mo_integral_tool = integrals%eri_t1_mem
 !
    end function get_eri_t1_mem_mo_integral_tool
+!
+!
+   subroutine make_eri_complex_mo_integral_tool(integrals)
+!!
+!!    Make ERI complex
+!!    Written by Andreas Skeidsvoll, Sep 2019
+!!
+!!    Allocates complex ERI integrals, puts the real integrals into the real part of the complex
+!!    integrals and zero into the imaginary part, and deallocates the real integrals.
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(inout) :: integrals
+!
+      integer, parameter :: fraction_of_total_mem = 5
+!
+      integer :: required_mem, mem_real_eri
+!
+      if (.not. integrals%eri_t1_mem) &
+         call output%error_msg('tried to place complex ERI-T1 integrals in memory, but real ERI-T1 is not there')
+!
+      required_mem = 2*integrals%n_mo**4
+      mem_real_eri = (integrals%n_mo**4) ! Added to mem%available
+!
+      if (required_mem*dp .gt. (mem%available + mem_real_eri*dp)/fraction_of_total_mem) &
+         call output%error_msg('not enough memory to place complex ERI-T1 integrals in memory.')
+!
+      call mem%alloc(integrals%g_pqrs_complex, integrals%n_mo, integrals%n_mo, integrals%n_mo, integrals%n_mo)
+!
+      integrals%g_pqrs_complex = cmplx(integrals%g_pqrs, zero, dp)
+!
+      call mem%dealloc(integrals%g_pqrs, integrals%n_mo, integrals%n_mo, integrals%n_mo, integrals%n_mo)
+!
+      integrals%eri_t1_mem = .false.
+      integrals%eri_t1_mem_complex = .true.
+!
+   end subroutine make_eri_complex_mo_integral_tool
 !
 !
 end module mo_integral_tool_class

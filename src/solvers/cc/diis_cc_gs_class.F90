@@ -131,11 +131,17 @@ contains
          call output%printf('Requested restart. Reading in solution from file.', fs='(/t3,a)', pl='minimal')
 !
          call wf%read_amplitudes()
+!
          call wf%integrals%write_t1_cholesky(wf%t1) 
+         if(wf%need_g_abcd() .and. wf%integrals%room_for_g_pqrs_t1()) &
+            call wf%integrals%place_g_pqrs_t1_in_memory()
 ! 
       else
 !
          call wf%integrals%write_t1_cholesky(wf%t1) 
+         if(wf%need_g_abcd() .and. wf%integrals%room_for_g_pqrs_t1()) &
+            call wf%integrals%place_g_pqrs_t1_in_memory()
+!
          call wf%set_initial_amplitudes_guess()
 !
       endif
@@ -320,7 +326,8 @@ contains
 !           and store in memory the entire ERI-T1 matrix if possible and necessary 
 !
             call wf%integrals%write_t1_cholesky(wf%t1)
-            if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
+            if (wf%integrals%get_eri_t1_mem()) &
+               call wf%integrals%update_g_pqrs_t1_in_memory()
 !
          endif
 !

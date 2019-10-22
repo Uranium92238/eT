@@ -93,11 +93,11 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_iajb, &
-                                             local_first_i, local_last_i, &
-                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
-                                             local_first_j, local_last_j, &
-                                             wf%n_o + local_first_b, wf%n_o + local_last_b)
+      call wf%integrals%get_g_pqrs_t1(g_iajb, &
+                          local_first_i, local_last_i, &
+                          wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                          local_first_j, local_last_j, &
+                          wf%n_o + local_first_b, wf%n_o + local_last_b)
 !
    end subroutine get_ovov_ccs
 !
@@ -163,11 +163,11 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_ijkl, &
-                                             local_first_i, local_last_i, &
-                                             local_first_j, local_last_j, &
-                                             local_first_k, local_last_k, &
-                                             local_first_l, local_last_l)
+      call wf%integrals%get_g_pqrs_t1(g_ijkl, &
+                          local_first_i, local_last_i, &
+                          local_first_j, local_last_j, &
+                          local_first_k, local_last_k, &
+                          local_first_l, local_last_l)
 !
    end subroutine get_oooo_ccs
 !
@@ -227,11 +227,11 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_ijka, &
-                                             local_first_i, local_last_i, &
-                                             local_first_j, local_last_j, &
-                                             local_first_k, local_last_k, &
-                                             wf%n_o + local_first_a, wf%n_o + local_last_a)
+      call wf%integrals%get_g_pqrs_t1(g_ijka, &
+                          local_first_i, local_last_i, &
+                          local_first_j, local_last_j, &
+                          local_first_k, local_last_k, &
+                          wf%n_o + local_first_a, wf%n_o + local_last_a)
 !
    end subroutine get_ooov_ccs
 !
@@ -291,11 +291,11 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_ijak, &
-                                             local_first_i, local_last_i, &
-                                             local_first_j, local_last_j, &
-                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
-                                             local_first_k, local_last_k)
+      call wf%integrals%get_g_pqrs_t1(g_ijak, &
+                           local_first_i, local_last_i, &
+                           local_first_j, local_last_j, &
+                           wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                           local_first_k, local_last_k)
 !
    end subroutine get_oovo_ccs
 !
@@ -355,11 +355,11 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_iajk, &
-                                             local_first_i, local_last_i, &
-                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
-                                             local_first_j, local_last_j, &
-                                             local_first_k, local_last_k)
+      call wf%integrals%get_g_pqrs_t1(g_iajk, &
+                           local_first_i, local_last_i, &
+                           wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                           local_first_j, local_last_j, &
+                           local_first_k, local_last_k)
 !
    end subroutine get_ovoo_ccs
 !
@@ -419,11 +419,11 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_aijk, &
-                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
-                                             local_first_i, local_last_i, &
-                                             local_first_j, local_last_j, &
-                                             local_first_k, local_last_k)
+      call wf%integrals%get_g_pqrs_t1(g_aijk, &
+                           wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                           local_first_i, local_last_i, &
+                           local_first_j, local_last_j, &
+                           local_first_k, local_last_k)
 !
    end subroutine get_vooo_ccs
 !
@@ -483,11 +483,11 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_abij, &
-                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
-                                             wf%n_o + local_first_b, wf%n_o + local_last_b, &
-                                             local_first_i, local_last_i, &
-                                             local_first_j, local_last_j)
+      call wf%integrals%get_g_pqrs_t1(g_abij, &
+                           wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                           wf%n_o + local_first_b, wf%n_o + local_last_b, &
+                           local_first_i, local_last_i, &
+                           local_first_j, local_last_j)
 !
    end subroutine get_vvoo_ccs
 !
@@ -553,11 +553,11 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_aibj, &
-                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
-                                             local_first_i, local_last_i, &
-                                             wf%n_o + local_first_b, wf%n_o + local_last_b, &
-                                             local_first_j, local_last_j)
+      call wf%integrals%get_g_pqrs_t1(g_aibj, &
+                           wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                           local_first_i, local_last_i, &
+                           wf%n_o + local_first_b, wf%n_o + local_last_b, &
+                           local_first_j, local_last_j)
 !
    end subroutine get_vovo_ccs
 !
@@ -617,11 +617,11 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_aijb, &
-                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
-                                             local_first_i, local_last_i, &
-                                             local_first_j, local_last_j, &
-                                             wf%n_o + local_first_b, wf%n_o + local_last_b)
+      call wf%integrals%get_g_pqrs_t1(g_aijb, &
+                           wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                           local_first_i, local_last_i, &
+                           local_first_j, local_last_j, &
+                           wf%n_o + local_first_b, wf%n_o + local_last_b)
 !
    end subroutine get_voov_ccs
 !
@@ -681,11 +681,11 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_iabj, &
-                                             local_first_i, local_last_i, &
-                                             wf%n_o + local_first_a, wf%n_o + local_last_a, &
-                                             wf%n_o + local_first_b, wf%n_o + local_last_b, &
-                                             local_first_j, local_last_j)
+      call wf%integrals%get_g_pqrs_t1(g_iabj, &
+                           local_first_i, local_last_i, &
+                           wf%n_o + local_first_a, wf%n_o + local_last_a, &
+                           wf%n_o + local_first_b, wf%n_o + local_last_b, &
+                           local_first_j, local_last_j)
 !
    end subroutine get_ovvo_ccs
 !
@@ -745,15 +745,15 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_ijab, &
-                                             local_first_i, &
-                                             local_last_i, &
-                                             local_first_j, &
-                                             local_last_j, &
-                                             wf%n_o + local_first_a, &
-                                             wf%n_o + local_last_a, &
-                                             wf%n_o + local_first_b, &
-                                             wf%n_o + local_last_b)
+      call wf%integrals%get_g_pqrs_t1(g_ijab, &
+                           local_first_i, &
+                           local_last_i, &
+                           local_first_j, &
+                           local_last_j, &
+                           wf%n_o + local_first_a, &
+                           wf%n_o + local_last_a, &
+                           wf%n_o + local_first_b, &
+                           wf%n_o + local_last_b)
 !
    end subroutine get_oovv_ccs
 !
@@ -813,15 +813,15 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_abci, &
-                                             wf%n_o + local_first_a, &
-                                             wf%n_o + local_last_a, &
-                                             wf%n_o + local_first_b, &
-                                             wf%n_o + local_last_b, &
-                                             wf%n_o + local_first_c, &
-                                             wf%n_o + local_last_c,&
-                                             local_first_i, &
-                                             local_last_i)
+      call wf%integrals%get_g_pqrs_t1(g_abci, &
+                           wf%n_o + local_first_a, &
+                           wf%n_o + local_last_a, &
+                           wf%n_o + local_first_b, &
+                           wf%n_o + local_last_b, &
+                           wf%n_o + local_first_c, &
+                           wf%n_o + local_last_c,&
+                           local_first_i, &
+                           local_last_i)
 !
    end subroutine get_vvvo_ccs
 !
@@ -881,15 +881,15 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_abic, &
-                                             wf%n_o + local_first_a, &
-                                             wf%n_o + local_last_a, &
-                                             wf%n_o + local_first_b, &
-                                             wf%n_o + local_last_b, &
-                                             local_first_i, &
-                                             local_last_i, &
-                                             wf%n_o + local_first_c, &
-                                             wf%n_o + local_last_c)
+      call wf%integrals%get_g_pqrs_t1(g_abic, &
+                           wf%n_o + local_first_a, &
+                           wf%n_o + local_last_a, &
+                           wf%n_o + local_first_b, &
+                           wf%n_o + local_last_b, &
+                           local_first_i, &
+                           local_last_i, &
+                           wf%n_o + local_first_c, &
+                           wf%n_o + local_last_c)
 !
    end subroutine get_vvov_ccs
 !
@@ -949,15 +949,15 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_aibc, &
-                                             wf%n_o + local_first_a, &
-                                             wf%n_o + local_last_a, &
-                                             local_first_i, &
-                                             local_last_i, &
-                                             wf%n_o + local_first_b, &
-                                             wf%n_o + local_last_b, &
-                                             wf%n_o + local_first_c, &
-                                             wf%n_o + local_last_c)
+      call wf%integrals%get_g_pqrs_t1(g_aibc, &
+                           wf%n_o + local_first_a, &
+                           wf%n_o + local_last_a, &
+                           local_first_i, &
+                           local_last_i, &
+                           wf%n_o + local_first_b, &
+                           wf%n_o + local_last_b, &
+                           wf%n_o + local_first_c, &
+                           wf%n_o + local_last_c)
 !
    end subroutine get_vovv_ccs
 !
@@ -1017,15 +1017,15 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_iabc, &
-                                             local_first_i, &
-                                             local_last_i, &
-                                             wf%n_o + local_first_a, &
-                                             wf%n_o + local_last_a, &
-                                             wf%n_o + local_first_b, &
-                                             wf%n_o + local_last_b, &
-                                             wf%n_o + local_first_c, &
-                                             wf%n_o + local_last_c)
+      call wf%integrals%get_g_pqrs_t1(g_iabc, &
+                           local_first_i, &
+                           local_last_i, &
+                           wf%n_o + local_first_a, &
+                           wf%n_o + local_last_a, &
+                           wf%n_o + local_first_b, &
+                           wf%n_o + local_last_b, &
+                           wf%n_o + local_first_c, &
+                           wf%n_o + local_last_c)
 !
    end subroutine get_ovvv_ccs
 !
@@ -1091,15 +1091,15 @@ contains
 !
       endif
 !
-      call wf%integrals%construct_g_pqrs_t1(g_abcd, &
-                                             wf%n_o + local_first_a, &
-                                             wf%n_o + local_last_a, &
-                                             wf%n_o + local_first_b, &
-                                             wf%n_o + local_last_b, &
-                                             wf%n_o + local_first_c, &
-                                             wf%n_o + local_last_c, &
-                                             wf%n_o + local_first_d, &
-                                             wf%n_o + local_last_d)
+      call wf%integrals%get_g_pqrs_t1(g_abcd, &
+                           wf%n_o + local_first_a, &
+                           wf%n_o + local_last_a, &
+                           wf%n_o + local_first_b, &
+                           wf%n_o + local_last_b, &
+                           wf%n_o + local_first_c, &
+                           wf%n_o + local_last_c, &
+                           wf%n_o + local_first_d, &
+                           wf%n_o + local_last_d)
 !
    end subroutine get_vvvv_ccs
 !
