@@ -32,6 +32,7 @@ module hf_class
    use array_utilities, only : get_abs_max, sandwich, print_vector
    use array_utilities, only : full_cholesky_decomposition_system
    use array_utilities, only : get_n_highest
+   use array_utilities, only : identity_array
 !
    use libint_initialization, only : set_coulomb_precision_c
 !
@@ -46,6 +47,7 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: ao_density
       real(dp), dimension(:,:), allocatable :: ao_fock
       real(dp), dimension(:,:), allocatable :: mo_fock
+      real(dp), dimension(:,:), allocatable :: W_mo_update ! Eigenvectors for Roothan-Hall in MO basis
 !
       real(dp), dimension(:,:), allocatable :: ao_overlap
       real(dp), dimension(:,:), allocatable :: cholesky_ao_overlap
@@ -68,6 +70,7 @@ module hf_class
                                                    ! approximately by sqrt(ε)
 !
       type(sequential_file) :: restart_file
+      type(sequential_file) :: orbital_information_file
 !
       integer :: n_densities
 !
@@ -77,7 +80,10 @@ module hf_class
 !
       procedure :: cleanup                                  => cleanup_hf
 !
+      procedure :: read_for_scf_restart                     => read_for_scf_restart_hf
       procedure :: is_restart_safe                          => is_restart_safe_hf
+      procedure :: write_scf_restart                        => write_scf_restart_hf
+      procedure :: write_orbital_information                => write_orbital_information_hf
 !
       procedure :: read_settings                            => read_settings_hf
       procedure :: read_hf_settings                         => read_hf_settings_hf
@@ -96,7 +102,6 @@ module hf_class
       procedure :: construct_coulomb_ao_G                   => construct_coulomb_ao_G_hf
       procedure :: construct_exchange_ao_G                  => construct_exchange_ao_G_hf
 !
-      procedure :: construct_ao_fock_SAD                    => construct_ao_fock_SAD_hf
       procedure :: construct_mo_fock                        => construct_mo_fock_hf
       procedure :: set_ao_fock                              => set_ao_fock_hf
       procedure :: get_ao_fock                              => get_ao_fock_hf
@@ -180,10 +185,34 @@ module hf_class
       procedure :: set_screening_and_precision_thresholds   => set_screening_and_precision_thresholds_hf
       procedure :: print_screening_settings                 => print_screening_settings_hf
 !
-      procedure :: construct_idempotent_density_and_fock => construct_idempotent_density_and_fock_hf
-      procedure :: prepare                               => prepare_hf
+      procedure :: prepare_for_roothan_hall                 => prepare_for_roothan_hall_hf
+      procedure :: prepare                                  => prepare_hf
+!
+!     MO scf routines
+!
+      procedure :: get_max_roothan_hall_mo_gradient         => get_max_roothan_hall_mo_gradient_hf
+!
+      procedure :: update_fock_and_energy_mo                => update_fock_and_energy_mo_hf
+      procedure :: get_roothan_hall_mo_gradient             => get_roothan_hall_mo_gradient_hf
+!
+      procedure :: get_mo_fock                              => get_mo_fock_hf
+      procedure :: set_mo_fock                              => set_mo_fock_hf
+!
+      procedure :: do_roothan_hall_mo                       => do_roothan_hall_mo_hf
+!
+      procedure :: initialize_W_mo_update                   => initialize_W_mo_update_hf
+      procedure :: destruct_W_mo_update                     => destruct_W_mo_update_hf
+!
+      procedure :: roothan_hall_update_orbitals_mo          => roothan_hall_update_orbitals_mo_hf
+      procedure :: prepare_for_roothan_hall_mo              => prepare_for_roothan_hall_mo_hf
 !
    end type hf
+!
+   interface 
+!
+      include "mo_hf_interface.F90"
+!
+   end interface
 !
 !
    interface hf 
@@ -218,6 +247,30 @@ contains
    end function new_hf
 !
 !
+   subroutine read_for_scf_restart_hf(wf)
+!!
+!!    SCF restart
+!!    Written by Sarai D. Folkestad and Linda Goletto, Oct 2019
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call wf%read_orbital_coefficients()
+      call wf%update_ao_density()
+      call wf%read_orbital_energies()
+!
+!     Allocate active mo specific arrays
+!     and construct them
+!
+      call wf%initialize_W_mo_update()
+      call wf%initialize_mo_fock()
+!
+      call identity_array(wf%W_mo_update, wf%n_mo)
+!
+   end subroutine read_for_scf_restart_hf
+!
+!
    subroutine is_restart_safe_hf(wf, task)
 !!
 !!    Is restart safe?
@@ -229,13 +282,13 @@ contains
 !
       character(len=*), intent(in) :: task
 !
-      integer :: n_ao, n_mo, n_densities
+      integer :: n_ao, n_densities, n_electrons
 !
       call wf%restart_file%open_('read', 'rewind')
 !
       call wf%restart_file%read_(n_ao)
-      call wf%restart_file%read_(n_mo)
       call wf%restart_file%read_(n_densities)
+      call wf%restart_file%read_(n_electrons)
 !
       call wf%restart_file%close_
 !
@@ -244,15 +297,15 @@ contains
                                'of atomic orbitals for task ' // trim(task))
       endif
 !
-      if (n_mo .ne. wf%n_mo) then 
-         call output%error_msg('attempted to restart HF with an inconsistent number ' // &
-                               'of molecular orbitals for task ' // trim(task))
-      endif
-!
       if (n_densities .ne. wf%n_densities) then 
          call output%error_msg('attempted to restart HF with an inconsistent number ' // &
                                'of atomic densities (likely a HF/UHF inconsistency) for task ' // &
                                trim(task))
+      endif
+!
+      if (n_electrons .ne. wf%system%get_n_electrons()) then 
+         call output%error_msg('attempted to restart HF with an inconsistent number ' // &
+                               'of electrons for task ' // trim(task))
       endif
 !
    end subroutine is_restart_safe_hf
@@ -274,13 +327,18 @@ contains
 !
       real(dp) :: homo_lumo_gap, nuclear_repulsion
 !
-      homo_lumo_gap = wf%orbital_energies(wf%n_o + 1) - wf%orbital_energies(wf%n_o)
+      if (wf%n_v > 0) then 
+!
+         homo_lumo_gap = wf%orbital_energies(wf%n_o + 1) - wf%orbital_energies(wf%n_o)
+         call output%printf('HOMO-LUMO gap:             (f19.12)', pl='m', fs='(/t6,a)', reals=[homo_lumo_gap])
+!
+      endif 
+!
       nuclear_repulsion = wf%system%get_total_nuclear_repulsion()
 !
-      call output%printf('HOMO-LUMO gap:             (f19.12)', pl='normal', fs='(/t6,a)', reals=[homo_lumo_gap])
-      call output%printf('Nuclear repulsion energy:  (f19.12)', pl='normal', fs='(t6,a)',  reals=[nuclear_repulsion])
-      call output%printf('Electronic energy:         (f19.12)', pl='normal', fs='(t6,a)',  reals=[wf%energy - nuclear_repulsion])
-      call output%printf('Total energy:              (f19.12)', pl='normal', fs='(t6,a)',  reals=[wf%energy])
+      call output%printf('Nuclear repulsion energy:  (f19.12)', pl='m', fs='(t6,a)',  reals=[nuclear_repulsion])
+      call output%printf('Electronic energy:         (f19.12)', pl='m', fs='(t6,a)',  reals=[wf%energy - nuclear_repulsion])
+      call output%printf('Total energy:              (f19.12)', pl='m', fs='(t6,a)',  reals=[wf%energy])
 !      
       if(wf%system%mm_calculation) call wf%print_energy_mm()
 
@@ -520,7 +578,7 @@ contains
 !
       enddo 
 !
-      call mem%dealloc(orbital_list_local, n_orbitals)
+      call mem%dealloc(orbital_list_local, mos_to_print)
 
 !
    end subroutine print_orbitals_hf
@@ -900,12 +958,9 @@ contains
 !
       class(hf) :: wf
 !
-      call wf%restart_file%open_('write', 'append')
+!     Save orbital information in orbital_information_file for CC
 !
-      call wf%restart_file%write_(wf%energy)
-      call wf%restart_file%write_(wf%ao_fock, wf%n_ao**2)
-!
-      call wf%restart_file%close_
+      call wf%write_orbital_information()
 !
       call wf%destruct_orbital_energies()
       call wf%destruct_ao_overlap()
@@ -916,6 +971,9 @@ contains
 !
       call wf%destruct_sp_eri_schwarz()
       call wf%destruct_sp_eri_schwarz_list()
+!
+      call wf%destruct_W_mo_update()
+      call wf%destruct_mo_fock()
 !
    end subroutine cleanup_hf
 !
@@ -1347,307 +1405,6 @@ contains
       enddo
 !
    end subroutine get_n_sig_eri_sp_hf
-!
-!
-   subroutine construct_ao_fock_SAD_hf(wf, coulomb, exchange)
-!!
-!!    Construct AO Fock matrix
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Calculates
-!!
-!!       F_αβ = h_αβ + sum_γ g_αβγδ D_γδ - 1/2 * sum_γ g_αδγβ D_γδ,
-!!
-!!    where D is the SAD density, which is block diagonal.
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      real(dp), optional :: coulomb, exchange ! Non-standard screening thresholds
-!
-      real(dp) :: coulomb_thr, exchange_thr
-!
-      real(dp), dimension(:,:), allocatable :: sp_eri_schwarz, sp_density_schwarz
-!
-      real(dp), dimension(:,:), allocatable :: h_wx
-      integer :: w, x, y, z
-!
-      integer :: A, B, C, D, atom
-!
-      type(interval) :: A_interval
-      type(interval) :: B_interval
-      type(interval) :: C_interval
-      type(interval) :: D_interval
-!
-      real(dp) :: maximum, max_eri, max_density
-!
-      real(dp), dimension(wf%system%max_shell_size**4) :: g
-!
-      real(dp), dimension(wf%system%max_shell_size**4), target :: g_C, g_K
-      real(dp), dimension(:,:,:,:), pointer :: g_C_p, g_K_p
-!
-      real(dp), dimension(wf%system%max_shell_size**2), target :: D_yz
-      real(dp), dimension(:,:), contiguous, pointer :: D_yz_p
-!
-      integer, dimension(:,:), allocatable :: shells_on_atoms
-!
-!     Set thresholds to ignore Coulomb and exchange terms,
-!     as well as the desired Libint integral precision
-!
-      coulomb_thr = wf%coulomb_threshold
-      if (present(coulomb)) coulomb_thr = coulomb
-!
-      exchange_thr = wf%exchange_threshold
-      if (present(exchange)) exchange_thr = exchange
-!
-      !n_s = wf%system%get_n_shells()
-!
-   call mem%alloc(sp_eri_schwarz, wf%system%n_s, wf%system%n_s)
-!
-!$omp parallel do private(A, B, A_interval, B_interval, g, maximum) schedule(dynamic)
-      do A = 1, wf%system%n_s
-         do B = 1, A
-!
-            A_interval = wf%system%shell_limits(A)
-            B_interval = wf%system%shell_limits(B)
-!
-            call wf%system%construct_ao_g_wxyz(g, A, B, A, B)
-!
-            maximum = get_abs_max(g, ((A_interval%length)*(B_interval%length))**2)
-!
-            sp_eri_schwarz(A, B) = sqrt(maximum)
-            sp_eri_schwarz(B, A) = sqrt(maximum)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call mem%alloc(shells_on_atoms, wf%system%n_atoms, 2) ! [first, last]
-!
-      shells_on_atoms(1, 1) = 1
-      shells_on_atoms(1, 2) = wf%system%atoms(1)%n_shells
-!
-      do atom = 2, wf%system%n_atoms
-!
-         shells_on_atoms(atom, 1) =  shells_on_atoms(atom - 1, 2) + 1
-         shells_on_atoms(atom, 2) =  shells_on_atoms(atom, 1) + wf%system%atoms(atom)%n_shells - 1
-!
-      enddo
-!
-      call mem%alloc(sp_density_schwarz, wf%system%n_s, wf%system%n_s)
-      sp_density_schwarz = zero
-!
-!$omp parallel do private(A, B, A_interval, B_interval, D_yz, D_yz_p, maximum) schedule(dynamic)
-      do atom = 1, wf%system%n_atoms
-         do A = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
-!
-            A_interval = wf%system%shell_limits(A)
-!
-            do B = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
-!
-               B_interval = wf%system%shell_limits(B)
-!
-               D_yz_p(1 : A_interval%length, 1 : B_interval%length) => D_yz(1 : A_interval%length*B_interval%length)
-
-               D_yz_p = wf%ao_density(A_interval%first : A_interval%last, &
-                                    B_interval%first : B_interval%last)
-!
-               maximum = get_abs_max(D_yz, (A_interval%length)*(B_interval%length))
-!
-               sp_density_schwarz(A, B) = maximum
-!
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-      wf%ao_fock = zero
-!
-      max_density = get_abs_max(sp_density_schwarz, wf%system%n_s**2)
-      max_eri     = get_abs_max(sp_eri_schwarz, wf%system%n_s**2)
-!
-!$omp parallel do &
-!$omp private(A, B, C, D, A_interval, B_interval, C_interval, D_interval, w, x, y, z, &
-!$omp g_C, g_C_p) schedule(dynamic)
-      do A = 1, wf%system%n_s
-!
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, A
-!
-            B_interval = wf%system%shell_limits(B)
-!
-            if (sp_eri_schwarz(A, B)*max_eri*max_density .lt. coulomb_thr) cycle
-!
-            do atom = 1, wf%system%n_atoms
-!
-               do C = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
-!
-                  C_interval = wf%system%shell_limits(C)
-!
-                  do D = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
-!
-                     D_interval = wf%system%shell_limits(D)
-!
-                     if (sp_eri_schwarz(A, B)*sp_eri_schwarz(C, D)*sp_density_schwarz(C, D) &
-                                       .lt. coulomb_thr) cycle
-!
-                     call wf%system%construct_ao_g_wxyz(g_C, A, B, C, D)
-
-                     g_C_p(1 : A_interval%length, 1 : B_interval%length, 1 : C_interval%length, 1 : D_interval%length) &
-                                 => g_C(1 : A_interval%length*B_interval%length*C_interval%length*D_interval%length)
-!
-!                    Add Fock matrix contributions
-!
-                     if (A .ne. B) then
-!
-                        do w = A_interval%first, A_interval%last
-                           do x = B_interval%first, B_interval%last
-                              do y = C_interval%first, C_interval%last
-                                 do z = D_interval%first, D_interval%last
-!
-                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + g_C_p(w, x, y, z)*wf%ao_density(y, z)
-!
-                                 enddo
-                              enddo
-                           enddo
-                        enddo
-!
-                     else
-!
-                        do w = A_interval%first, A_interval%last
-                           do x = A_interval%first, w
-                              do y = C_interval%first, C_interval%last
-                                 do z = D_interval%first, D_interval%last
-!
-                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + g_C_p(w, x, y, z)*wf%ao_density(y, z)
-!
-                                 enddo
-                              enddo
-                           enddo
-                        enddo
-                     endif
-!
-                  enddo
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-!$omp parallel do &
-!$omp private(A, B, C, D, A_interval, B_interval, C_interval, D_interval, w, x, y, z, &
-!$omp g_K, g_K_p) schedule(dynamic)
-      do A = 1, wf%system%n_s
-!
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, A
-!
-            B_interval = wf%system%shell_limits(B)
-!
-            do atom = 1, wf%system%n_atoms
-!
-               do C = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
-!
-                  C_interval = wf%system%shell_limits(C)
-!
-                  do D = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
-!
-                     D_interval = wf%system%shell_limits(D)
-!
-                     if (sp_eri_schwarz(A, D)*sp_eri_schwarz(C, B)*sp_density_schwarz(C, D) .lt. exchange_thr) cycle
-!
-                     call wf%system%construct_ao_g_wxyz(g_K, A, D, C, B)
-
-                     g_K_p(1 : A_interval%length, 1 : D_interval%length, 1 : C_interval%length, 1 : B_interval%length) &
-                                    => g_K(1 : A_interval%length*B_interval%length*C_interval%length*D_interval%length)
-!
-!                   Add Fock matrix contributions
-!
-                     if (A .ne. B) then
-!
-                        do w = A_interval%first, A_interval%last
-                           do x = B_interval%first, B_interval%last
-                              do y = C_interval%first, C_interval%last
-                                 do z = D_interval%first, D_interval%last
-!
-                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + &
-                                             (- half*g_K_p(w, z, y, x))*wf%ao_density(y, z)
-!
-                                 enddo
-!
-                              enddo
-                           enddo
-                        enddo
-!
-                     else
-!
-                        do w = A_interval%first, A_interval%last
-                           do x = A_interval%first, w
-                              do y = C_interval%first, C_interval%last
-                                 do z = D_interval%first, D_interval%last
-!
-                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + (- half*g_K_p(w, z, y, x))*wf%ao_density(y, z)
-!
-                                 enddo
-                              enddo
-                           enddo
-                        enddo
-                     endif
-!
-                  enddo
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-!     Symmetrize
-!
-!$omp parallel do &
-!$omp private(x, y) schedule(static)
-      do x = 1, wf%n_ao
-         do y = x + 1, wf%n_ao
-!
-            wf%ao_fock(x,y) = wf%ao_fock(x,y) + wf%ao_fock(y,x)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-!$omp parallel do &
-!$omp private(x, y) schedule(static)
-      do y = 1, wf%n_ao
-         do x = y + 1, wf%n_ao
-!
-            wf%ao_fock(x,y) = wf%ao_fock(y,x)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-!
-      call wf%get_ao_h_wx(h_wx)
-!
-      call wf%calculate_hf_energy_from_G(wf%ao_fock, h_wx)
-
-!$omp parallel do &
-!$omp private(x, y) schedule(static)
-      do y = 1, wf%n_ao
-         do x = 1, wf%n_ao
-!
-            wf%ao_fock(x,y) = wf%ao_fock(x,y) + h_wx(x, y)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
-!
-   end subroutine construct_ao_fock_SAD_hf
 !
 !
    subroutine construct_ao_fock_hf(wf, D, ao_fock, h_wx, cumulative)
@@ -2469,7 +2226,7 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(:,:) :: D ! Packed
+      real(dp), dimension(:) :: D ! Packed
 !
       call squareup(D, wf%ao_density, wf%n_ao)
 !
@@ -2489,7 +2246,7 @@ contains
 !
       real(dp), dimension(wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities), intent(in) :: F ! Packed
 !
-      call squareup(F, wf%ao_fock, wf%n_ao)
+      call squareup(F(:,1), wf%ao_fock, wf%n_ao)
 !
    end subroutine set_ao_fock_hf
 !
@@ -2507,7 +2264,7 @@ contains
 !
       real(dp), dimension(wf%n_ao*(wf%n_ao+1)/2, wf%n_densities), intent(inout) :: F ! Packed
 !
-      call packin(F, wf%ao_fock, wf%n_ao)
+      call packin(F(:,1), wf%ao_fock, wf%n_ao)
 !
    end subroutine get_ao_fock_hf
 !
@@ -2634,7 +2391,7 @@ contains
 !
       real(dp), dimension(:,:) :: D
 !
-      call packin(D, wf%ao_density, wf%n_ao)
+      call packin(D(:,1), wf%ao_density, wf%n_ao)
 !
    end subroutine get_ao_density_hf
 !
@@ -3173,7 +2930,7 @@ contains
       call mem%dealloc(Pv, wf%n_ao, wf%n_ao)
 !
       G = zero
-      call packin_anti(G, G_sq, wf%n_ao)
+      call packin_anti(G(:,1), G_sq, wf%n_ao)
 !
       call mem%dealloc(G_sq, wf%n_ao, wf%n_ao)
 !
@@ -3605,13 +3362,9 @@ contains
 !
       class(hf) :: wf
 !
-      character(len=12) :: frmt0
-!     
       real(dp), dimension(:), allocatable                   :: potential_points
       integer :: i
 !     
-      frmt0="(t5,65('='))"
-! 
       if(wf%system%mm%forcefield.eq.'fq') then
 !      
          if(.not.allocated(potential_points)) call mem%alloc(potential_points, wf%system%mm%n_atoms)
@@ -3645,24 +3398,22 @@ contains
                      wf%system%mm%pol_emb_lhs,  &
                      wf%system%mm%n_variables)
 !
-         if(wf%system%mm%verbose.ge.1) then 
-!         
-            write(output%unit,frmt0) 
+!
+         call output%print_separator('verbose', 67, fs='(/t3,a)')
+!
+         call output%printf('Atom          FQ LHS             FQ RHS        QM Potential@FQs', &
+                            pl='v', fs='(t6,a)')
 !            
-            write(output%unit,'(t6,a /)') 'Atom          FQ LHS             FQ RHS        QM Potential@FQs'
+         do i = 1, wf%system%mm%n_atoms
 !           
-            do i = 1, wf%system%mm%n_atoms
+            call output%printf('(i4)      (e13.6)      (e13.6)      (e13.6)', pl='v', &
+                               fs='(t6,a)', ints=[i], reals=[wf%system%mm%pol_emb_lhs(i), &
+                               wf%system%mm%pol_emb_rhs(i), potential_points(i)])
 !           
-               write(output%unit,'(t6,i4,6x,3(E13.6,6x))') &
-               i, wf%system%mm%pol_emb_lhs(i), wf%system%mm%pol_emb_rhs(i), potential_points(i)
+         enddo
 !           
-            enddo
-!           
-            write(output%unit,frmt0) 
-!           
-            flush(output%unit)
-!           
-         endif
+         call output%print_separator('verbose', 67)
+!
 !
 !        put FQ charges into charge (I am discrading langrangian multipliers)
 !
@@ -3674,18 +3425,12 @@ contains
 !
          wf%ao_fock = wf%ao_fock + half * wf%system%mm%pol_emb_fock
 !
-         if(wf%system%mm%verbose.ge.3) then 
-!           
-            call print_matrix('QM Density',wf%ao_density,wf%n_ao,wf%n_ao) 
-            flush(output%unit)
-!           
-            call print_matrix('FQ Fock',wf%system%mm%pol_emb_fock,wf%n_ao,wf%n_ao) 
-            flush(output%unit)
-!           
-            call print_matrix('QM/FQ Fock',wf%ao_fock,wf%n_ao,wf%n_ao) 
-            flush(output%unit)
-!           
-         endif
+!
+         call output%print_matrix('debug', 'QM Density', wf%ao_density, wf%n_ao, wf%n_ao)
+!
+         call output%print_matrix('debug', 'FQ Fock', wf%system%mm%pol_emb_fock, wf%n_ao, wf%n_ao)
+!
+         call output%print_matrix('debug', 'QM/FQ Fock', wf%ao_fock, wf%n_ao, wf%n_ao)
 !
          call mem%dealloc(potential_points, wf%system%mm%n_atoms)
 !         
@@ -3906,18 +3651,21 @@ contains
    end subroutine construct_molecular_gradient_hf
 !
 !
-   subroutine construct_idempotent_density_and_fock_hf(wf)
+   subroutine prepare_for_roothan_hall_hf(wf)
 !!
-!!    Construct idempotent density and Fock 
+!!    Prepare for Roothan-Hall 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Constructs the Fock matrix and
+!!    Constructs the ao Fock matrix and
 !!    performs a Roothan-Hall step to get the
 !!    initial idempotent density. 
 !!
-!!    Upon exit the Fock matrix is reconstructed
-!!    and the energy calculated.
+!!    The routine also prints the number of 
+!!    electrons and the energy of the initial guess.
 !!
+!!    NOTE: this routine is overwritten
+!!          for MLHF!  
+!!          
       implicit none 
 !
       class(hf) :: wf
@@ -3944,7 +3692,7 @@ contains
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
-   end subroutine construct_idempotent_density_and_fock_hf
+   end subroutine prepare_for_roothan_hall_hf
 !
 !
    subroutine prepare_hf(wf)
@@ -3962,17 +3710,9 @@ contains
       call wf%set_n_mo()
 !
       call wf%initialize_wavefunction_files()
-      wf%restart_file = sequential_file('hf_restart_file')
+      wf%restart_file = sequential_file('scf_restart_file')
 !
-      call wf%restart_file%open_('write', 'rewind')
-!
-      call wf%restart_file%write_(wf%n_ao)
-      call wf%restart_file%write_(wf%n_mo)
-      call wf%restart_file%write_(wf%n_densities)
-      call wf%restart_file%write_(wf%n_o)
-      call wf%restart_file%write_(wf%n_v)
-!
-      call wf%restart_file%close_
+      call wf%write_scf_restart()   
 !
       call wf%initialize_sp_eri_schwarz()
       call wf%initialize_sp_eri_schwarz_list()
@@ -3980,6 +3720,54 @@ contains
       call wf%construct_sp_eri_schwarz()
 !
    end subroutine prepare_hf
+!
+!
+   subroutine write_scf_restart_hf(wf)
+!!
+!!    Write HF restart file
+!!    Written by Linda Goletto, Oct 2019
+!!
+!!    Writes a file used for consistency checks when restarting
+!!
+      implicit none 
+!
+      class(hf) :: wf
+!
+      call wf%restart_file%open_('write', 'rewind')
+!
+      call wf%restart_file%write_(wf%n_ao)
+      call wf%restart_file%write_(wf%n_densities)
+      call wf%restart_file%write_(wf%system%get_n_electrons())
+!
+      call wf%restart_file%close_
+!
+   end subroutine write_scf_restart_hf
+!
+!
+   subroutine write_orbital_information_hf(wf)
+!!
+!!    Write HF information file
+!!    Written by Linda Goletto, Oct 2019
+!!
+!!    Writes orbital information
+!!    Used for CC and MP2 and for restarting MLHF
+!!
+      implicit none 
+!
+      class(hf) :: wf
+!
+      wf%orbital_information_file = sequential_file('orbital_information')
+      call wf%orbital_information_file%open_('write', 'rewind')
+!
+      call wf%orbital_information_file%write_(wf%n_o)
+      call wf%orbital_information_file%write_(wf%n_v)
+      call wf%orbital_information_file%write_(wf%n_ao)
+      call wf%orbital_information_file%write_(wf%n_mo)
+      call wf%orbital_information_file%write_(wf%energy)
+!
+      call wf%orbital_information_file%close_
+!
+   end subroutine write_orbital_information_hf
 !
 !
 end module hf_class

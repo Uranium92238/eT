@@ -32,124 +32,18 @@ submodule (abstract_doubles_class) file_handling_abstract_doubles
 !
 contains
 !
-   module subroutine save_excited_state_abstract_doubles(wf, X, n, side)
+   module subroutine read_doubles_vector_abstract_doubles(wf, X, file_)
 !!
-!!    Save excited state 
-!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!    Read doubles vector X in a file
+!!    Written by Alexander C. Paul, Oct 2019
 !!
-!!    Saves an excited state to disk. Since the solvers 
-!!    keep these vectors in full length, we receive a vector 
-!!    in full length (n_es_amplitudes), and then distribute 
-!!    the different parts of that vector to singles, doubles, etc.,
-!!    files (if there are doubles, etc.).
+!!    NB: Currently only works for t and tbar-file
+!!        Because the excited states use sequential_file_array which
+!!        does not support several records yet.
 !!
-!!    NB! If n = 1, then the routine WILL REWIND the files before writing,
-!!    thus DELETING every record in the file. For n >=2, we just append to
-!!    the file. The purpose of this setup is that the files should be saved in 
-!!    the correct order, from n = 1 to n = # states. 
-!!
-      implicit none 
-!
-      class(abstract_doubles), intent(inout) :: wf 
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
-!
-      if (trim(side) == 'right') then 
-!
-         call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
-         call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
-!
-      elseif (trim(side) == 'left') then 
-!
-         call wf%save_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
-         call wf%save_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
-!
-      else
-!
-         call output%error_msg('Tried to save an excited state, but argument side not recognized: ' // side)
-!
-      endif
-!
-   end subroutine save_excited_state_abstract_doubles
-!
-!
-   module subroutine save_doubles_vector_abstract_doubles(wf, X, n, file_)
-!!
-!!    Save doubles vector state 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
-!!
-!!    Writes doubles vector "X" to the sequential
-!!    and unformatted file "file_".
-!!    
-!!    NB! If n = 1, then the routine WILL REWIND the file before writing,
-!!    thus DELETING every record in the file. For n >=2, we just append to
-!!    the file. The purpose of this setup is that the files should be saved in 
-!!    the correct order, from n = 1 to n = # states.
-!!
-      implicit none
-!
-      class(abstract_doubles), intent(inout) :: wf 
-!
-      real(dp), dimension(wf%n_t2), intent(in) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      type(sequential_file) :: file_
-!
-      call file_%open_('write', 'append')
-!
-      if (n .eq. 1) then
-         call file_%rewind_()
-      endif
-!
-      call file_%write_(X, wf%n_t2)
-!
-      call file_%close_()
-!
-   end subroutine save_doubles_vector_abstract_doubles
-!
-!
-   module subroutine read_excited_state_abstract_doubles(wf, X, n, side)
-!!
-!!    Read excited state 
-!!    Written by Sarai D. Fokestad, Mar 2019 
-!!
-      implicit none
-!
-      class(abstract_doubles), intent(inout) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X
-!
-      integer, intent(in) :: n ! state number 
-!
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
-!
-      if (trim(side) == 'right') then
-!
-         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%r1_file)
-         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%r2_file)
-!
-      elseif (trim(side) == 'left') then
-!
-         call wf%read_singles_vector(X(1 : wf%n_t1), n, wf%l1_file)
-         call wf%read_doubles_vector(X(wf%n_t1 + 1 : wf%n_es_amplitudes), n, wf%l2_file)
-!
-      endif
-!
-   end subroutine read_excited_state_abstract_doubles
-!
-!
-   module subroutine read_doubles_vector_abstract_doubles(wf, X, n, file_)
-!!
-!!    Read doubles vector state 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
-!!
-!!    Reads doubles vector "X" from the "n"'th line
-!!    of the sequential and unformatted file "file_".
+!!    Files are written with the singles part in the first record
+!!    and the doubles part in the second. Thus, skip first record
+!!    and read second.
 !!
       implicit none 
 !
@@ -157,13 +51,12 @@ contains
 !
       real(dp), dimension(wf%n_t2), intent(out) :: X 
 !
-      integer, intent(in) :: n ! state number 
-!
       type(sequential_file) :: file_
 !
       call file_%open_('read', 'rewind')
 !
-      call file_%skip(n-1)
+!     Skip first record because it contains only the singles part
+      call file_%skip(1)
 !
       call file_%read_(X, wf%n_t2)
 !
@@ -172,3 +65,4 @@ contains
    end subroutine read_doubles_vector_abstract_doubles
 !
 end submodule file_handling_abstract_doubles 
+!

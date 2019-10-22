@@ -25,7 +25,7 @@ module wavefunction_class
 !!
 !
    use parameters
-   use array_utilities, only : zero_array, print_matrix
+   use array_utilities, only : zero_array
    use global_out, only : output
    use sequential_file_class, only : sequential_file
    use memory_manager_class, only : mem
@@ -454,10 +454,6 @@ contains
 !!    Constructs the one-electron Hamiltonian integrals h_pq 
 !!    in the AO basis. 
 !!
-!!    Modification moved by Eirik F. Kjønstad from get_mo_h 
-!!    for QM / MM  (Tommaso Giovannini, July 2019). Will be fixed 
-!!    ASAP. 
-!!
       use molecular_system_class, only: construct_ao_h_wx_molecular_system
 !
       implicit none 
@@ -467,22 +463,6 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: h 
 !
       call wf%get_ao_x_wx(construct_ao_h_wx_molecular_system, h)
-!
-!     Ugly hacks for QM / MM to work (to be fixed soon)
-!
-      if(wf%system%mm_calculation .and. wf%system%mm%forcefield.eq.'non-polarizable' &
-            .and. allocated(wf%system%mm%nopol_h_wx)) then 
-!
-         h = h + half*wf%system%mm%nopol_h_wx
-!
-      endif
-!         
-      if(wf%system%mm_calculation .and. wf%system%mm%forcefield .ne. 'non-polarizable' &
-            .and. allocated(wf%system%mm%pol_emb_fock)) then
-!
-         h = h + half*wf%system%mm%pol_emb_fock
-!
-      endif 
 !
    end subroutine get_ao_h_wx_wavefunction
 !
@@ -1369,25 +1349,15 @@ contains
 !
          call wf%construct_ao_electrostatics(0,0,'fock',elec_fock=wf%system%mm%nopol_h_wx)
 !         
-         if(wf%system%mm%verbose.ge.3) then 
-!          
-            call print_matrix('Electrostatic Embedding h:',wf%system%mm%nopol_h_wx,wf%n_ao,wf%n_ao)
-!         
-            flush(output%unit)
-!
-         endif
-!         
+         call output%print_matrix('debug', 'Electrostatic Embedding h:', &
+                                  wf%system%mm%nopol_h_wx, wf%n_ao, wf%n_ao)
       endif
 !         
       h_wx_eff = h_wx_eff + half * wf%system%mm%nopol_h_wx
 !         
-      if(wf%system%mm%verbose.ge.3) then 
-!      
-        call print_matrix('h_eff (QM + Electrostatic Embedding)',h_wx_eff,wf%n_ao,wf%n_ao) 
-!         
-        flush(output%unit)
-!         
-      endif
+!
+      call output%print_matrix('debug', 'h_eff (QM + Electrostatic Embedding)', & 
+                               h_wx_eff, wf%n_ao, wf%n_ao)
 !
 !
    end subroutine update_h_wx_mm_hf

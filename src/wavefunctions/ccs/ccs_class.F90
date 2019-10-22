@@ -40,6 +40,7 @@ module ccs_class
    use index_invert, only : invert_compound_index, invert_packed_index
    use batching_index_class, only : batching_index
    use timings_class, only : timings
+   use sequential_storer_class, only: sequential_storer
 !
    implicit none
 !
@@ -48,21 +49,24 @@ module ccs_class
       integer :: n_gs_amplitudes
       integer :: n_es_amplitudes
       integer :: n_t1
-      integer :: n_excited_states
+      integer :: n_singlet_states
       integer :: n_bath_orbitals
 !
       integer :: n_core_MOs
       logical :: cvs 
 !
-      real(dp), dimension(:), allocatable :: left_excitation_energies, right_excitation_energies
+      real(dp), dimension(:), allocatable :: left_excitation_energies 
+      real(dp), dimension(:), allocatable :: right_excitation_energies
 !
       logical :: bath_orbital
       logical :: frozen_core
 !
-      type(sequential_file) :: t1_file, t1bar_file
-      type(sequential_file) :: r1_file, l1_file
+      type(sequential_file) :: t_file, tbar_file
       type(sequential_file) :: excitation_energies_file
       type(sequential_file) :: restart_file
+!
+      type(sequential_storer), allocatable :: r_files
+      type(sequential_storer), allocatable :: l_files
 !
       type(mo_integral_tool) :: integrals
 !
@@ -99,7 +103,8 @@ module ccs_class
       procedure :: read_hf                                     => read_hf_ccs
       procedure :: initialize_files                            => initialize_files_ccs
       procedure :: initialize_cc_files                         => initialize_cc_files_ccs
-      procedure :: initialize_singles_files                    => initialize_singles_files_ccs
+      procedure :: initialize_ground_state_files               => initialize_ground_state_files_ccs
+      procedure :: initialize_excited_state_files              => initialize_excited_state_files_ccs
 !
 !     Routines related to the amplitudes & multipliers
 !
@@ -107,6 +112,7 @@ module ccs_class
       procedure :: destruct_amplitudes                         => destruct_amplitudes_ccs
       procedure :: set_initial_amplitudes_guess                => set_initial_amplitudes_guess_ccs
       procedure :: t1_transform                                => t1_transform_ccs
+      procedure :: ao_to_t1_transformation                     => ao_to_t1_transformation_ccs
       procedure :: set_amplitudes                              => set_amplitudes_ccs
       procedure :: get_amplitudes                              => get_amplitudes_ccs
       procedure :: save_amplitudes                             => save_amplitudes_ccs
@@ -117,7 +123,6 @@ module ccs_class
       procedure :: print_dominant_x1                           => print_dominant_x1_ccs
       procedure :: get_t1_diagnostic                           => get_t1_diagnostic_ccs
 !
-      procedure :: save_singles_vector                         => save_singles_vector_ccs
       procedure :: read_singles_vector                         => read_singles_vector_ccs
 !
       procedure :: save_excited_state                          => save_excited_state_ccs
@@ -148,6 +153,8 @@ module ccs_class
 !
       procedure :: set_fock                                    => set_fock_ccs
       procedure :: construct_fock                              => construct_fock_ccs
+      procedure :: add_frozen_core_fock_contribution           => add_frozen_core_fock_contribution_ccs
+      procedure :: add_molecular_mechanics_fock_contribution   => add_molecular_mechanics_fock_contribution_ccs
 !
       procedure :: get_gs_orbital_differences                  => get_gs_orbital_differences_ccs
       procedure :: get_es_orbital_differences                  => get_gs_orbital_differences_ccs
@@ -173,7 +180,7 @@ module ccs_class
       procedure :: jacobian_transpose_ccs_a1                   => jacobian_transpose_ccs_a1_ccs
       procedure :: jacobian_transpose_ccs_b1                   => jacobian_transpose_ccs_b1_ccs
 !
-      procedure :: construct_excited_state_equation            => construct_excited_state_equation_ccs
+      procedure :: construct_Jacobian_transform                => construct_Jacobian_transform_ccs
       procedure :: construct_multiplier_equation               => construct_multiplier_equation_ccs
       procedure :: construct_eta                               => construct_eta_ccs
 !
@@ -413,7 +420,7 @@ contains
 !!
 !!    Cleanup
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad and
-!!    Alexander Paul , 2018
+!!    Alexander C. Paul , 2018
 !!
       implicit none
 !
@@ -467,19 +474,18 @@ contains
 !
       class(ccs) :: wf
 !
-      type(sequential_file) :: hf_restart_file 
+      type(sequential_file) :: orbital_information_file 
 !
-      hf_restart_file = sequential_file('hf_restart_file')
-      call hf_restart_file%open_('read', 'rewind')
+      orbital_information_file = sequential_file('orbital_information')
+      call orbital_information_file%open_('read', 'rewind')
 !
-      call hf_restart_file%read_(wf%n_ao)     
-      call hf_restart_file%read_(wf%n_mo)     
-      call hf_restart_file%skip()     
-      call hf_restart_file%read_(wf%n_o)     
-      call hf_restart_file%read_(wf%n_v)     
-      call hf_restart_file%read_(wf%hf_energy)    
+      call orbital_information_file%read_(wf%n_o)     
+      call orbital_information_file%read_(wf%n_v)         
+      call orbital_information_file%read_(wf%n_ao)     
+      call orbital_information_file%read_(wf%n_mo)     
+      call orbital_information_file%read_(wf%hf_energy)    
 !
-      call hf_restart_file%close_()
+      call orbital_information_file%close_()
 !
    end subroutine read_hf_ccs
 !
@@ -617,68 +623,59 @@ contains
    end subroutine get_gs_orbital_differences_ccs
 !
 !
-   subroutine construct_excited_state_equation_ccs(wf, X, R, w, r_or_l)
+   subroutine construct_Jacobian_transform_ccs(wf, r_or_l, X, w)
 !!
-!!    Construct excited state equation
+!!    Construct Jacobian transform
 !!    Written by Eirik F. Kjønstad, Dec 2018
 !!
-!!    Constructs R = AX - wX, where w = X^T A X and norm(X) = sqrt(X^T X) = 1
+!!    Modified by Rolf H. Myhre, Oct 2019
 !!
-!!    Note I: we assume that X is normalized. If it is not,
-!!    please normalize before calling the routine.
+!!    Constructs R = AX or R = A^T X
 !!
-!!    Note II: this routine constructs the excited state equation
-!!    for standard CC models and the effective (!) excited state
-!!    equation in perturbative models. In the CC2 routine, for
-!!    instance, X and R will be n_o*n_v vectors and A(w) will
-!!    depend on the excitation energy w. See, e.g., Weigend and
-!!    Hättig's RI-CC2 paper for more on this topic. This means
-!!    that w should be the previous w-value when entering the
-!!    routine (so that A(w)X may be constructed approximately)
-!!    in perturbative models.
+!!    Removed calculation of residual, this is now done in the solver
 !!
-!!    Note III: the routine is used by the DIIS excited state solver.
+!!    Wrapper for Jacobian transformations
+!!
+!!    r_or_l: string that should be 'left' or 'right', 
+!!            determines if Jacobian or Jacobian transpose is called
+!!
+!!    X: On input contains the vector to transform, 
+!!       on output contains the transformed vector
+!!
+!!    w: Excitation energy. Only used for debug prints for CCS, CCSD etc.
+!!       but is passed to the effective_jacobian_transform for lowmem_CC2 and CC3
 !!
       implicit none
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: X
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: R
-!
       character(len=*), intent(in) :: r_or_l
 !
-      real(dp), intent(inout) :: w
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout)   :: X
 !
-      real(dp), dimension(:), allocatable :: X_copy
+      real(dp), intent(in), optional :: w
 !
-      real(dp) :: ddot
+      if (present(w)) then
+         call output%printf('Calling Jacobian (a0) transform with energy: (f19.12)', &
+                            pl='debug', chars=[r_or_l], reals=[w])
+      endif
 !
-      call mem%alloc(X_copy, wf%n_es_amplitudes)
-      call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
-!
+!     Compute the transformed matrix
       if (r_or_l .eq. "right") then
 !
-         call wf%jacobian_transformation(X_copy) ! X_copy <- AX
+         call wf%jacobian_transformation(X) ! X <- AX
 !
       elseif (r_or_l .eq. 'left') then
 !
-         call wf%jacobian_transpose_transformation(X_copy) ! X_copy <- XA
+         call wf%jacobian_transpose_transformation(X) ! X <- XA
 !
       else
 !
-         call output%error_msg('Neither left nor right in construct_excited_state')
+         call output%error_msg('Neither left nor right in construct_Jacobian_transform')
 !
       endif
 !
-      w = ddot(wf%n_es_amplitudes, X, 1, X_copy, 1)
-!
-      call dcopy(wf%n_es_amplitudes, X_copy, 1, R, 1)
-      call daxpy(wf%n_es_amplitudes, -w, X, 1, R, 1)
-!
-      call mem%dealloc(X_copy, wf%n_es_amplitudes)
-!
-   end subroutine construct_excited_state_equation_ccs
+   end subroutine construct_Jacobian_transform_ccs
 !
 !
    subroutine get_cvs_projector_ccs(wf, projector, n_cores, core_MOs)
@@ -832,7 +829,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      integer, dimension(wf%n_excited_states) :: start_indices
+      integer, dimension(wf%n_singlet_states) :: start_indices
 !
 !     Local variables
 !
@@ -857,7 +854,7 @@ contains
             current_root = current_root + 1
             start_indices(current_root) = wf%n_v*( i - 1) + a
 !
-            if (current_root .eq. wf%n_excited_states) then
+            if (current_root .eq. wf%n_singlet_states) then
 !
                all_selected = .true.
                exit
@@ -1024,11 +1021,11 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      integer, dimension(wf%n_excited_states), intent(out) :: start_indices
+      integer, dimension(wf%n_singlet_states), intent(out) :: start_indices
 !
       integer :: I
 !
-      do I = 1, wf%n_excited_states
+      do I = 1, wf%n_singlet_states
 !
          start_indices(I) = (wf%n_o - I)*wf%n_v + wf%n_v
 !

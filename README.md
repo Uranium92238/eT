@@ -9,15 +9,15 @@ and the dependencies [Eigen 3](http://eigen.tuxfamily.org/index.php?title=Main_P
 
 ## Install Libint
 Download the Libint library for eT. Unpack the library:
-```
+```shell
 tar -xvzf libint-2.7.0-beta.1.tgz
 ```
 Enter the generated folder:
-```
+```shell
 cd libint-2.7.0-beta.1
 ```
 Compile:
-```
+```shell
 cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/libint/libint-2.7.0-beta.1 -DCMAKE_CXX_COMPILER=[C++ compiler] CXXFLAGS=[C++ compiler flags]
 cmake --build .
 ```
@@ -25,50 +25,50 @@ In the compilation step, the installation prefix should be provided.
 
 
 Install:
-```
+```shell
 cmake --build . --target install
 ```
  
 # Quick install of eT
 Open the terminal and clone the repository:
-```
+```shell
 git clone git@gitlab.com:eT-program/eT.git
 ```
 This will create a folder called "eT". Change to this directory:
-```
+```shell
 cd eT
 ```
 Initialize and update the submodules:
-```
+```shell
 git submodule init 
 git submodule update
 ```
 Run the setup script to configure using CMake:
-```
+```shell
 ./setup [--help]
 ```
 CMake will identify the compilers to use (Fortran, C++) and the location of libraries (BLAS, LAPACK, Libint, Eigen, Boost). If the setup script does not correctly locate and identify libraries (BLAS, LAPACK, Libint, Eigen, Boost), try setting the associated environment variables in the .bashrc (example paths given):
-```
+```shell
 export LIBINT2_ROOT=/home/eirikfad/prog/libint
 export EIGEN3_ROOT=/home/eirikfad/prog/eigen3/include/eigen3
 export BOOST_INCLUDEDIR=/usr/include
 export MATH_ROOT=/opt/intel/mkl/lib/intel64_lin 
 ```
 Change to the "build" directory and compile the executable:
-```
+```shell
 cd build
 make [-j4]
 ```
 If successful, the directory now contain the executable (eT) as well as a Python launch script (eT_launch). 
 To test that the program performs as expected, make sure all the tests pass using the compiled executable:
-```
+```shell
 ctest
 ``` 
-To use the launch script, it is useful to define an alias in .bashrc:
-```
-alias eT=pathtoeT/build/eT_launch
+To use the launch script, it is useful to define a symlink:
+```shell
+ln -s /pathtoeT/build/eT_launch eT
 ```
 The program can then be conveniently run by using the command eT:
-```
+```shell
 eT [--help]
 ```

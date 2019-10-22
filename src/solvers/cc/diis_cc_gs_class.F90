@@ -55,7 +55,8 @@ module diis_cc_gs_class
       real(dp) :: energy_threshold
       real(dp) :: omega_threshold 
 !
-      logical  :: restart
+      character(len=200) :: storage 
+      logical :: restart, records_in_memory 
 !
       type(timings) :: timer
 !
@@ -105,11 +106,12 @@ contains
 !
 !     Set standard settings 
 !
-      solver%diis_dimension   = 8 
-      solver%max_iterations   = 100
-      solver%energy_threshold = 1.0d-6
-      solver%omega_threshold  = 1.0d-6
-      solver%restart          = .false.
+      solver%diis_dimension      = 8 
+      solver%max_iterations      = 100
+      solver%energy_threshold    = 1.0d-6
+      solver%omega_threshold     = 1.0d-6
+      solver%restart             = .false.
+      solver%storage             = 'disk'
 !
 !     Read & print settings (thresholds, etc.)
 !
@@ -129,14 +131,37 @@ contains
          call output%printf('Requested restart. Reading in solution from file.', fs='(/t3,a)', pl='minimal')
 !
          call wf%read_amplitudes()
+!
          call wf%integrals%write_t1_cholesky(wf%t1) 
+         if(wf%need_g_abcd() .and. wf%integrals%room_for_g_pqrs_t1()) &
+            call wf%integrals%place_g_pqrs_t1_in_memory()
 ! 
       else
 !
          call wf%integrals%write_t1_cholesky(wf%t1) 
+         if(wf%need_g_abcd() .and. wf%integrals%room_for_g_pqrs_t1()) &
+            call wf%integrals%place_g_pqrs_t1_in_memory()
+!
          call wf%set_initial_amplitudes_guess()
 !
       endif
+!
+!     Determine whether to store records in memory or on file
+!
+      if (trim(solver%storage) == 'memory') then 
+!
+         solver%records_in_memory = .true.
+!
+      elseif (trim(solver%storage) == 'disk') then 
+!
+         solver%records_in_memory = .false.
+!
+      else 
+!
+         call output%error_msg('Could not recognize keyword storage in solver: ' // &
+                                 trim(solver%storage))
+!
+      endif 
 !
    end function new_diis_cc_gs
 !
@@ -205,7 +230,7 @@ contains
 !
       class(ccs) :: wf
 !
-      type(diis_tool) :: diis_manager
+      type(diis_tool) :: diis
 !
       logical :: converged
       logical :: converged_energy
@@ -220,7 +245,8 @@ contains
 !
       integer :: iteration
 !
-      diis_manager = diis_tool('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
+      diis = diis_tool('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, &
+               solver%records_in_memory, dimension_=solver%diis_dimension)
 !
       call mem%alloc(omega, wf%n_gs_amplitudes)
       call mem%alloc(amplitudes, wf%n_gs_amplitudes)
@@ -291,7 +317,7 @@ contains
 !
             call wf%form_newton_raphson_t_estimate(amplitudes, omega)
 !
-            call diis_manager%update(omega, amplitudes)
+            call diis%update(omega, amplitudes)
             call wf%set_amplitudes(amplitudes)
 !
             prev_energy = energy 
@@ -300,7 +326,8 @@ contains
 !           and store in memory the entire ERI-T1 matrix if possible and necessary 
 !
             call wf%integrals%write_t1_cholesky(wf%t1)
-            if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
+            if (wf%integrals%get_eri_t1_mem()) &
+               call wf%integrals%update_g_pqrs_t1_in_memory()
 !
          endif
 !
@@ -315,8 +342,6 @@ contains
       call mem%dealloc(omega, wf%n_gs_amplitudes)
       call mem%dealloc(amplitudes, wf%n_gs_amplitudes)
       call mem%dealloc(epsilon, wf%n_gs_amplitudes)
-!
-      call diis_manager%cleanup()
 !
       if (.not. converged) then 
 !   
@@ -393,6 +418,8 @@ contains
       call input%get_keyword_in_section('max iterations', 'solver cc gs', solver%max_iterations)
 !
       if (input%requested_keyword_in_section('restart', 'solver cc gs')) solver%restart = .true.
+!
+      call input%get_keyword_in_section('storage', 'solver cc gs', solver%storage)
 !
    end subroutine read_settings_diis_cc_gs
 !

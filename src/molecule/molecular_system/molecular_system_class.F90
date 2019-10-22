@@ -251,7 +251,7 @@ contains
       call molecule%read_geometry()
       call molecule%read_active_atoms()
 !
-      molecule%mm_calculation = input%requested_mm_calculation()
+      molecule%mm_calculation = input%requested_section('molecular mechanics')
 !
    end subroutine read_settings_molecular_system
 !
@@ -353,7 +353,7 @@ contains
 !
       enddo
 !
-      call molecule%set_basis_info                           
+      call molecule%set_basis_info                          
       call molecule%check_convert_pure_to_cartesian_basis    
       call molecule%normalize_raw_primitives                 
 !
@@ -2069,36 +2069,40 @@ contains
 !!    coefficient and exponents of the primitives in 
 !!    the basis_detail variable for each shell
 !!
+!!    Modified by Marco Scavino, 2019
+!!    Extended to read the SP primitives from
+!!    gaussian format
+!!
       implicit none
 !
       class(molecular_system), intent(inout) :: molecule
 !
-      integer, intent(inout)              :: shell
-      integer, intent(in)                 :: atom_index
-!        
-      type(sequential_file), intent(in)             :: basis_set_file
+      integer, intent(inout)            :: shell
+      integer, intent(in)               :: atom_index
+!
+      type(sequential_file), intent(in)                 :: basis_set_file
 !
       character(len=200)   :: line
 !
-      integer              :: n_primitive, primitive
+      integer         :: n_primitive, primitive
 !
-      character(len=1)     :: ang_mom
+      character(len=2)     :: ang_mom
 !
       logical              :: elm_found
 !
-      real(dp)             :: coefficient, exponent_
+      real(dp)             :: coefficient, coefficient_2, exponent_
 !
 !     Find position of element in file
 !     Look for:  ****
 !     Symbol
 !
-      elm_found = .false.        
+      elm_found = .false.
 !
       call basis_set_file%read_(line,'(a200)')
 !
       do while (.not. elm_found)
 !
-         if (trim(line) == '****') then 
+         if (trim(line) == '****') then
 !
             call basis_set_file%read_(line,'(a200)')
 !
@@ -2110,7 +2114,7 @@ contains
 !
          endif
 !
-         if (.not. elm_found) then 
+         if (.not. elm_found) then
 !
             call basis_set_file%read_(line,'(a200)')
 !
@@ -2127,14 +2131,14 @@ contains
          shell = shell + 1
 !
          read(line, *) ang_mom, n_primitive
-!  
-!        Sanity check -> does shell exceede number of shells on atom
+!
+!        Sanity check -> does shell exceed number of shells on atom
 !
          if (shell .gt. molecule%atoms(atom_index)%n_shells) &
             call output%error_msg('Mismatch in number of shells in set_shell_basis_info')
-!  
-!        Sanity check -> does shell have the correct angular momentum
 !
+!        Sanity check -> does shell have the correct angular momentum
+
          if (angular_momentum_from_symbol(ang_mom) .ne. molecule%atoms(atom_index)%shells(shell)%l) &
             call output%error_msg('Mismatch in angular momentum in set_shell_basis_info')
 !
@@ -2146,17 +2150,45 @@ contains
 !
 !        Loop over primitives and set coefficient and exponent
 !
-         do primitive = 1, n_primitive
+         if(ang_mom == "SP") then
 !
-!           Read coefficient and exponent
+!           In case of "SP" shell, split S and P coefficients
 !
-            call basis_set_file%read_(line,'(a200)')
-            read(line, *) exponent_, coefficient
+            call molecule%atoms(atom_index)%shells(shell+1)%basis_details%set_n_primitives(n_primitive)
+            call molecule%atoms(atom_index)%shells(shell+1)%basis_details%initialize_exponents()
+            call molecule%atoms(atom_index)%shells(shell+1)%basis_details%initialize_coefficients()
 !
-            call molecule%atoms(atom_index)%shells(shell)%basis_details%set_exponent_i(primitive, exponent_)
-            call molecule%atoms(atom_index)%shells(shell)%basis_details%set_coefficient_i(primitive, coefficient)
-!                                                 
-         enddo
+            do primitive = 1, n_primitive
+!
+!              Read coefficient and exponent
+!
+               call basis_set_file%read_(line,'(a200)')
+               read(line, *) exponent_, coefficient, coefficient_2
+!
+               call molecule%atoms(atom_index)%shells(shell)%basis_details%set_exponent_i(primitive, exponent_)
+               call molecule%atoms(atom_index)%shells(shell+1)%basis_details%set_exponent_i(primitive, exponent_)
+               call molecule%atoms(atom_index)%shells(shell)%basis_details%set_coefficient_i(primitive, coefficient)
+               call molecule%atoms(atom_index)%shells(shell+1)%basis_details%set_coefficient_i(primitive, coefficient_2)
+!
+            enddo
+!
+            shell = shell + 1
+!
+         else
+!
+            do primitive = 1, n_primitive
+!
+!              Read coefficient and exponent
+!
+               call basis_set_file%read_(line,'(a200)')
+               read(line, *) exponent_, coefficient
+!
+               call molecule%atoms(atom_index)%shells(shell)%basis_details%set_exponent_i(primitive, exponent_)
+               call molecule%atoms(atom_index)%shells(shell)%basis_details%set_coefficient_i(primitive, coefficient)
+!
+            enddo
+!
+         end if
 !
          call basis_set_file%read_(line,'(a200)')
 !

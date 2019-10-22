@@ -57,7 +57,7 @@ program eT_program
    timing = output_file('timing.out')
    call timing%open_()
 !
-   eT_timer = timings("Total time in eT")
+   eT_timer = timings("Total time in eT", pl='minimal')
    call eT_timer%turn_on()
 !
 !
@@ -105,6 +105,9 @@ program eT_program
    endif
 !
    call input%check_for_errors()
+!
+!  Set print level in output and timing files
+   call set_global_print_levels()
 !
 !  Prepare memory manager and disk manager
 !
@@ -156,8 +159,7 @@ subroutine reference_calculation(system)
    use hf_class, only: hf 
    use uhf_class, only: uhf 
 !
-   use abstract_hf_engine_class, only: abstract_hf_engine
-   use hf_engine_class, only: hf_engine 
+   use reference_engine_class, only: reference_engine 
    use hf_geoopt_engine_class, only: hf_geoopt_engine 
 !
    implicit none
@@ -166,7 +168,7 @@ subroutine reference_calculation(system)
 !
    class(hf), allocatable  :: ref_wf
 !
-   class(abstract_hf_engine), allocatable :: ref_engine
+   class(reference_engine), allocatable :: ref_engine
 !
    character(len=25) :: ref_wf_name
 !
@@ -193,7 +195,7 @@ subroutine reference_calculation(system)
 !
    else 
 !
-      ref_engine = hf_engine()
+      ref_engine = reference_engine()
 !
    endif 
 !
@@ -223,7 +225,6 @@ subroutine cc_calculation(system)
    use mp2_class, only: mp2 
    use mlcc2_class, only: mlcc2
 !
-   use abstract_cc_engine_class, only: abstract_cc_engine
    use gs_engine_class, only: gs_engine
    use es_engine_class, only: es_engine
    use zop_engine_class, only: zop_engine 
@@ -234,7 +235,7 @@ subroutine cc_calculation(system)
    type(molecular_system) :: system
 !
    class(ccs), allocatable :: cc_wf
-   class(abstract_cc_engine), allocatable :: cc_engine 
+   class(gs_engine), allocatable :: cc_engine 
 !
    character(len=25) :: cc_wf_name
 !
@@ -305,4 +306,40 @@ subroutine cc_calculation(system)
    call cc_wf%cleanup()
 !
 end subroutine cc_calculation
+!
+!
+subroutine set_global_print_levels()
+!!
+!! Set global print levels
+!! Written by Rolf H. Myhre, Oct. 2019
+!!
+!! Reads and sets the global print levels for the output file
+!! and the timing file from input.
+!!
+   use global_out, only: output 
+   use global_in, only: input
+   use timings_class, only : timing
+!
+   character(len=200) :: print_level
+!
+!  Set default
+   print_level = 'normal' 
+!
+!  Overwrite print_level if keyword is present
+   call input%get_keyword_in_section('output print level', 'print', print_level)
+!
+!  This is the only place this routine is allowed to be called
+   call output%set_global_print_level(print_level)
+!
+!  Repeat for timing file
+!  Set default
+   print_level = 'normal' 
+!
+!  Overwrite print_level if keyword is present
+   call input%get_keyword_in_section('timing print level', 'print', print_level)
+!
+!  This is the only place this routine is allowed to be called
+   call timing%set_global_print_level(print_level)
+!
+end subroutine set_global_print_levels
 !

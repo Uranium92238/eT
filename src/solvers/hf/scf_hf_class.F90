@@ -183,9 +183,7 @@ contains
 !
          call output%printf('- Requested restart. Reading orbitals from file',fs='(/t3,a)', pl='minimal')
 !
-         call wf%read_orbital_coefficients()
-         call wf%update_ao_density()
-         call wf%read_orbital_energies()
+         call wf%read_for_scf_restart()
 !
       else 
 !
@@ -193,7 +191,7 @@ contains
             fs='(/t3,a)',pl='minimal')
 !
          call wf%set_initial_ao_density_guess(solver%ao_density_guess)
-         call wf%construct_idempotent_density_and_fock()
+         call wf%prepare_for_roothan_hall()
 !
       endif
 !
@@ -221,6 +219,14 @@ contains
       real(dp), dimension(:,:), allocatable :: h_wx
 !
       real(dp), dimension(:), allocatable :: G 
+!
+      if (wf%n_ao == 1) then 
+!
+         call solver%run_single_ao(wf)
+         call solver%print_summary(wf)
+         return
+!
+      endif 
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)

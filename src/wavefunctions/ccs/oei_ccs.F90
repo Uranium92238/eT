@@ -126,6 +126,29 @@ contains
    end subroutine t1_transform_ccs
 !
 !
+   module subroutine ao_to_t1_transformation_ccs(wf, x_wx, y_pq)
+!!
+!!    AO to T1 transformation 
+!!    Written by Eirik F. Kjønstad, 2019 
+!!
+!!    Takes in an AO array and returns the T1-transformed array: 
+!!
+!!    x_wx (in)   array in the AO basis (w and x are AO indices)
+!!    y_pq (out)  array in the T1-transformed basis (p and q are MO indices) 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)  :: x_wx 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: y_pq 
+!
+      call wf%mo_transform(x_wx, y_pq)
+      call wf%t1_transform(y_pq)
+!
+   end subroutine ao_to_t1_transformation_ccs
+!
+!
    module subroutine construct_mu_ccs(wf, mu_pqk)
 !!
 !!    Construct mu
@@ -167,7 +190,6 @@ contains
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: h_pq 
 !
       call wf%get_mo_h(h_pq)
-!
       call wf%t1_transform(h_pq)
 !
    end subroutine construct_h_ccs

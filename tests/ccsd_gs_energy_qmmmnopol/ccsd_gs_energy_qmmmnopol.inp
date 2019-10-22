@@ -6,7 +6,6 @@ end system
 method
    hf
    ccsd
-   mm
 end method
 
 memory
@@ -34,7 +33,6 @@ end solver cc multipliers
 
 molecular mechanics
    forcefield: non-polarizable
-   verbose:    0
 end molecular mechanics
 
 do

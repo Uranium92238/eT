@@ -19,13 +19,11 @@ end solver hf
 
 molecular mechanics
    forcefield: fq
-   verbose:    0
 end molecular mechanics
 
 method
    hf
    mp2
-   mm
 end method
 
 geometry

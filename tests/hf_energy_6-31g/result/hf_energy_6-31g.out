@@ -1,0 +1,666 @@
+
+
+
+                       eT - a coupled cluster program 
+       Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch
+
+  ----------------------------------------------------------------------------------
+   Author:                Contribution(s):
+  ----------------------------------------------------------------------------------
+   Josefine H. Andersen   first order properties
+   Sarai D. Folkestad     program design, HF, CCS, CC2, CCSD, libint-interface,
+                          Cholesky decomposition, Davidson-tool, CVS, DIIS-tool
+                          zeroth order properties, first order properties, IP
+                          frozen core, MLCC2
+   Tommaso Giovannini     QM/MM
+   Linda Goletto          CC2
+   Tor S. Haugland        SAD
+   Eirik F. Kjønstad      program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,
+                          Cholesky decomposition, Libint-interface, Davidson-tool
+                          zeroth order properties, first order properties, SAD   
+                          BFGS-tool                                              
+   Rolf H. Myhre          CC3, Runtest-interface, launch script, file system
+   Alexander Paul         CC2, CC3, first order properties
+   Andreas Skeidsvoll     MP2
+   Åsmund H. Tveten       HF
+  ----------------------------------------------------------------------------------
+   Other contributors: A. Balbi, M. Scavino
+
+  Running on 2 OMP threads
+
+  Memory available for calculation:         8 GB
+
+  - Molecular system specifications:
+
+     Name:         h2o-he
+     Charge:       0
+     Multiplicity: 1
+
+     Pure basis functions:         22
+     Cartesian basis functions:    22
+     Primitive basis functions:    52
+
+     Nuclear repulsion energy (a.u.):             48.518317619727
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+
+    ====================================================================
+                               Geometry (Å)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     H    0.866810000000   0.601440000000   5.000000000000         6-31g
+     F   -0.866810000000   0.601440000000   5.000000000000         6-31g
+     O    0.000000000000  -0.075790000000   5.000000000000         6-31g
+     He   0.000000000000   0.000000000000   7.500000000000         6-31g
+    ====================================================================
+                             Geometry (a.u.)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     H    1.638033502034   1.136556880358   9.448630622825         6-31g
+     F   -1.638033502034   1.136556880358   9.448630622825         6-31g
+     O    0.000000000000  -0.143222342981   9.448630622825         6-31g
+     He   0.000000000000   0.000000000000  14.172945934238         6-31g
+    ====================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         12
+     Number of molecular orbitals:       22
+     Number of atomic orbitals:          22
+
+  - SAD generation
+
+  - Molecular system specifications:
+
+     Name:         sad_6-31g_H
+     Charge:       0
+     Multiplicity: 2
+
+     Pure basis functions:          2
+     Cartesian basis functions:     2
+     Primitive basis functions:     4
+
+     Nuclear repulsion energy (a.u.):              0.000000000000
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+
+    ====================================================================
+                               Geometry (Å)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     H    0.866810000000   0.601440000000   5.000000000000         6-31g
+    ====================================================================
+                             Geometry (a.u.)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     H    1.638033502034   1.136556880358   9.448630622825         6-31g
+    ====================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+  Requested fractional uniform valence. Valence electrons will be
+  distributed evenly in the highest molecular orbitals (if plural).
+
+
+  :: Self-consistent field solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  Warning: We recommend to use the SCF-DIIS algorithm instead, which supports 
+  a gradient threshold and typically converges much faster. Use only when 
+  absolutely necessary!
+
+  A Roothan-Hall self-consistent field solver. In each iteration, the Roothan-Hall 
+  equation (or equations for unrestricted HF theory) are solved to provide 
+  the next orbital coefficients. From the new orbitals, a new density provides 
+  the next Fock matrix. The cycle repeats until the solution is self-consistent 
+  (as measured by the energy change).
+
+     Coulomb screening threshold:   0.1000E-12
+     Exchange screening threshold:  0.1000E-12
+     ERI integral precision:        0.1000E-25
+
+  Alpha orbital energies:
+
+    1   -0.498232910729      2    0.916192761779
+
+  Beta orbital energies:
+
+    1    0.095023067012      2    1.108073206363
+
+  Printing 2 MOs (out of the total 2 MOs).
+
+  - Printing molecular orbitals: 1, 2
+
+     AO   Atom          1           2
+    ---------------------------------------------------------------
+     1   1 H (s)   -0.427430   -1.257798
+     2   1 H (s)   -0.665449    1.149752
+    ---------------------------------------------------------------
+     Generated SAD in 6-31g for H
+
+  - Cleaning up Self-consistent field solver
+
+  Requested MO transformation of Fock matrix, but this is not yet implemented for UHF                                     
+
+  - Molecular system specifications:
+
+     Name:         sad_6-31g_F
+     Charge:       0
+     Multiplicity: 2
+
+     Pure basis functions:          9
+     Cartesian basis functions:     9
+     Primitive basis functions:    22
+
+     Nuclear repulsion energy (a.u.):              0.000000000000
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+
+    ====================================================================
+                               Geometry (Å)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     F   -0.866810000000   0.601440000000   5.000000000000         6-31g
+    ====================================================================
+                             Geometry (a.u.)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     F   -1.638033502034   1.136556880358   9.448630622825         6-31g
+    ====================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+  Requested fractional uniform valence. Valence electrons will be
+  distributed evenly in the highest molecular orbitals (if plural).
+
+
+  :: Self-consistent field solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  Warning: We recommend to use the SCF-DIIS algorithm instead, which supports 
+  a gradient threshold and typically converges much faster. Use only when 
+  absolutely necessary!
+
+  A Roothan-Hall self-consistent field solver. In each iteration, the Roothan-Hall 
+  equation (or equations for unrestricted HF theory) are solved to provide 
+  the next orbital coefficients. From the new orbitals, a new density provides 
+  the next Fock matrix. The cycle repeats until the solution is self-consistent 
+  (as measured by the energy change).
+
+     Coulomb screening threshold:   0.1000E-12
+     Exchange screening threshold:  0.1000E-12
+     ERI integral precision:        0.1000E-25
+
+  Alpha orbital energies:
+
+    1  -26.455593978639      2   -1.684381386519      3   -0.783456638398
+    4   -0.783456638398      5   -0.783456638398      6    1.389352641905
+    7    1.389352641905      8    1.389352641905      9    1.550132744309
+
+
+  Beta orbital energies:
+
+    1  -26.393562068164      2   -1.473916915181      3   -0.410820607799
+    4   -0.410820607799      5   -0.410820607799      6    1.490018861964
+    7    1.490018861964      8    1.490018861964      9    1.610557711752
+
+
+  Printing 9 MOs (out of the total 9 MOs).
+
+  - Printing molecular orbitals: 1, 2, 3, 4
+
+     AO   Atom          1           2           3           4
+    ---------------------------------------------------------------
+     1   1 F (s)   -1.003509   -0.238719   -0.000000   -0.000000
+     2   1 F (s)    0.021506    1.082969    0.000000    0.000000
+     3   1 F (p)   -0.000000    0.000000   -0.079987   -0.110188
+     4   1 F (p)    0.000000   -0.000000    0.925671   -0.518568
+     5   1 F (p)   -0.000000   -0.000000    0.512614    0.919230
+     6   1 F (s)   -0.009506   -0.068859   -0.000000   -0.000000
+     7   1 F (p)    0.000000   -0.000000    0.010286    0.014169
+     8   1 F (p)   -0.000000    0.000000   -0.119033    0.066683
+     9   1 F (p)    0.000000    0.000000   -0.065918   -0.118205
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 5, 6, 7, 8
+
+     AO   Atom          5           6           7           8
+    ---------------------------------------------------------------
+     1   1 F (s)   -0.000000   -0.007779    0.000000    0.000000
+     2   1 F (s)   -0.000000    1.141484   -0.000000   -0.000000
+     3   1 F (p)    1.052378   -0.000000   -0.053926    0.145693
+     4   1 F (p)    0.016061   -0.000000    0.029415   -0.427958
+     5   1 F (p)    0.135209    0.000000   -0.450182   -0.045415
+     6   1 F (s)    0.000000   -1.547356    0.000000    0.000000
+     7   1 F (p)   -0.135326    0.000000    0.136043   -0.367553
+     8   1 F (p)   -0.002065    0.000000   -0.074208    1.079645
+     9   1 F (p)   -0.017387    0.000000    1.135712    0.114573
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 9     AO   Atom          9
+    ---------------------------------------------------------------
+     1   1 F (s)    0.000000
+     2   1 F (s)    0.000000
+     3   1 F (p)    0.426969
+     4   1 F (p)    0.149746
+     5   1 F (p)   -0.041361
+     6   1 F (s)   -0.000000
+     7   1 F (p)   -1.077150
+     8   1 F (p)   -0.377776
+     9   1 F (p)    0.104344
+    ---------------------------------------------------------------
+     Generated SAD in 6-31g for F
+
+  - Cleaning up Self-consistent field solver
+
+  Requested MO transformation of Fock matrix, but this is not yet implemented for UHF                                     
+
+  - Molecular system specifications:
+
+     Name:         sad_6-31g_O
+     Charge:       0
+     Multiplicity: 3
+
+     Pure basis functions:          9
+     Cartesian basis functions:     9
+     Primitive basis functions:    22
+
+     Nuclear repulsion energy (a.u.):              0.000000000000
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+
+    ====================================================================
+                               Geometry (Å)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     O    0.000000000000  -0.075790000000   5.000000000000         6-31g
+    ====================================================================
+                             Geometry (a.u.)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     O    0.000000000000  -0.143222342981   9.448630622825         6-31g
+    ====================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+  Requested fractional uniform valence. Valence electrons will be
+  distributed evenly in the highest molecular orbitals (if plural).
+
+
+  :: Self-consistent field solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  Warning: We recommend to use the SCF-DIIS algorithm instead, which supports 
+  a gradient threshold and typically converges much faster. Use only when 
+  absolutely necessary!
+
+  A Roothan-Hall self-consistent field solver. In each iteration, the Roothan-Hall 
+  equation (or equations for unrestricted HF theory) are solved to provide 
+  the next orbital coefficients. From the new orbitals, a new density provides 
+  the next Fock matrix. The cycle repeats until the solution is self-consistent 
+  (as measured by the energy change).
+
+     Coulomb screening threshold:   0.1000E-12
+     Exchange screening threshold:  0.1000E-12
+     ERI integral precision:        0.1000E-25
+
+  Alpha orbital energies:
+
+    1  -20.767162174524      2   -1.438737029342      3   -0.700340922654
+    4   -0.700340922654      5   -0.700340922654      6    1.036404668018
+    7    1.036404668018      8    1.036404668018      9    1.141924439561
+
+
+  Beta orbital energies:
+
+    1  -20.674646151260      2   -1.079344629935      3   -0.083843000374
+    4   -0.083843000374      5   -0.083843000374      6    1.208594861845
+    7    1.208594861845      8    1.208594861845      9    1.243251928189
+
+
+  Printing 9 MOs (out of the total 9 MOs).
+
+  - Printing molecular orbitals: 1, 2, 3, 4
+
+     AO   Atom          1           2           3           4
+    ---------------------------------------------------------------
+     1   1 O (s)   -1.003611   -0.225533    0.000000    0.000000
+     2   1 O (s)    0.023130    1.091833   -0.000000   -0.000000
+     3   1 O (p)    0.000000    0.000000   -0.202874    0.227833
+     4   1 O (p)   -0.000000   -0.000000    0.594740   -0.830024
+     5   1 O (p)   -0.000000   -0.000000   -0.860171   -0.627631
+     6   1 O (s)   -0.009920   -0.084841    0.000000    0.000000
+     7   1 O (p)   -0.000000   -0.000000    0.027826   -0.031249
+     8   1 O (p)    0.000000    0.000000   -0.081573    0.113844
+     9   1 O (p)    0.000000    0.000000    0.117979    0.086084
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 5, 6, 7, 8
+
+     AO   Atom          5           6           7           8
+    ---------------------------------------------------------------
+     1   1 O (s)   -0.000000    0.000468    0.000000    0.000000
+     2   1 O (s)    0.000000    1.129002   -0.000000   -0.000000
+     3   1 O (p)   -1.020638   -0.000000    0.002074   -0.207903
+     4   1 O (p)   -0.303500   -0.000000   -0.001054    0.397557
+     5   1 O (p)    0.030874   -0.000000   -0.448634   -0.001895
+     6   1 O (s)    0.000000   -1.546736    0.000000    0.000000
+     7   1 O (p)    0.139988    0.000000   -0.005301    0.531343
+     8   1 O (p)    0.041627    0.000000    0.002694   -1.016046
+     9   1 O (p)   -0.004235    0.000000    1.146588    0.004844
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 9     AO   Atom          9
+    ---------------------------------------------------------------
+     1   1 O (s)    0.000000
+     2   1 O (s)   -0.000000
+     3   1 O (p)   -0.397556
+     4   1 O (p)   -0.207909
+     5   1 O (p)   -0.001350
+     6   1 O (s)    0.000000
+     7   1 O (p)    1.016044
+     8   1 O (p)    0.531358
+     9   1 O (p)    0.003449
+    ---------------------------------------------------------------
+     Generated SAD in 6-31g for O
+
+  - Cleaning up Self-consistent field solver
+
+  Requested MO transformation of Fock matrix, but this is not yet implemented for UHF                                     
+
+  - Molecular system specifications:
+
+     Name:         sad_6-31g_He
+     Charge:       0
+     Multiplicity: 1
+
+     Pure basis functions:          2
+     Cartesian basis functions:     2
+     Primitive basis functions:     4
+
+     Nuclear repulsion energy (a.u.):              0.000000000000
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+
+    ====================================================================
+                               Geometry (Å)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     He   0.000000000000   0.000000000000   7.500000000000         6-31g
+    ====================================================================
+                             Geometry (a.u.)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     He   0.000000000000   0.000000000000  14.172945934238         6-31g
+    ====================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+  Requested fractional uniform valence. Valence electrons will be
+  distributed evenly in the highest molecular orbitals (if plural).
+
+
+  :: Self-consistent field solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  Warning: We recommend to use the SCF-DIIS algorithm instead, which supports 
+  a gradient threshold and typically converges much faster. Use only when 
+  absolutely necessary!
+
+  A Roothan-Hall self-consistent field solver. In each iteration, the Roothan-Hall 
+  equation (or equations for unrestricted HF theory) are solved to provide 
+  the next orbital coefficients. From the new orbitals, a new density provides 
+  the next Fock matrix. The cycle repeats until the solution is self-consistent 
+  (as measured by the energy change).
+
+     Coulomb screening threshold:   0.1000E-12
+     Exchange screening threshold:  0.1000E-12
+     ERI integral precision:        0.1000E-25
+
+  Alpha orbital energies:
+
+    1   -0.914126628519      2    1.399859335351
+
+  Beta orbital energies:
+
+    1   -0.914126628519      2    1.399859335351
+
+  Printing 2 MOs (out of the total 2 MOs).
+
+  - Printing molecular orbitals: 1, 2
+
+     AO   Atom          1           2
+    ---------------------------------------------------------------
+     1   1 He(s)   -0.772530   -1.037227
+     2   1 He(s)   -0.312098    1.255084
+    ---------------------------------------------------------------
+     Generated SAD in 6-31g for He
+
+  - Cleaning up Self-consistent field solver
+
+  Requested MO transformation of Fock matrix, but this is not yet implemented for UHF                                     
+
+
+  :: Self-consistent field DIIS Hartree-Fock solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock matrix 
+  is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+     DIIS dimension:                8
+     Energy threshold:              0.1000E-09
+     Gradient threshold:            0.1000E-09
+
+     Coulomb screening threshold:   0.1000E-12
+     Exchange screening threshold:  0.1000E-12
+     ERI integral precision:        0.1000E-25
+
+  - Setting initial AO density to SAD
+
+     Energy of initial guess:              -178.296789161050
+     Number of electrons in guess:           20.000000000000
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1          -177.356080045603     0.4712E-01     0.1774E+03
+     2          -177.377821959496     0.1455E-01     0.2174E-01
+     3          -177.378995853025     0.4402E-02     0.1174E-02
+     4          -177.379064370234     0.1447E-02     0.6852E-04
+     5          -177.379075785347     0.1660E-03     0.1142E-04
+     6          -177.379076284370     0.8625E-04     0.4990E-06
+     7          -177.379076321837     0.1138E-04     0.3747E-07
+     8          -177.379076324290     0.1612E-05     0.2454E-08
+     9          -177.379076324395     0.2714E-06     0.1044E-09
+    10          -177.379076324396     0.6997E-07     0.1336E-11
+    11          -177.379076324396     0.1360E-07     0.1705E-12
+    12          -177.379076324396     0.5177E-08     0.1137E-12
+    13          -177.379076324397     0.1106E-08     0.2274E-12
+    14          -177.379076324396     0.3151E-09     0.5684E-13
+    15          -177.379076324397     0.1139E-09     0.2558E-12
+    16          -177.379076324397     0.2117E-10     0.5684E-13
+  ---------------------------------------------------------------
+
+  Convergence criterion met in 16 iterations!
+
+  - Summary of HF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.627561422279
+     Nuclear repulsion energy:      48.518317619727
+     Electronic energy:           -225.897393944124
+     Total energy:                -177.379076324397
+
+  - Molecular orbital energies:
+
+    1  -26.339465574619      2  -20.662711160368      3   -1.925584584405
+    4   -1.208822823896      5   -0.912176685668      6   -0.874167195300
+    7   -0.843048065144      8   -0.781911503912      9   -0.509164038755
+   10   -0.459197263870     11    0.168364158409     12    0.529328212119
+   13    0.974683556870     14    1.084969383790     15    1.124057288827
+   16    1.213442401170     17    1.436767724071     18    1.509793671728
+   19    1.527532077125     20    1.532719100301     21    1.670895361095
+   22    2.377942959632
+
+  Printing 20 MOs (out of the total 22 MOs).
+
+  - Printing molecular orbitals: 1, 2, 3, 4
+
+     AO   Atom          1           2           3           4
+    ---------------------------------------------------------------
+     1   1 H (s)    0.000410   -0.000383   -0.028940    0.110299
+     2   1 H (s)   -0.000333   -0.001784    0.017291   -0.003362
+     3   2 F (s)   -0.995450    0.000052    0.187124    0.143347
+     4   2 F (s)   -0.022750    0.000219   -0.404633   -0.309220
+     5   2 F (p)   -0.001928    0.000228   -0.138746    0.164962
+     6   2 F (p)    0.001363   -0.000144    0.098124   -0.100267
+     7   2 F (p)   -0.000001   -0.000001   -0.000038    0.000120
+     8   2 F (s)    0.009918   -0.001412   -0.397669   -0.495835
+     9   2 F (p)    0.003150   -0.000121   -0.073489    0.038820
+    10   2 F (p)   -0.002320   -0.000239    0.049515   -0.026360
+    11   2 F (p)    0.000002   -0.000004   -0.000047   -0.000021
+    12   3 O (s)   -0.000099   -0.995704    0.123789   -0.171253
+    13   3 O (s)    0.000452   -0.022039   -0.286492    0.400984
+    14   3 O (p)   -0.000063    0.000930    0.130878    0.084505
+    15   3 O (p)    0.000034   -0.002712   -0.126807    0.031515
+    16   3 O (p)    0.000004   -0.000007   -0.000076    0.000396
+    17   3 O (s)   -0.005026    0.007034   -0.101065    0.489910
+    18   3 O (p)    0.002511    0.000020   -0.027770    0.025845
+    19   3 O (p)   -0.002073    0.002187   -0.001061    0.056812
+    20   3 O (p)   -0.000010    0.000026   -0.000009    0.000376
+    21   4 He(s)   -0.000028    0.000117   -0.000826    0.007199
+    22   4 He(s)    0.000073   -0.000203   -0.000850    0.003376
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 5, 6, 7, 8
+
+     AO   Atom          5           6           7           8
+    ---------------------------------------------------------------
+     1   1 H (s)   -0.003294   -0.147463   -0.000914   -0.072652
+     2   1 H (s)   -0.008918   -0.063291    0.001808   -0.051885
+     3   2 F (s)    0.003245    0.027233   -0.000382    0.036485
+     4   2 F (s)   -0.005787   -0.059012    0.000666   -0.076295
+     5   2 F (p)    0.015678   -0.105345   -0.007078    0.487674
+     6   2 F (p)   -0.022238   -0.481060   -0.001883   -0.045230
+     7   2 F (p)   -0.077783    0.006207   -0.534969   -0.004194
+     8   2 F (s)   -0.011382   -0.065044    0.001185   -0.103414
+     9   2 F (p)    0.009763   -0.057015   -0.004668    0.331213
+    10   2 F (p)   -0.013415   -0.302561   -0.001130   -0.028175
+    11   2 F (p)   -0.048819    0.003910   -0.332613   -0.002625
+    12   3 O (s)   -0.002576   -0.011588   -0.000208    0.063823
+    13   3 O (s)    0.009938    0.056439   -0.000118   -0.122922
+    14   3 O (p)   -0.018727   -0.322114    0.000746   -0.262431
+    15   3 O (p)    0.006483   -0.170694   -0.005464    0.322932
+    16   3 O (p)   -0.066093    0.004519   -0.362261   -0.002328
+    17   3 O (s)   -0.004009   -0.061097    0.002591   -0.343210
+    18   3 O (p)   -0.003221   -0.118216   -0.000890   -0.063865
+    19   3 O (p)    0.000000   -0.142592   -0.002554    0.114772
+    20   3 O (p)   -0.038965    0.002557   -0.195251   -0.000816
+    21   4 He(s)   -0.581261    0.021824    0.106929    0.025877
+    22   4 He(s)   -0.504242    0.020250    0.090887    0.020505
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 9, 10, 11, 12
+
+     AO   Atom          9          10          11          12
+    ---------------------------------------------------------------
+     1   1 H (s)   -0.233734    0.000239   -0.136416   -0.058749
+     2   1 H (s)   -0.170760    0.002258   -1.357375    0.013180
+     3   2 F (s)    0.001807    0.000078   -0.003441   -0.101302
+     4   2 F (s)   -0.014763   -0.000222    0.011236    0.196927
+     5   2 F (p)    0.235430   -0.000207   -0.092257    0.293801
+     6   2 F (p)    0.391255   -0.000608   -0.009834   -0.230108
+     7   2 F (p)    0.000884    0.441870    0.000203    0.000258
+     8   2 F (s)    0.036505   -0.000689   -0.005645    1.534043
+     9   2 F (p)    0.207054   -0.000386   -0.134165    0.829838
+    10   2 F (p)    0.306324   -0.000324   -0.020600   -0.686452
+    11   2 F (p)    0.000809    0.373752    0.000300   -0.000308
+    12   3 O (s)   -0.051372    0.000261   -0.064302    0.076492
+    13   3 O (s)    0.128930   -0.000947    0.101321   -0.138171
+    14   3 O (p)   -0.167643   -0.000159    0.252600    0.327163
+    15   3 O (p)   -0.415710    0.000625    0.228057   -0.191619
+    16   3 O (p)   -0.001093   -0.594240   -0.002657   -0.000842
+    17   3 O (s)    0.209863   -0.000773    0.779711   -1.396728
+    18   3 O (p)   -0.122506   -0.000773    0.436993    1.233472
+    19   3 O (p)   -0.317565    0.000530    0.400191   -0.901402
+    20   3 O (p)   -0.001028   -0.463509    0.000027    0.000715
+    21   4 He(s)   -0.002403    0.021937    0.022488    0.019305
+    22   4 He(s)    0.003075    0.022210    0.015364   -0.002159
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 13, 14, 15, 16
+
+     AO   Atom         13          14          15          16
+    ---------------------------------------------------------------
+     1   1 H (s)    1.140513    0.061976    0.211275    0.445979
+     2   1 H (s)   -1.076126   -0.105671   -0.176403   -0.166594
+     3   2 F (s)   -0.027130   -0.002197    0.003514    0.011887
+     4   2 F (s)    0.137581    0.005041   -0.005581   -0.094104
+     5   2 F (p)    0.115971    0.058612   -0.207083    0.168805
+     6   2 F (p)    0.053160   -0.037292    0.237931    0.141319
+     7   2 F (p)    0.009232   -0.140338   -0.029206    0.009142
+     8   2 F (s)   -0.057381   -0.186756    0.894289   -0.116718
+     9   2 F (p)    0.048758   -0.043072    0.198242   -0.085928
+    10   2 F (p)   -0.072333    0.036395   -0.218941    0.099924
+    11   2 F (p)    0.000723   -0.089289   -0.026697    0.016185
+    12   3 O (s)    0.033733    0.012501   -0.017998    0.063309
+    13   3 O (s)   -0.224927   -0.187169    0.411202   -0.764835
+    14   3 O (p)   -0.205908    0.136683   -0.790870    0.271085
+    15   3 O (p)   -0.483061   -0.110605    0.499129    0.638929
+    16   3 O (p)    0.039809   -0.837333   -0.198098    0.084380
+    17   3 O (s)    0.331625    0.308582   -0.868311    0.838572
+    18   3 O (p)    0.072164   -0.206254    1.127629   -0.598254
+    19   3 O (p)    0.254201    0.166447   -0.817858   -0.781396
+    20   3 O (p)   -0.042151    0.999180    0.244150   -0.110581
+    21   4 He(s)    0.129409   -0.377533    0.035417   -0.100025
+    22   4 He(s)   -0.096187    0.318836   -0.031516    0.099497
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 17, 18, 19, 20
+
+     AO   Atom         17          18          19          20
+    ---------------------------------------------------------------
+     1   1 H (s)    0.186146    0.026700    0.024756    0.189198
+     2   1 H (s)    0.549127    0.246120   -0.027348   -0.074868
+     3   2 F (s)   -0.023258   -0.043723    0.017016   -0.035517
+     4   2 F (s)    0.186609    0.363965   -0.139658    0.256113
+     5   2 F (p)    0.019297   -0.114962    0.097251   -0.870746
+     6   2 F (p)    0.255889    0.658275   -0.254287   -0.198942
+     7   2 F (p)    0.060213   -0.337079   -0.853899   -0.042744
+     8   2 F (s)    0.018406   -0.045465    0.037384   -0.057211
+     9   2 F (p)    0.186084    0.280080   -0.153017    1.246503
+    10   2 F (p)   -0.293661   -0.915369    0.362060    0.254687
+    11   2 F (p)   -0.173274    0.499518    1.114635    0.054258
+    12   3 O (s)   -0.027928   -0.029218    0.007859    0.002273
+    13   3 O (s)    0.633226    0.374520   -0.027450   -0.237260
+    14   3 O (p)    0.401749    0.149910   -0.015853    0.089452
+    15   3 O (p)    0.161604   -0.019872    0.028974    0.071818
+    16   3 O (p)   -0.273306    0.172773    0.009335   -0.003916
+    17   3 O (s)   -1.163550   -0.934497    0.206175   -0.174016
+    18   3 O (p)   -0.558717    0.001999   -0.066791   -0.249712
+    19   3 O (p)   -0.453213   -0.034867   -0.045499   -0.445626
+    20   3 O (p)    0.428272   -0.390821   -0.338807   -0.010226
+    21   4 He(s)    0.811234   -0.482724    0.291167    0.033505
+    22   4 He(s)   -0.859368    0.523427   -0.301943   -0.033458
+    ---------------------------------------------------------------
+
+  Mismatch in memory according to eT and specified on input:
+
+     Memory available (eT):          7.9999 GB
+     Memory available (input):       8.0000 GB
+
+  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
+
+  eT terminated successfully!

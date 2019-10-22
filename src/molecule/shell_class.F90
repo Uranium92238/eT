@@ -91,9 +91,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Determines the angular momentum by counting the number of basis
-!!    functions in the shell (2l + 1). If l >= 10 or the shell size is
-!!    not 2l + 1 for some l = 1, 2, 3, ..., 9, the routine will print an
-!!    error and stop.
+!!    functions in the shell (l < 10)
 !!
       implicit none
 !
@@ -102,6 +100,7 @@ contains
       integer :: i
 !
       i = 0
+      sh%l = -1
 !
       do while (i .lt. 10)
 !

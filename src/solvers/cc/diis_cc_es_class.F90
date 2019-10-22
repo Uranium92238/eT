@@ -101,6 +101,8 @@ contains
       solver%restart              = .false.
       solver%transformation       = trim(transformation)
       solver%es_type              = 'valence'
+      solver%records_in_memory    = .false.
+      solver%storage              = 'disk'
 !
       call solver%read_settings()
       call solver%print_settings()
@@ -110,7 +112,7 @@ contains
       call solver%initialize_energies()
       solver%energies = zero
 !
-      wf%n_excited_states = solver%n_singlet_states
+      wf%n_singlet_states = solver%n_singlet_states
 !
       call solver%initialize_start_vector_tool(wf)
       call solver%initialize_projection_tool(wf)
@@ -197,6 +199,8 @@ contains
       real(dp), dimension(:), allocatable   :: eps
       real(dp), dimension(:,:), allocatable :: X, R
 !
+      real(dp) :: ddot
+!
 !     Initialize energies, residual norms, and convergence arrays 
 !
       call mem%alloc(prev_energies, solver%n_singlet_states)
@@ -220,7 +224,8 @@ contains
       do state = 1, solver%n_singlet_states
 !  
          write(string_state, '(i3.3)') state
-         diis(state) = diis_tool('diis_cc_es_' // string_state, wf%n_es_amplitudes, wf%n_es_amplitudes, solver%diis_dimension)
+         diis(state) = diis_tool('diis_cc_es_' // string_state, wf%n_es_amplitudes, wf%n_es_amplitudes, &
+                                       solver%records_in_memory, dimension_=solver%diis_dimension)
 !
       enddo 
 !
@@ -278,13 +283,21 @@ contains
 !
             if (.not. converged(state)) then 
 !
-!              Construct residual and energy and precondition the former 
+!              Construct the transformed vector
+               call dcopy(wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
+               call wf%construct_Jacobian_transform(solver%transformation, R(:,state), &
+                                                    solver%energies(state))
 !
-               call wf%construct_excited_state_equation(X(:,state), R(:,state), solver%energies(state), &
-                                                        solver%transformation)
-!
+!              Project if relavant (CVS, bath orbitals)
                if (solver%projection_tool%active) call solver%projection_tool%project(R(:,state))
 !
+!              Calculate energy, X is normalized
+               solver%energies(state) = ddot(wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
+!
+!              Subtract energy*X to get residual
+               call daxpy(wf%n_es_amplitudes, -solver%energies(state), X(:,state), 1, R(:,state), 1)
+!
+!              Calculate residual norm
                residual_norms(state) = get_l2_norm(R(:, state), wf%n_es_amplitudes)
 !
 !$omp parallel do private(amplitude)
@@ -373,12 +386,6 @@ contains
          call output%error_msg("Did not converge in the max number of iterations.")
 !
       endif 
-!
-      do state = 1, solver%n_singlet_states
-!
-         call diis(state)%cleanup()
-!
-      enddo
 !
       call mem%dealloc(prev_energies, solver%n_singlet_states)
       call mem%dealloc(residual_norms, solver%n_singlet_states)

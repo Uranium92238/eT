@@ -17,19 +17,27 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-module abstract_hf_engine_class
+module reference_engine_class
 !!
-!!    Abstract Hartree-Fock engine class module 
-!!    Written by Tor S. Haugland, 2019
+!!    Hartree-Fock engine class module 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
-   use parameters
+   use kinds
 !
-   use global_in, only: input
-   use global_out, only: output
+   use abstract_engine_class, only: abstract_engine
 !
-   use hf_class, only: hf
+   use global_in,         only: input
+   use global_out,        only: output
+   use timings_class,     only: timings
 !
-   type, abstract :: abstract_hf_engine 
+   use hf_class,          only: hf
+!
+   use scf_hf_class,      only: scf_hf
+   use scf_diis_hf_class, only: scf_diis_hf
+   use mo_scf_diis_class, only: mo_scf_diis
+!
+!
+   type, extends(abstract_engine) :: reference_engine
 !
       character(len=200) :: ao_density_guess
       character(len=200) :: algorithm 
@@ -37,71 +45,163 @@ module abstract_hf_engine_class
 !
    contains 
 !
-      procedure(run_abstract_hf_engine), deferred :: run
+      procedure :: ignite                       => ignite_reference_engine
 !
-      procedure :: ignite                       => ignite_abstract_hf_engine
+      procedure :: run                          => run_reference_engine
+      procedure :: read_settings                => read_settings_reference_engine
 !
-      procedure :: read_settings                => read_settings_abstract_hf_engine
+      procedure :: set_printables               => set_printables_reference_engine
 !
-      procedure, nopass :: generate_sad_density => generate_sad_density_abstract_hf_engine
-!
-   end type abstract_hf_engine 
-!
-!
-   abstract interface
-!
-      subroutine run_abstract_hf_engine(engine, wf)
-!
-         import :: abstract_hf_engine, hf
-!
-         implicit none 
-!
-         class(abstract_hf_engine) :: engine
-!
-         class(hf) :: wf
-!
-      end subroutine run_abstract_hf_engine
+      procedure, nopass :: generate_sad_density => generate_sad_density_reference_engine
 !
 !
-   end interface
+   end type reference_engine 
+!
+!
+   interface reference_engine
+!
+      procedure :: new_reference_engine 
+!
+   end interface reference_engine
 !
 !
 contains
 !
 !
-   subroutine ignite_abstract_hf_engine(engine, wf)
+   function new_reference_engine() result(engine)
+!!
+!!    New reference engine 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!
+      implicit none 
+!
+      type(reference_engine) :: engine
+!
+      engine%ao_density_guess = 'sad'
+      engine%algorithm        = 'scf-diis'
+      engine%restart          = .false.
+!
+      call engine%read_settings()
+!
+      call engine%set_printables()
+!
+      engine%timer = timings(trim(engine%name_))
+      call engine%timer%turn_on()
+!
+   end function new_reference_engine
+!
+!
+   subroutine ignite_reference_engine(engine, wf)
 !!
 !!    Ignite
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
 !!
       implicit none 
 !
-      class(abstract_hf_engine) :: engine 
+      class(reference_engine) :: engine 
       class(hf)        :: wf 
 !
+      call engine%print_banner(wf)
       call engine%run(wf)
+      call engine%print_timings(wf)
 !
-   end subroutine ignite_abstract_hf_engine
+   end subroutine ignite_reference_engine
 !
 !
-   subroutine read_settings_abstract_hf_engine(engine)
+   subroutine run_reference_engine(engine, wf)
+!!
+!!    Run 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none 
+!
+      class(reference_engine)  :: engine 
+      class(hf)         :: wf 
+!
+      type(scf_hf),      allocatable :: scf
+      type(scf_diis_hf), allocatable :: scf_diis
+      type(mo_scf_diis), allocatable :: mo_scf_diis_
+!
+!     Generate SAD if requested
+!
+      if (.not. engine%restart .and. (trim(engine%ao_density_guess) == 'sad')) then
+!
+         call engine%generate_sad_density(wf)
+!
+      endif
+!
+!     Choose solver
+!
+      if (trim(engine%algorithm) == 'scf-diis') then
+!
+         scf_diis = scf_diis_hf(wf, engine%restart)
+         call scf_diis%run(wf)
+         call scf_diis%cleanup(wf)
+!
+      elseif (trim(engine%algorithm) == 'mo-scf-diis') then
+!
+         mo_scf_diis_ = mo_scf_diis(wf, engine%restart)
+         call mo_scf_diis_%run(wf)
+         call mo_scf_diis_%cleanup(wf)
+!
+      elseif (trim(engine%algorithm) == 'scf') then 
+!
+         scf = scf_hf(wf, engine%restart)
+         call scf%run(wf)
+         call scf%cleanup(wf)
+!
+      else
+!
+         call output%error_msg('did not recognize hf algorithm: '// engine%algorithm)
+!
+      endif
+!
+   end subroutine run_reference_engine
+!
+!
+   subroutine read_settings_reference_engine(engine)
 !!
 !!    Read settings 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none
 !
-      class(abstract_hf_engine) :: engine 
+      class(reference_engine) :: engine 
 !
       call input%get_keyword_in_section('algorithm', 'solver hf', engine%algorithm)
       if (input%requested_keyword_in_section('restart', 'solver hf')) engine%restart = .true.
 !
       call input%get_keyword_in_section('ao density guess', 'solver hf', engine%ao_density_guess)
 !
-   end subroutine read_settings_abstract_hf_engine
+   end subroutine read_settings_reference_engine
 !
 !
-   subroutine generate_sad_density_abstract_hf_engine(wf)
+   subroutine set_printables_reference_engine(engine)
+!!
+!!    Set Printables
+!!    Written by Sarai D. Folkestad, May 2019
+!!
+!!    Should be overwritten by descendants.
+!!
+      implicit none
+!
+      class(reference_engine) :: engine
+!
+      engine%name_       = 'Reference state engine'
+      engine%author      = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      engine%description = 'Calculates the reference wavefunction | R >.'
+      engine%tag         = 'ground state'
+!
+      engine%tasks       = [character(len=150) ::                                                         &
+                           'Generate initial density (' // trim(engine%ao_density_guess) // ')',          &
+                           'Calculation of reference state (' // trim(engine%algorithm) // ' algorithm)', &
+                           'Calculation of the ground state energy']
+!
+   end subroutine set_printables_reference_engine
+!
+!
+   subroutine generate_sad_density_reference_engine(wf)
 !!    
 !!    Generate SAD density
 !!    Written by Tor S. Haugland, 2019
@@ -136,6 +236,7 @@ contains
       type(sequential_file) :: alpha_density_file
       type(sequential_file) :: beta_density_file
       type(sequential_file) :: restart_file
+      type(sequential_file) :: orbital_information_file
       type(sequential_file) :: other_file
 !
       character(len=200) :: alpha_fname
@@ -170,13 +271,22 @@ contains
 !
       call output%mute()
 !
-!     Rename Hartree-Fock restart files so that they are not overwritten
+!     Rename Hartree-Fock restart file and information file so that they are not overwritten:
+!     hf_restart_file used in checking if restart is safe, 
+!     orbital_information used for CC
 !
-      restart_file = sequential_file("hf_restart_file")
+      restart_file = sequential_file("scf_restart_file")
 !
       if (restart_file%exists()) then
          call restart_file%copy("temp_restart_file")
          call restart_file%delete_()
+      endif
+!
+      orbital_information_file = sequential_file("orbital_information")
+!
+      if (orbital_information_file%exists()) then
+         call orbital_information_file%copy("temp_orbital_information")
+         call orbital_information_file%delete_()
       endif
 !
 !     For every unique atom, generate SAD density to file
@@ -258,16 +368,26 @@ contains
       other_file = sequential_file("orbital_energies")
       call other_file%delete_()
 !
-      restart_file = sequential_file('hf_restart_file')
+      restart_file = sequential_file('scf_restart_file')
       call restart_file%delete_()
+!
+      orbital_information_file = sequential_file('orbital_information')
+      call orbital_information_file%delete_()
 !
 !     Rename Hartree-Fock restart files back to their original names
 !
       restart_file = sequential_file('temp_restart_file')
 !
       if (restart_file%exists()) then
-         call restart_file%copy('hf_restart_file')
+         call restart_file%copy('scf_restart_file')
          call restart_file%delete_()
+      endif
+!
+      orbital_information_file = sequential_file('temp_orbital_information')
+!
+      if (orbital_information_file%exists()) then
+         call orbital_information_file%copy('orbital_information')
+         call orbital_information_file%delete_()
       endif
 !
 !     Libint is overwritten by SAD. Re-initialize.
@@ -278,7 +398,7 @@ contains
 !
       call output%unmute()
 !
-   end subroutine generate_sad_density_abstract_hf_engine
+   end subroutine generate_sad_density_reference_engine
 !
 !
-end module abstract_hf_engine_class
+end module reference_engine_class

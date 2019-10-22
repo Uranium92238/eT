@@ -21,12 +21,10 @@ end solver hf
 
 molecular mechanics
    forcefield: non-polarizable
-   verbose:    0
 end molecular mechanics
 
 method
    uhf
-   mm
 end method
 
 geometry

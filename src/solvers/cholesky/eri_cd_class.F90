@@ -4077,7 +4077,7 @@ contains
 !
          call mem%alloc(E_Jpx, batch_J%length, n_mo, solver%n_ao)
 !
-         call sort_12_to_21(E_pxJ, E_Jpx, n_mo*solver%n_ao, batch_J%length)
+         call sort_123_to_312(E_pxJ, E_Jpx, n_mo, solver%n_ao, batch_J%length)
 !
          call mem%dealloc(E_pxJ, n_mo, solver%n_ao, batch_J%length)
 !

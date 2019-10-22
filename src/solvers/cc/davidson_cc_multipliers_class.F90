@@ -53,7 +53,8 @@ module davidson_cc_multipliers_class
 !
       real(dp) :: residual_threshold
 !
-      logical :: restart
+      character(len=200) :: storage 
+      logical :: restart, records_in_memory
 !
       type(timings) :: timer
 !
@@ -107,9 +108,28 @@ contains
       solver%residual_threshold  = 1.0d-6
       solver%restart             = .false.
       solver%max_dim_red         = 50
+      solver%records_in_memory   = .false.
+      solver%storage             = 'disk'
 !
       call solver%read_settings()
       call solver%print_settings()
+!
+!     Determine whether to store records in memory or on file
+!
+      if (trim(solver%storage) == 'memory') then 
+!
+         solver%records_in_memory = .true.
+!
+      elseif (trim(solver%storage) == 'disk') then 
+!
+         solver%records_in_memory = .false.
+!
+      else 
+!
+         call output%error_msg('Could not recognize keyword storage in solver: ' // &
+                                 trim(solver%storage))
+!
+      endif 
 !
    end function new_davidson_cc_multipliers
 !
@@ -158,7 +178,7 @@ contains
       call wf%construct_eta(eta)
 !
       davidson = linear_davidson_tool('multipliers', wf%n_gs_amplitudes, &
-                  solver%residual_threshold, solver%max_dim_red, -eta)
+                  solver%residual_threshold, solver%max_dim_red, -eta, solver%records_in_memory)
 !
       call solver%set_precondition_vector(wf, davidson)
 !
@@ -179,7 +199,7 @@ contains
          norm_trial = sqrt(ddot(wf%n_gs_amplitudes, multipliers, 1, multipliers, 1))
          call dscal(wf%n_gs_amplitudes, one/norm_trial, multipliers, 1)
 !
-         call davidson%write_trial(multipliers, 'rewind')
+         call davidson%set_trial(multipliers, 1)
          call mem%dealloc(multipliers, wf%n_gs_amplitudes)
 !
       else ! Use - eta_mu / eps_mu as first trial 
@@ -190,7 +210,7 @@ contains
          norm_trial = sqrt(ddot(wf%n_gs_amplitudes, eta, 1, eta, 1))
          call dscal(wf%n_gs_amplitudes, one/norm_trial, eta, 1)
 !
-         call davidson%write_trial(eta, 'rewind')
+         call davidson%set_trial(eta, 1)
 !
       endif 
 !
@@ -213,11 +233,11 @@ contains
 !
          call mem%alloc(c, davidson%n_parameters)
 !
-         call davidson%read_trial(c, davidson%dim_red)
+         call davidson%get_trial(c, davidson%dim_red)
 !
-         call wf%jacobian_transpose_transformation(c)
+         call wf%construct_Jacobian_transform('left', c, zero)
 !
-         call davidson%write_transform(c)
+         call davidson%set_transform(c, davidson%dim_red)
 !
          call mem%dealloc(c, davidson%n_parameters)
 !
@@ -361,6 +381,8 @@ contains
       call input%get_keyword_in_section('max iterations', 'solver cc multipliers', solver%max_iterations)
 !
       if (input%requested_keyword_in_section('restart', 'solver cc multipliers')) solver%restart = .true.    
+!
+      call input%get_keyword_in_section('storage', 'solver cc multipliers', solver%storage)
 !
    end subroutine read_settings_davidson_cc_multipliers
 !

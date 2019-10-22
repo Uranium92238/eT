@@ -17,62 +17,8 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine save_excited_state_abstract_doubles(wf, X, n, side)
-!!
-!!    Save excited state 
-!!    Written by Eirik F. Kjønstad, Mar 2019 
-!!
-      implicit none 
 !
-      class(abstract_doubles), intent(inout) :: wf 
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
-!
-   end subroutine save_excited_state_abstract_doubles
-!
-!
-   module subroutine save_doubles_vector_abstract_doubles(wf, X, n, file_)
-!!
-!!    Save doubles vector state 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
-!!
-!!
-      implicit none
-!
-      class(abstract_doubles), intent(inout) :: wf 
-!
-      real(dp), dimension(wf%n_t2), intent(in) :: X 
-!
-      integer, intent(in) :: n ! state number 
-!
-      type(sequential_file) :: file_
-!
-   end subroutine save_doubles_vector_abstract_doubles
-!
-!
-   module subroutine read_excited_state_abstract_doubles(wf, X, n, side)
-!!
-!!    Read excited state 
-!!    Written by Sarai D. Fokestad, Mar 2019 
-!!
-      implicit none
-!
-      class(abstract_doubles), intent(inout) :: wf
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(out) :: X
-!
-      integer, intent(in) :: n ! state number 
-!
-      character(len=*), intent(in) :: side ! 'left' or 'right' 
-!
-   end subroutine read_excited_state_abstract_doubles
-!
-!
-   module subroutine read_doubles_vector_abstract_doubles(wf, X, n, file_)
+   module subroutine read_doubles_vector_abstract_doubles(wf, X, file_)
 !!
 !!    Read doubles vector state 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
@@ -84,9 +30,6 @@
 !
       real(dp), dimension(wf%n_t2), intent(out) :: X 
 !
-      integer, intent(in) :: n ! state number 
-!
       type(sequential_file) :: file_
 !
    end subroutine read_doubles_vector_abstract_doubles
-!

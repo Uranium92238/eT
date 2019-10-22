@@ -6,7 +6,7 @@ module bfgs_geoopt_hf_class
 !!
 !
    use hf_class 
-   use hf_engine_class
+   use reference_engine_class
    use bfgs_tool_class
    use diis_tool_class
 !
@@ -28,7 +28,7 @@ module bfgs_geoopt_hf_class
       real(dp) :: gradient_threshold
       real(dp) :: max_step 
 !
-      type(hf_engine) :: hf_gs_engine
+      type(reference_engine) :: hf_gs_engine
 !
       real(dp), dimension(:), allocatable :: energies, gradient_maxs 
 !
@@ -98,7 +98,7 @@ contains
 !
       call output%printf('Starting HF solver.', fs='(/t3,a)')
 !
-      solver%hf_gs_engine = hf_engine()
+      solver%hf_gs_engine = reference_engine()
 !
    end function new_bfgs_geoopt_hf
 !

@@ -21,6 +21,7 @@ set(eT_fortran_sources
    src/eT_program.F90
    src/solvers/hf/abstract_hf_solver_class.F90
    src/solvers/hf/scf_diis_hf_class.F90
+   src/solvers/hf/mo_scf_diis_class.F90
    src/solvers/hf/scf_hf_class.F90
    src/solvers/hf/bfgs_geoopt_hf_class.F90
    src/solvers/cc/diis_cc_gs_class.F90
@@ -31,10 +32,9 @@ set(eT_fortran_sources
    src/solvers/cc/abstract_cc_es_class.F90
    src/solvers/cc/newton_raphson_cc_gs_class.F90
    src/solvers/cholesky/eri_cd_class.F90
-   src/engines/abstract_hf_engine_class.F90
-   src/engines/hf_engine_class.F90
+   src/engines/abstract_engine_class.F90
+   src/engines/reference_engine_class.F90
    src/engines/hf_geoopt_engine_class.F90
-   src/engines/abstract_cc_engine_class.F90
    src/engines/gs_engine_class.F90
    src/engines/es_engine_class.F90
    src/engines/zop_engine_class.F90
@@ -65,8 +65,15 @@ set(eT_fortran_sources
    src/tools/math_utilities.F90
    src/tools/linked_list/array_list_class.F90
    src/tools/linked_list/array_node_class.F90
+   src/tools/fftpack/fftpack_auxiliary_routines.F90
+   src/tools/fftpack/fftpack_complex_forward_1d.F90
+   src/tools/fftpack/fftpack_complex_initialization_routines.F90
+   src/tools/record_storer/record_storer_class.F90
+   src/tools/record_storer/memory_storer_class.F90
+   src/tools/record_storer/sequential_storer_class.F90
    src/wavefunctions/wavefunction/wavefunction_class.F90
-   src/wavefunctions/hf/hf_class.F90
+   src/wavefunctions/hf/hf_class.F90  
+   src/wavefunctions/hf/mo_hf.F90
    src/wavefunctions/uhf/uhf_class.F90
    src/wavefunctions/ccs/ccs_class.F90
    src/wavefunctions/abstract_doubles/abstract_doubles_class.F90
@@ -123,7 +130,6 @@ set(eT_fortran_sources
    src/wavefunctions/cc2/jacobian_transpose_cc2.F90
    src/wavefunctions/cc2/multiplier_equation_cc2.F90
    src/wavefunctions/cc2/initialize_destruct_cc2.F90
-   src/wavefunctions/cc2/file_handling_cc2.F90
    src/wavefunctions/cc2/debug_jacobian_cc2.F90
    src/wavefunctions/lowmem_cc2/omega_lowmem_cc2.F90
    src/wavefunctions/lowmem_cc2/jacobian_lowmem_cc2.F90
@@ -153,6 +159,5 @@ set(eT_fortran_sources
    src/wavefunctions/mlcc2/jacobian_mlcc2.F90
    src/wavefunctions/mlcc2/jacobian_transpose_mlcc2.F90
    src/wavefunctions/mlcc2/initialize_destruct_mlcc2.F90
-   src/wavefunctions/mlcc2/file_handling_mlcc2.F90
    src/wavefunctions/mlcc2/debug_jacobian_mlcc2.F90
 )

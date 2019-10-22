@@ -843,11 +843,12 @@ contains
       real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
       real(dp), dimension(wf%n_v, wf%n_v), intent(out) :: T_v
 !
-      integer :: n_es, k
+      integer :: n_cnto_states, k
 !
-      real(dp), dimension(:), allocatable       :: excitation_energies
-      real(dp), dimension(:,:), allocatable     :: R_ai
-      real(dp), dimension(:,:,:,:), allocatable :: R_aibj
+      real(dp), dimension(:), allocatable       :: omega_ccs ! CCS excitation energies
+      real(dp), dimension(:,:), allocatable     :: R_ai_k
+      real(dp), dimension(:,:,:), allocatable   :: R_ai
+      real(dp), dimension(:,:,:,:), allocatable :: R_aibj_k
 !
       logical :: set_to_zero
 !
@@ -855,55 +856,43 @@ contains
 !
       character(len=200) :: r_or_l
 !
+      n_cnto_states = size(wf%cnto_states)
+!
       r_or_l = 'right'
 !
       if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) r_or_l = 'left'
+
+      call mem%alloc(R_ai, wf%n_v, wf%n_o, n_cnto_states)
+      call mem%alloc(omega_ccs, n_cnto_states)
 !
 !     Run CCS calculation 
 !
-      call wf%ccs_calculation_for_cntos(r_or_l)
-!
-      n_es = wf%get_n_excitation_energies_on_file()
-!
-      call mem%alloc(excitation_energies, n_es)
-!
-!     Read excitaion energies
-!
-      call wf%read_excitation_energies(n_es, excitation_energies)
-!
-      call mem%alloc(R_ai, wf%n_v, wf%n_o)
-      call mem%alloc(R_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call wf%ccs_calculation_for_cntos(r_or_l, n_cnto_states, R_ai, wf%cnto_states, omega_ccs)
 !
       set_to_zero = .true.
 !
-      do k = 1, size(wf%cnto_states)
+      call mem%alloc(R_ai_k, wf%n_v, wf%n_o)
+      call mem%alloc(R_aibj_k, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!   
+      do k = 1, n_cnto_states
 !
-!        Read single excitation vector
-!
-         if (r_or_l == 'right') then
-!
-            call wf%read_singles_vector(R_ai, wf%cnto_states(k), wf%r1_file)
-!
-         elseif (r_or_l == 'left') then
-!
-            call wf%read_singles_vector(R_ai, wf%cnto_states(k), wf%l1_file)
-!
-         endif
+         call dcopy(wf%n_t1, R_ai(1,1,k), 1, R_ai_k, 1)
 !
 !        Construct approximate double excitation vector
 ! 
-         call wf%approximate_double_excitation_vectors(R_ai, R_aibj, excitation_energies(wf%cnto_states(k)))
+         call wf%approximate_double_excitation_vectors(R_ai_k, R_aibj_k, omega_ccs(k))
 !
 !        Add contribution to M and N
 !
-         call wf%construct_M_and_N_cnto(R_ai, R_aibj, T_o, T_v, set_to_zero)
+         call wf%construct_M_and_N_cnto(R_ai_k, R_aibj_k, T_o, T_v, set_to_zero)
 !
          set_to_zero = .false.
 !
       enddo
 !
-      call mem%dealloc(R_ai, wf%n_v, wf%n_o)
-      call mem%dealloc(R_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(R_ai_k, wf%n_v, wf%n_o)
+      call mem%dealloc(R_aibj_k, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(R_ai, wf%n_v, wf%n_o, n_cnto_states)
 !
       call wf%diagonalize_M_and_N(T_o, T_v)
 !
@@ -994,10 +983,11 @@ contains
 !
       real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
 !
-      integer :: n_es, k, info
+      integer :: k, info, n_nto_states
 !
       real(dp), dimension(:), allocatable       :: work, eigenvalues
-      real(dp), dimension(:,:), allocatable     :: R_ai
+      real(dp), dimension(:,:), allocatable     :: R_ai_k
+      real(dp), dimension(:,:,:), allocatable   :: R_ai
 !
       logical :: set_to_zero
 !
@@ -1005,47 +995,36 @@ contains
 
       character(len=200) :: r_or_l
 !
+      n_nto_states = size(wf%nto_states)
+!
       r_or_l = 'right'
 !
       if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) r_or_l = 'left'
 !
+      call mem%alloc(R_ai, wf%n_v, wf%n_o, n_nto_states)
+!
 !     Run CCS calculation
 !
-      call wf%ccs_calculation_for_cntos(r_or_l)
-!
-      n_es = wf%get_n_excitation_energies_on_file()
-!
-      if(n_es .lt. size(wf%nto_states)) call output%error_msg('Requested too many NTO states')
-!
-      call mem%alloc(R_ai, wf%n_v, wf%n_o)
+      call wf%ccs_calculation_for_cntos(r_or_l, n_nto_states, R_ai, wf%nto_states)
 !
       set_to_zero = .true.
 !
-      do k = 1, size(wf%nto_states)
+      call mem%alloc(R_ai_k, wf%n_v, wf%n_o)
+!   
+      do k = 1, n_nto_states
 !
-         if(n_es .lt. wf%nto_states(k)) call output%error_msg('Requested non-existent NTO state')
-!
-!        Read single excitation vector
-!
-         if (r_or_l == 'right') then
-!
-            call wf%read_singles_vector(R_ai, wf%nto_states(k), wf%r1_file)
-!
-         elseif (r_or_l == 'left') then
-!
-            call wf%read_singles_vector(R_ai, wf%nto_states(k), wf%l1_file)
-!
-         endif
+         call dcopy(wf%n_t1, R_ai(1,1,k), 1, R_ai_k, 1)
 !
 !        Add contribution to M 
 !
-         call wf%construct_M_nto(R_ai, T_o, set_to_zero)
+         call wf%construct_M_nto(R_ai_k, T_o, set_to_zero)
 !
          set_to_zero = .false.
 !
       enddo
 !
-      call mem%dealloc(R_ai, wf%n_v, wf%n_o)
+      call mem%dealloc(R_ai_k, wf%n_v, wf%n_o)
+      call mem%dealloc(R_ai, wf%n_v, wf%n_o, n_nto_states)
 !
 !     Diagonalize -M  to get eigenvectors in correct order
 !
@@ -1282,6 +1261,7 @@ contains
       call dscal(wf%n_v**2, -one, T_v, 1)
 !
       call mem%alloc(work, 1)
+      call mem%alloc(eigenvalues, wf%n_o)
 !
       call dsyev('V','U',        &
                   wf%n_o,        &
@@ -1296,8 +1276,6 @@ contains
 !
       call mem%dealloc(work, 1)
       call mem%alloc(work, work_size)
-!
-      call mem%alloc(eigenvalues, wf%n_o)
 !
       call dsyev('V','U',        &
                   wf%n_o,        &
@@ -1325,8 +1303,8 @@ contains
 !
       if (info .ne. 0) call output%error_msg('Diagonalization of M failed')
 !
-!
       call mem%alloc(work, 1)
+      call mem%alloc(eigenvalues, wf%n_v)
 !
       call dsyev('V','U',        &
                   wf%n_v,        &
@@ -1341,8 +1319,6 @@ contains
 !
       call mem%dealloc(work, 1)
       call mem%alloc(work, work_size)
-!
-      call mem%alloc(eigenvalues, wf%n_v)
 !
       call dsyev('V','U',        &
                   wf%n_v,        &
@@ -1373,7 +1349,8 @@ contains
    end subroutine diagonalize_M_and_N_mlcc2
 !
 !
-   module subroutine ccs_calculation_for_cntos_mlcc2(wf, transformation)
+   module subroutine ccs_calculation_for_cntos_mlcc2(wf, transformation, n_cnto_states, &
+                                                         R_ai, cnto_states, omega_ccs)
 !!
 !!    CCS calculation for CNTOs
 !!    Written by Sarai D. Folkestad, Sep 2019
@@ -1387,9 +1364,19 @@ contains
 !
       implicit none
 !
-      class(mlcc2) :: wf
+      class(mlcc2), intent(inout) :: wf
 !
-      character(len=200) :: transformation
+      character(len=200), intent(in) :: transformation
+!
+      integer, intent(in) :: n_cnto_states
+!
+      real(dp), dimension(wf%n_v, wf%n_o, n_cnto_states), intent(out) :: R_ai
+!
+      integer, dimension(n_cnto_states), intent(in) :: cnto_states
+!
+      real(dp), dimension(n_cnto_states), intent(out), optional :: omega_ccs
+!
+!     Local variables
 !
       type(ccs), allocatable :: ccs_wf
 !
@@ -1397,6 +1384,10 @@ contains
       type(davidson_cc_es) :: cc_es_solver_davidson
 !
       type(timings) :: timer, timer_gs, timer_es
+!
+      integer :: n, n_es
+!
+      real(dp), dimension(:), allocatable :: all_omega_ccs
 !
       call output%printf('Running CCS calculation for NTOs/CNTOs.', fs='(/t3,a)',pl='minimal')
 !
@@ -1407,11 +1398,15 @@ contains
       timer = timings('CCS calculation for NTOs/CNTOs')
       call timer%turn_on()
 !
+!     1. Preparations (Note that cholesky decomposition is already done)
+!
       ccs_wf = ccs(wf%system)
 !
       ccs_wf%integrals = mo_integral_tool(ccs_wf%n_o, ccs_wf%n_v, ccs_wf%system%n_J)
 !
       call ccs_wf%mo_preparations()
+!
+!     1. Ground state
 !
       timer_gs = timings('Ground state CCS calculation for NTOs/CNTOs')
       call timer_gs%turn_on()
@@ -1424,6 +1419,8 @@ contains
 !
       call ccs_wf%integrals%write_t1_cholesky(ccs_wf%t1)
 !
+!     Excited states
+!
       timer_es = timings('Excited state CCS calculation for NTOs/CNTOs')
       call timer_es%turn_on()
 !
@@ -1433,7 +1430,49 @@ contains
 !
       call timer_es%turn_off()
 !
+!     Transfer information to mlcc wavefunction
+!
+!     1. Integrals
+!
       wf%integrals = mo_integral_tool(ccs_wf%integrals)
+!
+!     2. Excitation vectors
+!
+      n_es = ccs_wf%get_n_excitation_energies_on_file()
+!
+      if(n_es .lt. n_cnto_states) call output%error_msg('Requested too many CNTO/NTO states')
+!
+!     Return only the excitation vectors in cnto_states
+!
+      do n = 1, n_cnto_states
+!
+         if(n_es .lt. cnto_states(n)) call output%error_msg('Requested non-existent CNTO/NTO state')
+!
+         call ccs_wf%read_excited_state(R_ai(:,:,n), cnto_states(n), transformation)   
+!
+      enddo  
+!
+!     3. Excitation energies (if requested)
+!
+      if (present(omega_ccs)) then  
+!
+         call mem%alloc(all_omega_ccs, n_es)
+!
+!        Read CCS excitaion energies
+!
+         call wf%read_excitation_energies(n_es, all_omega_ccs)
+!
+!        Return only the excitation energies in cnto_states
+!
+         do n = 1, n_cnto_states
+!
+            omega_ccs(n) = all_omega_ccs(cnto_states(n))   
+!
+         enddo  
+!
+      endif
+!
+!     Cleanup and print
 !
       call ccs_wf%cleanup() 
 !

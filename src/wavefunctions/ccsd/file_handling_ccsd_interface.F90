@@ -85,5 +85,3 @@
       class(ccsd), intent(inout) :: wf
 !
    end subroutine read_multipliers_ccsd
-!
-!

@@ -36,7 +36,6 @@ module input_file_class
 !
       character(len=25), allocatable :: rf_wfs(:)
       character(len=25), allocatable :: cc_wfs(:)
-      character(len=25), allocatable :: mm_wfs(:)
 !
    contains
 !
@@ -57,7 +56,6 @@ module input_file_class
 !
       procedure :: requested_reference_calculation                      => requested_reference_calculation_input_file
       procedure :: requested_cc_calculation                             => requested_cc_calculation_input_file
-      procedure :: requested_mm_calculation                             => requested_mm_calculation_input_file
 !
       procedure, private :: get_string_keyword_in_section_wo_safety     => get_string_keyword_in_section_wo_safety_input_file
       procedure, private :: move_to_section                             => move_to_section_input_file
@@ -71,15 +69,15 @@ module input_file_class
       procedure, nopass, private :: extract_keyword_from_string         => extract_keyword_from_string_input_file
       procedure, nopass, private :: extract_keyword_value_from_string   => extract_keyword_value_from_string_input_file
 !
-      generic :: get_keyword_in_section                                 => get_integer_keyword_in_section_input_file,   &
-                                                                           get_integer8_keyword_in_section_input_file,  &
-                                                                           get_string_keyword_in_section_input_file,    &
-                                                                           get_dp_keyword_in_section_input_file
+      generic :: get_keyword_in_section            => get_integer_keyword_in_section_input_file,   &
+                                                      get_integer8_keyword_in_section_input_file,  &
+                                                      get_string_keyword_in_section_input_file,    &
+                                                      get_dp_keyword_in_section_input_file
 !
-      generic :: get_required_keyword_in_section                        => get_required_string_keyword_in_section_input_file,    &
-                                                                           get_required_integer_keyword_in_section_input_file,   &
-                                                                           get_required_integer8_keyword_in_section_input_file,  &
-                                                                           get_required_dp_keyword_in_section_input_file
+      generic :: get_required_keyword_in_section   => get_required_string_keyword_in_section_input_file,    &
+                                                      get_required_integer_keyword_in_section_input_file,   &
+                                                      get_required_integer8_keyword_in_section_input_file,  &
+                                                      get_required_dp_keyword_in_section_input_file
 !
       procedure :: get_integer_keyword_in_section_input_file
       procedure :: get_integer8_keyword_in_section_input_file
@@ -116,8 +114,6 @@ contains
 !
       character(len=*), intent(in) :: name_
 !
-      integer :: k
-!
       type(section) :: calculations
       type(section) :: system 
       type(section) :: memory 
@@ -134,6 +130,7 @@ contains
       type(section) :: cc
       type(section) :: mlcc
       type(section) :: mm
+      type(section) :: global_print
 !
 !     Set input file name, access and format 
 !
@@ -158,32 +155,13 @@ contains
                            'cc3',               &
                            'mlcc2']
 !
-      the_file%mm_wfs = [character(len=25) :: 'mm']
-!
       method%name_    = 'method'
       method%required = .true.
 !
-      allocate(method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs) &
-            + size(the_file%mm_wfs) ))
+      allocate(method%keywords(size(the_file%rf_wfs) &
+                             + size(the_file%cc_wfs)))
 !
-      do k = 1, size(the_file%rf_wfs)
-!
-         method%keywords(k) = the_file%rf_wfs(k)
-!
-      enddo 
-!
-      do k = 1, size(the_file%cc_wfs)
-!
-         method%keywords(size(the_file%rf_wfs) + k) = the_file%cc_wfs(k)
-!
-      enddo 
-!
-      do k = 1, size(the_file%mm_wfs)
-!
-         method%keywords(size(the_file%rf_wfs) + size(the_file%cc_wfs) + k) &
-            = the_file%mm_wfs(k)
-!
-      enddo 
+      method%keywords = [the_file%rf_wfs, the_file%cc_wfs]
 !
 !     Set other sections
 !
@@ -235,10 +213,11 @@ contains
 !
       solver_hf%name_    = 'solver hf'
       solver_hf%required = .false.
-      solver_hf%keywords = [character(len=25) ::       &
+      solver_hf%keywords = [character(len=25) ::         &
                               'algorithm            ',   &
                               'energy threshold     ',   &
                               'gradient threshold   ',   &
+                              'storage              ',   &
                               'max iterations       ',   &
                               'diis dimension       ',   &
                               'restart              ',   &
@@ -264,6 +243,7 @@ contains
                                  'omega threshold',      &
                                  'max micro iterations', &
                                  'rel micro threshold',  &
+                                 'storage',              &
                                  'max iterations',       &
                                  'diis dimension',       &
                                  'restart' ]
@@ -280,6 +260,7 @@ contains
                                  'restart',              &
                                  'left eigenvectors',    &
                                  'right eigenvectors',   &
+                                 'storage',              &
                                  'singlet states',       &
                                  'diis dimension',       &
                                  'max micro iterations', &
@@ -290,6 +271,7 @@ contains
       solver_cc_multipliers%keywords = [character(len=25) ::         &
                                           'algorithm            ',   &
                                           'threshold            ',   &
+                                          'storage              ',   &
                                           'restart              ',   &
                                           'max iterations       ']
 !
@@ -329,8 +311,13 @@ contains
       mm%required = .false.
       mm%keywords = [character(len=25) :: &
                      'forcefield', &
-                     'algorithm ', &
-                     'verbose']
+                     'algorithm ']
+!
+      global_print%name_    = 'print'
+      global_print%required = .false.
+      global_print%keywords = [character(len=25) :: &
+                              'output print level ', &
+                              'timing print level ']
 !
 !     Gather all sections into the file's section array 
 !
@@ -349,7 +336,8 @@ contains
                            active_atoms,           &
                            mlcc,                   &
                            cc,                     &
-                           mm]
+                           mm,                     &
+                           global_print]
 !
       the_file%is_open = .false.
       the_file%unit = -1
@@ -776,46 +764,6 @@ contains
       if (.not. recognized) call output%error_msg('Tried to read CC wavefunction, but could not find any.')
 !
    end function get_cc_wf_input_file
-!
-!
-   logical function requested_mm_calculation_input_file(the_file)
-!!
-!!    Requested QM/MM calculation 
-!!    Written by Tommaso Giovannini, May 2019
-!!
-      implicit none 
-!
-      class(input_file), intent(in) :: the_file
-!
-      integer :: n_mm_wfs, k
-!
-      n_mm_wfs = 0
-      do k = 1, size(the_file%mm_wfs)
-!
-         if (the_file%requested_keyword_in_section(the_file%mm_wfs(k), 'method')) then 
-!
-            n_mm_wfs = n_mm_wfs + 1
-!
-         endif 
-!
-      enddo 
-!
-      if (n_mm_wfs == 1) then 
-!
-         requested_mm_calculation_input_file = .true.
-!
-      elseif (n_mm_wfs > 1) then
-!
-         requested_mm_calculation_input_file = .false.
-         call output%error_msg('Requested more than one reference wavefunction.')
-!
-      else
-!
-         requested_mm_calculation_input_file = .false.
-!
-      endif  
-!
-   end function requested_mm_calculation_input_file
 !
 !
    subroutine get_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)

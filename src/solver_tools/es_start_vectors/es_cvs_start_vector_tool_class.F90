@@ -64,7 +64,7 @@ contains
 !
       if (wf%bath_orbital) call output%error_msg('Bath orbitals can not be used in cvs excitation calculation')
 !
-      tool%n_vectors = wf%n_excited_states
+      tool%n_vectors = wf%n_singlet_states
       tool%vector_length = wf%n_es_amplitudes
 !
       call mem%alloc(tool%indices, tool%n_vectors)

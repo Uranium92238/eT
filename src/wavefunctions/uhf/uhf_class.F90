@@ -199,6 +199,7 @@ contains
       wf%n_ao = wf%system%get_n_aos()
 !
       call wf%set_n_mo()
+      wf%n_o = 0 ! hack to fix print_orbitals (remove later)
 !
       if (wf%fractional_uniform_valence) then
 !
@@ -209,7 +210,9 @@ contains
 !
       wf%orbital_coefficients_file = sequential_file('orbital_coefficients')
       wf%orbital_energies_file = sequential_file('orbital_energies')
-      wf%restart_file = sequential_file('hf_restart_file')
+      wf%restart_file = sequential_file('scf_restart_file')
+!
+      call wf%write_scf_restart()
 !
       call wf%initialize_sp_eri_schwarz() 
       call wf%initialize_sp_eri_schwarz_list()
@@ -1639,13 +1642,9 @@ contains
 !
       class(uhf) :: wf
 !
-      character(len=12) :: frmt0
-!      
       real(dp), dimension(:),    allocatable                  :: potential_points
       integer :: i
 !     
-      frmt0="(t5,65('='))"
-! 
       if(wf%system%mm%forcefield.eq.'fq') then
 !      
          if(.not.allocated(potential_points)) call mem%alloc(potential_points, wf%system%mm%n_atoms)
@@ -1679,24 +1678,22 @@ contains
                      wf%system%mm%pol_emb_lhs,            &
                      wf%system%mm%n_variables)
 !
-         if(wf%system%mm%verbose.ge.1) then 
-!         
-            write(output%unit,frmt0) 
+!
+         call output%print_separator('verbose', 67, fs='(/t3,a)')
+!
+         call output%printf('Atom          FQ LHS             FQ RHS        QM Potential@FQs', &
+                            pl='v', fs='(t6,a)')
 !            
-            write(output%unit,'(t6,a /)') 'Atom          FQ LHS             FQ RHS        QM Potential@FQs'
+         do i = 1, wf%system%mm%n_atoms
 !           
-            do i = 1, wf%system%mm%n_atoms
+            call output%printf('(i4)      (e13.6)      (e13.6)      (e13.6)', pl='v', &
+                               fs='(t6,a)', ints=[i], reals=[wf%system%mm%pol_emb_lhs(i), &
+                               wf%system%mm%pol_emb_rhs(i), potential_points(i)])
 !           
-               write(output%unit,'(t6,i4,6x,3(E13.6,6x))') &
-               i, wf%system%mm%pol_emb_lhs(i), wf%system%mm%pol_emb_rhs(i), potential_points(i)
+         enddo
 !           
-            enddo
-!           
-            write(output%unit,frmt0) 
-!           
-            flush(output%unit)
-!           
-         endif
+         call output%print_separator('verbose', 67)
+!
 !
 !        put FQ charges into charge (I am discrading langrangian multipliers)
 !
@@ -1709,24 +1706,22 @@ contains
          wf%ao_fock_a = wf%ao_fock_a + half*wf%system%mm%pol_emb_fock
          wf%ao_fock_b = wf%ao_fock_b + half*wf%system%mm%pol_emb_fock
 !
-         if(wf%system%mm%verbose.ge.3) then 
-!           
-            call print_matrix('Total QM Density',wf%ao_density,wf%n_ao,wf%n_ao) 
-            flush(output%unit)
-            call print_matrix('QM Density - Spin alpha',wf%ao_density_a,wf%n_ao,wf%n_ao) 
-            flush(output%unit)
-            call print_matrix('QM Density - Spin beta',wf%ao_density_b,wf%n_ao,wf%n_ao) 
-            flush(output%unit)
-!           
-            call print_matrix('FQ Fock - Spin alpha + beta',wf%system%mm%pol_emb_fock,wf%n_ao,wf%n_ao) 
-            flush(output%unit)
-!           
-            call print_matrix('QM/FQ Fock - Spin alpha',wf%ao_fock_a,wf%n_ao,wf%n_ao) 
-            flush(output%unit)
-            call print_matrix('QM/FQ Fock - Spin beta',wf%ao_fock_b,wf%n_ao,wf%n_ao) 
-            flush(output%unit)
-!           
-         endif
+!
+         call output%print_matrix('debug', 'Total QM Density', wf%ao_density, wf%n_ao, wf%n_ao)
+!
+         call output%print_matrix('debug', 'QM Density - Spin alpha', &
+                                  wf%ao_density_a, wf%n_ao, wf%n_ao)
+!
+         call output%print_matrix('debug', 'QM Density - Spin beta', &
+                                  wf%ao_density_b, wf%n_ao, wf%n_ao)
+!
+         call output%print_matrix('debug', 'FQ Fock - Spin alpha + beta', &
+                                  wf%system%mm%pol_emb_fock, wf%n_ao, wf%n_ao)
+!
+         call output%print_matrix('debug', 'QM/FQ Fock - Spin alpha', wf%ao_fock_a, wf%n_ao, wf%n_ao)
+!
+         call output%print_matrix('debug', 'QM/FQ Fock - Spin beta', wf%ao_fock_b, wf%n_ao, wf%n_ao)
+!
 !
          call mem%dealloc(potential_points, wf%system%mm%n_atoms)
 !         

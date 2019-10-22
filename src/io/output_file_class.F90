@@ -37,12 +37,14 @@ module output_file_class
 !
    contains
 !
-      procedure :: open_                  => open_output_file
+      procedure :: open_                     => open_output_file
 !
-      procedure :: error_msg              => error_msg_output_file
-      procedure :: warning_msg            => warning_msg_output_file
+      procedure :: error_msg                 => error_msg_output_file
+      procedure :: warning_msg               => warning_msg_output_file
 !
-      procedure, public :: printf         => printf_output_file
+      procedure, public :: printf            => printf_output_file
+      procedure, public :: print_matrix      => print_matrix_output_file
+      procedure, public :: print_separator   => print_separator_output_file
 !
       procedure, public :: set_global_print_level  => set_global_print_level_output_file 
       procedure, public :: set_local_print_level   => set_local_print_level_output_file  
@@ -51,6 +53,8 @@ module output_file_class
 !
       procedure, public :: mute   => mute_output_file
       procedure, public :: unmute => unmute_output_file
+!
+      procedure, private :: should_print => should_print_output_file
 !
    end type output_file
 !
@@ -98,6 +102,8 @@ contains
 !!    Set the global print level
 !!    Written by Rolf Heilemann Myhre, May 2019
 !!
+!!    Also sets the local print level
+!!
       implicit none
 !
       class(output_file) :: the_file
@@ -105,16 +111,20 @@ contains
       character(len=*), intent(in) :: print_level
 !
       if (trim(print_level) .eq. 'normal') then
-         the_file%global_print_level='normal'
+         the_file%global_print_level = 'normal'
+         the_file%local_print_level  = 'normal'
 !
       elseif (trim(print_level) .eq. 'minimal') then
-         the_file%global_print_level='minimal'
+         the_file%global_print_level = 'minimal'
+         the_file%local_print_level  = 'minimal'
 !
       elseif (trim(print_level) .eq. 'verbose') then
-         the_file%global_print_level='verbose'
+         the_file%global_print_level = 'verbose'
+         the_file%local_print_level  = 'verbose'
 !
       elseif (trim(print_level) .eq. 'debug') then
-         the_file%global_print_level='debug'
+         the_file%global_print_level = 'debug'
+         the_file%local_print_level  = 'debug'
 !
       else
          print *, 'Error: Print level not normal, minimal, verbose or debug'
@@ -136,16 +146,16 @@ contains
       character(len=*), intent(in) :: print_level
 !
       if (trim(print_level) .eq. 'normal') then
-         the_file%global_print_level='normal'
+         the_file%local_print_level='normal'
 !
       elseif (trim(print_level) .eq. 'minimal') then
-         the_file%global_print_level='minimal'
+         the_file%local_print_level='minimal'
 !
       elseif (trim(print_level) .eq. 'verbose') then
-         the_file%global_print_level='verbose'
+         the_file%local_print_level='verbose'
 !
       elseif (trim(print_level) .eq. 'debug') then
-         the_file%global_print_level='debug'
+         the_file%local_print_level='debug'
 !
       else
          print *, 'Error: Print level not normal, minimal, verbose or debug'
@@ -316,13 +326,14 @@ contains
 !!
 !!    pl:       print level
 !!              compared to stored print level variable and four allowed levels
-!!              'minimal' or 'm' : Will always be printed. Only banners, final results like total energies
-!!                                 or excitation energies, and solver settings or other essential information 
+!!              'minimal' or 'm' : Will always be printed. Only banners, final results 
+!!                                 like total energies or excitation energies, and solver 
+!!                                 settings or other essential information 
 !!              'normal' or 'n'  : Will normally be printed, for example convergence iterations
-!!              'verbose' or 'v' : Will only be printed unless explicitly asked for, for example 
-!!                                 extra norms and MO coefficients 
+!!              'verbose' or 'v' : Will only be printed if verbose output is specified in input,
+!!                                 for example extra norms and MO coefficients 
 !!              'debug'          : Print information only useful for developers such as extra tests 
-!!                                 and index dimensions, default
+!!                                 and index dimensions
 !!
 !!
 !!    string:   String of character that should be printed, 
@@ -342,7 +353,8 @@ contains
 !!    ll:       Integer specifying number of characters per line of print.
 !!    adv:      Logical specifies whether advance is 'yes' or 'no', default = 'yes'
 !!
-!!    Example: call output%printf('Energy (a.u.): (f19.12)', pl='minimal', reals=[wf%energy], fs='(/t6,a)')
+!!    Example: 
+!!    call output%printf('Energy (a.u.): (f19.12)', pl='minimal', reals=[wf%energy], fs='(/t6,a)')
 !!
 !!
       implicit none
@@ -367,22 +379,8 @@ contains
 !
       character(len=10) :: plvl
 !
-      if(present(pl)) then !Check if pl makes sense and set internal plvl
-         if (trim(pl) .eq. 'minimal' .or. trim(pl) .eq. 'm') then
-            plvl = 'minimal'
-         elseif (trim(pl) .eq. 'normal'  .or. trim(pl) .eq. 'n') then
-            plvl = 'normal'
-         elseif (trim(pl) .eq. 'verbose' .or. trim(pl) .eq. 'v') then
-            plvl = 'verbose'
-         elseif (trim(pl) .eq. 'debug') then 
-            plvl = 'debug'
-         else
-!
-            print *, trim(pl)// ' is not an acceptable print level'
-            stop
-!
-         endif
-!
+      if(present(pl)) then !Set local plvl to pl if present
+         plvl = trim(pl)
       else !Else default
          plvl = 'normal'
       endif
@@ -393,20 +391,13 @@ contains
 !
       endif
 !
-      if(trim(plvl) .eq. 'minimal' &                                 !Print if plvl minimal
-        .or. (trim(plvl) .eq. 'normal' &                             !Print if plvl is normal 
-             .and. the_file%local_print_level .ne. 'minimal') &      !and local print level is not minimal
-        .or. (trim(plvl) .eq. 'verbose' &                            !Print if plvl is verbose
-             .and. (the_file%local_print_level .eq. 'verbose' &      !and local print level is vebose
-                    .or. the_file%local_print_level .eq. 'debug')) & !or local print level is debug
-        .or. (trim(plvl) .eq. 'debug' &                              !Print if plvl is debug
-             .and. the_file%local_print_level .eq. 'debug')) then    !and local print level is debug
 !
-         call the_file%formprint(string, reals, ints, chars, logs, fs, ffs, lfs, ll, adv)
+      if (the_file%should_print(plvl)) then
 !
-         if (trim(plvl) .eq. 'minimal' &
-            .or. trim(plvl) .eq. 'normal' &
-            .or. trim(plvl) .eq. 'debug') then !Flush if print at least normal or debugging
+         call the_file%format_print(string, reals, ints, chars, logs, fs, ffs, lfs, ll, adv)
+!
+!        Flush if not a verbose print
+         if (trim(plvl) .ne. 'verbose' .and. trim(plvl) .ne. 'v') then 
 !
             call the_file%flush_()
 !
@@ -416,6 +407,161 @@ contains
       
 !
    end subroutine printf_output_file
+!
+!
+   function should_print_output_file(the_file, print_level) result(should_print)
+!!
+!!    Should print
+!!
+!!    Written by Rolf H. Myhre, Oct. 2019
+!!
+!!    Checks if print_level is valid and compares it to local_print_level
+!!
+      implicit none
+!
+      class(output_file), intent(in) :: the_file
+!
+      character(len=*), intent(in)   :: print_level
+!
+      logical :: should_print
+!
+!     Default value is false
+      should_print = .false.
+!
+!     Always print if print_level is minimal
+      if ((trim(print_level) .eq. 'minimal') .or. (trim(print_level) .eq. 'm' )) then
+!
+         should_print = .true.
+!
+!
+!     Print if print_level is normal and local print level not minimal
+      elseif ((trim(print_level) .eq. 'normal') .or. (trim(print_level) .eq. 'n' )) then
+!
+         if (the_file%local_print_level .ne. 'minimal') then
+            should_print = .true.
+         endif
+!
+!
+!     Print if print_level is verbose and local print level is verbose or debug
+      elseif ((trim(print_level) .eq. 'verbose') .or. (trim(print_level) .eq. 'v' )) then
+!        
+         if ((the_file%local_print_level .eq. 'verbose') .or. &
+             (the_file%local_print_level .eq. 'debug')) then
+            should_print = .true.
+         endif
+!
+!
+!     Print if print_level is debug and local print level is debug
+      elseif (trim(print_level) .eq. 'debug') then
+!
+         if (the_file%local_print_level .eq. 'debug') then
+            should_print = .true.
+         endif
+!
+!
+      else
+!
+         print *, 'Error: '//trim(print_level)// 'is not an acceptable print level'
+         error stop 
+!
+      endif
+!
+!
+   end function should_print_output_file
+!
+!
+   subroutine print_matrix_output_file(the_file, pl, name_, matrix, dim_1, dim_2, fs, columns)
+!!    
+!!    Print matrix 
+!!    
+!!    Written by Rolf H. Myhre, Oct. 2019
+!!
+!!    Calls format_print_matrix if appropriate print level
+!!
+!!    name_: Name to be printed above the matrix
+!!
+!!    Matrix to be printed with dimension dim_1 x dim_2
+!!
+!!    fs:      Optional format string for numbers, default is (f19.12)
+!!    columns: Optional integer specifying number of columns to print per line, default is 5
+!!
+      implicit none
+!
+      class(output_file), intent(in) :: the_file
+!
+      character(len=*), intent(in)                    :: pl
+!
+      character(len=*), intent(in)                    :: name_
+!      
+      integer, intent(in)                             :: dim_1
+      integer, intent(in)                             :: dim_2
+!
+      real(dp), dimension(dim_1, dim_2), intent(in)   :: matrix
+!
+      character(len=*), optional, intent(in)          :: fs
+      integer, intent(in), optional                   :: columns
+!
+!
+      if (the_file%is_mute) then !File is muted, make a quiet return
+!
+         return 
+!
+      endif
+!
+!
+      if (the_file%should_print(pl)) then
+!
+         call the_file%format_print_matrix(name_, matrix, dim_1, dim_2, fs, columns)
+!
+         call the_file%flush_()
+!
+      endif
+      
+!
+   end subroutine print_matrix_output_file
+!
+!
+   subroutine print_separator_output_file(the_file, pl, n, symbol, fs)
+!!    
+!!    Print separator
+!!    
+!!    Written by Rolf H. Myhre, Oct. 2019
+!!
+!!    Calls format_print_separator if appropriate print level
+!!
+!!    n: Number of symbols to print
+!!    symbol: optional, what symbol to print, default is '='
+!!    fs: optional format string
+!!
+      implicit none
+!
+      class(output_file), intent(in)         :: the_file
+!
+      character(len=*), intent(in)           :: pl
+!
+      integer, intent(in)                    :: n
+!
+      character, intent(in), optional        :: symbol
+!
+      character(len=*), optional, intent(in) :: fs
+!
+      if (the_file%is_mute) then !File is muted, make a quiet return
+!
+         return 
+!
+      endif
+!
+!
+      if (the_file%should_print(pl)) then
+!
+         call the_file%format_print_separator(n, symbol, fs)
+!
+         call the_file%flush_()
+!
+      endif
+      
+!
+   end subroutine print_separator_output_file
 !
 !
 end module output_file_class

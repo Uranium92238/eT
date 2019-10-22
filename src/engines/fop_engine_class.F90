@@ -23,7 +23,14 @@ module fop_engine_class
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
 !!    and Josefine H. Andersen, Apr 2019
 !!
-   use es_engine_class
+   use parameters
+   use global_in,            only: input
+   use global_out,           only: output
+   use timings_class,        only: timings
+   use memory_manager_class, only: mem
+!
+   use es_engine_class, only: es_engine
+   use ccs_class,       only: ccs
 !
    type, extends(es_engine) :: fop_engine
 !
@@ -71,12 +78,6 @@ contains
 !
       type(fop_engine) :: engine
 !
-      engine%name_       = 'First order coupled cluster properties engine'
-      engine%author      = 'J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, A. Paul 2019'
-!
-      engine%timer = timings(trim(engine%name_))
-      call engine%timer%turn_on()
-!
 !     Set standards and then read if nonstandard
 !
       engine%es_algorithm           = 'davidson'
@@ -87,6 +88,11 @@ contains
       engine%eom                    = .false.
 !
       call engine%read_settings()
+!
+      call engine%set_printables()
+!
+      engine%timer = timings(trim(engine%name_))
+      call engine%timer%turn_on()
 !
    end function new_fop_engine
 !
@@ -114,7 +120,10 @@ contains
 !     Prepare for excited state calculation
 !
       call wf%integrals%write_t1_cholesky(wf%t1)
-      if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
+      if (wf%integrals%get_eri_t1_mem()) call wf%integrals%update_g_pqrs_t1_in_memory()
+!
+      if(wf%integrals%get_eri_t1_mem()) &
+         call output%printf('Note: All T1-integrals are stored in memory',fs='(/t3, a)',pl='normal')
 !
 !     Determine multipliers
 !
@@ -308,35 +317,43 @@ contains
 !
       real(dp) :: sum_strength
 !
-      write(output%unit, '(/t6, a6 ,i3, a1)') 'State ', state, ':'
-      write(output%unit, '(t6, a)') '----------'
-      write(output%unit, '(t6, a30, f19.12)') 'Excitation energy [E_h]:      ', excitation_energy
-      write(output%unit, '(t6, a30, f19.12)') 'Excitation energy [eV]:       ', excitation_energy*Hartree_to_eV
+      call output%printf('State (i0):', pl='minimal', fs='(/t6,a)', ints=[state])
+      call output%printf('-----------', pl='minimal', fs='(t6,a)')
+      call output%printf('Excitation energy [E_h]:       (f19.12)', pl='minimal', fs='(t6,a)', &
+                          reals=[excitation_energy])
+      call output%printf('Excitation energy [eV]:        (f19.12)', pl='minimal', fs='(t6,a)', &
+                          reals=[excitation_energy*Hartree_to_eV])
+      call output%printf('Hartree-to-eV (CODATA 2014)):  (f19.8)',  pl='minimal', fs='(t6,a)', &
+                          reals=[Hartree_to_eV])
 !
-      write(output%unit, '(t6, a30, f19.8)')  'Hartree-to-eV (CODATA 2014):  ', Hartree_to_eV
-!
-      write(output%unit, '(/t6,a)')  '              Transition moments [a.u.]         Transition strength [a.u.]'
-      write(output%unit, '(t6,a)')   '--------------------------------------------------------------------------'
-      write(output%unit, '(t6,a)')   'Comp. q     < k |q| 0 >       < 0 |q| k >        < k |q| 0 > < 0 |q| k >  '
-      write(output%unit, '(t6,a)')   '--------------------------------------------------------------------------'
+      call output%printf('              Transition moments [a.u.]         Transition strength [a.u.]', &
+                         pl='minimal', fs='(/t6,a)', ll=80)
+      call output%printf('--------------------------------------------------------------------------', &
+                         pl='minimal', fs='(t6,a)', ll=80)
+      call output%printf('Comp. q     < k |q| 0 >       < 0 |q| k >        < k |q| 0 > < 0 |q| k >  ', &
+                         pl='minimal', fs='(t6,a)', ll=80)
+      call output%printf('--------------------------------------------------------------------------', &
+                         pl='minimal', fs='(t6,a)', ll=80)
 !
       sum_strength = zero
 !
       do component = 1, 3
 !
-         write(output%unit, '(t6,a1,6x,f17.10,1x,f17.10,7x,f17.10)') components(component),              &
-                                                                     transition_moment_left(component),  &
-                                                                     transition_moment_right(component), &
-                                                                     transition_strength(component)
+         call output%printf('(a1)      (f17.10) (f17.10)       (f17.10)', pl='minimal', fs=('(t6,a)'), &
+                            chars=[components(component)],                                             &
+                            reals=[transition_moment_left(component),                                  &
+                                   transition_moment_right(component),                                 &
+                                   transition_strength(component)])
 !
          sum_strength = sum_strength + transition_strength(component)
 !
       enddo
 !
-      write(output%unit, '(t6,a)')   '--------------------------------------------------------------------------'
+      call output%printf('--------------------------------------------------------------------------', &
+                         pl='minimal', fs='(t6,a)', ll=80)
 !
-      write(output%unit, '(t6, a28, f19.12)') 'Oscillator strength [a.u.]: ', (two/three)*excitation_energy*sum_strength
-      flush(output%unit)
+      call output%printf('Oscillator strength [a.u.]: (f19.12)', pl='minimal', fs='(t6,a)', &
+                          reals=[(two/three) * excitation_energy * sum_strength])
 !
    end subroutine print_summary_eom_fop_engine
 !
@@ -351,6 +368,9 @@ contains
       class(fop_engine) :: engine
 !
       character(len=5) :: fop_type
+!
+      engine%name_       = 'First order coupled cluster properties engine'
+      engine%author      = 'J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, A. Paul 2019'
 !
       engine%tag = 'first order properties'
 !

@@ -116,6 +116,8 @@ contains
       solver%max_dim_red          = 100 
       solver%transformation       = trim(transformation)
       solver%es_type              = 'valence'
+      solver%records_in_memory    = .false.  
+      solver%storage              = 'disk'
 !
       call solver%read_settings()
       call solver%print_settings()
@@ -125,7 +127,7 @@ contains
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
-      wf%n_excited_states = solver%n_singlet_states
+      wf%n_singlet_states = solver%n_singlet_states
 !
       call solver%initialize_start_vector_tool(wf)
       call solver%initialize_projection_tool(wf)
@@ -133,6 +135,23 @@ contains
       call solver%prepare_wf_for_excited_state(wf)
 !
       if (wf%frozen_core .and. solver%es_type=='core') call output%error_msg('No support for frozen core with CVS yet.')
+!
+!     Determine whether to store records in memory or on file
+!
+      if (trim(solver%storage) == 'memory') then 
+!
+         solver%records_in_memory = .true.
+!
+      elseif (trim(solver%storage) == 'disk') then 
+!
+         solver%records_in_memory = .false.
+!
+      else 
+!
+         call output%error_msg('Could not recognize keyword storage in solver: ' // &
+                                 trim(solver%storage))
+!
+      endif 
 !
    end function new_davidson_cc_es
 !
@@ -183,7 +202,7 @@ contains
 !     :: Preparations ::
 !
       davidson = eigen_davidson_tool('cc_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
-                                       solver%residual_threshold, solver%max_dim_red)
+                              solver%residual_threshold, solver%max_dim_red, solver%records_in_memory)
 !
       call solver%set_precondition_vector(wf, davidson)
       call solver%set_start_vectors(wf, davidson)
@@ -210,21 +229,13 @@ contains
 !
          do trial = davidson%first_trial(), davidson%last_trial()
 !
-            call davidson%read_trial(c, trial)
+            call davidson%get_trial(c, trial)
 !
-            if (trim(solver%transformation) == 'right') then 
-!
-               call wf%jacobian_transformation(c)
-!
-            elseif (trim(solver%transformation) == 'left') then 
-!
-               call wf%jacobian_transpose_transformation(c)
-!
-            endif
+            call wf%construct_Jacobian_transform(solver%transformation, c)
 !
             if (solver%projection_tool%active) call solver%projection_tool%project(c)
 !
-            call davidson%write_transform(c)
+            call davidson%set_transform(c, trial)
 !
          enddo ! Done transforming new trials 
 !
@@ -365,7 +376,7 @@ contains
          do trial = 1, n_solutions_on_file
 !
             call wf%read_excited_state(c, trial, solver%restart_transformation)
-            call davidson%write_trial(c)
+            call davidson%set_trial(c, trial)
 !
          enddo 
 !
@@ -386,13 +397,13 @@ contains
          do trial = n_solutions_on_file + 1, solver%n_singlet_states
 !
             call solver%start_vector_tool%get_vector(c, trial)
-            call davidson%write_trial(c)
+            call davidson%set_trial(c, trial)
 !
          enddo 
+!
+         call mem%dealloc(c, wf%n_es_amplitudes)
 !     
       endif
-!
-      call davidson%orthonormalize_trial_vecs()
 !
    end subroutine set_start_vectors_davidson_cc_es
 !

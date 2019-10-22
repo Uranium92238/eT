@@ -22,7 +22,14 @@ module es_engine_class
 !!    Coupled cluster ground state engine class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-   use gs_engine_class
+!
+   use kinds
+   use global_in,     only: input
+   use global_out,    only: output
+   use timings_class, only: timings
+!
+   use gs_engine_class, only: gs_engine
+   use ccs_class,       only: ccs
 !
    type, extends(gs_engine) :: es_engine
 !
@@ -63,12 +70,6 @@ contains
 !
       type(es_engine) :: engine
 !
-      engine%name_  = 'Excited state engine'
-      engine%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      engine%timer = timings(trim(engine%name_))
-      call engine%timer%turn_on()
-!
 !     Set standards and then read if nonstandard
 !
       engine%es_algorithm        = 'davidson'
@@ -77,6 +78,11 @@ contains
       engine%es_transformation   = 'right'
 !
       call engine%read_settings()
+!
+      call engine%set_printables()
+!
+      engine%timer = timings(trim(engine%name_))
+      call engine%timer%turn_on()
 !
    end function new_es_engine
 !
@@ -142,9 +148,10 @@ contains
 !
       call wf%integrals%write_t1_cholesky(wf%t1)
 !      
-      if (wf%need_g_abcd()) call wf%integrals%can_we_keep_g_pqrs_t1()
+      if (wf%integrals%get_eri_t1_mem()) call wf%integrals%update_g_pqrs_t1_in_memory()
 !
-      if(wf%integrals%get_eri_t1_mem()) call output%printf('Note: All T1-integrals are stored in memory',fs='(/t3, a)',pl='normal')
+      if(wf%integrals%get_eri_t1_mem()) &
+         call output%printf('Note: All T1-integrals are stored in memory',fs='(/t3, a)',pl='normal')
 !
 !     Excited state solutions
 !
@@ -211,6 +218,9 @@ contains
       implicit none
 !
       class(es_engine) :: engine
+!
+      engine%name_  = 'Excited state engine'
+      engine%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       engine%tag = 'excited state'
 !

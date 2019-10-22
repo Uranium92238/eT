@@ -69,7 +69,7 @@ contains
       call wf%set_amplitudes(t)
 !
       call wf%integrals%write_t1_cholesky(wf%t1)
-      if (wf%integrals%get_eri_t1_mem()) call wf%integrals%can_we_keep_g_pqrs_t1()
+      if (wf%integrals%get_eri_t1_mem()) call wf%integrals%update_g_pqrs_t1_in_memory()
 !
       call wf%construct_fock()
       call wf%construct_omega(omega)
@@ -228,7 +228,7 @@ contains
 !
          call wf%integrals%write_t1_cholesky(wf%t1)
 !
-         if (wf%integrals%get_eri_t1_mem()) call wf%integrals%can_we_keep_g_pqrs_t1()
+         if (wf%integrals%get_eri_t1_mem()) call wf%integrals%update_g_pqrs_t1_in_memory()
 
          call wf%construct_fock()
 !

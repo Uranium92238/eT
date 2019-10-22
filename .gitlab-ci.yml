@@ -1,3 +1,5 @@
+image: registry.gitlab.com/et-program/et/ubuntu-for-et-v4
+
 stages:
   - build
   - run
@@ -12,6 +14,8 @@ build:
     - ./setup --int32 -FC=gfortran-8 -CXX=g++-8 $extra_setup_options
     - cd build
     - make
+  tags:
+    - docker
   only:
     - master
     - merge_requests
@@ -24,6 +28,8 @@ run:
   script:
     - cd build
     - ctest
+  tags:
+    - docker
   only:
     - master
     - merge_requests
