@@ -199,6 +199,8 @@ contains
       real(dp), dimension(:), allocatable   :: eps
       real(dp), dimension(:,:), allocatable :: X, R
 !
+      real(dp) :: ddot
+!
 !     Initialize energies, residual norms, and convergence arrays 
 !
       call mem%alloc(prev_energies, solver%n_singlet_states)
@@ -281,13 +283,21 @@ contains
 !
             if (.not. converged(state)) then 
 !
-!              Construct residual and energy and precondition the former 
+!              Construct the transformed vector
+               call dcopy(wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
+               call wf%construct_Jacobian_transform(solver%transformation, R(:,state), &
+                                                    solver%energies(state))
 !
-               call wf%construct_excited_state_equation(X(:,state), R(:,state), solver%energies(state), &
-                                                        solver%transformation)
-!
+!              Project if relavant (CVS, bath orbitals)
                if (solver%projection_tool%active) call solver%projection_tool%project(R(:,state))
 !
+!              Calculate energy, X is normalized
+               solver%energies(state) = ddot(wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
+!
+!              Subtract energy*X to get residual
+               call daxpy(wf%n_es_amplitudes, -solver%energies(state), X(:,state), 1, R(:,state), 1)
+!
+!              Calculate residual norm
                residual_norms(state) = get_l2_norm(R(:, state), wf%n_es_amplitudes)
 !
 !$omp parallel do private(amplitude)

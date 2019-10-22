@@ -41,9 +41,9 @@ module lowmem_cc2_class
 !
       procedure :: calculate_energy => calculate_energy_lowmem_cc2
 !
-      procedure :: construct_excited_state_equation => construct_excited_state_equation_lowmem_cc2
+      procedure :: construct_Jacobian_transform       => construct_Jacobian_transform_lowmem_cc2
 !
-      procedure :: effective_jacobian_transformation => effective_jacobian_transformation_lowmem_cc2
+      procedure :: effective_jacobian_transformation  => effective_jacobian_transformation_lowmem_cc2
 !
       procedure :: jacobian_cc2_a1 => jacobian_cc2_a1_lowmem_cc2
       procedure :: jacobian_cc2_b1 => jacobian_cc2_b1_lowmem_cc2
@@ -115,65 +115,63 @@ contains
    end function new_lowmem_cc2
 !
 !
-   subroutine construct_excited_state_equation_lowmem_cc2(wf, X, R, w, r_or_l)
+   subroutine construct_Jacobian_transform_lowmem_cc2(wf, r_or_l, X, w)
 !!
-!!    Construct excited state equation
+!!    Construct Jacobian transform
 !!    Written by Eirik F. Kjønstad, Dec 2018
 !!
-!!    Constructs R = AX - wX, where w = X^T A X and norm(X) = sqrt(X^T X) = 1
+!!    Modified by Rolf H. Myhre, Oct 2019
 !!
-!!    Note I: we assume that X is normalized. If it is not,
-!!    please normalize before calling the routine.
+!!    Constructs R = AX or R = A^T X
 !!
-!!    Note II: this routine constructs the excited state equation
-!!    for standard CC models and the effective (!) excited state
-!!    equation in perturbative models. In the lowmem_CC2 routine, for
-!!    instance, X and R will be n_o*n_v vectors and A(w) will
-!!    depend on the excitation energy w. See, e.g., Weigend and
-!!    Hättig's RI-lowmem_CC2 paper for more on this topic. This means
-!!    that w should be the previous w-value when entering the
-!!    routine (so that A(w)X may be constructed approximately)
-!!    in perturbative models.
+!!    Removed calculation of residual, this is now done in the solver
 !!
-!!    Note III: the routine is used by the DIIS excited state solver.
+!!    Wrapper for Jacobian transformations
+!!
+!!    r_or_l: string that should be 'left' or 'right', 
+!!            determines if Jacobian or Jacobian transpose is called
+!!
+!!    X: On input contains the vector to transform, 
+!!       on output contains the transformed vector
+!!
+!!    w: Excitation energy. Only used for debug prints for CCS, CCSD etc.
+!!       but is passed to the effective_jacobian_transform for lowmem_CC2 and CC3
 !!
       implicit none
 !
       class(lowmem_cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: X
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: R
-!
       character(len=*), intent(in) :: r_or_l
 !
-      real(dp), intent(inout) :: w
+      real(dp), dimension(wf%n_es_amplitudes), intent(inout)   :: X
 !
-      real(dp), dimension(:), allocatable :: X_copy
+      real(dp), intent(in), optional :: w
 !
-      real(dp) :: ddot
+      if (present(w)) then
+         call output%printf('Calling Jacobian (a0) transform with energy: (f19.12)', &
+                            pl='debug', chars=[r_or_l], reals=[w])
+      else
 !
-!     Construct residual based on previous excitation energy w
+         call output%error_msg('w is missing in construct_Jacobian_transform for lowmem_cc2')
 !
-      call mem%alloc(X_copy, wf%n_es_amplitudes)
-!
-      call dcopy(wf%n_es_amplitudes, X, 1, X_copy, 1)
-!
-      if (r_or_l .eq. "right") then
-         call wf%effective_jacobian_transformation(w, X_copy) ! X_copy <- AX
-      elseif (r_or_l .eq. "left") then
-         call wf%effective_jacobian_transpose_transformation(w, X_copy) ! X_copy <- A^TX
       endif
-
 !
-      call dcopy(wf%n_es_amplitudes, X_copy, 1, R, 1)
-      call daxpy(wf%n_es_amplitudes, -w, X, 1, R, 1)
+!     Compute the transformed matrix
+      if (r_or_l .eq. "right") then
 !
-!     Update excitation energy w
+         call wf%effective_jacobian_transformation(w, X) ! X <- AX
 !
-      w = ddot(wf%n_es_amplitudes, X, 1, X_copy, 1)
-      call mem%dealloc(X_copy, wf%n_es_amplitudes)
+      elseif (r_or_l .eq. 'left') then
 !
-   end subroutine construct_excited_state_equation_lowmem_cc2
+         call wf%effective_jacobian_transpose_transformation(w, X) ! X <- AX
+!
+      else
+!
+         call output%error_msg('Neither left nor right in construct_Jacobian_transform')
+!
+      end if
+!
+   end subroutine construct_Jacobian_transform_lowmem_cc2
 !
 !
 end module lowmem_cc2_class
