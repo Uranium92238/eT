@@ -104,6 +104,7 @@ set(eT_fortran_sources
    src/solver_tools/es_projectors/es_cvs_projection_tool_class.F90
    src/solver_tools/es_projectors/es_valence_projection_tool_class.F90
    src/solver_tools/es_projectors/es_ip_projection_tool_class.F90
+   src/wavefunctions/hf/frozen_orbital_hf.F90
    src/wavefunctions/ccs/oei_ccs.F90
    src/wavefunctions/ccs/tei_ccs.F90
    src/wavefunctions/ccs/fock_ccs.F90

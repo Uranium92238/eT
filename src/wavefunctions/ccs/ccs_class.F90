@@ -26,8 +26,6 @@ module ccs_class
 !
    use wavefunction_class
 !
-   use global_in, only: input
-!
    use mo_integral_tool_class, only : mo_integral_tool
 !
    use reordering
@@ -59,7 +57,6 @@ module ccs_class
       real(dp), dimension(:), allocatable :: right_excitation_energies
 !
       logical :: bath_orbital
-      logical :: frozen_core
 !
       type(sequential_file) :: t_file, tbar_file
       type(sequential_file) :: excitation_energies_file
@@ -85,13 +82,6 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: right_transition_density
 !
       integer, dimension(:), allocatable :: core_MOs
-!
-!     Frozen core variables (FC)
-!
-      real(dp), dimension(:,:), allocatable :: mo_fock_fc_contribution 
-      real(dp), dimension(:,:), allocatable :: orbital_coefficients_fc
-!
-      integer :: n_frozen_orbitals
 !
    contains
 !
@@ -154,6 +144,7 @@ module ccs_class
       procedure :: set_fock                                    => set_fock_ccs
       procedure :: construct_fock                              => construct_fock_ccs
       procedure :: add_frozen_core_fock_contribution           => add_frozen_core_fock_contribution_ccs
+      procedure :: add_frozen_hf_fock_contribution             => add_frozen_hf_fock_contribution_ccs
       procedure :: add_molecular_mechanics_fock_contribution   => add_molecular_mechanics_fock_contribution_ccs
 !
       procedure :: get_gs_orbital_differences                  => get_gs_orbital_differences_ccs
@@ -288,16 +279,8 @@ module ccs_class
 !
 !     Frozen core
 !
-      procedure :: initialize_mo_fock_fc_contribution          => initialize_mo_fock_fc_contribution_ccs                
-      procedure :: destruct_mo_fock_fc_contribution            => destruct_mo_fock_fc_contribution_ccs                
-      procedure :: initialize_orbital_coefficients_fc          => initialize_orbital_coefficients_fc_ccs
-      procedure :: destruct_orbital_coefficients_fc            => destruct_orbital_coefficients_fc_ccs
-!
-      procedure :: coulomb_contribution_fock_fc                => coulomb_contribution_fock_fc_ccs
-      procedure :: exchange_contribution_fock_fc               => exchange_contribution_fock_fc_ccs
-      procedure :: remove_core_orbitals                        => remove_core_orbitals_ccs
-      procedure :: construct_mo_fock_fc_contribution           => construct_mo_fock_fc_contribution_ccs
       procedure :: construct_t1_fock_fc_contribution           => construct_t1_fock_fc_contribution_ccs
+      procedure :: construct_t1_fock_frozen_hf_contribution    => construct_t1_fock_frozen_hf_contribution_ccs
 !
 !     MO preparations
 !
@@ -309,6 +292,8 @@ module ccs_class
       procedure :: amplitudes_for_jacobian_debug               => amplitudes_for_jacobian_debug_ccs
       procedure :: normalization_for_jacobian_debug            => normalization_for_jacobian_debug_ccs
       procedure :: numerical_test_jacobian                     => numerical_test_jacobian_ccs
+!
+      procedure :: read_frozen_orbital_contributions           => read_frozen_orbital_contributions_ccs
 !
    end type ccs
 !
@@ -385,6 +370,17 @@ contains
 !
       call wf%initialize_files()
 !
+!     Logicals for special methods
+!
+      wf%bath_orbital = .false.
+      wf%frozen_core = .false.
+      wf%frozen_hf_mos = .false.
+      wf%cvs = .false.
+!
+!     Read CC settings from eT.inp (from cc section)
+!
+      call wf%read_settings()
+!
 !     Read necessary information from HF
 !
       call wf%read_hf()
@@ -397,21 +393,19 @@ contains
       call wf%read_orbital_coefficients()
       call wf%read_orbital_energies()
 !
-!     Logicals for special methods
-!
-      wf%bath_orbital = .false.
-      wf%frozen_core = .false.
-      wf%cvs = .false.
-!
-!     Read CC settings from eT.inp (from cc section)
-!
-      call wf%read_settings()
-!
 !     Handle changes in the number of MOs as a result of 
 !     special methods
 !
       if (wf%bath_orbital) call wf%make_bath_orbital()
-      if (wf%frozen_core) call wf%remove_core_orbitals()
+!
+      if (wf%frozen_core .or. wf%frozen_hf_mos) call wf%read_frozen_orbital_contributions()
+!
+!     print orbital space info for cc
+      call output%printf(' - Number of orbitals for coupled cluster calculation', fs='(/t3,a)', pl='minimal')
+      call output%printf('Number of occupied orbitals:    (i12)',ints=[wf%n_o], fs='(/t6,a)', pl='minimal')
+      call output%printf('Number of virtual orbitals:     (i12)',ints=[wf%n_v], fs='(t6,a)', pl='minimal')
+      call output%printf('Number of molecular orbitals:   (i12)',ints=[wf%n_mo], fs='(t6,a)', pl='minimal')
+      call output%printf('Number of atomic orbitals:      (i12)',ints=[wf%n_ao], fs='(t6,a)', pl='minimal')
 !
    end subroutine general_cc_preparations_ccs
 !
@@ -431,6 +425,7 @@ contains
       call wf%destruct_right_excitation_energies()
       call wf%destruct_left_excitation_energies()
       call wf%destruct_mo_fock_fc_contribution()
+      call wf%destruct_mo_fock_frozen_hf_contribution()
 !
       write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(convert_to_uppercase(wf%name_)), ' wavefunction'
 !
@@ -448,6 +443,8 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
+      call wf%read_frozen_orbitals_settings()
+!
       if (input%requested_section('cc')) then
 !
          if (input%requested_keyword_in_section('bath orbital','cc')) then 
@@ -457,7 +454,7 @@ contains
 !
          endif
 !
-         if (input%requested_keyword_in_section('frozen core', 'cc')) wf%frozen_core = .true.
+        if (input%requested_keyword_in_section('frozen core', 'cc')) wf%frozen_core = .true.
 !
       endif
 !
@@ -1292,109 +1289,6 @@ contains
    end subroutine read_cvs_settings_ccs
 !
 !
-   subroutine remove_core_orbitals_ccs(wf)
-!!
-!!    Remove core orbitals
-!!    Written by Sarai D. Folkestad, Sep 2018 
-!!
-!!    Removes 1s orbitals for C and heavier atoms
-!!    from orbital coefficient matrix
-!!
-      implicit none 
-!
-      class(ccs) :: wf 
-!
-      real(dp), dimension(:,:), allocatable :: orbital_coefficients_copy
-      real(dp), dimension(:), allocatable :: orbital_energies_copy
-!
-      integer :: I
-!
-      logical, dimension(:), allocatable :: freeze_atom
-!
-      integer :: index_max
-      real(dp) :: max_
-!
-      call mem%alloc(freeze_atom, wf%system%n_atoms)
-      freeze_atom = .false.
-!
-!     Figure out how many core orbitals we have
-!
-!     Number of atoms heavier than Be (atomic number larger than 4)
-!
-      wf%n_frozen_orbitals = 0
-!
-      do I = 1, wf%system%n_atoms
-!
-         if (wf%system%atoms(I)%number_ .ge. 5 .and. wf%system%atoms(I)%number_ .le. 12) then
-!
-            wf%n_frozen_orbitals = wf%n_frozen_orbitals + 1
-            freeze_atom(I) = .true.
-!
-         elseif (wf%system%atoms(I)%number_ .ge. 13 .and. wf%system%atoms(I)%number_ .le. 30) then
-!
-            wf%n_frozen_orbitals = wf%n_frozen_orbitals + 5
-            freeze_atom(I) = .true.
-!
-         elseif (wf%system%atoms(I)%number_ .gt. 30) then
-!
-            call output%error_msg('No frozen core for Z > 30.')
-!
-         endif
-!
-      enddo
-!
-      call mem%alloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
-!
-      call copy_and_scale(one, wf%orbital_coefficients, orbital_coefficients_copy, wf%n_mo*wf%n_ao)
-!
-      call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
-!
-      call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo - wf%n_frozen_orbitals)
-!
-      wf%orbital_coefficients(1:wf%n_ao, 1:wf%n_mo - wf%n_frozen_orbitals) = &
-            orbital_coefficients_copy(1:wf%n_ao, wf%n_frozen_orbitals + 1:wf%n_mo)
-!
-!     Keep frozen core orbital orbital coefficients
-!
-      call wf%initialize_orbital_coefficients_fc()
-!
-      wf%orbital_coefficients_fc(1:wf%n_ao, 1:wf%n_frozen_orbitals) = &
-            orbital_coefficients_copy(1:wf%n_ao, 1:wf%n_frozen_orbitals) 
-!
-!     Check for crossover:  
-!
-!     If the largest AO weight on a frozen MO does not belong to an 
-!     atom we are supposed to freeze, then we stop.
-!
-      do i = 1, wf%n_frozen_orbitals
-!
-         call get_abs_max_w_index(wf%orbital_coefficients_fc(:,i), wf%n_ao, max_, index_max)
-!
-         if (.not. freeze_atom(wf%system%basis2atom(index_max))) &
-            call output%error_msg('Detected crossover in frozen core.')
-!
-      enddo
-!
-     call mem%dealloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
-!
-     call mem%alloc(orbital_energies_copy, wf%n_mo)
-!
-     call copy_and_scale(one, wf%orbital_energies, orbital_energies_copy, wf%n_mo)
-!
-     call mem%dealloc(wf%orbital_energies, wf%n_mo)
-     call mem%alloc(wf%orbital_energies, wf%n_mo - wf%n_frozen_orbitals)
-!
-     wf%orbital_energies(1:wf%n_mo - wf%n_frozen_orbitals) = &
-            orbital_energies_copy(wf%n_frozen_orbitals + 1: wf%n_mo)
-!
-     call mem%dealloc(orbital_energies_copy, wf%n_mo)
-!
-     wf%n_mo = wf%n_mo  - wf%n_frozen_orbitals
-     wf%n_o = wf%n_o  - wf%n_frozen_orbitals     
-!
-   end subroutine remove_core_orbitals_ccs
-!
-!
    subroutine mo_preparations_ccs(wf)
 !!
 !!    MO preparations
@@ -1417,9 +1311,46 @@ contains
       wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, wf%system%n_J)
       call wf%construct_and_write_mo_cholesky(wf%n_mo, wf%orbital_coefficients, wf%integrals%cholesky_mo)
 !
-      if (wf%frozen_core) call wf%construct_mo_fock_fc_contribution()
-!
    end subroutine mo_preparations_ccs
+!
+!
+   subroutine read_frozen_orbital_contributions_ccs(wf)
+!!
+!!    Read frozen orbital contributions
+!!    Written by Sarai D. Folkestad, Oct 2019
+!!
+!!    Reads frozen orbital contributions to the
+!!    mo Fock matrix.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (wf%frozen_core) then
+!      
+         call wf%initialize_mo_fock_fc_contribution()
+!
+         wf%mo_fock_fc_file = sequential_file('MO_Fock_FC')
+!
+         call wf%mo_fock_fc_file%open_('read', 'rewind')
+         call wf%mo_fock_fc_file%read_(wf%mo_fock_fc_contribution, wf%n_mo**2)
+         call wf%mo_fock_fc_file%close_('keep')
+!
+      endif
+!
+      if (wf%frozen_hf_mos) then
+!
+         call wf%initialize_mo_fock_frozen_hf_contribution()
+!
+         wf%mo_fock_frozen_hf_file = sequential_file('MO_frozen_hf_Fock')
+!
+         call wf%mo_fock_frozen_hf_file%open_('read', 'rewind')
+         call wf%mo_fock_frozen_hf_file%read_(wf%mo_fock_frozen_hf_contribution, wf%n_mo**2)
+         call wf%mo_fock_frozen_hf_file%close_('keep')
+!
+      endif
+!
+   end subroutine read_frozen_orbital_contributions_ccs
 !
 !
 end module ccs_class
