@@ -79,6 +79,7 @@ add_eT_runtest(cc2_lowmem_frozen_core                       "eT;short;lowmem-cc2
 add_eT_runtest(cc2_lowmem_right_es_energies                 "eT;short;lowmem-cc2;es;right")
 add_eT_runtest(cc2_lowmem_left_es_energies                  "eT;short;lowmem-cc2;es")
 add_eT_runtest(ccsd_gs_energy                               "eT;short;ccsd;gs")
+add_eT_runtest(ccsd_frozen_hf_gs_energy                     "eT;short;ccsd;gs")
 add_eT_runtest(ccsd_gs_energy_qmmmnopol                     "eT;short;ccsd;gs;qmmm;mmnopol")
 add_eT_runtest(ccsd_gs_energy_qmfq                          "eT;short;ccsd;gs;qmmm;fq")
 add_eT_runtest(ccsd_gs_energy_1c_cd                         "eT;short;ccsd;gs;1c-cd")

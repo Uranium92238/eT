@@ -219,6 +219,9 @@ contains
 !
       call wf%construct_sp_eri_schwarz()
 !
+      wf%frozen_core = .false.
+      wf%frozen_hf_mos = .false.
+!
    end subroutine prepare_uhf
 !
 !

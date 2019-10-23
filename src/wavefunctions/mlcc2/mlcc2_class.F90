@@ -75,10 +75,6 @@ module mlcc2_class
 !
       character(len=200) :: cc2_orbital_type
 !
-!     Cholesky decomposition threshold for orbitals
-!
-      real(dp) :: cholesky_orbital_threshold = 1.0d-2
-!
 !     cc2 variables
 !
       integer :: n_x2 ! n_s2
@@ -138,7 +134,8 @@ module mlcc2_class
 !
 !     File handling
 !
-      procedure :: read_settings                                     => read_settings_mlcc2
+!
+      procedure :: read_mlcc_settings                                => read_mlcc_settings_mlcc2
       procedure, non_overridable :: read_orbital_settings            => read_orbital_settings_mlcc2
       procedure, non_overridable :: read_cc2_orbital_settings        => read_cc2_orbital_settings_mlcc2
 !
@@ -154,7 +151,6 @@ module mlcc2_class
       procedure :: construct_ccs_cnto_transformation_matrices        => construct_ccs_cnto_transformation_matrices_mlcc2
 !
       procedure :: construct_cholesky_orbitals                       => construct_cholesky_orbitals_mlcc2
-      procedure :: construct_orbital_block_by_density_cd             => construct_orbital_block_by_density_cd_mlcc2
 !
       procedure :: construct_block_diagonal_fock_orbitals            => construct_block_diagonal_fock_orbitals_mlcc2
 !
@@ -262,7 +258,13 @@ contains
       wf%n_ccs_o = 0
       wf%n_ccs_v = 0
 !
+      wf%cholesky_orbital_threshold = 1.0d-2
+!
       call wf%general_cc_preparations(system)
+
+      if (wf%frozen_core .or. wf%frozen_hf_mos) call output%error_msg('frozen orbitals not yet implemented for MLCC2')
+!
+      call wf%read_mlcc_settings()
 !
       wf%n_t1 = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
@@ -292,9 +294,9 @@ contains
    end subroutine print_orbital_space_mlcc2
 !
 !
-   subroutine read_settings_mlcc2(wf)
+   subroutine read_mlcc_settings_mlcc2(wf)
 !!
-!!    Read settings
+!!    Read MLCC settings
 !!    Written by Sarai D. Folkestad, Apr 2019
 !!
 !!    Reads the cc and mlcc sections of the
@@ -321,19 +323,7 @@ contains
 !
       call wf%read_cc2_orbital_settings()
 !
-      if (input%requested_section('cc')) then
-!
-         if (input%requested_keyword_in_section('bath orbital','cc')) then 
-!
-            call output%error_msg('Bath orbitals not yet available for ' //trim(convert_to_uppercase(wf%name_)))
-!
-         endif
-!
-            call output%error_msg('Frozen core not yet available for '//trim(convert_to_uppercase(wf%name_)))
-!
-      endif
-!
-   end subroutine read_settings_mlcc2
+   end subroutine read_mlcc_settings_mlcc2
 !
 !
    subroutine read_cc2_orbital_settings_mlcc2(wf)

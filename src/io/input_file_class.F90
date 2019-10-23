@@ -131,6 +131,7 @@ contains
       type(section) :: mlcc
       type(section) :: mm
       type(section) :: global_print
+      type(section) :: frozen_orbitals
 !
 !     Set input file name, access and format 
 !
@@ -305,7 +306,7 @@ contains
 !
       cc%name_    = 'cc'
       cc%required = .false.
-      cc%keywords = [character(len=25) :: 'bath orbital', 'frozen core']
+      cc%keywords = [character(len=25) :: 'bath orbital']
 !
       mm%name_    = 'molecular mechanics'
       mm%required = .false.
@@ -318,6 +319,12 @@ contains
       global_print%keywords = [character(len=25) :: &
                               'output print level ', &
                               'timing print level ']
+!
+      frozen_orbitals%name_    = 'frozen orbitals'
+      frozen_orbitals%required = .false.
+      frozen_orbitals%keywords = [character(len=25) :: &
+                              'hf', &
+                              'core']
 !
 !     Gather all sections into the file's section array 
 !
@@ -337,7 +344,8 @@ contains
                            mlcc,                   &
                            cc,                     &
                            mm,                     &
-                           global_print]
+                           global_print,           &
+                           frozen_orbitals]
 !
       the_file%is_open = .false.
       the_file%unit = -1

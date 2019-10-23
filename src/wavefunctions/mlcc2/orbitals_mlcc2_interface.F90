@@ -47,27 +47,6 @@
    end subroutine construct_cholesky_orbitals_mlcc2
 !
 !
-   module subroutine construct_orbital_block_by_density_cd_mlcc2(wf, D, n_vectors, threshold, mo_offset, active_aos)
-!!
-!!    Construct orbital block  by Cholesky decomposition for density
-!!    Written by Sarai D. Folkestad, Feb 2019
-!!
-      implicit none
-!
-      class(mlcc2), intent(inout) :: wf
-!
-      real(dp), dimension(wf%n_ao,wf%n_ao), intent(inout) :: D
-!
-      integer, intent(out) :: n_vectors
-!
-      real(dp), intent(in) :: threshold
-!
-      integer, intent(in) :: mo_offset
-!
-      integer, dimension(:), optional :: active_aos
-!
-   end subroutine construct_orbital_block_by_density_cd_mlcc2
-!
    module subroutine construct_block_diagonal_fock_mos_2_level_mlcc2(wf, n_total, n_active, fock, MO_coeff, diagonal)
 !!
 !!    Construct Fock block diagonal 2 levels

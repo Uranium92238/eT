@@ -16,9 +16,9 @@ method
    cc2
 end method
 
-cc
-   frozen core
-end cc
+frozen orbitals
+   core
+end frozen orbitals
 
 solver scf
    energy threshold:   1.0d-11
