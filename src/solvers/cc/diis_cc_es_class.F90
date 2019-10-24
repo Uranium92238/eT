@@ -24,14 +24,19 @@ module diis_cc_es_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-   use kinds
-   use ccs_class
-   use diis_tool_class
+   use parameters
+   use global_out, only: output
+   use global_in, only: input
+   use timings_class, only: timings
+   use memory_manager_class, only: mem
+   use ccs_class, only: ccs
+   use diis_tool_class, only: diis_tool
    use abstract_cc_es_class, only: abstract_cc_es
    use precondition_tool_class, only: precondition_tool
    use es_valence_start_vector_tool_class, only: es_valence_start_vector_tool
    use es_valence_projection_tool_class, only: es_valence_projection_tool
-   use array_utilities, only: quicksort_with_index_ascending
+   use array_utilities, only: quicksort_with_index_ascending, get_l2_norm
+   use string_utilities, only: convert_to_uppercase
 !
    implicit none
 !

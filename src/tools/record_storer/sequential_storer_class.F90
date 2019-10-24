@@ -40,6 +40,7 @@ module sequential_storer_class
    type, extends(record_storer) :: sequential_storer
 !
       logical :: delete
+      integer :: n_preexisting_files
 !
       type(sequential_file), dimension(:), allocatable :: files
 !
@@ -102,6 +103,8 @@ contains
       storer%n_records   = n_records
       storer%delete      = delete
 !
+      storer%n_preexisting_files = 0
+!
       call mem%alloc(storer%record_indices, storer%n_records)
       allocate(storer%files(storer%n_records))
 !
@@ -113,6 +116,10 @@ contains
          storer%files(I) = sequential_file(record_name)
 !
          call storer%files(I)%open_('readwrite', 'rewind')
+!
+         if (storer%files(I)%number_of_records() .ge. 1) then
+            storer%n_preexisting_files = storer%n_preexisting_files + 1
+         endif
 !
       enddo
 !
