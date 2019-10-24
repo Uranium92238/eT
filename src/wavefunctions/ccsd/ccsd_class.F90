@@ -30,8 +30,6 @@ module ccsd_class
 !
    type, extends(abstract_doubles) :: ccsd
 !
-      type(sequential_file) :: t2_file, t2bar_file
-!
 !     Intermediate files 
 !
       type(sequential_file) :: jacobian_c2_intermediate_oovo_1

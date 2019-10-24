@@ -1837,7 +1837,7 @@ contains
 !
       integer, intent(in) :: dim
       real(dp), dimension(dim), intent(inout) :: vec
-      integer, dimension(dim), intent(inout) :: index_list
+      integer, dimension(dim), intent(out) :: index_list
 !
       integer :: i
 !
@@ -1858,7 +1858,7 @@ contains
 !
       integer, intent(in) :: dim
       real(dp), dimension(dim), intent(inout) :: vec
-      integer, dimension(dim), intent(inout) :: index_list
+      integer, dimension(dim), intent(out) :: index_list
 !
       call dscal(dim, -one, vec, 1)
 !
@@ -2064,6 +2064,45 @@ contains
       vec = -1*vec
 !
    end subroutine quicksort_with_index_ascending_int
+!
+!
+   function are_vectors_parallel(x, y, dim_, threshold) result(parallel)
+!!
+!!    Checks if 2 vectors are parallel within a given threshold
+!!    written by Alexander C. Paul and Rolf H. Myhre, Oct 2019
+!!
+!!    For 2 parallel vectors x and y = a*x
+!!          sqrt(x*x * y*y) = |x*y|
+!!
+      implicit none
+!
+      logical :: parallel
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_), intent(in) :: x, y
+!
+      real(dp), intent(in) :: threshold
+!
+      real(dp) :: ddot, x_dot_x, y_dot_y, x_dot_y
+!
+      x_dot_x = ddot(dim_, x, 1, x, 1)
+!
+      y_dot_y = ddot(dim_, y, 1, y, 1)
+!
+      x_dot_y = ddot(dim_, x, 1, y, 1)
+!
+      if(abs(sqrt(x_dot_x*y_dot_y) - abs(x_dot_y)) .gt. threshold) then
+!
+         parallel = .false.
+!
+      else
+!
+         parallel = .true.
+!
+      end if
+!
+   end function are_vectors_parallel
 !
 !
 end module array_utilities

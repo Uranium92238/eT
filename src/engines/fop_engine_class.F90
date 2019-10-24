@@ -52,6 +52,8 @@ module fop_engine_class
 !
       procedure :: do_eom                    => do_eom_fop_engine
 !
+      procedure, nopass :: get_thresholds    => get_thresholds_fop_engine
+!
       procedure, nopass :: print_summary_eom => print_summary_eom_fop_engine
 !
       procedure :: set_printables            => set_printables_fop_engine
@@ -107,6 +109,10 @@ contains
       class(fop_engine) :: engine
       class(ccs)         :: wf
 !
+      real(dp) :: energy_threshold, residual_threshold
+!
+      logical, dimension(:), allocatable :: skip_states
+!
 !     Cholesky decomposition
 !
       call engine%do_cholesky(wf)
@@ -134,6 +140,12 @@ contains
       call engine%do_excited_state(wf, 'right')
       call engine%do_excited_state(wf, 'left')
 !
+      call mem%alloc(skip_states, wf%n_singlet_states)
+!
+      call engine%get_thresholds(energy_threshold, residual_threshold)
+!
+      call wf%biorthonormalize_L_and_R(energy_threshold, residual_threshold, skip_states)
+!
 !     EOM properties if requested
 !
       if (engine%eom) then
@@ -142,13 +154,13 @@ contains
          call wf%initialize_gs_density()
          call wf%construct_gs_density()
 !
-!        TODO: calculate ground state dipole moment as well
-!
          call wf%initialize_transition_densities()
-         call engine%do_eom(wf)
+         call engine%do_eom(wf, skip_states)
          call wf%destruct_transition_densities()
 !
       end if
+!
+      call mem%dealloc(skip_states, wf%n_singlet_states)
 !
    end subroutine run_fop_engine
 !
@@ -191,26 +203,26 @@ contains
    end subroutine read_fop_settings_fop_engine
 
 
-   subroutine do_eom_fop_engine(engine, wf)
+   subroutine do_eom_fop_engine(engine, wf, skip_states)
 !!
 !!    Do EOM
 !!    Written by Written by Josefine H. Andersen, Sarai D. Folkestad 
-!!    and Alexander Paul, June 2019
+!!    and Alexander C. Paul, June 2019
 !!
       implicit none
 !
       class(fop_engine) :: engine
-      class(ccs)         :: wf
+      class(ccs)        :: wf
+!
+      logical, dimension(wf%n_singlet_states), intent(in) :: skip_states
 !
       real(dp), dimension(:,:,:), allocatable :: operator
-!
-   !   character(len=1), dimension(3) :: components = ['X', 'Y', 'Z']
 !
       real(dp), dimension(3) :: transition_strength, transition_moment_left, transition_moment_right
 !
       real(dp), dimension(:), allocatable :: excitation_energies, L, R
 !
-      integer :: n_states, state, k
+      integer :: n_states, state, component
 !
       type(timings) :: L_TDM_timer, R_TDM_timer, EOM_timer
 !
@@ -249,6 +261,12 @@ contains
 !
          do state = 1, n_states
 !
+            if(skip_states(state)) then
+               call output%printf('Warning: Skipped state (i0) because it is &
+               & parallel to the previous state', ints=[state], fs='(/t3,a)')
+               cycle
+            end if
+!
             call R_TDM_timer%turn_on()
 !
             call wf%read_excited_state(R, state, 'right')
@@ -257,27 +275,26 @@ contains
             call R_TDM_timer%turn_off()
             call R_TDM_timer%reset()
 !
-!           Read left states and make them binormal to the right vectors
+!           Read left states and construct transition density
 !
             call L_TDM_timer%turn_on()
 !
             call wf%read_excited_state(L, state, 'left')
-            call wf%binormalize_L_wrt_R(L, R, state)
-!
             call wf%construct_left_transition_density(L)
 !
             call L_TDM_timer%turn_off()
             call L_TDM_timer%reset()
 !
-            do k = 1, 3
+            do component = 1, 3
 !
-               transition_moment_left(k) = wf%calculate_expectation_value(operator(:,:,k),   &
-                                             wf%left_transition_density)
+               transition_moment_left(component) = wf%calculate_expectation_value(operator(:,:,component),   &
+                                                                              wf%left_transition_density)
 !
-               transition_moment_right(k) = wf%calculate_expectation_value(operator(:,:,k),  &
-                                             wf%right_transition_density)
+               transition_moment_right(component) = wf%calculate_expectation_value(operator(:,:,component),  &
+                                                                              wf%right_transition_density)
 !
-               transition_strength(k) = transition_moment_left(k)*transition_moment_right(k)
+               transition_strength(component) = transition_moment_left(component)*  &
+                                                transition_moment_right(component)
 !
             enddo
 !
@@ -294,6 +311,50 @@ contains
       call EOM_timer%turn_off()
 !
    end subroutine do_eom_fop_engine
+!
+!
+   subroutine get_thresholds_fop_engine(energy_threshold, residual_threshold)
+!!
+!!    Get thresholds from input
+!!    written by Alexander C. Paul, Oct 2019
+!!
+!!    Get thresholds from input to perform checks for parallel states and 
+!!    to check that the left and right states are consistent
+!!
+      implicit none
+!
+      real(dp), intent(out) :: energy_threshold, residual_threshold
+!
+!     Set default values and overwrite if specified in input
+!
+      energy_threshold = 1.0d-6
+      residual_threshold = energy_threshold
+!
+!     Set thresholds for the sanity checks if the roots are ordered correctly
+!
+      if (input%requested_keyword_in_section('energy threshold', 'solver cc es') .and.   &
+          input%requested_keyword_in_section('residual threshold', 'solver cc es')) then 
+!
+        call input%get_keyword_in_section('energy threshold', 'solver cc es', energy_threshold)
+        call input%get_keyword_in_section('residual threshold', 'solver cc es', residual_threshold)
+!
+      else if (input%requested_keyword_in_section('residual threshold', 'solver cc es')) then 
+!
+        call input%get_keyword_in_section('residual threshold', 'solver cc es', residual_threshold)
+!
+      else if (input%requested_keyword_in_section('energy threshold', 'solver cc es')) then 
+!
+         call input%get_keyword_in_section('energy threshold', 'solver cc es', energy_threshold)
+!
+         if (residual_threshold .lt. energy_threshold) then
+!
+            energy_threshold = residual_threshold
+!
+         end if
+!
+      endif
+!
+   end subroutine get_thresholds_fop_engine
 !
 !
    subroutine print_summary_eom_fop_engine(transition_strength, transition_moment_left, &
@@ -352,7 +413,7 @@ contains
       call output%printf('--------------------------------------------------------------------------', &
                          pl='minimal', fs='(t6,a)', ll=80)
 !
-      call output%printf('Oscillator strength [a.u.]: (f19.12)', pl='minimal', fs='(t6,a)', &
+      call output%printf('Oscillator strength [a.u.]: (f19.12)', pl='minimal', fs='(t6,a)', &
                           reals=[(two/three) * excitation_energy * sum_strength])
 !
    end subroutine print_summary_eom_fop_engine

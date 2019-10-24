@@ -86,7 +86,7 @@ contains
 !
       character(len=*), intent(in) :: transformation
 !
-      if((trim(transformation) .eq. 'right') .or. (trim(transformation) .eq. 'both')) then
+      if(trim(transformation) .eq. 'right') then
 !
          wf%r_files = sequential_storer('r_', wf%n_es_amplitudes, &
                                          wf%n_singlet_states,     &
@@ -94,17 +94,31 @@ contains
 !
          wf%excitation_energies_file = sequential_file('excitation_energies')
 !
-      end if
-!
-      if((trim(transformation) .eq. 'left') .or. (trim(transformation) .eq. 'both')) then
+      else if(trim(transformation) .eq. 'left') then
 !
          wf%l_files = sequential_storer('l_', wf%n_es_amplitudes, &
                                          wf%n_singlet_states,     &
                                          delete=.false.)
 !
-         if(.not. wf%excitation_energies_file%exists()) then
-            wf%excitation_energies_file = sequential_file('excitation_energies')
-         end if
+         wf%excitation_energies_file = sequential_file('excitation_energies')
+!
+      else if(trim(transformation) .eq. 'both') then 
+!
+         wf%r_files = sequential_storer('r_', wf%n_es_amplitudes, &
+                                         wf%n_singlet_states,     &
+                                         delete=.false.)
+!
+         wf%l_files = sequential_storer('l_', wf%n_es_amplitudes, &
+                                         wf%n_singlet_states,     &
+                                         delete=.false.)
+!
+         wf%excitation_energies_file = sequential_file('excitation_energies')
+!
+      else
+!
+         call output%error_msg('Tried to initialize files for excited states &
+                              & but argument ' // trim(transformation) //    &
+                              ' not recognized')
 !
       end if
 !
