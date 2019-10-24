@@ -2,6 +2,10 @@ system
    name:  HOF
    charge: 0
 end system
+ 
+print 
+   output print level: debug 
+end print
 
 do
    excited state

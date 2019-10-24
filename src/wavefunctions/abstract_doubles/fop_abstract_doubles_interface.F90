@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine construct_left_transition_density_abstract_doubles(wf, L_k)
+   module subroutine construct_left_transition_density_abstract_doubles(wf, state)
 !!
 !!    Construct left one-electron transition density for the state k
 !!    Written by Alexander Paul, June 2019
@@ -26,13 +26,12 @@
 !
       class(abstract_doubles) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: L_k
-!
+      integer, intent(in) :: state
 !      
    end subroutine construct_left_transition_density_abstract_doubles
 !
 !
-   module subroutine construct_right_transition_density_abstract_doubles(wf, R_k)
+   module subroutine construct_right_transition_density_abstract_doubles(wf, state)
 !!
 !!    Construct right one-electron transition density for the state k
 !!    Written by Alexander Paul, June 2019
@@ -41,7 +40,7 @@
 !
       class(abstract_doubles) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: R_k
+      integer, intent(in) :: state
 !
    end subroutine construct_right_transition_density_abstract_doubles
 !

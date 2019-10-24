@@ -24,10 +24,11 @@ module fop_engine_class
 !!    and Josefine H. Andersen, Apr 2019
 !!
    use parameters
-   use global_in,            only: input
-   use global_out,           only: output
-   use timings_class,        only: timings
-   use memory_manager_class, only: mem
+   use global_in,             only: input
+   use global_out,            only: output
+   use timings_class,         only: timings
+   use memory_manager_class,  only: mem
+   use sequential_file_class, only: sequential_file
 !
    use es_engine_class, only: es_engine
    use ccs_class,       only: ccs
@@ -220,32 +221,22 @@ contains
 !
       real(dp), dimension(3) :: transition_strength, transition_moment_left, transition_moment_right
 !
-      real(dp), dimension(:), allocatable :: excitation_energies, L, R
+      integer :: state, component
 !
-      integer :: n_states, state, component
+      real(dp) :: trace_r_tdm, trace_l_tdm
+      integer :: p
 !
-      type(timings) :: L_TDM_timer, R_TDM_timer, EOM_timer
+      type(sequential_file) :: left_file, right_file
+      character(len=15)     :: name_left, name_right
 !
-      L_TDM_timer = timings('Time for left transition density')
-      R_TDM_timer = timings('Time for right transition density')
+      type(timings) :: EOM_timer
+!
       EOM_timer = timings('Total time for EOM FOP')
 !
       call EOM_timer%turn_on()
 !
-      call output%long_string_print('EOM first order properties calculation','(/t3,a)',.true.)
-      call output%long_string_print(engine%author,'(t3,a/)',.true.)
-!
-      call input%get_required_keyword_in_section('singlet states', 'solver cc es', n_states)
-      call mem%alloc(excitation_energies, n_states)
-!
-      call wf%read_excitation_energies(n_states, excitation_energies)
-!
-      transition_strength     = zero
-      transition_moment_right = zero
-      transition_moment_left  = zero
-!
-      call mem%alloc(L, wf%n_es_amplitudes)
-      call mem%alloc(R, wf%n_es_amplitudes)
+      call output%long_string_print('EOM first order properties calculation', fs='(/t3,a)', colons=.true.)
+      call output%long_string_print(engine%author, fs='(t3,a)', colons=.true.)
 !
       if (engine%dipole_length) then
 !
@@ -259,7 +250,7 @@ contains
 !
          call output%printf('- Summary of EOM first order properties calculation:', fs='(/t3,a)')
 !
-         do state = 1, n_states
+         do state = 1, wf%n_singlet_states
 !
             if(skip_states(state)) then
                call output%printf('Warning: Skipped state (i0) because it is &
@@ -267,23 +258,26 @@ contains
                cycle
             end if
 !
-            call R_TDM_timer%turn_on()
+            call wf%construct_right_transition_density(state)
 !
-            call wf%read_excited_state(R, state, 'right')
-            call wf%construct_right_transition_density(R)
+            call wf%construct_left_transition_density(state)
 !
-            call R_TDM_timer%turn_off()
-            call R_TDM_timer%reset()
+!           Initialize and write the files to store the transition densities
 !
-!           Read left states and construct transition density
+            write(name_left, '(a, i3.3)') 'left_tdm_', state
+            write(name_right, '(a, i3.3)') 'right_tdm_', state
 !
-            call L_TDM_timer%turn_on()
+            left_file  = sequential_file(trim(name_left))
+            right_file = sequential_file(trim(name_right))
 !
-            call wf%read_excited_state(L, state, 'left')
-            call wf%construct_left_transition_density(L)
+            call left_file%open_('write')
+            call right_file%open_('write')
 !
-            call L_TDM_timer%turn_off()
-            call L_TDM_timer%reset()
+            call left_file%write_(wf%left_transition_density, wf%n_mo**2)
+            call right_file%write_(wf%right_transition_density, wf%n_mo**2)
+!
+            call left_file%close_()
+            call right_file%close_()
 !
             do component = 1, 3
 !
@@ -293,20 +287,34 @@ contains
                transition_moment_right(component) = wf%calculate_expectation_value(operator(:,:,component),  &
                                                                               wf%right_transition_density)
 !
-               transition_strength(component) = transition_moment_left(component)*  &
+               transition_strength(component) = transition_moment_left(component)* &
                                                 transition_moment_right(component)
 !
             enddo
 !
+!           Print results
+!
             call engine%print_summary_eom(transition_strength, transition_moment_left, &
-                                          transition_moment_right, state, excitation_energies(state))
+                                          transition_moment_right, state,              &
+                                          wf%right_excitation_energies(state))
+!
+!           Print traces of the density matrices for Debugging
+!
+            trace_r_tdm = zero
+            trace_l_tdm = zero
+!
+            do p = 1, wf%n_mo
+               trace_r_tdm = trace_r_tdm + wf%right_transition_density(p,p)
+               trace_l_tdm = trace_l_tdm + wf%left_transition_density(p,p)
+            end do
+            call output%printf('Trace left transition density:  (f15.10)',    &
+                                fs='(t6,a)', reals=[trace_l_tdm], pl='v')
+            call output%printf('Trace right transition density: (f15.10)',    &
+                                fs='(t6,a/)', reals=[trace_r_tdm], pl='v')
 !
          enddo
 !
       endif
-!
-      call mem%dealloc(L, wf%n_es_amplitudes)
-      call mem%dealloc(R, wf%n_es_amplitudes)
 !
       call EOM_timer%turn_off()
 !
@@ -332,7 +340,7 @@ contains
 !
 !     Set thresholds for the sanity checks if the roots are ordered correctly
 !
-      if (input%requested_keyword_in_section('energy threshold', 'solver cc es') .and.   &
+      if (input%requested_keyword_in_section('energy threshold', 'solver cc es') .and. &
           input%requested_keyword_in_section('residual threshold', 'solver cc es')) then 
 !
         call input%get_keyword_in_section('energy threshold', 'solver cc es', energy_threshold)
@@ -341,16 +349,12 @@ contains
       else if (input%requested_keyword_in_section('residual threshold', 'solver cc es')) then 
 !
         call input%get_keyword_in_section('residual threshold', 'solver cc es', residual_threshold)
+        energy_threshold = residual_threshold
 !
       else if (input%requested_keyword_in_section('energy threshold', 'solver cc es')) then 
 !
          call input%get_keyword_in_section('energy threshold', 'solver cc es', energy_threshold)
-!
-         if (residual_threshold .lt. energy_threshold) then
-!
-            energy_threshold = residual_threshold
-!
-         end if
+         residual_threshold = energy_threshold
 !
       endif
 !
@@ -358,7 +362,7 @@ contains
 !
 !
    subroutine print_summary_eom_fop_engine(transition_strength, transition_moment_left, &
-                                       transition_moment_right, state, excitation_energy)
+                                           transition_moment_right, state, excitation_energy)
 !!
 !!    Print summary
 !!    Written by Josefine H. Andersen
@@ -367,10 +371,11 @@ contains
 !!
       implicit none
 !
-      integer, intent(in)  :: state
-!
-      real(dp), dimension(3), intent(in) :: transition_strength, transition_moment_left, transition_moment_right
+      real(dp), dimension(3), intent(in) :: transition_strength
+      real(dp), dimension(3), intent(in) :: transition_moment_left 
+      real(dp), dimension(3), intent(in) :: transition_moment_right
       real(dp), intent(in) :: excitation_energy
+      integer, intent(in)  :: state
 !
       character(len=1), dimension(3) :: components = ['X', 'Y', 'Z']
 !
@@ -378,43 +383,45 @@ contains
 !
       real(dp) :: sum_strength
 !
-      call output%printf('State (i0):', pl='minimal', fs='(/t6,a)', ints=[state])
-      call output%printf('-----------', pl='minimal', fs='(t6,a)')
-      call output%printf('Excitation energy [E_h]:       (f19.12)', pl='minimal', fs='(t6,a)', &
-                          reals=[excitation_energy])
-      call output%printf('Excitation energy [eV]:        (f19.12)', pl='minimal', fs='(t6,a)', &
-                          reals=[excitation_energy*Hartree_to_eV])
-      call output%printf('Hartree-to-eV (CODATA 2014)):  (f19.8)',  pl='minimal', fs='(t6,a)', &
-                          reals=[Hartree_to_eV])
+      call output%printf('State (i0):', pl='m', fs='(/t6,a)', ints=[state])
+      call output%print_separator('m', 10, '-', fs='(t6,a)')
 !
-      call output%printf('              Transition moments [a.u.]         Transition strength [a.u.]', &
-                         pl='minimal', fs='(/t6,a)', ll=80)
-      call output%printf('--------------------------------------------------------------------------', &
-                         pl='minimal', fs='(t6,a)', ll=80)
-      call output%printf('Comp. q     < k |q| 0 >       < 0 |q| k >        < k |q| 0 > < 0 |q| k >  ', &
-                         pl='minimal', fs='(t6,a)', ll=80)
-      call output%printf('--------------------------------------------------------------------------', &
-                         pl='minimal', fs='(t6,a)', ll=80)
+      call output%printf('Excitation energy [E_h]:      (f19.12)', &
+                         pl='m', reals=[excitation_energy], fs='(t6,a)')
+      call output%printf('Excitation energy [eV]:       (f19.12)', &
+                         pl='m', reals=[excitation_energy*Hartree_to_eV], fs='(t6,a)')
+!
+      call output%printf('Hartree-to-eV (CODATA 2014):  (f19.8)', &
+                         pl='m', reals=[Hartree_to_eV], fs='(t6,a)')
+!
+      call output%printf('Transition moments [a.u.]         Transition strength [a.u.]', &
+                         pl='m', fs='(/t6,14X,a)', ll=74)
+      call output%print_separator('m', 74, '-', fs='(t6,a)')
+      call output%printf('Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >  ', &
+                         pl='m', fs='(t6,a)', ll=74)
+      call output%print_separator('m', 74, '-', fs='(t6,a)')
 !
       sum_strength = zero
 !
       do component = 1, 3
 !
-         call output%printf('(a1)      (f17.10) (f17.10)       (f17.10)', pl='minimal', fs=('(t6,a)'), &
-                            chars=[components(component)],                                             &
-                            reals=[transition_moment_left(component),                                  &
-                                   transition_moment_right(component),                                 &
-                                   transition_strength(component)])
+         call output%printf('(a0)      (f17.10) (f17.10)       (f17.10)',  &
+                           reals=[transition_moment_left(component),       &
+                           transition_moment_right(component),             &
+                           transition_strength(component)],                &
+                           chars=[components(component)], pl='m', fs='(t6,a)')
 !
          sum_strength = sum_strength + transition_strength(component)
 !
       enddo
 !
-      call output%printf('--------------------------------------------------------------------------', &
-                         pl='minimal', fs='(t6,a)', ll=80)
+      call output%print_separator('m', 74, '-', fs='(t6,a)')
 !
-      call output%printf('Oscillator strength [a.u.]: (f19.12)', pl='minimal', fs='(t6,a)', &
-                          reals=[(two/three) * excitation_energy * sum_strength])
+      call output%printf('Oscillator strength [a.u.]: (f19.12)', &
+                        reals=[(two/three)*excitation_energy*sum_strength], &
+                        pl='m', fs='(t6,a)')
+!
+      flush(output%unit)
 !
    end subroutine print_summary_eom_fop_engine
 !

@@ -78,10 +78,6 @@ module cc3_class
 !
       type(direct_file) :: Y_clik_tbar
 !
-!     Real wavefunction variables
-!
-      real(dp) :: excitation_energy
-!
       real(dp), dimension(:,:), allocatable :: GS_cc3_density_oo
       real(dp), dimension(:,:), allocatable :: GS_cc3_density_vv
 !

@@ -2,6 +2,10 @@ system
    name: H2O
    charge: 0
 end system
+ 
+print 
+   output print level: debug 
+end print
 
 method
   hf

@@ -434,7 +434,7 @@ contains
 !
          call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
 !
-         call wf%check_for_degenerate_states(solver%transformation, solver%residual_threshold)
+         call wf%check_for_degeneracies(solver%transformation, solver%residual_threshold)
 !
       else 
 !
