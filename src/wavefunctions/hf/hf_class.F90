@@ -81,7 +81,16 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_frozen_hf
       real(dp), dimension(:,:), allocatable :: orbital_coefficients_fc
 !
+      type(sequential_file) :: orbital_coefficients_file
+      type(sequential_file) :: orbital_energies_file
+!
    contains
+!
+!
+      procedure :: read_orbital_coefficients                   => read_orbital_coefficients_hf
+      procedure :: save_orbital_coefficients                   => save_orbital_coefficients_hf
+      procedure :: read_orbital_energies                       => read_orbital_energies_hf
+      procedure :: save_orbital_energies                       => save_orbital_energies_hf
 !
       procedure :: read_for_scf_restart                        => read_for_scf_restart_hf
       procedure :: is_restart_safe                             => is_restart_safe_hf
@@ -991,16 +1000,6 @@ contains
 !     Save orbital information in orbital_information_file for CC
 !
       call wf%write_orbital_information()
-!
-      if (wf%frozen_core .or. wf%frozen_hf_mos) then
-!
-!        Rewrite orbitals and energies, as they have been
-!        redefined
-!
-         call wf%save_orbital_coefficients()
-         call wf%save_orbital_energies()
-!
-      endif
 !
 !     Deallocations
 !
@@ -3835,7 +3834,9 @@ contains
 !
       call wf%set_n_mo()
 !
-      call wf%initialize_wavefunction_files()
+      wf%orbital_coefficients_file = sequential_file('orbital_coefficients')
+      wf%orbital_energies_file = sequential_file('orbital_energies')
+!
       wf%restart_file = sequential_file('scf_restart_file')
 !
       call wf%write_scf_restart()   
@@ -3882,6 +3883,8 @@ contains
 !
       class(hf) :: wf
 !
+      type(sequential_file) :: CC_orbitals_file, CC_orbital_energies_file
+!
       wf%orbital_information_file = sequential_file('orbital_information')
       call wf%orbital_information_file%open_('write', 'rewind')
 !
@@ -3893,7 +3896,95 @@ contains
 !
       call wf%orbital_information_file%close_
 !
+      CC_orbitals_file = sequential_file('cc_orbital_coefficients')
+      call CC_orbitals_file%open_('write', 'rewind')
+!
+      call CC_orbitals_file%write_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
+!
+      call CC_orbitals_file%close_('keep')
+!
+      CC_orbital_energies_file = sequential_file('cc_orbital_energies')
+      call CC_orbital_energies_file%open_('write', 'rewind')
+!
+      call CC_orbital_energies_file%write_(wf%orbital_energies, wf%n_mo)
+!
+      call CC_orbital_energies_file%close_('keep')
+!
    end subroutine write_orbital_information_hf
+!
+!
+!
+!
+   subroutine save_orbital_coefficients_hf(wf)
+!!
+!!    Save orbital coefficients 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(hf), intent(inout) :: wf 
+!
+      call wf%orbital_coefficients_file%open_('write', 'rewind')
+!
+      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
+!
+      call wf%orbital_coefficients_file%close_
+!
+   end subroutine save_orbital_coefficients_hf
+!
+!
+   subroutine read_orbital_coefficients_hf(wf)
+!!
+!!    Save orbital coefficients 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(hf), intent(inout) :: wf 
+!
+      call wf%orbital_coefficients_file%open_('read', 'rewind')
+!
+      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
+!
+      call wf%orbital_coefficients_file%close_
+!
+   end subroutine read_orbital_coefficients_hf
+!
+!
+   subroutine save_orbital_energies_hf(wf)
+!!
+!!    Save orbital energies 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(hf), intent(inout) :: wf 
+!
+      call wf%orbital_energies_file%open_('write', 'rewind')
+!
+      call wf%orbital_energies_file%write_(wf%orbital_energies, wf%n_mo)
+!
+      call wf%orbital_energies_file%close_
+!
+   end subroutine save_orbital_energies_hf
+!
+!
+   subroutine read_orbital_energies_hf(wf)
+!!
+!!    Save orbital energies 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(hf), intent(inout) :: wf 
+!
+      call wf%orbital_energies_file%open_('read', 'rewind')
+!
+      call wf%orbital_energies_file%read_(wf%orbital_energies, wf%n_mo)
+!
+      call wf%orbital_energies_file%close_
+!
+   end subroutine read_orbital_energies_hf
 !
 !
 end module hf_class
