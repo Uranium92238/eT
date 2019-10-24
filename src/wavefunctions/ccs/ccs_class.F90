@@ -260,7 +260,7 @@ module ccs_class
 !
       procedure :: biorthonormalize_L_and_R                    => biorthonormalize_L_and_R_ccs
       procedure :: L_R_overlap                                 => L_R_overlap_ccs
-      procedure :: check_for_degenerate_states                 => check_for_degenerate_states_ccs
+      procedure :: check_for_degeneracies                      => check_for_degeneracies_ccs
 !
 !     One-electron operators and mean value
 !
@@ -1315,9 +1315,9 @@ contains
    end subroutine read_frozen_orbital_contributions_ccs
 !
 !
-   subroutine check_for_degenerate_states_ccs(wf, transformation, threshold)
+   subroutine check_for_degeneracies_ccs(wf, transformation, threshold)
 !!
-!!    Check for degenerate states in the excited states
+!!    Check for degeneracies in the excited states
 !!    written by Alexander C. Paul and Rolf H. Myhre, Oct 2019
 !!
 !!    The solver might not ensure orthogonality of the states (e.g. in DIIS).
@@ -1423,7 +1423,7 @@ contains
 !
       end do
 !
-   end subroutine check_for_degenerate_states_ccs
+   end subroutine check_for_degeneracies_ccs
 !
 !
    subroutine biorthonormalize_L_and_R_ccs(wf, energy_threshold, residual_threshold, skip_states)
@@ -1678,7 +1678,7 @@ contains
 !
                   call dcopy(wf%n_es_amplitudes, &
                            L(:,p), 1,            &
-                           L_normalized(:,p), 1)
+                           L_normalized(:, p), 1)
 !
                end do
 !
@@ -1869,7 +1869,6 @@ contains
 !
                call mem%dealloc(overlap_LR, reduced_degeneracy_r)
                call mem%dealloc(order, reduced_degeneracy_r)
-!
 !
             else ! States are not degenerate, thus only binormalize
 !

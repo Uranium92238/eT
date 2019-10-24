@@ -58,7 +58,7 @@ submodule (abstract_doubles_class) fop_abstract_doubles
 contains
 !
 !
-   module subroutine construct_left_transition_density_abstract_doubles(wf, L_k)
+   module subroutine construct_left_transition_density_abstract_doubles(wf, state)
 !!
 !!    Construct left one-electron transition density for the state k
 !!    Written by Alexander Paul, June 2019
@@ -74,7 +74,9 @@ contains
 !
       class(abstract_doubles) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: L_k
+      integer, intent(in) :: state
+!
+      real(dp), dimension(:), allocatable :: L_k
 !
       real(dp), dimension(:,:), allocatable :: L_ai
       real(dp), dimension(:,:,:,:), allocatable :: L_aibj
@@ -82,6 +84,15 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: t_aibj
 !
       integer :: i, j, a, b, ai, bj, aibj, b_end
+!
+      type(timings) :: L_TDM_timer
+!
+      call L_TDM_timer%turn_on()
+!
+      L_TDM_timer = timings('Left transition density')
+!
+      call mem%alloc(L_k, wf%n_es_amplitudes)
+      call wf%read_excited_state(L_k, state, 'left')
 !
       call zero_array(wf%left_transition_density, wf%n_mo**2)
 !
@@ -143,16 +154,20 @@ contains
       enddo
 !$omp end parallel do
 !
+      call mem%dealloc(L_k, wf%n_es_amplitudes)
+!
       call wf%gs_one_el_density_doubles_oo(wf%left_transition_density, L_aibj, t_aibj)
       call wf%gs_one_el_density_doubles_vv(wf%left_transition_density, L_aibj, t_aibj)
 !
       call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call L_TDM_timer%turn_off()
 !      
    end subroutine construct_left_transition_density_abstract_doubles
 !
 !
-   module subroutine construct_right_transition_density_abstract_doubles(wf, R_k)
+   module subroutine construct_right_transition_density_abstract_doubles(wf, state)
 !!
 !!    Construct right one-electron transition density for the state k
 !!    Written by Alexander Paul, June 2019
@@ -168,7 +183,9 @@ contains
 !
       class(abstract_doubles) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: R_k
+      integer, intent(in) :: state
+!
+      real(dp), dimension(:), allocatable :: R_k
 !
       real(dp), dimension(:,:), allocatable :: R_ai
       real(dp), dimension(:,:,:,:), allocatable :: R_aibj
@@ -182,7 +199,16 @@ contains
 !
       integer :: i, j, a, b, ai, bj, aibj, b_end
 !
+      type(timings) :: R_TDM_timer
+!
+      R_TDM_timer = timings('Right transition density')
+!
+      call R_TDM_timer%turn_on()
+!
       call zero_array(wf%right_transition_density, (wf%n_mo)**2)
+!
+      call mem%alloc(R_k, wf%n_es_amplitudes)
+      call wf%read_excited_state(R_k, state, 'right')
 !
       call mem%alloc(R_ai, wf%n_v, wf%n_o)
 !
@@ -245,6 +271,8 @@ contains
       enddo
 !$omp end parallel do
 !
+      call mem%dealloc(R_k, wf%n_es_amplitudes)
+!
 !     Scale the doubles vector by 1 + δ_ai,bj, i.e.
 !     redefine to c_ckdl = c_ckdl (1 + δ_ck,dl)
 !
@@ -289,6 +317,8 @@ contains
       call daxpy(wf%n_mo**2, scaling_factor, rho_corr, 1, wf%right_transition_density, 1)
 !
       call mem%dealloc(rho_corr, wf%n_mo, wf%n_mo)
+!
+      call R_TDM_timer%turn_off()
 !
    end subroutine construct_right_transition_density_abstract_doubles
 !

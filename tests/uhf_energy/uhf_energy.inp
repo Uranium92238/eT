@@ -3,6 +3,10 @@ system
    charge: 0
    multiplicity: 3
 end system
+ 
+print 
+   output print level: debug 
+end print
 
 method
    uhf

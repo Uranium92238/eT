@@ -3,9 +3,9 @@ system
    charge: 0
    multiplicity: 1
 end system
-
-print
-   output print level: debug
+ 
+print 
+   output print level: debug 
 end print
 
 do

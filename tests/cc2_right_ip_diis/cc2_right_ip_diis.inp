@@ -1,6 +1,10 @@
 system
    name: H2O He
 end system
+ 
+print 
+   output print level: debug 
+end print
 
 memory
   available: 8
