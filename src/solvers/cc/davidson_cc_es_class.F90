@@ -233,7 +233,7 @@ contains
 !
             call wf%construct_Jacobian_transform(solver%transformation, c)
 !
-            if (solver%projection_tool%active) call solver%projection_tool%project(c)
+            if (solver%projector%active) call solver%projector%do_(c)
 !
             call davidson%set_transform(c, trial)
 !
@@ -265,7 +265,7 @@ contains
 !
             call davidson%construct_residual(residual, solution, n)
 !
-            if (solver%projection_tool%active) call solver%projection_tool%project(residual)
+            if (solver%projector%active) call solver%projector%do_(residual)
 !
             residual_norm = get_l2_norm(residual, wf%n_es_amplitudes)
 !
@@ -396,7 +396,7 @@ contains
 !
          do trial = n_solutions_on_file + 1, solver%n_singlet_states
 !
-            call solver%start_vector_tool%get_vector(c, trial)
+            call solver%start_vectors%get(c, trial)
             call davidson%set_trial(c, trial)
 !
          enddo 

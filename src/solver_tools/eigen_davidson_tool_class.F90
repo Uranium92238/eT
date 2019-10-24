@@ -182,11 +182,11 @@ contains
 !
       class(eigen_davidson_tool), intent(inout) :: davidson 
 !
-      if (davidson%do_precondition) then 
+      if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
+      if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
 !
-         call mem%dealloc(davidson%preconditioner, davidson%n_parameters)
-!
-      endif
+      call davidson%destruct_omega_re()
+      call davidson%destruct_omega_im()
 !
    end subroutine cleanup_eigen_davidson_tool
 !  
@@ -619,7 +619,7 @@ contains
       call mem%alloc(trial, davidson%n_parameters)
       call dcopy(davidson%n_parameters, R, 1, trial, 1)
 !
-      if (davidson%do_precondition) call davidson%precondition(trial, davidson%omega_re(k))
+      if (davidson%do_precondition) call davidson%preconditioner%do_(trial, shift=davidson%omega_re(k))
 !
 !     Renormalize 
 !
