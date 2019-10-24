@@ -1,0 +1,60 @@
+system
+   name: N2 - bondlength from NIST
+   charge: 0
+end system
+
+print
+   output print level: debug
+end print
+
+do
+   fop
+end do
+
+memory
+   available: 8
+end memory
+
+solver cholesky
+   threshold: 1.0d-12
+end solver cholesky
+
+solver scf
+   algorithm:          scf-diis
+   energy threshold:   1.0d-11
+   gradient threshold: 1.0d-11
+end solver scf
+
+method
+   hf
+   ccsd
+end method
+
+cc fop
+   eom
+   dipole length
+end cc fop
+
+solver cc gs
+   omega threshold:  1.0d-11
+   energy threshold: 1.0d-11
+end solver cc gs
+
+solver cc multipliers
+   threshold: 1.0d-11
+   algorithm: diis
+end solver cc multipliers
+
+solver cc es
+   core excitation:    {1,2}
+   algorithm:          diis
+   singlet states:     4
+   residual threshold: 1.0d-11
+   energy threshold:   1.0d-11
+end solver cc es
+
+geometry
+basis: cc-pVDZ
+   N   0.00000   0.00000   0.00000
+   N   0.00000   0.00000   1.01071
+end geometry

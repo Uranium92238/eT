@@ -30,6 +30,7 @@ module diis_cc_es_class
    use abstract_cc_es_class, only: abstract_cc_es
    use es_valence_start_vector_tool_class, only: es_valence_start_vector_tool
    use es_valence_projection_tool_class, only: es_valence_projection_tool
+   use array_utilities, only: quicksort_with_index_ascending
 !
    implicit none
 !
@@ -185,8 +186,10 @@ contains
       logical, dimension(:), allocatable :: converged_eigenvalue
       logical, dimension(:), allocatable :: converged_residual
 !
-      real(dp), dimension(:), allocatable :: prev_energies 
-      real(dp), dimension(:), allocatable :: residual_norms
+      real(dp), dimension(:), allocatable :: prev_energies
+      real(dp), dimension(:), allocatable :: residual_norms 
+!
+      integer, dimension(:), allocatable :: prev_state_numbers
 !
       type(diis_tool), dimension(:), allocatable :: diis 
 !
@@ -198,6 +201,7 @@ contains
 !
       real(dp), dimension(:), allocatable   :: eps
       real(dp), dimension(:,:), allocatable :: X, R
+      real(dp), dimension(:,:), allocatable :: X_sorted
 !
       real(dp) :: ddot
 !
@@ -222,7 +226,7 @@ contains
       allocate(diis(solver%n_singlet_states))
 !
       do state = 1, solver%n_singlet_states
-!  
+!
          write(string_state, '(i3.3)') state
          diis(state) = diis_tool('diis_cc_es_' // string_state, wf%n_es_amplitudes, wf%n_es_amplitudes, &
                                        solver%records_in_memory, dimension_=solver%diis_dimension)
@@ -273,11 +277,12 @@ contains
 !
          iteration = iteration + 1   
 !
-         write(output%unit,'(/t3,a25,i4)') 'Iteration:               ', iteration
+         call output%printf('Iteration: (i18)', &
+                     ints=[iteration], fs='(/t3,a)', pl='n')
 !
-         write(output%unit,'(/t3,a)') 'Root     Eigenvalue (Re)     Residual norm    '
-         write(output%unit,'(t3,a)')  '----------------------------------------------'
-         flush(output%unit)
+         call output%printf('Root     Eigenvalue (Re)     Residual norm', &
+                            fs='(/t3,a)', pl='n')
+         call output%print_separator('n', 46, '-')
 !
          do state = 1, solver%n_singlet_states
 !
@@ -339,8 +344,8 @@ contains
 !
             endif 
 !
-            write(output%unit, '(i3,3x,f19.12,6x,e11.4)') state, solver%energies(state), residual_norms(state)
-            flush(output%unit)
+            call output%printf('(i0)   (f19.12)      (e11.4)', ints=[state], &
+                 reals=[solver%energies(state), residual_norms(state)], pl='n')
 !
          enddo
 !
@@ -352,10 +357,11 @@ contains
 !
          enddo 
 !
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
+         call wf%save_excitation_energies(solver%n_singlet_states, &
+                           solver%energies, solver%transformation)
          prev_energies = solver%energies 
 !
-         write(output%unit,'(t3,a)')  '----------------------------------------------'     
+         call output%print_separator('n', 46, '-')
 !
       enddo 
 !
@@ -363,29 +369,59 @@ contains
 !
          if (iteration .eq. 1) then 
 !
-            write(output%unit, '(/t3,a)')  'Note: residual of all states converged in first iteration.'
-            write(output%unit, '(t3,a/)')  'Energy convergence has not been tested.'
+            call output%printf('Note: residual of all states converged &
+                              & in first iteration.', fs='(/t3,a)',pl='n')
+            call output%printf('Energy convergence has not been tested.', &
+                                fs='(t3,a/)',pl='n')
 !
          endif
 !
-         write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
-         call solver%print_summary(wf, X) 
+         call output%printf('Convergence criterion met in (i0) iterations!', &
+                            ints=[iteration], fs='(/t3,a)',pl='m')
+         call output%printf('- Resorting roots according to excitation energy.', &
+                            fs='(/t3,a)', pl='n')
 !
-         write(output%unit, '(/t3,a)') '- Storing converged states to file.'       
+!        Sort roots and store the original state number in prev_state_numbers
+!
+         call mem%alloc(prev_state_numbers, solver%n_singlet_states)
+!
+         call quicksort_with_index_ascending(solver%energies, prev_state_numbers, solver%n_singlet_states)
+!
+         call mem%alloc(X_sorted, wf%n_es_amplitudes, solver%n_singlet_states)
 !
          do state = 1, solver%n_singlet_states
 !
-            call wf%save_excited_state(X(:,state), state, solver%transformation)
+!           Need X_sorted because print_summary needs the vectors in the correct order
+            call dcopy(wf%n_es_amplitudes, X(:, prev_state_numbers(state)), 1, X_sorted(:, state), 1)
 !
-         enddo 
+            if(prev_state_numbers(state) .ne. state) then
+!
+               call output%printf('Root number (i3) renamed to state (i3)',      &
+                     ints=[prev_state_numbers(state), state], fs='(t5,a)', pl='v')
+!
+            end if
+!
+            call wf%save_excited_state(X_sorted(:, state), state, solver%transformation)
+!
+         enddo
+!
+         call mem%dealloc(prev_state_numbers, solver%n_singlet_states)
+!
+         call output%printf('- Stored converged states to file.', fs='(/t3,a)', pl='n')
+!
+         call solver%print_summary(wf, X_sorted)
+!
+         call mem%dealloc(X_sorted, wf%n_es_amplitudes, solver%n_singlet_states)
 !
          call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
+!
+         call wf%check_for_degenerate_states(solver%transformation, solver%residual_threshold)
 !
       else 
 !
          call output%error_msg("Did not converge in the max number of iterations.")
 !
-      endif 
+      endif
 !
       call mem%dealloc(prev_energies, solver%n_singlet_states)
       call mem%dealloc(residual_norms, solver%n_singlet_states)

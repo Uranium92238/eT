@@ -33,8 +33,8 @@ module ccs_class
    use sequential_file_class, only : sequential_file
    use string_utilities, only : convert_to_uppercase
    use array_utilities, only : get_l2_norm, copy_and_scale
-   use array_utilities, only : get_abs_max_w_index
-   use array_utilities, only : get_n_highest, get_n_lowest
+   use array_utilities, only : get_abs_max_w_index, get_n_lowest, get_n_highest
+   use array_utilities, only: quicksort_with_index_descending, are_vectors_parallel
    use index_invert, only : invert_compound_index, invert_packed_index
    use batching_index_class, only : batching_index
    use timings_class, only : timings
@@ -69,13 +69,13 @@ module ccs_class
 !
       real(dp) :: hf_energy
 !
-      real(dp), dimension(:,:), allocatable  :: t1
-      real(dp), dimension(:,:), allocatable  :: t1bar
+      real(dp), dimension(:,:), allocatable :: t1
+      real(dp), dimension(:,:), allocatable :: t1bar
 !
-      real(dp), dimension(:,:), allocatable  :: fock_ij
-      real(dp), dimension(:,:), allocatable  :: fock_ia
-      real(dp), dimension(:,:), allocatable  :: fock_ai
-      real(dp), dimension(:,:), allocatable  :: fock_ab
+      real(dp), dimension(:,:), allocatable :: fock_ij
+      real(dp), dimension(:,:), allocatable :: fock_ia
+      real(dp), dimension(:,:), allocatable :: fock_ai
+      real(dp), dimension(:,:), allocatable :: fock_ab
 !
       real(dp), dimension(:,:), allocatable :: density
       real(dp), dimension(:,:), allocatable :: left_transition_density
@@ -256,7 +256,11 @@ module ccs_class
       procedure :: right_transition_density_ccs_vv             => right_transition_density_ccs_vv_ccs
       procedure :: right_transition_density_ccs_gs_contr       => right_transition_density_ccs_gs_contr_ccs
 !
-      procedure :: binormalize_L_wrt_R                         => binormalize_L_wrt_R_ccs
+!     Routines related to post-processing excited states
+!
+      procedure :: biorthonormalize_L_and_R                    => biorthonormalize_L_and_R_ccs
+      procedure :: L_R_overlap                                 => L_R_overlap_ccs
+      procedure :: check_for_degenerate_states                 => check_for_degenerate_states_ccs
 !
 !     One-electron operators and mean value
 !
@@ -865,63 +869,21 @@ contains
    end subroutine set_cvs_start_indices_ccs
 !
 !
-   subroutine binormalize_L_wrt_R_ccs(wf, L, R, state)
+   real(dp) function L_R_overlap_ccs(wf, L, R)
 !!
 !!    Calculates the overlap of the left and right states 
-!!    and scales the left amplitudes by it
 !!    Written by Josefine Andersen, Apr 2019
-!!
-!!    Consistency/sanity check: Eirik F. Kjønstad, Aug 2019
 !!
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: R
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: L
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: R
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: L
 !
-      integer, intent(in) :: state
+      real(dp) :: ddot
 !
-      real(dp) :: ddot, LT_R
-      real(dp) :: energy_threshold
+      L_R_overlap_ccs = ddot(wf%n_es_amplitudes, L, 1, R, 1)
 !
-!     Sanity check in case roots are ordered incorrectly
-!
-      if (input%requested_keyword_in_section('energy threshold', 'solver cc es')) then 
-!
-        call input%get_keyword_in_section('energy threshold', 'solver cc es', energy_threshold)
-!
-      elseif (input%requested_keyword_in_section('residual threshold', 'solver cc es')) then 
-!
-        call input%get_keyword_in_section('residual threshold', 'solver cc es', energy_threshold)
-!
-      else
-!
-        call output%printf('Note: assuming default energy threshold (1.0d-6) when testing root consistency.', fs='(t6,a)')
-!
-        energy_threshold = 1.0d-6
-!
-      endif 
-!
-      if (abs(wf%left_excitation_energies(state) - wf%right_excitation_energies(state)) > energy_threshold) then 
-!
-          call output%printf('Eigenvector (i0) is not left-right consistent to threshold (e8.2).', &
-                              ints=[state], reals=[energy_threshold], fs='(/t6,a)')
-!
-          call output%printf('Energies (left, right): (f19.12) (f19.12)', &
-                reals=[wf%left_excitation_energies(state), wf%right_excitation_energies(state)], fs='(/t6,a)')
-!
-          call output%error_msg('while calculating transition strength.')
-!
-      !  else
-!
-         ! Note: consider to add in verbose mode
-         ! call output%printf('The left and right states corresponding to root (i0) are consistent', ints=[state])
-!
-      endif 
-!
-      LT_R = ddot(wf%n_es_amplitudes, L, 1, R, 1)
-      call dscal(wf%n_es_amplitudes, one/LT_R, L, 1)
-!
-   end subroutine binormalize_L_wrt_R_ccs
+   end function L_R_overlap_ccs
 !
 !
    subroutine form_newton_raphson_t_estimate_ccs(wf, t, dt)
@@ -1087,7 +1049,7 @@ contains
       class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(out) :: R_aibj
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                  :: R_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)               :: R_ai
 !
       real(dp), intent(in) :: omega
 !
@@ -1351,6 +1313,622 @@ contains
       endif
 !
    end subroutine read_frozen_orbital_contributions_ccs
+!
+!
+   subroutine check_for_degenerate_states_ccs(wf, transformation, threshold)
+!!
+!!    Check for degenerate states in the excited states
+!!    written by Alexander C. Paul and Rolf H. Myhre, Oct 2019
+!!
+!!    The solver might not ensure orthogonality of the states (e.g. in DIIS).
+!!    Therefore, degenerate roots might be found where the eigenvectors
+!!    are equal up to a sign (and within the convergence threshold)
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: transformation
+!
+      real(dp), intent(in) :: threshold
+!
+      real(dp), dimension(:,:), allocatable  :: R
+!
+      integer :: current_state, state
+      integer :: n_degeneracy, p, q
+      integer :: reduced_degeneracy
+!
+      current_state = 1
+!
+      do while (current_state .le. wf%n_singlet_states)
+!
+         n_degeneracy = 1
+         state = current_state + 1
+!
+!        Check for degeneracies in the excitation energies
+!        NB: energies are assumed to be sorted (cf. DIIS - quicksort)
+!
+         do while (state .le. wf%n_singlet_states)
+!
+            if (transformation .eq. 'right') then
+!
+               if (abs(wf%right_excitation_energies(state) - &
+                       wf%right_excitation_energies(current_state)) .gt. threshold) exit
+!
+            else if (transformation .eq. 'left') then
+!
+               if (abs(wf%left_excitation_energies(state) - &
+                       wf%left_excitation_energies(current_state)) .gt. threshold) exit
+!
+            else
+!
+               call output%error_msg('Tried to check for parallel states but argument ' &
+                                     // trim(transformation) // ' not recognized.')
+!
+            end if
+!
+            n_degeneracy = n_degeneracy + 1
+!
+            state = state + 1
+!
+         end do
+!
+!        If degeneracies are found:
+!           - read all degenerate states
+!           - loop through all state pairs (p != q): 
+!                 -If 2 states are parallel print warning 
+!                  and reduce the degree of degeneracy
+!
+         if (n_degeneracy .gt. 1) then
+!
+            call mem%alloc(R, wf%n_es_amplitudes, n_degeneracy)
+!
+            do p = 1, n_degeneracy
+               call wf%read_excited_state(R(:,p), current_state + p - 1, 'right')
+            end do
+!
+            reduced_degeneracy = n_degeneracy
+!
+            do p = 2, n_degeneracy ! if p == 1 then also q == 1 and we cycle anyway
+               do q = 1, p
+!
+                  if(p .eq. q) cycle
+!
+                  if(are_vectors_parallel(R(:,p), R(:,q), wf%n_es_amplitudes, threshold)) then
+!
+                     call output%printf('Warning: The (a0) states (i0) and (i0) are parallel.',&
+                                         ints=[current_state + p - 1, current_state + q - 1],  &
+                                         chars=[trim(transformation)], fs='(//t3,a)', pl='m')
+!
+                     reduced_degeneracy = reduced_degeneracy - 1
+!
+                  end if
+!
+               end do
+            end do
+!
+            if(reduced_degeneracy .gt. 1) then
+!
+               call output%printf('Found a (i0)-fold degeneracy involving the &
+                                  &(i0). state.', fs='(//t6,a)', pl='v',      &
+                                  ints=[reduced_degeneracy, current_state])
+!
+            end if
+!
+            call mem%dealloc(R, wf%n_es_amplitudes, n_degeneracy)
+!
+         end if
+!
+         current_state = current_state + n_degeneracy
+!
+      end do
+!
+   end subroutine check_for_degenerate_states_ccs
+!
+!
+   subroutine biorthonormalize_L_and_R_ccs(wf, energy_threshold, residual_threshold, skip_states)
+!!
+!!    Biorthonormalize the left and right eigenvectors
+!!    Written by Alexander C. Paul, Sep 2019
+!!
+!!    For that: 
+!!       - check if excitation energies are the same
+!!       - check for degenerate states
+!!       - check for and discard parallel states
+!!       - If degeneracies are present: biorthonormalize using Gram-Schmidt
+!!          following Kohaupt, L., Rocky Mountain J. Math., 44, 1265, (2014)
+!!       - Normalize and write to file
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), intent(in) :: energy_threshold, residual_threshold
+!
+      logical, dimension(wf%n_singlet_states), intent(inout) :: skip_states
+!
+      real(dp), dimension(:,:), allocatable :: R, R_normalized
+      real(dp), dimension(:,:), allocatable :: L, L_normalized
+!
+      real(dp), dimension(:), allocatable :: overlap_LR
+!
+      integer, dimension(:), allocatable :: order
+!
+      logical, dimension(:), allocatable :: parallel
+!
+      real(dp) :: LT_R, overlap_L_Rnorm, overlap_Lnorm_R, norm_R
+      real(dp) :: ddot
+!
+      integer :: state, current_state, prev_state, p, q
+      integer :: n_degeneracy, reduced_degeneracy_r, reduced_degeneracy_l
+      integer :: n_overlap_zero, state_nonzero_overlap
+!
+      logical :: biorthonormalize
+!
+!     Loop through states look for degenerate states (skip degeneracy)
+!     discard parallel states
+!     biorthonormalize degenerate states
+!
+      call output%printf('Biorthonormalization of left and right excited state vectors', &
+                          pl='v', fs='(/t3,a)')
+!
+      current_state = 1
+!
+      do while (current_state .le. wf%n_singlet_states)
+!
+         skip_states(current_state) = .false.
+!
+         if (abs(wf%left_excitation_energies(current_state) &
+               - wf%right_excitation_energies(current_state)) .lt. energy_threshold) then
+!
+            call output%printf('The left and right states corresponding to root (i0) &
+                               &are consistent', fs='(/t6,a)', ints=[current_state], pl='v')
+!
+            n_degeneracy = 1
+            state = current_state + 1
+!
+!           :: Check for degeneracies in both left and right excitation energies ::
+!
+            do while (state .le. wf%n_singlet_states)
+!
+               if(abs(wf%left_excitation_energies(state)          &
+                    - wf%left_excitation_energies(current_state)) &
+                  .gt. energy_threshold) exit
+!
+               if (abs(wf%right_excitation_energies(state)           &
+                     - wf%right_excitation_energies(current_state))  &
+                     .lt. energy_threshold) then
+!
+                  n_degeneracy = n_degeneracy + 1
+!
+               else 
+!
+                  call output%error_msg('Different degree of degeneracy in the   &
+                  &    left excited states compared to the right excited states')
+!
+               end if
+!
+               state = state + 1
+!
+            end do
+!
+            call output%printf('Degree of degeneracy: (i0)', fs='(t6,a)', &
+                                ints=[n_degeneracy], pl='debug')
+!
+            if(n_degeneracy .gt. 1) then
+!
+!              :: Check for parallel "right" states ::
+!
+               call mem%alloc(R, wf%n_es_amplitudes, n_degeneracy)
+!
+               do p = 1, n_degeneracy
+                  call wf%read_excited_state(R(:,p), current_state + p - 1, 'right')
+               end do
+!
+               reduced_degeneracy_r = n_degeneracy
+!
+               call mem%alloc(parallel, n_degeneracy)
+!
+               do p = 1, n_degeneracy
+!
+                  parallel(p) = .false.
+!
+                  do q = 1, p
+!
+                     if(q .eq. p) cycle
+!
+                     if(are_vectors_parallel(R(:,p), R(:,q), &
+                        wf%n_es_amplitudes, residual_threshold)) then
+!
+                        parallel(p) = .true.
+!
+                        call output%printf('Warning: The right states (i0) and (i0) &
+                                           &are parallel', pl='m', fs='(/t3,a)',   &
+                                           ints=[current_state+p-1, current_state+q-1])
+!
+                        reduced_degeneracy_r = reduced_degeneracy_r - 1
+!
+                     end if
+!
+                  end do
+               end do
+!
+!              Remove parallel state from array R
+               if(reduced_degeneracy_r .ne. n_degeneracy) then
+!
+                  state = 0
+!
+                  do p = 1, n_degeneracy
+                     if(parallel(p)) cycle
+!
+                     state = state + 1
+                     call dcopy(wf%n_es_amplitudes, &
+                                R(:,p), 1,          &
+                                R(:,state), 1)
+!
+                  end do
+!
+               end if
+!
+!              :: Check for parallel "left" states ::
+!
+               call mem%alloc(L, wf%n_es_amplitudes, n_degeneracy)
+!
+               do p = 1, n_degeneracy
+                  call wf%read_excited_state(L(:,p), current_state + p - 1, 'left')
+               end do
+!
+               reduced_degeneracy_l = n_degeneracy
+!
+               do p = 1, n_degeneracy
+!
+                  parallel(p) = .false.
+                  skip_states(current_state + p - 1) = .false.
+!
+                  do q = 1, p
+!
+                     if(q .eq. p) cycle
+!
+                     if(are_vectors_parallel(L(:,p), L(:,q), &
+                        wf%n_es_amplitudes, residual_threshold)) then
+!
+                        parallel(p) = .true.
+!
+                        call output%printf('Warning: The left states (i0) and (i0) &
+                                           &are parallel', pl='m', fs='(/t3,a)',   &
+                                           ints=[current_state + p - 1, current_state+q-1])
+!
+                        reduced_degeneracy_l = reduced_degeneracy_l - 1
+!
+                     end if
+!
+                  end do
+               end do
+!
+               if(reduced_degeneracy_l .ne. reduced_degeneracy_r) then
+                  call output%error_msg('Different degree of degeneracy in the &
+                                        &left excited states compared to the &
+                                        &right excited states')
+               end if
+!
+!              Remove parallel state from array L
+               if(reduced_degeneracy_l .ne. n_degeneracy) then
+!
+                  state = 0
+!
+                  do p = 1, n_degeneracy
+!
+                     if(p .gt. reduced_degeneracy_l) then
+                        skip_states(current_state + p - 1) = .true.
+                     end if
+!
+                     if(parallel(p)) cycle
+!
+                     state = state + 1
+!
+                     call dcopy(wf%n_es_amplitudes, &
+                                L(:,p), 1,          &
+                                L(:,state), 1)
+!
+                  end do
+!
+               end if
+!
+               if (reduced_degeneracy_r .gt. 1) then
+!
+                  call output%printf('Found a degeneracy between:', fs='(/t6,a)', pl='n')
+                  call output%printf('-----------------------------', fs='(t6,a)', pl='n')
+                  call output%printf('State     Excitation Energy', fs='(t6,a)', pl='n')
+!
+                  do p = 1, n_degeneracy
+!
+                     if(parallel(p)) cycle
+!
+                     call output%printf(' (i2)     (f19.12)', &
+                          fs='(t6,a)', pl='n',                &
+                          ints=[current_state + p - 1],       & 
+                          reals=[wf%right_excitation_energies(current_state+p-1)])
+!
+                  end do
+!
+               end if
+!
+               call mem%dealloc(parallel, n_degeneracy)
+!
+!              :: Biorthonormalize states ::
+!              -----------------------------
+!
+!                 (following Kohaupt, L., Rocky Mountain J. Math., 44, 1265, (2014))
+!
+!                 non degenerate L/R states are biorthogonal, thus only normalization needed
+!
+!                 degenerate L/R states should be biorthogonal as well
+!                 if not the k-th state is determined in terms of the 
+!                 previously biorthogonalized states i
+!
+!                 Intermediate:  L'(k) = L(k) - sum_i < L(k)|R"(i)> * L"(i)
+!                 Biorthonormal: L"(k) = < L'(k)|R(k)>^(-1) * L'(k)
+!
+!                 Biorthonormal: R"(k) = R(k) - sum_i < R(k)|L"(i)> * R"(i)
+!
+               call mem%alloc(L_normalized, wf%n_es_amplitudes, reduced_degeneracy_l)
+               call mem%alloc(R_normalized, wf%n_es_amplitudes, reduced_degeneracy_r)
+!
+               do p = 1, reduced_degeneracy_l
+!
+                  call dcopy(wf%n_es_amplitudes, &
+                           L(:,p), 1,            &
+                           L_normalized(:,p), 1)
+!
+               end do
+!
+               call mem%alloc(overlap_LR, reduced_degeneracy_r)
+               call mem%alloc(order, reduced_degeneracy_r)
+!
+!              We first check if the degenerate states are biorthogonal
+!              then we only need to binormalize (biorthonormalize = .false.).
+!              If we need to biorthonormalize the logical is set to .true.
+!              so that we don't run into the wrong branch of the if-statement
+!
+               biorthonormalize = .false.
+!
+               do state = 1, reduced_degeneracy_l
+!
+                  n_overlap_zero = 0
+                  state_nonzero_overlap = 0
+!
+                  do q = 1, reduced_degeneracy_r
+!
+!                    Overlap of Singles and Doubles should be enough also for CC3
+                     overlap_lr(q) = abs(ddot(wf%n_es_amplitudes, &
+                                              L(:,state), 1,      &
+                                              R(:,q), 1))
+!
+                     if(overlap_lr(q) .lt. residual_threshold) then
+!
+                        n_overlap_zero = n_overlap_zero + 1
+!
+                     else
+!
+                        state_nonzero_overlap = q
+!
+                     end if
+!
+                  end do
+!
+!                 Simple binormalization if only 1 right state 
+!                 has significant overlap with the L state
+!
+                  if((.not. biorthonormalize) .and. &
+                     (n_overlap_zero .eq. reduced_degeneracy_r-1)) then
+!
+                     call output%printf('Degenerate states except one are biorthogonal &
+                                       &- Thus, only binormalize', pl='v', fs='(/t6,a)')
+!
+                     LT_R = wf%L_R_overlap(L(:,state),                  &
+                                           R(:,state_nonzero_overlap))
+!
+!                    Sanity check that the left and corresponding right state are not orthogonal
+!
+                     if(abs(LT_R) .lt. 1.0d-2) then
+!
+                        call output%printf('Warning: Overlap of (i0). left and right state close to zero.', &
+                                          pl='m', ints=[current_state])
+!
+                     end if
+!
+!                    Normalize the new left state to the right state
+                     call dscal(wf%n_es_amplitudes,     &
+                                one/LT_R,               &
+                                L_normalized(:, state), & 
+                                1)
+!
+!                    Copy to have correct ordering in R_normalized
+                     call dcopy(wf%n_es_amplitudes,            &
+                                R(:,state_nonzero_overlap), 1, &
+                                R_normalized(:, state), 1)
+!
+                  else ! Actual biorthonormalization needed
+!
+                     call output%printf('Biorthonormalization of degenerate states', &
+                                         pl='n',fs='(/t6,a)')
+!
+!                    Make sure to not run into the other branch of the if statement
+                     biorthonormalize = .true.
+!
+!                    sort overlap_lr and select corresponding R state for L(p)
+!                    R(:,order(1)) has the maximal overlap with L(p)
+!
+                     call quicksort_with_index_descending(overlap_lr, &
+                                                          order,      &
+                                                          reduced_degeneracy_r)
+!
+                     call dcopy(wf%n_es_amplitudes,       &
+                                R(:,order(1)), 1,         &
+                                R_normalized(:,state), 1)
+!
+                     do prev_state = 1, state - 1
+!
+!                       :: Construct biorthogonal left state ::
+!
+!                       L'(k) = L(k) - sum_i < L(k)|R"(i)> * L"(i)
+!
+                        overlap_L_Rnorm = ddot(wf%n_es_amplitudes,         &
+                                               L(:,state),                 &
+                                               1,                          &
+                                               R_normalized(:,prev_state), &
+                                               1)
+!
+                        call daxpy(wf%n_es_amplitudes,         &
+                                   -overlap_L_Rnorm,           &
+                                   L_normalized(:,prev_state), &
+                                   1,                          &
+                                   L_normalized(:,state),      &
+                                   1)
+!
+!                       :: Construct biorthonormal right state ::
+!
+!                       R"(k) = R(k) - sum_i < R(k)|L"(i)> * R"(i)
+!
+                        overlap_Lnorm_R = ddot(wf%n_es_amplitudes,          &
+                                                R(:,order(1)),              &
+                                                1,                          &
+                                                L_normalized(:,prev_state), &
+                                                1)
+!
+                        call daxpy(wf%n_es_amplitudes,         &
+                                   -overlap_Lnorm_R,           &
+                                   R_normalized(:,prev_state), &
+                                   1,                          &
+                                   R_normalized(:,state),      &
+                                   1)
+!
+                     end do
+!
+!                    :: Binormalize L'(state) to the corresponding R-state ::
+!
+                     overlap_Lnorm_R = ddot(wf%n_es_amplitudes,    &
+                                            L_normalized(:,state), &
+                                            1,                     &
+                                            R(:,order(1)),         &
+                                            1)
+!
+                     call dscal(wf%n_es_amplitudes, one/overlap_Lnorm_R, L_normalized(:,state), 1)
+!
+!                    Zero out R state that has already been used
+!                    Thus, overlap_lr(q) will be zero and this state will not be selected again
+!
+                     call zero_array(R(:,order(1)), wf%n_es_amplitudes)
+!
+!                    :: Renormalize singles and doubles part of the right vectors ::
+!
+                     norm_R = ddot(wf%n_es_amplitudes,    &
+                                   R_normalized(:,state), &
+                                   1,                     &
+                                   R_normalized(:,state), &
+                                   1)
+!
+                     call dscal(wf%n_es_amplitudes, one/norm_R, R_normalized(:,state), 1)
+!
+!                    :: Binormalize the left to the right vectors ::
+!                    ::        including triples if present       ::
+!
+                     LT_R = wf%L_R_overlap(L_normalized(:,state), R_normalized(:,state))
+!
+!                    Sanity check that the left and corresponding right state are not orthogonal
+!
+                     if(abs(LT_R) .lt. 1.0d-2) then
+!
+                        call output%printf('Warning: Overlap of (i0). left and right state close to zero.', &
+                                          pl='m', ints=[current_state])
+!
+                     else if(abs(LT_R) .lt. residual_threshold) then
+!
+                        call output%printf('Overlap of (i0). left and right state less than &
+                                          &threshold: (e8.3).', reals=[residual_threshold], &
+                                          pl='m', ints=[current_state])
+!
+                        call output%error_msg('Trying to binormalize nonoverlapping states.')
+!
+                     end if
+!
+                     call dscal(wf%n_es_amplitudes, one/LT_R, L_normalized(:, state), 1)
+!
+                  end if
+!
+                  call wf%save_excited_state(L_normalized(:, state), current_state+state-1, 'left')
+                  call wf%save_excited_state(R_normalized(:, state), current_state+state-1, 'right')
+!
+               end do
+!
+               call mem%dealloc(R_normalized, wf%n_es_amplitudes, reduced_degeneracy_r)
+               call mem%dealloc(L_normalized, wf%n_es_amplitudes, reduced_degeneracy_l)
+!
+               call mem%dealloc(R, wf%n_es_amplitudes, n_degeneracy)
+               call mem%dealloc(L, wf%n_es_amplitudes, n_degeneracy)
+!
+               call mem%dealloc(overlap_LR, reduced_degeneracy_r)
+               call mem%dealloc(order, reduced_degeneracy_r)
+!
+!
+            else ! States are not degenerate, thus only binormalize
+!
+               call mem%alloc(R, wf%n_es_amplitudes, 1)
+               call wf%read_excited_state(R, current_state, 'right')
+!
+               call mem%alloc(L, wf%n_es_amplitudes, 1)
+               call wf%read_excited_state(L, current_state, 'left')
+!
+               LT_R = wf%L_R_overlap(L, R)
+!
+!              Sanity check that the left and corresponding right state are not orthogonal
+!
+               if(abs(LT_R) .lt. 1.0d-2) then
+!
+                  call output%printf('Warning: Overlap of (i0). left and right state close to zero.', &
+                                     pl='m', ints=[current_state])
+!
+               else if(abs(LT_R) .lt. residual_threshold) then
+!
+                  call output%printf('Overlap of (i0). left and right state less than &
+                                    &threshold: (e8.3).', reals=[residual_threshold], &
+                                     pl='m', ints=[current_state])
+!
+                  call output%error_msg('Trying to binormalize biorthogonal states.')
+!
+               end if
+!
+               call mem%dealloc(R, wf%n_es_amplitudes, 1)
+!
+!              Normalize the new left state to the right state
+               call dscal(wf%n_es_amplitudes, 1/LT_R, L, 1)
+!
+               call wf%save_excited_state(L, current_state, 'left')
+!
+               call mem%dealloc(L, wf%n_es_amplitudes, 1)
+!
+            end if
+!
+         else ! Sanity check failed - roots ordered incorrectly
+!
+            call output%printf('Eigenvector (i0) is not left-right consistent &
+                              & to threshold (e8.3).', fs='(/t6,a)', pl='m',  &
+                                ints=[current_state], reals=[energy_threshold])
+!
+            call output%printf('Energies (left, right): (f19.12) (f19.12)', &
+                 reals=[wf%left_excitation_energies(current_state),         &
+                 wf%right_excitation_energies(current_state)], fs='(/t6,a)',&
+                 pl='m')
+!
+            call output%error_msg('while biorthonormalizing.')
+!
+         end if
+!
+         current_state = current_state + n_degeneracy
+!
+      end do
+!
+   end subroutine biorthonormalize_L_and_R_ccs
 !
 !
 end module ccs_class

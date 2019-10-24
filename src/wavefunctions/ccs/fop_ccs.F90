@@ -513,8 +513,6 @@ contains
 !! 
 !!    The left and right states L and R are read from file and made binormal by the routine.
 !!
-!!    Consistency/sanity check: Eirik F. Kjønstad, Aug 2019
-!!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -531,12 +529,11 @@ contains
 !
       real(dp) :: ddot
 !
-!     Read states and make them binormal by scaling the left vector 
-!
       call mem%alloc(L, wf%n_es_amplitudes)
       call mem%alloc(R, wf%n_es_amplitudes)
 !
-      call wf%binormalize_L_wrt_R(L, R, state)
+      call wf%read_excited_state(L , state, 'left')
+      call wf%read_excited_state(R , state, 'right')
 !
 !     Left and right transition moments
 !

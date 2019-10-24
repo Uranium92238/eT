@@ -283,7 +283,7 @@ contains
             reals=[get_l2_norm(X(1:wf%n_t1,state),wf%n_t1)/get_l2_norm(X(:,state),wf%n_es_amplitudes)], &
             chars=[label, label], fs='(t6,a)')
 !
-         call wf%print_dominant_x_amplitudes(X(1,state), label)
+         call wf%print_dominant_x_amplitudes(X(1, state), label)
 !
       enddo 
 !
@@ -319,15 +319,19 @@ contains
 !
       if (solver%transformation == 'right') then 
 !
-         call wf%prepare_for_jacobian()
          call wf%initialize_excited_state_files('right')
+         call wf%prepare_for_jacobian()
 !
-      end if
+      else if (solver%transformation == 'left') then 
 !
-      if (solver%transformation == 'left') then 
-!
-         call wf%prepare_for_jacobian_transpose()
          call wf%initialize_excited_state_files('left')
+         call wf%prepare_for_jacobian_transpose()
+!
+      else if (solver%transformation == 'both') then 
+!
+         call wf%initialize_excited_state_files('both')
+         call wf%prepare_for_jacobian()
+         call wf%prepare_for_jacobian_transpose()
 !
       end if
 !
