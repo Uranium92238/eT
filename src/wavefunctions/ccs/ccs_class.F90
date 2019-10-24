@@ -389,14 +389,6 @@ contains
 !
       call wf%read_hf()
 !
-!     Set orbital coefficients and energies
-!
-      call wf%initialize_orbital_coefficients()
-      call wf%initialize_orbital_energies()
-!
-      call wf%read_orbital_coefficients()
-      call wf%read_orbital_energies()
-!
 !     Handle changes in the number of MOs as a result of 
 !     special methods
 !
@@ -475,7 +467,8 @@ contains
 !
       class(ccs) :: wf
 !
-      type(sequential_file) :: orbital_information_file 
+      type(sequential_file) :: orbital_information_file
+      type(sequential_file) :: CC_orbitals_file, CC_orbital_energies_file
 !
       orbital_information_file = sequential_file('orbital_information')
       call orbital_information_file%open_('read', 'rewind')
@@ -487,6 +480,25 @@ contains
       call orbital_information_file%read_(wf%hf_energy)    
 !
       call orbital_information_file%close_()
+!
+!     Set orbital coefficients and energies
+!
+      call wf%initialize_orbital_coefficients()
+      call wf%initialize_orbital_energies()
+!
+      CC_orbitals_file = sequential_file('cc_orbital_coefficients')
+      call CC_orbitals_file%open_('read', 'rewind')
+!
+      call CC_orbitals_file%read_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
+!
+      call CC_orbitals_file%close_('keep')
+!
+      CC_orbital_energies_file = sequential_file('cc_orbital_energies')
+      call CC_orbital_energies_file%open_('read', 'rewind')
+!
+      call CC_orbital_energies_file%read_(wf%orbital_energies, wf%n_mo)
+!
+      call CC_orbital_energies_file%close_('keep')
 !
    end subroutine read_hf_ccs
 !

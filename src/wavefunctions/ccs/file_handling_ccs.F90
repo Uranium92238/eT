@@ -43,7 +43,6 @@ contains
 !!
       class(ccs) :: wf 
 !
-      call wf%initialize_wavefunction_files()
       call wf%initialize_cc_files()
       call wf%initialize_ground_state_files()
 !

@@ -52,9 +52,6 @@ module wavefunction_class
       real(dp), dimension(:,:), allocatable :: orbital_coefficients
       real(dp), dimension(:), allocatable :: orbital_energies
 !
-      type(sequential_file) :: orbital_coefficients_file
-      type(sequential_file) :: orbital_energies_file
-!
 !     Frozen orbital variables. Frozen orbitals are typically frozen core or frozen HF orbitals.
 !
       real(dp), dimension(:,:), allocatable :: mo_fock_fc_contribution 
@@ -93,13 +90,6 @@ module wavefunction_class
       procedure :: get_mo_q                        => get_mo_q_wavefunction
 !
       procedure :: mo_transform                    => mo_transform_wavefunction
-!
-      procedure :: initialize_wavefunction_files   => initialize_wavefunction_files_wavefunction
-!
-      procedure :: read_orbital_coefficients       => read_orbital_coefficients_wavefunction
-      procedure :: save_orbital_coefficients       => save_orbital_coefficients_wavefunction
-      procedure :: read_orbital_energies           => read_orbital_energies_wavefunction
-      procedure :: save_orbital_energies           => save_orbital_energies_wavefunction
 !
       procedure :: is_restart_safe                 => is_restart_safe_wavefunction 
 !
@@ -358,21 +348,6 @@ contains
       if (.not. allocated(wf%orbital_coefficients)) call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
 !
    end subroutine initialize_orbital_coefficients_wavefunction
-!
-!
-   subroutine initialize_wavefunction_files_wavefunction(wf)
-!!
-!!    Initialize wavefunction files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
-!!
-      implicit none 
-!
-      class(wavefunction) :: wf 
-!
-      wf%orbital_coefficients_file = sequential_file('orbital_coefficients')
-      wf%orbital_energies_file = sequential_file('orbital_energies')
-!
-   end subroutine initialize_wavefunction_files_wavefunction
 !
 !
    subroutine destruct_orbital_coefficients_wavefunction(wf)
@@ -710,78 +685,6 @@ contains
 !$omp end parallel do
 !
    end subroutine get_ao_q_wx_wavefunction
-!
-!
-   subroutine save_orbital_coefficients_wavefunction(wf)
-!!
-!!    Save orbital coefficients 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
-!!
-      implicit none 
-!
-      class(wavefunction), intent(inout) :: wf 
-!
-      call wf%orbital_coefficients_file%open_('write', 'rewind')
-!
-      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
-!
-      call wf%orbital_coefficients_file%close_
-!
-   end subroutine save_orbital_coefficients_wavefunction
-!
-!
-   subroutine read_orbital_coefficients_wavefunction(wf)
-!!
-!!    Save orbital coefficients 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
-!!
-      implicit none 
-!
-      class(wavefunction), intent(inout) :: wf 
-!
-      call wf%orbital_coefficients_file%open_('read', 'rewind')
-!
-      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
-!
-      call wf%orbital_coefficients_file%close_
-!
-   end subroutine read_orbital_coefficients_wavefunction
-!
-!
-   subroutine save_orbital_energies_wavefunction(wf)
-!!
-!!    Save orbital energies 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
-!!
-      implicit none 
-!
-      class(wavefunction), intent(inout) :: wf 
-!
-      call wf%orbital_energies_file%open_('write', 'rewind')
-!
-      call wf%orbital_energies_file%write_(wf%orbital_energies, wf%n_mo)
-!
-      call wf%orbital_energies_file%close_
-!
-   end subroutine save_orbital_energies_wavefunction
-!
-!
-   subroutine read_orbital_energies_wavefunction(wf)
-!!
-!!    Save orbital energies 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
-!!
-      implicit none 
-!
-      class(wavefunction), intent(inout) :: wf 
-!
-      call wf%orbital_energies_file%open_('read', 'rewind')
-!
-      call wf%orbital_energies_file%read_(wf%orbital_energies, wf%n_mo)
-!
-      call wf%orbital_energies_file%close_
-!
-   end subroutine read_orbital_energies_wavefunction
 !
 !
    subroutine is_restart_safe_wavefunction(wf, task)

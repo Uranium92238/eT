@@ -67,32 +67,19 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
-      type(sequential_file) :: orbital_information_file 
-!
       wf%name_ = 'mp2'
 !
       wf%system => system
 !
-      orbital_information_file = sequential_file('orbital_information')
+      call wf%general_cc_preparations(system)
 !
-      call orbital_information_file%open_('read', 'rewind')
+      wf%n_t1            = (wf%n_o)*(wf%n_v)
+      wf%n_gs_amplitudes = wf%n_t1
+      wf%n_es_amplitudes = wf%n_t1
 !
-      call orbital_information_file%read_(wf%n_o)
-      call orbital_information_file%read_(wf%n_v)
-      call orbital_information_file%read_(wf%n_ao)
-      call orbital_information_file%read_(wf%n_mo)
-      call orbital_information_file%read_(wf%hf_energy)
+      call wf%write_cc_restart()
 !
-      call orbital_information_file%close_()
-!
-      call wf%initialize_files()
-!
-      call wf%initialize_orbital_coefficients()
-      call wf%initialize_orbital_energies()
-!
-      call wf%read_orbital_coefficients()
-      call wf%read_orbital_energies()
-!
+      call wf%initialize_fock()
       call wf%initialize_amplitudes()
       call zero_array(wf%t1, wf%n_o*wf%n_v)
 !
