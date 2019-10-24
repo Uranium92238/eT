@@ -319,17 +319,16 @@ contains
 !
       if (solver%transformation == 'right') then 
 !
-         call wf%initialize_excited_state_files('right')
          call wf%prepare_for_jacobian()
+         call wf%initialize_excited_state_files('right')
 !
       else if (solver%transformation == 'left') then 
 !
-         call wf%initialize_excited_state_files('left')
          call wf%prepare_for_jacobian_transpose()
+         call wf%initialize_excited_state_files('left')
 !
       else if (solver%transformation == 'both') then 
 !
-         call wf%initialize_excited_state_files('both')
          call wf%prepare_for_jacobian()
          call wf%prepare_for_jacobian_transpose()
 !
@@ -351,10 +350,11 @@ contains
 !
       integer :: n_left_vectors_on_file, n_right_vectors_on_file
 !
-      n_left_vectors_on_file = wf%get_n_excited_states_on_file('left')
-      n_right_vectors_on_file = wf%get_n_excited_states_on_file('right')
-!
       if (solver%transformation == 'right') then 
+!
+!        Dirty hack to disable right restart from left for now !!!!!
+         n_right_vectors_on_file = wf%get_n_excited_states_on_file('right')
+         n_left_vectors_on_file = 0
 !
          if (n_right_vectors_on_file > 0) then 
 !
@@ -371,6 +371,10 @@ contains
          endif 
 !
       elseif (solver%transformation == 'left') then
+!
+!        Dirty hack to disable left restart from right for now !!!!!
+         n_left_vectors_on_file = wf%get_n_excited_states_on_file('left')
+         n_right_vectors_on_file = 0
 !
          if (n_left_vectors_on_file > 0) then 
 !

@@ -425,11 +425,11 @@ contains
 !
       if (trim(side) .eq. 'right') then
 !
-         n_states = wf%r_files%n_records
+         n_states = wf%r_files%n_preexisting_files
 !
       else if (trim(side) .eq. 'left') then
 !
-         n_states = wf%l_files%n_records
+         n_states = wf%l_files%n_preexisting_files
 !
       else 
 !

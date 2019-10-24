@@ -201,7 +201,7 @@ contains
 !
       if (records_in_memory) then 
 !
-         call output%printf('Storing DIIS records in memory.', pl='m', fs='(/t3,a)')
+         call output%printf('Storing DIIS records in memory.', pl='v', fs='(/t3,a)')
 !
          diis%e_vectors = memory_storer(trim(diis%name_) // '_e', &
                            diis%n_equations, diis%dimension_)
@@ -211,7 +211,7 @@ contains
 !
       else 
 !
-         call output%printf('Storing DIIS records on file.', pl='m', fs='(/t3,a)')
+         call output%printf('Storing DIIS records on file.', pl='v', fs='(/t3,a)')
 !
          diis%e_vectors = sequential_storer(trim(diis%name_) // '_e', &
                            diis%n_equations, diis%dimension_, delete=.true.)
