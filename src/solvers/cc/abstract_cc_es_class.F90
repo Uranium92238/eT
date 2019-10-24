@@ -77,8 +77,8 @@ module abstract_cc_es_class
 !
       type(timings) :: timer
 !
-      class(es_start_vector_tool), allocatable  :: start_vector_tool
-      class(es_projection_tool), allocatable    :: projection_tool
+      class(es_start_vector_tool), allocatable  :: start_vectors
+      class(es_projection_tool), allocatable    :: projector
 !
    contains
 !
@@ -408,16 +408,16 @@ contains
 !
       if (trim(solver%es_type) == 'valence') then 
 !
-         solver%start_vector_tool = es_valence_start_vector_tool(wf)
+         solver%start_vectors = es_valence_start_vector_tool(wf)
 !
       elseif (trim(solver%es_type) == 'core') then 
 !
          call wf%read_cvs_settings()
-         solver%start_vector_tool = es_cvs_start_vector_tool(wf)
+         solver%start_vectors = es_cvs_start_vector_tool(wf)
 !
       elseif (trim(solver%es_type) == 'ionize') then 
 !
-         solver%start_vector_tool = es_ip_start_vector_tool(wf)
+         solver%start_vectors = es_ip_start_vector_tool(wf)
 !
       else 
 !
@@ -441,15 +441,15 @@ contains
 !
       if (trim(solver%es_type) == 'valence') then 
 !
-         solver%projection_tool = es_valence_projection_tool()
+         solver%projector = es_valence_projection_tool()
 !
       elseif (trim(solver%es_type) == 'core') then 
 !
-         solver%projection_tool = es_cvs_projection_tool(wf)
+         solver%projector = es_cvs_projection_tool(wf)
 !
       elseif (trim(solver%es_type) == 'ionize') then 
 !
-         solver%projection_tool = es_ip_projection_tool(wf)
+         solver%projector = es_ip_projection_tool(wf)
 !
       else 
 !

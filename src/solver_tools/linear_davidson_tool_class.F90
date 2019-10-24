@@ -337,7 +337,7 @@ contains
       call mem%alloc(trial, davidson%n_parameters)
       call dcopy(davidson%n_parameters, R, 1, trial, 1)
 !
-      if (davidson%do_precondition) call davidson%precondition(trial, alpha_local)
+      if (davidson%do_precondition) call davidson%preconditioner%do_(trial, shift=alpha_local)
 !
 !     Renormalize 
 !
@@ -362,12 +362,6 @@ contains
       implicit none 
 !
       class(linear_davidson_tool) :: davidson 
-!
-      if (davidson%do_precondition) then 
-!
-         call mem%dealloc(davidson%preconditioner, davidson%n_parameters)
-!
-      endif
 !
       if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
       if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)

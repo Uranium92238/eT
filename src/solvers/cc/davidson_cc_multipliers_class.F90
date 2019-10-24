@@ -205,7 +205,7 @@ contains
       else ! Use - eta_mu / eps_mu as first trial 
 !
          call dscal(wf%n_gs_amplitudes, -one, eta, 1)
-         call davidson%precondition(eta)
+         call davidson%preconditioner%do_(eta)
 !
          norm_trial = sqrt(ddot(wf%n_gs_amplitudes, eta, 1, eta, 1))
          call dscal(wf%n_gs_amplitudes, one/norm_trial, eta, 1)

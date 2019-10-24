@@ -49,7 +49,7 @@ module es_projection_tool_class
 !
    contains
 !
-      procedure :: project => project_es_projection_tool 
+      procedure :: do_ => do_es_projection_tool 
 !
    end type es_projection_tool
 !
@@ -57,12 +57,12 @@ module es_projection_tool_class
 contains 
 !
 !
-   subroutine project_es_projection_tool(tool, R)
+   subroutine do_es_projection_tool(tool, R)
 !!
-!!    Project
+!!    Do
 !!    Written by Sarai D. Folkestad, 2018-2019
 !!
-!!    Does the operation:
+!!    Does the projection operation:
 !!
 !!       R(i) = R(i)*projector(i).
 !!
@@ -87,7 +87,7 @@ contains
       enddo  
 !$omp end parallel do
 !
-   end subroutine project_es_projection_tool
+   end subroutine do_es_projection_tool
 !
 !
 end module es_projection_tool_class

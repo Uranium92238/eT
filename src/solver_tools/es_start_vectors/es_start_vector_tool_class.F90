@@ -29,7 +29,7 @@ module es_start_vector_tool_class
 !!
 !!    A solver can request the nth start vector R as follows:
 !!
-!!       call start_vector_tool%get_vector(R, n).
+!!       call start_vector_tool%get(R, n).
 !!
 !!    Initialization depends on the constructor; see descendants. 
 !!
@@ -48,7 +48,7 @@ module es_start_vector_tool_class
 !
    contains
 !
-      procedure :: get_vector => get_vector_es_start_vector_tool
+      procedure :: get => get_es_start_vector_tool
 !
    end type es_start_vector_tool
 !
@@ -56,9 +56,9 @@ module es_start_vector_tool_class
 contains 
 !
 !
-   subroutine get_vector_es_start_vector_tool(tool, R, n)
+   subroutine get_es_start_vector_tool(tool, R, n)
 !!
-!!    Get vector 
+!!    Get 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
 !!
 !!    Sets the nth vector R equal to the starting guess according to the 
@@ -75,7 +75,7 @@ contains
       call zero_array(R, tool%vector_length)
       R(tool%indices(n)) = one
 !
-   end subroutine get_vector_es_start_vector_tool
+   end subroutine get_es_start_vector_tool
 !
 !
 end module es_start_vector_tool_class

@@ -344,7 +344,7 @@ contains
       call dcopy(wf%n_gs_amplitudes, omega, 1, first_trial, 1)
       call dscal(wf%n_gs_amplitudes, -one, first_trial, 1) 
 !
-      call davidson%precondition(first_trial)
+      call davidson%preconditioner%do_(first_trial)
 !
       norm_trial = sqrt(ddot(wf%n_gs_amplitudes, first_trial, 1, first_trial, 1))
       call dscal(wf%n_gs_amplitudes, one/norm_trial, first_trial, 1)

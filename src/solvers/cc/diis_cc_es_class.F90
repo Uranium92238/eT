@@ -28,6 +28,7 @@ module diis_cc_es_class
    use ccs_class
    use diis_tool_class
    use abstract_cc_es_class, only: abstract_cc_es
+   use precondition_tool_class, only: precondition_tool
    use es_valence_start_vector_tool_class, only: es_valence_start_vector_tool
    use es_valence_projection_tool_class, only: es_valence_projection_tool
    use array_utilities, only: quicksort_with_index_ascending
@@ -37,6 +38,8 @@ module diis_cc_es_class
    type, extends(abstract_cc_es) :: diis_cc_es
 !
       integer :: diis_dimension
+!
+      class(precondition_tool), allocatable :: preconditioner 
 !
    contains
 !     
@@ -71,6 +74,8 @@ contains
       class(ccs), intent(inout) :: wf
 !
       character(len=*), intent(in) :: transformation
+!
+      real(dp), dimension(:), allocatable :: eps 
 !
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
       call solver%timer%turn_on()
@@ -121,6 +126,15 @@ contains
       call solver%prepare_wf_for_excited_state(wf)
 
       if (wf%frozen_core .and. solver%es_type=='core') call output%error_msg('No support for frozen core with CVS yet.')
+!
+!     Initialize preconditioner 
+!
+      call mem%alloc(eps, wf%n_es_amplitudes)
+      call wf%get_es_orbital_differences(eps, wf%n_es_amplitudes)
+!
+      solver%preconditioner = precondition_tool(eps, wf%n_es_amplitudes)
+!
+      call mem%dealloc(eps, wf%n_es_amplitudes)
 !
    end function new_diis_cc_es
 !
@@ -193,7 +207,7 @@ contains
 !
       type(diis_tool), dimension(:), allocatable :: diis 
 !
-      integer :: iteration, state, amplitude, n_solutions_on_file
+      integer :: iteration, state, n_solutions_on_file
 !
       character(len=3) :: string_state
 !
@@ -242,7 +256,7 @@ contains
 !
       do state = 1, solver%n_singlet_states
 !
-         call solver%start_vector_tool%get_vector(X(:,state), state)
+         call solver%start_vectors%get(X(:,state), state)
 !
       enddo 
 !
@@ -288,35 +302,33 @@ contains
 !
             if (.not. converged(state)) then 
 !
-!              Construct the transformed vector
+!              Construct R = AX 
+!
                call dcopy(wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
-               call wf%construct_Jacobian_transform(solver%transformation, R(:,state), &
-                                                    solver%energies(state))
 !
-!              Project if relavant (CVS, bath orbitals)
-               if (solver%projection_tool%active) call solver%projection_tool%project(R(:,state))
+               call wf%construct_Jacobian_transform(solver%transformation, &
+                                                      R(:,state),          &
+                                                      solver%energies(state))
 !
-!              Calculate energy, X is normalized
+!              Project if relevant (CVS, IP)
+!
+               if (solver%projector%active) call solver%projector%do_(R(:,state))
+!
+!              Calculate energy E = X^T R = X^T A X
+!
                solver%energies(state) = ddot(wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
 !
-!              Subtract energy*X to get residual
+!              Construct residual, R = A X - energy X, and calculate its norm           
+!
                call daxpy(wf%n_es_amplitudes, -solver%energies(state), X(:,state), 1, R(:,state), 1)
 !
-!              Calculate residual norm
                residual_norms(state) = get_l2_norm(R(:, state), wf%n_es_amplitudes)
-!
-!$omp parallel do private(amplitude)
-               do amplitude = 1, wf%n_es_amplitudes
-!
-                  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude) - solver%energies(state))
-!
-               enddo
-!$omp end parallel do 
 !
 !              Update convergence logicals 
 !
                converged_eigenvalue(state) = abs(solver%energies(state)-prev_energies(state)) &
                                                       .lt. solver%eigenvalue_threshold
+!
                converged_residual(state)   = residual_norms(state) .lt. solver%residual_threshold
 !
                converged(state) = converged_eigenvalue(state) .and. converged_residual(state)
@@ -332,12 +344,19 @@ contains
 !
                if (.not. converged(state)) then
 !
+!                 Form quasi-Newton estimate for X 
+!
+                  call solver%preconditioner%do_(R(:,state), shift=solver%energies(state))
+!
                   call daxpy(wf%n_es_amplitudes, one, R(1, state), 1, X(1, state), 1)
+!
+!                 DIIS extrapolate using previous quasi-Newton estimates
 !
                   call diis(state)%update(R(:,state), X(:,state))
 !
-                  norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
+!                 Renormalize X 
 !
+                  norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
                   call dscal(wf%n_es_amplitudes, one/norm_X, X(1, state), 1)
 !
                endif 
