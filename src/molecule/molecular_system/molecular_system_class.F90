@@ -48,6 +48,8 @@ module molecular_system_class
       character(len=200) :: name_
       character(len=100), dimension(:), allocatable :: basis_sets
 !
+      character(len=100) :: coordinate_units = 'angstrom'
+!
       integer :: n_atoms
       integer :: n_basis_sets 
       integer :: charge
@@ -541,8 +543,13 @@ contains
 !!
 !!    Read geometry
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Modified by Åsmund H. Tveten, Oct 2019. Ensuring that
+!!    coordinates are read in units of Ångström.
 !!
-!!    Read atoms and their coordinates, assumed to be in units of Ångstrøm.
+!!    Read atoms and their coordinates.
+!!    The coordinates are assumed to be in units of Ångström by
+!!    default; if units of Bohr are specified, they will be
+!!    converted to Ångström.
 !!
 !!    In eT, atoms are ordered after basis set, with the first basis
 !!    set specified on input first.
@@ -572,6 +579,13 @@ contains
 !
       character(len=100) :: current_basis
 !
+      logical :: units_angstrom
+!
+      real(dp) :: angstrom_conversion
+!
+      units_angstrom = .true.
+      angstrom_conversion = one
+!
       molecule%n_atoms = input%get_n_atoms()
 !
       call mem%alloc(positions, molecule%n_atoms, 3)
@@ -579,9 +593,18 @@ contains
       allocate(symbols(molecule%n_atoms))
       allocate(basis_sets(molecule%n_atoms))
 !
-      call input%get_geometry(molecule%n_atoms, symbols, positions, basis_sets)
+      call input%get_geometry(molecule%n_atoms, symbols, positions, basis_sets, units_angstrom)
 !
       call molecule%initialize_atoms()
+!
+!     Set coordinate conversion factor if geometry is given in units of Bohr
+!
+      if(.not. units_angstrom) then
+!
+         angstrom_conversion = bohr_to_angstrom
+         molecule%coordinate_units = 'bohr'
+!
+      endif
 !
 !     1. Place the first atom in atoms
 !
@@ -589,9 +612,9 @@ contains
 !
       molecule%atoms(current_atom)%symbol       = symbols(current_atom)
       molecule%atoms(current_atom)%basis        = basis_sets(current_atom)
-      molecule%atoms(current_atom)%x            = positions(current_atom,1)
-      molecule%atoms(current_atom)%y            = positions(current_atom,2)
-      molecule%atoms(current_atom)%z            = positions(current_atom,3)
+      molecule%atoms(current_atom)%x            = positions(current_atom,1)*angstrom_conversion
+      molecule%atoms(current_atom)%y            = positions(current_atom,2)*angstrom_conversion
+      molecule%atoms(current_atom)%z            = positions(current_atom,3)*angstrom_conversion
 !
       molecule%atoms(current_atom)%input_number = current_atom
 !
@@ -614,9 +637,9 @@ contains
 !
                molecule%atoms(current_atom)%symbol       = symbols(atom)
                molecule%atoms(current_atom)%basis        = basis_sets(atom)
-               molecule%atoms(current_atom)%x            = positions(atom,1)
-               molecule%atoms(current_atom)%y            = positions(atom,2)
-               molecule%atoms(current_atom)%z            = positions(atom,3)
+               molecule%atoms(current_atom)%x            = positions(atom,1)*angstrom_conversion
+               molecule%atoms(current_atom)%y            = positions(atom,2)*angstrom_conversion
+               molecule%atoms(current_atom)%z            = positions(atom,3)*angstrom_conversion
 !
                molecule%atoms(current_atom)%input_number = atom
 !
@@ -634,9 +657,9 @@ contains
 !
                molecule%atoms(current_atom)%symbol       = symbols(atom)
                molecule%atoms(current_atom)%basis        = basis_sets(atom)
-               molecule%atoms(current_atom)%x            = positions(atom,1)
-               molecule%atoms(current_atom)%y            = positions(atom,2)
-               molecule%atoms(current_atom)%z            = positions(atom,3)
+               molecule%atoms(current_atom)%x            = positions(atom,1)*angstrom_conversion
+               molecule%atoms(current_atom)%y            = positions(atom,2)*angstrom_conversion
+               molecule%atoms(current_atom)%z            = positions(atom,3)*angstrom_conversion
 !
                molecule%atoms(current_atom)%input_number = atom
 !
@@ -1742,26 +1765,27 @@ contains
 !!    Print geometry 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!    Modified by Tommaso Giovannini, March 2019
+!!    Modified by Åsmund H. Tveten, Oct 2019. Switched to printf function.
 !!
       implicit none 
 !
       class(molecular_system) :: molecule  
 !
-      write(output%unit, '(/t3,a)')       '- Molecular system specifications:'
+      call output%printf('- Molecular system specifications:', pl='m', fs='(/t3,a)')
 !
-      write(output%unit, '(/t6,a14,a)')      'Name:         ', trim(molecule%name_)
-      write(output%unit, '(t6,a14,i1)')      'Charge:       ', molecule%charge 
-      write(output%unit, '(t6,a14,i1)')      'Multiplicity: ', molecule%multiplicity 
+      call output%printf('Name:             (a0)', pl='m', fs='(/t6,a)', chars=[trim(molecule%name_)])
+      call output%printf('Charge:           (i1)', pl='m', fs='(t6,a)',  ints=[molecule%charge]) 
+      call output%printf('Multiplicity:     (i1)', pl='m', fs='(t6,a)',  ints=[molecule%multiplicity]) 
+      call output%printf('Coordinate units: (a0)', pl='m', fs='(t6,a)',  chars=[trim(molecule%coordinate_units)])
 !
 !
-      write(output%unit, '(/t6,a27,i5)')     'Pure basis functions:      ', molecule%n_pure_basis
-      write(output%unit, '(t6,a27,i5)')      'Cartesian basis functions: ', molecule%n_cart_basis
-      write(output%unit, '(t6,a27,i5)')      'Primitive basis functions: ', molecule%n_primitives_cart
+      call output%printf('Pure basis functions:      (i5)', pl='m', fs='(/t6,a)', ints=[molecule%n_pure_basis])
+      call output%printf('Cartesian basis functions: (i5)', pl='m', fs='(t6,a)',  ints=[molecule%n_cart_basis])
+      call output%printf('Primitive basis functions: (i5)', pl='m', fs='(t6,a)',  ints=[molecule%n_primitives_cart])
 !
-      write(output%unit, '(/t6,a35,f25.12)') 'Nuclear repulsion energy (a.u.):   ', molecule%get_nuclear_repulsion()
-      write(output%unit, '(t6,a35,f25.12)')  'Bohr/angstrom value (CODATA 2010): ', bohr_to_angstrom
-!
-      flush(output%unit)
+      call output%printf('Nuclear repulsion energy (a.u.):   (f25.12)', pl='m', fs='(/t6,a)', & 
+      reals=[molecule%get_nuclear_repulsion()])
+      call output%printf('Bohr/angstrom value (CODATA 2010): (f25.12)', pl='m', fs='(t6,a)',  reals=[bohr_to_angstrom])
 !
       call molecule%print_geometry()
 !

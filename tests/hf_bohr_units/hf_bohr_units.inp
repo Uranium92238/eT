@@ -1,0 +1,31 @@
+system
+   name: H2O-He
+   charge: 0
+end system
+
+do
+   ground state
+end do
+
+memory
+   available: 8
+end memory
+
+solver scf
+   algorithm:          scf-diis
+   energy threshold:   1.0d-10
+   gradient threshold: 1.0d-10
+end solver scf
+
+method
+   hf
+end method
+
+geometry
+units: bohr
+basis: cc-pVDZ
+H          1.63804        1.13656        9.44865
+F         -1.63804        1.13656        9.44865
+O          0.00000       -0.14322        9.44856
+He         0.00000        0.00000        14.1730
+end geometry
