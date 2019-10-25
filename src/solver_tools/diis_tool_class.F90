@@ -67,7 +67,7 @@ module diis_tool_class
 !
    use sequential_file_class, only : sequential_file
    use record_storer_class, only : record_storer  
-   use sequential_storer_class, only : sequential_storer  
+   use file_storer_class, only : file_storer  
    use memory_storer_class, only : memory_storer  
 !
    use memory_manager_class, only : mem
@@ -213,9 +213,9 @@ contains
 !
          call output%printf('Storing DIIS records on file.', pl='v', fs='(/t3,a)')
 !
-         diis%e_vectors = sequential_storer(trim(diis%name_) // '_e', &
+         diis%e_vectors = file_storer(trim(diis%name_) // '_e', &
                            diis%n_equations, diis%dimension_, delete=.true.)
-         diis%x_vectors = sequential_storer(trim(diis%name_) // '_x', &
+         diis%x_vectors = file_storer(trim(diis%name_) // '_x', &
                            diis%n_parameters, diis%dimension_, delete=.true.)
 !
       endif 
@@ -232,7 +232,9 @@ contains
 !
       type(diis_tool) :: diis
 !
-      call diis%diis_matrix%delete_()
+      if (diis%iteration .gt. 1) then
+         call diis%diis_matrix%delete_()
+      endif
 !
    end subroutine destructor
 !

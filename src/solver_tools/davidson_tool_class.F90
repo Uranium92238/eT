@@ -28,7 +28,7 @@ module davidson_tool_class
 !
    use record_storer_class, only: record_storer
    use memory_storer_class, only: memory_storer
-   use sequential_storer_class, only: sequential_storer
+   use file_storer_class, only: file_storer
    use memory_manager_class, only: mem 
    use global_out, only: output
    use array_utilities, only: get_l2_norm, copy_and_scale, zero_array
@@ -256,11 +256,11 @@ contains
          call output%printf('Reduced space basis and transforms are stored on disk.', &
                                  pl='m', fs='(/t6,a)')
 !
-         davidson%trials = sequential_storer(trim(davidson%name_) // '_trials', &
+         davidson%trials = file_storer(trim(davidson%name_) // '_trials', &
                      davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions, &
                      delete=.true.)   
 !
-         davidson%transforms = sequential_storer(trim(davidson%name_) // '_transforms', &
+         davidson%transforms = file_storer(trim(davidson%name_) // '_transforms', &
                      davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions, &
                      delete=.true.)   
 !

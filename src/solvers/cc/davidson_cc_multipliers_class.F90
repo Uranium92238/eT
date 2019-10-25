@@ -168,7 +168,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: eta, c, multipliers, residual 
 !
-      integer :: iteration
+      integer :: iteration 
 !
       real(dp) :: residual_norm, ddot, norm_trial
 !
@@ -177,8 +177,10 @@ contains
       call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
 !
-      davidson = linear_davidson_tool('multipliers', wf%n_gs_amplitudes, &
-                  solver%residual_threshold, solver%max_dim_red, -eta, solver%records_in_memory)
+      davidson = linear_davidson_tool('multipliers', wf%n_gs_amplitudes,   &
+                                       solver%residual_threshold,          &
+                                       solver%max_dim_red,                 &
+                                       -eta, 1, solver%records_in_memory)
 !
       call solver%set_precondition_vector(wf, davidson)
 !
@@ -204,13 +206,7 @@ contains
 !
       else ! Use - eta_mu / eps_mu as first trial 
 !
-         call dscal(wf%n_gs_amplitudes, -one, eta, 1)
-         call davidson%preconditioner%do_(eta)
-!
-         norm_trial = sqrt(ddot(wf%n_gs_amplitudes, eta, 1, eta, 1))
-         call dscal(wf%n_gs_amplitudes, one/norm_trial, eta, 1)
-!
-         call davidson%set_trial(eta, 1)
+         call davidson%set_trials_to_preconditioner_guess()
 !
       endif 
 !
@@ -257,7 +253,7 @@ contains
          if (residual_norm >= solver%residual_threshold) then 
 !
             converged_residual = .false.
-            call davidson%construct_next_trial(residual)
+            call davidson%construct_next_trial(residual, 1)
 !
          endif 
 !

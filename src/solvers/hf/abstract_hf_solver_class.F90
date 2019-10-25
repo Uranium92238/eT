@@ -96,6 +96,9 @@ contains
       call wf%roothan_hall_update_orbitals() ! F => C
       call wf%update_ao_density()            ! C => D
 !
+      call wf%save_orbital_coefficients()
+      call wf%save_orbital_energies()
+!
    end subroutine run_single_ao_abstract_hf_solver
 !
 !

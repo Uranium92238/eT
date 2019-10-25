@@ -87,29 +87,33 @@ contains
 !
       if(trim(transformation) .eq. 'right') then
 !
-         wf%r_files = sequential_storer('r_', wf%n_es_amplitudes, &
+         wf%r_files = file_storer('r_', wf%n_es_amplitudes,       &
                                          wf%n_singlet_states,     &
-                                         delete=.false.)
+                                         delete=.false.,          &
+                                         direct=.false.)
 !
          wf%excitation_energies_file = sequential_file('excitation_energies')
 !
       else if(trim(transformation) .eq. 'left') then
 !
-         wf%l_files = sequential_storer('l_', wf%n_es_amplitudes, &
+         wf%l_files = file_storer('l_', wf%n_es_amplitudes,       &
                                          wf%n_singlet_states,     &
-                                         delete=.false.)
+                                         delete=.false.,          &
+                                         direct=.false.)
 !
          wf%excitation_energies_file = sequential_file('excitation_energies')
 !
       else if(trim(transformation) .eq. 'both') then 
 !
-         wf%r_files = sequential_storer('r_', wf%n_es_amplitudes, &
+         wf%r_files = file_storer('r_', wf%n_es_amplitudes,       &
                                          wf%n_singlet_states,     &
-                                         delete=.false.)
+                                         delete=.false.,          &
+                                         direct=.false.)
 !
-         wf%l_files = sequential_storer('l_', wf%n_es_amplitudes, &
+         wf%l_files = file_storer('l_', wf%n_es_amplitudes,       &
                                          wf%n_singlet_states,     &
-                                         delete=.false.)
+                                         delete=.false.,          &
+                                         direct=.false.)
 !
          wf%excitation_energies_file = sequential_file('excitation_energies')
 !
@@ -232,7 +236,7 @@ contains
 !!    Since the solvers  keep these vectors in full length, 
 !!    we save the vector in full length (n_es_amplitudes), 
 !!
-!!    Uses sequential_storer to distinguish different states
+!!    Uses file_storer to distinguish different states
 !!
 !!
       implicit none
@@ -272,7 +276,7 @@ contains
 !!    Reads an excited state from disk. Since this routine is used by 
 !!    solvers, it returns the vector in the full space.
 !!
-!!    Uses sequential_storer to distinguish different states
+!!    Uses file_storer to distinguish different states
 !!
       implicit none
 !
@@ -425,11 +429,11 @@ contains
 !
       if (trim(side) .eq. 'right') then
 !
-         n_states = wf%r_files%n_preexisting_files
+         n_states = wf%r_files%get_n_existing_records()
 !
       else if (trim(side) .eq. 'left') then
 !
-         n_states = wf%l_files%n_preexisting_files
+         n_states = wf%l_files%get_n_existing_records()
 !
       else 
 !

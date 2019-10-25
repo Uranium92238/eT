@@ -315,9 +315,9 @@ contains
 !
       integer, intent(out) :: final_iteration
 !
-      real(dp), dimension(:), allocatable :: epsilon, first_trial, c, residual 
+      real(dp), dimension(:), allocatable :: epsilon, c, residual 
 !
-      real(dp) :: norm_trial, residual_norm, ddot
+      real(dp) :: residual_norm
 !
       type(linear_davidson_tool) :: davidson 
 !
@@ -331,7 +331,7 @@ contains
       call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
 !
       davidson = linear_davidson_tool('cc_gs_newton_raphson', wf%n_gs_amplitudes, &
-         solver%micro_residual_threshold, solver%max_micro_dim_red, -omega, solver%records_in_memory)
+         solver%micro_residual_threshold, solver%max_micro_dim_red, -omega, 1, solver%records_in_memory)
 !
       call davidson%set_preconditioner(epsilon)
       call mem%dealloc(epsilon, wf%n_gs_amplitudes)
@@ -340,17 +340,7 @@ contains
 !
 !     Use - omega_mu / eps_mu as first guess 
 !
-      call mem%alloc(first_trial, wf%n_gs_amplitudes)
-      call dcopy(wf%n_gs_amplitudes, omega, 1, first_trial, 1)
-      call dscal(wf%n_gs_amplitudes, -one, first_trial, 1) 
-!
-      call davidson%preconditioner%do_(first_trial)
-!
-      norm_trial = sqrt(ddot(wf%n_gs_amplitudes, first_trial, 1, first_trial, 1))
-      call dscal(wf%n_gs_amplitudes, one/norm_trial, first_trial, 1)
-!
-      call davidson%set_trial(first_trial, 1)
-      call mem%dealloc(first_trial, wf%n_gs_amplitudes)
+      call davidson%set_trials_to_preconditioner_guess()
 !
 !     Prepare intermediates for Jacobian transformation
 !
@@ -395,7 +385,7 @@ contains
          if (residual_norm >= solver%micro_residual_threshold) then 
 !
             converged_residual = .false.
-            call davidson%construct_next_trial(residual)
+            call davidson%construct_next_trial(residual, 1)
 !
          endif 
 !

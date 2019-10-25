@@ -70,7 +70,7 @@ set(eT_fortran_sources
    src/tools/fftpack/fftpack_complex_initialization_routines.F90
    src/tools/record_storer/record_storer_class.F90
    src/tools/record_storer/memory_storer_class.F90
-   src/tools/record_storer/sequential_storer_class.F90
+   src/tools/record_storer/file_storer_class.F90
    src/wavefunctions/wavefunction/wavefunction_class.F90
    src/wavefunctions/hf/hf_class.F90  
    src/wavefunctions/hf/mo_hf.F90

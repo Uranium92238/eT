@@ -111,11 +111,14 @@ contains
 !
       else
 !
-         open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
-              action='write', iostat=io_error, iomsg=io_msg)
+!        Open the file with unformatted stream access 
+!        Stream doesn't care about format and records and neither do we
+         open(newunit=the_file%unit, file=the_file%name_, access='stream', &
+              form='unformatted', action='write', status='old', & 
+              iostat=io_error, iomsg=io_msg)
 !
          if (io_error .ne. 0) then 
-            call output%error_msg('could not open eT file '//trim(the_file%name_)//&
+            call output%error_msg('could not delete eT file '//trim(the_file%name_)//&
                                  &'. Error message: '//trim(io_msg))
          endif
 !
