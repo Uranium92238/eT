@@ -25,7 +25,7 @@ module math_utilities
 !!    This module contains routines that perform various math operations.
 !!
 !
-   use kinds
+   use parameters
 !
    implicit none
 !
@@ -59,7 +59,36 @@ contains
 !     
       enddo
 !
-   end function double_factorial
+    end function double_factorial
+!
+!
+    function delta(i,j) result(delta_ij)
+!!
+!!    Delta    
+!!    Written by Eirik F. Kjønstad, 2019 
+!!
+!!    Returns the Kronecker delta as a real number:
+!!
+!!      delta_ij = 1 if i .eq. j
+!!      delta_ij = 0 if i .ne. j
+!!
+      implicit none 
+!
+      real(dp) :: delta_ij 
+!
+      integer, intent(in) :: i, j
+!
+      if (i == j) then 
+!
+        delta_ij = one
+!
+      else 
+!
+        delta_ij = zero
+!
+      endif
+!
+    end function delta
 !
 !
 end module math_utilities

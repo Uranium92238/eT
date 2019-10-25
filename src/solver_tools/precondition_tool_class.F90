@@ -98,18 +98,19 @@ contains
    end function new_precondition_tool
 !
 !
-   subroutine do_precondition_tool(tool, R, shift)
+   subroutine do_precondition_tool(tool, R, shift, prefactor)
 !!
 !!    Do 
 !!    Written by Eirik F. Kjønstad, 2019
 !!
 !!    Does the precondition operation:
 !!
-!!       R(i) = -R(i)/(preconditioner(i) - shift).
+!!       R(i) = -prefactor*R(i)/(preconditioner(i) - shift).
 !!
 !!    The preconditioner is set by the constructor.
 !!
-!!    shift: Optional real number. Default is zero. 
+!!    shift:     Optional real number. Default is zero. 
+!!    prefactor: Optional real number. Default is one. 
 !!
       implicit none
 !
@@ -118,10 +119,14 @@ contains
       real(dp), dimension(tool%dim_), intent(inout) :: R 
 !
       real(dp), intent(in), optional :: shift 
+      real(dp), intent(in), optional :: prefactor 
 !
       real(dp) :: shift_local
+      real(dp) :: prefactor_local
 !
       integer :: i
+!
+!     Set optionals 
 !
       if (present(shift)) then 
 !
@@ -132,6 +137,18 @@ contains
          shift_local = zero 
 !
       endif
+!
+      if (present(prefactor)) then 
+!
+         prefactor_local = prefactor 
+!
+      else 
+!
+         prefactor_local = one
+!
+      endif
+!
+!     Precondition R 
 !
 !$omp parallel do private(i)
       do i = 1, tool%dim_

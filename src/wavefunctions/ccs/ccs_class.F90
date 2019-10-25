@@ -38,7 +38,7 @@ module ccs_class
    use index_invert, only : invert_compound_index, invert_packed_index
    use batching_index_class, only : batching_index
    use timings_class, only : timings
-   use sequential_storer_class, only: sequential_storer
+   use file_storer_class, only: file_storer
 !
    implicit none
 !
@@ -62,8 +62,8 @@ module ccs_class
       type(sequential_file) :: excitation_energies_file
       type(sequential_file) :: restart_file
 !
-      type(sequential_storer), allocatable :: r_files
-      type(sequential_storer), allocatable :: l_files
+      type(file_storer), allocatable :: r_files
+      type(file_storer), allocatable :: l_files
 !
       type(mo_integral_tool) :: integrals
 !
