@@ -1396,7 +1396,7 @@ contains
             call mem%alloc(R, wf%n_es_amplitudes, n_degeneracy)
 !
             do p = 1, n_degeneracy
-               call wf%read_excited_state(R(:,p), current_state + p - 1, 'right')
+               call wf%read_excited_state(R(:,p), current_state + p - 1, trim(transformation))
             end do
 !
             reduced_degeneracy = n_degeneracy
