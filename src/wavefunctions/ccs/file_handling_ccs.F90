@@ -90,7 +90,7 @@ contains
          wf%r_files = file_storer('r_', wf%n_es_amplitudes,       &
                                          wf%n_singlet_states,     &
                                          delete=.false.,          &
-                                         direct=.false.)
+                                         direct_=.false.)
 !
          wf%excitation_energies_file = sequential_file('excitation_energies')
 !
@@ -99,7 +99,7 @@ contains
          wf%l_files = file_storer('l_', wf%n_es_amplitudes,       &
                                          wf%n_singlet_states,     &
                                          delete=.false.,          &
-                                         direct=.false.)
+                                         direct_=.false.)
 !
          wf%excitation_energies_file = sequential_file('excitation_energies')
 !
@@ -108,12 +108,12 @@ contains
          wf%r_files = file_storer('r_', wf%n_es_amplitudes,       &
                                          wf%n_singlet_states,     &
                                          delete=.false.,          &
-                                         direct=.false.)
+                                         direct_=.false.)
 !
          wf%l_files = file_storer('l_', wf%n_es_amplitudes,       &
                                          wf%n_singlet_states,     &
                                          delete=.false.,          &
-                                         direct=.false.)
+                                         direct_=.false.)
 !
          wf%excitation_energies_file = sequential_file('excitation_energies')
 !

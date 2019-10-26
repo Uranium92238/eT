@@ -41,7 +41,7 @@ module file_storer_class
 !
    type, extends(record_storer) :: file_storer
 !
-      logical :: delete, direct 
+      logical :: delete, direct_ 
 !
       type(direct_file), allocatable :: direct_file
       type(sequential_file), dimension(:), allocatable :: sequential_files
@@ -73,7 +73,7 @@ module file_storer_class
 contains
 !
 !
-   function new_file_storer(name_, record_dim, n_records, delete, direct) result(storer)
+   function new_file_storer(name_, record_dim, n_records, delete, direct_) result(storer)
 !!
 !!    File storer constructer
 !!    Writen by Eirik F. Kjønstad, 2019
@@ -104,7 +104,7 @@ contains
       integer, intent(in) :: n_records
       logical, intent(in) :: delete
 !
-      logical, intent(in), optional :: direct 
+      logical, intent(in), optional :: direct_ 
 !
       integer :: I
       character(len=200) :: record_name
@@ -121,19 +121,19 @@ contains
 !
 !     Use direct file or sequential file array? 
 !
-      if (present(direct)) then 
+      if (present(direct_)) then 
 !
-         storer%direct = direct
+         storer%direct_ = direct_
 !
       else 
 !
          if (record_dim*dp > recl_limit) then 
 !
-            storer%direct = .false.
+            storer%direct_ = .false.
 !
          else 
 !
-            storer%direct = .true.
+            storer%direct_ = .true.
 !
          endif
 !
@@ -141,7 +141,7 @@ contains
 !
 !     Initialize file(s) 
 !
-      if (.not. storer%direct) then 
+      if (.not. storer%direct_) then 
 !
 !        Use array of sequential files 
 !
@@ -197,7 +197,7 @@ contains
 !
       integer :: n_existing_records
 !
-      if (storer%direct) call output%error_msg('cannot ask for number of existing records '&
+      if (storer%direct_) call output%error_msg('cannot ask for number of existing records '&
                                              // 'for storer using direct access file.')
 !
       call storer%open_()
@@ -238,7 +238,7 @@ contains
 !
       record = storer%record_indices(n)
 !
-      if (storer%direct) then 
+      if (storer%direct_) then 
 !
          call storer%direct_file%read_(x, record)
 !
@@ -272,7 +272,7 @@ contains
 !
       record = storer%record_indices(n)
 !
-      if (storer%direct) then 
+      if (storer%direct_) then 
 !
          call storer%direct_file%write_(x, record)
 !
@@ -300,7 +300,7 @@ contains
 !
       integer :: I
 !
-      if (storer%direct) then 
+      if (storer%direct_) then 
 !
          call storer%direct_file%open_()
 !
@@ -330,7 +330,7 @@ contains
 !
       integer :: I
 !
-      if (storer%direct) then 
+      if (storer%direct_) then 
 !
          call storer%direct_file%close_()
 !
@@ -360,7 +360,7 @@ contains
 !
       integer :: I
 !
-      if (storer%direct) then 
+      if (storer%direct_) then 
 !
          call storer%direct_file%delete_()
 !
@@ -392,13 +392,13 @@ contains
 !
       else 
 !
-         if (storer%direct) call storer%direct_file%close_('keep')
+         if (storer%direct_) call storer%direct_file%close_('keep')
 !
       endif 
 !
       call mem%dealloc(storer%record_indices, storer%n_records)
 !
-      if (storer%direct) then 
+      if (storer%direct_) then 
 !
          deallocate(storer%direct_file)
 !

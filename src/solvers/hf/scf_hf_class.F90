@@ -288,13 +288,13 @@ contains
             call wf%roothan_hall_update_orbitals() ! F => C
             call wf%update_ao_density()            ! C => D
 !
-            call wf%save_orbital_coefficients()
-            call wf%save_orbital_energies()
-!
             prev_energy = wf%energy
             call wf%update_fock_and_energy(h_wx)
 !
          endif
+!
+         call wf%save_orbital_coefficients()
+         call wf%save_orbital_energies()
 !
          iteration = iteration + 1
 !
