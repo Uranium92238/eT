@@ -7323,7 +7323,7 @@ contains
       complex(dp), dimension(N*(N+1)/2), intent(out) :: packed
       complex(dp), dimension(:,:,:,:), intent(in)    :: unpacked
 !
-      call symmetrize_and_add_to_packed(packed, unpacked, N)
+      call symmetrize_and_add_to_packed_complex(packed, unpacked, N)
 !
    end subroutine symmetrize_and_add_4_to_packed_complex
 !
