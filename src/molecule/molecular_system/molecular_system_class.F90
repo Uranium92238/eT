@@ -206,7 +206,7 @@ contains
    end function new_molecular_system
 !
 !
-   function new_molecular_system_from_parameters(atoms, name, charge, multiplicity, mm_calculation) result(molecule)
+   function new_molecular_system_from_parameters(atoms, name_, charge, multiplicity, mm_calculation) result(molecule)
 !!
 !!    Initialize From Parameters
 !!    Written by Tor S. Haugland, 2019
@@ -216,7 +216,7 @@ contains
       type(molecular_system) :: molecule
 !
       type(atomic), dimension(:), intent(in) :: atoms
-      character(len=100),         intent(in) :: name
+      character(len=100),         intent(in) :: name_
       integer,                    intent(in) :: charge
       integer,                    intent(in) :: multiplicity
       logical,                    intent(in) :: mm_calculation
@@ -225,7 +225,7 @@ contains
 !
       molecule%atoms          = atoms
       molecule%n_atoms        = size(atoms)
-      molecule%name_          = name
+      molecule%name_          = name_
       molecule%charge         = charge
       molecule%multiplicity   = multiplicity
       molecule%mm_calculation = mm_calculation
