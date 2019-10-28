@@ -1703,7 +1703,7 @@ contains
       character(len=12) :: frmt0
       character(len=46) :: frmt1
 !
-      frmt0="(t5,68('='))"
+      frmt0="(t5,71('='))"
       frmt1="(t5,'Atom',9x,'X',16x,'Y',16x,'Z',13x,'Basis')"
       write(output%unit,'(/)')
       write(output%unit,frmt0 )
@@ -1714,7 +1714,7 @@ contains
 !
       do I = 1, molecule%n_atoms 
 !
-         write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a11)')  molecule%atoms(I)%symbol, &
+         write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a14)')  molecule%atoms(I)%symbol, &
                                                                           molecule%atoms(I)%x,      &
                                                                           molecule%atoms(I)%y,      &
                                                                           molecule%atoms(I)%z,      &
@@ -1731,7 +1731,7 @@ contains
       write(output%unit,frmt0 )
       do I = 1, molecule%n_atoms 
 !
-         write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a11)')  molecule%atoms(I)%symbol, &
+         write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a14)')  molecule%atoms(I)%symbol, &
                                                                           angstrom_to_bohr*molecule%atoms(I)%x,      &
                                                                           angstrom_to_bohr*molecule%atoms(I)%y,      &
                                                                           angstrom_to_bohr*molecule%atoms(I)%z,      &
