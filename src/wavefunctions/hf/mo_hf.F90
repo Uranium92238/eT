@@ -33,7 +33,7 @@ contains
 !
 !
 !
-   function get_max_roothan_hall_mo_gradient_hf(wf) result(max_gradient)
+   module function get_max_roothan_hall_mo_gradient_hf(wf) result(max_gradient)
 !!
 !!    Get max of Roothan-Hall gradient
 !!    Written by Sarai D. Folkestad, 2018
