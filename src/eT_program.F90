@@ -74,12 +74,12 @@ program eT_program
    write(output%unit,'(t4, a, a)')    'Sarai D. Folkestad     ','program design, HF, CCS, CC2, CCSD, libint-interface,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS, DIIS-tool'
    write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties, IP'
-   write(output%unit,'(t4, a, a)')    '                       ','frozen core, MLCC2'
+   write(output%unit,'(t4, a, a)')    '                       ','frozen core, MLCC2, MLHF'
    write(output%unit,'(t4, a, a)')    'Tommaso Giovannini     ','QM/MM'
-   write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2'
+   write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2, MLHF'
    write(output%unit,'(t4, a, a)')    'Tor S. Haugland        ','SAD'
    write(output%unit,'(t4, a, a)')    'Anders Hutcheson       ','frozen HF orbitals'
-   write(output%unit,'(t4, a, a)')    'Ida-Marie Høyvik       ','frozen HF orbitals'
+   write(output%unit,'(t4, a, a)')    'Ida-Marie Høyvik       ','MLHF, frozen HF orbitals'
    write(output%unit,'(t4, a, a)')    'Eirik F. Kjønstad      ','program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
    write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties, SAD   '
@@ -160,6 +160,7 @@ subroutine reference_calculation(system)
 !
    use hf_class, only: hf 
    use uhf_class, only: uhf 
+   use mlhf_class, only: mlhf 
 !
    use reference_engine_class, only: reference_engine 
    use hf_geoopt_engine_class, only: hf_geoopt_engine 
@@ -183,6 +184,10 @@ subroutine reference_calculation(system)
    elseif (trim(ref_wf_name) == 'uhf') then
 !
       ref_wf = uhf(system)
+!
+   elseif (trim(ref_wf_name) == 'mlhf') then
+!
+      ref_wf = mlhf(system)
 !
    else
 !

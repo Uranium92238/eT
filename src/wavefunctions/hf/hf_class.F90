@@ -183,6 +183,7 @@ module hf_class
       procedure :: construct_roothan_hall_hessian              => construct_roothan_hall_hessian_hf
       procedure :: construct_roothan_hall_gradient             => construct_roothan_hall_gradient_hf
       procedure :: get_packed_roothan_hall_gradient            => get_packed_roothan_hall_gradient_hf
+      procedure :: get_max_roothan_hall_gradient               => get_max_roothan_hall_gradient_hf
 !
       procedure :: construct_molecular_gradient                => construct_molecular_gradient_hf
 !
@@ -271,7 +272,7 @@ contains
 !
       class(molecular_system), target, intent(in) :: system
 !
-      wf%name_ = 'HF'
+      wf%name_ = 'hf'
 !
       wf%system => system
 !
@@ -1471,31 +1472,17 @@ contains
 !
       logical, intent(in), optional :: cumulative
 !
-      real(dp) :: coulomb_thr, exchange_thr, precision_thr
-!
-      integer :: thread = 0, n_threads = 1
-!
       logical :: local_cumulative
 !
-      real(dp), dimension(:,:), allocatable :: F, sp_density_schwarz
-!
-      integer :: n_sig_sp
-!
-      real(dp) :: max_D_schwarz, max_eri_schwarz
+      real(dp), dimension(:,:), allocatable :: G
 !
       type(timings) :: ao_fock_timer
-!
-     ! n_s = wf%system%get_n_shells()
 !
       ao_fock_timer = timings('AO Fock construction')
       call ao_fock_timer%turn_on()
 !
-!     Set thresholds to ignore Coulomb and exchange terms,
-!     as well as the desired Libint integral precision
-!
-      coulomb_thr   = wf%coulomb_threshold
-      exchange_thr  = wf%exchange_threshold
-      precision_thr = wf%libint_epsilon
+!     Set whether to accumulate into Fock (density differences)
+!     or to construct the entire Fock matrix 
 !
       local_cumulative = .false.
       if (present(cumulative)) then
@@ -1512,49 +1499,20 @@ contains
 !
       endif
 !
-!     Construct the density screening vector and the maximum element in the density
+!     Construct the two electron part of the Fock matrix (G),
+!     and add the contribution to the Fock matrix 
 !
-      call mem%alloc(sp_density_schwarz, wf%system%n_s, wf%system%n_s)
-      call wf%construct_sp_density_schwarz(sp_density_schwarz, D)
-      max_D_schwarz = get_abs_max(sp_density_schwarz, wf%system%n_s**2)
+      call mem%alloc(G, wf%n_ao, wf%n_ao)
+      call wf%construct_ao_G(D, G)
 !
-!     Compute number of significant ERI shell pairs (the Fock construction
-!     only loops over these shell pairs) and the maximum element
+      if (.not. local_cumulative) call zero_array(ao_fock, wf%n_ao**2)
 !
-      call wf%get_n_sig_eri_sp(n_sig_sp)
-      max_eri_schwarz = get_abs_max(wf%sp_eri_schwarz, wf%system%n_s*(wf%system%n_s + 1)/2)
+      call daxpy(wf%n_ao**2, one, G, 1, ao_fock, 1)
+      call mem%dealloc(G, wf%n_ao, wf%n_ao)
 !
-!     Construct the two electron part of the Fock matrix, using the screening vectors
-!     and parallellizing over available threads (each gets its own copy of the Fock matrix)
+!     Add the one-electron contribution F =+ h 
 !
-!$    n_threads = omp_get_max_threads()
-!
-      call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
-      F = zero
-!
-      call wf%construct_ao_G_thread_contribution(F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &
-                                         sp_density_schwarz,  &
-                                         n_sig_sp, coulomb_thr, exchange_thr, precision_thr, &
-                                         wf%system%shell_limits)
-!
-      call mem%dealloc(sp_density_schwarz, wf%system%n_s, wf%system%n_s)
-!
-!     Put the accumulated Fock matrices from each thread into the Fock matrix,
-!     and symmetrize the result
-!
-      if (.not. local_cumulative) ao_fock = zero
-      do thread = 1, n_threads
-!
-         call daxpy(wf%n_ao**2, one, F(1, (thread-1)*wf%n_ao + 1), 1, ao_fock, 1)
-!
-      enddo
-!
-      call mem%dealloc(F, wf%n_ao, wf%n_ao*n_threads)
-!
-      call symmetric_sum(ao_fock, wf%n_ao)
-      ao_fock = ao_fock*half
-!
-      if (.not. local_cumulative) ao_fock = ao_fock + h_wx
+      if (.not. local_cumulative) call daxpy(wf%n_ao**2, one, h_wx, 1, ao_fock, 1)
 !
       call ao_fock_timer%turn_off()
 !
@@ -1615,7 +1573,6 @@ contains
 !
       call mem%alloc(G_thread, wf%n_ao, wf%n_ao, n_threads) ! [G(thread 1) G(thread 2) ...]
       call zero_array(G_thread, (wf%n_ao**2)*n_threads)
-!
 !
       call wf%construct_ao_G_thread_contribution(G_thread, D, n_threads, max_D_schwarz, max_eri_schwarz,      &
                                          sp_density_schwarz, n_sig_sp,                 &
@@ -2110,7 +2067,7 @@ contains
    end subroutine construct_exchange_ao_G_hf
 !
 !
-   subroutine calculate_hf_energy_from_G_hf(wf, half_GD_wx, h_wx)
+   real(dp) function calculate_hf_energy_from_G_hf(wf, half_GD_wx, h_wx) result(hf_energy)
 !!
 !!    Calculate HF energy from G(D)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2127,6 +2084,8 @@ contains
 !!
 !!       Tr(AB) = sum_x (AB)_xx = sum_xy A_xy B_yx = sum_xy A_xy B_xy.
 !!
+!!    NOTE: the nuclear repulsion is not included
+!!
       implicit none
 !
       class(hf) :: wf
@@ -2136,12 +2095,12 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: half_GD_wx
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
-      wf%energy = wf%system%get_nuclear_repulsion()
+      hf_energy = zero
 !
-      wf%energy = wf%energy + ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
-      wf%energy = wf%energy + half*ddot((wf%n_ao)**2, wf%ao_density, 1, half_GD_wx, 1)
+      hf_energy = hf_energy + ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
+      hf_energy = hf_energy + half*ddot((wf%n_ao)**2, wf%ao_density, 1, half_GD_wx, 1)
 
-   end subroutine calculate_hf_energy_from_G_hf
+   end function calculate_hf_energy_from_G_hf
 !
 !
    subroutine calculate_hf_energy_from_fock_hf(wf, F_wx, h_wx)
@@ -3062,6 +3021,33 @@ contains
    end subroutine get_packed_roothan_hall_gradient_hf
 !
 !
+   function get_max_roothan_hall_gradient_hf(wf) result(max_gradient)
+!!
+!!    Get max Roothan-Hall gradient
+!!    Written by Sarai D. Folkestad, 2019
+!!
+!!    Constructs and returns the absolute maximum 
+!!    of the HF gradient
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp) :: max_gradient
+!
+      real(dp), dimension(:), allocatable :: G
+!
+      call mem%alloc(G, wf%n_ao*(wf%n_ao - 1)/2*wf%n_densities)
+!
+      call wf%get_packed_roothan_hall_gradient(G)
+!
+      max_gradient = get_abs_max(G, wf%n_ao*(wf%n_ao - 1)/2*wf%n_densities)
+!
+      call mem%dealloc(G, wf%n_ao*(wf%n_ao - 1)/2*wf%n_densities)
+!
+   end function get_max_roothan_hall_gradient_hf
+!
+!
    subroutine construct_roothan_hall_gradient_hf(wf, G, Po, Pv, F)
 !!
 !!    Construct Roothan-Hall gradient
@@ -3781,12 +3767,16 @@ contains
 !!    Prepare for Roothan-Hall
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Constructs the ao Fock matrix and
-!!    performs a Roothan-Hall step to get the
-!!    initial idempotent density.
+!!    Performs the necessary preparations needed to solve 
+!!    of the Roothan-Hall equation in the iterative cycle 
+!!    construct Fock - calculate energy - Roothan-Hall-update orbitals -
+!!    update the density:
 !!
-!!    The routine also prints the number of
-!!    electrons and the energy of the initial guess.
+!!    - constructs the ao Fock matrix and
+!!      performs a Roothan-Hall step to get the
+!!      initial idempotent density;
+!!    - prints the number of electrons and the energy 
+!!      of the initial guess.
 !!
 !!    NOTE: this routine is overwritten
 !!          for MLHF!
@@ -3824,6 +3814,9 @@ contains
 !!
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Initializes files, writes the restart file used for consistency checks
+!!    and constructs screening vectors
 !!
       implicit none
 !
@@ -3911,8 +3904,6 @@ contains
       call CC_orbital_energies_file%close_('keep')
 !
    end subroutine write_orbital_information_hf
-!
-!
 !
 !
    subroutine save_orbital_coefficients_hf(wf)

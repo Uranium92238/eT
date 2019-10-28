@@ -284,7 +284,9 @@ contains
 !
             call output%printf('---------------------------------------------------------------', &
                               pl='normal',fs='(t3,a)') 
-            call output%printf('Convergence criterion met in (i0) iterations!',ints=[iteration],fs='(/t3,a)', pl='normal')
+!
+            call output%printf('Convergence criterion met in (i0) iterations!',&
+               ints=[iteration],fs='(t3,a)', pl='normal')
 !
             if (.not. converged_energy) then
 !
@@ -300,16 +302,19 @@ contains
 !
             prev_energy = wf%energy
 !
+!           Update Fock, coefficients, density and gradient
+!
             call wf%roothan_hall_update_orbitals_mo()  ! DIIS F => C
             call wf%update_ao_density()                ! C => D
             call wf%update_fock_and_energy_mo(h_wx)    ! MO F
             call wf%get_roothan_hall_mo_gradient(G)    ! MO G
+            max_grad = get_abs_max(G, dim_gradient)
 !
-!           Update diis history
+!           Update DIIS history
 !
             call solver%update_diis_history(wf, iteration)
 !
-            max_grad = get_abs_max(G, dim_gradient)
+!           DIIS step
 !
             call wf%get_mo_fock(F)              ! Sets F to wf%mo_fock
 !

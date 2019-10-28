@@ -190,11 +190,14 @@ contains
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    Initializes files
+!!    and constructs screening vectors
+!!
       implicit none
 !
       class(uhf) :: wf
 !
-      wf%name_ = 'UHF'
+      wf%name_ = 'uhf'
 !
       wf%n_ao = wf%system%get_n_aos()
 !

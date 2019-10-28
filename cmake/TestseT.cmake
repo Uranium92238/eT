@@ -58,7 +58,11 @@ add_eT_runtest(uhf_energy                                   "eT;short;uhf")
 #
 add_eT_runtest(uhf_energy_qmmmnopol                         "eT;short;uhf;sad;qmmm;mmnopol")
 add_eT_runtest(uhf_energy_qmfq                              "eT;short;uhf;sad;qmmm;fq")
-#
+add_eT_runtest(mlhf_cholesky_energy                         "eT;short;mlhf;sad;cholesky")
+add_eT_runtest(mlhf_pao_energy                              "eT;short;mlhf;sad;pao")
+add_eT_runtest(mlhf_scf_energy                              "eT;short;mlhf;sad;pao")
+add_eT_runtest(mlhf_full_space_energy                       "eT;short;mlhf;sad;pao")
+add_eT_runtest(mlhf_min_basis_diagonalization_energy        "eT;short;mlhf;sad;pao")
 add_eT_runtest(mp2_energy                                   "eT;short;hf;mp2")
 add_eT_runtest(mp2_energy_qmmmnopol                         "eT;short;hf;mp2;qmmm;mmnopol")
 add_eT_runtest(mp2_energy_qmfq                              "eT;short;hf;mp2;qmmm;fq")

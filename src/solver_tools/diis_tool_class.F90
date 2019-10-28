@@ -232,7 +232,7 @@ contains
 !
       type(diis_tool) :: diis
 !
-      if (diis%iteration .gt. 1) then
+      if (diis%iteration .gt. 1 .and. diis%accumulate) then
          call diis%diis_matrix%delete_()
       endif
 !
