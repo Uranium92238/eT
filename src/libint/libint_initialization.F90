@@ -125,7 +125,7 @@ contains
 !
    subroutine initialize_basis(basis_set, file_name, cartesian_gaussians_int)
 !
-      use iso_c_binding, only: c_char, c_null_char
+      use iso_c_binding, only: c_char, c_null_char, c_int
       implicit none
 !
       character(len=*) :: basis_set
@@ -137,7 +137,7 @@ contains
       character(kind=c_char),dimension(40) :: cpp_temp_basis
       character(kind=c_char),dimension(40) :: cpp_temp_file
 !
-      integer(i6) :: cartesian_gaussians_int
+      integer(c_int) :: cartesian_gaussians_int
 !
       integer :: j
 !
