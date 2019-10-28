@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (abstract_doubles_class) fop_abstract_doubles
+submodule (doubles_class) fop_doubles
 !
 !!
 !!    First order properties submodule
@@ -58,7 +58,7 @@ submodule (abstract_doubles_class) fop_abstract_doubles
 contains
 !
 !
-   module subroutine construct_left_transition_density_abstract_doubles(wf, state)
+   module subroutine construct_left_transition_density_doubles(wf, state)
 !!
 !!    Construct left one-electron transition density for the state k
 !!    Written by Alexander Paul, June 2019
@@ -72,7 +72,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       integer, intent(in) :: state
 !
@@ -164,10 +164,10 @@ contains
 !
       call L_TDM_timer%turn_off()
 !      
-   end subroutine construct_left_transition_density_abstract_doubles
+   end subroutine construct_left_transition_density_doubles
 !
 !
-   module subroutine construct_right_transition_density_abstract_doubles(wf, state)
+   module subroutine construct_right_transition_density_doubles(wf, state)
 !!
 !!    Construct right one-electron transition density for the state k
 !!    Written by Alexander Paul, June 2019
@@ -181,7 +181,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       integer, intent(in) :: state
 !
@@ -320,10 +320,10 @@ contains
 !
       call R_TDM_timer%turn_off()
 !
-   end subroutine construct_right_transition_density_abstract_doubles
+   end subroutine construct_right_transition_density_doubles
 !
 !
-   module subroutine right_transition_density_doubles_ov_abstract_doubles(wf, tbar_aibj, R_ai)
+   module subroutine right_transition_density_doubles_ov_doubles(wf, tbar_aibj, R_ai)
 !!
 !!    Right transition density ov contribution (CCSD)
 !!    from the singles part of the excitation vector
@@ -334,7 +334,7 @@ contains
 !!      
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
@@ -472,10 +472,10 @@ contains
 !
       call mem%dealloc(X_ck, wf%n_v, wf%n_o)
 !
-   end subroutine right_transition_density_doubles_ov_abstract_doubles
+   end subroutine right_transition_density_doubles_ov_doubles
 !
 !
-   module subroutine right_transition_density_doubles_vo_abstract_doubles(wf, tbar_aibj, R_ai)
+   module subroutine right_transition_density_doubles_vo_doubles(wf, tbar_aibj, R_ai)
 !!
 !!    Right transition density ov contribution (CCSD)
 !!    Written by Alexander Paul, June 2019
@@ -484,7 +484,7 @@ contains
 !!      
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
@@ -520,9 +520,9 @@ contains
 !
       call mem%dealloc(rho_vo, wf%n_v, wf%n_o)
 !
-   end subroutine right_transition_density_doubles_vo_abstract_doubles
+   end subroutine right_transition_density_doubles_vo_doubles
 !
-   module subroutine construct_eom_etaX_abstract_doubles(wf, X, csiX, etaX)
+   module subroutine construct_eom_etaX_doubles(wf, X, csiX, etaX)
 !!
 !!    Construct EOM etaX
 !!    Written by Sarai D. Folkestad, May 2019
@@ -532,7 +532,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
@@ -545,10 +545,10 @@ contains
 !
       call wf%etaX_eom_doubles_a1(X, etaX(1:wf%n_t1))
 !
-   end subroutine construct_eom_etaX_abstract_doubles
+   end subroutine construct_eom_etaX_doubles
 !
 !
-   module subroutine construct_etaX_abstract_doubles(wf, X, etaX)
+   module subroutine construct_etaX_doubles(wf, X, etaX)
 !!
 !!    Construct η^X
 !!    Written by Josefine H. Andersen, 2019
@@ -561,7 +561,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
@@ -610,10 +610,10 @@ contains
 !
       call mem%dealloc(etaX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine construct_etaX_abstract_doubles
+   end subroutine construct_etaX_doubles
 !
 !
-   module subroutine etaX_doubles_a1_abstract_doubles(wf, X, etaX_ai)
+   module subroutine etaX_doubles_a1_doubles(wf, X, etaX_ai)
 !!
 !!    etaX CCSD A1
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -624,7 +624,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
@@ -740,9 +740,9 @@ contains
       call mem%dealloc(I_li, wf%n_o, wf%n_o)
       call mem%dealloc(X_id, wf%n_o, wf%n_v)
 !
-   end subroutine etaX_doubles_a1_abstract_doubles
+   end subroutine etaX_doubles_a1_doubles
 !
-   module subroutine etaX_doubles_a2_abstract_doubles(wf, X, etaX_aibj)
+   module subroutine etaX_doubles_a2_doubles(wf, X, etaX_aibj)
 !!
 !!    etaX CCSD A2
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -755,7 +755,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
@@ -780,10 +780,10 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine etaX_doubles_a2_abstract_doubles
+   end subroutine etaX_doubles_a2_doubles
 !
 !
-   module subroutine etaX_doubles_b2_abstract_doubles(wf, X, etaX_aibj)
+   module subroutine etaX_doubles_b2_doubles(wf, X, etaX_aibj)
 !!
 !!    etaX CCSD B2
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -796,7 +796,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
@@ -888,10 +888,10 @@ contains
       call mem%dealloc(tb_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(X_jk, wf%n_o, wf%n_o)
 !
-   end subroutine etaX_doubles_b2_abstract_doubles
+   end subroutine etaX_doubles_b2_doubles
 !
 !
-   module subroutine construct_csiX_abstract_doubles(wf, X, csiX)
+   module subroutine construct_csiX_doubles(wf, X, csiX)
 !!
 !!    Construct csiX
 !!    Written by Josefine H. Andersen, 2019
@@ -904,7 +904,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
@@ -956,10 +956,10 @@ contains
 !
       call mem%dealloc(csiX_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine construct_csiX_abstract_doubles
+   end subroutine construct_csiX_doubles
 !
 !
-   module subroutine csiX_doubles_a1_abstract_doubles(wf, X, csiX_ai)
+   module subroutine csiX_doubles_a1_doubles(wf, X, csiX_ai)
 !!
 !!    csiX CCSD A1
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -974,7 +974,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
@@ -1032,10 +1032,10 @@ contains
       call mem%dealloc(u_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(X_ck, wf%n_v, wf%n_o)
 !
-   end subroutine csiX_doubles_a1_abstract_doubles
+   end subroutine csiX_doubles_a1_doubles
 !
 !
-   module subroutine csiX_doubles_a2_abstract_doubles(wf, X, csiX_aibj)
+   module subroutine csiX_doubles_a2_doubles(wf, X, csiX_aibj)
 !!
 !!    CsiX CCSD A2
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -1048,7 +1048,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !      
@@ -1123,10 +1123,10 @@ contains
       call mem%dealloc(X_kj, wf%n_o, wf%n_o)
       call mem%dealloc(t_cjai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine csiX_doubles_a2_abstract_doubles
+   end subroutine csiX_doubles_a2_doubles
 !
 !
-   module subroutine etaX_eom_doubles_a1_abstract_doubles(wf, X, etaX_ai)
+   module subroutine etaX_eom_doubles_a1_doubles(wf, X, etaX_ai)
 !!
 !!    etaX EOM CCSD A1
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -1141,7 +1141,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
 !
@@ -1257,10 +1257,10 @@ contains
             call mem%dealloc(I_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
             call mem%dealloc(X_dl, wf%n_v, wf%n_o)
 !
-   end subroutine etaX_eom_doubles_a1_abstract_doubles
+   end subroutine etaX_eom_doubles_a1_doubles
 !
 !
-   module subroutine etaX_eom_a_abstract_doubles(wf, etaX, csiX)
+   module subroutine etaX_eom_a_doubles(wf, etaX, csiX)
 !!
 !!    Get eom contribution
 !!    Written by Josefine H. Andersen, Feb 2019
@@ -1271,7 +1271,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
       real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
@@ -1292,9 +1292,9 @@ contains
 !
       call mem%dealloc(multipliers, wf%n_es_amplitudes)
 !
-   end subroutine etaX_eom_a_abstract_doubles
+   end subroutine etaX_eom_a_doubles
 !
 !
 !
 !
-end submodule fop_abstract_doubles
+end submodule fop_doubles

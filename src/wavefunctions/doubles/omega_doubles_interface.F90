@@ -18,47 +18,47 @@
 !
 !
 !
-   module subroutine omega_doubles_a1_abstract_doubles(wf, omega, u)
+   module subroutine omega_doubles_a1_doubles(wf, omega, u)
 !!
 !!    Omega doubles A1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
 !
-   end subroutine omega_doubles_a1_abstract_doubles
+   end subroutine omega_doubles_a1_doubles
 !
 !
-   module subroutine omega_doubles_b1_abstract_doubles(wf, omega, u)
+   module subroutine omega_doubles_b1_doubles(wf, omega, u)
 !!
 !!    Omega doubles B1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
 !
-   end subroutine omega_doubles_b1_abstract_doubles
+   end subroutine omega_doubles_b1_doubles
 !
 !
-   module subroutine omega_doubles_c1_abstract_doubles(wf, omega, u)
+   module subroutine omega_doubles_c1_doubles(wf, omega, u)
 !!
 !!    Omega doubles C1 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
 !
-    end subroutine omega_doubles_c1_abstract_doubles
+    end subroutine omega_doubles_c1_doubles
 !

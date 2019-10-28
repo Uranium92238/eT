@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (abstract_doubles_class) file_handling_abstract_doubles
+submodule (doubles_class) file_handling_doubles
 !
 !!
 !!    File handling submodule
@@ -32,7 +32,7 @@ submodule (abstract_doubles_class) file_handling_abstract_doubles
 !
 contains
 !
-   module subroutine read_doubles_vector_abstract_doubles(wf, X, file_)
+   module subroutine read_doubles_vector_doubles(wf, X, file_)
 !!
 !!    Read doubles vector X in a file
 !!    Written by Alexander C. Paul, Oct 2019
@@ -47,7 +47,7 @@ contains
 !!
       implicit none 
 !
-      class(abstract_doubles), intent(inout) :: wf 
+      class(doubles), intent(inout) :: wf 
 !
       real(dp), dimension(wf%n_t2), intent(out) :: X 
 !
@@ -62,7 +62,7 @@ contains
 !
       call file_%close_()
 !
-   end subroutine read_doubles_vector_abstract_doubles
+   end subroutine read_doubles_vector_doubles
 !
-end submodule file_handling_abstract_doubles 
+end submodule file_handling_doubles 
 !

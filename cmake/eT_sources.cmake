@@ -77,7 +77,7 @@ set(eT_fortran_sources
    src/wavefunctions/uhf/uhf_class.F90
    src/wavefunctions/mlhf/mlhf_class.F90
    src/wavefunctions/ccs/ccs_class.F90
-   src/wavefunctions/abstract_doubles/abstract_doubles_class.F90
+   src/wavefunctions/doubles/doubles_class.F90
    src/wavefunctions/cc2/cc2_class.F90
    src/wavefunctions/lowmem_cc2/lowmem_cc2_class.F90
    src/wavefunctions/ccsd/ccsd_class.F90
@@ -120,13 +120,13 @@ set(eT_fortran_sources
    src/wavefunctions/ccs/set_get_ccs.F90
    src/wavefunctions/ccs/file_handling_ccs.F90
    src/wavefunctions/ccs/debug_jacobian_ccs.F90
-   src/wavefunctions/abstract_doubles/omega_abstract_doubles.F90
-   src/wavefunctions/abstract_doubles/jacobian_abstract_doubles.F90
-   src/wavefunctions/abstract_doubles/jacobian_transpose_abstract_doubles.F90
-   src/wavefunctions/abstract_doubles/file_handling_abstract_doubles.F90
-   src/wavefunctions/abstract_doubles/initialize_destruct_abstract_doubles.F90
-   src/wavefunctions/abstract_doubles/zop_abstract_doubles.F90
-   src/wavefunctions/abstract_doubles/fop_abstract_doubles.F90
+   src/wavefunctions/doubles/omega_doubles.F90
+   src/wavefunctions/doubles/jacobian_doubles.F90
+   src/wavefunctions/doubles/jacobian_transpose_doubles.F90
+   src/wavefunctions/doubles/file_handling_doubles.F90
+   src/wavefunctions/doubles/initialize_destruct_doubles.F90
+   src/wavefunctions/doubles/zop_doubles.F90
+   src/wavefunctions/doubles/fop_doubles.F90
    src/wavefunctions/cc2/zop_cc2.F90
    src/wavefunctions/cc2/omega_cc2.F90
    src/wavefunctions/cc2/jacobian_cc2.F90

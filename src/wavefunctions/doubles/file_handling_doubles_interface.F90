@@ -18,7 +18,7 @@
 !
 !
 !
-   module subroutine read_doubles_vector_abstract_doubles(wf, X, file_)
+   module subroutine read_doubles_vector_doubles(wf, X, file_)
 !!
 !!    Read doubles vector state 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2019 
@@ -26,10 +26,10 @@
 !!
       implicit none 
 !
-      class(abstract_doubles), intent(inout) :: wf 
+      class(doubles), intent(inout) :: wf 
 !
       real(dp), dimension(wf%n_t2), intent(out) :: X 
 !
       type(sequential_file) :: file_
 !
-   end subroutine read_doubles_vector_abstract_doubles
+   end subroutine read_doubles_vector_doubles

@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine jacobian_transpose_doubles_a1_abstract_doubles(wf, sigma_ai, c_bj, u)
+   module subroutine jacobian_transpose_doubles_a1_doubles(wf, sigma_ai, c_bj, u)
 !!
 !!    Jacobian transpose doubles A1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
@@ -25,16 +25,16 @@
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)     :: c_bj
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)  :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
 !
-   end subroutine jacobian_transpose_doubles_a1_abstract_doubles
+   end subroutine jacobian_transpose_doubles_a1_doubles
 !
 !
-  module subroutine jacobian_transpose_doubles_b1_abstract_doubles(wf, sigma_ai, c_bjck)
+  module subroutine jacobian_transpose_doubles_b1_doubles(wf, sigma_ai, c_bjck)
 !!
 !!    Jacobian transpose doubles B1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
@@ -42,25 +42,25 @@
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_bjck
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)  :: sigma_ai
 !
-   end subroutine jacobian_transpose_doubles_b1_abstract_doubles
+   end subroutine jacobian_transpose_doubles_b1_doubles
 !
 !
-  module subroutine jacobian_transpose_doubles_a2_abstract_doubles(wf, sigma_aibj, c_ai)
+  module subroutine jacobian_transpose_doubles_a2_doubles(wf, sigma_aibj, c_ai)
 !!
 !!    Jacobian transpose CC2 A2
 !!    Written by Sarai D. Folkestad and Alexander Paul, Feb 2019
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: sigma_aibj
 !
-   end subroutine jacobian_transpose_doubles_a2_abstract_doubles
+   end subroutine jacobian_transpose_doubles_a2_doubles
 !
