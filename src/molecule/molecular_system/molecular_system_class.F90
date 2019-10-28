@@ -66,8 +66,6 @@ module molecular_system_class
 !
       integer, dimension(:), allocatable :: shell2atom 
 !
-      logical :: active_atoms = .false.
-!
       integer :: max_shell_size
 !     
 !     CGTO information                                           
@@ -156,6 +154,8 @@ module molecular_system_class
       procedure :: read_n_active_atoms_for_method           => read_n_active_atoms_for_method_molecular_system 
 !
       procedure :: first_and_last_ao_active_space           => first_and_last_ao_active_space_molecular_system 
+      procedure :: first_ao_active_space                    => first_ao_active_space_molecular_system
+      procedure :: last_ao_active_space                     => last_ao_active_space_molecular_system
 !
       procedure :: set_basis_info                           => set_basis_info_molecular_system
       procedure :: set_shell_basis_info                     => set_shell_basis_info_molecular_system
@@ -1157,7 +1157,7 @@ contains
       enddo
 !
       call output%printf('--------------------------------------', fs='(t6, a)', pl='minimal')
-      call output%printf('Total number of active atoms: ', ints=[n_total], fs='(t6, a)', pl='minimal')
+      call output%printf('Total number of active atoms: (i0)', ints=[n_total], fs='(t6, a)', pl='minimal')
       call output%printf('OBS: Atoms will be reordered, active atoms first', fs='(t6, a)', pl='minimal')
 !
       deallocate(atoms_copy)
@@ -1973,24 +1973,41 @@ contains
 !
       integer, intent(out) :: first, last
 !
-      integer :: i, first_atom, last_atom
+      call molecule%first_ao_active_space(level, first)
+      call molecule%last_ao_active_space(level, last)
 !
+   end subroutine first_and_last_ao_active_space_molecular_system
+!
+!
+   subroutine first_ao_active_space_molecular_system(molecule, level, first)
+!!
+!!    First ao in active space
+!!    Written by Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      character(len=*), intent(in) :: level
+!
+      integer, intent(out) :: first
+!
+      integer :: i, first_atom 
+!  
       first_atom = 0
-      last_atom = 0 
 !
       do i = 1, molecule%n_active_atoms_spaces
 !
          if (trim(molecule%active_atoms_spaces(i)%level) == trim(level)) then
 !
             first_atom = molecule%active_atoms_spaces(i)%first_atom
-            last_atom = molecule%active_atoms_spaces(i)%last_atom
             exit
 !
          endif
 !
       enddo
 !
-      if (first_atom == 0 .or. last_atom == 0) &
+      if (first_atom == 0) &
          call output%warning_msg('Could not find the requested active space in molecular system.')
 !
       first = 1
@@ -2001,15 +2018,50 @@ contains
 !
       enddo
 !
-      last = first - 1
+   end subroutine first_ao_active_space_molecular_system
 !
-      do i = first_atom, last_atom
+!
+   subroutine last_ao_active_space_molecular_system(molecule, level, last)
+!!
+!!    Last ao in active space
+!!    Written by Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      character(len=*), intent(in) :: level
+!
+      integer, intent(out) :: last
+!
+      integer :: i, last_atom 
+!  
+      last_atom = 0
+!
+      do i = 1, molecule%n_active_atoms_spaces
+!
+         if (trim(molecule%active_atoms_spaces(i)%level) == trim(level)) then
+!
+            last_atom = molecule%active_atoms_spaces(i)%last_atom
+            exit
+!
+         endif
+!
+      enddo
+!
+      if (last_atom == 0) &
+         call output%warning_msg('Could not find the requested active space in molecular system.')
+!
+      last = 0
+!
+      do i = 1, last_atom
 !
          last = last + molecule%atoms(i)%n_ao
 !
       enddo
 !
-   end subroutine first_and_last_ao_active_space_molecular_system
+   end subroutine last_ao_active_space_molecular_system
+!
 !
   subroutine set_basis_info_molecular_system(molecule)
 !!

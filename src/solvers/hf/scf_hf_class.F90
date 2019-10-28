@@ -214,11 +214,9 @@ contains
 !
       real(dp) :: energy, prev_energy, max_grad 
 !
-      integer :: iteration, dim_gradient
+      integer :: iteration
 !
       real(dp), dimension(:,:), allocatable :: h_wx
-!
-      real(dp), dimension(:), allocatable :: G 
 !
       if (wf%n_ao == 1) then 
 !
@@ -245,9 +243,6 @@ contains
 !
       prev_energy = zero
 !
-      dim_gradient = wf%n_densities*wf%n_ao*(wf%n_ao - 1)/2
-      call mem%alloc(G, dim_gradient)
-!
       call output%printf('Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)',fs='(/t3,a)',pl='normal') 
       call output%printf('---------------------------------------------------------------',fs='(t3,a)',pl='normal') 
 !
@@ -255,8 +250,7 @@ contains
 !
          energy = wf%energy
 !
-         call wf%get_packed_roothan_hall_gradient(G)
-         max_grad = get_abs_max(G, dim_gradient)
+         max_grad = wf%get_max_roothan_hall_gradient()
 !
 !        Print current iteration information
 !
@@ -301,7 +295,6 @@ contains
       enddo
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
-      call mem%dealloc(G, dim_gradient)
 !
       if (.not. converged) then
 !

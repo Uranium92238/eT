@@ -1,5 +1,4 @@
 !
-!
 !  eT - a coupled cluster program
 !  Copyright (C) 2016-2019 the authors of eT
 !
@@ -854,7 +853,7 @@ contains
 !
       integer, intent(in) :: n
 !
-      real(dp), dimension(n,n), intent(inout) :: A
+      real(dp), dimension(n,n), intent(in) :: A
       real(dp), dimension(n,n), intent(inout) :: Ainv
 
       real(dp), dimension(n) :: work  ! work array for LAPACK
@@ -1171,8 +1170,6 @@ contains
                         n)
 !
          endif
-!
-
 !
       call mem%dealloc(tmp, n, n)
 !
@@ -1815,56 +1812,56 @@ contains
    end subroutine quicksort_with_index_recursive
 !
 !
-   subroutine quicksort_descending(vec, dim)
+   subroutine quicksort_descending(vec, dim_)
 !!
 !!    Wrapper for recursive quicksort routine
 !!
       implicit none
 !
-      integer, intent(in) :: dim
-      real(dp), dimension(dim), intent(inout) :: vec
+      integer, intent(in) :: dim_
+      real(dp), dimension(dim_), intent(inout) :: vec
 !
-      call quicksort_recursive(vec, 1, dim)
+      call quicksort_recursive(vec, 1, dim_)
 !
    end subroutine quicksort_descending
 !
 !
-   subroutine quicksort_with_index_descending(vec, index_list, dim)
+   subroutine quicksort_with_index_descending(vec, index_list, dim_)
 !!
 !!    Wrapper for recursive quicksort with index list
 !!
       implicit none
 !
-      integer, intent(in) :: dim
-      real(dp), dimension(dim), intent(inout) :: vec
-      integer, dimension(dim), intent(out) :: index_list
+      integer, intent(in) :: dim_
+      real(dp), dimension(dim_), intent(inout) :: vec
+      integer, dimension(dim_), intent(out) :: index_list
 !
       integer :: i
 !
-      do i = 1, dim
+      do i = 1, dim_
          index_list(i) = i
       enddo
 !
-      call quicksort_with_index_recursive(vec, index_list, 1, dim)
+      call quicksort_with_index_recursive(vec, index_list, 1, dim_)
 !
    end subroutine quicksort_with_index_descending
 !
 !
-   subroutine quicksort_with_index_ascending(vec, index_list, dim)
+   subroutine quicksort_with_index_ascending(vec, index_list, dim_)
 !!
 !!    Wrapper for recursive quicksort with index list ascending order
 !!
       implicit none
 !
-      integer, intent(in) :: dim
-      real(dp), dimension(dim), intent(inout) :: vec
-      integer, dimension(dim), intent(out) :: index_list
+      integer, intent(in) :: dim_
+      real(dp), dimension(dim_), intent(inout) :: vec
+      integer, dimension(dim_), intent(out) :: index_list
 !
-      call dscal(dim, -one, vec, 1)
+      call dscal(dim_, -one, vec, 1)
 !
-      call quicksort_with_index_descending(vec, index_list, dim)
+      call quicksort_with_index_descending(vec, index_list, dim_)
 !
-      call dscal(dim, -one, vec, 1)
+      call dscal(dim_, -one, vec, 1)
 !
    end subroutine quicksort_with_index_ascending
 !
@@ -2012,58 +2009,221 @@ contains
    end subroutine quicksort_with_index_recursive_int
 !
 !
-   subroutine quicksort_descending_int(vec, dim)
+   subroutine quicksort_descending_int(vec, dim_)
 !!
 !!    Wrapper for recursive quicksort routine
 !!
       implicit none
 !
-      integer, intent(in) :: dim
-      integer, dimension(dim), intent(inout) :: vec
+      integer, intent(in) :: dim_
+      integer, dimension(dim_), intent(inout) :: vec
 !
-      call quicksort_recursive_int(vec, 1, dim)
+      call quicksort_recursive_int(vec, 1, dim_)
 !
    end subroutine quicksort_descending_int
 !
 !
-   subroutine quicksort_with_index_descending_int(vec, index_list, dim)
+   subroutine quicksort_with_index_descending_int(vec, index_list, dim_)
 !!
 !!    Wrapper for recursive quicksort with index list
 !!
       implicit none
 !
-      integer, intent(in) :: dim
-      integer, dimension(dim), intent(inout) :: vec
-      integer, dimension(dim), intent(inout) :: index_list
+      integer, intent(in) :: dim_
+      integer, dimension(dim_), intent(inout) :: vec
+      integer, dimension(dim_), intent(inout) :: index_list
 !
       integer :: i
 !
-      do i = 1, dim
+      do i = 1, dim_
          index_list(i) = i
       enddo
 !
-      call quicksort_with_index_recursive_int(vec, index_list, 1, dim)
+      call quicksort_with_index_recursive_int(vec, index_list, 1, dim_)
 !
    end subroutine quicksort_with_index_descending_int
 !
 !
-   subroutine quicksort_with_index_ascending_int(vec, index_list, dim)
+   subroutine quicksort_with_index_ascending_int(vec, index_list, dim_)
 !!
 !!    Wrapper for recursive quicksort with index list ascending order
 !!
       implicit none
 !
-      integer, intent(in) :: dim
-      integer, dimension(dim), intent(inout) :: vec
-      integer, dimension(dim), intent(inout) :: index_list
+      integer, intent(in) :: dim_
+      integer, dimension(dim_), intent(inout) :: vec
+      integer, dimension(dim_), intent(inout) :: index_list
 !
       vec = -1*vec
 !
-      call quicksort_with_index_descending_int(vec, index_list, dim)
+      call quicksort_with_index_descending_int(vec, index_list, dim_)
 !
       vec = -1*vec
 !
    end subroutine quicksort_with_index_ascending_int
+!
+!
+   subroutine generalized_diagonalization(dim_, A, M, V, e)
+!!
+!!    Generalized diagonalization
+!!    Written by Sarai D. Folkestad, Oct 2019
+!!
+!!    Solves the generalized eigenvalue
+!!    problem
+!!
+!!       A V = M X e
+!!
+!!    'dim_' : dimension of matrix A
+!!
+!!    'A' : Matrix to be diagonalized
+!!
+!!    'M' : Metric
+!!
+!!    'V' : Eigenvectors
+!!
+!!    'e' : Eigenvalues (optional)
+!!
+!!    Wrapper for dsygv (LAPACK)
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_, dim_), intent(in) :: A
+      real(dp), dimension(dim_, dim_), intent(in) :: M
+!
+      real(dp), dimension(dim_, dim_), intent(out) :: V
+!
+      real(dp), dimension(dim_), optional, intent(out) :: e
+!
+      real(dp), dimension(:), allocatable :: work, eigenvalues
+!
+      integer :: info, lwork
+!
+!     Work space inquiry
+!
+      call dcopy(dim_**2, A, 1, V, 1)
+!
+      call mem%alloc(work, 1)
+      lwork = -1
+!
+      call mem%alloc(eigenvalues, dim_)
+!
+      call dsygv(1, 'V', 'L',       &
+                  dim_,             &
+                  V,                &
+                  dim_,             &
+                  M,                &
+                  dim_,             &
+                  eigenvalues,      &
+                  work,             &
+                  lwork,            &
+                  info)
+!
+      lwork = int(work(1))
+      call mem%dealloc(work, 1)
+!
+!     Diagonalization
+!
+      call mem%alloc(work, lwork)
+!
+      call dsygv(1, 'V', 'L',       &
+                  dim_,             &
+                  V,                &
+                  dim_,             &
+                  M,                &
+                  dim_,             &
+                  eigenvalues,      &
+                  work,             &
+                  lwork,            &
+                  info)
+!
+      if (info .ne. 0) call output%error_msg('Could not solve generalized eigenvalue problem')
+!
+      call mem%dealloc(work, lwork)
+!
+      if (present(e)) then
+!
+         call dcopy(dim_, eigenvalues, 1, e, 1)
+!
+      endif
+!
+      call mem%dealloc(eigenvalues, dim_)
+!
+   end subroutine generalized_diagonalization
+!
+!
+   function count_n_true(dim_, logical_list) result(n_true)
+!!
+!!    Count n true
+!!    Written by Sarai D. Folkestad, Oct 2018
+!!
+!!    Counts the number of .true.
+!!    in the list of logicals ('logical_list')
+!!    with dimension 'dim_'
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+      logical, dimension(dim_), intent(in) :: logical_list
+!
+      integer :: n_true
+!
+      integer :: I
+!
+      n_true = 0
+!
+      do I = 1, dim_
+!
+         if (logical_list(I)) n_true = n_true + 1
+!
+      enddo
+!
+   end function count_n_true
+!
+!
+   subroutine extract_columns_of_matrix(n_extract, n_rows, n_columns, M, M_extracted, extract)
+!!
+!!    Extract columns of matrix
+!!    Written by Ida-Marie Høyvik and Sarai D. Folkestad, Oct 2019
+!!
+!!    Extracts columns of a matrix, based on the logical list
+!!    'extract' where extract(I)=.true. defines the instruction 
+!!    to extract. The number of elements to extract
+!!    'n_extract' must already be determined and passed to the routine.
+!!
+      implicit none
+!
+      integer, intent(in) :: n_extract, n_rows, n_columns
+!
+      real(dp), dimension(n_rows, n_columns), intent(in) :: M
+      real(dp), dimension(n_rows, n_extract), intent(out) :: M_extracted
+!
+      logical, dimension(n_columns) :: extract
+!
+      integer :: counter, I
+!
+      if (n_extract .gt. n_columns) &
+         call output%error_msg('Can not extract more columns than the original matrix contains: ' &
+                               //'mismatch beween n_extract and number of true in the extract list')
+!
+      counter = 0
+!
+      do I = 1, n_columns
+!  
+         if (extract(I)) then
+!
+            counter = counter + 1
+!
+            if (counter .gt. n_extract) call output%error_msg('Tried to extract non-existent column from matrix')
+!
+            call dcopy(n_rows, M(1,I), 1, M_extracted(1,counter), 1)
+!     
+         endif
+!
+      enddo
+!
+   end subroutine extract_columns_of_matrix
 !
 !
    function are_vectors_parallel(x, y, dim_, threshold) result(parallel)

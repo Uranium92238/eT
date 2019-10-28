@@ -132,7 +132,15 @@ contains
 !
 !     Choose solver
 !
-      if (trim(engine%algorithm) == 'scf-diis') then
+      if (trim(engine%algorithm) .eq. 'scf-diis' .and. trim(wf%name_) .eq. 'mlhf') then
+!
+         call output%error_msg('MLHF can not run with scf-diis, try mo-scf-diis.')
+!
+      elseif (trim(engine%algorithm) .eq. 'mo-scf-diis' .and. trim(wf%name_) .eq. 'uhf') then
+!
+         call output%error_msg('UHF can not run with mo-scf-diis, try scf-diis.')
+!
+      elseif (trim(engine%algorithm) == 'scf-diis') then
 !
          scf_diis = scf_diis_hf(wf, engine%restart)
          call scf_diis%run(wf)

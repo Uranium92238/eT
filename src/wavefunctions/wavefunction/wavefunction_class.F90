@@ -816,8 +816,8 @@ contains
 !
       integer, intent(in) :: n_orbitals
 !  
-      real(dp), dimension(wf%n_ao,wf%n_ao), intent(in)      :: D
-      real(dp), dimension(wf%n_ao,n_orbitals), intent(out)  :: PAO_coeff
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)      :: D
+      real(dp), dimension(wf%n_ao, n_orbitals), intent(out)  :: PAO_coeff
 !
       integer, intent(in), optional :: first_ao
 ! 
@@ -853,7 +853,6 @@ contains
 !$omp end parallel do
 !  
       call mem%alloc(S, wf%n_ao, wf%n_ao)
-      S = zero
 !
       call wf%get_ao_s_wx(S)
 !
@@ -957,7 +956,7 @@ contains
 !!       C = C U λ^(-1/2).
 !!
 !!    Linear dependence is removed by screening on the eigenvalues
-!!    with a threshold of 1.0 * 10^-6
+!!    with a threshold of 1.0 * 10^-10
 !!
       use array_utilities, only: copy_and_scale
 !
@@ -976,13 +975,13 @@ contains
 !
       integer :: i, info
 !
-      real(dp), parameter :: threshold = 1.0d-6
+      real(dp), parameter :: threshold = 1.0d-10
 !
 !     Diagonalize S
 !
       call mem%alloc(eigenvalues, n_orbitals)
 !
-      call mem%alloc(work, 3*n_orbitals-1)
+      call mem%alloc(work, 4*n_orbitals)
 !
       call dscal(n_orbitals**2, -one, S, 1)
 !
@@ -992,10 +991,10 @@ contains
                n_orbitals,       &
                eigenvalues,      &
                work,             &
-               3*n_orbitals-1,   &
+               4*n_orbitals,     &
                info)
 !
-      call mem%dealloc(work, 3*n_orbitals-1)
+      call mem%dealloc(work, 4*n_orbitals)
 !
 !     Find the rank of S
 !

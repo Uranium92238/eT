@@ -130,6 +130,7 @@ contains
       type(section) :: cc
       type(section) :: mlcc
       type(section) :: mm
+      type(section) :: mlhf
       type(section) :: global_print
       type(section) :: frozen_orbitals
 !
@@ -143,9 +144,7 @@ contains
 !
 !     Set method section 
 !
-      the_file%rf_wfs = [character(len=25) :: &
-                           'hf',   &
-                           'uhf']
+      the_file%rf_wfs = [character(len=25) ::'hf','uhf','mlhf']
 !
       the_file%cc_wfs = [character(len=25) ::   &
                            'ccs',               &
@@ -314,6 +313,13 @@ contains
                      'forcefield', &
                      'algorithm ']
 !
+      mlhf%name_    = 'multilevel hf'
+      mlhf%required = .false.
+      mlhf%keywords = [character(len=25) :: &
+                        'cholesky threshold', &
+                        'project on minimal basis', &
+                        'cholesky virtuals']
+!
       global_print%name_    = 'print'
       global_print%required = .false.
       global_print%keywords = [character(len=25) :: &
@@ -344,6 +350,7 @@ contains
                            mlcc,                   &
                            cc,                     &
                            mm,                     &
+                           mlhf,                   &
                            global_print,           &
                            frozen_orbitals]
 !

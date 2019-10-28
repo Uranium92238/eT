@@ -75,6 +75,7 @@ set(eT_fortran_sources
    src/wavefunctions/hf/hf_class.F90  
    src/wavefunctions/hf/mo_hf.F90
    src/wavefunctions/uhf/uhf_class.F90
+   src/wavefunctions/mlhf/mlhf_class.F90
    src/wavefunctions/ccs/ccs_class.F90
    src/wavefunctions/abstract_doubles/abstract_doubles_class.F90
    src/wavefunctions/cc2/cc2_class.F90
