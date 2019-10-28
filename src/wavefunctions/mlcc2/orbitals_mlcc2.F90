@@ -326,7 +326,7 @@ contains
    end subroutine construct_block_diagonal_fock_orbitals_mlcc2
 !
 !
-   module subroutine construct_block_diagonal_fock_mos_2_level_mlcc2(wf, n_total, n_active, fock, MO_coeff, diagonal)
+   module subroutine construct_block_diagonal_fock_mos_2_level_mlcc2(wf, n_total, n_active, fock, mo_coeff, diagonal)
 !!
 !!    Construct Fock block diagonal 2 levels
 !!    Written by Sarai D. Folkestad, Feb 2019
@@ -340,7 +340,7 @@ contains
 !!
 !!    'fock' : Fock matrix block to block diagonalize
 !!
-!!    'MO_coef' : MO coefficients which are updated to 
+!!    'mo_coef' : MO coefficients which are updated to 
 !!                the new basis which block diagonalizes Fock
 !!                matrix block
 !!
