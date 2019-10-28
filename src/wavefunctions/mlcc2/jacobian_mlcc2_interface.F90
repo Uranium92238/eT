@@ -104,8 +104,8 @@
 !
       integer, intent(in) :: n_cc2_o, n_cc2_v, first_cc2_o, first_cc2_v, last_cc2_o, last_cc2_v
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                                  :: c_ai
-      real(dp), dimension(wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o), intent(out) :: rho_aibj   
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: c_ai
+      real(dp), dimension(n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o), intent(out) :: rho_aibj   
 !
    end subroutine jacobian_cc2_a2_mlcc2
 !

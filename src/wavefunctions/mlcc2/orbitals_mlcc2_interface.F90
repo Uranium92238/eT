@@ -59,7 +59,7 @@
       integer, intent(in) :: n_total, n_active ! Total matrix dimension of block, and number of active orbitals
 !
       real(dp), dimension(n_total, n_total), intent(inout) :: fock
-      real(dp), dimension(n_total, n_total), intent(inout) :: mo_coeff
+      real(dp), dimension(wf%n_ao, n_total), intent(inout) :: mo_coeff
       real(dp), dimension(n_total), intent(out) :: diagonal
 !
    end subroutine construct_block_diagonal_fock_mos_2_level_mlcc2
