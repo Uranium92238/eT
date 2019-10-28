@@ -24,11 +24,11 @@ module ccsd_class
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
 !!
 !
-   use abstract_doubles_class
+   use doubles_class
 !
    implicit none
 !
-   type, extends(abstract_doubles) :: ccsd
+   type, extends(doubles) :: ccsd
 !
 !     Intermediate files 
 !

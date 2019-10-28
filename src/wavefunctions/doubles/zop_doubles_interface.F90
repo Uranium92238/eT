@@ -17,68 +17,68 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine construct_gs_density_abstract_doubles(wf)
+   module subroutine construct_gs_density_doubles(wf)
 !!
 !!    Construct one-electron density
 !!    Written by Sarai Dery Folkestad, 2019
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(:,:,:,:), allocatable :: tbar_aibj
       real(dp), dimension(:,:,:,:), allocatable :: t_aibj
 !
-   end subroutine construct_gs_density_abstract_doubles
+   end subroutine construct_gs_density_doubles
 !
 !
-   module subroutine gs_one_el_density_doubles_oo_abstract_doubles(wf, density, tbar_akbj, t_akbi)
+   module subroutine gs_one_el_density_doubles_oo_doubles(wf, density, tbar_akbj, t_akbi)
 !!
 !!    One electron density oo
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_akbj
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_akbi
 !
-   end subroutine gs_one_el_density_doubles_oo_abstract_doubles
+   end subroutine gs_one_el_density_doubles_oo_doubles
 !
 !
-   module subroutine gs_one_el_density_doubles_vv_abstract_doubles(wf, density, tbar_ajci, t_bjci)
+   module subroutine gs_one_el_density_doubles_vv_doubles(wf, density, tbar_ajci, t_bjci)
 !!
 !!    One electron density vv
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_ajci
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_bjci
 !
-   end subroutine gs_one_el_density_doubles_vv_abstract_doubles
+   end subroutine gs_one_el_density_doubles_vv_doubles
 !
 !
-   module subroutine gs_one_el_density_doubles_ov_abstract_doubles(wf, density, tbar_ai, t_aibj)
+   module subroutine gs_one_el_density_doubles_ov_doubles(wf, density, tbar_ai, t_aibj)
 !!
 !!    One electron density ov
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_aibj
 !
-   end subroutine gs_one_el_density_doubles_ov_abstract_doubles
+   end subroutine gs_one_el_density_doubles_ov_doubles
 !

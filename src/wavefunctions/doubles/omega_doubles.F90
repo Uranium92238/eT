@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (abstract_doubles_class) omega_abstract_doubles
+submodule (doubles_class) omega_doubles
 !
 !!
 !!    Omega submodule (Abstract doubles)
@@ -33,7 +33,7 @@ submodule (abstract_doubles_class) omega_abstract_doubles
 contains
 !
 !
-   module subroutine omega_doubles_a1_abstract_doubles(wf, omega, u)
+   module subroutine omega_doubles_a1_doubles(wf, omega, u)
 !!
 !!    Omega doubles A1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
@@ -46,7 +46,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
@@ -127,10 +127,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine omega_doubles_a1_abstract_doubles
+   end subroutine omega_doubles_a1_doubles
 !
 !
-   module subroutine omega_doubles_b1_abstract_doubles(wf, omega, u)
+   module subroutine omega_doubles_b1_doubles(wf, omega, u)
 !!
 !!    Omega doubles B1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
@@ -147,7 +147,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
@@ -191,10 +191,10 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine omega_doubles_b1_abstract_doubles
+   end subroutine omega_doubles_b1_doubles
 !
 !
-   module subroutine omega_doubles_c1_abstract_doubles(wf, omega, u)
+   module subroutine omega_doubles_c1_doubles(wf, omega, u)
 !!
 !!    Omega doubles C1 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
@@ -210,7 +210,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles), intent(in) :: wf
+      class(doubles), intent(in) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
@@ -242,7 +242,7 @@ contains
 !
       call timer%turn_off()
 !
-    end subroutine omega_doubles_c1_abstract_doubles
+    end subroutine omega_doubles_c1_doubles
 !
 !
-end submodule omega_abstract_doubles
+end submodule omega_doubles

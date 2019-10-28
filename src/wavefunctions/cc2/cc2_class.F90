@@ -24,11 +24,11 @@ module cc2_class
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 2018
 !!
 !
-   use abstract_doubles_class
+   use doubles_class
 !
    implicit none
 !
-   type, extends(abstract_doubles) :: cc2
+   type, extends(doubles) :: cc2
 !
       real(dp), dimension(:,:,:,:), allocatable :: u
 !
