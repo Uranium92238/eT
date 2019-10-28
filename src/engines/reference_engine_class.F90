@@ -251,7 +251,7 @@ contains
       character(len=200) :: beta_fname
 !
       character(len=200) :: ao_density_guess
-      character(len=200) :: name
+      character(len=200) :: name_
       integer            :: multiplicity
 !
       real(dp) :: energy_threshold
@@ -287,14 +287,12 @@ contains
 !
       if (restart_file%exists()) then
          call restart_file%copy("temp_restart_file")
-         call restart_file%delete_()
       endif
 !
       orbital_information_file = sequential_file("orbital_information")
 !
       if (orbital_information_file%exists()) then
          call orbital_information_file%copy("temp_orbital_information")
-         call orbital_information_file%delete_()
       endif
 !
 !     For every unique atom, generate SAD density to file
@@ -303,9 +301,9 @@ contains
 !
          atom = wf%system%atoms(i)
 !
-         name        = "sad_" // trim(atom%basis) // "_" // trim(atom%symbol)
-         alpha_fname = trim(name) // '_alpha'
-         beta_fname  = trim(name) // '_beta'
+         name_       = "sad_" // trim(atom%basis) // "_" // trim(atom%symbol)
+         alpha_fname = trim(name_) // '_alpha'
+         beta_fname  = trim(name_) // '_beta'
 !
 !        if SAD already exist, skip to next atom
 !
@@ -318,7 +316,7 @@ contains
 !
          multiplicity = atom%get_multiplicity()
          sad_system   = molecular_system(atoms=[atom],              &
-                                         name=name,                 &
+                                         name_=name_,               &
                                          charge=0,                  &
                                          multiplicity=multiplicity, &
                                          mm_calculation=.false.     )
