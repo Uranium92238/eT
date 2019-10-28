@@ -28,6 +28,7 @@ module molecular_system_class
    use libint_initialization
    use active_atoms_class, only : active_atoms
 !
+   use iso_c_binding, only : c_int
    use global_in, only : input
    use global_out, only : output
    use sequential_file_class, only : sequential_file
@@ -55,7 +56,7 @@ module molecular_system_class
       integer :: n_electrons 
       integer :: n_s
 !
-      integer(i6) :: cartesian_gaussians_int
+      integer(c_int) :: cartesian_gaussians_int
 !
       type(atomic), dimension(:), allocatable :: atoms
 !
@@ -199,7 +200,7 @@ contains
 !
       molecule%charge = 0
       molecule%multiplicity = 1
-      molecule%cartesian_gaussians_int = 0
+      molecule%cartesian_gaussians_int = int(0,kind=c_int)
 !
       call molecule%read_settings()
 !
@@ -232,7 +233,7 @@ contains
       molecule%multiplicity   = multiplicity
       molecule%mm_calculation = mm_calculation
 !
-      molecule%cartesian_gaussians_int = 0
+      molecule%cartesian_gaussians_int = int(0, kind=c_int)
       molecule%n_active_atoms_spaces = 0
 !
       call molecule%prepare()
@@ -459,12 +460,6 @@ contains
 !
       call input%get_keyword_in_section('charge', 'system', molecule%charge)
       call input%get_keyword_in_section('multiplicity', 'system', molecule%multiplicity)
-!
-!!      if (input%requested_keyword_in_section('cartesian gaussians', 'system')) then 
-!!!
-!!         molecule%cartesian_gaussians_int = 1
-!!!
-!!      endif 
 !
    end subroutine read_system_molecular_system
 !
@@ -2541,15 +2536,15 @@ contains
          trim(basis).eq.'6-31++g**'.or.     &
          trim(basis).eq.'6-31g(d,p)'.or.    &
          trim(basis).eq.'6-31g(2df,p)'.or.  &
-         trim(basis).eq.'6-31g(3df,3pd)') molecule%cartesian_gaussians_int = 1
+         trim(basis).eq.'6-31g(3df,3pd)') molecule%cartesian_gaussians_int = int(1, kind=c_int)
 !
       if (input%requested_keyword_in_section('cartesian gaussians', 'system')) then 
 !
-         molecule%cartesian_gaussians_int = 1
+         molecule%cartesian_gaussians_int = int(1, kind=c_int)
 ! 
       else if(input%requested_keyword_in_section('pure gaussians','system')) then
 !
-         molecule%cartesian_gaussians_int = 0
+         molecule%cartesian_gaussians_int = int(0, kind=c_int)
 !
       endif 
 

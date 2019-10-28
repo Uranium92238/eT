@@ -98,6 +98,11 @@ void reset_basis(){
 
 void initialize_basis(char *basisset, char *filename, int *cartesian_gaussians_int){
     
+    bool cartesian = false;
+    if (*cartesian_gaussians_int == 1) {
+       cartesian = true;
+    }
+
     string xyzfilename(strcat(filename,".xyz"));
 
     ifstream input_file(xyzfilename);
@@ -105,14 +110,21 @@ void initialize_basis(char *basisset, char *filename, int *cartesian_gaussians_i
     vector<Atom> temporary_atoms = read_dotxyz(input_file);
 
     cout.setstate(ios_base::failbit);
+
     BasisSet temporary(basisset, temporary_atoms);
+
     cout.clear();
 
-    bool cartesian = false;
-    if (*cartesian_gaussians_int == 1) {
-       cartesian = true;
+    for(auto& shell: temporary) {
+       for(auto& contraction: shell.contr) {
+          if (contraction.l == 2 && cartesian) contraction.pure = false;
+	  else if (contraction.l == 3 && cartesian) contraction.pure = false;
+	  else if (contraction.l == 4 && cartesian) contraction.pure = false;
+	  else if (contraction.l == 5 && cartesian) contraction.pure = false;
+	  else if (contraction.l == 6 && cartesian) contraction.pure = false;
+       }
     }
-    temporary.set_pure(!cartesian);
+
     basis.add(temporary);
 
 }
@@ -186,6 +198,7 @@ void initialize_nuclear(){
     }
 
     Engine temporary(Operator::nuclear, basis.max_nprim(), basis.max_l());
+
     temporary.set_params(q);
 
     for (int i = 0; i != omp_get_max_threads(); i++){
