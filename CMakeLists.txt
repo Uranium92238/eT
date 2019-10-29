@@ -21,7 +21,7 @@
 cmake_minimum_required(VERSION 3.7)
 
 # Project name and programming languanges
-project(eT Fortran CXX)
+project(eT Fortran CXX C)
 
 # Paths that CMake will search for cmake
 # module files that end with .cmake
@@ -29,6 +29,7 @@ set(CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake
     ${CMAKE_SOURCE_DIR}/cmake/math
     ${CMAKE_SOURCE_DIR}/cmake/findlibint
+    ${CMAKE_SOURCE_DIR}/cmake/findLibXC
     /usr/local/share/cmake/Modules
     )
 
@@ -43,13 +44,15 @@ option(ENABLE_PROFILING       "Enable profiling of code"                        
 option(ENABLE_RUNTIME_CHECKS  "Enable all runtime checks (for debug purposes)"           OFF)
 option(ENABLE_FORCED_BATCHING "Enable batching in every batch loop (for debug purposes)" OFF)
 
-# Find packages needed for libint 
+# Find packages needed for libint
+find_package(LibXC REQUIRED)
 find_package(Libint2 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
 message("-- Boost location: ${Boost_INCLUDE_DIRS}")
 
 # Include the relevant directories 
+include_directories(${LibXC_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${Libint2_H_DIR})
@@ -83,7 +86,7 @@ set(eT_CXX_sources
 
 add_executable(eT ${eT_fortran_sources} ${eT_CXX_sources})
 
-target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY})
+target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} ${LibXC_LIBRARY})
 
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
 
