@@ -156,7 +156,7 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
         if (not args.ignore_errors):
             something_wrong = True
         print()
-        print("Error message from eT:")
+        print("Error message for input file ", inpf, ":")
         print(s)
 
     if (args.verbose):
