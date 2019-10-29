@@ -158,6 +158,7 @@ module hf_class
       procedure :: roothan_hall_update_orbitals                => roothan_hall_update_orbitals_hf
       procedure :: print_orbital_energies                      => print_orbital_energies_hf
       procedure :: print_orbitals                              => print_orbitals_hf
+      procedure :: print_orbitals_from_coefficients            => print_orbitals_from_coefficients_hf
 !
 !     Class variable initialize and destruct routines
 !
@@ -481,109 +482,127 @@ contains
    end subroutine print_orbital_energies_hf
 !
 !
-   subroutine print_orbitals_hf(wf, n_orbitals, orbital_list)
+   subroutine print_orbitals_hf(wf, orbital_list)
 !!
 !!    Print orbitals
-!!    Written by Eirik F. Kjønstad, May 2019
+!!    Written by Eirik F. Kjønstad and Tor S. Haugland, Oct 2019
 !!
 !!    Prints the orbitals with atom & orbital information given.
 !!
+!!    orbital_list: A list of integers determining which MO to print
+!!                     [1,3,4] -> print MO 1, 3 and 4
+!!
       implicit none
 !
-      class(hf), intent(in) :: wf
-!
-      integer, intent(in) :: n_orbitals
-!
-      integer, dimension(n_orbitals), intent(in), optional :: orbital_list
-!
-      integer, parameter :: n_entries  = 4
-!
-      integer :: atom, mo_offset, first_mo, last_mo, shell, ao, mo, l, mos_to_print
-!
-      character(len=3) :: adv ! advance = 'yes' or 'no', depending on the circumstances
-!
-      character(len=1), dimension(6), parameter :: angular_momentum = ['s', 'p', 'd', 'f', 'g', 'h']
+      class(hf),             intent(in)           :: wf
+      integer, dimension(:), intent(in), optional :: orbital_list
 !
       integer, dimension(:), allocatable :: orbital_list_local
 !
-      mos_to_print = min(wf%n_mo, n_orbitals)
+      integer :: n_orbitals
+      integer :: mo, first_mo, last_mo
 !
-      write(output%unit, '(/t3,a,i0,a,i0,a)') 'Printing ', mos_to_print, ' MOs (out of the total ', wf%n_mo, ' MOs).'
-!
-      call mem%alloc(orbital_list_local, mos_to_print)
+!     Set orbital_list
 !
       if (.not. present(orbital_list)) then
 !
-!        Default is to print MOs [1,n_orbitals]
+!        Default: orbital_list = [n_o - 9, ..., n_o + 10]
 !
-         do mo = 1, mos_to_print
+         first_mo = max(1, wf%n_o - 9)
+         last_mo = min(wf%n_mo, wf%n_o + 10)
 !
-            orbital_list_local(mo) = mo
+         n_orbitals = last_mo - first_mo + 1
+!
+         call mem%alloc(orbital_list_local, n_orbitals)
+!
+         do mo = 1, n_orbitals
+!
+            orbital_list_local(mo) = first_mo + mo - 1
 !
          enddo
 !
       else
 !
-!        If list is provided, print only MOs in list
+!        Input: orbital_list
+!
+         n_orbitals = size(orbital_list)
+!
+         call mem%alloc(orbital_list_local, n_orbitals)
 !
          orbital_list_local = orbital_list
 !
-!        Sanity check
+      endif
 !
-         do mo = 1, mos_to_print
+!     Print MO and coefficients
 !
-            if (orbital_list(mo) .lt. 1 .or. orbital_list(mo) .gt. wf%n_mo) &
-                     call output%error_msg('Tried to print non-existent orbital')
+      call output%printf('- Printing molecular orbitals ((i0) from total (i0))', pl='normal', fs='(/t3,a)', &
+                        ints=[n_orbitals, wf%n_mo])
 !
-         enddo
+      call wf%print_orbitals_from_coefficients(orbital_list_local, wf%orbital_coefficients)
+!
+      call mem%dealloc(orbital_list_local, n_orbitals)
+!
+   end subroutine print_orbitals_hf
+!
+!
+   subroutine print_orbitals_from_coefficients_hf(wf, orbital_list, orbital_coefficients)
+!!
+!!    Print orbitals from coefficients
+!!    Written by Eirik F. Kjønstad and Tor S. Haugland, Oct 2019
+!!
+!!    Prints the orbitals from coefficients with atom & orbital information given.
+!!
+      implicit none
+!
+      class(hf),                             intent(in) :: wf
+      integer, dimension(:),                 intent(in) :: orbital_list
+      real(dp), dimension(wf%n_ao, wf%n_mo), intent(in) :: orbital_coefficients 
+!
+      integer, parameter :: n_entries  = 5
+!
+      character(len=1), dimension(6), parameter :: angular_momentums = ['s', 'p', 'd', 'f', 'g', 'h']
+!
+      integer :: n_orbitals, mo_offset, first_mo, last_mo, mo
+      integer :: atom, shell, ao, l
+!
+      logical :: adv
+!
+      character(len=2) :: symbol, ang_mom
+      real(dp) :: orb_coeff
+!
+!     Sanity check
+!
+      if (any(orbital_list < 1) .or. any(orbital_list > wf%n_mo)) then
+!
+         call output%error_msg('Tried to print non-existent orbital')
 !
       endif
 !
-      do mo_offset = 1, mos_to_print, n_entries
+      n_orbitals = size(orbital_list)
+!
+!     Print `n_entries` columns with `wf%n_mo` rows
+!
+      do mo_offset = 1, n_orbitals, n_entries
 !
          first_mo = mo_offset
-         last_mo  = min(mo_offset + n_entries - 1, mos_to_print)
+         last_mo  = min(mo_offset + n_entries - 1, n_orbitals)
 !
-         write(output%unit, '(/t3,a)', advance='no') '- Printing molecular orbitals: '
+!        Print header: AO Atom 1 2 3 4 ..
+!
+         call output%printf('  AO    Atom', pl='normal', fs='(/t3,a)', adv=.false.)
 !
          do mo = first_mo, last_mo
 !
-            if (mo == first_mo) then
+            adv = (mo == last_mo)
 !
-               write(output%unit, '(i0)', advance='no') orbital_list_local(mo)
-!
-            elseif ((mo == last_mo) ) then
-!
-            write(output%unit, '(a,1x,i0/)', advance='yes') ',', orbital_list_local(mo)
-!
-            else
-!
-               write(output%unit, '(a,1x,i0)', advance='no') ',', orbital_list_local(mo)
-!
-            endif
+            call output%printf('(i4)', pl='normal', fs='(8x,a)', adv=adv, &
+                              ints=[orbital_list(mo)] )
 !
          enddo
 !
-         write(output%unit, '(t6,a)', advance='no') 'AO   Atom'
+         call output%print_separator(pl='normal', n=76, symbol='-')
 !
-         adv = 'no'
-         do mo = first_mo, last_mo
-!
-            if (mo == last_mo) adv = 'yes'
-!
-            if (mo == first_mo) then
-!
-               write(output%unit, '(7x,i4)', advance=adv) orbital_list_local(mo)
-!
-            else
-!
-               write(output%unit, '(8x,i4)', advance=adv) orbital_list_local(mo)
-!
-            endif
-!
-         enddo
-!
-         write(output%unit, '(t5,a)') '---------------------------------------------------------------'
+!        Print content: AO, Atom and orbital coefficients
 !
          do atom = 1, wf%system%n_atoms
 !
@@ -593,15 +612,19 @@ contains
 !
                do ao = wf%system%atoms(atom)%shells(shell)%first, wf%system%atoms(atom)%shells(shell)%last
 !
-                  write(output%unit, '(t3,i4,i4,1x,a2,a1,a1,a1)', advance='no') ao, atom, &
-                                                                          wf%system%atoms(atom)%symbol, &
-                                                                         '(', angular_momentum(l + 1), ')'
+                  symbol  = trim( wf%system%atoms(atom)%symbol )
+                  ang_mom = trim( angular_momentums(l+1) )
 !
-                  adv = 'no'
+                  call output%printf('(i4) (i4) (a2)((a1))', pl='normal', adv=.false., &
+                                    ints=[ao, atom], chars=[symbol, ang_mom])
+!
                   do mo = first_mo, last_mo
 !
-                     if (mo == last_mo) adv = 'yes'
-                     write(output%unit, '(2x, f10.6)', advance=adv) wf%orbital_coefficients(ao, orbital_list_local(mo))
+                     adv = (mo == last_mo)
+                     orb_coeff = orbital_coefficients(ao, orbital_list(mo))
+!
+                     call output%printf('(f10.6)', pl='normal', fs='(2x,a)', adv=adv, &
+                                       reals=[orb_coeff] )
 !
                   enddo
 !
@@ -611,14 +634,11 @@ contains
 !
          enddo
 !
-         write(output%unit, '(t5,a)') '---------------------------------------------------------------'
+         call output%print_separator(pl='normal', n=76, symbol='-')
 !
       enddo
 !
-      call mem%dealloc(orbital_list_local, mos_to_print)
-
-!
-   end subroutine print_orbitals_hf
+   end subroutine print_orbitals_from_coefficients_hf
 !
 !
    subroutine mo_transform_hf(wf, X_wx, Y_pq)

@@ -93,6 +93,7 @@ module uhf_class
       procedure :: roothan_hall_update_orbitals         => roothan_hall_update_orbitals_uhf
       procedure :: print_orbital_energies               => print_orbital_energies_uhf
       procedure :: print_energy                         => print_energy_uhf
+      procedure :: print_orbitals                       => print_orbitals_uhf
       procedure :: save_orbital_coefficients            => save_orbital_coefficients_uhf
       procedure :: read_orbital_coefficients            => read_orbital_coefficients_uhf
       procedure :: save_orbital_energies                => save_orbital_energies_uhf
@@ -202,7 +203,6 @@ contains
       wf%n_ao = wf%system%get_n_aos()
 !
       call wf%set_n_mo()
-      wf%n_o = 0 ! hack to fix print_orbitals (remove later)
 !
       if (wf%fractional_uniform_valence) then
 !
@@ -1773,5 +1773,90 @@ contains
          call output%printf('Removed (i0) AOs due to linear dep.', ints=[wf%n_ao - wf%n_mo], fs='(/t6,a)', pl='minimal')
 !
    end subroutine set_n_mo_uhf
+!
+!
+   subroutine print_orbitals_uhf(wf, orbital_list)
+!!
+!!    Print orbitals
+!!    Written by Eirik F. Kjønstad and Tor S. Haugland, Oct 2019
+!!
+!!    Prints the orbitals with atom & orbital information given.
+!!
+!!    orbital_list: A list of integers determining which MO to print
+!!                     [1,3,20] -> print MO 1, 3 and 20
+!!
+      implicit none
+!
+      class(uhf),            intent(in)           :: wf
+      integer, dimension(:), intent(in), optional :: orbital_list
+!
+      integer, dimension(:), allocatable :: orbital_list_alpha, orbital_list_beta
+!
+      integer :: n_orbitals_alpha, n_orbitals_beta
+      integer :: mo, first_mo, last_mo
+!
+!     Set defaults
+!
+      if (.not. present(orbital_list)) then
+!
+!        Default: orbital_list_alpha = [n_alpha - 4, ..., n_alpha + 5]
+!
+         first_mo = max(1, wf%n_alpha - 4)
+         last_mo = min(wf%n_mo, wf%n_alpha + 5)
+!
+         n_orbitals_alpha = last_mo - first_mo + 1
+!
+         call mem%alloc(orbital_list_alpha, n_orbitals_alpha)
+!
+         do mo = 1, n_orbitals_alpha
+!
+            orbital_list_alpha(mo) = first_mo + mo - 1
+!
+         enddo
+!
+!        Default: orbital_list_beta = [n_beta - 4, ..., n_beta + 5]
+!
+         first_mo = max(1, wf%n_beta - 4)
+         last_mo = min(wf%n_mo, wf%n_beta + 5)
+!
+         n_orbitals_beta = last_mo - first_mo + 1
+!
+         call mem%alloc(orbital_list_beta, n_orbitals_beta)
+!
+         do mo = 1, n_orbitals_beta
+!
+            orbital_list_beta(mo) = first_mo + mo - 1
+!
+         enddo
+!
+      else
+!
+!        Input: orbital_list
+!
+         n_orbitals_alpha = size(orbital_list)
+         n_orbitals_beta = size(orbital_list)
+!
+         call mem%alloc(orbital_list_alpha, n_orbitals_alpha)
+         call mem%alloc(orbital_list_beta,  n_orbitals_beta)
+!
+         orbital_list_alpha = orbital_list
+         orbital_list_beta = orbital_list
+!
+      endif
+!
+      call output%printf('- Printing alpha molecular orbitals ((i0) from total (i0))', pl='normal', fs='(/t3,a)', &
+                        ints=[n_orbitals_alpha, wf%n_mo])
+!
+      call wf%print_orbitals_from_coefficients(orbital_list_alpha, wf%orbital_coefficients_a)
+!
+      call output%printf('- Printing beta molecular orbitals ((i0) from total (i0))', pl='normal', fs='(/t3,a)', &
+                        ints=[n_orbitals_beta, wf%n_mo])
+!
+      call wf%print_orbitals_from_coefficients(orbital_list_beta, wf%orbital_coefficients_b)
+!
+      call mem%dealloc(orbital_list_alpha, n_orbitals_alpha)
+      call mem%dealloc(orbital_list_beta,  n_orbitals_beta)
+!
+   end subroutine print_orbitals_uhf
 !
 end module uhf_class

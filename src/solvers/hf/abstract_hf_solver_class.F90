@@ -207,11 +207,11 @@ contains
 !
       if (allocated(solver%orbitals_to_print)) then
 !      
-         call wf%print_orbitals(size(solver%orbitals_to_print), solver%orbitals_to_print)
+         call wf%print_orbitals(solver%orbitals_to_print)
 !
       else
 !
-         call wf%print_orbitals(wf%n_o + 10)
+         call wf%print_orbitals()
 !
       endif
 !
