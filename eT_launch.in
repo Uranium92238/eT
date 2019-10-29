@@ -48,7 +48,7 @@ parser.add_argument("--omp", help="Number of OpenMP threads", action=OMPaction, 
 parser.add_argument('-nt', "--no-timing", help="Do not copy timing.out from scratch", action='store_true')
 parser.add_argument('-v', "--verbose", help="Run some print statements", action='store_true')
 parser.add_argument('-bd', "--binary-dir", help="Specify location of eT executable", type=str)
-parser.add_argument('-ldd', "--libint-data-dir", help="Specify location of Libint basis directory", type=str)
+parser.add_argument('-basis', "--basis_dir", help="Specify location of Libint basis directory", type=str)
 parser.add_argument('--profile', help="Copy gmon.out from scratch", action='store_true')
 parser.add_argument('-i_err', '--ignore_errors', help="Continue with default behaviour if errors detected", action='store_true')
 args = parser.parse_args()
@@ -73,8 +73,8 @@ else:
 eT_dir = os.path.abspath(eT_dir) # Use absolute path
 
 #Set the Libint basis directory
-if (args.libint_data_dir):
-    ldd_dir = os.path.abspath(args.libint_data_dir)
+if (args.basis_dir):
+    ldd_dir = os.path.abspath(args.basis_dir)
     os.environ['LIBINT_DATA_PATH'] = ldd_dir
 elif not 'LIBINT_DATA_PATH' in os.environ:
     ldd_dir = os.path.join('${CMAKE_SOURCE_DIR}/basis')

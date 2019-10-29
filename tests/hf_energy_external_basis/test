@@ -45,6 +45,6 @@ for inp in ['hf_energy_external_basis.inp']:
                 configure,
                 input_files=inp,
                 filters={'out': f},
-                extra_args='-ldd '+cwd+'/tests/hf_energy_external_basis')
+                extra_args='-basis '+cwd+'/tests/hf_energy_external_basis')
 
 sys.exit(ierr)
