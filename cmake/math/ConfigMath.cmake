@@ -1,5 +1,4 @@
 
-
 # -----------------------------------------------------------------------------
 # Copyright 2011-2013 Jonas Juselius <firstname.lastname at uit.no>
 #                     Radovan Bast   <lastname at kth.se>
@@ -13,9 +12,9 @@
 
 
 if(ENABLE_64BIT_INTEGERS)
-	set(MATH_LIB_SEARCH_ORDER ATLAS MKL ACML SYSTEM_NATIVE)
+	set(MATH_LIB_SEARCH_ORDER MKL ACML SYSTEM_NATIVE ATLAS)
 else()
-	set(MATH_LIB_SEARCH_ORDER SYSTEM_NATIVE MKL ATLAS ESSL OPENBLAS ACML)
+	set(MATH_LIB_SEARCH_ORDER MKL SYSTEM_NATIVE OPENBLAS ATLAS ESSL ACML)
 endif()
 
 if(NOT DEFINED MKL_FLAG)
