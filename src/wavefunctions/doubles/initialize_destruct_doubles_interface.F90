@@ -17,20 +17,8 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (abstract_doubles_class) initialize_destruct_abstract_doubles
 !
-!!
-!!    Initialize and destruct submodule
-!!
-!!    Gathers routines that get and set wavefunction parameters.
-!!
-!
-   implicit none
-!
-!
-contains
-!
-   module subroutine initialize_t2_abstract_doubles(wf)
+   module subroutine initialize_t2_doubles(wf)
 !!
 !!    Initialize t2 amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
@@ -38,14 +26,12 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
-      if (.not. allocated(wf%t2)) call mem%alloc(wf%t2, wf%n_t2)
-!
-   end subroutine initialize_t2_abstract_doubles
+   end subroutine initialize_t2_doubles
 !
 !
-   module subroutine destruct_t2_abstract_doubles(wf)
+   module subroutine destruct_t2_doubles(wf)
 !!
 !!    Destruct t2 amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
@@ -53,38 +39,31 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
-      if (allocated(wf%t2)) call mem%dealloc(wf%t2, wf%n_t2)
-!
-   end subroutine destruct_t2_abstract_doubles
+   end subroutine destruct_t2_doubles
 !
 !
-   module subroutine initialize_t2bar_abstract_doubles(wf)
+   module subroutine initialize_t2bar_doubles(wf)
 !!
 !!    Initialize t2bar amplitudes
 !!    Written by Sarai D. Folkestad
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
-      if (.not. allocated(wf%t2bar)) call mem%alloc(wf%t2bar, wf%n_t2)
-!
-   end subroutine initialize_t2bar_abstract_doubles
+   end subroutine initialize_t2bar_doubles
 !
 !
-   module subroutine destruct_t2bar_abstract_doubles(wf)
+   module subroutine destruct_t2bar_doubles(wf)
 !!
 !!    Destruct t2bar amplitudes
 !!    Written by Sarai D. Folkestad
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
-      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_t2)
+   end subroutine destruct_t2bar_doubles
 !
-   end subroutine destruct_t2bar_abstract_doubles
-!
-end submodule initialize_destruct_abstract_doubles 

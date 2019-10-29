@@ -17,91 +17,91 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine jacobian_doubles_b1_abstract_doubles(wf, rho_ai, c_aibj)
+   module subroutine jacobian_doubles_b1_doubles(wf, rho_ai, c_aibj)
 !!
 !!    Jacobian doubles B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_aibj
       real(dp), dimension(wf%n_v, wf%n_o) :: rho_ai
 !
-   end subroutine jacobian_doubles_b1_abstract_doubles
+   end subroutine jacobian_doubles_b1_doubles
 !
 !
-   module subroutine jacobian_doubles_c1_abstract_doubles(wf, rho_ai, c_aibj)
+   module subroutine jacobian_doubles_c1_doubles(wf, rho_ai, c_aibj)
 !!
 !!    Jacobian doubles C1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_aibj
       real(dp), dimension(wf%n_v, wf%n_o) :: rho_ai
 !
-   end subroutine jacobian_doubles_c1_abstract_doubles
+   end subroutine jacobian_doubles_c1_doubles
 !
 !
-   module subroutine jacobian_doubles_d1_abstract_doubles(wf, rho_ai, c_bicj)
+   module subroutine jacobian_doubles_d1_doubles(wf, rho_ai, c_bicj)
 !!
 !!    Jacobian doubles D1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_bicj
       real(dp), dimension(wf%n_v, wf%n_o) :: rho_ai
 !
-   end subroutine jacobian_doubles_d1_abstract_doubles
+   end subroutine jacobian_doubles_d1_doubles
 !
 !
-   module subroutine save_jacobian_a1_intermediates_abstract_doubles(wf)
+   module subroutine save_jacobian_a1_intermediates_doubles(wf)
 !!
 !!    Save jacobian a1 intermediates
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2019
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
-   end subroutine save_jacobian_a1_intermediates_abstract_doubles
+   end subroutine save_jacobian_a1_intermediates_doubles
 !
 !
-   module subroutine jacobian_doubles_a1_abstract_doubles(wf, rho_ai, c_ai)
+   module subroutine jacobian_doubles_a1_doubles(wf, rho_ai, c_ai)
 !!
 !!    Jacobian doubles A1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
 !     Vectors sent to the routine
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o)                :: rho_ai
 !
-   end subroutine jacobian_doubles_a1_abstract_doubles
+   end subroutine jacobian_doubles_a1_doubles
 !
 !
-   module subroutine jacobian_doubles_a2_abstract_doubles(wf, rho_aibj, c_ai)
+   module subroutine jacobian_doubles_a2_doubles(wf, rho_aibj, c_ai)
 !!
 !!    Jacobian doubles A2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)          :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o)      :: rho_aibj
 !
-   end subroutine jacobian_doubles_a2_abstract_doubles
+   end subroutine jacobian_doubles_a2_doubles
 !

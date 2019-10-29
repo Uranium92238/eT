@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (abstract_doubles_class) zop_abstract_doubles
+submodule (doubles_class) zop_doubles
 !
 !!
 !!    Zeroth order properties submodule 
@@ -34,7 +34,7 @@ contains
 !
 !
 
-   module subroutine construct_gs_density_abstract_doubles(wf)
+   module subroutine construct_gs_density_doubles(wf)
 !!
 !!    Construct one-electron density
 !!    Written by Sarai Dery Folkestad, 2019
@@ -46,7 +46,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(:,:,:,:), allocatable :: tbar_aibj
       real(dp), dimension(:,:,:,:), allocatable :: t_aibj
@@ -70,10 +70,10 @@ contains
       call mem%dealloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine construct_gs_density_abstract_doubles
+   end subroutine construct_gs_density_doubles
 !
 !
-   module subroutine gs_one_el_density_doubles_oo_abstract_doubles(wf, density, tbar_akbj, t_akbi)
+   module subroutine gs_one_el_density_doubles_oo_doubles(wf, density, tbar_akbj, t_akbi)
 !!
 !!    One electron density oo
 !!    Written by Sarai D. Folkestad, 2019
@@ -82,7 +82,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
@@ -102,10 +102,10 @@ contains
                   density,                &
                   wf%n_mo)
 !
-   end subroutine gs_one_el_density_doubles_oo_abstract_doubles
+   end subroutine gs_one_el_density_doubles_oo_doubles
 !
 !
-   module subroutine gs_one_el_density_doubles_vv_abstract_doubles(wf, density, tbar_ajci, t_bjci)
+   module subroutine gs_one_el_density_doubles_vv_doubles(wf, density, tbar_ajci, t_bjci)
 !!
 !!    One electron density vv
 !!    Written by Sarai D. Folkestad, 2019
@@ -114,7 +114,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
@@ -134,10 +134,10 @@ contains
                   density(wf%n_o + 1, wf%n_o + 1), &
                   wf%n_mo)
 !
-   end subroutine gs_one_el_density_doubles_vv_abstract_doubles
+   end subroutine gs_one_el_density_doubles_vv_doubles
 !
 !
-   module subroutine gs_one_el_density_doubles_ov_abstract_doubles(wf, density, tbar_ai, t_aibj)
+   module subroutine gs_one_el_density_doubles_ov_doubles(wf, density, tbar_ai, t_aibj)
 !!
 !!    One electron density ov
 !!    Written by Sarai D. Folkestad, 2019
@@ -148,7 +148,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
@@ -196,7 +196,7 @@ contains
 !
       call mem%dealloc(D_ov, wf%n_v, wf%n_o)
 !
-   end subroutine gs_one_el_density_doubles_ov_abstract_doubles
+   end subroutine gs_one_el_density_doubles_ov_doubles
 !
 !
-end submodule zop_abstract_doubles
+end submodule zop_doubles

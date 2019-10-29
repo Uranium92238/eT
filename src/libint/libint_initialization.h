@@ -18,6 +18,16 @@
 //
 // -----------------------------------------------------------------------
 
+// check if the correct shell ordering is set-up in libint
+// however throw an error
+
+// define the LIBINT_CGSHELL_ORDERING, which contains infromation about
+// Gaussian shell ordering
+#include "libint2/config.h"
+#if LIBINT_CGSHELL_ORDERING != LIBINT_CGSHELL_ORDERING_STANDARD
+#error "Libint compiled with an cg shell ordering different from cartesian"
+#endif
+
 #ifdef __cplusplus
 // Are we compiling this with a C++ compiler? Add extern "C" { ... }
 extern "C" {

@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (abstract_doubles_class) jacobian_abstract_doubles
+submodule (doubles_class) jacobian_doubles
 !
 !!
 !!    Jacobian submodule (Abstract doubles)
@@ -39,7 +39,7 @@ submodule (abstract_doubles_class) jacobian_abstract_doubles
 contains
 !
 !
-   module subroutine save_jacobian_a1_intermediates_abstract_doubles(wf)
+   module subroutine save_jacobian_a1_intermediates_doubles(wf)
 !!
 !!    Save jacobian a1 intermediates
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2019
@@ -59,7 +59,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       type(timings) :: jacobian_a1_intermediate_timer
 !
@@ -142,10 +142,10 @@ contains
 !
       call wf%jacobian_a1_intermediate_oo%close_('keep')
 !
-   end subroutine save_jacobian_a1_intermediates_abstract_doubles
+   end subroutine save_jacobian_a1_intermediates_doubles
 !
 !
-   module subroutine jacobian_doubles_a1_abstract_doubles(wf, rho_ai, c_ai)
+   module subroutine jacobian_doubles_a1_doubles(wf, rho_ai, c_ai)
 !!
 !!    Jacobian doubles A1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -155,7 +155,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
 !     Vectors sent to the routine
 !
@@ -301,10 +301,10 @@ contains
 !
       call jacobian_doubles_a1_timer%turn_off()
 !
-   end subroutine jacobian_doubles_a1_abstract_doubles
+   end subroutine jacobian_doubles_a1_doubles
 !
 !
- module subroutine jacobian_doubles_b1_abstract_doubles(wf, rho_ai, c_aibj)
+ module subroutine jacobian_doubles_b1_doubles(wf, rho_ai, c_aibj)
 !!
 !!    Jacobian doubles B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
@@ -314,7 +314,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_aibj
       real(dp), dimension(wf%n_v, wf%n_o) :: rho_ai
@@ -354,10 +354,10 @@ contains
 !
       call jacobian_doubles_b1_timer%turn_off()
 !
-   end subroutine jacobian_doubles_b1_abstract_doubles
+   end subroutine jacobian_doubles_b1_doubles
 !
 !
-   module subroutine jacobian_doubles_c1_abstract_doubles(wf, rho_ai, c_aibj)
+   module subroutine jacobian_doubles_c1_doubles(wf, rho_ai, c_aibj)
 !!
 !!    Jacobian doubles C1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -367,7 +367,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_aibj
       real(dp), dimension(wf%n_v, wf%n_o) :: rho_ai
@@ -414,10 +414,10 @@ contains
 !
       call jacobian_doubles_c1_timer%turn_off()
 !
-   end subroutine jacobian_doubles_c1_abstract_doubles
+   end subroutine jacobian_doubles_c1_doubles
 !
 !
-   module subroutine jacobian_doubles_d1_abstract_doubles(wf, rho_ai, c_bicj)
+   module subroutine jacobian_doubles_d1_doubles(wf, rho_ai, c_bicj)
 !!
 !!    Jacobian doubles D1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -426,7 +426,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_bicj
       real(dp), dimension(wf%n_v, wf%n_o) :: rho_ai
@@ -504,10 +504,10 @@ contains
 !
       call jacobian_doubles_d1_timer%turn_off()
 !
-   end subroutine jacobian_doubles_d1_abstract_doubles
+   end subroutine jacobian_doubles_d1_doubles
 !
 !
-   module subroutine jacobian_doubles_a2_abstract_doubles(wf, rho_aibj, c_ai)
+   module subroutine jacobian_doubles_a2_doubles(wf, rho_aibj, c_ai)
 !!
 !!    Jacobian doubles A2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2017-2018
@@ -516,7 +516,7 @@ contains
 !!
       implicit none
 !
-      class(abstract_doubles) :: wf
+      class(doubles) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)          :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o)      :: rho_aibj
@@ -623,6 +623,6 @@ contains
 !
       call jacobian_doubles_a2_timer%turn_off()
 !
-   end subroutine jacobian_doubles_a2_abstract_doubles
+   end subroutine jacobian_doubles_a2_doubles
 !
-end submodule jacobian_abstract_doubles
+end submodule jacobian_doubles
