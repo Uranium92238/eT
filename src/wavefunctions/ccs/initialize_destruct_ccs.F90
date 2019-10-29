@@ -343,7 +343,8 @@ contains
 !
       class(ccs) :: wf
 !
-      if (.not. allocated(wf%right_excitation_energies)) call mem%alloc(wf%right_excitation_energies, wf%n_singlet_states)
+      if (.not. allocated(wf%right_excitation_energies)) &
+                  call mem%alloc(wf%right_excitation_energies, wf%n_singlet_states)
 !
    end subroutine initialize_right_excitation_energies_ccs
 !
@@ -357,7 +358,8 @@ contains
 !
       class(ccs) :: wf
 !
-      if (allocated(wf%right_excitation_energies)) call mem%dealloc(wf%right_excitation_energies, wf%n_singlet_states)
+      if (allocated(wf%right_excitation_energies)) &
+               call mem%dealloc(wf%right_excitation_energies, wf%n_singlet_states)
 !
    end subroutine destruct_right_excitation_energies_ccs
 !
@@ -371,7 +373,8 @@ contains
 !
       class(ccs) :: wf
 !
-      if (.not. allocated(wf%left_excitation_energies)) call mem%alloc(wf%left_excitation_energies, wf%n_singlet_states)
+      if (.not. allocated(wf%left_excitation_energies)) &
+               call mem%alloc(wf%left_excitation_energies, wf%n_singlet_states)
 !
    end subroutine initialize_left_excitation_energies_ccs
 !
@@ -416,64 +419,6 @@ contains
       if (allocated(wf%core_MOs)) call mem%dealloc(wf%core_MOs, wf%n_core_MOs)
 !
    end subroutine destruct_core_MOs_ccs
-!
-!
-   module subroutine initialize_mo_fock_fc_contribution_ccs(wf)
-!!
-!!    Initialize Fock frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (.not. allocated(wf%mo_fock_fc_contribution)) call mem%alloc(wf%mo_fock_fc_contribution, wf%n_mo, wf%n_mo)
-!
-   end subroutine initialize_mo_fock_fc_contribution_ccs
-!
-!
-   module subroutine destruct_mo_fock_fc_contribution_ccs(wf)
-!!
-!!    Destruct Fock frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (allocated(wf%mo_fock_fc_contribution)) call mem%dealloc(wf%mo_fock_fc_contribution, wf%n_mo, wf%n_mo)
-!
-   end subroutine destruct_mo_fock_fc_contribution_ccs
-!
-!
-   module subroutine initialize_orbital_coefficients_fc_ccs(wf)
-!!
-!!    Initialize orbital coefficients frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (.not. allocated(wf%orbital_coefficients_fc)) & 
-            call mem%alloc(wf%orbital_coefficients_fc, wf%n_ao, wf%n_frozen_orbitals)
-!
-   end subroutine initialize_orbital_coefficients_fc_ccs
-!
-!
-   module subroutine destruct_orbital_coefficients_fc_ccs(wf)
-!!
-!!    Destruct orbital coefficients frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (allocated(wf%orbital_coefficients_fc)) &
-            call mem%dealloc(wf%orbital_coefficients_fc, wf%n_ao, wf%n_frozen_orbitals)
-!
-   end subroutine destruct_orbital_coefficients_fc_ccs
 !
 !
    module subroutine initialize_fock_ccs(wf)

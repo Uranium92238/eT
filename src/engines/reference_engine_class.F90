@@ -132,7 +132,15 @@ contains
 !
 !     Choose solver
 !
-      if (trim(engine%algorithm) == 'scf-diis') then
+      if (trim(engine%algorithm) .eq. 'scf-diis' .and. trim(wf%name_) .eq. 'mlhf') then
+!
+         call output%error_msg('MLHF can not run with scf-diis, try mo-scf-diis.')
+!
+      elseif (trim(engine%algorithm) .eq. 'mo-scf-diis' .and. trim(wf%name_) .eq. 'uhf') then
+!
+         call output%error_msg('UHF can not run with mo-scf-diis, try scf-diis.')
+!
+      elseif (trim(engine%algorithm) == 'scf-diis') then
 !
          scf_diis = scf_diis_hf(wf, engine%restart)
          call scf_diis%run(wf)
@@ -168,10 +176,10 @@ contains
 !
       class(reference_engine) :: engine 
 !
-      call input%get_keyword_in_section('algorithm', 'solver hf', engine%algorithm)
-      if (input%requested_keyword_in_section('restart', 'solver hf')) engine%restart = .true.
+      call input%get_keyword_in_section('algorithm', 'solver scf', engine%algorithm)
+      if (input%requested_keyword_in_section('restart', 'solver scf')) engine%restart = .true.
 !
-      call input%get_keyword_in_section('ao density guess', 'solver hf', engine%ao_density_guess)
+      call input%get_keyword_in_section('ao density guess', 'solver scf', engine%ao_density_guess)
 !
    end subroutine read_settings_reference_engine
 !
@@ -243,7 +251,7 @@ contains
       character(len=200) :: beta_fname
 !
       character(len=200) :: ao_density_guess
-      character(len=200) :: name
+      character(len=200) :: name_
       integer            :: multiplicity
 !
       real(dp) :: energy_threshold
@@ -258,11 +266,11 @@ contains
       max_iterations     = 100
 !
       energy_threshold   = 1.0D-6
-      call input%get_keyword_in_section('energy threshold', 'solver hf', energy_threshold)
+      call input%get_keyword_in_section('energy threshold', 'solver scf', energy_threshold)
       energy_threshold   = min(1.0D-6, energy_threshold)
 !
       gradient_threshold = 1.0D-6
-      call input%get_keyword_in_section('gradient threshold', 'solver hf', gradient_threshold)
+      call input%get_keyword_in_section('gradient threshold', 'solver scf', gradient_threshold)
       gradient_threshold = min(1.0D-6, gradient_threshold)
 !
 !     Mute output
@@ -279,14 +287,12 @@ contains
 !
       if (restart_file%exists()) then
          call restart_file%copy("temp_restart_file")
-         call restart_file%delete_()
       endif
 !
       orbital_information_file = sequential_file("orbital_information")
 !
       if (orbital_information_file%exists()) then
          call orbital_information_file%copy("temp_orbital_information")
-         call orbital_information_file%delete_()
       endif
 !
 !     For every unique atom, generate SAD density to file
@@ -295,9 +301,9 @@ contains
 !
          atom = wf%system%atoms(i)
 !
-         name        = "sad_" // trim(atom%basis) // "_" // trim(atom%symbol)
-         alpha_fname = trim(name) // '_alpha'
-         beta_fname  = trim(name) // '_beta'
+         name_       = "sad_" // trim(atom%basis) // "_" // trim(atom%symbol)
+         alpha_fname = trim(name_) // '_alpha'
+         beta_fname  = trim(name_) // '_beta'
 !
 !        if SAD already exist, skip to next atom
 !
@@ -310,7 +316,7 @@ contains
 !
          multiplicity = atom%get_multiplicity()
          sad_system   = molecular_system(atoms=[atom],              &
-                                         name=name,                 &
+                                         name_=name_,               &
                                          charge=0,                  &
                                          multiplicity=multiplicity, &
                                          mm_calculation=.false.     )

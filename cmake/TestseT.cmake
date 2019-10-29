@@ -49,19 +49,31 @@ add_eT_runtest(hf_energy_cartesian_basis_set                "eT;short;hf;sad;car
 add_eT_runtest(hf_energy_external_basis                     "eT;short;hf;sad;cartesian;externalbasis")
 add_eT_runtest(hf_geoopt                                    "eT;short;hf;bfgs;gradient")
 add_eT_runtest(hf_scf_energy                                "eT;short;hf;sad")
-add_eT_runtest(hf_mo_energy                    				"eT;short;hf;mo-diis")
-add_eT_runtest(uhf_energy                                   "eT;short;uhf")
+add_eT_runtest(hf_mo_energy                                 "eT;short;hf;mo-diis")
 add_eT_runtest(hf_energy_qmmmnopol                          "eT;short;hf;sad;qmmm;mmnopol")
 add_eT_runtest(hf_energy_qmfq                               "eT;short;hf;sad;qmmm;fq")
 add_eT_runtest(hf_scf_energy_qmmmnopol                      "eT;short;hf;sad;qmmm;mmnopol")
 add_eT_runtest(hf_scf_energy_qmfq                           "eT;short;hf;sad;qmmm;fq")
+#
+add_eT_runtest(hf_bohr_units                                "eT;short;hf;sad")
+#
+add_eT_runtest(uhf_energy                                   "eT;short;uhf")
+#
 add_eT_runtest(uhf_energy_qmmmnopol                         "eT;short;uhf;sad;qmmm;mmnopol")
 add_eT_runtest(uhf_energy_qmfq                              "eT;short;uhf;sad;qmmm;fq")
+add_eT_runtest(mlhf_cholesky_energy                         "eT;short;mlhf;sad;cholesky")
+add_eT_runtest(mlhf_pao_energy                              "eT;short;mlhf;sad;pao")
+add_eT_runtest(mlhf_scf_energy                              "eT;short;mlhf;sad;pao")
+add_eT_runtest(mlhf_full_space_energy                       "eT;short;mlhf;sad;pao")
+add_eT_runtest(mlhf_min_basis_diagonalization_energy        "eT;short;mlhf;sad;pao")
 add_eT_runtest(mp2_energy                                   "eT;short;hf;mp2")
 add_eT_runtest(mp2_energy_qmmmnopol                         "eT;short;hf;mp2;qmmm;mmnopol")
 add_eT_runtest(mp2_energy_qmfq                              "eT;short;hf;mp2;qmmm;fq")
+#
 add_eT_runtest(ccs_frozen_core                              "eT;short;ccs;gs;es;frozen core")
 add_eT_runtest(ccs_oscillator_strength_eom                  "eT;short;ccs;es;eom")
+add_eT_runtest(ccs_eom_diis_parallel_states                 "eT;short;ccs;es;eom;diis;parallel states")
+#
 add_eT_runtest(cc2_gs_energy                                "eT;short;cc2;gs")
 add_eT_runtest(cc2_gs_energy_batched_cd                     "eT;short;cc2;gs;pcd")
 add_eT_runtest(cc2_dipole                                   "eT;short;cc2;gs;dipole")
@@ -81,7 +93,9 @@ add_eT_runtest(cc2_lowmem_gs_energy                         "eT;short;lowmem-cc2
 add_eT_runtest(cc2_lowmem_frozen_core                       "eT;short;lowmem-cc2;es;gs;frozen core")
 add_eT_runtest(cc2_lowmem_right_es_energies                 "eT;short;lowmem-cc2;es;right")
 add_eT_runtest(cc2_lowmem_left_es_energies                  "eT;short;lowmem-cc2;es")
+#
 add_eT_runtest(ccsd_gs_energy                               "eT;short;ccsd;gs")
+add_eT_runtest(ccsd_frozen_hf_gs_energy                     "eT;short;ccsd;gs")
 add_eT_runtest(ccsd_gs_energy_qmmmnopol                     "eT;short;ccsd;gs;qmmm;mmnopol")
 add_eT_runtest(ccsd_gs_energy_qmfq                          "eT;short;ccsd;gs;qmmm;fq")
 add_eT_runtest(ccsd_gs_energy_1c_cd                         "eT;short;ccsd;gs;1c-cd")
@@ -104,6 +118,8 @@ add_eT_runtest(ccsd_left_es_energies                        "eT;short;ccsd;es;le
 add_eT_runtest(ccsd_left_es_diis                            "eT;short;ccsd;es;left;diis")
 add_eT_runtest(ccsd_oscillator_strength_eom                 "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom_records_in_mem  "eT;short;ccsd;es;eom")
+add_eT_runtest(ccsd_cvs_eom_degeneracy                      "eT;short;ccsd;es;eom;diis;degeneracy")
+#
 add_eT_runtest(cc3_gs_energy                                "eT;short;cc3;gs")
 add_eT_runtest(cc3_dipole                                   "eT;short;cc3;gs;dipole")
 add_eT_runtest(cc3_frozen_core                              "eT;short;cc3;gs;es;frozen core")
@@ -111,6 +127,7 @@ add_eT_runtest(cc3_right_es_energies                        "eT;short;cc3;es;rig
 add_eT_runtest(cc3_right_cvs_es_energies                    "eT;short;cc3;es;right;cvs;diis")
 add_eT_runtest(cc3_left_es_energies                         "eT;short;cc3;es;left;diis")
 add_eT_runtest(cc3_left_cvs_es_energies                     "eT;short;cc3;es;left;cvs;diis")
+#
 add_eT_runtest(mlcc2_cnto_full_right_es                     "eT;short;mlcc2;cnto")
 add_eT_runtest(mlcc2_pao_full_right_es                      "eT;short;mlcc2;pao")
 add_eT_runtest(mlcc2_pao_right_es                           "eT;short;mlcc2;pao")

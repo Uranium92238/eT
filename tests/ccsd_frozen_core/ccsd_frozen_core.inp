@@ -2,6 +2,10 @@ system
    name: HOF-He
    charge: 0
 end system
+ 
+print 
+   output print level: debug 
+end print
 
 do
    excited state
@@ -16,14 +20,14 @@ method
    ccsd
 end method
 
-cc
-   frozen core
-end cc
+frozen orbitals
+   core
+end frozen orbitals
 
-solver hf
+solver scf
    energy threshold:   1.0d-11
    gradient threshold: 1.0d-11
-end solver hf
+end solver scf
 
 solver cholesky
    threshold: 1.0d-11

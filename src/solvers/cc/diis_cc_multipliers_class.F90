@@ -25,8 +25,16 @@ module diis_cc_multipliers_class
 !!  
 !
    use kinds
-   use ccs_class
-   use diis_tool_class
+   use parameters 
+   use global_out, only: output
+   use timings_class, only: timings
+   use global_in, only: input
+   use array_utilities, only: get_l2_norm
+   use string_utilities, only: convert_to_uppercase
+   use ccs_class, only: ccs 
+   use diis_tool_class, only: diis_tool 
+   use precondition_tool_class, only: precondition_tool 
+   use memory_manager_class, only: mem
 !
    implicit none
 !
@@ -54,10 +62,10 @@ module diis_cc_multipliers_class
 !
       type(timings) :: timer
 !
+      class(precondition_tool), allocatable :: preconditioner 
+!
    contains
 !     
-      procedure, nopass :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_multipliers
-!
       procedure :: run                      => run_diis_cc_multipliers
       procedure :: cleanup                  => cleanup_diis_cc_multipliers
 !
@@ -91,6 +99,8 @@ contains
       type(diis_cc_multipliers) :: solver
 !
       class(ccs) :: wf
+!
+      real(dp), dimension(:), allocatable :: eps
 !
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' multipliers')
       call solver%timer%turn_on()
@@ -132,6 +142,15 @@ contains
 !
       endif 
 !
+!     Initialize preconditioner 
+!
+      call mem%alloc(eps, wf%n_gs_amplitudes)
+      call wf%get_gs_orbital_differences(eps, wf%n_gs_amplitudes)
+!
+      solver%preconditioner = precondition_tool(eps, wf%n_gs_amplitudes)
+!
+      call mem%dealloc(eps, wf%n_gs_amplitudes)
+!
    end function new_diis_cc_multipliers
 !
 !
@@ -152,41 +171,6 @@ contains
       write(output%unit, '(t6,a26,i9)')    'Max number of iterations: ', solver%max_iterations
 !
    end subroutine print_settings_diis_cc_multipliers
-!
-!
-   subroutine do_diagonal_precondition_diis_cc_multipliers(alpha, preconditioner, vector, n)
-!!
-!!    Do diagonal precondition 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
-!!
-!!    Performs the following operation:
-!!
-!!       v(n) = alpha*(v(n)/preconditioner(n)).
-!!
-!!    This is now used in three solvers. I think the correct way to handle this 
-!!    is not by inheritance but by generalizing this as a utility which can be 
-!!    used by each solver irrespective of ancestry. - Eirik, Sep 2018
-!!
-      implicit none 
-!     
-      integer, intent(in) :: n
-!
-      real(dp), intent(in) :: alpha 
-!
-      real(dp), dimension(n), intent(in)    :: preconditioner
-      real(dp), dimension(n), intent(inout) :: vector  
-!
-      integer :: I 
-!
-!$omp parallel do private(I)
-      do I = 1, n 
-!
-         vector(I) = alpha*vector(I)/preconditioner(I)
-!
-      enddo 
-!$omp end parallel do
-!
-   end subroutine do_diagonal_precondition_diis_cc_multipliers
 !
 !
    subroutine run_diis_cc_multipliers(solver, wf)
@@ -270,7 +254,7 @@ contains
 !           Precondition residual, shift multipliers by preconditioned residual, 
 !           then ask for the DIIS update of the multipliers 
 !
-            call solver%do_diagonal_precondition(-one, epsilon, residual, wf%n_gs_amplitudes)
+            call solver%preconditioner%do_(residual)
 !
             call wf%get_multipliers(multipliers)
             call daxpy(wf%n_gs_amplitudes, one, residual, 1, multipliers, 1)

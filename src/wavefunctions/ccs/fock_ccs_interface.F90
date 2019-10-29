@@ -57,40 +57,18 @@
    end subroutine add_frozen_core_fock_contribution_ccs
 !
 !
-   module subroutine coulomb_contribution_fock_fc_ccs(wf)
+   module subroutine add_frozen_hf_fock_contribution_ccs(wf, F_pq)
 !!
-!!    Coulomb contribution to frozen core Fock
-!!    Written by Sarai D. Folkestad, Sep 2019
-!!
-      implicit none
+!!    Add frozen HF Fock contribution 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 
+!!  
+      implicit none 
 !
-      class(ccs) :: wf 
+      class(ccs), intent(in) :: wf 
 !
-   end subroutine coulomb_contribution_fock_fc_ccs
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
 !
-!
-   module subroutine exchange_contribution_fock_fc_ccs(wf)
-!!
-!!    Exchange contribution to frozen core fock
-!!    Written by Sarai D. Folkestad, Sep 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf 
-!
-   end subroutine exchange_contribution_fock_fc_ccs
-!
-!
-   module subroutine construct_mo_fock_fc_contribution_ccs(wf)
-!!
-!!    Calculate Fock frozen core
-!!    Written by Sarai D. Folkestad, Sep 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf 
-!
-   end subroutine construct_mo_fock_fc_contribution_ccs
+   end subroutine add_frozen_hf_fock_contribution_ccs
 !
 !
    module subroutine construct_t1_fock_fc_contribution_ccs(wf, F_pq)
@@ -105,5 +83,19 @@
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
    end subroutine construct_t1_fock_fc_contribution_ccs
+!
+!
+   module subroutine construct_t1_fock_frozen_hf_contribution_ccs(wf, F_pq)
+!!
+!!    Calculate T1 Fock frozen fock contribution
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf 
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
+!
+   end subroutine construct_t1_fock_frozen_hf_contribution_ccs
 !
 !

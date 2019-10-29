@@ -1,0 +1,53 @@
+system
+   name: formamide
+   charge: 0
+end system
+ 
+print 
+   output print level: debug 
+end print
+
+do
+   ground state
+end do
+
+memory
+   available: 16
+end memory
+
+solver cholesky
+   threshold: 1.0d-12
+end solver cholesky
+
+solver scf
+   algorithm:          scf
+   energy threshold:   1.0d-11
+   gradient threshold: 1.0d-11
+end solver scf
+
+method
+   hf
+   ccsd
+end method
+
+frozen orbitals
+   core
+   hf
+end frozen orbitals
+
+
+active atoms
+   selection type: range
+   ccs: [3,4]
+end active atoms
+
+geometry
+basis: STO-3G
+  H   -0.769900   -1.230070   -0.047420
+  H    0.712170    1.269620   -0.047420
+  H   -0.980990    1.067370   -0.047420
+  C    0.082620   -0.648490   -0.047420
+  O    1.166230   -1.229710   -0.047420
+  N   -0.076030    0.679720   -0.047420
+end geometry
+

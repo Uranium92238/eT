@@ -367,9 +367,6 @@ contains
 !
             call wf%roothan_hall_update_orbitals()     ! DIIS F => C
 !
-            call wf%save_orbital_coefficients()
-            call wf%save_orbital_energies()
-!
             call wf%update_ao_density()                ! C => D
 !
             if (iteration .ne. 1) call wf%set_ao_fock(ao_fock) ! Restore F
@@ -389,6 +386,9 @@ contains
             call wf%set_ao_fock(F)
 !
          endif
+!
+         call wf%save_orbital_coefficients()
+         call wf%save_orbital_energies()
 !
          call iteration_timer%turn_off()
          call iteration_timer%reset()
@@ -474,8 +474,8 @@ contains
 !
       class(scf_diis_hf) :: solver
 !
-      call input%get_keyword_in_section('diis dimension', 'solver hf', solver%diis_dimension)
-      call input%get_keyword_in_section('storage', 'solver hf', solver%storage)
+      call input%get_keyword_in_section('diis dimension', 'solver scf', solver%diis_dimension)
+      call input%get_keyword_in_section('storage', 'solver scf', solver%storage)
 !
    end subroutine read_scf_diis_settings_scf_diis_hf
 !

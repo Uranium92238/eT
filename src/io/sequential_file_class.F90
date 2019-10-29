@@ -242,6 +242,13 @@ contains
 !
       integer :: io_stat 
 !
+!     Check if the file is open
+      if (.not. the_file%is_open) then
+!
+         call output%error_msg(trim('in number_of_records '//the_file%name_)//' is not open')
+!
+      endif
+!
       call the_file%rewind_() ! Make sure the file is rewinded
 !
       n_lines = -1
@@ -268,6 +275,13 @@ contains
 !
       integer              :: io_error
       character(len=100)   :: io_msg
+!
+!     Check if the file is open
+      if (.not. the_file%is_open) then
+!
+         call output%error_msg(trim('in rewind '//the_file%name_)//' is not open')
+!
+      endif
 !
       rewind(the_file%unit, iostat=io_error, iomsg=io_msg)
 !

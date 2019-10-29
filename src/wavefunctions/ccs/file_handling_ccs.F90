@@ -43,7 +43,6 @@ contains
 !!
       class(ccs) :: wf 
 !
-      call wf%initialize_wavefunction_files()
       call wf%initialize_cc_files()
       call wf%initialize_ground_state_files()
 !
@@ -86,25 +85,43 @@ contains
 !
       character(len=*), intent(in) :: transformation
 !
-      if((trim(transformation) .eq. 'right') .or. (trim(transformation) .eq. 'both')) then
+      if(trim(transformation) .eq. 'right') then
 !
-         wf%r_files = sequential_storer('r_', wf%n_es_amplitudes, &
+         wf%r_files = file_storer('r_', wf%n_es_amplitudes,       &
                                          wf%n_singlet_states,     &
-                                         delete=.false.)
+                                         delete=.false.,          &
+                                         direct_=.false.)
 !
          wf%excitation_energies_file = sequential_file('excitation_energies')
 !
-      end if
+      else if(trim(transformation) .eq. 'left') then
 !
-      if((trim(transformation) .eq. 'left') .or. (trim(transformation) .eq. 'both')) then
-!
-         wf%l_files = sequential_storer('l_', wf%n_es_amplitudes, &
+         wf%l_files = file_storer('l_', wf%n_es_amplitudes,       &
                                          wf%n_singlet_states,     &
-                                         delete=.false.)
+                                         delete=.false.,          &
+                                         direct_=.false.)
 !
-         if(.not. wf%excitation_energies_file%exists()) then
-            wf%excitation_energies_file = sequential_file('excitation_energies')
-         end if
+         wf%excitation_energies_file = sequential_file('excitation_energies')
+!
+      else if(trim(transformation) .eq. 'both') then 
+!
+         wf%r_files = file_storer('r_', wf%n_es_amplitudes,       &
+                                         wf%n_singlet_states,     &
+                                         delete=.false.,          &
+                                         direct_=.false.)
+!
+         wf%l_files = file_storer('l_', wf%n_es_amplitudes,       &
+                                         wf%n_singlet_states,     &
+                                         delete=.false.,          &
+                                         direct_=.false.)
+!
+         wf%excitation_energies_file = sequential_file('excitation_energies')
+!
+      else
+!
+         call output%error_msg('Tried to initialize files for excited states &
+                              & but argument ' // trim(transformation) //    &
+                              ' not recognized')
 !
       end if
 !
@@ -219,7 +236,7 @@ contains
 !!    Since the solvers  keep these vectors in full length, 
 !!    we save the vector in full length (n_es_amplitudes), 
 !!
-!!    Uses sequential_storer to distinguish different states
+!!    Uses file_storer to distinguish different states
 !!
 !!
       implicit none
@@ -259,7 +276,7 @@ contains
 !!    Reads an excited state from disk. Since this routine is used by 
 !!    solvers, it returns the vector in the full space.
 !!
-!!    Uses sequential_storer to distinguish different states
+!!    Uses file_storer to distinguish different states
 !!
       implicit none
 !
@@ -412,11 +429,11 @@ contains
 !
       if (trim(side) .eq. 'right') then
 !
-         n_states = wf%r_files%n_records
+         n_states = wf%r_files%get_n_existing_records()
 !
       else if (trim(side) .eq. 'left') then
 !
-         n_states = wf%l_files%n_records
+         n_states = wf%l_files%get_n_existing_records()
 !
       else 
 !

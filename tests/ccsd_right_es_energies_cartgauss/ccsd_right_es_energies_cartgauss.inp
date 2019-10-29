@@ -17,12 +17,12 @@ solver cholesky
    threshold: 1.0d-12
 end solver cholesky
 
-solver hf
+solver scf
    ao density guess:   core
    algorithm:          scf-diis
    energy threshold:   1.0d-10
    gradient threshold: 1.0d-10
-end solver hf
+end solver scf
 
 method
    hf

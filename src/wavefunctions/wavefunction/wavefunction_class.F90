@@ -32,6 +32,7 @@ module wavefunction_class
    use molecular_system_class, only : molecular_system
    use interval_class, only : interval
    use libint_initialization, only : initialize_potential_c
+   use global_in, only: input
 !
    implicit none
 !
@@ -51,8 +52,17 @@ module wavefunction_class
       real(dp), dimension(:,:), allocatable :: orbital_coefficients
       real(dp), dimension(:), allocatable :: orbital_energies
 !
-      type(sequential_file) :: orbital_coefficients_file
-      type(sequential_file) :: orbital_energies_file
+!     Frozen orbital variables. Frozen orbitals are typically frozen core or frozen HF orbitals.
+!
+      real(dp), dimension(:,:), allocatable :: mo_fock_fc_contribution 
+      real(dp), dimension(:,:), allocatable :: mo_fock_frozen_hf_contribution 
+!
+      type(sequential_file) :: mo_fock_fc_file, mo_fock_frozen_hf_file
+!
+      logical :: frozen_core
+      logical :: frozen_hf_mos
+!
+      real(dp) :: cholesky_orbital_threshold = 1.0D-2
 !
    contains
 !
@@ -81,13 +91,6 @@ module wavefunction_class
 !
       procedure :: mo_transform                    => mo_transform_wavefunction
 !
-      procedure :: initialize_wavefunction_files   => initialize_wavefunction_files_wavefunction
-!
-      procedure :: read_orbital_coefficients       => read_orbital_coefficients_wavefunction
-      procedure :: save_orbital_coefficients       => save_orbital_coefficients_wavefunction
-      procedure :: read_orbital_energies           => read_orbital_energies_wavefunction
-      procedure :: save_orbital_energies           => save_orbital_energies_wavefunction
-!
       procedure :: is_restart_safe                 => is_restart_safe_wavefunction 
 !
       procedure(gradient_function), deferred :: &
@@ -97,10 +100,19 @@ module wavefunction_class
       procedure :: get_orbital_overlap       => get_orbital_overlap_wavefunction
       procedure :: lovdin_orthonormalization => lovdin_orthonormalization_wavefunction
 !
-      procedure :: construct_ao_electrostatics              => construct_ao_electrostatics_wavefunction       ! V_αβ, E_αβ, V(D), E(D)
-      procedure :: update_h_wx_mm                           => update_h_wx_mm_hf
+      procedure :: construct_ao_electrostatics                 => construct_ao_electrostatics_wavefunction       ! V_wx, E_wx, V(D), E(D)
+      procedure :: update_h_wx_mm                              => update_h_wx_mm_hf
 !  
-      procedure :: construct_and_write_mo_cholesky          => construct_and_write_mo_cholesky_wavefunction      
+      procedure :: construct_and_write_mo_cholesky             => construct_and_write_mo_cholesky_wavefunction      
+!
+      procedure :: construct_orbital_block_by_density_cd       => construct_orbital_block_by_density_cd_wavefunction
+!
+      procedure :: initialize_mo_fock_fc_contribution          => initialize_mo_fock_fc_contribution_wavefunction                
+      procedure :: destruct_mo_fock_fc_contribution            => destruct_mo_fock_fc_contribution_wavefunction  
+      procedure :: initialize_mo_fock_frozen_hf_contribution   => initialize_mo_fock_frozen_hf_contribution_wavefunction                
+      procedure :: destruct_mo_fock_frozen_hf_contribution     => destruct_mo_fock_frozen_hf_contribution_wavefunction  
+!
+      procedure :: read_frozen_orbitals_settings   => read_frozen_orbitals_settings_wavefunction 
 !
    end type wavefunction 
 !
@@ -336,21 +348,6 @@ contains
       if (.not. allocated(wf%orbital_coefficients)) call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
 !
    end subroutine initialize_orbital_coefficients_wavefunction
-!
-!
-   subroutine initialize_wavefunction_files_wavefunction(wf)
-!!
-!!    Initialize wavefunction files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
-!!
-      implicit none 
-!
-      class(wavefunction) :: wf 
-!
-      wf%orbital_coefficients_file = sequential_file('orbital_coefficients')
-      wf%orbital_energies_file = sequential_file('orbital_energies')
-!
-   end subroutine initialize_wavefunction_files_wavefunction
 !
 !
    subroutine destruct_orbital_coefficients_wavefunction(wf)
@@ -690,78 +687,6 @@ contains
    end subroutine get_ao_q_wx_wavefunction
 !
 !
-   subroutine save_orbital_coefficients_wavefunction(wf)
-!!
-!!    Save orbital coefficients 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
-!!
-      implicit none 
-!
-      class(wavefunction), intent(inout) :: wf 
-!
-      call wf%orbital_coefficients_file%open_('write', 'rewind')
-!
-      call wf%orbital_coefficients_file%write_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
-!
-      call wf%orbital_coefficients_file%close_
-!
-   end subroutine save_orbital_coefficients_wavefunction
-!
-!
-   subroutine read_orbital_coefficients_wavefunction(wf)
-!!
-!!    Save orbital coefficients 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
-!!
-      implicit none 
-!
-      class(wavefunction), intent(inout) :: wf 
-!
-      call wf%orbital_coefficients_file%open_('read', 'rewind')
-!
-      call wf%orbital_coefficients_file%read_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
-!
-      call wf%orbital_coefficients_file%close_
-!
-   end subroutine read_orbital_coefficients_wavefunction
-!
-!
-   subroutine save_orbital_energies_wavefunction(wf)
-!!
-!!    Save orbital energies 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
-!!
-      implicit none 
-!
-      class(wavefunction), intent(inout) :: wf 
-!
-      call wf%orbital_energies_file%open_('write', 'rewind')
-!
-      call wf%orbital_energies_file%write_(wf%orbital_energies, wf%n_mo)
-!
-      call wf%orbital_energies_file%close_
-!
-   end subroutine save_orbital_energies_wavefunction
-!
-!
-   subroutine read_orbital_energies_wavefunction(wf)
-!!
-!!    Save orbital energies 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
-!!
-      implicit none 
-!
-      class(wavefunction), intent(inout) :: wf 
-!
-      call wf%orbital_energies_file%open_('read', 'rewind')
-!
-      call wf%orbital_energies_file%read_(wf%orbital_energies, wf%n_mo)
-!
-      call wf%orbital_energies_file%close_
-!
-   end subroutine read_orbital_energies_wavefunction
-!
-!
    subroutine is_restart_safe_wavefunction(wf, task)
 !!
 !!    Is restart safe?
@@ -891,8 +816,8 @@ contains
 !
       integer, intent(in) :: n_orbitals
 !  
-      real(dp), dimension(wf%n_ao,wf%n_ao), intent(in)      :: D
-      real(dp), dimension(wf%n_ao,n_orbitals), intent(out)  :: PAO_coeff
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)      :: D
+      real(dp), dimension(wf%n_ao, n_orbitals), intent(out)  :: PAO_coeff
 !
       integer, intent(in), optional :: first_ao
 ! 
@@ -928,7 +853,6 @@ contains
 !$omp end parallel do
 !  
       call mem%alloc(S, wf%n_ao, wf%n_ao)
-      S = zero
 !
       call wf%get_ao_s_wx(S)
 !
@@ -1032,7 +956,7 @@ contains
 !!       C = C U λ^(-1/2).
 !!
 !!    Linear dependence is removed by screening on the eigenvalues
-!!    with a threshold of 1.0 * 10^-6
+!!    with a threshold of 1.0 * 10^-10
 !!
       use array_utilities, only: copy_and_scale
 !
@@ -1051,13 +975,13 @@ contains
 !
       integer :: i, info
 !
-      real(dp), parameter :: threshold = 1.0d-6
+      real(dp), parameter :: threshold = 1.0d-10
 !
 !     Diagonalize S
 !
       call mem%alloc(eigenvalues, n_orbitals)
 !
-      call mem%alloc(work, 3*n_orbitals-1)
+      call mem%alloc(work, 4*n_orbitals)
 !
       call dscal(n_orbitals**2, -one, S, 1)
 !
@@ -1067,10 +991,10 @@ contains
                n_orbitals,       &
                eigenvalues,      &
                work,             &
-               3*n_orbitals-1,   &
+               4*n_orbitals,     &
                info)
 !
-      call mem%dealloc(work, 3*n_orbitals-1)
+      call mem%dealloc(work, 4*n_orbitals)
 !
 !     Find the rank of S
 !
@@ -1509,5 +1433,200 @@ contains
       call timer%turn_off()
 !
    end subroutine construct_and_write_mo_cholesky_wavefunction
+!
+!
+   subroutine construct_orbital_block_by_density_cd_wavefunction(wf, D, n_vectors, threshold, mo_offset, active_aos)
+!!
+!!    Construct orbital block  by Cholesky decomposition for density
+!!    Written by Sarai D. Folkestad, Feb 2019
+!!
+!!    Cholesky decomposition of density D plus
+!!    update of corresponding wavefunction MOs
+!!
+!!    See A. M. J. Sánchez de Merás, H. Koch, 
+!!    I. G. Cuesta, and L. Boman (J. Chem. Phys. 132, 204105 (2010))
+!!    for more information on active space generation
+!!    using Cholesky decomposition
+!!
+!!    'D' : Density to be decomposed 
+!!          Given in the AO basis
+!!
+!!    'n_vectors' : The number of Cholesky 
+!!                  vectors (orbitals) constructed
+!!
+!!    'threshold' : The Cholesky decomposition threshold
+!!
+!!    'mo_offset' : Offset used to set the new MOs
+!!
+!!    'active_aos' : List of AOs on active atoms (optional)
+!!                   This is used in case we want to partially
+!!                   decompose density to get active orbitals
+!!
+!!
+!
+      use array_utilities, only: cholesky_decomposition_limited_diagonal, full_cholesky_decomposition_effective
+!
+      implicit none
+!
+      class(wavefunction), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_ao,wf%n_ao), intent(inout) :: D
+!
+      integer, intent(out) :: n_vectors
+!
+      real(dp), intent(in) :: threshold
+!
+      integer, intent(in) :: mo_offset
+!
+      integer, dimension(:), optional :: active_aos
+!
+      integer :: n_active_aos, ao, mo
+!
+      real(dp), dimension(:,:), allocatable :: cholesky_vec
+      integer, dimension(:), allocatable  :: keep_vectors
+!
+      call mem%alloc(cholesky_vec, wf%n_ao, wf%n_ao)
+!
+      if (present(active_aos)) then
+!
+!        Active space generation by CD choosing pivots 
+!        only on active atoms
+!
+         n_active_aos = size(active_aos)
+!
+         if (n_active_aos .gt. wf%n_ao) call output%error_msg('More active AOs than total AOs')
+!      
+         call cholesky_decomposition_limited_diagonal(D, cholesky_vec, wf%n_ao, &
+                                                      n_vectors, threshold, &
+                                                      n_active_aos, active_aos)
+! 
+!        Set the  MOs to be the ones to be frozen for CC
+!
+!$omp parallel do private(ao, mo)
+         do mo = 1, n_vectors
+            do ao = 1, wf%n_ao
+!
+               wf%orbital_coefficients(ao, mo_offset + mo) = cholesky_vec(ao, mo)
+!
+            enddo
+         enddo
+!$omp end parallel do
+!
+      else
+!
+         call mem%alloc(keep_vectors, wf%n_ao)
+!
+!        Full CD of density (used for inactive densities)
+!
+         call full_cholesky_decomposition_effective(D, cholesky_vec, &
+                                             wf%n_ao, n_vectors, &
+                                             threshold, keep_vectors)
+!
+!
+         call mem%dealloc(keep_vectors, wf%n_ao)
+!
+!
+!$omp parallel do private(ao, mo)
+         do mo = 1, n_vectors
+            do ao = 1, wf%n_ao
+!
+               wf%orbital_coefficients(ao, mo_offset + mo) = cholesky_vec(ao, mo)
+!
+            enddo
+         enddo
+!$omp end parallel do
+!
+      endif
+!
+      call mem%dealloc(cholesky_vec, wf%n_ao, wf%n_ao)
+!
+   end subroutine construct_orbital_block_by_density_cd_wavefunction
+!
+!
+   subroutine read_frozen_orbitals_settings_wavefunction(wf)
+!!
+!!    Read frozen orbitals 
+!!    Written by Sarai D. Folkestad, Oct 2019
+!!
+!!    Reads the frozen orbitals section of the input
+!!
+!!     - Frozen core 
+!!
+!!    - Frozen hf orbitals
+!!
+!!    This routine is used at HF level to prepare mos and 
+!!    frozen fock contributions.
+!!
+!!    This routine is read at cc level to figure out if there
+!!    should be frozen fock contributions
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      wf%frozen_core    = .false.
+      wf%frozen_hf_mos  = .false.
+!
+      if (input%requested_keyword_in_section('core', 'frozen orbitals')) wf%frozen_core = .true.
+      if (input%requested_keyword_in_section('hf', 'frozen orbitals')) wf%frozen_hf_mos = .true.
+!
+   end subroutine read_frozen_orbitals_settings_wavefunction
+!
+!
+   subroutine initialize_mo_fock_frozen_hf_contribution_wavefunction(wf)
+!!
+!!    Initialize Fock frozen HF orbitals contributions
+!!    Written by Sarai D. Folkestad, Sep. 2019
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      if (.not. allocated(wf%mo_fock_frozen_hf_contribution)) call mem%alloc(wf%mo_fock_frozen_hf_contribution, wf%n_mo, wf%n_mo)
+!
+   end subroutine initialize_mo_fock_frozen_hf_contribution_wavefunction
+!
+!
+   subroutine destruct_mo_fock_frozen_hf_contribution_wavefunction(wf)
+!!
+!!    Destruct Fock frozen HF orbitals contributions
+!!    Written by Sarai D. Folkestad, Sep. 2019
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      if (allocated(wf%mo_fock_frozen_hf_contribution)) call mem%dealloc(wf%mo_fock_frozen_hf_contribution, wf%n_mo, wf%n_mo)
+!
+   end subroutine destruct_mo_fock_frozen_hf_contribution_wavefunction
+!
+!
+   subroutine initialize_mo_fock_fc_contribution_wavefunction(wf)
+!!
+!!    Initialize Fock frozen core
+!!    Written by Sarai D. Folkestad, Sep. 2019
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      if (.not. allocated(wf%mo_fock_fc_contribution)) call mem%alloc(wf%mo_fock_fc_contribution, wf%n_mo, wf%n_mo)
+!
+   end subroutine initialize_mo_fock_fc_contribution_wavefunction
+!
+!
+   subroutine destruct_mo_fock_fc_contribution_wavefunction(wf)
+!!
+!!    Destruct Fock frozen core
+!!    Written by Sarai D. Folkestad, Sep. 2019
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      if (allocated(wf%mo_fock_fc_contribution)) call mem%dealloc(wf%mo_fock_fc_contribution, wf%n_mo, wf%n_mo)
+!
+   end subroutine destruct_mo_fock_fc_contribution_wavefunction
+!
 !
 end module wavefunction_class

@@ -163,8 +163,8 @@ contains
 !
       davidson%do_precondition   = .false. ! Switches to true if 'set_preconditioner' is called
 !
-      davidson%dim_red      = 0     
-      davidson%n_new_trials = n_solutions   
+      davidson%dim_red      = 0
+      davidson%n_new_trials = n_solutions
 !
 !     Set up array/or file array for trials and transforms    
 !
@@ -182,11 +182,11 @@ contains
 !
       class(eigen_davidson_tool), intent(inout) :: davidson 
 !
-      if (davidson%do_precondition) then 
+      if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
+      if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
 !
-         call mem%dealloc(davidson%preconditioner, davidson%n_parameters)
-!
-      endif
+      call davidson%destruct_omega_re()
+      call davidson%destruct_omega_im()
 !
    end subroutine cleanup_eigen_davidson_tool
 !  
@@ -583,12 +583,10 @@ contains
 !!    Construct next trial  
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
 !!
-!!    R: residual, AX - omega*X 
-!!    n: the eigenstate number of the vector X
+!!    R: nth residual, AX - omega*X 
+!!    n: state number 
 !!
-!!    The routine constructs a new trial vector from the residual R by 
-!!    1) preconditioning it and 2) orthonormalizing the result with respect 
-!!    to previous trial vectors. 
+!!    Preconditions the residual and adds it to the trial space.
 !!    
       implicit none 
 !
@@ -596,30 +594,18 @@ contains
 !
       real(dp), dimension(davidson%n_parameters), intent(in) :: R
 !
-      integer, optional, intent(in) :: n 
-!
-      integer :: k ! k = n, where k is set to 1 if n is not present 
+      integer, intent(in) :: n 
 !
       real(dp) :: norm_trial
 !
       real(dp), dimension(:), allocatable :: trial 
-!
-      if (present(n)) then
-! 
-         k = n
-!
-      else
-!
-         k = 1
-!
-      endif  
 !
 !     Precondition 
 !
       call mem%alloc(trial, davidson%n_parameters)
       call dcopy(davidson%n_parameters, R, 1, trial, 1)
 !
-      if (davidson%do_precondition) call davidson%precondition(trial, davidson%omega_re(k))
+      if (davidson%do_precondition) call davidson%preconditioner%do_(trial, shift=davidson%omega_re(n))
 !
 !     Renormalize 
 !

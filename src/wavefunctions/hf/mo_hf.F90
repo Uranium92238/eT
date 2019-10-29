@@ -33,7 +33,7 @@ contains
 !
 !
 !
-   function get_max_roothan_hall_mo_gradient_hf(wf) result(max_gradient)
+   module function get_max_roothan_hall_mo_gradient_hf(wf) result(max_gradient)
 !!
 !!    Get max of Roothan-Hall gradient
 !!    Written by Sarai D. Folkestad, 2018
@@ -61,7 +61,6 @@ contains
       call mem%dealloc(gradient, wf%n_v, wf%n_o)
 !
    end function get_max_roothan_hall_mo_gradient_hf
-!
 !
 !
    module subroutine get_roothan_hall_mo_gradient_hf(wf, G)
@@ -268,10 +267,10 @@ contains
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
 !!    and Linda Goletto, Jan 2019
 !!
+!!    Modified by Ida-Marie Hoyvik, Oct 2019
+!!
 !!    Initializes the eigenvectors W 
 !!    for Roothan-Hall in the mo basis (FW = We)
-!!
-!!    Modified by Ida-Marie Hoyvik, Oct 2019
 !!
       implicit none
 !

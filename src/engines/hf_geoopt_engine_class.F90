@@ -111,8 +111,8 @@ contains
 !
       class(hf_geoopt_engine) :: engine 
 !
-      call input%get_keyword_in_section('algorithm', 'solver hf geoopt', engine%algorithm)
-      if (input%requested_keyword_in_section('restart', 'solver hf geoopt')) engine%restart = .true.
+      call input%get_keyword_in_section('algorithm', 'solver scf geoopt', engine%algorithm)
+      if (input%requested_keyword_in_section('restart', 'solver scf geoopt')) engine%restart = .true.
 !
    end subroutine read_settings_hf_geoopt_engine
 !

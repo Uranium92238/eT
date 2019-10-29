@@ -2,6 +2,10 @@ system
    name: HOF-He
    charge: 0
 end system
+ 
+print 
+   output print level: debug 
+end print
 
 do
    ground state
@@ -11,11 +15,11 @@ memory
    available: 8
 end memory
 
-solver hf
+solver scf
    algorithm:          mo-scf-diis
-   energy threshold:   1.0d-12
-   gradient threshold: 1.0d-12
-end solver hf
+   energy threshold:   1.0d-11
+   gradient threshold: 1.0d-11
+end solver scf
 
 method
    hf

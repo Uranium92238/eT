@@ -77,8 +77,8 @@ module abstract_cc_es_class
 !
       type(timings) :: timer
 !
-      class(es_start_vector_tool), allocatable  :: start_vector_tool
-      class(es_projection_tool), allocatable    :: projection_tool
+      class(es_start_vector_tool), allocatable  :: start_vectors
+      class(es_projection_tool), allocatable    :: projector
 !
    contains
 !
@@ -283,7 +283,7 @@ contains
             reals=[get_l2_norm(X(1:wf%n_t1,state),wf%n_t1)/get_l2_norm(X(:,state),wf%n_es_amplitudes)], &
             chars=[label, label], fs='(t6,a)')
 !
-         call wf%print_dominant_x_amplitudes(X(1,state), label)
+         call wf%print_dominant_x_amplitudes(X(1, state), label)
 !
       enddo 
 !
@@ -322,12 +322,15 @@ contains
          call wf%prepare_for_jacobian()
          call wf%initialize_excited_state_files('right')
 !
-      end if
-!
-      if (solver%transformation == 'left') then 
+      else if (solver%transformation == 'left') then 
 !
          call wf%prepare_for_jacobian_transpose()
          call wf%initialize_excited_state_files('left')
+!
+      else if (solver%transformation == 'both') then 
+!
+         call wf%prepare_for_jacobian()
+         call wf%prepare_for_jacobian_transpose()
 !
       end if
 !
@@ -347,10 +350,11 @@ contains
 !
       integer :: n_left_vectors_on_file, n_right_vectors_on_file
 !
-      n_left_vectors_on_file = wf%get_n_excited_states_on_file('left')
-      n_right_vectors_on_file = wf%get_n_excited_states_on_file('right')
-!
       if (solver%transformation == 'right') then 
+!
+!        Dirty hack to disable right restart from left for now !!!!!
+         n_right_vectors_on_file = wf%get_n_excited_states_on_file('right')
+         n_left_vectors_on_file = 0
 !
          if (n_right_vectors_on_file > 0) then 
 !
@@ -367,6 +371,10 @@ contains
          endif 
 !
       elseif (solver%transformation == 'left') then
+!
+!        Dirty hack to disable left restart from right for now !!!!!
+         n_left_vectors_on_file = wf%get_n_excited_states_on_file('left')
+         n_right_vectors_on_file = 0
 !
          if (n_left_vectors_on_file > 0) then 
 !
@@ -404,16 +412,16 @@ contains
 !
       if (trim(solver%es_type) == 'valence') then 
 !
-         solver%start_vector_tool = es_valence_start_vector_tool(wf)
+         solver%start_vectors = es_valence_start_vector_tool(wf)
 !
       elseif (trim(solver%es_type) == 'core') then 
 !
          call wf%read_cvs_settings()
-         solver%start_vector_tool = es_cvs_start_vector_tool(wf)
+         solver%start_vectors = es_cvs_start_vector_tool(wf)
 !
       elseif (trim(solver%es_type) == 'ionize') then 
 !
-         solver%start_vector_tool = es_ip_start_vector_tool(wf)
+         solver%start_vectors = es_ip_start_vector_tool(wf)
 !
       else 
 !
@@ -437,15 +445,15 @@ contains
 !
       if (trim(solver%es_type) == 'valence') then 
 !
-         solver%projection_tool = es_valence_projection_tool()
+         solver%projector = es_valence_projection_tool()
 !
       elseif (trim(solver%es_type) == 'core') then 
 !
-         solver%projection_tool = es_cvs_projection_tool(wf)
+         solver%projector = es_cvs_projection_tool(wf)
 !
       elseif (trim(solver%es_type) == 'ionize') then 
 !
-         solver%projection_tool = es_ip_projection_tool(wf)
+         solver%projector = es_ip_projection_tool(wf)
 !
       else 
 !

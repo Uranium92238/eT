@@ -49,6 +49,8 @@ module molecular_system_class
       character(len=200) :: name_
       character(len=100), dimension(:), allocatable :: basis_sets
 !
+      character(len=100) :: coordinate_units = 'angstrom'
+!
       integer :: n_atoms
       integer :: n_basis_sets 
       integer :: charge
@@ -66,8 +68,6 @@ module molecular_system_class
       type(active_atoms), dimension(:),allocatable :: active_atoms_spaces
 !
       integer, dimension(:), allocatable :: shell2atom 
-!
-      logical :: active_atoms = .false.
 !
       integer :: max_shell_size
 !     
@@ -158,6 +158,8 @@ module molecular_system_class
       procedure :: read_n_active_atoms_for_method           => read_n_active_atoms_for_method_molecular_system 
 !
       procedure :: first_and_last_ao_active_space           => first_and_last_ao_active_space_molecular_system 
+      procedure :: first_ao_active_space                    => first_ao_active_space_molecular_system
+      procedure :: last_ao_active_space                     => last_ao_active_space_molecular_system
 !
       procedure :: set_basis_info                           => set_basis_info_molecular_system
       procedure :: set_shell_basis_info                     => set_shell_basis_info_molecular_system
@@ -209,7 +211,7 @@ contains
    end function new_molecular_system
 !
 !
-   function new_molecular_system_from_parameters(atoms, name, charge, multiplicity, mm_calculation) result(molecule)
+   function new_molecular_system_from_parameters(atoms, name_, charge, multiplicity, mm_calculation) result(molecule)
 !!
 !!    Initialize From Parameters
 !!    Written by Tor S. Haugland, 2019
@@ -219,7 +221,7 @@ contains
       type(molecular_system) :: molecule
 !
       type(atomic), dimension(:), intent(in) :: atoms
-      character(len=100),         intent(in) :: name
+      character(len=100),         intent(in) :: name_
       integer,                    intent(in) :: charge
       integer,                    intent(in) :: multiplicity
       logical,                    intent(in) :: mm_calculation
@@ -228,7 +230,7 @@ contains
 !
       molecule%atoms          = atoms
       molecule%n_atoms        = size(atoms)
-      molecule%name_          = name
+      molecule%name_          = name_
       molecule%charge         = charge
       molecule%multiplicity   = multiplicity
       molecule%mm_calculation = mm_calculation
@@ -550,8 +552,13 @@ contains
 !!
 !!    Read geometry
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Modified by Åsmund H. Tveten, Oct 2019. Ensuring that
+!!    coordinates are read in units of Ångström.
 !!
-!!    Read atoms and their coordinates, assumed to be in units of Ångstrøm.
+!!    Read atoms and their coordinates.
+!!    The coordinates are assumed to be in units of Ångström by
+!!    default; if units of Bohr are specified, they will be
+!!    converted to Ångström.
 !!
 !!    In eT, atoms are ordered after basis set, with the first basis
 !!    set specified on input first.
@@ -581,6 +588,13 @@ contains
 !
       character(len=100) :: current_basis
 !
+      logical :: units_angstrom
+!
+      real(dp) :: angstrom_conversion
+!
+      units_angstrom = .true.
+      angstrom_conversion = one
+!
       molecule%n_atoms = input%get_n_atoms()
 !
       call mem%alloc(positions, molecule%n_atoms, 3)
@@ -588,9 +602,18 @@ contains
       allocate(symbols(molecule%n_atoms))
       allocate(basis_sets(molecule%n_atoms))
 !
-      call input%get_geometry(molecule%n_atoms, symbols, positions, basis_sets)
+      call input%get_geometry(molecule%n_atoms, symbols, positions, basis_sets, units_angstrom)
 !
       call molecule%initialize_atoms()
+!
+!     Set coordinate conversion factor if geometry is given in units of Bohr
+!
+      if(.not. units_angstrom) then
+!
+         angstrom_conversion = bohr_to_angstrom
+         molecule%coordinate_units = 'bohr'
+!
+      endif
 !
 !     1. Place the first atom in atoms
 !
@@ -598,9 +621,9 @@ contains
 !
       molecule%atoms(current_atom)%symbol       = symbols(current_atom)
       molecule%atoms(current_atom)%basis        = basis_sets(current_atom)
-      molecule%atoms(current_atom)%x            = positions(current_atom,1)
-      molecule%atoms(current_atom)%y            = positions(current_atom,2)
-      molecule%atoms(current_atom)%z            = positions(current_atom,3)
+      molecule%atoms(current_atom)%x            = positions(current_atom,1)*angstrom_conversion
+      molecule%atoms(current_atom)%y            = positions(current_atom,2)*angstrom_conversion
+      molecule%atoms(current_atom)%z            = positions(current_atom,3)*angstrom_conversion
 !
       molecule%atoms(current_atom)%input_number = current_atom
 !
@@ -623,9 +646,9 @@ contains
 !
                molecule%atoms(current_atom)%symbol       = symbols(atom)
                molecule%atoms(current_atom)%basis        = basis_sets(atom)
-               molecule%atoms(current_atom)%x            = positions(atom,1)
-               molecule%atoms(current_atom)%y            = positions(atom,2)
-               molecule%atoms(current_atom)%z            = positions(atom,3)
+               molecule%atoms(current_atom)%x            = positions(atom,1)*angstrom_conversion
+               molecule%atoms(current_atom)%y            = positions(atom,2)*angstrom_conversion
+               molecule%atoms(current_atom)%z            = positions(atom,3)*angstrom_conversion
 !
                molecule%atoms(current_atom)%input_number = atom
 !
@@ -643,9 +666,9 @@ contains
 !
                molecule%atoms(current_atom)%symbol       = symbols(atom)
                molecule%atoms(current_atom)%basis        = basis_sets(atom)
-               molecule%atoms(current_atom)%x            = positions(atom,1)
-               molecule%atoms(current_atom)%y            = positions(atom,2)
-               molecule%atoms(current_atom)%z            = positions(atom,3)
+               molecule%atoms(current_atom)%x            = positions(atom,1)*angstrom_conversion
+               molecule%atoms(current_atom)%y            = positions(atom,2)*angstrom_conversion
+               molecule%atoms(current_atom)%z            = positions(atom,3)*angstrom_conversion
 !
                molecule%atoms(current_atom)%input_number = atom
 !
@@ -1143,7 +1166,7 @@ contains
       enddo
 !
       call output%printf('--------------------------------------', fs='(t6, a)', pl='minimal')
-      call output%printf('Total number of active atoms: ', ints=[n_total], fs='(t6, a)', pl='minimal')
+      call output%printf('Total number of active atoms: (i0)', ints=[n_total], fs='(t6, a)', pl='minimal')
       call output%printf('OBS: Atoms will be reordered, active atoms first', fs='(t6, a)', pl='minimal')
 !
       deallocate(atoms_copy)
@@ -1751,27 +1774,28 @@ contains
 !!    Print geometry 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!    Modified by Tommaso Giovannini, March 2019
+!!    Modified by Åsmund H. Tveten, Oct 2019. Switched to printf function.
 !!
       implicit none 
 !
       class(molecular_system) :: molecule  
 !
-      write(output%unit, '(/t3,a)')       '- Molecular system specifications:'
+      call output%printf('- Molecular system specifications:', pl='m', fs='(/t3,a)')
 !
-      write(output%unit, '(/t6,a14,a)')      'Name:         ', trim(molecule%name_)
-      write(output%unit, '(t6,a14,i1)')      'Charge:       ', molecule%charge 
-      write(output%unit, '(t6,a14,i1)')      'Multiplicity: ', molecule%multiplicity 
-!
+      call output%printf('Name:             (a0)', pl='m', fs='(/t6,a)', chars=[trim(molecule%name_)])
+      call output%printf('Charge:           (i1)', pl='m', fs='(t6,a)',  ints=[molecule%charge]) 
+      call output%printf('Multiplicity:     (i1)', pl='m', fs='(t6,a)',  ints=[molecule%multiplicity]) 
+      call output%printf('Coordinate units: (a0)', pl='m', fs='(t6,a)',  chars=[trim(molecule%coordinate_units)])
       if (molecule%cartesian_gaussians_int.eq.1) call output%printf('Using Cartesian gaussians.', pl='m', fs='(/t6,a)')
 !
-      write(output%unit, '(/t6,a27,i5)')     'Pure basis functions:      ', molecule%n_pure_basis
-      write(output%unit, '(t6,a27,i5)')      'Cartesian basis functions: ', molecule%n_cart_basis
-      write(output%unit, '(t6,a27,i5)')      'Primitive basis functions: ', molecule%n_primitives_cart
 !
-      write(output%unit, '(/t6,a35,f25.12)') 'Nuclear repulsion energy (a.u.):   ', molecule%get_nuclear_repulsion()
-      write(output%unit, '(t6,a35,f25.12)')  'Bohr/angstrom value (CODATA 2010): ', bohr_to_angstrom
+      call output%printf('Pure basis functions:      (i5)', pl='m', fs='(/t6,a)', ints=[molecule%n_pure_basis])
+      call output%printf('Cartesian basis functions: (i5)', pl='m', fs='(t6,a)',  ints=[molecule%n_cart_basis])
+      call output%printf('Primitive basis functions: (i5)', pl='m', fs='(t6,a)',  ints=[molecule%n_primitives_cart])
 !
-      flush(output%unit)
+      call output%printf('Nuclear repulsion energy (a.u.):   (f25.12)', pl='m', fs='(/t6,a)', & 
+      reals=[molecule%get_nuclear_repulsion()])
+      call output%printf('Bohr/angstrom value (CODATA 2010): (f25.12)', pl='m', fs='(t6,a)',  reals=[bohr_to_angstrom])
 !
       call molecule%print_geometry()
 !
@@ -1959,24 +1983,41 @@ contains
 !
       integer, intent(out) :: first, last
 !
-      integer :: i, first_atom, last_atom
+      call molecule%first_ao_active_space(level, first)
+      call molecule%last_ao_active_space(level, last)
 !
+   end subroutine first_and_last_ao_active_space_molecular_system
+!
+!
+   subroutine first_ao_active_space_molecular_system(molecule, level, first)
+!!
+!!    First ao in active space
+!!    Written by Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      character(len=*), intent(in) :: level
+!
+      integer, intent(out) :: first
+!
+      integer :: i, first_atom 
+!  
       first_atom = 0
-      last_atom = 0 
 !
       do i = 1, molecule%n_active_atoms_spaces
 !
          if (trim(molecule%active_atoms_spaces(i)%level) == trim(level)) then
 !
             first_atom = molecule%active_atoms_spaces(i)%first_atom
-            last_atom = molecule%active_atoms_spaces(i)%last_atom
             exit
 !
          endif
 !
       enddo
 !
-      if (first_atom == 0 .or. last_atom == 0) &
+      if (first_atom == 0) &
          call output%warning_msg('Could not find the requested active space in molecular system.')
 !
       first = 1
@@ -1987,15 +2028,50 @@ contains
 !
       enddo
 !
-      last = first - 1
+   end subroutine first_ao_active_space_molecular_system
 !
-      do i = first_atom, last_atom
+!
+   subroutine last_ao_active_space_molecular_system(molecule, level, last)
+!!
+!!    Last ao in active space
+!!    Written by Sarai D. Folkestad
+!!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      character(len=*), intent(in) :: level
+!
+      integer, intent(out) :: last
+!
+      integer :: i, last_atom 
+!  
+      last_atom = 0
+!
+      do i = 1, molecule%n_active_atoms_spaces
+!
+         if (trim(molecule%active_atoms_spaces(i)%level) == trim(level)) then
+!
+            last_atom = molecule%active_atoms_spaces(i)%last_atom
+            exit
+!
+         endif
+!
+      enddo
+!
+      if (last_atom == 0) &
+         call output%warning_msg('Could not find the requested active space in molecular system.')
+!
+      last = 0
+!
+      do i = 1, last_atom
 !
          last = last + molecule%atoms(i)%n_ao
 !
       enddo
 !
-   end subroutine first_and_last_ao_active_space_molecular_system
+   end subroutine last_ao_active_space_molecular_system
+!
 !
   subroutine set_basis_info_molecular_system(molecule)
 !!
@@ -2519,7 +2595,7 @@ contains
 !           
             call output%error_msg(trim(basis)//' basis set has not been found'//&
                                 & new_line('a') //&
-                                & '  Maybe you forgot -ldd path_to_basis?')
+                                & '  Maybe you forgot -basis --basis_dir?')
 !            
          endif
 !

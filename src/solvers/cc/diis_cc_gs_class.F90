@@ -35,6 +35,7 @@ module diis_cc_gs_class
    use ccs_class, only : ccs
    use diis_tool_class, only : diis_tool
    use timings_class, only : timings
+   use precondition_tool_class, only : precondition_tool
 !
    implicit none
 !
@@ -60,10 +61,10 @@ module diis_cc_gs_class
 !
       type(timings) :: timer
 !
+      class(precondition_tool), allocatable :: preconditioner 
+!
    contains
 !     
-      procedure, nopass :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_gs
-!
       procedure :: run                      => run_diis_cc_gs
       procedure :: cleanup                  => cleanup_diis_cc_gs
 !
@@ -96,6 +97,8 @@ contains
       type(diis_cc_gs) :: solver
 !
       class(ccs) :: wf
+!
+      real(dp), dimension(:), allocatable :: eps
 !
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' ground state')
       call solver%timer%turn_on()
@@ -163,6 +166,15 @@ contains
 !
       endif 
 !
+!     Initialize preconditioner 
+!
+      call mem%alloc(eps, wf%n_gs_amplitudes)
+      call wf%get_gs_orbital_differences(eps, wf%n_gs_amplitudes)
+!
+      solver%preconditioner = precondition_tool(eps, wf%n_gs_amplitudes)
+!
+      call mem%dealloc(eps, wf%n_gs_amplitudes)
+!
    end function new_diis_cc_gs
 !
 !
@@ -183,40 +195,7 @@ contains
       call output%printf('DIIS dimension:           (i9)', ints=[solver%diis_dimension], fs='(/t6, a)', pl='minimal')
       call output%printf('Max number of iterations: (i9)', ints=[solver%max_iterations], fs='(t6, a)', pl='minimal')
 !
-      call output%flush_()
-!
    end subroutine print_settings_diis_cc_gs
-!
-!
-   subroutine do_diagonal_precondition_diis_cc_gs(alpha, preconditioner, vector, n)
-!!
-!!    Do diagonal precondition 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
-!!
-!!    Performs the following operation:
-!!
-!!       v(n) = alpha*(v(n)/preconditioner(n)).
-!!
-      implicit none 
-!     
-      integer, intent(in) :: n
-!
-      real(dp), intent(in) :: alpha 
-!
-      real(dp), dimension(n), intent(in)    :: preconditioner
-      real(dp), dimension(n), intent(inout) :: vector  
-!
-      integer :: I 
-!
-!$omp parallel do private(I)
-      do I = 1, n 
-!
-         vector(I) = alpha*vector(I)/preconditioner(I)
-!
-      enddo 
-!$omp end parallel do
-!
-   end subroutine do_diagonal_precondition_diis_cc_gs
 !
 !
    subroutine run_diis_cc_gs(solver, wf)
@@ -241,7 +220,6 @@ contains
 !
       real(dp), dimension(:), allocatable :: omega 
       real(dp), dimension(:), allocatable :: amplitudes  
-      real(dp), dimension(:), allocatable :: epsilon  
 !
       integer :: iteration
 !
@@ -250,7 +228,6 @@ contains
 !
       call mem%alloc(omega, wf%n_gs_amplitudes)
       call mem%alloc(amplitudes, wf%n_gs_amplitudes)
-      call mem%alloc(epsilon, wf%n_gs_amplitudes)
 !
       converged          = .false.
       converged_energy   = .false.
@@ -310,11 +287,9 @@ contains
 !           Precondition omega, shift amplitudes by preconditioned omega, 
 !           then ask for the DIIS update of the amplitudes 
 !
-            call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
-            call solver%do_diagonal_precondition(-one, epsilon, omega, wf%n_gs_amplitudes)
+            call solver%preconditioner%do_(omega)
 !
             call wf%get_amplitudes(amplitudes)
-!
             call wf%form_newton_raphson_t_estimate(amplitudes, omega)
 !
             call diis%update(omega, amplitudes)
@@ -341,7 +316,6 @@ contains
 !
       call mem%dealloc(omega, wf%n_gs_amplitudes)
       call mem%dealloc(amplitudes, wf%n_gs_amplitudes)
-      call mem%dealloc(epsilon, wf%n_gs_amplitudes)
 !
       if (.not. converged) then 
 !   

@@ -28,10 +28,11 @@ module davidson_tool_class
 !
    use record_storer_class, only: record_storer
    use memory_storer_class, only: memory_storer
-   use sequential_storer_class, only: sequential_storer
+   use file_storer_class, only: file_storer
    use memory_manager_class, only: mem 
    use global_out, only: output
    use array_utilities, only: get_l2_norm, copy_and_scale, zero_array
+   use precondition_tool_class, only: precondition_tool
 !
 !
    type, abstract :: davidson_tool
@@ -53,7 +54,7 @@ module davidson_tool_class
       real(dp) :: lindep_threshold 
 !
       logical :: do_precondition
-      real(dp), dimension(:), allocatable :: preconditioner 
+      class(precondition_tool), allocatable :: preconditioner 
 !
    contains
 !
@@ -76,8 +77,6 @@ module davidson_tool_class
 !
       procedure, non_overridable :: construct_AX               => construct_AX_davidson_tool
       procedure, non_overridable :: construct_reduced_matrix   => construct_reduced_matrix_davidson_tool
-!
-      procedure :: precondition                                => precondition_davidson_tool
 !
       procedure :: orthonormalize_trial_vecs                   => orthonormalize_trial_vecs_davidson_tool
 !
@@ -257,11 +256,11 @@ contains
          call output%printf('Reduced space basis and transforms are stored on disk.', &
                                  pl='m', fs='(/t6,a)')
 !
-         davidson%trials = sequential_storer(trim(davidson%name_) // '_trials', &
+         davidson%trials = file_storer(trim(davidson%name_) // '_trials', &
                      davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions, &
                      delete=.true.)   
 !
-         davidson%transforms = sequential_storer(trim(davidson%name_) // '_transforms', &
+         davidson%transforms = file_storer(trim(davidson%name_) // '_transforms', &
                      davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions, &
                      delete=.true.)   
 !
@@ -621,76 +620,9 @@ contains
       real(dp), dimension(davidson%n_parameters), intent(in) :: preconditioner 
 !
       davidson%do_precondition = .true.
-!
-      if (.not. allocated(davidson%preconditioner)) then 
-!
-         call mem%alloc(davidson%preconditioner, davidson%n_parameters)
-!
-      endif 
-!
-      call dcopy(davidson%n_parameters, preconditioner, 1, davidson%preconditioner, 1)
+      davidson%preconditioner = precondition_tool(preconditioner, davidson%n_parameters)
 !
    end subroutine set_preconditioner_davidson_tool
-!
-!
-   subroutine precondition_davidson_tool(davidson, R, alpha)
-!!
-!!    Precondition 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!!
-!!    Preconditions the vector R. 
-!!
-!!    Without the optional α:
-!!
-!!       R(i) <- R(i)/preconditioner(i).
-!!
-!!    With α:
-!!
-!!       R(i) <- R(i)/(preconditioner(i) - alpha).
-!!
-!!    α will typically be the current (approximated) eigenvalue
-!!    if we are solving an eigenvalue problem.
-!!
-!!    However, if the user has not set any preconditioner, 
-!!    this routine performs no action on R. 
-!!
-      implicit none 
-!
-      class(davidson_tool), intent(inout) :: davidson
-!
-      real(dp), dimension(davidson%n_parameters), intent(inout) :: R
-!
-      real(dp), intent(in), optional :: alpha
-!
-      integer :: i
-!
-      if (davidson%do_precondition) then 
-!
-         if (.not. present(alpha)) then
-!
-!$omp parallel do private(i)
-            do i = 1, davidson%n_parameters
-!
-               R(i) = R(i)/davidson%preconditioner(i)
-!
-            enddo
-!$omp end parallel do
-!
-         else
-!
-!$omp parallel do private(i)
-            do i = 1, davidson%n_parameters
-!
-               R(i) = R(i)/(davidson%preconditioner(i)-alpha)
-!
-            enddo 
-!$omp end parallel do
-!
-         endif
-!
-      endif 
-!
-   end subroutine precondition_davidson_tool
 !  
 !
    subroutine set_trials_to_solutions_davidson_tool(davidson)

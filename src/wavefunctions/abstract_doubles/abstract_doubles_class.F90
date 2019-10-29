@@ -36,9 +36,6 @@ module abstract_doubles_class
 !
       integer :: n_t2
 !
-      type(sequential_file) :: r2_file
-      type(sequential_file) :: l2_file
-!
       type(sequential_file) :: jacobian_a1_intermediate_vv
       type(sequential_file) :: jacobian_a1_intermediate_oo
 !

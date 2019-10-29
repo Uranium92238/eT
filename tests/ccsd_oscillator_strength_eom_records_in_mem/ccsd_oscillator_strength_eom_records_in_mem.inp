@@ -2,6 +2,10 @@ system
    name: HOF-He
    charge: 0
 end system
+ 
+print 
+   output print level: debug 
+end print
 
 do
    fop
@@ -17,10 +21,10 @@ cc fop
    dipole length
 end cc fop
 
-solver hf
+solver scf
    storage: memory
    gradient threshold: 1.0d-11
-end solver hf
+end solver scf
 
 solver cholesky
    threshold: 1.0d-11

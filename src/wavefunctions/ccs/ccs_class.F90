@@ -26,8 +26,6 @@ module ccs_class
 !
    use wavefunction_class
 !
-   use global_in, only: input
-!
    use mo_integral_tool_class, only : mo_integral_tool
 !
    use reordering
@@ -35,12 +33,12 @@ module ccs_class
    use sequential_file_class, only : sequential_file
    use string_utilities, only : convert_to_uppercase
    use array_utilities, only : get_l2_norm, copy_and_scale
-   use array_utilities, only : get_abs_max_w_index
-   use array_utilities, only : get_n_highest, get_n_lowest
+   use array_utilities, only : get_abs_max_w_index, get_n_lowest, get_n_highest
+   use array_utilities, only: quicksort_with_index_descending, are_vectors_parallel
    use index_invert, only : invert_compound_index, invert_packed_index
    use batching_index_class, only : batching_index
    use timings_class, only : timings
-   use sequential_storer_class, only: sequential_storer
+   use file_storer_class, only: file_storer
 !
    implicit none
 !
@@ -59,39 +57,31 @@ module ccs_class
       real(dp), dimension(:), allocatable :: right_excitation_energies
 !
       logical :: bath_orbital
-      logical :: frozen_core
 !
       type(sequential_file) :: t_file, tbar_file
       type(sequential_file) :: excitation_energies_file
       type(sequential_file) :: restart_file
 !
-      type(sequential_storer), allocatable :: r_files
-      type(sequential_storer), allocatable :: l_files
+      type(file_storer), allocatable :: r_files
+      type(file_storer), allocatable :: l_files
 !
       type(mo_integral_tool) :: integrals
 !
       real(dp) :: hf_energy
 !
-      real(dp), dimension(:,:), allocatable  :: t1
-      real(dp), dimension(:,:), allocatable  :: t1bar
+      real(dp), dimension(:,:), allocatable :: t1
+      real(dp), dimension(:,:), allocatable :: t1bar
 !
-      real(dp), dimension(:,:), allocatable  :: fock_ij
-      real(dp), dimension(:,:), allocatable  :: fock_ia
-      real(dp), dimension(:,:), allocatable  :: fock_ai
-      real(dp), dimension(:,:), allocatable  :: fock_ab
+      real(dp), dimension(:,:), allocatable :: fock_ij
+      real(dp), dimension(:,:), allocatable :: fock_ia
+      real(dp), dimension(:,:), allocatable :: fock_ai
+      real(dp), dimension(:,:), allocatable :: fock_ab
 !
       real(dp), dimension(:,:), allocatable :: density
       real(dp), dimension(:,:), allocatable :: left_transition_density
       real(dp), dimension(:,:), allocatable :: right_transition_density
 !
       integer, dimension(:), allocatable :: core_MOs
-!
-!     Frozen core variables (FC)
-!
-      real(dp), dimension(:,:), allocatable :: mo_fock_fc_contribution 
-      real(dp), dimension(:,:), allocatable :: orbital_coefficients_fc
-!
-      integer :: n_frozen_orbitals
 !
    contains
 !
@@ -154,6 +144,7 @@ module ccs_class
       procedure :: set_fock                                    => set_fock_ccs
       procedure :: construct_fock                              => construct_fock_ccs
       procedure :: add_frozen_core_fock_contribution           => add_frozen_core_fock_contribution_ccs
+      procedure :: add_frozen_hf_fock_contribution             => add_frozen_hf_fock_contribution_ccs
       procedure :: add_molecular_mechanics_fock_contribution   => add_molecular_mechanics_fock_contribution_ccs
 !
       procedure :: get_gs_orbital_differences                  => get_gs_orbital_differences_ccs
@@ -265,7 +256,11 @@ module ccs_class
       procedure :: right_transition_density_ccs_vv             => right_transition_density_ccs_vv_ccs
       procedure :: right_transition_density_ccs_gs_contr       => right_transition_density_ccs_gs_contr_ccs
 !
-      procedure :: binormalize_L_wrt_R                         => binormalize_L_wrt_R_ccs
+!     Routines related to post-processing excited states
+!
+      procedure :: biorthonormalize_L_and_R                    => biorthonormalize_L_and_R_ccs
+      procedure :: L_R_overlap                                 => L_R_overlap_ccs
+      procedure :: check_for_degeneracies                      => check_for_degeneracies_ccs
 !
 !     One-electron operators and mean value
 !
@@ -288,16 +283,8 @@ module ccs_class
 !
 !     Frozen core
 !
-      procedure :: initialize_mo_fock_fc_contribution          => initialize_mo_fock_fc_contribution_ccs                
-      procedure :: destruct_mo_fock_fc_contribution            => destruct_mo_fock_fc_contribution_ccs                
-      procedure :: initialize_orbital_coefficients_fc          => initialize_orbital_coefficients_fc_ccs
-      procedure :: destruct_orbital_coefficients_fc            => destruct_orbital_coefficients_fc_ccs
-!
-      procedure :: coulomb_contribution_fock_fc                => coulomb_contribution_fock_fc_ccs
-      procedure :: exchange_contribution_fock_fc               => exchange_contribution_fock_fc_ccs
-      procedure :: remove_core_orbitals                        => remove_core_orbitals_ccs
-      procedure :: construct_mo_fock_fc_contribution           => construct_mo_fock_fc_contribution_ccs
       procedure :: construct_t1_fock_fc_contribution           => construct_t1_fock_fc_contribution_ccs
+      procedure :: construct_t1_fock_frozen_hf_contribution    => construct_t1_fock_frozen_hf_contribution_ccs
 !
 !     MO preparations
 !
@@ -309,6 +296,8 @@ module ccs_class
       procedure :: amplitudes_for_jacobian_debug               => amplitudes_for_jacobian_debug_ccs
       procedure :: normalization_for_jacobian_debug            => normalization_for_jacobian_debug_ccs
       procedure :: numerical_test_jacobian                     => numerical_test_jacobian_ccs
+!
+      procedure :: read_frozen_orbital_contributions           => read_frozen_orbital_contributions_ccs
 !
    end type ccs
 !
@@ -385,33 +374,34 @@ contains
 !
       call wf%initialize_files()
 !
-!     Read necessary information from HF
-!
-      call wf%read_hf()
-!
-!     Set orbital coefficients and energies
-!
-      call wf%initialize_orbital_coefficients()
-      call wf%initialize_orbital_energies()
-!
-      call wf%read_orbital_coefficients()
-      call wf%read_orbital_energies()
-!
 !     Logicals for special methods
 !
       wf%bath_orbital = .false.
       wf%frozen_core = .false.
+      wf%frozen_hf_mos = .false.
       wf%cvs = .false.
 !
 !     Read CC settings from eT.inp (from cc section)
 !
       call wf%read_settings()
 !
+!     Read necessary information from HF
+!
+      call wf%read_hf()
+!
 !     Handle changes in the number of MOs as a result of 
 !     special methods
 !
       if (wf%bath_orbital) call wf%make_bath_orbital()
-      if (wf%frozen_core) call wf%remove_core_orbitals()
+!
+      if (wf%frozen_core .or. wf%frozen_hf_mos) call wf%read_frozen_orbital_contributions()
+!
+!     print orbital space info for cc
+      call output%printf(' - Number of orbitals for coupled cluster calculation', fs='(/t3,a)', pl='minimal')
+      call output%printf('Number of occupied orbitals:    (i12)',ints=[wf%n_o], fs='(/t6,a)', pl='minimal')
+      call output%printf('Number of virtual orbitals:     (i12)',ints=[wf%n_v], fs='(t6,a)', pl='minimal')
+      call output%printf('Number of molecular orbitals:   (i12)',ints=[wf%n_mo], fs='(t6,a)', pl='minimal')
+      call output%printf('Number of atomic orbitals:      (i12)',ints=[wf%n_ao], fs='(t6,a)', pl='minimal')
 !
    end subroutine general_cc_preparations_ccs
 !
@@ -431,6 +421,7 @@ contains
       call wf%destruct_right_excitation_energies()
       call wf%destruct_left_excitation_energies()
       call wf%destruct_mo_fock_fc_contribution()
+      call wf%destruct_mo_fock_frozen_hf_contribution()
 !
       write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(convert_to_uppercase(wf%name_)), ' wavefunction'
 !
@@ -448,6 +439,8 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
+      call wf%read_frozen_orbitals_settings()
+!
       if (input%requested_section('cc')) then
 !
          if (input%requested_keyword_in_section('bath orbital','cc')) then 
@@ -457,7 +450,7 @@ contains
 !
          endif
 !
-         if (input%requested_keyword_in_section('frozen core', 'cc')) wf%frozen_core = .true.
+        if (input%requested_keyword_in_section('frozen core', 'cc')) wf%frozen_core = .true.
 !
       endif
 !
@@ -474,7 +467,8 @@ contains
 !
       class(ccs) :: wf
 !
-      type(sequential_file) :: orbital_information_file 
+      type(sequential_file) :: orbital_information_file
+      type(sequential_file) :: CC_orbitals_file, CC_orbital_energies_file
 !
       orbital_information_file = sequential_file('orbital_information')
       call orbital_information_file%open_('read', 'rewind')
@@ -486,6 +480,25 @@ contains
       call orbital_information_file%read_(wf%hf_energy)    
 !
       call orbital_information_file%close_()
+!
+!     Set orbital coefficients and energies
+!
+      call wf%initialize_orbital_coefficients()
+      call wf%initialize_orbital_energies()
+!
+      CC_orbitals_file = sequential_file('cc_orbital_coefficients')
+      call CC_orbitals_file%open_('read', 'rewind')
+!
+      call CC_orbitals_file%read_(wf%orbital_coefficients, wf%n_ao*wf%n_mo)
+!
+      call CC_orbitals_file%close_('keep')
+!
+      CC_orbital_energies_file = sequential_file('cc_orbital_energies')
+      call CC_orbital_energies_file%open_('read', 'rewind')
+!
+      call CC_orbital_energies_file%read_(wf%orbital_energies, wf%n_mo)
+!
+      call CC_orbital_energies_file%close_('keep')
 !
    end subroutine read_hf_ccs
 !
@@ -868,63 +881,21 @@ contains
    end subroutine set_cvs_start_indices_ccs
 !
 !
-   subroutine binormalize_L_wrt_R_ccs(wf, L, R, state)
+   real(dp) function L_R_overlap_ccs(wf, L, R)
 !!
 !!    Calculates the overlap of the left and right states 
-!!    and scales the left amplitudes by it
 !!    Written by Josefine Andersen, Apr 2019
-!!
-!!    Consistency/sanity check: Eirik F. Kjønstad, Aug 2019
 !!
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: R
-      real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: L
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: R
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: L
 !
-      integer, intent(in) :: state
+      real(dp) :: ddot
 !
-      real(dp) :: ddot, LT_R
-      real(dp) :: energy_threshold
+      L_R_overlap_ccs = ddot(wf%n_es_amplitudes, L, 1, R, 1)
 !
-!     Sanity check in case roots are ordered incorrectly
-!
-      if (input%requested_keyword_in_section('energy threshold', 'solver cc es')) then 
-!
-        call input%get_keyword_in_section('energy threshold', 'solver cc es', energy_threshold)
-!
-      elseif (input%requested_keyword_in_section('residual threshold', 'solver cc es')) then 
-!
-        call input%get_keyword_in_section('residual threshold', 'solver cc es', energy_threshold)
-!
-      else
-!
-        call output%printf('Note: assuming default energy threshold (1.0d-6) when testing root consistency.', fs='(t6,a)')
-!
-        energy_threshold = 1.0d-6
-!
-      endif 
-!
-      if (abs(wf%left_excitation_energies(state) - wf%right_excitation_energies(state)) > energy_threshold) then 
-!
-          call output%printf('Eigenvector (i0) is not left-right consistent to threshold (e8.2).', &
-                              ints=[state], reals=[energy_threshold], fs='(/t6,a)')
-!
-          call output%printf('Energies (left, right): (f19.12) (f19.12)', &
-                reals=[wf%left_excitation_energies(state), wf%right_excitation_energies(state)], fs='(/t6,a)')
-!
-          call output%error_msg('while calculating transition strength.')
-!
-      !  else
-!
-         ! Note: consider to add in verbose mode
-         ! call output%printf('The left and right states corresponding to root (i0) are consistent', ints=[state])
-!
-      endif 
-!
-      LT_R = ddot(wf%n_es_amplitudes, L, 1, R, 1)
-      call dscal(wf%n_es_amplitudes, one/LT_R, L, 1)
-!
-   end subroutine binormalize_L_wrt_R_ccs
+   end function L_R_overlap_ccs
 !
 !
    subroutine form_newton_raphson_t_estimate_ccs(wf, t, dt)
@@ -1090,7 +1061,7 @@ contains
       class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(out) :: R_aibj
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                  :: R_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)               :: R_ai
 !
       real(dp), intent(in) :: omega
 !
@@ -1292,109 +1263,6 @@ contains
    end subroutine read_cvs_settings_ccs
 !
 !
-   subroutine remove_core_orbitals_ccs(wf)
-!!
-!!    Remove core orbitals
-!!    Written by Sarai D. Folkestad, Sep 2018 
-!!
-!!    Removes 1s orbitals for C and heavier atoms
-!!    from orbital coefficient matrix
-!!
-      implicit none 
-!
-      class(ccs) :: wf 
-!
-      real(dp), dimension(:,:), allocatable :: orbital_coefficients_copy
-      real(dp), dimension(:), allocatable :: orbital_energies_copy
-!
-      integer :: I
-!
-      logical, dimension(:), allocatable :: freeze_atom
-!
-      integer :: index_max
-      real(dp) :: max_
-!
-      call mem%alloc(freeze_atom, wf%system%n_atoms)
-      freeze_atom = .false.
-!
-!     Figure out how many core orbitals we have
-!
-!     Number of atoms heavier than Be (atomic number larger than 4)
-!
-      wf%n_frozen_orbitals = 0
-!
-      do I = 1, wf%system%n_atoms
-!
-         if (wf%system%atoms(I)%number_ .ge. 5 .and. wf%system%atoms(I)%number_ .le. 12) then
-!
-            wf%n_frozen_orbitals = wf%n_frozen_orbitals + 1
-            freeze_atom(I) = .true.
-!
-         elseif (wf%system%atoms(I)%number_ .ge. 13 .and. wf%system%atoms(I)%number_ .le. 30) then
-!
-            wf%n_frozen_orbitals = wf%n_frozen_orbitals + 5
-            freeze_atom(I) = .true.
-!
-         elseif (wf%system%atoms(I)%number_ .gt. 30) then
-!
-            call output%error_msg('No frozen core for Z > 30.')
-!
-         endif
-!
-      enddo
-!
-      call mem%alloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
-!
-      call copy_and_scale(one, wf%orbital_coefficients, orbital_coefficients_copy, wf%n_mo*wf%n_ao)
-!
-      call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
-!
-      call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo - wf%n_frozen_orbitals)
-!
-      wf%orbital_coefficients(1:wf%n_ao, 1:wf%n_mo - wf%n_frozen_orbitals) = &
-            orbital_coefficients_copy(1:wf%n_ao, wf%n_frozen_orbitals + 1:wf%n_mo)
-!
-!     Keep frozen core orbital orbital coefficients
-!
-      call wf%initialize_orbital_coefficients_fc()
-!
-      wf%orbital_coefficients_fc(1:wf%n_ao, 1:wf%n_frozen_orbitals) = &
-            orbital_coefficients_copy(1:wf%n_ao, 1:wf%n_frozen_orbitals) 
-!
-!     Check for crossover:  
-!
-!     If the largest AO weight on a frozen MO does not belong to an 
-!     atom we are supposed to freeze, then we stop.
-!
-      do i = 1, wf%n_frozen_orbitals
-!
-         call get_abs_max_w_index(wf%orbital_coefficients_fc(:,i), wf%n_ao, max_, index_max)
-!
-         if (.not. freeze_atom(wf%system%basis2atom(index_max))) &
-            call output%error_msg('Detected crossover in frozen core.')
-!
-      enddo
-!
-     call mem%dealloc(orbital_coefficients_copy, wf%n_ao, wf%n_mo)
-!
-     call mem%alloc(orbital_energies_copy, wf%n_mo)
-!
-     call copy_and_scale(one, wf%orbital_energies, orbital_energies_copy, wf%n_mo)
-!
-     call mem%dealloc(wf%orbital_energies, wf%n_mo)
-     call mem%alloc(wf%orbital_energies, wf%n_mo - wf%n_frozen_orbitals)
-!
-     wf%orbital_energies(1:wf%n_mo - wf%n_frozen_orbitals) = &
-            orbital_energies_copy(wf%n_frozen_orbitals + 1: wf%n_mo)
-!
-     call mem%dealloc(orbital_energies_copy, wf%n_mo)
-!
-     wf%n_mo = wf%n_mo  - wf%n_frozen_orbitals
-     wf%n_o = wf%n_o  - wf%n_frozen_orbitals     
-!
-   end subroutine remove_core_orbitals_ccs
-!
-!
    subroutine mo_preparations_ccs(wf)
 !!
 !!    MO preparations
@@ -1417,9 +1285,661 @@ contains
       wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, wf%system%n_J)
       call wf%construct_and_write_mo_cholesky(wf%n_mo, wf%orbital_coefficients, wf%integrals%cholesky_mo)
 !
-      if (wf%frozen_core) call wf%construct_mo_fock_fc_contribution()
-!
    end subroutine mo_preparations_ccs
+!
+!
+   subroutine read_frozen_orbital_contributions_ccs(wf)
+!!
+!!    Read frozen orbital contributions
+!!    Written by Sarai D. Folkestad, Oct 2019
+!!
+!!    Reads frozen orbital contributions to the
+!!    mo Fock matrix.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (wf%frozen_core) then
+!      
+         call wf%initialize_mo_fock_fc_contribution()
+!
+         wf%mo_fock_fc_file = sequential_file('MO_Fock_FC')
+!
+         call wf%mo_fock_fc_file%open_('read', 'rewind')
+         call wf%mo_fock_fc_file%read_(wf%mo_fock_fc_contribution, wf%n_mo**2)
+         call wf%mo_fock_fc_file%close_('keep')
+!
+      endif
+!
+      if (wf%frozen_hf_mos) then
+!
+         call wf%initialize_mo_fock_frozen_hf_contribution()
+!
+         wf%mo_fock_frozen_hf_file = sequential_file('MO_frozen_hf_Fock')
+!
+         call wf%mo_fock_frozen_hf_file%open_('read', 'rewind')
+         call wf%mo_fock_frozen_hf_file%read_(wf%mo_fock_frozen_hf_contribution, wf%n_mo**2)
+         call wf%mo_fock_frozen_hf_file%close_('keep')
+!
+      endif
+!
+   end subroutine read_frozen_orbital_contributions_ccs
+!
+!
+   subroutine check_for_degeneracies_ccs(wf, transformation, threshold)
+!!
+!!    Check for degeneracies in the excited states
+!!    written by Alexander C. Paul and Rolf H. Myhre, Oct 2019
+!!
+!!    The solver might not ensure orthogonality of the states (e.g. in DIIS).
+!!    Therefore, degenerate roots might be found where the eigenvectors
+!!    are equal up to a sign (and within the convergence threshold)
+!!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      character(len=*), intent(in) :: transformation
+!
+      real(dp), intent(in) :: threshold
+!
+      real(dp), dimension(:,:), allocatable  :: R
+!
+      integer :: current_state, state
+      integer :: n_degeneracy, p, q
+      integer :: reduced_degeneracy
+!
+      current_state = 1
+!
+      do while (current_state .le. wf%n_singlet_states)
+!
+         n_degeneracy = 1
+         state = current_state + 1
+!
+!        Check for degeneracies in the excitation energies
+!        NB: energies are assumed to be sorted (cf. DIIS - quicksort)
+!
+         do while (state .le. wf%n_singlet_states)
+!
+            if (transformation .eq. 'right') then
+!
+               if (abs(wf%right_excitation_energies(state) - &
+                       wf%right_excitation_energies(current_state)) .gt. threshold) exit
+!
+            else if (transformation .eq. 'left') then
+!
+               if (abs(wf%left_excitation_energies(state) - &
+                       wf%left_excitation_energies(current_state)) .gt. threshold) exit
+!
+            else
+!
+               call output%error_msg('Tried to check for parallel states but argument ' &
+                                     // trim(transformation) // ' not recognized.')
+!
+            end if
+!
+            n_degeneracy = n_degeneracy + 1
+!
+            state = state + 1
+!
+         end do
+!
+!        If degeneracies are found:
+!           - read all degenerate states
+!           - loop through all state pairs (p != q): 
+!                 -If 2 states are parallel print warning 
+!                  and reduce the degree of degeneracy
+!
+         if (n_degeneracy .gt. 1) then
+!
+            call mem%alloc(R, wf%n_es_amplitudes, n_degeneracy)
+!
+            do p = 1, n_degeneracy
+               call wf%read_excited_state(R(:,p), current_state + p - 1, trim(transformation))
+            end do
+!
+            reduced_degeneracy = n_degeneracy
+!
+            do p = 2, n_degeneracy ! if p == 1 then also q == 1 and we cycle anyway
+               do q = 1, p
+!
+                  if(p .eq. q) cycle
+!
+                  if(are_vectors_parallel(R(:,p), R(:,q), wf%n_es_amplitudes, threshold)) then
+!
+                     call output%printf('Warning: The (a0) states (i0) and (i0) are parallel.',&
+                                         ints=[current_state + p - 1, current_state + q - 1],  &
+                                         chars=[trim(transformation)], fs='(//t3,a)', pl='m')
+!
+                     reduced_degeneracy = reduced_degeneracy - 1
+!
+                  end if
+!
+               end do
+            end do
+!
+            if(reduced_degeneracy .gt. 1) then
+!
+               call output%printf('Found a (i0)-fold degeneracy involving the &
+                                  &(i0). state.', fs='(//t6,a)', pl='v',      &
+                                  ints=[reduced_degeneracy, current_state])
+!
+            end if
+!
+            call mem%dealloc(R, wf%n_es_amplitudes, n_degeneracy)
+!
+         end if
+!
+         current_state = current_state + n_degeneracy
+!
+      end do
+!
+   end subroutine check_for_degeneracies_ccs
+!
+!
+   subroutine biorthonormalize_L_and_R_ccs(wf, energy_threshold, residual_threshold, skip_states)
+!!
+!!    Biorthonormalize the left and right eigenvectors
+!!    Written by Alexander C. Paul, Sep 2019
+!!
+!!    For that: 
+!!       - check if excitation energies are the same
+!!       - check for degenerate states
+!!       - check for and discard parallel states
+!!       - If degeneracies are present: biorthonormalize using Gram-Schmidt
+!!          following Kohaupt, L., Rocky Mountain J. Math., 44, 1265, (2014)
+!!       - Normalize and write to file
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), intent(in) :: energy_threshold, residual_threshold
+!
+      logical, dimension(wf%n_singlet_states), intent(inout) :: skip_states
+!
+      real(dp), dimension(:,:), allocatable :: R, R_normalized
+      real(dp), dimension(:,:), allocatable :: L, L_normalized
+!
+      real(dp), dimension(:), allocatable :: overlap_LR
+!
+      integer, dimension(:), allocatable :: order
+!
+      logical, dimension(:), allocatable :: parallel
+!
+      real(dp) :: LT_R, overlap_L_Rnorm, overlap_Lnorm_R, norm_R
+      real(dp) :: ddot
+!
+      integer :: state, current_state, prev_state, p, q
+      integer :: n_degeneracy, reduced_degeneracy_r, reduced_degeneracy_l
+      integer :: n_overlap_zero, state_nonzero_overlap
+!
+      logical :: biorthonormalize
+!
+!     Loop through states look for degenerate states (skip degeneracy)
+!     discard parallel states
+!     biorthonormalize degenerate states
+!
+      call output%printf('Biorthonormalization of left and right excited state vectors', &
+                          pl='v', fs='(/t3,a)')
+!
+      current_state = 1
+!
+      do while (current_state .le. wf%n_singlet_states)
+!
+         skip_states(current_state) = .false.
+!
+         if (abs(wf%left_excitation_energies(current_state) &
+               - wf%right_excitation_energies(current_state)) .lt. energy_threshold) then
+!
+            call output%printf('The left and right states corresponding to root (i0) &
+                               &are consistent', fs='(/t6,a)', ints=[current_state], pl='v')
+!
+            n_degeneracy = 1
+            state = current_state + 1
+!
+!           :: Check for degeneracies in both left and right excitation energies ::
+!
+            do while (state .le. wf%n_singlet_states)
+!
+               if(abs(wf%left_excitation_energies(state)          &
+                    - wf%left_excitation_energies(current_state)) &
+                  .gt. energy_threshold) exit
+!
+               if (abs(wf%right_excitation_energies(state)           &
+                     - wf%right_excitation_energies(current_state))  &
+                     .lt. energy_threshold) then
+!
+                  n_degeneracy = n_degeneracy + 1
+!
+               else 
+!
+                  call output%error_msg('Different degree of degeneracy in the   &
+                  &    left excited states compared to the right excited states')
+!
+               end if
+!
+               state = state + 1
+!
+            end do
+!
+            call output%printf('Degree of degeneracy: (i0)', fs='(t6,a)', &
+                                ints=[n_degeneracy], pl='debug')
+!
+            if(n_degeneracy .gt. 1) then
+!
+!              :: Check for parallel "right" states ::
+!
+               call mem%alloc(R, wf%n_es_amplitudes, n_degeneracy)
+!
+               do p = 1, n_degeneracy
+                  call wf%read_excited_state(R(:,p), current_state + p - 1, 'right')
+               end do
+!
+               reduced_degeneracy_r = n_degeneracy
+!
+               call mem%alloc(parallel, n_degeneracy)
+!
+               do p = 1, n_degeneracy
+!
+                  parallel(p) = .false.
+!
+                  do q = 1, p
+!
+                     if(q .eq. p) cycle
+!
+                     if(are_vectors_parallel(R(:,p), R(:,q), &
+                        wf%n_es_amplitudes, residual_threshold)) then
+!
+                        parallel(p) = .true.
+!
+                        call output%printf('Warning: The right states (i0) and (i0) &
+                                           &are parallel', pl='m', fs='(/t3,a)',   &
+                                           ints=[current_state+p-1, current_state+q-1])
+!
+                        reduced_degeneracy_r = reduced_degeneracy_r - 1
+!
+                     end if
+!
+                  end do
+               end do
+!
+!              Remove parallel state from array R
+               if(reduced_degeneracy_r .ne. n_degeneracy) then
+!
+                  state = 0
+!
+                  do p = 1, n_degeneracy
+                     if(parallel(p)) cycle
+!
+                     state = state + 1
+                     call dcopy(wf%n_es_amplitudes, &
+                                R(:,p), 1,          &
+                                R(:,state), 1)
+!
+                  end do
+!
+               end if
+!
+!              :: Check for parallel "left" states ::
+!
+               call mem%alloc(L, wf%n_es_amplitudes, n_degeneracy)
+!
+               do p = 1, n_degeneracy
+                  call wf%read_excited_state(L(:,p), current_state + p - 1, 'left')
+               end do
+!
+               reduced_degeneracy_l = n_degeneracy
+!
+               do p = 1, n_degeneracy
+!
+                  parallel(p) = .false.
+                  skip_states(current_state + p - 1) = .false.
+!
+                  do q = 1, p
+!
+                     if(q .eq. p) cycle
+!
+                     if(are_vectors_parallel(L(:,p), L(:,q), &
+                        wf%n_es_amplitudes, residual_threshold)) then
+!
+                        parallel(p) = .true.
+!
+                        call output%printf('Warning: The left states (i0) and (i0) &
+                                           &are parallel', pl='m', fs='(/t3,a)',   &
+                                           ints=[current_state + p - 1, current_state+q-1])
+!
+                        reduced_degeneracy_l = reduced_degeneracy_l - 1
+!
+                     end if
+!
+                  end do
+               end do
+!
+               if(reduced_degeneracy_l .ne. reduced_degeneracy_r) then
+                  call output%error_msg('Different degree of degeneracy in the &
+                                        &left excited states compared to the &
+                                        &right excited states')
+               end if
+!
+!              Remove parallel state from array L
+               if(reduced_degeneracy_l .ne. n_degeneracy) then
+!
+                  state = 0
+!
+                  do p = 1, n_degeneracy
+!
+                     if(p .gt. reduced_degeneracy_l) then
+                        skip_states(current_state + p - 1) = .true.
+                     end if
+!
+                     if(parallel(p)) cycle
+!
+                     state = state + 1
+!
+                     call dcopy(wf%n_es_amplitudes, &
+                                L(:,p), 1,          &
+                                L(:,state), 1)
+!
+                  end do
+!
+               end if
+!
+               if (reduced_degeneracy_r .gt. 1) then
+!
+                  call output%printf('Found a degeneracy between:', fs='(/t6,a)', pl='n')
+                  call output%printf('-----------------------------', fs='(t6,a)', pl='n')
+                  call output%printf('State     Excitation Energy', fs='(t6,a)', pl='n')
+!
+                  do p = 1, n_degeneracy
+!
+                     if(parallel(p)) cycle
+!
+                     call output%printf(' (i2)     (f19.12)', &
+                          fs='(t6,a)', pl='n',                &
+                          ints=[current_state + p - 1],       & 
+                          reals=[wf%right_excitation_energies(current_state+p-1)])
+!
+                  end do
+!
+               end if
+!
+               call mem%dealloc(parallel, n_degeneracy)
+!
+!              :: Biorthonormalize states ::
+!              -----------------------------
+!
+!                 (following Kohaupt, L., Rocky Mountain J. Math., 44, 1265, (2014))
+!
+!                 non degenerate L/R states are biorthogonal, thus only normalization needed
+!
+!                 degenerate L/R states should be biorthogonal as well
+!                 if not the k-th state is determined in terms of the 
+!                 previously biorthogonalized states i
+!
+!                 Intermediate:  L'(k) = L(k) - sum_i < L(k)|R"(i)> * L"(i)
+!                 Biorthonormal: L"(k) = < L'(k)|R(k)>^(-1) * L'(k)
+!
+!                 Biorthonormal: R"(k) = R(k) - sum_i < R(k)|L"(i)> * R"(i)
+!
+               call mem%alloc(L_normalized, wf%n_es_amplitudes, reduced_degeneracy_l)
+               call mem%alloc(R_normalized, wf%n_es_amplitudes, reduced_degeneracy_r)
+!
+               do p = 1, reduced_degeneracy_l
+!
+                  call dcopy(wf%n_es_amplitudes, &
+                           L(:,p), 1,            &
+                           L_normalized(:, p), 1)
+!
+               end do
+!
+               call mem%alloc(overlap_LR, reduced_degeneracy_r)
+               call mem%alloc(order, reduced_degeneracy_r)
+!
+!              We first check if the degenerate states are biorthogonal
+!              then we only need to binormalize (biorthonormalize = .false.).
+!              If we need to biorthonormalize the logical is set to .true.
+!              so that we don't run into the wrong branch of the if-statement
+!
+               biorthonormalize = .false.
+!
+               do state = 1, reduced_degeneracy_l
+!
+                  n_overlap_zero = 0
+                  state_nonzero_overlap = 0
+!
+                  do q = 1, reduced_degeneracy_r
+!
+!                    Overlap of Singles and Doubles should be enough also for CC3
+                     overlap_lr(q) = abs(ddot(wf%n_es_amplitudes, &
+                                              L(:,state), 1,      &
+                                              R(:,q), 1))
+!
+                     if(overlap_lr(q) .lt. residual_threshold) then
+!
+                        n_overlap_zero = n_overlap_zero + 1
+!
+                     else
+!
+                        state_nonzero_overlap = q
+!
+                     end if
+!
+                  end do
+!
+!                 Simple binormalization if only 1 right state 
+!                 has significant overlap with the L state
+!
+                  if((.not. biorthonormalize) .and. &
+                     (n_overlap_zero .eq. reduced_degeneracy_r-1)) then
+!
+                     call output%printf('Degenerate states except one are biorthogonal &
+                                       &- Thus, only binormalize', pl='v', fs='(/t6,a)')
+!
+                     LT_R = wf%L_R_overlap(L(:,state),                  &
+                                           R(:,state_nonzero_overlap))
+!
+!                    Sanity check that the left and corresponding right state are not orthogonal
+!
+                     if(abs(LT_R) .lt. 1.0d-2) then
+!
+                        call output%printf('Warning: Overlap of (i0). left and right state close to zero.', &
+                                          pl='m', ints=[current_state])
+!
+                     end if
+!
+!                    Normalize the new left state to the right state
+                     call dscal(wf%n_es_amplitudes,     &
+                                one/LT_R,               &
+                                L_normalized(:, state), & 
+                                1)
+!
+!                    Copy to have correct ordering in R_normalized
+                     call dcopy(wf%n_es_amplitudes,            &
+                                R(:,state_nonzero_overlap), 1, &
+                                R_normalized(:, state), 1)
+!
+                  else ! Actual biorthonormalization needed
+!
+                     call output%printf('Biorthonormalization of degenerate states', &
+                                         pl='n',fs='(/t6,a)')
+!
+!                    Make sure to not run into the other branch of the if statement
+                     biorthonormalize = .true.
+!
+!                    sort overlap_lr and select corresponding R state for L(p)
+!                    R(:,order(1)) has the maximal overlap with L(p)
+!
+                     call quicksort_with_index_descending(overlap_lr, &
+                                                          order,      &
+                                                          reduced_degeneracy_r)
+!
+                     call dcopy(wf%n_es_amplitudes,       &
+                                R(:,order(1)), 1,         &
+                                R_normalized(:,state), 1)
+!
+                     do prev_state = 1, state - 1
+!
+!                       :: Construct biorthogonal left state ::
+!
+!                       L'(k) = L(k) - sum_i < L(k)|R"(i)> * L"(i)
+!
+                        overlap_L_Rnorm = ddot(wf%n_es_amplitudes,         &
+                                               L(:,state),                 &
+                                               1,                          &
+                                               R_normalized(:,prev_state), &
+                                               1)
+!
+                        call daxpy(wf%n_es_amplitudes,         &
+                                   -overlap_L_Rnorm,           &
+                                   L_normalized(:,prev_state), &
+                                   1,                          &
+                                   L_normalized(:,state),      &
+                                   1)
+!
+!                       :: Construct biorthonormal right state ::
+!
+!                       R"(k) = R(k) - sum_i < R(k)|L"(i)> * R"(i)
+!
+                        overlap_Lnorm_R = ddot(wf%n_es_amplitudes,          &
+                                                R(:,order(1)),              &
+                                                1,                          &
+                                                L_normalized(:,prev_state), &
+                                                1)
+!
+                        call daxpy(wf%n_es_amplitudes,         &
+                                   -overlap_Lnorm_R,           &
+                                   R_normalized(:,prev_state), &
+                                   1,                          &
+                                   R_normalized(:,state),      &
+                                   1)
+!
+                     end do
+!
+!                    :: Binormalize L'(state) to the corresponding R-state ::
+!
+                     overlap_Lnorm_R = ddot(wf%n_es_amplitudes,    &
+                                            L_normalized(:,state), &
+                                            1,                     &
+                                            R(:,order(1)),         &
+                                            1)
+!
+                     call dscal(wf%n_es_amplitudes, one/overlap_Lnorm_R, L_normalized(:,state), 1)
+!
+!                    Zero out R state that has already been used
+!                    Thus, overlap_lr(q) will be zero and this state will not be selected again
+!
+                     call zero_array(R(:,order(1)), wf%n_es_amplitudes)
+!
+!                    :: Renormalize singles and doubles part of the right vectors ::
+!
+                     norm_R = ddot(wf%n_es_amplitudes,    &
+                                   R_normalized(:,state), &
+                                   1,                     &
+                                   R_normalized(:,state), &
+                                   1)
+!
+                     call dscal(wf%n_es_amplitudes, one/norm_R, R_normalized(:,state), 1)
+!
+!                    :: Binormalize the left to the right vectors ::
+!                    ::        including triples if present       ::
+!
+                     LT_R = wf%L_R_overlap(L_normalized(:,state), R_normalized(:,state))
+!
+!                    Sanity check that the left and corresponding right state are not orthogonal
+!
+                     if(abs(LT_R) .lt. 1.0d-2) then
+!
+                        call output%printf('Warning: Overlap of (i0). left and right state close to zero.', &
+                                          pl='m', ints=[current_state])
+!
+                     else if(abs(LT_R) .lt. residual_threshold) then
+!
+                        call output%printf('Overlap of (i0). left and right state less than &
+                                          &threshold: (e8.3).', reals=[residual_threshold], &
+                                          pl='m', ints=[current_state])
+!
+                        call output%error_msg('Trying to binormalize nonoverlapping states.')
+!
+                     end if
+!
+                     call dscal(wf%n_es_amplitudes, one/LT_R, L_normalized(:, state), 1)
+!
+                  end if
+!
+                  call wf%save_excited_state(L_normalized(:, state), current_state+state-1, 'left')
+                  call wf%save_excited_state(R_normalized(:, state), current_state+state-1, 'right')
+!
+               end do
+!
+               call mem%dealloc(R_normalized, wf%n_es_amplitudes, reduced_degeneracy_r)
+               call mem%dealloc(L_normalized, wf%n_es_amplitudes, reduced_degeneracy_l)
+!
+               call mem%dealloc(R, wf%n_es_amplitudes, n_degeneracy)
+               call mem%dealloc(L, wf%n_es_amplitudes, n_degeneracy)
+!
+               call mem%dealloc(overlap_LR, reduced_degeneracy_r)
+               call mem%dealloc(order, reduced_degeneracy_r)
+!
+            else ! States are not degenerate, thus only binormalize
+!
+               call mem%alloc(R, wf%n_es_amplitudes, 1)
+               call wf%read_excited_state(R, current_state, 'right')
+!
+               call mem%alloc(L, wf%n_es_amplitudes, 1)
+               call wf%read_excited_state(L, current_state, 'left')
+!
+               LT_R = wf%L_R_overlap(L, R)
+!
+!              Sanity check that the left and corresponding right state are not orthogonal
+!
+               if(abs(LT_R) .lt. 1.0d-2) then
+!
+                  call output%printf('Warning: Overlap of (i0). left and right state close to zero.', &
+                                     pl='m', ints=[current_state])
+!
+               else if(abs(LT_R) .lt. residual_threshold) then
+!
+                  call output%printf('Overlap of (i0). left and right state less than &
+                                    &threshold: (e8.3).', reals=[residual_threshold], &
+                                     pl='m', ints=[current_state])
+!
+                  call output%error_msg('Trying to binormalize biorthogonal states.')
+!
+               end if
+!
+               call mem%dealloc(R, wf%n_es_amplitudes, 1)
+!
+!              Normalize the new left state to the right state
+               call dscal(wf%n_es_amplitudes, 1/LT_R, L, 1)
+!
+               call wf%save_excited_state(L, current_state, 'left')
+!
+               call mem%dealloc(L, wf%n_es_amplitudes, 1)
+!
+            end if
+!
+         else ! Sanity check failed - roots ordered incorrectly
+!
+            call output%printf('Eigenvector (i0) is not left-right consistent &
+                              & to threshold (e8.3).', fs='(/t6,a)', pl='m',  &
+                                ints=[current_state], reals=[energy_threshold])
+!
+            call output%printf('Energies (left, right): (f19.12) (f19.12)', &
+                 reals=[wf%left_excitation_energies(current_state),         &
+                 wf%right_excitation_energies(current_state)], fs='(/t6,a)',&
+                 pl='m')
+!
+            call output%error_msg('while biorthonormalizing.')
+!
+         end if
+!
+         current_state = current_state + n_degeneracy
+!
+      end do
+!
+   end subroutine biorthonormalize_L_and_R_ccs
 !
 !
 end module ccs_class

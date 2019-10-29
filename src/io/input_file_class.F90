@@ -121,8 +121,8 @@ contains
       type(section) :: cc_fop 
       type(section) :: method 
       type(section) :: solver_cholesky
-      type(section) :: solver_hf
-      type(section) :: solver_hf_geoopt
+      type(section) :: solver_scf
+      type(section) :: solver_scf_geoopt
       type(section) :: solver_cc_gs
       type(section) :: solver_cc_es
       type(section) :: solver_cc_multipliers 
@@ -130,7 +130,9 @@ contains
       type(section) :: cc
       type(section) :: mlcc
       type(section) :: mm
+      type(section) :: mlhf
       type(section) :: global_print
+      type(section) :: frozen_orbitals
 !
 !     Set input file name, access and format 
 !
@@ -142,9 +144,7 @@ contains
 !
 !     Set method section 
 !
-      the_file%rf_wfs = [character(len=25) :: &
-                           'hf',   &
-                           'uhf']
+      the_file%rf_wfs = [character(len=25) ::'hf','uhf','mlhf']
 !
       the_file%cc_wfs = [character(len=25) ::   &
                            'ccs',               &
@@ -212,9 +212,9 @@ contains
                                     'one center          ',    &
                                     'no vectors          ']
 !
-      solver_hf%name_    = 'solver hf'
-      solver_hf%required = .false.
-      solver_hf%keywords = [character(len=25) ::         &
+      solver_scf%name_    = 'solver scf'
+      solver_scf%required = .false.
+      solver_scf%keywords = [character(len=25) ::         &
                               'algorithm            ',   &
                               'energy threshold     ',   &
                               'gradient threshold   ',   &
@@ -225,9 +225,9 @@ contains
                               'ao density guess     ',   &
                               'print orbitals       ' ]
 !
-      solver_hf_geoopt%name_    = 'solver hf geoopt'
-      solver_hf_geoopt%required = .false.
-      solver_hf_geoopt%keywords = [character(len=25) ::     &
+      solver_scf_geoopt%name_    = 'solver scf geoopt'
+      solver_scf_geoopt%required = .false.
+      solver_scf_geoopt%keywords = [character(len=25) ::     &
                                     'algorithm',            &
                                      'max step',            &
                                      'energy threshold',    &
@@ -306,7 +306,7 @@ contains
 !
       cc%name_    = 'cc'
       cc%required = .false.
-      cc%keywords = [character(len=25) :: 'bath orbital', 'frozen core']
+      cc%keywords = [character(len=25) :: 'bath orbital']
 !
       mm%name_    = 'molecular mechanics'
       mm%required = .false.
@@ -314,11 +314,24 @@ contains
                      'forcefield', &
                      'algorithm ']
 !
+      mlhf%name_    = 'multilevel hf'
+      mlhf%required = .false.
+      mlhf%keywords = [character(len=25) :: &
+                        'cholesky threshold', &
+                        'project on minimal basis', &
+                        'cholesky virtuals']
+!
       global_print%name_    = 'print'
       global_print%required = .false.
       global_print%keywords = [character(len=25) :: &
                               'output print level ', &
                               'timing print level ']
+!
+      frozen_orbitals%name_    = 'frozen orbitals'
+      frozen_orbitals%required = .false.
+      frozen_orbitals%keywords = [character(len=25) :: &
+                              'hf', &
+                              'core']
 !
 !     Gather all sections into the file's section array 
 !
@@ -329,8 +342,8 @@ contains
                            cc_zop,                 &
                            cc_fop,                 &
                            solver_cholesky,        &
-                           solver_hf,              &
-                           solver_hf_geoopt,       &
+                           solver_scf,             &
+                           solver_scf_geoopt,      &
                            solver_cc_gs,           &
                            solver_cc_es,           &
                            solver_cc_multipliers,  &
@@ -338,7 +351,9 @@ contains
                            mlcc,                   &
                            cc,                     &
                            mm,                     &
-                           global_print]
+                           mlhf,                   &
+                           global_print,           &
+                           frozen_orbitals]
 !
       the_file%is_open = .false.
       the_file%unit = -1
@@ -1373,8 +1388,8 @@ contains
       do while (trim(line) /= 'end geometry' .and. trim(line) /= '--' .and. trim(line) /= 'end ' // string) 
 !
          end_record = end_record + 1
-! 
-        line = the_file%read_adjustl_lower()     
+!
+         line = the_file%read_adjustl_lower()     
 !
       enddo   
 !
@@ -1391,7 +1406,7 @@ contains
 !
          start_record = start_record + 1
 ! 
-        line = the_file%read_adjustl_lower()       
+         line = the_file%read_adjustl_lower()       
 !
       enddo
 !
@@ -1518,7 +1533,7 @@ contains
 !
          string = the_file%read_adjustl_lower()
 !
-         if(string(1:6) /= 'basis:') n_atoms = n_atoms + 1
+         if(string(1:6) /= 'basis:' .and. string(1:6) /= 'units:') n_atoms = n_atoms + 1
 !
       enddo
 !
@@ -1546,10 +1561,11 @@ contains
    end function  get_mm_n_atoms_input_file
 !
 !
-   subroutine get_geometry_input_file(the_file, n_atoms, symbols, positions, basis_sets)
+   subroutine get_geometry_input_file(the_file, n_atoms, symbols, positions, basis_sets, units_angstrom)
 !!
 !!    Get geometry
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!    Modified by Åsmund H. Tveten, Oct 2019. Generalized to Bohr units.
 !!
 !!    Reads the geometry from the output file and sets it in the
 !!    list of atoms.
@@ -1569,18 +1585,46 @@ contains
 !
       real(dp), dimension(n_atoms, 3), intent(out) :: positions ! x, y, z
 !
+      logical, intent(out) :: units_angstrom ! True if units are Ångström/unspecified, false if Bohr 
+!
 !     Local variables
 !
       integer :: n_records, record, cursor, current_atom, i
+!
+      integer :: not_atom ! Number of records in geometry section which are not atoms
 !
       character(len=200) :: string, coordinate
       character(len=100) :: current_basis
 !
       call the_file%move_to_section('geometry', n_records)
 !
-!     Set initial basis -> Error if not
+      not_atom = 1
+!
+!     Determine coordinate units if specified
 !
       string = the_file%read_adjustl_lower()
+!
+      if(string(1:6) == 'units:') then
+!
+         string = trim(adjustl(string(7:200)))
+!
+         if (string(1:4) == 'bohr') then
+!
+            units_angstrom = .false.
+!
+         elseif (string(1:8) /= 'angstrom') then 
+!
+            call output%error_msg('units of atom coordinates must be either angstrom or bohr')
+!
+         endif
+!
+         string = the_file%read_adjustl_lower()
+!
+         not_atom = 2
+!
+      endif
+!
+!     Set initial basis -> Error if not
 !
       if(string(1:6) /= 'basis:') call output%error_msg('did not find basis in geometry section.')
       current_basis = trim(adjustl(string(7:200)))
@@ -1589,7 +1633,7 @@ contains
 !
       current_atom = 0
 !
-      do record = 1, n_records - 1
+      do record = 1, n_records - not_atom
 !
          string = the_file%read_adjustl_lower()
 !

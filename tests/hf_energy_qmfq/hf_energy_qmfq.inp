@@ -2,6 +2,10 @@ system
    name: H2O-H2O-FQ
    charge: 0
 end system
+ 
+print 
+   output print level: debug 
+end print
 
 do
   ground state
@@ -11,11 +15,11 @@ memory
    available: 8
 end memory
 
-solver hf
+solver scf
    algorithm:          scf-diis
    energy threshold:   1.0d-10
    gradient threshold: 1.0d-10
-end solver hf
+end solver scf
 
 molecular mechanics
    forcefield: fq

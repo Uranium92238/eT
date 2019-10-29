@@ -1,6 +1,10 @@
 system
    name: hypofluorous_acid
 end system
+ 
+print 
+   output print level: debug 
+end print
 
 do
   ground state
@@ -22,11 +26,11 @@ end method
 
 ! Solver settings:
 
-solver hf
+solver scf
    algorithm: scf-diis
    gradient threshold: 1.0d-11
    energy threshold: 1.0d-11
-end solver hf
+end solver scf
 
 solver cc gs
    omega threshold: 1.0d-11

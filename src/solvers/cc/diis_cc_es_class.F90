@@ -24,18 +24,27 @@ module diis_cc_es_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-   use kinds
-   use ccs_class
-   use diis_tool_class
+   use parameters
+   use global_out, only: output
+   use global_in, only: input
+   use timings_class, only: timings
+   use memory_manager_class, only: mem
+   use ccs_class, only: ccs
+   use diis_tool_class, only: diis_tool
    use abstract_cc_es_class, only: abstract_cc_es
+   use precondition_tool_class, only: precondition_tool
    use es_valence_start_vector_tool_class, only: es_valence_start_vector_tool
    use es_valence_projection_tool_class, only: es_valence_projection_tool
+   use array_utilities, only: quicksort_with_index_ascending, get_l2_norm
+   use string_utilities, only: convert_to_uppercase
 !
    implicit none
 !
    type, extends(abstract_cc_es) :: diis_cc_es
 !
       integer :: diis_dimension
+!
+      class(precondition_tool), allocatable :: preconditioner 
 !
    contains
 !     
@@ -70,6 +79,8 @@ contains
       class(ccs), intent(inout) :: wf
 !
       character(len=*), intent(in) :: transformation
+!
+      real(dp), dimension(:), allocatable :: eps 
 !
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
       call solver%timer%turn_on()
@@ -120,6 +131,15 @@ contains
       call solver%prepare_wf_for_excited_state(wf)
 
       if (wf%frozen_core .and. solver%es_type=='core') call output%error_msg('No support for frozen core with CVS yet.')
+!
+!     Initialize preconditioner 
+!
+      call mem%alloc(eps, wf%n_es_amplitudes)
+      call wf%get_es_orbital_differences(eps, wf%n_es_amplitudes)
+!
+      solver%preconditioner = precondition_tool(eps, wf%n_es_amplitudes)
+!
+      call mem%dealloc(eps, wf%n_es_amplitudes)
 !
    end function new_diis_cc_es
 !
@@ -185,12 +205,14 @@ contains
       logical, dimension(:), allocatable :: converged_eigenvalue
       logical, dimension(:), allocatable :: converged_residual
 !
-      real(dp), dimension(:), allocatable :: prev_energies 
-      real(dp), dimension(:), allocatable :: residual_norms
+      real(dp), dimension(:), allocatable :: prev_energies
+      real(dp), dimension(:), allocatable :: residual_norms 
+!
+      integer, dimension(:), allocatable :: prev_state_numbers
 !
       type(diis_tool), dimension(:), allocatable :: diis 
 !
-      integer :: iteration, state, amplitude, n_solutions_on_file
+      integer :: iteration, state, n_solutions_on_file
 !
       character(len=3) :: string_state
 !
@@ -198,6 +220,7 @@ contains
 !
       real(dp), dimension(:), allocatable   :: eps
       real(dp), dimension(:,:), allocatable :: X, R
+      real(dp), dimension(:,:), allocatable :: X_sorted
 !
       real(dp) :: ddot
 !
@@ -222,7 +245,7 @@ contains
       allocate(diis(solver%n_singlet_states))
 !
       do state = 1, solver%n_singlet_states
-!  
+!
          write(string_state, '(i3.3)') state
          diis(state) = diis_tool('diis_cc_es_' // string_state, wf%n_es_amplitudes, wf%n_es_amplitudes, &
                                        solver%records_in_memory, dimension_=solver%diis_dimension)
@@ -238,7 +261,7 @@ contains
 !
       do state = 1, solver%n_singlet_states
 !
-         call solver%start_vector_tool%get_vector(X(:,state), state)
+         call solver%start_vectors%get(X(:,state), state)
 !
       enddo 
 !
@@ -273,45 +296,44 @@ contains
 !
          iteration = iteration + 1   
 !
-         write(output%unit,'(/t3,a25,i4)') 'Iteration:               ', iteration
+         call output%printf('Iteration: (i18)', &
+                     ints=[iteration], fs='(/t3,a)', pl='n')
 !
-         write(output%unit,'(/t3,a)') 'Root     Eigenvalue (Re)     Residual norm    '
-         write(output%unit,'(t3,a)')  '----------------------------------------------'
-         flush(output%unit)
+         call output%printf('Root     Eigenvalue (Re)     Residual norm', &
+                            fs='(/t3,a)', pl='n')
+         call output%print_separator('n', 46, '-')
 !
          do state = 1, solver%n_singlet_states
 !
             if (.not. converged(state)) then 
 !
-!              Construct the transformed vector
+!              Construct R = AX 
+!
                call dcopy(wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
-               call wf%construct_Jacobian_transform(solver%transformation, R(:,state), &
-                                                    solver%energies(state))
 !
-!              Project if relavant (CVS, bath orbitals)
-               if (solver%projection_tool%active) call solver%projection_tool%project(R(:,state))
+               call wf%construct_Jacobian_transform(solver%transformation, &
+                                                      R(:,state),          &
+                                                      solver%energies(state))
 !
-!              Calculate energy, X is normalized
+!              Project if relevant (CVS, IP)
+!
+               if (solver%projector%active) call solver%projector%do_(R(:,state))
+!
+!              Calculate energy E = X^T R = X^T A X
+!
                solver%energies(state) = ddot(wf%n_es_amplitudes, X(:,state), 1, R(:,state), 1)
 !
-!              Subtract energy*X to get residual
+!              Construct residual, R = A X - energy X, and calculate its norm           
+!
                call daxpy(wf%n_es_amplitudes, -solver%energies(state), X(:,state), 1, R(:,state), 1)
 !
-!              Calculate residual norm
                residual_norms(state) = get_l2_norm(R(:, state), wf%n_es_amplitudes)
-!
-!$omp parallel do private(amplitude)
-               do amplitude = 1, wf%n_es_amplitudes
-!
-                  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude) - solver%energies(state))
-!
-               enddo
-!$omp end parallel do 
 !
 !              Update convergence logicals 
 !
                converged_eigenvalue(state) = abs(solver%energies(state)-prev_energies(state)) &
                                                       .lt. solver%eigenvalue_threshold
+!
                converged_residual(state)   = residual_norms(state) .lt. solver%residual_threshold
 !
                converged(state) = converged_eigenvalue(state) .and. converged_residual(state)
@@ -327,20 +349,27 @@ contains
 !
                if (.not. converged(state)) then
 !
+!                 Form quasi-Newton estimate for X 
+!
+                  call solver%preconditioner%do_(R(:,state), shift=solver%energies(state))
+!
                   call daxpy(wf%n_es_amplitudes, one, R(1, state), 1, X(1, state), 1)
+!
+!                 DIIS extrapolate using previous quasi-Newton estimates
 !
                   call diis(state)%update(R(:,state), X(:,state))
 !
-                  norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
+!                 Renormalize X 
 !
+                  norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
                   call dscal(wf%n_es_amplitudes, one/norm_X, X(1, state), 1)
 !
                endif 
 !
             endif 
 !
-            write(output%unit, '(i3,3x,f19.12,6x,e11.4)') state, solver%energies(state), residual_norms(state)
-            flush(output%unit)
+            call output%printf('(i0)   (f19.12)      (e11.4)', ints=[state], &
+                 reals=[solver%energies(state), residual_norms(state)], pl='n')
 !
          enddo
 !
@@ -352,10 +381,11 @@ contains
 !
          enddo 
 !
-         call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
+         call wf%save_excitation_energies(solver%n_singlet_states, &
+                           solver%energies, solver%transformation)
          prev_energies = solver%energies 
 !
-         write(output%unit,'(t3,a)')  '----------------------------------------------'     
+         call output%print_separator('n', 46, '-')
 !
       enddo 
 !
@@ -363,29 +393,59 @@ contains
 !
          if (iteration .eq. 1) then 
 !
-            write(output%unit, '(/t3,a)')  'Note: residual of all states converged in first iteration.'
-            write(output%unit, '(t3,a/)')  'Energy convergence has not been tested.'
+            call output%printf('Note: residual of all states converged &
+                              & in first iteration.', fs='(/t3,a)',pl='n')
+            call output%printf('Energy convergence has not been tested.', &
+                                fs='(t3,a/)',pl='n')
 !
          endif
 !
-         write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
-         call solver%print_summary(wf, X) 
+         call output%printf('Convergence criterion met in (i0) iterations!', &
+                            ints=[iteration], fs='(/t3,a)',pl='m')
+         call output%printf('- Resorting roots according to excitation energy.', &
+                            fs='(/t3,a)', pl='n')
 !
-         write(output%unit, '(/t3,a)') '- Storing converged states to file.'       
+!        Sort roots and store the original state number in prev_state_numbers
+!
+         call mem%alloc(prev_state_numbers, solver%n_singlet_states)
+!
+         call quicksort_with_index_ascending(solver%energies, prev_state_numbers, solver%n_singlet_states)
+!
+         call mem%alloc(X_sorted, wf%n_es_amplitudes, solver%n_singlet_states)
 !
          do state = 1, solver%n_singlet_states
 !
-            call wf%save_excited_state(X(:,state), state, solver%transformation)
+!           Need X_sorted because print_summary needs the vectors in the correct order
+            call dcopy(wf%n_es_amplitudes, X(:, prev_state_numbers(state)), 1, X_sorted(:, state), 1)
 !
-         enddo 
+            if(prev_state_numbers(state) .ne. state) then
+!
+               call output%printf('Root number (i3) renamed to state (i3)',      &
+                     ints=[prev_state_numbers(state), state], fs='(t5,a)', pl='v')
+!
+            end if
+!
+            call wf%save_excited_state(X_sorted(:, state), state, solver%transformation)
+!
+         enddo
+!
+         call mem%dealloc(prev_state_numbers, solver%n_singlet_states)
+!
+         call output%printf('- Stored converged states to file.', fs='(/t3,a)', pl='n')
+!
+         call solver%print_summary(wf, X_sorted)
+!
+         call mem%dealloc(X_sorted, wf%n_es_amplitudes, solver%n_singlet_states)
 !
          call wf%save_excitation_energies(solver%n_singlet_states, solver%energies, solver%transformation)
+!
+         call wf%check_for_degeneracies(solver%transformation, solver%residual_threshold)
 !
       else 
 !
          call output%error_msg("Did not converge in the max number of iterations.")
 !
-      endif 
+      endif
 !
       call mem%dealloc(prev_energies, solver%n_singlet_states)
       call mem%dealloc(residual_norms, solver%n_singlet_states)

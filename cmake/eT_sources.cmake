@@ -70,11 +70,12 @@ set(eT_fortran_sources
    src/tools/fftpack/fftpack_complex_initialization_routines.F90
    src/tools/record_storer/record_storer_class.F90
    src/tools/record_storer/memory_storer_class.F90
-   src/tools/record_storer/sequential_storer_class.F90
+   src/tools/record_storer/file_storer_class.F90
    src/wavefunctions/wavefunction/wavefunction_class.F90
    src/wavefunctions/hf/hf_class.F90  
    src/wavefunctions/hf/mo_hf.F90
    src/wavefunctions/uhf/uhf_class.F90
+   src/wavefunctions/mlhf/mlhf_class.F90
    src/wavefunctions/ccs/ccs_class.F90
    src/wavefunctions/abstract_doubles/abstract_doubles_class.F90
    src/wavefunctions/cc2/cc2_class.F90
@@ -104,6 +105,8 @@ set(eT_fortran_sources
    src/solver_tools/es_projectors/es_cvs_projection_tool_class.F90
    src/solver_tools/es_projectors/es_valence_projection_tool_class.F90
    src/solver_tools/es_projectors/es_ip_projection_tool_class.F90
+   src/solver_tools/precondition_tool_class.F90
+   src/wavefunctions/hf/frozen_orbital_hf.F90
    src/wavefunctions/ccs/oei_ccs.F90
    src/wavefunctions/ccs/tei_ccs.F90
    src/wavefunctions/ccs/fock_ccs.F90

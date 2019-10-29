@@ -1,6 +1,10 @@
 system
    name: H2O He
 end system
+ 
+print 
+   output print level: debug 
+end print
 
 memory
   available: 8
@@ -19,10 +23,10 @@ cc
   bath orbital
 end cc
 
-solver hf
+solver scf
    gradient threshold: 1.0d-11
    energy threshold: 1.0d-11
-end solver hf
+end solver scf
 
 solver cholesky
    threshold: 1.0d-11

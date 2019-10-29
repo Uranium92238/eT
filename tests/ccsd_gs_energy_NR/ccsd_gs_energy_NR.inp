@@ -2,6 +2,10 @@ system
    name: H2O-He
    charge: 0
 end system
+ 
+print 
+   output print level: debug 
+end print
 
 do
    ground state
@@ -15,11 +19,11 @@ solver cholesky
    threshold: 1.0d-10
 end solver cholesky
 
-solver hf
+solver scf
    algorithm:          scf-diis
    energy threshold:   1.0d-10
    gradient threshold: 1.0d-10
-end solver hf
+end solver scf
 
 method
    hf
