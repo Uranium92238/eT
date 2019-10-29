@@ -44,6 +44,7 @@ elseif(LIBINT2_ENV)
 
 # Else look in standard paths
 else()
+   message("-- Libint2 will be searched for based on default path ${_LIBINT_NORMAL_SEARCH}")
    foreach(search ${_LIBINT_NORMAL_SEARCH})
       file(GLOB_RECURSE _GLOBFILE ${search}/*/libint2.h)
       if(_GLOBFILE)

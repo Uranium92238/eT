@@ -46,11 +46,15 @@ def input_parser():
 
     parser.add_argument('-ll', '--libint-lib',
                          help="Path to libint library")
+    parser.add_argument('-lxc', '--libxc-lib',
+                         help="Path to libxc library")
 
     parser.add_argument('-FC', '--Fortran-compiler',
                          help="Fortran compiler")
     parser.add_argument('-CXX', '--CXX-compiler',
                          help="C++ compiler")
+    parser.add_argument('-CC', '--C-compiler',
+                         help='C compiler')
 
     parser.add_argument('--profiling',
                          help="Add profiling flag to compilation",
@@ -74,6 +78,16 @@ def input_parser():
                           help="disable OpenMP parallelization",
                           action='store_true',
                           default=False)
+
+    parser.add_argument('--blas_type',
+                        choices=['ATLAS',
+                                 'MKL',
+                                 'ACML',
+                                 'SYSTEM_NATIVE',
+                                 'ESSL',
+                                 'OPENBLAS'],
+                        action='store',
+                        default=None)
 
     parser.add_argument('-F_flags', '--extra_F_flags',
                          help="additional Fortran flags")
@@ -139,15 +153,23 @@ def construct_command(args):
     if (args.libint_lib):
         command += " -DLIBINT2_ROOT=" + args.libint_lib   
 
+    if(args.libxc_lib):
+        command += " -DLIBXC_ROOT=" + args.libxc_lib
+
     if (args.Fortran_compiler):
         command += " -DCMAKE_Fortran_COMPILER=" + args.Fortran_compiler
     if (args.CXX_compiler):
         command += " -DCMAKE_CXX_COMPILER=" + args.CXX_compiler   
+    if(args.C_compiler):
+        command += " -DCMAKE_C_COMPILER=" + args.C_compiler
 
     if (args.extra_F_flags):
         command += " -DEXTRA_Fortran_FLAGS=" + args.extra_F_flags   
     if (args.extra_CXX_flags):
         command += " -DEXTRA_CXX_FLAGS=" + args.extra_CXX_flags   
+
+    if(args.blas_type):
+        command += " -DBLAS_TYPE=" + args.blas_type
 
     command += " %s" % root_dir
     return command
