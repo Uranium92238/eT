@@ -83,8 +83,6 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_aibj
 !
-      integer :: i, j, a, b, ai, bj, aibj, b_end
-!
       type(timings) :: L_TDM_timer
 !
       call L_TDM_timer%turn_on()
@@ -100,17 +98,7 @@ contains
 !
       call mem%alloc(L_ai, wf%n_v, wf%n_o)
 !
-!$omp parallel do schedule(static) private(a, i, ai)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            L_ai(a, i) = L_k(ai)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call dcopy(wf%n_t1, L_k, 1, L_ai, 1)
 !
       call wf%gs_one_el_density_ccs_vo(wf%left_transition_density, L_ai)
 !
@@ -125,34 +113,7 @@ contains
 !
       call mem%alloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj, b_end)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            do j = 1, i
-!
-               if (i .ne. j) then
-                  b_end = wf%n_v
-               else
-                  b_end = a
-               endif
-!
-               do b = 1, b_end
-!
-                  bj = wf%n_v*(j - 1) + b
-!
-                  aibj = ai*(ai-3)/2 + ai + bj
-!
-                  L_aibj(a,i,b,j) = L_k(wf%n_t1 + aibj)
-                  L_aibj(b,j,a,i) = L_k(wf%n_t1 + aibj)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call squareup(L_k(wf%n_t1 + 1 : wf%n_es_amplitudes), L_aibj, wf%n_t1)
 !
       call mem%dealloc(L_k, wf%n_es_amplitudes)
 !
@@ -197,7 +158,7 @@ contains
       real(dp) :: scaling_factor
       real(dp) :: ddot
 !
-      integer :: i, j, a, b, ai, bj, aibj, b_end
+      integer :: a, i
 !
       type(timings) :: R_TDM_timer
 !
@@ -212,17 +173,7 @@ contains
 !
       call mem%alloc(R_ai, wf%n_v, wf%n_o)
 !
-!$omp parallel do schedule(static) private(a, i, ai)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            R_ai(a, i) = R_k(ai)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call dcopy(wf%n_t1, R_k, 1, R_ai, 1)
 !
       scaling_factor = -one*ddot(wf%n_v*wf%n_o, R_ai, 1, wf%t1bar, 1)
 !
@@ -242,34 +193,7 @@ contains
 !
       call mem%alloc(R_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj, b_end)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            do j = 1, i
-!
-               if (i .ne. j) then
-                  b_end = wf%n_v
-               else
-                  b_end = a
-               endif
-!
-               do b = 1, b_end
-!
-                  bj = wf%n_v*(j - 1) + b
-!
-                  aibj = ai*(ai-3)/2 + ai + bj
-!
-                  R_aibj(a,i,b,j) = R_k(wf%n_t1 + aibj)
-                  R_aibj(b,j,a,i) = R_k(wf%n_t1 + aibj)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call squareup(R_k(wf%n_t1 + 1 : wf%n_es_amplitudes), R_aibj, wf%n_t1)
 !
       call mem%dealloc(R_k, wf%n_es_amplitudes)
 !

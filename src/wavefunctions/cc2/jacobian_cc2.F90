@@ -85,8 +85,7 @@ contains
       real(dp), dimension(:,:), allocatable     :: rho_ai   
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj
 !
-!
-      integer :: i, j, a, b, ai, bj, aibj ! Index
+      integer :: i, a
 !
       type(timings) :: timer
 !
@@ -100,17 +99,7 @@ contains
 !
       call mem%alloc(c_ai, wf%n_v, wf%n_o)
 !
-!$omp parallel do schedule(static) private(a, i, ai) 
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            c_ai(a, i) = c(ai)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call dcopy(wf%n_t1, c, 1, c_ai, 1)
 !
 !     :: CCS contributions to the singles c vector ::
 !
@@ -125,31 +114,7 @@ contains
 !
       call mem%alloc(c_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
-      do j = 1, wf%n_o
-         do b = 1, wf%n_v
-!
-            bj = wf%n_v*(j - 1) + b
-!  
-            do i = 1, wf%n_o
-               do a = 1, wf%n_v
-!
-                  ai = wf%n_v*(i - 1) + a
-!
-                  if (ai .ge. bj) then
-!
-                     aibj = ai*(ai-3)/2 + ai + bj
-!
-                     c_aibj(a, i, b, j) = c(wf%n_o*wf%n_v + aibj)
-                     c_aibj(b, j, a, i) = c(wf%n_o*wf%n_v + aibj)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call squareup(c(wf%n_t1 + 1 : wf%n_es_amplitudes), c_aibj, wf%n_t1)
 !
 !     Scale the doubles vector by 1 + delta_ai,bj, i.e.
 !     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
@@ -171,17 +136,7 @@ contains
 !     Done with singles vector c; overwrite it with
 !     transformed vector for exit
 !
-!$omp parallel do schedule(static) private(a, i, ai) 
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            c(ai) = rho_ai(a, i)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call dcopy(wf%n_t1, rho_ai, 1, c, 1)
 !
       call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
 !
@@ -218,30 +173,7 @@ contains
 !
 !     Overwrite the incoming doubles c vector & pack in
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
-      do j = 1, wf%n_o
-         do b = 1, wf%n_v
-!
-            bj = wf%n_v*(j - 1) + b
-!  
-            do i = 1, wf%n_o
-               do a = 1, wf%n_v
-!
-                  ai = wf%n_v*(i - 1) + a
-!
-                  if (ai .ge. bj) then
-!
-                     aibj = ai*(ai-3)/2 + ai + bj
-!
-                     c((wf%n_o)*(wf%n_v) + aibj) = rho_aibj(a, i, b, j)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call packin(c(wf%n_t1 + 1 : wf%n_es_amplitudes), rho_aibj, wf%n_t1)
 !
       call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !

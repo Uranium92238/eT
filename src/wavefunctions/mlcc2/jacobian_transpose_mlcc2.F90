@@ -82,8 +82,6 @@ contains
       real(dp), dimension(:,:), allocatable :: sigma_ai
       real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj
 !
-      integer :: i, j, a, bb, ai, bj, aibj ! Index
-!
 !     Allocate and zero the transformed vecotr (singles part)
 !
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
@@ -91,17 +89,7 @@ contains
 !
       call mem%alloc(b_ai, wf%n_v, wf%n_o)
 !
-!$omp parallel do schedule(static) private(a, i, ai)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            b_ai(a, i) = b(ai)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call dcopy(wf%n_t1, b, 1, b_ai, 1)
 !
 !     CCS contributions to the singles c vector
 !
@@ -117,50 +105,16 @@ contains
 !
       call mem%alloc(b_aibj, (wf%n_cc2_v), (wf%n_cc2_o), (wf%n_cc2_v), (wf%n_cc2_o))
 !
-!$omp parallel do schedule(static) private(a, i, bb, j, ai, bj, aibj)
-      do a = 1, wf%n_cc2_v
-         do i = 1, wf%n_cc2_o
-!
-            ai = wf%n_cc2_v*(i - 1) + a
-!
-            do j = 1, wf%n_cc2_o
-               do bb = 1, wf%n_cc2_v
-!
-                  bj = wf%n_cc2_v*(j - 1) + bb
-!
-                  if (ai .ge. bj) then
-!
-                     aibj = ai*(ai-3)/2 + ai + bj
-!
-                     b_aibj(a, i, bb, j) = b(wf%n_o*wf%n_v + aibj)
-                     b_aibj(bb, j, a, i) = b(wf%n_o*wf%n_v + aibj)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call squareup(b(wf%n_t1 + 1 : wf%n_es_amplitudes), &
+                    b_aibj, wf%n_cc2_v*wf%n_cc2_o)
 !
       call wf%jacobian_transpose_cc2_b1(sigma_ai, b_aibj, wf%n_cc2_o, wf%n_cc2_v, &
                                        wf%first_cc2_o, wf%first_cc2_v, wf%last_cc2_o, wf%last_cc2_v)
 !
-!
 !     Done with singles vector c; overwrite it with
 !     transformed vector for exit
 !
-!$omp parallel do schedule(static) private(a, i, ai)
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            b(ai) = sigma_ai(a, i)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call dcopy(wf%n_t1, sigma_ai, 1, b, 1)
 !
       call mem%dealloc(sigma_ai, wf%n_v, wf%n_o)
 !
@@ -190,30 +144,8 @@ contains
 !
 !     Overwrite the incoming doubles c vector & pack in
 !
-!$omp parallel do schedule(static) private(a, i, bb, j, ai, bj, aibj)
-      do a = 1, wf%n_cc2_v
-         do i = 1, wf%n_cc2_o
-!
-            ai = wf%n_cc2_v*(i - 1) + a
-!
-            do j = 1, wf%n_cc2_o
-               do bb = 1, wf%n_cc2_v
-!
-                  bj = wf%n_cc2_v*(j - 1) + bb
-!
-                  if (ai .ge. bj) then
-!
-                     aibj = ai*(ai-3)/2 + ai + bj
-!
-                     b((wf%n_o)*(wf%n_v) + aibj) = sigma_aibj(a, i, bb, j)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call packin(b(wf%n_t1 + 1 : wf%n_es_amplitudes), &
+                  sigma_aibj, wf%n_cc2_v*wf%n_cc2_o)
 !
       call mem%dealloc(sigma_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !

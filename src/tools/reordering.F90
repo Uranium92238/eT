@@ -516,10 +516,12 @@ module reordering
    end interface squareup
 !
    interface packin
-      procedure :: packin_real, &
-                   packin_complex, &
-                   packin_4, &
-                   packin_4_complex
+      procedure :: packin_real,      &
+                   packin_complex,   &
+                   packin_4_real,    &
+                   packin_4_complex, &
+                   packin_4_from_1324_order_real, &
+                   packin_4_from_1324_order_complex
    end interface packin
 !
    interface packin_anti
@@ -7561,7 +7563,7 @@ contains
    end subroutine packin_complex
 !
 !
-   subroutine packin_4(packed,unpacked,N)
+   subroutine packin_4_real(packed,unpacked,N)
 !!
 !!    Pack in 4-dimensional symmetric matrix
 !!    Written by Andreas Skeidsvoll, Sep 2019
@@ -7577,7 +7579,7 @@ contains
 !
       call packin_real(packed, unpacked, N)
 !
-   end subroutine packin_4
+   end subroutine packin_4_real
 !
 !
    subroutine packin_4_complex(packed,unpacked,N)
@@ -7597,6 +7599,100 @@ contains
       call packin_complex(packed, unpacked, N)
 !
    end subroutine packin_4_complex
+!
+!
+   subroutine packin_4_from_1324_order_real(packed, unpacked, dim_p, dim_q)
+!!
+!!    Pack in symmetric matrix ordered 1324
+!!    Written by Rolf H. Myhre, Oct 2019
+!!
+!!    Pack in unpacked array X_prqs to packed array Y_pqrs
+!!    where dim_p = dim_r and dim_q = dim_s
+!!
+      integer, intent(in) :: dim_p
+      integer, intent(in) :: dim_q
+!
+      real(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(out) :: packed
+      real(dp), dimension(dim_p,dim_p,dim_q,dim_q), intent(in)        :: unpacked
+!
+      integer :: p, q, r, s, pq, rs, pqrs, r_end
+!
+!$omp parallel do schedule(static) private(p, q, r, s, pq, rs, pqrs, r_end)
+      do q = 1, dim_q
+         do p = 1, dim_p
+!
+            pq = dim_p*(q - 1) + p
+!
+            do s = 1, q
+!
+               if (s .ne. q) then
+                  r_end = dim_p
+               else
+                  r_end = p
+               endif
+!
+               do r = 1, r_end
+!
+                  rs = dim_p*(s - 1) + r
+!
+                  pqrs = pq*(pq-3)/2 + pq + rs
+!
+                  packed(pqrs) = unpacked(p,r,q,s)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine packin_4_from_1324_order_real
+!
+!
+   subroutine packin_4_from_1324_order_complex(packed, unpacked, dim_p, dim_q)
+!!
+!!    Pack in symmetric complex matrix ordered 1324
+!!    Written by Rolf H. Myhre, Oct 2019
+!!
+!!    Pack in unpacked array X_prqs to packed array Y_pqrs
+!!    where dim_p = dim_r and dim_q = dim_s
+!!
+      integer, intent(in) :: dim_p
+      integer, intent(in) :: dim_q
+!
+      complex(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(out) :: packed
+      complex(dp), dimension(dim_p,dim_p,dim_q,dim_q), intent(in)        :: unpacked
+!
+      integer :: p, q, r, s, pq, rs, pqrs, r_end
+!
+!$omp parallel do schedule(static) private(p, q, r, s, pq, rs, pqrs, r_end)
+      do q = 1, dim_q
+         do p = 1, dim_p
+!
+            pq = dim_p*(q - 1) + p
+!
+            do s = 1, q
+!
+               if (s .ne. q) then
+                  r_end = dim_p
+               else
+                  r_end = p
+               endif
+!
+               do r = 1, r_end
+!
+                  rs = dim_p*(s - 1) + r
+!
+                  pqrs = pq*(pq-3)/2 + pq + rs
+!
+                  packed(pqrs) = unpacked(p,r,q,s)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine packin_4_from_1324_order_complex
 !
 !
    subroutine packin_anti(packed, unpacked, N)
