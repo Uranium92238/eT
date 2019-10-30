@@ -1437,7 +1437,7 @@ contains
 !
    subroutine construct_orbital_block_by_density_cd_wavefunction(wf, D, n_vectors, threshold, mo_offset, active_aos)
 !!
-!!    Construct orbital block  by Cholesky decomposition for density
+!!    Construct orbital block by Cholesky decomposition for density
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!
 !!    Cholesky decomposition of density D plus
