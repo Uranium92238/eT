@@ -123,9 +123,9 @@ contains
 !
    end subroutine initialize_atoms
 !
-   subroutine initialize_basis(basis_set, file_name)
+   subroutine initialize_basis(basis_set, file_name, cartesian_gaussians_int)
 !
-      use iso_c_binding, only: c_char, c_null_char
+      use iso_c_binding, only: c_char, c_null_char, c_int
       implicit none
 !
       character(len=*) :: basis_set
@@ -136,6 +136,9 @@ contains
 !
       character(kind=c_char),dimension(40) :: cpp_temp_basis
       character(kind=c_char),dimension(40) :: cpp_temp_file
+!
+      integer :: cartesian_gaussians_int
+      integer(c_int) :: cartesian_gaussians_int_c
 !
       integer :: j
 !
@@ -155,7 +158,9 @@ contains
 !
       enddo
 !
-      call initialize_basis_c(cpp_temp_basis, cpp_temp_file)
+      cartesian_gaussians_int_c = int(cartesian_gaussians_int, kind=c_int)
+!     
+      call initialize_basis_c(cpp_temp_basis, cpp_temp_file, cartesian_gaussians_int_c)
 !
    end subroutine initialize_basis
 !

@@ -38,7 +38,7 @@ void initialize_libint();
 void finalize_libint();
 void initialize_coulomb();
 void initialize_atoms(char *name);
-void initialize_basis(char *basisset, char *filename);
+void initialize_basis(char *basisset, char *filename, int *cartesian_gaussians_int);
 void reset_basis();
 void initialize_kinetic();
 void initialize_nuclear();

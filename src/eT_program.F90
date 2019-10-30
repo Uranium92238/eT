@@ -75,7 +75,7 @@ program eT_program
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS, DIIS-tool'
    write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties, IP'
    write(output%unit,'(t4, a, a)')    '                       ','frozen core, MLCC2, MLHF'
-   write(output%unit,'(t4, a, a)')    'Tommaso Giovannini     ','QM/MM'
+   write(output%unit,'(t4, a, a)')    'Tommaso Giovannini     ','QM/MM, PCM, Libint-interface'
    write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2, MLHF'
    write(output%unit,'(t4, a, a)')    'Tor S. Haugland        ','SAD'
    write(output%unit,'(t4, a, a)')    'Anders Hutcheson       ','frozen HF orbitals'

@@ -57,6 +57,8 @@ module molecular_system_class
       integer :: n_electrons 
       integer :: n_s
 !
+      integer :: cartesian_gaussians_int
+!
       type(atomic), dimension(:), allocatable :: atoms
 !
       type(interval), dimension(:), allocatable :: shell_limits 
@@ -121,6 +123,7 @@ module molecular_system_class
 !
       procedure :: shell_to_atom                            => shell_to_atom_molecular_system
 !
+      procedure :: check_if_basis_present_and_pure             => check_if_basis_present_and_pure_molecular_system
       procedure :: initialize_libint_atoms_and_bases           => initialize_libint_atoms_and_bases_molecular_system
       procedure, nopass :: initialize_libint_integral_engines  => initialize_libint_integral_engines_molecular_system
 !
@@ -198,6 +201,7 @@ contains
 !
       molecule%charge = 0
       molecule%multiplicity = 1
+      molecule%cartesian_gaussians_int = 0
 !
       call molecule%read_settings()
 !
@@ -230,6 +234,7 @@ contains
       molecule%multiplicity   = multiplicity
       molecule%mm_calculation = mm_calculation
 !
+      molecule%cartesian_gaussians_int = 0
       molecule%n_active_atoms_spaces = 0
 !
       call molecule%prepare()
@@ -275,6 +280,10 @@ contains
       integer(i6), dimension(:), allocatable :: n_basis_in_shells
       integer(i6), dimension(:), allocatable :: first_ao_in_shells
       integer(i6), dimension(:), allocatable :: shell_numbers
+!
+!     First have a look to the basis set infos
+!
+      call molecule%check_if_basis_present_and_pure()
 !
 !     Initialize libint with atoms and basis sets,
 !     then initialize the integral engines 
@@ -430,7 +439,7 @@ contains
 !
          write(temp_name, '(a, a1, i4.4)') trim(molecule%name_), '_', i
 !
-         call initialize_basis(molecule%basis_sets(i), temp_name)
+         call initialize_basis(molecule%basis_sets(i), temp_name, molecule%cartesian_gaussians_int)
 !
       enddo
 !
@@ -447,7 +456,6 @@ contains
       implicit none
 !
       class(molecular_system) :: molecule
-!
 !
       call input%get_required_keyword_in_section('name', 'system', molecule%name_)
 !
@@ -1717,7 +1725,7 @@ contains
       character(len=12) :: frmt0
       character(len=46) :: frmt1
 !
-      frmt0="(t5,68('='))"
+      frmt0="(t5,71('='))"
       frmt1="(t5,'Atom',9x,'X',16x,'Y',16x,'Z',13x,'Basis')"
       write(output%unit,'(/)')
       write(output%unit,frmt0 )
@@ -1728,7 +1736,7 @@ contains
 !
       do I = 1, molecule%n_atoms 
 !
-         write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a11)')  molecule%atoms(I)%symbol, &
+         write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a14)')  molecule%atoms(I)%symbol, &
                                                                           molecule%atoms(I)%x,      &
                                                                           molecule%atoms(I)%y,      &
                                                                           molecule%atoms(I)%z,      &
@@ -1745,7 +1753,7 @@ contains
       write(output%unit,frmt0 )
       do I = 1, molecule%n_atoms 
 !
-         write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a11)')  molecule%atoms(I)%symbol, &
+         write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a14)')  molecule%atoms(I)%symbol, &
                                                                           angstrom_to_bohr*molecule%atoms(I)%x,      &
                                                                           angstrom_to_bohr*molecule%atoms(I)%y,      &
                                                                           angstrom_to_bohr*molecule%atoms(I)%z,      &
@@ -1777,6 +1785,7 @@ contains
       call output%printf('Charge:           (i1)', pl='m', fs='(t6,a)',  ints=[molecule%charge]) 
       call output%printf('Multiplicity:     (i1)', pl='m', fs='(t6,a)',  ints=[molecule%multiplicity]) 
       call output%printf('Coordinate units: (a0)', pl='m', fs='(t6,a)',  chars=[trim(molecule%coordinate_units)])
+      if (molecule%cartesian_gaussians_int.eq.1) call output%printf('Using Cartesian gaussians.', pl='m', fs='(/t6,a)')
 !
 !
       call output%printf('Pure basis functions:      (i5)', pl='m', fs='(/t6,a)', ints=[molecule%n_pure_basis])
@@ -2535,6 +2544,94 @@ contains
       enddo
 !
   end function get_nuclear_repulsion_mm_molecular_system
+!
+!
+   subroutine check_if_basis_present_and_pure_molecular_system(molecule)
+!!
+!!    Check Basis Set Info
+!!    Written by Tommaso Giovannini, Oct 2019
+!!
+!!    The subroutine looks for the basis set inside LIBINT_DATA_PATH
+!!    if the basis file.g94 is not found than the program stops
+!!
+!!    Then it checks whether the basis set is defined in cartesian 
+!!    or in pure.
+!!    
+!!    The default is pure.
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      integer :: atom_index
+      character(len=100) :: basis
+!      
+      character(len=300) :: libint_path
+      character(len=300) :: file_name
+!      
+      logical :: exists_in_libint_path
+!
+!     Loop over atoms 
+!
+      do atom_index = 1, molecule%n_atoms
+!
+         call get_environment_variable("LIBINT_DATA_PATH",libint_path)
+!         
+         if (molecule%atoms(atom_index)%basis(1:3) .ne. 'aug') then
+!        
+            write(basis,'(a)') molecule%atoms(atom_index)%basis
+            call convert_to_lowercase(basis)
+!            
+         else
+!         
+            write(basis,'(a)') molecule%atoms(atom_index)%basis(5:100)
+            call convert_to_lowercase(basis)
+            basis = 'augmentation-'//trim(basis)
+!
+         endif
+!
+         file_name = trim(libint_path) // '/' // trim(basis) // '.g94'
+!
+         inquire(file=file_name, exist=exists_in_libint_path)
+!         
+         if(exists_in_libint_path) then
+!          
+           continue
+!
+         else
+!           
+            call output%error_msg(trim(basis)//' basis set has not been found'//&
+                                & new_line('a') //&
+                                & '  Maybe you forgot -basis --basis_dir?')
+!            
+         endif
+!
+      enddo
+!
+      if(trim(basis).eq.'3-21g'.or.         &
+         trim(basis).eq.'6-31g'.or.         &
+         trim(basis).eq.'6-31+g'.or.        &
+         trim(basis).eq.'6-31++g'.or.       &
+         trim(basis).eq.'6-31g*'.or.        &
+         trim(basis).eq.'6-31g**'.or.       &
+         trim(basis).eq.'6-31+g*'.or.       &
+         trim(basis).eq.'6-31+g**'.or.      &
+         trim(basis).eq.'6-31++g**'.or.     &
+         trim(basis).eq.'6-31g(d,p)'.or.    &
+         trim(basis).eq.'6-31g(2df,p)'.or.  &
+         trim(basis).eq.'6-31g(3df,3pd)') molecule%cartesian_gaussians_int = 1
+!
+      if (input%requested_keyword_in_section('cartesian gaussians', 'system')) then 
+!
+         molecule%cartesian_gaussians_int = 1
+! 
+      else if(input%requested_keyword_in_section('pure gaussians','system')) then
+!
+         molecule%cartesian_gaussians_int = 0
+!
+      endif 
+
+   end subroutine check_if_basis_present_and_pure_molecular_system
 !
 !
 end module molecular_system_class
