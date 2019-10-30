@@ -286,7 +286,7 @@ contains
 !
    subroutine read_for_scf_restart_hf(wf)
 !!
-!!    SCF restart
+!!    Read for SCF restart
 !!    Written by Sarai D. Folkestad and Linda Goletto, Oct 2019
 !!
       implicit none
@@ -340,7 +340,7 @@ contains
                                trim(task))
       endif
 !
-      if (n_electrons .ne. wf%system%get_n_electrons()) then 
+      if (n_electrons .ne. wf%system%get_n_electrons()) then
          call output%error_msg('attempted to restart HF with an inconsistent number ' // &
                                'of electrons for task ' // trim(task))
       endif
@@ -477,7 +477,7 @@ contains
 !
       write(output%unit, '(/t'//trim(indent)//',a)') '- Molecular orbital energies:'
 !
-      call print_vector(wf%orbital_energies, wf%n_ao, indent)
+      call print_vector(wf%orbital_energies, wf%n_mo, indent)
 !
    end subroutine print_orbital_energies_hf
 !
@@ -1502,7 +1502,7 @@ contains
       call ao_fock_timer%turn_on()
 !
 !     Set whether to accumulate into Fock (density differences)
-!     or to construct the entire Fock matrix 
+!     or to construct the entire Fock matrix
 !
       local_cumulative = .false.
       if (present(cumulative)) then
@@ -1520,7 +1520,7 @@ contains
       endif
 !
 !     Construct the two electron part of the Fock matrix (G),
-!     and add the contribution to the Fock matrix 
+!     and add the contribution to the Fock matrix
 !
       call mem%alloc(G, wf%n_ao, wf%n_ao)
       call wf%construct_ao_G(D, G)
@@ -1530,7 +1530,7 @@ contains
       call daxpy(wf%n_ao**2, one, G, 1, ao_fock, 1)
       call mem%dealloc(G, wf%n_ao, wf%n_ao)
 !
-!     Add the one-electron contribution F =+ h 
+!     Add the one-electron contribution F =+ h
 !
       if (.not. local_cumulative) call daxpy(wf%n_ao**2, one, h_wx, 1, ao_fock, 1)
 !
@@ -3046,7 +3046,7 @@ contains
 !!    Get max Roothan-Hall gradient
 !!    Written by Sarai D. Folkestad, 2019
 !!
-!!    Constructs and returns the absolute maximum 
+!!    Constructs and returns the absolute maximum
 !!    of the HF gradient
 !!
       implicit none
@@ -3787,15 +3787,15 @@ contains
 !!    Prepare for Roothan-Hall
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Performs the necessary preparations needed to solve 
-!!    of the Roothan-Hall equation in the iterative cycle 
+!!    Performs the necessary preparations needed to solve
+!!    of the Roothan-Hall equation in the iterative cycle
 !!    construct Fock - calculate energy - Roothan-Hall-update orbitals -
 !!    update the density:
 !!
 !!    - constructs the ao Fock matrix and
 !!      performs a Roothan-Hall step to get the
 !!      initial idempotent density;
-!!    - prints the number of electrons and the energy 
+!!    - prints the number of electrons and the energy
 !!      of the initial guess.
 !!
 !!    NOTE: this routine is overwritten
@@ -3852,8 +3852,6 @@ contains
 !
       wf%restart_file = sequential_file('scf_restart_file')
 !
-      call wf%write_scf_restart()   
-!
       call wf%initialize_sp_eri_schwarz()
       call wf%initialize_sp_eri_schwarz_list()
 !
@@ -3869,7 +3867,7 @@ contains
 !!
 !!    Writes a file used for consistency checks when restarting
 !!
-      implicit none 
+      implicit none
 !
       class(hf) :: wf
 !
@@ -3892,7 +3890,7 @@ contains
 !!    Writes orbital information
 !!    Used for CC and MP2 and for restarting MLHF
 !!
-      implicit none 
+      implicit none
 !
       class(hf) :: wf
 !
@@ -3928,12 +3926,12 @@ contains
 !
    subroutine save_orbital_coefficients_hf(wf)
 !!
-!!    Save orbital coefficients 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!    Save orbital coefficients
+!!    Written by Eirik F. Kjønstad, Oct 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(hf), intent(inout) :: wf 
+      class(hf), intent(inout) :: wf
 !
       call wf%orbital_coefficients_file%open_('write', 'rewind')
 !
@@ -3946,12 +3944,12 @@ contains
 !
    subroutine read_orbital_coefficients_hf(wf)
 !!
-!!    Save orbital coefficients 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!    Save orbital coefficients
+!!    Written by Eirik F. Kjønstad, Oct 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(hf), intent(inout) :: wf 
+      class(hf), intent(inout) :: wf
 !
       call wf%orbital_coefficients_file%open_('read', 'rewind')
 !
@@ -3964,12 +3962,12 @@ contains
 !
    subroutine save_orbital_energies_hf(wf)
 !!
-!!    Save orbital energies 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!    Save orbital energies
+!!    Written by Eirik F. Kjønstad, Oct 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(hf), intent(inout) :: wf 
+      class(hf), intent(inout) :: wf
 !
       call wf%orbital_energies_file%open_('write', 'rewind')
 !
@@ -3982,12 +3980,12 @@ contains
 !
    subroutine read_orbital_energies_hf(wf)
 !!
-!!    Save orbital energies 
-!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!    Save orbital energies
+!!    Written by Eirik F. Kjønstad, Oct 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(hf), intent(inout) :: wf 
+      class(hf), intent(inout) :: wf
 !
       call wf%orbital_energies_file%open_('read', 'rewind')
 !

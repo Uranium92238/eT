@@ -215,8 +215,6 @@ contains
       wf%orbital_energies_file = sequential_file('orbital_energies')
       wf%restart_file = sequential_file('scf_restart_file')
 !
-      call wf%write_scf_restart()
-!
       call wf%initialize_sp_eri_schwarz() 
       call wf%initialize_sp_eri_schwarz_list()
 !
@@ -338,7 +336,7 @@ contains
 !
    subroutine read_orbital_coefficients_uhf(wf)
 !!
-!!    Save orbital coefficients
+!!    Read orbital coefficients
 !!    Written by Eirik F. Kjønstad, Oct 2018
 !!
       implicit none
