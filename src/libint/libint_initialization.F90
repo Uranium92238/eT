@@ -137,7 +137,8 @@ contains
       character(kind=c_char),dimension(40) :: cpp_temp_basis
       character(kind=c_char),dimension(40) :: cpp_temp_file
 !
-      integer(c_int) :: cartesian_gaussians_int
+      integer :: cartesian_gaussians_int
+      integer(c_int) :: cartesian_gaussians_int_c
 !
       integer :: j
 !
@@ -157,7 +158,9 @@ contains
 !
       enddo
 !
-      call initialize_basis_c(cpp_temp_basis, cpp_temp_file, cartesian_gaussians_int)
+      cartesian_gaussians_int_c = int(cartesian_gaussians_int, kind=c_int)
+!     
+      call initialize_basis_c(cpp_temp_basis, cpp_temp_file, cartesian_gaussians_int_c)
 !
    end subroutine initialize_basis
 !

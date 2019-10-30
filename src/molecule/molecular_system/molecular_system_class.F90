@@ -28,7 +28,6 @@ module molecular_system_class
    use libint_initialization
    use active_atoms_class, only : active_atoms
 !
-   use iso_c_binding, only : c_int
    use global_in, only : input
    use global_out, only : output
    use sequential_file_class, only : sequential_file
@@ -58,7 +57,7 @@ module molecular_system_class
       integer :: n_electrons 
       integer :: n_s
 !
-      integer(c_int) :: cartesian_gaussians_int
+      integer :: cartesian_gaussians_int
 !
       type(atomic), dimension(:), allocatable :: atoms
 !
@@ -124,7 +123,7 @@ module molecular_system_class
 !
       procedure :: shell_to_atom                            => shell_to_atom_molecular_system
 !
-      procedure :: check_basis_set                             => check_basis_set_molecular_system
+      procedure :: check_basis_set_info                        => check_basis_set_info_molecular_system
       procedure :: initialize_libint_atoms_and_bases           => initialize_libint_atoms_and_bases_molecular_system
       procedure, nopass :: initialize_libint_integral_engines  => initialize_libint_integral_engines_molecular_system
 !
@@ -202,7 +201,7 @@ contains
 !
       molecule%charge = 0
       molecule%multiplicity = 1
-      molecule%cartesian_gaussians_int = int(0,kind=c_int)
+      molecule%cartesian_gaussians_int = 0
 !
       call molecule%read_settings()
 !
@@ -235,7 +234,7 @@ contains
       molecule%multiplicity   = multiplicity
       molecule%mm_calculation = mm_calculation
 !
-      molecule%cartesian_gaussians_int = int(0, kind=c_int)
+      molecule%cartesian_gaussians_int = 0
       molecule%n_active_atoms_spaces = 0
 !
       call molecule%prepare()
@@ -282,9 +281,9 @@ contains
       integer(i6), dimension(:), allocatable :: first_ao_in_shells
       integer(i6), dimension(:), allocatable :: shell_numbers
 !
-!     First have a look to the basis set
+!     First have a look to the basis set infos
 !
-      call molecule%check_basis_set()
+      call molecule%check_basis_set_info()
 !
 !     Initialize libint with atoms and basis sets,
 !     then initialize the integral engines 
@@ -2547,10 +2546,18 @@ contains
   end function get_nuclear_repulsion_mm_molecular_system
 !
 !
-   subroutine check_basis_set_molecular_system(molecule)
+   subroutine check_basis_set_info_molecular_system(molecule)
 !!
-!!    Check Basis Path
+!!    Check Basis Set Info
 !!    Written by Tommaso Giovannini, Oct 2019
+!!
+!!    The subroutine looks for the basis set inside LIBINT_DATA_PATH
+!!    if the basis file.g94 is not found than the program stops
+!!
+!!    Then it checks whether the basis set is defined in cartesian 
+!!    or in pure.
+!!    
+!!    The default is pure.
 !!
       implicit none
 !
@@ -2612,19 +2619,19 @@ contains
          trim(basis).eq.'6-31++g**'.or.     &
          trim(basis).eq.'6-31g(d,p)'.or.    &
          trim(basis).eq.'6-31g(2df,p)'.or.  &
-         trim(basis).eq.'6-31g(3df,3pd)') molecule%cartesian_gaussians_int = int(1, kind=c_int)
+         trim(basis).eq.'6-31g(3df,3pd)') molecule%cartesian_gaussians_int = 1
 !
       if (input%requested_keyword_in_section('cartesian gaussians', 'system')) then 
 !
-         molecule%cartesian_gaussians_int = int(1, kind=c_int)
+         molecule%cartesian_gaussians_int = 1
 ! 
       else if(input%requested_keyword_in_section('pure gaussians','system')) then
 !
-         molecule%cartesian_gaussians_int = int(0, kind=c_int)
+         molecule%cartesian_gaussians_int = 0
 !
       endif 
 
-   end subroutine check_basis_set_molecular_system
+   end subroutine check_basis_set_info_molecular_system
 !
 !
 end module molecular_system_class
