@@ -18,11 +18,16 @@ cd libint-2.7.0-beta.1
 ```
 Compile:
 ```shell
-cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/libint/libint-2.7.0-beta.1 -DCMAKE_CXX_COMPILER=[C++ compiler] CXXFLAGS=[C++ compiler flags]
+cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/libint/libint-2.7.0-beta.1 -DCMAKE_CXX_COMPILER=[C++ compiler] -DCMAKE_CXX_FLAGS=[C++ compiler flags]
 cmake --build .
 ```
-In the compilation step, the installation prefix should be provided.
+Note when compiling with Intel. One should include
+```shell
+-DCMAKE_CXX_COMPILER=icpc -DCMAKE_CXX_FLAGS=-std=c++11
+```
+Linking with eT will fail if the correct standard library is not specified and compiling Libint can take several hours.
 
+In the compilation step, the installation prefix should be provided.
 
 Install:
 ```shell
