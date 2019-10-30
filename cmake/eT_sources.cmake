@@ -57,6 +57,8 @@ set(eT_fortran_sources
    src/memory/memory_manager_class.F90
    src/various/kinds.F90
    src/various/parameters.F90
+   src/various/butcher_tables.F90
+   src/various/continuous_output_coefficients.F90
    src/tools/interval_class.F90
    src/tools/index_invert.F90
    src/tools/reordering.F90
@@ -105,6 +107,7 @@ set(eT_fortran_sources
    src/solver_tools/es_projectors/es_cvs_projection_tool_class.F90
    src/solver_tools/es_projectors/es_valence_projection_tool_class.F90
    src/solver_tools/es_projectors/es_ip_projection_tool_class.F90
+   src/fields/electric_field_class.F90
    src/solver_tools/precondition_tool_class.F90
    src/wavefunctions/hf/frozen_orbital_hf.F90
    src/wavefunctions/ccs/oei_ccs.F90
