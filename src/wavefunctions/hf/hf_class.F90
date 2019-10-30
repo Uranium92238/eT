@@ -409,16 +409,15 @@ contains
 
       endif
 !
-      write(output%unit, '(/t3,a)') '- Summary of QM/MM energetics:'
+      call output%printf('- Summary of QM/MM energetics:', pl='m', fs='(/t3,a)')
+      call output%printf('a.u.             eV     kcal/mol', pl='m', fs='(t42,a)')
+      call output%printf('QM/MM SCF Contribution: (f22.12)', pl='m', &
+                          reals=[wf%energy_scf_qmmm], fs='(t6,a)')
+      call output%printf('QM/MM Electrostatic Energy:(f19.12)(f12.5) (f9.3)', pl='m', &
+                          reals=[wf%elec_energy_qmmm,               &
+                                 wf%elec_energy_qmmm*Hartree_to_eV, &
+                                 wf%elec_energy_qmmm*Hartree_to_kcalmol], fs='(t6,a)')
 !
-      write(output%unit, '(t42,a)') 'a.u.             eV     kcal/mol'
-!
-      write(output%unit, '(t6,a26,f19.12)')  'QM/MM SCF Contribution:    ', &
-          wf%energy_scf_qmmm
-!
-      write(output%unit, '(t6,a26,f19.12,f12.5,1x,f9.3)')  'QM/MM Electrostatic Energy:',  &
-          wf%elec_energy_qmmm, wf%elec_energy_qmmm*Hartree_to_eV, wf%elec_energy_qmmm*Hartree_to_kcalmol
-
    end subroutine print_energy_mm_hf
 !
 !
@@ -475,7 +474,8 @@ contains
       indent = '6'
       if (present(indentation)) indent = trim(indentation)
 !
-      write(output%unit, '(/t'//trim(indent)//',a)') '- Molecular orbital energies:'
+      call output%printf('- Molecular orbital energies:', pl='n', &
+                         fs='(/t'//trim(indent)//',a)')
 !
       call print_vector(wf%orbital_energies, wf%n_mo, indent)
 !
@@ -2511,6 +2511,9 @@ contains
 !!
 !!    and sets the MO coefficients accordingly.
 !!
+!!    Modified by Rolf H. Myhre and Alexander C. Paul, Oct 2019
+!!    included sanity check
+!!
       implicit none
 !
       class(hf) :: wf
@@ -2524,13 +2527,22 @@ contains
       call mem%alloc(used_diag, wf%n_ao)
 !
       wf%ao_density = half*wf%ao_density
-      call full_cholesky_decomposition_system(wf%ao_density, wf%orbital_coefficients, wf%n_ao, rank, &
-                                                      1.0d-12, used_diag)
+      call full_cholesky_decomposition_system(wf%ao_density, wf%orbital_coefficients, &
+                                              wf%n_ao, rank, 1.0d-12, used_diag)
       wf%ao_density = two*wf%ao_density
 !
 !     Make permutation matrix P
 !
       call mem%alloc(perm_matrix, wf%n_ao, wf%n_ao)
+!
+      if (any(used_diag .gt. wf%n_ao) .or. any(used_diag .le. 0)) then
+!
+         call output%printf('Something went wrong when decomposing the AO density.', &
+                             pl='m', fs='(/t3,a)')
+!
+         call output%error_msg('Trying to access elements outside of an array.')
+!
+      end if
 !
       perm_matrix = zero
 !
@@ -2561,6 +2573,9 @@ contains
 !!    wf%n_ao. From P and L, we can transform equations to the linearly
 !!    independent basis and back.
 !!
+!!    Modified by Rolf H. Myhre and Alexander C. Paul, Oct 2019
+!!    included sanity check
+!!
       implicit none
 !
       class(hf) :: wf
@@ -2578,7 +2593,7 @@ contains
       L = zero
 !
       call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, wf%n_mo, &
-                                                wf%linear_dep_threshold, used_diag)
+                                              wf%linear_dep_threshold, used_diag)
 !
       call wf%initialize_cholesky_ao_overlap()
 !
@@ -2591,6 +2606,24 @@ contains
       call wf%initialize_pivot_matrix_ao_overlap()
 !
       wf%pivot_matrix_ao_overlap = zero
+!
+      if (wf%n_mo .gt. wf%n_ao .or. wf%n_mo .le. 0 .or. &
+          any(used_diag .gt. wf%n_ao) .or. any(used_diag .le. 0)) then
+!
+         call output%printf('Something went wrong when decomposing the AO overlap.', &
+                            pl='m', fs='(/t3,a)')
+!
+         call output%printf('Did you compile with wrong type of integers in setup? &
+                            &For example system native BLAS  &
+                            &with default 64-bit integers.', &
+                            pl='m', ffs='(/t3,a)')
+!
+         call output%printf('If that is the case, use setup with --int32 or install MKL.', &
+                            pl='m')
+!
+         call output%error_msg('Failed to decompose AO overlap.')
+!
+      end if
 !
       do j = 1, wf%n_mo
 !
@@ -2804,7 +2837,8 @@ contains
 !
       if (.not. pure) then
 !
-         write(output%unit, '(t3,a49,f16.12)') 'Error: could not purify AO density. Final error: ', error
+         call output%printf('Error: could not purify AO density. Final error: ', &
+                             pl='m', reals=[error], fs='(/t3,a)')
          stop
 !
       endif
@@ -3414,10 +3448,14 @@ contains
 !
       class(hf) :: wf
 !
-      write(output%unit, '(/t6,a30,e11.4)') 'Coulomb screening threshold:  ', wf%coulomb_threshold
-      write(output%unit, '(t6,a30,e11.4)') 'Exchange screening threshold: ', wf%exchange_threshold
-      write(output%unit, '(t6,a30,e11.4)') 'ERI integral precision:       ', wf%libint_epsilon
-      flush(output%unit)
+      call output%printf('Coulomb screening threshold:  (e11.4)', pl='n', &
+                          reals=[wf%coulomb_threshold], fs='(/t6,a)')
+!
+      call output%printf('Exchange screening threshold: (e11.4)', pl='n', &
+                          reals=[wf%exchange_threshold], fs='(t6,a)')
+!
+      call output%printf('ERI integral precision:       (e11.4)', pl='n', &
+                          reals=[wf%libint_epsilon], fs='(t6,a)')
 !
    end subroutine print_screening_settings_hf
 !
@@ -3431,7 +3469,8 @@ contains
 !
       class(hf) :: wf
 !
-      write(output%unit, '(/t3,a)') '- Cholesky decomposition of AO overlap to get linearly independent orbitals:'
+      call output%printf('- Cholesky decomposition of AO overlap to get linearly independent orbitals:', &
+                         pl='n', fs='(/t3,a)')
 !
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()
@@ -3762,12 +3801,14 @@ contains
          enddo
       enddo
 !
-      write(output%unit, '(/t6,a/)') 'Molecular gradient (Hartree/bohr):'
+      call output%printf('Molecular gradient (Hartree/bohr):', fs='(/t6,a/)', pl='m')
 !
       do k = 1, wf%system%n_atoms
 !
-         write(output%unit, '(t6,a2,f19.12,f19.12,f19.12)') wf%system%atoms(k)%symbol, &
-                                                            E_qk(1,k), E_qk(2,k), E_qk(3,k)
+         call output%printf('(a2)(f19.12)(f19.12)(f19.12)',         &
+                           chars=[wf%system%atoms(k)%symbol],       &
+                           reals=[E_qk(1,k), E_qk(2,k), E_qk(3,k)], &
+                           fs='(t6,a)', pl='m')
 !
       enddo
 !
