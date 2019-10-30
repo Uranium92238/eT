@@ -151,6 +151,7 @@ contains
 !
          call output%printf('- Requested restart. Reading orbitals from file',fs='(/t3,a)', pl='minimal')
 !
+         call wf%is_restart_safe('ground state')
          call wf%read_for_scf_restart()
 !
       else
@@ -159,6 +160,7 @@ contains
             chars=[solver%ao_density_guess], &
             fs='(/t3,a)', pl='minimal')
 !
+         call wf%write_scf_restart()
          call wf%set_initial_ao_density_guess(solver%ao_density_guess)
          call wf%prepare_for_roothan_hall_mo() ! NOTE: this routine does wavefunction 
 !                                                      specific preparations for RH, 
