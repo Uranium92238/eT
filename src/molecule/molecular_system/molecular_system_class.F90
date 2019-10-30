@@ -123,7 +123,7 @@ module molecular_system_class
 !
       procedure :: shell_to_atom                            => shell_to_atom_molecular_system
 !
-      procedure :: check_basis_set_info                        => check_basis_set_info_molecular_system
+      procedure :: check_if_basis_present_and_pure             => check_if_basis_present_and_pure_molecular_system
       procedure :: initialize_libint_atoms_and_bases           => initialize_libint_atoms_and_bases_molecular_system
       procedure, nopass :: initialize_libint_integral_engines  => initialize_libint_integral_engines_molecular_system
 !
@@ -283,7 +283,7 @@ contains
 !
 !     First have a look to the basis set infos
 !
-      call molecule%check_basis_set_info()
+      call molecule%check_if_basis_present_and_pure()
 !
 !     Initialize libint with atoms and basis sets,
 !     then initialize the integral engines 
@@ -2546,7 +2546,7 @@ contains
   end function get_nuclear_repulsion_mm_molecular_system
 !
 !
-   subroutine check_basis_set_info_molecular_system(molecule)
+   subroutine check_if_basis_present_and_pure_molecular_system(molecule)
 !!
 !!    Check Basis Set Info
 !!    Written by Tommaso Giovannini, Oct 2019
@@ -2631,7 +2631,7 @@ contains
 !
       endif 
 
-   end subroutine check_basis_set_info_molecular_system
+   end subroutine check_if_basis_present_and_pure_molecular_system
 !
 !
 end module molecular_system_class
