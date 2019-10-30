@@ -46,7 +46,8 @@ module input_file_class
       procedure :: requested_section                                    => requested_section_input_file
       procedure :: requested_keyword_in_section                         => requested_keyword_in_section_input_file
       procedure :: get_n_elements_for_keyword_in_section                => get_n_elements_for_keyword_in_section_input_file
-      procedure :: get_array_for_keyword_in_section                     => get_array_for_keyword_in_section_input_file
+      procedure :: get_integer_array_for_keyword_in_section             => get_integer_array_for_keyword_in_section_input_file
+      procedure :: get_real_array_for_keyword_in_section                => get_real_array_for_keyword_in_section_input_file
       procedure :: get_n_atoms                                          => get_n_atoms_input_file
       procedure :: get_mm_n_atoms                                       => get_mm_n_atoms_input_file
       procedure :: get_geometry                                         => get_geometry_input_file
@@ -69,22 +70,25 @@ module input_file_class
       procedure, nopass, private :: extract_keyword_from_string         => extract_keyword_from_string_input_file
       procedure, nopass, private :: extract_keyword_value_from_string   => extract_keyword_value_from_string_input_file
 !
-      generic :: get_keyword_in_section            => get_integer_keyword_in_section_input_file,   &
-                                                      get_integer8_keyword_in_section_input_file,  &
-                                                      get_string_keyword_in_section_input_file,    &
-                                                      get_dp_keyword_in_section_input_file
+      generic :: get_keyword_in_section                                 => get_integer4_keyword_in_section_input_file,  &
+                                                                           get_integer8_keyword_in_section_input_file,  &
+                                                                           get_string_keyword_in_section_input_file,    &
+                                                                           get_dp_keyword_in_section_input_file
 !
-      generic :: get_required_keyword_in_section   => get_required_string_keyword_in_section_input_file,    &
-                                                      get_required_integer_keyword_in_section_input_file,   &
-                                                      get_required_integer8_keyword_in_section_input_file,  &
-                                                      get_required_dp_keyword_in_section_input_file
+      generic :: get_required_keyword_in_section                        => get_required_string_keyword_in_section_input_file,    &
+                                                                           get_required_integer4_keyword_in_section_input_file,   &
+                                                                           get_required_integer8_keyword_in_section_input_file,  &
+                                                                           get_required_dp_keyword_in_section_input_file
 !
-      procedure :: get_integer_keyword_in_section_input_file
+      generic :: get_array_for_keyword_in_section                       => get_integer_array_for_keyword_in_section, &
+                                                                           get_real_array_for_keyword_in_section
+!
+      procedure :: get_integer4_keyword_in_section_input_file
       procedure :: get_integer8_keyword_in_section_input_file
       procedure :: get_string_keyword_in_section_input_file
       procedure :: get_dp_keyword_in_section_input_file
       procedure :: get_required_string_keyword_in_section_input_file
-      procedure :: get_required_integer_keyword_in_section_input_file
+      procedure :: get_required_integer4_keyword_in_section_input_file
       procedure :: get_required_integer8_keyword_in_section_input_file
       procedure :: get_required_dp_keyword_in_section_input_file
 !
@@ -782,7 +786,7 @@ contains
    end function get_cc_wf_input_file
 !
 !
-   subroutine get_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_integer4_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
 !!
 !!    Read integer keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
@@ -812,7 +816,7 @@ contains
 !
       endif
 !
-   end subroutine get_integer_keyword_in_section_input_file
+   end subroutine get_integer4_keyword_in_section_input_file
 !
 !
    subroutine get_integer8_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
@@ -848,7 +852,7 @@ contains
    end subroutine get_integer8_keyword_in_section_input_file
 !
 !
-   subroutine get_required_integer_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
+   subroutine get_required_integer4_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
 !!
 !!    Read required integer keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
@@ -882,7 +886,7 @@ contains
 !
       read(keyword_value_string, *) keyword_value
 !
-   end subroutine get_required_integer_keyword_in_section_input_file
+   end subroutine get_required_integer4_keyword_in_section_input_file
 !
 !
    subroutine get_required_integer8_keyword_in_section_input_file(the_file, keyword, section, keyword_value)
@@ -1460,7 +1464,7 @@ contains
    end function get_n_elements_for_keyword_in_section_input_file
 !
 !
-   subroutine get_array_for_keyword_in_section_input_file(the_file, keyword, section, n_elements, array_)
+   subroutine get_integer_array_for_keyword_in_section_input_file(the_file, keyword, section, n_elements, array_)
 !!
 !!    Get array for keyword in section 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
@@ -1502,7 +1506,51 @@ contains
 !  
       call get_elements_in_string(keyword_value_string, n_elements, array_)
 !
-   end subroutine get_array_for_keyword_in_section_input_file
+   end subroutine get_integer_array_for_keyword_in_section_input_file
+!
+!
+   subroutine get_real_array_for_keyword_in_section_input_file(the_file, keyword, section, n_elements, array_)
+!!
+!!    Get real array for keyword in section 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!    Modified by Andreas Skeidsvoll, Sep 2019: Reads real array instead of integer array
+!!
+!!    Gets input variable array (array_) for keyword
+!!    which is specified on input by either an
+!!    integer range or list (of length n_elements).
+!!
+!!    Ranges should always be given as [a,b].
+!!
+!!    Lists should always be given as {a, b, c, d},
+!!    that is, in set notation.
+!!
+!!    Routine should be called after the 
+!!    get_n_elements_for_keyword_in_section is called
+!!    in order to determine n_elements so that array_ 
+!!    can be allocated.
+!!
+      implicit none 
+!
+      class(input_file), intent(in) :: the_file
+!
+      character(len=*), intent(in) :: keyword 
+      character(len=*), intent(in) :: section  
+!
+      integer, intent(in) :: n_elements
+!
+      real(dp), dimension(n_elements) :: array_
+!
+      character(len=200) :: keyword_value_string
+!
+!     Get the keyword value in string format 
+!
+      call the_file%get_keyword_in_section(keyword, section, keyword_value_string)
+!
+!     Use string utility functionality to get the real array
+!  
+      call get_reals_in_string(keyword_value_string, n_elements, array_)
+!
+   end subroutine get_real_array_for_keyword_in_section_input_file
 !
 !
    function get_n_atoms_input_file(the_file) result(n_atoms)
