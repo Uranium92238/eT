@@ -56,12 +56,10 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: omega_aibj, omega_abij
 !
       call mem%alloc(omega1, wf%n_v, wf%n_o)
-      call mem%alloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Set the omega vector to zero
 !
       call zero_array(omega1, wf%n_t1)
-      call zero_array(omega_aibj, wf%n_t1**2)
 !
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_aibj, wf%n_t1)
@@ -80,7 +78,14 @@ contains
 !
       call wf%omega_ccs_a1(omega1)
 !
+      call dcopy((wf%n_o)*(wf%n_v), omega1, 1, omega, 1)
+!
+      call mem%dealloc(omega1, wf%n_v, wf%n_o)
+!
 !     Construct doubles contributions
+!
+      call mem%alloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call zero_array(omega_aibj, wf%n_t1**2)
 !
       call wf%omega_ccsd_c2(omega_aibj, t_aibj)
       call wf%omega_ccsd_d2(omega_aibj, t_aibj)
@@ -93,24 +98,17 @@ contains
       call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call zero_array(omega_abij, wf%n_t1**2)
+      call sort_1234_to_1324(omega_aibj, omega_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call wf%omega_ccsd_a2(omega_abij, t_abij)
       call wf%omega_ccsd_b2(omega_abij, t_abij)
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call add_1324_to_1234(one, omega_abij, omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call packin(omega(wf%n_t1+1 : wf%n_gs_amplitudes), omega_abij, wf%n_v, wf%n_o)
       call mem%dealloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call packin(omega((wf%n_o)*(wf%n_v)+1:wf%n_gs_amplitudes), omega_aibj, wf%n_t1)
-!
-      call mem%dealloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
       call wf%from_biorthogonal_to_biorthonormal(omega((wf%n_o)*(wf%n_v)+1:wf%n_gs_amplitudes))
-!
-      call dcopy((wf%n_o)*(wf%n_v), omega1, 1, omega, 1)
-!
-      call mem%dealloc(omega1, wf%n_v, wf%n_o)
 !
    end subroutine construct_omega_ccsd
 !

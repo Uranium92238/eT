@@ -53,8 +53,6 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij, omega_aibj, u_aibj
 !
-      integer  :: i,j,a,b,a_end,aibj
-!
       type(timings) :: cc3_timer
       type(timings) :: ccsd_timer
 !
@@ -94,9 +92,6 @@ contains
       call wf%omega_ccsd_d2(omega_aibj, t_aibj)
       call wf%omega_ccsd_e2(omega_aibj, t_aibj)
 !
-      call symmetric_sum(omega_aibj, wf%n_t1)
-      call packin(omega(wf%n_t1+1:wf%n_gs_amplitudes), omega_aibj, wf%n_t1)
-!
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call sort_1234_to_1324(t_aibj, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -104,10 +99,11 @@ contains
       call ccsd_timer%freeze()
 !    
       call mem%alloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call zero_array(omega_abij, wf%n_t1**2)
+      call sort_1234_to_1324(omega_aibj, omega_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call cc3_timer%turn_on()
-      call wf%omega_cc3_a(omega1,omega_abij)
+      call wf%omega_cc3_a(omega1, omega_abij)
       call cc3_timer%turn_off()
 !
       call symmetrize_12_and_34(omega_abij, wf%n_v, wf%n_o)
@@ -121,30 +117,10 @@ contains
 !
       call dcopy(wf%n_t1, omega1, 1, omega, 1)
 !
-      aibj = 0
-!
-      do j = 1,wf%n_o
-         do b = 1,wf%n_v
-            do i = 1,j
-!
-               if(i .ne. j) then
-                  a_end = wf%n_v
-               else
-                  a_end = b
-               end if
-!
-               do a = 1,a_end
-!
-                  aibj = aibj + 1
-!
-                  omega(wf%n_t1+aibj) = omega(wf%n_t1+aibj) + omega_abij(a,b,i,j)
-!
-               end do
-            end do
-         end do
-      end do
-!
       call mem%dealloc(omega1, wf%n_v, wf%n_o)
+!
+      call packin(omega(wf%n_t1+1 : wf%n_gs_amplitudes), omega_abij, wf%n_v, wf%n_o)
+!
       call mem%dealloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
    end subroutine construct_omega_cc3

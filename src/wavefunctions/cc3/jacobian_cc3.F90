@@ -70,7 +70,7 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_ai
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj, rho_abij
 !
-      integer :: i, j, a, b, ai, bj, aibj, b_end ! Index
+      integer :: i, a
 !
       type(timings) :: cc3_timer, cc3_timer_t3_a2, cc3_timer_t3_b2, cc3_timer_c3
       type(timings) :: ccsd_timer
@@ -88,17 +88,7 @@ contains
 !
       call mem%alloc(c_ai, wf%n_v, wf%n_o)
 !
-!$omp parallel do schedule(static) private(a, i, ai)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            c_ai(a, i) = c(ai)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call dcopy(wf%n_t1, c(1:wf%n_t1), 1, c_ai, 1)
 !
 !     :: CCS contributions to the singles c vector ::
 !
@@ -115,34 +105,7 @@ contains
 !
       call mem%alloc(c_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj, b_end)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-!
-            do j = 1, i
-!
-               if (i .ne. j) then
-                  b_end = wf%n_v
-               else
-                  b_end = a
-               endif
-!
-               do b = 1,b_end
-!
-                  bj = wf%n_v*(j - 1) + b
-!
-                  aibj = ai*(ai-3)/2 + ai + bj
-!
-                  c_aibj(a,i,b,j) = c(wf%n_t1 + aibj)
-                  c_aibj(b,j,a,i) = c(wf%n_t1 + aibj)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call squareup(c(wf%n_t1 + 1 : wf%n_es_amplitudes), c_aibj, wf%n_t1)
 !
 !     Scale the doubles vector by 1 + δ_ai,bj, i.e.
 !     redefine to c_ckdl = c_ckdl (1 + δ_ck,dl)
@@ -248,39 +211,24 @@ contains
 !
       call ccsd_timer%turn_off()
 !
-!     divide by the biorthonormal factor 1 + δ_ai,bj and
-!     overwrite the incoming, packed doubles c vector for exit
-!
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj, b_end)
+!     divide by the biorthonormal factor 1 + δ_ai,bj
+! 
+!$omp parallel do schedule(static) private(a,i)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
-            ai = wf%n_v*(i - 1) + a
-            rho_abij(a,a,i,i) = half * rho_abij(a,a,i,i)
+         rho_abij(a,a,i,i) = half*rho_abij(a,a,i,i)
 !
-            do j = 1, i
-!
-               if (j .ne. i) then
-                  b_end = wf%n_v
-               else
-                  b_end = a
-               endif
-!
-               do b = 1, b_end
-!
-                  bj = wf%n_v*(j - 1) + b
-!
-                  aibj = ai*(ai-3)/2 + ai + bj
-!
-                  c(wf%n_t1 + aibj) = rho_abij(a,b,i,j)
-!
-               enddo
-            enddo
          enddo
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(rho_abij,wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!     overwrite the incoming, packed doubles c vector with rho_abij
+!     and pack in for exit
+!
+      call packin(c(wf%n_t1 + 1 : wf%n_es_amplitudes), rho_abij, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
    end subroutine effective_jacobian_transformation_cc3
 !

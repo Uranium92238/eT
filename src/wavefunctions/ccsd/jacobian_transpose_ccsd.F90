@@ -153,7 +153,8 @@ contains
       call mem%dealloc(b_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call zero_array(sigma_abij, (wf%n_o*wf%n_v)**2)
+      call sort_1234_to_1324(sigma_aibj, sigma_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Add the last two terms
 !
@@ -162,15 +163,11 @@ contains
 !
       call mem%dealloc(b_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call add_1324_to_1234(one, sigma_abij, sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
 !     Overwrite the incoming doubles b vector
 !
-      call packin(b(wf%n_t1+1:wf%n_t1+wf%n_t2), sigma_aibj, wf%n_v*wf%n_o)
+      call packin(b(wf%n_t1 + 1 : wf%n_es_amplitudes), sigma_abij, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call jacobian_transpose_timer%turn_off()
 !
