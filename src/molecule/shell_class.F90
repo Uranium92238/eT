@@ -27,22 +27,40 @@ module shell_class
    use kinds
    use interval_class
    use global_out, only : output
-   use shell_details_class, only : shell_details
+   use memory_manager_class, only : mem
 !
    implicit none
 !
    type, extends(interval) :: shell ! interval: AO index range of the shell 
 !
-      type(shell_details) :: basis_details
-!
       integer    :: size_cart = -1 ! The number of basis functions in cartesian
       integer    :: l         = -1 ! The angular momentum
       integer    :: number_   = -1 ! The shell number (according to the ordering given by Libint)
 !
+      integer, private :: n_primitives = 0 ! Number of primitive Gaussians
+!
+      real(dp), dimension(:), allocatable, private :: exponents ! Exponents for primitives
+      real(dp), dimension(:), allocatable, private :: coefficients ! Coefficients for primitives
+!
    contains
 !
-      procedure :: determine_angular_momentum => determine_angular_momentum_shell
-      procedure :: determine_last_ao_index    => determine_last_ao_index_shell
+      procedure :: determine_angular_momentum         => determine_angular_momentum_shell
+      procedure :: determine_last_ao_index            => determine_last_ao_index_shell
+!
+      procedure :: initialize_exponents               => initialize_exponents_shell
+      procedure :: initialize_coefficients            => initialize_coefficients_shell
+!
+      procedure :: destruct_exponents                 => destruct_exponents_shell
+      procedure :: destruct_coefficients              => destruct_coefficients_shell
+!
+      procedure :: set_exponent_i                     => set_exponent_i_shell
+      procedure :: get_exponent_i                     => get_exponent_i_shell
+!
+      procedure :: set_coefficient_i                  => set_coefficient_i_shell
+      procedure :: get_coefficient_i                  => get_coefficient_i_shell
+!
+      procedure :: set_n_primitives                   => set_n_primitives_shell
+      procedure :: get_n_primitives                   => get_n_primitives_shell
 !
    end type shell
 !
@@ -135,6 +153,172 @@ contains
       sh%last = sh%first + sh%length - 1
 !
    end subroutine determine_last_ao_index_shell
+!
+!
+   subroutine initialize_exponents_shell(ao)
+!!
+!!    Initialize exponents
+!!    Written by Sarai D. Folkestad, 2019
+!!
+      implicit none
+!  
+      class(shell), intent(inout) :: ao
+!
+      if (ao%n_primitives == 0) &
+      call output%error_msg('Number of primitive Gaussians not set before alloc of exponents')
+!
+      if (.not. allocated(ao%exponents)) call mem%alloc(ao%exponents, ao%n_primitives)
+!
+   end subroutine initialize_exponents_shell
+!
+!
+   subroutine initialize_coefficients_shell(ao)
+!!
+!!    Initialize coefficients
+!!    Written by Sarai D. Folkestad, 2019
+!!
+      implicit none
+!  
+      class(shell), intent(inout) :: ao
+!
+      if (ao%n_primitives == 0) &
+      call output%error_msg('Number of primitive Gaussians not set before alloc of coefficients')
+!
+      if (.not. allocated(ao%coefficients)) call mem%alloc(ao%coefficients, ao%n_primitives)
+!
+   end subroutine initialize_coefficients_shell
+!
+!
+   subroutine destruct_exponents_shell(ao)
+!!
+!!    Destruct exponents
+!!    Written by Sarai D. Folkestad, 2019
+!!
+      implicit none
+!  
+      class(shell), intent(inout) :: ao
+!
+      if (allocated(ao%exponents)) call mem%dealloc(ao%exponents, ao%n_primitives)
+!
+   end subroutine destruct_exponents_shell
+!
+!
+   subroutine destruct_coefficients_shell(ao)
+!!
+!!    Destruct coefficients
+!!    Written by Sarai D. Folkestad, 2019
+!!
+      implicit none
+!  
+      class(shell), intent(inout) :: ao
+!
+      if (allocated(ao%coefficients)) call mem%dealloc(ao%coefficients, ao%n_primitives)
+!
+   end subroutine destruct_coefficients_shell
+!
+!
+   subroutine set_exponent_i_shell(ao, i, exponent_)
+!!
+!!    Set exponent
+!!    Written by Sarai D. Folkestad, 2019
+!!
+      implicit none
+!  
+      class(shell), intent(inout) :: ao
+!
+      integer, intent(in)   :: i
+      real(dp), intent(in)       :: exponent_
+!
+      if (i .gt. ao%n_primitives) call output%error_msg('Tried to set exponent for non-exisiting primitive Gaussian')
+!
+      ao%exponents(i) = exponent_
+!
+   end subroutine set_exponent_i_shell
+!
+!
+   real(dp) function get_exponent_i_shell(ao, i)
+!!
+!!    Get exponent
+!!    Written by Sarai D. Folkestad, 2019
+!!
+      implicit none
+!  
+      class(shell), intent(inout) :: ao
+!
+      integer, intent(in)   :: i
+!
+      if (i .gt. ao%n_primitives) call output%error_msg('Tried to get exponent for non-exisiting primitive Gaussian')
+!
+      get_exponent_i_shell = ao%exponents(i)
+!
+   end function get_exponent_i_shell
+!
+!
+   subroutine set_coefficient_i_shell(ao, i, coefficient)
+!!
+!!    Set coefficient
+!!    Written by Sarai D. Folkestad, 2019
+!!
+      implicit none
+!  
+      class(shell), intent(inout) :: ao
+!
+      integer, intent(in)   :: i
+      real(dp), intent(in)       :: coefficient
+!
+      if (i .gt. ao%n_primitives) call output%error_msg('Tried to set coefficient for non-exisiting primitive Gaussian')
+!
+      ao%coefficients(i) = coefficient
+!
+   end subroutine set_coefficient_i_shell
+!
+!
+   real(dp) function get_coefficient_i_shell(ao, i)
+!!
+!!    Get coefficient
+!!    Written by Sarai D. Folkestad, 2019
+!!
+      implicit none
+!  
+      class(shell), intent(inout) :: ao
+!
+      integer, intent(in)   :: i
+!
+      if (i .gt. ao%n_primitives) call output%error_msg('Tried to get coefficient for non-exisiting primitive Gaussian')
+!
+      get_coefficient_i_shell = ao%coefficients(i)
+!
+   end function get_coefficient_i_shell
+!
+!
+   subroutine set_n_primitives_shell(ao, n)
+!!
+!!    Set number of primitives
+!!    Written by Sarai D. Folkestad, 2019
+!!
+      implicit none
+!  
+      class(shell), intent(inout) :: ao
+!
+      integer, intent(in) :: n
+!
+      ao%n_primitives = n
+!
+   end subroutine set_n_primitives_shell
+!
+!
+   integer function get_n_primitives_shell(ao)
+!!
+!!    Get number of primitives
+!!    Written by Sarai D. Folkestad, 2019
+!!
+      implicit none
+!  
+      class(shell), intent(in) :: ao
+!
+      get_n_primitives_shell = ao%n_primitives
+!
+   end function get_n_primitives_shell
 !
 !
 end module shell_class
