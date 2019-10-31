@@ -114,6 +114,14 @@ contains
 !
       logical, dimension(:), allocatable :: skip_states
 !
+      if (trim(wf%name_) == 'low memory cc2') then
+!
+         call output%printf('Requested first order properites (FOP) with lowmem-cc2.', &
+                             pl='m', fs='(/t3,a)')
+         call output%error_msg('FOP not implemented for low memory cc2.')
+!
+      end if
+!
 !     Cholesky decomposition
 !
       call engine%do_cholesky(wf)
