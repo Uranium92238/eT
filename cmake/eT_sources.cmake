@@ -54,7 +54,6 @@ set(eT_fortran_sources
    src/molecule/periodic_table.F90
    src/molecule/shell_class.F90
    src/molecule/active_atoms_class.F90
-   src/molecule/shell_details_class.F90
 #
    src/solver_tools/cholesky_array_list_class.F90
    src/solver_tools/bfgs_tool_class.F90

@@ -2220,9 +2220,9 @@ contains
 !
 !        Set number of primitives and initialize exponents and coefficient array
 !
-         call molecule%atoms(atom_index)%shells(shell)%basis_details%set_n_primitives(n_primitive)
-         call molecule%atoms(atom_index)%shells(shell)%basis_details%initialize_exponents()
-         call molecule%atoms(atom_index)%shells(shell)%basis_details%initialize_coefficients()
+         call molecule%atoms(atom_index)%shells(shell)%set_n_primitives(n_primitive)
+         call molecule%atoms(atom_index)%shells(shell)%initialize_exponents()
+         call molecule%atoms(atom_index)%shells(shell)%initialize_coefficients()
 !
 !        Loop over primitives and set coefficient and exponent
 !
@@ -2230,9 +2230,9 @@ contains
 !
 !           In case of "SP" shell, split S and P coefficients
 !
-            call molecule%atoms(atom_index)%shells(shell+1)%basis_details%set_n_primitives(n_primitive)
-            call molecule%atoms(atom_index)%shells(shell+1)%basis_details%initialize_exponents()
-            call molecule%atoms(atom_index)%shells(shell+1)%basis_details%initialize_coefficients()
+            call molecule%atoms(atom_index)%shells(shell+1)%set_n_primitives(n_primitive)
+            call molecule%atoms(atom_index)%shells(shell+1)%initialize_exponents()
+            call molecule%atoms(atom_index)%shells(shell+1)%initialize_coefficients()
 !
             do primitive = 1, n_primitive
 !
@@ -2241,10 +2241,10 @@ contains
                call basis_set_file%read_(line,'(a200)')
                read(line, *) exponent_, coefficient, coefficient_2
 !
-               call molecule%atoms(atom_index)%shells(shell)%basis_details%set_exponent_i(primitive, exponent_)
-               call molecule%atoms(atom_index)%shells(shell+1)%basis_details%set_exponent_i(primitive, exponent_)
-               call molecule%atoms(atom_index)%shells(shell)%basis_details%set_coefficient_i(primitive, coefficient)
-               call molecule%atoms(atom_index)%shells(shell+1)%basis_details%set_coefficient_i(primitive, coefficient_2)
+               call molecule%atoms(atom_index)%shells(shell)%set_exponent_i(primitive, exponent_)
+               call molecule%atoms(atom_index)%shells(shell+1)%set_exponent_i(primitive, exponent_)
+               call molecule%atoms(atom_index)%shells(shell)%set_coefficient_i(primitive, coefficient)
+               call molecule%atoms(atom_index)%shells(shell+1)%set_coefficient_i(primitive, coefficient_2)
 !
             enddo
 !
@@ -2259,8 +2259,8 @@ contains
                call basis_set_file%read_(line,'(a200)')
                read(line, *) exponent_, coefficient
 !
-               call molecule%atoms(atom_index)%shells(shell)%basis_details%set_exponent_i(primitive, exponent_)
-               call molecule%atoms(atom_index)%shells(shell)%basis_details%set_coefficient_i(primitive, coefficient)
+               call molecule%atoms(atom_index)%shells(shell)%set_exponent_i(primitive, exponent_)
+               call molecule%atoms(atom_index)%shells(shell)%set_coefficient_i(primitive, coefficient)
 !
             enddo
 !
@@ -2333,51 +2333,50 @@ contains
       implicit none
 !
       class(molecular_system) :: molecule
-      integer :: i,j, angmom1, n_prim1, n_func
+      integer :: i,j, angmom, n_primitives, n_functions
 !
       do i = 1, molecule%n_atoms
 !  
          do j = 1, molecule%atoms(i)%n_shells
 !  
-             angmom1 = molecule%atoms(i)%shells(j)%l
-             n_prim1 = int(molecule%atoms(i)%shells(j)%basis_details%n_primitives,kind(n_prim1))
-             n_func  = molecule%atoms(i)%shells(j)%length
-             molecule%n_pure_basis = molecule%n_pure_basis + n_func 
+            angmom                  = molecule%atoms(i)%shells(j)%l
+            n_primitives            = molecule%atoms(i)%shells(j)%get_n_primitives()
+            n_functions             = molecule%atoms(i)%shells(j)%length
+            molecule%n_pure_basis   = molecule%n_pure_basis + n_functions 
 !  
-             if(angmom1.ge.1) then
+             if(angmom .ge. 1) then
 !  
-                molecule%atoms(i)%shells(j)%size_cart = n_func
+                molecule%atoms(i)%shells(j)%size_cart = n_functions
 !  
-                if(angmom1.ge.2) then
+                if(angmom .ge. 2) then
 !  
-                   if(angmom1.eq.2.and.n_func.eq.6) continue
+                   if(angmom .eq. 2 .and. n_functions .eq. 6) continue
 !  
-                   if(angmom1.eq.2.and.n_func.eq.5) then
+                   if(angmom .eq. 2 .and. n_functions .eq. 5) then
 !  
-                      molecule%atoms(i)%shells(j)%size_cart = n_func + 1
-!  
-                   endIf
-!  
-                   if(angmom1.eq.3.and.n_func.eq.10) continue
-!  
-                   if(angmom1.eq.3.and.n_func.eq.7) then
-!  
-                      molecule%atoms(i)%shells(j)%size_cart = n_func + 3
+                      molecule%atoms(i)%shells(j)%size_cart = n_functions + 1
 !  
                    endIf
 !  
-                   if(angmom1.eq.4.and.n_func.eq.15) continue
+                   if(angmom .eq. 3 .and. n_functions .eq.10) continue
 !  
-                   if(angmom1.eq.4.and.n_func.eq.9) then
+                   if(angmom .eq. 3 .and. n_functions .eq. 7) then
 !  
-                      molecule%atoms(i)%shells(j)%size_cart = n_func + 6
+                      molecule%atoms(i)%shells(j)%size_cart = n_functions + 3
 !  
                    endIf
 !  
-                   if(angmom1.gt.4) then
+                   if(angmom .eq. 4 .and. n_functions .eq. 15) continue
 !  
-                      write(output%unit,'(a)') 'Cartesian G functions NYI'
-                      Stop
+                   if(angmom .eq. 4 .and. n_functions .eq. 9) then
+!  
+                      molecule%atoms(i)%shells(j)%size_cart = n_functions + 6
+!  
+                   endIf
+!  
+                   if(angmom .gt. 4) then
+!  
+                      call output%error_msg('Cartesian G functions not yet implemented')
 !  
                    endIf
 !  
@@ -2385,12 +2384,15 @@ contains
 !  
             else 
 !  
-               molecule%atoms(i)%shells(j)%size_cart = n_func 
+               molecule%atoms(i)%shells(j)%size_cart = n_functions 
 !  
             endIf
 !  
-            molecule%n_cart_basis      = molecule%n_cart_basis + molecule%atoms(i)%shells(j)%size_cart
-            molecule%n_primitives_cart = molecule%n_primitives_cart + molecule%atoms(i)%shells(j)%size_cart*n_prim1
+            molecule%n_cart_basis      = molecule%n_cart_basis + &
+                                          molecule%atoms(i)%shells(j)%size_cart
+!
+            molecule%n_primitives_cart = molecule%n_primitives_cart + &
+                                          molecule%atoms(i)%shells(j)%size_cart*n_primitives
 !  
          enddo
 !  
@@ -2412,10 +2414,9 @@ contains
       implicit none
 !
       class(molecular_system) :: molecule
-      integer :: i,j,k,l, angmom, n_prim
-      real(kind=dp) :: alpha1, coeff1, pi, overlap_kk, overlap_kl,alpha2,coeff2
+      integer :: i, j, k, l, angmom, n_primitives
+      real(kind=dp) :: alpha_1, coeff_1, pi, overlap_kk, overlap_kl, alpha_2, coeff_2
       real(kind=dp) :: sum_
-!
 !
          pi = 4.0d0*atan(1.0d0)
 !  
@@ -2424,46 +2425,50 @@ contains
             do j = 1, molecule%atoms(i)%n_shells
 !  
                 angmom = molecule%atoms(i)%shells(j)%l
-                n_prim = int(molecule%atoms(i)%shells(j)%basis_details%n_primitives,kind(n_prim))
+                n_primitives = molecule%atoms(i)%shells(j)%get_n_primitives()
 !  
-                do k = 1, n_prim
+                do k = 1, n_primitives
 !  
-                   alpha1 = molecule%atoms(i)%shells(j)%basis_details%exponents(k)
-                   coeff1 = molecule%atoms(i)%shells(j)%basis_details%coefficients(k)
-                   overlap_kk = ((pi/(2*alpha1))**1.5d0)/(4.0d0*(alpha1))**angmom
-                   overlap_kk = double_factorial(2*angmom-1) * overlap_kk
-                   coeff1 = coeff1 / sqrt(overlap_kk)
-                   molecule%atoms(i)%shells(j)%basis_details%coefficients(k) = coeff1
+                  alpha_1 = molecule%atoms(i)%shells(j)%get_exponent_i(k)
+                  coeff_1 = molecule%atoms(i)%shells(j)%get_coefficient_i(k)
+!
+                  overlap_kk = ((pi/(2*alpha_1))**1.5d0)/(4.0d0*(alpha_1))**angmom
+                  overlap_kk = double_factorial(2*angmom-1) * overlap_kk
+!
+                  coeff_1 = coeff_1 / sqrt(overlap_kk)
+                  call molecule%atoms(i)%shells(j)%set_coefficient_i(k, coeff_1)
 !  
                 enddo
 !  
                 sum_ = 0.0d0
 !  
-                do k = 1, n_prim
+                do k = 1, n_primitives
 !  
-                   alpha1 = molecule%atoms(i)%shells(j)%basis_details%exponents(k)
-                   coeff1 = molecule%atoms(i)%shells(j)%basis_details%coefficients(k)
-                   overlap_kk = ((pi/(2*alpha1))**1.5d0)/(4.0d0*(alpha1))**angmom
+                   alpha_1 = molecule%atoms(i)%shells(j)%get_exponent_i(k)
+                   coeff_1 = molecule%atoms(i)%shells(j)%get_coefficient_i(k)
+!
+                   overlap_kk = ((pi/(2*alpha_1))**1.5d0)/(4.0d0*(alpha_1))**angmom
                    overlap_kk = double_factorial(2*angmom-1) * overlap_kk
-                   sum_ = sum_ + coeff1*coeff1*overlap_kk
+                   sum_ = sum_ + coeff_1*coeff_1*overlap_kk
 !  
                    do l = 1,k-1
 !  
-                      alpha2 = molecule%atoms(i)%shells(j)%basis_details%exponents(l)
-                      coeff2 = molecule%atoms(i)%shells(j)%basis_details%coefficients(l)
-                      overlap_kl = ((pi/(alpha1+alpha2))**1.5d0)/(2.0d0*(alpha1+alpha2))**angmom
-                      overlap_kl = double_factorial(2*angmom-1) * overlap_kl
-                      sum_ = sum_ + 2.0d0*coeff1*coeff2*overlap_kl
+                     alpha_2 = molecule%atoms(i)%shells(j)%get_exponent_i(l)
+                     coeff_2 = molecule%atoms(i)%shells(j)%get_coefficient_i(l)
+!
+                     overlap_kl = ((pi/(alpha_1+alpha_2))**1.5d0)/(2.0d0*(alpha_1+alpha_2))**angmom
+                     overlap_kl = double_factorial(2*angmom-1) * overlap_kl
+                     sum_ = sum_ + 2.0d0*coeff_1*coeff_2*overlap_kl
 !  
                    enddo
 !  
                 enddo
 !  
-                do k =1, n_prim
+                do k =1, n_primitives
 !  
-                   coeff1 = molecule%atoms(i)%shells(j)%basis_details%coefficients(k)
-                   coeff1 = coeff1/sqrt(sum_)
-                   molecule%atoms(i)%shells(j)%basis_details%coefficients(k) = coeff1
+                  coeff_1 = molecule%atoms(i)%shells(j)%get_coefficient_i(k)
+                  coeff_1 = coeff_1/sqrt(sum_)
+                  call molecule%atoms(i)%shells(j)%set_coefficient_i(k, coeff_1)
 !  
                 enddo
 !  
