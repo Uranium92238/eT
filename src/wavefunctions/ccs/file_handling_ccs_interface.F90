@@ -217,6 +217,8 @@
 !!    Get number of excited states on file 
 !!    Written by Eirik F. Kjønstad, Mar 2019 
 !!
+      implicit none
+!
       class(ccs) :: wf 
 !
       character(len=*), intent(in) :: side 

@@ -51,7 +51,7 @@ contains
    subroutine close_abstract_other_file(the_file, file_status)
 !!
 !!    Close file
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
@@ -91,7 +91,7 @@ contains
    subroutine delete_abstract_other_file(the_file)
 !!
 !!    Delete file
-!!    Written by Rolf Heilemann Myhre, Aug 2019
+!!    Written by Rolf H. Myhre, Aug 2019
 !!
       implicit none
 !
@@ -139,7 +139,7 @@ contains
    subroutine copy_abstract_other_file(the_file, filename)
 !!
 !!    Copy abstract file
-!!    Written by Alexander Paul and Rolf H. Myhre, September 2019
+!!    Written by Alexander C. Paul and Rolf H. Myhre, September 2019
 !!
 !!    Very similar to abstract copy, but with access to output
 !!

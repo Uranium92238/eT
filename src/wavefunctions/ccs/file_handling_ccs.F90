@@ -419,6 +419,8 @@ contains
 !!    all coupled cluster models (i.e., it is most likely  
 !!    unneccessary to overwrite this routine in descendants)
 !!
+      implicit none
+!
       class(ccs) :: wf 
 !
       character(len=*), intent(in) :: side 
@@ -443,6 +445,7 @@ contains
       end if
 !
    end function get_n_excited_states_on_file_ccs
+
 !
 !
    module subroutine save_tbar_intermediates_ccs(wf)

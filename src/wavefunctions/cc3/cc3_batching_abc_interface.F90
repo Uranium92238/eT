@@ -17,36 +17,36 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine prep_cc3_integrals_t3_abc_batch_cc3(wf)
+   module subroutine prepare_cc3_integrals_t3_abc_batch_cc3(wf)
 !!
-!!    Prepares files containing the integrals needed 
-!!    to construct t3-amplitudes in batches of a,b,c
+!!    Prepare integral files for t3 amplitudes in batches of a,b,c
+!!    Written by Alexander C. Paul, July 2019
 !!
 !!    (bd|ck) ordered as dk,bc
 !!    (lj|ck) ordered as ljk,c
 !!
-!!    written by Alexander Paul, July 2019
 !!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
 !!
       implicit none
 !
       class(cc3) :: wf
 !
-   end subroutine prep_cc3_integrals_t3_abc_batch_cc3
+   end subroutine prepare_cc3_integrals_t3_abc_batch_cc3
 !
 !
-   module subroutine prep_cc3_integrals_R3_abc_batch_cc3(wf, R_ai)
+   module subroutine prepare_cc3_integrals_R3_abc_batch_cc3(wf, R_ai)
 !!
-!!    Prepares the files containing the R1-transformed 
-!!    integrals needed to construct R3 in batches of a,b,c
-!!    NB: The integrals (bd|ck) and (lj|ck) constructed in 
-!!        prep_cc3_integrals_t3_abc_batch_cc3 are also needed
+!!    Prepare integral files for R3 amplitudes in batches of a,b,c
+!!    Written by Alexander C. Paul, July 2019
 !!
 !!    g'_bdck = (b'd|ck) + (bd|c'k) + (bd|ck')   ordered as dk,bc
 !!    g'_ljck = (lj'|ck) + (lj|ck') + (lj|c'k)   ordered as ljk,c
 !!
-!!    written by Alexander Paul, July 2019
-!!    Based on construct_c1_integrals_cc3 written by Rolf H. Myhre and A. Paul
+!!    NB: The integrals (bd|ck) and (lj|ck) constructed in 
+!!        prepare_cc3_integrals_t3_abc_batch_cc3 are also needed
+!!
+!!    Based on construct_c1_integrals_cc3 written by Rolf H. Myhre and A. C. Paul
+!!    Based on construct_c1_integrals_cc3 written by Rolf H. Myhre and A. C. Paul
 !!
 !
       implicit none
@@ -55,26 +55,25 @@
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
 !
-   end subroutine prep_cc3_integrals_R3_abc_batch_cc3
+   end subroutine prepare_cc3_integrals_R3_abc_batch_cc3
 !
 !
-   module subroutine prep_cc3_integrals_L3_abc_batch_cc3(wf)
+   module subroutine prepare_cc3_integrals_L3_abc_batch_cc3(wf)
 !!
-!!    Prepares the files containing the integrals needed to 
-!!    construct tbar3 and L3 in batches of a,b,c
+!!    Prepare integral files for L3 amplitudes in batches of a,b,c
+!!    Written by Alexander C. Paul, July 2019
 !!
 !!    (db|kc) ordered as dk,bc
 !!    (jl|kc) ordered as ljk,c
 !!    L_jbkc  ordered as jk,bc
 !!
-!!    written by Alexander Paul, July 2019
 !!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
 !!
       implicit none
 !
       class(cc3) :: wf
 !
-   end subroutine prep_cc3_integrals_L3_abc_batch_cc3
+   end subroutine prepare_cc3_integrals_L3_abc_batch_cc3
 !
 !
    module subroutine omega_cc3_W_calc_abc_batch_cc3(wf, a, b, c,           &
@@ -84,13 +83,12 @@
                                                    g_adbk, g_adck, g_bdck, &
                                                    keep_t)
 !!
-!!    Calculate the the contributions to the t_3 amplitudes
-!!    for virtual indices a,v,c
+!!    Omega CC3 intermediate W_ijk in batches of a,b,c
+!!    Written by Rolf H. Myhre and Alexander C. Paul July 2019
 !!
 !!    Contributions to W
-!!     W^abc_ijk = P^abc_ijk(\sum_d t^ad_ij(bd|ck) - \sum_l t^ab_il(lj|ck))
+!!     W^abc_ijk = P^abc_ijk(sum_d t^ad_ij(bd|ck) - sum_l t^ab_il(lj|ck))
 !!
-!!    Written by Rolf H. Myhre and Alexander Paul July 2019
 !!    based on omega_cc3_W_calc written by Rolf H. Myhre
 !!
       implicit none
@@ -122,12 +120,14 @@
 !
    module subroutine omega_cc3_eps_abc_batch_cc3(wf, a, b, c, t_ijk, omega)
 !!
+!!    Omega CC3 epsilon denominator in batches of a,b,c
+!!    Written by Alexander C. Paul, July 2019    
+!!
 !!    Divide W^abc_ijk by -epsilon^abc_ijk to obtain T^abc_ijk
 !!    Optional argument omega for jacobian transformations
 !!
 !!    t^abc_ijk = -W^abc_ijk/epsilon^abc_ijk
 !!
-!!    Written by Alexander Paul, July 2019
 !!    based on omega_cc3_eps_cc3 by Rolf H. Myhre
 !!
       implicit none
@@ -151,6 +151,7 @@
                                                                   g_dakb, g_dakc, g_dbkc)
 !!
 !!    Calculate the L3 amplitudes for fixed indices a,b,c
+!!    Written by Alexander C. Paul, July 2019
 !!
 !!    C^abc_ijk 
 !!    = (ω - ε^abc_ijk)^-1 P^abc_ijk (C_ai*L_jbkc - C_ak*L_jbic + Cabij*F_kc - C_abik*F_jc)
@@ -163,8 +164,7 @@
 !!      sum_l P^abc_ijk (C_ablk g_iljc + C_abil g_jckl - 2 C_abil g_jlkc) 
 !!    - sum_d P^abc_ijk (C_adjk g_ibdc + C_adij g_dckb - 2 C_adij g_dbkc)
 !!
-!!    Written by Alexander Paul, July 2019
-!!    based on ojacobian_transpose_cc3_c3_calc written by A.Paul and Rolf H. Myhre
+!!    based on jacobian_transpose_cc3_c3_calc written by A.Paul and Rolf H. Myhre
 !!
       implicit none
 !
@@ -200,3 +200,18 @@
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_dbkc
 !
    end subroutine jacobian_transpose_cc3_c3_calc_abc_batch_cc3
+!
+!
+   module subroutine get_triples_cvs_projector_abc_batch_cc3(wf, projector_ijk)
+!!
+!!    Get triples cvs projector for fixed a,b,c
+!!    Written by Alexander C. Paul and Rolf H. Myhre, September 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(out) :: projector_ijk
+!
+   end subroutine get_triples_cvs_projector_abc_batch_cc3
+   !

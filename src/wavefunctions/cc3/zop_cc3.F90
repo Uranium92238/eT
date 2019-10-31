@@ -21,7 +21,7 @@ submodule (cc3_class) zop_cc3
 !
 !!
 !!    Zeroth order properties submodule 
-!!    Written by Alexander Paul, July 2019
+!!    Written by Alexander C. Paul, July 2019
 !!
 !!    Contains routines related to the mean values, i.e. 
 !!    the construction of density matrices as well as expectation 
@@ -41,29 +41,23 @@ contains
 !
    module subroutine prepare_for_density_cc3(wf)
 !!
-!!    Prepare the construction of the CC3 contribution to the GS density
-!!    Written by Alexander Paul and Rolf H. Myhre, March 2019
+!!    Prepare for ground state density
+!!    Written by Alexander C. Paul and Rolf H. Myhre, March 2019
 !!
-!!    Sets up the file containing an intermediate needed for the GS and
-!!    transition density matrices.
-!!
-!!    Z_alik = sum_bcj tbar^abc_ijk t^bc_jl
-!!
-!!    And
 !!    Sets up the integral files needed to construct t3 and tbar3
 !!    batching over the virtual indices.
 !!    g_vvvo ordered 2413
 !!    g_oovo ordered 1243
-!!    g_vvov ordered 3124
-!!    g_ooov ordered 1324
+!!    g_vvov ordered 1324
+!!    g_ooov ordered 2134
 !!    L_ovov ordered 1324
 !!
       implicit none
 !
       class(cc3), intent(inout) :: wf
 !
-      call wf%prep_cc3_integrals_t3_abc_batch
-      call wf%prep_cc3_integrals_L3_abc_batch
+      call wf%prepare_cc3_integrals_t3_abc_batch
+      call wf%prepare_cc3_integrals_L3_abc_batch
 !
    end subroutine prepare_for_density_cc3
 !
@@ -71,12 +65,13 @@ contains
    module subroutine construct_gs_density_cc3(wf)
 !!
 !!    Construct one-electron density
-!!    Written by Alexander Paul
-!!    based on construct_gs_density_ccsd by Sarai D. Folkestad
+!!    Written by Alexander C. Paul
 !!
 !!    Constructs the one-electron density matrix in the T1 basis
 !!
 !!    D_pq = < Λ | E_pq | CC >
+!!
+!!    based on construct_gs_density_ccsd by Sarai D. Folkestad
 !!
       implicit none
 !
@@ -121,7 +116,8 @@ contains
 !
       call ccsd_timer%turn_off()
 !
-!     CC3 contributions
+!     :: CC3 contributions ::
+!     -----------------------
 !
       call cc3_timer%turn_on()
 !
@@ -143,7 +139,7 @@ contains
 !
       call cc3_ijk_timer%turn_on()
       call wf%gs_one_el_density_cc3_ijk(density_ov, wf%GS_cc3_density_vv, zero, &
-                                        wf%t1bar, tbar_abij, t_abij, .true.)
+                                        wf%t1bar, tbar_abij, t_abij, cvs=.false., keep_Y=.true.)
       call cc3_ijk_timer%turn_off()
 !
 !     Copy CC3 ov and vv contributions to the density matrix
@@ -191,7 +187,7 @@ contains
 !
       call cc3_abc_timer%turn_on()
       call wf%gs_one_el_density_cc3_abc(wf%GS_cc3_density_oo, zero, &
-                                        tbar_ia, tbar_ijab, t_ijab)
+                                        tbar_ia, tbar_ijab, t_ijab, cvs=.false.)
       call cc3_abc_timer%turn_off()
 !
       call mem%dealloc(tbar_ia, wf%n_o, wf%n_v)
@@ -213,8 +209,11 @@ contains
    end subroutine construct_gs_density_cc3
 !
 !
-   module subroutine gs_one_el_density_cc3_abc_cc3(wf, density_oo, omega,     &
-                                                   tbar_ia, tbar_ijab, t_ijab)
+   module subroutine gs_one_el_density_cc3_abc_cc3(wf, density_oo, omega,tbar_ia, &
+                                                   tbar_ijab, t_ijab, cvs)
+!!
+!!    Ground state density contributions in batches of abc
+!!    Written by Alexander C. Paul, July 2019
 !!
 !!    Construct t^abc_ijk and tbar^abc_ijk in batches of a,b,c and compute
 !!    the contributions to the oo-part of the ground state density matrix.
@@ -224,8 +223,6 @@ contains
 !!
 !!    ρ^L_kl -= 1/2 sum_{abc}{ij} tbar^abc_ijl t^abc_ijk
 !!
-!!    Written by Alexander Paul, July 2019
-!!
       implicit none
 !
       class(cc3) :: wf
@@ -233,6 +230,8 @@ contains
       real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: density_oo
 !
       real(dp), intent(in) :: omega
+!
+      logical, intent(in)  :: cvs
 !
 !     Unpacked Multipliers
       real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: tbar_ia
@@ -246,6 +245,8 @@ contains
       real(dp), dimension(:,:,:), allocatable :: tbar_ijk
       real(dp), dimension(:,:,:), allocatable :: u_ijk
       real(dp), dimension(:,:,:), allocatable :: v_ijk
+!
+      real(dp), dimension(:,:,:), allocatable :: projector_ijk
 !
 !     Integrals for the construction of the T3-amplitudes
       real(dp), dimension(:,:,:,:), allocatable, target :: g_ljak
@@ -301,6 +302,14 @@ contains
       integer              :: a_batch, b_batch, c_batch
       integer              :: req_0, req_1, req_2, req_3
 !
+!     Allocate and construct the projector for triples amplitudes if CVS is requested
+      if(cvs) then
+!
+         call mem%alloc(projector_ijk, wf%n_o, wf%n_o, wf%n_o)
+         call wf%get_triples_cvs_projector_abc_batch(projector_ijk)
+!
+      end if
+!
 !     Setup and Batching loops
       req_0 = 4*(wf%n_o)**3
       req_1 = 2*(wf%n_o)**3
@@ -312,7 +321,7 @@ contains
       batch_c = batching_index(wf%n_v)
 !
       call mem%batch_setup_ident(batch_a, batch_b, batch_c, &
-                           req_0, req_1, req_2, req_3, zero)
+                           req_0, req_1, req_2, req_3, buffer_size = zero)
 !
 !     Allocate integral arrays for T3-amplitudes
 !
@@ -553,6 +562,10 @@ contains
 !
                         call wf%omega_cc3_eps_abc_batch(a, b, c, tbar_ijk, omega) ! omega = 0
 !
+                        if (cvs) then
+                           call scale_vector_by_vector(tbar_ijk, projector_ijk, wf%n_o**3)
+                        end if
+!
                         call wf%one_el_density_cc3_oo_N7(a, b, c, density_oo, t_ijk,   &
                                                          u_ijk, tbar_ijk, v_ijk)
 !
@@ -629,6 +642,9 @@ contains
    module subroutine one_el_density_cc3_oo_N7_cc3(wf, a, b, c, density_oo, t_ijk, &
                                                    u_ijk, tbar_ijk, v_ijk)
 !!
+!!    CC3 Ground state density oo-part N7 scaling
+!!    Written by Alexander C. Paul, August 2019
+!!
 !!    Calculates triples contribution to the oo-part of the GS-density
 !!
 !!    D_kl += -1/2 sum_ij,abc t^abc_ijk tbar^abc_ijl
@@ -636,15 +652,13 @@ contains
 !!    All permutations for a,b,c have to be considered 
 !!    due to the restrictions in the a,b,c loops   
 !!
-!!    Written by Alexander Paul, August 2019
-!!
       implicit none
 !
       class(cc3) :: wf
 !
       integer, intent(in) :: a, b, c
 !
-      real(dp), dimension(wf%n_o, wf%n_o), intent(out)  :: density_oo
+      real(dp), dimension(wf%n_o, wf%n_o), intent(inout)  :: density_oo
 !
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(in)  :: t_ijk
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(out) :: u_ijk
@@ -765,8 +779,11 @@ contains
    end subroutine one_el_density_cc3_oo_N7_cc3
 !
 !
-   module subroutine gs_one_el_density_cc3_ijk_cc3(wf, density_ov, density_vv, omega, &
-                                                   tbar_ai, tbar_abij, t_abij, keep_Y)
+   module subroutine gs_one_el_density_cc3_ijk_cc3(wf, density_ov, density_vv, omega,  &
+                                                   tbar_ai, tbar_abij, t_abij, cvs, keep_Y)
+!!
+!!    CC3 Ground state density contributions in batches of i,j,k
+!!    Written by Alexander C. Paul, August 2019
 !!
 !!    Construct t^abc_ijk and tbar^abc_ijk in batches of i,j,k and compute
 !!    the contributions to the ov- and vv-part of the ground state density matrix.
@@ -776,18 +793,18 @@ contains
 !!
 !!    ov-part:
 !!       ρ^L_kc += sum_{ab}{ij} tbar^ab_ij (t^abc_ijk - t^bac_ijk)
+!!       ρ^L_ld -= sum_{ab}{ijk} tbar^abc_ijk t^ab_lj t^dc_ik
 !!
 !!    vv-part:
 !!       ρ^L_cd += 1/2 sum_{ab}{ijk} tbar^abc_ijk t^abd_ijk
-!!       ρ^L_ld -= sum_{ab}{ijk} tbar^abc_ijk t^ab_lj t^dc_ik
-!!
-!!    Written by Alexander Paul, August 2019
 !!
       implicit none
 !
       class(cc3) :: wf
 !
       real(dp), intent(in) :: omega
+!
+      logical, intent(in)  :: cvs
 !
 !     If present and true the intermediate Y_clik will be stored on file
       logical, intent(in), optional :: keep_Y
@@ -808,7 +825,7 @@ contains
       real(dp), dimension(:,:,:), allocatable :: u_abc
       real(dp), dimension(:,:,:), allocatable :: v_abc
 !
-      real(dp), dimension(:,:), allocatable :: F_kc ! Transpose the fock matrix sub block
+      real(dp), dimension(:,:), allocatable :: F_ov_ck ! Transpose the fock matrix ov block
 !
 !     Integrals for the construction of the T3-amplitudes
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdci
@@ -865,11 +882,15 @@ contains
 !     Intermediate Y_clik
       real(dp), dimension(:,:,:,:), allocatable :: Y_clik, Y_lcik
 !
-      integer :: i, j, k, i_rel, j_rel, k_rel
       type(batching_index) :: batch_i, batch_j, batch_k
       integer :: i_batch, j_batch, k_batch
       integer :: req_0, req_1, req_2, req_3
+      integer :: i, j, k, i_rel, j_rel, k_rel
       integer :: a
+!
+!     CVS
+      integer :: i_cvs
+      logical :: ijk_core
 !
 !     Setup and Batching loops
 !
@@ -883,7 +904,7 @@ contains
       batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                           req_0, req_1, req_2, req_3, zero)
+                           req_0, req_1, req_2, req_3, buffer_size = zero)
 !
 !     Allocate integral arrays
 !
@@ -923,8 +944,8 @@ contains
       call mem%alloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
 !     Fock matrix subblock: Resorting for easier contractions later
-      call mem%alloc(F_kc, wf%n_v, wf%n_o)
-      call sort_12_to_21(wf%fock_ia, F_kc, wf%n_o, wf%n_v)
+      call mem%alloc(F_ov_ck, wf%n_v, wf%n_o)
+      call sort_12_to_21(wf%fock_ia, F_ov_ck, wf%n_o, wf%n_v)
 !
 !     vooo Intermediate
       call mem%alloc(Y_clik, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
@@ -1095,8 +1116,29 @@ contains
 !
                      do k = batch_k%first, min(batch_k%last, j)
 !
-                        if (i .eq. j .and. i .eq. k) then
-                           cycle
+                        if (i .eq. j .and. i .eq. k) cycle
+!
+!
+!                       Check if at least one index i,j,k is a core orbital
+                        if(cvs) then
+!
+                           ijk_core = .false.
+!
+                           do i_cvs = 1, wf%n_core_MOs
+!
+                              if(     i .eq. wf%core_MOs(i_cvs)   &
+                                 .or. j .eq. wf%core_MOs(i_cvs)   &
+                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+!
+                              ijk_core = .true.
+!
+                              end if
+!
+                           end do
+!
+!                       Cycle if i,j,k are not core orbitals
+                        if (.not. ijk_core) cycle
+!
                         end if
 !
 !                       c3_calc does not zero out the array
@@ -1124,7 +1166,7 @@ contains
 !                       construct tbar3 for fixed i,j,k
                         call wf%jacobian_transpose_cc3_c3_calc(i, j ,k, tbar_ai, tbar_abij,  &
                                                                tbar_abc, u_abc, v_abc,       &
-                                                               F_kc,                         &
+                                                               F_ov_ck,                      &
                                                                L_ibjc_p(:,:,i_rel,j_rel),    &
                                                                L_ibkc_p(:,:,i_rel,k_rel),    &
                                                                L_jbkc_p(:,:,j_rel,k_rel),    &
@@ -1208,7 +1250,7 @@ contains
 !
       call mem%dealloc(tbar_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call mem%dealloc(F_kc, wf%n_v, wf%n_o)
+      call mem%dealloc(F_ov_ck, wf%n_v, wf%n_o)
 !
       do a = 1, wf%n_v
          do i = 1, wf%n_o
@@ -1262,14 +1304,13 @@ contains
    module subroutine one_el_density_cc3_vv_N7_cc3(wf, i, j, k, density_vv, t_abc, &
                                                    u_abc, tbar_abc, v_abc)
 !!
-!!    Calculates triples contribution to the vv-part of the GS-density
+!!    CC3 contribution to the vv-part of the GS-density
+!!    Written by Alexander C. Paul, August 2019
 !!
 !!    D_cd += 1/2 sum_ab,ijk tbar^abc_ijk t^abd_ijk
 !!
 !!    All permutations for i,j,k have to be considered 
-!!    due to the restrictions in the i,j,k loops   
-!!
-!!    Written by Alexander Paul, August 2019
+!!    due to the restrictions in the i,j,k loops
 !!
       implicit none
 !
@@ -1277,14 +1318,14 @@ contains
 !
       integer, intent(in) ::  i, j, k
 !
-      real(dp), dimension(wf%n_v, wf%n_v), intent(out)  :: density_vv
+      real(dp), dimension(wf%n_v, wf%n_v), intent(inout)  :: density_vv
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)  :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: u_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)  :: tbar_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: v_abc
 !
-!     D_cd += 1/2 sum_ab tbar^abc_ijk tbar^abd_ijk
+!     D_cd += 1/2 sum_ab tbar^abc_ijk t^abd_ijk
 !
       call dgemm('T','N',     &
                   wf%n_v,     &
@@ -1299,7 +1340,7 @@ contains
                   density_vv, &
                   wf%n_v)
 !
-!     D_cd += 1/2 sum_ab tbar^cab_ijk tbar^dab_ijk
+!     D_cd += 1/2 sum_ab tbar^cab_ijk t^dab_ijk
 !
       call dgemm('N','T',     &
                   wf%n_v,     &
@@ -1319,7 +1360,7 @@ contains
       call sort_123_to_231(t_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
       call sort_123_to_231(tbar_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-!     D_cd += 1/2 sum_ab tbar^bca_ijk tbar^bda_ijk
+!     D_cd += 1/2 sum_ab tbar^bca_ijk t^bda_ijk
 !
       call dgemm('N','T',     &
                   wf%n_v,     &
@@ -1342,7 +1383,7 @@ contains
          call sort_123_to_213(t_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
          call sort_123_to_213(tbar_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-!     D_cd += 1/2 sum_ab tbar^bac_ijk tbar^bad_ijk
+!     D_cd += 1/2 sum_ab tbar^bac_ijk t^bad_ijk
 !
       call dgemm('T','N',     &
                   wf%n_v,     &
@@ -1357,7 +1398,7 @@ contains
                   density_vv, &
                   wf%n_v)
 !
-!     D_cd += 1/2 sum_ab tbar^acb_ijk tbar^adb_ijk
+!     D_cd += 1/2 sum_ab tbar^acb_ijk t^adb_ijk
 !
       call dgemm('N','T',     &
                   wf%n_v,     &
@@ -1377,7 +1418,7 @@ contains
          call sort_123_to_321(t_abc, u_abc, wf%n_v, wf%n_v, wf%n_v)
          call sort_123_to_321(tbar_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-!     D_cd += 1/2 sum_ab tbar^cba_ijk tbar^dba_ijk
+!     D_cd += 1/2 sum_ab tbar^cba_ijk t^dba_ijk
 !
       call dgemm('T','N',     &
                   wf%n_v,     &
@@ -1399,16 +1440,16 @@ contains
 !
    module subroutine construct_y_intermediate_vo3_cc3(wf, i, j, k, tbar_abc, u_abc, t_abij, Y_clik)
 !!
-!!    Constructs the intermediate Y_clik used to compute 
-!!    the triples multipliers contributions to the ov part of the GS density
+!!    Construct Y_clik intermediate  
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
 !!    Y_clik = sum_abj tbar^abc_ijk * t^ab_lj
+!!    used to compute the tbar3 contributions to the ov part of the GS density
 !!
 !!    All permutations for i,j,k have to be considered 
 !!    due to the restrictions in the i,j,k loops
 !!
 !!    equal to some of the terms in jacobian_transpose construct_y_intermediates
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !

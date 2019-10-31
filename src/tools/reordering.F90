@@ -5750,7 +5750,7 @@ contains
 !!
 !!    Add 2431 to 1234
 !!    Written by Sarai D. Folkestad,
-!!    Eirik F. Kjønstad and Alexander Paul, Jan 2019
+!!    Eirik F. Kjønstad and Alexander C. Paul, Jan 2019
 !!
 !!    Performs:
 !!
@@ -5788,7 +5788,7 @@ contains
 !!
 !!    Add 2431 to 1234
 !!    Written by Sarai D. Folkestad,
-!!    Eirik F. Kjønstad and Alexander Paul, Jan 2019
+!!    Eirik F. Kjønstad and Alexander C. Paul, Jan 2019
 !!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
 !!
 !!    Performs:

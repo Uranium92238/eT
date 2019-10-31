@@ -22,7 +22,7 @@ submodule (lowmem_cc2_class) omega_lowmem_cc2
 !!
 !!    Omega submodule (CC2)
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    Linda Goletto and Alexander Paul, 2018
+!!    Linda Goletto and Alexander C. Paul, 2018
 !!
 !!    Routines to construct 
 !!
@@ -38,7 +38,7 @@ contains
 !!
 !!    Construct omega 
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
 !!    Direqts the construction of the projection vector < mu | exp(-T) H exp(T) | R >
 !!    for the current wavefunction amplitudes.
@@ -64,7 +64,7 @@ contains
 !!
 !!    Omega CC2 A1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
 !!    Calculates the A1 term,
 !!
@@ -181,7 +181,7 @@ contains
 !!
 !!    Omega CC2 B1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
 !!    Calculates the B1 term,
 !!
@@ -344,7 +344,7 @@ contains
 !!
 !!    Omega CC2 C1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
 !!    Calculates the C1 term,
 !!

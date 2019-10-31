@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine effective_jacobian_transpose_transformation_lowmem_cc2(wf, omega, b)
+   module subroutine effective_jacobian_transpose_transformation_lowmem_cc2(wf, omega, b, cvs)
 !!
 !!    Effective Jacobian transpose transformation
 !!    Written by Sarai Dery Folkestad, Jun 2019
@@ -28,6 +28,8 @@
 !
       real(dp), intent(in) :: omega
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
+!
+      logical, intent(in) :: cvs
 !
    end subroutine effective_jacobian_transpose_transformation_lowmem_cc2
 !

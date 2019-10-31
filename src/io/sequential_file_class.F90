@@ -179,7 +179,7 @@ contains
    subroutine open_sequential_file(the_file, file_action, position_)
 !!
 !!    Open eT sequential file
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
@@ -267,7 +267,7 @@ contains
    subroutine rewind_sequential_file(the_file)
 !!
 !!    Rewind the sequential file
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
@@ -296,7 +296,7 @@ contains
    subroutine skip_sequential_file(the_file, jump)
 !!
 !!    Skip sequential file
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!    Skip jump number of lines. Default: 1
 !!
       implicit none

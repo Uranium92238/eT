@@ -2228,9 +2228,10 @@ contains
 !
    function are_vectors_parallel(x, y, dim_, threshold) result(parallel)
 !!
-!!    Checks if 2 vectors are parallel within a given threshold
-!!    written by Alexander C. Paul and Rolf H. Myhre, Oct 2019
+!!    Are vectors parallel
+!!    Written by Alexander C. Paul and Rolf H. Myhre, Oct 2019
 !!
+!!    Checks if 2 vectors are parallel within a given threshold.
 !!    For 2 parallel vectors x and y = a*x
 !!          sqrt(x*x * y*y) = |x*y|
 !!
@@ -2263,6 +2264,37 @@ contains
       end if
 !
    end function are_vectors_parallel
+!
+!
+   subroutine scale_vector_by_vector(X, Y, dim_)
+!!
+!!    Scale vector by vector
+!!    Written by Alexander C. Paul, Sep 2019
+!!
+!!    Scales each element of a vector 
+!!    by the corresponding element of another vector
+!!             X(p) = X(p) * Y(p)
+!!
+!!    Used eg. for applying a projector
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_), intent(inout)  :: X
+      real(dp), dimension(dim_), intent(in)     :: Y
+!
+      integer :: p
+!
+!$omp parallel do private(p)
+      do p = 1, dim_
+!
+         X(p) = X(p)*Y(p)
+!
+      enddo  
+!$omp end parallel do
+!
+   end subroutine scale_vector_by_vector
 !
 !
 end module array_utilities

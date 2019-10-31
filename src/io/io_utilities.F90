@@ -61,8 +61,9 @@ module io_utilities
 !
    interface compound_record_writer
 !
-      procedure   write_array_compound_record_2batches, &
-                  write_array_compound_record_1batch
+      procedure   write_array_compound_record_2batches,  &
+                  write_array_compound_record_1batch,    &
+                  write_array_compound_record_0batches
 !
    end interface compound_record_writer
 !
@@ -72,10 +73,11 @@ contains
 !
    subroutine read_1_array_single_record(dim_z, file_1, g_pqrz)
 !!
-!!    Read the direct access file "file_1" with record z into g_pqrz
-!!    NB: It is assumed that z is sorted at the end
+!!    Read one array with single index as record
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Read the whole direct access file "file_1" with record z into g_pqrz
+!!    NB: It is assumed that z is the last index
 !!
       implicit none
 !
@@ -98,11 +100,12 @@ contains
 !
    subroutine read_1_array_single_record_batch(batch_z, file_1, g_pqrz)
 !!
-!!    Read parts of the direct access files "file" into g_pqrz for the current batch z
-!!    NB: It is assumed that the batching index is sorted at the end
-!!        and that the record is equal to the batching index
+!!    Read one array with single index as record (batched)
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Read parts of the direct access file "file_1" into g_pqrz for the current batch z
+!!    NB: It is assumed that the batching index is the last index
+!!        and that the record is equal to the batching index
 !!
       implicit none
 !
@@ -127,12 +130,12 @@ contains
 !
    subroutine read_2_arrays_single_record_batch(batch_z, file_1, g_pqrz, file_2, g_stuz)
 !!
-!!    Read parts of the direct access files "file_1/2"
-!!    into g_pqrz/g_stuz for the current batch z
-!!    NB: It is assumed that the batching index is sorted at the end
-!!        and that the record is equal to the batching index
+!!    Read two arrays with single index as record (batched)
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Read parts of the direct access files "file_1/2" for the current batch z
+!!    NB: It is assumed that the batching index is the last index
+!!        and that the record is equal to the batching index
 !!
       implicit none
 !
@@ -169,12 +172,12 @@ contains
 !
    subroutine read_3_arrays_single_record_batch(batch_z, file_1, g_pqrz, file_2, g_stuz, file_3, g_vwxz)
 !!
-!!    Read parts of the direct access files "file_1/2/3"
-!!    into g_pqrz/g_stuz/g_vwxz for the current batch z
-!!    NB: It is assumed that the batching index is sorted at the end
-!!        and that the record is equal to the batching index
+!!    Read three arrays with single index as record (batched)
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Read parts of the direct access files "file_1/2/3" for the current batch z
+!!    NB: It is assumed that the batching index is the last index
+!!        and that the record is equal to the batching index
 !!
       implicit none
 !
@@ -223,11 +226,12 @@ contains
 !
    subroutine read_1_array_compound_record_0batches(dim_z, dim_y, file_1, g_pqzy)
 !!
-!!    Read the direct access file "file_1" with records of zy into g_pqzy
-!!    NB: It is assumed that the batching indices are sorted at the end of the array
-!!        in z,y order and that the record is equal to the compound index zy
+!!    Read one array with compound index as record
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Read whole direct access file "file_1" into g_pqzy for the current batch z
+!!    NB: It is assumed that the batching indices are the last indices of the
+!!        array (z,y order) and that the record is equal to the compound index zy
 !!
       implicit none
 !
@@ -256,12 +260,12 @@ contains
 !
    subroutine read_1_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
 !!
-!!    Read parts of the direct access file "file_1" with records of zy into g_pqzy
-!!    Read in batches of z and y
-!!    NB: It is assumed that the batching indices are sorted at the end of the array
-!!        in z,y order and that the record is equal to the compound index zy
+!!    Read one array with compound index as record (batched)
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Read parts of the direct access file "file_1" with records of zy into g_pqzy
+!!    NB: It is assumed that the batching indices are the last indices of the
+!!        array (z,y order) and that the record is equal to the compound index zy
 !!
       implicit none
 !
@@ -295,13 +299,13 @@ contains
 !
    subroutine read_1_array_compound_record_1batch(dim_z, batch_y, file_1, g_pqzy, switch)
 !!
-!!    Read parts of the direct access file "file_1" with records of zy into g_pqzy
-!!    Reads z in full dimension y in batches
-!!    NB: It is assumed that the indices zy are sorted at the end of the array
-!!        in z,y order and that the record is equal to the compound index zy
+!!    Read one array with compound index as record (batched)
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    Based on read_1_array_compound_record_2batches written by Alexander Paul and Rolf H. Myhre
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Read parts of the direct access file "file_1" with records of zy
+!!    Reads 1 index in full dimension depending on switch
+!!    NB: It is assumed that the batching indices are the last indices of the
+!!        array (z,y order) and that the record is equal to the compound index zy
 !!
       implicit none
 !
@@ -346,14 +350,14 @@ contains
 !
 !
    subroutine read_2_arrays_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, &
-                                                   file_2, g_rszy)
+                                                     file_2, g_rszy)
 !!
-!!    Read parts of the direct access files "file_1/2" with records of zy into g_pqzy/g_rszy
-!!    Reads in batches of z and y
-!!    NB: It is assumed that the batching indices are sorted at the end of the array
-!!        in z,y order and that the record is equal to the compound index zy
+!!    Read two arrays with compound index as record (batched)
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Read parts of the direct access file "file_1/2" with records of zy
+!!    NB: It is assumed that the batching indices are the last indices of the
+!!        array (z,y order) and that the record is equal to the compound index zy
 !!
       implicit none
 !
@@ -407,13 +411,12 @@ contains
    subroutine read_3_arrays_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, &
                                                    file_2, g_rszy, file_3, g_tuzy)
 !!
-!!    Read parts of the direct access files "file_1/2/3" with records of zy
-!!    into g_pqzy/g_rszy/g_tuzy
-!!    Reads in batches of z and y
-!!    NB: It is assumed that the batching indices are sorted at the end of the array
-!!        in z,y order and that the record is equal to the compound index zy
+!!    Read three arrays with compound index as record (batched)
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Read parts of the direct access file "file_1/2/3" with records of zy
+!!    NB: It is assumed that the batching indices are the last indices of the
+!!        arrays (z,y order) and that the record is equal to the compound index zy
 !!
       implicit none
 !
@@ -486,13 +489,12 @@ contains
    subroutine read_4_arrays_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy, file_2,  &
                                                    g_rszy, file_3, g_tuzy, file_4, g_vwzy)
 !!
-!!    Read parts of the direct access files "file_1/2/3/4" with records of zy
-!!    into g_pqzy/g_rszy/g_tuzy/g_vwzy
-!!    Reads in batches of z and y
-!!    NB: It is assumed that the batching indices are sorted at the end of the array
-!!        in z,y order and that the record is equal to the compound index zy
+!!    Read four arrays with compound index as record (batched)
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Read parts of the direct access file "file_1/2/3/4" with records of zy
+!!    NB: It is assumed that the batching indices are the last indices of the
+!!        arrays (z,y order) and that the record is equal to the compound index zy
 !!
       implicit none
 !
@@ -583,10 +585,11 @@ contains
 !
    subroutine write_array_single_record(dim_z, file_1, g_pqrz)
 !!
-!!    Writes an array to a direct access file "file_1" with records z
-!!    The last index of the array (z) is the record number
+!!    Write array with single index as record
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Writes parts of the direct access file "file_1" with record in z
+!!    NB: It is assumed that the batching index is the last index
 !!
       implicit none
 !
@@ -609,10 +612,11 @@ contains
 !
    subroutine write_array_single_record_batch(batch_z, file_1, g_pqrz)
 !!
-!!    Writes an array to a direct access file "file_1" with records z
-!!    The last index of the array (z) is batched over and is also the record number
+!!    Write array with single index as record (batched)
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Writes parts of the direct access file "file_1" with record in z
+!!    NB: It is assumed that the batching index is the last index
 !!
       implicit none
 !
@@ -637,12 +641,12 @@ contains
 !
    subroutine write_array_compound_record_2batches(batch_z, batch_y, file_1, g_pqzy)
 !!
-!!    Writes an array to a direct access file "file_1" with records zy
+!!    Write array with compound index as record (batched)
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
+!!    Writes parts of the direct access file "file_1" with records in z,y
 !!    NB: It is assumed that the array is split in batches of z and y
-!!        which are sorted in y,z order at the end of the array
-!!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!        which are sorted (z,y order) at the end of the array
 !!
       implicit none
 !
@@ -676,15 +680,14 @@ contains
 !
    subroutine write_array_compound_record_1batch(dim_z, batch_y, file_1, g_pqzy, reverse)
 !!
-!!    Writes an array to a direct access file "file_1" with records zy
+!!    Write array with compound index as record (batched)
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
+!!    Writes parts of the direct access file "file_1" with records in z,y
 !!    NB: It is assumed that z is of full dimension and y is batched over
-!!        z and y are sorted in z,y order at the end of the array
+!!        z and y are sorted (z,y order) at the end of the array
 !!
-!!    reverse, optional logical that changes order of z and y if .true.. 
-!!    Fortran does not let us overload based on argument order alone, unfortunately
-!!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Writes an array to a direct access file "file_1" with records zy
 !!
       implicit none
 !
@@ -725,6 +728,39 @@ contains
       endif
 !
    end subroutine write_array_compound_record_1batch
+!
+!
+   subroutine write_array_compound_record_0batches(dim_z, dim_y, file_1, g_pqzy)
+!!
+!!    Write array with compound index as record
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
+!!
+!!    Writes whole direct access file "file_1" with records in z,y
+!!    NB: It is assumed that z and y are sorted (z,y order) at the end of the array
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_z
+      integer, intent(in) :: dim_y
+!
+      real(dp), dimension(:,:,:,:), contiguous, intent(in) :: g_pqzy
+!
+      type(direct_file), intent(in) :: file_1
+!
+      integer :: record
+      integer :: z, y
+!
+      do y = 1, dim_y
+         do z = 1, dim_z
+!
+            record = (y - 1) * dim_z + z
+!
+            call file_1%write_(g_pqzy(:,:,z,y), record)
+!
+         enddo
+      enddo
+!
+   end subroutine write_array_compound_record_0batches
 !
 !
 end module

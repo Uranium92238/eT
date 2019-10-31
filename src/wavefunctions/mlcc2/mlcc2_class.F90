@@ -1013,7 +1013,7 @@ contains
 !!
 !!    Cleanup
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad and
-!!    Alexander Paul , 2018
+!!    Alexander C. Paul , 2018
 !!
       implicit none
 !

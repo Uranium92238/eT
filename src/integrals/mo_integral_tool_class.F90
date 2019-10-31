@@ -825,20 +825,20 @@ contains
 !
    subroutine construct_cholesky_ij_c1_mo_integral_tool(integrals, L_J_ij_c1, c_aj, first_i, last_i, first_j, last_j)
 !!
-!!    Construct the C1-transformed Cholesky Vector ij from the T1-transformed Cholesky Vector L_J_ia
+!!    Construct the C1-transformed Cholesky Vector ij
+!!    Written by Alexander C. Paul, Feb 2019
 !!
-!!    Based on construct_cholesky_ij_mo_integral_tool written by Sarai D. Folkestad and Eirik F. Kjønstad
-!!    Modified for the c1-transformation by Alexander Paul, Feb 2019
-!!
-!!    j is the transformed index
-!!
-!!    Note: the routine assumes that the T1-transformed Cholesky vectors have been placed on file.
+!!    Based on construct_cholesky_ij_mo_integral_tool 
+!!    written by Sarai D. Folkestad and Eirik F. Kjønstad
 !!
 !!    Computes
 !!
 !!       L_ij_J_c1= sum_a L_ia_J_T1 c_aj ,
 !!
 !!    and saves the result in L_J_ij_c1 (ordering to be consistent with read_cholesky_t1)
+!!
+!!    Note: assumes that the T1-transformed Cholesky vectors have been placed on file.
+!!          j is the transformed index
 !!
       implicit none
 !
@@ -847,7 +847,7 @@ contains
       integer, intent(in) :: first_i, last_i
       integer, intent(in) :: first_j, last_j
 !
-      real(dp), dimension(integrals%n_J, last_i - first_i + 1, last_j - first_j + 1), intent(inout) :: L_J_ij_c1
+      real(dp), dimension(integrals%n_J, last_i - first_i + 1, last_j - first_j + 1), intent(out) :: L_J_ij_c1
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: c_aj
 !
@@ -895,20 +895,20 @@ contains
    subroutine construct_cholesky_ab_c1_mo_integral_tool(integrals, L_J_ab_c1, c_ai, &
                                                         first_a, last_a, first_b, last_b)
 !!
-!!    Construct the C1-transformed Cholesky Vector ab from the T1-transformed Cholesky Vector
+!!    Construct the C1-transformed Cholesky Vector ab
+!!    Written by Alexander C. Paul, Feb 2019
 !!
-!!    Based on construct_cholesky_ab_mo_integral_tool written by Sarai D. Folkestad and Eirik F. Kjønstad
-!!    Modified for the c1-transformation by Alexander Paul, Feb 2019
-!!
-!!    a is the transformed index
-!!
-!!    Note: the routine assumes that the T1-transformed Cholesky vectors have been placed on file.
+!!    Based on construct_cholesky_ab_mo_integral_tool
+!!    written by Sarai D. Folkestad and Eirik F. Kjønstad
 !!
 !!    Computes
 !!
 !!       L_ab_J_c1= - sum_i c_ai L_ib_J_T1 ,
 !!
 !!    and returns the result in L_J_ab_c1 (ordering to be consistent with read_cholesky_t1)
+!!
+!!    Note: the routine assumes that the T1-transformed Cholesky vectors have been placed on file.
+!!          a is the transformed index
 !!
       implicit none
 !
@@ -919,7 +919,7 @@ contains
       integer, intent(in) :: first_a, last_a
       integer, intent(in) :: first_b, last_b
 !
-      real(dp), dimension(integrals%n_J, last_a - first_a + 1, last_b - first_b + 1) :: L_J_ab_c1
+      real(dp), dimension(integrals%n_J, last_a - first_a + 1, last_b - first_b + 1), intent(out) :: L_J_ab_c1
 !
       integer :: full_first_a, full_last_a
       integer :: full_first_b, full_last_b
@@ -975,21 +975,20 @@ contains
    subroutine construct_cholesky_ai_a_c1_mo_integral_tool(integrals, L_J_ai_c1, c_aj, &
                                                           first_a, last_a, first_i, last_i)
 !!
-!!    Construct the C1-transformed Cholesky Vector ai from the T1-transformed Cholesky Vector
+!!    Construct the C1-transformed Cholesky Vector ai
+!!    Written by Alexander C. Paul, Feb 2019
 !!
-!!    Based on construct_cholesky_ai_mo_integral_tool (Term 3) written by Sarai D. Folkestad and Eirik F. Kjønstad
-!!    Modified for the c1-transformation by Alexander Paul, Feb 2019
-!!
-!!    a is the transformed index
-!!
-!!    Note: the routine assumes that the T1-transformed Cholesky vectors
-!!    have been placed on file.
+!!    Based on construct_cholesky_ai_mo_integral_tool (Term 3) 
+!!    written by Sarai D. Folkestad and Eirik F. Kjønstad
 !!
 !!    Computes
 !!
 !!       L_ai_J_c1= - sum_j c_aj L_ji_J_T1 ,
 !!
 !!    and returns the result in L_J_ai_c1 (ordering to be consistent with read_cholesky_t1)
+!!
+!!    Note: assumes that the T1-transformed Cholesky have been placed on file.
+!!    a is the transformed index
 !!
       implicit none
 !
@@ -998,7 +997,7 @@ contains
       integer, intent(in) :: first_i, last_i
       integer, intent(in) :: first_a, last_a
 !
-      real(dp), dimension(last_a - first_a + 1, last_i - first_i + 1, integrals%n_J) :: L_J_ai_c1
+      real(dp), dimension(last_a - first_a + 1, last_i - first_i + 1, integrals%n_J), intent(out) :: L_J_ai_c1
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: c_aj
 !
@@ -1052,21 +1051,20 @@ contains
    subroutine construct_cholesky_ai_i_c1_mo_integral_tool(integrals, L_J_ai_c1, c_bi, & 
                                                           first_a, last_a, first_i, last_i)
 !!
-!!    Construct the C1-transformed Cholesky Vector ai from the T1-transformed Cholesky Vector
+!!    Construct the C1-transformed Cholesky Vector ai
+!!    Written by Alexander C. Paul, Feb 2019
 !!
-!!    Based on construct_cholesky_ai_mo_integral_tool (Term 2) written by Sarai D. Folkestad and Eirik F. Kjønstad
-!!    Modified for the c1-transformation by Alexander Paul, Feb 2019
-!!
-!!    i is the transformed index
-!!
-!!    Note: the routine assumes that the T1-transformed Cholesky vectors
-!!    have been placed on file.
+!!    Based on construct_cholesky_ai_mo_integral_tool (Term 2) 
+!!    written by Sarai D. Folkestad and Eirik F. Kjønstad
 !!
 !!    Computes
 !!
 !!       L_ai'_J_c1= sum_b L_ab_J_T1 c_bi,
 !!
 !!    and returns the result in L_J_ai_c1 (ordering to be consistent with read_cholesky_t1)
+!!
+!!    Note: assumes that the T1-transformed Cholesky vectors have been placed on file.
+!!          i is the transformed index
 !!
       implicit none
 !
@@ -1075,7 +1073,7 @@ contains
       integer, intent(in) :: first_i, last_i
       integer, intent(in) :: first_a, last_a
 !
-      real(dp), dimension(last_a - first_a + 1, last_i - first_i + 1, integrals%n_J) :: L_J_ai_c1
+      real(dp), dimension(last_a - first_a + 1, last_i - first_i + 1, integrals%n_J), intent(out) :: L_J_ai_c1
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: c_bi
 !

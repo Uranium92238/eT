@@ -291,8 +291,6 @@ contains
 !
       endif
 !
-      call wf%save_tbar_intermediates()
-!
    end subroutine do_multipliers_gs_engine
 !
 !

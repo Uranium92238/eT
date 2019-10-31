@@ -23,7 +23,7 @@
 !!    Written by Sarai D. Folkestad, Apr 2019
 !!
 !!    Adapted from jacobian_transpose_cc2.F90
-!!    written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
       implicit none
 !
@@ -38,7 +38,7 @@
 !!    Written by Sarai D. Folkestad, Apr 2019
 !!
 !!    Adapted from jacobian_transpose_cc2.F90
-!!    written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
       implicit none
 !
@@ -57,7 +57,7 @@
 !!    Written by Sarai D. Folkestad, Apr 2019
 !!
 !!    Adapted from jacobian_transpose_cc2.F90
-!!    written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
       implicit none
 !
@@ -78,7 +78,7 @@
 !!    Written by Sarai D. Folkestad, Apr 2019
 !!
 !!    Adapted from jacobian_transpose_cc2.F90
-!!    written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
       implicit none
 !
@@ -100,7 +100,7 @@
 !!    Written by Sarai D. Folkestad, Apr 2019
 !!
 !!    Adapted from jacobian_transpose_cc2.F90
-!!    written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
       implicit none
 !
@@ -119,7 +119,7 @@
 !!    Written by Sarai D. Folkestad, Apr 2019
 !!
 !!    Adapted from jacobian_transpose_cc2.F90
-!!    written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
       implicit none
 !

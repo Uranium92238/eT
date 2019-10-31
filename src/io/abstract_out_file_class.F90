@@ -55,7 +55,7 @@ contains
    subroutine open_abstract_out_file(the_file, position_)
 !!
 !!    Open the abstract_out file
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
@@ -100,7 +100,7 @@ contains
    subroutine close_abstract_out_file(the_file)
 !!
 !!    Close the output file
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
@@ -132,7 +132,7 @@ contains
    subroutine flush_abstract_out_file(the_file)
 !!
 !!    Flush the output file
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
@@ -157,7 +157,7 @@ contains
    subroutine format_print_abstract_out_file(the_file, string, reals, ints, chars, logs, fs, ffs, lfs, ll, adv)
 !!
 !!    Format print 
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
 !!    Prints any number of reals and integers formatted Python style.
 !!

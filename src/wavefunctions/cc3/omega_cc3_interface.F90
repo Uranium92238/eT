@@ -114,8 +114,10 @@
    end subroutine omega_cc3_eps_cc3
 !
 !
-   module subroutine omega_cc3_a_n6_cc3(wf, i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
-                                        L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
+   module subroutine omega_cc3_a_n6_cc3(wf, i, j, k, t_abc, u_abc, &
+                                        omega1, omega2, F_ov_ck,   &
+                                        L_jbic, L_kbic, L_kbjc,    &
+                                        L_ibjc, L_ibkc, L_jbkc)
 !!
 !!    omega_cc3_a_n6
 !!
@@ -140,7 +142,7 @@
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                   :: omega1
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: omega2
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_kc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_ov_ck
 !
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbic
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbic

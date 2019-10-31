@@ -21,7 +21,7 @@ submodule (cc3_class) jacobian_transpose
 !
 !!
 !!    Jacobian transpose submodule (cc3)
-!!    Written by Alexander Paul and Rolf H. Myhre, March 2019
+!!    Written by Alexander C. Paul and Rolf H. Myhre, March 2019
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the transpose of the Jacobian matrix
@@ -39,10 +39,10 @@ submodule (cc3_class) jacobian_transpose
 contains
 !
 !
-   module subroutine effective_jacobian_transpose_transformation_cc3(wf, omega, c)
+   module subroutine effective_jacobian_transpose_transformation_cc3(wf, omega, c, cvs)
 !!
 !!    Effective Jacobian transpose transformation (CC3)
-!!    Written by Alexander Paul and Rolf H. Myhre, March 2019
+!!    Alexander C. Paul and Rolf H. Myhre, March 2019
 !!
 !!    Directs the transformation by the transpose of the  CC3 Jacobi matrix,
 !!
@@ -52,7 +52,7 @@ contains
 !!    sent to the routine. On exit, the vector c is equal to sigma (the transformed
 !!    vector).
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -61,6 +61,8 @@ contains
       real(dp), intent(in) :: omega
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
+!
+      logical, intent(in) :: cvs
 !
       real(dp), dimension(:,:), allocatable :: c_ai
       real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij, t_aibj, u_aibj
@@ -164,14 +166,14 @@ contains
 !
       call cc3_timer_t3_b1%turn_on()
 !
-      call wf%jacobian_transpose_cc3_t3_b1(c_abij, sigma_ai)
+      call wf%jacobian_transpose_cc3_t3_b1(c_abij, sigma_ai, cvs)
 !
       call cc3_timer_t3_b1%turn_off()
 !
 !     CC3-Contributions from the C3-amplitudes
       call cc3_timer_c3%turn_on()
 !
-      call wf%jacobian_transpose_cc3_c3_a(omega, c_ai, c_abij, sigma_ai, sigma_abij)
+      call wf%jacobian_transpose_cc3_c3_a(omega, c_ai, c_abij, sigma_ai, sigma_abij, cvs)
 !
       call cc3_timer_c3%turn_off()
 !
@@ -213,6 +215,9 @@ contains
 !
    module subroutine jacobian_transpose_cc3_t3_a1_cc3(wf, c_abij, sigma_ai)
 !!
+!!    Jacobian transpose T3 A1 term
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
+!!
 !!    Computes the first contribution of the T3 amplitudes to sigma_1
 !!
 !!    Reads in the intermediates X_abid and X_ajil prepared in prepare_jacobian_transpose
@@ -223,7 +228,7 @@ contains
 !!    where: X_abid = - sum_jck (2t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_kcjd
 !!           X_ajil = - sum_bck (2t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_lbkc
 !!    
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -310,17 +315,16 @@ contains
    end subroutine jacobian_transpose_cc3_t3_a1_cc3
 !
 !
-   module subroutine jacobian_transpose_cc3_t3_b1_cc3(wf, c_abij, sigma_ai)
+   module subroutine jacobian_transpose_cc3_t3_b1_cc3(wf, c_abij, sigma_ai, cvs)
 !!
-!!    Computes the second contribution of the T3 amplitudes to sigma_1
+!!    Jacobian transpose T3 B1 term
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
 !!    Constructs t^abc_ijk for fixed ijk and contracts with c_abij
 !!    The intermediate X_ai is then contracted with L_iald
 !!
 !!    sigma_dl +=  sum_abcijk C^bc_jk (t^abc_ijk - t^bac_ijk) L_iald
 !!             +=  sum_ai X_ai * L_iald
-!!    
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -329,6 +333,8 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
+!
+      logical, intent(in) :: cvs
 !
 !     Arrays for triples amplitudes
       real(dp), dimension(:,:,:), allocatable :: t_abc
@@ -389,7 +395,7 @@ contains
       batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                                 req_0, req_1, req_2, req_3, zero)
+                                 req_0, req_1, req_2, req_3, buffer_size = zero)
 !
 !     Allocate integral arrays
 !
@@ -503,6 +509,10 @@ contains
 !
                endif
 !
+!              sigma_dl +=  sum_abcijk C^bc_jk (t^abc_ijk - t^bac_ijk) L_iald
+!              CVS: in principle check j,k and l but due to the symmetry in L_iald
+!                   we can also check i,j,k
+!
                do i = batch_i%first, batch_i%last
 !
                   i_rel = i - batch_i%first + 1
@@ -518,7 +528,7 @@ contains
                         end if
 !
 !                       Check if at least one index i,j,k is a core orbital
-                        if(wf%cvs) then
+                        if(cvs) then
 !
                            ijk_core = .false.
 !
@@ -655,6 +665,7 @@ contains
    module subroutine construct_x_ai_intermediate_cc3(wf, i, j, k, t_abc, u_abc, x_ai, c_bcjk)
 !!
 !!    Constructs the intermediate X_ai
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
 !!    X_ai = sum_abcijk (t^abc_ijk - t^bac_ijk) C^bc_jk 
 !!
@@ -780,17 +791,28 @@ contains
    end subroutine construct_x_ai_intermediate_cc3
 
 
-   module subroutine jacobian_transpose_cc3_c3_a_cc3(wf, omega, c_ai, c_abij, sigma_ai, sigma_abij)
+   module subroutine jacobian_transpose_cc3_c3_a_cc3(wf, omega,            &
+                                                     c_ai, c_abij,         &
+                                                     sigma_ai, sigma_abij, &
+                                                     cvs)
+!!
+!!    Contributions of the c3/L3 terms
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
+!!
 !!
 !!    Construct C^abc_ijk in single batches of ijk and compute the contributions
 !!    to the singles and doubles part of the outgoing vector
+!!
+!!    The construction of C3 is split into contributions 
+!!    from outer products and matrix multiplications
+!!
+!!    1 array for each Permutation of C_abc will be used 
+!!    to reduce the amount of N^7-contractions and sorting
 !!
 !!    c_μ3 = (ω - ε^abc_ijk)^-1 (c_μ1 < μ1 | [H,τ_ν3] | R > + c_μ2 < μ2 | [H,τ_ν3] | R >
 !!
 !!    σ1 += c_μ3 < μ3 | [[H,T_2],τ_ν1] | R >
 !!    σ2 += c_μ3 < μ3 | [H,τ_ ν2] | R >
-!!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -804,6 +826,8 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: sigma_abij
 !
+      logical, intent(in) :: cvs
+!
 !     Arrays for triples amplitudes
       real(dp), dimension(:,:,:), allocatable :: c_abc
       real(dp), dimension(:,:,:), allocatable :: u_abc
@@ -812,7 +836,7 @@ contains
 !     Unpacked doubles amplitudes
       real(dp), dimension(:,:,:,:), allocatable :: t_abij
 !
-      real(dp), dimension(:,:), allocatable :: F_kc
+      real(dp), dimension(:,:), allocatable :: F_ov_ck
 !
 !     Arrays for intermediates
 !     cannot hold the whole Y_bcek array
@@ -902,7 +926,7 @@ contains
       batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                           req_0, req_1, req_2, req_3, zero)
+                           req_0, req_1, req_2, req_3, buffer_size = zero)
 !
 !     Allocate integral arrays
 !
@@ -938,8 +962,8 @@ contains
       endif
 !
 !     Fock matrix subblock: Resorting for easier contractions later
-      call mem%alloc(F_kc, wf%n_v, wf%n_o)
-      call sort_12_to_21(wf%fock_ia, F_kc, wf%n_o, wf%n_v)
+      call mem%alloc(F_ov_ck, wf%n_v, wf%n_o)
+      call sort_12_to_21(wf%fock_ia, F_ov_ck, wf%n_o, wf%n_v)
 !
 !     Arrays for the triples amplitudes and intermediates
       call mem%alloc(c_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -1137,7 +1161,7 @@ contains
                         call zero_array(c_abc, wf%n_v**3)
 !
 !                       Check if at least one index i,j,k is a core orbital
-                        if(wf%cvs) then
+                        if(cvs) then
 !
                            ijk_core = .false.
 !
@@ -1165,7 +1189,8 @@ contains
 !                       and calculate contributions to sigma2
 !
                         call wf%jacobian_transpose_cc3_c3_calc(i, j ,k, c_ai, c_abij,       &
-                                                               c_abc, u_abc, v_abc, F_kc,   &
+                                                               c_abc, u_abc,                &
+                                                               v_abc, F_ov_ck,              &
                                                                L_ibjc_p(:,:,i_rel,j_rel),   &
                                                                L_ibkc_p(:,:,i_rel,k_rel),   &
                                                                L_jbkc_p(:,:,j_rel,k_rel),   &
@@ -1280,11 +1305,11 @@ contains
       call mem%dealloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%dealloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call mem%dealloc(F_kc, wf%n_v, wf%n_o)
+      call mem%dealloc(F_ov_ck, wf%n_v, wf%n_o)
 !
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-!     Contribution of the Y_cmkj to sigma1
+!     Contribution of the Y_cmjk to sigma1
 !
       call wf%jacobian_transpose_cc3_c3_a1_y_o(sigma_ai, Y_cmjk)
 !
@@ -1300,17 +1325,21 @@ contains
 !
 !
    module subroutine jacobian_transpose_cc3_c3_calc_cc3(wf, i, j ,k, c_ai, c_abij, &
-                                                        c_abc, u_abc, v_abc, F_kc, &
+                                                        c_abc, u_abc,              &
+                                                        v_abc, F_ov_ck,               &
                                                         L_ibjc, L_ibkc, L_jbkc,    &
                                                         g_dbic, g_dbjc, g_dbkc,    &
                                                         g_jlic, g_klic, g_kljc,    &
                                                         g_iljc, g_ilkc, g_jlkc)
 !!
-!!    Calculate the C3 amplitudes for fixed indices i,j,k 
+!!    Construct c3 amplitudes for fixed i,j,k
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    C^abc_ijk 
-!!    = (ω - ε^abc_ijk)^-1 P^abc_ijk ((C_ai*L_jbkc - C_ak*L_jbic + C_abij*F_kc - C_abik*F_jc)
-!!    + sum_l (C_ablk g_iljc - C_abil L_jlkc) - sum_d (C_adjk g_ibdc - C_adij L_dbkc))
+!!    C_^abc_ijk 
+!!    = (ω - ε^abc_ijk)^-1 P^abc_ijk (C__ai*L_jbkc - C__ak*L_jbic 
+!!                                  + C_abij*F_kc - C__abik*F_jc
+!!                                  + sum_l (C__ablk g_iljc - C__abil L_jlkc) 
+!!                                  - sum_d (C__adjk g_ibdc - C__adij L_dbkc))
 !!
 !!    Contibutions from outer products:
 !!    P^abc_ijk (C_ai*L_jbkc - C_ak*L_jbic + Cabij*F_kc - C_abik*F_jc)
@@ -1318,8 +1347,6 @@ contains
 !!    Contibutions from matrix multiplication:
 !!      sum_l P^abc_ijk (C_ablk g_iljc + C_abil g_jckl - 2 C_abil g_jlkc) 
 !!    - sum_d P^abc_ijk (C_adjk g_ibdc + C_adij g_dckb - 2 C_adij g_dbkc)
-!!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -1334,7 +1361,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: u_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: v_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: F_kc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: F_ov_ck
 !
 !     L_ibjc ordered bc,ij
       real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: L_ibjc
@@ -1406,7 +1433,7 @@ contains
                one,              &
                c_abij(:,:,i,j),  & ! c_ab,ij c_ac,ij c_cb,ij
                1,                &
-               F_kc(:,k),        & ! F_c,k F_b,k F_a,k
+               F_ov_ck(:,k),     & ! F_c,k F_b,k F_a,k
                1,                &
                u_abc,            &
                wf%n_v**2)
@@ -1496,7 +1523,7 @@ contains
                one,              &
                c_abij(:,:,i,k),  & ! c_ac,ik c_ab,ik c_bc,ik
                1,                &
-               F_kc(:,j),        & ! F_b,j F_c,j F_a,j
+               F_ov_ck(:,j),     & ! F_b,j F_c,j F_a,j
                1,                &
                u_abc,            &
                wf%n_v**2)
@@ -1586,7 +1613,7 @@ contains
                one,              &
                c_abij(:,:,j,k),  & ! c_bc,jk c_ba,jk c_ac,jk
                1,                &
-               F_kc(:,i),        & ! F_a,i F_c,i F_b,i
+               F_ov_ck(:,i),     & ! F_a,i F_c,i F_b,i
                1,                &
                u_abc,            &
                wf%n_v**2)
@@ -1632,14 +1659,14 @@ contains
                                                      g_bdci, g_bdcj, g_bdck, g_ljci, g_lkci, &
                                                      g_lkcj, g_licj, g_lick, g_ljck)
 !!
-!!    Calculates triples contribution to sigma2
+!!    Jacobian transpose A2 term
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    sigma_adij += sum_bc,k c^abc_ijk g_bdck
-!!    sigma_ablj += -sum_c,ik c^abc_ijk g_lick
+!!    sigma_adij =   sum_ckd c^abc_ijk g_bdck
+!!    sigma_abil = - sum_cki c^bac_ijk g_lick
 !!
-!!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops   
-!!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    All permutations for i,j,k have to be considered 
+!!    due to the restrictions in the i,j,k loops
 !!
       implicit none
 !
@@ -1874,14 +1901,13 @@ contains
    module subroutine construct_y_intermediates_cc3(wf, i, j, k, c_abc, u_abc, t_abij, y_cmjk,   &
                                                    Y_bcei, Y_bcej, Y_bcek)
 !!
-!!    Constructs the intermediates Y_bcei and Y_cmik used to compute the c3 contributions to sigma_ai
+!!    Construct Y intermediates
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    Y_bcek = sum_aij c^abc_ijk * t^ae_ij
-!!    Y_cmik = sum_abj c^abc_ijk * t^ab_mj
+!!    Y_bcei = sum_aij c^abc_ijk * t^ae_ij
+!!    Y_cmjk = sum_abj c^bac_ijk * t^ba_mj
 !!
 !!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops
-!!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -2111,14 +2137,13 @@ contains
 !
    module subroutine jacobian_transpose_cc3_c3_a1_y_o_cc3(wf, sigma_ai, Y_cmjk)
 !!
-!!    Computes the contribution of the intermediate Y_cmjk to sigma_1
+!!    Jacobian tranpose contribution of Y_vooo
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    sigma_cl +=   sum_mjk Y_cmjk * g_mjlk
-!!    sigma_dk += - sum_cmj Y_cmjk * g_cdmj
-!!    sigma_dk += - sum_cmj Y_cmkj * g_cjmd
-!!    
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
-!!
+!!    sigma1 += sum_mjk Y_cmjk * g_mjlk
+!!    sigma1 += sum_cmj g_mjcd * Y_cmjk
+!!    sigma1 += sum_cmk g_leck * Y_cmjk
+!!   
       implicit none
 !
       class(cc3) :: wf
@@ -2272,13 +2297,12 @@ contains
 !
    module subroutine jacobian_transpose_cc3_c3_b1_y_v_cc3(wf, sigma_ai)
 !!
-!!    Computes the contribution of the intermediate Y_bcek to sigma_1
+!!    Jacobian transpose contribution Y_vvvo
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    sigma_dk +=   sum_bec Y_bcek * g_becd
-!!    sigma_bl += - sum_cek Y_bcek * g_ckle
-!!    sigma_bl += - sum_bek Y_cbek * g_celk
-!!    
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    sigma1 += sum_bec g_becd * X_bcek
+!!    sigma1 += sum_cek X_bcek * g_leck
+!!    sigma1 += sum_bek X_bcek * g_lkbe
 !!
       implicit none
 !

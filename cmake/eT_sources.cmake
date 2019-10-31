@@ -19,19 +19,7 @@
 #
 set(eT_fortran_sources
    src/eT_program.F90
-   src/solvers/hf/abstract_hf_solver_class.F90
-   src/solvers/hf/scf_diis_hf_class.F90
-   src/solvers/hf/mo_scf_diis_class.F90
-   src/solvers/hf/scf_hf_class.F90
-   src/solvers/hf/bfgs_geoopt_hf_class.F90
-   src/solvers/cc/diis_cc_gs_class.F90
-   src/solvers/cc/diis_cc_es_class.F90
-   src/solvers/cc/diis_cc_multipliers_class.F90
-   src/solvers/cc/davidson_cc_multipliers_class.F90
-   src/solvers/cc/davidson_cc_es_class.F90
-   src/solvers/cc/abstract_cc_es_class.F90
-   src/solvers/cc/newton_raphson_cc_gs_class.F90
-   src/solvers/cholesky/eri_cd_class.F90
+#
    src/engines/abstract_engine_class.F90
    src/engines/reference_engine_class.F90
    src/engines/hf_geoopt_engine_class.F90
@@ -39,6 +27,9 @@ set(eT_fortran_sources
    src/engines/es_engine_class.F90
    src/engines/zop_engine_class.F90
    src/engines/fop_engine_class.F90
+#
+   src/integrals/mo_integral_tool_class.F90
+#
    src/io/abstract_file_class.F90
    src/io/abstract_out_file_class.F90
    src/io/abstract_other_file_class.F90
@@ -48,43 +39,14 @@ set(eT_fortran_sources
    src/io/section_class.F90
    src/io/output_file_class.F90
    src/io/io_utilities.F90
-   src/tools/string_utilities.F90
    src/io/global_out.F90
    src/io/global_in.F90
-   src/integrals/mo_integral_tool_class.F90
-   src/solver_tools/cholesky_array_list_class.F90
+#
+   src/libint/libint_initialization.F90
+#
    src/memory/batching_index_class.F90
    src/memory/memory_manager_class.F90
-   src/various/kinds.F90
-   src/various/parameters.F90
-   src/various/butcher_tables.F90
-   src/various/continuous_output_coefficients.F90
-   src/tools/interval_class.F90
-   src/tools/index_invert.F90
-   src/tools/reordering.F90
-   src/tools/timings_class.F90
-   src/tools/array_utilities.F90
-   src/tools/math_utilities.F90
-   src/tools/linked_list/array_list_class.F90
-   src/tools/linked_list/array_node_class.F90
-   src/tools/fftpack/fftpack_auxiliary_routines.F90
-   src/tools/fftpack/fftpack_complex_forward_1d.F90
-   src/tools/fftpack/fftpack_complex_initialization_routines.F90
-   src/tools/record_storer/record_storer_class.F90
-   src/tools/record_storer/memory_storer_class.F90
-   src/tools/record_storer/file_storer_class.F90
-   src/wavefunctions/wavefunction/wavefunction_class.F90
-   src/wavefunctions/hf/hf_class.F90  
-   src/wavefunctions/hf/mo_hf.F90
-   src/wavefunctions/uhf/uhf_class.F90
-   src/wavefunctions/mlhf/mlhf_class.F90
-   src/wavefunctions/ccs/ccs_class.F90
-   src/wavefunctions/doubles/doubles_class.F90
-   src/wavefunctions/cc2/cc2_class.F90
-   src/wavefunctions/lowmem_cc2/lowmem_cc2_class.F90
-   src/wavefunctions/ccsd/ccsd_class.F90
-   src/wavefunctions/cc3/cc3_class.F90
-   src/wavefunctions/mp2/mp2_class.F90
+#
    src/molecule/atomic_class.F90
    src/molecule/molecular_system/molecular_system_class.F90
    src/molecule/mm_class.F90
@@ -93,7 +55,8 @@ set(eT_fortran_sources
    src/molecule/shell_class.F90
    src/molecule/active_atoms_class.F90
    src/molecule/shell_details_class.F90
-   src/libint/libint_initialization.F90
+#
+   src/solver_tools/cholesky_array_list_class.F90
    src/solver_tools/bfgs_tool_class.F90
    src/solver_tools/diis_tool_class.F90
    src/solver_tools/davidson_tool_class.F90
@@ -109,7 +72,55 @@ set(eT_fortran_sources
    src/solver_tools/es_projectors/es_ip_projection_tool_class.F90
    src/fields/electric_field_class.F90
    src/solver_tools/precondition_tool_class.F90
+#
+   src/solvers/hf/abstract_hf_solver_class.F90
+   src/solvers/hf/scf_diis_hf_class.F90
+   src/solvers/hf/mo_scf_diis_class.F90
+   src/solvers/hf/scf_hf_class.F90
+   src/solvers/hf/bfgs_geoopt_hf_class.F90
+   src/solvers/cc/diis_cc_gs_class.F90
+   src/solvers/cc/diis_cc_es_class.F90
+   src/solvers/cc/diis_cc_multipliers_class.F90
+   src/solvers/cc/davidson_cc_multipliers_class.F90
+   src/solvers/cc/davidson_cc_es_class.F90
+   src/solvers/cc/abstract_cc_es_class.F90
+   src/solvers/cc/newton_raphson_cc_gs_class.F90
+   src/solvers/cholesky/eri_cd_class.F90
+#
+   src/tools/interval_class.F90
+   src/tools/index_invert.F90
+   src/tools/reordering.F90
+   src/tools/timings_class.F90
+   src/tools/array_utilities.F90
+   src/tools/math_utilities.F90
+   src/tools/linked_list/array_list_class.F90
+   src/tools/linked_list/array_node_class.F90
+   src/tools/fftpack/fftpack_auxiliary_routines.F90
+   src/tools/fftpack/fftpack_complex_forward_1d.F90
+   src/tools/fftpack/fftpack_complex_initialization_routines.F90
+   src/tools/record_storer/record_storer_class.F90
+   src/tools/record_storer/memory_storer_class.F90
+   src/tools/record_storer/file_storer_class.F90
+   src/tools/string_utilities.F90
+#
+   src/various/butcher_tables.F90
+   src/various/continuous_output_coefficients.F90
+   src/various/kinds.F90
+   src/various/parameters.F90
+   
+#
+   src/wavefunctions/wavefunction/wavefunction_class.F90
+
    src/wavefunctions/hf/frozen_orbital_hf.F90
+   src/wavefunctions/hf/hf_class.F90  
+   src/wavefunctions/hf/mo_hf.F90
+   src/wavefunctions/uhf/uhf_class.F90
+   src/wavefunctions/mlhf/mlhf_class.F90
+#
+   src/wavefunctions/mp2/mp2_class.F90
+   src/wavefunctions/mp2/zop_mp2.F90
+#
+   src/wavefunctions/ccs/ccs_class.F90
    src/wavefunctions/ccs/oei_ccs.F90
    src/wavefunctions/ccs/tei_ccs.F90
    src/wavefunctions/ccs/fock_ccs.F90
@@ -123,6 +134,8 @@ set(eT_fortran_sources
    src/wavefunctions/ccs/set_get_ccs.F90
    src/wavefunctions/ccs/file_handling_ccs.F90
    src/wavefunctions/ccs/debug_jacobian_ccs.F90
+#
+   src/wavefunctions/doubles/doubles_class.F90
    src/wavefunctions/doubles/omega_doubles.F90
    src/wavefunctions/doubles/jacobian_doubles.F90
    src/wavefunctions/doubles/jacobian_transpose_doubles.F90
@@ -130,6 +143,8 @@ set(eT_fortran_sources
    src/wavefunctions/doubles/initialize_destruct_doubles.F90
    src/wavefunctions/doubles/zop_doubles.F90
    src/wavefunctions/doubles/fop_doubles.F90
+#
+   src/wavefunctions/cc2/cc2_class.F90
    src/wavefunctions/cc2/zop_cc2.F90
    src/wavefunctions/cc2/omega_cc2.F90
    src/wavefunctions/cc2/jacobian_cc2.F90
@@ -137,10 +152,14 @@ set(eT_fortran_sources
    src/wavefunctions/cc2/multiplier_equation_cc2.F90
    src/wavefunctions/cc2/initialize_destruct_cc2.F90
    src/wavefunctions/cc2/debug_jacobian_cc2.F90
+#
+   src/wavefunctions/lowmem_cc2/lowmem_cc2_class.F90
    src/wavefunctions/lowmem_cc2/omega_lowmem_cc2.F90
    src/wavefunctions/lowmem_cc2/jacobian_lowmem_cc2.F90
    src/wavefunctions/lowmem_cc2/jacobian_transpose_lowmem_cc2.F90
    src/wavefunctions/lowmem_cc2/zop_lowmem_cc2.F90
+#
+   src/wavefunctions/ccsd/ccsd_class.F90
    src/wavefunctions/ccsd/zop_ccsd.F90
    src/wavefunctions/ccsd/omega_ccsd.F90
    src/wavefunctions/ccsd/file_handling_ccsd.F90
@@ -150,6 +169,8 @@ set(eT_fortran_sources
    src/wavefunctions/ccsd/jacobian_transpose_ccsd.F90
    src/wavefunctions/ccsd/multiplier_equation_ccsd.F90
    src/wavefunctions/ccsd/debug_jacobian_ccsd.F90
+#
+   src/wavefunctions/cc3/cc3_class.F90
    src/wavefunctions/cc3/zop_cc3.F90
    src/wavefunctions/cc3/omega_cc3.F90
    src/wavefunctions/cc3/jacobian_cc3.F90
@@ -158,7 +179,9 @@ set(eT_fortran_sources
    src/wavefunctions/cc3/cc3_batching_abc.F90
    src/wavefunctions/cc3/multiplier_equation_cc3.F90
    src/wavefunctions/cc3/initialize_destruct_cc3.F90
-   src/wavefunctions/mp2/zop_mp2.F90
+   src/wavefunctions/cc3/fop_cc3.F90
+   src/wavefunctions/cc3/debug_transition_density_cc3.F90
+#
    src/wavefunctions/mlcc2/mlcc2_class.F90
    src/wavefunctions/mlcc2/orbitals_mlcc2.F90
    src/wavefunctions/mlcc2/omega_mlcc2.F90

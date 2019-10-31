@@ -22,7 +22,7 @@ module lowmem_cc2_class
 !!
 !!    Low-memory coupled cluster singles and perturbative doubles (CC2) class module
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto and Alexander Paul, 2018
+!!    Linda Goletto and Alexander C. Paul, 2018
 !!
 !
    use ccs_class
@@ -161,9 +161,9 @@ contains
 !
          call wf%effective_jacobian_transformation(w, X) ! X <- AX
 !
-      elseif (r_or_l .eq. 'left') then
+      else if (r_or_l .eq. "left") then
 !
-         call wf%effective_jacobian_transpose_transformation(w, X) ! X <- AX
+         call wf%effective_jacobian_transpose_transformation(w, X, wf%cvs) ! X <- A^TX
 !
       else
 !

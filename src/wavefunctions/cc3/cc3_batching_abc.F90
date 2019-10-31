@@ -21,7 +21,7 @@ submodule (cc3_class) batching_abc
 !
 !!
 !!    Batching abc submodule
-!!    Written by Alexander Paul July 2019
+!!    Written by Alexander C. Paul July 2019
 !!
 !!    Routines that construct the triples T-amplitudes and
 !!    components of the excitation vectors in batches 
@@ -34,15 +34,14 @@ submodule (cc3_class) batching_abc
 contains
 !
 !
-   module subroutine prep_cc3_integrals_t3_abc_batch_cc3(wf)
+   module subroutine prepare_cc3_integrals_t3_abc_batch_cc3(wf)
 !!
-!!    Prepares files containing the integrals needed 
-!!    to construct t3-amplitudes in batches of a,b,c
+!!    Prepare integral files t3 amplitudes in batches of a,b,c
+!!    Written by Alexander C. Paul, July 2019
 !!
 !!    (bd|ck) ordered as dk,bc
 !!    (lj|ck) ordered as ljk,c
 !!
-!!    written by Alexander Paul, July 2019
 !!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
 !!
       implicit none
@@ -127,21 +126,22 @@ contains
 !
       call wf%g_ljck_t_v%close_()
 !
-   end subroutine prep_cc3_integrals_t3_abc_batch_cc3
+   end subroutine prepare_cc3_integrals_t3_abc_batch_cc3
 !
 !
-   module subroutine prep_cc3_integrals_R3_abc_batch_cc3(wf, R_ai)
+   module subroutine prepare_cc3_integrals_R3_abc_batch_cc3(wf, R_ai)
 !!
-!!    Prepares the files containing the R1-transformed 
-!!    integrals needed to construct R3 in batches of a,b,c
-!!    NB: The integrals (bd|ck) and (lj|ck) constructed in 
-!!        prep_cc3_integrals_t3_abc_batch_cc3 are also needed
+!!    Prepare integral files R3 amplitudes in batches of a,b,c
+!!    Written by Alexander C. Paul, July 
 !!
 !!    g'_bdck = (b'd|ck) + (bd|c'k) + (bd|ck')   ordered as dk,bc
 !!    g'_ljck = (lj'|ck) + (lj|ck') + (lj|c'k)   ordered as ljk,c
 !!
-!!    written by Alexander Paul, July 2019
-!!    Based on construct_c1_integrals_cc3 written by Rolf H. Myhre and A. Paul
+!!    NB: The integrals (bd|ck) and (lj|ck) constructed in 
+!!        prepare_cc3_integrals_t3_abc_batch_cc3 are also needed
+!!
+!!    Based on construct_c1_integrals_cc3 written by Rolf H. Myhre and A. C. Paul
+!!    Based on construct_c1_integrals_cc3 written by Rolf H. Myhre and A. C. Paul
 !!
 !
       implicit none
@@ -153,7 +153,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_pqrs ! Array for constructed integrals
       real(dp), dimension(:,:,:,:), allocatable :: h_pqrs ! Array for sorted integrals
 !
-      real(dp), dimension(:,:,:), allocatable :: L_J_ck_c1              ! c1 transformed Cholesky vector
+      real(dp), dimension(:,:,:), allocatable :: L_J_ck_c1      ! c1 transformed Cholesky vector
       real(dp), dimension(:,:,:), allocatable :: L_J_ck, L_J_bd ! Cholesky vectors
 !
       type(batching_index) :: batch_c
@@ -179,7 +179,7 @@ contains
 !
          call batch_c%determine_limits(c_batch)
 !
-!        :: Term 1: g_b'dck = sum_J L_J_b'd L_J_ck ::
+!        :: Term 1: g_b'dck += sum_J L_J_b'd L_J_ck ::
 !
 !        here L_J_bd is used for the R1-transformed cholesky-vector 
          call wf%integrals%construct_cholesky_ab_c1(L_J_bd, R_ai, 1, wf%n_v, 1,  wf%n_v)
@@ -205,7 +205,7 @@ contains
 !
          call mem%dealloc(L_J_ck, wf%integrals%n_J, batch_c%length, wf%n_o)
 !
-!        :: Term 2: g_bdc'k = sum_J L_J_bd L_J_c'k_c1 ::
+!        :: Term 2: g_bdc'k += sum_J L_J_bd L_J_c'k_c1 ::
 !
          call mem%alloc(L_J_ck_c1, wf%integrals%n_J, batch_c%length, wf%n_o)
          call wf%integrals%construct_cholesky_ai_a_c1(L_J_ck_c1, R_ai, batch_c%first,  &
@@ -227,7 +227,7 @@ contains
                      g_pqrs,                    & ! (bd|c'k)
                      (wf%n_v)**2)
 !
-!        :: Term 3: g_bdck' = sum_J L_J_bd L_J_ck'_c1 ::
+!        :: Term 3: g_bdck' += sum_J L_J_bd L_J_ck'_c1 ::
 !
          call wf%integrals%construct_cholesky_ai_i_c1(L_J_ck_c1, R_ai, batch_c%first,  &
                                                       batch_c%last, 1, wf%n_o)
@@ -253,7 +253,7 @@ contains
 !
          call sort_1234_to_2413(g_pqrs, h_pqrs, wf%n_v, wf%n_v, batch_c%length, wf%n_o)
 !
-         call compound_record_writer(wf%n_v, batch_c, wf%g_bdck_t_v, h_pqrs)
+         call compound_record_writer(wf%n_v, batch_c, wf%g_bdck_c1_v, h_pqrs)
 !
          call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, batch_c%length, wf%n_o)
          call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_v, batch_c%length)
@@ -267,7 +267,7 @@ contains
 !
 !     g'_ljck = (lj'|ck) + (lj|ck') + (lj|c'k)   ordered as ljk,c
 !
-!     assume its possible to hold n_v*n_o**3 and g_ljck_c1 is already on file
+!     assume it's possible to hold n_v*n_o**3 and g_ljck_c1 is already on file
 !
       wf%g_ljck_c1_v = direct_file('g_ljck_c1_v', wf%n_o**3)
       call wf%g_ljck_c1_v%open_('write')
@@ -289,19 +289,18 @@ contains
       call wf%g_ljck_c1_v%close_()
       call wf%g_ljck_c1%close_()
 !
-   end subroutine prep_cc3_integrals_R3_abc_batch_cc3
+   end subroutine prepare_cc3_integrals_R3_abc_batch_cc3
 !
 !
-   module subroutine prep_cc3_integrals_L3_abc_batch_cc3(wf)
+   module subroutine prepare_cc3_integrals_L3_abc_batch_cc3(wf)
 !!
-!!    Prepares the files containing the integrals needed to 
-!!    construct tbar3 and L3 in batches of a,b,c
+!!    Prepare integral files for L3 amplitudes in batches of a,b,c
+!!    Written by Alexander C. Paul, July 2019
 !!
-!!    (db|kc) ordered as kd,bc
-!!    (jl|kc) ordered as jkl,c
+!!    (db|kc) ordered as dk,bc
+!!    (jl|kc) ordered as ljk,c
 !!    L_jbkc  ordered as jk,bc
 !!
-!!    written by Alexander Paul, July 2019
 !!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
 !!
       implicit none
@@ -442,7 +441,7 @@ contains
 !
       call wf%L_jbkc_t_v%close_()
 !
-   end subroutine prep_cc3_integrals_L3_abc_batch_cc3
+   end subroutine prepare_cc3_integrals_L3_abc_batch_cc3
 !
 !
    module subroutine omega_cc3_W_calc_abc_batch_cc3(wf, a, b, c,           &
@@ -452,13 +451,12 @@ contains
                                                    g_adbk, g_adck, g_bdck, &
                                                    keep_t)
 !!
-!!    Calculate the the contributions to the t_3 amplitudes
-!!    for virtual indices a,b,c
+!!    Omega CC3 intermediate W_ijk for fixed a,b,c
+!!    Written by Rolf H. Myhre and Alexander C. Paul July 2019
 !!
 !!    Contributions to W
-!!    W^abc_ijk = P^abc_ijk(\sum_d t^ad_ij(bd|ck) - \sum_l t^ab_il(lj|ck))
+!!     W^abc_ijk = P^abc_ijk(sum_d t^ad_ij(bd|ck) - sum_l t^ab_il(lj|ck))
 !!
-!!    Written by Alexander Paul July 2019
 !!    based on omega_cc3_W_calc written by Rolf H. Myhre
 !!
       implicit none
@@ -716,12 +714,14 @@ contains
 !
    module subroutine omega_cc3_eps_abc_batch_cc3(wf, a, b, c, t_ijk, omega)
 !!
+!!    Omega CC3 epsilon denominator in batches of a,b,c
+!!    Written by Alexander C. Paul, July 2019    
+!!
 !!    Divide W^abc_ijk by -epsilon^abc_ijk to obtain T^abc_ijk
 !!    Optional argument omega for jacobian transformations
 !!
 !!    t^abc_ijk = -W^abc_ijk/epsilon^abc_ijk
 !!
-!!    Written by Alexander Paul, July 2019
 !!    based on omega_cc3_eps_cc3 by Rolf H. Myhre
 !!
       implicit none
@@ -788,6 +788,7 @@ contains
                                                                   g_dakb, g_dakc, g_dbkc)
 !!
 !!    Calculate the L3 amplitudes for fixed indices a,b,c
+!!    Written by Alexander C. Paul, July 2019
 !!
 !!    C^abc_ijk 
 !!    = (ω - ε^abc_ijk)^-1 P^abc_ijk (C_ai*L_jbkc - C_ak*L_jbic + C_abij*F_kc - L_abik*F_jc)
@@ -800,7 +801,6 @@ contains
 !!      sum_l P^abc_ijk (C_ablk g_iljc + C_abil g_jckl - 2 C_abil g_jlkc) 
 !!    - sum_d P^abc_ijk (C_adjk g_ibdc + C_adij g_dckb - 2 C_adij g_dbkc)
 !!
-!!    Written by Alexander Paul, July 2019
 !!    based on jacobian_transpose_cc3_c3_calc written by A.Paul and Rolf H. Myhre
 !!
       implicit none
@@ -1113,6 +1113,47 @@ contains
       call add_two_231_min_213_min_132(u_ijk, c_ijk, wf%n_o)
 !
    end subroutine jacobian_transpose_cc3_c3_calc_abc_batch_cc3
+!
+!
+   module subroutine get_triples_cvs_projector_abc_batch_cc3(wf, projector_ijk)
+!!
+!!    Get triples cvs projector for fixed a,b,c
+!!    Written by Alexander C. Paul and Rolf H. Myhre, September 2019
+!!
+!!    Set up projector for cvs for the triples amplitudes 
+!!    if we batch over the virtual indices
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(out) :: projector_ijk
+!
+      integer :: i, j, k
+!
+      call zero_array(projector_ijk, wf%n_o**3)
+!
+      do k = 1, wf%n_o
+         do j = 1, k
+            do i = 1, wf%n_core_MOs
+!
+               projector_ijk(wf%core_MOs(i),j,k) = one
+               projector_ijk(j,wf%core_MOs(i),k) = one
+               projector_ijk(j,k,wf%core_MOs(i)) = one
+!
+               if (j .ne. k) then
+!
+                  projector_ijk(wf%core_MOs(i),k,j) = one
+                  projector_ijk(k,wf%core_MOs(i),j) = one
+                  projector_ijk(k,j,wf%core_MOs(i)) = one
+!
+               end if
+!
+            end do
+         end do
+      end do
+!
+   end subroutine get_triples_cvs_projector_abc_batch_cc3
 !
 !
 end submodule batching_abc

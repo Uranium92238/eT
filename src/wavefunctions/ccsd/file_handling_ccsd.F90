@@ -80,10 +80,28 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
+      integer :: records
+!
       call wf%t_file%open_('read', 'rewind')
 !
+!     Check if doubles exist then read
+!     Sinlges in first record, doubles in second
+!
+      records = wf%t_file%number_of_records()
+!
+      call wf%t_file%rewind_()
+!
       call wf%t_file%read_(wf%t1, wf%n_t1)
-      call wf%t_file%read_(wf%t2, wf%n_t2)
+!
+      if (records .gt. 1) then
+!
+         call wf%t_file%read_(wf%t2, wf%n_t2)
+!
+      else
+!
+         call zero_array(wf%t2, wf%n_t2)
+!
+      end if
 !
       call wf%t_file%close_()
 !
@@ -99,10 +117,28 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
+      integer :: records
+!
       call wf%tbar_file%open_('read', 'rewind')
 !
+!     Check if doubles exist then read
+!     Sinlges in first record, doubles in second
+!
+      records = wf%tbar_file%number_of_records()
+!
+      call wf%tbar_file%rewind_()
+!
       call wf%tbar_file%read_(wf%t1bar, wf%n_t1)
-      call wf%tbar_file%read_(wf%t2bar, wf%n_t2)
+!
+      if (records .gt. 1) then
+!
+         call wf%tbar_file%read_(wf%t2bar, wf%n_t2)
+!
+      else
+!
+         call zero_array(wf%t2bar, wf%n_t2)
+!
+      end if
 !
       call wf%tbar_file%close_()
 !

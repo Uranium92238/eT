@@ -368,7 +368,7 @@ contains
    subroutine open_input_file(the_file)
 !!
 !!    Open the input file
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
@@ -400,7 +400,7 @@ contains
    subroutine close_input_file(the_file)
 !!
 !!    Close the input file
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !

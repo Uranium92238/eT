@@ -173,7 +173,7 @@ contains
    subroutine open_direct_file(the_file, file_action)
 !!
 !!    Open eT direct file
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
