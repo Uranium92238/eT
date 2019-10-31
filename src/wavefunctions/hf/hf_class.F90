@@ -113,7 +113,7 @@ module hf_class
       procedure :: construct_ao_fock                           => construct_ao_fock_hf
 !
       procedure :: construct_ao_G                              => construct_ao_G_hf
-      procedure, private :: construct_ao_G_thread_contribution => construct_ao_G_thread_contribution_hf
+      procedure, private :: construct_ao_G_thread_terms        => construct_ao_G_thread_terms_hf
       procedure :: construct_ao_G_1der                         => construct_ao_G_1der_hf
 !
       procedure :: construct_coulomb_ao_G                      => construct_coulomb_ao_G_hf
@@ -210,13 +210,13 @@ module hf_class
 !     Frozen core
 !
       procedure :: prepare_mos                                 => prepare_mos_hf
-      procedure :: prepare_frozen_fock_contributions           => prepare_frozen_fock_contributions_hf
+      procedure :: prepare_frozen_fock_terms                   => prepare_frozen_fock_terms_hf
 !
       procedure :: remove_core_orbitals                        => remove_core_orbitals_hf
       procedure :: remove_frozen_hf_orbitals                   => remove_frozen_hf_orbitals_hf
 !
-      procedure :: construct_mo_fock_fc_contribution           => construct_mo_fock_fc_contribution_hf
-      procedure :: construct_mo_fock_frozen_hf_contribution    => construct_mo_fock_frozen_hf_contribution_hf
+      procedure :: construct_mo_fock_fc_term                   => construct_mo_fock_fc_term_hf
+      procedure :: construct_mo_fock_frozen_hf_term            => construct_mo_fock_frozen_hf_term_hf
 !
       procedure :: initialize_orbital_coefficients_fc          => initialize_orbital_coefficients_fc_hf
       procedure :: destruct_orbital_coefficients_fc            => destruct_orbital_coefficients_fc_hf
@@ -1016,7 +1016,7 @@ contains
       class(hf) :: wf
 !
       call wf%prepare_mos()
-      call wf%prepare_frozen_fock_contributions()
+      call wf%prepare_frozen_fock_terms()
 !
 !     Save orbital information in orbital_information_file for CC
 !
@@ -1594,7 +1594,7 @@ contains
       call mem%alloc(G_thread, wf%n_ao, wf%n_ao, n_threads) ! [G(thread 1) G(thread 2) ...]
       call zero_array(G_thread, (wf%n_ao**2)*n_threads)
 !
-      call wf%construct_ao_G_thread_contribution(G_thread, D, n_threads, max_D_schwarz, max_eri_schwarz,      &
+      call wf%construct_ao_G_thread_terms(G_thread, D, n_threads, max_D_schwarz, max_eri_schwarz,      &
                                          sp_density_schwarz, n_sig_sp,                 &
                                          wf%coulomb_threshold, wf%exchange_threshold,  &
                                          wf%libint_epsilon, wf%system%shell_limits)
@@ -1622,7 +1622,7 @@ contains
    end subroutine construct_ao_G_hf
 !
 !
-   subroutine construct_ao_G_thread_contribution_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,    &
+   subroutine construct_ao_G_thread_terms_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,    &
                                           sp_density_schwarz, n_sig_sp, coulomb_thr, &
                                           exchange_thr, precision_thr, shells)
 !!
@@ -1787,7 +1787,7 @@ contains
 !
       call set_coulomb_precision_c(wf%libint_epsilon)
 !
-   end subroutine construct_ao_G_thread_contribution_hf
+   end subroutine construct_ao_G_thread_terms_hf
 !
 !
    subroutine construct_coulomb_ao_G_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,     &

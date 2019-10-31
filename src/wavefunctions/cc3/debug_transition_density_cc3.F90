@@ -318,7 +318,7 @@ contains
 !
       call mem%dealloc(t_abcijk, wf%n_v,wf%n_v,wf%n_v,wf%n_o,wf%n_o,wf%n_o)
 !
-      call wf%debug_right_ov_Y_contribution(density_ov, R_abij, tbar_abcijk)
+      call wf%debug_right_ov_Y_term(density_ov, R_abij, tbar_abcijk)
 !
 !     :: Construct  R3 ::
       call mem%alloc(R_abcijk, wf%n_v,wf%n_v,wf%n_v,wf%n_o,wf%n_o,wf%n_o)
@@ -1478,7 +1478,7 @@ contains
    end subroutine debug_right_ov_t3_cc3
 !
 !
-   module subroutine debug_right_ov_Y_contribution_cc3(wf, density_ov, R_abij, tbar_abcijk)
+   module subroutine debug_right_ov_Y_term_cc3(wf, density_ov, R_abij, tbar_abcijk)
 !!
 !!    CC3 contribution to the ov-block of the right TDM (Y intermediates)
 !!    Written by Alexander C. Paul, September 2019
@@ -1598,7 +1598,7 @@ contains
 !
       call mem%dealloc(Y_acdi, wf%n_v, wf%n_v, wf%n_v, wf%n_o)
 !
-   end subroutine debug_right_ov_Y_contribution_cc3
+   end subroutine debug_right_ov_Y_term_cc3
 !
 !
    module subroutine debug_right_ov_R3_cc3(wf, density_ov, R_abcijk)

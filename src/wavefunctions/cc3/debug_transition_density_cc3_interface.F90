@@ -251,7 +251,7 @@
    end subroutine debug_right_ov_t3_cc3
 !
 !
-   module subroutine debug_right_ov_Y_contribution_cc3(wf, density_ov, R_abij, tbar_abcijk)
+   module subroutine debug_right_ov_Y_term_cc3(wf, density_ov, R_abij, tbar_abcijk)
 !!
 !!    CC3 contribution to the ov-block of the right TDM (Y intermediates)
 !!    Written by Alexander C. Paul, September 2019
@@ -269,7 +269,7 @@
 !
       real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,wf%n_o,wf%n_o,wf%n_o), intent(in) :: tbar_abcijk
 !
-   end subroutine debug_right_ov_Y_contribution_cc3
+   end subroutine debug_right_ov_Y_term_cc3
 !
 !
    module subroutine debug_right_oo_cc3(wf, density_oo, R_ai, tbar_abcijk, R_abcijk)

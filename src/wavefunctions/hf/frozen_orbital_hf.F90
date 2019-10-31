@@ -395,7 +395,7 @@ contains
    end subroutine remove_frozen_hf_orbitals_hf
 !
 !
-   module subroutine prepare_frozen_fock_contributions_hf(wf)
+   module subroutine prepare_frozen_fock_terms_hf(wf)
 !!
 !!    Prepare frozen Fock contributions
 !!    Written by Sarai D. Folkestad, Oct 2019
@@ -408,13 +408,13 @@ contains
 !
       class(hf) :: wf
 !
-      if (wf%frozen_core)     call wf%construct_mo_fock_fc_contribution()
-      if (wf%frozen_hf_mos)   call wf%construct_mo_fock_frozen_hf_contribution()
+      if (wf%frozen_core)     call wf%construct_mo_fock_fc_term()
+      if (wf%frozen_hf_mos)   call wf%construct_mo_fock_frozen_hf_term()
 !
-   end subroutine prepare_frozen_fock_contributions_hf
+   end subroutine prepare_frozen_fock_terms_hf
 !
 !
-   module subroutine construct_mo_fock_fc_contribution_hf(wf)
+   module subroutine construct_mo_fock_fc_term_hf(wf)
 !!
 !!    Calculate MO Fock frozen core contribution
 !!    Written by Sarai D. Folkestad, Sep 2019
@@ -461,9 +461,9 @@ contains
 !
       call wf%construct_ao_G(D, ao_F_fc)
 !
-      call wf%initialize_mo_fock_fc_contribution()
+      call wf%initialize_mo_fock_fc_term()
 !
-      call wf%mo_transform(ao_F_fc, wf%mo_fock_fc_contribution)
+      call wf%mo_transform(ao_F_fc, wf%mo_fock_fc_term)
 !
       call mem%dealloc(ao_F_fc, wf%n_ao, wf%n_ao)
       call mem%dealloc(D, wf%n_ao, wf%n_ao)
@@ -474,16 +474,16 @@ contains
 !
       call wf%mo_fock_fc_file%open_('write', 'rewind')
 !
-      call wf%mo_fock_fc_file%write_(wf%mo_fock_fc_contribution, wf%n_mo**2)
+      call wf%mo_fock_fc_file%write_(wf%mo_fock_fc_term, wf%n_mo**2)
 !
       call wf%mo_fock_fc_file%close_('keep')
 !
-      call wf%destruct_mo_fock_fc_contribution()
+      call wf%destruct_mo_fock_fc_term()
 !
-   end subroutine construct_mo_fock_fc_contribution_hf
+   end subroutine construct_mo_fock_fc_term_hf
 !
 !
-   module subroutine construct_mo_fock_frozen_hf_contribution_hf(wf)
+   module subroutine construct_mo_fock_frozen_hf_term_hf(wf)
 !!
 !!    Construct MO fock frozen hf  contribution
 !!    Written by Ida-Marie Høyvik, Oct 2019
@@ -537,9 +537,9 @@ contains
 !
       call wf%construct_ao_G(D, ao_F_frozen_hf)
 !
-      call wf%initialize_mo_fock_frozen_hf_contribution()
+      call wf%initialize_mo_fock_frozen_hf_term()
 !
-      call wf%mo_transform(ao_F_frozen_hf, wf%mo_fock_frozen_hf_contribution)
+      call wf%mo_transform(ao_F_frozen_hf, wf%mo_fock_frozen_hf_term)
 !
       call mem%dealloc(ao_F_frozen_hf, wf%n_ao, wf%n_ao)
       call mem%dealloc(D, wf%n_ao, wf%n_ao)
@@ -547,13 +547,13 @@ contains
 !
       call wf%mo_fock_frozen_hf_file%open_('write', 'rewind')
 !
-      call wf%mo_fock_frozen_hf_file%write_(wf%mo_fock_frozen_hf_contribution, wf%n_mo**2)
+      call wf%mo_fock_frozen_hf_file%write_(wf%mo_fock_frozen_hf_term, wf%n_mo**2)
 !
       call wf%mo_fock_frozen_hf_file%close_('keep')
 !
-      call wf%destruct_mo_fock_frozen_hf_contribution()
+      call wf%destruct_mo_fock_frozen_hf_term()
 !
-   end subroutine construct_mo_fock_frozen_hf_contribution_hf
+   end subroutine construct_mo_fock_frozen_hf_term_hf
 !
 !
    module subroutine initialize_orbital_coefficients_frozen_hf_hf(wf)

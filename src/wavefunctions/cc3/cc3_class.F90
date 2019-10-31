@@ -222,7 +222,7 @@ module cc3_class
       procedure :: debug_left_ov_N6                   => debug_left_ov_N6_cc3
       procedure :: debug_left_vv                      => debug_left_vv_cc3
       procedure :: debug_right_ov_t3                  => debug_right_ov_t3_cc3
-      procedure :: debug_right_ov_Y_contribution      => debug_right_ov_Y_contribution_cc3
+      procedure :: debug_right_ov_Y_term              => debug_right_ov_Y_term_cc3
       procedure :: debug_right_oo                     => debug_right_oo_cc3
       procedure :: debug_right_vv                     => debug_right_vv_cc3
       procedure :: debug_right_ov_R3                  => debug_right_ov_R3_cc3

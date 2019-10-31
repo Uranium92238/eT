@@ -29,7 +29,7 @@
    end subroutine prepare_mos_hf
 !
 !
-   module subroutine prepare_frozen_fock_contributions_hf(wf)
+   module subroutine prepare_frozen_fock_terms_hf(wf)
 !!
 !!    Prepare frozen Fock conttributions
 !!    Written by Sarai D. Folkestad, Oct 2019
@@ -38,7 +38,7 @@
 !
       class(hf) :: wf
 !
-   end subroutine prepare_frozen_fock_contributions_hf
+   end subroutine prepare_frozen_fock_terms_hf
 !
 !
    module subroutine remove_core_orbitals_hf(wf)
@@ -70,7 +70,7 @@
    end subroutine remove_frozen_hf_orbitals_hf
 !
 !
-   module subroutine construct_mo_fock_fc_contribution_hf(wf)
+   module subroutine construct_mo_fock_fc_term_hf(wf)
 !!
 !!    Calculate MO Fock frozen core contribution
 !!    Written by Sarai D. Folkestad, Sep 2019
@@ -79,10 +79,10 @@
 !
       class(hf) :: wf
 !
-   end subroutine construct_mo_fock_fc_contribution_hf
+   end subroutine construct_mo_fock_fc_term_hf
 !
 !
-   module subroutine construct_mo_fock_frozen_hf_contribution_hf(wf)
+   module subroutine construct_mo_fock_frozen_hf_term_hf(wf)
 !!
 !!    Construct MO fock frozen hf  contribution
 !!    Written by Ida-Marie Høyvik, Oct 2019
@@ -91,7 +91,7 @@
 !
       class(hf) :: wf
 !
-   end subroutine construct_mo_fock_frozen_hf_contribution_hf
+   end subroutine construct_mo_fock_frozen_hf_term_hf
 !
 !
    module subroutine initialize_orbital_coefficients_frozen_hf_hf(wf)

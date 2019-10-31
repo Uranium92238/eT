@@ -69,9 +69,9 @@ contains
 !
 !     Add effective contributions to Fock matrix 
 !
-      if (wf%frozen_core) call wf%add_frozen_core_fock_contribution(F_pq)
-      if (wf%frozen_hf_mos) call wf%add_frozen_hf_fock_contribution(F_pq)
-      if (wf%system%mm_calculation) call wf%add_molecular_mechanics_fock_contribution(F_pq)
+      if (wf%frozen_core) call wf%add_frozen_core_fock_term(F_pq)
+      if (wf%frozen_hf_mos) call wf%add_frozen_hf_fock_term(F_pq)
+      if (wf%system%mm_calculation) call wf%add_molecular_mechanics_fock_term(F_pq)
 !
 !     Add occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
@@ -147,7 +147,7 @@ contains
    end subroutine construct_fock_ccs
 !
 !
-   module subroutine add_frozen_core_fock_contribution_ccs(wf, F_pq)
+   module subroutine add_frozen_core_fock_term_ccs(wf, F_pq)
 !!
 !!    Add frozen core Fock contribution 
 !!    Written by Sarai D. Folkestad, 2019 
@@ -167,15 +167,15 @@ contains
 !
       call mem%alloc(F_pq_core, wf%n_mo, wf%n_mo)
 !
-      call wf%construct_t1_fock_fc_contribution(F_pq_core)
+      call wf%construct_t1_fock_fc_term(F_pq_core)
       call daxpy(wf%n_mo**2, one, F_pq_core, 1, F_pq, 1)
 !
       call mem%dealloc(F_pq_core, wf%n_mo, wf%n_mo)      
 !
-   end subroutine add_frozen_core_fock_contribution_ccs
+   end subroutine add_frozen_core_fock_term_ccs
 !
 !
-   module subroutine add_frozen_hf_fock_contribution_ccs(wf, F_pq)
+   module subroutine add_frozen_hf_fock_term_ccs(wf, F_pq)
 !!
 !!    Add frozen HF Fock contribution 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 
@@ -193,15 +193,15 @@ contains
 !
       call mem%alloc(F_pq_core, wf%n_mo, wf%n_mo)
 !
-      call wf%construct_t1_fock_frozen_hf_contribution(F_pq_core)
+      call wf%construct_t1_fock_frozen_hf_term(F_pq_core)
       call daxpy(wf%n_mo**2, one, F_pq_core, 1, F_pq, 1)
 !
       call mem%dealloc(F_pq_core, wf%n_mo, wf%n_mo)      
 !
-   end subroutine add_frozen_hf_fock_contribution_ccs
+   end subroutine add_frozen_hf_fock_term_ccs
 !
 !
-   module subroutine add_molecular_mechanics_fock_contribution_ccs(wf, F_pq)
+   module subroutine add_molecular_mechanics_fock_term_ccs(wf, F_pq)
 !!
 !!    Add molecular mechanics Fock contribution 
 !!    Written by Tommaso Giovannini, 2019 
@@ -235,10 +235,10 @@ contains
 !
       call mem%dealloc(h_mm_t1, wf%n_mo, wf%n_mo) 
 !
-   end subroutine add_molecular_mechanics_fock_contribution_ccs
+   end subroutine add_molecular_mechanics_fock_term_ccs
 !
 !
-   module subroutine construct_t1_fock_fc_contribution_ccs(wf, F_pq)
+   module subroutine construct_t1_fock_fc_term_ccs(wf, F_pq)
 !!
 !!    Calculate T1 Fock frozen core contribution
 !!    Written by Sarai D. Folkestad, Sep 2019
@@ -249,14 +249,14 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
-      call dcopy(wf%n_mo**2, wf%mo_fock_fc_contribution, 1, F_pq, 1)
+      call dcopy(wf%n_mo**2, wf%mo_fock_fc_term, 1, F_pq, 1)
 !
       call wf%t1_transform(F_pq)
 !
-   end subroutine construct_t1_fock_fc_contribution_ccs
+   end subroutine construct_t1_fock_fc_term_ccs
 !
 !
-   module subroutine construct_t1_fock_frozen_hf_contribution_ccs(wf, F_pq)
+   module subroutine construct_t1_fock_frozen_hf_term_ccs(wf, F_pq)
 !!
 !!    Calculate T1 Fock frozen fock contribution
 !!    Written by Sarai D. Folkestad, Sep 2019
@@ -267,11 +267,11 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
-      call dcopy(wf%n_mo**2, wf%mo_fock_frozen_hf_contribution, 1, F_pq, 1)
+      call dcopy(wf%n_mo**2, wf%mo_fock_frozen_hf_term, 1, F_pq, 1)
 !
       call wf%t1_transform(F_pq)
 !
-   end subroutine construct_t1_fock_frozen_hf_contribution_ccs
+   end subroutine construct_t1_fock_frozen_hf_term_ccs
 !
 !
 end submodule fock_ccs

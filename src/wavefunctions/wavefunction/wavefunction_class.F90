@@ -54,8 +54,8 @@ module wavefunction_class
 !
 !     Frozen orbital variables. Frozen orbitals are typically frozen core or frozen HF orbitals.
 !
-      real(dp), dimension(:,:), allocatable :: mo_fock_fc_contribution 
-      real(dp), dimension(:,:), allocatable :: mo_fock_frozen_hf_contribution 
+      real(dp), dimension(:,:), allocatable :: mo_fock_fc_term 
+      real(dp), dimension(:,:), allocatable :: mo_fock_frozen_hf_term 
 !
       type(sequential_file) :: mo_fock_fc_file, mo_fock_frozen_hf_file
 !
@@ -107,10 +107,10 @@ module wavefunction_class
 !
       procedure :: construct_orbital_block_by_density_cd       => construct_orbital_block_by_density_cd_wavefunction
 !
-      procedure :: initialize_mo_fock_fc_contribution          => initialize_mo_fock_fc_contribution_wavefunction                
-      procedure :: destruct_mo_fock_fc_contribution            => destruct_mo_fock_fc_contribution_wavefunction  
-      procedure :: initialize_mo_fock_frozen_hf_contribution   => initialize_mo_fock_frozen_hf_contribution_wavefunction                
-      procedure :: destruct_mo_fock_frozen_hf_contribution     => destruct_mo_fock_frozen_hf_contribution_wavefunction  
+      procedure :: initialize_mo_fock_fc_term                  => initialize_mo_fock_fc_term_wavefunction                
+      procedure :: destruct_mo_fock_fc_term                    => destruct_mo_fock_fc_term_wavefunction  
+      procedure :: initialize_mo_fock_frozen_hf_term           => initialize_mo_fock_frozen_hf_term_wavefunction                
+      procedure :: destruct_mo_fock_frozen_hf_term             => destruct_mo_fock_frozen_hf_term_wavefunction  
 !
       procedure :: read_frozen_orbitals_settings   => read_frozen_orbitals_settings_wavefunction 
 !
@@ -1573,7 +1573,7 @@ contains
    end subroutine read_frozen_orbitals_settings_wavefunction
 !
 !
-   subroutine initialize_mo_fock_frozen_hf_contribution_wavefunction(wf)
+   subroutine initialize_mo_fock_frozen_hf_term_wavefunction(wf)
 !!
 !!    Initialize Fock frozen HF orbitals contributions
 !!    Written by Sarai D. Folkestad, Sep. 2019
@@ -1582,12 +1582,12 @@ contains
 !
       class(wavefunction) :: wf
 !
-      if (.not. allocated(wf%mo_fock_frozen_hf_contribution)) call mem%alloc(wf%mo_fock_frozen_hf_contribution, wf%n_mo, wf%n_mo)
+      if (.not. allocated(wf%mo_fock_frozen_hf_term)) call mem%alloc(wf%mo_fock_frozen_hf_term, wf%n_mo, wf%n_mo)
 !
-   end subroutine initialize_mo_fock_frozen_hf_contribution_wavefunction
+   end subroutine initialize_mo_fock_frozen_hf_term_wavefunction
 !
 !
-   subroutine destruct_mo_fock_frozen_hf_contribution_wavefunction(wf)
+   subroutine destruct_mo_fock_frozen_hf_term_wavefunction(wf)
 !!
 !!    Destruct Fock frozen HF orbitals contributions
 !!    Written by Sarai D. Folkestad, Sep. 2019
@@ -1596,12 +1596,12 @@ contains
 !
       class(wavefunction) :: wf
 !
-      if (allocated(wf%mo_fock_frozen_hf_contribution)) call mem%dealloc(wf%mo_fock_frozen_hf_contribution, wf%n_mo, wf%n_mo)
+      if (allocated(wf%mo_fock_frozen_hf_term)) call mem%dealloc(wf%mo_fock_frozen_hf_term, wf%n_mo, wf%n_mo)
 !
-   end subroutine destruct_mo_fock_frozen_hf_contribution_wavefunction
+   end subroutine destruct_mo_fock_frozen_hf_term_wavefunction
 !
 !
-   subroutine initialize_mo_fock_fc_contribution_wavefunction(wf)
+   subroutine initialize_mo_fock_fc_term_wavefunction(wf)
 !!
 !!    Initialize Fock frozen core
 !!    Written by Sarai D. Folkestad, Sep. 2019
@@ -1610,12 +1610,12 @@ contains
 !
       class(wavefunction) :: wf
 !
-      if (.not. allocated(wf%mo_fock_fc_contribution)) call mem%alloc(wf%mo_fock_fc_contribution, wf%n_mo, wf%n_mo)
+      if (.not. allocated(wf%mo_fock_fc_term)) call mem%alloc(wf%mo_fock_fc_term, wf%n_mo, wf%n_mo)
 !
-   end subroutine initialize_mo_fock_fc_contribution_wavefunction
+   end subroutine initialize_mo_fock_fc_term_wavefunction
 !
 !
-   subroutine destruct_mo_fock_fc_contribution_wavefunction(wf)
+   subroutine destruct_mo_fock_fc_term_wavefunction(wf)
 !!
 !!    Destruct Fock frozen core
 !!    Written by Sarai D. Folkestad, Sep. 2019
@@ -1624,9 +1624,9 @@ contains
 !
       class(wavefunction) :: wf
 !
-      if (allocated(wf%mo_fock_fc_contribution)) call mem%dealloc(wf%mo_fock_fc_contribution, wf%n_mo, wf%n_mo)
+      if (allocated(wf%mo_fock_fc_term)) call mem%dealloc(wf%mo_fock_fc_term, wf%n_mo, wf%n_mo)
 !
-   end subroutine destruct_mo_fock_fc_contribution_wavefunction
+   end subroutine destruct_mo_fock_fc_term_wavefunction
 !
 !
 end module wavefunction_class
