@@ -29,7 +29,7 @@
    end subroutine construct_fock_ccs
 !
 !
-   module subroutine add_molecular_mechanics_fock_contribution_ccs(wf, F_pq)
+   module subroutine add_molecular_mechanics_fock_term_ccs(wf, F_pq)
 !!
 !!    Add molecular mechanics Fock contribution 
 !!    Written by Tommaso Giovannini, 2019 
@@ -40,10 +40,10 @@
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
 !
-   end subroutine add_molecular_mechanics_fock_contribution_ccs
+   end subroutine add_molecular_mechanics_fock_term_ccs
 !
 !
-   module subroutine add_frozen_core_fock_contribution_ccs(wf, F_pq)
+   module subroutine add_frozen_core_fock_term_ccs(wf, F_pq)
 !!
 !!    Add frozen core Fock contribution 
 !!    Written by Sarai D. Folkestad, 2019 
@@ -54,10 +54,10 @@
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq    
 !
-   end subroutine add_frozen_core_fock_contribution_ccs
+   end subroutine add_frozen_core_fock_term_ccs
 !
 !
-   module subroutine add_frozen_hf_fock_contribution_ccs(wf, F_pq)
+   module subroutine add_frozen_hf_fock_term_ccs(wf, F_pq)
 !!
 !!    Add frozen HF Fock contribution 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 
@@ -68,10 +68,10 @@
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
 !
-   end subroutine add_frozen_hf_fock_contribution_ccs
+   end subroutine add_frozen_hf_fock_term_ccs
 !
 !
-   module subroutine construct_t1_fock_fc_contribution_ccs(wf, F_pq)
+   module subroutine construct_t1_fock_fc_term_ccs(wf, F_pq)
 !!
 !!    Calculate T1 Fock frozen core
 !!    Written by Sarai D. Folkestad, Sep 2019
@@ -82,10 +82,10 @@
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
-   end subroutine construct_t1_fock_fc_contribution_ccs
+   end subroutine construct_t1_fock_fc_term_ccs
 !
 !
-   module subroutine construct_t1_fock_frozen_hf_contribution_ccs(wf, F_pq)
+   module subroutine construct_t1_fock_frozen_hf_term_ccs(wf, F_pq)
 !!
 !!    Calculate T1 Fock frozen fock contribution
 !!    Written by Sarai D. Folkestad, Sep 2019
@@ -96,6 +96,6 @@
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
-   end subroutine construct_t1_fock_frozen_hf_contribution_ccs
+   end subroutine construct_t1_fock_frozen_hf_term_ccs
 !
 !

@@ -403,7 +403,7 @@ contains
 !
 !     Contribution to Fock matrix corresponding to the interaction with the electric field.
 !
-      call wf%add_t1_fock_em_lg_dipole_contribution_complex(cmplx(field%vector, zero, dp))
+      call wf%add_t1_fock_length_dipole_term_complex(cmplx(field%vector, zero, dp))
 !
    end subroutine update_wavefunction_cc_propagation
 !
@@ -441,8 +441,8 @@ contains
 !     Total variational energy with interaction, <Λ| e^-T H e^T |R>
 !
       call wf%calculate_energy_complex()
-      call wf%calculate_energy_omega_contribution_complex()
-      call wf%calculate_energy_em_lg_dp_contribution_complex(cmplx(field%vector, zero, dp))
+      call wf%calculate_energy_omega_term_complex()
+      call wf%calculate_energy_length_dipole_term_complex(cmplx(field%vector, zero, dp))
 !
    end subroutine calculate_energy_cc_propagation
 !

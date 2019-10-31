@@ -36,7 +36,7 @@ module mlhf_class
    type, extends(hf) :: mlhf
 !
       type(sequential_file) :: inactive_energy_file
-      type(sequential_file) :: inactive_contribution_to_fock_file
+      type(sequential_file) :: inactive_fock_term_file
 !
       real(dp), dimension(:,:), allocatable :: G_De
 !
@@ -77,7 +77,7 @@ module mlhf_class
       procedure :: initialize_G_De                          => initialize_G_De_mlhf
       procedure :: destruct_G_De                            => destruct_G_De_mlhf
 !
-      procedure :: get_active_energy_contribution_from_G_De => get_active_energy_contribution_from_G_De_mlhf
+      procedure :: get_active_energy_G_De_term              => get_active_energy_G_De_term_mlhf
 !
       procedure :: construct_G_De                           => construct_G_De_mlhf
 !
@@ -152,8 +152,8 @@ contains
 !
 !     Initialize other MLHF files
 !
-      wf%inactive_contribution_to_fock_file = &
-            sequential_file('inactive_contribution_to_fock')
+      wf%inactive_fock_term_file = &
+            sequential_file('inactive_fock_term')
 !
 !     Construct screening vectors
 !
@@ -377,9 +377,9 @@ contains
 !
 !     Write the new G(De) to file
 !
-      call wf%inactive_contribution_to_fock_file%open_('write', 'rewind')
-      call wf%inactive_contribution_to_fock_file%write_(wf%G_De, wf%n_mo**2)
-      call wf%inactive_contribution_to_fock_file%close_
+      call wf%inactive_fock_term_file%open_('write', 'rewind')
+      call wf%inactive_fock_term_file%write_(wf%G_De, wf%n_mo**2)
+      call wf%inactive_fock_term_file%close_
 !
 !     AO fock construction and energy calculation
 !
@@ -389,7 +389,7 @@ contains
 !
 !     Add the Tr[Da * G(De)] and inactive energy contributions to the energy
 !
-      wf%energy = wf%energy + wf%inactive_energy + wf%get_active_energy_contribution_from_G_De()
+      wf%energy = wf%energy + wf%inactive_energy + wf%get_active_energy_G_De_term()
 !
 !     Transformation of the AO fock in the MO basis and addition of the G_De term
 !     to costruct the effective MO fock
@@ -849,7 +849,7 @@ contains
    end subroutine construct_active_paos_mlhf
 !
 !
-   real(dp) function get_active_energy_contribution_from_G_De_mlhf(wf)
+   real(dp) function get_active_energy_G_De_term_mlhf(wf)
 !!
 !!    Get active energy contribution from G(De)
 !!    Written by Sarai D. Folkestad and Linda Goletto, 2019
@@ -876,9 +876,9 @@ contains
 !
       E_G_De = two * E_G_De
 !
-      get_active_energy_contribution_from_G_De_mlhf = E_G_De
+      get_active_energy_G_De_term_mlhf = E_G_De
 !
-   end function get_active_energy_contribution_from_G_De_mlhf
+   end function get_active_energy_G_De_term_mlhf
 !
 !
    subroutine print_orbital_space_info_mlhf(wf)
@@ -1047,7 +1047,7 @@ contains
       call wf%hf%print_energy()
 !
       nuclear_repulsion = wf%system%get_total_nuclear_repulsion()
-      E_G_De = wf%get_active_energy_contribution_from_G_De()
+      E_G_De = wf%get_active_energy_G_De_term()
 !
       call output%printf('- Summary of '// trim(convert_to_uppercase(wf%name_))//&
          ' active/inactive contributions to electronic energy (a.u.):', pl='m', fs='(/t3,a)', ll=80)
@@ -1272,9 +1272,9 @@ contains
       call wf%initialize_mo_fock()
       call wf%initialize_G_De()
 !
-      call wf%inactive_contribution_to_fock_file%open_('read', 'rewind')
-      call wf%inactive_contribution_to_fock_file%read_(wf%G_De, wf%n_mo**2)
-      call wf%inactive_contribution_to_fock_file%close_
+      call wf%inactive_fock_term_file%open_('read', 'rewind')
+      call wf%inactive_fock_term_file%read_(wf%G_De, wf%n_mo**2)
+      call wf%inactive_fock_term_file%close_
 !
       call identity_array(wf%W_mo_update, wf%n_mo)
 !

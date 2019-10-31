@@ -144,9 +144,9 @@ module ccs_class
 !
       procedure :: set_fock                                    => set_fock_ccs
       procedure :: construct_fock                              => construct_fock_ccs
-      procedure :: add_frozen_core_fock_contribution           => add_frozen_core_fock_contribution_ccs
-      procedure :: add_frozen_hf_fock_contribution             => add_frozen_hf_fock_contribution_ccs
-      procedure :: add_molecular_mechanics_fock_contribution   => add_molecular_mechanics_fock_contribution_ccs
+      procedure :: add_frozen_core_fock_term                   => add_frozen_core_fock_term_ccs
+      procedure :: add_frozen_hf_fock_term                     => add_frozen_hf_fock_term_ccs
+      procedure :: add_molecular_mechanics_fock_term           => add_molecular_mechanics_fock_term_ccs
 !
       procedure :: get_gs_orbital_differences                  => get_gs_orbital_differences_ccs
       procedure :: get_es_orbital_differences                  => get_gs_orbital_differences_ccs
@@ -284,8 +284,8 @@ module ccs_class
 !
 !     Frozen core
 !
-      procedure :: construct_t1_fock_fc_contribution           => construct_t1_fock_fc_contribution_ccs
-      procedure :: construct_t1_fock_frozen_hf_contribution    => construct_t1_fock_frozen_hf_contribution_ccs
+      procedure :: construct_t1_fock_fc_term                   => construct_t1_fock_fc_term_ccs
+      procedure :: construct_t1_fock_frozen_hf_term            => construct_t1_fock_frozen_hf_term_ccs
 !
 !     MO preparations
 !
@@ -298,7 +298,7 @@ module ccs_class
       procedure :: normalization_for_jacobian_debug            => normalization_for_jacobian_debug_ccs
       procedure :: numerical_test_jacobian                     => numerical_test_jacobian_ccs
 !
-      procedure :: read_frozen_orbital_contributions           => read_frozen_orbital_contributions_ccs
+      procedure :: read_frozen_orbital_terms                   => read_frozen_orbital_terms_ccs
 !
    end type ccs
 !
@@ -395,7 +395,7 @@ contains
 !
       if (wf%bath_orbital) call wf%make_bath_orbital()
 !
-      if (wf%frozen_core .or. wf%frozen_hf_mos) call wf%read_frozen_orbital_contributions()
+      if (wf%frozen_core .or. wf%frozen_hf_mos) call wf%read_frozen_orbital_terms()
 !
 !     print orbital space info for cc
       call output%printf(' - Number of orbitals for coupled cluster calculation', fs='(/t3,a)', pl='minimal')
@@ -421,8 +421,8 @@ contains
       call wf%destruct_multipliers()
       call wf%destruct_right_excitation_energies()
       call wf%destruct_left_excitation_energies()
-      call wf%destruct_mo_fock_fc_contribution()
-      call wf%destruct_mo_fock_frozen_hf_contribution()
+      call wf%destruct_mo_fock_fc_term()
+      call wf%destruct_mo_fock_frozen_hf_term()
 !
       write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(convert_to_uppercase(wf%name_)), ' wavefunction'
 !
@@ -1296,7 +1296,7 @@ contains
    end subroutine mo_preparations_ccs
 !
 !
-   subroutine read_frozen_orbital_contributions_ccs(wf)
+   subroutine read_frozen_orbital_terms_ccs(wf)
 !!
 !!    Read frozen orbital contributions
 !!    Written by Sarai D. Folkestad, Oct 2019
@@ -1310,29 +1310,29 @@ contains
 !
       if (wf%frozen_core) then
 !      
-         call wf%initialize_mo_fock_fc_contribution()
+         call wf%initialize_mo_fock_fc_term()
 !
          wf%mo_fock_fc_file = sequential_file('MO_Fock_FC')
 !
          call wf%mo_fock_fc_file%open_('read', 'rewind')
-         call wf%mo_fock_fc_file%read_(wf%mo_fock_fc_contribution, wf%n_mo**2)
+         call wf%mo_fock_fc_file%read_(wf%mo_fock_fc_term, wf%n_mo**2)
          call wf%mo_fock_fc_file%close_('keep')
 !
       endif
 !
       if (wf%frozen_hf_mos) then
 !
-         call wf%initialize_mo_fock_frozen_hf_contribution()
+         call wf%initialize_mo_fock_frozen_hf_term()
 !
          wf%mo_fock_frozen_hf_file = sequential_file('MO_frozen_hf_Fock')
 !
          call wf%mo_fock_frozen_hf_file%open_('read', 'rewind')
-         call wf%mo_fock_frozen_hf_file%read_(wf%mo_fock_frozen_hf_contribution, wf%n_mo**2)
+         call wf%mo_fock_frozen_hf_file%read_(wf%mo_fock_frozen_hf_term, wf%n_mo**2)
          call wf%mo_fock_frozen_hf_file%close_('keep')
 !
       endif
 !
-   end subroutine read_frozen_orbital_contributions_ccs
+   end subroutine read_frozen_orbital_terms_ccs
 !
 !
    subroutine check_for_degeneracies_ccs(wf, transformation, threshold)
