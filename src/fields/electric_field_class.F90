@@ -49,8 +49,9 @@ module electric_field_class
 !
       integer, dimension(:), allocatable :: envelope, repetition
 !
-      real(dp), dimension(:), allocatable :: x_polarization, y_polarization, z_polarization, tc, angfreqc, &
-                                             peak_strength, phase_shift, width, separation
+      real(dp), dimension(:), allocatable :: x_polarization, y_polarization, z_polarization, tc, &
+                                             angfreqc, peak_strength, phase_shift, width,        &
+                                             separation
 !
    contains
 !
@@ -159,8 +160,9 @@ contains
 !
       logical :: separation_input
 !
-      integer :: n_envelopes, n_x_polarizations, n_y_polarizations, n_z_polarizations, n_central_times, n_widths, &
-                 n_central_angfreqs, n_peak_strengths, n_phase_shifts, n_repetitions, n_separations, i
+      integer :: n_envelopes, n_x_polarizations, n_y_polarizations, n_z_polarizations, &
+                 n_central_times, n_widths, n_central_angfreqs, n_peak_strengths, n_phase_shifts, &
+                 n_repetitions, n_separations, i
 !
 !     Read settings for an arbitrary number of pulses to arrays
 !
@@ -180,37 +182,48 @@ contains
       if (input%requested_keyword_in_section('envelope', 'electric field')) &
          n_envelopes = input%get_n_elements_for_keyword_in_section('envelope', 'electric field')
 !
-      if (input%requested_keyword_in_section('x polarization', 'electric field')) &
-         n_x_polarizations = input%get_n_elements_for_keyword_in_section('x polarization', 'electric field')
+      if (input%requested_keyword_in_section('x polarization', 'electric field'))          &
+         n_x_polarizations = input%get_n_elements_for_keyword_in_section('x polarization', &
+                                                                         'electric field')
 !
-      if (input%requested_keyword_in_section('y polarization', 'electric field')) &
-         n_y_polarizations = input%get_n_elements_for_keyword_in_section('y polarization', 'electric field')
+      if (input%requested_keyword_in_section('y polarization', 'electric field'))          &
+         n_y_polarizations = input%get_n_elements_for_keyword_in_section('y polarization', &
+                                                                         'electric field')
 !
-      if (input%requested_keyword_in_section('z polarization', 'electric field')) &
-         n_z_polarizations = input%get_n_elements_for_keyword_in_section('z polarization', 'electric field')
+      if (input%requested_keyword_in_section('z polarization', 'electric field'))          &
+         n_z_polarizations = input%get_n_elements_for_keyword_in_section('z polarization', &
+                                                                         'electric field')
 !
-      if (input%requested_keyword_in_section('central time', 'electric field')) &
-         n_central_times = input%get_n_elements_for_keyword_in_section('central time', 'electric field')
+      if (input%requested_keyword_in_section('central time', 'electric field'))        &
+         n_central_times = input%get_n_elements_for_keyword_in_section('central time', &
+                                                                       'electric field')
 !
       if (input%requested_keyword_in_section('width', 'electric field')) &
          n_widths = input%get_n_elements_for_keyword_in_section('width', 'electric field')
 !
       if (input%requested_keyword_in_section('central angular frequency', 'electric field')) &
-         n_central_angfreqs = input%get_n_elements_for_keyword_in_section('central angular frequency', 'electric field')
+         n_central_angfreqs =                                                                &
+            input%get_n_elements_for_keyword_in_section('central angular frequency',         &
+                                                        'electric field')
 !
-      if (input%requested_keyword_in_section('peak strength', 'electric field')) &
-         n_peak_strengths = input%get_n_elements_for_keyword_in_section('peak strength', 'electric field')
+      if (input%requested_keyword_in_section('peak strength', 'electric field'))         &
+         n_peak_strengths = input%get_n_elements_for_keyword_in_section('peak strength', &
+                                                                        'electric field')
 !
-      if (input%requested_keyword_in_section('phase shift', 'electric field')) &
-         n_phase_shifts = input%get_n_elements_for_keyword_in_section('phase shift', 'electric field')
+      if (input%requested_keyword_in_section('phase shift', 'electric field'))       &
+         n_phase_shifts = input%get_n_elements_for_keyword_in_section('phase shift', &
+                                                                      'electric field')
 !
-      if (input%requested_keyword_in_section('repetition', 'electric field')) &
-         n_repetitions = input%get_n_elements_for_keyword_in_section('repetition', 'electric field')
+      if (input%requested_keyword_in_section('repetition', 'electric field'))      &
+         n_repetitions = input%get_n_elements_for_keyword_in_section('repetition', &
+                                                                     'electric field')
 !
-      if (input%requested_keyword_in_section('separation', 'electric field')) &
-         n_separations = input%get_n_elements_for_keyword_in_section('separation', 'electric field')
+      if (input%requested_keyword_in_section('separation', 'electric field'))      &
+         n_separations = input%get_n_elements_for_keyword_in_section('separation', &
+                                                                     'electric field')
 !
-!     Check if the arrays of pulse parameters have the same lengths, sets n_pulses to this length if true
+!     Check if the arrays of pulse parameters have the same lengths, sets n_pulses to this length if
+!     true
 !
       if ((n_envelopes .eq. n_x_polarizations)        &
           .and. (n_envelopes .eq. n_y_polarizations)  &
@@ -231,15 +244,15 @@ contains
 !
       if ((n_repetitions .ne. 0) .and. (n_repetitions .ne. field%n_pulses)) then
 !
-         call output%error_msg('the array of repetitions was specified, but the length did not match ' &
-                                // 'the number of specified pulses.')
+         call output%error_msg('the array of repetitions was specified, but the length did not ' &
+                                // 'match the number of specified pulses.')
 !
       endif
 !
       if ((n_separations .ne. 0) .and. (n_separations .ne. field%n_pulses)) then
 !
-         call output%error_msg('the array of separations was specified, but the length did not match ' &
-                               // 'the number of specified pulses.')
+         call output%error_msg('the array of separations was specified, but the length did not ' &
+                               // 'match the number of specified pulses.')
 !
       endif
 !
@@ -259,23 +272,34 @@ contains
 !
          field%repetition = 1
 !
-         call input%get_array_for_keyword_in_section('envelope', 'electric field', field%n_pulses, field%envelope)
-         call input%get_array_for_keyword_in_section('x polarization', 'electric field', field%n_pulses, field%x_polarization)
-         call input%get_array_for_keyword_in_section('y polarization', 'electric field', field%n_pulses, field%y_polarization)
-         call input%get_array_for_keyword_in_section('z polarization', 'electric field', field%n_pulses, field%z_polarization)
-         call input%get_array_for_keyword_in_section('central time', 'electric field', field%n_pulses, field%tc)
-         call input%get_array_for_keyword_in_section('width', 'electric field', field%n_pulses, field%width)
-         call input%get_array_for_keyword_in_section('central angular frequency', 'electric field', field%n_pulses, field%angfreqc)
-         call input%get_array_for_keyword_in_section('peak strength', 'electric field', field%n_pulses, field%peak_strength)
-         call input%get_array_for_keyword_in_section('phase shift', 'electric field', field%n_pulses, field%phase_shift)
+         call input%get_array_for_keyword_in_section('envelope', 'electric field', field%n_pulses, &
+                                                     field%envelope)
+         call input%get_array_for_keyword_in_section('x polarization', 'electric field', &
+                                                     field%n_pulses, field%x_polarization)
+         call input%get_array_for_keyword_in_section('y polarization', 'electric field', &
+                                                     field%n_pulses, field%y_polarization)
+         call input%get_array_for_keyword_in_section('z polarization', 'electric field', &
+                                                     field%n_pulses, field%z_polarization)
+         call input%get_array_for_keyword_in_section('central time', 'electric field', &
+                                                     field%n_pulses, field%tc)
+         call input%get_array_for_keyword_in_section('width', 'electric field', field%n_pulses, &
+                                                     field%width)
+         call input%get_array_for_keyword_in_section('central angular frequency', 'electric field', &
+                                                     field%n_pulses, field%angfreqc)
+         call input%get_array_for_keyword_in_section('peak strength', 'electric field', &
+                                                     field%n_pulses, field%peak_strength)
+         call input%get_array_for_keyword_in_section('phase shift', 'electric field', &
+                                                     field%n_pulses, field%phase_shift)
 !
          if (input%requested_keyword_in_section('separation', 'electric field')) then
-            call input%get_array_for_keyword_in_section('separation', 'electric field', field%n_pulses, field%separation)
+            call input%get_array_for_keyword_in_section('separation', 'electric field', &
+                                                        field%n_pulses, field%separation)
             separation_input = .true.
          endif
 !
          if (input%requested_keyword_in_section('repetition', 'electric field')) then
-            call input%get_array_for_keyword_in_section('repetition', 'electric field', field%n_pulses, field%repetition)                                                                                 
+            call input%get_array_for_keyword_in_section('repetition', 'electric field', &
+                                                        field%n_pulses, field%repetition)                                                                                 
          endif
 !
          do i = 1, field%n_pulses
@@ -336,7 +360,8 @@ contains
 !
 !           Cosine carrier wave modulated by the envelope of the given pulse
 !
-            field_strength = field%peak_strength(i)*cos(field%angfreqc(i)*(t-tc)+field%phase_shift(i))*envelope
+            field_strength = field%peak_strength(i) &
+                             *cos(field%angfreqc(i)*(t-tc)+field%phase_shift(i))*envelope
 !
             field%vector(1) = field%vector(1) + field%x_polarization(i)*field_strength
             field%vector(2) = field%vector(2) + field%y_polarization(i)*field_strength
