@@ -301,7 +301,7 @@ contains
    module subroutine initialize_transition_densities_ccs(wf)
 !!
 !!    Initialize left and right transition densities
-!!    Written by Alexander Paul, June 2019
+!!    Written by Alexander C. Paul, June 2019
 !!
       implicit none
 !
@@ -319,7 +319,7 @@ contains
    module subroutine destruct_transition_densities_ccs(wf)
 !!
 !!    Destruct left and right transition densities
-!!    Written by Alexander Paul, June 2019
+!!    Written by Alexander C. Paul, June 2019
 !!
       implicit none
 !

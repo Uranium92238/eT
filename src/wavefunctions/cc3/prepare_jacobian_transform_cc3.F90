@@ -21,7 +21,7 @@ submodule (cc3_class) prepare_jacobian_transform
 !
 !!
 !!    Prepare jacobian transformation (cc3)
-!!    Written by Alexander Paul and Rolf H. Myhre, March 2019
+!!    Written by Alexander C. Paul and Rolf H. Myhre, March 2019
 !!
 !!    Routines setting up the files containing intermediates for the linear 
 !!    transform of trial vectors by the Jacobian matrix and its transpose.
@@ -47,7 +47,7 @@ contains
    module subroutine prepare_for_jacobian_cc3(wf)
 !!
 !!    Prepare for jacobian
-!!    Written by Rolf Heilemann Myhre, April 2019
+!!    Written by Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -78,7 +78,7 @@ contains
    module subroutine prepare_for_jacobian_transpose_cc3(wf)
 !!
 !!    Prepare for jacobian transpose transformation
-!!    Written by Rolf Heilemann Myhre, April 2019
+!!    Written by Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -102,13 +102,14 @@ contains
 !
    module subroutine prep_cc3_jacobian_trans_integrals_cc3(wf)
 !!
+!!    Jacobian transpose transformation prepare integral files
+!!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
+!!
 !!    Construct integrals needed in CC3 jacobian transpose and store on disk
 !!    (be|cd) ordered as bce,d
 !!    (mj|lk) ordered as mjk,l
 !!    (ck|ld) ordered as cl,kd
 !!    (cd|lk) ordered as cl,kd
-!!
-!!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
       implicit none
 !
@@ -287,12 +288,13 @@ contains
 !
    module subroutine prep_cc3_g_lbkc_t_file_cc3(wf)
 !!
-!!    Construct ovov-integral needed only in the construction of the intermediates 
-!!    for the CC3 jacobian transformations and store on disk
+!!    Prepare ovov-integral 
+!!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
 !!
 !!    (lb|kc) ordered as bcl,k
 !!
-!!    written by Rolf H. Myhre and Alexander Paul, Mai 2019
+!!    only needed in the construction of the intermediates
+!!    for the CC3 jacobian transformations and store on disk
 !!
       implicit none
 !
@@ -352,7 +354,11 @@ contains
 !
    module subroutine prep_cc3_jacobian_intermediates_cc3(wf)
 !!
-!!    Construct X_abdi and X_ajil needed in CC3 jacobian transpose and store on disk
+!!
+!!    Prepare intermediates for jacobian CC3 transformations
+!!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
+!!
+!!    Construct X_abdi and Y_akil needed in CC3 jacobian transpose and store on disk
 !!    For that: construct t^abc_ijk in single batches of ijk 
 !!    and contract with the respective integrals
 !!
@@ -360,8 +366,6 @@ contains
 !!
 !!    X_abid = - sum_jck (2t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_kcjd
 !!    X_ajil = - sum_bck (2t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_lbkc
-!!
-!!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
       implicit none
 !
@@ -441,7 +445,7 @@ contains
       batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                                 req_0, req_1, req_2, req_3, zero)
+                                 req_0, req_1, req_2, req_3, buffer_size = zero)
 !
 !     Allocate integral arrays
 !     Split up so that the integral and amplitude arrays are closer in mem
@@ -742,7 +746,11 @@ contains
    module subroutine construct_x_intermediates_cc3(wf, i, j, k, t_abc, u_abc, v_abc, x_alij,      &
                                                    X_abdi, X_abdj, X_abdk, g_lbic, g_lbjc, g_lbkc)
 !!
-!!    Constructs the intermediates X_abdi and X_ajil used to compute the contributions to sigma_ai
+!!    Construct X intermediates
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
+!!
+!!    Constructs the intermediates X_vvvo and X_vooo
+!!    used to compute the contributions to sigma_ai
 !!
 !!    X_abdi = sum_cjk (t^cba_ijk + t^acb_ijk - 2 * t^abc_ijk) * g_kcjd
 !!    X_ajil = sum_cjk (t^cba_ijk + t^acb_ijk - 2 * t^abc_ijk) * g_lbkc
@@ -751,8 +759,6 @@ contains
 !!    The p(i,j,k) can be set in dgemm and q(i,j,k) is defined by the array used
 !!
 !!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops
-!!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -996,7 +1002,7 @@ contains
 !!
 !!    Read in intermediate X_abdi from file, resort to X_abid and write to file again
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !

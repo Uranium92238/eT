@@ -85,7 +85,7 @@ program eT_program
    write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties, SAD   '
    write(output%unit,'(t4, a, a)')    '                       ','BFGS-tool                                              '
    write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, launch script, file system'
-   write(output%unit,'(t4, a, a)')    'Alexander Paul         ','CC2, CC3, first order properties'
+   write(output%unit,'(t4, a, a)')    'Alexander C. Paul      ','CC2, CC3, first order properties'
    write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
    write(output%unit,'(t4, a, a)')    'Åsmund H. Tveten       ','HF'
    write(output%unit,'(t3,a)')       '----------------------------------------------------------------------------------'

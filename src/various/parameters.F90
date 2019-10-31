@@ -45,9 +45,10 @@ module parameters
 !
 !  Fractions
 !
-   real(dp), parameter :: half           = 0.5D0
-   real(dp), parameter :: quarter        = 0.25D0
-   real(dp), parameter :: one_over_eight = one/eight
+   real(dp), parameter :: half      = 0.5D0
+   real(dp), parameter :: quarter   = 0.25D0
+   real(dp), parameter :: sixth     = one/six
+   real(dp), parameter :: eighth    = one/eight
 !
 !  Complex integers
 !
@@ -65,7 +66,7 @@ module parameters
 !
    complex(dp), parameter :: half_complex           = cmplx(half, zero, dp)
    complex(dp), parameter :: quarter_complex        = cmplx(quarter, zero, dp)
-   complex(dp), parameter :: one_over_eight_complex = cmplx(one_over_eight, zero, dp)
+   complex(dp), parameter :: eighth_complex = cmplx(eighth, zero, dp)
 !
 !  Conversion factors
 !

@@ -117,6 +117,7 @@ module ccs_class
 !
       procedure :: save_excited_state                          => save_excited_state_ccs
       procedure :: read_excited_state                          => read_excited_state_ccs
+!
       procedure :: get_n_excited_states_on_file                => get_n_excited_states_on_file_ccs
 !
       procedure :: initialize_right_excitation_energies        => initialize_right_excitation_energies_ccs
@@ -460,7 +461,7 @@ contains
    subroutine read_hf_ccs(wf)
 !!
 !!    Read HF file
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!    Short routine to read the HF information from disk
 !!
       implicit none
@@ -881,19 +882,26 @@ contains
    end subroutine set_cvs_start_indices_ccs
 !
 !
-   real(dp) function L_R_overlap_ccs(wf, L, R)
+   real(dp) function L_R_overlap_ccs(wf, L, left_state, R, right_state)
 !!
-!!    Calculates the overlap of the left and right states 
+!!    Calculates the overlap between a given left and right state
 !!    Written by Josefine Andersen, Apr 2019
+!!    Modified by Alexander C. Paul to be overwritable for CC3
 !!
-      class(ccs) :: wf
+      class(ccs), intent(in) :: wf
+
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: L
+      integer, intent(in) :: left_state
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: R
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: L
+      integer, intent(in) :: right_state
 !
       real(dp) :: ddot
 !
       L_R_overlap_ccs = ddot(wf%n_es_amplitudes, L, 1, R, 1)
+!
+      call output%printf('Overlap of (i0). left and (i0). right state: (f15.10)',   &
+                          fs='(/t6,a)', ints=[left_state, right_state], reals=[L_R_overlap_ccs], pl='debug')
 !
    end function L_R_overlap_ccs
 !
@@ -1330,7 +1338,7 @@ contains
    subroutine check_for_degeneracies_ccs(wf, transformation, threshold)
 !!
 !!    Check for degeneracies in the excited states
-!!    written by Alexander C. Paul and Rolf H. Myhre, Oct 2019
+!!    Written by Alexander C. Paul and Rolf H. Myhre, Oct 2019
 !!
 !!    The solver might not ensure orthogonality of the states (e.g. in DIIS).
 !!    Therefore, degenerate roots might be found where the eigenvectors
@@ -1444,7 +1452,7 @@ contains
 !!    Written by Alexander C. Paul, Sep 2019
 !!
 !!    For that: 
-!!       - check if excitation energies are the same
+!!       - check if left and right excitation energies are consistent
 !!       - check for degenerate states
 !!       - check for and discard parallel states
 !!       - If degeneracies are present: biorthonormalize using Gram-Schmidt
@@ -1670,18 +1678,20 @@ contains
 !              :: Biorthonormalize states ::
 !              -----------------------------
 !
-!                 (following Kohaupt, L., Rocky Mountain J. Math., 44, 1265, (2014))
+!              (following Kohaupt, L., Rocky Mountain J. Math., 44, 1265, (2014))
 !
-!                 non degenerate L/R states are biorthogonal, thus only normalization needed
+!              non degenerate L/R states are biorthogonal, thus only normalization needed
 !
-!                 degenerate L/R states should be biorthogonal as well
-!                 if not the k-th state is determined in terms of the 
-!                 previously biorthogonalized states i
+!              degenerate L/R states should be biorthogonal as well
+!              if not the k-th state is determined in terms of the 
+!              previously biorthogonalized states i
 !
-!                 Intermediate:  L'(k) = L(k) - sum_i < L(k)|R"(i)> * L"(i)
-!                 Biorthonormal: L"(k) = < L'(k)|R(k)>^(-1) * L'(k)
+!              Intermediate:  L'(k) = L(k) - sum_i < L(k)|R"(i)> * L"(i)
+!              Biorthonormal: L"(k) = < L'(k)|R(k)>^(-1) * L'(k)
 !
-!                 Biorthonormal: R"(k) = R(k) - sum_i < R(k)|L"(i)> * R"(i)
+!              Biorthonormal: R"(k) = R(k) - sum_i < R(k)|L"(i)> * R"(i)
+!
+!              Renormalize R"(k) afterwards and then binormalize L"(k) to R"(k)
 !
                call mem%alloc(L_normalized, wf%n_es_amplitudes, reduced_degeneracy_l)
                call mem%alloc(R_normalized, wf%n_es_amplitudes, reduced_degeneracy_r)
@@ -1689,8 +1699,8 @@ contains
                do p = 1, reduced_degeneracy_l
 !
                   call dcopy(wf%n_es_amplitudes, &
-                           L(:,p), 1,            &
-                           L_normalized(:, p), 1)
+                             L(:,p), 1,          &
+                             L_normalized(:,p), 1)
 !
                end do
 !
@@ -1729,7 +1739,7 @@ contains
                   end do
 !
 !                 Simple binormalization if only 1 right state 
-!                 has significant overlap with the L state
+!                 has significant overlap with the left state
 !
                   if((.not. biorthonormalize) .and. &
                      (n_overlap_zero .eq. reduced_degeneracy_r-1)) then
@@ -1737,15 +1747,18 @@ contains
                      call output%printf('Degenerate states except one are biorthogonal &
                                        &- Thus, only binormalize', pl='v', fs='(/t6,a)')
 !
-                     LT_R = wf%L_R_overlap(L(:,state),                  &
-                                           R(:,state_nonzero_overlap))
+                     LT_R = wf%L_R_overlap(L(:, state),                             &
+                                           current_state + state - 1,               &
+                                           R(:, state_nonzero_overlap),             &
+                                           current_state + state_nonzero_overlap - 1)
 !
 !                    Sanity check that the left and corresponding right state are not orthogonal
 !
                      if(abs(LT_R) .lt. 1.0d-2) then
 !
-                        call output%printf('Warning: Overlap of (i0). left and right state close to zero.', &
-                                          pl='m', ints=[current_state])
+                        call output%printf('Warning: Overlap of (i0). left and &
+                                          &right state close to zero.',        &
+                                           pl='m', ints=[current_state])
 !
                      end if
 !
@@ -1845,7 +1858,10 @@ contains
 !                    :: Binormalize the left to the right vectors ::
 !                    ::        including triples if present       ::
 !
-                     LT_R = wf%L_R_overlap(L_normalized(:,state), R_normalized(:,state))
+                     LT_R = wf%L_R_overlap(L_normalized(:,state),     &
+                                           current_state + state - 1, &
+                                           R_normalized(:,state),     &
+                                           current_state + state - 1)
 !
 !                    Sanity check that the left and corresponding right state are not orthogonal
 !
@@ -1890,7 +1906,10 @@ contains
                call mem%alloc(L, wf%n_es_amplitudes, 1)
                call wf%read_excited_state(L, current_state, 'left')
 !
-               LT_R = wf%L_R_overlap(L, R)
+               LT_R = wf%L_R_overlap(L,             &
+                                     current_state, &
+                                     R,             &
+                                     current_state)
 !
 !              Sanity check that the left and corresponding right state are not orthogonal
 !

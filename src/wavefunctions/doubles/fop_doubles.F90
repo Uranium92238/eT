@@ -41,7 +41,7 @@ submodule (doubles_class) fop_doubles
 !!
 !!       ξ^X_μ = < μ | exp(-T) X exp(T)| R >
 !!
-!!    The transition density matrices are construct as follows:
+!!    The EOM transition density matrices are constructed as follows:
 !!
 !!       ρ^L_pq = < k | E_pq | CC >
 !!       ρ^R_pq = < Λ | E_pq | k >
@@ -60,8 +60,8 @@ contains
 !
    module subroutine construct_left_transition_density_doubles(wf, state)
 !!
-!!    Construct left one-electron transition density for the state k
-!!    Written by Alexander Paul, June 2019
+!!    Construct left one-electron EOM transition density
+!!    Written by Alexander C. Paul, June 2019
 !!
 !!          ρ^L_pq = < k | E_pq | CC >
 !!
@@ -130,8 +130,8 @@ contains
 !
    module subroutine construct_right_transition_density_doubles(wf, state)
 !!
-!!    Construct right one-electron transition density for the state k
-!!    Written by Alexander Paul, June 2019
+!!    Construct right one-electron EOM transition density
+!!    Written by Alexander C. Paul, June 2019
 !!
 !!          ρ^R_pq = < Λ | E_pq | k >
 !!
@@ -153,9 +153,9 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: tbar_aibj
 !
-      real(dp), dimension(:,:), allocatable :: rho_corr
+      real(dp), dimension(:,:), allocatable :: rho_correlation
 !
-      real(dp) :: scaling_factor
+      real(dp) :: tbar_R_overlap
       real(dp) :: ddot
 !
       integer :: a, i
@@ -175,17 +175,17 @@ contains
 !
       call dcopy(wf%n_t1, R_k, 1, R_ai, 1)
 !
-      scaling_factor = -one*ddot(wf%n_v*wf%n_o, R_ai, 1, wf%t1bar, 1)
+      tbar_R_overlap = -one*ddot(wf%n_v*wf%n_o, R_ai, 1, wf%t1bar, 1)
 !
-      call wf%right_transition_density_ccs_oo(wf%t1bar, R_ai)
-      call wf%right_transition_density_ccs_ov(R_ai)
-      call wf%right_transition_density_ccs_vv(wf%t1bar, R_ai)
+      call wf%right_transition_density_ccs_oo(wf%right_transition_density, wf%t1bar, R_ai)
+      call wf%right_transition_density_ccs_ov(wf%right_transition_density, R_ai)
+      call wf%right_transition_density_ccs_vv(wf%right_transition_density, wf%t1bar, R_ai)
 !
       call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2bar, tbar_aibj, (wf%n_v)*(wf%n_o))
 !
-      call wf%right_transition_density_doubles_ov(tbar_aibj, R_ai)
-      call wf%right_transition_density_doubles_vo(tbar_aibj, R_ai)
+      call wf%right_transition_density_doubles_ov(wf%right_transition_density, tbar_aibj, R_ai)
+      call wf%right_transition_density_doubles_vo(wf%right_transition_density, tbar_aibj, R_ai)
 !
       call mem%dealloc(R_ai, wf%n_v, wf%n_o)
 !
@@ -197,8 +197,7 @@ contains
 !
       call mem%dealloc(R_k, wf%n_es_amplitudes)
 !
-!     Scale the doubles vector by 1 + δ_ai,bj, i.e.
-!     redefine to c_ckdl = c_ckdl (1 + δ_ck,dl)
+!     Scale the doubles vector by 1 + δ_ai,bj
 !
 !$omp parallel do schedule(static) private(a,i)
       do i = 1, wf%n_o
@@ -210,7 +209,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      scaling_factor = scaling_factor &
+      tbar_R_overlap = tbar_R_overlap &
                         - half * ddot((wf%n_v)**2*(wf%n_o)**2, R_aibj, 1, tbar_aibj, 1)
 !
       call wf%gs_one_el_density_doubles_oo(wf%right_transition_density, tbar_aibj, R_aibj)
@@ -222,36 +221,44 @@ contains
 !
       call mem%dealloc(R_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Right transition density, contribution from the ground state density
+!     Right EOM transition density, contribution from the ground state density
 !     ρ^R_pq -= sum_μν R_{k,μ}tbar_μ tbar_ν < ν |e^-T E_pq e^T| HF >
 !            -= sum_μ R_{k,μ} tbar_μ (D_GS - D_HF)
-!            -= sum_μ R_{k,μ} tbar_μ ρ_corr
+!            -= sum_μ R_{k,μ} tbar_μ ρ_correlation
 !
-      call mem%alloc(rho_corr, wf%n_mo, wf%n_mo)
-      call dcopy(wf%n_mo**2, wf%density, 1, rho_corr, 1)
+      call mem%alloc(rho_correlation, wf%n_mo, wf%n_mo)
+      call dcopy(wf%n_mo**2, wf%density, 1, rho_correlation, 1)
+!
+!     Correlation Density: 
+!     Difference between ground state density and Hartree-Fock density
+!        rho_correlation = D_GS - D_HF
 !
 !$omp parallel do private(i)
       do i = 1, wf%n_o
 !
-         rho_corr(i,i) = rho_corr(i,i) - two  
+         rho_correlation(i,i) = rho_correlation(i,i) - two  
 !
       enddo
 !$omp end parallel do
 !
-      call daxpy(wf%n_mo**2, scaling_factor, rho_corr, 1, wf%right_transition_density, 1)
+      call daxpy(wf%n_mo**2,                  &
+                 tbar_R_overlap,              &
+                 rho_correlation,             &
+                 1,                           &
+                 wf%right_transition_density, &
+                 1)
 !
-      call mem%dealloc(rho_corr, wf%n_mo, wf%n_mo)
+      call mem%dealloc(rho_correlation, wf%n_mo, wf%n_mo)
 !
       call R_TDM_timer%turn_off()
 !
    end subroutine construct_right_transition_density_doubles
 !
 !
-   module subroutine right_transition_density_doubles_ov_doubles(wf, tbar_aibj, R_ai)
+   module subroutine right_transition_density_doubles_ov_doubles(wf, density, tbar_aibj, R_ai)
 !!
-!!    Right transition density ov contribution (CCSD)
-!!    from the singles part of the excitation vector
-!!    Written by Alexander Paul, June 2019
+!!    Right EOM transition density ov contribution (CCSD)
+!!    Written by Alexander C. Paul, June 2019
 !!
 !!    ρ^R_kc += sum_abij R^a_i tbar^ab_ij (2t^bc_jk - t^bc_kj)
 !!             -sum_abij tbar^ab_ij (R^b_k t^ac_ij + R^c_j t^ab_ik)
@@ -259,6 +266,8 @@ contains
       implicit none
 !
       class(doubles) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
@@ -387,8 +396,7 @@ contains
       do c = 1, wf%n_v
          do k = 1, wf%n_o
 !
-            wf%right_transition_density(k, wf%n_o + c) = X_ck(c, k) &
-                        + wf%right_transition_density(k, wf%n_o + c)
+            density(k, wf%n_o + c) = X_ck(c, k) + density(k, wf%n_o + c)
 !
          enddo
       enddo
@@ -399,16 +407,18 @@ contains
    end subroutine right_transition_density_doubles_ov_doubles
 !
 !
-   module subroutine right_transition_density_doubles_vo_doubles(wf, tbar_aibj, R_ai)
+   module subroutine right_transition_density_doubles_vo_doubles(wf, density, tbar_aibj, R_ai)
 !!
-!!    Right transition density ov contribution (CCSD)
-!!    Written by Alexander Paul, June 2019
+!!    Right transition density vo contribution (CCSD)
+!!    Written by Alexander C. Paul, June 2019
 !!
 !!    ρ^R_bj += sum_ai R^a_i tbar^ab_ij
 !!      
       implicit none
 !
       class(doubles) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
@@ -435,8 +445,7 @@ contains
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
-            wf%right_transition_density(wf%n_o + a, i) = rho_vo(a, i) &
-                        + wf%right_transition_density(wf%n_o + a, i)
+            density(wf%n_o + a, i) = rho_vo(a, i) + density(wf%n_o + a, i)
 !
          enddo
       enddo

@@ -100,7 +100,7 @@ contains
    subroutine set_global_print_level_output_file(the_file, print_level)
 !!
 !!    Set the global print level
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
 !!    Also sets the local print level
 !!
@@ -137,7 +137,7 @@ contains
    subroutine set_local_print_level_output_file(the_file, print_level)
 !!
 !!    Set the local print level
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
@@ -168,7 +168,7 @@ contains
    subroutine reset_local_print_level_output_file(the_file)
 !!
 !!    Set the local print level to global
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
@@ -182,7 +182,7 @@ contains
    subroutine check_print_level_output_file(the_file)
 !!
 !!    Check if local and global print level is the same
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
@@ -198,7 +198,7 @@ contains
    subroutine mute_output_file(the_file)
 !!
 !!    Set the file to mute
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
@@ -212,7 +212,7 @@ contains
    subroutine unmute_output_file(the_file)
 !!
 !!    Set the file to unmute
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
@@ -226,7 +226,7 @@ contains
    subroutine open_output_file(the_file, position_)
 !!
 !!    Open the output file
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
       implicit none
 !
@@ -319,7 +319,7 @@ contains
    subroutine printf_output_file(the_file, string, pl, reals, ints, chars, logs, fs, ffs, lfs, ll, adv)
 !!
 !!    printf
-!!    Written by Rolf Heilemann Myhre, May 2019
+!!    Written by Rolf H. Myhre, May 2019
 !!
 !!    Printf output_file wrapper that checks for print level and silence
 !!    Prints any number of reals and integers formatted Python style.

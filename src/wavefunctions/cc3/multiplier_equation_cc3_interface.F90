@@ -19,8 +19,8 @@
 !
    module subroutine prepare_for_multiplier_equation_cc3(wf)
 !!
-!!    Prepare for jacobian transpose transformation
-!!    Written by Alexander Paul, July 2019
+!!    Prepare for Mutliplier equation
+!!    Written by Alexander C. Paul, July 2019
 !!
       implicit none
 !
@@ -34,7 +34,7 @@
 !!    Construct multiplier equation
 !!    Written by Eirik F. Kjønstad, Nov 2018
 !!
-!!    Adapted by Alexander Paul, June 2019
+!!    Adapted by Alexander C. Paul, June 2019
 !!
       implicit none
 !

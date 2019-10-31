@@ -22,7 +22,7 @@ submodule (lowmem_cc2_class) jacobian
 !!
 !!    Jacobian submodule (CC2)
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian matrix
@@ -44,7 +44,7 @@ contains
 !!
 !!    Effective jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
       implicit none
 !
@@ -105,7 +105,7 @@ contains
 !!
 !!    Jacobian CC2 A1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
 !!    rho_ai =+ sum_bj (2 g_aijb - g_abji) * c_bj
 !!
@@ -272,7 +272,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!
 !!    Jacobian CC2 B1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
 !!    rho_ai^B1 = L_kcjb c_bj (2 t^ac_ik - t^ac_ki)
 !!                - L_kcjb t^cb_ki c_aj - L_kcjb t^ca_kj c_bi
@@ -718,7 +718,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!
 !!    Jacobian CC2 A1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
 !!    rho_ai =+ F_kc * (-eps_ai,ck + w)^-1 * (2 g_aicd c_dk + 2 g_ckad c_di - g_akcd c_di - g_ciad c_dk)
 !!           =+ F_kc * (-eps_ai,ck + w)^-1 * (2 X_aick - X_akci + 2 X_ckai - X_ciak)
@@ -920,7 +920,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!
 !!    Effective jacobian B1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    Linda Goletto, and Alexander Paul, Jan 2019
+!!    Linda Goletto, and Alexander C. Paul, Jan 2019
 !!
 !!    Effective B1 = - 2 sum_{kcl} F_kc (1/(ε_{aick} + ω)) * (g_ailk c_cl + g_ckli c_al)
 !!                     + sum_{kcl} F_kc (1/(ε_{akci} + ω)) * (g_akli c_cl + g_cilk c_al)
@@ -1059,7 +1059,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!
 !!    Jacobian CC2 C1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
 !!    Implicit calculation of the doubles vector
 !!    rho_ai^C1 =+ sum_ckbj - L_kijb  (g_akbc * c_cj + g_bjac * c_ck) (omega - ε_akbj)^-1
@@ -1247,7 +1247,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!
 !!    Jacobian CC2 D1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
 !!    Implicit calculation of the doubles vector
 !!    rho_ai^D1 =+ sum_ckbj - L_kijb  (- g_aklj * c_bl - g_bjlk * c_al) (omega - ε_akbj)^-1 
@@ -1433,7 +1433,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!
 !!    Jacobian CC2 E1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Jan 2019
+!!    Linda Goletto, and Alexander C. Paul, Jan 2019
 !!
 !!    Implicit calculation of the doubles vector
 !!    rho_ai^E1 =+ sum_bckd L_abkc  (g_bicd * c_dk + g_ckbd * c_di) (omega - ε_bick)^-1
@@ -1621,7 +1621,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!
 !!    Jacobian CC2 effective F1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Jan 2019
+!!    Linda Goletto, and Alexander C. Paul, Jan 2019
 !!
 !!    Effective F1 = - L_abkc (1/(ε_{bick} + ω) * (g_lkbi c_cl + g_lick c_bl))
 !!

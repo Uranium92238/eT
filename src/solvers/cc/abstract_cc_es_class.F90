@@ -319,13 +319,19 @@ contains
 !
       if (solver%transformation == 'right') then 
 !
-         call wf%prepare_for_jacobian()
          call wf%initialize_excited_state_files('right')
+         call wf%prepare_for_jacobian()
 !
       else if (solver%transformation == 'left') then 
 !
-         call wf%prepare_for_jacobian_transpose()
          call wf%initialize_excited_state_files('left')
+         call wf%prepare_for_jacobian_transpose()
+!
+      else if (solver%transformation == 'both') then 
+!
+         call wf%initialize_excited_state_files('both')
+         call wf%prepare_for_jacobian()
+         call wf%prepare_for_jacobian_transpose()
 !
       else if (solver%transformation == 'both') then 
 !

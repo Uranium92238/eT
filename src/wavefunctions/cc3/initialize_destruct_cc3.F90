@@ -62,8 +62,8 @@ contains
       if (allocated(wf%density)) call mem%dealloc(wf%density, wf%n_mo, wf%n_mo)
 !
 !     CC3 corrections to the GS-density are needed for the right transition density
-      if (.not. allocated(wf%GS_cc3_density_oo)) call mem%dealloc(wf%GS_cc3_density_oo, wf%n_o, wf%n_o)
-      if (.not. allocated(wf%GS_cc3_density_vv)) call mem%dealloc(wf%GS_cc3_density_vv, wf%n_v, wf%n_v)
+      if (allocated(wf%GS_cc3_density_oo)) call mem%dealloc(wf%GS_cc3_density_oo, wf%n_o, wf%n_o)
+      if (allocated(wf%GS_cc3_density_vv)) call mem%dealloc(wf%GS_cc3_density_vv, wf%n_v, wf%n_v)
 !
    end subroutine destruct_gs_density_cc3
 !

@@ -32,7 +32,7 @@ submodule (mlcc2_class) jacobian_transpose_mlcc2
 !!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
 !!
 !!    Note that all routines are adapted from jacobian_transpose_cc2.F90
-!!    written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
 !
    implicit none
@@ -44,7 +44,7 @@ contains
    module subroutine prepare_for_jacobian_transpose_mlcc2(wf)
 !!
 !!    Jacobian transpose submodule (MLCC2)
-!!    Written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    Written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
       implicit none
 !
@@ -159,7 +159,7 @@ contains
 !!    Written by Sarai D. Folkestad, Apr 2019
 !!
 !!    Adapted from jacobian_transpose_cc2.F90
-!!    written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
 !!    Calculates the A1 term,
 !!
@@ -388,7 +388,7 @@ contains
 !!    Written by Sarai D. Folkestad, Apr 2019
 !!
 !!    Adapted from jacobian_transpose_cc2.F90
-!!    written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
 !!    Calculates the B1 term,
 !!
@@ -510,7 +510,7 @@ contains
 !!    Written by Sarai D. Folkestad, Apr 2019
 !!
 !!    Adapted from jacobian_transpose_cc2.F90
-!!    written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
 !!    Calculates the A2 term,
 !!
@@ -681,7 +681,7 @@ contains
 !!    Written by Sarai D. Folkestad, Apr 2019
 !!
 !!    Adapted from jacobian_transpose_cc2.F90
-!!    written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
 !!    Calculates the B2 term,
 !!

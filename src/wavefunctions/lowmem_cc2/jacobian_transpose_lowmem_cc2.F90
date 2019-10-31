@@ -39,7 +39,7 @@ submodule (lowmem_cc2_class) jacobian_transpose
 contains
 !
 !
-   module subroutine effective_jacobian_transpose_transformation_lowmem_cc2(wf, omega, b)
+   module subroutine effective_jacobian_transpose_transformation_lowmem_cc2(wf, omega, b, cvs)
 !!
 !!    Effective Jacobian transpose transformation
 !!    Written by Sarai Dery Folkestad, Jun 2019
@@ -51,12 +51,16 @@ contains
       real(dp), intent(in) :: omega
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
 !
+      logical, intent(in) :: cvs
+!
       real(dp), dimension(:,:), allocatable :: b_ai
 !
       real(dp), dimension(:,:), allocatable :: sigma_ai
 !
       real(dp), dimension(:), allocatable :: eps_o
       real(dp), dimension(:), allocatable :: eps_v
+!
+      if(cvs) call output%error_msg('CVS not yet implemented for lowmem CC2.')
 !
 !     Allocate and zero the transformed vector (singles part)
 !

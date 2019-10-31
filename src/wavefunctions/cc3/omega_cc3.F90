@@ -152,7 +152,7 @@ contains
 !     Unpacked doubles amplitudes
       real(dp), dimension(:,:,:,:), allocatable :: t_abij
 !
-      real(dp), dimension(:,:), allocatable :: F_kc !Transpose the fock matrix sub block
+      real(dp), dimension(:,:), allocatable :: F_ov_ck !Transpose the fock matrix ov block
 !
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdci
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdcj
@@ -232,7 +232,7 @@ contains
       batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                           req_0, req_1, req_2, req_3, zero)
+                           req_0, req_1, req_2, req_3, buffer_size = zero)
 !
 !     Allocate integral arrays and assign pointers.
 !     Without pointers we'll have to use three times as much
@@ -263,8 +263,8 @@ contains
       endif
 !
 !     Resorting of the Fock-Matrix for easier contractions later
-      call mem%alloc(F_kc,wf%n_v,wf%n_o)
-      call sort_12_to_21(wf%fock_ia,F_kc,wf%n_o,wf%n_v)
+      call mem%alloc(F_ov_ck,wf%n_v,wf%n_o)
+      call sort_12_to_21(wf%fock_ia,F_ov_ck,wf%n_o,wf%n_v)
 !
 !     Arrays for the triples amplitudes
       call mem%alloc(t_abc,wf%n_v,wf%n_v,wf%n_v)
@@ -470,12 +470,13 @@ contains
                                                g_ilkc_p(:,:,i_rel,k_rel),            &
                                                g_jlkc_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_a_n6(i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
-                                               L_jbic_p(:,:,j_rel,i_rel),                   &
-                                               L_kbic_p(:,:,k_rel,i_rel),                   &
-                                               L_kbjc_p(:,:,k_rel,j_rel),                   &
-                                               L_ibjc_p(:,:,i_rel,j_rel),                   &
-                                               L_ibkc_p(:,:,i_rel,k_rel),                   &
+                        call wf%omega_cc3_a_n6(i, j, k, t_abc, u_abc,      &
+                                               omega1, omega2, F_ov_ck,    &
+                                               L_jbic_p(:,:,j_rel,i_rel),  &
+                                               L_kbic_p(:,:,k_rel,i_rel),  &
+                                               L_kbjc_p(:,:,k_rel,j_rel),  &
+                                               L_ibjc_p(:,:,i_rel,j_rel),  &
+                                               L_ibkc_p(:,:,i_rel,k_rel),  &
                                                L_jbkc_p(:,:,j_rel,k_rel))
 !
                      enddo
@@ -537,7 +538,7 @@ contains
 !
       endif
 !
-      call mem%dealloc(F_kc,wf%n_v,wf%n_o)
+      call mem%dealloc(F_ov_ck,wf%n_v,wf%n_o)
 !
 !     Deallocate amplitude arrays
 !
@@ -1097,8 +1098,10 @@ contains
    end subroutine omega_cc3_eps_cc3
 !
 !
-   module subroutine omega_cc3_a_n6_cc3(wf, i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
-                                        L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
+   module subroutine omega_cc3_a_n6_cc3(wf, i, j, k, t_abc, u_abc, &
+                                        omega1, omega2, F_ov_ck,   &
+                                        L_jbic, L_kbic, L_kbjc,    &
+                                        L_ibjc, L_ibkc, L_jbkc)
 !!
 !!    omega_cc3_a_n6
 !!
@@ -1123,7 +1126,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                   :: omega1
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: omega2
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_kc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_ov_ck
 !
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbic
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbic
@@ -1160,7 +1163,7 @@ contains
                  one, &
                  u_abc, &
                  wf%n_v**2, &
-                 F_kc(:,k), &
+                 F_ov_ck(:,k), &
                  1, &
                  one, &
                  omega2(:,:,i,j), &
@@ -1189,7 +1192,7 @@ contains
                  -one, &
                  u_abc, &
                  wf%n_v**2, &
-                 F_kc(:,i), &
+                 F_ov_ck(:,i), &
                  1, &
                  one, &
                  omega2(:,:,k,j), &
@@ -1225,7 +1228,7 @@ contains
                     one, &
                     u_abc, &
                     wf%n_v**2, &
-                    F_kc(:,j), &
+                    F_ov_ck(:,j), &
                     1, &
                     one, &
                     omega2(:,:,i,k), &
@@ -1254,7 +1257,7 @@ contains
                        -one, &
                        u_abc, &
                        wf%n_v**2, &
-                       F_kc(:,i), &
+                       F_ov_ck(:,i), &
                        1, &
                        one, &
                        omega2(:,:,j,k), &
@@ -1288,7 +1291,7 @@ contains
                     one, &
                     u_abc, &
                     wf%n_v**2, &
-                    F_kc(:,k), &
+                    F_ov_ck(:,k), &
                     1, &
                     one, &
                     omega2(:,:,j,i), &
@@ -1317,7 +1320,7 @@ contains
                     -one, &
                     u_abc, &
                     wf%n_v**2, &
-                    F_kc(:,j), &
+                    F_ov_ck(:,j), &
                     1, &
                     one, &
                     omega2(:,:,k,i), &

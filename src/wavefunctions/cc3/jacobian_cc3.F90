@@ -21,7 +21,7 @@ submodule (cc3_class) jacobian
 !
 !!
 !!    Jacobian submodule (cc3)
-!!    Written by Alexander Paul and Rolf H. Myhre Feb 2019
+!!    Written by Alexander C. Paul and Rolf H. Myhre Feb 2019
 !!
 !!    Routines for the linear transform of trial
 !!    vectors by the Jacobian matrix
@@ -42,7 +42,7 @@ contains
    module subroutine effective_jacobian_transformation_cc3(wf, omega, c)
 !!
 !!    Effective Jacobian transformation (CC3)
-!!    Written by Alexander Paul and Rolf H. Myhre Feb 2019
+!!    Written by Alexander C. Paul and Rolf H. Myhre, Feb 2019
 !!
 !!    Directs the transformation by the CC3 Jacobi matrix,
 !!
@@ -114,7 +114,7 @@ contains
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
-         c_aibj(a,i,a,i) = two*c_aibj(a,i,a,i)
+            c_aibj(a,i,a,i) = two*c_aibj(a,i,a,i)
 !
          enddo
       enddo
@@ -235,7 +235,8 @@ contains
 !
    module subroutine jacobian_cc3_t3_a2_cc3(wf, c_ai, rho_abij)
 !!
-!!    Computes the first contribution of the T3 amplitudes to ρ_2
+!!    Jacobian CC3 A2
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
 !!    Reads in the intermediates X_abid and X_ajil prepared in 
 !!    prepare_jacobian_transform contracts with c_ai and adds to ρ_abij
@@ -245,8 +246,6 @@ contains
 !!
 !!    where: X_abid = - sum_jck (2 t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_kcjd
 !!           X_ajil = - sum_bck (2 t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_lbkc
-!!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -335,15 +334,14 @@ contains
 !
    module subroutine jacobian_cc3_t3_b2_cc3(wf, c_ai, rho_abij)
 !!
-!!    Computes the second contribution of the T3 amplitudes to rho_2
+!!    Jacobian CC3 B2
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
 !!    sigma_abij +=  sum_ckdl C^d_l L_kcld (t^abc_ijk - t^bac_ijk)
 !!               +=  sum_ck F_kc_c1 * (t^abc_ijk - t^bac_ijk)
 !!
-!!    Constructs t^abc_ijk for fixed ijk contracts with 
+!!    Constructs t^abc_ijk for fixed ijk contracts with
 !!    the c1-transformed Fock matrix
-!!    
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -360,7 +358,7 @@ contains
 !     Unpacked doubles amplitudes
       real(dp), dimension(:,:,:,:), allocatable :: t_abij
 !
-      real(dp), dimension(:,:), allocatable :: F_kc_c1
+      real(dp), dimension(:,:), allocatable :: F_ov_ck_c1
 !
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdci
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdcj
@@ -395,8 +393,8 @@ contains
 !
 !     C1 transformed Fock matrix
 !
-      call mem%alloc(F_kc_c1, wf%n_v, wf%n_o)
-      call wf%construct_c1_fock(c_ai, F_kc_c1)
+      call mem%alloc(F_ov_ck_c1, wf%n_v, wf%n_o)
+      call wf%construct_c1_fock(c_ai, F_ov_ck_c1)
 !
 !     Setup and Batching loops for the T3-contributions to rho2
 !
@@ -410,7 +408,7 @@ contains
       batch_k = batching_index(wf%n_o)
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                                 req_0, req_1, req_2, req_3, zero)
+                                 req_0, req_1, req_2, req_3, buffer_size = zero)
 !
 !     Allocate integral arrays
 !
@@ -574,7 +572,7 @@ contains
 !
                         call wf%omega_cc3_eps(i, j, k, t_abc)
 !
-                        call wf%jacobian_cc3_b2_fock(i, j, k, t_abc, u_abc, rho_abij, F_kc_c1)
+                        call wf%jacobian_cc3_b2_fock(i, j, k, t_abc, u_abc, rho_abij, F_ov_ck_c1)
 !
                      enddo ! loop over k
                   enddo ! loop over j
@@ -617,7 +615,7 @@ contains
       call mem%dealloc(t_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%dealloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call mem%dealloc(F_kc_c1, wf%n_v, wf%n_o)
+      call mem%dealloc(F_ov_ck_c1, wf%n_v, wf%n_o)
 !
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -626,11 +624,13 @@ contains
 !
    module subroutine jacobian_cc3_c3_a_cc3(wf, omega, c_ai, c_abij, rho_ai, rho_abij)
 !!
+!!    Contribution of the C3/R3 terms
+!!    Written by Alexander C. Paul and Rolf H. Myhre, Feb 2019
+!!
 !!    Construct C^abc_ijk in single batches of ijk and compute the contributions
 !!    to the singles and doubles part of the outgoing vector
 !!
 !!    The triples amplitudes are expressed in terms of doubles amplitudes:
-!!
 !!    C_3 = (ω - ε_μ3)^-1 (< μ3 | [H,C_2] | HF > + < μ3 | [[H,C_1],T_2] | HF >)
 !!
 !!    c^abc = (ω - ε^abc_ijk)^-1 * P^abc_ijk (sum_d c^ad_ij g_ckbd - sum_l c^ab_il g_cklj
@@ -640,7 +640,6 @@ contains
 !!    rho2 += < μ2 | [H,C_3] | R >
 !!
 !!    Based on omega_cc3_a_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
 !
@@ -662,7 +661,7 @@ contains
 !     Unpacked doubles amplitudes
       real(dp), dimension(:,:,:,:), allocatable :: t_abij
 !
-      real(dp), dimension(:,:), allocatable :: F_kc
+      real(dp), dimension(:,:), allocatable :: F_ov_ck
 !
 !     T1 transformed integrals
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdci
@@ -771,7 +770,7 @@ contains
       req_3 = 0
 !
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
-                           req_0, req_1, req_2, req_3, zero)
+                           req_0, req_1, req_2, req_3, buffer_size = zero)
 !
 !     Allocate integral arrays
 !
@@ -816,8 +815,8 @@ contains
       endif
 !
 !     Resorting of the Fock-Matrix for easier contractions later
-      call mem%alloc(F_kc, wf%n_v, wf%n_o)
-      call sort_12_to_21(wf%fock_ia, F_kc, wf%n_o, wf%n_v)
+      call mem%alloc(F_ov_ck, wf%n_v, wf%n_o)
+      call sort_12_to_21(wf%fock_ia, F_ov_ck, wf%n_o, wf%n_v)
 !
 !     Arrays for the triples amplitudes and intermediates
       call mem%alloc(c_abc, wf%n_v, wf%n_v, wf%n_v)
@@ -1108,25 +1107,25 @@ contains
 !
                         call wf%omega_cc3_eps(i, j, k, c_abc, omega)
 !
-                        call wf%omega_cc3_a_n7(i, j, k, c_abc, u_abc, v_abc,   &
-                                               rho_abij,                        &
-                                               g_dbic_p(:,:,:,i_rel),           &
-                                               g_dbjc_p(:,:,:,j_rel),           &
-                                               g_dbkc_p(:,:,:,k_rel),           &
-                                               g_jlic_p(:,:,j_rel,i_rel),       &
-                                               g_klic_p(:,:,k_rel,i_rel),       &
-                                               g_kljc_p(:,:,k_rel,j_rel),       &
-                                               g_iljc_p(:,:,i_rel,j_rel),       &
-                                               g_ilkc_p(:,:,i_rel,k_rel),       &
+                        call wf%omega_cc3_a_n7(i, j, k, c_abc, u_abc, v_abc,  &
+                                               rho_abij,                      &
+                                               g_dbic_p(:,:,:,i_rel),         &
+                                               g_dbjc_p(:,:,:,j_rel),         &
+                                               g_dbkc_p(:,:,:,k_rel),         &
+                                               g_jlic_p(:,:,j_rel,i_rel),     &
+                                               g_klic_p(:,:,k_rel,i_rel),     &
+                                               g_kljc_p(:,:,k_rel,j_rel),     &
+                                               g_iljc_p(:,:,i_rel,j_rel),     &
+                                               g_ilkc_p(:,:,i_rel,k_rel),     &
                                                g_jlkc_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_a_n6(i, j, k, c_abc, u_abc,    &
-                                               rho_ai, rho_abij, F_kc,    &
-                                               L_jbic_p(:,:,j_rel,i_rel), &
-                                               L_kbic_p(:,:,k_rel,i_rel), &
-                                               L_kbjc_p(:,:,k_rel,j_rel), &
-                                               L_ibjc_p(:,:,i_rel,j_rel), &
-                                               L_ibkc_p(:,:,i_rel,k_rel), &
+                        call wf%omega_cc3_a_n6(i, j, k, c_abc, u_abc,      &
+                                               rho_ai, rho_abij, F_ov_ck,  &
+                                               L_jbic_p(:,:,j_rel,i_rel),  &
+                                               L_kbic_p(:,:,k_rel,i_rel),  &
+                                               L_kbjc_p(:,:,k_rel,j_rel),  &
+                                               L_ibjc_p(:,:,i_rel,j_rel),  &
+                                               L_ibkc_p(:,:,i_rel,k_rel),  &
                                                L_jbkc_p(:,:,j_rel,k_rel))
 !
                      enddo ! loop over k
@@ -1212,7 +1211,7 @@ contains
       call mem%dealloc(u_abc, wf%n_v, wf%n_v, wf%n_v)
       call mem%dealloc(v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-      call mem%dealloc(F_kc, wf%n_v, wf%n_o)
+      call mem%dealloc(F_ov_ck, wf%n_v, wf%n_o)
 !
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -1221,14 +1220,13 @@ contains
 !
    module subroutine construct_c1_integrals_cc3(wf, c_ai)
 !!
-!!    Construct c1-transformed integrals needed in CC3 jacobian
-!!    from the c1-transformed Cholesky Vectors
+!!    Construct c1 transformed integrals
+!!    Alexander C. Paul and Rolf H. Myhre Feb 2019
 !!
 !!    g'_bdck = (b'd|ck) + (bd|c'k) + (bd|ck')   ordered as dbc,k
 !!    g'_ljck = (lj'|ck) + (lj|ck') + (lj|c'k)   ordered as lc,jk
 !!
 !!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre
 !!
       implicit none
 !
@@ -1265,7 +1263,7 @@ contains
 !
          call batch_k%determine_limits(k_batch)
 !
-!        :: Term 1: g_b'dck = sum_J L_J_b'd L_J_ck ::
+!        :: Term 1: g_b'dck += sum_J L_J_b'd L_J_ck ::
 !
 !        here L_J_bd is used for the c1-transformed cholesky vector
          call wf%integrals%construct_cholesky_ab_c1(L_J_bd, c_ai, 1, wf%n_v, 1, wf%n_v)
@@ -1290,7 +1288,7 @@ contains
 !
          call mem%dealloc(L_J_ck, wf%integrals%n_J, wf%n_v, batch_k%length)
 !
-!        :: Term 2: g_bdc'k = sum_J L_J_bd L_J_c'k_c1 ::
+!        :: Term 2: g_bdc'k += sum_J L_J_bd L_J_c'k_c1 ::
 !
          call mem%alloc(L_J_ck_c1, wf%integrals%n_J, wf%n_v, batch_k%length)
          call wf%integrals%construct_cholesky_ai_a_c1(L_J_ck_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
@@ -1310,7 +1308,7 @@ contains
                      g_pqrs,                    & ! (bd|c'k)
                      (wf%n_v)**2)
 !
-!        :: Term 3: g_bdck' = sum_J L_bd_J L_ck_J_c1 ::
+!        :: Term 3: g_bdck' += sum_J L_bd_J L_ck_J_c1 ::
 !
          call wf%integrals%construct_cholesky_ai_i_c1(L_J_ck_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
 !
@@ -1454,13 +1452,13 @@ contains
 !
    module subroutine construct_c1_fock_cc3(wf, c_ai, F_ia_c1)
 !!
+!!    Construct C1-transformed fock matrix ov-block
+!!    Written by Alexander C. Paul, Feb 2019
+!!
 !!    Calculates C1-transformed occupied-virtual elements of the Fock matrix
 !!    required for the CC3 jacobian and returns it ordered as n_v, n_o
 !!
 !!    F_ia_c1 = sum_j L_iajj' = sum_j 2 g_iajj' - g_ij'ja
-!!
-!!    Based on construct_fock_ccs written by Sarai D. Folkestad and Eirik F. Kjønstad
-!!    Modified by Alexander Paul, Feb 2019
 !!
       implicit none
 !
@@ -1525,17 +1523,15 @@ contains
    end subroutine construct_c1_fock_cc3
 !
 !
-   module subroutine jacobian_cc3_b2_fock_cc3(wf, i, j, k, t_abc, u_abc, rho_abij, F_kc)
+   module subroutine jacobian_cc3_b2_fock_cc3(wf, i, j, k, t_abc, u_abc, rho_abij, F_ov_ck)
 !!
-!!    Calculate the triples contribution to rho2 for fixed i,j and k
+!!    Jacobian CC3 contribution c1-transformed fock matrix
+!!    Written by Alexander C. Paul and Rolf H. Myhre, Feb 2019
 !!
 !!    rho_2 =+ P^{ab}_{ij} sum_kc (t^abc_ijk - t^cba_ijk) F_kc
 !!
 !!    The permutations of i,j,k are necessary 
 !!    due to the index restrictions in the batching loops
-!!
-!!    Based on omega_cc3_omega1_cc3 written by Rolf H. Myhre
-!!    Modified by Alexander Paul and Rolf H. Myhre, Feb 2019
 !!
       implicit none
 !
@@ -1548,7 +1544,7 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: rho_abij
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_kc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_ov_ck
 !
 !
 !     Construct u_abc = t_abc - t_cba
@@ -1563,7 +1559,7 @@ contains
                  one,               &
                  u_abc,             &
                  wf%n_v**2,         &
-                 F_kc(:,k),         &
+                 F_ov_ck(:,k),      &
                  1,                 &
                  one,               &
                  rho_abij(:,:,i,j), &
@@ -1578,7 +1574,7 @@ contains
                  -one,              &
                  u_abc,             &
                  wf%n_v**2,         &
-                 F_kc(:,i),         &
+                 F_ov_ck(:,i),      &
                  1,                 &
                  one,               &
                  rho_abij(:,:,k,j), &
@@ -1600,7 +1596,7 @@ contains
                     one,               &
                     u_abc,             &
                     wf%n_v**2,         &
-                    F_kc(:,j),         &
+                    F_ov_ck(:,j),      &
                     1,                 &
                     one,               &
                     rho_abij(:,:,i,k), &
@@ -1615,7 +1611,7 @@ contains
                      -one,                &
                      u_abc,               &
                      wf%n_v**2,           &
-                     F_kc(:,i),           &
+                     F_ov_ck(:,i),        &
                      1,                   &
                      one,                 &
                      rho_abij(:,:,j,k),   &
@@ -1635,7 +1631,7 @@ contains
                     one,               &
                     u_abc,             &
                     wf%n_v**2,         &
-                    F_kc(:,k),         &
+                    F_ov_ck(:,k),      &
                     1,                 &
                     one,               &
                     rho_abij(:,:,j,i), &
@@ -1650,7 +1646,7 @@ contains
                     -one,              &
                     u_abc,             &
                     wf%n_v**2,         &
-                    F_kc(:,j),         &
+                    F_ov_ck(:,j),      &
                     1,                 &
                     one,               &
                     rho_abij(:,:,k,i), &

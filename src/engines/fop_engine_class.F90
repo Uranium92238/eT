@@ -136,6 +136,11 @@ contains
 !
       call engine%do_multipliers(wf)
 !
+!     Save intermediates from solving the mutlipliers 
+!     needed for the transition densities
+!
+      call wf%save_tbar_intermediates()
+!
 !     Excited state solutions
 !
       call engine%do_excited_state(wf, 'right')
@@ -158,6 +163,7 @@ contains
          call wf%initialize_transition_densities()
          call engine%do_eom(wf, skip_states)
          call wf%destruct_transition_densities()
+         call wf%destruct_gs_density()
 !
       end if
 !
@@ -199,7 +205,7 @@ contains
 !
       if (engine%eom .and. engine%lr) call output%error_msg('can not run lr and eom in same calculation.')
       if (engine%lr) call output%error_msg('lr not yet available.')
-      if (.not. engine%eom .and. .not. engine%lr) call output%error_msg('specify either eom og lr for fop.')
+      if (.not. engine%eom .and. .not. engine%lr) call output%error_msg('specify either eom or lr for fop.')
 !
    end subroutine read_fop_settings_fop_engine
 
@@ -324,7 +330,7 @@ contains
    subroutine get_thresholds_fop_engine(energy_threshold, residual_threshold)
 !!
 !!    Get thresholds from input
-!!    written by Alexander C. Paul, Oct 2019
+!!    Written by Alexander C. Paul, Oct 2019
 !!
 !!    Get thresholds from input to perform checks for parallel states and 
 !!    to check that the left and right states are consistent

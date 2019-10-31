@@ -21,7 +21,7 @@
 !!
 !!    Effective jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
       implicit none
 !
@@ -37,7 +37,7 @@
 !!
 !!    Jacobian CC2 A1
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
       implicit none
 !
@@ -55,7 +55,7 @@
 !!
 !!    Jacobian CC2 B1
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
       implicit none
 !
@@ -76,7 +76,7 @@
 !!
 !!    Effective Jacobian CC2 A1
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
-!!    Linda Goletto, and Alexander Paul, Jan 2019
+!!    Linda Goletto, and Alexander C. Paul, Jan 2019
 !!
       implicit none
 !
@@ -97,7 +97,7 @@
 !!
 !!    Effective jacobian B1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    Linda Goletto, and Alexander Paul, Jan 2019
+!!    Linda Goletto, and Alexander C. Paul, Jan 2019
 !!
       implicit none
 !
@@ -118,7 +118,7 @@
 !!
 !!    Jacobian CC2 E1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Jan 2019
+!!    Linda Goletto, and Alexander C. Paul, Jan 2019
 !!
       implicit none
 !
@@ -139,7 +139,7 @@ end subroutine effective_jacobian_cc2_c1_lowmem_cc2
 !!
 !!    Jacobian CC2 E1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Jan 2019
+!!    Linda Goletto, and Alexander C. Paul, Jan 2019
 !!
       implicit none
 !
@@ -160,7 +160,7 @@ end subroutine effective_jacobian_cc2_c1_lowmem_cc2
 !!
 !!    Jacobian CC2 F1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
       implicit none
 !
@@ -181,7 +181,7 @@ end subroutine effective_jacobian_cc2_c1_lowmem_cc2
 !!
 !!    Jacobian CC2 f1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
       implicit none
 !

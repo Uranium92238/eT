@@ -21,7 +21,7 @@
 !!
 !!    Jacobian transpose doubles A1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
-!!    and Alexander Paul, Feb 2019
+!!    and Alexander C. Paul, Feb 2019
 !!
       implicit none
 !
@@ -38,7 +38,7 @@
 !!
 !!    Jacobian transpose doubles B1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
-!!    and Alexander Paul, Feb 2019
+!!    and Alexander C. Paul, Feb 2019
 !!
       implicit none
 !
@@ -53,7 +53,7 @@
   module subroutine jacobian_transpose_doubles_a2_doubles(wf, sigma_aibj, c_ai)
 !!
 !!    Jacobian transpose CC2 A2
-!!    Written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    Written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
       implicit none
 !

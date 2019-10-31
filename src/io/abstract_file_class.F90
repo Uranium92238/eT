@@ -77,7 +77,7 @@ contains
    subroutine copy_abstract_file(the_file, filename)
 !!
 !!    Copy abstract file
-!!    Written by Alexander Paul and Rolf H. Myhre, September 2019
+!!    Written by Alexander C. Paul and Rolf H. Myhre, September 2019
 !!
       implicit none
 !
@@ -85,7 +85,7 @@ contains
 !
       character(*), intent(in) :: filename
 !
-      integer              :: copy_unit
+      integer :: copy_unit
 !
 !     Character to hold a byte
       character :: byte

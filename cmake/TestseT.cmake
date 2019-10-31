@@ -120,6 +120,7 @@ add_eT_runtest(ccsd_left_es_diis                            "eT;short;ccsd;es;le
 add_eT_runtest(ccsd_oscillator_strength_eom                 "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom_records_in_mem  "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_cvs_eom_degeneracy                      "eT;short;ccsd;es;eom;diis;degeneracy")
+add_eT_runtest(restart_ccsd_from_cc2                        "eT;short;ccsd;es;eom;restart")
 #
 add_eT_runtest(cc3_gs_energy                                "eT;short;cc3;gs")
 add_eT_runtest(cc3_dipole                                   "eT;short;cc3;gs;dipole")
@@ -128,6 +129,8 @@ add_eT_runtest(cc3_right_es_energies                        "eT;short;cc3;es;rig
 add_eT_runtest(cc3_right_cvs_es_energies                    "eT;short;cc3;es;right;cvs;diis")
 add_eT_runtest(cc3_left_es_energies                         "eT;short;cc3;es;left;diis")
 add_eT_runtest(cc3_left_cvs_es_energies                     "eT;short;cc3;es;left;cvs;diis")
+add_eT_runtest(cc3_oscillator_strength_eom                  "eT;short;cc3;es;eom")
+add_eT_runtest(restart_cc3_from_ccsd                        "eT;short;cc3;es;eom;restart")
 #
 add_eT_runtest(mlcc2_cnto_full_right_es                     "eT;short;mlcc2;cnto")
 add_eT_runtest(mlcc2_pao_full_right_es                      "eT;short;mlcc2;pao")

@@ -34,8 +34,8 @@ contains
 !
    module subroutine prepare_for_multiplier_equation_cc3(wf)
 !!
-!!    Prepare for jacobian transpose transformation
-!!    Written by Alexander Paul, July 2019
+!!    Prepare for Mutliplier equation
+!!    Written by Alexander C. Paul, July 2019
 !!
       implicit none
 !
@@ -46,7 +46,8 @@ contains
       prep_timer = timings("Time preparing for multiplier equation")
       call prep_timer%turn_on()
 !
-      call output%printf('Preparing for (a0) multiplier equations', chars=[trim(wf%name_)], fs='(/t3,a)')
+      call output%printf('Preparing for (a0) multiplier equations',   &
+                          chars=[trim(wf%name_)], pl='v', fs='(/t3,a)')
 !
       if (.not. wf%X_ajil%exists()) call wf%prep_cc3_jacobian_intermediates()
       if (.not. wf%g_cdlk_t%exists()) call wf%prep_cc3_jacobian_trans_integrals()
@@ -61,7 +62,7 @@ contains
 !!    Construct multiplier equation
 !!    Written by Eirik F. Kjønstad, Nov 2018
 !!
-!!    Adapted by Alexander Paul, June 2019
+!!    Adapted by Alexander C. Paul, June 2019
 !!
 !!    Constructs
 !!
@@ -83,7 +84,8 @@ contains
 !
 !     Transform the multipliers by A^T, eq. = t-bar^T A
 !
-      call wf%effective_jacobian_transpose_transformation(zero, equation) ! frequency ω = 0
+!     Same as A^T transformation but with zero frequency and cvs is switched off
+      call wf%effective_jacobian_transpose_transformation(omega = zero, c = equation, cvs = .false.)
 !
 !     No triples contributions to η
 !     Construct eta(CCSD) and add, eq. = t-bar^T A + eta

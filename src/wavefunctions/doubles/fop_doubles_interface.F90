@@ -19,8 +19,8 @@
 !
    module subroutine construct_left_transition_density_doubles(wf, state)
 !!
-!!    Construct left one-electron transition density for the state k
-!!    Written by Alexander Paul, June 2019
+!!    Construct left one-electron transition density
+!!    Written by Alexander C. Paul, June 2019
 !!
       implicit none
 !
@@ -33,8 +33,8 @@
 !
    module subroutine construct_right_transition_density_doubles(wf, state)
 !!
-!!    Construct right one-electron transition density for the state k
-!!    Written by Alexander Paul, June 2019
+!!    Construct right one-electron transition density
+!!    Written by Alexander C. Paul, June 2019
 !!
       implicit none
 !
@@ -45,15 +45,16 @@
    end subroutine construct_right_transition_density_doubles
 !
 !
-   module subroutine right_transition_density_doubles_ov_doubles(wf, tbar_aibj, R_ai)
+   module subroutine right_transition_density_doubles_ov_doubles(wf, density, tbar_aibj, R_ai)
 !!
 !!    Right transition density ov contribution (CCSD)
-!!    from the singles part of the excitation vector
-!!    Written by Alexander Paul, June 2019
+!!    Written by Alexander C. Paul, June 2019
 !!    
       implicit none
 !
       class(doubles) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
@@ -61,14 +62,16 @@
    end subroutine right_transition_density_doubles_ov_doubles
 !
 !
-   module subroutine right_transition_density_doubles_vo_doubles(wf, tbar_aibj, R_ai)
+   module subroutine right_transition_density_doubles_vo_doubles(wf, density, tbar_aibj, R_ai)
 !!
-!!    Right transition density ov contribution (CCSD)
-!!    Written by Alexander Paul, June 2019
+!!    Right transition density vo contribution (CCSD)
+!!    Written by Alexander C. Paul, June 2019
 !!      
       implicit none
 !
       class(doubles) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai

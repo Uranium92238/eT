@@ -20,7 +20,7 @@
    module subroutine prepare_for_multiplier_equation_ccs(wf)
 !!
 !!    Prepare for the construction of the multipliers
-!!    Written by Alexander Paul, July 2019
+!!    Written by Alexander C. Paul, July 2019
 !!
       implicit none
 !

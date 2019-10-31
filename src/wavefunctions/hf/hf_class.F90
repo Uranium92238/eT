@@ -1761,10 +1761,10 @@ contains
                            temp1 = half*temp*d1
                            temp2 = half*temp*d2
 !
-                           temp3 = one_over_eight*temp*d3
-                           temp4 = one_over_eight*temp*d4
-                           temp5 = one_over_eight*temp*d5
-                           temp6 = one_over_eight*temp*d6
+                           temp3 = eighth*temp*d3
+                           temp4 = eighth*temp*d4
+                           temp5 = eighth*temp*d5
+                           temp6 = eighth*temp*d6
 !
                            F(w, thread_offset + x) = F(w, thread_offset + x) + temp1
                            F(y, thread_offset + x) = F(y, thread_offset + x) - temp6
@@ -2064,10 +2064,10 @@ contains
 !
                            temp = g(wxyz)
 !
-                           temp3 = one_over_eight*temp*d3
-                           temp4 = one_over_eight*temp*d4
-                           temp5 = one_over_eight*temp*d5
-                           temp6 = one_over_eight*temp*d6
+                           temp3 = eighth*temp*d3
+                           temp4 = eighth*temp*d4
+                           temp5 = eighth*temp*d5
+                           temp6 = eighth*temp*d6
 !
                            F(y, thread_offset + x) = F(y, thread_offset + x) - temp6
                            F(w, thread_offset + z) = F(w, thread_offset + z) - temp3
@@ -2278,10 +2278,10 @@ contains
                               temp1 = half*temp*d1
                               temp2 = half*temp*d2
 !
-                              temp3 = one_over_eight*temp*d3
-                              temp4 = one_over_eight*temp*d4
-                              temp5 = one_over_eight*temp*d5
-                              temp6 = one_over_eight*temp*d6
+                              temp3 = eighth*temp*d3
+                              temp4 = eighth*temp*d4
+                              temp5 = eighth*temp*d5
+                              temp6 = eighth*temp*d6
 !
                               do k = 1, 4
                                  do q = 1, 3

@@ -20,7 +20,7 @@
    module subroutine prepare_for_jacobian_cc3(wf)
 !!
 !!    Prepare for jacobian
-!!    Written by Rolf Heilemann Myhre, April 2019
+!!    Written by Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -32,7 +32,7 @@
    module subroutine prepare_for_jacobian_transpose_cc3(wf)
 !!
 !!    Prepare for jacobian transpose transformation
-!!    Written by Rolf Heilemann Myhre, April 2019
+!!    Written by Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -43,13 +43,14 @@
 !
    module subroutine prep_cc3_jacobian_trans_integrals_cc3(wf)
 !!
+!!    Jacobian transpose transformation prepare integral files
+!!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
+!!
 !!    Construct integrals needed in CC3 jacobian transpose and store on disk
 !!    (be|cd) ordered as bce,d
 !!    (mj|lk) ordered as mjk,l
 !!    (ck|ld) ordered as cl,kd
 !!    (cd|lk) ordered as cl,kd
-!!
-!!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
       implicit none
 !!
@@ -60,12 +61,13 @@
 !
    module subroutine prep_cc3_g_lbkc_t_file_cc3(wf)
 !!
-!!    Construct ovov-integral only needed in the construction of 
-!!    the intermediates for the CC3 jacobian transformations and store on disk
+!!    Prepare ovov-integral 
+!!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
 !!
 !!    (lb|kc) ordered as bcl,k
 !!
-!!    written by Rolf H. Myhre and Alexander Paul, April 2019
+!!    only needed in the construction of the intermediates
+!!    for the CC3 jacobian transformations and store on disk
 !!
       implicit none
 !
@@ -76,11 +78,12 @@
 !
    module subroutine prep_cc3_jacobian_intermediates_cc3(wf)
 !!
+!!    Prepare intermediates for jacobian CC3 transformations
+!!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
+!!
 !!    Construct X_abdi and Y_akil needed in CC3 jacobian transpose and store on disk
 !!    For that: construct t^abc_ijk in single batches of ijk 
 !!    and contract with the respective integrals
-!!
-!!    written by Rolf H. Myhre and Alexander Paul, April 2019
 !!
       implicit none
 !!
@@ -92,17 +95,19 @@
    module subroutine construct_X_intermediates_cc3(wf, i, j, k, t_abc, u_abc, v_abc, X_alij,      &
                                                    X_abdi, X_abdj, X_abdk, g_lbic, g_lbjc, g_lbkc)
 !!
-!!    Constructs the intermediates X_abdi and Y_akil used to compute the contributions to sigma_ai
+!!    Construct X intermediates
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
+!!
+!!    Constructs the intermediates X_vvvo and X_vooo
+!!    used to compute the contributions to sigma_ai
 !!
 !!    X_abdi = sum_cjk (t^cba_ijk + t^acb_ijk - 2 * t^abc_ijk) * g_kcjd
-!!    Y_akil = sum_cjk (t^cba_ijk + t^acb_ijk - 2 * t^abc_ijk) * g_lbkc
+!!    X_ajil = sum_cjk (t^cba_ijk + t^acb_ijk - 2 * t^abc_ijk) * g_lbkc
 !!
 !!    g_lbic, g_lbjc, g_lbkc can be used for g_pcqd as well: 
 !!    The p(i,j,k) can be set in dgemm and q(i,j,k) is defined by the array used
 !!
-!!    All permutations for i,j,k have to be considered due to the restrictions in the loops
-!!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops
 !!
       implicit none
 !
@@ -131,7 +136,7 @@
 !!
 !!    Read in intermediate X_abdi from file, resort to X_baid and write to file again
 !!
-!!    Written by Alexander Paul and Rolf H. Myhre, April 2019
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !

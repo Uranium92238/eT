@@ -20,7 +20,7 @@
    module subroutine prepare_for_jacobian_transpose_cc2(wf)
 !!
 !!    Jacobian transpose transform trial vector
-!!    Written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    Written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
       implicit none
 !
@@ -32,7 +32,7 @@
    module subroutine jacobian_transpose_transformation_cc2(wf, b)
 !!
 !!    Jacobian transpose transformation
-!!    Written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    Written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
 !!    Calculates the transpose Jacobian transformation, i.e., the transformation
 !!    by the transpose of the Jacobian matrix
@@ -55,7 +55,7 @@
    module subroutine jacobian_transpose_cc2_b2_cc2(wf, sigma_aibj, c_aibj)
 !!
 !!    Jacobian transpose CC2 B2
-!!    Written by Sarai D. Folkestad and Alexander Paul, Feb 2019
+!!    Written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
 !!
       implicit none
 !

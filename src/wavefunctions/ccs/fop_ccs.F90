@@ -44,7 +44,7 @@ submodule (ccs_class) fop_ccs
 !!
 !!       ξ^X_μ = < μ | exp(-T) X exp(T)| R >
 !!
-!!    The transition density matrices are construct as follows:
+!!    The EOM transition density matrices are constructed as follows:
 !!
 !!       ρ^L_pq = < k | E_pq | CC >
 !!       ρ^R_pq = < Λ | E_pq | k >
@@ -53,6 +53,7 @@ submodule (ccs_class) fop_ccs
 !!
 !!       | k > = sum_μ (τ_μ | CC > R_{k,μ} - tbar_μ | CC > R_{k,μ})
 !!       < k | = sum_μ L_{k,μ} < μ | e^-T
+!!
 !!
 !
    implicit none
@@ -63,8 +64,8 @@ contains
 !
    module subroutine construct_right_transition_density_ccs(wf, state)
 !!
-!!    Construct right one-electron transition density for the state k
-!!    Written by Alexander Paul, June 2019
+!!    Construct right one-electron transition density (EOM)
+!!    Written by Alexander C. Paul, June 2019
 !!
 !!          ρ^R_pq = < Λ | E_pq | k >
 !!
@@ -92,28 +93,32 @@ contains
       call mem%alloc(R_k, wf%n_es_amplitudes)
       call wf%read_excited_state(R_k, state, 'right')
 !
-      call wf%right_transition_density_ccs_oo(wf%t1bar, R_k)
-      call wf%right_transition_density_ccs_ov(R_k)
-      call wf%right_transition_density_ccs_vv(wf%t1bar, R_k)
-      call wf%right_transition_density_ccs_gs_contr(wf%t1bar, R_k)
+      call wf%right_transition_density_ccs_oo(wf%right_transition_density, wf%t1bar, R_k)
+      call wf%right_transition_density_ccs_ov(wf%right_transition_density, R_k)
+      call wf%right_transition_density_ccs_vv(wf%right_transition_density, wf%t1bar, R_k)
+      call wf%right_transition_density_ccs_gs_contr(wf%right_transition_density, wf%t1bar, R_k)
 !
       call mem%dealloc(R_k, wf%n_es_amplitudes)
+!
+      call R_TDM_timer%turn_off()
 !
       call R_TDM_timer%turn_off()
 !
    end subroutine construct_right_transition_density_ccs
 !
 !
-   module subroutine right_transition_density_ccs_oo_ccs(wf, tbar_ai, R_ai)
+   module subroutine right_transition_density_ccs_oo_ccs(wf, density, tbar_ai, R_ai)
 !!
-!!    Right transition density oo contribution
-!!    Written by Alexander Paul, June 2019
+!!    Right transition density (EOM) oo contribution
+!!    Written by Alexander C. Paul, June 2019
 !!
 !!    ρ^R_ij = -sum_a R_ai tbar_aj
 !!      
       implicit none
 !
       class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
@@ -128,22 +133,24 @@ contains
                   tbar_ai, & ! tbar_a_j
                   wf%n_v,  &
                   one,     &
-                  wf%right_transition_density,  &
+                  density, &
                   wf%n_mo)
 !
    end subroutine right_transition_density_ccs_oo_ccs
 !
 !
-   module subroutine right_transition_density_ccs_ov_ccs(wf, R_ai)
+   module subroutine right_transition_density_ccs_ov_ccs(wf, density, R_ai)
 !!
-!!    Right transition density ov
-!!    Written by Alexander Paul, June 2019
+!!    Right transition density (EOM) ov
+!!    Written by Alexander C. Paul, June 2019
 !!
 !!    ρ^R_pq = 2*R_ai 
 !!
       implicit none
 !
       class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
 !
@@ -153,8 +160,7 @@ contains
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
-            wf%right_transition_density(i, wf%n_o + a) = two*R_ai(a, i) &
-                           + wf%right_transition_density(i, wf%n_o + a)
+            density(i, wf%n_o + a) = two*R_ai(a, i) + density(i, wf%n_o + a)
 !
          enddo
       enddo
@@ -163,16 +169,18 @@ contains
    end subroutine right_transition_density_ccs_ov_ccs
 !
 !
-   module subroutine right_transition_density_ccs_vv_ccs(wf, tbar_ai, R_ai)
+   module subroutine right_transition_density_ccs_vv_ccs(wf, density, tbar_ai, R_ai)
 !!
-!!    Right transition density vv contribution
-!!    Written by Alexander Paul, June 2019
+!!    Right transition density (EOM) vv contribution
+!!    Written by Alexander C. Paul, June 2019
 !!
 !!    ρ^R_ab = sum_i R_bi tbar_ai
 !!      
       implicit none
 !
       class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
@@ -187,15 +195,17 @@ contains
                   R_ai,    & ! R_b_i
                   wf%n_v,  &
                   one,     &
-                  wf%right_transition_density(wf%n_o+1, wf%n_o+1),  &
+                  density(wf%n_o+1, wf%n_o+1),  &
                   wf%n_mo)
 !
    end subroutine right_transition_density_ccs_vv_ccs
 !
 !
-   module subroutine right_transition_density_ccs_gs_contr_ccs(wf, tbar_ai, R_ai)
+   module subroutine right_transition_density_ccs_gs_contr_ccs(wf, density, tbar_ai, R_ai)
 !!
-!!    Right transition density, contribution from the ground state density
+!!    Right transition density (EOM), contribution from the ground state density
+!!    Written by Alexander C. Paul, June 2019
+!!
 !!    ρ^R_pq -= sum_μν R_{k,μ}tbar_μ tbar_ν < ν |e^-T E_pq e^T| HF >
 !!           -= sum_μ R_{k,μ}tbar_μ (D_GS - D_HF)
 !!    CCS:
@@ -205,21 +215,22 @@ contains
 !
       class(ccs) :: wf
 !
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
+!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
 !
-      real(dp) :: ddot, scaling_factor
+      real(dp) :: ddot, tbar_R_overlap
 !
       integer :: i, a
 !
-      scaling_factor = ddot(wf%n_v*wf%n_o, tbar_ai, 1, R_ai, 1)
+      tbar_R_overlap = - ddot(wf%n_v*wf%n_o, tbar_ai, 1, R_ai, 1)
 !
 !$omp parallel do private(a, i)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
-            wf%right_transition_density(wf%n_o + a, i) = scaling_factor*tbar_ai(a, i)  &
-                     + wf%right_transition_density(wf%n_o + a, i)
+            density(wf%n_o + a, i) = tbar_R_overlap*tbar_ai(a, i) + density(wf%n_o + a, i)
 !
          enddo
       enddo
@@ -230,8 +241,8 @@ contains
 !
    module subroutine construct_left_transition_density_ccs(wf, state)
 !!
-!!    Construct left one-electron transition density for the state k
-!!    Written by Alexander Paul, June 2019
+!!    Construct left one-electron transition density (EOM)
+!!    Written by Alexander C. Paul, June 2019
 !!
 !!          ρ^L_pq = < k | E_pq | CC >
 !!
