@@ -94,8 +94,6 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_ai
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj, rho_abij
 !
-      integer :: i, a
-!
 !     Allocate and zero the transformed vector (singles part)
 !
       call mem%alloc(rho_ai, wf%n_v, wf%n_o)
@@ -123,15 +121,7 @@ contains
 !     Scale the doubles vector by 1 + delta_ai,bj, i.e.
 !     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
 !
-!$omp parallel do schedule(static) private(a, i)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            c_aibj(a,i,a,i) = two*c_aibj(a,i,a,i)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call scale_diagonal(two, c_aibj, wf%n_t1)
 !
       call wf%jacobian_doubles_b1(rho_ai, c_aibj)
       call wf%jacobian_doubles_c1(rho_ai, c_aibj)
@@ -196,15 +186,7 @@ contains
 !     Order rho_abij back into rho_aibj & divide by
 !     the biorthonormal factor 1 + delta_ai,bj
 !
-!$omp parallel do schedule(static) private(a,i)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-         rho_abij(a,a,i,i) = half*rho_abij(a,a,i,i)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call scale_diagonal(half, rho_abij, wf%n_v, wf%n_o)
 !
 !     Overwrite the incoming doubles c vector & pack in
 !

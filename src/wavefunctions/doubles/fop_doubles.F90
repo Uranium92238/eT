@@ -158,7 +158,7 @@ contains
       real(dp) :: tbar_R_overlap
       real(dp) :: ddot
 !
-      integer :: a, i
+      integer :: i
 !
       type(timings) :: R_TDM_timer
 !
@@ -199,15 +199,7 @@ contains
 !
 !     Scale the doubles vector by 1 + δ_ai,bj
 !
-!$omp parallel do schedule(static) private(a,i)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            R_aibj(a,i,a,i) = two*R_aibj(a,i,a,i)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call scale_diagonal(two, R_aibj, wf%n_t1)
 !
       tbar_R_overlap = tbar_R_overlap &
                         - half * ddot((wf%n_v)**2*(wf%n_o)**2, R_aibj, 1, tbar_aibj, 1)

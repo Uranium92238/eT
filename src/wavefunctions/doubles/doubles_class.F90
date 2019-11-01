@@ -30,6 +30,7 @@ module doubles_class
 !!
 !
    use ccs_class
+   use array_utilities, only : scale_diagonal
 !
    implicit none
 !
