@@ -26,7 +26,8 @@ module hf_class
    use wavefunction_class
 !
    use reordering
-   use timings_class, only : timings
+!
+   use timings_class,   only : timings
    use array_utilities, only : get_abs_max, sandwich
    use array_utilities, only : full_cholesky_decomposition_system
    use array_utilities, only : get_n_highest
@@ -56,7 +57,7 @@ module hf_class
 !
 !     Declarations for QM/MM
 !
-      real(dp) :: elec_energy_qmmm
+      real(dp) :: electrostatic_energy_qmmm
       real(dp) :: energy_qmmm
       real(dp) :: energy_scf_qmmm
 !
@@ -124,7 +125,7 @@ module hf_class
       procedure :: get_ao_fock                                 => get_ao_fock_hf
       procedure :: get_fock_ov                                 => get_fock_ov_hf
       procedure :: calculate_hf_energy_from_fock               => calculate_hf_energy_from_fock_hf
-      procedure :: calculate_hf_energy_from_fock_mm            => calculate_hf_energy_from_fock_mm_hf
+      procedure :: calculate_mm_energy_terms                   => calculate_mm_energy_terms_hf
       procedure :: calculate_hf_energy_from_G                  => calculate_hf_energy_from_G_hf
       procedure :: initialize_fock                             => initialize_fock_hf
       procedure :: destruct_fock                               => destruct_fock_hf
@@ -387,36 +388,23 @@ contains
 !!    Print hf summary for QM/MM calculations
 !!    Written by Tommaso Giovannini, March 2019
 !!
+!!    Modified by Sarai D. Folkestad, Oct 2019
+!!      
+!!    Moved the calculation of some non-polerizable QM/MM energy terms to 
+!!    calculate_mm_energy_terms_hf
+!!
       implicit none
 !
       class(hf), intent(inout) :: wf
-!
-      real(dp), dimension(:), allocatable :: nopol_potential
-!
-      if(wf%system%mm%forcefield.eq.'non-polarizable') then
-
-         call mem%alloc(nopol_potential, wf%system%mm%n_atoms)
-!
-         call wf%construct_ao_electrostatics(0,1,'prop',property_points=nopol_potential,ao_density=wf%ao_density)
-!
-         wf%elec_energy_qmmm = zero
-!
-         wf%elec_energy_qmmm = wf%elec_energy_qmmm - dot_product(wf%system%mm%charge,nopol_potential)
-!
-         wf%energy_qmmm = wf%elec_energy_qmmm
-!
-         call mem%dealloc(nopol_potential, wf%system%mm%n_atoms)
-
-      endif
 !
       call output%printf('- Summary of QM/MM energetics:', pl='m', fs='(/t3,a)')
       call output%printf('a.u.             eV     kcal/mol', pl='m', fs='(t42,a)')
       call output%printf('QM/MM SCF Contribution: (f22.12)', pl='m', &
                           reals=[wf%energy_scf_qmmm], fs='(t6,a)')
       call output%printf('QM/MM Electrostatic Energy:(f19.12)(f12.5) (f9.3)', pl='m', &
-                          reals=[wf%elec_energy_qmmm,               &
-                                 wf%elec_energy_qmmm*Hartree_to_eV, &
-                                 wf%elec_energy_qmmm*Hartree_to_kcalmol], fs='(t6,a)')
+                          reals=[wf%electrostatic_energy_qmmm,               &
+                                 wf%electrostatic_energy_qmmm*Hartree_to_eV, &
+                                 wf%electrostatic_energy_qmmm*Hartree_to_kcalmol], fs='(t6,a)')
 !
    end subroutine print_energy_mm_hf
 !
@@ -837,7 +825,9 @@ contains
       if(wf%system%mm_calculation .and. wf%system%mm%forcefield .ne. 'non-polarizable') &
          call wf%update_fock_mm()
 !
-      call wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+!
+      if (wf%system%mm_calculation) call wf%calculate_mm_energy_terms()
 !
    end subroutine update_fock_and_energy_no_cumulative_hf
 !
@@ -869,7 +859,9 @@ contains
 !
       call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density, 1)
 !
-      call wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+!
+      if (wf%system%mm_calculation) call wf%calculate_mm_energy_terms()
 !
    end subroutine update_fock_and_energy_cumulative_hf
 !
@@ -2097,6 +2089,10 @@ contains
 !!
 !!    NOTE: the nuclear repulsion is not included
 !!
+!!    Modified by Sarai D. Folkestad, Oct 2019
+!!
+!!    Changed from subroutine to function.
+!!
       implicit none
 !
       class(hf) :: wf
@@ -2114,9 +2110,9 @@ contains
    end function calculate_hf_energy_from_G_hf
 !
 !
-   subroutine calculate_hf_energy_from_fock_hf(wf, F_wx, h_wx)
+   function calculate_hf_energy_from_fock_hf(wf, F_wx, h_wx) result(hf_energy)
 !!
-!!    Calculate HF energy from F
+!!    Calculate HF energy from Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Calculates the Hartree-Fock energy,
@@ -2140,14 +2136,14 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: F_wx
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
-      wf%energy = wf%system%get_nuclear_repulsion()
+      real(dp) :: hf_energy
 !
-      if (wf%system%mm_calculation) call wf%calculate_hf_energy_from_fock_mm()
+      hf_energy = wf%system%get_nuclear_repulsion()
 !
-       wf%energy = wf%energy + half*ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
-       wf%energy = wf%energy + half*ddot((wf%n_ao)**2, wf%ao_density, 1, F_wx, 1)
+      hf_energy = hf_energy + half*ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
+      hf_energy = hf_energy + half*ddot((wf%n_ao)**2, wf%ao_density, 1, F_wx, 1)
 !
-   end subroutine calculate_hf_energy_from_fock_hf
+   end function calculate_hf_energy_from_fock_hf
 !
 !
    subroutine construct_ao_G_1der_hf(wf, G_ao, D_ao)
@@ -3604,12 +3600,18 @@ contains
    end subroutine update_fock_mm_hf
 !
 !
-   subroutine calculate_hf_energy_from_fock_mm_hf(wf)
+   subroutine calculate_mm_energy_terms_hf(wf) 
 !!
-!!    Calculate HF energy from F for QM/MM methods
+!!    Calculate MM energy contributions
 !!    Written by Tommaso Giovannini, July 2019
 !!
+!!    Calculates QM/MM energy contributions.
 !!    Adds the QM/MM contribution to the HF energy.
+!!
+!!    Modified by Sarai D. Folkestad, Oct 2019
+!!
+!!    Moved some energy calculation from the print_energy_mm_hf routine
+!!    and added it to the non-polarizable part of this routine.
 !!
       implicit none
 !
@@ -3617,7 +3619,9 @@ contains
 !
       real(dp) :: ddot
 !
-      wf%elec_energy_qmmm = zero
+      real(dp), dimension(:), allocatable :: nopol_potential
+!
+      wf%electrostatic_energy_qmmm    = zero
 !
 !     energy terms due to non-polarizable QM/MM
 !
@@ -3627,32 +3631,44 @@ contains
 !
          wf%energy = wf%energy + wf%system%get_nuclear_repulsion_mm()
 !
-         wf%energy = wf%energy + one/two*ddot((wf%n_ao)**2, half*wf%system%mm%nopol_h_wx, 1,wf%ao_density, 1)
+         wf%energy = wf%energy + one/two*ddot((wf%n_ao)**2, &
+                                       half*wf%system%mm%nopol_h_wx, 1,wf%ao_density, 1)
 !
-         wf%elec_energy_qmmm = + one/two*ddot((wf%n_ao)**2, one*wf%system%mm%nopol_h_wx, 1, wf%ao_density,1)
-
+         wf%energy_scf_qmmm  = + one/two*ddot((wf%n_ao)**2, one*wf%system%mm%nopol_h_wx, 1, wf%ao_density, 1)
+!
+        call mem%alloc(nopol_potential, wf%system%mm%n_atoms)
+!
+        call wf%construct_ao_electrostatics(0, 1, 'prop', &
+                     property_points=nopol_potential, ao_density=wf%ao_density)
+!
+        wf%electrostatic_energy_qmmm = zero
+!
+        wf%electrostatic_energy_qmmm = wf%electrostatic_energy_qmmm - &
+                                          dot_product(wf%system%mm%charge,nopol_potential)
+!
+        wf%energy_qmmm = wf%electrostatic_energy_qmmm
+!
+        call mem%dealloc(nopol_potential, wf%system%mm%n_atoms)
+!
       endif
-!
 !
 !     energy terms due to polarizable QM/FQ
 !
       if(wf%system%mm%forcefield .eq. 'fq') then
 !
-         wf%energy = wf%energy - one/four*ddot((wf%n_ao)**2, wf%ao_density, 1, wf%system%mm%pol_emb_fock, 1) &
+         wf%energy = wf%energy - one/four*ddot((wf%n_ao)**2, wf%ao_density, &
+                                          1, wf%system%mm%pol_emb_fock, 1) &
                                - one/two*dot_product(wf%system%mm%pol_emb_lhs,wf%system%mm%pol_emb_rhs)
 !
          wf%energy_scf_qmmm  = - one/two*dot_product(wf%system%mm%pol_emb_lhs,wf%system%mm%pol_emb_rhs)
 !
-         wf%system%mm%pol_emb_rhs(1:wf%system%mm%n_atoms) = wf%system%mm%pol_emb_rhs(1:wf%system%mm%n_atoms) + wf%system%mm%chi
-         wf%elec_energy_qmmm = - dot_product(wf%system%mm%pol_emb_lhs,wf%system%mm%pol_emb_rhs)
+         wf%system%mm%pol_emb_rhs(1:wf%system%mm%n_atoms) = wf%system%mm%pol_emb_rhs(1:wf%system%mm%n_atoms) &
+                                                            + wf%system%mm%chi
+         wf%electrostatic_energy_qmmm = - dot_product(wf%system%mm%pol_emb_lhs,wf%system%mm%pol_emb_rhs)
 !
       endif
 !
-      wf%energy_qmmm = wf%elec_energy_qmmm
-!
-      if(wf%system%mm%forcefield .eq. 'non-polarizable') wf%energy_scf_qmmm  = wf%energy_qmmm
-!
-   end subroutine calculate_hf_energy_from_fock_mm_hf
+   end subroutine calculate_mm_energy_terms_hf
 !
 !
    subroutine construct_molecular_gradient_hf(wf, E_qk)

@@ -200,7 +200,7 @@ contains
       call wf%get_ao_h_wx(h_wx)
 !
       call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx)
-      call wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
 !
       call wf%get_n_electrons_in_density(n_electrons)
 !
@@ -385,7 +385,7 @@ contains
 !
       call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx)
 !
-      call wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
 !
 !     Add the Tr[Da * G(De)] and inactive energy contributions to the energy
 !

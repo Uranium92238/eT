@@ -1397,7 +1397,7 @@ contains
 !
       wf%energy = wf%system%get_nuclear_repulsion()
 !
-      if (wf%system%mm_calculation) call wf%calculate_hf_energy_from_fock_mm()
+      if (wf%system%mm_calculation) call wf%calculate_mm_energy_terms()
 !      
       wf%energy = wf%energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_a, 1, h_wx, 1)
       wf%energy = wf%energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_a, 1, wf%ao_fock_a, 1)

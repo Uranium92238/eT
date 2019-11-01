@@ -252,7 +252,7 @@ contains
 !
       call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx)
 !
-      call wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
 !
 !     Transformation of the AO fock in the MO basis
 !
