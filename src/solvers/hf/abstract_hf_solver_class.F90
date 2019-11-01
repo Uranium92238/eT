@@ -112,7 +112,7 @@ contains
       class(abstract_hf_solver) :: solver 
 !
       call output%printf('Energy threshold:             (e11.4)',&
-         reals=[solver%energy_threshold], fs='(t6,a)', pl='minimal')
+         reals=[solver%energy_threshold], fs='(/t6,a)', pl='minimal')
 !
       call output%printf('Gradient threshold:           (e11.4)',&
          reals=[solver%gradient_threshold], fs='(t6,a)', pl='minimal')
@@ -179,9 +179,9 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
-      call output%long_string_print(solver%author,'(t3,a/)',.true.)
-      call output%long_string_print(solver%description)
+      call output%printf(':: (a0)', pl='normal', fs='(//t3,a)',  chars=[trim(solver%tag)])
+      call output%printf(':: (a0)', pl='normal', fs='(t3,a)',    chars=[trim(solver%author)])
+      call output%printf('(a0)',    pl='normal', ffs='(/t3,a)',  chars=[trim(solver%description)])
 !
    end subroutine print_banner_abstract_hf_solver
 !
@@ -203,7 +203,7 @@ contains
              ' wavefunction energetics (a.u.):', fs='(/t3,a)', pl='minimal')
 !
       call wf%print_energy()
-      call wf%print_orbital_energies('3')
+      call wf%print_orbital_energies()
 !
       if (allocated(solver%orbitals_to_print)) then
 !      

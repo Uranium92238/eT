@@ -223,6 +223,10 @@ contains
 !!    The renaming of files and the cleanup and re-prepare of the full system
 !!    is present to avoid overwriting files.
 !!
+!!    Modified by Tor S. Haugland, 2019
+!!
+!!    Added "Found SAD". Only loop over unique atoms.
+!!
 !
       use sequential_file_class,  only: sequential_file
 !
@@ -231,6 +235,8 @@ contains
 !
       use uhf_class,              only: uhf
       use scf_hf_class,           only: scf_hf
+!
+      use string_utilities,       only: index_of_unique_strings
 !
       implicit none
 !
@@ -258,7 +264,12 @@ contains
       real(dp) :: gradient_threshold
       integer  :: max_iterations
 !
-      integer :: i
+      integer :: I
+!
+      character(len=50), dimension(wf%system%n_atoms) :: atom_and_basis
+      integer,           dimension(wf%system%n_atoms) :: unique_atom_index
+!
+      call output%printf('- Generating SAD guess', pl='minimal', fs='(/t3,a)')
 !
 !     SAD DIIS solver settings
 !
@@ -272,12 +283,6 @@ contains
       gradient_threshold = 1.0D-6
       call input%get_keyword_in_section('gradient threshold', 'solver scf', gradient_threshold)
       gradient_threshold = min(1.0D-6, gradient_threshold)
-!
-!     Mute output
-!
-      call output%printf('- SAD generation', pl='normal', fs='(/t3,a)')
-!
-      call output%mute()
 !
 !     Rename Hartree-Fock restart file and information file so that they are not overwritten:
 !     hf_restart_file used in checking if restart is safe, 
@@ -295,11 +300,27 @@ contains
          call orbital_information_file%copy("temp_orbital_information")
       endif
 !
+!     Find atomic index of unique atom/basis combinations
+!
+      do I = 1, wf%system%n_atoms
+!
+         atom_and_basis(I) = trim(wf%system%atoms(I)%symbol) // trim(wf%system%atoms(I)%basis)
+!
+      enddo
+!
+      call index_of_unique_strings(unique_atom_index, wf%system%n_atoms, atom_and_basis)
+!
 !     For every unique atom, generate SAD density to file
 !
-      do i = 1, wf%system%n_atoms
+      call output%mute()
 !
-         atom = wf%system%atoms(i)
+      do I = 1, wf%system%n_atoms
+!
+!        Check unique
+!
+         if ( all(unique_atom_index /= I)) cycle
+!
+         atom = wf%system%atoms(I)
 !
          name_       = "sad_" // trim(atom%basis) // "_" // trim(atom%symbol)
          alpha_fname = trim(name_) // '_alpha'
@@ -310,7 +331,18 @@ contains
          alpha_density_file = sequential_file(alpha_fname)
          beta_density_file  = sequential_file(beta_fname)
 !
-         if (alpha_density_file%exists() .AND. beta_density_file%exists()) cycle
+         if (alpha_density_file%exists() .and. beta_density_file%exists()) then
+!
+            call output%unmute()
+!
+            call output%printf('Found SAD for '// adjustl(atom%symbol) &
+               // ' in ' // trim(atom%basis), pl='verbose', fs='(t6,a)')
+!
+            call output%mute()
+!
+            cycle
+!
+         endif
 !
 !        Prepare molecule of the chosen atom
 !
@@ -340,8 +372,8 @@ contains
 !
          call output%unmute()
 !
-         call output%printf('Generated SAD in (a0) for (a0)', chars=[character(len=100) :: atom%basis, atom%symbol], &
-                                             pl='normal', ffs='(/t6,a)', fs='(t6,a)')
+         call output%printf('Generated SAD for '// adjustl(atom%symbol) //' in '&
+                  // trim(atom%basis), pl='verbose', fs='(t6,a)')
 !
          call output%mute()
 !

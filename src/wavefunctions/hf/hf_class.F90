@@ -27,7 +27,7 @@ module hf_class
 !
    use reordering
    use timings_class, only : timings
-   use array_utilities, only : get_abs_max, sandwich, print_vector
+   use array_utilities, only : get_abs_max, sandwich
    use array_utilities, only : full_cholesky_decomposition_system
    use array_utilities, only : get_n_highest
    use array_utilities, only : identity_array
@@ -455,7 +455,7 @@ contains
    end subroutine read_hf_settings_hf
 !
 !
-   subroutine print_orbital_energies_hf(wf, indentation)
+   subroutine print_orbital_energies_hf(wf)
 !!
 !!    Print orbital energies
 !!    Written by Eirik F. Kjønstad, Sep 2018
@@ -467,17 +467,8 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      character(len=*), optional :: indentation
-!
-      character(len=40) :: indent
-!
-      indent = '6'
-      if (present(indentation)) indent = trim(indentation)
-!
-      call output%printf('- Molecular orbital energies:', pl='n', &
-                         fs='(/t'//trim(indent)//',a)')
-!
-      call print_vector(wf%orbital_energies, wf%n_mo, indent)
+      call output%print_vector('normal', '- Molecular orbital energies', wf%n_ao, wf%orbital_energies, &
+                              fs='(f16.12)', columns=4)
 !
    end subroutine print_orbital_energies_hf
 !
@@ -3470,7 +3461,7 @@ contains
       class(hf) :: wf
 !
       call output%printf('- Cholesky decomposition of AO overlap to get linearly independent orbitals:', &
-                         pl='n', fs='(/t3,a)')
+                         pl='n', fs='(/t3,a)', ll=100)
 !
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()

@@ -233,7 +233,7 @@ contains
       class(scf_diis_hf) :: solver
 !
       call output%printf('DIIS dimension:                (i0)', &
-         ints=[solver%diis_dimension],fs='(t6,a)', pl='minimal')
+         ints=[solver%diis_dimension],fs='(/t6,a)', pl='minimal')
 !
    end subroutine print_scf_diis_settings_scf_diis_hf
 !

@@ -1711,59 +1711,76 @@ contains
    end subroutine destruct_shell_limits_molecular_system
 !
 !
-   subroutine print_geometry_molecular_system(molecule)
+   subroutine print_geometry_molecular_system(molecule, units)
 !!
 !!    Print geometry 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+!!    Prints xyz of the molecular geometry in the unit specified.
+!!
+!!    units:   'angstrom' or 'bohr'
+!!
+!!    Modified by Tor S. Haugland, Oct 2019
+!!
+!!    Printf and print_separator. Modified to take unit as input
 !!
       implicit none 
 !
-      class(molecular_system) :: molecule  
+      class(molecular_system), intent(in) :: molecule  
+      character(len=*),        intent(in) :: units
 !
-      integer :: I 
+      real(dp)           :: scaling
+      character(len=100) :: local_units
 !
-      character(len=12) :: frmt0
-      character(len=46) :: frmt1
+      integer            :: I, line_length
+      type(atomic)       :: atom
 !
-      frmt0="(t5,71('='))"
-      frmt1="(t5,'Atom',9x,'X',16x,'Y',16x,'Z',13x,'Basis')"
-      write(output%unit,'(/)')
-      write(output%unit,frmt0 )
-      write(output%unit,'(t32,a)') 'Geometry (Å)'
-      write(output%unit,frmt0 )
-      write(output%unit,frmt1 )
-      write(output%unit,frmt0 )
+!     Choose unit
 !
-      do I = 1, molecule%n_atoms 
+      if (trim(units) == 'angstrom') then
 !
-         write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a14)')  molecule%atoms(I)%symbol, &
-                                                                          molecule%atoms(I)%x,      &
-                                                                          molecule%atoms(I)%y,      &
-                                                                          molecule%atoms(I)%z,      &
-                                                                          adjustr(trim(molecule%atoms(I)%basis))
-!  
-         flush(output%unit)
+         scaling = one
+         local_units = 'Å'
+!
+      elseif (trim(units) == 'bohr') then
+!
+         scaling = angstrom_to_bohr
+         local_units = 'a.u.'
+!
+      else
+!
+         scaling = zero
+         call output%error_msg("Could not find unit: "// units // ". Use angstrom/bohr")
+!
+      endif
+!
+!     Print header
+!
+      line_length = 73
+!
+      call output%print_separator(pl='minimal', n=line_length, fs='(/t5,a)')
+      call output%printf('Geometry((a0))', pl='minimal', fs='(t32,a)', chars=[local_units])
+      call output%print_separator(pl='minimal', n=line_length, fs='(t5,a)')
+      call output%printf('Atom          X                Y                Z                Basis', &
+                        pl='minimal', fs='(t6,a)')
+      call output%print_separator(pl='minimal', n=line_length, fs='(t5,a)')
+!
+!     Print geometry for every atom
+!
+      do I = 1, molecule%n_atoms
+!
+         atom = molecule%atoms(I)
+!
+         call output%printf(adjustl(atom%symbol) // ' (f17.12)(f17.12)(f17.12)  (a14)', &
+                           pl='minimal', fs='(t7,a)', &
+                           chars=[atom%basis],        &
+                           reals=[atom%x * scaling,   &
+                                  atom%y * scaling,   &
+                                  atom%z * scaling]   )
 !
       enddo 
 !
-      write(output%unit,frmt0 )
-      write(output%unit,'(t30,a)') 'Geometry (a.u.)'
-      write(output%unit,frmt0 )
-      write(output%unit,frmt1 )
-      write(output%unit,frmt0 )
-      do I = 1, molecule%n_atoms 
-!
-         write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a14)')  molecule%atoms(I)%symbol, &
-                                                                          angstrom_to_bohr*molecule%atoms(I)%x,      &
-                                                                          angstrom_to_bohr*molecule%atoms(I)%y,      &
-                                                                          angstrom_to_bohr*molecule%atoms(I)%z,      &
-                                                                          adjustr(trim(molecule%atoms(I)%basis))
-!  
-         flush(output%unit)
-!
-      enddo 
-!      
-      write(output%unit,frmt0 )
+      call output%print_separator(pl='minimal', n=line_length, fs='(t5,a)')
 !
    end subroutine print_geometry_molecular_system
 !
@@ -1782,11 +1799,10 @@ contains
       call output%printf('- Molecular system specifications:', pl='m', fs='(/t3,a)')
 !
       call output%printf('Name:             (a0)', pl='m', fs='(/t6,a)', chars=[trim(molecule%name_)])
-      call output%printf('Charge:           (i1)', pl='m', fs='(t6,a)',  ints=[molecule%charge]) 
-      call output%printf('Multiplicity:     (i1)', pl='m', fs='(t6,a)',  ints=[molecule%multiplicity]) 
+      call output%printf('Charge:         (i3)',  pl='m', fs='(t6,a)',  ints=[molecule%charge]) 
+      call output%printf('Multiplicity:   (i3)', pl='m', fs='(t6,a)',  ints=[molecule%multiplicity]) 
       call output%printf('Coordinate units: (a0)', pl='m', fs='(t6,a)',  chars=[trim(molecule%coordinate_units)])
       if (molecule%cartesian_gaussians_int.eq.1) call output%printf('Using Cartesian gaussians.', pl='m', fs='(/t6,a)')
-!
 !
       call output%printf('Pure basis functions:      (i5)', pl='m', fs='(/t6,a)', ints=[molecule%n_pure_basis])
       call output%printf('Cartesian basis functions: (i5)', pl='m', fs='(t6,a)',  ints=[molecule%n_cart_basis])
@@ -1796,7 +1812,8 @@ contains
       reals=[molecule%get_nuclear_repulsion()])
       call output%printf('Bohr/angstrom value (CODATA 2010): (f25.12)', pl='m', fs='(t6,a)',  reals=[bohr_to_angstrom])
 !
-      call molecule%print_geometry()
+      call molecule%print_geometry('angstrom')
+      call molecule%print_geometry('bohr')
 !
    end subroutine print_system_molecular_system
 !
