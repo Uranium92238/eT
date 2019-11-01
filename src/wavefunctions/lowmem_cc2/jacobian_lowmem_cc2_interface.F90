@@ -17,6 +17,53 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
+   module subroutine prepare_for_jacobian_lowmem_cc2(wf)
+!!
+!!    Prepare for jacobian
+!!    Written by Linda Goletto, Oct 2019
+!!    Based on work of Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!
+      implicit none
+!
+      class(lowmem_cc2), intent(inout) :: wf
+!
+   end subroutine prepare_for_jacobian_lowmem_cc2
+!
+!
+   module subroutine save_jacobian_b1_2_intermediate_lowmem_cc2(wf, eps_o, eps_v)
+!!
+!!    Save jacobian b1 term 2 intermediate
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad,
+!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Modified by Anders Hutcheson, Oct 2019
+!!
+      implicit none
+!
+      class(lowmem_cc2) :: wf
+!
+      real(dp), dimension(wf%n_o), intent(in) :: eps_o
+      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+!
+   end subroutine save_jacobian_b1_2_intermediate_lowmem_cc2
+!
+!
+   module subroutine save_jacobian_b1_3_intermediate_lowmem_cc2(wf, eps_o, eps_v)
+!!
+!!    Save jacobian b1 term 3 intermediate
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad
+!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Modified by Linda Goletto, Oct 2019
+!!
+      implicit none
+!
+      class(lowmem_cc2) :: wf
+!
+      real(dp), dimension(wf%n_o), intent(in) :: eps_o
+      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+!
+   end subroutine save_jacobian_b1_3_intermediate_lowmem_cc2
+!
+!
    module subroutine effective_jacobian_transformation_lowmem_cc2(wf, omega, c)
 !!
 !!    Effective jacobian transformation
@@ -132,7 +179,7 @@
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
-end subroutine effective_jacobian_cc2_c1_lowmem_cc2
+   end subroutine effective_jacobian_cc2_c1_lowmem_cc2
 !
 !
    module subroutine effective_jacobian_cc2_d1_lowmem_cc2(wf, omega, rho_ai, c_bl, eps_o, eps_v)

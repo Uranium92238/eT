@@ -1839,7 +1839,7 @@ contains
 !!       Y_ljai = sum_kc L_ljkc t_ik^ac 
 !!
 !!    used in the c2-term. This is done only once in prepare_for_jacobian
-!!    and the intermediate is stored in the file jacobian_c2_intermdiate
+!!    and the intermediate is stored in the file jacobian_c2_intermediate
 !!    which is a wf variable.
 !!
       implicit none
@@ -1994,7 +1994,7 @@ contains
 !!       X_kbij = sum_dl g_kcbd t_ij^cd 
 !!
 !!    used in the d2-term. This is done only once in prepare_for_jacobian
-!!    and the intermediate is stored in the file jacobian_d2_intermdiate
+!!    and the intermediate is stored in the file jacobian_d2_intermediate
 !!    which is a wf variable.
 !!
       implicit none
@@ -2114,7 +2114,7 @@ contains
 !!       Y_bjck = sum_dl t_bjdl L_ldkc
 !!
 !!    used in the e2-term. This is done only once in prepare_for_jacobian
-!!    and the intermediate is stored in the file jacobian_e2_intermdiate
+!!    and the intermediate is stored in the file jacobian_e2_intermediate
 !!    which is a wf variable
 !!
       implicit none
@@ -2189,7 +2189,7 @@ contains
 !!
 !!    The intermediates are stored in the file:
 !!
-!!       jacobian_g2_intermdiate_vovo
+!!       jacobian_g2_intermediate_vovo
 !!
 !!    G2 also needs intermediates formed for A1 term:
 !!
@@ -2199,8 +2199,8 @@ contains
 !!    Which are constructed in save_jacobian_a1_intermediates
 !!    and stored on files
 !!
-!!       jacobian_a1_intermdiate_oo
-!!       jacobian_a1_intermdiate_vv
+!!       jacobian_a1_intermediate_oo
+!!       jacobian_a1_intermediate_vv
 !!
 !!    which are wavefunction variables
 !!
@@ -2285,8 +2285,8 @@ contains
 !!
 !!    The intermediates are stored in the files:
 !!
-!!       jacobian_h2_intermdiate_voov_1
-!!       jacobian_h2_intermdiate_voov_2
+!!       jacobian_h2_intermediate_voov_1
+!!       jacobian_h2_intermediate_voov_2
 !!
 !!    which are wavefunction variables
 !!
@@ -2389,7 +2389,7 @@ contains
 !!
 !!    The intermediates are stored in the files:
 !!
-!!       jacobian_j2_intermdiate_oooo
+!!       jacobian_j2_intermediate_oooo
 !!
 !!    which are wavefunction variables
 !!

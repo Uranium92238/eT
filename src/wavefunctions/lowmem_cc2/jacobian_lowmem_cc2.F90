@@ -20,24 +20,399 @@
 submodule (lowmem_cc2_class) jacobian
 !
 !!
-!!    Jacobian submodule (CC2)
+!!    Jacobian submodule (lowmem CC2)
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
 !!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
-!!    Routines for the linear transform of trial
+!!    Routines for the lowmem CC2 linear transform of trial
 !!    vectors by the Jacobian matrix
 !!
 !!    ρ_i = A * c_i,
 !!
 !!    where
 !!
-!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
+!!    A_mu,nu = < mu | exp(-T) [H, τ_nu] exp(T) | R >.
+!!  
+!!    These routines build the effective Jacobian transformation
+!!    as described in 
 !!
-!
+!!       C. Hättig and F. Weigend, J. Chem. Phys. 113, 5154 (2000).
+!!
+!!    We operate with an N^2 memory limit, and perform 
+!!    batching for all terms where tensors of rank > 2 
+!!    are used.
+!!    
+!!   Modified by Linda Goletto and Anders Hutcheson, Oct 2019
+!!
+!!   Introduced intermediates in the jacobian_doubles_b1
+!!   routine. These intermediates are now handled with IO.
+!!
+
    implicit none
 !
 !
 contains
+!
+!
+   module subroutine prepare_for_jacobian_lowmem_cc2(wf)
+!!
+!!    Prepare for jacobian
+!!    Written by Linda Goletto, Oct 2019
+!!
+!!    Gets occupied and virtual orbital energies and construcs 
+!!    the jacobian_doubles_b1_doubles routine second and 
+!!    third intermediates
+!!
+      implicit none
+!
+      class(lowmem_cc2), intent(inout) :: wf
+!
+      real(dp), dimension(:), allocatable :: eps_o
+      real(dp), dimension(:), allocatable :: eps_v
+!
+      call mem%alloc(eps_o, wf%n_o)
+      call mem%alloc(eps_v, wf%n_v)
+!
+      eps_o = wf%orbital_energies(1:wf%n_o)
+      eps_v = wf%orbital_energies(wf%n_o + 1 : wf%n_mo)
+!
+      call wf%save_jacobian_b1_2_intermediate(eps_o, eps_v)
+      call wf%save_jacobian_b1_3_intermediate(eps_o, eps_v)
+!
+      call mem%dealloc(eps_o, wf%n_o)
+      call mem%dealloc(eps_v, wf%n_v)
+!
+   end subroutine prepare_for_jacobian_lowmem_cc2
+!
+!
+   module subroutine save_jacobian_b1_2_intermediate_lowmem_cc2(wf,eps_o, eps_v)
+!!
+!!    Save jacobian b1 second intermediate
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad,
+!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!
+!!    Constructs the intermediate 
+!!
+!!       X_ji   = L_kcjb t^cb_ki  
+!!
+!!    and stores it on the file:
+!!
+!!       jacobian_b1_intermediate_oo
+!!
+!!    which is a wavefunction variable
+!!
+!!    Modified by Anders Hutcheson, Oct 2019
+!!
+!!    Transferred here as separate subroutine in order to only
+!!    compute X_ji once at the beginning of the calculation
+!!
+      implicit none
+!
+      class(lowmem_cc2) :: wf
+!
+      type(timings) :: jacobian_b1_2_intermediate_timer
+!
+      real(dp), dimension(wf%n_o), intent(in) :: eps_o
+      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+!
+      real(dp), dimension(:,:), allocatable :: X_ji
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_ckbi
+      real(dp), dimension(:,:,:,:), allocatable :: L_kcjb
+      real(dp), dimension(:,:,:,:), allocatable :: g_jckb
+!
+      real(dp) :: eps_ik
+!
+      integer :: i, k, b, c
+!
+      integer :: req0, req1_j, req1_k
+      integer :: req1_i, req2_ji, req2_ki, req2_kj, req3
+!
+      integer :: current_j_batch, current_k_batch, current_i_batch
+!
+      type(batching_index) :: batch_j, batch_k, batch_i
+!
+      jacobian_b1_2_intermediate_timer = timings('Jacobian CC2 B1-term 2 intermediate construction')
+      call jacobian_b1_2_intermediate_timer%turn_on()
+!
+!     X_ji   = L_kcjb t^cb_ki
+!
+      call mem%alloc(X_ji, wf%n_o, wf%n_o)
+      call zero_array(X_ji, wf%n_o**2)
+!
+      req0 = 0
+!
+!     req1_ used for Cholesky vectors
+!
+      req1_k = (wf%integrals%n_J)*(wf%n_v)
+      req1_j = 0
+      req1_i = (wf%integrals%n_J)*(wf%n_v)
+!
+      req2_kj = 2*(wf%n_v**2)
+      req2_ki = (wf%n_v**2)
+      req2_ji = 0
+!
+      req3 = 0
+!
+      batch_k = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+      batch_i = batching_index(wf%n_o)
+!
+      call mem%batch_setup(batch_k, batch_j, batch_i, req0, req1_k, req1_j, req1_i, &
+            req2_kj, req2_ki, req2_ji, req3)
+!
+      do current_k_batch = 1, batch_k%num_batches
+!
+         call batch_k%determine_limits(current_k_batch)
+!
+         do current_j_batch = 1, batch_j%num_batches
+!
+            call batch_j%determine_limits(current_j_batch)
+!
+!           L_kcjb = 2 g_kcjb - g_jckb 
+!
+            call mem%alloc(g_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
+!
+            call wf%get_ovov(g_jckb,                        &
+                              batch_j%first, batch_j%last,  &
+                              1, wf%n_v,                    &
+                              batch_k%first, batch_k%last,  &
+                              1, wf%n_v)
+!
+            call mem%alloc(L_kcjb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
+!
+            call dcopy(batch_j%length*(wf%n_v**2)*batch_k%length, g_jckb, 1, L_kcjb, 1)
+            call dscal(batch_j%length*(wf%n_v**2)*batch_k%length, -one, L_kcjb, 1)
+!
+            call add_1432_to_1234(two, g_jckb, L_kcjb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
+            call mem%dealloc(g_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
+!
+            do current_i_batch = 1, batch_i%num_batches
+!
+               call batch_i%determine_limits(current_i_batch)
+!
+!              t_ckbi = - g_ckbi/eps^{cb}_{ik}
+!
+               call mem%alloc(g_ckbi, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
+!
+               call wf%get_vovo(g_ckbi,                        &
+                                 1, wf%n_v,                    &
+                                 batch_k%first, batch_k%last,  &
+                                 1, wf%n_v,                    &
+                                 batch_i%first, batch_i%last)
+!
+!$omp parallel do private(i,b,k,c,eps_ik)
+               do i = 1, batch_i%length 
+                  do k = 1, batch_k%length
+!
+                     eps_ik = eps_o(i + batch_i%first - 1) + eps_o(k + batch_k%first - 1)
+!
+                     do b = 1, wf%n_v
+                        do c = 1, wf%n_v
+!
+                           g_ckbi(c,k,b,i) = - g_ckbi(c,k,b,i) &
+                                             /(eps_v(c) + eps_v(b) &
+                                             - eps_ik)
+                        enddo
+                     enddo
+                  enddo
+               enddo
+!$omp end parallel do
+!
+               call dgemm('N', 'N',                                     &
+                           batch_j%length,                              &
+                           batch_i%length,                              &
+                           (wf%n_v**2)*(batch_k%length),                &
+                           one,                                         &
+                           L_kcjb,                                      & ! L_j_ckb
+                           batch_j%length,                              &
+                           g_ckbi,                                      & ! g_ckb_i
+                           (wf%n_v**2)*(batch_k%length),                &
+                           one,                                         &
+                           X_ji(batch_j%first, batch_i%first),          & ! X_ji
+                           (wf%n_o))
+!
+               call mem%dealloc(g_ckbi, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
+!
+            enddo ! batch_i
+!
+            call mem%dealloc(L_kcjb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
+!
+         enddo ! batch_j
+      enddo ! batch_k
+!
+      wf%jacobian_b1_intermediate_oo = sequential_file('jacobian_b1_2_intermediate_oo_lowmem_cc2')
+      call wf%jacobian_b1_intermediate_oo%open_('write', 'rewind')
+!
+      call wf%jacobian_b1_intermediate_oo%write_(X_ji, wf%n_o**2)
+!
+      call mem%dealloc(X_ji, wf%n_o, wf%n_o)
+!
+      call wf%jacobian_b1_intermediate_oo%close_('keep')
+!
+      call jacobian_b1_2_intermediate_timer%turn_off()
+!
+   end subroutine save_jacobian_b1_2_intermediate_lowmem_cc2
+!
+!
+   module subroutine save_jacobian_b1_3_intermediate_lowmem_cc2(wf, eps_o, eps_v)
+!!
+!!    Save jacobian b1 term 3 intermediates
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad,
+!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!
+!!    Constructs the intermediate
+!!
+!!       X_ab = t_akcj L_kcjb 
+!!
+!!    and stores it on the file:
+!!
+!!       jacobian_b1_intermediate_vv
+!!
+!!    which is a wavefunction variable
+!!
+!!    Modified by Linda Goletto, Oct 2019
+!!
+!!    Transferred here as separate subroutine in order to only
+!!    compute X_ab once at the beginning of the calculation
+!!
+      implicit none
+!
+      class(lowmem_cc2) :: wf
+!
+      type(timings) :: jacobian_b1_3_intermediate_timer
+!
+      real(dp), dimension(wf%n_o), intent(in) :: eps_o
+      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+!
+      real(dp), dimension(:,:), allocatable :: X_ab
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_kcjb, g_ckaj
+      real(dp), dimension(:,:,:,:), allocatable :: L_kcjb
+      real(dp), dimension(:,:,:,:), allocatable :: t_akcj
+!
+      real(dp) :: eps_jk
+!
+      integer :: j, k, a, c
+!
+      integer :: req0, req1_j, req1_k, req2
+!
+      integer :: current_j_batch, current_k_batch
+!
+      type(batching_index) :: batch_j, batch_k
+!
+      jacobian_b1_3_intermediate_timer = timings('Jacobian CC2 B1-term 3 intermediate construction')
+      call jacobian_b1_3_intermediate_timer%turn_on()
+!
+!     X_ab = t_akcj L_kcjb
+!
+      call mem%alloc(X_ab, (wf%n_v), (wf%n_v))
+      call zero_array(X_ab, wf%n_v**2)
+!
+      req0 = 0
+!
+!     req1_ used for Cholesky vectors
+!
+      req1_k = (wf%integrals%n_J)*(wf%n_v)
+      req1_j = (wf%integrals%n_J)*(wf%n_v)
+!
+      req2 = 3*(wf%n_v)**2
+!
+      batch_k = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+!
+      call mem%batch_setup(batch_k, batch_j, req0, req1_k, req1_j, req2)
+!
+      do current_k_batch = 1, batch_k%num_batches
+!
+         call batch_k%determine_limits(current_k_batch)
+!
+         do current_j_batch = 1, batch_j%num_batches
+!
+            call batch_j%determine_limits(current_j_batch)
+!
+!           L_kcjb = 2 g_kcjb - g_kbjc
+!
+            call mem%alloc(g_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
+!
+            call wf%get_ovov(g_kcjb,                        &
+                              batch_k%first, batch_k%last,  &
+                              1, wf%n_v,                    &
+                              batch_j%first, batch_j%last,  &
+                              1, wf%n_v)
+!
+            call mem%alloc(L_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
+!
+            call dcopy(batch_k%length*(wf%n_v**2)*batch_j%length, g_kcjb, 1, L_kcjb, 1)
+            call dscal(batch_k%length*(wf%n_v**2)*batch_j%length, two, L_kcjb, 1)
+!
+            call add_1432_to_1234(-one, g_kcjb, L_kcjb, &
+                                 batch_k%length, wf%n_v, batch_j%length, wf%n_v)
+!
+            call mem%dealloc(g_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
+!
+!           t_akcj = - g_ckaj/eps^{ca}_{jk}
+!
+            call mem%alloc(g_ckaj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
+!
+            call wf%get_vovo(g_ckaj,                        &
+                              1, wf%n_v,                    &
+                              batch_k%first, batch_k%last,  &
+                              1, wf%n_v,                    &
+                              batch_j%first, batch_j%last)
+!
+            call mem%alloc(t_akcj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
+!
+!$omp parallel do private(j,c,k,a)
+            do j = 1, batch_j%length 
+               do k = 1, batch_k%length
+                  eps_jk = eps_o(j + batch_j%first - 1) + eps_o(k + batch_k%first - 1)
+                  do c = 1, wf%n_v
+                     do a = 1, wf%n_v
+!
+                        t_akcj(a,k,c,j) = - g_ckaj(c,k,a,j) &
+                                  /(eps_v(a) + eps_v(c) &
+                                    - eps_jk)
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+            call mem%dealloc(g_ckaj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
+!
+            call dgemm('N', 'N',                                     &
+                        (wf%n_v),                                    &
+                        (wf%n_v),                                    &
+                        (wf%n_v)*(batch_k%length)*(batch_j%length),  &
+                        one,                                         &
+                        t_akcj,                                      & ! t_a_kcj
+                        (wf%n_v),                                    &
+                        L_kcjb,                                      & ! L_kcj_b
+                        (wf%n_v)*(batch_k%length)*(batch_j%length),  &
+                        one,                                         &
+                        X_ab,                                        & ! X_a_b
+                        (wf%n_v))
+!
+            call mem%dealloc(t_akcj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
+            call mem%dealloc(L_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
+!
+         enddo ! batch_k
+      enddo ! batch_j
+!
+      wf%jacobian_b1_intermediate_vv = sequential_file('jacobian_b1_intermediate_vv_doubles')
+      call wf%jacobian_b1_intermediate_vv%open_('write', 'rewind')
+!
+      call wf%jacobian_b1_intermediate_vv%write_(X_ab, wf%n_v**2)
+!
+      call mem%dealloc(X_ab, wf%n_v, wf%n_v)
+!
+      call wf%jacobian_b1_intermediate_vv%close_('keep')
+!
+      call jacobian_b1_3_intermediate_timer%turn_off()
+!
+   end subroutine save_jacobian_b1_3_intermediate_lowmem_cc2
 !
 !
    module subroutine effective_jacobian_transformation_lowmem_cc2(wf, omega, c)
@@ -45,6 +420,12 @@ contains
 !!    Effective jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
 !!    Linda Goletto, and Alexander C. Paul, Dec 2018
+!!
+!!    Constructs the effective Jacobian transformation
+!!    for lowmem CC2 according to
+!!    
+!!       C. Hättig and F. Weigend, J. Chem. Phys. 113, 5154 (2000).
+!!
 !!
       implicit none
 !
@@ -107,9 +488,13 @@ contains
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
-!!    rho_ai =+ sum_bj (2 g_aijb - g_abji) * c_bj
+!!    Calculates the A1 term
 !!
-!!    Separate calculation of both terms due to batching
+!!       A1: sum_bj (2 g_aijb - g_abji) * c_bj
+!!
+!!    and adds it to rho_ai.
+!!
+!!    Separate calculation of both terms due to batching.
 !!
       implicit none
 !
@@ -265,7 +650,7 @@ contains
          enddo ! batch_b
       enddo ! batch_i
 !
-end subroutine jacobian_cc2_a1_lowmem_cc2
+   end subroutine jacobian_cc2_a1_lowmem_cc2
 !
 !
    module subroutine jacobian_cc2_b1_lowmem_cc2(wf, rho_ai, c_bj, eps_o, eps_v)
@@ -274,8 +659,19 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
-!!    rho_ai^B1 = L_kcjb c_bj (2 t^ac_ik - t^ac_ki)
-!!                - L_kcjb t^cb_ki c_aj - L_kcjb t^ca_kj c_bi
+!!    Calculates the B1 term
+!!
+!!       B1 = L_kcjb c_bj (2 t^ac_ik - t^ac_ki)
+!!           - L_kcjb t^cb_ki c_aj - L_kcjb t^ca_kj c_bi
+!!
+!!    and adds it to rho_ai
+!!
+!!    Modified by Linda Goletto and Anders Hutcheson, Oct 2019
+!!
+!!    Reads two intermediates, which are prepared in prepare_for_jacobian
+!!
+!!       X_ab  =  L_kcjb t^ac_kj 
+!!       X_ji   = L_kcjb t^cb_ki 
 !!
       implicit none
 !
@@ -290,19 +686,18 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
       real(dp), dimension(:,:), allocatable :: X_kc, X_ji, X_ab, X_kc_batch
       real(dp), dimension(:,:), allocatable :: rho_ai_batch
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_kcjb, g_ckbi, g_ckaj, g_aick
-      real(dp), dimension(:,:,:,:), allocatable :: L_kcbj, L_kcjb, L_jckb
-      real(dp), dimension(:,:,:,:), allocatable :: u_aikc, t_akcj, g_jckb
+      real(dp), dimension(:,:,:,:), allocatable :: g_kcjb, g_aick
+      real(dp), dimension(:,:,:,:), allocatable :: L_kcbj
+      real(dp), dimension(:,:,:,:), allocatable :: u_aikc
 !
-      integer :: i, j, k, a, b, c, bj_offset, kc_offset
+      integer :: i, k, a, c, bj_offset, kc_offset
 !
       integer :: req0, req1_j, req1_k, req2, req1_a, req1_c
-      integer :: req1_i, req2_ji, req2_ki, req2_kj, req3
 !
-      integer :: current_j_batch, current_k_batch, current_i_batch
+      integer :: current_j_batch, current_k_batch
       integer :: current_a_batch, current_c_batch
 !
-      type(batching_index) :: batch_j, batch_k, batch_a, batch_c, batch_i
+      type(batching_index) :: batch_j, batch_k, batch_a, batch_c
 !
 !     :: Term 1: L_kcjb * c_bj * (2 t^ac_ik - t^ac_ki)  ::
 !                L_kcjb * c_bj * u_aick
@@ -480,107 +875,17 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
       call mem%dealloc(X_kc, wf%n_o, wf%n_v)
 !
-!     :: Term 2: - L_kcjb t^cb_ki c_aj ::
+!     :: Term 2:  - L_kcjb t^cb_ki c_aj :: 
+!     
+!     rho_ai = rho_ai - c_aj X_ji
 !
       call mem%alloc(X_ji, wf%n_o, wf%n_o)
-      call zero_array(X_ji, wf%n_o**2)
 !
-      req0 = 0
+      call wf%jacobian_b1_intermediate_oo%open_('read', 'rewind')
 !
-      req1_k = (wf%integrals%n_J)*(wf%n_v)
-      req1_j = (wf%integrals%n_J)*(wf%n_v)
-      req1_i = (wf%integrals%n_J)*(wf%n_v)
+      call wf%jacobian_b1_intermediate_oo%read_(X_ji, wf%n_o**2)
 !
-      req2_kj = 2*(wf%n_v**2)
-      req2_ki = (wf%n_v**2)
-      req2_ji = 0
-!
-      req3 = 0
-!
-      batch_k = batching_index(wf%n_o)
-      batch_j = batching_index(wf%n_o)
-      batch_i = batching_index(wf%n_o)
-!
-      call mem%batch_setup(batch_k, batch_j, batch_i, req0, req1_k, req1_j, req1_i, &
-            req2_kj, req2_ki, req2_ji, req3)
-!
-      do current_k_batch = 1, batch_k%num_batches
-!
-         call batch_k%determine_limits(current_k_batch)
-!
-         do current_j_batch = 1, batch_j%num_batches
-!
-            call batch_j%determine_limits(current_j_batch)
-!
-            do current_i_batch = 1, batch_i%num_batches
-!
-               call batch_i%determine_limits(current_i_batch)
-!
-!              L_kcjb = 2 g_kcjb - g_jckb  (ordered as L_jckb)
-!
-               call mem%alloc(g_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
-!
-               call wf%get_ovov(g_jckb,                        &
-                                 batch_j%first, batch_j%last,  &
-                                 1, wf%n_v,                    &
-                                 batch_k%first, batch_k%last,  &
-                                 1, wf%n_v)
-!
-               call mem%alloc(L_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
-!
-               call dcopy(batch_j%length*(wf%n_v**2)*batch_k%length, g_jckb, 1, L_jckb, 1)
-               call dscal(batch_j%length*(wf%n_v**2)*batch_k%length, -one, L_jckb, 1)
-!
-               call add_1432_to_1234(two, g_jckb, L_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
-               call mem%dealloc(g_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
-!
-!              t_ckbi = - g_ckbi/ε^{cb}_{ik}
-!
-               call mem%alloc(g_ckbi, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
-!
-               call wf%get_vovo(g_ckbi,                        &
-                                 1, wf%n_v,                    &
-                                 batch_k%first, batch_k%last,  &
-                                 1, wf%n_v,                    &
-                                 batch_i%first, batch_i%last)
-!
-!$omp parallel do private(i,b,k,c)
-               do c = 1, wf%n_v
-                  do i = 1, batch_i%length
-                     do k = 1, batch_k%length
-                        do b = 1, wf%n_v
-!
-                           g_ckbi(c,k,b,i) = - g_ckbi(c,k,b,i) &
-                                             /(eps_v(c) + eps_v(b) &
-                                             - eps_o(i + batch_i%first - 1) &
-                                             - eps_o(k + batch_k%first - 1))
-                        enddo
-                     enddo
-                  enddo
-               enddo
-!$omp end parallel do
-!
-               call dgemm('N', 'N',                                     &
-                           batch_j%length,                              &
-                           batch_i%length,                              &
-                           (wf%n_v**2)*(batch_k%length),                &
-                           one,                                         &
-                           L_jckb,                                      & ! L_j_ckb
-                           batch_j%length,                              &
-                           g_ckbi,                                      & ! g_ckb_i
-                           (wf%n_v**2)*(batch_k%length),                &
-                           one,                                         &
-                           X_ji(batch_j%first, batch_i%first),          & ! X_ji
-                           (wf%n_o))
-!
-               call mem%dealloc(L_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
-               call mem%dealloc(g_ckbi, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
-!
-            enddo ! batch_i
-         enddo ! batch_j
-      enddo ! batch_k
-!
-!     rho_ai = rho_ai - c_aj X_ji
+      call wf%jacobian_b1_intermediate_oo%close_('keep')
 !
       call dgemm('N', 'N',  &
                   (wf%n_v), &
@@ -597,104 +902,15 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
       call mem%dealloc(X_ji, wf%n_o, wf%n_o)
 !
-!     :: Term 3: - L_kcjb t^ca_kj c_bi ::
-!
-!     X_ab = t_akcj L_kcjb
+!     :: Term 3: - rho_ai = rho_ai - X_ab c_bi ::
 !
       call mem%alloc(X_ab, (wf%n_v), (wf%n_v))
-      call zero_array(X_ab, wf%n_v**2)
 !
-      req0 = 0
+      call wf%jacobian_b1_intermediate_vv%open_('read', 'rewind')
 !
-      req1_k = (wf%integrals%n_J)*(wf%n_v)
-      req1_j = (wf%integrals%n_J)*(wf%n_v)
+      call wf%jacobian_b1_intermediate_vv%read_(X_ab, wf%n_v**2)
 !
-      req2 = 3*(wf%n_v)**2
-!
-      batch_k = batching_index(wf%n_o)
-      batch_j = batching_index(wf%n_o)
-!
-      call mem%batch_setup(batch_k, batch_j, req0, req1_k, req1_j, req2)
-!
-      do current_k_batch = 1, batch_k%num_batches
-!
-         call batch_k%determine_limits(current_k_batch)
-!
-         do current_j_batch = 1, batch_j%num_batches
-!
-            call batch_j%determine_limits(current_j_batch)
-!
-!           L_kcjb = 2 g_kcjb - g_kbjc
-!
-            call mem%alloc(g_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
-!
-            call wf%get_ovov(g_kcjb,                        &
-                              batch_k%first, batch_k%last,  &
-                              1, wf%n_v,                    &
-                              batch_j%first, batch_j%last,  &
-                              1, wf%n_v)
-!
-            call mem%alloc(L_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
-!
-            call dcopy(batch_k%length*(wf%n_v**2)*batch_j%length, g_kcjb, 1, L_kcjb, 1)
-            call dscal(batch_k%length*(wf%n_v**2)*batch_j%length, two, L_kcjb, 1)
-!
-            call add_1432_to_1234(-one, g_kcjb, L_kcjb, &
-                                 batch_k%length, wf%n_v, batch_j%length, wf%n_v)
-!
-            call mem%dealloc(g_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
-!
-!           t_akcj = - g_ckaj/ε^{ca}_{jk}
-!
-            call mem%alloc(g_ckaj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
-!
-            call wf%get_vovo(g_ckaj,                        &
-                              1, wf%n_v,                    &
-                              batch_k%first, batch_k%last,  &
-                              1, wf%n_v,                    &
-                              batch_j%first, batch_j%last)
-!
-            call mem%alloc(t_akcj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
-!
-!$omp parallel do private(j,c,k,a)
-            do c = 1, wf%n_v
-               do j = 1, batch_j%length
-                  do k = 1, batch_k%length
-                     do a = 1, wf%n_v
-!
-                        t_akcj(a,k,c,j) = - g_ckaj(c,k,a,j) &
-                                  /(eps_v(a) + eps_v(c) &
-                                    - eps_o(j + batch_j%first - 1) &
-                                    - eps_o(k + batch_k%first - 1))
-!
-                     enddo
-                  enddo
-               enddo
-            enddo
-!$omp end parallel do
-!
-            call mem%dealloc(g_ckaj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
-!
-            call dgemm('N', 'N',                                     &
-                        (wf%n_v),                                    &
-                        (wf%n_v),                                    &
-                        (wf%n_v)*(batch_k%length)*(batch_j%length),  &
-                        one,                                         &
-                        t_akcj,                                      & ! t_a_kcj
-                        (wf%n_v),                                    &
-                        L_kcjb,                                      & ! L_kcj_b
-                        (wf%n_v)*(batch_k%length)*(batch_j%length),  &
-                        one,                                         &
-                        X_ab,                                        & ! X_a_b
-                        (wf%n_v))
-!
-            call mem%dealloc(t_akcj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
-            call mem%dealloc(L_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
-!
-         enddo ! batch_k
-      enddo ! batch_j
-!
-!     rho_ai = rho_ai - X_ab c_bi
+      call wf%jacobian_b1_intermediate_vv%close_('keep')
 !
       call dgemm('N', 'N',  &
                   (wf%n_v), &
@@ -720,10 +936,14 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
-!!    rho_ai =+ F_kc * (-eps_ai,ck + w)^-1 * (2 g_aicd c_dk + 2 g_ckad c_di - g_akcd c_di - g_ciad c_dk)
-!!           =+ F_kc * (-eps_ai,ck + w)^-1 * (2 X_aick - X_akci + 2 X_ckai - X_ciak)
-!!           =+ F_kc * (Y_aick + Y_ckai)
+!!    Calculates the A1 contribution using an implicit
+!!    calculation of the doubles vector
 !!
+!!       A1 = F_kc * (-eps_ai,ck + w)^-1 * (2 g_aicd c_dk + 2 g_ckad c_di - g_akcd c_di - g_ciad c_dk)
+!!          = F_kc * (-eps_ai,ck + w)^-1 * (2 X_aick - X_akci + 2 X_ckai - X_ciak)
+!!          = F_kc * (Y_aick + Y_ckai)
+!!
+!!    and adds it to rho_ai
 !!    The term is calculated in batches over the a and c indices.
 !!
       implicit none
@@ -922,9 +1142,15 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    Linda Goletto, and Alexander C. Paul, Jan 2019
 !!
-!!    Effective B1 = - 2 sum_{kcl} F_kc (1/(ε_{aick} + ω)) * (g_ailk c_cl + g_ckli c_al)
-!!                     + sum_{kcl} F_kc (1/(ε_{akci} + ω)) * (g_akli c_cl + g_cilk c_al)
-!!                 =   2 sum_{kcl} F_kc (- 2*X_ckai - 2*X_aick + X_ciak + X_akci)
+!!
+!!    Calculates the B1 contribution using an implicit
+!!    calculation of the doubles vector
+!!
+!!       B1 = - 2 sum_{kcl} F_kc (1/(ε_{aick} + ω)) * (g_ailk c_cl + g_ckli c_al)
+!!            + sum_{kcl} F_kc (1/(ε_{akci} + ω)) * (g_akli c_cl + g_cilk c_al)
+!!          = 2 sum_{kcl} F_kc (- 2*X_ckai - 2*X_aick + X_ciak + X_akci)
+!!
+!!    and adds it to rho_ai     
 !!
 !!
       implicit none
@@ -1061,10 +1287,18 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
-!!    Implicit calculation of the doubles vector
-!!    rho_ai^C1 =+ sum_ckbj - L_kijb  (g_akbc * c_cj + g_bjac * c_ck) (omega - ε_akbj)^-1
-!!              =+ sum_kjb - L_kijb  (X_akbj + X_bjak)
-!!              =+ sum_kjb - L_kijb Y_a_kjb
+!!    Calculates the C1 contribution using an implicit
+!!    calculation of the doubles vector
+!!
+!!       C1 = sum_ckbj - L_kijb  (g_akbc * c_cj + g_bjac * c_ck) (omega - ε_akbj)^-1
+!!          = sum_kjb - L_kijb  (X_akbj + X_bjak)
+!!          = sum_kjb - L_kijb Y_a_kjb
+!!
+!!    and adds it to the rho_ai vector
+!!
+!!    Modified by Linda Goletto and Anders Hutcheson, Oct 2019
+!!
+!!    Integrals, g_akbc and g_bjac, moved out of i batching loop 
 !!
       implicit none
 !
@@ -1109,27 +1343,35 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
       call mem%batch_setup(batch_i, batch_a, batch_b, req0, req1_i, req1_a, req1_b, &
                            req2_ia, req2_ib, req2_ab, req3)
 !
-      do current_i_batch = 1, batch_i%num_batches
+      do current_a_batch = 1, batch_a%num_batches
 !
-         call batch_i%determine_limits(current_i_batch)
+         call batch_a%determine_limits(current_a_batch)
 !
-         do current_a_batch = 1, batch_a%num_batches
+         do current_b_batch = 1, batch_b%num_batches
 !
-               call batch_a%determine_limits(current_a_batch)
+            call batch_b%determine_limits(current_b_batch)
 !
-            do current_b_batch = 1, batch_b%num_batches
+            call mem%alloc(g_akbc, batch_a%length, wf%n_o, batch_b%length, wf%n_v)
 !
-               call batch_b%determine_limits(current_b_batch)
+            call wf%get_vovv(g_akbc,                        &
+                              batch_a%first, batch_a%last,  &
+                              1, wf%n_o,                    &
+                              batch_b%first, batch_b%last,  &
+                              1, wf%n_v)
+!
+            call mem%alloc(g_bjac, batch_b%length, wf%n_o, batch_a%length, wf%n_v)
+!
+            call wf%get_vovv(g_bjac,                        &
+                              batch_b%first, batch_b%last,  &
+                              1, wf%n_o,                    &
+                              batch_a%first, batch_a%last,  &
+                              1, wf%n_v)
+!
+            do current_i_batch = 1, batch_i%num_batches
+!
+               call batch_i%determine_limits(current_i_batch)
 !
 !              X_akbj = sum_c g_akbc * c_cj
-!
-               call mem%alloc(g_akbc, batch_a%length, wf%n_o, batch_b%length, wf%n_v)
-!
-               call wf%get_vovv(g_akbc,                        &
-                                 batch_a%first, batch_a%last,  &
-                                 1, wf%n_o,                    &
-                                 batch_b%first, batch_b%last,  &
-                                 1, wf%n_v)
 !
                call mem%alloc(X_akbj, batch_a%length, wf%n_o, batch_b%length, wf%n_o)
 !
@@ -1146,17 +1388,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
                            X_akbj,                                      & ! X_akb_j
                            (batch_a%length)*(wf%n_o)*(batch_b%length))
 !
-               call mem%dealloc(g_akbc, batch_a%length, wf%n_o, batch_b%length, wf%n_v)
-!
 !              X_bjak = sum_c g_bjac * c_ck
-!
-               call mem%alloc(g_bjac, batch_b%length, wf%n_o, batch_a%length, wf%n_v)
-!
-               call wf%get_vovv(g_bjac,                        &
-                                 batch_b%first, batch_b%last,  &
-                                 1, wf%n_o,                    &
-                                 batch_a%first, batch_a%last,  &
-                                 1, wf%n_v)
 !
                call mem%alloc(X_bjak, batch_b%length, wf%n_o, batch_a%length, wf%n_o)
 !
@@ -1172,8 +1404,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
                            zero,                                        &
                            X_bjak,                                      & ! X_bja_k
                            (batch_b%length)*(wf%n_o)*(batch_a%length))
-!
-               call mem%dealloc(g_bjac, batch_b%length, wf%n_o, batch_a%length, wf%n_v)
 !
                call mem%alloc(Y_akjb, batch_a%length, wf%n_o, wf%n_o, batch_b%length)
 !
@@ -1229,16 +1459,20 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
                            (batch_a%length),                      &
                            L_kjbi,                                & ! L_kjb_i
                            (batch_b%length)*(wf%n_o)**2,          &
-                           one,                                  &
+                           one,                                   &
                            rho_ai(batch_a%first, batch_i%first),  & ! rho_ai
                            (wf%n_v))
 !
                call mem%dealloc(Y_akjb, batch_a%length, wf%n_o, wf%n_o, batch_b%length)
                call mem%dealloc(L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length)
 !
-            enddo ! batch_b
-         enddo ! batch_a
-      enddo ! batch_i
+            enddo ! batch_i
+!
+            call mem%dealloc(g_akbc, batch_a%length, wf%n_o, batch_b%length, wf%n_v)
+            call mem%dealloc(g_bjac, batch_b%length, wf%n_o, batch_a%length, wf%n_v)
+!
+         enddo ! batch_b
+      enddo ! batch_a
 !
    end subroutine effective_jacobian_cc2_c1_lowmem_cc2
 !
@@ -1249,10 +1483,14 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander C. Paul, Dec 2018
 !!
-!!    Implicit calculation of the doubles vector
-!!    rho_ai^D1 =+ sum_ckbj - L_kijb  (- g_aklj * c_bl - g_bjlk * c_al) (omega - ε_akbj)^-1 
-!!              =+ sum_kjb L_kijb  (X_bjak + X_akbj)
-!!              =+ sum_kjb L_kijb  Y_ajbk
+!!    Calculates the D1 contribution using an implicit
+!!    calculation of the doubles vector
+!!
+!!       D1 = sum_ckbj - L_kijb  (- g_aklj * c_bl - g_bjlk * c_al) (omega - ε_akbj)^-1 
+!!          = sum_kjb L_kijb  (X_bjak + X_akbj)
+!!          = sum_kjb L_kijb  Y_ajbk
+!!
+!!    and adds it to the rho_ai vector.
 !!
       implicit none
 !
@@ -1435,10 +1673,13 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander C. Paul, Jan 2019
 !!
-!!    Implicit calculation of the doubles vector
-!!    rho_ai^E1 =+ sum_bckd L_abkc  (g_bicd * c_dk + g_ckbd * c_di) (omega - ε_bick)^-1
-!!              =+ sum_bck L_abkc  (X_bick + X_ckbi)
+!!    Calculates the E1 contribution using an implicit
+!!    calculation of the doubles vector
 !!
+!!       E1 = sum_bckd L_abkc  (g_bicd * c_dk + g_ckbd * c_di) (omega - ε_bick)^-1
+!!          = sum_bck L_abkc  (X_bick + X_ckbi)
+!!
+!!    and adds it to the rho_ai vector.
 !!
       implicit none
 !
@@ -1464,7 +1705,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
       integer :: current_b_batch, current_c_batch
 !
       type(batching_index) :: batch_b, batch_c
-!
 !
       req0 = 0
       req1_b = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
@@ -1623,7 +1863,16 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander C. Paul, Jan 2019
 !!
-!!    Effective F1 = - L_abkc (1/(ε_{bick} + ω) * (g_lkbi c_cl + g_lick c_bl))
+!!    Calculates the F1 contribution using an implicit
+!!    calculation of the doubles vector
+!!
+!!       F1 = - L_abkc (1/(ε_{bick} + ω) * (g_lkbi c_cl + g_lick c_bl))
+!!
+!!    and adds it to the rho_ai vector.
+!!
+!!    Modified by Linda Goletto and Anders Hutcheson, Oct 2019
+!!
+!!    Integral, g_abkc, moved out of i batching loop 
 !!
       implicit none
 !
@@ -1666,17 +1915,25 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
       call mem%batch_setup(batch_i, batch_k, batch_a, req0, req1_i, req1_k, req1_a, &
                            req2_ik, req2_ia, req2_ka, req3)
 !
-      do current_i_batch = 1, batch_i%num_batches
+      do current_k_batch = 1, batch_k%num_batches
 !
-         call batch_i%determine_limits(current_i_batch)
+         call batch_k%determine_limits(current_k_batch)
 !
-         do current_k_batch = 1, batch_k%num_batches
+         do current_a_batch = 1, batch_a%num_batches
 !
-            call batch_k%determine_limits(current_k_batch)
+            call batch_a%determine_limits(current_a_batch)
 !
-            do current_a_batch = 1, batch_a%num_batches
+            call mem%alloc(g_abkc, batch_a%length, wf%n_v, batch_k%length, wf%n_v)
 !
-               call batch_a%determine_limits(current_a_batch)
+            call wf%get_vvov(g_abkc,                        &
+                              batch_a%first, batch_a%last,  &
+                              1, wf%n_v,                    &
+                              batch_k%first, batch_k%last,  &
+                              1, wf%n_v)
+!
+            do current_i_batch = 1, batch_i%num_batches
+!
+               call batch_i%determine_limits(current_i_batch)
 !
 !              X_ckbi = sum_c g_lkbi * c_cl
 !
@@ -1760,22 +2017,12 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
 !              L_abkc = 2 g_abkc - g_ackb ordered as L_abck
 !
-               call mem%alloc(g_abkc, batch_a%length, wf%n_v, batch_k%length, wf%n_v)
-!
-               call wf%get_vvov(g_abkc,                        &
-                                 batch_a%first, batch_a%last,  &
-                                 1, wf%n_v,                    &
-                                 batch_k%first, batch_k%last,  &
-                                 1, wf%n_v)
-!
                call mem%alloc(L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
 !
                call zero_array(L_abck, batch_a%length*(wf%n_v**2)*batch_k%length)
 !
                call add_1243_to_1234(two, g_abkc, L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
                call add_1342_to_1234(-one, g_abkc, L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
-!
-               call mem%dealloc(g_abkc, batch_a%length, wf%n_v, batch_k%length, wf%n_v)
 !
 !              rho_ai = rho_ai - sum_bkc L_kjbi * Y_akjb
 !
@@ -1795,9 +2042,12 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
                call mem%dealloc(Y_bcki, wf%n_v, wf%n_v, batch_k%length, batch_i%length)
                call mem%dealloc(L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
 !
-            enddo ! batch_a
-         enddo ! batch_k
-      enddo ! batch_i
+            enddo ! batch_i
+!
+            call mem%dealloc(g_abkc, batch_a%length, wf%n_v, batch_k%length, wf%n_v)
+!
+         enddo ! batch_a
+      enddo ! batch_k
 !
    end subroutine effective_jacobian_cc2_f1_lowmem_cc2
 !
