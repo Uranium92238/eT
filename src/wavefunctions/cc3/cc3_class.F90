@@ -283,6 +283,7 @@ contains
 !
       wf%n_gs_amplitudes = wf%n_t1 + wf%n_t2
       wf%n_es_amplitudes = wf%n_t1 + wf%n_t2
+      wf%need_g_abcd     = .true.
 !
       call wf%write_cc_restart()
 !

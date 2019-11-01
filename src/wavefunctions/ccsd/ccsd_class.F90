@@ -124,8 +124,6 @@ module ccsd_class
       procedure :: read_multipliers                            => read_multipliers_ccsd
       procedure :: destruct_multipliers                        => destruct_multipliers_ccsd
 !
-      procedure, nopass :: need_g_abcd                         => need_g_abcd_ccsd
-!
       procedure :: normalization_for_jacobian_debug            => normalization_for_jacobian_debug_ccsd
 !
    end type ccsd
@@ -175,29 +173,13 @@ contains
       wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
       wf%n_gs_amplitudes = wf%n_t1 + wf%n_t2
       wf%n_es_amplitudes = wf%n_t1 + wf%n_t2
+      wf%need_g_abcd     = .true.
 !
       call wf%write_cc_restart()
 !
       call wf%initialize_fock()
 !
    end function new_ccsd
-!
-!
-   logical function need_g_abcd_ccsd()
-!!
-!!    Need g_abcd 
-!!    Written by Eirik F. Kjønstad, Mar 2019 
-!!
-!!    Returns whether the vvvv-part of the ERI matrix 
-!!    is used to calculate the ground and/or excited state 
-!!    equations. If not, there is no need to compute the
-!!    entire ERI matrix and store it in memory.
-!!
-      implicit none 
-!
-      need_g_abcd_ccsd = .true.
-!
-   end function need_g_abcd_ccsd
 !
 !
    subroutine set_initial_amplitudes_guess_ccsd(wf)

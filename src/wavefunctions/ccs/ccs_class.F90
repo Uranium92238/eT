@@ -58,6 +58,8 @@ module ccs_class
 !
       logical :: bath_orbital
 !
+      logical :: need_g_abcd
+!
       type(sequential_file) :: t_file, tbar_file
       type(sequential_file) :: excitation_energies_file
       type(sequential_file) :: restart_file
@@ -201,8 +203,6 @@ module ccs_class
       procedure :: get_ovvv                                    => get_ovvv_ccs
 !
       procedure :: get_g_pqrs_required                         => get_g_pqrs_required_ccs
-!
-      procedure, nopass :: need_g_abcd                         => need_g_abcd_ccs
 !
 !     Routines to initialize and destruct arrays
 !
@@ -350,6 +350,7 @@ contains
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
       wf%n_es_amplitudes = wf%n_t1
+      wf%need_g_abcd     = .false.
 !
       call wf%write_cc_restart()
 !

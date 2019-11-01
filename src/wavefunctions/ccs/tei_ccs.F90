@@ -1104,25 +1104,6 @@ contains
    end subroutine get_vvvv_ccs
 !
 !
-   module function need_g_abcd_ccs()
-!!
-!!    Need g_abcd
-!!    Written by Eirik F. Kjønstad, Mar 2019
-!!
-!!    Returns whether the vvvv-part of the ERI matrix
-!!    is used to calculate the ground and/or excited state
-!!    equations. If not, there is no need to compute the
-!!    entire ERI matrix and store it in memory.
-!!
-      implicit none
-!
-      logical :: need_g_abcd_ccs
-!
-      need_g_abcd_ccs = .false.
-!
-   end function need_g_abcd_ccs
-!
-!
    module subroutine get_g_pqrs_required_ccs(wf, req_l, req_r, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Get memory required to construct g_pqrs
