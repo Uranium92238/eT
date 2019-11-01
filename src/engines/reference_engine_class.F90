@@ -225,7 +225,8 @@ contains
 !!
 !!    Modified by Tor S. Haugland, 2019
 !!
-!!    Added "Found SAD". Only loop over unique atoms.
+!!    Removed deletion of files generated in SCF for SAD to fix a re-occuring bug. Restart files
+!!    are now checked from a parameter list. Added "Found SAD". Only loop over unique atoms.
 !!
 !
       use sequential_file_class,  only: sequential_file
@@ -250,8 +251,6 @@ contains
       type(sequential_file) :: alpha_density_file
       type(sequential_file) :: beta_density_file
       type(sequential_file) :: restart_file
-      type(sequential_file) :: orbital_information_file
-      type(sequential_file) :: other_file
 !
       character(len=200) :: alpha_fname
       character(len=200) :: beta_fname
@@ -269,6 +268,9 @@ contains
       character(len=50), dimension(wf%system%n_atoms) :: atom_and_basis
       integer,           dimension(wf%system%n_atoms) :: unique_atom_index
 !
+      character(len=20), dimension(2), parameter :: restart_files = ["scf_restart_file   ", &
+                                                                     "orbital_information"  ]
+!
       call output%printf('- Generating SAD guess', pl='minimal', fs='(/t3,a)')
 !
 !     SAD DIIS solver settings
@@ -284,21 +286,24 @@ contains
       call input%get_keyword_in_section('gradient threshold', 'solver scf', gradient_threshold)
       gradient_threshold = min(1.0D-6, gradient_threshold)
 !
-!     Rename Hartree-Fock restart file and information file so that they are not overwritten:
-!     hf_restart_file used in checking if restart is safe, 
-!     orbital_information used for CC
+!     Rename Hartree-Fock restart files so that they are not overwritten:
 !
-      restart_file = sequential_file("scf_restart_file")
+      do I = 1, size(restart_files)
 !
-      if (restart_file%exists()) then
-         call restart_file%copy("temp_restart_file")
-      endif
+         restart_file = sequential_file(trim(restart_files(I)))
 !
-      orbital_information_file = sequential_file("orbital_information")
+         if (restart_file%exists()) then
 !
-      if (orbital_information_file%exists()) then
-         call orbital_information_file%copy("temp_orbital_information")
-      endif
+            call output%printf('Found restart, copy to temp. position: temp_(a0)', &
+                              pl='debug', chars=[trim(restart_files(I))], fs='(t6,a)' )
+!
+            call restart_file%copy("temp_" // trim(restart_files(I)))
+!
+            call restart_file%delete_()
+!
+         endif
+!
+      enddo
 !
 !     Find atomic index of unique atom/basis combinations
 !
@@ -311,8 +316,6 @@ contains
       call index_of_unique_strings(unique_atom_index, wf%system%n_atoms, atom_and_basis)
 !
 !     For every unique atom, generate SAD density to file
-!
-      call output%mute()
 !
       do I = 1, wf%system%n_atoms
 !
@@ -333,18 +336,24 @@ contains
 !
          if (alpha_density_file%exists() .and. beta_density_file%exists()) then
 !
-            call output%unmute()
-!
             call output%printf('Found SAD for '// adjustl(atom%symbol) &
                // ' in ' // trim(atom%basis), pl='verbose', fs='(t6,a)')
 !
-            call output%mute()
-!
             cycle
+!
+         elseif (alpha_density_file%exists() .or. beta_density_file%exists()) then
+!
+            call output%warning_msg("Could only find 1 of 2 density files for " // trim(name_) // &
+                                  ". Deleting it and creating both SAD densities.")
+!
+            if (alpha_density_file%exists()) call alpha_density_file%delete_()
+            if (beta_density_file%exists())  call beta_density_file%delete_()
 !
          endif
 !
 !        Prepare molecule of the chosen atom
+!
+         call output%mute()
 !
          multiplicity = atom%get_multiplicity()
          sad_system   = molecular_system(atoms=[atom],              &
@@ -368,20 +377,16 @@ contains
 !
          call sad_solver%run(sad_wf)
 !
-!        Print which density was generated
-!
-         call output%unmute()
-!
-         call output%printf('Generated SAD for '// adjustl(atom%symbol) //' in '&
-                  // trim(atom%basis), pl='verbose', fs='(t6,a)')
-!
-         call output%mute()
-!
 !        Cleanup and generate ao_density_a and ao_density_b
 !
          call sad_solver%cleanup(sad_wf)
          call sad_wf%cleanup()
          call sad_system%cleanup()
+!
+         call output%unmute()
+!
+         call output%printf('Generated SAD for '// adjustl(atom%symbol) //' in '&
+                  // trim(atom%basis), pl='verbose', fs='(t6,a)')
 !
 !        Move densities to where "set_ao_density_sad" can use them
 !
@@ -395,46 +400,29 @@ contains
 !
       enddo
 !
-!     Remove junk from SAD-generation
-!
-      other_file = sequential_file("ao_density")
-      call other_file%delete_()
-!
-      other_file = sequential_file("orbital_coefficients")
-      call other_file%delete_()
-!
-      other_file = sequential_file("orbital_energies")
-      call other_file%delete_()
-!
-      restart_file = sequential_file('scf_restart_file')
-      call restart_file%delete_()
-!
-      orbital_information_file = sequential_file('orbital_information')
-      call orbital_information_file%delete_()
-!
 !     Rename Hartree-Fock restart files back to their original names
 !
-      restart_file = sequential_file('temp_restart_file')
+      do I = 1, size(restart_files)
 !
-      if (restart_file%exists()) then
-         call restart_file%copy('scf_restart_file')
-         call restart_file%delete_()
-      endif
+         restart_file = sequential_file('temp_' // trim(restart_files(I)))
 !
-      orbital_information_file = sequential_file('temp_orbital_information')
+         if (restart_file%exists()) then
 !
-      if (orbital_information_file%exists()) then
-         call orbital_information_file%copy('orbital_information')
-         call orbital_information_file%delete_()
-      endif
+            call output%printf('Found temp. restart, copy it back:     (a0)', &
+                              pl='debug', chars=[restart_files(I)], fs='(t6,a)' )
+!
+            call restart_file%copy(trim(restart_files(I)))
+!
+            call restart_file%delete_()
+!
+         endif
+!
+      enddo
 !
 !     Libint is overwritten by SAD. Re-initialize.
 !
       call wf%system%initialize_libint_atoms_and_bases()
       call wf%system%initialize_libint_integral_engines()
-!
-!
-      call output%unmute()
 !
    end subroutine generate_sad_density_reference_engine
 !
