@@ -31,6 +31,18 @@ module array_utilities
 !
    implicit none
 !
+   interface scale_diagonal
+      procedure :: scale_real_diagonal_by_real, &
+                   scale_complex_diagonal_by_real, &
+                   scale_complex_diagonal_by_complex, &
+                   scale_real_4_diagonal_by_real, &
+                   scale_complex_4_diagonal_by_real, &
+                   scale_complex_4_diagonal_by_complex, &
+                   scale_real_4_diagonal_by_real_1324, &
+                   scale_complex_4_diagonal_by_real_1324, &
+                   scale_complex_4_diagonal_by_complex_1324
+   end interface scale_diagonal
+!
 contains
 !
 !
@@ -2295,6 +2307,235 @@ contains
 !$omp end parallel do
 !
    end subroutine scale_vector_by_vector
+!
+!
+   subroutine scale_real_diagonal_by_real(alpha, X, dim_)
+!!
+!!    Scale diagonal of real array by real  
+!!    Written by Anders Hutcheson, Oct 2019 
+!!
+!!    X is of dimension dim_^2 and we scale every 
+!!    dim_+1 element(diagonal) by alpha,
+!!    because we only scale the diagonal elements 
+!!    the first argument is dim_    
+!!
+
+      implicit none
+!
+      real(dp), intent(in) :: alpha
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_, dim_), intent(inout) :: X 
+!
+      call dscal(dim_, alpha, X, dim_+1)
+!
+   end subroutine scale_real_diagonal_by_real
+!
+!
+   subroutine scale_complex_diagonal_by_real(alpha, X, dim_)
+!!
+!!    Scale diagonal of complex array by real
+!!    Written by Anders Hutcheson, Oct 2019 
+!!
+!!    X is of dimension dim_^2 and we scale every 
+!!    dim_+1 element(diagonal) by alpha,
+!!    because we only scale the diagonal elements 
+!!    the first argument is dim_ 
+!!
+      implicit none
+!
+      real(dp), intent(in) :: alpha
+!
+      integer, intent(in) :: dim_
+!
+      complex(dp), dimension(dim_, dim_), intent(inout) :: X    
+!
+      call zdscal(dim_, alpha, X, dim_+1)
+!
+   end subroutine scale_complex_diagonal_by_real
+!
+!
+   subroutine scale_complex_diagonal_by_complex(alpha, X, dim_)
+!!
+!!    Scale diagonal of complex array by complex
+!!    Written by Anders Hutcheson, Oct 2019
+!!
+!!    X is of dimension dim_^2 and we scale every 
+!!    dim_+1 element(diagonal) by alpha,
+!!    because we only scale the diagonal elements 
+!!    the first argument is dim_  
+!! 
+      implicit none
+!
+      complex(dp), intent(in) :: alpha
+!
+      integer, intent(in) :: dim_
+!
+      complex(dp), dimension(dim_, dim_), intent(inout) :: X    
+!
+      call zscal(dim_, alpha, X, dim_+1)
+!
+   end subroutine scale_complex_diagonal_by_complex
+!
+!
+   subroutine scale_real_4_diagonal_by_real(alpha, X, dim_)
+!!
+!!    Scale diagonal of 4 dimensional real array by real 
+!!    Written by Anders Hutcheson, Oct 2019 
+!!
+!!    The matrix has to have the following dimensions,
+!!    X(dim_1,dim_2,dim_1,dim_2) and 
+!!    dim_ is then given by dim_1*dim_2  
+!!
+      implicit none
+!
+      real(dp), intent(in) :: alpha
+!
+      real(dp), dimension(:,:,:,:), intent(inout) :: X
+!
+      integer, intent(in) :: dim_
+!
+      call scale_real_diagonal_by_real(alpha, X, dim_)
+!
+   end subroutine scale_real_4_diagonal_by_real
+!
+!
+   subroutine scale_complex_4_diagonal_by_real(alpha, X, dim_)
+!!
+!!    Scale diagonal of 4 dimensional complex array by real  
+!!    Written by Anders Hutcheson, Oct 2019 
+!! 
+!!    The matrix has to have the following dimensions,
+!!    X(dim_1,dim_2,dim_1,dim_2) and 
+!!    dim_ is then given by dim_1*dim_2  
+!!
+      implicit none
+!
+      real(dp), intent(in) :: alpha
+!
+      complex(dp), dimension(:,:,:,:), intent(inout) :: X
+!
+      integer, intent(in) :: dim_
+!
+      call scale_complex_diagonal_by_real(alpha, X, dim_)
+!
+   end subroutine scale_complex_4_diagonal_by_real
+!
+!
+   subroutine scale_complex_4_diagonal_by_complex(alpha, X, dim_)
+!!
+!!    Scale diagonal of 4 dimensional complex array by complex  
+!!    Written by Anders Hutcheson, Oct 2019 
+!! 
+!!    The matrix has to have the following dimensions,
+!!    X(dim_1,dim_2,dim_1,dim_2) and 
+!!    dim_ is then given by dim_1*dim_2   
+!!
+      implicit none
+!
+      complex(dp), intent(in) :: alpha
+!
+      complex(dp), dimension(:,:,:,:), intent(inout) :: X
+!
+      integer, intent(in) :: dim_
+!
+      call scale_complex_diagonal_by_complex(alpha, X, dim_)
+!
+   end subroutine scale_complex_4_diagonal_by_complex
+!
+!
+   subroutine scale_real_4_diagonal_by_real_1324(alpha, X, dim_p, dim_q)
+!!
+!!    Scale diagonal of 4 dimensional real array sorted 1324 by real 
+!!    Written by Anders Hutcheson, Oct 2019 
+!!
+!!    The matrix has to have the following dimensions,
+!!    X(dim_p, dim_p, dim_q, dim_q) 
+!!
+      implicit none
+!
+      real(dp), intent(in) :: alpha
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      real(dp), dimension(dim_p,dim_p,dim_q,dim_q), intent(inout) :: X
+!      
+      integer :: p, q
+!
+!$omp parallel do schedule(static) private(p, q)
+      do q = 1, dim_q
+         do p = 1, dim_p
+!
+            X(p,p,q,q) = alpha*X(p,p,q,q)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine scale_real_4_diagonal_by_real_1324
+!
+!
+   subroutine scale_complex_4_diagonal_by_real_1324(alpha, X, dim_p, dim_q)
+!!
+!!    Scale diagonal of 4 dimensional complex array sorted 1324 by real 
+!!    Written by Anders Hutcheson, Oct 2019 
+!!
+!!    The matrix has to have the following dimensions,
+!!    X(dim_p, dim_p, dim_q, dim_q) 
+!! 
+      implicit none
+!
+      real(dp), intent(in) :: alpha
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      complex(dp), dimension(dim_p,dim_p,dim_q,dim_q), intent(inout) :: X
+!      
+      integer :: p, q
+!
+!$omp parallel do schedule(static) private(p, q)
+      do q = 1, dim_q
+         do p = 1, dim_p
+!
+            X(p,p,q,q) = alpha*X(p,p,q,q)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine scale_complex_4_diagonal_by_real_1324
+!
+!
+   subroutine scale_complex_4_diagonal_by_complex_1324(alpha, X, dim_p, dim_q)
+!!
+!!    Scale diagonal of 4 dimensional complex array sorted 1324 by complex 
+!!    Written by Anders Hutcheson, Oct 2019 
+!!
+!!    The matrix has to have the following dimensions,
+!!    X(dim_p, dim_p, dim_q, dim_q) 
+!! 
+      implicit none
+!
+      complex(dp), intent(in) :: alpha
+!
+      integer, intent(in) :: dim_p, dim_q
+!
+      complex(dp), dimension(dim_p,dim_p,dim_q,dim_q), intent(inout) :: X
+!      
+      integer :: p, q
+!
+!$omp parallel do schedule(static) private(p, q)
+      do q = 1, dim_q
+         do p = 1, dim_p
+!
+            X(p,p,q,q) = alpha*X(p,p,q,q)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+end subroutine scale_complex_4_diagonal_by_complex_1324
 !
 !
 end module array_utilities

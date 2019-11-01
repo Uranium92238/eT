@@ -70,8 +70,6 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_ai
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj, rho_abij
 !
-      integer :: i, a
-!
       type(timings) :: cc3_timer, cc3_timer_t3_a2, cc3_timer_t3_b2, cc3_timer_c3
       type(timings) :: ccsd_timer
 !
@@ -110,16 +108,7 @@ contains
 !     Scale the doubles vector by 1 + δ_ai,bj, i.e.
 !     redefine to c_ckdl = c_ckdl (1 + δ_ck,dl)
 !
-!$omp parallel do schedule(static) private(a,i)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            c_aibj(a,i,a,i) = two*c_aibj(a,i,a,i)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
+      call scale_diagonal(two, c_aibj, wf%n_t1)
 !
       call wf%jacobian_doubles_b1(rho_ai, c_aibj)
       call wf%jacobian_doubles_c1(rho_ai, c_aibj)
@@ -213,15 +202,7 @@ contains
 !
 !     divide by the biorthonormal factor 1 + δ_ai,bj
 ! 
-!$omp parallel do schedule(static) private(a,i)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-         rho_abij(a,a,i,i) = half*rho_abij(a,a,i,i)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call scale_diagonal(half, rho_abij, wf%n_v, wf%n_o)
 !
 !     overwrite the incoming, packed doubles c vector with rho_abij
 !     and pack in for exit

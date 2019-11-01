@@ -57,8 +57,6 @@ module ccsd_class
       procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccsd
       procedure :: print_dominant_x_amplitudes                 => print_dominant_x_amplitudes_ccsd
 !
-      procedure :: from_biorthogonal_to_biorthonormal          => from_biorthogonal_to_biorthonormal_ccsd
-!
 !     Routines related to omega
 !
       procedure :: construct_omega                             => construct_omega_ccsd
@@ -413,38 +411,6 @@ contains
       call mem%dealloc(abs_x2, wf%n_t2)
 !
    end subroutine print_dominant_x2_ccsd
-!
-!
-   subroutine from_biorthogonal_to_biorthonormal_ccsd(wf, X)
-!!
-!!    From biorthogonal to biorthonormal 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
-!!
-      implicit none 
-!
-      class(ccsd), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_t2), intent(inout) :: X 
-!
-      real(dp), dimension(:,:), allocatable :: X_unpacked
-!
-      integer :: I
-!
-      call mem%alloc(X_unpacked, wf%n_t1, wf%n_t1)
-      call squareup(X, X_unpacked, wf%n_t1)
-!
-!$omp parallel do private(I)
-      do I = 1, wf%n_t1 
-!
-         X_unpacked(I,I) = X_unpacked(I,I)/two
-!
-      enddo
-!$omp end parallel do 
-!
-      call packin(X, X_unpacked, wf%n_t1)
-      call mem%dealloc(X_unpacked, wf%n_t1, wf%n_t1)
-!
-   end subroutine from_biorthogonal_to_biorthonormal_ccsd
 !
 !
    subroutine form_newton_raphson_t_estimate_ccsd(wf, t, dt)

@@ -85,8 +85,6 @@ contains
       real(dp), dimension(:,:), allocatable     :: rho_ai   
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj
 !
-      integer :: i, a
-!
       type(timings) :: timer
 !
       timer = timings('Jacobian transformation CC2')
@@ -119,15 +117,7 @@ contains
 !     Scale the doubles vector by 1 + delta_ai,bj, i.e.
 !     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
 !
-!$omp parallel do schedule(static) private(a, i) 
-      do i =1, wf%n_o
-         do a = 1, wf%n_v
-!
-            c_aibj(a, i, a, i) = two*c_aibj(a, i, a, i)
-!
-         enddo
-      enddo
-!$omp end parallel do
+      call scale_diagonal(two, c_aibj, wf%n_t1)
 !
       call wf%jacobian_doubles_b1(rho_ai, c_aibj)
       call wf%jacobian_doubles_c1(rho_ai, c_aibj)
@@ -151,15 +141,7 @@ contains
 !
       call wf%jacobian_doubles_a2(rho_aibj, c_ai)
 !
-!$omp parallel do private(a, i)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            rho_aibj(a, i, a, i) = half*rho_aibj(a, i, a, i)
-!
-         enddo
-      enddo
-!$omp end parallel do 
+      call scale_diagonal(half, rho_aibj, wf%n_t1)
 !
       call symmetric_sum(rho_aibj, wf%n_t1)
 !
@@ -205,16 +187,7 @@ contains
 !
 !     c_aibj/(1/Δ_aibj) 
 !
-!$omp parallel do private(a, i)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            c_aibj(a, i, a, i) = half*c_aibj(a, i, a, i) 
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
+      call scale_diagonal(half, c_aibj, wf%n_o*wf%n_v)
 !
 !$omp parallel do private(a, i, b, j)
       do j = 1, wf%n_o

@@ -105,10 +105,10 @@ contains
       call wf%omega_ccsd_b2(omega_abij, t_abij)
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
+      call scale_diagonal(half, omega_abij, wf%n_v, wf%n_o)
+!
       call packin(omega(wf%n_t1+1 : wf%n_gs_amplitudes), omega_abij, wf%n_v, wf%n_o)
       call mem%dealloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-      call wf%from_biorthogonal_to_biorthonormal(omega((wf%n_o)*(wf%n_v)+1:wf%n_gs_amplitudes))
 !
    end subroutine construct_omega_ccsd
 !
