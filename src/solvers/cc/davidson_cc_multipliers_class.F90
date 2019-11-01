@@ -37,6 +37,7 @@ module davidson_cc_multipliers_class
    use kinds
    use ccs_class
    use linear_davidson_tool_class
+   use array_utilities, only: get_l2_norm
 !
    implicit none
 !
@@ -176,6 +177,25 @@ contains
 !
       call mem%alloc(eta, wf%n_gs_amplitudes)
       call wf%construct_eta(eta)
+!
+      if (get_l2_norm(eta, wf%n_gs_amplitudes) < solver%residual_threshold) then 
+!
+         call output%printf('Convergence criterion already met!', pl='m', fs='(/t3,a)')
+!
+         call wf%initialize_multipliers()
+!
+         call mem%alloc(multipliers, wf%n_gs_amplitudes)
+         call zero_array(multipliers, wf%n_gs_amplitudes)
+!
+         call wf%set_multipliers(multipliers)
+!
+         call wf%print_dominant_x_amplitudes(multipliers, 'tbar')
+!
+         call mem%dealloc(multipliers, wf%n_gs_amplitudes)
+!
+         return
+!
+      endif
 !
       davidson = linear_davidson_tool('multipliers', wf%n_gs_amplitudes,   &
                                        solver%residual_threshold,          &

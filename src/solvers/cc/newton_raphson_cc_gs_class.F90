@@ -122,13 +122,13 @@ contains
          call wf%read_amplitudes()
 !
          call wf%integrals%write_t1_cholesky(wf%t1) 
-         if(wf%need_g_abcd() .and. wf%integrals%room_for_g_pqrs_t1()) &
+         if(wf%need_g_abcd .and. wf%integrals%room_for_g_pqrs_t1()) &
             call wf%integrals%place_g_pqrs_t1_in_memory()
 ! 
       else
 !
          call wf%integrals%write_t1_cholesky(wf%t1) 
-         if(wf%need_g_abcd() .and. wf%integrals%room_for_g_pqrs_t1()) &
+         if(wf%need_g_abcd .and. wf%integrals%room_for_g_pqrs_t1()) &
             call wf%integrals%place_g_pqrs_t1_in_memory()
 !
          call wf%set_initial_amplitudes_guess()

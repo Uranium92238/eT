@@ -258,6 +258,8 @@ contains
       wf%n_ccs_o = 0
       wf%n_ccs_v = 0
 !
+      wf%need_g_abcd = .false.
+!
       wf%cholesky_orbital_threshold = 1.0d-2
 !
       call wf%general_cc_preparations(system)
