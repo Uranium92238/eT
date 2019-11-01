@@ -536,7 +536,7 @@ contains
       call squareup_and_sort_1234_to_1324(R(wf%n_t1 + 1 : wf%n_es_amplitudes), R_abij, &
                                           wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Scale the right doubles vector by 1 + δ_ai,bj
+!     Scale the right doubles vector by 1 + delta_ai,bj
 !
 !$omp parallel do schedule(static) private(a,i) collapse(2)
       do i = 1, wf%n_o
@@ -562,8 +562,8 @@ contains
    end function L_R_overlap_cc3
 !
 !
-   module subroutine L_R_overlap_triples_cc3(wf, omega_L, omega_R, L_ai, &
-                                                               L_abij, R_abij, LT_R)
+   subroutine L_R_overlap_triples_cc3(wf, omega_L, omega_R, L_ai, &
+                                      L_abij, R_abij, LT_R)
 !!
 !!    Left right overlap triples contribution
 !!    Written by Alexander C. Paul, August 2019
@@ -572,10 +572,12 @@ contains
 !!    of the left and right excitation vectors
 !!    
 !!    Right excitation vector:
-!!       R_μ3 = (ω - ε_μ3)^-1 (< μ3 | [H,R_2] | HF > + < μ3 | [[H,R_1],T_2] | HF >)
+!!       R_mu3 = (omega - eps_mu3)^-1 (< mu3| [H,R_2] |HF > 
+!!                                   + < mu3| [[H,R_1],T_2] |HF >)
 !!
 !!    Left excitation vector:
-!!       L_μ3 = (ω - ε^abc_ijk)^-1 (L_μ1 < μ1 | [H,τ_ν3] | R > + L_μ2 < μ2 | [H,τ_ν3] | R >
+!!       L_mu3 = (omega - eps^abc_ijk)^-1 (L_mu1 < mu1| [H,tau_nu3] |R > 
+!!                                       + L_mu2 < mu2| [H,tau_nu3] |R >)
 !!
       implicit none
 !
@@ -1157,10 +1159,13 @@ contains
 !!    Written by Alexander C. Paul, August 2019
 !!
 !!    Removing the restrictions on the sum over the triples excitations
-!!    introduces a factor similar to (1+δ_ai,bj) in the doubles.
+!!    introduces a factor similar to (1+delta_ai,bj) in the doubles.
 !!    Usually this factor cancles but it is e.g. needed in EOM-CC3.
 !!
-!!       sum_{ai >= bj >= ck} = 1/6 sum_aibjck (1+δ_ai,bj+δ_ai,ck+δ_bj,ck+2 δ_ai,bj δ_ai,ck)
+!!       sum_{ai >= bj >= ck} = 1/6 sum_aibjck (1 + delta_ai,bj 
+!!                                                + delta_ai,ck
+!!                                                + delta_bj,ck
+!!                                                + 2 delta_ai,bj delta_ai,ck)
 !!
 !!    This routine scales an array of amplitudes (for single i,j,k)
 !!    with the expression in paranthesis
@@ -1208,10 +1213,13 @@ contains
 !!    Written by Alexander C. Paul, August 2019
 !!
 !!    Removing the restrictions on the sum over the triples excitations
-!!    introduces a factor similar to (1+δ_ai,bj) in the doubles.
+!!    introduces a factor similar to (1+delta_ai,bj) in the doubles.
 !!    Usually this factor cancles but it is e.g. needed in EOM-CC3.
 !!
-!!       sum_{ai >= bj >= ck} = 1/6 sum_aibjck (1+δ_ai,bj+δ_ai,ck+δ_bj,ck+2 δ_ai,bj δ_ai,ck)
+!!       sum_{ai >= bj >= ck} = 1/6 sum_aibjck (1 + delta_ai,bj 
+!!                                                + delta_ai,ck
+!!                                                + delta_bj,ck
+!!                                                + 2 delta_ai,bj delta_ai,ck)
 !!
 !!    This routine scales an array of amplitudes (for single a,b,c)
 !!    with the expression in paranthesis

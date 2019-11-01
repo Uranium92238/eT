@@ -1163,7 +1163,7 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(in) :: t_abcijk
 !
-      integer :: a, b, d, i, j, l, d
+      integer :: a, b, d, i, j, l
 !
       do l = 1, wf%n_o
          do j = 1, wf%n_o
