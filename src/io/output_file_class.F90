@@ -45,6 +45,7 @@ module output_file_class
       procedure, public :: printf            => printf_output_file
       procedure, public :: print_matrix      => print_matrix_output_file
       procedure, public :: print_separator   => print_separator_output_file
+      procedure, public :: print_vector      => print_vector_output_file
 !
       procedure, public :: set_global_print_level  => set_global_print_level_output_file 
       procedure, public :: set_local_print_level   => set_local_print_level_output_file  
@@ -562,6 +563,55 @@ contains
       
 !
    end subroutine print_separator_output_file
+!
+!
+   subroutine print_vector_output_file(the_file, pl, name_, dim_, vector, fs, columns, transpose_)
+!!    
+!!    Print vector 
+!!    Written by Tor S. Haugland, Oct 2019
+!!
+!!    Calls format_print_vector if appropriate print level
+!!
+!!    Based on print_matrix_output_file by Rolf H. Myhre.
+!!
+!!    name_     : name to be printed above the vector
+!!    dim       : size(vector)
+!!    vector    : vector to print
+!!
+!!       OPTIONAL
+!!    fs        : format string, default '(f12.8)'
+!!    columns   : number of columns to print per row, default 4
+!!    transpose : transpose the printed vector
+!!
+      implicit none
+!
+      class(output_file),        intent(in)           :: the_file
+      character(len=*),          intent(in)           :: pl
+      character(len=*),          intent(in)           :: name_
+      integer,                   intent(in)           :: dim_
+      real(dp), dimension(dim_), intent(in)           :: vector
+!
+      character(len=*),          intent(in), optional :: fs
+      integer,                   intent(in), optional :: columns
+      logical,                   intent(in), optional :: transpose_
+!
+      if (the_file%is_mute) then !File is muted, make a quiet return
+!
+         return 
+!
+      endif
+!
+!
+      if (the_file%should_print(pl)) then
+!
+         call the_file%format_print_vector(name_, dim_, vector, fs, columns, transpose_)
+!
+         call the_file%flush_()
+!
+      endif
+      
+!
+   end subroutine print_vector_output_file
 !
 !
 end module output_file_class

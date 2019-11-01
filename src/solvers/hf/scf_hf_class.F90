@@ -321,7 +321,8 @@ contains
 !
       class(hf) :: wf
 !
-      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
+      call output%printf('- Cleaning up (a0)', pl='normal', fs='(/t3,a)', &
+                        chars=[trim(solver%tag)] )
 !
 !     Save the orbitals to file & store restart information
 !
@@ -355,10 +356,10 @@ contains
 !
       class(scf_hf) :: solver
 !
-      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
-      call output%long_string_print(solver%author,'(t3,a/)',.true.)
-      call output%long_string_print(solver%warning,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
-      call output%long_string_print(solver%description)
+      call output%printf(':: (a0)', pl='normal', fs='(//t3,a)',  chars=[trim(solver%tag)])
+      call output%printf(':: (a0)', pl='normal', fs='(t3,a)',    chars=[trim(solver%author)])
+      call output%printf('(a0)',    pl='normal', ffs='(/t3,a)',  chars=[trim(solver%warning)])
+      call output%printf('(a0)',    pl='normal', ffs='(/t3,a)',  chars=[trim(solver%description)])
 !
    end subroutine print_banner_scf_hf
 !

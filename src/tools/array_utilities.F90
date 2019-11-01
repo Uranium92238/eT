@@ -1362,58 +1362,6 @@ contains
    end function get_l2_norm
 !
 !
-   subroutine print_vector(A, n, indent)
-!!
-!!    Print vector 
-!!    Written by Eirik F. Kjønstad, Sep 2018
-!!
-!!    Prints the vector A (of length n), using five columns and the indentation 
-!!    specified by "indent", to the output file. 
-!!
-      implicit none 
-!
-      integer, intent(in) :: n
-!
-      real(dp), dimension(n), intent(in) :: A 
-!
-      integer :: I 
-!
-      character(len=*)   :: indent ! indentation
-      character(len=255) :: adv    ! advance
-      character(len=255) :: frmt   ! format
-      character(len=255) :: sep    ! column separation
-!
-      write(output%unit, *)
-      sep = trim(indent)
-      adv = 'no'
-      do I = 1, n 
-!
-         frmt = '(t' // trim(sep) // ', i3, f18.12)'
-         write(output%unit, frmt, advance=trim(adv)) I, A(I) 
-!
-         if (mod(I, 3) .eq. 2) then 
-!
-            adv = 'yes'
-            sep = '5'
-!
-         elseif (mod(I, 3) .eq. 0) then
-!
-            adv = 'no'
-            sep = indent
-!
-         else
-!
-            adv = 'no'
-            sep = '5'
-!
-         endif
-!
-      enddo
-      write(output%unit, *)
-!
-   end subroutine print_vector
-!
-!
    subroutine transpose_(A, A_trans, dim_)
 !!
 !!    Transpose 

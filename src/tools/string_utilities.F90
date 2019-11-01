@@ -455,4 +455,51 @@ contains
    end function convert_to_uppercase
 !
 !
+   subroutine index_of_unique_strings(indices, n_strings, strings)
+!!
+!!    Index of unique strings
+!!    Written by Tor S. Haugland, Oct 2019
+!!
+!!    Find index of unique strings in an array of strings.
+!!
+!!    indices:    on input an array of size n_strings.
+!!                   on output the index of unique elements in strings. 0 elsewhere.
+!!                   n_unique = count( indices /= 0 )
+!!    n_strings:  check first `n_strings` values of strings
+!!    strings:    array of strings to check for unique. 
+!!
+!!    Example: strings = ['a', 'b', 'a', 'c'], n_strings = 4
+!!             will return indices = [1, 2, 4, 0]
+!!    
+      implicit none 
+!
+      integer,                                intent(in)   :: n_strings
+      integer, dimension(n_strings),          intent(out)  :: indices
+      character(len=*), dimension(n_strings), intent(in)   :: strings
+!
+      character(len=len(strings(1))), dimension(n_strings) :: unique_strings
+      integer :: i, n_unique
+!
+      n_unique = 0
+!
+      indices(:) = 0
+!
+      do i = 1, n_strings
+!
+!        Try to add string to unique_strings. if failed: check next
+!
+         if (.not. any(unique_strings(1:n_unique) == strings(i) )) then
+!
+            n_unique = n_unique + 1
+!
+            unique_strings(n_unique) = strings(i)
+            indices(n_unique) = i
+!
+         endif
+!
+      enddo
+!
+   end subroutine index_of_unique_strings
+!
+!
 end module string_utilities

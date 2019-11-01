@@ -206,8 +206,9 @@ contains
 !
       if (wf%fractional_uniform_valence) then
 !
-         write(output%unit, '(/t3,a)') 'Requested fractional uniform valence. Valence electrons will be'
-         write(output%unit, '(t3,a)')  'distributed evenly in the highest molecular orbitals (if plural).'
+         call output%printf('Requested fractional uniform valence. Valence electrons will be  &
+                            &distributed evenly in the highest molecular orbitals (if plural).', &
+                            pl='minimal', ffs='(/t3,a)')
 !
       endif
 !
@@ -278,38 +279,33 @@ contains
 !
       class(uhf), intent(inout) :: wf
 !
-      write(output%unit, '(/t3,a,a,a)') 'Requested MO transformation of Fock matrix, but this ', &
-                                          'is not yet implemented for ', wf%name_
+      call output%printf('Requested MO transformation of Fock matrix, but this is not yet implemented for (a0).', &
+                        pl='minimal', ffs='(/t3,a)', chars=[trim(wf%name_)] )
 !
    end subroutine construct_mo_fock_uhf
 !
 !
-   subroutine print_orbital_energies_uhf(wf, indentation)
+   subroutine print_orbital_energies_uhf(wf)
 !!
 !!    Print orbital energies
 !!    Written by Eirik F. Kjønstad, Sep 2018
 !!
-!!    Prints the current orbital energies to output
-!!    in a hopefully readable way.
+!!    Prints the current orbital energies to output.
+!!
+!!    Modified by Tor S. Haugland, Oct 2019
+!!
+!!    Use new output%print_vector instead of deprecated print_vector.
+!!    Removed indent from input.
 !!
       implicit none
 !
       class(uhf), intent(in) :: wf
 !
-      character(len=*), optional :: indentation
+      call output%print_vector('normal', '- Alpha orbital energies', wf%n_ao, wf%orbital_energies_a, &
+                              fs='(f16.12)', columns=4)
 !
-      character(len=40) :: indent
-!
-      indent = '6'
-      if (present(indentation)) indent = trim(indentation)
-!
-      write(output%unit, '(/t' // trim(indent) // ',a)') 'Alpha orbital energies:'
-!
-      call print_vector(wf%orbital_energies_a, wf%n_ao, indent)
-!
-      write(output%unit, '(/t' // trim(indent) // ',a)') 'Beta orbital energies:'
-!
-      call print_vector(wf%orbital_energies_b, wf%n_ao, indent)
+      call output%print_vector('normal', '- Beta orbital energies',  wf%n_ao, wf%orbital_energies_b, &
+                              fs='(f16.12)', columns=4)
 !
    end subroutine print_orbital_energies_uhf
 !
@@ -781,14 +777,14 @@ contains
       if (wf%n_alpha > 0 .and. wf%n_alpha < wf%n_mo) then 
 !
          homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
-         call output%printf('HOMO-LUMO gap (alpha):     (f19.12)', pl='normal', fs='(/t6,a)', reals=[homo_lumo_gap_a])
+         call output%printf('HOMO-LUMO gap (alpha):     (f19.12)', pl='minimal', fs='(/t6,a)', reals=[homo_lumo_gap_a])
 !
       endif 
 !
       if (wf%n_beta > 0 .and. wf%n_beta < wf%n_mo) then 
 !
          homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
-         call output%printf('HOMO-LUMO gap (beta):      (f19.12)', pl='normal', fs='(t6,a)',  reals=[homo_lumo_gap_b])
+         call output%printf('HOMO-LUMO gap (beta):      (f19.12)', pl='minimal', fs='(t6,a)',  reals=[homo_lumo_gap_b])
 !
       endif
 !
@@ -800,9 +796,9 @@ contains
 !
       endif
 !
-      call output%printf('Nuclear repulsion energy:  (f19.12)', pl='normal', fs='(t6,a)',  reals=[nuclear_repulsion])
-      call output%printf('Electronic energy:         (f19.12)', pl='normal', fs='(t6,a)',  reals=[wf%energy - nuclear_repulsion])
-      call output%printf('Total energy:              (f19.12)', pl='normal', fs='(t6,a)',  reals=[wf%energy])
+      call output%printf('Nuclear repulsion energy:  (f19.12)', pl='minimal', fs='(t6,a)',  reals=[nuclear_repulsion])
+      call output%printf('Electronic energy:         (f19.12)', pl='minimal', fs='(t6,a)',  reals=[wf%energy - nuclear_repulsion])
+      call output%printf('Total energy:              (f19.12)', pl='minimal', fs='(t6,a)',  reals=[wf%energy])
 !
       if(wf%system%mm_calculation) call wf%print_energy_mm()
 !      
@@ -1748,7 +1744,8 @@ contains
 !
       class(uhf) :: wf
 !
-      write(output%unit, '(/t3,a)') '- Cholesky decomposition of AO overlap to get linearly independent orbitals:'
+      call output%printf('- Cholesky decomposition of AO overlap to get linearly independent orbitals:', &
+                         pl='n', fs='(/t3,a)', ll=100)
 !
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()

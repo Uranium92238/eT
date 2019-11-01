@@ -116,7 +116,7 @@ contains
       class(abstract_engine), intent(inout) :: engine
       class(wavefunction),    intent(in)    :: wf
 !
-      call output%printf('- Timings for the (a0) (a0) calculation', pl='minimal', fs='(/t3, a)', &
+      call output%printf('- Timings for the (a0) (a0) calculation', pl='normal', fs='(/t3, a)', &
                          chars=[character(len=500)::convert_to_uppercase(wf%name_), engine%tag])
 !
       call engine%timer%turn_off()

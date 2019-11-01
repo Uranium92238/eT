@@ -250,7 +250,9 @@ contains
 !
          endif
 !
-         call wf%system%print_geometry()
+         call wf%system%print_geometry('angstrom')
+         call wf%system%print_geometry('bohr')
+!
          prev_energy = energy 
 !
       enddo

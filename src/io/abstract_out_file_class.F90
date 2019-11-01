@@ -43,6 +43,8 @@ module abstract_out_file_class
 !
       procedure, public :: format_print_separator  => format_print_separator_abstract_out_file
 !
+      procedure, public :: format_print_vector     => format_print_vector_abstract_out_file
+!
       procedure :: long_string_print         => long_string_print_abstract_out_file
 !
       procedure, nopass, private :: get_format_length
@@ -831,6 +833,122 @@ contains
       call the_file%format_print(separator_line, ll=n, fs=fs)
 !
    end subroutine format_print_separator_abstract_out_file
+!
+!
+   subroutine format_print_vector_abstract_out_file(the_file, name_, dim_, vector, fs, columns, transpose_)
+!!
+!!    Format print vector 
+!!    Written by Tor S. Haugland, Oct 2019
+!!
+!!    Prints a given vector using formats and columns.
+!!    Based on the now deprecated print_vector by Eirik F. Kjønstad.
+!!
+!!    name_:      Name of vector
+!!    dim_:       Number of elements to be printed
+!!    vector:     Vector to print
+!!
+!!       OPTIONAL
+!!    fs:         Format string for the numbers.         Default '(f13.8)'
+!!    columns:    Number of columns to print per row.    Default: 4
+!!    transpose_: Transpose the vector printing.         Default: .false.
+!!
+!!
+!!    By default vector will be printed vertically in 4 columns,
+!!       1 vector(1)   4 vector(4)   7 vector(7)  10 vector(10)
+!!       2 vector(2)   5 vector(5)   8 vector(8) 
+!!       3 vector(3)   6 vector(6)   9 vector(9) 
+!!
+      implicit none 
+!
+      class(abstract_out_file),  intent(in)           :: the_file
+      character(len=*),          intent(in)           :: name_
+      integer,                   intent(in)           :: dim_
+      real(dp), dimension(dim_), intent(in)           :: vector
+!
+      character(len=*),          intent(in), optional :: fs
+      integer,                   intent(in), optional :: columns
+      logical,                   intent(in), optional :: transpose_
+!
+      integer :: I, index_
+      integer :: form_length, line_length, int_length
+      integer :: n_columns, n_rows, row, col
+!
+      character(len=20) :: form_string, int_string, index_format
+!
+      logical :: adv, transpose_local
+!
+!     Set defaults
+!
+      if (present(fs)) then
+         form_string = trim(fs)
+      else
+         form_string = '(f13.8)'
+      endif 
+!
+      if (present(columns)) then
+         n_columns = columns
+      else
+         n_columns = 5
+      endif
+!
+      if (present(transpose_)) then
+         transpose_local = transpose_
+      else
+         transpose_local = .false.
+      endif
+!
+!     Initialize formatting variables
+!
+      form_length = the_file%get_format_length(form_string)
+!
+      write(int_string, '(i0)') dim_
+      int_length = len_trim(int_string)
+!
+      write(index_format,'(a,i0,a)') '(i', int_length, ')'
+!
+      line_length = (3 + form_length + int_length) * n_columns - 1
+!
+!     Print header
+!
+      call the_file%format_print(name_, fs='(/t3,a/)')
+!
+      call the_file%format_print_separator(line_length, symbol='-')
+!
+!     Print content
+!
+      n_rows = 1 + (dim_-1) / n_columns ! integer division
+!
+      do I = 1, n_rows * n_columns
+!
+         if (.not. transpose_local) then
+!
+!           Find row and column of element
+!
+            row = (I-1) / n_columns     ! which row
+            col = mod(I - 1, n_columns) ! which column
+!
+            index_ = 1 + row + col * n_rows
+            adv = ( mod(I,n_columns) == 0 .or. index_ + n_rows > dim_)
+!
+         else
+!
+            index_ = I
+            adv = ( mod(I,n_columns) == 0 .or. index_ == dim_)
+!
+         endif
+!
+!        When size(dim_) < n_rows * n_columns, the index can be out of bounds
+!
+         if (index_ > dim_) cycle
+!
+         call the_file%format_print( trim(index_format) // ' ' // trim(form_string), adv=adv, &
+                                    ints=[index_], reals=[vector(index_)])
+!
+      enddo
+!
+      call the_file%format_print_separator(line_length, symbol='-')
+!
+   end subroutine format_print_vector_abstract_out_file
 !
 !
 end module abstract_out_file_class
