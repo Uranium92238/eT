@@ -817,8 +817,8 @@ contains
 !!    Which are constructed in save_jacobian_a1_intermediates
 !!    and stored on files
 !!
-!!       jacobian_a1_intermdiate_oo
-!!       jacobian_a1_intermdiate_vv
+!!       jacobian_a1_intermediate_oo
+!!       jacobian_a1_intermediate_vv
 !!
 !!    which are wavefunction variables
 !!

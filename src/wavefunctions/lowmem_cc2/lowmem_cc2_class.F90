@@ -31,6 +31,9 @@ module lowmem_cc2_class
 !
    type, extends(ccs) :: lowmem_cc2
 !
+      type(sequential_file) :: jacobian_b1_intermediate_vv
+      type(sequential_file) :: jacobian_b1_intermediate_oo
+!
    contains
 !
       procedure :: construct_omega  => construct_omega_lowmem_cc2
@@ -45,8 +48,11 @@ module lowmem_cc2_class
 !
       procedure :: effective_jacobian_transformation  => effective_jacobian_transformation_lowmem_cc2
 !
-      procedure :: jacobian_cc2_a1 => jacobian_cc2_a1_lowmem_cc2
-      procedure :: jacobian_cc2_b1 => jacobian_cc2_b1_lowmem_cc2
+      procedure :: prepare_for_jacobian               => prepare_for_jacobian_lowmem_cc2
+      procedure :: save_jacobian_b1_2_intermediate    => save_jacobian_b1_2_intermediate_lowmem_cc2
+      procedure :: save_jacobian_b1_3_intermediate    => save_jacobian_b1_3_intermediate_lowmem_cc2      
+      procedure :: jacobian_cc2_a1                    => jacobian_cc2_a1_lowmem_cc2
+      procedure :: jacobian_cc2_b1                    => jacobian_cc2_b1_lowmem_cc2
 !
       procedure :: effective_jacobian_cc2_a1 => effective_jacobian_cc2_a1_lowmem_cc2
       procedure :: effective_jacobian_cc2_b1 => effective_jacobian_cc2_b1_lowmem_cc2
@@ -157,6 +163,7 @@ contains
       endif
 !
 !     Compute the transformed matrix
+!
       if (r_or_l .eq. "right") then
 !
          call wf%effective_jacobian_transformation(w, X) ! X <- AX
