@@ -42,7 +42,7 @@ contains
       class(cc2) :: wf
 !
       call wf%initialize_t1()
-      call wf%initialize_u()
+      call wf%initialize_u_aibj()
 !
    end subroutine initialize_amplitudes_cc2
 !
@@ -57,7 +57,7 @@ contains
       class(cc2) :: wf
 !
       call wf%destruct_t1()
-      call wf%destruct_u()
+      call wf%destruct_u_aibj()
 !
    end subroutine destruct_amplitudes_cc2
 !
@@ -116,34 +116,6 @@ contains
       if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_t2)
 !
    end subroutine destruct_t2bar_cc2
-!
-!
-   module subroutine initialize_u_cc2(wf)
-!!
-!!    Initialize u 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      if (.not. allocated(wf%u)) call mem%alloc(wf%u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-   end subroutine initialize_u_cc2
-!
-!
-   module subroutine destruct_u_cc2(wf)
-!!
-!!    Initialize u 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      if (allocated(wf%u)) call mem%dealloc(wf%u, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-   end subroutine destruct_u_cc2
 !
 !
 end submodule initialize_destruct_cc2

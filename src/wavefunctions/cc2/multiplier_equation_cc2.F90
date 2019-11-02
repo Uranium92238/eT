@@ -114,7 +114,7 @@ contains
 !  
       call wf%jacobian_transpose_ccs_a1(equation, wf%t1bar)
       call wf%jacobian_transpose_ccs_b1(equation, wf%t1bar)
-      call wf%jacobian_transpose_doubles_a1(equation, wf%t1bar, wf%u)
+      call wf%jacobian_transpose_doubles_a1(equation, wf%t1bar, wf%u_aibj)
 !
 !     equation += sum_bjck tbar_bjck A_{bjck,ai}
 !

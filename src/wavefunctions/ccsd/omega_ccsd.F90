@@ -52,33 +52,23 @@ contains
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
       real(dp), dimension(:,:), allocatable :: omega1
-      real(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij, u_aibj
+      real(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij
       real(dp), dimension(:,:,:,:), allocatable :: omega_aibj, omega_abij
-!
-      call mem%alloc(omega1, wf%n_v, wf%n_o)
-!
-!     Set the omega vector to zero
-!
-      call zero_array(omega1, wf%n_t1)
-!
-      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_aibj, wf%n_t1)
-!
-      call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call copy_and_scale(two, t_aibj, u_aibj, wf%n_t1**2)
-      call add_1432_to_1234(-one, t_aibj, u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Construct singles contributions
 !
-      call wf%omega_doubles_a1(omega1, u_aibj)
-      call wf%omega_doubles_b1(omega1, u_aibj)
-      call wf%omega_doubles_c1(omega1, u_aibj)
-!
-      call mem%dealloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(omega1, wf%n_v, wf%n_o)
+      call zero_array(omega1, wf%n_t1)
 !
       call wf%omega_ccs_a1(omega1)
 !
-      call dcopy((wf%n_o)*(wf%n_v), omega1, 1, omega, 1)
+      call wf%construct_u_aibj()
+!
+      call wf%omega_doubles_a1(omega1, wf%u_aibj)
+      call wf%omega_doubles_b1(omega1, wf%u_aibj)
+      call wf%omega_doubles_c1(omega1, wf%u_aibj)
+!
+      call dcopy(wf%n_t1, omega1, 1, omega, 1)
 !
       call mem%dealloc(omega1, wf%n_v, wf%n_o)
 !
@@ -86,6 +76,9 @@ contains
 !
       call mem%alloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call zero_array(omega_aibj, wf%n_t1**2)
+!
+      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_aibj, wf%n_t1)
 !
       call wf%omega_ccsd_c2(omega_aibj, t_aibj)
       call wf%omega_ccsd_d2(omega_aibj, t_aibj)
@@ -712,7 +705,6 @@ contains
 !
 !     Reordered U2 amplitudes
 !
-      real(dp), dimension(:,:,:,:), allocatable :: u_ckbj
       real(dp), dimension(:,:,:,:), allocatable :: omega_a_batch
 !
 !     Indices
@@ -734,7 +726,7 @@ contains
 !
 !     Sort t_al_di = t_li^ad as t_aidl (1234 to 1432)
 !
-      call mem%alloc(t_aidl,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(t_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call sort_1234_to_1432(t_aibj, t_aidl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -771,14 +763,6 @@ contains
 !
       call mem%dealloc(g_dlck,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(t_aidl,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Form u_ckbj = u_jk^bc = u_kj^cb = 2 * t_jk^bc - t_kj^bc
-!
-      call mem%alloc(u_ckbj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call copy_and_scale(two, t_aibj, u_ckbj, (wf%n_o)**2*(wf%n_v)**2)
-!
-!
-      call add_1432_to_1234(-one, t_aibj, u_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Allocate a holder for - 1/2 * sum_ck u_jk^bc g_acki,
 !     constructed in batches over the a index below
@@ -848,7 +832,7 @@ contains
                   -one/two,                  &
                   g_aick,                    &
                   (wf%n_o)*(batch_a%length), &
-                  u_ckbj,                    &
+                  wf%u_aibj,                 & ! u_ck_bj
                   (wf%n_o)*(wf%n_v),         &
                   zero,                      &
                   omega_a_batch,             &
@@ -874,10 +858,6 @@ contains
          call mem%dealloc(omega_a_batch, batch_a%length, wf%n_o, wf%n_v, wf%n_o)
 !
       enddo ! End of batching
-!
-!     Deallocate reordered u_ckbj vector
-!
-      call mem%dealloc(u_ckbj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Add the - 1/2 * sum_ck u_jk^bc g_acki term to omega
 !

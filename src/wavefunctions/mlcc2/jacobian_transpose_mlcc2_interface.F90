@@ -17,21 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine prepare_for_jacobian_transpose_mlcc2(wf)
-!!
-!!    Jacobian transpose transform trial vector
-!!    Written by Sarai D. Folkestad, Apr 2019
-!!
-!!    Adapted from jacobian_transpose_cc2.F90
-!!    written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
-!!
-      implicit none
-!
-      class(mlcc2), intent(inout) :: wf
-!
-   end subroutine prepare_for_jacobian_transpose_mlcc2
-!
-!
    module subroutine jacobian_transpose_transformation_mlcc2(wf, b)
 !!
 !!    Jacobian transpose transformation (MLCC2)

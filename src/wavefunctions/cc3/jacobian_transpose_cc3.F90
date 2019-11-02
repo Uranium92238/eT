@@ -65,7 +65,7 @@ contains
       logical, intent(in) :: cvs
 !
       real(dp), dimension(:,:), allocatable :: c_ai
-      real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij, t_aibj, u_aibj
+      real(dp), dimension(:,:,:,:), allocatable :: c_aibj, c_abij
 !
       real(dp), dimension(:,:), allocatable :: sigma_ai
       real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj, sigma_abij
@@ -97,17 +97,7 @@ contains
 !
 !     :: CCSD contributions to the transformed singles vector ::
 !
-      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_aibj, wf%n_t1)
-!
-      call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call copy_and_scale(two, t_aibj, u_aibj, wf%n_t1**2)
-      call add_1432_to_1234(-one, t_aibj, u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call wf%jacobian_transpose_doubles_a1(sigma_ai, c_ai, u_aibj)
-!
-      call mem%dealloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call wf%jacobian_transpose_doubles_a1(sigma_ai, c_ai, wf%u_aibj)
 !
 !     Allocate the incoming unpacked doubles vector
 !

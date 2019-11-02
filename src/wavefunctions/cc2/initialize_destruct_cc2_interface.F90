@@ -87,27 +87,3 @@
       class(cc2) :: wf
 !
    end subroutine destruct_t2bar_cc2
-!
-!
-   module subroutine initialize_u_cc2(wf)
-!!
-!!    Initialize u 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-   end subroutine initialize_u_cc2
-!
-!
-   module subroutine destruct_u_cc2(wf)
-!!
-!!    Initialize u 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-   end subroutine destruct_u_cc2

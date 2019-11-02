@@ -50,9 +50,6 @@ contains
 !
       class(mlcc2), intent(inout) :: wf 
 !
-      call wf%initialize_u()
-      call wf%construct_u()
-!
       call wf%save_jacobian_a1_intermediates(wf%n_cc2_o, wf%n_cc2_v, wf%first_cc2_o, wf%first_cc2_v)
 !
    end subroutine prepare_for_jacobian_mlcc2
@@ -307,7 +304,7 @@ contains
                   1,                &
                   n_cc2_o*n_cc2_v,  &
                   one,              &
-                  wf%u,             & ! u_ai_ck
+                  wf%u_aibj,        & ! u_ai_ck
                   n_cc2_o*n_cc2_v,  &
                   X_ck,             &
                   n_cc2_o*n_cc2_v,  &
@@ -868,7 +865,7 @@ contains
 !     Reorder u_ckbi as u_bkci
 !
       call mem%alloc(u_bkci, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
-      call sort_1234_to_3214(wf%u, u_bkci, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
+      call sort_1234_to_3214(wf%u_aibj, u_bkci, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
 !
       call mem%alloc(Y_ji, wf%n_o, n_cc2_o)
 !
@@ -923,7 +920,7 @@ contains
                   wf%n_v,                 &
                   n_cc2_v*(n_cc2_o**2),   &
                   one,                    &
-                  wf%u,                   & ! u_ajck
+                  wf%u_aibj,              & ! u_ajck
                   n_cc2_v,                &
                   g_jckb,                 & 
                   n_cc2_v*(n_cc2_o**2),   &

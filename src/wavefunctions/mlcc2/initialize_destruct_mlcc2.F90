@@ -30,7 +30,7 @@ submodule (mlcc2_class) initialize_desctruct_mlcc2
 !
 contains
 !
-   module subroutine initialize_u_mlcc2(wf)
+   module subroutine initialize_u_aibj_mlcc2(wf)
 !!
 !!    Initialize u 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
@@ -39,12 +39,12 @@ contains
 !
       class(mlcc2) :: wf
 !
-      if (.not. allocated(wf%u)) call mem%alloc(wf%u, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
+      if (.not. allocated(wf%u_aibj)) call mem%alloc(wf%u_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
-   end subroutine initialize_u_mlcc2
+   end subroutine initialize_u_aibj_mlcc2
 !
 !
-   module subroutine destruct_u_mlcc2(wf)
+   module subroutine destruct_u_aibj_mlcc2(wf)
 !!
 !!    Initialize u 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
@@ -53,9 +53,9 @@ contains
 !
       class(mlcc2) :: wf
 !
-      if (allocated(wf%u)) call mem%dealloc(wf%u, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
+      if (allocated(wf%u_aibj)) call mem%dealloc(wf%u_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !
-   end subroutine destruct_u_mlcc2
+   end subroutine destruct_u_aibj_mlcc2
 !
 !
    module subroutine initialize_amplitudes_mlcc2(wf)
@@ -68,7 +68,7 @@ contains
       class(mlcc2) :: wf
 !
       call wf%initialize_t1()
-      call wf%initialize_u()
+      call wf%initialize_u_aibj()
       call wf%initialize_x2()
 !
    end subroutine initialize_amplitudes_mlcc2
@@ -84,7 +84,7 @@ contains
       class(mlcc2) :: wf
 !
       call wf%destruct_t1()
-      call wf%destruct_u()
+      call wf%destruct_u_aibj()
       call wf%destruct_x2()
 !
    end subroutine destruct_amplitudes_mlcc2

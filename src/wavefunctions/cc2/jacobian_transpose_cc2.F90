@@ -40,21 +40,6 @@ submodule (cc2_class) jacobian_transpose_cc2
 contains
 !
 !
-   module subroutine prepare_for_jacobian_transpose_cc2(wf)
-!!
-!!    Jacobian transpose submodule (CC2)
-!!    Written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
-!!
-      implicit none
-!
-      class(cc2), intent(inout) :: wf
-!
-      call wf%initialize_u()
-      call wf%construct_u()
-!
-   end subroutine prepare_for_jacobian_transpose_cc2
-!
-!
    module subroutine jacobian_transpose_transformation_cc2(wf, b)
 !!
 !!    Jacobian transpose transformation
@@ -102,7 +87,7 @@ contains
 !
 !     :: CC2 contributions to the transformed singles vector ::
 !
-      call wf%jacobian_transpose_doubles_a1(sigma_ai, b_ai, wf%u)
+      call wf%jacobian_transpose_doubles_a1(sigma_ai, b_ai, wf%u_aibj)
 !
 !     Allocate the incoming unpacked doubles vector
 !
