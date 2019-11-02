@@ -30,8 +30,6 @@ module cc2_class
 !
    type, extends(doubles) :: cc2
 !
-      real(dp), dimension(:,:,:,:), allocatable :: u
-!
    contains
 !
 !     Ground state
@@ -42,8 +40,9 @@ module cc2_class
 !
 !     Amplitudes and multipliers
 !
-      procedure :: construct_u                                 => construct_u_cc2
       procedure :: construct_t2                                => construct_t2_cc2
+      procedure :: construct_u_aibj                            => construct_u_aibj_cc2
+!
       procedure :: construct_t2bar                             => construct_t2bar_cc2
 !
 !     Excited state 
@@ -53,19 +52,16 @@ module cc2_class
 !     Jacobian
 !
       procedure :: prepare_for_jacobian                        => prepare_for_jacobian_cc2
+!
       procedure :: jacobian_transformation                     => jacobian_transformation_cc2
       procedure :: jacobian_cc2_b2                             => jacobian_cc2_b2_cc2
 !
 !     Jacobian transpose
 !
-      procedure :: prepare_for_jacobian_transpose              => prepare_for_jacobian_transpose_cc2
       procedure :: jacobian_transpose_transformation           => jacobian_transpose_transformation_cc2
       procedure :: jacobian_transpose_cc2_b2                   => jacobian_transpose_cc2_b2_cc2
 !
 !     Initialize and destruct
-!
-      procedure :: initialize_u                                => initialize_u_cc2 
-      procedure :: destruct_u                                  => destruct_u_cc2 
 !
       procedure :: initialize_amplitudes                       => initialize_amplitudes_cc2 
       procedure :: destruct_amplitudes                         => destruct_amplitudes_cc2 
@@ -250,9 +246,9 @@ contains
    end subroutine construct_t2bar_cc2
 !
 !
-   subroutine construct_u_cc2(wf)
+   subroutine construct_u_aibj_cc2(wf)
 !!
-!!    Construct U 
+!!    Construct u_aibj
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
 !!
 !!    Construct
@@ -276,10 +272,11 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_aibj
 !
       integer :: a, i, b, j
+      real(dp) :: eps
 !
       type(timings) :: timer
 !
-      timer = timings('Construct u CC2')
+      timer = timings('Construct u_aibj CC2')
       call timer%turn_on()
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
@@ -292,10 +289,12 @@ contains
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
-                  wf%u(a, i, b, j) = (two*g_aibj(a, i, b, j) - g_aibj(a, j, b, i))/ &
-                                       (  wf%orbital_energies(i) + wf%orbital_energies(j) &
-                                        - wf%orbital_energies(wf%n_o + a) &
-                                        - wf%orbital_energies(wf%n_o + b))
+                  eps =   wf%orbital_energies(i)          &
+                        + wf%orbital_energies(j)          &
+                        - wf%orbital_energies(wf%n_o + a) &
+                        - wf%orbital_energies(wf%n_o + b) 
+!
+                  wf%u_aibj(a, i, b, j) = (two*g_aibj(a, i, b, j) - g_aibj(a, j, b, i)) / eps
 !
                enddo
             enddo
@@ -307,7 +306,7 @@ contains
 !
       call timer%turn_off()
 !
-   end subroutine construct_u_cc2
+   end subroutine construct_u_aibj_cc2
 !
 !
    subroutine get_es_orbital_differences_cc2(wf, orbital_differences, N)

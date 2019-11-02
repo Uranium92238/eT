@@ -79,7 +79,7 @@ module mlcc2_class
 !
       integer :: n_x2 ! n_s2
 !
-      real(dp), dimension(:,:,:,:), allocatable :: u
+      real(dp), dimension(:,:,:,:), allocatable :: u_aibj
 !
 !     For properties
 !
@@ -103,8 +103,8 @@ module mlcc2_class
 !
 !     Initializations and destructions
 !
-      procedure :: initialize_u                                      => initialize_u_mlcc2
-      procedure :: destruct_u                                        => destruct_u_mlcc2
+      procedure :: initialize_u_aibj                                 => initialize_u_aibj_mlcc2
+      procedure :: destruct_u_aibj                                   => destruct_u_aibj_mlcc2
 !
       procedure :: initialize_amplitudes                             => initialize_amplitudes_mlcc2
       procedure :: destruct_amplitudes                               => destruct_amplitudes_mlcc2
@@ -194,8 +194,6 @@ module mlcc2_class
 !
 !     Jacobian transpose routines
 !
-      procedure :: prepare_for_jacobian_transpose                    => prepare_for_jacobian_transpose_mlcc2
-!
       procedure :: jacobian_transpose_transformation                 => jacobian_transpose_transformation_mlcc2
 !
       procedure :: jacobian_transpose_cc2_a1                         => jacobian_transpose_cc2_a1_mlcc2
@@ -207,7 +205,7 @@ module mlcc2_class
 !
       procedure :: construct_x2                                      => construct_x2_mlcc2
       procedure :: construct_t2bar                                   => construct_t2bar_mlcc2
-      procedure :: construct_u                                       => construct_u_mlcc2
+      procedure :: construct_u_aibj                                  => construct_u_aibj_mlcc2
 !
 !     Debug 
 !
@@ -435,9 +433,9 @@ contains
    end subroutine read_orbital_settings_mlcc2
 !
 !
-   subroutine construct_u_mlcc2(wf)
+   subroutine construct_u_aibj_mlcc2(wf)
 !!
-!!    Construct U 
+!!    Construct u_aibj
 !!    Written by Sarai D. Folkestad, Jan 2019
 !!
 !!    Construct
@@ -467,12 +465,12 @@ contains
 !
       call squareup(wf%x2, s_aibj, wf%n_cc2_v*wf%n_cc2_o)
 !
-      call copy_and_scale(two, s_aibj, wf%u, (wf%n_cc2_v**2)*(wf%n_cc2_o**2))
-      call add_1432_to_1234(-one, s_aibj, wf%u, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
+      call copy_and_scale(two, s_aibj, wf%u_aibj, (wf%n_cc2_v**2)*(wf%n_cc2_o**2))
+      call add_1432_to_1234(-one, s_aibj, wf%u_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)
 !    
       call mem%dealloc(s_aibj, wf%n_cc2_v, wf%n_cc2_o, wf%n_cc2_v, wf%n_cc2_o)     
 !
-   end subroutine construct_u_mlcc2
+   end subroutine construct_u_aibj_mlcc2
 !
 !
    subroutine calculate_energy_mlcc2(wf)

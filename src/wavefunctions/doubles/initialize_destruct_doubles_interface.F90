@@ -67,3 +67,26 @@
 !
    end subroutine destruct_t2bar_doubles
 !
+!
+   module subroutine initialize_u_aibj_doubles(wf)
+!!
+!!    Initialize u 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
+!!
+      implicit none
+!
+      class(doubles) :: wf
+!
+   end subroutine initialize_u_aibj_doubles
+!
+!
+   module subroutine destruct_u_aibj_doubles(wf)
+!!
+!!    Destruct u
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
+!!
+      implicit none
+!
+      class(doubles) :: wf
+!
+   end subroutine destruct_u_aibj_doubles

@@ -46,6 +46,7 @@ contains
 !
       call wf%initialize_t1()
       call wf%initialize_t2()
+      call wf%initialize_u_aibj()
 !
    end subroutine initialize_amplitudes_ccsd
 !
@@ -64,6 +65,7 @@ contains
 !
       call wf%destruct_t1()
       call wf%destruct_t2()
+      call wf%destruct_u_aibj()
 !
    end subroutine destruct_amplitudes_ccsd
 !

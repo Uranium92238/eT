@@ -74,7 +74,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: sigma_abij     ! sigma_aibj, reordered
 !
       real(dp), dimension(:,:), allocatable :: sigma_ai
-      real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj, u_aibj, t_aibj
+      real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj
 !
 !     Indices
 !
@@ -99,17 +99,7 @@ contains
 !     Calculate and add the CCSD contributions to the
 !     singles transformed vector
 !
-      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_aibj, wf%n_t1)
-!
-      call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call copy_and_scale(two, t_aibj, u_aibj, wf%n_t1**2)
-      call add_1432_to_1234(-one, t_aibj, u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call wf%jacobian_transpose_doubles_a1(sigma_ai, b_ai, u_aibj)
-!
-      call mem%dealloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call wf%jacobian_transpose_doubles_a1(sigma_ai, b_ai, wf%u_aibj)
 !
       call mem%alloc(b_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(b(wf%n_t1+1:wf%n_t1+wf%n_t2), b_aibj, wf%n_v*wf%n_o)

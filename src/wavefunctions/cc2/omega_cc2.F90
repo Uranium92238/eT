@@ -56,11 +56,11 @@ contains
 !
       call wf%omega_ccs_a1(omega)
 !
-      call wf%construct_u()
+      call wf%construct_u_aibj()
 !
-      call wf%omega_doubles_a1(omega, wf%u)
-      call wf%omega_doubles_b1(omega, wf%u)
-      call wf%omega_doubles_c1(omega, wf%u)
+      call wf%omega_doubles_a1(omega, wf%u_aibj)
+      call wf%omega_doubles_b1(omega, wf%u_aibj)
+      call wf%omega_doubles_c1(omega, wf%u_aibj)
 !
       call timer%turn_off()
 !

@@ -60,7 +60,7 @@ contains
       call wf%omega_ccs_a1(omega)
 !
       call wf%construct_x2()
-      call wf%construct_u()
+      call wf%construct_u_aibj()
 !
       call wf%omega_cc2_a1(omega, wf%n_cc2_o, wf%n_cc2_v, wf%first_cc2_o, wf%first_cc2_v, &
                            wf%last_cc2_o, wf%last_cc2_v)
@@ -118,7 +118,7 @@ contains
 !
 !     Reorder u_bicj to u_bjci
 !
-      call sort_1234_to_1432(wf%u, u_bjci, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
+      call sort_1234_to_1432(wf%u_aibj, u_bjci, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
 !
       req0 = (n_cc2_o)*(n_cc2_v)*(wf%integrals%n_J)
       req1 = (n_cc2_v)**2*(n_cc2_o) + (n_cc2_v)*(wf%integrals%n_J)
@@ -234,7 +234,7 @@ contains
                   wf%n_o,                 &
                   (n_cc2_o**2)*n_cc2_v,   &
                   -one,                   &
-                  wf%u,                   &! u_a_jbk
+                  wf%u_aibj,              &! u_a_jbk
                   n_cc2_v,                &
                   g_jbki,                 &! g_jbk_i
                   (n_cc2_o**2)*n_cc2_v,   &
@@ -302,7 +302,7 @@ contains
                   1,                   &
                   (n_cc2_v)*(n_cc2_o), &
                   one,                 &
-                  wf%u,                & ! u_ai_bj
+                  wf%u_aibj,           & ! u_ai_bj
                   (n_cc2_v)*(n_cc2_o), &
                   F_bj,                &
                   (n_cc2_v)*(n_cc2_o), &

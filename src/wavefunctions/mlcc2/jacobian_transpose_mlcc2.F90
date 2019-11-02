@@ -41,21 +41,6 @@ submodule (mlcc2_class) jacobian_transpose_mlcc2
 contains
 !
 !
-   module subroutine prepare_for_jacobian_transpose_mlcc2(wf)
-!!
-!!    Jacobian transpose submodule (MLCC2)
-!!    Written by Sarai D. Folkestad and Alexander C. Paul, Feb 2019
-!!
-      implicit none
-!
-      class(mlcc2), intent(inout) :: wf
-!
-      call wf%initialize_u()
-      call wf%construct_u()
-!
-   end subroutine prepare_for_jacobian_transpose_mlcc2
-!
-!
    module subroutine jacobian_transpose_transformation_mlcc2(wf, b)
 !!
 !!    Jacobian transpose transformation (MLCC2)
@@ -213,7 +198,7 @@ contains
                   1,                   &
                   (n_cc2_o)*(n_cc2_v), &
                   one,                 &
-                  wf%u,                & ! u_ck_bj
+                  wf%u_aibj,           & ! u_ck_bj
                   (n_cc2_o)*(n_cc2_v), &
                   c_bj_active,         & ! c_bj
                   (n_cc2_o)*(n_cc2_v), &
@@ -283,7 +268,7 @@ contains
 !$omp end parallel do
 !
       call mem%alloc(u_cjbk, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
-      call sort_1234_to_3214(wf%u, u_cjbk, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
+      call sort_1234_to_3214(wf%u_aibj, u_cjbk, n_cc2_v, n_cc2_o, n_cc2_v, n_cc2_o)
 !
       call mem%alloc(Y_ik, wf%n_o, n_cc2_o)
 !

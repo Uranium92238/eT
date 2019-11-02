@@ -87,4 +87,32 @@ contains
 !
    end subroutine destruct_t2bar_doubles
 !
+!
+   module subroutine initialize_u_aibj_doubles(wf)
+!!
+!!    Initialize u_aibj
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
+!!
+      implicit none
+!
+      class(doubles) :: wf
+!
+      if (.not. allocated(wf%u_aibj)) call mem%alloc(wf%u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+   end subroutine initialize_u_aibj_doubles
+!
+!
+   module subroutine destruct_u_aibj_doubles(wf)
+!!
+!!    Destruct u_aibj
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
+!!
+      implicit none
+!
+      class(doubles) :: wf
+!
+      if (allocated(wf%u_aibj)) call mem%dealloc(wf%u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+   end subroutine destruct_u_aibj_doubles
+!
 end submodule initialize_destruct_doubles 

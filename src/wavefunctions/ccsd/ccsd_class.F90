@@ -56,6 +56,7 @@ module ccsd_class
       procedure :: print_dominant_x2                           => print_dominant_x2_ccsd
       procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccsd
       procedure :: print_dominant_x_amplitudes                 => print_dominant_x_amplitudes_ccsd
+      procedure :: construct_u_aibj                            => construct_u_aibj_ccsd
 !
 !     Routines related to omega
 !
@@ -444,6 +445,38 @@ contains
       call daxpy(wf%n_gs_amplitudes, one, dt, 1, t, 1)    
 !
    end subroutine form_newton_raphson_t_estimate_ccsd
+!
+!
+   subroutine construct_u_aibj_ccsd(wf)
+!!
+!!    Construct u_aibj
+!!    Written by Tor S. Haugland, Nov 2019
+!!
+!!    Construct
+!!       u_aibj = 2t_aibj - t_ajbi
+!!
+      implicit none
+!
+      class(ccsd),                  intent(inout)          :: wf
+!
+      real(dp), dimension(:,:,:,:), allocatable :: t_aibj
+!
+      type(timings) :: timer
+!
+      timer = timings('Construct u_aibj', pl='debug')
+      call timer%turn_on()
+!
+      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_aibj, wf%n_t1)
+!
+      call copy_and_scale(two,    t_aibj, wf%u_aibj, wf%n_v**2 * wf%n_o**2)
+      call add_1432_to_1234(-one, t_aibj, wf%u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
+!
+   end subroutine construct_u_aibj_ccsd
 !
 !
 end module ccsd_class

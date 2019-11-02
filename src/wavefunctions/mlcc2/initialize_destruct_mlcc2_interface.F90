@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine initialize_u_mlcc2(wf)
+   module subroutine initialize_u_aibj_mlcc2(wf)
 !!
 !!    Initialize u 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
@@ -26,10 +26,10 @@
 !
       class(mlcc2) :: wf
 !
-   end subroutine initialize_u_mlcc2
+   end subroutine initialize_u_aibj_mlcc2
 !
 !
-   module subroutine destruct_u_mlcc2(wf)
+   module subroutine destruct_u_aibj_mlcc2(wf)
 !!
 !!    Initialize u 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
@@ -38,7 +38,7 @@
 !
       class(mlcc2) :: wf
 !
-   end subroutine destruct_u_mlcc2
+   end subroutine destruct_u_aibj_mlcc2
 !
 !
    module subroutine initialize_amplitudes_mlcc2(wf)

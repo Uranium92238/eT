@@ -73,7 +73,7 @@ contains
       wf%x2 = t(wf%n_gs_amplitudes+1:wf%n_es_amplitudes)
 !
       call wf%construct_fock()
-      call wf%construct_u()
+      call wf%construct_u_aibj()
 !
       call zero_array(omega, wf%n_es_amplitudes)
 !

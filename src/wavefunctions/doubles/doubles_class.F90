@@ -39,6 +39,8 @@ module doubles_class
       real(dp), dimension(:), allocatable :: t2
       real(dp), dimension(:), allocatable :: t2bar
 !
+      real(dp), dimension(:,:,:,:), allocatable :: u_aibj ! 2t_aibj - t_ajbi
+!
       integer :: n_t2
 !
       type(sequential_file) :: jacobian_a1_intermediate_vv
@@ -72,6 +74,9 @@ module doubles_class
 !
       procedure :: initialize_t2 => initialize_t2_doubles
       procedure :: destruct_t2   => destruct_t2_doubles
+!
+      procedure :: initialize_u_aibj  => initialize_u_aibj_doubles
+      procedure :: destruct_u_aibj    => destruct_u_aibj_doubles
 !
       procedure :: initialize_t2bar => initialize_t2bar_doubles
       procedure :: destruct_t2bar   => destruct_t2bar_doubles
