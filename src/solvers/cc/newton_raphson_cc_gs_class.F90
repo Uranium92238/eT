@@ -181,8 +181,6 @@ contains
                           ints=[solver%max_micro_iterations],    &
                           pl='m', fs='(t6,a)')
 !
-      flush(output%unit)
-!
    end subroutine print_settings_newton_raphson_cc_gs
 !
 !

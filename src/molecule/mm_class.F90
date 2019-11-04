@@ -280,7 +280,6 @@ contains
 !
           endIf
 !  
-         flush(output%unit)
 !
       enddo 
 !

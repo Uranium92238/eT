@@ -282,8 +282,6 @@ contains
 !
       endif 
 !
-      flush(output%unit)
-!
       call mem%dealloc(residual, wf%n_gs_amplitudes)
       call mem%dealloc(multipliers, wf%n_gs_amplitudes)
       call mem%dealloc(epsilon, wf%n_gs_amplitudes)

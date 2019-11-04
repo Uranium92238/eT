@@ -276,7 +276,6 @@ contains
             call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
 !
             call solver%print_summary(wf)
-            flush(output%unit)
 !
          else
 !
