@@ -71,6 +71,7 @@ program eT_program
    write(output%unit,'(t4, a, a)')    'Author:                ','Contribution(s):'
    write(output%unit,'(t3, a)')      '----------------------------------------------------------------------------------'
    write(output%unit,'(t4, a, a)')    'Josefine H. Andersen   ','first order properties'
+   write(output%unit,'(t4, a, a)')    'Alice Balbi            ','CC propagation'
    write(output%unit,'(t4, a, a)')    'Sarai D. Folkestad     ','program design, HF, CCS, CC2, CCSD, libint-interface,'
    write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS, DIIS-tool'
    write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties, IP'
@@ -86,7 +87,7 @@ program eT_program
    write(output%unit,'(t4, a, a)')    '                       ','BFGS-tool                                              '
    write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, launch script, file system'
    write(output%unit,'(t4, a, a)')    'Alexander C. Paul      ','CC2, CC3, first order properties'
-   write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2'
+   write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2, CC propagation, FFT solver'
    write(output%unit,'(t4, a, a)')    'Åsmund H. Tveten       ','HF'
    write(output%unit,'(t3,a)')       '----------------------------------------------------------------------------------'
    write(output%unit,'(t4,a/)')       'Other contributors: A. Balbi, M. Scavino'
@@ -236,6 +237,7 @@ subroutine cc_calculation(system)
    use es_engine_class, only: es_engine
    use zop_engine_class, only: zop_engine 
    use fop_engine_class, only: fop_engine 
+   use td_engine_class, only: td_engine 
 !
    implicit none
 !
@@ -302,6 +304,10 @@ subroutine cc_calculation(system)
    elseif (input%requested_keyword_in_section('ground state', 'do')) then
 !
       cc_engine = gs_engine()
+!
+   elseif (input%requested_keyword_in_section('time dependent state', 'do')) then
+!
+      cc_engine = td_engine()
 !
    else
 !

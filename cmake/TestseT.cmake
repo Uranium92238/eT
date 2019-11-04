@@ -74,6 +74,7 @@ add_eT_runtest(mp2_energy_qmfq                              "eT;short;hf;mp2;qmm
 add_eT_runtest(ccs_frozen_core                              "eT;short;ccs;gs;es;frozen core")
 add_eT_runtest(ccs_oscillator_strength_eom                  "eT;short;ccs;es;eom")
 add_eT_runtest(ccs_eom_diis_parallel_states                 "eT;short;ccs;es;eom;diis;parallel states")
+add_eT_runtest(ccs_td_rk4                                   "eT;short;ccs;complex;td")
 #
 add_eT_runtest(cc2_gs_energy                                "eT;short;cc2;gs")
 add_eT_runtest(cc2_gs_energy_batched_cd                     "eT;short;cc2;gs;pcd")

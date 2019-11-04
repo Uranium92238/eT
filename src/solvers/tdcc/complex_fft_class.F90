@@ -123,11 +123,14 @@ contains
 !!
 !!    Do the complex fast Fourier transform (complex FFT) of the time series to get an angular frequency spectrum.
 !!
+      use iso_fortran_env, only: iostat_end
+!
       implicit none 
 !
       class(complex_fft) :: solver
 !
-      integer :: i, work_save_length, work_length, error_index, n_unused_lines, n_complex_fft_lines
+      integer :: io, i, work_save_length, work_length, error_index, n_unused_lines, &
+                 n_complex_fft_lines
 !
       real(dp) :: t, sampling_angular_frequency, angular_frequency_resolution
 !
@@ -138,29 +141,52 @@ contains
 !
       call solver%time_series_file%open_('read', 'rewind')
 !
-!     Get number of unused lines before the start of the time series
+!     Get number of unused lines before the start of the time series, stop reading if
+!     reaching end of file
 !
       n_unused_lines = 0
       n_complex_fft_lines = 0
 !
-      do while (.not. solver%time_series_file%is_eof())
-         call solver%time_series_file%read_(t)
-         if (t .ge. solver%ti) then
+      do
+!
+         call solver%time_series_file%read_(t, io_stat=io)
+!
+!        Reached initial time of time series, or end of file
+!
+         if ((t .ge. solver%ti) .or. (io .eq. iostat_end)) then
             n_complex_fft_lines = 1
             exit
+!
+         elseif (io .ne. 0) then
+            call output%error_msg('complex FFT file reading failed.')
+!
          endif
+!
          n_unused_lines = n_unused_lines + 1
+!
       enddo
 !
-!     Get number of lines after the start and before the end of the time series
+!     Get number of lines after the start and before the end of the time series, stop reading if
+!     reaching end of file
 !
-      do while (.not. solver%time_series_file%is_eof())
-         call solver%time_series_file%read_(t)
-         if (t .gt. solver%tf) then
+      do
+!
+         call solver%time_series_file%read_(t, io_stat=io)
+!
+!        Reached initial time of time series, or end of file
+!
+         if ((t .gt. solver%tf) .or. (io .eq. iostat_end)) then
             exit
+!
+         elseif (io .ne. 0) then
+            call output%error_msg('complex FFT file reading failed.')
+!
          endif
-         n_complex_fft_lines = n_complex_fft_lines + 1
+!
+         n_complex_fft_lines = 1
+!
       enddo
+!
 !
       call solver%time_series_file%rewind_
 !

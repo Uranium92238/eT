@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (ccs_class) zop_ccs
+submodule (ccs_class) zop_ccs_complex
 !
 !!
 !!    Zeroth order properties submodule 
@@ -33,7 +33,7 @@ submodule (ccs_class) zop_ccs
 contains
 !
 !
-   module subroutine prepare_for_density_ccs(wf)
+   module subroutine prepare_for_density_ccs_complex(wf)
 !!
 !!    Prepare for the construction of density matrices
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
@@ -47,15 +47,15 @@ contains
       call output%printf('No preparations for the density for (a0) wavefunction.', pl='minimal', &
                          fs='(/t3,a)', chars=[trim(wf%name_)])
 !
-   end subroutine prepare_for_density_ccs
+   end subroutine prepare_for_density_ccs_complex
 !
 !
-   module subroutine construct_gs_density_ccs(wf)
+   module subroutine construct_gs_density_ccs_complex(wf)
 !!
-!!    Construct one-electron density
+!!    Construct one_complex-electron density
 !!    Written by Sarai Dery Folkestad, 2019
 !!
-!!    Constructs the one-electron density 
+!!    Constructs the one_complex-electron density 
 !!    matrix in the T1 basis
 !!
 !!    D_pq = < Λ | E_pq | CC >
@@ -64,15 +64,15 @@ contains
 !
       class(ccs) :: wf
 !
-      call zero_array(wf%density, (wf%n_mo)**2)
+      call zero_array_complex(wf%density_complex, (wf%n_mo)**2)
 !
-      call wf%gs_one_el_density_ccs_oo(wf%density)
-      call wf%gs_one_el_density_ccs_vo(wf%density, wf%t1bar)
+      call wf%gs_one_el_density_ccs_oo_complex(wf%density_complex)
+      call wf%gs_one_el_density_ccs_vo_complex(wf%density_complex, wf%t1bar_complex)
 !
-   end subroutine construct_gs_density_ccs
+   end subroutine construct_gs_density_ccs_complex
 !
 !
-   module subroutine gs_one_el_density_ccs_oo_ccs(wf, density)
+   module subroutine gs_one_el_density_ccs_oo_ccs_complex(wf, density)
 !!
 !!    One electron density oo
 !!    Written by Sarai D. Folkestad, 2019
@@ -83,22 +83,22 @@ contains
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
       integer :: i
 !
 !$omp parallel do private(i)
       do i = 1, wf%n_o
 !
-         density(i,i) = density(i,i) + two  
+         density(i,i) = density(i,i) + two_complex  
 !
       enddo
 !$omp end parallel do
 !
-   end subroutine gs_one_el_density_ccs_oo_ccs
+   end subroutine gs_one_el_density_ccs_oo_ccs_complex
 !
 !
-   module subroutine gs_one_el_density_ccs_vo_ccs(wf, density, tbar_ai)
+   module subroutine gs_one_el_density_ccs_vo_ccs_complex(wf, density, tbar_ai)
 !!
 !!    One electron density vo
 !!    Written by Sarai D. Folkestad, 2019
@@ -109,8 +109,8 @@ contains
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
-      real(dp), dimension(wf%n_v, wf%n_o) :: tbar_ai
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
+      complex(dp), dimension(wf%n_v, wf%n_o) :: tbar_ai
 !
       integer :: i, a
 !
@@ -124,47 +124,46 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine gs_one_el_density_ccs_vo_ccs
+   end subroutine gs_one_el_density_ccs_vo_ccs_complex
 !
 !
-   module function calculate_expectation_value_ccs(wf, A, density) result(expectation_value)
+   module function calculate_expectation_value_ccs_complex(wf, A, density) result(expectation_value)
 !!
 !!    Calculate expectation value
 !!    Written by Sarai D. Folkestad, 2019
 !!
-!!    Calculate the expectation value of a one-electron
+!!    Calculate the expectation value of a one_complex-electron
 !!    operator Â
 !!
 !!       < A > = < Λ | Â | CC > = sum_pq A_pq D_pq
 !!
 !!    where A_pq are the T1-transformed integrals
-!!    and D_pq is the a one-electron density matrix
+!!    and D_pq is the a one_complex-electron density matrix
 !!    in the T1-basis
 !!
       implicit none
 !  
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: A
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: A
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: density
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: density
 !
-      real(dp) :: expectation_value
-!
-      real(dp) :: ddot
-!
-      expectation_value = ddot(wf%n_mo**2, A, 1, density, 1)
-!
-   end function calculate_expectation_value_ccs
+      complex(dp) :: expectation_value
 !
 !
-   module subroutine calculate_energy_ccs(wf)
+      expectation_value = our_zdotu(wf%n_mo**2, A, 1, density, 1)
+!
+   end function calculate_expectation_value_ccs_complex
+!
+!
+   module subroutine calculate_energy_ccs_complex(wf)
 !!
-!!    Calculate energy
+!!    Calculate energy_complex
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    Calculates the CCSD energy. This is only equal to the actual
-!!    energy when the ground state equations are solved, of course.
+!!    Calculates the CCSD energy_complex. This is only equal to the actual
+!!    energy_complex when the ground state equations are solved, of course.
 !!
 !!       E = E_hf + sum_aibj t_i^a t_j^b L_iajb
 !!
@@ -172,17 +171,17 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_iajb
+      complex(dp), dimension(:,:,:,:), allocatable :: g_iajb
 !
-      real(dp) :: correlation_energy 
+      complex(dp) :: correlation_energy 
 !
       integer :: a, i, b, j, ai, bj, aibj
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%get_ovov(g_iajb)
+      call wf%get_ovov_complex(g_iajb)
 !
-      correlation_energy = zero 
+      correlation_energy = zero_complex 
 !
 !$omp parallel do private(a,i,ai,bj,j,b,aibj) reduction(+:correlation_energy)
       do a = 1, wf%n_v
@@ -197,8 +196,8 @@ contains
 !
                   aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
 !
-                  correlation_energy = correlation_energy + (wf%t1(a,i))*(wf%t1(b,j))* &
-                                                      (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
+                  correlation_energy = correlation_energy + (wf%t1_complex(a,i))*(wf%t1_complex(b,j))* &
+                                                      (two_complex*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
 !
                enddo
             enddo
@@ -208,53 +207,52 @@ contains
 !
       call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      wf%energy = wf%hf_energy + correlation_energy
+      wf%energy_complex = wf%hf_energy_complex + correlation_energy
 !
-   end subroutine calculate_energy_ccs
+   end subroutine calculate_energy_ccs_complex
 !
 !
-   module subroutine calculate_energy_omega_term_ccs(wf)
+   module subroutine calculate_energy_omega_term_ccs_complex(wf)
 !!
-!!    Calculate energy omega term (CCS)
+!!    Calculate energy_complex omega term (CCS)
 !!    Written by Andreas Skeidsvoll, Jan 2019
 !!
-!!    Adds multipliers dot omega to the energy,
+!!    Adds multipliers dot omega to the energy_complex,
 !!
-!!       energy += Σ_μ tbar_μ Ω_μ,
+!!       energy_complex += Σ_μ tbar_μ Ω_μ,
 !!
-!!    which appears in the variational energy expression <Λ|H|CC> when Omega ≠ 0.
+!!    which appears in the variational energy_complex expression <Λ|H|CC> when Omega ≠ 0.
 !!    This routine does not have to be overwritten in descendants.
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(:), allocatable :: multipliers, omega
+      complex(dp), dimension(:), allocatable :: multipliers, omega
 !
-      real(dp), external :: ddot
 !
       call mem%alloc(multipliers, wf%n_gs_amplitudes)
       call mem%alloc(omega, wf%n_gs_amplitudes)
 !
-      call wf%get_multipliers(multipliers)
-      call wf%construct_omega(omega)
+      call wf%get_multipliers_complex(multipliers)
+      call wf%construct_omega_complex(omega)
 !
-      wf%energy = wf%energy + ddot(wf%n_gs_amplitudes, multipliers, 1, omega, 1)
+      wf%energy_complex = wf%energy_complex + our_zdotu(wf%n_gs_amplitudes, multipliers, 1, omega, 1)
 !
       call mem%dealloc(multipliers, wf%n_gs_amplitudes)
       call mem%dealloc(omega, wf%n_gs_amplitudes)
 !
-   end subroutine calculate_energy_omega_term_ccs
+   end subroutine calculate_energy_omega_term_ccs_complex
 !
 !
-   module subroutine calculate_energy_length_dipole_term_ccs(wf, electric_field)
+   module subroutine calculate_energy_length_dipole_term_ccs_complex(wf, electric_field)
 !!
-!!    Calculate energy length dipole term (CCS)
+!!    Calculate energy_complex length dipole term (CCS)
 !!    Written by Andreas Skeidsvoll, Jan 2019
 !!
-!!    Adds dipole part of the length gauge electromagnetic potential to the energy,
+!!    Adds dipole part of the length gauge electromagnetic potential to the energy_complex,
 !!
-!!       energy += 2 sum_ii (-μ·E)_ii,
+!!       energy_complex += 2 sum_ii (-μ·E)_ii,
 !!
 !!    where μ is the vector of electric dipole integral matrices and E is a uniform classical electric
 !!    vector field. This routine does not have to be overwritten in descendants.
@@ -263,28 +261,28 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(3), intent(in) :: electric_field
+      complex(dp), dimension(3), intent(in) :: electric_field
 !
-      real(dp), dimension(:,:,:), allocatable :: mu
+      complex(dp), dimension(:,:,:), allocatable :: mu
 !
       integer :: i
 !
 !     Construct t1 transformed dipole moment
 !
       call mem%alloc(mu, wf%n_mo, wf%n_mo, 3)
-      call wf%construct_mu(mu)
+      call wf%construct_mu_complex(mu)
 !
-!     Add one-electron electric field contribution to the diagonal of Fock and one-electron integral terms
+!     Add one_complex-electron electric field contribution to the diagonal of Fock and one_complex-electron integral terms
 !
       do i = 1, wf%n_o
 !
-         wf%energy = wf%energy - two*(mu(i, i, 1)*electric_field(1)   &
+         wf%energy_complex = wf%energy_complex - two_complex*(mu(i, i, 1)*electric_field(1)   &
                                       + mu(i, i, 2)*electric_field(2) &
                                       + mu(i, i, 3)*electric_field(3))
 !
       enddo
 !
-   end subroutine calculate_energy_length_dipole_term_ccs
+   end subroutine calculate_energy_length_dipole_term_ccs_complex
 !
 !
-end submodule zop_ccs
+end submodule zop_ccs_complex

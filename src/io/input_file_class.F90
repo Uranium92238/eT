@@ -123,6 +123,7 @@ contains
       type(section) :: memory 
       type(section) :: cc_zop 
       type(section) :: cc_fop 
+      type(section) :: cc_td
       type(section) :: method 
       type(section) :: solver_cholesky
       type(section) :: solver_scf
@@ -130,6 +131,10 @@ contains
       type(section) :: solver_cc_gs
       type(section) :: solver_cc_es
       type(section) :: solver_cc_multipliers 
+      type(section) :: solver_cc_propagation
+      type(section) :: solver_fft_dipole_moment
+      type(section) :: solver_fft_electric_field
+      type(section) :: electric_field
       type(section) :: active_atoms
       type(section) :: cc
       type(section) :: mlcc
@@ -172,14 +177,14 @@ contains
       calculations%name_    = 'do'
       calculations%required = .true.
 !
-      calculations%keywords = [character(len=25) ::         &
-                                 'ground state',            &
-                                 'ground state geoopt',     &
-                                 'excited state',           &
-                                 'zop',                     &
-                                 'fop',                     &
-                                 'cholesky eri',            &
-                                 'multipliers']
+      calculations%keywords = [character(len=25) :: 'ground state',         &
+                                                    'ground state geoopt',  &
+                                                    'excited state',        &
+                                                    'zop',                  &
+                                                    'fop',                  &
+                                                    'time dependent state', &
+                                                    'cholesky eri',         &
+                                                    'multipliers']
 !
       system%name_    = 'system'
       system%required = .true.
@@ -205,6 +210,12 @@ contains
                            'dipole length        ',   &
                            'lr                   ',   &
                            'eom                  ']
+!
+      cc_td%name_    = 'cc td'
+      cc_td%required = .false.
+      cc_td%keywords = [character(len=25) :: 'propagation',       &
+                                             'fft dipole moment', &
+                                             'fft electric field' ]
 !
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%required = .false.
@@ -280,6 +291,47 @@ contains
                                           'restart              ',   &
                                           'max iterations       ']
 !
+      solver_cc_propagation%name_    = 'solver cc propagation'
+      solver_cc_propagation%required = .false.
+      solver_cc_propagation%keywords = [character(len=25) :: 'initial time',          &
+                                                             'final time',            &
+                                                             'time step',             &
+                                                             'steps between output',  &
+                                                             'implicit threshold',    &
+                                                             'energy output',         &
+                                                             'dipole moment output',  &
+                                                             'electric field output', &
+                                                             'density diag output',   &
+                                                             'amplitudes output',     &
+                                                             'multipliers output',    &
+                                                             'integrator']
+!
+      solver_fft_dipole_moment%name_    = 'solver fft dipole moment'
+      solver_fft_dipole_moment%required = .false.
+      solver_fft_dipole_moment%keywords = [character(len=25) :: 'initial time', &
+                                                                'final time',   &
+                                                                'time step']
+!
+      solver_fft_electric_field%name_    = 'solver fft electric field'
+      solver_fft_electric_field%required = .false.
+      solver_fft_electric_field%keywords = [character(len=25) :: 'initial time', &
+                                                                 'final time',   &
+                                                                 'time step']
+!
+      electric_field%name_    = 'electric field'
+      electric_field%required = .false.
+      electric_field%keywords = [character(len=25) :: 'envelope',                  &
+                                                      'x polarization',            &
+                                                      'y polarization',            &
+                                                      'z polarization',            &
+                                                      'central time',              &
+                                                      'width',                     &
+                                                      'central angular frequency', &
+                                                      'peak strength',             &
+                                                      'phase shift',               &
+                                                      'repetition',                &
+                                                      'separation']
+!
       active_atoms%name_    = 'active atoms'
       active_atoms%required = .false.
       active_atoms%keywords = [character(len=25) ::       &
@@ -339,24 +391,29 @@ contains
 !
 !     Gather all sections into the file's section array 
 !
-      the_file%sections = [calculations,           &
-                           system,                 &
-                           memory,                 &
-                           method,                 &
-                           cc_zop,                 &
-                           cc_fop,                 &
-                           solver_cholesky,        &
-                           solver_scf,             &
-                           solver_scf_geoopt,      &
-                           solver_cc_gs,           &
-                           solver_cc_es,           &
-                           solver_cc_multipliers,  &
-                           active_atoms,           &
-                           mlcc,                   &
-                           cc,                     &
-                           mm,                     &
-                           mlhf,                   &
-                           global_print,           &
+      the_file%sections = [calculations,              &
+                           system,                    &
+                           memory,                    &
+                           method,                    &
+                           cc_zop,                    &
+                           cc_fop,                    &
+                           cc_td,                     &
+                           solver_cholesky,           &
+                           solver_scf,                &
+                           solver_scf_geoopt,         &
+                           solver_cc_gs,              &
+                           solver_cc_es,              &
+                           solver_cc_multipliers,     &
+                           solver_cc_propagation,     &
+                           solver_fft_dipole_moment,  &
+                           solver_fft_electric_field, &
+                           electric_field,            &
+                           active_atoms,              &
+                           mlcc,                      &
+                           cc,                        &
+                           mm,                        &
+                           mlhf,                      &
+                           global_print,              &
                            frozen_orbitals]
 !
       the_file%is_open = .false.

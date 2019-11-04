@@ -40,7 +40,11 @@ module wavefunction_class
 !
       character(len=40) :: name_
 !
-      real(dp) :: energy
+      real(dp)    :: energy
+      complex(dp) :: energy_complex
+!
+      real(dp),    dimension(3) :: dipole_moment
+      complex(dp), dimension(3) :: dipole_moment_complex
 !
       integer :: n_ao
       integer :: n_mo

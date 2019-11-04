@@ -31,6 +31,12 @@ module array_utilities
 !
    implicit none
 !
+   interface copy_
+      procedure :: copy_real,    &
+                   copy_complex, &
+                   copy_real_to_complex
+   end interface copy_
+!
    interface scale_diagonal
       procedure :: scale_real_diagonal_by_real, &
                    scale_complex_diagonal_by_real, &
@@ -1390,6 +1396,88 @@ contains
    end subroutine transpose_
 !
 !
+   subroutine copy_real(X, Y, n, m)
+!!
+!!    Copy real
+!!    Written by Andreas Skeidsvoll, Oct 2019
+!!
+!!    Sets Y as:
+!!
+!!       Y = X
+!!
+!!    where X and Y are real vectors of length n x m.
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+      integer, intent(in) :: m
+!
+      real(dp), dimension(n,m), intent(in)  :: X
+      real(dp), dimension(n,m), intent(out) :: Y
+!
+      call dcopy(n*m, X, 1, Y, 1)
+!
+   end subroutine copy_real
+!
+!
+   subroutine copy_complex(X, Y, n, m)
+!!
+!!    Copy complex
+!!    Written by Andreas Skeidsvoll, Oct 2019
+!!
+!!    Sets Y as:
+!!
+!!       Y = X
+!!
+!!    where X and Y are complex vectors of length n.
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+      integer, intent(in) :: m
+!
+      complex(dp), dimension(n,m), intent(in)  :: X
+      complex(dp), dimension(n,m), intent(out) :: Y
+!
+      call zcopy(n*m, X, 1, Y, 1)
+!
+   end subroutine copy_complex
+!
+!
+   subroutine copy_real_to_complex(X, Y, n, m)
+!!
+!!    Copy real to complex
+!!    Written by Andreas Skeidsvoll, Oct 2019
+!!
+!!    Sets Y as:
+!!
+!!       Y = X
+!!
+!!    where X is a real and Y is a complex vector of length n.
+!!
+      implicit none
+!
+      integer, intent(in) :: n
+      integer, intent(in) :: m
+!
+      real(dp),    dimension(n,m), intent(in) :: X
+      complex(dp), dimension(n,m), intent(out) :: Y
+!
+      integer :: i, j
+!
+!$omp parallel do private(i,j)
+      do j = 1, m
+         do i = 1, n
+!
+            Y(i, j) = cmplx(X(i, j), zero, dp)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine copy_real_to_complex
+!
+!
    subroutine copy_and_scale(alpha, X, Y, n)
 !!
 !!    Copy and scale
@@ -2483,7 +2571,37 @@ contains
       enddo
 !$omp end parallel do
 !
-end subroutine scale_complex_4_diagonal_by_complex_1324
+   end subroutine scale_complex_4_diagonal_by_complex_1324
+!
+!
+   complex(dp) function our_zdotu(n, zx, incx, zy, incy)
+!!
+!!    Our zdotu
+!!    Written by Andreas Skeidsvoll, Nov 2019
+!!
+!!    A custom zdotu routine, to make zdotu work on Macs
+!!
+      implicit none
+!
+      integer :: incx, incy, n
+!
+      complex(dp) :: zx(*), zy(*)
+!
+      integer :: i
+!
+      if ((incx .ne. 0) .and. (incy .ne. 0)) continue
+!
+      our_zdotu = zero_complex
+!
+!$omp parallel do schedule(static) private(i) reduction(+:our_zdotu)
+      do i = 1, n
+!
+         our_zdotu = our_zdotu + zx(i)*zy(i)
+!
+      enddo
+!$omp end parallel do
+!
+   end function our_zdotu
 !
 !
 end module array_utilities

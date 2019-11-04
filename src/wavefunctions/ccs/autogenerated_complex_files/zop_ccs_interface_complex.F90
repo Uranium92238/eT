@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine prepare_for_density_ccs(wf)
+   module subroutine prepare_for_density_ccs_complex(wf)
 !!
 !!    Prepare for the construction of density matrices
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
@@ -26,22 +26,22 @@
 !
       class(ccs), intent(inout) :: wf
 !
-   end subroutine prepare_for_density_ccs
+   end subroutine prepare_for_density_ccs_complex
 !
 !
-   module subroutine construct_gs_density_ccs(wf)
+   module subroutine construct_gs_density_ccs_complex(wf)
 !!
-!!    Construct one-electron density
+!!    Construct one_complex-electron density
 !!    Written by Sarai Dery Folkestad, 2019
 !!
       implicit none
 !
       class(ccs) :: wf
 !
-   end subroutine construct_gs_density_ccs
+   end subroutine construct_gs_density_ccs_complex
 !
 !
-   module subroutine gs_one_el_density_ccs_oo_ccs(wf, density)
+   module subroutine gs_one_el_density_ccs_oo_ccs_complex(wf, density)
 !!
 !!    One electron density oo
 !!    Written by Sarai D. Folkestad, 2019
@@ -50,12 +50,12 @@
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
-   end subroutine gs_one_el_density_ccs_oo_ccs
+   end subroutine gs_one_el_density_ccs_oo_ccs_complex
 !
 !
-   module subroutine gs_one_el_density_ccs_vo_ccs(wf, density, tbar_ai)
+   module subroutine gs_one_el_density_ccs_vo_ccs_complex(wf, density, tbar_ai)
 !!
 !!    One electron density vo
 !!    Written by Sarai D. Folkestad, 2019
@@ -64,13 +64,13 @@
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
-      real(dp), dimension(wf%n_v, wf%n_o) :: tbar_ai
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
+      complex(dp), dimension(wf%n_v, wf%n_o) :: tbar_ai
 !
-   end subroutine gs_one_el_density_ccs_vo_ccs
+   end subroutine gs_one_el_density_ccs_vo_ccs_complex
 !
 !
-   module function calculate_expectation_value_ccs(wf, A, density) result(expectation_value)
+   module function calculate_expectation_value_ccs_complex(wf, A, density) result(expectation_value)
 !!
 !!    Calculate expectation value
 !!    Written by Sarai D. Folkestad, 2019
@@ -79,48 +79,48 @@
 !  
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: A
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: A
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: density
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: density
 !
-      real(dp) :: expectation_value
+      complex(dp) :: expectation_value
 !
-   end function calculate_expectation_value_ccs
+   end function calculate_expectation_value_ccs_complex
 !
 !
-   module subroutine calculate_energy_ccs(wf)
+   module subroutine calculate_energy_ccs_complex(wf)
 !!
-!!    Calculate energy
+!!    Calculate energy_complex
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-   end subroutine calculate_energy_ccs
+   end subroutine calculate_energy_ccs_complex
 !
 !
-   module subroutine calculate_energy_omega_term_ccs(wf)
+   module subroutine calculate_energy_omega_term_ccs_complex(wf)
 !!
-!!    Calculate energy omega term (CCS)
+!!    Calculate energy_complex omega term (CCS)
 !!    Written by Andreas Skeidsvoll, Jan 2019
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-   end subroutine calculate_energy_omega_term_ccs
+   end subroutine calculate_energy_omega_term_ccs_complex
 !
 !
-   module subroutine calculate_energy_length_dipole_term_ccs(wf, electric_field)
+   module subroutine calculate_energy_length_dipole_term_ccs_complex(wf, electric_field)
 !!
-!!    Calculate energy length dipole term (CCS)
+!!    Calculate energy_complex length dipole term (CCS)
 !!    Written by Andreas Skeidsvoll, Jan 2019
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(3), intent(in) :: electric_field
+      complex(dp), dimension(3), intent(in) :: electric_field
 !
-   end subroutine calculate_energy_length_dipole_term_ccs
+   end subroutine calculate_energy_length_dipole_term_ccs_complex
