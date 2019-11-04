@@ -28,7 +28,7 @@ program eT_program
    use global_in 
    use global_out
    use timings_class, only : timings, timing
-   use memory_manager_class, only : mem
+   use memory_manager_class, only : mem, memory_manager
    use libint_initialization, only : initialize_libint, finalize_libint
    use molecular_system_class, only : molecular_system
 !
@@ -60,65 +60,29 @@ program eT_program
    eT_timer = timings("Total time in eT", pl='minimal')
    call eT_timer%turn_on()
 !
-!
 !  Print program banner
 !
-   write(output%unit,'(///t24,a)')                       'eT - a coupled cluster program '
-   write(output%unit,'(t8,a)')         'Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch'
-   flush(output%unit)
-!
-   write(output%unit,'(/t3, a)')     '----------------------------------------------------------------------------------'
-   write(output%unit,'(t4, a, a)')    'Author:                ','Contribution(s):'
-   write(output%unit,'(t3, a)')      '----------------------------------------------------------------------------------'
-   write(output%unit,'(t4, a, a)')    'Josefine H. Andersen   ','first order properties'
-   write(output%unit,'(t4, a, a)')    'Alice Balbi            ','CC propagation'
-   write(output%unit,'(t4, a, a)')    'Sarai D. Folkestad     ','program design, HF, CCS, CC2, CCSD, libint-interface,'
-   write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Davidson-tool, CVS, DIIS-tool'
-   write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties, IP'
-   write(output%unit,'(t4, a, a)')    '                       ','frozen core, MLCC2, MLHF'
-   write(output%unit,'(t4, a, a)')    'Tommaso Giovannini     ','QM/MM, Libint-interface'
-   write(output%unit,'(t4, a, a)')    'Linda Goletto          ','CC2, MLHF'
-   write(output%unit,'(t4, a, a)')    'Tor S. Haugland        ','SAD'
-   write(output%unit,'(t4, a, a)')    'Anders Hutcheson       ','frozen HF orbitals'
-   write(output%unit,'(t4, a, a)')    'Ida-Marie Høyvik       ','MLHF, frozen HF orbitals'
-   write(output%unit,'(t4, a, a)')    'Eirik F. Kjønstad      ','program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,'
-   write(output%unit,'(t4, a, a)')    '                       ','Cholesky decomposition, Libint-interface, Davidson-tool'
-   write(output%unit,'(t4, a, a)')    '                       ','zeroth order properties, first order properties, SAD   '
-   write(output%unit,'(t4, a, a)')    '                       ','BFGS-tool                                              '
-   write(output%unit,'(t4, a, a)')    'Rolf H. Myhre          ','CC3, Runtest-interface, launch script, file system'
-   write(output%unit,'(t4, a, a)')    'Alexander C. Paul      ','CC2, CC3, first order properties'
-   write(output%unit,'(t4, a, a)')    'Andreas Skeidsvoll     ','MP2, CC propagation, FFT solver'
-   write(output%unit,'(t4, a, a)')    'Åsmund H. Tveten       ','HF'
-   write(output%unit,'(t3,a)')       '----------------------------------------------------------------------------------'
-   write(output%unit,'(t4,a/)')       'Other contributors: A. Balbi, M. Scavino'
-   call output%flush_()   
+   call print_program_banner()
 !
    n_threads = 1
 !
 !$   n_threads = omp_get_max_threads()
 !
-   if (n_threads .eq. 1) then
-!
-      write(output%unit,'(t3,a,i0,a/)')   'Running on ',n_threads, ' OMP thread'
-!
-   else
-!
-      write(output%unit,'(t3,a,i0,a/)')   'Running on ',n_threads, ' OMP threads'
-!
-   endif
+   call output%printf('Running on (i0) OMP thread(s)', pl='minimal', fs='(/t3,a)', ints=[n_threads])
 !
    call input%check_for_errors()
 !
 !  Set print level in output and timing files
+!
    call set_global_print_levels()
 !
-!  Prepare memory manager and disk manager
+!  Create memory manager
 !
-   call mem%prepare()
+   mem = memory_manager()
 !
-   call initialize_libint()
+   call initialize_libint() ! Safe to use Libint from now on
 !
-!  Prepare molecular system 
+!  Create molecular system 
 !
    system = molecular_system()
 !
@@ -130,7 +94,7 @@ program eT_program
 !
    if (input%requested_cc_calculation()) call cc_calculation(system)
 !
-   call finalize_libint()
+   call finalize_libint() ! No longer safe to use Libint
 !
    call eT_timer%turn_off()
 !
@@ -138,7 +102,7 @@ program eT_program
 !
    call mem%check_for_leak()
 !
-   write(output%unit, '(/t3,a)') 'eT terminated successfully!'
+   call output%printf('eT terminated successfully!', pl='minimal', fs='(/t3,a)')
 !
    call output%close_()
    call input%close_()
@@ -355,4 +319,59 @@ subroutine set_global_print_levels()
    call timing%set_global_print_level(print_level)
 !
 end subroutine set_global_print_levels
+!
+!
+subroutine print_program_banner()
+!!
+!! Print program banner 
+!! Written by Eirik F. Kjønstad, 2019 
+!!
+!! Prints banner, author list, and list of contributors.
+!!
+   use global_out, only: output 
+!
+   implicit none 
+!
+   call output%printf('eT - a coupled cluster program ', pl='m', fs='(///t24,a)')
+   call output%printf('Original authors: Sarai D. Folkestad, Eirik F. Kjønstad,' &
+                     // ' and Henrik Koch', pl='m', fs='(t8,a)')
+!
+   call output%print_separator('m',82,'-', fs='(/t3,a)')
+!
+   call output%printf('Author:                 Contribution(s):', pl='m', fs='(t4,a)')
+!
+   call output%print_separator('m',82,'-', fs='(t3,a)')
+!
+   call output%printf('Josefine H. Andersen   first order properties', pl='m', fs='(t4,a)', ll=82)
+   call output%printf('Alice Balbi            CC propagation', pl='m', fs='(t4,a)', ll=82)
+!
+   call output%printf('Sarai D. Folkestad', pl='m', fs='(t4,a)', adv=.false.)
+   call output%printf('program design, HF, CCS, CC2, CCSD, Libint-interface, &
+                      &Cholesky decomposition, Davidson-tool, CVS, DIIS-tool, &
+                      &zeroth order properties, first order properties, IP, &
+                      &frozen core, MLCC2, MLHF', &
+                      pl='m', ffs='(t6,a)', fs='(t27,a)', ll=50)
+!
+   call output%printf('Tommaso Giovannini     QM/MM, PCM, Libint-interface', pl='m', fs='(t4,a)', ll=82)
+   call output%printf('Linda Goletto          CC2, MLHF', pl='m', fs='(t4,a)', ll=82)
+   call output%printf('Tor S. Haugland        SAD', pl='m', fs='(t4,a)', ll=82)
+   call output%printf('Anders Hutcheson       frozen HF orbitals', pl='m', fs='(t4,a)', ll=82)
+   call output%printf('Ida-Marie Høyvik       MLHF, frozen HF orbitals', pl='m', fs='(t4,a)', ll=82)
+!
+   call output%printf('Eirik F. Kjønstad', pl='m', fs='(t4,a)', adv=.false.)
+   call output%printf('program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool, &
+                      &Cholesky decomposition, Libint-interface, Davidson-tool, &
+                      &zeroth order properties, first order properties, SAD, &
+                      &BFGS-tool', pl='m', ffs='(t7,a)',fs='(t27,a)', ll=50)
+!
+   call output%printf('Rolf H. Myhre          CC3, Runtest-interface, launch script, file system', &
+                        pl='m', fs='(t4,a)', ll=82)
+   call output%printf('Alexander C. Paul      CC2, CC3, first order properties', pl='m', fs='(t4,a)', ll=82)
+   call output%printf('Andreas Skeidsvoll     MP2, CC propagation, FFT solver', pl='m', fs='(t4,a)', ll=82)
+   call output%printf('Åsmund H. Tveten       HF', pl='m', fs='(t4,a)', ll=82)
+!
+   call output%print_separator('m', 82, '-', fs='(t3,a)')
+   call output%printf('Other contributors: A. Balbi, M. Scavino', pl='m', fs='(t4,a)', ll=82) 
+!
+end subroutine print_program_banner
 !

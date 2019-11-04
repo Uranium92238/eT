@@ -41,7 +41,8 @@ contains
 !
 !     For now, do nothing.
 !
-      write(output%unit,'(/t3,a,a,a,a,a)') 'No preparation for ', trim(wf%name_), ' excited state equation.'
+      call output%printf('- No preparations for the ' // trim(wf%name_) // &
+                         ' excited state equation.', pl='v', fs='(/t3,a)')
 !
    end subroutine prepare_for_jacobian_ccs
 !

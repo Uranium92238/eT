@@ -1085,9 +1085,9 @@ contains
 !
       call output%printf('Active atoms:', fs='(/t6, a)', pl='minimal')
 !
-      call output%printf('--------------------------------------', fs='(t6, a)', pl='minimal')
+      call output%print_separator('m', 38,'-', fs='(t6, a)')
       call output%printf(' Atom   Symbol       Basis     Method', fs='(t6, a)', pl='minimal')
-      call output%printf('--------------------------------------', fs='(t6, a)', pl='minimal')
+      call output%print_separator('m', 38,'-', fs='(t6, a)')
 !
 !     Reorder atoms
 !
@@ -1164,7 +1164,7 @@ contains
 !
       enddo
 !
-      call output%printf('--------------------------------------', fs='(t6, a)', pl='minimal')
+      call output%print_separator('m', 38,'-', fs='(t6, a)')
       call output%printf('Total number of active atoms: (i0)', ints=[n_total], fs='(t6, a)', pl='minimal')
       call output%printf('OBS: Atoms will be reordered, active atoms first', fs='(t6, a)', pl='minimal')
 !

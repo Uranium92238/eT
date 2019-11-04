@@ -236,8 +236,7 @@ contains
 !
       else ! List is empty
 !
-         write(output%unit, '(a)') 'Error: attempted to remove node from empty list.'
-         stop
+         call output%error_msg('Attempted to remove node from empty list.')
 !
       endif
 !
@@ -263,8 +262,7 @@ contains
 !
       if (n .gt. list%n_nodes .or. n .lt. 1) then
 !
-         write(output%unit, '(t3,a)') 'Error: attempted to get an element not in the list.'
-         stop
+         call output%error_msg('Attempted to get an element not in the list.')
 !
       endif
 !
@@ -296,8 +294,7 @@ contains
 !
       if (n .gt. list%n_nodes .or. n .lt. 1) then
 !
-         write(output%unit, '(t3,a)') 'Error: attempted to get a node not in the list.'
-         stop
+         call output%error_msg('Attempted to get a node not in the list.')
 !
       endif
 !
@@ -332,9 +329,7 @@ contains
 !
       if (n .gt. list%n_nodes .or. n .lt. 1) then
 !
-         write(output%unit, '(t3,a)') 'Error: attempted to set an element not in the list.'
-         flush(output%unit)
-         stop
+         call output%error_msg('Attempted to set an element not in the list.')
 !
       endif
 !
@@ -348,9 +343,7 @@ contains
 !
       if (n_rows .ne. node_pointer%n_rows .or. n_columns .ne. node_pointer%n_columns) then
 !
-         write(output%unit, '(t3,a)') 'Error: attempted to set an element with wrong dimensions.'
-         flush(output%unit)
-         stop
+         call output%error_msg('Attempted to set an element with wrong dimensions.')
 !
       endif
 !
@@ -374,8 +367,7 @@ contains
 !
       if (n .gt. list%n_nodes .or. n .lt. 1) then
 !
-         write(output%unit, '(t3,a)') 'Error: attempted to get an element not in the list.'
-         stop
+         call output%error_msg('Attempted to get an element not in the list.')
 !
       endif
 !
@@ -407,8 +399,7 @@ contains
 !
       if (n .gt. list%n_nodes .or. n .lt. 1) then
 !
-         write(output%unit, '(t3,a)') 'Error: attempted to get an element not in the list.'
-         stop
+         call output%error_msg('Attempted to get an element not in the list.')
 !
       endif
 !
@@ -440,8 +431,7 @@ contains
 !
        if (n .gt. (list%n_nodes + 1) .or. n .lt. 1) then
 !
-         write(output%unit, '(t3,a)') 'Error: attempted to get an element not in the list.'
-         stop
+         call output%error_msg('Attempted to get an element not in the list.')
 !
       endif
 !
@@ -497,8 +487,7 @@ contains
 !
          else
 !
-            write(output%unit, '(a47, i3, a15)') 'Error: attempted to insert element at position ', n, ' of empty list!'
-            stop
+            call output%error_msg('Attempted to insert element into empty list at position', n)
 !
          endif
 !
@@ -524,8 +513,7 @@ contains
 !
        if (n .gt. (list%n_nodes + 1) .or. n .lt. 1) then
 !
-         write(output%unit, '(t3,a)') 'Error: attempted to remove an element not in the list.'
-         stop
+         call output%error_msg('Attempted to remove an element not in the list.')
 !
       endif
 !

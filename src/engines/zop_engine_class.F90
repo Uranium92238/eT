@@ -245,7 +245,7 @@ contains
       call output%printf('- Operator: (a0) [a.u.]', pl='minimal', fs='(/t3,a,a,a)', chars=[operator_])
 !
       call output%printf('Cart. comp.  Electronic         Nuclear             Total           ', pl='minimal', fs='(/t6,a)')
-      call output%printf('--------------------------------------------------------------------', pl='minimal', fs='(t6,a)')
+      call output%print_separator('m', 68, '-', fs='(t6,a)')
 !
       do k = 1, n_components
 !
@@ -254,7 +254,7 @@ contains
 !
       enddo
 !
-      call output%printf('--------------------------------------------------------------------', pl='minimal', fs='(t6,a)')
+      call output%print_separator('m', 68, '-', fs='(t6,a)')
 !
    end subroutine print_operator_zop_engine
 !

@@ -513,8 +513,10 @@ contains
 !
             if (the_file%sections(k)%required) then 
 !
-               write(output%unit, '(/t3,a,a,a)') 'All calculations require the section "', trim(the_file%sections(k)%name_), &
-                                                   '". It appears to be missing.'
+               call output%printf('All calculations require the section "' &
+                                   // trim(the_file%sections(k)%name_) //  &
+                                  '". It appears to be missing.',          &
+                                  fs='(/t3,a)', pl='m')
 !
                call output%error_msg('Something is wrong in the input file. See above.')
 ! 
@@ -573,7 +575,9 @@ contains
 !
             if (.not. recognized) then 
 !
-               write(output%unit, '(/t3,a,a,a)') 'Could not recognize section named "', trim(adjustl(line(4 : 200))), '".'
+               call output%printf('Could not recognize section named "' &
+                                   // trim(adjustl(line(4 : 200))) //   &
+                                   '".', fs='(/t3,a)', pl='m')
 !
                call the_file%print_sections()
 !
@@ -609,11 +613,11 @@ contains
 !
       integer :: k
 !
-      write(output%unit, '(/t3,a/)') 'The valid input sections are:'
+      call output%printf('The valid input sections are:', pl='m', fs='(/t3,a/)')
 !
       do k = 1, size(the_file%sections)
 !
-         write(output%unit, '(t6,a)') the_file%sections(k)%name_
+         call output%printf('(a0)', chars=[trim(the_file%sections(k)%name_)], pl='m', fs='(t6,a)')
 !
       enddo
 !
@@ -670,8 +674,10 @@ contains
 !
             if (.not. recognized) then 
 !
-               write(output%unit, '(/t3,a,a,a,a,a)') 'Could not recognize keyword "', trim(keyword), &
-                                                         '" in section "', trim(the_section%name_), '".'
+               call output%printf('Could not recognize keyword "' // trim(keyword) // &
+                                  '" in section "' // trim(the_section%name_) //      &
+                                  '".', pl='m', fs='(/t3,a)') 
+                                                         
 !
                call the_section%print_keywords()
 !
@@ -687,8 +693,11 @@ contains
 !
          if (keywords_instances(k) .gt. 1) then 
 !
-            write(output%unit, '(/t3,a,i0,a,a,a,a,a)') 'Found ', keywords_instances(k), ' instances of the keyword "', &
-                              trim(the_section%keywords(k)), '" in the section "', the_section%name_, '".'
+         call output%printf('Found (i0) instances of the keyword "'  &
+                             // trim(the_section%keywords(k)) //     &
+                             '" in the section "'                    &
+                             // the_section%name_ // '".',           &
+                             ints=[keywords_instances(k)], pl='m', fs='(/t3,a)')
 !
             call output%error_msg('Something is wrong in the input file. See above.')
 !
@@ -1880,8 +1889,9 @@ contains
 !             
              if(abs(charge(current_atom)).lt.1.0d-8) then
 !             
-                write(output%unit,'(/t6,a)') 'Electrostatic Embedding QM/MM '
-                write(output%unit,'(t6,a43,i4)') 'WARNING! You have put zero charge on atom =', current_atom
+                call output%printf('Electrostatic Embedding QM/MM ', pl='m', fs='(/t6,a)')
+                call output%printf('Warning: You have put zero charge on atom = (i0)', &
+                                    ints=[current_atom], pl='m', fs='(t6,a)')
 !                
              endif
 !
@@ -1911,11 +1921,9 @@ contains
 !             
              if(abs(eta(current_atom)).lt.1.0d-8) then
 !             
-                write(output%unit,'(/t6,a)') 'Polarizable QM/FQ '
-                write(output%unit,'(t6,a51,i4)') 'WARNING! You have put zero chem. hardness on atom: ', current_atom
-                write(output%unit,'(t6,a)') 'FATAL ERROR'
-                write(output%unit,'(/t6,a)') 'eT programm will stop.'
-                stop
+               call output%printf('Polarizable QM/FQ ', pl='m', fs='(/t6,a)')
+               call output%error_msg('You have put zero chemical hardness on atom:', &
+                                    error_int=current_atom)
 !                
              endif
 !             
@@ -1950,7 +1958,6 @@ contains
       call convert_to_lowercase(line)
 !
    end function read_adjustl_lower_input_file
-
 !
 !
    subroutine move_to_mm_geometry_input_file(the_file, string, n_records)

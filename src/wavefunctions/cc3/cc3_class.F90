@@ -1530,7 +1530,7 @@ contains
                                           &roots are biorthogonal in cc3.')
 !
                   call output%printf('Found a degeneracy between:', fs='(/t6,a)', pl='n')
-                  call output%printf('-----------------------------', fs='(t6,a)', pl='n')
+                  call output%print_separator('n', 29,'-', fs='(t6,a)')
                   call output%printf('State     Excitation Energy', fs='(t6,a)', pl='n')
 !
                   do p = 1, n_degeneracy

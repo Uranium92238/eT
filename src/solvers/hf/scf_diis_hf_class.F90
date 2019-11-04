@@ -319,8 +319,8 @@ contains
 !
       prev_energy = zero
 !
-      call output%printf('Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)',fs='(/t3,a)',pl='normal') 
-      call output%printf('---------------------------------------------------------------',fs='(t3,a)',pl='normal') 
+      call output%printf('Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)',fs='(/t3,a)',pl='n') 
+      call output%print_separator('n', 63, '-')
 !
       iteration = 1
 !
@@ -348,8 +348,7 @@ contains
 !
          if (solver%converged) then
 !
-            call output%printf('---------------------------------------------------------------', &
-                              pl='normal',fs='(t3,a)') 
+            call output%print_separator('n', 63, '-', fs='(t3,a)')
 !
             call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
 !
@@ -410,9 +409,9 @@ contains
 !
       if (.not. solver%converged) then
 !
-         call output%printf('---------------------------------------------------------------', &
-                              pl='normal',fs='(t3,a)') 
-         call output%error_msg('Was not able to converge the equations in the given number of maximum iterations.')
+         call output%print_separator('n', 63, '-',fs='(t3,a)')
+         call output%error_msg('Was not able to converge the equations       &
+                               &in the given number of maximum iterations.')
 !
       endif
 !
