@@ -36,10 +36,14 @@ module doubles_class
 !
    type, abstract, extends(ccs) :: doubles
 !
-      real(dp), dimension(:), allocatable :: t2
-      real(dp), dimension(:), allocatable :: t2bar
+      real(dp),    dimension(:), allocatable :: t2
+      complex(dp), dimension(:), allocatable :: t2_complex
 !
-      real(dp), dimension(:,:,:,:), allocatable :: u_aibj ! 2t_aibj - t_ajbi
+      real(dp),    dimension(:), allocatable :: t2bar
+      complex(dp), dimension(:), allocatable :: t2bar_complex
+!
+      real(dp),    dimension(:,:,:,:), allocatable :: u_aibj ! 2t_aibj - t_ajbi
+      complex(dp), dimension(:,:,:,:), allocatable :: u_aibj_complex
 !
       integer :: n_t2
 !
@@ -48,50 +52,76 @@ module doubles_class
 !
    contains
 !
-!     Omega routines in common for doubles and doubles
+!     Omega procedures in common for doubles and doubles
 !
-      procedure :: omega_doubles_a1 => omega_doubles_a1_doubles
-      procedure :: omega_doubles_b1 => omega_doubles_b1_doubles
-      procedure :: omega_doubles_c1 => omega_doubles_c1_doubles
+      procedure :: omega_doubles_a1                      => omega_doubles_a1_doubles
+      procedure :: omega_doubles_a1_complex              => omega_doubles_a1_doubles_complex
 !
-!     Jacobian transformation routines in common for doubles and doubles
+      procedure :: omega_doubles_b1                      => omega_doubles_b1_doubles
+      procedure :: omega_doubles_b1_complex              => omega_doubles_b1_doubles_complex
 !
-      procedure :: jacobian_doubles_a1 => jacobian_doubles_a1_doubles
-      procedure :: jacobian_doubles_b1 => jacobian_doubles_b1_doubles
-      procedure :: jacobian_doubles_c1 => jacobian_doubles_c1_doubles
-      procedure :: jacobian_doubles_d1 => jacobian_doubles_d1_doubles
-      procedure :: jacobian_doubles_a2 => jacobian_doubles_a2_doubles
+      procedure :: omega_doubles_c1                      => omega_doubles_c1_doubles
+      procedure :: omega_doubles_c1_complex              => omega_doubles_c1_doubles_complex
 !
-      procedure :: save_jacobian_a1_intermediates  => save_jacobian_a1_intermediates_doubles
+!     Jacobian transformation procedures in common for doubles and doubles
 !
-!     Jacobian transpose transformation routines in common for doubles and doubles
+      procedure :: jacobian_doubles_a1                   => jacobian_doubles_a1_doubles
+      procedure :: jacobian_doubles_b1                   => jacobian_doubles_b1_doubles
+      procedure :: jacobian_doubles_c1                   => jacobian_doubles_c1_doubles
+      procedure :: jacobian_doubles_d1                   => jacobian_doubles_d1_doubles
+      procedure :: jacobian_doubles_a2                   => jacobian_doubles_a2_doubles
 !
-      procedure :: jacobian_transpose_doubles_a1   => jacobian_transpose_doubles_a1_doubles
-      procedure :: jacobian_transpose_doubles_b1   => jacobian_transpose_doubles_b1_doubles
-      procedure :: jacobian_transpose_doubles_a2   => jacobian_transpose_doubles_a2_doubles
+      procedure :: save_jacobian_a1_intermediates        => save_jacobian_a1_intermediates_doubles
 !
-!     Initializations and destructions   
+!     Jacobian transpose transformation procedures in common for CC2 and CCSD
 !
-      procedure :: initialize_t2 => initialize_t2_doubles
-      procedure :: destruct_t2   => destruct_t2_doubles
+      procedure :: jacobian_transpose_doubles_a1         => jacobian_transpose_doubles_a1_doubles
+      procedure :: jacobian_transpose_doubles_a1_complex => jacobian_transpose_doubles_a1_doubles_complex
 !
-      procedure :: initialize_u_aibj  => initialize_u_aibj_doubles
-      procedure :: destruct_u_aibj    => destruct_u_aibj_doubles
+      procedure :: jacobian_transpose_doubles_b1         => jacobian_transpose_doubles_b1_doubles
+      procedure :: jacobian_transpose_doubles_b1_complex => jacobian_transpose_doubles_b1_doubles_complex
 !
-      procedure :: initialize_t2bar => initialize_t2bar_doubles
-      procedure :: destruct_t2bar   => destruct_t2bar_doubles
+      procedure :: jacobian_transpose_doubles_a2         => jacobian_transpose_doubles_a2_doubles
+      procedure :: jacobian_transpose_doubles_a2_complex => jacobian_transpose_doubles_a2_doubles_complex
+!
+!     Initialization/destruction procedures
+!
+      procedure :: initialize_t2                         => initialize_t2_doubles
+      procedure :: initialize_t2_complex                 => initialize_t2_doubles_complex
+!
+      procedure :: destruct_t2                           => destruct_t2_doubles
+      procedure :: destruct_t2_complex                   => destruct_t2_doubles_complex
+!
+      procedure :: initialize_t2bar                      => initialize_t2bar_doubles
+      procedure :: initialize_t2bar_complex              => initialize_t2bar_doubles_complex
+!
+      procedure :: destruct_t2bar                        => destruct_t2bar_doubles
+      procedure :: destruct_t2bar_complex                => destruct_t2bar_doubles_complex
+!
+      procedure :: initialize_u_aibj                     => initialize_u_aibj_doubles
+      procedure :: initialize_u_aibj_complex             => initialize_u_aibj_doubles_complex
+!
+      procedure :: destruct_u_aibj                       => destruct_u_aibj_doubles
+      procedure :: destruct_u_aibj_complex               => destruct_u_aibj_doubles_complex
 !
 !     Projectors for excited and ionized states
 !
-      procedure :: get_cvs_projector   => get_cvs_projector_doubles
-      procedure :: get_ip_projector    => get_ip_projector_doubles
+      procedure :: get_cvs_projector                     => get_cvs_projector_doubles
+      procedure :: get_ip_projector                      => get_ip_projector_doubles
 !
 !     Ground state density
 !
-      procedure :: construct_gs_density          => construct_gs_density_doubles
-      procedure :: gs_one_el_density_doubles_oo  => gs_one_el_density_doubles_oo_doubles
-      procedure :: gs_one_el_density_doubles_vv  => gs_one_el_density_doubles_vv_doubles
-      procedure :: gs_one_el_density_doubles_ov  => gs_one_el_density_doubles_ov_doubles
+      procedure :: construct_gs_density                  => construct_gs_density_doubles
+      procedure :: construct_gs_density_complex          => construct_gs_density_doubles_complex
+!
+      procedure :: gs_one_el_density_doubles_oo          => gs_one_el_density_doubles_oo_doubles
+      procedure :: gs_one_el_density_doubles_oo_complex  => gs_one_el_density_doubles_oo_doubles_complex
+
+      procedure :: gs_one_el_density_doubles_vv          => gs_one_el_density_doubles_vv_doubles
+      procedure :: gs_one_el_density_doubles_vv_complex  => gs_one_el_density_doubles_vv_doubles_complex
+!
+      procedure :: gs_one_el_density_doubles_ov          => gs_one_el_density_doubles_ov_doubles
+      procedure :: gs_one_el_density_doubles_ov_complex  => gs_one_el_density_doubles_ov_doubles_complex
 !
 !     Transition densities
 !
@@ -102,19 +132,25 @@ module doubles_class
 !
 !     Eta and cxi
 !
-      procedure :: construct_eom_etaX  => construct_eom_etaX_doubles
-      procedure :: construct_etaX      => construct_etaX_doubles 
+      procedure :: construct_eom_etaX                    => construct_eom_etaX_doubles
 !
-      procedure :: etaX_eom_a       => etaX_eom_a_doubles    
-      procedure :: etaX_doubles_a1  => etaX_doubles_a1_doubles    
-      procedure :: etaX_doubles_a2  => etaX_doubles_a2_doubles    
-      procedure :: etaX_doubles_b2  => etaX_doubles_b2_doubles    
-!     
-      procedure :: construct_csiX   => construct_csiX_doubles  
-      procedure :: csiX_doubles_a1  => csiX_doubles_a1_doubles    
-      procedure :: csiX_doubles_a2  => csiX_doubles_a2_doubles    
+      procedure :: construct_etaX                        => construct_etaX_doubles
 !
-      procedure :: etaX_eom_doubles_a1 => etaX_eom_doubles_a1_doubles
+      procedure :: etaX_eom_a                            => etaX_eom_a_doubles
+!
+      procedure :: etaX_doubles_a1                       => etaX_doubles_a1_doubles
+      procedure :: etaX_doubles_a2                       => etaX_doubles_a2_doubles
+      procedure :: etaX_doubles_b2                       => etaX_doubles_b2_doubles
+!
+      procedure :: construct_csiX                        => construct_csiX_doubles
+!
+      procedure :: csiX_doubles_a1                       => csiX_doubles_a1_doubles
+      procedure :: csiX_doubles_a2                       => csiX_doubles_a2_doubles
+      procedure :: etaX_eom_doubles_a1                   => etaX_eom_doubles_a1_doubles
+!
+!     Procedures related to time dependency
+!
+      procedure :: make_doubles_complex                  => make_doubles_complex_doubles
 !
    end type doubles
 !
@@ -127,6 +163,12 @@ module doubles_class
       include "initialize_destruct_doubles_interface.F90"
       include "zop_doubles_interface.F90"
       include "fop_doubles_interface.F90"
+      include "complex_doubles_interface.F90"
+!
+      include "autogenerated_complex_files/initialize_destruct_doubles_interface_complex.F90"
+      include "autogenerated_complex_files/jacobian_transpose_doubles_interface_complex.F90"
+      include "autogenerated_complex_files/omega_doubles_interface_complex.F90"
+      include "autogenerated_complex_files/zop_doubles_interface_complex.F90"
 !
    end interface
 !

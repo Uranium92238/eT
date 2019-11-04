@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine omega_ccsd_a2_ccsd(wf, omega_abij, t_abij)
+   module subroutine omega_ccsd_a2_ccsd_complex(wf, omega_abij, t_abij)
 !!
 !!    Omega A2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -26,13 +26,13 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(inout) :: omega_abij
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(in):: t_abij
+      complex(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(inout) :: omega_abij
+      complex(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(in):: t_abij
 !
-   end subroutine omega_ccsd_a2_ccsd
+   end subroutine omega_ccsd_a2_ccsd_complex
 !
 !
-   module subroutine omega_ccsd_b2_ccsd(wf, omega_abij, t_abij)
+   module subroutine omega_ccsd_b2_ccsd_complex(wf, omega_abij, t_abij)
 !!
 !!    Omega B2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -41,13 +41,13 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_abij
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(in):: t_abij
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_abij
+      complex(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(in):: t_abij
 !
-   end subroutine omega_ccsd_b2_ccsd
+   end subroutine omega_ccsd_b2_ccsd_complex
 !
 !
-   module subroutine omega_ccsd_c2_ccsd(wf, omega_aibj, t_aibj)
+   module subroutine omega_ccsd_c2_ccsd_complex(wf, omega_aibj, t_aibj)
 !!
 !!    Omega C2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -56,13 +56,13 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
-      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
 !
-   end subroutine omega_ccsd_c2_ccsd
+   end subroutine omega_ccsd_c2_ccsd_complex
 !
 !
-   module subroutine omega_ccsd_d2_ccsd(wf, omega_aibj, t_aibj)
+   module subroutine omega_ccsd_d2_ccsd_complex(wf, omega_aibj, t_aibj)
 !!
 !!    Omega D2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -71,13 +71,13 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
-      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
 !
-   end subroutine omega_ccsd_d2_ccsd
+   end subroutine omega_ccsd_d2_ccsd_complex
 !
 !
-   module subroutine omega_ccsd_e2_ccsd(wf, omega_aibj, t_aibj)
+   module subroutine omega_ccsd_e2_ccsd_complex(wf, omega_aibj, t_aibj)
 !!
 !!    Omega E2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -86,13 +86,13 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
-      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
 !
-   end subroutine omega_ccsd_e2_ccsd
+   end subroutine omega_ccsd_e2_ccsd_complex
 !
 !
-   module subroutine construct_omega_ccsd(wf, omega)
+   module subroutine construct_omega_ccsd_complex(wf, omega)
 !!
 !!    Construct omega (CCSD)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -101,12 +101,12 @@
 !
          class(ccsd), intent(inout) :: wf
 !
-         real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+         complex(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
-   end subroutine construct_omega_ccsd
+   end subroutine construct_omega_ccsd_complex
 !
 !
-   module subroutine construct_u_aibj_ccsd(wf)
+   module subroutine construct_u_aibj_ccsd_complex(wf)
 !!
 !!    Construct u_aibj
 !!    Written by Tor S. Haugland, Nov 2019
@@ -115,10 +115,10 @@
 !
       class(ccsd),                  intent(inout)          :: wf
 !
-   end subroutine construct_u_aibj_ccsd
+   end subroutine construct_u_aibj_ccsd_complex
 !
 !
-   module subroutine from_biorthogonal_to_biorthonormal_ccsd(wf, X)
+   module subroutine from_biorthogonal_to_biorthonormal_ccsd_complex(wf, X)
 !!
 !!    From biorthogonal to biorthonormal 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -127,12 +127,12 @@
 !
       class(ccsd), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_t2), intent(inout) :: X 
+      complex(dp), dimension(wf%n_t2), intent(inout) :: X 
 !
-   end subroutine from_biorthogonal_to_biorthonormal_ccsd
+   end subroutine from_biorthogonal_to_biorthonormal_ccsd_complex
 !
 !
-   module subroutine from_biorthonormal_to_biorthogonal_ccsd(wf, X)
+   module subroutine from_biorthonormal_to_biorthogonal_ccsd_complex(wf, X)
 !!
 !!    From biorthonormal to biorthogonal 
 !!    Written by Andreas Skeidsvoll, Sep 2019
@@ -141,6 +141,6 @@
 !
       class(ccsd), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_t2), intent(inout) :: X 
+      complex(dp), dimension(wf%n_t2), intent(inout) :: X 
 !
-   end subroutine from_biorthonormal_to_biorthogonal_ccsd
+   end subroutine from_biorthonormal_to_biorthogonal_ccsd_complex
