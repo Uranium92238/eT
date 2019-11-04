@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine get_ovov_ccs(wf, g_iajb, first_i, last_i, first_a, last_a, &
+   module subroutine get_ovov_ccs_complex(wf, g_iajb, first_i, last_i, first_a, last_a, &
                                          first_j, last_j, first_b, last_b)
 !!
 !!    Get ovov
@@ -27,17 +27,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iajb
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iajb
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_b, last_b
 !
-   end subroutine get_ovov_ccs
+   end subroutine get_ovov_ccs_complex
 !
 !
-   module subroutine get_oooo_ccs(wf, g_ijkl, first_i, last_i, first_j, last_j, &
+   module subroutine get_oooo_ccs_complex(wf, g_ijkl, first_i, last_i, first_j, last_j, &
                                          first_k, last_k, first_l, last_l)
 !!
 !!    Get oooo
@@ -47,17 +47,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijkl
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijkl
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_k, last_k
       integer, optional, intent(in) :: first_l, last_l
 !
-   end subroutine get_oooo_ccs
+   end subroutine get_oooo_ccs_complex
 !
 !
-   module subroutine get_ooov_ccs(wf, g_ijka, first_i, last_i, first_j, last_j, &
+   module subroutine get_ooov_ccs_complex(wf, g_ijka, first_i, last_i, first_j, last_j, &
                                          first_k, last_k, first_a, last_a)
 !!
 !!    Get ooov
@@ -67,17 +67,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijka
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijka
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_k, last_k
       integer, optional, intent(in) :: first_a, last_a
 !
-   end subroutine get_ooov_ccs
+   end subroutine get_ooov_ccs_complex
 !
 !
-   module subroutine get_oovo_ccs(wf, g_ijak, first_i, last_i, first_j, last_j, &
+   module subroutine get_oovo_ccs_complex(wf, g_ijak, first_i, last_i, first_j, last_j, &
                                          first_a, last_a, first_k, last_k)
 !!
 !!    Get oovo
@@ -87,17 +87,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijak
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijak
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_k, last_k
       integer, optional, intent(in) :: first_a, last_a
 !
-   end subroutine get_oovo_ccs
+   end subroutine get_oovo_ccs_complex
 !
 !
-   module subroutine get_ovoo_ccs(wf, g_iajk, first_i, last_i, first_a, last_a, &
+   module subroutine get_ovoo_ccs_complex(wf, g_iajk, first_i, last_i, first_a, last_a, &
                                          first_j, last_j, first_k, last_k)
 !!
 !!    Get ovoo
@@ -107,17 +107,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iajk
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iajk
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_k, last_k
       integer, optional, intent(in) :: first_a, last_a
 !
-   end subroutine get_ovoo_ccs
+   end subroutine get_ovoo_ccs_complex
 !
 !
-   module subroutine get_vooo_ccs(wf, g_aijk, first_a, last_a, first_i, last_i, &
+   module subroutine get_vooo_ccs_complex(wf, g_aijk, first_a, last_a, first_i, last_i, &
                                          first_j, last_j, first_k, last_k)
 !!
 !!    Get vooo
@@ -127,17 +127,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aijk
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aijk
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_k, last_k
       integer, optional, intent(in) :: first_a, last_a
 !
-   end subroutine get_vooo_ccs
+   end subroutine get_vooo_ccs_complex
 !
 !
-   module subroutine get_vvoo_ccs(wf, g_abij, first_a, last_a, first_b, last_b, &
+   module subroutine get_vvoo_ccs_complex(wf, g_abij, first_a, last_a, first_b, last_b, &
                                          first_i, last_i, first_j, last_j)
 !!
 !!    Get vvoo
@@ -147,17 +147,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abij
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abij
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-   end subroutine get_vvoo_ccs
+   end subroutine get_vvoo_ccs_complex
 !
 !
-   module subroutine get_vovo_ccs(wf, g_aibj, first_a, last_a, first_i, last_i, &
+   module subroutine get_vovo_ccs_complex(wf, g_aibj, first_a, last_a, first_i, last_i, &
                                          first_b, last_b, first_j, last_j)
 !!
 !!    Get vovo
@@ -167,17 +167,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aibj
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aibj
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-   end subroutine get_vovo_ccs
+   end subroutine get_vovo_ccs_complex
 !
 !
-   module subroutine get_voov_ccs(wf, g_aijb, first_a, last_a, first_i, last_i, &
+   module subroutine get_voov_ccs_complex(wf, g_aijb, first_a, last_a, first_i, last_i, &
                                          first_j, last_j, first_b, last_b)
 !!
 !!    Get voov
@@ -187,17 +187,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aijb
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aijb
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-   end subroutine get_voov_ccs
+   end subroutine get_voov_ccs_complex
 !
 !
-   module subroutine get_ovvo_ccs(wf, g_iabj, first_i, last_i, first_a, last_a, &
+   module subroutine get_ovvo_ccs_complex(wf, g_iabj, first_i, last_i, first_a, last_a, &
                                          first_b, last_b, first_j, last_j)
 !!
 !!    Get ovvo
@@ -207,17 +207,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iabj
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iabj
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-   end subroutine get_ovvo_ccs
+   end subroutine get_ovvo_ccs_complex
 !
 !
-   module subroutine get_oovv_ccs(wf, g_ijab, first_i, last_i, first_j, last_j, &
+   module subroutine get_oovv_ccs_complex(wf, g_ijab, first_i, last_i, first_j, last_j, &
                                          first_a, last_a, first_b, last_b)
 !!
 !!    Get oovv
@@ -227,17 +227,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijab
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_ijab
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_j, last_j
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-   end subroutine get_oovv_ccs
+   end subroutine get_oovv_ccs_complex
 !
 !
-   module subroutine get_vvvo_ccs(wf, g_abci, first_a, last_a, first_b, last_b, &
+   module subroutine get_vvvo_ccs_complex(wf, g_abci, first_a, last_a, first_b, last_b, &
                                        first_c, last_c, first_i, last_i)
 !!
 !!    Get vvvo
@@ -247,17 +247,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abci
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abci
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_c, last_c
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-   end subroutine get_vvvo_ccs
+   end subroutine get_vvvo_ccs_complex
 !
 !
-   module subroutine get_vvov_ccs(wf, g_abic, first_a, last_a, first_b, last_b, &
+   module subroutine get_vvov_ccs_complex(wf, g_abic, first_a, last_a, first_b, last_b, &
                                          first_i, last_i, first_c, last_c)
 !!
 !!    Get vvov
@@ -267,17 +267,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abic
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abic
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_c, last_c
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-   end subroutine get_vvov_ccs
+   end subroutine get_vvov_ccs_complex
 !
 !
-   module subroutine get_vovv_ccs(wf, g_aibc, first_a, last_a, first_i, last_i, &
+   module subroutine get_vovv_ccs_complex(wf, g_aibc, first_a, last_a, first_i, last_i, &
                                          first_b, last_b, first_c, last_c)
 !!
 !!    Get vovv
@@ -287,17 +287,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aibc
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_aibc
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_c, last_c
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-   end subroutine get_vovv_ccs
+   end subroutine get_vovv_ccs_complex
 !
 !
-   module subroutine get_ovvv_ccs(wf, g_iabc, first_i, last_i, first_a, last_a, &
+   module subroutine get_ovvv_ccs_complex(wf, g_iabc, first_i, last_i, first_a, last_a, &
                                          first_b, last_b, first_c, last_c)
 !!
 !!    Get ovvv
@@ -307,17 +307,17 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iabc
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_iabc
 !
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_c, last_c
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-   end subroutine get_ovvv_ccs
+   end subroutine get_ovvv_ccs_complex
 !
 !
-   module subroutine get_vvvv_ccs(wf, g_abcd, first_a, last_a, first_b, last_b, &
+   module subroutine get_vvvv_ccs_complex(wf, g_abcd, first_a, last_a, first_b, last_b, &
                                          first_c, last_c, first_d, last_d)
 !!
 !!    Get vvvv
@@ -327,27 +327,27 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abcd
+      complex(dp), dimension(:,:,:,:), contiguous, intent(out) :: g_abcd
 !
       integer, optional, intent(in) :: first_d, last_d
       integer, optional, intent(in) :: first_c, last_c
       integer, optional, intent(in) :: first_a, last_a
       integer, optional, intent(in) :: first_b, last_b
 !
-   end subroutine get_vvvv_ccs
+   end subroutine get_vvvv_ccs_complex
 !
 !
-   logical module function need_g_abcd_ccs()
+   logical module function need_g_abcd_ccs_complex()
 !!
 !!    Need g_abcd
 !!    Written by Eirik F. Kjønstad, Mar 2019
 !!
       implicit none
 !
-   end function need_g_abcd_ccs
+   end function need_g_abcd_ccs_complex
 !
 !
-   module subroutine get_g_pqrs_required_ccs(wf, req_l, req_r, dim_p, dim_q, dim_r, dim_s)
+   module subroutine get_g_pqrs_required_ccs_complex(wf, req_l, req_r, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Get memory required to construct g_pqrs
 !!    Written by Rolf H. Myhre, April 2019
@@ -359,6 +359,6 @@
       integer, intent(in)  :: dim_p, dim_q, dim_r, dim_s
       integer, intent(out) :: req_l, req_r
 !
-   end subroutine get_g_pqrs_required_ccs
+   end subroutine get_g_pqrs_required_ccs_complex
 !
 !

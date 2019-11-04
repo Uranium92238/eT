@@ -72,6 +72,7 @@ module mo_integral_tool_class
 !
       procedure :: get_g_pqrs_t1                => get_g_pqrs_t1_mo_integral_tool
       procedure :: construct_g_pqrs_t1          => construct_g_pqrs_t1_mo_integral_tool
+      procedure :: construct_g_pqrs_t1_complex  => construct_g_pqrs_t1_mo_integral_tool_complex
 !
       procedure :: get_g_pqrs_t1_complex        => get_g_pqrs_t1_mo_integral_tool_complex
 !
@@ -509,6 +510,63 @@ contains
       call mem%dealloc(L_J_rs, integrals%n_J, dim_r, dim_s)
 !
    end subroutine construct_g_pqrs_t1_mo_integral_tool
+!
+!
+   subroutine construct_g_pqrs_t1_mo_integral_tool_complex(integrals, g_pqrs, first_p, last_p, first_q, last_q, &
+                                                                              first_r, last_r, first_s, last_s)
+!!
+!!    Construct g_pqrs T1
+!!    Written by Eirik F. Kjønstad, Mar 2019
+!!    Modified by Andreas Skeidsvoll, Sep 2019: Changed real arrays to complex
+!!
+!!    Assumes that the integrals are in memory
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!
+      integer, intent(in) :: first_p, last_p
+      integer, intent(in) :: first_q, last_q
+      integer, intent(in) :: first_r, last_r
+      integer, intent(in) :: first_s, last_s
+!
+      complex(dp), dimension(last_p-first_p+1,last_q-first_q+1,last_r-first_r+1,last_s-first_s+1), intent(out) :: g_pqrs
+!
+      integer :: p, q, r, s
+      integer :: dim_p, dim_q, dim_r, dim_s
+!
+      dim_p = last_p - first_p + 1
+      dim_q = last_q - first_q + 1
+      dim_r = last_r - first_r + 1
+      dim_s = last_s - first_s + 1
+!
+      if (integrals%eri_t1_mem_complex) then
+!
+!$omp parallel do private(s, r, q, p)
+         do s = 1, dim_s
+            do r = 1, dim_r
+               do q = 1, dim_q
+                  do p = 1, dim_p
+!
+                     g_pqrs(p,q,r,s) = integrals%g_pqrs_complex(p + first_p - 1,  &
+                                                                q + first_q - 1,  &
+                                                                r + first_r - 1,  &
+                                                                s + first_s - 1)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+!
+      else
+!
+         call output%error_msg('tried to get complex T1-transformed g_pqrs, but ' &
+                               // 'they were not found in memory!')
+!
+      endif
+!
+   end subroutine construct_g_pqrs_t1_mo_integral_tool_complex
 !
 !
    subroutine construct_cholesky_ij_mo_integral_tool(integrals, L_ij_J, t1, first_i, last_i, first_j, last_j)
@@ -1419,8 +1477,7 @@ contains
 !
       integer :: required_mem, mem_real_eri
 !
-      if (.not. integrals%eri_t1_mem) &
-         call output%error_msg('tried to place complex ERI-T1 integrals in memory, but real ERI-T1 is not there')
+      if (.not. integrals%eri_t1_mem) call integrals%place_g_pqrs_t1_in_memory()
 !
       required_mem = 2*integrals%n_mo**4
       mem_real_eri = (integrals%n_mo**4) ! Added to mem%available

@@ -17,18 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine t1_transform_ccs(wf, Z_pq)
-!!
-!!    T1 transform
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
-!!
-      implicit none
-!
-      class(ccs), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Z_pq
-!
-   end subroutine t1_transform_ccs
 !
 !
    module subroutine ao_to_t1_transformation_ccs(wf, x_wx, y_pq)
@@ -46,6 +34,21 @@
    end subroutine ao_to_t1_transformation_ccs
 !
 !
+   module subroutine ao_to_t1_transformation_ccs_complex(wf, x_wx, y_pq)
+!!
+!!    AO to T1 transformation 
+!!    Written by Eirik F. Kjønstad, 2019 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)  :: x_wx 
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: y_pq 
+!
+   end subroutine ao_to_t1_transformation_ccs_complex
+!
+!
    module subroutine construct_mu_ccs(wf, mu_pqk)
 !!
 !!    Construct mu
@@ -58,6 +61,20 @@
       real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(out) :: mu_pqk 
 !
    end subroutine construct_mu_ccs
+!
+!
+   module subroutine construct_mu_ccs_complex(wf, mu_pqk)
+!!
+!!    Construct mu
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!    
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      complex(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(out) :: mu_pqk 
+!
+   end subroutine construct_mu_ccs_complex
 !
 !
    module subroutine construct_h_ccs(wf, h_pq)
@@ -74,6 +91,20 @@
    end subroutine construct_h_ccs
 !
 !
+   module subroutine construct_h_ccs_complex(wf, h_pq)
+!!
+!!    Construct h
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!    
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: h_pq 
+!
+   end subroutine construct_h_ccs_complex
+!
+!
    module subroutine construct_q_ccs(wf, q_pqk)
 !!
 !!    Construct q
@@ -86,3 +117,17 @@
       real(dp), dimension(wf%n_mo, wf%n_mo, 6), intent(out) :: q_pqk 
 !
    end subroutine construct_q_ccs
+!
+!
+   module subroutine construct_q_ccs_complex(wf, q_pqk)
+!!
+!!    Construct q
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!    
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      complex(dp), dimension(wf%n_mo, wf%n_mo, 6), intent(out) :: q_pqk 
+!
+   end subroutine construct_q_ccs_complex

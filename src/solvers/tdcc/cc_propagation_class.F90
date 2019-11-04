@@ -48,6 +48,7 @@ module cc_propagation_class
    use sequential_file_class, only: sequential_file
    use ccs_class, only: ccs
    use electric_field_class, only: electric_field
+   use array_utilities, only: our_zdotu
 !
    implicit none
 !
@@ -482,16 +483,14 @@ contains
 !
       complex(dp), dimension(:,:,:), allocatable :: mu
 !
-      complex(dp), external :: zdotu
-!
 !     Do contraction between electronic dipole integrals and electronic density
 !
       call mem%alloc(mu, wf%n_mo, wf%n_mo, 3)
       call wf%construct_mu_complex(mu)
 !
-      wf%dipole_moment_complex(1) = zdotu(wf%n_mo*wf%n_mo, wf%density_complex, 1, mu(:,:,1), 1)
-      wf%dipole_moment_complex(2) = zdotu(wf%n_mo*wf%n_mo, wf%density_complex, 1, mu(:,:,2), 1)
-      wf%dipole_moment_complex(3) = zdotu(wf%n_mo*wf%n_mo, wf%density_complex, 1, mu(:,:,3), 1)
+      wf%dipole_moment_complex(1) = our_zdotu(wf%n_mo*wf%n_mo, wf%density_complex, 1, mu(:,:,1), 1)
+      wf%dipole_moment_complex(2) = our_zdotu(wf%n_mo*wf%n_mo, wf%density_complex, 1, mu(:,:,2), 1)
+      wf%dipole_moment_complex(3) = our_zdotu(wf%n_mo*wf%n_mo, wf%density_complex, 1, mu(:,:,3), 1)
 !
       call mem%dealloc(mu, wf%n_mo, wf%n_mo, 3)
 !

@@ -170,6 +170,8 @@ contains
 !
       call wf%general_cc_preparations(system)
 !
+      wf%need_g_abcd = .true.
+!
       wf%n_t1 = (wf%n_o)*(wf%n_v)
       wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
       wf%n_gs_amplitudes = wf%n_t1 + wf%n_t2

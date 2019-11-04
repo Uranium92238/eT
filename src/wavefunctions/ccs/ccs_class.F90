@@ -32,7 +32,8 @@ module ccs_class
 !
    use sequential_file_class, only : sequential_file
    use string_utilities, only : convert_to_uppercase
-   use array_utilities, only : get_l2_norm, copy_and_scale
+   use array_utilities, only : zero_array_complex
+   use array_utilities, only : get_l2_norm, copy_and_scale, copy_and_scale_complex, copy_, our_zdotu
    use array_utilities, only : get_abs_max_w_index, get_n_lowest, get_n_highest
    use array_utilities, only: quicksort_with_index_descending, are_vectors_parallel
    use index_invert, only : invert_compound_index, invert_packed_index
@@ -53,7 +54,7 @@ module ccs_class
       integer :: n_core_MOs
       logical :: cvs 
 !
-      real(dp), dimension(:), allocatable :: left_excitation_energies 
+      real(dp), dimension(:), allocatable :: left_excitation_energies
       real(dp), dimension(:), allocatable :: right_excitation_energies
 !
       logical :: bath_orbital
@@ -69,237 +70,401 @@ module ccs_class
 !
       type(mo_integral_tool) :: integrals
 !
-      real(dp) :: hf_energy
+      real(dp)    :: hf_energy
+      complex(dp) :: hf_energy_complex
 !
-      real(dp), dimension(:,:), allocatable :: t1
-      real(dp), dimension(:,:), allocatable :: t1bar
+      real(dp),    dimension(:,:), allocatable :: t1
+      complex(dp), dimension(:,:), allocatable :: t1_complex
 !
-      real(dp), dimension(:,:), allocatable :: fock_ij
-      real(dp), dimension(:,:), allocatable :: fock_ia
-      real(dp), dimension(:,:), allocatable :: fock_ai
-      real(dp), dimension(:,:), allocatable :: fock_ab
+      real(dp),    dimension(:,:), allocatable :: t1bar
+      complex(dp), dimension(:,:), allocatable :: t1bar_complex
 !
-      real(dp), dimension(:,:), allocatable :: density
-      real(dp), dimension(:,:), allocatable :: left_transition_density
-      real(dp), dimension(:,:), allocatable :: right_transition_density
+      real(dp),    dimension(:,:), allocatable :: fock_ij
+      complex(dp), dimension(:,:), allocatable :: fock_ij_complex
+!
+      real(dp),    dimension(:,:), allocatable :: fock_ia
+      complex(dp), dimension(:,:), allocatable :: fock_ia_complex
+!
+      real(dp),    dimension(:,:), allocatable :: fock_ai
+      complex(dp), dimension(:,:), allocatable :: fock_ai_complex
+!
+      real(dp),    dimension(:,:), allocatable :: fock_ab
+      complex(dp), dimension(:,:), allocatable :: fock_ab_complex
+!
+      real(dp),    dimension(:,:), allocatable :: density
+      complex(dp), dimension(:,:), allocatable :: density_complex
+
+      real(dp),    dimension(:,:), allocatable :: left_transition_density
+      real(dp),    dimension(:,:), allocatable :: right_transition_density
 !
       integer, dimension(:), allocatable :: core_MOs
 !
    contains
 !
-!     Preparation and cleanup routines
+!     Initialization/destruction procedures
 !
-      procedure :: cleanup                                     => cleanup_ccs
-      procedure :: general_cc_preparations                     => general_cc_preparations_ccs
+      procedure :: initialize_amplitudes                         => initialize_amplitudes_ccs
+      procedure :: initialize_amplitudes_complex                 => initialize_amplitudes_ccs_complex
 !
-      procedure :: read_hf                                     => read_hf_ccs
-      procedure :: initialize_files                            => initialize_files_ccs
-      procedure :: initialize_cc_files                         => initialize_cc_files_ccs
-      procedure :: initialize_ground_state_files               => initialize_ground_state_files_ccs
-      procedure :: initialize_excited_state_files              => initialize_excited_state_files_ccs
+      procedure :: destruct_amplitudes                           => destruct_amplitudes_ccs
+      procedure :: destruct_amplitudes_complex                   => destruct_amplitudes_ccs_complex
 !
-!     Routines related to the amplitudes & multipliers
+      procedure :: initialize_multipliers                        => initialize_multipliers_ccs
+      procedure :: initialize_multipliers_complex                => initialize_multipliers_ccs_complex
 !
-      procedure :: initialize_amplitudes                       => initialize_amplitudes_ccs
-      procedure :: destruct_amplitudes                         => destruct_amplitudes_ccs
-      procedure :: set_initial_amplitudes_guess                => set_initial_amplitudes_guess_ccs
-      procedure :: t1_transform                                => t1_transform_ccs
-      procedure :: ao_to_t1_transformation                     => ao_to_t1_transformation_ccs
-      procedure :: set_amplitudes                              => set_amplitudes_ccs
-      procedure :: get_amplitudes                              => get_amplitudes_ccs
-      procedure :: save_amplitudes                             => save_amplitudes_ccs
-      procedure :: read_amplitudes                             => read_amplitudes_ccs
+      procedure :: destruct_multipliers                          => destruct_multipliers_ccs
+      procedure :: destruct_multipliers_complex                  => destruct_multipliers_ccs_complex
 !
-      procedure :: print_dominant_x_amplitudes                 => print_dominant_x_amplitudes_ccs
-      procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccs
-      procedure :: print_dominant_x1                           => print_dominant_x1_ccs
-      procedure :: get_t1_diagnostic                           => get_t1_diagnostic_ccs
+      procedure :: initialize_fock                               => initialize_fock_ccs
+      procedure :: initialize_fock_complex                       => initialize_fock_ccs_complex
 !
-      procedure :: read_singles_vector                         => read_singles_vector_ccs
+      procedure :: initialize_fock_ij                            => initialize_fock_ij_ccs
+      procedure :: initialize_fock_ij_complex                    => initialize_fock_ij_ccs_complex
 !
-      procedure :: save_excited_state                          => save_excited_state_ccs
-      procedure :: read_excited_state                          => read_excited_state_ccs
+      procedure :: destruct_fock_ij                              => destruct_fock_ij_ccs
+      procedure :: destruct_fock_ij_complex                      => destruct_fock_ij_ccs_complex
 !
-      procedure :: get_n_excited_states_on_file                => get_n_excited_states_on_file_ccs
+      procedure :: initialize_fock_ia                            => initialize_fock_ia_ccs
+      procedure :: initialize_fock_ia_complex                    => initialize_fock_ia_ccs_complex
 !
-      procedure :: initialize_right_excitation_energies        => initialize_right_excitation_energies_ccs
-      procedure :: initialize_left_excitation_energies         => initialize_left_excitation_energies_ccs
-      procedure :: destruct_right_excitation_energies          => destruct_right_excitation_energies_ccs
-      procedure :: destruct_left_excitation_energies           => destruct_left_excitation_energies_ccs
-      procedure :: save_excitation_energies                    => save_excitation_energies_ccs
-      procedure :: read_excitation_energies                    => read_excitation_energies_ccs
-      procedure :: get_n_excitation_energies_on_file           => get_n_excitation_energies_on_file_ccs
+      procedure :: destruct_fock_ia                              => destruct_fock_ia_ccs
+      procedure :: destruct_fock_ia_complex                      => destruct_fock_ia_ccs_complex
 !
-      procedure :: initialize_multipliers                      => initialize_multipliers_ccs
-      procedure :: destruct_multipliers                        => destruct_multipliers_ccs
-      procedure :: set_multipliers                             => set_multipliers_ccs
-      procedure :: get_multipliers                             => get_multipliers_ccs
-      procedure :: save_multipliers                            => save_multipliers_ccs
-      procedure :: read_multipliers                            => read_multipliers_ccs
+      procedure :: initialize_fock_ai                            => initialize_fock_ai_ccs
+      procedure :: initialize_fock_ai_complex                    => initialize_fock_ai_ccs_complex
 !
-      procedure :: save_tbar_intermediates                     => save_tbar_intermediates_ccs
+      procedure :: destruct_fock_ai                              => destruct_fock_ai_ccs
+      procedure :: destruct_fock_ai_complex                      => destruct_fock_ai_ccs_complex
 !
-      procedure :: is_restart_safe                             => is_restart_safe_ccs
-      procedure :: write_cc_restart                            => write_cc_restart_ccs
+      procedure :: initialize_fock_ab                            => initialize_fock_ab_ccs
+      procedure :: initialize_fock_ab_complex                    => initialize_fock_ab_ccs_complex
 !
-!     Routines related to the Fock matrix
+      procedure :: destruct_fock_ab                              => destruct_fock_ab_ccs
+      procedure :: destruct_fock_ab_complex                      => destruct_fock_ab_ccs_complex
 !
-      procedure :: set_fock                                    => set_fock_ccs
-      procedure :: construct_fock                              => construct_fock_ccs
-      procedure :: add_frozen_core_fock_term                   => add_frozen_core_fock_term_ccs
-      procedure :: add_frozen_hf_fock_term                     => add_frozen_hf_fock_term_ccs
-      procedure :: add_molecular_mechanics_fock_term           => add_molecular_mechanics_fock_term_ccs
+      procedure :: initialize_t1                                 => initialize_t1_ccs
+      procedure :: initialize_t1_complex                         => initialize_t1_ccs_complex
 !
-      procedure :: get_gs_orbital_differences                  => get_gs_orbital_differences_ccs
-      procedure :: get_es_orbital_differences                  => get_gs_orbital_differences_ccs
+      procedure :: destruct_t1                                   => destruct_t1_ccs
+      procedure :: destruct_t1_complex                           => destruct_t1_ccs_complex
 !
-!     Routines related to the omega vector
+      procedure :: initialize_t1bar                              => initialize_t1bar_ccs
+      procedure :: initialize_t1bar_complex                      => initialize_t1bar_ccs_complex
 !
-      procedure :: construct_omega                             => construct_omega_ccs
-      procedure :: omega_ccs_a1                                => omega_ccs_a1_ccs
+      procedure :: destruct_t1bar                                => destruct_t1bar_ccs
+      procedure :: destruct_t1bar_complex                        => destruct_t1bar_ccs_complex
 !
-      procedure :: form_newton_raphson_t_estimate              => form_newton_raphson_t_estimate_ccs
+      procedure :: initialize_gs_density                         => initialize_gs_density_ccs
+      procedure :: initialize_gs_density_complex                 => initialize_gs_density_ccs_complex
 !
-!     Routines related to the Jacobian transformation
+      procedure :: destruct_gs_density                           => destruct_gs_density_ccs
+      procedure :: destruct_gs_density_complex                   => destruct_gs_density_ccs_complex
 !
-      procedure :: prepare_for_jacobian                        => prepare_for_jacobian_ccs
-      procedure :: prepare_for_jacobian_transpose              => prepare_for_jacobian_transpose_ccs
-      procedure :: prepare_for_multiplier_equation             => prepare_for_multiplier_equation_ccs
+      procedure :: initialize_transition_densities               => initialize_transition_densities_ccs
 !
-      procedure :: jacobian_transformation                     => jacobian_transformation_ccs 
-      procedure :: jacobian_ccs_a1                             => jacobian_ccs_a1_ccs
-      procedure :: jacobian_ccs_b1                             => jacobian_ccs_b1_ccs
+      procedure :: destruct_transition_densities                 => destruct_transition_densities_ccs
 !
-      procedure :: jacobian_transpose_transformation           => jacobian_transpose_transformation_ccs
-      procedure :: jacobian_transpose_ccs_a1                   => jacobian_transpose_ccs_a1_ccs
-      procedure :: jacobian_transpose_ccs_b1                   => jacobian_transpose_ccs_b1_ccs
+      procedure :: initialize_right_excitation_energies          => initialize_right_excitation_energies_ccs
 !
-      procedure :: construct_Jacobian_transform                => construct_Jacobian_transform_ccs
-      procedure :: construct_multiplier_equation               => construct_multiplier_equation_ccs
-      procedure :: construct_eta                               => construct_eta_ccs
+      procedure :: destruct_right_excitation_energies            => destruct_right_excitation_energies_ccs
 !
-      procedure :: get_cvs_projector                           => get_cvs_projector_ccs
-      procedure :: read_cvs_settings                           => read_cvs_settings_ccs
+      procedure :: initialize_left_excitation_energies           => initialize_left_excitation_energies_ccs
 !
-      procedure :: set_cvs_start_indices                       => set_cvs_start_indices_ccs
+      procedure :: destruct_left_excitation_energies             => destruct_left_excitation_energies_ccs
 !
-!     Routines to get electron repulsion integrals (ERIs)
+      procedure :: initialize_core_MOs                           => initialize_core_MOs_ccs 
+      procedure :: destruct_core_MOs                             => destruct_core_MOs_ccs
 !
-      procedure :: get_ovov                                    => get_ovov_ccs
-      procedure :: get_vovo                                    => get_vovo_ccs
-      procedure :: get_vvoo                                    => get_vvoo_ccs
-      procedure :: get_voov                                    => get_voov_ccs
-      procedure :: get_ovvo                                    => get_ovvo_ccs
-      procedure :: get_oovv                                    => get_oovv_ccs
-      procedure :: get_oooo                                    => get_oooo_ccs
-      procedure :: get_vvvv                                    => get_vvvv_ccs
-      procedure :: get_ooov                                    => get_ooov_ccs
-      procedure :: get_oovo                                    => get_oovo_ccs
-      procedure :: get_ovoo                                    => get_ovoo_ccs
-      procedure :: get_vooo                                    => get_vooo_ccs
-      procedure :: get_vvvo                                    => get_vvvo_ccs
-      procedure :: get_vvov                                    => get_vvov_ccs
-      procedure :: get_vovv                                    => get_vovv_ccs
-      procedure :: get_ovvv                                    => get_ovvv_ccs
+!     File handling procedures
 !
-      procedure :: get_g_pqrs_required                         => get_g_pqrs_required_ccs
+      procedure :: read_hf                                       => read_hf_ccs
+      procedure :: initialize_files                              => initialize_files_ccs
+      procedure :: initialize_cc_files                           => initialize_cc_files_ccs
+      procedure :: initialize_ground_state_files                 => initialize_ground_state_files_ccs
+      procedure :: initialize_excited_state_files                => initialize_excited_state_files_ccs
 !
-!     Routines to initialize and destruct arrays
+      procedure :: read_settings                                 => read_settings_ccs
+      procedure :: read_cvs_settings                             => read_cvs_settings_ccs
 !
-      procedure :: initialize_fock                             => initialize_fock_ccs
-      procedure :: initialize_fock_ij                          => initialize_fock_ij_ccs
-      procedure :: initialize_fock_ia                          => initialize_fock_ia_ccs
-      procedure :: initialize_fock_ai                          => initialize_fock_ai_ccs
-      procedure :: initialize_fock_ab                          => initialize_fock_ab_ccs
-      procedure :: initialize_t1                               => initialize_t1_ccs
-      procedure :: initialize_t1bar                            => initialize_t1bar_ccs
-      procedure :: initialize_gs_density                       => initialize_gs_density_ccs
-      procedure :: initialize_transition_densities             => initialize_transition_densities_ccs
-      procedure :: initialize_core_MOs                         => initialize_core_MOs_ccs 
+      procedure :: read_singles_vector                           => read_singles_vector_ccs
+      procedure :: save_amplitudes                               => save_amplitudes_ccs
+      procedure :: read_amplitudes                               => read_amplitudes_ccs
+      procedure :: save_multipliers                              => save_multipliers_ccs
+      procedure :: read_multipliers                              => read_multipliers_ccs
+      procedure :: save_excited_state                            => save_excited_state_ccs
+      procedure :: read_excited_state                            => read_excited_state_ccs
+      procedure :: save_excitation_energies                      => save_excitation_energies_ccs
+      procedure :: read_excitation_energies                      => read_excitation_energies_ccs
+      procedure :: read_frozen_orbital_terms                     => read_frozen_orbital_terms_ccs
 !
-      procedure :: destruct_fock_ij                            => destruct_fock_ij_ccs
-      procedure :: destruct_fock_ia                            => destruct_fock_ia_ccs
-      procedure :: destruct_fock_ai                            => destruct_fock_ai_ccs
-      procedure :: destruct_fock_ab                            => destruct_fock_ab_ccs
-      procedure :: destruct_t1                                 => destruct_t1_ccs
-      procedure :: destruct_t1bar                              => destruct_t1bar_ccs
-      procedure :: destruct_gs_density                         => destruct_gs_density_ccs
-      procedure :: destruct_transition_densities               => destruct_transition_densities_ccs
-      procedure :: destruct_core_MOs                           => destruct_core_MOs_ccs 
+      procedure :: write_cc_restart                              => write_cc_restart_ccs
 !
-!     Routines related to EOM first order property calculations
+      procedure :: save_tbar_intermediates                       => save_tbar_intermediates_ccs
 !
-      procedure :: construct_etaX                              => construct_etaX_ccs
-      procedure :: construct_eom_etaX                          => construct_eom_etaX_ccs
-      procedure :: etaX_ccs_a1                                 => etaX_ccs_a1_ccs
-      procedure :: etaX_ccs_b1                                 => etaX_ccs_b1_ccs
+      procedure :: get_n_excited_states_on_file                  => get_n_excited_states_on_file_ccs
+      procedure :: get_n_excitation_energies_on_file             => get_n_excitation_energies_on_file_ccs
 !
-      procedure :: construct_csiX                              => construct_csiX_ccs
-      procedure :: csiX_ccs_a1                                 => csiX_ccs_a1_ccs
+!     Set/get procedures
 !
-      procedure :: etaX_eom_a                                  => etaX_eom_a_ccs
+      procedure :: set_amplitudes                                => set_amplitudes_ccs
+      procedure :: set_amplitudes_complex                        => set_amplitudes_ccs_complex
 !
-      procedure :: calculate_transition_strength               => calculate_transition_strength_ccs
+      procedure :: get_amplitudes                                => get_amplitudes_ccs
+      procedure :: get_amplitudes_complex                        => get_amplitudes_ccs_complex
 !
-!     Routines related to one-electron densities
+      procedure :: set_multipliers                               => set_multipliers_ccs
+      procedure :: set_multipliers_complex                       => set_multipliers_ccs_complex
 !
-      procedure :: prepare_for_density                         => prepare_for_density_ccs
+      procedure :: get_multipliers                               => get_multipliers_ccs
+      procedure :: get_multipliers_complex                       => get_multipliers_ccs_complex
 !
-      procedure :: construct_gs_density                        => construct_gs_density_ccs
-      procedure :: construct_right_transition_density          => construct_right_transition_density_ccs
-      procedure :: construct_left_transition_density           => construct_left_transition_density_ccs
+      procedure :: set_fock                                      => set_fock_ccs
+      procedure :: set_fock_complex                              => set_fock_ccs_complex
 !
-      procedure :: gs_one_el_density_ccs_oo                    => gs_one_el_density_ccs_oo_ccs
-      procedure :: gs_one_el_density_ccs_vo                    => gs_one_el_density_ccs_vo_ccs
+      procedure :: get_gs_orbital_differences                    => get_gs_orbital_differences_ccs
+      procedure :: get_es_orbital_differences                    => get_gs_orbital_differences_ccs
 !
-      procedure :: right_transition_density_ccs_oo             => right_transition_density_ccs_oo_ccs
-      procedure :: right_transition_density_ccs_ov             => right_transition_density_ccs_ov_ccs
-      procedure :: right_transition_density_ccs_vv             => right_transition_density_ccs_vv_ccs
-      procedure :: right_transition_density_ccs_gs_contr       => right_transition_density_ccs_gs_contr_ccs
+!     Procedures related to the Fock matrix
+!
+      procedure :: construct_fock                                => construct_fock_ccs
+      procedure :: construct_fock_complex                        => construct_fock_ccs_complex
+!
+      procedure :: add_frozen_core_fock_term                     => add_frozen_core_fock_term_ccs
+      procedure :: add_frozen_core_fock_term_complex             => add_frozen_core_fock_term_ccs_complex
+
+      procedure :: add_frozen_hf_fock_term                       => add_frozen_hf_fock_term_ccs
+      procedure :: add_frozen_hf_fock_term_complex               => add_frozen_hf_fock_term_ccs_complex
+
+      procedure :: add_molecular_mechanics_fock_term             => add_molecular_mechanics_fock_term_ccs
+      procedure :: add_molecular_mechanics_fock_term_complex     => add_molecular_mechanics_fock_term_ccs_complex
+!
+      procedure :: add_t1_fock_length_dipole_term                => add_t1_fock_length_dipole_term_ccs
+      procedure :: add_t1_fock_length_dipole_term_complex        => add_t1_fock_length_dipole_term_ccs_complex
+!
+!     Procedures related to the omega vector
+!
+      procedure :: construct_omega                               => construct_omega_ccs
+      procedure :: construct_omega_complex                       => construct_omega_ccs_complex
+!
+      procedure :: omega_ccs_a1                                  => omega_ccs_a1_ccs
+      procedure :: omega_ccs_a1_complex                          => omega_ccs_a1_ccs_complex
+!
+      procedure :: construct_Jacobian_transform                  => construct_Jacobian_transform_ccs
+!
+!     Procedures related to the multiplier equation vector
+!
+      procedure :: construct_multiplier_equation                 => construct_multiplier_equation_ccs
+      procedure :: construct_multiplier_equation_complex         => construct_multiplier_equation_ccs_complex
+!
+      procedure :: construct_eta                                 => construct_eta_ccs
+      procedure :: construct_eta_complex                         => construct_eta_ccs_complex
+!
+!     Procedures related to the Jacobian transformation
+!
+      procedure :: jacobian_transformation                       => jacobian_transformation_ccs
+      procedure :: jacobian_ccs_a1                               => jacobian_ccs_a1_ccs
+      procedure :: jacobian_ccs_b1                               => jacobian_ccs_b1_ccs
+!
+!     Procedures related to the Jacobian transpose transformation
+!
+      procedure :: jacobian_transpose_transformation             => jacobian_transpose_transformation_ccs
+      procedure :: jacobian_transpose_transformation_complex     => jacobian_transpose_transformation_ccs_complex
+!
+      procedure :: jacobian_transpose_ccs_a1                     => jacobian_transpose_ccs_a1_ccs
+      procedure :: jacobian_transpose_ccs_a1_complex             => jacobian_transpose_ccs_a1_ccs_complex
+!
+      procedure :: jacobian_transpose_ccs_b1                     => jacobian_transpose_ccs_b1_ccs
+      procedure :: jacobian_transpose_ccs_b1_complex             => jacobian_transpose_ccs_b1_ccs_complex
+!
+!     Procedures related to zero order properties
+!
+      procedure :: calculate_expectation_value                   => calculate_expectation_value_ccs
+      procedure :: calculate_expectation_value_complex           => calculate_expectation_value_ccs_complex
+!
+      procedure :: calculate_energy                              => calculate_energy_ccs
+      procedure :: calculate_energy_complex                      => calculate_energy_ccs_complex
+!
+      procedure :: calculate_energy_omega_term                   => calculate_energy_omega_term_ccs
+      procedure :: calculate_energy_omega_term_complex           => calculate_energy_omega_term_ccs_complex
+!
+      procedure :: calculate_energy_length_dipole_term           => calculate_energy_length_dipole_term_ccs
+      procedure :: calculate_energy_length_dipole_term_complex   => calculate_energy_length_dipole_term_ccs_complex
+!
+      procedure :: construct_gs_density                          => construct_gs_density_ccs
+      procedure :: construct_gs_density_complex                  => construct_gs_density_ccs_complex
+!
+      procedure :: gs_one_el_density_ccs_oo                      => gs_one_el_density_ccs_oo_ccs
+      procedure :: gs_one_el_density_ccs_oo_complex              => gs_one_el_density_ccs_oo_ccs_complex
+!
+      procedure :: gs_one_el_density_ccs_vo                      => gs_one_el_density_ccs_vo_ccs
+      procedure :: gs_one_el_density_ccs_vo_complex              => gs_one_el_density_ccs_vo_ccs_complex
+!
+!     Procedures related to first order properties
+!
+      procedure :: construct_right_transition_density            => construct_right_transition_density_ccs
+      procedure :: construct_left_transition_density             => construct_left_transition_density_ccs
+      procedure :: right_transition_density_ccs_oo               => right_transition_density_ccs_oo_ccs
+      procedure :: right_transition_density_ccs_ov               => right_transition_density_ccs_ov_ccs
+      procedure :: right_transition_density_ccs_vv               => right_transition_density_ccs_vv_ccs
+      procedure :: right_transition_density_ccs_gs_contr         => right_transition_density_ccs_gs_contr_ccs
+      procedure :: construct_etaX                                => construct_etaX_ccs
+      procedure :: construct_eom_etaX                            => construct_eom_etaX_ccs
+      procedure :: etaX_ccs_a1                                   => etaX_ccs_a1_ccs
+      procedure :: etaX_ccs_b1                                   => etaX_ccs_b1_ccs
+      procedure :: construct_csiX                                => construct_csiX_ccs
+      procedure :: csiX_ccs_a1                                   => csiX_ccs_a1_ccs
+      procedure :: etaX_eom_a                                    => etaX_eom_a_ccs
+      procedure :: calculate_transition_strength                 => calculate_transition_strength_ccs
 !
 !     Routines related to post-processing excited states
 !
-      procedure :: biorthonormalize_L_and_R                    => biorthonormalize_L_and_R_ccs
-      procedure :: L_R_overlap                                 => L_R_overlap_ccs
-      procedure :: check_for_degeneracies                      => check_for_degeneracies_ccs
+      procedure :: biorthonormalize_L_and_R                      => biorthonormalize_L_and_R_ccs
+      procedure :: L_R_overlap                                   => L_R_overlap_ccs
+      procedure :: check_for_degeneracies                        => check_for_degeneracies_ccs
 !
-!     One-electron operators and mean value
+!     One-electron interals
 !
-      procedure :: construct_h                                 => construct_h_ccs 
-      procedure :: construct_mu                                => construct_mu_ccs 
-      procedure :: construct_q                                 => construct_q_ccs 
+      procedure :: t1_transform                                  => t1_transform_ccs
+      procedure :: t1_transform_complex                          => t1_transform_ccs_complex
 !
-      procedure :: calculate_expectation_value                 => calculate_expectation_value_ccs
-      procedure :: calculate_energy                            => calculate_energy_ccs
+      procedure :: ao_to_t1_transformation                       => ao_to_t1_transformation_ccs
+      procedure :: ao_to_t1_transformation_complex               => ao_to_t1_transformation_ccs_complex
 !
-      procedure :: construct_molecular_gradient                => construct_molecular_gradient_ccs
+      procedure :: construct_h                                   => construct_h_ccs
+      procedure :: construct_h_complex                           => construct_h_ccs_complex
 !
-      procedure :: read_settings                               => read_settings_ccs
-      procedure :: make_bath_orbital                           => make_bath_orbital_ccs
+      procedure :: construct_mu                                  => construct_mu_ccs
+      procedure :: construct_mu_complex                          => construct_mu_ccs_complex
 !
-      procedure :: set_ip_start_indices                        => set_ip_start_indices_ccs
-      procedure :: get_ip_projector                            => get_ip_projector_ccs
+      procedure :: construct_q                                   => construct_q_ccs
+      procedure :: construct_q_complex                           => construct_q_ccs_complex
 !
-      procedure :: approximate_double_excitation_vectors       => approximate_double_excitation_vectors_ccs
+!     Two-electron integrals
+!
+      procedure :: t1_transform_4                                => t1_transform_4_ccs
+      procedure :: t1_transform_4_complex                        => t1_transform_4_ccs_complex
+!
+      procedure :: get_ovov                                      => get_ovov_ccs
+      procedure :: get_ovov_complex                              => get_ovov_ccs_complex
+!
+      procedure :: get_vovo                                      => get_vovo_ccs
+      procedure :: get_vovo_complex                              => get_vovo_ccs_complex
+!
+      procedure :: get_vvoo                                      => get_vvoo_ccs
+      procedure :: get_vvoo_complex                              => get_vvoo_ccs_complex
+!
+      procedure :: get_voov                                      => get_voov_ccs
+      procedure :: get_voov_complex                              => get_voov_ccs_complex
+!
+      procedure :: get_ovvo                                      => get_ovvo_ccs
+      procedure :: get_ovvo_complex                              => get_ovvo_ccs_complex
+!
+      procedure :: get_oovv                                      => get_oovv_ccs
+      procedure :: get_oovv_complex                              => get_oovv_ccs_complex
+!
+      procedure :: get_oooo                                      => get_oooo_ccs
+      procedure :: get_oooo_complex                              => get_oooo_ccs_complex
+!
+      procedure :: get_vvvv                                      => get_vvvv_ccs
+      procedure :: get_vvvv_complex                              => get_vvvv_ccs_complex
+!
+      procedure :: get_ooov                                      => get_ooov_ccs
+      procedure :: get_ooov_complex                              => get_ooov_ccs_complex
+!
+      procedure :: get_oovo                                      => get_oovo_ccs
+      procedure :: get_oovo_complex                              => get_oovo_ccs_complex
+!
+      procedure :: get_ovoo                                      => get_ovoo_ccs
+      procedure :: get_ovoo_complex                              => get_ovoo_ccs_complex
+!
+      procedure :: get_vooo                                      => get_vooo_ccs
+      procedure :: get_vooo_complex                              => get_vooo_ccs_complex
+!
+      procedure :: get_vvvo                                      => get_vvvo_ccs
+      procedure :: get_vvvo_complex                              => get_vvvo_ccs_complex
+!
+      procedure :: get_vvov                                      => get_vvov_ccs
+      procedure :: get_vvov_complex                              => get_vvov_ccs_complex
+!
+      procedure :: get_vovv                                      => get_vovv_ccs
+      procedure :: get_vovv_complex                              => get_vovv_ccs_complex
+!
+      procedure :: get_ovvv                                      => get_ovvv_ccs
+      procedure :: get_ovvv_complex                              => get_ovvv_ccs_complex
+
+!
+!     Preparation procedures
+!
+      procedure :: prepare_for_jacobian                          => prepare_for_jacobian_ccs
+      procedure :: prepare_for_jacobian_transpose                => prepare_for_jacobian_transpose_ccs
+      procedure :: prepare_for_multiplier_equation               => prepare_for_multiplier_equation_ccs
+      procedure :: prepare_for_density                           => prepare_for_density_ccs
+!
+      procedure :: prepare_for_jacobian_transpose_complex        => prepare_for_jacobian_transpose_ccs_complex
+      procedure :: prepare_for_multiplier_equation_complex       => prepare_for_multiplier_equation_ccs_complex
+      procedure :: prepare_for_density_complex                   => prepare_for_density_ccs_complex
+!
+      procedure :: approximate_double_excitation_vectors         => approximate_double_excitation_vectors_ccs
 !
 !     Frozen core
 !
-      procedure :: construct_t1_fock_fc_term                   => construct_t1_fock_fc_term_ccs
-      procedure :: construct_t1_fock_frozen_hf_term            => construct_t1_fock_frozen_hf_term_ccs
+      procedure :: construct_t1_fock_fc_term                     => construct_t1_fock_fc_term_ccs
+      procedure :: construct_t1_fock_fc_term_complex             => construct_t1_fock_fc_term_ccs_complex
+!
+      procedure :: construct_t1_fock_frozen_hf_term              => construct_t1_fock_frozen_hf_term_ccs
+      procedure :: construct_t1_fock_frozen_hf_term_complex      => construct_t1_fock_frozen_hf_term_ccs_complex
 !
 !     MO preparations
 !
-      procedure :: mo_preparations                             => mo_preparations_ccs
+      procedure :: mo_preparations                               => mo_preparations_ccs
 !   
 !     Debug 
 !
-      procedure :: omega_for_jacobian_debug                    => omega_for_jacobian_debug_ccs
-      procedure :: amplitudes_for_jacobian_debug               => amplitudes_for_jacobian_debug_ccs
-      procedure :: normalization_for_jacobian_debug            => normalization_for_jacobian_debug_ccs
-      procedure :: numerical_test_jacobian                     => numerical_test_jacobian_ccs
+      procedure :: omega_for_jacobian_debug                      => omega_for_jacobian_debug_ccs
+      procedure :: amplitudes_for_jacobian_debug                 => amplitudes_for_jacobian_debug_ccs
+      procedure :: normalization_for_jacobian_debug              => normalization_for_jacobian_debug_ccs
+      procedure :: numerical_test_jacobian                       => numerical_test_jacobian_ccs
 !
-      procedure :: read_frozen_orbital_terms                   => read_frozen_orbital_terms_ccs
+!     Core-valence separation procedures
 !
+      procedure :: get_cvs_projector                             => get_cvs_projector_ccs
+      procedure :: set_cvs_start_indices                         => set_cvs_start_indices_ccs
+!
+!     Other procedures
+!
+      procedure :: cleanup                                       => cleanup_ccs
+      procedure :: general_cc_preparations                       => general_cc_preparations_ccs
+!
+      procedure :: is_restart_safe                               => is_restart_safe_ccs
+!
+      procedure :: set_initial_amplitudes_guess                  => set_initial_amplitudes_guess_ccs
+      procedure :: set_ip_start_indices                          => set_ip_start_indices_ccs
+      procedure :: get_ip_projector                              => get_ip_projector_ccs
+      procedure :: get_t1_diagnostic                             => get_t1_diagnostic_ccs
+!
+      procedure :: form_newton_raphson_t_estimate                => form_newton_raphson_t_estimate_ccs
+!
+      procedure :: print_dominant_x_amplitudes                   => print_dominant_x_amplitudes_ccs
+      procedure :: print_dominant_amplitudes                     => print_dominant_amplitudes_ccs
+      procedure :: print_dominant_x1                             => print_dominant_x1_ccs
+!
+      procedure :: make_bath_orbital                             => make_bath_orbital_ccs
+!
+      procedure :: construct_molecular_gradient                  => construct_molecular_gradient_ccs
+!
+      procedure :: get_g_pqrs_required                           => get_g_pqrs_required_ccs
+!
+!     Procedures related to time dependency
+!
+      procedure :: make_complex                                  => make_complex_ccs
+      procedure :: make_ccs_complex                              => make_ccs_complex_ccs
+!
+      procedure :: construct_complex_time_derivative             => construct_complex_time_derivative_ccs
+!
+      procedure :: construct_complex_time_derivative_amplitudes  => construct_complex_time_derivative_amplitudes_ccs
+      procedure :: construct_complex_time_derivative_multipliers => construct_complex_time_derivative_multipliers_ccs
+!
+
    end type ccs
 !
 !
@@ -316,8 +481,21 @@ module ccs_class
       include "fop_ccs_interface.F90"
       include "oei_ccs_interface.F90"
       include "tei_ccs_interface.F90"
+      include "t1_ccs_interface.F90"
       include "fock_ccs_interface.F90"
       include "debug_jacobian_ccs_interface.F90"
+!
+      include "complex_ccs_interface.F90"
+!
+      include "autogenerated_complex_files/fock_ccs_interface_complex.F90"
+      include "autogenerated_complex_files/initialize_destruct_ccs_interface_complex.F90"
+      include "autogenerated_complex_files/jacobian_transpose_ccs_interface_complex.F90"
+      include "autogenerated_complex_files/multiplier_equation_ccs_interface_complex.F90"
+      include "autogenerated_complex_files/omega_ccs_interface_complex.F90"
+      include "autogenerated_complex_files/set_get_ccs_interface_complex.F90"
+      include "autogenerated_complex_files/t1_ccs_interface_complex.F90"
+      include "autogenerated_complex_files/tei_ccs_interface_complex.F90"
+      include "autogenerated_complex_files/zop_ccs_interface_complex.F90"
 !
    end interface
 !
@@ -370,7 +548,7 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
-      wf%system => system
+      wf%system   => system
 !
 !     Initialize CC files
 !
@@ -382,6 +560,7 @@ contains
       wf%frozen_core = .false.
       wf%frozen_hf_mos = .false.
       wf%cvs = .false.
+      wf%need_g_abcd = .false.
 !
 !     Read CC settings from eT.inp (from cc section)
 !

@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (ccs_class) initialize_desctruct_ccs
+submodule (ccs_class) initialize_destruct_ccs
 !
 !!
 !!    Initialize destruct submodule (CCS)
@@ -388,7 +388,8 @@ contains
 !
       class(ccs) :: wf
 !
-      if (allocated(wf%left_excitation_energies)) call mem%dealloc(wf%left_excitation_energies, wf%n_singlet_states)
+      if (allocated(wf%left_excitation_energies)) &
+         call mem%dealloc(wf%left_excitation_energies, wf%n_singlet_states)
 !
    end subroutine destruct_left_excitation_energies_ccs
 !
@@ -439,4 +440,4 @@ contains
 !
    end subroutine initialize_fock_ccs
 !
-end submodule initialize_desctruct_ccs
+end submodule initialize_destruct_ccs
