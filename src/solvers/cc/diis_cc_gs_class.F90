@@ -234,7 +234,7 @@ contains
       converged_omega    = .false.
 !
       call output%printf('Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) ', fs='(/t3,a)', pl='normal')
-      call output%printf('---------------------------------------------------------------', fs='(t3,a)', pl='normal')
+      call output%print_separator('n', 63,'-')
 !
       prev_energy = zero
       iteration   = 1
@@ -268,8 +268,7 @@ contains
 !
          if (converged) then
 !
-            call output%printf('---------------------------------------------------------------', &
-               fs='(t3,a)', pl='normal')
+            call output%print_separator('n', 63,'-')
 !
            call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
 !
@@ -319,8 +318,7 @@ contains
 !
       if (.not. converged) then 
 !   
-         call output%printf('---------------------------------------------------------------', &
-            fs='(t3,a)', pl='normal')
+         call output%print_separator('n', 63,'-')
 !
          call output%error_msg('Did not converge in the max number of iterations.')
 !

@@ -207,16 +207,19 @@ contains
 !
       class(mm) :: molecule  
 !
-      write(output%unit, '(/t3,a)')       '- Molecular Mechanics Specifications'
+      call output%printf('- Molecular Mechanics Specifications', pl='m', fs='(/t3,a)')
 !
-      write(output%unit, '(/t6,a14,a)')     'Force Field:  ', trim(molecule%forcefield)
+      call output%printf('Force Field:  ' // trim(molecule%forcefield), pl='m', fs='(/t6,a)')
+!
       If(trim(molecule%forcefield).ne.'non-polarizable') &
-         write(output%unit, '(t6,a14,a)')      'Algorithm  :  ', trim(molecule%algorithm)
+         call output%printf('Algorithm  :  ' // trim(molecule%algorithm), pl='m', fs='(t6,a)')
 !
-      write(output%unit, '(/t6,a34,i4)')     'Number of MM atoms:                ', molecule%n_atoms
-      write(output%unit, '(t6,a34,i4)')      'Number of MM molecules:            ', molecule%max_mm_mol
-
-      flush(output%unit)
+      call output%printf('Number of MM atoms:     (i15)', &
+                          ints=[molecule%n_atoms],        &
+                          pl='m', fs='(/t6,a)')
+      call output%printf('Number of MM molecules: (i15)', &
+                          ints=[molecule%max_mm_mol],     &
+                          pl='m', fs='(t6,a)') 
 !
       call molecule%print_geometry()
 !
@@ -234,45 +237,46 @@ contains
 !
       integer :: I 
 !      
-      character(len=12) :: frmt0
-      character(len=57) :: frmt1
-      character(len=61) :: frmt2
-!
-      write(output%unit,'(a)') ''
-!
-      frmt0="(t5,68('='))"
-      frmt1="(t5,'Atom',4x,'Mol',13x,'X',10x,'Y',10x,'Z',12x,'Charge')"
-      frmt2="(t5,'Atom',4x,'Mol',9x,'X',10x,'Y',10x,'Z',9x,'Chi',8x,'Eta')"
+      call output%printf('', pl='m')
 !      
-      write(output%unit,frmt0 )
-      write(output%unit,'(t25,a)') 'MM Geometry (Å) and Parameters'
-      write(output%unit,frmt0)
+      call output%print_separator('m', 68,'=', fs='(t5,a)')
+      call output%printf('MM Geometry (Å) and Parameters', pl='m', fs='(t25,a)')
+      call output%print_separator('m', 68,'=', fs='(t5,a)')
 !
-      If(trim(molecule%forcefield).eq.'non-polarizable') write(output%unit,frmt1)
-      If(trim(molecule%forcefield).eq.'fq') write(output%unit,frmt2)
-      write(output%unit,frmt0)
+      If(trim(molecule%forcefield).eq.'non-polarizable') &
+         call output%printf('Atom    Mol             X          Y          Z            Charge', &
+                             pl='m', fs=('(t5,a)'))
+!
+      If(trim(molecule%forcefield) .eq. 'fq') &
+         call output%printf('Atom    Mol         X          Y          Z         Chi        Eta', &
+                             pl='m', fs=('(t5,a)'))
+!
+      call output%print_separator('m', 68,'=', fs='(t5,a)')
 !
       do I = 1, molecule%n_atoms 
 !
-          If(trim(molecule%forcefield).eq.'non-polarizable') then
+          If(trim(molecule%forcefield) .eq. 'non-polarizable') then
 !
-             write(output%unit, '(t6, a2,4x,i4,6x,3(f11.6),5x,f11.6)') molecule%symbol(I),          &
-                                                                       molecule%molecule(I),        &
-                                                                       molecule%coordinates(1,I),   &
-                                                                       molecule%coordinates(2,I),   &
-                                                                       molecule%coordinates(3,I),   &
-                                                                       molecule%charge(I)
+            call output%printf('(a2)    (i4)      (f11.6)(f11.6)(f11.6)     (f11.6)', &
+                                chars=[molecule%symbol(I)],       &
+                                ints=[molecule%molecule(I)],      &
+                                reals=[molecule%coordinates(1,I), &
+                                       molecule%coordinates(2,I), &
+                                       molecule%coordinates(3,I), &
+                                       molecule%charge(I)],       &
+                                pl='m', fs='(t6,a)')
 !
           else if(trim(molecule%forcefield).eq.'fq') then
 !
-            write(output%unit, '(t6, a2,4x,i4,2x,3(f11.6),2(f11.6))')  &
-                  molecule%symbol(I),          &
-                  molecule%molecule(I),        &
-                  molecule%coordinates(1,I),   &
-                  molecule%coordinates(2,I),   &
-                  molecule%coordinates(3,I),   &
-                  molecule%chi(I),             &
-                  molecule%eta(I)
+            call output%printf('(a2)    (i4)  (f11.6)(f11.6)(f11.6)(f11.6)(f11.6)', &
+                                chars=[molecule%symbol(I)],       &
+                                ints=[molecule%molecule(I)],      &
+                                reals=[molecule%coordinates(1,I), &
+                                       molecule%coordinates(2,I), &
+                                       molecule%coordinates(3,I), &
+                                       molecule%chi(I),           &
+                                       molecule%eta(I)],          &
+                                pl='m', fs='(t6,a)')
 !
           endIf
 !  
@@ -280,49 +284,62 @@ contains
 !
       enddo 
 !
-      write(output%unit,frmt0)
+      call output%print_separator('m', 68,'=', fs='(t5,a)')
 !
       if(trim(molecule%forcefield).eq.'non-polarizable') then
 !
-         write(output%unit,'(/ / t3,a)') '- Electrostatic Embedding'
-         write(output%unit,'(/ t6,a)') 'Each atom of the MM portion is endowed with a charge which'
-         write(output%unit,'(  t6,a)') 'value is a fixed external parameter.'
-         write(output%unit,'(  t6,a)') 'The QM/MM electrostatic interaction energy is defined as:'
-         write(output%unit,'(/ t6,a)') '   E^ele_QM/MM = sum_i q_i * V_i(P)'
-         write(output%unit,'(/ t6,a)') 'where V_i(P) is the electrostatic potential due to the QM'
-         write(output%unit,'(  t6,a)') 'density calculated at the position of the i-th charge q_i.'
-         write(output%unit,'(/ t6,a)') 'For further details, see:'
-         write(output%unit,'(  t6,a /)') 'Senn & Thiel, Angew. Chem. Int. Ed., 2009, 48, 1198−1229'
+         call output%printf( '- Electrostatic Embedding', pl='m', fs='(//t3,a)')
+         call output%printf('Each atom of the MM portion is endowed with a charge which &
+                            &value is a fixed external parameter.', &
+                             pl='m', ffs='(/t6,a)', fs='(t6,a)')
+         call output%printf('The QM/MM electrostatic interaction energy is defined as:', &
+                             pl='m', fs='(t6,a)')
+                            
+         call output%printf('   E^ele_QM/MM = sum_i q_i * V_i(P)', pl='m', fs='(/t6,a)')
+         call output%printf('where V_i(P) is the electrostatic potential due to the &
+                            &QM density calculated at the position of the i-th charge q_i.', &
+                             pl='m', ffs='(/t6,a)', fs='(t6,a)')
+         call output%printf('For further details, see:', pl='m', fs='(/t6,a)')
+         call output%printf('Senn & Thiel, Angew. Chem. Int. Ed., 2009, 48, 1198−1229', &
+                             pl='m', fs='(t6,a/)')
+!
          if(input%requested_cc_calculation()) &
-            write(output%unit,'(  t6,a/)') 'CC calculation: MM charges only affect MOs and Fock'
+            call output%printf('CC calculation: MM charges only affect MOs and Fock', &
+                                pl='m', fs='(t6,a/)')
 !
-      else if(trim(molecule%forcefield).eq.'fq') then
+      else if(trim(molecule%forcefield) .eq. 'fq') then
 !
-         write(output%unit,'(/ / t3,a)') '- Polarizable Embedding : Fluctuating Charges (FQ) Force Field'
-         write(output%unit,'(/ t6,a)') 'Each atom of the MM portion is endowed with a charge which'
-         write(output%unit,'(  t6,a)') 'value can vary in agreement with the Electronegativity'
-         write(output%unit,'(  t6,a)') 'Equalization Principle (EEP), which states that at the'
-         write(output%unit,'(  t6,a)') 'equilibrium each atom has the same electronegativity.'
-         write(output%unit,'(/ t6,a)') 'The force field is defined in terms of electronegativity (Chi)'
-         write(output%unit,'(  t6,a)') 'and chemical hardness (Eta), which are specified for each MM'
-         write(output%unit,'(  t6,a)') 'atom.'
-         write(output%unit,'(  t6,a)') 'The QM/MM electrostatic interaction energy is defined as:'
-         write(output%unit,'(/ t6,a)') '   E^ele_QM/MM = sum_i q_i * V_i(P)'
-         write(output%unit,'(/ t6,a)') 'where V_i(P) is the electrostatic potential due to the QM'
-         write(output%unit,'(  t6,a)') 'density calculated at the position of the i-th charge q_i.'
-         write(output%unit,'(  t6,a)') 'The values of the charges are obtained by solving a linear'
-         write(output%unit,'(  t6,a)') 'equation:'
-         write(output%unit,'(/ t6,a)') '   Dq = -Chi - V(P)'
-         write(output%unit,'(/ t6,a)') 'For further details, see:'
-         write(output%unit,'(  t6,a /)') 'Lipparini et al. JCTC 2012, 8, 4153–4165.'
+         call output%printf('- Polarizable Embedding : &
+                           &Fluctuating Charges (FQ) Force Field', pl='m', fs='(//t3,a)')
+!
+         call output%printf('Each atom of the MM portion is endowed with a charge '        //&
+                            'which value can vary in agreement with the Electronegativity' //&
+                            'Equalization Principle (EEP), which states that at the '      //&
+                            'equilibrium each atom has the same electronegativity.',         &
+                             pl='m',fs='(t6,a)', ffs='(/t6,a)')
+!
+         call output%printf('The force field is defined in terms of electronegativity ' //&
+                            '(Chi) and chemical hardness (Eta), which are specified '   //&
+                            'for each MM atom.', pl='m',fs='(t6,a)', ffs='(/t6,a)')
+!
+         call output%printf('The QM/MM electrostatic interaction energy is defined as:', &
+                             pl='m', fs='(t6,a)')
+         call output%printf( '   E^ele_QM/MM = sum_i q_i * V_i(P)', pl='m', fs='(/t6,a)')
+!
+         call output%printf('where V_i(P) is the electrostatic potential due to the QM'  //&
+                            'density calculated at the position of the i-th charge q_i.' //&
+                            'The values of the charges are obtained by solving a linear' //&
+                            'equation:', pl='m',fs='(t6,a)', ffs='(/t6,a)')
+         call output%printf('   Dq = -Chi - V(P)', pl='m', fs='(/t6,a)')
+         call output%printf('For further details, see:', pl='m', fs='(/t6,a)')
+         call output%printf('Lipparini et al. JCTC 2012, 8, 4153–4165.', pl='m', fs='(t6,a/)')
+!
          if(input%requested_cc_calculation()) then 
-            write(output%unit,'(  t6,a)') 'CC calculation: zero-order approximation'
-            write(output%unit,'(  t6,a/)') 'FQ charges only affect MOs and Fock'
+            call output%printf('CC calculation: zero-order approximation', pl='m', fs='(t6,a)') 
+            call output%printf('FQ charges only affect MOs and Fock', pl='m', fs='(t6,a/)') 
          endif
 !
       endif
-!
-      flush(output%unit)
 !
 !
    end subroutine print_geometry_mm
@@ -440,11 +457,10 @@ contains
 !
             if(molecule%molecule(i+1).ne.(molecule%molecule(i) + 1)) then
 !
-               write(output%unit,'(/t6,a)') 'QM/MM Calculation'
-               write(output%unit,'(t6,a41,i4)') 'WARNING! Something wrong: missing molecule = ', molecule%molecule(i) + 1
-               write(output%unit,'(t6,a41,i4)') '                      but maximum molecule = ', molecule%max_mm_mol
-               write(output%unit,'(t6,a)') 'FATAL ERROR'
-               call output%error_msg('eT programm will stop.')
+               call output%printf('Warning: Molecule (i0) missing even though (i0) should be present.', &
+                                   ints=[molecule%molecule(i) + 1, molecule%max_mm_mol],                &
+                                   pl='m', fs='(/t3,a)')
+               call output%error_msg('Something went wrong in QM/MM calculation.')
 !
             endif
 !

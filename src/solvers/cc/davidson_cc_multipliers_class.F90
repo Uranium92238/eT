@@ -235,7 +235,7 @@ contains
 !     :: Iterative loop ::
 !
       call output%printf('Iteration     Residual norm', pl='n', fs='(/t3,a)')
-      call output%printf('---------------------------', pl='n')
+      call output%print_separator('n', 27,'-')
 !
       iteration = 0
       converged_residual = .false.
@@ -286,7 +286,7 @@ contains
 !
       enddo ! End of iterative loop 
 !
-      call output%printf('---------------------------', pl='n')
+      call output%print_separator('n', 27,'-')
 !
 !     :: Summary of calculation :: 
 !

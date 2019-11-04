@@ -289,10 +289,10 @@ contains
 !
       call output%printf('- Electronic excitation energies:', pl='m', fs='(/t6,a)')
 !
-      call output%printf('                                 Excitation energy             ', pl='m', fs='(/t6,a)')
-      call output%printf('                     ------------------------------------------', pl='m', fs='(t6,a)')
-      call output%printf('State                (Hartree)             (eV)                ', pl='m', fs='(t6,a)')
-      call output%printf('---------------------------------------------------------------', pl='m', fs='(t6,a)')
+      call output%printf('Excitation energy', pl='m', fs='(/t39,a)')
+      call output%print_separator('m', 42, '-', fs='(t27,a)')
+      call output%printf('State                (Hartree)             (eV)', pl='m', fs='(t6,a)')
+      call output%print_separator('m', 63, '-', fs='(t6,a)')
 !
       do state = 1, solver%n_singlet_states
 !
@@ -301,7 +301,7 @@ contains
 !
       enddo 
 !
-      call output%printf('---------------------------------------------------------------', pl='m', fs='(t6,a)')
+      call output%print_separator('m', 63, '-', fs='(t6,a)')
       call output%printf('eV/Hartree (CODATA 2014): (f11.8)', pl='m', fs='(t6,a)', reals=[Hartree_to_eV])
 !
    end subroutine print_summary_abstract_cc_es
