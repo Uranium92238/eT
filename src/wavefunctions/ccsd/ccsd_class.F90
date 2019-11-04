@@ -458,10 +458,11 @@ contains
 !
 !     Print largest contributions
 !
-      write(output%unit, '(/t6,a)') 'Largest double amplitudes:'
-      write(output%unit, '(t6,a)')  '--------------------------------------------------'
-      write(output%unit, '(t6,a)')  '   a      i       b      j         ' // tag // '(ai,bj)             '
-      write(output%unit, '(t6,a)')  '--------------------------------------------------'
+      call output%printf('Largest double amplitudes:', pl='m', fs='(/t6,a)') 
+      call output%print_separator('m', 50, '-', fs='(t6,a)')
+      call output%printf('a      i       b      j         ' // tag // '(ai,bj)', &
+                         pl='m', fs='(t9,a)')
+      call output%print_separator('m', 50, '-', fs='(t6,a)')
 !
       do elm = 1, n_elements
 !
@@ -469,11 +470,12 @@ contains
          call invert_compound_index(ai, a, i, wf%n_v, wf%n_o)
          call invert_compound_index(bj, b, j, wf%n_v, wf%n_o)
 !
-         write(output%unit, '(t6,i4,4x,i3,4x,i4,4x,i3,3x,f19.12)') a, i, b, j, x2(dominant_indices(elm))
+         call output%printf('(i4)    (i3)    (i4)    (i3)   (f19.12)', ints=[a,i,b,j], &
+                            reals=[x2(dominant_indices(elm))], fs='(t6,a)', pl='m')
 !
       enddo
 !           '
-      write(output%unit, '(t6,a)')  '--------------------------------------------------'
+      call output%print_separator('m', 50, '-', fs='(t6,a)')
 !
       call mem%dealloc(dominant_indices, n_elements)
       call mem%dealloc(dominant_values, n_elements)

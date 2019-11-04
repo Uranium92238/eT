@@ -138,7 +138,7 @@ contains
       if (wf%integrals%get_eri_t1_mem()) call wf%integrals%update_g_pqrs_t1_in_memory()
 !
       if(wf%integrals%get_eri_t1_mem()) &
-         call output%printf('Note: All T1-integrals are stored in memory',fs='(/t3, a)',pl='normal')
+         call output%printf('Note: All T1-integrals are stored in memory',fs='(/t3, a)',pl='n')
 !
 !     Determine multipliers
 !
@@ -262,13 +262,13 @@ contains
 !        Loop over excited states, construct transition density
 !        and calculate transition strength
 !
-         call output%printf('- Summary of EOM first order properties calculation:', fs='(/t3,a)')
+         call output%printf('- Summary of EOM first order properties calculation:', pl='m', fs='(/t3,a)')
 !
          do state = 1, wf%n_singlet_states
 !
             if(skip_states(state)) then
                call output%printf('Warning: Skipped state (i0) because it is &
-               & parallel to the previous state', ints=[state], fs='(/t3,a)')
+               & parallel to the previous state', ints=[state], fs='(/t3,a)', pl='m')
                cycle
             end if
 !
@@ -434,8 +434,6 @@ contains
       call output%printf('Oscillator strength [a.u.]: (f19.12)', &
                         reals=[(two/three)*excitation_energy*sum_strength], &
                         pl='m', fs='(t6,a)')
-!
-      flush(output%unit)
 !
    end subroutine print_summary_eom_fop_engine
 !

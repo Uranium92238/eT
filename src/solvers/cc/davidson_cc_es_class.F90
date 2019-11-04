@@ -252,7 +252,7 @@ contains
          call mem%alloc(solution, wf%n_es_amplitudes)
 !
          call output%printf('Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm', pl='n', fs='(/t3,a)')
-         call output%printf('--------------------------------------------------------------------', pl='n')
+         call output%print_separator('n', 68,'-')
 !
          converged_residual   = .true.
          converged_eigenvalue = .true.
@@ -287,7 +287,7 @@ contains
 !
          enddo ! Done constructing new trials from residuals
 !
-         call output%printf('--------------------------------------------------------------------', pl='n')
+         call output%print_separator('n', 68,'-')
 !
          call mem%dealloc(residual, wf%n_es_amplitudes)
          call mem%dealloc(solution, wf%n_es_amplitudes)

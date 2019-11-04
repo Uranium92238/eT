@@ -79,9 +79,7 @@ module memory_manager_class
 !
    contains
 !
-!     Initialization routine (used if user specifies a memory different from standard)
-!
-      procedure :: prepare          => prepare_memory_manager
+!     Check if there are memory leaks - on exit of program
 !
       procedure :: check_for_leak   => check_for_leak_memory_manager
 !
@@ -168,13 +166,25 @@ module memory_manager_class
       procedure :: batch_setup_3_ident_memory_manager
       generic   :: batch_setup_ident => batch_setup_3_ident_memory_manager
 !
+!     Read and print of settings 
+!
       procedure :: read_settings     => read_settings_memory_manager
       procedure :: print_settings    => print_settings_memory_manager
 !
-      procedure :: get_available     => get_available_memory_manager
-      procedure :: print_available   => print_available_memory_manager
+!     Get and print of available memory 
+!
+      procedure :: print_available                 => print_available_memory_manager
+      procedure :: get_available                   => get_available_memory_manager
+      procedure, nopass :: get_memory_as_character => get_memory_as_character_memory_manager
 !
    end type memory_manager
+!
+!
+   interface memory_manager
+!
+      procedure :: new_memory_manager
+!
+   end interface memory_manager
 !
 !  Main memory object
 !
@@ -183,17 +193,17 @@ module memory_manager_class
 contains
 !
 !
-   subroutine prepare_memory_manager(mem)
+   function new_memory_manager() result(mem)
 !!
-!!    Prepare (memory manager)
+!!    New memory manager 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
-!!    Prepares the memory manager object by setting the
+!!    Creates the memory manager object and sets the
 !!    total and initial available memory.
 !!
       implicit none
 !
-      class(memory_manager) :: mem
+      type(memory_manager) :: mem
 !
 !     Set standard and read settings 
 !
@@ -209,7 +219,7 @@ contains
 !
       call mem%print_settings()
 !
-   end subroutine prepare_memory_manager
+   end function new_memory_manager
 !
 !
    subroutine check_for_leak_memory_manager(mem)
@@ -228,45 +238,99 @@ contains
 !
       if (mem%available .ne. mem%total) then 
 !
-         write(output%unit, '(/t3,a)')  'Mismatch in memory according to eT and specified on input:'
+         call output%printf('Mismatch in memory according to eT and specified on input:', &
+                             pl='m', fs='(/t3,a)')
 !
-         write(output%unit, '(/t6, a27, f11.4, a)') 'Memory available (eT):     ', &
-                         real(mem%available)/real(1000000000), ' GB'
-         write(output%unit, '(t6, a27, f11.4, a)') 'Memory available (input):   ', &
-                         real(mem%total)/real(1000000000), ' GB'
+         call output%printf('Memory available (eT):    (a0)', pl='m', &
+                            chars=[mem%get_memory_as_character(mem%available)], fs='(/t6,a)')
 !
-         call output%warning_msg('Deallocations may be missing or specified with incorrect dimensionalities.')
+         call output%printf('Memory available (input): (a0)', pl='m', &
+                             chars=[mem%get_memory_as_character(mem%total)], fs='(t6,a)')
+!
+         call output%warning_msg('Deallocations may be missing or specified with &
+                                 &incorrect dimensionalities.')
 !
       endif 
 !
    end subroutine check_for_leak_memory_manager
 !
 !
-   integer(i15) function get_available_memory_manager(mem)
+   function get_available_memory_manager(mem) result(memory)
 !!
 !!    Get available  
 !!    Written by Eirik F. Kjønstad, Jan 2019 
 !!
       implicit none 
 !
-      class(memory_manager), intent(in) :: mem 
+      class(memory_manager), intent(in) :: mem
 !
-      get_available_memory_manager = mem%available
+      integer(i15) :: memory
+!
+      memory = mem%available
 !
    end function get_available_memory_manager
 !
 !
+   function get_memory_as_character_memory_manager(input_mem, all_digits) result(memory)
+!!
+!!    Get available memory as character
+!!    Written by Alexander C. Paul, Oct 2019
+!!
+!!    Receives an 8 byte integer containing the memory in byte.
+!!    Returns character containing the same the number with a reasonable unit
+!!
+!!    If all_digits is .true. the full memory is returned in bytes
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: input_mem
+!
+      logical, intent(in), optional :: all_digits
+!
+      character(len=17) :: memory
+!
+      if(present(all_digits) .and. all_digits) then
+!
+         write(memory,'(i15, a)') input_mem, ' B'
+         memory = trim(adjustl(memory))
+!
+      else if(input_mem .lt. 1d6) then
+!
+         write(memory,'(f10.3, a)') dble(input_mem)/1.0d3, ' KB'
+         memory = trim(adjustl(memory))
+!         
+      else if(input_mem .lt. 1d9) then
+!
+         write(memory,'(f10.6, a)') dble(input_mem)/1.0d6, ' MB'
+         memory = trim(adjustl(memory))
+!
+      else if(input_mem .lt. 1d12) then
+!
+         write(memory,'(f10.6, a)') dble(input_mem)/1.0d9, ' GB'
+         memory = trim(adjustl(memory))
+!
+      else if(input_mem .lt. 1d15) then
+!
+         write(memory,'(f13.9, a)') dble(input_mem)/1.0d12, ' TB'
+         memory = trim(adjustl(memory))
+!
+      end if
+!
+   end function get_memory_as_character_memory_manager
+!
+!
    subroutine print_available_memory_manager(mem)
 !!
-!!    Get available  
+!!    Print available  
 !!    Written by Eirik F. Kjønstad, Jan 2019 
 !!
       implicit none 
 !
       class(memory_manager), intent(in) :: mem 
 !
-      write(output%unit, '(t3, a38, i5, a)') 'Currently available memory:     ', &
-                         mem%available/1000000, ' MB'
+
+      call output%printf('Currently available memory: (a0)', pl='m', &
+                          chars=[mem%get_memory_as_character(mem%available, .true.)])
 !
    end subroutine print_available_memory_manager
 !
@@ -1857,8 +1921,8 @@ contains
 !
       class(memory_manager) :: mem
 !
-      write(output%unit, '(t3, a38, i5, a)') 'Memory available for calculation:     ', &
-                         mem%total/1000000000, ' GB'
+      call output%printf('Memory available for calculation: ' &
+                        // mem%get_memory_as_character(mem%total) , pl='m')
 !
    end subroutine print_settings_memory_manager
 !
@@ -1927,7 +1991,9 @@ contains
 !
 !        Not enough memory for a batch
 !
-         write(output%unit,'(t3,a,i14,a,i14)') 'Need at least', req_min, 'but only have ', mem%available
+         call output%printf('Need at least (i0) B but only have (a0)', ints=[req_min],   &
+                             chars=[mem%get_memory_as_character(mem%available, .true.)], &
+                             pl='m')
          call output%error_msg('Not enough memory for a batch.')
 !
       else
@@ -2041,7 +2107,9 @@ contains
 !
 !        Not enough memory for a batch
 !
-         write(output%unit,'(t3,a,i14,a,i14)') 'Need ', req_min, 'but only have ', mem%available
+         call output%printf('Need at least (i0) B but only have (a0)', ints=[req_min],   &
+                             chars=[mem%get_memory_as_character(mem%available, .true.)], &
+                             pl='m')
          call output%error_msg('Not enough memory for a batch.')
 !
       else
@@ -2277,8 +2345,9 @@ contains
 !
 !        Not enough memory for a batch
 !
-         write(output%unit,'(t3,a,i14,a,i14)') 'Need ', (req_min), 'but only have ', &
-                                               mem%available
+         call output%printf('Need at least (i0) B but only have (a0)', ints=[req_min],   &
+                             chars=[trim(mem%get_memory_as_character(mem%available, .true.))], &
+                             pl='m')
          call output%error_msg('Not enough memory for a batch')
 !
       else
@@ -2484,8 +2553,9 @@ contains
 !
 !        Not enough memory for a batch
 !
-         write(output%unit,'(t3,a,i14,a,i14)') 'Need ', (req_min), 'but only have ', &
-                                               mem%available
+         call output%printf('Need at least (i0) B but only have (a0)', ints=[req_min],   &
+                             chars=[mem%get_memory_as_character(mem%available, .true.)], &
+                             pl='m')
          call output%error_msg('Not enough memory for a batch')
 !
       else

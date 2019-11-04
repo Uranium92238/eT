@@ -515,8 +515,7 @@ contains
          if (max_diagonal .lt. 0.0d0) then
             if (abs(max_diagonal) .gt. tolerance) then
 !
-               write(output%unit,*)'Error: Found negative diagonal in cholesky decomposition.'
-               stop
+               call output%error_msg('Found negative diagonal in cholesky decomposition.')
 !
             endif
          endif
@@ -751,8 +750,7 @@ contains
          if (max_diagonal .lt. 0.0d0) then
             if (abs(max_diagonal) .gt. tolerance) then
 !
-               write(output%unit,*)'Error: Found negative diagonal in cholesky decomposition.'
-               stop
+               call output%error_msg('Found negative diagonal in cholesky decomposition.')
 !
             endif
          endif
@@ -782,7 +780,8 @@ contains
 !
             enddo
 !
-            write(output%unit, '(t3, a46, e12.4)') 'The smallest diagonal after decomposition is: ', min_diagonal
+            call output%printf('The smallest diagonal after decomposition is: (e12.4)', &
+                                reals=[min_diagonal], pl='n')
             call mem%dealloc(diagonal, dim_)
 !
             return
@@ -853,7 +852,8 @@ contains
 !
       enddo
 !
-      write(output%unit, '(t3, a46, e12.4)') 'The smallest diagonal after decomposition is: ', min_diagonal
+      call output%printf('The smallest diagonal after decomposition is: (e12.4)', &
+                          reals=[min_diagonal], pl='n')
 !
       call mem%dealloc(diagonal, dim_)
 !
@@ -923,14 +923,13 @@ contains
 !
       Ainv = A
 !
-!     DTRTRI computes the inverse of a real upper or lower triangular
+!     dtrtri computes the inverse of a real upper or lower triangular
 !     matrix A.
 !
-      call DTRTRI('l','n', n, Ainv, n, info)
+      call dtrtri('l','n', n, Ainv, n, info)
 !
       if (info /= 0) then
-         write(output%unit, *) 'Error: matrix inversion failed!', info
-         stop
+         call output%error_msg('Matrix inversion failed. ', info)
       end if
 !
    end subroutine invert_lower_triangular

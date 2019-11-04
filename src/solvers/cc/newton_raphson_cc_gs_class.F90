@@ -164,17 +164,22 @@ contains
 !
       class(newton_raphson_cc_gs) :: solver 
 !
-      write(output%unit, '(/t3,a)')      '- DIIS accelerated Newton-Raphson CC ground state solver settings:'
+      call output%printf('- DIIS accelerated Newton-Raphson CC ground state solver settings:', &
+                          pl='m', fs='(/t3,a)')
 !
-      write(output%unit, '(/t6,a32,e9.2)') 'Omega threshold:                ', solver%omega_threshold
-      write(output%unit, '(t6,a32,e9.2)')  'Energy threshold:               ', solver%energy_threshold
-      write(output%unit, '(t6,a32,e9.2)')  'Relative micro threshold:       ', solver%relative_micro_residual_threshold
-
-      write(output%unit, '(/t6,a32,i9)')   'DIIS dimension:                 ', solver%diis_dimension
-      write(output%unit, '(t6,a32,i9)')    'Max number of iterations:       ', solver%max_iterations
-      write(output%unit, '(t6,a32,i9)')    'Max number of micro-iterations: ', solver%max_micro_iterations
+      call output%printf('Omega threshold: (e23.3)', reals=[solver%omega_threshold], pl='m', fs='(/t6,a)')
+      call output%printf('Energy threshold: (e22.3)', reals=[solver%energy_threshold], pl='m', fs='(t6,a)')
+      call output%printf('Relative micro threshold: (e14.3)',               &
+                          reals=[solver%relative_micro_residual_threshold], &
+                          pl='m', fs='(t6,a)')
 !
-      flush(output%unit)
+      call output%printf('DIIS dimension: (i25)', ints=[solver%diis_dimension], &
+                          pl='m', fs='(/t6,a)')
+      call output%printf('Max number of iterations: (i15)', ints=[solver%max_iterations], &
+                          pl='m', fs='(t6,a)')
+      call output%printf('Max number of micro-iterations: (i9)', &
+                          ints=[solver%max_micro_iterations],    &
+                          pl='m', fs='(t6,a)')
 !
    end subroutine print_settings_newton_raphson_cc_gs
 !
@@ -232,14 +237,17 @@ contains
 !
 !        Print energy, energy difference and residual, then test convergence 
 !
-         write(output%unit, '(/t3,a)') 'Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)'
-         write(output%unit, '(t3,a)')  '----------------------------------------------------------------'
-         flush(output%unit)
-         write(output%unit, '(t3,2x,i3,9x,f17.12,4x,e11.4,4x,e11.4, 8x)') iteration, wf%energy, &
-                                          omega_norm, abs(energy-prev_energy)
-
-         write(output%unit, '(t3,a)')  '----------------------------------------------------------------'
-         flush(output%unit)
+         call output%printf('Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)', &
+                             fs='(/t3,a)', pl='n')
+!
+         call output%print_separator('n', 64, '-', fs='(t3,a)')
+!
+         call output%printf('(i5)         (f17.12)    (e11.4)    (e11.4)',           &
+                             ints=[iteration],                                       &
+                             reals=[wf%energy, omega_norm, abs(energy-prev_energy)], &
+                             pl='n')
+!
+         call output%print_separator('n', 64, '-', fs='(t3,a)')
 !
          converged_energy   = abs(energy-prev_energy) .lt. solver%energy_threshold
          converged_omega    = omega_norm              .lt. solver%omega_threshold
@@ -277,16 +285,16 @@ contains
       enddo
 !
       if (.not. converged) then 
-!   
-         write(output%unit, '(/t3,a)')  'Warning: was not able to converge the equations in the given'
-         write(output%unit, '(t3,a)')  'number of maximum iterations.'
+!
+         call output%warning_msg('Was not able to converge the equations      &
+                                 &in the given number of maximum iterations.')
 !
       else
 !
-         write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
+         call output%printf('Convergence criterion met in (i0) iterations!', &
+                             ints=[iteration], pl='m', fs='(/t3,a)')
 !
          call solver%print_summary(wf)
-
 !
       endif 
 !
@@ -348,9 +356,8 @@ contains
 !
 !     Enter iterative loop
 !
-      write(output%unit,'(/t6,a)') 'Micro-iter.  Residual norm'
-      write(output%unit,'(t6,a)')  '--------------------------'
-      flush(output%unit)
+      call output%printf('Micro-iter.  Residual norm', pl='n', fs='(/t6,a)')
+      call output%print_separator('m', 26, '-', fs='(t6,a)')
 !
       micro_iteration = 0
       converged_residual = .false.
@@ -395,7 +402,7 @@ contains
 !
       enddo
 !
-      call output%printf('--------------------------', pl='n', fs='(t6,a)')
+      call output%print_separator('n', 26, '-', fs='(t6,a)')
 !
       if (.not. converged_residual) then
 !
@@ -476,14 +483,14 @@ contains
 !
       real(dp) :: t1_diagnostic 
 !
-      call output%printf('- DIIS accelerated Newton-Raphson CC ground state solver summary:', pl='n', fs='(/t3,a)')
+      call output%printf('- DIIS accelerated Newton-Raphson CC ground state solver summary:', pl='m', fs='(/t3,a)')
 !
-      call output%printf('Final ground state energy (a.u.): (f18.12)', pl='n', reals=[wf%energy], fs='(/t6,a)')
+      call output%printf('Final ground state energy (a.u.): (f18.12)', pl='m', reals=[wf%energy], fs='(/t6,a)')
 !
       call wf%print_dominant_amplitudes()
 !
       t1_diagnostic = wf%get_t1_diagnostic() 
-      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', pl='n', reals=[t1_diagnostic], fs='(/t6,a)')
+      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', pl='m', reals=[t1_diagnostic], fs='(/t6,a)')
 !
    end subroutine print_summary_newton_raphson_cc_gs
 !

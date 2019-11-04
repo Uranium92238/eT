@@ -604,7 +604,7 @@ contains
       call wf%destruct_mo_fock_fc_term()
       call wf%destruct_mo_fock_frozen_hf_term()
 !
-      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(convert_to_uppercase(wf%name_)), ' wavefunction'
+      call output%printf('- Cleaning up ' // trim(wf%name_) // ' wavefunction', pl='v', fs='(/t3,a)')
 !
    end subroutine cleanup_ccs
 !
@@ -977,20 +977,21 @@ contains
 !
 !     Print largest contributions
 !
-      write(output%unit, '(/t6,a)') 'Largest single amplitudes:'
-      write(output%unit, '(t6,a)')  '-----------------------------------'
-      write(output%unit, '(t6,a)')  '   a       i         ' // tag // '(a,i)             '
-      write(output%unit, '(t6,a)')  '-----------------------------------'
+      call output%printf('Largest single amplitudes:', pl='m', fs='(/t6,a)')
+      call output%print_separator('m', 35, '-', fs='(t6,a)')
+      call output%printf('a       i         ' // tag // '(a,i)', pl='m', fs='(t9,a)')
+      call output%print_separator('m', 35, '-', fs='(t6,a)')
 !
       do elm = 1, n_elements
 !
          call invert_compound_index(dominant_indices(elm), a, i, wf%n_v, wf%n_o)
 !
-         write(output%unit, '(t6,i4,4x,i3,3x,f19.12)') a, i, x1(dominant_indices(elm))
+         call output%printf('(i4)    (i3)   (f19.12)', fs='(t6,a)', pl='m', &
+                             ints=[a, i], reals=[x1(dominant_indices(elm))])
 !
       enddo
 !
-      write(output%unit, '(t6,a)')  '------------------------------------'
+      call output%print_separator('m', 36, '-', fs='(t6,a)')
 !
       call mem%dealloc(dominant_indices, n_elements)
       call mem%dealloc(dominant_values, n_elements)
@@ -1837,7 +1838,7 @@ contains
                if (reduced_degeneracy_r .gt. 1) then
 !
                   call output%printf('Found a degeneracy between:', fs='(/t6,a)', pl='n')
-                  call output%printf('-----------------------------', fs='(t6,a)', pl='n')
+                  call output%print_separator('n', 29,'-', fs='(t6,a)')
                   call output%printf('State     Excitation Energy', fs='(t6,a)', pl='n')
 !
                   do p = 1, n_degeneracy

@@ -186,9 +186,12 @@ contains
 !
 !     Additional prints
 !
-      write(output%unit, '(/t6, a29, i13)') 'Total number of AOs:         ', system%get_n_aos()
-      write(output%unit, '(t6, a29, i13)')  'Total number of shell pairs: ', solver%n_sp
-      write(output%unit, '(t6, a29, i13)')  'Total number of AO pairs:    ', solver%n_aop
+      call output%printf('Total number of AOs:         (i13)', &
+                          ints=[system%get_n_aos()], pl='m', fs='(/t6,a)')
+      call output%printf('Total number of shell pairs: (i13)', &
+                          ints=[solver%n_sp], pl='m', fs='(t6, a)')
+      call output%printf('Total number of AO pairs:    (i13)', &
+                          ints=[solver%n_aop], pl='m', fs='(t6, a)')
 !
    end function new_eri_cd
 !
@@ -211,7 +214,7 @@ contains
       det_basis_timer   = timings("Cholesky; time to determine auxiliary basis")
       invert_timer      = timings("Cholesky; time to construct (J|K), decompose, and invert")
 !
-      write(output%unit, '(/t3, a39)') '- Preparing diagonal for decomposition:'
+      call output%printf('- Preparing diagonal for decomposition:', pl='v', fs='(/t3,a)')
 !
       call det_basis_timer%turn_on()
 !
@@ -274,7 +277,6 @@ contains
 !
       endif
 !
-      flush(output%unit)
 !
    end subroutine run_eri_cd
 !
@@ -298,10 +300,12 @@ contains
 !
       call solver%timer%turn_off()
 !
-      write(output%unit, '(/t3, a)') '- Finished decomposing the ERIs.'
+      call output%printf('- Finished decomposing the ERIs.', pl='n', fs='(/t3, a)')
 !
-      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
-      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
+      call output%printf('Total wall time (sec): (f20.5)', pl='n', fs='(/t6,a)', &
+                          reals=[solver%timer%get_elapsed_time('wall')])
+      call output%printf('Total cpu time (sec):  (f20.5)', pl='n', fs='(t6, a)', &
+                          reals=[solver%timer%get_elapsed_time('cpu')])
 !
    end subroutine cleanup_eri_cd
 !
@@ -526,12 +530,11 @@ contains
 !
       enddo
 !
-      write(output%unit, '(/t6, a33, 2x, i11)')  'Significant shell pairs:         ', n_sig_sp
-      write(output%unit, '(t6, a33, 2x, i11)')  'Significant AO pairs:            ', n_sig_aop
+      call output%printf('Significant shell pairs: (i21)', ints=[n_sig_sp], pl='n', fs='(/t6,a)')
+      call output%printf('Significant AO pairs:    (i21)', ints=[n_sig_aop], pl='n', fs='(t6, a)')
 !
-      write(output%unit, '(/t6, a33, 2x, i11)') 'Construct shell pairs:           ', n_construct_sp
-      write(output%unit, '(t6, a33, 2x, i11)')  'Construct AO pairs:              ', n_construct_aop
-      flush(output%unit)
+      call output%printf('Construct shell pairs: (i23)', ints=[n_construct_sp], pl='n', fs='(/t6,a)')
+      call output%printf('Construct AO pairs:    (i23)', ints=[n_construct_aop], pl='n', fs='(t6, a)')
 !
 !     Prepare for construction of diagonal and screening vector
 !     
@@ -883,12 +886,11 @@ contains
 !
       enddo
 !
-      write(output%unit, '(/t6, a33, 2x, i11)')  'Significant shell pairs:         ', n_sig_sp
-      write(output%unit, '(t6, a33, 2x, i11)')  'Significant AO pairs:            ', n_sig_aop
+      call output%printf('Significant shell pairs: (i21)', ints=[n_sig_sp], pl='n', fs='(/t6,a)')
+      call output%printf('Significant AO pairs:    (i21)', ints=[n_sig_aop], pl='n', fs='(t6, a)')
 !
-      write(output%unit, '(/t6, a33, 2x, i11)') 'Construct shell pairs:           ', n_construct_sp
-      write(output%unit, '(t6, a33, 2x, i11)')  'Construct AO pairs:              ', n_construct_aop
-      flush(output%unit)
+      call output%printf('Construct shell pairs: (i23)', ints=[n_construct_sp], pl='n', fs='(/t6,a)')
+      call output%printf('Construct AO pairs:    (i23)', ints=[n_construct_aop], pl='n', fs='(t6, a)')
 !
 !     Prepare for construction of diagonal and screening vector
 !     
@@ -1156,12 +1158,9 @@ contains
 !
          call batch_file%open_('write', 'rewind')
 !
-         write(output%unit, '(/t6, a40, i3, a1)')  'Significant AO and shell pairs in batch ', batch, ':'
-         write(output%unit, '(/t9, a33, 2x, i11)') 'Significant shell pairs:         ', n_sig_sp_batch
-         write(output%unit, '(t9, a33, 2x, i11)')  'Significant AO pairs:            ', current_batch_size
-!
-         flush(output%unit)
-!
+         call output%printf('Significant AO and shell pairs in batch (i0):', ints=[batch], pl='n', fs='(/t6,a)')
+         call output%printf('Significant shell pairs: (i21)', ints=[n_sig_sp_batch], pl='n', fs='(/t9,a)')
+         call output%printf('Significant AO pairs:    (i21)', ints=[current_batch_size], pl='n', fs='(/t9,a)')
 !
          call batch_file%write_(n_sig_sp_batch)
          call batch_file%write_(current_batch_size)
@@ -1514,12 +1513,11 @@ contains
 !        3. D_xy = ( xy | xy ), the significant diagonal.
 !        4. Screening vector
 !
-      write(output%unit, '(/t6, a)')  'Significant AO and shell pairs in final decomposition:'
+      call output%printf('Significant AO and shell pairs in final decomposition:', pl='n', fs='(/t6, a)') 
 !
-      write(output%unit, '(/t6, a33, 2x, i11)')  'Significant shell pairs:         ', n_sig_sp
-      write(output%unit, '(t6, a33, 2x, i11)')  'Significant AO pairs:            ', n_sig_aop
+      call output%printf('Significant shell pairs: (i21)', ints=[n_sig_sp], pl='n', fs='(/t6,a)')
+      call output%printf('Significant AO pairs:    (i21)', ints=[n_sig_aop], pl='n', fs='(t6, a)')
 !
-      flush(output%unit)
 !
       call solver%diagonal_info_target%open_('write', 'rewind')
 !
@@ -1671,11 +1669,11 @@ contains
 !
       call solver%construct_diagonal_batches(system)
 !
-      write(output%unit, '(/t3, a31)') '- Decomposing batched diagonal:'
+      call output%printf('- Decomposing batched diagonal', pl='n', fs='(t3,a)')
 !
       do batch = 1, solver%n_batches 
 !
-         write(output%unit, '(/t3, a6, i3, a1)') 'Batch ', batch, ':'
+         call output%printf('Batch (i0):', ints=[batch], pl='n', fs='(t3,a)')
 !
          write(temp_name, '(a14, i4.4)')'diagonal_info_', batch
          batch_file_diag = sequential_file(trim(temp_name))
@@ -1913,11 +1911,10 @@ contains
 !
 !     Determining the basis
 !
-      write(output%unit, '(/t3, a)')&
-      'Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size'
-      write(output%unit, '(t3, a)') &
-      '-------------------------------------------------------------------------------------------------------'
-      flush(output%unit)
+      call output%printf(&
+      'Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size', &
+      pl='n', fs='(/t3, a)')
+      call output%print_separator('n', 103,'-', fs='(t3,a)')
 !
       solver%iteration   = 0
       solver%n_cholesky  = 0
@@ -2311,7 +2308,7 @@ contains
 !
                      if (abs(D_xy(xy) - approx_diagonal_accumulative(xy)) .gt. 1.0d-10) then
                         if (write_warning) then
-                           write(output%unit, '(t6, a)') 'Warning: Found significant negative diagonal! '
+                           call output%warning_msg('Found significant negative diagonal!')
                            write_warning = .false.
                         endif
                         sig_neg = sig_neg + 1
@@ -2537,9 +2534,12 @@ contains
             call mem%dealloc(qual_aop, n_qual_aop, 3)
             call mem%dealloc(qual_sp, n_qual_sp, 3)
 !
-            write(output%unit, '(t3, i4, 8x, i9, 1x, a1, i9, 6x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
-            solver%iteration, n_sig_aop,'/', n_sig_sp, D_max_full , n_qual_aop, solver%n_cholesky, solver%n_cholesky*n_sig_aop
-            flush(output%unit)
+            call output%printf('(i4)        (i9) /(i9)      (e12.5)    (i4)        (i7)        (i13)',  &
+                               ints=[solver%iteration, n_sig_aop, n_sig_sp, n_qual_aop, solver%n_cholesky, &
+                                     solver%n_cholesky*n_sig_aop], &
+                               reals=[D_max_full],                 &
+                               pl='n', fs='(t3,a)')
+            call output%print_separator('n', 103,'-', fs='(t3,a)')
 !
          else
 !
@@ -2559,9 +2559,11 @@ contains
 !
             done = .true.
 !
-            write(output%unit, '(t3, i4, 8x, i9, 1x, a1, i9, 6x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
-            solver%iteration, 0,'/',0, D_max_full, n_qual_aop, solver%n_cholesky, 0
-            flush(output%unit)
+            call output%printf('(i4)        (i9) /(i9)      (e12.5)    (i4)        (i7)        (i13)',  &
+                               ints=[solver%iteration, 0, 0, n_qual_aop, solver%n_cholesky, 0], &
+                               reals=[D_max_full], &
+                               pl='n', fs='(t3,a)')
+!
 !
          endif
 !
@@ -2569,15 +2571,15 @@ contains
          full_reduce_time = full_reduce_time + e_reduce_time - s_reduce_time
 !
       enddo ! while not done
-      write(output%unit, '(t3, a)') &
-      '-------------------------------------------------------------------------------------------------------'
-      flush(output%unit)
+!
+      call output%print_separator('n', 103,'-', fs='(t3,a)')
 !
 !     Timings
 !
       call cpu_time(e_select_basis_time)
 !
-      if (sig_neg .gt. 0) write(output%unit,'(/t6, a42, i7)')'Number of significant negative diagonals: ', sig_neg
+      if (sig_neg .gt. 0) call output%printf('Number of significant negative diagonals: (i0)', &
+                                              ints=[sig_neg], pl='n', fs='(/t6,a')
 !
 !     Prepare info on basis
 !
@@ -2880,9 +2882,10 @@ contains
 !
       solver%n_cholesky = n_vectors
 !
-      write(output%unit, '(/t3, a, i10)')'- Summary of Cholesky decomposition of electronic repulsion integrals: '
-      write(output%unit, '(/t6, a, i10)')'Final number of Cholesky vectors: ', solver%n_cholesky
-      flush(output%unit)
+      call output%printf('- Summary of Cholesky decomposition of electronic repulsion integrals: ', &
+                          pl='n', fs='(/t3,a)')
+      call output%printf('Final number of Cholesky vectors: (i0)', &
+                          ints=[solver%n_cholesky], pl='n', fs='(/t6,a)')
 !
 !     Update the basis_shell_info array which contains information of which shell pairs (and shells)
 !     contain elements of the basis and how many elements of the basis they contain.
@@ -3560,11 +3563,14 @@ contains
 !
       call mem%dealloc(D_xy, n_construct_aop)
 !
-      write(output%unit, '(/t2, a)')'- Testing the Cholesky decomposition decomposition electronic repulsion integrals:'
+      call output%printf('- Testing the Cholesky decomposition decomposition &
+                         &electronic repulsion integrals:',                  &
+                          pl='m', fs='(/t2,a)')
 !
-      write(output%unit, '(/t6, a71, e12.4)')'Maximal difference between approximate and actual diagonal:            ', max_diff
-      write(output%unit, '(t6, a71, e12.4)')'Minimal element of difference between approximate and actual diagonal: ', min_diff
-      flush(output%unit)
+      call output%printf('Maximal difference between approximate and actual diagonal: (e23.4)',&
+                          reals=[max_diff], pl='m', fs='(/t6,a)')
+      call output%printf('Minimal element of difference between approximate &
+                         &and actual diagonal: (e12.4)',reals=[min_diff], pl='m', fs='( t6,a)')
 !
    end subroutine diagonal_test_eri_cd
 !
@@ -4208,19 +4214,17 @@ contains
 !
       class(eri_cd) :: solver
 !
-      write(output%unit, '(/t3, a)')      '- Cholesky decomposition settings:'
+      call output%printf('- Cholesky decomposition settings:', pl='m', fs='(/t3, a)')
 !
-      write(output%unit, '(/t6, a21, e10.2)') 'Target threshold is: ', solver%threshold
-      write(output%unit, '( t6, a21, e10.2)') 'Span factor:         ', solver%span
-      write(output%unit, '( t6, a21, 4x, i6)')'Max qual:            ', solver%max_qual
+      call output%printf('Target threshold is: (e10.2)', reals=[solver%threshold], pl='m', fs='(/t6, a)')
+      call output%printf('Span factor:         (e10.2)', reals=[solver%span], pl='m', fs='(t6, a)')
+      call output%printf('Max qual:            (i10)', ints=[solver%max_qual], pl='m', fs='(t6, a)')
 !
       if (solver%one_center) then 
-
-         write(output%unit, '(/t6, a)') 'Doing one-center Cholesky decomposition (1C-CD).'
-      
-      endif 
 !
-      flush(output%unit)
+         call output%printf('Doing one-center Cholesky decomposition (1C-CD).', pl='m', fs='(/t6, a)')
+!      
+      endif 
 !
    end subroutine print_settings_eri_cd
 !

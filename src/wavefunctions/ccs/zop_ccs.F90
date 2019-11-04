@@ -44,8 +44,8 @@ contains
 !
 !     For now, do nothing.
 !
-      call output%printf('No preparations for the density for (a0) wavefunction.', pl='minimal', &
-                         fs='(/t3,a)', chars=[trim(wf%name_)])
+      call output%printf('- No preparations for the density for ' // trim(wf%name_) // &
+                         ' wavefunction.', pl='v', fs='(/t3,a)')
 !
    end subroutine prepare_for_density_ccs
 !

@@ -163,12 +163,15 @@ contains
 !
       class(diis_cc_multipliers) :: solver 
 !
-      write(output%unit, '(/t3,a)')      '- DIIS CC multipliers solver settings:'
+      call output%printf('- DIIS CC multipliers solver settings:', pl='m', fs='(/t3,a)')
 !
-      write(output%unit, '(/t6,a26,e9.2)') 'Residual threshold:       ', solver%residual_threshold
+      call output%printf('Residual threshold: (e15.2)', pl='m', fs='(/t6,a)', &
+                          reals=[solver%residual_threshold])
 
-      write(output%unit, '(/t6,a26,i9)')   'DIIS dimension:           ', solver%diis_dimension
-      write(output%unit, '(t6,a26,i9)')    'Max number of iterations: ', solver%max_iterations
+      call output%printf('DIIS dimension: (i19)', pl='m', fs='(/t6,a)', &
+                          ints=[solver%diis_dimension])
+      call output%printf('Max number of iterations: (i9)', pl='m', fs='(t6,a)', &
+                          ints=[solver%max_iterations])
 !
    end subroutine print_settings_diis_cc_multipliers
 !
@@ -209,7 +212,8 @@ contains
 !
       if (solver%restart) then 
 !
-         write(output%unit, '(/t3,a)') 'Requested restart. Reading multipliers from file.'
+         call output%printf('Requested restart. Reading multipliers from file.', &
+                             pl='m', fs='(/t3,a)')
 !
          call wf%is_restart_safe('ground state')
          call wf%read_multipliers()
@@ -224,9 +228,8 @@ contains
 !
       converged_residual = .false.
 !
-      write(output%unit, '(/t3,a)') 'Iteration    Norm residual  '
-      write(output%unit, '(t3,a)')  '----------------------------'
-      flush(output%unit)
+      call output%printf('Iteration    Norm residual  ', pl='n', fs='(/t3,a)')
+      call output%print_separator('n', 28,'-', fs='(t3,a)')
 !
       iteration   = 1
 !
@@ -237,8 +240,7 @@ contains
          call wf%construct_multiplier_equation(residual)
          residual_norm = get_l2_norm(residual, wf%n_gs_amplitudes)
 !
-         write(output%unit, '(t3,i3,10x,e11.4)') iteration, residual_norm
-         flush(output%unit)
+         call output%printf('(i3)         (e11.4)', ints=[iteration], reals=[residual_norm], pl='n')
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !
@@ -246,8 +248,8 @@ contains
 !
          if (converged_residual) then
 !
-            write(output%unit, '(t3,a)')           '----------------------------'
-            write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
+            call output%print_separator('n', 28,'-', fs='(t3,a)')
+            call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], pl='n', fs='(/t3,a)')
 !
          else
 !
@@ -270,17 +272,15 @@ contains
 !
       if (.not. converged_residual) then 
 !   
-         write(output%unit, '(t3,a)')   '---------------------------------------------------------------'
-         write(output%unit, '(/t3,a)')  'Warning: was not able to converge the equations in the given'
-         write(output%unit, '(t3,a/)')  'number of maximum iterations.'
+         call output%print_separator('m', 63,'-', fs='(t3,a)')
+         call output%warning_msg('was not able to converge the equations      &
+                                 &in the given number of maximum iterations.')
 !
       else
 !
          call solver%print_summary(wf, multipliers)
 !
       endif 
-!
-      flush(output%unit)
 !
       call mem%dealloc(residual, wf%n_gs_amplitudes)
       call mem%dealloc(multipliers, wf%n_gs_amplitudes)
@@ -303,11 +303,15 @@ contains
 !
       call solver%timer%turn_off()
 !
-      write(output%unit, '(/t3, a)') '- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) // &
-                                       ' multipliers equations'
+      call output%printf('- Finished solving the ' // trim(wf%name_) // &
+                         ' multipliers equations', pl='n', fs='(/t3, a)')
 !
-      write(output%unit, '(/t6,a23,f20.5)')  'Total wall time (sec): ', solver%timer%get_elapsed_time('wall')
-      write(output%unit, '(t6,a23,f20.5)')   'Total cpu time (sec):  ', solver%timer%get_elapsed_time('cpu')
+      call output%printf('Total wall time (sec): (f20.5)',              &
+                          reals=[solver%timer%get_elapsed_time('wall')], &
+                          pl='n', fs='(/t6,a)')
+      call output%printf('Total cpu time (sec):  (f20.5)',             &
+                          reals=[solver%timer%get_elapsed_time('cpu')], &
+                          pl='n', fs='(t6,a)')
 !
    end subroutine cleanup_diis_cc_multipliers
 !
@@ -340,8 +344,7 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: X
 !
-      write(output%unit, '(/t3,a)') '- DIIS CC multipliers solver summary:'
-      flush(output%unit)      
+      call output%printf('- DIIS CC multipliers solver summary:', pl='m', fs='(/t3,a)')
 !
       call wf%print_dominant_x_amplitudes(X, 'r')
 !

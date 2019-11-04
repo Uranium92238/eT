@@ -212,23 +212,20 @@ contains
    subroutine generate_sad_density_reference_engine(wf)
 !!    
 !!    Generate SAD density
-!!    Written by Tor S. Haugland, 2019
+!!    Written by Tor S. Haugland, Sep 2019
 !!
-!!    Generates SAD density for every unique (atom, basis) pair and sets the wf density.
-!!    First, a molecular system with only one atom for every (atom, basis) is created.
-!!    Secondly, a UHF wavefunction is created for that system.
-!!    Thirdly, the wavefunction is run through a HF solver.
-!!    Finally, the density files are moved to where the wavefunction expects them to be.
+!!    Generates SAD density for every unique (atom, basis) pair.
 !!
-!!    The renaming of files and the cleanup and re-prepare of the full system
-!!    is present to avoid overwriting files.
+!!       1: a molecular system with only one atom for every (atom, basis) is created.
+!!       2: an UHF wavefunction is created for that system.
+!!       3: the wavefunction is run through a SCF solver.
+!!       4: the density files are moved to where the wavefunction expects them to be.
 !!
-!!    Modified by Tor S. Haugland, 2019
+!!    Modified by Tor S. Haugland, Nov 2019
 !!
-!!    Removed deletion of files generated in SCF for SAD to fix a re-occuring bug. Restart files
-!!    are now checked from a parameter list. Added "Found SAD". Only loop over unique atoms.
+!!    Removed deletion of files generated in SCF for SAD to fix a re-occuring bug.
+!!    Added "Found SAD". Only loop over unique atoms.
 !!
-!
       use sequential_file_class,  only: sequential_file
 !
       use atomic_class,           only: atomic
@@ -248,32 +245,26 @@ contains
       type(uhf),         allocatable   :: sad_wf
       type(scf_hf), allocatable        :: sad_solver
 !
+      character(len=200)    :: ao_density_guess
+      real(dp)              :: energy_threshold
+      real(dp)              :: gradient_threshold
+      integer               :: max_iterations
+!
+      character(len=200)    :: name_
+      integer               :: multiplicity
+!
+      character(len=200)    :: alpha_fname
+      character(len=200)    :: beta_fname
       type(sequential_file) :: alpha_density_file
       type(sequential_file) :: beta_density_file
-      type(sequential_file) :: restart_file
-!
-      character(len=200) :: alpha_fname
-      character(len=200) :: beta_fname
-!
-      character(len=200) :: ao_density_guess
-      character(len=200) :: name_
-      integer            :: multiplicity
-!
-      real(dp) :: energy_threshold
-      real(dp) :: gradient_threshold
-      integer  :: max_iterations
 !
       integer :: I
-!
       character(len=50), dimension(wf%system%n_atoms) :: atom_and_basis
       integer,           dimension(wf%system%n_atoms) :: unique_atom_index
 !
-      character(len=20), dimension(2), parameter :: restart_files = ["scf_restart_file   ", &
-                                                                     "orbital_information"  ]
-!
       call output%printf('- Generating SAD guess', pl='minimal', fs='(/t3,a)')
 !
-!     SAD DIIS solver settings
+!     SAD solver settings
 !
       ao_density_guess   = 'core'
       max_iterations     = 100
@@ -285,25 +276,6 @@ contains
       gradient_threshold = 1.0D-6
       call input%get_keyword_in_section('gradient threshold', 'solver scf', gradient_threshold)
       gradient_threshold = min(1.0D-6, gradient_threshold)
-!
-!     Rename Hartree-Fock restart files so that they are not overwritten:
-!
-      do I = 1, size(restart_files)
-!
-         restart_file = sequential_file(trim(restart_files(I)))
-!
-         if (restart_file%exists()) then
-!
-            call output%printf('Found restart, copy to temp. position: temp_(a0)', &
-                              pl='debug', chars=[trim(restart_files(I))], fs='(t6,a)' )
-!
-            call restart_file%copy("temp_" // trim(restart_files(I)))
-!
-            call restart_file%delete_()
-!
-         endif
-!
-      enddo
 !
 !     Find atomic index of unique atom/basis combinations
 !
@@ -397,25 +369,6 @@ contains
          beta_density_file  = sequential_file('ao_density_b')
          call beta_density_file%copy(beta_fname)
          call beta_density_file%delete_()
-!
-      enddo
-!
-!     Rename Hartree-Fock restart files back to their original names
-!
-      do I = 1, size(restart_files)
-!
-         restart_file = sequential_file('temp_' // trim(restart_files(I)))
-!
-         if (restart_file%exists()) then
-!
-            call output%printf('Found temp. restart, copy it back:     (a0)', &
-                              pl='debug', chars=[restart_files(I)], fs='(t6,a)' )
-!
-            call restart_file%copy(trim(restart_files(I)))
-!
-            call restart_file%delete_()
-!
-         endif
 !
       enddo
 !
