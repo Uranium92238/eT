@@ -277,7 +277,6 @@ contains
 !
       endif
 !
-      flush(output%unit)
 !
    end subroutine run_eri_cd
 !
@@ -1519,7 +1518,6 @@ contains
       call output%printf('Significant shell pairs: (i21)', ints=[n_sig_sp], pl='n', fs='(/t6,a)')
       call output%printf('Significant AO pairs:    (i21)', ints=[n_sig_aop], pl='n', fs='(t6, a)')
 !
-      flush(output%unit)
 !
       call solver%diagonal_info_target%open_('write', 'rewind')
 !

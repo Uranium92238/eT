@@ -435,8 +435,6 @@ contains
                         reals=[(two/three)*excitation_energy*sum_strength], &
                         pl='m', fs='(t6,a)')
 !
-      flush(output%unit)
-!
    end subroutine print_summary_eom_fop_engine
 !
 !
