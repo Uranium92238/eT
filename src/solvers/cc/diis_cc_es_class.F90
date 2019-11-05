@@ -20,8 +20,46 @@
 module diis_cc_es_class
 !
 !!
-!!    DIIS coupled cluster excited state solver class module
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!! DIIS coupled cluster excited state solver class module
+!! Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+!! Solves the CC excited state eigenvalue equation
+!!
+!!    A R = omega R   or  L^T A = omega L^T
+!!
+!! for a set of right or left states (R, L) and the associated
+!! excitation energies omega. Here, A is the coupled cluster 
+!! Jacobian matrix:
+!!
+!!       A_mu,nu = < mu | [H-bar, tau_nu] | HF >,    H-bar = e-T H eT. 
+!!
+!! The equation is solved using the direct inversion of the iterative 
+!! subspace (DIIS) algorithm. See Pulay, P. Convergence acceleration 
+!! of iterative sequences. The case of SCF iteration. Chem. Phys. Lett. 
+!! 1980, 73, 393−398. This algorithm combines estimates for the parameters 
+!! and the errors and finds a least-squares solution to the error being 
+!! zero (see diis_tool solver tool for more details). 
+!!
+!! The update estimates used in DIIS are the following. Assuming we 
+!! are solving for a right excited state R, the update estimate is
+!!
+!!    R_mu <- R_mu - Residual_mu/(epsilon_mu - omega),
+!!
+!! where Residual = A R - omega R and omega = R^T A R.
+!! (R is normalized.) 
+!!
+!! This solver can handle the folded CC2 and CC3 equations, where 
+!! the Jacobian transformation becomes non-linear 
+!!
+!!    A(omega) R = omega R   or    L^T A(omega) = omega L^T.
+!!
+!! In this case, Davidson's algorithm is not as well-suited. 
+!! Literature for DIIS/CC2: C. Hättig and F. Weigend, 
+!! J. Chem. Phys. 113, 5154 (2000).
+!!
+!! Note/warning for usage: if poor starting guesses for L and R,  
+!! are used this solver often finds duplicate roots and may in some
+!! cases not converge. 
 !!
 !
    use parameters
