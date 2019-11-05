@@ -20,9 +20,41 @@
 module newton_raphson_cc_gs_class
 !
 !!
-!!		Newton-Raphson coupled cluster ground state solver class module
-!!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!	Newton-Raphson coupled cluster ground state solver class module
+!!	Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!  
+!! Solves the ground state coupled cluster equation (or, amplitude
+!! equations)
+!!
+!!    Omega_mu = < mu | H-bar | HF > = 0,     H-bar = e-T H eT,
+!!
+!! for the cluster amplitudes t_mu in T = sum_mu t_mu tau_mu. The 
+!! cluster amplitude give the (right) coupled cluster ground state as 
+!!
+!!    | CC > = e^T | HF >.
+!!
+!! The equation is solved using the direct inversion of the iterative 
+!! subspace (DIIS) algorithm. See Pulay, P. Convergence acceleration 
+!! of iterative sequences. The case of SCF iteration. Chem. Phys. Lett. 
+!! 1980, 73, 393−398. This algorithm combines estimates for the parameters 
+!! and the errors and finds a least-squares solution to the error being 
+!! zero (see diis_tool solver tool for more details). 
+!!
+!! The amplitude estimates that are used to DIIS-extrapolate are the 
+!! exact Newton-Raphson update estimates: 
+!!
+!!    t_mu <- t_mu + Delta t_mu = t_mu - (A^-1 Omega)_mu.
+!!
+!! The equation for the update estimate,
+!!
+!!    A (Delta t) = - Omega,
+!!
+!! is solved approximately in each macro-iteration (giving 
+!! a number of micro-iterations, each involving a transformation
+!! by the Jacobian matrix A). Micro-iterations are performed 
+!! using the Davidson algorithm for linear CC equations - see 
+!! davidson_cc_multipliers solver for more details.
+!!
 !
    use kinds
    use ccs_class

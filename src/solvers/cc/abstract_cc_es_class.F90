@@ -20,9 +20,20 @@
 module abstract_cc_es_class
 !
 !!
-!!    Abstract coupled cluster excited state solver class module
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, June 2019
+!! Abstract coupled cluster excited state solver class module
+!! Written by Eirik F. Kjønstad, Sarai D. Folkestad, June 2019
 !!   
+!! Class that gathers functionality common the CC excited state 
+!! solvers (in particular, DIIS and Davidson). These solvers determine 
+!! states L and R and excitation energies omega that satisfy the 
+!! eigenvalue equation 
+!!
+!!    A R = omega R        L^T A = omega L^T,
+!!
+!! where A is the coupled cluster Jacobian matrix, 
+!!
+!!    A_mu,nu = < mu | [H-bar, tau_nu] | HF >,    H-bar = e-T H eT. 
+!!
 !
    use parameters
 !

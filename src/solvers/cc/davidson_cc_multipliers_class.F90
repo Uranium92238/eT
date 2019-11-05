@@ -20,18 +20,33 @@
 module davidson_cc_multipliers_class
 !
 !!
-!!    Davidson coupled cluster multipliers solver class module
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!! Davidson coupled cluster multipliers solver class module
+!! Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!  
-!!    Solves the multiplier or left CC ground state equation 
+!! Solves the multiplier or left CC ground state equation 
 !!
-!!       t-bar^T A = - eta^T
+!!    tbar^T A = - eta^T
 !!
-!!    for t-bar. The solutions are determined using the 
-!!    Davidson reduced space algorithm, where the eigenvalue problem 
-!!    is solved in a subspace generated from the residuals obtained
-!!    in the preceding iterations. See E. R. Davidson, J. Comput. Phys. 
-!!    17, 87 (1975) for more details.
+!! for t-bar. Here, A is the coupled cluster Jacobian 
+!!
+!!    A_mu,nu = < mu | [H-bar, tau_nu] | HF >,    H-bar = e-T H eT,
+!!
+!! and 
+!!
+!!    eta_mu = < HF | [H-bar, tau_nu] | HF >.
+!!
+!! The multipliers are tbar and give the left CC ground state as 
+!!
+!!    < Lambda | = < HF | e-T + sum_mu tbar_mu < mu | e-T 
+!!
+!! The solutions are determined using the Davidson
+!! reduced space algorithm, where the eigenvalue problem 
+!! is solved in a subspace generated from the residuals* obtained
+!! in the preceding iterations. See E. R. Davidson, J. Comput. Phys. 
+!! 17, 87 (1975) for more details.
+!!
+!! * Preconditioned using orbital differences approximation of A 
+!!   (See davidson_cc_es solver for more details.)
 !!
 !
    use kinds
