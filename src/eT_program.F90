@@ -371,7 +371,7 @@ subroutine print_program_banner()
    call output%printf('Åsmund H. Tveten       HF', pl='m', fs='(t4,a)', ll=82)
 !
    call output%print_separator('m', 82, '-', fs='(t3,a)')
-   call output%printf('Other contributors: A. Balbi, M. Scavino', pl='m', fs='(t4,a)', ll=82) 
+   call output%printf('Other contributors: M. Scavino', pl='m', fs='(t4,a)', ll=82) 
 !
 end subroutine print_program_banner
 !
