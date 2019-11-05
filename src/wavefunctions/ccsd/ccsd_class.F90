@@ -94,12 +94,6 @@ module ccsd_class
       procedure :: construct_u_aibj                           => construct_u_aibj_ccsd
       procedure :: construct_u_aibj_complex                   => construct_u_aibj_ccsd_complex
 !
-      procedure :: from_biorthogonal_to_biorthonormal         => from_biorthogonal_to_biorthonormal_ccsd
-      procedure :: from_biorthogonal_to_biorthonormal_complex => from_biorthogonal_to_biorthonormal_ccsd_complex
-!
-      procedure :: from_biorthonormal_to_biorthogonal         => from_biorthonormal_to_biorthogonal_ccsd
-      procedure :: from_biorthonormal_to_biorthogonal_complex => from_biorthonormal_to_biorthogonal_ccsd_complex
-!
 !     Procedures related to Jacobian transformation
 !
       procedure :: jacobian_transformation                    => jacobian_transformation_ccsd

@@ -116,31 +116,3 @@
       class(ccsd),                  intent(inout)          :: wf
 !
    end subroutine construct_u_aibj_ccsd
-!
-!
-   module subroutine from_biorthogonal_to_biorthonormal_ccsd(wf, X)
-!!
-!!    From biorthogonal to biorthonormal 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
-!!
-      implicit none 
-!
-      class(ccsd), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_t2), intent(inout) :: X 
-!
-   end subroutine from_biorthogonal_to_biorthonormal_ccsd
-!
-!
-   module subroutine from_biorthonormal_to_biorthogonal_ccsd(wf, X)
-!!
-!!    From biorthonormal to biorthogonal 
-!!    Written by Andreas Skeidsvoll, Sep 2019
-!!
-      implicit none 
-!
-      class(ccsd), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_t2), intent(inout) :: X 
-!
-   end subroutine from_biorthonormal_to_biorthogonal_ccsd

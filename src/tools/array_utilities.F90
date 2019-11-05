@@ -46,7 +46,10 @@ module array_utilities
                    scale_complex_4_diagonal_by_complex, &
                    scale_real_4_diagonal_by_real_1324, &
                    scale_complex_4_diagonal_by_real_1324, &
-                   scale_complex_4_diagonal_by_complex_1324
+                   scale_complex_4_diagonal_by_complex_1324, &
+                   scale_real_packed_4_diagonal_by_real, &
+                   scale_complex_packed_4_diagonal_by_real, &
+                   scale_complex_packed_4_diagonal_by_complex
    end interface scale_diagonal
 !
 contains
@@ -2571,6 +2574,117 @@ contains
 !$omp end parallel do
 !
    end subroutine scale_complex_4_diagonal_by_complex_1324
+!
+!
+   module subroutine scale_real_packed_4_diagonal_by_real(alpha, X, dim_p, dim_q)
+!!
+!!    Scale real packed 4 diagonal by real
+!!    Written by Andreas Skeidsvoll, Nov 2019
+!!
+!!    Scales the diagonal of a real packed 4-dimensional matrix by a real scalar alpha. The
+!!    unpacked matrix is symmetric under the exchange of the two first and last dimensions, and has
+!!    been packed as
+!!
+!!    X(dim_p, dim_q, dim_p, dim_q) -> X(dim_p*dim_q*(dim_p*dim_q+1)/2)
+!!
+      implicit none 
+!
+      real(dp), intent(in) :: alpha
+!
+      integer :: dim_p, dim_q
+!
+      real(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(inout) :: X 
+!
+      integer :: p, q, pq, pqpq
+!
+!$omp parallel do private(p,q,pq,pqpq)
+      do q = 1, dim_q
+         do p = 1, dim_p
+!
+            pq = (dim_p)*(q-1) + p
+            pqpq = (pq**2 + pq)/2
+!
+            X(pqpq) = X(pqpq) * alpha
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine scale_real_packed_4_diagonal_by_real
+!
+!
+   module subroutine scale_complex_packed_4_diagonal_by_real(alpha, X, dim_p, dim_q)
+!!
+!!    Scale complex packed 4 diagonal by real
+!!    Written by Andreas Skeidsvoll, Nov 2019
+!!
+!!    Scales the diagonal of a complex packed 4-dimensional matrix by a real scalar alpha. The
+!!    unpacked matrix is symmetric under the exchange of the two first and last dimensions, and has
+!!    been packed as
+!!
+!!    X(dim_p, dim_q, dim_p, dim_q) -> X(dim_p*dim_q*(dim_p*dim_q+1)/2)
+!!
+      implicit none 
+!
+      real(dp), intent(in) :: alpha
+!
+      integer :: dim_p, dim_q
+!
+      complex(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(inout) :: X 
+!
+      integer :: p, q, pq, pqpq
+!
+!$omp parallel do private(p,q,pq,pqpq)
+      do q = 1, dim_q
+         do p = 1, dim_p
+!
+            pq = (dim_p)*(q-1) + p
+            pqpq = (pq**2 + pq)/2
+!
+            X(pqpq) = X(pqpq) * cmplx(alpha, zero, dp)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine scale_complex_packed_4_diagonal_by_real
+!
+!
+   module subroutine scale_complex_packed_4_diagonal_by_complex(alpha, X, dim_p, dim_q)
+!!
+!!    Scale complex packed 4 diagonal by complex
+!!    Written by Andreas Skeidsvoll, Nov 2019
+!!
+!!    Scales the diagonal of a complex packed 4-dimensional matrix by a complex scalar alpha. The
+!!    unpacked matrix is symmetric under the exchange of the two first and last dimensions, and has
+!!    been packed as
+!!
+!!    X(dim_p, dim_q, dim_p, dim_q) -> X(dim_p*dim_q*(dim_p*dim_q+1)/2)
+!!
+      implicit none 
+!
+      complex(dp), intent(in) :: alpha
+!
+      integer :: dim_p, dim_q
+!
+      complex(dp), dimension(dim_p*dim_q*(dim_p*dim_q+1)/2), intent(inout) :: X 
+!
+      integer :: p, q, pq, pqpq
+!
+!$omp parallel do private(p,q,pq,pqpq)
+      do q = 1, dim_q
+         do p = 1, dim_p
+!
+            pq = (dim_p)*(q-1) + p
+            pqpq = (pq**2 + pq)/2
+!
+            X(pqpq) = X(pqpq) * alpha
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine scale_complex_packed_4_diagonal_by_complex
 !
 !
    complex(dp) function our_zdotu(n, zx, incx, zy, incy)

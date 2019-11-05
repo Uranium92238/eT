@@ -63,14 +63,13 @@ contains
       class(ccsd), intent(inout) :: wf
       complex(dp), dimension(wf%n_gs_amplitudes), intent(out) :: ddt_amplitudes
 !
-!     Multiply diagonal by two to remove ai .ge. bj restriction and to incorporate
-!     factor 1/2 into amplitudes to match form of T2 operator in Koch and Jørgensen (1990).
-!     This is done by using from_biorthonormal_to_biorthogonal (same operation as changing bases).
+!     Multiply doubles diagonal by two to remove ai .ge. bj restriction and to incorporate
+!     factor 1/2 in doubles amplitudes to match form of T2 operator in Koch and Jørgensen (1990).
 !
       if (allocated(wf%t1_complex) .and. allocated(wf%t2_complex)) then
 !
          call wf%construct_omega_complex(ddt_amplitudes)
-         call wf%from_biorthonormal_to_biorthogonal_complex(ddt_amplitudes(wf%n_t1+1:wf%n_gs_amplitudes))
+         call scale_diagonal(two, ddt_amplitudes(wf%n_t1+1:wf%n_gs_amplitudes), wf%n_v, wf%n_o)
          call zscal(wf%n_gs_amplitudes, cmplx(zero, -one, dp), ddt_amplitudes, 1)
 !
       else
