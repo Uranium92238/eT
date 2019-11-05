@@ -23,17 +23,21 @@ module cholesky_array_list_class
 !!    Cholesky array list class module
 !!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, July 2018
 !!
+!!    Linked list of Cholesky vectors. Specialized class for 
+!!    Cholesky decomposition of the electron repulsion integrals.
+!!
+!!    Extends the array_list class
+!!
 !
    use kinds
-   use memory_manager_class
-   use array_list_class
-   use array_utilities
+   use memory_manager_class, only : mem
+   use array_list_class, only : array_list
+   use array_node_class, only : array_node
+   use array_utilities, only : reduce_array
 !
    implicit none
 !
    type, extends(array_list) :: cholesky_array_list
-!
-!     Nothing here
 !
    contains
 !
@@ -41,28 +45,59 @@ module cholesky_array_list_class
 !
    end type cholesky_array_list
 !
+!
+   interface cholesky_array_list
+!
+      procedure :: new_cholesky_array_list
+!
+   end interface cholesky_array_list
+!
+!
 contains
+!
+!
+   function new_cholesky_array_list() result(list)
+!!
+!!    New array list
+!!    Written by Sarai D. Folkestad, Nov 2019
+!!
+      implicit none
+!
+      type(cholesky_array_list) :: list
+!
+      list%n_nodes = 0
+      list%head => null()
+      list%tail => null()
+!
+   end function new_cholesky_array_list
 !
 !
    subroutine reduce_cholesky_array_list(cholesky_array, block_firsts, block_significant, n_blocks, dim_reduced)
 !!
-!!    Reduce Cholesky array by deleting rows
+!!    Reduce Cholesky array
+!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, July 2018
 !!
-!!    block_firsts: integer array of offsets to first element in each block
-!!    block_significant: logical array whose elements are true if a block is significant and is to be kept
-!!    n_blocks: total number of blocks
-!!    dim_reduced: number of rows after reduction
+!!    Reduces a Cholesky array by deleting rows
+!!
+!!    'block_firsts'       : integer array of offsets to first element in each block
+!!
+!!    'block_significant'  : logical array whose elements are true if 
+!!                            a block is significant and is to be kept
+!!
+!!    'n_blocks'           : total number of blocks
+!!
+!!    'dim_reduced'        : number of rows after reduction
 !!
       implicit none
 !
-      class(cholesky_array_list) :: cholesky_array
+      class(cholesky_array_list), intent(inout) :: cholesky_array
 !
-      integer :: n_blocks
+      integer, intent(in) :: n_blocks
 !
-      integer, dimension(n_blocks + 1) :: block_firsts
-      logical, dimension(n_blocks)     :: block_significant
+      integer, dimension(n_blocks + 1), intent(in) :: block_firsts
+      logical, dimension(n_blocks), intent(in)     :: block_significant
 !
-      integer :: dim_reduced
+      integer, intent(in) :: dim_reduced
 !
       integer :: list_element
 !

@@ -23,10 +23,19 @@ module array_list_class
 !!    Array list class module
 !!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, July 2018
 !!
+!!    A linked list of arrays. The nodes are defined in array_node class.
+!!
+!!    The class contains all functionality needed to use the linked list
+!!
+!!       - Different methods of insertion of a new array node
+!!       - Removal of an array node
+!!       - Get and set routines to access information of a specific node
+!!
 !
    use kinds
-   use memory_manager_class
-   use array_node_class
+   use memory_manager_class, only : mem
+   use array_node_class, only : array_node
+   use global_out, only : output
 !
    implicit none
 !
@@ -39,32 +48,63 @@ module array_list_class
 !
    contains
 !
-      procedure :: initialize => initialize_array_list
-      procedure :: finalize   => finalize_array_list
+      procedure :: initialize    => initialize_array_list
+      procedure :: finalize      => finalize_array_list
 !
-      procedure :: push_back  => push_back_array_list
-      procedure :: pop_back   => pop_back_array_list
-      procedure :: push_front  => push_front_array_list
-      procedure :: insert     => insert_array_list
-      procedure :: remove     => remove_array_list
+      procedure :: push_back     => push_back_array_list
+      procedure :: pop_back      => pop_back_array_list
+      procedure :: push_front    => push_front_array_list
+      procedure :: insert        => insert_array_list
+      procedure :: remove        => remove_array_list
 !
-      procedure :: get_element => get_element_array_list
-      procedure :: set_element => set_element_array_list
+      procedure :: get_array     => get_array_array_list
+      procedure :: set_array     => set_array_array_list
 !
-      procedure :: get_node => get_node_array_list
+      procedure :: get_node      => get_node_array_list
 !
-      procedure :: get_n_rows_element => get_n_rows_element_array_list
-      procedure :: get_n_columns_element => get_n_columns_element_array_list
+      procedure :: get_n_rows_element     => get_n_rows_element_array_list
+      procedure :: get_n_columns_element  => get_n_columns_element_array_list
 !
-      procedure :: keep_columns => keep_columns_array_list
+      procedure :: keep_columns           => keep_columns_array_list
 !
    end type array_list
+!
+!
+   interface array_list
+!
+      procedure :: new_array_list
+!
+   end interface array_list
+!
 !
 contains
 !
 !
+   function new_array_list() result(list)
+!!
+!!    New array list
+!!    Written by Sarai D. Folkestad, Nov 2019
+!!
+      implicit none
+!
+      type(array_list) :: list
+!
+      list%n_nodes = 0
+      list%head => null()
+      list%tail => null()
+!
+   end function new_array_list
+!
+!
    subroutine initialize_array_list(list)
 !!
+!!    Initialize 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jul 2018
+!!
+!!    Initialize the empty array list:
+!! 
+!!       Set both head and tail poiters to null()
+!!       Set the number of nodes to 0
 !!
       implicit none
 !
@@ -79,6 +119,11 @@ contains
 !
    subroutine finalize_array_list(list)
 !!
+!!    Finalize
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jul 2018
+!!
+!!    Delete all nodes, by deleting the last node until the
+!!    list is empty. Then set head and tail to null()
 !!
       implicit none
 !
@@ -98,19 +143,27 @@ contains
 !
    subroutine keep_columns_array_list(list, n, first, last)
 !!
-!!    Keep only a specific range of columns of n
+!!    Keep columns
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jul 2018
+!!
+!!    Keep only a specific range (first, last) of columns of 
+!!    array node n.
+!!
+!!    Redefine the node with these columns only.
 !!
       implicit none
 !
-      class(array_list) :: list
+      class(array_list), intent(inout) :: list
 !
-      integer :: n, first, last
+      integer, intent(in) :: n, first, last
 !
-      integer :: element
+      integer :: element, n_rows
 !
       real(dp), dimension(:,:), allocatable :: temp_array
 !
       type(array_node), pointer :: node_pointer
+!
+!     Point at the correct node (n)
 !
       node_pointer => list%head
 !
@@ -120,15 +173,23 @@ contains
 !
       enddo
 !
+!     Construct a temporary array using only the requested columns
+!
       call mem%alloc(temp_array, node_pointer%n_rows, last - first + 1)
 !
-      temp_array(:, :) = node_pointer%array(:, first:last)
+      call dcopy((last - first + 1)*node_pointer%n_rows, &
+                  node_pointer%array(1, first), 1, temp_array, 1)
 !
-      call mem%dealloc(node_pointer%array, node_pointer%n_rows, node_pointer%n_columns)
-      call mem%alloc(node_pointer%array, node_pointer%n_rows, last - first + 1)
-      node_pointer%array = temp_array
+!     Redefine the node
 !
-      node_pointer%n_columns = last - first + 1
+      call node_pointer%destruct()
+!
+      n_rows = node_pointer%n_rows
+!
+      call node_pointer%initialize(n_rows, last - first + 1)
+!
+      call dcopy(node_pointer%n_rows*node_pointer%n_columns, temp_array, 1, node_pointer%array,1)
+!      
       call mem%dealloc(temp_array, node_pointer%n_rows, last - first + 1)
 !
    end subroutine keep_columns_array_list
@@ -136,34 +197,54 @@ contains
 !
    subroutine push_back_array_list(list, n_rows, n_columns)
 !!
-!!    Insert at the end of the list
+!!    Push back
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jul 2018
+!!
+!!    Insert a node at the end of the list
 !!
       implicit none
 !
-      class(array_list) :: list
+      class(array_list), intent(inout) :: list
       integer, intent(in) :: n_rows, n_columns
 !
       if (associated(list%head)) then ! List has nodes already
 !
+!        Allocate the next node of the last node (tail)
+!
          allocate(list%tail%next)
-         call mem%alloc(list%tail%next%array, n_rows, n_columns)
-         list%tail%next%n_rows = n_rows
-         list%tail%next%n_columns = n_columns
+!
+!        Set the node specifics
+!
+         call list%tail%next%initialize(n_rows, n_columns)
+!
+!        The previous node for the new node is tail
 !
          list%tail%next%previous => list%tail
+!
+!        Reset tail to the new node
+!
          list%tail => list%tail%next
-
+!
+!        The next node of the last node does not exist
+!
          list%tail%next => null()
 !
       else ! List is empty
 !
+!        Allocate head
+!
          allocate(list%head)
-         call mem%alloc(list%head%array, n_rows, n_columns)
-         list%head%n_rows = n_rows
-         list%head%n_columns = n_columns
+!
+!        Set the node specifics
+!
+         call list%head%initialize(n_rows, n_columns) 
+!
+!        This is the first node so head = tail
 !
          list%tail => list%head
-
+!
+!        Only one node, so previous and next do not exist
+!
          list%head%next => null()
          list%head%previous => null()
 !
@@ -176,34 +257,51 @@ contains
 !
    subroutine push_front_array_list(list, n_rows, n_columns)
 !!
-!!    Insert at the beginning of the list
+!!    Push front
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jul 2018
+!!
+!!    Insert a node at the beginning of the list
 !!
       implicit none
 !
-      class(array_list) :: list
+      class(array_list), intent(inout) :: list
       integer, intent(in) :: n_rows, n_columns
 !
       if (associated(list%head)) then ! List has nodes already
 !
+!        Allocate new node, it is before head
+!
          allocate(list%head%previous)
-         call mem%alloc(list%head%previous%array, n_rows, n_columns)
-         list%head%previous%n_rows = n_rows
-         list%head%previous%n_columns = n_columns
+!
+!        Set node specifics
+!
+         call list%head%previous%initialize(n_rows, n_columns)
+!
+!        The new node is before (old) head
 !
          list%head%previous%next => list%head
+!
+!        The new node is the new head 
+!
          list%head => list%head%previous
-
          list%head%previous => null()
 !
       else ! List is empty
 !
+!        Allocate head
+!
          allocate(list%head)
-         call mem%alloc(list%head%array, n_rows, n_columns)
-         list%head%n_rows = n_rows
-         list%head%n_columns = n_columns
+!
+!        Set node specifics
+!
+         call list%head%initialize(n_rows, n_columns)
+!
+!        This is the first node so head = tail
 !
          list%tail => list%head
-
+!
+!        Only one node, so previous and next do not exist
+!
          list%head%next => null()
          list%head%previous => null()
 !
@@ -216,21 +314,35 @@ contains
 !
    subroutine pop_back_array_list(list)
 !!
+!!    Pop back
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jul 2018
+!!
 !!    Remove at the end of the list
 !!
       implicit none
 !
-      class(array_list) :: list
+      class(array_list), intent(inout) :: list
 !
       if (associated(list%head)) then ! List has nodes already
 !
-         call mem%dealloc(list%tail%array, list%tail%n_rows, list%tail%n_columns)
+!        Deallocate the array
+!
+         call list%tail%destruct()
 !
          if (associated(list%tail%previous)) then
+!
+!           Reset the tail
+!
             list%tail =>  list%tail%previous
+!
+!           Deallocate the node
+!
             deallocate(list%tail%next)
+!
          else
+!
             deallocate(list%tail)
+!
          endif
 
 !
@@ -245,15 +357,18 @@ contains
    end subroutine pop_back_array_list
 !
 !
-   subroutine get_element_array_list(list, array_pointer, n)
+   subroutine get_array_array_list(list, array_pointer, n)
 !!
-!!    Set a pointer to the nth array in the list
+!!    Get array
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jul 2018
+!!
+!!    Set a pointer to the n'th array in the list
 !!
       implicit none
 !
-      class(array_list) :: list
+      class(array_list), intent(inout) :: list
 !
-      real(dp), dimension(:,:), pointer :: array_pointer
+      real(dp), dimension(:,:), pointer, intent(out) :: array_pointer
 !
       integer, intent(in) :: n
 !
@@ -276,21 +391,25 @@ contains
 !
       array_pointer => node_pointer%array
 !
-   end subroutine get_element_array_list
+   end subroutine get_array_array_list
 !
 !
    subroutine get_node_array_list(list, node_pointer, n)
 !!
-!!    Set a pointer to the nth node in the list
+!!    Get node
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jul 2018
+!!
+!!    Set a pointer to the n'th node in the list
 !!
       implicit none
 !
-      class(array_list) :: list
+      class(array_list), intent(in) :: list
 !
-      integer :: n
+      integer, intent(in) :: n
+!
+      type(array_node), pointer, intent(out) :: node_pointer
+!
       integer :: element
-!
-      type(array_node), pointer :: node_pointer
 !
       if (n .gt. list%n_nodes .or. n .lt. 1) then
 !
@@ -309,18 +428,20 @@ contains
    end subroutine get_node_array_list
 !
 !
-   subroutine set_element_array_list(list, n, array, n_rows, n_columns)
+   subroutine set_array_array_list(list, n, array, n_rows, n_columns)
 !!
-!!    Sets value of nth element in list
+!!    Set array
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jul 2018
+!!
+!!    Sets the array (and dimensions) of n'th node in list
 !!
       implicit none
 !
-      class(array_list) :: list
+      class(array_list), intent(inout) :: list
 !
-      integer :: n
-!
-      integer :: n_rows
-      integer :: n_columns
+      integer, intent(in) :: n
+      integer, intent(in) :: n_rows
+      integer, intent(in) :: n_columns
 !
       real(dp), dimension(n_rows, n_columns) :: array
 !
@@ -349,16 +470,19 @@ contains
 !
       node_pointer%array = array
 !
-   end subroutine set_element_array_list
+   end subroutine set_array_array_list
 !
 !
    integer function get_n_rows_element_array_list(list, n)
 !!
-!!    Set a pointer to the nth array in the list
+!!    Get number of rows
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jul 2018
+!!
+!!    Get the number of rows of the n'th node in the list
 !!
       implicit none
 !
-      class(array_list) :: list
+      class(array_list), intent(in) :: list
 !
       integer, intent(in) :: n
 !
@@ -386,11 +510,14 @@ contains
 !
    integer function get_n_columns_element_array_list(list, n)
 !!
-!!    Set a pointer to the nth array in the list
+!!    Get number of columns
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jul 2018
+!!
+!!    Get the number of columns of the n'th node in the list
 !!
       implicit none
 !
-      class(array_list) :: list
+      class(array_list), intent(in) :: list
 !
       integer, intent(in) :: n
 !
@@ -418,11 +545,14 @@ contains
 !
    subroutine insert_array_list(list, n_rows, n_columns, n)
 !!
+!!    Insert
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jul 2018
+!!
 !!    Insert at position n
 !!
       implicit none
 !
-      class(array_list) :: list
+      class(array_list), intent(inout) :: list
       integer, intent(in) :: n_rows, n_columns, n
 !
       type(array_node), pointer :: nth_pointer, nth_prev_pointer
@@ -437,17 +567,19 @@ contains
 !
       if (associated(list%head)) then ! List has nodes already
 !
-         if (n == (list%n_nodes + 1) ) then
+         if (n == (list%n_nodes + 1) ) then ! insert at the end
 !
             call list%push_back(n_rows, n_columns)
             return
 !
-         elseif (n == 1) then
+         elseif (n == 1) then ! insert at the beginning
 !
             call list%push_front(n_rows, n_columns)
             return
 ! 
          else
+!
+!           point to the correct place in the list
 !
             nth_pointer => list%head
 !
@@ -457,14 +589,23 @@ contains
 !
             enddo
 !
+!              Point to the node previous to the insertion point
+!
                nth_prev_pointer => nth_pointer%previous
                nth_prev_pointer%next => null()
 !
+!              Allocate a node following that previous node
+!
                allocate(nth_prev_pointer%next)
-               call mem%alloc(nth_prev_pointer%next%array, n_rows, n_columns)
-               nth_prev_pointer%next%n_rows = n_rows
-               nth_prev_pointer%next%n_columns = n_columns
-               
+!
+!              Set node specifics
+!
+               call nth_prev_pointer%next%initialize(n_rows, n_columns)
+!
+!              The old n'th node is after the new node
+!              and the node previous to the old n'th node 
+!              is previous to the new n'th node
+!
                nth_pointer%previous => nth_prev_pointer%next
                nth_prev_pointer%next%previous => nth_prev_pointer
                nth_prev_pointer%next%next => nth_pointer
@@ -475,13 +616,20 @@ contains
 !
          if (n == 1) then
 !
+!           Allocate head
+!
             allocate(list%head)
-            call mem%alloc(list%head%array, n_rows, n_columns)
+!
+!           Set node specifics
+!
+            call list%head%initialize(n_rows, n_columns)
+!
+!           This is the first node so head = tail
 !
             list%tail => list%head
-            list%head%n_rows = n_rows
-            list%head%n_columns = n_columns
-
+!
+!           Only one node, so previous and next do not exist
+!
             list%head%next => null()
             list%head%previous => null()
 !
@@ -500,11 +648,14 @@ contains
 !
    subroutine remove_array_list(list, n)
 !!
+!!    Remove
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jul 2018
+!!
 !!    Remove at position n
 !!
       implicit none
 !
-      class(array_list) :: list
+      class(array_list), intent(inout) :: list
       integer, intent(in) :: n
 !
       type(array_node), pointer :: nth_pointer, nth_prev_pointer, nth_next_pointer
@@ -519,7 +670,7 @@ contains
 !
       if (associated(list%head)) then ! List has nodes already
 !
-         if (n == list%n_nodes) then
+         if (n == list%n_nodes) then ! Remove at the end
 !
             call list%pop_back()
             return
@@ -534,13 +685,17 @@ contains
 !
             enddo
 !
+!           Reset pointers
+!
             nth_next_pointer => nth_pointer%next 
             nth_prev_pointer => nth_pointer%previous
 !
             nth_prev_pointer%next => nth_next_pointer
             nth_next_pointer%previous => nth_prev_pointer
-               
-            call mem%dealloc(nth_pointer%array, nth_pointer%n_rows, nth_pointer%n_columns)
+!
+!           Deallocate array
+!           
+            call nth_pointer%destruct()
 
          endif
 !
