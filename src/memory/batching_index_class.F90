@@ -182,8 +182,7 @@ contains
       batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
 !
       call output%printf('Forced batch of index with dimension: (i0). Number of batches: (i0), Max length of batch: (i0)', &
-                                 ints=[batch_p%index_dimension, batch_p%num_batches, batch_p%max_length], ll=90)
-      call output%flush_()
+                          ints=[batch_p%index_dimension, batch_p%num_batches, batch_p%max_length], pl='m', ll=90)
 !
    end subroutine force_batch_batching_index
 !

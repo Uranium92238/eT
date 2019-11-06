@@ -264,8 +264,6 @@ contains
 !
       call invert_timer%turn_off()
 !
-      call output%flush_()
-!
       if (solver%construct_vectors) then
 !
          build_timer = timings("Cholesky; time to build L_ab^J and test")
