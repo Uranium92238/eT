@@ -69,7 +69,7 @@ contains
       if (allocated(wf%t1_complex) .and. allocated(wf%t2_complex)) then
 !
          call wf%construct_omega_complex(ddt_amplitudes)
-         call scale_diagonal(two, ddt_amplitudes(wf%n_t1+1:wf%n_gs_amplitudes), wf%n_v, wf%n_o)
+         call scale_diagonal(two, ddt_amplitudes(wf%n_t1+1:wf%n_gs_amplitudes), wf%n_t1)
          call zscal(wf%n_gs_amplitudes, cmplx(zero, -one, dp), ddt_amplitudes, 1)
 !
       else
