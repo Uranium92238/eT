@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-submodule (ccsd_class) omega_ccsd
+submodule (ccsd_class) omega_ccsd_complex
 !
 !!
 !!    Omega submodule (CCSD)
@@ -37,7 +37,7 @@ submodule (ccsd_class) omega_ccsd
 contains
 !
 !
-   module subroutine construct_omega_ccsd(wf, omega)
+   module subroutine construct_omega_ccsd_complex(wf, omega)
 !!
 !!    Construct omega (CCSD)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -49,40 +49,40 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      complex(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
-      real(dp), dimension(:,:), allocatable :: omega1
-      real(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij
-      real(dp), dimension(:,:,:,:), allocatable :: omega_aibj, omega_abij
+      complex(dp), dimension(:,:), allocatable :: omega1
+      complex(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij
+      complex(dp), dimension(:,:,:,:), allocatable :: omega_aibj, omega_abij
 !
 !     Construct singles contributions
 !
       call mem%alloc(omega1, wf%n_v, wf%n_o)
-      call zero_array(omega1, wf%n_t1)
+      call zero_array_complex(omega1, wf%n_t1)
 !
-      call wf%omega_ccs_a1(omega1)
+      call wf%omega_ccs_a1_complex(omega1)
 !
-      call wf%construct_u_aibj()
+      call wf%construct_u_aibj_complex()
 !
-      call wf%omega_doubles_a1(omega1, wf%u_aibj)
-      call wf%omega_doubles_b1(omega1, wf%u_aibj)
-      call wf%omega_doubles_c1(omega1, wf%u_aibj)
+      call wf%omega_doubles_a1_complex(omega1, wf%u_aibj_complex)
+      call wf%omega_doubles_b1_complex(omega1, wf%u_aibj_complex)
+      call wf%omega_doubles_c1_complex(omega1, wf%u_aibj_complex)
 !
-      call dcopy(wf%n_t1, omega1, 1, omega, 1)
+      call zcopy(wf%n_t1, omega1, 1, omega, 1)
 !
       call mem%dealloc(omega1, wf%n_v, wf%n_o)
 !
 !     Construct doubles contributions
 !
       call mem%alloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(omega_aibj, wf%n_t1**2)
+      call zero_array_complex(omega_aibj, wf%n_t1**2)
 !
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_aibj, wf%n_t1)
+      call squareup(wf%t2_complex, t_aibj, wf%n_t1)
 !
-      call wf%omega_ccsd_c2(omega_aibj, t_aibj)
-      call wf%omega_ccsd_d2(omega_aibj, t_aibj)
-      call wf%omega_ccsd_e2(omega_aibj, t_aibj)
+      call wf%omega_ccsd_c2_complex(omega_aibj, t_aibj)
+      call wf%omega_ccsd_d2_complex(omega_aibj, t_aibj)
+      call wf%omega_ccsd_e2_complex(omega_aibj, t_aibj)
 !
       call symmetric_sum(omega_aibj, wf%n_t1)
 !
@@ -94,19 +94,19 @@ contains
       call sort_1234_to_1324(omega_aibj, omega_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%omega_ccsd_a2(omega_abij, t_abij)
-      call wf%omega_ccsd_b2(omega_abij, t_abij)
+      call wf%omega_ccsd_a2_complex(omega_abij, t_abij)
+      call wf%omega_ccsd_b2_complex(omega_abij, t_abij)
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call scale_diagonal(half, omega_abij, wf%n_v, wf%n_o)
+      call scale_diagonal(half_complex, omega_abij, wf%n_v, wf%n_o)
 !
       call packin(omega(wf%n_t1+1 : wf%n_gs_amplitudes), omega_abij, wf%n_v, wf%n_o)
       call mem%dealloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-   end subroutine construct_omega_ccsd
+   end subroutine construct_omega_ccsd_complex
 !
 !
-   module subroutine omega_ccsd_a2_ccsd(wf, omega_abij, t_abij)
+   module subroutine omega_ccsd_a2_ccsd_complex(wf, omega_abij, t_abij)
 !!
 !!    Omega A2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -126,24 +126,24 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(inout) :: omega_abij
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(in):: t_abij
+      complex(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(inout) :: omega_abij
+      complex(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(in):: t_abij
 !
 !     Integrals
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_acbd
-      real(dp), dimension(:,:), allocatable :: g_p_abcd
-      real(dp), dimension(:,:), allocatable :: g_m_abcd
+      complex(dp), dimension(:,:,:,:), allocatable :: g_acbd
+      complex(dp), dimension(:,:), allocatable :: g_p_abcd
+      complex(dp), dimension(:,:), allocatable :: g_m_abcd
 !
 !     Reordered T2 amplitudes
 !
-      real(dp), dimension(:,:), allocatable :: t_p_cdij
-      real(dp), dimension(:,:), allocatable :: t_m_cdij
+      complex(dp), dimension(:,:), allocatable :: t_p_cdij
+      complex(dp), dimension(:,:), allocatable :: t_m_cdij
 !
 !     Reordered omega 2
 !
-      real(dp), dimension(:,:), allocatable :: omega2_p_abij
-      real(dp), dimension(:,:), allocatable :: omega2_m_abij
+      complex(dp), dimension(:,:), allocatable :: omega2_p_abij
+      complex(dp), dimension(:,:), allocatable :: omega2_m_abij
 !
 !     Indices
 !
@@ -156,7 +156,7 @@ contains
 !
       integer :: aibj, biaj, cidj, dicj 
 !
-      real(dp) :: diag_factor
+      complex(dp) :: diag_factor
 !
 !     Batching and memory handling variables
 !
@@ -198,7 +198,7 @@ contains
 !
       if (batch_a%num_batches /= batch_b%num_batches) then ! Should not happen, but just to be safe 
 !
-        call output%error_msg('Expected same-sized batches in omega_ccsd_a2 but something went wrong in mem%batch_setup.')
+        call output%error_msg('Expected same-sized batches in omega_ccsd_a2_complex but something went wrong in mem%batch_setup.')
 !
       endif 
 !
@@ -217,7 +217,7 @@ contains
 !
             call ccsd_a2_integral_timer%turn_on()
 !
-            call wf%get_vvvv(g_acbd,         &
+            call wf%get_vvvv_complex(g_acbd,         &
                               batch_a%first, &
                               batch_a%last,  &
                               1,             &
@@ -247,9 +247,9 @@ contains
                      cd = (c*(c-3)/2) + c + d
 !
                      if (c .ne. d) then
-                        diag_factor = two
+                        diag_factor = two_complex
                      else
-                        diag_factor = one
+                        diag_factor = one_complex
                      endif
 !
                      do b = 1, batch_b%length
@@ -297,29 +297,29 @@ contains
 !
 !              omega2_ab_ij = sum_(cd) g_abcd*t_cdij
 !
-               call dgemm('N','N',        &
+               call zgemm('N','N',        &
                           batch_a_packed, &
                           n_o_packed,     &
                           n_v_packed,     &
-                          one/four,       &
+                          one_complex/four_complex,       &
                           g_p_abcd,       &
                           batch_a_packed, &
                           t_p_cdij,       &
                           n_v_packed,     &
-                          zero,           &
+                          zero_complex,           &
                           omega2_p_abij,  &
                           batch_a_packed)
 !
-               call dgemm('N','N',        &
+               call zgemm('N','N',        &
                           batch_a_packed, &
                           n_o_packed,     &
                           n_v_packed,     &
-                          one/four,       &
+                          one_complex/four_complex,       &
                           g_m_abcd,       &
                           batch_a_packed, &
                           t_m_cdij,       &
                           n_v_packed,     &
-                          zero,           &
+                          zero_complex,           &
                           omega2_m_abij,  &
                           batch_a_packed )
 !
@@ -410,9 +410,9 @@ contains
                      cd = (c*(c-3)/2) + c + d
 !
                      if (c .ne. d) then
-                        diag_factor = two
+                        diag_factor = two_complex
                      else
-                        diag_factor = one
+                        diag_factor = one_complex
                      endif
 !
                      do  b = 1, batch_b%length
@@ -460,29 +460,29 @@ contains
 !
 !              omega2_ab_ij = sum_(cd) g_abcd*t_cdij
 !
-               call dgemm('N','N',                            &
+               call zgemm('N','N',                            &
                            (batch_a%length)*(batch_b%length), &
                            n_o_packed,                        &
                            n_v_packed,                        &
-                           one/four,                          &
+                           one_complex/four_complex,                          &
                            g_p_abcd,                          &
                            (batch_a%length)*(batch_b%length), &
                            t_p_cdij,                          &
                            n_v_packed,                        &
-                           zero,                              &
+                           zero_complex,                              &
                            omega2_p_abij,                     &
                            (batch_a%length)*(batch_b%length))
 !
-               call dgemm('N','N',                            &
+               call zgemm('N','N',                            &
                            (batch_a%length)*(batch_b%length), &
                            n_o_packed,                        &
                            n_v_packed,                        &
-                           one/four,                          &
+                           one_complex/four_complex,                          &
                            g_m_abcd,                          &
                            (batch_a%length)*(batch_b%length), &
                            t_m_cdij,                          &
                            n_v_packed,                        &
-                           zero,                              &
+                           zero_complex,                              &
                            omega2_m_abij,                     &
                            (batch_a%length)*(batch_b%length))
 !
@@ -551,10 +551,10 @@ contains
       call ccsd_a2_timer%turn_off()
       call ccsd_a2_integral_timer%turn_off()
 !
-   end subroutine omega_ccsd_a2_ccsd
+   end subroutine omega_ccsd_a2_ccsd_complex
 !
 !
-   module subroutine omega_ccsd_b2_ccsd(wf, omega_abij, t_abij)
+   module subroutine omega_ccsd_b2_ccsd_complex(wf, omega_abij, t_abij)
 !!
 !!    Omega B2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -569,25 +569,25 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(inout):: omega_abij
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(in):: t_abij
+      complex(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(inout):: omega_abij
+      complex(dp), dimension(wf%n_v,wf%n_v,wf%n_o,wf%n_o), intent(in):: t_abij
 !
 !     Integrals
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj
-      real(dp), dimension(:,:,:,:), allocatable :: g_kcld
-      real(dp), dimension(:,:,:,:), allocatable :: g_klcd
-      real(dp), dimension(:,:,:,:), allocatable :: g_klij
-      real(dp), dimension(:,:,:,:), allocatable :: g_kilj
+      complex(dp), dimension(:,:,:,:), allocatable :: g_aibj
+      complex(dp), dimension(:,:,:,:), allocatable :: g_kcld
+      complex(dp), dimension(:,:,:,:), allocatable :: g_klcd
+      complex(dp), dimension(:,:,:,:), allocatable :: g_klij
+      complex(dp), dimension(:,:,:,:), allocatable :: g_kilj
 !
 !     Reordered T2 apmlitudes
 !
-     ! real(dp), dimension(:,:,:,:), allocatable :: t_cdij
+     ! complex(dp), dimension(:,:,:,:), allocatable :: t_cdij
 !
 !     Reordered omega
 !
-   !   real(dp), dimension(:,:,:,:), allocatable :: omega_abij
-   !   real(dp), dimension(:,:,:,:), allocatable :: omega_aibj
+   !   complex(dp), dimension(:,:,:,:), allocatable :: omega_abij
+   !   complex(dp), dimension(:,:,:,:), allocatable :: omega_aibj
 !
       type(timings) :: ccsd_b2_timer
 !
@@ -597,15 +597,15 @@ contains
 !     Construct g_aibj and add to omega2 
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call wf%get_vovo(g_aibj)
-      call add_1324_to_1234(one, g_aibj, omega_abij,  wf%n_v,  wf%n_v,  wf%n_o,  wf%n_o)
+      call wf%get_vovo_complex(g_aibj)
+      call add_1324_to_1234(one_complex, g_aibj, omega_abij,  wf%n_v,  wf%n_v,  wf%n_o,  wf%n_o)
       call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Allocate and construct g_kilj
 !
       call mem%alloc(g_kilj, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
-      call wf%get_oooo(g_kilj)
+      call wf%get_oooo_complex(g_kilj)
 !
       call mem%alloc(g_klij,  wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
@@ -617,7 +617,7 @@ contains
 !
       call mem%alloc(g_kcld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%get_ovov(g_kcld)
+      call wf%get_ovov_complex(g_kcld)
 !
 !     Reorder g_kcld as g_klcd
 !
@@ -629,16 +629,16 @@ contains
 !
 !     Reorder t_cidj as t_cdij
 !
-      call dgemm('N','N',      &
+      call zgemm('N','N',      &
                   (wf%n_o)**2, &
                   (wf%n_o)**2, &
                   (wf%n_v)**2, &
-                  one,         &
+                  one_complex,         &
                   g_klcd,      &
                   (wf%n_o)**2, &
                   t_abij,      &
                   (wf%n_v)**2, &
-                  one,         &
+                  one_complex,         &
                   g_klij,      &
                   (wf%n_o)**2)
 !
@@ -650,16 +650,16 @@ contains
 !
     !  call mem%alloc(omega_abij,  wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call dgemm('N','N',      &
+      call zgemm('N','N',      &
                   (wf%n_v)**2, &
                   (wf%n_o)**2, &
                   (wf%n_o)**2, &
-                  one,         &
+                  one_complex,         &
                   t_abij,      & ! t_ab_kl
                   (wf%n_v)**2, &
                   g_klij,      &
                   (wf%n_o)**2, &
-                  one,         &
+                  one_complex,         &
                   omega_abij,  &
                   (wf%n_v)**2)
 !
@@ -667,10 +667,10 @@ contains
 !
       call ccsd_b2_timer%turn_off()
 !
-   end subroutine omega_ccsd_b2_ccsd
+   end subroutine omega_ccsd_b2_ccsd_complex
 !
 !
-   module subroutine omega_ccsd_c2_ccsd(wf, omega_aibj, t_aibj)
+   module subroutine omega_ccsd_c2_ccsd_complex(wf, omega_aibj, t_aibj)
 !!
 !!    Omega C2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -683,29 +683,29 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
-      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
 !
 !     Integrals
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_kdlc
-      real(dp), dimension(:,:,:,:), allocatable :: g_dlck
-      real(dp), dimension(:,:,:,:), allocatable :: g_kiac
-      real(dp), dimension(:,:,:,:), allocatable :: g_aick
+      complex(dp), dimension(:,:,:,:), allocatable :: g_kdlc
+      complex(dp), dimension(:,:,:,:), allocatable :: g_dlck
+      complex(dp), dimension(:,:,:,:), allocatable :: g_kiac
+      complex(dp), dimension(:,:,:,:), allocatable :: g_aick
 !
 !     Reordered T2 amplitudes
 !
-      real(dp), dimension(:,:,:,:), allocatable :: t_aidl
-      real(dp), dimension(:,:,:,:), allocatable :: t_ckbj
+      complex(dp), dimension(:,:,:,:), allocatable :: t_aidl
+      complex(dp), dimension(:,:,:,:), allocatable :: t_ckbj
 !
 !    Intermediates for matrix multiplication
 !
-      real(dp), dimension(:,:,:,:), allocatable :: X_aick
-      real(dp), dimension(:,:,:,:), allocatable :: Y_aibj
+      complex(dp), dimension(:,:,:,:), allocatable :: X_aick
+      complex(dp), dimension(:,:,:,:), allocatable :: Y_aibj
 !
 !     Reordered U2 amplitudes
 !
-      real(dp), dimension(:,:,:,:), allocatable :: omega_a_batch
+      complex(dp), dimension(:,:,:,:), allocatable :: omega_a_batch
 !
 !     Indices
 !
@@ -734,7 +734,7 @@ contains
 !
       call mem%alloc(g_kdlc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call wf%get_ovov(g_kdlc)
+      call wf%get_ovov_complex(g_kdlc)
 !
 !     Sort g_kdlc to g_dlck (1234 to 2341)
 !
@@ -748,16 +748,16 @@ contains
 !
       call mem%alloc(X_aick,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call dgemm('N','N',            &
+      call zgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
-                  -half,             &
+                  -half_complex,             &
                   t_aidl,            &
                   (wf%n_o)*(wf%n_v), &
                   g_dlck,            &
                   (wf%n_o)*(wf%n_v), &
-                  zero,              &
+                  zero_complex,              &
                   X_aick,            &
                   (wf%n_o)*(wf%n_v))
 !
@@ -789,7 +789,7 @@ contains
 !
          call mem%alloc(g_kiac, wf%n_o, wf%n_o, batch_a%length, wf%n_v)
 !
-         call wf%get_oovv(g_kiac,                        &
+         call wf%get_oovv_complex(g_kiac,                        &
                            1, wf%n_o,                    &
                            1, wf%n_o,                    &
                            batch_a%first, batch_a%last,  &
@@ -825,16 +825,16 @@ contains
 !
          call mem%alloc(omega_a_batch, batch_a%length, wf%n_o, wf%n_v, wf%n_o)
 !
-         call dgemm('N','N',                 &
+         call zgemm('N','N',                 &
                   (wf%n_o)*(batch_a%length), &
                   (wf%n_o)*(wf%n_v),         &
                   (wf%n_o)*(wf%n_v),         &
-                  -one/two,                  &
+                  -one_complex/two_complex,                  &
                   g_aick,                    &
                   (wf%n_o)*(batch_a%length), &
-                  wf%u_aibj,                 & ! u_ck_bj
+                  wf%u_aibj_complex,                 & ! u_ck_bj
                   (wf%n_o)*(wf%n_v),         &
-                  zero,                      &
+                  zero_complex,                      &
                   omega_a_batch,             &
                   (wf%n_o)*batch_a%length)
 !
@@ -871,16 +871,16 @@ contains
 !
       call mem%alloc(Y_aibj,  wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call dgemm('N','N',            &
+      call zgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
-                  -one,              &
+                  -one_complex,              &
                   X_aick,            &
                   (wf%n_o)*(wf%n_v), &
                   t_ckbj,            &
                   (wf%n_o)*(wf%n_v), &
-                  zero,              &
+                  zero_complex,              &
                   Y_aibj,            &
                   (wf%n_o)*(wf%n_v))
 !
@@ -895,7 +895,7 @@ contains
                do i = 1, wf%n_o
                   do a = 1, wf%n_v
 !
-                     omega_aibj(a, i, b, j) = omega_aibj(a, i, b, j) + half*Y_aibj(a, i, b, j) + Y_aibj(a, j, b, i) 
+                     omega_aibj(a, i, b, j) = omega_aibj(a, i, b, j) + half_complex*Y_aibj(a, i, b, j) + Y_aibj(a, j, b, i) 
 !
                enddo
             enddo
@@ -907,10 +907,10 @@ contains
 !
       call ccsd_c2_timer%turn_off()
 !
-   end subroutine omega_ccsd_c2_ccsd
+   end subroutine omega_ccsd_c2_ccsd_complex
 !
 !
-   module subroutine omega_ccsd_d2_ccsd(wf, omega_aibj, t_aibj)
+   module subroutine omega_ccsd_d2_ccsd_complex(wf, omega_aibj, t_aibj)
 !!
 !!    Omega D2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -933,14 +933,14 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
-      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_ldkc ! g_ldkc
-      real(dp), dimension(:,:,:,:), allocatable :: L_ldkc ! L_ldkc = 2 * g_ldkc - g_lckd
-      real(dp), dimension(:,:,:,:), allocatable :: u_aild ! u_il^ad = 2 * t_il^ad - t_li^ad
-      real(dp), dimension(:,:,:,:), allocatable :: Z_aikc ! An intermediate, see below
-      real(dp), dimension(:,:,:,:), allocatable :: g_aikc ! g_aikc
+      complex(dp), dimension(:,:,:,:), allocatable :: g_ldkc ! g_ldkc
+      complex(dp), dimension(:,:,:,:), allocatable :: L_ldkc ! L_ldkc = 2 * g_ldkc - g_lckd
+      complex(dp), dimension(:,:,:,:), allocatable :: u_aild ! u_il^ad = 2 * t_il^ad - t_li^ad
+      complex(dp), dimension(:,:,:,:), allocatable :: Z_aikc ! An intermediate, see below
+      complex(dp), dimension(:,:,:,:), allocatable :: g_aikc ! g_aikc
 !
       type(timings) :: ccsd_d2_timer
 !
@@ -952,35 +952,35 @@ contains
 !     Form L_ld_kc = L_ldkc = 2*g_ldkc(ld,kc) - g_ldkc(lc,kd)
 !
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%get_ovov(g_ldkc)
+      call wf%get_ovov_complex(g_ldkc)
 !
       call mem%alloc(L_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call copy_and_scale(two, g_ldkc, L_ldkc, (wf%n_o)**2*(wf%n_v)**2)
-      call add_1432_to_1234(-one, g_ldkc, L_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call copy_and_scale_complex(two_complex, g_ldkc, L_ldkc, (wf%n_o)**2*(wf%n_v)**2)
+      call add_1432_to_1234(-one_complex, g_ldkc, L_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call mem%dealloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call mem%alloc(u_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       
-      call zero_array(u_aild, wf%n_t1**2)
-      call add_1243_to_1234(two, t_aibj, u_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call add_1342_to_1234(-one, t_aibj, u_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call zero_array_complex(u_aild, wf%n_t1**2)
+      call add_1243_to_1234(two_complex, t_aibj, u_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call add_1342_to_1234(-one_complex, t_aibj, u_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-!     Form the intermediate Z_aikc = sum_dl u_aild L_ldkc and set it to zero
+!     Form the intermediate Z_aikc = sum_dl u_aild L_ldkc and set it to zero_complex
 !
       call mem%alloc(Z_aikc,  wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call dgemm('N','N',            &
+      call zgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
-                  one,               &
+                  one_complex,               &
                   u_aild,            &
                   (wf%n_o)*(wf%n_v), &
                   L_ldkc,            &
                   (wf%n_o)*(wf%n_v), &
-                  zero,              &
+                  zero_complex,              &
                   Z_aikc,            &
                   (wf%n_o)*(wf%n_v))
 !
@@ -988,16 +988,16 @@ contains
 !
 !     Form the D2.2 term, 1/4 sum_kc Z_aikc u_kc_bj = 1/4 sum_kc Z_aikc(ai,kc) u_aild(bj,kc)
 !
-      call dgemm('N','T',            &
+      call zgemm('N','T',            &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
-                  one/four,          &
+                  one_complex/four_complex,          &
                   Z_aikc,            &
                   (wf%n_o)*(wf%n_v), &
                   u_aild,            &
                   (wf%n_o)*(wf%n_v), &
-                  one,               &
+                  one_complex,               &
                   omega_aibj,        &
                   (wf%n_o)*(wf%n_v))
 !
@@ -1013,20 +1013,20 @@ contains
 !     :: Calculate the D2.1 term of omega ::
 !
       call mem%alloc(g_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call wf%get_voov(g_aikc)
+      call wf%get_voov_complex(g_aikc)
 !
 !     Calculate the D2.1 term, sum_ck u_jk^bc g_aikc = sum_ck g_aikc(ai,kc) u_aild(bj,kc)
 !
-      call dgemm('N','T',            &
+      call zgemm('N','T',            &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
-                  one,               &
+                  one_complex,               &
                   g_aikc,            &
                   (wf%n_o)*(wf%n_v), &
                   u_aild,            &
                   (wf%n_o)*(wf%n_v), &
-                  one,               &
+                  one_complex,               &
                   omega_aibj,        &
                   (wf%n_o)*(wf%n_v))
 !
@@ -1035,10 +1035,10 @@ contains
 !
       call ccsd_d2_timer%turn_off()
 !
-   end subroutine omega_ccsd_d2_ccsd
+   end subroutine omega_ccsd_d2_ccsd_complex
 !
 !
-   module subroutine omega_ccsd_e2_ccsd(wf, omega_aibj, t_aibj)
+   module subroutine omega_ccsd_e2_ccsd_complex(wf, omega_aibj, t_aibj)
 !!
 !!    Omega E2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -1062,18 +1062,18 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
-      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(inout):: omega_aibj
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in):: t_aibj
 !
 !     Vectors for E2.1 term
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_ldkc      ! g_ldkc
-      real(dp), dimension(:,:,:,:), allocatable :: u_bldk      ! u_kl^bd
-      real(dp), dimension(:,:), allocatable :: X_b_c           ! An intermediate, see below for definition
+      complex(dp), dimension(:,:,:,:), allocatable :: g_ldkc      ! g_ldkc
+      complex(dp), dimension(:,:,:,:), allocatable :: u_bldk      ! u_kl^bd
+      complex(dp), dimension(:,:), allocatable :: X_b_c           ! An intermediate, see below for definition
 !
 !     Vectors for E2.2 term
 !
-      real(dp), dimension(:,:), allocatable :: Y_k_j        ! An intermediate, see below for definition
+      complex(dp), dimension(:,:), allocatable :: Y_k_j        ! An intermediate, see below for definition
 !
       type(timings) :: ccsd_e2_timer 
 !
@@ -1087,35 +1087,35 @@ contains
 !
       call mem%alloc(u_bldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       
-      call copy_and_scale(-one, t_aibj, u_bldk, (wf%n_v)**2*(wf%n_o)**2)
-      call add_1432_to_1234(two, t_aibj, u_bldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call copy_and_scale_complex(-one_complex, t_aibj, u_bldk, (wf%n_v)**2*(wf%n_o)**2)
+      call add_1432_to_1234(two_complex, t_aibj, u_bldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Form g_ldkc = g_ldkc
 !
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call wf%get_ovov(g_ldkc)
+      call wf%get_ovov_complex(g_ldkc)
 !
-!     Make the intermediate X_b_c = F_bc - sum_dkl g_ldkc u_kl^bd and set to zero
+!     Make the intermediate X_b_c = F_bc - sum_dkl g_ldkc u_kl^bd and set to zero_complex
 !
       call mem%alloc(X_b_c, wf%n_v, wf%n_v)
 !
 !     First, copy the virtual-virtual Fock matrix into the intermediate
 !
-      call dcopy((wf%n_v)**2, wf%fock_ab, 1, X_b_c, 1) ! X_b_c = F_bc
+      call zcopy((wf%n_v)**2, wf%fock_ab_complex, 1, X_b_c, 1) ! X_b_c = F_bc
 !
 !     Then, add the second contribution,
 !     - sum_dkl g_ldkc u_kl^bd = - sum_dkl u_b_kdl * g_kdl_c, to X_b_c
 !
-      call dgemm('N','N',               &
+      call zgemm('N','N',               &
                   wf%n_v,               &
                   wf%n_v,               &
                   (wf%n_v)*(wf%n_o)**2, &
-                  -one,                 &
+                  -one_complex,                 &
                   u_bldk,               & ! u_b_ldk
                   wf%n_v,               &
                   g_ldkc,               & ! g_ldk_c
                   (wf%n_v)*(wf%n_o)**2, &
-                  one,                  &
+                  one_complex,                  &
                   X_b_c,                &
                   wf%n_v)
 !
@@ -1123,16 +1123,16 @@ contains
 !
 !     Form the E2.1 term
 !
-      call dgemm('N','N',               &
+      call zgemm('N','N',               &
                   wf%n_v,               &
                   (wf%n_v)*(wf%n_o)**2, &
                   wf%n_v,               &
-                  one,                  &
+                  one_complex,                  &
                   X_b_c,                &
                   wf%n_v,               &
                   t_aibj,               & ! t_c_jai
                   wf%n_v,               &
-                  one,                  &
+                  one_complex,                  &
                   omega_aibj,           & ! omega_bjai But we will symmetrize later
                   wf%n_v)
 !
@@ -1150,7 +1150,7 @@ contains
 !
 !     Copy the occupied-occupied Fock matrix, such that Y_k_j = F_kj
 !
-      call dcopy((wf%n_o)**2, wf%fock_ij, 1, Y_k_j, 1)
+      call zcopy((wf%n_o)**2, wf%fock_ij_complex, 1, Y_k_j, 1)
 !
 !     Add sum_cdl g_k_dlc u_dlc_j to Y_k_j, such that
 !     Y_k_j = F_k_j + sum_cdl g_k_cld u_cld_j
@@ -1160,16 +1160,16 @@ contains
 !     g_ldkc(kc,ld) = g_kcld              -> pretend that this is g_k_cld
 !     u_b_ldk(c,ldj) = u_jl^cd (= u_lj^dc) -> pretend that this is u_cld_j
 !
-      call dgemm('N','N',              &
+      call zgemm('N','N',              &
                  wf%n_o,               &
                  wf%n_o,               &
                  (wf%n_o)*(wf%n_v)**2, &
-                 one,                  &
+                 one_complex,                  &
                  g_ldkc,               & ! g_k_cld
                  wf%n_o,               &
                  u_bldk,               & ! u_cld_j
                  (wf%n_o)*(wf%n_v)**2, &
-                 one,                  &
+                 one_complex,                  &
                  Y_k_j,                &
                  wf%n_o)
 !
@@ -1182,16 +1182,16 @@ contains
 !     Note: t_cjai = t_ji^ca => t_cjai(ai,bk) = t_ik^ab;
 !     thus, we can treat t_cjai as t_aib_k = t_ik^ab.
 !
-      call dgemm('N','N',              &
+      call zgemm('N','N',              &
                  (wf%n_o)*(wf%n_v)**2, &
                  wf%n_o,               &
                  wf%n_o,               &
-                 -one,                 &
+                 -one_complex,                 &
                  t_aibj,               & ! t_aib_k
                  (wf%n_o)*(wf%n_v)**2, &
                  Y_k_j,                &
                  wf%n_o,               &
-                 one,                  &
+                 one_complex,                  &
                  omega_aibj,           & ! omega2_aib_j
                  (wf%n_o)*(wf%n_v)**2)
 !
@@ -1201,10 +1201,10 @@ contains
 !
       call ccsd_e2_timer%turn_off()
 !
-   end subroutine omega_ccsd_e2_ccsd
+   end subroutine omega_ccsd_e2_ccsd_complex
 !
 !
-   module subroutine construct_u_aibj_ccsd(wf)
+   module subroutine construct_u_aibj_ccsd_complex(wf)
 !!
 !!    Construct u_aibj
 !!    Written by Tor S. Haugland, Nov 2019
@@ -1216,7 +1216,7 @@ contains
 !
       class(ccsd),                  intent(inout)          :: wf
 !
-      real(dp), dimension(:,:,:,:), allocatable :: t_aibj
+      complex(dp), dimension(:,:,:,:), allocatable :: t_aibj
 !
       type(timings) :: timer
 !
@@ -1224,16 +1224,16 @@ contains
       call timer%turn_on()
 !
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_aibj, wf%n_t1)
+      call squareup(wf%t2_complex, t_aibj, wf%n_t1)
 !
-      call copy_and_scale(two,    t_aibj, wf%u_aibj, wf%n_v**2 * wf%n_o**2)
-      call add_1432_to_1234(-one, t_aibj, wf%u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call copy_and_scale_complex(two_complex,    t_aibj, wf%u_aibj_complex, wf%n_v**2 * wf%n_o**2)
+      call add_1432_to_1234(-one_complex, t_aibj, wf%u_aibj_complex, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call timer%turn_off()
 !
-   end subroutine construct_u_aibj_ccsd
+   end subroutine construct_u_aibj_ccsd_complex
 !
 !
-end submodule omega_ccsd 
+end submodule omega_ccsd_complex
