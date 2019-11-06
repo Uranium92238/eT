@@ -2602,7 +2602,7 @@ contains
 !$omp parallel do private(pq,pqpq)
       do pq = 1, dim_pq
 !
-         pqpq = (pq**2 + pq)/2
+         pqpq = pq*(pq+1)/2
 !
          X(pqpq) = alpha*X(pqpq)
 !
@@ -2638,7 +2638,7 @@ contains
 !$omp parallel do private(pq,pqpq)
       do pq = 1, dim_pq
 !
-         pqpq = (pq**2 + pq)/2
+         pqpq = pq*(pq+1)/2
 !
          X(pqpq) = cmplx(alpha, zero, dp)*X(pqpq)
 !
@@ -2674,7 +2674,7 @@ contains
 !$omp parallel do private(pq,pqpq)
       do pq = 1, dim_pq
 !
-         pqpq = (pq**2 + pq)/2
+         pqpq = pq*(pq+1)/2
 !
          X(pqpq) = alpha*X(pqpq)
 !
