@@ -47,6 +47,7 @@ contains
 !!
 !!       Frozen core by Sarai D. Folkestad, 2019
 !!       QM/MM by Tommaso Giovannini, 2019
+!!       QM/PCM by Tommaso Giovannini, 2019
 !!
       implicit none
 !
@@ -73,6 +74,7 @@ contains
       if (wf%frozen_core) call wf%add_frozen_core_fock_term(F_pq)
       if (wf%frozen_hf_mos) call wf%add_frozen_hf_fock_term(F_pq)
       if (wf%system%mm_calculation) call wf%add_molecular_mechanics_fock_term(F_pq)
+      if (wf%system%pcm_calculation) call wf%add_pcm_fock_contribution(F_pq)
 !
 !     Add occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
@@ -224,12 +226,12 @@ contains
 !
       if (wf%system%mm%forcefield == 'non-polarizable') then
 !
-         call wf%ao_to_t1_transformation(wf%system%mm%nopol_h_wx, h_mm_t1)
+         call wf%ao_to_t1_transformation(wf%nopol_h_wx, h_mm_t1)
          call daxpy(wf%n_mo**2, half, h_mm_t1, 1, F_pq, 1)
 !
       else
 !
-         call wf%ao_to_t1_transformation(wf%system%mm%pol_emb_fock, h_mm_t1)
+         call wf%ao_to_t1_transformation(wf%pol_emb_fock, h_mm_t1)
          call daxpy(wf%n_mo**2, half, h_mm_t1, 1, F_pq, 1)
 !
       endif    
@@ -237,6 +239,36 @@ contains
       call mem%dealloc(h_mm_t1, wf%n_mo, wf%n_mo) 
 !
    end subroutine add_molecular_mechanics_fock_term_ccs
+!
+!
+   module subroutine add_pcm_fock_contribution_ccs(wf, F_pq)
+!!
+!!    Add PCM Fock contribution 
+!!    Written by Tommaso Giovannini, 2019 
+!!
+!!    Adds the PCM contributions to  
+!!    the effective T1-transformed Fock matrix. 
+!!
+!!    Isolated into subroutine by Eirik F. Kjønstad, 2019
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
+!
+      real(dp), dimension(:,:), allocatable :: h_mm_t1
+!
+      call mem%alloc(h_mm_t1, wf%n_mo, wf%n_mo) 
+!
+!
+      call wf%ao_to_t1_transformation(wf%pcm_fock, h_mm_t1)
+      call daxpy(wf%n_mo**2, half, h_mm_t1, 1, F_pq, 1)
+!
+!
+      call mem%dealloc(h_mm_t1, wf%n_mo, wf%n_mo) 
+!
+   end subroutine add_pcm_fock_contribution_ccs
 !
 !
    module subroutine construct_t1_fock_fc_term_ccs(wf, F_pq)

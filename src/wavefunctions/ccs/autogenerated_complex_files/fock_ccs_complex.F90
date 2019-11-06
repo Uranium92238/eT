@@ -224,12 +224,12 @@ contains
 !
       if (wf%system%mm%forcefield == 'non-polarizable') then
 !
-         call wf%ao_to_t1_transformation_complex(wf%system%mm%nopol_h_wx, h_mm_t1)
+         call wf%ao_to_t1_transformation_complex(wf%nopol_h_wx, h_mm_t1)
          call zaxpy(wf%n_mo**2, half_complex, h_mm_t1, 1, F_pq, 1)
 !
       else
 !
-         call wf%ao_to_t1_transformation_complex(wf%system%mm%pol_emb_fock, h_mm_t1)
+         call wf%ao_to_t1_transformation_complex(wf%pol_emb_fock, h_mm_t1)
          call zaxpy(wf%n_mo**2, half_complex, h_mm_t1, 1, F_pq, 1)
 !
       endif    

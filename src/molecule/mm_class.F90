@@ -50,8 +50,6 @@ module mm_class
       integer, dimension(:), allocatable :: molecule              ! Molecule number
       integer, dimension(:), allocatable :: n_atoms_per_molecule  ! Number of atoms per molecule
 !      
-      real(dp), dimension(:,:), allocatable :: nopol_h_wx         ! one-electron for non-polarizable QM/MM
-      real(dp), dimension(:,:), allocatable :: pol_emb_fock       ! Fock for polarizable QM/MM
       real(dp), dimension(:), allocatable   :: pol_emb_rhs        ! RHS for polarizable QM/MM
       real(dp), dimension(:), allocatable   :: pol_emb_lhs        ! LHS for polarizable QM/MM
 !      
@@ -92,7 +90,7 @@ contains
 !
       if(.not.allocated(molecule%coordinates)) call mem%alloc(molecule%coordinates, 3,molecule%n_atoms)
 !
-      if(.not.allocated(molecule%molecule))    allocate(molecule%molecule(molecule%n_atoms))
+      if(.not.allocated(molecule%molecule))    call mem%alloc(molecule%molecule, molecule%n_atoms)
 !
       if(.not.allocated(molecule%symbol))      allocate(molecule%symbol(molecule%n_atoms))
 !      
@@ -111,7 +109,7 @@ contains
 !
       molecule%max_mm_mol = maxval(molecule%molecule)
 !
-      if(.not.allocated(molecule%n_atoms_per_molecule)) allocate(molecule%n_atoms_per_molecule(molecule%max_mm_mol))
+      if(.not.allocated(molecule%n_atoms_per_molecule)) call mem%alloc(molecule%n_atoms_per_molecule,molecule%max_mm_mol)
 !
       call molecule%check_molecule()
 !      
@@ -124,6 +122,9 @@ contains
 !
           if(.not.allocated(molecule%fq_matrix)) call mem%alloc(molecule%fq_matrix,molecule%n_variables, &
                                                                                    molecule%n_variables)
+          if(.not.allocated(molecule%pol_emb_rhs))   call mem%alloc(molecule%pol_emb_rhs, molecule%n_variables)
+          if(.not.allocated(molecule%pol_emb_lhs))   call mem%alloc(molecule%pol_emb_lhs, molecule%n_variables)
+!          
           call zero_array(molecule%fq_matrix,(molecule%n_variables)**2)
 !
           call molecule%fq_matrix_create()
@@ -144,7 +145,7 @@ contains
 !
       if(allocated(molecule%coordinates)) call mem%dealloc(molecule%coordinates, 3,molecule%n_atoms)
 !
-      if(allocated(molecule%molecule))    deallocate(molecule%molecule)
+      if(allocated(molecule%molecule))    call mem%dealloc(molecule%molecule, molecule%n_atoms)
 !
       if(allocated(molecule%symbol))      deallocate(molecule%symbol)
 !      
@@ -154,18 +155,14 @@ contains
 !      
       if(allocated(molecule%eta))         call mem%dealloc(molecule%eta, molecule%n_atoms)
 !
-      if(allocated(molecule%n_atoms_per_molecule)) deallocate(molecule%n_atoms_per_molecule)
+      if(allocated(molecule%n_atoms_per_molecule)) call mem%dealloc(molecule%n_atoms_per_molecule,molecule%max_mm_mol)
 !      
       if(allocated(molecule%fq_matrix)) call mem%dealloc(molecule%fq_matrix,molecule%n_variables, &
                                                                             molecule%n_variables)
 !                                                                            
-      if (allocated(molecule%pol_emb_lhs))  deallocate(molecule%pol_emb_fock)
+      if (allocated(molecule%pol_emb_lhs))  call mem%dealloc(molecule%pol_emb_lhs, molecule%n_variables)
 !
-      if (allocated(molecule%nopol_h_wx))   deallocate(molecule%nopol_h_wx)
-!      
-      if (allocated(molecule%pol_emb_fock)) call mem%dealloc(molecule%pol_emb_rhs, molecule%n_variables)
-!      
-      if (allocated(molecule%pol_emb_rhs))  call mem%dealloc(molecule%pol_emb_lhs, molecule%n_variables)
+      if (allocated(molecule%pol_emb_rhs))  call mem%dealloc(molecule%pol_emb_rhs, molecule%n_variables)
 !
 !
    end subroutine cleanup_mm
@@ -331,7 +328,7 @@ contains
                             'equation:', pl='m',fs='(t6,a)', ffs='(/t6,a)')
          call output%printf('   Dq = -Chi - V(P)', pl='m', fs='(/t6,a)')
          call output%printf('For further details, see:', pl='m', fs='(/t6,a)')
-         call output%printf('Lipparini et al. JCTC 2012, 8, 4153–4165.', pl='m', fs='(t6,a/)')
+         call output%printf('C. Cappelli. IJQC, 2016, 116, 1532-1542.', pl='m', fs='(t6,a/)')
 !
          if(input%requested_cc_calculation()) then 
             call output%printf('CC calculation: zero-order approximation', pl='m', fs='(t6,a)') 

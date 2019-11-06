@@ -1,0 +1,701 @@
+
+
+
+                       eT - a coupled cluster program 
+       Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch
+
+  ----------------------------------------------------------------------------------
+   Author:                Contribution(s):
+  ----------------------------------------------------------------------------------
+   Josefine H. Andersen   first order properties
+   Sarai D. Folkestad     program design, HF, CCS, CC2, CCSD, libint-interface,
+                          Cholesky decomposition, Davidson-tool, CVS, DIIS-tool
+                          zeroth order properties, first order properties, IP
+                          frozen core, MLCC2, MLHF
+   Tommaso Giovannini     QM/MM
+   Linda Goletto          CC2, MLHF
+   Tor S. Haugland        SAD
+   Anders Hutcheson       frozen HF orbitals
+   Ida-Marie Høyvik       MLHF, frozen HF orbitals
+   Eirik F. Kjønstad      program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool,
+                          Cholesky decomposition, Libint-interface, Davidson-tool
+                          zeroth order properties, first order properties, SAD   
+                          BFGS-tool                                              
+   Rolf H. Myhre          CC3, Runtest-interface, launch script, file system
+   Alexander Paul         CC2, CC3, first order properties
+   Andreas Skeidsvoll     MP2
+   Åsmund H. Tveten       HF
+  ----------------------------------------------------------------------------------
+   Other contributors: A. Balbi, M. Scavino
+
+  Running on 8 OMP threads
+
+  Memory available for calculation:         8 GB
+
+  - Molecular system specifications:
+
+     Name:             h2o
+     Charge:           0
+     Multiplicity:     1
+     Coordinate units: angstrom
+
+     Pure basis functions:         24
+     Cartesian basis functions:    25
+     Primitive basis functions:    49
+
+     Nuclear repulsion energy (a.u.):              9.307879526626
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+
+    ====================================================================
+                               Geometry (Å)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     O    0.009319000000   1.133156000000   0.000000000000       cc-pvdz
+     H    0.023452000000   0.185621000000   0.000000000000       cc-pvdz
+     H    0.906315000000   1.422088000000   0.000000000000       cc-pvdz
+    ====================================================================
+                             Geometry (a.u.)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     O    0.017610357755   2.141354496408   0.000000000000       cc-pvdz
+     H    0.044317857073   0.350772852968   0.000000000000       cc-pvdz
+     H    1.712687132585   2.687356845030   0.000000000000       cc-pvdz
+    ====================================================================
+
+
+  - Polarizable Continuum Solver via PCMSolver
+
+     PCMSolver was set via external file
+
+     CC calculation: zero-order approximation
+     FQ charges only affect MOs and Fock
+
+     
+     -----------------------------------------------------------------------
+        PCMSolver: An Open Source API for the Polarizable Continuum Model
+                        PCMSolver undefined+5f1645c
+     
+                Git: Branch {HEAD}, Revision {5f1645c}
+     
+      R. Di Remigio, A. H. Steindal, K. Mozgawa, V. Weijo, H. Cao, and
+      L. Frediani, Int. J. Quantum Chem., to be submitted
+     
+      Source repository: https://github.com/PCMSolver/pcmsolver
+      Documentation: https://pcmsolver.readthedocs.io/
+      PCMSolver initialized on: Tuesday, 29 October 2019 12:24 PM
+     -----------------------------------------------------------------------
+     ~~~~~~~~~~ PCMSolver ~~~~~~~~~~
+     Using CODATA 2010 set of constants.
+     Input parsing done API-side
+     ========== Cavity 
+     Atomic radii set: 
+     Cavity type: GePol
+     Average tesserae area = 0.3 Ang^2
+     Solvent probe radius = 1.385 Ang
+     Number of spheres = 3 [initial = 3; added = 0]
+     Number of finite elements = 192
+     Number of irreducible finite elements = 192
+     ============ Spheres list (in Angstrom)
+      Sphere   on   Radius   Alpha       X            Y            Z     
+     -------- ---- -------- ------- -----------  -----------  -----------
+        1      O    1.5200   1.20     0.009319     1.133156     0.000000
+        2      H    1.2000   1.20     0.023452     0.185621     0.000000
+        3      H    1.2000   1.20     0.906315     1.422088     0.000000
+     ========== Static solver 
+     Solver Type: IEFPCM, isotropic
+     PCM matrix hermitivitized
+     ============ Medium 
+     Medium initialized from solvent built-in data.
+     Solvent name:          Water
+     Static  permittivity = 78.39
+     Optical permittivity = 1.78
+     Solvent radius =       1.39 Ang
+     .... Inside 
+     Green's function type: vacuum
+     .... Outside 
+     Green's function type: uniform dielectric
+     Permittivity = 78.39
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+     Number of occupied orbitals:         5
+     Number of virtual orbitals:         19
+     Number of molecular orbitals:       24
+     Number of atomic orbitals:          24
+
+
+  :: Reference state engine
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  Calculates the reference wavefunction | R >.
+
+  This is a HF ground state calculation. The following tasks will be performed: 
+  
+     - Generate initial density (sad)
+     - Calculation of reference state (scf-diis algorithm)
+     - Calculation of the ground state energy
+
+  - SAD generation
+
+
+    ====================================================================
+                               Geometry (Å)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     O    0.009319000000   1.133156000000   0.000000000000       cc-pvdz
+    ====================================================================
+                             Geometry (a.u.)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     O    0.017610357755   2.141354496408   0.000000000000       cc-pvdz
+    ====================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+  Requested fractional uniform valence. Valence electrons will be
+  distributed evenly in the highest molecular orbitals (if plural).
+
+
+  :: Self-consistent field solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  Warning: We recommend to use the SCF-DIIS algorithm instead, which supports 
+  a gradient threshold and typically converges much faster. Use only when 
+  absolutely necessary!
+
+  A Roothan-Hall self-consistent field solver. In each iteration, the Roothan-Hall 
+  equation (or equations for unrestricted HF theory) are solved to provide 
+  the next orbital coefficients. From the new orbitals, a new density provides 
+  the next Fock matrix. The cycle repeats until the solution is self-consistent 
+  (as measured by the energy change).
+
+     Coulomb screening threshold:   0.1000E-12
+     Exchange screening threshold:  0.1000E-12
+     ERI integral precision:        0.1000E-25
+
+  Alpha orbital energies:
+
+    1  -20.757153119727      2   -1.437243076627      3   -0.694807028077
+    4   -0.694807028077      5   -0.694807028077      6    1.066964041455
+    7    1.066964041455      8    1.066964041455      9    1.309465013516
+   10    2.789728387493     11    2.789728387493     12    2.789728387493
+   13    2.789728387493     14    2.789728387493
+
+  Beta orbital energies:
+
+    1  -20.664766012245      2   -1.079597844441      3   -0.079632318743
+    4   -0.079632318743      5   -0.079632318743      6    1.240180643804
+    7    1.240180643804      8    1.240180643804      9    1.415598137853
+   10    2.968259266771     11    2.968259266771     12    2.968259266771
+   13    2.968259266771     14    2.968259266771
+
+  Printing 10 MOs (out of the total 14 MOs).
+
+  - Printing molecular orbitals: 1, 2, 3, 4
+
+     AO   Atom          1           2           3           4
+    ---------------------------------------------------------------
+     1   1 O (s)   -0.987118   -0.285956    0.000000    0.000000
+     2   1 O (s)    0.045173   -1.093191    0.000000   -0.000000
+     3   1 O (s)   -0.013408    0.091124   -0.000000   -0.000000
+     4   1 O (p)    0.000000   -0.000000    0.007351    1.061798
+     5   1 O (p)   -0.000000   -0.000000   -1.062971    0.008504
+     6   1 O (p)    0.000000    0.000000    0.022578    0.054631
+     7   1 O (p)   -0.000000    0.000000   -0.000975   -0.140879
+     8   1 O (p)    0.000000    0.000000    0.141034   -0.001128
+     9   1 O (p)   -0.000000    0.000000   -0.002996   -0.007248
+    10   1 O (d)   -0.000000    0.000000    0.000000   -0.000000
+    11   1 O (d)    0.000000    0.000000   -0.000000    0.000000
+    12   1 O (d)    0.000000    0.000000   -0.000000   -0.000000
+    13   1 O (d)   -0.000000   -0.000000   -0.000000    0.000000
+    14   1 O (d)   -0.000000    0.000000   -0.000000   -0.000000
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 5, 6, 7, 8
+
+     AO   Atom          5           6           7           8
+    ---------------------------------------------------------------
+     1   1 O (s)    0.000000   -0.587471   -0.000000    0.000000
+     2   1 O (s)    0.000000   -1.229265   -0.000000    0.000000
+     3   1 O (s)   -0.000000    1.636183    0.000000   -0.000000
+     4   1 O (p)   -0.054798    0.000000   -0.000000   -0.000000
+     5   1 O (p)    0.022170   -0.000000    0.000000    0.000000
+     6   1 O (p)    1.061592    0.000000   -0.000000   -0.000000
+     7   1 O (p)    0.007271   -0.000000    0.000000    0.000000
+     8   1 O (p)   -0.002941    0.000000    0.000000   -0.000000
+     9   1 O (p)   -0.140851    0.000000    0.000000    0.000000
+    10   1 O (d)    0.000000   -0.000000    0.000000   -0.000000
+    11   1 O (d)   -0.000000   -0.000000   -0.380971   -0.883841
+    12   1 O (d)   -0.000000   -0.000000    0.482443    0.000000
+    13   1 O (d)    0.000000    0.000000   -0.784866    0.443740
+    14   1 O (d)   -0.000000    0.000000   -0.078071   -0.148055
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 9, 10
+
+     AO   Atom          9          10
+    ---------------------------------------------------------------
+     1   1 O (s)   -0.000000    0.000000
+     2   1 O (s)   -0.000000    0.000000
+     3   1 O (s)    0.000000   -0.000000
+     4   1 O (p)   -0.000000    0.000000
+     5   1 O (p)    0.000000    0.000000
+     6   1 O (p)    0.000000    0.000000
+     7   1 O (p)    0.000000   -0.000000
+     8   1 O (p)   -0.000000   -0.000000
+     9   1 O (p)   -0.000000   -0.000000
+    10   1 O (d)   -0.000000    1.000000
+    11   1 O (d)   -0.052400    0.000000
+    12   1 O (d)   -0.675951   -0.000000
+    13   1 O (d)   -0.324450    0.000000
+    14   1 O (d)   -0.659604    0.000000
+    ---------------------------------------------------------------
+     Generated SAD in cc-pvdz for O
+
+  - Cleaning up Self-consistent field solver
+
+  Requested MO transformation of Fock matrix, but this is not yet implemented for uhf                                     
+
+
+    ====================================================================
+                               Geometry (Å)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     H    0.023452000000   0.185621000000   0.000000000000       cc-pvdz
+    ====================================================================
+                             Geometry (a.u.)
+    ====================================================================
+    Atom         X                Y                Z             Basis
+    ====================================================================
+     H    0.044317857073   0.350772852968   0.000000000000       cc-pvdz
+    ====================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+  Requested fractional uniform valence. Valence electrons will be
+  distributed evenly in the highest molecular orbitals (if plural).
+
+
+  :: Self-consistent field solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  Warning: We recommend to use the SCF-DIIS algorithm instead, which supports 
+  a gradient threshold and typically converges much faster. Use only when 
+  absolutely necessary!
+
+  A Roothan-Hall self-consistent field solver. In each iteration, the Roothan-Hall 
+  equation (or equations for unrestricted HF theory) are solved to provide 
+  the next orbital coefficients. From the new orbitals, a new density provides 
+  the next Fock matrix. The cycle repeats until the solution is self-consistent 
+  (as measured by the energy change).
+
+     Coulomb screening threshold:   0.1000E-12
+     Exchange screening threshold:  0.1000E-12
+     ERI integral precision:        0.1000E-25
+
+  Alpha orbital energies:
+
+    1   -0.499278403420      2    0.572444879572      3    1.443026598858
+    4    1.443026598858      5    1.443026598858
+
+  Beta orbital energies:
+
+    1    0.073347478316      2    0.753291595234      3    1.573636329517
+    4    1.573636329517      5    1.573636329517
+
+  Printing 5 MOs (out of the total 5 MOs).
+
+  - Printing molecular orbitals: 1, 2, 3, 4
+
+     AO   Atom          1           2           3           4
+    ---------------------------------------------------------------
+     1   1 H (s)   -0.587634   -1.240179   -0.000000    0.000000
+     2   1 H (s)   -0.501239    1.277544    0.000000    0.000000
+     3   1 H (p)   -0.000000    0.000000   -0.976954    0.000000
+     4   1 H (p)   -0.000000    0.000000    0.213448    0.000000
+     5   1 H (p)    0.000000    0.000000    0.000000   -1.000000
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 5     AO   Atom          5
+    ---------------------------------------------------------------
+     1   1 H (s)   -0.000000
+     2   1 H (s)    0.000000
+     3   1 H (p)    0.213448
+     4   1 H (p)    0.976954
+     5   1 H (p)    0.000000
+    ---------------------------------------------------------------
+     Generated SAD in cc-pvdz for H
+
+  - Cleaning up Self-consistent field solver
+
+  Requested MO transformation of Fock matrix, but this is not yet implemented for uhf                                     
+
+
+  :: Self-consistent field DIIS Hartree-Fock solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock matrix 
+  is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+     DIIS dimension:                8
+     Energy threshold:              0.1000E-09
+     Gradient threshold:            0.1000E-09
+
+     Coulomb screening threshold:   0.1000E-12
+     Exchange screening threshold:  0.1000E-12
+     ERI integral precision:        0.1000E-25
+
+  - Setting initial AO density to SAD
+
+     Energy of initial guess:               -75.916824923907
+     Number of electrons in guess:           10.000000000000
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -76.001683148260     0.8228E-01     0.7600E+02
+     2           -76.027650726027     0.4857E-01     0.2597E-01
+     3           -76.035332285656     0.5102E-02     0.7682E-02
+     4           -76.035487691814     0.9052E-03     0.1554E-03
+     5           -76.035497680607     0.1549E-03     0.9989E-05
+     6           -76.035497969967     0.3113E-04     0.2894E-06
+     7           -76.035497980733     0.1816E-05     0.1077E-07
+     8           -76.035497980819     0.6847E-06     0.8616E-10
+     9           -76.035497980826     0.1044E-06     0.6551E-11
+    10           -76.035497980826     0.1055E-07     0.4263E-13
+    11           -76.035497980826     0.8555E-09     0.4263E-13
+    12           -76.035497980826     0.1803E-09     0.9948E-13
+    13           -76.035497980826     0.6723E-10     0.1279E-12
+  ---------------------------------------------------------------
+
+  Convergence criterion met in 13 iterations!
+
+  - Summary of HF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.697569870182
+     Nuclear repulsion energy:       9.307879526626
+     Electronic energy:            -85.343377507452
+     Total energy:                 -76.035497980826
+
+  - Summary of QM/PCM energetics:
+                                         a.u.             eV     kcal/mol
+     QM/PCM SCF Contribution:      -0.009387191615
+     QM/PCM Electrostatic Energy:  -0.018774383230    -0.51088   -11.781
+
+  - Molecular orbital energies:
+
+    1  -20.546744331369      2   -1.340860449892      3   -0.709505925404
+    4   -0.569195794239      5   -0.496469923735      6    0.201099946447
+    7    0.275148310949      8    0.811737292078      9    0.863779241489
+   10    1.155116551842     11    1.194578299681     12    1.247059869190
+   13    1.464566153880     14    1.479426134170     15    1.694808355597
+   16    1.869320703401     17    1.941723501361     18    2.496316625118
+   19    2.526295693073     20    3.280216596208     21    3.359419487728
+   22    3.510584475595     23    3.901945769601     24    4.144240039379
+
+
+  Printing 15 MOs (out of the total 24 MOs).
+
+  - Printing molecular orbitals: 1, 2, 3, 4
+
+     AO   Atom          1           2           3           4
+    ---------------------------------------------------------------
+     1   1 O (s)   -1.000935   -0.009741    0.000005   -0.003000
+     2   1 O (s)   -0.001286    0.441435   -0.001427    0.138143
+     3   1 O (s)    0.002634    0.374585   -0.004062    0.332617
+     4   1 O (p)   -0.001373    0.062841    0.290152   -0.447480
+     5   1 O (p)    0.000968   -0.043747    0.400023    0.323215
+     6   1 O (p)   -0.000000   -0.000000   -0.000000    0.000000
+     7   1 O (p)    0.000346   -0.015499    0.131713   -0.308697
+     8   1 O (p)   -0.000257    0.010771    0.181754    0.222871
+     9   1 O (p)   -0.000000   -0.000000   -0.000000    0.000000
+    10   1 O (d)   -0.000084    0.000991    0.008342    0.011278
+    11   1 O (d)   -0.000000   -0.000000    0.000000   -0.000000
+    12   1 O (d)    0.000154   -0.003128   -0.000107    0.012257
+    13   1 O (d)   -0.000000    0.000000   -0.000000    0.000000
+    14   1 O (d)    0.000020   -0.000196    0.024623   -0.003801
+    15   2 H (s)    0.000286    0.193263   -0.323938   -0.200829
+    16   2 H (s)   -0.000427    0.009122   -0.076528   -0.028018
+    17   2 H (p)   -0.000043    0.006153    0.012727   -0.022432
+    18   2 H (p)    0.000757    0.042962   -0.039285   -0.021429
+    19   2 H (p)    0.000000   -0.000000   -0.000000    0.000000
+    20   3 H (s)    0.000314    0.196183    0.326153   -0.198332
+    21   3 H (s)   -0.000429    0.009106    0.075860   -0.026082
+    22   3 H (p)   -0.000749   -0.039096   -0.041337    0.012616
+    23   3 H (p)   -0.000209   -0.019697   -0.000644    0.028211
+    24   3 H (p)    0.000000   -0.000000   -0.000000    0.000000
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 5, 6, 7, 8
+
+     AO   Atom          5           6           7           8
+    ---------------------------------------------------------------
+     1   1 O (s)    0.000000    0.048931   -0.000370    0.003101
+     2   1 O (s)   -0.000000   -0.084039    0.000390    0.011367
+     3   1 O (s)   -0.000000   -1.020778    0.010035   -0.015844
+     4   1 O (p)    0.000000   -0.135778    0.163023   -0.137811
+     5   1 O (p)   -0.000000    0.100462    0.227072   -0.217150
+     6   1 O (p)    0.627100   -0.000000    0.000000   -0.000000
+     7   1 O (p)    0.000000   -0.265143    0.387559   -0.302083
+     8   1 O (p)   -0.000000    0.195699    0.538955   -0.418842
+     9   1 O (p)    0.501340   -0.000000    0.000000    0.000000
+    10   1 O (d)   -0.000000   -0.000154    0.006691    0.033832
+    11   1 O (d)   -0.009596   -0.000000   -0.000000    0.000000
+    12   1 O (d)   -0.000000    0.012569   -0.000223    0.004050
+    13   1 O (d)    0.013502    0.000000    0.000000    0.000000
+    14   1 O (d)    0.000000   -0.000032    0.019209    0.107291
+    15   2 H (s)    0.000000    0.066856    0.025526   -0.993575
+    16   2 H (s)    0.000000    0.841549    1.443875    0.670107
+    17   2 H (p)    0.000000   -0.001276   -0.002406   -0.077362
+    18   2 H (p)    0.000000    0.027222    0.027259    0.158883
+    19   2 H (p)    0.028792   -0.000000   -0.000000   -0.000000
+    20   3 H (s)    0.000000    0.065439   -0.024797    0.920566
+    21   3 H (s)    0.000000    0.830467   -1.456935   -0.616702
+    22   3 H (p)   -0.000000   -0.026404    0.027443    0.159055
+    23   3 H (p)    0.000000   -0.007475    0.006866   -0.039364
+    24   3 H (p)    0.028984    0.000000    0.000000    0.000000
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 9, 10, 11, 12
+
+     AO   Atom          9          10          11          12
+    ---------------------------------------------------------------
+     1   1 O (s)   -0.055501    0.007502    0.000000    0.000058
+     2   1 O (s)   -0.239364    0.123401    0.000000    0.001970
+     3   1 O (s)    0.273871    0.756429   -0.000000   -0.001476
+     4   1 O (p)   -0.263917   -0.628317    0.000000    0.416212
+     5   1 O (p)    0.176720    0.442556    0.000000    0.595906
+     6   1 O (p)    0.000000    0.000000    0.969158   -0.000000
+     7   1 O (p)   -0.013788    1.072828   -0.000000   -1.032054
+     8   1 O (p)   -0.026680   -0.746584   -0.000000   -1.462349
+     9   1 O (p)    0.000000    0.000000   -1.042935    0.000000
+    10   1 O (d)    0.056884   -0.007735    0.000000   -0.016230
+    11   1 O (d)    0.000000    0.000000   -0.002735    0.000000
+    12   1 O (d)   -0.093613   -0.001526   -0.000000    0.000705
+    13   1 O (d)    0.000000   -0.000000    0.004357    0.000000
+    14   1 O (d)   -0.013367    0.003544   -0.000000   -0.046614
+    15   2 H (s)    0.745382   -0.552272   -0.000000   -0.389221
+    16   2 H (s)   -0.508934   -0.096479   -0.000000   -0.854939
+    17   2 H (p)   -0.143567    0.110323    0.000000   -0.029877
+    18   2 H (p)   -0.261541   -0.212805   -0.000000   -0.359326
+    19   2 H (p)    0.000000   -0.000000    0.012806   -0.000000
+    20   3 H (s)    0.832614   -0.561513    0.000000    0.379266
+    21   3 H (s)   -0.557483   -0.116054    0.000000    0.858067
+    22   3 H (p)    0.218651    0.241781   -0.000000   -0.327805
+    23   3 H (p)    0.217197   -0.031352    0.000000   -0.143587
+    24   3 H (p)    0.000000   -0.000000    0.020023    0.000000
+    ---------------------------------------------------------------
+
+  - Printing molecular orbitals: 13, 14, 15
+
+     AO   Atom         13          14          15
+    ---------------------------------------------------------------
+     1   1 O (s)   -0.229740   -0.000000    0.000000
+     2   1 O (s)   -0.586372   -0.000000    0.000000
+     3   1 O (s)    0.702077    0.000000    0.000000
+     4   1 O (p)    0.085290    0.000000   -0.000000
+     5   1 O (p)   -0.058970   -0.000000    0.000000
+     6   1 O (p)    0.000000    0.006515   -0.055754
+     7   1 O (p)   -0.517707   -0.000000    0.000000
+     8   1 O (p)    0.368415    0.000000   -0.000000
+     9   1 O (p)   -0.000000   -0.005915   -0.610617
+    10   1 O (d)   -0.094522   -0.000000    0.000000
+    11   1 O (d)    0.000000   -0.106969   -0.094698
+    12   1 O (d)   -0.057954   -0.000000    0.000000
+    13   1 O (d)    0.000000   -0.075606    0.132240
+    14   1 O (d)    0.032228    0.000000   -0.000000
+    15   2 H (s)    0.269757    0.000000   -0.000000
+    16   2 H (s)   -0.244827   -0.000000    0.000000
+    17   2 H (p)    0.633292    0.000000   -0.000000
+    18   2 H (p)   -0.110146   -0.000000   -0.000000
+    19   2 H (p)   -0.000000    0.686292    0.769450
+    20   3 H (s)    0.272475    0.000000   -0.000000
+    21   3 H (s)   -0.245974   -0.000000    0.000000
+    22   3 H (p)    0.307973    0.000000    0.000000
+    23   3 H (p)   -0.564512   -0.000000    0.000000
+    24   3 H (p)    0.000000   -0.681596    0.774933
+    ---------------------------------------------------------------
+
+  - Timings for the HF ground state calculation
+
+     Total wall time (sec):              1.22400
+     Total cpu time (sec):               4.84644
+
+   - Number of orbitals for coupled cluster calculation
+
+     Number of occupied orbitals:               5
+     Number of virtual orbitals:               19
+     Number of molecular orbitals:             24
+     Number of atomic orbitals:                24
+
+
+  :: Ground state coupled cluster engine
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  Calculates the ground state CC wavefunction | CC > = exp(T) | R >
+
+  This is a CCSD ground state calculation. The following tasks will be performed: 
+  
+     - Cholesky decomposition of the ERI-matrix
+     - Calculation of the ground state amplitudes (diis-algorithm)
+     - Calculation of the ground state energy
+
+
+  :: Cholesky decomposition of electronic repulsion integrals solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations.
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-11
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+     Total number of AOs:                    24
+     Total number of shell pairs:            78
+     Total number of AO pairs:              300
+
+  - Preparing diagonal for decomposition:
+
+     Significant shell pairs:                    78
+     Significant AO pairs:                      300
+
+     Construct shell pairs:                      78
+     Construct AO pairs:                        300
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1              285 /       71       0.47383E+01     150             29                 8265
+     2              220 /       60       0.46828E-01     242             99                21780
+     3              141 /       47       0.46528E-03     158            157                22137
+     4              105 /       33       0.45055E-05     122            226                23730
+     5               12 /        8       0.45032E-07      55            271                 3252
+     6                0 /        0       0.23634E-09       9            279                    0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals: 
+
+     Final number of Cholesky vectors:        279
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.1995E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.8882E-15
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.07800
+     Total cpu time (sec):               0.61048
+
+
+  :: DIIS CC ground solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
+  of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 13. 
+  
+
+  - DIIS CC ground state solver settings:
+
+     Omega threshold:           0.10E-09
+     Energy threshold:          0.10E-09
+
+     DIIS dimension:                   8
+     Max number of iterations:       100
+
+  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ---------------------------------------------------------------
+    1           -76.237764121886     0.7428E-01     0.7624E+02
+    2           -76.242855809319     0.2066E-01     0.5092E-02
+    3           -76.246553822068     0.4713E-02     0.3698E-02
+    4           -76.246952753428     0.1042E-02     0.3989E-03
+    5           -76.246962018798     0.2032E-03     0.9265E-05
+    6           -76.246970944030     0.6158E-04     0.8925E-05
+    7           -76.246970381578     0.1556E-04     0.5625E-06
+    8           -76.246970004369     0.3775E-05     0.3772E-06
+    9           -76.246969921010     0.8789E-06     0.8336E-07
+   10           -76.246969873274     0.1969E-06     0.4774E-07
+   11           -76.246969886193     0.4420E-07     0.1292E-07
+   12           -76.246969885189     0.7204E-08     0.1004E-08
+   13           -76.246969885536     0.1495E-08     0.3469E-09
+   14           -76.246969885453     0.3311E-09     0.8335E-10
+   15           -76.246969885439     0.8299E-10     0.1383E-10
+  ---------------------------------------------------------------
+
+  Convergence criterion met in 15 iterations!
+
+  - DIIS CC ground state solver summary:
+
+     Final ground state energy (a.u.):   -76.246969885439
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         t(a,i)             
+     -----------------------------------
+       13      3       -0.006717198932
+        2      3       -0.005978930376
+        1      4       -0.005585943702
+        1      2        0.004834313095
+       14      4        0.004423592413
+        7      3        0.003904626055
+        5      2       -0.003888505129
+       10      5        0.003002942370
+        8      4       -0.002862130003
+        4      4       -0.002741308714
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         t(ai,bj)             
+     --------------------------------------------------
+        6      5       6      5       -0.051528572905
+        5      4       5      4       -0.036734218418
+        3      3       3      3       -0.034863850354
+        5      4       6      5       -0.029385447846
+        4      3       4      3       -0.028349904409
+        2      3       2      3       -0.026683237501
+        3      4       3      4       -0.024717474985
+        7      3       6      5       -0.022998454493
+        7      3       7      3       -0.022503656468
+        2      3       6      5       -0.021090002470
+     --------------------------------------------------
+
+     T1 diagnostic (|T1|/sqrt(N_e)): 0.004856204800
+
+  - Finished solving the CCSD ground state equations
+
+     Total wall time (sec):              1.45500
+     Total cpu time (sec):               3.58473
+
+  - Timings for the CCSD ground state calculation
+
+     Total wall time (sec):              1.53900
+     Total cpu time (sec):               4.24448
+
+  - Cleaning up CCSD wavefunction
+
+  Mismatch in memory according to eT and specified on input:
+
+     Memory available (eT):          7.9971 GB
+     Memory available (input):       8.0000 GB
+
+  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
+
+  eT terminated successfully!

@@ -38,6 +38,7 @@ module molecular_system_class
    use interval_class, only : interval
    use atomic_class, only : atomic
    use mm_class, only : mm
+   use pcm_class, only : pcm
 !
    implicit none
 !
@@ -77,8 +78,10 @@ module molecular_system_class
       integer :: n_primitives_cart = 0                         
       logical :: cartesian_basis = .false. 
       logical :: mm_calculation = .false.
+      logical :: pcm_calculation = .false.
 !
       type(mm) :: mm
+      type(pcm) :: pcm
 !
 !     AO Cholesky vectors
 !
@@ -210,7 +213,8 @@ contains
    end function new_molecular_system
 !
 !
-   function new_molecular_system_from_parameters(atoms, name_, charge, multiplicity, mm_calculation) result(molecule)
+   function new_molecular_system_from_parameters(atoms, name_, charge, multiplicity, mm_calculation, &
+                                                 pcm_calculation) result(molecule)
 !!
 !!    Initialize From Parameters
 !!    Written by Tor S. Haugland, 2019
@@ -224,15 +228,17 @@ contains
       integer,                    intent(in) :: charge
       integer,                    intent(in) :: multiplicity
       logical,                    intent(in) :: mm_calculation
+      logical,                    intent(in) :: pcm_calculation
 !
       allocate(molecule%atoms(size(atoms)))
 !
-      molecule%atoms          = atoms
-      molecule%n_atoms        = size(atoms)
-      molecule%name_          = name_
-      molecule%charge         = charge
-      molecule%multiplicity   = multiplicity
-      molecule%mm_calculation = mm_calculation
+      molecule%atoms           = atoms
+      molecule%n_atoms         = size(atoms)
+      molecule%name_           = name_
+      molecule%charge          = charge
+      molecule%multiplicity    = multiplicity
+      molecule%mm_calculation  = mm_calculation
+      molecule%pcm_calculation = pcm_calculation
 !
       molecule%cartesian_gaussians_int = 0
       molecule%n_active_atoms_spaces = 0
@@ -256,6 +262,7 @@ contains
       call molecule%read_active_atoms()
 !
       molecule%mm_calculation = input%requested_section('molecular mechanics')
+      molecule%pcm_calculation = input%requested_section('pcm')
 !
    end subroutine read_settings_molecular_system
 !
@@ -280,6 +287,9 @@ contains
       integer(i6), dimension(:), allocatable :: n_basis_in_shells
       integer(i6), dimension(:), allocatable :: first_ao_in_shells
       integer(i6), dimension(:), allocatable :: shell_numbers
+!
+      real(dp), dimension(:,:), allocatable :: qm_coordinates
+      real(dp), dimension(:), allocatable :: qm_charges
 !
 !     First have a look to the basis set infos
 !
@@ -374,6 +384,29 @@ contains
          call molecule%mm%prepare()
 !         
       endif
+!ctg
+!     pcm
+!
+      if (molecule%pcm_calculation) then
+!      
+         call mem%alloc(qm_coordinates, 3, molecule%n_atoms)
+         call mem%alloc(qm_charges, molecule%n_atoms)
+!      
+         do i = 1, molecule%n_atoms 
+!      
+            qm_coordinates(1,i) = molecule%atoms(i)%x * angstrom_to_bohr
+            qm_coordinates(2,i) = molecule%atoms(i)%y * angstrom_to_bohr
+            qm_coordinates(3,i) = molecule%atoms(i)%z * angstrom_to_bohr
+            qm_charges(i)       = molecule%atoms(i)%number_
+!      
+         enddo
+!      
+         call molecule%pcm%prepare(molecule%n_atoms, qm_coordinates, qm_charges)
+!      
+         call mem%dealloc(qm_coordinates, 3, molecule%n_atoms)
+         call mem%dealloc(qm_charges, molecule%n_atoms)
+!         
+      endif
 !
       call initialize_shell2atom_c()
 !
@@ -412,6 +445,7 @@ contains
       call molecule%destruct_shell2atom()
       call molecule%delete_libint_files()
       if (molecule%mm_calculation) call molecule%mm%cleanup()
+      if (molecule%pcm_calculation) call molecule%pcm%cleanup()
 !
    end subroutine cleanup_molecular_system
 !
@@ -2157,6 +2191,7 @@ contains
 !!
 !!    Set shell basis info
 !!    Written by Sarai D. Folkestad, Dec 2018
+!!    Modified by Marco Scavino, 2019
 !!
 !!    Sets the number of primitives, and the 
 !!    coefficient and exponents of the primitives in 
@@ -2240,6 +2275,7 @@ contains
          call molecule%atoms(atom_index)%shells(shell)%set_n_primitives(n_primitive)
          call molecule%atoms(atom_index)%shells(shell)%initialize_exponents()
          call molecule%atoms(atom_index)%shells(shell)%initialize_coefficients()
+
 !
 !        Loop over primitives and set coefficient and exponent
 !
@@ -2278,6 +2314,7 @@ contains
 !
                call molecule%atoms(atom_index)%shells(shell)%set_exponent_i(primitive, exponent_)
                call molecule%atoms(atom_index)%shells(shell)%set_coefficient_i(primitive, coefficient)
+
 !
             enddo
 !
