@@ -29,6 +29,7 @@ set(CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake
     ${CMAKE_SOURCE_DIR}/cmake/math
     ${CMAKE_SOURCE_DIR}/cmake/findlibint
+    ${CMAKE_SOURCE_DIR}/cmake/findPCMSolver
     ${CMAKE_SOURCE_DIR}/cmake/findLibXC
     /usr/local/share/cmake/Modules
     )
@@ -49,9 +50,12 @@ find_package(LibXC REQUIRED)
 find_package(Libint2 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
+find_package(PCMSolver REQUIRED)
+
 message("-- Boost location: ${Boost_INCLUDE_DIRS}")
 
 # Include the relevant directories 
+include_directories(${PCMSolver_INCLUDE_DIR})
 include_directories(${LibXC_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -76,6 +80,7 @@ if(LAPACK_FOUND AND BLAS_FOUND)
     set(lapackblas_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 endif()
 
+
 set(eT_fortran_sources
         ${eT_fortran_sources}
         )
@@ -86,7 +91,7 @@ set(eT_CXX_sources
 
 add_executable(eT ${eT_fortran_sources} ${eT_CXX_sources})
 
-target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} ${LibXC_LIBRARY})
+target_link_libraries(eT ${lapackblas_libraries} ${Libint2_LIBRARY} ${LibXC_LIBRARY} ${PCMSolver_LIBRARY})
 
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
 

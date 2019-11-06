@@ -70,6 +70,7 @@ module uhf_class
       procedure :: update_fock_and_energy_cumulative    => update_fock_and_energy_cumulative_uhf
       procedure :: update_fock_and_energy               => update_fock_and_energy_uhf
       procedure :: update_fock_mm                       => update_fock_mm_uhf
+      procedure :: update_fock_pcm                      => update_fock_pcm_uhf
       procedure :: set_ao_fock                          => set_ao_fock_uhf
       procedure :: get_ao_fock                          => get_ao_fock_uhf
 !
@@ -220,6 +221,9 @@ contains
       call wf%initialize_sp_eri_schwarz_list()
 !
       call wf%construct_sp_eri_schwarz()
+!
+      if(wf%system%mm_calculation)  call wf%initialize_mm_matrices()
+      if(wf%system%pcm_calculation) call wf%initialize_pcm_matrices()
 !
       wf%frozen_core = .false.
       wf%frozen_hf_mos = .false.
@@ -615,6 +619,8 @@ contains
       if(wf%system%mm_calculation.and.wf%system%mm%forcefield.ne.'non-polarizable') &
          call wf%update_fock_mm()
 !         
+      if(wf%system%pcm_calculation) call wf%update_fock_pcm()
+!      
       call wf%calculate_uhf_energy(h_wx)
 !
    end subroutine update_fock_and_energy_no_cumulative_uhf
@@ -642,7 +648,7 @@ contains
 !
       else 
 !      
-         if(.not.wf%system%mm_calculation) then
+         if(.not.wf%system%mm_calculation.and..not.wf%system%pcm_calculation) then
 !         
             call wf%update_fock_and_energy_cumulative(prev_ao_density, h_wx)
 !            
@@ -801,6 +807,7 @@ contains
       call output%printf('Total energy:              (f19.12)', pl='minimal', fs='(t6,a)',  reals=[wf%energy])
 !
       if(wf%system%mm_calculation) call wf%print_energy_mm()
+      if(wf%system%pcm_calculation) call wf%print_energy_pcm()
 !      
 !
    end subroutine print_energy_uhf
@@ -1398,6 +1405,7 @@ contains
       wf%energy = wf%system%get_nuclear_repulsion()
 !
       if (wf%system%mm_calculation) call wf%calculate_mm_energy_terms()
+      if (wf%system%pcm_calculation) call wf%calculate_pcm_energy_terms()
 !      
       wf%energy = wf%energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_a, 1, h_wx, 1)
       wf%energy = wf%energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_a, 1, wf%ao_fock_a, 1)
@@ -1648,16 +1656,14 @@ contains
       if(wf%system%mm%forcefield.eq.'fq') then
 !      
          if(.not.allocated(potential_points)) call mem%alloc(potential_points, wf%system%mm%n_atoms)
-         if(.not.allocated(wf%system%mm%pol_emb_rhs))   call mem%alloc(wf%system%mm%pol_emb_rhs, wf%system%mm%n_variables)
-         if(.not.allocated(wf%system%mm%pol_emb_lhs))   call mem%alloc(wf%system%mm%pol_emb_lhs, wf%system%mm%n_variables)
-         if(.not.allocated(wf%system%mm%pol_emb_fock))  call mem%alloc(wf%system%mm%pol_emb_fock, wf%n_ao,wf%n_ao)
 !
-         call zero_array(wf%system%mm%pol_emb_fock,wf%n_ao*wf%n_ao)
+         call zero_array(wf%pol_emb_fock,wf%n_ao*wf%n_ao)
          call zero_array(wf%system%mm%pol_emb_rhs,wf%system%mm%n_variables)
 !         
 !        electrostatic potential contracted with density : \sum_i V_mu(D_mu)(r_i)
 !
-         call wf%construct_ao_electrostatics(0,1,'prop',property_points=potential_points,ao_density=wf%ao_density)
+         call wf%construct_ao_electrostatics(0,1,'prop',wf%system%mm%n_atoms,wf%system%mm%coordinates, &
+                                             property_points=potential_points,ao_density=wf%ao_density)
 !
 !        rhs for fq: -chi - V(D)
 !
@@ -1701,10 +1707,11 @@ contains
 !
 !        Fock creation: F_munu = \sum_i q_i V_munu(r_i)
 !
-         call wf%construct_ao_electrostatics(0,0,'fock',elec_fock=wf%system%mm%pol_emb_fock) 
+         call wf%construct_ao_electrostatics(0,0,'fock',wf%system%mm%n_atoms,wf%system%mm%coordinates, &
+                                             elec_fock=wf%pol_emb_fock,charges=wf%system%mm%charge) 
 !
-         wf%ao_fock_a = wf%ao_fock_a + half*wf%system%mm%pol_emb_fock
-         wf%ao_fock_b = wf%ao_fock_b + half*wf%system%mm%pol_emb_fock
+         wf%ao_fock_a = wf%ao_fock_a + half*wf%pol_emb_fock
+         wf%ao_fock_b = wf%ao_fock_b + half*wf%pol_emb_fock
 !
 !
          call output%print_matrix('debug', 'Total QM Density', wf%ao_density, wf%n_ao, wf%n_ao)
@@ -1716,7 +1723,7 @@ contains
                                   wf%ao_density_b, wf%n_ao, wf%n_ao)
 !
          call output%print_matrix('debug', 'FQ Fock - Spin alpha + beta', &
-                                  wf%system%mm%pol_emb_fock, wf%n_ao, wf%n_ao)
+                                  wf%pol_emb_fock, wf%n_ao, wf%n_ao)
 !
          call output%print_matrix('debug', 'QM/FQ Fock - Spin alpha', wf%ao_fock_a, wf%n_ao, wf%n_ao)
 !
@@ -1733,6 +1740,91 @@ contains
 !
 !
    end subroutine update_fock_mm_uhf
+!
+!
+   subroutine update_fock_pcm_uhf(wf)
+!!
+!!    Update Fock PCM 
+!!    Written by Tommaso Giovannini, Oct 2019 
+!!
+!!    The QM Fock is updated with the contributions coming 
+!!    from the PCM:
+!!       q*V_αβ
+!!
+!!    Done by interfacing to PCMSolver
+!!
+      use pcmsolver
+      implicit none
+!
+      class(uhf) :: wf
+!
+      character(kind=c_char, len=*), parameter :: mep_lbl = 'NucMEP'
+      character(kind=c_char, len=*), parameter :: asc_lbl = 'NucASC'
+      integer :: i
+! 
+      if(.not.allocated(wf%system%pcm%pcm_rhs))   call mem%alloc(wf%system%pcm%pcm_rhs, wf%system%pcm%n_tesserae)
+!
+      call zero_array(wf%pcm_fock,wf%n_ao*wf%n_ao)
+      call zero_array(wf%system%pcm%pcm_rhs,wf%system%pcm%n_tesserae)
+!      
+!     electrostatic potential contracted with density : \sum_i V_mu(D_mu)(r_i)
+!
+      call wf%construct_ao_electrostatics(0,1,'prop',wf%system%pcm%n_tesserae,wf%system%pcm%grid_coord*bohr_to_angstrom, &
+                                          property_points=wf%system%pcm%pcm_rhs,ao_density=wf%ao_density) 
+!      
+!     solve q=D^-1 (V(D)) 
+! 
+      call pcmsolver_set_surface_function(wf%system%pcm%pcm_context, int(wf%system%pcm%n_tesserae,kind=c_int), &
+                                         -wf%system%pcm%pcm_rhs, pcmsolver_fstring_to_carray(mep_lbl))
+!                                          
+      call pcmsolver_compute_asc(wf%system%pcm%pcm_context, &
+                                 pcmsolver_fstring_to_carray(mep_lbl), &
+                                 pcmsolver_fstring_to_carray(asc_lbl), &
+                                 irrep=0_c_int)
+!                                 
+      call pcmsolver_get_surface_function(wf%system%pcm%pcm_context, int(wf%system%pcm%n_tesserae,kind=c_int), &
+                                          wf%system%pcm%charges, pcmsolver_fstring_to_carray(asc_lbl))
+!
+      call output%print_separator('verbose', 67, fs='(/t3,a)')
+!
+      call output%printf('Atom         PCM ASC            PCM RHS', &
+                         pl='v', fs='(t6,a)')
+!
+      do i = 1, wf%system%pcm%n_tesserae
+!
+         call output%printf('(i4)      (e13.6)      (e13.6)', pl='v', &
+                            fs='(t6,a)', ints=[i], reals=[wf%system%pcm%charges(i), &
+                            wf%system%pcm%pcm_rhs(i)])
+!
+      enddo
+!
+      call output%print_separator('verbose', 67)
+!
+!     Fock creation: F_munu = \sum_i q_i V_munu(r_i)
+!
+      call wf%construct_ao_electrostatics(0,0,'fock',wf%system%pcm%n_tesserae,wf%system%pcm%grid_coord*bohr_to_angstrom, & 
+                                          elec_fock=wf%pcm_fock,charges=wf%system%pcm%charges) 
+!
+      wf%ao_fock_a = wf%ao_fock_a + half*wf%pcm_fock
+      wf%ao_fock_b = wf%ao_fock_b + half*wf%pcm_fock
+!
+      call output%print_matrix('debug', 'Total QM Density', wf%ao_density, wf%n_ao, wf%n_ao)
+!
+      call output%print_matrix('debug', 'QM Density - Spin alpha', &
+                               wf%ao_density_a, wf%n_ao, wf%n_ao)
+!
+      call output%print_matrix('debug', 'QM Density - Spin beta', &
+                               wf%ao_density_b, wf%n_ao, wf%n_ao)
+!
+      call output%print_matrix('debug', 'PCM Fock - Spin alpha + beta', &
+                               wf%pcm_fock, wf%n_ao, wf%n_ao)
+!
+      call output%print_matrix('debug', 'QM/PCM Fock - Spin alpha', wf%ao_fock_a, wf%n_ao, wf%n_ao)
+!
+      call output%print_matrix('debug', 'QM/PCM Fock - Spin beta', wf%ao_fock_b, wf%n_ao, wf%n_ao)
+!
+!
+   end subroutine update_fock_pcm_uhf
 !
 !
    subroutine set_n_mo_uhf(wf)

@@ -61,6 +61,9 @@ module hf_class
       real(dp) :: energy_qmmm
       real(dp) :: energy_scf_qmmm
 !
+      real(dp) :: electrostatic_energy_qmpcm
+      real(dp) :: energy_scf_qmpcm
+!      
       real(dp) :: linear_dep_threshold = 1.0D-6
 !
       real(dp) :: coulomb_threshold    = 1.0D-12   ! screening threshold
@@ -108,6 +111,7 @@ module hf_class
       procedure :: decompose_ao_overlap                        => decompose_ao_overlap_hf
       procedure :: print_energy                                => print_energy_hf
       procedure :: print_energy_mm                             => print_energy_mm_hf
+      procedure :: print_energy_pcm                            => print_energy_pcm_hf
 !
 !     AO Fock and energy related routines
 !
@@ -126,6 +130,7 @@ module hf_class
       procedure :: get_fock_ov                                 => get_fock_ov_hf
       procedure :: calculate_hf_energy_from_fock               => calculate_hf_energy_from_fock_hf
       procedure :: calculate_mm_energy_terms                   => calculate_mm_energy_terms_hf
+      procedure :: calculate_pcm_energy_terms                  => calculate_pcm_energy_terms_hf
       procedure :: calculate_hf_energy_from_G                  => calculate_hf_energy_from_G_hf
       procedure :: initialize_fock                             => initialize_fock_hf
       procedure :: destruct_fock                               => destruct_fock_hf
@@ -133,6 +138,7 @@ module hf_class
       procedure :: update_fock_and_energy_cumulative           => update_fock_and_energy_cumulative_hf
       procedure :: update_fock_and_energy                      => update_fock_and_energy_hf
       procedure :: update_fock_mm                              => update_fock_mm_hf
+      procedure :: update_fock_pcm                             => update_fock_pcm_hf
 !
 !     AO Density related routines
 !
@@ -379,7 +385,9 @@ contains
       call output%printf('Total energy:              (f19.12)', pl='m', fs='(t6,a)',  reals=[wf%energy])
 !
       if(wf%system%mm_calculation) call wf%print_energy_mm()
-
+      if(wf%system%pcm_calculation) call wf%print_energy_pcm()
+!
+!
    end subroutine print_energy_hf
 !
 !
@@ -824,10 +832,13 @@ contains
 !
       if(wf%system%mm_calculation .and. wf%system%mm%forcefield .ne. 'non-polarizable') &
          call wf%update_fock_mm()
+!         
+      if(wf%system%pcm_calculation) call wf%update_fock_pcm()
 !
       wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
 !
-      if (wf%system%mm_calculation) call wf%calculate_mm_energy_terms()
+      if(wf%system%mm_calculation) call wf%calculate_mm_energy_terms()
+      if(wf%system%pcm_calculation) call wf%calculate_pcm_energy_terms()
 !
    end subroutine update_fock_and_energy_no_cumulative_hf
 !
@@ -861,7 +872,7 @@ contains
 !
       wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
 !
-      if (wf%system%mm_calculation) call wf%calculate_mm_energy_terms()
+      if(wf%system%mm_calculation) call wf%calculate_mm_energy_terms()
 !
    end subroutine update_fock_and_energy_cumulative_hf
 !
@@ -887,7 +898,7 @@ contains
 !
       else
 !
-         if(.not.wf%system%mm_calculation) then
+         if(.not.wf%system%mm_calculation.and..not.wf%system%pcm_calculation) then
 !
             call wf%update_fock_and_energy_cumulative(prev_ao_density, h_wx)
 !
@@ -1005,6 +1016,11 @@ contains
 !
       call wf%write_orbital_information()
 !
+!     Save MM and PCM matrices for CC
+!
+      call wf%write_mm_matrices()
+      call wf%write_pcm_matrices()
+!
 !     Deallocations
 !
       call wf%destruct_orbital_energies()
@@ -1019,6 +1035,9 @@ contains
 !
       call wf%destruct_W_mo_update()
       call wf%destruct_mo_fock()
+!
+      call wf%destruct_mm_matrices()
+      call wf%destruct_pcm_matrices()
 !
    end subroutine cleanup_hf
 !
@@ -3525,16 +3544,14 @@ contains
       if(wf%system%mm%forcefield.eq.'fq') then
 !
          if(.not.allocated(potential_points)) call mem%alloc(potential_points, wf%system%mm%n_atoms)
-         if(.not.allocated(wf%system%mm%pol_emb_rhs))   call mem%alloc(wf%system%mm%pol_emb_rhs, wf%system%mm%n_variables)
-         if(.not.allocated(wf%system%mm%pol_emb_lhs))   call mem%alloc(wf%system%mm%pol_emb_lhs, wf%system%mm%n_variables)
-         if(.not.allocated(wf%system%mm%pol_emb_fock))  call mem%alloc(wf%system%mm%pol_emb_fock, wf%n_ao,wf%n_ao)
 !
-         call zero_array(wf%system%mm%pol_emb_fock,wf%n_ao*wf%n_ao)
+         call zero_array(wf%pol_emb_fock,wf%n_ao*wf%n_ao)
          call zero_array(wf%system%mm%pol_emb_rhs,wf%system%mm%n_variables)
 !
 !        electrostatic potential contracted with density : \sum_i V_mu(D_mu)(r_i)
 !
-         call wf%construct_ao_electrostatics(0,1,'prop',property_points=potential_points,ao_density=wf%ao_density)
+         call wf%construct_ao_electrostatics(0,1,'prop',wf%system%mm%n_atoms,wf%system%mm%coordinates, &
+                                             property_points=potential_points,ao_density=wf%ao_density) 
 !
 !        rhs for fq: -chi - V(D)
 !
@@ -3578,14 +3595,15 @@ contains
 !
 !        Fock creation: F_munu = \sum_i q_i V_munu(r_i)
 !
-         call wf%construct_ao_electrostatics(0,0,'fock',elec_fock=wf%system%mm%pol_emb_fock)
+         call wf%construct_ao_electrostatics(0,0,'fock',wf%system%mm%n_atoms,wf%system%mm%coordinates, & 
+                                             elec_fock=wf%pol_emb_fock,charges=wf%system%mm%charge) 
 !
-         wf%ao_fock = wf%ao_fock + half * wf%system%mm%pol_emb_fock
+         wf%ao_fock = wf%ao_fock + half * wf%pol_emb_fock
 !
 !
          call output%print_matrix('debug', 'QM Density', wf%ao_density, wf%n_ao, wf%n_ao)
 !
-         call output%print_matrix('debug', 'FQ Fock', wf%system%mm%pol_emb_fock, wf%n_ao, wf%n_ao)
+         call output%print_matrix('debug', 'FQ Fock', wf%pol_emb_fock, wf%n_ao, wf%n_ao)
 !
          call output%print_matrix('debug', 'QM/FQ Fock', wf%ao_fock, wf%n_ao, wf%n_ao)
 !
@@ -3632,13 +3650,13 @@ contains
          wf%energy = wf%energy + wf%system%get_nuclear_repulsion_mm()
 !
          wf%energy = wf%energy + one/two*ddot((wf%n_ao)**2, &
-                                       half*wf%system%mm%nopol_h_wx, 1,wf%ao_density, 1)
+                                       half*wf%nopol_h_wx, 1,wf%ao_density, 1)
 !
-         wf%energy_scf_qmmm  = + one/two*ddot((wf%n_ao)**2, one*wf%system%mm%nopol_h_wx, 1, wf%ao_density, 1)
+         wf%energy_scf_qmmm  = + one/two*ddot((wf%n_ao)**2, one*wf%nopol_h_wx, 1, wf%ao_density, 1)
 !
         call mem%alloc(nopol_potential, wf%system%mm%n_atoms)
 !
-        call wf%construct_ao_electrostatics(0, 1, 'prop', &
+        call wf%construct_ao_electrostatics(0, 1, 'prop', wf%system%mm%n_atoms, wf%system%mm%coordinates, &
                      property_points=nopol_potential, ao_density=wf%ao_density)
 !
         wf%electrostatic_energy_qmmm = zero
@@ -3657,7 +3675,7 @@ contains
       if(wf%system%mm%forcefield .eq. 'fq') then
 !
          wf%energy = wf%energy - one/four*ddot((wf%n_ao)**2, wf%ao_density, &
-                                          1, wf%system%mm%pol_emb_fock, 1) &
+                                          1, wf%pol_emb_fock, 1) &
                                - one/two*dot_product(wf%system%mm%pol_emb_lhs,wf%system%mm%pol_emb_rhs)
 !
          wf%energy_scf_qmmm  = - one/two*dot_product(wf%system%mm%pol_emb_lhs,wf%system%mm%pol_emb_rhs)
@@ -3830,6 +3848,130 @@ contains
    end subroutine construct_molecular_gradient_hf
 !
 !
+   subroutine update_fock_pcm_hf(wf)
+!!
+!!    Update Fock PCM 
+!!    Written by Tommaso Giovannini, Oct 2019 
+!!
+!!    The QM Fock is updated with the contributions coming 
+!!    from the PCM:
+!!       q*V_αβ
+!!
+!!    Done by interfacing to PCMSolver
+!!
+      use pcmsolver
+      implicit none
+!
+      class(hf) :: wf
+!
+      character(kind=c_char, len=*), parameter :: mep_lbl = 'NucMEP'
+      character(kind=c_char, len=*), parameter :: asc_lbl = 'NucASC'
+      integer :: i
+!     
+! 
+      if(.not.allocated(wf%system%pcm%pcm_rhs))   call mem%alloc(wf%system%pcm%pcm_rhs, wf%system%pcm%n_tesserae)
+!
+      call zero_array(wf%pcm_fock,wf%n_ao*wf%n_ao)
+      call zero_array(wf%system%pcm%pcm_rhs,wf%system%pcm%n_tesserae)
+!      
+!     electrostatic potential contracted with density : \sum_i V_mu(D_mu)(r_i)
+!
+      call wf%construct_ao_electrostatics(0,1,'prop',wf%system%pcm%n_tesserae,wf%system%pcm%grid_coord*bohr_to_angstrom, &
+                                          property_points=wf%system%pcm%pcm_rhs,ao_density=wf%ao_density) 
+!      
+!     solve q=D^-1 (V(D)) 
+! 
+      call pcmsolver_set_surface_function(wf%system%pcm%pcm_context, int(wf%system%pcm%n_tesserae, kind=c_int), &
+                                          -wf%system%pcm%pcm_rhs,pcmsolver_fstring_to_carray(mep_lbl))
+!                                          
+      call pcmsolver_compute_asc(wf%system%pcm%pcm_context, &
+                                 pcmsolver_fstring_to_carray(mep_lbl), &
+                                 pcmsolver_fstring_to_carray(asc_lbl), &
+                                 irrep=0_c_int)
+!                                 
+      call pcmsolver_get_surface_function(wf%system%pcm%pcm_context, int(wf%system%pcm%n_tesserae, kind=c_int), &
+                                          wf%system%pcm%charges,pcmsolver_fstring_to_carray(asc_lbl))
+!
+      call output%print_separator('verbose', 67, fs='(/t3,a)')
+!
+      call output%printf('Atom         PCM ASC            PCM RHS', &
+                         pl='v', fs='(t6,a)')
+!
+      do i = 1, wf%system%pcm%n_tesserae
+!
+         call output%printf('(i4)      (e13.6)      (e13.6)', pl='v', &
+                            fs='(t6,a)', ints=[i], reals=[wf%system%pcm%charges(i), &
+                            wf%system%pcm%pcm_rhs(i)])
+!
+      enddo
+!
+      call output%print_separator('verbose', 67)
+!
+!     Fock creation: F_munu = \sum_i q_i V_munu(r_i)
+!
+      call wf%construct_ao_electrostatics(0,0,'fock',wf%system%pcm%n_tesserae,wf%system%pcm%grid_coord*bohr_to_angstrom, & 
+                                          elec_fock=wf%pcm_fock,charges=wf%system%pcm%charges) 
+!
+      wf%ao_fock = wf%ao_fock + half*wf%pcm_fock
+!
+      call output%print_matrix('debug', 'QM Density', wf%ao_density, wf%n_ao, wf%n_ao)
+!
+      call output%print_matrix('debug', 'PCM Fock', wf%pcm_fock, wf%n_ao, wf%n_ao)
+!
+      call output%print_matrix('debug', 'QM/PCM Fock', wf%ao_fock, wf%n_ao, wf%n_ao)
+!
+!
+   end subroutine update_fock_pcm_hf
+!
+!
+   subroutine calculate_pcm_energy_terms_hf(wf)
+!!
+!!    Calculate HF energy from F for QM/MM methods
+!!    Written by Tommaso Giovannini, July 2019
+!!
+!!    Adds the QM/MM contribution to the HF energy. 
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp) :: ddot
+!
+      wf%electrostatic_energy_qmpcm = zero
+!
+      wf%energy = wf%energy - one/four*ddot((wf%n_ao)**2, wf%ao_density, 1, wf%pcm_fock, 1) &
+                            - one/two*dot_product(wf%system%pcm%charges,wf%system%pcm%pcm_rhs)
+!
+      wf%energy_scf_qmpcm  = - one/two*dot_product(wf%system%pcm%charges,wf%system%pcm%pcm_rhs)
+!
+      wf%electrostatic_energy_qmpcm = two * wf%energy_scf_qmpcm
+!
+!
+   end subroutine calculate_pcm_energy_terms_hf
+!
+!
+   subroutine print_energy_pcm_hf(wf)
+!!
+!!    Print wavefunction summary for QM/MM calculations
+!!    Written by Tommaso Giovannini, March 2019
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!      
+      call output%printf('- Summary of QM/PCM energetics:', pl='m', fs='(/t3,a)')
+      call output%printf('a.u.             eV     kcal/mol', pl='m', fs='(t42,a)')
+      call output%printf('QM/PCM SCF Contribution: (f21.12)', pl='m', &
+                          reals=[wf%energy_scf_qmpcm], fs='(t6,a)')
+      call output%printf('QM/PCM Electrostatic Energy:(f18.12)(f12.5) (f9.3)', pl='m', &
+                          reals=[wf%electrostatic_energy_qmpcm,               &
+                                 wf%electrostatic_energy_qmpcm*Hartree_to_eV, &
+                                 wf%electrostatic_energy_qmpcm*Hartree_to_kcalmol], fs='(t6,a)')
+!
+!
+   end subroutine print_energy_pcm_hf!
+!
+!
    subroutine prepare_for_roothan_hall_hf(wf)
 !!
 !!    Prepare for Roothan-Hall
@@ -3904,6 +4046,9 @@ contains
       call wf%initialize_sp_eri_schwarz_list()
 !
       call wf%construct_sp_eri_schwarz()
+!
+      if(wf%system%mm_calculation) call wf%initialize_mm_matrices()
+      if(wf%system%pcm_calculation) call wf%initialize_pcm_matrices()
 !
    end subroutine prepare_hf
 !
