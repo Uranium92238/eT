@@ -54,7 +54,7 @@ class eTBasis: public vector<BasisSet> {
       }
 
       int max_nprim() {
-         int n = 0;
+         std::size_t n = 0;
          for (auto it = this->begin(); it != this->end(); ++it){
             if ((*it).max_nprim() > n){
                n = (*it).max_nprim();
@@ -120,7 +120,7 @@ class eTBasis: public vector<BasisSet> {
         result.reserve(nshells());
 
          for (int i = 0; i != this->nshells(); i++){
-            for (int j = 0; j != atoms.size(); j++){
+            for (std::size_t j = 0; j != atoms.size(); j++){
                if (this->operator[](i).O[0] == atoms[j].x && this->operator[](i).O[1] == atoms[j].y && this->operator[](i).O[2] == atoms[j].z){
                   result.push_back(j);
                }
@@ -132,10 +132,10 @@ class eTBasis: public vector<BasisSet> {
 
       vector<vector<int>>  atom2shell(const vector<Atom>& atoms) {
         vector<vector<int>> result;
-        int iatom = 0;
+
         result.resize(atoms.size());
 
-         for (int i = 0; i != atoms.size(); i++){
+         for (std::size_t i = 0; i != atoms.size(); i++){
             for (int j = 0; j != this->nshells(); j++){
                if (this->operator[](j).O[0] == atoms[i].x && this->operator[](j).O[1] == atoms[i].y && this->operator[](j).O[2] == atoms[i].z){
                   result[i].push_back(j);

@@ -25,7 +25,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
 # 
 #   Set standard flags 
 #  
-    set(CMAKE_CXX_FLAGS "-std=c++11 -xHost -O3")
+    set(CMAKE_CXX_FLAGS "-std=c++11 -xHost -O3 -Wall")
 # 
     set (CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -shared-intel")
 # 
@@ -56,7 +56,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
 # 
 #   Set standard flags 
 # 
-    set(CMAKE_CXX_FLAGS "-O3 -std=c++11")
+    set(CMAKE_CXX_FLAGS "-O3 -std=c++11 -Wall")
 # 
 #   Testing processor 32-bit or 64-bit
 # 

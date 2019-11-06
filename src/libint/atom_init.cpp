@@ -40,7 +40,7 @@ void get_shell_numbers(int *atom, int *sn){
 
 	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
 
-	for (auto j = 0; j < a2s_list[*atom-1].size(); j++){ // loop over shells on atom
+	for (std::size_t j = 0; j < a2s_list[*atom-1].size(); j++){ // loop over shells on atom
 
 		auto the_shell = a2s_list[*atom-1][j];
 
@@ -54,7 +54,7 @@ void get_first_ao_in_shells(int *atom, int *faois){
 
 	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
 	auto shell2bf = basis.shell2bf(); // shell2bf[0] -> first AO index of shell 0
-	for (auto j = 0; j < a2s_list[*atom-1].size(); j++){ // loop over shells on atom
+	for (std::size_t j = 0; j < a2s_list[*atom-1].size(); j++){ // loop over shells on atom
 
 		auto the_shell = a2s_list[*atom-1][j];
 		auto the_first_ao = shell2bf[the_shell];
@@ -68,7 +68,7 @@ void get_n_basis_in_shells(int *atom, int *nbis){
 
 	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
 
-	for (auto j = 0; j < a2s_list[*atom-1].size(); j++){
+	for (std::size_t j = 0; j < a2s_list[*atom-1].size(); j++){
 
 		auto n = basis[a2s_list[*atom-1][j]].size();
 
@@ -83,7 +83,7 @@ void get_n_shells_on_atoms(int *nsoa){
 	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
 	int n_shells = 0;
 
-	for (auto j = 0; j < atoms.size(); j++){
+	for (std::size_t j = 0; j < atoms.size(); j++){
 
 		n_shells = a2s_list[j].size();
 
