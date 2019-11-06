@@ -20,9 +20,35 @@
 module diis_cc_gs_class
 !
 !!
-!!		DIIS coupled cluster ground state solver class module
-!!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!	DIIS coupled cluster ground state solver class module
+!!	Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!  
+!! Solves the ground state coupled cluster equation (or, amplitude
+!! equations)
+!!
+!!    Omega_mu = < mu | H-bar | HF > = 0,     H-bar = e-T H eT,
+!!
+!! for the cluster amplitudes t_mu in T = sum_mu t_mu tau_mu. The 
+!! cluster amplitude give the (right) coupled cluster ground state as 
+!!
+!!    | CC > = e^T | HF >.
+!!
+!! The equation is solved using the direct inversion of the iterative 
+!! subspace (DIIS) algorithm. See Pulay, P. Convergence acceleration 
+!! of iterative sequences. The case of SCF iteration. Chem. Phys. Lett. 
+!! 1980, 73, 393−398. This algorithm combines estimates for the parameters 
+!! and the errors and finds a least-squares solution to the error being 
+!! zero (see diis_tool solver tool for more details). 
+!!
+!! The amplitude estimates that are used to DIIS-extrapolate are the quasi-Newton 
+!! update estimates for t_mu: 
+!!
+!!    t_mu <- t_mu - Omega_mu/epsilon_mu.
+!!
+!! See davidson_cc_es solver for the definition of the orbital differences 
+!! vector epsilon_mu and "Molecular Electronic Structure Theory", by Helgaker,
+!! Jørgensen, and Olsen, for details regarding this t-estimate. 
+!!
 !
    use parameters
 !

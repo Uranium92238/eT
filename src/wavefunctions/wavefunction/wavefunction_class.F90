@@ -55,6 +55,15 @@ module wavefunction_class
 !
       real(dp), dimension(:,:), allocatable :: orbital_coefficients
       real(dp), dimension(:), allocatable :: orbital_energies
+!      
+!     QMMM matrices
+!
+      real(dp), dimension(:,:), allocatable :: nopol_h_wx         ! one-electron for non-polarizable QM/MM
+      real(dp), dimension(:,:), allocatable :: pol_emb_fock       ! Fock for polarizable QM/MM
+!
+!     QMPCM matrices
+!
+      real(dp), dimension(:,:), allocatable :: pcm_fock   ! Fock for QM/PCM
 !
 !     Frozen orbital variables. Frozen orbitals are typically frozen core or frozen HF orbitals.
 !
@@ -62,6 +71,7 @@ module wavefunction_class
       real(dp), dimension(:,:), allocatable :: mo_fock_frozen_hf_term 
 !
       type(sequential_file) :: mo_fock_fc_file, mo_fock_frozen_hf_file
+      type(sequential_file) :: mm_matrices_file, pcm_matrices_file
 !
       logical :: frozen_core
       logical :: frozen_hf_mos
@@ -73,8 +83,14 @@ module wavefunction_class
       procedure :: initialize_orbital_coefficients => initialize_orbital_coefficients_wavefunction
       procedure :: initialize_orbital_energies     => initialize_orbital_energies_wavefunction
 !
+      procedure :: initialize_mm_matrices          => initialize_mm_matrices_wavefunction
+      procedure :: initialize_pcm_matrices         => initialize_pcm_matrices_wavefunction
+!
       procedure :: destruct_orbital_coefficients   => destruct_orbital_coefficients_wavefunction
       procedure :: destruct_orbital_energies       => destruct_orbital_energies_wavefunction
+!      
+      procedure :: destruct_mm_matrices            => destruct_mm_matrices_wavefunction
+      procedure :: destruct_pcm_matrices           => destruct_pcm_matrices_wavefunction
 !
       procedure :: get_ao_x_wx                     => get_ao_x_wx_wavefunction
       procedure :: get_ao_x_wx_1der                => get_ao_x_wx_1der_wavefunction
@@ -118,6 +134,12 @@ module wavefunction_class
 !
       procedure :: read_frozen_orbitals_settings   => read_frozen_orbitals_settings_wavefunction 
 !
+      procedure :: write_mm_matrices               => write_mm_matrices_wavefunction
+      procedure :: write_pcm_matrices              => write_pcm_matrices_wavefunction
+!
+      procedure :: read_mm_matrices               => read_mm_matrices_wavefunction
+      procedure :: read_pcm_matrices              => read_pcm_matrices_wavefunction
+!      
    end type wavefunction 
 !
 !
@@ -464,6 +486,7 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(out) :: h 
 !
       call wf%get_ao_x_wx(construct_ao_h_wx_molecular_system, h)
+!
 !
    end subroutine get_ao_h_wx_wavefunction
 !
@@ -1085,8 +1108,8 @@ contains
    end subroutine get_ao_v_wx_wavefunction
 !
 !
-   subroutine construct_ao_electrostatics_wavefunction(wf, multipole, elec_nucl, what, elec_fock, &
-                                                     & property_points, ao_density)
+   subroutine construct_ao_electrostatics_wavefunction(wf, multipole, elec_nucl, what, n_points, points_coord, &
+                                                       elec_fock, property_points, ao_density, charges)
 !!
 !!    Construct electrostatic properties
 !!    Written by Tommaso Giovannini, April 2019 
@@ -1102,6 +1125,12 @@ contains
 !!    what            = 'fock'     fock contribution, i.e. q*V_αβ or mu*E_αβ
 !!                      'prop'     requested property calculated at MM points V(D) or E(D)
 !!
+!!    n_points                     number of points in the classical region
+!!
+!!    points_coord                 coordinates of the points
+!!
+!!    charges                      charges (PCM or QM/MM)
+!!
 !!-------------------------------------------------------------------------------
 !!    optional arguments
 !!
@@ -1109,8 +1138,8 @@ contains
 !!                      MANDATORY if what.eq.'fock'
 !!
 !!    property_points = array for property contribution 
-!!                      (dimension wf%system%mm%n_atoms if multipole = 0 or 
-!!                       dimension 3*wf%system%mm%n_atoms if multipole = 1)
+!!                      (dimension n_points if multipole = 0 or 
+!!                       dimension 3*n_points if multipole = 1)
 !!                      MANDATORY if what.eq.'prop'
 !!
 !!-------------------------------------------------------------------------------
@@ -1125,9 +1154,12 @@ contains
       integer :: multipole
       integer :: elec_nucl
       character(len=4) :: what
+      integer :: n_points
+      real(dp), dimension(3,n_points) :: points_coord
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout), optional :: elec_fock
       real(dp), dimension(:), intent(inout), optional :: property_points
       real(dp), dimension(:,:), intent(inout), optional :: ao_density
+      real(dp), dimension(:), intent(inout), optional :: charges
 ! 
 !     stuff for libint
 ! 
@@ -1136,11 +1168,11 @@ contains
 ! 
 !     internal variables
 ! 
-      integer  :: mm_atom
+      integer  :: point
       integer  :: qm_atom
 !
       real(dp) :: ddot
-      real(dp) :: distQMMM
+      real(dp) :: distQMpoints
       real(dp), dimension(wf%n_ao,wf%n_ao) :: fock_internal_ao
 !     
 !     Sanity check for Fock creation 
@@ -1154,6 +1186,9 @@ contains
 !      
          if(.not.present(elec_fock)) &
             call output%error_msg('Error in call electrostatic fock creation')
+!            
+         if(.not.present(charges)) &
+            call output%error_msg('Missing charges in call electrostatic fock creation')
 !      
       else if(what.eq.'prop') then
 !      
@@ -1170,7 +1205,7 @@ contains
 !         
          if(multipole.eq.0) then
 !         
-            if(size(property_points).ne.wf%system%mm%n_atoms) &
+            if(size(property_points).ne.n_points) &
                call output%error_msg('Wrong dimension of property points in electrostatics integral')
 !               
          else if(multipole.ge.1) then
@@ -1188,10 +1223,10 @@ contains
 ! 
          if(multipole.eq.0) then 
 !
-            n_variables_i6 = int(size(wf%system%mm%charge),kind=i6)
+            n_variables_i6 = int(size(charges),kind=i6)
 !            
-            call initialize_potential_c(wf%system%mm%charge, &
-                                        wf%system%mm%coordinates*angstrom_to_bohr, &
+            call initialize_potential_c(charges, &
+                                        points_coord*angstrom_to_bohr, &
                                         n_variables_i6)
             call wf%get_ao_v_wx(elec_fock)
 !            
@@ -1210,9 +1245,9 @@ contains
 !      
          if(multipole.eq.0) then
 !      
-            call zero_array(property_points,wf%system%mm%n_atoms)
+            call zero_array(property_points,n_points)
 !      
-            do mm_atom = 1, wf%system%mm%n_atoms
+            do point = 1, n_points
 !      
                call zero_array(fock_internal_ao,wf%n_ao*wf%n_ao)
 !               
@@ -1220,24 +1255,24 @@ contains
                fake_charge(1) = 1.0d0
 !               
                call initialize_potential_c(fake_charge, &
-                                           wf%system%mm%coordinates(:,mm_atom)*angstrom_to_bohr, &
+                                           points_coord(:,point)*angstrom_to_bohr, &
                                            n_variables_i6)
                call wf%get_ao_v_wx(fock_internal_ao)
 !      
-               property_points(mm_atom) = -one/two * ddot((wf%n_ao)**2,ao_density,1,fock_internal_ao,1)
+               property_points(point) = -one/two * ddot((wf%n_ao)**2,ao_density,1,fock_internal_ao,1)
 !      
                if(elec_nucl.eq.1) then
 !      
                   do qm_atom = 1, wf%system%n_atoms
 !      
-                     distQMMM =  dsqrt((wf%system%atoms(qm_atom)%x - wf%system%mm%coordinates(1,mm_atom))**2 + &
-                                       (wf%system%atoms(qm_atom)%y - wf%system%mm%coordinates(2,mm_atom))**2 + &
-                                       (wf%system%atoms(qm_atom)%z - wf%system%mm%coordinates(3,mm_atom))**2)
+                     distQMpoints =  dsqrt((wf%system%atoms(qm_atom)%x - points_coord(1,point))**2 + &
+                                       (wf%system%atoms(qm_atom)%y - points_coord(2,point))**2 + &
+                                       (wf%system%atoms(qm_atom)%z - points_coord(3,point))**2)
 !      
-                     distQMMM = angstrom_to_bohr*distQMMM
+                     distQMpoints = angstrom_to_bohr*distQMpoints
 !      
-                     property_points(mm_atom) = property_points(mm_atom) &
-                                              - (wf%system%atoms(qm_atom)%number_)/distQMMM
+                     property_points(point) = property_points(point) &
+                                              - (wf%system%atoms(qm_atom)%number_)/distQMpoints
 !      
                   enddo
 !      
@@ -1269,19 +1304,20 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: h_wx_eff
 !
-      if(.not.allocated(wf%system%mm%nopol_h_wx)) then 
+      if(.not.allocated(wf%nopol_h_wx)) then 
 !      
-         call mem%alloc(wf%system%mm%nopol_h_wx, wf%n_ao, wf%n_ao)
+         call mem%alloc(wf%nopol_h_wx, wf%n_ao, wf%n_ao)
 !         
-         call zero_array(wf%system%mm%nopol_h_wx, wf%n_ao*wf%n_ao)
+         call zero_array(wf%nopol_h_wx, wf%n_ao*wf%n_ao)
 !
-         call wf%construct_ao_electrostatics(0,0,'fock',elec_fock=wf%system%mm%nopol_h_wx)
+         call wf%construct_ao_electrostatics(0,0,'fock',wf%system%mm%n_atoms,wf%system%mm%coordinates, &
+                                             elec_fock=wf%nopol_h_wx,charges=wf%system%mm%charge)
 !         
          call output%print_matrix('debug', 'Electrostatic Embedding h:', &
-                                  wf%system%mm%nopol_h_wx, wf%n_ao, wf%n_ao)
+                                  wf%nopol_h_wx, wf%n_ao, wf%n_ao)
       endif
 !         
-      h_wx_eff = h_wx_eff + half * wf%system%mm%nopol_h_wx
+      h_wx_eff = h_wx_eff + half * wf%nopol_h_wx
 !         
 !
       call output%print_matrix('debug', 'h_eff (QM + Electrostatic Embedding)', & 
@@ -1631,6 +1667,179 @@ contains
       if (allocated(wf%mo_fock_fc_term)) call mem%dealloc(wf%mo_fock_fc_term, wf%n_mo, wf%n_mo)
 !
    end subroutine destruct_mo_fock_fc_term_wavefunction
+!
+!
+   subroutine initialize_mm_matrices_wavefunction(wf)
+!!
+!!    Initialize MM matrices
+!!    Written by Tommaso Giovannini, Oct 2019
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      if(wf%system%mm%forcefield.eq.'fq') then
+!         
+         if(.not.allocated(wf%pol_emb_fock))  call mem%alloc(wf%pol_emb_fock, wf%n_ao,wf%n_ao)
+!         
+      endif
+!
+   end subroutine initialize_mm_matrices_wavefunction
+!
+!
+   subroutine destruct_mm_matrices_wavefunction(wf)
+!!
+!!    Destruct MM matrices
+!!    Written by Tommaso Giovannini, Oct 2019
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      if(wf%system%mm%forcefield.eq.'non-polarizable') then 
+!      
+         if(allocated(wf%nopol_h_wx)) call mem%dealloc(wf%nopol_h_wx, wf%n_ao,wf%n_ao)
+!         
+      else if(wf%system%mm%forcefield.eq.'fq') then
+!         
+         if(allocated(wf%pol_emb_fock))  call mem%dealloc(wf%pol_emb_fock, wf%n_ao,wf%n_ao)
+!         
+      endif
+!
+   end subroutine destruct_mm_matrices_wavefunction
+!
+!
+   subroutine initialize_pcm_matrices_wavefunction(wf)
+!!
+!!    Initialize PCM matrices
+!!    Written by Tommaso Giovannini, Oct 2019
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      if(.not.allocated(wf%pcm_fock))   call mem%alloc(wf%pcm_fock, wf%n_ao, wf%n_ao)
+!
+   end subroutine initialize_pcm_matrices_wavefunction
+!
+!
+   subroutine destruct_pcm_matrices_wavefunction(wf)
+!!
+!!    Destruct PCM matrices
+!!    Written by Tommaso Giovannini, Oct 2019
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      if(allocated(wf%pcm_fock))  call mem%dealloc(wf%pcm_fock, wf%n_ao,wf%n_ao)
+!
+   end subroutine destruct_pcm_matrices_wavefunction
+!
+!
+   subroutine write_mm_matrices_wavefunction(wf)
+!!
+!!    Save MM matrices
+!!    Written by Tommaso Giovannini, Oct 2019
+!!
+!!    Save AO Fock or h_wx for QM/MM at the end
+!!    of SCF
+!!
+      implicit none
+!
+      class(wavefunction), intent(inout) :: wf
+!
+      wf%mm_matrices_file = sequential_file('mm_matrices')
+!      
+      call wf%mm_matrices_file%open_('write', 'rewind')
+!
+      if(wf%system%mm%forcefield.eq.'non-polarizable') then 
+!
+         call wf%mm_matrices_file%write_(wf%nopol_h_wx, wf%n_ao*wf%n_ao)
+!
+      else if(wf%system%mm%forcefield.eq.'fq') then
+!
+         call wf%mm_matrices_file%write_(wf%pol_emb_fock, wf%n_ao*wf%n_ao)
+!
+      endif
+!
+      call wf%mm_matrices_file%close_
+!
+   end subroutine write_mm_matrices_wavefunction
+!
+!
+   subroutine write_pcm_matrices_wavefunction(wf)
+!!
+!!    Save MM matrices
+!!    Written by Tommaso Giovannini, Oct 2019
+!!
+!!    Save AO Fock or h_wx for QM/MM at the end
+!!    of SCF
+!!
+      implicit none
+!
+      class(wavefunction), intent(inout) :: wf
+!
+      wf%pcm_matrices_file = sequential_file('pcm_matrices')
+!      
+      call wf%pcm_matrices_file%open_('write', 'rewind')
+!
+      call wf%pcm_matrices_file%write_(wf%pcm_fock, wf%n_ao*wf%n_ao)
+!
+      call wf%pcm_matrices_file%close_
+!
+   end subroutine write_pcm_matrices_wavefunction
+!
+!
+   subroutine read_mm_matrices_wavefunction(wf)
+!!
+!!    Read MM matrices 
+!!    Written by Tommaso Giovannini, Oct 2019
+!!
+      implicit none
+!
+      class(wavefunction), intent(inout) :: wf
+!
+      wf%mm_matrices_file = sequential_file('mm_matrices')
+!      
+      call wf%mm_matrices_file%open_('read', 'rewind')
+!
+      if(wf%system%mm%forcefield.eq.'non-polarizable') then 
+!
+         call wf%mm_matrices_file%read_(wf%nopol_h_wx, wf%n_ao*wf%n_ao)
+!
+      else if(wf%system%mm%forcefield.eq.'fq') then
+!
+         call wf%mm_matrices_file%read_(wf%pol_emb_fock, wf%n_ao*wf%n_ao)
+!
+      endif
+!
+      call wf%mm_matrices_file%close_
+!
+   end subroutine read_mm_matrices_wavefunction
+!
+!
+   subroutine read_pcm_matrices_wavefunction(wf)
+!!
+!!    Save MM matrices
+!!    Written by Tommaso Giovannini, Oct 2019
+!!
+!!    Save AO Fock or h_wx for QM/MM at the end
+!!    of SCF
+!!
+      implicit none
+!
+      class(wavefunction), intent(inout) :: wf
+!
+      wf%pcm_matrices_file = sequential_file('pcm_matrices')
+!      
+      call wf%pcm_matrices_file%open_('read', 'rewind')
+!
+      call wf%pcm_matrices_file%read_(wf%pcm_fock, wf%n_ao*wf%n_ao)
+!
+      call wf%pcm_matrices_file%close_
+!
+   end subroutine read_pcm_matrices_wavefunction
 !
 !
 end module wavefunction_class

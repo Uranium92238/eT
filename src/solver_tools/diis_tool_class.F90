@@ -43,6 +43,9 @@ module diis_tool_class
 !!    quasi-Newton estimates (this is, e.g., the case for CC ground and 
 !!    excited states).
 !!
+!!    See Pulay, P. Convergence acceleration of iterative sequences. 
+!!    The case of SCF iteration. Chem. Phys. Lett. 1980, 73, 393−398.
+!!
 !!    Typical usage: 
 !!
 !!    do while (.not. converged) 

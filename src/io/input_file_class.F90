@@ -140,6 +140,7 @@ contains
       type(section) :: mlcc
       type(section) :: mm
       type(section) :: mlhf
+      type(section) :: pcm
       type(section) :: global_print
       type(section) :: frozen_orbitals
 !
@@ -171,7 +172,6 @@ contains
                              + size(the_file%cc_wfs)))
 !
       method%keywords = [the_file%rf_wfs, the_file%cc_wfs]
-!
 !     Set other sections
 !
       calculations%name_    = 'do'
@@ -229,7 +229,7 @@ contains
 !
       solver_scf%name_    = 'solver scf'
       solver_scf%required = .false.
-      solver_scf%keywords = [character(len=25) ::         &
+      solver_scf%keywords = [character(len=25) ::        &
                               'algorithm            ',   &
                               'energy threshold     ',   &
                               'gradient threshold   ',   &
@@ -242,7 +242,7 @@ contains
 !
       solver_scf_geoopt%name_    = 'solver scf geoopt'
       solver_scf_geoopt%required = .false.
-      solver_scf_geoopt%keywords = [character(len=25) ::     &
+      solver_scf_geoopt%keywords = [character(len=25) ::    &
                                     'algorithm',            &
                                      'max step',            &
                                      'energy threshold',    &
@@ -382,6 +382,14 @@ contains
       global_print%keywords = [character(len=25) :: &
                               'output print level ', &
                               'timing print level ']
+!                       
+      pcm%name_    = 'pcm'
+      pcm%required = .false.
+      pcm%keywords = [character(len=25) :: &
+                              'solvent',            &
+                              'input',              &
+                              'tesserae area',      &
+                              'solver type']       
 !
       frozen_orbitals%name_    = 'frozen orbitals'
       frozen_orbitals%required = .false.
@@ -412,6 +420,7 @@ contains
                            mlcc,                      &
                            cc,                        &
                            mm,                        &
+                           pcm,                    &
                            mlhf,                      &
                            global_print,              &
                            frozen_orbitals]
@@ -850,6 +859,8 @@ contains
       if (.not. recognized) call output%error_msg('Tried to read CC wavefunction, but could not find any.')
 !
    end function get_cc_wf_input_file
+!
+!
 !
 !
    subroutine get_integer4_keyword_in_section_input_file(the_file, keyword, section, keyword_value)

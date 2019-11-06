@@ -51,6 +51,7 @@ set(eT_fortran_sources
    src/molecule/atomic_class.F90
    src/molecule/molecular_system/molecular_system_class.F90
    src/molecule/mm_class.F90
+   src/molecule/pcm_class.F90
    src/molecule/molecular_system/ao_integrals.F90
    src/molecule/periodic_table.F90
    src/molecule/shell_class.F90
@@ -211,6 +212,7 @@ set(eT_fortran_sources
    src/wavefunctions/cc3/initialize_destruct_cc3.F90
    src/wavefunctions/cc3/fop_cc3.F90
    src/wavefunctions/cc3/debug_transition_density_cc3.F90
+   external/PCMSolver-api/pcmsolver.f90
 #
    src/wavefunctions/mlcc2/mlcc2_class.F90
    src/wavefunctions/mlcc2/orbitals_mlcc2.F90

@@ -50,6 +50,7 @@ parser.add_argument('-v', "--verbose", help="Run some print statements", action=
 parser.add_argument('-bd', "--binary-dir", help="Specify location of eT executable", type=str)
 parser.add_argument('-basis', "--basis-path-dir", help="Specify location of the basis directory", type=str)
 parser.add_argument('--profile', help="Copy gmon.out from scratch", action='store_true')
+parser.add_argument('-pcm', "--pcm-input-file", help="Specify PCMSolver Input File", type=str)
 parser.add_argument('-i_err', '--ignore_errors', help="Continue with default behaviour if errors detected", action='store_true')
 args = parser.parse_args()
 
@@ -72,6 +73,7 @@ else:
     eT_dir = '${CMAKE_BINARY_DIR}' # Default binary directory set by CMake
 eT_dir = os.path.abspath(eT_dir) # Use absolute path
 
+
 #Set the Libint basis directory
 if (args.basis_path_dir):
     ldd_dir = os.path.abspath(args.basis_path_dir)
@@ -79,6 +81,13 @@ if (args.basis_path_dir):
 elif not 'LIBINT_DATA_PATH' in os.environ:
     ldd_dir = os.path.join('${CMAKE_SOURCE_DIR}/ao_basis')
     os.environ['LIBINT_DATA_PATH'] = ldd_dir
+
+#Set the PCMSolver input location
+#([file].pcm specified in input continuum section) 
+if (args.pcm_input_file):
+    pcm_input_file = os.path.abspath(args.pcm_input_file)
+    PCMSolver_GOPCM = '${PCMSolver_INCLUDE_DIR}'[:-7]+'bin/'
+    os.environ['PCMSOLVER_GO_PCM'] = PCMSolver_GOPCM
 
 executable = os.path.join(eT_dir,'eT')
 
@@ -134,17 +143,28 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
     inp_dest = os.path.join(scratch,'eT.inp')
     out_src = os.path.join(scratch,'eT.out')
     time_src = os.path.join(scratch,'timing.out')
+    if (args.pcm_input_file):
+       pcm_src = os.path.abspath(pcm_input_file)
+       pcm_dest = os.path.join(scratch,'pcmsolver.inp')
     if(args.profile):
         profile_src = os.path.join(scratch,'gmon.out')
         profile_dest = os.path.join(cwd,profile_file)
 
     # Copy files
     shutil.copyfile(inp_src,inp_dest)
+    if (args.pcm_input_file):
+       shutil.copyfile(pcm_src,pcm_dest)
     os.chdir(scratch)
 
     if (args.verbose):
         print("Ready to run eT in", scratch, "with", omps, "threads")
 
+    # preprocess for PCMSolver external file
+    if (args.pcm_input_file):
+       PCMSolver_libpy = '${PCMSolver_INCLUDE_DIR}'[:-7]
+       os.environ["PYTHONPATH"] = PCMSolver_libpy+'lib/python:$PYTHONPATH'
+       os.system('python3 '+PCMSolver_GOPCM+'go_pcm.py --inp pcmsolver.inp')
+        
     # Run eT
     p = subprocess.run(executable,
                        shell=True,

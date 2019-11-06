@@ -220,6 +220,7 @@ module ccs_class
 !
       procedure :: set_fock                                      => set_fock_ccs
       procedure :: set_fock_complex                              => set_fock_ccs_complex
+      procedure :: add_pcm_fock_contribution                   => add_pcm_fock_contribution_ccs
 !
       procedure :: get_gs_orbital_differences                    => get_gs_orbital_differences_ccs
       procedure :: get_es_orbital_differences                    => get_gs_orbital_differences_ccs
@@ -425,6 +426,11 @@ module ccs_class
       procedure :: normalization_for_jacobian_debug              => normalization_for_jacobian_debug_ccs
       procedure :: numerical_test_jacobian                       => numerical_test_jacobian_ccs
 !
+!     MM and PCM reading fock matrices
+!
+      procedure :: read_mm_fock_contributions                  => read_mm_fock_contributions_ccs
+      procedure :: read_pcm_fock_contributions                 => read_pcm_fock_contributions_ccs
+!
 !     Core-valence separation procedures
 !
       procedure :: get_cvs_projector                             => get_cvs_projector_ccs
@@ -577,6 +583,11 @@ contains
 !
       if (wf%frozen_core .or. wf%frozen_hf_mos) call wf%read_frozen_orbital_terms()
 !
+!     Read MM or PCM file if present
+!
+      if (wf%system%mm_calculation)  call wf%read_mm_fock_contributions()
+      if (wf%system%pcm_calculation) call wf%read_pcm_fock_contributions()
+!
 !     print orbital space info for cc
       call output%printf(' - Number of orbitals for coupled cluster calculation', fs='(/t3,a)', pl='minimal')
       call output%printf('Number of occupied orbitals:    (i12)',ints=[wf%n_o], fs='(/t6,a)', pl='minimal')
@@ -603,6 +614,10 @@ contains
       call wf%destruct_left_excitation_energies()
       call wf%destruct_mo_fock_fc_term()
       call wf%destruct_mo_fock_frozen_hf_term()
+!
+      call wf%destruct_mm_matrices()
+!
+      call wf%destruct_pcm_matrices()
 !
       call output%printf('- Cleaning up ' // trim(wf%name_) // ' wavefunction', pl='v', fs='(/t3,a)')
 !
@@ -2140,6 +2155,47 @@ contains
       end do
 !
    end subroutine biorthonormalize_L_and_R_ccs
+!
+!
+   subroutine read_mm_fock_contributions_ccs(wf)
+!!
+!!    Read MM Fock contributions
+!!    Written by Tommaso Giovannini, Oct 2019
+!!
+!!    Reads HF MM Fock contributions at convergence
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      call wf%initialize_mm_matrices()
+!      
+      if(wf%system%mm%forcefield.eq.'non-polarizable') &
+         call mem%alloc(wf%nopol_h_wx,wf%n_ao,wf%n_ao)
+!
+      call wf%read_mm_matrices()
+!
+!
+   end subroutine read_mm_fock_contributions_ccs
+!
+!
+   subroutine read_pcm_fock_contributions_ccs(wf)
+!!
+!!    Read MM Fock contributions
+!!    Written by Tommaso Giovannini, Oct 2019
+!!
+!!    Reads HF MM Fock contributions at convergence
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      call wf%initialize_pcm_matrices()
+!
+      call wf%read_pcm_matrices()
+!
+!
+   end subroutine read_pcm_fock_contributions_ccs
 !
 !
 end module ccs_class

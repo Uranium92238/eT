@@ -332,7 +332,8 @@ contains
                                          name_=name_,               &
                                          charge=0,                  &
                                          multiplicity=multiplicity, &
-                                         mm_calculation=.false.     )
+                                         mm_calculation=.false.,    &
+                                         pcm_calculation=.false.     )
 !
 !        Prepare SAD wavefunction
 !

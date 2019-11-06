@@ -8,4 +8,5 @@ documentation/docs/
 __pycache__
 *sublime*
 .vscode/
-external/
+external/PCMSolver/
+external/libxc/

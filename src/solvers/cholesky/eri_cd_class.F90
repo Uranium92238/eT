@@ -1926,7 +1926,7 @@ contains
 !
       done = .false.
 !
-      call cholesky_array%initialize()
+      cholesky_array = cholesky_array_list()
 !
       do while (.not. done)
 !
@@ -2164,7 +2164,7 @@ contains
 !
             do I = 1, cholesky_array%n_nodes
 !
-               call cholesky_array%get_element(cholesky, I) ! Let cholesky point to node # I
+               call cholesky_array%get_array(cholesky, I) ! Let cholesky point to node # I
 !
                n_cholesky_in_node = cholesky_array%get_n_columns_element(I)
 !
@@ -2208,7 +2208,7 @@ contains
          approx_diagonal_accumulative = zero
 !
          call cholesky_array%push_back(n_sig_aop, n_qual_aop) ! Make new element at the tail
-         call cholesky_array%get_element(cholesky_new, cholesky_array%n_nodes) ! Point cholesky_new to this last element
+         call cholesky_array%get_array(cholesky_new, cholesky_array%n_nodes) ! Point cholesky_new to this last element
          cholesky_new = zero
 !
          current_qual = 0

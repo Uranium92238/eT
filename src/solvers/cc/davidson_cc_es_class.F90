@@ -20,19 +20,38 @@
 module davidson_cc_es_class
 !
 !!
-!!    Davidson coupled cluster excited state solver class module
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018-2019
+!! Davidson coupled cluster excited state solver class module
+!! Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018-2019
 !!
-!!    Solves the CC excited state eigenvalue equation
+!! Solves the CC excited state eigenvalue equation
 !!
-!!       A R = omega R   or  L^T A = omega L^T
+!!    A R = omega R   or  L^T A = omega L^T
 !!
-!!    for a set of right or left states (R, L) and the associated
-!!    excitation energies omega. The solutions are determined using the 
-!!    Davidson reduced space algorithm, where the eigenvalue problem 
-!!    is solved in a subspace generated from the residuals obtained
-!!    in the preceding iterations. See E. R. Davidson, J. Comput. Phys. 
-!!    17, 87 (1975) for more details.
+!! for a set of right or left states (R, L) and the associated
+!! excitation energies omega. Here, A is the coupled cluster 
+!! Jacobian matrix:
+!!
+!!       A_mu,nu = < mu | [H-bar, tau_nu] | HF >,    H-bar = e-T H eT. 
+!!
+!! The solutions are determined using the Davidson
+!! reduced space algorithm, where the eigenvalue problem 
+!! is solved in a subspace generated from the residuals* obtained
+!! in the preceding iterations. See E. R. Davidson, J. Comput. Phys. 
+!! 17, 87 (1975) for more details.
+!!
+!! * More precisely, using preconditioned residuals based on the 
+!!   orbital differences approximation of A, 
+!!
+!!    A_mu,nu = < mu | [F, tau_nu] | HF > = epsilon_mu delta_mu,nu 
+!!
+!!   Here, 
+!!
+!!               epsilon_ai = orbital_energy(a) - orbital_energy(i) 
+!!
+!!             epsilon_aibj = orbital_energy(a) + orbital_energy(b) 
+!!                          - orbital_energy(i) - orbital_energy(j),
+!!
+!!   and so on.
 !!   
 !
    use kinds
