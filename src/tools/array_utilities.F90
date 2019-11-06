@@ -2635,12 +2635,16 @@ contains
 !
       integer :: pq, pqpq
 !
+      complex(dp) :: alpha_complex
+!
+      alpha_complex = cmplx(alpha, zero, dp)
+!
 !$omp parallel do private(pq,pqpq)
       do pq = 1, dim_pq
 !
          pqpq = pq*(pq+1)/2
 !
-         X(pqpq) = cmplx(alpha, zero, dp)*X(pqpq)
+         X(pqpq) = alpha_complex*X(pqpq)
 !
       enddo
 !$omp end parallel do
