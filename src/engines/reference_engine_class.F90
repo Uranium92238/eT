@@ -301,28 +301,6 @@ contains
          alpha_fname = trim(name_) // '_alpha'
          beta_fname  = trim(name_) // '_beta'
 !
-!        if SAD already exist, skip to next atom
-!
-         alpha_density_file = sequential_file(alpha_fname)
-         beta_density_file  = sequential_file(beta_fname)
-!
-         if (alpha_density_file%exists() .and. beta_density_file%exists()) then
-!
-            call output%printf('Found SAD for '// adjustl(atom%symbol) &
-               // ' in ' // trim(atom%basis), pl='verbose', fs='(t6,a)')
-!
-            cycle
-!
-         elseif (alpha_density_file%exists() .or. beta_density_file%exists()) then
-!
-            call output%warning_msg("Could only find 1 of 2 density files for " // trim(name_) // &
-                                  ". Deleting it and creating both SAD densities.")
-!
-            if (alpha_density_file%exists()) call alpha_density_file%delete_()
-            if (beta_density_file%exists())  call beta_density_file%delete_()
-!
-         endif
-!
 !        Prepare molecule of the chosen atom
 !
          call output%mute()
@@ -358,10 +336,17 @@ contains
 !
          call output%unmute()
 !
-         call output%printf('Generated SAD for '// adjustl(atom%symbol) //' in '&
-                  // trim(atom%basis), pl='verbose', fs='(t6,a)')
+         call output%printf('Generated atomic density for ' // adjustl(atom%symbol) // &
+                            ' using UHF/(a0)', pl='verbose', fs='(t6,a)', chars=[atom%basis])
 !
-!        Move densities to where "set_ao_density_sad" can use them
+!        Move densities to where "set_ao_density_sad" can use them,
+!        but first delete SAD if it already exists.
+!
+         alpha_density_file = sequential_file(alpha_fname)
+         if (alpha_density_file%exists()) call alpha_density_file%delete_()
+!
+         beta_density_file  = sequential_file(beta_fname)
+         if (beta_density_file%exists())  call beta_density_file%delete_()
 !
          alpha_density_file = sequential_file('ao_density_a')
          call alpha_density_file%copy(alpha_fname)
