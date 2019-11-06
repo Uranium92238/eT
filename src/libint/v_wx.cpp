@@ -52,12 +52,12 @@ void construct_ao_v_wx(double *V, int *s1, int *s2){
   potential[thread].compute(basis[*s1 - 1], basis[*s2 - 1]);
   auto ints_shellset_n = buf_vec_n[0];                    // location of the computed integrals
 
-  auto n1 = basis[*s1 - 1].size();                // Number of basis functions in shell 1
-  auto n2 = basis[*s2 - 1].size();                // number of basis functions in shell 2
+  std::size_t n1 = basis[*s1 - 1].size();                // Number of basis functions in shell 1
+  std::size_t n2 = basis[*s2 - 1].size();                // number of basis functions in shell 2
 
   if (ints_shellset_n != nullptr){
-    for(auto f1=0; f1!=n1; ++f1){
-      for(auto f2=0; f2!=n2; ++f2){
+    for(std::size_t f1=0; f1!=n1; ++f1){
+      for(std::size_t f2=0; f2!=n2; ++f2){
 
       *(V + n1*f2+f1) = ints_shellset_n[f1*n2+f2];
 

@@ -48,10 +48,10 @@ void construct_ao_g_wxyz(double *g, int *s1, int *s2, int *s3, int *s4){
 
 	const auto& buf_vec = electronic_repulsion_engines[thread].results(); // will point to computed shell sets
 
-	auto n1 = basis[*s1 - 1].size(); // Number of basis functions in shell 1
-	auto n2 = basis[*s2 - 1].size(); // Number of basis functions in shell 2
-	auto n3 = basis[*s3 - 1].size(); // Number of basis functions in shell 3
-	auto n4 = basis[*s4 - 1].size(); // Number of basis functions in shell 4
+	std::size_t n1 = basis[*s1 - 1].size(); // Number of basis functions in shell 1
+	std::size_t n2 = basis[*s2 - 1].size(); // Number of basis functions in shell 2
+	std::size_t n3 = basis[*s3 - 1].size(); // Number of basis functions in shell 3
+	std::size_t n4 = basis[*s4 - 1].size(); // Number of basis functions in shell 4
 
 	electronic_repulsion_engines[thread].compute(basis[*s1 - 1], basis[*s2 - 1], basis[*s3 - 1], basis[*s4 - 1]);
 
@@ -59,13 +59,13 @@ void construct_ao_g_wxyz(double *g, int *s1, int *s2, int *s3, int *s4){
 
    if (ints_1234 == nullptr)
    {
-      for(auto f1=0, f1234=0; f1!=n1; ++f1){
+      for(std::size_t f1=0, f1234=0; f1!=n1; ++f1){
 
-  	      for(auto f2=0; f2!=n2; ++f2){
+  	      for(std::size_t f2=0; f2!=n2; ++f2){
 
-            for(auto f3=0; f3!=n3; ++f3){
+            for(std::size_t f3=0; f3!=n3; ++f3){
 
-               for(auto f4=0; f4!=n4; ++f4, ++f1234){
+               for(std::size_t f4=0; f4!=n4; ++f4, ++f1234){
                 int ind_offset = n1*(n2*(n3*f4+f3)+f2)+f1;
 	  				     *(g + ind_offset) = 0.0e0;
 
@@ -76,13 +76,13 @@ void construct_ao_g_wxyz(double *g, int *s1, int *s2, int *s3, int *s4){
    }
    else
    {
-      for(auto f1=0, f1234=0; f1!=n1; ++f1){
+      for(std::size_t f1=0, f1234=0; f1!=n1; ++f1){
 
-         for(auto f2=0; f2!=n2; ++f2){
+         for(std::size_t f2=0; f2!=n2; ++f2){
 
-            for(auto f3=0; f3!=n3; ++f3){
+            for(std::size_t f3=0; f3!=n3; ++f3){
 
-               for(auto f4=0; f4!=n4; ++f4, ++f1234){
+               for(std::size_t f4=0; f4!=n4; ++f4, ++f1234){
 
                 int ind_offset = n1*(n2*(n3*f4+f3)+f2)+f1;
                  *(g + ind_offset) = ints_1234[f1234];
@@ -143,10 +143,10 @@ void construct_ao_g_wxyz_1der(double *g_wxyzqk, int *s1, int *s2, int *s3, int *
 
   const auto& buf_vec = electronic_repulsion_1der[thread].results();
 
-  auto n1 = basis[*s1 - 1].size(); 
-  auto n2 = basis[*s2 - 1].size(); 
-  auto n3 = basis[*s3 - 1].size(); 
-  auto n4 = basis[*s4 - 1].size(); 
+  std::size_t n1 = basis[*s1 - 1].size(); 
+  std::size_t n2 = basis[*s2 - 1].size(); 
+  std::size_t n3 = basis[*s3 - 1].size(); 
+  std::size_t n4 = basis[*s4 - 1].size(); 
 
   electronic_repulsion_1der[thread].compute(basis[*s1 - 1], basis[*s2 - 1], 
                                     basis[*s3 - 1], basis[*s4 - 1]);
@@ -160,13 +160,13 @@ void construct_ao_g_wxyz_1der(double *g_wxyzqk, int *s1, int *s2, int *s3, int *
 
         if (ints == nullptr)
         {
-          for(auto f1=0; f1!=n1; ++f1){
+          for(std::size_t f1=0; f1!=n1; ++f1){
 
-            for(auto f2=0; f2!=n2; ++f2){
+            for(std::size_t f2=0; f2!=n2; ++f2){
 
-              for(auto f3=0; f3!=n3; ++f3){
+              for(std::size_t f3=0; f3!=n3; ++f3){
 
-                for(auto f4=0; f4!=n4; ++f4){
+                for(std::size_t f4=0; f4!=n4; ++f4){
 
                   g_wxyzqk[offset + n1*(n2*(n3*f4+f3)+f2)+f1] = 0.0e0;
 
@@ -177,13 +177,13 @@ void construct_ao_g_wxyz_1der(double *g_wxyzqk, int *s1, int *s2, int *s3, int *
         }
         else
         {
-          for(auto f1=0, f1234=0; f1!=n1; ++f1){
+          for(std::size_t f1=0, f1234=0; f1!=n1; ++f1){
   
-            for(auto f2=0; f2!=n2; ++f2){
+            for(std::size_t f2=0; f2!=n2; ++f2){
   
-              for(auto f3=0; f3!=n3; ++f3){
+              for(std::size_t f3=0; f3!=n3; ++f3){
   
-                for(auto f4=0; f4!=n4; ++f4, ++f1234){
+                for(std::size_t f4=0; f4!=n4; ++f4, ++f1234){
   
                   g_wxyzqk[offset + n1*(n2*(n3*f4+f3)+f2)+f1] = ints[f1234];
   

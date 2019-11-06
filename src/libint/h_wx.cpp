@@ -136,11 +136,9 @@ void construct_and_add_ao_h_wx_nuclear_1der(double *h_wxqk, int *s1, int *s2, in
   const auto n_atoms = atoms.size();
   const auto n_centers = n_atoms + 2;
 
-  auto atom = 0;
-
   int nao = *n_ao;
 
-  for (int center = 0, shellset = 0; center != n_centers; ++center){
+  for (std::size_t center = 0, shellset = 0; center != n_centers; ++center){
 
     int atom = (center == 0) ? atom1 : ((center == 1) ? atom2 : center - 2);
 
