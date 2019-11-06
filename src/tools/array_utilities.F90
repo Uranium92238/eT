@@ -781,7 +781,7 @@ contains
             enddo
 !
             call output%printf('The smallest diagonal after decomposition is: (e12.4)', &
-                                reals=[min_diagonal], pl='n')
+                                reals=[min_diagonal], pl='n', fs='(/t6,a)')
             call mem%dealloc(diagonal, dim_)
 !
             return
@@ -853,7 +853,7 @@ contains
       enddo
 !
       call output%printf('The smallest diagonal after decomposition is: (e12.4)', &
-                          reals=[min_diagonal], pl='n')
+                          reals=[min_diagonal], pl='n', fs='(/t6,a)')
 !
       call mem%dealloc(diagonal, dim_)
 !
