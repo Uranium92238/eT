@@ -63,7 +63,6 @@ module uhf_class
 !     AO Fock and energy related routines
 !
       procedure :: initialize_fock                      => initialize_fock_uhf
-      procedure :: destruct_fock                        => destruct_fock_uhf
       procedure :: construct_ao_spin_fock               => construct_ao_spin_fock_uhf
       procedure :: calculate_uhf_energy                 => calculate_uhf_energy_uhf
       procedure :: update_fock_and_energy_no_cumulative => update_fock_and_energy_no_cumulative_uhf
@@ -118,15 +117,19 @@ module uhf_class
       procedure :: initialize_orbital_energies_a        => initialize_orbital_energies_a_uhf
       procedure :: initialize_orbital_energies_b        => initialize_orbital_energies_b_uhf
 !
+      procedure :: destruct_ao_density                  => destruct_ao_density_uhf
       procedure :: destruct_ao_density_a                => destruct_ao_density_a_uhf
       procedure :: destruct_ao_density_b                => destruct_ao_density_b_uhf
 !
+      procedure :: destruct_fock                        => destruct_fock_uhf
       procedure :: destruct_ao_fock_a                   => destruct_ao_fock_a_uhf
       procedure :: destruct_ao_fock_b                   => destruct_ao_fock_b_uhf
 !
+      procedure :: destruct_orbital_coefficients        => destruct_orbital_coefficients_uhf
       procedure :: destruct_orbital_coefficients_a      => destruct_orbital_coefficients_a_uhf
       procedure :: destruct_orbital_coefficients_b      => destruct_orbital_coefficients_b_uhf
 !
+      procedure :: destruct_orbital_energies            => destruct_orbital_energies_uhf
       procedure :: destruct_orbital_energies_a          => destruct_orbital_energies_a_uhf
       procedure :: destruct_orbital_energies_b          => destruct_orbital_energies_b_uhf
 !
@@ -1430,6 +1433,29 @@ contains
    end subroutine initialize_ao_density_a_uhf
 !
 !
+   subroutine destruct_ao_density_uhf(wf)
+!!
+!!    Destruct AO density
+!!    Written by Linda Goletto, Oct 2019
+!!    Based on the work of Eirik F. Kjønstad, Sep 2018
+!!
+!!    Destructs the AO density matrix (or matrices).
+!!    In spin-unrestricted wavefunctions, this alpha and beta matrices,
+!!    though these are the same and therefore redundant in restricted
+!!    wavefunctions.
+!!
+      implicit none
+!
+      class(uhf) :: wf
+!
+      call wf%hf%destruct_ao_density()
+!
+      call wf%destruct_ao_density_a()
+      call wf%destruct_ao_density_b()
+!
+   end subroutine destruct_ao_density_uhf
+!
+!
    subroutine destruct_ao_density_a_uhf(wf)
 !!
 !!    Destruct AO density alpha
@@ -1528,6 +1554,29 @@ contains
    end subroutine destruct_ao_fock_b_uhf
 !
 !
+   subroutine destruct_orbital_coefficients_uhf(wf)
+!!
+!!    Destruct orbital coefficients
+!!    Written by Linda Goletto, Oct 2019
+!!    Based on the work of Eirik F. Kjønstad, Sep 2018
+!!
+!!    Destructs the orbital coefficients matrix (or matrices).
+!!    In spin-unrestricted wavefunctions, this alpha and beta matrices,
+!!    though these are the same and therefore redundant in restricted
+!!    wavefunctions.
+!!
+      implicit none
+!
+      class(uhf) :: wf
+!
+      call wf%hf%destruct_orbital_coefficients()
+!
+      call wf%destruct_orbital_coefficients_a()
+      call wf%destruct_orbital_coefficients_b()
+!
+   end subroutine destruct_orbital_coefficients_uhf
+!
+!
    subroutine initialize_orbital_coefficients_a_uhf(wf)
 !!
 !!    Initialize orbital coefficients alpha
@@ -1596,6 +1645,29 @@ contains
       if (.not. allocated(wf%orbital_energies_a)) call mem%alloc(wf%orbital_energies_a, wf%n_mo)
 !
    end subroutine initialize_orbital_energies_a_uhf
+!
+!
+   subroutine destruct_orbital_energies_uhf(wf)
+!!
+!!    Destruct orbital energies
+!!    Written by Linda Goletto, Oct 2019
+!!    Based on the work of Eirik F. Kjønstad, Sep 2018
+!!
+!!    Destructs the orbital energies array (or arrays).
+!!    In spin-unrestricted wavefunctions, this alpha and beta arrays,
+!!    though these are the same and therefore redundant in restricted
+!!    wavefunctions.
+!!
+      implicit none
+!
+      class(uhf) :: wf
+!
+      call wf%hf%destruct_orbital_energies()
+!
+      call wf%destruct_orbital_energies_a()
+      call wf%destruct_orbital_energies_b()
+!
+   end subroutine destruct_orbital_energies_uhf
 !
 !
    subroutine destruct_orbital_energies_a_uhf(wf)

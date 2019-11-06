@@ -339,7 +339,6 @@ contains
 !     (note that we keep certain arrays in the wavefunction for later)
 !
       call wf%destruct_ao_overlap()
-      call wf%destruct_fock()
 !
    end subroutine cleanup_scf_hf
 !

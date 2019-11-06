@@ -234,7 +234,7 @@ contains
 !!
       implicit none 
 !
-      class(memory_manager), intent(in) :: mem 
+      class(memory_manager), intent(in) :: mem
 !
       if (mem%available .ne. mem%total) then 
 !

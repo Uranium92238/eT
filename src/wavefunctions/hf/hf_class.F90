@@ -1024,12 +1024,12 @@ contains
 !     Deallocations
 !
       call wf%destruct_orbital_energies()
+      call wf%destruct_orbital_coefficients()
       call wf%destruct_ao_overlap()
-      call wf%destruct_ao_fock()
+      call wf%destruct_fock()
       call wf%destruct_ao_density()
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
-!
       call wf%destruct_sp_eri_schwarz()
       call wf%destruct_sp_eri_schwarz_list()
 !
@@ -2559,6 +2559,7 @@ contains
       enddo
 !
       call mem%dealloc(used_diag, wf%n_ao)
+      call mem%dealloc(perm_matrix, wf%n_ao, wf%n_ao)
 !
    end subroutine decompose_ao_density_hf
 !
@@ -3251,7 +3252,7 @@ contains
                   ao_fock,                      & ! F' = P^T F P
                   wf%n_mo)
 !
-      call mem%dealloc(FP, wf%n_mo, wf%n_ao)
+      call mem%dealloc(FP, wf%n_ao, wf%n_mo)
 !
 !     Solve F'C' = L L^T C' e
 !
@@ -3312,6 +3313,8 @@ contains
          endif
 !
       enddo
+!
+      call mem%dealloc(prev_C, wf%n_ao, wf%n_mo)
 !
    end subroutine do_roothan_hall_hf
 !
