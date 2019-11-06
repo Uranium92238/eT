@@ -66,6 +66,8 @@ module bfgs_tool_class
       procedure, public :: get_step                => get_step_bfgs_tool
       procedure, public :: update_hessian          => update_hessian_bfgs_tool
 !
+      final :: destructor_bfgs_tool
+!
    end type bfgs_tool
 !
 !
@@ -113,6 +115,22 @@ contains
       enddo
 !
    end function new_bfgs_tool
+!
+!
+   subroutine destructor_bfgs_tool(bfgs)
+!!
+!!    Destructor  
+!!    Written by Eirik F. Kjønstad, 2019 
+!!
+      implicit none 
+!
+      type(bfgs_tool) :: bfgs
+!
+      if (allocated(bfgs%Hessian)) call mem%dealloc(bfgs%Hessian, bfgs%n_parameters, bfgs%n_parameters) 
+      if (allocated(bfgs%prev_g)) call mem%dealloc(bfgs%prev_g, bfgs%n_parameters) 
+      if (allocated(bfgs%prev_x)) call mem%dealloc(bfgs%prev_x, bfgs%n_parameters) 
+!
+   end subroutine destructor_bfgs_tool
 !
 !
    subroutine get_step_bfgs_tool(bfgs, g, d)

@@ -328,7 +328,7 @@ contains
 !
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
 !
-      real(dp), dimension(:,:), allocatable :: Z_wq ! = sum_x G_De_old_wx * w_xq
+      real(dp), dimension(:,:), allocatable :: Z_pq ! = sum_x G_De_old_wx * w_xq
       real(dp), dimension(:,:), allocatable :: G_De_old
 !
 !
@@ -341,7 +341,7 @@ contains
 !     Update of the MO basis for the G_De
 !     G_De =  w^T * G_De_old * w
 !
-      call mem%alloc(Z_wq, wf%n_mo, wf%n_mo)
+      call mem%alloc(Z_pq, wf%n_mo, wf%n_mo)
       call mem%alloc(G_De_old, wf%n_mo, wf%n_mo)
 !
       call dcopy(wf%n_mo**2, wf%G_De, 1, G_De_old, 1)
@@ -356,7 +356,7 @@ contains
                   wf%w_mo_update,   &
                   wf%n_mo,          &
                   zero,             &
-                  Z_wq,             &
+                  Z_pq,             &
                   wf%n_mo)
 !
       call dgemm('T', 'N',          &
@@ -366,14 +366,14 @@ contains
                   one,              &
                   wf%w_mo_update,   &
                   wf%n_mo,          &
-                  Z_wq,             &
+                  Z_pq,             &
                   wf%n_mo,          &
                   zero,             &
                   wf%G_De,          &
                   wf%n_mo)
 !
       call mem%dealloc(G_De_old, wf%n_mo, wf%n_mo)
-      call mem%dealloc(Z_wq, wf%n_ao, wf%n_mo)
+      call mem%dealloc(Z_pq, wf%n_mo, wf%n_mo)
 !
 !     Write the new G(De) to file
 !
@@ -424,12 +424,18 @@ contains
       real(dp), dimension(wf%n_ao,wf%n_o), intent(in) :: C_o
       real(dp), dimension(wf%n_ao,wf%n_v), intent(in) :: C_v
 !
-      call mem%dealloc(wf%orbital_coefficients,wf%n_ao,wf%n_mo)
+      call wf%destruct_orbital_coefficients()
+      call wf%destruct_orbital_energies()
+      call wf%destruct_pivot_matrix_ao_overlap()
+      call wf%destruct_cholesky_ao_overlap()
 !
 !     new dimension of mo space
       wf%n_mo = wf%n_o + wf%n_v
 !
-      call mem%alloc(wf%orbital_coefficients,wf%n_ao,wf%n_mo)
+      call wf%initialize_orbital_coefficients()
+      call wf%initialize_orbital_energies()
+      call wf%initialize_pivot_matrix_ao_overlap()
+      call wf%initialize_cholesky_ao_overlap()
 !
       call dcopy(wf%n_ao*wf%n_o, C_o, 1, wf%orbital_coefficients, 1)
 !
@@ -577,6 +583,8 @@ contains
       call mem%alloc(S_minimal,  n_significant_AOs,  n_significant_AOs)
       call extract_columns_of_matrix(n_significant_AOs, n_significant_AOs, wf%n_ao, &
                                        Q, S_minimal, significant_AOs)
+!
+      call mem%dealloc(significant_AOs, wf%n_ao)
 !
       call mem%alloc(S_minimal_inv,  n_significant_AOs,  n_significant_AOs)
 !
@@ -727,6 +735,9 @@ contains
                   zero,                &
                   wf%ao_density,       &
                   wf%n_ao)
+!
+      call mem%dealloc(T, n_significant_AOs, wf%n_ao)
+      call mem%dealloc(X, n_significant_AOs, wf%n_ao)
 !
    end subroutine minimal_basis_fock_diagonalization_mlhf
 !
@@ -949,8 +960,10 @@ contains
       class(mlhf) :: wf
 !
       call wf%destruct_orbital_energies()
+      call wf%destruct_orbital_coefficients()
       call wf%destruct_ao_overlap()
       call wf%destruct_ao_fock()
+      call wf%destruct_mo_fock()
       call wf%destruct_ao_density()
       call wf%destruct_pivot_matrix_ao_overlap()
       call wf%destruct_cholesky_ao_overlap()
@@ -1239,6 +1252,8 @@ contains
 !
       call wf%destruct_orbital_coefficients()
       call wf%destruct_orbital_energies()
+      call wf%destruct_pivot_matrix_ao_overlap()
+      call wf%destruct_cholesky_ao_overlap()
 !
 !     Read n_o, n_v and inactive_energy
 !
@@ -1260,6 +1275,8 @@ contains
 !
       call wf%initialize_orbital_coefficients()
       call wf%initialize_orbital_energies()
+      call wf%initialize_pivot_matrix_ao_overlap()
+      call wf%initialize_cholesky_ao_overlap()
 !
       call wf%read_orbital_coefficients()
       call wf%update_ao_density()
