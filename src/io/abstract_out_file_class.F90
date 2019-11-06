@@ -588,8 +588,6 @@ contains
 !
       enddo
 !
-      call the_file%flush_()
-!
    end subroutine long_string_print_abstract_out_file
 !
 !

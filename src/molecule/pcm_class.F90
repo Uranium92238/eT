@@ -127,7 +127,6 @@ contains
       call molecule%print_system()
 ! 
       call pcmsolver_print(molecule%pcm_context)
-      flush(output%unit)
 !
    end subroutine prepare_pcm
 !
@@ -201,7 +200,7 @@ contains
 !
         if (message(i) .eq. char(10)) then
 !
-            write(message_eT(n_messages),'(1000a)') message(length_2:i) 
+            write(message_eT(n_messages),'(1000a)') message(length_2:i-1) 
             length_2 = i + 1_c_int
             n_messages = n_messages + 1_c_int
 !
@@ -211,7 +210,7 @@ contains
 !
      do i = 1_c_int, n_messages-1_c_int
 !
-        write(output%unit,'(t6,a)',advance="no") trim(message_eT(i))
+      call output%printf(trim(message_eT(i)), pl='n', fs='(t6,a)')
 !
      enddo
 !
