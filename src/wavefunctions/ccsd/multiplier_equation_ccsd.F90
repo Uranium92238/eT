@@ -32,6 +32,21 @@ submodule (ccsd_class) multiplier_equation_ccsd
 contains
 !
 !
+   module subroutine prepare_for_multiplier_equation_ccsd(wf)
+!!
+!!    Prepare for multiplier equation
+!!    Written by Tor S. Haugland, 2019
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+!
+      call output%printf('- Prepare for multiplier equation', pl='verbose')
+      call wf%prepare_for_jacobian_transpose()
+!
+   end subroutine prepare_for_multiplier_equation_ccsd
+!
+!
    module subroutine construct_eta_ccsd(wf, eta)
 !!
 !!    Construct eta (CCSD)

@@ -100,6 +100,7 @@ contains
       if (allocated(wf%t1_complex) .and. allocated(wf%t1bar_complex) &
           .and. allocated(wf%t2_complex) .and. allocated(wf%t2bar_complex)) then
 !
+         call wf%prepare_for_multiplier_equation_complex()
          call wf%construct_multiplier_equation_complex(ddt_multipliers)
          call zscal(wf%n_gs_amplitudes, cmplx(zero, one, dp), ddt_multipliers, 1)
 !

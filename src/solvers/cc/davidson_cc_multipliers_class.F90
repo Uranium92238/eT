@@ -188,6 +188,8 @@ contains
 !
       real(dp) :: residual_norm, ddot, norm_trial
 !
+      call wf%prepare_for_multiplier_equation()
+!
 !     :: Initialize solver tool and set preconditioner ::
 !
       call mem%alloc(eta, wf%n_gs_amplitudes)

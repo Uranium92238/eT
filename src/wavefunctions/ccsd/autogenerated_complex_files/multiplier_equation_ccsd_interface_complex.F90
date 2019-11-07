@@ -17,6 +17,18 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
+   module subroutine prepare_for_multiplier_equation_ccsd_complex(wf)
+!!
+!!    Prepare for multiplier equation
+!!    Written by Tor S. Haugland, Oct 2019
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+!
+   end subroutine prepare_for_multiplier_equation_ccsd_complex
+!
+!
    module subroutine construct_eta_ccsd_complex(wf, eta)
 !!
 !!    Construct eta (CCSD)

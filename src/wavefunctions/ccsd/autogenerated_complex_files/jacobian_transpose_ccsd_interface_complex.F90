@@ -17,6 +17,22 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
+   module subroutine prepare_for_jacobian_transpose_ccsd_complex(wf)
+!!
+!!    Prepare for jacobian transpose
+!!    Written by Tor S. Haugland, Oct 2019
+!!
+!!    Creates intermediates needed in the jacobian transpose calculation.
+!!
+!!    Based on prepare_for_jacobian_ccsd by E. F. Kjønstad and S. D. Folkestad
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+!
+   end subroutine prepare_for_jacobian_transpose_ccsd_complex
+!
+!
    module subroutine jacobian_transpose_transformation_ccsd_complex(wf, b)
 !!
 !!    Jacobian transpose transformation

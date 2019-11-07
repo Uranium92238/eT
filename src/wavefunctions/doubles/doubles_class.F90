@@ -50,6 +50,9 @@ module doubles_class
       type(sequential_file) :: jacobian_a1_intermediate_vv
       type(sequential_file) :: jacobian_a1_intermediate_oo
 !
+      type(sequential_file) :: jacobian_transpose_a1_intermediate_vv
+      type(sequential_file) :: jacobian_transpose_a1_intermediate_oo
+!
    contains
 !
 !     Omega procedures in common for doubles and doubles
@@ -83,6 +86,9 @@ module doubles_class
 !
       procedure :: jacobian_transpose_doubles_a2         => jacobian_transpose_doubles_a2_doubles
       procedure :: jacobian_transpose_doubles_a2_complex => jacobian_transpose_doubles_a2_doubles_complex
+!
+      procedure :: save_jacobian_transpose_a1_intermediates         => save_jacobian_transpose_a1_intermediates_doubles
+      procedure :: save_jacobian_transpose_a1_intermediates_complex => save_jacobian_transpose_a1_intermediates_doubles_complex
 !
 !     Initialization/destruction procedures
 !

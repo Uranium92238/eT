@@ -42,6 +42,54 @@ submodule (ccsd_class) jacobian_transpose_ccsd_complex
 contains
 !
 !
+   module subroutine prepare_for_jacobian_transpose_ccsd_complex(wf)
+!!
+!!    Prepare for jacobian transpose
+!!    Written by Tor S. Haugland, Oct 2019
+!!
+!!    Creates intermediates needed in the jacobian transpose calculation,
+!!
+!!       a1: Y_ik = sum_cjb g_icjb * u_bjck
+!!       a1: Y_ca = sum_jbk u_bjck * g_jbka
+!!
+!!    Based on prepare_for_jacobian_ccsd by E. F. Kjønstad and S. D. Folkestad
+!!
+      implicit none
+!
+      class(ccsd), intent(inout) :: wf
+!
+      type(timings) :: timer
+!
+      complex(dp), dimension(:,:,:,:), allocatable :: t_aibj
+      complex(dp), dimension(:,:,:,:), allocatable :: u_aibj
+!
+      timer = timings('Prepare for Jacobian Transpose')
+      call timer%turn_on()
+!
+!     Construct u_aibj = 2 t_aibj - t_ajbi
+!
+      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2_complex, t_aibj, wf%n_t1)
+!
+      call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call copy_and_scale_complex(two_complex, t_aibj, u_aibj, wf%n_t1**2)
+      call add_1432_to_1234(-one_complex, t_aibj, u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     CCSD intermediates
+!
+      call wf%save_jacobian_transpose_a1_intermediates_complex(u_aibj)
+!
+!     Cleanup
+!
+      call mem%dealloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
+!
+   end subroutine prepare_for_jacobian_transpose_ccsd_complex
+!
+!
    module subroutine jacobian_transpose_transformation_ccsd_complex(wf, b)
 !!
 !!    Jacobian transpose transformation 

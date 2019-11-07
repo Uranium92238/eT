@@ -17,6 +17,20 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
+   module subroutine save_jacobian_transpose_a1_intermediates_doubles(wf, u_bjck)
+!!
+!!    Save jacobian transpose a1 intermediate
+!!    Written by Tor S. Haugland, Oct 2019
+!!
+      implicit none
+!
+      class(doubles), intent(inout) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_bjck
+!
+   end subroutine save_jacobian_transpose_a1_intermediates_doubles
+!
+!
    module subroutine jacobian_transpose_doubles_a1_doubles(wf, sigma_ai, c_bj, u)
 !!
 !!    Jacobian transpose doubles A1

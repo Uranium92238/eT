@@ -47,6 +47,7 @@ contains
 !!
 !!       Frozen core by Sarai D. Folkestad, 2019
 !!       QM/MM by Tommaso Giovannini, 2019
+!!       QM/PCM by Tommaso Giovannini, 2019
 !!
       implicit none
 !
