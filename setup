@@ -46,8 +46,6 @@ def input_parser():
 
     parser.add_argument('-ll', '--libint-lib',
                          help="Path to libint library")
-    parser.add_argument('-lxc', '--libxc-lib',
-                         help="Path to libxc library")
 
     parser.add_argument('-FC', '--Fortran-compiler',
                          help="Fortran compiler")
@@ -152,9 +150,6 @@ def construct_command(args):
 
     if (args.libint_lib):
         command += " -DLIBINT2_ROOT=" + args.libint_lib   
-
-    if(args.libxc_lib):
-        command += " -DLIBXC_ROOT=" + args.libxc_lib
 
     if (args.Fortran_compiler):
         command += " -DCMAKE_Fortran_COMPILER=" + args.Fortran_compiler
