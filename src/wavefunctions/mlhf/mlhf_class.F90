@@ -45,6 +45,7 @@ module mlhf_class
 !
       logical :: cholesky_virtuals
       logical :: minimal_basis_diagonalization
+      logical :: full_space_optimization
 !
    contains
 !
@@ -70,6 +71,7 @@ module mlhf_class
       procedure :: determine_minimal_basis                  => determine_minimal_basis_mlhf
       procedure :: construct_idempotent_density_from_fock   => construct_idempotent_density_from_fock_mlhf
       procedure :: minimal_basis_fock_diagonalization       => minimal_basis_fock_diagonalization_mlhf
+      procedure :: do_initial_full_space_optimization       => do_initial_full_space_optimization_mlhf
 !
       procedure :: read_mlhf_settings                       => read_mlhf_settings_mlhf
       procedure :: read_settings                            => read_settings_mlhf
@@ -114,6 +116,7 @@ contains
       wf%system => system
 !
       wf%cholesky_threshold            = 1.0d-2
+      wf%full_space_optimization       = .false.
       wf%minimal_basis_diagonalization = .false.
       wf%cholesky_virtuals             = .false.
 !
@@ -503,6 +506,11 @@ contains
 !!    This is done by either using the standard diagonalization
 !!    of the hf class (do_roothan_hall) or by projecting the problem
 !!    onto a minimal basis.
+!!
+!!    Modified by Anders Hutcheson and Linda Goletto, Oct 2019
+!!
+!!    Added option of an initial optimization in the full space.
+!!
 !
       implicit none
 !
@@ -513,6 +521,12 @@ contains
 !        The problem is projected on a minimal basis
 !
          call wf%minimal_basis_fock_diagonalization()
+!
+      elseif (wf%full_space_optimization) then
+!
+!        An initial optimization of the density in the full space is performed
+!
+         call wf%do_initial_full_space_optimization
 !
       else
 !
@@ -801,15 +815,27 @@ contains
 !!
       implicit none
 !
-      class(mlhf) :: wf
+      class(mlhf) :: wf               
 !
       call input%get_keyword_in_section('cholesky threshold', 'multilevel hf', wf%cholesky_threshold)
 !
-       if (input%requested_keyword_in_section('project on minimal basis', 'multilevel hf')) &
+      if (input%requested_keyword_in_section('project on minimal basis', 'multilevel hf')) &
             wf%minimal_basis_diagonalization = .true.
 !
-       if (input%requested_keyword_in_section('cholesky virtuals', 'multilevel hf')) &
+      if (input%requested_keyword_in_section('cholesky virtuals', 'multilevel hf')) &
             wf%cholesky_virtuals = .true.
+!
+      if (input%requested_keyword_in_section('initial hf optimization', 'multilevel hf')) &
+            wf%full_space_optimization = .true.
+!
+!     Sanity checks
+!
+      if (input%requested_keyword_in_section('initial hf threshold', 'multilevel hf') &
+            .and. .not. wf%full_space_optimization) &
+            call output%error_msg('Initial hf threshold specified, without specifying initial hf optimization')
+!
+      if (wf%full_space_optimization .and. wf%minimal_basis_diagonalization) &
+            call output%error_msg('Projection on minimal basis and initial hf optimization are not compatible')
 !
    end subroutine read_mlhf_settings_mlhf
 !
@@ -1296,6 +1322,73 @@ contains
       call identity_array(wf%W_mo_update, wf%n_mo)
 !
    end subroutine read_for_scf_restart_mlhf
+!
+!
+   subroutine do_initial_full_space_optimization_mlhf(wf)
+!!
+!!    Do initial full space optimization
+!!    Written by Anders Hutcheson and Linda Goletto, 2019
+!!
+!!    Performs an initial optimization of the full space wavefunction
+!!    to a low threshold that can be read from input (otherwise set 
+!!    to 1.0d-1), in order to start the multilevelcalculation with
+!!    a better starting density.
+!!
+!
+      use scf_diis_hf_class, only: scf_diis_hf
+!
+      implicit none
+!
+      class(mlhf) :: wf
+!
+      type(hf), allocatable        :: full_space_wf
+      type(scf_diis_hf), allocatable    :: full_space_solver
+!
+      real(dp) :: full_space_thr
+!
+      integer :: max_iterations, diis_dimension
+      character(len=200) :: ao_density_guess, storage
+!
+!     Set the default settings
+!
+      full_space_thr = 1.0d-1
+      max_iterations = 20
+      diis_dimension = 8
+      ao_density_guess = 'sad'
+      storage = 'memory'
+!
+!     Read the optional threshold from input
+!
+      call input%get_keyword_in_section('initial hf threshold', 'multilevel hf', full_space_thr)
+!
+!     Perform the HF calculation in the full space
+!
+      full_space_wf = hf(wf%system)
+!
+      call output%printf('Requested initial hf optimization. Performing scf-diis' // &
+                  'to the threshold (e9.2)', reals=[full_space_thr], pl='minimal', fs='(/t6,a)')
+!
+      full_space_solver = scf_diis_hf(wf=full_space_wf,    &
+                        restart=.false.,                   &
+                        diis_dimension=diis_dimension,     &
+                        ao_density_guess=ao_density_guess, &
+                        energy_threshold=full_space_thr,   &
+                        max_iterations=max_iterations,     &
+                        gradient_threshold=full_space_thr, &
+                        storage=storage)
+!
+      call full_space_solver%run(full_space_wf)
+!
+!     Update the MLHF orbital coefficients, orbital energies and density
+!
+      wf%orbital_coefficients = full_space_wf%orbital_coefficients
+      wf%orbital_energies = full_space_wf%orbital_energies
+!
+      call full_space_wf%cleanup()
+!
+      call wf%update_ao_density()
+!
+   end subroutine do_initial_full_space_optimization_mlhf
 !
 !
 end module mlhf_class
