@@ -123,6 +123,7 @@ contains
       type(section) :: memory 
       type(section) :: cc_zop 
       type(section) :: cc_fop 
+      type(section) :: hf_zop
       type(section) :: cc_td
       type(section) :: method 
       type(section) :: solver_cholesky
@@ -197,6 +198,12 @@ contains
       memory%name_    = 'memory'
       memory%required = .false.
       memory%keywords = [character(len=25) :: 'available']
+!
+      hf_zop%name_    = 'hf zop'
+      hf_zop%required = .false.
+      hf_zop%keywords = [character(len=25) ::         &
+                           'dipole               ',   &
+                           'quadrupole           ']
 !
       cc_zop%name_    = 'cc zop'
       cc_zop%required = .false.
@@ -405,6 +412,7 @@ contains
                            system,                    &
                            memory,                    &
                            method,                    &
+                           hf_zop,                 &
                            cc_zop,                    &
                            cc_fop,                    &
                            cc_td,                     &

@@ -20,8 +20,18 @@ assert version_info.major == 2
 
 # construct filter(s)
 f = [
-    get_filter(string='Final ground state energy (a.u.):',
+# total energy
+    get_filter(string='Total energy:',
                abs_tolerance=1.0e-10),
+# non-idempotent SAD 
+    get_filter(string='Energy of initial guess:',
+               abs_tolerance=1.0e-10),
+# idempotent SAD
+    get_filter(from_string='Iteration       Energy (a.u.)      Max(grad.) ',
+               num_lines=3,
+               abs_tolerance=1.0e-10,
+               mask=[2]),
+# quadrupole components
     get_filter(string='xx:',
                abs_tolerance=1.0e-10),
     get_filter(string='xy:',
@@ -33,19 +43,14 @@ f = [
     get_filter(string='yz:',
                abs_tolerance=1.0e-10),
     get_filter(string='zz:',
-               abs_tolerance=1.0e-10),
-    get_filter(from_string='- Davidson CC multipliers solver summary:',
-               num_lines=10,
-               abs_tolerance=1.0e-10,
-               mask=[3],
-               ignore_sign=True)
+               abs_tolerance=1.0e-10)
 ]
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_quadrupole.inp']:
+for inp in ['hf_quadrupole.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

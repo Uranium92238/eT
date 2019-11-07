@@ -214,6 +214,10 @@ module hf_class
       procedure :: prepare_for_roothan_hall                    => prepare_for_roothan_hall_hf
       procedure :: prepare                                     => prepare_hf
 !
+!     Zop
+!
+      procedure :: calculate_expectation_value                 => calculate_expectation_value_hf
+!
 !     Frozen core
 !
       procedure :: prepare_mos                                 => prepare_mos_hf
@@ -4190,6 +4194,40 @@ contains
       call wf%orbital_energies_file%close_
 !
    end subroutine read_orbital_energies_hf
+!
+!
+   function calculate_expectation_value_hf(wf, A, density) result(expectation_value)
+!!
+!!    Calculate expectation value
+!!    Written by Sarai D. Folkestad, 2019
+!!
+!!    Calculate the expectation value of a one-electron
+!!    operator Â
+!!
+!!    Modified by Anders Hutcheson and Linda Goletto, Oct 2019
+!!
+!!    The expectation values is calculated as:
+!!
+!!       < A > = < HF | Â | HF > = sum_pq A_pq D_pq
+!!
+!!    where A_pq are the integrals in the AO basis
+!!    and D_pq is the a one-electron density matrix in the AO basis
+!!
+      implicit none
+!  
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: A
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: density
+!
+      real(dp) :: expectation_value
+!
+      real(dp) :: ddot
+!
+      expectation_value = ddot(wf%n_ao**2, A, 1, density, 1)
+!
+   end function calculate_expectation_value_hf
 !
 !
 end module hf_class

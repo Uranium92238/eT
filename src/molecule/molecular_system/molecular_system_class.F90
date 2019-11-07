@@ -117,6 +117,8 @@ module molecular_system_class
       procedure :: get_n_electrons                          => get_n_electrons_molecular_system
       procedure :: get_nuclear_dipole                       => get_nuclear_dipole_molecular_system
       procedure :: get_nuclear_quadrupole                   => get_nuclear_quadrupole_molecular_system
+      procedure :: get_nuclear_dipole_active                => get_nuclear_dipole_active_molecular_system
+      procedure :: get_nuclear_quadrupole_active            => get_nuclear_quadrupole_active_molecular_system
 !
       procedure :: get_n_aos                                => get_n_aos_molecular_system
       procedure :: get_n_shells                             => get_n_shells_molecular_system
@@ -2693,4 +2695,76 @@ contains
    end subroutine check_if_basis_present_and_pure_molecular_system
 !
 !
+   subroutine get_nuclear_dipole_active_molecular_system(molecule, mu_k)
+!!
+!!    Get nuclear dipole moment 
+!!    Written by Eirik F. Kjønstad, Apr 2019
+!!
+!!    Modified by Tommaso Giovannini, Linda Goletto 
+!!    and Anders Hutcheson, Oct 2019 
+!!
+!!    Used when an active space exists, only loops over the active atoms 
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      real(dp), dimension(3), intent(out) :: mu_k 
+!
+      integer :: j 
+      integer :: n_active_atoms, n_active_spaces
+!
+      n_active_spaces  = molecule%n_active_atoms_spaces
+      n_active_atoms = molecule%active_atoms_spaces(n_active_spaces)%last_atom
+!
+      mu_k = zero 
+!
+      do j = 1, n_active_atoms
+!
+         mu_k(1) = mu_k(1) + (molecule%atoms(j)%x)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+         mu_k(2) = mu_k(2) + (molecule%atoms(j)%y)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+         mu_k(3) = mu_k(3) + (molecule%atoms(j)%z)*(molecule%atoms(j)%number_)*(angstrom_to_bohr)
+!
+      enddo
+!
+   end subroutine get_nuclear_dipole_active_molecular_system
+!
+!
+   subroutine get_nuclear_quadrupole_active_molecular_system(molecule, Q_k)
+!!
+!!    Get nuclear dipole moment 
+!!    Written by Eirik F. Kjønstad, Apr 2019
+!!
+!!    Modified by Tommaso Giovannini, Linda Goletto 
+!!    and Anders Hutcheson, Oct 2019 
+!!
+!!    Used when an active space exists, only loops over the active atoms
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      real(dp), dimension(6), intent(out) :: Q_k 
+!
+      integer :: j 
+      integer :: n_active_atoms, n_active_spaces
+!
+      n_active_spaces  = molecule%n_active_atoms_spaces
+      n_active_atoms = molecule%active_atoms_spaces(n_active_spaces)%last_atom
+!      
+      Q_k = zero 
+!
+      do j = 1, n_active_atoms
+!
+         Q_k(1) = Q_k(1) + (molecule%atoms(j)%x**2)*(molecule%atoms(j)%number_)*(angstrom_to_bohr**2)
+         Q_k(2) = Q_k(2) + (molecule%atoms(j)%x*molecule%atoms(j)%y)*(molecule%atoms(j)%number_)*(angstrom_to_bohr**2)
+         Q_k(3) = Q_k(3) + (molecule%atoms(j)%x*molecule%atoms(j)%z)*(molecule%atoms(j)%number_)*(angstrom_to_bohr**2)
+         Q_k(4) = Q_k(4) + (molecule%atoms(j)%y**2)*(molecule%atoms(j)%number_)*(angstrom_to_bohr**2)
+         Q_k(5) = Q_k(5) + (molecule%atoms(j)%y*molecule%atoms(j)%z)*(molecule%atoms(j)%number_)*(angstrom_to_bohr**2)
+         Q_k(6) = Q_k(6) + (molecule%atoms(j)%z**2)*(molecule%atoms(j)%number_)*(angstrom_to_bohr**2)
+!
+      enddo
+!
+   end subroutine get_nuclear_quadrupole_active_molecular_system
+
 end module molecular_system_class

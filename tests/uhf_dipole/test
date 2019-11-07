@@ -20,32 +20,31 @@ assert version_info.major == 2
 
 # construct filter(s)
 f = [
-    get_filter(string='Final ground state energy (a.u.):',
+# total energy
+    get_filter(string='Total energy:',
                abs_tolerance=1.0e-10),
-    get_filter(string='xx:',
+# non-idempotent SAD 
+    get_filter(string='Energy of initial guess:',
                abs_tolerance=1.0e-10),
-    get_filter(string='xy:',
-               abs_tolerance=1.0e-10),
-    get_filter(string='xz:',
-               abs_tolerance=1.0e-10),
-    get_filter(string='yy:',
-               abs_tolerance=1.0e-10),
-    get_filter(string='yz:',
-               abs_tolerance=1.0e-10),
-    get_filter(string='zz:',
-               abs_tolerance=1.0e-10),
-    get_filter(from_string='- Davidson CC multipliers solver summary:',
-               num_lines=10,
+# idempotent SAD
+    get_filter(from_string='Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)',
+               num_lines=3,
                abs_tolerance=1.0e-10,
-               mask=[3],
-               ignore_sign=True)
+               mask=[2]),
+# dipole components
+    get_filter(string=' x ',
+               abs_tolerance=1.0e-7),
+    get_filter(string=' y ',
+               abs_tolerance=1.0e-7),
+    get_filter(string=' z ',
+               abs_tolerance=1.0e-7)
 ]
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['ccsd_quadrupole.inp']:
+for inp in ['uhf_dipole.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,
