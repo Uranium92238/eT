@@ -372,9 +372,11 @@ contains
 !
       mlhf%name_    = 'multilevel hf'
       mlhf%required = .false.
-      mlhf%keywords = [character(len=25) :: &
-                        'cholesky threshold', &
-                        'project on minimal basis', &
+      mlhf%keywords = [character(len=25) ::           &
+                        'initial hf optimization',    &
+                        'initial hf threshold',       &
+                        'cholesky threshold',         &
+                        'project on minimal basis',   &
                         'cholesky virtuals']
 !
       global_print%name_    = 'print'
