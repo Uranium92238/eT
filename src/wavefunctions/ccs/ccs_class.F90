@@ -397,12 +397,14 @@ module ccs_class
 !     Preparation procedures
 !
       procedure :: prepare_for_jacobian                          => prepare_for_jacobian_ccs
-      procedure :: prepare_for_jacobian_transpose                => prepare_for_jacobian_transpose_ccs
-      procedure :: prepare_for_multiplier_equation               => prepare_for_multiplier_equation_ccs
-      procedure :: prepare_for_density                           => prepare_for_density_ccs
 !
+      procedure :: prepare_for_jacobian_transpose                => prepare_for_jacobian_transpose_ccs
       procedure :: prepare_for_jacobian_transpose_complex        => prepare_for_jacobian_transpose_ccs_complex
+!
+      procedure :: prepare_for_multiplier_equation               => prepare_for_multiplier_equation_ccs
       procedure :: prepare_for_multiplier_equation_complex       => prepare_for_multiplier_equation_ccs_complex
+!
+      procedure :: prepare_for_density                           => prepare_for_density_ccs
       procedure :: prepare_for_density_complex                   => prepare_for_density_ccs_complex
 !
       procedure :: approximate_double_excitation_vectors         => approximate_double_excitation_vectors_ccs

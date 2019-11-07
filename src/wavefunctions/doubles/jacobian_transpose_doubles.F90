@@ -38,6 +38,118 @@ submodule (doubles_class) jacobian_transpose_doubles
 !
 contains
 !
+   module subroutine save_jacobian_transpose_a1_intermediates_doubles(wf, u_bjck)
+!!
+!!    Save jacobian transpose A1 intermediates
+!!    Written by Tor S. Haugland, Oct 2019
+!!
+!!    Calculates the intermediates,
+!!
+!!       Y_ik = sum_cjb g_icjb * u_bjck
+!!       Y_ca = sum_jbk u_bjck * g_jbka
+!!
+!!    and saves them into
+!!
+!!       jacobian_transpose_a1_intermdiate_oo
+!!       jacobian_transpose_a1_intermdiate_vv
+!!
+!!    u_bjck = u^bc_jk =  2 t^bc_jk - t^bc_kj = -(2 g_bjck - g_bkcj)/eps^bc_jk
+!!
+!!    Based on jacobian_transpose_doubles_a1_doubles
+!!    by E. F. Kjønstad, S. D. Folkestad and A. Paul
+!!
+!!    Copied construction of intermediates.
+!!
+      class(doubles), intent(inout) :: wf
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_bjck
+!
+      type(timings) :: timer
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_ovov
+      real(dp), dimension(:,:,:,:), allocatable :: u_cjbk
+!
+      real(dp), dimension(:,:),     allocatable :: Y_ik
+      real(dp), dimension(:,:),     allocatable :: Y_ca
+!
+      timer = timings('Save Jacobian Transpose A1 intermediates', pl='debug')
+      call timer%turn_on()
+!
+!     Both intermediates need g_ovov and u_bjck -> u_cjbk
+!
+      call mem%alloc(g_ovov, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call wf%get_ovov(g_ovov)
+!
+      call mem%alloc(u_cjbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_3214(u_bjck, u_cjbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!        Y_ik = sum_cjb g_i_cjb * u_cjb_k
+!
+      call mem%alloc(Y_ik, wf%n_o, wf%n_o)
+!
+      call dgemm('N', 'N',                &
+                  wf%n_o,                 &
+                  wf%n_o,                 &
+                  (wf%n_o)*(wf%n_v)**2,   &
+                  one,                    &
+                  g_ovov,                 & ! g_i_cjb
+                  wf%n_o,                 &
+                  u_cjbk,                 & ! u_cjb_k
+                  (wf%n_o)*(wf%n_v)**2,   &
+                  zero,                   &
+                  Y_ik,                   & ! Y_ik
+                  wf%n_o)
+!
+!     Save Y_ik
+!
+      wf%jacobian_transpose_a1_intermediate_oo = &
+                                          sequential_file('jacobian_transpose_intermediate_a1_oo')
+      call wf%jacobian_transpose_a1_intermediate_oo%open_('write', 'rewind')
+!
+      call wf%jacobian_transpose_a1_intermediate_oo%write_(Y_ik, wf%n_o**2)
+!
+      call wf%jacobian_transpose_a1_intermediate_oo%close_('keep')
+!
+      call mem%dealloc(Y_ik, wf%n_o, wf%n_o)
+!
+!        Y_ca = sum_jbk u_c_jbk g_jbk_a
+!
+      call mem%alloc(Y_ca, wf%n_v, wf%n_v)
+!
+      call dgemm('N', 'N',                &
+                  wf%n_v,                 &
+                  wf%n_v,                 &
+                  (wf%n_v)*(wf%n_o)**2,   &
+                  one,                    &
+                  u_cjbk,                 & ! u_c_jbk
+                  wf%n_v,                 &
+                  g_ovov,                 & ! g_jbk_a
+                  (wf%n_v)*(wf%n_o)**2,   &
+                  zero,                   &
+                  Y_ca,                   & ! Y_ca
+                  wf%n_v)
+!
+!     Save Y_ca
+!
+      wf%jacobian_transpose_a1_intermediate_vv = &
+                                          sequential_file('jacobian_transpose_intermediate_a1_vv')
+      call wf%jacobian_transpose_a1_intermediate_vv%open_('write', 'rewind')
+!
+      call wf%jacobian_transpose_a1_intermediate_vv%write_(Y_ca, wf%n_v**2)
+!
+      call wf%jacobian_transpose_a1_intermediate_vv%close_('keep')
+!
+      call mem%dealloc(Y_ca, wf%n_v, wf%n_v)
+!
+!     Cleanup
+!
+      call mem%dealloc(g_ovov, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(u_cjbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
+!
+   end subroutine save_jacobian_transpose_a1_intermediates_doubles
+!
+!
    module subroutine jacobian_transpose_doubles_a1_doubles(wf, sigma_ai, c_bj, u)
 !!
 !!    Jacobian transpose doubles A1
@@ -46,10 +158,15 @@ contains
 !!
 !!    Calculates the A1 term,
 !!
-!!    u_kcbj = u^bc_jk =  2 t^bc_jk - t^bc_kj = -(2 g_bjck - g_bkcj)/eps^bc_jk
+!!    u_ckbj = u^bc_jk =  2 t^bc_jk - t^bc_kj = -(2 g_bjck - g_bkcj)/eps^bc_jk
 !!
-!!    sigma_ai =+ sum_bjck u^bc_jk (c_bj L_iakc - c_ak g_jbic - c_ci g_jbka)
-!!             =+ sum_ck X_kc L_iakc - sum_k c_ak Y_ik - sum_c Y_ca c_ci
+!!    sigma_ai += sum_bjck u^bc_jk (c_bj L_iakc - c_ak g_jbic - c_ci g_jbka)
+!!             += sum_ck X_kc L_iakc - sum_k c_ak Y_ik - sum_c Y_ca c_ci
+!!
+!!    Modified by Tor S. Haugland, Oct 2019
+!!
+!!    Use saved intermediates to construct Y_ik and Y_ca.
+!!    Create intermediate X_kc using transpose to save time re-ordering g_iakc
 !!
       implicit none
 !
@@ -60,90 +177,91 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_iakc
-      real(dp), dimension(:,:,:,:), allocatable :: L_aick
-      real(dp), dimension(:,:,:,:), allocatable :: u_cjbk
+      real(dp), dimension(:,:,:,:), allocatable :: L_iakc
 !
-      real(dp), dimension(:,:), allocatable :: X_ck, Y_ik, Y_ca
+      real(dp), dimension(:,:), allocatable :: X_ck, X_kc, Y_ik, Y_ca, sigma_ia, sigma_ai_temp
 !
       type(timings) :: timer
 !
-      timer = timings('jacobian transpose doubles a1')
+      timer = timings('jacobian transpose doubles a1', pl='debug')
       call timer%turn_on()
 !
-!     :: Term 1: sigma_ai =+ sum_bjck c_bj u^bc_jk L_iakc
+!     :: Term 1: sigma_ai += sum_bjck c_bj u^bc_jk L_iakc
+!
+!     Intermediate X_kc = (X_ck)^T = ( sum_bj u_ckbj * c_bj )^T
 !
       call mem%alloc(X_ck, wf%n_v, wf%n_o)
 !
-!     X_ck = sum_bj u_ckbj * c_bj
-!
-      call dgemm('N', 'N',             &
+      call dgemv('N',                  &
                   (wf%n_o)*(wf%n_v),   &
-                  1,                   &
                   (wf%n_o)*(wf%n_v),   &
                   one,                 &
                   u,                   & ! u_ck_bj
                   (wf%n_o)*(wf%n_v),   &
                   c_bj,                & ! c_bj
-                  (wf%n_o)*(wf%n_v),   &
+                  1,                   &
                   zero,                &
                   X_ck,                &
-                  (wf%n_o)*(wf%n_v))
+                  1)
+!
+      call mem%alloc(X_kc, wf%n_o, wf%n_v)
+!
+      call sort_12_to_21(X_ck, X_kc, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(X_ck, wf%n_v, wf%n_o)
 !
 !     L_iakc = 2 g_iakc - g_icka
 !
       call mem%alloc(g_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
+      call mem%alloc(L_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%get_ovov(g_iakc)
 !
-      call mem%alloc(L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(L_aick, wf%n_t1**2)
+      call copy_and_scale(two, g_iakc, L_iakc, wf%n_t1**2)
+      call add_1432_to_1234(-one, g_iakc, L_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call add_2143_to_1234(two, g_iakc, L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call add_2341_to_1234(-one, g_iakc, L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(g_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-!     sigma_ai =+ sum_kc L_iakc * X_ck
+!     sigma_ai += sum_kc L_iakc * X_kc
+!
+      call mem%alloc(sigma_ia, wf%n_o, wf%n_v)
 !
       call dgemm('N', 'N',             &
                   (wf%n_v)*(wf%n_o),   &
                   1,                   &
                   (wf%n_v)*(wf%n_o),   &
                   one,                 &
-                  L_aick,              & ! L_ai_ck
+                  L_iakc,              & ! L_ia_kc
                   (wf%n_v)*(wf%n_o),   &
-                  X_ck,                & ! X_ck
+                  X_kc,                & ! X_kc
                   (wf%n_v)*(wf%n_o),   &
-                  one,                 &
-                  sigma_ai,            &
+                  zero,                &
+                  sigma_ia,            &
                   (wf%n_v)*(wf%n_o))
 !
-      call mem%dealloc(L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(X_ck, wf%n_v, wf%n_o)
+      call mem%alloc(sigma_ai_temp, wf%n_v, wf%n_o)
+      call sort_12_to_21(sigma_ia, sigma_ai_temp, wf%n_o, wf%n_v)
 !
-!     :: Term 2: sigma_ai =+ sum_bjck - c_ak u^bc_jk g_jbic
+      call daxpy(wf%n_v * wf%n_o, one, sigma_ai_temp, 1, sigma_ai, 1)
 !
-!      Note: Pretend g_iakc is g_icjb
+      call mem%dealloc(sigma_ai_temp, wf%n_v, wf%n_o)
 !
-      call mem%alloc(u_cjbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call sort_1234_to_3214(u, u_cjbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     Cleanup
+!
+      call mem%dealloc(X_kc, wf%n_o, wf%n_v)
+      call mem%dealloc(L_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(sigma_ia, wf%n_v, wf%n_o)
+!
+!     :: Term 2: sigma_ai -= c_ak Y_ik
+!
+!     Read Y_ik from file
 !
       call mem%alloc(Y_ik, wf%n_o, wf%n_o)
 !
-!     Y_ik = sum_cjb g_jbic * u_cjbk = sum_cjb g_icjb * u_cjbk
+      call wf%jacobian_transpose_a1_intermediate_oo%open_('read', 'rewind')
+      call wf%jacobian_transpose_a1_intermediate_oo%read_(Y_ik, wf%n_o**2)
+      call wf%jacobian_transpose_a1_intermediate_oo%close_()
 !
-      call dgemm('N', 'N',                &
-                  wf%n_o,                 &
-                  wf%n_o,                 &
-                  (wf%n_o)*(wf%n_v)**2,   &
-                  one,                    &
-                  g_iakc,                 & ! g_i_cjb
-                  wf%n_o,                 &
-                  u_cjbk,                 & ! u_cjb_k
-                  (wf%n_o)*(wf%n_v)**2,   &
-                  zero,                   &
-                  Y_ik,                   & ! Y_ik
-                  wf%n_o)
-!
-!     sigma_ai =+ - c_ak * Y_ik
+!     sigma_ai -= c_ak * Y_ik
 !
       call dgemm('N', 'T',    & ! transpose of Y_ik
                   wf%n_v,     &
@@ -160,33 +278,19 @@ contains
 !
       call mem%dealloc(Y_ik, wf%n_o, wf%n_o)
 !
-!     :: Term 3: sigma_ai =+ sum_bjck - c_ci u^bc_jk g_jbka
-!
-!     Note: we pretend that g_iakc is g_jbka 
+!     :: Term 3: sigma_ai += - c_ci Y_ca
 !
       call mem%alloc(Y_ca, wf%n_v, wf%n_v)
 !
-!     Y_ca = sum_jbk u_cjbk * g_jbka
+!     Read Y_ca from file
 !
-      call dgemm('N', 'N',                &
-                  wf%n_v,                 &
-                  wf%n_v,                 &
-                  (wf%n_v)*(wf%n_o)**2,   &
-                  one,                    &
-                  u_cjbk,                 & ! u_c_jbk
-                  wf%n_v,                 &
-                  g_iakc,                 & ! g_jbk_a
-                  (wf%n_v)*(wf%n_o)**2,   &
-                  zero,                   &
-                  Y_ca,                   & ! Y_ca
-                  wf%n_v)
+      call wf%jacobian_transpose_a1_intermediate_vv%open_('read', 'rewind')
+      call wf%jacobian_transpose_a1_intermediate_vv%read_(Y_ca, wf%n_v**2)
+      call wf%jacobian_transpose_a1_intermediate_vv%close_()
 !
-      call mem%dealloc(g_iakc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call mem%dealloc(u_cjbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     sigma_ai -= c_ci * Y_ca
 !
-!     sigma_ai =+ - c_ci * Y_ca
-!
-      call dgemm('T', 'N',    & ! transpose of Y_ik
+      call dgemm('T', 'N',    & ! transpose of Y_ca
                   wf%n_v,     &
                   wf%n_o,     &
                   wf%n_v,     &
@@ -231,7 +335,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = timings('jacobian transpose doubles b1')
+      timer = timings('jacobian transpose doubles b1', pl='debug')
       call timer%turn_on()
 !
 !     :: Term 1: sigma_ai =+ sum_bjc c_bjci g_bjca = sum_bjc (g_bjca)^T c_bjci
@@ -311,6 +415,10 @@ contains
 !!
 !!    sigma_aibj =+ (2F_jb c_ai - F_ib c_aj - L_ikjb c_ak + L_cajb c_ci)
 !!
+!!    Modified by Tor S. Haugland, Nov 2019
+!!
+!!    Now uses BLAS dger for outer-product instead of for-loops.
+!!
       implicit none
 !
       class(doubles) :: wf
@@ -323,38 +431,43 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_ikjb, g_cajb
       real(dp), dimension(:,:,:,:), allocatable :: L_kibj, L_cajb
       real(dp), dimension(:,:,:,:), allocatable :: sigma_ajbi
+      real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj_temp
+      real(dp), dimension(:,:),     allocatable :: F_ai
 !
       type(batching_index) :: batch_c
 !
       integer :: req0, req1, current_c_batch
 !
-      integer :: a, i, b, j
-!
       type(timings) :: timer
 !
-      timer = timings('jacobian transpose doubles a2')
+      timer = timings('jacobian transpose doubles a2', pl='debug')
       call timer%turn_on()
 !
 !     Term 1: (2F_jb c_ai - F_ib c_aj)
 !
-      call zero_array(sigma_aibj, (wf%n_o*wf%n_v)**2)
+!     Sort F_ia to F_ai
 !
-!$omp parallel do private(a, i, b, j)
-      do j = 1, wf%n_o
-         do b = 1, wf%n_v
-            do i = 1, wf%n_o
-               do a = 1, wf%n_v
+      call mem%alloc(F_ai, wf%n_v, wf%n_o)
+      call sort_12_to_21(wf%fock_ia, F_ai, wf%n_o, wf%n_v)
 !
-                  sigma_aibj(a, i, b, j) = sigma_aibj(a, i, b, j) &
-                                          +  two*wf%fock_ia(j, b)*c_ai(a, i)&
-                                          -  wf%fock_ia(i, b)*c_ai(a, j)
-
+      call mem%alloc(sigma_aibj_temp, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call zero_array(sigma_aibj_temp, wf%n_o**2 * wf%n_v**2)
 !
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call dger(wf%n_v * wf%n_o,    &
+                wf%n_v * wf%n_o,    &
+                one,                &
+                c_ai,               & ! c_ai
+                1,                  &
+                F_ai,               & ! F_jb
+                1,                  &
+                sigma_aibj_temp,    & ! sigma_aibj
+                wf%n_v * wf%n_o)
+!
+      call daxpy(wf%n_v**2 * wf%n_o**2, two, sigma_aibj_temp, 1, sigma_aibj, 1)
+      call add_1432_to_1234(-one, sigma_aibj_temp, sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(F_ai, wf%n_v, wf%n_o)
+      call mem%dealloc(sigma_aibj_temp, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Term 3: - L_ikjb c_ak
 !

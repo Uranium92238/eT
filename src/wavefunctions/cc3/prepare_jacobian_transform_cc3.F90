@@ -80,20 +80,26 @@ contains
 !!    Prepare for jacobian transpose transformation
 !!    Written by Rolf H. Myhre, April 2019
 !!
+!!    Modified by Tor S. Haugland
+!!
+!!    Also prepares CCSD jacobian_transpose.
+!!
       implicit none
 !
       class(cc3), intent(inout) :: wf
 !
       type(timings) :: prep_timer
 !
-      prep_timer = timings("Time preparing for Jacobian")
+      prep_timer = timings("Time preparing for Jacobian", pl='normal')
       call prep_timer%turn_on()
 !
       call output%printf('Preparing for (a0) left excited state equations',   &
                           chars=[trim(wf%name_)], pl='v', fs='(/t3,a)')
 !
-      if (.not. wf%X_ajil%exists()) call wf%prep_cc3_jacobian_intermediates()
-      if (.not. wf%g_cdlk_t%exists()) call wf%prep_cc3_jacobian_trans_integrals()
+      call wf%ccsd%prepare_for_jacobian_transpose()
+!
+      call wf%prep_cc3_jacobian_intermediates()
+      call wf%prep_cc3_jacobian_trans_integrals()
 !
       call prep_timer%turn_off()
 !

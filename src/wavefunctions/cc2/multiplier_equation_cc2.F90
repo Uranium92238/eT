@@ -32,6 +32,32 @@ submodule (cc2_class) multiplier_equation_cc2
 contains
 !
 !
+   module subroutine prepare_for_multiplier_equation_cc2(wf)
+!!
+!!    Prepare for jacobian transpose transformation
+!!    Written by Tor S. Haugland, Oct 2019
+!!
+!!    Based on prepare_for_multiplier_equation_cc3 by Alex Paul
+!!
+      implicit none
+!
+      class(cc2), intent(inout) :: wf
+!
+      type(timings) :: prep_timer
+!
+      prep_timer = timings("Prepare for multiplier equation", pl='normal')
+      call prep_timer%turn_on()
+!
+      call output%printf('Preparing for (a0) multiplier equations', pl='verbose', &
+                        chars=[trim(wf%name_)], fs='(/t3,a)')
+!
+      call wf%prepare_for_jacobian_transpose()
+!
+      call prep_timer%turn_off()
+!
+   end subroutine prepare_for_multiplier_equation_cc2
+!
+!
    module subroutine construct_multiplier_equation_cc2(wf, equation)
 !!
 !!    Construct multiplier equation 

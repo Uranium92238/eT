@@ -36,7 +36,6 @@ module cc2_class
 !
       procedure :: construct_omega                             => construct_omega_cc2
       procedure :: calculate_energy                            => calculate_energy_cc2
-      procedure :: construct_multiplier_equation               => construct_multiplier_equation_cc2
 !
 !     Amplitudes and multipliers
 !
@@ -58,8 +57,15 @@ module cc2_class
 !
 !     Jacobian transpose
 !
+      procedure :: prepare_for_jacobian_transpose              => prepare_for_jacobian_transpose_cc2
+!
       procedure :: jacobian_transpose_transformation           => jacobian_transpose_transformation_cc2
       procedure :: jacobian_transpose_cc2_b2                   => jacobian_transpose_cc2_b2_cc2
+!
+!     Multiplier equation
+!
+      procedure :: prepare_for_multiplier_equation             => prepare_for_multiplier_equation_cc2
+      procedure :: construct_multiplier_equation               => construct_multiplier_equation_cc2
 !
 !     Initialize and destruct
 !

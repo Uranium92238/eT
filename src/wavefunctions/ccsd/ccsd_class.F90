@@ -120,6 +120,9 @@ module ccsd_class
 !
 !     Procedures related to Jacobian transpose transformation
 !
+      procedure :: prepare_for_jacobian_transpose             => prepare_for_jacobian_transpose_ccsd
+      procedure :: prepare_for_jacobian_transpose_complex     => prepare_for_jacobian_transpose_ccsd_complex
+!
       procedure :: jacobian_transpose_transformation          => jacobian_transpose_transformation_ccsd
       procedure :: jacobian_transpose_transformation_complex  => jacobian_transpose_transformation_ccsd_complex
 !
@@ -160,6 +163,9 @@ module ccsd_class
       procedure :: jacobian_transpose_ccsd_i2_complex         => jacobian_transpose_ccsd_i2_ccsd_complex
 !
 !     Procedures related to multiplier equation
+!
+      procedure :: prepare_for_multiplier_equation            => prepare_for_multiplier_equation_ccsd
+      procedure :: prepare_for_multiplier_equation_complex    => prepare_for_multiplier_equation_ccsd_complex
 !
       procedure :: construct_eta                              => construct_eta_ccsd
       procedure :: construct_eta_complex                      => construct_eta_ccsd_complex

@@ -51,6 +51,9 @@ module sequential_file_class
 !
       procedure, public :: write_c_sequential_file
       procedure, public :: write_c_1_sequential_file
+      procedure, public :: write_c_2_sequential_file
+      procedure, public :: write_c_3_sequential_file
+      procedure, public :: write_c_4_sequential_file
 !
       procedure, public :: write_i_sequential_file
       procedure, public :: write_i_1_sequential_file
@@ -71,6 +74,9 @@ module sequential_file_class
                                      write_r_4_sequential_file,   &
                                      write_c_sequential_file,     &
                                      write_c_1_sequential_file,   &
+                                     write_c_2_sequential_file,   &
+                                     write_c_3_sequential_file,   &
+                                     write_c_4_sequential_file,   &
                                      write_i_sequential_file,     &
                                      write_i_1_sequential_file,   &
                                      write_i_2_sequential_file,   &
