@@ -75,5 +75,6 @@ module parameters
    real(dp), parameter :: Hartree_to_eV    = 27.21138602D0        ! 2014 CODATA
                                                                   ! (https://physics.nist.gov/cgi-bin/cuu/Value?threv)
    real(dp), parameter :: Hartree_to_kcalmol = 627.509474D0       ! 2019 wikipedia
+   real(dp), parameter :: au_to_debye        = 2.541746473D0      ! 2018 CODATA
 !
 end module parameters

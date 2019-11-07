@@ -27,14 +27,14 @@ module abstract_engine_class
 !!
 !
    use kinds
+   use parameters
 !
-   use global_out,         only: output
-   use timings_class,      only: timings
-   use string_utilities,   only: convert_to_uppercase
+   use global_out,           only: output
+   use timings_class,        only: timings
+   use string_utilities,     only: convert_to_uppercase
+   use memory_manager_class, only: mem
 !
    use wavefunction_class, only: wavefunction
-   use hf_class,           only: hf
-   use ccs_class,          only: ccs
 !
    implicit none
 !
@@ -44,6 +44,8 @@ module abstract_engine_class
       character(len=200) :: tag
       character(len=200) :: description  
       character(len=200) :: author
+      logical :: dipole
+      logical :: quadrupole
 !
       type(timings) :: timer ! Timer for engine. Obs! must be turned on in constructor
 !
@@ -52,8 +54,11 @@ module abstract_engine_class
 !
    contains
 !
-      procedure :: print_banner   => print_banner_abstract_engine
-      procedure :: print_timings  => print_timings_abstract_engine
+      procedure :: print_banner           => print_banner_abstract_engine
+      procedure :: print_timings          => print_timings_abstract_engine
+      procedure, nopass :: print_operator => print_operator_abstract_engine
+!
+      procedure, nopass :: remove_trace   => remove_trace_abstract_engine
 !
    end type abstract_engine
 !
@@ -127,6 +132,149 @@ contains
                          reals=[engine%timer%get_elapsed_time('cpu')])
 !
    end subroutine print_timings_abstract_engine
+!
+!
+   subroutine print_operator_abstract_engine(operator_, electronic, nuclear, total, components, n_components)
+!!
+!!    Print operator
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
+!!    Modified by Linda Goletto and Tommaso Giovannini, Oct 2019
+!!
+      use parameters
+!!      
+      implicit none
+!
+      integer, intent(in) :: n_components
+!
+      real(dp), dimension(n_components), intent(in) :: electronic
+      real(dp), dimension(n_components), intent(in) :: nuclear
+      real(dp), dimension(n_components), intent(in) :: total
+      real(dp)  :: dipole_norm
+!
+      character(len=4), dimension(n_components), intent(in) :: components
+!
+      character(len=*), intent(in) :: operator_
+!
+      integer :: k
+!
+      call output%printf('- Operator: (a0) [a.u.]', pl='minimal', fs='(/t3,a,a,a)', chars=[operator_])
+!
+      call output%printf(' Comp.   Electronic        Nuclear          Total   ', pl='verbose', fs='(/t6,a)')
+      call output%printf('------------------------------------------------------', pl='verbose', fs='(t6,a)')
+!
+      do k = 1, n_components
+!
+         call output%printf('(a4)   (E14.7)  (E14.7)  (E14.7)', pl='verbose', fs='(t6,a)', &
+                        chars=[components(k)], reals=[electronic(k), nuclear(k), total(k)])
+!
+      enddo
+!
+      call output%printf('------------------------------------------------------', pl='verbose', fs='(t6,a)')
+!
+!     For dipole moments calculate the norm and print Debye units 
+! 
+      if (index(trim(operator_), 'dipole').gt.0) then
+!
+         call output%printf('x:     (f14.7)', pl='minimal', fs='(/t6,a)', reals=[total(1)])
+         call output%printf('y:     (f14.7)', pl='minimal', fs='(t6,a)', reals=[total(2)])
+         call output%printf('z:     (f14.7)', pl='minimal', fs='(t6,a)', reals=[total(3)])
+!      
+         dipole_norm = dsqrt(total(1)**2 + total(2)**2 + total(3)**2)
+!
+         call output%printf('|mu|:  (f14.7)', pl='minimal', fs='(/t6,a)', reals=[dipole_norm])
+!
+         call output%printf('- Operator: (a0) [Debye]', pl='minimal', fs='(/t3,a,a,a)', chars=[operator_])
+!         
+         call output%printf(' Comp.   Electronic        Nuclear          Total   ', pl='verbose', fs='(/t6,a)')
+         call output%printf('------------------------------------------------------', pl='verbose', fs='(t6,a)')
+!
+         do k = 1, n_components
+!
+            call output%printf('(a4)   (E14.7)  (E14.7)  (E14.7)', pl='verbose', fs='(t6,a)',   &
+                                       chars=[components(k)], reals=[electronic(k)*au_to_debye, &
+                                                                     nuclear(k)*au_to_debye,    &
+                                                                     total(k)*au_to_debye])
+!
+         enddo
+!
+         call output%printf('------------------------------------------------------', pl='verbose', fs='(t6,a)')
+!
+         call output%printf('x:     (f14.7)', pl='minimal', fs='(/t6,a)', reals=[total(1)*au_to_debye])
+         call output%printf('y:     (f14.7)', pl='minimal', fs='(t6,a)', reals=[total(2)*au_to_debye])
+         call output%printf('z:     (f14.7)', pl='minimal', fs='(t6,a)', reals=[total(3)*au_to_debye])
+!
+         call output%printf('|mu|:  (f14.7)', pl='minimal', fs='(/t6,a)', reals=[dipole_norm*au_to_debye])
+!
+!     For quadrupole moments print Debye*Ang units 
+!
+      else if (index(trim(operator_), 'quadrupole').gt.0) then
+!
+         call output%printf('xx:    (f14.7)', pl='minimal', fs='(/t6,a)', reals=[total(1)])
+!
+         do k = 2, n_components
+!
+            call output%printf('(a4):    (f14.7)', pl='minimal', fs='(t4,a)', &
+                                     chars=[components(k)], reals=[total(k)])
+!
+         enddo
+!
+         call output%printf('- Operator: (a0) [Debye*Ang]', pl='minimal', fs='(/t3,a,a,a)', chars=[operator_])
+!          
+         call output%printf(' Comp.   Electronic        Nuclear          Total   ', pl='verbose', fs='(/t6,a)')
+         call output%printf('------------------------------------------------------', pl='verbose', fs='(t6,a)')
+!
+         do k = 1, n_components
+!
+            call output%printf('(a4)   (E14.7)  (E14.7)  (E14.7)', pl='verbose', fs='(t6,a)',      &
+                          chars=[components(k)], reals=[electronic(k)*au_to_debye*bohr_to_angstrom,&
+                                                        nuclear(k)*au_to_debye*bohr_to_angstrom,   &
+                                                        total(k)*au_to_debye*bohr_to_angstrom])
+!
+         enddo
+!
+         call output%printf('------------------------------------------------------', pl='verbose', fs='(t6,a)')
+!
+         call output%printf('xx:    (f14.7)', pl='minimal', fs='(/t6,a)', reals=[total(1)*au_to_debye*bohr_to_angstrom])
+!
+         do k = 2, n_components
+!
+            call output%printf('(a4):    (f14.7)', pl='minimal', fs='(t4,a)',      &
+                          chars=[components(k)], reals=[total(k)*au_to_debye*bohr_to_angstrom])
+!
+         enddo
+!
+      endif
+!
+   end subroutine print_operator_abstract_engine
+!
+!
+   subroutine remove_trace_abstract_engine(M)
+!!
+!!    Remove trace
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    The assumption here is that M is a 2-tensor ordered as xx, xy, xz, yy, yz, and zz,
+!!    where the other elements of the tensor are given by symmetry, such as for the quadrupole
+!!    moment. Thus, this routine can be called after a call to "calculate quadrupole moment"
+!!    to make the moment trace-free.
+!!
+      implicit none
+!
+      real(dp), dimension(6), intent(inout) :: M
+!
+      real(dp) :: trace_
+!
+      trace_ = M(1) + M(4) + M(6)
+!
+      M(1) = (three*M(1) - trace_)/two
+      M(4) = (three*M(4) - trace_)/two
+      M(6) = (three*M(6) - trace_)/two
+!
+      M(2) = (three*M(2))/two
+      M(3) = (three*M(3))/two
+      M(5) = (three*M(5))/two
+!
+   end subroutine remove_trace_abstract_engine
 !
 !
 end module abstract_engine_class

@@ -35,9 +35,6 @@ module zop_engine_class
 !
    type, extends(gs_engine) :: zop_engine
 !
-      logical :: dipole
-      logical :: quadrupole
-!
    contains
 !
       procedure :: run                          => run_zop_engine
@@ -46,10 +43,7 @@ module zop_engine_class
       procedure :: read_zop_settings            => read_zop_settings_zop_engine
 !
       procedure :: calculate_expectation_values => calculate_expectation_values_zop_engine
-!
       procedure :: set_printables               => set_printables_zop_engine
-!
-      procedure, nopass :: print_operator       => print_operator_zop_engine
 !
    end type zop_engine
 !
@@ -154,6 +148,32 @@ contains
    end subroutine run_zop_engine
 !
 !
+   subroutine set_printables_zop_engine(engine)
+!!
+!!    Set printables
+!!    Written by sarai D. Folkestad, May 2019
+!!
+      implicit none
+!
+      class(zop_engine) :: engine
+!
+      engine%name_ = 'Zeroth order coupled cluster properties engine'
+      engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      engine%tag   = 'zeroth order properties'
+!
+      engine%tasks = [character(len=150) ::                                                                       &
+      'Cholesky decomposition of the ERI-matrix',                                                           &
+      'Calculation of the ground state amplitudes and energy ('//trim(engine%gs_algorithm)//'-algorithm)',  &
+      'Calculation of the multipliers ('//trim(engine%multipliers_algorithm)//'-algorithm)',                &
+      'Calculation of the zeroth order property']
+!
+      engine%description  = 'Calculates the time-independent expectation value of&
+                            & one-electron operators A, < A > = < Λ | A | CC >.'
+!
+   end subroutine set_printables_zop_engine
+!
+!
    subroutine calculate_expectation_values_zop_engine(engine, wf)
 !!
 !!    Calculate expectation values
@@ -172,10 +192,10 @@ contains
       real(dp), dimension(6) :: q_electronic
       real(dp), dimension(6) :: q_nuclear
       real(dp), dimension(6) :: q_total
-!
+!      
       character(len=4), dimension(:), allocatable :: components
 !
-      if (engine%dipole) then
+      if(engine%dipole) then 
 !
          call engine%calculate_dipole_moment(wf, mu_electronic, mu_nuclear, mu_total)
 !
@@ -213,6 +233,10 @@ contains
 !
          q_total = q_electronic + q_nuclear
 !
+         call output%printf('The traceless quadrupole is calculated as:', pl='minimal',fs='(/t6,a)')
+         call output%printf('Q_ij = 1/2[3*q_ij - tr(q)*delta_ij]', pl='minimal',fs='(/t9,a)')
+         call output%printf('where q_ij is the non-traceless matrix', pl='minimal',fs='(/t6,a)')
+!
          call engine%print_operator('traceless quadrupole moment', q_electronic, q_nuclear, q_total, &
                                     components, 6)
 !
@@ -221,68 +245,6 @@ contains
       endif
 !
    end subroutine calculate_expectation_values_zop_engine
-!
-!
-   subroutine print_operator_zop_engine(operator_, electronic, nuclear, total, components, n_components)
-!!
-!!    Print operator
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
-!!
-      implicit none
-!
-      integer, intent(in) :: n_components
-!
-      real(dp), dimension(n_components), intent(in) :: electronic
-      real(dp), dimension(n_components), intent(in) :: nuclear
-      real(dp), dimension(n_components), intent(in) :: total
-!
-      character(len=4), dimension(n_components), intent(in) :: components
-!
-      character(len=*), intent(in) :: operator_
-!
-      integer :: k
-!
-      call output%printf('- Operator: (a0) [a.u.]', pl='minimal', fs='(/t3,a,a,a)', chars=[operator_])
-!
-      call output%printf('Cart. comp.  Electronic         Nuclear             Total           ', pl='minimal', fs='(/t6,a)')
-      call output%print_separator('m', 68, '-', fs='(t6,a)')
-!
-      do k = 1, n_components
-!
-         call output%printf('(a4)   (f19.12)(f19.12)(f19.12)', pl='minimal', fs='(t9,a)', &
-                            chars=[components(k)], reals=[electronic(k), nuclear(k), total(k)])
-!
-      enddo
-!
-      call output%print_separator('m', 68, '-', fs='(t6,a)')
-!
-   end subroutine print_operator_zop_engine
-!
-!
-   subroutine set_printables_zop_engine(engine)
-!!
-!!    Set printables
-!!    Written by sarai D. Folkestad, May 2019
-!!
-      implicit none
-!
-      class(zop_engine) :: engine
-!
-      engine%name_ = 'Zeroth order coupled cluster properties engine'
-      engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      engine%tag   = 'zeroth order properties'
-!
-      engine%tasks = [character(len=150) ::                                                                       &
-      'Cholesky decomposition of the ERI-matrix',                                                           &
-      'Calculation of the ground state amplitudes and energy ('//trim(engine%gs_algorithm)//'-algorithm)',  &
-      'Calculation of the multipliers ('//trim(engine%multipliers_algorithm)//'-algorithm)',                &
-      'Calculation of the zeroth order property']
-!
-      engine%description  = 'Calculates the time-independent expectation value of&
-                            & one-electron operators A, < A > = < Λ | A | CC >.'
-!
-   end subroutine set_printables_zop_engine
 !
 !
 end module zop_engine_class

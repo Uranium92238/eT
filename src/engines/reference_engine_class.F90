@@ -26,9 +26,10 @@ module reference_engine_class
 !
    use abstract_engine_class, only: abstract_engine
 !
-   use global_in,         only: input
-   use global_out,        only: output
-   use timings_class,     only: timings
+   use global_in,            only: input
+   use global_out,           only: output
+   use timings_class,        only: timings
+   use memory_manager_class, only: mem
 !
    use hf_class,          only: hf
 !
@@ -42,17 +43,23 @@ module reference_engine_class
       character(len=200) :: ao_density_guess
       character(len=200) :: algorithm 
       logical :: restart
+      logical :: requested_zop
 !
    contains 
 !
-      procedure :: ignite                       => ignite_reference_engine
+      procedure :: ignite                              => ignite_reference_engine
 !
-      procedure :: run                          => run_reference_engine
-      procedure :: read_settings                => read_settings_reference_engine
+      procedure :: run                                 => run_reference_engine
+      procedure :: read_settings                       => read_settings_reference_engine
+      procedure :: read_zop_settings                   => read_zop_settings_reference_engine
 !
-      procedure :: set_printables               => set_printables_reference_engine
+      procedure :: calculate_expectation_values        => calculate_expectation_values_reference_engine
+      procedure, nopass :: calculate_quadrupole_moment => calculate_quadrupole_moment_reference_engine
+      procedure, nopass :: calculate_dipole_moment     => calculate_dipole_moment_reference_engine
 !
-      procedure, nopass :: generate_sad_density => generate_sad_density_reference_engine
+      procedure :: set_printables                      => set_printables_reference_engine
+!
+      procedure, nopass :: generate_sad_density        => generate_sad_density_reference_engine
 !
 !
    end type reference_engine 
@@ -80,6 +87,8 @@ contains
       engine%ao_density_guess = 'sad'
       engine%algorithm        = 'scf-diis'
       engine%restart          = .false.
+      engine%dipole           = .false.
+      engine%quadrupole       = .false.
 !
       call engine%read_settings()
 !
@@ -164,6 +173,10 @@ contains
 !
       endif
 !
+!     Eventually calculate the zeroth order properties
+!
+      if(engine%requested_zop) call engine%calculate_expectation_values(wf)
+!
    end subroutine run_reference_engine
 !
 !
@@ -180,6 +193,8 @@ contains
       if (input%requested_keyword_in_section('restart', 'solver scf')) engine%restart = .true.
 !
       call input%get_keyword_in_section('ao density guess', 'solver scf', engine%ao_density_guess)
+!
+      call engine%read_zop_settings()
 !
    end subroutine read_settings_reference_engine
 !
@@ -364,6 +379,219 @@ contains
       call wf%system%initialize_libint_integral_engines()
 !
    end subroutine generate_sad_density_reference_engine
+!
+!
+   subroutine read_zop_settings_reference_engine(engine)
+!!
+!!    Read ZOP settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!    Modified by Tommaso Giovannini and Linda Goletto
+!!
+      implicit none
+!
+      class(reference_engine) :: engine
+!
+      engine%requested_zop = input%requested_section('hf zop')
+!
+      if (engine%requested_zop) then 
+!
+         if (input%requested_keyword_in_section('dipole','hf zop')) &
+             engine%dipole = .true.
+!
+         if (input%requested_keyword_in_section('quadrupole','hf zop')) &
+             engine%quadrupole = .true.
+!
+      endif
+!
+   end subroutine read_zop_settings_reference_engine
+!
+!
+   subroutine calculate_expectation_values_reference_engine(engine, wf)
+!!
+!!    Calculate expectation values
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+      implicit none
+!
+      class(reference_engine), intent(in) :: engine
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(3) :: mu_electronic
+      real(dp), dimension(3) :: mu_nuclear
+      real(dp), dimension(3) :: mu_total
+!
+      real(dp), dimension(6) :: q_electronic
+      real(dp), dimension(6) :: q_nuclear
+      real(dp), dimension(6) :: q_total
+!      
+      character(len=4), dimension(:), allocatable :: components
+!
+      if(engine%dipole) then 
+!
+         call engine%calculate_dipole_moment(wf, mu_electronic, mu_nuclear, mu_total)
+!
+         allocate(components(3))
+!
+         components = (/'x   ',&
+                        'y   ',&
+                        'z   '/)
+!
+         call engine%print_operator('dipole moment', mu_electronic, mu_nuclear, mu_total, &
+                                    components, 3)
+!
+         deallocate(components)
+!
+      endif
+!
+      if (engine%quadrupole) then
+!
+         call engine%calculate_quadrupole_moment(wf, q_electronic, q_nuclear, q_total)
+!
+         allocate(components(6))
+!
+         components = (/ 'xx  ',   &
+                         'xy  ',   &
+                         'xz  ',   &
+                         'yy  ',   &
+                         'yz  ',   &
+                         'zz  '    /)
+!
+         call engine%print_operator('quadrupole moment (with trace)', q_electronic, q_nuclear, q_total, &
+                                    components, 6)
+!
+         call engine%remove_trace(q_electronic)
+         call engine%remove_trace(q_nuclear)
+!
+         q_total = q_electronic + q_nuclear
+!
+         call output%printf('The traceless quadrupole is calculated as:', pl='minimal',fs='(/t6,a)')
+         call output%printf('Q_ij = 1/2[3*q_ij - tr(q)*delta_ij]', pl='minimal',fs='(/t9,a)')
+         call output%printf('where q_ij is the non-traceless matrix', pl='minimal',fs='(/t6,a)')
+!
+         call engine%print_operator('traceless quadrupole moment', q_electronic, q_nuclear, q_total, &
+                                    components, 6)
+!
+         deallocate(components)
+!
+      endif
+!
+   end subroutine calculate_expectation_values_reference_engine
+!
+!
+   subroutine calculate_dipole_moment_reference_engine(wf, electronic, nuclear, total)
+!!
+!!    Calculate dipole moment
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+!!    Modified by Linda Goletto, Anders Hutcheson 
+!!    and Tommaso Giovannini, Oct 2019
+!!
+!!    Calculates tr(D mu) in the AO basis; if the wf is mlhf,
+!!    it only calculates tr(D Q) for the active space
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(3), intent(out) :: electronic
+      real(dp), dimension(3), intent(out) :: nuclear
+      real(dp), dimension(3), intent(out) :: total
+!
+      integer :: k
+!
+      real(dp), dimension(:,:,:), allocatable :: mu_pqk
+!
+!     Get the integrals mu_pqk for components k = 1, 2, 3
+!
+      call mem%alloc(mu_pqk, wf%n_ao, wf%n_ao, 3)
+      call wf%get_ao_mu_wx(mu_pqk(:,:,1), mu_pqk(:,:,2), mu_pqk(:,:,3))
+!
+!     Get electronic expectation value contribution
+!
+      do k = 1, 3
+!
+         electronic(k) = wf%calculate_expectation_value(mu_pqk(:,:,k), wf%ao_density)
+!
+      enddo
+!
+      call mem%dealloc(mu_pqk, wf%n_ao, wf%n_ao, 3)
+!
+!     Get nuclear expectation value contribution, then sum the two
+!
+      if(wf%name_.eq.'mlhf') then
+!
+         call output%printf('In MLHF the dipole moment is computed only in the active space', pl='minimal',fs='(/t6,a)')
+!
+         call wf%system%get_nuclear_dipole_active(nuclear)
+!
+      else
+!
+         call wf%system%get_nuclear_dipole(nuclear)
+!
+      endif
+!
+      total = electronic + nuclear
+!
+   end subroutine calculate_dipole_moment_reference_engine
+!
+!
+   subroutine calculate_quadrupole_moment_reference_engine(wf, electronic, nuclear, total)
+!!
+!!    Calculate quadrupole moment
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
+!!
+!!    Modified by Linda Goletto, Anders Hutcheson 
+!!    and Tommaso Giovannini, Oct 2019
+!!
+!!    Calculates tr(D Q) in the AO basis; if the wf is mlhf,
+!!    it only calculates tr(D Q) for the active space
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(6), intent(out) :: electronic
+      real(dp), dimension(6), intent(out) :: nuclear
+      real(dp), dimension(6), intent(out) :: total
+!
+      integer :: k
+!
+      real(dp), dimension(:,:,:), allocatable :: q_pqk
+!
+!     Get the integrals q_pqk for components k = 1, 2, ..., 6 in the T1-transformed basis
+!
+      call mem%alloc(q_pqk, wf%n_ao, wf%n_ao, 6)
+      call wf%get_ao_q_wx(q_pqk(:,:,1), q_pqk(:,:,2), q_pqk(:,:,3), &
+                          q_pqk(:,:,4), q_pqk(:,:,5), q_pqk(:,:,6))
+!
+!     Get electronic expectation value contribution
+!
+      do k = 1, 6
+!
+         electronic(k) = wf%calculate_expectation_value(q_pqk(:,:,k), wf%ao_density)
+!
+      enddo
+!
+      call mem%dealloc(q_pqk, wf%n_ao, wf%n_ao, 6)
+!
+!     Get nuclear expectation value contribution, then sum the two
+!
+      if(wf%name_.eq.'mlhf') then
+!
+         call output%printf('In MLHF the quadrupole moment is computed only in the active space', pl='minimal',fs='(/t6,a)')
+!
+         call wf%system%get_nuclear_quadrupole_active(nuclear)
+!
+      else
+!
+         call wf%system%get_nuclear_quadrupole(nuclear)
+!
+      endif
+!
+      total = electronic + nuclear
+!
+   end subroutine calculate_quadrupole_moment_reference_engine
 !
 !
 end module reference_engine_class
