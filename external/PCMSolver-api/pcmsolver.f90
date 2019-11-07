@@ -20,7 +20,14 @@
 ! For information on the complete list of contributors to the
 ! PCMSolver API, see: <http://pcmsolver.readthedocs.io/>
 !
-
+!  Modifications by Tommaso Giovannini, Oct 2019
+!  Change of some dimensions  
+!
+!  solver_type(7)    --> solver_type(8)
+!  solvent(16)       --> solvent(22)
+!  equation_type(11) --> equation_type(12)
+!  inside_type(7)    --> inside_type(8)
+!
 module pcmsolver
 
   use, intrinsic :: iso_c_binding
@@ -38,12 +45,12 @@ module pcmsolver
     logical(c_bool)               :: scaling = .false.
     character(kind=c_char, len=1) :: restart_name(20)
     real(c_double)                :: min_radius = 0.0
-    character(kind=c_char, len=1) :: solver_type(7)
+    character(kind=c_char, len=1) :: solver_type(8)
     real(c_double)                :: correction = 0.0
-    character(kind=c_char, len=1) :: solvent(16)
+    character(kind=c_char, len=1) :: solvent(22)
     real(c_double)                :: probe_radius = 0.0
-    character(kind=c_char, len=1) :: equation_type(11)
-    character(kind=c_char, len=1) :: inside_type(7)
+    character(kind=c_char, len=1) :: equation_type(12)
+    character(kind=c_char, len=1) :: inside_type(8)
     real(c_double)                :: outside_epsilon = 0.0
     character(kind=c_char, len=1) :: outside_type(22)
   end type PCMInput
