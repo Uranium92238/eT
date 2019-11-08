@@ -217,7 +217,8 @@ contains
 !
       if (info .ne. 0) then
 !
-         call output%error_msg('could not solve Roothan-Hall equations.', info)
+         call output%error_msg('Could not solve Roothan-Hall equations.' // &
+                              ' "Dsyev" finished with info: (i0)', ints=[info])
 !
       endif
 !

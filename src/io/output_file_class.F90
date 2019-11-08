@@ -35,12 +35,15 @@ module output_file_class
       character(len=10), private :: local_print_level
       logical, private :: is_mute
 !
+      integer :: warning_counter
+!
    contains
 !
       procedure :: open_                     => open_output_file
 !
       procedure :: error_msg                 => error_msg_output_file
       procedure :: warning_msg               => warning_msg_output_file
+      procedure :: check_for_warnings        => check_for_warnings_output_file
 !
       procedure, public :: printf            => printf_output_file
       procedure, public :: print_matrix      => print_matrix_output_file
@@ -94,6 +97,8 @@ contains
 !
       the_file%is_open = .false.
       the_file%unit = -1
+!
+      the_file%warning_counter = 0
 !
    end function new_output_file
 !
@@ -269,52 +274,213 @@ contains
    end subroutine open_output_file
 !
 !
-   subroutine error_msg_output_file(out_file, error_specs, error_int)
+   subroutine error_msg_output_file(the_file, error_specs, reals, ints, chars, logs, fs, ffs, lfs, ll)
 !!
 !!    Error message
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    Modified by Alexander C. Paul, Nov 2019
+!!    Uses format_print for the error message
+!!
+!!    error_specs: String of character that should be printed as error message, 
+!!                 including formatting of reals and integers
+!!    reals:       Array of real(dp) to print - in the order specified by string 
+!!    ints:        Array of integers to print - in the order specified by string 
+!!    chars:       Array of strings to print - in the order specified by string
+!!                 Note that all the strings must be of same length in Fortran
+!!
+!!    fs:          Specifies the format of the entire string, e.g. fs='(/t6,a)' gives 
+!!                 a new line, then indentation 5, then the value of 'string'
+!!                 with reals and integers as specified. Default: '(t3,a)'
+!!    ffs:         Specifies the format of the first printed line if different from fs. 
+!!                 Default: same as fs
+!!    lfs:         Specifies the format of the last printed line if different from fs. 
+!!                 Default: same as fs
+!!    ll:          Integer specifying number of characters per line of print.
+!!
       implicit none
 !
-      class(output_file) :: out_file
+      class(output_file) :: the_file
 !
       character(len=*) :: error_specs
 !
-      integer, optional :: error_int 
+      real(dp)        , dimension(:), intent(in), optional  :: reals 
+      integer         , dimension(:), intent(in), optional  :: ints
+      character(len=*), dimension(:), intent(in), optional  :: chars
+      logical         , dimension(:), intent(in), optional  :: logs
 !
-      character(len=40) :: error_int_char = ' '
+      integer         , optional, intent(in)                :: ll
+      character(len=*), optional, intent(in)                :: fs
+      character(len=*), optional, intent(in)                :: ffs
+      character(len=*), optional, intent(in)                :: lfs
 !
-      if (present(error_int)) then
+      character(len=20) :: ff_string
+      character(len=20) :: f_string
+      character(len=20) :: lf_string
+      integer           :: l_length
 !
-         write(error_int_char, '(i12)') error_int   
+!     Default format: New line with t3 - Error message aligned after the colon
 !
-         write(out_file%unit, '(/t3,a)') 'Error: ' // trim(error_specs) // ' ' // error_int_char
-!
+!     Format for the first line
+      if(present(ffs)) then
+         ff_string = ffs
       else
-!
-         write(out_file%unit, '(/t3,a)') 'Error: ' // trim(error_specs)
-!
+         ff_string = '(/t3,a)'
       endif
+!
+!     Format for the core message
+      if(present(fs)) then
+         f_string = fs
+      else
+         f_string = '(t10,a)'
+      endif
+!
+!     Format for the last line, default: same as previous lines
+      if(present(lfs)) then
+         lf_string = lfs
+      else
+         lf_string = f_string
+      endif
+!
+!     Line length to send to format_print
+      if(present(ll)) then
+         l_length = ll
+      else
+         l_length = 70
+      endif
+!
+!     Option advance from format_print shall always be true for for errors
+!
+      call the_file%format_print('Error: ' // trim(error_specs),         &
+                                 reals, ints, chars, logs,               &
+                                 ffs=trim(ff_string), fs=trim(f_string), &
+                                 lfs=trim(lf_string), ll= l_length,      &
+                                 adv=.true.)
+!
+      call the_file%flush_()
 !
       stop "Something went wrong, check the .out file"
 !
    end subroutine error_msg_output_file
 !
 !
-   subroutine warning_msg_output_file(out_file, warning_specs)
+   subroutine warning_msg_output_file(the_file, warning_specs, reals, ints, chars, logs, fs, ffs, lfs, ll)
 !!
 !!    Warning message
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    Modified by Alexander C. Paul, Nov 2019
+!!    Uses format_print for the warning message
+!!
+!!    error_specs: String of character that should be printed as error message, 
+!!                 including formatting of reals and integers
+!!    reals:       Array of real(dp) to print - in the order specified by string 
+!!    ints:        Array of integers to print - in the order specified by string 
+!!    chars:       Array of strings to print - in the order specified by string
+!!                 Note that all the strings must be of same length in Fortran
+!!
+!!    fs:          Specifies the format of the entire string, e.g. fs='(/t6,a)' gives 
+!!                 a new line, then indentation 5, then the value of 'string'
+!!                 with reals and integers as specified. Default: '(t3,a)'
+!!    ffs:         Specifies the format of the first printed line if different from fs. 
+!!                 Default: same as fs
+!!    lfs:         Specifies the format of the last printed line if different from fs. 
+!!                 Default: same as fs
+!!    ll:          Integer specifying number of characters per line of print.
+!!
       implicit none
 !
-      class(output_file), intent(in) :: out_file
+      class(output_file) :: the_file
 !
       character(len=*) :: warning_specs
 !
-      write(out_file%unit, '(/t3,a)') 'Warning: ' // trim(warning_specs)
+      real(dp)        , dimension(:), intent(in), optional  :: reals 
+      integer         , dimension(:), intent(in), optional  :: ints
+      character(len=*), dimension(:), intent(in), optional  :: chars
+      logical         , dimension(:), intent(in), optional  :: logs
+!
+      integer         , optional, intent(in)                :: ll
+      character(len=*), optional, intent(in)                :: fs
+      character(len=*), optional, intent(in)                :: ffs
+      character(len=*), optional, intent(in)                :: lfs
+!
+      character(len=20) :: ff_string
+      character(len=20) :: f_string
+      character(len=20) :: lf_string
+      integer           :: l_length
+!
+      the_file%warning_counter = the_file%warning_counter + 1
+!
+!     Default format: New line with t3 - Warning message aligned after the colon
+!
+!     Format for the first line
+      if(present(ffs)) then
+         ff_string = ffs
+      else
+         ff_string = '(/t3,a)'
+      endif
+!
+!     Format for the core message
+      if(present(fs)) then
+         f_string = fs
+      else
+         f_string = '(t12,a)'
+      endif
+!
+!     Format for the last line, default: same as previous lines
+      if(present(lfs)) then
+         lf_string = lfs
+      else
+         lf_string = f_string
+      endif
+!
+!     Line length to send to format_print
+      if(present(ll)) then
+         l_length = ll
+      else
+         l_length = 70
+      endif
+!
+!     Option advance from format_print shall always be true for for errors
+!
+      call the_file%format_print('Warning: ' // trim(warning_specs),     &
+                                 reals, ints, chars, logs,               &
+                                 ffs=trim(ff_string), fs=trim(f_string), &
+                                 lfs=trim(lf_string), ll=l_length,       &
+                                 adv=.true.)
+!
+      call the_file%flush_()
 !
    end subroutine warning_msg_output_file
+!
+!
+   subroutine check_for_warnings_output_file(the_file)
+!!
+!!    Check for warnings
+!!    Written by Alexander C. Paul, Nov 2019
+!!
+      implicit none
+!
+      class(output_file) :: the_file
+!
+      if (the_file%warning_counter .eq. 1) then
+!
+         call the_file%printf(':: There was 1 warning during the execution of eT. ::', &
+                              pl='m', fs='(/t3,a)')
+!
+      else if(the_file%warning_counter .gt. 1) then
+!
+         call the_file%printf(':: There were (i0) warnings during the execution of eT. ::', &
+                              ints=[the_file%warning_counter], pl='m', fs='(/t3,a)')
+!
+      else if(the_file%warning_counter .lt. 0) then
+!
+         call the_file%error_msg('Negative number of warning messages.' // &
+                                 'Something went horribly wrong.')
+!
+      end if
+!
+   end subroutine check_for_warnings_output_file
 !
 !  
    subroutine printf_output_file(the_file, string, pl, reals, ints, chars, logs, fs, ffs, lfs, ll, adv)
@@ -391,7 +557,6 @@ contains
          return 
 !
       endif
-!
 !
       if (the_file%should_print(plvl)) then
 !

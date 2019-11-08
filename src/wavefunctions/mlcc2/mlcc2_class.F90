@@ -262,7 +262,8 @@ contains
 !
       call wf%general_cc_preparations(system)
 
-      if (wf%frozen_core .or. wf%frozen_hf_mos) call output%error_msg('frozen orbitals not yet implemented for MLCC2')
+      if (wf%frozen_core .or. wf%frozen_hf_mos) &
+            call output%error_msg('frozen orbitals not yet implemented for MLCC2')
 !
       call wf%read_mlcc_settings()
 !
@@ -402,7 +403,8 @@ contains
 !
          wf%n_cnto_states = input%get_n_elements_for_keyword_in_section('cnto states', 'mlcc')
 !
-         if (wf%n_cnto_states == 0) call output%error_msg('to construct CNTOs excitation vectors must be specified.')
+         if (wf%n_cnto_states == 0) &
+               call output%error_msg('to construct CNTOs excitation vectors must be specified.')
 !
          call wf%initialize_cnto_states()
          call input%get_array_for_keyword_in_section('cnto states', 'mlcc', wf%n_cnto_states, wf%cnto_states)
@@ -415,7 +417,8 @@ contains
 !
          wf%n_nto_states = input%get_n_elements_for_keyword_in_section('nto states', 'mlcc')
 !
-         if (wf%n_nto_states == 0) call output%error_msg('to construct NTOs excitation vectors must be specified.')
+         if (wf%n_nto_states == 0) &
+               call output%error_msg('to construct NTOs excitation vectors must be specified.')
 !
          call wf%initialize_nto_states()
          call input%get_array_for_keyword_in_section('nto states', 'mlcc', wf%n_nto_states, wf%nto_states)
@@ -907,7 +910,9 @@ contains
 !
          i = core_MOs(core)
 !
-         if ((i .lt. wf%first_cc2_o) .or. (i  .gt. wf%last_cc2_o)) call output%error_msg('Core orbital is not CC2 orbital', i)
+         if ((i .lt. wf%first_cc2_o) .or. (i  .gt. wf%last_cc2_o)) then 
+            call output%error_msg('Core orbital (i0) is not CC2 orbital', ints=[i])
+         end if
 !
 !$omp parallel do private (a, ai)
          do a = 1, wf%n_v

@@ -635,7 +635,8 @@ contains
 !
          else
 !
-            call output%error_msg('Attempted to insert element into empty list at position', n)
+            call output%error_msg('Attempted to insert element into empty list '// &
+                                  'at position (i0)', ints=[n])
 !
          endif
 !

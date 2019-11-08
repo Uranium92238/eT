@@ -1943,8 +1943,8 @@ contains
              if(abs(eta(current_atom)).lt.1.0d-8) then
 !             
                call output%printf('Polarizable QM/FQ ', pl='m', fs='(/t6,a)')
-               call output%error_msg('You have put zero chemical hardness on atom:', &
-                                    error_int=current_atom)
+               call output%error_msg('You have put zero chemical hardness on atom: (i0)', &
+                                      ints=[current_atom])
 !                
              endif
 !             

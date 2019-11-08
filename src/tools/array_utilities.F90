@@ -931,8 +931,9 @@ contains
 !
       call dtrtri('l','n', n, Ainv, n, info)
 !
-      if (info /= 0) then
-         call output%error_msg('Matrix inversion failed. ', info)
+      if (info /= 0) then 
+         call output%error_msg('Matrix inversion failed.' // &
+                               ' "Dtrtri" finished with info: (i0)', ints=[info])
       end if
 !
    end subroutine invert_lower_triangular

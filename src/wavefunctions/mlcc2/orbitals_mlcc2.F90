@@ -383,7 +383,10 @@ contains
 !
          call mem%dealloc(work, 4*n_active)
 !
-         if (info .ne. 0) call output%error_msg('Diagonalization of active fock matrix block failed')
+         if (info .ne. 0) then
+            call output%error_msg('Diagonalization of active fock matrix block failed.' // &
+                                 ' "Dsyev" finished with info: (i0)', ints=[info])
+         end if
 !
 !        Setting diagonal (orbital energies)
 !
@@ -417,7 +420,10 @@ contains
 !
          call mem%dealloc(work, 4*(n_total - n_active))
 !
-         if (info .ne. 0) call output%error_msg('Diagonalization of inactive fock matrix block failed')
+         if (info .ne. 0) then 
+            call output%error_msg('Diagonalization of inactive fock matrix block failed.' // &
+                                  ' "Dsyev" finished with info: (i0)', ints=[info])
+         end if
 !
 !        Setting diagonal (orbital energies)
 !
@@ -933,7 +939,10 @@ contains
       call mem%dealloc(work, 4*wf%n_o)
       call mem%dealloc(eigenvalues, wf%n_o)
 !
-      if (info .ne. 0) call output%error_msg('Diagonalization of M failed')
+      if (info .ne. 0) then 
+         call output%error_msg('Diagonalization of M failed.' // &
+                               ' "Dsyev" finished with info: (i0)', ints=[info])
+      end if
 !
 !     Write eigenvectors of M 
 !
@@ -1228,11 +1237,14 @@ contains
       enddo
 !
       if (count_zero_eigenvalues .gt. 0)  &
-         call output%printf('Warning: T_v has (i0) zero eigenvalues', ints=[count_zero_eigenvalues],pl='minimal')
+         call output%warning_msg('Warning: T_v has (i0) zero eigenvalues', ints=[count_zero_eigenvalues])
 !
       call mem%dealloc(eigenvalues, wf%n_v)
 !
-      if (info .ne. 0) call output%error_msg('Diagonalization of N failed')
+      if (info .ne. 0) then
+         call output%error_msg('Diagonalization of N failed. ' // &
+                               ' "Dsyev" finished with info: (i0)', ints=[info])
+      end if
 !
    end subroutine diagonalize_M_and_N_mlcc2
 !
