@@ -181,7 +181,10 @@ contains
                   4*(bfgs%n_parameters+1),   &
                   info)
 !
-      if (info .ne. 0) call output%error_msg('Could not solve eigenvalue equation in BFGS tool.')
+      if (info .ne. 0) then 
+         call output%error_msg('Could not solve eigenvalue equation in BFGS tool.' // &
+                              ' "Dsyev" finished with info: (i0)', ints=[info])
+      end if
 !
       call output%printf('Level shift: (f19.12)', reals=[eigvals(1)], fs='(/t3,a)')
 !

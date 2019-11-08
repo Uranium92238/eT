@@ -2983,7 +2983,10 @@ contains
 !
       call dtrtri('l','n', solver%n_cholesky, cholesky_inverse, solver%n_cholesky, info)
 !
-      if (info /= 0) call output%error_msg('Error: matrix inversion failed!', info)
+      if (info /= 0) then 
+         call output%error_msg('Matrix inversion failed.' // &
+                               ' "Dtrtri" finished with info: (i0)', ints=[info])
+      end if
 !
 !     Write inverse Cholesky vectors of auxiliary basis overlap
 !

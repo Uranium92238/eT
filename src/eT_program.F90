@@ -102,6 +102,8 @@ program eT_program
 !
    call mem%check_for_leak()
 !
+   call output%check_for_warnings()
+!
    call output%printf('eT terminated successfully!', pl='minimal', fs='(/t3,a)')
 !
    call output%close_()

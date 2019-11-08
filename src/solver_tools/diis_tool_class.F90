@@ -335,7 +335,7 @@ contains
       call mem%dealloc(ipiv, current_dim + 1)
       call mem%dealloc(diis_matrix, current_dim + 1, current_dim + 1)
 !
-      if (info .ne. 0) call output%error_msg('could not solve DIIS matrix equation!', info)
+      if (info .ne. 0) call output%error_msg('could not solve DIIS matrix equation! (i0)', ints=[info])
 !
 !     Update the parameters x
 !
