@@ -1,5 +1,4 @@
 # Try to find PCMSolver
-# Exchange-Correlation functional library
 #
 # If successful, will define the required variables
 # PCMSolver_FOUND - true if PCMSolver was found
@@ -10,6 +9,8 @@
 # Distributed under the GNU Lesser General Public License.
 
 #Where to look for PCMSolver
+
+#Eirik F. Kjønstad, Nov 2019: assume .dylib if mac, .so otherwise
 
 set(_PCMSolver_NORMAL_SEARCH
   "/usr/local"
@@ -31,10 +32,10 @@ endif()
 # Use the find_package macro to search in some possible paths
 
 find_package(PCMSolver
-  CONFIG
-  PATHS ${PCMSolver_ROOT} ${_PCMSolver_NORMAL_SEARCH}
-  NO_DEFAULT_PATH
-  QUIET)
+ CONFIG
+ PATHS ${PCMSolver_ROOT} ${_PCMSolver_NORMAL_SEARCH}
+ NO_DEFAULT_PATH
+ QUIET)
 
 if(PCMSolver_LIBRARY)
    # If found PCMSolver, get the library path
@@ -59,8 +60,8 @@ else()
    #External project to construct
    ExternalProject_add(project_PCMSolver
       # git repository url
-      GIT_REPOSITORY https://github.com/PCMSolver/pcmsolver.git
-      GIT_TAG release/1.2
+      GIT_REPOSITORY https://github.com/eirik-kjonstad/pcmsolver.git
+      GIT_TAG patched_release_1.2
       # root directory of the project
       PREFIX ${PCMSolver_library}
       # source directory in which git clones the repository
@@ -87,8 +88,13 @@ else()
    add_library(PCMSolver SHARED IMPORTED)
 
    # link the IMPORTED library to its files
-   set_property(TARGET PCMSolver
+   if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+     set_property(TARGET PCMSolver
+      PROPERTY IMPORTED_LOCATION ${PCMSolver_install}/${CMAKE_INSTALL_LIBDIR}/libpcm.dylib)
+   else()
+     set_property(TARGET PCMSolver
       PROPERTY IMPORTED_LOCATION ${PCMSolver_install}/${CMAKE_INSTALL_LIBDIR}/libpcm.so)
+   endif()
 
    # mandatory. set the library dependencies
    add_dependencies(PCMSolver project_PCMSolver)
