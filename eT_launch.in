@@ -26,6 +26,7 @@ import argparse
 import sys
 import glob
 import subprocess
+import fnmatch
 
 if sys.version < '3.5':
     print('requires python version >= 3.5')
@@ -189,6 +190,14 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
     if(args.profile):
         shutil.copyfile(profile_src,profile_dest)
     
+    #Check if there are any .plt files    
+    pltfiles = [pltfile for pltfile in fnmatch.filter(os.listdir(scratch), '*.plt')]
+    for pltfile in pltfiles:
+        pltsrc = os.path.join(scratch, pltfile)
+        pltname = pltfile.replace('eT', inp_name)
+        pltdest = os.path.join(cwd, pltname)
+        shutil.copyfile(pltsrc, pltdest)
+
     os.chdir(cwd)
 
     if (something_wrong):

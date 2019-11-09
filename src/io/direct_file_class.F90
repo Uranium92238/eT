@@ -114,6 +114,10 @@ module direct_file_class
 !
       final :: destructor
 !
+!
+      procedure :: write_chimera => write_chimera_direct_file
+      procedure :: read_chimera  => read_chimera_direct_file
+!
    end type direct_file
 !
    interface direct_file
@@ -783,7 +787,7 @@ contains
                                       & min_z, max_z, min_y, max_y, min_x, max_x, &
                                       & vector)
 !!
-!!    Direct file write chimera
+!!    Write chimera
 !!    Written by Rolf H. Myhre, September 2019
 !!
 !!    Specialized routine to write density grids 
@@ -835,6 +839,69 @@ contains
       endif
 !
    end subroutine write_chimera_direct_file
+!
+!
+   subroutine read_chimera_direct_file(the_file, n_z, n_y, n_x, &
+                                      & min_z, max_z, min_y, max_y, min_x, max_x, &
+                                      & vector)
+!!
+!!    Read chimera
+!!    Written by Andreas Skeidsvoll, Oct 2019
+!!
+!!    Specialized routine to read density grids 
+!!    in the plt format readable by chimera
+!!    
+!!    Adapted from write_chimera_direct_file
+!!    Written by Rolf H. Myhre, September 2019
+!!
+!!    Changed to from write to read
+!!
+      implicit none
+!
+      class(direct_file), intent(inout) :: the_file
+!
+      integer, intent(out)  :: n_z, n_y, n_x !Number of grid points in each direction
+      real(dp), intent(out) :: min_z, max_z, min_y, max_y, min_x, max_x !Min and max in each direction
+!
+      real(kind=4), dimension(:), intent(out) :: vector
+!
+      integer(i6) :: int1, int2
+      integer(i6) :: n_z_sp, n_y_sp, n_x_sp !Single precision 
+!
+      real(kind=4) :: min_z_sp, max_z_sp, min_y_sp, max_y_sp, min_x_sp, max_x_sp !Single precision
+!
+      integer              :: io_error
+      character(len=100)   :: io_msg
+!
+      int1 = 3 !Required integer that must always be 3
+      int2 = 200 !Required integer that can be anything
+!
+      read(the_file%unit, rec=1, &
+            iostat=io_error, iomsg=io_msg) int1, &
+                                           int2, &
+                                           n_z_sp, n_y_sp, n_x_sp, &
+                                           min_z_sp, max_z_sp, &
+                                           min_y_sp, max_y_sp, &
+                                           min_x_sp, max_x_sp, &
+                                           vector
+!
+      if(io_error .ne. 0) then
+         call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
+                              &'. Error message: '//trim(io_msg))
+      endif
+!
+      n_z = int(n_z_sp)
+      n_y = int(n_y_sp)
+      n_x = int(n_x_sp)
+!
+      min_z = real(min_z_sp)
+      max_z = real(max_z_sp)
+      min_y = real(min_y_sp)
+      max_y = real(max_y_sp)
+      min_x = real(min_x_sp)
+      max_x = real(max_x_sp)
+!
+   end subroutine read_chimera_direct_file
 !
 !
    subroutine destructor(the_file)

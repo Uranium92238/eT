@@ -351,7 +351,7 @@ subroutine print_program_banner()
    call output%printf('program design, HF, CCS, CC2, CCSD, Libint-interface, &
                       &Cholesky decomposition, Davidson-tool, CVS, DIIS-tool, &
                       &zeroth order properties, first order properties, IP, &
-                      &frozen core, MLCC2, MLHF', &
+                      &frozen core, MLCC2, MLHF, visualization', &
                       pl='m', ffs='(t6,a)', fs='(t27,a)', ll=50)
 !
    call output%printf('Tommaso Giovannini     QM/MM, PCM, Libint-interface', pl='m', fs='(t4,a)', ll=82)
@@ -369,7 +369,8 @@ subroutine print_program_banner()
    call output%printf('Rolf H. Myhre          CC3, Runtest-interface, launch script, file system', &
                         pl='m', fs='(t4,a)', ll=82)
    call output%printf('Alexander C. Paul      CC2, CC3, first order properties', pl='m', fs='(t4,a)', ll=82)
-   call output%printf('Andreas Skeidsvoll     MP2, CC propagation, FFT solver', pl='m', fs='(t4,a)', ll=82)
+   call output%printf('Andreas Skeidsvoll     MP2, CC propagation, FFT solver, visualization', &
+                      pl='m', fs='(t4,a)', ll=82)
    call output%printf('Åsmund H. Tveten       HF', pl='m', fs='(t4,a)', ll=82)
 !
    call output%print_separator('m', 82, '-', fs='(t3,a)')

@@ -50,6 +50,10 @@ module parameters
    real(dp), parameter :: sixth     = one/six
    real(dp), parameter :: eighth    = one/eight
 !
+!  Pi
+!
+   real(dp), parameter :: pi = four*atan(one)
+!
 !  Complex integers
 !
    complex(dp), parameter :: zero_complex  = cmplx(zero, zero, dp)
