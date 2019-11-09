@@ -1,0 +1,535 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
+module visualization_class
+!
+!!
+!!    Visualization class
+!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Aug 2019
+!!
+!!    A tool to plot orbitals and densities. That is, produce .plt files
+!!    which may be opened in Chimera. This class has two
+!!    routines that may be accessed outside of this module: 
+!!
+!!    Usage:
+!!
+!!    Include a use statement
+!!
+!!       use visualization_class, only : visualization
+!!
+!!    Declare and initialize a tool
+!!
+!!       type(visualization) :: plotter
+!!
+!!       ...
+!!
+!!       plotter = visualization(wf%system)
+!!
+!!    Plot something:
+!!
+!!       call plotter%plot_orbitals(wf%system, orbital_coefficients, wf%n_ao, n_mo, file_tags)
+!!       call plotter%plot_density(wf%system, wf%n_ao, D, file_tag)
+!!
+!!       plot_orbitals  -> use it to plot orbitals by passing orbital coefficients
+!!       plot_density   -> use it to plot densities (NOTE: see documentation of how 
+!!                         these densities must be prepared)
+!!    
+!!
+!
+   use parameters
+!
+   use molecular_system_class, only: molecular_system
+   use global_out, only: output
+   use global_in, only: input
+   use memory_manager_class, only: mem
+!
+   type :: visualization 
+!
+      real(dp) :: buffer ! The padding in x, y, and z directions around the molecule  (Angstrom)
+!
+      integer  :: n_x, n_y, n_z, n_grid_points
+      real(dp) :: dx ! Grid point spacing
+      real(dp) :: x_min, y_min, z_min
+      real(dp) :: x_max, y_max, z_max
+!
+   contains 
+!
+      procedure :: plot_orbitals => plot_orbitals_visualization
+      procedure :: plot_density  => plot_density_visualization
+!
+      procedure, private :: set_up_grid                  => set_up_grid_visualization
+      procedure, private :: print_grid_info              => print_grid_info_visualization
+      procedure, private :: read_settings                => read_settings_visualization
+      procedure, private :: write_vector_to_plt          => write_vector_to_plt_visualization
+      procedure, private :: evaluate_mos_on_grid         => evaluate_mos_on_grid_visualization
+      procedure, private :: evaluate_density_on_grid     => evaluate_density_on_grid_visualization
+!
+   end type visualization
+!
+!
+   interface visualization
+!
+      procedure :: new_visualization
+!
+   end interface visualization 
+!
+!
+contains
+!
+!
+   function new_visualization(system) result(plotter)
+!!
+!!    New visualization 
+!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Aug 2019
+!!
+      implicit none 
+!
+      type(molecular_system), intent(inout) :: system
+      type(visualization) :: plotter
+!
+!     Default settings (lengths given in Ångströms)
+!
+      plotter%dx     = 0.1d0 
+      plotter%buffer = 2.00d0
+!
+      call plotter%read_settings()
+!
+      call plotter%set_up_grid(system)
+!
+      call output%printf(':: Visualization of orbitals and density', pl='minimal', fs='(/t3,a)')
+!
+      call plotter%print_grid_info()
+!
+      call system%set_basis_info()
+!
+   end function new_visualization
+!
+!
+  subroutine set_up_grid_visualization(plotter, system)
+!!
+!!    Set up grid
+!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Jul 2019
+!!
+!!    Sets up the grid, that is, given the
+!!    buffer and grid point spacing, it sets up a 
+!!    grid around the molecule (system)
+!!
+!!
+      implicit none
+!
+      class(visualization), intent(inout) :: plotter
+      type(molecular_system), intent(in)      :: system
+!
+      integer :: i
+!
+      if (plotter%buffer .lt. plotter%dx) &
+         call output%error_msg('in visualization tool. Buffer is smaller than grid point spacing!')
+!
+!     Find minimal and maximal atomic x, y and z positions in the molecule
+!
+      plotter%x_min = system%atoms(1)%x
+      plotter%y_min = system%atoms(1)%y
+      plotter%z_min = system%atoms(1)%z
+!
+      plotter%x_max = system%atoms(1)%x
+      plotter%y_max = system%atoms(1)%y
+      plotter%z_max = system%atoms(1)%z
+!
+      do i = 2, system%n_atoms
+!
+         plotter%x_min = min(plotter%x_min, system%atoms(i)%x)
+         plotter%y_min = min(plotter%y_min, system%atoms(i)%y)
+         plotter%z_min = min(plotter%z_min, system%atoms(i)%z)
+!
+         plotter%x_max = max(plotter%x_max, system%atoms(i)%x)
+         plotter%y_max = max(plotter%y_max, system%atoms(i)%y)
+         plotter%z_max = max(plotter%z_max, system%atoms(i)%z)
+!
+      enddo
+!
+!     Subtract/add buffer from minimum/maximum X,Y,Z values
+!
+      plotter%x_min = plotter%x_min - plotter%buffer
+      plotter%y_min = plotter%y_min - plotter%buffer
+      plotter%z_min = plotter%z_min - plotter%buffer
+!
+      plotter%x_max = plotter%x_max + plotter%buffer
+      plotter%y_max = plotter%y_max + plotter%buffer
+      plotter%z_max = plotter%z_max + plotter%buffer
+!
+!     Determine the number of grid points in x, y, and z directions
+!
+      plotter%n_x = nint((plotter%x_max - plotter%x_min)/plotter%dx)
+      plotter%n_y = nint((plotter%y_max - plotter%y_min)/plotter%dx)
+      plotter%n_z = nint((plotter%z_max - plotter%z_min)/plotter%dx)
+!
+!     Update x_max, y_max, z_max
+!
+      plotter%x_max = plotter%x_min + (plotter%n_x - 1)*plotter%dx
+      plotter%y_max = plotter%y_min + (plotter%n_y - 1)*plotter%dx
+      plotter%z_max = plotter%z_min + (plotter%n_z - 1)*plotter%dx
+! 
+      plotter%n_grid_points = (plotter%n_x)*(plotter%n_y)*(plotter%n_z)
+!
+   end subroutine set_up_grid_visualization
+!
+!
+   subroutine print_grid_info_visualization(plotter)
+!!
+!!    Print grid information
+!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Aug 2019
+!!
+      implicit none
+!
+      class(visualization), intent(in) :: plotter
+!
+      call output%printf('Grid information              x             y             z       ', &
+                  pl='normal', fs='(/t3, a)')
+!
+      call output%print_separator(pl='normal', fs='(t3, a)', n=66, symbol='-')
+!
+      call output%printf('First (A):                (f8.2)      (f8.2)      (f8.2)', & 
+                  reals=[plotter%x_min, plotter%y_min, plotter%z_min],  &
+                  pl='normal', fs='(t3, a)')
+!
+      call output%printf('Last (A):                 (f8.2)      (f8.2)      (f8.2)', &
+                  reals=[plotter%x_min + (plotter%n_x-1)*plotter%dx,    &
+                         plotter%y_min + (plotter%n_y-1)*plotter%dx,    &
+                         plotter%z_min + (plotter%n_z-1)*plotter%dx],   &
+                         pl='normal', fs='(t3, a)')
+!
+      call output%printf('Number of grid points:  (i8)      (i8)       (i8)',    &
+                        ints=[plotter%n_x, plotter%n_y, plotter%n_z],  &
+                        pl='normal', fs='(t3, a)')
+!
+      call output%print_separator(pl='normal', fs='(t3, a)', n=66, symbol='-')
+!
+   end subroutine print_grid_info_visualization
+!  
+!
+   subroutine write_vector_to_plt_visualization(plotter, vector, file_name)
+!!
+!!    Write vector to plt file
+!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Aug 2019
+!!
+!
+      use direct_file_class, only: direct_file
+!
+      implicit none
+!
+      class(visualization), intent(in) :: plotter
+!
+      real(kind=4), dimension(plotter%n_grid_points), intent(in) :: vector
+!
+      character(len=*), intent(in) :: file_name
+!
+      type(direct_file) :: plt_file
+!
+      plt_file = direct_file(trim(file_name), (plotter%n_grid_points + 11), w_size=4)
+!
+      call plt_file%open_('write')
+!
+      call plt_file%write_chimera(plotter%n_z, plotter%n_y, plotter%n_x,   &
+                                       plotter%z_min, plotter%z_max, plotter%y_min,    &
+                                       plotter%y_max, plotter%x_min, plotter%x_max,    &
+                                       vector)
+!
+      call plt_file%close_('keep')
+!
+   end subroutine write_vector_to_plt_visualization
+!
+!
+   subroutine read_settings_visualization(plotter)
+!!
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Aug 2019
+!!
+      implicit none 
+!
+      class(visualization), intent(inout) :: plotter 
+!
+      call input%get_keyword_in_section('grid spacing', 'visualization', plotter%dx)
+      call input%get_keyword_in_section('grid buffer', 'visualization', plotter%buffer)
+!
+   end subroutine read_settings_visualization
+!
+!
+   subroutine evaluate_mos_on_grid_visualization(plotter, system, mos_on_grid, &
+                                                         n_ao, orbital_coefficients, n_mo)
+!!
+!!    Evaluate MOs on grid
+!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Jul 2019
+!!
+!!    Creates the values at each grid point of the n_mo orbitals
+!!    given by orbital_coefficients.
+!!    This is done by contracting the vector of AO values on the grid
+!!    with the orbital coefficients of the MOs.   
+!!
+!!    This routine may be used for canonical orbitals 
+!!    NTOs, CNTOs and so on.
+!!
+      implicit none
+!
+      class(visualization), intent(in)  :: plotter
+!
+      integer, intent(in) :: n_ao, n_mo
+!
+      real(kind=4), dimension(plotter%n_x, plotter%n_y, &
+                              plotter%n_z, n_mo), intent(out) :: mos_on_grid
+!
+      type(molecular_system), intent(in) :: system
+!
+      real(dp), dimension(n_ao, n_mo), intent(in) :: orbital_coefficients
+!
+      integer                             :: i, j, k, mo, ao
+      real(dp), dimension(:), allocatable :: aos_at_point
+      real(dp)                            :: x, y, z
+!
+      real(dp), external :: ddot
+!
+      call mem%alloc(aos_at_point, n_ao)
+!
+!$omp parallel do private(k, j, i, x, y, z, aos_at_point, mo, ao)
+      do k = 1, plotter%n_z
+         do j = 1, plotter%n_y
+            do i = 1, plotter%n_x
+!
+               x = plotter%x_min + real((i-1), dp)*plotter%dx
+               y = plotter%y_min + real((j-1), dp)*plotter%dx
+               z = plotter%z_min + real((k-1), dp)*plotter%dx
+!
+               call system%evaluate_aos_at_point(x, y, z, aos_at_point, n_ao)
+!
+               do mo = 1, n_mo
+!
+                  mos_on_grid(i, j, k, mo) = real(ddot(n_ao, aos_at_point, 1, &
+                     orbital_coefficients(1,mo), 1), kind=4)
+!
+               enddo
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call mem%dealloc(aos_at_point, n_ao)
+!
+   end subroutine evaluate_mos_on_grid_visualization
+!
+!
+   subroutine plot_orbitals_visualization(plotter, system, orbital_coefficients, &
+                                                n_ao, n_mo, file_tags)
+!!
+!!    Plot orbitals
+!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Sep. 2019
+!!
+!!    Plots orbitals on grid.
+!!
+!!    Receives the number of MOs to plot n_mo, 
+!!    the orbital coefficients for these orbitals,
+!!    the molecular system, and the file_tags for
+!!    file names
+!!
+      use array_utilities, only: get_abs_max
+!!
+      implicit none
+!
+      class(visualization), intent(inout) :: plotter
+!
+      type(molecular_system), intent(in) :: system
+!
+      integer, intent(in) :: n_ao, n_mo
+!
+      real(dp), dimension(n_ao, n_mo), intent(in) :: orbital_coefficients
+!
+      character(len=200), dimension(n_mo), intent(in) :: file_tags
+!
+      real(kind=4), dimension(:,:,:,:), allocatable :: mos_on_grid
+!
+      character(len=200) :: file_name
+!
+      integer :: mo
+!
+      call output%printf('- Plotting orbitals', pl='minimal', fs='(/t3,a)')      
+!
+!     Create array of molecular orbitals at grid point
+!
+      allocate(mos_on_grid(plotter%n_x, plotter%n_y, plotter%n_z, n_mo))
+      call plotter%evaluate_mos_on_grid(system, mos_on_grid, n_ao, orbital_coefficients, n_mo)
+!
+!     Write the molecular orbitals in the array to .plt files
+!
+      do mo = 1, n_mo
+!
+!        For each orbital write to file
+!
+         file_name = 'eT' // '.' // trim(file_tags(mo)) // '.plt'
+!
+         call plotter%write_vector_to_plt(mos_on_grid(:, :, :, mo), trim(file_name))
+!
+      enddo
+!
+      deallocate(mos_on_grid)
+!
+   end subroutine plot_orbitals_visualization
+!
+!
+   subroutine plot_density_visualization(plotter, system, n_ao, density, file_tag)
+!!
+!!    Plot density 
+!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Sep 2019
+!!
+!!    Plot density (e.g. AO density,  CC densities or density
+!!    differences)
+!!
+!!    NOTE:
+!!
+!!    The density passed to this routine has dimension
+!!     (n_ao x n_ao) and
+!!
+!!    For HF,  D^AO is passed to the routine.
+!!
+!!    For coupled cluster densities we have
+!!
+!!       D_alpha,beta = (sum_pq  D_pq C_alpha,p C_beta,q) 
+!! 
+!!    is passed to the routine.
+!!
+      implicit none 
+!
+      class(visualization), intent(in)     :: plotter
+      class(molecular_system), intent(in)  :: system
+!
+      integer, intent(in) :: n_ao
+!
+      character(len=200), intent(in) :: file_tag
+!
+      real(dp), dimension(n_ao, n_ao), intent(in) :: density
+!
+      real(kind=4), dimension(:), allocatable :: density_on_grid_vec
+!
+      character(len=200) :: file_name
+
+      call output%printf('- Plotting density', pl='minimal', fs='(/t3,a)')      
+!
+!     Create electron density vector
+!
+      allocate(density_on_grid_vec(plotter%n_grid_points))
+!
+      call plotter%evaluate_density_on_grid(system, n_ao, density, density_on_grid_vec)
+!
+!     Write vector to .plt file
+!
+      file_name = 'eT' // '.' // trim(file_tag) // '.plt'
+      call plotter%write_vector_to_plt(density_on_grid_vec, trim(file_name))
+!
+      deallocate(density_on_grid_vec)
+!
+   end subroutine plot_density_visualization
+!
+!
+   subroutine evaluate_density_on_grid_visualization(plotter, system, n_ao, density, &
+                                                      density_on_grid_vec)
+!!
+!!    Evaluate density on grid
+!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Aug 2019
+!!
+!!    Calculates the expectation value of the density for each grid point:
+!!
+!!      rho(r) = sum_pq D_pq phi_p(r) phi_q(r) 
+!!           
+!!    See eqn. (2.7.33) in Molecular Electronic Structure Theory
+!!
+!!    For the HF density (D_pq = delta_pq nu_q), the expression reduces to 
+!!
+!!       sum_alpha,beta xi_alpha(r) D^AO_alpha,beta xi_beta(r)
+!!
+!!    and the AO density must be passed to this routine.
+!!
+!!    For coupled cluster densities we have
+!!     
+!!       sum_pq D_pq phi_p(r) phi_q(r) 
+!!       = sum_alpha,beta (sum_pq  D_pq C_alpha,p C_beta,q) xi_beta(r) xi_alpha(r)
+!!       = sum_alpha,beta D_alpha,beta xi_beta(r) xi_alpha(r)
+!!
+!!    and 
+!!
+!!       D_alpha,beta = (sum_pq  D_pq C_alpha,p C_beta,q) 
+!! 
+!!    is passed to the routine.
+
+      implicit none
+!
+      class(visualization), intent(in)  :: plotter
+!
+      integer, intent(in) :: n_ao
+!
+      real(dp), dimension(n_ao, n_ao), intent(in)  :: density
+      real(kind=4), dimension(plotter%n_grid_points), intent(out) :: density_on_grid_vec
+!
+      type(molecular_system), intent(in) :: system
+!
+      integer                             :: i, j, k, vector_index
+      real(dp), dimension(:), allocatable :: aos_at_point, intermediate
+      real(dp)                            :: x, y, z
+!
+      real(dp), external :: ddot
+!
+      call mem%alloc(aos_at_point, n_ao)
+      call mem%alloc(intermediate, n_ao)
+!
+!$omp parallel do private(k, j, i, x, y, z, aos_at_point, intermediate, vector_index)
+      do k = 1, plotter%n_z
+         do j = 1, plotter%n_y
+            do i = 1, plotter%n_x
+!
+               x = plotter%x_min + real((i-1), dp)*plotter%dx
+               y = plotter%y_min + real((j-1), dp)*plotter%dx
+               z = plotter%z_min + real((k-1), dp)*plotter%dx
+!
+               call system%evaluate_aos_at_point(x, y, z, aos_at_point, n_ao)
+!
+               call dgemv('N',            &
+                          n_ao,           &
+                          n_ao,           & 
+                          one,            &
+                          density,        &
+                          n_ao,           & 
+                          aos_at_point,   &
+                          1,              &
+                          zero,           &
+                          intermediate,   &
+                          1)
+!
+               vector_index = (k-1)*plotter%n_y*plotter%n_x + (j-1)*plotter%n_x + i
+               density_on_grid_vec(vector_index) = real(ddot(n_ao, aos_at_point, &
+                                                                  1, intermediate, 1), kind=4)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call mem%dealloc(aos_at_point, n_ao)
+      call mem%dealloc(intermediate, n_ao)
+!
+   end subroutine evaluate_density_on_grid_visualization
+!
+!
+end module visualization_class

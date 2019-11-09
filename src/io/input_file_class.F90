@@ -141,6 +141,7 @@ contains
       type(section) :: mlcc
       type(section) :: mm
       type(section) :: mlhf
+      type(section) :: visualization
       type(section) :: pcm
       type(section) :: global_print
       type(section) :: frozen_orbitals
@@ -386,6 +387,13 @@ contains
                         'project on minimal basis',   &
                         'cholesky virtuals']
 !
+!
+      visualization%name_    = 'visualization'
+      visualization%required = .false.
+      visualization%keywords = [character(len=25) ::    &
+                                 'plot hf orbitals',  &
+                                 'plot hf density'    ]
+!
       global_print%name_    = 'print'
       global_print%required = .false.
       global_print%keywords = [character(len=25) :: &
@@ -433,6 +441,7 @@ contains
                            pcm,                    &
                            mlhf,                      &
                            global_print,              &
+                           visualization,             &
                            frozen_orbitals]
 !
       the_file%is_open = .false.

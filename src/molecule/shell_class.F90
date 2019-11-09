@@ -21,10 +21,11 @@ module shell_class
 !
 !!
 !!    Shell class module
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad and Andreas Skeidsvoll, 2019
 !!
 !
    use kinds
+!
    use interval_class
    use global_out, only : output
    use memory_manager_class, only : mem
@@ -155,168 +156,181 @@ contains
    end subroutine determine_last_ao_index_shell
 !
 !
-   subroutine initialize_exponents_shell(ao)
+   subroutine initialize_exponents_shell(sh)
 !!
-!!    Initialize exponents
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: ao
+      class(shell), intent(inout) :: sh
 !
-      if (ao%n_primitives == 0) &
+      if (sh%n_primitives == 0) &
       call output%error_msg('Number of primitive Gaussians not set before alloc of exponents')
 !
-      if (.not. allocated(ao%exponents)) call mem%alloc(ao%exponents, ao%n_primitives)
+      if (.not. allocated(sh%exponents)) &
+         call mem%alloc(sh%exponents, sh%n_primitives)
 !
    end subroutine initialize_exponents_shell
 !
 !
-   subroutine initialize_coefficients_shell(ao)
+   subroutine initialize_coefficients_shell(sh)
 !!
 !!    Initialize coefficients
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: ao
+      class(shell), intent(inout) :: sh
 !
-      if (ao%n_primitives == 0) &
+      if (sh%n_primitives == 0) &
       call output%error_msg('Number of primitive Gaussians not set before alloc of coefficients')
 !
-      if (.not. allocated(ao%coefficients)) call mem%alloc(ao%coefficients, ao%n_primitives)
+      if (.not. allocated(sh%coefficients)) &
+            call mem%alloc(sh%coefficients, sh%n_primitives)
 !
    end subroutine initialize_coefficients_shell
 !
 !
-   subroutine destruct_exponents_shell(ao)
+   subroutine destruct_exponents_shell(sh)
 !!
-!!    Destruct exponents
-!!    Written by Sarai D. Folkestad, 2019
+!!    Destruct primitive exponents
+!!    Written by Andreas Skeidsvoll, Aug 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: ao
+      class(shell), intent(inout) :: sh
 !
-      if (allocated(ao%exponents)) call mem%dealloc(ao%exponents, ao%n_primitives)
+      if (sh%n_primitives == 0) &
+      call output%error_msg('Number of primitive Gaussians not set before dealloc of exponents')
+!
+      if (allocated(sh%exponents)) &
+         call mem%dealloc(sh%exponents, sh%n_primitives)
 !
    end subroutine destruct_exponents_shell
 !
 !
-   subroutine destruct_coefficients_shell(ao)
+   subroutine destruct_coefficients_shell(sh)
 !!
 !!    Destruct coefficients
-!!    Written by Sarai D. Folkestad, 2019
+!!    Written by Andreas Skeidsvoll, Aug 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: ao
+      class(shell), intent(inout) :: sh
 !
-      if (allocated(ao%coefficients)) call mem%dealloc(ao%coefficients, ao%n_primitives)
+      if (sh%n_primitives == 0) &
+      call output%error_msg('Number of primitive Gaussians not set before dealloc of coefficients')
+!
+      if (allocated(sh%coefficients)) &
+         call mem%dealloc(sh%coefficients, sh%n_primitives)
 !
    end subroutine destruct_coefficients_shell
 !
 !
-   subroutine set_exponent_i_shell(ao, i, exponent_)
+   subroutine set_exponent_i_shell(sh, i, exponent)
 !!
-!!    Set exponent
+!!    Set exponent i
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: ao
+      class(shell), intent(inout) :: sh
 !
       integer, intent(in)   :: i
-      real(dp), intent(in)       :: exponent_
+      real(dp), intent(in)       :: exponent
 !
-      if (i .gt. ao%n_primitives) call output%error_msg('Tried to set exponent for non-exisiting primitive Gaussian')
+      if (i .gt. sh%n_primitives) &
+         call output%error_msg('Tried to set exponent for non-exisiting primitive Gaussian')
 !
-      ao%exponents(i) = exponent_
+      sh%exponents(i) = exponent
 !
    end subroutine set_exponent_i_shell
 !
 !
-   real(dp) function get_exponent_i_shell(ao, i)
+   real(dp) function get_exponent_i_shell(sh, i)
 !!
-!!    Get exponent
+!!    Get exponent i
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: ao
+      class(shell), intent(in) :: sh
 !
       integer, intent(in)   :: i
 !
-      if (i .gt. ao%n_primitives) call output%error_msg('Tried to get exponent for non-exisiting primitive Gaussian')
+      if (i .gt. sh%n_primitives) &
+         call output%error_msg('Tried to get exponent for non-exisiting primitive Gaussian')
 !
-      get_exponent_i_shell = ao%exponents(i)
+      get_exponent_i_shell = sh%exponents(i)
 !
    end function get_exponent_i_shell
 !
 !
-   subroutine set_coefficient_i_shell(ao, i, coefficient)
+   subroutine set_coefficient_i_shell(sh, i, coefficient)
 !!
-!!    Set coefficient
+!!    Set coefficient i
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: ao
+      class(shell), intent(inout) :: sh
 !
       integer, intent(in)   :: i
-      real(dp), intent(in)       :: coefficient
+      real(dp), intent(in)  :: coefficient
 !
-      if (i .gt. ao%n_primitives) call output%error_msg('Tried to set coefficient for non-exisiting primitive Gaussian')
+      if (i .gt. sh%n_primitives) &
+         call output%error_msg('Tried to set coefficient for non-exisiting primitive Gaussian')
 !
-      ao%coefficients(i) = coefficient
+      sh%coefficients(i) = coefficient
 !
    end subroutine set_coefficient_i_shell
 !
 !
-   real(dp) function get_coefficient_i_shell(ao, i)
+   real(dp) function get_coefficient_i_shell(sh, i)
 !!
-!!    Get coefficient
+!!    Get coefficient i
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: ao
+      class(shell), intent(in) :: sh
 !
       integer, intent(in)   :: i
 !
-      if (i .gt. ao%n_primitives) call output%error_msg('Tried to get coefficient for non-exisiting primitive Gaussian')
+      if (i .gt. sh%n_primitives) &
+         call output%error_msg('Tried to get coefficient for non-exisiting primitive Gaussian')
 !
-      get_coefficient_i_shell = ao%coefficients(i)
+      get_coefficient_i_shell = sh%coefficients(i)
 !
    end function get_coefficient_i_shell
 !
 !
-   subroutine set_n_primitives_shell(ao, n)
+   subroutine set_n_primitives_shell(sh, n)
 !!
 !!    Set number of primitives
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(inout) :: ao
+      class(shell), intent(inout) :: sh
 !
       integer, intent(in) :: n
 !
-      ao%n_primitives = n
+      sh%n_primitives = n
 !
    end subroutine set_n_primitives_shell
 !
 !
-   integer function get_n_primitives_shell(ao)
+   integer function get_n_primitives_shell(sh)
 !!
 !!    Get number of primitives
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
 !  
-      class(shell), intent(in) :: ao
+      class(shell), intent(in) :: sh
 !
-      get_n_primitives_shell = ao%n_primitives
+      get_n_primitives_shell = sh%n_primitives
 !
    end function get_n_primitives_shell
 !

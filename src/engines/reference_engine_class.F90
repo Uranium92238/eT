@@ -42,8 +42,12 @@ module reference_engine_class
 !
       character(len=200) :: ao_density_guess
       character(len=200) :: algorithm 
+!
       logical :: restart
       logical :: requested_zop
+!
+      logical :: plot_orbitals
+      logical :: plot_density
 !
    contains 
 !
@@ -61,6 +65,8 @@ module reference_engine_class
 !
       procedure, nopass :: generate_sad_density        => generate_sad_density_reference_engine
 !
+      procedure :: do_visualization             => do_visualization_reference_engine
+      procedure, nopass :: do_orbital_plotting  => do_orbital_plotting_reference_engine
 !
    end type reference_engine 
 !
@@ -89,6 +95,8 @@ contains
       engine%restart          = .false.
       engine%dipole           = .false.
       engine%quadrupole       = .false.
+      engine%plot_orbitals    = .false.
+      engine%plot_density     = .false.
 !
       call engine%read_settings()
 !
@@ -173,7 +181,9 @@ contains
 !
       endif
 !
-!     Eventually calculate the zeroth order properties
+      call engine%do_visualization(wf)
+!
+!     Calculate the zeroth order properties
 !
       if(engine%requested_zop) call engine%calculate_expectation_values(wf)
 !
@@ -193,6 +203,9 @@ contains
       if (input%requested_keyword_in_section('restart', 'solver scf')) engine%restart = .true.
 !
       call input%get_keyword_in_section('ao density guess', 'solver scf', engine%ao_density_guess)
+!
+      if (input%requested_keyword_in_section('plot hf orbitals', 'visualization')) engine%plot_orbitals = .true.
+      if (input%requested_keyword_in_section('plot hf density', 'visualization')) engine%plot_density = .true.
 !
       call engine%read_zop_settings()
 !
@@ -379,6 +392,124 @@ contains
       call wf%system%initialize_libint_integral_engines()
 !
    end subroutine generate_sad_density_reference_engine
+!
+!
+   subroutine do_visualization_reference_engine(engine, wf)
+!!
+!!    Do visualization
+!!    Written by Sarai D. Folkestad, Oct 2019
+!!
+!!    Writes orbitals and/or density to .plt files
+!!    which may be opened in Chimera, if requested
+!!    on input. 
+!!
+!
+      use visualization_class, only : visualization
+!
+      implicit none
+!
+      class(reference_engine) :: engine
+      class(hf) :: wf 
+!
+      type(visualization)     :: plotter
+!
+      character(len=200)      :: density_file_tag
+!
+      if (.not. engine%plot_orbitals .and. .not. engine%plot_density) return
+!
+      if (trim(wf%name_) .eq. 'uhf') call output%error_msg('no plotting for UHF')
+!
+!     Initialize the plotter
+!
+      plotter = visualization(wf%system)
+!
+      if (engine%plot_orbitals) then
+!
+         call engine%do_orbital_plotting(plotter, wf)
+!
+      endif
+!
+      if (engine%plot_density) then
+!
+         density_file_tag = 'AO_density'
+         call plotter%plot_density(wf%system, wf%n_ao, wf%ao_density, density_file_tag)
+!
+      endif
+!
+   end subroutine do_visualization_reference_engine
+!
+!
+   subroutine do_orbital_plotting_reference_engine(plotter, wf)
+!!
+!!    Do orbital plotting
+!!    Written by Sarai D. Folkestad, Oct 2019
+!!
+!!    Reads orbitals to plot, and extracts the 
+!!    corresponding MO coefficients. Prepares 
+!!    file tags for the .plt files and writes
+!!    orbital plot files using the visualization 
+!!    tool.
+!!
+!
+      use visualization_class, only : visualization
+      use memory_manager_class, only : mem
+!
+      implicit none
+!
+      class(hf) :: wf 
+!
+      type(visualization) :: plotter
+!
+      integer :: i, n_orbitals_to_plot
+!
+      integer, dimension(:), allocatable :: orbitals_to_plot
+!
+      real(dp), dimension(:,:), allocatable :: orbital_coefficients
+!
+      character(len=200), dimension(:), allocatable :: orbital_file_tags
+!
+!     Read orbital plotting settings
+!
+      n_orbitals_to_plot = input%get_n_elements_for_keyword_in_section('plot hf orbitals', &
+                                                                        'visualization')
+!
+      call mem%alloc(orbitals_to_plot, n_orbitals_to_plot)
+      call input%get_array_for_keyword_in_section('plot hf orbitals', 'visualization', &
+            n_orbitals_to_plot, orbitals_to_plot)
+!
+!     Extract the orbitals we will plot from the full orbital coefficient matrix
+!
+      call mem%alloc(orbital_coefficients, wf%n_ao, n_orbitals_to_plot)
+!
+      do i = 1, n_orbitals_to_plot
+!
+         call dcopy(wf%n_ao, wf%orbital_coefficients(1, orbitals_to_plot(i)), &
+               1, orbital_coefficients(1, i), 1)
+!
+      enddo
+!
+      allocate(orbital_file_tags(n_orbitals_to_plot))
+!
+!     Set file tags
+!
+      do i = 1, n_orbitals_to_plot
+!
+         write(orbital_file_tags(i), '(i4.4)') orbitals_to_plot(i)
+         orbital_file_tags(i) = 'MO_' // trim(orbital_file_tags(i))
+!
+      enddo
+!
+      call mem%dealloc(orbitals_to_plot, n_orbitals_to_plot)
+!
+!     Plot orbitals
+!
+      call plotter%plot_orbitals(wf%system, orbital_coefficients, wf%n_ao, &
+                                       n_orbitals_to_plot, orbital_file_tags)
+!
+      call mem%dealloc(orbital_coefficients, wf%n_ao, n_orbitals_to_plot)
+      deallocate(orbital_file_tags)
+!
+   end subroutine do_orbital_plotting_reference_engine
 !
 !
    subroutine read_zop_settings_reference_engine(engine)
