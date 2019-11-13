@@ -85,6 +85,8 @@ add_eT_runtest(ccs_frozen_core                              "eT;short;ccs;gs;es;
 add_eT_runtest(ccs_oscillator_strength_eom                  "eT;short;ccs;es;eom")
 add_eT_runtest(ccs_eom_diis_parallel_states                 "eT;short;ccs;es;eom;diis;parallel states")
 add_eT_runtest(ccs_td_rk4                                   "eT;short;ccs;complex;td")
+add_eT_runtest(restart_ccs_es                               "eT;short;ccs;es;restart")
+add_eT_runtest(restart_ccs_eom                              "eT;short;ccs;eom;restart")
 #
 add_eT_runtest(cc2_gs_energy                                "eT;short;cc2;gs")
 add_eT_runtest(cc2_gs_energy_batched_cd                     "eT;short;cc2;gs;pcd")
@@ -101,10 +103,12 @@ add_eT_runtest(cc2_left_cvs_es_energies                     "eT;short;cc2;es;lef
 add_eT_runtest(cc2_left_ip_energies                         "eT;short;cc2;es;left")
 add_eT_runtest(cc2_left_ip_diis                             "eT;short;cc2;es;left;diis")
 add_eT_runtest(cc2_oscillator_strength_eom                  "eT;short;cc2;eom")
+add_eT_runtest(restart_cc2_es                               "eT;short;cc2;es;restart")
 add_eT_runtest(cc2_lowmem_gs_energy                         "eT;short;lowmem-cc2;gs")
 add_eT_runtest(cc2_lowmem_frozen_core                       "eT;short;lowmem-cc2;es;gs;frozen core")
 add_eT_runtest(cc2_lowmem_right_es_energies                 "eT;short;lowmem-cc2;es;right")
 add_eT_runtest(cc2_lowmem_left_es_energies                  "eT;short;lowmem-cc2;es")
+add_eT_runtest(restart_lowmem_cc2_es                        "eT;short;lowmem-cc2;es;restart")
 #
 add_eT_runtest(ccsd_gs_energy                               "eT;short;ccsd;gs")
 add_eT_runtest(ccsd_frozen_hf_gs_energy                     "eT;short;ccsd;gs")
@@ -133,8 +137,8 @@ add_eT_runtest(ccsd_left_es_diis                            "eT;short;ccsd;es;le
 add_eT_runtest(ccsd_oscillator_strength_eom                 "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom_records_in_mem  "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_cvs_eom_degeneracy                      "eT;short;ccsd;es;eom;diis;degeneracy")
-add_eT_runtest(restart_ccsd_from_cc2                        "eT;short;ccsd;es;eom;restart")
 add_eT_runtest(ccsd_td_rk4                                  "eT;short;ccsd;complex;td")
+add_eT_runtest(restart_ccsd_es                              "eT;short;ccsd;es;restart")
 #
 add_eT_runtest(cc3_gs_energy                                "eT;short;cc3;gs")
 add_eT_runtest(cc3_dipole                                   "eT;short;cc3;gs;dipole")

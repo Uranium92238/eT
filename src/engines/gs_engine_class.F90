@@ -37,6 +37,10 @@ module gs_engine_class
 !
       character(len=200) :: gs_algorithm
 !
+      logical :: restart
+      logical :: gs_restart
+      logical :: multipliers_restart
+!
    contains
 !
       procedure :: ignite                                => ignite_gs_engine
@@ -56,6 +60,8 @@ module gs_engine_class
       procedure, nopass :: calculate_quadrupole_moment   => calculate_quadrupole_moment_gs_engine
 !
       procedure, nopass :: do_cholesky                   => do_cholesky_gs_engine
+!
+      procedure :: restart_handling                      => restart_handling_gs_engine
 !
    end type gs_engine
 !
@@ -82,7 +88,12 @@ contains
       engine%multipliers_algorithm = 'davidson'
       engine%gs_algorithm          = 'diis'
 !
+      engine%gs_restart            = .false.
+      engine%multipliers_restart   = .false.
+!
       call engine%read_settings()
+!
+      engine%restart = engine%gs_restart .or. engine%multipliers_restart
 !
       call engine%set_printables()
 !
@@ -126,7 +137,9 @@ contains
 !
       call engine%do_cholesky(wf)
 !
-      call wf%mo_preparations()
+      call wf%mo_preparations() 
+!
+      call engine%restart_handling(wf)
 !
 !     Determine ground state
 !
@@ -158,8 +171,15 @@ contains
 !
       class(gs_engine) :: engine
 !
-      call input%get_keyword_in_section('algorithm', 'solver cc multipliers', engine%multipliers_algorithm)
+      call input%get_keyword_in_section('algorithm', 'solver cc multipliers', &
+                                                            engine%multipliers_algorithm)
+!
       call input%get_keyword_in_section('algorithm', 'solver cc gs', engine%gs_algorithm )
+!
+      engine%gs_restart = input%requested_keyword_in_section('restart', 'solver cc gs')
+!
+      engine%multipliers_restart = input%requested_keyword_in_section('restart', 'solver cc multipliers')
+                                                               
 !
    end subroutine read_gs_settings_gs_engine
 !
@@ -183,7 +203,8 @@ contains
 !
       engine%tasks       = [character(len=150) ::                                                                    &
                            'Cholesky decomposition of the ERI-matrix',                                               &
-                           'Calculation of the ground state amplitudes ('//trim(engine%gs_algorithm)//'-algorithm)', &
+                           'Calculation of the ground state amplitudes ('// &
+                           trim(engine%gs_algorithm)//'-algorithm)', &
                            'Calculation of the ground state energy']
 !
    end subroutine set_printables_gs_engine
@@ -217,22 +238,28 @@ contains
          call wf%integrals%write_t1_cholesky(wf%t1)
          call wf%calculate_energy()
 !
-         call output%printf(':: Summary of (a0) wavefunction energetics (a.u.)', pl='minimal', fs='(/t3,a)', &
-                             chars=[convert_to_uppercase(wf%name_)])
+         call output%printf(':: Summary of (a0) wavefunction energetics (a.u.)', &
+                              pl='minimal', fs='(/t3,a)', &
+                              chars=[convert_to_uppercase(wf%name_)])
 !
-         call output%printf('HF energy:                (f19.12)', pl='minimal', reals=[wf%hf_energy], fs='(/t6,a)')
-         call output%printf('MP2 correction:           (f19.12)', pl='minimal', reals=[ (wf%energy - wf%hf_energy) ], fs='(t6,a)')
-         call output%printf('MP2 energy:               (f19.12)', pl='minimal', reals=[wf%energy], fs='(t6,a)')
+         call output%printf('HF energy:                (f19.12)', pl='minimal', &
+                                                reals=[wf%hf_energy], fs='(/t6,a)')
+!
+         call output%printf('MP2 correction:           (f19.12)', pl='minimal', &
+                                                reals=[ (wf%energy - wf%hf_energy) ], fs='(t6,a)')
+!
+         call output%printf('MP2 energy:               (f19.12)', pl='minimal', &
+                                                reals=[wf%energy], fs='(t6,a)')
 !
       elseif (trim(engine%gs_algorithm) == 'diis') then
 !
-         diis_solver = diis_cc_gs(wf)
+         diis_solver = diis_cc_gs(wf, engine%gs_restart)
          call diis_solver%run(wf)
          call diis_solver%cleanup(wf)
 !
       elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
 !
-         newton_raphson_solver = newton_raphson_cc_gs(wf)
+         newton_raphson_solver = newton_raphson_cc_gs(wf, engine%gs_restart)
          call newton_raphson_solver%run(wf)
          call newton_raphson_solver%cleanup(wf)
 !
@@ -274,13 +301,13 @@ contains
 !
          end if
 !
-         davidson_solver = davidson_cc_multipliers(wf)
+         davidson_solver = davidson_cc_multipliers(wf, engine%multipliers_restart)
          call davidson_solver%run(wf)
          call davidson_solver%cleanup(wf)
 !
       elseif (trim(engine%multipliers_algorithm) == 'diis') then 
 !
-         diis_solver = diis_cc_multipliers(wf)
+         diis_solver = diis_cc_multipliers(wf, engine%multipliers_restart)
          call diis_solver%run(wf)
          call diis_solver%cleanup(wf)
 !
@@ -408,6 +435,36 @@ contains
       call eri_chol_solver%cleanup(wf%system)
 !
    end subroutine do_cholesky_gs_engine
+!
+!
+   subroutine restart_handling_gs_engine(engine, wf)
+!!
+!!    Restart handling
+!!    Written by Sarai D. Folkestad, Nov 2019
+!!
+!!    Writes the restart information 
+!!    if restart is not requested.
+!!
+!!    If restart is requested performs safety 
+!!    checks for restart
+!!
+      implicit none
+!
+      class(gs_engine), intent(in) :: engine
+      class(ccs), intent(in) :: wf
+!
+      if (.not. engine%restart) then
+!
+         call wf%write_cc_restart()
+!
+      else
+!
+         if (engine%gs_restart .or. engine%multipliers_restart) &
+               call wf%is_restart_safe('ground state')
+!
+      endif
+!
+   end subroutine restart_handling_gs_engine
 !
 !
 end module gs_engine_class

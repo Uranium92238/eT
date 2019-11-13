@@ -1311,7 +1311,7 @@ contains
       timer_gs = timings('Ground state CCS calculation for NTOs/CNTOs')
       call timer_gs%turn_on()
 !
-      cc_gs_solver_diis = diis_cc_gs(ccs_wf)
+      cc_gs_solver_diis = diis_cc_gs(ccs_wf, restart=.false.)
       call cc_gs_solver_diis%run(ccs_wf)
       call cc_gs_solver_diis%cleanup(ccs_wf)
 !
@@ -1324,7 +1324,7 @@ contains
       timer_es = timings('Excited state CCS calculation for NTOs/CNTOs')
       call timer_es%turn_on()
 !
-      cc_es_solver_davidson = davidson_cc_es(transformation, ccs_wf)
+      cc_es_solver_davidson = davidson_cc_es(transformation, ccs_wf, restart=.false.)
       call cc_es_solver_davidson%run(ccs_wf)
       call cc_es_solver_davidson%cleanup(ccs_wf)
 !
