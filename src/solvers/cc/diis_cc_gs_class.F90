@@ -67,8 +67,8 @@ module diis_cc_gs_class
 !
    type :: diis_cc_gs
 !
-      character(len=100) :: tag = 'DIIS CC ground solver'
-      character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+      character(len=100) :: tag = ':: DIIS CC ground solver'
+      character(len=100) :: author = ':: E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       character(len=500) :: description1 = 'A DIIS CC ground state amplitude equations solver. It uses &
                                            &an extrapolation of previous quasi-Newton perturbation theory &
@@ -394,9 +394,9 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
-      call output%long_string_print(solver%author,'(t3,a/)',.true.)
-      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
+      call output%printf(solver%tag, pl='m', fs='(//t3,a)')
+      call output%printf(solver%author, pl='m', fs='(t3,a)')
+      call output%printf(solver%description1, pl='m', ffs='(/t3,a)')
 !
    end subroutine print_banner_diis_cc_gs
 !

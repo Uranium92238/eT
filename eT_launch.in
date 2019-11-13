@@ -52,7 +52,7 @@ parser.add_argument('-bd', "--binary-dir", help="Specify location of eT executab
 parser.add_argument('-basis', "--basis-path-dir", help="Specify location of the basis directory", type=str)
 parser.add_argument('--profile', help="Copy gmon.out from scratch", action='store_true')
 parser.add_argument('-pcm', "--pcm-input-file", help="Specify PCMSolver Input File", type=str)
-parser.add_argument('-i_err', '--ignore_errors', help="Continue with default behaviour if errors detected", action='store_true')
+parser.add_argument('-i-err', '--ignore-errors', help="Continue with default behaviour if errors detected", action='store_true')
 args = parser.parse_args()
 
 something_wrong = False

@@ -45,9 +45,11 @@ module abstract_out_file_class
 !
       procedure, public :: format_print_vector     => format_print_vector_abstract_out_file
 !
-      procedure :: long_string_print         => long_string_print_abstract_out_file
+      procedure, private :: long_string_print      => long_string_print_abstract_out_file
 !
-      procedure, nopass, private :: get_format_length
+      procedure, private :: get_format_length   => get_format_length_abstract_out_file
+      procedure, private :: get_tab_length      => get_tab_length_abstract_out_file
+      procedure, nopass, private :: is_number   => is_number_abstract_out_file
 !
    end type abstract_out_file
 !
@@ -113,6 +115,7 @@ contains
 !
       if (.not. the_file%is_open) then
          print *, trim(the_file%name_)//' already closed'
+         stop
       end if
 !
       close(the_file%unit, iostat=io_error, iomsg=io_msg, status='keep')
@@ -156,31 +159,44 @@ contains
    end subroutine flush_abstract_out_file
 !
 !
-   subroutine format_print_abstract_out_file(the_file, string, reals, ints, chars, logs, fs, ffs, lfs, ll, adv)
+   subroutine format_print_abstract_out_file(the_file, string, reals, ints, chars, logs, &
+                                             fs, ffs, ll, padd, adv)
 !!
 !!    Format print 
 !!    Written by Rolf H. Myhre, May 2019
 !!
-!!    Prints any number of reals and integers formatted Python style.
+!!    Prints any number of reals, integers, characters and logicals formatted Python style.
 !!
-!!    string:   String of character that should be printed, 
-!!              including formatting of reals and integers 
-!!    reals:    Array of real(dp) to print - in the order specified by string 
-!!    ints:     Array of integers to print - in the order specified by string 
-!!    chars:    Array of strings to print - in the order specified by string
-!!              Note that all the strings must be of same length in Fortran
+!!    string:  String of characters that should be printed, 
+!!             including formatting of reals, integers, characters and logicals
 !!
-!!    fs:       Specifies the format of the entire string, e.g. fs='(/t6,a)' gives 
-!!              a new line, then indentation 5, then the value of 'string'
-!!              with reals and integers as specified. Default: '(t3,a)'
-!!    ffs:      Specifies the format of the first printed line if different from fs. 
-!!              Default: same as fs
-!!    lfs:      Specifies the format of the last printed line if different from fs. 
-!!              Default: same as fs
-!!    ll:       Integer specifying number of characters per line of print.
-!!    adv:      Logical specifies whether advance is 'yes' or 'no', default = 'yes'
+!!    reals:   Optional array of reals to print - in the order specified by string 
+!!             Default: None
+!!    ints:    Optional array of integers to print - in the order specified by string 
+!!             Default: None
+!!    chars:   Optional array of character strings to print - in the order specified 
+!!             by string. Note that all the strings must be of same length in Fortran
+!!             Default: None
+!!    logs:    Optional array of logicals to print - in the order specified by string 
+!!             Default: None
 !!
-!!    Example: call output%printf('Energy (a.u.): (f19.12)', reals=[wf%energy], fs='(/t6,a)')
+!!    fs:      Optional character string specifies the format of the entire string,  
+!!             e.g. fs='(/t6,a)' gives a new line, then indentation 5, then the value 
+!!             of 'string' with reals and integers as specified. Default: '(t3,a)'
+!!    ffs:     Optional character string specifies the format of the first printed line if 
+!!             different from fs. Default: same as fs
+!!
+!!    ll:      Optional integer specifying number of characters to print per line before 
+!!             looking for a white space to add a line break after. Default: 70
+!!    padd:    Optional integer specifies how many characters beyond ll to search for 
+!!             a white space. Default: 18
+!!
+!!    adv:     Optional logical specifies whether advance is 'yes' or 'no' for the last line. 
+!!             Default: .true.
+!!
+!!    Note that the number of characters to print per line will typically be between ll and 
+!!    ll + padd minus the number of blank spaces specified by the t specifier in the format 
+!!    string, assuming there are enough characters to print.
 !!
       implicit none
 !
@@ -194,26 +210,20 @@ contains
       logical, dimension(:), intent(in), optional           :: logs
 !
 !     Parameters to pass to long_string_print
-      integer, intent(in), optional                         :: ll
+      integer, optional, intent(in)                         :: ll
+      integer, optional, intent(in)                         :: padd
       character(len=*), optional, intent(in)                :: fs
       character(len=*), optional, intent(in)                :: ffs
-      character(len=*), optional, intent(in)                :: lfs
 !
       logical, intent(in), optional :: adv
 !
       character(len=1000)  :: pstring 
       character(len=20)    :: fstring 
 !
-      integer :: i, p_pos, int_check, i_err, add_pos
+      integer :: i, p_pos, add_pos
       integer :: int_len, real_len, log_len, char_len, string_len
       integer :: int_count, real_count, log_count, char_count
       integer :: print_pos, printed
-!
-      integer           :: l_length
-      character(len=20) :: f_string
-      character(len=20) :: ff_string
-      character(len=20) :: lf_string
-      logical           :: adva
 !
 !     Set print string and format string blank
       pstring = ' '
@@ -249,41 +259,6 @@ contains
          char_len = 0
       endif
 !
-!     Line length to send to long_string_print
-      if(present(ll)) then
-         l_length = ll
-      else
-         l_length = 70
-      endif
-!
-!     Format string to send to long_string_print
-      if(present(fs)) then
-         f_string = fs
-      else
-         f_string = '(t3,a)'
-      endif
-!
-!     First line format string to send to long_string_print
-      if(present(ffs)) then
-         ff_string = ffs
-      else
-         ff_string = f_string
-      endif
-!
-!     Last line format string to send to long_string_print
-      if(present(lfs)) then
-         lf_string = lfs
-      else
-         lf_string = f_string
-      endif
-!
-!     Advance write?
-      if(present(adv)) then
-         adva = adv
-      else
-         adva = .True.
-      endif
-!
       real_count = 0
       int_count  = 0
       log_count  = 0
@@ -305,11 +280,13 @@ contains
                string(i+1:i+1) .eq. "e" .or. string(i+1:i+1) .eq. "E") then
 !
 !              Is it followed by a number, if so, assume a format string
-               read(string(i+2:),'(i1)',iostat=i_err) int_check
-               if (i_err .eq. 0) then
+               if (the_file%is_number(string(i + 2 : i + 2))) then
 !
                   real_count = real_count + 1
-                  if (real_count .gt. real_len) print *, 'Not enough reals in printf'
+                  if (real_count .gt. real_len) then
+                     print *, 'Not enough reals in printf'
+                     stop
+                  endif
 !
 !                 Print everything between previous print and (
                   write(pstring(print_pos:),'(a)') string(printed:i-1)
@@ -317,8 +294,15 @@ contains
                   p_pos = i
 !
 !                 Get length of format string
-                  do while (string(i:i) .ne. ")" .and. i .le. string_len)
+                  do while (string(i:i) .ne. ")")
                      i = i + 1
+!
+                     if (i .gt. string_len) then 
+                        print *, 'Reached end of string with no end to format in'
+                        print *, string
+                        stop
+                     endif
+!
                   enddo
 !
                   printed = i+1
@@ -336,11 +320,13 @@ contains
             elseif(string(i+1:i+1) .eq. "i" .or. string(i+1:i+1) .eq. "I") then
 !
 !              Is it followed by a number, if so, assume a format string
-               read(string(i+2:),'(i1)',iostat=i_err) int_check
-               if (i_err .eq. 0) then
+               if (the_file%is_number(string(i + 2 : i + 2))) then
 !
                   int_count = int_count + 1
-                  if (int_count .gt. int_len) print *, 'Not enough ints in printf'
+                  if (int_count .gt. int_len) then
+                     print *, 'Not enough ints in printf'
+                     stop
+                  endif
 !
 !                 Print everything between previous print and (
                   write(pstring(print_pos:),'(a)') string(printed:i-1)
@@ -348,8 +334,15 @@ contains
                   p_pos = i
 !
 !                 Get length of format string
-                  do while (string(i:i) .ne. ")" .and. i .le. string_len)
+                  do while (string(i:i) .ne. ")")
                      i = i + 1
+!
+                     if (i .gt. string_len) then 
+                        print *, 'Reached end of string with no end to format'
+                        print *, string
+                        stop
+                     endif
+!
                   enddo
 !
                   printed = i + 1
@@ -367,11 +360,13 @@ contains
             elseif(string(i+1:i+1) .eq. "l" .or. string(i+1:i+1) .eq. "L") then
 !
 !              Is it followed by a number, if so, assume a format string
-               read(string(i+2:),'(i1)',iostat=i_err) int_check
-               if (i_err .eq. 0) then
+               if (the_file%is_number(string(i + 2 : i + 2))) then
 !
                   log_count = log_count + 1
-                  if (log_count .gt. log_len) print *, 'Not enough ints in printf'
+                  if (log_count .gt. log_len) then
+                     print *, 'Not enough ints in printf'
+                     stop
+                  endif
 !
 !                 Print everything between previous print and (
                   write(pstring(print_pos:),'(a)') string(printed:i-1)
@@ -379,8 +374,15 @@ contains
                   p_pos = i
 !
 !                 Get length of format string
-                  do while (string(i:i) .ne. ")" .and. i .le. string_len)
+                  do while (string(i:i) .ne. ")")
                      i = i + 1
+!
+                     if (i .gt. string_len) then 
+                        print *, 'Reached end of string with no end to format'
+                        print *, string
+                        stop
+                     endif
+!
                   enddo
 !
                   printed = i + 1
@@ -410,12 +412,14 @@ contains
             elseif(string(i+1:i+1) .eq. "a" .or. string(i+1:i+1) .eq. "A") then
 !
 !              Is it followed by a number, if so, assume a format string
-               read(string(i+2:),'(i1)',iostat=i_err) int_check
-               if (i_err .eq. 0) then
+               if (the_file%is_number(string(i + 2 : i + 2))) then
 !
 !
                   char_count = char_count + 1
-                  if (char_count .gt. char_len) print *,  'Not enough chars in printf'
+                  if (char_count .gt. char_len) then
+                     print *,  'Not enough chars in printf'
+                     stop
+                  endif
 !
 !                 Print everything between previous print and (
                   write(pstring(print_pos:),'(a)') string(printed:i-1)
@@ -423,8 +427,15 @@ contains
                   p_pos = i
 !
 !                 Get length of format string
-                  do while (string(i:i) .ne. ")" .and. i .le. string_len)
+                  do while (string(i:i) .ne. ")")
                      i = i + 1
+!
+                     if (i .gt. string_len) then 
+                        print *, 'Reached end of string with no end to format'
+                        print *, string
+                        stop
+                     endif
+!
                   enddo
 !
                   printed = i + 1
@@ -444,6 +455,45 @@ contains
                   print_pos = print_pos + add_pos
 !
                endif
+!  
+!           Is ( followed by x or X?
+            elseif(string(i+1:i+1) .eq. "x" .or. string(i+1:i+1) .eq. "X") then
+!
+!              Is it followed by a number, if so, assume a format string
+               if (the_file%is_number(string(i + 2 : i + 2))) then
+!
+!                 Print everything between previous print and (
+                  write(pstring(print_pos:),'(a)') string(printed:i-1)
+                  print_pos = print_pos + i - printed
+                  p_pos = i
+!
+!                 Get length of format string
+                  do while (string(i:i) .ne. ")")
+                     i = i + 1
+!
+                     if (i .gt. string_len) then 
+                        print *, 'Reached end of string with no end to format'
+                        print *, string
+                        stop
+                     endif
+!
+                  enddo
+!
+                  printed = i + 1
+!
+!                 Copy format string to fstring and check if a0
+                  fstring = string(p_pos:i)
+!
+                  add_pos = the_file%get_format_length(fstring)
+!
+                  write(fstring(1:), '(a1,i0,a2)') '(', add_pos, 'x)'
+!
+                  write(pstring(print_pos:), fstring) 
+!
+!                 Set next position to print
+                  print_pos = print_pos + add_pos
+!
+               endif
             endif
 !  
          elseif (i .eq. string_len) then
@@ -455,143 +505,177 @@ contains
 !
       enddo 
 !
-      call the_file%long_string_print(pstring, fs=f_string, ffs=ff_string, lfs=lf_string, & 
-                                      ll=l_length, adv=adva)
+      call the_file%long_string_print(pstring, fs, ffs, ll, padd, adv)
 !
    end subroutine format_print_abstract_out_file
 !
 !  
-   subroutine long_string_print_abstract_out_file(the_file, string, fs, colons, &
-                                            ffs, lfs, ll, adv)
+   subroutine long_string_print_abstract_out_file(the_file, string, fs, ffs, ll, padd, adv)
 !!
 !!    Long string print
 !!    Written by Rolf H. Myhre, Nov 2018
 !!
-!!    Prints a reasonbly formatted long string over several lines
-!!    fs: optional format string
-!!    ffs: optional format string for first printed line, 
-!!                    will be used for single line if present
-!!    lfs: optional format string for last printed line
-!!    ll: optional argument for length printed lines, 
-!!                 routine adds extra length to not split up words
+!!    Inserts newlines into strings based on ll, padd and format and prints them to the_file
 !!
+!!    fs:      Optional character string specifies the format of the entire string,  
+!!             e.g. fs='(/t6,a)' gives a new line, then indentation 5, then the value 
+!!             of 'string' with reals and integers as specified. Default: '(t3,a)'
+!!    ffs:     Optional character string specifies the format of the first printed line if 
+!!             different from fs. Default: same as fs
+!!
+!!    ll:      Optional integer specifying number of characters to print per line before 
+!!             looking for a white space to add a line break after. Default: 70
+!!    padd:    Optional integer specifies how many characters beyond ll to search for 
+!!             a white space. Default: 18
+!!
+!!    adv:     Optional logical specifies whether advance is 'yes' or 'no' for the last line. 
+!!             Default: .true.
+!!
+!!    Note: The number of characters to print per line will typically be between ll and 
+!!    ll + padd minus the number of blank spaces specified by the t specifier in the format 
+!!    string, assuming there are enough characters to print.
 !!
       implicit none
 !
       class(abstract_out_file), intent(in) :: the_file
 !
       character(len=*), intent(in) :: string
-      character(len=*), intent(in), optional :: fs, ffs, lfs
+      character(len=*), intent(in), optional :: fs, ffs
       integer, intent(in), optional :: ll
-      logical, intent(in), optional :: colons
       logical, intent(in), optional :: adv
+      integer, intent(in), optional :: padd
 !
-      character(90)  :: temp
-      integer        :: l, l_left, lines, l_length
-      integer        :: i,j, padd, printed 
-      character(20)  :: f_s,fstring,ffstring,lfstring
-      logical        :: col 
+      character(200) :: temp
+      integer        :: length, length_with_tab
+      integer        :: temp_length, printed
+      integer        :: line_length, fline_length, l_l
+      integer        :: padding, max_padd
+      character(20)  :: f_s, fstring, ffstring
+      logical        :: do_advance
 !
-      character(len=3) :: adva
+      character(len=3) :: advancing
 !
-!     Default line length
-      l_length = 70
-      if(present(ll)) then
-         l_length = ll
+!     Get string length
+      length = len_trim(string)
+!
+!     Just print a new line and return if empty
+      if (length .eq. 0) then
+         write(the_file%unit, *)
+         return
       endif
 !
-!     Figure out the formatting
+!     Default line length
+      length_with_tab = 70
+      if(present(ll)) then
+         length_with_tab = ll
+      endif
+!
+      if(length_with_tab .le. 0) then
+         print *, "Too short line length: ", length_with_tab
+         stop
+      endif
+!
+!     Figure out the formatting for the bulk
       fstring = '(t3,a)'
       if(present(fs)) then
          fstring = fs
       endif
+      line_length = length_with_tab - the_file%get_tab_length(fstring)
 !
+      if(line_length .le. 0) then
+         print *, "Too many tabs or too short line length: ", line_length
+         stop
+      endif
+!
+!     Figure out the formatting of the first line
       ffstring = fstring
       if(present(ffs)) then
          ffstring = ffs
       endif
+      fline_length = length_with_tab - the_file%get_tab_length(ffstring)
 !
-      lfstring = fstring
-      if(present(lfs)) then
-         lfstring = lfs
+      if(fline_length .le. 0) then
+         print *, "Too many tabs or too short first line length: ", fline_length
+         stop
       endif
 !
-!     First line format
-      f_s = ffstring
-!
-!     Fancy colons for banner headings
-      col = .false.
-      if(present(colons)) then
-         col = colons
-      endif
-      if(col) then
-         l_length = l_length - 3
+!     How much padding?
+      max_padd = 18
+      if(present(padd)) then
+         max_padd = padd
       endif
 !
-      adva = 'yes'
+      if(max_padd .lt. 0) then
+         print *, "Padding is less than zero: ", max_padd
+         stop
+      endif
+!
+!     advancing?
+      do_advance = .true.
       if(present(adv)) then
-         if(adv) then
-            adva = 'yes'
-         else
-            adva = 'no'
-         endif
+         do_advance = adv
       endif
 !
-      l = len_trim(string)      
-      l_left = l
-      lines = (l-1)/l_length + 1
-      printed = 1
+!     First line format and length
+      f_s = ffstring
+      l_l = fline_length
+      advancing = 'yes'
 !
-      do i = 1,lines
+      printed = 0
 !
-         if(i .ne. lines) then
+      do while (printed .lt. length)
 !
-            if(i .ne. 1) then
-               f_s = fstring
-            endif
+         temp_length = l_l
 !
-!           Add some extra padding to not split words
-            do j = 1,18
-               padd = j
-               if(string(printed+l_length+j:printed+l_length+j) == ' ') then
+!        See if we've reached the end
+         if ((printed + temp_length) .ge. length) then
+            temp_length = length - printed
+!
+!        Search for a white space or the end of the string within max_padd
+!        Note that the white space will be included in the print
+         else
+            do padding = 0, max_padd
+!
+               if((string(printed + temp_length : printed + temp_length) .eq. ' ') .or. &
+                  (printed + temp_length .eq. length)) then
                   exit
                endif
+!
+               temp_length = temp_length + 1
+!
             enddo
-!
-!           Copy string to be printed. Add hyphen if word must be split
-            if(padd == 18) then
-               temp(1:l_length+padd+1) = string(printed:printed+l_length+padd)
-               temp(l_length+padd+1:l_length+padd+1) = '-'
-               printed = printed + l_length + padd
-            else
-               temp(1:l_length+padd+1) = string(printed:printed+l_length+padd+1)
-               printed = printed + l_length + padd + 1
-            endif
-!
-!           Print
-            if(col) then
-               write(the_file%unit,f_s) ':: '//temp(1:l_length+padd+1)
-            else
-               write(the_file%unit,f_s) temp(1:l_length+padd+1)
-            endif
-!
-         else
-!           Print the remaining string
-            f_s = lfstring
-            if(col) then
-               write(the_file%unit,f_s, advance=trim(adva)) ':: '//string(printed:l)
-            else
-               write(the_file%unit,f_s, advance=trim(adva)) string(printed:l)
-            endif
-            printed = l
          endif
+!
+!        Check if we reached the end and set advancing parameter and disable hyphen
+         if ((printed + temp_length) .eq. length) then
+            padding = -1
+            if (.not. do_advance) then
+               advancing = 'no'
+            end if
+         end if
+!
+!        Copy string to be printed
+         temp(1 : temp_length) = string(printed + 1 : printed + temp_length)
+         printed = printed + temp_length
+!
+!        Add hyphen if splitting words and max_padd is not zero
+         if((padding .eq. max_padd) .and. (max_padd .ne. 0)) then
+            temp_length = temp_length + 1
+            temp(temp_length : temp_length) = '-'
+         endif
+!
+!        Write to file
+         write(the_file%unit, f_s, advance=advancing) temp(1 : temp_length)
+!
+         f_s = fstring
+         l_l = line_length
 !
       enddo
 !
    end subroutine long_string_print_abstract_out_file
 !
 !
-   function get_format_length(fstring) result(length)
+   function get_format_length_abstract_out_file(the_file, fstring) result(length)
 !
 !!    Get printed length of format
 !!    Written by Rolf H. Myhre, Sep 2019
@@ -600,27 +684,45 @@ contains
 !
       implicit none
 !
+      class(abstract_out_file), intent(in) :: the_file
+!
       character(len=*), intent(in)  :: fstring
 !
-      integer i, length, string_len, stat
+      integer :: i, length, string_len, stat
 !
       string_len = len_trim(fstring)
 !
-!     If character, integer or logical
+!     Check that it starts and ends with ( and )
       if(fstring(1:1) .eq. '(') then 
+!
+         if (fstring(string_len:string_len) .ne. ')') then
+!
+            print *, fstring//' does not end with )'
+            stop
+!
+         endif 
+!
+!        If character, integer, blank space or logical
          if(fstring(2:2) .eq. 'a' .or. fstring(2:2) .eq. 'A' .or. &
+            fstring(2:2) .eq. 'i' .or. fstring(2:2) .eq. 'I' .or. &
             fstring(2:2) .eq. 'l' .or. fstring(2:2) .eq. 'L' .or. &
-            fstring(2:2) .eq. 'i' .or. fstring(2:2) .eq. 'I') then
+            fstring(2:2) .eq. 'x' .or. fstring(2:2) .eq. 'X') then
 !
             i = 3
-            do while (fstring(i+1:i+1) .ne. ")" .and. i .lt. string_len)
-               i = i + 1
+            do while (fstring(i+1:i+1) .ne. ")" .and. i .lt. string_len-1)
+               if (the_file%is_number(fstring(i+1:i+1))) then
+                  i = i + 1
+               else
+                  print *, 'Something is wrong with format string '//fstring
+                  stop
+               endif
             enddo
 !
             read(fstring(3:i),*,iostat=stat) length
 !
             if(stat .ne. 0) then
-               print *, fstring//' is not an acceptable format string'
+               print *, 'Cannot read format length from '//fstring
+               stop
             endif 
 !
 !        If float
@@ -628,22 +730,140 @@ contains
                 fstring(2:2) .eq. 'e' .or. fstring(2:2) .eq. 'E') then
 !
             i = 3
-            do while (fstring(i+1:i+1) .ne. "." .and. i .lt. string_len)
-               i = i + 1
+            do while (fstring(i+1:i+1) .ne. "." .and. i .lt. string_len-1)
+               if (the_file%is_number(fstring(i+1:i+1))) then
+                  i = i + 1
+               else
+                  print *, 'Something is wrong with format string '//fstring
+                  stop
+               endif
             enddo
 !
             read(fstring(3:i),*,iostat=stat) length
 !
             if(stat .ne. 0) then
-               print *, fstring//' is not an acceptable format string'
+               print *, 'Cannot read format length from '//fstring
+               stop
             endif 
 !
          endif
       else
-         print *, fstring//' is not an acceptable format string'
+         print *, fstring//' does not start with ('
+         stop
       endif
 !
-   end function get_format_length
+   end function get_format_length_abstract_out_file
+!
+!
+   function get_tab_length_abstract_out_file(the_file, fstring) result(length)
+!
+!!    Get tab length
+!!    Written by Rolf H. Myhre, Sep 2019
+!!
+!!    Figure out how many blank spaces are added in front by a format string
+!!    For example fstring='(/t6,a)' should return 5
+!
+      implicit none
+!
+      class(abstract_out_file), intent(in) :: the_file
+!
+      character(len=*), intent(in)  :: fstring
+!
+      integer :: i, j 
+      integer :: length, string_length, stat
+!
+      string_length = len_trim(fstring)
+!
+      length = 0
+!
+!     If character, integer or logical
+      if (fstring(1:1) .eq. '(') then
+!
+         if (fstring(string_length:string_length) .ne. ')') then
+!
+            print *, fstring//' does not end with )'
+            stop
+!
+         endif
+!
+!        Loop over length of string
+         do i = 2,string_length-2
+!
+!           If it doesn't start with a tab we don't care
+            if(fstring(i:i) .ne. '/' .and. fstring(i:i) .ne. 't') then 
+               exit
+!
+!           If we find a t
+            elseif(fstring(i:i) .eq. 't') then 
+!
+!              Check that we're not at the end, then something is very wrong
+               if (i .lt. string_length) then
+!
+!                 Count the numbers after the t
+                  j = i
+                  do while (the_file%is_number(fstring(j+1:j+1)))
+                     j = j + 1
+                  enddo
+!
+!                 If we found any numbers, read them into the length int
+                  if (j .gt. i) then
+!
+                     read(fstring(i+1:j),*,iostat=stat) length
+                     if (stat .ne. 0) then
+                        print *, 'Failed to read numbers from '//fstring
+                        stop
+                     endif
+!
+!                 No numbers
+                  else
+                     print *, 'No numbers after t in '//fstring
+                     stop
+                  endif
+!
+               else
+                  print *, fstring//' is not a format string'
+                  stop
+               endif
+!
+               length = length - 1
+!
+               if (length .lt. 0) then
+                  print *, 'Tab length less than 0 for '//fstring
+                  stop
+               endif
+!
+               exit
+!
+            endif
+         enddo
+      else
+         print *, fstring//' is not a format string'
+         stop
+      endif
+!
+   end function get_tab_length_abstract_out_file
+!
+!
+   function is_number_abstract_out_file(check_char) result(it_is)
+!
+!!    is number
+!!    Written by Rolf H. Myhre, Nov 2019
+!!
+!!    Check if check_char is a number or not
+!!
+!
+      implicit none
+!
+      character, intent(in)   :: check_char
+      logical                 :: it_is
+!
+      character(len=1), dimension(10)  :: zero_to_nine
+!
+      zero_to_nine=['0','1','2','3','4','5','6','7','8','9']
+!
+      it_is = any(check_char .eq. zero_to_nine)
+!
+   end function is_number_abstract_out_file
 !
 !
    subroutine format_print_matrix_abstract_out_file(the_file, name_, matrix, dim_1, dim_2, fs, columns)
@@ -742,7 +962,7 @@ contains
       real_string = trim(row_index_format) // repeat(' '//trim(form_string), n_columns)
 !
 !     Print separator
-      call the_file%format_print_separator(line_length+1)
+      call the_file%format_print_separator(line_length+1, '=')
 !
 !     Start iterating over number of prints
 !
@@ -787,7 +1007,7 @@ contains
       enddo
 !
 !     Print separator
-      call the_file%format_print_separator(line_length+1)
+      call the_file%format_print_separator(line_length+1, '=')
 !
 !
       deallocate(ints_to_print)
@@ -803,8 +1023,8 @@ contains
 !!    Written by Rolf H. Myhre, Oct. 2019
 !!
 !!    n: Number of symbols to print
-!!    symbol: optional, what symbol to print, default is '='
-!!    fs: optional format string
+!!    symbol: optional, what symbol to print. Default: '-'
+!!    fs: optional format string. Default: '(t3,a)'
 !!
       implicit none
 !
@@ -820,15 +1040,23 @@ contains
 !
       character(len=n) :: separator_line
 !
+      integer :: line_length
+!
       if (present(symbol)) then
          sym = symbol
       else
-         sym = '='
+         sym = '-'
+      endif
+!
+      if (present(fs)) then
+         line_length = n+the_file%get_tab_length(fs)
+      else 
+         line_length = n + 2
       endif
 !
       separator_line = repeat(sym, n)
 !
-      call the_file%format_print(separator_line, ll=n, fs=fs)
+      call the_file%format_print(separator_line, ll=line_length, fs=fs, padd=0)
 !
    end subroutine format_print_separator_abstract_out_file
 !

@@ -274,7 +274,8 @@ contains
    end subroutine open_output_file
 !
 !
-   subroutine error_msg_output_file(the_file, error_specs, reals, ints, chars, logs, fs, ffs, lfs, ll)
+   subroutine error_msg_output_file(the_file, error_specs, &
+                                    reals, ints, chars, logs, fs, ffs, ll, padd)
 !!
 !!    Error message
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -282,21 +283,36 @@ contains
 !!    Modified by Alexander C. Paul, Nov 2019
 !!    Uses format_print for the error message
 !!
+!!    Modified by Rolf H. Myhre, Nov 2019
+!!    Updated to reflect changes in format_print, plus update of documentation
+!!
 !!    error_specs: String of character that should be printed as error message, 
 !!                 including formatting of reals and integers
-!!    reals:       Array of real(dp) to print - in the order specified by string 
-!!    ints:        Array of integers to print - in the order specified by string 
-!!    chars:       Array of strings to print - in the order specified by string
-!!                 Note that all the strings must be of same length in Fortran
 !!
-!!    fs:          Specifies the format of the entire string, e.g. fs='(/t6,a)' gives 
-!!                 a new line, then indentation 5, then the value of 'string'
-!!                 with reals and integers as specified. Default: '(t3,a)'
-!!    ffs:         Specifies the format of the first printed line if different from fs. 
-!!                 Default: same as fs
-!!    lfs:         Specifies the format of the last printed line if different from fs. 
-!!                 Default: same as fs
-!!    ll:          Integer specifying number of characters per line of print.
+!!    reals:   Optional array of reals to print - in the order specified by string 
+!!             Default: None
+!!    ints:    Optional array of integers to print - in the order specified by string 
+!!             Default: None
+!!    chars:   Optional array of character strings to print - in the order specified 
+!!             by string. Note that all the strings must be of same length in Fortran
+!!             Default: None
+!!    logs:    Optional array of logicals to print - in the order specified by string 
+!!             Default: None
+!!
+!!    fs:      Optional character string specifies the format of the entire string,  
+!!             e.g. fs='(/t6,a)' gives a new line, then indentation 5, then the value 
+!!             of 'string' with reals and integers as specified. Default: '(t3,a)'
+!!    ffs:     Optional character string specifies the format of the first printed line if 
+!!             different from fs. Default: same as fs
+!!
+!!    ll:      Optional integer specifying number of characters to print per line before 
+!!             looking for a white space to add a line break after. Default: 70
+!!    padd:    Optional integer specifies how many characters beyond ll to search for 
+!!             a white space. Default: 18
+!!
+!!    Note: The number of characters to print per line will typically be between ll and 
+!!    ll + padd minus the number of blank spaces specified by the t specifier in the format 
+!!    string, assuming there are enough characters to print.
 !!
       implicit none
 !
@@ -309,15 +325,14 @@ contains
       character(len=*), dimension(:), intent(in), optional  :: chars
       logical         , dimension(:), intent(in), optional  :: logs
 !
-      integer         , optional, intent(in)                :: ll
       character(len=*), optional, intent(in)                :: fs
       character(len=*), optional, intent(in)                :: ffs
-      character(len=*), optional, intent(in)                :: lfs
+!
+      integer, optional, intent(in)                         :: ll
+      integer, optional, intent(in)                         :: padd
 !
       character(len=20) :: ff_string
       character(len=20) :: f_string
-      character(len=20) :: lf_string
-      integer           :: l_length
 !
 !     Default format: New line with t3 - Error message aligned after the colon
 !
@@ -335,27 +350,13 @@ contains
          f_string = '(t10,a)'
       endif
 !
-!     Format for the last line, default: same as previous lines
-      if(present(lfs)) then
-         lf_string = lfs
-      else
-         lf_string = f_string
-      endif
-!
-!     Line length to send to format_print
-      if(present(ll)) then
-         l_length = ll
-      else
-         l_length = 70
-      endif
-!
 !     Option advance from format_print shall always be true for for errors
 !
-      call the_file%format_print('Error: ' // trim(error_specs),         &
-                                 reals, ints, chars, logs,               &
-                                 ffs=trim(ff_string), fs=trim(f_string), &
-                                 lfs=trim(lf_string), ll= l_length,      &
-                                 adv=.true.)
+      call the_file%format_print('Error: ' // trim(error_specs),  &
+                                 reals, ints, chars, logs,        &
+                                 fs = f_string, ffs = ff_string,  &
+                                 ll = ll, padd = padd,            &
+                                 adv = .true.)
 !
       call the_file%flush_()
 !
@@ -364,7 +365,8 @@ contains
    end subroutine error_msg_output_file
 !
 !
-   subroutine warning_msg_output_file(the_file, warning_specs, reals, ints, chars, logs, fs, ffs, lfs, ll)
+   subroutine warning_msg_output_file(the_file, warning_specs, &
+                                      reals, ints, chars, logs, fs, ffs, ll, padd)
 !!
 !!    Warning message
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -372,21 +374,36 @@ contains
 !!    Modified by Alexander C. Paul, Nov 2019
 !!    Uses format_print for the warning message
 !!
+!!    Modified by Rolf H. Myhre, Nov 2019
+!!    Updated to reflect changes in format_print, plus update of documentation
+!!
 !!    error_specs: String of character that should be printed as error message, 
 !!                 including formatting of reals and integers
-!!    reals:       Array of real(dp) to print - in the order specified by string 
-!!    ints:        Array of integers to print - in the order specified by string 
-!!    chars:       Array of strings to print - in the order specified by string
-!!                 Note that all the strings must be of same length in Fortran
 !!
-!!    fs:          Specifies the format of the entire string, e.g. fs='(/t6,a)' gives 
-!!                 a new line, then indentation 5, then the value of 'string'
-!!                 with reals and integers as specified. Default: '(t3,a)'
-!!    ffs:         Specifies the format of the first printed line if different from fs. 
-!!                 Default: same as fs
-!!    lfs:         Specifies the format of the last printed line if different from fs. 
-!!                 Default: same as fs
-!!    ll:          Integer specifying number of characters per line of print.
+!!    reals:   Optional array of reals to print - in the order specified by string 
+!!             Default: None
+!!    ints:    Optional array of integers to print - in the order specified by string 
+!!             Default: None
+!!    chars:   Optional array of character strings to print - in the order specified 
+!!             by string. Note that all the strings must be of same length in Fortran
+!!             Default: None
+!!    logs:    Optional array of logicals to print - in the order specified by string 
+!!             Default: None
+!!
+!!    fs:      Optional character string specifies the format of the entire string,  
+!!             e.g. fs='(/t6,a)' gives a new line, then indentation 5, then the value 
+!!             of 'string' with reals and integers as specified. Default: '(t3,a)'
+!!    ffs:     Optional character string specifies the format of the first printed line if 
+!!             different from fs. Default: same as fs
+!!
+!!    ll:      Optional integer specifying number of characters to print per line before 
+!!             looking for a white space to add a line break after. Default: 70
+!!    padd:    Optional integer specifies how many characters beyond ll to search for 
+!!             a white space. Default: 18
+!!
+!!    Note: The number of characters to print per line will typically be between ll and 
+!!    ll + padd minus the number of blank spaces specified by the t specifier in the format 
+!!    string, assuming there are enough characters to print.
 !!
       implicit none
 !
@@ -399,15 +416,14 @@ contains
       character(len=*), dimension(:), intent(in), optional  :: chars
       logical         , dimension(:), intent(in), optional  :: logs
 !
-      integer         , optional, intent(in)                :: ll
       character(len=*), optional, intent(in)                :: fs
       character(len=*), optional, intent(in)                :: ffs
-      character(len=*), optional, intent(in)                :: lfs
+!
+      integer, optional, intent(in)                         :: ll
+      integer, optional, intent(in)                         :: padd
 !
       character(len=20) :: ff_string
       character(len=20) :: f_string
-      character(len=20) :: lf_string
-      integer           :: l_length
 !
       the_file%warning_counter = the_file%warning_counter + 1
 !
@@ -427,27 +443,13 @@ contains
          f_string = '(t12,a)'
       endif
 !
-!     Format for the last line, default: same as previous lines
-      if(present(lfs)) then
-         lf_string = lfs
-      else
-         lf_string = f_string
-      endif
-!
-!     Line length to send to format_print
-      if(present(ll)) then
-         l_length = ll
-      else
-         l_length = 70
-      endif
-!
 !     Option advance from format_print shall always be true for for errors
 !
-      call the_file%format_print('Warning: ' // trim(warning_specs),     &
-                                 reals, ints, chars, logs,               &
-                                 ffs=trim(ff_string), fs=trim(f_string), &
-                                 lfs=trim(lf_string), ll=l_length,       &
-                                 adv=.true.)
+      call the_file%format_print('Warning: ' // trim(warning_specs), &
+                                 reals, ints, chars, logs,           &
+                                 fs = f_string, ffs = ff_string,     &
+                                 ll = ll, padd = padd,               &
+                                 adv = .true.)
 !
       call the_file%flush_()
 !
@@ -483,46 +485,63 @@ contains
    end subroutine check_for_warnings_output_file
 !
 !  
-   subroutine printf_output_file(the_file, string, pl, reals, ints, chars, logs, fs, ffs, lfs, ll, adv)
+   subroutine printf_output_file(the_file, string, pl, &
+                                 reals, ints, chars, logs, fs, ffs, ll, padd, adv)
 !!
 !!    printf
 !!    Written by Rolf H. Myhre, May 2019
 !!
-!!    Printf output_file wrapper that checks for print level and silence
-!!    Prints any number of reals and integers formatted Python style.
+!!    Printf output_file wrapper that checks for print level and silence before calling 
+!!    format_print which prints any number of reals, integers, characters and logicals 
+!!    formatted Python style.
 !!
-!!    pl:       print level
-!!              compared to stored print level variable and four allowed levels
-!!              'minimal' or 'm' : Will always be printed. Only banners, final results 
-!!                                 like total energies or excitation energies, and solver 
-!!                                 settings or other essential information 
-!!              'normal' or 'n'  : Will normally be printed, for example convergence iterations
-!!              'verbose' or 'v' : Will only be printed if verbose output is specified in input,
-!!                                 for example extra norms and MO coefficients 
-!!              'debug'          : Print information only useful for developers such as extra tests 
-!!                                 and index dimensions
+!!    pl:      print level
+!!             character string that is compared to the print level of the file with four 
+!!             allowed levels:
+!!             'minimal' or 'm' : Will always be printed. Only banners, final results 
+!!                                like total energies or excitation energies, and solver 
+!!                                settings or other essential information 
+!!             'normal' or 'n'  : Will normally be printed, for example convergence iterations
+!!             'verbose' or 'v' : Will only be printed if verbose output is specified in input,
+!!                                for example extra norms and MO coefficients 
+!!             'debug'          : Print information only useful for developers such as extra tests 
+!!                                and index dimensions
 !!
 !!
-!!    string:   String of character that should be printed, 
-!!              including formatting of reals and integers 
-!!    reals:    Array of real(dp) to print - in the order specified by string 
-!!    ints:     Array of integers to print - in the order specified by string 
-!!    chars:    Array of strings to print - in the order specified by string
-!!              Note that all the strings must be of same length in Fortran
+!!    string:  String of characters that should be printed, 
+!!             including formatting of reals, integers, characters and logicals
 !!
-!!    fs:       Specifies the format of the entire string, e.g. fs='(/t6,a)' gives 
-!!              a new line, then indentation 5, then the value of 'string'
-!!              with reals and integers as specified. Default: '(t3,a)'
-!!    ffs:      Specifies the format of the first printed line if different from fs. 
-!!              Default: same as fs
-!!    lfs:      Specifies the format of the last printed line if different from fs. 
-!!              Default: same as fs
-!!    ll:       Integer specifying number of characters per line of print.
-!!    adv:      Logical specifies whether advance is 'yes' or 'no', default = 'yes'
+!!    reals:   Optional array of reals to print - in the order specified by string 
+!!             Default: None
+!!    ints:    Optional array of integers to print - in the order specified by string 
+!!             Default: None
+!!    chars:   Optional array of character strings to print - in the order specified 
+!!             by string. Note that all the strings must be of same length in Fortran
+!!             Default: None
+!!    logs:    Optional array of logicals to print - in the order specified by string 
+!!             Default: None
+!!
+!!    fs:      Optional character string specifies the format of the entire string,  
+!!             e.g. fs='(/t6,a)' gives a new line, then indentation 5, then the value 
+!!             of 'string' with reals and integers as specified. Default: '(t3,a)'
+!!    ffs:     Optional character string specifies the format of the first printed line if 
+!!             different from fs. Default: same as fs
+!!
+!!    ll:      Optional integer specifying number of characters to print per line before 
+!!             looking for a white space to add a line break after. Default: 70
+!!    padd:    Optional integer specifies how many characters beyond ll to search for 
+!!             a white space. Default: 18
+!!
+!!    adv:     Optional logical specifies whether advance is 'yes' or 'no' for the last line. 
+!!             Default: .true.
+!!
+!!    Note: The number of characters to print per line will typically be between ll and 
+!!    ll + padd minus the number of blank spaces specified by the t specifier in the format 
+!!    string, assuming there are enough characters to print.
 !!
 !!    Example: 
-!!    call output%printf('Energy (a.u.): (f19.12)', pl='minimal', reals=[wf%energy], fs='(/t6,a)')
-!!
+!!    call output%printf('(a0) ground state energy (a.u): (f19.12)', &
+!!                       pl='minimal', reals=[wf%energy], chars=[wf%name_], fs='(/t6,a)')
 !!
       implicit none
 !
@@ -540,7 +559,7 @@ contains
       integer, intent(in), optional                         :: ll
       character(len=*), optional, intent(in)                :: fs
       character(len=*), optional, intent(in)                :: ffs
-      character(len=*), optional, intent(in)                :: lfs
+      integer, optional, intent(in)                         :: padd
 !
       logical, intent(in), optional :: adv
 !
@@ -560,7 +579,7 @@ contains
 !
       if (the_file%should_print(plvl)) then
 !
-         call the_file%format_print(string, reals, ints, chars, logs, fs, ffs, lfs, ll, adv)
+         call the_file%format_print(string, reals, ints, chars, logs, fs, ffs, ll, padd, adv)
 !
 !        Flush if not a verbose print
          if (trim(plvl) .ne. 'verbose' .and. trim(plvl) .ne. 'v') then 

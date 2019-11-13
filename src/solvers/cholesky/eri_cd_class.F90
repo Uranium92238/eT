@@ -58,8 +58,8 @@ module eri_cd_class
 !
    type :: eri_cd
 !
-      character(len=100) :: tag = 'Cholesky decomposition of electronic repulsion integrals solver'
-      character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+      character(len=100) :: tag = ':: Cholesky decomposition of electronic repulsion integrals solver'
+      character(len=100) :: author = ':: E. F. Kjønstad, S. D. Folkestad, 2018'
 
       character(len=500) :: description1 = 'Performs a Cholesky decomposition of the two-electron &
                                             &electronic repulsion integrals in the atomic orbital basis,'
@@ -4197,11 +4197,11 @@ contains
 !
       class(eri_cd) :: solver
 !
-      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
-      call output%long_string_print(solver%author,'(t3,a/)',.true.)
-      call output%long_string_print(solver%description1)
-      call output%long_string_print(solver%description2,'(/t3,a/)')
-      call output%long_string_print(solver%description3)
+      call output%printf(solver%tag, pl='m', fs='(//t3,a)')
+      call output%printf(solver%author, pl='m', fs='(t3,a/)')
+      call output%printf(solver%description1, pl='m')
+      call output%printf(solver%description2, pl='m', fs='(/t3,a/)')
+      call output%printf(solver%description3, pl='m')
 !
    end subroutine print_banner_eri_cd
 !

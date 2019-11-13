@@ -373,7 +373,7 @@ contains
 !
       call output%printf(':: ' // solver%name_, pl='m', fs='(//t3,a)')
       call output%printf(':: ' // solver%author, pl='m', fs='(t3,a)')
-      call output%printf(solver%description, pl='n', ffs='(/t3,a)', fs='(t3,a)', lfs='(t3,a)')
+      call output%printf(solver%description, pl='n', ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_davidson_cc_multipliers
 !

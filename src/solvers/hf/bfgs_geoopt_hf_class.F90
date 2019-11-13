@@ -69,8 +69,8 @@ contains
 !
 !     Print solver banner
 !
-      solver%tag     = 'HF geometry optimization BFGS solver'
-      solver%author  = 'Eirik F. Kjønstad, Åsmund H. Tveten, 2019'
+      solver%tag     = ':: HF geometry optimization BFGS solver'
+      solver%author  = ':: Eirik F. Kjønstad, Åsmund H. Tveten, 2019'
 !
       solver%description = 'Constructs an approximate Hessian using the BFGS algorithm &
                            &using the previous geometries and gradients. From the BFGS Hessian, &
@@ -283,9 +283,9 @@ contains
 !
       class(bfgs_geoopt_hf) :: solver 
 !
-      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
-      call output%long_string_print(solver%author,'(t3,a/)',.true.)
-      call output%long_string_print(solver%description)
+      call output%printf(solver%tag, pl='m', fs='(//t3,a)')
+      call output%printf(solver%author, pl='m')
+      call output%printf(solver%description, pl='m', ffs='(//t3,a)')
 !
    end subroutine print_banner_bfgs_geoopt_hf
 !
