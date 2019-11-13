@@ -336,7 +336,7 @@ subroutine print_program_banner()
 !
    call output%printf('eT - a coupled cluster program ', pl='m', fs='(///t24,a)')
    call output%printf('Original authors: Sarai D. Folkestad, Eirik F. Kjønstad,' &
-                     // ' and Henrik Koch', pl='m', fs='(t8,a)')
+                     // ' and Henrik Koch', pl='m', fs='(t8,a)', ll=80)
 !
    call output%print_separator('m',82,'-', fs='(/t3,a)')
 !
@@ -347,12 +347,12 @@ subroutine print_program_banner()
    call output%printf('Josefine H. Andersen   first order properties', pl='m', fs='(t4,a)', ll=82)
    call output%printf('Alice Balbi            CC propagation', pl='m', fs='(t4,a)', ll=82)
 !
-   call output%printf('Sarai D. Folkestad', pl='m', fs='(t4,a)', adv=.false.)
-   call output%printf('program design, HF, CCS, CC2, CCSD, Libint-interface, &
+   call output%printf('Sarai D. Folkestad     &
+                      &program design, HF, CCS, CC2, CCSD, Libint-interface, &
                       &Cholesky decomposition, Davidson-tool, CVS, DIIS-tool, &
                       &zeroth order properties, first order properties, IP, &
                       &frozen core, MLCC2, MLHF, visualization', &
-                      pl='m', ffs='(t6,a)', fs='(t27,a)', ll=50)
+                      pl='m', ffs='(t4,a)', fs='(t27,a)', ll=50)
 !
    call output%printf('Tommaso Giovannini     QM/MM, PCM, Libint-interface', pl='m', fs='(t4,a)', ll=82)
    call output%printf('Linda Goletto          CC2, MLHF', pl='m', fs='(t4,a)', ll=82)
@@ -360,11 +360,11 @@ subroutine print_program_banner()
    call output%printf('Anders Hutcheson       frozen HF orbitals', pl='m', fs='(t4,a)', ll=82)
    call output%printf('Ida-Marie Høyvik       MLHF, frozen HF orbitals', pl='m', fs='(t4,a)', ll=82)
 !
-   call output%printf('Eirik F. Kjønstad', pl='m', fs='(t4,a)', adv=.false.)
-   call output%printf('program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool, &
+   call output%printf('Eirik F. Kjønstad      &
+                      &program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool, &
                       &Cholesky decomposition, Libint-interface, Davidson-tool, &
                       &zeroth order properties, first order properties, SAD, &
-                      &BFGS-tool', pl='m', ffs='(t7,a)',fs='(t27,a)', ll=50)
+                      &BFGS-tool', pl='m', ffs='(t4,a)',fs='(t27,a)')
 !
    call output%printf('Rolf H. Myhre          CC3, Runtest-interface, launch script, file system', &
                         pl='m', fs='(t4,a)', ll=82)

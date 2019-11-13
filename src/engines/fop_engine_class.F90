@@ -249,8 +249,8 @@ contains
 !
       call EOM_timer%turn_on()
 !
-      call output%long_string_print('EOM first order properties calculation', fs='(/t3,a)', colons=.true.)
-      call output%long_string_print(engine%author, fs='(t3,a)', colons=.true.)
+      call output%printf(':: EOM first order properties calculation', fs='(/t3,a)')
+      call output%printf(engine%author, fs='(t3,a)')
 !
       if (engine%dipole_length) then
 !
@@ -412,7 +412,7 @@ contains
                          pl='m', fs='(/t6,14X,a)', ll=74)
       call output%print_separator('m', 74, '-', fs='(t6,a)')
       call output%printf('Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >  ', &
-                         pl='m', fs='(t6,a)', ll=74)
+                         pl='m', fs='(t6,a)', ll=79)
       call output%print_separator('m', 74, '-', fs='(t6,a)')
 !
       sum_strength = zero
@@ -449,8 +449,8 @@ contains
 !
       character(len=5) :: fop_type
 !
-      engine%name_       = 'First order coupled cluster properties engine'
-      engine%author      = 'J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, A. Paul 2019'
+      engine%name_       = ':: First order coupled cluster properties engine'
+      engine%author      = ':: J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, A. Paul 2019'
 !
       engine%tag = 'first order properties'
 !

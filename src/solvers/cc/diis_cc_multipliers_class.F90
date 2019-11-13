@@ -71,8 +71,8 @@ module diis_cc_multipliers_class
 !
    type :: diis_cc_multipliers
 !
-      character(len=100) :: tag = 'DIIS multipliers solver'
-      character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+      character(len=100) :: tag = ':: DIIS multipliers solver'
+      character(len=100) :: author = ':: E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       character(len=500) :: description1 = 'A DIIS CC multiplier equations solver. It combines a quasi-Newton &
                                            &perturbation theory estimate of the next multipliers, using &
@@ -356,10 +356,10 @@ contains
 !
       class(diis_cc_multipliers) :: solver 
 !
-      call output%long_string_print(solver%tag,'(//t3,a)',.true.)
-      call output%long_string_print(solver%author,'(t3,a/)',.true.)
-      call output%long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
-      call output%long_string_print(solver%description2)
+      call output%printf(solver%tag, pl='m' , fs='(//t3,a)')
+      call output%printf(solver%author, pl='m', fs='(t3,a)')
+      call output%printf(solver%description1, pl='m', ffs='(/t3,a)')
+      call output%printf(solver%description2, pl='m', ffs='(/t3,a)')
 !
    end subroutine print_banner_diis_cc_multipliers
 !

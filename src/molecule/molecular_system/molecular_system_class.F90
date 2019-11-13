@@ -1796,12 +1796,12 @@ contains
 !
       line_length = 73
 !
-      call output%print_separator(pl='minimal', n=line_length, fs='(/t5,a)')
+      call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(/t5,a)')
       call output%printf('Geometry((a0))', pl='minimal', fs='(t32,a)', chars=[local_units])
-      call output%print_separator(pl='minimal', n=line_length, fs='(t5,a)')
+      call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(t5,a)')
       call output%printf('Atom          X                Y                Z                Basis', &
                         pl='minimal', fs='(t6,a)')
-      call output%print_separator(pl='minimal', n=line_length, fs='(t5,a)')
+      call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(t5,a)')
 !
 !     Print geometry for every atom
 !
@@ -1818,7 +1818,7 @@ contains
 !
       enddo 
 !
-      call output%print_separator(pl='minimal', n=line_length, fs='(t5,a)')
+      call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(t5,a)')
 !
    end subroutine print_geometry_molecular_system
 !
