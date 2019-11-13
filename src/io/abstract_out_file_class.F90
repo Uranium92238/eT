@@ -976,7 +976,7 @@ contains
          end if
 !
 !        Calculate number of columns if last print and not first print and set up format strings
-         if ((i .eq.  n_prints) .and. (i .ne. 1)) then
+         if ((i .eq.  n_prints) .and. (i .ne. 1) .and. (mod(dim_2, n_columns) .ne. 0)) then
             n_columns = mod(dim_2, n_columns)
             int_string = trim(first_col_index_format) // &
                          repeat(' '//trim(col_index_format), n_columns - 1)
@@ -993,7 +993,7 @@ contains
          do k = 1, dim_1
 !
             do j = 1, n_columns
-               reals_to_print(j) = matrix(k,j)
+               reals_to_print(j) = matrix(k,j + columns_printed)
             enddo
 !
             call the_file%format_print(real_string, ints=[k], &
