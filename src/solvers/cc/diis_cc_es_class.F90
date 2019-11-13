@@ -106,7 +106,7 @@ module diis_cc_es_class
 contains
 !
 !
-   function new_diis_cc_es(transformation, wf) result(solver)
+   function new_diis_cc_es(transformation, wf, restart) result(solver)
 !!
 !!    New DIIS CC ES 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -117,6 +117,8 @@ contains
       class(ccs), intent(inout) :: wf
 !
       character(len=*), intent(in) :: transformation
+!
+      logical, intent(in) :: restart
 !
       real(dp), dimension(:), allocatable :: eps 
 !
@@ -147,7 +149,7 @@ contains
       solver%residual_threshold   = 1.0d-6
       solver%transformation       = 'right'
       solver%diis_dimension       = 20
-      solver%restart              = .false.
+      solver%restart              = restart
       solver%transformation       = trim(transformation)
       solver%es_type              = 'valence'
       solver%records_in_memory    = .false.
@@ -305,7 +307,6 @@ contains
 !
       if (solver%restart) then ! Overwrite all or some of the orbital differences 
 !
-         call wf%is_restart_safe('excited state')
          call solver%determine_restart_transformation(wf) ! Read right or left?
 !
          n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)

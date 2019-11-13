@@ -100,7 +100,7 @@ module davidson_cc_multipliers_class
 contains
 !
 !
-   function new_davidson_cc_multipliers(wf) result(solver)
+   function new_davidson_cc_multipliers(wf, restart) result(solver)
 !!
 !!    New Davidson CC multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -110,6 +110,8 @@ contains
       type(davidson_cc_multipliers) :: solver
 !
       class(ccs) :: wf
+!
+      logical, intent(in) :: restart
 !
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' multipliers')
       call solver%timer%turn_on()
@@ -122,7 +124,7 @@ contains
 !
       solver%max_iterations      = 100
       solver%residual_threshold  = 1.0d-6
-      solver%restart             = .false.
+      solver%restart             = restart
       solver%max_dim_red         = 50
       solver%records_in_memory   = .false.
       solver%storage             = 'disk'
@@ -227,7 +229,6 @@ contains
 !
          call output%printf('Requested restart. Reading multipliers from file.', pl='m', fs='(/t3,a)')
 !
-         call wf%is_restart_safe('ground state')
          call wf%initialize_multipliers()
          call wf%read_multipliers()
 !
@@ -412,8 +413,6 @@ contains
 !
       call input%get_keyword_in_section('threshold', 'solver cc multipliers', solver%residual_threshold)
       call input%get_keyword_in_section('max iterations', 'solver cc multipliers', solver%max_iterations)
-!
-      if (input%requested_keyword_in_section('restart', 'solver cc multipliers')) solver%restart = .true.    
 !
       call input%get_keyword_in_section('storage', 'solver cc multipliers', solver%storage)
 !

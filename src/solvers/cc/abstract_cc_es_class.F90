@@ -199,8 +199,7 @@ contains
       call input%get_keyword_in_section('max iterations', 'solver cc es', solver%max_iterations)
 !               
       call input%get_required_keyword_in_section('singlet states', 'solver cc es', solver%n_singlet_states)
-!
-      if (input%requested_keyword_in_section('restart', 'solver cc es')) solver%restart = .true.    
+!  
       if (input%requested_keyword_in_section('left eigenvectors', 'solver cc es')) solver%transformation = 'left'    
       if (input%requested_keyword_in_section('right eigenvectors', 'solver cc es')) solver%transformation = 'right'    
 !

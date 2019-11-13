@@ -113,7 +113,7 @@ module diis_cc_gs_class
 contains
 !
 !
-   function new_diis_cc_gs(wf) result(solver)
+   function new_diis_cc_gs(wf, restart) result(solver)
 !!
 !!    New DIIS CC GS 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -125,6 +125,8 @@ contains
       class(ccs) :: wf
 !
       real(dp), dimension(:), allocatable :: eps
+!
+      logical, intent(in) :: restart
 !
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' ground state')
       call solver%timer%turn_on()
@@ -139,7 +141,7 @@ contains
       solver%max_iterations      = 100
       solver%energy_threshold    = 1.0d-6
       solver%omega_threshold     = 1.0d-6
-      solver%restart             = .false.
+      solver%restart             = restart
       solver%storage             = 'disk'
 !
 !     Read & print settings (thresholds, etc.)
@@ -155,19 +157,19 @@ contains
 !
       if (solver%restart) then
 !
-         call wf%is_restart_safe('ground state')
-!
          call output%printf('Requested restart. Reading in solution from file.', fs='(/t3,a)', pl='minimal')
 !
          call wf%read_amplitudes()
 !
          call wf%integrals%write_t1_cholesky(wf%t1) 
+!
          if(wf%need_g_abcd .and. wf%integrals%room_for_g_pqrs_t1()) &
             call wf%integrals%place_g_pqrs_t1_in_memory()
 ! 
       else
 !
          call wf%integrals%write_t1_cholesky(wf%t1) 
+!
          if(wf%need_g_abcd .and. wf%integrals%room_for_g_pqrs_t1()) &
             call wf%integrals%place_g_pqrs_t1_in_memory()
 !
@@ -414,8 +416,6 @@ contains
       call input%get_keyword_in_section('energy threshold', 'solver cc gs', solver%energy_threshold)
       call input%get_keyword_in_section('diis dimension', 'solver cc gs', solver%diis_dimension)
       call input%get_keyword_in_section('max iterations', 'solver cc gs', solver%max_iterations)
-!
-      if (input%requested_keyword_in_section('restart', 'solver cc gs')) solver%restart = .true.
 !
       call input%get_keyword_in_section('storage', 'solver cc gs', solver%storage)
 !

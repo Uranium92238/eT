@@ -96,7 +96,7 @@ module davidson_cc_es_class
 contains
 !
 !
-   function new_davidson_cc_es(transformation, wf) result(solver)
+   function new_davidson_cc_es(transformation, wf, restart) result(solver)
 !!
 !!    New Davidson CC ES 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -107,6 +107,8 @@ contains
       class(ccs), intent(inout) :: wf
 !
       character(len=*), intent(in) :: transformation
+!
+      logical, intent(in) :: restart
 !
       solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' excited state (' // trim(transformation) //')')
       call solver%timer%turn_on()
@@ -131,7 +133,7 @@ contains
       solver%max_iterations       = 100
       solver%eigenvalue_threshold = 1.0d-6
       solver%residual_threshold   = 1.0d-6
-      solver%restart              = .false.
+      solver%restart              = restart
       solver%max_dim_red          = 100 
       solver%transformation       = trim(transformation)
       solver%es_type              = 'valence'
@@ -381,8 +383,6 @@ contains
       if (solver%restart) then 
 !
 !        Read the solutions from file & set as initial trial vectors 
-!
-         call wf%is_restart_safe('excited state')
 !
          call solver%determine_restart_transformation(wf) ! Read right or left?
          n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)

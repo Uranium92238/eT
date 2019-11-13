@@ -110,7 +110,7 @@ module newton_raphson_cc_gs_class
 contains
 !
 !
-   function new_newton_raphson_cc_gs(wf) result(solver)
+   function new_newton_raphson_cc_gs(wf, restart) result(solver)
 !!
 !!    New Newton-Rahpson GS 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -120,6 +120,8 @@ contains
       type(newton_raphson_cc_gs) :: solver
 !
       class(ccs) :: wf
+!
+      logical, intent(in) :: restart
 !
 !     Print solver banner
 !
@@ -133,7 +135,7 @@ contains
       solver%relative_micro_residual_threshold  = 1.0d-2
       solver%energy_threshold                   = 1.0d-6
       solver%omega_threshold                    = 1.0d-6
-      solver%restart                            = .false.
+      solver%restart                            = restart
       solver%max_micro_dim_red                  = 50
       solver%storage                            = 'disk'
 !
@@ -150,16 +152,17 @@ contains
 !
       if (solver%restart) then
 !
-         call wf%is_restart_safe('ground state')
          call wf%read_amplitudes()
 !
          call wf%integrals%write_t1_cholesky(wf%t1) 
+!
          if(wf%need_g_abcd .and. wf%integrals%room_for_g_pqrs_t1()) &
             call wf%integrals%place_g_pqrs_t1_in_memory()
 ! 
       else
 !
          call wf%integrals%write_t1_cholesky(wf%t1) 
+!
          if(wf%need_g_abcd .and. wf%integrals%room_for_g_pqrs_t1()) &
             call wf%integrals%place_g_pqrs_t1_in_memory()
 !
@@ -496,8 +499,6 @@ contains
       call input%get_keyword_in_section('max iterations', 'solver cc gs', solver%max_iterations)
       call input%get_keyword_in_section('rel micro threshold', 'solver cc gs', solver%relative_micro_residual_threshold)
       call input%get_keyword_in_section('max micro iterations', 'solver cc gs', solver%max_micro_iterations)
-!
-      if (input%requested_keyword_in_section('restart', 'solver cc gs')) solver%restart = .true.
 !
       call input%get_keyword_in_section('storage', 'solver cc gs', solver%storage)
 !

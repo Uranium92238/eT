@@ -133,8 +133,6 @@ contains
       wf%n_es_amplitudes = wf%n_t1 + wf%n_t2
       wf%need_g_abcd     = .false.
 !
-      call wf%write_cc_restart()
-!
       call wf%initialize_fock()
 !
    end function new_cc2

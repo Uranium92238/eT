@@ -71,7 +71,12 @@ contains
       engine%multipliers_algorithm  = 'davidson'
       engine%gs_algorithm           = 'diis'
 !
+      engine%gs_restart            = .false.
+      engine%multipliers_restart   = .false.
+!
       call engine%read_settings()
+!
+      engine%restart = engine%gs_restart .or. engine%multipliers_restart
 !
       call engine%set_printables()
 !
@@ -126,6 +131,8 @@ contains
       call engine%do_cholesky(wf)
 !
       call wf%mo_preparations()
+!
+      call engine%restart_handling(wf)
 !
 !     Determine ground state | CC >
 !

@@ -90,7 +90,16 @@ contains
       engine%lr                     = .false.
       engine%eom                    = .false.
 !
+      engine%gs_restart            = .false.
+      engine%multipliers_restart   = .false.
+      engine%es_restart            = .false.
+!
       call engine%read_settings()
+!
+!
+      engine%restart =  engine%gs_restart .or. &
+                        engine%multipliers_restart .or. &
+                        engine%es_restart
 !
       call engine%set_printables()
 !
@@ -127,6 +136,8 @@ contains
       call engine%do_cholesky(wf)
 !
       call wf%mo_preparations()
+!
+      call engine%restart_handling(wf)
 !
 !     Ground state solution
 !

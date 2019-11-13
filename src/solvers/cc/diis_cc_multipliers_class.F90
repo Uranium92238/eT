@@ -120,7 +120,7 @@ module diis_cc_multipliers_class
 contains
 !
 !
-   function new_diis_cc_multipliers(wf) result(solver)
+   function new_diis_cc_multipliers(wf, restart) result(solver)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -130,6 +130,8 @@ contains
       type(diis_cc_multipliers) :: solver
 !
       class(ccs) :: wf
+!
+      logical, intent(in) :: restart
 !
       real(dp), dimension(:), allocatable :: eps
 !
@@ -145,7 +147,7 @@ contains
       solver%diis_dimension = 8
       solver%max_iterations = 100
       solver%residual_threshold  = 1.0d-6
-      solver%restart = .false.
+      solver%restart = restart
       solver%storage = 'disk'
 !
       call solver%read_settings()
@@ -246,7 +248,6 @@ contains
          call output%printf('Requested restart. Reading multipliers from file.', &
                              pl='m', fs='(/t3,a)')
 !
-         call wf%is_restart_safe('ground state')
          call wf%read_multipliers()
          call wf%get_multipliers(multipliers) 
 !
@@ -392,9 +393,7 @@ contains
       class(diis_cc_multipliers) :: solver 
 !
       call input%get_keyword_in_section('threshold', 'solver cc multipliers', solver%residual_threshold)
-      call input%get_keyword_in_section('max iterations', 'solver cc multipliers', solver%max_iterations)
-!
-      if (input%requested_keyword_in_section('restart', 'solver cc multipliers')) solver%restart = .true.    
+      call input%get_keyword_in_section('max iterations', 'solver cc multipliers', solver%max_iterations)   
 !
       call input%get_keyword_in_section('storage', 'solver cc multipliers', solver%storage)
 !
