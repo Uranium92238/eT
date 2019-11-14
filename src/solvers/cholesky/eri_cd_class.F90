@@ -25,6 +25,39 @@ module eri_cd_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!    Files updated by Rolf H. Myhre, September 2019
 !!
+!!    Handles the Cholesky decomposition of the ERIs
+!!    
+!!       g_wxyz = (wx|yz) = sum_J L_wx_J L_yz_J
+!!
+!!    by first determining the Cholesky basis, i.e., 
+!!    the decomposition pivots and then constructing the 
+!!    vectors.
+!!
+!!    After the basis is determined, the overlap
+!!
+!!       S_JK = (J|K),
+!!
+!!    is constructed for the pivot elements {J}. S is Cholesky
+!!    decomposed,
+!!
+!!       S = Q^T Q,
+!!
+!!    and the factors Q are inverted.
+!!
+!!    Finally the Cholesky vectors are constructed 
+!!    as 
+!!
+!!       L_wx_J = sum_K (wx|K)[Q^-T]_KJ.
+!!
+!!    For a more detailed description see 
+!!
+!!       Folkestad, S. D., Kjønstad, E. F., and Koch, H.,
+!!       JCP, 150(19), 194112 (2019).
+!!
+!!    There are options for one-center Cholesky decomposition
+!!    method specific Cholesky decomposition or partitioned 
+!!    Cholesky decomposition (PCD).
+!!
 !
    use kinds
 !
@@ -103,26 +136,38 @@ module eri_cd_class
       procedure :: run                                    => run_eri_cd
       procedure :: cleanup                                => cleanup_eri_cd
 !
-      procedure :: invert_Q                               => invert_Q_eri_cd
-      procedure :: diagonal_test                          => diagonal_test_eri_cd
-      procedure :: full_test_cholesky_vecs                => full_test_cholesky_vecs_cd_eri_solver
+!     Screening
+!
       procedure :: construct_significant_diagonal         => construct_significant_diagonal_eri_cd
-      procedure :: construct_significant_diagonal_atomic  => construct_significant_diagonal_atomic_eri_cd
+      procedure :: construct_significant_diagonal_atomic  => construct_significant_diagonal_atomic_eri_cd  
+!
+!     Determine Cholesky basis 
+!
       procedure :: determine_cholesky_basis               => determine_cholesky_basis_eri_cd
       procedure :: determine_cholesky_basis_PCD           => determine_cholesky_basis_PCD_eri_cd
+!
+!     Construct vectors
+!  
+      procedure :: invert_Q                               => invert_Q_eri_cd
       procedure :: construct_S                            => construct_S_eri_cd
       procedure :: construct_cholesky_vectors             => construct_cholesky_vectors_eri_cd
-      procedure :: construct_mo_cholesky_vectors          => construct_mo_cholesky_vectors_cd_eri_solver
+!
+!     Read, write, and print
 !
       procedure :: read_settings                          => read_settings_eri_cd
       procedure :: print_banner                           => print_banner_eri_cd
       procedure :: print_settings                         => print_settings_eri_cd
+      procedure :: write_ao_cholesky_to_direct_file       => write_ao_cholesky_to_direct_file_cd_eri_solver
+!
+!     PCD utilities
 !
       procedure :: construct_diagonal_batches             => construct_diagonal_batches_eri_cd
       procedure :: construct_diagonal_from_batch_bases    => construct_diagonal_from_batch_bases_eri_cd
-      procedure :: append_bases                           => append_bases_eri_cd
 !
-      procedure :: write_ao_cholesky_to_direct_file       => write_ao_cholesky_to_direct_file_cd_eri_solver
+!     Testing 
+!
+      procedure :: diagonal_test                          => diagonal_test_eri_cd
+      procedure :: full_test_cholesky_vecs                => full_test_cholesky_vecs_cd_eri_solver
 !
    end type eri_cd
 !
@@ -218,6 +263,9 @@ contains
 !
       call det_basis_timer%turn_on()
 !
+!     Construct screened lists for basis determination (diagonal screening (wx|wx)<T)
+!     and for vector construction (Cauchy-Schwarz screening).
+!
       if (solver%one_center) then
 !
          if (present(screening_vector)) then
@@ -244,6 +292,8 @@ contains
 !
       endif
 !
+!     Determine the basis (decomposition pivots) either for regular CD or PCD
+!
       if (solver%n_batches == 1) then
 !
          call solver%determine_cholesky_basis(system, solver%diagonal_info_target, &
@@ -259,14 +309,18 @@ contains
 !
       call invert_timer%turn_on()
 !
+!     Construct and decompose S, invert the factors Q.
+!
       call solver%construct_S(system)
       call solver%invert_Q()
 !
       call invert_timer%turn_off()
 !
+!     If vectors are requested, construct L_wx_J and write them to file
+!
       if (solver%construct_vectors) then
 !
-         build_timer = timings("Cholesky; time to build L_ab^J and test")
+         build_timer = timings("Cholesky; time to build L_ab^J")
          call build_timer%turn_on()
 !
          call solver%construct_cholesky_vectors(system)
@@ -315,10 +369,10 @@ contains
 !!
 !!    Constructs two screened diagonals
 !!
-!!       1. Screened diagonal for decomposition D_αβ <= T   or   D_αβ * V_α * V_β <= T 
+!!       1. Screened diagonal for decomposition D_wx <= T   or   D_wx * V_w * V_x <= T 
 !!          The latter if optional screening vector is present
 !!
-!!       2. Screened diagonal for construction of cholesky vectros  sqrt( D_αβ * D_max ) <= T  
+!!       2. Screened diagonal for construction of cholesky vectros  sqrt( D_wx * D_max ) <= T  
 !!
 !!    Writes all information to files target_diagonal and construct_diagonal
 !!
@@ -337,7 +391,8 @@ contains
 !
       integer, dimension(:), allocatable  :: ao_offsets
 !
-      real(dp), dimension(:), allocatable :: screening_vector_local, screening_vector_reduced, max_in_sp_diagonal
+      real(dp), dimension(:), allocatable :: screening_vector_local, screening_vector_reduced
+      real(dp), dimension(:), allocatable :: max_in_sp_diagonal
       real(dp), dimension(:), allocatable :: D_xy 
 !
       real(dp), dimension(:,:,:,:), pointer :: g_ABAB_p
@@ -385,7 +440,9 @@ contains
          enddo
       enddo
 !
-!     Pre-screening of full diagonal
+!     Pre-screening of full diagonal to
+!     determine the number of significant shell pairs
+!     and extract the largest diagonal for the shell pairs
 !
       call mem%alloc(sig_sp, solver%n_sp)
       sig_sp = .false.
@@ -436,7 +493,8 @@ contains
       enddo
 !$omp end parallel do
 !
-!     Prescreening for construction diagonal (Cauchy-Schwarz for final Cholesky vectors)
+!     Pre-screening for vector construction,
+!     that is, Cauchy-Schwarz for final Cholesky vectors.
 !
       max_diagonal = get_abs_max(max_in_sp_diagonal, solver%n_sp)
 !
@@ -535,6 +593,8 @@ contains
       call output%printf('Construct AO pairs:    (i19)', ints=[n_construct_aop], pl='n', fs='(t6, a)')
 !
 !     Prepare for construction of diagonal and screening vector
+!     Make index lists such that the diagonal construction 
+!     may be omp-parallelized
 !     
       call mem%alloc(ao_offsets, n_sig_sp)
       ao_offsets = 0
@@ -679,8 +739,17 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Constructs the significant diagonal for the given decomposition threshold within 
-!!    the one-center approximation. Screening diagonal is optional argument for 
+!!    the one-center approximation. Screening vector is optional argument for 
 !!    additional screening.
+!!
+!!    Constructs two screened diagonals
+!!
+!!       1. Screened diagonal for decomposition D_wx <= T   or   D_wx * V_w * V_x <= T 
+!!          The latter if optional screening vector is present
+!!
+!!       2. Screened diagonal for construction of cholesky vectros  sqrt( D_wx * D_max ) <= T  
+!!
+!!    Writes all information to files target_diagonal and construct_diagonal
 !!
       implicit none
 !
@@ -741,7 +810,9 @@ contains
 !
       call mem%alloc(max_in_sp_diagonal, solver%n_sp)
 !
-!     Pre-screening of full diagonal
+!     Pre-screening of full diagonal to
+!     determine the number of significant shell pairs
+!     and extract the largest diagonal for the shell pairs
 !
       allocate(sig_sp(solver%n_sp))
       sig_sp = .false.
@@ -794,7 +865,8 @@ contains
       enddo
 !$omp end parallel do
 !
-!     Prescreening for construction diagonal (Cauchy-Schwarz for final Cholesky vectors)
+!     Pre-screening for vector construction,
+!     that is, Cauchy-Schwarz for final Cholesky vectors.
 !
       max_diagonal = get_abs_max(max_in_sp_diagonal, solver%n_sp)
 !
@@ -891,7 +963,9 @@ contains
       call output%printf('Construct AO pairs:    (i23)', ints=[n_construct_aop], pl='n', fs='(t6, a)')
 !
 !     Prepare for construction of diagonal and screening vector
-!     
+!     Make index lists such that the diagonal construction 
+!     may be omp-parallelized
+!    
       call mem%alloc(ao_offsets, n_sig_sp)
       ao_offsets = 0
 !
@@ -1037,7 +1111,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Divides the significant diagonal into batches and prepares for 
-!!    decomposition
+!!    partitioned decomposition
 !!
       implicit none
 !  
@@ -1083,7 +1157,7 @@ contains
 !
       call solver%diagonal_info_target%close_()
 !
-!     Calculate size of batches and the remainder
+!     Calculate size of batches
 !
       batch_size = n_sig_aop/solver%n_batches
 !
@@ -1194,7 +1268,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
 !!
 !!    Constructs the final diagonal from the bases obtained from diagonal batches.
-!!    Called as preparation for final decomposition step.
+!!    Called as preparation for final decomposition step in PCD.
 !!
       implicit none
 !
@@ -1535,111 +1609,9 @@ contains
    end subroutine construct_diagonal_from_batch_bases_eri_cd
 !
 !
-   subroutine append_bases_eri_cd(solver, n_cholesky_batches, n_sp_in_basis_batches)
-!!
-!!    Append bases
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Appends bases from different diagonal batches, to be used
-!!    if system routine is used to decompose directly the bases from the batches
-!!
-      implicit none
-!
-      class(eri_cd) :: solver
-!
-      integer, dimension(solver%n_batches), intent(in) :: n_cholesky_batches
-      integer, dimension(solver%n_batches), intent(in) :: n_sp_in_basis_batches
-!
-      integer :: n_cholesky_total, n_sp_in_basis_total, J
-      integer :: sp, batch
-      integer :: n_cholesky_offset, n_sp_in_basis_offset
-!
-      type(sequential_file) :: batch_file
-!
-      integer, dimension(:,:), allocatable :: basis_shell_info, cholesky_basis
-      integer, dimension(:,:), allocatable :: cholesky_full, basis_shell_info_full
-!
-      character(len=100) :: temp_name
-!
-      n_cholesky_total = 0
-      n_sp_in_basis_total = 0
-!
-      do batch = 1, solver%n_batches
-!
-         n_cholesky_total = n_cholesky_total + n_cholesky_batches(batch) 
-         n_sp_in_basis_total = n_sp_in_basis_total + n_sp_in_basis_batches(batch) 
-!
-      enddo
-!
-      call mem%alloc(cholesky_full, n_cholesky_total, 3)
-      call mem%alloc(basis_shell_info_full, n_sp_in_basis_total, 4)
-!
-      n_sp_in_basis_offset = 0
-      n_cholesky_offset = 0
-!
-      do batch = 1, solver%n_batches
-!
-!        Read basis_shell_data file containing
-!  
-!           1. number shell pairs in basis
-!           2. basis_shell_info
-!           3. cholesky_basis
-         
-         write(temp_name, '(a11, i4.4)') 'basis_info_', batch
-         batch_file = sequential_file(trim(temp_name))
-!
-         call batch_file%open_('read', 'rewind')
-!  
-         call mem%alloc(basis_shell_info, n_sp_in_basis_batches(batch), 4)
-         call mem%alloc(cholesky_basis, n_cholesky_batches(batch), 3)
-!  
-         call batch_file%read_blank()
-         call batch_file%read_(basis_shell_info, 4*n_sp_in_basis_batches(batch))
-         call batch_file%read_(cholesky_basis, 3*n_cholesky_batches(batch))
-!  
-         call batch_file%close_()
-!
-         do J = 1, n_cholesky_batches(batch)
-!
-            cholesky_full(n_cholesky_offset + J, :) = cholesky_basis(J, :)
-!
-         enddo
-!
-         do sp = 1, n_sp_in_basis_batches(batch)
-!
-            basis_shell_info_full(n_sp_in_basis_offset + sp, :) = basis_shell_info(sp, :)
-!
-         enddo
-!
-         n_sp_in_basis_offset = n_sp_in_basis_offset + n_sp_in_basis_batches(batch)
-         n_cholesky_offset = n_cholesky_offset + n_cholesky_batches(batch)
-!
-         call mem%dealloc(basis_shell_info, n_sp_in_basis_batches(batch), 4)
-         call mem%dealloc(cholesky_basis, n_cholesky_batches(batch), 3)
-!
-      enddo
-!
-      call solver%cholesky_basis_file%open_('write', 'rewind')
-!
-      call solver%cholesky_basis_file%write_(n_sp_in_basis_total)
-!
-      call solver%cholesky_basis_file%write_(basis_shell_info_full, 4*n_sp_in_basis_total)
-!
-      call solver%cholesky_basis_file%write_(cholesky_full, 3*n_cholesky_total)
-!
-      solver%n_cholesky = n_cholesky_total
-!
-      call solver%cholesky_basis_file%close_()
-!
-      call mem%dealloc(cholesky_full, n_cholesky_total, 3)
-      call mem%dealloc(basis_shell_info_full, n_sp_in_basis_total, 4)
-!
-   end subroutine append_bases_eri_cd
-!
-!
    subroutine determine_cholesky_basis_PCD_eri_cd(solver, system)
 !!
-!!    Determine auxiliary cholesky basis for partitioned Cholesky decomposition
+!!    Determine cholesky basis for partitioned Cholesky decomposition
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Determines the elements of the auxiliary basis by PCD
@@ -1699,7 +1671,7 @@ contains
 !
    subroutine determine_cholesky_basis_eri_cd(solver, system, diagonal_info, basis_info)
 !!
-!!    Determine auxiliary cholesky basis
+!!    Determine cholesky basis
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Determines the elements of the Cholesky auxiliary basis.
@@ -1832,8 +1804,11 @@ contains
 !
 !     Construct info arrays
 !
-      call mem%alloc(sig_sp_to_first_sig_aop, n_sig_sp + 1)
+      call mem%alloc(sig_sp_to_first_sig_aop, n_sig_sp + 1) ! Maps significant shell pair to first ao pair
       sig_sp_to_first_sig_aop = 0
+!
+!     Note: allocated with length n_significant_sp + 1, last element is used for n_sig_aop + 1
+!     This is convenient because sig_sp_to_first_sig_aop will be used to calculate lengths.
 !
       sig_sp_to_first_sig_aop(n_sig_sp + 1) = n_sig_aop + 1
 !
@@ -1842,9 +1817,6 @@ contains
 !
       call mem%alloc(sig_aop_to_aos, n_sig_aop, 2) ! [alpha, beta]
       sig_aop_to_aos = 0
-!
-!     Note: allocated with length n_significant_sp + 1, last element is used for n_significant_aop
-!     This is convenient because significant_sp_to_first_significant_aop will be used to calculate lengths.
 !
       sp              = 1
       current_sig_sp  = 1
@@ -1977,6 +1949,8 @@ contains
          call mem%alloc(qual_sp, solver%n_sp, 3)
          qual_sp = 0
          qual_aop = 0
+!
+!        Determine qualified shell pairs
 !
          do sp = 1, n_sig_sp
 !
@@ -2649,12 +2623,11 @@ contains
 !
    subroutine construct_S_eri_cd(solver, system)
 !!
-!!    Construct overlap cholesky vectors
+!!    Construct S
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Constructs the overlap matrix (J|K) of the auxiliary basis 
-!!    and cholesky decomposes it.
-!!
+!!    and Cholesky decomposes it.
 !!
       implicit none
 !
@@ -2952,8 +2925,10 @@ contains
 !
    subroutine invert_Q_eri_cd(solver)
 !!
-!!    Invert cholesky vectors of auxiliary basis overlap
+!!    Invert Q
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, July 2018
+!!
+!!    Invert Cholesky factors Q of S
 !!
       implicit none
 !
@@ -3021,8 +2996,11 @@ contains
 !!    Construct Cholesky vectors
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Constructs the Cholesky vectors L_xy_J = sum_K L_K_J^-1 (K | xy)
+!!    Constructs the Cholesky vectors 
 !!
+!!       L_xy_J = sum_K (Q^-1)_JK (K | xy)
+!!
+!!    and writes them to file
 !!
       implicit none
 !
@@ -3047,9 +3025,9 @@ contains
 !
       integer, dimension(:,:), allocatable :: basis_shell_info                      ! Info on shells containing elements of the basis
       integer, dimension(:,:), allocatable :: AB_info                               ! Info on offsets and shells for OMP-loop [offset, A, B]
-      integer, dimension(3*system%max_shell_size**2), target :: basis_aops_in_CD_sp   ! Basis ao pairs in shell pair CD
+      integer, dimension(3*system%max_shell_size**2), target :: basis_aops_in_CD_sp ! Basis ao pairs in shell pair CD
       integer, dimension(:,:), pointer :: basis_aops_in_CD_sp_p                     ! Basis ao pairs in shell pair CD
-      integer, dimension(:,:), allocatable :: cholesky_basis                     ! Info on cholesky basis
+      integer, dimension(:,:), allocatable :: cholesky_basis                        ! Info on cholesky basis
 !
 !     Reals
 !
@@ -3386,6 +3364,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Tests the decomposition by 
+!!
 !!       1. finding the largest element of (D_sig - D_approx)
 !!       2. finding the smallest (largest negative) element of (D_sig - D_approx)
 !!
@@ -3578,6 +3557,12 @@ contains
 !
    subroutine full_test_cholesky_vecs_cd_eri_solver(solver, system)
 !!
+!!    Full test Cholesky vectors 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad
+!!
+!!    Tests the entire ERI matrix. 
+!!    Note that this test is expensive (memory and computation)
+!!    and should only be used for very small systems.
 !!
       implicit none
 !
@@ -3833,13 +3818,13 @@ contains
 !!
 !!     Read input if it is present:
 !!
-!!        cholesky
+!!        solver cholesky
 !!           threshold: 1.0d-8
 !!           span: 1.0d-2
 !!           qualified: 1000
 !!           one center
 !!           no vectors
-!!        end cholesky
+!!        end solver cholesky
 !!
       implicit none
 !
@@ -3854,338 +3839,6 @@ contains
       if (input%requested_keyword_in_section('no vectors', 'solver cholesky')) solver%construct_vectors = .false.
 !
    end subroutine read_settings_eri_cd
-!
-!
-   subroutine construct_mo_cholesky_vectors_cd_eri_solver(solver, system, n_mo, orbital_coefficients)
-!!
-!!    Construct MO Cholesky vectors
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018-2019
-!!
-!!    Reads AO Cholesky vectors, transforms them to MO basis and writes them to file.
-!!    MO Cholesky vectors L_pq_J are stored packed (q .le. p) on direct access file 
-!!    with record pq and record length n_cholesky.
-!!
-      implicit none
-!
-      class(eri_cd) :: solver
-!
-      type(molecular_system), intent(in) :: system
-!
-      integer, intent(in) :: n_mo
-!
-      real(dp), dimension(solver%n_ao, n_mo), intent(in) :: orbital_coefficients
-!
-      integer :: n_construct_sp, n_construct_aop
-!
-      real(dp), dimension(:,:), allocatable :: L_wx_J, L_AB_J
-!
-      real(dp), dimension(:,:,:), allocatable :: E_pxJ, E_Jpx, L_Jpq, L_wx_J_full 
-!
-      real(dp), dimension(:), allocatable :: L_J, L_J_padded
-!
-      integer :: A, B, J, sp, x, q, p, pq_rec, Jbatch_pq_rec, K
-      integer :: y, xy_packed, AB_offset, AB_offset_full, xy
-!
-      integer :: io_stat
-!
-      type(interval) :: A_interval, B_interval
-!
-      type(batching_index) :: batch_J 
-      integer :: current_J_batch, req0, req1
-!     
-      integer :: max_shell_size, size_AB, max_size_AB
-!
-      type(direct_file) :: mo_cholesky_tmp
-!
-      type(timings) :: cholesky_mo_timer 
-!
-      logical, dimension(:), allocatable :: construct_sp 
-!
-!     Read information about for which shell pairs 
-!     the AO Cholesky vectors were constructed (the rest screened out)
-!
-      cholesky_mo_timer = timings('transform and write mo cholesky to file')
-      call cholesky_mo_timer%turn_on()
-!
-      call mem%alloc(construct_sp, solver%n_sp)
-!
-      call solver%diagonal_info_cauchy_schwarz%open_('read', 'rewind')
-!
-      call solver%diagonal_info_cauchy_schwarz%read_(n_construct_sp)
-      call solver%diagonal_info_cauchy_schwarz%read_(n_construct_aop)
-      call solver%diagonal_info_cauchy_schwarz%read_(construct_sp, solver%n_sp)
-!
-      call solver%diagonal_info_cauchy_schwarz%close_()
-!
-!     We batch over J, MO transforming L_pq^J for as many Js as we can manage.
-!
-!     Once MO transformed, we store L_#J,pq to a temporary file,  
-!     which is later rewritten using the information from the original 
-!     batching procedure.
-!
-      call solver%cholesky_ao_vectors_info%open_('read', 'rewind')
-!
-      call solver%cholesky_ao_vectors_info%read_(size_AB, io_stat)
-!
-      max_size_AB = 0 
-!
-      do while (io_stat .ge. 0)
-!
-         if (size_AB .gt. max_size_AB) max_size_AB = size_AB 
-!
-         call solver%cholesky_ao_vectors_info%read_(size_AB, io_stat)
-!
-      enddo
-!
-      batch_J = batching_index(solver%n_cholesky)
-!
-      call system%get_max_shell_size(max_shell_size)
-!
-      req0 = (max_size_AB)*(solver%n_cholesky)        ! To be able to hold L_AB_J for all J 
-      req1 = 2*n_mo*solver%n_ao + &                   ! E_pxJ, E_Jpx for given J
-               n_mo**2 + max_shell_size + &           ! L_J_padded for given pq, L_Jp,q for given J batch 
-               2*solver%n_ao**2 + 1                   ! Hold L_wx_J for given J batch
-!
-      call mem%batch_setup(batch_J, req0, req1)
-!
-      call mem%alloc(L_J_padded, batch_J%max_length)
-!
-      mo_cholesky_tmp = direct_file('cholesky_mo_tmp', batch_J%max_length)
-!
-      call mo_cholesky_tmp%open_()
-!
-      call solver%cholesky_ao_vectors%open_('read')
-!
-      do current_J_batch = 1, batch_J%num_batches
-!
-         call batch_J%determine_limits(current_J_batch)
-!
-!        1. Extract packed & screened AO vector L_wx^J for the given batch of J 
-!  
-         call solver%cholesky_ao_vectors%rewind_()
-         call solver%cholesky_ao_vectors_info%rewind_()
-!
-         call solver%cholesky_ao_vectors_info%read_(size_AB, io_stat)
-!
-         AB_offset = 0
-!
-         call mem%alloc(L_wx_J, n_construct_aop, batch_J%length)
-!
-         do while (io_stat .ge. 0)
-!
-!           Read for the particular shell pair 
-!
-            call mem%alloc(L_AB_J, size_AB, solver%n_cholesky)
-!
-            call solver%cholesky_ao_vectors%read_(L_AB_J, size_AB*solver%n_cholesky)
-!
-!           Set full vector for the relevant J  
-!  
-!$omp parallel do private(J, K)
-            do J = 1, batch_J%length 
-               do K = 1, size_AB 
-!
-                  L_wx_J(AB_offset + K, J) = L_AB_J(K, J + batch_J%first - 1)
-!
-               enddo
-            enddo
-!$omp end parallel do 
-!
-            AB_offset = AB_offset + size_AB
-!
-            call mem%dealloc(L_AB_J, size_AB, solver%n_cholesky)
-!
-            call solver%cholesky_ao_vectors_info%read_(size_AB, io_stat)
-!
-         enddo
-!
-!        2. Make the unpacked & full AO vector L_wx^J 
-!
-         call mem%alloc(L_wx_J_full, solver%n_ao, solver%n_ao, batch_J%length)
-         L_wx_J_full = zero 
-!
-         AB_offset = 0
-         AB_offset_full = 0
-         sp = 0
-!
-         do B = 1, solver%n_s
-!
-            B_interval = system%shell_limits(B)
-!
-            do A = B, solver%n_s
-!
-               A_interval = system%shell_limits(A)
-!
-               sp = sp + 1
-!
-               if (construct_sp(sp)) then
-!
-                  if (A .ne. B) then 
-!
-!$omp parallel do private(J,x,y,xy)
-                     do J = 1, batch_J%length 
-                        do x = 1, A_interval%length
-                           do y = 1, B_interval%length
-!  
-                              xy = A_interval%length*(y-1) + x
-                              L_wx_J_full(x + A_interval%first - 1, y + B_interval%first - 1, J) = L_wx_J(xy + AB_offset, J)
-                              L_wx_J_full(y + B_interval%first - 1, x + A_interval%first - 1, J) = L_wx_J(xy + AB_offset, J)
-!  
-                           enddo
-                        enddo
-                     enddo
-!$omp end parallel do
-!
-                  else
-!
-!$omp parallel do private(J,x,y,xy_packed)
-                     do J = 1, batch_J%length 
-                        do x = 1, A_interval%length
-                           do y = 1, B_interval%length
-!  
-                              xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
-                              L_wx_J_full(x + A_interval%first - 1, y + B_interval%first - 1, J) = L_wx_J(xy_packed + AB_offset, J)
-                              L_wx_J_full(y + B_interval%first - 1, x + A_interval%first - 1, J) = L_wx_J(xy_packed + AB_offset, J)
-!  
-                           enddo
-                        enddo
-                     enddo
-!$omp end parallel do
-!
-                  endif
-!
-                  AB_offset = AB_offset + get_size_sp(A_interval, B_interval)
-!
-               endif
-!
-            enddo
-         enddo
-!
-         call mem%dealloc(L_wx_J, n_construct_aop, batch_J%length)
-!
-!        3. MO transform the AO Cholesky vector
-!
-!        E_p,xJ = C^T_p,w L_w,xJ 
-!
-         call mem%alloc(E_pxJ, n_mo, solver%n_ao, batch_J%length)
-!
-         call dgemm('T', 'N', &
-                     n_mo, &
-                     solver%n_ao*batch_J%length, &
-                     solver%n_ao, &
-                     one, &
-                     orbital_coefficients, & ! C_w,p
-                     solver%n_ao, &
-                     L_wx_J_full, & ! L_w,xJ 
-                     solver%n_ao, &
-                     zero, &
-                     E_pxJ, & ! E_p,xJ 
-                     n_mo)
-!
-         call mem%alloc(E_Jpx, batch_J%length, n_mo, solver%n_ao)
-!
-         call sort_123_to_312(E_pxJ, E_Jpx, n_mo, solver%n_ao, batch_J%length)
-!
-         call mem%dealloc(E_pxJ, n_mo, solver%n_ao, batch_J%length)
-!
-!        L_Jp,q = E_Jp,x C_x,q 
-!
-         call mem%alloc(L_Jpq, batch_J%length, n_mo, n_mo)
-!
-         call dgemm('N','N', &
-                     batch_J%length*n_mo, &
-                     n_mo, &
-                     solver%n_ao, &
-                     one, &
-                     E_Jpx, & ! E_Jp,x
-                     batch_J%length*n_mo, &
-                     orbital_coefficients, & ! C_x,q 
-                     solver%n_ao, &
-                     zero, &
-                     L_Jpq, & ! L_Jp,q
-                     batch_J%length*n_mo)
-!
-         call mem%dealloc(E_Jpx, batch_J%length, n_mo, solver%n_ao)
-!
-!        4. Write the contribution to file for convenient reread once 
-!           all batches over J are done 
-!  
-         L_J_padded = zero 
-!
-         do q = 1, n_mo        
-            do p = q, n_mo
-!
-               Jbatch_pq_rec = batch_J%num_batches*((max(p, q)*(max(p, q)-3)/2) + p + q - 1) + current_J_batch
-!
-               do J = 1, batch_J%length
-!
-                  L_J_padded(J) = L_Jpq(J, p, q)
-!
-               enddo
-!
-               call mo_cholesky_tmp%write_(L_J_padded, Jbatch_pq_rec)
-!
-            enddo
-         enddo
-!
-         call mem%dealloc(L_wx_J_full, solver%n_ao, solver%n_ao, batch_J%length)
-         call mem%dealloc(L_Jpq, batch_J%length, n_mo, n_mo)
-!
-      enddo ! end of batches over J 
-!
-      call  mem%dealloc(construct_sp, solver%n_sp)
-!
-      call solver%cholesky_ao_vectors%close_()
-      call solver%cholesky_ao_vectors_info%close_()
-!
-!     Finally, read in the transformed vectors and write them to 
-!     file using records most suited for eT MO integral handling
-!
-      solver%cholesky_mo_vectors = direct_file('cholesky_mo_vectors', solver%n_cholesky)
-!
-      call solver%cholesky_mo_vectors%open_('write')
-!
-      call mem%alloc(L_J, solver%n_cholesky)
-!
-      do q = 1, n_mo
-         do p = q, n_mo 
-!
-!           - Read all Js for given pq 
-! 
-            do current_J_batch = 1, batch_J%num_batches
-!
-               call batch_J%determine_limits(current_J_batch)
-!
-               Jbatch_pq_rec = batch_J%num_batches*((max(p, q)*(max(p, q)-3)/2) + p + q - 1) + current_J_batch
-!
-               call mo_cholesky_tmp%read_(L_J_padded, Jbatch_pq_rec)
-!
-               do J = 1, batch_J%length
-! 
-                  L_J(J + batch_J%first - 1) = L_J_padded(J)
-!
-               enddo
-!
-            enddo
-!
-!           - Write to pq record of MO Cholesky file  
-!
-            pq_rec = (max(p, q)*(max(p, q)-3)/2) + p + q
-!
-            call solver%cholesky_mo_vectors%write_(L_J, pq_rec)
-!
-         enddo
-      enddo
-!
-      call mo_cholesky_tmp%close_('delete')
-      call solver%cholesky_mo_vectors%close_()
-!
-      call mem%dealloc(L_J, solver%n_cholesky)
-      call mem%dealloc(L_J_padded, batch_J%max_length)
-!
-      call cholesky_mo_timer%turn_off()
-!
-   end subroutine construct_mo_cholesky_vectors_cd_eri_solver
 !
 !
    subroutine print_banner_eri_cd(solver)
@@ -4208,7 +3861,7 @@ contains
 !
    subroutine print_settings_eri_cd(solver)
 !!
-!!    Print banner
+!!    Print settings
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
