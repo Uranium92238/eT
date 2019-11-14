@@ -17,16 +17,20 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-!
    module subroutine omega_doubles_a1_doubles_complex(wf, omega, u)
 !!
 !!    Omega doubles A1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
 !!
+!!    Calculates the A1 term,
+!!
+!!       A1: sum_ckd u_bicj g_abjc = sum_ckd u_bjc_i * g_a_bjc,
+!!
+!!    and adds it to the projection vector omega
+!!
       implicit none
 !
       class(doubles), intent(in) :: wf
-!
       complex(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
       complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
 !
@@ -38,10 +42,19 @@
 !!    Omega doubles B1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
 !!
+!!    Calculates the B1 term,
+!!
+!!       B1: - sum_ckl g_kb,ji * u_aj,bk,
+!!
+!!    with
+!!
+!!      u_aj_bk = 2t_aj,bk - t_ak,bj
+!!
+!!    and adds it to the projection vector (omega)
+!!
       implicit none
 !
       class(doubles), intent(in) :: wf
-!
       complex(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
       complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
 !
@@ -53,12 +66,19 @@
 !!    Omega doubles C1 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
 !!
+!!    Calculates the C1 term,
+!!
+!!       C1: sum_bj u_ai,bj * F_jb,
+!!
+!!    with
+!!
+!!       u_ai_bj = 2*t_ai_bj - t_aj_bi
+!!
+!!
       implicit none
 !
       class(doubles), intent(in) :: wf
-!
       complex(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega
       complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u
 !
     end subroutine omega_doubles_c1_doubles_complex
-!
