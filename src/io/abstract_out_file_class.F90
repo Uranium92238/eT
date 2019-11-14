@@ -84,7 +84,7 @@ contains
 !
       endif
 !
-      open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
+      open(newunit=the_file%unit_, file=the_file%name_, access=the_file%access_, &
            action='write', status='unknown', form=the_file%format_, position=pos, &
            iostat=io_error, iomsg=io_msg)
 !
@@ -118,7 +118,7 @@ contains
          stop
       end if
 !
-      close(the_file%unit, iostat=io_error, iomsg=io_msg, status='keep')
+      close(the_file%unit_, iostat=io_error, iomsg=io_msg, status='keep')
 !
       if (io_error.ne. 0) then
 !
@@ -129,7 +129,7 @@ contains
       endif
 !
       the_file%is_open = .false.
-      the_file%unit = -1
+      the_file%unit_ = -1
 !
    end subroutine close_abstract_out_file
 !
@@ -146,7 +146,7 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      flush(the_file%unit, iostat=io_error, iomsg=io_msg)
+      flush(the_file%unit_, iostat=io_error, iomsg=io_msg)
 !
       if (io_error /= 0) then 
 !
@@ -560,7 +560,7 @@ contains
 !
 !     Just print a new line and return if empty
       if (length .eq. 0) then
-         write(the_file%unit, *)
+         write(the_file%unit_, *)
          return
       endif
 !
@@ -665,7 +665,7 @@ contains
          endif
 !
 !        Write to file
-         write(the_file%unit, f_s, advance=advancing) temp(1 : temp_length)
+         write(the_file%unit_, f_s, advance=advancing) temp(1 : temp_length)
 !
          f_s = fstring
          l_l = line_length

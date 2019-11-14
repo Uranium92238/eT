@@ -445,7 +445,7 @@ contains
                            frozen_orbitals]
 !
       the_file%is_open = .false.
-      the_file%unit = -1
+      the_file%unit_ = -1
 !
    end function new_input_file
 !
@@ -468,7 +468,7 @@ contains
 !
       endif
 !
-      open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
+      open(newunit=the_file%unit_, file=the_file%name_, access=the_file%access_, &
            action='read', status='unknown', form=the_file%format_, iostat=io_error, iomsg=io_msg)
 !
       if (io_error .ne. 0) then 
@@ -498,7 +498,7 @@ contains
          call output%error_msg(trim(the_file%name_)//' already closed')
       end if
 !
-      close(the_file%unit, iostat=io_error, iomsg=io_msg, status='keep')
+      close(the_file%unit_, iostat=io_error, iomsg=io_msg, status='keep')
 !
       if (io_error .ne. 0) then 
 !
@@ -507,7 +507,7 @@ contains
       endif 
 !
       the_file%is_open = .false.
-      the_file%unit = -1
+      the_file%unit_ = -1
 !
    end subroutine close_input_file
 !
@@ -578,7 +578,7 @@ contains
 !
       logical :: recognized 
 !  
-      rewind(the_file%unit)
+      rewind(the_file%unit_)
 !
       line = the_file%read_adjustl_lower()
 !
@@ -617,7 +617,7 @@ contains
 !
             do k = 1, n_elements + 1
 !
-               read(the_file%unit, *) 
+               read(the_file%unit_, *) 
 !
             enddo
 !
@@ -683,7 +683,7 @@ contains
 !
          recognized = .false.
 !
-         read(the_file%unit, '(a200)') string 
+         read(the_file%unit_, '(a200)') string 
 !
          if (.not. the_file%string_is_comment(string)) then 
 !
@@ -1176,7 +1176,7 @@ contains
 !
       do record = 1, n_records
 !
-         read(the_file%unit, '(a200)') line 
+         read(the_file%unit_, '(a200)') line 
 !
          if (the_file%string_is_comment(line)) then
 !
@@ -1360,7 +1360,7 @@ contains
 !
       do record = 1, n_records
 !
-         read(the_file%unit, '(a200)') line 
+         read(the_file%unit_, '(a200)') line 
 !
          if (the_file%string_is_comment(line)) then
 !
@@ -1405,7 +1405,7 @@ contains
 !
       requested_section_input_file = .false.
 !
-      rewind(the_file%unit)
+      rewind(the_file%unit_)
 !
       do 
 !
@@ -1455,7 +1455,7 @@ contains
 !     Find the number of instances of the section,
 !     stopping with an error if there are any inconsistencies 
 !
-      rewind(the_file%unit)
+      rewind(the_file%unit_)
 !
       line = repeat(' ', 200)
 !
@@ -1479,7 +1479,7 @@ contains
 !
 !     Find the end of the section 
 !
-      rewind(the_file%unit)
+      rewind(the_file%unit_)
 !
       line = the_file%read_adjustl_lower()
 !
@@ -1496,7 +1496,7 @@ contains
 !     Find the beginning of the section;
 !     this also places the pointer in the correct position
 !
-      rewind(the_file%unit)
+      rewind(the_file%unit_)
 !
       line = the_file%read_adjustl_lower()
 !
@@ -1983,7 +1983,7 @@ contains
 !
       character(len=200) :: line
 !  
-      read(the_file%unit, '(a200)') line
+      read(the_file%unit_, '(a200)') line
       line = adjustl(line)
       call convert_to_lowercase(line)
 !
@@ -2015,7 +2015,7 @@ contains
 !     Find the number of instances of the section,
 !     stopping with an error if there are any inconsistencies 
 !
-      rewind(the_file%unit)
+      rewind(the_file%unit_)
 !
       line = repeat(' ', 200)
 !
@@ -2044,7 +2044,7 @@ contains
 !
 !     Find the end of the section 
 !
-      rewind(the_file%unit)
+      rewind(the_file%unit_)
 !
       line = the_file%read_adjustl_lower()
 !
@@ -2061,7 +2061,7 @@ contains
 !     Find the beginning of the section;
 !     this also places the pointer in the correct position
 !
-      rewind(the_file%unit)
+      rewind(the_file%unit_)
 !
       line = the_file%read_adjustl_lower()
 !

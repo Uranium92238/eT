@@ -177,7 +177,7 @@ contains
       endif
 !
       the_file%is_open = .false.
-      the_file%unit = -1
+      the_file%unit_ = -1
 !
    end function new_sequential_file
 !
@@ -216,7 +216,7 @@ contains
 !
       endif
 !
-      open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
+      open(newunit=the_file%unit_, file=the_file%name_, access=the_file%access_, &
            action=the_file%action_, status='unknown', form=the_file%format_, &
            position=pos, iostat=io_error, iomsg=io_msg)
 !
@@ -289,7 +289,7 @@ contains
 !
       endif
 !
-      rewind(the_file%unit, iostat=io_error, iomsg=io_msg)
+      rewind(the_file%unit_, iostat=io_error, iomsg=io_msg)
 !
       if (io_error .ne. 0) then 
          call output%error_msg('Error: could not rewind eT file '//trim(the_file%name_)//&
@@ -322,7 +322,7 @@ contains
       endif
 !
       do i = 1,skips
-         read(the_file%unit, iostat=io_error, iomsg=io_msg) 
+         read(the_file%unit_, iostat=io_error, iomsg=io_msg) 
 !
          if (io_error .ne. 0) then 
             call output%error_msg('Error: could not skip eT sequential file '//trim(the_file%name_)//&
@@ -347,9 +347,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         write(the_file%unit, iostat=io_error, iomsg=io_msg) 
+         write(the_file%unit_, iostat=io_error, iomsg=io_msg) 
       else
-         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) 
+         write(the_file%unit_, *, iostat=io_error, iomsg=io_msg) 
       endif
 !
       if(io_error .ne. 0) then
@@ -375,9 +375,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+         write(the_file%unit_, iostat=io_error, iomsg=io_msg) scalar
       else
-         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar
+         write(the_file%unit_, *, iostat=io_error, iomsg=io_msg) scalar
       endif
 !
       if(io_error .ne. 0) then
@@ -404,9 +404,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         write(the_file%unit, iostat=io_error, iomsg=io_msg) array
+         write(the_file%unit_, iostat=io_error, iomsg=io_msg) array
       else
-         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) array
+         write(the_file%unit_, *, iostat=io_error, iomsg=io_msg) array
       endif
 !
       if(io_error .ne. 0) then
@@ -477,9 +477,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+         write(the_file%unit_, iostat=io_error, iomsg=io_msg) scalar
       else
-         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar
+         write(the_file%unit_, *, iostat=io_error, iomsg=io_msg) scalar
       endif
 !
       if(io_error .ne. 0) then
@@ -506,9 +506,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         write(the_file%unit, iostat=io_error, iomsg=io_msg) array
+         write(the_file%unit_, iostat=io_error, iomsg=io_msg) array
       else
-         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) array
+         write(the_file%unit_, *, iostat=io_error, iomsg=io_msg) array
       endif
 !
       if(io_error .ne. 0) then
@@ -579,9 +579,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+         write(the_file%unit_, iostat=io_error, iomsg=io_msg) scalar
       else
-         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar
+         write(the_file%unit_, *, iostat=io_error, iomsg=io_msg) scalar
       endif
 !
       if(io_error .ne. 0) then
@@ -608,9 +608,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         write(the_file%unit, iostat=io_error, iomsg=io_msg) array
+         write(the_file%unit_, iostat=io_error, iomsg=io_msg) array
       else
-         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) array
+         write(the_file%unit_, *, iostat=io_error, iomsg=io_msg) array
       endif
 !
       if(io_error .ne. 0) then
@@ -681,9 +681,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         write(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+         write(the_file%unit_, iostat=io_error, iomsg=io_msg) scalar
       else
-         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar
+         write(the_file%unit_, *, iostat=io_error, iomsg=io_msg) scalar
       endif
 !
       if(io_error .ne. 0) then
@@ -710,9 +710,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         write(the_file%unit, iostat=io_error, iomsg=io_msg) array
+         write(the_file%unit_, iostat=io_error, iomsg=io_msg) array
       else
-         write(the_file%unit, *, iostat=io_error, iomsg=io_msg) array
+         write(the_file%unit_, *, iostat=io_error, iomsg=io_msg) array
       endif
 !
       if(io_error .ne. 0) then
@@ -751,9 +751,9 @@ contains
       endif
 !
       if (the_file%format_ .eq. 'unformatted') then
-         write(the_file%unit, iostat=io_error, iomsg=io_msg) string
+         write(the_file%unit_, iostat=io_error, iomsg=io_msg) string
       else
-         write(the_file%unit, trim(fstring), iostat=io_error, iomsg=io_msg) string
+         write(the_file%unit_, trim(fstring), iostat=io_error, iomsg=io_msg) string
       endif
 !
       if(io_error .ne. 0) then
@@ -779,9 +779,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         read(the_file%unit, iostat=io_error, iomsg=io_msg)
+         read(the_file%unit_, iostat=io_error, iomsg=io_msg)
       else
-         read(the_file%unit, *, iostat=io_error, iomsg=io_msg)
+         read(the_file%unit_, *, iostat=io_error, iomsg=io_msg)
       endif
 !
       if (present(io_stat) .and. io_error .le. 0) then 
@@ -814,9 +814,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         read(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+         read(the_file%unit_, iostat=io_error, iomsg=io_msg) scalar
       else
-         read(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar
+         read(the_file%unit_, *, iostat=io_error, iomsg=io_msg) scalar
       endif
 !
       if(present(io_stat) .and. io_error .le. 0) then
@@ -849,9 +849,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         read(the_file%unit, iostat=io_error, iomsg=io_msg) array
+         read(the_file%unit_, iostat=io_error, iomsg=io_msg) array
       else
-         read(the_file%unit, *, iostat=io_error, iomsg=io_msg) array
+         read(the_file%unit_, *, iostat=io_error, iomsg=io_msg) array
       endif
 !
       if(present(io_stat) .and. io_error .le. 0) then
@@ -931,9 +931,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         read(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+         read(the_file%unit_, iostat=io_error, iomsg=io_msg) scalar
       else
-         read(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar
+         read(the_file%unit_, *, iostat=io_error, iomsg=io_msg) scalar
       endif
 !
       if(present(io_stat) .and. io_error .le. 0) then
@@ -966,9 +966,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         read(the_file%unit, iostat=io_error, iomsg=io_msg) array
+         read(the_file%unit_, iostat=io_error, iomsg=io_msg) array
       else
-         read(the_file%unit, *, iostat=io_error, iomsg=io_msg) array
+         read(the_file%unit_, *, iostat=io_error, iomsg=io_msg) array
       endif
 !
       if(present(io_stat) .and. io_error .le. 0) then
@@ -1048,9 +1048,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         read(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+         read(the_file%unit_, iostat=io_error, iomsg=io_msg) scalar
       else
-         read(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar
+         read(the_file%unit_, *, iostat=io_error, iomsg=io_msg) scalar
       endif
 !
       if(present(io_stat) .and. io_error .le. 0) then
@@ -1083,9 +1083,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         read(the_file%unit, iostat=io_error, iomsg=io_msg) array
+         read(the_file%unit_, iostat=io_error, iomsg=io_msg) array
       else
-         read(the_file%unit, *, iostat=io_error, iomsg=io_msg) array
+         read(the_file%unit_, *, iostat=io_error, iomsg=io_msg) array
       endif
 !
       if(present(io_stat) .and. io_error .le. 0) then
@@ -1168,9 +1168,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         read(the_file%unit, iostat=io_error, iomsg=io_msg) scalar
+         read(the_file%unit_, iostat=io_error, iomsg=io_msg) scalar
       else
-         read(the_file%unit, *, iostat=io_error, iomsg=io_msg) scalar
+         read(the_file%unit_, *, iostat=io_error, iomsg=io_msg) scalar
       endif
 !
       if(present(io_stat) .and. io_error .le. 0) then
@@ -1207,9 +1207,9 @@ contains
       character(len=100)   :: io_msg
 !
       if (the_file%format_ .eq. 'unformatted') then
-         read(the_file%unit, iostat=io_error, iomsg=io_msg) array
+         read(the_file%unit_, iostat=io_error, iomsg=io_msg) array
       else
-         read(the_file%unit, *, iostat=io_error, iomsg=io_msg) array
+         read(the_file%unit_, *, iostat=io_error, iomsg=io_msg) array
       endif
 !
       if(present(io_stat) .and. io_error .le. 0) then
@@ -1253,9 +1253,9 @@ contains
       endif
 !
       if (the_file%format_ .eq. 'unformatted') then
-         read(the_file%unit, iostat=io_error, iomsg=io_msg) string
+         read(the_file%unit_, iostat=io_error, iomsg=io_msg) string
       else
-         read(the_file%unit, trim(fstring), iostat=io_error, iomsg=io_msg) string
+         read(the_file%unit_, trim(fstring), iostat=io_error, iomsg=io_msg) string
       endif
 !
       if(io_error .ne. 0) then

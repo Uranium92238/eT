@@ -169,7 +169,7 @@ contains
       the_file%record_length = rec_dim*the_file%word_size
 !
       the_file%is_open = .false.
-      the_file%unit = -1
+      the_file%unit_ = -1
 !
    end function new_direct_file
 !
@@ -199,7 +199,7 @@ contains
 !
       endif
 !
-      open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
+      open(newunit=the_file%unit_, file=the_file%name_, access=the_file%access_, &
            action=the_file%action_, recl=the_file%record_length, status='unknown', &
            form=the_file%format_, iostat=io_error, iomsg=io_msg)
 !
@@ -228,7 +228,7 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) scalar
+      write(the_file%unit_, rec=record, iostat=io_error, iomsg=io_msg) scalar
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//trim(the_file%name_)//&
@@ -253,7 +253,7 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+      write(the_file%unit_, rec=record, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//trim(the_file%name_)//&
@@ -323,7 +323,7 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) scalar
+      write(the_file%unit_, rec=record, iostat=io_error, iomsg=io_msg) scalar
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//trim(the_file%name_)//&
@@ -348,7 +348,7 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+      write(the_file%unit_, rec=record, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//trim(the_file%name_)//&
@@ -418,7 +418,7 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) scalar
+      write(the_file%unit_, rec=record, iostat=io_error, iomsg=io_msg) scalar
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//trim(the_file%name_)//&
@@ -443,7 +443,7 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      write(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+      write(the_file%unit_, rec=record, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to write to file: '//trim(the_file%name_)//&
@@ -513,7 +513,7 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) scalar
+      read(the_file%unit_, rec=record, iostat=io_error, iomsg=io_msg) scalar
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
@@ -538,7 +538,7 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+      read(the_file%unit_, rec=record, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
@@ -608,7 +608,7 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) scalar
+      read(the_file%unit_, rec=record, iostat=io_error, iomsg=io_msg) scalar
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
@@ -633,7 +633,7 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+      read(the_file%unit_, rec=record, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
@@ -703,7 +703,7 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) scalar
+      read(the_file%unit_, rec=record, iostat=io_error, iomsg=io_msg) scalar
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
@@ -728,7 +728,7 @@ contains
       integer              :: io_error
       character(len=100)   :: io_msg
 !
-      read(the_file%unit, rec=record, iostat=io_error, iomsg=io_msg) array
+      read(the_file%unit_, rec=record, iostat=io_error, iomsg=io_msg) array
 !
       if(io_error .ne. 0) then
          call output%error_msg('Failed to read from file: '//trim(the_file%name_)//&
@@ -824,7 +824,7 @@ contains
       min_x_sp = real(min_x,4)
       max_x_sp = real(max_x,4)
 !
-      write(the_file%unit, rec=1, &
+      write(the_file%unit_, rec=1, &
             iostat=io_error, iomsg=io_msg) int1, &
                                            int2, &
                                            n_z_sp, n_y_sp, n_x_sp, &
@@ -876,7 +876,7 @@ contains
       int1 = 3 !Required integer that must always be 3
       int2 = 200 !Required integer that can be anything
 !
-      read(the_file%unit, rec=1, &
+      read(the_file%unit_, rec=1, &
             iostat=io_error, iomsg=io_msg) int1, &
                                            int2, &
                                            n_z_sp, n_y_sp, n_x_sp, &

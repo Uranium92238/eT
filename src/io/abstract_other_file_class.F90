@@ -73,7 +73,7 @@ contains
          print *, 'Error: '//trim(the_file%name_)//' already closed'
       end if
 !
-      close(the_file%unit, iostat=io_error, iomsg=io_msg, status=trim(stat))
+      close(the_file%unit_, iostat=io_error, iomsg=io_msg, status=trim(stat))
 !
       if (io_error .ne. 0) then 
          print *, 'Error: could not close eT file '//trim(the_file%name_)
@@ -82,7 +82,7 @@ contains
       endif
 !
       the_file%is_open = .false.
-      the_file%unit = -1
+      the_file%unit_ = -1
       the_file%action_ = 'unknown'
 !
    end subroutine close_abstract_other_file
@@ -102,7 +102,7 @@ contains
 !
       if(the_file%is_open) then
 !
-         close(the_file%unit, iostat=io_error, iomsg=io_msg, status='delete')
+         close(the_file%unit_, iostat=io_error, iomsg=io_msg, status='delete')
 !
          if (io_error .ne. 0) then 
             call output%error_msg('could not delete eT file '//trim(the_file%name_)//&
@@ -113,7 +113,7 @@ contains
 !
 !        Open the file with unformatted stream access 
 !        Stream doesn't care about format and records and neither do we
-         open(newunit=the_file%unit, file=the_file%name_, access='stream', &
+         open(newunit=the_file%unit_, file=the_file%name_, access='stream', &
               form='unformatted', action='write', status='old', & 
               iostat=io_error, iomsg=io_msg)
 !
@@ -122,7 +122,7 @@ contains
                                  &'. Error message: '//trim(io_msg))
          endif
 !
-         close(the_file%unit, iostat=io_error, iomsg=io_msg, status='delete')
+         close(the_file%unit_, iostat=io_error, iomsg=io_msg, status='delete')
 !
          if (io_error .ne. 0) then 
             call output%error_msg('could not delete eT file '//trim(the_file%name_)//&
@@ -165,7 +165,7 @@ contains
       endif
 !
 !     Open the file with stream unformatted access
-      open(newunit=the_file%unit, file=the_file%name_, access='stream', &
+      open(newunit=the_file%unit_, file=the_file%name_, access='stream', &
            form='unformatted', action='read', status='old', & 
            iostat=io_error, iomsg=io_msg)
 !
@@ -193,7 +193,7 @@ contains
 !
       do
 !
-         read(the_file%unit, iostat=io_error, iomsg=io_msg) !Read until end of file
+         read(the_file%unit_, iostat=io_error, iomsg=io_msg) !Read until end of file
 !                                                                         
          if(io_error .gt. 0) then 
 !
@@ -227,7 +227,7 @@ contains
 !
       endif
 !
-      close(the_file%unit, status='keep', iostat=io_error, iomsg=io_msg)
+      close(the_file%unit_, status='keep', iostat=io_error, iomsg=io_msg)
 !
       if(io_error .ne. 0) then 
 !

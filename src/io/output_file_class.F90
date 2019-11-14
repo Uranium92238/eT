@@ -96,7 +96,7 @@ contains
       the_file%is_mute = .false.
 !
       the_file%is_open = .false.
-      the_file%unit = -1
+      the_file%unit_ = -1
 !
       the_file%warning_counter = 0
 !
@@ -257,7 +257,7 @@ contains
 !
       endif
 !
-      open(newunit=the_file%unit, file=the_file%name_, access=the_file%access_, &
+      open(newunit=the_file%unit_, file=the_file%name_, access=the_file%access_, &
            action='write', status='unknown', form=the_file%format_, position=pos, &
            iostat=io_error, iomsg=io_msg)
 !

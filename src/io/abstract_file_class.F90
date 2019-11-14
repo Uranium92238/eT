@@ -36,7 +36,7 @@ module abstract_file_class
 !
 !     Unit identifier
 !
-      integer :: unit = -1
+      integer :: unit_ = -1
 !
 !     Logical for whether the file is currently opened or not
 !
@@ -99,7 +99,7 @@ contains
       endif
 !
 !     Open the file with stream unformatted access
-      open(newunit=the_file%unit, file=the_file%name_, access='stream', &
+      open(newunit=the_file%unit_, file=the_file%name_, access='stream', &
            form='unformatted', action='read')
 !
 !     Open a new file
@@ -111,7 +111,7 @@ contains
 !
       do
 !
-         read(the_file%unit, end=200) byte !Read until end of file, then go to 200
+         read(the_file%unit_, end=200) byte !Read until end of file, then go to 200
          write(copy_unit) byte             !Write whatever you just read
 !
       enddo
@@ -119,7 +119,7 @@ contains
 !
 !     Close the files
       close(copy_unit, status='keep')
-      close(the_file%unit, status='keep')
+      close(the_file%unit_, status='keep')
 !
 !
    end subroutine copy_abstract_file
