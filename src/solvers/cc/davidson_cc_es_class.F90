@@ -348,7 +348,7 @@ contains
 !
          do state = 1, solver%n_singlet_states
 !
-            call davidson%construct_solution(r(:,state), state)   
+            call davidson%construct_solution(r(:,state), state) 
 !
          enddo 
 !

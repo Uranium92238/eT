@@ -178,8 +178,8 @@ contains
 !
       engine%gs_restart = input%requested_keyword_in_section('restart', 'solver cc gs')
 !
-      engine%multipliers_restart = input%requested_keyword_in_section('restart', 'solver cc multipliers')
-                                                               
+      engine%multipliers_restart = &
+               input%requested_keyword_in_section('restart', 'solver cc multipliers')
 !
    end subroutine read_gs_settings_gs_engine
 !
