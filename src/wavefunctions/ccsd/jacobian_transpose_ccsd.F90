@@ -45,14 +45,9 @@ contains
    module subroutine prepare_for_jacobian_transpose_ccsd(wf)
 !!
 !!    Prepare for jacobian transpose
-!!    Written by Tor S. Haugland, Oct 2019
+!!    Written by Tor S. Haugland, Andreas Skeidsvoll and Sarai D. Folkestad, Oct-Nov 2019
 !!
-!!    Creates intermediates needed in the jacobian transpose calculation,
-!!
-!!       a1: Y_ik = sum_cjb g_icjb * u_bjck
-!!       a1: Y_ca = sum_jbk u_bjck * g_jbka
-!!
-!!    Based on prepare_for_jacobian_ccsd by E. F. Kjønstad and S. D. Folkestad
+!!    Creates intermediates needed in the jacobian transpose calculation.
 !!
       implicit none
 !
@@ -60,30 +55,69 @@ contains
 !
       type(timings) :: timer
 !
-      real(dp), dimension(:,:,:,:), allocatable :: t_aibj
-      real(dp), dimension(:,:,:,:), allocatable :: u_aibj
+      real(dp), dimension(:,:,:,:), allocatable :: t_vovo
 !
-      timer = timings('Prepare for Jacobian Transpose')
+      real(dp), dimension(:,:,:,:), allocatable :: g_ovov, g_ooov
+      real(dp), dimension(:,:,:,:), allocatable :: L_ooov
+      real(dp), dimension(:,:,:,:), allocatable :: L_vovo
+!
+      timer = timings('Prepare for Jacobian Transpose', pl='minimal')
       call timer%turn_on()
 !
-!     Construct u_aibj = 2 t_aibj - t_ajbi
+!     Form t_vovo
 !
-      call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_aibj, wf%n_t1)
+      call mem%alloc(t_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_vovo, wf%n_t1)
 !
-      call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call copy_and_scale(two, t_aibj, u_aibj, wf%n_t1**2)
-      call add_1432_to_1234(-one, t_aibj, u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call wf%save_jacobian_transpose_d1_intermediates(t_vovo) 
+      call wf%save_jacobian_transpose_g1_intermediates(t_vovo)
 !
-      call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     Prepare integrals for f1 and e1 intermediates
+!     g_ooov used in f1 and L_ooov used in e1
 !
-!     CCSD intermediates
+      call mem%alloc(g_ooov, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call wf%get_ooov(g_ooov)
 !
-      call wf%save_jacobian_transpose_a1_intermediates(u_aibj)
+      call wf%save_jacobian_transpose_f1_intermediates(t_vovo, g_ooov)
 !
-!     Cleanup
+      call mem%alloc(L_ooov, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call copy_and_scale(two, g_ooov, L_ooov, wf%n_o**3 * wf%n_v)
+      call add_3214_to_1234(-one, g_ooov, L_ooov, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+      call mem%dealloc(g_ooov, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+      call wf%save_jacobian_transpose_e1_intermediates(t_vovo, L_ooov)
+!
+      call mem%dealloc(L_ooov, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+      call wf%save_jacobian_transpose_a1_intermediates(wf%u_aibj)
+!
+!     Construct g_ovov and make g2 and i2 intermediates
+!
+      call mem%alloc(g_ovov, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call wf%get_ovov(g_ovov)
+!
+      call wf%save_jacobian_transpose_g2_intermediates(t_vovo, g_ovov)
+      call wf%save_jacobian_transpose_i2_intermediates(t_vovo, g_ovov)
+!
+!     Construct L_ovov ordered as L_vovo and make d2, e2, and f2 intermediates
+!
+      call mem%alloc(L_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call zero_array(L_vovo, wf%n_o**2 * wf%n_v**2)
+!
+      call add_2143_to_1234(two, g_ovov, L_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o )
+      call add_2341_to_1234(-one, g_ovov, L_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(g_ovov, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+      call wf%save_jacobian_transpose_d2_intermediates(wf%u_aibj, L_vovo)
+      call wf%save_jacobian_transpose_e2_oo_intermediate(t_vovo, L_vovo)
+      call wf%save_jacobian_transpose_e2_vv_intermediate(t_vovo, L_vovo)
+      call wf%save_jacobian_transpose_f2_intermediates(t_vovo, L_vovo)
+!
+      call mem%dealloc(t_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(L_vovo, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call timer%turn_off()
 !
@@ -212,6 +246,60 @@ contains
    end subroutine jacobian_transpose_transformation_ccsd
 !
 !
+   module subroutine save_jacobian_transpose_d1_intermediates_ccsd(wf, t_aibj)
+!!
+!!    Save Jacobian transpose D1 intermediates
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, and 
+!!    Tor S. Haugland, Oct 2019
+!!    
+!!    Calculates the intermediate
+!!
+!!       X_lcki = sum_d t_dlck F_id
+!!
+!!    (E. F. K. and S. D. F 2017-2018)
+!!      
+!!    and write the intermediate to the file 'jacobian_transpose_d1_intermediate'.
+!! 
+!!    (T. S. H., Nov 2019)
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in) :: t_aibj
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_ilck
+!
+!     Form intermediate X_ilck = sum_d F_i_d t_d_lck
+!
+      call mem%alloc(X_ilck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N','N',               &
+                  wf%n_o,               &
+                  (wf%n_o)**2 * wf%n_v, & 
+                  wf%n_v,               & 
+                  one,                  &
+                  wf%fock_ia,           & ! F_i_d
+                  wf%n_o,               &
+                  t_aibj,               & ! t_d_lck
+                  wf%n_v,               &
+                  zero,                 &
+                  X_ilck,               & ! X_i_lck
+                  wf%n_o)
+!
+!     Write X_ilck to file
+!
+      wf%jacobian_transpose_d1_intermediate = sequential_file('jacobian_transpose_d1_intermediate')
+      call wf%jacobian_transpose_d1_intermediate%open_('write', 'rewind')
+!
+      call wf%jacobian_transpose_d1_intermediate%write_(X_ilck, wf%n_o**3 * wf%n_v)
+!
+      call wf%jacobian_transpose_d1_intermediate%close_()
+!
+      call mem%dealloc(X_ilck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+   end subroutine save_jacobian_transpose_d1_intermediates_ccsd
+!
+!
    module subroutine jacobian_transpose_ccsd_d1_ccsd(wf, sigma_ai, b_aibj)
 !!
 !!    Jacobian transpose CCSD D1
@@ -223,6 +311,11 @@ contains
 !!
 !!    and adds it to the transformed vector sigma_ai.
 !!
+!!    Modified by Tor S. Haugland, Oct 2019
+!!
+!!    Reads intermediate for term 1 from the file 'jacobian_transpose_d1_intermediate'. Removed
+!!    re-order in term 2.
+!!
       implicit none
 !
       class(ccsd) :: wf
@@ -230,96 +323,144 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o)                 :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: t_lckd ! t_kl^cd
+      real(dp), dimension(:,:,:,:), allocatable :: X_ilck ! intermediate, term 1
 !
-      real(dp), dimension(:,:), allocatable :: X_ad ! An intermediate, term 1
-      real(dp), dimension(:,:), allocatable :: X_li ! An intermediate, term 2
+      real(dp), dimension(:,:,:,:), allocatable :: t_ckdl
+      real(dp), dimension(:,:), allocatable     :: X_li   ! intermediate, term 2
 !
 !     :: Term 1. - sum_ckdl b_ckal F_id t_kl^cd ::
 !
-!     Read amplitudes and order as t_lckd = t_kl^cd
+!     Form intermediate X_ilck = sum_d F_id t_dlck from file
 !
-      call mem%alloc(t_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call squareup_and_sort_1234_to_2341(wf%t2, t_lckd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(X_ilck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Form the intermediate X_ad = sum_ckl b_a_lck t_lck_d = sum_ckl b_ckal t_kl^cd
+      call wf%jacobian_transpose_d1_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_d1_intermediate%read_(X_ilck, wf%n_o**3 * wf%n_v)
+      call wf%jacobian_transpose_d1_intermediate%close_()
 !
-      call mem%alloc(X_ad, wf%n_v, wf%n_v)
+!     Add intermediate: sigma_ai += - sum_lck b_a_lck X_i_lck
 !
-      call dgemm('N','N',               &
+      call dgemm('N','T',               &
                   wf%n_v,               &
+                  wf%n_o,               & 
+                  (wf%n_o)**2 * wf%n_v, & 
+                  -one,                 &
+                  b_aibj,               & ! b_a_lck
                   wf%n_v,               &
-                  (wf%n_v)*(wf%n_o)**2, &
+                  X_ilck,               & ! X_i_lck
+                  wf%n_o,               & 
                   one,                  &
-                  b_aibj,               &  ! b_a_lck = b_alck = b_ckal
-                  wf%n_v,               &
-                  t_lckd,               & ! t_lck_d
-                  (wf%n_v)*(wf%n_o)**2, &
-                  zero,                 &
-                  X_ad,                 &
+                  sigma_ai,             & ! sigma_a_i
                   wf%n_v)
 !
-!     Add - sum_ckdl b_ckal F_id t_kl^cd
-!           = - sum_d X_ad F_id
-!           = - sum_d X_ad F_i_a^T(d,i)
-!
-      call dgemm('N','T',     &
-                  wf%n_v,     &
-                  wf%n_o,     &
-                  wf%n_v,     &
-                  -one,       &
-                  X_ad,       &
-                  wf%n_v,     &
-                  wf%fock_ia, & ! F_i_a
-                  wf%n_o,     &
-                  one,        &
-                  sigma_ai,   &
-                  wf%n_v)
-!
-      call mem%dealloc(X_ad, wf%n_v, wf%n_v)
+      call mem%dealloc(X_ilck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
 !     :: Term 2. - sum_ckdl b_ckdi F_la t_kl^cd
 !
-!     Form the intermediate X_li = sum_ckd t_l_ckd b_ckd_i  = sum_ckd b_ckdi t_kl^cd
-!
-!     Note: we interpret b_aibj as b_aib_j, such that b_aib_j(ckd, i) = b_ckdi
-!           we interpret t_lckd as t_l_ckd, such that t_l_ckd(l,ckd) = t_kl^cd
+!     Form the intermediate X_li = sum_ckd t_ckd_l b_ckd_i
 !
       call mem%alloc(X_li, wf%n_o, wf%n_o)
 !
-      call dgemm('N','N',               &
-                  wf%n_o,               &
-                  wf%n_o,               &
-                  (wf%n_o)*(wf%n_v)**2, &
-                  one,                  &
-                  t_lckd,               & ! t_l_ckd
-                  (wf%n_o),             &
+      call mem%alloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_ckdl, wf%n_v * wf%n_o)
+!
+      call dgemm('T','N',               &
+                  wf%n_o,               & 
+                  wf%n_o,               & 
+                  (wf%n_o)*(wf%n_v)**2, & 
+                  one,                  & 
+                  t_ckdl,               & ! t_ckd_l 
+                  (wf%n_o)*(wf%n_v)**2, & 
                   b_aibj,               & ! b_ckd_i
-                  (wf%n_o)*(wf%n_v)**2, &
-                  zero,                 &
-                  X_li,                 &
-                  wf%n_o)
+                  (wf%n_o)*(wf%n_v)**2, & 
+                  zero,                 & 
+                  X_li,                 & ! X_l_i
+                  wf%n_o)                 
 !
-      call mem%dealloc(t_lckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Add - sum_ckdl b_ckdi F_la t_kl^cd = - sum_l F_la X_li = - sum_l F_i_a^T(a,l) X_li(l,i)
+!     Add intermediate: sigma_ai += - sum_l F_la X_li = - sum_l F_i_a^T(a,l) X_li(l,i)
 !
       call dgemm('T','N',     &
                   wf%n_v,     &
                   wf%n_o,     &
                   wf%n_o,     &
                   -one,       &
-                  wf%fock_ia, &
+                  wf%fock_ia, & ! F_i_a
                   wf%n_o,     &
-                  X_li,       &
+                  X_li,       & ! X_l_i
                   wf%n_o,     &
                   one,        &
-                  sigma_ai,   &
+                  sigma_ai,   & ! sigma_a_i
                   wf%n_v)
 !
       call mem%dealloc(X_li, wf%n_o, wf%n_o)
 !
    end subroutine jacobian_transpose_ccsd_d1_ccsd
+!
+!
+   module subroutine save_jacobian_transpose_e1_intermediates_ccsd(wf, t_aibj, L_ilmd)
+!!
+!!    Save Jacobian transpose E1 intermediates
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, and 
+!!    Tor S. Haugland, Oct 2019
+!!
+!!    Calculates the intermediate
+!!
+!!       X_ilck = sum_md L_ilmd t_mk^dc = sum_md L_ilmd t_ckdm
+!!
+!!    (E. F. K and S. D. F., 2017-2018)
+!!
+!!    and saves it to the file 'jacobian_transpose_e1_intermediate_oovo'.
+!!
+!!    (T. S. H., Nov 2019)
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in) :: t_aibj
+      real(dp), dimension(wf%n_o,wf%n_o,wf%n_o,wf%n_v), intent(in) :: L_ilmd
+!
+      real(dp), dimension(:,:,:,:), allocatable :: L_ildm
+      real(dp), dimension(:,:,:,:), allocatable :: X_ilck
+!
+!     Sort L_ilmd into L_ildm
+!
+      call mem%alloc(L_ildm, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1243(L_ilmd, L_ildm, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+!     Form the intermediate X_ilck = sum_md L_ilmd t_mk^dc
+!                                  = sum_md L_il_dm t_dm_ck
+!
+      call mem%alloc(X_ilck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)**2,       &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  L_ildm,            & ! L_il_dm
+                  (wf%n_o)**2,       &
+                  t_aibj,            & ! t_dm_ck
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_ilck,            & ! X_il_ck
+                  (wf%n_o)**2)
+!
+      call mem%dealloc(L_ildm, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Write X_ilck to file
+!
+      wf%jacobian_transpose_e1_intermediate = sequential_file('jacobian_transpose_e1_intermediate')
+      call wf%jacobian_transpose_e1_intermediate%open_('write', 'rewind')
+!
+      call wf%jacobian_transpose_e1_intermediate%write_(X_ilck, wf%n_o**3 * wf%n_v)
+!
+      call wf%jacobian_transpose_e1_intermediate%close_()
+!
+      call mem%dealloc(X_ilck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+   end subroutine save_jacobian_transpose_e1_intermediates_ccsd
 !
 !
    module subroutine jacobian_transpose_ccsd_e1_ccsd(wf, sigma_ai, b_aibj)
@@ -336,6 +477,10 @@ contains
 !!
 !!    The routine adds the third and forth terms first.
 !!
+!!    Modified by Tor S. Haugland, Nov 2019
+!!
+!!    Reads intermediate for term 3 from the file 'jacobian_transpose_e1_intermediate'.
+!!
       implicit none
 !
       class(ccsd) :: wf
@@ -343,13 +488,11 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o)                 :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: t_dmck ! t_km^cd
+      real(dp), dimension(:,:,:,:), allocatable :: t_ckdm ! t_km^cd
       real(dp), dimension(:,:,:,:), allocatable :: t_elck ! t_lk^ec
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_ilmd
       real(dp), dimension(:,:,:,:), allocatable :: g_mlia
 !
-      real(dp), dimension(:,:,:,:), allocatable :: L_ildm
       real(dp), dimension(:,:,:,:), allocatable :: L_aiml ! L_mlia
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_ilck ! An intermediate, term 3
@@ -377,53 +520,22 @@ contains
 !
 !     :: Term 3. - sum_ckdlm b_ckal L_ilmd t_km^cd ::
 !
-      call mem%alloc(t_dmck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_dmck, (wf%n_o)*(wf%n_v))
-!
-      call mem%alloc(g_ilmd, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-!
-      call wf%get_ooov(g_ilmd)
-!
-!     Form L_ildm = L_ilmd = 2 * g_ilmd - g_mlid
-!                          = 2 * g_ilmd(i,l,m,d) - g_ilmd(m,l,i,d)
-!
-      call mem%alloc(L_ildm, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(L_ildm, wf%n_v*wf%n_o**3)
-!
-      call add_1243_to_1234(two, g_ilmd, L_ildm, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-      call add_4213_to_1234(-one, g_ilmd, L_ildm, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(g_ilmd, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-!
-!     Form the intermediate X_ilck = sum_md L_ilmd t_mk^dc
-!                                  = sum_md L_il_dm t_dm_ck
+!     Read the intermediate X_ilck = sum_md L_ilmd t_mk^dc = sum_md L_il_dm t_dm_ck
 !
       call mem%alloc(X_ilck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
-      call dgemm('N','N',            &
-                  (wf%n_o)**2,       &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  L_ildm,            & ! L_il_dm
-                  (wf%n_o)**2,       &
-                  t_dmck,            & ! t_dm_ck
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  X_ilck,            & ! X_il_ck
-                  (wf%n_o)**2)
+      call wf%jacobian_transpose_e1_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_e1_intermediate%read_(X_ilck, wf%n_o**3 * wf%n_v)
+      call wf%jacobian_transpose_e1_intermediate%close_()
 !
-      call mem%dealloc(L_ildm, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Add - sum_ckdlm b_ckal L_ilmd t_km^cd
-!         = - sum_ckl b_a_lck X_i_lck^T
+!     Add = - sum_ckl b_a_lck X_i_lck^T
 !
       call dgemm('N','T',               &
                   wf%n_v,               &
                   wf%n_o,               &
                   (wf%n_v)*(wf%n_o)**2, &
                   -one,                 &
-                  b_aibj,               & ! b_a_lck (= b_al_ck = b_aibj)
+                  b_aibj,               & ! b_a_lck
                   wf%n_v,               &
                   X_ilck,               & ! X_i_lck
                   wf%n_o,               &
@@ -436,7 +548,10 @@ contains
 !     :: Term 4. - sum_ckdlm b_ckdl L_mlia t_km^cd ::
 !
 !     Form the intermediate X_ml = sum_ckd t_km^cd b_ckdl
-!                                 = sum_ckd t_ckd_m^T b_ckd_l
+!                                = sum_ckd t_ckd_m^T b_ckd_l
+!
+      call mem%alloc(t_ckdm, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_ckdm, (wf%n_o)*(wf%n_v))
 !
       call mem%alloc(X_ml, wf%n_o, wf%n_o)
 !
@@ -445,7 +560,7 @@ contains
                   wf%n_o,               &
                   (wf%n_o)*(wf%n_v)**2, &
                   one,                  &
-                  t_dmck,               & ! t_ckd_m
+                  t_ckdm,               & ! t_ckd_m
                   (wf%n_o)*(wf%n_v)**2, &
                   b_aibj,               & ! b_aib_j
                   (wf%n_o)*(wf%n_v)**2, &
@@ -453,7 +568,7 @@ contains
                   X_ml,                 &
                   wf%n_o)
 !
-      call mem%dealloc(t_dmck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(t_ckdm, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Form g_mlia = g_mlia
 !
@@ -666,59 +781,47 @@ contains
    end subroutine jacobian_transpose_ccsd_e1_ccsd
 !
 !
-   module subroutine jacobian_transpose_ccsd_f1_ccsd(wf, sigma_ai, b_aibj)
+   module subroutine save_jacobian_transpose_f1_intermediates_ccsd(wf, t_aibj, g_ikmc)
 !!
-!!    Jacobian transpose CCSD F1
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
+!!    Save Jacobian transpose F1 intermediates
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, and
+!!    Andreas Skeidsvoll, Oct 2019
 !!
-!!    Calculates the F1 term,
+!!    Construct and save the intermediates
 !!
-!!       sum_ckdlm (b_akdl t_lm^cd g_ikmc + b_ckal t_ml^cd g_mkid + b_ckdi t_ml^cd g_mkla)
+!!       X_ikdl = sum_mc t_lm^cd g_ikmc = t_mcdl g_ikmc
 !!
-!!    and adds it to the transformed vector sigma_ai.
+!!    (E. F. K. and S. D. F. 2017-2018)
+!! 
+!!       X_lidk = sum_mc t_mk^dc g_mlic = t_mcdk g_limc
+!!
+!!    adds them reordered together
+!!
+!!       X_kdli = X_ikdl + X_lidk
+!!
+!!    and writes it to the file 'jacobian_transpose_f1_intermediate'.
+!!
+!!    (A. S. and S. D. F. Nov 2019)
 !!
       implicit none
 !
       class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o)                 :: sigma_ai
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in) :: t_aibj
+      real(dp), dimension(wf%n_o,wf%n_o,wf%n_o,wf%n_v), intent(in) :: g_ikmc
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_mcdl
-      real(dp), dimension(:,:,:,:), allocatable :: t_cldm
-      real(dp), dimension(:,:,:,:), allocatable :: t_cdml
+      real(dp), dimension(:,:,:,:), allocatable :: g_limc
+      real(dp), dimension(:,:,:,:), allocatable :: X_ikdl
+      real(dp), dimension(:,:,:,:), allocatable :: X_kdli
+      real(dp), dimension(:,:,:,:), allocatable :: X_lidk
 !
-      real(dp), dimension(:,:,:,:), allocatable :: b_akcl
-      real(dp), dimension(:,:,:,:), allocatable :: b_kicd
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_ikmc
-      real(dp), dimension(:,:,:,:), allocatable :: g_kdmi
-      real(dp), dimension(:,:,:,:), allocatable :: g_amkl
-!
-      real(dp), dimension(:,:,:,:), allocatable :: X_ikdl, X_kdli
-!
-      real(dp), dimension(:,:,:,:), allocatable :: X_akdm
-!
-      real(dp), dimension(:,:,:,:), allocatable :: X_kiml
-      real(dp), dimension(:,:,:,:), allocatable :: X_mkli
-!
-!     :: Term 1. sum_ckdlm b_akdl t_lm^cd g_ikmc ::
-!
-!     X_ikdl = sum_mc t_lm^cd g_ikmc = sum_mc g_ik_mc t_mc_dl
+!     X_ikdl = sum_mc t_lm^cd g_ikmc = t_mcdl g_ikmc
 !
 !     Order amplitudes as t_mcdl = t_lm^cd
 !
       call mem%alloc(t_mcdl, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
-      call squareup_and_sort_1234_to_4132(wf%t2, t_mcdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Form the integral g_ik_mc
-!
-      call mem%alloc(g_ikmc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-!
-      call wf%get_ooov(g_ikmc)
-!
-!     Form the intermediate X_ikdl = sum_mc t_lm^cd g_ikmc = sum_mc g_ik_mc t_mc_dl
+      call sort_1234_to_4132(t_aibj, t_mcdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(X_ikdl, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -735,13 +838,102 @@ contains
                   X_ikdl,            & ! X_ik_dl
                   (wf%n_o)**2)
 !
-!     Add sum_ckdlm b_akdl t_lm^cd g_ikmc
-!         = sum_kdl b_a_kdl X_i_kdl^T
+!     X_lidk = sum_mc t_mk^dc g_mlic = t_mcdk g_limc
+!
+!     Pretend that g_ikmc is g_mlic and reorder to g_limc
+!   
+      call mem%alloc(g_limc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+      call sort_1234_to_2314(g_ikmc, g_limc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+!     Pretend that t_mcdl is t_mcdk (t_lm^cd is t_km^cd)
+!
+      call mem%alloc(X_lidk, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',       &
+                  wf%n_o**2,     &
+                  wf%n_o*wf%n_v, &
+                  wf%n_o*wf%n_v, &
+                  one,           &
+                  g_limc,        & ! g_li_mc
+                  wf%n_o**2,     &
+                  t_mcdl,        & ! t_mc_dk
+                  wf%n_o*wf%n_v, &
+                  zero,          &
+                  X_lidk,        & ! X_li_dk
+                  wf%n_o**2)
+!
+!      Reorder and add the intermediates to X_kdli
+!
+      call mem%alloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call zero_array(X_kdli, wf%n_o**3 * wf%n_v)
+!
+      call add_4123_to_1234(one, X_ikdl, X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call add_3421_to_1234(one, X_lidk, X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call mem%dealloc(X_lidk, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(X_ikdl, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Write X_kdli to file
+!
+      wf%jacobian_transpose_f1_intermediate = sequential_file('jacobian_transpose_f1_intermediate')
+      call wf%jacobian_transpose_f1_intermediate%open_('write', 'rewind')
+!
+      call wf%jacobian_transpose_f1_intermediate%write_(X_kdli, wf%n_o**3 * wf%n_v)
+!
+      call wf%jacobian_transpose_f1_intermediate%close_()
+!
+      call mem%dealloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+   end subroutine save_jacobian_transpose_f1_intermediates_ccsd
+!
+!
+   module subroutine jacobian_transpose_ccsd_f1_ccsd(wf, sigma_ai, b_aibj)
+!!
+!!    Jacobian transpose CCSD F1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
+!!
+!!    Calculates the F1 term,
+!!
+!!       sum_ckdlm (b_akdl t_lm^cd g_ikmc + b_dlak t_mk^dc g_mlic + b_ckdi t_ml^cd g_mkla)
+!!
+!!    and adds it to the transformed vector sigma_ai.
+!!
+!!    Modified by Andreas Skeidsvoll, Oct 2019
+!!
+!!    Reads intermediate for term 1 and 2 from the file 'jacobian_transpose_f1_intermediate'.
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o)                 :: sigma_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
+!
+      real(dp), dimension(:,:,:,:), allocatable :: t_cdml
+!
+      real(dp), dimension(:,:,:,:), allocatable :: b_kicd
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_amkl
+      real(dp), dimension(:,:,:,:), allocatable :: g_mkla
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_kdli
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_kiml
+      real(dp), dimension(:,:,:,:), allocatable :: X_mkli
+!
+!     :: Term 1. and Term 2. 
+!     
+!        sum_ckdlm b_akdl t_lm^cd g_ikmc + sum_ckdlm b_akdl t_mk^dc g_mlic
+!        = sum_kdl b_akdl X_kdli
+!
+!     Read the intermediate X_kdli
 !
       call mem%alloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call sort_1234_to_2341(X_ikdl, X_kdli, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(X_ikdl, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+      call wf%jacobian_transpose_f1_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_f1_intermediate%read_(X_kdli, wf%n_o**3 * wf%n_v)
+      call wf%jacobian_transpose_f1_intermediate%close_()
 !
       call dgemm('N','N',               &
                   wf%n_v,               &
@@ -758,90 +950,13 @@ contains
 !
       call mem%dealloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-!     :: Term 2. sum_ckdlm b_ckal t_ml^cd g_mkid ::
-!
-!     X_akdm = sum_cl b_ckal t_ml^cd
-!            = sum_cl b_ak_cl t_cl_dm
-!
-!     We have t_mcdl(m,c,d,l) = t_lm^cd
-!     Reorder t_cldm(c,l,d,m) = t_mcdl(l,c,d,m) = t_ml^cd
-!
-      call mem%alloc(t_cldm, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call sort_1234_to_2134(t_mcdl, t_cldm, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(t_mcdl, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
-!
-!     Reorder to b_akcl = b_ckal
-!
-      call mem%alloc(b_akcl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call sort_1234_to_3214(b_aibj, b_akcl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Form the intermediate X_akdm = sum_cl b_ak_cl t_cl_dm
-!
-      call mem%alloc(X_akdm, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call dgemm('N','N',            &
-                  (wf%n_v)*(wf%n_o), &
-                  (wf%n_v)*(wf%n_o), &
-                  (wf%n_v)*(wf%n_o), &
-                  one,               &
-                  b_akcl,            & ! b_ak_cl
-                  (wf%n_v)*(wf%n_o), &
-                  t_cldm,            & ! t_cl_dm
-                  (wf%n_v)*(wf%n_o), &
-                  zero,              &
-                  X_akdm,            &
-                  (wf%n_v)*(wf%n_o))
-!
-      call mem%dealloc(b_akcl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     sum_ckdlm b_ckal t_ml^cd g_mkid = sum_kdm X_akdm g_mkid
-!
-!     We have g_ikmc(i,k,m,c)
-!     Reorder to g_kdmi(k,d,m,i) = g_mkid = g_ikmc(m,k,i,d)
-!
-      call mem%alloc(g_kdmi, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!
-      call sort_1234_to_2413(g_ikmc, g_kdmi, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-!
-      call mem%dealloc(g_ikmc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-!
-!     Add sum_ckdlm b_ckal t_ml^cd g_mkid = sum_kdm X_akdm g_mkid
-!                                         = sum_kdm X_akdm g_kdm_i
-!
-!     Note: we interpret X_akdm as X_a_kdm
-!
-      call dgemm('N','N',               &
-                  wf%n_v,               &
-                  wf%n_o,               &
-                  (wf%n_v)*(wf%n_o)**2, &
-                  one,                  &
-                  X_akdm,               & ! X_a_kdm
-                  wf%n_v,               &
-                  g_kdmi,               & ! g_kdm_i
-                  (wf%n_v)*(wf%n_o)**2, &
-                  one,                  &
-                  sigma_ai,             &
-                  wf%n_v)
-!
-      call mem%dealloc(X_akdm, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
 !     :: Term 3. sum_ckdlm b_ckdi t_ml^cd g_mkla ::
 !
 !     X_kiml = sum_cd b_ckdi t_ml^cd
 !
-!     We have t_cldm(c,l,d,m) = t_ml^cd
-!     Reorder to t_cdml(c,d,m,l) = t_cldm(c,l,d,m) = t_ml^cd
-!
       call mem%alloc(t_cdml, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call sort_1234_to_1342(t_cldm, t_cdml, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(t_cldm, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Reorder to b_kicd = b_ckdi
+      call squareup_and_sort_1234_to_1324(wf%t2, t_cdml, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(b_kicd, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
 !
@@ -880,11 +995,14 @@ contains
 !     We have g_kdm_i(kdm,i) = g_mkid
 !     Reorder to g_amkl(a,m,k,l) = g_mkla = g_kdm_i(kam,l)
 !
+      call mem%alloc(g_mkla, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+      call wf%get_ooov(g_mkla)
+!
       call mem%alloc(g_amkl, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call sort_1234_to_2314(g_kdmi, g_amkl, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!
-      call mem%dealloc(g_kdmi, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call sort_1234_to_4123(g_mkla, g_amkl, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(g_mkla, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
 !     Add sum_ckdlm b_ckdi t_ml^cd g_mkla = sum_klm g_a_mkl X_mkl_i
 !
@@ -907,6 +1025,125 @@ contains
    end subroutine jacobian_transpose_ccsd_f1_ccsd
 !
 !
+   module subroutine save_jacobian_transpose_g1_intermediates_ccsd(wf, t_aibj)
+!!
+!!    Save jacobian transpose g1 intermediates
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad and
+!!    Tor S. Haugland, Oct 2019
+!!
+!!    Calculates the intermediate,
+!!
+!!       X_idkl = sum_ce t_ckel g_icde ordered as X_kdli
+!!
+!!    (E. F. K. and S. D. F. 2017-1028)
+!!
+!!    and saves it to the file 'jacobian_transpose_g1_intermediate'.
+!!
+!!    (T. H. S., Oct 2019)
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in) :: t_aibj
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_idkl ! An intermediate, term 1
+      real(dp), dimension(:,:,:,:), allocatable :: X_kdli ! Reordered intermediate, term 1
+!
+      real(dp), dimension(:,:,:,:), allocatable :: t_cekl
+      real(dp), dimension(:,:,:,:), allocatable :: g_icde, g_idce
+
+!     Batching variables
+!
+      integer :: current_d_batch = 0
+!
+      type(batching_index) :: batch_d
+!
+      integer :: rec1, rec0
+!
+!     X_idkl = sum_ce t_kl^ce g_icde = sum_ce g_id_ce t_ce_kl
+!
+!     Reorder to t_cekl = t_kl^ce
+!
+      call mem%alloc(t_cekl, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call sort_1234_to_1324(t_aibj, t_cekl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(X_idkl, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call zero_array(X_idkl, wf%n_v*wf%n_o**3)
+!
+!     Prepare for batching over d
+!
+      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
+      rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
+!
+      batch_d = batching_index(wf%n_v)
+      call mem%batch_setup(batch_d, rec0, rec1)
+!
+!     Loop over the d-batches
+!
+      do current_d_batch = 1, batch_d%num_batches
+!
+         call batch_d%determine_limits(current_d_batch)
+!
+         call mem%alloc(g_icde, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+!
+         call wf%get_ovvv(g_icde,         &
+                           1,             &
+                           wf%n_o,        &
+                           1,             &
+                           wf%n_v,        &
+                           batch_d%first, &
+                           batch_d%last,  &
+                           1,             &
+                           wf%n_v)
+!
+!        Reorder to g_id_ce = g_ic_de
+!
+         call mem%alloc(g_idce, wf%n_o, batch_d%length, wf%n_v, wf%n_v)
+!
+         call sort_1234_to_1324(g_icde, g_idce, wf%n_o, wf%n_v, (batch_d%length), wf%n_v)
+!
+         call mem%dealloc(g_icde, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+!
+         call dgemm('N','N',                      &
+                     (wf%n_o)*(batch_d%length),   &
+                     (wf%n_o)**2,                 &
+                     (wf%n_v)**2,                 &
+                     one,                         &
+                     g_idce,                      &
+                     (wf%n_o)*(batch_d%length),   &
+                     t_cekl,                      &
+                     (wf%n_v)**2,                 &
+                     one,                         &
+                     X_idkl(1,batch_d%first,1,1), &
+                     (wf%n_o)*(wf%n_v))
+!
+         call mem%dealloc(g_idce, wf%n_o, batch_d%length, wf%n_v, wf%n_v)
+!
+      enddo ! End of batches over d
+!
+      call mem%dealloc(t_cekl, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+!     - sum_ckdle b_akdl t_kl^ce g_icde = sum_kdl b_akdl X_id_kl
+!
+      call mem%alloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call sort_1234_to_3241(X_idkl, X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call mem%dealloc(X_idkl, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+!     Save X_kdli to file
+!
+      wf%jacobian_transpose_g1_intermediate = sequential_file('jacobian_transpose_g1_intermediate')
+      call wf%jacobian_transpose_g1_intermediate%open_('write', 'rewind')
+!
+      call wf%jacobian_transpose_g1_intermediate%write_(X_kdli, wf%n_o**3 * wf%n_v)
+!
+      call wf%jacobian_transpose_g1_intermediate%close_()
+!
+      call mem%dealloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+   end subroutine save_jacobian_transpose_g1_intermediates_ccsd
+!
+!
    module subroutine jacobian_transpose_ccsd_g1_ccsd(wf, sigma_ai, b_aibj)
 !!
 !!    Jacobian transpose CCSD G1
@@ -918,6 +1155,9 @@ contains
 !!
 !!    and adds it to the transformed vector sigma_ai.
 !!
+!!    Modified by Tor S. Haugland, Oct 2019
+!!
+!!    Reads intermediate for term 1 from the file 'jacobian_transpose_g1_intermediate'.
 !!
       implicit none
 !
@@ -933,26 +1173,20 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_kedi ! Reordered intermediate, term 3
 !
-      real(dp), dimension(:,:,:,:), allocatable :: X_idkl ! An intermediate, term 1
-      real(dp), dimension(:,:,:,:), allocatable :: X_kdli ! Reordered intermediate, term 1
+      real(dp), dimension(:,:,:,:), allocatable :: X_kdli ! An intermediate, term 1
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_clek ! t_kl^ce
-      real(dp), dimension(:,:,:,:), allocatable :: t_cekl ! t_kl^ce
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_kade
       real(dp), dimension(:,:,:,:), allocatable :: g_akde
       real(dp), dimension(:,:,:,:), allocatable :: g_keda
-      real(dp), dimension(:,:,:,:), allocatable :: g_icde
-      real(dp), dimension(:,:,:,:), allocatable :: g_idce ! g_icde
 !
 !     Batching variables
 !
       integer :: current_a_batch = 0
-      integer :: current_d_batch = 0
       integer :: current_e_batch = 0
 !
       type(batching_index) :: batch_a
-      type(batching_index) :: batch_d
       type(batching_index) :: batch_e
 !
       integer :: rec1, rec0
@@ -1141,75 +1375,13 @@ contains
 !
 !     :: Term 1. - sum_ckdle b_akdl t_kl^ce g_icde ::
 !
-!     X_idkl = sum_ce t_kl^ce g_icde = sum_ce g_id_ce t_ce_kl
-!
-!     Reorder to t_cekl = t_kl^ce
-!
-      call mem%alloc(t_cekl, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call squareup_and_sort_1234_to_1324(wf%t2, t_cekl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%alloc(X_idkl, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call zero_array(X_idkl, wf%n_v*wf%n_o**3)
-!
-!     Prepare for batching over d
-!
-      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
-      rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
-!
-      batch_d = batching_index(wf%n_v)
-      call mem%batch_setup(batch_d, rec0, rec1)
-!
-!     Loop over the d-batches
-!
-      do current_d_batch = 1, batch_d%num_batches
-!
-         call batch_d%determine_limits(current_d_batch)
-!
-         call mem%alloc(g_icde, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
-!
-         call wf%get_ovvv(g_icde,         &
-                           1,             &
-                           wf%n_o,        &
-                           1,             &
-                           wf%n_v,        &
-                           batch_d%first, &
-                           batch_d%last,  &
-                           1,             &
-                           wf%n_v)
-!
-!        Reorder to g_id_ce = g_ic_de
-!
-         call mem%alloc(g_idce, wf%n_o, batch_d%length, wf%n_v, wf%n_v)
-!
-         call sort_1234_to_1324(g_icde, g_idce, wf%n_o, wf%n_v, (batch_d%length), wf%n_v)
-!
-         call mem%dealloc(g_icde, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
-!
-         call dgemm('N','N',                      &
-                     (wf%n_o)*(batch_d%length),   &
-                     (wf%n_o)**2,                 &
-                     (wf%n_v)**2,                 &
-                     one,                         &
-                     g_idce,                      &
-                     (wf%n_o)*(batch_d%length),   &
-                     t_cekl,                      &
-                     (wf%n_v)**2,                 &
-                     one,                         &
-                     X_idkl(1,batch_d%first,1,1), &
-                     (wf%n_o)*(wf%n_v))
-!
-         call mem%dealloc(g_idce, wf%n_o, batch_d%length, wf%n_v, wf%n_v)
-!
-      enddo ! End of batches over d
-!
-      call mem%dealloc(t_cekl, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
-!     - sum_ckdle b_akdl t_kl^ce g_icde = sum_kdl b_akdl X_id_kl
+!     Get intermediate X_kdl_i from file
 !
       call mem%alloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call sort_1234_to_3241(X_idkl, X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call mem%dealloc(X_idkl, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call wf%jacobian_transpose_g1_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_g1_intermediate%read_(X_kdli, wf%n_o**3 * wf%n_v)
+      call wf%jacobian_transpose_g1_intermediate%close_()
 !
 !     Add - sum_ckdle b_akdl t_kl^ce g_icde = - sum_dkl b_a_kdl X_kdl_i
 !
@@ -1581,56 +1753,29 @@ contains
    end subroutine jacobian_transpose_ccsd_c2_ccsd
 !
 !
-   module subroutine jacobian_transpose_ccsd_d2_ccsd(wf, sigma_aibj, b_aibj)
+   module subroutine save_jacobian_transpose_d2_intermediates_ccsd(wf, u_ckdl, L_dlbj)
 !!
-!!    Jacobian transpose CCSD D2
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
+!!    Save Jacobian transpose D2 intermediates
+!!    Written by Andreas Skeidsvoll, Tor S. Haugland,
+!!    Sarai D. Folkestad and Eirik F. Kjønstad , Nov 2019
 !!
-!!    Calculates the D2 term,
+!!    Constructs the intermediate
 !!
-!!       2 * sum_ckdl b_aick L_jbld t_kl^cd
+!!       X_ckbj = sum_dl u_ckdl L_jbld
 !!
-!!    and adds it to the transformed vector sigma_aibj.
+!!    where u_ckdl = 2 t_ckdl - t_cldk.
 !!
-   implicit none
+!!    and saves it to the file 'jacobian_transpose_d2_intermediate'.
+!!
+      implicit none
 !
       class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: sigma_aibj
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
-!
-      real(dp), dimension(:,:,:,:), allocatable :: t_ckdl ! t_kl^cd
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_ckdl
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: L_dlbj ! Reordered L_jbld
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_ckbj ! An intermediate
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_jbld ! g_jbld
-      real(dp), dimension(:,:,:,:), allocatable :: L_dlbj ! L_jbld
-!
-!     Form g_jbld
-!
-      call mem%alloc(g_jbld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call wf%get_ovov(g_jbld)
-!
-!     Form L_dlbj = L_jbld = 2 * g_jbld - g_jdlb
-!                          = 2 * g_jbld(j,b,l,d) - g_jbld(j,d,l,b)
-!
-      call mem%alloc(L_dlbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(L_dlbj, (wf%n_o*wf%n_v)**2)
-!
-      call add_4321_to_1234(two, g_jbld, L_dlbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call add_4123_to_1234(-one, g_jbld, L_dlbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(g_jbld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-!     Form t_ckdl = t_kl^cd
-!
-      call mem%alloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call zero_array(t_ckdl, (wf%n_o*wf%n_v)**2)
-!
-      call squareup(wf%t2, t_ckdl, (wf%n_o)*(wf%n_v))
-!
-!     Form the intermediate X_ckbj = sum_dl t_ck_dl L_dl_bj
+!     Form the intermediate X_ckbj = sum_dl u_ck_dl L_dl_bj
 !
       call mem%alloc(X_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1639,7 +1784,7 @@ contains
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
                   one,               &
-                  t_ckdl,            & ! t_ck_dl
+                  u_ckdl,            & ! u_ck_dl
                   (wf%n_o)*(wf%n_v), &
                   L_dlbj,            & ! L_dl_bj
                   (wf%n_o)*(wf%n_v), &
@@ -1647,16 +1792,63 @@ contains
                   X_ckbj,            &
                   (wf%n_o)*(wf%n_v))
 !
-      call mem%dealloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(L_dlbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     Save X_ckbj to file
 !
-!     Add 2 * sum_ckdl b_aick L_jbld t_kl^cd = 2 * sum_ck b_ai_ck X_ck_bj
+      wf%jacobian_transpose_d2_intermediate = sequential_file('jacobian_transpose_d2_intermediate')
+      call wf%jacobian_transpose_d2_intermediate%open_('write', 'rewind')
+!
+      call wf%jacobian_transpose_d2_intermediate%write_(X_ckbj, wf%n_o**2 * wf%n_v**2)
+!
+      call wf%jacobian_transpose_d2_intermediate%close_()
+!
+      call mem%dealloc(X_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+   end subroutine save_jacobian_transpose_d2_intermediates_ccsd
+!
+!
+   module subroutine jacobian_transpose_ccsd_d2_ccsd(wf, sigma_aibj, b_aibj)
+!!
+!!    Jacobian transpose CCSD D2
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
+!!
+!!    Calculates the D2 term,
+!!
+!!       sum_ckdl b_aick L_jbld u_kl^cd
+!!
+!!    and adds it to the transformed vector sigma_aibj.
+!!
+!!    Modified by Andreas Skeidsvoll and Tor S. Haugland, Nov 2019
+!!
+!!    Reads intermediate from the file 'jacobian_transpose_d2_intermediate'. Contribution from
+!!    e2 was moved to d2, changing the term
+!!       sum_ckdl b_aick L_jbld 2 t_kl^cd
+!!    to
+!!       sum_ckdl b_aick L_jbld (2 t_kl^cd - t_kl^dc)
+!!
+   implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: sigma_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_ckbj ! An intermediate
+!
+!     Read the intermediate X_ckbj = sum_dl t_ck_dl L_dl_bj
+!
+      call mem%alloc(X_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call wf%jacobian_transpose_d2_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_d2_intermediate%read_(X_ckbj, wf%n_o**2 * wf%n_v**2)
+      call wf%jacobian_transpose_d2_intermediate%close_()
+!
+!     Add sum_ckdl b_aick L_jbld t_kl^cd = sum_ck b_ai_ck X_ck_bj
 !
       call dgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
-                  two,               &
+                  one,               &
                   b_aibj,            & ! "b_ai_ck"
                   (wf%n_o)*(wf%n_v), &
                   X_ckbj,            & ! X_ck_bj
@@ -1677,9 +1869,17 @@ contains
 !!
 !!    Calculates the E2 term,
 !!
-!!       - sum_ckdl (b_aibl t_kl^cd L_kcjd + b_aicl t_kl^cd L_jbkd + b_aicj t_kl^cd L_ldkb)
+!!       - sum_ckdl (b_aibl t_kl^cd L_kcjd + b_aicj t_kl^cd L_ldkb)
 !!
 !!    and adds it to the transformed vector sigma_aibj.
+!!
+!!    Modified by Sarai D. Folkestad and Tor S. Haugland, Nov 2019
+!!
+!!    Reads term 1 and 2 intermediates from the files 'jacobian_transpose_e2_oo_intermediate'
+!!    and 'jacobian_transpose_e2_vv_intermediate'.
+!!
+!!    Moved term to jacobian_transpose_d2,
+!!       - sum_ckdl b_aicl t_kl^cd L_jbkd
 !!
       implicit none
 !
@@ -1690,63 +1890,25 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_kcjd
       real(dp), dimension(:,:,:,:), allocatable :: L_jckd ! L_kcjd
-      real(dp), dimension(:,:,:,:), allocatable :: L_dkbj ! L_jbkd
-      real(dp), dimension(:,:,:,:), allocatable :: L_ldkb
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_ckdl ! t_kl^cd
-      real(dp), dimension(:,:,:,:), allocatable :: t_cldk ! t_kl^cd
 !
-      real(dp), dimension(:,:), allocatable :: X_jl   ! An intermediate, term 1
-      real(dp), dimension(:,:,:,:), allocatable :: X_clbj ! An intermediate, term 2
-      real(dp), dimension(:,:), allocatable :: X_cb   ! An intermediate, term 3
+      real(dp), dimension(:,:), allocatable     :: X_jl   ! An intermediate, term 1
+      real(dp), dimension(:,:), allocatable     :: X_cb   ! An intermediate, term 3
 !
-      real(dp), dimension(:,:,:,:), allocatable :: sigma_aijb ! sigma_aibj contribution
-      real(dp), dimension(:,:,:,:), allocatable :: b_aijc     ! b_aicj
+!     Term 1. - sum_ckdl b_aibl t_kl^cd L_kcjd
+!             - sum_l X_jl b_aibl
 !
-!     :: Term 1. - sum_ckdl b_aibl t_kl^cd L_kcjd ::
-!
-!     X_jl = sum_kcd L_kcjd t_kl^cd = sum_kcd L_j_ckd t_ckd_l
-!
-!     Form g_kcjd
-!
-      call mem%alloc(g_kcjd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call wf%get_ovov(g_kcjd)
-!
-!     Form L_jckd = L_kcjd = 2 * g_kcjd - g_kdjc
-!                          = 2 * g_kcjd(k,c,j,d) - g_kcjd(k,d,j,c)
-!
-      call mem%alloc(L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call zero_array(L_jckd, (wf%n_o*wf%n_v)**2)
-!
-      call add_3214_to_1234(two, g_kcjd, L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call add_3412_to_1234(-one, g_kcjd, L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call mem%dealloc(g_kcjd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-!     Form t_ckdl = t_kl^cd
-!
-      call mem%alloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call squareup(wf%t2, t_ckdl, (wf%n_o)*(wf%n_v))
-!
-!     Form the intermediate X_jl = sum_kcd L_kcjd t_kl^cd
-!                                 = sum_kcd L_j_ckd t_ckd_l
+!     Read X_jl to file
 !
       call mem%alloc(X_jl, wf%n_o, wf%n_o)
 !
-      call dgemm('N','N',               &
-                  wf%n_o,               &
-                  wf%n_o,               &
-                  (wf%n_o)*(wf%n_v)**2, &
-                  one,                  &
-                  L_jckd,               & ! L_j_ckd
-                  wf%n_o,               &
-                  t_ckdl,               & ! "t_ckd_l"
-                  (wf%n_o)*(wf%n_v)**2, &
-                  zero,                 &
-                  X_jl,                 &
-                  wf%n_o)
+      wf%jacobian_transpose_e2_oo_intermediate = sequential_file('jacobian_transpose_e2_oo_intermediate')
+      call wf%jacobian_transpose_e2_oo_intermediate%open_('read', 'rewind')
+!
+      call wf%jacobian_transpose_e2_oo_intermediate%read_(X_jl, wf%n_o**2)
+!
+      call wf%jacobian_transpose_e2_oo_intermediate%close_()
 !
 !     Add - sum_ckdl b_aibl t_kl^cd L_kcjd
 !         = - sum_l b_aib_l X_jl^T(l,j)
@@ -1766,133 +1928,110 @@ contains
 !
       call mem%dealloc(X_jl, wf%n_o, wf%n_o)
 !
-!     :: Term 2. -sum_ckdl b_aicl t_kl^cd L_jbkd ::
+!     Form g_kcjd
 !
-!     X_clbj = sum_kd t_kl^cd L_jbkd = sum_kd t_cl_dk L_dk_bj
+      call mem%alloc(g_kcjd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-!     We have L_jckd = L_kcjd   => L_jckd(k,b,j,d) = L_jbkd
-!     We have t_ckd_l = t_kl^cd
+      call wf%get_ovov(g_kcjd)
 !
-!     Reorder to L_dkbj(d,k,b,j) = L_jbkd = L_jckd(k,b,j,d)
+!     Form L_jckd = L_kcjd = 2 * g_kcjd - g_kdjc
+!                          = 2 * g_kcjd(k,c,j,d) - g_kcjd(k,d,j,c)
 !
-      call mem%alloc(L_dkbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call zero_array(L_jckd, (wf%n_o*wf%n_v)**2)
 !
-      call sort_1234_to_4123(L_jckd, L_dkbj, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call add_3214_to_1234(two, g_kcjd, L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call add_3412_to_1234(-one, g_kcjd, L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(g_kcjd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-!     Reorder to t_cldk = t_kl^cd = t_ckdl
+      call mem%alloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2, t_ckdl, wf%n_t1)
 !
-      call mem%alloc(t_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     Term 2: - sum_ckdl b_aicj t_kl^cd L_ldkb  = - sum_c b_cjai X_cb
 !
-      call sort_1234_to_1432(t_ckdl, t_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Form the intermediate X_clbj = sum_kd t_kl^cd L_jbkd
-!                                  = sum_kd t_cl_dk L_dk_bj
-!
-      call mem%alloc(X_clbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call dgemm('N','N',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  t_cldk,            & ! t_cl_dk
-                  (wf%n_o)*(wf%n_v), &
-                  L_dkbj,            & ! L_dk_bj
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  X_clbj,            &
-                  (wf%n_o)*(wf%n_v))
-!
-!     Add - sum_ckdl b_aicl t_kl^cd L_jbkd
-!           = - sum_cl b_ai_cl X_cl_bj
-!
-      call dgemm('N','N',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  -one,              &
-                  b_aibj,            & ! "b_ai_cl"
-                  (wf%n_o)*(wf%n_v), &
-                  X_clbj,            & ! X_cl_bj
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  sigma_aibj,        &
-                  (wf%n_o)*(wf%n_v))
-!
-      call mem%dealloc(X_clbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     :: Term 3. - sum_ckdl b_aicj t_kl^cd L_ldkb ::
-!
-!     - sum_c b_aijc X_cb,   X_cb = sum_kdl t_kl^cd L_ldkb
-!                                    = sum_kdl t_c_ldk L_ldk_b
-!
-!     We have L_dkbj(d,k,b,j) = L_jbkd => L_dkbj(b,k,d,l) = L_ldkb
-!
-!     Reorder to L_ldkb = L_dkbj(b,k,d,l)
-!
-      call mem%alloc(L_ldkb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call sort_1234_to_4321(L_dkbj, L_ldkb, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(L_dkbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Form the intermediate X_cb = sum_kdl t_kl^cd L_ldkb
-!                                 = sum_kdl t_c_ldk L_ldk_b
+!     Read X_cb from file
 !
       call mem%alloc(X_cb, wf%n_v, wf%n_v)
 !
-      call dgemm('N','N',               &
-                  wf%n_v,               &
+      wf%jacobian_transpose_e2_vv_intermediate = sequential_file('jacobian_transpose_e2_vv_intermediate')
+      call wf%jacobian_transpose_e2_vv_intermediate%open_('read', 'rewind')
+!
+      call wf%jacobian_transpose_e2_vv_intermediate%read_(X_cb, wf%n_v**2)
+!
+      call wf%jacobian_transpose_e2_vv_intermediate%close_()
+!
+      call dgemm('T','N',               &
                   wf%n_v,               &
                   (wf%n_v)*(wf%n_o)**2, &
-                  one,                  &
-                  t_cldk,               & ! t_c_ldk
-                  wf%n_v,               &
-                  L_ldkb,               & ! L_ldk_b
-                  (wf%n_v)*(wf%n_o)**2, &
-                  zero,                 &
-                  X_cb,                 &
-                  wf%n_v)
-!
-      call mem%dealloc(t_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(L_ldkb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-!     Reorder to b_aijc = b_aicj
-!
-      call mem%alloc(b_aijc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-      call sort_1234_to_1243(b_aibj, b_aijc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Form and add - sum_ckdl b_aicj t_kl^cd L_ldkb
-!                  = - sum_c b_aij_c X_cb
-!
-      call mem%alloc(sigma_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-      call dgemm('N','N',               &
-                  (wf%n_v)*(wf%n_o)**2, &
-                  wf%n_v,               &
                   wf%n_v,               &
                   -one,                 &
-                  b_aijc,               & ! b_aij_c
-                  (wf%n_v)*(wf%n_o)**2, &
                   X_cb,                 &
                   wf%n_v,               &
-                  zero,                 &
-                  sigma_aijb,           &
-                  (wf%n_v)*(wf%n_o)**2)
+                  b_aibj,               & ! b_c_jai
+                  wf%n_v,               &
+                  one,                  & 
+                  sigma_aibj,           & ! sigma_b_jai, but we will symmetrize later on
+                  (wf%n_v))
 !
       call mem%dealloc(X_cb, wf%n_v, wf%n_v)
-      call mem%dealloc(b_aijc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-      call add_1243_to_1234(one, sigma_aijb, sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call mem%dealloc(sigma_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
    end subroutine jacobian_transpose_ccsd_e2_ccsd
+!
+!
+   module subroutine save_jacobian_transpose_f2_intermediates_ccsd(wf, t_ckdl, L_dlbi)
+!!
+!!    Save Jacobian transpose f2 intermediates
+!!    Written by Eirik F. Kjønstad, Tor S. Haugland and 
+!!    Sarai D. Folkestad, Nov 2019
+!!
+!!    Calculates the F2 intermediate,
+!!
+!!       X_ckbi = sum_dl t_ckdl L_ldib
+!!
+!!       (S. D. F and E. F. K. 2017-2018)
+!!
+!!    and writes it to the file 'jacobian_transpose_f2_intermediate'.
+!!
+!!       (T. S. H., Nov 2019)
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: t_ckdl
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: L_dlbi ! Reordered L_ldib
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_ckbi ! An intermediate, term 2
+!
+!     Form the intermediate X_ckbi = sum_dl t_ck_dl L_dl_bi
+!
+      call mem%alloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N','N',            &
+                  (wf%n_v)*(wf%n_o), &
+                  (wf%n_v)*(wf%n_o), &
+                  (wf%n_v)*(wf%n_o), &
+                  one,               &
+                  t_ckdl,            & 
+                  (wf%n_v)*(wf%n_o), &
+                  L_dlbi,            & 
+                  (wf%n_v)*(wf%n_o), &
+                  zero,              &
+                  X_ckbi,            &
+                  (wf%n_v)*(wf%n_o))
+!
+!     Write X_ckbi to file
+!
+      wf%jacobian_transpose_f2_intermediate = sequential_file('jacobian_transpose_f2_intermediate')
+      call wf%jacobian_transpose_f2_intermediate%open_('write', 'rewind')
+!
+      call wf%jacobian_transpose_f2_intermediate%write_(X_ckbi, wf%n_v**2 * wf%n_o**2)
+!
+      call wf%jacobian_transpose_f2_intermediate%close_()
+!
+      call mem%dealloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+   end subroutine save_jacobian_transpose_f2_intermediates_ccsd
 !
 !
    module subroutine jacobian_transpose_ccsd_f2_ccsd(wf, sigma_aibj, b_aibj)
@@ -1905,6 +2044,10 @@ contains
 !!       - sum_ckdl (b_alck t_kl^cd L_jbid + b_ajck t_kl^cd L_ldib + b_djck t_kl^cd L_ialb)
 !!
 !!    and adds it to the transformed vector sigma_aibj.
+!!
+!!    Modified by Tor S. Haugland, Nov 2019
+!!
+!!    Reads term 2 intermediate from the file 'jacobian_transpose_f2_intermediate'.
 !!
       implicit none
 !
@@ -2015,18 +2158,9 @@ contains
 !
       call mem%alloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call dgemm('N','N',            &
-                  (wf%n_v)*(wf%n_o), &
-                  (wf%n_v)*(wf%n_o), &
-                  (wf%n_v)*(wf%n_o), &
-                  one,               &
-                  t_ckdl,            & ! t_ck_dl
-                  (wf%n_v)*(wf%n_o), &
-                  L_dlbi,            & ! L_dl_bi
-                  (wf%n_v)*(wf%n_o), &
-                  zero,              &
-                  X_ckbi,            &
-                  (wf%n_v)*(wf%n_o))
+      call wf%jacobian_transpose_f2_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_f2_intermediate%read_(X_ckbi, wf%n_o**2 * wf%n_v**2)
+      call wf%jacobian_transpose_f2_intermediate%close_()
 !
 !     Form and add - sum_ckdl b_ajck t_kl^cd L_ldib = - sum_ck b_aj_ck X_ck_bi
 !
@@ -2088,17 +2222,17 @@ contains
 !     We have L_dlbi = (L_ldib) = L_aib_l
 !     Add - sum_ckdl b_ckdj t_kl^cd L_ialb = - sum_l L_aib_l X_lj
 !
-      call dgemm('N','N',               &
-                  (wf%n_o)*(wf%n_v)**2, &
-                  wf%n_o,               &
-                  wf%n_o,               &
-                  -one,                 &
-                  L_dlbi,               & ! L_dl_bi
-                  (wf%n_o)*(wf%n_v)**2, &
-                  X_lj,                 &
-                  wf%n_o,               &
-                  one,                  &
-                  sigma_aibj,          & ! sigma_aib_j
+      call dgemm('N','N',                 &
+                  (wf%n_o)*(wf%n_v)**2,   &
+                  wf%n_o,                 &
+                  wf%n_o,                 &
+                  -one,                   &
+                  L_dlbi,                 & ! L_dl_bi
+                  (wf%n_o)*(wf%n_v)**2,   &
+                  X_lj,                   &
+                  wf%n_o,                 &
+                  one,                    &
+                  sigma_aibj,             & ! sigma_aib_j
                   (wf%n_o)*(wf%n_v)**2)
 !
       call mem%dealloc(L_dlbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -2107,59 +2241,48 @@ contains
    end subroutine jacobian_transpose_ccsd_f2_ccsd
 !
 !
-   module subroutine jacobian_transpose_ccsd_g2_ccsd(wf, sigma_aibj, b_aibj)
+   module subroutine save_jacobian_transpose_g2_intermediates_ccsd(wf, t_aibj, g_kdib)
 !!
-!!    Jacobian transpose CCSD G2
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
+!!    Save Jacobian transpose g2 intermediates
+!!    Written by Tor S. Haugland, Eirik F. Kjønstad and 
+!!    S. D. Folkestad, Nov 2019
 !!
-!!    Calculates the G2 term,
+!!    Constructs intermediates 
 !!
-!!       sum_ckdl (b_alcj t_kl^cd g_kbid + b_ajcl t_kl^cd g_kdib)
+!!       X_clbi = sum_dk t_ckdl g_kbid (E. F. K. and S. D. F., 2017-2018)
+!!       X_clib = sum_kd t_clkd g_kdib (T. S. H., Nov 2019)
 !!
-!!    and adds it to the transformed vector sigma_aibj.
+!!    and saves them to files 'jacobian_transpose_g2_intermediate' 
+!!    and 'jacobian_transpose_g2_intermediate_2'
+!!
+!!       (T. S. H., Nov 2019)
+!!
 !!
       implicit none
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: sigma_aibj
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in) :: t_aibj
+      real(dp), dimension(wf%n_o,wf%n_v,wf%n_o,wf%n_v), intent(in) :: g_kdib
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_cldk ! t_kl^cd
-      real(dp), dimension(:,:,:,:), allocatable :: t_clkd ! t_kl^cd
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_kbid
       real(dp), dimension(:,:,:,:), allocatable :: g_dkbi ! g_kbid
-      real(dp), dimension(:,:,:,:), allocatable :: g_kdib
-!
-      real(dp), dimension(:,:,:,:), allocatable :: b_ajcl     ! b_alcj
-      real(dp), dimension(:,:,:,:), allocatable :: sigma_ajbi ! sigma_aibj contribution
-      real(dp), dimension(:,:,:,:), allocatable :: sigma_ajib ! sigma_aibj contribution
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_clbi ! An intermediate, term 1
-      real(dp), dimension(:,:,:,:), allocatable :: X_ajkd ! An intermediate, term 2
 !
-!     :: Term 1. sum_ckdl b_alcj t_kl^cd g_kbid ::
+      real(dp), dimension(:,:,:,:), allocatable :: t_clkd
+      real(dp), dimension(:,:,:,:), allocatable :: X_clib
 !
 !     Form t_cldk = t_kl^cd
 !
       call mem%alloc(t_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1432(t_aibj, t_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call squareup_and_sort_1234_to_1432(wf%t2, t_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Form g_kbid
-!
-      call mem%alloc(g_kbid, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call wf%get_ovov(g_kbid)
-!
-!     Reorder to g_dkbi = g_kbid
+!     Reorder g_kbid to g_dkbi  (Pretending that g_kdib is g_kbid)
 !
       call mem%alloc(g_dkbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call sort_1234_to_4123(g_kbid, g_dkbi, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call mem%dealloc(g_kbid, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call sort_1234_to_4123(g_kdib, g_dkbi, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     Form the intermediate X_clbi = sum_dk t_cl_dk g_dk_bi
 !
@@ -2180,6 +2303,99 @@ contains
 !
       call mem%dealloc(t_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(g_dkbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Write X_clbi to file
+!
+      wf%jacobian_transpose_g2_intermediate = sequential_file('jacobian_transpose_g2_intermediate')
+      call wf%jacobian_transpose_g2_intermediate%open_('write', 'rewind')
+!
+      call wf%jacobian_transpose_g2_intermediate%write_(X_clbi, wf%n_v**2 * wf%n_o**2)
+!
+      call wf%jacobian_transpose_g2_intermediate%close_()
+!
+!     Cleanup
+!
+      call mem%dealloc(X_clbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     :: Intermediate X_clib 
+!
+!     Form t_clkd = t_kl^cd
+!
+      call mem%alloc(t_clkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call sort_1234_to_1423(t_aibj, t_clkd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Form the intermediate object X_clib = sum_kd t_clkd g_kdib
+!
+      call mem%alloc(X_clib, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  t_clkd,            & ! t_cl_kd
+                  (wf%n_o)*(wf%n_v), &
+                  g_kdib,            & ! g_kd_ib
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_clib,            &
+                  (wf%n_o)*(wf%n_v))
+!
+!     Write X_clib to file
+!
+      wf%jacobian_transpose_g2_intermediate_2 = sequential_file('jacobian_transpose_g2_intermediate_2')
+      call wf%jacobian_transpose_g2_intermediate_2%open_('write', 'rewind')
+!
+      call wf%jacobian_transpose_g2_intermediate_2%write_(X_clib, wf%n_v**2 * wf%n_o**2)
+!
+      call wf%jacobian_transpose_g2_intermediate_2%close_()
+!
+!     Cleanup
+!
+      call mem%dealloc(t_clkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+   end subroutine save_jacobian_transpose_g2_intermediates_ccsd
+!
+!
+   module subroutine jacobian_transpose_ccsd_g2_ccsd(wf, sigma_aibj, b_aibj)
+!!
+!!    Jacobian transpose CCSD G2
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
+!!
+!!    Calculates the G2 term,
+!!
+!!       sum_ckdl (b_alcj t_kl^cd g_kbid + b_ajcl t_kl^cd g_kdib)
+!!
+!!    and adds it to the transformed vector sigma_aibj.
+!!
+!!    Modified by Tor S. Haugland, Nov 2019
+!!
+!!    Reads term 1 and 2 intermediates from the files 'jacobian_transpose_g2_intermediate'
+!!    and 'jacobian_transpose_g2_intermediate_2'.
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: sigma_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
+!
+      real(dp), dimension(:,:,:,:), allocatable :: b_ajcl     ! b_alcj
+      real(dp), dimension(:,:,:,:), allocatable :: sigma_ajbi ! sigma_aibj contribution
+      real(dp), dimension(:,:,:,:), allocatable :: sigma_ajib ! sigma_aibj contribution
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_clbi ! An intermediate, term 1
+      real(dp), dimension(:,:,:,:), allocatable :: X_clib ! An intermediate, term 2
+!
+!     :: Term 1. sum_ckdl b_alcj t_kl^cd g_kbid ::
+!
+!     Read pre-generated intermediate X_clbi = sum_dk t_ckdl g_kbid
+!
+      call mem%alloc(X_clbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call wf%jacobian_transpose_g2_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_g2_intermediate%read_(X_clbi, wf%n_v**2 * wf%n_o**2)
+      call wf%jacobian_transpose_g2_intermediate%close_()
 !
 !     Reorder to b_ajcl = b_alcj
 !
@@ -2214,39 +2430,16 @@ contains
 !
 !     :: Term 2. sum_ckdl b_ajcl t_kl^cd g_kdib ::
 !
-!     Form t_clkd = t_kl^cd
+!     Read intermediate X_clib = sum_kd t_kl^cd g_kdib
 !
-      call mem%alloc(t_clkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call mem%alloc(X_clib, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call squareup_and_sort_1234_to_1423(wf%t2, t_clkd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Form the intermediate X_ajkd = sum_cl b_aj_cl t_cl_kd
-!
-      call mem%alloc(X_ajkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-      call dgemm('N','N',            &
-                  (wf%n_v)*(wf%n_o), &
-                  (wf%n_v)*(wf%n_o), &
-                  (wf%n_v)*(wf%n_o), &
-                  one,               &
-                  b_aibj,            & ! b_aj_cl
-                  (wf%n_v)*(wf%n_o), &
-                  t_clkd,            & ! t_cl_kd
-                  (wf%n_v)*(wf%n_o), &
-                  zero,              &
-                  X_ajkd,            &
-                  (wf%n_v)*(wf%n_o))
-!
-      call mem%dealloc(t_clkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
-!     Form g_kdib
-!
-      call mem%alloc(g_kdib, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call wf%get_ovov(g_kdib)
+      call wf%jacobian_transpose_g2_intermediate_2%open_('read', 'rewind')
+      call wf%jacobian_transpose_g2_intermediate_2%read_(X_clib, wf%n_v**2 * wf%n_o**2)
+      call wf%jacobian_transpose_g2_intermediate_2%close_()
 !
 !     Form and add sum_ckdl b_ajcl t_kl^cd g_kdib
-!                  = sum_kd X_aj_kd g_kd_ib
+!                  = sum_cl b_aj_cl X_cl_ib
 !
       call mem%alloc(sigma_ajib, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
@@ -2255,19 +2448,17 @@ contains
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
                   one,               &
-                  X_ajkd,            & ! X_aj_kd
+                  b_aibj,            & ! b_aj_cl
                   (wf%n_o)*(wf%n_v), &
-                  g_kdib,            & ! g_kd_ib
+                  X_clib,            & ! X_cl_ib
                   (wf%n_o)*(wf%n_v), &
                   zero,              &
                   sigma_ajib,        &
                   (wf%n_o)*(wf%n_v))
 !
-      call mem%dealloc(g_kdib, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call mem%dealloc(X_ajkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
       call add_1423_to_1234(one, sigma_ajib, sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+      call mem%dealloc(X_clib, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call mem%dealloc(sigma_ajib, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
    end subroutine jacobian_transpose_ccsd_g2_ccsd
@@ -2450,6 +2641,79 @@ contains
    end subroutine jacobian_transpose_ccsd_h2_ccsd
 !
 !
+   module subroutine save_jacobian_transpose_i2_intermediates_ccsd(wf, t_aibj, g_ovov)
+!!
+!!    Save Jacobian transpose i2 intermediates
+!!    Written by Tor S. Haugland, Eirik F. Kjønstad and 
+!!    Sarai D. Folkestad, Nov 2019
+!!
+!!    Construct intermediate
+!!
+!!       X_klij = sum_cd t_kl^cd g_icjd
+!!
+!!       (E. F. K. and S. D. F. 2017-2018)
+!!
+!!    and saves them to the file jacobian_transpose_i2_intermediate.
+!!
+!!       (T. S. H., Nov 2019)
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      real(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in) :: t_aibj
+      real(dp), dimension(wf%n_o,wf%n_v,wf%n_o,wf%n_v), intent(in) :: g_ovov
+!
+      real(dp), dimension(:,:,:,:), allocatable :: t_klcd ! t_kl^cd
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_cdij ! g_kalb
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_klij ! An intermediate, terms 1 & 2
+!
+!     Reorder g_icjd to g_cdij
+!
+      call mem%alloc(g_cdij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call sort_1234_to_2413(g_ovov, g_cdij, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+!     Form t_ckdl and sort to t_klcd
+!
+      call mem%alloc(t_klcd, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+      call sort_1234_to_2413(t_aibj, t_klcd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     X_kl_ij = sum_cd t_kl_cd g_cd_ij
+!
+      call mem%alloc(X_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+!
+      call dgemm('N','N',      &
+                  (wf%n_o)**2, &
+                  (wf%n_o)**2, &
+                  (wf%n_v)**2, &
+                  one,         &
+                  t_klcd,      & ! t_kl_cd
+                  (wf%n_o)**2, &
+                  g_cdij,      & ! g_cd_ij
+                  (wf%n_v)**2, &
+                  zero,        &
+                  X_klij,      & ! X_kl_ij
+                  (wf%n_o)**2)
+!
+!     Write X_klij to file
+!
+      wf%jacobian_transpose_i2_intermediate = sequential_file('jacobian_transpose_i2_intermediate')
+      call wf%jacobian_transpose_i2_intermediate%open_('write', 'rewind')
+!
+      call wf%jacobian_transpose_i2_intermediate%write_(X_klij, wf%n_o**4)
+!
+      call wf%jacobian_transpose_i2_intermediate%close_()
+!
+!     Cleanup
+!
+      call mem%dealloc(g_cdij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(t_klcd, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+      call mem%dealloc(X_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+!
+   end subroutine save_jacobian_transpose_i2_intermediates_ccsd
+!
+!
    module subroutine jacobian_transpose_ccsd_i2_ccsd(wf, sigma_abij, b_abij)
 !!
 !!    Jacobian transpose CCSD I2
@@ -2465,6 +2729,10 @@ contains
 !!
 !!       b_abij = b_aibj
 !!       sigma_abij = sigma_abij
+!!
+!!    Modified by Tor S. Haugland, Nov 2019
+!!
+!!    Reads term 2 intermediate from the file 'jacobian_transpose_i2_intermediate'.
 !!
       implicit none
 !
@@ -2507,6 +2775,9 @@ contains
                   X_klij,      &
                   (wf%n_o)**2)
 !
+      call mem%dealloc(t_klcd, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+!
+!
 !     Form g_kalb
 !
       call mem%alloc(g_kalb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -2516,7 +2787,6 @@ contains
 !     Reorder to g_abkl = g_kalb
 !
       call mem%alloc(g_abkl, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call zero_array(g_abkl, (wf%n_o*wf%n_v)**2)
 !
       call sort_1234_to_2413(g_kalb, g_abkl, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
@@ -2538,27 +2808,17 @@ contains
                   sigma_abij,  &
                   (wf%n_v)**2)
 !
+      call mem%dealloc(g_abkl, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
 !     :: Term 2. sum_ckdl b_akbl t_kl^cd g_icjd ::
 !
 !     Repurpose X_kl_ij to make sum_cd t_kl^cd g_icjd
 !                               = sum_cd t_kl_cd g_cd_ij
 !                               = sum_cd t_kl_cd g_ab_kl(cd,ij)
 !
-      call dgemm('N','N',      &
-                  (wf%n_o)**2, &
-                  (wf%n_o)**2, &
-                  (wf%n_v)**2, &
-                  one,         &
-                  t_klcd,      & ! t_kl_cd
-                  (wf%n_o)**2, &
-                  g_abkl,      & ! "g_cd_ij"
-                  (wf%n_v)**2, &
-                  zero,        &
-                  X_klij,      &
-                  (wf%n_o)**2)
-!
-      call mem%dealloc(g_abkl, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%dealloc(t_klcd, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+      call wf%jacobian_transpose_i2_intermediate%open_('read', 'rewind')
+      call wf%jacobian_transpose_i2_intermediate%read_(X_klij, wf%n_o**4)
+      call wf%jacobian_transpose_i2_intermediate%close_()
 !
 !     Add sum_ckdl b_akbl t_kl^cd g_icjd
 !         = sum_kl b_ab_kl X_kl_ij
@@ -2579,6 +2839,117 @@ contains
       call mem%dealloc(X_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
    end subroutine jacobian_transpose_ccsd_i2_ccsd
+!
+!
+   module subroutine save_jacobian_transpose_e2_oo_intermediate_ccsd(wf, t_ckdl, L_ckdj)
+!!
+!!    Save Jacobian transpose e2 oo intermediate
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
+!!
+!!    Constructs the intermediate 
+!!
+!!       X_jl = sum_kcd L_kcjd t_kl^cd
+!!
+!!    and saves it to the file 'jacobian_transpose_e2_intermediate'.
+!!
+!!    Modified by Sarai D. Folkestad, Nov 2019
+!!
+!!    Separated intermediate from jacobian_ccsd_e2_ccsd, it is now saved to file.
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: t_ckdl
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: L_ckdj ! L_kcjd
+!
+      real(dp), dimension(:,:), allocatable :: X_jl 
+!
+!     X_jl = sum_kcd L_kcjd t_kl^cd = sum_kcd L_j_ckd t_ckd_l
+!
+!
+      call mem%alloc(X_jl, wf%n_o, wf%n_o)
+!
+      call dgemm('T','N',               &
+                  wf%n_o,               &
+                  wf%n_o,               &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  one,                  &
+                  L_ckdj,               & ! L_ckd_j
+                  (wf%n_o)*(wf%n_v)**2, &
+                  t_ckdl,               & ! t_ckd_l
+                  (wf%n_o)*(wf%n_v)**2, &
+                  zero,                 &
+                  X_jl,                 &
+                  wf%n_o)
+!
+!     Write X_jl to file
+!
+      wf%jacobian_transpose_e2_oo_intermediate = sequential_file('jacobian_transpose_e2_oo_intermediate')
+      call wf%jacobian_transpose_e2_oo_intermediate%open_('write', 'rewind')
+!
+      call wf%jacobian_transpose_e2_oo_intermediate%write_(X_jl, wf%n_o**2)
+!
+      call wf%jacobian_transpose_e2_oo_intermediate%close_()
+!
+      call mem%dealloc(X_jl, wf%n_o, wf%n_o)
+!
+   end subroutine save_jacobian_transpose_e2_oo_intermediate_ccsd
+!
+!
+   module subroutine save_jacobian_transpose_e2_vv_intermediate_ccsd(wf, t_ckdl, L_bkdl)
+!!
+!!    Save Jacobian transpose e2 vv intermediate
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
+!!
+!!    Constructs the intermediate 
+!!
+!!       X_cd = sum_kdl t_kl^cd L_ldkb
+!!
+!!    and saves it to file 'jacobian_transpose_e2_intermediate_vv'.
+!!
+!!    Modified by Sarai D. Folkestad, Nov 2019
+!!
+!!    Separated intermediate from jacobian_ccsd_e2_ccsd, it is now saved to file.
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: t_ckdl
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: L_bkdl ! L_kbld
+!
+      real(dp), dimension(:,:), allocatable :: X_cb
+!
+!     X_cd  sum_kdl t_kl^cd L_ldkb
+!
+      call mem%alloc(X_cb, wf%n_v, wf%n_v)
+!
+      call dgemm('N','T',               &
+                  wf%n_v,               &
+                  wf%n_v,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  t_ckdl,               & ! t_c_kdl
+                  wf%n_v,               &
+                  L_bkdl,               & ! L_b_kdl
+                  (wf%n_v),             &
+                  zero,                 &
+                  X_cb,                 &
+                  wf%n_v)
+!
+!     Write X_cb to file
+!
+      wf%jacobian_transpose_e2_vv_intermediate = sequential_file('jacobian_transpose_e2_vv_intermediate')
+      call wf%jacobian_transpose_e2_vv_intermediate%open_('write', 'rewind')
+!
+      call wf%jacobian_transpose_e2_vv_intermediate%write_(X_cb, wf%n_v**2)
+!
+      call wf%jacobian_transpose_e2_vv_intermediate%close_()
+!
+      call mem%dealloc(X_cb, wf%n_v, wf%n_v)
+!
+   end subroutine save_jacobian_transpose_e2_vv_intermediate_ccsd
 !
 !
 end submodule jacobian_transpose_ccsd

@@ -43,6 +43,21 @@
    end subroutine add_molecular_mechanics_fock_term_ccs_complex
 !
 !
+
+   module subroutine add_pcm_fock_contribution_ccs_complex(wf, F_pq)
+!!
+!!    Add PCM Fock contribution 
+!!    Written by Tommaso Giovannini, 2019 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
+!
+   end subroutine add_pcm_fock_contribution_ccs_complex
+!
+!
    module subroutine add_frozen_core_fock_term_ccs_complex(wf, F_pq)
 !!
 !!    Add frozen core Fock contribution 

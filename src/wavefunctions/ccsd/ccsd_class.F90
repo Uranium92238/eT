@@ -42,6 +42,18 @@ module ccsd_class
       type(sequential_file) :: jacobian_h2_intermediate_voov_2
       type(sequential_file) :: jacobian_j2_intermediate_oooo
 !
+      type(sequential_file) :: jacobian_transpose_d1_intermediate
+      type(sequential_file) :: jacobian_transpose_e1_intermediate
+      type(sequential_file) :: jacobian_transpose_f1_intermediate
+      type(sequential_file) :: jacobian_transpose_g1_intermediate
+      type(sequential_file) :: jacobian_transpose_d2_intermediate
+      type(sequential_file) :: jacobian_transpose_e2_oo_intermediate
+      type(sequential_file) :: jacobian_transpose_e2_vv_intermediate
+      type(sequential_file) :: jacobian_transpose_f2_intermediate
+      type(sequential_file) :: jacobian_transpose_g2_intermediate
+      type(sequential_file) :: jacobian_transpose_g2_intermediate_2
+      type(sequential_file) :: jacobian_transpose_i2_intermediate
+!
    contains
 !
 !     Initialization/destruction procedures
@@ -62,6 +74,7 @@ module ccsd_class
 !
       procedure :: set_amplitudes                             => set_amplitudes_ccsd
       procedure :: set_amplitudes_complex                     => set_amplitudes_ccsd_complex
+!
       procedure :: get_amplitudes                             => get_amplitudes_ccsd
       procedure :: get_amplitudes_complex                     => get_amplitudes_ccsd_complex
 !
@@ -161,6 +174,36 @@ module ccsd_class
 !
       procedure :: jacobian_transpose_ccsd_i2                 => jacobian_transpose_ccsd_i2_ccsd
       procedure :: jacobian_transpose_ccsd_i2_complex         => jacobian_transpose_ccsd_i2_ccsd_complex
+!
+      procedure :: save_jacobian_transpose_d1_intermediates           => save_jacobian_transpose_d1_intermediates_ccsd
+      procedure :: save_jacobian_transpose_d1_intermediates_complex   => save_jacobian_transpose_d1_intermediates_ccsd_complex
+!
+      procedure :: save_jacobian_transpose_e1_intermediates           => save_jacobian_transpose_e1_intermediates_ccsd
+      procedure :: save_jacobian_transpose_e1_intermediates_complex   => save_jacobian_transpose_e1_intermediates_ccsd_complex
+!
+      procedure :: save_jacobian_transpose_f1_intermediates           => save_jacobian_transpose_f1_intermediates_ccsd
+      procedure :: save_jacobian_transpose_f1_intermediates_complex   => save_jacobian_transpose_f1_intermediates_ccsd_complex
+!
+      procedure :: save_jacobian_transpose_g1_intermediates           => save_jacobian_transpose_g1_intermediates_ccsd
+      procedure :: save_jacobian_transpose_g1_intermediates_complex   => save_jacobian_transpose_g1_intermediates_ccsd_complex
+!
+      procedure :: save_jacobian_transpose_d2_intermediates           => save_jacobian_transpose_d2_intermediates_ccsd
+      procedure :: save_jacobian_transpose_d2_intermediates_complex   => save_jacobian_transpose_d2_intermediates_ccsd_complex
+!
+      procedure :: save_jacobian_transpose_e2_oo_intermediate         => save_jacobian_transpose_e2_oo_intermediate_ccsd
+      procedure :: save_jacobian_transpose_e2_oo_intermediate_complex => save_jacobian_transpose_e2_oo_intermediate_ccsd_complex
+!
+      procedure :: save_jacobian_transpose_e2_vv_intermediate         => save_jacobian_transpose_e2_vv_intermediate_ccsd
+      procedure :: save_jacobian_transpose_e2_vv_intermediate_complex => save_jacobian_transpose_e2_vv_intermediate_ccsd_complex
+!
+      procedure :: save_jacobian_transpose_f2_intermediates           => save_jacobian_transpose_f2_intermediates_ccsd
+      procedure :: save_jacobian_transpose_f2_intermediates_complex   => save_jacobian_transpose_f2_intermediates_ccsd_complex
+!
+      procedure :: save_jacobian_transpose_g2_intermediates           => save_jacobian_transpose_g2_intermediates_ccsd
+      procedure :: save_jacobian_transpose_g2_intermediates_complex   => save_jacobian_transpose_g2_intermediates_ccsd_complex
+!
+      procedure :: save_jacobian_transpose_i2_intermediates           => save_jacobian_transpose_i2_intermediates_ccsd
+      procedure :: save_jacobian_transpose_i2_intermediates_complex   => save_jacobian_transpose_i2_intermediates_ccsd_complex
 !
 !     Procedures related to multiplier equation
 !
