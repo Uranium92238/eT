@@ -56,6 +56,116 @@
    end subroutine jacobian_transpose_transformation_ccsd_complex
 !
 !
+   module subroutine save_jacobian_transpose_d1_intermediates_ccsd_complex(wf, t_aibj)
+!!
+!!    Save Jacobian transpose D1 intermediates
+!!    Written by Tor S. Haugland, Oct 2019
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_aibj
+!
+   end subroutine save_jacobian_transpose_d1_intermediates_ccsd_complex
+!
+!
+   module subroutine save_jacobian_transpose_e1_intermediates_ccsd_complex(wf, t_aibj, L_ooov)
+!!
+!!    Save Jacobian transpose E1 intermediates
+!!    Written by Tor S. Haugland, Oct 2019
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_aibj
+      complex(dp), dimension(wf%n_o, wf%n_o, wf%n_o, wf%n_v), intent(in) :: L_ooov
+!
+   end subroutine save_jacobian_transpose_e1_intermediates_ccsd_complex
+!
+!
+   module subroutine save_jacobian_transpose_f1_intermediates_ccsd_complex(wf, t_aibj, g_ooov)
+!!
+!!    Save Jacobian transpose F1 intermediates
+!!    Written by Andreas Skeidsvoll, Oct 2019
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in) :: t_aibj
+      complex(dp), dimension(wf%n_o,wf%n_o,wf%n_o,wf%n_v), intent(in) :: g_ooov
+!
+   end subroutine save_jacobian_transpose_f1_intermediates_ccsd_complex
+!
+!
+   module subroutine save_jacobian_transpose_g1_intermediates_ccsd_complex(wf, t_aibj)
+!!
+!!    Save Jacobian transpose G1 intermediates
+!!    Written by Tor S. Haugland, Oct 2019
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in) :: t_aibj
+!
+   end subroutine save_jacobian_transpose_g1_intermediates_ccsd_complex
+!
+!
+   module subroutine save_jacobian_transpose_d2_intermediates_ccsd_complex(wf, u_aibj, L_ovov)
+!!
+!!    Save Jacobian transpose D2 intermediates
+!!    Written by Andreas Skeidsvoll, Nov 2019
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_aibj
+      complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: L_ovov ! L_jbld
+!
+   end subroutine save_jacobian_transpose_d2_intermediates_ccsd_complex
+!
+!
+   module subroutine save_jacobian_transpose_f2_intermediates_ccsd_complex(wf, t_aibj, L_ovov)
+!!
+!!    Save Jacobian transpose f2 intermediates
+!!    Written by Tor S. Haugland, Nov 2019
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o) :: t_aibj
+      complex(dp), dimension(wf%n_o,wf%n_v,wf%n_o,wf%n_v) :: L_ovov
+!
+   end subroutine save_jacobian_transpose_f2_intermediates_ccsd_complex
+!
+!
+   module subroutine save_jacobian_transpose_g2_intermediates_ccsd_complex(wf, t_aibj, g_ovov)
+!!
+!!    Save Jacobian transpose G2 intermediates
+!!    Written by Tor S. Haugland, Nov 2019
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in) :: t_aibj
+      complex(dp), dimension(wf%n_o,wf%n_v,wf%n_o,wf%n_v), intent(in) :: g_ovov
+!
+   end subroutine save_jacobian_transpose_g2_intermediates_ccsd_complex
+!
+!
+   module subroutine save_jacobian_transpose_i2_intermediates_ccsd_complex(wf, t_aibj, g_ovov)
+!!
+!!    Save Jacobian transpose i2 intermediates
+!!    Written by Tor S. Haugland, Nov 2019
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in) :: t_aibj
+      complex(dp), dimension(wf%n_o,wf%n_v,wf%n_o,wf%n_v), intent(in) :: g_ovov
+!
+   end subroutine save_jacobian_transpose_i2_intermediates_ccsd_complex
+!
+!
    module subroutine jacobian_transpose_ccsd_d1_ccsd_complex(wf, sigma_ai, b_aibj)
 !!
 !!    Jacobian transpose CCSD D1
@@ -321,3 +431,35 @@
       complex(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o) :: b_abij
 !
    end subroutine jacobian_transpose_ccsd_i2_ccsd_complex
+!
+!
+   module subroutine save_jacobian_transpose_e2_oo_intermediate_ccsd_complex(wf, t_ckdl, L_ckdj)
+!!
+!!    Save Jacobian transpose e2 oo intermediate
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018    
+!!
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: t_ckdl
+      complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: L_ckdj ! L_kcjd
+!
+   end subroutine save_jacobian_transpose_e2_oo_intermediate_ccsd_complex
+!
+!
+   module subroutine save_jacobian_transpose_e2_vv_intermediate_ccsd_complex(wf, t_ckdl, L_bkdl)
+!!
+!!    Save Jacobian transpose e2 vv intermediate
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018    
+!!
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: t_ckdl
+      complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: L_bkdl ! L_kbld
+!
+   end subroutine save_jacobian_transpose_e2_vv_intermediate_ccsd_complex

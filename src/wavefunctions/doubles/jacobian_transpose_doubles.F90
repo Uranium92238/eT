@@ -41,7 +41,7 @@ contains
    module subroutine save_jacobian_transpose_a1_intermediates_doubles(wf, u_bjck)
 !!
 !!    Save jacobian transpose A1 intermediates
-!!    Written by Tor S. Haugland, Oct 2019
+!!    Written by by E. F. Kjønstad, S. D. Folkestad and A. C. Paul
 !!
 !!    Calculates the intermediates,
 !!
@@ -53,12 +53,13 @@ contains
 !!       jacobian_transpose_a1_intermdiate_oo
 !!       jacobian_transpose_a1_intermdiate_vv
 !!
-!!    u_bjck = u^bc_jk =  2 t^bc_jk - t^bc_kj = -(2 g_bjck - g_bkcj)/eps^bc_jk
+!!    u_bjck = u^bc_jk =  2 t^bc_jk - t^bc_kj 
+!!           = -(2 g_bjck - g_bkcj)/eps^bc_jk
+!!    
+!!    Adapted by Tor S. Haugland, Oct 2019
 !!
-!!    Based on jacobian_transpose_doubles_a1_doubles
-!!    by E. F. Kjønstad, S. D. Folkestad and A. Paul
-!!
-!!    Copied construction of intermediates.
+!!    Isolated the intermediates from the
+!!    jacobian_transpose_doubles_a1_doubles and wrote them to file. 
 !!
       class(doubles), intent(inout) :: wf
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_bjck
