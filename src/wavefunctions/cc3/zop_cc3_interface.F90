@@ -41,12 +41,14 @@
 !!
 !!    Construct one-electron density
 !!    Written by Alexander C. Paul
+!!    based on construct_gs_density_ccsd by Sarai D. Folkestad
 !!
 !!    Constructs the one-electron density matrix in the T1 basis
 !!
-!!    D_pq = < Λ | E_pq | CC >
+!!    D_pq = < Lambda| E_pq |CC >
 !!
-!!    based on construct_gs_density_ccsd by Sarai D. Folkestad
+!!    Contributions to the density are split up as follows:
+!!    D_pq = D_pq(ref-ref) + sum_mu tbar_mu D_pq(mu-ref)
 !!
       implicit none
 !
@@ -82,25 +84,18 @@
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: density_oo
-!
       real(dp), intent(in) :: omega
-!
-!     Unpacked Multipliers
+      logical, intent(in)  :: cvs
       real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: tbar_ia
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_v, wf%n_v), intent(in) :: tbar_ijab
-!
-!     Unpacked t2-amplitudes
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_v, wf%n_v), intent(in) :: t_ijab
-!
-      logical, intent(in) :: cvs
 !
    end subroutine density_cc3_mu_ref_abc_cc3
 !
 !
    module subroutine density_cc3_mu_ref_oo_cc3(wf, a, b, c, density_oo, t_ijk, &
-                                               u_ijk, tbar_ijk, v_ijk)
+                                                   u_ijk, tbar_ijk, v_ijk)
 !!
 !!    One electron density excited-determinant/reference oo-term 
 !!    Written by Alexander C. Paul, August 2019
@@ -120,11 +115,8 @@
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: a, b, c
-!
       real(dp), dimension(wf%n_o, wf%n_o), intent(inout)  :: density_oo
-!
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(in)  :: t_ijk
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(out) :: u_ijk
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(in)  :: tbar_ijk
@@ -165,22 +157,13 @@
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), intent(in) :: omega
-!
       logical, intent(in)  :: cvs
-!
-!     If present and true the intermediate Y_clik will be stored on file
       logical, intent(in), optional :: keep_Y
-!
       real(dp), dimension(wf%n_o, wf%n_v), intent(inout) :: density_ov
       real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: density_vv
-!
-!     Unpacked Multipliers
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: tbar_abij
-!
-!     Unpacked t2-amplitudes
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: t_abij
 !
    end subroutine density_cc3_mu_ref_ijk_cc3
@@ -207,11 +190,8 @@
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) ::  i, j, k
-!
       real(dp), dimension(wf%n_v, wf%n_v), intent(inout)  :: density_vv
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)  :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out) :: u_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)  :: tbar_abc
@@ -237,15 +217,10 @@
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: i, j, k
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: tbar_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abij
-!
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(out)  :: Y_clik
 !
    end subroutine construct_y_intermediate_vo3_cc3
-!

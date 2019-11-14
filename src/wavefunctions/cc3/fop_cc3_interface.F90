@@ -17,7 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-!
    module subroutine construct_left_transition_density_cc3(wf, state)
 !!
 !!    Construct left one-electron transition density
@@ -33,9 +32,8 @@
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: state
-!      
+!
    end subroutine construct_left_transition_density_cc3
 !
 !
@@ -54,7 +52,6 @@
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: state
 !
    end subroutine construct_right_transition_density_cc3
@@ -82,10 +79,8 @@
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), dimension(wf%n_o, wf%n_v), intent(inout) :: density_ov
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: R_ai
 !
    end subroutine density_cc3_mu_nu_ov_cc3
 !
@@ -124,13 +119,11 @@
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: density_oo
       real(dp), dimension(wf%n_o, wf%n_v), intent(inout) :: density_ov
       real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: density_vv
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: R_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: R_aibj
 !
    end subroutine density_cc3_mu_nu_oo_ov_vv_cc3
 !
@@ -173,20 +166,13 @@
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), intent(in) :: omega
-!
       real(dp), intent(inout) :: tbar_R_overlap
-!
       real(dp), dimension(wf%n_o, wf%n_v), intent(inout) :: density_ov
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: density_vo
       real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: density_vv
-!
-!     Unpacked Multipliers
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: tbar_abij
-!
-!     Excitation vector
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: R_abij
 !
@@ -216,15 +202,11 @@
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: i, j, k
-!
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: tbar_abc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: v_abc
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: density_vo
-!
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: R_abij
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)         :: tbar_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)        :: v_abc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)              :: density_vo
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: R_abij
 !
    end subroutine density_cc3_mu_nu_vo_cc3
 !
@@ -244,18 +226,14 @@
 !!
 !!    All permutations for i,j,k have to be considered 
 !!    due to the restrictions in the i,j,k loops
-!!  
+!!      
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: i, j, k
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: tbar_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: v_abc
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(out)  :: Z_bcjk
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)   :: R_ai
 !
    end subroutine construct_Z_intermediate_cc3
@@ -281,7 +259,6 @@
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), dimension(wf%n_o, wf%n_v), intent(inout) :: density_ov
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: density_vo
 !
@@ -318,16 +295,10 @@
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), intent(in) :: omega
-!
       real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: density_oo
-!
-!     Unpacked Multipliers
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ia
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: tbar_ijab
-!
-!     Unpacked excitation vector
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: R_ijab
 !
    end subroutine density_cc3_mu_nu_abc_cc3
@@ -358,8 +329,6 @@
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), dimension(wf%n_o, wf%n_v), intent(inout) :: density_ov
 !
    end subroutine density_cc3_mu_nu_ov_Z_term_cc3
-!

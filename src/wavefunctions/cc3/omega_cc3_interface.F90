@@ -19,14 +19,16 @@
 !
    module subroutine construct_omega_cc3(wf, omega)
 !!
-!!   Construct omega (CC3)
-!!   Rolf H. Myhre 2018
+!!    Construct omega (CC3)
+!!    Written by Rolf H. Myhre, January 2019
 !!
-     implicit none
+!!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
+!!    for the current amplitudes of the object wfn
+!!
+      implicit none
 !
-     class(cc3), intent(inout) :: wf
-!
-     real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
+      class(cc3), intent(inout) :: wf
+      real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
    end subroutine construct_omega_cc3
 !
@@ -34,12 +36,17 @@
    module subroutine omega_cc3_a_cc3(wf, omega1, omega2)
 !!
 !!    CC3 Omega terms
-!!    Rolf H. Myhre 2018
+!!    Written by Rolf H. Myhre, January 2019
+!!
+!!    t_mu3 = -<mu3|{U,T2}|HF>/epsilon_mu3
+!!
+!!    omega_mu1 += <mu1|[H,T3]|HF>
+!!
+!!    omega_mu2 += <mu2|[H,T3]|HF>
 !!
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega1
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: omega2
 !
@@ -49,7 +56,13 @@
    module subroutine omega_cc3_integrals_cc3(wf)
 !!
 !!    Construct integrals need in CC3 Omega and store on disk
-!!    Rolf H. Myhre, January 2019
+!!    (bd|ck) ordered as dbc,k
+!!    (db|kc) ordered as bcd,k
+!!    (lj|ck) ordered as lc,jk
+!!    (jl|kc) ordered as cl,jk
+!!    (jb|kc) stored as L_jbkc = 2g_jbkc - g_jckb ordered as bc,jk
+!!
+!!    Written by Rolf H. Myhre, January 2019
 !!
       implicit none
 !
@@ -63,52 +76,49 @@
                                           g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck, &
                                           keep_t)
 !!
-!!    Read the ljck, jlkc and jbkc integrals needed in the current batches
+!!    Calculate the the contributions to the t_3 amplitudes
+!!    for occupied indices i,j,k
 !!
-!!    Rolf H. Myhre, January 2019
+!!     Contributions to W
+!!     W^abc_ijk = P^abc_ijk(\sum_d t^ad_ij(bd|ck) - \sum_l t^ab_il(lj|ck))
+!!
+!!    Written by Rolf H. Myhre, January 2019
 !!
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: i, j, k
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abij
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck
-!
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljci
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkci
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkcj
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_licj
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lick
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck
-!
-      logical, optional, intent(in) :: keep_t
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljci
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lkci
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lkcj
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_licj
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lick
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljck
+      logical, optional, intent(in) :: keep_t !If present and true, t_abc is not overwritten by first dgemm
 !
    end subroutine omega_cc3_W_calc_cc3
 !
 !
    module subroutine omega_cc3_eps_cc3(wf, i, j, k, t_abc, omega)
 !!
-!!    Divide W^abc_ijk with -epsilon^abc_ijk to obtain T^abc_ijk
+!!    Divide W^abc_ijk by -epsilon^abc_ijk to obtain T^abc_ijk
 !!    Optional argument omega for jacobian transformations
 !!
-!!    Rolf H. Myhre, January 2019
+!!    t^abc_ijk = -W^abc_ijk/epsilon^abc_ijk
+!!
+!!    Written by Rolf H. Myhre, January 2019
 !!
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: i, j, k
-!
       real(dp), dimension(wf%n_v,wf%n_v,wf%n_v), intent(inout) :: t_abc
-!
       real(dp), optional :: omega
 !
    end subroutine omega_cc3_eps_cc3
@@ -121,10 +131,10 @@
 !!
 !!    omega_cc3_a_n6
 !!
-!!    Written by Rolf H. Myhre, January 2019
-!!
 !!    Calculate the triples contribution to omega1 and
 !!    the Fock contribution to omega2 scaling as n^6
+!!
+!!    Written by Rolf H. Myhre, January 2019
 !!
 !!    omega^a_i += sum_bcjk (t^abc_ijk - t^cba_ijk)*L_jbkc
 !!    
@@ -133,17 +143,12 @@
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: i, j, k
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                   :: omega1
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: omega2
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_ov_ck
-!
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbic
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbic
       real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbjc
@@ -171,26 +176,19 @@
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: i, j, k
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: v_abc
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: omega2
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbic
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbjc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbkc
-!
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlic
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_klic
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_kljc
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_iljc
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_ilkc
-      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlkc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_jlic
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_klic
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_kljc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_iljc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_ilkc
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: g_jlkc
 !
    end subroutine omega_cc3_a_n7_cc3
-!
-!

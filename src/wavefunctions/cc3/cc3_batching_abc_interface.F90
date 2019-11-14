@@ -19,7 +19,7 @@
 !
    module subroutine prepare_cc3_integrals_t3_abc_batch_cc3(wf)
 !!
-!!    Prepare integral files for t3 amplitudes in batches of a,b,c
+!!    Prepare integral files t3 amplitudes in batches of a,b,c
 !!    Written by Alexander C. Paul, July 2019
 !!
 !!    (bd|ck) ordered as dk,bc
@@ -36,8 +36,8 @@
 !
    module subroutine prepare_cc3_integrals_R3_abc_batch_cc3(wf, R_ai)
 !!
-!!    Prepare integral files for R3 amplitudes in batches of a,b,c
-!!    Written by Alexander C. Paul, July 2019
+!!    Prepare integral files R3 amplitudes in batches of a,b,c
+!!    Written by Alexander C. Paul, July 
 !!
 !!    g'_bdck = (b'd|ck) + (bd|c'k) + (bd|ck')   ordered as dk,bc
 !!    g'_ljck = (lj'|ck) + (lj|ck') + (lj|c'k)   ordered as ljk,c
@@ -48,11 +48,9 @@
 !!    Based on construct_c1_integrals_cc3 written by Rolf H. Myhre and A. C. Paul
 !!    Based on construct_c1_integrals_cc3 written by Rolf H. Myhre and A. C. Paul
 !!
-!
       implicit none
 !
-      class(cc3) :: wf
-!
+      class(cc3) :: wf 
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
 !
    end subroutine prepare_cc3_integrals_R3_abc_batch_cc3
@@ -83,7 +81,7 @@
                                                    g_adbk, g_adck, g_bdck, &
                                                    keep_t)
 !!
-!!    Omega CC3 intermediate W_ijk in batches of a,b,c
+!!    Omega CC3 intermediate W_ijk for fixed a,b,c
 !!    Written by Rolf H. Myhre and Alexander C. Paul July 2019
 !!
 !!    Contributions to W
@@ -94,25 +92,19 @@
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: a, b, c
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: t_ijk
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_ijk
-!
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_v, wf%n_v), intent(in)   :: t_ijab
-!
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(in)           :: g_ljak
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(in)           :: g_ljbk
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(in)           :: g_ljck
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: g_bdak
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: g_cdak
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: g_cdbk
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: g_adbk
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: g_adck
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: g_bdck
-!
       logical, optional, intent(in) :: keep_t ! If present and true, t_abc is not overwritten by first dgemm
 !
    end subroutine omega_cc3_W_calc_abc_batch_cc3
@@ -133,11 +125,8 @@
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: a, b, c
-!
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(inout) :: t_ijk
-!
       real(dp), optional :: omega
 !
    end subroutine omega_cc3_eps_abc_batch_cc3
@@ -154,11 +143,11 @@
 !!    Written by Alexander C. Paul, July 2019
 !!
 !!    C^abc_ijk 
-!!    = (ω - ε^abc_ijk)^-1 P^abc_ijk (C_ai*L_jbkc - C_ak*L_jbic + Cabij*F_kc - C_abik*F_jc)
+!!    = (ω - ε^abc_ijk)^-1 P^abc_ijk (C_ai*L_jbkc - C_ak*L_jbic + C_abij*F_kc - L_abik*F_jc)
 !!    + sum_l (C_ablk g_iljc - C_abil L_jlkc) - sum_d (C_adjk g_ibdc - C_adij L_dbkc)
 !!
 !!    Contibutions from outer products:
-!!    P^abc_ijk (C_ai*L_jbkc - C_ak*L_jbic + Cabij*F_kc - C_abik*F_jc)
+!!    P^abc_ijk (C_ai*L_jbkc - C_ak*L_jbic + C_abij*F_kc - C_abik*F_jc)
 !!
 !!    Contibutions from matrix multiplication:
 !!      sum_l P^abc_ijk (C_ablk g_iljc + C_abil g_jckl - 2 C_abil g_jlkc) 
@@ -169,35 +158,25 @@
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: a, b, c
-!
       real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: c_ia
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_v, wf%n_v), intent(in) :: c_ijab
-!
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(out) :: c_ijk
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(out) :: u_ijk
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(out) :: v_ijk
-!
       real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: F_kc
-!
-!     L_ibjc ordered ij,bc
       real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: L_jakb
       real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: L_jakc
       real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: L_jbkc
-!
-!     g_jlkc ordered jkl,c
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(in) :: g_jlka
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(in) :: g_jlkb
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(in) :: g_jlkc
-!
-!     g_dbkc ordered kd,bc
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_dbka
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_dcka
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_dckb
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_dakb
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_dakc
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: g_dbkc
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_dbka
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_dcka
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_dckb
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_dakb
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_dakc
+      real(dp), dimension(wf%n_o, wf%n_v), intent(in) :: g_dbkc
 !
    end subroutine jacobian_transpose_cc3_c3_calc_abc_batch_cc3
 !
@@ -207,11 +186,12 @@
 !!    Get triples cvs projector for fixed a,b,c
 !!    Written by Alexander C. Paul and Rolf H. Myhre, September 2019
 !!
+!!    Set up projector for cvs for the triples amplitudes 
+!!    if we batch over the virtual indices
+!!
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), dimension(wf%n_o, wf%n_o, wf%n_o), intent(out) :: projector_ijk
 !
    end subroutine get_triples_cvs_projector_abc_batch_cc3
-   !

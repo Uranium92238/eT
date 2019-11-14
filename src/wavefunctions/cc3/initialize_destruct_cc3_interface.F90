@@ -19,7 +19,7 @@
 !
    module subroutine initialize_gs_density_cc3(wf)
 !!
-!!    Initialize GS density and CC3 corrections to the GS-density
+!!    Initialize density and CC3 corrections to the GS-density
 !!    Written by Sarai D. Folkestad, Apr 2019
 !!
       implicit none
@@ -31,7 +31,7 @@
 !
    module subroutine destruct_gs_density_cc3(wf)
 !!
-!!    Destruct GS density amd CC3 correctoins to the GS-density
+!!    Destruct density
 !!    Written by Sarai D. Folkestad, Apr 2019
 !!
       implicit none
