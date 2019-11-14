@@ -104,7 +104,7 @@ contains
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
 !
-      call wf%gs_one_el_density_doubles_ov(wf%left_transition_density, L_ai, t_aibj)
+      call wf%density_doubles_mu_ref_ov(wf%left_transition_density, L_ai, t_aibj)
 !
 !     Allocate and unpack doubles part of the excitation vector
 !
@@ -114,8 +114,8 @@ contains
 !
       call mem%dealloc(L_k, wf%n_es_amplitudes)
 !
-      call wf%gs_one_el_density_doubles_oo(wf%left_transition_density, L_aibj, t_aibj)
-      call wf%gs_one_el_density_doubles_vv(wf%left_transition_density, L_aibj, t_aibj)
+      call wf%density_doubles_mu_ref_oo(wf%left_transition_density, L_aibj, t_aibj)
+      call wf%density_doubles_mu_ref_vv(wf%left_transition_density, L_aibj, t_aibj)
 !
       call ccsd_timer%turn_off()
 !
@@ -288,8 +288,8 @@ contains
       call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2bar, tbar_aibj, wf%n_v*wf%n_o)
 !
-      call wf%right_transition_density_doubles_ov(wf%right_transition_density, tbar_aibj, R_ai)
-      call wf%right_transition_density_doubles_vo(wf%right_transition_density, tbar_aibj, R_ai)
+      call wf%density_doubles_mu_nu_ov(wf%right_transition_density, tbar_aibj, R_ai)
+      call wf%density_doubles_mu_nu_vo(wf%right_transition_density, tbar_aibj, R_ai)
 !
 !     Allocate and unpack doubles part of the excitation vector
 !
@@ -310,12 +310,12 @@ contains
                                                    1)
 !
 !
-      call wf%gs_one_el_density_doubles_ov(wf%right_transition_density, &
+      call wf%density_doubles_mu_ref_ov(wf%right_transition_density, &
                                            wf%t1bar, R_aibj)
 !
-      call wf%gs_one_el_density_doubles_oo(wf%right_transition_density, &
+      call wf%density_doubles_mu_ref_oo(wf%right_transition_density, &
                                            tbar_aibj, R_aibj)
-      call wf%gs_one_el_density_doubles_vv(wf%right_transition_density, &
+      call wf%density_doubles_mu_ref_vv(wf%right_transition_density, &
                                            tbar_aibj, R_aibj)
 !
       call ccsd_timer%turn_off()

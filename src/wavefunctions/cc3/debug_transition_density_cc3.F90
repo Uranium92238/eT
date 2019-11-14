@@ -85,7 +85,7 @@ contains
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
 !
-      call wf%gs_one_el_density_doubles_ov(l_tdm, L_ai, t_aibj)
+      call wf%density_doubles_mu_ref_ov(l_tdm, L_ai, t_aibj)
 !
 !     Allocate and unpack doubles part of the excitation vector
 !
@@ -95,8 +95,8 @@ contains
 !
       call mem%dealloc(L_k, wf%n_es_amplitudes)
 !
-      call wf%gs_one_el_density_doubles_oo(l_tdm, L_aibj, t_aibj)
-      call wf%gs_one_el_density_doubles_vv(l_tdm, L_aibj, t_aibj)
+      call wf%density_doubles_mu_ref_oo(l_tdm, L_aibj, t_aibj)
+      call wf%density_doubles_mu_ref_vv(l_tdm, L_aibj, t_aibj)
 !
       call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -233,8 +233,8 @@ contains
       call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2bar, tbar_aibj, wf%n_v*wf%n_o)
 !
-      call wf%right_transition_density_doubles_ov(r_TDM, tbar_aibj, R_ai)
-      call wf%right_transition_density_doubles_vo(r_TDM, tbar_aibj, R_ai)
+      call wf%density_doubles_mu_nu_ov(r_TDM, tbar_aibj, R_ai)
+      call wf%density_doubles_mu_nu_vo(r_TDM, tbar_aibj, R_ai)
 !
 !     Allocate and unpack doubles part of the excitation vector
 !
@@ -264,10 +264,10 @@ contains
                                                    1)
 !
 !
-      call wf%gs_one_el_density_doubles_ov(r_TDM, wf%t1bar, R_aibj)
+      call wf%density_doubles_mu_ref_ov(r_TDM, wf%t1bar, R_aibj)
 !
-      call wf%gs_one_el_density_doubles_oo(r_TDM, tbar_aibj, R_aibj)
-      call wf%gs_one_el_density_doubles_vv(r_TDM, tbar_aibj, R_aibj)
+      call wf%density_doubles_mu_ref_oo(r_TDM, tbar_aibj, R_aibj)
+      call wf%density_doubles_mu_ref_vv(r_TDM, tbar_aibj, R_aibj)
 !
 !     :: CC3 contributions ::
 !     -----------------------

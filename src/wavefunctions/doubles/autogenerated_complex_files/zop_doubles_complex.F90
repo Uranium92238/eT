@@ -20,11 +20,53 @@
 submodule (doubles_class) zop_doubles_complex
 !
 !!
-!!    Zeroth order properties submodule 
+!!    Complex zeroth order properties submodule 
 !!
 !!    Contains routines related to the mean values, i.e. 
 !!    the construction of density matrices as well as expectation 
 !!    value calculation.
+!!
+!!    The ground state density is constructed as follows:
+!!
+!!          D_pq = < Lambda| E_pq |CC >
+!!    where: 
+!!          < Lambda| = < HF| + sum_mu tbar_mu < mu| exp(-T)
+!!
+!!
+!!    In general a CC density matrix can be written as:
+!!
+!!          D_pq = < X| e^(-T) E_pq e^T |Y >
+!!
+!!    where X and Y are left and right vectors with contributions from
+!!    a reference determinant and excited determinants (< mu|, |nu >):
+!!
+!!          D_pq =             X_ref < HF| e^(-T) E_pq e^T |HF >  Y_ref
+!!                 + sum_mu    X_mu  < mu| e^(-T) E_pq e^T |HF >  Y_ref
+!!                 + sum_mu    X_ref < HF| e^(-T) E_pq e^T |mu >  Y_mu
+!!                 + sum_mu,nu X_mu  < mu| e^(-T) E_pq e^T |nu >  Y_nu
+!!
+!!    Depending on the type of density matrix (Ground state, transition , 
+!!    excited state, interstate transition) different states and thus different
+!!    amplitudes X_ref, X_mu, Y_ref and Y_mu will contribute.
+!!
+!!    In EOM theory the states can be written as the following vectors:
+!!
+!!          |CC >     = R_0 = (1, 0)
+!!          |Lambda > = L_0 = (1, tbar_mu)
+!!          |R_k >    = R_k = (-sum_mu(tbar_mu*R_mu), R_mu)
+!!          |L_k >    = L_k = (0, L_mu)
+!!
+!!    The routine names derive from the contribution of the vectors:
+!!
+!!       ref_ref: first component of the vector for the left and right state
+!!
+!!       mu_ref:  second component of the vector for the left and 
+!!                first component of the vector for the right state
+!!
+!!       ref_mu:  first component of the vector for the left and 
+!!                second component of the vector for the right state
+!!
+!!       mu_nu:   second component of the vector for the left and right state
 !!
 !
    implicit none 
@@ -33,16 +75,18 @@ submodule (doubles_class) zop_doubles_complex
 contains
 !
 !
-
    module subroutine construct_gs_density_doubles_complex(wf)
 !!
-!!    Construct one_complex-electron density
+!!    Construct complex one-electron density
 !!    Written by Sarai Dery Folkestad, 2019
 !!
 !!    Constructs the one_complex-electron density 
 !!    matrix in the T1 basis
 !!
-!!    D_pq = < Λ | E_pq | CC >
+!!    D_pq = < Lambda| E_pq |CC >
+!!
+!!    Contributions to the density are split up as follows:
+!!       D_pq = D_pq(ref-ref) + sum_mu tbar_mu D_pq(mu-ref)
 !!
       implicit none
 !
@@ -59,13 +103,13 @@ contains
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2_complex, t_aibj, (wf%n_v)*(wf%n_o))
 !
-      call wf%gs_one_el_density_doubles_ov_complex(wf%density_complex, wf%t1bar_complex, t_aibj)
+      call wf%density_doubles_mu_ref_ov_complex(wf%density_complex, wf%t1bar_complex, t_aibj)
 !
       call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2bar_complex, tbar_aibj, (wf%n_v)*(wf%n_o))
 !
-      call wf%gs_one_el_density_doubles_oo_complex(wf%density_complex, tbar_aibj, t_aibj)
-      call wf%gs_one_el_density_doubles_vv_complex(wf%density_complex, tbar_aibj, t_aibj)
+      call wf%density_doubles_mu_ref_oo_complex(wf%density_complex, tbar_aibj, t_aibj)
+      call wf%density_doubles_mu_ref_vv_complex(wf%density_complex, tbar_aibj, t_aibj)
 !
       call mem%dealloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -73,12 +117,19 @@ contains
    end subroutine construct_gs_density_doubles_complex
 !
 !
-   module subroutine gs_one_el_density_doubles_oo_doubles_complex(wf, density, tbar_akbj, t_akbi)
+   module subroutine density_doubles_mu_ref_oo_doubles_complex(wf, density, tbar_akbj, t_akbi)
 !!
-!!    One electron density oo
+!!    One electron density excited-determinant/reference oo-term
 !!    Written by Sarai D. Folkestad, 2019
 !!
-!!    D_ij -= sum_abk t_akb,i tbar_akb,j 
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu X_mu * < mu| e^(-T) E_pq e^T |HF >
+!!
+!!    where X_mu is a general amplitude (tbar or L)
+!!
+!!    explicit term in this routine:
+!!          D_ij -= sum_abk t_akb,i tbar_akb,j 
 !!
       implicit none
 !
@@ -102,15 +153,21 @@ contains
                   density,                &
                   wf%n_mo)
 !
-   end subroutine gs_one_el_density_doubles_oo_doubles_complex
+   end subroutine density_doubles_mu_ref_oo_doubles_complex
 !
 !
-   module subroutine gs_one_el_density_doubles_vv_doubles_complex(wf, density, tbar_ajci, t_bjci)
+   module subroutine density_doubles_mu_ref_vv_doubles_complex(wf, density, tbar_ajci, t_bjci)
 !!
-!!    One electron density vv
+!!    One electron density excited-determinant/reference vv-term
 !!    Written by Sarai D. Folkestad, 2019
 !!
-!!    D_ab += sum_jci tbar_a,jci t_b,jci
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu X_mu * < mu| e^(-T) E_pq e^T |HF >
+!!
+!!    where X_mu is a general amplitude (tbar or L)
+!!
+!!          D_ab += sum_jci tbar_a,jci t_b,jci
 !!
       implicit none
 !
@@ -134,17 +191,23 @@ contains
                   density(wf%n_o + 1, wf%n_o + 1), &
                   wf%n_mo)
 !
-   end subroutine gs_one_el_density_doubles_vv_doubles_complex
+   end subroutine density_doubles_mu_ref_vv_doubles_complex
 !
 !
-   module subroutine gs_one_el_density_doubles_ov_doubles_complex(wf, density, tbar_ai, t_aibj)
+   module subroutine density_doubles_mu_ref_ov_doubles_complex(wf, density, tbar_ai, t_aibj)
 !!
-!!    One electron density ov
+!!    One electron density excited-determinant/reference ov-term
 !!    Written by Sarai D. Folkestad, 2019
 !!
-!!    D_ia += sum_bj u^{ab}_ij tbar_bj = sum_bj u_ia,bj tbar_bj 
+!!    Computes terms of the form:
 !!
-!!    u^{ab}_ij = 2t_aibj - t_ajbi
+!!          D_pq += sum_mu X_mu * < mu| e^(-T) E_pq e^T |HF >
+!!
+!!    where X_mu is a general amplitude (tbar or L)
+!!
+!!          D_ia += sum_bj u^ab_ij tbar_bj = sum_bj u_ia,bj tbar_bj 
+!!
+!!          u^{ab}_ij = 2t_aibj - t_ajbi
 !!
       implicit none
 !
@@ -196,7 +259,7 @@ contains
 !
       call mem%dealloc(D_ov, wf%n_v, wf%n_o)
 !
-   end subroutine gs_one_el_density_doubles_ov_doubles_complex
+   end subroutine density_doubles_mu_ref_ov_doubles_complex
 !
 !
 end submodule zop_doubles_complex

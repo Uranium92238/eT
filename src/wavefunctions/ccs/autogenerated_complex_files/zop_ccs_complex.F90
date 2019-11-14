@@ -20,7 +20,7 @@
 submodule (ccs_class) zop_ccs_complex
 !
 !!
-!!    Zeroth order properties submodule 
+!!    Complex zeroth order properties submodule 
 !!
 !!    Contains routines related to the mean values, i.e. 
 !!    the construction of density matrices as well as expectation 

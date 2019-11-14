@@ -45,27 +45,18 @@
    end subroutine construct_right_transition_density_doubles
 !
 !
-   module subroutine right_transition_density_doubles_ov_doubles(wf, density, tbar_aibj, R_ai)
+   module subroutine density_doubles_mu_nu_ov_doubles(wf, density, tbar_aibj, R_ai)
 !!
-!!    Right transition density ov contribution (CCSD)
+!!    One electron density (EOM) excited-determinant/excited-determinant ov-term 
 !!    Written by Alexander C. Paul, June 2019
-!!    
-      implicit none
-!
-      class(doubles) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
-!
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
-!
-   end subroutine right_transition_density_doubles_ov_doubles
-!
-!
-   module subroutine right_transition_density_doubles_vo_doubles(wf, density, tbar_aibj, R_ai)
 !!
-!!    Right transition density vo contribution (CCSD)
-!!    Written by Alexander C. Paul, June 2019
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu,nu X_mu < mu| e^(-T) E_pq e^T |nu > Y_nu
+!!
+!!    explicit term in this routine:
+!!          D^R_kc += sum_abij R^a_i tbar^ab_ij (2t^bc_jk - t^bc_kj)
+!!                   -sum_abij tbar^ab_ij (R^b_k t^ac_ij + R^c_j t^ab_ik)
 !!      
       implicit none
 !
@@ -76,7 +67,31 @@
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
 !
-   end subroutine right_transition_density_doubles_vo_doubles
+   end subroutine density_doubles_mu_nu_ov_doubles
+!
+!
+   module subroutine density_doubles_mu_nu_vo_doubles(wf, density, tbar_aibj, R_ai)
+!!
+!!    One electron density (EOM) excited-determinant/excited-determinant vo-term 
+!!    Written by Alexander C. Paul, June 2019
+!!
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu,nu X_mu < mu| e^(-T) E_pq e^T |nu > Y_nu
+!!
+!!    explicit term in this routine:
+!!          D^R_bj += sum_ai R^a_i tbar^ab_ij
+!!      
+      implicit none
+!
+      class(doubles) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+   end subroutine density_doubles_mu_nu_vo_doubles
 !
 !
    module subroutine construct_eom_etaX_doubles(wf, X, csiX, etaX)
