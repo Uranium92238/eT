@@ -20,7 +20,7 @@
 submodule (doubles_class) zop_doubles_complex
 !
 !!
-!!    Complex zeroth order properties submodule 
+!!    Zeroth order properties submodule 
 !!
 !!    Contains routines related to the mean values, i.e. 
 !!    the construction of density matrices as well as expectation 
@@ -77,10 +77,10 @@ contains
 !
    module subroutine construct_gs_density_doubles_complex(wf)
 !!
-!!    Construct complex one-electron density
+!!    Construct one-electron density
 !!    Written by Sarai Dery Folkestad, 2019
 !!
-!!    Constructs the one_complex-electron density 
+!!    Constructs the one-electron density 
 !!    matrix in the T1 basis
 !!
 !!    D_pq = < Lambda| E_pq |CC >

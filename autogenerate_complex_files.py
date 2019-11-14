@@ -472,8 +472,9 @@ for directory_name in wavefunction_complexified_submodules:
 #           Change parameters
 #
             for parameter_name in parameter_list:
-               line = sub(r'\b'+parameter_name+r'\b',
-                          parameter_name+'_complex', line)
+               if search(r'\b'+parameter_name+r'\b', line_without_comments):
+                  line = sub(r'\b'+parameter_name+r'\b',
+                             parameter_name+'_complex', line)
 #
             complex_submodule_file.write(line)
 #

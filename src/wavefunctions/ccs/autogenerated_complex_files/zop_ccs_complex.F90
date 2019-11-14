@@ -20,7 +20,7 @@
 submodule (ccs_class) zop_ccs_complex
 !
 !!
-!!    Complex zeroth order properties submodule 
+!!    Zeroth order properties submodule 
 !!
 !!    Contains routines related to the mean values, i.e. 
 !!    the construction of density matrices as well as expectation 
@@ -94,10 +94,10 @@ contains
 !
    module subroutine construct_gs_density_ccs_complex(wf)
 !!
-!!    Construct one_complex-electron density
+!!    Construct one-electron density
 !!    Written by Sarai Dery Folkestad, 2019
 !!
-!!    Constructs the one_complex-electron density 
+!!    Constructs the one-electron density 
 !!    matrix in the T1 basis
 !!
 !!    D_pq = < Lambda| E_pq |CC >
@@ -187,13 +187,13 @@ contains
 !!    Calculate expectation value
 !!    Written by Sarai D. Folkestad, 2019
 !!
-!!    Calculate the expectation value of a one_complex-electron
+!!    Calculate the expectation value of a one-electron
 !!    operator A
 !!
 !!       < A > = < Lambda| A | CC > = sum_pq A_pq D_pq
 !!
 !!    where A_pq are the T1-transformed integrals
-!!    and D_pq is the a one_complex-electron density matrix
+!!    and D_pq is the a one-electron density matrix
 !!    in the T1-basis
 !!
       implicit none
@@ -325,8 +325,8 @@ contains
       call mem%alloc(mu, wf%n_mo, wf%n_mo, 3)
       call wf%construct_mu_complex(mu)
 !
-!     Add one_complex-electron electric field contribution to the diagonal 
-!     of Fock and one_complex-electron integral terms
+!     Add one-electron electric field contribution to the diagonal 
+!     of Fock and one-electron integral terms
 !
       do i = 1, wf%n_o
 !

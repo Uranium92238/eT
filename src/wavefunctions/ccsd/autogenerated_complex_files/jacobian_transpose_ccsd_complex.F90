@@ -213,12 +213,12 @@ contains
       call wf%jacobian_transpose_ccsd_f2_complex(sigma_aibj, b_aibj)
       call wf%jacobian_transpose_ccsd_g2_complex(sigma_aibj, b_aibj)
 !
-!     Last two_complex terms are already symmetric (h2 and i2). Perform the symmetrization
+!     Last two terms are already symmetric (h2 and i2). Perform the symmetrization
 !     sigma_aibj = P_ij^ab sigma_aibj now, for convenience
 !
       call symmetric_sum(sigma_aibj, wf%n_v*wf%n_o)
 !
-!     In preparation for last two_complex terms, reorder b_aibj to b_abij
+!     In preparation for last two terms, reorder b_aibj to b_abij
 !
       call mem%alloc(b_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call sort_1234_to_1324(b_aibj, b_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -228,7 +228,7 @@ contains
       call sort_1234_to_1324(sigma_aibj, sigma_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(sigma_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Add the last two_complex terms
+!     Add the last two terms
 !
       call wf%jacobian_transpose_ccsd_h2_complex(sigma_abij, b_abij)
       call wf%jacobian_transpose_ccsd_i2_complex(sigma_abij, b_abij)
