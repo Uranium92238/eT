@@ -37,7 +37,6 @@
       implicit none
 !
       class(ccs) :: wf
-!
       integer, intent(in) :: state
 !
    end subroutine construct_right_transition_density_ccs
@@ -58,9 +57,7 @@
       implicit none
 !
       class(ccs) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
 !
@@ -82,9 +79,7 @@
       implicit none
 !
       class(ccs) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
 !
    end subroutine density_ccs_ref_mu_ov_ccs
@@ -105,9 +100,7 @@
       implicit none
 !
       class(ccs) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
 !
@@ -139,9 +132,7 @@
       implicit none
 !
       class(ccs) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
-!
       real(dp), intent(in) :: scaling_factor
 !
    end subroutine density_mu_mu_oo_ccs
@@ -162,6 +153,7 @@
 !!
 !!       D^R_pq -= sum_mu,nu R_{k,mu} tbar_mu* tbar_nu < nu| e^-T E_pq e^T |HF >
 !!              -= sum_mu R_{k,mu} tbar_mu D^GS_pq
+!!              -= scaling_factor D^GS_pq
 !!
 !!       density_out   : right_transition density
 !!       density_in    : ground state density 
@@ -170,10 +162,8 @@
       implicit none
 !
       class(ccs) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density_out
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in)    :: density_in
-!
       real(dp), intent(in) :: scaling_factor
 !
    end subroutine density_mu_ref_ccs
@@ -181,20 +171,19 @@
 !
    module subroutine construct_left_transition_density_ccs(wf, state)
 !!
-!!    Construct left one-electron transition density for the state k
+!!    Construct left one-electron transition density (EOM)
 !!    Written by Alexander C. Paul, June 2019
 !!
 !!          D^L_pq = < k| E_pq |CC >
 !!
-!!    where <k| is the left eigenvector of the Jacobian
+!!    where < k| is the left eigenvector of the Jacobian
 !!    with amplitudes L_mu
 !!
-!!          < k| = sum_mu L_{k,mu} < mu | e^-T
+!!          < k| = sum_mu L_{k,mu} < mu| e^-T
 !!
       implicit none
 !
       class(ccs) :: wf
-!
       integer, intent(in) :: state
 !
    end subroutine construct_left_transition_density_ccs
@@ -211,10 +200,8 @@
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!
-      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
    end subroutine construct_eom_etaX_ccs
@@ -234,9 +221,7 @@
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
    end subroutine construct_etaX_ccs
@@ -256,9 +241,7 @@
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX_ai
 !
    end subroutine etaX_ccs_a1_ccs
@@ -278,9 +261,7 @@
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!      
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)   :: etaX_ai
 !
    end subroutine etaX_ccs_b1_ccs
@@ -293,16 +274,14 @@
 !!
 !!    Adapted by Sarai D. Folkestad
 !!
-!!    Constructs x^X_mu :
+!!    Constructs xi^X_mu :
 !!
-!!       x^X_mu = < mu| exp(-T) X exp(T)|R >
+!!       xi^X_mu = < mu| exp(-T) X exp(T)|R >
 !!
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!      
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: csiX
 !
    end subroutine construct_csiX_ccs
@@ -315,14 +294,12 @@
 !!
 !!    Adds the A1 term to csiX:
 !! 
-!!       x^X_ai += X_ai
+!!       xi^X_ai += X_ai
 !!
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
-!      
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: csiX_ai
 !
    end subroutine csiX_ccs_a1_ccs
@@ -335,12 +312,11 @@
 !!
 !!    Add EOM A correction to etaX vector:
 !!
-!!       A:  eta^X,corr_mu += tbar_mu (x * tbar) 
+!!       A:  eta^X,corr_mu += tbar_mu (xi * tbar) 
 !!
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
       real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
 !
@@ -361,12 +337,9 @@
       implicit none
 !
       class(ccs), intent(inout) :: wf
-!
       real(dp), intent(inout) :: S
-!
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: etaX
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: csiX
-!
       real(dp), intent(out) :: T_l, T_r
       integer, intent(in)   :: state
 !

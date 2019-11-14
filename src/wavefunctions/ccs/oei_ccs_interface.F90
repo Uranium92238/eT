@@ -17,17 +17,19 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-!
-!
    module subroutine ao_to_t1_transformation_ccs(wf, x_wx, y_pq)
 !!
 !!    AO to T1 transformation 
 !!    Written by Eirik F. Kjønstad, 2019 
 !!
+!!    Takes in an AO array and returns the T1-transformed array: 
+!!
+!!    x_wx (in)   array in the AO basis (w and x are AO indices)
+!!    y_pq (out)  array in the T1-transformed basis (p and q are MO indices) 
+!!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
-!
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)  :: x_wx 
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: y_pq 
 !
@@ -39,12 +41,16 @@
 !!    AO to T1 transformation 
 !!    Written by Eirik F. Kjønstad, 2019 
 !!
+!!    Takes in an AO array and returns the T1-transformed array: 
+!!
+!!    x_wx (in)   array in the AO basis (w and x are AO indices)
+!!    y_pq (out)  array in the T1-transformed basis (p and q are MO indices) 
+!!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)  :: x_wx 
-      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: y_pq 
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)  :: x_wx
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: y_pq
 !
    end subroutine ao_to_t1_transformation_ccs_complex
 !
@@ -53,11 +59,16 @@
 !!
 !!    Construct mu
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
-!!    
+!!
+!!    Constructs 
+!!
+!!       mu_pqk, k = 1, 2, 3 (x, y, z)
+!!
+!!    in the T1 transformed basis.
+!!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
-!
       real(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(out) :: mu_pqk 
 !
    end subroutine construct_mu_ccs
@@ -67,11 +78,16 @@
 !!
 !!    Construct mu
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
-!!    
+!!
+!!    Constructs 
+!!
+!!       mu_pqk, k = 1, 2, 3 (x, y, z)
+!!
+!!    in the T1 transformed basis.
+!!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
-!
       complex(dp), dimension(wf%n_mo, wf%n_mo, 3), intent(out) :: mu_pqk 
 !
    end subroutine construct_mu_ccs_complex
@@ -82,10 +98,12 @@
 !!    Construct h
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!    
+!!    Constructs the one-electron Hamiltonian integrals h_pq 
+!!    in the T1 transformed basis.
+!!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: h_pq 
 !
    end subroutine construct_h_ccs
@@ -96,11 +114,13 @@
 !!    Construct h
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!    
+!!    Constructs the one-electron Hamiltonian integrals h_pq 
+!!    in the T1 transformed basis.
+!!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
-!
-      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: h_pq 
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: h_pq
 !
    end subroutine construct_h_ccs_complex
 !
@@ -110,10 +130,15 @@
 !!    Construct q
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!    
+!!    Constructs 
+!!
+!!       q_pqk, k = 1, 2, 3, 4, 5, 6 (xx, xy, xz, yy, yz, and zz)
+!!
+!!    in the T1 transformed basis.
+!!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
-!
       real(dp), dimension(wf%n_mo, wf%n_mo, 6), intent(out) :: q_pqk 
 !
    end subroutine construct_q_ccs
@@ -124,10 +149,15 @@
 !!    Construct q
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
 !!    
+!!    Constructs 
+!!
+!!       q_pqk, k = 1, 2, 3, 4, 5, 6 (xx, xy, xz, yy, yz, and zz)
+!!
+!!    in the T1 transformed basis.
+!!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
-!
       complex(dp), dimension(wf%n_mo, wf%n_mo, 6), intent(out) :: q_pqk 
 !
    end subroutine construct_q_ccs_complex

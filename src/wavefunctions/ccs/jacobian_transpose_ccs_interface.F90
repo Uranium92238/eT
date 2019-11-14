@@ -31,7 +31,7 @@
 !
    module subroutine jacobian_transpose_transformation_ccs(wf, b)
 !!
-!!    Jacobian transpose transformation
+!!    Jacobian transpose transformation 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
 !!    Calculates the transpose Jacobian transformation, i.e., the transformation
@@ -48,7 +48,6 @@
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: b
 !
    end subroutine jacobian_transpose_transformation_ccs
@@ -68,7 +67,6 @@
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_ai
 !
@@ -89,7 +87,6 @@
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_ai
 !
