@@ -17,20 +17,22 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-!
-!
    module subroutine normalization_for_jacobian_debug_ccsd(wf, A_numerical_mu_nu, nu)
 !!
 !!    Normalization for jacobian debug
-!!    Written by Sarai D. Folkestad
+!!    Written by Sarai D. Folkestad and Tor S. Haugland, Sep 2019
+!!
+!!    Differentiation wrt. doubles amplitudes (nu > wf%n_t1)
+!!    will yield factor one half on the diagonal nu = aiai
+!!
+!!    A_numerical_μ_aiai = dΩ_μ/dt_aiai = 1/2 <μ|[H^T, tau_aiai]|R>
+!!
+!!    This routine scales these diagonal elements by factor two
 !!
       implicit none
 !
       class(ccsd), intent(in) :: wf
-!
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: A_numerical_mu_nu
-!
       integer, intent(in) :: nu
 !
    end subroutine normalization_for_jacobian_debug_ccsd
-!

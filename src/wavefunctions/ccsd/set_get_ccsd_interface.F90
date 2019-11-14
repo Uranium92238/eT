@@ -25,7 +25,6 @@
       implicit none
 !
       class(ccsd) :: wf
-!
       real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: amplitudes
 !
    end subroutine set_amplitudes_ccsd
@@ -39,7 +38,6 @@
       implicit none
 !
       class(ccsd), intent(in) :: wf
-!
       real(dp), dimension(wf%n_gs_amplitudes) :: amplitudes
 !
    end subroutine get_amplitudes_ccsd
@@ -53,7 +51,6 @@
       implicit none
 !
       class(ccsd) :: wf
-!
       real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: multipliers
 !
    end subroutine set_multipliers_ccsd
@@ -67,7 +64,6 @@
       implicit none
 !
       class(ccsd), intent(in) :: wf
-!
       real(dp), dimension(wf%n_gs_amplitudes) :: multipliers
 !
    end subroutine get_multipliers_ccsd
