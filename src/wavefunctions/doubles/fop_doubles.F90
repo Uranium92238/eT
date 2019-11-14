@@ -100,7 +100,7 @@ contains
 !
       call dcopy(wf%n_t1, L_k, 1, L_ai, 1)
 !
-      call wf%gs_one_el_density_ccs_vo(wf%left_transition_density, L_ai)
+      call wf%density_ccs_mu_ref_vo(wf%left_transition_density, L_ai)
 !
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
@@ -153,12 +153,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: tbar_aibj
 !
-      real(dp), dimension(:,:), allocatable :: rho_correlation
-!
-      real(dp) :: tbar_R_overlap
-      real(dp) :: ddot
-!
-      integer :: i
+      real(dp) :: tbar_R_overlap, ddot
 !
       type(timings) :: R_TDM_timer
 !
@@ -175,11 +170,11 @@ contains
 !
       call dcopy(wf%n_t1, R_k, 1, R_ai, 1)
 !
-      tbar_R_overlap = -one*ddot(wf%n_v*wf%n_o, R_ai, 1, wf%t1bar, 1)
+      call wf%density_ccs_mu_nu_oo(wf%right_transition_density, wf%t1bar, R_ai)
+      call wf%density_ccs_ref_mu_ov(wf%right_transition_density, R_ai)
+      call wf%density_ccs_mu_nu_vv(wf%right_transition_density, wf%t1bar, R_ai)
 !
-      call wf%right_transition_density_ccs_oo(wf%right_transition_density, wf%t1bar, R_ai)
-      call wf%right_transition_density_ccs_ov(wf%right_transition_density, R_ai)
-      call wf%right_transition_density_ccs_vv(wf%right_transition_density, wf%t1bar, R_ai)
+      tbar_R_overlap = ddot(wf%n_t1, wf%t1bar, 1, R_ai, 1)
 !
       call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2bar, tbar_aibj, (wf%n_v)*(wf%n_o))
@@ -202,7 +197,7 @@ contains
       call scale_diagonal(two, R_aibj, wf%n_t1)
 !
       tbar_R_overlap = tbar_R_overlap &
-                        - half * ddot((wf%n_v)**2*(wf%n_o)**2, R_aibj, 1, tbar_aibj, 1)
+                        + half * ddot((wf%n_v)**2*(wf%n_o)**2, R_aibj, 1, tbar_aibj, 1)
 !
       call wf%gs_one_el_density_doubles_oo(wf%right_transition_density, tbar_aibj, R_aibj)
       call wf%gs_one_el_density_doubles_vv(wf%right_transition_density, tbar_aibj, R_aibj)
@@ -213,34 +208,14 @@ contains
 !
       call mem%dealloc(R_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Right EOM transition density, contribution from the ground state density
-!     ρ^R_pq -= sum_μν R_{k,μ}tbar_μ tbar_ν < ν |e^-T E_pq e^T| HF >
-!            -= sum_μ R_{k,μ} tbar_μ (D_GS - D_HF)
-!            -= sum_μ R_{k,μ} tbar_μ ρ_correlation
+!     Contribution of the ground state density scaled by 
+!     the right-hand side reference term (- sum_mu tbar_mu*R_mu)
 !
-      call mem%alloc(rho_correlation, wf%n_mo, wf%n_mo)
-      call dcopy(wf%n_mo**2, wf%density, 1, rho_correlation, 1)
+      call wf%density_mu_mu_oo(wf%right_transition_density, tbar_R_overlap)
 !
-!     Correlation Density: 
-!     Difference between ground state density and Hartree-Fock density
-!        rho_correlation = D_GS - D_HF
-!
-!$omp parallel do private(i)
-      do i = 1, wf%n_o
-!
-         rho_correlation(i,i) = rho_correlation(i,i) - two  
-!
-      enddo
-!$omp end parallel do
-!
-      call daxpy(wf%n_mo**2,                  &
-                 tbar_R_overlap,              &
-                 rho_correlation,             &
-                 1,                           &
-                 wf%right_transition_density, &
-                 1)
-!
-      call mem%dealloc(rho_correlation, wf%n_mo, wf%n_mo)
+      call wf%density_mu_ref(wf%right_transition_density, &
+                             wf%density,                  &
+                             tbar_R_overlap)
 !
       call R_TDM_timer%turn_off()
 !

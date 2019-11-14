@@ -22,12 +22,17 @@
 !!    Construct right one-electron transition density (EOM)
 !!    Written by Alexander C. Paul, June 2019
 !!
-!!          ρ^R_pq = < Λ | E_pq | k >
+!!          D^R_pq = < Lambda| E_pq |k >
 !!
-!!    where |k> is the right eigenvector of the Jacobian
-!!    with amplitudes R_μ
+!!    where |k > is the right eigenvector of the Jacobian
+!!    with amplitudes R_mu
 !!
-!!          | k > = sum_μ (τ_μ | CC > R_{k,μ} - tbar_μ | CC > R_{k,μ}) 
+!!          |k > = sum_mu (tau_mu R_{k,mu} - tbar_mu R_{k,mu}) |CC >
+!!
+!!    Contributions to the right transition density are split as follows:
+!!
+!!          D^R_pq = sum_mu D_pq(ref-mu) R_mu + sum_mu tbar_mu D_pq(mu-ref)
+!!                   + sum_mu,nu tbar_mu D_pq(mu-nu) R_nu
 !!
       implicit none
 !
@@ -38,12 +43,64 @@
    end subroutine construct_right_transition_density_ccs
 !
 !
-   module subroutine right_transition_density_ccs_oo_ccs(wf, density, tbar_ai, R_ai)
+   module subroutine density_ccs_mu_nu_oo_ccs(wf, density, tbar_ai, R_ai)
 !!
-!!    Right transition density oo contribution
+!!    One electron density (EOM) excited-determinant/excited-determinant oo-term 
 !!    Written by Alexander C. Paul, June 2019
 !!
-!!    ρ^R_ij = -sum_a R_ai tbar_aj
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu X_mu * < mu| e^(-T) E_pq e^T |nu > Y_nu
+!!
+!!    explicit term in this routine:
+!!          D^R_ij = -sum_a R_ai tbar_aj
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+   end subroutine density_ccs_mu_nu_oo_ccs
+!
+!
+   module subroutine density_ccs_ref_mu_ov_ccs(wf, density, R_ai)
+!!
+!!    One electron density (EOM) reference/excited-determinant ov-term 
+!!    Written by Alexander C. Paul, June 2019
+!!
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu < HF| e^(-T) E_pq e^T |nu > Y_mu
+!!
+!!    explicit term in this routine:
+!!          D^R_ia = 2*R^a_i 
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+!
+   end subroutine density_ccs_ref_mu_ov_ccs
+!
+!
+   module subroutine density_ccs_mu_nu_vv_ccs(wf, density, tbar_ai, R_ai)
+!!
+!!    One electron density (EOM) excited-determinant/excited-determinant vv-term 
+!!    Written by Alexander C. Paul, June 2019
+!!
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu,nu X_mu < mu| e^(-T) E_pq e^T |nu > Y_nu
+!!
+!!    explicit term in this routine:
+!!          D^R_ab = sum_i R_bi tbar_ai
 !!      
       implicit none
 !
@@ -54,15 +111,30 @@
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
 !
-   end subroutine right_transition_density_ccs_oo_ccs
+   end subroutine density_ccs_mu_nu_vv_ccs
 !
 !
-   module subroutine right_transition_density_ccs_ov_ccs(wf, density, R_ai)
+   module subroutine density_mu_mu_oo_ccs(wf, density, scaling_factor)
 !!
-!!    Right transition density ov
+!!    One electron density (EOM) excited determinant/excited determinant
 !!    Written by Alexander C. Paul, June 2019
 !!
-!!    ρ^R_pq = 2*R_ai 
+!!    Should be reusable in the whole CC hierachy
+!!
+!!    Computes the following term containing the same excited contributions (mu,mu) 
+!!    of the left and right vector
+!!
+!!          D_pq += sum_mu X_mu < mu| tau_mu e^(-T) E_pq e^T |HF > Y_mu
+!!               += sum_mu X_mu *Y_mu < HF| e^(-T) E_pq e^T |HF >
+!!
+!!    This is the Hartree fock density scaled by the overlap X_mu*Y_mu
+!!
+!!    For the right transition density of any level in CC:
+!!
+!!       D^R_pq +=  sum_mu R_{k,mu} tbar_mu * < HF| e^-T E_pq e^T |HF >
+!!              +=  sum_mu R_{k,mu} tbar_mu * 2 delta_pq delta_p,occ 
+!!
+!!       scaling_factor: overlap of tbar- and R-vector
 !!
       implicit none
 !
@@ -70,48 +142,41 @@
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+      real(dp), intent(in) :: scaling_factor
 !
-   end subroutine right_transition_density_ccs_ov_ccs
+   end subroutine density_mu_mu_oo_ccs
 !
 !
-   module subroutine right_transition_density_ccs_vv_ccs(wf, density, tbar_ai, R_ai)
+   module subroutine density_mu_ref_ccs(wf, density_out, density_in, scaling_factor)
 !!
-!!    Right transition density vv contribution
+!!    One electron density (EOM) excited determinant/reference term
 !!    Written by Alexander C. Paul, June 2019
 !!
-!!    ρ^R_ab = sum_i R_bi tbar_ai
-!!      
-      implicit none
-!
-      class(ccs) :: wf
-!
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
-!
-   end subroutine right_transition_density_ccs_vv_ccs
-!
-!
-   module subroutine right_transition_density_ccs_gs_contr_ccs(wf, density, tbar_ai, R_ai)
+!!    Should be reusable in the whole CC hierachy
 !!
-!!    Right transition density, contribution from the ground state density
-!!    ρ^R_pq -= sum_μν R_{k,μ}tbar_μ tbar_ν < ν |e^-T E_pq e^T| HF >
-!!           -= sum_μ R_{k,μ}tbar_μ (D_GS - D_HF)
-!!    CCS:
-!!    ρ^R_pq = ρ^R_ai = sum_bj R^b_j tbar^b_j tbar^a_i
+!!    Computes term that is a density matrix scaled by Y_ref
+!!
+!!          D_pq += sum_mu X_mu < mu| e^(-T) E_pq e^T |HF > Y_ref
+!!
+!!    For the right transition density of any level in CC:
+!!
+!!       D^R_pq -= sum_mu,nu R_{k,mu} tbar_mu* tbar_nu < nu| e^-T E_pq e^T |HF >
+!!              -= sum_mu R_{k,mu} tbar_mu D^GS_pq
+!!
+!!       density_out   : right_transition density
+!!       density_in    : ground state density 
+!!       scaling_factor: overlap of tbar- and R-vector
 !!
       implicit none
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density_out
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in)    :: density_in
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
+      real(dp), intent(in) :: scaling_factor
 !
-   end subroutine right_transition_density_ccs_gs_contr_ccs
+   end subroutine density_mu_ref_ccs
 !
 !
    module subroutine construct_left_transition_density_ccs(wf, state)
@@ -119,12 +184,12 @@
 !!    Construct left one-electron transition density for the state k
 !!    Written by Alexander C. Paul, June 2019
 !!
-!!          ρ^L_pq = < k | E_pq | CC >
+!!          D^L_pq = < k| E_pq |CC >
 !!
 !!    where <k| is the left eigenvector of the Jacobian
-!!    with amplitudes L_μ
+!!    with amplitudes L_mu
 !!
-!!          < k | = sum_μ L_{k,μ} < μ | e^-T
+!!          < k| = sum_mu L_{k,mu} < mu | e^-T
 !!
       implicit none
 !
@@ -157,14 +222,14 @@
 !
    module subroutine construct_etaX_ccs(wf, X, etaX)
 !!
-!!    Construct η^X
+!!    Construct eta^X
 !!    Written by Josefine H. Andersen, 2019
 !!
 !!    Adapted by Sarai D. Folekstad, Apr 2019
 !!
 !!    Constructs left-hand-side vector etaX:
 !!
-!!       η^X_μ = < Λ | [X, τ_μ] | CC >
+!!       eta^X_mu = < Lambda| [X, tau_mu] |CC >
 !!
       implicit none
 !
@@ -184,7 +249,7 @@
 !!
 !!    Adapted by Sarai D. Folekstad, Apr 2019
 !!
-!!    Adds the A1 term of η_ai^X:
+!!    Adds the A1 term of eta_ai^X:
 !!
 !!       A1 = 2X_ia
 !!
@@ -206,7 +271,7 @@
 !!
 !!    Adapted by Sarai D. Folkestad, Apr 2019
 !!
-!!    Adds the B1 term of η_ai^X:
+!!    Adds the B1 term of eta_ai^X:
 !!
 !!       B1 = sum_c tb_ci X_ca - sum_k tb_ak X_ik
 !!
@@ -228,9 +293,9 @@
 !!
 !!    Adapted by Sarai D. Folkestad
 !!
-!!    Constructs ξ^X_μ :
+!!    Constructs x^X_mu :
 !!
-!!       ξ^X_μ = < μ | exp(-T) X exp(T)| R >
+!!       x^X_mu = < mu| exp(-T) X exp(T)|R >
 !!
       implicit none
 !
@@ -250,7 +315,7 @@
 !!
 !!    Adds the A1 term to csiX:
 !! 
-!!       ξ^X_ai =+ X_ai
+!!       x^X_ai += X_ai
 !!
       implicit none
 !
@@ -270,7 +335,7 @@
 !!
 !!    Add EOM A correction to etaX vector:
 !!
-!!       A:  η^X,corr_μ += tbar_μ (ξ * tbar) 
+!!       A:  eta^X,corr_mu += tbar_mu (x * tbar) 
 !!
       implicit none
 !

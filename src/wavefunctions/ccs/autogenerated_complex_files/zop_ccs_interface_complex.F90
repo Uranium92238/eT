@@ -31,7 +31,7 @@
 !
    module subroutine construct_gs_density_ccs_complex(wf)
 !!
-!!    Construct one_complex-electron density
+!!    Construct complex one-electron density
 !!    Written by Sarai Dery Folkestad, 2019
 !!
       implicit none
@@ -41,9 +41,9 @@
    end subroutine construct_gs_density_ccs_complex
 !
 !
-   module subroutine gs_one_el_density_ccs_oo_ccs_complex(wf, density)
+   module subroutine density_ccs_ref_ref_oo_ccs_complex(wf, density)
 !!
-!!    One electron density oo
+!!    One electron density reference-reference oo-term
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
@@ -52,12 +52,12 @@
 !
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
-   end subroutine gs_one_el_density_ccs_oo_ccs_complex
+   end subroutine density_ccs_ref_ref_oo_ccs_complex
 !
 !
-   module subroutine gs_one_el_density_ccs_vo_ccs_complex(wf, density, tbar_ai)
+   module subroutine density_ccs_mu_ref_vo_ccs_complex(wf, density, tbar_ai)
 !!
-!!    One electron density vo
+!!    One electron density excited-determinant/reference vo-term
 !!    Written by Sarai D. Folkestad, 2019
 !!
       implicit none
@@ -67,7 +67,7 @@
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
       complex(dp), dimension(wf%n_v, wf%n_o) :: tbar_ai
 !
-   end subroutine gs_one_el_density_ccs_vo_ccs_complex
+   end subroutine density_ccs_mu_ref_vo_ccs_complex
 !
 !
    module function calculate_expectation_value_ccs_complex(wf, A, density) result(expectation_value)

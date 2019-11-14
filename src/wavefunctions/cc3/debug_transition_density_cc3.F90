@@ -80,7 +80,7 @@ contains
 !
       call dcopy(wf%n_t1, L_k(1:wf%n_t1), 1, L_ai, 1)
 !
-      call wf%gs_one_el_density_ccs_vo(l_tdm, L_ai)
+      call wf%density_ccs_mu_ref_vo(l_tdm, L_ai)
 !
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
@@ -91,12 +91,13 @@ contains
 !
       call mem%alloc(L_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call squareup(L_k(wf%n_t1 + 1 : wf%n_es_amplitudes), L_abij, wf%n_t1)
+      call squareup(L_k(wf%n_t1 + 1 : wf%n_es_amplitudes), L_aibj, wf%n_t1)
 !
       call mem%dealloc(L_k, wf%n_es_amplitudes)
 !
       call wf%gs_one_el_density_doubles_oo(l_tdm, L_aibj, t_aibj)
       call wf%gs_one_el_density_doubles_vv(l_tdm, L_aibj, t_aibj)
+!
       call mem%dealloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     :: CC3 contributions ::
@@ -207,8 +208,6 @@ contains
       real(dp), dimension(:,:), allocatable :: density_oo, density_ov 
       real(dp), dimension(:,:), allocatable :: density_vo, density_vv
 !
-      real(dp), dimension(:,:), allocatable :: rho_correlation
-!
       real(dp) :: tbar_R_overlap, ddot
 !
       integer :: i, j, a, b
@@ -225,11 +224,11 @@ contains
 !     make sure that the correct integrals are on file
       call wf%construct_c1_integrals(R_ai)
 !
-      tbar_R_overlap = -one*ddot(wf%n_v*wf%n_o, R_ai, 1, wf%t1bar, 1)
+      tbar_R_overlap = ddot(wf%n_v*wf%n_o, R_ai, 1, wf%t1bar, 1)
 !
-      call wf%right_transition_density_ccs_oo(r_TDM, wf%t1bar, R_ai)
-      call wf%right_transition_density_ccs_ov(r_TDM, R_ai)
-      call wf%right_transition_density_ccs_vv(r_TDM, wf%t1bar, R_ai)
+      call wf%density_ccs_mu_nu_oo(r_TDM, wf%t1bar, R_ai)
+      call wf%density_ccs_ref_mu_ov(r_TDM, R_ai)
+      call wf%density_ccs_mu_nu_vv(r_TDM, wf%t1bar, R_ai)
 !
       call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2bar, tbar_aibj, wf%n_v*wf%n_o)
@@ -258,7 +257,7 @@ contains
 !$omp end parallel do
 
 !
-      tbar_R_overlap = tbar_R_overlap - half*ddot((wf%n_v*wf%n_o)**2, &
+      tbar_R_overlap = tbar_R_overlap + half*ddot((wf%n_v*wf%n_o)**2, &
                                                    R_aibj,            &
                                                    1,                 &
                                                    tbar_aibj,         &
@@ -369,44 +368,22 @@ contains
 !
       call mem%dealloc(density_vv, wf%n_v, wf%n_v)
 !
-!     sclaing factor triples contribution 
-      tbar_R_overlap = tbar_R_overlap - sixth*ddot((wf%n_v*wf%n_o)**3, tbar_abcijk, 1 , R_abcijk, 1)
-!
-!     Deallocations
+!     tbar3 R3 overlap
+      tbar_R_overlap = tbar_R_overlap + sixth*ddot((wf%n_v*wf%n_o)**3, tbar_abcijk, 1 , R_abcijk, 1)
 !
       call mem%dealloc(R_abcijk,wf%n_v,wf%n_v,wf%n_v,wf%n_o,wf%n_o,wf%n_o)
       call mem%dealloc(tbar_abcijk,wf%n_v,wf%n_v,wf%n_v,wf%n_o,wf%n_o,wf%n_o)
 !
       call mem%dealloc(R_ai, wf%n_v, wf%n_o)
 !
-!     Right transition density, contribution from the ground state density
-!     ρ^R_pq -= sum_μν R_{k,μ}tbar_μ tbar_ν < ν |e^-T E_pq e^T| HF >
-!            -= sum_μ R_{k,μ} tbar_μ (D_GS - D_HF)
-!            -= sum_μ R_{k,μ} tbar_μ ρ_correlation
+!     Contribution of the ground state density scaled by 
+!     the right-hand side reference term (- sum_mu tbar_mu*R_mu)
 !
-      call mem%alloc(rho_correlation, wf%n_mo, wf%n_mo)
-      call dcopy(wf%n_mo**2, wf%density, 1, rho_correlation, 1)
+      call wf%density_mu_mu_oo(r_TDM, tbar_R_overlap)
 !
-!     Correlation Density: 
-!     Difference between ground state density and Hartree-Fock density
-!        rho_correlation = D_GS - D_HF
-!
-!$omp parallel do private(i)
-      do i = 1, wf%n_o
-!       
-         rho_correlation(i,i) = rho_correlation(i,i) - two  
-!
-      enddo
-!$omp end parallel do
-!
-      call daxpy(wf%n_mo**2,    &
-               tbar_R_overlap,  &
-               rho_correlation, &
-               1,               &
-               r_TDM,           &
-               1)
-!
-      call mem%dealloc(rho_correlation, wf%n_mo, wf%n_mo)
+      call wf%density_mu_ref(r_TDM,          &
+                             wf%density,     &
+                             tbar_R_overlap)
 !
    end subroutine right_TDM_debug_cc3
 !

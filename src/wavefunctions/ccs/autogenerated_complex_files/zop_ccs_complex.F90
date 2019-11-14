@@ -26,6 +26,48 @@ submodule (ccs_class) zop_ccs_complex
 !!    the construction of density matrices as well as expectation 
 !!    value calculation.
 !!
+!!    The ground state density is constructed as follows:
+!!
+!!          D_pq = < Lambda| E_pq |CC >
+!!    where: 
+!!          < Lambda| = < HF| + sum_mu tbar_mu < mu| exp(-T)
+!!
+!!
+!!    In general a CC density matrix can be written as:
+!!
+!!          D_pq = < X| e^(-T) E_pq e^T |Y >
+!!
+!!    where X and Y are left and right state vectors with contributions 
+!!    from a reference determinant and excited determinants (< mu|, |nu >):
+!!
+!!          D_pq =             X_ref < HF| e^(-T) E_pq e^T |HF >  Y_ref
+!!                 + sum_mu    X_mu  < mu| e^(-T) E_pq e^T |HF >  Y_ref
+!!                 + sum_mu    X_ref < HF| e^(-T) E_pq e^T |mu >  Y_mu
+!!                 + sum_mu,nu X_mu  < mu| e^(-T) E_pq e^T |nu >  Y_nu
+!!
+!!    Depending on the type of density matrix (Ground state, transition , 
+!!    excited state, interstate transition) different states and thus different
+!!    amplitudes X_ref, X_mu, Y_ref and Y_mu will contribute.
+!!
+!!    The states can be written as the following vectors:
+!!
+!!          |CC >     = R_0 = (1, 0)
+!!          |Lambda > = L_0 = (1, tbar_mu)
+!!          |R_k >    = R_k = (-sum_mu(tbar_mu*R_mu), R_mu)
+!!          |L_k >    = L_k = (0, L_mu)
+!!
+!!    The routine names derive from the contribution of the vectors:
+!!
+!!       ref_ref: first component of the vector for the left and right state
+!!
+!!       mu_ref:  second component of the vector for the left and 
+!!                first component of the vector for the right state
+!!
+!!       ref_mu:  first component of the vector for the left and 
+!!                second component of the vector for the right state
+!!
+!!       mu_nu:   second component of the vector for the left and right state
+!!
 !
    implicit none 
 !
@@ -58,7 +100,10 @@ contains
 !!    Constructs the one_complex-electron density 
 !!    matrix in the T1 basis
 !!
-!!    D_pq = < Λ | E_pq | CC >
+!!    D_pq = < Lambda| E_pq |CC >
+!!
+!!    Contributions to the density are split up as follows:
+!!    D_pq = D_pq(ref-ref) + sum_mu tbar_mu D_pq(mu-ref)
 !!
       implicit none
 !
@@ -66,16 +111,19 @@ contains
 !
       call zero_array_complex(wf%density_complex, (wf%n_mo)**2)
 !
-      call wf%gs_one_el_density_ccs_oo_complex(wf%density_complex)
-      call wf%gs_one_el_density_ccs_vo_complex(wf%density_complex, wf%t1bar_complex)
+      call wf%density_ccs_ref_ref_oo_complex(wf%density_complex)
+      call wf%density_ccs_mu_ref_vo_complex(wf%density_complex, wf%t1bar_complex)
 !
    end subroutine construct_gs_density_ccs_complex
 !
 !
-   module subroutine gs_one_el_density_ccs_oo_ccs_complex(wf, density)
+   module subroutine density_ccs_ref_ref_oo_ccs_complex(wf, density)
 !!
-!!    One electron density oo
+!!    One electron density reference-reference oo-term
 !!    Written by Sarai D. Folkestad, 2019
+!!
+!!    Hartree-Fock density contribution:
+!!    D_pq += < HF| e^(-T) E_pq e^T |HF >
 !!
 !!    D_ii = 2  
 !!
@@ -95,15 +143,22 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine gs_one_el_density_ccs_oo_ccs_complex
+   end subroutine density_ccs_ref_ref_oo_ccs_complex
 !
 !
-   module subroutine gs_one_el_density_ccs_vo_ccs_complex(wf, density, tbar_ai)
+   module subroutine density_ccs_mu_ref_vo_ccs_complex(wf, density, tbar_ai)
 !!
-!!    One electron density vo
+!!    One electron density excited-determinant/reference vo-term
 !!    Written by Sarai D. Folkestad, 2019
 !!
-!!    D_ai = tbar_ai 
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu X_mu * < mu| e^(-T) E_pq e^T |HF >
+!!
+!!    where X_mu is a general amplitude (tbar or L)
+!!
+!!    explicit term in this routine:
+!!          D_ai = tbar_ai 
 !!
       implicit none
 !
@@ -124,7 +179,7 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine gs_one_el_density_ccs_vo_ccs_complex
+   end subroutine density_ccs_mu_ref_vo_ccs_complex
 !
 !
    module function calculate_expectation_value_ccs_complex(wf, A, density) result(expectation_value)
@@ -133,9 +188,9 @@ contains
 !!    Written by Sarai D. Folkestad, 2019
 !!
 !!    Calculate the expectation value of a one_complex-electron
-!!    operator Â
+!!    operator A
 !!
-!!       < A > = < Λ | Â | CC > = sum_pq A_pq D_pq
+!!       < A > = < Lambda| A | CC > = sum_pq A_pq D_pq
 !!
 !!    where A_pq are the T1-transformed integrals
 !!    and D_pq is the a one_complex-electron density matrix
@@ -196,8 +251,9 @@ contains
 !
                   aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
 !
-                  correlation_energy = correlation_energy + (wf%t1_complex(a,i))*(wf%t1_complex(b,j))* &
-                                                      (two_complex*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
+                  correlation_energy = correlation_energy &
+                                       + (wf%t1_complex(a,i))*(wf%t1_complex(b,j)) &
+                                       * (two_complex*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
 !
                enddo
             enddo
@@ -219,9 +275,12 @@ contains
 !!
 !!    Adds multipliers dot omega to the energy_complex,
 !!
-!!       energy_complex += Σ_μ tbar_μ Ω_μ,
+!!       energy_complex += sum_mu tbar_mu Omega_mu,
 !!
-!!    which appears in the variational energy_complex expression <Λ|H|CC> when Omega ≠ 0.
+!!    which appears in the variational energy_complex expression:
+!!
+!!          < Lambda|H|CC > when Omega != 0.
+!!
 !!    This routine does not have to be overwritten in descendants.
 !!
       implicit none
@@ -252,9 +311,10 @@ contains
 !!
 !!    Adds dipole part of the length gauge electromagnetic potential to the energy_complex,
 !!
-!!       energy_complex += 2 sum_ii (-μ·E)_ii,
+!!       energy_complex += 2 sum_ii (-mu·E)_ii,
 !!
-!!    where μ is the vector of electric dipole integral matrices and E is a uniform classical electric
+!!    where mu is the vector of electric dipole integral matrices 
+!!    and E is a uniform classical electric
 !!    vector field. This routine does not have to be overwritten in descendants.
 !!
       implicit none
@@ -272,7 +332,8 @@ contains
       call mem%alloc(mu, wf%n_mo, wf%n_mo, 3)
       call wf%construct_mu_complex(mu)
 !
-!     Add one_complex-electron electric field contribution to the diagonal of Fock and one_complex-electron integral terms
+!     Add one_complex-electron electric field contribution to the diagonal 
+!     of Fock and one_complex-electron integral terms
 !
       do i = 1, wf%n_o
 !

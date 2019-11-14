@@ -332,9 +332,9 @@ contains
                trace_r_tdm = trace_r_tdm + wf%right_transition_density(p,p)
                trace_l_tdm = trace_l_tdm + wf%left_transition_density(p,p)
             end do
-            call output%printf('Trace left transition density:  (f15.10)',    &
+            call output%printf('Trace left transition density:  (f15.12)',    &
                                 fs='(t6,a)', reals=[trace_l_tdm], pl='v')
-            call output%printf('Trace right transition density: (f15.10)',    &
+            call output%printf('Trace right transition density: (f15.12)',    &
                                 fs='(t6,a/)', reals=[trace_r_tdm], pl='v')
 !
          enddo

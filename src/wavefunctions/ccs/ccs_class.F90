@@ -277,7 +277,7 @@ module ccs_class
       procedure :: jacobian_transpose_ccs_b1                     => jacobian_transpose_ccs_b1_ccs
       procedure :: jacobian_transpose_ccs_b1_complex             => jacobian_transpose_ccs_b1_ccs_complex
 !
-!     Procedures related to zero order properties
+!     Procedures related to properties
 !
       procedure :: calculate_expectation_value                   => calculate_expectation_value_ccs
       procedure :: calculate_expectation_value_complex           => calculate_expectation_value_ccs_complex
@@ -294,20 +294,22 @@ module ccs_class
       procedure :: construct_gs_density                          => construct_gs_density_ccs
       procedure :: construct_gs_density_complex                  => construct_gs_density_ccs_complex
 !
-      procedure :: gs_one_el_density_ccs_oo                      => gs_one_el_density_ccs_oo_ccs
-      procedure :: gs_one_el_density_ccs_oo_complex              => gs_one_el_density_ccs_oo_ccs_complex
-!
-      procedure :: gs_one_el_density_ccs_vo                      => gs_one_el_density_ccs_vo_ccs
-      procedure :: gs_one_el_density_ccs_vo_complex              => gs_one_el_density_ccs_vo_ccs_complex
-!
-!     Procedures related to first order properties
-!
       procedure :: construct_right_transition_density            => construct_right_transition_density_ccs
       procedure :: construct_left_transition_density             => construct_left_transition_density_ccs
-      procedure :: right_transition_density_ccs_oo               => right_transition_density_ccs_oo_ccs
-      procedure :: right_transition_density_ccs_ov               => right_transition_density_ccs_ov_ccs
-      procedure :: right_transition_density_ccs_vv               => right_transition_density_ccs_vv_ccs
-      procedure :: right_transition_density_ccs_gs_contr         => right_transition_density_ccs_gs_contr_ccs
+!
+      procedure :: density_ccs_ref_ref_oo                        => density_ccs_ref_ref_oo_ccs
+      procedure :: density_ccs_ref_ref_oo_complex                => density_ccs_ref_ref_oo_ccs_complex
+!
+      procedure :: density_ccs_mu_ref_vo                         => density_ccs_mu_ref_vo_ccs
+      procedure :: density_ccs_mu_ref_vo_complex                 => density_ccs_mu_ref_vo_ccs_complex
+!
+      procedure :: density_ccs_ref_mu_ov                         => density_ccs_ref_mu_ov_ccs
+      procedure :: density_ccs_mu_nu_oo                          => density_ccs_mu_nu_oo_ccs
+      procedure :: density_ccs_mu_nu_vv                          => density_ccs_mu_nu_vv_ccs
+!
+      procedure :: density_mu_mu_oo                              => density_mu_mu_oo_ccs
+      procedure :: density_mu_ref                                => density_mu_ref_ccs
+!
       procedure :: construct_etaX                                => construct_etaX_ccs
       procedure :: construct_eom_etaX                            => construct_eom_etaX_ccs
       procedure :: etaX_ccs_a1                                   => etaX_ccs_a1_ccs
