@@ -115,26 +115,25 @@ module doubles_class
       procedure :: get_cvs_projector                     => get_cvs_projector_doubles
       procedure :: get_ip_projector                      => get_ip_projector_doubles
 !
-!     Ground state density
+!     Properties and densities
 !
       procedure :: construct_gs_density                  => construct_gs_density_doubles
       procedure :: construct_gs_density_complex          => construct_gs_density_doubles_complex
 !
-      procedure :: gs_one_el_density_doubles_oo          => gs_one_el_density_doubles_oo_doubles
-      procedure :: gs_one_el_density_doubles_oo_complex  => gs_one_el_density_doubles_oo_doubles_complex
-
-      procedure :: gs_one_el_density_doubles_vv          => gs_one_el_density_doubles_vv_doubles
-      procedure :: gs_one_el_density_doubles_vv_complex  => gs_one_el_density_doubles_vv_doubles_complex
-!
-      procedure :: gs_one_el_density_doubles_ov          => gs_one_el_density_doubles_ov_doubles
-      procedure :: gs_one_el_density_doubles_ov_complex  => gs_one_el_density_doubles_ov_doubles_complex
-!
-!     Transition densities
-!
       procedure :: construct_left_transition_density     => construct_left_transition_density_doubles
       procedure :: construct_right_transition_density    => construct_right_transition_density_doubles
-      procedure :: right_transition_density_doubles_ov   => right_transition_density_doubles_ov_doubles
-      procedure :: right_transition_density_doubles_vo   => right_transition_density_doubles_vo_doubles
+!
+      procedure :: density_doubles_mu_ref_oo             => density_doubles_mu_ref_oo_doubles
+      procedure :: density_doubles_mu_ref_oo_complex     => density_doubles_mu_ref_oo_doubles_complex
+
+      procedure :: density_doubles_mu_ref_vv             => density_doubles_mu_ref_vv_doubles
+      procedure :: density_doubles_mu_ref_vv_complex     => density_doubles_mu_ref_vv_doubles_complex
+!
+      procedure :: density_doubles_mu_ref_ov             => density_doubles_mu_ref_ov_doubles
+      procedure :: density_doubles_mu_ref_ov_complex     => density_doubles_mu_ref_ov_doubles_complex
+!
+      procedure :: density_doubles_mu_nu_ov              => density_doubles_mu_nu_ov_doubles
+      procedure :: density_doubles_mu_nu_vo              => density_doubles_mu_nu_vo_doubles
 !
 !     Eta and cxi
 !
