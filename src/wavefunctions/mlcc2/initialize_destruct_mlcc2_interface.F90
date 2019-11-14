@@ -159,4 +159,3 @@
       class(mlcc2) :: wf
 !
    end subroutine destruct_cnto_states_mlcc2
-!
