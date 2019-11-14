@@ -53,8 +53,8 @@ contains
 !
       call zero_array(wf%density, (wf%n_mo)**2)
 !
-      call wf%gs_one_el_density_ccs_oo(wf%density)
-      call wf%gs_one_el_density_ccs_vo(wf%density, wf%t1bar)
+      call wf%density_ccs_ref_ref_oo(wf%density)
+      call wf%density_ccs_mu_ref_vo(wf%density, wf%t1bar)
 !
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))

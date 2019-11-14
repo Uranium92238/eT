@@ -41,10 +41,15 @@
    end subroutine construct_gs_density_ccs
 !
 !
-   module subroutine gs_one_el_density_ccs_oo_ccs(wf, density)
+   module subroutine density_ccs_ref_ref_oo_ccs(wf, density)
 !!
-!!    One electron density oo
+!!    One electron density reference-reference oo-term
 !!    Written by Sarai D. Folkestad, 2019
+!!
+!!    Hartree-Fock density contribution:
+!!    D_pq += < HF| e^(-T) E_pq e^T |HF >
+!!
+!!    D_ii = 2  
 !!
       implicit none
 !
@@ -52,13 +57,22 @@
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
-   end subroutine gs_one_el_density_ccs_oo_ccs
+   end subroutine density_ccs_ref_ref_oo_ccs
 !
 !
-   module subroutine gs_one_el_density_ccs_vo_ccs(wf, density, tbar_ai)
+   module subroutine density_ccs_mu_ref_vo_ccs(wf, density, tbar_ai)
 !!
-!!    One electron density vo
+!!    One electron density excited-determinant/reference vo-term
 !!    Written by Sarai D. Folkestad, 2019
+!!
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu X_mu * < mu| e^(-T) E_pq e^T |HF >
+!!
+!!    where X_mu is a general amplitude (tbar or L)
+!!
+!!    explicit term in this routine:
+!!          D_ai = tbar_ai 
 !!
       implicit none
 !
@@ -67,7 +81,7 @@
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
       real(dp), dimension(wf%n_v, wf%n_o) :: tbar_ai
 !
-   end subroutine gs_one_el_density_ccs_vo_ccs
+   end subroutine density_ccs_mu_ref_vo_ccs
 !
 !
    module function calculate_expectation_value_ccs(wf, A, density) result(expectation_value)

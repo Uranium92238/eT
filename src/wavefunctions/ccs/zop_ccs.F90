@@ -26,6 +26,48 @@ submodule (ccs_class) zop_ccs
 !!    the construction of density matrices as well as expectation 
 !!    value calculation.
 !!
+!!    The ground state density is constructed as follows:
+!!
+!!          D_pq = < Lambda| E_pq |CC >
+!!    where: 
+!!          < Lambda| = < HF| + sum_mu tbar_mu < mu| exp(-T)
+!!
+!!
+!!    In general a CC density matrix can be written as:
+!!
+!!          D_pq = < X| e^(-T) E_pq e^T |Y >
+!!
+!!    where X and Y are left and right vectors with contributions from
+!!    a reference determinant and excited determinants (< mu|, |nu >):
+!!
+!!          D_pq =             X_ref < HF| e^(-T) E_pq e^T |HF >  Y_ref
+!!                 + sum_mu    X_mu  < mu| e^(-T) E_pq e^T |HF >  Y_ref
+!!                 + sum_mu    X_ref < HF| e^(-T) E_pq e^T |mu >  Y_mu
+!!                 + sum_mu,nu X_mu  < mu| e^(-T) E_pq e^T |nu >  Y_nu
+!!
+!!    Depending on the type of density matrix (Ground state, transition , 
+!!    excited state, interstate transition) different states and thus different
+!!    amplitudes X_ref, X_mu, Y_ref and Y_mu will contribute.
+!!
+!!    In EOM theory the states can be written as the following vectors:
+!!
+!!          |CC >     = R_0 = (1, 0)
+!!          |Lambda > = L_0 = (1, tbar_mu)
+!!          |R_k >    = R_k = (-sum_mu(tbar_mu*R_mu), R_mu)
+!!          |L_k >    = L_k = (0, L_mu)
+!!
+!!    The routine names derive from the contribution of the vectors:
+!!
+!!       ref_ref: first component of the vector for the left and right state
+!!
+!!       mu_ref:  second component of the vector for the left and 
+!!                first component of the vector for the right state
+!!
+!!       ref_mu:  first component of the vector for the left and 
+!!                second component of the vector for the right state
+!!
+!!       mu_nu:   second component of the vector for the left and right state
+!!
 !
    implicit none 
 !
@@ -58,7 +100,10 @@ contains
 !!    Constructs the one-electron density 
 !!    matrix in the T1 basis
 !!
-!!    D_pq = < Λ | E_pq | CC >
+!!    D_pq = < Lambda| E_pq |CC >
+!!
+!!    Contributions to the density are split up as follows:
+!!    D_pq = D_pq(ref-ref) + sum_mu tbar_mu D_pq(mu-ref)
 !!
       implicit none
 !
@@ -66,16 +111,19 @@ contains
 !
       call zero_array(wf%density, (wf%n_mo)**2)
 !
-      call wf%gs_one_el_density_ccs_oo(wf%density)
-      call wf%gs_one_el_density_ccs_vo(wf%density, wf%t1bar)
+      call wf%density_ccs_ref_ref_oo(wf%density)
+      call wf%density_ccs_mu_ref_vo(wf%density, wf%t1bar)
 !
    end subroutine construct_gs_density_ccs
 !
 !
-   module subroutine gs_one_el_density_ccs_oo_ccs(wf, density)
+   module subroutine density_ccs_ref_ref_oo_ccs(wf, density)
 !!
-!!    One electron density oo
+!!    One electron density reference-reference oo-term
 !!    Written by Sarai D. Folkestad, 2019
+!!
+!!    Hartree-Fock density contribution:
+!!    D_pq += < HF| e^(-T) E_pq e^T |HF >
 !!
 !!    D_ii = 2  
 !!
@@ -95,15 +143,22 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine gs_one_el_density_ccs_oo_ccs
+   end subroutine density_ccs_ref_ref_oo_ccs
 !
 !
-   module subroutine gs_one_el_density_ccs_vo_ccs(wf, density, tbar_ai)
+   module subroutine density_ccs_mu_ref_vo_ccs(wf, density, tbar_ai)
 !!
-!!    One electron density vo
+!!    One electron density excited-determinant/reference vo-term
 !!    Written by Sarai D. Folkestad, 2019
 !!
-!!    D_ai = tbar_ai 
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu X_mu * < mu| e^(-T) E_pq e^T |HF >
+!!
+!!    where X_mu is a general amplitude (tbar or L)
+!!
+!!    explicit term in this routine:
+!!          D_ai = tbar_ai 
 !!
       implicit none
 !
@@ -124,7 +179,7 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine gs_one_el_density_ccs_vo_ccs
+   end subroutine density_ccs_mu_ref_vo_ccs
 !
 !
    module function calculate_expectation_value_ccs(wf, A, density) result(expectation_value)
@@ -133,9 +188,9 @@ contains
 !!    Written by Sarai D. Folkestad, 2019
 !!
 !!    Calculate the expectation value of a one-electron
-!!    operator Â
+!!    operator A
 !!
-!!       < A > = < Λ | Â | CC > = sum_pq A_pq D_pq
+!!       < A > = < Lambda| A | CC > = sum_pq A_pq D_pq
 !!
 !!    where A_pq are the T1-transformed integrals
 !!    and D_pq is the a one-electron density matrix
@@ -163,7 +218,7 @@ contains
 !!    Calculate energy
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    Calculates the CCSD energy. This is only equal to the actual
+!!    Calculates the CCS energy. This is only equal to the actual
 !!    energy when the ground state equations are solved, of course.
 !!
 !!       E = E_hf + sum_aibj t_i^a t_j^b L_iajb
@@ -176,7 +231,7 @@ contains
 !
       real(dp) :: correlation_energy 
 !
-      integer :: a, i, b, j, ai, bj, aibj
+      integer :: a, i, b, j
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
@@ -184,21 +239,15 @@ contains
 !
       correlation_energy = zero 
 !
-!$omp parallel do private(a,i,ai,bj,j,b,aibj) reduction(+:correlation_energy)
+!$omp parallel do private(a,i,j,b) reduction(+:correlation_energy)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
-!
-            ai = (i-1)*wf%n_v + a
-!
             do j = 1, wf%n_o
                do b = 1, wf%n_v
 !
-                  bj = wf%n_v*(j - 1) + b
-!
-                  aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
-!
-                  correlation_energy = correlation_energy + (wf%t1(a,i))*(wf%t1(b,j))* &
-                                                      (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
+                  correlation_energy = correlation_energy &
+                                       + (wf%t1(a,i))*(wf%t1(b,j)) &
+                                       * (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
 !
                enddo
             enddo
@@ -220,9 +269,12 @@ contains
 !!
 !!    Adds multipliers dot omega to the energy,
 !!
-!!       energy += Σ_μ tbar_μ Ω_μ,
+!!       energy += sum_mu tbar_mu Omega_mu,
 !!
-!!    which appears in the variational energy expression <Λ|H|CC> when Omega ≠ 0.
+!!    which appears in the energy expression:
+!!
+!!          < Lambda|H|CC > when Omega != 0.
+!!
 !!    This routine does not have to be overwritten in descendants.
 !!
       implicit none
@@ -254,9 +306,10 @@ contains
 !!
 !!    Adds dipole part of the length gauge electromagnetic potential to the energy,
 !!
-!!       energy += 2 sum_ii (-μ·E)_ii,
+!!       energy += 2 sum_ii (-mu·E)_ii,
 !!
-!!    where μ is the vector of electric dipole integral matrices and E is a uniform classical electric
+!!    where mu is the vector of electric dipole integral matrices 
+!!    and E is a uniform classical electric
 !!    vector field. This routine does not have to be overwritten in descendants.
 !!
       implicit none
@@ -274,7 +327,8 @@ contains
       call mem%alloc(mu, wf%n_mo, wf%n_mo, 3)
       call wf%construct_mu(mu)
 !
-!     Add one-electron electric field contribution to the diagonal of Fock and one-electron integral terms
+!     Add one-electron electric field contribution to the diagonal 
+!     of Fock and one-electron integral terms
 !
       do i = 1, wf%n_o
 !

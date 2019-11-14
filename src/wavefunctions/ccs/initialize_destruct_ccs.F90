@@ -279,7 +279,7 @@ contains
 !
       class(ccs) :: wf
 !
-      if (.not. allocated(wf%density)) call mem%alloc(wf%density, wf%n_mo, wf%n_mo)
+      call mem%alloc(wf%density, wf%n_mo, wf%n_mo)
 !
    end subroutine initialize_gs_density_ccs
 !
@@ -307,11 +307,9 @@ contains
 !
       class(ccs) :: wf
 !
-      if (.not. allocated(wf%left_transition_density))               &
-         call mem%alloc(wf%left_transition_density, wf%n_mo, wf%n_mo)
+      call mem%alloc(wf%left_transition_density, wf%n_mo, wf%n_mo)
 !
-      if (.not. allocated(wf%right_transition_density))              &
-         call mem%alloc(wf%right_transition_density, wf%n_mo, wf%n_mo)
+      call mem%alloc(wf%right_transition_density, wf%n_mo, wf%n_mo)
 !
    end subroutine initialize_transition_densities_ccs
 !
@@ -325,11 +323,9 @@ contains
 !
       class(ccs) :: wf
 !
-      if (allocated(wf%left_transition_density))                        &
-         call mem%dealloc(wf%left_transition_density, wf%n_mo, wf%n_mo)
+      call mem%dealloc(wf%left_transition_density, wf%n_mo, wf%n_mo)
 !
-      if (allocated(wf%right_transition_density))                       &
-         call mem%dealloc(wf%right_transition_density, wf%n_mo, wf%n_mo)
+      call mem%dealloc(wf%right_transition_density, wf%n_mo, wf%n_mo)
 !
    end subroutine destruct_transition_densities_ccs
 !

@@ -99,7 +99,7 @@ contains
 !
       call dcopy(wf%n_t1, L_k, 1, L_ai, 1)
 !
-      call wf%gs_one_el_density_ccs_vo(wf%left_transition_density, L_ai)
+      call wf%density_ccs_mu_ref_vo(wf%left_transition_density, L_ai)
 !
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2, t_aibj, (wf%n_v)*(wf%n_o))
@@ -252,21 +252,21 @@ contains
       real(dp), dimension(:,:), allocatable :: density_oo, density_ov 
       real(dp), dimension(:,:), allocatable :: density_vo, density_vv
 !
-      real(dp), dimension(:,:), allocatable :: rho_correlation
+      real(dp) :: tbar_R_overlap, ddot
 !
       integer :: i, j, a, b
 !
-      type(timings) :: cc3_timer, ccsd_timer
+      type(timings) :: R_TDM_timer, cc3_timer, ccsd_timer
       type(timings) :: cc3_ijk_timer, cc3_abc_timer, cc3_int_timer
 !
-      real(dp) :: tbar_R_overlap
-      real(dp) :: ddot
-!
+      R_TDM_timer    = timings('Right transition density')
       cc3_ijk_timer  = timings('CC3 right TDM ijk batching')
       cc3_abc_timer  = timings('CC3 right TDM abc batching')
       cc3_int_timer  = timings('CC3 right TDM contributions from intermediates')
       cc3_timer      = timings('Total CC3 contribution right TDM')
       ccsd_timer     = timings('Total CCSD contribution right TDM')
+!
+      call R_TDM_timer%turn_on()
 !
       call ccsd_timer%turn_on()
 !
@@ -279,11 +279,11 @@ contains
 !
       call dcopy(wf%n_t1, R_k, 1, R_ai, 1)
 !
-      tbar_R_overlap = -one*ddot(wf%n_v*wf%n_o, R_ai, 1, wf%t1bar, 1)
+      call wf%density_ccs_mu_nu_oo(wf%right_transition_density, wf%t1bar, R_ai)
+      call wf%density_ccs_ref_mu_ov(wf%right_transition_density, R_ai)
+      call wf%density_ccs_mu_nu_vv(wf%right_transition_density, wf%t1bar, R_ai)
 !
-      call wf%right_transition_density_ccs_oo(wf%right_transition_density, wf%t1bar, R_ai)
-      call wf%right_transition_density_ccs_ov(wf%right_transition_density, R_ai)
-      call wf%right_transition_density_ccs_vv(wf%right_transition_density, wf%t1bar, R_ai)
+      tbar_R_overlap = ddot(wf%n_t1, wf%t1bar, 1, R_ai, 1)
 !
       call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2bar, tbar_aibj, wf%n_v*wf%n_o)
@@ -303,7 +303,7 @@ contains
 !
       call scale_diagonal(two, R_aibj, wf%n_t1)
 !
-      tbar_R_overlap = tbar_R_overlap - half*ddot((wf%n_v*wf%n_o)**2, &
+      tbar_R_overlap = tbar_R_overlap + half*ddot((wf%n_v*wf%n_o)**2, &
                                                    R_aibj,            &
                                                    1,                 &
                                                    tbar_aibj,         &
@@ -469,34 +469,16 @@ contains
 !
       call cc3_timer%turn_off()
 !
-!     Right transition density, contribution from the ground state density
-!     ρ^R_pq -= sum_μν R_{k,μ}tbar_μ tbar_ν < ν |e^-T E_pq e^T| HF >
-!            -= sum_μ R_{k,μ} tbar_μ (D_GS - D_HF)
-!            -= sum_μ R_{k,μ} tbar_μ ρ_correlation
+!     Contribution of the ground state density scaled by 
+!     the right-hand side reference term (- sum_mu tbar_mu*R_mu)
 !
-      call mem%alloc(rho_correlation, wf%n_mo, wf%n_mo)
-      call dcopy(wf%n_mo**2, wf%density, 1, rho_correlation, 1)
+      call wf%density_mu_mu_oo(wf%right_transition_density, tbar_R_overlap)
 !
-!     Correlation Density: 
-!     Difference between ground state density and Hartree-Fock density
-!        rho_correlation = D_GS - D_HF
+      call wf%density_mu_ref(wf%right_transition_density, &
+                             wf%density,                  &
+                             tbar_R_overlap)
 !
-!$omp parallel do private(i)
-      do i = 1, wf%n_o
-!
-         rho_correlation(i,i) = rho_correlation(i,i) - two  
-!
-      enddo
-!$omp end parallel do
-!
-      call daxpy(wf%n_mo**2,                  &
-                 tbar_R_overlap,              &
-                 rho_correlation,             &
-                 1,                           &
-                 wf%right_transition_density, &
-                 1)
-!
-      call mem%dealloc(rho_correlation, wf%n_mo, wf%n_mo)
+      call R_TDM_timer%turn_off()
 !
    end subroutine construct_right_transition_density_cc3
 !
@@ -1258,10 +1240,21 @@ contains
                         call wf%construct_x_ai_intermediate(i, j, k, R_abc, u_abc,  &
                                                             density_ai, tbar_abij)
 !
+!                       Overlap:
+!                          tbar_R_overlap = sum_{ai >= bj >= ck} L^abc_ijk R^abc_ijk
+!                                         = 1/6 sum_abcijk L^abc_ijk R^abc_ijk
+!
+!                       Due to the restrictions on the loops the factor of 1/6 
+!                       vanishes, but we need to account for double counting 
+!                       if 2 indices are the same e.g.:
+!                             tbar^abc_ijk*R^abc_ijk = tbar^abc_jik*R^abc_jik
+!
                         if (i .ne. j .and. j .ne. k) then
-                           tbar_R_overlap = tbar_R_overlap - ddot(wf%n_v**3, tbar_abc, 1 , R_abc, 1)
+                           tbar_R_overlap = tbar_R_overlap &
+                                          + ddot(wf%n_v**3, tbar_abc, 1 , R_abc, 1)
                         else
-                           tbar_R_overlap = tbar_R_overlap - half*ddot(wf%n_v**3, tbar_abc, 1 , R_abc, 1)
+                           tbar_R_overlap = tbar_R_overlap &
+                                          + half*ddot(wf%n_v**3, tbar_abc, 1 , R_abc, 1)
                         end if
 !
                      enddo ! loop over k

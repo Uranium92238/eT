@@ -53,8 +53,8 @@ contains
 !
       call zero_array_complex(wf%density_complex, (wf%n_mo)**2)
 !
-      call wf%gs_one_el_density_ccs_oo_complex(wf%density_complex)
-      call wf%gs_one_el_density_ccs_vo_complex(wf%density_complex, wf%t1bar_complex)
+      call wf%density_ccs_ref_ref_oo_complex(wf%density_complex)
+      call wf%density_ccs_mu_ref_vo_complex(wf%density_complex, wf%t1bar_complex)
 !
       call mem%alloc(t_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2_complex, t_aibj, (wf%n_v)*(wf%n_o))
