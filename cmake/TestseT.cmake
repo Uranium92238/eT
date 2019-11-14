@@ -138,6 +138,12 @@ add_eT_runtest(ccsd_oscillator_strength_eom                 "eT;short;ccsd;es;eo
 add_eT_runtest(ccsd_oscillator_strength_eom_records_in_mem  "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_cvs_eom_degeneracy                      "eT;short;ccsd;es;eom;diis;degeneracy")
 add_eT_runtest(ccsd_td_rk4                                  "eT;short;ccsd;complex;td")
+add_eT_runtest(ccsd_td_rk4_train                            "eT;short;ccsd;complex;td")
+add_eT_runtest(ccsd_td_rk4_many_pulses                      "eT;short;ccsd;complex;td")
+add_eT_runtest(ccsd_td_euler                                "eT;short;ccsd;complex;td")
+add_eT_runtest(ccsd_td_gl2                                  "eT;short;ccsd;complex;td")
+add_eT_runtest(ccsd_td_gl4                                  "eT;short;ccsd;complex;td")
+add_eT_runtest(ccsd_td_gl6                                  "eT;short;ccsd;complex;td")
 add_eT_runtest(restart_ccsd_es                              "eT;short;ccsd;es;restart")
 #
 add_eT_runtest(cc3_gs_energy                                "eT;short;cc3;gs")

@@ -20,7 +20,8 @@
    module subroutine save_jacobian_transpose_a1_intermediates_doubles_complex(wf, u_bjck)
 !!
 !!    Save jacobian transpose a1 intermediate
-!!    Written by Tor S. Haugland, Oct 2019
+!!    Written by by E. F. Kjønstad, S. D. Folkestad and A. C. Paul
+!!    Adapted by Tor S. Haugland, Oct 2019
 !!
       implicit none
 !
