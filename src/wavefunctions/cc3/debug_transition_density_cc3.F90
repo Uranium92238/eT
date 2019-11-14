@@ -37,7 +37,7 @@ submodule (cc3_class) debug_transition_density_cc3
 contains
 !
 !
-   module subroutine left_TDM_debug_cc3(wf, state, l_TDM)
+   module subroutine left_tdm_debug_cc3(wf, state, l_tdm)
 !!
 !!    Left transition density matrix (debug)
 !!    Written by Alexander C. Paul, Sep 2019
@@ -54,7 +54,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: L_k
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: l_TDM
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: l_tdm
 !
       real(dp), dimension(:,:), allocatable :: L_ai
 !
@@ -69,7 +69,7 @@ contains
 !
       integer :: i, j, a, b
 !
-      call zero_array(l_TDM, wf%n_mo**2)
+      call zero_array(l_tdm, wf%n_mo**2)
 !
       call mem%alloc(L_k, wf%n_es_amplitudes)
       call wf%read_excited_state(L_k, state, 'left')
@@ -133,7 +133,7 @@ contains
 !
       do a = 1, wf%n_v
          do i = 1, wf%n_o
-            l_TDM(i, wf%n_o + a) = l_TDM(i, wf%n_o + a) + density_ov(i, a)
+            l_tdm(i, wf%n_o + a) = l_tdm(i, wf%n_o + a) + density_ov(i, a)
          enddo
       enddo
 !
@@ -148,7 +148,7 @@ contains
 !
       do j = 1, wf%n_o
          do i = 1, wf%n_o
-            l_TDM(i,j) = l_TDM(i,j) + density_oo(i,j)
+            l_tdm(i,j) = l_tdm(i,j) + density_oo(i,j)
          enddo
       enddo
 !
@@ -164,7 +164,7 @@ contains
       do b = 1, wf%n_v
          do a = 1, wf%n_v
 !
-            l_TDM(wf%n_o + a, wf%n_o + b) = l_TDM(wf%n_o + a, wf%n_o + b) + density_vv(a, b)
+            l_tdm(wf%n_o + a, wf%n_o + b) = l_tdm(wf%n_o + a, wf%n_o + b) + density_vv(a, b)
 !
          enddo
       enddo
@@ -174,10 +174,10 @@ contains
       call mem%dealloc(t_abcijk, wf%n_v, wf%n_v, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       call mem%dealloc(L_abcijk, wf%n_v, wf%n_v, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-   end subroutine left_TDM_debug_cc3
+   end subroutine left_tdm_debug_cc3
 !
 !
-   module subroutine right_TDM_debug_cc3(wf, state, r_TDM)
+   module subroutine right_tdm_debug_cc3(wf, state, r_tdm)
 !!
 !!    Right transition density matrix (debug)
 !!    Written by Alexander C. Paul, Sep 2019
@@ -194,7 +194,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: R_k
 !
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: r_TDM
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: r_tdm
 !
       real(dp), dimension(:,:), allocatable :: R_ai
 !
@@ -233,8 +233,8 @@ contains
       call mem%alloc(tbar_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call squareup(wf%t2bar, tbar_aibj, wf%n_v*wf%n_o)
 !
-      call wf%density_doubles_mu_nu_ov(r_TDM, tbar_aibj, R_ai)
-      call wf%density_doubles_mu_nu_vo(r_TDM, tbar_aibj, R_ai)
+      call wf%density_doubles_mu_nu_ov(r_tdm, tbar_aibj, R_ai)
+      call wf%density_doubles_mu_nu_vo(r_tdm, tbar_aibj, R_ai)
 !
 !     Allocate and unpack doubles part of the excitation vector
 !
@@ -264,10 +264,10 @@ contains
                                                    1)
 !
 !
-      call wf%density_doubles_mu_ref_ov(r_TDM, wf%t1bar, R_aibj)
+      call wf%density_doubles_mu_ref_ov(r_tdm, wf%t1bar, R_aibj)
 !
-      call wf%density_doubles_mu_ref_oo(r_TDM, tbar_aibj, R_aibj)
-      call wf%density_doubles_mu_ref_vv(r_TDM, tbar_aibj, R_aibj)
+      call wf%density_doubles_mu_ref_oo(r_tdm, tbar_aibj, R_aibj)
+      call wf%density_doubles_mu_ref_vv(r_tdm, tbar_aibj, R_aibj)
 !
 !     :: CC3 contributions ::
 !     -----------------------
@@ -299,7 +299,7 @@ contains
 !
       do a = 1, wf%n_v
          do i = 1, wf%n_o
-            r_TDM(wf%n_o + a, i) = r_TDM(wf%n_o + a, i) + density_vo(a, i)
+            r_tdm(wf%n_o + a, i) = r_tdm(wf%n_o + a, i) + density_vo(a, i)
          enddo
       enddo
 !
@@ -327,7 +327,7 @@ contains
 !
       do a = 1, wf%n_v
          do i = 1, wf%n_o
-            r_TDM(i, wf%n_o + a) = r_TDM(i, wf%n_o + a) + density_ov(i, a)
+            r_tdm(i, wf%n_o + a) = r_tdm(i, wf%n_o + a) + density_ov(i, a)
          enddo
       enddo
 !
@@ -345,7 +345,7 @@ contains
 !
       do j = 1, wf%n_o
          do i = 1, wf%n_o
-            r_TDM(i, j) = r_TDM(i, j) + density_oo(i, j)
+            r_tdm(i, j) = r_tdm(i, j) + density_oo(i, j)
          enddo
       enddo
 !
@@ -362,7 +362,7 @@ contains
 !
       do b = 1, wf%n_v
          do a = 1, wf%n_v
-            r_TDM(wf%n_o + a, wf%n_o + b) = r_TDM(wf%n_o + a, wf%n_o + b) + density_vv(a, b)
+            r_tdm(wf%n_o + a, wf%n_o + b) = r_tdm(wf%n_o + a, wf%n_o + b) + density_vv(a, b)
          enddo
       enddo
 !
@@ -379,13 +379,13 @@ contains
 !     Contribution of the ground state density scaled by 
 !     the right-hand side reference term (- sum_mu tbar_mu*R_mu)
 !
-      call wf%density_mu_mu_oo(r_TDM, tbar_R_overlap)
+      call wf%density_mu_mu_oo(r_tdm, tbar_R_overlap)
 !
-      call wf%density_mu_ref(r_TDM,          &
+      call wf%density_mu_ref(r_tdm,          &
                              wf%density,     &
                              tbar_R_overlap)
 !
-   end subroutine right_TDM_debug_cc3
+   end subroutine right_tdm_debug_cc3
 !
 !
    module subroutine construct_full_R3_cc3(wf, R_abij, R_abcijk, omega)
@@ -1004,7 +1004,7 @@ contains
 !
    module subroutine debug_left_oo_cc3(wf, density_oo, L_abcijk, t_abcijk)
 !!
-!!    CC3 contribution to the oo-block of the left TDM
+!!    CC3 contribution to the oo-block of the left tdm
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    Constructs the following term using unwrapped loops:
@@ -1051,7 +1051,7 @@ contains
 !
    module subroutine debug_left_ov_N7_cc3(wf, density_ov, L_abcijk)
 !!
-!!    CC3 contribution to the ov-block of the left TDM
+!!    CC3 contribution to the ov-block of the left tdm
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    Constructs the following term using unwrapped loops:
@@ -1124,7 +1124,7 @@ contains
 !
    module subroutine debug_left_ov_N6_cc3(wf, density_ov, L_abij, t_abcijk)
 !!
-!!    CC3 contribution to the ov-block of the left TDM N6 scaling
+!!    CC3 contribution to the ov-block of the left tdm N6 scaling
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    Constructs the following term using unwrapped loops:
@@ -1170,7 +1170,7 @@ contains
 !
    module subroutine debug_left_vv_cc3(wf, density_vv, L_abcijk, t_abcijk)
 !!
-!!    CC3 contribution to the vv-block of the left TDM
+!!    CC3 contribution to the vv-block of the left tdm
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    Constructs the following term using unwrapped loops:
@@ -1217,7 +1217,7 @@ contains
 !
    module subroutine debug_right_vo_cc3(wf, density_vo, R_abij, tbar_abcijk)
 !!
-!!    CC3 contribution to the vo-block of the right TDM
+!!    CC3 contribution to the vo-block of the right tdm
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    Constructs the following term using unwrapped loops:
@@ -1265,7 +1265,7 @@ contains
 !
    module subroutine debug_right_ov_t3_cc3(wf, density_ov, density_vo, R_ai, tbar_abcijk, t_abcijk)
 !!
-!!    CC3 contribution to the ov-block of the right TDM (t3 contribution)
+!!    CC3 contribution to the ov-block of the right tdm (t3 contribution)
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    Constructs the following terms using unwrapped loops:
@@ -1457,7 +1457,7 @@ contains
 !
    module subroutine debug_right_ov_Y_term_cc3(wf, density_ov, R_abij, tbar_abcijk)
 !!
-!!    CC3 contribution to the ov-block of the right TDM (Y intermediates)
+!!    CC3 contribution to the ov-block of the right tdm (Y intermediates)
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    Constructs the following terms using unwrapped loops:
@@ -1580,7 +1580,7 @@ contains
 !
    module subroutine debug_right_ov_R3_cc3(wf, density_ov, R_abcijk)
 !!
-!!    CC3 contribution to the ov-block of the right TDM (R3 contribution)
+!!    CC3 contribution to the ov-block of the right tdm (R3 contribution)
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    Constructs the following terms using unwrapped loops:
@@ -1634,7 +1634,7 @@ contains
 !
    module subroutine debug_right_oo_cc3(wf, density_oo, R_ai, tbar_abcijk, R_abcijk)
 !!
-!!    CC3 contribution to the oo-block of the right TDM
+!!    CC3 contribution to the oo-block of the right tdm
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    Constructs the following terms using unwrapped loops:
@@ -1696,7 +1696,7 @@ contains
 !
    module subroutine debug_right_vv_cc3(wf, density_vv, R_ai, tbar_abcijk, R_abcijk)
 !!
-!!    CC3 contribution to the vv-block of the right TDM
+!!    CC3 contribution to the vv-block of the right tdm
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    Constructs the following terms using unwrapped loops:

@@ -41,7 +41,7 @@
    end subroutine prepare_for_jacobian_transpose_cc3
 !
 !
-   module subroutine prep_cc3_jacobian_trans_integrals_cc3(wf)
+   module subroutine prepare_cc3_jacobian_trans_integrals_cc3(wf)
 !!
 !!    Jacobian transpose transformation prepare integral files
 !!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
@@ -56,10 +56,10 @@
 !!
       class(cc3) :: wf
 !
-   end subroutine prep_cc3_jacobian_trans_integrals_cc3
+   end subroutine prepare_cc3_jacobian_trans_integrals_cc3
 !
 !
-   module subroutine prep_cc3_g_lbkc_t_file_cc3(wf)
+   module subroutine prepare_cc3_g_lbkc_t_file_cc3(wf)
 !!
 !!    Prepare ovov-integral 
 !!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
@@ -73,10 +73,10 @@
 !
       class(cc3) :: wf
 !
-   end subroutine prep_cc3_g_lbkc_t_file_cc3
+   end subroutine prepare_cc3_g_lbkc_t_file_cc3
 !
 !
-   module subroutine prep_cc3_jacobian_intermediates_cc3(wf)
+   module subroutine prepare_cc3_jacobian_intermediates_cc3(wf)
 !!
 !!    Prepare intermediates for jacobian CC3 transformations
 !!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
@@ -89,7 +89,7 @@
 !!
       class(cc3) :: wf
 !
-   end subroutine prep_cc3_jacobian_intermediates_cc3
+   end subroutine prepare_cc3_jacobian_intermediates_cc3
 !
 !
    module subroutine construct_X_intermediates_cc3(wf, i, j, k, t_abc, u_abc, v_abc, X_alij,      &
