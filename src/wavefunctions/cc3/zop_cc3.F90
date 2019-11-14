@@ -21,16 +21,52 @@ submodule (cc3_class) zop_cc3
 !
 !!
 !!    Zeroth order properties submodule 
-!!    Written by Alexander C. Paul, July 2019
 !!
 !!    Contains routines related to the mean values, i.e. 
 !!    the construction of density matrices as well as expectation 
 !!    value calculation.
 !!
-!!    Constructs the ground state one-electron density matrix (cc3)
-!!    D_pq = < Λ | E_pq | CC >
+!!    The ground state density is constructed as follows:
 !!
-!!    Routines can be reused for the construction of the transition density
+!!          D_pq = < Lambda| E_pq |CC >
+!!    where: 
+!!          < Lambda| = < HF| + sum_mu tbar_mu < mu| exp(-T)
+!!
+!!
+!!    In general a CC density matrix can be written as:
+!!
+!!          D_pq = < X| e^(-T) E_pq e^T |Y >
+!!
+!!    where X and Y are left and right vectors with contributions from
+!!    a reference determinant and excited determinants (< mu|, |nu >):
+!!
+!!          D_pq =             X_ref < HF| e^(-T) E_pq e^T |HF >  Y_ref
+!!                 + sum_mu    X_mu  < mu| e^(-T) E_pq e^T |HF >  Y_ref
+!!                 + sum_mu    X_ref < HF| e^(-T) E_pq e^T |mu >  Y_mu
+!!                 + sum_mu,nu X_mu  < mu| e^(-T) E_pq e^T |nu >  Y_nu
+!!
+!!    Depending on the type of density matrix (Ground state, transition , 
+!!    excited state, interstate transition) different states and thus different
+!!    amplitudes X_ref, X_mu, Y_ref and Y_mu will contribute.
+!!
+!!    In EOM theory the states can be written as the following vectors:
+!!
+!!          |CC >     = R_0 = (1, 0)
+!!          |Lambda > = L_0 = (1, tbar_mu)
+!!          |R_k >    = R_k = (-sum_mu(tbar_mu*R_mu), R_mu)
+!!          |L_k >    = L_k = (0, L_mu)
+!!
+!!    The routine names derive from the contribution of the vectors:
+!!
+!!       ref_ref: first component of the vector for the left and right state
+!!
+!!       mu_ref:  second component of the vector for the left and 
+!!                first component of the vector for the right state
+!!
+!!       ref_mu:  first component of the vector for the left and 
+!!                second component of the vector for the right state
+!!
+!!       mu_nu:   second component of the vector for the left and right state
 !!
 !
    implicit none
@@ -66,12 +102,14 @@ contains
 !!
 !!    Construct one-electron density
 !!    Written by Alexander C. Paul
+!!    based on construct_gs_density_ccsd by Sarai D. Folkestad
 !!
 !!    Constructs the one-electron density matrix in the T1 basis
 !!
-!!    D_pq = < Λ | E_pq | CC >
+!!    D_pq = < Lambda| E_pq |CC >
 !!
-!!    based on construct_gs_density_ccsd by Sarai D. Folkestad
+!!    Contributions to the density are split up as follows:
+!!    D_pq = D_pq(ref-ref) + sum_mu tbar_mu D_pq(mu-ref)
 !!
       implicit none
 !
@@ -89,10 +127,10 @@ contains
       type(timings) :: cc3_timer, ccsd_timer
       type(timings) :: cc3_ijk_timer, cc3_abc_timer
 !
-      cc3_ijk_timer   = timings('Time in CC3 GS density ijk batching')
-      cc3_abc_timer   = timings('Time in CC3 GS density abc batching')
-      cc3_timer      = timings('Total CC3 contribution GS density')
-      ccsd_timer     = timings('Total CCSD contribution GS density')
+      cc3_ijk_timer = timings('Time in CC3 GS density ijk batching')
+      cc3_abc_timer = timings('Time in CC3 GS density abc batching')
+      cc3_timer     = timings('Total CC3 contribution GS density')
+      ccsd_timer    = timings('Total CCSD contribution GS density')
 !
       call ccsd_timer%turn_on()
 !
@@ -137,9 +175,13 @@ contains
 !
       call zero_array(wf%GS_cc3_density_vv, wf%n_v**2)
 !
+!     Call with omega = zero and cvs=.false. for GS density
+!     Save the Y_vooo intermediate for FOP
+!
       call cc3_ijk_timer%turn_on()
-      call wf%gs_one_el_density_cc3_ijk(density_ov, wf%GS_cc3_density_vv, zero, &
-                                        wf%t1bar, tbar_abij, t_abij, cvs=.false., keep_Y=.true.)
+      call wf%density_cc3_mu_ref_ijk(density_ov, wf%GS_cc3_density_vv,  &
+                                     zero, wf%t1bar, tbar_abij, t_abij, &
+                                     cvs=.false., keep_Y=.true.)
       call cc3_ijk_timer%turn_off()
 !
 !     Copy CC3 ov and vv contributions to the density matrix
@@ -167,7 +209,6 @@ contains
       enddo
 !$omp end parallel do
 !
-!
 !     :: CC3 contribution to oo-part ::
 !     ::     in batches of a,b,c     ::
 !
@@ -186,8 +227,12 @@ contains
       call zero_array(wf%GS_cc3_density_oo, wf%n_o**2)
 !
       call cc3_abc_timer%turn_on()
-      call wf%gs_one_el_density_cc3_abc(wf%GS_cc3_density_oo, zero, &
-                                        tbar_ia, tbar_ijab, t_ijab, cvs=.false.)
+!
+!     Call with omega = zero and cvs=.false. for GS density
+!
+      call wf%density_cc3_mu_ref_abc(wf%GS_cc3_density_oo,     &
+                                     zero, tbar_ia, tbar_ijab, &
+                                     t_ijab, cvs=.false.)
       call cc3_abc_timer%turn_off()
 !
       call mem%dealloc(tbar_ia, wf%n_o, wf%n_v)
@@ -209,19 +254,29 @@ contains
    end subroutine construct_gs_density_cc3
 !
 !
-   module subroutine gs_one_el_density_cc3_abc_cc3(wf, density_oo, omega,tbar_ia, &
-                                                   tbar_ijab, t_ijab, cvs)
+   module subroutine density_cc3_mu_ref_abc_cc3(wf, density_oo, omega, tbar_ia, &
+                                                tbar_ijab, t_ijab, cvs)
 !!
-!!    Ground state density contributions in batches of abc
+!!    One electron density excited-determinant/reference term 
+!!    in batches of the virtual orbitals a,b,c
 !!    Written by Alexander C. Paul, July 2019
 !!
-!!    Construct t^abc_ijk and tbar^abc_ijk in batches of a,b,c and compute
-!!    the contributions to the oo-part of the ground state density matrix.
+!!    Computes terms of the form:
 !!
-!!    t_μ3 = -< μ3 |{U,T2}| HF >/ε_μ3
-!!    tbar_μ3 = (- ε_μ3)^-1 (tbar_μ1 < μ1 | [H,τ_ν3] | R > + tbar_μ2 < μ2 | [H,τ_ν3] | R >
+!!          D_pq += sum_mu X_mu * < mu| e^(-T) E_pq e^T |HF >
 !!
-!!    ρ^L_kl -= 1/2 sum_{abc}{ij} tbar^abc_ijl t^abc_ijk
+!!    where X_mu is a general amplitude (tbar or L)
+!!
+!!    Construct t^abc_ijk and tbar^abc_ijk in batches of a,b,c.
+!!    Calls routines calculating the actual density contributions
+!!    to the oo-block
+!!
+!!    t_mu3 = -< mu3|{U,T2}|HF > (eps_mu3)^-1
+!!    tbar_mu3 = (- eps_mu3)^-1 (tbar_mu1 < mu1| [H,tau_nu3] |R > 
+!!                             + tbar_mu2 < mu2| [H,tau_nu3] |R >
+!!
+!!    oo-block:
+!!          D_kl += -1/2 sum_ij,abc t^abc_ijk tbar^abc_ijl    
 !!
       implicit none
 !
@@ -566,8 +621,8 @@ contains
                            call scale_vector_by_vector(tbar_ijk, projector_ijk, wf%n_o**3)
                         end if
 !
-                        call wf%one_el_density_cc3_oo_N7(a, b, c, density_oo, t_ijk,   &
-                                                         u_ijk, tbar_ijk, v_ijk)
+                        call wf%density_cc3_mu_ref_oo(a, b, c, density_oo, t_ijk, &
+                                                      u_ijk, tbar_ijk, v_ijk)
 !
                      enddo ! loop over a
                   enddo ! loop over b
@@ -636,18 +691,23 @@ contains
       call mem%dealloc(v_ijk, wf%n_o, wf%n_o, wf%n_o)
       call mem%dealloc(tbar_ijk, wf%n_o, wf%n_o, wf%n_o)
 !
-   end subroutine gs_one_el_density_cc3_abc_cc3
+   end subroutine density_cc3_mu_ref_abc_cc3
 !
 !
-   module subroutine one_el_density_cc3_oo_N7_cc3(wf, a, b, c, density_oo, t_ijk, &
+   module subroutine density_cc3_mu_ref_oo_cc3(wf, a, b, c, density_oo, t_ijk, &
                                                    u_ijk, tbar_ijk, v_ijk)
 !!
-!!    CC3 Ground state density oo-part N7 scaling
+!!    One electron density excited-determinant/reference oo-term 
 !!    Written by Alexander C. Paul, August 2019
 !!
-!!    Calculates triples contribution to the oo-part of the GS-density
+!!    Calculates CC3 terms of the form:
 !!
-!!    D_kl += -1/2 sum_ij,abc t^abc_ijk tbar^abc_ijl
+!!          D_pq += sum_mu X_mu * < mu| e^(-T) E_pq e^T |HF >
+!!
+!!    where X_mu is a general amplitude (tbar or L)
+!!
+!!    explicit Term:
+!!          D_kl += -1/2 sum_ij,abc t^abc_ijk tbar^abc_ijl
 !!
 !!    All permutations for a,b,c have to be considered 
 !!    due to the restrictions in the a,b,c loops   
@@ -776,27 +836,37 @@ contains
 !
       end if
 !
-   end subroutine one_el_density_cc3_oo_N7_cc3
+   end subroutine density_cc3_mu_ref_oo_cc3
 !
 !
-   module subroutine gs_one_el_density_cc3_ijk_cc3(wf, density_ov, density_vv, omega,  &
-                                                   tbar_ai, tbar_abij, t_abij, cvs, keep_Y)
+   module subroutine density_cc3_mu_ref_ijk_cc3(wf, density_ov, density_vv, omega, &
+                                                tbar_ai, tbar_abij, t_abij,        &
+                                                cvs, keep_Y)
 !!
-!!    CC3 Ground state density contributions in batches of i,j,k
-!!    Written by Alexander C. Paul, August 2019
+!!    One electron density excited-determinant/reference term 
+!!    in batches of the occupied orbitals i,j,k
+!!    Written by Alexander C. Paul, July 2019
 !!
-!!    Construct t^abc_ijk and tbar^abc_ijk in batches of i,j,k and compute
-!!    the contributions to the ov- and vv-part of the ground state density matrix.
+!!    Computes terms of the form:
 !!
-!!    t_μ3 = -< μ3 |{U,T2}| HF >/ε_μ3
-!!    tbar_μ3 = (- ε_μ3)^-1 (tbar_μ1 < μ1 | [H,τ_ν3] | R > + tbar_μ2 < μ2 | [H,τ_ν3] | R >
+!!          D_pq += sum_mu X_mu * < mu| e^(-T) E_pq e^T |HF >
 !!
-!!    ov-part:
-!!       ρ^L_kc += sum_{ab}{ij} tbar^ab_ij (t^abc_ijk - t^bac_ijk)
-!!       ρ^L_ld -= sum_{ab}{ijk} tbar^abc_ijk t^ab_lj t^dc_ik
+!!    where X_mu is a general amplitude (tbar or L)
 !!
-!!    vv-part:
-!!       ρ^L_cd += 1/2 sum_{ab}{ijk} tbar^abc_ijk t^abd_ijk
+!!    Construct t^abc_ijk and tbar^abc_ijk in batches of a,b,c.
+!!    Calls routines calculating the actual density contributions
+!!    to the ov- and vv-blocks.
+!!
+!!    t_mu3 = -< mu3| [U,T2] |HF > (eps_mu3)^-1
+!!    tbar_mu3 = (- eps_mu3)^-1 (tbar_mu1 < mu1 | [H,tau_nu3] |R > 
+!!                             + tbar_mu2 < mu2 | [H,tau_nu3] |R >
+!!
+!!    ov-block:
+!!       rho^L_kc += sum_{abij} tbar^ab_ij (t^abc_ijk - t^bac_ijk)
+!!       rho^L_ld -= sum_{abijk} tbar^abc_ijk t^ab_lj t^dc_ik
+!!
+!!    vv-block:
+!!       rho^L_cd += 1/2 sum_{abijk} tbar^abc_ijk t^abd_ijk
 !!
       implicit none
 !
@@ -1185,7 +1255,7 @@ contains
                         call wf%construct_y_intermediate_vo3(i, j, k, tbar_abc, u_abc,   &
                                                             t_abij, Y_clik)
 !
-                        call wf%one_el_density_cc3_vv_N7(i, j, k, density_vv, t_abc,   &
+                        call wf%density_cc3_mu_ref_vv(i, j, k, density_vv, t_abc,   &
                                                          u_abc, tbar_abc, v_abc)
 !
                      enddo ! loop over k
@@ -1298,19 +1368,26 @@ contains
 !
       call mem%dealloc(Y_lcik, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-   end subroutine gs_one_el_density_cc3_ijk_cc3
+   end subroutine density_cc3_mu_ref_ijk_cc3
 !
 !
-   module subroutine one_el_density_cc3_vv_N7_cc3(wf, i, j, k, density_vv, t_abc, &
-                                                   u_abc, tbar_abc, v_abc)
+   module subroutine density_cc3_mu_ref_vv_cc3(wf, i, j, k, density_vv, t_abc, &
+                                               u_abc, tbar_abc, v_abc)
 !!
-!!    CC3 contribution to the vv-part of the GS-density
+!!    One electron density excited-determinant/reference vv-term 
 !!    Written by Alexander C. Paul, August 2019
 !!
-!!    D_cd += 1/2 sum_ab,ijk tbar^abc_ijk t^abd_ijk
+!!    Calculates CC3 terms of the form:
+!!
+!!          D_pq += sum_mu X_mu * < mu| e^(-T) E_pq e^T |HF >
+!!
+!!    where X_mu is a general amplitude (tbar or L)
+!!
+!!    explicit Term:
+!!          D_cd += 1/2 sum_ab,ijk tbar^abc_ijk t^abd_ijk
 !!
 !!    All permutations for i,j,k have to be considered 
-!!    due to the restrictions in the i,j,k loops
+!!    due to the restrictions in the i,j,k loops   
 !!
       implicit none
 !
@@ -1435,12 +1512,13 @@ contains
 !
       end if
 !
-   end subroutine one_el_density_cc3_vv_N7_cc3
+   end subroutine density_cc3_mu_ref_vv_cc3
 !
 !
-   module subroutine construct_y_intermediate_vo3_cc3(wf, i, j, k, tbar_abc, u_abc, t_abij, Y_clik)
+   module subroutine construct_y_intermediate_vo3_cc3(wf, i, j, k, tbar_abc, &
+                                                      u_abc, t_abij, Y_clik)
 !!
-!!    Construct Y_clik intermediate  
+!!    Construct Y_vooo intermediate  
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
 !!    Y_clik = sum_abj tbar^abc_ijk * t^ab_lj

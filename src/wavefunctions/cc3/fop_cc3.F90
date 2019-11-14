@@ -19,27 +19,64 @@
 submodule (cc3_class) fop_cc3
 !
 !!
-!!    First order properties submodule (CC3)
-!!    Written by Alexander C. Paul, August 2019
+!!    First order properties submodule
 !!
-!!    Routines for construction of the left-hand-side (ρ^L) 
-!!    and right-hand-side (ρ^R) transition densities
-!!    for the calculation of transition moments.
+!!    Routines for construction of the CC3 transition densities.
 !!
 !!    Equation-of-motion (EOM):
 !!
 !!    (Following Koch, H., Kobayashi, R., Sanches de Merás, A., and Jørgensen, P.,
 !!    J. Chem. Phys. 100, 4393 (1994))
 !!
-!!    The transition density matrices are constructed as follows:
+!!    In general a CC density matrix can be written as:
 !!
-!!       ρ^L_pq = < k | E_pq | CC >
-!!       ρ^R_pq = < Λ | E_pq | k >
+!!          D_pq = < X| e^(-T) E_pq e^T |Y >
 !!
-!!    where |k> and <k| are the eigenvectors of the Jacobian with amplitudes R_μ, L_μ
+!!    where X and Y are left and right state vectors with contributions 
+!!    from a reference determinant and excited determinants (< mu|, |nu >):
 !!
-!!       | k > = sum_μ (τ_μ | CC > R_{k,μ} - tbar_μ | CC > R_{k,μ})
-!!       < k | = sum_μ L_{k,μ} < μ | e^-T
+!!          D_pq =             X_ref < HF| e^(-T) E_pq e^T |HF >  Y_ref
+!!                 + sum_mu    X_mu  < mu| e^(-T) E_pq e^T |HF >  Y_ref
+!!                 + sum_mu    X_ref < HF| e^(-T) E_pq e^T |mu >  Y_mu
+!!                 + sum_mu,nu X_mu  < mu| e^(-T) E_pq e^T |nu >  Y_nu
+!!
+!!    Depending on the type of density matrix (Ground state, transition , 
+!!    excited state, interstate transition) different states and thus different
+!!    amplitudes X_ref, X_mu, Y_ref and Y_mu will contribute.
+!!
+!!    In EOM theory the states can be written as the following vectors:
+!!
+!!          |CC >     = R_0 = (1, 0)
+!!          |Lambda > = L_0 = (1, tbar_mu)
+!!          |R_k >    = R_k = (-sum_mu(tbar_mu*R_mu), R_mu)
+!!          |L_k >    = L_k = (0, L_mu)
+!!
+!!    The routine names derive from the contribution of the vectors:
+!!
+!!       ref_ref: first component of the vector for the left and right state
+!!
+!!       mu_ref:  second component of the vector for the left and 
+!!                first component of the vector for the right state
+!!
+!!       ref_mu:  first component of the vector for the left and 
+!!                second component of the vector for the right state
+!!
+!!       mu_nu:   second component of the vector for the left and right state
+!!
+!!
+!!    The EOM transition density matrices are constructed as follows:
+!!
+!!          D^L_pq = < k| E_pq |CC >
+!!          D^R_pq = < Lambda| E_pq |k >
+!!
+!!    where |k > and < k| are the eigenvectors of the Jacobian 
+!!    with the amplitudes R_mu, L_mu
+!!
+!!          |k > = - tbar R_k |CC > + sum_mu (tau_mu |CC > R_{k,mu})
+!!          < k| = sum_mu L_{k,mu} < mu| e^-T
+!!
+!!    For the left transition density all the ground state terms can be reused, 
+!!    if tbar is replaced by L_k and the ref_ref term is neglected.
 !!
 !
    implicit none
@@ -53,12 +90,12 @@ contains
 !!    Construct left one-electron transition density
 !!    Written by Alexander C. Paul, June 2019
 !!
-!!          ρ^L_pq = < k | E_pq | CC >
+!!          D^L_pq = < k| E_pq |CC >
 !!
-!!    where <k| is the left eigenvector of the Jacobian
-!!    with amplitudes L_μ
+!!    where < k| is the left eigenvector of the Jacobian
+!!    with amplitudes L_mu
 !!
-!!          < k | = sum_μ L_{k,μ} < μ | e^-T
+!!          < k| = sum_mu L_{k,mu} < mu| e^-T
 !!
       implicit none
 !
@@ -78,13 +115,17 @@ contains
 !
       integer :: i, j, a, b
 !
+      type(timings) :: L_TDM_timer
       type(timings) :: cc3_timer, ccsd_timer
       type(timings) :: cc3_ijk_timer, cc3_abc_timer
 !
-      cc3_ijk_timer  = timings('CC3 left TDM ijk batching')
-      cc3_abc_timer  = timings('CC3 left TDM abc batching')
-      cc3_timer      = timings('Total CC3 contribution left TDM')
-      ccsd_timer     = timings('Total CCSD contribution left TDM')
+      L_TDM_timer    = timings('Left transition density', pl='m')
+      cc3_ijk_timer  = timings('CC3 left TDM ijk batching', pl='n')
+      cc3_abc_timer  = timings('CC3 left TDM abc batching', pl='n')
+      cc3_timer      = timings('Total CC3 contribution left TDM', pl='n')
+      ccsd_timer     = timings('Total CCSD contribution left TDM', pl='n')
+!
+      call L_TDM_timer%turn_on()
 !
       call mem%alloc(L_k, wf%n_es_amplitudes)
       call wf%read_excited_state(L_k, state, 'left')
@@ -141,9 +182,10 @@ contains
       call zero_array(density_vv, wf%n_v**2)
 !
       call cc3_ijk_timer%turn_on()
-      call wf%gs_one_el_density_cc3_ijk(density_ov, density_vv,               &
-                                        wf%left_excitation_energies(state),   &
-                                        L_ai, L_abij, t_abij, cvs=wf%cvs)
+      call wf%density_cc3_mu_ref_ijk(density_ov, density_vv,             &
+                                     wf%left_excitation_energies(state), &
+                                     L_ai, L_abij, t_abij,               &
+                                     cvs=wf%cvs, keep_Y=.false.)
       call cc3_ijk_timer%turn_off()
 !
 !     Add CC3 ov and vv contributions to the density matrix
@@ -174,7 +216,6 @@ contains
 !
       call mem%dealloc(density_vv, wf%n_v, wf%n_v)
 !
-!
 !     :: CC3 contribution to oo-part ::
 !     ::     in batches of a,b,c     ::
 !
@@ -195,9 +236,9 @@ contains
       call zero_array(density_oo, wf%n_o**2)
 !
       call cc3_abc_timer%turn_on()
-      call wf%gs_one_el_density_cc3_abc(density_oo, &
-                                        wf%left_excitation_energies(state),  &
-                                        L_ia, L_ijab, t_ijab, cvs=wf%cvs)
+      call wf%density_cc3_mu_ref_abc(density_oo,                         &
+                                     wf%left_excitation_energies(state), &
+                                     L_ia, L_ijab, t_ijab, cvs=wf%cvs)
       call cc3_abc_timer%turn_off()
 !
       call mem%dealloc(L_ia, wf%n_o, wf%n_v)
@@ -219,6 +260,8 @@ contains
       call mem%dealloc(density_oo, wf%n_o, wf%n_o)
       call cc3_timer%turn_off()
 !
+      call L_TDM_timer%turn_off()
+!
    end subroutine construct_left_transition_density_cc3
 !
 !
@@ -227,12 +270,12 @@ contains
 !!    Construct right one-electron transition density
 !!    Written by Alexander C. Paul, June 2019
 !!
-!!          ρ^R_pq = < Λ | E_pq | k >
+!!          rho^R_pq = < Lambda| E_pq |k >
 !!
-!!    where |k> is the right eigenvector of the Jacobian
-!!    with amplitudes R_μ
+!!    where |k > is the right eigenvector of the Jacobian
+!!    with amplitudes R_mu
 !!
-!!          | k > = sum_μ (τ_μ | CC > R_{k,μ} - tbar_μ | CC > R_{k,μ}) 
+!!          |k > = sum_mu (tau_mu |CC > R_{k,mu} - tbar_mu |CC > R_{k,mu}) 
 !!
       implicit none
 !
@@ -259,12 +302,14 @@ contains
       type(timings) :: R_TDM_timer, cc3_timer, ccsd_timer
       type(timings) :: cc3_ijk_timer, cc3_abc_timer, cc3_int_timer
 !
-      R_TDM_timer    = timings('Right transition density')
-      cc3_ijk_timer  = timings('CC3 right TDM ijk batching')
-      cc3_abc_timer  = timings('CC3 right TDM abc batching')
-      cc3_int_timer  = timings('CC3 right TDM contributions from intermediates')
-      cc3_timer      = timings('Total CC3 contribution right TDM')
-      ccsd_timer     = timings('Total CCSD contribution right TDM')
+      R_TDM_timer    = timings('Right transition density', pl='m')
+      cc3_ijk_timer  = timings('CC3 right TDM ijk batching', pl='n')
+      cc3_abc_timer  = timings('CC3 right TDM abc batching', pl='n')
+      cc3_int_timer  = timings('CC3 right TDM contributions from intermediates', pl='n')
+      cc3_timer      = timings('Total CC3 contribution right TDM', pl='n')
+      ccsd_timer     = timings('Total CCSD contribution right TDM', pl='n')
+!
+      call R_TDM_timer%turn_on()
 !
       call R_TDM_timer%turn_on()
 !
@@ -311,12 +356,12 @@ contains
 !
 !
       call wf%density_doubles_mu_ref_ov(wf%right_transition_density, &
-                                           wf%t1bar, R_aibj)
+                                        wf%t1bar, R_aibj)
 !
       call wf%density_doubles_mu_ref_oo(wf%right_transition_density, &
-                                           tbar_aibj, R_aibj)
+                                        tbar_aibj, R_aibj)
       call wf%density_doubles_mu_ref_vv(wf%right_transition_density, &
-                                           tbar_aibj, R_aibj)
+                                        tbar_aibj, R_aibj)
 !
       call ccsd_timer%turn_off()
 !
@@ -339,7 +384,7 @@ contains
       call mem%alloc(density_ov, wf%n_o, wf%n_v)
 !
       call cc3_int_timer%turn_on()
-      call wf%right_transition_density_cc3_ov_gs_contr(density_ov, R_ai)
+      call wf%density_cc3_mu_nu_ov(density_ov, R_ai)
 !
       call mem%alloc(density_oo, wf%n_o, wf%n_o)
       call zero_array(density_oo, wf%n_o**2)
@@ -347,8 +392,8 @@ contains
       call mem%alloc(density_vv, wf%n_v, wf%n_v)
       call zero_array(density_vv, wf%n_v**2)
 !
-      call wf%right_transition_density_cc3_Y_contr(density_oo, density_ov, &
-                                                   density_vv, R_ai, R_aibj)
+      call wf%density_cc3_mu_nu_oo_ov_vv(density_oo, density_ov, &
+                                         density_vv, R_ai, R_aibj)
       call cc3_int_timer%turn_off()
 !
 !     :: CC3 contribution in batches of i,j,k ::
@@ -365,10 +410,10 @@ contains
       call zero_array(density_vo, wf%n_v*wf%n_o)
 !
       call cc3_ijk_timer%turn_on
-      call wf%right_transition_density_cc3_ijk(density_ov, density_vo, density_vv,  &
-                                               wf%right_excitation_energies(state), &
-                                               wf%t1bar, tbar_abij,                 &
-                                               R_ai, R_abij, tbar_R_overlap)
+      call wf%density_cc3_mu_nu_ijk(density_ov, density_vo, density_vv,  &
+                                    wf%right_excitation_energies(state), &
+                                    wf%t1bar, tbar_abij,                 &
+                                    R_ai, R_abij, tbar_R_overlap)
       call cc3_ijk_timer%turn_off
 !
       call mem%dealloc(R_ai, wf%n_v, wf%n_o) 
@@ -376,7 +421,7 @@ contains
 !     :: Contribution of the vo block to the ov block ::
 !
       call cc3_int_timer%turn_on
-      call wf%right_transition_density_vo_contr_to_ov(density_ov, density_vo)
+      call wf%density_cc3_mu3_nu2_ov(density_ov, density_vo)
       call cc3_int_timer%freeze()
 !
 !     Done with vo-block - add to density matrix
@@ -422,8 +467,8 @@ contains
       call sort_12_to_21(wf%t1bar, tbar_ia, wf%n_v, wf%n_o)
 !
       call cc3_abc_timer%turn_on
-      call wf%right_transition_density_cc3_abc(density_oo, wf%right_excitation_energies(state), &
-                                               tbar_ia, tbar_ijab, R_ijab)
+      call wf%density_cc3_mu_nu_abc(density_oo, wf%right_excitation_energies(state), &
+                                    tbar_ia, tbar_ijab, R_ijab)
       call cc3_abc_timer%turn_off
 !
       call mem%dealloc(tbar_ia, wf%n_o, wf%n_v)
@@ -448,11 +493,11 @@ contains
 !     :: Final Contribution to the ov-block ::
 !        
 !     Z-intermediate constructed and written to disk 
-!     in right_transition_density_cc3_ijk:
+!     in density_cc3_mu_nu_ijk:
 !
 !        Z_bcjk = tbar^abc_ijk R^a_i
 !
-      call wf%right_transition_density_cc3_Z_contr(density_ov)
+      call wf%density_cc3_mu_nu_ov_Z_term(density_ov)
 !
 !$omp parallel do private(a, i)
       do a = 1, wf%n_v
@@ -483,18 +528,24 @@ contains
    end subroutine construct_right_transition_density_cc3
 !
 !
-   module subroutine right_transition_density_cc3_ov_gs_contr_cc3(wf, density_ov, R_ai)
+   module subroutine density_cc3_mu_nu_ov_cc3(wf, density_ov, R_ai)
 !!
-!!    Right transition density ov-contribution from ground state density
+!!    One electron density (EOM) excited-determinant/excited-determinant ov-term 
 !!    Written by Alexander C. Paul, August 2019
+!!
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu,nu X_mu < mu| e^(-T) E_pq e^T |nu > Y_nu
+!!
+!!    explicit term in this routine:
+!!
+!!       D^R_ld = -1/2 sum_{abcijk} tbar^abc_ijk(R^c_l t^abd_ijk + R^d_k t^abc_ijl)
+!!                = sum_{abcijk}( -1/2 tbar^abc_ijk t^abc_ijl R^d_k 
+!!                                -1/2 tbar^abc_ijk t^abd_ijk R^c_l)
+!!                = sum_k D_lk R^d_k - sum_c D_cd R^c_l
 !!
 !!    Calculates the contribution of the oo- and vv-blocks
 !!    of the GS density to the ov-block of the right TDM
-!!
-!!       ρ^R_ld = -1/2 sum_{abcijk} tbar^abc_ijk(R^c_l t^abd_ijk + R^d_k t^abc_ijl)
-!!              = sum_{abcijk}( -1/2 tbar^abc_ijk t^abc_ijl R^d_k 
-!!                            -1/2 tbar^abc_ijk t^abd_ijk R^c_l)
-!!              = sum_k D_lk R^d_k - sum_c D_cd R^c_l
 !!
       implicit none
 !
@@ -504,7 +555,7 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: R_ai
 !
-!     ρ^R_ld += sum_k D_lk R^d_k
+!     rho^R_ld += sum_k D_lk R^d_k
 !
       call dgemm('N', 'T',                &
                   wf%n_o,                 &
@@ -519,7 +570,7 @@ contains
                   density_ov,             &
                   wf%n_o)
 !
-!     ρ^R_ld -= sum_c R^c_l D_cd
+!     rho^R_ld -= sum_c R^c_l D_cd
 !
       call dgemm('T', 'N',                &
                   wf%n_o,                 &
@@ -534,33 +585,39 @@ contains
                   density_ov,             &
                   wf%n_o)
 !
-   end subroutine right_transition_density_cc3_ov_gs_contr_cc3
+   end subroutine density_cc3_mu_nu_ov_cc3
 !
 !
-   module subroutine right_transition_density_cc3_Y_contr_cc3(wf, density_oo, density_ov, &
-                                                              density_vv, R_ai, R_aibj)
+   module subroutine density_cc3_mu_nu_oo_ov_vv_cc3(wf, density_oo, density_ov, &
+                                                    density_vv, R_ai, R_aibj)
 !!
-!!    Right transition density contribution from Y-intermediates
+!!    One electron density (EOM) excited-determinant/excited-determinant 
+!!    oo-, ov- and vv-term 
 !!    Written by Alexander C. Paul, August 2019
+!!
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu,nu X_mu < mu| e^(-T) E_pq e^T |nu > Y_nu
+!!
+!!    explicit terms in this routine:
+!!
+!!          D^R_lk -= sum{abcij}  tbar^abc_ijk t^bc_jl R^a_i
+!!                 -= sum{ai}  Y_alki R^a_i
+!!
+!!          D^R_ld -= sum{abcijk} tbar^abc_ijk (t^bd_jk R^ac_il + t^bc_jl R^ad_ik)
+!!                 -= sum{aci} Y_cadi R^ac_il + sum{aik} Y_alki R^ad_ik
+!!
+!!          D^R_cd += sum{abijk}  tbar^abc_ijk t^bd_jk R^a_i
+!!                 += sum{ai}  Y_cadi R^a_i
 !!
 !!    Calculates the contribution of the Y_clik- and Y_bcdk-intermediates
 !!    to the oo-, ov- and vv-block of the right TDM
 !!
 !!    The intermediates are constructed and written to file during
 !!    the construction of the GS-density and while solving for the multipliers
-!!       Y_bcek = sum_aij tbar^abc_ijk * t^ae_ij
-!!       Y_clik = sum_abj tbar^abc_ijk * t^ab_lj
 !!
-!!    Contribution to the density matrix
-!!
-!!       ρ^R_lk -= sum{abcij}  tbar^abc_ijk t^bc_jl R^a_i
-!!              -= sum{ai}  Y_alki R^a_i
-!!
-!!       ρ^R_ld -= sum{abcijk} tbar^abc_ijk (t^bd_jk R^ac_il + t^bc_jl R^ad_ik)
-!!              -= sum{aci} Y_cadi R^ac_il + sum{aik} Y_alki R^ad_ik
-!!
-!!       ρ^R_cd += sum{abijk}  tbar^abc_ijk t^bd_jk R^a_i
-!!              += sum{ai}  Y_cadi R^a_i
+!!          Y_bcek = sum_aij tbar^abc_ijk * t^ae_ij
+!!          Y_clik = sum_abj tbar^abc_ijk * t^ab_lj
 !!
       implicit none
 !
@@ -619,7 +676,7 @@ contains
 !
          call mem%dealloc(Y_cadi, wf%n_v, wf%n_v, wf%n_v, batch_i%length)
 !
-!        ρ^R_cd += sum{ai} Y_cadi R^a_i
+!        rho^R_cd += sum{ai} Y_cadi R^a_i
 !
          call dgemv('N',                     &
                      wf%n_v**2,              &
@@ -633,7 +690,7 @@ contains
                      rho_dc,                 &
                      1)
 !
-!        ρ^R_ld -= sum{aci} Y_cadi R^ac_il
+!        rho^R_ld -= sum{aci} Y_cadi R^ac_il
 !
          call dgemm('N', 'T',                      &
                      wf%n_o,                       &
@@ -673,7 +730,7 @@ contains
       call sort_1234_to_2314(Y_alki, Y_lkai, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       call mem%dealloc(Y_alki, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-!     ρ^R_kl -= sum{ai} Y_alki R^a_i     
+!     rho^R_kl -= sum{ai} Y_alki R^a_i     
 !
       call dgemv('N',            &
                   wf%n_o**2,     &
@@ -687,7 +744,7 @@ contains
                   density_oo,    &
                   1)
 !
-!     ρ^R_ld -= sum{aik} Y_alki R^ad_ik
+!     rho^R_ld -= sum{aik} Y_alki R^ad_ik
 !
       call dgemm('N', 'T',          &
                   wf%n_o,           &
@@ -704,31 +761,43 @@ contains
 !
       call mem%dealloc(Y_lkai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
-   end subroutine right_transition_density_cc3_Y_contr_cc3
+   end subroutine density_cc3_mu_nu_oo_ov_vv_cc3
 !
 !
-   module subroutine right_transition_density_cc3_ijk_cc3(wf, density_ov, density_vo, &
-                                                          density_vv, omega,          &
-                                                          tbar_ai, tbar_abij,         &
-                                                          R_ai, R_abij, tbar_R_overlap)
+   module subroutine density_cc3_mu_nu_ijk_cc3(wf, density_ov, density_vo, &
+                                               density_vv, omega,          &
+                                               tbar_ai, tbar_abij,         &
+                                               R_ai, R_abij, tbar_R_overlap)
 !!
-!!    Right transition density contributions in batches of ijk
-!!    Written by Alexander C. Paul, August 2019
+!!    One electron density excited-determinant/excited-determinant term 
+!!    in batches of the occupied orbitals i,j,k
+!!    Written by Alexander C. Paul, July 2019
+!!
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu,nu X_mu * < mu| e^(-T) E_pq e^T |nu > Y_nu
+!!
+!!    where X_mu and Y_nu are general amplitude (tbar or L)
+!!
 !!
 !!    Construct R^abc_ijk and tbar^abc_ijk in batches of i,j,k and compute
 !!    the contributions to the vo- and vv-block of the right TDM.
 !!
-!!    R_μ3 = (ω - ε_μ3)^-1 (< μ3 | [H,R_2] | HF > + < μ3 | [[H,R_1],T_2] | HF >)
-!!    tbar_μ3 = (- ε_μ3)^-1 (tbar_μ1 < μ1 | [H,τ_ν3] | R > + tbar_μ2 < μ2 | [H,τ_ν3] | R >
+!!    explicit terms in this routine
+!!
+!!    R_mu3 = (omega - eps_mu3)^-1 (< mu3| [H,R_2] |HF > 
+!!                                + < mu3| [[H,R_1],T_2] |HF >)
+!!    tbar_mu3 = (- eps_mu3)^-1 (tbar_mu1 < mu1| [H,tau_nu3] |R > 
+!!                             + tbar_mu2 < mu2| [H,tau_nu3] |R >
 !!
 !!    vo-part:
-!!       ρ^R_ck += 1/2 sum{abij} tbar^abc_ijk R^ab_ij
+!!          D^R_ck += 1/2 sum{abij} tbar^abc_ijk R^ab_ij
 !!
 !!    vv-part:
-!!       ρ^R_cd += 1/2 sum_{abijk} tbar^abc_ijk R^abd_ijk
+!!          D^R_cd += 1/2 sum_{abijk} tbar^abc_ijk R^abd_ijk
 !!
 !!    Also construct the intermediate Z_bcjk needed for the ov-block
-!!       Z_bcjk = sum{ai} tbar^abc_ijk R^a_i
+!!          Z_bcjk = sum{ai} tbar^abc_ijk R^a_i
 !!
       implicit none
 !
@@ -1166,7 +1235,7 @@ contains
 !                       the whole tbar3, R3 arrays. 
 !                       All the permutations yield the same result
 !
-                        call wf%right_transition_density_vo_N6(i, j, k, tbar_abc, v_abc,  &
+                        call wf%density_cc3_mu_nu_vo(i, j, k, tbar_abc, v_abc,  &
                                                                density_vo, R_abij)
 !
 !                       Construct intermediate used for the ov-block:
@@ -1234,10 +1303,10 @@ contains
 !
                         call wf%scale_triples_biorthonormal_factor(i, j, k, R_abc)
 !
-                        call wf%one_el_density_cc3_vv_N7(i, j, k, density_vv, R_abc,   &
-                                                         u_abc, tbar_abc, v_abc)
+                        call wf%density_cc3_mu_ref_vv(i, j, k, density_vv, R_abc, &
+                                                      u_abc, tbar_abc, v_abc)
 !
-                        call wf%construct_x_ai_intermediate(i, j, k, R_abc, u_abc,  &
+                        call wf%construct_x_ai_intermediate(i, j, k, R_abc, u_abc, &
                                                             density_ai, tbar_abij)
 !
 !                       Overlap:
@@ -1355,23 +1424,28 @@ contains
       call wf%Z_bcjk%close_()
       call mem%dealloc(Z_bcjk, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-   end subroutine right_transition_density_cc3_ijk_cc3
+   end subroutine density_cc3_mu_nu_ijk_cc3
 !
 !
-   module subroutine right_transition_density_vo_N6_cc3(wf, i, j, k, tbar_abc, v_abc, density_vo, R_abij)
+   module subroutine density_cc3_mu_nu_vo_cc3(wf, i, j, k, tbar_abc,   &
+                                              v_abc, density_vo, R_abij)
 !!
-!!    Constructs vo-block of the right transition density matrix N6 scaling term
+!!    One electron density (EOM) excited-determinant/excited-determinant vo-term 
 !!    Written by Alexander C. Paul, August 2019
 !!
-!!    tbar_μ3 = (- ε_μ3)^-1 (tbar_μ1 < μ1 | [H,τ_ν3] | R > 
-!!                         + tbar_μ2 < μ2 | [H,τ_ν3] | R >
+!!    Computes terms of the form:
 !!
-!!       ρ^R_ck += sum_{abij} tbar^abc_ijk R^ab_ij
+!!          D_pq += sum_mu,nu X_mu < mu| e^(-T) E_pq e^T |nu > Y_nu
+!!
+!!    explicit term in this routine:
+!!
+!!          D^R_ck += sum_{abij} tbar^abc_ijk R^ab_ij
 !!
 !!    All permutations for i,j,k have to be considered 
 !!    due to the restrictions in the i,j,k loops
 !!
 !!    based on construct_x_ai_intermediate_cc3
+!!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
       implicit none
 !
@@ -1379,14 +1453,14 @@ contains
 !
       integer, intent(in) :: i, j, k
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: tbar_abc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: v_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)         :: tbar_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)        :: v_abc
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: density_vo
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)              :: density_vo
 !
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: R_abij
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: R_abij
 !
-!     ρ^R_ck += 1/2 sum_{abij} tbar^abc_ijk R^ab_ij
+!     rho^R_ck += 1/2 sum_{abij} tbar^abc_ijk R^ab_ij
 !
       call dgemv('T',               &
                   wf%n_v**2,        & 
@@ -1400,7 +1474,7 @@ contains
                   density_vo(:,k),  &
                   1)
 !
-!     ρ^R_ci += 1/2 sum_{abjk} tbar^cab_ijk R^ab_jk
+!     rho^R_ci += 1/2 sum_{abjk} tbar^cab_ijk R^ab_jk
 !
       call dgemv('N',               &
                   wf%n_v,           & 
@@ -1418,7 +1492,7 @@ contains
 !
       call sort_123_to_231(tbar_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-!     ρ^R_cj += 1/2 sum_{abik} tbar^bca_ijk R^ab_ki
+!     rho^R_cj += 1/2 sum_{abik} tbar^bca_ijk R^ab_ki
 !
       call dgemv('N',               &
                   wf%n_v,           & 
@@ -1439,7 +1513,7 @@ contains
 !
          call sort_123_to_213(tbar_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-!        ρ^R_ck += 1/2 sum_{abij} tbar^bac_ijk R^ab_ji
+!        rho^R_ck += 1/2 sum_{abij} tbar^bac_ijk R^ab_ji
 !
          call dgemv('T',               &
                      wf%n_v**2,        & 
@@ -1453,7 +1527,7 @@ contains
                      density_vo(:,k),  &
                      1)
 !
-!        ρ^R_cj += 1/2 sum_{abik} tbar^acb_ijk R^ab_ik
+!        rho^R_cj += 1/2 sum_{abik} tbar^acb_ijk R^ab_ik
 !
          call dgemv('N',               &
                      wf%n_v,           & 
@@ -1471,7 +1545,7 @@ contains
 !
          call sort_123_to_132(tbar_abc, v_abc, wf%n_v, wf%n_v, wf%n_v)
 !
-!        ρ^R_ci += 1/2 sum_{abik} tbar^cba_ijk R^ab_kj
+!        rho^R_ci += 1/2 sum_{abik} tbar^cba_ijk R^ab_kj
 !
          call dgemv('N',               &
                      wf%n_v,           & 
@@ -1487,25 +1561,25 @@ contains
 !
       end if
 !
-   end subroutine right_transition_density_vo_N6_cc3
+   end subroutine density_cc3_mu_nu_vo_cc3
 !
 !
-   module subroutine construct_Z_intermediate_cc3(wf, i, j, k, tbar_abc, v_abc, Z_bcjk, R_ai)
+   module subroutine construct_Z_intermediate_cc3(wf, i, j, k, tbar_abc, &
+                                                  v_abc, Z_bcjk, R_ai)
 !!
 !!    Constructs Z-intermediate 
 !!    Written by Alexander C. Paul, August 2019
 !!
-!!    needed for the ov-block of the right TDM
+!!    based on jacobian_cc3_b2_fock_cc3
+!!    Written by Alexander C. Paul and Rolf H. Myhre, Feb 2019
 !!
-!!    tbar_μ3 = (- ε_μ3)^-1 (tbar_μ1 < μ1 | [H,τ_ν3] | R > + tbar_μ2 < μ2 | [H,τ_ν3] | R >
+!!    needed for the ov-block of the right TDM
 !!
 !!       Z_bcjk += sum_{ai} tbar^abc_ijk R^a_i
 !!
-!!    All permutations for i,j,k have to be considered due to the restrictions in the i,j,k loops
-!!
-!!    based on jacobian_cc3_b2_fock_cc3
-!!
-      
+!!    All permutations for i,j,k have to be considered 
+!!    due to the restrictions in the i,j,k loops
+!!      
       implicit none
 !
       class(cc3) :: wf
@@ -1623,15 +1697,22 @@ contains
    end subroutine construct_Z_intermediate_cc3
 !
 !
-   module subroutine right_transition_density_vo_contr_to_ov_cc3(wf, density_ov, density_vo)
+   module subroutine density_cc3_mu3_nu2_ov_cc3(wf, density_ov, density_vo)
+!!
+!!    One electron density (EOM) triples-determinant/doubles-determinant ov-term 
+!!    Written by Alexander C. Paul, August 2019
+!!
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu,nu X_mu < mu| e^(-T) E_pq e^T |nu > Y_nu
+!!
+!!    explicit term in this routine:
+!!
+!!          D^R_ld += sum{abcijk} 1/2 tbar^abc_ijk R^ab_ij(2t^cd_kl-t^cd_lk)
+!!                 += sum{ck} D^R_ck (2t^cd_kl-t^cd_lk)
 !!
 !!    Calculates the contribution of the vo-block of the right TDM to
 !!    the ov-block of the right TDM
-!!
-!!       ρ^R_ld += sum{abcijk} 1/2 tbar^abc_ijk R^ab_ij(2t^cd_kl-t^cd_lk)
-!!              += sum{ck} ρ^R_ck (2t^cd_kl-t^cd_lk)
-!!
-!!    Written by Alexander C. Paul, August 2019
 !!
       implicit none
 !
@@ -1667,23 +1748,35 @@ contains
 !
       call mem%dealloc(u_ckld, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-   end subroutine right_transition_density_vo_contr_to_ov_cc3
+   end subroutine density_cc3_mu3_nu2_ov_cc3
 !
 !
-   module subroutine right_transition_density_cc3_abc_cc3(wf, density_oo, omega, &
-                                                          tbar_ia, tbar_ijab, R_ijab)
+   module subroutine density_cc3_mu_nu_abc_cc3(wf, density_oo, omega, &
+                                               tbar_ia, tbar_ijab, R_ijab)
 !!
-!!    Right transition density contributions in batches of ijk
+!!    One electron density excited-determinant/excited-determinant term 
+!!    in batches of the virtual orbitals a,b,c
 !!    Written by Alexander C. Paul, August 2019
+!!
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu,nu X_mu * < mu| e^(-T) E_pq e^T |nu > Y_nu
+!!
+!!    where X_mu and Y_nu are general amplitude (tbar or L)
 !!
 !!    Construct R^abc_ijk and tbar^abc_ijk in batches of a,b,c
 !!    and compute the contribution to the oo-block of the right TDM.
 !!
-!!    R_μ3 = (ω - ε_μ3)^-1 (< μ3 | [H,R_2] | HF > + < μ3 | [[H,R_1],T_2] | HF >)
-!!    tbar_μ3 = (- ε_μ3)^-1 (tbar_μ1 < μ1 | [H,τ_ν3] | R > + tbar_μ2 < μ2 | [H,τ_ν3] | R >
+!!    explicit terms in this routine
+!!
+!!    R_mu3 = (omega - eps_mu3)^-1 (< mu3| [H,R_2] |HF > 
+!!                                + < mu3| [[H,R_1],T_2] |HF >)
+!!
+!!    tbar_mu3 = (- eps_mu3)^-1 (tbar_mu1 < mu1| [H,tau_nu3] |R > 
+!!                             + tbar_mu2 < mu2| [H,tau_nu3] |R >
 !!
 !!    oo-part:
-!!       ρ^R_kl -= 1/2 sum_{abcij} tbar^abc_ijl R^abc_ijk
+!!          D^R_kl -= 1/2 sum_{abcij} tbar^abc_ijl R^abc_ijk
 !!
       implicit none
 !
@@ -2141,8 +2234,8 @@ contains
 !
                         call wf%omega_cc3_eps_abc_batch(a, b, c, tbar_ijk, zero)
 !
-                        call wf%one_el_density_cc3_oo_N7(a, b, c, density_oo, R_ijk,   &
-                                                         u_ijk, tbar_ijk, v_ijk)
+                        call wf%density_cc3_mu_ref_oo(a, b, c, density_oo, R_ijk,   &
+                                                      u_ijk, tbar_ijk, v_ijk)
 !
                      enddo ! loop over c
                   enddo ! loop over b
@@ -2234,21 +2327,30 @@ contains
 !
       call mem%dealloc(t_ijab, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
 !
-   end subroutine right_transition_density_cc3_abc_cc3
+   end subroutine density_cc3_mu_nu_abc_cc3
 !
 !
-   module subroutine right_transition_density_cc3_Z_contr_cc3(wf, density_ov)
+   module subroutine density_cc3_mu_nu_ov_Z_term_cc3(wf, density_ov)
 !!
-!!    Right transition density Z intermediate contributions
+!!    One electron density (EOM) excited-determinant/excited-determinant 
+!!    ov-term from Z_intermediate
 !!    Written by Alexander C. Paul, August 2019
+!!
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu,nu X_mu < mu| e^(-T) E_pq e^T |nu > Y_nu
+!!
+!!    explicit term in this routine:
+!!
+!!       D^R_ld += sum_{abcijk} tbar^abc_ijk R^a_i (t^bcd_jkl - t^bcd_jlk)
+!!              += sum_{bcjk} Z_bcjk (t^bcd_jkl - t^bcd_jlk)
 !!
 !!    Construct t3-amplitudes in batches of i,j,k and calculate the
 !!    contribution to the ov-block involving the Z-intermediate
 !!
-!!       t_μ3 = -< μ3 |{U,T2}| HF >/ε_μ3
+!!       t_mu3 = -< mu3| [U,T2] |HF > (eps_mu3)^-1
 !!
-!!       ρ^R_ld += sum_{abcijk} tbar^abc_ijk R^a_i (t^bcd_jkl - t^bcd_jlk)
-!!              += sum_{bcjk} Z_bcjk (t^bcd_jkl - t^bcd_jlk)
+!!    The Z-intermediate was constructed in density_cc3_mu_nu_ijk_cc3
 !!
       implicit none
 !
@@ -2507,7 +2609,7 @@ contains
 !
       call mem%dealloc(density_ai, wf%n_v, wf%n_o)
 !
-   end subroutine right_transition_density_cc3_Z_contr_cc3
+   end subroutine density_cc3_mu_nu_ov_Z_term_cc3
 !
 !
 end submodule

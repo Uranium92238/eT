@@ -61,7 +61,7 @@ contains
       call output%printf('Preparing for (a0) right excited state equations', pl='v', &
                           chars=[trim(wf%name_)], fs='(/t3,a)')
 !
-      call wf%prep_cc3_jacobian_intermediates()
+      call wf%prepare_cc3_jacobian_intermediates()
       call wf%save_jacobian_a1_intermediates()
       call wf%save_jacobian_c2_intermediates()
       call wf%save_jacobian_d2_intermediate()
@@ -98,15 +98,15 @@ contains
 !
       call wf%ccsd%prepare_for_jacobian_transpose()
 !
-      call wf%prep_cc3_jacobian_intermediates()
-      call wf%prep_cc3_jacobian_trans_integrals()
+      call wf%prepare_cc3_jacobian_intermediates()
+      call wf%prepare_cc3_jacobian_trans_integrals()
 !
       call prep_timer%turn_off()
 !
    end subroutine prepare_for_jacobian_transpose_cc3
 !
 !
-   module subroutine prep_cc3_jacobian_trans_integrals_cc3(wf)
+   module subroutine prepare_cc3_jacobian_trans_integrals_cc3(wf)
 !!
 !!    Jacobian transpose transformation prepare integral files
 !!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
@@ -289,10 +289,10 @@ contains
       call batch_d%determine_limits(1)
       call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_d%length)
 !
-   end subroutine prep_cc3_jacobian_trans_integrals_cc3
+   end subroutine prepare_cc3_jacobian_trans_integrals_cc3
 !
 !
-   module subroutine prep_cc3_g_lbkc_t_file_cc3(wf)
+   module subroutine prepare_cc3_g_lbkc_t_file_cc3(wf)
 !!
 !!    Prepare ovov-integral 
 !!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
@@ -355,10 +355,10 @@ contains
       call wf%g_lbkc_t%close_()
 
 !
-   end subroutine prep_cc3_g_lbkc_t_file_cc3
+   end subroutine prepare_cc3_g_lbkc_t_file_cc3
 !
 !
-   module subroutine prep_cc3_jacobian_intermediates_cc3(wf)
+   module subroutine prepare_cc3_jacobian_intermediates_cc3(wf)
 !!
 !!
 !!    Prepare intermediates for jacobian CC3 transformations
@@ -433,7 +433,7 @@ contains
 !     Construct the g_lbkc_t file (only needed for the intermediates)
 !     g_ljck_t and g_bdck_t are already on disk from the ground state calculation
 !
-      call wf%prep_cc3_g_lbkc_t_file()
+      call wf%prepare_cc3_g_lbkc_t_file()
 !
 !     Alloc and squareup the t2 amplitudes
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -746,7 +746,7 @@ contains
 !
       call wf%X_ajil%close_()
 !
-   end subroutine prep_cc3_jacobian_intermediates_cc3
+   end subroutine prepare_cc3_jacobian_intermediates_cc3
 !
 !
    module subroutine construct_x_intermediates_cc3(wf, i, j, k, t_abc, u_abc, v_abc, x_alij,      &

@@ -17,7 +17,7 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine left_TDM_debug_cc3(wf, state, l_TDM)
+   module subroutine left_tdm_debug_cc3(wf, state, l_tdm)
 !!
 !!    Construct CC3 left transition density matrix
 !!    Written by Alexander C. Paul, Sep 2019
@@ -30,12 +30,12 @@
 !
       integer, intent(in) :: state
 !
-      real(dp), dimension(wf%n_mo,wf%n_mo), intent(out) :: l_TDM
+      real(dp), dimension(wf%n_mo,wf%n_mo), intent(out) :: l_tdm
 !
-   end subroutine left_TDM_debug_cc3
+   end subroutine left_tdm_debug_cc3
 !
 !
-   module subroutine right_TDM_debug_cc3(wf, state, r_TDM)
+   module subroutine right_tdm_debug_cc3(wf, state, r_tdm)
 !!
 !!    Construct CC3 right transition density matrix
 !!    Written by Alexander C. Paul, Sep 2019
@@ -48,9 +48,9 @@
 !
       integer, intent(in) :: state
 !
-      real(dp), dimension(wf%n_mo,wf%n_mo), intent(inout) :: r_TDM
+      real(dp), dimension(wf%n_mo,wf%n_mo), intent(inout) :: r_tdm
 !
-   end subroutine right_TDM_debug_cc3
+   end subroutine right_tdm_debug_cc3
 !
 !
    module subroutine construct_full_R3_cc3(wf, R_abij, R_abcijk, omega)
@@ -119,7 +119,7 @@
 !
    module subroutine debug_left_oo_cc3(wf, density_oo, L_abcijk, t_abcijk)
 !!
-!!    CC3 contribution to the oo-block of the left TDM
+!!    CC3 contribution to the oo-block of the left tdm
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    rho_kl -= 1/2 sum_abcijk L^abc_ijk*t^abc_ijk
@@ -136,7 +136,7 @@
 !
    module subroutine debug_left_ov_N7_cc3(wf, density_ov, L_abcijk)
 !!
-!!    CC3 contribution to the ov-block of the left TDM (N7 scaling)
+!!    CC3 contribution to the ov-block of the left tdm (N7 scaling)
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    rho_ld -= sum_abcijk L^abc_ijk*t^ad_ik*t^bc_jl
@@ -153,7 +153,7 @@
 !
    module subroutine debug_left_ov_N6_cc3(wf, density_ov, L_abij, t_abcijk)
 !!
-!!    CC3 contribution to the ov-block of the left TDM N6 scaling
+!!    CC3 contribution to the ov-block of the left tdm N6 scaling
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    rho_ld += sum_abcijk L^ab_ij*(t^abd_ijl-t^adb_ijl)
@@ -171,7 +171,7 @@
 !
    module subroutine debug_left_vv_cc3(wf, density_vv, L_abcijk, t_abcijk)
 !!
-!!    CC3 contribution to the vv-block of the left TDM
+!!    CC3 contribution to the vv-block of the left tdm
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    rho_cd += 1/2 sum_abcijk L^abc_ijk*t^abd_ijk
@@ -188,7 +188,7 @@
 !
    module subroutine debug_right_vo_cc3(wf, density_vo, R_abij, tbar_abcijk)
 !!
-!!    CC3 contribution to the vo-block of the right TDM
+!!    CC3 contribution to the vo-block of the right tdm
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    rho_ck += sum_abij 1/2 tbar^abc_ijk*R^ab_ij
@@ -208,7 +208,7 @@
 !
    module subroutine debug_right_ov_R3_cc3(wf, density_ov, R_abcijk)
 !!
-!!    CC3 contribution to the ov-block of the right TDM (R3 contribution)
+!!    CC3 contribution to the ov-block of the right tdm (R3 contribution)
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    rho_ld += sum_abij tbar^ab_ij*(R^abd_ijl - R^abd_ilj)
@@ -226,7 +226,7 @@
 !
    module subroutine debug_right_ov_t3_cc3(wf, density_ov, density_vo, R_ai, tbar_abcijk, t_abcijk)
 !!
-!!    CC3 contribution to the ov-block of the right TDM (t3 contribution)
+!!    CC3 contribution to the ov-block of the right tdm (t3 contribution)
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    rho_ld += -1/2 tbar^abc_ijk*t^abc_ijl*R^d_k
@@ -253,7 +253,7 @@
 !
    module subroutine debug_right_ov_Y_term_cc3(wf, density_ov, R_abij, tbar_abcijk)
 !!
-!!    CC3 contribution to the ov-block of the right TDM (Y intermediates)
+!!    CC3 contribution to the ov-block of the right tdm (Y intermediates)
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    rho_ld -= sum_abcijk tbar^abc_ijk*R^ad_ik*t^bc_jl
@@ -274,7 +274,7 @@
 !
    module subroutine debug_right_oo_cc3(wf, density_oo, R_ai, tbar_abcijk, R_abcijk)
 !!
-!!    CC3 contribution to the oo-block of the right TDM
+!!    CC3 contribution to the oo-block of the right tdm
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    rho_lk -= sum_abcij (tbar^abc_ijk*R^a_i*t^bc_jl 
@@ -295,7 +295,7 @@
 !
    module subroutine debug_right_vv_cc3(wf, density_vv, R_ai, tbar_abcijk, R_abcijk)
 !!
-!!    CC3 contribution to the vv-block of the right TDM
+!!    CC3 contribution to the vv-block of the right tdm
 !!    Written by Alexander C. Paul, September 2019
 !!
 !!    rho_cd += sum_abijk tbar^abc_ijk*R^a_i*t^bd_jk 
