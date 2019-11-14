@@ -1,0 +1,893 @@
+
+
+
+                       eT - a coupled cluster program
+       Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch 
+       
+
+  ----------------------------------------------------------------------------------
+   Author:                 Contribution(s):
+  ----------------------------------------------------------------------------------
+   Josefine H. Andersen   first order properties
+   Alice Balbi            CC propagation
+   Sarai D. Folkestad     program design, HF, CCS, CC2, CCSD, Libint-interface, 
+                          Cholesky decomposition, Davidson-tool, CVS, DIIS-tool, 
+                          zeroth order properties, first order properties, IP, 
+                          frozen core, MLCC2, MLHF
+   Tommaso Giovannini     QM/MM, PCM, Libint-interface
+   Linda Goletto          CC2, MLHF
+   Tor S. Haugland        SAD
+   Anders Hutcheson       frozen HF orbitals
+   Ida-Marie Høyvik       MLHF, frozen HF orbitals
+   Eirik F. Kjønstad      program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool, 
+                          Cholesky decomposition, Libint-interface, Davidson-tool, 
+                          zeroth order properties, first order properties, SAD, 
+                          BFGS-tool
+   Rolf H. Myhre          CC3, Runtest-interface, launch script, file system
+   Alexander C. Paul      CC2, CC3, first order properties
+   Andreas Skeidsvoll     MP2, CC propagation, FFT solver
+   Åsmund H. Tveten       HF
+  ----------------------------------------------------------------------------------
+   Other contributors: M. Scavino
+
+  Running on 4 OMP thread(s)
+  Memory available for calculation: 8.000000 GB
+
+     Active atoms:
+     --------------------------------------
+      Atom   Symbol       Basis     Method
+     --------------------------------------
+        1      H       cc-pvdz       cc2
+        2      F       cc-pvdz       cc2
+        3      O       cc-pvdz       cc2
+        4      He      cc-pvdz       cc2
+     --------------------------------------
+     Total number of active atoms: 4
+     OBS: Atoms will be reordered, active atoms first
+
+  - Molecular system specifications:
+
+     Name:             hof-he
+     Charge:           0
+     Multiplicity:     1
+     Coordinate units: angstrom
+
+     Pure basis functions:         38
+     Cartesian basis functions:    40
+     Primitive basis functions:    84
+
+     Nuclear repulsion energy (a.u.):             48.518317619727
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+    =========================================================================
+                               Geometry(Å)
+    =========================================================================
+     Atom          X                Y                Z                Basis
+    =========================================================================
+      H     0.866810000000   0.601440000000   5.000000000000         cc-pvdz
+      F    -0.866810000000   0.601440000000   5.000000000000         cc-pvdz
+      O     0.000000000000  -0.075790000000   5.000000000000         cc-pvdz
+      He    0.000000000000   0.000000000000   7.500000000000         cc-pvdz
+    =========================================================================
+
+    =========================================================================
+                               Geometry(a.u.)
+    =========================================================================
+     Atom          X                Y                Z                Basis
+    =========================================================================
+      H     1.638033502034   1.136556880358   9.448630622825         cc-pvdz
+      F    -1.638033502034   1.136556880358   9.448630622825         cc-pvdz
+      O     0.000000000000  -0.143222342981   9.448630622825         cc-pvdz
+      He    0.000000000000   0.000000000000  14.172945934238         cc-pvdz
+    =========================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         28
+     Number of molecular orbitals:       38
+     Number of atomic orbitals:          38
+
+
+  :: Reference state engine
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  Calculates the reference wavefunction | R >.
+
+  This is a HF ground state calculation. The following tasks will be performed: 
+  
+     - Generate initial density (sad)
+     - Calculation of reference state (scf-diis algorithm)
+     - Calculation of the ground state energy
+
+  - Generating SAD guess
+     Generated atomic density for H  using UHF/cc-pvdz
+     Generated atomic density for F  using UHF/cc-pvdz
+     Generated atomic density for O  using UHF/cc-pvdz
+     Generated atomic density for He using UHF/cc-pvdz
+
+
+  :: Self-consistent field DIIS Hartree-Fock solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock matrix 
+  is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:                8
+
+     Energy threshold:              0.1000E-10
+     Gradient threshold:            0.1000E-10
+
+     Coulomb screening threshold:   0.1000E-13
+     Exchange screening threshold:  0.1000E-13
+     ERI integral precision:        0.1000E-27
+
+  - Setting initial AO density to SAD
+
+     Energy of initial guess:              -178.316362504245
+     Number of electrons in guess:           20.000000000000
+
+  Storing DIIS records in memory.
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1          -177.452442672057     0.7565E-01     0.1775E+03
+     2          -177.479038695767     0.1346E-01     0.2660E-01
+     3          -177.480034970238     0.4311E-02     0.9963E-03
+     4          -177.480161392961     0.1845E-02     0.1264E-03
+     5          -177.480175069916     0.3629E-03     0.1368E-04
+     6          -177.480176290419     0.7402E-04     0.1221E-05
+     7          -177.480176366127     0.2207E-04     0.7571E-07
+     8          -177.480176376357     0.5096E-05     0.1023E-07
+     9          -177.480176377182     0.1218E-05     0.8252E-09
+    10          -177.480176377209     0.2536E-06     0.2643E-10
+    11          -177.480176377210     0.4399E-07     0.1364E-11
+    12          -177.480176377210     0.8545E-08     0.2842E-13
+    13          -177.480176377210     0.2855E-08     0.1421E-12
+    14          -177.480176377210     0.1321E-08     0.8527E-13
+    15          -177.480176377210     0.3976E-09     0.1705E-12
+    16          -177.480176377210     0.1465E-09     0.3695E-12
+    17          -177.480176377210     0.5394E-10     0.0000E+00
+    18          -177.480176377210     0.4750E-11     0.2842E-12
+  ---------------------------------------------------------------
+
+  Convergence criterion met in 18 iterations!
+
+  - Summary of HF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.600136348374
+     Nuclear repulsion energy:      48.518317619727
+     Electronic energy:           -225.998493996938
+     Total energy:                -177.480176377210
+
+  - Molecular orbital energies
+
+  -----------------------------------------------------------------------------------
+   1 -26.334215396999  11   0.160499885362  21   1.561381025900  31   3.061115047192
+   2 -20.644676143380  12   0.548524783473  22   1.686298886878  32   3.534199119736
+   3  -1.894514195174  13   0.716123096553  23   1.771732504121  33   3.762918741791
+   4  -1.204323614935  14   1.106561922005  24   2.108007790821  34   3.962288761107
+   5  -0.910581317587  15   1.130678945489  25   2.501253825885  35   4.000546434670
+   6  -0.866359982044  16   1.195125644619  26   2.530943514170  36   4.553973955057
+   7  -0.832531025218  17   1.332305214084  27   2.531186114994  37   4.580623650146
+   8  -0.790125272689  18   1.423088812984  28   2.601426569358  38   5.083709277162
+   9  -0.497921814630  19   1.453320735216  29   2.725832254868
+  10  -0.439636463012  20   1.486906665153  30   2.888293377080
+  -----------------------------------------------------------------------------------
+
+  - Printing molecular orbitals (20 from total 38)
+
+    AO    Atom           1           2           3           4           5
+  ----------------------------------------------------------------------------
+     1    1  H(s)   -0.000260   -0.000489    0.035525   -0.136826   -0.005401
+     2    1  H(s)    0.000305   -0.000637   -0.007019   -0.001800   -0.009765
+     3    1  H(p)   -0.000000   -0.000008   -0.008974    0.019571    0.001270
+     4    1  H(p)    0.000017   -0.000151   -0.005704    0.016722    0.001142
+     5    1  H(p)   -0.000001   -0.000002    0.000012   -0.000036   -0.002599
+     6    2  F(s)    1.001049    0.000029   -0.002982   -0.000567    0.000787
+     7    2  F(s)    0.001521   -0.000118    0.393331    0.295138   -0.004821
+     8    2  F(s)   -0.004892   -0.000104    0.370069    0.423250   -0.013113
+     9    2  F(p)    0.001399    0.000075    0.125216   -0.182965    0.017052
+    10    2  F(p)   -0.001020   -0.000038   -0.091242    0.117621   -0.022303
+    11    2  F(p)    0.000001   -0.000001    0.000035   -0.000132   -0.068277
+    12    2  F(p)   -0.001567    0.000237    0.047239   -0.081754    0.009621
+    13    2  F(p)    0.001140   -0.000349   -0.030449    0.052164   -0.012637
+    14    2  F(p)   -0.000001   -0.000002    0.000053   -0.000049   -0.041842
+    15    2  F(d)    0.000095   -0.000481   -0.016521    0.013914   -0.001511
+    16    2  F(d)    0.000000    0.000001   -0.000009    0.000009    0.002102
+    17    2  F(d)    0.000072   -0.000284   -0.010769    0.008734   -0.001171
+    18    2  F(d)   -0.000000   -0.000001    0.000007   -0.000014   -0.002993
+    19    2  F(d)   -0.000036    0.000129    0.005355   -0.006195    0.000007
+    20    3  O(s)   -0.000019   -1.000965   -0.002192   -0.004148    0.001282
+    21    3  O(s)   -0.000189   -0.001420    0.258595   -0.378011    0.007244
+    22    3  O(s)    0.002151    0.003397    0.145581   -0.404380   -0.001139
+    23    3  O(p)   -0.000000    0.000941   -0.127390   -0.073492   -0.019024
+    24    3  O(p)    0.000029   -0.002207    0.114249   -0.011948    0.007287
+    25    3  O(p)   -0.000002   -0.000000    0.000091   -0.000444   -0.057278
+    26    3  O(p)   -0.001008    0.000041   -0.012829   -0.031880   -0.004161
+    27    3  O(p)    0.000840    0.001164    0.013090    0.003882    0.002653
+    28    3  O(p)    0.000005    0.000010   -0.000032   -0.000132   -0.033976
+    29    3  O(d)    0.000308    0.000281   -0.027216   -0.006655   -0.001750
+    30    3  O(d)    0.000000    0.000000    0.000002   -0.000013   -0.003582
+    31    3  O(d)    0.000142   -0.000077   -0.016635    0.000226   -0.002067
+    32    3  O(d)   -0.000000   -0.000001   -0.000001   -0.000001    0.002785
+    33    3  O(d)   -0.000071   -0.000002    0.003565    0.001935    0.000641
+    34    4 He(s)    0.000009    0.000052    0.000762   -0.006337   -0.583730
+    35    4 He(s)   -0.000030   -0.000077    0.001270   -0.006137   -0.505295
+    36    4 He(p)   -0.000001    0.000004   -0.000034   -0.000119   -0.000356
+    37    4 He(p)   -0.000002    0.000000    0.000047    0.000063   -0.000743
+    38    4 He(p)    0.000011    0.000009   -0.000317    0.000628   -0.000229
+  ----------------------------------------------------------------------------
+
+    AO    Atom           6           7           8           9          10
+  ----------------------------------------------------------------------------
+     1    1  H(s)   -0.203607   -0.000931    0.079547    0.318481    0.000386
+     2    1  H(s)   -0.049948    0.002797    0.053414    0.107880    0.003508
+     3    1  H(p)    0.028023   -0.000033   -0.006115   -0.027652   -0.000193
+     4    1  H(p)    0.017041   -0.000226   -0.015757   -0.016118   -0.000159
+     5    1  H(p)    0.000138   -0.009987    0.000089    0.000029   -0.023301
+     6    2  F(s)    0.003255   -0.000087   -0.004922    0.003040    0.000000
+     7    2  F(s)   -0.048353    0.000689    0.059271    0.009502   -0.000178
+     8    2  F(s)   -0.101371    0.001555    0.133136   -0.009637   -0.000717
+     9    2  F(p)   -0.091503   -0.008360   -0.486841   -0.241513   -0.000200
+    10    2  F(p)   -0.482269   -0.001848    0.030774   -0.393279   -0.000616
+    11    2  F(p)    0.005786   -0.542069    0.006112   -0.000918    0.439480
+    12    2  F(p)   -0.061555   -0.005263   -0.306382   -0.193928   -0.000306
+    13    2  F(p)   -0.288861   -0.001166    0.016325   -0.313409   -0.000446
+    14    2  F(p)    0.003542   -0.327570    0.003710   -0.000853    0.374475
+    15    2  F(d)   -0.017373    0.000176    0.015044   -0.001292    0.000013
+    16    2  F(d)   -0.000176    0.014594   -0.000157   -0.000016    0.004602
+    17    2  F(d)   -0.005576    0.000215    0.011416   -0.001295    0.000036
+    18    2  F(d)    0.000229   -0.020737    0.000214    0.000003   -0.005131
+    19    2  F(d)   -0.019035   -0.000382   -0.016686    0.000918   -0.000006
+    20    3  O(s)    0.006830   -0.000193   -0.008998    0.002118   -0.000016
+    21    3  O(s)    0.022810    0.000633    0.125365   -0.103246   -0.000657
+    22    3  O(s)   -0.015721    0.002924    0.302672   -0.256226   -0.001815
+    23    3  O(p)   -0.325821    0.001352    0.240303    0.169829   -0.000188
+    24    3  O(p)   -0.154432   -0.006410   -0.336527    0.399149    0.000525
+    25    3  O(p)    0.003986   -0.354900    0.003541    0.001198   -0.583509
+    26    3  O(p)   -0.123051   -0.000564    0.066307    0.123187   -0.000946
+    27    3  O(p)   -0.093387   -0.003244   -0.159965    0.290070    0.000314
+    28    3  O(p)    0.002365   -0.193122    0.001485    0.001067   -0.473382
+    29    3  O(d)   -0.017076    0.000370    0.033545    0.010545   -0.000034
+    30    3  O(d)    0.000281   -0.025790    0.000265    0.000032   -0.009008
+    31    3  O(d)   -0.002771    0.000497    0.018277   -0.012453    0.000065
+    32    3  O(d)   -0.000241    0.021879   -0.000240    0.000008   -0.007103
+    33    3  O(d)    0.030328    0.000405    0.015935    0.005607    0.000008
+    34    4 He(s)    0.023058    0.095392   -0.027146    0.002012    0.022051
+    35    4 He(s)    0.020282    0.080199   -0.020542   -0.004279    0.020068
+    36    4 He(p)   -0.000158    0.000422    0.000026    0.000191   -0.000575
+    37    4 He(p)   -0.000144   -0.000114   -0.000277    0.000387    0.000577
+    38    4 He(p)    0.000001    0.001885   -0.000560    0.000485    0.002788
+  ----------------------------------------------------------------------------
+
+    AO    Atom          11          12          13          14          15
+  ----------------------------------------------------------------------------
+     1    1  H(s)   -0.137554    0.172551   -1.219107    0.038665    0.002783
+     2    1  H(s)   -1.259472   -0.080945    1.087950   -0.057679   -0.082831
+     3    1  H(p)    0.005408   -0.006803   -0.174347   -0.014094    0.128746
+     4    1  H(p)    0.001608    0.052594   -0.128859    0.015878   -0.076406
+     5    1  H(p)   -0.000236    0.000037    0.000467    0.151096    0.038309
+     6    2  F(s)   -0.005805    0.025241   -0.007783    0.000527   -0.010087
+     7    2  F(s)    0.006615   -0.168172   -0.088806    0.006510   -0.039930
+     8    2  F(s)    0.100585   -1.402986   -0.300799   -0.133971    0.690242
+     9    2  F(p)   -0.084113   -0.269657   -0.098168    0.043609   -0.172029
+    10    2  F(p)   -0.004541    0.213525   -0.051444   -0.037730    0.249019
+    11    2  F(p)    0.000005   -0.000360   -0.001069   -0.154734   -0.031208
+    12    2  F(p)   -0.097089   -0.803606   -0.226287   -0.016809    0.083261
+    13    2  F(p)   -0.016549    0.672909    0.074349    0.026965   -0.189663
+    14    2  F(p)    0.000820    0.000238    0.001434   -0.030649   -0.010093
+    15    2  F(d)   -0.001957   -0.000023    0.001169    0.019770   -0.091005
+    16    2  F(d)    0.000100    0.000018   -0.000002    0.018061    0.003962
+    17    2  F(d)   -0.000327   -0.000539    0.002321    0.011813   -0.049701
+    18    2  F(d)   -0.000133   -0.000019    0.000009   -0.020565   -0.004404
+    19    2  F(d)    0.009532   -0.004186    0.020336   -0.004279    0.019284
+    20    3  O(s)   -0.031898   -0.039367    0.051983   -0.054389    0.132759
+    21    3  O(s)    0.072135    0.092940    0.192449   -0.132593    0.317248
+    22    3  O(s)    0.687931    1.318622   -0.040508    0.195121   -0.568404
+    23    3  O(p)    0.230023   -0.315226    0.212742    0.140784   -0.714582
+    24    3  O(p)    0.186052    0.150283    0.335126   -0.103985    0.567091
+    25    3  O(p)   -0.004543   -0.000412    0.000681   -0.824153   -0.181633
+    26    3  O(p)    0.390515   -1.168828   -0.153651   -0.189419    0.984880
+    27    3  O(p)    0.287912    0.827256    0.163167    0.126894   -0.681100
+    28    3  O(p)   -0.000503    0.000229   -0.002037    0.904075    0.202069
+    29    3  O(d)    0.005318    0.020072   -0.065230   -0.003641    0.031155
+    30    3  O(d)   -0.000109   -0.000025   -0.000059   -0.016687   -0.003291
+    31    3  O(d)   -0.001113   -0.001332    0.055880   -0.002099    0.017788
+    32    3  O(d)    0.000099    0.000027    0.000089    0.039221    0.009062
+    33    3  O(d)   -0.009624   -0.007561   -0.029191    0.001201   -0.004130
+    34    4 He(s)    0.029028   -0.011702   -0.084115   -0.376975   -0.014149
+    35    4 He(s)    0.040809    0.005193    0.023245    0.328163    0.013334
+    36    4 He(p)   -0.001604   -0.002826    0.004511   -0.001186    0.004548
+    37    4 He(p)   -0.001176    0.001438    0.003738   -0.001037   -0.004331
+    38    4 He(p)    0.003610   -0.003634   -0.012410   -0.039946   -0.001517
+  ----------------------------------------------------------------------------
+
+    AO    Atom          16          17          18          19          20
+  ----------------------------------------------------------------------------
+     1    1  H(s)    0.696078    0.032207   -0.071719   -0.165598    0.031540
+     2    1  H(s)    0.080568   -0.030516   -0.201422    0.269685    0.197235
+     3    1  H(p)   -0.320992   -0.368576    0.052647    0.105586   -0.021184
+     4    1  H(p)   -0.104743    0.371909    0.036556   -0.165800   -0.055929
+     5    1  H(p)   -0.011069    0.032214   -0.514693    0.113357    0.055126
+     6    2  F(s)   -0.046204   -0.005247    0.003933    0.058543    0.013759
+     7    2  F(s)   -0.085269    0.073304    0.026873    0.200083    0.037641
+     8    2  F(s)    0.312955    0.777943    0.072040    0.068956   -0.004008
+     9    2  F(p)    0.010832   -0.731430   -0.107521   -0.144718    0.017790
+    10    2  F(p)    0.174994   -0.103421    0.152065    0.781137    0.062217
+    11    2  F(p)    0.004467    0.005491   -0.344872    0.137740   -0.809647
+    12    2  F(p)    0.371928    1.242399    0.142402    0.362736    0.028700
+    13    2  F(p)   -0.064665   -0.197966   -0.260645   -1.191206   -0.085497
+    14    2  F(p)    0.003882   -0.015637    0.455336   -0.173289    1.065494
+    15    2  F(d)    0.025154   -0.006701    0.003462    0.014075   -0.001850
+    16    2  F(d)   -0.000780    0.000974   -0.006338    0.000032    0.016706
+    17    2  F(d)   -0.001847   -0.016862    0.007729    0.012187   -0.004650
+    18    2  F(d)    0.000786   -0.000522   -0.005079    0.002995   -0.019842
+    19    2  F(d)    0.014122    0.003966    0.000279    0.005833    0.000755
+    20    3  O(s)   -0.119995    0.055067   -0.093571    0.094472    0.104001
+    21    3  O(s)   -0.383016    0.120398   -0.202286    0.262139    0.239205
+    22    3  O(s)   -0.331506   -1.005565    0.181170   -0.869242   -0.401286
+    23    3  O(p)    0.361537   -0.122090   -0.094927    0.134551    0.089551
+    24    3  O(p)    0.615873   -0.047636   -0.052346   -0.161346    0.000325
+    25    3  O(p)    0.035667   -0.038946    0.201003   -0.018046   -0.025577
+    26    3  O(p)   -0.759412    0.546456    0.271062    0.087742   -0.151642
+    27    3  O(p)   -1.253726   -0.588503    0.139086    0.297100   -0.063513
+    28    3  O(p)   -0.040934    0.045310   -0.249453    0.040639   -0.281506
+    29    3  O(d)    0.045667    0.090445    0.026621    0.079907    0.002207
+    30    3  O(d)    0.000363    0.001515   -0.048065    0.013057   -0.008823
+    31    3  O(d)   -0.004948    0.043197    0.035975    0.077247   -0.009592
+    32    3  O(d)   -0.002108    0.004307   -0.056235    0.010715    0.024001
+    33    3  O(d)   -0.051255   -0.055214   -0.006006   -0.019612   -0.000098
+    34    4 He(s)   -0.029487    0.099141   -0.778403    0.068892    0.500367
+    35    4 He(s)    0.029554   -0.097105    0.819472   -0.080099   -0.527543
+    36    4 He(p)   -0.004462    0.002304   -0.003898    0.003191   -0.006766
+    37    4 He(p)   -0.006571   -0.002129    0.002294    0.004324    0.007381
+    38    4 He(p)    0.002436    0.004768    0.009910   -0.003006   -0.001181
+  ----------------------------------------------------------------------------
+
+  - Cleaning up Self-consistent field DIIS Hartree-Fock solver
+
+  - Timings for the HF ground state calculation
+
+     Total wall time (sec):              1.13900
+     Total cpu time (sec):               3.78088
+
+  :: Frozen orbital approximation is prepared
+     There are 2 frozen core orbitals.
+
+   - Number of orbitals for coupled cluster calculation
+
+     Number of occupied orbitals:               8
+     Number of virtual orbitals:               28
+     Number of molecular orbitals:             36
+     Number of atomic orbitals:                38
+
+
+  :: Excited state engine
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  Calculates the coupled cluster excitation vectors and excitation energies 
+
+  
+
+  This is a MLCC2 excited state calculation. The following tasks will be performed: 
+  
+     - Cholesky decomposition of the ERI-matrix
+     - Calculation of the ground state amplitudes (diis-algorithm)
+     - Calculation of the ground state energy
+     - Calculation of the right hand side valence excitation vectors (davidson-algorithm) 
+     
+     - Calculation of the excitation energies (davidson-algorithm)
+
+
+  :: Cholesky decomposition of electronic repulsion integrals solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations.
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-10
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+     Total number of AOs:                    38
+     Total number of shell pairs:           171
+     Total number of AO pairs:              741
+
+  - Preparing diagonal for decomposition:
+
+     Significant shell pairs:               161
+     Significant AO pairs:                  697
+
+     Construct shell pairs:                 171
+     Construct AO pairs:                    741
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               671 /     150       0.53537E+01         194             49             32879
+     2               524 /     128       0.52717E-01         398            155             81220
+     3               484 /     114       0.52418E-03         303            243            117612
+     4               362 /      92       0.51440E-05         311            363            131406
+     5               218 /      52       0.49587E-07         221            476            103768
+     6                 0 /       0       0.48539E-09         121            550                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 550
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.9691E-11
+     Minimal element of difference between approximate and actual diagonal:  -0.8882E-15
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.36000
+     Total cpu time (sec):               0.96491
+
+     The smallest diagonal after decomposition is:  -0.1110E-15
+
+     The smallest diagonal after decomposition is:  -0.7105E-14
+
+  Warning: no ccs orbitals in mlcc2 calulation, recomended to run standard cc2 code.
+
+  - Summary of MLCC2 orbital partitioning:
+
+     Orbital type: cholesky
+
+     Number occupied cc2 orbitals:    8
+     Number virtual cc2 orbitals:    28
+
+     Number occupied ccs orbitals:    0
+     Number virtual ccs orbitals:     0
+
+
+  :: DIIS CC ground solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
+  of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 13. 
+  
+
+  - DIIS CC ground state solver settings:
+
+     Omega threshold:           0.10E-10
+     Energy threshold:          0.10E-10
+
+     DIIS dimension:                   8
+     Max number of iterations:       100
+
+  Storing DIIS records on file.
+
+  Using direct file to store records with name: cc_gs_diis_e.
+
+  Using direct file to store records with name: cc_gs_diis_x.
+
+  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ---------------------------------------------------------------
+    1          -177.872596608752     0.4576E-01     0.1779E+03
+    2          -177.874258138480     0.9200E-02     0.1662E-02
+    3          -177.874680603187     0.1662E-02     0.4225E-03
+    4          -177.874735607237     0.5182E-03     0.5500E-04
+    5          -177.874731846966     0.9100E-04     0.3760E-05
+    6          -177.874731646440     0.1120E-04     0.2005E-06
+    7          -177.874731622626     0.3641E-05     0.2381E-07
+    8          -177.874731607509     0.1541E-05     0.1512E-07
+    9          -177.874731618480     0.3015E-06     0.1097E-07
+   10          -177.874731617191     0.6419E-07     0.1288E-08
+   11          -177.874731617160     0.1201E-07     0.3172E-10
+   12          -177.874731617129     0.2276E-08     0.3052E-10
+   13          -177.874731617106     0.5137E-09     0.2294E-10
+   14          -177.874731617105     0.6177E-10     0.8527E-12
+   15          -177.874731617106     0.9770E-11     0.9948E-12
+  ---------------------------------------------------------------
+
+  Convergence criterion met in 15 iterations!
+
+  - DIIS CC ground state solver summary:
+
+     Final ground state energy (a.u.):  -177.874731617106
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         t(a,i)
+     -----------------------------------
+        1      7       -0.022113416957
+        3      7        0.008477926021
+        4      5       -0.006478916276
+       14      7       -0.005579437757
+        4      8        0.005220847370
+        5      4       -0.005071721237
+       14      4       -0.004917206830
+       10      5        0.004448899635
+        5      2        0.004355950067
+        3      4       -0.004303395546
+     ------------------------------------
+
+     T1 diagnostic (|T1|/sqrt(N_e)): 0.007153293660
+
+  - Finished solving the MLCC2 ground state equations
+
+     Total wall time (sec):              0.69400
+     Total cpu time (sec):               1.07146
+
+
+  :: Davidson coupled cluster excited state solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A Davidson solver that calculates the lowest eigenvalues and  the right 
+  or left eigenvectors of the Jacobian matrix, A. The eigenvalue  problem 
+  is solved in a reduced space, the dimension of which is  expanded until 
+  the convergence criteria are met.
+
+  A complete description of the algorithm can be found in  E. R. Davidson, 
+  J. Comput. Phys. 17, 87 (1975).
+
+  - Settings for coupled cluster excited state solver (Davidson):
+
+     Energy threshold:      0.10E-05
+
+     Residual threshold:    0.10E-10
+
+     Number of singlet states:       2
+     Max number of iterations:     100
+     Calculation type:          valence
+
+     Solving for the right eigenvectors.
+
+     Max reduced space dimension:  100
+
+  Using sequential file array to store records using the prefix: r_.
+
+     Reduced space basis and transforms are stored on disk.
+
+  Using direct file to store records with name: cc_es_davidson_trials.
+
+  Using direct file to store records with name: cc_es_davidson_transforms. 
+
+  
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                  1
+  Reduced space dimension:    2
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.357336332405         0.000000000000            0.5499E+00
+   2       0.459974233657         0.000000000000            0.5271E+00
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                  2
+  Reduced space dimension:    4
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.203427820004         0.000000000000            0.6866E-01
+   2       0.320245527001         0.000000000000            0.6913E-01
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                  3
+  Reduced space dimension:    6
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.201155888073         0.000000000000            0.2964E-01
+   2       0.315646305569         0.000000000000            0.5012E-01
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                  4
+  Reduced space dimension:    8
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200859761787         0.000000000000            0.9208E-02
+   2       0.314036806405         0.000000000000            0.1310E-01
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                  5
+  Reduced space dimension:   10
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200983700574         0.000000000000            0.2720E-02
+   2       0.313833133722         0.000000000000            0.5192E-02
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                  6
+  Reduced space dimension:   12
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200941443826         0.000000000000            0.1320E-02
+   2       0.313756446149         0.000000000000            0.1632E-02
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                  7
+  Reduced space dimension:   14
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200920976869         0.000000000000            0.5884E-03
+   2       0.313755881177         0.000000000000            0.8033E-03
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                  8
+  Reduced space dimension:   16
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200924117655         0.000000000000            0.1640E-03
+   2       0.313761278225         0.000000000000            0.2744E-03
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                  9
+  Reduced space dimension:   18
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926346302         0.000000000000            0.5880E-04
+   2       0.313753756729         0.000000000000            0.1134E-03
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                 10
+  Reduced space dimension:   20
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926448218         0.000000000000            0.2847E-04
+   2       0.313754869063         0.000000000000            0.3311E-04
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                 11
+  Reduced space dimension:   22
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926802085         0.000000000000            0.6430E-05
+   2       0.313754889506         0.000000000000            0.8525E-05
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                 12
+  Reduced space dimension:   24
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926847242         0.000000000000            0.1483E-05
+   2       0.313754888398         0.000000000000            0.2577E-05
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                 13
+  Reduced space dimension:   26
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926846044         0.000000000000            0.3605E-06
+   2       0.313754899618         0.000000000000            0.7437E-06
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                 14
+  Reduced space dimension:   28
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926844939         0.000000000000            0.9391E-07
+   2       0.313754910362         0.000000000000            0.3059E-06
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                 15
+  Reduced space dimension:   30
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926846336         0.000000000000            0.2766E-07
+   2       0.313754909433         0.000000000000            0.1429E-06
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                 16
+  Reduced space dimension:   32
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926846261         0.000000000000            0.7754E-08
+   2       0.313754908805         0.000000000000            0.6377E-07
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                 17
+  Reduced space dimension:   34
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926846216         0.000000000000            0.1623E-08
+   2       0.313754908426         0.000000000000            0.2089E-07
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                 18
+  Reduced space dimension:   36
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926846219         0.000000000000            0.3196E-09
+   2       0.313754908474         0.000000000000            0.6379E-08
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                 19
+  Reduced space dimension:   38
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926846220         0.000000000000            0.6995E-10
+   2       0.313754908455         0.000000000000            0.1874E-08
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                 20
+  Reduced space dimension:   40
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926846220         0.000000000000            0.1338E-10
+   2       0.313754908466         0.000000000000            0.5383E-09
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                 21
+  Reduced space dimension:   42
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926846220         0.000000000000            0.3060E-11
+   2       0.313754908467         0.000000000000            0.1668E-09
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                 22
+  Reduced space dimension:   43
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926846220         0.000000000000            0.3052E-11
+   2       0.313754908468         0.000000000000            0.3913E-10
+  --------------------------------------------------------------------
+
+  Orthonormalizing trial vectors.
+
+  Iteration:                 23
+  Reduced space dimension:   44
+
+  Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm
+  --------------------------------------------------------------------
+   1       0.200926846220         0.000000000000            0.3049E-11
+   2       0.313754908468         0.000000000000            0.9445E-11
+  --------------------------------------------------------------------
+
+  Convergence criterion met in 23 iterations!
+
+  - Excitation vector amplitudes:
+
+     Electronic state nr. 1
+
+     Energy (Hartree):                  0.200926846220
+     Fraction singles (|R1|/|R|):       0.980635145727
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         R(a,i)
+     -----------------------------------
+        1      8        0.969479009522
+        3      8       -0.125458946921
+        2      8        0.044640796851
+        1      5       -0.029695790346
+        6      8       -0.025107696518
+       13      8       -0.025001698821
+       12      8        0.022540930955
+       14      8       -0.012079245571
+        3      5        0.011882425066
+        2      5       -0.011580787264
+     ------------------------------------
+
+     Electronic state nr. 2
+
+     Energy (Hartree):                  0.313754908468
+     Fraction singles (|R1|/|R|):       0.982273568701
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         R(a,i)
+     -----------------------------------
+        1      7        0.970945559760
+        1      4       -0.100819985119
+        3      7       -0.056864690907
+        4      8        0.034974432541
+        1      6        0.034446187886
+        3      4        0.029806694986
+        1      2       -0.025905963196
+       13      7       -0.025268959101
+        5      6       -0.022000530042
+        9      7        0.020658119172
+     ------------------------------------
+
+     - Electronic excitation energies:
+
+                                      Excitation energy
+                          ------------------------------------------
+     State                (Hartree)             (eV)
+     ---------------------------------------------------------------
+      1                   0.200926846220         5.467497974262
+      2                   0.313754908468         8.537705930000
+     ---------------------------------------------------------------
+     eV/Hartree (CODATA 2014): 27.21138602
+
+  - Finished solving the MLCC2 excited state equations (right)
+
+     Total wall time (sec):              1.74200
+     Total cpu time (sec):               2.86806
+
+  - Timings for the MLCC2 excited state calculation
+
+     Total wall time (sec):              2.89200
+     Total cpu time (sec):               5.05957
+
+  - Cleaning up MLCC2 wavefunction
+
+  Mismatch in memory according to eT and specified on input:
+
+     Memory available (eT):    7.999952 GB
+     Memory available (input): 8.000000 GB
+
+  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
+
+  eT terminated successfully!

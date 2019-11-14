@@ -1085,7 +1085,8 @@ contains
 !!
 !!    All matrices are n x n.
 !!
-!!    left (optional): if true, transpose the left factor, A (standard); if false, tranpose the right factor, B. 
+!!    left (optional): if true, transpose the left factor, A (standard); 
+!!    if false, tranpose the right factor, B. 
 !!
       implicit none
 !
@@ -1202,9 +1203,9 @@ contains
 !!    Symmetric sandwich
 !!    Written by Eirik F. Kjønstad, 2018
 !!
-!!    Overwrites the n-by-n matrix X with a sandwich-ed X:
+!!    Constructs the similary transformed matrix X_r
 !!
-!!       X <- A^T X A
+!!       Xr = A^T X A
 !!
       implicit none
 !
@@ -1250,14 +1251,16 @@ contains
    end subroutine symmetric_sandwich
 !
 !
-   subroutine symmetric_sandwich_right(Xr, X, A, m, n)
+   subroutine symmetric_sandwich_right_transposition(Xr, X, A, m, n)
 !!
-!!    Symmetric sandwich using right transposition
+!!    Symmetric sandwich right transposition
 !!    Written by Eirik F. Kjønstad, 2018
 !!
-!!    Overwrites the n-by-n matrix X with a sandwich-ed X:
+!!    Constructs the similarity transformation
+!!    wrt the matrix A^T
 !!
-!!       X <- A X A^T
+!!       Xr = A X A^T
+!!
 !!
       implicit none
 !
@@ -1300,7 +1303,59 @@ contains
 !
       call mem%dealloc(tmp, n, m)
 !
-   end subroutine symmetric_sandwich_right
+   end subroutine symmetric_sandwich_right_transposition
+!
+!
+   subroutine symmetric_sandwich_right_transposition_replace(X, A, m)
+!!
+!!    Symmetric sandwich right transposition replace
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Overwrites the n-by-n matrix X with a sandwich-ed X:
+!!
+!!       X <- A X A^T
+!!
+      implicit none
+!
+      integer, intent(in) :: m
+!
+      real(dp), dimension(m, m), intent(in) :: A
+!
+      real(dp), dimension(m, m), intent(inout) :: X
+!
+      real(dp), dimension(:, :), allocatable :: tmp
+!
+      call mem%alloc(tmp, m, m)
+!
+      call dgemm('N', 'T', &
+                  m,       &
+                  m,       &
+                  m,       &
+                  one,     &
+                  X,       &
+                  m,       &
+                  A,       &
+                  m,       &
+                  zero,    &
+                  tmp,     & ! tmp = X A^T
+                  m)
+!
+      call dgemm('N', 'N', &
+                  m,       &
+                  m,       &
+                  m,       &
+                  one,     &
+                  A,       &
+                  m,       &
+                  tmp,     &
+                  m,       &
+                  zero,    &
+                  X,       & ! X = A tmp = A X A^T 
+                  m)
+!
+      call mem%dealloc(tmp, m, m)
+!
+   end subroutine symmetric_sandwich_right_transposition_replace
 !
 !
    subroutine commute(A, B, AcB, n)

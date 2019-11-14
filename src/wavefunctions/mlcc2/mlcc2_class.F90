@@ -134,7 +134,6 @@ module mlcc2_class
 !
 !     File handling
 !
-!
       procedure :: read_mlcc_settings                                => read_mlcc_settings_mlcc2
       procedure, non_overridable :: read_orbital_settings            => read_orbital_settings_mlcc2
       procedure, non_overridable :: read_cc2_orbital_settings        => read_cc2_orbital_settings_mlcc2
@@ -167,6 +166,9 @@ module mlcc2_class
 !
       procedure :: orbital_partitioning                              => orbital_partitioning_mlcc2
       procedure :: diagonalize_M_and_N                               => diagonalize_M_and_N_mlcc2
+!
+      procedure :: contruct_mo_basis_transformation                  => contruct_mo_basis_transformation_mlcc2
+      procedure :: update_MO_fock_contributions                      => update_MO_fock_contributions_mlcc2
 !
 !     Ground state routines
 !
@@ -261,9 +263,8 @@ contains
       wf%cholesky_orbital_threshold = 1.0d-2
 !
       call wf%general_cc_preparations(system)
-
-      if (wf%frozen_core .or. wf%frozen_hf_mos) &
-            call output%error_msg('frozen orbitals not yet implemented for MLCC2')
+!
+      if (wf%bath_orbital) call output%error_msg('Bath orbitals not yet implemented for MLCC2')
 !
       call wf%read_mlcc_settings()
 !
@@ -575,6 +576,12 @@ contains
       class(mlcc2) :: wf
 !
       call wf%check_orthonormality_of_MOs()
+!
+      if (wf%n_cc2_o .eq. 0) &
+               call output%error_msg('no occupied cc2 orbitals in mlcc2 calulation.')
+!
+      if (wf%n_cc2_v .eq. 0) &
+               call output%error_msg('no virtual cc2 orbitals in mlcc2 calulation.')
 !
       if (wf%n_cc2_o + wf%n_cc2_v .eq. 0) call output%error_msg('no cc2 orbitals in mlcc2 calulation.')
 !
@@ -983,9 +990,34 @@ contains
 !!    MO preparations
 !!    Written by Sarai D. Folkestad, Sep 2019
 !!
+!!    Partitions the orbitals and
+!!    determines the number of amplitudes.
+!!
+!!    Determines the MLCC basis (occupied-occupied and virtual-virtual 
+!!    Fock matrices are block diagonal).
+!!
+!!    Prepares the MO Cholesky vectors
+!!
+!!    Transforms all frozen constributions to the Fock matrix
+!!    from the old (canonical) MO basis to the MLCC basis.
+!!    This update is done twice, once after orbital partitioning 
+!!    and once after occupied-occupied and virtual-virtual 
+!!    Fock matrices are block diagonalized.
+!!
+!!
       implicit none
 !
       class(mlcc2) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: canonical_orbitals
+      real(dp), dimension(:,:), allocatable :: partitioning_orbitals
+!
+!     Keep canonical orbitals (for transformation of frozen MO fock terms)
+!
+      call mem%alloc(canonical_orbitals, wf%n_ao, wf%n_mo)
+      call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, canonical_orbitals, 1)
+!
+!     Construct partitioning orbital basis, and determine active spaces
 !
       call wf%orbital_partitioning()
 !
@@ -994,7 +1026,16 @@ contains
       call wf%determine_n_es_amplitudes()
 !
       wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, wf%system%n_J)
-      call wf%construct_and_write_mo_cholesky(wf%n_mo, wf%orbital_coefficients, wf%integrals%cholesky_mo)
+      call wf%construct_and_write_mo_cholesky(wf%n_mo, wf%orbital_coefficients, &
+                  wf%integrals%cholesky_mo)
+!
+!     Frozen fock terms transformed from the canonical MO basis to 
+!     the basis of orbital partitioning
+!
+      if ((wf%frozen_core) .or. (wf%frozen_hf_mos)) &
+         call wf%update_MO_fock_contributions(canonical_orbitals)
+!
+      call mem%dealloc(canonical_orbitals, wf%n_ao, wf%n_mo)
 !
       call wf%initialize_t1()
       call zero_array(wf%t1, wf%n_t1)
@@ -1004,9 +1045,25 @@ contains
       call wf%construct_fock()
       call wf%destruct_t1()
 !
+!     Keep partitioning orbital basis (for transformation of frozen MO fock terms)
+!
+      call mem%alloc(partitioning_orbitals, wf%n_ao, wf%n_mo)
+      call dcopy(wf%n_ao*wf%n_mo, wf%orbital_coefficients, 1, partitioning_orbitals, 1)
+!
+!     Construct MLCC orbital basis
+!
       call wf%construct_block_diagonal_fock_orbitals()
 !
-      call wf%construct_and_write_mo_cholesky(wf%n_mo, wf%orbital_coefficients, wf%integrals%cholesky_mo)
+!     Frozen fock terms transformed from the basis of orbital partitioning to 
+!     the MLCC basis
+!
+      if ((wf%frozen_core) .or. (wf%frozen_hf_mos)) &
+         call wf%update_MO_fock_contributions(partitioning_orbitals)
+!
+      call mem%dealloc(partitioning_orbitals, wf%n_ao, wf%n_mo)
+!
+      call wf%construct_and_write_mo_cholesky(wf%n_mo, wf%orbital_coefficients, &
+                  wf%integrals%cholesky_mo)
 !
       call wf%check_orbital_space()
       call wf%print_orbital_space()
@@ -1082,6 +1139,118 @@ contains
       wf%n_gs_amplitudes = wf%n_t1
 !
    end subroutine determine_n_gs_amplitudes_mlcc2
+!
+!
+   subroutine contruct_mo_basis_transformation_mlcc2(wf, C1, C2, T)
+!!
+!!    Construct MO basis transformation 
+!!    Written by Sarai D. Folekstad, Nov 2019
+!!
+!!    Constructs a transformation matrix 'T' which
+!!    takes a matrix from one molecular orbital basis
+!!    to another. 
+!!
+!!    'C1' : coefficients of the MO basis we end up in
+!!
+!!    'C2' : coefficients of the MO basis we start out with 
+!!
+!!    The transformation matrix is defined as
+!!
+!!       T = C1^T S C2
+!!    
+!!    where S is the AO overlap matrix.
+!!
+      implicit none
+!
+      class(mlcc2), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_mo), intent(in) :: C1, C2
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: T
+!
+      real(dp), dimension(:,:), allocatable :: S, X
+!
+      call mem%alloc(S, wf%n_ao, wf%n_ao)
+      call wf%get_ao_s_wx(S)
+!
+!     X = C1^T S
+!
+      call mem%alloc(X, wf%n_mo, wf%n_ao)
+!
+      call dgemm('T', 'N', &
+                  wf%n_mo, &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  one,     &
+                  C1,      &
+                  wf%n_ao, &
+                  S,       &
+                  wf%n_ao, &
+                  zero,    &
+                  X,       &
+                  wf%n_mo)
+!
+      call mem%dealloc(S, wf%n_ao, wf%n_ao)
+!
+!     T = X C2
+!
+      call dgemm('N', 'N', &
+                  wf%n_mo, &
+                  wf%n_mo, &
+                  wf%n_ao, &
+                  one,     &
+                  X,       &
+                  wf%n_mo, &
+                  C2,      &
+                  wf%n_ao, &
+                  zero,    &
+                  T,       &
+                  wf%n_mo)
+!
+      call mem%dealloc(X, wf%n_mo, wf%n_ao)
+!
+   end subroutine contruct_mo_basis_transformation_mlcc2
+!
+!
+   subroutine update_MO_fock_contributions_mlcc2(wf, C_old)
+!!
+!!    Updates MO Fock contributions 
+!!    Written by Sarai D. Folkestad, Nov 2019
+!!
+!!    Updates the frozen contributions to the fock matrix
+!!    from the old MO basis (C_old) to the current
+!!    (wf%orbital_coefficients)
+!!
+!
+      use array_utilities, only : symmetric_sandwich_right_transposition_replace
+!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_mo), intent(in) :: C_old
+!
+      real(dp), dimension(:,:), allocatable :: T
+!
+      call mem%alloc(T, wf%n_mo, wf%n_mo)
+!
+      call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, C_old, T)
+!
+      if (wf%frozen_core) then
+!
+         call symmetric_sandwich_right_transposition_replace(wf%mo_fock_fc_term, T, wf%n_mo)
+!
+      endif
+!
+      if (wf%frozen_hf_mos) then
+!
+         call symmetric_sandwich_right_transposition_replace(wf%mo_fock_frozen_hf_term, T, wf%n_mo)
+!
+      endif
+!
+      call mem%dealloc(T, wf%n_mo, wf%n_mo)
+!
+   end subroutine update_MO_fock_contributions_mlcc2
 !
 !
 end module mlcc2_class
