@@ -31,7 +31,7 @@
 !
    module subroutine construct_gs_density_ccs_complex(wf)
 !!
-!!    Construct complex one-electron density
+!!    Construct one-electron density
 !!    Written by Sarai Dery Folkestad, 2019
 !!
       implicit none

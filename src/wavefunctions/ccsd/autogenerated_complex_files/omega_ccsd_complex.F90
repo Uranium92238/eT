@@ -967,7 +967,7 @@ contains
       call add_1243_to_1234(two_complex, t_aibj, u_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call add_1342_to_1234(-one_complex, t_aibj, u_aild, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-!     Form the intermediate Z_aikc = sum_dl u_aild L_ldkc and set it to zero_complex
+!     Form the intermediate Z_aikc = sum_dl u_aild L_ldkc and set it to zero
 !
       call mem%alloc(Z_aikc,  wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
@@ -1095,7 +1095,7 @@ contains
       call mem%alloc(g_ldkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%get_ovov_complex(g_ldkc)
 !
-!     Make the intermediate X_b_c = F_bc - sum_dkl g_ldkc u_kl^bd and set to zero_complex
+!     Make the intermediate X_b_c = F_bc - sum_dkl g_ldkc u_kl^bd and set to zero
 !
       call mem%alloc(X_b_c, wf%n_v, wf%n_v)
 !

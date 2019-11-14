@@ -46,7 +46,7 @@ contains
 !!       X = I - t1
 !!       Y = I + t1^T
 !!
-!!    Here, t1 is a full MO matrix whose only non-zero_complex block is the vir-occ
+!!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ
 !!    part, where it is equal to t_i^a.
 !!
       implicit none
@@ -140,7 +140,7 @@ contains
 !!       X = I - t1
 !!       Y = I + t1^T
 !!
-!!    Here, t1 is a full MO matrix whose only non-zero_complex block is the vir-occ
+!!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ
 !!    part, where it is equal to t_i^a.
 !!    NB: needs place for an additional 2*wf%n_mo**4 + wf%n_t1 in memory.
 !!
