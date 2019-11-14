@@ -221,9 +221,6 @@ module ccs_class
       procedure :: set_fock                                      => set_fock_ccs
       procedure :: set_fock_complex                              => set_fock_ccs_complex
 !
-      procedure :: add_pcm_fock_contribution                     => add_pcm_fock_contribution_ccs
-      procedure :: add_pcm_fock_contribution_complex             => add_pcm_fock_contribution_ccs_complex
-!
       procedure :: get_gs_orbital_differences                    => get_gs_orbital_differences_ccs
       procedure :: get_es_orbital_differences                    => get_gs_orbital_differences_ccs
 !
@@ -243,6 +240,9 @@ module ccs_class
 !
       procedure :: add_t1_fock_length_dipole_term                => add_t1_fock_length_dipole_term_ccs
       procedure :: add_t1_fock_length_dipole_term_complex        => add_t1_fock_length_dipole_term_ccs_complex
+!
+      procedure :: add_pcm_fock_contribution                     => add_pcm_fock_contribution_ccs
+      procedure :: add_pcm_fock_contribution_complex             => add_pcm_fock_contribution_ccs_complex
 !
 !     Procedures related to the omega vector
 !

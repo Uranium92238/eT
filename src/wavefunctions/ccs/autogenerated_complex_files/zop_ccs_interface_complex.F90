@@ -31,7 +31,7 @@
 !
    module subroutine construct_gs_density_ccs_complex(wf)
 !!
-!!    Construct complex one-electron density
+!!    Construct one_complex-electron density
 !!    Written by Sarai Dery Folkestad, 2019
 !!
       implicit none
@@ -46,6 +46,11 @@
 !!    One electron density reference-reference oo-term
 !!    Written by Sarai D. Folkestad, 2019
 !!
+!!    Hartree-Fock density contribution:
+!!    D_pq += < HF| e^(-T) E_pq e^T |HF >
+!!
+!!    D_ii = 2  
+!!
       implicit none
 !
       class(ccs) :: wf
@@ -59,6 +64,15 @@
 !!
 !!    One electron density excited-determinant/reference vo-term
 !!    Written by Sarai D. Folkestad, 2019
+!!
+!!    Computes terms of the form:
+!!
+!!          D_pq += sum_mu X_mu * < mu| e^(-T) E_pq e^T |HF >
+!!
+!!    where X_mu is a general amplitude (tbar or L)
+!!
+!!    explicit term in this routine:
+!!          D_ai = tbar_ai 
 !!
       implicit none
 !

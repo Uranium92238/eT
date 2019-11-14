@@ -279,7 +279,7 @@ contains
 !
       class(ccs) :: wf
 !
-      if (.not. allocated(wf%density_complex)) call mem%alloc(wf%density_complex, wf%n_mo, wf%n_mo)
+      call mem%alloc(wf%density_complex, wf%n_mo, wf%n_mo)
 !
    end subroutine initialize_gs_density_ccs_complex
 !

@@ -37,8 +37,8 @@ submodule (ccs_class) zop_ccs_complex
 !!
 !!          D_pq = < X| e^(-T) E_pq e^T |Y >
 !!
-!!    where X and Y are left and right state vectors with contributions 
-!!    from a reference determinant and excited determinants (< mu|, |nu >):
+!!    where X and Y are left and right vectors with contributions from
+!!    a reference determinant and excited determinants (< mu|, |nu >):
 !!
 !!          D_pq =             X_ref < HF| e^(-T) E_pq e^T |HF >  Y_ref
 !!                 + sum_mu    X_mu  < mu| e^(-T) E_pq e^T |HF >  Y_ref
@@ -49,7 +49,7 @@ submodule (ccs_class) zop_ccs_complex
 !!    excited state, interstate transition) different states and thus different
 !!    amplitudes X_ref, X_mu, Y_ref and Y_mu will contribute.
 !!
-!!    The states can be written as the following vectors:
+!!    In EOM theory the states can be written as the following vectors:
 !!
 !!          |CC >     = R_0 = (1, 0)
 !!          |Lambda > = L_0 = (1, tbar_mu)
@@ -217,7 +217,7 @@ contains
 !!    Calculate energy_complex
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
-!!    Calculates the CCSD energy_complex. This is only equal to the actual
+!!    Calculates the CCS energy_complex. This is only equal to the actual
 !!    energy_complex when the ground state equations are solved, of course.
 !!
 !!       E = E_hf + sum_aibj t_i^a t_j^b L_iajb
@@ -230,7 +230,7 @@ contains
 !
       complex(dp) :: correlation_energy 
 !
-      integer :: a, i, b, j, ai, bj, aibj
+      integer :: a, i, b, j
 !
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
@@ -238,18 +238,11 @@ contains
 !
       correlation_energy = zero_complex 
 !
-!$omp parallel do private(a,i,ai,bj,j,b,aibj) reduction(+:correlation_energy)
+!$omp parallel do private(a,i,j,b) reduction(+:correlation_energy)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
-!
-            ai = (i-1)*wf%n_v + a
-!
             do j = 1, wf%n_o
                do b = 1, wf%n_v
-!
-                  bj = wf%n_v*(j - 1) + b
-!
-                  aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
 !
                   correlation_energy = correlation_energy &
                                        + (wf%t1_complex(a,i))*(wf%t1_complex(b,j)) &
@@ -277,7 +270,7 @@ contains
 !!
 !!       energy_complex += sum_mu tbar_mu Omega_mu,
 !!
-!!    which appears in the variational energy_complex expression:
+!!    which appears in the energy_complex expression:
 !!
 !!          < Lambda|H|CC > when Omega != 0.
 !!
