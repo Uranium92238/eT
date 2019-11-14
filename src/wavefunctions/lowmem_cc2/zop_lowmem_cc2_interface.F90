@@ -23,6 +23,9 @@
 !!     Written by Sarai D. Folkestad, Eirik F. Kjønstad,
 !!     Andreas Skeidsvoll, 2018
 !!
+!!     Calculates the lowmem CC2 energy. This is only equal to the actual
+!!     energy when the ground state equations are solved, of course.
+!!
       implicit none
 !
       class(lowmem_cc2), intent(inout) :: wf
