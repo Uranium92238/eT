@@ -650,8 +650,6 @@ contains
 !
          endif
 !
-        if (input%requested_keyword_in_section('frozen core', 'cc')) wf%frozen_core = .true.
-!
       endif
 !
    end subroutine read_settings_ccs

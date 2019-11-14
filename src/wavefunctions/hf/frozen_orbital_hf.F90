@@ -369,7 +369,7 @@ contains
       call dcopy(wf%n_mo, wf%orbital_energies, 1, orbital_energies_copy, 1)
 !
       call mem%dealloc(wf%orbital_energies, wf%n_mo)
-      call mem%alloc(wf%orbital_energies, wf%n_mo - wf%n_frozen_core_orbitals)
+      call mem%alloc(wf%orbital_energies, wf%n_o + wf%n_v)
 !
 !$omp parallel do private(i)
       do i = 1, wf%n_o
