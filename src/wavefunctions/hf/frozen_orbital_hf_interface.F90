@@ -22,6 +22,16 @@
 !!    Prepare MOs
 !!    Written by Ida-Marie Høyvik, Oct 2019
 !!
+!!    This routine prepares the MOs for coupled cluster
+!!    in the cases where there is a reduction in the
+!!    number of MOs in CC compared to HF
+!!
+!!    Examples of this is the frozen core
+!!    approximation and if CC is only done
+!!    for a localized region of a large molecule
+!!    which has been treated at HF level of theory.
+!!
+!!
       implicit none
 !
       class(hf) :: wf
@@ -29,27 +39,24 @@
    end subroutine prepare_mos_hf
 !
 !
-   module subroutine prepare_frozen_fock_terms_hf(wf)
-!!
-!!    Prepare frozen Fock conttributions
-!!    Written by Sarai D. Folkestad, Oct 2019
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine prepare_frozen_fock_terms_hf
-!
-!
    module subroutine remove_core_orbitals_hf(wf)
 !!
 !!    Remove core orbitals
-!!    Written by Sarai D. Folkestad, Sep 2018 
+!!    Written by Sarai D. Folkestad, Sep 2018
 !!
+!!    - Removes core orbitals from wf%orbital_coefficients
+!!
+!!       Removes 1s for C - Mg
+!!       Removes 1s, 2s, 2p for Al - Zn
+!!
+!!    - The core orbitals are stored in wf%orbital_coefficients_fc
+!!    - The number of frozen core orbitals is wf%n_frozen_core_orbitals 
+!!       on exit
+!!    - On exit wf%n_mo and wf%n_o are updated to not include the core orbitals
+!!    
+      implicit none
 !
-      implicit none 
-!
-      class(hf) :: wf  
+      class(hf) :: wf
 !
    end subroutine remove_core_orbitals_hf
 !
@@ -60,9 +67,13 @@
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!    Added and modified for HF by Ida-Marie Hoyvik, Oct 2019
 !!
-!
-      use array_utilities, only : copy_and_scale
-!
+!!    - Removes frozen HF omolecular orbitals from wf%orbital_coefficients
+!!      and places them in wf%orbital_coefficients_frozen_hf
+!!    - The number of frozen occupied HF orbitals is wf%n_frozen_hf_o
+!!      on exit
+!!    - On exit wf%n_mo, wf%n_o and wf%n_v are updated not to include 
+!!      frozen hf orbitals
+!!
       implicit none
 !
       class(hf), intent(inout) :: wf
@@ -70,10 +81,33 @@
    end subroutine remove_frozen_hf_orbitals_hf
 !
 !
+   module subroutine prepare_frozen_fock_terms_hf(wf)
+!!
+!!    Prepare frozen Fock contributions
+!!    Written by Sarai D. Folkestad, Oct 2019
+!!
+!!    This routine prepares the frozen Fock contributions
+!!    to coupled cluster. This occurs e.g.,  in the cases where there
+!!    is a reduction in the number of MOs in CC compared to HF
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+   end subroutine prepare_frozen_fock_terms_hf
+!
+!
    module subroutine construct_mo_fock_fc_term_hf(wf)
 !!
 !!    Calculate MO Fock frozen core contribution
 !!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Constructs the frozen core contribution to
+!!    the fock matrix
+!!
+!!       F_pq = (2 g_wxyz D^FC_yz - g_wyzx D^FC_xy) C_pw C_qx
+!!
+!!    in preparation of FC-CC
 !!
       implicit none
 !
@@ -86,6 +120,15 @@
 !!
 !!    Construct MO fock frozen hf  contribution
 !!    Written by Ida-Marie Høyvik, Oct 2019
+!!
+!!
+!!    Constructs the frozen HF contribution to
+!!    the fock matrix
+!!
+!!       F_pq = (2 g_wxyz D^F_yz - g_wyzx D^F_xy) C_pw C_qx
+!!
+!!    in preparation of CC in subspace.
+!!
 !!
       implicit none
 !
@@ -140,5 +183,3 @@
       class(hf) :: wf
 !
    end subroutine destruct_orbital_coefficients_fc_hf
-!
-!
