@@ -22,6 +22,8 @@
 !!    Prepare for jacobian transpose transformation
 !!    Written by Tor S. Haugland, Oct 2019
 !!
+!!    Based on prepare_for_multiplier_equation_cc3 by Alex Paul
+!!
       implicit none
 !
       class(cc2), intent(inout) :: wf
@@ -34,10 +36,27 @@
 !!    Construct multiplier equation 
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!
+!!    Constructs 
+!!
+!!       t-bar^T A + eta,
+!!
+!!    and places the result in 'equation'.
+!!
+!!    Solves analytically for tbar_aibj
+!!
+!!       tbar_aibj = - (η_aibj + sum_ai tbar_ai A_ai,aibj)/ε_aibj
+!!
+!!    where
+!!
+!!       η_aibj = 2 L_iajb       
+!!
+!!    and uses this to set up 'equation'
+!!
+!!       η_ai + sum_bj tbar_bj A_bj,ai + sum_bjck tbar_bjck A_{bjck,ai}
+!!
       implicit none 
 !
       class(cc2), intent(in) :: wf 
-!
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation 
 !
    end subroutine construct_multiplier_equation_cc2
