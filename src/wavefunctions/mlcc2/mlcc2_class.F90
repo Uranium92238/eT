@@ -216,6 +216,11 @@ module mlcc2_class
       procedure :: normalization_for_jacobian_debug                  => normalization_for_jacobian_debug_mlcc2
       procedure :: construct_omega_doubles                           => construct_omega_doubles_mlcc2
 !
+!     Restart
+!
+      procedure :: is_restart_safe                                   => is_restart_safe_mlcc2
+      procedure :: write_cc_restart                                  => write_cc_restart_mlcc2
+!
    end type mlcc2
 !
    interface mlcc2
@@ -288,10 +293,14 @@ contains
       call output%printf('- Summary of MLCC2 orbital partitioning:',fs='(/t3,a)',pl='minimal')
 !
       call output%printf('Orbital type: ' // trim(wf%cc2_orbital_type), fs='(/t6,a)',pl='minimal')
-      call output%printf('Number occupied cc2 orbitals: (i4)', ints=[wf%n_cc2_o], fs='(/t6,a)',pl='minimal')
-      call output%printf('Number virtual cc2 orbitals:  (i4)', ints=[wf%n_cc2_v], fs='(t6,a)',pl='minimal')
-      call output%printf('Number occupied ccs orbitals: (i4)', ints=[wf%n_ccs_o], fs='(/t6,a)',pl='minimal')
-      call output%printf('Number virtual ccs orbitals:  (i4)', ints=[wf%n_ccs_v], fs='(t6,a)',pl='minimal')
+      call output%printf('Number occupied cc2 orbitals: (i4)', &
+            ints=[wf%n_cc2_o], fs='(/t6,a)',pl='minimal')
+      call output%printf('Number virtual cc2 orbitals:  (i4)', &
+            ints=[wf%n_cc2_v], fs='(t6,a)',pl='minimal')
+      call output%printf('Number occupied ccs orbitals: (i4)', &
+            ints=[wf%n_ccs_o], fs='(/t6,a)',pl='minimal')
+      call output%printf('Number virtual ccs orbitals:  (i4)', &
+            ints=[wf%n_ccs_v], fs='(t6,a)',pl='minimal')
 !
    end subroutine print_orbital_space_mlcc2
 !
@@ -408,11 +417,13 @@ contains
                call output%error_msg('to construct CNTOs excitation vectors must be specified.')
 !
          call wf%initialize_cnto_states()
-         call input%get_array_for_keyword_in_section('cnto states', 'mlcc', wf%n_cnto_states, wf%cnto_states)
+         call input%get_array_for_keyword_in_section('cnto states', 'mlcc', &
+                  wf%n_cnto_states, wf%cnto_states)
 !
       elseif (trim(orbital_type) == 'cholesky') then
 !
-         call input%get_keyword_in_section('cholesky threshold', 'mlcc', wf%cholesky_orbital_threshold)
+         call input%get_keyword_in_section('cholesky threshold', 'mlcc', &
+                  wf%cholesky_orbital_threshold)
 !
       elseif (trim(orbital_type) == 'nto-canonical') then
 !
@@ -422,11 +433,13 @@ contains
                call output%error_msg('to construct NTOs excitation vectors must be specified.')
 !
          call wf%initialize_nto_states()
-         call input%get_array_for_keyword_in_section('nto states', 'mlcc', wf%n_nto_states, wf%nto_states)
+         call input%get_array_for_keyword_in_section('nto states', 'mlcc', &
+               wf%n_nto_states, wf%nto_states)
 !
       elseif (trim(orbital_type) == 'cholesky-pao') then
 !
-         call input%get_keyword_in_section('cholesky threshold', 'mlcc', wf%cholesky_orbital_threshold)
+         call input%get_keyword_in_section('cholesky threshold', 'mlcc', &
+               wf%cholesky_orbital_threshold)
 !
       else 
 !
@@ -583,17 +596,19 @@ contains
       if (wf%n_cc2_v .eq. 0) &
                call output%error_msg('no virtual cc2 orbitals in mlcc2 calulation.')
 !
-      if (wf%n_cc2_o + wf%n_cc2_v .eq. 0) call output%error_msg('no cc2 orbitals in mlcc2 calulation.')
-!
       if (wf%n_ccs_o + wf%n_ccs_v .eq. 0)  &
-            call output%warning_msg('no ccs orbitals in mlcc2 calulation, recomended to run standard cc2 code.')
+            call output%warning_msg('no ccs orbitals in mlcc2 calulation, ' //&
+               'recomended to run standard cc2 code.')
 !
       if (wf%n_cc2_o .lt. 0 .or. wf%n_ccs_o .lt. 0 .or. &
-          wf%n_cc2_v .lt. 0 .or. wf%n_ccs_v .lt. 0 ) call output%error_msg('negative orbital space size.')
+          wf%n_cc2_v .lt. 0 .or. wf%n_ccs_v .lt. 0 ) &
+            call output%error_msg('negative orbital space size.')
 !
-      if (wf%n_cc2_o + wf%n_ccs_o .ne. wf%n_o) call output%error_msg('occupied spaces do not add to n_o.')
+      if (wf%n_cc2_o + wf%n_ccs_o .ne. wf%n_o) &
+            call output%error_msg('occupied spaces do not add to n_o.')
 !
-      if (wf%n_cc2_v + wf%n_ccs_v .ne. wf%n_v) call output%error_msg('virtual spaces do not add to n_v.')
+      if (wf%n_cc2_v + wf%n_ccs_v .ne. wf%n_v) &
+            call output%error_msg('virtual spaces do not add to n_v.')
 !
    end subroutine check_orbital_space_mlcc2
 !
@@ -1026,8 +1041,9 @@ contains
       call wf%determine_n_es_amplitudes()
 !
       wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, wf%system%n_J)
-      call wf%construct_and_write_mo_cholesky(wf%n_mo, wf%orbital_coefficients, &
-                  wf%integrals%cholesky_mo)
+!
+      call wf%construct_and_write_mo_cholesky(wf%n_mo, &
+            wf%orbital_coefficients, wf%integrals%cholesky_mo)
 !
 !     Frozen fock terms transformed from the canonical MO basis to 
 !     the basis of orbital partitioning
@@ -1053,6 +1069,9 @@ contains
 !     Construct MLCC orbital basis
 !
       call wf%construct_block_diagonal_fock_orbitals()
+!
+      call wf%construct_and_write_mo_cholesky(wf%n_mo, &
+            wf%orbital_coefficients, wf%integrals%cholesky_mo)
 !
 !     Frozen fock terms transformed from the basis of orbital partitioning to 
 !     the MLCC basis
@@ -1139,6 +1158,124 @@ contains
       wf%n_gs_amplitudes = wf%n_t1
 !
    end subroutine determine_n_gs_amplitudes_mlcc2
+!
+!
+   subroutine is_restart_safe_mlcc2(wf, task)
+!!
+!!    Is restart safe?
+!!    Written by Eirik F. Kjønstad, Mar 2019 
+!!
+!!    'task' : Which type of restart we are considering.
+!!             can be either 'ground state' or 'excited state'
+!!
+!!    Modified by Sarai D. Folkestad, Nov 2019
+!!    
+!!    Modified for MLCC
+!!
+      implicit none 
+!
+      class(mlcc2) :: wf 
+!
+      character(len=*), intent(in) :: task 
+!
+      integer :: n_o, n_v, n_gs_amplitudes, n_es_amplitudes
+      integer :: n_cc2_o, n_cc2_v, n_ccs_o, n_ccs_v
+!
+      character(len=200) :: cc2_orbital_type
+!
+      call wf%restart_file%open_('read', 'rewind')
+!
+      call wf%restart_file%read_(n_o)
+      call wf%restart_file%read_(n_v)
+      call wf%restart_file%read_(n_gs_amplitudes)
+      call wf%restart_file%read_(n_es_amplitudes)
+!
+      if (n_o .ne. wf%n_o) &
+        call output%error_msg('attempted to restart from inconsistent number of occupied orbitals.')
+!
+      if (n_v .ne. wf%n_v) &
+         call output%error_msg('attempted to restart from inconsistent number of virtual orbitals.')
+!
+      call wf%restart_file%read_(cc2_orbital_type) 
+!
+      if (cc2_orbital_type .ne. wf%cc2_orbital_type) &
+         call output%error_msg('attempted MLCC restart ' // &
+         'with inconsistent orbital type.')
+!
+      call wf%restart_file%read_(n_ccs_o)
+      call wf%restart_file%read_(n_ccs_v)
+      call wf%restart_file%read_(n_cc2_o)
+      call wf%restart_file%read_(n_cc2_v)
+!
+      if (n_ccs_o .ne. wf%n_ccs_o) &
+         call output%error_msg('attempted to restart from inconsistent ' // &
+                                                   'number of ccs occupied orbitals.')
+!
+      if (n_ccs_v .ne. wf%n_ccs_v) &
+         call output%error_msg('attempted to restart from inconsistent ' // &
+                                                   'number of ccs virtual orbitals.')
+!
+      if (n_cc2_o .ne. wf%n_cc2_o) &
+         call output%error_msg('attempted to restart from inconsistent ' // &
+                                                   'number of cc2 occupied orbitals.')
+!
+      if (n_cc2_v .ne. wf%n_cc2_v) &
+         call output%error_msg('attempted to restart from inconsistent ' // &
+                                                   'number of cc2 virtual orbitals.')
+!
+      call wf%restart_file%close_()
+!
+      if (trim(task) == 'ground state') then 
+!
+         if (n_gs_amplitudes .ne. wf%n_gs_amplitudes) &
+            call output%error_msg('attempted to restart from inconsistent number ' // &
+                                    'of ground state amplitudes.')    
+!
+      elseif (trim(task) == 'excited state') then    
+!
+         if (n_es_amplitudes .ne. wf%n_es_amplitudes) &
+            call output%error_msg('attempted to restart from inconsistent number ' // &
+                                    'of excited state amplitudes.')     
+!
+      else
+!
+         call output%error_msg('attempted to restart, but the task was not recognized: ' // task)
+!
+      endif   
+!
+   end subroutine is_restart_safe_mlcc2
+!
+!
+   subroutine write_cc_restart_mlcc2(wf)
+!!
+!!    Write CC restart file
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019
+!!
+!!    Modified by Sarai D. Folkestad, Nov 2019
+!!    
+!!    Modified for MLCC
+!!
+      implicit none
+!
+      class(mlcc2) :: wf 
+!
+!     Write information to restart file 
+!
+      call wf%restart_file%open_('write', 'rewind')
+!
+      call wf%restart_file%write_(wf%n_o)
+      call wf%restart_file%write_(wf%n_v)
+      call wf%restart_file%write_(wf%n_gs_amplitudes)
+      call wf%restart_file%write_(wf%n_es_amplitudes)
+      call wf%restart_file%write_(wf%cc2_orbital_type)
+      call wf%restart_file%write_(wf%n_ccs_o)
+      call wf%restart_file%write_(wf%n_ccs_v)
+      call wf%restart_file%write_(wf%n_cc2_o)
+      call wf%restart_file%write_(wf%n_cc2_v)
+!
+      call wf%restart_file%close_()
+!
+   end subroutine write_cc_restart_mlcc2
 !
 !
    subroutine contruct_mo_basis_transformation_mlcc2(wf, C1, C2, T)
