@@ -22,6 +22,18 @@
 !!    Calculate energy
 !!    Written by Andreas Skeidsvoll, 2018
 !!
+!!    Calculates the MP2 energy from HF energy, E_HF, vovo integrals, g_aibj, 
+!!    and the orbital energies, eps. The total MP2 energy is calculated as
+!!
+!!       E = E_HF - sum_aibj g_aibj*L_aibj/(eps(a)+eps(b)-eps(i)-eps(j))
+!!
+!!    where
+!!
+!!       L_aibj = 2*g_aibj - g_ajbi.
+!!
+!!    On entry, it is assumed that the energy is equal to the HF energy 
+!!    (i.e. the routine only adds the correction to the energy variable).
+!!
       implicit none
 !
       class(mp2), intent(inout) :: wf 
