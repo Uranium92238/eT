@@ -219,7 +219,9 @@ contains
       davidson = linear_davidson_tool('multipliers', wf%n_gs_amplitudes,   &
                                        solver%residual_threshold,          &
                                        solver%max_dim_red,                 &
-                                       -eta, 1, solver%records_in_memory)
+                                       -eta, 1)
+!
+      call davidson%initialize_trials_and_transforms(solver%records_in_memory)
 !
       call solver%set_precondition_vector(wf, davidson)
 !
@@ -332,7 +334,7 @@ contains
 !
       endif
 !
-      call davidson%cleanup()
+      call davidson%finalize_trials_and_transforms()
 !
    end subroutine run_davidson_cc_multipliers
 !

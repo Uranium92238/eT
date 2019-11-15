@@ -85,7 +85,7 @@ contains
    end function factorial
 !
 !
-   function double_factorial_recursive(arg) result(f)
+   recursive function double_factorial_recursive(arg) result(f)
 !!
 !!    Recursive implementation of double factorial operation
 !!

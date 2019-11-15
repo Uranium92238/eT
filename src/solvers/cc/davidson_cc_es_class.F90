@@ -222,8 +222,11 @@ contains
 !
 !     :: Preparations ::
 !
-      davidson = eigen_davidson_tool('cc_es_davidson', wf%n_es_amplitudes, solver%n_singlet_states, &
-                              solver%residual_threshold, solver%max_dim_red, solver%records_in_memory)
+      davidson = eigen_davidson_tool('cc_es_davidson', wf%n_es_amplitudes, &
+                        solver%n_singlet_states, solver%residual_threshold, &
+                        solver%max_dim_red)
+!
+      call davidson%initialize_trials_and_transforms(solver%records_in_memory)
 !
       call solver%set_precondition_vector(wf, davidson)
       call solver%set_start_vectors(wf, davidson)
@@ -357,6 +360,8 @@ contains
          call mem%dealloc(r, wf%n_es_amplitudes, solver%n_singlet_states)
 !
       endif
+!
+      call davidson%finalize_trials_and_transforms()
 !
    end subroutine run_davidson_cc_es
 !

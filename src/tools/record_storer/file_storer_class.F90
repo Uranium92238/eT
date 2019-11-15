@@ -48,17 +48,20 @@ module file_storer_class
 !
    contains
 !
-      procedure :: get        => get_file_storer
-      procedure :: set        => set_file_storer
+      procedure :: get                    => get_file_storer
+      procedure :: set                    => set_file_storer
 !
-      procedure :: open_      => open_file_storer
-      procedure :: close_     => close_file_storer
+      procedure :: open_                  => open_file_storer
+      procedure :: close_                 => close_file_storer
 !
-      procedure :: delete_    => delete_file_storer
+      procedure :: delete_                => delete_file_storer
 !
       procedure :: get_n_existing_records => get_n_existing_records_file_storer
 !
       final :: destructor
+!
+      procedure :: initialize_storer      => initialize_storer_file_storer
+      procedure :: finalize_storer        => finalize_storer_file_storer
 !
    end type file_storer
 !
@@ -166,20 +169,7 @@ contains
 !
          storer%direct_file = direct_file(trim(storer%name_), storer%record_dim)
 !
-         call storer%direct_file%open_('readwrite')
-!
       endif
-!
-!     Set up index array telling us which record is 
-!     stored in which position
-!
-      call mem%alloc(storer%record_indices, storer%n_records)
-!
-      do I = 1, storer%n_records
-!
-         storer%record_indices(I) = I
-!
-      enddo
 !
    end function new_file_storer
 !
@@ -377,14 +367,60 @@ contains
    end subroutine delete_file_storer
 !
 !
-   subroutine destructor(storer)
+   subroutine initialize_storer_file_storer(storer)
 !!
-!!    Destructor
-!!    Written by Eirik F. Kjønstad, 2019
+!!    Initialize storer 
+!!    Written by Eirik F. Kjønstad, Nov 2019 
 !!
-      implicit none
+!!    Initializes indices for records.
+!!    Opens file if direct.
+!!
+      implicit none 
 !
-      type(file_storer) :: storer
+      class(file_storer) :: storer 
+!
+      integer :: I 
+!
+      call output%printf('Doing preparations for file storer (a0)', pl='debug', &
+                           chars=[storer%name_], fs='(/t3,a)')
+!
+!     Set up index array telling us which record is 
+!     stored in which position
+!
+      call mem%alloc(storer%record_indices, storer%n_records)
+!
+      do I = 1, storer%n_records
+!
+         storer%record_indices(I) = I
+!
+      enddo
+!
+!     Open file if direct 
+!
+      if (storer%direct_) call storer%direct_file%open_('readwrite')
+!
+   end subroutine initialize_storer_file_storer
+!
+!
+   subroutine finalize_storer_file_storer(storer)
+!!
+!!    Finalize storer 
+!!    Written by Eirik F. Kjønstad, Nov 2019 
+!!
+!!    Deallocates index array. 
+!!
+!!    Deletes file(s) if requested. 
+!!
+!!    If direct file, closes the file.     
+!!
+      implicit none 
+!
+      class(file_storer) :: storer 
+!
+      call output%printf('Doing finalizations for file storer (a0)', pl='debug', &
+                           chars=[storer%name_], fs='(/t3,a)')
+!
+      call mem%dealloc(storer%record_indices, storer%n_records)
 !
       if (storer%delete) then 
 !
@@ -394,9 +430,19 @@ contains
 !
          if (storer%direct_) call storer%direct_file%close_('keep')
 !
-      endif 
+      endif      
 !
-      call mem%dealloc(storer%record_indices, storer%n_records)
+   end subroutine finalize_storer_file_storer
+!
+!
+   subroutine destructor(storer)
+!!
+!!    Destructor
+!!    Written by Eirik F. Kjønstad, 2019
+!!
+      implicit none
+!
+      type(file_storer) :: storer
 !
       if (storer%direct_) then 
 !

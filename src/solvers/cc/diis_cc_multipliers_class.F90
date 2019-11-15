@@ -232,10 +232,12 @@ contains
 !
       integer :: iteration
 !
-      call wf%prepare_for_multiplier_equation
+      call wf%prepare_for_multiplier_equation()
 !
-      diis = diis_tool('cc_multipliers_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, &
-                  solver%records_in_memory, dimension_=solver%diis_dimension)
+      diis = diis_tool('cc_multipliers_diis', wf%n_gs_amplitudes, &
+                     wf%n_gs_amplitudes, dimension_=solver%diis_dimension)
+!
+      call diis%initialize_storers(solver%records_in_memory)
 !
       call mem%alloc(residual, wf%n_gs_amplitudes)
       call mem%alloc(multipliers, wf%n_gs_amplitudes)
@@ -317,6 +319,8 @@ contains
       call mem%dealloc(residual, wf%n_gs_amplitudes)
       call mem%dealloc(multipliers, wf%n_gs_amplitudes)
       call mem%dealloc(epsilon, wf%n_gs_amplitudes)
+!
+      call diis%finalize_storers()
 !
    end subroutine run_diis_cc_multipliers
 !

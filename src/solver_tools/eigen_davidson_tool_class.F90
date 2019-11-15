@@ -96,8 +96,6 @@ module eigen_davidson_tool_class
 !
 !     Other routines 
 !
-      procedure :: cleanup                            => cleanup_eigen_davidson_tool
-!
       procedure, private :: construct_re_residual     => construct_re_residual_eigen_davidson_tool
       procedure, private :: construct_im_residual     => construct_im_residual_eigen_davidson_tool
 !  
@@ -106,6 +104,8 @@ module eigen_davidson_tool_class
 !  
       procedure, private :: destruct_omega_re         => destruct_omega_re_eigen_davidson_tool
       procedure, private :: destruct_omega_im         => destruct_omega_im_eigen_davidson_tool
+!
+      final :: destructor_eigen_davidson_tool 
 !
    end type eigen_davidson_tool
 !
@@ -121,7 +121,7 @@ contains
 !
 !
    function new_eigen_davidson_tool(name_, n_parameters, n_solutions, &
-                        lindep_threshold, max_dim_red, records_in_memory) result(davidson)
+                        lindep_threshold, max_dim_red) result(davidson)
 !!
 !!    New eigen Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -140,9 +140,6 @@ contains
 !!    max_dim_red:       Maximum dimension of the reduced space. When exceeding this dimensionality,
 !!                       the solutions are set as the basis for the new trial space. 
 !!
-!!    records_in_memory: If .true., the trials and transforms are kept in memory. Otherwise they 
-!!                       are stored on file. 
-!!
       implicit none 
 !
       type(eigen_davidson_tool) :: davidson 
@@ -151,7 +148,6 @@ contains
 !
       integer, intent(in)  :: n_parameters, n_solutions, max_dim_red 
       real(dp), intent(in) :: lindep_threshold  
-      logical, intent(in)  :: records_in_memory
 !
       davidson%n_parameters = n_parameters
       davidson%n_solutions  = n_solutions
@@ -166,21 +162,17 @@ contains
       davidson%dim_red      = 0
       davidson%n_new_trials = n_solutions
 !
-!     Set up array/or file array for trials and transforms    
-!
-      call davidson%prepare_trials_and_transforms(records_in_memory)
-!
    end function new_eigen_davidson_tool
 !
 !
-   subroutine cleanup_eigen_davidson_tool(davidson)
+   subroutine destructor_eigen_davidson_tool(davidson)
 !!
-!!    Cleanup 
+!!    Destructor  
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
 !
-      class(eigen_davidson_tool), intent(inout) :: davidson 
+      type(eigen_davidson_tool), intent(inout) :: davidson 
 !
       if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
       if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
@@ -188,7 +180,7 @@ contains
       call davidson%destruct_omega_re()
       call davidson%destruct_omega_im()
 !
-   end subroutine cleanup_eigen_davidson_tool
+   end subroutine destructor_eigen_davidson_tool
 !  
 !
    subroutine initialize_omega_im_eigen_davidson_tool(davidson)

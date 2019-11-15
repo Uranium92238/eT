@@ -32,7 +32,7 @@ hf zop
 end hf zop
 
 geometry
-   basis: aug-cc-pVDZ
+basis: aug-cc-pVDZ
 O         -0.57303        2.18995       -0.05256
 H          0.34769        2.48598        0.05049
 H         -1.07580        3.01947        0.02024

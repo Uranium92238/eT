@@ -82,7 +82,8 @@ module davidson_tool_class
 !
       procedure :: set_trials_to_solutions                     => set_trials_to_solutions_davidson_tool
 !
-      procedure :: prepare_trials_and_transforms               => prepare_trials_and_transforms_davidson_tool
+      procedure :: initialize_trials_and_transforms            => initialize_trials_and_transforms_davidson_tool
+      procedure :: finalize_trials_and_transforms              => finalize_trials_and_transforms_davidson_tool
 !
    end type davidson_tool
 !
@@ -104,6 +105,76 @@ module davidson_tool_class
    end interface
 !
 contains
+!
+!
+   subroutine initialize_trials_and_transforms_davidson_tool(davidson, records_in_memory)
+!!
+!!    Initialize trials and transforms  
+!!    Written by Eirik F. Kjønstad, Nov 2019 
+!!
+!!    Initializes the storers for trials and transforms.
+!!
+!!    records_in_memory: if true,  trials and transforms are stored in memory 
+!!                       if false, trials and transforms are stored on disk 
+!!
+!!    Trial vectors c define the subspace. Transforms refer to the transformed 
+!!    trial vectors, i.e. rho = A c, if A is the linear transformation of 
+!!    the linear equation. 
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson 
+!
+      logical, intent(in) :: records_in_memory
+!
+      if (records_in_memory) then 
+!
+         call output%printf('Reduced space basis and transforms are stored in memory.', &
+                                    pl='m', fs='(/t6,a)')
+!
+         davidson%trials = memory_storer(trim(davidson%name_) // '_trials', &
+                     davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions)   
+!
+         davidson%transforms = memory_storer(trim(davidson%name_) // '_transforms', &
+                     davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions) 
+!
+      else
+!
+         call output%printf('Reduced space basis and transforms are stored on disk.', &
+                                 pl='m', fs='(/t6,a)')
+!
+         davidson%trials = file_storer(trim(davidson%name_) // '_trials', &
+                     davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions, &
+                     delete=.true.)   
+!
+         davidson%transforms = file_storer(trim(davidson%name_) // '_transforms', &
+                     davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions, &
+                     delete=.true.)   
+!
+      endif 
+!
+      call davidson%trials%initialize_storer()
+      call davidson%transforms%initialize_storer()
+!
+   end subroutine initialize_trials_and_transforms_davidson_tool
+!
+!
+   subroutine finalize_trials_and_transforms_davidson_tool(davidson)
+!!
+!!    Finalize trials and transforms 
+!!    Written by Eirik F. Kjønstad, Nov 2019 
+!!
+!!    Finalizes the storers. This means for files that they are closed 
+!!    and deleted.
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson 
+!
+      call davidson%trials%finalize_storer()
+      call davidson%transforms%finalize_storer()
+!
+   end subroutine finalize_trials_and_transforms_davidson_tool
 !
 !
    subroutine set_trial_davidson_tool(davidson, c, n)
@@ -225,48 +296,6 @@ contains
       call davidson%orthonormalize_trial_vecs()
 !
    end subroutine iterate_davidson_tool
-!
-!
-   subroutine prepare_trials_and_transforms_davidson_tool(davidson, records_in_memory)
-!!
-!!    Prepare trials and transforms 
-!!    Written by Eirik F. Kjønstad, 2019 
-!!
-!!    Sets up a record storer for trials and transforms. 
-!!
-      implicit none 
-!
-      class(davidson_tool) :: davidson 
-!
-      logical, intent(in) :: records_in_memory
-!
-      if (records_in_memory) then 
-!
-         call output%printf('Reduced space basis and transforms are stored in memory.', &
-                                    pl='m', fs='(/t6,a)')
-!
-         davidson%trials = memory_storer(trim(davidson%name_) // '_trials', &
-                     davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions)   
-!
-         davidson%transforms = memory_storer(trim(davidson%name_) // '_transforms', &
-                     davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions) 
-!
-      else
-!
-         call output%printf('Reduced space basis and transforms are stored on disk.', &
-                                 pl='m', fs='(/t6,a)')
-!
-         davidson%trials = file_storer(trim(davidson%name_) // '_trials', &
-                     davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions, &
-                     delete=.true.)   
-!
-         davidson%transforms = file_storer(trim(davidson%name_) // '_transforms', &
-                     davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions, &
-                     delete=.true.)   
-!
-      endif 
-!
-   end subroutine prepare_trials_and_transforms_davidson_tool
 !
 !
    function first_trial_davidson_tool(davidson) result(first)

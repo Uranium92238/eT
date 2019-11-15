@@ -288,8 +288,9 @@ contains
       dim_fock     = ((wf%n_ao)*(wf%n_ao + 1)/2)*(wf%n_densities)
       dim_gradient = (wf%n_ao*(wf%n_ao - 1)/2)*(wf%n_densities)
 !
-      diis = diis_tool('hf_diis', dim_fock, dim_gradient, &
-         solver%records_in_memory, dimension_=solver%diis_dimension)
+      diis = diis_tool('hf_diis', dim_fock, dim_gradient, dimension_=solver%diis_dimension)
+!
+      call diis%initialize_storers(solver%records_in_memory)
 !
 !     Set the initial density guess and Fock matrix
 !
@@ -415,6 +416,7 @@ contains
 !
       endif
 !
+      call diis%finalize_storers()
       call solver_timer%turn_off()
 !
    end subroutine run_scf_diis_hf

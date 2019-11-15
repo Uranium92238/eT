@@ -234,8 +234,10 @@ contains
       dim_fock     = (wf%n_mo)*(wf%n_mo)
       dim_gradient = (wf%n_o)*(wf%n_v)
 !
-      solver%diis = diis_tool('mo_hf_diis', dim_fock, dim_gradient, solver%records_in_memory, &
+      solver%diis = diis_tool('mo_hf_diis', dim_fock, dim_gradient, &
                        solver%diis_dimension, accumulate=.false., erase_history=.true.)
+!
+      call solver%diis%initialize_storers(solver%records_in_memory)
 !
       call mem%alloc(G, wf%n_v, wf%n_o)
       call mem%alloc(F, wf%n_mo, wf%n_mo)
@@ -350,6 +352,8 @@ contains
       call output%error_msg('Was not able to converge the equations in the given number of maximum iterations.')
 !
       endif
+!
+      call solver%diis%finalize_storers()
 !
       call solver_timer%turn_off()
 !

@@ -46,7 +46,8 @@ module memory_storer_class
       procedure :: get => get_memory_storer
       procedure :: set => set_memory_storer
 !
-      final :: destructor 
+      procedure :: initialize_storer   => initialize_storer_memory_storer 
+      procedure :: finalize_storer     => finalize_storer_memory_storer 
 !
    end type memory_storer
 !
@@ -82,21 +83,9 @@ contains
       integer, intent(in) :: record_dim
       integer, intent(in) :: n_records 
 !
-      integer :: I
-!
       storer%name_       = trim(name_)
       storer%record_dim  = record_dim 
       storer%n_records   = n_records 
-!
-      call mem%alloc(storer%record_indices, storer%n_records)
-!
-      do I = 1, storer%n_records
-!
-         storer%record_indices(I) = I 
-!
-      enddo
-!
-      call mem%alloc(storer%array, storer%record_dim, storer%n_records)
 !
    end function new_memory_storer
 !
@@ -149,19 +138,58 @@ contains
    end subroutine set_memory_storer
 !
 !
-   subroutine destructor(storer)
+   subroutine initialize_storer_memory_storer(storer)
 !!
-!!    Destructor 
-!!    Written by Eirik F. Kjønstad, 2019 
+!!    Initialize storer  
+!!    Written by Eirik F. Kjønstad, Nov 2019 
+!!
+!!    Allocates arrays for storing and indices. 
 !!
       implicit none 
 !
-      type(memory_storer) :: storer
+      class(memory_storer) :: storer 
+!
+      integer :: I 
+!
+      call output%printf('Doing preparations for memory storer (a0)', pl='debug', &
+                           chars=[storer%name_], fs='(/t3,a)')
+!
+!     Set up index array telling us which record is 
+!     stored in which position
+!
+      call mem%alloc(storer%record_indices, storer%n_records)
+!
+      do I = 1, storer%n_records
+!
+         storer%record_indices(I) = I 
+!
+      enddo
+!
+!     Allocate array to hold records 
+!
+      call mem%alloc(storer%array, storer%record_dim, storer%n_records)
+!
+   end subroutine initialize_storer_memory_storer
+!
+!
+   subroutine finalize_storer_memory_storer(storer)
+!!
+!!    Finalize storer  
+!!    Written by Eirik F. Kjønstad, Nov 2019 
+!!
+!!    Deallocates arrays for storing and indices.
+!!
+      implicit none 
+!
+      class(memory_storer) :: storer 
+!
+      call output%printf('Doing finalizations for memory storer (a0)', pl='debug', &
+                           chars=[storer%name_], fs='(/t3,a)')
 !
       call mem%dealloc(storer%record_indices, storer%n_records)
       call mem%dealloc(storer%array, storer%record_dim, storer%n_records)
 !
-   end subroutine destructor
+   end subroutine finalize_storer_memory_storer
 !
 !
 end module memory_storer_class

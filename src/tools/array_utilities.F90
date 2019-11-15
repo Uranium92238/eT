@@ -2632,7 +2632,7 @@ contains
    end subroutine scale_complex_4_diagonal_by_complex_1324
 !
 !
-   module subroutine scale_real_packed_4_diagonal_by_real(alpha, X, dim_pq)
+   subroutine scale_real_packed_4_diagonal_by_real(alpha, X, dim_pq)
 !!
 !!    Scale real packed 4 diagonal by real
 !!    Written by Andreas Skeidsvoll, Nov 2019
@@ -2668,7 +2668,7 @@ contains
    end subroutine scale_real_packed_4_diagonal_by_real
 !
 !
-   module subroutine scale_complex_packed_4_diagonal_by_real(alpha, X, dim_pq)
+   subroutine scale_complex_packed_4_diagonal_by_real(alpha, X, dim_pq)
 !!
 !!    Scale complex packed 4 diagonal by real
 !!    Written by Andreas Skeidsvoll, Nov 2019
@@ -2708,7 +2708,7 @@ contains
    end subroutine scale_complex_packed_4_diagonal_by_real
 !
 !
-   module subroutine scale_complex_packed_4_diagonal_by_complex(alpha, X, dim_pq)
+   subroutine scale_complex_packed_4_diagonal_by_complex(alpha, X, dim_pq)
 !!
 !!    Scale complex packed 4 diagonal by complex
 !!    Written by Andreas Skeidsvoll, Nov 2019

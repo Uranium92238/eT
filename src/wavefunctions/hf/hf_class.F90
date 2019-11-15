@@ -1022,8 +1022,8 @@ contains
 !
 !     Save MM and PCM matrices for CC
 !
-      call wf%write_mm_matrices()
-      call wf%write_pcm_matrices()
+      if (wf%system%mm_calculation) call wf%write_mm_matrices()
+      if (wf%system%pcm_calculation) call wf%write_pcm_matrices()
 !
 !     Deallocations
 !
