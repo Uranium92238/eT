@@ -83,6 +83,7 @@ set(eT_fortran_sources
    src/solvers/cc/diis_cc_es_class.F90
    src/solvers/cc/diis_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_multipliers_class.F90
+   src/solvers/cc/davidson_cc_linear_equations_class.F90
    src/solvers/cc/davidson_cc_es_class.F90
    src/solvers/cc/abstract_cc_es_class.F90
    src/solvers/cc/newton_raphson_cc_gs_class.F90
@@ -136,6 +137,7 @@ set(eT_fortran_sources
    src/wavefunctions/ccs/zop_ccs.F90
    src/wavefunctions/ccs/fop_ccs.F90
    src/wavefunctions/ccs/omega_ccs.F90
+   src/wavefunctions/ccs/F_ccs.F90
    src/wavefunctions/ccs/jacobian_ccs.F90
    src/wavefunctions/ccs/jacobian_transpose_ccs.F90
    src/wavefunctions/ccs/multiplier_equation_ccs.F90

@@ -252,7 +252,14 @@ module ccs_class
       procedure :: omega_ccs_a1                                  => omega_ccs_a1_ccs
       procedure :: omega_ccs_a1_complex                          => omega_ccs_a1_ccs_complex
 !
-      procedure :: construct_Jacobian_transform                  => construct_Jacobian_transform_ccs
+!     Routines related to the F transformation 
+!
+      procedure :: F_transformation                            => F_transformation_ccs
+!
+      procedure :: F_ccs_a1_0                                  => F_ccs_a1_0_ccs
+      procedure :: F_ccs_a1_1                                  => F_ccs_a1_1_ccs
+      procedure :: F_ccs_b1_1                                  => F_ccs_b1_1_ccs
+      procedure :: F_ccs_c1_1                                  => F_ccs_c1_1_ccs
 !
 !     Procedures related to the multiplier equation vector
 !
@@ -263,6 +270,8 @@ module ccs_class
       procedure :: construct_eta_complex                         => construct_eta_ccs_complex
 !
 !     Procedures related to the Jacobian transformation
+!
+      procedure :: construct_Jacobian_transform                  => construct_Jacobian_transform_ccs
 !
       procedure :: jacobian_transformation                       => jacobian_transformation_ccs
       procedure :: jacobian_ccs_a1                               => jacobian_ccs_a1_ccs
@@ -319,7 +328,7 @@ module ccs_class
       procedure :: construct_csiX                                => construct_csiX_ccs
       procedure :: csiX_ccs_a1                                   => csiX_ccs_a1_ccs
       procedure :: etaX_eom_a                                    => etaX_eom_a_ccs
-      procedure :: calculate_transition_strength                 => calculate_transition_strength_ccs
+      procedure :: calculate_lr_transition_strength              => calculate_lr_transition_strength_ccs
 !
 !     Routines related to post-processing excited states
 !
@@ -396,7 +405,6 @@ module ccs_class
 !
       procedure :: get_ovvv                                      => get_ovvv_ccs
       procedure :: get_ovvv_complex                              => get_ovvv_ccs_complex
-
 !
 !     Preparation procedures
 !
@@ -476,7 +484,6 @@ module ccs_class
       procedure :: construct_complex_time_derivative_amplitudes  => construct_complex_time_derivative_amplitudes_ccs
       procedure :: construct_complex_time_derivative_multipliers => construct_complex_time_derivative_multipliers_ccs
 !
-
    end type ccs
 !
 !
@@ -487,6 +494,7 @@ module ccs_class
       include "set_get_ccs_interface.F90"
       include "omega_ccs_interface.F90"
       include "multiplier_equation_ccs_interface.F90"
+      include "F_ccs_interface.F90"
       include "jacobian_ccs_interface.F90"
       include "jacobian_transpose_ccs_interface.F90"
       include "zop_ccs_interface.F90"

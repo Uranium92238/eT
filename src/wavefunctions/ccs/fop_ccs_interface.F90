@@ -323,9 +323,9 @@
    end subroutine etaX_eom_a_ccs
 !
 !
-   module subroutine calculate_transition_strength_ccs(wf, S, etaX, csiX, state, T_l, T_r)
+   module subroutine calculate_lr_transition_strength_ccs(wf, S, etaX, csiX, state, T_l, T_r, M)
 !!
-!!    Calculate transition strength
+!!    Calculate LR transition strength
 !!    Written by Josefine H. Andersen, February 2019
 !!
 !!    Given etaX and csiX, this routine calculates the left and right transition 
@@ -334,13 +334,17 @@
 !! 
 !!    The left and right states L and R are read from file and made binormal by the routine.
 !!
+!!    Modified by Eirik F. Kjønstad, Nov 2019:
+!!    Changed to calculate the LR transition strength instead of the EOM value.
+!!
       implicit none
 !
       class(ccs), intent(inout) :: wf
       real(dp), intent(inout) :: S
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: etaX
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: csiX
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: M
       real(dp), intent(out) :: T_l, T_r
       integer, intent(in)   :: state
 !
-   end subroutine calculate_transition_strength_ccs
+   end subroutine calculate_lr_transition_strength_ccs

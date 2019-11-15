@@ -401,7 +401,38 @@ contains
       call mem%alloc(c_i, davidson%n_parameters)
       call mem%alloc(c_j, davidson%n_parameters)
 !
-      do j = 1, davidson%dim_red 
+!     First orthonormalization of new trials 
+!
+      do j = davidson%first_trial(), davidson%last_trial() 
+!
+         call davidson%get_trial(c_j, j)
+!
+         do i = 1, j - 1
+!
+            call davidson%get_trial(c_i, i)
+!
+            r_ji = ddot(davidson%n_parameters, c_j, 1, c_i, 1)
+            call daxpy(davidson%n_parameters, -r_ji, c_i, 1, c_j, 1)
+!
+         enddo
+!
+         norm_c_j = sqrt(ddot(davidson%n_parameters, c_j, 1, c_j, 1))
+!
+         if (norm_c_j < davidson%lindep_threshold) then 
+!
+            call output%error_msg('detected linear dependence in trial space in davidson_tool.')
+!
+         endif
+!
+         call dscal(davidson%n_parameters, one/norm_c_j, c_j, 1)
+!
+         call davidson%set_trial(c_j, j)
+!
+      enddo
+!
+!     Second orthonormalization to avoid accumulation of noise
+!
+      do j = davidson%first_trial(), davidson%last_trial() 
 !
          call davidson%get_trial(c_j, j)
 !

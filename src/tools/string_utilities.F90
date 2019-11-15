@@ -103,7 +103,7 @@ contains
 !
       else ! Did not find list or 
 !
-         call output%error_msg('neither list nor range was found.')
+         n_elements = 0
 !
       endif
 !

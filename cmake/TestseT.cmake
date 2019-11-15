@@ -82,6 +82,7 @@ add_eT_runtest(mp2_energy_qmmmnopol                         "eT;short;hf;mp2;qmm
 add_eT_runtest(mp2_energy_qmfq                              "eT;short;hf;mp2;qmmm;fq")
 #
 add_eT_runtest(ccs_frozen_core                              "eT;short;ccs;gs;es;frozen core")
+add_eT_runtest(ccs_lr_polarizability_transition_moments     "eT;short;ccs;es;lr")
 add_eT_runtest(ccs_oscillator_strength_eom                  "eT;short;ccs;es;eom")
 add_eT_runtest(ccs_eom_diis_parallel_states                 "eT;short;ccs;es;eom;diis;parallel states")
 add_eT_runtest(ccs_td_rk4                                   "eT;short;ccs;complex;td")
@@ -134,6 +135,7 @@ add_eT_runtest(ccsd_left_ip_energies                        "eT;short;ccsd;ip;le
 add_eT_runtest(ccsd_left_ip_diis                            "eT;short;ccsd;ip;left;diis")
 add_eT_runtest(ccsd_left_es_energies                        "eT;short;ccsd;es;left")
 add_eT_runtest(ccsd_left_es_diis                            "eT;short;ccsd;es;left;diis")
+add_eT_runtest(ccsd_eom_polarizability                      "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom                 "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom_records_in_mem  "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_cvs_eom_degeneracy                      "eT;short;ccsd;es;eom;diis;degeneracy")
