@@ -17,7 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-!
    module subroutine initialize_t2_doubles_complex(wf)
 !!
 !!    Initialize t2 amplitudes
@@ -70,7 +69,7 @@
 !
    module subroutine initialize_u_aibj_doubles_complex(wf)
 !!
-!!    Initialize u 
+!!    Initialize u_aibj
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
 !!
       implicit none
@@ -82,7 +81,7 @@
 !
    module subroutine destruct_u_aibj_doubles_complex(wf)
 !!
-!!    Destruct u
+!!    Destruct u_aibj
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
 !!
       implicit none

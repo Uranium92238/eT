@@ -22,6 +22,9 @@
 !!    Make doubles complex (doubles)
 !!    Written by Andreas Skeidsvoll, Sep 2019
 !!
+!!    Allocates complex doubles variables, puts the real variables into the real part of the
+!!    complex variables and zero into the imaginary part, and deallocates the real variables.
+!!
       implicit none
 !
       class(doubles), intent(inout) :: wf

@@ -22,12 +22,17 @@
 !!    Construct one-electron density
 !!    Written by Sarai Dery Folkestad, 2019
 !!
+!!    Constructs the one-electron density 
+!!    matrix in the T1 basis
+!!
+!!    D_pq = < Lambda| E_pq |CC >
+!!
+!!    Contributions to the density are split up as follows:
+!!       D_pq = D_pq(ref-ref) + sum_mu tbar_mu D_pq(mu-ref)
+!!
       implicit none
 !
       class(doubles) :: wf
-!
-      complex(dp), dimension(:,:,:,:), allocatable :: tbar_aibj
-      complex(dp), dimension(:,:,:,:), allocatable :: t_aibj
 !
    end subroutine construct_gs_density_doubles_complex
 !
@@ -49,9 +54,7 @@
       implicit none
 !
       class(doubles) :: wf
-!
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
-!
       complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_akbj
       complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_akbi
 !
@@ -74,9 +77,7 @@
       implicit none
 !
       class(doubles) :: wf
-!
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
-!
       complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_ajci
       complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_bjci
 !
@@ -101,11 +102,8 @@
       implicit none
 !
       class(doubles) :: wf
-!
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
-!
       complex(dp), dimension(wf%n_v, wf%n_o), intent(in) :: tbar_ai
       complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_aibj
 !
    end subroutine density_doubles_mu_ref_ov_doubles_complex
-!
