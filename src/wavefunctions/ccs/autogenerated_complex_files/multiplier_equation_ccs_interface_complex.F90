@@ -43,7 +43,6 @@
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       complex(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
 !
    end subroutine construct_multiplier_equation_ccs_complex
@@ -57,7 +56,6 @@
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       complex(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: eta
 !
    end subroutine construct_eta_ccs_complex

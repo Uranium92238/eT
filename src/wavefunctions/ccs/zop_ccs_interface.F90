@@ -34,6 +34,14 @@
 !!    Construct one-electron density
 !!    Written by Sarai Dery Folkestad, 2019
 !!
+!!    Constructs the one-electron density 
+!!    matrix in the T1 basis
+!!
+!!    D_pq = < Lambda| E_pq |CC >
+!!
+!!    Contributions to the density are split up as follows:
+!!    D_pq = D_pq(ref-ref) + sum_mu tbar_mu D_pq(mu-ref)
+!!
       implicit none
 !
       class(ccs) :: wf
@@ -54,7 +62,6 @@
       implicit none
 !
       class(ccs) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
 !
    end subroutine density_ccs_ref_ref_oo_ccs
@@ -77,7 +84,6 @@
       implicit none
 !
       class(ccs) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: density
       real(dp), dimension(wf%n_v, wf%n_o) :: tbar_ai
 !
@@ -89,16 +95,21 @@
 !!    Calculate expectation value
 !!    Written by Sarai D. Folkestad, 2019
 !!
+!!    Calculate the expectation value of a one-electron
+!!    operator A
+!!
+!!       < A > = < Lambda| A | CC > = sum_pq A_pq D_pq
+!!
+!!    where A_pq are the T1-transformed integrals
+!!    and D_pq is the a one-electron density matrix
+!!    in the T1-basis
+!!
       implicit none
-!  
+!
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: A
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: density
-!
       real(dp) :: expectation_value
-!
    end function calculate_expectation_value_ccs
 !
 !
@@ -106,6 +117,11 @@
 !!
 !!    Calculate energy
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+!!    Calculates the CCS energy. This is only equal to the actual
+!!    energy when the ground state equations are solved, of course.
+!!
+!!       E = E_hf + sum_aibj t_i^a t_j^b L_iajb
 !!
       implicit none
 !
@@ -119,6 +135,16 @@
 !!    Calculate energy omega term (CCS)
 !!    Written by Andreas Skeidsvoll, Jan 2019
 !!
+!!    Adds multipliers dot omega to the energy,
+!!
+!!       energy += sum_mu tbar_mu Omega_mu,
+!!
+!!    which appears in the energy expression:
+!!
+!!          < Lambda|H|CC > when Omega != 0.
+!!
+!!    This routine does not have to be overwritten in descendants.
+!!
       implicit none
 !
       class(ccs), intent(inout) :: wf
@@ -131,10 +157,17 @@
 !!    Calculate energy length dipole term (CCS)
 !!    Written by Andreas Skeidsvoll, Jan 2019
 !!
+!!    Adds dipole part of the length gauge electromagnetic potential to the energy,
+!!
+!!       energy += 2 sum_ii (-mu·E)_ii,
+!!
+!!    where mu is the vector of electric dipole integral matrices 
+!!    and E is a uniform classical electric
+!!    vector field. This routine does not have to be overwritten in descendants.
+!!
       implicit none
 !
       class(ccs), intent(inout) :: wf
-!
       real(dp), dimension(3), intent(in) :: electric_field
 !
    end subroutine calculate_energy_length_dipole_term_ccs

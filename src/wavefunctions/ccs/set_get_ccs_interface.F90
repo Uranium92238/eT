@@ -25,7 +25,6 @@
       implicit none
 !
       class(ccs) :: wf
-!
       real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: amplitudes
 !
    end subroutine set_amplitudes_ccs
@@ -39,7 +38,6 @@
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_gs_amplitudes) :: amplitudes
 !
    end subroutine get_amplitudes_ccs
@@ -53,7 +51,6 @@
       implicit none
 !
       class(ccs) :: wf
-!
       real(dp), dimension(wf%n_gs_amplitudes), intent(in) :: multipliers
 !
    end subroutine set_multipliers_ccs
@@ -67,7 +64,6 @@
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_gs_amplitudes) :: multipliers
 !
    end subroutine get_multipliers_ccs
@@ -78,10 +74,12 @@
 !!    Set Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
+!!    Sets the different blocks of the Fock matrix based on the full
+!!    matrix sent to the routine.
+!!
       implicit none
 !
       class(ccs), intent(inout) :: wf
-!
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_pq
 !
    end subroutine set_fock_ccs

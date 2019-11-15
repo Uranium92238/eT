@@ -19,15 +19,23 @@
 !
    module subroutine omega_for_jacobian_debug_ccs(wf, omega, t)
 !!
-!!    Omega for jacoboan debug
-!!    Written by Sarai D. Folkestad
+!!    Omega for Jacobian debug
+!!    Written by Sarai D. Folkestad, Sep. 2019
+!!
+!!    Calculates omega 
+!!    with dimension n_es_amplitudes for
+!!    t given on input. For methods where 
+!!
+!!       n_es_amplitudes = n_gs_amplitudes
+!!
+!!    this simply entails calling construct omega.
+!!    For e.g. CC2 this routine must be overwritten
+!!    to obtain Ω_μ2
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf
-!
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: omega
-!
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: t
 !
    end subroutine omega_for_jacobian_debug_ccs
@@ -35,45 +43,67 @@
 !
    module subroutine amplitudes_for_jacobian_debug_ccs(wf, t)
 !!
-!!    Amplitudes for jacobian debug
-!!    Written by Sarai D. Folkestad
+!!    Amplitudes for Jacobian debug
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Calculates the amplitudes 
+!!    with dimension n_es_amplitudes
+!!
+!!    For methods where 
+!!
+!!       n_es_amplitudes = n_gs_amplitudes
+!!
+!!    this simply entails calling get_amplitudes.
+!!    For e.g. CC2 this routine must be overwritten
+!!    to obtain t_μ2
+!!
 !!
       implicit none
 !
       class(ccs), intent(inout) :: wf
-!
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: t
 !
    end subroutine amplitudes_for_jacobian_debug_ccs
 !
 !
-   module subroutine numerical_test_jacobian_ccs(wf, store_on_file)
-!!
-!!    Numerical test for Jacobian
-!!    Written by Sarai D. Folkestad, Sep 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      logical, optional :: store_on_file
-!
-   end subroutine numerical_test_jacobian_ccs
-!
-!
    module subroutine normalization_for_jacobian_debug_ccs(wf, A_numerical_mu_nu, nu)
 !!
-!!    Normalization for jacobian debug
-!!    Written by Sarai D. Folkestad
+!!    Normalization for Jacobian debug
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Routine does nothing for CCS
 !!
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: A_numerical_mu_nu
-!
       integer, intent(in) :: nu
 !
    end subroutine normalization_for_jacobian_debug_ccs
 !
 !
+   module subroutine numerical_test_jacobian_ccs(wf, store_on_file)
+!!
+!!    Numerical test for Jacobian matrix
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Calculates the Jacobian matrix numerically
+!!    by differentiating Ω wrt the ground state 
+!!    amplitudes. Compares to the elements of
+!!    the Jacobian matrix obtained by transforming
+!!    unit vectors.
+!!
+!!    The optional logical parameter "store_on_file"
+!!    can be used to write the two Jacobian matrices
+!!    on file.
+!!
+!!    NOTE: This test scales as N^9 for CCS !! 
+!!
+!!    For now, we stop the test with error message if wf%name_ = 'cc2'
+!!
+      implicit none
+!
+      class(ccs) :: wf
+      logical, optional :: store_on_file
+!
+   end subroutine numerical_test_jacobian_ccs

@@ -46,11 +46,11 @@
 !
    module subroutine construct_complex_time_derivative_ccs(wf, ddt_amplitudes_multipliers)
 !!
-!!    Construct time derivative of amplitudes and multipliers (CCS)
+!!    Construct complex time derivative (CCS)
 !!    Written by Alice Balbi and Andreas Skeidsvoll, Oct 2018
 !!
-!!    Returns the time derivative of the CCS amplitudes and multipliers. Does not have to be
-!!    overwritten in descendants.
+!!    Returns the complex time derivative of the CCS amplitudes and multipliers. Does not have to
+!!    be overwritten in descendants.
 !!
       implicit none
 !
@@ -62,10 +62,10 @@
 !
    module subroutine construct_complex_time_derivative_amplitudes_ccs(wf, ddt_amplitudes)
 !!
-!!    Construct time derivative of amplitudes (CCS)
+!!    Construct complex time derivative of amplitudes (CCS)
 !!    Written by Alice Balbi and Andreas Skeidsvoll, Oct 2018
 !!
-!!    Returns the time derivative of the CCS amplitudes (complex). The time derivative
+!!    Returns the complex time derivative of the CCS amplitudes (complex). The time derivative
 !!    of the amplitudes is, according to Koch and Jørgensen (1990), given by
 !!
 !!       ddt_amplitudes = -i*omega
@@ -80,10 +80,10 @@
 !
    module subroutine construct_complex_time_derivative_multipliers_ccs(wf, ddt_multipliers)
 !!
-!!    Construct time derivative multipliers (CCS)
+!!    Construct complex time derivative multipliers (CCS)
 !!    Written by Alice Balbi and Andreas Skeidsvoll, Oct 2018
 !!
-!!    Returns the time derivative of the CCS multipliers (complex). The time derivative
+!!    Returns the complex time derivative of the CCS multipliers (complex). The time derivative
 !!    of the multipliers is, according to Koch and Jørgensen (1990), given by
 !!
 !!       ddt_multipliers = i*multiplier_equation

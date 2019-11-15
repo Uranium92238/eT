@@ -37,7 +37,6 @@
       implicit none
 !
       class(ccs), intent(in) :: wf
-!
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Z_pq
 !
    end subroutine t1_transform_ccs_complex

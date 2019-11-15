@@ -20,7 +20,19 @@
    module subroutine construct_fock_ccs_complex(wf)
 !!
 !!    Construct Fock
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad,
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the Fock matrix in the t1-transformed MO
+!!    basis using the MO integrals and the current single
+!!    amplitudes:
+!!
+!!       F_pq = h_pq + sum_k (2*g_pqkk - g_pkkq) + (effective Fock contributions)
+!!
+!!    Effective Fock contributions:
+!!
+!!       Frozen core by Sarai D. Folkestad, 2019
+!!       QM/MM by Tommaso Giovannini, 2019
+!!       QM/PCM by Tommaso Giovannini, 2019
 !!
       implicit none
 !
@@ -29,45 +41,20 @@
    end subroutine construct_fock_ccs_complex
 !
 !
-   module subroutine add_molecular_mechanics_fock_term_ccs_complex(wf, F_pq)
-!!
-!!    Add molecular mechanics Fock contribution 
-!!    Written by Tommaso Giovannini, 2019 
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
-!
-   end subroutine add_molecular_mechanics_fock_term_ccs_complex
-!
-!
-
-   module subroutine add_pcm_fock_contribution_ccs_complex(wf, F_pq)
-!!
-!!    Add PCM Fock contribution 
-!!    Written by Tommaso Giovannini, 2019 
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
-!
-   end subroutine add_pcm_fock_contribution_ccs_complex
-!
-!
    module subroutine add_frozen_core_fock_term_ccs_complex(wf, F_pq)
 !!
 !!    Add frozen core Fock contribution 
 !!    Written by Sarai D. Folkestad, 2019 
 !!
+!!    Adds the frozen core contributions to
+!!    the effective T1-transformed Fock matrix.
+!!
+!!    Isolated into subroutine by Eirik F. Kjønstad, 2019    
+!!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
-!
-      complex(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq    
+      complex(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
 !
    end subroutine add_frozen_core_fock_term_ccs_complex
 !
@@ -76,25 +63,62 @@
 !!
 !!    Add frozen HF Fock contribution 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 
-!!  
+!!
+!!    Adds the contributions from frozen HF orbitals to
+!!    the effective T1-transformed Fock matrix.  
+!!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
-!
       complex(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
 !
    end subroutine add_frozen_hf_fock_term_ccs_complex
 !
 !
+   module subroutine add_molecular_mechanics_fock_term_ccs_complex(wf, F_pq)
+!!
+!!    Add molecular mechanics Fock contribution 
+!!    Written by Tommaso Giovannini, 2019 
+!!
+!!    Adds the molecular mechanics contributions to  
+!!    the effective T1-transformed Fock matrix. 
+!!
+!!    Isolated into subroutine by Eirik F. Kjønstad, 2019
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
+!
+   end subroutine add_molecular_mechanics_fock_term_ccs_complex
+!
+!
+   module subroutine add_pcm_fock_contribution_ccs_complex(wf, F_pq)
+!!
+!!    Add PCM Fock contribution 
+!!    Written by Tommaso Giovannini, 2019 
+!!
+!!    Adds the PCM contributions to  
+!!    the effective T1-transformed Fock matrix. 
+!!
+!!    Isolated into subroutine by Eirik F. Kjønstad, 2019
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
+!
+   end subroutine add_pcm_fock_contribution_ccs_complex
+!
+!
    module subroutine construct_t1_fock_fc_term_ccs_complex(wf, F_pq)
 !!
-!!    Calculate T1 Fock frozen core
+!!    Calculate T1 Fock frozen core contribution
 !!    Written by Sarai D. Folkestad, Sep 2019
 !!
       implicit none
 !
       class(ccs) :: wf 
-!
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
    end subroutine construct_t1_fock_fc_term_ccs_complex
@@ -108,7 +132,6 @@
       implicit none
 !
       class(ccs) :: wf 
-!
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
    end subroutine construct_t1_fock_frozen_hf_term_ccs_complex
@@ -118,6 +141,13 @@
 !!
 !!    Add t1 Fock length dipole term (CCS)
 !!    Written by Andreas Skeidsvoll, Jan 2019
+!!
+!!    Adds dipole part of the length gauge electromagnetic potential to the Fock matrix,
+!!
+!!       Fock matrix += -μ·E,
+!!
+!!    where μ is the vector of electric dipole integral matrices and E is a uniform classical electric
+!!    vector field. This routine does not have to be overwritten in descendants.
 !!
       implicit none
 !
