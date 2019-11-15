@@ -22,13 +22,20 @@
 !!    Omega for Jacobian debug
 !!    Written by Sarai D. Folkestad, Sep. 2019
 !!
+!!    Calculates omega 
+!!    with dimension n_es_amplitudes for
+!!    t given on input. For methods where 
+!!
+!!       n_es_amplitudes = n_gs_amplitudes
+!!
+!!    this simply entails calling construct omega.
+!!    For e.g. CC2 this routine must be overwritten
+!!    to obtain Ω_μ2
 !!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
-!
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: omega
-!
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: t
 !
    end subroutine omega_for_jacobian_debug_mlcc2
@@ -39,11 +46,20 @@
 !!    Amplitudes for Jacobian debug
 !!    Written by Sarai D. Folkestad, Sep 2019
 !!
+!!    Calculates the amplitudes 
+!!    with dimension n_es_amplitudes
+!!
+!!    For methods where 
+!!
+!!       n_es_amplitudes = n_gs_amplitudes
+!!
+!!    this simply entails calling get_amplitudes.
+!!    For e.g. CC2 this routine must be overwritten
+!!    to obtain t_μ2
 !!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
-!
       real(dp), dimension(wf%n_es_amplitudes), intent(out) :: t
 !
    end subroutine amplitudes_for_jacobian_debug_mlcc2
@@ -54,14 +70,12 @@
 !!    Normalization for Jacobian debug
 !!    Written by Sarai D. Folkestad, Sep 2019
 !!
+!!    Routine does nothing for CCS
+!!
       implicit none
 !
       class(mlcc2), intent(in) :: wf
-!
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: A_numerical_mu_nu
-!
       integer, intent(in) :: nu
 !
-!
    end subroutine normalization_for_jacobian_debug_mlcc2
-!

@@ -17,15 +17,24 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-!
-!
    module subroutine orbital_partitioning_mlcc2(wf)
 !!
 !!    Orbital partitioning 
 !!    Written by Sarai D. Folkestad, May 2019
 !!
-      use eri_cd_class
-!
+!!    This routine drives the orbital 
+!!    partitioning for MLCC2 
+!!
+!!    Based on which orbitals are requested on 
+!!    input, we construct this new orbital basis 
+!!    and sets, n_cc2_o, n_cc2_v, n_ccs_o and n_ccs_v,
+!!    first_cc2_o, last_cc2_o, first_cc2_v, last_cc2_v
+!!    first_ccs_o, last_ccs_o, first_ccs_v, last_ccs_v
+!!
+!!    NOTE: This routine shold always be 
+!!    followed by a routine which block diagonalizes
+!!    the Fock matrix!
+!!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
@@ -35,40 +44,44 @@
 !
    module subroutine construct_cholesky_orbitals_mlcc2(wf, occupied_only)
 !!
-!!    Cholesky orbitals
+!!    Construct Cholesky orbitals
 !!    Written by Sarai D. Folkestad, Feb 2019
+!!
+!!    Constructs Cholesky orbitals by
+!!    decomposing the HF AO density and the
+!!    HF virtual AO density
+!!
+!!    See A. M. J. Sánchez de Merás, H. Koch, 
+!!    I. G. Cuesta, and L. Boman (J. Chem. Phys. 132, 204105 (2010))
+!!    for more information on active space generation
+!!    using Cholesky decomposition
+!!
+!!    'occupied_only' : Optional argument that is used to 
+!!                      determine if we construct occuped 
+!!                      Cholesky orbitals only, or if we also 
+!!                      construct the virtual Cholesky orbitals
+!!                      DEFAULT: .false.
 !!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
-!
       logical, intent(in), optional :: occupied_only
 !
    end subroutine construct_cholesky_orbitals_mlcc2
 !
 !
-   module subroutine construct_block_diagonal_fock_mos_2_level_mlcc2(wf, n_total, n_active, fock, MO_coeff, diagonal)
-!!
-!!    Construct Fock block diagonal 2 levels
-!!    Written by Sarai D. Folkestad, Feb 2019
-!!
-      implicit none
-!
-      class(mlcc2), intent(inout) :: wf
-!
-      integer, intent(in) :: n_total, n_active ! Total matrix dimension of block, and number of active orbitals
-!
-      real(dp), dimension(n_total, n_total), intent(inout) :: fock
-      real(dp), dimension(wf%n_ao, n_total), intent(inout) :: mo_coeff
-      real(dp), dimension(n_total), intent(out) :: diagonal
-!
-   end subroutine construct_block_diagonal_fock_mos_2_level_mlcc2
-!
-!
    module subroutine construct_block_diagonal_fock_orbitals_mlcc2(wf)
 !!
-!!    Construct orbitals that block diagonalizes Fock
+!!    Construct block diagonal Fock MOs 
 !!    Written by Sarai D. Folkestad, Feb 2019
+!!
+!!    This routine block-diagonalizes the occupied-occupied
+!!    and virutal-virtual blocks of the Fock matrix s.t.
+!!    the active-active, and inactive-inactive blocks are 
+!!    diagonal.
+!!   
+!!    Note that after this routine, the Fock matrix in wf 
+!!    corresponds to the old basis.
 !!
       implicit none
 !
@@ -77,21 +90,61 @@
    end subroutine construct_block_diagonal_fock_orbitals_mlcc2
 !
 !
+   module subroutine construct_block_diagonal_fock_mos_2_level_mlcc2(wf, n_total, n_active, fock, mo_coeff, diagonal)
+!!
+!!    Construct Fock block diagonal 2 levels
+!!    Written by Sarai D. Folkestad, Feb 2019
+!!
+!!    Construct orbitals that block diagonalizes 
+!!    Fock matrix block for two levels (inactive/active)
+!!
+!!    'n_total' : Total dimmension of Fock matrix block
+!!
+!!    'n_active' : Dimension of active block of Fock matrix block
+!!
+!!    'fock' : Fock matrix block to block diagonalize
+!!
+!!    'mo_coef' : MO coefficients which are updated to 
+!!                the new basis which block diagonalizes Fock
+!!                matrix block
+!!
+!!    'diagonal' : Diagonal elements of Fock matrix after block
+!!                 diagonalization
+!!
+      implicit none
+!
+      class(mlcc2), intent(inout) :: wf
+      integer, intent(in) :: n_total, n_active ! Total matrix dimension of block, and number of active orbitals
+      real(dp), dimension(n_total, n_total), intent(inout) :: fock
+      real(dp), dimension(wf%n_ao, n_total), intent(inout) :: mo_coeff
+      real(dp), dimension(n_total), intent(out) :: diagonal
+!
+   end subroutine construct_block_diagonal_fock_mos_2_level_mlcc2
+!
+!
    module subroutine construct_M_and_N_cnto_mlcc2(wf, R_ai, R_aibj, M, N, set_to_zero)
 !!
 !!    Construct M and N
 !!    Written by Sarai D. Folkestad, May 2019
 !!
+!!    Constructs the M and N matrices,
+!!
+!!       M_ij += ( sum_a R_ai R_aj + 1/2 sum_abl(1 + δ_ai,bl δ_i,j) R_aibj R_ajbl )
+!!       N_ab += ( sum_i R_ai R_bi + 1/2 sum_cij(1 + δ_ai,cj δ_a,b) R_aicj R_bicj )
+!!
+!!    Used to construct CNTOs.
+!!
+!!    set_to_zero determines if M and N are set to zero initially. This makes it possible for 
+!!    the routine ton be used to add to M and N if we are using more than one excitation vector 
+!!    to generate the CNTOs.
+!!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: R_aibj
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                 :: R_ai
-!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)  :: R_aibj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                  :: R_ai
       real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: M
       real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: N
-!
       logical, intent(in) :: set_to_zero
 !
    end subroutine construct_M_and_N_cnto_mlcc2
@@ -102,10 +155,12 @@
 !!    Construct correlated natural transition orbitals
 !!    Written by Sarai D. Folkestad, May 2019
 !!
+!!    Transform orbital coefficients to CNTO
+!!    basis.
+!!
       implicit none
 !
       class(mlcc2) :: wf
-!
       real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: T_o
       real(dp), dimension(wf%n_v, wf%n_v), intent(in) :: T_v
 !
@@ -117,10 +172,11 @@
 !!    Read CNTO transformation matrices
 !!    Written by Sarai D. Folkestad, Jun 2019
 !!
+!!    Read CNTO transformation matrices.
+!!
       implicit none
 !
       class(mlcc2) :: wf
-!
       real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
       real(dp), dimension(wf%n_v, wf%n_v), intent(out) :: T_v
 !
@@ -132,29 +188,43 @@
 !!    Construct CCS CNTO transformation matrices
 !!    Written by Sarai D. Folkestad, May 2019
 !!
+!!       - Run CCS calculation
+!!
+!!       - Construct M and N for CNTOs 
+!!
+!!       - Diagonalize M and N
+!!
+!!       - Write transformation matrices to file
+!!
       implicit none
 !
       class(mlcc2) :: wf
-!
       real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
       real(dp), dimension(wf%n_v, wf%n_v), intent(out) :: T_v
 !
    end subroutine construct_ccs_cnto_transformation_matrices_mlcc2
-
+!
 !
    module subroutine construct_M_nto_mlcc2(wf, R_ai, M, set_to_zero)
 !!
 !!    Construct M and N
 !!    Written by Sarai D. Folkestad, May 2019
 !!
+!!    Constructs the M and N matrices,
+!!
+!!       M_ij +=  sum_a R_ai R_aj
+!!
+!!    Used to construct occupied NTOs.
+!!
+!!    set_to_zero determines if M and N are set to zero initially. This is used such that 
+!!    the routine can be used to add to M and N if we are using more than one excitation vector 
+!!    to generate the CNTOs.
+!!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: R_ai
-!
       real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: M
-!
       logical, intent(in) :: set_to_zero
 !
    end subroutine construct_M_nto_mlcc2
@@ -165,11 +235,17 @@
 !!    Construct CCS CNTO transformation matrices
 !!    Written by Sarai D. Folkestad, May 2019
 !!
-!
+!!       - Run CCS calculation
+!!
+!!       - Construct M NTOs 
+!!
+!!       - Diagonalize M
+!!
+!!       - Write transformation matrix to file
+!!
       implicit none
 !
       class(mlcc2) :: wf
-!
       real(dp), dimension(wf%n_o, wf%n_o), intent(out) :: T_o
 !
    end subroutine construct_ccs_nto_transformation_matrix_mlcc2
@@ -185,7 +261,6 @@
       implicit none 
 !
       class(mlcc2) :: wf
-!
       real(dp), dimension(wf%n_o, wf%n_o), intent(in) :: T_o
 !
    end subroutine construct_mixed_nto_canonical_orbitals_mlcc2
@@ -196,6 +271,18 @@
 !!    Construct PAOs
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!
+!!    Construct projected atomic orbitals for
+!!    virtual orbitals.
+!!
+!!    1. Construct PAOs on active atoms
+!!
+!!    2. Orthonormalize these active virtual orbitals 
+!!
+!!    3. PAOs for the remaining system by projecting out
+!!       both occupied and active virtuals out of all  AOs
+!!
+!!    4. Orthonormalize these inactive virtual orbitals 
+!!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
@@ -203,15 +290,16 @@
    end subroutine construct_paos_mlcc2
 !
 !
-   module subroutine diagonalize_M_and_N_mlcc2(wf,T_o, T_v)
+   module subroutine diagonalize_M_and_N_mlcc2(wf, T_o, T_v)
 !!
 !!    Diagonalize M and N
 !!    Written by Sarai D. Folkestad, Aug. 2019
 !!
+!!    Diagonalizes the M and N CNTO matrices.
+!!
       implicit none
 !
       class(mlcc2) :: wf
-!
       real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: T_o
       real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: T_v
 !
@@ -224,18 +312,16 @@
 !!    CCS calculation for CNTOs
 !!    Written by Sarai D. Folkestad, Sep 2019
 !!
+!!    Performs CCS calculation for CNTO (and NTO)
+!!    construction.
+!!
       implicit none
 !
       class(mlcc2), intent(inout) :: wf
-!
       character(len=200), intent(in) :: transformation
-!
       integer, intent(in) :: n_cnto_states
-!
       real(dp), dimension(wf%n_v, wf%n_o, n_cnto_states), intent(out) :: R_ai
-!
       integer, dimension(n_cnto_states), intent(in) :: cnto_states
-!
       real(dp), dimension(n_cnto_states), intent(out), optional :: omega_ccs
 !
    end subroutine ccs_calculation_for_cntos_mlcc2
@@ -246,9 +332,14 @@
 !!    Check orthonormality of MOs
 !!    Write Sarai D. Folkestad, Sep 2019
 !!
-!! 
+!!    Checks that 
+!!
+!!       C^T S C = I
+!!
+!!    to ensure that we have orthonormal MOs.
+!!
       implicit none
-
+!
       class(mlcc2) :: wf
-
+!
    end subroutine check_orthonormality_of_MOs_mlcc2
