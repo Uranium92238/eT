@@ -22,6 +22,9 @@
 !!    Initialize amplitudes
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
+!!    Allocates the amplitudes. This routine must be overwritten in
+!!    descendants which have more amplitudes.
+!!
       implicit none
 !
       class(ccsd) :: wf
@@ -73,6 +76,9 @@
 !!    Initialize multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
+!!    Allocates the multipliers. This routine must be overwritten in
+!!    descendants which have more multipliers.
+!!
       implicit none
 !
       class(ccsd) :: wf
@@ -84,6 +90,9 @@
 !!
 !!    Destruct multipliers
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
+!!
+!!    Deallocates the multipliers. This routine must be overwritten in
+!!    descendants which have more multipliers.
 !!
       implicit none
 !

@@ -34,6 +34,11 @@
 !!    Construct complex time derivative amplitudes (CCSD)
 !!    Written by Alice Balbi and Andreas Skeidsvoll, Oct 2018
 !!
+!!    Returns the complex time derivative of the CCSD amplitudes (complex). The time derivative
+!!    of the amplitudes is, according to Koch and Jørgensen (1990), given by
+!!
+!!       ddt_amplitudes = -i*omega
+!!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
@@ -46,6 +51,11 @@
 !!
 !!    Construct complex time derivative multipliers (CCSD)
 !!    Written by Alice Balbi and Andreas Skeidsvoll, Oct 2018
+!!
+!!    Returns the complex time derivative of the CCSD multipliers (complex). The time derivative
+!!    of the multipliers is, according to Koch and Jørgensen (1990), given by
+!!
+!!       ddt_multipliers = i*multiplier_equation
 !!
       implicit none
 !

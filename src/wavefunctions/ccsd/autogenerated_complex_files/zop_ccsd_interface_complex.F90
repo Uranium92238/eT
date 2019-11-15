@@ -23,10 +23,13 @@
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
 !!    Andreas Skeidsvoll, 2018
 !!
+!!    Calculates the CCSD energy_complex. This is only equal to the actual
+!!    energy_complex when the ground state equations are solved, of course.
+!!
+!!       E = E_hf + sum_aibj (t_ij^ab + t_i^a t_j^b) L_iajb
+!!
       implicit none
 !
       class(ccsd), intent(inout) :: wf
 !
    end subroutine calculate_energy_ccsd_complex
-!
-!

@@ -20,7 +20,7 @@
    module subroutine prepare_for_multiplier_equation_ccsd(wf)
 !!
 !!    Prepare for multiplier equation
-!!    Written by Tor S. Haugland, Oct 2019
+!!    Written by Tor S. Haugland, 2019
 !!
       implicit none
 !
@@ -34,10 +34,12 @@
 !!    Construct eta (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
+!!    Note: the routine assumes that eta is initialized and that the Fock matrix
+!!    has been constructed.
+!!
       implicit none
 !
       class(ccsd), intent(in) :: wf
-!
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: eta
 !
    end subroutine construct_eta_ccsd

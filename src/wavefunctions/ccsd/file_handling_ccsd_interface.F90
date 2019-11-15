@@ -17,28 +17,6 @@
 !  along with this program. If not, see <https://www.gnu.org/licenses/>.
 !
 !
-   module subroutine initialize_files_ccsd(wf)
-!!
-!!    Initialize files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
-!!
-!!    Initializes the wavefucntion files for wavefunction parameters.
-!!
-      class(ccsd) :: wf 
-!
-   end subroutine initialize_files_ccsd
-!
-!
-   module subroutine initialize_doubles_files_ccsd(wf)
-!!
-!!    Initialize doubles files 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2019 
-!!
-      class(ccsd) :: wf 
-!
-   end subroutine initialize_doubles_files_ccsd
-!
-!
    module subroutine save_amplitudes_ccsd(wf)
 !!
 !!    Read amplitudes
