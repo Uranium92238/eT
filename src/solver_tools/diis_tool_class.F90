@@ -115,6 +115,9 @@ module diis_tool_class
 !
       final :: destructor 
 !
+      procedure :: initialize_storers              => initialize_storers_diis_tool
+      procedure :: finalize_storers                => finalize_storers_diis_tool
+!
    end type diis_tool
 !
 !
@@ -128,7 +131,7 @@ module diis_tool_class
 contains
 !
 !
-   function new_diis_tool(name_, n_parameters, n_equations, records_in_memory, &
+   function new_diis_tool(name_, n_parameters, n_equations, &
                         dimension_, accumulate, erase_history) result(diis)
 !!
 !!    New DIIS tool
@@ -139,9 +142,6 @@ contains
 !!    n_parameters:        Number of parameters (dimensionality of the x vectors)
 !!
 !!    n_equations:         Number of equations (dimensionality of the e vectors)
-!!
-!!    records_in_memory:   If true, keep DIIS records (previous x and e vectors) 
-!!                         in memory. Otherwise, they are stored on disk.
 !!
 !!    dimension_:          Number of records to use in the DIIS extrapolation. 
 !!                         Default is to use the previous 8 records. 
@@ -165,7 +165,6 @@ contains
 !
       integer, intent(in) :: n_parameters
       integer, intent(in) :: n_equations
-      logical, intent(in) :: records_in_memory 
 !
       integer, intent(in), optional :: dimension_
       logical, intent(in), optional :: accumulate
@@ -198,9 +197,62 @@ contains
 !
       endif 
 !
-!     Set up storers for e and x vectors and the DIIS matrix 
+!     Initialize DIIS matrix 
 !
       diis%diis_matrix = sequential_file(trim(diis%name_) // '_matrix')
+!
+   end function new_diis_tool
+!
+!
+   subroutine destructor(diis)
+!!
+!!    Destructor 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, July 2018
+!!
+      implicit none
+!
+      type(diis_tool) :: diis
+!
+      if (diis%iteration .gt. 1 .and. diis%accumulate) then
+         call diis%diis_matrix%delete_()
+      endif
+!
+   end subroutine destructor
+!
+!
+   subroutine finalize_storers_diis_tool(diis)
+!!
+!!    Cleanup storers 
+!!    Written by Eirik F. Kjønstad, Nov 2019 
+!!
+!!    Performs cleanup for the different storers. 
+!!    Cannot be done in the constructor. 
+!!
+      implicit none 
+!
+      class(diis_tool) :: diis
+!
+      call diis%e_vectors%finalize_storer()
+      call diis%x_vectors%finalize_storer()
+!
+   end subroutine finalize_storers_diis_tool
+!
+!
+   subroutine initialize_storers_diis_tool(diis, records_in_memory)
+!!
+!!    Prepare storers 
+!!    Written by Eirik F. Kjønstad, Nov 2019 
+!!
+!!    Prepares the storer objects for e and x vectors.
+!!
+!!    records_in_memory:   If true, keep DIIS records (previous x and e vectors) 
+!!                         in memory. Otherwise, they are stored on disk.
+!!
+      implicit none 
+!
+      class(diis_tool) :: diis
+!
+      logical, intent(in) :: records_in_memory
 !
       if (records_in_memory) then 
 !
@@ -223,23 +275,10 @@ contains
 !
       endif 
 !
-   end function new_diis_tool
+      call diis%e_vectors%initialize_storer()
+      call diis%x_vectors%initialize_storer()
 !
-!
-   subroutine destructor(diis)
-!!
-!!    Destructor 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, July 2018
-!!
-      implicit none
-!
-      type(diis_tool) :: diis
-!
-      if (diis%iteration .gt. 1 .and. diis%accumulate) then
-         call diis%diis_matrix%delete_()
-      endif
-!
-   end subroutine destructor
+   end subroutine initialize_storers_diis_tool
 !
 !
     subroutine update_diis_tool(diis, e, x)
@@ -247,7 +286,7 @@ contains
 !!    Update 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
 !!
-!!    Routine to call in each iteration of a DIIS-based diis. The 
+!!    Routine to call in each iteration of a DIIS-based solver. The 
 !!    routine stores the current vectors (e and x) sent to the routine. 
 !!    Then it constructs the DIIS matrix G and solves the DIIS equation 
 !!

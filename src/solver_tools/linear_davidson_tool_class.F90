@@ -91,21 +91,19 @@ module linear_davidson_tool_class
 !
    contains 
 !
-!     Prepare and Cleanup
-!
-      procedure :: cleanup                      => cleanup_linear_davidson_tool 
-!
 !     Linear Davidson specific routines
 !
-      procedure :: construct_next_trial         => construct_next_trial_linear_davidson_tool
-      procedure :: construct_residual           => construct_residual_linear_davidson_tool
-      procedure :: solve_reduced_problem        => solve_reduced_problem_linear_davidson_tool
+      procedure :: construct_next_trial               => construct_next_trial_linear_davidson_tool
+      procedure :: construct_residual                 => construct_residual_linear_davidson_tool
+      procedure :: solve_reduced_problem              => solve_reduced_problem_linear_davidson_tool
 !
-      procedure :: construct_reduced_gradient   => construct_reduced_gradient_linear_davidson_tool
+      procedure :: construct_reduced_gradient         => construct_reduced_gradient_linear_davidson_tool
 !
-      procedure, private :: prepare             => prepare_linear_davidson_tool
+      procedure, private :: general_preparations      => general_preparations_linear_davidson_tool
 !
       procedure :: set_trials_to_preconditioner_guess => set_trials_to_preconditioner_guess_linear_davidson
+!
+      final :: destructor_linear_davidson_tool
 !
    end type linear_davidson_tool
 !
@@ -122,7 +120,7 @@ contains
 !
 !
    function new_linear_davidson_tool_one_rhs(name_, n_parameters, lindep_threshold, &
-            max_dim_red, F, n_equations, records_in_memory, frequencies) result(davidson)
+            max_dim_red, F, n_equations, frequencies) result(davidson)
 !!
 !!    New linear Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -149,9 +147,6 @@ contains
 !!
 !!                         (A - freq_k) X_k = F,    k = 1, 2, ..., n_frequencies.  (**)
 !!    
-!!    records_in_memory: If .true., the trials and transforms are kept in memory. Otherwise they 
-!!                       are stored on file. 
-!!
 !!    n_equations:       Number of equations / number of solutions. 
 !!
 !!    frequencies:       (Optional) Array of frequencies with length equal to n_equations. 
@@ -171,12 +166,10 @@ contains
 !
       real(dp), intent(in) :: lindep_threshold
 !
-      logical, intent(in) :: records_in_memory 
-!
 !     Perform tasks common to constructor 
 !
-      call davidson%prepare(name_, n_parameters, n_equations, lindep_threshold, &
-                              max_dim_red, 1, records_in_memory)
+      call davidson%general_preparations(name_, n_parameters, n_equations, &
+                           lindep_threshold, max_dim_red, 1)
 !
 !     Set F and frequencies 
 !
@@ -198,7 +191,7 @@ contains
 !
 !
    function new_linear_davidson_tool_multiple_rhs(name_, n_parameters, lindep_threshold, &
-            max_dim_red, F, n_equations, records_in_memory, frequencies) result(davidson)
+            max_dim_red, F, n_equations, frequencies) result(davidson)
 !!
 !!    New linear Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -219,9 +212,6 @@ contains
 !!
 !!                         (A - freq_k) X_k = F_k,   F_k = F(:,k),   k = 1, 2, ..., n_frequencies. (***)
 !!                                                   
-!!    records_in_memory: If .true., the trials and transforms are kept in memory. Otherwise they 
-!!                       are stored on file. 
-!!
 !!    n_equations:       Number of equations / number of solutions. 
 !!
 !!    frequencies:       (Optional) Array of frequencies with length equal to n_equations. 
@@ -241,12 +231,10 @@ contains
 !
       real(dp), intent(in) :: lindep_threshold
 !
-      logical, intent(in) :: records_in_memory 
-!
 !     Perform tasks common to constructor 
 !
-      call davidson%prepare(name_, n_parameters, n_equations, lindep_threshold, &
-                              max_dim_red, n_equations, records_in_memory)
+      call davidson%general_preparations(name_, n_parameters, n_equations, &
+                              lindep_threshold, max_dim_red, n_equations)
 !
 !     Set F and frequencies 
 !
@@ -267,10 +255,11 @@ contains
    end function new_linear_davidson_tool_multiple_rhs
 !
 !
-   subroutine prepare_linear_davidson_tool(davidson, name_, n_parameters, n_equations, lindep_threshold, &
-                                             max_dim_red, n_rhs, records_in_memory)
+   subroutine general_preparations_linear_davidson_tool(davidson, name_, &
+                                             n_parameters, n_equations, lindep_threshold, &
+                                             max_dim_red, n_rhs)
 !!
-!!    Prepare 
+!!    General preparations  
 !!    Written by Eirik F. Kjønstad, 2019 
 !!
 !!    Performs tasks that are in common for different constructors of the tool. 
@@ -285,8 +274,6 @@ contains
 !
       real(dp), intent(in) :: lindep_threshold
 !
-      logical, intent(in) :: records_in_memory
-!
 !     Set tool parameters 
 !
       davidson%name_ = trim(name_)
@@ -298,10 +285,6 @@ contains
 !
       davidson%do_precondition = .false. ! Switches to true if 'set_preconditioner' is called
 !
-!     Set up array/or file array for trials and transforms    
-!
-      call davidson%prepare_trials_and_transforms(records_in_memory)
-!
 !     Set some initial values 
 !
       davidson%dim_red      = 0    
@@ -309,7 +292,7 @@ contains
 !
       call mem%alloc(davidson%F, davidson%n_parameters, davidson%n_rhs)
 !
-   end subroutine prepare_linear_davidson_tool
+   end subroutine general_preparations_linear_davidson_tool
 !
 !
    subroutine set_trials_to_preconditioner_guess_linear_davidson(davidson)
@@ -606,21 +589,21 @@ contains
    end subroutine construct_next_trial_linear_davidson_tool
 !
 !
-   subroutine cleanup_linear_davidson_tool(davidson)
+   subroutine destructor_linear_davidson_tool(davidson)
 !!
-!!    Finalize 
+!!    Destructor  
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
 !
-      class(linear_davidson_tool) :: davidson 
+      type(linear_davidson_tool) :: davidson 
 !
       if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
       if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
       if (allocated(davidson%F)) call mem%dealloc(davidson%F, davidson%n_parameters, davidson%n_rhs)
       if (allocated(davidson%F_red)) call mem%dealloc(davidson%F_red, davidson%dim_red, davidson%n_rhs)
 !
-   end subroutine cleanup_linear_davidson_tool
+   end subroutine destructor_linear_davidson_tool
 !
 !
 end module linear_davidson_tool_class

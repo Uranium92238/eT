@@ -94,6 +94,8 @@ contains
 !
          wf%excitation_energies_file = sequential_file('excitation_energies')
 !
+         call wf%r_files%initialize_storer()
+!
       else if(trim(transformation) .eq. 'left') then
 !
          wf%l_files = file_storer('l_', wf%n_es_amplitudes,       &
@@ -102,6 +104,8 @@ contains
                                          direct_=.false.)
 !
          wf%excitation_energies_file = sequential_file('excitation_energies')
+!
+         call wf%l_files%initialize_storer()
 !
       else if(trim(transformation) .eq. 'both') then 
 !
@@ -116,6 +120,9 @@ contains
                                          direct_=.false.)
 !
          wf%excitation_energies_file = sequential_file('excitation_energies')
+!
+         call wf%l_files%initialize_storer()
+         call wf%r_files%initialize_storer()
 !
       else
 !

@@ -240,8 +240,10 @@ contains
 !
       real(dp) :: energy, prev_energy, omega_norm
 !
-      diis = diis_tool('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, &
-                  solver%records_in_memory, dimension_=solver%diis_dimension)
+      diis = diis_tool('cc_gs_diis', wf%n_gs_amplitudes, &
+                     wf%n_gs_amplitudes, dimension_=solver%diis_dimension)
+!
+      call diis%initialize_storers(solver%records_in_memory)
 !
       iteration = 0
       micro_iterations = 0
@@ -337,6 +339,8 @@ contains
       call mem%dealloc(dt, wf%n_gs_amplitudes)
       call mem%dealloc(t, wf%n_gs_amplitudes)
 !
+      call diis%finalize_storers()
+!
    end subroutine run_newton_raphson_cc_gs
 !
 !
@@ -374,7 +378,9 @@ contains
       call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
 !
       davidson = linear_davidson_tool('cc_gs_newton_raphson', wf%n_gs_amplitudes, &
-         solver%micro_residual_threshold, solver%max_micro_dim_red, -omega, 1, solver%records_in_memory)
+         solver%micro_residual_threshold, solver%max_micro_dim_red, -omega, 1)
+!
+      call davidson%initialize_trials_and_transforms(solver%records_in_memory)
 !
       call davidson%set_preconditioner(epsilon)
       call mem%dealloc(epsilon, wf%n_gs_amplitudes)
@@ -447,7 +453,7 @@ contains
       endif
 !
       call davidson%construct_solution(dt, 1)
-      call davidson%cleanup()
+      call davidson%finalize_trials_and_transforms()
 !
       final_iteration = micro_iteration
 !

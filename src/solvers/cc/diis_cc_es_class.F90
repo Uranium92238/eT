@@ -287,8 +287,10 @@ contains
       do state = 1, solver%n_singlet_states
 !
          write(string_state, '(i3.3)') state
-         diis(state) = diis_tool('diis_cc_es_' // string_state, wf%n_es_amplitudes, wf%n_es_amplitudes, &
-                                       solver%records_in_memory, dimension_=solver%diis_dimension)
+         diis(state) = diis_tool('diis_cc_es_' // string_state, wf%n_es_amplitudes, &
+                                    wf%n_es_amplitudes, dimension_=solver%diis_dimension)
+!
+         call diis(state)%initialize_storers(solver%records_in_memory)
 !
       enddo 
 !
@@ -496,6 +498,12 @@ contains
       call mem%dealloc(eps, wf%n_es_amplitudes)
       call mem%dealloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
       call mem%dealloc(R, wf%n_es_amplitudes, solver%n_singlet_states)
+!
+      do state = 1, solver%n_singlet_states
+!
+         call diis(state)%finalize_storers()
+!
+      enddo 
 !
    end subroutine run_diis_cc_es
 !

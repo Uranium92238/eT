@@ -133,7 +133,9 @@ module uhf_class
       procedure :: destruct_orbital_energies_a          => destruct_orbital_energies_a_uhf
       procedure :: destruct_orbital_energies_b          => destruct_orbital_energies_b_uhf
 !
-      procedure :: set_n_mo                              => set_n_mo_uhf
+      procedure :: set_n_mo                             => set_n_mo_uhf
+!
+      procedure :: cleanup                              => cleanup_uhf 
 !
    end type uhf
 !
@@ -2017,5 +2019,42 @@ contains
       call mem%dealloc(orbital_list_beta,  n_orbitals_beta)
 !
    end subroutine print_orbitals_uhf
+!
+!
+   subroutine cleanup_uhf(wf)
+!!
+!!    Cleanup
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf
+!
+!     Deallocations
+!
+      call wf%destruct_orbital_energies()
+      call wf%destruct_orbital_energies_a()
+      call wf%destruct_orbital_energies_b()
+      call wf%destruct_orbital_coefficients()
+      call wf%destruct_orbital_coefficients_a()
+      call wf%destruct_orbital_coefficients_b()
+      call wf%destruct_ao_overlap()
+      call wf%destruct_fock()
+      call wf%destruct_ao_density()
+      call wf%destruct_ao_density_a()
+      call wf%destruct_ao_density_b()
+      call wf%destruct_pivot_matrix_ao_overlap()
+      call wf%destruct_cholesky_ao_overlap()
+      call wf%destruct_sp_eri_schwarz()
+      call wf%destruct_sp_eri_schwarz_list()
+!
+      call wf%destruct_W_mo_update()
+      call wf%destruct_mo_fock()
+!
+      call wf%destruct_mm_matrices()
+      call wf%destruct_pcm_matrices()
+!
+   end subroutine cleanup_uhf
+!
 !
 end module uhf_class

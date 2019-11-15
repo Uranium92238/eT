@@ -47,6 +47,9 @@ module record_storer_class
 !
       procedure :: cycle_left => cycle_left_record_storer
 !
+      procedure(initialize_storer_record_storer), deferred :: initialize_storer 
+      procedure(finalize_storer_record_storer), deferred :: finalize_storer 
+!
    end type record_storer
 !
 !
@@ -89,6 +92,36 @@ module record_storer_class
          real(dp), dimension(storer%record_dim), intent(in) :: x 
 !
       end subroutine set_record_storer
+!
+      subroutine initialize_storer_record_storer(storer)
+!!
+!!       Initialize storer 
+!!       Written by Eirik F. Kjønstad, 2019 
+!!
+!!       Make necessary preparations, e.g. open the files 
+!!
+         import :: record_storer
+!
+         implicit none 
+!
+         class(record_storer) :: storer 
+!
+      end subroutine initialize_storer_record_storer
+!
+      subroutine finalize_storer_record_storer(storer)
+!!
+!!       Finalize storer
+!!       Written by Eirik F. Kjønstad, 2019 
+!!
+!!       Make necessary finalization, e.g. close the files 
+!!
+         import :: record_storer
+!
+         implicit none 
+!
+         class(record_storer) :: storer 
+!
+      end subroutine finalize_storer_record_storer
 !
    end interface 
 !

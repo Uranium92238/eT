@@ -251,8 +251,10 @@ contains
 !
       integer :: iteration
 !
-      diis = diis_tool('cc_gs_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, &
-               solver%records_in_memory, dimension_=solver%diis_dimension)
+      diis = diis_tool('cc_gs_diis', wf%n_gs_amplitudes, &
+                           wf%n_gs_amplitudes, dimension_=solver%diis_dimension)
+!
+      call diis%initialize_storers(solver%records_in_memory)
 !
       call mem%alloc(omega, wf%n_gs_amplitudes)
       call mem%alloc(amplitudes, wf%n_gs_amplitudes)
@@ -355,6 +357,8 @@ contains
          call solver%print_summary(wf)
 !
       endif 
+!
+      call diis%finalize_storers()
 !
    end subroutine run_diis_cc_gs
 !
