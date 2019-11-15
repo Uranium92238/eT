@@ -34,10 +34,8 @@
 !!    Calculate energy 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
 !!
+!!    E = E_HF + sum_aibj (t_i^a*t_j^b + t_ij^ab) L_iajb
+!!
       class(cc2), intent(inout) :: wf 
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb 
-!
-      real(dp) :: correlation_energy
 !
    end subroutine calculate_energy_cc2
