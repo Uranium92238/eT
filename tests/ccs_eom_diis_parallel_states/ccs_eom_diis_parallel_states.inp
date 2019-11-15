@@ -15,6 +15,7 @@ end do
 cc fop
    eom
    dipole length
+   transition moments
 end cc fop
 
 memory 

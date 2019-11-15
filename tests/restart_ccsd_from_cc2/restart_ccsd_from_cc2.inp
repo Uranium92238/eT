@@ -34,6 +34,7 @@ end method
 cc fop
    eom
    dipole length
+   transition moments
 end cc fop
 
 solver cc gs

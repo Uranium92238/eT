@@ -132,6 +132,7 @@ contains
       type(section) :: solver_cc_gs
       type(section) :: solver_cc_es
       type(section) :: solver_cc_multipliers 
+      type(section) :: solver_cc_response 
       type(section) :: solver_cc_propagation
       type(section) :: solver_fft_dipole_moment
       type(section) :: solver_fft_electric_field
@@ -215,6 +216,9 @@ contains
       cc_fop%name_    = 'cc fop'
       cc_fop%required = .false.
       cc_fop%keywords = [character(len=25) ::         &
+                           'transition moments   ',   &
+                           'frequencies          ',   &
+                           'polarizabilities     ',   &
                            'dipole length        ',   &
                            'lr                   ',   &
                            'eom                  ']
@@ -297,6 +301,13 @@ contains
                                           'threshold            ',   &
                                           'storage              ',   &
                                           'restart              ',   &
+                                          'max iterations       ']
+!
+      solver_cc_response%name_    = 'solver cc response'
+      solver_cc_response%required = .false.
+      solver_cc_response%keywords = [character(len=25) ::            &
+                                          'threshold            ',   &
+                                          'storage              ',   &
                                           'max iterations       ']
 !
       solver_cc_propagation%name_    = 'solver cc propagation'
@@ -430,6 +441,7 @@ contains
                            solver_cc_gs,              &
                            solver_cc_es,              &
                            solver_cc_multipliers,     &
+                           solver_cc_response,        &
                            solver_cc_propagation,     &
                            solver_fft_dipole_moment,  &
                            solver_fft_electric_field, &

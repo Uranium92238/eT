@@ -660,9 +660,9 @@ contains
    end subroutine etaX_eom_a_ccs
 !
 !
-   module subroutine calculate_transition_strength_ccs(wf, S, etaX, csiX, state, T_l, T_r)
+   module subroutine calculate_lr_transition_strength_ccs(wf, S, etaX, csiX, state, T_l, T_r, M)
 !!
-!!    Calculate transition strength
+!!    Calculate LR transition strength
 !!    Written by Josefine H. Andersen, February 2019
 !!
 !!    Given etaX and csiX, this routine calculates the left and right transition 
@@ -670,6 +670,9 @@ contains
 !!    S = T_l * T_r.
 !! 
 !!    The left and right states L and R are read from file and made binormal by the routine.
+!!
+!!    Modified by Eirik F. Kjønstad, Nov 2019:
+!!    Changed to calculate the LR transition strength instead of the EOM value.
 !!
       implicit none
 !
@@ -679,6 +682,8 @@ contains
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: etaX
       real(dp), dimension(wf%n_es_amplitudes), intent(in) :: csiX
+!
+      real(dp), dimension(wf%n_es_amplitudes), intent(in) :: M
 !
       real(dp), intent(out) :: T_l, T_r
       integer, intent(in)   :: state
@@ -690,12 +695,12 @@ contains
       call mem%alloc(L, wf%n_es_amplitudes)
       call mem%alloc(R, wf%n_es_amplitudes)
 !
-      call wf%read_excited_state(L , state, 'left')
-      call wf%read_excited_state(R , state, 'right')
+      call wf%read_excited_state(L, state, 'left')
+      call wf%read_excited_state(R, state, 'right')
 !
 !     Left and right transition moments
 !
-      T_r = ddot(wf%n_es_amplitudes, etaX, 1, R, 1)
+      T_r = ddot(wf%n_es_amplitudes, etaX, 1, R, 1) + ddot(wf%n_es_amplitudes, M, 1, csiX, 1)
       T_l = ddot(wf%n_es_amplitudes, L, 1, csiX, 1)
 !
 !     Transition strength
@@ -705,7 +710,7 @@ contains
       call mem%dealloc(L, wf%n_es_amplitudes)
       call mem%dealloc(R, wf%n_es_amplitudes)
 !
-   end subroutine calculate_transition_strength_ccs
+   end subroutine calculate_lr_transition_strength_ccs
 !
 !
 end submodule fop_ccs

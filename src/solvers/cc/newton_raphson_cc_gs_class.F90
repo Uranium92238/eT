@@ -362,7 +362,9 @@ contains
 !
       integer, intent(out) :: final_iteration
 !
-      real(dp), dimension(:), allocatable :: epsilon, c, residual 
+      real(dp), dimension(:), allocatable :: epsilon, c, residual
+!
+      real(dp), dimension(:), allocatable :: minus_omega  
 !
       real(dp) :: residual_norm
 !
@@ -377,8 +379,11 @@ contains
       call mem%alloc(epsilon, wf%n_gs_amplitudes)
       call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
 !
+      call mem%alloc(minus_omega, wf%n_gs_amplitudes)
+      call copy_and_scale(-one, omega, minus_omega, wf%n_gs_amplitudes)
+!
       davidson = linear_davidson_tool('cc_gs_newton_raphson', wf%n_gs_amplitudes, &
-         solver%micro_residual_threshold, solver%max_micro_dim_red, -omega, 1)
+         solver%micro_residual_threshold, solver%max_micro_dim_red, minus_omega, 1)
 !
       call davidson%initialize_trials_and_transforms(solver%records_in_memory)
 !
@@ -456,6 +461,8 @@ contains
       call davidson%finalize_trials_and_transforms()
 !
       final_iteration = micro_iteration
+!
+      call mem%dealloc(minus_omega, wf%n_gs_amplitudes)
 !
    end subroutine do_micro_iterations_newton_raphson_cc_gs
 !

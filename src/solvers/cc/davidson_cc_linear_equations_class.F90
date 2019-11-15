@@ -1,0 +1,451 @@
+!
+!
+!  eT - a coupled cluster program
+!  Copyright (C) 2016-2019 the authors of eT
+!
+!  eT is free software: you can redistribute it and/or modify
+!  it under the terms of the GNU General Public License as published by
+!  the Free Software Foundation, either version 3 of the License, or
+!  (at your option) any later version.
+!
+!  eT is distributed in the hope that it will be useful,
+!  but WITHOUT ANY WARRANTY; without even the implied warranty of
+!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!  GNU General Public License for more details.
+!
+!  You should have received a copy of the GNU General Public License
+!  along with this program. If not, see <https://www.gnu.org/licenses/>.
+!
+!
+module davidson_cc_linear_equations_class
+!
+!!
+!!    Davidson coupled cluster linear equations solver class module
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Josefine H. Andersen, 2018-2019
+!!
+!!    Uses the Davidson algorithm to solve the sets of linear equations
+!!
+!!       (A - omega_k I) X_k = G_k,    or     (A^T - omega_k I) X_k = G_k,
+!!
+!!    where omega_k is a set of real numbers referred to as "frequencies",
+!!    and the G_k can either be one vector, meaning that we solve 
+!!
+!!       (A - omega_k I) X_k = G,      or     (A^T - omega_k I) X_k = G,
+!! 
+!!    or there can be different right-hand-sides, G_k, for different frequencies, omega_k. 
+!!
+!!    The solver builds a shared reduced space for the set of linear equations,
+!!    and stores the solution(s) on file(s) provided on input. 
+!!    
+!!    This solver was set up by Eirik F. Kjønstad, Nov 2019, and is a simple generalization
+!!    of the ground state multipliers Davidson solver (authors Eirik F. Kjønstad, Sarai D. Folkestad) 
+!!    as well as the solvers for response made by Josefine H. Andersen, spring 2019. 
+!!
+!!    --------
+!!    Some things that should be done before the release: 
+!!
+!!       TODO: Use this solver when solving for the CC multipliers. 
+!!       TODO: Write restart functionality.
+!!    --------
+!!
+!
+   use kinds
+   use ccs_class
+   use linear_davidson_tool_class
+!
+   implicit none
+!
+   type :: davidson_cc_linear_equations
+!
+      character(len=100) :: name_   = 'Davidson CC linear equations solver'
+      character(len=100) :: author  = 'Eirik F. Kjønstad, Sarai D. Folkestad, Josefine H. Andersen, 2018-2019'
+!
+      character(len=500) :: description = 'A Davidson solver that solves linear equations &
+                                          &involving the Jacobian transformation. When solving &
+                                          &multiple linear equations, it builds a shared reduced &
+                                          &space in which to express each of the solutions to the &
+                                          &equations.'
+!
+      character(len=500) :: eq_description ! provided by the programmer and printed to the user
+!
+      integer :: max_iterations, max_dim_red
+!
+      real(dp) :: residual_threshold
+!
+      character(len=200) :: storage 
+      character(len=200) :: section  
+!
+      logical :: restart, records_in_memory
+!
+      type(timings) :: timer
+!
+   contains
+!
+      procedure :: cleanup                         => cleanup_davidson_cc_linear_equations
+!
+      procedure :: print_banner                    => print_banner_davidson_cc_linear_equations
+      procedure :: print_settings                  => print_settings_davidson_cc_linear_equations
+!
+      procedure :: read_settings                   => read_settings_davidson_cc_linear_equations
+!
+      procedure :: run                             => run_davidson_cc_linear_equations
+!
+      procedure, nopass :: set_precondition_vector => set_precondition_vector_davidson_cc_linear_equations     
+!
+   end type davidson_cc_linear_equations
+!
+!
+   interface davidson_cc_linear_equations
+!
+      procedure :: new_davidson_cc_linear_equations
+!
+   end interface davidson_cc_linear_equations
+!
+!
+contains
+!
+!
+   function new_davidson_cc_linear_equations(wf, section, eq_description) result(solver)
+!!
+!!    New Davidson CC linear equations 
+!!    Written by Eirik F. Kjønstad, 2019
+!!
+!!    wf:               The coupled cluster wavefunction to use for the Jacobian transformation 
+!!
+!!    section:          Thresholds will be read from input in "solver section", i.e. if 
+!!                      section == "cc response", then thresholds are read from the section
+!!                      in the input named "solver cc response".
+!!
+!!    eq_description:   Equation description. String describing the particular problem the 
+!!                      solver is meant to solve. This is printed to output so that the user
+!!                      can tell which kinds of linear equations are solved.
+!!
+      implicit none
+!
+      type(davidson_cc_linear_equations) :: solver
+!
+      class(ccs) :: wf
+!
+      character(len=*), intent(in) :: section 
+      character(len=*), intent(in) :: eq_description 
+!
+      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' linear equations solver')
+      call solver%timer%turn_on()
+!
+!     Set default settings
+!
+      solver%max_iterations      = 100
+      solver%residual_threshold  = 1.0d-6
+      solver%restart             = .false.
+      solver%max_dim_red         = 100
+      solver%records_in_memory   = .false.
+      solver%storage             = 'disk'
+      solver%section             = trim(section)
+      solver%eq_description      = trim(eq_description)
+!
+!     Print solver banner
+!
+      call solver%print_banner()
+!
+!     Read non-default settings and print settings to output 
+!
+      call solver%read_settings()
+      call solver%print_settings()
+!
+!     Determine whether to store records in memory or on file
+!
+      if (trim(solver%storage) == 'memory') then 
+!
+         solver%records_in_memory = .true.
+!
+      elseif (trim(solver%storage) == 'disk') then 
+!
+         solver%records_in_memory = .false.
+!
+      else 
+!
+         call output%error_msg('Could not recognize keyword storage in solver: ' // &
+                                 trim(solver%storage))
+!
+      endif 
+!
+   end function new_davidson_cc_linear_equations
+!
+!
+   subroutine print_settings_davidson_cc_linear_equations(solver)
+!!
+!!    Print settings    
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+      implicit none 
+!
+      class(davidson_cc_linear_equations) :: solver 
+!
+      call output%printf('- Davidson CC linear equations solver settings:', pl='m', fs='(/t3,a)')
+!
+      call output%printf('Residual threshold:       (e9.2)', pl='m', fs='(/t6,a)', reals=[solver%residual_threshold])
+      call output%printf('Max number of iterations: (i9)', pl='m', fs='(t6,a)', ints=[solver%max_iterations])
+!
+   end subroutine print_settings_davidson_cc_linear_equations
+!
+!
+   subroutine run_davidson_cc_linear_equations(solver, wf, G, n_rhs,          &
+                                 frequencies, n_frequencies, solution_files,  &
+                                 transformation)
+!!
+!!    Run 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Josefine H. Andersen, 2018-2019
+!!
+!!    Solves the equations
+!!
+!!       (A - omega_k I) X_k = G_k,    or     (A^T - omega_k I) X_k = G_k,
+!!
+!!    where A is the coupled cluster Jacobian matrix and omega_k, G_k is specified 
+!!    by the programmer. The omega_k are the frequencies. G is referred to as the 
+!!    right-hand-side(s).
+!!
+!!    List of arguments:
+!!
+!!       G:                The right-hand-side vector or vectors. If there are multiple 
+!!                         right-hand-sides, then G_k is placed in column k of the array G.
+!!
+!!       n_rhs:            Number of columns of G. 
+!!          
+!!       frequencies:      The vector containing the frequencies omega_k.
+!!
+!!       n_frequencies:    k = 1, 2, ..., n_frequencies
+!!
+!!       solution_files:   Sequential file array to store the solutions X_k 
+!!
+!!       transformation:   Whether to use A or A^T ("right" or "left", respectively).       
+!!
+      implicit none
+!
+      class(davidson_cc_linear_equations) :: solver
+!
+      class(ccs) :: wf
+!
+      integer, intent(in) :: n_rhs 
+      real(dp), dimension(wf%n_es_amplitudes, n_rhs), intent(in) :: G
+!
+      integer, intent(in) :: n_frequencies
+!
+      real(dp), dimension(n_frequencies), intent(in) :: frequencies
+!
+      character(len=*), intent(in) :: transformation
+!
+      type(sequential_file), dimension(n_frequencies) :: solution_files
+!
+      class(linear_davidson_tool), allocatable :: davidson
+!
+      logical :: converged_residual
+!
+      real(dp), dimension(:), allocatable :: c, residual, solution
+!
+      integer :: iteration, root, trial
+!
+      real(dp) :: residual_norm
+!
+!     :: Initialize solver tool and set preconditioner and start vectors ::
+!
+      davidson = linear_davidson_tool('davidson_t_response', wf%n_gs_amplitudes, &
+            solver%residual_threshold, solver%max_dim_red, G, n_rhs, &
+            frequencies, n_frequencies)
+!
+      call davidson%initialize_trials_and_transforms(solver%records_in_memory)
+!
+      call solver%set_precondition_vector(wf, davidson)
+!
+      call davidson%set_trials_to_preconditioner_guess()
+!
+!     :: Iterative loop ::
+!
+      iteration = 0
+      converged_residual = .false.
+!
+      call output%printf('Entering iterative loop to solve equations.', pl='m', fs='(/t3,a)')
+!
+      do while (.not. converged_residual .and. (iteration .le. solver%max_iterations))
+!
+         iteration = iteration + 1       
+         call davidson%iterate()
+!
+         call output%printf('Iteration:               (i0)', pl='n', ints=[iteration], fs='(/t3,a)')
+         call output%printf('Reduced space dimension: (i0)', pl='n', ints=[davidson%dim_red])
+!
+!        Transform new trial vectors 
+!
+         call mem%alloc(c, wf%n_gs_amplitudes)
+!
+         do trial = davidson%first_trial(), davidson%last_trial()
+!
+            call davidson%get_trial(c, trial)
+!
+            call wf%construct_Jacobian_transform(trim(transformation), c)
+!
+            call davidson%set_transform(c, trial)
+!
+         enddo
+!
+         call mem%dealloc(c, wf%n_gs_amplitudes)
+!
+!        Solve linear equation(s) in reduced space 
+!
+         call davidson%solve_reduced_problem()
+!
+!        Loop over roots and check residuals, 
+!        then generate new trial vectors for roots not yet converged 
+!
+         call output%printf('Frequency      Residual norm', pl='n', fs='(/t3,a)')
+         call output%print_separator('n', 30, '-')
+!
+         call mem%alloc(residual, wf%n_gs_amplitudes)
+!
+         converged_residual = .true.
+!
+         do root = 1, n_frequencies
+!
+            call davidson%construct_residual(residual, root)
+!
+            residual_norm = get_l2_norm(residual, wf%n_gs_amplitudes)
+!
+            if (residual_norm > solver%residual_threshold) then 
+!
+               converged_residual = .false.
+               call davidson%construct_next_trial(residual, root)
+!
+            endif
+!
+            call output%printf('(e9.2)     (e9.2)', pl='n', &
+                                 reals=[frequencies(root), residual_norm])
+!
+         enddo 
+!
+         call mem%dealloc(residual, wf%n_gs_amplitudes)
+!
+         call output%print_separator('n', 30, '-')
+!
+      enddo ! End of iterative loop 
+!
+!     :: Summary of calculation :: 
+!
+      if (converged_residual) then
+!
+         call output%printf('Convergence criterion met in (i0) iterations!', pl='m', &
+                              ints=[iteration], fs='(/t3,a)')
+!
+         call mem%alloc(solution, wf%n_gs_amplitudes)
+!
+         do root = 1, n_frequencies
+!
+            call davidson%construct_solution(solution, root)
+!
+            call solution_files(root)%open_('write', 'rewind')
+            call solution_files(root)%write_(solution, wf%n_gs_amplitudes)
+            call solution_files(root)%close_()
+!
+         enddo
+!
+         call mem%dealloc(solution, wf%n_gs_amplitudes)
+!
+      else
+!
+         call output%error_msg('was not able to converge the equations in the given ' //&
+                                 'number of iterations in run_davidson_cc_linear_equations.')
+!
+      endif
+!
+      call davidson%finalize_trials_and_transforms()
+!
+   end subroutine run_davidson_cc_linear_equations
+!
+!
+   subroutine cleanup_davidson_cc_linear_equations(solver, wf)
+!!
+!!    Cleanup 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+      class(davidson_cc_linear_equations) :: solver
+!
+      call solver%timer%turn_off()
+!
+      call output%printf('- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) // &
+                           ' linear equations', pl='m', fs='(/t3,a)')
+!
+      call output%printf('Total wall time (sec):  (f20.5)', pl='m', &
+                           reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+!
+      call output%printf('Total cpu time (sec):   (f20.5)', pl='m', &
+                           reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6,a)')
+!
+   end subroutine cleanup_davidson_cc_linear_equations
+!
+!
+   subroutine print_banner_davidson_cc_linear_equations(solver)
+!!
+!!    Print banner
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none 
+!
+      class(davidson_cc_linear_equations) :: solver 
+!
+      call output%printf(':: ' // solver%name_, pl='m', fs='(/t3,a)')
+      call output%printf(':: ' // solver%author, pl='m', fs='(t3,a)')
+      call output%printf(solver%description, pl='m', ffs='(t3,a)', fs='(t3,a)')
+      call output%printf(solver%eq_description, pl='m', ffs='(/t3,a)', fs='(t3,a)')
+!
+   end subroutine print_banner_davidson_cc_linear_equations
+!
+!
+   subroutine set_precondition_vector_davidson_cc_linear_equations(wf, davidson)
+!!
+!!    Set precondition vector
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
+!!
+!!    Sets precondition vector to orbital differences 
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      type(linear_davidson_tool) :: davidson
+!
+      real(dp), dimension(:), allocatable :: preconditioner
+!
+      call mem%alloc(preconditioner, wf%n_gs_amplitudes)
+      call wf%get_gs_orbital_differences(preconditioner, wf%n_gs_amplitudes)
+      call davidson%set_preconditioner(preconditioner)
+      call mem%dealloc(preconditioner, wf%n_gs_amplitudes)
+!
+   end subroutine set_precondition_vector_davidson_cc_linear_equations
+!
+!
+   subroutine read_settings_davidson_cc_linear_equations(solver)
+!!
+!!    Read settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(davidson_cc_linear_equations) :: solver 
+!
+      call input%get_keyword_in_section('threshold',                       &
+                                        'solver ' // trim(solver%section), &
+                                        solver%residual_threshold)
+!
+      call input%get_keyword_in_section('max iterations',                  &
+                                        'solver ' // trim(solver%section), &
+                                        solver%max_iterations)
+!
+      call input%get_keyword_in_section('storage',                         &
+                                        'solver ' // trim(solver%section), &
+                                         solver%storage)
+!
+   end subroutine read_settings_davidson_cc_linear_equations
+!
+!
+end module davidson_cc_linear_equations_class

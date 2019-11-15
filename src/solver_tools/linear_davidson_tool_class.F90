@@ -84,7 +84,7 @@ module linear_davidson_tool_class
    type, extends(davidson_tool) :: linear_davidson_tool 
 !
       real(dp), dimension(:,:), allocatable :: F_red
-      real(dp), dimension(:,:), allocatable :: F
+      real(dp), dimension(:,:), pointer :: F 
 !
       integer :: n_rhs
       real(dp), dimension(:), allocatable :: frequencies
@@ -162,7 +162,7 @@ contains
 !
       real(dp), dimension(n_equations), intent(in), optional :: frequencies
 !
-      real(dp), dimension(n_parameters), intent(in) :: F 
+      real(dp), dimension(n_parameters), target, intent(in) :: F 
 !
       real(dp), intent(in) :: lindep_threshold
 !
@@ -173,7 +173,7 @@ contains
 !
 !     Set F and frequencies 
 !
-      call dcopy(davidson%n_parameters*davidson%n_rhs, F, 1, davidson%F, 1)
+      davidson%F(1:n_parameters, 1:davidson%n_rhs) => F(1:n_parameters)
 !
       call mem%alloc(davidson%frequencies, davidson%n_solutions)
 !
@@ -191,7 +191,7 @@ contains
 !
 !
    function new_linear_davidson_tool_multiple_rhs(name_, n_parameters, lindep_threshold, &
-            max_dim_red, F, n_equations, frequencies) result(davidson)
+            max_dim_red, F, n_rhs, frequencies, n_frequencies) result(davidson)
 !!
 !!    New linear Davidson tool 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -214,8 +214,7 @@ contains
 !!                                                   
 !!    n_equations:       Number of equations / number of solutions. 
 !!
-!!    frequencies:       (Optional) Array of frequencies with length equal to n_equations. 
-!!                       Default is an array of zeros. 
+!!    frequencies:       Array of frequencies with length equal to n_frequencies.
 !!
       implicit none 
 !
@@ -223,34 +222,26 @@ contains
 !
       character(len=*), intent(in) :: name_
 !
-      integer, intent(in) :: n_parameters, max_dim_red, n_equations
+      integer, intent(in) :: n_parameters, max_dim_red, n_rhs, n_frequencies
 !
-      real(dp), dimension(n_equations), intent(in), optional :: frequencies
+      real(dp), dimension(n_frequencies), intent(in) :: frequencies
 !
-      real(dp), dimension(n_parameters, n_equations), intent(in) :: F 
+      real(dp), dimension(n_parameters, n_rhs), target, intent(in) :: F 
 !
       real(dp), intent(in) :: lindep_threshold
 !
 !     Perform tasks common to constructor 
 !
-      call davidson%general_preparations(name_, n_parameters, n_equations, &
-                              lindep_threshold, max_dim_red, n_equations)
+      call davidson%general_preparations(name_, n_parameters, n_frequencies, &
+                              lindep_threshold, max_dim_red, n_rhs)
 !
 !     Set F and frequencies 
 !
-      call dcopy(davidson%n_parameters*davidson%n_rhs, F, 1, davidson%F, 1)
+      davidson%F(1:n_parameters, 1:n_rhs) => F
 !
       call mem%alloc(davidson%frequencies, davidson%n_solutions)
 !
-      if (present(frequencies)) then 
-!
-         davidson%frequencies = frequencies
-!
-      else 
-!
-         call zero_array(davidson%frequencies, davidson%n_solutions)
-!
-      endif
+      davidson%frequencies = frequencies
 !
    end function new_linear_davidson_tool_multiple_rhs
 !
@@ -289,8 +280,6 @@ contains
 !
       davidson%dim_red      = 0    
       davidson%n_new_trials = davidson%n_solutions 
-!
-      call mem%alloc(davidson%F, davidson%n_parameters, davidson%n_rhs)
 !
    end subroutine general_preparations_linear_davidson_tool
 !
@@ -600,8 +589,9 @@ contains
 !
       if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
       if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
-      if (allocated(davidson%F)) call mem%dealloc(davidson%F, davidson%n_parameters, davidson%n_rhs)
       if (allocated(davidson%F_red)) call mem%dealloc(davidson%F_red, davidson%dim_red, davidson%n_rhs)
+!
+      davidson%F => null()
 !
    end subroutine destructor_linear_davidson_tool
 !
