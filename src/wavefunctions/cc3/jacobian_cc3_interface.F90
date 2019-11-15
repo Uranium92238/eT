@@ -20,14 +20,25 @@
    module subroutine effective_jacobian_transformation_cc3(wf, omega, c)
 !!
 !!    Effective Jacobian transformation (CC3)
-!!    Alexander C. Paul and Rolf H. Myhre, Feb 2019
+!!    Written by Alexander C. Paul and Rolf H. Myhre, Feb 2019
+!!
+!!    Directs the transformation by the CC3 Jacobi matrix,
+!!
+!!       A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >,
+!!
+!!    where the basis employed for the brackets is biorthonormal.
+!!    The transformation is ρ = A c, i.e.,
+!!
+!!       ρ_μ = (A c)_μ = sum_ck A_μ,ck c_ck
+!!                  + 1/2 sum_ckdl A_μ,ckdl c_ckdl (1 + δ_ck,dl)
+!!
+!!    On exit, c is overwritten by ρ. That is, c(ai) = ρ_a_i,
+!!    and c(aibj) = ρ_aibj.
 !!
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), intent(in) :: omega
-!
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
    end subroutine effective_jacobian_transformation_cc3
@@ -35,7 +46,7 @@
 !
    module subroutine jacobian_cc3_t3_a2_cc3(wf, c_ai, rho_abij)
 !!
-!!    T3 comtribution to the doubles transformed vector
+!!    Jacobian CC3 A2
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
 !!    Reads in the intermediates X_abid and X_ajil prepared in 
@@ -50,9 +61,7 @@
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(out) :: rho_abij
 !
    end subroutine jacobian_cc3_t3_a2_cc3
@@ -72,9 +81,7 @@
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_abij
 !
    end subroutine jacobian_cc3_t3_b2_cc3
@@ -102,12 +109,9 @@
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), intent(in) :: omega
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abij
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_abij
 !
@@ -119,26 +123,32 @@
 !!    Construct c1 transformed integrals
 !!    Alexander C. Paul and Rolf H. Myhre Feb 2019
 !!
+!!    g'_bdck = (b'd|ck) + (bd|c'k) + (bd|ck')   ordered as dbc,k
+!!    g'_ljck = (lj'|ck) + (lj|ck') + (lj|c'k)   ordered as lc,jk
+!!
+!!    Based on omega_cc3_integrals_cc3 written by Rolf H. Myhre
+!!
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
 !
    end subroutine construct_c1_integrals_cc3
 !
 !
    module subroutine construct_c1_fock_cc3(wf, c_ai, F_ia_c1)
+!!
 !!    Construct C1-transformed fock matrix ov-block
 !!    Written by Alexander C. Paul, Feb 2019
 !!
 !!    Calculates C1-transformed occupied-virtual elements of the Fock matrix
 !!    required for the CC3 jacobian and returns it ordered as n_v, n_o
 !!
+!!    F_ia_c1 = sum_j L_iajj' = sum_j 2 g_iajj' - g_ij'ja
+!!
       implicit none
 !
       class(cc3) :: wf
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(out) :: F_ia_c1
 !
@@ -150,7 +160,7 @@
 !!    Jacobian CC3 contribution c1-transformed fock matrix
 !!    Written by Alexander C. Paul and Rolf H. Myhre, Feb 2019
 !!
-!!    rho_2 =+ P^{ab}_{ij} sum_kc (t^abc_ijk - t^cba_ijk) F_ov_ck
+!!    rho_2 =+ P^{ab}_{ij} sum_kc (t^abc_ijk - t^cba_ijk) F_kc
 !!
 !!    The permutations of i,j,k are necessary 
 !!    due to the index restrictions in the batching loops
@@ -158,16 +168,10 @@
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: i, j, k
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: rho_abij
-!
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_ov_ck
 !
    end subroutine jacobian_cc3_b2_fock_cc3
-!
-!

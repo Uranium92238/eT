@@ -34,6 +34,10 @@
 !!    Prepare for jacobian transpose transformation
 !!    Written by Rolf H. Myhre, April 2019
 !!
+!!    Modified by Tor S. Haugland
+!!
+!!    Also prepares CCSD jacobian_transpose.
+!!
       implicit none
 !
       class(cc3), intent(inout) :: wf
@@ -53,7 +57,7 @@
 !!    (cd|lk) ordered as cl,kd
 !!
       implicit none
-!!
+!
       class(cc3) :: wf
 !
    end subroutine prepare_cc3_jacobian_trans_integrals_cc3
@@ -78,6 +82,7 @@
 !
    module subroutine prepare_cc3_jacobian_intermediates_cc3(wf)
 !!
+!!
 !!    Prepare intermediates for jacobian CC3 transformations
 !!    written by Rolf H. Myhre and Alexander C. Paul, April 2019
 !!
@@ -85,14 +90,19 @@
 !!    For that: construct t^abc_ijk in single batches of ijk 
 !!    and contract with the respective integrals
 !!
-      implicit none
+!!    t^abc_ijk = - (ε^abc_ijk)^-1 P^abc_ijk(sum_d t^ad_ij(bd|ck) - sum_l t^ab_il(lj|ck))
 !!
+!!    X_abid = - sum_jck (2t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_kcjd
+!!    X_ajil = - sum_bck (2t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_lbkc
+!!
+      implicit none
+!
       class(cc3) :: wf
 !
    end subroutine prepare_cc3_jacobian_intermediates_cc3
 !
 !
-   module subroutine construct_X_intermediates_cc3(wf, i, j, k, t_abc, u_abc, v_abc, X_alij,      &
+   module subroutine construct_x_intermediates_cc3(wf, i, j, k, t_abc, u_abc, v_abc, x_alij,      &
                                                    X_abdi, X_abdj, X_abdk, g_lbic, g_lbjc, g_lbkc)
 !!
 !!    Construct X intermediates
@@ -112,29 +122,24 @@
       implicit none
 !
       class(cc3) :: wf
-!
       integer, intent(in) :: i, j, k
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: v_abc
-!
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(out)  :: X_alij
-!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_o, wf%n_o), intent(out)  :: X_alij ! ordered alij
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: X_abdi
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: X_abdj
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: X_abdk
-!
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o), intent(in)           :: g_lbic
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o), intent(in)           :: g_lbjc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o), intent(in)           :: g_lbkc
-!                       
-   end subroutine construct_X_intermediates_cc3
+!
+   end subroutine construct_x_intermediates_cc3
 !
 !
-   module subroutine sort_X_to_abid_and_write_cc3(wf)
+   module subroutine sort_x_to_abid_and_write_cc3(wf)
 !!
-!!    Read in intermediate X_abdi from file, resort to X_baid and write to file again
+!!    Read in intermediate X_abdi from file, resort to X_abid and write to file again
 !!
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
@@ -142,4 +147,4 @@
 !
       class(cc3) :: wf
 !
-   end subroutine sort_X_to_abid_and_write_cc3
+   end subroutine sort_x_to_abid_and_write_cc3

@@ -36,10 +36,15 @@
 !!
 !!    Adapted by Alexander C. Paul, June 2019
 !!
+!!    Constructs
+!!
+!!       t-bar^T A + eta,
+!!
+!!    and places the result in 'equation'.
+!!
       implicit none
 !
       class(cc3), intent(in) :: wf
-!
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: equation
 !
    end subroutine construct_multiplier_equation_cc3
