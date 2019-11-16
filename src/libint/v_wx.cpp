@@ -38,6 +38,7 @@ using namespace std;
 #include "v_wx.h"
 
 #include "globals.h"
+#include "omp_control.h"
 
 using namespace libint2;
 
