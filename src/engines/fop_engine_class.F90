@@ -134,6 +134,8 @@ contains
       engine%multipliers_restart   = .false.
       engine%es_restart            = .false.
 !
+      engine%dipole_length         = .false.
+!
       call engine%read_settings()
 !
 !
@@ -813,13 +815,21 @@ contains
                                     'provided!')
 !
          endif
-!
       endif
+!
+!     Set operator
+!
+      engine%dipole_length = input%requested_keyword_in_section('dipole length','cc fop')
 !
 !     Sanity checks
 !
       if (engine%eom .and. engine%lr) call output%error_msg('can not run lr and eom in same calculation.')
       if (.not. engine%eom .and. .not. engine%lr) call output%error_msg('specify either eom or lr for fop.')
+!
+!     Since dipole is the only operator we currently have, we will check that it is indeed true
+!
+      if (.not. engine%dipole_length) &
+            call output%error_msg('no operator selected in fop calculation')
 !
    end subroutine read_fop_settings_fop_engine
 !
