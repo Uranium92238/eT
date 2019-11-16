@@ -36,6 +36,7 @@ using namespace std;
 #include <libint2.hpp>
 
 #include "globals.h"
+#include "omp_control.h"
 
 using namespace libint2;
 
