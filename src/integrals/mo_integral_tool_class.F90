@@ -241,6 +241,8 @@ contains
 !
       class(mo_integral_tool), intent(inout) :: integrals
 !
+      call output%printf('Placing the ERIs in memory', fs='(/t3,a)', pl='minimal')
+!
       if (integrals%eri_t1_mem) call output%error_msg('tried to put T1 g_pqrs in memory, but it is already there.')
 !
       call mem%alloc(integrals%g_pqrs, integrals%n_mo, integrals%n_mo, &

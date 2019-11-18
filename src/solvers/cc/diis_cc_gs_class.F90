@@ -223,6 +223,8 @@ contains
       call output%printf('DIIS dimension:           (i9)', ints=[solver%diis_dimension], fs='(/t6, a)', pl='minimal')
       call output%printf('Max number of iterations: (i9)', ints=[solver%max_iterations], fs='(t6, a)', pl='minimal')
 !
+      call output%printf('Storage:                    '//trim(solver%storage), fs='(/t6, a)', pl='minimal')
+!
    end subroutine print_settings_diis_cc_gs
 !
 !
