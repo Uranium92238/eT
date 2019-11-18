@@ -631,6 +631,8 @@ contains
 !
       call wf%destruct_pcm_matrices()
 !
+      call wf%integrals%cleanup()
+!
       call output%printf('- Cleaning up ' // trim(wf%name_) // ' wavefunction', pl='v', fs='(/t3,a)')
 !
    end subroutine cleanup_ccs
