@@ -41,7 +41,7 @@ contains
    module subroutine save_jacobian_transpose_a1_intermediates_doubles_complex(wf, u_bjck)
 !!
 !!    Save jacobian transpose A1 intermediates
-!!    Written by by E. F. Kjønstad, S. D. Folkestad and A. C. Paul
+!!    Written by by E. F. Kjønstad, S. D. Folkestad and Alexander C. Paul
 !!
 !!    Calculates the intermediates,
 !!

@@ -26,11 +26,11 @@ submodule (cc3_class) jacobian_transpose
 !!    Routines for the linear transform of trial
 !!    vectors by the transpose of the Jacobian matrix
 !!
-!!    σ_i = A^T * c_i,
+!!    sigma_i = A^T * c_i,
 !!
 !!    where
 !!
-!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >.
+!!    A_mu,nu = < mu| exp(-T) [H, tau_nu] exp(T)|R >.
 !!
 !
    implicit none
@@ -46,7 +46,7 @@ contains
 !!
 !!    Directs the transformation by the transpose of the  CC3 Jacobi matrix,
 !!
-!!       A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >,
+!!       A_mu,nu = < mu| exp(-T) [H, tau_nu] exp(T)|R >,
 !!
 !!    The transformation is performed as sigma^T = c^T A, where c is the vector
 !!    sent to the routine. On exit, the vector c is equal to sigma (the transformed
@@ -799,10 +799,11 @@ contains
 !!    1 array for each Permutation of C_abc will be used 
 !!    to reduce the amount of N^7-contractions and sorting
 !!
-!!    c_μ3 = (ω - ε^abc_ijk)^-1 (c_μ1 < μ1 | [H,τ_ν3] | R > + c_μ2 < μ2 | [H,τ_ν3] | R >
+!!    c_mu3 = (omega - epsilon^abc_ijk)^-1 (c_mu1 < mu1| [H,tau_nu3] |R > 
+!!                                        + c_mu2 < mu2| [H,tau_nu3] |R >)
 !!
-!!    σ1 += c_μ3 < μ3 | [[H,T_2],τ_ν1] | R >
-!!    σ2 += c_μ3 < μ3 | [H,τ_ ν2] | R >
+!!    sigma_1 += c_mu3 < mu3| [[H,T_2],tau_nu1] |R >
+!!    sigma_2 += c_mu3 < mu3| [H,tau_ nu2] |R >
 !!
       implicit none
 !
@@ -1325,16 +1326,16 @@ contains
 !!    Construct c3 amplitudes for fixed i,j,k
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    C_^abc_ijk 
-!!    = (ω - ε^abc_ijk)^-1 P^abc_ijk (C__ai*L_jbkc - C__ak*L_jbic 
+!!    C^abc_ijk 
+!!    = (omega - epsilon^abc_ijk)^-1 P^abc_ijk (C__ai*L_jbkc - C__ak*L_jbic 
 !!                                  + C_abij*F_kc - C__abik*F_jc
 !!                                  + sum_l (C__ablk g_iljc - C__abil L_jlkc) 
 !!                                  - sum_d (C__adjk g_ibdc - C__adij L_dbkc))
 !!
-!!    Contibutions from outer products:
+!!    Contributions from outer products:
 !!    P^abc_ijk (C_ai*L_jbkc - C_ak*L_jbic + Cabij*F_kc - C_abik*F_jc)
 !!
-!!    Contibutions from matrix multiplication:
+!!    Contributions from matrix multiplication:
 !!      sum_l P^abc_ijk (C_ablk g_iljc + C_abil g_jckl - 2 C_abil g_jlkc) 
 !!    - sum_d P^abc_ijk (C_adjk g_ibdc + C_adij g_dckb - 2 C_adij g_dbkc)
 !!
@@ -2130,9 +2131,9 @@ contains
 !!    Jacobian tranpose contribution of Y_vooo
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    sigma1 += sum_mjk Y_cmjk * g_mjlk
-!!    sigma1 += sum_cmj g_mjcd * Y_cmjk
-!!    sigma1 += sum_cmk g_leck * Y_cmjk
+!!    sigma_1 += sum_mjk Y_cmjk * g_mjlk
+!!    sigma_1 += sum_cmj g_mjcd * Y_cmjk
+!!    sigma_1 += sum_cmk g_leck * Y_cmjk
 !!   
       implicit none
 !
@@ -2290,9 +2291,9 @@ contains
 !!    Jacobian transpose contribution Y_vvvo
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
-!!    sigma1 += sum_bec g_becd * X_bcek
-!!    sigma1 += sum_cek X_bcek * g_leck
-!!    sigma1 += sum_bek X_bcek * g_lkbe
+!!    sigma_1 += sum_bec g_becd * X_bcek
+!!    sigma_1 += sum_cek X_bcek * g_leck
+!!    sigma_1 += sum_bek X_bcek * g_lkbe
 !!
       implicit none
 !

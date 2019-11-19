@@ -22,7 +22,7 @@
 !!    Construct omega (CC3)
 !!    Written by Rolf H. Myhre, January 2019
 !!
-!!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
+!!    Directs the construction of the projection vector < mu| exp(-T) H exp(T) |R >
 !!    for the current amplitudes of the object wfn
 !!
       implicit none
@@ -38,11 +38,11 @@
 !!    CC3 Omega terms
 !!    Written by Rolf H. Myhre, January 2019
 !!
-!!    t_mu3 = -<mu3|{U,T2}|HF>/epsilon_mu3
+!!    t_mu3 = -< mu3|{U,T2}|HF > (epsilon_mu3)^-1
 !!
-!!    omega_mu1 += <mu1|[H,T3]|HF>
+!!    omega_mu1 += < mu1|[H,T3]|HF >
 !!
-!!    omega_mu2 += <mu2|[H,T3]|HF>
+!!    omega_mu2 += < mu2|[H,T3]|HF >
 !!
       implicit none
 !
@@ -79,8 +79,8 @@
 !!    Calculate the the contributions to the t_3 amplitudes
 !!    for occupied indices i,j,k
 !!
-!!     Contributions to W
-!!     W^abc_ijk = P^abc_ijk(\sum_d t^ad_ij(bd|ck) - \sum_l t^ab_il(lj|ck))
+!!    Contributions to W
+!!    W^abc_ijk = P^abc_ijk(sum_d t^ad_ij(bd|ck) - sum_l t^ab_il (lj|ck))
 !!
 !!    Written by Rolf H. Myhre, January 2019
 !!
@@ -100,7 +100,7 @@
       real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_licj
       real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lick
       real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljck
-      logical, optional, intent(in) :: keep_t !If present and true, t_abc is not overwritten by first dgemm
+      logical, optional, intent(in) :: keep_t
 !
    end subroutine omega_cc3_W_calc_cc3
 !

@@ -24,16 +24,16 @@
 !!
 !!    Directs the transformation by the CC3 Jacobi matrix,
 !!
-!!       A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | R >,
+!!       A_mu,nu = < mu| exp(-T) [H, tau_nu] exp(T) | R >,
 !!
 !!    where the basis employed for the brackets is biorthonormal.
-!!    The transformation is ρ = A c, i.e.,
+!!    The transformation is rho = A c, i.e.,
 !!
-!!       ρ_μ = (A c)_μ = sum_ck A_μ,ck c_ck
-!!                  + 1/2 sum_ckdl A_μ,ckdl c_ckdl (1 + δ_ck,dl)
+!!       rho_mu = (A c)_mu 
+!!       = sum_ck A_mu,ck c_ck + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl)
 !!
-!!    On exit, c is overwritten by ρ. That is, c(ai) = ρ_a_i,
-!!    and c(aibj) = ρ_aibj.
+!!    On exit, c is overwritten by rho. That is, c(ai) = rho_a_i,
+!!    and c(aibj) = rho_aibj.
 !!
       implicit none
 !
@@ -50,10 +50,10 @@
 !!    Written by Alexander C. Paul and Rolf H. Myhre, April 2019
 !!
 !!    Reads in the intermediates X_abid and X_ajil prepared in 
-!!    prepare_jacobian_transform contracts with c_ai and adds to ρ_abij
+!!    prepare_jacobian_transform contracts with c_ai and adds to rho_abij
 !!
-!!    ρ_abil += sum_abi X_abid * C_dl
-!!    ρ_daji += sum_aik C_dl * X_ajil
+!!    rho_abil += sum_abi X_abid * C_dl
+!!    rho_daji += sum_aik C_dl * X_ajil
 !!
 !!    where: X_abid = - sum_jck (2 t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_kcjd
 !!           X_ajil = - sum_bck (2 t^abc_ijk - t^cba_ijk - t^acb_ijk) * g_lbkc
@@ -96,13 +96,15 @@
 !!    to the singles and doubles part of the outgoing vector
 !!
 !!    The triples amplitudes are expressed in terms of doubles amplitudes:
-!!    C_3 = (ω - ε_μ3)^-1 (< μ3 | [H,C_2] | HF > + < μ3 | [[H,C_1],T_2] | HF >)
+!!    C_3 = (omega - epsilon_mu3)^-1 (< mu3| [H,C_2] | HF > 
+!!                                  + < mu3| [[H,C_1],T_2] |HF >)
 !!
-!!    c^abc = (ω - ε^abc_ijk)^-1 * P^abc_ijk (sum_d c^ad_ij g_ckbd - sum_l c^ab_il g_cklj
-!!             + sum_d t^ad_ij g'_bdck - sum_l t^ab_il g'_cklj
+!!    c^abc = (omega - epsilon^abc_ijk)^-1 * P^abc_ijk 
+!!             (sum_d c^ad_ij g_ckbd - sum_l c^ab_il g_cklj
+!!            + sum_d t^ad_ij g'_bdck - sum_l t^ab_il g'_cklj
 !!
-!!    rho1 += < μ1 | [H,C_3] | R >
-!!    rho2 += < μ2 | [H,C_3] | R >
+!!    rho1 += < mu1| [H,C_3] |R >
+!!    rho2 += < mu2| [H,C_3] |R >
 !!
 !!    Based on omega_cc3_a_cc3 written by Rolf H. Myhre
 !!
