@@ -25,7 +25,7 @@ submodule (cc3_class) omega_cc3
 !!
 !!    Routines to construct
 !!
-!!    Ω =  < mu | exp(-T) H exp(T) | R >
+!!    Omega =  < mu| exp(-T) H exp(T) |R >
 !!
 !
    implicit none
@@ -39,7 +39,7 @@ contains
 !!    Construct omega (CC3)
 !!    Written by Rolf H. Myhre, January 2019
 !!
-!!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
+!!    Directs the construction of the projection vector < mu| exp(-T) H exp(T) |R >
 !!    for the current amplitudes of the object wfn
 !!
       implicit none
@@ -127,11 +127,11 @@ contains
 !!    CC3 Omega terms
 !!    Written by Rolf H. Myhre, January 2019
 !!
-!!    t_mu3 = -<mu3|{U,T2}|HF>/epsilon_mu3
+!!    t_mu3 = -< mu3|{U,T2}|HF > (epsilon_mu3)^-1
 !!
-!!    omega_mu1 += <mu1|[H,T3]|HF>
+!!    omega_mu1 += < mu1|[H,T3]|HF >
 !!
-!!    omega_mu2 += <mu2|[H,T3]|HF>
+!!    omega_mu2 += < mu2|[H,T3]|HF >
 !!
       implicit none
 !
@@ -350,7 +350,7 @@ contains
 !
                call batch_k%determine_limits(k_batch)
 !
-               if (k_batch .ne. j_batch) then !k_batch != j_batch, k_batch != i_batch
+               if (k_batch .ne. j_batch) then ! k_batch != j_batch, k_batch != i_batch
 !
                   call single_record_reader(batch_k, wf%g_bdck_t, g_bdck, wf%g_dbkc_t, g_dbkc)
                   g_bdck_p => g_bdck
@@ -380,7 +380,7 @@ contains
                   g_jlkc_p => g_jlkc
                   L_jbkc_p => L_jbkc
 !
-               else if (k_batch .eq. i_batch) then !k_batch = j_batch = i_batch
+               else if (k_batch .eq. i_batch) then ! k_batch = j_batch = i_batch
 !
                   g_bdck_p => g_bdci
                   g_dbkc_p => g_dbic
@@ -562,9 +562,9 @@ contains
 !
       class(cc3) :: wf
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_pqrs !Array for constructed integrals
-      real(dp), dimension(:,:,:,:), allocatable :: h_pqrs !Array for sorted integrals
-      real(dp), dimension(:,:), allocatable     :: v2_help !Help array for constructing L_jbkc
+      real(dp), dimension(:,:,:,:), allocatable :: g_pqrs ! Array for constructed integrals
+      real(dp), dimension(:,:,:,:), allocatable :: h_pqrs ! Array for sorted integrals
+      real(dp), dimension(:,:), allocatable     :: v2_help ! Help array for constructing L_jbkc
 !
       integer :: k, j
       type(batching_index) :: batch_k
@@ -771,8 +771,8 @@ contains
 !!    Calculate the the contributions to the t_3 amplitudes
 !!    for occupied indices i,j,k
 !!
-!!     Contributions to W
-!!     W^abc_ijk = P^abc_ijk(\sum_d t^ad_ij(bd|ck) - \sum_l t^ab_il(lj|ck))
+!!    Contributions to W
+!!    W^abc_ijk = P^abc_ijk(sum_d t^ad_ij(bd|ck) - sum_l t^ab_il (lj|ck))
 !!
 !!    Written by Rolf H. Myhre, January 2019
 !!
@@ -798,7 +798,9 @@ contains
       real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lick
       real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljck
 !
-      logical, optional, intent(in) :: keep_t !If present and true, t_abc is not overwritten by first dgemm
+!     If present and true, t_abc is not overwritten by first dgemm
+!     Needed to calculate triples part of the right excitation vector
+      logical, optional, intent(in) :: keep_t
 !
       real(dp) :: alpha
 !
@@ -1422,7 +1424,7 @@ contains
                     omega2(:,:,j,i), &
                     wf%n_v)
 !      
-!        omega_abli += \sum_c (2*t_bac - t_bca - t_cab)*g_jlkc
+!        omega_abli += sum_c (2*t_bac - t_bca - t_cab)*g_jlkc
 !      
          call dgemm('N','N', &
                     wf%n_v**2, &
@@ -1515,7 +1517,7 @@ contains
 !
          if (j .ne. i) then
 !
-   !        construct u_acb = 2*t_acb - t_abc - t_cab
+!        construct u_acb = 2*t_acb - t_abc - t_cab
 !
             call construct_132_min_123_min_312(t_abc, u_abc, wf%n_v)
 !
@@ -1535,7 +1537,7 @@ contains
                        wf%n_v)
 !
 !
-!              omega_ablk += \sum_c (2*t_acb - t_abc - t_cab)*g_iljc
+!              omega_ablk += sum_c (2*t_acb - t_abc - t_cab)*g_iljc
 !
                call dgemm('N','N', &
                           wf%n_v**2, &
@@ -1570,7 +1572,7 @@ contains
                        omega2(:,:,k,i), &
                        wf%n_v)
 !
-!           omega_abli += \sum_c (2*t_bca - t_bac - t_cba)*g_kljc
+!           omega_abli += sum_c (2*t_bca - t_bac - t_cba)*g_kljc
 !
             call dgemm('N','N', &
                        wf%n_v**2, &

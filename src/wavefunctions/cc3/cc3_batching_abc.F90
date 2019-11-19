@@ -132,7 +132,7 @@ contains
    module subroutine prepare_cc3_integrals_R3_abc_batch_cc3(wf, R_ai)
 !!
 !!    Prepare integral files R3 amplitudes in batches of a,b,c
-!!    Written by Alexander C. Paul, July 
+!!    Written by Alexander C. Paul, July 2019
 !!
 !!    g'_bdck = (b'd|ck) + (bd|c'k) + (bd|ck')   ordered as dk,bc
 !!    g'_ljck = (lj'|ck) + (lj|ck') + (lj|c'k)   ordered as ljk,c
@@ -140,8 +140,8 @@ contains
 !!    NB: The integrals (bd|ck) and (lj|ck) constructed in 
 !!        prepare_cc3_integrals_t3_abc_batch_cc3 are also needed
 !!
-!!    Based on construct_c1_integrals_cc3 written by Rolf H. Myhre and A. C. Paul
-!!    Based on construct_c1_integrals_cc3 written by Rolf H. Myhre and A. C. Paul
+!!    Based on construct_c1_integrals_cc3 
+!!    written by Rolf H. Myhre and Alexander C. Paul
 !!
 !
       implicit none

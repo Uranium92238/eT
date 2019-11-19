@@ -45,8 +45,8 @@
 !!    NB: The integrals (bd|ck) and (lj|ck) constructed in 
 !!        prepare_cc3_integrals_t3_abc_batch_cc3 are also needed
 !!
-!!    Based on construct_c1_integrals_cc3 written by Rolf H. Myhre and A. C. Paul
-!!    Based on construct_c1_integrals_cc3 written by Rolf H. Myhre and A. C. Paul
+!!    Based on construct_c1_integrals_cc3 written by Rolf H. Myhre and Alexander C. Paul
+!!    Based on construct_c1_integrals_cc3 written by Rolf H. Myhre and Alexander C. Paul
 !!
       implicit none
 !
