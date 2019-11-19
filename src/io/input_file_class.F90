@@ -301,6 +301,7 @@ contains
                                           'threshold            ',   &
                                           'storage              ',   &
                                           'restart              ',   &
+                                          'max reduced dimension',   &
                                           'max iterations       ']
 !
       solver_cc_response%name_    = 'solver cc response'
