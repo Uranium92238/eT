@@ -283,15 +283,15 @@ contains
 !
       class(davidson_tool), intent(inout) :: davidson 
 !
-      if (davidson%dim_red >= davidson%max_dim_red) then
+      if (davidson%dim_red + davidson%n_new_trials >= davidson%max_dim_red) then
 !
          call davidson%set_trials_to_solutions()
 !
-      else
+      else 
 !
          davidson%dim_red = davidson%dim_red + davidson%n_new_trials
 !
-      endif
+      endif 
 !
       call davidson%orthonormalize_trial_vecs()
 !

@@ -416,6 +416,7 @@ contains
 !
       call input%get_keyword_in_section('threshold', 'solver cc multipliers', solver%residual_threshold)
       call input%get_keyword_in_section('max iterations', 'solver cc multipliers', solver%max_iterations)
+      call input%get_keyword_in_section('max reduced dimension', 'solver cc multipliers', solver%max_dim_red)
 !
       call input%get_keyword_in_section('storage', 'solver cc multipliers', solver%storage)
 !
