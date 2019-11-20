@@ -2212,7 +2212,7 @@ contains
                         call wf%scale_triples_biorthonormal_factor_abc(a, b, c, R_ijk)
 !
                         if (wf%cvs) then
-                           call scale_vector_by_vector(R_ijk, projector_ijk, wf%n_o**3)
+                           call entrywise_product(wf%n_o**3, R_ijk, projector_ijk)
                         end if
 !
 !                       construct tbar3 for fixed a,b,c

@@ -20,6 +20,8 @@
 set(eT_fortran_sources
    src/eT_program.F90
 #
+   external/PCMSolver-api/pcmsolver.f90
+#
    src/engines/abstract_engine_class.F90
    src/engines/reference_engine_class.F90
    src/engines/hf_geoopt_engine_class.F90
@@ -215,7 +217,6 @@ set(eT_fortran_sources
    src/wavefunctions/cc3/initialize_destruct_cc3.F90
    src/wavefunctions/cc3/fop_cc3.F90
    src/wavefunctions/cc3/debug_transition_density_cc3.F90
-   external/PCMSolver-api/pcmsolver.f90
 #
    src/wavefunctions/mlcc2/mlcc2_class.F90
    src/wavefunctions/mlcc2/orbitals_mlcc2.F90

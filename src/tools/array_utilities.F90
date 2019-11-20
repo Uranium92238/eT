@@ -52,6 +52,14 @@ module array_utilities
                    scale_complex_packed_4_diagonal_by_complex
    end interface scale_diagonal
 !
+   interface entrywise_product
+      procedure :: entrywise_product_in_place, &
+                   entrywise_product_in_place_2dim, &
+                   entrywise_product_in_place_3dim, &
+                   entrywise_product_in_place_4dim, &
+                   entrywise_product_
+   end interface entrywise_product
+!
 contains
 !
 !
@@ -2372,14 +2380,18 @@ contains
    end function are_vectors_parallel
 !
 !
-   subroutine scale_vector_by_vector(X, Y, dim_)
+   subroutine entrywise_product_in_place(dim_, X, Y)
 !!
-!!    Scale vector by vector
+!!    entrywise product in place
 !!    Written by Alexander C. Paul, Sep 2019
+!!
+!!    Also called Hadamard or Schur product
 !!
 !!    Scales each element of a vector 
 !!    by the corresponding element of another vector
 !!             X(p) = X(p) * Y(p)
+!!
+!!    NB: Vector X contains product on exit
 !!
 !!    Used eg. for applying a projector
 !!
@@ -2400,7 +2412,128 @@ contains
       enddo  
 !$omp end parallel do
 !
-   end subroutine scale_vector_by_vector
+   end subroutine entrywise_product_in_place
+!
+!
+   subroutine entrywise_product_in_place_2dim(dim_, X, Y)
+!!
+!!    entrywise product in place of 2 dimensional vectors
+!!    Written by Alexander C. Paul, Sep 2019
+!!
+!!    Also called Hadamard or Schur product
+!!
+!!    Scales each element of a 2 dimensional vector 
+!!    by the corresponding element of another vector
+!!             X(p) = X(p) * Y(p)
+!!
+!!    NB: Vector X contains product on exit
+!!
+!!    dim_ : full dimension of the vector, dim_1*dim_2
+!!
+!!    Used eg. for applying a projector
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(:,:), intent(inout)  :: X
+      real(dp), dimension(:,:), intent(in)     :: Y
+!
+      call entrywise_product_in_place(dim_, X, Y)
+!
+   end subroutine entrywise_product_in_place_2dim
+!
+!
+   subroutine entrywise_product_in_place_3dim(dim_, X, Y)
+!!
+!!    entrywise product in place 3-dimensional vectors
+!!    Written by Alexander C. Paul, Sep 2019
+!!
+!!    Also called Hadamard or Schur product
+!!
+!!    Scales each element of a 3 dimensional vector 
+!!    by the corresponding element of another vector
+!!             X(p) = X(p) * Y(p)
+!!
+!!    NB: Vector X contains product on exit
+!!
+!!    dim_ : full dimension of the vector, dim_1*dim_2*dim_3
+!!
+!!    Used eg. for applying a projector
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(:,:,:), intent(inout)  :: X
+      real(dp), dimension(:,:,:), intent(in)     :: Y
+!
+      call entrywise_product_in_place(dim_, X, Y)
+!
+   end subroutine entrywise_product_in_place_3dim
+!
+!
+   subroutine entrywise_product_in_place_4dim(dim_, X, Y)
+!!
+!!    entrywise product in place 4-dimensional vectors
+!!    Written by Alexander C. Paul, Sep 2019
+!!
+!!    Also called Hadamard or Schur product
+!!
+!!    Scales each element of a 4 dimensional vector 
+!!    by the corresponding element of another vector
+!!             X(p) = X(p) * Y(p)
+!!
+!!    NB: Vector X contains product on exit
+!!
+!!    dim_ : full dimension of the vector, dim_1*dim_2*dim_3*dim_4
+!!
+!!    Used eg. for applying a projector
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(:,:,:,:), intent(inout)  :: X
+      real(dp), dimension(:,:,:,:), intent(in)     :: Y
+!
+      call entrywise_product_in_place(dim_, X, Y)
+!
+   end subroutine entrywise_product_in_place_4dim
+!
+!
+   subroutine entrywise_product_(dim_, X, Y, Z)
+!!
+!!    entrywise product
+!!    Written by Alexander C. Paul, Sep 2019
+!!
+!!    Also called Hadamard or Schur product
+!!
+!!    Scales each element of a vector 
+!!    by the corresponding element of another vector
+!!             Z(p) = X(p) * Y(p)
+!!
+!!    Result will be returned as the Z-vector
+!!
+      implicit none
+!
+      integer, intent(in) :: dim_
+!
+      real(dp), dimension(dim_), intent(in)  :: X
+      real(dp), dimension(dim_), intent(in)  :: Y
+      real(dp), dimension(dim_), intent(out) :: Z
+!
+      integer :: p
+!
+!$omp parallel do private(p)
+      do p = 1, dim_
+!
+         Z(p) = X(p)*Y(p)
+!
+      enddo  
+!$omp end parallel do
+!
+   end subroutine entrywise_product_
 !
 !
    subroutine scale_real_diagonal_by_real(alpha, X, dim_)

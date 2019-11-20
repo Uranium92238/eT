@@ -618,7 +618,7 @@ contains
                         call wf%omega_cc3_eps_abc_batch(a, b, c, tbar_ijk, omega) ! omega = 0
 !
                         if (cvs) then
-                           call scale_vector_by_vector(tbar_ijk, projector_ijk, wf%n_o**3)
+                           call entrywise_product(wf%n_o**3,tbar_ijk, projector_ijk)
                         end if
 !
                         call wf%density_cc3_mu_ref_oo(a, b, c, density_oo, t_ijk, &
