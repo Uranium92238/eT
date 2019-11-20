@@ -112,7 +112,8 @@ add_eT_runtest(cc2_lowmem_left_es_energies                  "eT;short;lowmem-cc2
 add_eT_runtest(restart_lowmem_cc2_es                        "eT;short;lowmem-cc2;es;restart")
 #
 add_eT_runtest(ccsd_gs_energy                               "eT;short;ccsd;gs")
-add_eT_runtest(ccsd_frozen_hf_gs_energy                     "eT;short;ccsd;gs")
+add_eT_runtest(ccsd_frozen_hf_gs_energy                     "eT;short;ccsd;gs;frozen hf")
+add_eT_runtest(ccsd_frozen_hf_frozen_core_gs_energy         "eT;short;ccsd;gs;frozen hf; frozen core")
 add_eT_runtest(ccsd_gs_energy_qmmmnopol                     "eT;short;ccsd;gs;qmmm;mmnopol")
 add_eT_runtest(ccsd_gs_energy_qmfq                          "eT;short;ccsd;gs;qmmm;fq")
 add_eT_runtest(ccsd_gs_energy_pcm                           "eT;short;ccsd;gs;pcm;pcm_internal")

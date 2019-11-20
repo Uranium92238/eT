@@ -36,6 +36,7 @@ method
 end method
 
 frozen orbitals
+   core
    hf
 end frozen orbitals
 
