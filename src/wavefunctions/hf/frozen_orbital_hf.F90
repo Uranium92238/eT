@@ -211,7 +211,6 @@ contains
       class(hf), intent(inout) :: wf
 !
       real(dp), dimension(:,:), allocatable :: D, orbitals_copy
-      real(dp), dimension(:), allocatable :: orbital_energies_copy
 !
       integer, dimension(:), allocatable :: active_aos
 !
@@ -364,33 +363,28 @@ contains
 !
       call mem%dealloc(orbitals_copy, wf%n_ao, wf%n_mo)
 !
-      call mem%alloc(orbital_energies_copy, wf%n_mo)
-!
-      call dcopy(wf%n_mo, wf%orbital_energies, 1, orbital_energies_copy, 1)
-!
       call mem%dealloc(wf%orbital_energies, wf%n_mo)
       call mem%alloc(wf%orbital_energies, wf%n_o + wf%n_v)
 !
-!$omp parallel do private(i)
-      do i = 1, wf%n_o
-!
-         wf%orbital_energies(i) = orbital_energies_copy(i)
-!
-      enddo
-!$omp end parallel do
-!$omp parallel do private(a)
-      do a = 1, wf%n_v
-!
-         wf%orbital_energies(wf%n_o + a) = orbital_energies_copy(a + wf%n_o + wf%n_frozen_hf_o)
-!
-      enddo
-!$omp end parallel do
-!
-     call mem%dealloc(orbital_energies_copy, wf%n_mo)
+!     We do one Roothan-Hall step to get a diagonal Fock matrix 
+!     (this should only entail occupied-occupied and virtual-virtual orbital mixing.)
 !
       wf%n_frozen_hf_orbitals = wf%n_mo - wf%n_o - wf%n_v
 !
       wf%n_mo = wf%n_o + wf%n_v
+!
+      call wf%initialize_mo_fock()
+      call wf%mo_transform(wf%ao_fock, wf%mo_fock)
+!
+      call wf%initialize_W_mo_update()
+!
+!     Find active C that diagonalizes Fock in ao basis
+!     also updates the orbital energies
+!
+      call wf%roothan_hall_update_orbitals_mo()
+!
+      call wf%destruct_mo_fock()
+      call wf%destruct_W_mo_update()
 !
    end subroutine remove_frozen_hf_orbitals_hf
 !
