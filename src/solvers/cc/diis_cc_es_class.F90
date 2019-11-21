@@ -320,6 +320,11 @@ contains
 !
             call wf%read_excited_state(X(:,state), state, solver%restart_transformation)
 !
+!           Normalize X in case it has been changed by FOP
+!
+            norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
+            call dscal(wf%n_es_amplitudes, one/norm_X, X(:, state), 1)
+!
          enddo
 !
          solver%energies = zero
@@ -394,7 +399,7 @@ contains
 !
                   call solver%preconditioner%do_(R(:,state), shift=solver%energies(state))
 !
-                  call daxpy(wf%n_es_amplitudes, one, R(1, state), 1, X(1, state), 1)
+                  call daxpy(wf%n_es_amplitudes, one, R(:, state), 1, X(:, state), 1)
 !
 !                 DIIS extrapolate using previous quasi-Newton estimates
 !
@@ -403,7 +408,7 @@ contains
 !                 Renormalize X 
 !
                   norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
-                  call dscal(wf%n_es_amplitudes, one/norm_X, X(1, state), 1)
+                  call dscal(wf%n_es_amplitudes, one/norm_X, X(:, state), 1)
 !
                endif 
 !
