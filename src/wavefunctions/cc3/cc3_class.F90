@@ -466,6 +466,13 @@ contains
 !
       Y_bcek_tbar = direct_file('Y_bcek_tbar', wf%n_v**3)
 !
+!     Delete if the file already exists 
+!     e.g. when restarting a crashed CC3 calculation
+!
+      if(Y_bcek_tbar%exists()) then
+         call Y_bcek_tbar%delete_
+      end if
+!
       call wf%Y_bcek%copy('Y_bcek_tbar')
 !
    end subroutine save_tbar_intermediates_cc3
