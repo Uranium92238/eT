@@ -181,6 +181,23 @@ contains
 !
       call mem%dealloc(eps, wf%n_es_amplitudes)
 !
+!     Determine whether to store records in memory or on file
+!
+      if (trim(solver%storage) == 'memory') then 
+!
+         solver%records_in_memory = .true.
+!
+      elseif (trim(solver%storage) == 'disk') then 
+!
+         solver%records_in_memory = .false.
+!
+      else 
+!
+         call output%error_msg('Could not recognize keyword storage in solver: ' // &
+                                 trim(solver%storage))
+!
+      endif
+! 
    end function new_diis_cc_es
 !
 !
