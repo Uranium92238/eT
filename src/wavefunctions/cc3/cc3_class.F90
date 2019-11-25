@@ -349,29 +349,27 @@ contains
 !
       end if
 !
-!     Delete integral files needed for t3 and tbar3 in batches of a,b,c
+!     Intermediates created for/in zop
       if (wf%g_bdck_t_v%exists()) then
 !
+!        Integral files needed for t3, tbar3 (L3) in batches of a,b,c
          call wf%g_bdck_t_v%delete_
          call wf%g_ljck_t_v%delete_
          call wf%g_dbkc_t_v%delete_
          call wf%g_jlkc_t_v%delete_
          call wf%L_jbkc_t_v%delete_
 !
+         call wf%Y_clik_tbar%delete_
+!
       end if
 !
-!     Delete additional integral files needed R3 in batches of a,b,c
+!     Intermediates created for fop
       if (wf%g_bdck_c1_v%exists()) then
 !
+!        Integral files needed for R3 in batches of a,b,c
          call wf%g_bdck_c1_v%delete_
          call wf%g_ljck_c1_v%delete_
 !
-      end if
-!
-!     Delete intermediates needed for the transition densities
-      if(wf%Y_clik_tbar%exists()) then
-!
-         call wf%Y_clik_tbar%delete_
          call wf%Z_bcjk%delete_
 !
          Y_bcek_tbar = direct_file('Y_bcek_tbar', wf%n_v**3)
