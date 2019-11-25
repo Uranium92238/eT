@@ -297,7 +297,7 @@ contains
 !
       real(dp), dimension(n_ao, n_mo), intent(in) :: orbital_coefficients
 !
-      integer                             :: i, j, k, mo, ao
+      integer                             :: i, j, k, mo
       real(dp), dimension(:), allocatable :: aos_at_point
       real(dp)                            :: x, y, z
 !
@@ -305,7 +305,7 @@ contains
 !
       call mem%alloc(aos_at_point, n_ao)
 !
-!$omp parallel do private(k, j, i, x, y, z, aos_at_point, mo, ao)
+!$omp parallel do private(k, j, i, x, y, z, aos_at_point, mo)
       do k = 1, plotter%n_z
          do j = 1, plotter%n_y
             do i = 1, plotter%n_x

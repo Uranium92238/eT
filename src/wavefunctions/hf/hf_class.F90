@@ -2204,6 +2204,8 @@ contains
 !
       real(dp), dimension(:,:,:,:,:), allocatable :: G_ao_t
 !
+      thread = 0
+      n_threads = 1
 !$    n_threads = omp_get_max_threads()
       call mem%alloc(G_ao_t, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms, n_threads)
       G_ao_t = zero

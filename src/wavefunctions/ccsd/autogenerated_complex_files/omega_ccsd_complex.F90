@@ -151,10 +151,7 @@ contains
       integer :: i, j
 !
       integer :: ab, cd
-      integer :: ai, aj, bj, bi, ci, cj, dj, di
       integer :: ij
-!
-      integer :: aibj, biaj, cidj, dicj 
 !
       complex(dp) :: diag_factor
 !
@@ -330,7 +327,7 @@ contains
               call mem%dealloc(t_p_cdij, n_v_packed, n_o_packed)
               call mem%dealloc(t_m_cdij, n_v_packed, n_o_packed)
 !
-!$omp parallel do private(i, j, a, b, ij, ai, aj, bj, bi, ab, aibj, biaj)
+!$omp parallel do private(i, j, a, b, ij, ab, a_full, b_full)
                do i = 1, wf%n_o
                   do j = 1, i
 !
@@ -429,7 +426,7 @@ contains
                enddo
 !$omp end parallel do
 !
-!$omp parallel do schedule(static) private(c,d,i,j,cd,ij,ci,cj,di,dj,cidj,dicj)
+!$omp parallel do schedule(static) private(c,d,i,j,cd,ij)
                do i = 1, wf%n_o
                   do j = 1, i
 !
@@ -493,7 +490,7 @@ contains
                call mem%dealloc(t_p_cdij, n_v_packed, n_o_packed)
                call mem%dealloc(t_m_cdij, n_v_packed, n_o_packed)
 !
-!$omp parallel do private(i, j, a, b, ij, ai, aj, bj, bi, ab, aibj, biaj)
+!$omp parallel do private(i, j, a, b, ij, ab, a_full, b_full)
                do i = 1, wf%n_o
                   do j = 1, i
 !
