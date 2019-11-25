@@ -1778,6 +1778,8 @@ contains
 !!    oo-part:
 !!          D^R_kl -= 1/2 sum_{abcij} tbar^abc_ijl R^abc_ijk
 !!
+      use omp_lib
+!
       implicit none
 !
       class(cc3) :: wf
@@ -1797,10 +1799,10 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: t_ijab
 !
 !     Arrays for triples amplitudes and multipliers
-      real(dp), dimension(:,:,:), allocatable :: R_ijk
-      real(dp), dimension(:,:,:), allocatable :: tbar_ijk
-      real(dp), dimension(:,:,:), allocatable :: u_ijk
-      real(dp), dimension(:,:,:), allocatable :: v_ijk
+      real(dp), dimension(:,:,:,:), allocatable :: R_ijk
+      real(dp), dimension(:,:,:,:), allocatable :: tbar_ijk
+      real(dp), dimension(:,:,:,:), allocatable :: u_ijk
+      real(dp), dimension(:,:,:,:), allocatable :: v_ijk
 !
       real(dp), dimension(:,:,:), allocatable :: projector_ijk
 !
@@ -1874,10 +1876,18 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, pointer :: L_jakc_p => null()
       real(dp), dimension(:,:,:,:), contiguous, pointer :: L_jbkc_p => null()
 !
+!     Temporary array for each thread
+!
+      real(dp), dimension(:,:,:), allocatable :: density_oo_thread
+!
       integer              :: a, b, c, a_rel, b_rel, c_rel
       type(batching_index) :: batch_a, batch_b, batch_c
       integer              :: a_batch, b_batch, c_batch
       integer              :: req_0, req_1, req_2, req_3
+      integer              :: n_threads, thread_n, i
+!
+      thread_n  = 1
+      n_threads = 1
 !
 !     Allocate and construct the projector for triples amplitudes if CVS is requested
       if(wf%cvs) then
@@ -1887,12 +1897,18 @@ contains
 !
       end if
 !
+!
+!$    n_threads = omp_get_max_threads()
+      call mem%alloc(density_oo_thread, wf%n_o, wf%n_o, n_threads)
+      call zero_array(density_oo_thread, wf%n_o**2*n_threads)
+      
+!
 !     Set up arrays for amplitudes
       call mem%alloc(t_ijab, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
       call squareup_and_sort_1234_to_2413(wf%t2, t_ijab, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Setup and Batching loops
-      req_0 = 4*(wf%n_o)**3
+      req_0 = 4*(wf%n_o)**3*n_threads
       req_1 = 3*(wf%n_o)**3
       req_2 = 3*(wf%n_o)*(wf%n_v) + wf%n_o**2
       req_3 = 0
@@ -1945,10 +1961,10 @@ contains
       endif
 !
 !     Arrays for the triples amplitudes
-      call mem%alloc(R_ijk, wf%n_o, wf%n_o, wf%n_o)
-      call mem%alloc(u_ijk, wf%n_o, wf%n_o, wf%n_o)
-      call mem%alloc(v_ijk, wf%n_o, wf%n_o, wf%n_o)
-      call mem%alloc(tbar_ijk, wf%n_o, wf%n_o, wf%n_o)
+      call mem%alloc(R_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
+      call mem%alloc(u_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
+      call mem%alloc(v_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
+      call mem%alloc(tbar_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
 !
 !
 !     Allocate integral arrays for Tbar3 multipliers
@@ -2157,9 +2173,13 @@ contains
 !
                endif
 !
+!$omp parallel do private(a, a_rel, b, b_rel, c, c_rel, thread_n) & 
+!$omp schedule(guided, 1)
                do a = batch_a%first, batch_a%last
 !
                   a_rel = a - batch_a%first + 1
+!
+!$                thread_n = omp_get_thread_num() + 1
 !
                   do b = batch_b%first, min(batch_b%last, a)
 !
@@ -2171,9 +2191,6 @@ contains
                            cycle
                         end if
 !
-!                       c3_calc does not zero out the array
-                        call zero_array(tbar_ijk, wf%n_o**3)
-!
                         c_rel = c - batch_c%first + 1
 !
 !                       Construct R^abc_ijk for given a,b,c
@@ -2184,18 +2201,24 @@ contains
 !                       using the same routine once for t1-transformed and once for 
 !                       c1-transformed integrals
 !
-                        call wf%omega_cc3_W_calc_abc_batch(a, b, c, R_ijk, u_ijk, R_ijab, &
-                                                            g_ljak_p(:,:,:,a_rel),        &
-                                                            g_ljbk_p(:,:,:,b_rel),        &
-                                                            g_ljck_p(:,:,:,c_rel),        &
-                                                            g_bdak_p(:,:,b_rel,a_rel),    &
-                                                            g_cdak_p(:,:,c_rel,a_rel),    &
-                                                            g_cdbk_p(:,:,c_rel,b_rel),    &
-                                                            g_adbk_p(:,:,a_rel,b_rel),    &
-                                                            g_adck_p(:,:,a_rel,c_rel),    &
+                        call wf%omega_cc3_W_calc_abc_batch(a, b, c,                    &
+                                                            R_ijk(:,:,:,thread_n),     &
+                                                            u_ijk(:,:,:,thread_n),     &
+                                                            R_ijab,                    &
+                                                            g_ljak_p(:,:,:,a_rel),     &
+                                                            g_ljbk_p(:,:,:,b_rel),     &
+                                                            g_ljck_p(:,:,:,c_rel),     &
+                                                            g_bdak_p(:,:,b_rel,a_rel), &
+                                                            g_cdak_p(:,:,c_rel,a_rel), &
+                                                            g_cdbk_p(:,:,c_rel,b_rel), &
+                                                            g_adbk_p(:,:,a_rel,b_rel), &
+                                                            g_adck_p(:,:,a_rel,c_rel), &
                                                             g_bdck_p(:,:,b_rel,c_rel))
 !
-                        call wf%omega_cc3_W_calc_abc_batch(a, b, c, R_ijk, u_ijk, t_ijab, &
+                        call wf%omega_cc3_W_calc_abc_batch(a, b, c,                       &
+                                                            R_ijk(:,:,:,thread_n),        &
+                                                            u_ijk(:,:,:,thread_n),        &
+                                                            t_ijab,                       &
                                                             g_ljak_c1_p(:,:,:,a_rel),     &
                                                             g_ljbk_c1_p(:,:,:,b_rel),     &
                                                             g_ljck_c1_p(:,:,:,c_rel),     &
@@ -2207,42 +2230,59 @@ contains
                                                             g_bdck_c1_p(:,:,b_rel,c_rel), &
                                                             .true.) ! Do not overwrite R_ijk
 !
-                        call wf%omega_cc3_eps_abc_batch(a, b, c, R_ijk, omega)
+                        call wf%omega_cc3_eps_abc_batch(a, b, c, R_ijk(:,:,:,thread_n), omega)
 !
-                        call wf%scale_triples_biorthonormal_factor_abc(a, b, c, R_ijk)
+                        call wf%scale_triples_biorthonormal_factor_abc(a, b, c, &
+                                                                       R_ijk(:,:,:,thread_n))
 !
                         if (wf%cvs) then
-                           call entrywise_product(wf%n_o**3, R_ijk, projector_ijk)
+                           call entrywise_product(wf%n_o**3, R_ijk(:,:,:,thread_n), projector_ijk)
                         end if
 !
+!                       c3_calc does not zero out the array
+                        call zero_array(tbar_ijk(:,:,:,thread_n), wf%n_o**3)
+!
 !                       construct tbar3 for fixed a,b,c
-                        call wf%jacobian_transpose_cc3_c3_calc_abc_batch(a, b, c, tbar_ia, tbar_ijab, &
-                                                                        tbar_ijk, u_ijk, v_ijk,       &
-                                                                        wf%fock_ia,                   &
-                                                                        L_jakb_p(:,:,a_rel,b_rel),    &
-                                                                        L_jakc_p(:,:,a_rel,c_rel),    &
-                                                                        L_jbkc_p(:,:,b_rel,c_rel),    &
-                                                                        g_jlka_p(:,:,:,a_rel),        &
-                                                                        g_jlkb_p(:,:,:,b_rel),        &
-                                                                        g_jlkc_p(:,:,:,c_rel),        &
-                                                                        g_dbka_p(:,:,b_rel,a_rel),    &
-                                                                        g_dcka_p(:,:,c_rel,a_rel),    &
-                                                                        g_dckb_p(:,:,c_rel,b_rel),    &
-                                                                        g_dakb_p(:,:,a_rel,b_rel),    &
-                                                                        g_dakc_p(:,:,a_rel,c_rel),    &
+                        call wf%jacobian_transpose_cc3_c3_calc_abc_batch(a, b, c, tbar_ia,         &
+                                                                        tbar_ijab,                 &
+                                                                        tbar_ijk(:,:,:,thread_n),  &
+                                                                        u_ijk(:,:,:,thread_n),     & 
+                                                                        v_ijk(:,:,:,thread_n),     &
+                                                                        wf%fock_ia,                &
+                                                                        L_jakb_p(:,:,a_rel,b_rel), &
+                                                                        L_jakc_p(:,:,a_rel,c_rel), &
+                                                                        L_jbkc_p(:,:,b_rel,c_rel), &
+                                                                        g_jlka_p(:,:,:,a_rel),     &
+                                                                        g_jlkb_p(:,:,:,b_rel),     &
+                                                                        g_jlkc_p(:,:,:,c_rel),     &
+                                                                        g_dbka_p(:,:,b_rel,a_rel), &
+                                                                        g_dcka_p(:,:,c_rel,a_rel), &
+                                                                        g_dckb_p(:,:,c_rel,b_rel), &
+                                                                        g_dakb_p(:,:,a_rel,b_rel), &
+                                                                        g_dakc_p(:,:,a_rel,c_rel), &
                                                                         g_dbkc_p(:,:,b_rel,c_rel))
 !
-                        call wf%omega_cc3_eps_abc_batch(a, b, c, tbar_ijk, zero)
+                        call wf%omega_cc3_eps_abc_batch(a, b, c, tbar_ijk(:,:,:,thread_n), zero)
 !
-                        call wf%density_cc3_mu_ref_oo(a, b, c, density_oo, R_ijk,   &
-                                                      u_ijk, tbar_ijk, v_ijk)
+                        call wf%density_cc3_mu_ref_oo(a, b, c, density_oo_thread(:,:,thread_n), &
+                                                      R_ijk(:,:,:,thread_n),                    &
+                                                      u_ijk(:,:,:,thread_n),                    &
+                                                      tbar_ijk(:,:,:,thread_n),                 &
+                                                      v_ijk(:,:,:,thread_n))
 !
                      enddo ! loop over c
                   enddo ! loop over b
                enddo ! loop over a
+!$omp end parallel do
             enddo ! batch_c
          enddo ! batch_b
       enddo ! batch_a
+!
+!     Collect contributions to the oo-block from all threads
+!
+      do i = 1, n_threads
+         call daxpy(wf%n_o**2, one, density_oo_thread(:,:,i), 1, density_oo, 1)
+      enddo
 !
 !     Close files
 !
@@ -2316,10 +2356,10 @@ contains
 !
 !     Deallocate amplitude arrays
 !
-      call mem%dealloc(R_ijk, wf%n_o, wf%n_o, wf%n_o)
-      call mem%dealloc(u_ijk, wf%n_o, wf%n_o, wf%n_o)
-      call mem%dealloc(v_ijk, wf%n_o, wf%n_o, wf%n_o)
-      call mem%dealloc(tbar_ijk, wf%n_o, wf%n_o, wf%n_o)
+      call mem%dealloc(R_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
+      call mem%dealloc(u_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
+      call mem%dealloc(v_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
+      call mem%dealloc(tbar_ijk, wf%n_o, wf%n_o, wf%n_o, n_threads)
 !
       if(wf%cvs) then
          call mem%dealloc(projector_ijk, wf%n_o, wf%n_o, wf%n_o)
