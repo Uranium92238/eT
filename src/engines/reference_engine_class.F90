@@ -47,7 +47,6 @@ module reference_engine_class
       logical :: requested_zop
 !
       logical :: plot_orbitals
-      logical :: plot_density
 !
    contains 
 !
