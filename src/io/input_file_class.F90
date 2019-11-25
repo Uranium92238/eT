@@ -402,8 +402,11 @@ contains
 !
       visualization%name_    = 'visualization'
       visualization%required = .false.
-      visualization%keywords = [character(len=25) ::    &
-                                 'plot hf orbitals',  &
+      visualization%keywords = [character(len=25) ::     &
+                                 'grid spacing',         &
+                                 'grid buffer',          &
+                                 'plot cc density',      &
+                                 'plot hf orbitals',     &
                                  'plot hf density'    ]
 !
       global_print%name_    = 'print'

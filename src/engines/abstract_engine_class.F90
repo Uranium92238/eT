@@ -46,6 +46,7 @@ module abstract_engine_class
       character(len=200) :: author
       logical :: dipole
       logical :: quadrupole
+      logical :: plot_density
 !
       type(timings) :: timer ! Timer for engine. Obs! must be turned on in constructor
 !
@@ -78,7 +79,7 @@ contains
 !!       - Wavefunction type
 !!       - Engine tasks
 !!
-!!    Dependancies:
+!!    Dependencies:
 !!
 !!       - The printables of the engine must be set for each decendant (constructor)
 !!

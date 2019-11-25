@@ -28,6 +28,7 @@ module gs_engine_class
 !
    use ccs_class, only: ccs
    use global_in, only: input
+   use global_out, only: output
    use memory_manager_class, only: mem
    use timings_class, only: timings
 !
@@ -62,6 +63,8 @@ module gs_engine_class
       procedure, nopass :: do_cholesky                   => do_cholesky_gs_engine
 !
       procedure :: restart_handling                      => restart_handling_gs_engine
+!
+      procedure :: do_visualization                      => do_visualization_gs_engine
 !
    end type gs_engine
 !
@@ -180,6 +183,9 @@ contains
 !
       engine%multipliers_restart = &
                input%requested_keyword_in_section('restart', 'solver cc multipliers')
+!
+      engine%plot_density = &
+               input%requested_keyword_in_section('plot cc density', 'visualization')
 !
    end subroutine read_gs_settings_gs_engine
 !
@@ -465,6 +471,58 @@ contains
       endif
 !
    end subroutine restart_handling_gs_engine
+!
+!
+   subroutine do_visualization_gs_engine(engine, wf)
+!!
+!!    Do visualization
+!!    Written by Tor S. Haugland, Nov 2019
+!!
+!!    Writes the electron density to file.
+!!
+!!    Based on do_visualization_reference_engine by S. D. Folkestad
+!!
+      use visualization_class, only : visualization
+      use array_utilities, only: symmetric_sandwich_right_transposition
+!
+      implicit none
+!
+      class(gs_engine) :: engine
+      class(ccs) :: wf 
+!
+      type(visualization) :: plotter
+!
+      character(len=200) :: density_file_tag
+      real(dp), dimension(:,:), allocatable :: density
+!
+      if (.not. engine%plot_density) return
+!
+      if (.not. allocated(wf%density) ) &
+         call output%error_msg("CC density not allocated")
+!
+!     Initialize the plotter
+!
+      plotter = visualization(wf%system)
+!
+!     D_alpha,beta = sum_pq  D_pq C_alpha,p C_beta,q
+!
+      call mem%alloc(density, wf%n_ao, wf%n_ao)
+!
+      call symmetric_sandwich_right_transposition(density,                 &
+                                                  wf%density,              &
+                                                  wf%orbital_coefficients, &
+                                                  wf%n_ao,                 &
+                                                  wf%n_mo)
+!
+!     Plot density
+!
+      density_file_tag = 'cc_gs_density'
+!
+      call plotter%plot_density(wf%system, wf%n_ao, density, density_file_tag)
+!
+      call mem%dealloc(density, wf%n_ao, wf%n_ao)
+!
+   end subroutine do_visualization_gs_engine
 !
 !
 end module gs_engine_class

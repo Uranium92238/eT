@@ -68,6 +68,7 @@ contains
 !
       engine%dipole                 = .false.
       engine%quadrupole             = .false.
+      engine%plot_density           = .false.
       engine%multipliers_algorithm  = 'davidson'
       engine%gs_algorithm           = 'diis'
 !
@@ -149,6 +150,8 @@ contains
       call wf%construct_gs_density()
 !
       call engine%calculate_expectation_values(wf)
+!
+      call engine%do_visualization(wf)
 !
       call wf%destruct_gs_density()
 !
