@@ -140,7 +140,7 @@ subroutine reference_calculation(system)
 !
    class(reference_engine), allocatable :: ref_engine
 !
-   character(len=25) :: ref_wf_name
+   character(len=30) :: ref_wf_name
 !
    ref_wf_name = input%get_reference_wf()
 !
@@ -212,7 +212,7 @@ subroutine cc_calculation(system)
    class(ccs), allocatable :: cc_wf
    class(gs_engine), allocatable :: cc_engine 
 !
-   character(len=25) :: cc_wf_name
+   character(len=30) :: cc_wf_name
 !
    if (.not. input%requested_reference_calculation()) &
       call output%error_msg('to run CC calculation reference wavefunction must be specified.')

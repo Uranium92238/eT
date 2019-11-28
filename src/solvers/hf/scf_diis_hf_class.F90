@@ -45,6 +45,9 @@ module scf_diis_hf_class
 !
       integer :: diis_dimension
 !
+      logical  :: cumulative
+      real(dp) :: cumulative_threshold
+!
       logical :: converged
       logical :: restart
 !
@@ -91,13 +94,15 @@ contains
 !
 !     Set standard settings
 !
-      solver%restart             = restart
-      solver%diis_dimension      = 8
-      solver%max_iterations      = 100
-      solver%ao_density_guess    = 'SAD'
-      solver%energy_threshold    = 1.0d-6
-      solver%gradient_threshold  = 1.0d-6
-      solver%storage             = 'memory'
+      solver%restart                = restart
+      solver%diis_dimension         = 8
+      solver%max_iterations         = 100
+      solver%ao_density_guess       = 'SAD'
+      solver%energy_threshold       = 1.0d-6
+      solver%gradient_threshold     = 1.0d-6
+      solver%storage                = 'memory'
+      solver%cumulative             = .false.
+      solver%cumulative_threshold   = 1.0d-2
 !
       call solver%read_settings()
 !
@@ -112,7 +117,8 @@ contains
                                                 ao_density_guess,    &
                                                 energy_threshold,    &
                                                 gradient_threshold,  &
-                                                storage) result(solver)
+                                                storage,             &
+                                                cumulative_threshold) result(solver)
 !!
 !!    New SCF DIIS from parameters
 !!    Written by Tor S. Haugland, 2019
@@ -130,16 +136,18 @@ contains
       real(dp),           intent(in) :: energy_threshold
       real(dp),           intent(in) :: gradient_threshold
       character(len=200), intent(in) :: storage 
+      real(dp),           intent(in) :: cumulative_threshold
 !
 !     Set settings from parameters
 !
-      solver%restart             = restart
-      solver%diis_dimension      = diis_dimension
-      solver%max_iterations      = max_iterations
-      solver%ao_density_guess    = ao_density_guess
-      solver%energy_threshold    = energy_threshold
-      solver%gradient_threshold  = gradient_threshold
-      solver%storage             = storage
+      solver%restart                = restart
+      solver%diis_dimension         = diis_dimension
+      solver%max_iterations         = max_iterations
+      solver%ao_density_guess       = ao_density_guess
+      solver%energy_threshold       = energy_threshold
+      solver%gradient_threshold     = gradient_threshold
+      solver%storage                = storage
+      solver%cumulative_threshold   = cumulative_threshold
 !
       call solver%prepare(wf)
 !
@@ -235,6 +243,9 @@ contains
       call output%printf('DIIS dimension:                (i0)', &
          ints=[solver%diis_dimension],fs='(/t6,a)', pl='minimal')
 !
+      call output%printf('Cumulative Fock threshold:     (e9.2)', &
+         reals=[solver%cumulative_threshold],fs='(t6,a)', pl='minimal')
+!
    end subroutine print_scf_diis_settings_scf_diis_hf
 !
 !
@@ -286,7 +297,7 @@ contains
 !     Initialize the DIIS manager object
 !
       dim_fock     = ((wf%n_ao)*(wf%n_ao + 1)/2)*(wf%n_densities)
-      dim_gradient = (wf%n_ao*(wf%n_ao - 1)/2)*(wf%n_densities)
+      dim_gradient = (wf%n_mo*(wf%n_mo - 1)/2)*(wf%n_densities)
 !
       diis = diis_tool('hf_diis', dim_fock, dim_gradient, dimension_=solver%diis_dimension)
 !
@@ -302,7 +313,7 @@ contains
       call mem%alloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
       call mem%alloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
 !
-      call mem%alloc(G, wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities)
+      call mem%alloc(G, wf%n_mo*(wf%n_mo - 1)/2, wf%n_densities)
       call mem%alloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
 !
       call wf%get_packed_roothan_hall_gradient(G)
@@ -365,25 +376,53 @@ contains
 !
          else
 !
+!           Switch to cumulative Fock construction?
+!
+            if (.not. solver%cumulative .and. &
+                  max_grad .lt. solver%cumulative_threshold) then 
+!
+               solver%cumulative = .true.
+               call output%printf('Switching to Fock construction using density differences.', &
+                                    pl='verbose', fs='(t3,a)')
+!
+            endif
+!
+            if (solver%cumulative) call wf%get_ao_density_sq(prev_ao_density)
+!            
+!           Update the orbitals and density by solving the Roothan-Hall problem
+!
             prev_energy = wf%energy
-            call wf%get_ao_density_sq(prev_ao_density)
 !
             call wf%roothan_hall_update_orbitals()     ! DIIS F => C
-!
             call wf%update_ao_density()                ! C => D
 !
-            if (iteration .ne. 1) call wf%set_ao_fock(ao_fock) ! Restore F
+!           Restore Fock to non-DIIS-extrapolated Fock matrix 
 !
-!           calling a wrapper for cumulative or no_cumulative depending on options
+            if (iteration .gt. 1) call wf%set_ao_fock(ao_fock) 
 !
-            call wf%update_fock_and_energy(h_wx,prev_ao_density)
+!           Construct updated Fock matrix from the density 
+!
+            if (solver%cumulative) then 
+!
+               call wf%update_fock_and_energy(h_wx, prev_ao_density)
+!
+            else 
+!
+               call wf%update_fock_and_energy(h_wx)
+!
+            endif
+!
+!           Construct current gradient and the max norm of it 
 !
             call wf%get_packed_roothan_hall_gradient(G)
-!
             max_grad = get_abs_max(G, dim_gradient)
+!
+!           Keep a copy of non-extrapolated Fock matrix 
 !
             call wf%get_ao_fock(F)
             call dcopy(dim_fock, F, 1, ao_fock, 1)
+!
+!           Perform the DIIS extrapolation to get the next Fock matrix for Roothan-Hall
 !
             call diis%update(G, F)
             call wf%set_ao_fock(F)
@@ -400,7 +439,7 @@ contains
 !
       enddo
 !
-      call mem%dealloc(G, wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities)
+      call mem%dealloc(G, wf%n_mo*(wf%n_mo - 1)/2, wf%n_densities)
       call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
@@ -480,6 +519,9 @@ contains
 !
       call input%get_keyword_in_section('diis dimension', 'solver scf', solver%diis_dimension)
       call input%get_keyword_in_section('storage', 'solver scf', solver%storage)
+!
+      call input%get_keyword_in_section('cumulative fock threshold', &
+                                        'solver scf', solver%cumulative_threshold)
 !
    end subroutine read_scf_diis_settings_scf_diis_hf
 !

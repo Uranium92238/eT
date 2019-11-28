@@ -1341,8 +1341,8 @@ contains
 !
       class(mlhf) :: wf
 !
-      type(hf), allocatable        :: full_space_wf
-      type(scf_diis_hf), allocatable    :: full_space_solver
+      type(hf), allocatable            :: full_space_wf
+      type(scf_diis_hf), allocatable   :: full_space_solver
 !
       real(dp) :: full_space_thr
 !
@@ -1375,7 +1375,8 @@ contains
                         energy_threshold=full_space_thr,   &
                         max_iterations=max_iterations,     &
                         gradient_threshold=full_space_thr, &
-                        storage=storage)
+                        storage=storage,                   &
+                        cumulative_threshold=1.0d-2)
 !
       call full_space_solver%run(full_space_wf)
 !

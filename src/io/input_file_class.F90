@@ -34,8 +34,8 @@ module input_file_class
 !
       type(section), allocatable :: sections(:)
 !
-      character(len=25), allocatable :: rf_wfs(:)
-      character(len=25), allocatable :: cc_wfs(:)
+      character(len=30), allocatable :: rf_wfs(:)
+      character(len=30), allocatable :: cc_wfs(:)
 !
    contains
 !
@@ -76,7 +76,7 @@ module input_file_class
                                                                            get_dp_keyword_in_section_input_file
 !
       generic :: get_required_keyword_in_section                        => get_required_string_keyword_in_section_input_file,    &
-                                                                           get_required_integer4_keyword_in_section_input_file,   &
+                                                                           get_required_integer4_keyword_in_section_input_file,  &
                                                                            get_required_integer8_keyword_in_section_input_file,  &
                                                                            get_required_dp_keyword_in_section_input_file
 !
@@ -157,9 +157,9 @@ contains
 !
 !     Set method section 
 !
-      the_file%rf_wfs = [character(len=25) ::'hf','uhf','mlhf']
+      the_file%rf_wfs = [character(len=30) :: 'hf','uhf','mlhf']
 !
-      the_file%cc_wfs = [character(len=25) ::   &
+      the_file%cc_wfs = [character(len=30) ::   &
                            'ccs',               &
                            'mp2',               &
                            'cc2',               &
@@ -175,12 +175,13 @@ contains
                              + size(the_file%cc_wfs)))
 !
       method%keywords = [the_file%rf_wfs, the_file%cc_wfs]
+!
 !     Set other sections
 !
       calculations%name_    = 'do'
       calculations%required = .true.
 !
-      calculations%keywords = [character(len=25) :: 'ground state',         &
+      calculations%keywords = [character(len=30) :: 'ground state',         &
                                                     'ground state geoopt',  &
                                                     'excited state',        &
                                                     'zop',                  &
@@ -191,7 +192,7 @@ contains
 !
       system%name_    = 'system'
       system%required = .true.
-      system%keywords = [character(len=25) ::'name',  &
+      system%keywords = [character(len=30) ::'name',  &
                            'cartesian gaussians',     &
                            'pure gaussians',     &
                            'charge',                  &
@@ -199,23 +200,23 @@ contains
 !
       memory%name_    = 'memory'
       memory%required = .false.
-      memory%keywords = [character(len=25) :: 'available']
+      memory%keywords = [character(len=30) :: 'available']
 !
       hf_zop%name_    = 'hf zop'
       hf_zop%required = .false.
-      hf_zop%keywords = [character(len=25) ::         &
+      hf_zop%keywords = [character(len=30) ::         &
                            'dipole               ',   &
                            'quadrupole           ']
 !
       cc_zop%name_    = 'cc zop'
       cc_zop%required = .false.
-      cc_zop%keywords = [character(len=25) ::         &
+      cc_zop%keywords = [character(len=30) ::         &
                            'dipole               ',   &
                            'quadrupole           ']
 !
       cc_fop%name_    = 'cc fop'
       cc_fop%required = .false.
-      cc_fop%keywords = [character(len=25) ::         &
+      cc_fop%keywords = [character(len=30) ::         &
                            'transition moments   ',   &
                            'frequencies          ',   &
                            'polarizabilities     ',   &
@@ -225,13 +226,13 @@ contains
 !
       cc_td%name_    = 'cc td'
       cc_td%required = .false.
-      cc_td%keywords = [character(len=25) :: 'propagation',       &
+      cc_td%keywords = [character(len=30) :: 'propagation',       &
                                              'fft dipole moment', &
                                              'fft electric field' ]
 !
       solver_cholesky%name_    = 'solver cholesky'
       solver_cholesky%required = .false.
-      solver_cholesky%keywords = [character(len=25) ::         &
+      solver_cholesky%keywords = [character(len=30) ::         &
                                     'threshold           ',    &
                                     'span                ',    &
                                     'batches             ',    &
@@ -241,20 +242,21 @@ contains
 !
       solver_scf%name_    = 'solver scf'
       solver_scf%required = .false.
-      solver_scf%keywords = [character(len=25) ::        &
-                              'algorithm            ',   &
-                              'energy threshold     ',   &
-                              'gradient threshold   ',   &
-                              'storage              ',   &
-                              'max iterations       ',   &
-                              'diis dimension       ',   &
-                              'restart              ',   &
-                              'ao density guess     ',   &
-                              'print orbitals       ' ]
+      solver_scf%keywords = [character(len=30) ::           &
+                              'algorithm',                  &
+                              'energy threshold',           &
+                              'gradient threshold',         &
+                              'storage',                    &
+                              'cumulative fock threshold',  &
+                              'max iterations',             &
+                              'diis dimension',             &
+                              'restart',                    &
+                              'ao density guess',           &
+                              'print orbitals']
 !
       solver_scf_geoopt%name_    = 'solver scf geoopt'
       solver_scf_geoopt%required = .false.
-      solver_scf_geoopt%keywords = [character(len=25) ::    &
+      solver_scf_geoopt%keywords = [character(len=30) ::    &
                                     'algorithm',            &
                                      'max step',            &
                                      'energy threshold',    &
@@ -265,7 +267,7 @@ contains
       solver_cc_gs%name_    = 'solver cc gs'
       solver_cc_gs%required = .false.
 !
-      solver_cc_gs%keywords = [character(len=25) ::      &
+      solver_cc_gs%keywords = [character(len=30) ::      &
                                  'algorithm',            &
                                  'energy threshold',     &
                                  'omega threshold',      &
@@ -278,7 +280,7 @@ contains
 !
       solver_cc_es%name_    = 'solver cc es'
       solver_cc_es%required = .false.
-      solver_cc_es%keywords = [character(len=25) ::      &
+      solver_cc_es%keywords = [character(len=30) ::      &
                                  'algorithm',            &
                                  'core excitation',      &
                                  'ionization',           &
@@ -296,7 +298,7 @@ contains
 !
       solver_cc_multipliers%name_    = 'solver cc multipliers'
       solver_cc_multipliers%required = .false.
-      solver_cc_multipliers%keywords = [character(len=25) ::         &
+      solver_cc_multipliers%keywords = [character(len=30) ::         &
                                           'algorithm            ',   &
                                           'threshold            ',   &
                                           'storage              ',   &
@@ -306,14 +308,14 @@ contains
 !
       solver_cc_response%name_    = 'solver cc response'
       solver_cc_response%required = .false.
-      solver_cc_response%keywords = [character(len=25) ::            &
+      solver_cc_response%keywords = [character(len=30) ::            &
                                           'threshold            ',   &
                                           'storage              ',   &
                                           'max iterations       ']
 !
       solver_cc_propagation%name_    = 'solver cc propagation'
       solver_cc_propagation%required = .false.
-      solver_cc_propagation%keywords = [character(len=25) :: 'initial time',          &
+      solver_cc_propagation%keywords = [character(len=30) :: 'initial time',          &
                                                              'final time',            &
                                                              'time step',             &
                                                              'steps between output',  &
@@ -328,19 +330,19 @@ contains
 !
       solver_fft_dipole_moment%name_    = 'solver fft dipole moment'
       solver_fft_dipole_moment%required = .false.
-      solver_fft_dipole_moment%keywords = [character(len=25) :: 'initial time', &
+      solver_fft_dipole_moment%keywords = [character(len=30) :: 'initial time', &
                                                                 'final time',   &
                                                                 'time step']
 !
       solver_fft_electric_field%name_    = 'solver fft electric field'
       solver_fft_electric_field%required = .false.
-      solver_fft_electric_field%keywords = [character(len=25) :: 'initial time', &
+      solver_fft_electric_field%keywords = [character(len=30) :: 'initial time', &
                                                                  'final time',   &
                                                                  'time step']
 !
       electric_field%name_    = 'electric field'
       electric_field%required = .false.
-      electric_field%keywords = [character(len=25) :: 'envelope',                  &
+      electric_field%keywords = [character(len=30) :: 'envelope',                  &
                                                       'x polarization',            &
                                                       'y polarization',            &
                                                       'z polarization',            &
@@ -354,7 +356,7 @@ contains
 !
       active_atoms%name_    = 'active atoms'
       active_atoms%required = .false.
-      active_atoms%keywords = [character(len=25) ::       &
+      active_atoms%keywords = [character(len=30) ::       &
                                  'selection type       ', &
                                  'central atom         ', &
                                  'hf                   ', &
@@ -367,7 +369,7 @@ contains
 !
       mlcc%name_    = 'mlcc'
       mlcc%required = .false.
-      mlcc%keywords = [character(len=25) ::        &
+      mlcc%keywords = [character(len=30) ::        &
                         'levels',                  &
                         'cc2 orbitals',            &
                         'cholesky threshold',      &
@@ -382,17 +384,17 @@ contains
 !
       cc%name_    = 'cc'
       cc%required = .false.
-      cc%keywords = [character(len=25) :: 'bath orbital']
+      cc%keywords = [character(len=30) :: 'bath orbital']
 !
       mm%name_    = 'molecular mechanics'
       mm%required = .false.
-      mm%keywords = [character(len=25) :: &
+      mm%keywords = [character(len=30) :: &
                      'forcefield', &
                      'algorithm ']
 !
       mlhf%name_    = 'multilevel hf'
       mlhf%required = .false.
-      mlhf%keywords = [character(len=25) ::           &
+      mlhf%keywords = [character(len=30) ::           &
                         'initial hf optimization',    &
                         'initial hf threshold',       &
                         'cholesky threshold',         &
@@ -402,7 +404,7 @@ contains
 !
       visualization%name_    = 'visualization'
       visualization%required = .false.
-      visualization%keywords = [character(len=25) ::     &
+      visualization%keywords = [character(len=30) ::     &
                                  'grid spacing',         &
                                  'grid buffer',          &
                                  'plot cc density',      &
@@ -411,13 +413,13 @@ contains
 !
       global_print%name_    = 'print'
       global_print%required = .false.
-      global_print%keywords = [character(len=25) :: &
+      global_print%keywords = [character(len=30) :: &
                               'output print level ', &
                               'timing print level ']
 !                       
       pcm%name_    = 'pcm'
       pcm%required = .false.
-      pcm%keywords = [character(len=25) :: &
+      pcm%keywords = [character(len=30) :: &
                               'solvent',            &
                               'input',              &
                               'tesserae area',      &
@@ -425,7 +427,7 @@ contains
 !
       frozen_orbitals%name_    = 'frozen orbitals'
       frozen_orbitals%required = .false.
-      frozen_orbitals%keywords = [character(len=25) :: &
+      frozen_orbitals%keywords = [character(len=30) :: &
                               'hf', &
                               'core']
 !
@@ -794,7 +796,7 @@ contains
    end function requested_reference_calculation_input_file
 !
 !
-   character(len=25) function get_reference_wf_input_file(the_file)
+   character(len=30) function get_reference_wf_input_file(the_file)
 !!
 !!    Get reference wavefunction 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 
@@ -865,7 +867,7 @@ contains
    end function requested_cc_calculation_input_file
 !
 !
-   character(len=25) function get_cc_wf_input_file(the_file)
+   character(len=30) function get_cc_wf_input_file(the_file)
 !!
 !!    Get CC wavefunction 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019 

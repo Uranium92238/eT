@@ -414,7 +414,7 @@ contains
 !
       class(uhf), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities), intent(inout) :: G
+      real(dp), dimension(wf%n_mo*(wf%n_mo - 1)/2, wf%n_densities), intent(inout) :: G
 !
       real(dp), dimension(:,:), allocatable :: G_sq
       real(dp), dimension(:), allocatable :: G_pck
@@ -422,8 +422,8 @@ contains
 !
       call mem%alloc(Po, wf%n_ao, wf%n_ao)
       call mem%alloc(Pv, wf%n_ao, wf%n_ao)
-      call mem%alloc(G_pck, wf%n_ao*(wf%n_ao - 1)/2)
-      call mem%alloc(G_sq, wf%n_ao, wf%n_ao)
+      call mem%alloc(G_pck, wf%n_mo*(wf%n_mo - 1)/2)
+      call mem%alloc(G_sq, wf%n_mo, wf%n_mo)
 !
 !     Alpha gradient
 !
@@ -441,8 +441,8 @@ contains
 !
       call mem%dealloc(Po, wf%n_ao, wf%n_ao)
       call mem%dealloc(Pv, wf%n_ao, wf%n_ao)
-      call mem%dealloc(G_pck, wf%n_ao*(wf%n_ao - 1)/2)
-      call mem%dealloc(G_sq, wf%n_ao, wf%n_ao)
+      call mem%dealloc(G_pck, wf%n_mo*(wf%n_mo - 1)/2)
+      call mem%dealloc(G_sq, wf%n_mo, wf%n_mo)
 !
    end subroutine get_packed_roothan_hall_gradient_uhf
 !
