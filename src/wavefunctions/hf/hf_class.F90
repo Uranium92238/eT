@@ -3060,7 +3060,7 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities), intent(inout) :: G
+      real(dp), dimension(wf%n_mo*(wf%n_mo - 1)/2, wf%n_densities), intent(inout) :: G
 !
       real(dp), dimension(:,:), allocatable :: G_sq, Po, Pv
 !
@@ -3072,7 +3072,7 @@ contains
 !
       call wf%construct_projection_matrices(Po, Pv, wf%ao_density)
 !
-      call mem%alloc(G_sq, wf%n_ao, wf%n_ao)
+      call mem%alloc(G_sq, wf%n_mo, wf%n_mo)
       G_sq = zero
 !
       call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock)
@@ -3081,9 +3081,9 @@ contains
       call mem%dealloc(Pv, wf%n_ao, wf%n_ao)
 !
       G = zero
-      call packin_anti(G(:,1), G_sq, wf%n_ao)
+      call packin_anti(G(:,1), G_sq, wf%n_mo)
 !
-      call mem%dealloc(G_sq, wf%n_ao, wf%n_ao)
+      call mem%dealloc(G_sq, wf%n_mo, wf%n_mo)
 !
    end subroutine get_packed_roothan_hall_gradient_hf
 !
@@ -3135,27 +3135,61 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: Pv
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: F
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: G
+      real(dp), dimension(wf%n_mo, wf%n_mo) :: G
 !
-      real(dp), dimension(:, :), allocatable :: tmp
+      real(dp), dimension(:, :), allocatable :: tmp, G_ao 
 !
 !     Construct tmp = Fov = Po^T F Pv and set G = tmp = Fov
 !
       call mem%alloc(tmp, wf%n_ao, wf%n_ao)
+      call mem%alloc(G_ao, wf%n_ao, wf%n_ao)
 !
       tmp = F
       call sandwich(tmp, Po, Pv, wf%n_ao)
 !
-      G = tmp
+      G_ao = tmp
 !
 !     Construct tmp = Fvo = Pv^T F Po and set H = H - tmp = Fov - Fvo
 !
       tmp = F
       call sandwich(tmp, Pv, Po, wf%n_ao)
 !
-      G = G - tmp
+      G_ao = G_ao - tmp
 !
       call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
+!
+!     Transform G to linearly independent AO basis 
+!
+      call mem%alloc(tmp, wf%n_ao, wf%n_mo)
+!
+      call dgemm('N', 'N', &
+                  wf%n_ao, &
+                  wf%n_mo, &
+                  wf%n_ao, &
+                  one, &
+                  G_ao, &
+                  wf%n_ao, &
+                  wf%pivot_matrix_ao_overlap, & ! P 
+                  wf%n_ao, &
+                  zero, &
+                  tmp, &
+                  wf%n_ao)
+!
+      call dgemm('T', 'N', &
+                  wf%n_mo, &
+                  wf%n_mo, &
+                  wf%n_ao, &
+                  one, &
+                  wf%pivot_matrix_ao_overlap, & ! P 
+                  wf%n_ao, &
+                  tmp, & ! G P  
+                  wf%n_ao, &
+                  zero, &
+                  G, &
+                  wf%n_mo)
+!
+      call mem%dealloc(tmp, wf%n_ao, wf%n_mo)
+      call mem%dealloc(G_ao, wf%n_ao, wf%n_ao)
 !
    end subroutine construct_roothan_hall_gradient_hf
 !
