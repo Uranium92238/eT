@@ -175,6 +175,8 @@ module molecular_system_class
 !
       procedure :: evaluate_aos_at_point                    => evaluate_aos_at_point_molecular_system
 !
+      procedure :: rename_core_valence_dunning_sets   &
+                                       => rename_core_valence_dunning_sets_molecular_system
 !
    end type molecular_system
 !
@@ -297,6 +299,7 @@ contains
 !
 !     First have a look to the basis set infos
 !
+      call molecule%rename_core_valence_dunning_sets()
       call molecule%check_if_basis_present_and_pure()
 !
 !     Initialize libint with atoms and basis sets,
@@ -728,6 +731,53 @@ contains
       deallocate(selected_atom)
 !
    end subroutine read_geometry_molecular_system
+!
+!
+   subroutine rename_core_valence_dunning_sets_molecular_system(molecule)
+!!
+!!    Rename core valence Dunning sets 
+!!    Written by Eirik F. Kjønstad, Nov 2019 
+!!
+!!    Renames the basis sets (if any) of the core-valence type:
+!!
+!!       aug-cc-pCVXZ -> _aug-cc-pCVXZ
+!!
+!!    Note to developers: This is necessary because the Libint files must be named 
+!!    with an "_" prefix to avoid it looking for an "augmentation" file. 
+!!
+      implicit none 
+!
+      class(molecular_system) :: molecule 
+!
+      integer :: I, k
+!
+      integer, parameter :: n_renamings = 4
+!
+      character(len=20), dimension(n_renamings), parameter :: original_names = ['aug-cc-pcvdz', &
+                                                                                'aug-cc-pcvtz', &
+                                                                                'aug-cc-pcvqz', &
+                                                                                'aug-cc-pcv5z']
+!
+      character(len=20), dimension(n_renamings), parameter :: new_names = ['_aug-cc-pcvdz', &
+                                                                           '_aug-cc-pcvtz', &
+                                                                           '_aug-cc-pcvqz', &
+                                                                           '_aug-cc-pcv5z']
+!
+      do I = 1, molecule%n_atoms 
+!
+         do k = 1, n_renamings
+!
+            if (trim(molecule%atoms(I)%basis) == trim(original_names(k))) then 
+!
+               molecule%atoms(I)%basis = trim(new_names(k))
+!
+            endif
+!
+         enddo
+!
+      enddo
+!
+   end subroutine rename_core_valence_dunning_sets_molecular_system
 !
 !
    subroutine write_libint_files_molecular_system(molecule)
@@ -1770,7 +1820,7 @@ contains
       real(dp)           :: scaling
       character(len=100) :: local_units
 !
-      integer            :: I, line_length
+      integer            :: I, line_length, start_integer
       type(atomic)       :: atom
 !
 !     Choose unit
@@ -1800,7 +1850,7 @@ contains
       call output%printf('Geometry((a0))', pl='minimal', fs='(t32,a)', chars=[local_units])
       call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(t5,a)')
       call output%printf('Atom          X                Y                Z                Basis', &
-                        pl='minimal', fs='(t6,a)')
+                        pl='minimal', fs='(t6,a)', ll=100)
       call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(t5,a)')
 !
 !     Print geometry for every atom
@@ -1809,12 +1859,16 @@ contains
 !
          atom = molecule%atoms(I)
 !
+         start_integer = 1
+         if (atom%basis(1:1) == '_') start_integer = 2
+!
          call output%printf(adjustl(atom%symbol) // ' (f17.12)(f17.12)(f17.12)  (a14)', &
-                           pl='minimal', fs='(t7,a)', &
-                           chars=[atom%basis],        &
-                           reals=[atom%x * scaling,   &
-                                  atom%y * scaling,   &
-                                  atom%z * scaling]   )
+                           pl='minimal', fs='(t7,a)',                 &
+                           chars=[atom%basis(start_integer:)],        &
+                           reals=[atom%x * scaling,                   &
+                                  atom%y * scaling,                   &
+                                  atom%z * scaling],                  &
+                           ll=100)
 !
       enddo 
 !
