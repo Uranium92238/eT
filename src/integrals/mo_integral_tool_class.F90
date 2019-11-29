@@ -203,7 +203,7 @@ contains
    end subroutine cleanup_mo_integral_tool
 !
 !
-   logical function room_for_g_pqrs_t1_mo_integral_tool(integrals)
+   function room_for_g_pqrs_t1_mo_integral_tool(integrals) result(is_room)
 !!
 !!    Room for g_pqrs t1
 !!    Written by Eirik F. Kjønstad, Jan 2019
@@ -221,10 +221,13 @@ contains
 !
       integer, parameter :: fraction_of_total_mem = 5
 !
+      logical :: is_room
+!
+      is_room = .false.
+!
       required_mem = (integrals%n_mo)**4
 !
-      if (required_mem*dp .lt. mem%get_available()/fraction_of_total_mem) &
-         room_for_g_pqrs_t1_mo_integral_tool = .true.
+      if (required_mem*dp .lt. mem%get_available()/fraction_of_total_mem) is_room = .true.
 !
    end function room_for_g_pqrs_t1_mo_integral_tool
 !
