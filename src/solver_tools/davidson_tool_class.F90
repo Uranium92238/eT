@@ -449,7 +449,7 @@ contains
 !
          if (norm_c_j < davidson%lindep_threshold) then 
 !
-            call output%error_msg('detected linear dependence in trial space in davidson_tool.')
+             call output%error_msg('detected linear dependence in trial space in davidson_tool.')
 !
          endif
 !
