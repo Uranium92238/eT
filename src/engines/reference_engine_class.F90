@@ -410,7 +410,7 @@ contains
       class(reference_engine) :: engine
       class(hf) :: wf 
 !
-      type(visualization)     :: plotter
+      type(visualization), allocatable :: plotter
 !
       character(len=200)      :: density_file_tag
 !
@@ -420,7 +420,7 @@ contains
 !
 !     Initialize the plotter
 !
-      plotter = visualization(wf%system)
+      plotter = visualization(wf%system, wf%n_ao)
 !
       if (engine%plot_orbitals) then
 !
@@ -431,7 +431,7 @@ contains
       if (engine%plot_density) then
 !
          density_file_tag = 'AO_density'
-         call plotter%plot_density(wf%system, wf%n_ao, wf%ao_density, density_file_tag)
+         call plotter%plot_density(wf%system,wf%ao_density, density_file_tag)
 !
       endif
 !
@@ -502,7 +502,7 @@ contains
 !
 !     Plot orbitals
 !
-      call plotter%plot_orbitals(wf%system, orbital_coefficients, wf%n_ao, &
+      call plotter%plot_orbitals(wf%system, orbital_coefficients, &
                                        n_orbitals_to_plot, orbital_file_tags)
 !
       call mem%dealloc(orbital_coefficients, wf%n_ao, n_orbitals_to_plot)

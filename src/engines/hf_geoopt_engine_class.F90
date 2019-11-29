@@ -64,6 +64,8 @@ contains
 !
       engine%algorithm = 'bfgs'
       engine%restart = .false.
+      engine%plot_orbitals = .false.
+      engine%plot_density = .false.
 !
       call engine%read_settings()
 !

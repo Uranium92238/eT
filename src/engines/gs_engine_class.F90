@@ -502,7 +502,7 @@ contains
 !
 !     Initialize the plotter
 !
-      plotter = visualization(wf%system)
+      plotter = visualization(wf%system, wf%n_ao)
 !
 !     D_alpha,beta = sum_pq  D_pq C_alpha,p C_beta,q
 !
@@ -518,7 +518,7 @@ contains
 !
       density_file_tag = 'cc_gs_density'
 !
-      call plotter%plot_density(wf%system, wf%n_ao, density, density_file_tag)
+      call plotter%plot_density(wf%system, density, density_file_tag)
 !
       call mem%dealloc(density, wf%n_ao, wf%n_ao)
 !

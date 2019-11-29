@@ -61,12 +61,18 @@ module visualization_class
 !
    type :: visualization 
 !
+      integer  :: n_ao
+!
       real(dp) :: buffer ! The padding in x, y, and z directions around the molecule  (Angstrom)
 !
       integer  :: n_x, n_y, n_z, n_grid_points
       real(dp) :: dx ! Grid point spacing
       real(dp) :: x_min, y_min, z_min
       real(dp) :: x_max, y_max, z_max
+!
+      real(dp), dimension(:,:), allocatable :: aos_on_grid
+!
+      logical :: grid_in_memory
 !
    contains 
 !
@@ -79,6 +85,9 @@ module visualization_class
       procedure, private :: write_vector_to_plt          => write_vector_to_plt_visualization
       procedure, private :: evaluate_mos_on_grid         => evaluate_mos_on_grid_visualization
       procedure, private :: evaluate_density_on_grid     => evaluate_density_on_grid_visualization
+      procedure, private :: place_grid_in_memory         => place_grid_in_memory_visualization
+!
+      final :: destructor_visualization
 !
    end type visualization
 !
@@ -93,7 +102,7 @@ module visualization_class
 contains
 !
 !
-   function new_visualization(system) result(plotter)
+   function new_visualization(system, n_ao) result(plotter)
 !!
 !!    New visualization 
 !!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Aug 2019
@@ -103,20 +112,37 @@ contains
       type(molecular_system), intent(inout) :: system
       type(visualization) :: plotter
 !
+      integer :: n_ao
+!
 !     Default settings (lengths given in Ångströms)
 !
-      plotter%dx     = 0.1d0 
-      plotter%buffer = 2.00d0
+      plotter%dx              = 0.1d0 
+      plotter%buffer          = 2.00d0
+      plotter%grid_in_memory  = .false.
+      plotter%n_ao            = n_ao
+!
+      call output%printf(':: Visualization of orbitals and density', pl='minimal', fs='(/t3,a)')
 !
       call plotter%read_settings()
 !
-      call plotter%set_up_grid(system)
+!     Set up grid
 !
-      call output%printf(':: Visualization of orbitals and density', pl='minimal', fs='(/t3,a)')
+      call plotter%set_up_grid(system)
 !
       call plotter%print_grid_info()
 !
       call system%set_basis_info()
+!
+!     Evaluate aos on grid if we can keep it in memory
+!
+     if (plotter%n_ao*plotter%n_grid_points*dp .lt. mem%get_available()/2) then
+!
+        plotter%grid_in_memory = .true.
+        call mem%alloc(plotter%aos_on_grid, plotter%n_ao, plotter%n_grid_points)
+!
+        call plotter%place_grid_in_memory(system)
+!
+     endif
 !
    end function new_visualization
 !
@@ -271,7 +297,7 @@ contains
 !
 !
    subroutine evaluate_mos_on_grid_visualization(plotter, system, mos_on_grid, &
-                                                         n_ao, orbital_coefficients, n_mo)
+                                                         orbital_coefficients, n_mo)
 !!
 !!    Evaluate MOs on grid
 !!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Jul 2019
@@ -284,57 +310,107 @@ contains
 !!    This routine may be used for canonical orbitals 
 !!    NTOs, CNTOs and so on.
 !!
+!
+      use omp_lib
+!
       implicit none
 !
       class(visualization), intent(in)  :: plotter
 !
-      integer, intent(in) :: n_ao, n_mo
+      integer, intent(in) :: n_mo
 !
       real(kind=4), dimension(plotter%n_x, plotter%n_y, &
                               plotter%n_z, n_mo), intent(out) :: mos_on_grid
 !
       type(molecular_system), intent(in) :: system
 !
-      real(dp), dimension(n_ao, n_mo), intent(in) :: orbital_coefficients
+      real(dp), dimension(plotter%n_ao, n_mo), intent(in) :: orbital_coefficients
 !
-      integer                             :: i, j, k, mo
-      real(dp), dimension(:), allocatable :: aos_at_point
-      real(dp)                            :: x, y, z
+      integer :: i, j, k, mo, ao, n_threads, thread
+!
+      real(dp), dimension(:,:), allocatable     :: aos_at_point
+      real(dp), dimension(:,:,:,:), allocatable :: mos_on_grid_dp
+!
+      real(dp)                                  :: x, y, z
 !
       real(dp), external :: ddot
 !
-      call mem%alloc(aos_at_point, n_ao)
+      if (plotter%grid_in_memory) then
 !
-!$omp parallel do private(k, j, i, x, y, z, aos_at_point, mo)
-      do k = 1, plotter%n_z
-         do j = 1, plotter%n_y
-            do i = 1, plotter%n_x
+         call mem%alloc(mos_on_grid_dp, plotter%n_x, plotter%n_y, plotter%n_z, n_mo)
 !
-               x = plotter%x_min + real((i-1), dp)*plotter%dx
-               y = plotter%y_min + real((j-1), dp)*plotter%dx
-               z = plotter%z_min + real((k-1), dp)*plotter%dx
+         call dgemm('T', 'N',                & 
+                     plotter%n_grid_points,  &
+                     n_mo,                   &
+                     plotter%n_ao,           &
+                     one,                    &
+                     plotter%aos_on_grid,    &
+                     plotter%n_ao,           &
+                     orbital_coefficients,   &
+                     plotter%n_ao,           &
+                     zero,                   &
+                     mos_on_grid_dp,         &
+                     plotter%n_grid_points)
 !
-               call system%evaluate_aos_at_point(x, y, z, aos_at_point, n_ao)
+!$omp parallel do private (mo, k, j, i)
+         do mo = 1, n_mo
+            do k = 1, plotter%n_z
+               do j = 1, plotter%n_y
+                  do i = 1, plotter%n_x
 !
-               do mo = 1, n_mo
+                     mos_on_grid(i, j, k, mo) = real(mos_on_grid_dp(i, j, k, mo), kind=4)
 !
-                  mos_on_grid(i, j, k, mo) = real(ddot(n_ao, aos_at_point, 1, &
-                     orbital_coefficients(1,mo), 1), kind=4)
-!
+                  enddo
                enddo
-!
             enddo
          enddo
-      enddo
 !$omp end parallel do
 !
-      call mem%dealloc(aos_at_point, n_ao)
+      else
+!
+!     In case of no omp:
+!
+      n_threads   = 1
+      thread      = 1
+!
+!$    n_threads = omp_get_max_threads()
+!
+         call mem%alloc(aos_at_point, plotter%n_ao, n_threads)
+!
+!$omp parallel do private(k, j, i, x, y, z, mo, ao, thread)
+         do k = 1, plotter%n_z
+            do j = 1, plotter%n_y
+               do i = 1, plotter%n_x
+!
+!$                thread = omp_get_thread_num() + 1
+!
+                  x = plotter%x_min + real((i-1), dp)*plotter%dx
+                  y = plotter%y_min + real((j-1), dp)*plotter%dx
+                  z = plotter%z_min + real((k-1), dp)*plotter%dx
+!
+                  call system%evaluate_aos_at_point(x, y, z, aos_at_point(:,thread), plotter%n_ao)
+!
+                  do mo = 1, n_mo
+!
+                     mos_on_grid(i, j, k, mo) = real(ddot(plotter%n_ao, aos_at_point(:,thread), &
+                         1, orbital_coefficients(1,mo), 1), kind=4)
+!
+                  enddo
+!
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+!
+         call mem%dealloc(aos_at_point, plotter%n_ao, n_threads)
+!
+      endif
 !
    end subroutine evaluate_mos_on_grid_visualization
 !
 !
    subroutine plot_orbitals_visualization(plotter, system, orbital_coefficients, &
-                                                n_ao, n_mo, file_tags)
+                                                n_mo, file_tags)
 !!
 !!    Plot orbitals
 !!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Sep. 2019
@@ -354,9 +430,9 @@ contains
 !
       type(molecular_system), intent(in) :: system
 !
-      integer, intent(in) :: n_ao, n_mo
+      integer, intent(in) :: n_mo
 !
-      real(dp), dimension(n_ao, n_mo), intent(in) :: orbital_coefficients
+      real(dp), dimension(plotter%n_ao, n_mo), intent(in) :: orbital_coefficients
 !
       character(len=200), dimension(n_mo), intent(in) :: file_tags
 !
@@ -371,7 +447,7 @@ contains
 !     Create array of molecular orbitals at grid point
 !
       allocate(mos_on_grid(plotter%n_x, plotter%n_y, plotter%n_z, n_mo))
-      call plotter%evaluate_mos_on_grid(system, mos_on_grid, n_ao, orbital_coefficients, n_mo)
+      call plotter%evaluate_mos_on_grid(system, mos_on_grid, orbital_coefficients, n_mo)
 !
 !     Write the molecular orbitals in the array to .plt files
 !
@@ -390,7 +466,7 @@ contains
    end subroutine plot_orbitals_visualization
 !
 !
-   subroutine plot_density_visualization(plotter, system, n_ao, density, file_tag)
+   subroutine plot_density_visualization(plotter, system, density, file_tag)
 !!
 !!    Plot density 
 !!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Sep 2019
@@ -416,11 +492,9 @@ contains
       class(visualization), intent(in)     :: plotter
       class(molecular_system), intent(in)  :: system
 !
-      integer, intent(in) :: n_ao
-!
       character(len=200), intent(in) :: file_tag
 !
-      real(dp), dimension(n_ao, n_ao), intent(in) :: density
+      real(dp), dimension(plotter%n_ao, plotter%n_ao), intent(in) :: density
 !
       real(kind=4), dimension(:), allocatable :: density_on_grid_vec
 !
@@ -432,7 +506,7 @@ contains
 !
       allocate(density_on_grid_vec(plotter%n_grid_points))
 !
-      call plotter%evaluate_density_on_grid(system, n_ao, density, density_on_grid_vec)
+      call plotter%evaluate_density_on_grid(system, density, density_on_grid_vec)
 !
 !     Write vector to .plt file
 !
@@ -444,7 +518,7 @@ contains
    end subroutine plot_density_visualization
 !
 !
-   subroutine evaluate_density_on_grid_visualization(plotter, system, n_ao, density, &
+   subroutine evaluate_density_on_grid_visualization(plotter, system, density, &
                                                       density_on_grid_vec)
 !!
 !!    Evaluate density on grid
@@ -473,63 +547,177 @@ contains
 !!       D_alpha,beta = (sum_pq  D_pq C_alpha,p C_beta,q) 
 !! 
 !!    is passed to the routine.
-
+!
+      use omp_lib
+!
       implicit none
 !
       class(visualization), intent(in)  :: plotter
 !
-      integer, intent(in) :: n_ao
-!
-      real(dp), dimension(n_ao, n_ao), intent(in)  :: density
-      real(kind=4), dimension(plotter%n_grid_points), intent(out) :: density_on_grid_vec
+      real(dp), dimension(plotter%n_ao, plotter%n_ao), intent(in)  :: density
+      real(kind=4), dimension(plotter%n_grid_points), intent(out)  :: density_on_grid_vec
 !
       type(molecular_system), intent(in) :: system
 !
-      integer                             :: i, j, k, vector_index
-      real(dp), dimension(:), allocatable :: aos_at_point, intermediate
-      real(dp)                            :: x, y, z
+      integer                                :: i, j, k, vector_index, gp, n_threads, thread
+      real(dp), dimension(:), allocatable    :: I2
+      real(dp), dimension(:,:), allocatable  :: aos_at_point, I1
+      real(dp)                               :: x, y, z
 !
       real(dp), external :: ddot
 !
-      call mem%alloc(aos_at_point, n_ao)
-      call mem%alloc(intermediate, n_ao)
+      if (plotter%grid_in_memory) then
+!     
+         call mem%alloc(I1, plotter%n_ao, plotter%n_grid_points)
 !
-!$omp parallel do private(k, j, i, x, y, z, aos_at_point, intermediate, vector_index)
+         call dgemm('N','N',              &
+                  plotter%n_ao,           &
+                  plotter%n_grid_points,  &
+                  plotter%n_ao,           & 
+                  one,                    &
+                  density,                &
+                  plotter%n_ao,           & 
+                  plotter%aos_on_grid,    &
+                  plotter%n_ao,           & 
+                  zero,                   &
+                  I1,                     &
+                  plotter%n_ao)   
+!
+         do gp = 1, plotter%n_grid_points 
+!
+            density_on_grid_vec(gp) = &
+                     real(ddot(plotter%n_ao, plotter%aos_on_grid(1,gp), 1, I1(1,gp), 1), &
+                          kind=4)
+!
+         enddo
+!
+         call mem%dealloc(I1, plotter%n_ao, plotter%n_grid_points)  
+!
+      else
+!
+!     In case of no omp:
+!
+      n_threads   = 1
+      thread      = 1
+!
+!$    n_threads = omp_get_max_threads()
+!
+         call mem%alloc(aos_at_point, plotter%n_ao, n_threads)
+         call mem%alloc(I2, plotter%n_ao)
+!
+!$omp parallel do private(k, j, i, x, y, z, I2, vector_index, thread)
+         do k = 1, plotter%n_z
+            do j = 1, plotter%n_y
+               do i = 1, plotter%n_x
+!
+!$                thread = omp_get_thread_num() + 1
+!
+                  x = plotter%x_min + real((i-1), dp)*plotter%dx
+                  y = plotter%y_min + real((j-1), dp)*plotter%dx
+                  z = plotter%z_min + real((k-1), dp)*plotter%dx
+!
+                  call system%evaluate_aos_at_point(x, y, z, aos_at_point(:,thread), plotter%n_ao)
+!
+                  call dgemv('N',                        &
+                             plotter%n_ao,               &
+                             plotter%n_ao,               & 
+                             one,                        &
+                             density,                    &
+                             plotter%n_ao,               & 
+                             aos_at_point(1,thread),     &
+                             1,                          &
+                             zero,                       &
+                             I2,                         &
+                             1)
+!
+                  vector_index = (k-1)*plotter%n_y*plotter%n_x + (j-1)*plotter%n_x + i
+                  density_on_grid_vec(vector_index) = real(ddot(plotter%n_ao, &
+                                                    aos_at_point(1,thread), 1, I2, 1), kind=4)
+!
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+!
+         call mem%dealloc(aos_at_point, plotter%n_ao, n_threads)
+         call mem%dealloc(I2, plotter%n_ao)
+!
+      endif
+!
+   end subroutine evaluate_density_on_grid_visualization
+!
+!
+   subroutine place_grid_in_memory_visualization(plotter, system)
+!!
+!!    Place grid in memory
+!!    Written by Sarai D. Folkestad, Nov 2019
+!!
+!!    Places the aos evaluated on the grid in memory.
+!!
+!!    The routine is only called when the array 
+!!    can be placed in memory with a good marigin.
+!!
+      implicit none
+!
+      class(visualization), intent(inout) :: plotter
+!
+      type(molecular_system), intent(in)  :: system
+!
+      real(dp), dimension(:,:), allocatable :: coordinates
+!
+      integer :: i, j, k, gp
+!
+      call output%printf('- Placing the AOs evaluated on the grid in memory', fs='(/t3, a)', pl='m')
+!
+      call mem%alloc(coordinates, plotter%n_grid_points, 3) ! x, y, z
+!
+!$omp parallel do private(k, j, i, gp)
       do k = 1, plotter%n_z
          do j = 1, plotter%n_y
             do i = 1, plotter%n_x
 !
-               x = plotter%x_min + real((i-1), dp)*plotter%dx
-               y = plotter%y_min + real((j-1), dp)*plotter%dx
-               z = plotter%z_min + real((k-1), dp)*plotter%dx
+               gp = (k-1)*plotter%n_y*plotter%n_x + (j-1)*plotter%n_x + i
 !
-               call system%evaluate_aos_at_point(x, y, z, aos_at_point, n_ao)
-!
-               call dgemv('N',            &
-                          n_ao,           &
-                          n_ao,           & 
-                          one,            &
-                          density,        &
-                          n_ao,           & 
-                          aos_at_point,   &
-                          1,              &
-                          zero,           &
-                          intermediate,   &
-                          1)
-!
-               vector_index = (k-1)*plotter%n_y*plotter%n_x + (j-1)*plotter%n_x + i
-               density_on_grid_vec(vector_index) = real(ddot(n_ao, aos_at_point, &
-                                                                  1, intermediate, 1), kind=4)
+               coordinates(gp, 1) = plotter%x_min + real((i-1), dp)*plotter%dx
+               coordinates(gp, 2) = plotter%y_min + real((j-1), dp)*plotter%dx
+               coordinates(gp, 3) = plotter%z_min + real((k-1), dp)*plotter%dx
 !
             enddo
          enddo
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(aos_at_point, n_ao)
-      call mem%dealloc(intermediate, n_ao)
+!$omp parallel do private(gp)
+      do gp = 1, plotter%n_grid_points
 !
-   end subroutine evaluate_density_on_grid_visualization
+         call system%evaluate_aos_at_point(coordinates(gp, 1), &
+                                             coordinates(gp, 2), &
+                                             coordinates(gp, 3), &
+                                             plotter%aos_on_grid(:,gp), &
+                                             plotter%n_ao)
+!
+      enddo
+!$omp end parallel do
+!
+      call mem%dealloc(coordinates, plotter%n_grid_points, 3)
+!
+   end subroutine place_grid_in_memory_visualization
 !
 !
+   subroutine destructor_visualization(plotter)
+!!
+!!    Destructor  
+!!    Written by Sarai D. Folkestad, Nov 2019 
+!!
+      implicit none 
+!
+      type(visualization) :: plotter
+!
+      if (plotter%grid_in_memory) call mem%dealloc(plotter%aos_on_grid, &
+                                       plotter%n_ao, plotter%n_grid_points)
+!
+   end subroutine destructor_visualization
+!
+!
+
 end module visualization_class

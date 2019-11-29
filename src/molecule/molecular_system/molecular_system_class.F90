@@ -173,7 +173,7 @@ module molecular_system_class
 !
       procedure :: basis2atom                               => basis2atom_molecular_system
 !
-      procedure :: evaluate_aos_at_point                    => evaluate_aos_at_point_molecular_system
+      procedure :: evaluate_aos_at_point     => evaluate_aos_at_point_molecular_system
 !
       procedure :: rename_core_valence_dunning_sets   &
                                        => rename_core_valence_dunning_sets_molecular_system
@@ -2751,198 +2751,6 @@ contains
    end subroutine check_if_basis_present_and_pure_molecular_system
 !
 !
-   subroutine evaluate_aos_at_point_molecular_system(molecule, x, y, z, aos_at_point, n_ao)
-!!
-!!    Evaluate AOs at point
-!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Jul 2019
-!!
-!!    Evaluates all the aos at a point on a grid.
-!!
-!!    'x', 'y', 'z'  : coordinates of the grid point
-!!
-!!    'aos_at_point' : Value of the aos at the grid point (vector of dim n_ao)
-!!
-!!    'n_ao'         : number of aos
-!!
-!
-      use math_utilities, only: double_factorial, binomial, factorial
-!
-      implicit none
-!
-      class(molecular_system), intent(in) :: molecule
-!
-      integer :: n_ao
-!
-      real(dp), intent(in) :: x, y, z
-      real(dp), dimension(n_ao), intent(out) :: aos_at_point
-!
-      integer :: ao, n_primitives, i, j, shell, atom, t, u, two_v, two_v_m, two_v_max, t_max
-      integer :: floored_term, l, ml, abs_ml, count_ml
-!
-      real(dp) :: x_rel, y_rel, z_rel, r_squared, radial_part, angular_part, N_S_lm, C_lm_tuv 
-      real(dp) :: coefficient_i, coefficient_j, exponent_i, exponent_j
-      real(dp) :: normalization_constant_i, overlap_primitives
-!
-      aos_at_point = zero
-!
-      ao = 1
-!
-!     Loop over atoms
-!
-      do atom = 1, molecule%n_atoms
-!
-!        Find the position of the point relative to the nucleus, in atomic units
-!
-         x_rel = (x - molecule%atoms(atom)%x)*angstrom_to_bohr
-         y_rel = (y - molecule%atoms(atom)%y)*angstrom_to_bohr
-         z_rel = (z - molecule%atoms(atom)%z)*angstrom_to_bohr
-!
-!        Calculate distance between the point and the nucleus
-!
-         r_squared = x_rel**2 + y_rel**2 + z_rel**2
-!
-         do shell = 1, molecule%atoms(atom)%n_shells
-!
-!           Determine angular momentum
-!
-            l = molecule%atoms(atom)%shells(shell)%l 
-!
-!           Determine radial part
-!
-            radial_part = zero
-!
-            n_primitives = molecule%atoms(atom)%shells(shell)%get_n_primitives()
-!
-            overlap_primitives = 0
-!
-            do i = 1, n_primitives
-               do j = 1, n_primitives
-!
-                  exponent_i = molecule%atoms(atom)%shells(shell)%get_exponent_i(i)
-                  exponent_j = molecule%atoms(atom)%shells(shell)%get_exponent_i(j)
-                  coefficient_i = molecule%atoms(atom)%shells(shell)%get_coefficient_i(i)
-                  coefficient_j = molecule%atoms(atom)%shells(shell)%get_coefficient_i(j)
-!
-                  overlap_primitives = overlap_primitives                  &
-                                       + coefficient_i*coefficient_j       &
-                                       *(sqrt(four*exponent_i*exponent_j)  &
-                                       /(exponent_i + exponent_j))**(three*half + real(l, dp))
-!
-               enddo
-            enddo
-!
-            do i = 1, n_primitives
-!
-!              Evaluate linear combination of normalized primitives at point
-!
-               exponent_i = molecule%atoms(atom)%shells(shell)%get_exponent_i(i)
-               coefficient_i = molecule%atoms(atom)%shells(shell)%get_coefficient_i(i)
-!
-!              Normalization constant for primitive containing a Racah's normalized angular part 
-!              (from eqn. (94) without Racah's normalization constant and (95)
-!              in Giesea, T. J. HSERILib: Gaussian integral evaluation)
-!
-               normalization_constant_i = (four*exponent_i)**(real(l, dp)*half + three*quarter) &
-                                          /((two*pi)**(three*quarter)&
-                                          *sqrt(real(double_factorial(2*l-1), dp)))
-!
-               radial_part = radial_part &
-                             + normalization_constant_i/sqrt(overlap_primitives)*coefficient_i&
-                              *exp(-exponent_i*r_squared)
-!
-            enddo
-!
-!           Construct Racah's normalized orbitals
-!
-            if (l == 0) then 
-!
-!              Cartesian s-shell
-!
-               aos_at_point(ao) = radial_part
-!
-            elseif (l == 1) then
-!
-!              Cartesian p-shell
-!
-!              p_x, p_y, p_z (first, second, third in CCA standard)
-!
-               aos_at_point(ao) = radial_part*x_rel
-               aos_at_point(ao+1) = radial_part*y_rel
-               aos_at_point(ao+2) = radial_part*z_rel
-!
-            elseif (l > 1) then
-!
-!              Solid harmonic shell
-!
-               count_ml = 0
-!
-               do ml = -l, l, 1
-!
-                  abs_ml = abs(ml)
-!
-!                 Solid harmonic from Molecular electronic structure theory eqn. (6.4.47)
-!
-                  t_max = (l - abs_ml)/2 ! floors (l - abs_ml)/2, since abs_ml <= the non-negative l
-!
-                  if (ml .ge. 0) then
-                     two_v_m = 0
-                  else
-                     two_v_m = 1
-                  endif
-!
-                  floored_term = (abs_ml - two_v_m)/2 ! floors (abs_ml - two_v_m)/2, 
-!                                                       since 2*v_m <= the non-negative abs_ml
-                  two_v_max = 2*floored_term + two_v_m
-!
-!                 Calculate value of solid harmonic at point
-!
-                  angular_part = zero
-!
-                  do t = 0, t_max
-                     do u = 0, t
-                        do two_v = two_v_m, two_v_max, 2
-!
-!                          C_lm_tuv from Molecular electronic structure theory eqn. 
-!                          (6.4.48), where (two_v - two_v_m)/2 is an int
-!
-                           C_lm_tuv = (-one)**(t + (two_v - two_v_m)/2)*quarter**t &
-                                      *real(binomial(l, t)*binomial(l-t, abs_ml+t)*&
-                                          binomial(t, u)*binomial(abs_ml, two_v), dp)
-!
-                           angular_part = angular_part                     &
-                                 + C_lm_tuv*x_rel**(2*t+abs_ml-2*u-two_v)  &
-                                 *y_rel**(2*u+two_v)                       &
-                                 *z_rel**(l-2*t-abs_ml)
-!
-                        enddo
-                     enddo
-                  enddo
-!
-!                 Multiply by N_S_lm from Molecular electronic structure theory eqn. (6.4.49)
-!
-                  N_S_lm = one/real(2**abs_ml*factorial(l), dp)*sqrt(real(2*factorial(l + abs_ml)&
-                                       *factorial(l - abs_ml), dp))
-                  if (ml == 0) N_S_lm = N_S_lm/sqrt(two)
-!
-                  angular_part = N_S_lm*angular_part
-!
-                  aos_at_point(ao + count_ml) = radial_part*angular_part
-!
-                  count_ml = count_ml + 1
-!
-               enddo
-!
-            endif
-!
-            ao = ao + 2*l + 1
-!
-         enddo ! end loop over shells
-!
-      enddo ! end loop over atoms
-!          
-   end subroutine evaluate_aos_at_point_molecular_system
-!
-!
    subroutine get_nuclear_dipole_active_molecular_system(molecule, mu_k)
 !!
 !!    Get nuclear dipole moment 
@@ -3014,6 +2822,258 @@ contains
       enddo
 !
    end subroutine get_nuclear_quadrupole_active_molecular_system
+!
+!
+   subroutine evaluate_aos_at_point_molecular_system(molecule, x, y, z, aos_at_point, n_ao)
+!!
+!!    Evaluate AOs at point
+!!    Written by Sarai D. Folkestad and Andreas Skeidsvoll, Jul 2019
+!!
+!!    Evaluates all the aos at a point on a grid.
+!!
+!!    'x', 'y', 'z'  : coordinates of the grid point
+!!
+!!    'aos_at_point' : Value of the aos at the grid point (vector of dim n_ao)
+!!
+!!    'n_ao'         : number of aos
+!!
+!
+      use math_utilities, only: double_factorial, binomial, factorial
+!
+      implicit none
+!
+      class(molecular_system), intent(in) :: molecule
+!
+      integer :: n_ao
+!
+      real(dp), intent(in) :: x, y, z
+      real(dp), dimension(n_ao), intent(out) :: aos_at_point
+!
+      integer :: ao, n_primitives, i, j, shell, atom, t, u, two_v, two_v_m, two_v_max, t_max
+      integer :: floored_term, l, ml, abs_ml, count_ml
+!
+      real(dp) :: x_rel, y_rel, z_rel, r_squared, radial_part, angular_part, N_S_lm, C_lm_tuv 
+      real(dp) :: coefficient_i, coefficient_j, exponent_i, exponent_j
+      real(dp) :: normalization_constant_i, overlap_primitives
+!
+      real(dp), parameter :: sqrt_three      = sqrt(three)
+      real(dp), parameter :: sqrt_three_half = sqrt(three*half)
+      real(dp), parameter :: sqrt_fifteen    = sqrt(15.0d0)
+      real(dp), parameter :: sqrt_five_half  = sqrt(five*half)
+!
+      aos_at_point = zero
+!
+      ao = 1
+!
+!     Loop over atoms
+!
+      do atom = 1, molecule%n_atoms
+!
+!        Find the position of the point relative to the nucleus, in atomic units
+!
+         x_rel = (x - molecule%atoms(atom)%x)*angstrom_to_bohr
+         y_rel = (y - molecule%atoms(atom)%y)*angstrom_to_bohr
+         z_rel = (z - molecule%atoms(atom)%z)*angstrom_to_bohr
+!
+!        Calculate distance between the point and the nucleus
+!
+         r_squared = x_rel**2 + y_rel**2 + z_rel**2
+!
+         do shell = 1, molecule%atoms(atom)%n_shells
+!
+!           Determine angular momentum
+!
+            l = molecule%atoms(atom)%shells(shell)%l 
+!
+!           Determine radial part
+!
+            n_primitives = molecule%atoms(atom)%shells(shell)%get_n_primitives()
+!
+            overlap_primitives = zero
+!
+            do i = 1, n_primitives
+               do j = 1, n_primitives
+!
+                  exponent_i = molecule%atoms(atom)%shells(shell)%get_exponent_i(i)
+                  exponent_j = molecule%atoms(atom)%shells(shell)%get_exponent_i(j)
+                  coefficient_i = molecule%atoms(atom)%shells(shell)%get_coefficient_i(i)
+                  coefficient_j = molecule%atoms(atom)%shells(shell)%get_coefficient_i(j)
+!
+                  overlap_primitives = overlap_primitives                  &
+                                       + coefficient_i*coefficient_j       &
+                                       *sqrt(sqrt(exponent_i*exponent_j)  &
+                                       /(exponent_i + exponent_j))**(3 + 2*l)
+!
+               enddo
+            enddo
+!
+            overlap_primitives = overlap_primitives*(two**(three*half + real(l, dp)))
+!           
+            radial_part = zero
+!
+            do i = 1, n_primitives
+!
+!              Evaluate linear combination of normalized primitives at point
+!
+               exponent_i = molecule%atoms(atom)%shells(shell)%get_exponent_i(i)
+               coefficient_i = molecule%atoms(atom)%shells(shell)%get_coefficient_i(i)
+!
+!              Normalization constant for primitive containing a Racah's normalized angular part 
+!              (from eqn. (94) without Racah's normalization constant and (95)
+!              in Giesea, T. J. HSERILib: Gaussian integral evaluation)
+!
+               normalization_constant_i = (four*exponent_i)**(real(l, dp)*half + three*quarter)
+!
+               radial_part = radial_part &
+                             + normalization_constant_i*coefficient_i*exp(-exponent_i*r_squared)
+!
+            enddo
+!
+            radial_part = radial_part/(sqrt(overlap_primitives*((two*pi)**(three*half)&
+                                       *(real(double_factorial(2*l-1), dp)))))
+!
+!           Construct Racah's normalized orbitals
+!
+            if (l == 0) then 
+!
+!              Cartesian s-shell
+!
+               aos_at_point(ao) = radial_part
+!
+            elseif (l == 1) then
+!
+!              Cartesian p-shell
+!
+!              p_x, p_y, p_z (first, second, third in CCA standard)
+!
+               aos_at_point(ao)   = radial_part*x_rel
+               aos_at_point(ao+1) = radial_part*y_rel
+               aos_at_point(ao+2) = radial_part*z_rel
+!
+            elseif (l == 2) then
+!
+!              ml = -2, angular part: sqrt(3)xy
+!
+               aos_at_point(ao)   = sqrt_three*x_rel*y_rel*radial_part
+!
+!              ml = -1, angular part: sqrt(3)yz
+!
+               aos_at_point(ao+1) = sqrt_three*y_rel*z_rel*radial_part
+!
+!              ml = 0, angular part: 1.5z^2 - 0.5r^2
+!
+               aos_at_point(ao+2) = half*(three*z_rel**2 - r_squared)*radial_part
+!
+!              ml = 1, angular part: sqrt(3)xz
+!
+               aos_at_point(ao+3) = sqrt_three*x_rel*z_rel*radial_part
+!
+!              ml = 2, angular part: 1/2 sqrt(3)(x^2 - y^2)
+!  
+               aos_at_point(ao+4) = half*sqrt_three*(x_rel**2 - y_rel**2)*radial_part
+!
+            elseif (l == 3) then
+!
+!              ml = -3, angular part: 1/2 sqrt(5/2) (3x^2 - y^2)y
+!
+               aos_at_point(ao) = half*sqrt_five_half*(three*x_rel**2 - y_rel**2)*y_rel*radial_part
+!
+!              ml = -2, angular part: sqrt(15) xyz
+!
+               aos_at_point(ao+1) = sqrt_fifteen*x_rel*y_rel*z_rel*radial_part
+!
+!              ml = -1, angular part: 1/2 sqrt(3/2) (5*z**2 - r**2)y
+!              ml =  1, angular part: 1/2 sqrt(3/2) (5*z**2 - r**2)x
+!
+               aos_at_point(ao+2) = half*sqrt_three_half*(five*z_rel**2 - r_squared)*radial_part
+               aos_at_point(ao+4) = aos_at_point(ao+2)*x_rel
+               aos_at_point(ao+2) = aos_at_point(ao+2)*y_rel
+!
+!              ml = 0, angular part: 1/2(5z**2 - 3r^2)z
+!
+               aos_at_point(ao+3) = half*(five*z_rel**2 - three*r_squared)*z_rel*radial_part
+!
+!              ml = 2, angular_part: 1/2 sqrt(15)(x^2-y^2)z
+!
+               aos_at_point(ao+5) = half*sqrt_fifteen*(x_rel**2 - y_rel**2)*z_rel*radial_part
+!
+!              ml = 3, angular part: 1/2 sqrt(5/2)(x^2-3y^2)x
+!
+               aos_at_point(ao+6) = half*sqrt_five_half*(x_rel**2 - three*y_rel**2)&
+                                    *x_rel*radial_part
+!
+            elseif (l > 3) then
+!
+!              Solid harmonic shell
+!
+               count_ml = 0
+!
+               do ml = -l, l, 1
+!
+                  abs_ml = abs(ml)
+!
+!                 Solid harmonic from Molecular electronic structure theory eqn. (6.4.47)
+!
+                  t_max = (l - abs_ml)/2 ! floors (l - abs_ml)/2, since abs_ml <= the non-negative l
+!
+                  if (ml .ge. 0) then
+                     two_v_m = 0
+                  else
+                     two_v_m = 1
+                  endif
+!
+                  floored_term = (abs_ml - two_v_m)/2 ! floors (abs_ml - two_v_m)/2, 
+!                                                       since 2*v_m <= the non-negative abs_ml
+                  two_v_max = 2*floored_term + two_v_m
+!
+!                 Calculate value of solid harmonic at point
+!
+                  angular_part = zero
+!
+                  do t = 0, t_max
+                     do u = 0, t
+                        do two_v = two_v_m, two_v_max, 2
+!
+!                          C_lm_tuv from Molecular electronic structure theory eqn. 
+!                          (6.4.48), where (two_v - two_v_m)/2 is an int
+!
+                           C_lm_tuv = (-one)**(t + (two_v - two_v_m)/2)*quarter**t &
+                                      *real(binomial(l, t)*binomial(l-t, abs_ml+t)*&
+                                          binomial(t, u)*binomial(abs_ml, two_v), dp)
+!
+                           angular_part = angular_part                     &
+                                 + C_lm_tuv*x_rel**(2*t+abs_ml-2*u-two_v)  &
+                                 *y_rel**(2*u+two_v)                       &
+                                 *z_rel**(l-2*t-abs_ml)
+
+!
+                        enddo
+                     enddo
+                  enddo
+!
+!                 Multiply by N_S_lm from Molecular electronic structure theory eqn. (6.4.49)
+!
+                  N_S_lm = one/real(2**abs_ml*factorial(l), dp)*sqrt(real(2*factorial(l + abs_ml)&
+                                       *factorial(l - abs_ml), dp))
+                  if (ml == 0) N_S_lm = N_S_lm/sqrt(two)
+!
+                  angular_part = N_S_lm*angular_part
+!
+                  aos_at_point(ao + count_ml) = radial_part*angular_part
+!
+                  count_ml = count_ml + 1
+!
+               enddo
+!
+            endif
+!
+            ao = ao + 2*l + 1
+!
+         enddo ! end loop over shells
+!
+      enddo ! end loop over atoms
+!          
+   end subroutine evaluate_aos_at_point_molecular_system
 !
 !
 end module molecular_system_class
