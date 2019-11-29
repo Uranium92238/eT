@@ -294,7 +294,9 @@ contains
                                  'singlet states',       &
                                  'diis dimension',       &
                                  'max micro iterations', &
-                                 'max reduced dimension']
+                                 'max reduced dimension',&
+                                 'chain length',         &
+                                 'lanczos normalization']
 !
       solver_cc_multipliers%name_    = 'solver cc multipliers'
       solver_cc_multipliers%required = .false.

@@ -76,11 +76,12 @@ contains
 !
 !     Set standards and then read if nonstandard
 !
-      engine%es_algorithm        = 'davidson'
-      engine%gs_algorithm        = 'diis'
-      engine%es_type             = 'valence'
-      engine%es_transformation   = 'right'
-!      
+      engine%es_algorithm           = 'davidson'
+      engine%gs_algorithm           = 'diis'
+      engine%es_type                = 'valence'
+      engine%es_transformation      = 'right'
+      engine%multipliers_algorithm  = 'davidson'
+!
       engine%gs_restart            = .false.
       engine%multipliers_restart   = .false.
       engine%es_restart            = .false.
@@ -145,7 +146,6 @@ contains
 !
    end subroutine read_es_settings_es_engine
 !
-!
    subroutine run_es_engine(engine, wf)
 !!
 !!    Run
@@ -190,9 +190,17 @@ contains
 !!    Solves the excited state (valence or cvs) using
 !!    either a DIIS or Davidson solver
 !!
+!!    or calculates the excitation energies and oscillator strengths 
+!!    using the asymmetric Lanczos algorithm. 
+!!
+!!    Modified by Torsha Moitra, S. Coriani and Sarai D. Folkestad, Sep-Nov 2019
+!!
+!!       Added the asymmetric Lanczos solver 
+!!
       use abstract_cc_es_class, only: abstract_cc_es
       use davidson_cc_es_class, only: davidson_cc_es
       use diis_cc_es_class, only: diis_cc_es
+      use asymmetric_lanczos_cc_es_class, only: asymmetric_lanczos_cc_es
 !
       implicit none
 !
@@ -201,33 +209,44 @@ contains
 !
       character(len=*), intent(in) :: transformation
 !
+      class(asymmetric_lanczos_cc_es), allocatable :: cc_es_solver_asymmetric_lanczos
+
       class(abstract_cc_es), allocatable :: cc_es_solver
 !
 !     Prepare for excited state
 !
-      if (engine%es_algorithm == 'diis') then
-!
-         cc_es_solver = diis_cc_es(transformation, wf, engine%es_restart)
-!
-      elseif (engine%es_algorithm == 'davidson') then
-!
-         if (trim(wf%name_) == 'low memory cc2' .or. trim(wf%name_) == 'cc3') then
-!
-            call output%error_msg('Davidson not implemented for CC3 and lowmem CC2')
-!
-         end if
-!
-         cc_es_solver = davidson_cc_es(transformation, wf, engine%es_restart)
+      if (engine%es_algorithm == 'asymmetric lanczos')then
+         call engine%do_multipliers(wf)       
+         cc_es_solver_asymmetric_lanczos = asymmetric_lanczos_cc_es(wf)
+         call cc_es_solver_asymmetric_lanczos%run(wf)
+         call cc_es_solver_asymmetric_lanczos%cleanup(wf)
 !
       else
 !
-         call output%error_msg('Could not start excited state solver. It may be that the &
-                                 &algorithm is not implemented for the method specified.')
+         if (engine%es_algorithm == 'diis') then
+!
+            cc_es_solver = diis_cc_es(transformation, wf, engine%es_restart)
+
+! 
+         elseif (engine%es_algorithm == 'davidson') then
+!
+            if (trim(wf%name_) == 'low memory cc2' .or. trim(wf%name_) == 'cc3') then
+!
+                call output%error_msg('Davidson not implemented for CC3 and lowmem CC2')
+!
+            end if
+!
+            cc_es_solver = davidson_cc_es(transformation, wf, engine%es_restart)
+!
+         else
+               call output%error_msg('Could not start excited state solver. It may be that the &
+                                    &algorithm is not implemented for the method specified.')
+         endif
+!
+         call cc_es_solver%run(wf)
+         call cc_es_solver%cleanup(wf)
 !
       endif
-!
-      call cc_es_solver%run(wf)
-      call cc_es_solver%cleanup(wf)
 !
    end subroutine do_excited_state_es_engine
 !

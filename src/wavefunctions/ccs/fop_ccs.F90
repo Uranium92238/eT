@@ -413,6 +413,7 @@ contains
       real(dp), dimension(wf%n_es_amplitudes), intent(in)    :: csiX
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: etaX
 !
+
       call wf%construct_etaX(X, etaX)
 !
       call wf%etaX_eom_a(etaX, csiX)
