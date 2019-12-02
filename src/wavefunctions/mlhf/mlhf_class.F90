@@ -36,9 +36,11 @@ module mlhf_class
    type, extends(hf) :: mlhf
 !
       type(sequential_file) :: inactive_energy_file
-      type(sequential_file) :: inactive_fock_term_file
+      type(sequential_file) :: mlhf_inactive_fock_term_file
+      type(sequential_file) :: G_De_ao_file
 !
       real(dp), dimension(:,:), allocatable :: G_De
+      real(dp), dimension(:,:), allocatable :: G_De_ao
 !
       real(dp) :: inactive_energy
       real(dp) :: cholesky_threshold
@@ -78,6 +80,8 @@ module mlhf_class
 !
       procedure :: initialize_G_De                          => initialize_G_De_mlhf
       procedure :: destruct_G_De                            => destruct_G_De_mlhf
+      procedure :: initialize_G_De_ao                       => initialize_G_De_ao_mlhf
+      procedure :: destruct_G_De_ao                         => destruct_G_De_ao_mlhf
 !
       procedure :: get_active_energy_G_De_term              => get_active_energy_G_De_term_mlhf
 !
@@ -87,6 +91,11 @@ module mlhf_class
 !
       procedure :: update_fock_and_energy                   => update_fock_and_energy_mlhf
       procedure :: update_fock_and_energy_mo                => update_fock_and_energy_mlhf
+!
+      procedure :: prepare_frozen_fock_terms                => prepare_frozen_fock_terms_mlhf
+      procedure :: update_mlhf_inactive_fock_term           => update_mlhf_inactive_fock_term_mlhf
+      procedure :: diagonalize_fock_frozen_hf_orbitals      => diagonalize_fock_frozen_hf_orbitals_mlhf
+      procedure :: get_n_active_hf_atoms                    => get_n_active_hf_atoms_mlhf
 !
    end type mlhf
 !
@@ -155,8 +164,8 @@ contains
 !
 !     Initialize other MLHF files
 !
-      wf%inactive_fock_term_file = &
-            sequential_file('inactive_fock_term')
+      wf%mlhf_inactive_fock_term_file = sequential_file('mlhf_inactive_fock_term')
+      wf%G_De_ao_file = sequential_file('G_De_ao')
 !
 !     Construct screening vectors
 !
@@ -231,12 +240,11 @@ contains
       call wf%initialize_w_mo_update()
       call identity_array(wf%w_mo_update, wf%n_mo)
 !
+      call wf%initialize_G_De_ao()
       call wf%initialize_G_De()
       call wf%initialize_mo_fock()
 !
       call wf%construct_G_De(h_wx)
-!
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
 !     Print multilevel orbital information to restart file
 !
@@ -245,6 +253,11 @@ contains
 !     Construct active ao density
 !
       call wf%construct_ao_density()
+!
+      call wf%update_fock_and_energy_mo(h_wx)
+      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+      call wf%roothan_hall_update_orbitals_mo()  ! DIIS F => C
+      call wf%update_ao_density()
 !
    end subroutine prepare_for_roothan_hall_mlhf
 !
@@ -380,9 +393,9 @@ contains
 !
 !     Write the new G(De) to file
 !
-      call wf%inactive_fock_term_file%open_('write', 'rewind')
-      call wf%inactive_fock_term_file%write_(wf%G_De, wf%n_mo**2)
-      call wf%inactive_fock_term_file%close_
+      call wf%mlhf_inactive_fock_term_file%open_('write', 'rewind')
+      call wf%mlhf_inactive_fock_term_file%write_(wf%G_De, wf%n_mo**2)
+      call wf%mlhf_inactive_fock_term_file%close_
 !
 !     AO fock construction and energy calculation
 !
@@ -803,6 +816,7 @@ contains
       class(mlhf) :: wf
 !
       call wf%read_hf_settings()
+      call wf%read_frozen_orbitals_settings()
       call wf%read_mlhf_settings()
 !
    end subroutine read_settings_mlhf
@@ -959,6 +973,22 @@ contains
    end subroutine initialize_G_De_mlhf
 !
 !
+   subroutine initialize_G_De_ao_mlhf(wf)
+!!
+!!    Initialize G(De)_wx
+!!    Written by Ida-Marie Hoyvik and Linda Goletto, 2019
+!!
+!!    Initializes G_De in the AO basis
+!!
+      implicit none
+!
+      class(mlhf) :: wf
+!
+      call mem%alloc(wf%G_De_ao, wf%n_ao, wf%n_ao)
+!
+   end subroutine initialize_G_De_ao_mlhf
+!
+!
    subroutine destruct_G_De_mlhf(wf)
 !!
 !!    Destruct G(De)
@@ -975,6 +1005,22 @@ contains
    end subroutine destruct_G_De_mlhf
 !
 !
+   subroutine destruct_G_De_ao_mlhf(wf)
+!!
+!!    Destruct G(De)_wx
+!!    Written by Ida-Marie Hoyvik and Linda Goletto, 2019
+!!
+!!    Destructs G_De in the AO basis
+!!
+      implicit none
+!
+      class(mlhf) :: wf
+!
+      call mem%dealloc(wf%G_De_ao, wf%n_ao, wf%n_ao)
+!
+   end subroutine destruct_G_De_ao_mlhf
+!
+!
    subroutine cleanup_mlhf(wf)
 !!
 !!    Cleanup
@@ -984,6 +1030,13 @@ contains
       implicit none
 !
       class(mlhf) :: wf
+!
+      call wf%prepare_mos()
+      call wf%prepare_frozen_fock_terms()
+!
+!     Save orbital information in orbital_information_file for CC
+!
+      call wf%write_orbital_information()
 !
       call wf%destruct_orbital_energies()
       call wf%destruct_orbital_coefficients()
@@ -996,9 +1049,12 @@ contains
 !
       call wf%destruct_w_mo_update()
       call wf%destruct_G_De()
+      call wf%destruct_G_De_ao()
 !
       call wf%destruct_sp_eri_schwarz()
       call wf%destruct_sp_eri_schwarz_list()
+!
+      call wf%G_De_ao_file%delete_
 !
    end subroutine cleanup_mlhf
 !
@@ -1017,23 +1073,25 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
-      real(dp), dimension(:,:), allocatable :: G_De_wx
-!
-      call mem%alloc(G_De_wx, wf%n_ao, wf%n_ao)
-!
 !     Scale by two to get non-idempotent inactive density De
 !
       call dscal(wf%n_ao**2, two, wf%ao_density, 1)
 !
-      call wf%construct_ao_G(wf%ao_density, G_De_wx)
+      call wf%construct_ao_G(wf%ao_density, wf%G_De_ao)
 !
-      call wf%mo_transform(G_De_wx, wf%G_De)
+      call wf%G_De_ao_file%open_('write', 'rewind')
+      call wf%G_De_ao_file%write_(wf%G_De_ao, wf%n_ao**2)
+      call wf%G_De_ao_file%close_
+!
+      call wf%mo_transform(wf%G_De_ao, wf%G_De)
+!
+      call wf%mlhf_inactive_fock_term_file%open_('write', 'rewind')
+      call wf%mlhf_inactive_fock_term_file%write_(wf%G_De, wf%n_mo**2)
+      call wf%mlhf_inactive_fock_term_file%close_
 !
 !     Energy contribution, inactive
 !
-      wf%inactive_energy = wf%calculate_hf_energy_from_G(G_De_wx, h_wx)
-!
-      call mem%dealloc(G_De_wx, wf%n_ao, wf%n_ao)
+      wf%inactive_energy = wf%calculate_hf_energy_from_G(wf%G_De_ao, h_wx)
 !
    end subroutine construct_G_De_mlhf
 !
@@ -1309,15 +1367,20 @@ contains
       call wf%read_orbital_energies()
 !
 !     Allocate active mo specific arrays
-!     and read G(De) in the MO basis
+!     and read G(De) in the AO and MO basis
 !
       call wf%initialize_W_mo_update()
       call wf%initialize_mo_fock()
+      call wf%initialize_G_De_ao()
       call wf%initialize_G_De()
 !
-      call wf%inactive_fock_term_file%open_('read', 'rewind')
-      call wf%inactive_fock_term_file%read_(wf%G_De, wf%n_mo**2)
-      call wf%inactive_fock_term_file%close_
+      call wf%G_De_ao_file%open_('read', 'rewind')
+      call wf%G_De_ao_file%read_(wf%G_De_ao, wf%n_ao**2)
+      call wf%G_De_ao_file%close_
+!
+      call wf%mlhf_inactive_fock_term_file%open_('read', 'rewind')
+      call wf%mlhf_inactive_fock_term_file%read_(wf%G_De, wf%n_mo**2)
+      call wf%mlhf_inactive_fock_term_file%close_
 !
       call identity_array(wf%W_mo_update, wf%n_mo)
 !
@@ -1386,11 +1449,137 @@ contains
       wf%orbital_coefficients = full_space_wf%orbital_coefficients
       wf%orbital_energies = full_space_wf%orbital_energies
 !
+!     The orbitals are only going to be frozen in the mlhf calculation,
+!     if required, so for now the logical are set to false
+!
+      full_space_wf%frozen_core = .false.
+      full_space_wf%frozen_hf_mos = .false.
+!
       call full_space_wf%cleanup()
 !
       call wf%update_ao_density()
 !
    end subroutine do_initial_full_space_optimization_mlhf
+!
+!
+   subroutine prepare_frozen_fock_terms_mlhf(wf)
+!!
+!!    Prepare frozen Fock contributions
+!!    Written by Sarai D. Folkestad, Oct 2019
+!!
+!!    This routine prepares the frozen Fock contributions
+!!    to coupled cluster. This occurs e.g.,  in the cases where there
+!!    is a reduction in the number of MOs in CC compared to HF
+!!
+!!    Modified by Linda Goletto, Nov 2019
+!!
+!!    In case of a reduction, the MLHF inactive fock term 
+!!    has to be updated to the new MO basis
+!!
+      implicit none
+!
+      class(mlhf) :: wf
+!
+      if (wf%frozen_core .or. wf%frozen_hf_mos) call wf%update_mlhf_inactive_fock_term()
+      if (wf%frozen_core)                       call wf%construct_mo_fock_fc_term()
+      if (wf%frozen_hf_mos)                     call wf%construct_mo_fock_frozen_hf_term()
+!
+   end subroutine prepare_frozen_fock_terms_mlhf
+!
+!
+   subroutine update_mlhf_inactive_fock_term_mlhf(wf)
+!!
+!!    Prepare frozen Fock contributions
+!!    Written by Linda Goletto, Nov. 2019
+!!
+!!    This routine reads the MLHF inactive term in the AO basis
+!!    and MO transforms it with respect to the new MO basis;
+!!    the result is written to the mlhf_inactive_fock_term file
+!!    to be used in CC.
+!!
+      implicit none
+!
+      class(mlhf) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: G_De_mo
+!
+      call mem%alloc(G_De_mo, wf%n_mo, wf%n_mo)
+!
+      call wf%mo_transform(wf%G_De_ao, G_De_mo)
+!
+      call wf%mlhf_inactive_fock_term_file%open_('write', 'rewind')
+      call wf%mlhf_inactive_fock_term_file%write_(G_De_mo, wf%n_mo**2)
+      call wf%mlhf_inactive_fock_term_file%close_
+!
+      call mem%dealloc(G_De_mo, wf%n_mo, wf%n_mo)
+!
+   end subroutine update_mlhf_inactive_fock_term_mlhf
+!
+!
+   module subroutine diagonalize_fock_frozen_hf_orbitals_mlhf(wf)
+!!
+!!    Diagonalize Fock frozen HF orbitals
+!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
+!!
+!!    Does a diagonalization of the Fock matrix in the 
+!!    MO basis where the frozen HF orbitals have been removed
+!!
+!!    Fock matrix is no longer diagonal, because determining
+!!    the frozen HF orbitals entails mixing of occupied orbitals 
+!!    and mixing of virtual orbitals, respectively.
+!!
+      implicit none
+!
+      class(mlhf) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: F_effective
+!
+!     We do one Roothan-Hall step to get a diagonal Fock matrix 
+!     (this should only entail occupied-occupied and virtual-virtual orbital mixing.)
+!
+      call mem%alloc(F_effective, wf%n_ao, wf%n_ao)
+      call wf%initialize_mo_fock()
+!
+!     Add the MLHF inactive Fock term in the AO basis, G_De_ao, to the AO Fock
+!
+      call dcopy(wf%n_ao**2, wf%ao_fock, 1, F_effective, 1)
+      call daxpy(wf%n_ao**2, one, wf%G_De_ao, 1, F_effective, 1)      
+!
+      call wf%mo_transform(F_effective, wf%mo_fock)
+!
+      call mem%dealloc(F_effective, wf%n_ao, wf%n_ao)
+!
+      call wf%initialize_W_mo_update()
+!
+!     Find active C that diagonalizes Fock in mo basis
+!     also updates the orbital energies
+!
+      call wf%roothan_hall_update_orbitals_mo()
+!
+      call wf%destruct_mo_fock()
+      call wf%destruct_W_mo_update()
+!
+   end subroutine diagonalize_fock_frozen_hf_orbitals_mlhf
+!
+!
+   function get_n_active_hf_atoms_mlhf(wf) result(n_active_hf_atoms)
+!!
+!!    Get number of active hf atoms
+!!    Written by Sarai D. Folkestad and Linda Goletto, Dec 2019
+!!
+!!    Sets the number of active hf atoms in the system 
+!!
+      implicit none 
+!
+      class(mlhf), intent(in)  :: wf
+!
+      integer :: n_active_hf_atoms, n_active_spaces
+!
+      n_active_spaces = wf%system%n_active_atoms_spaces
+!
+      n_active_hf_atoms = wf%system%active_atoms_spaces(n_active_spaces)%last_atom
+!
+   end function get_n_active_hf_atoms_mlhf
 !
 !
 end module mlhf_class

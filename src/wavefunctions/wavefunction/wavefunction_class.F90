@@ -71,6 +71,7 @@ module wavefunction_class
 !
       real(dp), dimension(:,:), allocatable :: mo_fock_fc_term 
       real(dp), dimension(:,:), allocatable :: mo_fock_frozen_hf_term 
+      real(dp), dimension(:,:), allocatable :: mlhf_inactive_fock_term
 !
       type(sequential_file) :: mo_fock_fc_file, mo_fock_frozen_hf_file
       type(sequential_file) :: mm_matrices_file, pcm_matrices_file
@@ -132,7 +133,9 @@ module wavefunction_class
       procedure :: initialize_mo_fock_fc_term                  => initialize_mo_fock_fc_term_wavefunction                
       procedure :: destruct_mo_fock_fc_term                    => destruct_mo_fock_fc_term_wavefunction  
       procedure :: initialize_mo_fock_frozen_hf_term           => initialize_mo_fock_frozen_hf_term_wavefunction                
-      procedure :: destruct_mo_fock_frozen_hf_term             => destruct_mo_fock_frozen_hf_term_wavefunction  
+      procedure :: destruct_mo_fock_frozen_hf_term             => destruct_mo_fock_frozen_hf_term_wavefunction 
+      procedure :: initialize_mlhf_inactive_fock_term          => initialize_mlhf_inactive_fock_term_wavefunction
+      procedure :: destruct_mlhf_inactive_fock_term            => destruct_mlhf_inactive_fock_term_wavefunction
 !
       procedure :: read_frozen_orbitals_settings   => read_frozen_orbitals_settings_wavefunction 
 !
@@ -1669,6 +1672,35 @@ contains
       if (allocated(wf%mo_fock_fc_term)) call mem%dealloc(wf%mo_fock_fc_term, wf%n_mo, wf%n_mo)
 !
    end subroutine destruct_mo_fock_fc_term_wavefunction
+!
+!
+   subroutine initialize_mlhf_inactive_fock_term_wavefunction(wf)
+!!
+!!    Initialize mlhf inactive Fock term
+!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      call mem%alloc(wf%mlhf_inactive_fock_term, wf%n_mo, wf%n_mo)
+!
+   end subroutine initialize_mlhf_inactive_fock_term_wavefunction
+!
+!
+   subroutine destruct_mlhf_inactive_fock_term_wavefunction(wf)
+!!
+!!    Destruct mlhf inactive Fock term
+!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
+!!
+      implicit none
+!
+      class(wavefunction) :: wf
+!
+      if (allocated(wf%mlhf_inactive_fock_term)) &
+         call mem%dealloc(wf%mlhf_inactive_fock_term, wf%n_mo, wf%n_mo)
+!
+   end subroutine destruct_mlhf_inactive_fock_term_wavefunction
 !
 !
    subroutine initialize_mm_matrices_wavefunction(wf)

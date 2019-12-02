@@ -73,6 +73,7 @@ contains
 !
       if (wf%frozen_core) call wf%add_frozen_core_fock_term_complex(F_pq)
       if (wf%frozen_hf_mos) call wf%add_frozen_hf_fock_term_complex(F_pq)
+      if (wf%mlhf_reference) call wf%add_mlhf_inactive_fock_term_complex(F_pq)
       if (wf%system%mm_calculation) call wf%add_molecular_mechanics_fock_term_complex(F_pq)
       if (wf%system%pcm_calculation) call wf%add_pcm_fock_contribution_complex(F_pq)
 !
@@ -204,6 +205,33 @@ contains
    end subroutine add_frozen_hf_fock_term_ccs_complex
 !
 !
+   module subroutine add_mlhf_inactive_fock_term_ccs_complex(wf, F_pq)
+!!
+!!    Add MLHF inactive Fock term
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
+!!    and Linda Goletto, Nov 2019 
+!!
+!!    Adds the contribution from MLHF inactive orbitals to
+!!    the effective T1-transformed Fock matrix.  
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      complex(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
+!
+      complex(dp), dimension(:,:), allocatable :: F_pq_mlhf_inactive
+!
+      call mem%alloc(F_pq_mlhf_inactive, wf%n_mo, wf%n_mo)
+!
+      call wf%construct_t1_mlhf_inactive_fock_term_complex(F_pq_mlhf_inactive)
+      call zaxpy(wf%n_mo**2, one_complex, F_pq_mlhf_inactive, 1, F_pq, 1)
+!
+      call mem%dealloc(F_pq_mlhf_inactive, wf%n_mo, wf%n_mo)      
+!
+   end subroutine add_mlhf_inactive_fock_term_ccs_complex
+!
+!
    module subroutine add_molecular_mechanics_fock_term_ccs_complex(wf, F_pq)
 !!
 !!    Add molecular mechanics Fock contribution 
@@ -305,6 +333,24 @@ contains
       call wf%t1_transform_complex(F_pq)
 !
    end subroutine construct_t1_fock_frozen_hf_term_ccs_complex
+!
+!
+   module subroutine construct_t1_mlhf_inactive_fock_term_ccs_complex(wf, F_pq)
+!!
+!!    Calculate T1 MLHF inactive Fock term
+!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf 
+!
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
+!
+      call copy_(wf%mlhf_inactive_fock_term, F_pq, wf%n_mo, wf%n_mo)
+!
+      call wf%t1_transform_complex(F_pq)
+!
+   end subroutine construct_t1_mlhf_inactive_fock_term_ccs_complex
 !
 !
    module subroutine add_t1_fock_length_dipole_term_ccs_complex(wf, electric_field)

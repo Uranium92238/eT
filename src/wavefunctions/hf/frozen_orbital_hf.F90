@@ -99,7 +99,7 @@ contains
       integer :: index_max
       real(dp) :: max_
 !
-      call mem%alloc(freeze_atom, wf%system%n_atoms)
+      call mem%alloc(freeze_atom, wf%get_n_active_hf_atoms())
       freeze_atom = .false.
 !
 !     Figure out how many core orbitals we have
@@ -108,7 +108,7 @@ contains
 !
       wf%n_frozen_core_orbitals = 0
 !
-      do I = 1, wf%system%n_atoms
+      do I = 1, wf%get_n_active_hf_atoms()
 !
          if (wf%system%atoms(I)%number_ .ge. 5 .and. wf%system%atoms(I)%number_ .le. 12) then
 !
@@ -137,8 +137,8 @@ contains
       call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo - wf%n_frozen_core_orbitals)
 !
 !$omp parallel do private (ao, mo)
-      do ao = 1, wf%n_ao
-         do mo = 1, wf%n_mo - wf%n_frozen_core_orbitals
+      do mo = 1, wf%n_mo - wf%n_frozen_core_orbitals
+         do ao = 1, wf%n_ao
 !
             wf%orbital_coefficients(ao, mo) = &
                   orbital_coefficients_copy(ao, wf%n_frozen_core_orbitals + mo)
@@ -187,8 +187,14 @@ contains
 !
      call mem%dealloc(orbital_energies_copy, wf%n_mo)
 !
-     wf%n_mo = wf%n_mo  - wf%n_frozen_core_orbitals
-     wf%n_o = wf%n_o  - wf%n_frozen_core_orbitals
+!     Destruct MO quantities in the old MO dimension, if they are allocated,
+!     before n_mo changes
+!
+      call wf%destruct_mo_fock()
+      call wf%destruct_W_mo_update()
+!
+      wf%n_mo = wf%n_mo  - wf%n_frozen_core_orbitals
+      wf%n_o = wf%n_o  - wf%n_frozen_core_orbitals
 !
    end subroutine remove_core_orbitals_hf
 !
@@ -199,7 +205,7 @@ contains
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!    Added and modified for HF by Ida-Marie Hoyvik, Oct 2019
 !!
-!!    - Removes frozen HF omolecular orbitals from wf%orbital_coefficients
+!!    - Removes frozen HF molecular orbitals from wf%orbital_coefficients
 !!      and places them in wf%orbital_coefficients_frozen_hf
 !!    - The number of frozen occupied HF orbitals is wf%n_frozen_hf_o
 !!      on exit
@@ -366,19 +372,49 @@ contains
       call mem%dealloc(wf%orbital_energies, wf%n_mo)
       call mem%alloc(wf%orbital_energies, wf%n_o + wf%n_v)
 !
-!     We do one Roothan-Hall step to get a diagonal Fock matrix 
-!     (this should only entail occupied-occupied and virtual-virtual orbital mixing.)
-!
       wf%n_frozen_hf_orbitals = wf%n_mo - wf%n_o - wf%n_v
 !
+!     Destruct MO quantities in the old MO dimension, if they are allocated,
+!     before n_mo changes
+!
+      call wf%destruct_mo_fock()
+      call wf%destruct_W_mo_update()
+!
       wf%n_mo = wf%n_o + wf%n_v
+!
+!     Diagonalize MO Fock matrix for the new
+!     HF basis.
+!
+      call wf%diagonalize_fock_frozen_hf_orbitals() 
+!
+   end subroutine remove_frozen_hf_orbitals_hf
+!
+!
+   module subroutine diagonalize_fock_frozen_hf_orbitals_hf(wf)
+!!
+!!    Diagonalize Fock frozen HF orbitals
+!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
+!!
+!!    Does a diagonalization of the Fock matrix in the 
+!!    MO basis where the frozen HF orbitals have been removed
+!!
+!!    Fock matrix is no longer diagonal, because determining
+!!    the frozen HF orbitals entails mixing of occupied orbitals 
+!!    and mixing of virtual orbitals, respectively.
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+!     We do one Roothan-Hall step to get a diagonal Fock matrix 
+!     (this should only entail occupied-occupied and virtual-virtual orbital mixing.)
 !
       call wf%initialize_mo_fock()
       call wf%mo_transform(wf%ao_fock, wf%mo_fock)
 !
       call wf%initialize_W_mo_update()
 !
-!     Find active C that diagonalizes Fock in ao basis
+!     Find active C that diagonalizes Fock in mo basis
 !     also updates the orbital energies
 !
       call wf%roothan_hall_update_orbitals_mo()
@@ -386,7 +422,7 @@ contains
       call wf%destruct_mo_fock()
       call wf%destruct_W_mo_update()
 !
-   end subroutine remove_frozen_hf_orbitals_hf
+   end subroutine diagonalize_fock_frozen_hf_orbitals_hf
 !
 !
    module subroutine prepare_frozen_fock_terms_hf(wf)
@@ -504,7 +540,6 @@ contains
       call output%printf(':: Frozen orbital approximation is prepared',&
                          fs='(/t3,a)',pl='minimal')
 !
-
       call output%printf('There are (i0) frozen valence orbitals and (i0) frozen virtual orbitals.', &
                         ints=[wf%n_frozen_hf_o, wf%n_frozen_hf_orbitals-wf%n_frozen_hf_o],           &
                         pl='minimal',fs='(t6,a)')
@@ -608,6 +643,26 @@ contains
             call mem%dealloc(wf%orbital_coefficients_fc, wf%n_ao, wf%n_frozen_core_orbitals)
 !
    end subroutine destruct_orbital_coefficients_fc_hf
+!
+!
+   module function get_n_active_hf_atoms_hf(wf) result(n_active_hf_atoms)
+!!
+!!    Get number of active hf atoms
+!!    Written by Sarai D. Folkestad and Linda Goletto, Dec 2019
+!!
+!!    Sets the number of active hf atoms in the system 
+!!
+!!    NOTE: modified in mlhf
+!!
+      implicit none 
+!
+      class(hf), intent(in) :: wf
+!
+      integer :: n_active_hf_atoms
+!
+      n_active_hf_atoms = wf%system%n_atoms
+!
+   end function get_n_active_hf_atoms_hf
 !
 !
 end submodule frozen_orbital_hf

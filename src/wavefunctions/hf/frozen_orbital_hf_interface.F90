@@ -67,7 +67,7 @@
 !!    Written by Sarai D. Folkestad, Feb 2019
 !!    Added and modified for HF by Ida-Marie Hoyvik, Oct 2019
 !!
-!!    - Removes frozen HF omolecular orbitals from wf%orbital_coefficients
+!!    - Removes frozen HF molecular orbitals from wf%orbital_coefficients
 !!      and places them in wf%orbital_coefficients_frozen_hf
 !!    - The number of frozen occupied HF orbitals is wf%n_frozen_hf_o
 !!      on exit
@@ -79,6 +79,25 @@
       class(hf), intent(inout) :: wf
 !
    end subroutine remove_frozen_hf_orbitals_hf
+!
+!
+   module subroutine diagonalize_fock_frozen_hf_orbitals_hf(wf)
+!!
+!!    Diagonalize Fock frozen HF orbitals
+!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
+!!
+!!    Does a diagonalization of the Fock matrix in the 
+!!    MO basis where the frozen HF orbitals have been removed
+!!
+!!    Fock matrix is no longer diagonal, because determining
+!!    the frozen HF orbitals entails mixing of occupied orbitals 
+!!    and mixing of virtual orbitals, respectively.
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+   end subroutine diagonalize_fock_frozen_hf_orbitals_hf
 !
 !
    module subroutine prepare_frozen_fock_terms_hf(wf)
@@ -183,3 +202,19 @@
       class(hf) :: wf
 !
    end subroutine destruct_orbital_coefficients_fc_hf
+!
+!
+   module function get_n_active_hf_atoms_hf(wf) result(n_active_hf_atoms)
+!!
+!!    Get number of active hf atoms
+!!    Written by Sarai D. Folkestad and Linda Goletto, Dec 2019
+!!
+!!    Sets the number of active hf atoms in the system 
+!!
+!!    NOTE: modified in mlhf
+!!
+      implicit none 
+!
+      class(hf), intent(in) :: wf
+      integer :: n_active_hf_atoms
+   end function get_n_active_hf_atoms_hf

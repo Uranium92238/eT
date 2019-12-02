@@ -1385,6 +1385,12 @@ contains
 !
       endif
 !
+      if (wf%mlhf_reference) then
+!
+         call symmetric_sandwich_right_transposition_replace(wf%mlhf_inactive_fock_term, T, wf%n_mo)
+!
+      endif
+!
       call mem%dealloc(T, wf%n_mo, wf%n_mo)
 !
    end subroutine update_MO_fock_contributions_mlcc2

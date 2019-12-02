@@ -235,6 +235,9 @@ module hf_class
       procedure :: initialize_orbital_coefficients_frozen_hf   => initialize_orbital_coefficients_frozen_hf_hf
       procedure :: destruct_orbital_coefficients_frozen_hf     => destruct_orbital_coefficients_frozen_hf_hf
 !
+      procedure :: diagonalize_fock_frozen_hf_orbitals         => diagonalize_fock_frozen_hf_orbitals_hf
+      procedure :: get_n_active_hf_atoms                       => get_n_active_hf_atoms_hf
+!
 !     MO scf routines
 !
       procedure :: get_max_roothan_hall_mo_gradient         => get_max_roothan_hall_mo_gradient_hf
@@ -467,7 +470,7 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      call output%print_vector('normal', '- Molecular orbital energies', wf%n_ao, wf%orbital_energies, &
+      call output%print_vector('normal', '- Molecular orbital energies', wf%n_mo, wf%orbital_energies, &
                               fs='(f16.12)', columns=4)
 !
    end subroutine print_orbital_energies_hf
@@ -1543,7 +1546,6 @@ contains
       call ao_fock_timer%turn_off()
 !
    end subroutine construct_ao_fock_hf
-!
 !
 !
    subroutine construct_ao_G_hf(wf, D, G)

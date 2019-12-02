@@ -87,6 +87,7 @@ contains
 !
       if (wf%frozen_core) call wf%add_frozen_core_fock_term(F_pq)
       if (wf%frozen_hf_mos) call wf%add_frozen_hf_fock_term(F_pq)
+      if (wf%mlhf_reference) call wf%add_mlhf_inactive_fock_term(F_pq)
       if (wf%system%mm_calculation) call wf%add_molecular_mechanics_fock_term(F_pq)
       if (wf%system%pcm_calculation) call wf%add_pcm_fock_contribution(F_pq)
 !
@@ -358,6 +359,33 @@ contains
    end subroutine add_frozen_hf_fock_term_ccs
 !
 !
+   module subroutine add_mlhf_inactive_fock_term_ccs(wf, F_pq)
+!!
+!!    Add MLHF inactive Fock term
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
+!!    and Linda Goletto, Nov 2019 
+!!
+!!    Adds the contribution from MLHF inactive orbitals to
+!!    the effective T1-transformed Fock matrix.  
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
+!
+      real(dp), dimension(:,:), allocatable :: F_pq_mlhf_inactive
+!
+      call mem%alloc(F_pq_mlhf_inactive, wf%n_mo, wf%n_mo)
+!
+      call wf%construct_t1_mlhf_inactive_fock_term(F_pq_mlhf_inactive)
+      call daxpy(wf%n_mo**2, one, F_pq_mlhf_inactive, 1, F_pq, 1)
+!
+      call mem%dealloc(F_pq_mlhf_inactive, wf%n_mo, wf%n_mo)      
+!
+   end subroutine add_mlhf_inactive_fock_term_ccs
+!
+!
    module subroutine add_molecular_mechanics_fock_term_ccs(wf, F_pq)
 !!
 !!    Add molecular mechanics Fock contribution 
@@ -459,6 +487,24 @@ contains
       call wf%t1_transform(F_pq)
 !
    end subroutine construct_t1_fock_frozen_hf_term_ccs
+!
+!
+   module subroutine construct_t1_mlhf_inactive_fock_term_ccs(wf, F_pq)
+!!
+!!    Calculate T1 MLHF inactive Fock term
+!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf 
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
+!
+      call copy_(wf%mlhf_inactive_fock_term, F_pq, wf%n_mo, wf%n_mo)
+!
+      call wf%t1_transform(F_pq)
+!
+   end subroutine construct_t1_mlhf_inactive_fock_term_ccs
 !
 !
    module subroutine add_t1_fock_length_dipole_term_ccs(wf, electric_field)
