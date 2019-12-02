@@ -153,7 +153,7 @@ contains
 !$omp parallel do private(i)
       do i = 1, tool%dim_
 !
-         R(i) = -R(i)/(tool%preconditioner(i) - shift_local)
+         R(i) = -prefactor_local*R(i)/(tool%preconditioner(i) - shift_local)
 !
       enddo  
 !$omp end parallel do

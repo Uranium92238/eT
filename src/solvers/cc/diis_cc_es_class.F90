@@ -84,6 +84,8 @@ module diis_cc_es_class
 !
       class(precondition_tool), allocatable :: preconditioner 
 !
+      logical :: crop ! Standard DIIS if false; CROP variant of DIIS if true
+!
    contains
 !     
       procedure, non_overridable :: run            => run_diis_cc_es
@@ -154,6 +156,7 @@ contains
       solver%es_type              = 'valence'
       solver%records_in_memory    = .false.
       solver%storage              = 'disk'
+      solver%crop                 = .false.
 !
       call solver%read_settings()
       call solver%print_settings()
@@ -212,7 +215,14 @@ contains
 !
       call solver%print_es_settings()
 !
-      call output%printf('DIIS dimension: (i3)',  ints=[solver%diis_dimension], fs='(/t6,a)')
+      call output%printf('DIIS dimension: (i3)', pl='minimal', &
+                         ints=[solver%diis_dimension], fs='(/t6,a)')
+!
+      if (solver%crop) then 
+!
+         call output%printf('Enabled CROP in the DIIS algorithm.', pl='minimal', fs='(/t6,a)')
+!
+      endif
 !
    end subroutine print_settings_diis_cc_es
 !
@@ -242,6 +252,12 @@ contains
       class(diis_cc_es) :: solver 
 !
       call input%get_keyword_in_section('diis dimension', 'solver cc es', solver%diis_dimension)
+!
+      if (input%requested_keyword_in_section('crop', 'solver cc es')) then 
+!
+         solver%crop = .true.
+!
+      endif
 !
    end subroutine read_diis_settings_diis_cc_es
 !
@@ -304,8 +320,11 @@ contains
       do state = 1, solver%n_singlet_states
 !
          write(string_state, '(i3.3)') state
-         diis(state) = diis_tool('diis_cc_es_' // string_state, wf%n_es_amplitudes, &
-                                    wf%n_es_amplitudes, dimension_=solver%diis_dimension)
+         diis(state) = diis_tool('diis_cc_es_' // string_state,      &
+                                 wf%n_es_amplitudes,                 &
+                                 wf%n_es_amplitudes,                 &
+                                 dimension_=solver%diis_dimension,   &
+                                 crop=solver%crop)
 !
          call diis(state)%initialize_storers(solver%records_in_memory)
 !

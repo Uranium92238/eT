@@ -82,6 +82,8 @@ module diis_cc_gs_class
       real(dp) :: energy_threshold
       real(dp) :: omega_threshold 
 !
+      logical :: crop ! Standard DIIS if false; CROP variant of DIIS if true
+!
       character(len=200) :: storage 
       logical :: restart, records_in_memory 
 !
@@ -142,6 +144,7 @@ contains
       solver%omega_threshold     = 1.0d-6
       solver%restart             = restart
       solver%storage             = 'disk'
+      solver%crop                = .false.
 !
 !     Read & print settings (thresholds, etc.)
 !
@@ -224,6 +227,12 @@ contains
 !
       call output%printf('Storage:                    '//trim(solver%storage), fs='(/t6, a)', pl='minimal')
 !
+      if (solver%crop) then 
+!
+         call output%printf('Enabled CROP in the DIIS algorithm.', pl='minimal', fs='(/t6,a)')
+!
+      endif
+!
    end subroutine print_settings_diis_cc_gs
 !
 !
@@ -252,8 +261,11 @@ contains
 !
       integer :: iteration
 !
-      diis = diis_tool('cc_gs_diis', wf%n_gs_amplitudes, &
-                           wf%n_gs_amplitudes, dimension_=solver%diis_dimension)
+      diis = diis_tool('cc_gs_diis',                        &
+                        wf%n_gs_amplitudes,                 &
+                        wf%n_gs_amplitudes,                 &
+                        dimension_=solver%diis_dimension,   &
+                        crop=solver%crop)
 !
       call diis%initialize_storers(solver%records_in_memory)
 !
@@ -423,6 +435,12 @@ contains
       call input%get_keyword_in_section('max iterations', 'solver cc gs', solver%max_iterations)
 !
       call input%get_keyword_in_section('storage', 'solver cc gs', solver%storage)
+!
+      if (input%requested_keyword_in_section('crop', 'solver cc gs')) then 
+!
+         solver%crop = .true.
+!
+      endif
 !
    end subroutine read_settings_diis_cc_gs
 !

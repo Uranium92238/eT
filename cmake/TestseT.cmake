@@ -113,6 +113,7 @@ add_eT_runtest(cc2_lowmem_left_es_energies                  "eT;short;lowmem-cc2
 add_eT_runtest(restart_lowmem_cc2_es                        "eT;short;lowmem-cc2;es;restart")
 #
 add_eT_runtest(ccsd_gs_energy                               "eT;short;ccsd;gs")
+add_eT_runtest(ccsd_gs_energy_nr_crop                       "eT;short;ccsd;newton-raphson;crop")
 add_eT_runtest(ccsd_frozen_hf_gs_energy                     "eT;short;ccsd;gs;frozen hf")
 add_eT_runtest(ccsd_frozen_hf_frozen_core_gs_energy         "eT;short;ccsd;gs;frozen hf; frozen core")
 add_eT_runtest(ccsd_gs_energy_qmmmnopol                     "eT;short;ccsd;gs;qmmm;mmnopol")
@@ -140,6 +141,7 @@ add_eT_runtest(ccsd_left_es_diis                            "eT;short;ccsd;es;le
 add_eT_runtest(ccsd_es_lanczos                              "eT;short;ccsd;es;eom;lanczos")
 add_eT_runtest(ccsd_eom_polarizability                      "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom                 "eT;short;ccsd;es;eom")
+add_eT_runtest(ccsd_oscillator_strength_eom_crop            "eT;short;ccsd;es;eom;crop")
 add_eT_runtest(ccsd_oscillator_strength_eom_records_in_mem  "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_cvs_eom_degeneracy                      "eT;short;ccsd;es;eom;diis;degeneracy")
 add_eT_runtest(ccsd_td_rk4                                  "eT;short;ccsd;complex;td")

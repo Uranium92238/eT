@@ -51,6 +51,8 @@ module scf_diis_hf_class
       logical :: converged
       logical :: restart
 !
+      logical :: crop ! Standard DIIS if false; CROP variant of DIIS if true
+!
       logical :: records_in_memory
       character(len=200) :: storage 
 !
@@ -103,6 +105,7 @@ contains
       solver%storage                = 'memory'
       solver%cumulative             = .false.
       solver%cumulative_threshold   = 1.0d-2
+      solver%crop                   = .false.
 !
       call solver%read_settings()
 !
@@ -111,14 +114,15 @@ contains
    end function new_scf_diis_hf
 !
 !
-   function new_scf_diis_hf_from_parameters(wf, restart,             &
-                                                diis_dimension,      &
-                                                max_iterations,      &
-                                                ao_density_guess,    &
-                                                energy_threshold,    &
-                                                gradient_threshold,  &
-                                                storage,             &
-                                                cumulative_threshold) result(solver)
+   function new_scf_diis_hf_from_parameters(wf, restart,                &
+                                                diis_dimension,         &
+                                                max_iterations,         &
+                                                ao_density_guess,       &
+                                                energy_threshold,       &
+                                                gradient_threshold,     &
+                                                storage,                &
+                                                cumulative_threshold,   &
+                                                crop) result(solver)
 !!
 !!    New SCF DIIS from parameters
 !!    Written by Tor S. Haugland, 2019
@@ -137,6 +141,7 @@ contains
       real(dp),           intent(in) :: gradient_threshold
       character(len=200), intent(in) :: storage 
       real(dp),           intent(in) :: cumulative_threshold
+      logical,            intent(in) :: crop 
 !
 !     Set settings from parameters
 !
@@ -148,6 +153,7 @@ contains
       solver%gradient_threshold     = gradient_threshold
       solver%storage                = storage
       solver%cumulative_threshold   = cumulative_threshold
+      solver%crop                   = crop
 !
       call solver%prepare(wf)
 !
@@ -246,6 +252,12 @@ contains
       call output%printf('Cumulative Fock threshold:     (e9.2)', &
          reals=[solver%cumulative_threshold],fs='(t6,a)', pl='minimal')
 !
+      if (solver%crop) then 
+!
+         call output%printf('Enabled CROP in the DIIS algorithm.', pl='minimal', fs='(/t6,a)')
+!
+      endif
+!
    end subroutine print_scf_diis_settings_scf_diis_hf
 !
 !
@@ -299,7 +311,11 @@ contains
       dim_fock     = ((wf%n_ao)*(wf%n_ao + 1)/2)*(wf%n_densities)
       dim_gradient = (wf%n_mo*(wf%n_mo - 1)/2)*(wf%n_densities)
 !
-      diis = diis_tool('hf_diis', dim_fock, dim_gradient, dimension_=solver%diis_dimension)
+      diis = diis_tool('hf_diis',                           &
+                        dim_fock,                           &
+                        dim_gradient,                       &
+                        dimension_=solver%diis_dimension,   &
+                        crop=solver%crop)
 !
       call diis%initialize_storers(solver%records_in_memory)
 !
@@ -522,6 +538,12 @@ contains
 !
       call input%get_keyword_in_section('cumulative fock threshold', &
                                         'solver scf', solver%cumulative_threshold)
+!
+      if (input%requested_keyword_in_section('crop', 'solver scf')) then 
+!
+         solver%crop = .true.
+!
+      endif
 !
    end subroutine read_scf_diis_settings_scf_diis_hf
 !
