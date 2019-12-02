@@ -107,6 +107,7 @@ contains
       call ccsd_timer%turn_on()
       call wf%omega_ccsd_a2(omega_abij, t_abij)
       call wf%omega_ccsd_b2(omega_abij, t_abij)
+      call scale_diagonal(half, omega_abij, wf%n_v, wf%n_o)
       call ccsd_timer%turn_off()
 !
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
