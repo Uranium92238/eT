@@ -22,6 +22,8 @@ assert version_info.major == 2
 f = [
     get_filter(string='Final ground state energy (a.u.):',
                abs_tolerance=1.0e-10),
+    get_filter(string='Convergence criterion met in',
+               abs_tolerance=1.0e-10)
 ]
 
 # invoke the command line interface parser which returns options
