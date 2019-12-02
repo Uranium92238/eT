@@ -105,7 +105,7 @@ contains
       req1_b = (wf%integrals%n_J)*(wf%n_v)
       req1_c = (wf%integrals%n_J)*(wf%n_o)
 !
-      req2 =  (wf%n_o**2) + (wf%n_o)*(wf%n_v)
+      req2 =  2*(wf%n_o**2) + (wf%n_o)*(wf%n_v)
 !
       batch_b = batching_index(wf%n_v)
       batch_c = batching_index(wf%n_v)
@@ -123,10 +123,10 @@ contains
             call mem%alloc(g_bicj, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
             call mem%alloc(L_bjci, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
 !
-            call wf%get_vovo(g_bicj,                      &
-                              batch_b%first, batch_b%last, &
-                              1, wf%n_o,                   &
-                              batch_c%first, batch_c%last, &
+            call wf%get_vovo(g_bicj,                        &
+                              batch_b%first, batch_b%last,  &
+                              1, wf%n_o,                    &
+                              batch_c%first, batch_c%last,  &
                               1, wf%n_o)
 !
 !$omp parallel do schedule(static) private(i, j, c, b)
@@ -216,7 +216,7 @@ contains
 !
       req0 = 0
 !
-      req1_b = 0
+      req1_b = wf%integrals%n_J
       req1_j = wf%integrals%n_J*(wf%n_v)
       req1_k = wf%integrals%n_J*(wf%n_o)
 !
@@ -274,7 +274,7 @@ contains
                call mem%alloc(g_jbki, batch_j%length, batch_b%length, &
                               batch_k%length, wf%n_o)
 !
-               call wf%get_ovoo(g_jbki,                      &
+               call wf%get_ovoo(g_jbki,                       &
                                  batch_j%first, batch_j%last, &
                                  batch_b%first, batch_b%last, &
                                  batch_k%first, batch_k%last, & 

@@ -427,6 +427,7 @@ contains
 !!       C. Hättig and F. Weigend, J. Chem. Phys. 113, 5154 (2000).
 !!
 !!
+!
       implicit none
 !
       class(lowmem_cc2) :: wf
@@ -760,7 +761,7 @@ contains
                         one,                       &
                         L_kcbj,                    & ! L_kc_bj
                         (batch_k%length)*(wf%n_v), &
-                        c_bj(1, batch_j%first),    & ! c_bj ! HALLO
+                        c_bj(1, batch_j%first),    & ! c_bj 
                         (wf%n_v)*(wf%n_o),         &
                         zero,                      &
                         X_kc_batch,                & ! X_kc
@@ -849,7 +850,7 @@ contains
                         one,                       &
                         u_aikc,                    & ! u_ai_kc
                         (batch_a%length)*(wf%n_o), &
-                        X_kc(1, batch_c%first),    & ! X_kc ! HALLO
+                        X_kc(1, batch_c%first),    & ! X_kc
                         (wf%n_o)*(wf%n_v),         &
                         zero,                      &
                         rho_ai_batch,              & ! rho_ai
