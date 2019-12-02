@@ -120,7 +120,7 @@ add_eT_runtest(ccsd_gs_energy_qmfq                          "eT;short;ccsd;gs;qm
 add_eT_runtest(ccsd_gs_energy_pcm                           "eT;short;ccsd;gs;pcm;pcm_internal")
 add_eT_runtest(ccsd_gs_energy_pcm_external                  "eT;short;ccsd;gs;pcm;pcm_external")
 add_eT_runtest(ccsd_gs_energy_1c_cd                         "eT;short;ccsd;gs;1c-cd")
-add_eT_runtest(ccsd_gs_energy_NR                            "eT;short;ccsd;gs")
+add_eT_runtest(ccsd_gs_energy_NR                            "eT;short;ccsd;gs;newton-raphson")
 add_eT_runtest(ccsd_dipole                                  "eT;short;ccsd;gs;dipole")
 add_eT_runtest(ccsd_quadrupole                              "eT;short;ccsd;gs;quadrupole")
 add_eT_runtest(ccsd_frozen_core                             "eT;short;ccsd;es;gs;frozen core")
@@ -154,6 +154,7 @@ add_eT_runtest(restart_ccsd_es                              "eT;short;ccsd;es;re
 add_eT_runtest(ccsdpt_gs_energy                             "eT;short;ccsdpt;gs")
 #
 add_eT_runtest(cc3_gs_energy                                "eT;short;cc3;gs")
+add_eT_runtest(cc3_gs_energy_NR                             "eT;short;cc3;gs;newton-raphson")
 add_eT_runtest(cc3_dipole                                   "eT;short;cc3;gs;dipole")
 add_eT_runtest(cc3_frozen_core                              "eT;short;cc3;gs;es;frozen core")
 add_eT_runtest(cc3_right_es_energies                        "eT;short;cc3;es;right;diis")

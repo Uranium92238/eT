@@ -1,0 +1,754 @@
+
+
+
+                       eT - a coupled cluster program
+       Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch
+
+  ----------------------------------------------------------------------------------
+   Author:                 Contribution(s):
+  ----------------------------------------------------------------------------------
+   Josefine H. Andersen   first order properties
+   Alice Balbi            CC propagation
+   Sarai D. Folkestad     program design, HF, CCS, 
+                          CC2, CCSD, Libint-interface, 
+                          Cholesky decomposition, 
+                          Davidson-tool, CVS, DIIS-tool, 
+                          zeroth order properties, 
+                          first order properties, 
+                          IP, frozen core, MLCC2, 
+                          MLHF, visualization
+   Tommaso Giovannini     QM/MM, PCM, Libint-interface
+   Linda Goletto          CC2, MLHF
+   Tor S. Haugland        SAD
+   Anders Hutcheson       frozen HF orbitals
+   Ida-Marie Høyvik       MLHF, frozen HF orbitals
+   Eirik F. Kjønstad      program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool, 
+                          Cholesky decomposition, Libint-interface, Davidson-tool, 
+                          zeroth order properties, first order properties, 
+                          SAD, BFGS-tool
+   Rolf H. Myhre          CC3, Runtest-interface, launch script, file system
+   Alexander C. Paul      CC2, CC3, first order properties
+   Andreas Skeidsvoll     MP2, CC propagation, FFT solver, visualization
+   Åsmund H. Tveten       HF
+  ----------------------------------------------------------------------------------
+   Other contributors: M. Scavino
+
+  Running on 2 OMP thread(s)
+  Memory available for calculation: 8.000000 GB
+
+  - Molecular system specifications:
+
+     Name:             h2o
+     Charge:           0
+     Multiplicity:     1
+     Coordinate units: angstrom
+
+     Pure basis functions:         29
+     Cartesian basis functions:    30
+     Primitive basis functions:    56
+
+     Nuclear repulsion energy (a.u.):             12.116100574587
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+    =========================================================================
+                               Geometry(Å)
+    =========================================================================
+     Atom          X                Y                Z                Basis
+    =========================================================================
+      H     0.866810000000   0.601440000000   5.000000000000         cc-pvdz
+      H    -0.866810000000   0.601440000000   5.000000000000         cc-pvdz
+      O     0.000000000000  -0.075790000000   5.000000000000         cc-pvdz
+      He    0.100000000000  -0.020000000000   7.530000000000         cc-pvdz
+    =========================================================================
+
+    =========================================================================
+                               Geometry(a.u.)
+    =========================================================================
+     Atom          X                Y                Z                Basis
+    =========================================================================
+      H     1.638033502034   1.136556880358   9.448630622825         cc-pvdz
+      H    -1.638033502034   1.136556880358   9.448630622825         cc-pvdz
+      O     0.000000000000  -0.143222342981   9.448630622825         cc-pvdz
+      He    0.188972612457  -0.037794522491  14.229637717975         cc-pvdz
+    =========================================================================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:         23
+     Number of molecular orbitals:       29
+     Number of atomic orbitals:          29
+
+
+  :: Reference state engine
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  Calculates the reference wavefunction | R >.
+
+  This is a HF ground state calculation. The following tasks will be performed:
+     - Generate initial density (sad)
+     - Calculation of reference state (scf-diis algorithm)
+     - Calculation of the ground state energy
+
+  - Generating SAD guess
+     Generated atomic density for H  using UHF/cc-pvdz
+     Generated atomic density for O  using UHF/cc-pvdz
+     Generated atomic density for He using UHF/cc-pvdz
+
+
+  :: Self-consistent field DIIS Hartree-Fock solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
+  matrix is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:                8
+     Cumulative Fock threshold:      0.10E-01
+
+     Energy threshold:              0.1000E-10
+     Gradient threshold:            0.1000E-10
+
+     Coulomb screening threshold:   0.1000E-13
+     Exchange screening threshold:  0.1000E-13
+     ERI integral precision:        0.1000E-27
+
+  - Setting initial AO density to SAD
+
+     Energy of initial guess:               -78.492022836321
+     Number of electrons in guess:           12.000000000000
+
+  Storing DIIS records in memory.
+
+  Doing preparations for memory storer hf_diis_e
+
+  Doing preparations for memory storer hf_diis_x
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -78.796606592593     0.9053E-01     0.7880E+02
+     2           -78.828675852657     0.7128E-01     0.3207E-01
+     3           -78.843428154462     0.8290E-02     0.1475E-01
+  Switching to Fock construction using density differences.
+     4           -78.843809541675     0.2414E-02     0.3814E-03
+     5           -78.843850846799     0.3301E-03     0.4131E-04
+     6           -78.843851669326     0.5527E-04     0.8225E-06
+     7           -78.843851692851     0.5865E-05     0.2353E-07
+     8           -78.843851693557     0.2356E-05     0.7054E-09
+     9           -78.843851693630     0.2071E-06     0.7375E-10
+    10           -78.843851693631     0.1594E-07     0.3837E-12
+    11           -78.843851693631     0.3322E-08     0.8527E-13
+    12           -78.843851693631     0.1197E-08     0.1137E-12
+    13           -78.843851693631     0.4264E-09     0.1421E-13
+    14           -78.843851693631     0.1280E-09     0.2842E-13
+    15           -78.843851693631     0.1479E-10     0.4263E-13
+    16           -78.843851693631     0.2906E-11     0.8527E-13
+  ---------------------------------------------------------------
+
+  Convergence criterion met in 16 iterations!
+
+  - Summary of HF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.645629080248
+     Nuclear repulsion energy:      12.116100574587
+     Electronic energy:            -90.959952268217
+     Total energy:                 -78.843851693631
+
+  - Molecular orbital energies
+
+  -----------------------------------------------------------------------------------
+   1 -20.574269195145   9   0.704416610867  17   1.682695299878  25   3.175416260660
+   2  -1.277667044968  10   0.746260122914  18   1.804186820052  26   3.209661156313
+   3  -0.898849406810  11   1.155862024383  19   1.902641648742  27   3.328173215200
+   4  -0.629870222690  12   1.170770887076  20   2.148883457168  28   3.721936473470
+   5  -0.541641772852  13   1.267961746552  21   2.200395756969  29   3.985492632586
+   6  -0.485872762832  14   1.449847537220  22   2.540321860021
+   7   0.159756317416  15   1.463234913437  23   2.541517310547
+   8   0.229311906283  16   1.474444394527  24   2.559338707350
+  -----------------------------------------------------------------------------------
+
+  - Printing molecular orbitals (16 from total 29)
+
+    AO    Atom           1           2           3           4           5
+  ----------------------------------------------------------------------------
+     1    1  H(s)   -0.000325   -0.140729    0.004085    0.299590    0.207381
+     2    1  H(s)   -0.000460   -0.013665   -0.004414    0.118840    0.072812
+     3    1  H(p)   -0.000150    0.026700   -0.000211   -0.022931   -0.028671
+     4    1  H(p)   -0.000207    0.016138    0.000030   -0.029318    0.003426
+     5    1  H(p)   -0.000001   -0.000048   -0.001520    0.000014    0.000080
+     6    2  H(s)   -0.000325   -0.140698    0.005313   -0.299533    0.207420
+     7    2  H(s)   -0.000461   -0.013742   -0.003428   -0.118961    0.072652
+     8    2  H(p)    0.000150   -0.026706    0.000333   -0.022935    0.028660
+     9    2  H(p)   -0.000207    0.016140   -0.000166    0.029322    0.003433
+    10    2  H(p)   -0.000001   -0.000048   -0.001280   -0.000022    0.000086
+    11    3  O(s)   -1.000739    0.005312    0.000110    0.000001    0.001494
+    12    3  O(s)   -0.000619   -0.456473    0.012259    0.000033   -0.139081
+    13    3  O(s)    0.003381   -0.460793    0.014617    0.000067   -0.300118
+    14    3  O(p)    0.000000   -0.000012   -0.000896    0.474242   -0.000011
+    15    3  O(p)   -0.001443   -0.054123    0.002349    0.000028    0.530018
+    16    3  O(p)    0.000005   -0.000431   -0.016254   -0.000025    0.002830
+    17    3  O(p)   -0.000000   -0.000015   -0.000322    0.261952   -0.000036
+    18    3  O(p)    0.000875   -0.004804    0.001898    0.000031    0.377695
+    19    3  O(p)    0.000002   -0.000038   -0.013336   -0.000070    0.002167
+    20    3  O(d)    0.000000   -0.000001   -0.000022    0.023359   -0.000003
+    21    3  O(d)   -0.000002   -0.000010   -0.000390   -0.000002    0.000062
+    22    3  O(d)   -0.000149    0.002929   -0.001182   -0.000007   -0.012540
+    23    3  O(d)   -0.000000   -0.000002   -0.000052   -0.000012   -0.000002
+    24    3  O(d)    0.000026   -0.000342    0.000050   -0.000001   -0.011394
+    25    4 He(s)    0.000032   -0.006652   -0.591799   -0.002040    0.001476
+    26    4 He(s)   -0.000033   -0.007964   -0.512037   -0.001944   -0.005772
+    27    4 He(p)    0.000000    0.000025   -0.000115    0.000403    0.000029
+    28    4 He(p)    0.000002    0.000004   -0.000970    0.000001    0.000572
+    29    4 He(p)    0.000001    0.000710   -0.001363   -0.000104    0.000524
+  ----------------------------------------------------------------------------
+
+    AO    Atom           6           7           8           9          10
+  ----------------------------------------------------------------------------
+     1    1  H(s)   -0.000367   -0.097969   -0.071158   -0.927120   -0.874595
+     2    1  H(s)   -0.004196   -0.753944   -1.185226    0.866218    0.647772
+     3    1  H(p)    0.000368    0.002857    0.009777   -0.037289   -0.189767
+     4    1  H(p)    0.000181    0.008900    0.002893   -0.109727   -0.037978
+     5    1  H(p)    0.025374   -0.000275   -0.000032    0.000006    0.000366
+     6    2  H(s)   -0.000503   -0.097751    0.070038    0.936398   -0.865104
+     7    2  H(s)   -0.003404   -0.759201    1.181626   -0.872380    0.638222
+     8    2  H(p)   -0.000331   -0.002956    0.009834   -0.039305    0.189586
+     9    2  H(p)    0.000154    0.008964   -0.002883    0.110225   -0.036957
+    10    2  H(p)    0.025399   -0.000358   -0.000034    0.000078    0.000233
+    11    3  O(s)   -0.000237   -0.046350   -0.000141   -0.000418    0.079160
+    12    3  O(s)    0.000882    0.080112    0.000130   -0.001383    0.248916
+    13    3  O(s)    0.005090    0.845883    0.002184    0.001566   -0.346328
+    14    3  O(p)    0.000124   -0.000719    0.328394    0.281907    0.001112
+    15    3  O(p)   -0.001267    0.246969    0.000735   -0.001782    0.314957
+    16    3  O(p)    0.637774   -0.005155   -0.000523    0.000433   -0.000532
+    17    3  O(p)    0.000184   -0.001367    0.655086    0.239172    0.001266
+    18    3  O(p)   -0.000176    0.388086    0.001062   -0.000355    0.040871
+    19    3  O(p)    0.498402   -0.001235   -0.000053   -0.000353   -0.000787
+    20    3  O(d)    0.000012   -0.000046    0.009841   -0.091605   -0.000467
+    21    3  O(d)    0.016098   -0.000067   -0.000006    0.000003   -0.000017
+    22    3  O(d)   -0.000113   -0.005406    0.000024   -0.000365    0.069168
+    23    3  O(d)   -0.000006    0.000015    0.000023   -0.000014    0.000018
+    24    3  O(d)    0.000055   -0.005244   -0.000022    0.000216   -0.042047
+    25    4 He(s)   -0.038607    0.033543    0.001869   -0.004171   -0.093740
+    26    4 He(s)   -0.024728    0.045989    0.004985   -0.001275    0.028439
+    27    4 He(p)   -0.000188    0.000042   -0.003447    0.007915   -0.000235
+    28    4 He(p)   -0.000147   -0.001248   -0.000182    0.000218    0.004167
+    29    4 He(p)   -0.004042    0.004173    0.000256   -0.001205   -0.013526
+  ----------------------------------------------------------------------------
+
+    AO    Atom          11          12          13          14          15
+  ----------------------------------------------------------------------------
+     1    1  H(s)    0.035265    0.334021   -0.281345   -0.003398    0.052356
+     2    1  H(s)   -0.055176    0.095573   -0.627986   -0.042878    0.125458
+     3    1  H(p)    0.017130   -0.017349    0.329129    0.025162   -0.137051
+     4    1  H(p)   -0.010655   -0.315387    0.097266   -0.011262    0.098693
+     5    1  H(p)    0.099062   -0.005535   -0.001727    0.586169    0.432525
+     6    2  H(s)    0.035907    0.334105    0.281975   -0.006841    0.063681
+     7    2  H(s)   -0.041547    0.095261    0.625432   -0.040131    0.114558
+     8    2  H(p)   -0.014093    0.017334    0.328310   -0.028870    0.149124
+     9    2  H(p)   -0.012888   -0.315349   -0.097049   -0.012292    0.102671
+    10    2  H(p)    0.094153   -0.005441   -0.002070   -0.722684    0.058908
+    11    3  O(s)   -0.023170   -0.018436   -0.000508   -0.021451    0.046311
+    12    3  O(s)   -0.058331   -0.138791   -0.001130   -0.046472    0.088375
+    13    3  O(s)    0.075653   -0.378174    0.002318    0.096276   -0.270150
+    14    3  O(p)   -0.005687    0.000075   -0.792588    0.000854   -0.002080
+    15    3  O(p)    0.024181    0.775026   -0.000562   -0.021393    0.107944
+    16    3  O(p)   -0.883959    0.045170    0.008010    0.079738   -0.253804
+    17    3  O(p)    0.010073   -0.000118    1.576004   -0.002702    0.007448
+    18    3  O(p)   -0.021089   -1.074138    0.001124    0.062347   -0.313119
+    19    3  O(p)    0.863502   -0.044605   -0.007816   -0.059350    0.174620
+    20    3  O(d)    0.000245   -0.000009   -0.004624    0.000278   -0.000988
+    21    3  O(d)    0.005698   -0.000362   -0.000189   -0.010406    0.038437
+    22    3  O(d)    0.000051   -0.004621    0.000008    0.003586   -0.017608
+    23    3  O(d)    0.000579   -0.000011    0.000045    0.138374    0.039279
+    24    3  O(d)    0.004562    0.038101    0.000067    0.006782   -0.041658
+    25    4 He(s)   -0.389816    0.002641   -0.005570   -0.277444    0.944133
+    26    4 He(s)    0.351911   -0.005443    0.007047    0.293198   -0.998118
+    27    4 He(p)   -0.001653    0.000248   -0.001987    0.000520   -0.000182
+    28    4 He(p)   -0.001403   -0.004636   -0.000615    0.000023   -0.000953
+    29    4 He(p)   -0.035178    0.002251   -0.000801    0.004868   -0.015665
+  ----------------------------------------------------------------------------
+
+    AO    Atom          16
+  ----------------------------------------------------------------------------
+     1    1  H(s)   -0.288723
+     2    1  H(s)    0.209574
+     3    1  H(p)    0.366490
+     4    1  H(p)   -0.454845
+     5    1  H(p)    0.088613
+     6    2  H(s)   -0.285998
+     7    2  H(s)    0.206629
+     8    2  H(p)   -0.363510
+     9    2  H(p)   -0.453768
+    10    2  H(p)    0.040282
+    11    3  O(s)    0.249582
+    12    3  O(s)    0.635009
+    13    3  O(s)   -0.608978
+    14    3  O(p)   -0.000380
+    15    3  O(p)   -0.251506
+    16    3  O(p)   -0.059400
+    17    3  O(p)    0.001568
+    18    3  O(p)    0.700358
+    19    3  O(p)    0.037209
+    20    3  O(d)   -0.000248
+    21    3  O(d)    0.010309
+    22    3  O(d)    0.033906
+    23    3  O(d)    0.005056
+    24    3  O(d)    0.136244
+    25    4 He(s)    0.221937
+    26    4 He(s)   -0.245745
+    27    4 He(p)    0.000023
+    28    4 He(p)    0.009208
+    29    4 He(p)   -0.007810
+  ----------------------------------------------------------------------------
+
+  Doing finalizations for memory storer hf_diis_e
+
+  Doing finalizations for memory storer hf_diis_x
+
+  - Cleaning up Self-consistent field DIIS Hartree-Fock solver
+
+  - Timings for the HF ground state calculation
+
+     Total wall time (sec):              0.50433
+     Total cpu time (sec):               0.97183
+
+   - Number of orbitals for coupled cluster calculation
+
+     Number of occupied orbitals:               6
+     Number of virtual orbitals:               23
+     Number of molecular orbitals:             29
+     Number of atomic orbitals:                29
+
+
+  :: Ground state coupled cluster engine
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  Calculates the ground state CC wavefunction | CC > = exp(T) | R >
+
+  This is a CC3 ground state calculation. The following tasks will be 
+  performed:
+     - Cholesky decomposition of the ERI-matrix
+     - Calculation of the ground state amplitudes (newton-raphson-algorithm)
+     - Calculation of the ground state energy
+
+
+  :: Cholesky decomposition of electronic repulsion integrals solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations.
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-11
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+     Total number of AOs:                    29
+     Total number of shell pairs:           120
+     Total number of AO pairs:              435
+
+  - Preparing diagonal for decomposition:
+
+     Significant shell pairs:               118
+     Significant AO pairs:                  431
+
+     Construct shell pairs:                 120
+     Construct AO pairs:                    435
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               406 /     108       0.47383E+01         147             42             17052
+     2               319 /      93       0.47165E-01         234            111             35409
+     3               250 /      76       0.46944E-03         178            183             45750
+     4               187 /      55       0.38270E-05         145            265             49555
+     5                87 /      25       0.38106E-07          78            324             28188
+     6                21 /       3       0.37202E-09          43            349              7329
+     7                 0 /       0       0.36652E-11           7            354                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 354
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.7161E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.8882E-15
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.11527
+     Total cpu time (sec):               0.23127
+
+
+  :: DIIS Newton-Raphson coupled cluster ground state solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2019
+
+  A Newton-Raphson CC ground state equations solver. Solves the ground 
+  state equation using updates Δt based on the Newton equation, A Δt 
+  = -Ω, where the A is the Jacobian and Ω the omega vector.
+
+  - DIIS accelerated Newton-Raphson CC ground state solver settings:
+
+     Omega threshold:               0.100E-10
+     Energy threshold:              0.100E-10
+     Relative micro threshold:      0.100E-01
+
+     DIIS dimension:                         8
+     Max number of iterations:             100
+     Max number of micro-iterations:       100
+
+  Placing the ERIs in memory
+
+  Storing DIIS records on file.
+
+  Using direct file to store records with name: cc_gs_diis_e.
+
+  Using direct file to store records with name: cc_gs_diis_x.
+
+  Doing preparations for file storer cc_gs_diis_e
+
+  Doing preparations for file storer cc_gs_diis_x
+
+  Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ----------------------------------------------------------------
+      1          -79.084241931608     0.9358E-01     0.7908E+02
+  ----------------------------------------------------------------
+
+     Reduced space basis and transforms are stored on disk.
+
+  Using direct file to store records with name: cc_gs_newton_raphson_trials.
+
+  Using direct file to store records with name: cc_gs_newton_raphson_transforms.
+
+  Doing preparations for file storer cc_gs_newton_raphson_trials
+
+  Doing preparations for file storer cc_gs_newton_raphson_transforms
+
+  Preparing for cc3 right excited state equations
+
+     Micro-iter.  Residual norm
+     --------------------------
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       1           0.2323E-01
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       2           0.5910E-02
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       3           0.1640E-02
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       4           0.5758E-03
+     --------------------------
+
+  Doing finalizations for file storer cc_gs_newton_raphson_trials
+
+  Doing finalizations for file storer cc_gs_newton_raphson_transforms
+
+  Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ----------------------------------------------------------------
+      2          -79.104321650749     0.6497E-03     0.2008E-01
+  ----------------------------------------------------------------
+
+     Reduced space basis and transforms are stored on disk.
+
+  Using direct file to store records with name: cc_gs_newton_raphson_trials.
+
+  Using direct file to store records with name: cc_gs_newton_raphson_transforms.
+
+  Doing preparations for file storer cc_gs_newton_raphson_trials
+
+  Doing preparations for file storer cc_gs_newton_raphson_transforms
+
+  Preparing for cc3 right excited state equations
+
+     Micro-iter.  Residual norm
+     --------------------------
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       1           0.1843E-03
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       2           0.4238E-04
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       3           0.1345E-04
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       4           0.6342E-05
+     --------------------------
+
+  Doing finalizations for file storer cc_gs_newton_raphson_trials
+
+  Doing finalizations for file storer cc_gs_newton_raphson_transforms
+
+  Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ----------------------------------------------------------------
+      3          -79.104388570209     0.6474E-05     0.6692E-04
+  ----------------------------------------------------------------
+
+     Reduced space basis and transforms are stored on disk.
+
+  Using direct file to store records with name: cc_gs_newton_raphson_trials.
+
+  Using direct file to store records with name: cc_gs_newton_raphson_transforms.
+
+  Doing preparations for file storer cc_gs_newton_raphson_trials
+
+  Doing preparations for file storer cc_gs_newton_raphson_transforms
+
+  Preparing for cc3 right excited state equations
+
+     Micro-iter.  Residual norm
+     --------------------------
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       1           0.2575E-05
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       2           0.1337E-05
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       3           0.3661E-06
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       4           0.1380E-06
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       5           0.6206E-07
+     --------------------------
+
+  Doing finalizations for file storer cc_gs_newton_raphson_trials
+
+  Doing finalizations for file storer cc_gs_newton_raphson_transforms
+
+  Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ----------------------------------------------------------------
+      4          -79.104388524003     0.6903E-07     0.4621E-07
+  ----------------------------------------------------------------
+
+     Reduced space basis and transforms are stored on disk.
+
+  Using direct file to store records with name: cc_gs_newton_raphson_trials.
+
+  Using direct file to store records with name: cc_gs_newton_raphson_transforms.
+
+  Doing preparations for file storer cc_gs_newton_raphson_trials
+
+  Doing preparations for file storer cc_gs_newton_raphson_transforms
+
+  Preparing for cc3 right excited state equations
+
+     Micro-iter.  Residual norm
+     --------------------------
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       1           0.2555E-07
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       2           0.1405E-07
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       3           0.2274E-08
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       4           0.1015E-08
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       5           0.4368E-09
+     --------------------------
+
+  Doing finalizations for file storer cc_gs_newton_raphson_trials
+
+  Doing finalizations for file storer cc_gs_newton_raphson_transforms
+
+  Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ----------------------------------------------------------------
+      5          -79.104388532992     0.6077E-09     0.8989E-08
+  ----------------------------------------------------------------
+
+     Reduced space basis and transforms are stored on disk.
+
+  Using direct file to store records with name: cc_gs_newton_raphson_trials.
+
+  Using direct file to store records with name: cc_gs_newton_raphson_transforms.
+
+  Doing preparations for file storer cc_gs_newton_raphson_trials
+
+  Doing preparations for file storer cc_gs_newton_raphson_transforms
+
+  Preparing for cc3 right excited state equations
+
+     Micro-iter.  Residual norm
+     --------------------------
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       1           0.2836E-09
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       2           0.1353E-09
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       3           0.5395E-10
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       4           0.1921E-10
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       5           0.4351E-11
+     --------------------------
+
+  Doing finalizations for file storer cc_gs_newton_raphson_trials
+
+  Doing finalizations for file storer cc_gs_newton_raphson_transforms
+
+  Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ----------------------------------------------------------------
+      6          -79.104388533033     0.5948E-11     0.4073E-10
+  ----------------------------------------------------------------
+
+     Reduced space basis and transforms are stored on disk.
+
+  Using direct file to store records with name: cc_gs_newton_raphson_trials.
+
+  Using direct file to store records with name: cc_gs_newton_raphson_transforms.
+
+  Doing preparations for file storer cc_gs_newton_raphson_trials
+
+  Doing preparations for file storer cc_gs_newton_raphson_transforms
+
+  Preparing for cc3 right excited state equations
+
+     Micro-iter.  Residual norm
+     --------------------------
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       1           0.2631E-11
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       2           0.1303E-11
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       3           0.4264E-12
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       4           0.2021E-12
+
+  Orthonormalizing trial vectors.
+  Calling Jacobian right transform with energy:      0.000000000000
+       5           0.5345E-13
+     --------------------------
+
+  Doing finalizations for file storer cc_gs_newton_raphson_trials
+
+  Doing finalizations for file storer cc_gs_newton_raphson_transforms
+
+  Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ----------------------------------------------------------------
+      7          -79.104388533033     0.4249E-13     0.1421E-12
+  ----------------------------------------------------------------
+
+  Convergence criterion met in 7 iterations!
+
+  - Ground state summary:
+
+     Final ground state energy (a.u.):   -79.104388533033
+
+     Correlation energy (a.u.):           -0.260536839402
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         t(a,i)
+     -----------------------------------
+        1      5       -0.015274304437
+       14      4        0.008970023658
+        7      4       -0.007312583244
+        4      5       -0.006872684673
+        2      4       -0.006012921702
+       15      5        0.005704150040
+        6      2       -0.005025576014
+       13      5       -0.004933889031
+        5      6        0.004366074638
+        3      4       -0.004126391913
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         t(ai,bj)
+     --------------------------------------------------
+        2      4       2      4       -0.049931914504
+        5      6       5      6       -0.046567925291
+        9      3       9      3       -0.041349512985
+        3      4       3      4       -0.037778342513
+        1      5       1      5       -0.037299297230
+        6      5       6      5       -0.034903296771
+       16      3      16      3       -0.032107572471
+       17      3      17      3       -0.032051843284
+        2      4       1      5       -0.031565942819
+       18      3      18      3       -0.031349888894
+     --------------------------------------------------
+
+     T1 diagnostic (|T1|/sqrt(N_e)): 0.007219544905
+
+  Doing finalizations for file storer cc_gs_diis_e
+
+  Doing finalizations for file storer cc_gs_diis_x
+
+  - Timings for the CC3 ground state calculation
+
+     Total wall time (sec):              1.45469
+     Total cpu time (sec):               2.91068
+
+  - Cleaning up cc3 wavefunction
+
+  - Cleaning up cc3 wavefunction
+
+  Mismatch in memory according to eT and specified on input:
+
+     Memory available (eT):    7.997458 GB
+     Memory available (input): 8.000000 GB
+
+  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
+
+  :: There was 1 warning during the execution of eT. ::
+
+  eT terminated successfully!

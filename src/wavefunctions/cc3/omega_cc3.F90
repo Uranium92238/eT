@@ -42,6 +42,8 @@ contains
 !!    Directs the construction of the projection vector < mu| exp(-T) H exp(T) |R >
 !!    for the current amplitudes of the object wfn
 !!
+      use array_utilities, only: scale_diagonal
+!
       implicit none
 !
       class(cc3), intent(inout) :: wf

@@ -34,7 +34,7 @@ module cc3_class
    use direct_file_class, only : direct_file
    use io_utilities, only : single_record_reader, compound_record_reader 
    use io_utilities, only : single_record_writer, compound_record_writer
-   use array_utilities, only: entrywise_product, zero_array, scale_diagonal
+   use array_utilities, only: zero_array
    use reordering
 !
    implicit none
@@ -420,7 +420,7 @@ contains
                             pl='debug', chars=[r_or_l], reals=[w])
       else
 !
-         call output%error_msg('w is missing in construct_Jacobian_transform for lowmem_cc2')
+         call output%error_msg('w is missing in construct_Jacobian_transform for cc3')
 !
       endif
 !

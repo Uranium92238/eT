@@ -265,6 +265,12 @@ contains
 !
       elseif (trim(engine%gs_algorithm) == 'newton-raphson') then 
 !
+            if (trim(wf%name_) == 'cc2') then
+!
+                call output%error_msg('Newton-Raphson not implemented for CC2')
+!
+            end if
+!
          newton_raphson_solver = newton_raphson_cc_gs(wf, engine%gs_restart)
          call newton_raphson_solver%run(wf)
          call newton_raphson_solver%cleanup(wf)

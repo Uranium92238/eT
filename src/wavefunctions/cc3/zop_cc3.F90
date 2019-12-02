@@ -279,6 +279,7 @@ contains
 !!          D_kl += -1/2 sum_ij,abc t^abc_ijk tbar^abc_ijl    
 !!
       use omp_lib
+      use array_utilities, only: entrywise_product
 !
       implicit none
 !

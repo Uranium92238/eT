@@ -1781,6 +1781,7 @@ contains
 !!          D^R_kl -= 1/2 sum_{abcij} tbar^abc_ijl R^abc_ijk
 !!
       use omp_lib
+      use array_utilities, only: entrywise_product
 !
       implicit none
 !
