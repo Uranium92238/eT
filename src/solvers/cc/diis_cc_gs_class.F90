@@ -98,7 +98,6 @@ module diis_cc_gs_class
       procedure :: read_settings            => read_settings_diis_cc_gs
 !
       procedure :: print_settings           => print_settings_diis_cc_gs
-      procedure, nopass :: print_summary    => print_summary_diis_cc_gs
 !
    end type diis_cc_gs
 !
@@ -356,7 +355,7 @@ contains
 !
       else
 !
-         call solver%print_summary(wf)
+         call wf%print_gs_summary()
 !
       endif 
 !
@@ -426,29 +425,6 @@ contains
       call input%get_keyword_in_section('storage', 'solver cc gs', solver%storage)
 !
    end subroutine read_settings_diis_cc_gs
-!
-!
-   subroutine print_summary_diis_cc_gs(wf)
-!!
-!!    Print summary 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      real(dp) :: t1_diagnostic 
-!
-      call output%printf('- DIIS CC ground state solver summary:', fs='(/t3,a)', pl='minimal')
-!
-      call output%printf('Final ground state energy (a.u.): (f18.12)', reals=[wf%energy], fs='(/t6,a)', pl='minimal')
-!
-      call wf%print_dominant_amplitudes()
-!
-      t1_diagnostic = wf%get_t1_diagnostic() 
-      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', reals=[t1_diagnostic], fs='(/t6,a)', pl='minimal')
-!
-   end subroutine print_summary_diis_cc_gs
 !
 !
 end module diis_cc_gs_class

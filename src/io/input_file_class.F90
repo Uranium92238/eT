@@ -166,6 +166,7 @@ contains
                            'lowmem-cc2',        &
                            'ccsd',              &
                            'cc3',               &
+                           'ccsd(t)',           &
                            'mlcc2']
 !
       method%name_    = 'method'

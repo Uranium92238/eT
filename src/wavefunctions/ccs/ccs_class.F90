@@ -204,6 +204,10 @@ module ccs_class
       procedure :: get_n_excited_states_on_file                  => get_n_excited_states_on_file_ccs
       procedure :: get_n_excitation_energies_on_file             => get_n_excitation_energies_on_file_ccs
 !
+!     Print summaries
+!
+      procedure :: print_gs_summary                              => print_gs_summary_ccs
+!
 !     Set/get procedures
 !
       procedure :: set_amplitudes                                => set_amplitudes_ccs
@@ -2208,6 +2212,34 @@ contains
 !
 !
    end subroutine read_pcm_fock_contributions_ccs
+!
+!
+   subroutine print_gs_summary_ccs(wf)
+!!
+!!    Print ground state summary 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      real(dp) :: t1_diagnostic 
+!
+      call output%printf('- Ground state summary:', fs='(/t3,a)', pl='m')
+!
+      call output%printf('Final ground state energy (a.u.): (f18.12)', &
+                         reals=[wf%energy], fs='(/t6,a)', pl='m')
+!
+      call output%printf('Correlation energy (a.u.):        (f18.12)', &
+                         reals=[wf%correlation_energy], fs='(/t6,a)', pl='m')
+!
+      call wf%print_dominant_amplitudes()
+!
+      t1_diagnostic = wf%get_t1_diagnostic() 
+      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', &
+                         reals=[t1_diagnostic], fs='(/t6,a)', pl='m')
+!
+   end subroutine print_gs_summary_ccs
 !
 !
 end module ccs_class

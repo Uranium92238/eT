@@ -543,18 +543,18 @@ contains
 !
 !                       Construct t^{abc}_{ijk} for given i, j, k
 !
-                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abij,  &
-                                                   g_bdci_p(:,:,:,i_rel),        &
-                                                   g_bdcj_p(:,:,:,j_rel),        &
-                                                   g_bdck_p(:,:,:,k_rel),        &
-                                                   g_ljci_p(:,:,j_rel,i_rel),    &
-                                                   g_lkci_p(:,:,k_rel,i_rel),    &
-                                                   g_lkcj_p(:,:,k_rel,j_rel),    &
-                                                   g_licj_p(:,:,i_rel,j_rel),    &
-                                                   g_lick_p(:,:,i_rel,k_rel),    &
-                                                   g_ljck_p(:,:,j_rel,k_rel))
+                        call wf%construct_W(i, j, k, t_abc, u_abc, t_abij, &
+                                            g_bdci_p(:,:,:,i_rel),         &
+                                            g_bdcj_p(:,:,:,j_rel),         &
+                                            g_bdck_p(:,:,:,k_rel),         &
+                                            g_ljci_p(:,:,j_rel,i_rel),     &
+                                            g_lkci_p(:,:,k_rel,i_rel),     &
+                                            g_lkcj_p(:,:,k_rel,j_rel),     &
+                                            g_licj_p(:,:,i_rel,j_rel),     &
+                                            g_lick_p(:,:,i_rel,k_rel),     &
+                                            g_ljck_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_eps(i, j, k, t_abc)
+                        call wf%divide_by_orbital_differences(i, j, k, t_abc)
 !
                         call wf%construct_x_ai_intermediate(i, j, k, t_abc, u_abc, X_ai, c_abij)
 !
@@ -1195,7 +1195,7 @@ contains
                                                                g_ilkc_p(:,:,i_rel,k_rel),   &
                                                                g_jlkc_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_eps(i, j, k, c_abc, omega)
+                        call wf%divide_by_orbital_differences(i, j, k, c_abc, omega)
 !
                         call wf%jacobian_transpose_cc3_a_n7(i, j, k, c_abc, u_abc, sigma_abij, &
                                                             g_bdci_p(:,:,:,i_rel),             &

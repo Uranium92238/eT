@@ -449,7 +449,7 @@ contains
                                                    g_ljak, g_ljbk, g_ljck, &
                                                    g_bdak, g_cdak, g_cdbk, &
                                                    g_adbk, g_adck, g_bdck, &
-                                                   keep_t)
+                                                   overwrite)
 !!
 !!    Omega CC3 intermediate W_ijk for fixed a,b,c
 !!    Written by Rolf H. Myhre and Alexander C. Paul July 2019
@@ -481,16 +481,17 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: g_adck
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: g_bdck
 !
-      logical, optional, intent(in) :: keep_t ! If present and true, t_abc is not overwritten by first dgemm
+!     If present and false, t_abc is not overwritten by first dgemm
+      logical, optional, intent(in) :: overwrite
 !
       real(dp) :: alpha
 !
-      if (.not. present(keep_t)) then
+      if (.not. present(overwrite)) then
          alpha = zero
-      elseif (keep_t) then
-         alpha = one
+      elseif (overwrite) then
+         alpha = zero
       else
-         alpha = zero
+         alpha = one
       endif
 !
 !

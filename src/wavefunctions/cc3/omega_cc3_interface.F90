@@ -71,59 +71,6 @@
    end subroutine omega_cc3_integrals_cc3
 !
 !
-   module subroutine omega_cc3_W_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abij, &
-                                          g_bdci, g_bdcj, g_bdck, &
-                                          g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck, &
-                                          keep_t)
-!!
-!!    Calculate the the contributions to the t_3 amplitudes
-!!    for occupied indices i,j,k
-!!
-!!    Contributions to W
-!!    W^abc_ijk = P^abc_ijk(sum_d t^ad_ij(bd|ck) - sum_l t^ab_il (lj|ck))
-!!
-!!    Written by Rolf H. Myhre, January 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-      integer, intent(in) :: i, j, k
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: t_abc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abij
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj
-      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljci
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lkci
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lkcj
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_licj
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_lick
-      real(dp), dimension(wf%n_o, wf%n_v), intent(in)                   :: g_ljck
-      logical, optional, intent(in) :: keep_t
-!
-   end subroutine omega_cc3_W_calc_cc3
-!
-!
-   module subroutine omega_cc3_eps_cc3(wf, i, j, k, t_abc, omega)
-!!
-!!    Divide W^abc_ijk by -epsilon^abc_ijk to obtain T^abc_ijk
-!!    Optional argument omega for jacobian transformations
-!!
-!!    t^abc_ijk = -W^abc_ijk/epsilon^abc_ijk
-!!
-!!    Written by Rolf H. Myhre, January 2019
-!!
-      implicit none
-!
-      class(cc3) :: wf
-      integer, intent(in) :: i, j, k
-      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v), intent(inout) :: t_abc
-      real(dp), optional :: omega
-!
-   end subroutine omega_cc3_eps_cc3
-!
-!
    module subroutine omega_cc3_a_n6_cc3(wf, i, j, k, t_abc, u_abc, &
                                         omega1, omega2, F_ov_ck,   &
                                         L_jbic, L_kbic, L_kbjc,    &

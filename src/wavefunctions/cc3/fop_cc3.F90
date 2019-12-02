@@ -277,6 +277,8 @@ contains
 !!
 !!          |k > = sum_mu (tau_mu |CC > R_{k,mu} - tbar_mu |CC > R_{k,mu}) 
 !!
+      use array_utilities, only: scale_diagonal
+!
       implicit none
 !
       class(cc3) :: wf
@@ -1227,7 +1229,7 @@ contains
                                                                g_ilkc_p(:,:,i_rel,k_rel),    &
                                                                g_jlkc_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_eps(i, j, k, tbar_abc)
+                        call wf%divide_by_orbital_differences(i, j, k, tbar_abc)
 !
 !                       Scaling factor = 1/6 sum_abcijk tbar^abc_ijk R^abc_ijk
 !
@@ -1276,30 +1278,30 @@ contains
 !
                         end if
 !
-                        call wf%omega_cc3_W_calc(i, j, k, R_abc, u_abc, R_abij, &
-                                                g_bdci_p(:,:,:,i_rel),          &
-                                                g_bdcj_p(:,:,:,j_rel),          &
-                                                g_bdck_p(:,:,:,k_rel),          &
-                                                g_ljci_p(:,:,j_rel,i_rel),      &
-                                                g_lkci_p(:,:,k_rel,i_rel),      &
-                                                g_lkcj_p(:,:,k_rel,j_rel),      &
-                                                g_licj_p(:,:,i_rel,j_rel),      &
-                                                g_lick_p(:,:,i_rel,k_rel),      &
-                                                g_ljck_p(:,:,j_rel,k_rel))
+                        call wf%construct_W(i, j, k, R_abc, u_abc, R_abij, &
+                                            g_bdci_p(:,:,:,i_rel),         &
+                                            g_bdcj_p(:,:,:,j_rel),         &
+                                            g_bdck_p(:,:,:,k_rel),         &
+                                            g_ljci_p(:,:,j_rel,i_rel),     &
+                                            g_lkci_p(:,:,k_rel,i_rel),     &
+                                            g_lkcj_p(:,:,k_rel,j_rel),     &
+                                            g_licj_p(:,:,i_rel,j_rel),     &
+                                            g_lick_p(:,:,i_rel,k_rel),     &
+                                            g_ljck_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_W_calc(i, j, k, R_abc, u_abc, t_abij, &
-                                                g_bdci_c1_p(:,:,:,i_rel),       &
-                                                g_bdcj_c1_p(:,:,:,j_rel),       &
-                                                g_bdck_c1_p(:,:,:,k_rel),       &
-                                                g_ljci_c1_p(:,:,j_rel,i_rel),   &
-                                                g_lkci_c1_p(:,:,k_rel,i_rel),   &
-                                                g_lkcj_c1_p(:,:,k_rel,j_rel),   &
-                                                g_licj_c1_p(:,:,i_rel,j_rel),   &
-                                                g_lick_c1_p(:,:,i_rel,k_rel),   &
-                                                g_ljck_c1_p(:,:,j_rel,k_rel),   &
-                                                .true.) ! Do not overwrite R_abc
+                        call wf%construct_W(i, j, k, R_abc, u_abc, t_abij,  &
+                                            g_bdci_c1_p(:,:,:,i_rel),       &
+                                            g_bdcj_c1_p(:,:,:,j_rel),       &
+                                            g_bdck_c1_p(:,:,:,k_rel),       &
+                                            g_ljci_c1_p(:,:,j_rel,i_rel),   &
+                                            g_lkci_c1_p(:,:,k_rel,i_rel),   &
+                                            g_lkcj_c1_p(:,:,k_rel,j_rel),   &
+                                            g_licj_c1_p(:,:,i_rel,j_rel),   &
+                                            g_lick_c1_p(:,:,i_rel,k_rel),   &
+                                            g_ljck_c1_p(:,:,j_rel,k_rel),   &
+                                            overwrite = .false.) ! overwrite R_abc
 !
-                        call wf%omega_cc3_eps(i, j, k, R_abc, omega)
+                        call wf%divide_by_orbital_differences(i, j, k, R_abc, omega)
 !
                         call wf%scale_triples_biorthonormal_factor(i, j, k, R_abc)
 !
@@ -2228,7 +2230,7 @@ contains
                                                             g_adbk_c1_p(:,:,a_rel,b_rel), &
                                                             g_adck_c1_p(:,:,a_rel,c_rel), &
                                                             g_bdck_c1_p(:,:,b_rel,c_rel), &
-                                                            .true.) ! Do not overwrite R_ijk
+                                                            overwrite = .false.) ! overwrite R_abc ! Do not overwrite R_ijk
 !
                         call wf%omega_cc3_eps_abc_batch(a, b, c, R_ijk(:,:,:,thread_n), omega)
 !
@@ -2587,18 +2589,18 @@ contains
                         k_rel = k - batch_k%first + 1
 !
 !                       construct t3 for fixed i,j,k
-                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abij, &
-                                                 g_bdci_p(:,:,:,i_rel), &
-                                                 g_bdcj_p(:,:,:,j_rel), &
-                                                 g_bdck_p(:,:,:,k_rel), &
-                                                 g_ljci_p(:,:,j_rel,i_rel), &
-                                                 g_lkci_p(:,:,k_rel,i_rel), &
-                                                 g_lkcj_p(:,:,k_rel,j_rel), &
-                                                 g_licj_p(:,:,i_rel,j_rel), &
-                                                 g_lick_p(:,:,i_rel,k_rel), &
-                                                 g_ljck_p(:,:,j_rel,k_rel))
+                        call wf%construct_W(i, j, k, t_abc, u_abc, t_abij, &
+                                            g_bdci_p(:,:,:,i_rel),         &
+                                            g_bdcj_p(:,:,:,j_rel),         &
+                                            g_bdck_p(:,:,:,k_rel),         &
+                                            g_ljci_p(:,:,j_rel,i_rel),     &
+                                            g_lkci_p(:,:,k_rel,i_rel),     &
+                                            g_lkcj_p(:,:,k_rel,j_rel),     &
+                                            g_licj_p(:,:,i_rel,j_rel),     &
+                                            g_lick_p(:,:,i_rel,k_rel),     &
+                                            g_ljck_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_eps(i, j, k, t_abc)
+                        call wf%divide_by_orbital_differences(i, j, k, t_abc)
 !
                         call wf%construct_x_ai_intermediate(i, j, k, t_abc, u_abc,  &
                                                             density_ai, Z_bcjk)

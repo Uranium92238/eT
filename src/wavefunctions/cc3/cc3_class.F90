@@ -24,17 +24,22 @@ module cc3_class
 !!    Written by Rolf H. Myhre and Alexander C. Paul, 2018-2019
 !!
 !
-   use kinds
-   use ccsd_class
+   use triples_class, only: triples
+!
+   use parameters
+   use memory_manager_class, only: mem
+   use batching_index_class, only : batching_index
+   use global_out, only: output
+   use timings_class, only: timings
    use direct_file_class, only : direct_file
-   use sequential_file_class, only : sequential_file
    use io_utilities, only : single_record_reader, compound_record_reader 
    use io_utilities, only : single_record_writer, compound_record_writer
-   use array_utilities, only: entrywise_product
+   use array_utilities, only: entrywise_product, zero_array, scale_diagonal
+   use reordering
 !
    implicit none
 !
-   type, extends(ccsd) :: cc3
+   type, extends(triples) :: cc3
 !
 !     Ground state integral files
 !
@@ -96,8 +101,6 @@ module cc3_class
 !
       procedure :: omega_cc3_a         => omega_cc3_a_cc3
       procedure :: omega_cc3_integrals => omega_cc3_integrals_cc3
-      procedure :: omega_cc3_W_calc    => omega_cc3_W_calc_cc3
-      procedure :: omega_cc3_eps       => omega_cc3_eps_cc3
       procedure :: omega_cc3_a_n6      => omega_cc3_a_n6_cc3
       procedure :: omega_cc3_a_n7      => omega_cc3_a_n7_cc3
 !
@@ -254,6 +257,8 @@ contains
 !!    New CC3
 !!    Written by Rolf H. Myhre, 2018
 !!
+      use molecular_system_class, only: molecular_system
+!
       implicit none
 !
       type(cc3) :: wf
@@ -287,10 +292,7 @@ contains
 !
       call output%printf('- Cleaning up (a0) wavefunction', chars=[trim(wf%name_)], fs='(/t3,a)')
 !
-      call wf%destruct_amplitudes
-      call wf%destruct_multipliers
-      call wf%destruct_right_excitation_energies()
-      call wf%destruct_left_excitation_energies()
+      call wf%ccs%cleanup()
 !
       call wf%delete_intermediate_files
 !
@@ -991,30 +993,30 @@ contains
 !                       using the same routine once for t1-transformed and once for 
 !                       c1-transformed integrals
 !
-                        call wf%omega_cc3_W_calc(i, j, k, R_abc, u_abc, R_abij, &
-                                                g_bdci_p(:,:,:,i_rel),          &
-                                                g_bdcj_p(:,:,:,j_rel),          &
-                                                g_bdck_p(:,:,:,k_rel),          &
-                                                g_ljci_p(:,:,j_rel,i_rel),      &
-                                                g_lkci_p(:,:,k_rel,i_rel),      &
-                                                g_lkcj_p(:,:,k_rel,j_rel),      &
-                                                g_licj_p(:,:,i_rel,j_rel),      &
-                                                g_lick_p(:,:,i_rel,k_rel),      &
-                                                g_ljck_p(:,:,j_rel,k_rel))
+                        call wf%construct_W(i, j, k, R_abc, u_abc, R_abij,  &
+                                            g_bdci_p(:,:,:,i_rel),          &
+                                            g_bdcj_p(:,:,:,j_rel),          &
+                                            g_bdck_p(:,:,:,k_rel),          &
+                                            g_ljci_p(:,:,j_rel,i_rel),      &
+                                            g_lkci_p(:,:,k_rel,i_rel),      &
+                                            g_lkcj_p(:,:,k_rel,j_rel),      &
+                                            g_licj_p(:,:,i_rel,j_rel),      &
+                                            g_lick_p(:,:,i_rel,k_rel),      &
+                                            g_ljck_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_W_calc(i, j, k, R_abc, u_abc, t_abij, &
-                                                g_bdci_c1_p(:,:,:,i_rel),       &
-                                                g_bdcj_c1_p(:,:,:,j_rel),       &
-                                                g_bdck_c1_p(:,:,:,k_rel),       &
-                                                g_ljci_c1_p(:,:,j_rel,i_rel),   &
-                                                g_lkci_c1_p(:,:,k_rel,i_rel),   &
-                                                g_lkcj_c1_p(:,:,k_rel,j_rel),   &
-                                                g_licj_c1_p(:,:,i_rel,j_rel),   &
-                                                g_lick_c1_p(:,:,i_rel,k_rel),   &
-                                                g_ljck_c1_p(:,:,j_rel,k_rel),   &
-                                                .true.) ! Do not overwrite R_abc
+                        call wf%construct_W(i, j, k, R_abc, u_abc, t_abij,  &
+                                            g_bdci_c1_p(:,:,:,i_rel),       &
+                                            g_bdcj_c1_p(:,:,:,j_rel),       &
+                                            g_bdck_c1_p(:,:,:,k_rel),       &
+                                            g_ljci_c1_p(:,:,j_rel,i_rel),   &
+                                            g_lkci_c1_p(:,:,k_rel,i_rel),   &
+                                            g_lkcj_c1_p(:,:,k_rel,j_rel),   &
+                                            g_licj_c1_p(:,:,i_rel,j_rel),   &
+                                            g_lick_c1_p(:,:,i_rel,k_rel),   &
+                                            g_ljck_c1_p(:,:,j_rel,k_rel),   &
+                                            overwrite = .false.) ! overwrite R_abc
 !
-                        call wf%omega_cc3_eps(i, j, k, R_abc, omega_R)
+                        call wf%divide_by_orbital_differences(i, j, k, R_abc, omega_R)
 !
                         call wf%scale_triples_biorthonormal_factor(i, j, k, R_abc)
 !
@@ -1038,7 +1040,7 @@ contains
                                                                g_ilkc_p(:,:,i_rel,k_rel), &
                                                                g_jlkc_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_eps(i, j, k, L_abc, omega_L)
+                        call wf%divide_by_orbital_differences(i, j, k, L_abc, omega_L)
 !
 !                       Overlap:
 !                          LT_R = sum_{ai >= bj >= ck} L^abc_ijk R^abc_ijk
@@ -1318,6 +1320,8 @@ contains
 !!       - If degeneracies are present: Print Warning and biorthonormalize
 !!       - Normalize and write to file
 !!
+      use array_utilities, only: are_vectors_parallel, quicksort_with_index_descending
+!
       implicit none
 !
       class(cc3) :: wf
