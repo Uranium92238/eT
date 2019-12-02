@@ -1,0 +1,36 @@
+system
+  name: ozone
+end system
+
+do
+  ground state
+end do
+
+solver cholesky
+  threshold: 1.0d-10
+end solver cholesky
+
+solver scf
+  crop
+  diis dimension: 3
+  gradient threshold: 1.0d-9
+end solver scf
+
+solver cc gs
+  crop
+  diis dimension:   3
+  algorithm:        newton-raphson
+  omega threshold:  1.0d-8
+end solver cc gs
+
+method
+  hf
+  ccsd
+end method
+
+geometry
+basis: cc-pVDZ
+O 0.00000 0.00000 0.0000
+O 1.2720 0.00000 0.0000
+O -0.57325 1.1354 0.0000
+end geometry

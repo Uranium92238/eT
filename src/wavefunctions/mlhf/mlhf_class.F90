@@ -1376,7 +1376,8 @@ contains
                         max_iterations=max_iterations,     &
                         gradient_threshold=full_space_thr, &
                         storage=storage,                   &
-                        cumulative_threshold=1.0d-2)
+                        cumulative_threshold=1.0d-2,       &
+                        crop=.false.)
 !
       call full_space_solver%run(full_space_wf)
 !

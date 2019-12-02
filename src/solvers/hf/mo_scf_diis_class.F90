@@ -234,8 +234,12 @@ contains
       dim_fock     = (wf%n_mo)*(wf%n_mo)
       dim_gradient = (wf%n_o)*(wf%n_v)
 !
-      solver%diis = diis_tool('mo_hf_diis', dim_fock, dim_gradient, &
-                       solver%diis_dimension, accumulate=.false., erase_history=.true.)
+      solver%diis = diis_tool('mo_hf_diis',           &
+                              dim_fock,               &
+                              dim_gradient,           &
+                              solver%diis_dimension,  &
+                              accumulate=.false.,     &
+                              erase_history=.true.)
 !
       call solver%diis%initialize_storers(solver%records_in_memory)
 !
@@ -246,8 +250,8 @@ contains
 !
       max_grad = get_abs_max(G, dim_gradient)
 !
-      call wf%get_mo_fock(F)   ! Sets F to wf%mo_fock
-      call solver%diis%update(G, F)   ! First diis step -> Update F
+      call wf%get_mo_fock(F)           ! Sets F to wf%mo_fock
+      call solver%diis%update(G, F)    ! First diis step -> Update F
 !
 !     Part II. Iterative SCF loop.
 !
@@ -465,7 +469,7 @@ contains
       call mem%alloc(X_i, wf%n_mo, wf%n_mo)
       call mem%alloc(Y_i, wf%n_v, wf%n_o)
 !
-      current_diis_dim = solver%diis%get_current_dim()
+      current_diis_dim = solver%diis%get_dim_G()
 !
       if (current_diis_dim .lt. iteration) then
 !

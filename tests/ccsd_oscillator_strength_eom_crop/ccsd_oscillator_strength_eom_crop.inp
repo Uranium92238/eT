@@ -1,0 +1,55 @@
+system
+  name: ozone
+end system
+
+do
+  fop
+end do
+
+cc fop
+  eom
+  dipole length
+  transition moments
+end cc fop
+
+solver cholesky
+  threshold: 1.0d-11
+end solver cholesky
+
+solver scf
+  crop
+  diis dimension: 3
+  gradient threshold: 1.0d-10
+end solver scf
+
+solver cc multipliers
+  crop
+  algorithm:      diis
+  diis dimension: 5
+  threshold:      1.0d-9
+end solver cc multipliers
+
+solver cc gs
+  crop
+  diis dimension:   3
+  omega threshold:  1.0d-9
+end solver cc gs
+
+solver cc es
+  crop
+  algorithm:          diis
+  residual threshold: 1.0d-9
+  singlet states:     2
+end solver cc es
+
+method
+  hf
+  ccsd
+end method
+
+geometry
+basis: cc-pVDZ
+O 0.00000 0.00000 0.0000
+O 1.2720 0.00000 0.0000
+O -0.57325 1.1354 0.0000
+end geometry

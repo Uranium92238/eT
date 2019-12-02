@@ -248,6 +248,7 @@ contains
                               'energy threshold',           &
                               'gradient threshold',         &
                               'storage',                    &
+                              'crop',                       &
                               'cumulative fock threshold',  &
                               'max iterations',             &
                               'diis dimension',             &
@@ -272,6 +273,7 @@ contains
                                  'algorithm',            &
                                  'energy threshold',     &
                                  'omega threshold',      &
+                                 'crop',                 &
                                  'max micro iterations', &
                                  'rel micro threshold',  &
                                  'storage',              &
@@ -286,6 +288,7 @@ contains
                                  'core excitation',      &
                                  'ionization',           &
                                  'energy threshold ',    &
+                                 'crop',                 &
                                  'residual threshold',   &
                                  'max iterations',       &
                                  'restart',              &
@@ -302,12 +305,14 @@ contains
       solver_cc_multipliers%name_    = 'solver cc multipliers'
       solver_cc_multipliers%required = .false.
       solver_cc_multipliers%keywords = [character(len=30) ::         &
-                                          'algorithm            ',   &
-                                          'threshold            ',   &
-                                          'storage              ',   &
-                                          'restart              ',   &
+                                          'algorithm',               &
+                                          'threshold',               &
+                                          'storage',                 &
+                                          'crop',                    &
+                                          'diis dimension',          &
+                                          'restart',                 &
                                           'max reduced dimension',   &
-                                          'max iterations       ']
+                                          'max iterations']
 !
       solver_cc_response%name_    = 'solver cc response'
       solver_cc_response%required = .false.
