@@ -361,7 +361,7 @@ contains
 !
       integer, intent(out) :: final_iteration
 !
-      real(dp), dimension(:), allocatable :: epsilon, c, residual
+      real(dp), dimension(:), allocatable :: preconditioner, c, residual
 !
       real(dp), dimension(:), allocatable :: minus_omega  
 !
@@ -375,8 +375,8 @@ contains
 !
 !     Initialize solver tool and set preconditioner 
 !
-      call mem%alloc(epsilon, wf%n_gs_amplitudes)
-      call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
+      call mem%alloc(preconditioner, wf%n_gs_amplitudes)
+      call wf%get_gs_orbital_differences(preconditioner, wf%n_gs_amplitudes)
 !
       call mem%alloc(minus_omega, wf%n_gs_amplitudes)
       call copy_and_scale(-one, omega, minus_omega, wf%n_gs_amplitudes)
@@ -386,8 +386,8 @@ contains
 !
       call davidson%initialize_trials_and_transforms(solver%records_in_memory)
 !
-      call davidson%set_preconditioner(epsilon)
-      call mem%dealloc(epsilon, wf%n_gs_amplitudes)
+      call davidson%set_preconditioner(preconditioner)
+      call mem%dealloc(preconditioner, wf%n_gs_amplitudes)
 !
 !     Set start vector / initial guess 
 !
@@ -402,10 +402,13 @@ contains
 !     Enter iterative loop
 !
       call output%printf('Micro-iter.  Residual norm', pl='n', fs='(/t6,a)')
-      call output%print_separator('m', 26, '-', fs='(t6,a)')
+      call output%print_separator('n', 26, '-', fs='(t6,a)')
 !
       micro_iteration = 0
       converged_residual = .false.
+!
+      call mem%alloc(c, davidson%n_parameters)
+      call mem%alloc(residual, davidson%n_parameters)
 !
       do while (.not. converged_residual .and. (micro_iteration .le. solver%max_micro_iterations))
 !
@@ -414,21 +417,15 @@ contains
 !
 !        Transform new trial vectors and write to file
 !
-         call mem%alloc(c, davidson%n_parameters)
-!
          call davidson%get_trial(c, davidson%dim_red)
-         call wf%construct_Jacobian_transform('right', c)
+         call wf%construct_Jacobian_transform('right', c, w = zero)
          call davidson%set_transform(c, davidson%dim_red)
-!
-         call mem%dealloc(c, davidson%n_parameters)
 !
 !        Solve problem in reduced space
 !
          call davidson%solve_reduced_problem()
 !
 !        Construct new trials and check if convergence criterion on residual is satisfied
-!
-         call mem%alloc(residual, davidson%n_parameters)
 !
          call davidson%construct_residual(residual, 1)
          residual_norm = get_l2_norm(residual, wf%n_gs_amplitudes)
@@ -441,11 +438,13 @@ contains
 !
          endif 
 !
-         call mem%dealloc(residual, davidson%n_parameters)
-!
-         call output%printf('(i3)          (e11.4)', pl='n', ints=[micro_iteration], reals=[residual_norm], fs='(t6,a)')
+         call output%printf('(i3)          (e11.4)', pl='n', ints=[micro_iteration], &
+                            reals=[residual_norm], fs='(t6,a)')
 !
       enddo
+!
+      call mem%dealloc(residual, davidson%n_parameters)
+      call mem%dealloc(c, davidson%n_parameters)
 !
       call output%print_separator('n', 26, '-', fs='(t6,a)')
 !
