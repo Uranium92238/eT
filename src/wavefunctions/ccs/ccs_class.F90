@@ -61,9 +61,12 @@ module ccs_class
 !
       logical :: need_g_abcd
 !
+      logical :: mlhf_reference
+!
       type(sequential_file) :: t_file, tbar_file
       type(sequential_file) :: excitation_energies_file
       type(sequential_file) :: restart_file
+      type(sequential_file) :: mlhf_inactive_fock_term_file
 !
       type(file_storer), allocatable :: r_files
       type(file_storer), allocatable :: l_files
@@ -185,6 +188,7 @@ module ccs_class
 !
       procedure :: read_settings                                 => read_settings_ccs
       procedure :: read_cvs_settings                             => read_cvs_settings_ccs
+      procedure :: read_mlhf_settings                            => read_mlhf_settings_ccs
 !
       procedure :: read_singles_vector                           => read_singles_vector_ccs
       procedure :: save_amplitudes                               => save_amplitudes_ccs
@@ -196,6 +200,7 @@ module ccs_class
       procedure :: save_excitation_energies                      => save_excitation_energies_ccs
       procedure :: read_excitation_energies                      => read_excitation_energies_ccs
       procedure :: read_frozen_orbital_terms                     => read_frozen_orbital_terms_ccs
+      procedure :: read_mlhf_inactive_fock_term                  => read_mlhf_inactive_fock_term_ccs
 !
       procedure :: write_cc_restart                              => write_cc_restart_ccs
 !
@@ -238,7 +243,10 @@ module ccs_class
 
       procedure :: add_frozen_hf_fock_term                       => add_frozen_hf_fock_term_ccs
       procedure :: add_frozen_hf_fock_term_complex               => add_frozen_hf_fock_term_ccs_complex
-
+!
+      procedure :: add_mlhf_inactive_fock_term                   => add_mlhf_inactive_fock_term_ccs
+      procedure :: add_mlhf_inactive_fock_term_complex           => add_mlhf_inactive_fock_term_ccs_complex
+!
       procedure :: add_molecular_mechanics_fock_term             => add_molecular_mechanics_fock_term_ccs
       procedure :: add_molecular_mechanics_fock_term_complex     => add_molecular_mechanics_fock_term_ccs_complex
 !
@@ -433,6 +441,11 @@ module ccs_class
       procedure :: construct_t1_fock_frozen_hf_term              => construct_t1_fock_frozen_hf_term_ccs
       procedure :: construct_t1_fock_frozen_hf_term_complex      => construct_t1_fock_frozen_hf_term_ccs_complex
 !
+!     MLHF reference
+!
+      procedure :: construct_t1_mlhf_inactive_fock_term          => construct_t1_mlhf_inactive_fock_term_ccs
+      procedure :: construct_t1_mlhf_inactive_fock_term_complex  => construct_t1_mlhf_inactive_fock_term_ccs_complex
+!
 !     MO preparations
 !
       procedure :: mo_preparations                               => mo_preparations_ccs
@@ -581,6 +594,7 @@ contains
       wf%bath_orbital = .false.
       wf%frozen_core = .false.
       wf%frozen_hf_mos = .false.
+      wf%mlhf_reference = .false.
       wf%cvs = .false.
       wf%need_g_abcd = .false.
 !
@@ -598,6 +612,7 @@ contains
       if (wf%bath_orbital) call wf%make_bath_orbital()
 !
       if (wf%frozen_core .or. wf%frozen_hf_mos) call wf%read_frozen_orbital_terms()
+      if (wf%mlhf_reference) call wf%read_mlhf_inactive_fock_term()
 !
 !     Read MM or PCM file if present
 !
@@ -630,6 +645,7 @@ contains
       call wf%destruct_left_excitation_energies()
       call wf%destruct_mo_fock_fc_term()
       call wf%destruct_mo_fock_frozen_hf_term()
+      call wf%destruct_mlhf_inactive_fock_term()
 !
       call wf%destruct_mm_matrices()
 !
@@ -654,6 +670,7 @@ contains
       class(ccs), intent(inout) :: wf
 !
       call wf%read_frozen_orbitals_settings()
+      call wf%read_mlhf_settings()
 !
       if (input%requested_section('cc')) then
 !
@@ -667,6 +684,25 @@ contains
       endif
 !
    end subroutine read_settings_ccs
+!
+!
+   subroutine read_mlhf_settings_ccs(wf)
+!!
+!!    Read mlhf settings 
+!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
+!!
+!!    Looks for "mlhf" in the method section of the input
+!!
+!!    This routine is read at cc level to figure out if there
+!!    should be a mlhf inactive fock contribution
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (input%requested_keyword_in_section('mlhf', 'method')) wf%mlhf_reference = .true.
+!
+   end subroutine read_mlhf_settings_ccs
 !
 !
    subroutine read_hf_ccs(wf)
@@ -1545,6 +1581,29 @@ contains
       endif
 !
    end subroutine read_frozen_orbital_terms_ccs
+!
+!
+   subroutine read_mlhf_inactive_fock_term_ccs(wf)
+!!
+!!    Read mlhf inactive Fock term
+!!    Written by Sarai D. Folkestad and Linda Goletto, Oct 2019
+!!
+!!    Reads frozen orbital contributions to the
+!!    mo Fock matrix.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!      
+      call wf%initialize_mlhf_inactive_fock_term()
+!
+      wf%mlhf_inactive_fock_term_file = sequential_file('mlhf_inactive_fock_term')
+!
+      call wf%mlhf_inactive_fock_term_file%open_('read', 'rewind')
+      call wf%mlhf_inactive_fock_term_file%read_(wf%mlhf_inactive_fock_term, wf%n_mo**2)
+      call wf%mlhf_inactive_fock_term_file%close_('keep')
+!
+   end subroutine read_mlhf_inactive_fock_term_ccs
 !
 !
    subroutine check_for_degeneracies_ccs(wf, transformation, threshold)

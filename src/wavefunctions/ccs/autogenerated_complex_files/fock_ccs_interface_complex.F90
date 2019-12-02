@@ -75,6 +75,23 @@
    end subroutine add_frozen_hf_fock_term_ccs_complex
 !
 !
+   module subroutine add_mlhf_inactive_fock_term_ccs_complex(wf, F_pq)
+!!
+!!    Add MLHF inactive Fock term
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
+!!    and Linda Goletto, Nov 2019 
+!!
+!!    Adds the contribution from MLHF inactive orbitals to
+!!    the effective T1-transformed Fock matrix.  
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+      complex(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
+!
+   end subroutine add_mlhf_inactive_fock_term_ccs_complex
+!
+!
    module subroutine add_molecular_mechanics_fock_term_ccs_complex(wf, F_pq)
 !!
 !!    Add molecular mechanics Fock contribution 
@@ -135,6 +152,19 @@
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
    end subroutine construct_t1_fock_frozen_hf_term_ccs_complex
+!
+!
+   module subroutine construct_t1_mlhf_inactive_fock_term_ccs_complex(wf, F_pq)
+!!
+!!    Calculate T1 MLHF inactive Fock term
+!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf 
+      complex(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
+!
+   end subroutine construct_t1_mlhf_inactive_fock_term_ccs_complex
 !
 !
    module subroutine add_t1_fock_length_dipole_term_ccs_complex(wf, electric_field)

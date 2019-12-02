@@ -310,10 +310,10 @@ contains
 !
       class(uhf), intent(in) :: wf
 !
-      call output%print_vector('normal', '- Alpha orbital energies', wf%n_ao, wf%orbital_energies_a, &
+      call output%print_vector('normal', '- Alpha orbital energies', wf%n_mo, wf%orbital_energies_a, &
                               fs='(f16.12)', columns=4)
 !
-      call output%print_vector('normal', '- Beta orbital energies',  wf%n_ao, wf%orbital_energies_b, &
+      call output%print_vector('normal', '- Beta orbital energies',  wf%n_mo, wf%orbital_energies_b, &
                               fs='(f16.12)', columns=4)
 !
    end subroutine print_orbital_energies_uhf
