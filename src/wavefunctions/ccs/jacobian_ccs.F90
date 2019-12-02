@@ -104,7 +104,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c1
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1
 !
-!     sum_b F_a_b c_b_i
+!     sum_b F_a_b c_b_i 
 !
       call dgemm('N', 'N',     &
                   wf%n_v,      &

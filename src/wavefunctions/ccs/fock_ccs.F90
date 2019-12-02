@@ -49,6 +49,13 @@ contains
 !!       QM/MM by Tommaso Giovannini, 2019
 !!       QM/PCM by Tommaso Giovannini, 2019
 !!
+!!       Modified by Sarai D. Folkestad, Nov 2019
+!!
+!!       Added batching for N^2 memory requirement.
+!!
+!
+      use batching_index_class, only : batching_index
+!
       implicit none
 !
       class(ccs) :: wf
@@ -58,10 +65,17 @@ contains
       integer :: i, j, k, a, b
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_ijkl
-      real(dp), dimension(:,:,:,:), allocatable :: g_abij
-      real(dp), dimension(:,:,:,:), allocatable :: g_aijb
-      real(dp), dimension(:,:,:,:), allocatable :: g_iajk
-      real(dp), dimension(:,:,:,:), allocatable :: g_aijk
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajj
+      real(dp), dimension(:,:,:,:), allocatable :: g_ijja
+      real(dp), dimension(:,:,:,:), allocatable :: g_aijj
+      real(dp), dimension(:,:,:,:), allocatable :: g_ajji
+      real(dp), dimension(:,:,:,:), allocatable :: g_abii
+      real(dp), dimension(:,:,:,:), allocatable :: g_aiib
+!
+      integer :: req0, req2, req1_i, req1_k, current_i_batch, current_k_batch
+      integer :: req1_j, current_j_batch, req1_a, current_a_batch
+!
+      type(batching_index) :: batch_i, batch_k, batch_j, batch_a
 !
 !     Set F_pq = h_pq (t1-transformed) 
 !
@@ -78,71 +92,211 @@ contains
 !
 !     Add occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
-      call mem%alloc(g_ijkl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
-      call wf%get_oooo(g_ijkl)
+!     Batching over i and k
+!
+      req0 = 0
+!
+      req1_i = (wf%integrals%n_J)*(wf%n_o)
+      req1_k = (wf%integrals%n_J)*(wf%n_o)
+!
+      req2 =  (wf%n_o**2)
+!
+      batch_i = batching_index(wf%n_o)
+      batch_k = batching_index(wf%n_o)
+!
+      call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2)
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+         do current_k_batch = 1, batch_k%num_batches
+!
+            call batch_k%determine_limits(current_k_batch)
+!
+            call mem%alloc(g_ijkl, batch_i%length, wf%n_o, batch_k%length, wf%n_o)
+!
+            call wf%get_oooo(g_ijkl,                        &
+                              batch_i%first, batch_i%last,  &
+                              1, wf%n_o,                    &
+                              batch_k%first, batch_k%last,  &
+                              1, wf%n_o)
 !
 !$omp parallel do private(i,j,k)
-      do j = 1, wf%n_o
-         do i = 1, wf%n_o
-            do k = 1, wf%n_o
+            do j = 1, wf%n_o
+               do i = 1, batch_i%length
+                  do k = 1, batch_k%length
 !
-               F_pq(i, j) = F_pq(i, j) + two*g_ijkl(i,j,k,k) - g_ijkl(i,k,k,j)
+                     F_pq(i + batch_i%first - 1, j) = F_pq(i + batch_i%first - 1, j) &
+                                 + two*g_ijkl(i, j, k, k + batch_k%first - 1) &
+                                 - g_ijkl(i, k + batch_k%first - 1, k, j)
 !
+                  enddo
+               enddo
             enddo
-         enddo
-      enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g_ijkl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+            call mem%dealloc(g_ijkl, batch_i%length, wf%n_o, batch_k%length, wf%n_o)
+!
+         enddo
+!
+      enddo
 !
 !     Add occupied-virtual contributions: F_ia = F_ia + sum_j (2*g_iajj - g_ijja)
 !                                         F_ai = F_ai + sum_j (2*g_aijj - g_ajji)
 !
-      call mem%alloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call wf%get_ovoo(g_iajk)
+!     batching over i and j
 !
-      call mem%alloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
-      call wf%get_vooo(g_aijk)
+      req0 = 0
 !
-!$omp parallel do private(i,a,j)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-            do j = 1, wf%n_o
+      req1_i = (wf%integrals%n_J)*(wf%n_v)
+      req1_j = (wf%integrals%n_J)*(wf%n_v)
 !
-               F_pq(i, a + wf%n_o) = F_pq(i, a + wf%n_o) + two*g_iajk(i,a,j,j) - g_iajk(j,a,i,j)
-               F_pq(a + wf%n_o, i) = F_pq(a + wf%n_o, i) + two*g_aijk(a,i,j,j) - g_aijk(a,j,j,i)
+      req2 =  2*wf%n_o*wf%n_v
 !
+      batch_i = batching_index(wf%n_o)
+      batch_j = batching_index(wf%n_o)
+!
+      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+         do current_j_batch = 1, batch_j%num_batches
+!
+            call batch_j%determine_limits(current_j_batch)
+!
+!           F_ia = F_ia + sum_j (2*g_iajj - g_ijja)
+!
+            call mem%alloc(g_iajj, batch_i%length, wf%n_v, batch_j%length, batch_j%length)
+            call mem%alloc(g_ijja, batch_i%length, batch_j%length, batch_j%length, wf%n_v)
+!
+            call wf%get_ovoo(g_iajj,                        &
+                              batch_i%first, batch_i%last,  &
+                              1, wf%n_v,                    &
+                              batch_j%first, batch_j%last,  &
+                              batch_j%first, batch_j%last)
+!
+            call wf%get_ooov(g_ijja,                        &
+                              batch_i%first, batch_i%last,  &
+                              batch_j%first, batch_j%last,  &
+                              batch_j%first, batch_j%last,  &
+                              1, wf%n_v)
+!
+!$omp parallel do private (a, i, j)
+            do a = 1, wf%n_v
+               do i = 1, batch_i%length
+                  do j = 1, batch_j%length
+!
+                     F_pq(i + batch_i%first - 1, a + wf%n_o) & 
+                        = F_pq(i + batch_i%first - 1, a + wf%n_o) &
+                        + two*g_iajj(i, a, j, j) - g_ijja(i, j, j, a)
+!
+                  enddo
+               enddo 
             enddo
+!$omp end parallel do
+!
+            call mem%dealloc(g_ijja, batch_i%length, batch_j%length, batch_j%length, wf%n_v)
+            call mem%dealloc(g_iajj, batch_i%length, wf%n_v, batch_j%length, batch_j%length)
+!
+!           F_ai = F_ai + sum_j (2*g_aijj - g_ajji)
+!
+            call mem%alloc(g_aijj, wf%n_v, batch_i%length, batch_j%length, batch_j%length)
+            call mem%alloc(g_ajji, wf%n_v, batch_j%length, batch_j%length, batch_i%length)
+!
+            call wf%get_vooo(g_aijj,                        &
+                              1, wf%n_v,                    &
+                              batch_i%first, batch_i%last,  &
+                              batch_j%first, batch_j%last,  &
+                              batch_j%first, batch_j%last)
+!
+            call wf%get_vooo(g_ajji,                        &
+                              1, wf%n_v,                    &
+                              batch_j%first, batch_j%last,  &
+                              batch_j%first, batch_j%last,  &
+                              batch_i%first, batch_i%last)
+!
+!$omp parallel do private(i, a, j)
+            do i = 1, batch_i%length
+               do a = 1, wf%n_v
+                  do j = 1, batch_j%length
+!
+                     F_pq(a + wf%n_o, i + batch_i%first - 1)   &
+                     = F_pq(a + wf%n_o, i + batch_i%first - 1) &
+                     + two*g_aijj(a, i, j, j) - g_ajji(a, j, j, i)
+!
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+            call mem%dealloc(g_aijj, wf%n_v, batch_i%length, batch_j%length, batch_j%length)
+            call mem%dealloc(g_ajji, wf%n_v, batch_j%length, batch_j%length, batch_i%length)
 !
          enddo
       enddo
-!$omp end parallel do
-!
-      call mem%dealloc(g_iajk, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-      call mem%dealloc(g_aijk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
 !     Add virtual-virtual contributions: F_ab = h_ab + sum_i (2*g_abii - g_aiib) 
 !
-      call mem%alloc(g_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call wf%get_vvoo(g_abij)
+!     batching over a and i
 !
-      call mem%alloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call wf%get_voov(g_aijb)
+      req0 = 0
 !
-!$omp parallel do private(a,b,i)
-      do a = 1, wf%n_v
-         do b = 1, wf%n_v
-            do i = 1, wf%n_o
+      req1_i = (wf%integrals%n_J)*(wf%n_v)
+      req1_a = (wf%integrals%n_J)*(wf%n_v)
 !
-               F_pq(wf%n_o + a, wf%n_o + b) = F_pq(wf%n_o + a, wf%n_o + b) + two*g_abij(a,b,i,i) - g_aijb(a,i,i,b)
+      req2 =  2*wf%n_o*wf%n_v
 !
+      batch_i = batching_index(wf%n_o)
+      batch_a = batching_index(wf%n_v)
+!
+      call mem%batch_setup(batch_i, batch_a, req0, req1_i, req1_a, req2)
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+         do current_a_batch = 1, batch_a%num_batches
+!
+            call batch_a%determine_limits(current_a_batch)
+!
+            call mem%alloc(g_abii, batch_a%length, wf%n_v, batch_i%length, batch_i%length)
+!
+            call wf%get_vvoo(g_abii,                        &
+                              batch_a%first, batch_a%last,  &
+                              1, wf%n_v,                    &
+                              batch_i%first, batch_i%last,  &
+                              batch_i%first, batch_i%last)
+!
+            call mem%alloc(g_aiib, batch_a%length, batch_i%length, batch_i%length, wf%n_v)
+!
+            call wf%get_voov(g_aiib,                        &
+                              batch_a%first, batch_a%last,  &
+                              batch_i%first, batch_i%last,  &
+                              batch_i%first, batch_i%last,  &
+                              1, wf%n_v)
+!
+!$omp parallel do private (a, b, i)
+            do a = 1, batch_a%length
+               do b = 1, wf%n_v
+                  do i = 1, batch_i%length
+!
+                     F_pq(a + batch_a%first - 1 + wf%n_o, b + wf%n_o) &
+                     = F_pq(a + batch_a%first - 1 + wf%n_o, b + wf%n_o) &
+                     + two*g_abii(a, b, i, i) - g_aiib(a, i, i, b)
+!
+                  enddo
+               enddo
             enddo
-         enddo
-      enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-      call mem%dealloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+            call mem%dealloc(g_aiib, batch_a%length, batch_i%length, batch_i%length, wf%n_v)
+            call mem%dealloc(g_abii, batch_a%length, wf%n_v, batch_i%length, batch_i%length)
+!
+         enddo
+      enddo
 !
       call wf%set_fock(F_pq) 
       call mem%dealloc(F_pq, wf%n_mo, wf%n_mo)

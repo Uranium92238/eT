@@ -4,7 +4,7 @@ documentation/docs/
 *sublime*
 *.swp
 *.swo
-.DS_Store
+.DS_Store*
 __pycache__
 *sublime*
 .vscode/
