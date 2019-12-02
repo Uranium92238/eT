@@ -229,7 +229,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_iajb
 !
-      real(dp) :: correlation_energy 
+      real(dp) :: omp_correlation_energy
 !
       integer :: a, i, b, j
 !
@@ -237,17 +237,17 @@ contains
 !
       call wf%get_ovov(g_iajb)
 !
-      correlation_energy = zero 
+      omp_correlation_energy = zero
 !
-!$omp parallel do private(a,i,j,b) reduction(+:correlation_energy)
+!$omp parallel do private(a,i,j,b) reduction(+:omp_correlation_energy)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
             do j = 1, wf%n_o
                do b = 1, wf%n_v
 !
-                  correlation_energy = correlation_energy &
-                                       + (wf%t1(a,i))*(wf%t1(b,j)) &
-                                       * (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
+                  omp_correlation_energy = omp_correlation_energy &
+                                        + (wf%t1(a,i))*(wf%t1(b,j)) &
+                                        * (two*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
 !
                enddo
             enddo
@@ -257,7 +257,9 @@ contains
 !
       call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      wf%energy = wf%hf_energy + correlation_energy
+      wf%correlation_energy = omp_correlation_energy 
+!
+      wf%energy = wf%hf_energy + wf%correlation_energy
 !
    end subroutine calculate_energy_ccs
 !

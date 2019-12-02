@@ -196,6 +196,7 @@ subroutine cc_calculation(system)
    use lowmem_cc2_class, only: lowmem_cc2
    use ccsd_class, only: ccsd
    use cc3_class, only: cc3
+   use ccsdpt_class, only: ccsdpt
    use mp2_class, only: mp2 
    use mlcc2_class, only: mlcc2
 !
@@ -240,6 +241,10 @@ subroutine cc_calculation(system)
       case ('cc3')
 !
          cc_wf = cc3(system)
+!
+      case ('ccsd(t)')
+!
+         cc_wf = ccsdpt(system)
 !
       case ('mp2')
 !

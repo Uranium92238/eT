@@ -71,10 +71,12 @@ module mo_integral_tool_class
       procedure :: write_t1_cholesky            => write_t1_cholesky_mo_integral_tool
 !
       procedure :: get_g_pqrs_t1                => get_g_pqrs_t1_mo_integral_tool
+      procedure :: get_g_pqrs_t1_complex        => get_g_pqrs_t1_mo_integral_tool_complex
+!
       procedure :: construct_g_pqrs_t1          => construct_g_pqrs_t1_mo_integral_tool
       procedure :: construct_g_pqrs_t1_complex  => construct_g_pqrs_t1_mo_integral_tool_complex
 !
-      procedure :: get_g_pqrs_t1_complex        => get_g_pqrs_t1_mo_integral_tool_complex
+      procedure :: construct_g_pqrs_mo          => construct_g_pqrs_mo_mo_integral_tool
 !
       procedure :: construct_cholesky_ij        => construct_cholesky_ij_mo_integral_tool
       procedure :: construct_cholesky_ab        => construct_cholesky_ab_mo_integral_tool
@@ -515,6 +517,59 @@ contains
       call mem%dealloc(L_J_rs, integrals%n_J, dim_r, dim_s)
 !
    end subroutine construct_g_pqrs_t1_mo_integral_tool
+!
+!
+   subroutine construct_g_pqrs_mo_mo_integral_tool(integrals, g_pqrs, first_p, last_p, first_q, last_q, &
+                                                                     first_r, last_r, first_s, last_s)
+!!
+!!    Construct g_pqrs MO
+!!    written by Alexander C. Paul and Rolf H. Myhre, Nov 2019
+!!    
+!!    based on construct_gpqrs_t1 by Eirik F. Kjønstad, Mar 2019
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!
+      integer, intent(in) :: first_p, last_p
+      integer, intent(in) :: first_q, last_q
+      integer, intent(in) :: first_r, last_r
+      integer, intent(in) :: first_s, last_s
+!
+      real(dp), dimension(last_p-first_p+1,last_q-first_q+1,last_r-first_r+1,last_s-first_s+1), intent(out) :: g_pqrs
+!
+      integer :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_pq, L_J_rs
+!
+      dim_p = last_p - first_p + 1
+      dim_q = last_q - first_q + 1
+      dim_r = last_r - first_r + 1
+      dim_s = last_s - first_s + 1
+!
+      call mem%alloc(L_J_pq, integrals%n_J, dim_p, dim_q)
+      call mem%alloc(L_J_rs, integrals%n_J, dim_r, dim_s)
+!
+      call integrals%read_cholesky(L_J_pq, first_p, last_p, first_q, last_q)
+      call integrals%read_cholesky(L_J_rs, first_r, last_r, first_s, last_s)
+!
+      call dgemm('T', 'N',       &
+                  dim_p*dim_q,   &
+                  dim_r*dim_s,   &
+                  integrals%n_J, &
+                  one,           &
+                  L_J_pq,        &
+                  integrals%n_J, &
+                  L_J_rs,        &
+                  integrals%n_J, &
+                  zero,          &
+                  g_pqrs,        &
+                  dim_p*dim_q)
+!
+      call mem%dealloc(L_J_pq, integrals%n_J, dim_p, dim_q)
+      call mem%dealloc(L_J_rs, integrals%n_J, dim_r, dim_s)
+!
+   end subroutine construct_g_pqrs_mo_mo_integral_tool
 !
 !
    subroutine construct_g_pqrs_t1_mo_integral_tool_complex(integrals, g_pqrs, first_p, last_p, first_q, last_q, &

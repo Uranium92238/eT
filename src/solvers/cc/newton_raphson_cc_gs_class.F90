@@ -95,7 +95,6 @@ module newton_raphson_cc_gs_class
       procedure :: read_settings            => read_settings_newton_raphson_cc_gs
       procedure :: print_banner             => print_banner_newton_raphson_cc_gs
       procedure :: print_settings           => print_settings_newton_raphson_cc_gs
-      procedure, nopass :: print_summary    => print_summary_newton_raphson_cc_gs
 !
    end type newton_raphson_cc_gs
 !
@@ -331,7 +330,7 @@ contains
          call output%printf('Convergence criterion met in (i0) iterations!', &
                              ints=[iteration], pl='m', fs='(/t3,a)')
 !
-         call solver%print_summary(wf)
+         call wf%print_gs_summary()
 !
       endif 
 !
@@ -516,29 +515,6 @@ contains
       call input%get_keyword_in_section('storage', 'solver cc gs', solver%storage)
 !
    end subroutine read_settings_newton_raphson_cc_gs
-!
-!
-   subroutine print_summary_newton_raphson_cc_gs(wf)
-!!
-!!    Print summary 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-!
-      real(dp) :: t1_diagnostic 
-!
-      call output%printf('- DIIS accelerated Newton-Raphson CC ground state solver summary:', pl='m', fs='(/t3,a)')
-!
-      call output%printf('Final ground state energy (a.u.): (f18.12)', pl='m', reals=[wf%energy], fs='(/t6,a)')
-!
-      call wf%print_dominant_amplitudes()
-!
-      t1_diagnostic = wf%get_t1_diagnostic() 
-      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', pl='m', reals=[t1_diagnostic], fs='(/t6,a)')
-!
-   end subroutine print_summary_newton_raphson_cc_gs
 !
 !
 end module newton_raphson_cc_gs_class

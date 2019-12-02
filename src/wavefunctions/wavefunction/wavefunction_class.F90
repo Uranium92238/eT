@@ -43,6 +43,8 @@ module wavefunction_class
       real(dp)    :: energy
       complex(dp) :: energy_complex
 !
+      real(dp)    :: correlation_energy
+!
       real(dp),    dimension(3) :: dipole_moment
       complex(dp), dimension(3) :: dipole_moment_complex
 !

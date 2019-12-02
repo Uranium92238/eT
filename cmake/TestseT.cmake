@@ -151,6 +151,8 @@ add_eT_runtest(ccsd_td_gl4                                  "eT;short;ccsd;compl
 add_eT_runtest(ccsd_td_gl6                                  "eT;short;ccsd;complex;td")
 add_eT_runtest(restart_ccsd_es                              "eT;short;ccsd;es;restart")
 #
+add_eT_runtest(ccsdpt_gs_energy                             "eT;short;ccsdpt;gs")
+#
 add_eT_runtest(cc3_gs_energy                                "eT;short;cc3;gs")
 add_eT_runtest(cc3_dipole                                   "eT;short;cc3;gs;dipole")
 add_eT_runtest(cc3_frozen_core                              "eT;short;cc3;gs;es;frozen core")

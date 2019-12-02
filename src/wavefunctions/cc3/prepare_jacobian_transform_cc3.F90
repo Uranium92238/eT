@@ -353,7 +353,6 @@ contains
       call mem%dealloc(h_pqrs, wf%n_v , wf%n_v , wf%n_o , batch_k%length)
 !
       call wf%g_lbkc_t%close_()
-
 !
    end subroutine prepare_cc3_g_lbkc_t_file_cc3
 !
@@ -629,18 +628,18 @@ contains
 !
 !                       Construct t^{abc}_{ijk} for given i, j, k
 !
-                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abij,  &
-                                                g_bdci_p(:,:,:,i_rel),           &
-                                                g_bdcj_p(:,:,:,j_rel),           &
-                                                g_bdck_p(:,:,:,k_rel),           &
-                                                g_ljci_p(:,:,j_rel,i_rel),       &
-                                                g_lkci_p(:,:,k_rel,i_rel),       &
-                                                g_lkcj_p(:,:,k_rel,j_rel),       &
-                                                g_licj_p(:,:,i_rel,j_rel),       &
-                                                g_lick_p(:,:,i_rel,k_rel),       &
-                                                g_ljck_p(:,:,j_rel,k_rel))
+                        call wf%construct_W(i, j, k, t_abc, u_abc, t_abij, &
+                                            g_bdci_p(:,:,:,i_rel),         &
+                                            g_bdcj_p(:,:,:,j_rel),         &
+                                            g_bdck_p(:,:,:,k_rel),         &
+                                            g_ljci_p(:,:,j_rel,i_rel),     &
+                                            g_lkci_p(:,:,k_rel,i_rel),     &
+                                            g_lkcj_p(:,:,k_rel,j_rel),     &
+                                            g_licj_p(:,:,i_rel,j_rel),     &
+                                            g_lick_p(:,:,i_rel,k_rel),     &
+                                            g_ljck_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_eps(i, j, k, t_abc)
+                        call wf%divide_by_orbital_differences(i, j, k, t_abc)
 !
                         call wf%construct_x_intermediates(i, j, k, t_abc, u_abc, v_abc,  &
                                                           X_alij,                        &

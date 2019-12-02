@@ -673,20 +673,20 @@ contains
 !
                if (i .eq. j .and. i .eq. k) cycle
 !
-               call wf%omega_cc3_W_calc(i, j, k,               &
-                                       t_abcijk(:,:,:,i,j,k),  &
-                                       u_abc, t_abij,          &
-                                       g_bdci(:,:,:,i),        &
-                                       g_bdci(:,:,:,j),        &
-                                       g_bdci(:,:,:,k),        &
-                                       g_ljci(:,:,j,i),        &
-                                       g_ljci(:,:,k,i),        &
-                                       g_ljci(:,:,k,j),        &
-                                       g_ljci(:,:,i,j),        &
-                                       g_ljci(:,:,i,k),        &
-                                       g_ljci(:,:,j,k))
+               call wf%construct_W(i, j, k,                &
+                                   t_abcijk(:,:,:,i,j,k),  &
+                                   u_abc, t_abij,          &
+                                   g_bdci(:,:,:,i),        &
+                                   g_bdci(:,:,:,j),        &
+                                   g_bdci(:,:,:,k),        &
+                                   g_ljci(:,:,j,i),        &
+                                   g_ljci(:,:,k,i),        &
+                                   g_ljci(:,:,k,j),        &
+                                   g_ljci(:,:,i,j),        &
+                                   g_ljci(:,:,i,k),        &
+                                   g_ljci(:,:,j,k))
 !
-                  call wf%omega_cc3_eps(i, j, k, t_abcijk(:,:,:,i,j,k))
+                  call wf%divide_by_orbital_differences(i, j, k, t_abcijk(:,:,:,i,j,k))
 !
             end do 
          end do

@@ -57,6 +57,8 @@ contains
 !!    On exit, c is overwritten by rho. That is, c(ai) = rho_a_i,
 !!    and c(aibj) = rho_aibj.
 !!
+      use array_utilities, only: scale_diagonal
+!
       implicit none
 !
       class(cc3) :: wf
@@ -540,18 +542,18 @@ contains
 !
 !                       Construct t^{abc}_{ijk} for given i, j, k
 !
-                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abij,  &
-                                                   g_bdci_p(:,:,:,i_rel),        &
-                                                   g_bdcj_p(:,:,:,j_rel),        &
-                                                   g_bdck_p(:,:,:,k_rel),        &
-                                                   g_ljci_p(:,:,j_rel,i_rel),    &
-                                                   g_lkci_p(:,:,k_rel,i_rel),    &
-                                                   g_lkcj_p(:,:,k_rel,j_rel),    &
-                                                   g_licj_p(:,:,i_rel,j_rel),    &
-                                                   g_lick_p(:,:,i_rel,k_rel),    &
-                                                   g_ljck_p(:,:,j_rel,k_rel))
+                        call wf%construct_W(i, j, k, t_abc, u_abc, t_abij, &
+                                            g_bdci_p(:,:,:,i_rel),         &
+                                            g_bdcj_p(:,:,:,j_rel),         &
+                                            g_bdck_p(:,:,:,k_rel),         &
+                                            g_ljci_p(:,:,j_rel,i_rel),     &
+                                            g_lkci_p(:,:,k_rel,i_rel),     &
+                                            g_lkcj_p(:,:,k_rel,j_rel),     &
+                                            g_licj_p(:,:,i_rel,j_rel),     &
+                                            g_lick_p(:,:,i_rel,k_rel),     &
+                                            g_ljck_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_eps(i, j, k, t_abc)
+                        call wf%divide_by_orbital_differences(i, j, k, t_abc)
 !
                         call wf%jacobian_cc3_b2_fock(i, j, k, t_abc, u_abc, rho_abij, F_ov_ck_c1)
 !
@@ -1065,30 +1067,30 @@ contains
 !                       using the same routine once for t1-transformed and once for 
 !                       c1-transformed integrals
 !
-                        call wf%omega_cc3_W_calc(i, j, k, c_abc, u_abc, c_abij, &
-                                                g_bdci_p(:,:,:,i_rel),          &
-                                                g_bdcj_p(:,:,:,j_rel),          &
-                                                g_bdck_p(:,:,:,k_rel),          &
-                                                g_ljci_p(:,:,j_rel,i_rel),      &
-                                                g_lkci_p(:,:,k_rel,i_rel),      &
-                                                g_lkcj_p(:,:,k_rel,j_rel),      &
-                                                g_licj_p(:,:,i_rel,j_rel),      &
-                                                g_lick_p(:,:,i_rel,k_rel),      &
-                                                g_ljck_p(:,:,j_rel,k_rel))
+                        call wf%construct_W(i, j, k, c_abc, u_abc, c_abij,  &
+                                            g_bdci_p(:,:,:,i_rel),          &
+                                            g_bdcj_p(:,:,:,j_rel),          &
+                                            g_bdck_p(:,:,:,k_rel),          &
+                                            g_ljci_p(:,:,j_rel,i_rel),      &
+                                            g_lkci_p(:,:,k_rel,i_rel),      &
+                                            g_lkcj_p(:,:,k_rel,j_rel),      &
+                                            g_licj_p(:,:,i_rel,j_rel),      &
+                                            g_lick_p(:,:,i_rel,k_rel),      &
+                                            g_ljck_p(:,:,j_rel,k_rel))
 !
-                        call wf%omega_cc3_W_calc(i, j, k, c_abc, u_abc, t_abij, &
-                                                g_bdci_c1_p(:,:,:,i_rel),       &
-                                                g_bdcj_c1_p(:,:,:,j_rel),       &
-                                                g_bdck_c1_p(:,:,:,k_rel),       &
-                                                g_ljci_c1_p(:,:,j_rel,i_rel),   &
-                                                g_lkci_c1_p(:,:,k_rel,i_rel),   &
-                                                g_lkcj_c1_p(:,:,k_rel,j_rel),   &
-                                                g_licj_c1_p(:,:,i_rel,j_rel),   &
-                                                g_lick_c1_p(:,:,i_rel,k_rel),   &
-                                                g_ljck_c1_p(:,:,j_rel,k_rel),   &
-                                                .true.) ! Do not overwrite c_abc
+                        call wf%construct_W(i, j, k, c_abc, u_abc, t_abij,  &
+                                            g_bdci_c1_p(:,:,:,i_rel),       &
+                                            g_bdcj_c1_p(:,:,:,j_rel),       &
+                                            g_bdck_c1_p(:,:,:,k_rel),       &
+                                            g_ljci_c1_p(:,:,j_rel,i_rel),   &
+                                            g_lkci_c1_p(:,:,k_rel,i_rel),   &
+                                            g_lkcj_c1_p(:,:,k_rel,j_rel),   &
+                                            g_licj_c1_p(:,:,i_rel,j_rel),   &
+                                            g_lick_c1_p(:,:,i_rel,k_rel),   &
+                                            g_ljck_c1_p(:,:,j_rel,k_rel),   &
+                                            overwrite = .false.) ! overwrite R_abc
 !
-                        call wf%omega_cc3_eps(i, j, k, c_abc, omega)
+                        call wf%divide_by_orbital_differences(i, j, k, c_abc, omega)
 !
                         call wf%omega_cc3_a_n7(i, j, k, c_abc, u_abc, v_abc,  &
                                                rho_abij,                      &
