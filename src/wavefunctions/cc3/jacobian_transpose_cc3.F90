@@ -71,13 +71,17 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj, sigma_abij
 !
       type(timings) :: cc3_timer, cc3_timer_t3_a1, cc3_timer_t3_b1, cc3_timer_c3
-      type(timings) :: ccsd_timer
+      type(timings) :: ccsd_timer, timer 
 !
-      cc3_timer_t3_a1 = timings('Time in CC3 T3 a1')
-      cc3_timer_t3_b1 = timings('Time in CC3 T3 b1')
-      cc3_timer_c3   = timings('Time in CC3 C3')
-      cc3_timer      = timings('Total CC3 contribution')
-      ccsd_timer     = timings('Total CCSD contribution')
+      cc3_timer_t3_a1   = timings('Time in CC3 T3 a1', pl='normal')
+      cc3_timer_t3_b1   = timings('Time in CC3 T3 b1', pl='normal')
+      cc3_timer_c3      = timings('Time in CC3 C3', pl='normal')
+!
+      timer             = timings('Jacobian transpose CC3', pl='normal')
+      cc3_timer         = timings('Jacobian transpose CC3 (CC3 contribution)', pl='normal')
+      ccsd_timer        = timings('Jacobian transpose CC3 (CCSD contribution)', pl='normal')
+!
+      call timer%turn_on()
 !
 !     Allocate and zero the transformed singles vector
 !
@@ -199,6 +203,8 @@ contains
       call packin(c(wf%n_t1 + 1 : wf%n_es_amplitudes), sigma_abij, wf%n_v, wf%n_o)
 !
       call mem%dealloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine effective_jacobian_transpose_transformation_cc3
 !

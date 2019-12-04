@@ -71,6 +71,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: sigma_ai
 !
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCS', pl='normal')
+      call timer%turn_on()
+!
 !     Allocate the transformed vector & add the terms to it
 !
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
@@ -83,6 +88,8 @@ contains
 !
       call dcopy((wf%n_o)*(wf%n_v), sigma_ai, 1, b, 1)
       call mem%dealloc(sigma_ai, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_transpose_transformation_ccs
 !
@@ -104,6 +111,11 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_ai
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCS A1', pl='verbose')
+      call timer%turn_on()
 !
 !     Add sum_c F_ca b_ci = sum_c F_ac^T b_ci
 !
@@ -135,6 +147,8 @@ contains
                   sigma_ai,   &
                   wf%n_v)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_ccs_a1_ccs
 !
 !
@@ -165,6 +179,11 @@ contains
 !
       integer              :: req0, req1, current_a_batch
       type(batching_index) :: batch_a
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCS B1', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Construct L_aick = L_ckia
 !
@@ -235,6 +254,8 @@ contains
                   (wf%n_v)*(wf%n_o))
 !
       call mem%dealloc(L_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_transpose_ccs_b1_ccs
 !

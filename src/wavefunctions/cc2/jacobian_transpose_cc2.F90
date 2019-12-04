@@ -53,7 +53,14 @@ contains
 !
       class(cc2), intent(inout) :: wf
 !
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Prepare for Jacobian transpose CC2', pl='normal')
+      call timer%turn_on()
+!
       call wf%save_jacobian_transpose_a1_intermediates(wf%u_aibj)
+!
+      call timer%turn_off()
 !
    end subroutine prepare_for_jacobian_transpose_cc2
 !
@@ -84,9 +91,9 @@ contains
       real(dp), dimension(:,:), allocatable :: sigma_ai
       real(dp), dimension(:,:,:,:), allocatable :: sigma_aibj
 !
-      type(timings) :: timer
+      type(timings), allocatable :: timer
 !
-      timer = timings('Jacobian transpose transformation CC2')
+      timer = timings('Jacobian transpose CC2', pl='normal')
       call timer%turn_on()
 !
 !     Allocate and zero the transformed vecotr (singles part)
@@ -171,9 +178,9 @@ contains
 !
       integer :: a, i, b, j
 !
-      type(timings) :: timer
+      type(timings), allocatable :: timer
 !
-      timer = timings('jacobian transpose b2 cc2')
+      timer = timings('Jacobian transpose CC2 B2', pl='verbose')
       call timer%turn_on()
 !
 !$omp parallel do private(a, i, b, j)
