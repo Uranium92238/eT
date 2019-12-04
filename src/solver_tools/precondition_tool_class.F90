@@ -31,11 +31,11 @@ module precondition_tool_class
 !!
 !!       Then you can use
 !!
-!!          call precondition_tool%do(R) -> R(I) = -R(I)/X(I)
+!!          call precondition_tool%do(R) -> R(I) = R(I)/X(I)
 !!
 !!       or 
 !!           
-!!          call precondition_tool%do(R, shift=alpha) -> R(I) = -R(I)/(X(I) - alpha).
+!!          call precondition_tool%do(R, shift=alpha) -> R(I) = R(I)/(X(I) - alpha).
 !!
 !!    Class was made to replace, and is based on, precondition functionality coded 
 !!    in several solvers and solver tools originally written by Sarai D. Folkestad 
@@ -79,7 +79,7 @@ contains
 !!    Written by Eirik F. Kjønstad, 2019
 !!
 !!    preconditioner: vector X that will precondition vectors as 
-!!                    R(I) -> -R(I)/(X(I) - shift).
+!!                    R(I) -> R(I)/(X(I) - shift).
 !!
 !!    dim_: length of the preconditioner vector X  
 !!
@@ -105,7 +105,7 @@ contains
 !!
 !!    Does the precondition operation:
 !!
-!!       R(i) = -prefactor*R(i)/(preconditioner(i) - shift).
+!!       R(i) = prefactor*R(i)/(preconditioner(i) - shift).
 !!
 !!    The preconditioner is set by the constructor.
 !!
@@ -153,7 +153,7 @@ contains
 !$omp parallel do private(i)
       do i = 1, tool%dim_
 !
-         R(i) = -prefactor_local*R(i)/(tool%preconditioner(i) - shift_local)
+         R(i) = prefactor_local*R(i)/(tool%preconditioner(i) - shift_local)
 !
       enddo  
 !$omp end parallel do

@@ -329,7 +329,8 @@ contains
 !           Precondition omega, shift amplitudes by preconditioned omega, 
 !           then ask for the DIIS update of the amplitudes 
 !
-            call solver%preconditioner%do_(omega)
+            call solver%preconditioner%do_(omega, &
+                                           prefactor=-one)
 !
             call wf%get_amplitudes(amplitudes)
             call wf%form_newton_raphson_t_estimate(amplitudes, omega)

@@ -433,7 +433,9 @@ contains
 !
 !                 Form quasi-Newton estimate for X 
 !
-                  call solver%preconditioner%do_(R(:,state), shift=solver%energies(state))
+                  call solver%preconditioner%do_(R(:,state),                     &
+                                                 shift=solver%energies(state),   &
+                                                 prefactor=-one)
 !
                   call daxpy(wf%n_es_amplitudes, one, R(:, state), 1, X(:, state), 1)
 !
