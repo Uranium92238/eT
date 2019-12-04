@@ -1516,7 +1516,7 @@ contains
    end subroutine update_mlhf_inactive_fock_term_mlhf
 !
 !
-   module subroutine diagonalize_fock_frozen_hf_orbitals_mlhf(wf)
+   subroutine diagonalize_fock_frozen_hf_orbitals_mlhf(wf)
 !!
 !!    Diagonalize Fock frozen HF orbitals
 !!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
