@@ -302,7 +302,8 @@ contains
 !           Precondition residual, shift multipliers by preconditioned residual, 
 !           then ask for the DIIS update of the multipliers 
 !
-            call solver%preconditioner%do_(residual)
+            call solver%preconditioner%do_(residual, &
+                                           prefactor=-one)
 !
             call wf%get_multipliers(multipliers)
             call daxpy(wf%n_gs_amplitudes, one, residual, 1, multipliers, 1)

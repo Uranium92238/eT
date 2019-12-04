@@ -597,7 +597,10 @@ contains
       call mem%alloc(trial, davidson%n_parameters)
       call dcopy(davidson%n_parameters, R, 1, trial, 1)
 !
-      if (davidson%do_precondition) call davidson%preconditioner%do_(trial, shift=davidson%omega_re(n))
+      if (davidson%do_precondition) &
+         call davidson%preconditioner%do_(trial,                        &
+                                          shift=davidson%omega_re(n),   &
+                                          prefactor=-one)
 !
 !     Renormalize 
 !
