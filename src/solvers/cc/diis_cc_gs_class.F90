@@ -67,8 +67,7 @@ module diis_cc_gs_class
 !
    type :: diis_cc_gs
 !
-      character(len=100) :: tag = ':: DIIS CC ground solver'
-      character(len=100) :: author = ':: E. F. Kjønstad, S. D. Folkestad, 2018'
+      character(len=100) :: name_ = 'DIIS coupled cluster ground state solver'
 !
       character(len=500) :: description1 = 'A DIIS CC ground state amplitude equations solver. It uses &
                                            &an extrapolation of previous quasi-Newton perturbation theory &
@@ -225,7 +224,7 @@ contains
       call output%printf('DIIS dimension:           (i9)', ints=[solver%diis_dimension], fs='(/t6, a)', pl='minimal')
       call output%printf('Max number of iterations: (i9)', ints=[solver%max_iterations], fs='(t6, a)', pl='minimal')
 !
-      call output%printf('Storage:                    '//trim(solver%storage), fs='(/t6, a)', pl='minimal')
+      call output%printf('Storage: '//trim(solver%storage), fs='(/t6, a)', pl='minimal')
 !
       if (solver%crop) then 
 !
@@ -313,7 +312,8 @@ contains
 !
             call output%print_separator('n', 63,'-')
 !
-           call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
+           call output%printf('Convergence criterion met in (i0) iterations!', &
+               ints=[iteration], fs='(t3,a)', pl='normal') 
 !
             if (.not. converged_energy) then 
 !
@@ -414,8 +414,9 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      call output%printf(solver%tag, pl='m', fs='(//t3,a)')
-      call output%printf(solver%author, pl='m', fs='(t3,a)')
+      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
       call output%printf(solver%description1, pl='m', ffs='(/t3,a)')
 !
    end subroutine print_banner_diis_cc_gs

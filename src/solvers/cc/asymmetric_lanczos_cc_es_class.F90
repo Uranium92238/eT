@@ -138,9 +138,8 @@ contains
 !
 !     Set printables
 !
-      solver%name_  = 'Asymmetric Lanczos solver'
-      solver%tag    = 'Asymmetric Lanczos'
-      solver%author = 'T. Moitra, S. D. Folkestad and S. Coriani, 2019'
+      solver%name_  = 'Asymmetric Lanczos excited state solver'
+      solver%tag    = 'asymmetric lanczos'
 !
       solver%description1 = 'An asymmetric Lanczos solver builds a reduced space&
                & tridiagonal representation of the CC Jacobian of dimension defined&
@@ -304,8 +303,8 @@ contains
 !
             if (lanczos%chain_length .lt. solver%chain_length) then 
 !
-               call output%printf('WARNING: Chain length value reset = (i4)', &
-                  & ints=[lanczos%chain_length], pl='m', fs='(/t6,a)')
+               call output%warning_msg('Chain length value reset = (i4)', &
+                  & ints=[lanczos%chain_length], fs='(/t6,a)')
 !
                exit 
 !
@@ -370,22 +369,14 @@ contains
 !
       class(asymmetric_lanczos_cc_es) :: solver 
 !
-      call output%printf('Lanczos seeds chosen as biorthonormalized EOM &
-             & eta^{op} xi^{op} vectors', pl ='m', fs='(/t6,a)')
+      call output%printf('- Settings for coupled cluster excited state solver (' //trim(solver%tag) // '):', &
+                              pl='m', fs='(/t3,a)')
 !
-      call output%printf('Chain length asked for: (i4)', &
+      call output%printf('Chain length: (i6)', &
           & ints=[solver%chain_length],pl='m',fs='(/t6,a)')
 !
-      if (solver%normalization == "asymmetric") then
-!
-         call output%printf('Unequally split biorthonormalization procedure requested', &
-             & pl='minimal', fs='(/t6,a)')
-!
-      elseif (solver%normalization == "symmetric") then
-!
-         call output%printf('Equally split biorthonormalization procedure requested', &
-             & pl='minimal', fs='(t6,a)')
-      endif
+     call output%printf('Biorthonormalization procedure: (a0)', &
+             & chars=[trim(solver%normalization)], pl='minimal', fs='(t6,a)') 
 !
    end subroutine print_settings_asymmetric_lanczos_cc_es
 !
@@ -603,7 +594,7 @@ contains
 !
       call output%print_separator('minimal', 70, '-', fs='(t6, a)')
 !
-     call output%printf('For full spectrum see file: ' //           &
+     call output%printf('For full spectrum, see file: ' //           &
              & trim(wf%system%name_) // '_' //                 &
              & trim(adjustl(chain_length_string)) // '_' //    &
              & component_string(component), pl='m', fs='(t6,a)')
@@ -622,8 +613,9 @@ contains
 !
       class(asymmetric_lanczos_cc_es) :: solver 
 !
-      call output%printf(':: ' // solver%name_, pl='m', fs='(//t3,a)')
-      call output%printf(':: ' // solver%author, pl='m', fs='(t3,a)')
+      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
       call output%printf(solver%description1, pl='n', ffs='(/t3,a)', fs='(t3,a)')
       call output%printf(solver%description2, pl='n', ffs='(/t3,a)', fs='(t3,a)')
 !

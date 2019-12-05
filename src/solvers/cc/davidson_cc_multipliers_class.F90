@@ -59,7 +59,6 @@ module davidson_cc_multipliers_class
    type :: davidson_cc_multipliers
 !
       character(len=100) :: name_ = 'Davidson coupled cluster multipliers solver'
-      character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       character(len=500) :: description = 'A Davidson solver that solves the multiplier equation: t-bar^T A = -η. This linear &
                                             &equation is solved in a reduced space. A description of the algorithm can be &  
@@ -199,7 +198,7 @@ contains
 !
       if (get_l2_norm(eta, wf%n_gs_amplitudes) < solver%residual_threshold) then 
 !
-         call output%printf('Convergence criterion already met!', pl='m', fs='(/t3,a)')
+         call output%printf('Convergence criterion already met!', pl='m', fs='(t3,a)')
 !
          call wf%initialize_multipliers()
 !
@@ -375,8 +374,10 @@ contains
 !
       class(davidson_cc_multipliers) :: solver 
 !
-      call output%printf(':: ' // solver%name_, pl='m', fs='(//t3,a)')
-      call output%printf(':: ' // solver%author, pl='m', fs='(t3,a)')
+      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+
+!
       call output%printf(solver%description, pl='n', ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_davidson_cc_multipliers

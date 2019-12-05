@@ -71,8 +71,7 @@ module diis_cc_multipliers_class
 !
    type :: diis_cc_multipliers
 !
-      character(len=100) :: tag = ':: DIIS multipliers solver'
-      character(len=100) :: author = ':: E. F. Kjønstad, S. D. Folkestad, 2018'
+      character(len=100) :: name_ = 'DIIS coupled cluster multipliers solver'
 !
       character(len=500) :: description1 = 'A DIIS CC multiplier equations solver. It combines a quasi-Newton &
                                            &perturbation theory estimate of the next multipliers, using &
@@ -201,11 +200,12 @@ contains
 !
       call output%printf('- DIIS CC multipliers solver settings:', pl='m', fs='(/t3,a)')
 !
-      call output%printf('Residual threshold: (e15.2)', pl='m', fs='(/t6,a)', &
+      call output%printf('Residual threshold:       (e9.2)', pl='m', fs='(/t6,a)', &
                           reals=[solver%residual_threshold])
-
-      call output%printf('DIIS dimension: (i19)', pl='m', fs='(/t6,a)', &
+!
+      call output%printf('DIIS dimension:           (i9)', pl='m', fs='(/t6,a)', &
                           ints=[solver%diis_dimension])
+!
       call output%printf('Max number of iterations: (i9)', pl='m', fs='(t6,a)', &
                           ints=[solver%max_iterations])
 !
@@ -295,7 +295,8 @@ contains
          if (converged_residual) then
 !
             call output%print_separator('n', 28,'-', fs='(t3,a)')
-            call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], pl='n', fs='(/t3,a)')
+            call output%printf('Convergence criterion met in (i0) iterations!', &
+                ints=[iteration], pl='n', fs='(t3,a)')
 !
          else
 !
@@ -374,8 +375,9 @@ contains
 !
       class(diis_cc_multipliers) :: solver 
 !
-      call output%printf(solver%tag, pl='m' , fs='(//t3,a)')
-      call output%printf(solver%author, pl='m', fs='(t3,a)')
+      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
       call output%printf(solver%description1, pl='m', ffs='(/t3,a)')
       call output%printf(solver%description2, pl='m', ffs='(/t3,a)')
 !

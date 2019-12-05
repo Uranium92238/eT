@@ -52,7 +52,7 @@ module complex_fft_class
 !
    type :: complex_fft
 !
-      character(len=100) :: name_, tag, author, file_name
+      character(len=100) :: name_, tag, file_name
 !
       character(len=500) :: description
       character(len=500) :: summary
@@ -100,7 +100,6 @@ contains
       solver%tag = trim(tag)
 !
       solver%name_ = 'Complex FFT ' // trim(solver%tag) // ' solver'
-      solver%author = 'A. Skeidsvoll, 2019'
       solver%description = 'A solver that calculates the complex fast Fourier transform (FFT) of the ' // trim(solver%tag) // &
                            ' time series by using modified FFTPACK routines.'
       solver%summary = 'Complex FFT finished successfully, angular frequency series has been written to file.'
@@ -331,8 +330,9 @@ contains
 !
       class(complex_fft) :: solver
 !
-      call output%printf(':: ' // solver%name_, pl='minimal', fs='(//t3,a)')
-      call output%printf(':: ' // solver%author, pl='minimal', fs='(t3,a)')
+      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
       call output%printf(solver%description, pl='normal', ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_complex_fft

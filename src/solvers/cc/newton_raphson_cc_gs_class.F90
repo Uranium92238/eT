@@ -64,8 +64,7 @@ module newton_raphson_cc_gs_class
 !
    type :: newton_raphson_cc_gs
 !
-      character(len=100) :: tag = ':: DIIS Newton-Raphson coupled cluster ground state solver'
-      character(len=100) :: author = ':: E. F. Kjønstad, S. D. Folkestad, 2019'
+      character(len=100) :: name_ = 'DIIS Newton-Raphson coupled cluster ground state solver'
 !
       character(len=500) :: description1 = 'A Newton-Raphson CC ground state equations solver. Solves the &
                                              &ground state equation using updates Δt based on the Newton equation, &
@@ -204,17 +203,17 @@ contains
       call output%printf('- DIIS accelerated Newton-Raphson CC ground state solver settings:', &
                           pl='m', fs='(/t3,a)')
 !
-      call output%printf('Omega threshold: (e23.3)', reals=[solver%omega_threshold], pl='m', fs='(/t6,a)')
-      call output%printf('Energy threshold: (e22.3)', reals=[solver%energy_threshold], pl='m', fs='(t6,a)')
+      call output%printf('Omega threshold:          (e14.3)', reals=[solver%omega_threshold], pl='m', fs='(/t6,a)')
+      call output%printf('Energy threshold:         (e14.3)', reals=[solver%energy_threshold], pl='m', fs='(t6,a)')
       call output%printf('Relative micro threshold: (e14.3)',               &
                           reals=[solver%relative_micro_residual_threshold], &
                           pl='m', fs='(t6,a)')
 !
-      call output%printf('DIIS dimension: (i25)', ints=[solver%diis_dimension], &
+      call output%printf('DIIS dimension:           (i14)', ints=[solver%diis_dimension], &
                           pl='m', fs='(/t6,a)')
-      call output%printf('Max number of iterations: (i15)', ints=[solver%max_iterations], &
+      call output%printf('Max number of iterations: (i14)', ints=[solver%max_iterations], &
                           pl='m', fs='(t6,a)')
-      call output%printf('Max number of micro-iterations: (i9)', &
+      call output%printf('Max number of micro-iterations: (i8)', &
                           ints=[solver%max_micro_iterations],    &
                           pl='m', fs='(t6,a)')
 !
@@ -340,7 +339,7 @@ contains
       else
 !
          call output%printf('Convergence criterion met in (i0) iterations!', &
-                             ints=[iteration], pl='m', fs='(/t3,a)')
+                             ints=[iteration], pl='m', fs='(t3,a)')
 !
          call wf%print_gs_summary()
 !
@@ -486,6 +485,10 @@ contains
 !
       class(ccs) :: wf
 !
+      call output%printf('- Finished solving the (a0) ground state equations', & 
+                        chars=[convert_to_uppercase(wf%name_)], &
+                        fs='(/t3, a)', pl='minimal')
+!
       call wf%save_amplitudes()  
 !
    end subroutine cleanup_newton_raphson_cc_gs
@@ -500,8 +503,9 @@ contains
 !
       class(newton_raphson_cc_gs) :: solver 
 !
-      call output%printf(solver%tag, pl='m', fs='(//t3,a)')
-      call output%printf(solver%author, pl='m')
+      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
       call output%printf(solver%description1, pl='m', ffs='(/t3,a)')
 !
    end subroutine print_banner_newton_raphson_cc_gs
