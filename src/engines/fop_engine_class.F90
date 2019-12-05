@@ -174,10 +174,6 @@ contains
 !
       end if
 !
-!     Cholesky decomposition
-!
-      call engine%do_cholesky(wf)
-!
       call wf%mo_preparations()
 !
       call engine%restart_handling(wf)
@@ -1197,9 +1193,6 @@ contains
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
-!
-      call engine%tasks%add(label='cd solver',                                &
-                            description='Cholesky decomposition of the ERI-matrix')
 !
       call engine%tasks%add(label='gs solver',                                &
                             description='Calculation of the ground state ('// &

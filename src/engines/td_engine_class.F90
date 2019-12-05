@@ -160,10 +160,6 @@ contains
 !
       call engine%print_banner(wf)
 !
-!     Cholesky decoposition of the electron repulsion integrals
-!
-      call engine%do_cholesky(wf)
-!
       call wf%mo_preparations()
 !
 !     Determine ground state
@@ -337,9 +333,6 @@ contains
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
-!
-      call engine%tasks%add(label='cd solver',                                &
-                            description='Cholesky decomposition of the ERI-matrix')
 !
       call engine%tasks%add(label='gs solver',                                &
                             description='Calculation of the ground state ('// &
