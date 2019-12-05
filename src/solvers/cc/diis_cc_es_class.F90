@@ -214,12 +214,12 @@ contains
 !
       call solver%print_es_settings()
 !
-      call output%printf('DIIS dimension:               (i11)', pl='minimal', &
+      call output%printf('m', 'DIIS dimension:               (i11)', &
                          ints=[solver%diis_dimension], fs='(/t6,a)')
 !
       if (solver%crop) then 
 !
-         call output%printf('Enabled CROP in the DIIS algorithm.', pl='minimal', fs='(/t6,a)')
+         call output%printf('m', 'Enabled CROP in the DIIS algorithm.', fs='(/t6,a)')
 !
       endif
 !
@@ -348,8 +348,9 @@ contains
 !
          n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
 !
-         call output%printf('Requested restart - there are (i0) (a0) eigenvectors on file.', &
-                              ints=[n_solutions_on_file], chars=[solver%restart_transformation])
+         call output%printf('m', 'Requested restart - there are (i0) (a0) &
+                            &eigenvectors on file.', &
+                            ints=[n_solutions_on_file], chars=[solver%restart_transformation])
 !
          do state = 1, n_solutions_on_file
 !
@@ -377,11 +378,9 @@ contains
 !
          iteration = iteration + 1   
 !
-         call output%printf('Iteration: (i18)', &
-                     ints=[iteration], fs='(/t3,a)', pl='n')
+         call output%printf('n', 'Iteration: (i18)', ints=[iteration], fs='(/t3,a)')
 !
-         call output%printf('Root     Eigenvalue (Re)     Residual norm', &
-                            fs='(/t3,a)', pl='n')
+         call output%printf('n', 'Root     Eigenvalue (Re)     Residual norm', fs='(/t3,a)')
          call output%print_separator('n', 46, '-')
 !
          do state = 1, solver%n_singlet_states
@@ -451,8 +450,8 @@ contains
 !
             endif 
 !
-            call output%printf('(i0)   (f19.12)      (e11.4)', ints=[state], &
-                 reals=[solver%energies(state), residual_norms(state)], pl='n')
+            call output%printf('n', '(i0)   (f19.12)      (e11.4)', &
+                               ints=[state], reals=[solver%energies(state), residual_norms(state)])
 !
          enddo
 !
@@ -476,17 +475,16 @@ contains
 !
          if (iteration .eq. 1) then 
 !
-            call output%printf('Note: residual of all states converged &
-                              & in first iteration.', fs='(/t3,a)',pl='n')
-            call output%printf('Energy convergence has not been tested.', &
-                                fs='(t3,a/)',pl='n')
+            call output%printf('n', 'Note: residual of all states converged  in &
+                               &first iteration.', fs='(/t3,a)')
+            call output%printf('n', 'Energy convergence has not been tested.', fs='(t3,a/)')
 !
          endif
 !
-         call output%printf('Convergence criterion met in (i0) iterations!', &
-                            ints=[iteration], fs='(t3,a)',pl='m')
-         call output%printf('- Resorting roots according to excitation energy.', &
-                            fs='(/t3,a)', pl='n')
+         call output%printf('m', 'Convergence criterion met in (i0) iterations!', &
+                            ints=[iteration], fs='(t3,a)')
+         call output%printf('n', '- Resorting roots according to excitation energy.', &
+                            fs='(/t3,a)')
 !
 !        Sort roots and store the original state number in prev_state_numbers
 !
@@ -503,8 +501,8 @@ contains
 !
             if(prev_state_numbers(state) .ne. state) then
 !
-               call output%printf('Root number (i3) renamed to state (i3)',      &
-                     ints=[prev_state_numbers(state), state], fs='(t5,a)', pl='v')
+               call output%printf('v', 'Root number (i3) renamed to state (i3)' &
+                                  &, ints=[prev_state_numbers(state), state], fs='(t5,a)')
 !
             end if
 !
@@ -514,7 +512,7 @@ contains
 !
          call mem%dealloc(prev_state_numbers, solver%n_singlet_states)
 !
-         call output%printf('- Stored converged states to file.', fs='(/t3,a)', pl='n')
+         call output%printf('n', '- Stored converged states to file.', fs='(/t3,a)')
 !
          call solver%print_summary(wf, X_sorted)
 !

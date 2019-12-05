@@ -138,18 +138,18 @@ contains
 !
          if (label == trim(tasks%labels(i))) then
 !
-            call output%printf('(i0)) ' // trim(tasks%descriptions(i)), &
-               ints=[i], pl='minimal', fs='(//t3,a)')
+            call output%printf('m', '(i0)) ' // trim(tasks%descriptions(i)), &
+                               ints=[i], fs='(//t3,a)')
 !
             if (present(append_string)) then
 !
                if (present(append_fs)) then
 !
-                  call output%printf(append_string, pl='minimal', fs=append_fs)
+                  call output%printf('m', append_string, fs=append_fs)
 !
                else
 !
-                  call output%printf(append_string, pl='minimal', fs='(//t3,a)')
+                  call output%printf('m', append_string, fs='(//t3,a)')
 !
                endif
 !
@@ -181,8 +181,8 @@ contains
 !
       do i = 1, tasks%n_tasks
 !
-         call output%printf('(i0)) ' // trim(tasks%descriptions(i)), &
-            ints=[i], pl='minimal', fs='(t6,a)')
+         call output%printf('m', '(i0)) ' // trim(tasks%descriptions(i)), &
+                            ints=[i], fs='(t6,a)')
 !
       enddo
 !

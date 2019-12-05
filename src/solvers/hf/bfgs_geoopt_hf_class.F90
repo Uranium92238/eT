@@ -139,13 +139,17 @@ contains
 !
       class(bfgs_geoopt_hf) :: solver
 !
-      call output%printf('- BFGS geometry optimization settings:', pl='m', fs='(/t3,a)')
+      call output%printf('m', '- BFGS geometry optimization settings:', fs='(/t3,a)')
 !
-      call output%printf('Gradient threshold: (e11.4)', reals=[solver%gradient_threshold], pl='m', fs='(/t6,a)')
-      call output%printf('Energy threshold:   (e11.4)', reals=[solver%energy_threshold], pl='m', fs='(t6,a)')
+      call output%printf('m', 'Gradient threshold: (e11.4)', &
+                         reals=[solver%gradient_threshold], fs='(/t6,a)')
+      call output%printf('m', 'Energy threshold:   (e11.4)', &
+                         reals=[solver%energy_threshold], fs='(t6,a)')
 !
-      call output%printf('Max iterations:     (i11)', ints=[solver%max_iterations], pl='m', fs='(/t6,a)')
-      call output%printf('Max step size:      (e11.4)', reals=[solver%max_step], pl='m', fs='(t6,a)')
+      call output%printf('m', 'Max iterations:     (i11)', &
+                         ints=[solver%max_iterations], fs='(/t6,a)')
+      call output%printf('m', 'Max step size:      (e11.4)', &
+                         reals=[solver%max_step], fs='(t6,a)')
 !
    end subroutine print_settings_bfgs_geoopt_hf
 !
@@ -243,10 +247,10 @@ contains
          energy = wf%energy 
          max_gradient = get_abs_max(gradient, 3*wf%system%n_atoms)
 !
-         call output%printf('Geometry optimization iteration (i0)', &
-                            pl='n', ints=[solver%iteration], fs='(/t3,a)')
-         call output%printf('Absolute maximum of molecular gradient: (f17.12)', &
-                             pl='n', reals=[max_gradient], fs='(t3,a)')
+         call output%printf('n', 'Geometry optimization iteration (i0)', &
+                            ints=[solver%iteration], fs='(/t3,a)')
+         call output%printf('n', 'Absolute maximum of molecular gradient: (f17.12)', &
+                            reals=[max_gradient], fs='(t3,a)')
 !
          solver%energies(solver%iteration) = energy 
          solver%gradient_maxs(solver%iteration) = max_gradient
@@ -258,12 +262,13 @@ contains
 !
          if (converged) then
 !
-            call output%printf('Geometry converged in (i0) iterations!', &
-                                pl='m', ints=[solver%iteration], fs='(/t3,a)')
+            call output%printf('m', 'Geometry converged in (i0) iterations!', &
+                               ints=[solver%iteration], fs='(/t3,a)')
 !
          else
 !
-            call output%printf('Geometry not yet converged. Finding next geometry.', pl='m', fs='(/t3,a)')
+            call output%printf('m', 'Geometry not yet converged. Finding next geometry.', &
+                               fs='(/t3,a)')
 !
             call bfgs%update_hessian(geometry, gradient)
 !
@@ -302,12 +307,12 @@ contains
 !
       class(bfgs_geoopt_hf) :: solver 
 !
-      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
 !
-      call output%printf(solver%description, pl='m', ffs='(/t3,a)')
+      call output%printf('m', solver%description, ffs='(/t3,a)')
 !
-      call output%printf('Note: ' // solver%note, pl='m', ffs='(/t3,a)')
+      call output%printf('m', 'Note: ' // solver%note, ffs='(/t3,a)')
 !
    end subroutine print_banner_bfgs_geoopt_hf
 !
@@ -323,17 +328,18 @@ contains
 !
       integer :: iteration 
 !
-      call output%printf('- Summary of geometry optimization iterations: ', pl='n', fs='(/t3,a)')
+      call output%printf('n', '- Summary of geometry optimization iterations: ', fs='(/t3,a)')
 !
-      call output%printf('Iteration       Energy                Gradient norm', pl='n', fs='(/t6,a)')
+      call output%printf('n', 'Iteration       Energy                Gradient norm', &
+                         fs='(/t6,a)')
       call output%print_separator('n', 58,'-', fs='(t6,a)')
 !
       do iteration = 1, solver%iteration 
 !
-         call output%printf('(i4)         (f19.12)     (e11.4)', pl='n', &
-                             ints=[iteration], &
-                             reals=[solver%energies(iteration), solver%gradient_maxs(iteration)], &
-                             fs='(t6,a)')
+         call output%printf('n', '(i4)         (f19.12)     (e11.4)', &
+                            ints=[iteration], &
+                            reals=[solver%energies(iteration), &
+                            solver%gradient_maxs(iteration)], fs='(t6,a)')
 !
       enddo 
 !
@@ -351,8 +357,7 @@ contains
 !
       class(bfgs_geoopt_hf) :: solver 
 !
-      call output%printf('- Finished optimizing the HF geometry', & 
-                        fs='(/t3, a)', pl='minimal')
+      call output%printf('m', '- Finished optimizing the HF geometry', fs='(/t3, a)')
 !
       call mem%dealloc(solver%energies, solver%max_iterations)
       call mem%dealloc(solver%gradient_maxs, solver%max_iterations)

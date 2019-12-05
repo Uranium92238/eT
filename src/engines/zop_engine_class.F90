@@ -270,9 +270,9 @@ contains
 !
          q_total = q_electronic + q_nuclear
 !
-         call output%printf('The traceless quadrupole is calculated as:', pl='minimal',fs='(/t6,a)')
-         call output%printf('Q_ij = 1/2[3*q_ij - tr(q)*delta_ij]', pl='minimal',fs='(/t9,a)')
-         call output%printf('where q_ij is the non-traceless matrix', pl='minimal',fs='(/t6,a)')
+         call output%printf('m', 'The traceless quadrupole is calculated as:', fs='(/t6,a)')
+         call output%printf('m', 'Q_ij = 1/2[3*q_ij - tr(q)*delta_ij]',fs='(/t9,a)')
+         call output%printf('m', 'where q_ij is the non-traceless matrix',fs='(/t6,a)')
 !
          call engine%print_operator('traceless quadrupole moment', q_electronic, q_nuclear, q_total, &
                                     components, 6)

@@ -462,12 +462,11 @@ contains
       real(dp), dimension(:,:), allocatable :: D
       real(dp), dimension(:,:), allocatable :: ao_F_fc
 !
-      call output%printf(':: Frozen orbital approximation is prepared',&
-                         fs='(/t3,a)',pl='minimal')
+      call output%printf('m', ':: Frozen orbital approximation is prepared', fs='(/t3,a)')
 !
 
-      call output%printf('There are (i0) frozen core orbitals.', &
-                        ints=[wf%n_frozen_core_orbitals],pl='minimal',fs='(t6,a)')
+      call output%printf('m', 'There are (i0) frozen core orbitals.', &
+                         ints=[wf%n_frozen_core_orbitals], fs='(t6,a)')
 !
       call mem%alloc(D, wf%n_ao, wf%n_ao)
 !
@@ -537,12 +536,11 @@ contains
 !
       if (.not. wf%frozen_hf_mos) return
 !
-      call output%printf(':: Frozen orbital approximation is prepared',&
-                         fs='(/t3,a)',pl='minimal')
+      call output%printf('m', ':: Frozen orbital approximation is prepared', fs='(/t3,a)')
 !
-      call output%printf('There are (i0) frozen valence orbitals and (i0) frozen virtual orbitals.', &
-                        ints=[wf%n_frozen_hf_o, wf%n_frozen_hf_orbitals-wf%n_frozen_hf_o],           &
-                        pl='minimal',fs='(t6,a)')
+      call output%printf('m', 'There are (i0) frozen valence orbitals and (i0) &
+                         &frozen virtual orbitals.', ints=[wf%n_frozen_hf_o, &
+                         wf%n_frozen_hf_orbitals-wf%n_frozen_hf_o], fs='(t6,a)')
 !
       call mem%alloc(D, wf%n_ao, wf%n_ao)
 !

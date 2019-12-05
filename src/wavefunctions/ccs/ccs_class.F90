@@ -620,11 +620,16 @@ contains
       if (wf%system%pcm_calculation) call wf%read_pcm_fock_contributions()
 !
 !     print orbital space info for cc
-      call output%printf(' - Number of orbitals for coupled cluster calculation', fs='(/t3,a)', pl='minimal')
-      call output%printf('Number of occupied orbitals:    (i12)',ints=[wf%n_o], fs='(/t6,a)', pl='minimal')
-      call output%printf('Number of virtual orbitals:     (i12)',ints=[wf%n_v], fs='(t6,a)', pl='minimal')
-      call output%printf('Number of molecular orbitals:   (i12)',ints=[wf%n_mo], fs='(t6,a)', pl='minimal')
-      call output%printf('Number of atomic orbitals:      (i12)',ints=[wf%n_ao], fs='(t6,a)', pl='minimal')
+      call output%printf('m', ' - Number of orbitals for coupled cluster calculation', &
+                         fs='(/t3,a)')
+      call output%printf('m', 'Number of occupied orbitals:    (i12)', &
+                         ints=[wf%n_o], fs='(/t6,a)')
+      call output%printf('m', 'Number of virtual orbitals:     (i12)', &
+                         ints=[wf%n_v], fs='(t6,a)')
+      call output%printf('m', 'Number of molecular orbitals:   (i12)', &
+                         ints=[wf%n_mo], fs='(t6,a)')
+      call output%printf('m', 'Number of atomic orbitals:      (i12)', &
+                         ints=[wf%n_ao], fs='(t6,a)')
 !
    end subroutine general_cc_preparations_ccs
 !
@@ -653,7 +658,8 @@ contains
 !
       call wf%integrals%cleanup()
 !
-      call output%printf('- Cleaning up ' // trim(wf%name_) // ' wavefunction', pl='v', fs='(/t3,a)')
+      call output%printf('v', '- Cleaning up ' // trim(wf%name_) // ' wavefunction', &
+                         fs='(/t3,a)')
 !
    end subroutine cleanup_ccs
 !
@@ -917,8 +923,8 @@ contains
       real(dp), intent(in), optional :: w
 !
       if (present(w)) then
-         call output%printf('Calling Jacobian (a0) transform with energy: (f19.12)', &
-                            pl='debug', chars=[r_or_l], reals=[w])
+         call output%printf('debug', 'Calling Jacobian (a0) transform with &
+                            &energy: (f19.12)', chars=[r_or_l], reals=[w])
       endif
 !
 !     Compute the transformed matrix
@@ -1044,17 +1050,17 @@ contains
 !
 !     Print largest contributions
 !
-      call output%printf('Largest single amplitudes:', pl='m', fs='(/t6,a)')
+      call output%printf('m', 'Largest single amplitudes:', fs='(/t6,a)')
       call output%print_separator('m', 35, '-', fs='(t6,a)')
-      call output%printf('a       i         ' // tag // '(a,i)', pl='m', fs='(t9,a)')
+      call output%printf('m', 'a       i         ' // tag // '(a,i)', fs='(t9,a)')
       call output%print_separator('m', 35, '-', fs='(t6,a)')
 !
       do elm = 1, n_elements
 !
          call invert_compound_index(dominant_indices(elm), a, i, wf%n_v, wf%n_o)
 !
-         call output%printf('(i4)    (i3)   (f19.12)', fs='(t6,a)', pl='m', &
-                             ints=[a, i], reals=[x1(dominant_indices(elm))])
+         call output%printf('m', '(i4)    (i3)   (f19.12)', ints=[a, i], &
+                            reals=[x1(dominant_indices(elm))], fs='(t6,a)')
 !
       enddo
 !
@@ -1148,8 +1154,9 @@ contains
 !
       L_R_overlap_ccs = ddot(wf%n_es_amplitudes, L, 1, R, 1)
 !
-      call output%printf('Overlap of (i0). left and (i0). right state: (f15.10)',   &
-                          fs='(/t6,a)', ints=[left_state, right_state], reals=[L_R_overlap_ccs], pl='debug')
+      call output%printf('debug', 'Overlap of (i0). left and (i0). right state: (f15.10)', &
+                         ints=[left_state, right_state], &
+                         reals=[L_R_overlap_ccs], fs='(/t6,a)')
 !
    end function L_R_overlap_ccs
 !
@@ -1685,9 +1692,11 @@ contains
 !
                   if(are_vectors_parallel(R(:,p), R(:,q), wf%n_es_amplitudes, threshold)) then
 !
-                     call output%printf('Warning: The (a0) states (i0) and (i0) are parallel.',&
-                                         ints=[current_state + p - 1, current_state + q - 1],  &
-                                         chars=[trim(transformation)], fs='(//t3,a)', pl='m')
+                     call output%printf('m', 'Warning: The (a0) states (i0) and &
+                                        &(i0) are parallel.', &
+                                        ints=[current_state + p - 1, &
+                                        current_state + q - 1], &
+                                        chars=[trim(transformation)], fs='(//t3,a)')
 !
                      reduced_degeneracy = reduced_degeneracy - 1
 !
@@ -1698,9 +1707,9 @@ contains
 !
             if(reduced_degeneracy .gt. 1) then
 !
-               call output%printf('Found a (i0)-fold degeneracy involving the &
-                                  &(i0). state.', fs='(//t6,a)', pl='v',      &
-                                  ints=[reduced_degeneracy, current_state])
+               call output%printf('v', 'Found a (i0)-fold degeneracy involving &
+                                  &the (i0). state.', ints=[reduced_degeneracy, &
+                                  current_state], fs='(//t6,a)')
 !
             end if
 !
@@ -1758,8 +1767,8 @@ contains
 !     discard parallel states
 !     biorthonormalize degenerate states
 !
-      call output%printf('Biorthonormalization of left and right excited state vectors', &
-                          pl='v', fs='(/t3,a)')
+      call output%printf('v', 'Biorthonormalization of left and right excited &
+                         &state vectors', fs='(/t3,a)')
 !
       current_state = 1
 !
@@ -1770,8 +1779,9 @@ contains
          if (abs(wf%left_excitation_energies(current_state) &
                - wf%right_excitation_energies(current_state)) .lt. energy_threshold) then
 !
-            call output%printf('The left and right states corresponding to root (i0) &
-                               &are consistent', fs='(/t6,a)', ints=[current_state], pl='v')
+            call output%printf('v', 'The left and right states corresponding to &
+                               &root (i0) are consistent', &
+                               ints=[current_state], fs='(/t6,a)')
 !
             n_degeneracy = 1
             state = current_state + 1
@@ -1801,8 +1811,8 @@ contains
 !
             end do
 !
-            call output%printf('Degree of degeneracy: (i0)', fs='(t6,a)', &
-                                ints=[n_degeneracy], pl='debug')
+            call output%printf('debug', 'Degree of degeneracy: (i0)', &
+                               ints=[n_degeneracy], fs='(t6,a)')
 !
             if(n_degeneracy .gt. 1) then
 !
@@ -1833,9 +1843,10 @@ contains
 !
                         parallel(p) = .true.
 !
-                        call output%printf('Warning: The right states (i0) and (i0) &
-                                           &are parallel', pl='m', fs='(/t3,a)',   &
-                                           ints=[current_state+p-1, current_state+q-1])
+                        call output%printf('m', 'Warning: The right states (i0) &
+                                           &and (i0) are parallel', &
+                                           ints=[current_state+p-1, &
+                                           current_state+q-1], fs='(/t3,a)')
 !
                         reduced_degeneracy_r = reduced_degeneracy_r - 1
 !
@@ -1887,9 +1898,10 @@ contains
 !
                         parallel(p) = .true.
 !
-                        call output%printf('Warning: The left states (i0) and (i0) &
-                                           &are parallel', pl='m', fs='(/t3,a)',   &
-                                           ints=[current_state + p - 1, current_state+q-1])
+                        call output%printf('m', 'Warning: The left states (i0) &
+                                           &and (i0) are parallel', &
+                                           ints=[current_state + p - 1, &
+                                           current_state+q-1], fs='(/t3,a)')
 !
                         reduced_degeneracy_l = reduced_degeneracy_l - 1
 !
@@ -1929,18 +1941,17 @@ contains
 !
                if (reduced_degeneracy_r .gt. 1) then
 !
-                  call output%printf('Found a degeneracy between:', fs='(/t6,a)', pl='n')
+                  call output%printf('n', 'Found a degeneracy between:', fs='(/t6,a)')
                   call output%print_separator('n', 29,'-', fs='(t6,a)')
-                  call output%printf('State     Excitation Energy', fs='(t6,a)', pl='n')
+                  call output%printf('n', 'State     Excitation Energy', fs='(t6,a)')
 !
                   do p = 1, n_degeneracy
 !
                      if(parallel(p)) cycle
 !
-                     call output%printf(' (i2)     (f19.12)', &
-                          fs='(t6,a)', pl='n',                &
-                          ints=[current_state + p - 1],       & 
-                          reals=[wf%right_excitation_energies(current_state+p-1)])
+                     call output%printf('n', ' (i2)     (f19.12)', &
+                                        ints=[current_state + p - 1], &
+                                        reals=[wf%right_excitation_energies(current_state+p-1)], fs='(t6,a)')
 !
                   end do
 !
@@ -2017,8 +2028,9 @@ contains
                   if((.not. biorthonormalize) .and. &
                      (n_overlap_zero .eq. reduced_degeneracy_r-1)) then
 !
-                     call output%printf('Degenerate states except one are biorthogonal &
-                                       &- Thus, only binormalize', pl='v', fs='(/t6,a)')
+                     call output%printf('v', 'Degenerate states except one are &
+                                        &biorthogonal - Thus, only binormalize' &
+                                        &, fs='(/t6,a)')
 !
                      LT_R = wf%L_R_overlap(L(:, state),                             &
                                            current_state + state - 1,               &
@@ -2029,9 +2041,8 @@ contains
 !
                      if(abs(LT_R) .lt. 1.0d-2) then
 !
-                        call output%printf('Warning: Overlap of (i0). left and &
-                                          &right state close to zero.',        &
-                                           pl='m', ints=[current_state])
+                        call output%printf('m', 'Warning: Overlap of (i0). left &
+                                           &and right state close to zero.', ints=[current_state])
 !
                      end if
 !
@@ -2048,8 +2059,8 @@ contains
 !
                   else ! Actual biorthonormalization needed
 !
-                     call output%printf('Biorthonormalization of degenerate states', &
-                                         pl='n',fs='(/t6,a)')
+                     call output%printf('n', 'Biorthonormalization of &
+                                        &degenerate states', fs='(/t6,a)')
 !
 !                    Make sure to not run into the other branch of the if statement
                      biorthonormalize = .true.
@@ -2140,14 +2151,14 @@ contains
 !
                      if(abs(LT_R) .lt. 1.0d-2) then
 !
-                        call output%printf('Warning: Overlap of (i0). left and right state close to zero.', &
-                                          pl='m', ints=[current_state])
+                        call output%printf('m', 'Warning: Overlap of (i0). left &
+                                           &and right state close to zero.', ints=[current_state])
 !
                      else if(abs(LT_R) .lt. residual_threshold) then
 !
-                        call output%printf('Overlap of (i0). left and right state less than &
-                                          &threshold: (e8.3).', reals=[residual_threshold], &
-                                          pl='m', ints=[current_state])
+                        call output%printf('m', 'Overlap of (i0). left and &
+                                           &right state less than threshold: (e8.3).', &
+                                           reals=[residual_threshold], ints=[current_state])
 !
                         call output%error_msg('Trying to binormalize nonoverlapping states.')
 !
@@ -2188,14 +2199,14 @@ contains
 !
                if(abs(LT_R) .lt. 1.0d-2) then
 !
-                  call output%printf('Warning: Overlap of (i0). left and right state close to zero.', &
-                                     pl='m', ints=[current_state])
+                  call output%printf('m', 'Warning: Overlap of (i0). left and &
+                                     &right state close to zero.', ints=[current_state])
 !
                else if(abs(LT_R) .lt. residual_threshold) then
 !
-                  call output%printf('Overlap of (i0). left and right state less than &
-                                    &threshold: (e8.3).', reals=[residual_threshold], &
-                                     pl='m', ints=[current_state])
+                  call output%printf('m', 'Overlap of (i0). left and right &
+                                     &state less than threshold: (e8.3).', &
+                                     reals=[residual_threshold], ints=[current_state])
 !
                   call output%error_msg('Trying to binormalize biorthogonal states.')
 !
@@ -2214,14 +2225,14 @@ contains
 !
          else ! Sanity check failed - roots ordered incorrectly
 !
-            call output%printf('Eigenvector (i0) is not left-right consistent &
-                              & to threshold (e8.3).', fs='(/t6,a)', pl='m',  &
-                                ints=[current_state], reals=[energy_threshold])
+            call output%printf('m', 'Eigenvector (i0) is not left-right &
+                               &consistent  to threshold (e8.3).', &
+                               ints=[current_state], reals=[energy_threshold], fs='(/t6,a)')
 !
-            call output%printf('Energies (left, right): (f19.12) (f19.12)', &
-                 reals=[wf%left_excitation_energies(current_state),         &
-                 wf%right_excitation_energies(current_state)], fs='(/t6,a)',&
-                 pl='m')
+            call output%printf('m', 'Energies (left, right): (f19.12) (f19.12)' &
+                               &, &
+                               reals=[wf%left_excitation_energies(current_state), &
+                               wf%right_excitation_energies(current_state)], fs='(/t6,a)')
 !
             call output%error_msg('while biorthonormalizing.')
 !
@@ -2286,19 +2297,19 @@ contains
 !
       real(dp) :: t1_diagnostic 
 !
-      call output%printf('- Ground state summary:', fs='(/t3,a)', pl='m')
+      call output%printf('m', '- Ground state summary:', fs='(/t3,a)')
 !
-      call output%printf('Final ground state energy (a.u.): (f18.12)', &
-                         reals=[wf%energy], fs='(/t6,a)', pl='m')
+      call output%printf('m', 'Final ground state energy (a.u.): (f18.12)', &
+                         reals=[wf%energy], fs='(/t6,a)')
 !
-      call output%printf('Correlation energy (a.u.):        (f18.12)', &
-                         reals=[wf%correlation_energy], fs='(/t6,a)', pl='m')
+      call output%printf('m', 'Correlation energy (a.u.):        (f18.12)', &
+                         reals=[wf%correlation_energy], fs='(/t6,a)')
 !
       call wf%print_dominant_amplitudes()
 !
       t1_diagnostic = wf%get_t1_diagnostic() 
-      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', &
-                         reals=[t1_diagnostic], fs='(/t6,a)', pl='m')
+      call output%printf('m', 'T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', &
+                         reals=[t1_diagnostic], fs='(/t6,a)')
 !
    end subroutine print_gs_summary_ccs
 !

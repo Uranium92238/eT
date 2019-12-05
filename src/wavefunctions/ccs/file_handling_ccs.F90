@@ -466,7 +466,7 @@ contains
 !
 !     For now, do nothing.
 !
-      call output%printf('No intermediates to save in (a0)', chars=[trim(wf%name_)])
+      call output%printf('v', 'No intermediates to save in (a0)', chars=[trim(wf%name_)])
 !
    end subroutine save_tbar_intermediates_ccs
 !

@@ -180,10 +180,12 @@ contains
 !
       class(davidson_cc_linear_equations) :: solver 
 !
-      call output%printf('- Davidson CC linear equations solver settings:', pl='m', fs='(/t3,a)')
+      call output%printf('m', '- Davidson CC linear equations solver settings:', fs='(/t3,a)')
 !
-      call output%printf('Residual threshold:       (e9.2)', pl='m', fs='(/t6,a)', reals=[solver%residual_threshold])
-      call output%printf('Max number of iterations: (i9)', pl='m', fs='(t6,a)', ints=[solver%max_iterations])
+      call output%printf('m', 'Residual threshold:       (e9.2)', &
+                         reals=[solver%residual_threshold], fs='(/t6,a)')
+      call output%printf('m', 'Max number of iterations: (i9)', &
+                         ints=[solver%max_iterations], fs='(t6,a)')
 !
    end subroutine print_settings_davidson_cc_linear_equations
 !
@@ -262,15 +264,16 @@ contains
       iteration = 0
       converged_residual = .false.
 !
-      call output%printf('- Entering iterative loop to solve equations.', pl='m', fs='(/t3,a)')
+      call output%printf('m', 'Entering iterative loop to solve equations.', fs='(/t3,a)')
 !
       do while (.not. converged_residual .and. (iteration .le. solver%max_iterations))
 !
          iteration = iteration + 1       
          call davidson%iterate()
 !
-         call output%printf('Iteration:               (i0)', pl='n', ints=[iteration], fs='(/t3,a)')
-         call output%printf('Reduced space dimension: (i0)', pl='n', ints=[davidson%dim_red])
+         call output%printf('n', 'Iteration:               (i0)', &
+                            ints=[iteration], fs='(/t3,a)')
+         call output%printf('n', 'Reduced space dimension: (i0)', ints=[davidson%dim_red])
 !
 !        Transform new trial vectors 
 !
@@ -295,7 +298,7 @@ contains
 !        Loop over roots and check residuals, 
 !        then generate new trial vectors for roots not yet converged 
 !
-         call output%printf('Frequency      Residual norm', pl='n', fs='(/t3,a)')
+         call output%printf('n', 'Frequency      Residual norm', fs='(/t3,a)')
          call output%print_separator('n', 30, '-')
 !
          call mem%alloc(residual, wf%n_gs_amplitudes)
@@ -315,8 +318,8 @@ contains
 !
             endif
 !
-            call output%printf('(e9.2)     (e9.2)', pl='n', &
-                                 reals=[frequencies(root), residual_norm])
+            call output%printf('n', '(e9.2)     (e9.2)', &
+                               reals=[frequencies(root), residual_norm])
 !
          enddo 
 !
@@ -330,8 +333,8 @@ contains
 !
       if (converged_residual) then
 !
-         call output%printf('Convergence criterion met in (i0) iterations!', pl='m', &
-                              ints=[iteration], fs='(t3,a)')
+         call output%printf('m', 'Convergence criterion met in (i0) iterations!', &
+                            ints=[iteration], fs='(t3,a)')
 !
          call mem%alloc(solution, wf%n_gs_amplitudes)
 !
@@ -371,14 +374,15 @@ contains
 !
       call solver%timer%turn_off()
 !
-      call output%printf('- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) // &
-                           ' linear equations', pl='m', fs='(/t3,a)')
+      call output%printf('m', '- Finished solving the ' //  &
+                         trim(convert_to_uppercase(wf%name_)) // ' linear equations', &
+                         fs='(/t3,a)')
 !
-      call output%printf('Total wall time (sec):  (f20.5)', pl='m', &
-                           reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+      call output%printf('m', 'Total wall time (sec):  (f20.5)', &
+                         reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6,a)')
 !
-      call output%printf('Total cpu time (sec):   (f20.5)', pl='m', &
-                           reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6,a)')
+      call output%printf('m', 'Total cpu time (sec):   (f20.5)', &
+                         reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cleanup_davidson_cc_linear_equations
 !
@@ -392,11 +396,11 @@ contains
 !
       class(davidson_cc_linear_equations) :: solver 
 !
-      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
 !
-      call output%printf(solver%description, pl='m', ffs='(t3,a)', fs='(t3,a)')
-      call output%printf(solver%eq_description, pl='m', ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('m', solver%description, ffs='(t3,a)', fs='(t3,a)')
+      call output%printf('m', solver%eq_description, ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_davidson_cc_linear_equations
 !

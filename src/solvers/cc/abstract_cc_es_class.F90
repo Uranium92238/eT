@@ -176,11 +176,11 @@ contains
 !
       class(abstract_cc_es) :: solver 
 !
-      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
 !
-      call output%printf(solver%description1, pl='n', ffs='(/t3,a)', fs='(t3,a)')
-      call output%printf(solver%description2, pl='n', ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('n', solver%description1, ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('n', solver%description2, ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_abstract_cc_es
 !
@@ -223,17 +223,23 @@ contains
 !
       class(abstract_cc_es) :: solver 
 !
-      call output%printf('- Settings for coupled cluster excited state solver (' //trim(solver%tag) // '):', &
-                              pl='m', fs='(/t3,a)')
+      call output%printf('m', '- Settings for coupled cluster excited state &
+                         &solver (' //trim(solver%tag) // '):', fs='(/t3,a)')
 !
-      call output%printf('Calculation type:    (a0)', chars=[trim(solver%es_type)], pl='m', fs='(/t6,a)')
-      call output%printf('Excitation vectors:  (a0)', chars=[trim(solver%transformation)], pl='m', fs='(t6,a)')
+      call output%printf('m', 'Calculation type:    (a0)', &
+                         chars=[trim(solver%es_type)], fs='(/t6,a)')
+      call output%printf('m', 'Excitation vectors:  (a0)', &
+                         chars=[trim(solver%transformation)], fs='(t6,a)')
 !
-      call output%printf('Energy threshold:             (e11.2)', reals=[solver%eigenvalue_threshold], pl='m', fs='(/t6,a)')
-      call output%printf('Residual threshold:           (e11.2)', reals=[solver%residual_threshold], pl='m', fs='(t6,a)')
+      call output%printf('m', 'Energy threshold:             (e11.2)', &
+                         reals=[solver%eigenvalue_threshold], fs='(/t6,a)')
+      call output%printf('m', 'Residual threshold:           (e11.2)', &
+                         reals=[solver%residual_threshold], fs='(t6,a)')
 !
-      call output%printf('Number of singlet states:     (i11)', ints=[solver%n_singlet_states], pl='m', fs='(/t6,a)')
-      call output%printf('Max number of iterations:     (i11)', ints=[solver%max_iterations], pl='m', fs='(t6,a)')
+      call output%printf('m', 'Number of singlet states:     (i11)', &
+                         ints=[solver%n_singlet_states], fs='(/t6,a)')
+      call output%printf('m', 'Max number of iterations:     (i11)', &
+                         ints=[solver%max_iterations], fs='(t6,a)')
 !
    end subroutine print_es_settings_abstract_cc_es
 !
@@ -252,11 +258,14 @@ contains
 !
       call solver%timer%turn_off()
 !
-     call output%printf('- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) &
-                 // ' excited state equations ('// trim(solver%transformation) //')', pl='m', fs='(/t3,a)')
+     call output%printf('m', '- Finished solving the ' //  &
+                        trim(convert_to_uppercase(wf%name_)) // ' excited state &
+                        &equations ('// trim(solver%transformation) //')', fs='(/t3,a)')
 !
-      call output%printf('Total wall time (sec): (f20.5)', reals=[solver%timer%get_elapsed_time('wall')], pl='m', fs='(/t6,a)')
-      call output%printf('Total cpu time (sec):  (f20.5)', reals=[solver%timer%get_elapsed_time('cpu')], pl='m', fs='(t6,a)')
+      call output%printf('m', 'Total wall time (sec): (f20.5)', &
+                         reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+      call output%printf('m', 'Total cpu time (sec):  (f20.5)', &
+                         reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cleanup_abstract_cc_es
 !
@@ -280,39 +289,42 @@ contains
 !
       label = trim(adjustl(convert_to_uppercase(solver%transformation(1:1))))
 !
-      call output%printf('- Excitation vector amplitudes:', pl='n', fs='(/t3,a)')
+      call output%printf('n', '- Excitation vector amplitudes:', fs='(/t3,a)')
 !
       do state = 1, solver%n_singlet_states
 !
-         call output%printf('Electronic state nr. (i0)', pl='n', ints=[state], fs='(/t6,a)')
+         call output%printf('n', 'Electronic state nr. (i0)', ints=[state], fs='(/t6,a)')
 !
-         call output%printf('Energy (Hartree):             (f19.12)', pl='n', &
-                                 reals=[solver%energies(state)], fs='(/t6,a)')
+         call output%printf('n', 'Energy (Hartree):             (f19.12)', &
+                            reals=[solver%energies(state)], fs='(/t6,a)')
 !
-         call output%printf('Fraction singles (|(a0)1|/|(a0)|):  (f19.12)', pl='n', &
-            reals=[get_l2_norm(X(1:wf%n_t1,state),wf%n_t1)/get_l2_norm(X(:,state),wf%n_es_amplitudes)], &
-            chars=[label, label], fs='(t6,a)')
+         call output%printf('n', 'Fraction singles (|(a0)1|/|(a0)|):  (f19.12)' &
+                            &, reals=[get_l2_norm(X(1:wf%n_t1, state), &
+                            wf%n_t1)/get_l2_norm(X(:, state), &
+                            wf%n_es_amplitudes)], chars=[label, label], fs='(t6,a)')
 !
          call wf%print_dominant_x_amplitudes(X(1, state), label)
 !
       enddo 
 !
-      call output%printf('- Electronic excitation energies:', pl='m', fs='(/t6,a)')
+      call output%printf('m', '- Electronic excitation energies:', fs='(/t6,a)')
 !
-      call output%printf('Excitation energy', pl='m', fs='(/t39,a)')
+      call output%printf('m', 'Excitation energy', fs='(/t39,a)')
       call output%print_separator('m', 42, '-', fs='(t27,a)')
-      call output%printf('State                (Hartree)             (eV)', pl='m', fs='(t6,a)')
+      call output%printf('m', 'State                (Hartree)             (eV)', fs='(t6,a)')
       call output%print_separator('m', 63, '-', fs='(t6,a)')
 !
       do state = 1, solver%n_singlet_states
 !
-         call output%printf('(i2)              (f19.12)    (f19.12)', pl='m', fs='(t6,a)', &
-                     ints=[state], reals=[solver%energies(state), solver%energies(state)*Hartree_to_eV])
+         call output%printf('m', '(i2)              (f19.12)    (f19.12)', &
+                            ints=[state], reals=[solver%energies(state), &
+                            solver%energies(state)*Hartree_to_eV], fs='(t6,a)')
 !
       enddo 
 !
       call output%print_separator('m', 63, '-', fs='(t6,a)')
-      call output%printf('eV/Hartree (CODATA 2014): (f11.8)', pl='m', fs='(t6,a)', reals=[Hartree_to_eV])
+      call output%printf('m', 'eV/Hartree (CODATA 2014): (f11.8)', &
+                         reals=[Hartree_to_eV], fs='(t6,a)')
 !
    end subroutine print_summary_abstract_cc_es
 !

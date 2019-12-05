@@ -58,8 +58,8 @@ contains
       prep_timer = timings("Time preparing for Jacobian")
       call prep_timer%turn_on()
 !
-      call output%printf('Preparing for (a0) right excited state equations', pl='v', &
-                          chars=[trim(wf%name_)], fs='(/t3,a)')
+      call output%printf('v', 'Preparing for (a0) right excited state equations', &
+                         chars=[trim(wf%name_)], fs='(/t3,a)')
 !
       call wf%prepare_cc3_jacobian_intermediates()
       call wf%save_jacobian_a1_intermediates()
@@ -93,8 +93,8 @@ contains
       prep_timer = timings("Time preparing for Jacobian", pl='normal')
       call prep_timer%turn_on()
 !
-      call output%printf('Preparing for (a0) left excited state equations',   &
-                          chars=[trim(wf%name_)], pl='v', fs='(/t3,a)')
+      call output%printf('v', 'Preparing for (a0) left excited state equations' &
+                         &, chars=[trim(wf%name_)], fs='(/t3,a)')
 !
       call wf%ccsd%prepare_for_jacobian_transpose()
 !

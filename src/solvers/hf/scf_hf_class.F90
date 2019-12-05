@@ -178,15 +178,16 @@ contains
 !
       if (solver%restart) then
 !
-         call output%printf('- Requested restart. Reading orbitals from file',fs='(/t3,a)', pl='minimal')
+         call output%printf('m', '- Requested restart. Reading orbitals from file', &
+                            fs='(/t3,a)')
 !
          call wf%is_restart_safe('ground state')
          call wf%read_for_scf_restart()
 !
       else 
 !
-         call output%printf('- Setting initial AO density to '//trim(solver%ao_density_guess),&
-            fs='(/t3,a)',pl='minimal')
+         call output%printf('m', '- Setting initial AO density to &
+                            &'//trim(solver%ao_density_guess), fs='(/t3,a)')
 !
          call wf%write_scf_restart()
          call wf%set_initial_ao_density_guess(solver%ao_density_guess)
@@ -242,7 +243,8 @@ contains
 !
       prev_energy = zero
 !
-      call output%printf('Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)',fs='(/t3,a)',pl='normal') 
+      call output%printf('n', 'Iteration       Energy (a.u.)      Max(grad.)    &
+                         &Delta E (a.u.)', fs='(/t3,a)')
       call output%print_separator('n', 63,'-')
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)
@@ -253,10 +255,9 @@ contains
 !
 !        Print current iteration information
 !
-         call output%printf('(i4)  (f25.12)    (e11.4)    (e11.4)', &
-               ints=[iteration], &
-               reals=[wf%energy, max_grad, abs(wf%energy-prev_energy)], &
-               fs='(t3,a)', pl='normal')
+         call output%printf('n', '(i4)  (f25.12)    (e11.4)    (e11.4)', &
+                            ints=[iteration], reals=[wf%energy, max_grad, &
+                            abs(wf%energy-prev_energy)], fs='(t3,a)')
 !
 !        Test for convergence:
 !
@@ -270,8 +271,8 @@ contains
          if (converged) then
 !
             call output%print_separator('n', 63,'-')
-            call output%printf('Convergence criterion met in (i0) iterations!', &
-                  ints=[iteration], fs='(/t3,a)', pl='normal') 
+            call output%printf('n', 'Convergence criterion met in (i0) iterations!', &
+                               ints=[iteration], fs='(/t3,a)')
 !
             call solver%print_summary(wf)
 !
@@ -314,11 +315,11 @@ contains
 !
       class(scf_hf) :: solver
 !
-      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
 !
-      call output%printf('(a0)',    pl='normal', ffs='(/t3,a)',  chars=[trim(solver%warning)])
-      call output%printf('(a0)',    pl='normal', ffs='(/t3,a)',  chars=[trim(solver%description)])
+      call output%printf('n', '(a0)', ffs='(/t3,a)',  chars=[trim(solver%warning)])
+      call output%printf('n', '(a0)', ffs='(/t3,a)',  chars=[trim(solver%description)])
 !
    end subroutine print_banner_scf_hf
 !
@@ -334,7 +335,7 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
+      call output%printf('m', '- Hartree-Fock solver settings:',fs='(/t3,a)')
 !
       call solver%print_hf_solver_settings()
       call wf%print_screening_settings()

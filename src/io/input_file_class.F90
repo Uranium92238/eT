@@ -567,10 +567,9 @@ contains
 !
             if (the_file%sections(k)%required) then 
 !
-               call output%printf('All calculations require the section "' &
-                                   // trim(the_file%sections(k)%name_) //  &
-                                  '". It appears to be missing.',          &
-                                  fs='(/t3,a)', pl='m')
+               call output%printf('m', 'All calculations require the section "' // &
+                                  trim(the_file%sections(k)%name_) // '". It &
+                                  &appears to be missing.', fs='(/t3,a)')
 !
                call output%error_msg('Something is wrong in the input file. See above.')
 ! 
@@ -629,9 +628,8 @@ contains
 !
             if (.not. recognized) then 
 !
-               call output%printf('Could not recognize section named "' &
-                                   // trim(adjustl(line(4 : 200))) //   &
-                                   '".', fs='(/t3,a)', pl='m')
+               call output%printf('m', 'Could not recognize section named "' //  &
+                                   trim(adjustl(line(4 : 200))) // '".', fs='(/t3,a)')
 !
                call the_file%print_sections()
 !
@@ -667,11 +665,11 @@ contains
 !
       integer :: k
 !
-      call output%printf('The valid input sections are:', pl='m', fs='(/t3,a/)')
+      call output%printf('m', 'The valid input sections are:', fs='(/t3,a/)')
 !
       do k = 1, size(the_file%sections)
 !
-         call output%printf('(a0)', chars=[trim(the_file%sections(k)%name_)], pl='m', fs='(t6,a)')
+         call output%printf('m', '(a0)', chars=[trim(the_file%sections(k)%name_)], fs='(t6,a)')
 !
       enddo
 !
@@ -728,9 +726,9 @@ contains
 !
             if (.not. recognized) then 
 !
-               call output%printf('Could not recognize keyword "' // trim(keyword) // &
-                                  '" in section "' // trim(the_section%name_) //      &
-                                  '".', pl='m', fs='(/t3,a)') 
+               call output%printf('m', 'Could not recognize keyword "' //  &
+                                  trim(keyword) // '" in section "' //  &
+                                  trim(the_section%name_) // '".', fs='(/t3,a)')
                                                          
 !
                call the_section%print_keywords()
@@ -747,11 +745,10 @@ contains
 !
          if (keywords_instances(k) .gt. 1) then 
 !
-         call output%printf('Found (i0) instances of the keyword "'  &
-                             // trim(the_section%keywords(k)) //     &
-                             '" in the section "'                    &
-                             // the_section%name_ // '".',           &
-                             ints=[keywords_instances(k)], pl='m', fs='(/t3,a)')
+         call output%printf('m', 'Found (i0) instances of the keyword "' //  &
+                            trim(the_section%keywords(k)) // '" in the section "' &
+                            // the_section%name_ // '".', &
+                            ints=[keywords_instances(k)], fs='(/t3,a)')
 !
             call output%error_msg('Something is wrong in the input file. See above.')
 !
@@ -1945,9 +1942,9 @@ contains
 !             
              if(abs(charge(current_atom)).lt.1.0d-8) then
 !             
-                call output%printf('Electrostatic Embedding QM/MM ', pl='m', fs='(/t6,a)')
-                call output%printf('Warning: You have put zero charge on atom = (i0)', &
-                                    ints=[current_atom], pl='m', fs='(t6,a)')
+                call output%printf('m', 'Electrostatic Embedding QM/MM ', fs='(/t6,a)')
+                call output%printf('m', 'Warning: You have put zero charge on &
+                                   &atom = (i0)', ints=[current_atom], fs='(t6,a)')
 !                
              endif
 !
@@ -1977,7 +1974,7 @@ contains
 !             
              if(abs(eta(current_atom)).lt.1.0d-8) then
 !             
-               call output%printf('Polarizable QM/FQ ', pl='m', fs='(/t6,a)')
+               call output%printf('m', 'Polarizable QM/FQ ', fs='(/t6,a)')
                call output%error_msg('You have put zero chemical hardness on atom: (i0)', &
                                       ints=[current_atom])
 !                

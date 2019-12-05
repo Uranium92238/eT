@@ -41,7 +41,7 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      call output%printf('- Prepare for multiplier equation', pl='verbose')
+      call output%printf('v', '- Prepare for multiplier equation')
       call wf%prepare_for_jacobian_transpose_complex()
 !
    end subroutine prepare_for_multiplier_equation_ccsd_complex

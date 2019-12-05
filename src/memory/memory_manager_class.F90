@@ -238,14 +238,14 @@ contains
 !
       if (mem%available .ne. mem%total) then 
 !
-         call output%printf('Mismatch in memory according to eT and specified on input:', &
-                             pl='m', fs='(/t3,a)')
+         call output%printf('m', 'Mismatch in memory according to eT and &
+                            &specified on input:', fs='(/t3,a)')
 !
-         call output%printf('Memory available (eT):    (a0)', pl='m', &
+         call output%printf('m', 'Memory available (eT):    (a0)', &
                             chars=[mem%get_memory_as_character(mem%available)], fs='(/t6,a)')
 !
-         call output%printf('Memory available (input): (a0)', pl='m', &
-                             chars=[mem%get_memory_as_character(mem%total)], fs='(t6,a)')
+         call output%printf('m', 'Memory available (input): (a0)', &
+                            chars=[mem%get_memory_as_character(mem%total)], fs='(t6,a)')
 !
          call output%warning_msg('Deallocations may be missing or specified with &
                                  &incorrect dimensionalities.')
@@ -329,8 +329,8 @@ contains
       class(memory_manager), intent(in) :: mem 
 !
 
-      call output%printf('Currently available memory: (a0)', pl='m', &
-                          chars=[mem%get_memory_as_character(mem%available, .true.)])
+      call output%printf('m', 'Currently available memory: (a0)', &
+                         chars=[mem%get_memory_as_character(mem%available, .true.)])
 !
    end subroutine print_available_memory_manager
 !
@@ -1921,8 +1921,8 @@ contains
 !
       class(memory_manager) :: mem
 !
-      call output%printf('Memory available for calculation: ' &
-                        // mem%get_memory_as_character(mem%total) , pl='m')
+      call output%printf('m', 'Memory available for calculation: ' //  &
+                         mem%get_memory_as_character(mem%total))
 !
    end subroutine print_settings_memory_manager
 !
@@ -1991,9 +1991,9 @@ contains
 !
 !        Not enough memory for a batch
 !
-         call output%printf('Need at least (i0) B but only have (a0)', ints=[req_min],   &
-                             chars=[mem%get_memory_as_character(mem%available, .true.)], &
-                             pl='m')
+         call output%printf('m', 'Need at least (i0) B but only have (a0)', &
+                            ints=[req_min], &
+                            chars=[mem%get_memory_as_character(mem%available, .true.)])
          call output%error_msg('Not enough memory for a batch.')
 !
       else
@@ -2107,9 +2107,9 @@ contains
 !
 !        Not enough memory for a batch
 !
-         call output%printf('Need at least (i0) B but only have (a0)', ints=[req_min],   &
-                             chars=[mem%get_memory_as_character(mem%available, .true.)], &
-                             pl='m')
+         call output%printf('m', 'Need at least (i0) B but only have (a0)', &
+                            ints=[req_min], &
+                            chars=[mem%get_memory_as_character(mem%available, .true.)])
          call output%error_msg('Not enough memory for a batch.')
 !
       else
@@ -2345,9 +2345,9 @@ contains
 !
 !        Not enough memory for a batch
 !
-         call output%printf('Need at least (i0) B but only have (a0)', ints=[req_min],   &
-                             chars=[trim(mem%get_memory_as_character(mem%available, .true.))], &
-                             pl='m')
+         call output%printf('m', 'Need at least (i0) B but only have (a0)', &
+                            ints=[req_min], &
+                            chars=[trim(mem%get_memory_as_character(mem%available, .true.))])
          call output%error_msg('Not enough memory for a batch')
 !
       else
@@ -2553,9 +2553,9 @@ contains
 !
 !        Not enough memory for a batch
 !
-         call output%printf('Need at least (i0) B but only have (a0)', ints=[req_min],   &
-                             chars=[mem%get_memory_as_character(mem%available, .true.)], &
-                             pl='m')
+         call output%printf('m', 'Need at least (i0) B but only have (a0)', &
+                            ints=[req_min], &
+                            chars=[mem%get_memory_as_character(mem%available, .true.)])
          call output%error_msg('Not enough memory for a batch')
 !
       else

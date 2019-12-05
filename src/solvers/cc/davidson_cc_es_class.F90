@@ -187,8 +187,8 @@ contains
 !
       call solver%print_es_settings()
 !
-      call output%printf('Max reduced space dimension:  (i11)',  &
-         ints=[solver%max_dim_red], pl='m', fs='(/t6,a)')
+      call output%printf('m', 'Max reduced space dimension:  (i11)', &
+                         ints=[solver%max_dim_red], fs='(/t6,a)')
 !
    end subroutine print_settings_davidson_cc_es
 !
@@ -244,8 +244,9 @@ contains
          iteration = iteration + 1
          call davidson%iterate()
 !
-         call output%printf('Iteration:               (i4)', pl='n', ints=[iteration], fs='(/t3,a)')
-         call output%printf('Reduced space dimension: (i4)', pl='n', ints=[davidson%dim_red])
+         call output%printf('n', 'Iteration:               (i4)', &
+                            ints=[iteration], fs='(/t3,a)')
+         call output%printf('n', 'Reduced space dimension: (i4)', ints=[davidson%dim_red])
 !
 !        Transform new trial vectors and write them to file
 !
@@ -275,7 +276,8 @@ contains
          call mem%alloc(residual, wf%n_es_amplitudes)
          call mem%alloc(solution, wf%n_es_amplitudes)
 !
-         call output%printf('Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm', pl='n', fs='(/t3,a)')
+         call output%printf('n', 'Root     Eigenvalue (Re)        Eigenvalue &
+                            &(Im)      Residual norm', fs='(/t3,a)')
          call output%print_separator('n', 68,'-')
 !
          converged_residual   = .true.
@@ -306,8 +308,9 @@ contains
 !
             endif 
 !
-            call output%printf('(i2)     (f16.12)       (f16.12)           (e11.4)', pl='n', &
-                        ints=[n], reals=[davidson%omega_re(n), davidson%omega_im(n), residual_norm])
+            call output%printf('n', '(i2)     (f16.12)       (f16.12)           (e11.4)', &
+                               ints=[n], reals=[davidson%omega_re(n), &
+                               davidson%omega_im(n), residual_norm])
 !
          enddo ! Done constructing new trials from residuals
 !
@@ -328,8 +331,9 @@ contains
          if (converged_residual .and. iteration == 1) then 
 !
             converged = .true.
-            call output%printf('Note: Residual(s) converged in first iteration. ' // &
-                  'Energy convergence therefore not tested in this calculation.', pl='m')
+            call output%printf('m', 'Note: Residual(s) converged in first &
+                               &iteration. ' // 'Energy convergence therefore &
+                               &not tested in this calculation.')
 !
          endif
 !
@@ -344,8 +348,8 @@ contains
 !
       else 
 !
-         call output%printf('Convergence criterion met in (i0) iterations!', pl='m', &
-                              ints=[iteration], fs='(t3,a)')
+         call output%printf('m', 'Convergence criterion met in (i0) iterations!', &
+                            ints=[iteration], fs='(t3,a)')
 !
          call mem%alloc(r, wf%n_es_amplitudes, solver%n_singlet_states)
 !
@@ -392,8 +396,10 @@ contains
          call solver%determine_restart_transformation(wf) ! Read right or left?
          n_solutions_on_file = wf%get_n_excited_states_on_file(solver%restart_transformation)
 !
-         call output%printf('Requested restart - there are (i0) (a0) eigenvectors on file.', pl='m', &
-                  ints=[n_solutions_on_file], chars=[solver%restart_transformation], fs='(/t3,a)')
+         call output%printf('m', 'Requested restart - there are (i0) (a0) &
+                            &eigenvectors on file.', &
+                            ints=[n_solutions_on_file], &
+                            chars=[solver%restart_transformation], fs='(/t3,a)')
 !
          call mem%alloc(c, wf%n_es_amplitudes)
 !

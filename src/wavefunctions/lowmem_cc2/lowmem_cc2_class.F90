@@ -153,8 +153,8 @@ contains
       real(dp), intent(in), optional :: w
 !
       if (present(w)) then
-         call output%printf('Calling Jacobian (a0) transform with energy: (f19.12)', &
-                            pl='debug', chars=[r_or_l], reals=[w])
+         call output%printf('debug', 'Calling Jacobian (a0) transform with &
+                            &energy: (f19.12)', chars=[r_or_l], reals=[w])
       else
 !
          call output%error_msg('w is missing in construct_Jacobian_transform for lowmem_cc2')

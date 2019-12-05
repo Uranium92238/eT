@@ -86,8 +86,8 @@ contains
 !
 !     For now, do nothing.
 !
-      call output%printf('- No preparations for the density for ' // trim(wf%name_) // &
-                         ' wavefunction.', pl='v', fs='(/t3,a)')
+      call output%printf('v', '- No preparations for the density for ' //  &
+                         trim(wf%name_) // ' wavefunction.', fs='(/t3,a)')
 !
    end subroutine prepare_for_density_ccs
 !

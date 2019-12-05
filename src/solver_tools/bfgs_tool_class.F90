@@ -186,7 +186,7 @@ contains
                               ' "Dsyev" finished with info: (i0)', ints=[info])
       end if
 !
-      call output%printf('Level shift: (f19.12)', reals=[eigvals(1)], fs='(/t3,a)')
+      call output%printf('n', 'Level shift: (f19.12)', reals=[eigvals(1)], fs='(/t3,a)')
 !
       d = aug_H(1:bfgs%n_parameters,1)/aug_H(bfgs%n_parameters+1,1)
 !
@@ -198,7 +198,7 @@ contains
       norm_d = get_l2_norm(d, bfgs%n_parameters)
       if (norm_d > bfgs%max_step) then
 !
-         call output%printf('BFGS step exceeds max. Scaling down to max_step.')
+         call output%printf('n', 'BFGS step exceeds max. Scaling down to max_step.')
          d = d*(bfgs%max_step/norm_d)
 !
       endif
@@ -255,7 +255,7 @@ contains
 !
       if (bfgs%iteration == 1) then 
 !
-         call output%printf('First iteration: no update of the Hessian', fs='(/t3,a)')
+         call output%printf('n', 'First iteration: no update of the Hessian', fs='(/t3,a)')
          return
 !
       endif 

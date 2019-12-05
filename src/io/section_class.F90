@@ -56,13 +56,12 @@ contains
 !
       integer :: k 
 !
-      call output%printf('The valid keywords in the section named "' &
-                          // trim(the_section%name_) // '" are:',    &
-                          pl='m', fs='(/t3,a/)')
+      call output%printf('m', 'The valid keywords in the section named "' //  &
+                         trim(the_section%name_) // '" are:', fs='(/t3,a/)')
 !
       do k = 1, size(the_section%keywords)
 !
-         call output%printf('(a0)', chars=[the_section%keywords(k)], pl='m', fs='(t6,a)')
+         call output%printf('m', '(a0)', chars=[the_section%keywords(k)], fs='(t6,a)')
 !
       enddo
 !

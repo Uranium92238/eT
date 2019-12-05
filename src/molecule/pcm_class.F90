@@ -210,7 +210,7 @@ contains
 !
      do i = 1_c_int, n_messages-1_c_int
 !
-      call output%printf(trim(message_eT(i)), pl='n', fs='(t6,a)')
+      call output%printf('n', trim(message_eT(i)), fs='(t6,a)')
 !
      enddo
 !
@@ -352,30 +352,32 @@ contains
 !
       class(pcm) :: molecule  
 !
-      call output%printf( '- Polarizable Continuum Solver via PCMSolver', pl='m', fs='(//t3,a)')
-      call output%printf('For details on PCM, see:', pl='m', fs='(/t6,a)')
-      call output%printf('Tomasi, Mennucci, Cammi, Chem. Rev. 2005, 105, 2999-3094.', pl='m', fs='(t6,a)')
-      call output%printf('For details on PCMSolver, see:', pl='m', fs='(/t6,a)')
-      call output%printf('Di Remigio et al., IJQC, 2019, 119, e25685', pl='m', fs='(t6,a)')
+      call output%printf('m',  '- Polarizable Continuum Solver via PCMSolver', fs='(//t3,a)')
+      call output%printf('m', 'For details on PCM, see:', fs='(/t6,a)')
+      call output%printf('m', 'Tomasi, Mennucci, Cammi, Chem. Rev. 2005, 105, 2999-3094.', &
+                         fs='(t6,a)')
+      call output%printf('m', 'For details on PCMSolver, see:', fs='(/t6,a)')
+      call output%printf('m', 'Di Remigio et al., IJQC, 2019, 119, e25685', fs='(t6,a)')
 !      
 !
       if(molecule%input.eq.'external') then 
 !
-         call output%printf('PCM Solver was set via external file', pl='m', fs='(/t6,a)')
+         call output%printf('m', 'PCM Solver was set via external file', fs='(/t6,a)')
 !
       else 
 !
-         call output%printf('PCM Solver was set via internal parameters', pl='m', fs='(/t6,a)')
-         call output%printf('Solver Type:   '//trim(molecule%solver_type), pl='m', fs='(t6,a)')
-         call output%printf('Solvent:       '//trim(molecule%solvent), pl='m', fs='(t6,a)')
-         call output%printf('Tesserae Area: (f5.3) Å', reals=[molecule%tesserae_area], pl='m', fs='(t6,a/)')
+         call output%printf('m', 'PCM Solver was set via internal parameters', fs='(/t6,a)')
+         call output%printf('m', 'Solver Type:   '//trim(molecule%solver_type), fs='(t6,a)')
+         call output%printf('m', 'Solvent:       '//trim(molecule%solvent), fs='(t6,a)')
+         call output%printf('m', 'Tesserae Area: (f5.3) Å', &
+                            reals=[molecule%tesserae_area], fs='(t6,a/)')
 !
       endif
 !
 !
       if(input%requested_cc_calculation()) then 
-         call output%printf('CC calculation: zero-order approximation', pl='m', fs='(/t6,a)')
-         call output%printf('PCM charges only affect MOs and Fock', pl='m', fs='(t6,a/)')
+         call output%printf('m', 'CC calculation: zero-order approximation', fs='(/t6,a)')
+         call output%printf('m', 'PCM charges only affect MOs and Fock', fs='(t6,a/)')
       endif
 !      
 !

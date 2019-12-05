@@ -41,8 +41,8 @@ contains
 !
 !     For now, do nothing.
 !
-      call output%printf('- No preparations for the ' // trim(wf%name_) // &
-                         ' excited state equation.', pl='v', fs='(/t3,a)')
+      call output%printf('v', '- No preparations for the ' // trim(wf%name_) // &
+                         ' excited state equation.', fs='(/t3,a)')
 !
    end subroutine prepare_for_jacobian_transpose_ccs_complex
 !

@@ -467,13 +467,13 @@ contains
 !
       if (the_file%warning_counter .eq. 1) then
 !
-         call the_file%printf(':: There was 1 warning during the execution of eT. ::', &
-                              pl='m', fs='(/t3,a)')
+         call the_file%printf('m', ':: There was 1 warning during the execution of eT. ::', &
+                              fs='(/t3,a)')
 !
       else if(the_file%warning_counter .gt. 1) then
 !
-         call the_file%printf(':: There were (i0) warnings during the execution of eT. ::', &
-                              ints=[the_file%warning_counter], pl='m', fs='(/t3,a)')
+         call the_file%printf('m', ':: There were (i0) warnings during the execution of eT. ::', &
+                              ints=[the_file%warning_counter], fs='(/t3,a)')
 !
       else if(the_file%warning_counter .lt. 0) then
 !
@@ -485,7 +485,7 @@ contains
    end subroutine check_for_warnings_output_file
 !
 !  
-   subroutine printf_output_file(the_file, string, pl, &
+   subroutine printf_output_file(the_file, pl, string, &
                                  reals, ints, chars, logs, fs, ffs, ll, padd, adv)
 !!
 !!    printf
@@ -549,7 +549,7 @@ contains
 !
 !     Data to print
       character(len=*), intent(in)                          :: string 
-      character(len=*), intent(in), optional                :: pl
+      character(len=*), intent(in)                          :: pl
       real(dp), dimension(:), intent(in), optional          :: reals 
       integer, dimension(:), intent(in), optional           :: ints
       character(len=*), dimension(:), intent(in), optional  :: chars
@@ -563,26 +563,18 @@ contains
 !
       logical, intent(in), optional :: adv
 !
-      character(len=10) :: plvl
-!
-      if(present(pl)) then !Set local plvl to pl if present
-         plvl = trim(pl)
-      else !Else default
-         plvl = 'normal'
-      endif
-!
       if (the_file%is_mute) then !File is muted, make a quiet return
 !
          return 
 !
       endif
 !
-      if (the_file%should_print(plvl)) then
+      if (the_file%should_print(pl)) then
 !
          call the_file%format_print(string, reals, ints, chars, logs, fs, ffs, ll, padd, adv)
 !
 !        Flush if not a verbose print
-         if (trim(plvl) .ne. 'verbose' .and. trim(plvl) .ne. 'v') then 
+         if (trim(pl) .ne. 'verbose' .and. trim(pl) .ne. 'v') then 
 !
             call the_file%flush_()
 !
