@@ -64,15 +64,15 @@ contains
       class(doubles), intent(inout) :: wf
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_bjck
 !
-      type(timings) :: timer
-!
       real(dp), dimension(:,:,:,:), allocatable :: g_ovov
       real(dp), dimension(:,:,:,:), allocatable :: u_cjbk
 !
       real(dp), dimension(:,:),     allocatable :: Y_ik
       real(dp), dimension(:,:),     allocatable :: Y_ca
 !
-      timer = timings('Save Jacobian Transpose A1 intermediates', pl='debug')
+      type(timings), allocatable :: timer
+!
+      timer = timings('Jacobian transpose A1 intermediate', pl='verbose')
       call timer%turn_on()
 !
 !     Both intermediates need g_ovov and u_bjck -> u_cjbk
@@ -182,9 +182,9 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: X_ck, X_kc, Y_ik, Y_ca, sigma_ia, sigma_ai_temp
 !
-      type(timings) :: timer
+      type(timings), allocatable :: timer
 !
-      timer = timings('jacobian transpose doubles a1', pl='debug')
+      timer = timings('Jacobian transpose doubles A1', pl='verbose')
       call timer%turn_on()
 !
 !     :: Term 1: sigma_ai += sum_bjck c_bj u^bc_jk L_iakc
@@ -334,9 +334,9 @@ contains
 !
       integer :: req0, req1, current_a_batch
 !
-      type(timings) :: timer
+      type(timings), allocatable :: timer
 !
-      timer = timings('jacobian transpose doubles b1', pl='debug')
+      timer = timings('Jacobian transpose doubles B1', pl='verbose')
       call timer%turn_on()
 !
 !     :: Term 1: sigma_ai =+ sum_bjc c_bjci g_bjca = sum_bjc (g_bjca)^T c_bjci
@@ -439,9 +439,9 @@ contains
 !
       integer :: req0, req1, current_c_batch
 !
-      type(timings) :: timer
+      type(timings), allocatable :: timer
 !
-      timer = timings('jacobian transpose doubles a2', pl='debug')
+      timer = timings('Jacobian transpose doubles A2', pl='verbose')
       call timer%turn_on()
 !
 !     Term 1: (2F_jb c_ai - F_ib c_aj)
@@ -557,5 +557,6 @@ contains
       call timer%turn_off()
 !
    end subroutine jacobian_transpose_doubles_a2_doubles
+!
 !
 end submodule jacobian_transpose_doubles
