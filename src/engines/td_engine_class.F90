@@ -32,11 +32,12 @@ module td_engine_class
 !! and use them to read and process time series files.
 !! 
 !
-   use global_in, only: input
-   use global_out, only:output
+   use global_in,       only: input
+   use global_out,      only: output
    use gs_engine_class, only: gs_engine
-   use ccs_class, only: ccs
-   use timings_class, only: timings
+   use ccs_class,       only: ccs
+   use timings_class,   only: timings
+   use task_list_class, only: task_list
 !
    type, extends(gs_engine) :: td_engine
 !
@@ -52,8 +53,8 @@ module td_engine_class
 !
       procedure :: do_propagation                        => do_propagation_td_engine
 !
-      procedure, nopass :: do_fft_dipole_moment          => do_fft_dipole_moment_td_engine
-      procedure, nopass :: do_fft_electric_field         => do_fft_electric_field_td_engine
+      procedure :: do_fft_dipole_moment          => do_fft_dipole_moment_td_engine
+      procedure :: do_fft_electric_field         => do_fft_electric_field_td_engine
 !
       procedure :: set_printables                        => set_printables_td_engine
 !
@@ -220,6 +221,8 @@ contains
 !
       class(cc_propagation), allocatable :: cc_propagation_solver
 !
+      call engine%tasks%print_('propagation')
+!
 !     Prepare electric field object
 !
       field = electric_field()
@@ -261,7 +264,7 @@ contains
    end subroutine do_propagation_td_engine
 !
 !
-   subroutine do_fft_dipole_moment_td_engine()
+   subroutine do_fft_dipole_moment_td_engine(engine)
 !!
 !!    Do FFT of dipole moment
 !!    Written by Alice Balbi and Andreas Skeidsvoll, Oct 2018
@@ -272,8 +275,12 @@ contains
       use complex_fft_class, only: complex_fft
 !
       implicit none
+
+      class(td_engine) :: engine
 !
       class(complex_fft), allocatable :: fft_solver_dipole_moment
+!
+      call engine%tasks%print_('FFT dipole')
 !
       fft_solver_dipole_moment = complex_fft('dipole moment', 'cc_propagation_dipole_moment')
       call fft_solver_dipole_moment%run()
@@ -282,7 +289,7 @@ contains
    end subroutine do_fft_dipole_moment_td_engine
 !
 !
-   subroutine do_fft_electric_field_td_engine()
+   subroutine do_fft_electric_field_td_engine(engine)
 !!
 !!    Do FFT of electric field
 !!    Written by Alice Balbi and Andreas Skeidsvoll, Oct 2018
@@ -295,7 +302,10 @@ contains
 !
       implicit none
 !
+      class(td_engine) :: engine 
       class(complex_fft), allocatable :: fft_solver_electric_field
+
+      call engine%tasks%print_('FFT electric field')
 !
       fft_solver_electric_field = complex_fft('electric field', 'cc_propagation_electric_field')
       call fft_solver_electric_field%run()
@@ -311,27 +321,55 @@ contains
 !!
 !!    Sets the information that is printed in the banner of the engine in the output file.
 !!
+!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       class(td_engine) :: engine
 !
       engine%name_  = 'Time dependent coupled cluster engine'
-      engine%author = 'A. Balbi and A. Skeidsvoll, 2018'
 !
       engine%description = 'Calculates the time dependent CC wavefunction'
       engine%tag    = 'time dependent'
 !
-      engine%tasks = [character(len=150) ::                                 &
-            'Cholesky decomposition of the ERI-matrix',                     &
-            'Calculation of the ground state amplitudes '                   &
-            // '('//trim(engine%gs_algorithm)//'-algorithm)',               &
-            'Calculation of the ground state energy',                       &
-            'Calculation of the ground state multipliers '                  &
-            // '('//trim(engine%multipliers_algorithm)//'-algorithm)',      &
-            'Propagation from the ground state if requested by user',       &
-            'FFT of the time dependent dipole moment if requested by user', &
-            'FFT of the time dependent electric field if requested by user']
 !
+!     Prepare the list of tasks
+!
+      engine%tasks = task_list()
+!
+      call engine%tasks%add(label='cd solver',                                &
+                            description='Cholesky decomposition of the ERI-matrix')
+!
+      call engine%tasks%add(label='gs solver',                                &
+                            description='Calculation of the ground state ('// &
+                           trim((engine%gs_algorithm))//' algorithm)')
+!
+      call engine%tasks%add(label='multipliers solver',                       &
+                            description='Calculation of the multipliers ('    &
+                            //trim((engine%multipliers_algorithm))&
+                            //' algorithm)')
+!
+      if (engine%propagation) then
+!
+         call engine%tasks%add(label='propagation',                    &
+                            description='Propagation from the ground state')
+!
+      endif
+!
+      if (engine%fft_dipole_moment) then
+!
+         call engine%tasks%add(label='FFT dipole',                      &
+                            description='FFT of the time dependent dipole moment')
+!
+      endif
+!
+      if (engine%fft_electric_field) then
+!
+         call engine%tasks%add(label='FFT electric field',              &
+                            description='FFT of the time dependent electric field')
+!
+      endif
 !
    end subroutine set_printables_td_engine
 !

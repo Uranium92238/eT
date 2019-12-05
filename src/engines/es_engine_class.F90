@@ -24,9 +24,10 @@ module es_engine_class
 !!
 !
    use kinds
-   use global_in,     only: input
-   use global_out,    only: output
-   use timings_class, only: timings
+   use global_in,       only: input
+   use global_out,      only: output
+   use timings_class,   only: timings
+   use task_list_class, only: task_list
 !
    use gs_engine_class, only: gs_engine
    use ccs_class,       only: ccs
@@ -213,6 +214,9 @@ contains
 
       class(abstract_cc_es), allocatable :: cc_es_solver
 !
+      call engine%tasks%print_('es solver', &
+            append_string='Calculating ' // trim(transformation) //' vectors', append_fs='(t6,a)')
+!
 !     Prepare for excited state
 !
       if (engine%es_algorithm == 'asymmetric lanczos')then
@@ -256,22 +260,46 @@ contains
 !!    Set printables
 !!    Written by sarai D. Folkestad, May 2019
 !!
+!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       class(es_engine) :: engine
 !
-      engine%name_  = 'Excited state engine'
-      engine%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+      engine%name_  = 'Excited state coupled cluster engine'
 !
       engine%tag = 'excited state'
 !
-      engine%tasks = [character(len=150) ::                                                              &
-      'Cholesky decomposition of the ERI-matrix',                                                        &
-      'Calculation of the ground state amplitudes ('//trim(engine%gs_algorithm)//'-algorithm)',          &
-      'Calculation of the ground state energy',                                                          &
-      'Calculation of the ' // trim(engine%es_transformation) //' hand side '// trim(engine%es_type) //  &
-      ' excitation vectors ('//trim(engine%es_algorithm)//'-algorithm)',                                 &
-      'Calculation of the excitation energies ('//trim(engine%es_algorithm)//'-algorithm)']
+!     Prepare the list of tasks
+!
+      engine%tasks = task_list()
+!
+      call engine%tasks%add(label='cd solver',                                &
+                            description='Cholesky decomposition of the ERI-matrix')
+!
+      call engine%tasks%add(label='gs solver',                                &
+                           description='Calculation of the ground state ('//  &
+                           trim(engine%gs_algorithm)//' algorithm)')
+!
+      if (engine%es_algorithm == 'asymmetric lanczos') then
+!
+         call engine%tasks%add(label='multipliers solver',                    &
+                           description='Calculation of the multipliers ('     &
+                           //trim(engine%multipliers_algorithm)&
+                           //' algorithm)')
+!
+         call engine%tasks%add(label='es solver',                             &
+                           description='Calculation of the excited state ('// &
+                           trim(engine%es_algorithm)//' algorithm)')
+!
+      else
+!
+         call engine%tasks%add(label='es solver',                              &
+                           description='Calculation of the excited state ('//  &
+                           trim((engine%es_algorithm))//' algorithm)')
+!
+      endif
 !
       engine%description  = 'Calculates the coupled cluster excitation vectors and excitation energies'
 !

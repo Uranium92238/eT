@@ -116,6 +116,7 @@ set(eT_fortran_sources
    src/tools/record_storer/file_storer_class.F90
    src/tools/string_utilities.F90
    src/tools/visualization_class.F90
+   src/tools/task_list_class.F90
 #
    src/various/butcher_tables.F90
    src/various/continuous_output_coefficients.F90

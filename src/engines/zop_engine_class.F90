@@ -33,6 +33,8 @@ module zop_engine_class
    use gs_engine_class, only: gs_engine
    use ccs_class,       only: ccs
 !
+   use task_list_class, only: task_list
+!
    type, extends(gs_engine) :: zop_engine
 !
    contains
@@ -151,7 +153,11 @@ contains
 !
       call engine%calculate_expectation_values(wf)
 !
-      call engine%do_visualization(wf)
+      if (engine%plot_density) then
+!
+         call engine%do_visualization(wf)
+!
+      endif
 !
       call wf%destruct_gs_density()
 !
@@ -163,20 +169,39 @@ contains
 !!    Set printables
 !!    Written by sarai D. Folkestad, May 2019
 !!
+!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       class(zop_engine) :: engine
 !
       engine%name_ = 'Zeroth order coupled cluster properties engine'
-      engine%author ='E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       engine%tag   = 'zeroth order properties'
 !
-      engine%tasks = [character(len=150) ::                                                                       &
-      'Cholesky decomposition of the ERI-matrix',                                                           &
-      'Calculation of the ground state amplitudes and energy ('//trim(engine%gs_algorithm)//'-algorithm)',  &
-      'Calculation of the multipliers ('//trim(engine%multipliers_algorithm)//'-algorithm)',                &
-      'Calculation of the zeroth order property']
+!     Prepare the list of tasks
+!
+      engine%tasks = task_list()
+!
+      call engine%tasks%add(label='cd solver',                                &
+                            description='Cholesky decomposition of the ERI-matrix')
+!
+      call engine%tasks%add(label='gs solver',                                &
+                            description='Calculation of the ground state ('// &
+                           trim((engine%gs_algorithm))//' algorithm)')
+!
+      call engine%tasks%add(label='multipliers solver',                       &
+                            description='Calculation of the multipliers ('    &
+                            //trim((engine%multipliers_algorithm))&
+                            //' algorithm)')
+!
+      call engine%tasks%add(label='expectation value',                        &
+                            description='Calculation of ground state properties')
+!
+      if (engine%plot_density) &
+      call engine%tasks%add(label='plotting',                                 &
+                            description='Plot density')
 !
       engine%description  = 'Calculates the time-independent expectation value of&
                             & one-electron operators A, < A > = < Λ | A | CC >.'
@@ -204,6 +229,8 @@ contains
       real(dp), dimension(6) :: q_total
 !      
       character(len=4), dimension(:), allocatable :: components
+!
+      call engine%tasks%print_('expectation value')
 !
       if(engine%dipole) then 
 !

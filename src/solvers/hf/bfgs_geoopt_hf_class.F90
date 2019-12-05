@@ -5,10 +5,15 @@ module bfgs_geoopt_hf_class
 !!    Written by Eirik F. Kjønstad, June 2019
 !!
 !
-   use hf_class 
-   use reference_engine_class
-   use bfgs_tool_class
-   use diis_tool_class
+   use parameters
+!
+   use global_out,            only: output
+   use global_in,             only: input
+   use memory_manager_class,  only: mem
+!
+   use hf_class,              only: hf
+   use scf_diis_hf_class,     only: scf_diis_hf
+   use bfgs_tool_class,       only: bfgs_tool
 !
    implicit none
 !
@@ -27,8 +32,6 @@ module bfgs_geoopt_hf_class
       real(dp) :: energy_threshold
       real(dp) :: gradient_threshold
       real(dp) :: max_step 
-!
-      type(reference_engine) :: hf_gs_engine
 !
       real(dp), dimension(:), allocatable :: energies, gradient_maxs 
 !
@@ -98,8 +101,6 @@ contains
 !
       call output%printf('Starting HF solver.', fs='(/t3,a)', pl='n')
 !
-      solver%hf_gs_engine = reference_engine()
-!
    end function new_bfgs_geoopt_hf
 !
 !
@@ -159,6 +160,10 @@ contains
 !
       real(dp), dimension(3, wf%system%n_atoms) :: geometry, gradient 
 !
+      type(scf_diis_hf), allocatable :: hf_gs_solver
+!
+      logical :: restart
+!
 !     Update geometry to the one requested
 !
       call wf%system%set_geometry(geometry)
@@ -167,10 +172,15 @@ contains
 !
       call wf%set_n_mo() 
 !
-!     Attempt to converge HF orbitals/density, using restart 
+!     Attempt to converge HF orbitals/density
 !
-      if (solver%restart .or. solver%iteration > 1) solver%hf_gs_engine%restart = .true.
-      call solver%hf_gs_engine%ignite(wf) 
+      restart = .false.
+!
+      if (solver%restart .or. solver%iteration > 1) restart = .true.
+!
+      hf_gs_solver = scf_diis_hf(wf, restart)
+      call hf_gs_solver%run(wf)
+      call hf_gs_solver%cleanup(wf)
 !
 !     Compute gradient 
 !
@@ -184,6 +194,9 @@ contains
 !!    Run 
 !!    Written by Eirik F. Kjønstad, 2019
 !!
+!
+      use array_utilities, only: get_abs_max
+!
       implicit none
 !
       class(bfgs_geoopt_hf) :: solver
