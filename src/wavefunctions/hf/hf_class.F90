@@ -287,7 +287,7 @@ contains
 !
       class(molecular_system), target, intent(in) :: system
 !
-      wf%name_ = 'hf'
+      wf%name_ = 'rhf'
 !
       wf%system => system
 !

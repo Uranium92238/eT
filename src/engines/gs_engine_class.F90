@@ -26,11 +26,12 @@ module gs_engine_class
 !
    use parameters
 !
-   use ccs_class, only: ccs
-   use global_in, only: input
-   use global_out, only: output
-   use memory_manager_class, only: mem
-   use timings_class, only: timings
+   use ccs_class,             only: ccs
+   use global_in,             only: input
+   use global_out,            only: output
+   use memory_manager_class,  only: mem
+   use timings_class,         only: timings
+   use task_list_class,       only: task_list
 !
    type, extends(abstract_engine) :: gs_engine 
 !
@@ -60,7 +61,7 @@ module gs_engine_class
 !
       procedure, nopass :: calculate_quadrupole_moment   => calculate_quadrupole_moment_gs_engine
 !
-      procedure, nopass :: do_cholesky                   => do_cholesky_gs_engine
+      procedure :: do_cholesky                           => do_cholesky_gs_engine
 !
       procedure :: restart_handling                      => restart_handling_gs_engine
 !
@@ -197,21 +198,28 @@ contains
 !!
 !!    Should be overwritten by descendants.
 !!
+!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       class(gs_engine) :: engine
 !
       engine%name_       = 'Ground state coupled cluster engine'
-      engine%author      = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       engine%description = 'Calculates the ground state CC wavefunction | CC > = exp(T) | R >'
       engine%tag         = 'ground state'
 !
-      engine%tasks       = [character(len=150) ::                                                                    &
-                           'Cholesky decomposition of the ERI-matrix',                                               &
-                           'Calculation of the ground state amplitudes ('// &
-                           trim(engine%gs_algorithm)//'-algorithm)', &
-                           'Calculation of the ground state energy']
+!     Prepare the list of tasks
+!
+      engine%tasks = task_list()
+!
+      call engine%tasks%add(label='cd solver',                                &
+                            description='Cholesky decomposition of the ERI-matrix')
+!
+      call engine%tasks%add(label='gs solver',                                &
+                            description='Calculation of the ground state ('// &
+                           trim((engine%gs_algorithm))//' algorithm)')
 !
    end subroutine set_printables_gs_engine
 !
@@ -227,8 +235,9 @@ contains
 !!    After this routine, the wavefunction has the cluster amplitudes
 !!    stored in memory.
 !!
-      use diis_cc_gs_class
-      use newton_raphson_cc_gs_class
+      use diis_cc_gs_class,            only: diis_cc_gs
+      use newton_raphson_cc_gs_class,  only: newton_raphson_cc_gs
+      use string_utilities,            only: convert_to_uppercase
 !
       implicit none
 !
@@ -238,6 +247,8 @@ contains
 !
       type(diis_cc_gs), allocatable :: diis_solver
       type(newton_raphson_cc_gs), allocatable :: newton_raphson_solver
+!
+      call engine%tasks%print_('gs solver')
 !
       if (trim(wf%name_) == 'mp2') then
 !
@@ -291,8 +302,8 @@ contains
 !!    After this routine, the wavefunction has the cluster amplitudes
 !!    and the multipliers stored in memory.
 !!
-      use diis_cc_multipliers_class
-      use davidson_cc_multipliers_class
+      use diis_cc_multipliers_class,      only: diis_cc_multipliers
+      use davidson_cc_multipliers_class,  only: davidson_cc_multipliers
 !
       implicit none
 !
@@ -302,6 +313,8 @@ contains
 !
       type(diis_cc_multipliers), allocatable     :: diis_solver
       type(davidson_cc_multipliers), allocatable :: davidson_solver
+!
+      call engine%tasks%print_('multipliers solver')
 !
       if (trim(engine%multipliers_algorithm) == 'davidson') then 
 !
@@ -422,20 +435,23 @@ contains
    end subroutine calculate_quadrupole_moment_gs_engine
 !
 !
-   subroutine do_cholesky_gs_engine(wf)
+   subroutine do_cholesky_gs_engine(engine, wf)
 !!
 !!    Do Cholesky
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
 !!
 !!    Cholesky decomposition of electronic repiulsion integrals
 !!
-      use eri_cd_class
+      use eri_cd_class, only : eri_cd
 !
       implicit none
 !
+      class(gs_engine), intent(in) :: engine
       class(ccs), intent(inout) :: wf
 !
       type(eri_cd) :: eri_chol_solver
+!
+      call engine%tasks%print_('cd solver')
 !
 !     Cholesky decoposition 
 !
@@ -496,12 +512,12 @@ contains
       class(gs_engine) :: engine
       class(ccs) :: wf 
 !
-      type(visualization) :: plotter
+      type(visualization), allocatable :: plotter
 !
       character(len=200) :: density_file_tag
       real(dp), dimension(:,:), allocatable :: density
 !
-      if (.not. engine%plot_density) return
+      call engine%tasks%print_('plotting')
 !
       if (.not. allocated(wf%density) ) &
          call output%error_msg("CC density not allocated")

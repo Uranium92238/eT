@@ -30,6 +30,7 @@ module reference_engine_class
    use global_out,           only: output
    use timings_class,        only: timings
    use memory_manager_class, only: mem
+   use task_list_class,      only: task_list
 !
    use hf_class,          only: hf
 !
@@ -62,10 +63,12 @@ module reference_engine_class
 !
       procedure :: set_printables                      => set_printables_reference_engine
 !
-      procedure, nopass :: generate_sad_density        => generate_sad_density_reference_engine
+      procedure :: generate_sad_density               => generate_sad_density_reference_engine
 !
-      procedure :: do_visualization             => do_visualization_reference_engine
-      procedure, nopass :: do_orbital_plotting  => do_orbital_plotting_reference_engine
+      procedure :: do_visualization                   => do_visualization_reference_engine
+      procedure, nopass :: do_orbital_plotting        => do_orbital_plotting_reference_engine
+!
+      procedure :: do_ground_state                    => do_ground_state_reference_engine
 !
    end type reference_engine 
 !
@@ -134,53 +137,21 @@ contains
       class(reference_engine)  :: engine 
       class(hf)         :: wf 
 !
-      type(scf_hf),      allocatable :: scf
-      type(scf_diis_hf), allocatable :: scf_diis
-      type(mo_scf_diis), allocatable :: mo_scf_diis_
-!
-!     Generate SAD if requested
-!
       if (.not. engine%restart .and. (trim(engine%ao_density_guess) == 'sad')) then
+!
+!        Generate SAD if requested
 !
          call engine%generate_sad_density(wf)
 !
       endif
 !
-!     Choose solver
+!     Solve equations
 !
-      if (trim(engine%algorithm) .eq. 'scf-diis' .and. trim(wf%name_) .eq. 'mlhf') then
+      call engine%do_ground_state(wf)
 !
-         call output%error_msg('MLHF can not run with scf-diis, try mo-scf-diis.')
+!     Plot orbitals and/or density
 !
-      elseif (trim(engine%algorithm) .eq. 'mo-scf-diis' .and. trim(wf%name_) .eq. 'uhf') then
-!
-         call output%error_msg('UHF can not run with mo-scf-diis, try scf-diis.')
-!
-      elseif (trim(engine%algorithm) == 'scf-diis') then
-!
-         scf_diis = scf_diis_hf(wf, engine%restart)
-         call scf_diis%run(wf)
-         call scf_diis%cleanup(wf)
-!
-      elseif (trim(engine%algorithm) == 'mo-scf-diis') then
-!
-         mo_scf_diis_ = mo_scf_diis(wf, engine%restart)
-         call mo_scf_diis_%run(wf)
-         call mo_scf_diis_%cleanup(wf)
-!
-      elseif (trim(engine%algorithm) == 'scf') then 
-!
-         scf = scf_hf(wf, engine%restart)
-         call scf%run(wf)
-         call scf%cleanup(wf)
-!
-      else
-!
-         call output%error_msg('did not recognize hf algorithm: '// engine%algorithm)
-!
-      endif
-!
-      call engine%do_visualization(wf)
+      if (engine%plot_orbitals .or. engine%plot_density) call engine%do_visualization(wf)
 !
 !     Calculate the zeroth order properties
 !
@@ -218,25 +189,40 @@ contains
 !!
 !!    Should be overwritten by descendants.
 !!
+!
+      use string_utilities, only : convert_to_uppercase
+!
       implicit none
 !
       class(reference_engine) :: engine
 !
-      engine%name_       = 'Reference state engine'
-      engine%author      = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+      engine%name_       = 'Hartree-Fock engine'
 !
-      engine%description = 'Calculates the reference wavefunction | R >.'
+      engine%description = 'Drives the calculation of the Hartree-Fock state. '
       engine%tag         = 'ground state'
 !
-      engine%tasks       = [character(len=150) ::                                                         &
-                           'Generate initial density (' // trim(engine%ao_density_guess) // ')',          &
-                           'Calculation of reference state (' // trim(engine%algorithm) // ' algorithm)', &
-                           'Calculation of the ground state energy']
+!     Prepare the list of tasks
+!
+      engine%tasks = task_list()
+!
+      if (trim(engine%ao_density_guess) == 'sad' .and. .not. engine%restart) &
+         call engine%tasks%add(label='sad', description='Generate initial SAD density') 
+!
+      call engine%tasks%add(label='gs solver',                                &
+                            description='Calculation of reference state (' // &
+                                 trim(convert_to_uppercase(engine%algorithm)) // ' algorithm)')
+!
+      if (engine%plot_orbitals .or. engine%plot_density) &
+         call engine%tasks%add(label='plotting', description='Plot orbitals and/or density') 
+!
+      if (engine%dipole .or. engine%quadrupole) &
+         call engine%tasks%add(label='expectation value', &
+            description='Calculate dipole and/or quadrupole moments') 
 !
    end subroutine set_printables_reference_engine
 !
 !
-   subroutine generate_sad_density_reference_engine(wf)
+   subroutine generate_sad_density_reference_engine(engine, wf)
 !!    
 !!    Generate SAD density
 !!    Written by Tor S. Haugland, Sep 2019
@@ -265,6 +251,8 @@ contains
 !
       implicit none
 !
+      class(reference_engine)          :: engine
+!
       class(hf)                        :: wf
 !
       type(atomic)                     :: atom
@@ -289,7 +277,7 @@ contains
       character(len=50), dimension(wf%system%n_atoms) :: atom_and_basis
       integer,           dimension(wf%system%n_atoms) :: unique_atom_index
 !
-      call output%printf('- Generating SAD guess', pl='minimal', fs='(/t3,a)')
+      call engine%tasks%print_('sad')
 !
 !     SAD solver settings
 !
@@ -414,7 +402,7 @@ contains
 !
       character(len=200)      :: density_file_tag
 !
-      if (.not. engine%plot_orbitals .and. .not. engine%plot_density) return
+      call engine%tasks%print_('plotting')
 !
       if (trim(wf%name_) .eq. 'uhf') call output%error_msg('no plotting for UHF')
 !
@@ -556,6 +544,8 @@ contains
       real(dp), dimension(6) :: q_total
 !      
       character(len=4), dimension(:), allocatable :: components
+!
+      call engine%tasks%print_('expectation value')
 !
       if(engine%dipole) then 
 !
@@ -722,6 +712,60 @@ contains
       total = electronic + nuclear
 !
    end subroutine calculate_quadrupole_moment_reference_engine
+!
+!
+   subroutine do_ground_state_reference_engine(engine, wf)
+!!
+!!    Do ground state 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!
+!!    Constructs the solver specified on input. 
+!!    Solves the ground state.
+!!
+      implicit none
+!
+      class(reference_engine), intent(in)    :: engine 
+      class(hf), intent(inout)               :: wf 
+!
+      type(scf_hf),      allocatable :: scf
+      type(scf_diis_hf), allocatable :: scf_diis
+      type(mo_scf_diis), allocatable :: mo_scf_diis_
+!
+      call engine%tasks%print_('gs solver')
+!
+      if (trim(engine%algorithm) .eq. 'scf-diis' .and. trim(wf%name_) .eq. 'mlhf') then
+!
+         call output%error_msg('MLHF can not run with scf-diis, try mo-scf-diis.')
+!
+      elseif (trim(engine%algorithm) .eq. 'mo-scf-diis' .and. trim(wf%name_) .eq. 'uhf') then
+!
+         call output%error_msg('UHF can not run with mo-scf-diis, try scf-diis.')
+!
+      elseif (trim(engine%algorithm) == 'scf-diis') then
+!
+         scf_diis = scf_diis_hf(wf, engine%restart)
+         call scf_diis%run(wf)
+         call scf_diis%cleanup(wf)
+!
+      elseif (trim(engine%algorithm) == 'mo-scf-diis') then
+!
+         mo_scf_diis_ = mo_scf_diis(wf, engine%restart)
+         call mo_scf_diis_%run(wf)
+         call mo_scf_diis_%cleanup(wf)
+!
+      elseif (trim(engine%algorithm) == 'scf') then 
+!
+         scf = scf_hf(wf, engine%restart)
+         call scf%run(wf)
+         call scf%cleanup(wf)
+!
+      else
+!
+         call output%error_msg('did not recognize hf algorithm: '// engine%algorithm)
+!
+      endif
+!
+   end subroutine do_ground_state_reference_engine
 !
 !
 end module reference_engine_class

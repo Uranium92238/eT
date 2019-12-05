@@ -29,6 +29,7 @@ module fop_engine_class
    use timings_class,         only: timings
    use memory_manager_class,  only: mem
    use sequential_file_class, only: sequential_file
+   use task_list_class,       only: task_list
 !
    use es_engine_class, only: es_engine
    use ccs_class,       only: ccs
@@ -373,10 +374,7 @@ contains
 !
       character(len=4), dimension(3) :: operator = ['mu_x', 'mu_y', 'mu_z']
 !
-      call output%printf('- Polarizabilities:', pl='m', fs='(/t3,a)')
-!
-      if (engine%eom) call output%printf('Computed using EOM theory.', pl='m', fs='(/t6,a/)')
-      if (engine%lr)  call output%printf('Computed using LR theory.', pl='m', fs='(/t6,a/)')
+      call engine%tasks%print_('polarizabilities')
 !
 !     Allocate arrays to hold amplitude response vectors as well as 
 !     F-transformed response vectors (if LR)
@@ -870,6 +868,8 @@ contains
       real(dp), dimension(:), allocatable :: M ! M vector associated with state 
 !
       type(timings) :: timer
+!     
+      call engine%tasks%print_('transition moments')
 !
       timer = timings('Time to converge M vectors and calculate LR transition moments.', pl='n')
 !
@@ -950,6 +950,8 @@ contains
 !
       type(timings) :: EOM_timer
 !
+      call engine%tasks%print_('transition moments')
+!
       EOM_timer = timings('Total time to calculate EOM transition moments.')
 !
       call EOM_timer%turn_on()
@@ -960,7 +962,6 @@ contains
       call wf%initialize_transition_densities()
 !
       call output%printf(':: EOM first order properties calculation', fs='(/t3,a)')
-      call output%printf(engine%author, fs='(t3,a)')
 !
       if (engine%dipole_length) then
 !
@@ -1170,6 +1171,9 @@ contains
 !!    Set printables
 !!    Written by sarai D. Folkestad, May 2019
 !!
+!
+      use string_utilities, only: convert_to_uppercase
+!
       implicit none
 !
       class(fop_engine) :: engine
@@ -1177,7 +1181,6 @@ contains
       character(len=5) :: fop_type
 !
       engine%name_       = ':: First order coupled cluster properties engine'
-      engine%author      = ':: J. H. Andersen, S. D. Folkestad, E. F. Kjønstad, A. Paul 2019'
 !
       engine%tag = 'first order properties'
 !
@@ -1191,13 +1194,40 @@ contains
 !
       endif
 !
-      engine%tasks = [character(len=150) ::                                                                 &
-      'Cholesky decomposition of the ERI-matrix',                                                           &
-      'Calculation of the ground state amplitudes and energy ('//trim(engine%gs_algorithm)//'-algorithm)',  &
-      'Calculation of the multipliers ('//trim(engine%multipliers_algorithm)//'-algorithm)',                &
-      'Calculation of the ' //trim(engine%es_type) //' excitation vectors and&
-      & energies ('//trim(engine%es_algorithm)//'-algorithm)',                                              &
-      'Calculation of the first order property ('//trim(fop_type)//')']
+!     Prepare the list of tasks
+!
+      engine%tasks = task_list()
+!
+      call engine%tasks%add(label='cd solver',                                &
+                            description='Cholesky decomposition of the ERI-matrix')
+!
+      call engine%tasks%add(label='gs solver',                                &
+                            description='Calculation of the ground state ('// &
+                           trim((engine%gs_algorithm))//' algorithm)')
+!                    
+      call engine%tasks%add(label='multipliers solver',                       &
+                            description='Calculation of the multipliers ('    &
+                            //trim((engine%multipliers_algorithm))&
+                            //' algorithm)')
+!
+      call engine%tasks%add(label='es solver',                                &
+                           description='Calculation of the excited state ('// &
+                           trim((engine%es_algorithm))//' algorithm)')
+!
+      if (engine%transition_moments) then
+!
+         call engine%tasks%add(label='transition moments',                       &
+                           description='Calculation of the transition moments (' &
+                           //trim(fop_type)//')')
+!
+      endif
+!
+      if (engine%polarizabilities) then
+!
+         call engine%tasks%add(label='polarizabilities',                         &
+                           description='Calculation of the '//trim(fop_type)//' polarizabilities')
+!
+      endif
 !
       engine%description = 'Calculates dipole transition moments and oscillator strengths between &
                            &the ground state and the excited states.'

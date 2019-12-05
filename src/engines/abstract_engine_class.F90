@@ -33,6 +33,7 @@ module abstract_engine_class
    use timings_class,        only: timings
    use string_utilities,     only: convert_to_uppercase
    use memory_manager_class, only: mem
+   use task_list_class,      only: task_list
 !
    use wavefunction_class, only: wavefunction
 !
@@ -43,15 +44,15 @@ module abstract_engine_class
       character(len=200) :: name_
       character(len=200) :: tag
       character(len=200) :: description  
-      character(len=200) :: author
+!
       logical :: dipole
       logical :: quadrupole
       logical :: plot_density
 !
-      type(timings) :: timer ! Timer for engine. Obs! must be turned on in constructor
+      type(timings) :: timer ! Timer for engine. Obs! must be turned on in constructor                                                        
 !
-      character(len=150), dimension(:), allocatable :: tasks   ! The printed tasks of the engine. 
-                                                               ! Should be set in constructor
+      type(task_list), allocatable :: tasks  ! The printed tasks of the engine. 
+                                             ! Should be set in constructor
 !
    contains
 !
@@ -88,24 +89,20 @@ contains
       class(abstract_engine), intent(in) :: engine
       class(wavefunction),    intent(in) :: wf
 !
-      integer :: task
-!
       if (.not. allocated(engine%tasks)) call output%error_msg('Tasks of engine was not set. Do this in prepare.')
 !
       call output%printf(":: (a0)", pl='minimal', fs='(//t3,a)', chars=[engine%name_])
-      call output%printf(":: (a0)", pl='minimal', chars=[engine%author])
+      call output%print_separator('minimal', len(trim(engine%name_))+6, '=')
 !
-      call output%printf("(a0)",    pl='normal', fs='(/t3,a)', chars=[engine%description])
+      call output%printf("(a0)",    pl='minimal', fs='(/t3,a)', chars=[engine%description])
 !
-      call output%printf('This is a (a0) (a0) calculation. The following tasks will be performed:', &
-                         pl='normal', ffs='(/t3,a)', fs='(t3,a)',                                   &
-                         chars=[character(len=500)::convert_to_uppercase(wf%name_), engine%tag] )
+      call output%printf('This is a (a0) (a0) calculation.', pl='minimal', ffs='(/t3,a)', &
+                        chars=[character(len=500)::convert_to_uppercase(wf%name_), engine%tag])
+!
+      call output%printf('The following tasks will be performed:', &
+                         pl='minimal', fs='(t3,a/)')
 !     
-      do task = 1, size(engine%tasks)
-!
-         call output%printf('- (a0)', pl='normal', fs='(t6,a)', chars = [engine%tasks(task)] )
-!
-      enddo
+     call engine%tasks%print_all()
 !
    end subroutine print_banner_abstract_engine
 !
