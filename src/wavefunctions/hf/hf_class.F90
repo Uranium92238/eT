@@ -1007,7 +1007,7 @@ contains
    end subroutine get_ao_density_sq_hf
 !
 !
-   subroutine cleanup_hf(wf)
+   subroutine  cleanup_hf(wf)
 !!
 !!    Cleanup
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1015,6 +1015,8 @@ contains
       implicit none
 !
       class(hf) :: wf
+!
+      call wf%save_ao_density()
 !
       call wf%prepare_mos()
       call wf%prepare_frozen_fock_terms()

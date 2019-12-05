@@ -60,7 +60,6 @@ module scf_diis_hf_class
 !
       procedure, private :: prepare       => prepare_scf_diis_hf
       procedure :: run                    => run_scf_diis_hf
-      procedure :: cleanup                => cleanup_scf_diis_hf
 !
       procedure :: read_settings           => read_settings_scf_diis_hf
       procedure :: read_scf_diis_settings  => read_scf_diis_settings_scf_diis_hf
@@ -475,36 +474,6 @@ contains
       call solver_timer%turn_off()
 !
    end subroutine run_scf_diis_hf
-!
-!
-   subroutine cleanup_scf_diis_hf(solver, wf)
-!!
-!! 	Cleanup
-!! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(scf_diis_hf) :: solver
-!
-      class(hf) :: wf
-!
-      call output%printf('- Cleaning up (a0)',chars=[solver%tag], fs='(/t3, a)', pl='verbose')
-!
-!     MO transform the AO Fock matrix
-!
-      call wf%initialize_mo_fock()
-      call wf%construct_mo_fock()
-!
-!     Save the orbitals to file & store restart information
-!
-      call wf%save_orbital_coefficients()
-      call wf%save_orbital_energies()
-!
-!     Save AO density (or densities) to disk 
-!
-      call wf%save_ao_density()
-!
-   end subroutine cleanup_scf_diis_hf
 !
 !
    subroutine read_settings_scf_diis_hf(solver)
