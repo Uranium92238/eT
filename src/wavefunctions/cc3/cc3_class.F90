@@ -1416,9 +1416,11 @@ contains
 !
                   parallel(p) = .false.
 !
-                  do q = 1, p
+                  do q = 1, p-1
 !
-                     if(q .eq. p) cycle
+!                    Skip if the state q was already parallel to another p
+!
+                     if (parallel(q)) cycle
 !
                      if(are_vectors_parallel(R(:,p), R(:,q), &
                         wf%n_es_amplitudes, residual_threshold)) then
@@ -1468,9 +1470,11 @@ contains
                   parallel(p) = .false.
                   skip_states(current_state + p - 1) = .false.
 !
-                  do q = 1, p
+                  do q = 1, p-1
 !
-                     if(q .eq. p) cycle
+!                    Skip if the state q was already parallel to another p
+!
+                     if (parallel(q)) cycle
 !
                      if(are_vectors_parallel(L(:,p), L(:,q), &
                         wf%n_es_amplitudes, residual_threshold)) then

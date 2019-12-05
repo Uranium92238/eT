@@ -1681,9 +1681,7 @@ contains
             reduced_degeneracy = n_degeneracy
 !
             do p = 2, n_degeneracy ! if p == 1 then also q == 1 and we cycle anyway
-               do q = 1, p
-!
-                  if(p .eq. q) cycle
+               do q = 1, p-1
 !
                   if(are_vectors_parallel(R(:,p), R(:,q), wf%n_es_amplitudes, threshold)) then
 !
@@ -1824,9 +1822,11 @@ contains
 !
                   parallel(p) = .false.
 !
-                  do q = 1, p
+                  do q = 1, p-1
 !
-                     if(q .eq. p) cycle
+!                    Skip if the state q was already parallel to another p
+!
+                     if (parallel(q)) cycle
 !
                      if(are_vectors_parallel(R(:,p), R(:,q), &
                         wf%n_es_amplitudes, residual_threshold)) then
@@ -1876,9 +1876,11 @@ contains
                   parallel(p) = .false.
                   skip_states(current_state + p - 1) = .false.
 !
-                  do q = 1, p
+                  do q = 1, p-1
 !
-                     if(q .eq. p) cycle
+!                    Skip if the state q was already parallel to another p
+!
+                     if (parallel(q)) cycle
 !
                      if(are_vectors_parallel(L(:,p), L(:,q), &
                         wf%n_es_amplitudes, residual_threshold)) then
