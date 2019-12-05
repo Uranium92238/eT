@@ -51,7 +51,6 @@ module scf_hf_class
    contains
 !
       procedure :: run           => run_scf_hf
-      procedure :: cleanup       => cleanup_scf_hf
 !
       procedure :: print_banner  => print_banner_scf_hf
       procedure :: prepare       => prepare_scf_hf
@@ -305,42 +304,6 @@ contains
       endif
 !
    end subroutine run_scf_hf
-!
-!
-   subroutine cleanup_scf_hf(solver, wf)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(scf_hf) :: solver
-!
-      class(hf) :: wf
-!
-      call output%printf('- Cleaning up (a0)', pl='normal', fs='(/t3,a)', &
-                        chars=[trim(solver%tag)] )
-!
-!     Save the orbitals to file & store restart information
-!
-      call wf%save_orbital_coefficients()
-!
-!     MO transform the AO Fock matrix
-!     [NB! This is bound to go wrong for UHF. We should generalize and overwrite. @todo]
-!
-      call wf%initialize_mo_fock()
-      call wf%construct_mo_fock()
-!
-!     Save AO density (or densities) to disk
-!
-      call wf%save_ao_density()
-!
-!     Final deallocations of solver
-!     (note that we keep certain arrays in the wavefunction for later)
-!
-      call wf%destruct_ao_overlap()
-!
-   end subroutine cleanup_scf_hf
 !
 !
    subroutine print_banner_scf_hf(solver)

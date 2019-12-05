@@ -1031,6 +1031,8 @@ contains
 !
       class(mlhf) :: wf
 !
+      call wf%save_ao_density()
+!
       call wf%prepare_mos()
       call wf%prepare_frozen_fock_terms()
 !

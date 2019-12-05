@@ -345,7 +345,6 @@ contains
 !
 !        Cleanup and generate ao_density_a and ao_density_b
 !
-         call sad_solver%cleanup(sad_wf)
          call sad_wf%cleanup()
          call sad_system%cleanup()
 !
@@ -745,19 +744,16 @@ contains
 !
          scf_diis = scf_diis_hf(wf, engine%restart)
          call scf_diis%run(wf)
-         call scf_diis%cleanup(wf)
 !
       elseif (trim(engine%algorithm) == 'mo-scf-diis') then
 !
          mo_scf_diis_ = mo_scf_diis(wf, engine%restart)
          call mo_scf_diis_%run(wf)
-         call mo_scf_diis_%cleanup(wf)
 !
       elseif (trim(engine%algorithm) == 'scf') then 
 !
          scf = scf_hf(wf, engine%restart)
          call scf%run(wf)
-         call scf%cleanup(wf)
 !
       else
 !

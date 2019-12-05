@@ -57,7 +57,6 @@ module mo_scf_diis_class
 !
       procedure :: prepare                      => prepare_mo_scf_diis
       procedure :: run                          => run_mo_scf_diis
-      procedure :: cleanup                      => cleanup_mo_scf_diis
 !
       procedure :: read_settings                => read_settings_mo_scf_diis
       procedure :: read_mo_scf_diis_settings    => read_mo_scf_diis_settings_mo_scf_diis
@@ -377,31 +376,6 @@ contains
          ints=[solver%diis_dimension],fs='(t6,a)', pl='minimal')
 !
    end subroutine print_mo_scf_diis_settings_mo_scf_diis
-!
-!
-   subroutine cleanup_mo_scf_diis(solver, wf)
-!!
-!!    Cleanup
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(mo_scf_diis) :: solver
-!
-      class(hf) :: wf
-!
-      call output%printf('- Cleaning up (a0)',chars=[solver%tag], fs='(/t3, a)', pl='verbose')
-!
-!     Save the orbitals to file & store restart information
-!
-      call wf%save_orbital_coefficients()
-      call wf%save_orbital_energies()
-!
-!     Save AO density (or densities) to disk 
-!
-      call wf%save_ao_density()
-!
-   end subroutine cleanup_mo_scf_diis
 !
 !
    subroutine read_settings_mo_scf_diis(solver)

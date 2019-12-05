@@ -180,7 +180,6 @@ contains
 !
       hf_gs_solver = scf_diis_hf(wf, restart)
       call hf_gs_solver%run(wf)
-      call hf_gs_solver%cleanup(wf)
 !
 !     Compute gradient 
 !

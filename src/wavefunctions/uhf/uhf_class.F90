@@ -2030,6 +2030,8 @@ contains
 !
       class(uhf) :: wf
 !
+      call wf%save_ao_density()
+!
 !     Deallocations
 !
       call wf%destruct_orbital_energies()
