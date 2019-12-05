@@ -61,6 +61,7 @@ module mo_scf_diis_class
       procedure :: read_settings                => read_settings_mo_scf_diis
       procedure :: read_mo_scf_diis_settings    => read_mo_scf_diis_settings_mo_scf_diis
 !
+      procedure :: print_settings               => print_settings_mo_scf_diis
       procedure :: print_mo_scf_diis_settings   => print_mo_scf_diis_settings_mo_scf_diis
 !
       procedure, private :: update_diis_history => update_diis_history_mo_scf_diis
@@ -119,8 +120,9 @@ contains
 !
       class(hf) :: wf
 !
-      solver%tag           = 'MO Self-consistent field DIIS Hartree-Fock solver'
-      solver%author        = 'E. F. Kjønstad and S, D. Folkestad, 2018'
+      solver%name_         = 'MO Self-consistent field DIIS Hartree-Fock solver'
+      solver%tag           = 'MO SCF DIIS'
+!
       solver%description   = 'A DIIS-accelerated Roothan-Hall self-consistent field solver. &
                               &A least-square DIIS fit is performed on the previous Fock matrices and &
                               &associated gradients. Following the Roothan-Hall update of the density, &
@@ -134,11 +136,7 @@ contains
 !
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
 !
-      call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
-!
-      call solver%print_mo_scf_diis_settings()
-      call solver%print_hf_solver_settings()
-      call wf%print_screening_settings()
+      call solver%print_settings(wf)
 !
 !     Initialize the orbitals, density, and the Fock matrix (or matrices)
 !
@@ -372,8 +370,8 @@ contains
 !
       class(mo_scf_diis) :: solver
 !
-      call output%printf('DIIS dimension:                (i0)', &
-         ints=[solver%diis_dimension],fs='(t6,a)', pl='minimal')
+      call output%printf('DIIS dimension:               (i11)', &
+         ints=[solver%diis_dimension],fs='(/t6,a)', pl='minimal')
 !
    end subroutine print_mo_scf_diis_settings_mo_scf_diis
 !
@@ -529,6 +527,26 @@ contains
       call mem%dealloc(Y_i, wf%n_v, wf%n_o)
 !
    end subroutine update_diis_history_mo_scf_diis
+!
+!
+   subroutine print_settings_mo_scf_diis(solver, wf)
+!!
+!!    Print settings
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+      implicit none
+!
+      class(mo_scf_diis), intent(in) :: solver
+!
+      class(hf), intent(in) :: wf
+!
+      call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
+!
+      call solver%print_mo_scf_diis_settings()
+      call solver%print_hf_solver_settings()
+      call wf%print_screening_settings()
+!
+   end subroutine print_settings_mo_scf_diis
 !
 !
 end module mo_scf_diis_class

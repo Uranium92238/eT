@@ -50,10 +50,11 @@ module scf_hf_class
 !
    contains
 !
-      procedure :: run           => run_scf_hf
+      procedure :: run              => run_scf_hf
 !
-      procedure :: print_banner  => print_banner_scf_hf
-      procedure :: prepare       => prepare_scf_hf
+      procedure :: print_banner     => print_banner_scf_hf
+      procedure :: print_settings   => print_settings_scf_hf
+      procedure :: prepare          => prepare_scf_hf
 !
    end type scf_hf
 !
@@ -146,8 +147,8 @@ contains
 !
 !     Print solver banner
 !
-      solver%tag = 'Self-consistent field solver'
-      solver%author = 'E. F. Kjønstad and S, D. Folkestad, 2018'
+      solver%name_   = 'Self-consistent field solver'
+      solver%tag     = 'SCF'
 !
       solver%description = 'A Roothan-Hall self-consistent field solver. In each iteration, &
                                   &the Roothan-Hall equation (or equations for unrestricted HF theory) &
@@ -164,10 +165,7 @@ contains
 !
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
 !
-      call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
-!
-      call solver%print_hf_solver_settings()
-      call wf%print_screening_settings()
+      call solver%print_settings(wf)
 !
 !     Initialize orbital coefficients, densities, and Fock matrices (plural for unrestricted methods)
 !
@@ -272,7 +270,8 @@ contains
          if (converged) then
 !
             call output%print_separator('n', 63,'-')
-            call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
+            call output%printf('Convergence criterion met in (i0) iterations!', &
+                  ints=[iteration], fs='(/t3,a)', pl='normal') 
 !
             call solver%print_summary(wf)
 !
@@ -315,12 +314,31 @@ contains
 !
       class(scf_hf) :: solver
 !
-      call output%printf(':: (a0)', pl='normal', fs='(//t3,a)',  chars=[trim(solver%tag)])
-      call output%printf(':: (a0)', pl='normal', fs='(t3,a)',    chars=[trim(solver%author)])
+      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
       call output%printf('(a0)',    pl='normal', ffs='(/t3,a)',  chars=[trim(solver%warning)])
       call output%printf('(a0)',    pl='normal', ffs='(/t3,a)',  chars=[trim(solver%description)])
 !
    end subroutine print_banner_scf_hf
 !
+!
+   subroutine print_settings_scf_hf(solver, wf)
+!!
+!!    Print settings
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+      implicit none
+!
+      class(scf_hf), intent(in) :: solver
+!
+      class(hf), intent(in) :: wf
+!
+      call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
+!
+      call solver%print_hf_solver_settings()
+      call wf%print_screening_settings()
+!
+   end subroutine print_settings_scf_hf
 !
 end module scf_hf_class

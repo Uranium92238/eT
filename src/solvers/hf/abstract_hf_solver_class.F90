@@ -33,8 +33,8 @@ module abstract_hf_solver_class
 !
    type, abstract :: abstract_hf_solver 
 !
+      character(len=100) :: name_
       character(len=100) :: tag
-      character(len=100) :: author
       character(len=400) :: description
 !
       real(dp) :: energy_threshold  
@@ -179,8 +179,9 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      call output%printf(':: (a0)', pl='normal', fs='(//t3,a)',  chars=[trim(solver%tag)])
-      call output%printf(':: (a0)', pl='normal', fs='(t3,a)',    chars=[trim(solver%author)])
+      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
       call output%printf('(a0)',    pl='normal', ffs='(/t3,a)',  chars=[trim(solver%description)])
 !
    end subroutine print_banner_abstract_hf_solver

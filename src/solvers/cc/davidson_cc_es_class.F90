@@ -115,7 +115,6 @@ contains
 !
       solver%name_ = 'Davidson coupled cluster excited state solver'
       solver%tag   = 'Davidson'
-      solver%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       solver%description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
                & the right or left eigenvectors of the Jacobian matrix, A. The eigenvalue &
@@ -188,7 +187,8 @@ contains
 !
       call solver%print_es_settings()
 !
-      call output%printf('Max reduced space dimension: (i4)',  ints=[solver%max_dim_red], pl='m', fs='(/t6,a)')
+      call output%printf('Max reduced space dimension:  (i11)',  &
+         ints=[solver%max_dim_red], pl='m', fs='(/t6,a)')
 !
    end subroutine print_settings_davidson_cc_es
 !
@@ -345,7 +345,7 @@ contains
       else 
 !
          call output%printf('Convergence criterion met in (i0) iterations!', pl='m', &
-                              ints=[iteration], fs='(/t3,a)')
+                              ints=[iteration], fs='(t3,a)')
 !
          call mem%alloc(r, wf%n_es_amplitudes, solver%n_singlet_states)
 !

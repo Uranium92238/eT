@@ -57,8 +57,7 @@ module davidson_cc_linear_equations_class
 !
    type :: davidson_cc_linear_equations
 !
-      character(len=100) :: name_   = 'Davidson CC linear equations solver'
-      character(len=100) :: author  = 'Eirik F. Kjønstad, Sarai D. Folkestad, Josefine H. Andersen, 2018-2019'
+      character(len=100) :: name_   = 'Davidson coupled cluster linear equations solver'
 !
       character(len=500) :: description = 'A Davidson solver that solves linear equations &
                                           &involving the Jacobian transformation. When solving &
@@ -263,7 +262,7 @@ contains
       iteration = 0
       converged_residual = .false.
 !
-      call output%printf('Entering iterative loop to solve equations.', pl='m', fs='(/t3,a)')
+      call output%printf('- Entering iterative loop to solve equations.', pl='m', fs='(/t3,a)')
 !
       do while (.not. converged_residual .and. (iteration .le. solver%max_iterations))
 !
@@ -332,7 +331,7 @@ contains
       if (converged_residual) then
 !
          call output%printf('Convergence criterion met in (i0) iterations!', pl='m', &
-                              ints=[iteration], fs='(/t3,a)')
+                              ints=[iteration], fs='(t3,a)')
 !
          call mem%alloc(solution, wf%n_gs_amplitudes)
 !
@@ -393,8 +392,9 @@ contains
 !
       class(davidson_cc_linear_equations) :: solver 
 !
-      call output%printf(':: ' // solver%name_, pl='m', fs='(/t3,a)')
-      call output%printf(':: ' // solver%author, pl='m', fs='(t3,a)')
+      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
       call output%printf(solver%description, pl='m', ffs='(t3,a)', fs='(t3,a)')
       call output%printf(solver%eq_description, pl='m', ffs='(/t3,a)', fs='(t3,a)')
 !

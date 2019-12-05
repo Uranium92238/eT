@@ -219,7 +219,8 @@ contains
 !
 !     Prepare for excited state
 !
-      if (engine%es_algorithm == 'asymmetric lanczos')then
+      if (engine%es_algorithm == 'asymmetric lanczos') then
+!
          call engine%do_multipliers(wf)       
          cc_es_solver_asymmetric_lanczos = asymmetric_lanczos_cc_es(wf)
          call cc_es_solver_asymmetric_lanczos%run(wf)

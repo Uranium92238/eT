@@ -91,8 +91,7 @@ module eri_cd_class
 !
    type :: eri_cd
 !
-      character(len=100) :: tag = ':: Cholesky decomposition of electronic repulsion integrals solver'
-      character(len=100) :: author = ':: E. F. Kjønstad, S. D. Folkestad, 2018'
+      character(len=100) :: name_ = 'Cholesky decomposition of electronic repulsion integrals solver'
 
       character(len=500) :: description1 = 'Performs a Cholesky decomposition of the two-electron &
                                             &electronic repulsion integrals in the atomic orbital basis,'
@@ -102,7 +101,8 @@ module eri_cd_class
       character(len=500) :: description3 = 'Once the Cholesky basis has been determined, the vectors &
                                             &L^J are constructed and stored to disk. These may either be &
                                             &used directly, or be transformed to the MO basis for use in &
-                                            &post-HF calculations.'
+                                            &post-HF calculations. For more information, see &
+                                            &S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)'
 !
       real(dp) :: threshold
       real(dp) :: span     
@@ -230,6 +230,8 @@ contains
       call solver%print_settings()
 !
 !     Additional prints
+!
+      call output%printf('- Cholesky decomposition system details:', pl='m', fs='(/t3, a)')      
 !
       call output%printf('Total number of AOs:         (i13)', &
                           ints=[system%get_n_aos()], pl='m', fs='(/t6,a)')
@@ -3850,11 +3852,12 @@ contains
 !
       class(eri_cd) :: solver
 !
-      call output%printf(solver%tag, pl='m', fs='(//t3,a)')
-      call output%printf(solver%author, pl='m', fs='(t3,a/)')
-      call output%printf(solver%description1, pl='m')
-      call output%printf(solver%description2, pl='m', fs='(/t3,a/)')
-      call output%printf(solver%description3, pl='m')
+      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
+      call output%printf(solver%description1, pl='m', ffs='(/t3,a)')
+      call output%printf(solver%description2, pl='m', ffs='(/t3,a)')
+      call output%printf(solver%description3, pl='m', ffs='(/t3,a)')
 !
    end subroutine print_banner_eri_cd
 !

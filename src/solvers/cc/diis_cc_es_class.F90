@@ -131,7 +131,6 @@ contains
 !
       solver%name_  = 'DIIS coupled cluster excited state solver'
       solver%tag    = 'DIIS'
-      solver%author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       solver%description1 = 'A DIIS solver that solves for the lowest eigenvalues and &
                            & the right eigenvectors of the Jacobian matrix, A. The eigenvalue &
@@ -215,7 +214,7 @@ contains
 !
       call solver%print_es_settings()
 !
-      call output%printf('DIIS dimension: (i3)', pl='minimal', &
+      call output%printf('DIIS dimension:               (i11)', pl='minimal', &
                          ints=[solver%diis_dimension], fs='(/t6,a)')
 !
       if (solver%crop) then 
@@ -485,7 +484,7 @@ contains
          endif
 !
          call output%printf('Convergence criterion met in (i0) iterations!', &
-                            ints=[iteration], fs='(/t3,a)',pl='m')
+                            ints=[iteration], fs='(t3,a)',pl='m')
          call output%printf('- Resorting roots according to excitation energy.', &
                             fs='(/t3,a)', pl='n')
 !

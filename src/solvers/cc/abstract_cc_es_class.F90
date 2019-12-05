@@ -62,8 +62,7 @@ module abstract_cc_es_class
    type, abstract :: abstract_cc_es
 !
       character(len=100) :: name_ 
-      character(len=100) :: tag 
-      character(len=100) :: author 
+      character(len=100) :: tag
 !
       character(len=500) :: description1
       character(len=500) :: description2 
@@ -177,8 +176,9 @@ contains
 !
       class(abstract_cc_es) :: solver 
 !
-      call output%printf(':: ' // solver%name_, pl='m', fs='(//t3,a)')
-      call output%printf(':: ' // solver%author, pl='m', fs='(t3,a)')
+      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
       call output%printf(solver%description1, pl='n', ffs='(/t3,a)', fs='(t3,a)')
       call output%printf(solver%description2, pl='n', ffs='(/t3,a)', fs='(t3,a)')
 !
@@ -226,14 +226,14 @@ contains
       call output%printf('- Settings for coupled cluster excited state solver (' //trim(solver%tag) // '):', &
                               pl='m', fs='(/t3,a)')
 !
-      call output%printf('Energy threshold:     (e9.2)', reals=[solver%eigenvalue_threshold], pl='m', fs='(/t6,a)')
-      call output%printf('Residual threshold:   (e9.2)', reals=[solver%residual_threshold], pl='m', fs='(/t6,a)')
+      call output%printf('Calculation type:    (a0)', chars=[trim(solver%es_type)], pl='m', fs='(/t6,a)')
+      call output%printf('Excitation vectors:  (a0)', chars=[trim(solver%transformation)], pl='m', fs='(t6,a)')
 !
-      call output%printf('Number of singlet states:  (i6)', ints=[solver%n_singlet_states], pl='m', fs='(/t6,a)')
-      call output%printf('Max number of iterations:  (i6)', ints=[solver%max_iterations], pl='m', fs='(t6,a)')
-      call output%printf('Calculation type:          (a0)', chars=[trim(solver%es_type)], pl='m', fs='(t6,a)')
+      call output%printf('Energy threshold:             (e11.2)', reals=[solver%eigenvalue_threshold], pl='m', fs='(/t6,a)')
+      call output%printf('Residual threshold:           (e11.2)', reals=[solver%residual_threshold], pl='m', fs='(t6,a)')
 !
-      call output%printf('Solving for the (a0) eigenvectors.', chars=[trim(solver%transformation)], pl='m', fs='(/t6,a)')
+      call output%printf('Number of singlet states:     (i11)', ints=[solver%n_singlet_states], pl='m', fs='(/t6,a)')
+      call output%printf('Max number of iterations:     (i11)', ints=[solver%max_iterations], pl='m', fs='(t6,a)')
 !
    end subroutine print_es_settings_abstract_cc_es
 !

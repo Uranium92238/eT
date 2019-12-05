@@ -64,7 +64,8 @@ module scf_diis_hf_class
       procedure :: read_settings           => read_settings_scf_diis_hf
       procedure :: read_scf_diis_settings  => read_scf_diis_settings_scf_diis_hf
 !
-      procedure :: print_scf_diis_settings => print_scf_diis_settings_scf_diis_hf
+      procedure :: print_settings            => print_settings_scf_diis_hf
+      procedure :: print_scf_diis_settings   => print_scf_diis_settings_scf_diis_hf
 !
    end type scf_diis_hf
 !
@@ -170,8 +171,8 @@ contains
 !
       class(hf) :: wf
 !
-      solver%tag         = 'Self-consistent field DIIS Hartree-Fock solver'
-      solver%author      = 'E. F. Kjønstad and S, D. Folkestad, 2018'
+      solver%name_       = 'Self-consistent field DIIS Hartree-Fock solver'
+      solver%tag         = 'SCF DIIS'
       solver%description = 'A DIIS-accelerated Roothan-Hall self-consistent field solver. &
                            &A least-square DIIS fit is performed on the previous Fock matrices and &
                            &associated gradients. Following the Roothan-Hall update of the density, &
@@ -185,11 +186,7 @@ contains
 !
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
 !
-      call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
-!
-      call solver%print_scf_diis_settings()
-      call solver%print_hf_solver_settings()
-      call wf%print_screening_settings()
+      call solver%print_settings(wf)
 !
 !     Initialize the orbitals, density, and the Fock matrix (or matrices)
 !
@@ -245,10 +242,10 @@ contains
 !
       class(scf_diis_hf) :: solver
 !
-      call output%printf('DIIS dimension:                (i0)', &
+      call output%printf('DIIS dimension:               (i11)', &
          ints=[solver%diis_dimension],fs='(/t6,a)', pl='minimal')
 !
-      call output%printf('Cumulative Fock threshold:     (e9.2)', &
+      call output%printf('Cumulative Fock threshold:    (e11.2)', &
          reals=[solver%cumulative_threshold],fs='(t6,a)', pl='minimal')
 !
       if (solver%crop) then 
@@ -377,7 +374,8 @@ contains
 !
             call output%print_separator('n', 63, '-', fs='(t3,a)')
 !
-            call output%printf('Convergence criterion met in (i0) iterations!', ints=[iteration], fs='(/t3,a)', pl='normal') 
+            call output%printf('Convergence criterion met in (i0) iterations!', &
+                 ints=[iteration], fs='(t3,a)', pl='normal') 
 !
             if (.not. converged_energy) then
 !
@@ -516,5 +514,24 @@ contains
 !
    end subroutine read_scf_diis_settings_scf_diis_hf
 !
+!
+   subroutine print_settings_scf_diis_hf(solver, wf)
+!!
+!!    Print settings
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+      implicit none
+!
+      class(scf_diis_hf), intent(in) :: solver
+!
+      class(hf), intent(in) :: wf
+!
+      call output%printf('- Hartree-Fock solver settings:',fs='(/t3,a)', pl='minimal')
+!
+      call solver%print_scf_diis_settings()
+      call solver%print_hf_solver_settings()
+      call wf%print_screening_settings()
+!
+   end subroutine print_settings_scf_diis_hf
 !
 end module scf_diis_hf_class

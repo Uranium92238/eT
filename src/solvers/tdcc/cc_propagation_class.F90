@@ -56,7 +56,6 @@ module cc_propagation_class
 !
       character(len=100) :: tag
       character(len=100) :: name_
-      character(len=100) :: author
       character(len=500) :: description
 !
       integer :: steps_between_output, vector_length
@@ -150,7 +149,6 @@ contains
 !
 !     Set printables
 !
-      solver%author = 'A. Skeidsvoll, A. Balbi, 2018'
       solver%description = 'A solver that propagates a coupled cluster wavefunction from the ' &
                             // 'ground state using the ' // trim(solver%tag) // ' method.'
 !
@@ -420,8 +418,9 @@ contains
 !
       class(cc_propagation) :: solver 
 !
-      call output%printf(':: ' // solver%name_, pl='minimal', fs='(//t3,a)')
-      call output%printf(':: ' // solver%author, pl='minimal', fs='(t3,a)')
+      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
+!
       call output%printf(solver%description, pl='normal', ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_cc_propagation
