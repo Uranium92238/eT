@@ -56,7 +56,7 @@ contains
 !
    module subroutine prepare_for_jacobian_lowmem_cc2(wf)
 !!
-!!    Prepare for jacobian
+!!    Prepare for Jacobian
 !!    Written by Linda Goletto, Oct 2019
 !!
 !!    Gets occupied and virtual orbital energies and construcs 
@@ -70,6 +70,11 @@ contains
       real(dp), dimension(:), allocatable :: eps_o
       real(dp), dimension(:), allocatable :: eps_v
 !
+      type(timings), allocatable :: timer
+!
+      timer = timings('Prepare for Jacobian lowmem-CC2 transformation', pl='normal')
+      call timer%turn_on()
+!
       call mem%alloc(eps_o, wf%n_o)
       call mem%alloc(eps_v, wf%n_v)
 !
@@ -82,10 +87,12 @@ contains
       call mem%dealloc(eps_o, wf%n_o)
       call mem%dealloc(eps_v, wf%n_v)
 !
+      call timer%turn_off()
+!
    end subroutine prepare_for_jacobian_lowmem_cc2
 !
 !
-   module subroutine save_jacobian_b1_2_intermediate_lowmem_cc2(wf,eps_o, eps_v)
+   module subroutine save_jacobian_b1_2_intermediate_lowmem_cc2(wf, eps_o, eps_v)
 !!
 !!    Save jacobian b1 second intermediate
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad,
@@ -110,7 +117,7 @@ contains
 !
       class(lowmem_cc2) :: wf
 !
-      type(timings) :: jacobian_b1_2_intermediate_timer
+      type(timings), allocatable :: timer
 !
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
@@ -132,8 +139,8 @@ contains
 !
       type(batching_index) :: batch_j, batch_k, batch_i
 !
-      jacobian_b1_2_intermediate_timer = timings('Jacobian CC2 B1-term 2 intermediate construction')
-      call jacobian_b1_2_intermediate_timer%turn_on()
+      timer = timings('Jacobian CC2 B1 intermediate 2 construction', pl='verbose')
+      call timer%turn_on()
 !
 !     X_ji   = L_kcjb t^cb_ki
 !
@@ -250,7 +257,7 @@ contains
 !
       call wf%jacobian_b1_intermediate_oo%close_('keep')
 !
-      call jacobian_b1_2_intermediate_timer%turn_off()
+      call timer%turn_off()
 !
    end subroutine save_jacobian_b1_2_intermediate_lowmem_cc2
 !
@@ -280,8 +287,6 @@ contains
 !
       class(lowmem_cc2) :: wf
 !
-      type(timings) :: jacobian_b1_3_intermediate_timer
-!
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
@@ -301,8 +306,10 @@ contains
 !
       type(batching_index) :: batch_j, batch_k
 !
-      jacobian_b1_3_intermediate_timer = timings('Jacobian CC2 B1-term 3 intermediate construction')
-      call jacobian_b1_3_intermediate_timer%turn_on()
+      type(timings), allocatable :: timer
+!
+      timer = timings('Jacobian CC2 B1 intermediate 3 construction', pl='verbose')
+      call timer%turn_on()
 !
 !     X_ab = t_akcj L_kcjb
 !
@@ -410,7 +417,7 @@ contains
 !
       call wf%jacobian_b1_intermediate_vv%close_('keep')
 !
-      call jacobian_b1_3_intermediate_timer%turn_off()
+      call timer%turn_off()
 !
    end subroutine save_jacobian_b1_3_intermediate_lowmem_cc2
 !
@@ -425,8 +432,6 @@ contains
 !!    for lowmem CC2 according to
 !!    
 !!       C. Hättig and F. Weigend, J. Chem. Phys. 113, 5154 (2000).
-!!
-!!
 !
       implicit none
 !
@@ -441,6 +446,11 @@ contains
 !
       real(dp), dimension(:), allocatable :: eps_o
       real(dp), dimension(:), allocatable :: eps_v
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Effective Jacobian transformation lowmem-CC2', pl='normal')
+      call timer%turn_on()
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -480,6 +490,8 @@ contains
       call mem%dealloc(c_a_i, wf%n_v, wf%n_o)
       call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine effective_jacobian_transformation_lowmem_cc2
 !
 !
@@ -515,6 +527,11 @@ contains
       integer :: rho_offset, j, b
 !
       type(batching_index) :: batch_i, batch_j, batch_b
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Jacobian lowmem-CC2 A1', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Term 1: rho_ai = sum_bj 2 g_aijb * c_bj ::
 !
@@ -651,6 +668,8 @@ contains
          enddo ! batch_b
       enddo ! batch_i
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_cc2_a1_lowmem_cc2
 !
 !
@@ -699,6 +718,11 @@ contains
       integer :: current_a_batch, current_c_batch
 !
       type(batching_index) :: batch_j, batch_k, batch_a, batch_c
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Jacobian lowmem-CC2 B1', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Term 1: L_kcjb * c_bj * (2 t^ac_ik - t^ac_ki)  ::
 !                L_kcjb * c_bj * u_aick
@@ -928,6 +952,8 @@ contains
 !
       call mem%dealloc(X_ab, (wf%n_v), (wf%n_v))
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_cc2_b1_lowmem_cc2
 !
 !
@@ -973,6 +999,11 @@ contains
 !
       integer :: current_a_batch, current_c_batch
       integer :: req0, req1_a, req1_c, req2
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Effective Jacobian lowmem-CC2 A1 transformation', pl='verbose')
+      call timer%turn_on()
 !
       req0   = 0
       req1_a = wf%integrals%n_J*wf%n_o
@@ -1134,6 +1165,8 @@ contains
          enddo ! batch_a
       enddo ! batch_c
 !
+      call timer%turn_off()
+!
    end subroutine effective_jacobian_cc2_a1_lowmem_cc2
 !
 !
@@ -1175,6 +1208,11 @@ contains
       integer :: current_i_batch, current_k_batch
 !
       type(batching_index) :: batch_i, batch_k
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Effective Jacobian lowmem-CC2 B1 transformation', pl='verbose')
+      call timer%turn_on()
 !
       req0 = 0
 !
@@ -1279,6 +1317,8 @@ contains
          enddo ! batch_k
       enddo ! batch_i
 !
+      call timer%turn_off()
+!
    end subroutine effective_jacobian_cc2_b1_lowmem_cc2
 !
 !
@@ -1324,6 +1364,11 @@ contains
 !
       integer :: current_i_batch, current_a_batch, current_b_batch
       integer :: req0, req1_i, req1_a, req1_b, req2_ia, req2_ib, req2_ab, req3
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Effective Jacobian lowmem-CC2 C1 transformation', pl='verbose')
+      call timer%turn_on()
 !
       req0 = 0
 !
@@ -1475,6 +1520,8 @@ contains
          enddo ! batch_b
       enddo ! batch_a
 !
+      call timer%turn_off()
+!
    end subroutine effective_jacobian_cc2_c1_lowmem_cc2
 !
 !
@@ -1518,6 +1565,11 @@ contains
       integer :: current_j_batch, current_k_batch
 !
       type(batching_index) :: batch_j, batch_k
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Effective Jacobian lowmem-CC2 D1 transformation', pl='verbose')
+      call timer%turn_on()
 !
 !     X_bjak = sum_l g_aklj * c_bl
 !
@@ -1665,6 +1717,8 @@ contains
          enddo ! batch k
       enddo ! batch j
 !
+      call timer%turn_off()
+!
    end subroutine effective_jacobian_cc2_d1_lowmem_cc2
 !
 !
@@ -1706,6 +1760,11 @@ contains
       integer :: current_b_batch, current_c_batch
 !
       type(batching_index) :: batch_b, batch_c
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Effective Jacobian lowmem-CC2 E1 transformation', pl='verbose')
+      call timer%turn_on()
 !
       req0 = 0
       req1_b = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
@@ -1855,6 +1914,8 @@ contains
          enddo ! batch_c
       enddo ! batch_b
 !
+      call timer%turn_off()
+!
    end subroutine effective_jacobian_cc2_e1_lowmem_cc2
 !
 !
@@ -1896,6 +1957,11 @@ contains
 !
       integer :: current_i_batch, current_k_batch, current_a_batch
       integer :: req0, req1_i, req1_k, req1_a, req2_ik, req2_ia, req2_ka, req3
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Effective Jacobian lowmem-CC2 F1 transformation', pl='verbose')
+      call timer%turn_on()
 !
       req0 = 0
 !
@@ -2049,6 +2115,8 @@ contains
 !
          enddo ! batch_a
       enddo ! batch_k
+!
+      call timer%turn_off()
 !
    end subroutine effective_jacobian_cc2_f1_lowmem_cc2
 !

@@ -72,14 +72,13 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_ai
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj, rho_abij
 !
-      type(timings) :: cc3_timer, cc3_timer_t3_a2, cc3_timer_t3_b2, cc3_timer_c3
-      type(timings) :: ccsd_timer
+      type(timings), allocatable :: cc3_timer, ccsd_timer, timer
 !
-      cc3_timer_t3_a2 = timings('Time in CC3 T3 a2')
-      cc3_timer_t3_b2 = timings('Time in CC3 T3 b2')
-      cc3_timer_c3    = timings('Time in CC3 C3')
-      cc3_timer       = timings('Total CC3 contribution')
-      ccsd_timer      = timings('Total CCSD contribution')
+      timer           = timings('Jacobian CC3')
+      cc3_timer       = timings('Jacobian CC3 (CC3 contribution)', pl='normal')
+      ccsd_timer      = timings('Jacobian CC3 (CCSD contribution)', pl='normal')
+!
+      call timer%turn_on()
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -155,27 +154,17 @@ contains
       call ccsd_timer%freeze()
 !
       call cc3_timer%turn_on()
-      call cc3_timer_t3_a2%turn_on()
 !
 !     CC3-Contributions from the T3-amplitudes
       call wf%jacobian_cc3_t3_a2(c_ai, rho_abij)
 !
-      call cc3_timer_t3_a2%turn_off()
-!
-      call cc3_timer_t3_b2%turn_on()
-!
       call wf%jacobian_cc3_t3_b2(c_ai, rho_abij)
 !
-      call cc3_timer_t3_b2%turn_off()
-!
 !     CC3-Contributions from the C3-amplitudes
-      call cc3_timer_c3%turn_on()
 !
       call wf%jacobian_cc3_c3_a(omega, c_ai, c_abij, rho_ai, rho_abij)
 !
-      call cc3_timer_c3%turn_off()
-!
-      call cc3_timer%turn_off()
+      call cc3_timer%freeze()
 !
 !     Done with singles vector c; Overwrite the incoming singles c vector for exit
 !
@@ -200,7 +189,7 @@ contains
 !
       call mem%dealloc(c_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call ccsd_timer%turn_off()
+      call ccsd_timer%freeze()
 !
 !     divide by the biorthonormal factor 1 + delta_ai,bj
 ! 
@@ -212,6 +201,10 @@ contains
       call packin(c(wf%n_t1 + 1 : wf%n_es_amplitudes), rho_abij, wf%n_v, wf%n_o)
 !
       call mem%dealloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call timer%turn_off()
+      call cc3_timer%turn_off()
+      call ccsd_timer%turn_off()
 !
    end subroutine effective_jacobian_transformation_cc3
 !
@@ -244,6 +237,11 @@ contains
       type(batching_index) :: batch_d
       integer :: d_batch
       integer :: req_0, req_d
+!
+      type(timings), allocatable :: cc3_timer_t3_a2
+!
+      cc3_timer_t3_a2 = timings('Time in CC3 T3 a2', pl='verbose') 
+      call cc3_timer_t3_a2%turn_on()
 !
 !     :: X_abid term ::
 !
@@ -312,6 +310,8 @@ contains
 !
       call mem%dealloc(X_ajil, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
+      call cc3_timer_t3_a2%turn_off()
+!
    end subroutine jacobian_cc3_t3_a2_cc3
 !
 !
@@ -370,6 +370,11 @@ contains
 !
       logical :: ijk_core
       integer :: i_cvs
+!
+      type(timings), allocatable :: cc3_timer_t3_b2
+!
+      cc3_timer_t3_b2 = timings('Time in CC3 T3 b2', pl='verbose')
+      call cc3_timer_t3_b2%turn_on()
 !
       call mem%alloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call squareup_and_sort_1234_to_1324(wf%t2, t_abij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -602,6 +607,8 @@ contains
 !
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
+      call cc3_timer_t3_b2%turn_off()
+!
    end subroutine jacobian_cc3_t3_b2_cc3
 !
 !
@@ -735,6 +742,10 @@ contains
       logical :: ijk_core
       integer :: i_cvs
 !
+      type(timings), allocatable :: cc3_timer_c3
+!
+      cc3_timer_c3    = timings('Time in CC3 C3', pl='verbose')
+      call cc3_timer_c3%turn_on()
 !
 !     Set up required c1-transformed integrals
       call wf%construct_c1_integrals(c_ai)
@@ -1199,6 +1210,8 @@ contains
       call mem%dealloc(F_ov_ck, wf%n_v, wf%n_o)
 !
       call mem%dealloc(t_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call cc3_timer_c3%turn_off()
 !
    end subroutine jacobian_cc3_c3_a_cc3
 !

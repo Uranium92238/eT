@@ -70,6 +70,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: rho
 !
+      type(timings), allocatable :: timer
+!
+      timer = timings('Jacobian CCS transformation', pl='normal')
+      call timer%turn_on()
+!
 !     Allocate the transformed vector & add the terms to it
 !
       call mem%alloc(rho, wf%n_v, wf%n_o)
@@ -82,6 +87,8 @@ contains
 !
       call dcopy((wf%n_o)*(wf%n_v), rho, 1, c, 1)
       call mem%dealloc(rho, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_transformation_ccs
 !
@@ -103,6 +110,11 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c1
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Jacobian CCS A1', pl='verbose')
+      call timer%turn_on()
 !
 !     sum_b F_a_b c_b_i 
 !
@@ -134,6 +146,9 @@ contains
                   rho1,        &
                   wf%n_v)
 !
+      
+      call timer%turn_off()
+!
    end subroutine jacobian_ccs_a1_ccs
 !
 !
@@ -163,6 +178,11 @@ contains
       type(batching_index) :: batch_b
 !
       integer :: req0, req1, j, b, b_red, current_b_batch
+!
+      type(timings), allocatable :: timer
+!
+      timer = timings('Jacobian CCS B1', pl='verbose')
+      call timer%turn_on()
 !
       batch_b = batching_index(wf%n_v)
 !
@@ -234,6 +254,8 @@ contains
          call mem%dealloc(c_jb, (wf%n_o), (batch_b%length))
 !
       enddo ! batch_b
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_ccs_b1_ccs
 !

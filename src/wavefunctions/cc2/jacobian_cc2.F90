@@ -48,9 +48,16 @@ contains
 !
       class(cc2), intent(inout) :: wf
 !
+      type(timings), allocatable :: timer
+!
+      timer = timings('Prepare for Jacobian CC2', pl='normal')
+      call timer%turn_on()
+!
       call wf%initialize_t2()
       call wf%construct_t2()
       call wf%save_jacobian_a1_intermediates()
+!
+      call timer%turn_off()
 !
    end subroutine prepare_for_jacobian_cc2
 !
@@ -87,7 +94,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = timings('Jacobian transformation CC2')
+      timer = timings('Jacobian transformation CC2', pl='normal')
       call timer%turn_on()
 !
 !     Allocate and zero the transformed vector (singles part)
@@ -182,7 +189,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = timings('jacobian cc2 b2')
+      timer = timings('Jacobian CC2 B2', pl='verbose')
       call timer%turn_on()
 !
 !     c_aibj/(1/Δ_aibj) 
