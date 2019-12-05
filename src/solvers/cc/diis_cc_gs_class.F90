@@ -158,7 +158,8 @@ contains
 !
       if (solver%restart) then
 !
-         call output%printf('Requested restart. Reading in solution from file.', fs='(/t3,a)', pl='minimal')
+         call output%printf('m', 'Requested restart. Reading in solution from file.', &
+                            fs='(/t3,a)')
 !
          call wf%read_amplitudes()
 !
@@ -216,19 +217,23 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      call output%printf('- DIIS CC ground state solver settings:', fs='(/t3,a)', pl='minimal')
+      call output%printf('m', '- DIIS CC ground state solver settings:', fs='(/t3,a)')
 !
-      call output%printf('Omega threshold:          (e9.2)', reals=[solver%omega_threshold], fs='(/t6, a)', pl='minimal')
-      call output%printf('Energy threshold:         (e9.2)', reals=[solver%energy_threshold], fs='(t6, a)', pl='minimal')
+      call output%printf('m', 'Omega threshold:          (e9.2)', &
+                         reals=[solver%omega_threshold], fs='(/t6, a)')
+      call output%printf('m', 'Energy threshold:         (e9.2)', &
+                         reals=[solver%energy_threshold], fs='(t6, a)')
 !
-      call output%printf('DIIS dimension:           (i9)', ints=[solver%diis_dimension], fs='(/t6, a)', pl='minimal')
-      call output%printf('Max number of iterations: (i9)', ints=[solver%max_iterations], fs='(t6, a)', pl='minimal')
+      call output%printf('m', 'DIIS dimension:           (i9)', &
+                         ints=[solver%diis_dimension], fs='(/t6, a)')
+      call output%printf('m', 'Max number of iterations: (i9)', &
+                         ints=[solver%max_iterations], fs='(t6, a)')
 !
-      call output%printf('Storage: '//trim(solver%storage), fs='(/t6, a)', pl='minimal')
+      call output%printf('m', 'Storage: '//trim(solver%storage), fs='(/t6, a)')
 !
       if (solver%crop) then 
 !
-         call output%printf('Enabled CROP in the DIIS algorithm.', pl='minimal', fs='(/t6,a)')
+         call output%printf('m', 'Enabled CROP in the DIIS algorithm.', fs='(/t6,a)')
 !
       endif
 !
@@ -275,7 +280,8 @@ contains
       converged_energy   = .false.
       converged_omega    = .false.
 !
-      call output%printf('Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) ', fs='(/t3,a)', pl='normal')
+      call output%printf('n', 'Iteration    Energy (a.u.)        |omega|       &
+                         &Delta E (a.u.) ', fs='(/t3,a)')
       call output%print_separator('n', 63,'-')
 !
       prev_energy = zero
@@ -294,10 +300,9 @@ contains
 !
          omega_norm = get_l2_norm(omega, wf%n_gs_amplitudes)
 !
-         call output%printf('(i3)  (f25.12)    (e11.4)    (e11.4)', &
-            ints=[iteration], &
-            reals=[wf%energy, omega_norm, abs(wf%energy-prev_energy)], &
-            fs='(t3, a)', pl='normal')
+         call output%printf('n', '(i3)  (f25.12)    (e11.4)    (e11.4)', &
+                            ints=[iteration], reals=[wf%energy, omega_norm, &
+                            abs(wf%energy-prev_energy)], fs='(t3, a)')
 !
 !        Test for convergence & prepare for next iteration if not yet converged
 !
@@ -312,15 +317,15 @@ contains
 !
             call output%print_separator('n', 63,'-')
 !
-           call output%printf('Convergence criterion met in (i0) iterations!', &
-               ints=[iteration], fs='(t3,a)', pl='normal') 
+           call output%printf('n', 'Convergence criterion met in (i0) iterations!', &
+                              ints=[iteration], fs='(t3,a)')
 !
             if (.not. converged_energy) then 
 !
 !
-               call output%printf('Note: the omega vector converged in the first iteration, &
-                                 & so the energy convergence has not been tested!', &
-                                 ffs='(/t3,a)', pl='normal')
+               call output%printf('n', 'Note: the omega vector converged in the &
+                                  &first iteration,  so the energy convergence &
+                                  &has not been tested!', ffs='(/t3,a)')
 !
             endif
 !
@@ -393,14 +398,13 @@ contains
 !
       call solver%timer%turn_off()
 !
-      call output%printf('- Finished solving the (a0) ground state equations', & 
-                        chars=[convert_to_uppercase(wf%name_)], &
-                        fs='(/t3, a)', pl='minimal')
+      call output%printf('m', '- Finished solving the (a0) ground state equations', &
+                         chars=[convert_to_uppercase(wf%name_)], fs='(/t3, a)')
 !
-      call output%printf('Total wall time (sec): (f20.5)', &
-            reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6, a)', pl='minimal')
-      call output%printf('Total cpu time (sec):  (f20.5)', &
-            reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6, a)', pl='minimal')
+      call output%printf('m', 'Total wall time (sec): (f20.5)', &
+                         reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6, a)')
+      call output%printf('m', 'Total cpu time (sec):  (f20.5)', &
+                         reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6, a)')
 !
    end subroutine cleanup_diis_cc_gs
 !
@@ -414,10 +418,10 @@ contains
 !
       class(diis_cc_gs) :: solver 
 !
-      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
 !
-      call output%printf(solver%description1, pl='m', ffs='(/t3,a)')
+      call output%printf('m', solver%description1, ffs='(/t3,a)')
 !
    end subroutine print_banner_diis_cc_gs
 !

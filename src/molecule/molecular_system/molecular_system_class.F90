@@ -809,15 +809,15 @@ contains
       mol_file = output_file(trim(molecule%name_) // '.xyz')
       call mol_file%open_('rewind')
 !
-      call mol_file%printf('(i5)',ints=[molecule%n_atoms], fs='(a/)')
+      call mol_file%printf('m', '(i5)', ints=[molecule%n_atoms], fs='(a/)')
 !
       do atom = 1, molecule%n_atoms
 !
-         call mol_file%printf('(a2)   (f21.16)   (f21.16)   (f21.16)', &
-                              chars = [molecule%atoms(atom)%symbol],   &
-                              reals = [molecule%atoms(atom)%x,         &
-                                       molecule%atoms(atom)%y,         &
-                                       molecule%atoms(atom)%z],        &
+         call mol_file%printf('m', '(a2)   (f21.16)   (f21.16)   (f21.16)', &
+                              chars = [molecule%atoms(atom)%symbol],        &
+                              reals = [molecule%atoms(atom)%x,              &
+                                       molecule%atoms(atom)%y,              &
+                                       molecule%atoms(atom)%z],             &
                               fs ='(a)', ll=80)
 !
       enddo
@@ -874,17 +874,18 @@ contains
          basis_file = output_file(trim(temp_name))
          call basis_file%open_('rewind')
 !
-         call basis_file%printf('(i5)',ints=[n_atoms_in_basis(current_basis_nbr)], fs='(a/)')
+         call basis_file%printf('m', '(i5)', ints=[n_atoms_in_basis(current_basis_nbr)], &
+                                fs='(a/)')
 !
          do i = 1, n_atoms_in_basis(current_basis_nbr)
 !
             atom = i + atom_offset
 !
-            call basis_file%printf('(a2)   (f21.16)   (f21.16)   (f21.16)', &
-                                   chars = [molecule%atoms(atom)%symbol],   &
-                                   reals = [molecule%atoms(atom)%x,         &
-                                            molecule%atoms(atom)%y,         &
-                                            molecule%atoms(atom)%z],        &
+            call basis_file%printf('m', '(a2)   (f21.16)   (f21.16)   (f21.16)', &
+                                   chars = [molecule%atoms(atom)%symbol],        &
+                                   reals = [molecule%atoms(atom)%x,              &
+                                            molecule%atoms(atom)%y,              &
+                                            molecule%atoms(atom)%z],             &
                                    fs ='(a)', ll=80)
 !
          enddo
@@ -1171,10 +1172,10 @@ contains
 !
       allocate(molecule%active_atoms_spaces(molecule%n_active_atoms_spaces))
 !
-      call output%printf('Active atoms:', fs='(/t6, a)', pl='minimal')
+      call output%printf('m', 'Active atoms:', fs='(/t6, a)')
 !
       call output%print_separator('m', 38,'-', fs='(t6, a)')
-      call output%printf(' Atom   Symbol       Basis     Method', fs='(t6, a)', pl='minimal')
+      call output%printf('m', ' Atom   Symbol       Basis     Method', fs='(t6, a)')
       call output%print_separator('m', 38,'-', fs='(t6, a)')
 !
 !     Reorder atoms
@@ -1194,9 +1195,10 @@ contains
 !
             if (adjustl(basis(method)) /= '') molecule%atoms(atom)%basis = trim(adjustl(basis(method)))
 !
-            call output%printf('(i4)      '// molecule%atoms(atom)%symbol //'      '                     &
-                               // trim(molecule%atoms(atom)%basis)// '       '// trim(methods(method)),  &
-                     ints=[molecule%atoms(atom)%input_number], fs='(t6,a)', pl='minimal')
+            call output%printf('m', '(i4)      ' // molecule%atoms(atom)%symbol // &
+                               '      ' // trim(molecule%atoms(atom)%basis)// &
+                               '       ' // trim(methods(method)), &
+                               ints=[molecule%atoms(atom)%input_number], fs='(t6,a)')
 !
          enddo        
 !
@@ -1253,8 +1255,10 @@ contains
       enddo
 !
       call output%print_separator('m', 38,'-', fs='(t6, a)')
-      call output%printf('Total number of active atoms: (i0)', ints=[n_total], fs='(t6, a)', pl='minimal')
-      call output%printf('OBS: Atoms will be reordered, active atoms first', fs='(t6, a)', pl='minimal')
+      call output%printf('m', 'Total number of active atoms: (i0)', &
+                         ints=[n_total], fs='(t6, a)')
+      call output%printf('m', 'OBS: Atoms will be reordered, active atoms first', &
+                         fs='(t6, a)')
 !
       deallocate(atoms_copy)
 !
@@ -1847,10 +1851,10 @@ contains
       line_length = 73
 !
       call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(/t5,a)')
-      call output%printf('Geometry((a0))', pl='minimal', fs='(t32,a)', chars=[local_units])
+      call output%printf('m', 'Geometry((a0))', fs='(t32,a)', chars=[local_units])
       call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(t5,a)')
-      call output%printf('Atom          X                Y                Z                Basis', &
-                        pl='minimal', fs='(t6,a)', ll=100)
+      call output%printf('m', 'Atom          X                Y                &
+                         &Z                Basis', ll=100, fs='(t6,a)')
       call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(t5,a)')
 !
 !     Print geometry for every atom
@@ -1862,13 +1866,11 @@ contains
          start_integer = 1
          if (atom%basis(1:1) == '_') start_integer = 2
 !
-         call output%printf(adjustl(atom%symbol) // ' (f17.12)(f17.12)(f17.12)  (a14)', &
-                           pl='minimal', fs='(t7,a)',                 &
-                           chars=[atom%basis(start_integer:)],        &
-                           reals=[atom%x * scaling,                   &
-                                  atom%y * scaling,                   &
-                                  atom%z * scaling],                  &
-                           ll=100)
+         call output%printf('m', adjustl(atom%symbol) // &
+                            ' (f17.12)(f17.12)(f17.12)  (a14)', &
+                            chars=[atom%basis(start_integer:)], &
+                            reals=[atom%x * scaling, atom%y * scaling, &
+                            atom%z * scaling], ll=100, fs='(t7,a)')
 !
       enddo 
 !
@@ -1888,21 +1890,30 @@ contains
 !
       class(molecular_system) :: molecule  
 !
-      call output%printf('- Molecular system specifications:', pl='m', fs='(/t3,a)')
+      call output%printf('m', '- Molecular system specifications:', fs='(/t3,a)')
 !
-      call output%printf('Name:             (a0)', pl='m', fs='(/t6,a)', chars=[trim(molecule%name_)])
-      call output%printf('Charge:         (i3)',  pl='m', fs='(t6,a)',  ints=[molecule%charge]) 
-      call output%printf('Multiplicity:   (i3)', pl='m', fs='(t6,a)',  ints=[molecule%multiplicity]) 
-      call output%printf('Coordinate units: (a0)', pl='m', fs='(t6,a)',  chars=[trim(molecule%coordinate_units)])
-      if (molecule%cartesian_gaussians_int.eq.1) call output%printf('Using Cartesian gaussians.', pl='m', fs='(/t6,a)')
+      call output%printf('m', 'Name:             (a0)', &
+                         chars=[trim(molecule%name_)], fs='(/t6,a)')
+      call output%printf('m', 'Charge:         (i3)', fs='(t6,a)',  ints=[molecule%charge]) 
+      call output%printf('m', 'Multiplicity:   (i3)', &
+                         ints=[molecule%multiplicity], fs='(t6,a)')
+      call output%printf('m', 'Coordinate units: (a0)', &
+                         chars=[trim(molecule%coordinate_units)], fs='(t6,a)')
 !
-      call output%printf('Pure basis functions:      (i5)', pl='m', fs='(/t6,a)', ints=[molecule%n_pure_basis])
-      call output%printf('Cartesian basis functions: (i5)', pl='m', fs='(t6,a)',  ints=[molecule%n_cart_basis])
-      call output%printf('Primitive basis functions: (i5)', pl='m', fs='(t6,a)',  ints=[molecule%n_primitives_cart])
+      if (molecule%cartesian_gaussians_int.eq.1) &
+         call output%printf('m', 'Using Cartesian gaussians.', fs='(/t6,a)')
 !
-      call output%printf('Nuclear repulsion energy (a.u.):   (f25.12)', pl='m', fs='(/t6,a)', & 
-      reals=[molecule%get_nuclear_repulsion()])
-      call output%printf('Bohr/angstrom value (CODATA 2010): (f25.12)', pl='m', fs='(t6,a)',  reals=[bohr_to_angstrom])
+      call output%printf('m', 'Pure basis functions:      (i5)', &
+                         ints=[molecule%n_pure_basis], fs='(/t6,a)')
+      call output%printf('m', 'Cartesian basis functions: (i5)', &
+                         ints=[molecule%n_cart_basis], fs='(t6,a)')
+      call output%printf('m', 'Primitive basis functions: (i5)', &
+                         ints=[molecule%n_primitives_cart], fs='(t6,a)')
+!
+      call output%printf('m', 'Nuclear repulsion energy (a.u.):   (f25.12)', &
+                         reals=[molecule%get_nuclear_repulsion()], fs='(/t6,a)')
+      call output%printf('m', 'Bohr/angstrom value (CODATA 2010): (f25.12)', &
+                         reals=[bohr_to_angstrom], fs='(t6,a)')
 !
       call molecule%print_geometry('angstrom')
       call molecule%print_geometry('bohr')

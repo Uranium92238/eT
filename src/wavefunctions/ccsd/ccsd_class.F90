@@ -499,10 +499,10 @@ contains
 !
 !     Print largest contributions
 !
-      call output%printf('Largest double amplitudes:', pl='m', fs='(/t6,a)') 
+      call output%printf('m', 'Largest double amplitudes:', fs='(/t6,a)') 
       call output%print_separator('m', 50, '-', fs='(t6,a)')
-      call output%printf('a      i       b      j         ' // tag // '(ai,bj)', &
-                         pl='m', fs='(t9,a)')
+      call output%printf('m', 'a      i       b      j         ' // tag // '(ai,bj)', &
+                         fs='(t9,a)')
       call output%print_separator('m', 50, '-', fs='(t6,a)')
 !
       do elm = 1, n_elements
@@ -511,8 +511,9 @@ contains
          call invert_compound_index(ai, a, i, wf%n_v, wf%n_o)
          call invert_compound_index(bj, b, j, wf%n_v, wf%n_o)
 !
-         call output%printf('(i4)    (i3)    (i4)    (i3)   (f19.12)', ints=[a,i,b,j], &
-                            reals=[x2(dominant_indices(elm))], fs='(t6,a)', pl='m')
+         call output%printf('m', '(i4)    (i3)    (i4)    (i3)   (f19.12)', &
+                            ints=[a, i, b, j], &
+                            reals=[x2(dominant_indices(elm))], fs='(t6,a)')
 !
       enddo
 !           '

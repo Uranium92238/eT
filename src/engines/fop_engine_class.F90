@@ -168,8 +168,8 @@ contains
 !
       if (trim(wf%name_) == 'low memory cc2') then
 !
-         call output%printf('Requested first order properites (FOP) with lowmem-cc2.', &
-                             pl='m', fs='(/t3,a)')
+         call output%printf('m', 'Requested first order properites (FOP) with lowmem-cc2.', &
+                            fs='(/t3,a)')
          call output%error_msg('FOP not implemented for low memory cc2.')
 !
       end if
@@ -192,7 +192,7 @@ contains
       if (wf%integrals%get_eri_t1_mem()) call wf%integrals%update_g_pqrs_t1_in_memory()
 !
       if(wf%integrals%get_eri_t1_mem()) &
-         call output%printf('Note: All T1-integrals are stored in memory',fs='(/t3, a)',pl='n')
+         call output%printf('n', 'Note: All T1-integrals are stored in memory',fs='(/t3, a)')
 !
 !     Determine multipliers
 !
@@ -424,9 +424,10 @@ contains
 !
                endif 
 !
-               call output%printf('<< ' // operator(k) // ', ' // operator(k) // ' >>' // &
-                  '((e8.2)): (f19.12)', pl='m', reals=[engine%frequencies(freq), polarizability], &
-                  fs='(t6,a)')
+               call output%printf('m', '<< ' // operator(k) // ', ' //  &
+                                  operator(k) // ' >>' // '((e8.2)): (f19.12)', &
+                                  reals=[engine%frequencies(freq), &
+                                  polarizability], fs='(t6,a)')
 !
             endif
 !
@@ -458,9 +459,10 @@ contains
 !
                   endif
 !
-                  call output%printf('<< ' // operator(k) // ', ' // operator(l) // ' >>' //          &
-                     '((e8.2)): (f19.12)', pl='m', reals=[engine%frequencies(freq), polarizability],  &
-                     fs='(t6,a)') 
+                  call output%printf('m', '<< ' // operator(k) // ', ' //  &
+                                     operator(l) // ' >>' // '((e8.2)): (f19.12)', &
+                                     reals=[engine%frequencies(freq), &
+                                     polarizability], fs='(t6,a)')
 !
                endif
 !  
@@ -565,11 +567,11 @@ contains
             sign_character = '-'
             if (sign == 2) sign_character = '+'  
 !
-            call output%printf('Determining amplitude response...', pl='m', fs='(/t3,a)')
+            call output%printf('m', 'Determining amplitude response...', fs='(/t3,a)')
 !
-            call output%printf('Asking solver to get response for ' //             &
-                               'component (i0) and ((a1))-frequencies.', pl='m', ints=[k],   &
-                               chars=[sign_character], fs='(t3,a)')
+            call output%printf('m', 'Asking solver to get response for ' //  &
+                               'component (i0) and ((a1))-frequencies.', &
+                               ints=[k], chars=[sign_character], fs='(t3,a)')
 !
             t_response_solver = davidson_cc_linear_equations(wf,                             &
                                                              section='cc response',          &
@@ -883,8 +885,8 @@ contains
 !
          if (skip_states(state)) then
 !
-            call output%printf('Warning: Skipped state (i0) because it is&
-                              & parallel to the previous state', pl='m', ints=[state], fs='(/t3,a)')
+            call output%printf('m', 'Warning: Skipped state (i0) because it is &
+                               &parallel to the previous state', ints=[state], fs='(/t3,a)')
 !
             cycle
 !
@@ -961,7 +963,7 @@ contains
       call wf%construct_gs_density()
       call wf%initialize_transition_densities()
 !
-      call output%printf(':: EOM first order properties calculation', fs='(/t3,a)')
+      call output%printf('m', ':: EOM first order properties calculation', fs='(/t3,a)')
 !
       if (engine%dipole_length) then
 !
@@ -974,14 +976,16 @@ contains
 !        Loop over excited states, construct transition density
 !        and calculate transition strength
 !
-         call output%printf('- Summary of EOM first order properties calculation:', pl='m', fs='(/t3,a)')
+         call output%printf('m', '- Summary of EOM first order properties calculation:', &
+                            fs='(/t3,a)')
 !
          do state = 1, wf%n_singlet_states
 !
             if (skip_states(state)) then
 !
-               call output%printf('Warning: Skipped state (i0) because it is &
-               & parallel to the previous state', ints=[state], fs='(/t3,a)', pl='m')
+               call output%printf('m', 'Warning: Skipped state (i0) because it &
+                                  &is  parallel to the previous state', &
+                                  ints=[state], fs='(/t3,a)')
                cycle
 !
             end if
@@ -1038,10 +1042,10 @@ contains
 !
             end do
 !
-            call output%printf('Trace left transition density:  (f15.12)',    &
-                                fs='(t6,a)', reals=[trace_l_tdm], pl='v')
-            call output%printf('Trace right transition density: (f15.12)',    &
-                                fs='(t6,a/)', reals=[trace_r_tdm], pl='v')
+            call output%printf('v', 'Trace left transition density:  (f15.12)', &
+                               reals=[trace_l_tdm], fs='(t6,a)')
+            call output%printf('v', 'Trace right transition density: (f15.12)', &
+                               reals=[trace_r_tdm], fs='(t6,a/)')
 !
          enddo
 !
@@ -1123,35 +1127,35 @@ contains
       if (engine%lr) calculation_type  = 'LR'
       if (engine%eom) calculation_type = 'EOM'
 !
-      call output%printf('State (i0):', pl='m', fs='(/t6,a)', ints=[state])
+      call output%printf('m', 'State (i0):', fs='(/t6,a)', ints=[state])
       call output%print_separator('m', 10, '-', fs='(t6,a)')
 !
-      call output%printf('Calculation type:             (a19)', &
-                        pl='m', chars=[calculation_type], fs='(t6,a)')
-      call output%printf('Excitation energy [E_h]:      (f19.12)', &
-                         pl='m', reals=[excitation_energy], fs='(t6,a)')
-      call output%printf('Excitation energy [eV]:       (f19.12)', &
-                         pl='m', reals=[excitation_energy*Hartree_to_eV], fs='(t6,a)')
+      call output%printf('m', 'Calculation type:             (a19)', &
+                         chars=[calculation_type], fs='(t6,a)')
+      call output%printf('m', 'Excitation energy [E_h]:      (f19.12)', &
+                         reals=[excitation_energy], fs='(t6,a)')
+      call output%printf('m', 'Excitation energy [eV]:       (f19.12)', &
+                         reals=[excitation_energy*Hartree_to_eV], fs='(t6,a)')
 !
-      call output%printf('Hartree-to-eV (CODATA 2014):  (f19.8)', &
-                         pl='m', reals=[Hartree_to_eV], fs='(t6,a)')
+      call output%printf('m', 'Hartree-to-eV (CODATA 2014):  (f19.8)', &
+                         reals=[Hartree_to_eV], fs='(t6,a)')
 !
-      call output%printf('Transition moments [a.u.]         Transition strength [a.u.]', &
-                         pl='m', fs='(/t6,14X,a)', ll=74)
+      call output%printf('m', 'Transition moments [a.u.]         Transition &
+                         &strength [a.u.]', ll=74, fs='(/t6,14X,a)')
       call output%print_separator('m', 74, '-', fs='(t6,a)')
-      call output%printf('Comp. q     < k |q| 0 >       < 0 |q| k >        < 0 |q| k > < k |q| 0 >  ', &
-                         pl='m', fs='(t6,a)', ll=79)
+      call output%printf('m', 'Comp. q     < k |q| 0 >       < 0 |q| k >        &
+                         &< 0 |q| k > < k |q| 0 >  ', ll=79, fs='(t6,a)')
       call output%print_separator('m', 74, '-', fs='(t6,a)')
 !
       sum_strength = zero
 !
       do component = 1, 3
 !
-         call output%printf('(a0)      (f17.10) (f17.10)       (f17.10)',  &
-                           reals=[transition_moment_left(component),       &
-                           transition_moment_right(component),             &
-                           transition_strength(component)],                &
-                           chars=[components(component)], pl='m', fs='(t6,a)')
+         call output%printf('m', '(a0)      (f17.10) (f17.10)       (f17.10)', &
+                            reals=[transition_moment_left(component), &
+                            transition_moment_right(component), &
+                            transition_strength(component)], &
+                            chars=[components(component)], fs='(t6,a)')
 !
          sum_strength = sum_strength + transition_strength(component)
 !
@@ -1159,9 +1163,8 @@ contains
 !
       call output%print_separator('m', 74, '-', fs='(t6,a)')
 !
-      call output%printf('Oscillator strength [a.u.]: (f19.12)', &
-                        reals=[(two/three)*excitation_energy*sum_strength], &
-                        pl='m', fs='(t6,a)')
+      call output%printf('m', 'Oscillator strength [a.u.]: (f19.12)', &
+                         reals=[(two/three)*excitation_energy*sum_strength], fs='(t6,a)')
 !
    end subroutine print_transition_moment_summary_fop_engine
 !

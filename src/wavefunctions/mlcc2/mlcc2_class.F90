@@ -290,17 +290,17 @@ contains
 !
       class(mlcc2) :: wf
 !
-      call output%printf('- Summary of MLCC2 orbital partitioning:',fs='(/t3,a)',pl='minimal')
+      call output%printf('m', '- Summary of MLCC2 orbital partitioning:',fs='(/t3,a)')
 !
-      call output%printf('Orbital type: ' // trim(wf%cc2_orbital_type), fs='(/t6,a)',pl='minimal')
-      call output%printf('Number occupied cc2 orbitals: (i4)', &
-            ints=[wf%n_cc2_o], fs='(/t6,a)',pl='minimal')
-      call output%printf('Number virtual cc2 orbitals:  (i4)', &
-            ints=[wf%n_cc2_v], fs='(t6,a)',pl='minimal')
-      call output%printf('Number occupied ccs orbitals: (i4)', &
-            ints=[wf%n_ccs_o], fs='(/t6,a)',pl='minimal')
-      call output%printf('Number virtual ccs orbitals:  (i4)', &
-            ints=[wf%n_ccs_v], fs='(t6,a)',pl='minimal')
+      call output%printf('m', 'Orbital type: ' // trim(wf%cc2_orbital_type), fs='(/t6,a)')
+      call output%printf('m', 'Number occupied cc2 orbitals: (i4)', &
+                         ints=[wf%n_cc2_o], fs='(/t6,a)')
+      call output%printf('m', 'Number virtual cc2 orbitals:  (i4)', &
+                         ints=[wf%n_cc2_v], fs='(t6,a)')
+      call output%printf('m', 'Number occupied ccs orbitals: (i4)', &
+                         ints=[wf%n_ccs_o], fs='(/t6,a)')
+      call output%printf('m', 'Number virtual ccs orbitals:  (i4)', &
+                         ints=[wf%n_ccs_v], fs='(t6,a)')
 !
    end subroutine print_orbital_space_mlcc2
 !
@@ -1113,8 +1113,8 @@ contains
       call wf%destruct_nto_states()
       call wf%destruct_cnto_states()
 !
-      call output%printf('- Cleaning up (a0) wavefunction', &
-         chars=[trim(convert_to_uppercase(wf%name_))], fs='(/t3, a)', pl='verbose')
+      call output%printf('v', '- Cleaning up (a0) wavefunction', &
+                         chars=[trim(convert_to_uppercase(wf%name_))], fs='(/t3, a)')
 !
    end subroutine cleanup_mlcc2
 !

@@ -304,7 +304,7 @@ contains
             if (lanczos%chain_length .lt. solver%chain_length) then 
 !
                call output%warning_msg('Chain length value reset = (i4)', &
-                  & ints=[lanczos%chain_length], fs='(/t6,a)')
+                                       ints=[lanczos%chain_length], fs='(/t6,a)')
 !
                exit 
 !
@@ -369,14 +369,14 @@ contains
 !
       class(asymmetric_lanczos_cc_es) :: solver 
 !
-      call output%printf('- Settings for coupled cluster excited state solver (' //trim(solver%tag) // '):', &
-                              pl='m', fs='(/t3,a)')
+      call output%printf('m', '- Settings for coupled cluster excited state &
+                         &solver (' //trim(solver%tag) // '):', fs='(/t3,a)')
 !
-      call output%printf('Chain length: (i6)', &
-          & ints=[solver%chain_length],pl='m',fs='(/t6,a)')
+      call output%printf('m', 'Chain length: (i6)', ints=[solver%chain_length], &
+                         fs='(/t6,a)')
 !
-     call output%printf('Biorthonormalization procedure: (a0)', &
-             & chars=[trim(solver%normalization)], pl='minimal', fs='(t6,a)') 
+     call output%printf('m', 'Biorthonormalization procedure: (a0)', &
+                        chars=[trim(solver%normalization)], fs='(t6,a)')
 !
    end subroutine print_settings_asymmetric_lanczos_cc_es
 !
@@ -543,20 +543,20 @@ contains
 !
 !     Print entire spectrum
 !
-      call spectrum_file%printf('Nbr.      energy (Re) [eV]      energy (Im) [eV]  &
-                              &   energy (Re) [a.u]    energy (Im) [a.u.]   Osc. strength  ',   &
-                              pl='minimal', fs='(a)', ll=500)
+      call spectrum_file%printf('m', 'Nbr.      energy (Re) [eV]      energy (Im) [eV]    &
+                                & energy (Re) [a.u]    energy (Im) [a.u.]   Osc. strength  ',   &
+                                fs='(a)', ll=500)
 !
       do j = 1, solver%chain_length
 !
-         call spectrum_file%printf('(i4) (f20.12)  (f20.12) (f20.12)' //         &
+         call spectrum_file%printf('m', '(i4) (f20.12)  (f20.12) (f20.12)' //    &
                                    ' (f20.12)     (f16.12)', ints=[j],           &
                                     reals=[eigenvalues_Re(j)*Hartree_to_eV,      &
                                     eigenvalues_Im(index_list(j))*Hartree_to_eV, &
                                     eigenvalues_Re(j),                           &
                                     eigenvalues_Im(index_list(j)),               &
                                     oscillator_strength(index_list(j))],         &
-                                    pl='minimal', fs='(a)', ll=500)
+                                    fs='(a)', ll=500)
 !
       enddo
 !
@@ -564,40 +564,39 @@ contains
 !
       if (component == 1) then
 !
-         call output%printf('- Summary of the asymmetric Lanczos solver for excited states', &
-                  fs='(/t3,a)', pl='minimal')
+         call output%printf('m', '- Summary of the asymmetric Lanczos solver &
+                            &for excited states', fs='(/t3,a)')
 !
-         call output%printf('Printing the (i0) lowest excited states for each Cartesian&
-                           & component of the electric dipole moment', &
-                           ints = [min(print_in_output, solver%chain_length)], &
-                           ffs='(/t6,a)', fs='(t6,a)', pl='minimal')
+         call output%printf('m', 'Printing the (i0) lowest excited states for &
+                            &each Cartesian component of the electric dipole moment', &
+                            ints = [min(print_in_output, solver%chain_length)], ffs='(/t6,a)', fs='(t6,a)')
 !
       endif
 !
-      call output%printf('Component: (a1) ',chars=[component_string(component)], &
-                       pl='minimal', fs='(/t6,a)')
+      call output%printf('m', 'Component: (a1) ', &
+                         chars=[component_string(component)], fs='(/t6,a)')
 !
-      call output%printf('State.      energy [a.u]         energy [eV]         Osc. strength  ' &
-             & ,pl='minimal', fs='(/t6, a)')
+      call output%printf('m', 'State.      energy [a.u]         energy [eV]     &
+                         &    Osc. strength  ', fs='(/t6, a)')
 !
       call output%print_separator('minimal', 70, '-', fs='(t6, a)')
 !
 
       do j = 1, min(print_in_output, solver%chain_length)
 !
-         call output%printf('(i4)  (f20.12) (f20.12)    (f16.12)', ints=[j], &
-                       reals=[eigenvalues_Re(j), eigenvalues_Re(j)*Hartree_to_eV, &
-                       oscillator_strength(index_list(j))], &
-                       pl='minimal', fs='(t6,a)')
+         call output%printf('m', '(i4)  (f20.12) (f20.12)    (f16.12)', &
+                            ints=[j], reals=[eigenvalues_Re(j), &
+                            eigenvalues_Re(j)*Hartree_to_eV, &
+                            oscillator_strength(index_list(j))], fs='(t6,a)')
 !
       enddo
 !
       call output%print_separator('minimal', 70, '-', fs='(t6, a)')
 !
-     call output%printf('For full spectrum, see file: ' //           &
-             & trim(wf%system%name_) // '_' //                 &
-             & trim(adjustl(chain_length_string)) // '_' //    &
-             & component_string(component), pl='m', fs='(t6,a)')
+     call output%printf('m', 'For full spectrum see file: ' //  &
+                        trim(wf%system%name_) // '_' //  &
+                        trim(adjustl(chain_length_string)) // '_' //  &
+                        component_string(component), fs='(t6,a)')
 !
       call mem%dealloc(index_list, solver%chain_length)
 !
@@ -613,11 +612,11 @@ contains
 !
       class(asymmetric_lanczos_cc_es) :: solver 
 !
-      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
 !
-      call output%printf(solver%description1, pl='n', ffs='(/t3,a)', fs='(t3,a)')
-      call output%printf(solver%description2, pl='n', ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('n', solver%description1, ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('n', solver%description2, ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_asymmetric_lanczos_cc_es
 !
@@ -636,13 +635,14 @@ contains
 !
       call solver%timer%turn_off()
 !
-      call output%printf('- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) &
-                 // ' excited state equations.', pl='m', fs='(/t3,a)')
+      call output%printf('m', '- Finished solving the ' //  &
+                         trim(convert_to_uppercase(wf%name_)) // ' excited &
+                         &state equations.', fs='(/t3,a)')
 !
-      call output%printf('Total wall time (sec): (f20.5)', &
-                  reals=[solver%timer%get_elapsed_time('wall')], pl='m', fs='(/t6,a)')
-      call output%printf('Total cpu time (sec):  (f20.5)', &
-                  reals=[solver%timer%get_elapsed_time('cpu')], pl='m', fs='(t6,a)')
+      call output%printf('m', 'Total wall time (sec): (f20.5)', &
+                         reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+      call output%printf('m', 'Total cpu time (sec):  (f20.5)', &
+                         reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cleanup_asymmetric_lanczos_cc_es
 !

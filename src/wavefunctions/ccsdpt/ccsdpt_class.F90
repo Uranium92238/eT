@@ -751,27 +751,27 @@ contains
 !
       call wf%calculate_energy_correction()
 !
-      call output%printf('- Ground state summary:', fs='(/t3,a)', pl='m')
+      call output%printf('m', '- Ground state summary:', fs='(/t3,a)')
 !
-      call output%printf('Final ground state CCSD energy (a.u.):    (f18.12)', &
-                         reals=[wf%energy], fs='(/t6,a)', pl='m')
+      call output%printf('m', 'Final ground state CCSD energy (a.u.):    (f18.12)', &
+                         reals=[wf%energy], fs='(/t6,a)')
 !
-      call output%printf('Correlation energy CCSD (a.u.):           (f18.12)', &
-                         reals=[wf%correlation_energy], fs='(/t6,a)', pl='m')
+      call output%printf('m', 'Correlation energy CCSD (a.u.):           (f18.12)', &
+                         reals=[wf%correlation_energy], fs='(/t6,a)')
 !
       wf%energy = wf%energy + wf%ccsdpt_energy_correction
 !
-      call output%printf('Final ground state CCSD(T) energy (a.u.): (f18.12)', &
-                         reals=[wf%energy], fs='(/t6,a)', pl='m')
+      call output%printf('m', 'Final ground state CCSD(T) energy (a.u.): (f18.12)', &
+                         reals=[wf%energy], fs='(/t6,a)')
 !
-      call output%printf('CCSD(T) energy correction (a.u.):         (f18.12)', &
-                          pl='m', reals=[wf%ccsdpt_energy_correction], fs='(/t6,a)')
+      call output%printf('m', 'CCSD(T) energy correction (a.u.):         (f18.12)', &
+                         reals=[wf%ccsdpt_energy_correction], fs='(/t6,a)')
 !
       call wf%print_dominant_amplitudes()
 !
       t1_diagnostic = wf%get_t1_diagnostic() 
-      call output%printf('T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', &
-                         reals=[t1_diagnostic], fs='(/t6,a)', pl='m')
+      call output%printf('m', 'T1 diagnostic (|T1|/sqrt(N_e)): (f14.12)', &
+                         reals=[t1_diagnostic], fs='(/t6,a)')
 !
    end subroutine print_gs_summary_ccsdpt
 !

@@ -381,15 +381,19 @@ contains
       if (wf%n_v > 0) then
 !
          homo_lumo_gap = wf%orbital_energies(wf%n_o + 1) - wf%orbital_energies(wf%n_o)
-         call output%printf('HOMO-LUMO gap:             (f19.12)', pl='m', fs='(/t6,a)', reals=[homo_lumo_gap])
+         call output%printf('m', 'HOMO-LUMO gap:             (f19.12)', &
+                            reals=[homo_lumo_gap], fs='(/t6,a)')
 !
       endif
 !
       nuclear_repulsion = wf%system%get_total_nuclear_repulsion()
 !
-      call output%printf('Nuclear repulsion energy:  (f19.12)', pl='m', fs='(t6,a)',  reals=[nuclear_repulsion])
-      call output%printf('Electronic energy:         (f19.12)', pl='m', fs='(t6,a)',  reals=[wf%energy - nuclear_repulsion])
-      call output%printf('Total energy:              (f19.12)', pl='m', fs='(t6,a)',  reals=[wf%energy])
+      call output%printf('m', 'Nuclear repulsion energy:  (f19.12)', &
+                         reals=[nuclear_repulsion], fs='(t6,a)')
+      call output%printf('m', 'Electronic energy:         (f19.12)', &
+                         reals=[wf%energy - nuclear_repulsion], fs='(t6,a)')
+      call output%printf('m', 'Total energy:              (f19.12)', &
+                         reals=[wf%energy], fs='(t6,a)')
 !
       if(wf%system%mm_calculation) call wf%print_energy_mm()
       if(wf%system%pcm_calculation) call wf%print_energy_pcm()
@@ -412,14 +416,14 @@ contains
 !
       class(hf), intent(inout) :: wf
 !
-      call output%printf('- Summary of QM/MM energetics:', pl='m', fs='(/t3,a)')
-      call output%printf('a.u.             eV     kcal/mol', pl='m', fs='(t42,a)')
-      call output%printf('QM/MM SCF Contribution: (f22.12)', pl='m', &
-                          reals=[wf%energy_scf_qmmm], fs='(t6,a)')
-      call output%printf('QM/MM Electrostatic Energy:(f19.12)(f12.5) (f9.3)', pl='m', &
-                          reals=[wf%electrostatic_energy_qmmm,               &
-                                 wf%electrostatic_energy_qmmm*Hartree_to_eV, &
-                                 wf%electrostatic_energy_qmmm*Hartree_to_kcalmol], fs='(t6,a)')
+      call output%printf('m', '- Summary of QM/MM energetics:', fs='(/t3,a)')
+      call output%printf('m', 'a.u.             eV     kcal/mol', fs='(t42,a)')
+      call output%printf('m', 'QM/MM SCF Contribution: (f22.12)', &
+                         reals=[wf%energy_scf_qmmm], fs='(t6,a)')
+      call output%printf('m', 'QM/MM Electrostatic Energy:(f19.12)(f12.5) (f9.3)', &
+                         reals=[wf%electrostatic_energy_qmmm, &
+                         wf%electrostatic_energy_qmmm*Hartree_to_eV, &
+                         wf%electrostatic_energy_qmmm*Hartree_to_kcalmol], fs='(t6,a)')
 !
    end subroutine print_energy_mm_hf
 !
@@ -529,8 +533,8 @@ contains
 !
 !     Print MO and coefficients
 !
-      call output%printf('- Printing molecular orbitals ((i0) from total (i0))', pl='normal', fs='(/t3,a)', &
-                        ints=[n_orbitals, wf%n_mo])
+      call output%printf('n', '- Printing molecular orbitals ((i0) from total (i0))', &
+                         ints=[n_orbitals, wf%n_mo], fs='(/t3,a)')
 !
       call wf%print_orbitals_from_coefficients(orbital_list_local, wf%orbital_coefficients)
 !
@@ -583,14 +587,13 @@ contains
 !
 !        Print header: AO Atom 1 2 3 4 ..
 !
-         call output%printf('  AO    Atom', pl='normal', fs='(/t3,a)', adv=.false.)
+         call output%printf('n', '  AO    Atom', fs='(/t3,a)', adv=.false.)
 !
          do mo = first_mo, last_mo
 !
             adv = (mo == last_mo)
 !
-            call output%printf('(i4)', pl='normal', fs='(8x,a)', adv=adv, &
-                              ints=[orbital_list(mo)] )
+            call output%printf('n', '(i4)', adv=adv, ints=[orbital_list(mo)], fs='(8x,a)')
 !
          enddo
 !
@@ -609,16 +612,16 @@ contains
                   symbol  = trim( wf%system%atoms(atom)%symbol )
                   ang_mom = trim( angular_momentums(l+1) )
 !
-                  call output%printf('(i4) (i4) (a2)((a1))', pl='normal', adv=.false., &
-                                    ints=[ao, atom], chars=[symbol, ang_mom])
+                  call output%printf('n', '(i4) (i4) (a2)((a1))', adv=.false., &
+                                     ints=[ao, atom], chars=[symbol, ang_mom])
 !
                   do mo = first_mo, last_mo
 !
                      adv = (mo == last_mo)
                      orb_coeff = orbital_coefficients(ao, orbital_list(mo))
 !
-                     call output%printf('(f10.6)', pl='normal', fs='(2x,a)', adv=adv, &
-                                       reals=[orb_coeff] )
+                     call output%printf('n', '(f10.6)', adv=adv, &
+                                        reals=[orb_coeff], fs='(2x,a)')
 !
                   enddo
 !
@@ -2553,8 +2556,8 @@ contains
 !
       if (any(used_diag .gt. wf%n_ao) .or. any(used_diag .le. 0)) then
 !
-         call output%printf('Something went wrong when decomposing the AO density.', &
-                             pl='m', fs='(/t3,a)')
+         call output%printf('m', 'Something went wrong when decomposing the AO density.', &
+                            fs='(/t3,a)')
 !
          call output%error_msg('Trying to access elements outside of an array.')
 !
@@ -2627,16 +2630,15 @@ contains
       if (wf%n_mo .gt. wf%n_ao .or. wf%n_mo .le. 0 .or. &
           any(used_diag .gt. wf%n_ao) .or. any(used_diag .le. 0)) then
 !
-         call output%printf('Something went wrong when decomposing the AO overlap.', &
-                            pl='m', fs='(/t3,a)')
+         call output%printf('m', 'Something went wrong when decomposing the AO overlap.', &
+                            fs='(/t3,a)')
 !
-         call output%printf('Did you compile with wrong type of integers in setup? &
-                            &For example system native BLAS  &
-                            &with default 64-bit integers.', &
-                            pl='m', ffs='(/t3,a)')
+         call output%printf('m', 'Did you compile with wrong type of integers &
+                            &in setup? For example system native BLAS  with &
+                            &default 64-bit integers.', ffs='(/t3,a)')
 !
-         call output%printf('If that is the case, use setup with --int32 or install MKL.', &
-                            pl='m')
+         call output%printf('m', 'If that is the case, use setup with --int32 &
+                            &or install MKL.')
 !
          call output%error_msg('Failed to decompose AO overlap.')
 !
@@ -2854,8 +2856,8 @@ contains
 !
       if (.not. pure) then
 !
-         call output%printf('Error: could not purify AO density. Final error: ', &
-                             pl='m', reals=[error], fs='(/t3,a)')
+         call output%printf('m', 'Error: could not purify AO density. Final &
+                            &error: ', reals=[error], fs='(/t3,a)')
          stop
 !
       endif
@@ -3501,14 +3503,14 @@ contains
 !
       class(hf) :: wf
 !
-      call output%printf('Coulomb screening threshold:  (e11.4)', pl='n', &
-                          reals=[wf%coulomb_threshold], fs='(/t6,a)')
+      call output%printf('n', 'Coulomb screening threshold:  (e11.4)', &
+                         reals=[wf%coulomb_threshold], fs='(/t6,a)')
 !
-      call output%printf('Exchange screening threshold: (e11.4)', pl='n', &
-                          reals=[wf%exchange_threshold], fs='(t6,a)')
+      call output%printf('n', 'Exchange screening threshold: (e11.4)', &
+                         reals=[wf%exchange_threshold], fs='(t6,a)')
 !
-      call output%printf('ERI integral precision:       (e11.4)', pl='n', &
-                          reals=[wf%libint_epsilon], fs='(t6,a)')
+      call output%printf('n', 'ERI integral precision:       (e11.4)', &
+                         reals=[wf%libint_epsilon], fs='(t6,a)')
 !
    end subroutine print_screening_settings_hf
 !
@@ -3522,8 +3524,8 @@ contains
 !
       class(hf) :: wf
 !
-      call output%printf('- Cholesky decomposition of AO overlap to get linearly independent orbitals:', &
-                         pl='n', fs='(/t3,a)', ll=100)
+      call output%printf('n', '- Cholesky decomposition of AO overlap to get &
+                         &linearly independent orbitals:', ll=100, fs='(/t3,a)')
 !
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()
@@ -3532,13 +3534,18 @@ contains
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-      call output%printf('Number of occupied orbitals:  (i8)', ints=[wf%n_o], fs='(/t6,a)', pl='minimal')
-      call output%printf('Number of virtual orbitals:   (i8)', ints=[wf%n_v], fs='(t6,a)', pl='minimal')
-      call output%printf('Number of molecular orbitals: (i8)', ints=[wf%n_mo], fs='(t6,a)', pl='minimal')
-      call output%printf('Number of atomic orbitals:    (i8)', ints=[wf%n_ao], fs='(t6,a)', pl='minimal')
+      call output%printf('m', 'Number of occupied orbitals:  (i8)', &
+                         ints=[wf%n_o], fs='(/t6,a)')
+      call output%printf('m', 'Number of virtual orbitals:   (i8)', &
+                         ints=[wf%n_v], fs='(t6,a)')
+      call output%printf('m', 'Number of molecular orbitals: (i8)', &
+                         ints=[wf%n_mo], fs='(t6,a)')
+      call output%printf('m', 'Number of atomic orbitals:    (i8)', &
+                         ints=[wf%n_ao], fs='(t6,a)')
 !
       if (wf%n_mo .lt. wf%n_ao) &
-         call output%printf('Removed (i0) AOs due to linear dep.', ints=[wf%n_ao - wf%n_mo], fs='(/t6,a)', pl='minimal')
+         call output%printf('m', 'Removed (i0) AOs due to linear dep.', &
+                            ints=[wf%n_ao - wf%n_mo], fs='(/t6,a)')
 !
    end subroutine set_n_mo_hf
 !
@@ -3622,14 +3629,15 @@ contains
 !
          call output%print_separator('verbose', 67, fs='(/t3,a)')
 !
-         call output%printf('Atom          FQ LHS             FQ RHS        QM Potential@FQs', &
-                            pl='v', fs='(t6,a)')
+         call output%printf('v', 'Atom          FQ LHS             FQ RHS       &
+                            & QM Potential@FQs', fs='(t6,a)')
 !
          do i = 1, wf%system%mm%n_atoms
 !
-            call output%printf('(i4)      (e13.6)      (e13.6)      (e13.6)', pl='v', &
-                               fs='(t6,a)', ints=[i], reals=[wf%system%mm%pol_emb_lhs(i), &
-                               wf%system%mm%pol_emb_rhs(i), potential_points(i)])
+            call output%printf('v', '(i4)      (e13.6)      (e13.6)      (e13.6)', &
+                               ints=[i], reals=[wf%system%mm%pol_emb_lhs(i), &
+                               wf%system%mm%pol_emb_rhs(i), &
+                               potential_points(i)], fs='(t6,a)')
 !
          enddo
 !
@@ -3873,14 +3881,13 @@ contains
          enddo
       enddo
 !
-      call output%printf('Molecular gradient (Hartree/bohr):', fs='(/t6,a/)', pl='m')
+      call output%printf('m', 'Molecular gradient (Hartree/bohr):', fs='(/t6,a/)')
 !
       do k = 1, wf%system%n_atoms
 !
-         call output%printf('(a2)(f19.12)(f19.12)(f19.12)',         &
-                           chars=[wf%system%atoms(k)%symbol],       &
-                           reals=[E_qk(1,k), E_qk(2,k), E_qk(3,k)], &
-                           fs='(t6,a)', pl='m')
+         call output%printf('m', '(a2)(f19.12)(f19.12)(f19.12)', &
+                            chars=[wf%system%atoms(k)%symbol], reals=[E_qk(1, &
+                            k), E_qk(2, k), E_qk(3, k)], fs='(t6,a)')
 !
       enddo
 !
@@ -3941,14 +3948,13 @@ contains
 !
       call output%print_separator('verbose', 67, fs='(/t3,a)')
 !
-      call output%printf('Atom         PCM ASC            PCM RHS', &
-                         pl='v', fs='(t6,a)')
+      call output%printf('v', 'Atom         PCM ASC            PCM RHS', fs='(t6,a)')
 !
       do i = 1, wf%system%pcm%n_tesserae
 !
-         call output%printf('(i4)      (e13.6)      (e13.6)', pl='v', &
-                            fs='(t6,a)', ints=[i], reals=[wf%system%pcm%charges(i), &
-                            wf%system%pcm%pcm_rhs(i)])
+         call output%printf('v', '(i4)      (e13.6)      (e13.6)', ints=[i], &
+                            reals=[wf%system%pcm%charges(i), &
+                            wf%system%pcm%pcm_rhs(i)], fs='(t6,a)')
 !
       enddo
 !
@@ -4006,14 +4012,14 @@ contains
 !
       class(hf), intent(inout) :: wf
 !      
-      call output%printf('- Summary of QM/PCM energetics:', pl='m', fs='(/t3,a)')
-      call output%printf('a.u.             eV     kcal/mol', pl='m', fs='(t42,a)')
-      call output%printf('QM/PCM SCF Contribution: (f21.12)', pl='m', &
-                          reals=[wf%energy_scf_qmpcm], fs='(t6,a)')
-      call output%printf('QM/PCM Electrostatic Energy:(f18.12)(f12.5) (f9.3)', pl='m', &
-                          reals=[wf%electrostatic_energy_qmpcm,               &
-                                 wf%electrostatic_energy_qmpcm*Hartree_to_eV, &
-                                 wf%electrostatic_energy_qmpcm*Hartree_to_kcalmol], fs='(t6,a)')
+      call output%printf('m', '- Summary of QM/PCM energetics:', fs='(/t3,a)')
+      call output%printf('m', 'a.u.             eV     kcal/mol', fs='(t42,a)')
+      call output%printf('m', 'QM/PCM SCF Contribution: (f21.12)', &
+                         reals=[wf%energy_scf_qmpcm], fs='(t6,a)')
+      call output%printf('m', 'QM/PCM Electrostatic Energy:(f18.12)(f12.5) (f9.3)', &
+                         reals=[wf%electrostatic_energy_qmpcm, &
+                         wf%electrostatic_energy_qmpcm*Hartree_to_eV, &
+                         wf%electrostatic_energy_qmpcm*Hartree_to_kcalmol], fs='(t6,a)')
 !
 !
    end subroutine print_energy_pcm_hf!
@@ -4053,8 +4059,10 @@ contains
 !
       call wf%get_n_electrons_in_density(n_electrons)
 !
-      call output%printf('Energy of initial guess:      (f25.12)', reals=[wf%energy], fs='(/t6, a)',pl='minimal')
-      call output%printf('Number of electrons in guess: (f25.12)', reals=[n_electrons], fs='(t6, a)',pl='minimal')
+      call output%printf('m', 'Energy of initial guess:      (f25.12)', &
+                         reals=[wf%energy], fs='(/t6, a)')
+      call output%printf('m', 'Number of electrons in guess: (f25.12)', &
+                         reals=[n_electrons], fs='(t6, a)')
 !
 !     Update the orbitals and density to make sure the density is idempotent
 !     (not the case for the standard atomic superposition density)

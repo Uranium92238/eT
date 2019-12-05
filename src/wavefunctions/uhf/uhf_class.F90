@@ -212,9 +212,9 @@ contains
 !
       if (wf%fractional_uniform_valence) then
 !
-         call output%printf('Requested fractional uniform valence. Valence electrons will be  &
-                            &distributed evenly in the highest molecular orbitals (if plural).', &
-                            pl='minimal', ffs='(/t3,a)')
+         call output%printf('m', 'Requested fractional uniform valence. Valence &
+                            &electrons will be  distributed evenly in the &
+                            &highest molecular orbitals (if plural).', ffs='(/t3,a)')
 !
       endif
 !
@@ -288,8 +288,9 @@ contains
 !
       class(uhf), intent(inout) :: wf
 !
-      call output%printf('Requested MO transformation of Fock matrix, but this is not yet implemented for (a0).', &
-                        pl='minimal', ffs='(/t3,a)', chars=[trim(wf%name_)] )
+      call output%printf('m', 'Requested MO transformation of Fock matrix, but &
+                         &this is not yet implemented for (a0).', &
+                         chars=[trim(wf%name_)], ffs='(/t3,a)')
 !
    end subroutine construct_mo_fock_uhf
 !
@@ -788,14 +789,16 @@ contains
       if (wf%n_alpha > 0 .and. wf%n_alpha < wf%n_mo) then 
 !
          homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1) - wf%orbital_energies_a(wf%n_alpha)
-         call output%printf('HOMO-LUMO gap (alpha):     (f19.12)', pl='minimal', fs='(/t6,a)', reals=[homo_lumo_gap_a])
+         call output%printf('m', 'HOMO-LUMO gap (alpha):     (f19.12)', &
+                            reals=[homo_lumo_gap_a], fs='(/t6,a)')
 !
       endif 
 !
       if (wf%n_beta > 0 .and. wf%n_beta < wf%n_mo) then 
 !
          homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1) - wf%orbital_energies_b(wf%n_beta)
-         call output%printf('HOMO-LUMO gap (beta):      (f19.12)', pl='minimal', fs='(t6,a)',  reals=[homo_lumo_gap_b])
+         call output%printf('m', 'HOMO-LUMO gap (beta):      (f19.12)', &
+                            reals=[homo_lumo_gap_b], fs='(t6,a)')
 !
       endif
 !
@@ -807,9 +810,12 @@ contains
 !
       endif
 !
-      call output%printf('Nuclear repulsion energy:  (f19.12)', pl='minimal', fs='(t6,a)',  reals=[nuclear_repulsion])
-      call output%printf('Electronic energy:         (f19.12)', pl='minimal', fs='(t6,a)',  reals=[wf%energy - nuclear_repulsion])
-      call output%printf('Total energy:              (f19.12)', pl='minimal', fs='(t6,a)',  reals=[wf%energy])
+      call output%printf('m', 'Nuclear repulsion energy:  (f19.12)', &
+                         reals=[nuclear_repulsion], fs='(t6,a)')
+      call output%printf('m', 'Electronic energy:         (f19.12)', &
+                         reals=[wf%energy - nuclear_repulsion], fs='(t6,a)')
+      call output%printf('m', 'Total energy:              (f19.12)', &
+                         reals=[wf%energy], fs='(t6,a)')
 !
       if(wf%system%mm_calculation) call wf%print_energy_mm()
       if(wf%system%pcm_calculation) call wf%print_energy_pcm()
@@ -1761,14 +1767,15 @@ contains
 !
          call output%print_separator('verbose', 67, fs='(/t3,a)')
 !
-         call output%printf('Atom          FQ LHS             FQ RHS        QM Potential@FQs', &
-                            pl='v', fs='(t6,a)')
+         call output%printf('v', 'Atom          FQ LHS             FQ RHS       &
+                            & QM Potential@FQs', fs='(t6,a)')
 !            
          do i = 1, wf%system%mm%n_atoms
 !           
-            call output%printf('(i4)      (e13.6)      (e13.6)      (e13.6)', pl='v', &
-                               fs='(t6,a)', ints=[i], reals=[wf%system%mm%pol_emb_lhs(i), &
-                               wf%system%mm%pol_emb_rhs(i), potential_points(i)])
+            call output%printf('v', '(i4)      (e13.6)      (e13.6)      (e13.6)', &
+                               ints=[i], reals=[wf%system%mm%pol_emb_lhs(i), &
+                               wf%system%mm%pol_emb_rhs(i), &
+                               potential_points(i)], fs='(t6,a)')
 !           
          enddo
 !           
@@ -1861,14 +1868,13 @@ contains
 !
       call output%print_separator('verbose', 67, fs='(/t3,a)')
 !
-      call output%printf('Atom         PCM ASC            PCM RHS', &
-                         pl='v', fs='(t6,a)')
+      call output%printf('v', 'Atom         PCM ASC            PCM RHS', fs='(t6,a)')
 !
       do i = 1, wf%system%pcm%n_tesserae
 !
-         call output%printf('(i4)      (e13.6)      (e13.6)', pl='v', &
-                            fs='(t6,a)', ints=[i], reals=[wf%system%pcm%charges(i), &
-                            wf%system%pcm%pcm_rhs(i)])
+         call output%printf('v', '(i4)      (e13.6)      (e13.6)', ints=[i], &
+                            reals=[wf%system%pcm%charges(i), &
+                            wf%system%pcm%pcm_rhs(i)], fs='(t6,a)')
 !
       enddo
 !
@@ -1910,8 +1916,8 @@ contains
 !
       class(uhf) :: wf
 !
-      call output%printf('- Cholesky decomposition of AO overlap to get linearly independent orbitals:', &
-                         pl='n', fs='(/t3,a)', ll=100)
+      call output%printf('n', '- Cholesky decomposition of AO overlap to get &
+                         &linearly independent orbitals:', ll=100, fs='(/t3,a)')
 !
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()
@@ -1921,17 +1927,24 @@ contains
 !
       call wf%determine_n_alpha_and_n_beta()
 !
-      call output%printf('Number of alpha electrons:        (i8)', ints=[wf%n_alpha], fs='(/t6,a)',pl='minimal')
-      call output%printf('Number of beta electrons:         (i8)', ints=[wf%n_beta], fs='(t6,a)',pl='minimal')
+      call output%printf('m', 'Number of alpha electrons:        (i8)', &
+                         ints=[wf%n_alpha], fs='(/t6,a)')
+      call output%printf('m', 'Number of beta electrons:         (i8)', &
+                         ints=[wf%n_beta], fs='(t6,a)')
 !
-      call output%printf('Number of virtual alpha orbitals: (i8)', ints=[wf%n_mo - wf%n_alpha], fs='(t6,a)',pl='minimal')
-      call output%printf('Number of virtual beta orbitals:  (i8)', ints=[wf%n_mo - wf%n_beta], fs='(t6,a)',pl='minimal')
+      call output%printf('m', 'Number of virtual alpha orbitals: (i8)', &
+                         ints=[wf%n_mo - wf%n_alpha], fs='(t6,a)')
+      call output%printf('m', 'Number of virtual beta orbitals:  (i8)', &
+                         ints=[wf%n_mo - wf%n_beta], fs='(t6,a)')
 !
-      call output%printf('Number of molecular orbitals:     (i8)', ints=[wf%n_mo], fs='(t6,a)',pl='minimal')
-      call output%printf('Number of atomic orbitals:        (i8)', ints=[wf%n_ao], fs='(t6,a)',pl='minimal')
+      call output%printf('m', 'Number of molecular orbitals:     (i8)', &
+                         ints=[wf%n_mo], fs='(t6,a)')
+      call output%printf('m', 'Number of atomic orbitals:        (i8)', &
+                         ints=[wf%n_ao], fs='(t6,a)')
 !
       if (wf%n_mo .lt. wf%n_ao) &
-         call output%printf('Removed (i0) AOs due to linear dep.', ints=[wf%n_ao - wf%n_mo], fs='(/t6,a)', pl='minimal')
+         call output%printf('m', 'Removed (i0) AOs due to linear dep.', &
+                            ints=[wf%n_ao - wf%n_mo], fs='(/t6,a)')
 !
    end subroutine set_n_mo_uhf
 !
@@ -2005,13 +2018,13 @@ contains
 !
       endif
 !
-      call output%printf('- Printing alpha molecular orbitals ((i0) from total (i0))', pl='normal', fs='(/t3,a)', &
-                        ints=[n_orbitals_alpha, wf%n_mo])
+      call output%printf('n', '- Printing alpha molecular orbitals ((i0) from &
+                         &total (i0))', ints=[n_orbitals_alpha, wf%n_mo], fs='(/t3,a)')
 !
       call wf%print_orbitals_from_coefficients(orbital_list_alpha, wf%orbital_coefficients_a)
 !
-      call output%printf('- Printing beta molecular orbitals ((i0) from total (i0))', pl='normal', fs='(/t3,a)', &
-                        ints=[n_orbitals_beta, wf%n_mo])
+      call output%printf('n', '- Printing beta molecular orbitals ((i0) from &
+                         &total (i0))', ints=[n_orbitals_beta, wf%n_mo], fs='(/t3,a)')
 !
       call wf%print_orbitals_from_coefficients(orbital_list_beta, wf%orbital_coefficients_b)
 !

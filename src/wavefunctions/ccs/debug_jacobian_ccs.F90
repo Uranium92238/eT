@@ -123,9 +123,8 @@ contains
 !
       integer, intent(in) :: nu
 !
-!     Dirty hack to avoid warnings on compilation:
-!
-      if (.false.) call output%printf('No normalization needed for CCS (f20.5)', reals=[A_numerical_mu_nu(nu)], pl='verbose')     
+      call output%printf('v', 'No normalization needed for CCS (f20.5)', &
+                         reals=[A_numerical_mu_nu(nu)])     
 !
    end subroutine normalization_for_jacobian_debug_ccs
 !
@@ -271,7 +270,8 @@ contains
 !
       endif
 !
-      call output%printf('Exited numerical test for jacobian without errors.', fs='(/t3, a)',pl='normal')
+      call output%printf('n', 'Exited numerical test for jacobian without errors.', &
+                         fs='(/t3, a)')
 !
    end subroutine numerical_test_jacobian_ccs
 !

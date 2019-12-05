@@ -160,10 +160,12 @@ contains
 !
       class(davidson_cc_multipliers) :: solver 
 !
-      call output%printf('- Davidson CC multipliers solver settings:', pl='m', fs='(/t3,a)')
+      call output%printf('m', '- Davidson CC multipliers solver settings:', fs='(/t3,a)')
 !
-      call output%printf('Residual threshold:       (e9.2)', pl='m', fs='(/t6,a)', reals=[solver%residual_threshold])
-      call output%printf('Max number of iterations: (i9)', pl='m', fs='(t6,a)', ints=[solver%max_iterations])
+      call output%printf('m', 'Residual threshold:       (e9.2)', &
+                         reals=[solver%residual_threshold], fs='(/t6,a)')
+      call output%printf('m', 'Max number of iterations: (i9)', &
+                         ints=[solver%max_iterations], fs='(t6,a)')
 !
    end subroutine print_settings_davidson_cc_multipliers
 !
@@ -198,7 +200,7 @@ contains
 !
       if (get_l2_norm(eta, wf%n_gs_amplitudes) < solver%residual_threshold) then 
 !
-         call output%printf('Convergence criterion already met!', pl='m', fs='(t3,a)')
+         call output%printf('m', 'Convergence criterion already met!', fs='(t3,a)')
 !
          call wf%initialize_multipliers()
 !
@@ -230,7 +232,8 @@ contains
 !
       if (solver%restart) then ! Read multiplier vector from file
 !
-         call output%printf('Requested restart. Reading multipliers from file.', pl='m', fs='(/t3,a)')
+         call output%printf('m', 'Requested restart. Reading multipliers from file.', &
+                            fs='(/t3,a)')
 !
          call wf%initialize_multipliers()
          call wf%read_multipliers()
@@ -253,7 +256,7 @@ contains
 !
 !     :: Iterative loop ::
 !
-      call output%printf('Iteration     Residual norm', pl='n', fs='(/t3,a)')
+      call output%printf('n', 'Iteration     Residual norm', fs='(/t3,a)')
       call output%print_separator('n', 27,'-')
 !
       iteration = 0
@@ -300,8 +303,7 @@ contains
 !
 !        Print iteration and residual norm
 !
-         call output%printf('(i3)            (e11.4)', pl='n', &
-                              ints=[iteration], reals=[residual_norm])
+         call output%printf('n', '(i3)            (e11.4)', ints=[iteration], reals=[residual_norm])
 !
       enddo ! End of iterative loop 
 !
@@ -311,10 +313,10 @@ contains
 !
       if (converged_residual) then
 !
-         call output%printf('Convergence criterion met in (i0) iterations!', pl='m', &
-                              ints=[iteration], fs='(/t3,a)')
+         call output%printf('m', 'Convergence criterion met in (i0) iterations!', &
+                            ints=[iteration], fs='(/t3,a)')
 !
-         call output%printf('- Davidson CC multipliers solver summary:', pl='n', fs='(/t3,a)')
+         call output%printf('n', '- Davidson CC multipliers solver summary:', fs='(/t3,a)')
 !
          call mem%alloc(multipliers, wf%n_gs_amplitudes)
          call davidson%construct_solution(multipliers, 1)
@@ -353,14 +355,15 @@ contains
 !
       call solver%timer%turn_off()
 !
-      call output%printf('- Finished solving the ' // trim(convert_to_uppercase(wf%name_)) // &
-                           ' multipliers equations', pl='m', fs='(/t3,a)')
+      call output%printf('m', '- Finished solving the ' //  &
+                         trim(convert_to_uppercase(wf%name_)) // ' multipliers equations', &
+                         fs='(/t3,a)')
 !
-      call output%printf('Total wall time (sec):  (f20.5)', pl='m', &
-                           reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6,a)')
+      call output%printf('m', 'Total wall time (sec):  (f20.5)', &
+                         reals=[solver%timer%get_elapsed_time('wall')], fs='(/t6,a)')
 !
-      call output%printf('Total cpu time (sec):   (f20.5)', pl='m', &
-                           reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6,a)')
+      call output%printf('m', 'Total cpu time (sec):   (f20.5)', &
+                         reals=[solver%timer%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine cleanup_davidson_cc_multipliers
 !
@@ -374,11 +377,11 @@ contains
 !
       class(davidson_cc_multipliers) :: solver 
 !
-      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
 
 !
-      call output%printf(solver%description, pl='n', ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('n', solver%description, ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_davidson_cc_multipliers
 !

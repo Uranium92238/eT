@@ -350,8 +350,9 @@ contains
 !
          call output%unmute()
 !
-         call output%printf('Generated atomic density for ' // adjustl(atom%symbol) // &
-                            ' using UHF/(a0)', pl='verbose', fs='(t6,a)', chars=[atom%basis])
+         call output%printf('v', 'Generated atomic density for ' //  &
+                            adjustl(atom%symbol) // ' using UHF/(a0)', &
+                            chars=[atom%basis], fs='(t6,a)')
 !
 !        Move densities to where "set_ao_density_sad" can use them,
 !        but first delete SAD if it already exists.
@@ -584,9 +585,9 @@ contains
 !
          q_total = q_electronic + q_nuclear
 !
-         call output%printf('The traceless quadrupole is calculated as:', pl='minimal',fs='(/t6,a)')
-         call output%printf('Q_ij = 1/2[3*q_ij - tr(q)*delta_ij]', pl='minimal',fs='(/t9,a)')
-         call output%printf('where q_ij is the non-traceless matrix', pl='minimal',fs='(/t6,a)')
+         call output%printf('m', 'The traceless quadrupole is calculated as:', fs='(/t6,a)')
+         call output%printf('m', 'Q_ij = 1/2[3*q_ij - tr(q)*delta_ij]',fs='(/t9,a)')
+         call output%printf('m', 'where q_ij is the non-traceless matrix',fs='(/t6,a)')
 !
          call engine%print_operator('traceless quadrupole moment', q_electronic, q_nuclear, q_total, &
                                     components, 6)
@@ -640,7 +641,8 @@ contains
 !
       if(wf%name_.eq.'mlhf') then
 !
-         call output%printf('In MLHF the dipole moment is computed only in the active space', pl='minimal',fs='(/t6,a)')
+         call output%printf('m', 'In MLHF the dipole moment is computed only in &
+                            &the active space', fs='(/t6,a)')
 !
          call wf%system%get_nuclear_dipole_active(nuclear)
 !
@@ -698,7 +700,8 @@ contains
 !
       if(wf%name_.eq.'mlhf') then
 !
-         call output%printf('In MLHF the quadrupole moment is computed only in the active space', pl='minimal',fs='(/t6,a)')
+         call output%printf('m', 'In MLHF the quadrupole moment is computed &
+                            &only in the active space', fs='(/t6,a)')
 !
          call wf%system%get_nuclear_quadrupole_active(nuclear)
 !

@@ -89,18 +89,20 @@ contains
       class(abstract_engine), intent(in) :: engine
       class(wavefunction),    intent(in) :: wf
 !
-      if (.not. allocated(engine%tasks)) call output%error_msg('Tasks of engine was not set. Do this in prepare.')
+      if (.not. allocated(engine%tasks)) then
+         call output%error_msg('Tasks of engine was not set. Do this in prepare.')
+      end if
 !
-      call output%printf(":: (a0)", pl='minimal', fs='(//t3,a)', chars=[engine%name_])
+      call output%printf('m', ":: (a0)", fs='(//t3,a)', chars=[engine%name_])
       call output%print_separator('minimal', len(trim(engine%name_))+6, '=')
 !
-      call output%printf("(a0)",    pl='minimal', fs='(/t3,a)', chars=[engine%description])
+      call output%printf('m', "(a0)", fs='(/t3,a)', chars=[engine%description])
 !
-      call output%printf('This is a (a0) (a0) calculation.', pl='minimal', ffs='(/t3,a)', &
-                        chars=[character(len=500)::convert_to_uppercase(wf%name_), engine%tag])
+      call output%printf('m', 'This is a (a0) (a0) calculation.', &
+                         chars=[character(len=500)::convert_to_uppercase(wf%name_), &
+                         engine%tag], ffs='(/t3,a)')
 !
-      call output%printf('The following tasks will be performed:', &
-                         pl='minimal', fs='(t3,a/)')
+      call output%printf('m', 'The following tasks will be performed:', fs='(t3,a/)')
 !     
      call engine%tasks%print_all()
 !
@@ -119,15 +121,16 @@ contains
       class(abstract_engine), intent(inout) :: engine
       class(wavefunction),    intent(in)    :: wf
 !
-      call output%printf('- Timings for the (a0) (a0) calculation', pl='normal', fs='(/t3, a)', &
-                         chars=[character(len=500)::convert_to_uppercase(wf%name_), engine%tag])
+      call output%printf('n', '- Timings for the (a0) (a0) calculation', &
+                         chars=[character(len=500)::convert_to_uppercase(wf%name_), &
+                         engine%tag], fs='(/t3, a)')
 !
       call engine%timer%turn_off()
 !
-      call output%printf('Total wall time (sec): (f20.5)', pl='normal', fs='(/t6, a)', &
-                         reals=[engine%timer%get_elapsed_time('wall')])
-      call output%printf('Total cpu time (sec):  (f20.5)', pl='normal', fs='(t6, a)', &
-                         reals=[engine%timer%get_elapsed_time('cpu')])
+      call output%printf('n', 'Total wall time (sec): (f20.5)', &
+                         reals=[engine%timer%get_elapsed_time('wall')], fs='(/t6, a)')
+      call output%printf('n', 'Total cpu time (sec):  (f20.5)', &
+                         reals=[engine%timer%get_elapsed_time('cpu')], fs='(t6, a)')
 !
    end subroutine print_timings_abstract_engine
 !
@@ -155,89 +158,100 @@ contains
 !
       integer :: k
 !
-      call output%printf('- Operator: (a0) [a.u.]', pl='minimal', fs='(/t3,a,a,a)', chars=[operator_])
+      call output%printf('m', '- Operator: (a0) [a.u.]', chars=[operator_], fs='(/t3,a,a,a)')
 !
-      call output%printf(' Comp.   Electronic        Nuclear          Total   ', pl='verbose', fs='(/t6,a)')
-      call output%printf('------------------------------------------------------', pl='verbose', fs='(t6,a)')
+      call output%printf('v', ' Comp.   Electronic        Nuclear          &
+                         &Total   ', fs='(/t6,a)')
+      call output%print_separator('v', 54, '-', fs='(t6,a)')
 !
       do k = 1, n_components
 !
-         call output%printf('(a4)   (E14.7)  (E14.7)  (E14.7)', pl='verbose', fs='(t6,a)', &
-                        chars=[components(k)], reals=[electronic(k), nuclear(k), total(k)])
+         call output%printf('v', '(a4)   (E14.7)  (E14.7)  (E14.7)', &
+                            chars=[components(k)], reals=[electronic(k), &
+                            nuclear(k), total(k)], fs='(t6,a)')
 !
       enddo
 !
-      call output%printf('------------------------------------------------------', pl='verbose', fs='(t6,a)')
+      call output%print_separator('v', 54, '-', fs='(t6,a)')
 !
 !     For dipole moments calculate the norm and print Debye units 
 ! 
       if (index(trim(operator_), 'dipole').gt.0) then
 !
-         call output%printf('x:     (f14.7)', pl='minimal', fs='(/t6,a)', reals=[total(1)])
-         call output%printf('y:     (f14.7)', pl='minimal', fs='(t6,a)', reals=[total(2)])
-         call output%printf('z:     (f14.7)', pl='minimal', fs='(t6,a)', reals=[total(3)])
+         call output%printf('m', 'x:     (f14.7)', fs='(/t6,a)', reals=[total(1)])
+         call output%printf('m', 'y:     (f14.7)', fs='(t6,a)', reals=[total(2)])
+         call output%printf('m', 'z:     (f14.7)', fs='(t6,a)', reals=[total(3)])
 !      
          dipole_norm = dsqrt(total(1)**2 + total(2)**2 + total(3)**2)
 !
-         call output%printf('|mu|:  (f14.7)', pl='minimal', fs='(/t6,a)', reals=[dipole_norm])
+         call output%printf('m', '|mu|:  (f14.7)', fs='(/t6,a)', reals=[dipole_norm])
 !
-         call output%printf('- Operator: (a0) [Debye]', pl='minimal', fs='(/t3,a,a,a)', chars=[operator_])
+         call output%printf('m', '- Operator: (a0) [Debye]', chars=[operator_], fs='(/t3,a,a,a)')
 !         
-         call output%printf(' Comp.   Electronic        Nuclear          Total   ', pl='verbose', fs='(/t6,a)')
-         call output%printf('------------------------------------------------------', pl='verbose', fs='(t6,a)')
+         call output%printf('v', ' Comp.   Electronic        Nuclear          &
+                            &Total   ', fs='(/t6,a)')
+         call output%print_separator('v', 54, '-', fs='(t6,a)')
 !
          do k = 1, n_components
 !
-            call output%printf('(a4)   (E14.7)  (E14.7)  (E14.7)', pl='verbose', fs='(t6,a)',   &
-                                       chars=[components(k)], reals=[electronic(k)*au_to_debye, &
-                                                                     nuclear(k)*au_to_debye,    &
-                                                                     total(k)*au_to_debye])
+            call output%printf('v', '(a4)   (E14.7)  (E14.7)  (E14.7)', &
+                               chars=[components(k)], &
+                               reals=[electronic(k)*au_to_debye, &
+                               nuclear(k)*au_to_debye, total(k)*au_to_debye], fs='(t6,a)')
 !
          enddo
 !
-         call output%printf('------------------------------------------------------', pl='verbose', fs='(t6,a)')
+         call output%print_separator('v', 54, '-', fs='(t6,a)')
 !
-         call output%printf('x:     (f14.7)', pl='minimal', fs='(/t6,a)', reals=[total(1)*au_to_debye])
-         call output%printf('y:     (f14.7)', pl='minimal', fs='(t6,a)', reals=[total(2)*au_to_debye])
-         call output%printf('z:     (f14.7)', pl='minimal', fs='(t6,a)', reals=[total(3)*au_to_debye])
+         call output%printf('m', 'x:     (f14.7)', &
+                            reals=[total(1)*au_to_debye], fs='(/t6,a)')
+         call output%printf('m', 'y:     (f14.7)', &
+                            reals=[total(2)*au_to_debye], fs='(t6,a)')
+         call output%printf('m', 'z:     (f14.7)', &
+                            reals=[total(3)*au_to_debye], fs='(t6,a)')
 !
-         call output%printf('|mu|:  (f14.7)', pl='minimal', fs='(/t6,a)', reals=[dipole_norm*au_to_debye])
+         call output%printf('m', '|mu|:  (f14.7)', &
+                            reals=[dipole_norm*au_to_debye], fs='(/t6,a)')
 !
 !     For quadrupole moments print Debye*Ang units 
 !
       else if (index(trim(operator_), 'quadrupole').gt.0) then
 !
-         call output%printf('xx:    (f14.7)', pl='minimal', fs='(/t6,a)', reals=[total(1)])
+         call output%printf('m', 'xx:    (f14.7)', fs='(/t6,a)', reals=[total(1)])
 !
          do k = 2, n_components
 !
-            call output%printf('(a4):    (f14.7)', pl='minimal', fs='(t4,a)', &
-                                     chars=[components(k)], reals=[total(k)])
+            call output%printf('m', '(a4):    (f14.7)', chars=[components(k)], &
+                               reals=[total(k)], fs='(t4,a)')
 !
          enddo
 !
-         call output%printf('- Operator: (a0) [Debye*Ang]', pl='minimal', fs='(/t3,a,a,a)', chars=[operator_])
+         call output%printf('m', '- Operator: (a0) [Debye*Ang]', &
+                            chars=[operator_], fs='(/t3,a,a,a)')
 !          
-         call output%printf(' Comp.   Electronic        Nuclear          Total   ', pl='verbose', fs='(/t6,a)')
-         call output%printf('------------------------------------------------------', pl='verbose', fs='(t6,a)')
+         call output%printf('v', ' Comp.   Electronic        Nuclear          &
+                            &Total   ', fs='(/t6,a)')
+         call output%print_separator('v', 54, '-', fs='(t6,a)')
 !
          do k = 1, n_components
 !
-            call output%printf('(a4)   (E14.7)  (E14.7)  (E14.7)', pl='verbose', fs='(t6,a)',      &
-                          chars=[components(k)], reals=[electronic(k)*au_to_debye*bohr_to_angstrom,&
-                                                        nuclear(k)*au_to_debye*bohr_to_angstrom,   &
-                                                        total(k)*au_to_debye*bohr_to_angstrom])
+            call output%printf('v', '(a4)   (E14.7)  (E14.7)  (E14.7)', &
+                               chars=[components(k)], &
+                               reals=[electronic(k)*au_to_debye*bohr_to_angstrom, &
+                               nuclear(k)*au_to_debye*bohr_to_angstrom, &
+                               total(k)*au_to_debye*bohr_to_angstrom], fs='(t6,a)')
 !
          enddo
 !
-         call output%printf('------------------------------------------------------', pl='verbose', fs='(t6,a)')
+         call output%print_separator('v', 54, '-', fs='(t6,a)')
 !
-         call output%printf('xx:    (f14.7)', pl='minimal', fs='(/t6,a)', reals=[total(1)*au_to_debye*bohr_to_angstrom])
+         call output%printf('m', 'xx:    (f14.7)', &
+                            reals=[total(1)*au_to_debye*bohr_to_angstrom], fs='(/t6,a)')
 !
          do k = 2, n_components
 !
-            call output%printf('(a4):    (f14.7)', pl='minimal', fs='(t4,a)',      &
-                          chars=[components(k)], reals=[total(k)*au_to_debye*bohr_to_angstrom])
+            call output%printf('m', '(a4):    (f14.7)', chars=[components(k)], &
+                               reals=[total(k)*au_to_debye*bohr_to_angstrom], fs='(t4,a)')
 !
          enddo
 !

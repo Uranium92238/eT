@@ -1194,7 +1194,7 @@ contains
       enddo
 !
       if (count_zero_eigenvalues .gt. 0)  &
-         call output%printf('Warning: T_o has (i0) zero eigenvalues', ints=[count_zero_eigenvalues],pl='minimal')
+         call output%printf('m', 'Warning: T_o has (i0) zero eigenvalues', ints=[count_zero_eigenvalues])
 !
       call mem%dealloc(eigenvalues, wf%n_o)
 !
@@ -1289,7 +1289,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: all_omega_ccs
 !
-      call output%printf('Running CCS calculation for NTOs/CNTOs.', fs='(/t3,a)',pl='minimal')
+      call output%printf('m', 'Running CCS calculation for NTOs/CNTOs.', fs='(/t3,a)')
 !
       if (.not. input%requested_keyword_in_section('print ccs calculation','mlcc')) call output%mute()
 !
@@ -1380,17 +1380,17 @@ contains
 !
       call timer%turn_off()
 !
-      call output%printf('Summary of CCS calculation for NTOs/CNTOs:',fs='(/t3,a)',pl='minimal')
+      call output%printf('m', 'Summary of CCS calculation for NTOs/CNTOs:',fs='(/t3,a)')
 !
-      call output%printf('Wall time for CCS ground calculation (sec):   (f20.2)', &
-             reals=[timer_gs%get_elapsed_time('wall')], fs='(/t6,a)',pl='minimal')
-      call output%printf('CPU time for CCS ground calculation (sec):    (f20.2)', &
-             reals=[timer_gs%get_elapsed_time('cpu')], fs='(t6,a)',pl='minimal')
+      call output%printf('m', 'Wall time for CCS ground calculation (sec):   (f20.2)', &
+                         reals=[timer_gs%get_elapsed_time('wall')], fs='(/t6,a)')
+      call output%printf('m', 'CPU time for CCS ground calculation (sec):    (f20.2)', &
+                         reals=[timer_gs%get_elapsed_time('cpu')], fs='(t6,a)')
 !
-      call output%printf('Wall time for CCS excited calculation (sec):  (f20.2)', &
-             reals=[timer_es%get_elapsed_time('wall')], fs='(/t6,a)',pl='minimal')
-      call output%printf('CPU time for CCS excited calculation (sec):   (f20.2)', &
-             reals=[timer_es%get_elapsed_time('cpu')], fs='(t6,a)',pl='minimal')
+      call output%printf('m', 'Wall time for CCS excited calculation (sec):  (f20.2)', &
+                         reals=[timer_es%get_elapsed_time('wall')], fs='(/t6,a)')
+      call output%printf('m', 'CPU time for CCS excited calculation (sec):   (f20.2)', &
+                         reals=[timer_es%get_elapsed_time('cpu')], fs='(t6,a)')
 !
    end subroutine ccs_calculation_for_cntos_mlcc2
 !

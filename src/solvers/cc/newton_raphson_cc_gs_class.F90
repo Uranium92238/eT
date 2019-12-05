@@ -200,26 +200,26 @@ contains
 !
       class(newton_raphson_cc_gs) :: solver 
 !
-      call output%printf('- DIIS accelerated Newton-Raphson CC ground state solver settings:', &
-                          pl='m', fs='(/t3,a)')
+      call output%printf('m', '- DIIS accelerated Newton-Raphson CC ground &
+                         &state solver settings:', fs='(/t3,a)')
 !
-      call output%printf('Omega threshold:          (e14.3)', reals=[solver%omega_threshold], pl='m', fs='(/t6,a)')
-      call output%printf('Energy threshold:         (e14.3)', reals=[solver%energy_threshold], pl='m', fs='(t6,a)')
-      call output%printf('Relative micro threshold: (e14.3)',               &
-                          reals=[solver%relative_micro_residual_threshold], &
-                          pl='m', fs='(t6,a)')
+      call output%printf('m', 'Omega threshold:          (e14.3)', &
+                         reals=[solver%omega_threshold], fs='(/t6,a)')
+      call output%printf('m', 'Energy threshold:         (e14.3)', &
+                         reals=[solver%energy_threshold], fs='(t6,a)')
+      call output%printf('m', 'Relative micro threshold: (e14.3)', &
+                         reals=[solver%relative_micro_residual_threshold], fs='(t6,a)')
 !
-      call output%printf('DIIS dimension:           (i14)', ints=[solver%diis_dimension], &
-                          pl='m', fs='(/t6,a)')
-      call output%printf('Max number of iterations: (i14)', ints=[solver%max_iterations], &
-                          pl='m', fs='(t6,a)')
-      call output%printf('Max number of micro-iterations: (i8)', &
-                          ints=[solver%max_micro_iterations],    &
-                          pl='m', fs='(t6,a)')
+      call output%printf('m', 'DIIS dimension:           (i14)', &
+                         ints=[solver%diis_dimension], fs='(/t6,a)')
+      call output%printf('m', 'Max number of iterations: (i14)', &
+                         ints=[solver%max_iterations], fs='(t6,a)')
+      call output%printf('m', 'Max number of micro-iterations: (i8)', &
+                         ints=[solver%max_micro_iterations], fs='(t6,a)')
 !
       if (solver%crop) then 
 !
-         call output%printf('Enabled CROP in the DIIS algorithm.', pl='minimal', fs='(/t6,a)')
+         call output%printf('m', 'Enabled CROP in the DIIS algorithm.', fs='(/t6,a)')
 !
       endif
 !
@@ -284,15 +284,13 @@ contains
 !
 !        Print energy, energy difference and residual, then test convergence 
 !
-         call output%printf('Macro-iter.    Energy (a.u.)        |omega|       Delta E (a.u.)', &
-                             fs='(/t3,a)', pl='n')
+         call output%printf('n', 'Macro-iter.    Energy (a.u.)        |omega|   &
+                            &    Delta E (a.u.)', fs='(/t3,a)')
 !
          call output%print_separator('n', 64, '-', fs='(t3,a)')
 !
-         call output%printf('(i5)         (f17.12)    (e11.4)    (e11.4)',           &
-                             ints=[iteration],                                       &
-                             reals=[wf%energy, omega_norm, abs(energy-prev_energy)], &
-                             pl='n')
+         call output%printf('n', '(i5)         (f17.12)    (e11.4)    (e11.4)', &
+                            ints=[iteration], reals=[wf%energy, omega_norm, abs(energy-prev_energy)])
 !
          call output%print_separator('n', 64, '-', fs='(t3,a)')
 !
@@ -338,8 +336,8 @@ contains
 !
       else
 !
-         call output%printf('Convergence criterion met in (i0) iterations!', &
-                             ints=[iteration], pl='m', fs='(t3,a)')
+         call output%printf('m', 'Convergence criterion met in (i0) iterations!', &
+                            ints=[iteration], fs='(t3,a)')
 !
          call wf%print_gs_summary()
 !
@@ -412,7 +410,7 @@ contains
 !
 !     Enter iterative loop
 !
-      call output%printf('Micro-iter.  Residual norm', pl='n', fs='(/t6,a)')
+      call output%printf('n', 'Micro-iter.  Residual norm', fs='(/t6,a)')
       call output%print_separator('n', 26, '-', fs='(t6,a)')
 !
       micro_iteration = 0
@@ -449,8 +447,8 @@ contains
 !
          endif 
 !
-         call output%printf('(i3)          (e11.4)', pl='n', ints=[micro_iteration], &
-                            reals=[residual_norm], fs='(t6,a)')
+         call output%printf('n', '(i3)          (e11.4)', &
+                            ints=[micro_iteration], reals=[residual_norm], fs='(t6,a)')
 !
       enddo
 !
@@ -485,9 +483,8 @@ contains
 !
       class(ccs) :: wf
 !
-      call output%printf('- Finished solving the (a0) ground state equations', & 
-                        chars=[convert_to_uppercase(wf%name_)], &
-                        fs='(/t3, a)', pl='minimal')
+      call output%printf('m', '- Finished solving the (a0) ground state equations', &
+                         chars=[convert_to_uppercase(wf%name_)], fs='(/t3, a)')
 !
       call wf%save_amplitudes()  
 !
@@ -503,10 +500,10 @@ contains
 !
       class(newton_raphson_cc_gs) :: solver 
 !
-      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
 !
-      call output%printf(solver%description1, pl='m', ffs='(/t3,a)')
+      call output%printf('m', solver%description1, ffs='(/t3,a)')
 !
    end subroutine print_banner_newton_raphson_cc_gs
 !

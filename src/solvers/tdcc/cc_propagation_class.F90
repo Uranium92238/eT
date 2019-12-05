@@ -230,7 +230,7 @@ contains
 !
       do
 !
-         call output%printf('Time: (f10.4) au', reals=[t], pl='verbose', fs='(/t3,a)')
+         call output%printf('v', 'Time: (f10.4) au', reals=[t], fs='(/t3,a)')
 !
          call solver%update_field_and_wavefunction(wf, field, t, amplitudes_multipliers)
 !
@@ -255,8 +255,8 @@ contains
             if (solver%amplitudes_output)       call solver%write_amplitudes_to_file(wf, t)
             if (solver%multipliers_output)      call solver%write_multipliers_to_file(wf, t)
 !
-            call output%printf('Properties written at time: (f10.4) au', reals=[t], pl='normal', &
-                               fs='(t3,a)')
+            call output%printf('n', 'Properties written at time: (f10.4) au', &
+                               reals=[t], fs='(t3,a)')
 !
          endif
 !
@@ -313,8 +313,8 @@ contains
       call mem%dealloc(amplitudes_multipliers, solver%vector_length)
       call mem%dealloc(amplitudes_multipliers_next, solver%vector_length)
 !
-      call output%printf('Finished propagating for (f10.4) au', reals=[solver%tf], pl='minimal', &
-                         fs='(/t3,a)')
+      call output%printf('m', 'Finished propagating for (f10.4) au', &
+                         reals=[solver%tf], fs='(/t3,a)')
 !
    end subroutine run_cc_propagation
 !
@@ -418,10 +418,10 @@ contains
 !
       class(cc_propagation) :: solver 
 !
-      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
 !
-      call output%printf(solver%description, pl='normal', ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('n', solver%description, ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_cc_propagation
 !
@@ -622,29 +622,28 @@ contains
          call solver%calculate_dipole_moment(wf)
       endif
 !
-      call output%printf('- ' // trim(solver%name_) // ' summary', pl='minimal', fs='(/t3,a)')
-      call output%printf('Energy after propagation [au]:', pl='minimal', fs='(/t6,a)')
+      call output%printf('m', '- ' // trim(solver%name_) // ' summary', fs='(/t3,a)')
+      call output%printf('m', 'Energy after propagation [au]:', fs='(/t6,a)')
       call output%print_separator('minimal', 42, '-', fs='(t6,a)')
-      call output%printf('    Real part         Imaginary part      ', pl='minimal', fs='(t6,a)')
+      call output%printf('m', '    Real part         Imaginary part      ', fs='(t6,a)')
       call output%print_separator('minimal', 42, '-', fs='(t6,a)')
-      call output%printf('    (f16.10)  (f16.10)',                                                &
-                         reals=[real(wf%energy_complex), aimag(wf%energy_complex)], pl='minimal', &
-                         fs='(t6,a)')
+      call output%printf('m', '    (f16.10)  (f16.10)', &
+                         reals=[real(wf%energy_complex), &
+                         aimag(wf%energy_complex)], fs='(t6,a)')
       call output%print_separator('minimal', 42, '-', fs='(t6,a)')
-      call output%printf('Dipole moment after propagation [au]:', pl='minimal', fs='(/t6,a)')
+      call output%printf('m', 'Dipole moment after propagation [au]:', fs='(/t6,a)')
       call output%print_separator('minimal', 45, '-', fs='(t6,a)')
-      call output%printf('       Real part         Imaginary part      ', pl='minimal', &
-                         fs='(t6,a)')
+      call output%printf('m', '       Real part         Imaginary part      ', fs='(t6,a)')
       call output%print_separator('minimal', 45, '-', fs='(t6,a)')
-      call output%printf('    x  (f16.10)  (f16.10)', pl='minimal', fs='(t6,a)', &
-                         reals=[real(wf%dipole_moment_complex(1)),               &
-                                aimag(wf%dipole_moment_complex(1))])
-      call output%printf('    y  (f16.10)  (f16.10)', pl='minimal', fs='(t6,a)', &
-                         reals=[real(wf%dipole_moment_complex(2)),               &
-                                aimag(wf%dipole_moment_complex(2))])
-      call output%printf('    z  (f16.10)  (f16.10)', pl='minimal', fs='(t6,a)', &
-                         reals=[real(wf%dipole_moment_complex(3)),               &
-                                aimag(wf%dipole_moment_complex(3))])
+      call output%printf('m', '    x  (f16.10)  (f16.10)', &
+                         reals=[real(wf%dipole_moment_complex(1)), &
+                         aimag(wf%dipole_moment_complex(1))], fs='(t6,a)')
+      call output%printf('m', '    y  (f16.10)  (f16.10)', &
+                         reals=[real(wf%dipole_moment_complex(2)), &
+                         aimag(wf%dipole_moment_complex(2))], fs='(t6,a)')
+      call output%printf('m', '    z  (f16.10)  (f16.10)', &
+                         reals=[real(wf%dipole_moment_complex(3)), &
+                         aimag(wf%dipole_moment_complex(3))], fs='(t6,a)')
       call output%print_separator('minimal', 42, '-', fs='(t6,a)')
 !
    end subroutine print_summary_cc_propagation
@@ -716,11 +715,11 @@ contains
 !
       class(cc_propagation) :: solver 
 !
-      call output%printf('- Propagation settings:', pl='minimal', fs='(/t3,a)')
+      call output%printf('m', '- Propagation settings:', fs='(/t3,a)')
 !
-      call output%printf('Initial time: (f10.4) au', reals=[solver%ti], pl='minimal', fs='(/t6,a)')
-      call output%printf('Final time:   (f10.4) au', reals=[solver%tf], pl='minimal', fs='(t6,a)')
-      call output%printf('Time step:    (f10.4) au', reals=[solver%h], pl='minimal', fs='(t6,a)')
+      call output%printf('m', 'Initial time: (f10.4) au', reals=[solver%ti], fs='(/t6,a)')
+      call output%printf('m', 'Final time:   (f10.4) au', reals=[solver%tf], fs='(t6,a)')
+      call output%printf('m', 'Time step:    (f10.4) au', reals=[solver%h], fs='(t6,a)')
 !
    end subroutine print_settings_cc_propagation
 !

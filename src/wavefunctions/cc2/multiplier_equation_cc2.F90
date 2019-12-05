@@ -48,8 +48,8 @@ contains
       prep_timer = timings("Prepare for multiplier equation", pl='normal')
       call prep_timer%turn_on()
 !
-      call output%printf('Preparing for (a0) multiplier equations', pl='verbose', &
-                        chars=[trim(wf%name_)], fs='(/t3,a)')
+      call output%printf('v', 'Preparing for (a0) multiplier equations', &
+                         chars=[trim(wf%name_)], fs='(/t3,a)')
 !
       call wf%prepare_for_jacobian_transpose()
 !

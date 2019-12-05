@@ -43,8 +43,8 @@ contains
 !
 !     For now, do nothing.
 !
-      call output%printf('- No preparations for the ' // trim(wf%name_) // &
-                         ' multiplier equation.', pl='v', fs='(/t3,a)')
+      call output%printf('v', '- No preparations for the ' // trim(wf%name_) // &
+                         ' multiplier equation.', fs='(/t3,a)')
 !
    end subroutine prepare_for_multiplier_equation_ccs_complex
 !

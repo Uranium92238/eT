@@ -121,7 +121,7 @@ contains
       plotter%grid_in_memory  = .false.
       plotter%n_ao            = n_ao
 !
-      call output%printf(':: Visualization of orbitals and density', pl='minimal', fs='(/t3,a)')
+      call output%printf('m', ':: Visualization of orbitals and density', fs='(/t3,a)')
 !
       call plotter%read_settings()
 !
@@ -225,24 +225,23 @@ contains
 !
       class(visualization), intent(in) :: plotter
 !
-      call output%printf('Grid information              x             y             z       ', &
-                  pl='normal', fs='(/t3, a)')
+      call output%printf('n', 'Grid information              x             y    &
+                         &         z       ', fs='(/t3, a)')
 !
       call output%print_separator(pl='normal', fs='(t3, a)', n=66, symbol='-')
 !
-      call output%printf('First (A):                (f8.2)      (f8.2)      (f8.2)', & 
-                  reals=[plotter%x_min, plotter%y_min, plotter%z_min],  &
-                  pl='normal', fs='(t3, a)')
+      call output%printf('n', 'First (A):                (f8.2)      (f8.2)     &
+                         & (f8.2)', reals=[plotter%x_min, plotter%y_min, &
+                         plotter%z_min], fs='(t3, a)')
 !
-      call output%printf('Last (A):                 (f8.2)      (f8.2)      (f8.2)', &
-                  reals=[plotter%x_min + (plotter%n_x-1)*plotter%dx,    &
-                         plotter%y_min + (plotter%n_y-1)*plotter%dx,    &
-                         plotter%z_min + (plotter%n_z-1)*plotter%dx],   &
-                         pl='normal', fs='(t3, a)')
+      call output%printf('n', 'Last (A):                 (f8.2)      (f8.2)     &
+                         & (f8.2)', &
+                         reals=[plotter%x_min + (plotter%n_x-1)*plotter%dx, &
+                         plotter%y_min + (plotter%n_y-1)*plotter%dx, &
+                         plotter%z_min + (plotter%n_z-1)*plotter%dx], fs='(t3, a)')
 !
-      call output%printf('Number of grid points:  (i8)      (i8)       (i8)',    &
-                        ints=[plotter%n_x, plotter%n_y, plotter%n_z],  &
-                        pl='normal', fs='(t3, a)')
+      call output%printf('n', 'Number of grid points:  (i8)      (i8)       (i8)', &
+                         ints=[plotter%n_x, plotter%n_y, plotter%n_z], fs='(t3, a)')
 !
       call output%print_separator(pl='normal', fs='(t3, a)', n=66, symbol='-')
 !
@@ -442,7 +441,7 @@ contains
 !
       integer :: mo
 !
-      call output%printf('- Plotting orbitals', pl='minimal', fs='(/t3,a)')      
+      call output%printf('m', '- Plotting orbitals', fs='(/t3,a)')      
 !
 !     Create array of molecular orbitals at grid point
 !
@@ -500,7 +499,7 @@ contains
 !
       character(len=200) :: file_name
 
-      call output%printf('- Plotting density', pl='minimal', fs='(/t3,a)')      
+      call output%printf('m', '- Plotting density', fs='(/t3,a)')      
 !
 !     Create electron density vector
 !
@@ -667,7 +666,8 @@ contains
 !
       integer :: i, j, k, gp
 !
-      call output%printf('- Placing the AOs evaluated on the grid in memory', fs='(/t3, a)', pl='m')
+      call output%printf('m', '- Placing the AOs evaluated on the grid in memory', &
+                         fs='(/t3, a)')
 !
       call mem%alloc(coordinates, plotter%n_grid_points, 3) ! x, y, z
 !

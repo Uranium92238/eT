@@ -216,11 +216,11 @@ contains
 !
       call wf%get_n_electrons_in_density(n_electrons)
 !
-      call output%printf('Energy of initial guess:      (f25.12)', &
-            reals=[wf%energy], fs='(/t6, a)',pl='minimal')
+      call output%printf('m', 'Energy of initial guess:      (f25.12)', &
+                         reals=[wf%energy], fs='(/t6, a)')
 !
-      call output%printf('Number of electrons in guess: (f25.12)', &
-            reals=[n_electrons], fs='(t6, a)',pl='minimal')
+      call output%printf('m', 'Number of electrons in guess: (f25.12)', &
+                         reals=[n_electrons], fs='(t6, a)')
 !
 !     Diagonalize to generate idempotent density
 !
@@ -943,16 +943,15 @@ contains
 !
       class(mlhf) :: wf
 !
-     call output%printf('- Size of orbital spaces in MLHF ', &
-            fs='(/t3, a)',pl='minimal')
-     call output%printf(' Number of active occupied orbitals :  (i25)', &
-            ints=[wf%n_o], fs='(/t6, a)',pl='minimal')
-     call output%printf(' Number of active virtual orbitals  :  (i25)', &
-            ints=[wf%n_v], fs='(t6, a)',pl='minimal')
-     call output%printf(' Number of active orbitals          :  (i25)', &
-            ints=[wf%n_v+wf%n_o], fs='(t6, a)',pl='minimal')
-     call output%printf(' Number of inactive orbitals        :  (i25)', &
-            ints=[wf%n_ao-wf%n_v-wf%n_o], fs='(t6, a)',pl='minimal')
+     call output%printf('m', '- Size of orbital spaces in MLHF ', fs='(/t3, a)')
+     call output%printf('m', ' Number of active occupied orbitals :  (i25)', &
+                        ints=[wf%n_o], fs='(/t6, a)')
+     call output%printf('m', ' Number of active virtual orbitals  :  (i25)', &
+                        ints=[wf%n_v], fs='(t6, a)')
+     call output%printf('m', ' Number of active orbitals          :  (i25)', &
+                        ints=[wf%n_v+wf%n_o], fs='(t6, a)')
+     call output%printf('m', ' Number of inactive orbitals        :  (i25)', &
+                        ints=[wf%n_ao-wf%n_v-wf%n_o], fs='(t6, a)')
 !
    end subroutine print_orbital_space_info_mlhf
 !
@@ -1148,14 +1147,17 @@ contains
       nuclear_repulsion = wf%system%get_total_nuclear_repulsion()
       E_G_De = wf%get_active_energy_G_De_term()
 !
-      call output%printf('- Summary of '// trim(convert_to_uppercase(wf%name_))//&
-         ' active/inactive contributions to electronic energy (a.u.):', pl='m', fs='(/t3,a)', ll=80)
+      call output%printf('m', '- Summary of '// &
+                         trim(convert_to_uppercase(wf%name_))// &
+                         ' active/inactive contributions to electronic energy (a.u.):', &
+                         ll=80, fs='(/t3,a)')
 !
-      call output%printf('Active energy:             (f19.12)', pl='m', fs='(/t6,a)',  &
-                          reals=[wf%energy - (E_G_De + wf%inactive_energy + nuclear_repulsion)])
-      call output%printf('Active-inactive energy:    (f19.12)', pl='m', fs='(t6,a)', reals=[E_G_De])
-      call output%printf('Inactive energy:           (f19.12)', pl='m', fs='(t6,a)',  &
-                          reals=[wf%inactive_energy])
+      call output%printf('m', 'Active energy:             (f19.12)', &
+                         reals=[wf%energy - (E_G_De + wf%inactive_energy + nuclear_repulsion)], fs='(/t6,a)')
+      call output%printf('m', 'Active-inactive energy:    (f19.12)', &
+                         reals=[E_G_De], fs='(t6,a)')
+      call output%printf('m', 'Inactive energy:           (f19.12)', &
+                         reals=[wf%inactive_energy], fs='(t6,a)')
 !
    end subroutine print_energy_mlhf
 !
@@ -1430,8 +1432,8 @@ contains
 !
       full_space_wf = hf(wf%system)
 !
-      call output%printf('Requested initial hf optimization. Performing scf-diis' // &
-                  'to the threshold (e9.2)', reals=[full_space_thr], pl='minimal', fs='(/t6,a)')
+      call output%printf('m', 'Requested initial hf optimization. Performing scf-diis' &
+                         // 'to the threshold (e9.2)', reals=[full_space_thr], fs='(/t6,a)')
 !
       full_space_solver = scf_diis_hf(wf=full_space_wf,    &
                         restart=.false.,                   &

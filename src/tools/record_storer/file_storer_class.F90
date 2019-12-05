@@ -148,8 +148,8 @@ contains
 !
 !        Use array of sequential files 
 !
-         call output%printf('Using sequential file array to store records using the prefix: ' &
-                              // trim(storer%name_) // '.', pl='verbose', fs='(/t3,a)')
+         call output%printf('v', 'Using sequential file array to store records &
+                            &using the prefix: ' // trim(storer%name_) // '.', fs='(/t3,a)')
 !
          allocate(storer%sequential_files(storer%n_records))
 !
@@ -164,8 +164,8 @@ contains
 !
 !        Use one direct file 
 !
-         call output%printf('Using direct file to store records with name: ' &
-                              // trim(storer%name_) // '.', pl='verbose', fs='(/t3,a)')
+         call output%printf('v', 'Using direct file to store records with name: ' &
+                            // trim(storer%name_) // '.', fs='(/t3,a)')
 !
          storer%direct_file = direct_file(trim(storer%name_), storer%record_dim)
 !
@@ -381,8 +381,8 @@ contains
 !
       integer :: I 
 !
-      call output%printf('Doing preparations for file storer (a0)', pl='debug', &
-                           chars=[storer%name_], fs='(/t3,a)')
+      call output%printf('debug', 'Doing preparations for file storer (a0)', &
+                         chars=[storer%name_], fs='(/t3,a)')
 !
 !     Set up index array telling us which record is 
 !     stored in which position
@@ -417,8 +417,8 @@ contains
 !
       class(file_storer) :: storer 
 !
-      call output%printf('Doing finalizations for file storer (a0)', pl='debug', &
-                           chars=[storer%name_], fs='(/t3,a)')
+      call output%printf('debug', 'Doing finalizations for file storer (a0)', &
+                         chars=[storer%name_], fs='(/t3,a)')
 !
       call mem%dealloc(storer%record_indices, storer%n_records)
 !

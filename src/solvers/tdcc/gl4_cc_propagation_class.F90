@@ -203,7 +203,7 @@ contains
 !
       enddo
 !
-      call output%printf('GL4 iterations: (i6)', ints=[i], pl='n', fs='(t3,a)')
+      call output%printf('n', 'GL4 iterations: (i6)', ints=[i], fs='(t3,a)')
 !
       call mem%dealloc(z1, n)
       call mem%dealloc(z2, n)

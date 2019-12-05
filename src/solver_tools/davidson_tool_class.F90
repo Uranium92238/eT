@@ -129,8 +129,8 @@ contains
 !
       if (records_in_memory) then 
 !
-         call output%printf('Reduced space basis and transforms are stored in memory.', &
-                                    pl='m', fs='(/t6,a)')
+         call output%printf('m', 'Reduced space basis and transforms are stored &
+                            &in memory.', fs='(/t6,a)')
 !
          davidson%trials = memory_storer(trim(davidson%name_) // '_trials', &
                      davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions)   
@@ -140,8 +140,8 @@ contains
 !
       else
 !
-         call output%printf('Reduced space basis and transforms are stored on disk.', &
-                                 pl='m', fs='(/t6,a)')
+         call output%printf('m', 'Reduced space basis and transforms are stored &
+                            &on disk.', fs='(/t6,a)')
 !
          davidson%trials = file_storer(trim(davidson%name_) // '_trials', &
                      davidson%n_parameters, davidson%max_dim_red + davidson%n_solutions, &
@@ -396,7 +396,7 @@ contains
 !
       integer :: i, j
 !
-      call output%printf('Orthonormalizing trial vectors.', pl='v', fs='(/t3,a)')
+      call output%printf('v', 'Orthonormalizing trial vectors.', fs='(/t3,a)')
 !
       call mem%alloc(c_i, davidson%n_parameters)
       call mem%alloc(c_j, davidson%n_parameters)

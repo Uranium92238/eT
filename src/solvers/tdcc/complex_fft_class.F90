@@ -330,10 +330,10 @@ contains
 !
       class(complex_fft) :: solver
 !
-      call output%printf(' - ' // trim(solver%name_), pl='m', fs='(/t3,a)')
+      call output%printf('m', ' - ' // trim(solver%name_), fs='(/t3,a)')
       call output%print_separator('m', len(trim(solver%name_)) + 6, '-')
 !
-      call output%printf(solver%description, pl='normal', ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('n', solver%description, ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_banner_complex_fft
 !
@@ -349,7 +349,7 @@ contains
 !
       class(complex_fft) :: solver
 !
-      call output%printf(solver%summary, pl='normal', ffs='(/t3,a)', fs='(t3,a)')
+      call output%printf('n', solver%summary, ffs='(/t3,a)', fs='(t3,a)')
 !
    end subroutine print_summary_complex_fft
 !
