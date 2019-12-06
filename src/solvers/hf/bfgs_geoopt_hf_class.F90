@@ -14,6 +14,7 @@ module bfgs_geoopt_hf_class
    use hf_class,              only: hf
    use scf_diis_hf_class,     only: scf_diis_hf
    use bfgs_tool_class,       only: bfgs_tool
+   use timings_class,         only: timings
 !
    implicit none
 !
@@ -35,6 +36,8 @@ module bfgs_geoopt_hf_class
       real(dp) :: max_step 
 !
       real(dp), dimension(:), allocatable :: energies, gradient_maxs 
+!
+      type(timings), allocatable :: timer 
 !
    contains
 !
@@ -70,6 +73,9 @@ contains
       type(bfgs_geoopt_hf) :: solver
 !
       logical, intent(in) :: restart 
+!
+      solver%timer = timings('HF geometry optimization BFGS solver', pl='minimal')
+      call solver%timer%turn_on()
 !
 !     Print solver banner
 !
@@ -223,9 +229,13 @@ contains
       real(dp), dimension(3,wf%system%n_atoms) :: step
       real(dp), dimension(3,wf%system%n_atoms) :: geometry
 !
-      type(bfgs_tool) :: bfgs 
+      type(bfgs_tool) :: bfgs
+!
+      type(timings), allocatable :: iteration_timer  
 !
       bfgs = bfgs_tool(3*wf%system%n_atoms, solver%max_step)
+!
+      iteration_timer = timings('BFGS geoopt iteration time', pl='normal')
 !
       solver%iteration = 0
 !
@@ -241,6 +251,7 @@ contains
       do while (.not. converged .and. solver%iteration <= solver%max_iterations)        
 !
          solver%iteration = solver%iteration + 1
+         call iteration_timer%turn_on()
 !
          gradient = solver%determine_gradient(wf, geometry)
 !
@@ -281,6 +292,8 @@ contains
          call wf%system%print_geometry('bohr')
 !
          prev_energy = energy 
+         call iteration_timer%turn_off()
+         call iteration_timer%reset()
 !
       enddo
 !
@@ -361,6 +374,8 @@ contains
 !
       call mem%dealloc(solver%energies, solver%max_iterations)
       call mem%dealloc(solver%gradient_maxs, solver%max_iterations)
+!
+      call solver%timer%turn_off()
 !
    end subroutine cleanup_bfgs_geoopt_hf
 !

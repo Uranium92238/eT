@@ -1271,7 +1271,6 @@ contains
 !
       character(len=*), intent(in) :: sigma
 !
-!
       logical, intent(in), optional :: cumulative
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
@@ -1288,6 +1287,11 @@ contains
       real(dp) :: max_D_schwarz, max_eri_schwarz
 !
       real(dp), dimension(:,:), allocatable :: scaled_D_sigma ! = 2 * D_sigma
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('AO Fock construction (' // trim(sigma) // ')', 'normal')
+      call timer%turn_on()
 !
 !     Set thresholds to ignore Coulomb and exchange terms,
 !     as well as the desired Libint integral precision,
@@ -1391,6 +1395,7 @@ contains
       endif
 !
       call mem%dealloc(F, wf%n_ao, wf%n_ao*n_threads)
+      call timer%turn_off()
 !
    end subroutine construct_ao_spin_fock_uhf
 !

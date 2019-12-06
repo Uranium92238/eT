@@ -171,6 +171,9 @@ contains
 !
       class(hf) :: wf
 !
+      solver%timer = timings('SCF DIIS solver time', pl='minimal')
+      call solver%timer%turn_on()
+!
       solver%name_       = 'Self-consistent field DIIS Hartree-Fock solver'
       solver%tag         = 'SCF DIIS'
       solver%description = 'A DIIS-accelerated Roothan-Hall self-consistent field solver. &
@@ -285,7 +288,7 @@ contains
 !
       integer :: dim_gradient, dim_fock
 !
-      type(timings) :: iteration_timer, solver_timer
+      type(timings), allocatable :: iteration_timer
 !
       if (wf%n_ao == 1) then 
 !
@@ -297,10 +300,7 @@ contains
 !
 !     :: Part I. Preparations.
 !
-      iteration_timer = timings('SCF DIIS iteration time')
-      solver_timer = timings('SCF DIIS solver time')
-!
-      call solver_timer%turn_on()
+      iteration_timer = timings('SCF DIIS iteration time', pl='normal')
 !
 !     Initialize the DIIS manager object
 !
@@ -347,10 +347,11 @@ contains
                          &Delta E (a.u.)', fs='(/t3,a)')
       call output%print_separator('n', 63, '-')
 !
-      iteration = 1
+      iteration = 0
 !
       do while (.not. solver%converged .and. iteration .le. solver%max_iterations)
 !
+         iteration = iteration + 1
          call iteration_timer%turn_on()
 !
 !        Set energy and print information for current iteration
@@ -448,8 +449,6 @@ contains
          call iteration_timer%turn_off()
          call iteration_timer%reset()
 !
-         iteration = iteration + 1
-!
       enddo
 !
       call mem%dealloc(G, wf%n_mo*(wf%n_mo - 1)/2, wf%n_densities)
@@ -469,10 +468,9 @@ contains
       endif
 !
       call diis%finalize_storers()
-      call solver_timer%turn_off()
+      call solver%timer%turn_off()
 !
    end subroutine run_scf_diis_hf
-!
 !
    subroutine read_settings_scf_diis_hf(solver)
 !!

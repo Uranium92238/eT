@@ -134,8 +134,8 @@ contains
 !!
       implicit none 
 !
-      class(reference_engine)  :: engine 
-      class(hf)         :: wf 
+      class(reference_engine)    :: engine 
+      class(hf)                  :: wf 
 !
       if (.not. engine%restart .and. (trim(engine%ao_density_guess) == 'sad')) then
 !
@@ -249,6 +249,8 @@ contains
 !
       use string_utilities,       only: index_of_unique_strings
 !
+      use timings_class,          only: timing
+!
       implicit none
 !
       class(reference_engine)          :: engine
@@ -277,7 +279,12 @@ contains
       character(len=50), dimension(wf%system%n_atoms) :: atom_and_basis
       integer,           dimension(wf%system%n_atoms) :: unique_atom_index
 !
+      type(timings), allocatable :: sad_generation_timer
+!
       call engine%tasks%print_('sad')
+!
+      sad_generation_timer = timings('SAD generation time', pl='normal')
+      call sad_generation_timer%turn_on()
 !
 !     SAD solver settings
 !
@@ -303,6 +310,8 @@ contains
       call index_of_unique_strings(unique_atom_index, wf%system%n_atoms, atom_and_basis)
 !
 !     For every unique atom, generate SAD density to file
+!
+      call timing%mute()
 !
       do I = 1, wf%system%n_atoms
 !
@@ -378,6 +387,9 @@ contains
       call wf%system%initialize_libint_atoms_and_bases()
       call wf%system%initialize_libint_integral_engines()
 !
+      call timing%unmute()
+      call sad_generation_timer%turn_off()
+!
    end subroutine generate_sad_density_reference_engine
 !
 !
@@ -400,7 +412,9 @@ contains
 !
       type(visualization), allocatable :: plotter
 !
-      character(len=200)      :: density_file_tag
+      character(len=200) :: density_file_tag
+!
+      type(timings), allocatable :: density_plotting_timer
 !
       call engine%tasks%print_('plotting')
 !
@@ -418,8 +432,13 @@ contains
 !
       if (engine%plot_density) then
 !
+         density_plotting_timer = timings('Density plotting time', pl='normal')
+         call density_plotting_timer%turn_on()
+!
          density_file_tag = 'AO_density'
          call plotter%plot_density(wf%system,wf%ao_density, density_file_tag)
+!
+         call density_plotting_timer%turn_off()
 !
       endif
 !
@@ -437,7 +456,6 @@ contains
 !!    orbital plot files using the visualization 
 !!    tool.
 !!
-!
       use visualization_class, only : visualization
       use memory_manager_class, only : mem
 !
@@ -454,6 +472,11 @@ contains
       real(dp), dimension(:,:), allocatable :: orbital_coefficients
 !
       character(len=200), dimension(:), allocatable :: orbital_file_tags
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Orbital plotting time', pl='normal')
+      call timer%turn_on()
 !
 !     Read orbital plotting settings
 !
@@ -495,6 +518,8 @@ contains
 !
       call mem%dealloc(orbital_coefficients, wf%n_ao, n_orbitals_to_plot)
       deallocate(orbital_file_tags)
+!
+      call timer%turn_off()
 !
    end subroutine do_orbital_plotting_reference_engine
 !
@@ -544,6 +569,11 @@ contains
       real(dp), dimension(6) :: q_total
 !      
       character(len=4), dimension(:), allocatable :: components
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Time to calculte dipole and/or quadrupole', pl='normal')
+      call timer%turn_on()
 !
       call engine%tasks%print_('expectation value')
 !
@@ -595,6 +625,8 @@ contains
          deallocate(components)
 !
       endif
+!
+      call timer%turn_off()
 !
    end subroutine calculate_expectation_values_reference_engine
 !
