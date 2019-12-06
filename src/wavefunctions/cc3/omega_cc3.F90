@@ -55,11 +55,15 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: t_aibj, t_abij, omega_aibj
 !
-      type(timings) :: cc3_timer
-      type(timings) :: ccsd_timer
+      type(timings), allocatable :: cc3_timer
+      type(timings), allocatable :: ccsd_timer
+      type(timings), allocatable :: timer 
 !
-      cc3_timer = timings('CC3 contribution')
-      ccsd_timer = timings('CCSD contribution')
+      timer       = timings('Construct omega CC3', pl='normal')
+      ccsd_timer  = timings('Omega CC3 (CCSD contribution)', pl='normal')
+      cc3_timer   = timings('Omega CC3 (CC3 contribution)', pl='normal')
+!
+      call timer%turn_on()
 !
       call mem%alloc(omega1, wf%n_v, wf%n_o)
       call mem%alloc(omega_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -121,6 +125,8 @@ contains
       call packin(omega(wf%n_t1+1 : wf%n_gs_amplitudes), omega_abij, wf%n_v, wf%n_o)
 !
       call mem%dealloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine construct_omega_cc3
 !

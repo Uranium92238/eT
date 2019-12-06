@@ -63,7 +63,7 @@ contains
 !
       type(timings) :: timer 
 !  
-      timer = timings('omega doubles a1')
+      timer = timings('omega doubles a1', pl='verbose')
       call timer%turn_on()
 !
       call mem%alloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -157,7 +157,7 @@ contains
 !
       type(timings) :: timer 
 !  
-      timer = timings('omega doubles b1')
+      timer = timings('omega doubles b1', pl='verbose')
       call timer%turn_on()
 !
 !     g_kbji ordered as g_jbki
@@ -219,7 +219,7 @@ contains
 !
       type(timings) :: timer
 !  
-      timer = timings('omega doubles c1')
+      timer = timings('omega doubles c1', pl='verbose')
       call timer%turn_on()
 !
       call mem%alloc(F_bj, wf%n_o, wf%n_v)

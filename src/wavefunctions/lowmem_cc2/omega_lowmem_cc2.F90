@@ -49,13 +49,20 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
-      omega = zero
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Construct omega lowmem-cc2', pl='normal')
+      call timer%turn_on()
+!
+      call zero_array(omega, wf%n_gs_amplitudes)
 !
       call wf%omega_ccs_a1(omega)
 !
       call wf%omega_cc2_a1(omega, wf%orbital_energies(1:wf%n_o), wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
       call wf%omega_cc2_b1(omega, wf%orbital_energies(1:wf%n_o), wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
       call wf%omega_cc2_c1(omega, wf%orbital_energies(1:wf%n_o), wf%orbital_energies(wf%n_o + 1 : wf%n_mo))
+!
+      call timer%turn_off()
 !
    end subroutine construct_omega_lowmem_cc2
 !
@@ -99,6 +106,11 @@ contains
       integer :: current_b_batch, current_c_batch
 !
       type(batching_index) :: batch_b, batch_c
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('omega cc2 a1 lowmem', pl='verbose')
+      call timer%turn_on()
 !
       req0 = 0
 !
@@ -174,6 +186,8 @@ contains
          enddo
       enddo
 !
+      call timer%turn_off()
+!
    end subroutine omega_cc2_a1_lowmem_cc2
 !
 !
@@ -213,6 +227,11 @@ contains
       integer :: current_b_batch, current_j_batch, current_k_batch
 !
       type(batching_index) :: batch_b, batch_j, batch_k
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('omega cc2 b1 lowmem', pl='verbose')
+      call timer%turn_on()
 !
       req0 = 0
 !
@@ -337,6 +356,8 @@ contains
          enddo
       enddo
 !
+      call timer%turn_off()
+!
    end subroutine omega_cc2_b1_lowmem_cc2
 !
 !
@@ -380,6 +401,11 @@ contains
       integer :: current_j_batch, current_i_batch
 !
       type(batching_index) :: batch_j, batch_i
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('omega cc2 c1 lowmem', pl='verbose')
+      call timer%turn_on()
 !
       req0 = 0
 !
@@ -464,6 +490,8 @@ contains
 !
          enddo
       enddo
+!
+      call timer%turn_off()
 !
    end subroutine omega_cc2_c1_lowmem_cc2
 !

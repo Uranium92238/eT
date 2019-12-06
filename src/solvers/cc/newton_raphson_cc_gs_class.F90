@@ -86,9 +86,11 @@ module newton_raphson_cc_gs_class
       character(len=200) :: storage 
       logical :: restart, records_in_memory 
 !
+      type(timings), allocatable :: timer 
+!
    contains
 !     
-      procedure, nopass :: cleanup          => cleanup_newton_raphson_cc_gs
+      procedure :: cleanup                  => cleanup_newton_raphson_cc_gs
       procedure :: run                      => run_newton_raphson_cc_gs
 !
       procedure :: do_micro_iterations      => do_micro_iterations_newton_raphson_cc_gs
@@ -122,6 +124,9 @@ contains
       class(ccs) :: wf
 !
       logical, intent(in) :: restart
+!
+      solver%timer = timings('Newton-Raphson CC GS solver time', pl='minimal')
+      call solver%timer%turn_on()
 !
 !     Print solver banner
 !
@@ -247,6 +252,8 @@ contains
 !
       real(dp) :: energy, prev_energy, omega_norm
 !
+      type(timings), allocatable :: macro_iteration_timer
+!
       diis = diis_tool('cc_gs_diis',                        &
                         wf%n_gs_amplitudes,                 &
                         wf%n_gs_amplitudes,                 &
@@ -263,6 +270,9 @@ contains
       converged_omega = .false.
       converged = .false.
 !
+      macro_iteration_timer = timings('Newton-Raphson macro-iteration time ' // &
+                                       '(includes micro-iteration time)', pl='normal')
+!
       call mem%alloc(omega, wf%n_gs_amplitudes)
       call mem%alloc(dt, wf%n_gs_amplitudes)
       call mem%alloc(t, wf%n_gs_amplitudes)
@@ -270,6 +280,7 @@ contains
       do while (.not. converged .and. iteration .le. solver%max_iterations) 
 !
          iteration = iteration + 1
+         call macro_iteration_timer%turn_on()
 !
 !        Construct Fock, calculate energy, and construct omega 
 !
@@ -327,6 +338,9 @@ contains
 !
          prev_energy = energy 
 !
+         call macro_iteration_timer%turn_off()
+         call macro_iteration_timer%reset()
+!
       enddo
 !
       if (.not. converged) then 
@@ -382,6 +396,11 @@ contains
 !
       logical :: converged_residual 
 !
+      type(timings), allocatable :: micro_iteration_timer, timer 
+!
+      timer = timings('Newton-Raphson total micro-iteration time', pl='normal')
+      call timer%turn_on()
+!
 !     Initialize solver tool and set preconditioner 
 !
       call mem%alloc(preconditioner, wf%n_gs_amplitudes)
@@ -419,9 +438,13 @@ contains
       call mem%alloc(c, davidson%n_parameters)
       call mem%alloc(residual, davidson%n_parameters)
 !
+      micro_iteration_timer = timings('Newton-Raphson micro-iteration time', pl='verbose')
+!
       do while (.not. converged_residual .and. (micro_iteration .le. solver%max_micro_iterations))
 !
          micro_iteration = micro_iteration + 1
+         call micro_iteration_timer%turn_on()
+!
          call davidson%iterate()
 !
 !        Transform new trial vectors and write to file
@@ -450,6 +473,9 @@ contains
          call output%printf('n', '(i3)          (e11.4)', &
                             ints=[micro_iteration], reals=[residual_norm], fs='(t6,a)')
 !
+         call micro_iteration_timer%turn_off()
+         call micro_iteration_timer%reset()
+!
       enddo
 !
       call mem%dealloc(residual, davidson%n_parameters)
@@ -471,22 +497,28 @@ contains
 !
       call mem%dealloc(minus_omega, wf%n_gs_amplitudes)
 !
+      call timer%turn_off()
+!
    end subroutine do_micro_iterations_newton_raphson_cc_gs
 !
 !
-   subroutine cleanup_newton_raphson_cc_gs(wf)
+   subroutine cleanup_newton_raphson_cc_gs(solver, wf)
 !!
 !! 	Cleanup 
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
+      class(newton_raphson_cc_gs) :: solver 
+!
       class(ccs) :: wf
 !
       call output%printf('m', '- Finished solving the (a0) ground state equations', &
                          chars=[convert_to_uppercase(wf%name_)], fs='(/t3, a)')
 !
-      call wf%save_amplitudes()  
+      call wf%save_amplitudes()
+!
+      call solver%timer%turn_off() 
 !
    end subroutine cleanup_newton_raphson_cc_gs
 !
