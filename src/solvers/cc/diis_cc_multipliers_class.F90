@@ -311,6 +311,7 @@ contains
 !
             call diis%update(residual, multipliers)
             call wf%set_multipliers(multipliers)
+            call wf%save_multipliers()
 !
          endif
 !
@@ -321,7 +322,7 @@ contains
       if (.not. converged_residual) then 
 !   
          call output%print_separator('m', 63,'-', fs='(t3,a)')
-         call output%warning_msg('was not able to converge the equations      &
+         call output%error_msg('was not able to converge the equations      &
                                  &in the given number of maximum iterations.')
 !
       else

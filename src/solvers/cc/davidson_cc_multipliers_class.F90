@@ -226,7 +226,10 @@ contains
 !
       call davidson%initialize_trials_and_transforms(solver%records_in_memory)
 !
-      call solver%set_precondition_vector(wf, davidson)
+      call solver%set_precondition_vector(wf, davidson) 
+!
+      call wf%initialize_multipliers()
+      call mem%alloc(multipliers, wf%n_gs_amplitudes)
 !
 !     :: Set start vector / initial guess ::
 !
@@ -235,18 +238,14 @@ contains
          call output%printf('m', 'Requested restart. Reading multipliers from file.', &
                             fs='(/t3,a)')
 !
-         call wf%initialize_multipliers()
          call wf%read_multipliers()
 !
-         call mem%alloc(multipliers, wf%n_gs_amplitudes)
          call wf%get_multipliers(multipliers)
-         call wf%destruct_multipliers()
 !
          norm_trial = sqrt(ddot(wf%n_gs_amplitudes, multipliers, 1, multipliers, 1))
          call dscal(wf%n_gs_amplitudes, one/norm_trial, multipliers, 1)
 !
          call davidson%set_trial(multipliers, 1)
-         call mem%dealloc(multipliers, wf%n_gs_amplitudes)
 !
       else ! Use - eta_mu / eps_mu as first trial 
 !
@@ -305,6 +304,10 @@ contains
 !
          call output%printf('n', '(i3)            (e11.4)', ints=[iteration], reals=[residual_norm])
 !
+         call davidson%construct_solution(multipliers, 1)
+         call wf%set_multipliers(multipliers)
+         call wf%save_multipliers()
+!
       enddo ! End of iterative loop 
 !
       call output%print_separator('n', 27,'-')
@@ -318,15 +321,9 @@ contains
 !
          call output%printf('n', '- Davidson CC multipliers solver summary:', fs='(/t3,a)')
 !
-         call mem%alloc(multipliers, wf%n_gs_amplitudes)
-         call davidson%construct_solution(multipliers, 1)
+         call wf%get_multipliers(multipliers)
 !
          call wf%print_dominant_x_amplitudes(multipliers, 'tbar')
-!
-         call wf%initialize_multipliers()
-         call wf%set_multipliers(multipliers)
-!
-         call mem%dealloc(multipliers, wf%n_gs_amplitudes)
 !
       else
 !
@@ -336,6 +333,7 @@ contains
       endif
 !
       call mem%dealloc(eta, wf%n_gs_amplitudes)
+      call mem%dealloc(multipliers, wf%n_gs_amplitudes)
       call davidson%finalize_trials_and_transforms()
 !
    end subroutine run_davidson_cc_multipliers
