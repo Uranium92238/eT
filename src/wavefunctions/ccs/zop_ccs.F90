@@ -340,6 +340,8 @@ contains
 !
       enddo
 !
+      call mem%dealloc(mu, wf%n_mo, wf%n_mo, 3)
+!
    end subroutine calculate_energy_length_dipole_term_ccs
 !
 !

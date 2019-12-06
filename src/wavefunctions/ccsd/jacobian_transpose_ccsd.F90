@@ -894,6 +894,9 @@ contains
                   X_lidk,        & ! X_li_dk
                   wf%n_o**2)
 !
+      call mem%dealloc(t_mcdl, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call mem%dealloc(g_limc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
 !      Reorder and add the intermediates to X_kdli
 !
       call mem%alloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
@@ -1970,11 +1973,6 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: sigma_aibj
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_kcjd
-      real(dp), dimension(:,:,:,:), allocatable :: L_jckd ! L_kcjd
-!
-      real(dp), dimension(:,:,:,:), allocatable :: t_ckdl ! t_kl^cd
-!
       real(dp), dimension(:,:), allocatable     :: X_jl   ! An intermediate, term 1
       real(dp), dimension(:,:), allocatable     :: X_cb   ! An intermediate, term 3
 !
@@ -2014,26 +2012,6 @@ contains
                   (wf%n_o)*(wf%n_v)**2)
 !
       call mem%dealloc(X_jl, wf%n_o, wf%n_o)
-!
-!     Form g_kcjd
-!
-      call mem%alloc(g_kcjd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call wf%get_ovov(g_kcjd)
-!
-!     Form L_jckd = L_kcjd = 2 * g_kcjd - g_kdjc
-!                          = 2 * g_kcjd(k,c,j,d) - g_kcjd(k,d,j,c)
-!
-      call mem%alloc(L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call zero_array(L_jckd, (wf%n_o*wf%n_v)**2)
-!
-      call add_3214_to_1234(two, g_kcjd, L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call add_3412_to_1234(-one, g_kcjd, L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call mem%dealloc(g_kcjd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call mem%alloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2, t_ckdl, wf%n_t1)
 !
 !     Term 2: - sum_ckdl b_aicj t_kl^cd L_ldkb  = - sum_c b_cjai X_cb
 !
@@ -2461,6 +2439,7 @@ contains
 !     Cleanup
 !
       call mem%dealloc(t_clkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(X_clib, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
       call timer%turn_off()
 !

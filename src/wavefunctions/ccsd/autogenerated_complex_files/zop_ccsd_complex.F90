@@ -50,7 +50,7 @@ contains
 !
       complex(dp), dimension(:,:,:,:), allocatable :: g_iajb ! g_iajb
 !
-      complex(dp) :: correlation_energy
+      complex(dp) :: omp_correlation_energy
 !
       integer :: a, i, b, j, ai, bj, aibj
 !
@@ -58,9 +58,9 @@ contains
 !
       call wf%get_ovov_complex(g_iajb)
 !
-      correlation_energy = zero_complex
+      omp_correlation_energy = zero_complex
 !
-!$omp parallel do private(a,i,ai,bj,j,b,aibj) reduction(+:correlation_energy)
+!$omp parallel do private(a,i,ai,bj,j,b,aibj) reduction(+:omp_correlation_energy)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
@@ -73,9 +73,9 @@ contains
 !
                   aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
 !
-                  correlation_energy = correlation_energy +                 &
-                                 (wf%t2_complex(aibj) + (wf%t1_complex(a,i))*(wf%t1_complex(b,j)))* &
-                                 (two_complex*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
+                  omp_correlation_energy = omp_correlation_energy                   &
+                                         +(wf%t2_complex(aibj) + (wf%t1_complex(a,i))*(wf%t1_complex(b,j)))* &
+                                          (two_complex*g_iajb(i,a,j,b) - g_iajb(i,b,j,a))
 !
                enddo
             enddo
@@ -85,7 +85,9 @@ contains
 !
       call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      wf%energy_complex = wf%hf_energy_complex + correlation_energy
+      wf%correlation_energy_complex = omp_correlation_energy 
+!
+      wf%energy_complex = wf%hf_energy_complex + wf%correlation_energy_complex
 !
    end subroutine calculate_energy_ccsd_complex
 !

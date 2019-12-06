@@ -36,7 +36,7 @@
 !!
 !!       Modified by Sarai D. Folkestad, Nov 2019
 !!
-!!       Added batching for lowmem-cc2
+!!       Added batching for N^2 memory requirement.
 !!
       implicit none
 !
