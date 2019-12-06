@@ -216,8 +216,8 @@ contains
 !
 !     :: Part I. Preparations.
 !
-      iteration_timer = timings('MO SCF DIIS iteration time')
-      solver_timer = timings('MO SCF DIIS solver time')
+      iteration_timer = timings('MO SCF DIIS iteration time', pl='normal')
+      solver_timer = timings('MO SCF DIIS solver time', pl='minimal')
 !
       call solver_timer%turn_on()
 !

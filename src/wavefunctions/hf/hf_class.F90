@@ -1510,10 +1510,10 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: G
 !
-      type(timings) :: ao_fock_timer
+      type(timings) :: timer
 !
-      ao_fock_timer = timings('AO Fock construction')
-      call ao_fock_timer%turn_on()
+      timer = timings('AO Fock construction', pl='normal')
+      call timer%turn_on()
 !
 !     Set whether to accumulate into Fock (density differences)
 !     or to construct the entire Fock matrix
@@ -1548,7 +1548,7 @@ contains
 !
       if (.not. local_cumulative) call daxpy(wf%n_ao**2, one, h_wx, 1, ao_fock, 1)
 !
-      call ao_fock_timer%turn_off()
+      call timer%turn_off()
 !
    end subroutine construct_ao_fock_hf
 !
@@ -1580,11 +1580,6 @@ contains
       integer :: n_sig_sp
 !
       real(dp) :: max_D_schwarz, max_eri_schwarz
-!
-      type(timings) :: G_timer
-!
-      G_timer = timings('G construction time')
-      call G_timer%turn_on()
 !
 !     Construct the density screening vector and the maximum element in the density
 !
@@ -1629,8 +1624,6 @@ contains
 !
       call symmetric_sum(G, wf%n_ao)
       call dscal(wf%n_ao**2, half, G, 1)
-!
-      call G_timer%turn_off()
 !
    end subroutine construct_ao_G_hf
 !
@@ -3775,15 +3768,23 @@ contains
 !
       integer :: k, q
 !
-      type(timings) :: s_timer, h_timer, G_timer, G_timer_sym, non_integral_timer
+      type(timings) :: s_timer, h_timer, G_timer, G_timer_sym, non_integral_timer, timer 
 !
 !     Initialize timers
 !
-      s_timer = timings('HF gradient - 1st derivative-integrals of S')
-      h_timer = timings('HF gradient - 1st derivative-integrals of h')
-      G_timer = timings('HF gradient - 1st derivative-integrals of G(D) - integrals')
-      G_timer_sym = timings('HF gradient - 1st derivative-integrals of G(D) - symmetrization')
-      non_integral_timer = timings('HF gradient - non-integral-time')
+      timer = timings('HF gradient', pl='normal')
+!
+      s_timer = timings('HF gradient - 1st derivative of S', pl='verbose')
+!
+      h_timer = timings('HF gradient - 1st derivative of h', pl='verbose')
+!
+      G_timer = timings('HF gradient - 1st derivative of G(D) - integrals', pl='verbose')
+!
+      G_timer_sym = timings('HF gradient - 1st derivative of G(D) - symmetrization', pl='verbose')
+!
+      non_integral_timer = timings('HF gradient - non-integral-time', pl='verbose')
+!
+      call timer%turn_on()
 !
 !     Construct h_nuc^x, and the AO integral derivatives, h^x, S^x, and G^x(D)
 !
@@ -3898,6 +3899,8 @@ contains
       call mem%dealloc(h_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%dealloc(G_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
       call mem%dealloc(s_wxqk, wf%n_ao, wf%n_ao, 3, wf%system%n_atoms)
+!
+      call timer%turn_off()
 !
    end subroutine construct_molecular_gradient_hf
 !

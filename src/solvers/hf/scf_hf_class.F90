@@ -36,9 +36,10 @@ module scf_hf_class
    use kinds
    use abstract_hf_solver_class
 !
-   use memory_manager_class, only : mem
-   use hf_class, only : hf
-   use array_utilities, only: get_abs_max
+   use hf_class,              only : hf
+   use memory_manager_class,  only : mem
+   use timings_class,         only : timings 
+   use array_utilities,       only : get_abs_max
 !
    implicit none
 !
@@ -145,6 +146,9 @@ contains
 !
       class(hf) :: wf
 !
+      solver%timer = timings('SCF solver time', pl='minimal')
+      call solver%timer%turn_on()
+!
 !     Print solver banner
 !
       solver%name_   = 'Self-consistent field solver'
@@ -218,6 +222,8 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: h_wx
 !
+      type(timings), allocatable :: iteration_timer
+!
       if (wf%n_ao == 1) then 
 !
          call solver%run_single_ao(wf)
@@ -235,7 +241,9 @@ contains
 !
 !     :: Part I. Iterative SCF loop.
 !
-      iteration = 1
+      iteration_timer = timings('SCF iteration time', pl='normal')
+!
+      iteration = 0
 !
       converged            = .false.
       converged_energy     = .false.
@@ -248,6 +256,9 @@ contains
       call output%print_separator('n', 63,'-')
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)
+!
+         iteration = iteration + 1
+         call iteration_timer%turn_on()
 !
          energy = wf%energy
 !
@@ -289,7 +300,8 @@ contains
          call wf%save_orbital_coefficients()
          call wf%save_orbital_energies()
 !
-         iteration = iteration + 1
+         call iteration_timer%turn_off()
+         call iteration_timer%reset()
 !
       enddo
 !
@@ -302,6 +314,8 @@ contains
          call output%error_msg('Was not able to converge the equations in the given number of maximum iterations.')
 !
       endif
+!
+      call solver%timer%turn_off()
 !
    end subroutine run_scf_hf
 !

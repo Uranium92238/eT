@@ -24,8 +24,10 @@ module abstract_hf_solver_class
 !!
    use global_in,  only : input
    use global_out, only : output
-   use hf_class, only : hf
-   use memory_manager_class, only : mem
+!
+   use hf_class,              only : hf
+   use memory_manager_class,  only : mem
+   use timings_class,         only : timings
 !
    use parameters   
 !
@@ -45,6 +47,8 @@ module abstract_hf_solver_class
       character(len=200) :: ao_density_guess
 !
       integer, dimension(:), allocatable :: orbitals_to_print
+!
+      type(timings), allocatable :: timer 
 !
    contains 
 !
