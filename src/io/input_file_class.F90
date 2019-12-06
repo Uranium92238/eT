@@ -170,7 +170,7 @@ contains
                            'mlcc2']
 !
       method%name_    = 'method'
-      method%required = .true.
+      method%required = .false.
 !
       allocate(method%keywords(size(the_file%rf_wfs) &
                              + size(the_file%cc_wfs)))

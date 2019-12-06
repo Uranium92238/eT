@@ -61,8 +61,6 @@ module gs_engine_class
 !
       procedure, nopass :: calculate_quadrupole_moment   => calculate_quadrupole_moment_gs_engine
 !
-      procedure :: do_cholesky                           => do_cholesky_gs_engine
-!
       procedure :: restart_handling                      => restart_handling_gs_engine
 !
       procedure :: do_visualization                      => do_visualization_gs_engine
@@ -137,10 +135,6 @@ contains
       class(gs_engine) :: engine
       class(ccs)       :: wf
 !
-!     Cholesky decoposition of the electron repulsion integrals
-!
-      call engine%do_cholesky(wf)
-!
       call wf%mo_preparations() 
 !
       call engine%restart_handling(wf)
@@ -213,9 +207,6 @@ contains
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
-!
-      call engine%tasks%add(label='cd solver',                                &
-                            description='Cholesky decomposition of the ERI-matrix')
 !
       call engine%tasks%add(label='gs solver',                                &
                             description='Calculation of the ground state ('// &
@@ -432,36 +423,6 @@ contains
       total = electronic + nuclear
 !
    end subroutine calculate_quadrupole_moment_gs_engine
-!
-!
-   subroutine do_cholesky_gs_engine(engine, wf)
-!!
-!!    Do Cholesky
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019
-!!
-!!    Cholesky decomposition of electronic repiulsion integrals
-!!
-      use eri_cd_class, only : eri_cd
-!
-      implicit none
-!
-      class(gs_engine), intent(in) :: engine
-      class(ccs), intent(inout) :: wf
-!
-      type(eri_cd) :: eri_chol_solver
-!
-      call engine%tasks%print_('cd solver')
-!
-!     Cholesky decoposition 
-!
-      eri_chol_solver = eri_cd(wf%system)
-      call eri_chol_solver%run(wf%system)
-!
-      call eri_chol_solver%diagonal_test(wf%system)
-!
-      call eri_chol_solver%cleanup(wf%system)
-!
-   end subroutine do_cholesky_gs_engine
 !
 !
    subroutine restart_handling_gs_engine(engine, wf)

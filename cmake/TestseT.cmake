@@ -40,6 +40,8 @@ endmacro()
 # 	verylong > 200 seconds
 # 
 # NEVER comment out tests
+add_eT_runtest(eri_cholesky                                 "eT;short;cholesky;eri")
+#
 add_eT_runtest(hf_energy                                    "eT;short;hf;sad")
 add_eT_runtest(hf_energy_cumulative                         "eT;short;hf;cumulative-fock")
 add_eT_runtest(hf_energy_sto3g                              "eT;short;hf;sad;sto3g")

@@ -86,6 +86,12 @@ program eT_program
 !
    system = molecular_system()
 !
+!  Cholesky decomposition of electron repulsion integrals (ERIs)
+!
+   if (input%requested_cc_calculation() .or.                      &
+       input%requested_keyword_in_section('cholesky eri', 'do'))  &
+         call do_eri_cholesky(system) 
+!
 !  Hartree-Fock calculation
 !
    if (input%requested_reference_calculation()) call reference_calculation(system)
@@ -290,6 +296,35 @@ subroutine cc_calculation(system)
    call cc_wf%cleanup()
 !
 end subroutine cc_calculation
+!
+!
+subroutine do_eri_cholesky(system)
+!!
+!! Do ERI Cholesky 
+!! Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2019 and Dec 2019
+!! 
+!! Performs Cholesky decomposition of the atomic orbital (AO) electron repulsion 
+!! integrals. 
+!!
+   use eri_cd_class,             only: eri_cd 
+   use molecular_system_class,   only: molecular_system
+!
+   implicit none 
+!
+   type(molecular_system), intent(inout) :: system
+!
+   type(eri_cd), allocatable :: eri_cholesky_solver 
+!
+   eri_cholesky_solver = eri_cd(system)
+!
+   call eri_cholesky_solver%run(system)            ! Do the Cholesky decomposition 
+!
+   call eri_cholesky_solver%diagonal_test(system)  ! Determine the largest 
+                                                   ! deviation in the ERI matrix 
+!
+   call eri_cholesky_solver%cleanup(system)
+!
+end subroutine do_eri_cholesky
 !
 !
 subroutine set_global_print_levels()

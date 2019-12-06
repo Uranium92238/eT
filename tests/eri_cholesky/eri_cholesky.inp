@@ -1,0 +1,28 @@
+system
+   name: H2O-He
+   charge: 0
+end system
+ 
+print 
+   output print level: debug 
+end print
+
+do
+  cholesky eri
+end do
+
+memory
+   available: 8
+end memory
+
+solver cholesky
+   threshold: 1.0d-10
+end solver cholesky
+
+geometry
+basis: cc-pVDZ
+ H          0.86681        0.60144        5.00000
+ H         -0.86681        0.60144        5.00000
+ O          0.00000       -0.07579        5.00000
+ He         0.10000       -0.02000        7.53000
+end geometry

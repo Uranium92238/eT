@@ -147,6 +147,7 @@ contains
 !
    end subroutine read_es_settings_es_engine
 !
+!
    subroutine run_es_engine(engine, wf)
 !!
 !!    Run
@@ -156,10 +157,6 @@ contains
 !
       class(es_engine)  :: engine
       class(ccs)        :: wf
-!
-!     Cholesky decomposition
-!
-      call engine%do_cholesky(wf)
 !
       call wf%mo_preparations()
 !
@@ -275,9 +272,6 @@ contains
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
-!
-      call engine%tasks%add(label='cd solver',                                &
-                            description='Cholesky decomposition of the ERI-matrix')
 !
       call engine%tasks%add(label='gs solver',                                &
                            description='Calculation of the ground state ('//  &
