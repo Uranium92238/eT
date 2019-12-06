@@ -44,10 +44,12 @@ module mlhf_class
 !
       real(dp) :: inactive_energy
       real(dp) :: cholesky_threshold
+      real(dp) :: full_space_hf_threshold
 !
       logical :: cholesky_virtuals
       logical :: minimal_basis_diagonalization
       logical :: full_space_optimization
+      logical :: print_initial_hf
 !
    contains
 !
@@ -125,9 +127,11 @@ contains
       wf%system => system
 !
       wf%cholesky_threshold            = 1.0d-2
+      wf%full_space_hf_threshold       = 1.0d-1
       wf%full_space_optimization       = .false.
       wf%minimal_basis_diagonalization = .false.
       wf%cholesky_virtuals             = .false.
+      wf%print_initial_hf              = .false.
 !
       call wf%read_settings()
 !
@@ -832,6 +836,7 @@ contains
       class(mlhf) :: wf               
 !
       call input%get_keyword_in_section('cholesky threshold', 'multilevel hf', wf%cholesky_threshold)
+      call input%get_keyword_in_section('initial hf threshold', 'multilevel hf', wf%full_space_hf_threshold)
 !
       if (input%requested_keyword_in_section('project on minimal basis', 'multilevel hf')) &
             wf%minimal_basis_diagonalization = .true.
@@ -841,6 +846,9 @@ contains
 !
       if (input%requested_keyword_in_section('initial hf optimization', 'multilevel hf')) &
             wf%full_space_optimization = .true.
+!
+      if (input%requested_keyword_in_section('print initial hf', 'multilevel hf')) &
+            wf%print_initial_hf = .true.
 !
 !     Sanity checks
 !
@@ -937,21 +945,19 @@ contains
 !!    Print orbital space information
 !!    Written by Linda Goletto and Ida-Marie Hoyvik, 2019
 !!
-!!    Prints the information on the active and inactive orbitals
+!!    Prints the information on the active orbitals
 !!
       implicit none
 !
       class(mlhf) :: wf
 !
-     call output%printf('m', '- Size of orbital spaces in MLHF ', fs='(/t3, a)')
+     call output%printf('m', '- Size of active orbital spaces in MLHF ', fs='(/t3, a)')
      call output%printf('m', ' Number of active occupied orbitals :  (i25)', &
                         ints=[wf%n_o], fs='(/t6, a)')
      call output%printf('m', ' Number of active virtual orbitals  :  (i25)', &
                         ints=[wf%n_v], fs='(t6, a)')
      call output%printf('m', ' Number of active orbitals          :  (i25)', &
                         ints=[wf%n_v+wf%n_o], fs='(t6, a)')
-     call output%printf('m', ' Number of inactive orbitals        :  (i25)', &
-                        ints=[wf%n_ao-wf%n_v-wf%n_o], fs='(t6, a)')
 !
    end subroutine print_orbital_space_info_mlhf
 !
@@ -1411,39 +1417,36 @@ contains
       type(hf), allocatable            :: full_space_wf
       type(scf_diis_hf), allocatable   :: full_space_solver
 !
-      real(dp) :: full_space_thr
-!
       integer :: max_iterations, diis_dimension
       character(len=200) :: ao_density_guess, storage
 !
 !     Set the default settings
 !
-      full_space_thr = 1.0d-1
       max_iterations = 20
       diis_dimension = 8
       ao_density_guess = 'sad'
       storage = 'memory'
 !
-!     Read the optional threshold from input
-!
-      call input%get_keyword_in_section('initial hf threshold', 'multilevel hf', full_space_thr)
-!
 !     Perform the HF calculation in the full space
+!
+      call output%printf('m', '- Requested initial hf optimization: performing scf-diis', &
+                         fs='(/t3,a)')
+      call output%printf('m', 'Initial hf threshold:         (e11.4)', & 
+                         reals=[wf%full_space_hf_threshold], fs='(/t6,a)')
+!
+      if(.not. wf%print_initial_hf) call output%mute()
 !
       full_space_wf = hf(wf%system)
 !
-      call output%printf('m', 'Requested initial hf optimization. Performing scf-diis' &
-                         // 'to the threshold (e9.2)', reals=[full_space_thr], fs='(/t6,a)')
-!
-      full_space_solver = scf_diis_hf(wf=full_space_wf,    &
-                        restart=.false.,                   &
-                        diis_dimension=diis_dimension,     &
-                        ao_density_guess=ao_density_guess, &
-                        energy_threshold=full_space_thr,   &
-                        max_iterations=max_iterations,     &
-                        gradient_threshold=full_space_thr, &
-                        storage=storage,                   &
-                        cumulative_threshold=1.0d-2,       &
+      full_space_solver = scf_diis_hf(wf=full_space_wf,                 &
+                        restart=.false.,                                &
+                        diis_dimension=diis_dimension,                  &
+                        ao_density_guess=ao_density_guess,              &
+                        energy_threshold=wf%full_space_hf_threshold,    &
+                        max_iterations=max_iterations,                  &
+                        gradient_threshold=wf%full_space_hf_threshold,  &
+                        storage=storage,                                &
+                        cumulative_threshold=1.0d-2,                    &
                         crop=.false.)
 !
       call full_space_solver%run(full_space_wf)
@@ -1460,6 +1463,8 @@ contains
       full_space_wf%frozen_hf_mos = .false.
 !
       call full_space_wf%cleanup()
+!
+      if(.not. wf%print_initial_hf) call output%unmute()
 !
       call wf%update_ao_density()
 !
