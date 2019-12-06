@@ -19,7 +19,7 @@
 !
    module subroutine prepare_for_jacobian_lowmem_cc2(wf)
 !!
-!!    Prepare for jacobian
+!!    Prepare for Jacobian
 !!    Written by Linda Goletto, Oct 2019
 !!
 !!    Gets occupied and virtual orbital energies and construcs 
@@ -33,7 +33,7 @@
    end subroutine prepare_for_jacobian_lowmem_cc2
 !
 !
-   module subroutine save_jacobian_b1_2_intermediate_lowmem_cc2(wf,eps_o, eps_v)
+   module subroutine save_jacobian_b1_2_intermediate_lowmem_cc2(wf, eps_o, eps_v)
 !!
 !!    Save jacobian b1 second intermediate
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad,
@@ -103,8 +103,6 @@
 !!    for lowmem CC2 according to
 !!    
 !!       C. Hättig and F. Weigend, J. Chem. Phys. 113, 5154 (2000).
-!!
-!!
       implicit none
 !
       class(lowmem_cc2) :: wf

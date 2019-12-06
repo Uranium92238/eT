@@ -448,6 +448,8 @@ for directory_name in wavefunction_complexified_submodules:
             line = sub(r'\b'+'energy'+r'\b', 'energy_complex', line)
             line = sub(r'\b'+'dipole_moment'+r'\b',
                        'dipole_moment_complex', line)
+            line = sub(r'\b'+'correlation_energy'+r'\b',
+                       'correlation_energy_complex', line)
 #
 #           Change integral and t1 transformation routines
 #

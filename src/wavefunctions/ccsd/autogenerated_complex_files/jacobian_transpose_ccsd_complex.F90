@@ -61,7 +61,7 @@ contains
       complex(dp), dimension(:,:,:,:), allocatable :: L_ooov
       complex(dp), dimension(:,:,:,:), allocatable :: L_vovo
 !
-      timer = timings('Prepare for Jacobian Transpose', pl='minimal')
+      timer = timings('Prepare for Jacobian Transpose', pl='normal')
       call timer%turn_on()
 !
 !     Form t_vovo
@@ -158,12 +158,10 @@ contains
       complex(dp), dimension(:,:), allocatable :: sigma_ai
       complex(dp), dimension(:,:,:,:), allocatable :: sigma_aibj
 !
-!     Indices
+      type(timings), allocatable :: timer
 !
-      type(timings) :: jacobian_transpose_timer
-!
-      jacobian_transpose_timer = timings('jacobian transpose')
-      call jacobian_transpose_timer%turn_on()
+      timer = timings('Jacobian transpose CCSD', pl='normal')
+      call timer%turn_on()
 !
       call mem%alloc(sigma_ai, wf%n_v, wf%n_o)
       call zero_array_complex(sigma_ai, (wf%n_o*wf%n_v))
@@ -241,7 +239,7 @@ contains
 !
       call mem%dealloc(sigma_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-      call jacobian_transpose_timer%turn_off()
+      call timer%turn_off()
 !
    end subroutine jacobian_transpose_transformation_ccsd_complex
 !
@@ -268,6 +266,11 @@ contains
       complex(dp), dimension(wf%n_v,wf%n_o,wf%n_v,wf%n_o), intent(in) :: t_aibj
 !
       complex(dp), dimension(:,:,:,:), allocatable :: X_ilck
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD D1 intermediate', pl='verbose')
+      call timer%turn_on()
 !
 !     Form intermediate X_ilck = sum_d F_i_d t_d_lck
 !
@@ -296,6 +299,8 @@ contains
       call wf%jacobian_transpose_d1_intermediate%close_()
 !
       call mem%dealloc(X_ilck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine save_jacobian_transpose_d1_intermediates_ccsd_complex
 !
@@ -327,6 +332,11 @@ contains
 !
       complex(dp), dimension(:,:,:,:), allocatable :: t_ckdl
       complex(dp), dimension(:,:), allocatable     :: X_li   ! intermediate, term 2
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD D1', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Term 1. - sum_ckdl b_ckal F_id t_kl^cd ::
 !
@@ -396,6 +406,8 @@ contains
 !
       call mem%dealloc(X_li, wf%n_o, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_ccsd_d1_ccsd_complex
 !
 !
@@ -423,6 +435,11 @@ contains
 !
       complex(dp), dimension(:,:,:,:), allocatable :: L_ildm
       complex(dp), dimension(:,:,:,:), allocatable :: X_ilck
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD E1 intermediate', pl='verbose')
+      call timer%turn_on()
 !
 !     Sort L_ilmd into L_ildm
 !
@@ -459,6 +476,8 @@ contains
       call wf%jacobian_transpose_e1_intermediate%close_()
 !
       call mem%dealloc(X_ilck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine save_jacobian_transpose_e1_intermediates_ccsd_complex
 !
@@ -517,6 +536,11 @@ contains
       integer :: current_d_batch
 !
       type(batching_index) :: batch_d
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD E1', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Term 3. - sum_ckdlm b_ckal L_ilmd t_km^cd ::
 !
@@ -778,6 +802,8 @@ contains
 !
       call mem%dealloc(X_ed, wf%n_v, wf%n_v)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_ccsd_e1_ccsd_complex
 !
 !
@@ -814,6 +840,11 @@ contains
       complex(dp), dimension(:,:,:,:), allocatable :: X_ikdl
       complex(dp), dimension(:,:,:,:), allocatable :: X_kdli
       complex(dp), dimension(:,:,:,:), allocatable :: X_lidk
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD F1 intermediate', pl='verbose')
+      call timer%turn_on()
 !
 !     X_ikdl = sum_mc t_lm^cd g_ikmc = t_mcdl g_ikmc
 !
@@ -863,6 +894,9 @@ contains
                   X_lidk,        & ! X_li_dk
                   wf%n_o**2)
 !
+      call mem%dealloc(t_mcdl, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call mem%dealloc(g_limc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
 !      Reorder and add the intermediates to X_kdli
 !
       call mem%alloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
@@ -884,6 +918,8 @@ contains
       call wf%jacobian_transpose_f1_intermediate%close_()
 !
       call mem%dealloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine save_jacobian_transpose_f1_intermediates_ccsd_complex
 !
@@ -921,6 +957,11 @@ contains
 !
       complex(dp), dimension(:,:,:,:), allocatable :: X_kiml
       complex(dp), dimension(:,:,:,:), allocatable :: X_mkli
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD F1', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Term 1. and Term 2. 
 !     
@@ -1022,6 +1063,8 @@ contains
       call mem%dealloc(g_amkl, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
       call mem%dealloc(X_mkli, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_ccsd_f1_ccsd_complex
 !
 !
@@ -1051,7 +1094,9 @@ contains
 !
       complex(dp), dimension(:,:,:,:), allocatable :: t_cekl
       complex(dp), dimension(:,:,:,:), allocatable :: g_icde, g_idce
-
+!
+      type(timings), allocatable :: timer 
+!
 !     Batching variables
 !
       integer :: current_d_batch = 0
@@ -1059,6 +1104,9 @@ contains
       type(batching_index) :: batch_d
 !
       integer :: rec1, rec0
+!
+      timer = timings('Jacobian transpose CCSD G1 intermediate', pl='verbose')
+      call timer%turn_on()
 !
 !     X_idkl = sum_ce t_kl^ce g_icde = sum_ce g_id_ce t_ce_kl
 !
@@ -1141,6 +1189,8 @@ contains
 !
       call mem%dealloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine save_jacobian_transpose_g1_intermediates_ccsd_complex
 !
 !
@@ -1190,6 +1240,11 @@ contains
       type(batching_index) :: batch_e
 !
       integer :: rec1, rec0
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD G1', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Term 2. - sum_ckdle b_cidl t_kl^ce g_kade ::
 !
@@ -1400,6 +1455,8 @@ contains
 !
       call mem%dealloc(X_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_ccsd_g1_ccsd_complex
 !
 !
@@ -1438,6 +1495,11 @@ contains
       integer :: current_b_batch = 0
 !
       type(batching_index) :: batch_b
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD B2', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Term 1. sum_c b_aicj F_cb ::
 !
@@ -1592,6 +1654,8 @@ contains
 !
       call mem%dealloc(g_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_ccsd_b2_ccsd_complex
 !
 
@@ -1631,6 +1695,11 @@ contains
       integer :: current_b_batch = 0
 !
       type(batching_index) :: batch_b
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD C2', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Term 1. - sum_ck b_ajck g_ibck ::
 !
@@ -1750,6 +1819,8 @@ contains
 !
       call mem%dealloc(sigma_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_ccsd_c2_ccsd_complex
 !
 !
@@ -1774,6 +1845,11 @@ contains
       complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: L_dlbj ! Reordered L_jbld
 !
       complex(dp), dimension(:,:,:,:), allocatable :: X_ckbj ! An intermediate
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD D2 intermediate', pl='verbose')
+      call timer%turn_on()
 !
 !     Form the intermediate X_ckbj = sum_dl u_ck_dl L_dl_bj
 !
@@ -1802,6 +1878,8 @@ contains
       call wf%jacobian_transpose_d2_intermediate%close_()
 !
       call mem%dealloc(X_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine save_jacobian_transpose_d2_intermediates_ccsd_complex
 !
@@ -1834,6 +1912,11 @@ contains
 !
       complex(dp), dimension(:,:,:,:), allocatable :: X_ckbj ! An intermediate
 !
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD D2', pl='verbose')
+      call timer%turn_on()
+!
 !     Read the intermediate X_ckbj = sum_dl t_ck_dl L_dl_bj
 !
       call mem%alloc(X_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -1858,6 +1941,8 @@ contains
                   (wf%n_o)*(wf%n_v))
 !
       call mem%dealloc(X_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine jacobian_transpose_ccsd_d2_ccsd_complex
 !
@@ -1888,13 +1973,13 @@ contains
       complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: sigma_aibj
       complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: b_aibj
 !
-      complex(dp), dimension(:,:,:,:), allocatable :: g_kcjd
-      complex(dp), dimension(:,:,:,:), allocatable :: L_jckd ! L_kcjd
-!
-      complex(dp), dimension(:,:,:,:), allocatable :: t_ckdl ! t_kl^cd
-!
       complex(dp), dimension(:,:), allocatable     :: X_jl   ! An intermediate, term 1
       complex(dp), dimension(:,:), allocatable     :: X_cb   ! An intermediate, term 3
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD E2', pl='verbose')
+      call timer%turn_on()
 !
 !     Term 1. - sum_ckdl b_aibl t_kl^cd L_kcjd
 !             - sum_l X_jl b_aibl
@@ -1928,26 +2013,6 @@ contains
 !
       call mem%dealloc(X_jl, wf%n_o, wf%n_o)
 !
-!     Form g_kcjd
-!
-      call mem%alloc(g_kcjd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call wf%get_ovov_complex(g_kcjd)
-!
-!     Form L_jckd = L_kcjd = 2 * g_kcjd - g_kdjc
-!                          = 2 * g_kcjd(k,c,j,d) - g_kcjd(k,d,j,c)
-!
-      call mem%alloc(L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call zero_array_complex(L_jckd, (wf%n_o*wf%n_v)**2)
-!
-      call add_3214_to_1234(two_complex, g_kcjd, L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call add_3412_to_1234(-one_complex, g_kcjd, L_jckd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call mem%dealloc(g_kcjd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-!
-      call mem%alloc(t_ckdl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2_complex, t_ckdl, wf%n_t1)
-!
 !     Term 2: - sum_ckdl b_aicj t_kl^cd L_ldkb  = - sum_c b_cjai X_cb
 !
 !     Read X_cb from file
@@ -1976,6 +2041,8 @@ contains
 !
       call mem%dealloc(X_cb, wf%n_v, wf%n_v)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_ccsd_e2_ccsd_complex
 !
 !
@@ -2002,6 +2069,11 @@ contains
       complex(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o) :: L_dlbi ! Reordered L_ldib
 !
       complex(dp), dimension(:,:,:,:), allocatable :: X_ckbi ! An intermediate, term 2
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD F2 intermediate', pl='verbose')
+      call timer%turn_on()
 !
 !     Form the intermediate X_ckbi = sum_dl t_ck_dl L_dl_bi
 !
@@ -2030,6 +2102,8 @@ contains
       call wf%jacobian_transpose_f2_intermediate%close_()
 !
       call mem%dealloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine save_jacobian_transpose_f2_intermediates_ccsd_complex
 !
@@ -2068,6 +2142,11 @@ contains
       complex(dp), dimension(:,:), allocatable :: X_lj   ! An intermediate, term 3
 !
       complex(dp), dimension(:,:,:,:), allocatable :: sigma_ajbi ! sigma_aibj contribution
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD F2', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Term 1. - sum_ckdl b_alck t_kl^cd L_jbid ::
 !
@@ -2238,6 +2317,8 @@ contains
       call mem%dealloc(L_dlbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(X_lj, wf%n_o, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_ccsd_f2_ccsd_complex
 !
 !
@@ -2273,6 +2354,11 @@ contains
 !
       complex(dp), dimension(:,:,:,:), allocatable :: t_clkd
       complex(dp), dimension(:,:,:,:), allocatable :: X_clib
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD G2 intermediates', pl='verbose')
+      call timer%turn_on()
 !
 !     Form t_cldk = t_kl^cd
 !
@@ -2353,6 +2439,9 @@ contains
 !     Cleanup
 !
       call mem%dealloc(t_clkd, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(X_clib, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+      call timer%turn_off()
 !
    end subroutine save_jacobian_transpose_g2_intermediates_ccsd_complex
 !
@@ -2386,6 +2475,11 @@ contains
 !
       complex(dp), dimension(:,:,:,:), allocatable :: X_clbi ! An intermediate, term 1
       complex(dp), dimension(:,:,:,:), allocatable :: X_clib ! An intermediate, term 2
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD G2', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Term 1. sum_ckdl b_alcj t_kl^cd g_kbid ::
 !
@@ -2461,6 +2555,8 @@ contains
       call mem%dealloc(X_clib, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
       call mem%dealloc(sigma_ajib, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_ccsd_g2_ccsd_complex
 !
 !
@@ -2506,6 +2602,11 @@ contains
 !
       type(batching_index) :: batch_a
       type(batching_index) :: batch_b
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD H2', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Term 1. sum_kl b_akbl g_ikjl ::
 !
@@ -2638,6 +2739,8 @@ contains
          enddo ! End of batches over b
       enddo ! End of batches over a
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_ccsd_h2_ccsd_complex
 !
 !
@@ -2668,6 +2771,11 @@ contains
       complex(dp), dimension(:,:,:,:), allocatable :: g_cdij ! g_kalb
 !
       complex(dp), dimension(:,:,:,:), allocatable :: X_klij ! An intermediate, terms 1 & 2
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD I2 intermediate', pl='verbose')
+      call timer%turn_on()
 !
 !     Reorder g_icjd to g_cdij
 !
@@ -2711,6 +2819,8 @@ contains
       call mem%dealloc(t_klcd, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
       call mem%dealloc(X_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine save_jacobian_transpose_i2_intermediates_ccsd_complex
 !
 !
@@ -2747,6 +2857,11 @@ contains
       complex(dp), dimension(:,:,:,:), allocatable :: g_abkl ! g_kalb
 !
       complex(dp), dimension(:,:,:,:), allocatable :: X_klij ! An intermediate, terms 1 & 2
+!
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD I2', pl='verbose')
+      call timer%turn_on()
 !
 !     :: Term 1. sum_ckdl b_cidj t_kl^cd g_kalb ::
 !
@@ -2838,6 +2953,8 @@ contains
 !
       call mem%dealloc(X_klij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
+      call timer%turn_off()
+!
    end subroutine jacobian_transpose_ccsd_i2_ccsd_complex
 !
 !
@@ -2865,8 +2982,12 @@ contains
 !
       complex(dp), dimension(:,:), allocatable :: X_jl 
 !
-!     X_jl = sum_kcd L_kcjd t_kl^cd = sum_kcd L_j_ckd t_ckd_l
+      type(timings), allocatable :: timer 
 !
+      timer = timings('Jacobian transpose CCSD E2 oo intermediate', pl='verbose')
+      call timer%turn_on()
+!
+!     X_jl = sum_kcd L_kcjd t_kl^cd = sum_kcd L_j_ckd t_ckd_l
 !
       call mem%alloc(X_jl, wf%n_o, wf%n_o)
 !
@@ -2893,6 +3014,8 @@ contains
       call wf%jacobian_transpose_e2_oo_intermediate%close_()
 !
       call mem%dealloc(X_jl, wf%n_o, wf%n_o)
+!
+      call timer%turn_off()
 !
    end subroutine save_jacobian_transpose_e2_oo_intermediate_ccsd_complex
 !
@@ -2921,6 +3044,11 @@ contains
 !
       complex(dp), dimension(:,:), allocatable :: X_cb
 !
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Jacobian transpose CCSD E2 vv intermediate', pl='verbose')
+      call timer%turn_on()
+!
 !     X_cd  sum_kdl t_kl^cd L_ldkb
 !
       call mem%alloc(X_cb, wf%n_v, wf%n_v)
@@ -2948,6 +3076,8 @@ contains
       call wf%jacobian_transpose_e2_vv_intermediate%close_()
 !
       call mem%dealloc(X_cb, wf%n_v, wf%n_v)
+!
+      call timer%turn_off()
 !
    end subroutine save_jacobian_transpose_e2_vv_intermediate_ccsd_complex
 !

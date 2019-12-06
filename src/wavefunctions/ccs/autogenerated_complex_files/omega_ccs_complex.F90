@@ -41,8 +41,15 @@ contains
 !
       complex(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Construct ccs omega', pl='normal')
+      call timer%turn_on()
+!
       call zero_array_complex(omega, wf%n_gs_amplitudes)
       call wf%omega_ccs_a1_complex(omega)
+!
+      call timer%turn_off()
 !
    end subroutine construct_omega_ccs_complex
 !
@@ -64,7 +71,7 @@ contains
 !
       type(timings) :: omega_ccs_a1_timer
 !
-      omega_ccs_a1_timer = timings('omega ccs a1')
+      omega_ccs_a1_timer = timings('omega ccs a1', pl='verbose')
       call omega_ccs_a1_timer%turn_on()
 !
       call zaxpy((wf%n_o)*(wf%n_v), one_complex, wf%fock_ai_complex, 1, omega, 1)

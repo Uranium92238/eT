@@ -34,6 +34,10 @@
 !!       QM/MM by Tommaso Giovannini, 2019
 !!       QM/PCM by Tommaso Giovannini, 2019
 !!
+!!       Modified by Sarai D. Folkestad, Nov 2019
+!!
+!!       Added batching for N^2 memory requirement.
+!!
       implicit none
 !
       class(ccs) :: wf
