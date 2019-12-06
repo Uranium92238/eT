@@ -33,6 +33,7 @@ submodule (cc2_class) omega_cc2
 !
 contains
 !
+!
    module subroutine construct_omega_cc2(wf, omega)
 !!
 !!    Construct omega
@@ -49,7 +50,7 @@ contains
 !
       type(timings) :: timer
 !
-      timer = timings('omega CC2')
+      timer = timings('Construct cc2 omega', pl='normal')
       call timer%turn_on()
 !
       call zero_array(omega, wf%n_gs_amplitudes)
@@ -129,5 +130,6 @@ contains
       enddo
 !
    end subroutine construct_omega2_cc2
+!
 !
 end submodule omega_cc2

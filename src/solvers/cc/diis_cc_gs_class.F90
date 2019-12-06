@@ -128,7 +128,7 @@ contains
 !
       logical, intent(in) :: restart
 !
-      solver%timer = timings(trim(convert_to_uppercase(wf%name_)) // ' ground state')
+      solver%timer = timings('DIIS CC GS solver time', pl='minimal')
       call solver%timer%turn_on()
 !
 !     Print solver banner
@@ -265,6 +265,8 @@ contains
 !
       integer :: iteration
 !
+      type(timings), allocatable :: iteration_timer 
+!
       diis = diis_tool('cc_gs_diis',                        &
                         wf%n_gs_amplitudes,                 &
                         wf%n_gs_amplitudes,                 &
@@ -284,10 +286,15 @@ contains
                          &Delta E (a.u.) ', fs='(/t3,a)')
       call output%print_separator('n', 63,'-')
 !
-      prev_energy = zero
-      iteration   = 1
+      iteration_timer = timings('DIIS CC GS iteration time', pl='normal')
 !
-      do while (.not. converged .and. iteration .le. solver%max_iterations)         
+      prev_energy = zero
+      iteration   = 0
+!
+      do while (.not. converged .and. iteration .le. solver%max_iterations)
+!
+         iteration = iteration + 1
+         call iteration_timer%turn_on()         
 !
 !        Calculate the energy and error vector omega 
 !
@@ -354,11 +361,12 @@ contains
 !
          endif
 !
-         iteration = iteration + 1
-!
 !        Save amplitudes
 !
          call wf%save_amplitudes()
+!
+         call iteration_timer%turn_off()         
+         call iteration_timer%reset()         
 !
       enddo
 !

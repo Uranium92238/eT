@@ -41,8 +41,15 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes), intent(inout) :: omega
 !
+      type(timings), allocatable :: timer 
+!
+      timer = timings('Construct ccs omega', pl='normal')
+      call timer%turn_on()
+!
       call zero_array(omega, wf%n_gs_amplitudes)
       call wf%omega_ccs_a1(omega)
+!
+      call timer%turn_off()
 !
    end subroutine construct_omega_ccs
 !
@@ -64,7 +71,7 @@ contains
 !
       type(timings) :: omega_ccs_a1_timer
 !
-      omega_ccs_a1_timer = timings('omega ccs a1')
+      omega_ccs_a1_timer = timings('omega ccs a1', pl='verbose')
       call omega_ccs_a1_timer%turn_on()
 !
       call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, omega, 1)
