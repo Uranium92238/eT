@@ -405,6 +405,7 @@ contains
       mlhf%keywords = [character(len=30) ::           &
                         'initial hf optimization',    &
                         'initial hf threshold',       &
+                        'print initial hf',           &
                         'cholesky threshold',         &
                         'project on minimal basis',   &
                         'cholesky virtuals']
