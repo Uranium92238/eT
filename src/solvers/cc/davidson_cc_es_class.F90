@@ -276,9 +276,9 @@ contains
          call mem%alloc(residual, wf%n_es_amplitudes)
          call mem%alloc(solution, wf%n_es_amplitudes)
 !
-         call output%printf('n', 'Root     Eigenvalue (Re)        Eigenvalue &
+         call output%printf('n', ' Root     Eigenvalue (Re)        Eigenvalue &
                             &(Im)      Residual norm', fs='(/t3,a)')
-         call output%print_separator('n', 68,'-')
+         call output%print_separator('n', 69,'-')
 !
          converged_residual   = .true.
          converged_eigenvalue = .true.
@@ -308,13 +308,13 @@ contains
 !
             endif 
 !
-            call output%printf('n', '(i2)     (f16.12)       (f16.12)           (e11.4)', &
+            call output%printf('n', '(i4)    (f16.12)       (f16.12)           (e11.4)', &
                                ints=[n], reals=[davidson%omega_re(n), &
                                davidson%omega_im(n), residual_norm])
 !
          enddo ! Done constructing new trials from residuals
 !
-         call output%print_separator('n', 68,'-')
+         call output%print_separator('n', 69,'-')
 !
          call mem%dealloc(residual, wf%n_es_amplitudes)
          call mem%dealloc(solution, wf%n_es_amplitudes)
