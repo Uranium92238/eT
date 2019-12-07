@@ -311,12 +311,12 @@ contains
 !
       call output%printf('m', 'Excitation energy', fs='(/t39,a)')
       call output%print_separator('m', 42, '-', fs='(t27,a)')
-      call output%printf('m', 'State                (Hartree)             (eV)', fs='(t6,a)')
+      call output%printf('m', ' State                (Hartree)             (eV)', fs='(t6,a)')
       call output%print_separator('m', 63, '-', fs='(t6,a)')
 !
       do state = 1, solver%n_singlet_states
 !
-         call output%printf('m', '(i2)              (f19.12)    (f19.12)', &
+         call output%printf('m', '(i4)             (f19.12)   (f19.12)', &
                             ints=[state], reals=[solver%energies(state), &
                             solver%energies(state)*Hartree_to_eV], fs='(t6,a)')
 !

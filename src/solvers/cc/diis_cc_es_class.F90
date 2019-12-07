@@ -380,8 +380,8 @@ contains
 !
          call output%printf('n', 'Iteration: (i18)', ints=[iteration], fs='(/t3,a)')
 !
-         call output%printf('n', 'Root     Eigenvalue (Re)     Residual norm', fs='(/t3,a)')
-         call output%print_separator('n', 46, '-')
+         call output%printf('n', ' Root     Eigenvalue (Re)     Residual norm', fs='(/t3,a)')
+         call output%print_separator('n', 47, '-')
 !
          do state = 1, solver%n_singlet_states
 !
@@ -450,8 +450,9 @@ contains
 !
             endif 
 !
-            call output%printf('n', '(i0)   (f19.12)      (e11.4)', &
-                               ints=[state], reals=[solver%energies(state), residual_norms(state)])
+            call output%printf('n', '(i4)  (f18.12)      (e11.4)', &
+                               ints=[state], reals=[solver%energies(state), &
+                               residual_norms(state)])
 !
          enddo
 !
@@ -467,7 +468,7 @@ contains
                            solver%energies, solver%transformation)
          prev_energies = solver%energies 
 !
-         call output%print_separator('n', 46, '-')
+         call output%print_separator('n', 47, '-')
 !
       enddo 
 !
@@ -501,7 +502,7 @@ contains
 !
             if(prev_state_numbers(state) .ne. state) then
 !
-               call output%printf('v', 'Root number (i3) renamed to state (i3)' &
+               call output%printf('v', 'Root number (i0) renamed to state (i0)' &
                                   &, ints=[prev_state_numbers(state), state], fs='(t5,a)')
 !
             end if
