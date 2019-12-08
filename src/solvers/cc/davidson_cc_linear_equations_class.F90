@@ -279,7 +279,7 @@ contains
 !
          call mem%alloc(c, wf%n_gs_amplitudes)
 !
-         do trial = davidson%first_trial(), davidson%last_trial()
+         do trial = davidson%first_new_trial(), davidson%last_new_trial()
 !
             call davidson%get_trial(c, trial)
 !

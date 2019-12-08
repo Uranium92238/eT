@@ -66,8 +66,8 @@ module davidson_tool_class
       procedure :: get_trial                                   => get_trial_davidson_tool 
       procedure :: set_transform                               => set_transform_davidson_tool 
       procedure :: get_transform                               => get_transform_davidson_tool 
-      procedure :: first_trial                                 => first_trial_davidson_tool
-      procedure :: last_trial                                  => last_trial_davidson_tool
+      procedure :: first_new_trial                             => first_new_trial_davidson_tool
+      procedure :: last_new_trial                              => last_new_trial_davidson_tool
 !
       procedure :: set_preconditioner                          => set_preconditioner_davidson_tool
 !
@@ -298,7 +298,7 @@ contains
    end subroutine iterate_davidson_tool
 !
 !
-   function first_trial_davidson_tool(davidson) result(first)
+   function first_new_trial_davidson_tool(davidson) result(first)
 !!
 !!    First trial 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 
@@ -313,10 +313,10 @@ contains
 !
       first = davidson%dim_red - davidson%n_new_trials + 1
 !  
-   end function first_trial_davidson_tool
+   end function first_new_trial_davidson_tool
 !
 !
-   function last_trial_davidson_tool(davidson) result(last)
+   function last_new_trial_davidson_tool(davidson) result(last)
 !!
 !!    Last trial 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 
@@ -331,7 +331,7 @@ contains
 !
       last = davidson%dim_red
 !  
-   end function last_trial_davidson_tool
+   end function last_new_trial_davidson_tool
 !
 !
    subroutine read_trial_davidson_tool(davidson, c, n)
@@ -403,7 +403,7 @@ contains
 !
 !     First orthonormalization of new trials 
 !
-      do j = davidson%first_trial(), davidson%last_trial() 
+      do j = davidson%first_new_trial(), davidson%last_new_trial() 
 !
          call davidson%get_trial(c_j, j)
 !
@@ -432,7 +432,7 @@ contains
 !
 !     Second orthonormalization to avoid accumulation of noise
 !
-      do j = davidson%first_trial(), davidson%last_trial() 
+      do j = davidson%first_new_trial(), davidson%last_new_trial() 
 !
          call davidson%get_trial(c_j, j)
 !
