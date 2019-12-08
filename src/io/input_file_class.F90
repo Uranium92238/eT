@@ -188,8 +188,7 @@ contains
                                                     'zop',                  &
                                                     'fop',                  &
                                                     'time dependent state', &
-                                                    'cholesky eri',         &
-                                                    'multipliers']
+                                                    'cholesky eri']
 !
       system%name_    = 'system'
       system%required = .true.
