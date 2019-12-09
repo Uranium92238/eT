@@ -90,6 +90,7 @@ module hf_class
 !
    contains
 !
+      procedure :: print_banner                                => print_banner_hf
 !
       procedure :: read_orbital_coefficients                   => read_orbital_coefficients_hf
       procedure :: save_orbital_coefficients                   => save_orbital_coefficients_hf
@@ -292,6 +293,8 @@ contains
       wf%system => system
 !
       call wf%read_settings()
+!
+      call wf%print_banner()
 !
       call wf%prepare()
 !
@@ -3518,7 +3521,7 @@ contains
       class(hf) :: wf
 !
       call output%printf('n', '- Cholesky decomposition of AO overlap to get &
-                         &linearly independent orbitals:', ll=100, fs='(/t3,a)')
+                         &linearly independent orbitals:', ffs='(/t3,a)')
 !
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()
@@ -3527,18 +3530,17 @@ contains
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-      call output%printf('m', 'Number of occupied orbitals:  (i8)', &
-                         ints=[wf%n_o], fs='(/t6,a)')
-      call output%printf('m', 'Number of virtual orbitals:   (i8)', &
-                         ints=[wf%n_v], fs='(t6,a)')
-      call output%printf('m', 'Number of molecular orbitals: (i8)', &
-                         ints=[wf%n_mo], fs='(t6,a)')
-      call output%printf('m', 'Number of atomic orbitals:    (i8)', &
-                         ints=[wf%n_ao], fs='(t6,a)')
+      call output%printf('m', '- Orbital details:', &
+                         fs='(/t3,a)')
+!
+      call output%printf('m', 'Number of occupied orbitals:  (i8)', ints=[wf%n_o], fs='(/t6,a)')
+      call output%printf('m', 'Number of virtual orbitals:   (i8)', ints=[wf%n_v], fs='(t6,a)')
+      call output%printf('m', 'Number of molecular orbitals: (i8)', ints=[wf%n_mo], fs='(t6,a)')
+      call output%printf('m', 'Number of atomic orbitals:    (i8)', ints=[wf%n_ao], fs='(t6,a)')
 !
       if (wf%n_mo .lt. wf%n_ao) &
-         call output%printf('m', 'Removed (i0) AOs due to linear dep.', &
-                            ints=[wf%n_ao - wf%n_mo], fs='(/t6,a)')
+         call output%printf('m', '- Removed (i0) AOs due to linear dependencies', &
+            ints=[wf%n_ao - wf%n_mo], fs='(/t3,a)')
 !
    end subroutine set_n_mo_hf
 !
@@ -4279,6 +4281,42 @@ contains
       expectation_value = ddot(wf%n_ao**2, A, 1, density, 1)
 !
    end function calculate_expectation_value_hf
+!
+!
+   subroutine print_banner_hf(wf)
+!!
+!!    Print banner
+!!    Sarai D. Folkestad, Dec 2019
+!!
+!
+      use string_utilities, only : convert_to_uppercase
+!
+      implicit none
+!
+      class(hf) :: wf
+!
+      character(len=200) :: name_
+!
+      name_ = trim(convert_to_uppercase(wf%name_)) // ' wavefunction'
+!
+      call output%printf('m', ':: (a0)', chars=[name_], fs='(//t3,a)')
+      call output%print_separator('minimal', len_trim(name_) + 6, '=')
+!
+      if (wf%system%mm_calculation) then
+!
+         call output%printf('m', 'This is a QM/MM calculation', fs='(/t3,a)')
+         call wf%system%mm%print_description()
+!
+      endif
+!
+      if (wf%system%pcm_calculation)  then
+!
+         call output%printf('m', 'This is a PCM calculation', fs='(/t3,a)')
+         call wf%system%pcm%print_description_and_settings()
+!
+      endif
+!
+   end subroutine print_banner_hf
 !
 !
 end module hf_class

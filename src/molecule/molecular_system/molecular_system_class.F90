@@ -64,8 +64,8 @@ module molecular_system_class
 !
       type(interval), dimension(:), allocatable :: shell_limits 
 !
-      integer :: n_active_atoms_spaces
-      type(active_atoms), dimension(:),allocatable :: active_atoms_spaces
+      integer :: n_active_atom_spaces                                    ! Number of active spaces
+      type(active_atoms), dimension(:),allocatable :: active_atom_spaces ! Array of active spaces
 !
       integer, dimension(:), allocatable :: shell2atom 
 !
@@ -104,6 +104,7 @@ module molecular_system_class
 !
       procedure :: print_system                             => print_system_molecular_system
       procedure :: print_geometry                           => print_geometry_molecular_system
+      procedure :: print_active_atoms                       => print_active_atoms_molecular_system
 !
       procedure :: get_geometry                             => get_geometry_molecular_system
       procedure :: set_geometry                             => set_geometry_molecular_system
@@ -210,7 +211,8 @@ contains
 !
       molecule%charge = 0
       molecule%multiplicity = 1
-      molecule%cartesian_gaussians_int = 0
+      molecule%cartesian_gaussians_int = 0      
+      molecule%n_active_atom_spaces = 0
 !
       call molecule%read_settings()
 !
@@ -247,7 +249,7 @@ contains
       molecule%pcm_calculation = pcm_calculation
 !
       molecule%cartesian_gaussians_int = 0
-      molecule%n_active_atoms_spaces = 0
+      molecule%n_active_atom_spaces = 0
 !
       call molecule%prepare()
 !
@@ -391,7 +393,7 @@ contains
          call molecule%mm%prepare()
 !         
       endif
-!ctg
+!
 !     pcm
 !
       if (molecule%pcm_calculation) then
@@ -1160,23 +1162,17 @@ contains
 !
       enddo
 !
-      molecule%n_active_atoms_spaces = 0
+      molecule%n_active_atom_spaces = 0
 !
       do method = 1, size(methods)
 !
-         if (n_active(method) > 0) molecule%n_active_atoms_spaces = molecule%n_active_atoms_spaces + 1
+         if (n_active(method) > 0) molecule%n_active_atom_spaces = molecule%n_active_atom_spaces + 1
 !
       enddo
 !
-      if (molecule%n_active_atoms_spaces == 0) call output%error_msg('Requested active atoms, but no active spaces found.')
+      if (molecule%n_active_atom_spaces == 0) call output%error_msg('Requested active atoms, but no active spaces found.')
 !
-      allocate(molecule%active_atoms_spaces(molecule%n_active_atoms_spaces))
-!
-      call output%printf('m', 'Active atoms:', fs='(/t6, a)')
-!
-      call output%print_separator('m', 38,'-', fs='(t6, a)')
-      call output%printf('m', ' Atom   Symbol       Basis     Method', fs='(t6, a)')
-      call output%print_separator('m', 38,'-', fs='(t6, a)')
+      allocate(molecule%active_atom_spaces(molecule%n_active_atom_spaces))
 !
 !     Reorder atoms
 !
@@ -1195,21 +1191,16 @@ contains
 !
             if (adjustl(basis(method)) /= '') molecule%atoms(atom)%basis = trim(adjustl(basis(method)))
 !
-            call output%printf('m', '(i4)      ' // molecule%atoms(atom)%symbol // &
-                               '      ' // trim(molecule%atoms(atom)%basis)// &
-                               '       ' // trim(methods(method)), &
-                               ints=[molecule%atoms(atom)%input_number], fs='(t6,a)')
-!
          enddo        
 !
          if (n_active(method) > 0) then
 ! 
             space = space + 1
 !
-            molecule%active_atoms_spaces(space)%level = trim(methods(method))
+            molecule%active_atom_spaces(space)%level = trim(methods(method))
 !
-            molecule%active_atoms_spaces(space)%first_atom = offset + 1
-            molecule%active_atoms_spaces(space)%last_atom = offset + n_active(method)
+            molecule%active_atom_spaces(space)%first_atom = offset + 1
+            molecule%active_atom_spaces(space)%last_atom = offset + n_active(method)
 !
             offset = offset + n_active(method)
 !
@@ -1253,12 +1244,6 @@ contains
          endif 
 !
       enddo
-!
-      call output%print_separator('m', 38,'-', fs='(t6, a)')
-      call output%printf('m', 'Total number of active atoms: (i0)', &
-                         ints=[n_total], fs='(t6, a)')
-      call output%printf('m', 'OBS: Atoms will be reordered, active atoms first', &
-                         fs='(t6, a)')
 !
       deallocate(atoms_copy)
 !
@@ -1850,7 +1835,7 @@ contains
 !
       line_length = 73
 !
-      call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(/t5,a)')
+      call output%print_separator(pl='m', symbol='=', n=line_length, fs='(/t5,a)')
       call output%printf('m', 'Geometry((a0))', fs='(t32,a)', chars=[local_units])
       call output%print_separator(pl='minimal', symbol='=', n=line_length, fs='(t5,a)')
       call output%printf('m', 'Atom          X                Y                &
@@ -1890,7 +1875,17 @@ contains
 !
       class(molecular_system) :: molecule  
 !
-      call output%printf('m', '- Molecular system specifications:', fs='(/t3,a)')
+      if (molecule%mm_calculation) then
+!
+         call output%printf('m', ':: Molecular system specifications (QM)', fs='(//t3,a)')
+         call output%print_separator('m', 42, '=')
+!
+      else
+!
+         call output%printf('m', ':: Molecular system specifications', fs='(//t3,a)')
+         call output%print_separator('m', 37, '=')
+!
+      endif
 !
       call output%printf('m', 'Name:             (a0)', &
                          chars=[trim(molecule%name_)], fs='(/t6,a)')
@@ -1914,6 +1909,8 @@ contains
                          reals=[molecule%get_nuclear_repulsion()], fs='(/t6,a)')
       call output%printf('m', 'Bohr/angstrom value (CODATA 2010): (f25.12)', &
                          reals=[bohr_to_angstrom], fs='(t6,a)')
+!
+      call molecule%print_active_atoms()
 !
       call molecule%print_geometry('angstrom')
       call molecule%print_geometry('bohr')
@@ -2125,11 +2122,11 @@ contains
 !  
       first_atom = 0
 !
-      do i = 1, molecule%n_active_atoms_spaces
+      do i = 1, molecule%n_active_atom_spaces
 !
-         if (trim(molecule%active_atoms_spaces(i)%level) == trim(level)) then
+         if (trim(molecule%active_atom_spaces(i)%level) == trim(level)) then
 !
-            first_atom = molecule%active_atoms_spaces(i)%first_atom
+            first_atom = molecule%active_atom_spaces(i)%first_atom
             exit
 !
          endif
@@ -2167,11 +2164,11 @@ contains
 !  
       last_atom = 0
 !
-      do i = 1, molecule%n_active_atoms_spaces
+      do i = 1, molecule%n_active_atom_spaces
 !
-         if (trim(molecule%active_atoms_spaces(i)%level) == trim(level)) then
+         if (trim(molecule%active_atom_spaces(i)%level) == trim(level)) then
 !
-            last_atom = molecule%active_atoms_spaces(i)%last_atom
+            last_atom = molecule%active_atom_spaces(i)%last_atom
             exit
 !
          endif
@@ -2781,8 +2778,8 @@ contains
       integer :: j 
       integer :: n_active_atoms, n_active_spaces
 !
-      n_active_spaces  = molecule%n_active_atoms_spaces
-      n_active_atoms = molecule%active_atoms_spaces(n_active_spaces)%last_atom
+      n_active_spaces  = molecule%n_active_atom_spaces
+      n_active_atoms = molecule%active_atom_spaces(n_active_spaces)%last_atom
 !
       mu_k = zero 
 !
@@ -2816,8 +2813,8 @@ contains
       integer :: j 
       integer :: n_active_atoms, n_active_spaces
 !
-      n_active_spaces  = molecule%n_active_atoms_spaces
-      n_active_atoms = molecule%active_atoms_spaces(n_active_spaces)%last_atom
+      n_active_spaces  = molecule%n_active_atom_spaces
+      n_active_atoms = molecule%active_atom_spaces(n_active_spaces)%last_atom
 !      
       Q_k = zero 
 !
@@ -3085,6 +3082,51 @@ contains
       enddo ! end loop over atoms
 !          
    end subroutine evaluate_aos_at_point_molecular_system
+!
+!
+   subroutine print_active_atoms_molecular_system(molecule)
+!!
+!!    Print active atoms
+!!    Written by Sarai D. Folkestad, Dec 2019
+!!
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      integer :: i, atom, first, last, n_total
+!
+      if (molecule%n_active_atom_spaces == 0) return
+!
+      call output%printf('m', 'Active atoms:', fs='(/t6, a)')
+!
+      call output%print_separator('m', 38,'=', fs='(/t6, a)')
+      call output%printf('m',' Atom   Symbol       Basis     Method', fs='(t6, a)')
+      call output%print_separator('m', 38,'=', fs='(t6, a)')
+!
+      n_total = 0
+!
+      do i = 1, molecule%n_active_atom_spaces
+!
+         first = molecule%active_atom_spaces(i)%first_atom
+         last  = molecule%active_atom_spaces(i)%last_atom
+         n_total = n_total + last - first + 1
+!
+         do atom = first, last
+!
+            call output%printf('m','(i4)      '// molecule%atoms(atom)%symbol //'      '      &
+                              // trim(molecule%atoms(atom)%basis)                         &
+                              // '       '// trim(molecule%active_atom_spaces(i)%level), &
+                              ints=[molecule%atoms(atom)%input_number],                   &
+                              fs='(t6,a)')
+         enddo
+      enddo
+!
+      call output%print_separator('m', 38,'=', fs='(t6, a)')
+      call output%printf('m','Total number of active atoms: (i0)', ints=[n_total], fs='(t6, a)')
+      call output%printf('m','OBS: Atoms will be reordered, active atoms first', fs='(t6, a)')
+!
+   end subroutine print_active_atoms_molecular_system
 !
 !
 end module molecular_system_class

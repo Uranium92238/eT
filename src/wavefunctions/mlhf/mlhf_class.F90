@@ -89,6 +89,7 @@ module mlhf_class
       procedure :: prepare_for_roothan_hall                 => prepare_for_roothan_hall_mlhf
       procedure :: prepare_for_roothan_hall_mo              => prepare_for_roothan_hall_mlhf
       procedure :: print_energy                             => print_energy_mlhf
+      procedure :: print_banner                             => print_banner_mlhf
 !
       procedure :: append_orbital_info_to_restart           => append_orbital_info_to_restart_mlhf
       procedure :: is_restart_safe                          => is_restart_safe_mlhf
@@ -165,6 +166,8 @@ contains
       wf%print_initial_hf              = .false.
 !
       call wf%read_settings()
+!
+      call wf%print_banner()
 !
       call wf%prepare()
 !
@@ -309,14 +312,14 @@ contains
       integer :: i, n_active_atoms, n_active_spaces
       character(len=100) :: last_active_space_level
 !
-      n_active_spaces = wf%system%n_active_atoms_spaces
-      last_active_space_level = wf%system%active_atoms_spaces(n_active_spaces)%level
+      n_active_spaces = wf%system%n_active_atom_spaces
+      last_active_space_level = wf%system%active_atom_spaces(n_active_spaces)%level
 !
       if (trim(last_active_space_level) .ne. 'hf') then
          call output%error_msg('No hf active space found')
       endif
 !
-      n_active_atoms = wf%system%active_atoms_spaces(n_active_spaces)%last_atom
+      n_active_atoms = wf%system%active_atom_spaces(n_active_spaces)%last_atom
 !
       call wf%restart_file%open_('write', 'append')
 !
@@ -982,13 +985,14 @@ contains
 !
       class(mlhf) :: wf
 !
-     call output%printf('m', '- Size of active orbital spaces in MLHF ', fs='(/t3, a)')
-     call output%printf('m', ' Number of active occupied orbitals :  (i25)', &
-                        ints=[wf%n_o], fs='(/t6, a)')
-     call output%printf('m', ' Number of active virtual orbitals  :  (i25)', &
-                        ints=[wf%n_v], fs='(t6, a)')
-     call output%printf('m', ' Number of active orbitals          :  (i25)', &
-                        ints=[wf%n_v+wf%n_o], fs='(t6, a)')
+     call output%printf('m', '- Active orbital space:', &
+            fs='(/t3, a)')
+     call output%printf('m', ' Number of active occupied orbitals: (i8)', &
+            ints=[wf%n_o], ffs='(/t6, a)')
+     call output%printf('m', ' Number of active virtual orbitals:  (i8)', &
+            ints=[wf%n_v], ffs='(t6, a)')
+     call output%printf('m', ' Number of active orbitals:          (i8)', &
+            ints=[wf%n_v+wf%n_o], ffs='(t6, a)')
 !
    end subroutine print_orbital_space_info_mlhf
 !
@@ -1307,14 +1311,14 @@ contains
       integer, dimension(:), allocatable :: active_atoms
       character(len=100) :: last_active_space_level
 !
-      n_active_spaces = wf%system%n_active_atoms_spaces
-      last_active_space_level = wf%system%active_atoms_spaces(n_active_spaces)%level
+      n_active_spaces = wf%system%n_active_atom_spaces
+      last_active_space_level = wf%system%active_atom_spaces(n_active_spaces)%level
 !
       if (last_active_space_level .ne. 'hf') then
          call output%error_msg('The last active space is not hf, but:' // last_active_space_level)
       endif
 !
-      n_active_atoms = wf%system%active_atoms_spaces(n_active_spaces)%last_atom
+      n_active_atoms = wf%system%active_atom_spaces(n_active_spaces)%last_atom
 !
       call wf%restart_file%open_('read', 'rewind')
 !
@@ -1338,7 +1342,7 @@ contains
                                'of electrons for task ' // trim(task))
       endif
 !
-      if (n_active_atoms .ne. wf%system%active_atoms_spaces(n_active_spaces)%last_atom) then
+      if (n_active_atoms .ne. wf%system%active_atom_spaces(n_active_spaces)%last_atom) then
          call output%error_msg('attempted to restart MLHF with an inconsistent number ' // &
             'of active atoms for task ' // trim(task))
       endif
@@ -1458,12 +1462,11 @@ contains
       ao_density_guess = 'sad'
       storage = 'memory'
 !
-!     Perform the HF calculation in the full space
+      call output%printf('m', '- Initial full hf optimization to a gradient threshold of (e9.2)', &
+                  reals=[wf%full_space_hf_threshold], &
+                  ffs='(/t3,a)', fs='(t6,a)')
 !
-      call output%printf('m', '- Requested initial hf optimization: performing scf-diis', &
-                         fs='(/t3,a)')
-      call output%printf('m', 'Initial hf threshold:         (e11.4)', & 
-                         reals=[wf%full_space_hf_threshold], fs='(/t6,a)')
+!     Perform the HF calculation in the full space
 !
       if(.not. wf%print_initial_hf) call output%mute()
 !
@@ -1486,12 +1489,6 @@ contains
 !
       wf%orbital_coefficients = full_space_wf%orbital_coefficients
       wf%orbital_energies = full_space_wf%orbital_energies
-!
-!     The orbitals are only going to be frozen in the mlhf calculation,
-!     if required, so for now the logical are set to false
-!
-      full_space_wf%frozen_core = .false.
-      full_space_wf%frozen_hf_mos = .false.
 !
       call full_space_wf%cleanup()
 !
@@ -1615,11 +1612,50 @@ contains
 !
       integer :: n_active_hf_atoms, n_active_spaces
 !
-      n_active_spaces = wf%system%n_active_atoms_spaces
+      n_active_spaces = wf%system%n_active_atom_spaces
 !
-      n_active_hf_atoms = wf%system%active_atoms_spaces(n_active_spaces)%last_atom
+      n_active_hf_atoms = wf%system%active_atom_spaces(n_active_spaces)%last_atom
 !
    end function get_n_active_hf_atoms_mlhf
 !
+!
+   subroutine print_banner_mlhf(wf)
+!!
+!!    Print banner
+!!    Sarai D. Folkestad, Dec 2019
+!!
+!
+      use string_utilities, only : convert_to_uppercase
+!
+      implicit none
+!
+      class(mlhf) :: wf
+!
+      call wf%hf%print_banner()
+!
+      call output%printf('m', '- MLHF settings:', fs='(/t3,a)')
+!
+      call output%printf('m', 'Occupied orbitals:    Cholesky', fs='(/t6,a)')
+!
+      if (wf%cholesky_virtuals) then
+!     
+         call output%printf('m', 'Virtual orbitals:     Cholesky', fs='(t6,a)')
+!
+      else
+!     
+         call output%printf('m', 'Virtual orbitals:     PAOs', fs='(t6,a)')
+!
+      endif
+!
+      call output%printf('m', 'Cholesky decomposition threshold: (e9.2)', fs='(/t6,a)', &
+            reals=[wf%cholesky_threshold])
+!
+      if (wf%full_space_optimization) then
+!
+         call output%printf('m', 'Initial optimization of full AO density enabled', fs='(/t6,a)')
+!
+      endif
+!
+   end subroutine print_banner_mlhf
 !
 end module mlhf_class
