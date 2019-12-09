@@ -23,6 +23,37 @@ module mlhf_class
 !!    Written by Linda Goletto Ida-Marie Høyvik,
 !!    and Sarai D. Folkestad, 2019
 !!
+!!
+!!    An initial idempotent density D, is
+!!    partitioned into an active and an external part 
+!!
+!!       D = D^a + D^e
+!!
+!!    The Hartree-Fock energy expression becomes
+!!
+!!       E = e(D^a) + e(D^e) + 2Tr[D^aG(D^e)],
+!!    
+!!    where 
+!!
+!!       e(D^x) = 2Tr(hD^x) + Tr(D^xG(D^x)).
+!!
+!!    In the MLHF procedure, we only optimize the 
+!!    active density (i.e., only rotate among the active orbitals)
+!!
+!!    The Fock matrix of the active space is
+!!
+!!       F = F(D^a) + G(D^e),
+!!
+!!    and the SCF procedure is performed considering this Fock matrix.
+!!
+!!    The SCF procedure is always performed in the MO basis, either
+!!    with the standard Roothan-Hall procedure or with DIIS acceleration.
+!!
+!!    For further information, 
+!!    see S. Sæther, T. Kjærgaard, H. Koch, and I-M. Høyvik, JCTC 13, no. 11 (2017),
+!!    and I-M. Høyvik, Mol. Phys. (2019).
+!!
+!!
 !
    use hf_class
 !
