@@ -96,8 +96,10 @@ contains
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_bicj
-      real(dp), dimension(:,:,:,:), allocatable :: L_bjci
+      real(dp), dimension(:,:,:,:), allocatable :: u_bjci
       real(dp), dimension(:,:,:,:), allocatable :: g_abjc
+!
+      real(dp) :: eps_ci
 !
       integer :: b, j, c, i
 !
@@ -132,8 +134,10 @@ contains
 !
             call batch_c%determine_limits(current_c_batch)
 !
+!           Construct u_bicj = -2g_bicj + g_bjci/(e_bjci), ordered as u_bjci
+!
             call mem%alloc(g_bicj, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
-            call mem%alloc(L_bjci, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
+            call mem%alloc(u_bjci, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
 !
             call wf%get_vovo(g_bicj,                        &
                               batch_b%first, batch_b%last,  &
@@ -141,16 +145,19 @@ contains
                               batch_c%first, batch_c%last,  &
                               1, wf%n_o)
 !
-!$omp parallel do schedule(static) private(i, j, c, b)
-            do b = 1, (batch_b%length)
-               do  j = 1, wf%n_o
-                   do c = 1, (batch_c%length)
-                      do i = 1, wf%n_o
+!$omp parallel do schedule(static) private(i, j, c, b, eps_ci) collapse(2)
+            do i = 1, wf%n_o
+               do c = 1, (batch_c%length)
+!
+                  eps_ci = eps_v(c + batch_c%first - 1) - eps_o(i)
+!
+                  do  j = 1, wf%n_o
+                     do b = 1, (batch_b%length)
 !                 
-                         L_bjci(b,j,c,i) = -(two*g_bicj(b,i,c,j) - g_bicj(b,j,c,i))&
-                                                                /(eps_v(b + batch_b%first - 1)&
-                                                                + eps_v(c + batch_c%first - 1) &
-                                                                - eps_o(i) - eps_o(j))
+                        u_bjci(b,j,c,i) = -(two*g_bicj(b,i,c,j) - g_bicj(b,j,c,i))&
+                                                                /(eps_ci +  &
+                                                                  eps_v(b + batch_b%first - 1)&
+                                                                - eps_o(j))
                       enddo
                    enddo
                enddo
@@ -158,6 +165,8 @@ contains
 !$omp end parallel do
 !
             call mem%dealloc(g_bicj, batch_b%length,wf%n_o, batch_c%length,wf%n_o)
+!
+!           Omega_ai += sum_bjc u_bicj g_abjc       
 !
             call mem%alloc(g_abjc, batch_b%length,wf%n_v, batch_c%length,wf%n_o)
 !
@@ -174,14 +183,14 @@ contains
                         one,                                      &
                         g_abjc,                                   &
                         wf%n_v,                                   &
-                        L_bjci,                                   &
+                        u_bjci,                                   &
                         (batch_b%length)*(batch_c%length)*wf%n_o, &
                         one,                                      &
                         omega,                                    &
                         wf%n_v)
 !
             call mem%dealloc(g_abjc, batch_b%length, wf%n_v, batch_c%length, wf%n_o)
-            call mem%dealloc(L_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
+            call mem%dealloc(u_bjci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
          enddo
       enddo
@@ -264,6 +273,9 @@ contains
 !
                call batch_k%determine_limits(current_k_batch)
 !
+!               Construct t_ajbk = - g_ajbk/e_ajbk, 
+!               store in g_ajbk to avoid double memory requirement
+!
                call mem%alloc(g_ajbk, wf%n_v, batch_j%length,&
                               batch_b%length, batch_k%length)
 !
@@ -299,6 +311,8 @@ contains
                                  batch_k%first, batch_k%last, & 
                                  1, wf%n_o)
 !
+!              Omega_ai += sum_jbk t_ajbk g_jbki       
+!
                call dgemm('N','N',                                             &
                            wf%n_v,                                             &
                            wf%n_o,                                             &
@@ -315,6 +329,7 @@ contains
                call mem%dealloc(g_jbki, batch_j%length, batch_b%length, &
                                 batch_k%length, wf%n_o)
 !
+!              Construct g_kbij and reorder as g_jbki
 !
                call mem%alloc(g_kbji, batch_k%length, batch_b%length, &
                                       batch_j%length, wf%n_o)
@@ -333,6 +348,8 @@ contains
 !
                call mem%dealloc(g_kbji, batch_k%length, batch_b%length, &
                                         batch_j%length, wf%n_o)
+!
+!              Omega_ai += sum_bjk t_ajbk g_kbji
 !
                call dgemm('N','N',                                             &
                            wf%n_v,                                             &
@@ -427,6 +444,8 @@ contains
 !
             call batch_j%determine_limits(current_j_batch)
 !
+!           Construct u_aibj = -(2g_aibj - g_ajbi)/e_aibj
+!
             call mem%alloc(g_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
 !
             call wf%get_vovo(g_aibj,                        &
@@ -458,6 +477,8 @@ contains
 !
             call mem%dealloc(g_aibj, wf%n_v, batch_i%length, wf%n_v, batch_j%length)
 !
+!           Reorder F_jb as F_bj
+!
             call mem%alloc(F_bj, wf%n_v, batch_j%length)
 !
 !$omp parallel do schedule(static) private(b,j)
@@ -469,6 +490,8 @@ contains
                enddo
             enddo
 !$omp end parallel do
+!
+!           Omega_ai += u_aibj F_jb
 !
             omega_offset = wf%n_v*(batch_i%first - 1) + 1
 !
