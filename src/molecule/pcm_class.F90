@@ -54,11 +54,11 @@ module pcm_class
 !      
    contains
 !
-      procedure :: prepare                  => prepare_pcm
-      procedure :: cleanup                  => cleanup_pcm
-      procedure :: read_parameters          => read_parameters_pcm
-      procedure :: pcmsolver_input          => pcmsolver_input_pcm
-      procedure :: print_system             => print_system_pcm
+      procedure :: prepare                         => prepare_pcm
+      procedure :: cleanup                         => cleanup_pcm
+      procedure :: read_parameters                 => read_parameters_pcm
+      procedure :: pcmsolver_input                 => pcmsolver_input_pcm
+      procedure :: print_description_and_settings  => print_description_and_settings_pcm
 !
 !
    end type pcm
@@ -123,8 +123,6 @@ contains
       call mem%alloc(molecule%pcm_rhs, molecule%n_tesserae)
 !
       molecule%charges = zero
-!      
-      call molecule%print_system()
 ! 
       call pcmsolver_print(molecule%pcm_context)
 !
@@ -343,7 +341,7 @@ contains
    end subroutine read_parameters_pcm
 !
 !
-   subroutine print_system_pcm(molecule)
+   subroutine print_description_and_settings_pcm(molecule)
 !!
 !!    Print system PCM
 !!    Written by Tommaso Giovannini, Oct 2019
@@ -352,7 +350,7 @@ contains
 !
       class(pcm) :: molecule  
 !
-      call output%printf('m',  '- Polarizable Continuum Solver via PCMSolver', fs='(//t3,a)')
+      call output%printf('m',  'Polarizable Continuum Solver via PCMSolver', fs='(/t6,a)')
       call output%printf('m', 'For details on PCM, see:', fs='(/t6,a)')
       call output%printf('m', 'Tomasi, Mennucci, Cammi, Chem. Rev. 2005, 105, 2999-3094.', &
                          fs='(t6,a)')
@@ -381,7 +379,7 @@ contains
       endif
 !      
 !
-   end subroutine print_system_pcm
+   end subroutine print_description_and_settings_pcm
 !
 !
 end module pcm_class

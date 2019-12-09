@@ -264,7 +264,7 @@ contains
       iteration = 0
       converged_residual = .false.
 !
-      call output%printf('m', 'Entering iterative loop to solve equations.', fs='(/t3,a)')
+      call output%printf('n', '- Entering iterative loop to solve equations.', fs='(/t3,a)')
 !
       do while (.not. converged_residual .and. (iteration .le. solver%max_iterations))
 !

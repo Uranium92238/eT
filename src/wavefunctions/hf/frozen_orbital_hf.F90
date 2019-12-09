@@ -194,7 +194,14 @@ contains
       call wf%destruct_W_mo_update()
 !
       wf%n_mo = wf%n_mo  - wf%n_frozen_core_orbitals
-      wf%n_o = wf%n_o  - wf%n_frozen_core_orbitals
+      wf%n_o = wf%n_o  - wf%n_frozen_core_orbitals    
+!
+      call output%printf('m', '- Preparation for frozen core approximation', &
+                         fs='(/t3,a)')
+!
+
+      call output%printf('m', 'There are (i0) frozen core orbitals.', &
+                        ints=[wf%n_frozen_core_orbitals], fs='(/t6,a)')
 !
    end subroutine remove_core_orbitals_hf
 !
@@ -236,18 +243,18 @@ contains
 !     
 !     Are there active atoms spaces?
 !
-      if (wf%system%n_active_atoms_spaces .lt. 1) &
+      if (wf%system%n_active_atom_spaces .lt. 1) &
          call output%error_msg('frozen hf orbitals requested, but no active atoms on input')
 !
 !     If there is only one active atoms space, is it HF active?
 !
-      if ((wf%system%n_active_atoms_spaces .eq. 1) .and. &
-          (trim(wf%system%active_atoms_spaces(1)%level) == 'hf')) &
+      if ((wf%system%n_active_atom_spaces .eq. 1) .and. &
+          (trim(wf%system%active_atom_spaces(1)%level) == 'hf')) &
             call output%error_msg('frozen hf orbitals requested, but no active CC atoms on input')
 !
 !     Get the first and last ao indices of the last active space.
 !
-      last_active_level = wf%system%active_atoms_spaces(wf%system%n_active_atoms_spaces)%level
+      last_active_level = wf%system%active_atom_spaces(wf%system%n_active_atom_spaces)%level
 !
       call wf%system%first_and_last_ao_active_space(trim(last_active_level), first_ao, last_ao)
 !
@@ -387,6 +394,16 @@ contains
 !
       call wf%diagonalize_fock_frozen_hf_orbitals() 
 !
+      call output%printf('m', '- Preparation for frozen Hartree-Fock orbitals', &
+                         fs='(/t3,a)')
+!
+      call output%printf('m', 'There are (i0) frozen occupied orbitals.', &
+                        ints=[wf%n_frozen_hf_o], fs='(/t6,a)')
+!
+
+      call output%printf('m', 'There are (i0) frozen virtual orbitals.', &
+                        ints=[wf%n_frozen_hf_orbitals-wf%n_frozen_hf_o], fs='(t6,a)')
+!
    end subroutine remove_frozen_hf_orbitals_hf
 !
 !
@@ -462,12 +479,6 @@ contains
       real(dp), dimension(:,:), allocatable :: D
       real(dp), dimension(:,:), allocatable :: ao_F_fc
 !
-      call output%printf('m', ':: Frozen orbital approximation is prepared', fs='(/t3,a)')
-!
-
-      call output%printf('m', 'There are (i0) frozen core orbitals.', &
-                         ints=[wf%n_frozen_core_orbitals], fs='(t6,a)')
-!
       call mem%alloc(D, wf%n_ao, wf%n_ao)
 !
 !     add frozen core contribution
@@ -535,12 +546,6 @@ contains
       wf%mo_fock_frozen_hf_file = sequential_file('MO_frozen_hf_Fock')
 !
       if (.not. wf%frozen_hf_mos) return
-!
-      call output%printf('m', ':: Frozen orbital approximation is prepared', fs='(/t3,a)')
-!
-      call output%printf('m', 'There are (i0) frozen valence orbitals and (i0) &
-                         &frozen virtual orbitals.', ints=[wf%n_frozen_hf_o, &
-                         wf%n_frozen_hf_orbitals-wf%n_frozen_hf_o], fs='(t6,a)')
 !
       call mem%alloc(D, wf%n_ao, wf%n_ao)
 !

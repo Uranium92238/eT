@@ -66,6 +66,7 @@ module mm_class
 !
       procedure :: print_system             => print_system_mm
       procedure :: print_geometry           => print_geometry_mm
+      procedure :: print_description        => print_description_mm
 !
       procedure :: fq_matrix_create         => fq_matrix_create_mm
 !
@@ -204,7 +205,8 @@ contains
 !
       class(mm) :: molecule  
 !
-      call output%printf('m', '- Molecular Mechanics Specifications', fs='(/t3,a)')
+      call output%printf('m', ':: Molecular system specifications (MM)', fs='(//t3,a)')
+      call output%print_separator('m', 42, '=')
 !
       call output%printf('m', 'Force Field:  ' // trim(molecule%forcefield), fs='(/t6,a)')
 !
@@ -275,65 +277,6 @@ contains
       enddo 
 !
       call output%print_separator('m', 68,'=', fs='(t5,a)')
-!
-      if(trim(molecule%forcefield).eq.'non-polarizable') then
-!
-         call output%printf('m',  '- Electrostatic Embedding', fs='(//t3,a)')
-         call output%printf('m', 'Each atom of the MM portion is endowed with a &
-                            &charge which value is a fixed external parameter.' &
-                            &, ffs='(/t6,a)', fs='(t6,a)')
-         call output%printf('m', 'The QM/MM electrostatic interaction energy is &
-                            &defined as:', fs='(t6,a)')
-                            
-         call output%printf('m', '   E^ele_QM/MM = sum_i q_i * V_i(P)', fs='(/t6,a)')
-         call output%printf('m', 'where V_i(P) is the electrostatic potential &
-                            &due to the QM density calculated at the position &
-                            &of the i-th charge q_i.', ffs='(/t6,a)', fs='(t6,a)')
-         call output%printf('m', 'For further details, see:', fs='(/t6,a)')
-         call output%printf('m', 'Senn & Thiel, Angew. Chem. Int. Ed., 2009, &
-                            &48, 1198−1229', fs='(t6,a/)')
-!
-         if(input%requested_cc_calculation()) &
-            call output%printf('m', 'CC calculation: MM charges only affect MOs &
-                               &and Fock', fs='(t6,a/)')
-!
-      else if(trim(molecule%forcefield) .eq. 'fq') then
-!
-         call output%printf('m', '- Polarizable Embedding : Fluctuating Charges &
-                            &(FQ) Force Field', fs='(//t3,a)')
-!
-         call output%printf('m', 'Each atom of the MM portion is endowed with a &
-                            &charge '        // 'which value can vary in &
-                            &agreement with the Electronegativity' //  &
-                            'Equalization Principle (EEP), which states that at &
-                            &the '      // 'equilibrium each atom has the same electronegativity.', &
-                            fs='(t6,a)', ffs='(/t6,a)')
-!
-         call output%printf('m', 'The force field is defined in terms of &
-                            &electronegativity ' // '(Chi) and chemical &
-                            &hardness (Eta), which are specified '   // 'for &
-                            &each MM atom.', fs='(t6,a)', ffs='(/t6,a)')
-!
-         call output%printf('m', 'The QM/MM electrostatic interaction energy is &
-                            &defined as:', fs='(t6,a)')
-         call output%printf('m',  '   E^ele_QM/MM = sum_i q_i * V_i(P)', fs='(/t6,a)')
-!
-         call output%printf('m', 'where V_i(P) is the electrostatic potential &
-                            &due to the QM'  // 'density calculated at the &
-                            &position of the i-th charge q_i.' // 'The values &
-                            &of the charges are obtained by solving a linear' // &
-                            'equation:', fs='(t6,a)', ffs='(/t6,a)')
-         call output%printf('m', '   Dq = -Chi - V(P)', fs='(/t6,a)')
-         call output%printf('m', 'For further details, see:', fs='(/t6,a)')
-         call output%printf('m', 'C. Cappelli. IJQC, 2016, 116, 1532-1542.', fs='(t6,a/)')
-!
-         if(input%requested_cc_calculation()) then 
-            call output%printf('m', 'CC calculation: zero-order approximation', fs='(t6,a)') 
-            call output%printf('m', 'FQ charges only affect MOs and Fock', fs='(t6,a/)') 
-         endif
-!
-      endif
-!
 !
    end subroutine print_geometry_mm
 !
@@ -500,5 +443,73 @@ contains
 !      
    end subroutine read_geometry_mm
 !
+!
+   subroutine print_description_mm(molecule)
+!!
+!!    Print description
+!!    Written by Tommaso Giovannini, April 2019
+!!    
+      implicit none
+!
+      class(mm), intent(in) :: molecule
+!
+      if(trim(molecule%forcefield).eq.'non-polarizable') then
+!
+         call output%printf('n', 'Electrostatic Embedding:', fs='(/t6,a)')
+         call output%printf('n', 'Each atom of the MM portion is endowed with a charge which &
+                            &value is a fixed external parameter.', &
+                              ffs='(/t6,a)', fs='(t6,a)')
+
+         call output%printf('n', 'The QM/MM electrostatic interaction energy is defined as:', &
+                              fs='(/t6,a)')
+                            
+         call output%printf('n', 'E^ele_QM/MM = sum_i q_i * V_i(P)',  fs='(/t9,a)')
+!
+         call output%printf('n', 'where V_i(P) is the electrostatic potential due to the &
+                            &QM density calculated at the position of the i-th charge q_i.', &
+                              ffs='(/t6,a)', fs='(t6,a)')
+         call output%printf('n', 'For further details, see:',  fs='(/t6,a)')
+         call output%printf('n', 'Senn & Thiel, Angew. Chem. Int. Ed., 2009, 48, 1198−1229', &
+                              fs='(t6,a/)')
+!
+         if(input%requested_cc_calculation()) &
+            call output%printf('n', 'CC calculation: MM charges only affect MOs and Fock', &
+                                 fs='(t6,a/)')
+!
+      else if(trim(molecule%forcefield) .eq. 'fq') then
+!
+         call output%printf('n', 'Polarizable Embedding: &
+                           &Fluctuating Charges (FQ) Force Field',  fs='(/t6,a)')
+!
+         call output%printf('n', 'Each atom of the MM portion is endowed with a charge '        //&
+                            'which value can vary in agreement with the Electronegativity' //&
+                            'Equalization Principle (EEP), which states that at the '      //&
+                            'equilibrium each atom has the same electronegativity.',         &
+                             fs='(t6,a)', ffs='(/t6,a)')
+!
+         call output%printf('n', 'The force field is defined in terms of electronegativity ' //&
+                            '(Chi) and chemical hardness (Eta), which are specified '   //&
+                            'for each MM atom.', fs='(t6,a)', ffs='(/t6,a)')
+!
+         call output%printf('n', 'The QM/MM electrostatic interaction energy is defined as:', &
+                              fs='(/t6,a)')
+         call output%printf('n', 'E^ele_QM/MM = sum_i q_i * V_i(P)',  fs='(/t9,a)')
+!
+         call output%printf('n', 'where V_i(P) is the electrostatic potential due to the QM'  //&
+                            'density calculated at the position of the i-th charge q_i.' //&
+                            'The values of the charges are obtained by solving a linear' //&
+                            'equation:', fs='(t6,a)', ffs='(/t6,a)')
+         call output%printf('n', 'Dq = -Chi - V(P)',  fs='(/t9,a)')
+         call output%printf('n', 'For further details, see:',  fs='(/t6,a)')
+         call output%printf('n', 'C. Cappelli. IJQC, 2016, 116, 1532-1542.',  fs='(t6,a/)')
+!
+         if(input%requested_cc_calculation()) then 
+            call output%printf('n', 'CC calculation: zero-order approximation',  fs='(t6,a)') 
+            call output%printf('n', 'FQ charges only affect MOs and Fock',  fs='(t6,a/)') 
+         endif
+!
+      endif
+!
+   end subroutine print_description_mm
 !
 end module mm_class

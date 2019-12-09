@@ -164,7 +164,11 @@ contains
 !
       wf%system => system
 !
+      wf%name_ = 'uhf'
+!
       call wf%read_settings()
+!
+      call wf%print_banner()
 !
       call wf%prepare()
 !
@@ -203,8 +207,6 @@ contains
       implicit none
 !
       class(uhf) :: wf
-!
-      wf%name_ = 'uhf'
 !
       wf%n_ao = wf%system%get_n_aos()
 !
@@ -1931,6 +1933,10 @@ contains
       wf%n_densities = 2
 !
       call wf%determine_n_alpha_and_n_beta()
+!
+!
+      call output%printf('m', '- Orbital details:', &
+                         fs='(/t3,a)')
 !
       call output%printf('m', 'Number of alpha electrons:        (i8)', &
                          ints=[wf%n_alpha], fs='(/t6,a)')

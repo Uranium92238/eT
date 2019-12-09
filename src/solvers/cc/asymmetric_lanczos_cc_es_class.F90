@@ -304,7 +304,7 @@ contains
             if (lanczos%chain_length .lt. solver%chain_length) then 
 !
                call output%warning_msg('Chain length value reset = (i4)', &
-                                       ints=[lanczos%chain_length], fs='(/t6,a)')
+                  & ints=[lanczos%chain_length], fs='(/t6,a)')
 !
                exit 
 !
@@ -593,7 +593,7 @@ contains
 !
       call output%print_separator('minimal', 70, '-', fs='(t6, a)')
 !
-     call output%printf('m', 'For full spectrum see file: ' //  &
+      call output%printf('m', 'For full spectrum see file: ' //  &
                         trim(wf%system%name_) // '_' //  &
                         trim(adjustl(chain_length_string)) // '_' //  &
                         component_string(component), fs='(t6,a)')

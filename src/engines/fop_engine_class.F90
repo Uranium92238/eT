@@ -1179,7 +1179,7 @@ contains
 !
       character(len=5) :: fop_type
 !
-      engine%name_       = ':: First order coupled cluster properties engine'
+      engine%name_       = 'First order coupled cluster properties engine'
 !
       engine%tag = 'first order properties'
 !
