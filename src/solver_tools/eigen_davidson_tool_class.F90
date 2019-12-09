@@ -49,7 +49,7 @@ module eigen_davidson_tool_class
 !!
 !!             II. Read new trials, transform them, & store the result 
 !!
-!!             do trial = davidson%first_trial(), davidson%last_trial()
+!!             do trial = davidson%first_new_trial(), davidson%last_new_trial()
 !!
 !!                call davidson%get_trial(c, trial)
 !!                Transform: c <- A c 
