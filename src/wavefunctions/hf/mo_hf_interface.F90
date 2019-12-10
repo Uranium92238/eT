@@ -32,6 +32,7 @@
 !
       class(hf), intent(in) :: wf
       real(dp) :: max_gradient
+!
    end function get_max_roothan_hall_mo_gradient_hf
 !
 !

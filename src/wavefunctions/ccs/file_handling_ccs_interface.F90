@@ -219,6 +219,7 @@
       implicit none 
 !
       class(ccs), intent(inout) :: wf 
+!
    end function get_n_excitation_energies_on_file_ccs
 !
 !
@@ -237,6 +238,7 @@
       class(ccs) :: wf 
       character(len=*), intent(in) :: side 
       integer :: n_states
+!
    end function get_n_excited_states_on_file_ccs
 !
 !

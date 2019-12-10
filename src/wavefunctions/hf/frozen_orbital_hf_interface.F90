@@ -217,4 +217,5 @@
 !
       class(hf), intent(in) :: wf
       integer :: n_active_hf_atoms
+!
    end function get_n_active_hf_atoms_hf
