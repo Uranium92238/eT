@@ -41,6 +41,7 @@ module wavefunction_class
       character(len=40) :: name_
 !
       real(dp)    :: energy
+      real(dp)    :: hf_energy
       complex(dp) :: energy_complex
 !
       real(dp)    :: correlation_energy
@@ -71,10 +72,9 @@ module wavefunction_class
 !     Frozen orbital variables. Frozen orbitals are typically frozen core or frozen HF orbitals.
 !
       real(dp), dimension(:,:), allocatable :: mo_fock_fc_term 
-      real(dp), dimension(:,:), allocatable :: mo_fock_frozen_hf_term 
+      real(dp), dimension(:,:), allocatable :: mo_fock_frozen_hf_term
       real(dp), dimension(:,:), allocatable :: mlhf_inactive_fock_term
 !
-      type(sequential_file) :: mo_fock_fc_file, mo_fock_frozen_hf_file
       type(sequential_file) :: mm_matrices_file, pcm_matrices_file
 !
       logical :: frozen_core

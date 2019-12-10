@@ -105,6 +105,7 @@ module hf_class
 !     Preparation and cleanup routines
 !
       procedure :: cleanup                                     => cleanup_hf
+      procedure :: prepare_for_cc                              => prepare_for_cc_hf
 !
       procedure :: read_settings                               => read_settings_hf
       procedure :: read_hf_settings                            => read_hf_settings_hf
@@ -1022,21 +1023,9 @@ contains
 !
       class(hf) :: wf
 !
-      call wf%save_ao_density()
-!
-      call wf%prepare_mos()
-      call wf%prepare_frozen_fock_terms()
-!
-!     Save orbital information in orbital_information_file for CC
-!
-      call wf%write_orbital_information()
-!
-!     Save MM and PCM matrices for CC
-!
-      if (wf%system%mm_calculation) call wf%write_mm_matrices()
-      if (wf%system%pcm_calculation) call wf%write_pcm_matrices()
-!
 !     Deallocations
+!
+      call wf%save_ao_density()
 !
       call wf%destruct_orbital_energies()
       call wf%destruct_orbital_coefficients()
@@ -1053,8 +1042,38 @@ contains
 !
       call wf%destruct_mm_matrices()
       call wf%destruct_pcm_matrices()
+      call wf%destruct_mo_fock_frozen_hf_term()
+      call wf%destruct_mo_fock_fc_term()
 !
    end subroutine cleanup_hf
+!
+!
+   subroutine  prepare_for_cc_hf(wf)
+!!
+!!    Prepare for CC
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Prepares frozen fock terms, 
+!!    and places energy in hf_energy
+!!
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+!     Change the MOs if frozen core or frozen hf 
+!     is requested
+!
+      call wf%prepare_mos()
+!
+!     Prepare frozen Fock terms from frozen core 
+!     and frozen HF
+!
+      call wf%prepare_frozen_fock_terms()
+!
+      wf%hf_energy = wf%energy
+!
+   end subroutine prepare_for_cc_hf
 !
 !
    subroutine initialize_ao_density_hf(wf)

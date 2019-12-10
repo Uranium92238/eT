@@ -252,12 +252,13 @@ module cc3_class
 contains
 !
 !
-   function new_cc3(system) result(wf)
+   function new_cc3(system, template_wf) result(wf)
 !!
 !!    New CC3
 !!    Written by Rolf H. Myhre, 2018
 !!
-      use molecular_system_class, only: molecular_system
+      use molecular_system_class, only: molecular_system!
+      use wavefunction_class, only : wavefunction
 !
       implicit none
 !
@@ -265,9 +266,12 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
+      class(wavefunction), intent(in) :: template_wf
+!
       wf%name_ = 'cc3'
 !
       call wf%general_cc_preparations(system)
+      call wf%set_variables_from_template_wf(template_wf)
 !
       wf%n_t1 = (wf%n_o)*(wf%n_v)
       wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2

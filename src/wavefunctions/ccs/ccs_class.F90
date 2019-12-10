@@ -39,7 +39,9 @@ module ccs_class
    use index_invert, only : invert_compound_index, invert_packed_index
    use batching_index_class, only : batching_index
    use timings_class, only : timings
-   use file_storer_class, only: file_storer
+   use file_storer_class, only : file_storer
+!
+   use hf_class, only : hf
 !
    implicit none
 !
@@ -73,7 +75,6 @@ module ccs_class
 !
       type(mo_integral_tool) :: integrals
 !
-      real(dp)    :: hf_energy
       complex(dp) :: hf_energy_complex
 !
       real(dp),    dimension(:,:), allocatable :: t1
@@ -199,8 +200,6 @@ module ccs_class
       procedure :: read_excited_state                            => read_excited_state_ccs
       procedure :: save_excitation_energies                      => save_excitation_energies_ccs
       procedure :: read_excitation_energies                      => read_excitation_energies_ccs
-      procedure :: read_frozen_orbital_terms                     => read_frozen_orbital_terms_ccs
-      procedure :: read_mlhf_inactive_fock_term                  => read_mlhf_inactive_fock_term_ccs
 !
       procedure :: write_cc_restart                              => write_cc_restart_ccs
 !
@@ -459,8 +458,8 @@ module ccs_class
 !
 !     MM and PCM reading fock matrices
 !
-      procedure :: read_mm_fock_contributions                  => read_mm_fock_contributions_ccs
-      procedure :: read_pcm_fock_contributions                 => read_pcm_fock_contributions_ccs
+      procedure :: read_mm_fock_contributions                     => read_mm_fock_contributions_ccs
+      procedure :: read_pcm_fock_contributions                    => read_pcm_fock_contributions_ccs
 !
 !     Core-valence separation procedures
 !
@@ -471,6 +470,8 @@ module ccs_class
 !
       procedure :: cleanup                                       => cleanup_ccs
       procedure :: general_cc_preparations                       => general_cc_preparations_ccs
+      procedure :: set_variables_from_template_wf  &
+                => set_variables_from_template_wf_ccs
 !
       procedure :: is_restart_safe                               => is_restart_safe_ccs
 !
@@ -547,7 +548,7 @@ module ccs_class
 contains
 !
 !
-   function new_ccs(system) result(wf)
+   function new_ccs(system, template_wf) result(wf)
 !!
 !!    New CCS
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -556,11 +557,14 @@ contains
 !
       type(ccs) :: wf
 !
+      class(wavefunction), intent(in) :: template_wf
+!
       class(molecular_system), target, intent(in) :: system 
 !
       wf%name_ = 'ccs'
 !
       call wf%general_cc_preparations(system)
+      call wf%set_variables_from_template_wf(template_wf)
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1
@@ -602,24 +606,94 @@ contains
 !
       call wf%read_settings()
 !
-!     Read necessary information from HF
+   end subroutine general_cc_preparations_ccs
 !
-      call wf%read_hf()
+!
+   subroutine set_variables_from_template_wf_ccs(wf, template_wf)
+!!
+!!    Set variables from template wavefunction
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Transfers the wavefunction variables needed to start a 
+!!    CC calculation from either an HF of a CC wavefunction
+!!
+      implicit none
+!
+      class(ccs) :: wf
+
+      class(wavefunction), intent(in) :: template_wf
+!
+      wf%n_o = template_wf%n_o
+      wf%n_v = template_wf%n_v
+!
+      wf%n_ao = template_wf%n_ao
+      wf%n_mo = template_wf%n_mo
+!
+      wf%hf_energy = template_wf%energy
+!
+!     Set orbital coefficients and energies
+!
+      call wf%initialize_orbital_coefficients()
+      call wf%initialize_orbital_energies()
+!
+      call dcopy(wf%n_mo, template_wf%orbital_energies, 1, wf%orbital_energies, 1)
+!
+      call dcopy(wf%n_ao*wf%n_mo, template_wf%orbital_coefficients, 1, wf%orbital_coefficients, 1)
 !
 !     Handle changes in the number of MOs as a result of 
 !     special methods
 !
       if (wf%bath_orbital) call wf%make_bath_orbital()
 !
-      if (wf%frozen_core .or. wf%frozen_hf_mos) call wf%read_frozen_orbital_terms()
-      if (wf%mlhf_reference) call wf%read_mlhf_inactive_fock_term()
+!     Set extra contributions to the fock matrix
 !
-!     Read MM or PCM file if present
+      if (wf%frozen_core) then
 !
-      if (wf%system%mm_calculation)  call wf%read_mm_fock_contributions()
-      if (wf%system%pcm_calculation) call wf%read_pcm_fock_contributions()
+         call wf%initialize_mo_fock_fc_term()
+         call dcopy(wf%n_mo**2, template_wf%mo_fock_fc_term, 1, wf%mo_fock_fc_term, 1)
+!
+      endif
+!
+      if (wf%frozen_hf_mos) then
+!
+         call wf%initialize_mo_fock_frozen_hf_term()
+         call dcopy(wf%n_mo**2, template_wf%mo_fock_frozen_hf_term, 1, wf%mo_fock_frozen_hf_term, 1)
+!
+      endif
+!
+      if (wf%mlhf_reference) then
+!
+         call wf%initialize_mlhf_inactive_fock_term()
+         call dcopy(wf%n_mo**2, template_wf%mlhf_inactive_fock_term, 1, &
+                        wf%mlhf_inactive_fock_term, 1)
+!
+      endif
+!
+     if (wf%system%mm_calculation) then
+!
+         if(wf%system%mm%forcefield .eq. 'non-polarizable') then 
+!
+            call mem%alloc(wf%nopol_h_wx, wf%n_ao, wf%n_ao)
+            call dcopy(wf%n_ao**2, template_wf%nopol_h_wx, 1, wf%nopol_h_wx, 1)
+!
+         else if(wf%system%mm%forcefield .eq. 'fq') then
+!
+            call mem%alloc(wf%pol_emb_fock, wf%n_ao,wf%n_ao)
+            call dcopy(wf%n_ao**2, template_wf%pol_emb_fock, 1, wf%pol_emb_fock, 1)
+!
+         endif
+!
+     endif
+!
+     if (wf%system%pcm_calculation) then
+!
+         call wf%initialize_pcm_matrices()
+         call dcopy(wf%n_ao**2, template_wf%pcm_fock, 1, wf%pcm_fock, 1)
+!
+     endif
 !
 !     print orbital space info for cc
+!
       call output%printf('m', ' - Number of orbitals for coupled cluster calculation', &
                          fs='(/t3,a)')
       call output%printf('m', 'Number of occupied orbitals:    (i12)', &
@@ -631,7 +705,7 @@ contains
       call output%printf('m', 'Number of atomic orbitals:      (i12)', &
                          ints=[wf%n_ao], fs='(t6,a)')
 !
-   end subroutine general_cc_preparations_ccs
+   end subroutine set_variables_from_template_wf_ccs
 !
 !
    subroutine cleanup_ccs(wf)
@@ -653,7 +727,6 @@ contains
       call wf%destruct_mlhf_inactive_fock_term()
 !
       call wf%destruct_mm_matrices()
-!
       call wf%destruct_pcm_matrices()
 !
       call wf%integrals%cleanup()
@@ -1551,68 +1624,6 @@ contains
    end subroutine mo_preparations_ccs
 !
 !
-   subroutine read_frozen_orbital_terms_ccs(wf)
-!!
-!!    Read frozen orbital contributions
-!!    Written by Sarai D. Folkestad, Oct 2019
-!!
-!!    Reads frozen orbital contributions to the
-!!    mo Fock matrix.
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      if (wf%frozen_core) then
-!      
-         call wf%initialize_mo_fock_fc_term()
-!
-         wf%mo_fock_fc_file = sequential_file('MO_Fock_FC')
-!
-         call wf%mo_fock_fc_file%open_('read', 'rewind')
-         call wf%mo_fock_fc_file%read_(wf%mo_fock_fc_term, wf%n_mo**2)
-         call wf%mo_fock_fc_file%close_('keep')
-!
-      endif
-!
-      if (wf%frozen_hf_mos) then
-!
-         call wf%initialize_mo_fock_frozen_hf_term()
-!
-         wf%mo_fock_frozen_hf_file = sequential_file('MO_frozen_hf_Fock')
-!
-         call wf%mo_fock_frozen_hf_file%open_('read', 'rewind')
-         call wf%mo_fock_frozen_hf_file%read_(wf%mo_fock_frozen_hf_term, wf%n_mo**2)
-         call wf%mo_fock_frozen_hf_file%close_('keep')
-!
-      endif
-!
-   end subroutine read_frozen_orbital_terms_ccs
-!
-!
-   subroutine read_mlhf_inactive_fock_term_ccs(wf)
-!!
-!!    Read mlhf inactive Fock term
-!!    Written by Sarai D. Folkestad and Linda Goletto, Oct 2019
-!!
-!!    Reads frozen orbital contributions to the
-!!    mo Fock matrix.
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!      
-      call wf%initialize_mlhf_inactive_fock_term()
-!
-      wf%mlhf_inactive_fock_term_file = sequential_file('mlhf_inactive_fock_term')
-!
-      call wf%mlhf_inactive_fock_term_file%open_('read', 'rewind')
-      call wf%mlhf_inactive_fock_term_file%read_(wf%mlhf_inactive_fock_term, wf%n_mo**2)
-      call wf%mlhf_inactive_fock_term_file%close_('keep')
-!
-   end subroutine read_mlhf_inactive_fock_term_ccs
-!
-!
    subroutine check_for_degeneracies_ccs(wf, transformation, threshold)
 !!
 !!    Check for degeneracies in the excited states
@@ -2258,8 +2269,8 @@ contains
 !
       call wf%initialize_mm_matrices()
 !      
-      if(wf%system%mm%forcefield.eq.'non-polarizable') &
-         call mem%alloc(wf%nopol_h_wx,wf%n_ao,wf%n_ao)
+      if(wf%system%mm%forcefield .eq. 'non-polarizable') &
+         call mem%alloc(wf%nopol_h_wx, wf%n_ao, wf%n_ao)
 !
       call wf%read_mm_matrices()
 !

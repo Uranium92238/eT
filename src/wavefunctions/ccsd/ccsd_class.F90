@@ -282,7 +282,7 @@ module ccsd_class
 contains
 !
 !
-   function new_ccsd(system) result(wf)
+   function new_ccsd(system, template_wf) result(wf)
 !!
 !!    New CCSD
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -291,11 +291,14 @@ contains
 !
       type(ccsd) :: wf
 !
+      class(wavefunction), intent(in) :: template_wf
+!
       class(molecular_system), target, intent(in) :: system 
 !
       wf%name_ = 'ccsd'
 !
       call wf%general_cc_preparations(system)
+      call wf%set_variables_from_template_wf(template_wf)
 !
       wf%need_g_abcd = .true.
 !

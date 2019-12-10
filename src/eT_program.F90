@@ -32,6 +32,10 @@ program eT_program
    use libint_initialization, only : initialize_libint, finalize_libint
    use molecular_system_class, only : molecular_system
 !
+   use hf_class, only: hf 
+   use uhf_class, only: uhf 
+   use mlhf_class, only: mlhf 
+!
    use omp_lib
 !
    implicit none
@@ -45,6 +49,41 @@ program eT_program
 !  Timer object
 !
    type(timings) :: eT_timer
+!
+!  Reference wavefunction
+!
+   class(hf), allocatable  :: ref_wf
+!
+!  Interface reference and CC wavefunction calculation
+!
+   interface
+!
+      subroutine reference_calculation(system, ref_wf)
+!
+         use molecular_system_class, only: molecular_system
+         use hf_class, only: hf
+!
+         implicit none
+!
+         type(molecular_system), intent(inout)  :: system
+         class(hf), allocatable, intent(inout)  :: ref_wf
+!
+      end subroutine reference_calculation
+!
+      subroutine cc_calculation(system, ref_wf)
+!
+         use molecular_system_class, only: molecular_system
+!
+         use hf_class, only: hf 
+!
+         implicit none
+!
+         type(molecular_system) :: system
+         class(hf), intent(in)  :: ref_wf
+!
+      end subroutine cc_calculation
+!
+   end interface
 !
 !  Prepare input, output and timing file
 !
@@ -94,11 +133,27 @@ program eT_program
 !
 !  Hartree-Fock calculation
 !
-   if (input%requested_reference_calculation()) call reference_calculation(system)
+   if (input%requested_reference_calculation()) then
 !
-!  Coupled cluster calculation
+      call reference_calculation(system, ref_wf)
 !
-   if (input%requested_cc_calculation()) call cc_calculation(system)
+!     Coupled cluster calculation
+!
+      if (input%requested_cc_calculation()) then
+!
+         call ref_wf%prepare_for_cc()
+         call cc_calculation(system, ref_wf)
+!
+      endif
+!
+      call ref_wf%cleanup()
+!
+   else
+!
+      if (input%requested_cc_calculation()) &
+         call output%error_msg('to run CC calculation reference wavefunction must be specified.')
+!
+   endif
 !
    call finalize_libint() ! No longer safe to use Libint
 !
@@ -119,7 +174,7 @@ program eT_program
 end program eT_program
 !
 !
-subroutine reference_calculation(system)
+subroutine reference_calculation(system, ref_wf)
 !!
 !! Reference calculation
 !! Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -131,18 +186,18 @@ subroutine reference_calculation(system)
    use global_in,  only: input 
    use global_out, only: output
 !
+   use reference_engine_class, only: reference_engine 
+   use hf_geoopt_engine_class, only: hf_geoopt_engine 
+!
    use hf_class, only: hf 
    use uhf_class, only: uhf 
    use mlhf_class, only: mlhf 
 !
-   use reference_engine_class, only: reference_engine 
-   use hf_geoopt_engine_class, only: hf_geoopt_engine 
-!
    implicit none
 !
-   type(molecular_system) :: system
+   type(molecular_system), intent(inout) :: system
 !
-   class(hf), allocatable  :: ref_wf
+   class(hf), allocatable, intent(inout)  :: ref_wf
 !
    class(reference_engine), allocatable :: ref_engine
 !
@@ -180,12 +235,11 @@ subroutine reference_calculation(system)
    endif 
 !
    call ref_engine%ignite(ref_wf)
-   call ref_wf%cleanup()
 !
 end subroutine reference_calculation
 !
 !
-subroutine cc_calculation(system)
+subroutine cc_calculation(system, ref_wf)
 !!
 !! Coupled cluster calculation
 !! Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2019
@@ -196,6 +250,8 @@ subroutine cc_calculation(system)
    use global_out, only: output 
 !
    use molecular_system_class, only: molecular_system
+!
+   use hf_class, only: hf 
 !
    use ccs_class, only: ccs 
    use cc2_class, only: cc2 
@@ -210,19 +266,18 @@ subroutine cc_calculation(system)
    use es_engine_class, only: es_engine
    use zop_engine_class, only: zop_engine 
    use fop_engine_class, only: fop_engine 
-   use td_engine_class, only: td_engine 
+   use td_engine_class, only: td_engine
 !
    implicit none
 !
    type(molecular_system) :: system
 !
+   class(hf), intent(in)  :: ref_wf
+!
    class(ccs), allocatable :: cc_wf
    class(gs_engine), allocatable :: cc_engine 
 !
    character(len=30) :: cc_wf_name
-!
-   if (.not. input%requested_reference_calculation()) &
-      call output%error_msg('to run CC calculation reference wavefunction must be specified.')
 !
    cc_wf_name = input%get_cc_wf()
 !
@@ -230,35 +285,35 @@ subroutine cc_calculation(system)
 !
       case ('ccs')
 !
-         cc_wf = ccs(system)
+         cc_wf = ccs(system, ref_wf)
 !
       case ('cc2')
 !
-         cc_wf = cc2(system)
+         cc_wf = cc2(system, ref_wf)
 !
       case ('lowmem-cc2')
 !
-         cc_wf = lowmem_cc2(system)
+         cc_wf = lowmem_cc2(system, ref_wf)
 !
       case ('ccsd')
 !
-         cc_wf = ccsd(system)
+         cc_wf = ccsd(system, ref_wf)
 !
       case ('cc3')
 !
-         cc_wf = cc3(system)
+         cc_wf = cc3(system, ref_wf)
 !
       case ('ccsd(t)')
 !
-         cc_wf = ccsdpt(system)
+         cc_wf = ccsdpt(system, ref_wf)
 !
       case ('mp2')
 !
-         cc_wf = mp2(system)
+         cc_wf = mp2(system, ref_wf)
 !
       case ('mlcc2')
 !
-         cc_wf = mlcc2(system)
+         cc_wf = mlcc2(system, ref_wf)
 !
       case default
 !

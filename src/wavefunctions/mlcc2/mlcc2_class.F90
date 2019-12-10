@@ -243,7 +243,7 @@ module mlcc2_class
 contains
 !
 !
-   function new_mlcc2(system) result(wf)
+   function new_mlcc2(system, template_wf) result(wf)
 !!
 !!    New mlcc2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -255,6 +255,8 @@ contains
       type(mlcc2) :: wf
 !
       class(molecular_system), target, intent(in) :: system 
+!
+      class(wavefunction) :: template_wf
 !
       wf%name_ = 'mlcc2'
 !
@@ -268,6 +270,7 @@ contains
       wf%cholesky_orbital_threshold = 1.0d-2
 !
       call wf%general_cc_preparations(system)
+      call wf%set_variables_from_template_wf(template_wf)
 !
       if (wf%bath_orbital) call output%error_msg('Bath orbitals not yet implemented for MLCC2')
 !

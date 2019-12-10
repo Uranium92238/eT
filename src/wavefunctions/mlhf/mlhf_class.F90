@@ -127,9 +127,9 @@ module mlhf_class
       procedure :: update_fock_and_energy_mo                => update_fock_and_energy_mlhf
 !
       procedure :: prepare_frozen_fock_terms                => prepare_frozen_fock_terms_mlhf
-      procedure :: update_mlhf_inactive_fock_term           => update_mlhf_inactive_fock_term_mlhf
       procedure :: diagonalize_fock_frozen_hf_orbitals      => diagonalize_fock_frozen_hf_orbitals_mlhf
       procedure :: get_n_active_hf_atoms                    => get_n_active_hf_atoms_mlhf
+      procedure :: prepare_mos                              => prepare_mos_mlhf
 !
    end type mlhf
 !
@@ -1070,15 +1070,8 @@ contains
       implicit none
 !
       class(mlhf) :: wf
-!
+! 
       call wf%save_ao_density()
-!
-      call wf%prepare_mos()
-      call wf%prepare_frozen_fock_terms()
-!
-!     Save orbital information in orbital_information_file for CC
-!
-      call wf%write_orbital_information()
 !
       call wf%destruct_orbital_energies()
       call wf%destruct_orbital_coefficients()
@@ -1095,6 +1088,9 @@ contains
 !
       call wf%destruct_sp_eri_schwarz()
       call wf%destruct_sp_eri_schwarz_list()
+      call wf%destruct_mo_fock_frozen_hf_term()
+      call wf%destruct_mo_fock_fc_term()
+      call wf%destruct_mlhf_inactive_fock_term()
 !
       call wf%G_De_ao_file%delete_
 !
@@ -1517,40 +1513,14 @@ contains
 !
       class(mlhf) :: wf
 !
-      if (wf%frozen_core .or. wf%frozen_hf_mos) call wf%update_mlhf_inactive_fock_term()
-      if (wf%frozen_core)                       call wf%construct_mo_fock_fc_term()
-      if (wf%frozen_hf_mos)                     call wf%construct_mo_fock_frozen_hf_term()
+      call wf%initialize_mlhf_inactive_fock_term()
+!
+      call wf%mo_transform(wf%G_De_ao, wf%mlhf_inactive_fock_term)
+!
+      if (wf%frozen_core)   call wf%construct_mo_fock_fc_term()
+      if (wf%frozen_hf_mos) call wf%construct_mo_fock_frozen_hf_term()
 !
    end subroutine prepare_frozen_fock_terms_mlhf
-!
-!
-   subroutine update_mlhf_inactive_fock_term_mlhf(wf)
-!!
-!!    Prepare frozen Fock contributions
-!!    Written by Linda Goletto, Nov. 2019
-!!
-!!    This routine reads the MLHF inactive term in the AO basis
-!!    and MO transforms it with respect to the new MO basis;
-!!    the result is written to the mlhf_inactive_fock_term file
-!!    to be used in CC.
-!!
-      implicit none
-!
-      class(mlhf) :: wf
-!
-      real(dp), dimension(:,:), allocatable :: G_De_mo
-!
-      call mem%alloc(G_De_mo, wf%n_mo, wf%n_mo)
-!
-      call wf%mo_transform(wf%G_De_ao, G_De_mo)
-!
-      call wf%mlhf_inactive_fock_term_file%open_('write', 'rewind')
-      call wf%mlhf_inactive_fock_term_file%write_(G_De_mo, wf%n_mo**2)
-      call wf%mlhf_inactive_fock_term_file%close_
-!
-      call mem%dealloc(G_De_mo, wf%n_mo, wf%n_mo)
-!
-   end subroutine update_mlhf_inactive_fock_term_mlhf
 !
 !
    subroutine diagonalize_fock_frozen_hf_orbitals_mlhf(wf)
@@ -1657,5 +1627,51 @@ contains
       endif
 !
    end subroutine print_banner_mlhf
+!
+!
+   subroutine prepare_mos_mlhf(wf)
+!!
+!!    Prepare MOs
+!!    Written by Ida-Marie Høyvik, Oct 2019
+!!
+!!    This routine prepares the MOs for coupled cluster
+!!    in the cases where there is a reduction in the
+!!    number of MOs in CC compared to HF
+!!
+!!    Examples of this is the frozen core
+!!    approximation and if CC is only done
+!!    for a localized region of a large molecule
+!!    which has been treated at HF level of theory.
+!!
+!!
+      implicit none
+!
+      class(mlhf) :: wf
+!
+!     Destruct MO quantities in the old MO dimension, if they are allocated,
+!     before n_mo changes
+!
+      call wf%destruct_mo_fock()
+      call wf%destruct_W_mo_update()
+      call wf%destruct_G_De()
+!
+!     Eliminate the core orbitals if frozen core requested
+!
+!     MO coefficients for core orbitals are placed in 
+!     wf%orbital_coefficients_fc and removed from wf%orbital_coefficients
+!     the number of frozen core orbitals is wf%n_frozen_core_orbitals
+!
+      if (wf%frozen_core) call wf%remove_core_orbitals()
+!
+!     Cholesky decomposition of density for reduced space CC calculation
+!
+!     MO coefficients for frozen hf orbitals now placed in 
+!     wf%orbital_coefficients_frozen_hf and removed from wf%orbital_coefficients
+!     the number of frozen hf orbitals is wf%n_frozen_hf_orbitals
+!
+      if (wf%frozen_hf_mos) call wf%remove_frozen_hf_orbitals()
+!
+   end subroutine prepare_mos_mlhf
+!
 !
 end module mlhf_class
