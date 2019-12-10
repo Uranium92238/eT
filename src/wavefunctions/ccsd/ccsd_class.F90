@@ -338,33 +338,42 @@ contains
       class(ccsd) :: wf
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_aibj
+      real(dp) :: eps_ai
 !
-      integer :: a, b, i, j, ai, bj, aibj
+      integer :: a, b, i, j, ai, bj, aibj, b_end
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call wf%get_vovo(g_aibj)
+      call wf%integrals%construct_g_pqrs_mo(g_aibj,                  &
+                                            wf%n_o+1, wf%n_o+wf%n_v, &
+                                            1, wf%n_o,               &
+                                            wf%n_o+1, wf%n_o+wf%n_v, &
+                                            1, wf%n_o)
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj)
+!$omp parallel do schedule(guided) collapse(2) &
+!$omp private(a, i, b, j, ai, bj, aibj, b_end, eps_ai)
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
             ai = wf%n_v*(i-1) + a
+            eps_ai = wf%orbital_energies(i) - wf%orbital_energies(a + wf%n_o)
 !
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
+            do j = 1, i
+!
+               if (j .ne. i) then
+                  b_end = wf%n_v
+               else
+                  b_end = a
+               end if
+!
+               do b = 1, b_end
 !
                   bj = wf%n_v*(j-1) + b
 !
-                  if (ai .ge. bj) then
+                  aibj = (ai*(ai-3)/2) + ai + bj
 !
-                     aibj = (ai*(ai-3)/2) + ai + bj
-!
-                     wf%t2(aibj) = g_aibj(a,i,b,j)/(wf%orbital_energies(i) + &
-                                                    wf%orbital_energies(j) - &
-                                                    wf%orbital_energies(a + wf%n_o) - &
-                                                    wf%orbital_energies(b + wf%n_o))
-!
-                  endif
+                  wf%t2(aibj) = g_aibj(b,j,a,i)/(eps_ai +                     &
+                                                 wf%orbital_energies(j) -     &
+                                                 wf%orbital_energies(b + wf%n_o))
 !
                enddo
             enddo
