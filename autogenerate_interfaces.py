@@ -203,7 +203,7 @@ for directory_name in wavefunction_all_submodules:
                   if (search(r'\b'+'end'+r'\b', line_without_comments)
                       and search(r'\b'+'function'+r'\b',
                                  line_without_comments)):
-                     interface_file.write(line)
+                     interface_file.write('!\n'+line)
                      break
 #
 #                 Reached implicit none

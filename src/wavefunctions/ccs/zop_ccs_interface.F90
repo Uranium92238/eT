@@ -110,6 +110,7 @@
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: A
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: density
       real(dp) :: expectation_value
+!
    end function calculate_expectation_value_ccs
 !
 !
