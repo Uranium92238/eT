@@ -46,7 +46,7 @@ option(ENABLE_FORCED_BATCHING "Enable batching in every batch loop (for debug pu
 
 # Find packages needed for libint
 find_package(Libint2 REQUIRED)
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3)
 find_package(Boost REQUIRED)
 find_package(PCMSolver REQUIRED)
 
