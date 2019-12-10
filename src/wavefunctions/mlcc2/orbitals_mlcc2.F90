@@ -1300,7 +1300,7 @@ contains
 !
 !     1. Preparations (Note that cholesky decomposition is already done)
 !
-      ccs_wf = ccs(wf%system)
+      ccs_wf = ccs(wf%system, wf)
 !
       ccs_wf%integrals = mo_integral_tool(ccs_wf%n_o, ccs_wf%n_v, ccs_wf%system%n_J)
 !

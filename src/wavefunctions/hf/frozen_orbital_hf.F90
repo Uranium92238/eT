@@ -50,6 +50,13 @@ contains
 !
       class(hf) :: wf
 !
+!     Destruct MO quantities in the old MO dimension, if they are allocated,
+!     before n_mo changes
+!
+      call wf%destruct_mo_fock()
+      call wf%destruct_W_mo_update()
+!
+!
 !     Eliminate the core orbitals if frozen core requested
 !
 !     MO coefficients for core orbitals are placed in 
@@ -186,12 +193,6 @@ contains
 !$omp end parallel do
 !
      call mem%dealloc(orbital_energies_copy, wf%n_mo)
-!
-!     Destruct MO quantities in the old MO dimension, if they are allocated,
-!     before n_mo changes
-!
-      call wf%destruct_mo_fock()
-      call wf%destruct_W_mo_update()
 !
       wf%n_mo = wf%n_mo  - wf%n_frozen_core_orbitals
       wf%n_o = wf%n_o  - wf%n_frozen_core_orbitals    
@@ -381,12 +382,6 @@ contains
 !
       wf%n_frozen_hf_orbitals = wf%n_mo - wf%n_o - wf%n_v
 !
-!     Destruct MO quantities in the old MO dimension, if they are allocated,
-!     before n_mo changes
-!
-      call wf%destruct_mo_fock()
-      call wf%destruct_W_mo_update()
-!
       wf%n_mo = wf%n_o + wf%n_v
 !
 !     Diagonalize MO Fock matrix for the new
@@ -510,16 +505,6 @@ contains
 !
       call wf%destruct_orbital_coefficients_fc()
 !
-      wf%mo_fock_fc_file = sequential_file('MO_Fock_FC')
-!
-      call wf%mo_fock_fc_file%open_('write', 'rewind')
-!
-      call wf%mo_fock_fc_file%write_(wf%mo_fock_fc_term, wf%n_mo**2)
-!
-      call wf%mo_fock_fc_file%close_('keep')
-!
-      call wf%destruct_mo_fock_fc_term()
-!
    end subroutine construct_mo_fock_fc_term_hf
 !
 !
@@ -542,8 +527,6 @@ contains
       class(hf) :: wf
       real(dp), dimension(:,:), allocatable :: D
       real(dp), dimension(:,:), allocatable :: ao_F_frozen_hf
-!
-      wf%mo_fock_frozen_hf_file = sequential_file('MO_frozen_hf_Fock')
 !
       if (.not. wf%frozen_hf_mos) return
 !
@@ -576,14 +559,6 @@ contains
       call mem%dealloc(ao_F_frozen_hf, wf%n_ao, wf%n_ao)
       call mem%dealloc(D, wf%n_ao, wf%n_ao)
       call wf%destruct_orbital_coefficients_frozen_hf()
-!
-      call wf%mo_fock_frozen_hf_file%open_('write', 'rewind')
-!
-      call wf%mo_fock_frozen_hf_file%write_(wf%mo_fock_frozen_hf_term, wf%n_mo**2)
-!
-      call wf%mo_fock_frozen_hf_file%close_('keep')
-!
-      call wf%destruct_mo_fock_frozen_hf_term()
 !
    end subroutine construct_mo_fock_frozen_hf_term_hf
 !

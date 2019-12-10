@@ -56,7 +56,7 @@ module mp2_class
 contains
 !
 !
-   function new_mp2(system) result(wf)
+   function new_mp2(system, template_wf) result(wf)
 !!
 !!    New MP2
 !!    Written by Andreas Skeidsvoll, 2018
@@ -67,11 +67,14 @@ contains
 !
       class(molecular_system), target, intent(in) :: system 
 !
+      class(wavefunction), intent(in) :: template_wf
+!
       wf%name_ = 'mp2'
 !
       wf%system => system
 !
       call wf%general_cc_preparations(system)
+      call wf%set_variables_from_template_wf(template_wf)
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_gs_amplitudes = wf%n_t1

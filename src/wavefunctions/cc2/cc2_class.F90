@@ -112,7 +112,7 @@ module cc2_class
 contains
 !
 !
-   function new_cc2(system) result(wf)
+   function new_cc2(system, template_wf) result(wf)
 !!
 !!    New CC2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -123,9 +123,12 @@ contains
 !
       class(molecular_system), target, intent(in) :: system
 !
+      class(wavefunction), intent(in) :: template_wf
+!
       wf%name_ = 'cc2'
 !
       call wf%general_cc_preparations(system)
+      call wf%set_variables_from_template_wf(template_wf)
 !
       wf%n_t1            = (wf%n_o)*(wf%n_v)
       wf%n_t2            = wf%n_t1*(wf%n_t1+1)/2
