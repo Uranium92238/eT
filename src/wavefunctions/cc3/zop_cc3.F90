@@ -996,7 +996,6 @@ contains
       integer :: a
 !
 !     CVS
-      integer :: i_cvs
       logical :: ijk_core
 !
 !     Setup and Batching loops
@@ -1225,26 +1224,23 @@ contains
 !
                         if (i .eq. j .and. i .eq. k) cycle
 !
-!
 !                       Check if at least one index i,j,k is a core orbital
+!                       cvs == .true. if we construct the left transition density
+!
                         if(cvs) then
 !
                            ijk_core = .false.
 !
-                           do i_cvs = 1, wf%n_core_MOs
-!
-                              if(     i .eq. wf%core_MOs(i_cvs)   &
-                                 .or. j .eq. wf%core_MOs(i_cvs)   &
-                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+                           if(     any(wf%core_MOs .eq. i) &
+                              .or. any(wf%core_MOs .eq. j) &
+                              .or. any(wf%core_MOs .eq. k)) then
 !
                               ijk_core = .true.
 !
-                              end if
+                           end if
 !
-                           end do
-!
-!                       Cycle if i,j,k are not core orbitals
-                        if (.not. ijk_core) cycle
+!                          Cycle if i,j,k are not core orbitals
+                           if (.not. ijk_core) cycle
 !
                         end if
 !

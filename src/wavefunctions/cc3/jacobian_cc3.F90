@@ -369,7 +369,6 @@ contains
       integer              :: req_0, req_1, req_2, req_3
 !
       logical :: ijk_core
-      integer :: i_cvs
 !
       type(timings), allocatable :: cc3_timer_t3_b2
 !
@@ -521,22 +520,19 @@ contains
                         end if
 !
 !                       Check if at least one index i,j,k is a core orbital
-!                       i,j,k contribute to rho2 and thus have to be restricted as well
+!                       Here t3 contributes to rho2 and can, thus, be restricted as well
+!
                         if(wf%cvs) then
 !
                            ijk_core = .false.
 !
-                           do i_cvs = 1, wf%n_core_MOs
+                           if(     any(wf%core_MOs .eq. i) &
+                              .or. any(wf%core_MOs .eq. j) &
+                              .or. any(wf%core_MOs .eq. k)) then
 !
-                              if(     i .eq. wf%core_MOs(i_cvs)   &
-                                 .or. j .eq. wf%core_MOs(i_cvs)   &
-                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+                              ijk_core = .true.
 !
-                                 ijk_core = .true.
-!
-                              end if
-!
-                           end do
+                           end if
 !
 !                          Cycle if i,j,k are not core orbitals
                            if (.not. ijk_core) cycle
@@ -740,7 +736,6 @@ contains
       integer              :: req_0, req_1, req_2, req_3
 !
       logical :: ijk_core
-      integer :: i_cvs
 !
       type(timings), allocatable :: cc3_timer_c3
 !
@@ -1046,21 +1041,18 @@ contains
                         end if
 !
 !                       Check if at least one index i,j,k is a core orbital
+!
                         if(wf%cvs) then
 !
                            ijk_core = .false.
 !
-                           do i_cvs = 1, wf%n_core_MOs
+                           if(     any(wf%core_MOs .eq. i) &
+                              .or. any(wf%core_MOs .eq. j) &
+                              .or. any(wf%core_MOs .eq. k)) then
 !
-                              if(     i .eq. wf%core_MOs(i_cvs)   &
-                                 .or. j .eq. wf%core_MOs(i_cvs)   &
-                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+                              ijk_core = .true.
 !
-                                 ijk_core = .true.
-!
-                              end if
-!
-                           end do
+                           end if
 !
 !                          Cycle if i,j,k are not core orbitals
                            if (.not. ijk_core) cycle

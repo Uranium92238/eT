@@ -679,7 +679,6 @@ contains
       integer :: req_0, req_1, req_2, req_3
 !
 !     for CVS
-      integer :: i_cvs
       logical :: ijk_core
 !
       real(dp) :: ddot
@@ -970,21 +969,18 @@ contains
                         k_rel = k - batch_k%first + 1
 !
 !                       Check if at least one index i,j,k is a core orbital
+!
                         if(wf%cvs) then
 !
                            ijk_core = .false.
 !
-                           do i_cvs = 1, wf%n_core_MOs
+                           if(     any(wf%core_MOs .eq. i) &
+                              .or. any(wf%core_MOs .eq. j) &
+                              .or. any(wf%core_MOs .eq. k)) then
 !
-                              if(     i .eq. wf%core_MOs(i_cvs)   &
-                                 .or. j .eq. wf%core_MOs(i_cvs)   &
-                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+                              ijk_core = .true.
 !
-                                 ijk_core = .true.
-!
-                              end if
-!
-                           end do
+                           end if
 !
 !                          Cycle if i,j,k are not core orbitals
                            if (.not. ijk_core) cycle
