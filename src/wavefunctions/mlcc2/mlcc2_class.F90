@@ -1043,10 +1043,11 @@ contains
       call wf%determine_n_gs_amplitudes()
       call wf%determine_n_es_amplitudes()
 !
-      wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, wf%system%n_J)
+      wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, wf%system%n_J, wf%need_g_abcd)
 !
-      call wf%construct_and_write_mo_cholesky(wf%n_mo, &
-            wf%orbital_coefficients, wf%integrals%cholesky_mo)
+      call wf%integrals%initialize_storage()
+!
+      call wf%construct_and_save_mo_cholesky(wf%n_mo, wf%orbital_coefficients)
 !
 !     Frozen fock terms transformed from the canonical MO basis to 
 !     the basis of orbital partitioning
@@ -1059,7 +1060,7 @@ contains
       call wf%initialize_t1()
       call zero_array(wf%t1, wf%n_t1)
 !
-      call wf%integrals%write_t1_cholesky(wf%t1)
+      call wf%integrals%update_t1_integrals(wf%t1)
 !
       call wf%construct_fock()
       call wf%destruct_t1()
@@ -1073,8 +1074,7 @@ contains
 !
       call wf%construct_block_diagonal_fock_orbitals()
 !
-      call wf%construct_and_write_mo_cholesky(wf%n_mo, &
-            wf%orbital_coefficients, wf%integrals%cholesky_mo)
+      call wf%construct_and_save_mo_cholesky(wf%n_mo, wf%orbital_coefficients)
 !
 !     Frozen fock terms transformed from the basis of orbital partitioning to 
 !     the MLCC basis
@@ -1084,8 +1084,7 @@ contains
 !
       call mem%dealloc(partitioning_orbitals, wf%n_ao, wf%n_mo)
 !
-      call wf%construct_and_write_mo_cholesky(wf%n_mo, wf%orbital_coefficients, &
-                  wf%integrals%cholesky_mo)
+      call wf%construct_and_save_mo_cholesky(wf%n_mo, wf%orbital_coefficients)
 !
       call wf%check_orbital_space()
       call wf%print_orbital_space()

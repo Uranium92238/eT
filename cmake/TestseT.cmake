@@ -96,6 +96,7 @@ add_eT_runtest(restart_ccs_es                               "eT;short;ccs;es;res
 add_eT_runtest(restart_ccs_eom                              "eT;short;ccs;eom;restart")
 #
 add_eT_runtest(cc2_gs_energy                                "eT;short;cc2;gs")
+add_eT_runtest(cc2_gs_energy_cholesky_on_file               "eT;short;cc2;gs;cholesky-storage")
 add_eT_runtest(cc2_gs_energy_batched_cd                     "eT;short;cc2;gs;pcd")
 add_eT_runtest(cc2_dipole                                   "eT;short;cc2;gs;dipole")
 add_eT_runtest(cc2_frozen_core                              "eT;short;cc2;gs;es;frozen core")

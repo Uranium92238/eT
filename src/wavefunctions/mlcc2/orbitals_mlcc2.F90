@@ -1302,8 +1302,6 @@ contains
 !
       ccs_wf = ccs(wf%system, wf)
 !
-      ccs_wf%integrals = mo_integral_tool(ccs_wf%n_o, ccs_wf%n_v, ccs_wf%system%n_J)
-!
       call ccs_wf%mo_preparations()
 !
 !     1. Ground state
@@ -1317,7 +1315,7 @@ contains
 !
       call timer_gs%turn_off()
 !
-      call ccs_wf%integrals%write_t1_cholesky(ccs_wf%t1)
+      call ccs_wf%integrals%update_t1_integrals(ccs_wf%t1)
 !
 !     Excited states
 !
@@ -1335,6 +1333,8 @@ contains
 !     1. Integrals
 !
       wf%integrals = mo_integral_tool(ccs_wf%integrals)
+!
+      call wf%integrals%initialize_storage(ccs_wf%integrals)
 !
 !     2. Excitation vectors
 !
@@ -1380,7 +1380,7 @@ contains
 !
       call timer%turn_off()
 !
-      call output%printf('m', 'Summary of CCS calculation for NTOs/CNTOs:',fs='(/t3,a)')
+      call output%printf('m', '- Summary of CCS calculation for NTOs/CNTOs:',fs='(/t3,a)')
 !
       call output%printf('m', 'Wall time for CCS ground calculation (sec):   (f20.2)', &
                          reals=[timer_gs%get_elapsed_time('wall')], fs='(/t6,a)')

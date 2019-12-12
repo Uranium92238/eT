@@ -1267,7 +1267,7 @@ contains
          call wf%integrals%construct_cholesky_ab_c1(L_J_bd, c_ai, 1, wf%n_v, 1, wf%n_v)
 !
          call mem%alloc(L_J_ck, wf%integrals%n_J, wf%n_v, batch_k%length)
-         call wf%integrals%read_cholesky_t1(L_J_ck, wf%n_o + 1, wf%n_o + wf%n_v, batch_k%first, batch_k%last)
+         call wf%integrals%get_cholesky_t1(L_J_ck, wf%n_o + 1, wf%n_o + wf%n_v, batch_k%first, batch_k%last)
 !
          call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
@@ -1291,7 +1291,7 @@ contains
          call mem%alloc(L_J_ck_c1, wf%integrals%n_J, wf%n_v, batch_k%length)
          call wf%integrals%construct_cholesky_ai_a_c1(L_J_ck_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
 !
-         call wf%integrals%read_cholesky_t1(L_J_bd, wf%n_o + 1, wf%n_o + wf%n_v, wf%n_o + 1, wf%n_o + wf%n_v)
+         call wf%integrals%get_cholesky_t1(L_J_bd, wf%n_o + 1, wf%n_o + wf%n_v, wf%n_o + 1, wf%n_o + wf%n_v)
 !
          call dgemm('T', 'N',                   &
                      (wf%n_v)**2,               &
@@ -1369,7 +1369,7 @@ contains
          call wf%integrals%construct_cholesky_ij_c1(L_J_lj, c_ai, 1, wf%n_o, 1, wf%n_o)
 !
          call mem%alloc(L_J_ck, wf%integrals%n_J, wf%n_v, batch_k%length)
-         call wf%integrals%read_cholesky_t1(L_J_ck, wf%n_o + 1, wf%n_o + wf%n_v, batch_k%first, batch_k%last)
+         call wf%integrals%get_cholesky_t1(L_J_ck, wf%n_o + 1, wf%n_o + wf%n_v, batch_k%first, batch_k%last)
 !
          call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
 !
@@ -1393,7 +1393,7 @@ contains
          call mem%alloc(L_J_ck_c1, wf%integrals%n_J, wf%n_v, batch_k%length)
          call wf%integrals%construct_cholesky_ai_i_c1(L_J_ck_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
 !
-         call wf%integrals%read_cholesky_t1(L_J_lj, 1, wf%n_o, 1, wf%n_o)
+         call wf%integrals%get_cholesky_t1(L_J_lj, 1, wf%n_o, 1, wf%n_o)
 !
          call dgemm('T', 'N',                   &
                      (wf%n_o)**2,               &
@@ -1478,7 +1478,7 @@ contains
 !
       call mem%alloc(L_J_ia, wf%integrals%n_J, wf%n_o, wf%n_v)
 !
-      call wf%integrals%read_cholesky_t1(L_J_ia, 1, wf%n_o, wf%n_o + 1, wf%n_o + wf%n_v)
+      call wf%integrals%get_cholesky_t1(L_J_ia, 1, wf%n_o, wf%n_o + 1, wf%n_o + wf%n_v)
 !
       call mem%alloc(L_J_jk_c1, wf%integrals%n_J, wf%n_o, wf%n_o)
 !
