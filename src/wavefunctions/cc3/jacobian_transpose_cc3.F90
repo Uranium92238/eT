@@ -62,6 +62,7 @@ contains
 !
       real(dp), dimension(wf%n_es_amplitudes), intent(inout) :: c
 !
+!     Same routines used for tbar3 and L3
       logical, intent(in) :: cvs
 !
       real(dp), dimension(:,:), allocatable :: c_ai
@@ -372,7 +373,6 @@ contains
       integer :: req_0, req_1, req_2, req_3
 !
       logical :: ijk_core
-      integer :: i_cvs
 !
 !     :: Construct intermediate X_ai ::
 !
@@ -524,21 +524,19 @@ contains
                         end if
 !
 !                       Check if at least one index i,j,k is a core orbital
+!                       Here t3 is contracted with L2 and can, thus, be restricted as well
+!
                         if(cvs) then
 !
                            ijk_core = .false.
 !
-                           do i_cvs = 1, wf%n_core_MOs
+                           if(     any(wf%core_MOs .eq. i) &
+                              .or. any(wf%core_MOs .eq. j) &
+                              .or. any(wf%core_MOs .eq. k)) then
 !
-                              if(     i .eq. wf%core_MOs(i_cvs)   &
-                                 .or. j .eq. wf%core_MOs(i_cvs)   &
-                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+                              ijk_core = .true.
 !
-                                 ijk_core = .true.
-!
-                              end if
-!
-                           end do
+                           end if
 !
 !                          Cycle if i,j,k are not core orbitals
                            if (.not. ijk_core) cycle
@@ -823,6 +821,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_ai
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: sigma_abij
 !
+!     Same routines used for tbar3 and L3
       logical, intent(in) :: cvs
 !
 !     Arrays for triples amplitudes
@@ -904,7 +903,6 @@ contains
       integer              :: req_0, req_1, req_2, req_3
 !
       logical :: ijk_core
-      integer :: i_cvs
 !
 !
 !     Set up arrays for amplitudes
@@ -1158,21 +1156,18 @@ contains
                         call zero_array(c_abc, wf%n_v**3)
 !
 !                       Check if at least one index i,j,k is a core orbital
+!
                         if(cvs) then
 !
                            ijk_core = .false.
 !
-                           do i_cvs = 1, wf%n_core_MOs
+                           if(     any(wf%core_MOs .eq. i) &
+                              .or. any(wf%core_MOs .eq. j) &
+                              .or. any(wf%core_MOs .eq. k)) then
 !
-                              if(     i .eq. wf%core_MOs(i_cvs)   &
-                                 .or. j .eq. wf%core_MOs(i_cvs)   &
-                                 .or. k .eq. wf%core_MOs(i_cvs))  then
+                              ijk_core = .true.
 !
-                                 ijk_core = .true.
-!
-                              end if
-!
-                           end do
+                           end if
 !
 !                          Cycle if i,j,k are not core orbitals
                            if (.not. ijk_core) cycle

@@ -172,6 +172,7 @@ add_eT_runtest(cc3_right_cvs_es_energies                    "eT;short;cc3;es;rig
 add_eT_runtest(cc3_left_es_energies                         "eT;short;cc3;es;left;diis")
 add_eT_runtest(cc3_left_cvs_es_energies                     "eT;short;cc3;es;left;cvs;diis")
 add_eT_runtest(cc3_oscillator_strength_eom                  "eT;short;cc3;es;eom")
+add_eT_runtest(cc3_oscillator_strength_eom_cvs              "eT;short;cc3;es;eom;cvs")
 add_eT_runtest(restart_cc3_from_ccsd                        "eT;short;cc3;es;eom;restart")
 #
 add_eT_runtest(mlcc2_cnto_full_right_es                     "eT;short;mlcc2;cnto")

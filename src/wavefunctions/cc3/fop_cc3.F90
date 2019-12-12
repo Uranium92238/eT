@@ -912,7 +912,6 @@ contains
       integer :: req_0, req_1, req_2, req_3
 !
 !     for CVS
-      integer :: i_cvs
       logical :: ijk_core
 !
       real(dp) :: ddot
@@ -1209,6 +1208,31 @@ contains
 !
                         k_rel = k - batch_k%first + 1
 !
+!                       Check if at least one index i,j,k is a core orbital
+!
+                        if(wf%cvs) then
+!
+                           ijk_core = .false.
+!
+                           if(     any(wf%core_MOs .eq. i) &
+                              .or. any(wf%core_MOs .eq. j) &
+                              .or. any(wf%core_MOs .eq. k)) then
+!
+                              ijk_core = .true.
+!
+                           end if
+!
+!                          Cycle if i,j,k are not core orbitals
+                           if (.not. ijk_core) cycle
+!
+                        end if
+!
+!
+!                       Also terms that only include the triples multipliers 
+!                       can be cycled if we use CVS
+!                       Because they are contracted with R^a_i or R^ab_ij
+!                       which have to contain at least one core orbital.
+!
 !                       c3_calc does not zero out the array
                         call zero_array(tbar_abc, wf%n_v**3)
 !
@@ -1231,13 +1255,7 @@ contains
 !
                         call wf%divide_by_orbital_differences(i, j, k, tbar_abc)
 !
-!                       Scaling factor = 1/6 sum_abcijk tbar^abc_ijk R^abc_ijk
-!
-!                       Need to consider all permutations because we don't hold
-!                       the whole tbar3, R3 arrays. 
-!                       All the permutations yield the same result
-!
-                        call wf%density_cc3_mu_nu_vo(i, j, k, tbar_abc, v_abc,  &
+                        call wf%density_cc3_mu_nu_vo(i, j, k, tbar_abc, v_abc,   &
                                                                density_vo, R_abij)
 !
 !                       Construct intermediate used for the ov-block:
@@ -1253,30 +1271,6 @@ contains
 !                       Therefore the contributions to the R3-amplitudes can be computed 
 !                       using the same routine once for t1-transformed and once for 
 !                       c1-transformed integrals
-!
-!
-!                       Check if at least one index i,j,k is a core orbital
-!
-                        if(wf%cvs) then
-!
-                           ijk_core = .false.
-!
-                           do i_cvs = 1, wf%n_core_MOs
-!
-                              if(     i .eq. wf%core_MOs(i_cvs)   &
-                                 .or. j .eq. wf%core_MOs(i_cvs)   &
-                                 .or. k .eq. wf%core_MOs(i_cvs))  then
-!
-                                 ijk_core = .true.
-!
-                              end if
-!
-                           end do
-!
-!                          Cycle if i,j,k are not core orbitals
-                           if (.not. ijk_core) cycle
-!
-                        end if
 !
                         call wf%construct_W(i, j, k, R_abc, u_abc, R_abij, &
                                             g_bdci_p(:,:,:,i_rel),         &
