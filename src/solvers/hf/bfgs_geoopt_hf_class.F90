@@ -187,6 +187,10 @@ contains
 !
          call wf%set_n_mo() 
 !
+!        Update Cauchy Schwarz screening list 
+!
+         call wf%construct_sp_eri_schwarz()
+!
       endif
 !
 !     Attempt to converge HF orbitals/density
