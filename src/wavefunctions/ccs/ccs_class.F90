@@ -124,6 +124,9 @@ module ccs_class
       procedure :: initialize_fock                               => initialize_fock_ccs
       procedure :: initialize_fock_complex                       => initialize_fock_ccs_complex
 !
+      procedure :: destruct_fock                                 => destruct_fock_ccs
+      procedure :: destruct_fock_complex                         => destruct_fock_ccs_complex
+!
       procedure :: initialize_fock_ij                            => initialize_fock_ij_ccs
       procedure :: initialize_fock_ij_complex                    => initialize_fock_ij_ccs_complex
 !
@@ -731,7 +734,11 @@ contains
       call wf%destruct_mm_matrices()
       call wf%destruct_pcm_matrices()
 !
+      call wf%destruct_fock()
+!
       call wf%integrals%cleanup()
+!
+      call wf%destruct_core_MOs
 !
       call output%printf('v', '- Cleaning up ' // trim(wf%name_) // ' wavefunction', &
                          fs='(/t3,a)')

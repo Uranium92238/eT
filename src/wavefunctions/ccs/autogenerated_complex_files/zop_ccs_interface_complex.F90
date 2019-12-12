@@ -110,6 +110,7 @@
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: A
       complex(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: density
       complex(dp) :: expectation_value
+!
    end function calculate_expectation_value_ccs_complex
 !
 !
