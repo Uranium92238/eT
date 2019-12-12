@@ -158,6 +158,8 @@ contains
       class(es_engine)  :: engine
       class(ccs)        :: wf
 !
+      call engine%tasks%print_('mo preparations')
+!
       call wf%mo_preparations()
 !
       call engine%restart_handling(wf)
@@ -165,13 +167,6 @@ contains
 !     Ground state solution
 !
       call engine%do_ground_state(wf)
-!
-      call wf%integrals%write_t1_cholesky(wf%t1)
-!      
-      if (wf%integrals%get_eri_t1_mem()) call wf%integrals%update_g_pqrs_t1_in_memory()
-!
-      if(wf%integrals%get_eri_t1_mem()) &
-         call output%printf('n', 'Note: All T1-integrals are stored in memory', fs='(/t3, a)')
 !
 !     Excited state solutions
 !
@@ -272,6 +267,9 @@ contains
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
+!
+      call engine%tasks%add(label='mo preparations',                             &
+                            description='Preparation of MO basis and integrals')
 !
       call engine%tasks%add(label='gs solver',                                &
                            description='Calculation of the ground state ('//  &

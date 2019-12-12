@@ -160,6 +160,8 @@ contains
 !
       call engine%print_banner(wf)
 !
+      call engine%tasks%print_('mo preparations')
+!
       call wf%mo_preparations()
 !
 !     Determine ground state
@@ -333,6 +335,9 @@ contains
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
+!
+      call engine%tasks%add(label='mo preparations',                             &
+                            description='Preparation of MO basis and integrals')
 !
       call engine%tasks%add(label='gs solver',                                &
                             description='Calculation of the ground state ('// &

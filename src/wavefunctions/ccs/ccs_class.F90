@@ -105,6 +105,8 @@ module ccs_class
 !
    contains
 !
+      procedure :: construct_and_save_mo_cholesky                => construct_and_save_mo_cholesky_ccs
+!
 !     Initialization/destruction procedures
 !
       procedure :: initialize_amplitudes                         => initialize_amplitudes_ccs
@@ -692,7 +694,7 @@ contains
 !
      endif
 !
-!     print orbital space info for cc
+!     Print orbital space info for cc
 !
       call output%printf('m', ' - Number of orbitals for coupled cluster calculation', &
                          fs='(/t3,a)')
@@ -851,6 +853,142 @@ contains
       call wf%restart_file%close_()
 !
    end subroutine write_cc_restart_ccs
+!
+!
+   subroutine construct_and_save_mo_cholesky_ccs(wf, n_mo, mo_coeff)
+!!
+!!    Construct and save MO Cholesky 
+!!    Written by Sarai D. Folkestad, Sep 2019
+!!
+!!    Reads the AO Cholesky vectors, transforms them
+!!    by the MO coefficients, and saves them (file or memory).
+!!
+!!    
+!!    n_mo:             Number of MOs in mo_coeff
+!!
+!!    mo_coeff:         MO coefficients used to transform to MO
+!!                      basis. Dimension (wf%n_ao, n_mo)
+!!
+!
+      use direct_file_class, only: direct_file
+      use batching_index_class, only: batching_index
+      use reordering, only: sort_123_to_132
+      use timings_class, only: timings
+!
+      implicit none
+!
+      class(ccs), intent(inout) :: wf
+!
+      integer, intent(in) :: n_mo
+!
+      real(dp), dimension(wf%n_ao, n_mo), intent(in) :: mo_coeff
+!
+      real(dp), dimension(:,:,:), allocatable :: L_Jxy, L_Jxp, L_Jpx, L_Jpq
+!
+      integer :: x, y, rec_xy
+!
+      type(batching_index) :: batch_p, batch_y
+!
+      integer :: req0, req1_p, req1_y, req2, current_p_batch, current_y_batch
+!
+      type(timings) :: timer
+!
+      timer = timings('MO transform and write Cholesky vectors')
+      call timer%turn_on()
+!
+      call wf%system%ao_cholesky_file%open_('read')
+!
+      req0 = 0
+!
+      req1_p =  max(2*wf%system%n_J*wf%n_ao, wf%system%n_J*wf%n_ao + wf%system%n_J*n_mo)
+      req1_y = wf%system%n_J*wf%n_ao
+!
+      req2 = 0
+!
+!     Initialize batching variables
+!
+      batch_p = batching_index(n_mo)
+      batch_y = batching_index(wf%n_ao)
+!
+      call mem%batch_setup(batch_p, batch_y, req0, req1_p, req1_y, req2)
+!
+      do current_p_batch = 1, batch_p%num_batches
+!
+         call batch_p%determine_limits(current_p_batch)
+!
+         call mem%alloc(L_Jxp, wf%system%n_J, wf%n_ao, batch_p%length)
+         call zero_array(L_Jxp, (wf%system%n_J)*(wf%n_ao)*(batch_p%length))
+!
+         do current_y_batch = 1, batch_y%num_batches
+!
+            call batch_y%determine_limits(current_y_batch)
+!
+            call mem%alloc(L_Jxy, wf%system%n_J, wf%n_ao, batch_y%length)
+!
+            do x = 1, wf%n_ao
+               do y = 1, batch_y%length
+!
+                  rec_xy = max(x,y + batch_y%first - 1)*(max(x,y + batch_y%first - 1)-3)/2 + x + y + batch_y%first - 1
+!
+                  call wf%system%ao_cholesky_file%read_(L_Jxy(:,x,y), rec_xy)
+!
+               enddo
+            enddo
+!
+            call dgemm('N', 'N',                         &
+                  wf%n_ao*wf%system%n_J,                 &
+                  batch_p%length,                        &
+                  batch_y%length,                        &
+                  one,                                   &
+                  L_Jxy,                                 &
+                  wf%n_ao*wf%system%n_J,                 &
+                  mo_coeff(batch_y%first,batch_p%first), &
+                  wf%n_ao,                               &
+                  one,                                   &
+                  L_Jxp,                                 &
+                  wf%n_ao*wf%system%n_J)
+!
+            call mem%dealloc(L_Jxy, wf%system%n_J, wf%n_ao, batch_y%length)
+!
+         enddo ! y batches
+!
+         call mem%alloc(L_Jpx, wf%system%n_J, batch_p%length, wf%n_ao)
+         call sort_123_to_132(L_Jxp, L_Jpx, wf%system%n_J, wf%n_ao, batch_p%length)
+         call mem%dealloc(L_Jxp, wf%system%n_J, wf%n_ao, batch_p%length)
+!
+         call mem%alloc(L_Jpq, wf%system%n_J, batch_p%length, n_mo)
+!
+         call dgemm('N', 'N',                         &
+                     batch_p%length*wf%system%n_J,    &
+                     n_mo,                            &
+                     wf%n_ao,                         &
+                     one,                             &
+                     L_Jpx,                           &
+                     batch_p%length*wf%system%n_J,    &
+                     mo_coeff,                        &
+                     wf%n_ao,                         &
+                     zero,                            &
+                     L_Jpq,                           &
+                     batch_p%length*wf%system%n_J)
+!
+         call mem%dealloc(L_Jpx, wf%system%n_J, batch_p%length, wf%n_ao)
+!
+         call wf%integrals%set_cholesky_mo(L_Jpq,           &
+                                           batch_p%first,   &
+                                           batch_p%last,    &
+                                           1,               &
+                                           n_mo,            &
+                                           q_leq_p=.true.)
+!
+         call mem%dealloc(L_Jpq, wf%system%n_J, batch_p%length, n_mo)
+!
+      enddo ! p batches
+!
+      call wf%system%ao_cholesky_file%close_('keep')
+!
+      call timer%turn_off()
+!
+   end subroutine construct_and_save_mo_cholesky_ccs
 !
 !
    subroutine construct_molecular_gradient_ccs(wf, E_qk)
@@ -1420,8 +1558,8 @@ contains
       call mem%alloc(L_Jai, wf%integrals%n_J, wf%n_v, wf%n_o)
       call mem%alloc(L_Jkj, wf%integrals%n_J, wf%n_o, wf%n_o)
 !
-      call wf%integrals%read_cholesky(L_Jai, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
-      call wf%integrals%read_cholesky(L_Jkj, 1, wf%n_o, 1, wf%n_o)
+      call wf%integrals%get_cholesky_mo(L_Jai, wf%n_o + 1, wf%n_mo, 1, wf%n_o)
+      call wf%integrals%get_cholesky_mo(L_Jkj, 1, wf%n_o, 1, wf%n_o)
 !
 !     Construct g_kjai integrals in MO basis
 !
@@ -1475,7 +1613,7 @@ contains
 !
          call mem%alloc(L_Jac, wf%integrals%n_J, wf%n_v, batch_c%length)
 !
-         call wf%integrals%read_cholesky(L_Jac, wf%n_o + 1, wf%n_mo, wf%n_o + batch_c%first, wf%n_o + batch_c%last)
+         call wf%integrals%get_cholesky_mo(L_Jac, wf%n_o + 1, wf%n_mo, wf%n_o + batch_c%first, wf%n_o + batch_c%last)
 !
 !        X_ai_J = sum_c R_ci L_ac_J
 !
@@ -1618,8 +1756,12 @@ contains
 !
       class(ccs) :: wf
 !
-      wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, wf%system%n_J)
-      call wf%construct_and_write_mo_cholesky(wf%n_mo, wf%orbital_coefficients, wf%integrals%cholesky_mo)
+      wf%integrals = mo_integral_tool(wf%n_o, wf%n_v, wf%system%n_J, wf%need_g_abcd)
+!
+      call wf%integrals%initialize_storage()
+!
+      call wf%construct_and_save_mo_cholesky(wf%n_mo, &
+                                              wf%orbital_coefficients)
 !
    end subroutine mo_preparations_ccs
 !

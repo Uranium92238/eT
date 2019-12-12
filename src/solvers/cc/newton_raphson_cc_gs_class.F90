@@ -154,23 +154,15 @@ contains
 !
       call wf%initialize_amplitudes()
 !
-!     Prepare restart information file 
-!
       if (solver%restart) then
 !
          call wf%read_amplitudes()
 !
-         call wf%integrals%write_t1_cholesky(wf%t1) 
-!
-         if(wf%need_g_abcd .and. wf%integrals%room_for_g_pqrs_t1()) &
-            call wf%integrals%place_g_pqrs_t1_in_memory()
+         call wf%integrals%update_t1_integrals(wf%t1)
 ! 
       else
 !
-         call wf%integrals%write_t1_cholesky(wf%t1) 
-!
-         if(wf%need_g_abcd .and. wf%integrals%room_for_g_pqrs_t1()) &
-            call wf%integrals%place_g_pqrs_t1_in_memory()
+         call wf%integrals%update_t1_integrals(wf%t1)
 !
          call wf%set_initial_amplitudes_guess()
 !
@@ -327,12 +319,10 @@ contains
 !
             call wf%set_amplitudes(t)
 !
-!           Compute the new T1 transformed Cholesky vectors,
-!           and store in memory the entire ERI-T1 matrix if possible and necessary 
+!           Update the Cholesky (and electron repulsion integrals, if in memory) 
+!           to new T1 amplitudes 
 !
-            call wf%integrals%write_t1_cholesky(wf%t1)
-            if (wf%integrals%get_eri_t1_mem()) &
-               call wf%integrals%update_g_pqrs_t1_in_memory()
+            call wf%integrals%update_t1_integrals(wf%t1)
 !
          endif 
 !

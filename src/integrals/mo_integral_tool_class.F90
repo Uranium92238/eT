@@ -23,79 +23,135 @@ module mo_integral_tool_class
 !!    MO integral tool class module
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
+!!    Tool that handles the two-electron repulsion integrals in the MO/T1/C1 
+!!    basis. The tool uses Cholesky vectors L_pq^J (in a given basis) to construct 
+!!    the electron repulsion integrals (in a given basis):
+!!
+!!       g_pqrs = sum_J L_pq^J L_rs^J 
+!!
+!!    Interaction with the tool is mostly handled by basic functionality in the 
+!!    coupled cluster wavefunctions and engines/solvers. Developers will mostly need to 
+!!    use wavefunction routines such as g_pqrs (see get_oovv, get_vvov, etc. in CCS)
+!!    and not interact with the tool itself.
+!!
+!!    To use the tool, the following tasks are necessary:
+!!
+!!       1. call constructor to make object
+!!       2. initialize storage (to keep Cholesky vectors and integrals)
+!!       3. transform AO Cholesky to MO Cholesky 
+!!       4. to be able to compute g_pqrs integrals in the t1 basis, the t1 integrals must be 
+!!          constructed for the current t1 --- call integrals%update_t1_integrals()
+!!
+!!       (see mo_preparations routine in CCS object for 1--3, and engines/solvers for 4)
+!!
 !
-   use global_out, only : output
-   use memory_manager_class, only : mem
-   use direct_file_class, only : direct_file
-   use timings_class, only : timings
-   use eri_cd_class, only : eri_cd
-   use batching_index_class, only : batching_index
+   use global_out,   only : output
+   use global_in,    only : input
+!
+   use memory_manager_class,  only : mem
+   use direct_file_class,     only : direct_file
+   use timings_class,         only : timings
+   use eri_cd_class,          only : eri_cd
+   use batching_index_class,  only : batching_index
 !
    use reordering
 !
    implicit none
 !
-!  Class definition
 !
    type :: mo_integral_tool
 !
-      logical, private :: cholesky_file      = .true.
-      logical, private :: cholesky_t1_file   = .false.
+!     The number of Cholesky vectors 
 !
       integer :: n_J
 !
+!     Files to keep L_pq^J in MO and T1 bases 
+!
       type(direct_file) :: cholesky_mo
-      type(direct_file) :: cholesky_mo_t1
+      type(direct_file) :: cholesky_t1
+!
+!     Number of occupied, virtual, and number of MOs
 !
       integer, private :: n_o
       integer, private :: n_v
       integer, private :: n_mo
 !
-      logical, private :: eri_t1_mem = .false.
-      logical, private :: eri_t1_mem_complex = .false.
+!     Keep Cholesky MO and T1 in memory? (+ allocatables arrays for keeping them)
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_pqrs
-      complex(dp), dimension(:,:,:,:), allocatable :: g_pqrs_complex
+      logical, private :: cholesky_mem 
+!
+      real(dp), dimension(:,:,:), allocatable :: L_J_pq_t1 
+      real(dp), dimension(:,:,:), allocatable :: L_J_pq_mo
+!
+!     Keep full electron repulsion matrix g_pqrs in memory? (+ allocatables arrays for keeping it)
+!
+      logical, private :: eri_t1_mem       
+      real(dp), dimension(:,:,:,:), allocatable     :: g_pqrs
+!
+      logical, private :: eri_t1_complex_placed_in_mem 
+      complex(dp), dimension(:,:,:,:), allocatable  :: g_pqrs_complex
 !
    contains
 !
-      procedure :: cleanup                      => cleanup_mo_integral_tool
+!     Read, print settings 
 !
-!     Read MO Cholesky vectors
+      procedure :: print_settings                 => print_settings_mo_integral_tool 
+      procedure :: read_settings                  => read_settings_mo_integral_tool
 !
-      procedure :: read_cholesky                => read_cholesky_mo_integral_tool
+!     Initialization and cleanup 
 !
-!     Read/write/construct T1-transformed Cholesky vectors as well as T1-ERI construction
+      procedure :: cleanup                        => cleanup_mo_integral_tool
+      procedure :: initialize_storage             => initialize_storage_mo_integral_tool
 !
-      procedure :: read_cholesky_t1             => read_cholesky_t1_mo_integral_tool
-      procedure :: write_t1_cholesky            => write_t1_cholesky_mo_integral_tool
+!     Update T1 integrals (Cholesky, ERI matrix)
 !
-      procedure :: get_g_pqrs_t1                => get_g_pqrs_t1_mo_integral_tool
-      procedure :: get_g_pqrs_t1_complex        => get_g_pqrs_t1_mo_integral_tool_complex
+      procedure :: update_t1_integrals            => update_t1_integrals_mo_integral_tool
 !
-      procedure :: construct_g_pqrs_t1          => construct_g_pqrs_t1_mo_integral_tool
-      procedure :: construct_g_pqrs_t1_complex  => construct_g_pqrs_t1_mo_integral_tool_complex
+!     Set, get, read MO Cholesky 
 !
-      procedure :: construct_g_pqrs_mo          => construct_g_pqrs_mo_mo_integral_tool
+      procedure :: get_cholesky_mo                => get_cholesky_mo_mo_integral_tool
+      procedure :: set_cholesky_mo                => set_cholesky_mo_mo_integral_tool
 !
-      procedure :: construct_cholesky_ij        => construct_cholesky_ij_mo_integral_tool
-      procedure :: construct_cholesky_ab        => construct_cholesky_ab_mo_integral_tool
-      procedure :: construct_cholesky_ai        => construct_cholesky_ai_mo_integral_tool
+      procedure :: read_cholesky_mo               => read_cholesky_mo_mo_integral_tool
 !
-      procedure :: construct_cholesky_ij_c1     => construct_cholesky_ij_c1_mo_integral_tool
-      procedure :: construct_cholesky_ab_c1     => construct_cholesky_ab_c1_mo_integral_tool
-      procedure :: construct_cholesky_ai_a_c1   => construct_cholesky_ai_a_c1_mo_integral_tool
-      procedure :: construct_cholesky_ai_i_c1   => construct_cholesky_ai_i_c1_mo_integral_tool
+!     Set, get, read T1 Cholesky 
 !
-      procedure :: set_full_index               => set_full_index_mo_integral_tool
-      procedure :: room_for_g_pqrs_t1           => room_for_g_pqrs_t1_mo_integral_tool
+      procedure :: get_cholesky_t1                => get_cholesky_t1_mo_integral_tool
+      procedure :: set_cholesky_t1                => set_cholesky_t1_mo_integral_tool
 !
-      procedure :: get_eri_t1_mem               => get_eri_t1_mem_mo_integral_tool
+      procedure :: read_cholesky_t1               => read_cholesky_t1_mo_integral_tool
 !
-      procedure :: make_eri_complex             => make_eri_complex_mo_integral_tool
+!     Get and construct routines for g_pqrs in T1/MO basis 
 !
-      procedure :: place_g_pqrs_t1_in_memory    => place_g_pqrs_t1_in_memory_mo_integral_tool
-      procedure :: update_g_pqrs_t1_in_memory   => update_g_pqrs_t1_in_memory_mo_integral_tool
+      procedure :: get_g_pqrs_t1                  => get_g_pqrs_t1_mo_integral_tool
+      procedure :: get_g_pqrs_t1_complex          => get_g_pqrs_t1_mo_integral_tool_complex
+!
+      procedure :: construct_g_pqrs_t1            => construct_g_pqrs_t1_mo_integral_tool
+      procedure :: construct_g_pqrs_t1_complex    => construct_g_pqrs_t1_mo_integral_tool_complex
+!
+      procedure :: construct_g_pqrs_mo            => construct_g_pqrs_mo_mo_integral_tool
+!
+!     Construction of T1/C1 Cholesky vectors from MO Cholesky 
+!
+      procedure :: construct_and_save_t1_cholesky => construct_and_save_t1_cholesky_mo_integral_tool
+!
+      procedure :: construct_cholesky_ij          => construct_cholesky_ij_mo_integral_tool
+      procedure :: construct_cholesky_ab          => construct_cholesky_ab_mo_integral_tool
+      procedure :: construct_cholesky_ai          => construct_cholesky_ai_mo_integral_tool
+!
+      procedure :: construct_cholesky_ij_c1       => construct_cholesky_ij_c1_mo_integral_tool
+      procedure :: construct_cholesky_ab_c1       => construct_cholesky_ab_c1_mo_integral_tool
+      procedure :: construct_cholesky_ai_a_c1     => construct_cholesky_ai_a_c1_mo_integral_tool
+      procedure :: construct_cholesky_ai_i_c1     => construct_cholesky_ai_i_c1_mo_integral_tool
+!
+!     Various routines 
+!
+      procedure :: set_full_index                 => set_full_index_mo_integral_tool
+      procedure :: room_for_cholesky              => room_for_cholesky_mo_integral_tool
+      procedure :: room_for_g_pqrs_t1             => room_for_g_pqrs_t1_mo_integral_tool
+!
+      procedure :: make_eri_complex               => make_eri_complex_mo_integral_tool
+      procedure :: place_g_pqrs_t1_in_memory      => place_g_pqrs_t1_in_memory_mo_integral_tool
 !
    end type mo_integral_tool
 !
@@ -110,7 +166,7 @@ module mo_integral_tool_class
 contains
 !
 !
-   function new_mo_integral_tool(n_o, n_v, n_J) result(integrals)
+   function new_mo_integral_tool(n_o, n_v, n_J, need_g_abcd) result(integrals)
 !!
 !!    New MO integral tool
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -119,9 +175,12 @@ contains
 !!    needs to know the number of occupied and virtual orbitals,
 !!    which are also stored in the wavefunction.
 !!
-!!    n_o: number of occupied orbitals
-!!    n_v: number of virtual orbitals
-!!    n_J: number of Cholesky vectors
+!!    n_o:          Number of occupied orbitals
+!!    n_v:          Number of virtual orbitals
+!!    n_J:          Number of Cholesky vectors
+!!    need_g_abcd:  Will we have use of the full v^4 integrals? If so, 
+!!                  default is to store the full ERI matrix in memory 
+!!                  if there is plenty of room.
 !!
       implicit none
 !
@@ -130,6 +189,7 @@ contains
       integer, intent(in) :: n_o
       integer, intent(in) :: n_v
       integer, intent(in) :: n_J
+      logical, intent(in) :: need_g_abcd
 !
       integrals%n_J  = n_J
       integrals%n_o  = n_o
@@ -137,14 +197,41 @@ contains
       integrals%n_mo = n_o + n_v
 !
       integrals%cholesky_mo = direct_file('cholesky_mo_vectors', integrals%n_J)
-      integrals%cholesky_mo_t1 = direct_file('cholesky_mo_t1_vectors', integrals%n_J)
+      integrals%cholesky_t1 = direct_file('cholesky_t1_vectors', integrals%n_J)
 !
-!     Initially MO Cholesky on file, and not T1-transformed Cholesky
-!     nor full T1-ERI matrix
+!     Default: Cholesky in memory, integral matrix in memory 
+!              depends on amount of memory and "need_g_abcd"
 !
-      integrals%cholesky_file      = .true.
-      integrals%cholesky_t1_file   = .false.
-      integrals%eri_t1_mem         = .false.
+      if (integrals%room_for_cholesky()) then
+!
+         integrals%cholesky_mem = .true. 
+!
+      else
+! 
+         integrals%cholesky_mem = .false.
+!
+      endif
+!
+      if (need_g_abcd .and. integrals%room_for_g_pqrs_t1()) then 
+!
+        integrals%eri_t1_mem = .true.
+!
+      else 
+!
+        integrals%eri_t1_mem = .false.
+!
+      endif
+!
+      integrals%eri_t1_complex_placed_in_mem = .false. ! Switches to true when complex integrals are 
+                                                       ! placed in memory 
+!
+!     Read non-default settings
+!
+      call integrals%read_settings()
+!
+!     Print settings 
+!
+      call integrals%print_settings()
 !
    end function new_mo_integral_tool
 !
@@ -174,16 +261,181 @@ contains
       integrals%n_mo = integrals_template%n_o + integrals_template%n_v
 !
       integrals%cholesky_mo = direct_file(integrals_template%cholesky_mo%name_, integrals%n_J)
-      integrals%cholesky_mo_t1 = direct_file('cholesky_mo_t1_vectors', integrals%n_J)
+      integrals%cholesky_t1 = direct_file('cholesky_t1_vectors', integrals%n_J)
 !
-!     Initially MO cholesky on file, and not T1-transformed cholesky
-!     nor full T1-ERI matrix
+!     Memory logicals - Cholesky in memory (or file)? ERI in memory (or file)?
 !
-      integrals%cholesky_file      = .true.
-      integrals%cholesky_t1_file   = .false.
-      integrals%eri_t1_mem         = .false.
+      integrals%cholesky_mem = integrals_template%cholesky_mem
+      integrals%eri_t1_mem   = integrals_template%eri_t1_mem
+!
+      integrals%eri_t1_complex_placed_in_mem = .false. ! Switches to true when complex integrals are 
+                                                       ! placed in memory 
+!
+!     Print settings 
+!
+      call integrals%print_settings()
 !
    end function new_mo_integral_tool_from_template
+!
+!
+   subroutine print_settings_mo_integral_tool(integrals)
+!!
+!!    Print settings 
+!!    Written by Eirik F. Kjønstad, Dec 2019 
+!!
+      implicit none 
+!
+      class(mo_integral_tool) :: integrals 
+!
+      call output%printf('m', '- Settings for integral handling:', fs='(/t3,a)')
+!
+      call output%printf('m', &
+                         'Cholesky vectors in memory: (l1)', &
+                         logs=[integrals%cholesky_mem],     &
+                         fs='(/t6,a)')
+!
+      call output%printf('m', &
+                         'ERI matrix in memory:       (l1)', &
+                         logs=[integrals%eri_t1_mem],        &
+                         fs='(t6,a)')
+!
+   end subroutine print_settings_mo_integral_tool
+!
+!
+   subroutine read_settings_mo_integral_tool(integrals)
+!!
+!!    Read settings 
+!!    Written by Eirik F. Kjønstad, Dec 2019 
+!!
+      implicit none 
+!
+      class(mo_integral_tool) :: integrals 
+!
+      character(len=200) :: cholesky_storage
+      character(len=200) :: eri_storage 
+!
+      if (input%requested_keyword_in_section('cholesky storage', 'integrals')) then 
+!
+         call input%get_keyword_in_section('cholesky storage', &
+                                           'integrals',        &
+                                           cholesky_storage)
+!
+         if (cholesky_storage == 'memory') then 
+!
+            integrals%cholesky_mem = .true.
+!
+         elseif (cholesky_storage == 'disk') then 
+!
+            integrals%cholesky_mem = .false.
+!
+         else 
+!
+            call output%error_msg('Did not recognize keyword value ' // trim(cholesky_storage) // &
+                                  'for cholesky storage.')
+!
+         endif
+!
+      endif
+!
+      if (input%requested_keyword_in_section('eri storage', 'integrals')) then
+!
+         call input%get_keyword_in_section('eri storage',     &
+                                           'integrals',       &
+                                           eri_storage)
+!
+        if (eri_storage == 'memory') then
+!
+            integrals%eri_t1_mem = .true.
+!
+         elseif (eri_storage == 'none') then 
+!
+            integrals%eri_t1_mem = .false.
+!
+         else 
+!
+            call output%error_msg('Did not recognize keyword value ' // trim(eri_storage) // &
+                                  'for eri storage.')
+!
+         endif
+!
+      endif
+!
+   end subroutine read_settings_mo_integral_tool
+!
+!
+   subroutine initialize_storage_mo_integral_tool(integrals, integrals_template)
+!!
+!!    Initialize storage 
+!!    Written by Eirik F. Kjønstad, Dec 2019 
+!!
+!!    Allocates arrays for Cholesky vectors and the ERIs 
+!!    if they are to be stored in memory.
+!!
+!!    If template is passed, the routine copies integrals/Cholesky vectors from the template:
+!!
+!!    integrals_template:  Optional argument. If the integral tool constructor was 
+!!                         called with an integral template (i.e., the integral tool 
+!!                         is a copy of another integral tool), then the template  
+!!                         should be passed to this routine as well. If it is passed,
+!!                         the arrays in the integral template is copied over to the  
+!!                         current integrals object. These arrays are not copied in the 
+!!                         constructor to avoid allocation of large temporary arrays.
+!!
+      implicit none 
+!
+      class(mo_integral_tool) :: integrals 
+!
+      class(mo_integral_tool), optional :: integrals_template
+!
+      if (integrals%cholesky_mem) then 
+!
+!        Allocate Cholesky arrays 
+!
+         call mem%alloc(integrals%L_J_pq_t1, integrals%n_J, integrals%n_mo, integrals%n_mo)
+         call mem%alloc(integrals%L_J_pq_mo, integrals%n_J, integrals%n_mo, integrals%n_mo)
+!
+!        Copy Cholesky vectors from template - if present 
+!
+         if (present(integrals_template)) then 
+!
+            call dcopy(integrals%n_J*integrals%n_mo**2,  &
+                       integrals_template%L_J_pq_mo,     &
+                       1,                                &
+                       integrals%L_J_pq_mo,              &
+                       1)
+!
+            call dcopy(integrals%n_J*integrals%n_mo**2,  &
+                       integrals_template%L_J_pq_t1,     &
+                       1,                                &
+                       integrals%L_J_pq_t1,              &
+                       1)
+!
+         endif 
+!
+      endif
+!
+      if (integrals%eri_t1_mem) then 
+!
+!        Allocate integrals 
+!
+         call mem%alloc(integrals%g_pqrs, integrals%n_mo, integrals%n_mo, &
+                                          integrals%n_mo, integrals%n_mo)         
+!
+!        Copy integrals from template - if present 
+!
+         if (present(integrals_template)) then 
+!
+            call dcopy(integrals%n_mo**4,                &
+                       integrals_template%g_pqrs,        &
+                       1,                                &
+                       integrals%g_pqrs,                 &
+                       1)
+!
+         endif 
+!
+      endif 
+!
+   end subroutine initialize_storage_mo_integral_tool
 !
 !
    subroutine cleanup_mo_integral_tool(integrals)
@@ -195,7 +447,18 @@ contains
 !
       class(mo_integral_tool) :: integrals
 !
-      if (allocated(integrals%g_pqrs)) then
+      if (integrals%cholesky_mem) then 
+!
+!        Deallocate Cholesky arrays 
+!
+         call mem%dealloc(integrals%L_J_pq_t1, integrals%n_J, integrals%n_mo, integrals%n_mo)
+         call mem%dealloc(integrals%L_J_pq_mo, integrals%n_J, integrals%n_mo, integrals%n_mo)
+!
+      endif
+!
+      if (integrals%eri_t1_mem) then
+!
+!        Deallocate electron repulsion integrals
 !
          call mem%dealloc(integrals%g_pqrs, integrals%n_mo, integrals%n_mo, &
                                           integrals%n_mo, integrals%n_mo)
@@ -212,9 +475,8 @@ contains
 !!
 !!    This routine is called to check whether the T1-ERIs can be held in
 !!    memory safely (< 20% of total available). If this is the case, the
-!!    manager will keep a copy of g_pqrs in memory. 
+!!    tool will keep a copy of g_pqrs in memory. 
 !!
-!!    
       implicit none
 !
       class(mo_integral_tool) :: integrals
@@ -234,6 +496,34 @@ contains
    end function room_for_g_pqrs_t1_mo_integral_tool
 !
 !
+   function room_for_cholesky_mo_integral_tool(integrals) result(is_room)
+!!
+!!    Room for Cholesky 
+!!    Written by Eirik F. Kjønstad, Dec 2019
+!!
+!!    This routine is called to check whether the Cholesky vectors can be held in
+!!    memory safely (< 20% of total available). If this is the case, the
+!!    manager will keep a copy of them in memory.
+!!
+      implicit none
+!
+      class(mo_integral_tool) :: integrals
+!
+      integer :: required_mem
+!
+      integer, parameter :: fraction_of_total_mem = 5
+!
+      logical :: is_room
+!
+      is_room = .false.
+!
+      required_mem = 2*(integrals%n_J)*(integrals%n_mo)**2
+!
+      if (required_mem*dp .lt. mem%get_available()/fraction_of_total_mem) is_room = .true.
+!
+   end function room_for_cholesky_mo_integral_tool
+!
+!
    subroutine place_g_pqrs_t1_in_memory_mo_integral_tool(integrals)
 !!
 !!    Place g_pqrs T1 in memory
@@ -248,7 +538,8 @@ contains
 !
       call output%printf('m', 'Placing the ERIs in memory', fs='(/t3,a)')
 !
-      if (integrals%eri_t1_mem) call output%error_msg('tried to put T1 g_pqrs in memory, but it is already there.')
+      if (integrals%eri_t1_mem) &
+            call output%error_msg('tried to put T1 g_pqrs in memory, but it is already there.')
 !
       call mem%alloc(integrals%g_pqrs, integrals%n_mo, integrals%n_mo, &
                                           integrals%n_mo, integrals%n_mo)
@@ -261,24 +552,7 @@ contains
    end subroutine place_g_pqrs_t1_in_memory_mo_integral_tool
 !
 !
-   subroutine update_g_pqrs_t1_in_memory_mo_integral_tool(integrals)
-!!
-!!    Update g_pqrs T1 in memory
-!!    Written by Eirik F. Kjønstad, Jan 2019
-!!
-!!    Updates g_pqrs_t1 in memory
-!!
-      implicit none
-!
-      class(mo_integral_tool), intent(inout) :: integrals
-!
-      call integrals%construct_g_pqrs_t1(integrals%g_pqrs, 1, integrals%n_mo, 1, integrals%n_mo, &
-                                          1, integrals%n_mo, 1, integrals%n_mo)
-!
-   end subroutine update_g_pqrs_t1_in_memory_mo_integral_tool
-!
-!
-   subroutine read_cholesky_mo_integral_tool(integrals, L_J_pq, first_p, last_p, first_q, last_q)
+   subroutine read_cholesky_mo_mo_integral_tool(integrals, L_J_pq, first_p, last_p, first_q, last_q)
 !!
 !!    Read mo cholesky vectors
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
@@ -312,7 +586,50 @@ contains
 !
       call integrals%cholesky_mo%close_()
 !
-   end subroutine read_cholesky_mo_integral_tool
+   end subroutine read_cholesky_mo_mo_integral_tool
+!
+!
+   subroutine get_cholesky_mo_mo_integral_tool(integrals, L_J_pq, first_p, last_p, first_q, last_q)
+!!
+!!    Get Cholesky MO 
+!!    Written by Eirik F. Kjønstad, Dec 2019 
+!!
+!!    Wrapper to get parts of the MO Cholesky vectors (either from file or memory)
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!
+      integer, intent(in) :: first_p, last_p 
+      integer, intent(in) :: first_q, last_q 
+!
+      real(dp), dimension(integrals%n_J,        &
+                          last_p - first_p + 1, &
+                          last_q - first_q + 1), intent(out) :: L_J_pq
+!
+      integer :: p, q, J
+!
+      if (integrals%cholesky_mem) then 
+!
+!$omp parallel do private(J,p,q)
+         do q = first_q, last_q 
+            do p = first_p, last_p
+               do J = 1, integrals%n_J
+!
+                  L_J_pq(J, p - first_p + 1, q - first_q + 1) = integrals%L_J_pq_mo(J, p, q)
+!
+               enddo
+            enddo
+         enddo
+!$omp end parallel do 
+!
+      else 
+!
+         call integrals%read_cholesky_mo(L_J_pq, first_p, last_p, first_q, last_q)
+!
+      endif
+!
+   end subroutine get_cholesky_mo_mo_integral_tool
 !
 !
    subroutine read_cholesky_t1_mo_integral_tool(integrals, L_J_pq, first_p, last_p, first_q, last_q)
@@ -334,21 +651,251 @@ contains
 !
       integer :: p, q, pq_rec
 !
-      call integrals%cholesky_mo_t1%open_('read')
+      call integrals%cholesky_t1%open_('read')
 !
       do q = 1, last_q - first_q + 1
          do p = 1, last_p - first_p + 1
 !
             pq_rec = integrals%n_mo*(q + first_q - 2) + p + first_p - 1
 !
-            call integrals%cholesky_mo_t1%read_(L_J_pq(:, p, q), pq_rec)
+            call integrals%cholesky_t1%read_(L_J_pq(:, p, q), pq_rec)
 !
          enddo
       enddo
 !
-      call integrals%cholesky_mo_t1%close_()
+      call integrals%cholesky_t1%close_()
 !
    end subroutine read_cholesky_t1_mo_integral_tool
+!
+!
+   subroutine set_cholesky_t1_mo_integral_tool(integrals, L_J_pq, first_p, last_p, first_q, last_q)
+!!
+!!    Set Cholesky t1 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018 and Dec 2019 
+!!
+!!    Saves parts of the Cholesky t1 vectors either to file or in memory. 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(inout) :: integrals 
+!
+      integer, intent(in) :: first_p, last_p 
+      integer, intent(in) :: first_q, last_q 
+!
+      real(dp), dimension(integrals%n_J, &
+                          last_p - first_p + 1, &
+                          last_q - first_q + 1), intent(in) :: L_J_pq
+!
+      integer :: p, q, pq_rec, K  
+!
+      if (integrals%cholesky_mem) then 
+!
+!$omp parallel do private(p,q,K)
+         do q = first_q, last_q 
+            do p = first_p, last_p  
+               do K = 1, integrals%n_J
+!
+                  integrals%L_J_pq_t1(K, p, q) = L_J_pq(K,                 &
+                                                        p - first_p + 1,   &
+                                                        q - first_q + 1)
+!
+               enddo
+            enddo
+         enddo
+!$omp end parallel do 
+!
+      else
+!
+         call integrals%cholesky_t1%open_('write')
+!
+         do q = first_q, last_q
+            do p = first_p, last_p 
+!
+               pq_rec = integrals%n_mo*(q - 1) + p
+!
+               call integrals%cholesky_t1%write_(L_J_pq(:,                 &
+                                                        p - first_p + 1,   &
+                                                        q - first_q + 1),  &
+                                                        pq_rec)
+!
+            enddo
+         enddo
+!
+         call integrals%cholesky_t1%close_()
+!
+      endif
+!
+   end subroutine set_cholesky_t1_mo_integral_tool
+!
+!
+   subroutine set_cholesky_mo_mo_integral_tool(integrals, L_J_pq, &
+                                               first_p, last_p, &
+                                               first_q, last_q, &
+                                               q_leq_p)
+!!
+!!    Set Cholesky MO 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018 and Dec 2019 
+!!
+!!    Saves parts of the Cholesky MO vectors either to file or in memory. 
+!!
+!!    L_J_pq:           Cholesky vector L_pq^J ordered as J x pq 
+!!    
+!!    first_p, last_p:  MO index range for p in L_J_pq 
+!!    first_q, last_q:  MO index range for q in L_J_pq 
+!!
+!!    q_leq_p:          If Cholesky vectors are kept on file, only store for 
+!!                      records pq where q <= p. This is to not write the same 
+!!                      records several times when MO transforming and saving 
+!!                      the result.
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(inout) :: integrals 
+!
+      integer, intent(in) :: first_p, last_p 
+      integer, intent(in) :: first_q, last_q 
+!
+      real(dp), dimension(integrals%n_J, &
+                          last_p - first_p + 1, &
+                          last_q - first_q + 1), intent(in) :: L_J_pq
+!
+      logical, optional, intent(in) :: q_leq_p
+!
+      logical :: q_leq_p_local
+!
+      integer :: p, q, pq_rec, K  
+!  
+      q_leq_p_local = .false.
+      if (present(q_leq_p)) then 
+!  
+         q_leq_p_local = q_leq_p
+!
+      endif
+!
+      if (integrals%cholesky_mem) then 
+!
+        if (q_leq_p) then 
+!
+!$omp parallel do private(p,q,K)
+            do p = first_p, last_p  
+               do q = first_q, p 
+                  do K = 1, integrals%n_J
+!
+                     integrals%L_J_pq_mo(K, p, q) = L_J_pq(K,              &
+                                                        p - first_p + 1,   &
+                                                        q - first_q + 1)
+!
+                     integrals%L_J_pq_mo(K, q, p) = L_J_pq(K,              &
+                                                        p - first_p + 1,   &
+                                                        q - first_q + 1)
+!
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do 
+!
+        else 
+!
+!$omp parallel do private(p,q,K)
+            do q = first_q, last_q 
+               do p = first_p, last_p  
+                  do K = 1, integrals%n_J
+!
+                     integrals%L_J_pq_mo(K, p, q) = L_J_pq(K,              &
+                                                        p - first_p + 1,   &
+                                                        q - first_q + 1)
+!
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do 
+!
+        endif
+!
+      else
+!
+         call integrals%cholesky_mo%open_('write')
+!
+         if (q_leq_p) then 
+!
+            do p = first_p, last_p 
+               do q = first_q, p
+!
+                  pq_rec = p*(p-3)/2 + p + q
+!
+                  call integrals%cholesky_mo%write_(L_J_pq(:,                 &
+                                                           p - first_p + 1,   &
+                                                           q - first_q + 1),  &
+                                                           pq_rec)
+!
+               enddo
+            enddo
+!
+         else 
+!
+            do p = first_p, last_p 
+               do q = first_q, last_q
+!
+                  pq_rec = max(p,q)*(max(p,q)-3)/2 + p + q
+!
+                  call integrals%cholesky_mo%write_(L_J_pq(:,                 &
+                                                           p - first_p + 1,   &
+                                                           q - first_q + 1),  &
+                                                           pq_rec)
+!
+               enddo
+            enddo            
+!
+         endif
+!
+         call integrals%cholesky_mo%close_()
+!
+      endif
+!
+   end subroutine set_cholesky_mo_mo_integral_tool
+!
+!
+   subroutine get_cholesky_t1_mo_integral_tool(integrals, L_J_pq, first_p, last_p, first_q, last_q)
+!!
+!!    Get Cholesky t1 
+!!    Written by Eirik F. Kjønstad, Dec 2019 
+!!
+!!    Wrapper to get parts of the T1 Cholesky vectors (either from file or memory)
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!
+      integer, intent(in) :: first_p, last_p 
+      integer, intent(in) :: first_q, last_q 
+!
+      real(dp), dimension(integrals%n_J,        &
+                          last_p - first_p + 1, &
+                          last_q - first_q + 1), intent(out) :: L_J_pq
+!
+      integer :: p, q, J
+!
+      if (integrals%cholesky_mem) then 
+!
+!$omp parallel do private(J,p,q)
+         do q = first_q, last_q
+            do p = first_p, last_p
+               do J = 1, integrals%n_J
+!
+                  L_J_pq(J, p - first_p + 1, q - first_q + 1) = integrals%L_J_pq_t1(J, p, q)
+!
+               enddo
+            enddo
+         enddo
+!$omp end parallel do 
+!
+      else 
+!
+         call integrals%read_cholesky_t1(L_J_pq, first_p, last_p, first_q, last_q)
+!
+      endif
+!
+   end subroutine get_cholesky_t1_mo_integral_tool
 !
 !
    subroutine get_g_pqrs_t1_mo_integral_tool(integrals, g_pqrs, first_p, last_p, first_q, last_q, &
@@ -373,9 +920,6 @@ contains
 !
       integer :: p, q, r, s
       integer :: dim_p, dim_q, dim_r, dim_s
-!
-      if (.not. integrals%cholesky_t1_file) call output%error_msg('tried to construct T1-tranformed g_pqrs, but ' &
-                                                         // 'the T1-transformed Cholesky vectors are not on file!')
 !
       dim_p = last_p - first_p + 1
       dim_q = last_q - first_q + 1
@@ -439,7 +983,7 @@ contains
       dim_r = last_r - first_r + 1
       dim_s = last_s - first_s + 1
 !
-      if (integrals%eri_t1_mem_complex) then
+      if (integrals%eri_t1_complex_placed_in_mem) then
 !
 !$omp parallel do private(s, r, q, p)
          do s = 1, dim_s
@@ -497,8 +1041,8 @@ contains
       call mem%alloc(L_J_pq, integrals%n_J, dim_p, dim_q)
       call mem%alloc(L_J_rs, integrals%n_J, dim_r, dim_s)
 !
-      call integrals%read_cholesky_t1(L_J_pq, first_p, last_p, first_q, last_q)
-      call integrals%read_cholesky_t1(L_J_rs, first_r, last_r, first_s, last_s)
+      call integrals%get_cholesky_t1(L_J_pq, first_p, last_p, first_q, last_q)
+      call integrals%get_cholesky_t1(L_J_rs, first_r, last_r, first_s, last_s)
 !
       call dgemm('T', 'N',       &
                   dim_p*dim_q,   &
@@ -550,8 +1094,8 @@ contains
       call mem%alloc(L_J_pq, integrals%n_J, dim_p, dim_q)
       call mem%alloc(L_J_rs, integrals%n_J, dim_r, dim_s)
 !
-      call integrals%read_cholesky(L_J_pq, first_p, last_p, first_q, last_q)
-      call integrals%read_cholesky(L_J_rs, first_r, last_r, first_s, last_s)
+      call integrals%get_cholesky_mo(L_J_pq, first_p, last_p, first_q, last_q)
+      call integrals%get_cholesky_mo(L_J_rs, first_r, last_r, first_s, last_s)
 !
       call dgemm('T', 'N',       &
                   dim_p*dim_q,   &
@@ -600,7 +1144,7 @@ contains
       dim_r = last_r - first_r + 1
       dim_s = last_s - first_s + 1
 !
-      if (integrals%eri_t1_mem_complex) then
+      if (integrals%eri_t1_complex_placed_in_mem) then
 !
 !$omp parallel do private(s, r, q, p)
          do s = 1, dim_s
@@ -672,12 +1216,12 @@ contains
 !     Read the untransformed Cholesky vectors
 !
       call mem%alloc(L_J_ij, integrals%n_J, i_length, j_length)
-      call integrals%read_cholesky(L_J_ij, full_first_i, full_last_i, full_first_j, full_last_j)
+      call integrals%get_cholesky_mo(L_J_ij, full_first_i, full_last_i, full_first_j, full_last_j)
       call sort_123_to_231(L_J_ij, L_ij_J, integrals%n_J, i_length, j_length)
       call mem%dealloc(L_J_ij, integrals%n_J, i_length, j_length)
 !
       call mem%alloc(L_J_ia, integrals%n_J, i_length, integrals%n_v)
-      call integrals%read_cholesky(L_J_ia, full_first_i, full_last_i, integrals%n_o + 1, integrals%n_mo)
+      call integrals%get_cholesky_mo(L_J_ia, full_first_i, full_last_i, integrals%n_o + 1, integrals%n_mo)
 !
 !     Compute and add t1-transformed term, L_iJ_j sum_a t_aj L_ia_J
 !
@@ -750,14 +1294,14 @@ contains
 !     Set L_ib_J = L_ib^J and L_ab_J^T1 = L_ab_J
 !
       call mem%alloc(L_J_ib, integrals%n_J, integrals%n_o, b_length)
-      call integrals%read_cholesky(L_J_ib, 1, integrals%n_o, full_first_b, full_last_b)
+      call integrals%get_cholesky_mo(L_J_ib, 1, integrals%n_o, full_first_b, full_last_b)
 !
       call mem%alloc(L_ib_J, integrals%n_o, b_length, integrals%n_J)
       call sort_123_to_231(L_J_ib, L_ib_J, integrals%n_J, integrals%n_o, b_length)
       call mem%dealloc(L_J_ib, integrals%n_J, integrals%n_o, b_length)
 !
       call mem%alloc(L_J_ab, integrals%n_J, a_length, b_length)
-      call integrals%read_cholesky(L_J_ab, full_first_a, full_last_a, full_first_b, full_last_b)
+      call integrals%get_cholesky_mo(L_J_ab, full_first_a, full_last_a, full_first_b, full_last_b)
       call sort_123_to_231(L_J_ab, L_ab_J, integrals%n_J, a_length, b_length)
       call mem%dealloc(L_J_ab, integrals%n_J, a_length, b_length)
 !
@@ -824,7 +1368,7 @@ contains
 !     :: Term 1: L_ai_J - sum_bj t_aj*t_bi*L_jb_J
 !
       call mem%alloc(L_J_ai, integrals%n_J, length_a, length_i)
-      call integrals%read_cholesky(L_J_ai, full_first_a, full_last_a, full_first_i, full_last_i)
+      call integrals%get_cholesky_mo(L_J_ai, full_first_a, full_last_a, full_first_i, full_last_i)
       call sort_123_to_231(L_J_ai, L_ai_J, integrals%n_J, length_a, length_i)
       call mem%dealloc(L_J_ai, integrals%n_J, length_a, length_i)
 !
@@ -841,7 +1385,7 @@ contains
          call batch_j%determine_limits(current_j_batch)
 !
          call mem%alloc(L_J_jb, integrals%n_J, batch_j%length, integrals%n_v)
-         call integrals%read_cholesky(L_J_jb, batch_j%first, batch_j%last, (integrals%n_o) + 1, (integrals%n_mo))
+         call integrals%get_cholesky_mo(L_J_jb, batch_j%first, batch_j%last, (integrals%n_o) + 1, (integrals%n_mo))
 !
          call mem%alloc(X_Jj_i, integrals%n_J, batch_j%length, length_i)
 !
@@ -886,7 +1430,7 @@ contains
 !     :: Term 2: L_ai_J - sum_j t_aj*L_ji_J
 !
       call mem%alloc(L_J_ji, integrals%n_J, integrals%n_o, length_i)
-      call integrals%read_cholesky(L_J_ji, 1, (integrals%n_o), full_first_i, full_last_i)
+      call integrals%get_cholesky_mo(L_J_ji, 1, (integrals%n_o), full_first_i, full_last_i)
 !
       call mem%alloc(L_ji_J, integrals%n_o, length_i, integrals%n_J)
       call sort_123_to_231(L_J_ji, L_ji_J, integrals%n_J, integrals%n_o, length_i)
@@ -911,7 +1455,7 @@ contains
 !
       call mem%alloc(L_J_ab, integrals%n_J, length_a, integrals%n_v)
 !
-      call integrals%read_cholesky(L_J_ab, &
+      call integrals%get_cholesky_mo(L_J_ab, &
                                        first_a + integrals%n_o, last_a + (integrals%n_o), &
                                        integrals%n_o + 1, integrals%n_mo)
 !
@@ -988,7 +1532,7 @@ contains
 !     Read the t1-transformed Cholesky vectors
 !
       call mem%alloc(L_J_ia, integrals%n_J, i_length, integrals%n_v)
-      call integrals%read_cholesky_t1(L_J_ia, full_first_i, full_last_i, integrals%n_o + 1, integrals%n_mo)
+      call integrals%get_cholesky_t1(L_J_ia, full_first_i, full_last_i, integrals%n_o + 1, integrals%n_mo)
 !
 !     Compute and c1-transformed term, L_J_ij = sum_a c_aj L_J_ia
 !
@@ -1058,7 +1602,7 @@ contains
 !     Read t1-transformed L_J_ib and resort
 !
       call mem%alloc(L_J_ib, integrals%n_J, integrals%n_o, b_length)
-      call integrals%read_cholesky_t1(L_J_ib, 1, integrals%n_o, full_first_b, full_last_b)
+      call integrals%get_cholesky_t1(L_J_ib, 1, integrals%n_o, full_first_b, full_last_b)
 !
       call mem%alloc(L_ib_J, integrals%n_o, b_length, integrals%n_J)
       call sort_123_to_231(L_J_ib, L_ib_J, integrals%n_J, integrals%n_o, b_length)
@@ -1115,7 +1659,9 @@ contains
       integer, intent(in) :: first_i, last_i
       integer, intent(in) :: first_a, last_a
 !
-      real(dp), dimension(last_a - first_a + 1, last_i - first_i + 1, integrals%n_J), intent(out) :: L_J_ai_c1
+      real(dp), dimension(last_a - first_a + 1, &
+                          last_i - first_i + 1, &
+                          integrals%n_J), intent(out) :: L_J_ai_c1
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: c_aj
 !
@@ -1136,7 +1682,7 @@ contains
 !     Read t1-transformed L_J_ji and resort
 !
       call mem%alloc(L_J_ji, integrals%n_J, integrals%n_o, length_i)
-      call integrals%read_cholesky_t1(L_J_ji, 1, integrals%n_o, full_first_i, full_last_i)
+      call integrals%get_cholesky_t1(L_J_ji, 1, integrals%n_o, full_first_i, full_last_i)
 !
       call mem%alloc(L_ji_J, integrals%n_o, length_i, integrals%n_J)
       call sort_123_to_231(L_J_ji, L_ji_J, integrals%n_J, integrals%n_o, length_i)
@@ -1212,7 +1758,7 @@ contains
 !     Read t1-transformed L_J_ab
 !
       call mem%alloc(L_J_ab, integrals%n_J, length_a, integrals%n_v)
-      call integrals%read_cholesky_t1(L_J_ab, &
+      call integrals%get_cholesky_t1(L_J_ab, &
                                        first_a + integrals%n_o, last_a + (integrals%n_o), &
                                        integrals%n_o + 1, integrals%n_mo)
 !
@@ -1316,10 +1862,46 @@ contains
    end subroutine set_full_index_mo_integral_tool
 !
 !
-   subroutine write_t1_cholesky_mo_integral_tool(integrals, t1)
+   subroutine update_t1_integrals_mo_integral_tool(integrals, t1)
 !!
-!!    Write T1-transformed Cholesky vectors to file
+!!    Update t1 integrals 
+!!    Written by Eirik F. Kjønstad, Dec 2019 
+!!
+!!    Updates the t1 integrals by:
+!!
+!!       1. Constructing and saving (in memory or file) the Cholesky 
+!!          t1 transformed vectors
+!!
+!!       2. If ERI in memory, constructs and saves t1 g_pqrs 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(inout) :: integrals 
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: t1 
+!
+      call integrals%construct_and_save_t1_cholesky(t1)
+!  
+      if (integrals%eri_t1_mem) then 
+!
+         call integrals%construct_g_pqrs_t1(integrals%g_pqrs,     &
+                                            1, integrals%n_mo,    &
+                                            1, integrals%n_mo,    &
+                                            1, integrals%n_mo,    &
+                                            1, integrals%n_mo)
+!
+      endif 
+!
+   end subroutine update_t1_integrals_mo_integral_tool
+!
+!
+   subroutine construct_and_save_t1_cholesky_mo_integral_tool(integrals, t1)
+!!
+!!    Construct and save T1-transformed Cholesky
 !!    Written by Sarai D. Folkestad, 2018
+!!
+!!    Constructs the T1 transformed Cholesky vectors and stores them,
+!!    either on file or in memory. 
 !!
 !!    Eirik F. Kjønstad, Mar 2019: Modifications to write consequtively to file.
 !!
@@ -1332,18 +1914,14 @@ contains
       real(dp), dimension(:,:,:), allocatable :: L_ij_J, L_ai_J, L_ab_J
       real(dp), dimension(:,:,:), allocatable :: L_J_ia, L_J_ab, L_J_ij, L_J_ai
 !
-      integer :: ij_rec, i, j, ai_rec, ia_rec, ab_rec, a, b
-!
       integer :: req0, req1, req1_a, req1_i, req2, current_i_batch, current_a_batch, current_b_batch
 !
       type(batching_index) :: batch_i, batch_a, batch_b
 !
-      type(timings) :: write_t1_cholesky_timer
+      type(timings) :: construct_and_save_t1_cholesky_timer
 !
-      write_t1_cholesky_timer = timings('transform and write t1 cholesky to file')
-      call write_t1_cholesky_timer%turn_on()
-!
-      call integrals%cholesky_mo_t1%open_('write')
+      construct_and_save_t1_cholesky_timer = timings('Transform and save t1 cholesky', pl='normal')
+      call construct_and_save_t1_cholesky_timer%turn_on()
 !
 !     occupied-occupied block
 !
@@ -1367,15 +1945,9 @@ contains
          call sort_123_to_312(L_ij_J, L_J_ij, batch_i%length, integrals%n_o, integrals%n_J)
          call mem%dealloc(L_ij_J, batch_i%length, integrals%n_o, integrals%n_J)
 !
-         do j = 1, integrals%n_o
-            do i = 1, batch_i%length
-!
-               ij_rec = integrals%n_mo*(j - 1) + i + batch_i%first - 1
-!
-               call integrals%cholesky_mo_t1%write_(L_J_ij(:, i, j), ij_rec)
-!
-            enddo
-         enddo
+         call integrals%set_cholesky_t1(L_J_ij,                      &
+                                        batch_i%first, batch_i%last, &
+                                        1, integrals%n_o)
 !
          call mem%dealloc(L_J_ij, integrals%n_J, batch_i%length, integrals%n_o)
 !
@@ -1397,17 +1969,17 @@ contains
 !
          call mem%alloc(L_J_ia, integrals%n_J, integrals%n_o, batch_a%length)
 !
-         call integrals%read_cholesky(L_J_ia, 1, integrals%n_o, integrals%n_o + batch_a%first, integrals%n_o + batch_a%last)
+         call integrals%get_cholesky_mo(L_J_ia,                         &
+                                        1,                              &
+                                        integrals%n_o,                  &
+                                        integrals%n_o + batch_a%first,  &
+                                        integrals%n_o + batch_a%last)
 !
-         do a = 1, batch_a%length
-            do i = 1, integrals%n_o
-!
-               ia_rec = integrals%n_mo*(a + batch_a%first + integrals%n_o - 2) + i
-!
-               call integrals%cholesky_mo_t1%write_(L_J_ia(:, i, a), ia_rec)
-!
-            enddo
-         enddo
+         call integrals%set_cholesky_t1(L_J_ia,                         &
+                                        1,                              &
+                                        integrals%n_o,                  &
+                                        integrals%n_o + batch_a%first,  &
+                                        integrals%n_o + batch_a%last)
 !
          call mem%dealloc(L_J_ia, integrals%n_J, integrals%n_o, batch_a%length)
 !
@@ -1437,21 +2009,19 @@ contains
 !
             call mem%alloc(L_ai_J, batch_a%length, batch_i%length, integrals%n_J)
 !
-            call integrals%construct_cholesky_ai(L_ai_J, t1, batch_a%first, batch_a%last, batch_i%first, batch_i%last)
+            call integrals%construct_cholesky_ai(L_ai_J, t1,                  &
+                                                 batch_a%first, batch_a%last, &
+                                                 batch_i%first, batch_i%last)
 !
             call mem%alloc(L_J_ai, integrals%n_J, batch_a%length, batch_i%length)
             call sort_123_to_312(L_ai_J, L_J_ai, batch_a%length, batch_i%length, integrals%n_J)
             call mem%dealloc(L_ai_J, batch_a%length, batch_i%length, integrals%n_J)
 !
-            do i = 1, batch_i%length
-               do a = 1, batch_a%length
-!
-                  ai_rec = integrals%n_mo*(i + batch_i%first - 2) + a + batch_a%first - 1 + integrals%n_o
-!
-                  call integrals%cholesky_mo_t1%write_(L_J_ai(:, a, i), ai_rec)
-!
-               enddo
-            enddo
+            call integrals%set_cholesky_t1(L_J_ai,                         &
+                                           integrals%n_o + batch_a%first,  &
+                                           integrals%n_o + batch_a%last,   &
+                                           batch_i%first,                  &
+                                           batch_i%last)
 !
             call mem%dealloc(L_J_ai, integrals%n_J, batch_a%length, batch_i%length)
 !
@@ -1464,8 +2034,8 @@ contains
 !
       req0 = 0
 !
-      req1 = 2*(integrals%n_v)*(integrals%n_J) &   ! 2 x L_ab^J
-            + 2*(integrals%n_o)*(integrals%n_J)      ! L_ib^J
+      req1 = 2*(integrals%n_v)*(integrals%n_J) &      ! 2 x L_ab^J
+            + 2*(integrals%n_o)*(integrals%n_J)       ! L_ib^J
 !
       call mem%batch_setup(batch_b, req0, req1)
 !
@@ -1475,50 +2045,27 @@ contains
 !
          call mem%alloc(L_ab_J, integrals%n_v, batch_b%length, integrals%n_J)
 !
-         call integrals%construct_cholesky_ab(L_ab_J, t1, 1, integrals%n_v, batch_b%first, batch_b%last)
+         call integrals%construct_cholesky_ab(L_ab_J, t1,                  &
+                                              1, integrals%n_v,            &
+                                              batch_b%first, batch_b%last)
 !
          call mem%alloc(L_J_ab, integrals%n_J, integrals%n_v, batch_b%length)
          call sort_123_to_312(L_ab_J, L_J_ab, integrals%n_v, batch_b%length, integrals%n_J)
          call mem%dealloc(L_ab_J, integrals%n_v, batch_b%length, integrals%n_J)
 !
-         do b = 1, batch_b%length
-            do a = 1, integrals%n_v
-!
-               ab_rec = integrals%n_mo*((integrals%n_o + b + batch_b%first) - 2) + (a + integrals%n_o)
-!
-               call integrals%cholesky_mo_t1%write_(L_J_ab(:, a, b), ab_rec)
-!
-            enddo
-         enddo
+         call integrals%set_cholesky_t1(L_J_ab,                         &
+                                        integrals%n_o + 1,              &
+                                        integrals%n_o + integrals%n_v,  &
+                                        integrals%n_o + batch_b%first,  &
+                                        integrals%n_o + batch_b%last)
 !
          call mem%dealloc(L_J_ab, integrals%n_J, integrals%n_v, batch_b%length)
 !
       enddo
 !
-      integrals%cholesky_t1_file = .true.
+      call construct_and_save_t1_cholesky_timer%turn_off()
 !
-      call integrals%cholesky_mo_t1%close_()
-!
-      call write_t1_cholesky_timer%turn_off()
-!
-   end subroutine write_t1_cholesky_mo_integral_tool
-!
-!
-   logical function get_eri_t1_mem_mo_integral_tool(integrals)
-!!
-!!    Get ERI T1 mem 
-!!    Written by Sarai D. Folkestad, Sep 2019
-!!
-!!    Returns the logical eri_t1_mem
-!!
-!!
-      implicit none
-!
-      class(mo_integral_tool), intent(in) :: integrals
-!
-      get_eri_t1_mem_mo_integral_tool = integrals%eri_t1_mem
-!
-   end function get_eri_t1_mem_mo_integral_tool
+   end subroutine construct_and_save_t1_cholesky_mo_integral_tool
 !
 !
    subroutine make_eri_complex_mo_integral_tool(integrals)
@@ -1551,8 +2098,9 @@ contains
 !
       call mem%dealloc(integrals%g_pqrs, integrals%n_mo, integrals%n_mo, integrals%n_mo, integrals%n_mo)
 !
-      integrals%eri_t1_mem = .false.
-      integrals%eri_t1_mem_complex = .true.
+      integrals%eri_t1_mem = .false. ! Changing due to deallocation and no more use for it
+!
+      integrals%eri_t1_complex_placed_in_mem = .true. 
 !
    end subroutine make_eri_complex_mo_integral_tool
 !

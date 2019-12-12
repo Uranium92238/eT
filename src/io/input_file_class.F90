@@ -146,6 +146,7 @@ contains
       type(section) :: pcm
       type(section) :: global_print
       type(section) :: frozen_orbitals
+      type(section) :: integrals
 !
 !     Set input file name, access and format 
 !
@@ -439,6 +440,12 @@ contains
                               'hf', &
                               'core']
 !
+      integrals%name_ = 'integrals'
+      integrals%required = .false.
+      integrals%keywords = [character(len=30) ::  &
+                              'cholesky storage', &
+                              'eri storage']
+!
 !     Gather all sections into the file's section array 
 !
       the_file%sections = [calculations,              &
@@ -468,7 +475,8 @@ contains
                            mlhf,                      &
                            global_print,              &
                            visualization,             &
-                           frozen_orbitals]
+                           frozen_orbitals,           &
+                           integrals]
 !
       the_file%is_open = .false.
       the_file%unit_ = -1

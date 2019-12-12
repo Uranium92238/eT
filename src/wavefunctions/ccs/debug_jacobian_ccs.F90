@@ -68,8 +68,7 @@ contains
       call wf%get_amplitudes(t_copy)
       call wf%set_amplitudes(t)
 !
-      call wf%integrals%write_t1_cholesky(wf%t1)
-      if (wf%integrals%get_eri_t1_mem()) call wf%integrals%update_g_pqrs_t1_in_memory()
+      call wf%integrals%update_t1_integrals(wf%t1)
 !
       call wf%construct_fock()
       call wf%construct_omega(omega)
@@ -225,10 +224,8 @@ contains
          call zero_array(e, wf%n_es_amplitudes)
          e(nu) = one
 !
-         call wf%integrals%write_t1_cholesky(wf%t1)
+         call wf%integrals%update_t1_integrals(wf%t1)
 !
-         if (wf%integrals%get_eri_t1_mem()) call wf%integrals%update_g_pqrs_t1_in_memory()
-
          call wf%construct_fock()
 !
          call wf%jacobian_transformation(e)

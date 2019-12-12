@@ -76,9 +76,7 @@ contains
 !
 !     Prepare T1 integrals and Fock 
 !
-      call wf%integrals%write_t1_cholesky(wf%t1)
-      if (wf%integrals%get_eri_t1_mem()) &
-         call wf%integrals%update_g_pqrs_t1_in_memory()
+      call wf%integrals%update_t1_integrals(wf%t1)
 !
       call wf%construct_fock()
 !

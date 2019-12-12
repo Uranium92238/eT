@@ -135,6 +135,8 @@ contains
       class(gs_engine) :: engine
       class(ccs)       :: wf
 !
+      call engine%tasks%print_('mo preparations')
+!
       call wf%mo_preparations() 
 !
       call engine%restart_handling(wf)
@@ -208,9 +210,12 @@ contains
 !
       engine%tasks = task_list()
 !
+      call engine%tasks%add(label='mo preparations',                             &
+                            description='Preparation of MO basis and integrals')
+!
       call engine%tasks%add(label='gs solver',                                &
                             description='Calculation of the ground state ('// &
-                           trim((engine%gs_algorithm))//' algorithm)')
+                            trim((engine%gs_algorithm))//' algorithm)')
 !
    end subroutine set_printables_gs_engine
 !
@@ -243,7 +248,8 @@ contains
 !
       if (trim(wf%name_) == 'mp2') then
 !
-         call wf%integrals%write_t1_cholesky(wf%t1)
+         call wf%integrals%update_t1_integrals(wf%t1)
+!
          call wf%calculate_energy()
 !
          call output%printf('m', ':: Summary of (a0) wavefunction energetics (a.u.)', &

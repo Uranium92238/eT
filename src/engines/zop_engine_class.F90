@@ -129,6 +129,8 @@ contains
       class(ccs)         :: wf
       class(zop_engine)  :: engine
 !
+      call engine%tasks%print_('mo preparations')
+!
       call wf%mo_preparations()
 !
       call engine%restart_handling(wf)
@@ -179,6 +181,9 @@ contains
 !     Prepare the list of tasks
 !
       engine%tasks = task_list()
+!
+      call engine%tasks%add(label='mo preparations',                             &
+                            description='Preparation of MO basis and integrals')
 !
       call engine%tasks%add(label='gs solver',                                &
                             description='Calculation of the ground state ('// &
