@@ -124,7 +124,7 @@
    end subroutine do_roothan_hall_mo_hf
 !
 !
-   module subroutine update_fock_and_energy_mo_hf(wf, h_wx, prev_ao_density)
+   module subroutine update_fock_and_energy_mo_hf(wf, prev_ao_density)
 !!
 !!    Update Fock and energy
 !!    Written by Linda Goletto and Sarai D. Folkestad, 2019
@@ -137,7 +137,6 @@
       implicit none
 !
       class(hf) :: wf
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
 !
    end subroutine update_fock_and_energy_mo_hf
@@ -204,3 +203,15 @@
       class(hf) :: wf
 !
    end subroutine prepare_for_roothan_hall_mo_hf
+!
+!
+   module subroutine read_for_scf_restart_mo_hf(wf)
+!!
+!!    Read for SCF restart
+!!    Written by Sarai D. Folkestad and Linda Goletto, Oct 2019
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+   end subroutine read_for_scf_restart_mo_hf

@@ -676,14 +676,14 @@ contains
 !
      if (wf%system%mm_calculation) then
 !
+         call wf%initialize_mm_matrices()
+!
          if(wf%system%mm%forcefield .eq. 'non-polarizable') then 
 !
-            call mem%alloc(wf%nopol_h_wx, wf%n_ao, wf%n_ao)
             call dcopy(wf%n_ao**2, template_wf%nopol_h_wx, 1, wf%nopol_h_wx, 1)
 !
          else if(wf%system%mm%forcefield .eq. 'fq') then
 !
-            call mem%alloc(wf%pol_emb_fock, wf%n_ao,wf%n_ao)
             call dcopy(wf%n_ao**2, template_wf%pol_emb_fock, 1, wf%pol_emb_fock, 1)
 !
          endif

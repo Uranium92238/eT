@@ -187,6 +187,10 @@ contains
 !
          call wf%set_n_mo() 
 !
+!        Re-compute the AO h matrix 
+!
+         call wf%get_ao_h_wx(wf%ao_h)
+!
 !        Update Cauchy Schwarz screening list 
 !
          call wf%construct_sp_eri_schwarz()

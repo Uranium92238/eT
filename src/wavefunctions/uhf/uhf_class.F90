@@ -65,7 +65,7 @@ module uhf_class
       procedure :: initialize_fock                      => initialize_fock_uhf
       procedure :: construct_ao_spin_fock               => construct_ao_spin_fock_uhf
       procedure :: calculate_uhf_energy                 => calculate_uhf_energy_uhf
-      procedure :: update_fock_and_energy_no_cumulative => update_fock_and_energy_no_cumulative_uhf
+      procedure :: update_fock_and_energy_non_cumulative => update_fock_and_energy_non_cumulative_uhf
       procedure :: update_fock_and_energy_cumulative    => update_fock_and_energy_cumulative_uhf
       procedure :: update_fock_and_energy               => update_fock_and_energy_uhf
       procedure :: update_fock_mm                       => update_fock_mm_uhf
@@ -229,11 +229,14 @@ contains
 !
       call wf%construct_sp_eri_schwarz()
 !
-      if(wf%system%mm_calculation)  call wf%initialize_mm_matrices()
+      if (wf%system%mm_calculation) call wf%prepare_qmmm()
       if(wf%system%pcm_calculation) call wf%initialize_pcm_matrices()
 !
       wf%frozen_core = .false.
       wf%frozen_hf_mos = .false.
+!
+      call wf%initialize_ao_h()
+      call wf%get_ao_h_wx(wf%ao_h)
 !
    end subroutine prepare_uhf
 !
@@ -592,7 +595,7 @@ contains
    end subroutine destruct_fock_uhf
 !
 !
-   subroutine update_fock_and_energy_no_cumulative_uhf(wf, h_wx)
+   subroutine update_fock_and_energy_non_cumulative_uhf(wf)
 !!
 !!    Update Fock and energy
 !!    Written by Eirik F. Kjønstad, Sep 2018
@@ -606,69 +609,71 @@ contains
       implicit none
 !
       class(uhf) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !      
       real(dp), dimension(:, :), allocatable            :: h_wx_eff
 !
-      call mem%alloc(h_wx_eff, wf%n_ao,wf%n_ao)
-!      
-      h_wx_eff = h_wx
-! 
-      if(wf%system%mm_calculation.and.wf%system%mm%forcefield.eq.'non-polarizable') &
-         call wf%update_h_wx_mm(h_wx_eff)
-!         
-      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha', h_wx_eff)
+      if(wf%system%mm_calculation .and. wf%system%mm%forcefield .eq. 'non-polarizable') then
+
+         call mem%alloc(h_wx_eff, wf%n_ao, wf%n_ao)
 !
-      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_b, 'beta', h_wx_eff)
+         call dcopy(wf%n_ao**2, wf%ao_h, 1, h_wx_eff, 1)
+         call daxpy(wf%n_ao**2, half, wf%nopol_h_wx, 1, h_wx_eff, 1)
 !
-      call mem%dealloc(h_wx_eff, wf%n_ao, wf%n_ao) 
+         call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha', h_wx_eff)
+         call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_b, 'beta', h_wx_eff)
+!
+         call mem%dealloc(h_wx_eff, wf%n_ao, wf%n_ao) 
+!
+      else
+
+         call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha', wf%ao_h)
+         call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_b, 'beta', wf%ao_h)
+!
+      endif
 !      
-      if(wf%system%mm_calculation.and.wf%system%mm%forcefield.ne.'non-polarizable') &
+      if(wf%system%mm_calculation .and. wf%system%mm%forcefield .ne. 'non-polarizable') &
          call wf%update_fock_mm()
 !         
       if(wf%system%pcm_calculation) call wf%update_fock_pcm()
 !      
-      call wf%calculate_uhf_energy(h_wx)
+      call wf%calculate_uhf_energy(wf%ao_h)
 !
-   end subroutine update_fock_and_energy_no_cumulative_uhf
+   end subroutine update_fock_and_energy_non_cumulative_uhf
 !
 !
-   subroutine update_fock_and_energy_uhf(wf, h_wx, prev_ao_density)
+   subroutine update_fock_and_energy_uhf(wf, prev_ao_density)
 !!
 !!    Update Fock and energy wrapper
 !!    Written by Tommaso Giovannini, July 2019
 !!
-!!    Wrapper for cumulative or no_cumulative subroutines
+!!    Wrapper for cumulative or non-cumulative subroutines
 !!    depending on the path
 !!
       implicit none
 !
       class(uhf) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
-!
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
 !
-      if (.not.present(prev_ao_density)) then 
+      if (.not. present(prev_ao_density)) then 
 !
-          call wf%update_fock_and_energy_no_cumulative(h_wx)
+          call wf%update_fock_and_energy_non_cumulative()
 !
       else 
 !      
-         if(.not.wf%system%mm_calculation.and..not.wf%system%pcm_calculation) then
+         if (.not. wf%system%mm_calculation .and. .not. wf%system%pcm_calculation) then
 !         
-            call wf%update_fock_and_energy_cumulative(prev_ao_density, h_wx)
+            call wf%update_fock_and_energy_cumulative(prev_ao_density)
 !            
          else
 !         
-            if(wf%system%mm%forcefield.eq.'non-polarizable') then
+            if (wf%system%mm%forcefield .eq. 'non-polarizable') then
 !
-               call wf%update_fock_and_energy_cumulative(prev_ao_density, h_wx)
+               call wf%update_fock_and_energy_cumulative(prev_ao_density)
 !
             else 
 !         
-               call wf%update_fock_and_energy_no_cumulative(h_wx)
+               call wf%update_fock_and_energy_non_cumulative()
 !               
             endif
 !         
@@ -1200,7 +1205,7 @@ contains
    end subroutine form_ao_density_uhf
 !
 !
-   subroutine update_fock_and_energy_cumulative_uhf(wf, prev_ao_density, h_wx)
+   subroutine update_fock_and_energy_cumulative_uhf(wf, prev_ao_density)
 !!
 !!    Update Fock and energy cumulatively
 !!    Written by Eirik F. Kjønstad, Sep 2018
@@ -1213,8 +1218,6 @@ contains
       implicit none
 !
       class(uhf) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in) :: prev_ao_density
 !
@@ -1231,10 +1234,10 @@ contains
 !
       cumulative = .true.
       call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha', &
-                      h_wx, cumulative)
+                      wf%ao_h, cumulative)
 !
       call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_b, 'beta', &
-                      h_wx, cumulative)
+                      wf%ao_h, cumulative)
 !
       call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density_a, 1)
       call daxpy(wf%n_ao**2, one, prev_ao_density(1, 2), 1, wf%ao_density_b, 1)
@@ -1242,7 +1245,7 @@ contains
       call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density, 1)
       call daxpy(wf%n_ao**2, one, prev_ao_density(1, 2), 1, wf%ao_density, 1)
 !
-      call wf%calculate_uhf_energy(h_wx)
+      call wf%calculate_uhf_energy(wf%ao_h)
 !
    end subroutine update_fock_and_energy_cumulative_uhf
 !
