@@ -294,9 +294,6 @@ contains
 !
       class(cc3) :: wf
 !
-      call output%printf('n', '- Cleaning up (a0) wavefunction', &
-                         chars=[trim(wf%name_)], fs='(/t3,a)')
-!
       call wf%ccs%cleanup()
 !
       call wf%delete_intermediate_files

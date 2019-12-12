@@ -353,3 +353,17 @@
       class(ccs) :: wf
 !
    end subroutine initialize_fock_ccs
+!
+!
+   module subroutine destruct_fock_ccs(wf)
+!!
+!!    Destruct Fock
+!!    Written by Alexander C. Paul, Dec 2019
+!!
+!!    Destructs all Fock matrix blocks
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+   end subroutine destruct_fock_ccs
