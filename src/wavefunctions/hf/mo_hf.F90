@@ -225,7 +225,7 @@ contains
    end subroutine do_roothan_hall_mo_hf
 !
 !
-   module subroutine update_fock_and_energy_mo_hf(wf, h_wx, prev_ao_density)
+   module subroutine update_fock_and_energy_mo_hf(wf, prev_ao_density)
 !!
 !!    Update Fock and energy
 !!    Written by Linda Goletto and Sarai D. Folkestad, 2019
@@ -239,9 +239,9 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
-!
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
+!
+      type(timings) :: timer
 !
       if (present(prev_ao_density)) then ! Hack (should be fixed asap)
 !
@@ -249,11 +249,23 @@ contains
 !
       endif
 !
+      timer = timings('AO Fock construction', pl='normal')
+      call timer%turn_on()
+!
 !     AO fock construction and energy calculation
 !
-      call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx)
+!     Construct the two electron part of the Fock matrix (G),
+!     and add the contribution to the Fock matrix
 !
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+      call wf%construct_ao_G(wf%ao_density, wf%ao_fock)
+!
+!     Add the one-electron part
+!
+      call daxpy(wf%n_ao**2, one, wf%ao_h, 1, wf%ao_fock, 1)
+!
+      call timer%turn_off()
+!
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao_h)
 !
 !     Transformation of the AO fock in the MO basis
 !
@@ -337,6 +349,30 @@ contains
       call identity_array(wf%W_mo_update, wf%n_mo)
 !
    end subroutine prepare_for_roothan_hall_mo_hf
+!
+!
+   module subroutine read_for_scf_restart_mo_hf(wf)
+!!
+!!    Read for SCF restart
+!!    Written by Sarai D. Folkestad and Linda Goletto, Oct 2019
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call wf%read_orbital_coefficients()
+      call wf%update_ao_density()
+      call wf%read_orbital_energies()
+!
+!     Allocate active mo specific arrays
+!     and construct them
+!
+      call wf%initialize_W_mo_update()
+      call wf%initialize_mo_fock()
+!
+      call identity_array(wf%W_mo_update, wf%n_mo)
+!
+   end subroutine read_for_scf_restart_mo_hf
 !
 !
 end submodule mo_hf

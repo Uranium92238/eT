@@ -150,7 +150,7 @@ contains
                             fs='(/t3,a)')
 !
          call wf%is_restart_safe('ground state')
-         call wf%read_for_scf_restart()
+         call wf%read_for_scf_restart_mo()
 !
       else
 !
@@ -208,7 +208,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable  :: F
       real(dp), dimension(:,:), allocatable  :: G
-      real(dp), dimension(:,:), allocatable  :: h_wx
 !
       integer :: dim_gradient, dim_fock
 !
@@ -221,10 +220,7 @@ contains
 !
       call solver_timer%turn_on()
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_h_wx(h_wx)
-!
-      call wf%update_fock_and_energy_mo(h_wx)
+      call wf%update_fock_and_energy_mo()
 !
 !     Initialize the DIIS manager object
 !
@@ -310,7 +306,7 @@ contains
 !
             call wf%roothan_hall_update_orbitals_mo()  ! DIIS F => C
             call wf%update_ao_density()                ! C => D
-            call wf%update_fock_and_energy_mo(h_wx)    ! MO F
+            call wf%update_fock_and_energy_mo()        ! MO F
             call wf%get_roothan_hall_mo_gradient(G)    ! MO G
             max_grad = get_abs_max(G, dim_gradient)
 !
@@ -341,8 +337,6 @@ contains
 !
       call mem%dealloc(G, wf%n_v, wf%n_o)
       call mem%dealloc(F, wf%n_mo, wf%n_mo)
-!
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
 !     Initialize engine (make final deallocations, and other stuff)
 !

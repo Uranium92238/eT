@@ -94,6 +94,7 @@ module mlhf_class
       procedure :: append_orbital_info_to_restart           => append_orbital_info_to_restart_mlhf
       procedure :: is_restart_safe                          => is_restart_safe_mlhf
       procedure :: read_for_scf_restart                     => read_for_scf_restart_mlhf
+      procedure :: read_for_scf_restart_mo                  => read_for_scf_restart_mlhf
 !
       procedure :: roothan_hall_update_orbitals_mo          => roothan_hall_update_orbitals_mo_mlhf
       procedure :: roothan_hall_update_orbitals             => roothan_hall_update_orbitals_mo_mlhf
@@ -212,6 +213,9 @@ contains
 !
       call wf%construct_sp_eri_schwarz()
 !
+      call wf%initialize_ao_h()
+      call wf%get_ao_h_wx(wf%ao_h)
+!
    end subroutine prepare_mlhf
 !
 !
@@ -241,16 +245,29 @@ contains
 !
       class(mlhf) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: h_wx
       real(dp) :: n_electrons
+!
+      type(timings) :: timer
 !
 !     Construct AO Fock from SAD density
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_h_wx(h_wx)
+      timer = timings('AO Fock construction', pl='normal')
+      call timer%turn_on()
 !
-      call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx)
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+!     AO fock construction and energy calculation
+!
+!     Construct the two electron part of the Fock matrix (G),
+!     and add the contribution to the Fock matrix
+!
+      call wf%construct_ao_G(wf%ao_density, wf%ao_fock)
+!
+!     Add the one-electron part
+!
+      call daxpy(wf%n_ao**2, one, wf%ao_h, 1, wf%ao_fock, 1)
+!
+      call timer%turn_off()
+!
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao_h)
 !
       call wf%get_n_electrons_in_density(n_electrons)
 !
@@ -282,7 +299,7 @@ contains
       call wf%initialize_G_De()
       call wf%initialize_mo_fock()
 !
-      call wf%construct_G_De(h_wx)
+      call wf%construct_G_De(wf%ao_h)
 !
 !     Print multilevel orbital information to restart file
 !
@@ -292,8 +309,7 @@ contains
 !
       call wf%construct_ao_density()
 !
-      call wf%update_fock_and_energy_mo(h_wx)
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+      call wf%update_fock_and_energy_mo()
       call wf%roothan_hall_update_orbitals_mo()  ! DIIS F => C
       call wf%update_ao_density()
 !
@@ -354,7 +370,7 @@ contains
    end subroutine roothan_hall_update_orbitals_mo_mlhf
 !
 !
-   subroutine update_fock_and_energy_mlhf(wf, h_wx, prev_ao_density)
+   subroutine update_fock_and_energy_mlhf(wf, prev_ao_density)
 !!
 !!    Update Fock and energy
 !!    Written by Linda Goletto and Sarai D. Folkestad, 2019
@@ -378,13 +394,12 @@ contains
 !
       class(mlhf) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
-!
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
 !
       real(dp), dimension(:,:), allocatable :: Z_pq ! = sum_x G_De_old_wx * w_xq
       real(dp), dimension(:,:), allocatable :: G_De_old
 !
+      type(timings) :: timer
 !
       if (present(prev_ao_density)) then ! Hack (should be fixed asap)
 !
@@ -437,9 +452,23 @@ contains
 !
 !     AO fock construction and energy calculation
 !
-      call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx)
+      timer = timings('AO Fock construction', pl='normal')
+      call timer%turn_on()
 !
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+!     AO fock construction and energy calculation
+!
+!     Construct the two electron part of the Fock matrix (G),
+!     and add the contribution to the Fock matrix
+!
+      call wf%construct_ao_G(wf%ao_density, wf%ao_fock)
+!
+!     Add the one-electron part
+!
+      call daxpy(wf%n_ao**2, one, wf%ao_h, 1, wf%ao_fock, 1)
+!
+      call timer%turn_off()
+!
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao_h)
 !
 !     Add the Tr[Da * G(De)] and inactive energy contributions to the energy
 !

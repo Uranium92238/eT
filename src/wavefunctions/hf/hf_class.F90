@@ -45,6 +45,7 @@ module hf_class
 !
       real(dp), dimension(:,:), allocatable :: ao_density
       real(dp), dimension(:,:), allocatable :: ao_fock
+      real(dp), dimension(:,:), allocatable :: ao_h
       real(dp), dimension(:,:), allocatable :: mo_fock
       real(dp), dimension(:,:), allocatable :: W_mo_update ! Eigenvectors for Roothan-Hall in MO basis
 !
@@ -98,6 +99,7 @@ module hf_class
       procedure :: save_orbital_energies                       => save_orbital_energies_hf
 !
       procedure :: read_for_scf_restart                        => read_for_scf_restart_hf
+      procedure :: read_for_scf_restart_mo                     => read_for_scf_restart_mo_hf
       procedure :: is_restart_safe                             => is_restart_safe_hf
       procedure :: write_scf_restart                           => write_scf_restart_hf
       procedure :: write_orbital_information                   => write_orbital_information_hf
@@ -117,8 +119,6 @@ module hf_class
 !
 !     AO Fock and energy related routines
 !
-      procedure :: construct_ao_fock                           => construct_ao_fock_hf
-!
       procedure :: construct_ao_G                              => construct_ao_G_hf
       procedure, private :: construct_ao_G_thread_terms        => construct_ao_G_thread_terms_hf
       procedure :: construct_ao_G_1der                         => construct_ao_G_1der_hf
@@ -136,11 +136,13 @@ module hf_class
       procedure :: calculate_hf_energy_from_G                  => calculate_hf_energy_from_G_hf
       procedure :: initialize_fock                             => initialize_fock_hf
       procedure :: destruct_fock                               => destruct_fock_hf
-      procedure :: update_fock_and_energy_no_cumulative        => update_fock_and_energy_no_cumulative_hf
+      procedure :: update_fock_and_energy_non_cumulative       => update_fock_and_energy_non_cumulative_hf
       procedure :: update_fock_and_energy_cumulative           => update_fock_and_energy_cumulative_hf
       procedure :: update_fock_and_energy                      => update_fock_and_energy_hf
-      procedure :: update_fock_mm                              => update_fock_mm_hf
-      procedure :: update_fock_pcm                             => update_fock_pcm_hf
+      procedure :: add_mm_fock_terms                           => add_mm_fock_terms_hf
+      procedure :: add_pcm_fock_term                           => add_pcm_fock_term_hf
+      procedure :: initialize_ao_h                             => initialize_ao_h_hf
+      procedure :: destruct_ao_h                               => destruct_ao_h_hf
 !
 !     AO Density related routines
 !
@@ -215,6 +217,7 @@ module hf_class
 !
       procedure :: prepare_for_roothan_hall                    => prepare_for_roothan_hall_hf
       procedure :: prepare                                     => prepare_hf
+      procedure :: prepare_qmmm                                => prepare_qmmm_hf
 !
 !     Zop
 !
@@ -294,9 +297,7 @@ contains
       wf%system => system
 !
       call wf%read_settings()
-!
       call wf%print_banner()
-!
       call wf%prepare()
 !
    end function new_hf
@@ -314,14 +315,6 @@ contains
       call wf%read_orbital_coefficients()
       call wf%update_ao_density()
       call wf%read_orbital_energies()
-!
-!     Allocate active mo specific arrays
-!     and construct them
-!
-      call wf%initialize_W_mo_update()
-      call wf%initialize_mo_fock()
-!
-      call identity_array(wf%W_mo_update, wf%n_mo)
 !
    end subroutine read_for_scf_restart_hf
 !
@@ -401,7 +394,6 @@ contains
 !
       if(wf%system%mm_calculation) call wf%print_energy_mm()
       if(wf%system%pcm_calculation) call wf%print_energy_pcm()
-!
 !
    end subroutine print_energy_hf
 !
@@ -816,7 +808,37 @@ contains
    end subroutine destruct_fock_hf
 !
 !
-   subroutine update_fock_and_energy_no_cumulative_hf(wf, h_wx)
+   subroutine initialize_ao_h_hf(wf)
+!!
+!!    Initialize AO h
+!!    Written by Sarai D. Folkestad
+!!
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%alloc(wf%ao_h, wf%n_ao, wf%n_ao)
+!
+   end subroutine initialize_ao_h_hf
+!
+!
+   subroutine destruct_ao_h_hf(wf)
+!!
+!!    Destruct AO h
+!!    Written by Sarai D. Folkestad
+!!
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%dealloc(wf%ao_h, wf%n_ao, wf%n_ao)
+!
+   end subroutine destruct_ao_h_hf
+!
+!
+   subroutine update_fock_and_energy_non_cumulative_hf(wf)
 !!
 !!    Update Fock and energy
 !!    Written by Eirik F. Kjønstad, Sep 2018
@@ -829,35 +851,38 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: h_wx
+      type(timings) :: timer
 !
-      real(dp), dimension(:, :), allocatable            :: h_wx_eff
+      timer = timings('AO Fock construction', pl='normal')
+      call timer%turn_on()
 !
-      call mem%alloc(h_wx_eff, wf%n_ao,wf%n_ao)
+!     Construct the two electron part of the Fock matrix (G),
+!     and add the contribution to the Fock matrix
 !
-      h_wx_eff = h_wx
+      call wf%construct_ao_G(wf%ao_density, wf%ao_fock)
 !
-      if(wf%system%mm_calculation .and. wf%system%mm%forcefield .eq. 'non-polarizable') &
-         call wf%update_h_wx_mm(h_wx_eff)
+!     Add the one-electron part
 !
-      call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx_eff)
+      call daxpy(wf%n_ao**2, one, wf%ao_h, 1, wf%ao_fock, 1)
 !
-      call mem%dealloc(h_wx_eff, wf%n_ao,wf%n_ao)
+!     QM/MM and PCM specific work
 !
-      if(wf%system%mm_calculation .and. wf%system%mm%forcefield .ne. 'non-polarizable') &
-         call wf%update_fock_mm()
-!         
-      if(wf%system%pcm_calculation) call wf%update_fock_pcm()
+      if (wf%system%mm_calculation) call wf%add_mm_fock_terms()
+      if (wf%system%pcm_calculation) call wf%add_pcm_fock_term()
 !
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+      call timer%turn_off()
+!
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao_h)
+!
+!     QM/MM and PCM energy terms (NOTE! these must be called after calculate_hf_energy_from_fock !!)
 !
       if(wf%system%mm_calculation) call wf%calculate_mm_energy_terms()
       if(wf%system%pcm_calculation) call wf%calculate_pcm_energy_terms()
 !
-   end subroutine update_fock_and_energy_no_cumulative_hf
+   end subroutine update_fock_and_energy_non_cumulative_hf
 !
 !
-   subroutine update_fock_and_energy_cumulative_hf(wf, prev_ao_density, h_wx)
+   subroutine update_fock_and_energy_cumulative_hf(wf, prev_ao_density)
 !!
 !!    Update Fock and energy cumulatively
 !!    Written by Eirik F. Kjønstad, Sep 2018
@@ -871,60 +896,77 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
-!
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in) :: prev_ao_density
 !
-      logical :: cumulative
+      real(dp), dimension(:, :), allocatable :: G
+!
+      type(timings) :: timer
+!
+      timer = timings('AO Fock construction', pl='normal')
+      call timer%turn_on()
+!
+!     Fock
+!
+!     Construct the two electron part of the Fock matrix (G),
+!     and add the contribution to the Fock matrix
 !
       call daxpy(wf%n_ao**2, -one, prev_ao_density, 1, wf%ao_density, 1)
 !
-      cumulative = .true.
-      call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, h_wx, cumulative)
+      call mem%alloc(G, wf%n_ao, wf%n_ao)
+      call wf%construct_ao_G(wf%ao_density, G)
+!
+      call daxpy(wf%n_ao**2, one, G, 1, wf%ao_fock, 1)
+!
+      call mem%dealloc(G, wf%n_ao, wf%n_ao)
 !
       call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density, 1)
 !
-      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+      call timer%turn_off()
+!
+!     Energy
+!
+      wf%energy = wf%calculate_hf_energy_from_fock(wf%ao_fock, wf%ao_h)
+!
+!     Note! Must be called after wf%calculate_hf_energy_from_fock !!
 !
       if(wf%system%mm_calculation) call wf%calculate_mm_energy_terms()
+      if(wf%system%pcm_calculation) call wf%calculate_pcm_energy_terms()
 !
    end subroutine update_fock_and_energy_cumulative_hf
 !
 !
-   subroutine update_fock_and_energy_hf(wf, h_wx, prev_ao_density)
+   subroutine update_fock_and_energy_hf(wf, prev_ao_density)
 !!
 !!    Wrapper for Update Fock and energy
 !!    Written by Tommaso Giovannini, July 2019
 !!
-!!    Call either cumulative or no_cumulative updating depending on options
+!!    Call either cumulative or non-cumulative updating depending on options
 !!
       implicit none
 !
       class(hf) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
-!
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in), optional :: prev_ao_density
 !
       if (.not.present(prev_ao_density)) then
 !
-          call wf%update_fock_and_energy_no_cumulative(h_wx)
+          call wf%update_fock_and_energy_non_cumulative()
 !
       else
 !
          if(.not.wf%system%mm_calculation.and..not.wf%system%pcm_calculation) then
 !
-            call wf%update_fock_and_energy_cumulative(prev_ao_density, h_wx)
+            call wf%update_fock_and_energy_cumulative(prev_ao_density)
 !
          else
 !
             if(wf%system%mm%forcefield.eq.'non-polarizable') then
 !
-               call wf%update_fock_and_energy_cumulative(prev_ao_density, h_wx)
+               call wf%update_fock_and_energy_cumulative(prev_ao_density)
 !
             else
 !
-               call wf%update_fock_and_energy_no_cumulative(h_wx)
+               call wf%update_fock_and_energy_non_cumulative()
 !
             endif
 !
@@ -1036,6 +1078,7 @@ contains
       call wf%destruct_cholesky_ao_overlap()
       call wf%destruct_sp_eri_schwarz()
       call wf%destruct_sp_eri_schwarz_list()
+      call wf%destruct_ao_h()
 !
       call wf%destruct_W_mo_update()
       call wf%destruct_mo_fock()
@@ -1503,76 +1546,6 @@ contains
       enddo
 !
    end subroutine get_n_sig_eri_sp_hf
-!
-!
-   subroutine construct_ao_fock_hf(wf, D, ao_fock, h_wx, cumulative)
-!!
-!!    Construct AO Fock matrix
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Calculates
-!!
-!!       F_αβ = h_αβ + sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ,
-!!
-!!    where D is the AO density. This routine is integral direct, and
-!!    it calculates the Hartree-Fock energy by default.
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: D
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: ao_fock
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
-!
-      logical, intent(in), optional :: cumulative
-!
-      logical :: local_cumulative
-!
-      real(dp), dimension(:,:), allocatable :: G
-!
-      type(timings) :: timer
-!
-      timer = timings('AO Fock construction', pl='normal')
-      call timer%turn_on()
-!
-!     Set whether to accumulate into Fock (density differences)
-!     or to construct the entire Fock matrix
-!
-      local_cumulative = .false.
-      if (present(cumulative)) then
-!
-         if (cumulative) then
-!
-            local_cumulative = .true.
-!
-         else
-!
-            local_cumulative = .false.
-!
-         endif
-!
-      endif
-!
-!     Construct the two electron part of the Fock matrix (G),
-!     and add the contribution to the Fock matrix
-!
-      call mem%alloc(G, wf%n_ao, wf%n_ao)
-      call wf%construct_ao_G(D, G)
-!
-      if (.not. local_cumulative) call zero_array(ao_fock, wf%n_ao**2)
-!
-      call daxpy(wf%n_ao**2, one, G, 1, ao_fock, 1)
-      call mem%dealloc(G, wf%n_ao, wf%n_ao)
-!
-!     Add the one-electron contribution F =+ h
-!
-      if (.not. local_cumulative) call daxpy(wf%n_ao**2, one, h_wx, 1, ao_fock, 1)
-!
-      call timer%turn_off()
-!
-   end subroutine construct_ao_fock_hf
 !
 !
    subroutine construct_ao_G_hf(wf, D, G)
@@ -3596,7 +3569,7 @@ contains
    end subroutine set_screening_and_precision_thresholds_hf
 !
 !
-   subroutine update_fock_mm_hf(wf)
+   subroutine add_mm_fock_terms_hf(wf)
 !!
 !!    Update Fock with polarizable QM/MM terms
 !!    For now: QM/FQ model (see mm_class and output file)
@@ -3609,7 +3582,11 @@ contains
       real(dp), dimension(:), allocatable                   :: potential_points
       integer :: i
 !
-      if(wf%system%mm%forcefield.eq.'fq') then
+      if (wf%system%mm%forcefield .eq. 'non-polarizable') then
+!
+         call daxpy(wf%n_ao**2, half, wf%nopol_h_wx, 1, wf%ao_fock, 1)
+!
+      elseif (wf%system%mm%forcefield .eq. 'fq') then
 !
          if(.not.allocated(potential_points)) call mem%alloc(potential_points, wf%system%mm%n_atoms)
 !
@@ -3667,24 +3644,21 @@ contains
          call wf%construct_ao_electrostatics(0,0,'fock',wf%system%mm%n_atoms,wf%system%mm%coordinates, & 
                                              elec_fock=wf%pol_emb_fock,charges=wf%system%mm%charge) 
 !
-         wf%ao_fock = wf%ao_fock + half * wf%pol_emb_fock
-!
+         call daxpy(wf%n_ao**2, half, wf%pol_emb_fock, 1, wf%ao_fock, 1)
 !
          call output%print_matrix('debug', 'QM Density', wf%ao_density, wf%n_ao, wf%n_ao)
-!
          call output%print_matrix('debug', 'FQ Fock', wf%pol_emb_fock, wf%n_ao, wf%n_ao)
-!
          call output%print_matrix('debug', 'QM/FQ Fock', wf%ao_fock, wf%n_ao, wf%n_ao)
 !
          call mem%dealloc(potential_points, wf%system%mm%n_atoms)
 !
       else
 !
-         call output%error_msg('The only available polarizable force field is fq')
+         call output%error_msg('did not recognize the force field')
 !
       endif
 !
-   end subroutine update_fock_mm_hf
+   end subroutine add_mm_fock_terms_hf
 !
 !
    subroutine calculate_mm_energy_terms_hf(wf) 
@@ -3926,7 +3900,7 @@ contains
    end subroutine construct_molecular_gradient_hf
 !
 !
-   subroutine update_fock_pcm_hf(wf)
+   subroutine add_pcm_fock_term_hf(wf)
 !!
 !!    Update Fock PCM 
 !!    Written by Tommaso Giovannini, Oct 2019 
@@ -3998,7 +3972,7 @@ contains
       call output%print_matrix('debug', 'QM/PCM Fock', wf%ao_fock, wf%n_ao, wf%n_ao)
 !
 !
-   end subroutine update_fock_pcm_hf
+   end subroutine add_pcm_fock_term_hf
 !
 !
    subroutine calculate_pcm_energy_terms_hf(wf)
@@ -4046,7 +4020,7 @@ contains
                          wf%electrostatic_energy_qmpcm*Hartree_to_kcalmol], fs='(t6,a)')
 !
 !
-   end subroutine print_energy_pcm_hf!
+   end subroutine print_energy_pcm_hf
 !
 !
    subroutine prepare_for_roothan_hall_hf(wf)
@@ -4072,14 +4046,10 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: h_wx
 
       real(dp) :: n_electrons
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_h_wx(h_wx)
-!
-      call wf%update_fock_and_energy(h_wx)
+      call wf%update_fock_and_energy()
 !
       call wf%get_n_electrons_in_density(n_electrons)
 !
@@ -4093,8 +4063,6 @@ contains
 !
       call wf%roothan_hall_update_orbitals() ! F => C
       call wf%update_ao_density()            ! C => D
-!
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
    end subroutine prepare_for_roothan_hall_hf
 !
@@ -4126,8 +4094,11 @@ contains
 !
       call wf%construct_sp_eri_schwarz()
 !
-      if(wf%system%mm_calculation) call wf%initialize_mm_matrices()
-      if(wf%system%pcm_calculation) call wf%initialize_pcm_matrices()
+      if (wf%system%mm_calculation) call wf%prepare_qmmm()
+      if (wf%system%pcm_calculation) call wf%initialize_pcm_matrices()
+!
+      call wf%initialize_ao_h()
+      call wf%get_ao_h_wx(wf%ao_h)
 !
    end subroutine prepare_hf
 !
@@ -4337,5 +4308,30 @@ contains
 !
    end subroutine print_banner_hf
 !
+!
+   subroutine prepare_qmmm_hf(wf)
+!!
+!!    Prepare QM/MM 
+!!    Written by Tommaso Giovannini
+!!
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+      call wf%initialize_mm_matrices()
+!
+      if (wf%system%mm%forcefield .eq. 'non-polarizable') then
+!
+         call wf%construct_ao_electrostatics(0, 0, 'fock', wf%system%mm%n_atoms, &
+                                             wf%system%mm%coordinates,           &
+                                             elec_fock = wf%nopol_h_wx,          &
+                                             charges = wf%system%mm%charge)
+!         
+         call output%print_matrix('debug', 'Electrostatic Embedding h:', &
+                                  wf%nopol_h_wx, wf%n_ao, wf%n_ao)
+      endif
+!
+   end subroutine prepare_qmmm_hf
 !
 end module hf_class

@@ -220,8 +220,6 @@ contains
 !
       integer :: iteration
 !
-      real(dp), dimension(:,:), allocatable :: h_wx
-!
       type(timings), allocatable :: iteration_timer
 !
       if (wf%n_ao == 1) then 
@@ -232,12 +230,9 @@ contains
 !
       endif 
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_h_wx(h_wx)
-!
 !     Construct first Fock from initial idempotent density 
 !
-      call wf%update_fock_and_energy(h_wx)
+      call wf%update_fock_and_energy()
 !
 !     :: Part I. Iterative SCF loop.
 !
@@ -294,7 +289,7 @@ contains
             call wf%update_ao_density()            ! C => D
 !
             prev_energy = wf%energy
-            call wf%update_fock_and_energy(h_wx)
+            call wf%update_fock_and_energy()
 !
          endif
 !
@@ -305,8 +300,6 @@ contains
          call iteration_timer%reset()
 !
       enddo
-!
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
       if (.not. converged) then
 !

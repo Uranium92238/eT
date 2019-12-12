@@ -124,8 +124,8 @@ module wavefunction_class
       procedure :: get_orbital_overlap       => get_orbital_overlap_wavefunction
       procedure :: lovdin_orthonormalization => lovdin_orthonormalization_wavefunction
 !
-      procedure :: construct_ao_electrostatics                 => construct_ao_electrostatics_wavefunction       ! V_wx, E_wx, V(D), E(D)
-      procedure :: update_h_wx_mm                              => update_h_wx_mm_hf
+      procedure :: construct_ao_electrostatics &
+                => construct_ao_electrostatics_wavefunction       ! V_wx, E_wx, V(D), E(D)
 !  
       procedure :: construct_orbital_block_by_density_cd       => construct_orbital_block_by_density_cd_wavefunction
 !
@@ -1296,41 +1296,6 @@ contains
    end subroutine construct_ao_electrostatics_wavefunction
 !
 !
-   subroutine update_h_wx_mm_hf(wf, h_wx_eff)
-!!
-!!    Update one-electron Hamiltonian with fixed charges
-!!    for non-polarizable QM/MM
-!!    Written by Tommaso Giovannini, July 2019 for QM/MM
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: h_wx_eff
-!
-      if(.not.allocated(wf%nopol_h_wx)) then 
-!      
-         call mem%alloc(wf%nopol_h_wx, wf%n_ao, wf%n_ao)
-!         
-         call zero_array(wf%nopol_h_wx, wf%n_ao*wf%n_ao)
-!
-         call wf%construct_ao_electrostatics(0,0,'fock',wf%system%mm%n_atoms,wf%system%mm%coordinates, &
-                                             elec_fock=wf%nopol_h_wx,charges=wf%system%mm%charge)
-!         
-         call output%print_matrix('debug', 'Electrostatic Embedding h:', &
-                                  wf%nopol_h_wx, wf%n_ao, wf%n_ao)
-      endif
-!         
-      h_wx_eff = h_wx_eff + half * wf%nopol_h_wx
-!         
-!
-      call output%print_matrix('debug', 'h_eff (QM + Electrostatic Embedding)', & 
-                               h_wx_eff, wf%n_ao, wf%n_ao)
-!
-!
-   end subroutine update_h_wx_mm_hf
-!
-!
    subroutine construct_orbital_block_by_density_cd_wavefunction(wf, D, n_vectors, threshold, mo_offset, active_aos)
 !!
 !!    Construct orbital block by Cholesky decomposition for density
@@ -1565,7 +1530,13 @@ contains
 !
       if(wf%system%mm%forcefield.eq.'fq') then
 !         
-         if(.not.allocated(wf%pol_emb_fock))  call mem%alloc(wf%pol_emb_fock, wf%n_ao,wf%n_ao)
+         call mem%alloc(wf%pol_emb_fock, wf%n_ao, wf%n_ao)
+!         
+      endif
+!
+      if(wf%system%mm%forcefield .eq. 'non-polarizable') then
+!         
+         call mem%alloc(wf%nopol_h_wx, wf%n_ao, wf%n_ao)
 !         
       endif
 !

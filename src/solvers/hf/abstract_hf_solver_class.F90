@@ -85,17 +85,10 @@ contains
 !
       class(hf) :: wf 
 !
-      real(dp), dimension(:,:), allocatable :: h_wx 
-!
       call output%printf('m', 'The system contains just one atomic orbital. &
                          &Just constructing the solutions.', fs='(/t3,a)')
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_h_wx(h_wx)
-!
-      call wf%update_fock_and_energy(h_wx)  
-!
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+      call wf%update_fock_and_energy()  
 !
       call wf%roothan_hall_update_orbitals() ! F => C
       call wf%update_ao_density()            ! C => D

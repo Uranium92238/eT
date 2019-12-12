@@ -283,7 +283,6 @@ contains
       real(dp), dimension(:,:), allocatable :: F
       real(dp), dimension(:,:), allocatable :: G
       real(dp), dimension(:,:), allocatable :: ao_fock
-      real(dp), dimension(:,:), allocatable :: h_wx
       real(dp), dimension(:,:), allocatable :: prev_ao_density
 !
       integer :: dim_gradient, dim_fock
@@ -317,10 +316,7 @@ contains
 !
 !     Set the initial density guess and Fock matrix
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_h_wx(h_wx)
-!
-      call wf%update_fock_and_energy(h_wx)
+      call wf%update_fock_and_energy()
 !
       call mem%alloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
       call mem%alloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
@@ -418,11 +414,11 @@ contains
 !
             if (solver%cumulative) then 
 !
-               call wf%update_fock_and_energy(h_wx, prev_ao_density)
+               call wf%update_fock_and_energy(prev_ao_density)
 !
             else 
 !
-               call wf%update_fock_and_energy(h_wx)
+               call wf%update_fock_and_energy()
 !
             endif
 !
@@ -453,8 +449,6 @@ contains
 !
       call mem%dealloc(G, wf%n_mo*(wf%n_mo - 1)/2, wf%n_densities)
       call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
-!
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
       call mem%dealloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
       call mem%dealloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
