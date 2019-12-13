@@ -1117,9 +1117,7 @@ contains
 !
       call wf%destruct_sp_eri_schwarz()
       call wf%destruct_sp_eri_schwarz_list()
-      call wf%destruct_mo_fock_frozen_hf_term()
-      call wf%destruct_mo_fock_fc_term()
-      call wf%destruct_mlhf_inactive_fock_term()
+      call wf%destruct_mo_fock_frozen()
 !
       call wf%G_De_ao_file%delete_
 !
@@ -1530,8 +1528,21 @@ contains
 !!    Written by Sarai D. Folkestad, Oct 2019
 !!
 !!    This routine prepares the frozen Fock contributions
-!!    to coupled cluster. This occurs e.g.,  in the cases where there
-!!    is a reduction in the number of MOs in CC compared to HF
+!!    to coupled cluster. 
+!!
+!!    Always included
+!!
+!!       - G(De)
+!!
+!!    Possible contributions to frozen fock:
+!!
+!!       - Frozen core
+!!
+!!       - Frozen HF orbitals
+!!
+!!       - MM fock (QM/MM)
+!!
+!!       - PCM fock
 !!
 !!    Modified by Linda Goletto, Nov 2019
 !!
@@ -1542,12 +1553,48 @@ contains
 !
       class(mlhf) :: wf
 !
-      call wf%initialize_mlhf_inactive_fock_term()
+      real(dp), dimension(:,:), allocatable :: mo_fc_fock
+      real(dp), dimension(:,:), allocatable :: mo_frozen_hf_fock
+      real(dp), dimension(:,:), allocatable :: mo_frozen_mlhf_fock
 !
-      call wf%mo_transform(wf%G_De_ao, wf%mlhf_inactive_fock_term)
+      wf%exists_frozen_fock_terms = .true.
 !
-      if (wf%frozen_core)   call wf%construct_mo_fock_fc_term()
-      if (wf%frozen_hf_mos) call wf%construct_mo_fock_frozen_hf_term()
+      call wf%initialize_mo_fock_frozen()
+      call zero_array(wf%mo_fock_frozen, wf%n_mo**2)
+!
+!     Contribution from frozen core orbitals
+!
+      if (wf%frozen_core) then
+!
+         call mem%alloc(mo_fc_fock, wf%n_mo, wf%n_mo)
+!
+         call wf%construct_mo_fock_fc_term(mo_fc_fock)
+         call daxpy(wf%n_mo**2, one, mo_fc_fock, 1, wf%mo_fock_frozen, 1)
+!
+         call mem%dealloc(mo_fc_fock, wf%n_mo, wf%n_mo)
+!
+      endif
+!
+      if (wf%frozen_hf_mos) then
+!
+         call mem%alloc(mo_frozen_hf_fock, wf%n_mo, wf%n_mo)
+!
+         call wf%construct_mo_fock_frozen_hf_term(mo_frozen_hf_fock)
+         call daxpy(wf%n_mo**2, one, mo_frozen_hf_fock, 1, wf%mo_fock_frozen, 1)
+!
+         call mem%dealloc(mo_frozen_hf_fock, wf%n_mo, wf%n_mo)
+!
+      endif
+!
+!     Add G(De)
+!
+      call mem%alloc(mo_frozen_mlhf_fock, wf%n_mo, wf%n_mo)
+!
+      call wf%mo_transform(wf%G_De_ao, mo_frozen_mlhf_fock)
+!
+      call daxpy(wf%n_mo**2, one, mo_frozen_mlhf_fock, 1, wf%mo_fock_frozen, 1)
+!
+      call mem%dealloc(mo_frozen_mlhf_fock, wf%n_mo, wf%n_mo)
 !
    end subroutine prepare_frozen_fock_terms_mlhf
 !

@@ -89,6 +89,9 @@ module hf_class
       type(sequential_file) :: orbital_coefficients_file
       type(sequential_file) :: orbital_energies_file
 !
+      logical :: frozen_core
+      logical :: frozen_hf_mos
+!
    contains
 !
       procedure :: print_banner                                => print_banner_hf
@@ -118,6 +121,9 @@ module hf_class
       procedure :: print_energy_pcm                            => print_energy_pcm_hf
 !
 !     AO Fock and energy related routines
+!
+      procedure :: read_frozen_orbitals_settings &
+                => read_frozen_orbitals_settings_hf
 !
       procedure :: construct_ao_G                              => construct_ao_G_hf
       procedure, private :: construct_ao_G_thread_terms        => construct_ao_G_thread_terms_hf
@@ -1085,8 +1091,7 @@ contains
 !
       call wf%destruct_mm_matrices()
       call wf%destruct_pcm_matrices()
-      call wf%destruct_mo_fock_frozen_hf_term()
-      call wf%destruct_mo_fock_fc_term()
+      call wf%destruct_mo_fock_frozen()
 !
    end subroutine cleanup_hf
 !
@@ -1098,7 +1103,6 @@ contains
 !!
 !!    Prepares frozen fock terms, 
 !!    and places energy in hf_energy
-!!
 !!
       implicit none
 !
@@ -4333,5 +4337,148 @@ contains
       endif
 !
    end subroutine prepare_qmmm_hf
+!
+!
+   subroutine prepare_frozen_fock_terms_hf(wf)
+!!
+!!    Prepare frozen Fock contributions
+!!    Written by Sarai D. Folkestad, Oct 2019
+!!
+!!    This routine prepares the frozen Fock contributions
+!!    to coupled cluster.
+!!
+!!    Possible contributions to frozen fock:
+!!
+!!       - Frozen core
+!!
+!!       - Frozen HF orbitals
+!!
+!!       - MM fock (QM/MM)
+!!
+!!       - PCM fock
+!!
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: mo_pcm_fock
+      real(dp), dimension(:,:), allocatable :: mo_mm_fock
+      real(dp), dimension(:,:), allocatable :: mo_fc_fock
+      real(dp), dimension(:,:), allocatable :: mo_frozen_hf_fock
+!
+!     Check if there are frozen Fock contributions, if not
+!     return
+!
+      if ((.not. wf%frozen_core) .and. &
+          (.not. wf%frozen_hf_MOs) .and. &
+          (.not. wf%system%pcm_calculation) .and. &  
+          (.not. wf%system%mm_calculation)) then
+!
+         call output%printf('v', 'No frozen fock contributions!', fs='(/t3,a)')
+         wf%exists_frozen_fock_terms = .false.
+         return
+!
+      endif
+!
+      wf%exists_frozen_fock_terms = .true.
+!
+      call wf%initialize_mo_fock_frozen()
+      call zero_array(wf%mo_fock_frozen, wf%n_mo**2)
+!
+!     Contribution from frozen core orbitals
+!
+      if (wf%frozen_core) then
+!
+         call mem%alloc(mo_fc_fock, wf%n_mo, wf%n_mo)
+!
+         call wf%construct_mo_fock_fc_term(mo_fc_fock)
+         call daxpy(wf%n_mo**2, one, mo_fc_fock, 1, wf%mo_fock_frozen, 1)
+!
+         call mem%dealloc(mo_fc_fock, wf%n_mo, wf%n_mo)
+!
+      endif
+!
+!     Contributions from frozen HF orbitals
+!
+      if (wf%frozen_hf_mos) then
+!
+         call mem%alloc(mo_frozen_hf_fock, wf%n_mo, wf%n_mo)
+!
+         call wf%construct_mo_fock_frozen_hf_term(mo_frozen_hf_fock)
+         call daxpy(wf%n_mo**2, one, mo_frozen_hf_fock, 1, wf%mo_fock_frozen, 1)
+!
+         call mem%dealloc(mo_frozen_hf_fock, wf%n_mo, wf%n_mo)
+!
+      endif
+!
+!     MM
+!
+      if (wf%system%mm_calculation) then
+!
+         call mem%alloc(mo_mm_fock, wf%n_mo, wf%n_mo)
+!
+         if (wf%system%mm%forcefield .eq. 'non-polarizable') then
+!
+            call wf%mo_transform(wf%nopol_h_wx, mo_mm_fock)
+!
+         elseif (wf%system%mm%forcefield .eq. 'fq') then
+!
+            call wf%mo_transform(wf%pol_emb_fock, mo_mm_fock)
+!
+         endif
+!
+         call daxpy(wf%n_mo**2, half, mo_mm_fock, 1, wf%mo_fock_frozen, 1)
+!
+         call mem%dealloc(mo_mm_fock, wf%n_mo, wf%n_mo)
+!
+      endif
+!
+!     PCM
+!
+      if (wf%system%pcm_calculation) then
+!
+         call mem%alloc(mo_pcm_fock, wf%n_mo, wf%n_mo)
+!
+         call wf%mo_transform(wf%pcm_fock, mo_pcm_fock)
+!
+         call daxpy(wf%n_mo**2, half, mo_pcm_fock, 1, wf%mo_fock_frozen, 1)
+!
+         call mem%dealloc(mo_pcm_fock, wf%n_mo, wf%n_mo)
+!
+      endif
+!
+   end subroutine prepare_frozen_fock_terms_hf
+!
+!
+   subroutine read_frozen_orbitals_settings_hf(wf)
+!!
+!!    Read frozen orbitals 
+!!    Written by Sarai D. Folkestad, Oct 2019
+!!
+!!    Reads the frozen orbitals section of the input
+!!
+!!     - Frozen core 
+!!
+!!    - Frozen hf orbitals
+!!
+!!    This routine is used at HF level to prepare mos and 
+!!    frozen fock contributions.
+!!
+!!    This routine is read at cc level to figure out if there
+!!    should be frozen fock contributions
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      wf%frozen_core    = .false.
+      wf%frozen_hf_mos  = .false.
+!
+      if (input%requested_keyword_in_section('core', 'frozen orbitals')) wf%frozen_core = .true.
+      if (input%requested_keyword_in_section('hf', 'frozen orbitals')) wf%frozen_hf_mos = .true.
+!
+   end subroutine read_frozen_orbitals_settings_hf
+!
 !
 end module hf_class

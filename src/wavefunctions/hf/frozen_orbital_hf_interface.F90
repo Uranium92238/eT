@@ -100,23 +100,7 @@
    end subroutine diagonalize_fock_frozen_hf_orbitals_hf
 !
 !
-   module subroutine prepare_frozen_fock_terms_hf(wf)
-!!
-!!    Prepare frozen Fock contributions
-!!    Written by Sarai D. Folkestad, Oct 2019
-!!
-!!    This routine prepares the frozen Fock contributions
-!!    to coupled cluster. This occurs e.g.,  in the cases where there
-!!    is a reduction in the number of MOs in CC compared to HF
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-   end subroutine prepare_frozen_fock_terms_hf
-!
-!
-   module subroutine construct_mo_fock_fc_term_hf(wf)
+   module subroutine construct_mo_fock_fc_term_hf(wf, mo_fc_fock)
 !!
 !!    Calculate MO Fock frozen core contribution
 !!    Written by Sarai D. Folkestad, Sep 2019
@@ -131,11 +115,12 @@
       implicit none
 !
       class(hf) :: wf
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: mo_fc_fock
 !
    end subroutine construct_mo_fock_fc_term_hf
 !
 !
-   module subroutine construct_mo_fock_frozen_hf_term_hf(wf)
+   module subroutine construct_mo_fock_frozen_hf_term_hf(wf, mo_frozen_hf_fock)
 !!
 !!    Construct MO fock frozen hf  contribution
 !!    Written by Ida-Marie Høyvik, Oct 2019
@@ -152,6 +137,7 @@
       implicit none
 !
       class(hf) :: wf
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: mo_frozen_hf_fock
 !
    end subroutine construct_mo_fock_frozen_hf_term_hf
 !

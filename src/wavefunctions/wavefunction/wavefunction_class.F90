@@ -71,27 +71,24 @@ module wavefunction_class
 !
 !     Frozen orbital variables. Frozen orbitals are typically frozen core or frozen HF orbitals.
 !
-      real(dp), dimension(:,:), allocatable :: mo_fock_fc_term 
-      real(dp), dimension(:,:), allocatable :: mo_fock_frozen_hf_term
-      real(dp), dimension(:,:), allocatable :: mlhf_inactive_fock_term
+      real(dp), dimension(:,:), allocatable :: mo_fock_frozen
 !
       type(sequential_file) :: mm_matrices_file, pcm_matrices_file
 !
-      logical :: frozen_core
-      logical :: frozen_hf_mos
-!
       real(dp) :: cholesky_orbital_threshold = 1.0D-2
+!
+      logical :: exists_frozen_fock_terms
 !
    contains
 !
       procedure :: initialize_orbital_coefficients => initialize_orbital_coefficients_wavefunction
       procedure :: initialize_orbital_energies     => initialize_orbital_energies_wavefunction
 !
-      procedure :: initialize_mm_matrices          => initialize_mm_matrices_wavefunction
-      procedure :: initialize_pcm_matrices         => initialize_pcm_matrices_wavefunction
-!
       procedure :: destruct_orbital_coefficients   => destruct_orbital_coefficients_wavefunction
       procedure :: destruct_orbital_energies       => destruct_orbital_energies_wavefunction
+!
+      procedure :: initialize_mm_matrices          => initialize_mm_matrices_wavefunction
+      procedure :: initialize_pcm_matrices         => initialize_pcm_matrices_wavefunction
 !      
       procedure :: destruct_mm_matrices            => destruct_mm_matrices_wavefunction
       procedure :: destruct_pcm_matrices           => destruct_pcm_matrices_wavefunction
@@ -129,20 +126,8 @@ module wavefunction_class
 !  
       procedure :: construct_orbital_block_by_density_cd       => construct_orbital_block_by_density_cd_wavefunction
 !
-      procedure :: initialize_mo_fock_fc_term                  => initialize_mo_fock_fc_term_wavefunction                
-      procedure :: destruct_mo_fock_fc_term                    => destruct_mo_fock_fc_term_wavefunction  
-      procedure :: initialize_mo_fock_frozen_hf_term           => initialize_mo_fock_frozen_hf_term_wavefunction                
-      procedure :: destruct_mo_fock_frozen_hf_term             => destruct_mo_fock_frozen_hf_term_wavefunction 
-      procedure :: initialize_mlhf_inactive_fock_term          => initialize_mlhf_inactive_fock_term_wavefunction
-      procedure :: destruct_mlhf_inactive_fock_term            => destruct_mlhf_inactive_fock_term_wavefunction
-!
-      procedure :: read_frozen_orbitals_settings   => read_frozen_orbitals_settings_wavefunction 
-!
-      procedure :: write_mm_matrices               => write_mm_matrices_wavefunction
-      procedure :: write_pcm_matrices              => write_pcm_matrices_wavefunction
-!
-      procedure :: read_mm_matrices               => read_mm_matrices_wavefunction
-      procedure :: read_pcm_matrices              => read_pcm_matrices_wavefunction
+      procedure :: initialize_mo_fock_frozen                   => initialize_mo_fock_frozen_wavefunction
+      procedure :: destruct_mo_fock_frozen                     => destruct_mo_fock_frozen_wavefunction
 !      
    end type wavefunction 
 !
@@ -1404,119 +1389,32 @@ contains
    end subroutine construct_orbital_block_by_density_cd_wavefunction
 !
 !
-   subroutine read_frozen_orbitals_settings_wavefunction(wf)
+   subroutine initialize_mo_fock_frozen_wavefunction(wf)
 !!
-!!    Read frozen orbitals 
-!!    Written by Sarai D. Folkestad, Oct 2019
-!!
-!!    Reads the frozen orbitals section of the input
-!!
-!!     - Frozen core 
-!!
-!!    - Frozen hf orbitals
-!!
-!!    This routine is used at HF level to prepare mos and 
-!!    frozen fock contributions.
-!!
-!!    This routine is read at cc level to figure out if there
-!!    should be frozen fock contributions
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      wf%frozen_core    = .false.
-      wf%frozen_hf_mos  = .false.
-!
-      if (input%requested_keyword_in_section('core', 'frozen orbitals')) wf%frozen_core = .true.
-      if (input%requested_keyword_in_section('hf', 'frozen orbitals')) wf%frozen_hf_mos = .true.
-!
-   end subroutine read_frozen_orbitals_settings_wavefunction
-!
-!
-   subroutine initialize_mo_fock_frozen_hf_term_wavefunction(wf)
-!!
-!!    Initialize Fock frozen HF orbitals contributions
+!!    Initialize MO Fock frozen
 !!    Written by Sarai D. Folkestad, Sep. 2019
 !!
       implicit none
 !
       class(wavefunction) :: wf
 !
-      if (.not. allocated(wf%mo_fock_frozen_hf_term)) call mem%alloc(wf%mo_fock_frozen_hf_term, wf%n_mo, wf%n_mo)
+      call mem%alloc(wf%mo_fock_frozen, wf%n_mo, wf%n_mo)
 !
-   end subroutine initialize_mo_fock_frozen_hf_term_wavefunction
+   end subroutine initialize_mo_fock_frozen_wavefunction
 !
 !
-   subroutine destruct_mo_fock_frozen_hf_term_wavefunction(wf)
+   subroutine destruct_mo_fock_frozen_wavefunction(wf)
 !!
-!!    Destruct Fock frozen HF orbitals contributions
+!!    Destruct MO Fock frozen
 !!    Written by Sarai D. Folkestad, Sep. 2019
 !!
       implicit none
 !
       class(wavefunction) :: wf
 !
-      if (allocated(wf%mo_fock_frozen_hf_term)) call mem%dealloc(wf%mo_fock_frozen_hf_term, wf%n_mo, wf%n_mo)
+      if (allocated(wf%mo_fock_frozen)) call mem%dealloc(wf%mo_fock_frozen, wf%n_mo, wf%n_mo)
 !
-   end subroutine destruct_mo_fock_frozen_hf_term_wavefunction
-!
-!
-   subroutine initialize_mo_fock_fc_term_wavefunction(wf)
-!!
-!!    Initialize Fock frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      if (.not. allocated(wf%mo_fock_fc_term)) call mem%alloc(wf%mo_fock_fc_term, wf%n_mo, wf%n_mo)
-!
-   end subroutine initialize_mo_fock_fc_term_wavefunction
-!
-!
-   subroutine destruct_mo_fock_fc_term_wavefunction(wf)
-!!
-!!    Destruct Fock frozen core
-!!    Written by Sarai D. Folkestad, Sep. 2019
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      if (allocated(wf%mo_fock_fc_term)) call mem%dealloc(wf%mo_fock_fc_term, wf%n_mo, wf%n_mo)
-!
-   end subroutine destruct_mo_fock_fc_term_wavefunction
-!
-!
-   subroutine initialize_mlhf_inactive_fock_term_wavefunction(wf)
-!!
-!!    Initialize mlhf inactive Fock term
-!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      call mem%alloc(wf%mlhf_inactive_fock_term, wf%n_mo, wf%n_mo)
-!
-   end subroutine initialize_mlhf_inactive_fock_term_wavefunction
-!
-!
-   subroutine destruct_mlhf_inactive_fock_term_wavefunction(wf)
-!!
-!!    Destruct mlhf inactive Fock term
-!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
-!!
-      implicit none
-!
-      class(wavefunction) :: wf
-!
-      if (allocated(wf%mlhf_inactive_fock_term)) &
-         call mem%dealloc(wf%mlhf_inactive_fock_term, wf%n_mo, wf%n_mo)
-!
-   end subroutine destruct_mlhf_inactive_fock_term_wavefunction
+   end subroutine destruct_mo_fock_frozen_wavefunction
 !
 !
    subroutine initialize_mm_matrices_wavefunction(wf)
@@ -1591,111 +1489,6 @@ contains
       if(allocated(wf%pcm_fock))  call mem%dealloc(wf%pcm_fock, wf%n_ao,wf%n_ao)
 !
    end subroutine destruct_pcm_matrices_wavefunction
-!
-!
-   subroutine write_mm_matrices_wavefunction(wf)
-!!
-!!    Save MM matrices
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-!!    Save AO Fock or h_wx for QM/MM at the end
-!!    of SCF
-!!
-      implicit none
-!
-      class(wavefunction), intent(inout) :: wf
-!
-      wf%mm_matrices_file = sequential_file('mm_matrices')
-!      
-      call wf%mm_matrices_file%open_('write', 'rewind')
-!
-      if(wf%system%mm%forcefield.eq.'non-polarizable') then 
-!
-         call wf%mm_matrices_file%write_(wf%nopol_h_wx, wf%n_ao*wf%n_ao)
-!
-      else if(wf%system%mm%forcefield.eq.'fq') then
-!
-         call wf%mm_matrices_file%write_(wf%pol_emb_fock, wf%n_ao*wf%n_ao)
-!
-      endif
-!
-      call wf%mm_matrices_file%close_
-!
-   end subroutine write_mm_matrices_wavefunction
-!
-!
-   subroutine write_pcm_matrices_wavefunction(wf)
-!!
-!!    Save MM matrices
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-!!    Save AO Fock or h_wx for QM/MM at the end
-!!    of SCF
-!!
-      implicit none
-!
-      class(wavefunction), intent(inout) :: wf
-!
-      wf%pcm_matrices_file = sequential_file('pcm_matrices')
-!      
-      call wf%pcm_matrices_file%open_('write', 'rewind')
-!
-      call wf%pcm_matrices_file%write_(wf%pcm_fock, wf%n_ao*wf%n_ao)
-!
-      call wf%pcm_matrices_file%close_
-!
-   end subroutine write_pcm_matrices_wavefunction
-!
-!
-   subroutine read_mm_matrices_wavefunction(wf)
-!!
-!!    Read MM matrices 
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-      implicit none
-!
-      class(wavefunction), intent(inout) :: wf
-!
-      wf%mm_matrices_file = sequential_file('mm_matrices')
-!      
-      call wf%mm_matrices_file%open_('read', 'rewind')
-!
-      if(wf%system%mm%forcefield.eq.'non-polarizable') then 
-!
-         call wf%mm_matrices_file%read_(wf%nopol_h_wx, wf%n_ao*wf%n_ao)
-!
-      else if(wf%system%mm%forcefield.eq.'fq') then
-!
-         call wf%mm_matrices_file%read_(wf%pol_emb_fock, wf%n_ao*wf%n_ao)
-!
-      endif
-!
-      call wf%mm_matrices_file%close_
-!
-   end subroutine read_mm_matrices_wavefunction
-!
-!
-   subroutine read_pcm_matrices_wavefunction(wf)
-!!
-!!    Save MM matrices
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-!!    Save AO Fock or h_wx for QM/MM at the end
-!!    of SCF
-!!
-      implicit none
-!
-      class(wavefunction), intent(inout) :: wf
-!
-      wf%pcm_matrices_file = sequential_file('pcm_matrices')
-!      
-      call wf%pcm_matrices_file%open_('read', 'rewind')
-!
-      call wf%pcm_matrices_file%read_(wf%pcm_fock, wf%n_ao*wf%n_ao)
-!
-      call wf%pcm_matrices_file%close_
-!
-   end subroutine read_pcm_matrices_wavefunction
 !
 !
 end module wavefunction_class

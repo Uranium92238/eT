@@ -437,26 +437,7 @@ contains
    end subroutine diagonalize_fock_frozen_hf_orbitals_hf
 !
 !
-   module subroutine prepare_frozen_fock_terms_hf(wf)
-!!
-!!    Prepare frozen Fock contributions
-!!    Written by Sarai D. Folkestad, Oct 2019
-!!
-!!    This routine prepares the frozen Fock contributions
-!!    to coupled cluster. This occurs e.g.,  in the cases where there
-!!    is a reduction in the number of MOs in CC compared to HF
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (wf%frozen_core)     call wf%construct_mo_fock_fc_term()
-      if (wf%frozen_hf_mos)   call wf%construct_mo_fock_frozen_hf_term()
-!
-   end subroutine prepare_frozen_fock_terms_hf
-!
-!
-   module subroutine construct_mo_fock_fc_term_hf(wf)
+   module subroutine construct_mo_fock_fc_term_hf(wf, mo_fc_fock)
 !!
 !!    Calculate MO Fock frozen core contribution
 !!    Written by Sarai D. Folkestad, Sep 2019
@@ -471,6 +452,8 @@ contains
       implicit none
 !
       class(hf) :: wf
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: mo_fc_fock
+!
       real(dp), dimension(:,:), allocatable :: D
       real(dp), dimension(:,:), allocatable :: ao_F_fc
 !
@@ -496,9 +479,7 @@ contains
 !
       call wf%construct_ao_G(D, ao_F_fc)
 !
-      call wf%initialize_mo_fock_fc_term()
-!
-      call wf%mo_transform(ao_F_fc, wf%mo_fock_fc_term)
+      call wf%mo_transform(ao_F_fc, mo_fc_fock)
 !
       call mem%dealloc(ao_F_fc, wf%n_ao, wf%n_ao)
       call mem%dealloc(D, wf%n_ao, wf%n_ao)
@@ -508,7 +489,7 @@ contains
    end subroutine construct_mo_fock_fc_term_hf
 !
 !
-   module subroutine construct_mo_fock_frozen_hf_term_hf(wf)
+   module subroutine construct_mo_fock_frozen_hf_term_hf(wf, mo_frozen_hf_fock)
 !!
 !!    Construct MO fock frozen hf  contribution
 !!    Written by Ida-Marie Høyvik, Oct 2019
@@ -525,14 +506,15 @@ contains
       implicit none
 !
       class(hf) :: wf
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: mo_frozen_hf_fock
+!
       real(dp), dimension(:,:), allocatable :: D
       real(dp), dimension(:,:), allocatable :: ao_F_frozen_hf
-!
-      if (.not. wf%frozen_hf_mos) return
 !
       call mem%alloc(D, wf%n_ao, wf%n_ao)
 !
 !     add frozen orbitals contribution
+!
       call dgemm('N', 'T',                                &
                   wf%n_ao,                                &
                   wf%n_ao,                                &
@@ -552,9 +534,7 @@ contains
 !
       call wf%construct_ao_G(D, ao_F_frozen_hf)
 !
-      call wf%initialize_mo_fock_frozen_hf_term()
-!
-      call wf%mo_transform(ao_F_frozen_hf, wf%mo_fock_frozen_hf_term)
+      call wf%mo_transform(ao_F_frozen_hf, mo_frozen_hf_fock)
 !
       call mem%dealloc(ao_F_frozen_hf, wf%n_ao, wf%n_ao)
       call mem%dealloc(D, wf%n_ao, wf%n_ao)
