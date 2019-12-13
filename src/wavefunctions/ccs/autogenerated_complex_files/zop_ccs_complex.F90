@@ -258,7 +258,7 @@ contains
 !
       wf%correlation_energy_complex = omp_correlation_energy 
 !
-      wf%energy_complex = wf%hf_energy_complex + wf%correlation_energy_complex
+      wf%energy_complex = wf%hf_energy + wf%correlation_energy_complex
 !
    end subroutine calculate_energy_ccs_complex
 !

@@ -171,8 +171,6 @@ contains
       call solver%initialize_projection_tool(wf)
 !
       call solver%prepare_wf_for_excited_state(wf)
-
-      if (wf%frozen_core .and. solver%es_type=='core') call output%error_msg('No support for frozen core with CVS yet.')
 !
 !     Initialize preconditioner 
 !

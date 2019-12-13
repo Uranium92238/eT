@@ -1052,7 +1052,7 @@ contains
 !     Frozen fock terms transformed from the canonical MO basis to 
 !     the basis of orbital partitioning
 !
-      if ((wf%frozen_core) .or. (wf%frozen_hf_mos)) &
+      if (wf%exists_frozen_fock_terms) &
          call wf%update_MO_fock_contributions(canonical_orbitals)
 !
       call mem%dealloc(canonical_orbitals, wf%n_ao, wf%n_mo)
@@ -1079,7 +1079,7 @@ contains
 !     Frozen fock terms transformed from the basis of orbital partitioning to 
 !     the MLCC basis
 !
-      if ((wf%frozen_core) .or. (wf%frozen_hf_mos)) &
+      if (wf%exists_frozen_fock_terms) &
          call wf%update_MO_fock_contributions(partitioning_orbitals)
 !
       call mem%dealloc(partitioning_orbitals, wf%n_ao, wf%n_mo)
@@ -1375,23 +1375,7 @@ contains
 !
       call wf%contruct_mo_basis_transformation(wf%orbital_coefficients, C_old, T)
 !
-      if (wf%frozen_core) then
-!
-         call symmetric_sandwich_right_transposition_replace(wf%mo_fock_fc_term, T, wf%n_mo)
-!
-      endif
-!
-      if (wf%frozen_hf_mos) then
-!
-         call symmetric_sandwich_right_transposition_replace(wf%mo_fock_frozen_hf_term, T, wf%n_mo)
-!
-      endif
-!
-      if (wf%mlhf_reference) then
-!
-         call symmetric_sandwich_right_transposition_replace(wf%mlhf_inactive_fock_term, T, wf%n_mo)
-!
-      endif
+      call symmetric_sandwich_right_transposition_replace(wf%mo_fock_frozen, T, wf%n_mo)
 !
       call mem%dealloc(T, wf%n_mo, wf%n_mo)
 !

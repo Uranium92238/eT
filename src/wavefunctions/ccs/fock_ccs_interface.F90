@@ -45,9 +45,9 @@
    end subroutine construct_fock_ccs
 !
 !
-   module subroutine add_frozen_core_fock_term_ccs(wf, F_pq)
+   module subroutine add_frozen_fock_terms_ccs(wf, F_pq)
 !!
-!!    Add frozen core Fock contribution 
+!!    Add frozen Fock terms
 !!    Written by Sarai D. Folkestad, 2019 
 !!
 !!    Adds the frozen core contributions to
@@ -60,79 +60,10 @@
       class(ccs), intent(in) :: wf 
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
 !
-   end subroutine add_frozen_core_fock_term_ccs
+   end subroutine add_frozen_fock_terms_ccs
 !
 !
-   module subroutine add_frozen_hf_fock_term_ccs(wf, F_pq)
-!!
-!!    Add frozen HF Fock contribution 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019 
-!!
-!!    Adds the contributions from frozen HF orbitals to
-!!    the effective T1-transformed Fock matrix.  
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
-!
-   end subroutine add_frozen_hf_fock_term_ccs
-!
-!
-   module subroutine add_mlhf_inactive_fock_term_ccs(wf, F_pq)
-!!
-!!    Add MLHF inactive Fock term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad 
-!!    and Linda Goletto, Nov 2019 
-!!
-!!    Adds the contribution from MLHF inactive orbitals to
-!!    the effective T1-transformed Fock matrix.  
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: F_pq 
-!
-   end subroutine add_mlhf_inactive_fock_term_ccs
-!
-!
-   module subroutine add_molecular_mechanics_fock_term_ccs(wf, F_pq)
-!!
-!!    Add molecular mechanics Fock contribution 
-!!    Written by Tommaso Giovannini, 2019 
-!!
-!!    Adds the molecular mechanics contributions to  
-!!    the effective T1-transformed Fock matrix. 
-!!
-!!    Isolated into subroutine by Eirik F. Kjønstad, 2019
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
-!
-   end subroutine add_molecular_mechanics_fock_term_ccs
-!
-!
-   module subroutine add_pcm_fock_contribution_ccs(wf, F_pq)
-!!
-!!    Add PCM Fock contribution 
-!!    Written by Tommaso Giovannini, 2019 
-!!
-!!    Adds the PCM contributions to  
-!!    the effective T1-transformed Fock matrix. 
-!!
-!!    Isolated into subroutine by Eirik F. Kjønstad, 2019
-!!
-      implicit none 
-!
-      class(ccs), intent(in) :: wf 
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq 
-!
-   end subroutine add_pcm_fock_contribution_ccs
-!
-!
-   module subroutine construct_t1_fock_fc_term_ccs(wf, F_pq)
+   module subroutine construct_t1_frozen_fock_terms_ccs(wf, F_pq)
 !!
 !!    Calculate T1 Fock frozen core contribution
 !!    Written by Sarai D. Folkestad, Sep 2019
@@ -142,33 +73,7 @@
       class(ccs) :: wf 
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
 !
-   end subroutine construct_t1_fock_fc_term_ccs
-!
-!
-   module subroutine construct_t1_fock_frozen_hf_term_ccs(wf, F_pq)
-!!
-!!    Calculate T1 Fock frozen fock contribution
-!!    Written by Sarai D. Folkestad, Sep 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf 
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
-!
-   end subroutine construct_t1_fock_frozen_hf_term_ccs
-!
-!
-   module subroutine construct_t1_mlhf_inactive_fock_term_ccs(wf, F_pq)
-!!
-!!    Calculate T1 MLHF inactive Fock term
-!!    Written by Sarai D. Folkestad and Linda Goletto, Nov 2019
-!!
-      implicit none
-!
-      class(ccs) :: wf 
-      real(dp), dimension(wf%n_mo, wf%n_mo), intent(out) :: F_pq
-!
-   end subroutine construct_t1_mlhf_inactive_fock_term_ccs
+   end subroutine construct_t1_frozen_fock_terms_ccs
 !
 !
    module subroutine add_t1_fock_length_dipole_term_ccs(wf, electric_field)

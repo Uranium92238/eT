@@ -242,23 +242,11 @@ module ccs_class
       procedure :: construct_fock                                => construct_fock_ccs
       procedure :: construct_fock_complex                        => construct_fock_ccs_complex
 !
-      procedure :: add_frozen_core_fock_term                     => add_frozen_core_fock_term_ccs
-      procedure :: add_frozen_core_fock_term_complex             => add_frozen_core_fock_term_ccs_complex
-
-      procedure :: add_frozen_hf_fock_term                       => add_frozen_hf_fock_term_ccs
-      procedure :: add_frozen_hf_fock_term_complex               => add_frozen_hf_fock_term_ccs_complex
-!
-      procedure :: add_mlhf_inactive_fock_term                   => add_mlhf_inactive_fock_term_ccs
-      procedure :: add_mlhf_inactive_fock_term_complex           => add_mlhf_inactive_fock_term_ccs_complex
-!
-      procedure :: add_molecular_mechanics_fock_term             => add_molecular_mechanics_fock_term_ccs
-      procedure :: add_molecular_mechanics_fock_term_complex     => add_molecular_mechanics_fock_term_ccs_complex
+      procedure :: add_frozen_fock_terms                         => add_frozen_fock_terms_ccs
+      procedure :: add_frozen_fock_terms_complex                 => add_frozen_fock_terms_ccs_complex
 !
       procedure :: add_t1_fock_length_dipole_term                => add_t1_fock_length_dipole_term_ccs
       procedure :: add_t1_fock_length_dipole_term_complex        => add_t1_fock_length_dipole_term_ccs_complex
-!
-      procedure :: add_pcm_fock_contribution                     => add_pcm_fock_contribution_ccs
-      procedure :: add_pcm_fock_contribution_complex             => add_pcm_fock_contribution_ccs_complex
 !
 !     Procedures related to the omega vector
 !
@@ -439,16 +427,10 @@ module ccs_class
 !
 !     Frozen core
 !
-      procedure :: construct_t1_fock_fc_term                     => construct_t1_fock_fc_term_ccs
-      procedure :: construct_t1_fock_fc_term_complex             => construct_t1_fock_fc_term_ccs_complex
-!
-      procedure :: construct_t1_fock_frozen_hf_term              => construct_t1_fock_frozen_hf_term_ccs
-      procedure :: construct_t1_fock_frozen_hf_term_complex      => construct_t1_fock_frozen_hf_term_ccs_complex
-!
-!     MLHF reference
-!
-      procedure :: construct_t1_mlhf_inactive_fock_term          => construct_t1_mlhf_inactive_fock_term_ccs
-      procedure :: construct_t1_mlhf_inactive_fock_term_complex  => construct_t1_mlhf_inactive_fock_term_ccs_complex
+      procedure :: construct_t1_frozen_fock_terms  &
+                => construct_t1_frozen_fock_terms_ccs
+      procedure :: construct_t1_frozen_fock_terms_complex &
+                => construct_t1_frozen_fock_terms_ccs_complex
 !
 !     MO preparations
 !
@@ -460,11 +442,6 @@ module ccs_class
       procedure :: amplitudes_for_jacobian_debug                 => amplitudes_for_jacobian_debug_ccs
       procedure :: normalization_for_jacobian_debug              => normalization_for_jacobian_debug_ccs
       procedure :: numerical_test_jacobian                       => numerical_test_jacobian_ccs
-!
-!     MM and PCM reading fock matrices
-!
-      procedure :: read_mm_fock_contributions                     => read_mm_fock_contributions_ccs
-      procedure :: read_pcm_fock_contributions                    => read_pcm_fock_contributions_ccs
 !
 !     Core-valence separation procedures
 !
@@ -601,8 +578,6 @@ contains
 !     Logicals for special methods
 !
       wf%bath_orbital = .false.
-      wf%frozen_core = .false.
-      wf%frozen_hf_mos = .false.
       wf%mlhf_reference = .false.
       wf%cvs = .false.
       wf%need_g_abcd = .false.
@@ -650,52 +625,15 @@ contains
 !
       if (wf%bath_orbital) call wf%make_bath_orbital()
 !
-!     Set extra contributions to the fock matrix
+      wf%exists_frozen_fock_terms = template_wf%exists_frozen_fock_terms
 !
-      if (wf%frozen_core) then
+      if (wf%exists_frozen_fock_terms) then
 !
-         call wf%initialize_mo_fock_fc_term()
-         call dcopy(wf%n_mo**2, template_wf%mo_fock_fc_term, 1, wf%mo_fock_fc_term, 1)
+         call wf%initialize_mo_fock_frozen()
 !
-      endif
-!
-      if (wf%frozen_hf_mos) then
-!
-         call wf%initialize_mo_fock_frozen_hf_term()
-         call dcopy(wf%n_mo**2, template_wf%mo_fock_frozen_hf_term, 1, wf%mo_fock_frozen_hf_term, 1)
+         call dcopy(wf%n_mo**2, template_wf%mo_fock_frozen, 1, wf%mo_fock_frozen, 1)
 !
       endif
-!
-      if (wf%mlhf_reference) then
-!
-         call wf%initialize_mlhf_inactive_fock_term()
-         call dcopy(wf%n_mo**2, template_wf%mlhf_inactive_fock_term, 1, &
-                        wf%mlhf_inactive_fock_term, 1)
-!
-      endif
-!
-     if (wf%system%mm_calculation) then
-!
-         call wf%initialize_mm_matrices()
-!
-         if(wf%system%mm%forcefield .eq. 'non-polarizable') then 
-!
-            call dcopy(wf%n_ao**2, template_wf%nopol_h_wx, 1, wf%nopol_h_wx, 1)
-!
-         else if(wf%system%mm%forcefield .eq. 'fq') then
-!
-            call dcopy(wf%n_ao**2, template_wf%pol_emb_fock, 1, wf%pol_emb_fock, 1)
-!
-         endif
-!
-     endif
-!
-     if (wf%system%pcm_calculation) then
-!
-         call wf%initialize_pcm_matrices()
-         call dcopy(wf%n_ao**2, template_wf%pcm_fock, 1, wf%pcm_fock, 1)
-!
-     endif
 !
 !     Print orbital space info for cc
 !
@@ -727,12 +665,7 @@ contains
       call wf%destruct_multipliers()
       call wf%destruct_right_excitation_energies()
       call wf%destruct_left_excitation_energies()
-      call wf%destruct_mo_fock_fc_term()
-      call wf%destruct_mo_fock_frozen_hf_term()
-      call wf%destruct_mlhf_inactive_fock_term()
-!
-      call wf%destruct_mm_matrices()
-      call wf%destruct_pcm_matrices()
+      call wf%destruct_mo_fock_frozen()
 !
       call wf%destruct_fock()
 !
@@ -756,9 +689,6 @@ contains
       implicit none
 !
       class(ccs), intent(inout) :: wf
-!
-      call wf%read_frozen_orbitals_settings()
-      call wf%read_mlhf_settings()
 !
       if (input%requested_section('cc')) then
 !
@@ -1741,6 +1671,15 @@ contains
 !
       wf%cvs = .true.
 !
+!     Consistency check (given currently implemented CVS capabilities)
+!
+      if (input%requested_keyword_in_section('core excitation', 'solver cc es') .and. &
+          input%requested_keyword_in_section('core', 'frozen orbitals')) then 
+!
+         call output%error_msg('No support for CVS with frozen core yet. Turn off frozen core.')
+!
+      endif
+!
    end subroutine read_cvs_settings_ccs
 !
 !
@@ -2403,47 +2342,6 @@ contains
       end do
 !
    end subroutine biorthonormalize_L_and_R_ccs
-!
-!
-   subroutine read_mm_fock_contributions_ccs(wf)
-!!
-!!    Read MM Fock contributions
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-!!    Reads HF MM Fock contributions at convergence
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      call wf%initialize_mm_matrices()
-!      
-      if(wf%system%mm%forcefield .eq. 'non-polarizable') &
-         call mem%alloc(wf%nopol_h_wx, wf%n_ao, wf%n_ao)
-!
-      call wf%read_mm_matrices()
-!
-!
-   end subroutine read_mm_fock_contributions_ccs
-!
-!
-   subroutine read_pcm_fock_contributions_ccs(wf)
-!!
-!!    Read MM Fock contributions
-!!    Written by Tommaso Giovannini, Oct 2019
-!!
-!!    Reads HF MM Fock contributions at convergence
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      call wf%initialize_pcm_matrices()
-!
-      call wf%read_pcm_matrices()
-!
-!
-   end subroutine read_pcm_fock_contributions_ccs
 !
 !
    subroutine print_gs_summary_ccs(wf)
