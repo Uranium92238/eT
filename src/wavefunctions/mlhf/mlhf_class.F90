@@ -299,7 +299,11 @@ contains
       call wf%initialize_G_De()
       call wf%initialize_mo_fock()
 !
-      call wf%construct_G_De(wf%ao_h)
+      call wf%construct_G_De()
+!
+!     Inactive energy contribution
+!
+      wf%inactive_energy = wf%calculate_hf_energy_from_G(wf%G_De_ao, wf%ao_h)
 !
 !     Print multilevel orbital information to restart file
 !
@@ -310,6 +314,7 @@ contains
       call wf%construct_ao_density()
 !
       call wf%update_fock_and_energy_mo()
+!
       call wf%roothan_hall_update_orbitals_mo()  ! DIIS F => C
       call wf%update_ao_density()
 !
@@ -1124,7 +1129,7 @@ contains
    end subroutine cleanup_mlhf
 !
 !
-   subroutine construct_G_De_mlhf(wf, h_wx)
+   subroutine construct_G_De_mlhf(wf)
 !!
 !!    Construct G(De)
 !!    Written by Linda Goletto, Ida-Marie Høyvik
@@ -1135,8 +1140,6 @@ contains
       implicit none
 !
       class(mlhf), intent(inout) :: wf
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
 !     Scale by two to get non-idempotent inactive density De
 !
@@ -1153,10 +1156,6 @@ contains
       call wf%mlhf_inactive_fock_term_file%open_('write', 'rewind')
       call wf%mlhf_inactive_fock_term_file%write_(wf%G_De, wf%n_mo**2)
       call wf%mlhf_inactive_fock_term_file%close_
-!
-!     Energy contribution, inactive
-!
-      wf%inactive_energy = wf%calculate_hf_energy_from_G(wf%G_De_ao, h_wx)
 !
    end subroutine construct_G_De_mlhf
 !
