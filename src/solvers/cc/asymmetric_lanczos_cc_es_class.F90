@@ -61,6 +61,10 @@ module asymmetric_lanczos_cc_es_class
    use global_in,             only : input
    use memory_manager_class,  only : mem
    use string_utilities,      only : convert_to_uppercase
+!
+   use es_projection_tool_class,          only : es_projection_tool
+   use es_cvs_projection_tool_class,      only : es_cvs_projection_tool
+   use es_valence_projection_tool_class,  only : es_valence_projection_tool
 
    implicit none
 
@@ -80,7 +84,9 @@ module asymmetric_lanczos_cc_es_class
       real(dp), dimension(:), allocatable :: energies 
 !
       type(timings) :: timer
-
+!
+      class(es_projection_tool), allocatable :: projector
+!
    contains
 !
       procedure :: read_settings                   =>  read_settings_asymmetric_lanczos_cc_es
@@ -154,6 +160,7 @@ contains
 !     Set defaults
 !
       solver%normalization = 'asymmetric'
+      solver%es_type       = 'valence'
 !   
       call solver%read_settings()
 !
@@ -176,6 +183,21 @@ contains
 !     Prepare wavefunction for Jacobian transformations
 !
       call solver%prepare_wf_for_excited_state(wf)
+!
+      if (trim(solver%es_type) == 'valence') then
+!
+         solver%projector = es_valence_projection_tool()
+!
+      elseif (trim(solver%es_type) == 'core') then
+!
+         call wf%read_cvs_settings()
+         solver%projector = es_cvs_projection_tool(wf)
+!
+      else
+!
+         call output%error_msg('did not recognize the excited state type: ' //trim(solver%es_type))
+!
+      endif
 !
    end function new_asymmetric_lanczos_cc_es
 !
@@ -232,6 +254,13 @@ contains
          call wf%construct_csiX(dipole_length(:,:,cartesian), csiX)
          call wf%construct_eom_etaX(dipole_length(:,:,cartesian), csiX, etaX)
 !
+         if (solver%projector%active) then
+!
+            call solver%projector%do_(csiX)
+            call solver%projector%do_(etaX)
+!
+         endif
+!
 !        Prepare initial seeds (p1,q1) as binormalized etaX and csiX vectors
 !        
 !        The binormalization procedure is either 'symmetric' or 'asymmetric'
@@ -285,6 +314,13 @@ contains
 !
             call wf%jacobian_transformation(Aq) 
             call wf%jacobian_transpose_transformation(pA)
+!
+            if (solver%projector%active) then
+!
+               call solver%projector%do_(Aq)
+               call solver%projector%do_(pA)
+!
+            endif
 !            
 !           Calculates alpha_(i) 
 ! 
@@ -393,8 +429,14 @@ contains
 !
       call input%get_keyword_in_section('chain length', 'solver cc es', solver%chain_length)
 !
-      call input%get_required_keyword_in_section('lanczos normalization', 'solver cc es', &
+      call input%get_keyword_in_section('lanczos normalization', 'solver cc es', &
                                                    solver%normalization)
+!
+      if (input%requested_keyword_in_section('core excitation', 'solver cc es')) &
+            solver%es_type = 'core'
+!
+      if (input%requested_keyword_in_section('ionization', 'solver cc es')) &
+            call output%error_msg('Ionization not possible with the asymmetric Lanczos solver')
 !
    end subroutine read_settings_asymmetric_lanczos_cc_es
 !

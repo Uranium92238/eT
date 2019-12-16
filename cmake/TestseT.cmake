@@ -145,6 +145,7 @@ add_eT_runtest(ccsd_left_ip_diis                            "eT;short;ccsd;ip;le
 add_eT_runtest(ccsd_left_es_energies                        "eT;short;ccsd;es;left")
 add_eT_runtest(ccsd_left_es_diis                            "eT;short;ccsd;es;left;diis")
 add_eT_runtest(ccsd_es_lanczos                              "eT;short;ccsd;es;eom;lanczos")
+add_eT_runtest(ccsd_cvs_lanczos                          "eT;short;ccsd;es;eom;lanczos;cvs")
 add_eT_runtest(ccsd_eom_polarizability                      "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom                 "eT;short;ccsd;es;eom")
 add_eT_runtest(ccsd_oscillator_strength_eom_crop            "eT;short;ccsd;es;eom;crop")
