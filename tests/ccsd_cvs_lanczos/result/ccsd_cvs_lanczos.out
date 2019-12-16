@@ -1,0 +1,721 @@
+
+
+
+                       eT - a coupled cluster program
+       Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch
+
+  ----------------------------------------------------------------------------------
+   Author:                 Contribution(s):
+  ----------------------------------------------------------------------------------
+   Josefine H. Andersen   first order properties
+   Alice Balbi            CC propagation
+   Sarai D. Folkestad     program design, HF, CCS, 
+                          CC2, CCSD, Libint-interface, 
+                          Cholesky decomposition, 
+                          Davidson-tool, CVS, DIIS-tool, 
+                          zeroth order properties, 
+                          first order properties, 
+                          IP, frozen core, MLCC2, 
+                          MLHF, visualization
+   Tommaso Giovannini     QM/MM, PCM, Libint-interface
+   Linda Goletto          CC2, MLHF
+   Tor S. Haugland        SAD
+   Anders Hutcheson       frozen HF orbitals
+   Ida-Marie Høyvik       MLHF, frozen HF orbitals
+   Eirik F. Kjønstad      program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool, 
+                          Cholesky decomposition, Libint-interface, Davidson-tool, 
+                          zeroth order properties, first order properties, 
+                          SAD, BFGS-tool
+   Rolf H. Myhre          CC3, Runtest-interface, launch script, file system
+   Alexander C. Paul      CC2, CC3, first order properties
+   Andreas Skeidsvoll     MP2, CC propagation, FFT solver, visualization
+   Åsmund H. Tveten       HF
+  ----------------------------------------------------------------------------------
+   Other contributors: M. Scavino
+
+  Running on 8 OMP thread(s)
+  Memory available for calculation: 8.000000 GB
+
+
+  :: Molecular system specifications
+  =====================================
+
+     Name:             h2o-he
+     Charge:           0
+     Multiplicity:     1
+     Coordinate units: angstrom
+
+     Pure basis functions:         29
+     Cartesian basis functions:    30
+     Primitive basis functions:    56
+
+     Nuclear repulsion energy (a.u.):             12.116100574587
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+    =========================================================================
+                               Geometry(Å)
+    =========================================================================
+     Atom          X                Y                Z                Basis
+    =========================================================================
+      H     0.866810000000   0.601440000000   5.000000000000         cc-pvdz
+      H    -0.866810000000   0.601440000000   5.000000000000         cc-pvdz
+      O     0.000000000000  -0.075790000000   5.000000000000         cc-pvdz
+      He    0.100000000000  -0.020000000000   7.530000000000         cc-pvdz
+    =========================================================================
+
+    =========================================================================
+                               Geometry(a.u.)
+    =========================================================================
+     Atom          X                Y                Z                Basis
+    =========================================================================
+      H     1.638033502034   1.136556880358   9.448630622825         cc-pvdz
+      H    -1.638033502034   1.136556880358   9.448630622825         cc-pvdz
+      O     0.000000000000  -0.143222342981   9.448630622825         cc-pvdz
+      He    0.188972612457  -0.037794522491  14.229637717975         cc-pvdz
+    =========================================================================
+
+   - Cholesky decomposition of electronic repulsion integrals solver
+  ---------------------------------------------------------------------
+
+  Performs a Cholesky decomposition of the two-electron electronic repulsion 
+  integrals in the atomic orbital basis,
+
+  (ab|cd) = sum_J L_ab^J L_cd^J.
+
+  Once the Cholesky basis has been determined, the vectors L^J are constructed 
+  and stored to disk. These may either be used directly, or be transformed 
+  to the MO basis for use in post-HF calculations. For more information, 
+  see S. D. Folkestad, E. F. Kjønstad and H. Koch, JCP, 150(19), (2019)
+
+  - Cholesky decomposition settings:
+
+     Target threshold is:   0.10E-11
+     Span factor:           0.10E-01
+     Max qual:                  1000
+
+  - Cholesky decomposition system details:
+
+     Total number of AOs:                    29
+     Total number of shell pairs:           120
+     Total number of AO pairs:              435
+
+  - Preparing diagonal for decomposition:
+
+     Significant shell pairs:               118
+     Significant AO pairs:                  431
+
+     Construct shell pairs:                 120
+     Construct AO pairs:                    435
+
+  Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size
+  -------------------------------------------------------------------------------------------------------
+     1               406 /     108       0.47383E+01         147             42             17052
+     2               319 /      93       0.47165E-01         234            111             35409
+     3               250 /      76       0.46944E-03         178            183             45750
+     4               187 /      55       0.38270E-05         145            265             49555
+     5                87 /      25       0.38106E-07          78            324             28188
+     6                21 /       3       0.37202E-09          43            349              7329
+     7                 0 /       0       0.36652E-11           7            354                 0
+  -------------------------------------------------------------------------------------------------------
+
+  - Summary of Cholesky decomposition of electronic repulsion integrals:
+
+     Final number of Cholesky vectors: 354
+
+ - Testing the Cholesky decomposition decomposition electronic repulsion integrals:
+
+     Maximal difference between approximate and actual diagonal:              0.7161E-12
+     Minimal element of difference between approximate and actual diagonal:  -0.1110E-14
+
+  - Finished decomposing the ERIs.
+
+     Total wall time (sec):              0.12800
+     Total cpu time (sec):               0.44982
+
+
+  :: RHF wavefunction
+  ======================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+  - Orbital details:
+
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:         23
+     Number of molecular orbitals:       29
+     Number of atomic orbitals:          29
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+     Generated atomic density for H  using UHF/cc-pvdz
+     Generated atomic density for O  using UHF/cc-pvdz
+     Generated atomic density for He using UHF/cc-pvdz
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+   - Self-consistent field DIIS Hartree-Fock solver
+  ----------------------------------------------------
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
+  matrix is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:                         8
+     Cumulative Fock threshold:       0.10E-01
+
+     Energy threshold:              0.1000E-11
+     Gradient threshold:            0.1000E-11
+
+     Coulomb screening threshold:   0.1000E-14
+     Exchange screening threshold:  0.1000E-14
+     ERI integral precision:        0.1000E-29
+
+  - Setting initial AO density to SAD
+
+     Energy of initial guess:               -78.492022836315
+     Number of electrons in guess:           12.000000000000
+
+  Storing DIIS records in memory.
+
+  Doing preparations for memory storer hf_diis_e
+
+  Doing preparations for memory storer hf_diis_x
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -78.796606592587     0.9053E-01     0.7880E+02
+     2           -78.828675852655     0.7128E-01     0.3207E-01
+     3           -78.843428154462     0.8290E-02     0.1475E-01
+  Switching to Fock construction using density differences.
+     4           -78.843809541675     0.2414E-02     0.3814E-03
+     5           -78.843850846800     0.3301E-03     0.4131E-04
+     6           -78.843851669326     0.5527E-04     0.8225E-06
+     7           -78.843851692851     0.5865E-05     0.2353E-07
+     8           -78.843851693557     0.2356E-05     0.7054E-09
+     9           -78.843851693630     0.2071E-06     0.7381E-10
+    10           -78.843851693631     0.1594E-07     0.3268E-12
+    11           -78.843851693631     0.3322E-08     0.1421E-13
+    12           -78.843851693631     0.1197E-08     0.1421E-13
+    13           -78.843851693631     0.4264E-09     0.0000E+00
+    14           -78.843851693631     0.1280E-09     0.2842E-13
+    15           -78.843851693631     0.1479E-10     0.1421E-13
+    16           -78.843851693631     0.2907E-11     0.1421E-13
+    17           -78.843851693631     0.6422E-12     0.0000E+00
+  ---------------------------------------------------------------
+  Convergence criterion met in 17 iterations!
+
+  - Summary of RHF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                  0.645629080251
+     Nuclear repulsion energy:      12.116100574587
+     Electronic energy:            -90.959952268218
+     Total energy:                 -78.843851693631
+
+  - Molecular orbital energies
+
+  -----------------------------------------------------------------------------------
+   1 -20.574269195142   9   0.704416610867  17   1.682695299878  25   3.175416260660
+   2  -1.277667044967  10   0.746260122915  18   1.804186820053  26   3.209661156313
+   3  -0.898849406811  11   1.155862024381  19   1.902641648743  27   3.328173215200
+   4  -0.629870222687  12   1.170770887076  20   2.148883457169  28   3.721936473470
+   5  -0.541641772852  13   1.267961746552  21   2.200395756970  29   3.985492632586
+   6  -0.485872762834  14   1.449847537220  22   2.540321860021
+   7   0.159756317417  15   1.463234913437  23   2.541517310547
+   8   0.229311906285  16   1.474444394527  24   2.559338707349
+  -----------------------------------------------------------------------------------
+
+  - Printing molecular orbitals (16 from total 29)
+
+    AO    Atom           1           2           3           4           5
+  ----------------------------------------------------------------------------
+     1    1  H(s)   -0.000325   -0.140729    0.004085    0.299590    0.207381
+     2    1  H(s)   -0.000460   -0.013665   -0.004414    0.118840    0.072812
+     3    1  H(p)   -0.000150    0.026700   -0.000211   -0.022931   -0.028671
+     4    1  H(p)   -0.000207    0.016138    0.000030   -0.029318    0.003426
+     5    1  H(p)   -0.000001   -0.000048   -0.001520    0.000014    0.000080
+     6    2  H(s)   -0.000325   -0.140698    0.005313   -0.299533    0.207420
+     7    2  H(s)   -0.000461   -0.013742   -0.003428   -0.118961    0.072652
+     8    2  H(p)    0.000150   -0.026706    0.000333   -0.022935    0.028660
+     9    2  H(p)   -0.000207    0.016140   -0.000166    0.029322    0.003433
+    10    2  H(p)   -0.000001   -0.000048   -0.001280   -0.000022    0.000086
+    11    3  O(s)   -1.000739    0.005312    0.000110    0.000001    0.001494
+    12    3  O(s)   -0.000619   -0.456473    0.012259    0.000033   -0.139081
+    13    3  O(s)    0.003381   -0.460793    0.014617    0.000067   -0.300118
+    14    3  O(p)    0.000000   -0.000012   -0.000896    0.474242   -0.000011
+    15    3  O(p)   -0.001443   -0.054123    0.002349    0.000028    0.530018
+    16    3  O(p)    0.000005   -0.000431   -0.016254   -0.000025    0.002830
+    17    3  O(p)   -0.000000   -0.000015   -0.000322    0.261952   -0.000036
+    18    3  O(p)    0.000875   -0.004804    0.001898    0.000031    0.377695
+    19    3  O(p)    0.000002   -0.000038   -0.013336   -0.000070    0.002167
+    20    3  O(d)    0.000000   -0.000001   -0.000022    0.023359   -0.000003
+    21    3  O(d)   -0.000002   -0.000010   -0.000390   -0.000002    0.000062
+    22    3  O(d)   -0.000149    0.002929   -0.001182   -0.000007   -0.012540
+    23    3  O(d)   -0.000000   -0.000002   -0.000052   -0.000012   -0.000002
+    24    3  O(d)    0.000026   -0.000342    0.000050   -0.000001   -0.011394
+    25    4 He(s)    0.000032   -0.006652   -0.591799   -0.002040    0.001476
+    26    4 He(s)   -0.000033   -0.007964   -0.512037   -0.001944   -0.005772
+    27    4 He(p)    0.000000    0.000025   -0.000115    0.000403    0.000029
+    28    4 He(p)    0.000002    0.000004   -0.000970    0.000001    0.000572
+    29    4 He(p)    0.000001    0.000710   -0.001363   -0.000104    0.000524
+  ----------------------------------------------------------------------------
+
+    AO    Atom           6           7           8           9          10
+  ----------------------------------------------------------------------------
+     1    1  H(s)   -0.000367   -0.097969   -0.071158   -0.927120   -0.874595
+     2    1  H(s)   -0.004196   -0.753944   -1.185226    0.866218    0.647772
+     3    1  H(p)    0.000368    0.002857    0.009777   -0.037289   -0.189767
+     4    1  H(p)    0.000181    0.008900    0.002893   -0.109727   -0.037978
+     5    1  H(p)    0.025374   -0.000275   -0.000032    0.000006    0.000366
+     6    2  H(s)   -0.000503   -0.097751    0.070038    0.936398   -0.865104
+     7    2  H(s)   -0.003404   -0.759201    1.181626   -0.872380    0.638222
+     8    2  H(p)   -0.000331   -0.002956    0.009834   -0.039305    0.189586
+     9    2  H(p)    0.000154    0.008964   -0.002883    0.110225   -0.036957
+    10    2  H(p)    0.025399   -0.000358   -0.000034    0.000078    0.000233
+    11    3  O(s)   -0.000237   -0.046350   -0.000141   -0.000418    0.079160
+    12    3  O(s)    0.000882    0.080112    0.000130   -0.001383    0.248916
+    13    3  O(s)    0.005090    0.845883    0.002184    0.001566   -0.346328
+    14    3  O(p)    0.000124   -0.000719    0.328394    0.281907    0.001112
+    15    3  O(p)   -0.001267    0.246969    0.000735   -0.001782    0.314957
+    16    3  O(p)    0.637774   -0.005155   -0.000523    0.000433   -0.000532
+    17    3  O(p)    0.000184   -0.001367    0.655086    0.239172    0.001266
+    18    3  O(p)   -0.000176    0.388086    0.001062   -0.000355    0.040871
+    19    3  O(p)    0.498402   -0.001235   -0.000053   -0.000353   -0.000787
+    20    3  O(d)    0.000012   -0.000046    0.009841   -0.091605   -0.000467
+    21    3  O(d)    0.016098   -0.000067   -0.000006    0.000003   -0.000017
+    22    3  O(d)   -0.000113   -0.005406    0.000024   -0.000365    0.069168
+    23    3  O(d)   -0.000006    0.000015    0.000023   -0.000014    0.000018
+    24    3  O(d)    0.000055   -0.005244   -0.000022    0.000216   -0.042047
+    25    4 He(s)   -0.038607    0.033543    0.001869   -0.004171   -0.093740
+    26    4 He(s)   -0.024728    0.045989    0.004985   -0.001275    0.028439
+    27    4 He(p)   -0.000188    0.000042   -0.003447    0.007915   -0.000235
+    28    4 He(p)   -0.000147   -0.001248   -0.000182    0.000218    0.004167
+    29    4 He(p)   -0.004042    0.004173    0.000256   -0.001205   -0.013526
+  ----------------------------------------------------------------------------
+
+    AO    Atom          11          12          13          14          15
+  ----------------------------------------------------------------------------
+     1    1  H(s)    0.035265    0.334021   -0.281345   -0.003398    0.052356
+     2    1  H(s)   -0.055176    0.095573   -0.627986   -0.042878    0.125458
+     3    1  H(p)    0.017130   -0.017349    0.329129    0.025162   -0.137051
+     4    1  H(p)   -0.010655   -0.315387    0.097266   -0.011262    0.098693
+     5    1  H(p)    0.099062   -0.005535   -0.001727    0.586169    0.432525
+     6    2  H(s)    0.035907    0.334105    0.281975   -0.006841    0.063681
+     7    2  H(s)   -0.041547    0.095261    0.625432   -0.040131    0.114558
+     8    2  H(p)   -0.014093    0.017334    0.328310   -0.028870    0.149124
+     9    2  H(p)   -0.012888   -0.315349   -0.097049   -0.012292    0.102671
+    10    2  H(p)    0.094153   -0.005441   -0.002070   -0.722684    0.058908
+    11    3  O(s)   -0.023170   -0.018436   -0.000508   -0.021451    0.046311
+    12    3  O(s)   -0.058331   -0.138791   -0.001130   -0.046472    0.088375
+    13    3  O(s)    0.075653   -0.378174    0.002318    0.096276   -0.270150
+    14    3  O(p)   -0.005687    0.000075   -0.792588    0.000854   -0.002080
+    15    3  O(p)    0.024181    0.775026   -0.000562   -0.021393    0.107944
+    16    3  O(p)   -0.883959    0.045170    0.008010    0.079738   -0.253804
+    17    3  O(p)    0.010073   -0.000118    1.576004   -0.002702    0.007448
+    18    3  O(p)   -0.021089   -1.074138    0.001124    0.062347   -0.313119
+    19    3  O(p)    0.863502   -0.044605   -0.007816   -0.059350    0.174620
+    20    3  O(d)    0.000245   -0.000009   -0.004624    0.000278   -0.000988
+    21    3  O(d)    0.005698   -0.000362   -0.000189   -0.010406    0.038437
+    22    3  O(d)    0.000051   -0.004621    0.000008    0.003586   -0.017608
+    23    3  O(d)    0.000579   -0.000011    0.000045    0.138374    0.039279
+    24    3  O(d)    0.004562    0.038101    0.000067    0.006782   -0.041658
+    25    4 He(s)   -0.389816    0.002641   -0.005570   -0.277444    0.944133
+    26    4 He(s)    0.351911   -0.005443    0.007047    0.293198   -0.998118
+    27    4 He(p)   -0.001653    0.000248   -0.001987    0.000520   -0.000182
+    28    4 He(p)   -0.001403   -0.004636   -0.000615    0.000023   -0.000953
+    29    4 He(p)   -0.035178    0.002251   -0.000801    0.004868   -0.015665
+  ----------------------------------------------------------------------------
+
+    AO    Atom          16
+  ----------------------------------------------------------------------------
+     1    1  H(s)   -0.288723
+     2    1  H(s)    0.209574
+     3    1  H(p)    0.366490
+     4    1  H(p)   -0.454845
+     5    1  H(p)    0.088613
+     6    2  H(s)   -0.285998
+     7    2  H(s)    0.206629
+     8    2  H(p)   -0.363510
+     9    2  H(p)   -0.453768
+    10    2  H(p)    0.040282
+    11    3  O(s)    0.249582
+    12    3  O(s)    0.635009
+    13    3  O(s)   -0.608978
+    14    3  O(p)   -0.000380
+    15    3  O(p)   -0.251506
+    16    3  O(p)   -0.059400
+    17    3  O(p)    0.001568
+    18    3  O(p)    0.700358
+    19    3  O(p)    0.037209
+    20    3  O(d)   -0.000248
+    21    3  O(d)    0.010309
+    22    3  O(d)    0.033906
+    23    3  O(d)    0.005056
+    24    3  O(d)    0.136244
+    25    4 He(s)    0.221937
+    26    4 He(s)   -0.245745
+    27    4 He(p)    0.000023
+    28    4 He(p)    0.009208
+    29    4 He(p)   -0.007810
+  ----------------------------------------------------------------------------
+
+  Doing finalizations for memory storer hf_diis_e
+
+  Doing finalizations for memory storer hf_diis_x
+
+  - Timings for the RHF ground state calculation
+
+     Total wall time (sec):              0.45400
+     Total cpu time (sec):               1.76073
+
+   - Number of orbitals for coupled cluster calculation
+
+     Number of occupied orbitals:               6
+     Number of virtual orbitals:               23
+     Number of molecular orbitals:             29
+     Number of atomic orbitals:                29
+
+
+  :: Excited state coupled cluster engine
+  ==========================================
+
+  Calculates the coupled cluster excitation vectors and excitation energies
+
+  This is a CCSD excited state calculation.
+  The following tasks will be performed:
+
+     1) Calculation of the ground state (diis algorithm)
+     2) Calculation of the multipliers (diis algorithm)
+     3) Calculation of the excited state (asymmetric lanczos algorithm)
+
+
+  1) Calculation of the ground state (diis algorithm)
+
+   - DIIS coupled cluster ground state solver
+  ----------------------------------------------
+
+  A DIIS CC ground state amplitude equations solver. It uses an extrapolation 
+  of previous quasi-Newton perturbation theory estimates of the next amplitudes. 
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
+  13.
+
+  - DIIS CC ground state solver settings:
+
+     Omega threshold:           0.10E-11
+     Energy threshold:          0.10E-11
+
+     DIIS dimension:                   8
+     Max number of iterations:       100
+
+     Storage: disk
+
+  Placing the ERIs in memory
+
+  Storing DIIS records on file.
+
+  Using direct file to store records with name: cc_gs_diis_e.
+
+  Using direct file to store records with name: cc_gs_diis_x.
+
+  Doing preparations for file storer cc_gs_diis_e
+
+  Doing preparations for file storer cc_gs_diis_x
+
+  Iteration    Energy (a.u.)        |omega|       Delta E (a.u.)
+  ---------------------------------------------------------------
+    1           -79.084241931608     0.9391E-01     0.7908E+02
+    2           -79.092586666607     0.2720E-01     0.8345E-02
+    3           -79.099408028306     0.7507E-02     0.6821E-02
+    4           -79.100345871309     0.2095E-02     0.9378E-03
+    5           -79.100371860301     0.5154E-03     0.2599E-04
+    6           -79.100393801016     0.2313E-03     0.2194E-04
+    7           -79.100385611260     0.4933E-04     0.8190E-05
+    8           -79.100384217524     0.1180E-04     0.1394E-05
+    9           -79.100383621794     0.4135E-05     0.5957E-06
+   10           -79.100383427012     0.1779E-05     0.1948E-06
+   11           -79.100383466393     0.6705E-06     0.3938E-07
+   12           -79.100383474629     0.2989E-06     0.8237E-08
+   13           -79.100383487351     0.1028E-06     0.1272E-07
+   14           -79.100383481864     0.3056E-07     0.5487E-08
+   15           -79.100383481091     0.6508E-08     0.7730E-09
+   16           -79.100383481302     0.2112E-08     0.2110E-09
+   17           -79.100383481484     0.6588E-09     0.1819E-09
+   18           -79.100383481546     0.1594E-09     0.6158E-10
+   19           -79.100383481554     0.5326E-10     0.7901E-11
+   20           -79.100383481555     0.2008E-10     0.1208E-11
+   21           -79.100383481556     0.7516E-11     0.6679E-12
+   22           -79.100383481556     0.3071E-11     0.2984E-12
+   23           -79.100383481556     0.1337E-11     0.2842E-13
+   24           -79.100383481556     0.5367E-12     0.4263E-13
+  ---------------------------------------------------------------
+  Convergence criterion met in 24 iterations!
+
+  - Ground state summary:
+
+     Final ground state energy (a.u.):   -79.100383481556
+
+     Correlation energy (a.u.):           -0.256531787925
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         t(a,i)
+     -----------------------------------
+        1      5       -0.014740597523
+       14      4        0.009546856221
+        7      4       -0.008284826484
+       15      5        0.006124828874
+        4      5       -0.005606072698
+        6      2       -0.005476844297
+        2      4       -0.005318591697
+       13      5       -0.005269818337
+        5      6        0.004933006908
+       11      6       -0.003454309398
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         t(ai,bj)
+     --------------------------------------------------
+        2      4       2      4       -0.047351708919
+        5      6       5      6       -0.046240574404
+        9      3       9      3       -0.041367012249
+        3      4       3      4       -0.036659067517
+        6      5       6      5       -0.034554012170
+        1      5       1      5       -0.034177347750
+       16      3      16      3       -0.032108235347
+       17      3      17      3       -0.032052553603
+       18      3      18      3       -0.031351828684
+        2      4       3      4       -0.029701270698
+     --------------------------------------------------
+
+     T1 diagnostic (|T1|/sqrt(N_e)): 0.007226152112
+
+  Doing finalizations for file storer cc_gs_diis_e
+
+  Doing finalizations for file storer cc_gs_diis_x
+
+  - Finished solving the CCSD ground state equations
+
+     Total wall time (sec):              0.64700
+     Total cpu time (sec):               1.55713
+
+  Note: All T1-integrals are stored in memory
+
+
+  3) Calculation of the excited state (asymmetric lanczos algorithm)
+     Calculating right vectors
+
+
+  2) Calculation of the multipliers (diis algorithm)
+
+   - DIIS coupled cluster multipliers solver
+  ---------------------------------------------
+
+  A DIIS CC multiplier equations solver. It combines a quasi-Newton perturbation 
+  theory estimate of the next multipliers, using least square fitting 
+  to find an an optimal combination of previous estimates such that the 
+  update is minimized.
+
+  See Helgaker et al., Molecular Electronic Structure Theory, Chapter 
+  13, for the more details on this algorithm.
+
+  - DIIS CC multipliers solver settings:
+
+     Residual threshold:        0.10E-11
+
+     DIIS dimension:                   8
+     Max number of iterations:       100
+  - Prepare for multiplier equation
+
+  Storing DIIS records on file.
+
+  Using direct file to store records with name: cc_multipliers_diis_e.
+
+  Using direct file to store records with name: cc_multipliers_diis_x.
+
+  Doing preparations for file storer cc_multipliers_diis_e
+
+  Doing preparations for file storer cc_multipliers_diis_x
+
+  Iteration    Norm residual
+  ----------------------------
+    1          0.2076E+01
+    2          0.2758E+00
+    3          0.7390E-01
+    4          0.1823E-01
+    5          0.5144E-02
+    6          0.1276E-02
+    7          0.4964E-03
+    8          0.1188E-03
+    9          0.3340E-04
+   10          0.1139E-04
+   11          0.4270E-05
+   12          0.1506E-05
+   13          0.7168E-06
+   14          0.2642E-06
+   15          0.7915E-07
+   16          0.2040E-07
+   17          0.5933E-08
+   18          0.2025E-08
+   19          0.5601E-09
+   20          0.2374E-09
+   21          0.7979E-10
+   22          0.2750E-10
+   23          0.1089E-10
+   24          0.5256E-11
+   25          0.2457E-11
+   26          0.7653E-12
+  ----------------------------
+  Convergence criterion met in 26 iterations!
+
+  - DIIS CC multipliers solver summary:
+
+     Largest single amplitudes:
+     -----------------------------------
+        a       i         r(a,i)
+     -----------------------------------
+        1      5       -0.022790118896
+       14      4        0.015907507091
+        7      4       -0.014297181949
+        4      5       -0.011712306720
+       15      5        0.010007216962
+        6      2       -0.009083547621
+       13      5       -0.008770531160
+        2      4       -0.006954460286
+        5      6        0.006820250283
+        3      4       -0.006765159552
+     ------------------------------------
+
+     Largest double amplitudes:
+     --------------------------------------------------
+        a      i       b      j         r(ai,bj)
+     --------------------------------------------------
+        5      6       5      6       -0.092500754790
+        2      4       2      4       -0.092085328212
+        6      5       5      6        0.089666625590
+        2      4       5      6        0.083792278098
+        9      3       9      3       -0.082167759498
+        2      4       6      5       -0.077164163662
+        2      4       1      5       -0.076342716082
+        7      4       5      6       -0.071424572153
+        3      4       3      4       -0.071282985174
+        6      5       6      5       -0.068075967748
+     --------------------------------------------------
+
+  Doing finalizations for file storer cc_multipliers_diis_e
+
+  Doing finalizations for file storer cc_multipliers_diis_x
+
+  - Finished solving the ccsd multipliers equations
+
+     Total wall time (sec):              0.33600
+     Total cpu time (sec):               0.89067
+
+   - Asymmetric Lanczos excited state solver
+  ---------------------------------------------
+
+  An asymmetric Lanczos solver builds a reduced space tridiagonal representation 
+  of the CC Jacobian of dimension defined by the chain length. Diagonalization 
+  of this representation gives the eigenvalues and eigenvectors.
+
+  A complete description of the algorithm can be found in  S.Coriani et 
+  al., J. Chem. Theory Comput. 2012, 8, 5, 1616-1628.
+
+  - Settings for coupled cluster excited state solver (asymmetric lanczos):
+
+     Chain length:     30
+     Biorthonormalization procedure: asymmetric
+
+  - Summary of the asymmetric Lanczos solver for excited states
+
+     Printing the 10 lowest excited states for each Cartesian component 
+     of the electric dipole moment
+
+     Component: X
+
+     State.      energy [a.u]         energy [eV]         Osc. strength
+     ----------------------------------------------------------------------
+        1       19.798261999832     538.738149802519      0.044279942378
+        2       20.259302807770     551.283709198288      0.010202925951
+        3       20.648274711769     561.868173828943      0.002283723749
+        4       20.704491225351     563.397903080717      0.059443054431
+        5       21.384460905007     581.900820515733      0.004341104063
+        6       21.613821914978     588.142051495994      0.022985415235
+        7       22.264207641571     605.839948564226      0.002655196359
+        8       23.025231707176     626.548468183922      0.004260067857
+        9       23.518708107503     639.976645004955      0.003455911458
+       10       24.245051701206     659.741460916387      0.001575672966
+     ----------------------------------------------------------------------
+     For full spectrum see file: h2o-he_30_X
+
+     Component: Y
+
+     State.      energy [a.u]         energy [eV]         Osc. strength
+     ----------------------------------------------------------------------
+        1       19.741969189852     537.206344419998      0.024680371461
+        2       20.277115902866     551.768428205174      0.020517273232
+        3       20.592063201530     560.338580725067      0.058339304963
+        4       20.990817336279     571.189233412806      0.004569319519
+        5       21.361858135227     581.285767822143      0.005647195993
+        6       21.682168069376     590.001845086321      0.014673665588
+        7       22.405337078800     609.680276159434      0.002631253545
+        8       22.987664664215     625.526216876267      0.005518224301
+        9       23.666728275573     644.004478937067      0.001779598083
+       10       24.358961768693     662.841111734316      0.001059457302
+     ----------------------------------------------------------------------
+     For full spectrum see file: h2o-he_30_Y
+
+     Component: Z
+
+     State.      energy [a.u]         energy [eV]         Osc. strength
+     ----------------------------------------------------------------------
+        1       19.742130881139     537.210744264034      0.000006434633
+        2       20.260676273321     551.321083099596      0.000007808350
+        3       20.553563827573     559.290959398791      0.095054116581
+        4       20.944716224215     569.934758256470      0.000385006859
+        5       21.277351357922     578.986221283585      0.005316497696
+        6       21.763440099275     592.213369664515      0.001761270388
+        7       22.369749113032     608.711878285278      0.002654029213
+        8       22.796442049576     620.322784493585      0.004004551440
+        9       23.586890655165     641.831986629230      0.001655277107
+       10       24.131842462706     656.660880626531      0.000703681550
+     ----------------------------------------------------------------------
+     For full spectrum see file: h2o-he_30_Z
+
+  - Finished solving the CCSD excited state equations.
+
+     Total wall time (sec):              2.45100
+     Total cpu time (sec):               6.48762
+
+  - Timings for the CCSD excited state calculation
+
+     Total wall time (sec):              3.45900
+     Total cpu time (sec):               8.99151
+
+  - Cleaning up ccsd wavefunction
+
+  Mismatch in memory according to eT and specified on input:
+
+     Memory available (eT):    7.999676 GB
+     Memory available (input): 8.000000 GB
+
+  Warning: Deallocations may be missing or specified with incorrect dimensionalities.
+
+  :: There was 1 warning during the execution of eT. ::
+
+  eT terminated successfully!
