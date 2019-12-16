@@ -409,7 +409,8 @@ contains
                endif
 !  
 !           Is ( followed by a or A?
-            elseif(string(i+1:i+1) .eq. "a" .or. string(i+1:i+1) .eq. "A") then
+            elseif((string(i+1:i+1) .eq. "a") .or. (string(i+1:i+1) .eq. "A") .or. &
+                   (string(i+1:i+1) .eq. "b") .or. (string(i+1:i+1) .eq. "B")) then
 !
 !              Is it followed by a number, if so, assume a format string
                if (the_file%is_number(string(i + 2 : i + 2))) then
@@ -442,12 +443,15 @@ contains
 !
 !                 Copy format string to fstring and check if a0
                   fstring = string(p_pos:i)
-                  if (fstring(2:3) .eq. 'a0') then
-                     fstring = '(a)'
+                  if ((fstring(2:3) .eq. 'a0') .or. (fstring(2:3) .eq. 'b0')) then
                      add_pos = len_trim(chars(char_count))
+                     fstring = '(a)'
+                  else if ((fstring(2:2) .eq. 'b') .or. (fstring(2:2) .eq. 'B')) then
+                     add_pos = the_file%get_format_length(fstring)
+                     fstring = '(a)'
                   else
                      add_pos = the_file%get_format_length(fstring)
-                  endif
+                  end if
 !
                   write(pstring(print_pos:), fstring) trim(chars(char_count))
 !
@@ -704,6 +708,7 @@ contains
 !
 !        If character, integer, blank space or logical
          if(fstring(2:2) .eq. 'a' .or. fstring(2:2) .eq. 'A' .or. &
+            fstring(2:2) .eq. 'b' .or. fstring(2:2) .eq. 'B' .or. &
             fstring(2:2) .eq. 'i' .or. fstring(2:2) .eq. 'I' .or. &
             fstring(2:2) .eq. 'l' .or. fstring(2:2) .eq. 'L' .or. &
             fstring(2:2) .eq. 'x' .or. fstring(2:2) .eq. 'X') then
