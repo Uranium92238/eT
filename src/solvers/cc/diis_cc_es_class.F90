@@ -302,9 +302,9 @@ contains
       prev_energies     = zero 
       residual_norms    = zero 
 !
-      allocate(converged(solver%n_singlet_states))
-      allocate(converged_residual(solver%n_singlet_states))
-      allocate(converged_eigenvalue(solver%n_singlet_states))
+      call mem%alloc(converged, (solver%n_singlet_states))
+      call mem%alloc(converged_residual, (solver%n_singlet_states))
+      call mem%alloc(converged_eigenvalue, (solver%n_singlet_states))
 !
       converged            = .false.
       converged_residual   = .false.
@@ -530,9 +530,9 @@ contains
       call mem%dealloc(prev_energies, solver%n_singlet_states)
       call mem%dealloc(residual_norms, solver%n_singlet_states)
 !
-      deallocate(converged)
-      deallocate(converged_residual)
-      deallocate(converged_eigenvalue)
+      call mem%dealloc(converged, (solver%n_singlet_states))
+      call mem%dealloc(converged_residual, (solver%n_singlet_states))
+      call mem%dealloc(converged_eigenvalue, (solver%n_singlet_states))
 !
       call mem%dealloc(eps, wf%n_es_amplitudes)
       call mem%dealloc(X, wf%n_es_amplitudes, solver%n_singlet_states)

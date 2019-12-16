@@ -1006,8 +1006,8 @@ contains
       call timer%turn_on()
 !
       req0   = 0
-      req1_a = wf%integrals%n_J*wf%n_o
-      req1_c = wf%integrals%n_J*wf%n_v
+      req1_a = wf%integrals%n_J*wf%n_o + wf%n_o
+      req1_c = wf%integrals%n_J*wf%n_v + wf%n_o
       req2   = wf%n_v*wf%n_o + wf%n_o**2
 !
       batch_a = batching_index(wf%n_v)
@@ -1378,7 +1378,7 @@ contains
 !
       req2_ia = 0
       req2_ib = 2*(wf%n_o)**2
-      req2_ab = max(3*(wf%n_o)**2, 2*(wf%n_o)**2 + (wf%n_o)*(wf%n_v))
+      req2_ab = 2*(wf%n_o)*(wf%n_v) + 3*(wf%n_o)**2
 !
       req3 = 0
 !

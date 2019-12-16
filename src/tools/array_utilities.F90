@@ -664,22 +664,22 @@ contains
 !
       cholesky_vectors = matrix
 !
-      allocate(work(2*dim_))
+      call mem%alloc(work, (2*dim_))
 !
 !     DPSTRF computes the Cholesky factorization with complete pivoting
 !     of a real symmetric positive semidefinite matrix.
 !
-      call dpstrf('L',      &
-            dim_,              &
+      call dpstrf('L',        &
+            dim_,             &
             cholesky_vectors, &
-            dim_,              &
+            dim_,             &
             used_diag,        &
             n_vectors,        &
             threshold,        &
             work,             &
             info)
 !
-      deallocate(work)
+      call mem%dealloc(work, (2*dim_))
 !
       do I = 1, dim_ ! Zero upper unreferenced triangle
          do J = 1, I - 1
@@ -690,8 +690,7 @@ contains
       enddo
 !
       if (info .lt. 0) then
-         write(*,*) info
-         stop 'Cholesky decomposition failed! Something wrong in call to dpstrf'
+         call output%error_msg('Cholesky decomposition failed! Something wrong in call to dpstrf')
       end if
 !
    end subroutine full_cholesky_decomposition_system
