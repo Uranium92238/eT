@@ -1,0 +1,144 @@
+
+
+
+                       eT - a coupled cluster program
+       Original authors: Sarai D. Folkestad, Eirik F. Kjønstad, and Henrik Koch
+
+  ----------------------------------------------------------------------------------
+   Author:                 Contribution(s):
+  ----------------------------------------------------------------------------------
+   Josefine H. Andersen   first order properties
+   Alice Balbi            CC propagation
+   Sarai D. Folkestad     program design, HF, CCS, 
+                          CC2, CCSD, Libint-interface, 
+                          Cholesky decomposition, 
+                          Davidson-tool, CVS, DIIS-tool, 
+                          zeroth order properties, 
+                          first order properties, 
+                          IP, frozen core, MLCC2, 
+                          MLHF, visualization
+   Tommaso Giovannini     QM/MM, PCM, Libint-interface
+   Linda Goletto          CC2, MLHF
+   Tor S. Haugland        SAD
+   Anders Hutcheson       frozen HF orbitals
+   Ida-Marie Høyvik       MLHF, frozen HF orbitals
+   Eirik F. Kjønstad      program design, HF, UHF, CCS, CC2, CCSD, DIIS-tool, 
+                          Cholesky decomposition, Libint-interface, Davidson-tool, 
+                          zeroth order properties, first order properties, 
+                          SAD, BFGS-tool
+   Rolf H. Myhre          CC3, Runtest-interface, launch script, file system
+   Alexander C. Paul      CC2, CC3, first order properties
+   Andreas Skeidsvoll     MP2, CC propagation, FFT solver, visualization
+   Åsmund H. Tveten       HF
+  ----------------------------------------------------------------------------------
+   Other contributors: M. Scavino
+
+  Running on 8 OMP thread(s)
+  Memory available for calculation: 8.000000 GB
+
+
+  :: Molecular system specifications
+  =====================================
+
+     Name:             h2o-he
+     Charge:           0
+     Multiplicity:     1
+     Coordinate units: angstrom
+
+     Pure basis functions:         29
+     Cartesian basis functions:    30
+     Primitive basis functions:    56
+
+     Nuclear repulsion energy (a.u.):             12.116100574587
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+    =========================================================================
+                               Geometry(Å)
+    =========================================================================
+     Atom          X                Y                Z                Basis
+    =========================================================================
+      H     0.866810000000   0.601440000000   5.000000000000         cc-pvdz
+      H    -0.866810000000   0.601440000000   5.000000000000         cc-pvdz
+      O     0.000000000000  -0.075790000000   5.000000000000         cc-pvdz
+      He    0.100000000000  -0.020000000000   7.530000000000         cc-pvdz
+    =========================================================================
+
+    =========================================================================
+                               Geometry(a.u.)
+    =========================================================================
+     Atom          X                Y                Z                Basis
+    =========================================================================
+      H     1.638033502034   1.136556880358   9.448630622825         cc-pvdz
+      H    -1.638033502034   1.136556880358   9.448630622825         cc-pvdz
+      O     0.000000000000  -0.143222342981   9.448630622825         cc-pvdz
+      He    0.188972612457  -0.037794522491  14.229637717975         cc-pvdz
+    =========================================================================
+
+
+  :: RHF wavefunction
+  ======================
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+  - Orbital details:
+
+     Number of occupied orbitals:         6
+     Number of virtual orbitals:         23
+     Number of molecular orbitals:       29
+     Number of atomic orbitals:          29
+
+
+  :: Hartree-Fock engine
+  =========================
+
+  Drives the calculation of the Hartree-Fock state.
+
+  This is a RHF ground state calculation.
+  The following tasks will be performed:
+
+     1) Generate initial SAD density
+     2) Calculation of reference state (SCF-DIIS algorithm)
+
+
+  1) Generate initial SAD density
+
+
+  2) Calculation of reference state (SCF-DIIS algorithm)
+
+   - Self-consistent field DIIS Hartree-Fock solver
+  ----------------------------------------------------
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock 
+  matrix is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:                         8
+     Cumulative Fock threshold:       0.10E-01
+
+     Energy threshold:              0.1000E-10
+     Gradient threshold:            0.1000E-10
+
+     Coulomb screening threshold:   0.1000E-13
+     Exchange screening threshold:  0.1000E-13
+     ERI integral precision:        0.1000E-27
+
+  - Setting initial AO density to SAD
+
+     Energy of initial guess:               -78.492022836321
+     Number of electrons in guess:           12.000000000000
+
+  Iteration       Energy (a.u.)      Max(grad.)    Delta E (a.u.)
+  ---------------------------------------------------------------
+     1           -78.796606592593     0.9053E-01     0.7880E+02
+     2           -78.828675852657     0.7128E-01     0.3207E-01
+     3           -78.843428154462     0.8290E-02     0.1475E-01
+     4           -78.843809541675     0.2414E-02     0.3814E-03
+     5           -78.843850846800     0.3301E-03     0.4131E-04
+     6           -78.843851669326     0.5527E-04     0.8225E-06
+  ---------------------------------------------------------------
+
+  Error: Was not able to converge the equations       in the given number 
+         of maximum iterations.
