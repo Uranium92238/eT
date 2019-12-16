@@ -818,7 +818,7 @@ contains
 !     determine the number of significant shell pairs
 !     and extract the largest diagonal for the shell pairs
 !
-      allocate(sig_sp(solver%n_sp))
+      call mem%alloc(sig_sp, (solver%n_sp))
       sig_sp = .false.
 !
 !$omp parallel do &
@@ -1105,7 +1105,6 @@ contains
       call mem%dealloc(sig_sp, solver%n_sp)
       call mem%dealloc(D_xy, n_sig_aop)
       call mem%dealloc(screening_vector_reduced, n_sig_aop)
-!
       call mem%dealloc(construct_sp, solver%n_sp)
 !
    end subroutine construct_significant_diagonal_atomic_eri_cd
@@ -1167,7 +1166,7 @@ contains
 !
       batch_size = n_sig_aop/solver%n_batches
 !
-      allocate(sig_sp_batch(solver%n_sp))
+      call mem%alloc(sig_sp_batch, (solver%n_sp))
 !
       batch_first = 1
       batch_last = batch_size
@@ -1263,8 +1262,8 @@ contains
 !
       enddo
 !
-      deallocate(sig_sp_batch)
-      deallocate(sig_sp)
+      call mem%dealloc(sig_sp_batch, (solver%n_sp))
+      call mem%dealloc(sig_sp, (solver%n_sp))
       call mem%dealloc(D_xy, n_sig_aop)
       call mem%dealloc(screening_vector, n_sig_aop)
 !
@@ -2341,7 +2340,7 @@ contains
 !        Find new significant diagonals
 !
          n_new_sig_sp = 0
-         allocate(new_sig_sp(n_sig_sp))
+         call mem%alloc(new_sig_sp, n_sig_sp)
 !
          new_sig_sp = .false.
 !
@@ -2496,7 +2495,7 @@ contains
 !
 !           Deallocate old lists & reallocate + copy over new lists
 !
-            deallocate(new_sig_sp)
+            call mem%dealloc(new_sig_sp, (n_sig_sp))
 !
             call mem%dealloc(sig_sp_to_first_sig_aop, n_sig_sp + 1)
             call mem%alloc(sig_sp_to_first_sig_aop, n_new_sig_sp + 1)
@@ -2813,11 +2812,11 @@ contains
       call mem%dealloc(basis_shell_info, n_sp_in_basis, 4)
 !
       n_vectors = 0
-      allocate(keep_vectors(solver%n_cholesky))
+      call mem%alloc(keep_vectors, (solver%n_cholesky))
 !
       call cpu_time(s_decomp_time)
 !
-      allocate(work(2*solver%n_cholesky))
+      call mem%alloc(work, (2*solver%n_cholesky))
 !
 !     DPSTRF computes the Cholesky factorization with complete pivoting
 !     of a real symmetric positive semidefinite matrix.
@@ -2832,7 +2831,7 @@ contains
             work,                      &
             info)
 !
-      deallocate(work)
+      call mem%dealloc(work, (2*solver%n_cholesky))
 !
       call cpu_time(e_decomp_time)
 !
@@ -2847,7 +2846,7 @@ contains
 !$omp end parallel do
 !
       call mem%dealloc(cholesky_basis, solver%n_cholesky, 3)
-      deallocate(keep_vectors)
+      call mem%dealloc(keep_vectors, (solver%n_cholesky))
 !
 !     Write Q file containing
 !
