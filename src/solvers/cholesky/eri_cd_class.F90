@@ -3407,6 +3407,11 @@ contains
 !
       type(interval) :: A_interval, B_interval
 !
+      type(timings), allocatable :: timer
+!
+      timer = timings('Diagonal test', pl='n')
+      call timer%turn_on()
+!
 !     Read diagonal information
 !
       call mem%alloc(construct_sp, solver%n_sp)
@@ -3563,6 +3568,8 @@ contains
       call output%printf('m', 'Minimal element of difference between &
                          &approximate and actual diagonal: (e12.4)', &
                          reals=[min_diff], ll=100, fs='( t6,a)')
+!
+      call timer%turn_off()
 !
    end subroutine diagonal_test_eri_cd
 !
@@ -3932,6 +3939,11 @@ contains
 !
      logical, dimension(:), allocatable :: construct_sp 
 !
+      type(timings), allocatable :: timer
+!
+      timer = timings('Write AO Cholesky to direct file', pl='n')
+      call timer%turn_on()
+!
       system%ao_cholesky_file = direct_file('AO_cholesky_vectors', solver%n_cholesky)
       call system%ao_cholesky_file%open_('write')
 !
@@ -4070,6 +4082,8 @@ contains
 !
       call solver%cholesky_ao_vectors_info%close_()
       call solver%cholesky_ao_vectors%close_()
+!
+      call timer%turn_off()
 !
    end subroutine write_ao_cholesky_to_direct_file_cd_eri_solver
 !
