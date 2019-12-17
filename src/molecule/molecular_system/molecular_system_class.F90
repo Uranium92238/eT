@@ -356,6 +356,8 @@ contains
 !
       enddo
 !
+      deallocate(n_shells_on_atoms)
+!
       call molecule%initialize_shell_limits()
 !
       n_s = molecule%get_n_shells()
@@ -1149,6 +1151,7 @@ contains
 !
          enddo
 !
+         call mem%dealloc(radius, size(methods))
          call mem%dealloc(counter, size(methods))
 !
       endif

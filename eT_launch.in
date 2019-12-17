@@ -134,6 +134,7 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
         time_file = '{0}{1}{2}'.format(out_name,'.timing','.out')
     else:
         inp_name = os.path.splitext(inpf)[0]
+        out_name = inp_name
         output_file = '{0}{1}'.format(inp_name,'.out')
         time_file = '{0}{1}{2}'.format(inp_name,'.timing','.out')
 
@@ -188,12 +189,21 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
     shutil.copyfile(out_src,out_dest)
     if not args.no_timing:
         shutil.copyfile(time_src,time_dest)
-    
+
+    # Check if there are mo_coefficient.out files
+    coeff_files = [coeff_file for coeff_file in fnmatch.filter \
+                      (os.listdir(scratch), '*mo_coefficients.out')]
+    for coeff_file in coeff_files:
+        mo_coeff_src = os.path.join(scratch,coeff_file)
+        mo_coeff_name = out_name + '_' + coeff_file
+        mo_coeff_dest = os.path.join(cwd,mo_coeff_name)
+        shutil.copyfile(mo_coeff_src,mo_coeff_dest)
+        
     #Check if there are any .plt files    
     pltfiles = [pltfile for pltfile in fnmatch.filter(os.listdir(scratch), '*.plt')]
     for pltfile in pltfiles:
         pltsrc = os.path.join(scratch, pltfile)
-        pltname = pltfile.replace('eT', inp_name)
+        pltname = pltfile.replace('eT', out_name)
         pltdest = os.path.join(cwd, pltname)
         shutil.copyfile(pltsrc, pltdest)
 

@@ -225,7 +225,7 @@ contains
       if (wf%n_ao == 1) then 
 !
          call solver%run_single_ao(wf)
-         call solver%print_summary(wf)
+         call wf%print_summary()
          return
 !
       endif 
@@ -281,7 +281,7 @@ contains
             call output%printf('n', 'Convergence criterion met in (i0) iterations!', &
                                ints=[iteration], fs='(t3,a)')
 !
-            call solver%print_summary(wf)
+            call wf%print_summary()
 !
          else
 !
