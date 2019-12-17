@@ -296,7 +296,7 @@ contains
 !
             endif
 !
-            call solver%print_summary(wf)
+            call wf%print_summary()
 !
          else
 !

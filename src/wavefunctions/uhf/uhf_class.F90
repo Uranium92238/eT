@@ -876,87 +876,41 @@ contains
    end subroutine set_n_mo_uhf
 !
 !
-   subroutine print_orbitals_uhf(wf, orbital_list)
+   subroutine print_orbitals_uhf(wf)
 !!
 !!    Print orbitals
 !!    Written by Eirik F. Kjønstad and Tor S. Haugland, Oct 2019
+!!    Modified by Alexander C. Paul to print all MOs to file, Dec 2019
 !!
-!!    Prints the orbitals with atom & orbital information given.
+!!    Prints the alpha- and beta-orbitals with atom & orbital information given.
 !!
-!!    orbital_list: A list of integers determining which MO to print
-!!                     [1,3,20] -> print MO 1, 3 and 20
-!!
+      use output_file_class, only: output_file
+!
       implicit none
 !
-      class(uhf),            intent(in)           :: wf
-      integer, dimension(:), intent(in), optional :: orbital_list
+      class(uhf), intent(in) :: wf
 !
-      integer, dimension(:), allocatable :: orbital_list_alpha, orbital_list_beta
+      type(output_file) ::mo_coefficient_file
 !
-      integer :: n_orbitals_alpha, n_orbitals_beta
-      integer :: mo, first_mo, last_mo
+!     Alpha
 !
-!     Set defaults
+      mo_coefficient_file = output_file('alpha_mo_coefficients.out')
+      call mo_coefficient_file%open_()
 !
-      if (.not. present(orbital_list)) then
+      call wf%print_orbitals_from_coefficients(wf%orbital_coefficients_a, &
+                                               mo_coefficient_file)
 !
-!        Default: orbital_list_alpha = [n_alpha - 4, ..., n_alpha + 5]
+      call mo_coefficient_file%close_()
 !
-         first_mo = max(1, wf%n_alpha - 4)
-         last_mo = min(wf%n_mo, wf%n_alpha + 5)
+!     Beta
 !
-         n_orbitals_alpha = last_mo - first_mo + 1
+      mo_coefficient_file = output_file('beta_mo_coefficients.out')
+      call mo_coefficient_file%open_('rewind')
 !
-         call mem%alloc(orbital_list_alpha, n_orbitals_alpha)
+      call wf%print_orbitals_from_coefficients(wf%orbital_coefficients_b, &
+                                               mo_coefficient_file)
 !
-         do mo = 1, n_orbitals_alpha
-!
-            orbital_list_alpha(mo) = first_mo + mo - 1
-!
-         enddo
-!
-!        Default: orbital_list_beta = [n_beta - 4, ..., n_beta + 5]
-!
-         first_mo = max(1, wf%n_beta - 4)
-         last_mo = min(wf%n_mo, wf%n_beta + 5)
-!
-         n_orbitals_beta = last_mo - first_mo + 1
-!
-         call mem%alloc(orbital_list_beta, n_orbitals_beta)
-!
-         do mo = 1, n_orbitals_beta
-!
-            orbital_list_beta(mo) = first_mo + mo - 1
-!
-         enddo
-!
-      else
-!
-!        Input: orbital_list
-!
-         n_orbitals_alpha = size(orbital_list)
-         n_orbitals_beta = size(orbital_list)
-!
-         call mem%alloc(orbital_list_alpha, n_orbitals_alpha)
-         call mem%alloc(orbital_list_beta,  n_orbitals_beta)
-!
-         orbital_list_alpha = orbital_list
-         orbital_list_beta = orbital_list
-!
-      endif
-!
-      call output%printf('n', '- Printing alpha molecular orbitals ((i0) from &
-                         &total (i0))', ints=[n_orbitals_alpha, wf%n_mo], fs='(/t3,a)')
-!
-      call wf%print_orbitals_from_coefficients(orbital_list_alpha, wf%orbital_coefficients_a)
-!
-      call output%printf('n', '- Printing beta molecular orbitals ((i0) from &
-                         &total (i0))', ints=[n_orbitals_beta, wf%n_mo], fs='(/t3,a)')
-!
-      call wf%print_orbitals_from_coefficients(orbital_list_beta, wf%orbital_coefficients_b)
-!
-      call mem%dealloc(orbital_list_alpha, n_orbitals_alpha)
-      call mem%dealloc(orbital_list_beta,  n_orbitals_beta)
+      call mo_coefficient_file%close_()
 !
    end subroutine print_orbitals_uhf
 !

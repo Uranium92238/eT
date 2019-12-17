@@ -48,6 +48,7 @@ module reference_engine_class
       logical :: requested_zop
 !
       logical :: plot_orbitals
+      logical :: print_coeff
 !
    contains 
 !
@@ -99,6 +100,7 @@ contains
       engine%quadrupole       = .false.
       engine%plot_orbitals    = .false.
       engine%plot_density     = .false.
+      engine%print_coeff      = .false.
 !
       call engine%read_settings()
 !
@@ -149,6 +151,14 @@ contains
 !
       call engine%do_ground_state(wf)
 !
+!     Print MO-coefficients
+!
+      if (engine%print_coeff) then
+!
+         call wf%print_orbitals()
+!
+      end if
+!
 !     Plot orbitals and/or density
 !
       if (engine%plot_orbitals .or. engine%plot_density) call engine%do_visualization(wf)
@@ -170,12 +180,24 @@ contains
       class(reference_engine) :: engine 
 !
       call input%get_keyword_in_section('algorithm', 'solver scf', engine%algorithm)
-      if (input%requested_keyword_in_section('restart', 'solver scf')) engine%restart = .true.
+!
+      if (input%requested_keyword_in_section('restart', 'solver scf')) then
+         engine%restart = .true.
+      end if
 !
       call input%get_keyword_in_section('ao density guess', 'solver scf', engine%ao_density_guess)
 !
-      if (input%requested_keyword_in_section('plot hf orbitals', 'visualization')) engine%plot_orbitals = .true.
-      if (input%requested_keyword_in_section('plot hf density', 'visualization')) engine%plot_density = .true.
+      if (input%requested_keyword_in_section('print orbitals', 'solver scf')) then
+         engine%print_coeff = .true.
+      end if
+!
+      if (input%requested_keyword_in_section('plot hf orbitals', 'visualization')) then
+         engine%plot_orbitals = .true.
+      end if
+!
+      if (input%requested_keyword_in_section('plot hf density', 'visualization')) then 
+         engine%plot_density = .true.
+      end if
 !
       call engine%read_zop_settings()
 !

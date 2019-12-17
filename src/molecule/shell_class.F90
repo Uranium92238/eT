@@ -63,6 +63,8 @@ module shell_class
       procedure :: set_n_primitives                   => set_n_primitives_shell
       procedure :: get_n_primitives                   => get_n_primitives_shell
 !
+      procedure, nopass :: get_angular_momentum_label => get_angular_momentum_label_shell
+!
    end type shell
 !
 !
@@ -333,6 +335,75 @@ contains
       get_n_primitives_shell = sh%n_primitives
 !
    end function get_n_primitives_shell
+!
+!
+   subroutine get_angular_momentum_label_shell(l, ao, label, cartesian)
+!!
+!!    Get angular momentum label
+!!    written by Alexander C. Paul, Dec 2019
+!!
+!!    Returns string containing the angular momentum and it's spatial component
+!!
+!!    l:          angular momentum quantum number
+!!    ao:         atomic orbital of the shell
+!!                NB: assuming default ordering of libint.
+!!                cartesian basis functions: {xx, xy, xz, yy, yz, zz}
+!!                spherical/pure functions:  m_l: {2, 1, 0, -1, -2}
+!!    label:      string that is returned e.g. d_xx
+!!    cartesian: logical determining if a cartesian or "pure" basis set is used
+!!
+      use angular_momentum
+!
+      implicit none
+!
+      integer, intent(in) :: l
+      integer, intent(in) :: ao
+!
+      character(len=*), intent(inout) :: label
+!
+      logical, intent(in) :: cartesian
+!
+      if (cartesian) then
+!
+         select case (l)
+            case(0)
+               label = s
+            case(1)
+               label = p_cart(ao)
+            case(2)
+               label = d_cart(ao)
+            case(3)
+               label = f_cart(ao)
+            case(4)
+               label = g
+            case(5)
+               label = h
+            case default
+               call output%error_msg('Angular momentum of atomic orbital not recognized.')
+         end select
+!
+      else
+!
+         select case (l)
+            case(0)
+               label = s
+            case(1)
+               label = p(ao)
+            case(2)
+               label = d(ao)
+            case(3)
+               label = f(ao)
+            case(4)
+               label = g
+            case(5)
+               label = h
+            case default
+               call output%error_msg('Angular momentum of atomic orbital not recognized.')
+         end select
+!
+      end if
+!
+   end subroutine get_angular_momentum_label_shell
 !
 !
 end module shell_class
