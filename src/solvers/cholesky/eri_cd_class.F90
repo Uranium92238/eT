@@ -4012,6 +4012,8 @@ contains
 !
                   if (current_size_AB .lt. size_AB) then
 !
+                     construct_sp(sp) = .false. ! This shell pair should not be used again.
+!
                      if (A .ne. B) then 
 !
                         do x = 1, A_interval%length
