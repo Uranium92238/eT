@@ -65,13 +65,16 @@ module cc_propagation_class
       complex(dp), dimension(:,:,:,:), allocatable :: g_pqrs_complex_ti
       complex(dp), dimension(:,:), allocatable     :: t1_complex_ti
 !
-      logical :: energy_output, dipole_moment_output, electric_field_output, amplitudes_output, multipliers_output
+      logical :: energy_output, dipole_moment_output, electric_field_output, amplitudes_output, &
+                 multipliers_output, density_matrix_output
 !
       type(sequential_file) :: energy_file
       type(sequential_file) :: dipole_moment_file
       type(sequential_file) :: electric_field_file
       type(sequential_file) :: amplitudes_file
       type(sequential_file) :: multipliers_file
+      type(sequential_file) :: density_matrix_real_file
+      type(sequential_file) :: density_matrix_imaginary_file
 !
    contains
 !
@@ -95,11 +98,14 @@ module cc_propagation_class
       procedure :: write_electric_field_to_file    => write_electric_field_to_file_cc_propagation
       procedure :: write_amplitudes_to_file        => write_amplitudes_to_file_cc_propagation
       procedure :: write_multipliers_to_file       => write_multipliers_to_file_cc_propagation
+      procedure :: write_density_matrix_to_file    => write_density_matrix_to_file_cc_propagation
 !
       procedure :: open_files                      => open_files_cc_propagation
       procedure :: close_files                     => close_files_cc_propagation
 !
-      procedure(propagation_step), deferred        :: step ! Single propagation step for the selected method
+!     Single propagation step for the selected method
+!
+      procedure(propagation_step), deferred        :: step
 !
    end type cc_propagation  
 !
@@ -181,8 +187,9 @@ contains
 !
 !     Complex density matrix used to calculate properties
 !
-      if (solver%energy_output .or. solver%dipole_moment_output) &
-         call wf%initialize_gs_density_complex()
+      if (solver%energy_output             &
+          .or. solver%dipole_moment_output &
+          .or. solver%density_matrix_output) call wf%initialize_gs_density_complex()
 !
       call solver%open_files()
 !
@@ -238,8 +245,9 @@ contains
 !
          if (mod(step, solver%steps_between_output) == 0) then
 !
-            if (solver%energy_output .or. solver%dipole_moment_output) &
-               call wf%construct_gs_density_complex()
+            if (solver%energy_output             &
+                .or. solver%dipole_moment_output &
+                .or. solver%density_matrix_output) call wf%construct_gs_density_complex()
 !
             if (solver%energy_output) then
                call solver%calculate_energy(wf, field)
@@ -251,9 +259,11 @@ contains
                call solver%write_dipole_moment_to_file(wf, t)
             endif
 !
-            if (solver%electric_field_output)   call solver%write_electric_field_to_file(field, t)
-            if (solver%amplitudes_output)       call solver%write_amplitudes_to_file(wf, t)
-            if (solver%multipliers_output)      call solver%write_multipliers_to_file(wf, t)
+            if (solver%electric_field_output) call solver%write_electric_field_to_file(field, t)
+            if (solver%amplitudes_output)     call solver%write_amplitudes_to_file(wf, t)
+            if (solver%multipliers_output)    call solver%write_multipliers_to_file(wf, t)
+            if (solver%density_matrix_output) &
+               call solver%write_density_matrix_to_file(wf, step)
 !
             call output%printf('n', 'Properties written at time: (f10.4) au', &
                                reals=[t], fs='(t3,a)')
@@ -342,7 +352,9 @@ contains
 !
 !     Complex density matrix used to calculate properties
 !
-      if (solver%energy_output .or. solver%dipole_moment_output) call wf%destruct_gs_density()
+      if (solver%energy_output             &
+          .or. solver%dipole_moment_output &
+          .or. solver%density_matrix_output) call wf%destruct_gs_density()
 !
       call solver%print_summary(wf, field)
 !
@@ -601,6 +613,68 @@ contains
    end subroutine write_multipliers_to_file_cc_propagation
 !
 !
+   subroutine write_density_matrix_to_file_cc_propagation(solver, wf, step)
+!!
+!!    Write density matrix to file
+!!    Written by Andreas Skeidsvoll, Dec 2019
+!!
+!!    Write the real and imaginary parts of the density matrix to two files, numbered by the
+!!    current time step number.
+!!
+      implicit none
+!
+      class(cc_propagation) :: solver
+      class(ccs) :: wf
+      integer, intent(in) :: step
+!
+      integer :: n_digits_last_step
+!
+      character(len=100) :: n_digits_last_step_string
+      character(len=100) :: step_format
+      character(len=100) :: step_string
+!
+!     Maximum number of digits in step number, used to decide length of density matrix file names
+!
+      n_digits_last_step = floor(log10((solver%tf-solver%ti)/solver%h)) + 1
+!
+!     Writes the format used for formatting step numbers in file names to a string
+!
+      write(n_digits_last_step_string, *) n_digits_last_step
+!
+      step_format = "(I" // trim(n_digits_last_step_string) // "." &
+                    // trim(n_digits_last_step_string) // ")"
+!
+!     Writes the formatted step number to a string
+!
+      write(step_string, step_format) step
+!
+!     Writes real part of density matrix to z file
+!
+      solver%density_matrix_real_file = sequential_file("cc_propagation_density_" &
+                                                        // trim(step_string)      &
+                                                        // "_real", 'formatted')
+!
+      call solver%density_matrix_real_file%open_('write', 'rewind')
+!
+      call solver%density_matrix_real_file%write_(real(wf%density_complex), wf%n_mo*wf%n_mo)
+!
+      call solver%density_matrix_real_file%close_
+!
+!     Writes imaginary part of density matrix to file
+!
+      solver%density_matrix_imaginary_file = sequential_file("cc_propagation_density_" &
+                                                             // trim(step_string)      &
+                                                             // "_imaginary", 'formatted')
+!
+      call solver%density_matrix_imaginary_file%open_('write', 'rewind')
+!
+      call solver%density_matrix_imaginary_file%write_(aimag(wf%density_complex), wf%n_mo*wf%n_mo)
+!
+      call solver%density_matrix_imaginary_file%close_
+!
+   end subroutine write_density_matrix_to_file_cc_propagation
+!
+!
    subroutine print_summary_cc_propagation(solver, wf, field)
 !!
 !!    Print summary 
@@ -700,6 +774,8 @@ contains
          solver%amplitudes_output = .true.
       if (input%requested_keyword_in_section('multipliers output', 'solver cc propagation')) &
          solver%multipliers_output = .true.
+      if (input%requested_keyword_in_section('density matrix output', 'solver cc propagation')) &
+         solver%density_matrix_output = .true.
 !
    end subroutine read_settings_cc_propagation
 !
