@@ -875,8 +875,8 @@ contains
 !
          if (skip_states(state)) then
 !
-            call output%printf('m', 'Warning: Skipped state (i0) because it is &
-                               &parallel to the previous state', ints=[state], fs='(/t3,a)')
+            call output%warning_msg('Skipped state (i0) because it is parallel to the &
+                                    &previous state', ints=[state], fs='(/t3,a)')
 !
             cycle
 !
@@ -973,9 +973,8 @@ contains
 !
             if (skip_states(state)) then
 !
-               call output%printf('m', 'Warning: Skipped state (i0) because it &
-                                  &is  parallel to the previous state', &
-                                  ints=[state], fs='(/t3,a)')
+               call output%warning_msg('Skipped state (i0) because it is parallel to the &
+                                       &previous state', ints=[state], fs='(/t3,a)')
                cycle
 !
             end if
@@ -1032,9 +1031,9 @@ contains
 !
             end do
 !
-            call output%printf('v', 'Trace left transition density:  (f15.12)', &
+            call output%printf('debug', 'Trace left transition density:  (f15.12)', &
                                reals=[trace_l_tdm], fs='(t6,a)')
-            call output%printf('v', 'Trace right transition density: (f15.12)', &
+            call output%printf('debug', 'Trace right transition density: (f15.12)', &
                                reals=[trace_r_tdm], fs='(t6,a/)')
 !
          enddo

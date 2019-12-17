@@ -128,9 +128,9 @@ contains
 !
       type(timings) :: L_TDM_timer
 !
-      call L_TDM_timer%turn_on()
-!
       L_TDM_timer = timings('Left transition density')
+!
+      call L_TDM_timer%turn_on()
 !
       call mem%alloc(L_k, wf%n_es_amplitudes)
       call wf%read_excited_state(L_k, state, 'left')

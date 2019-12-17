@@ -120,8 +120,8 @@ contains
       type(timings) :: cc3_ijk_timer, cc3_abc_timer
 !
       L_TDM_timer    = timings('Left transition density', pl='m')
-      cc3_ijk_timer  = timings('CC3 left TDM ijk batching', pl='n')
-      cc3_abc_timer  = timings('CC3 left TDM abc batching', pl='n')
+      cc3_ijk_timer  = timings('CC3 left TDM ijk batching', pl='v')
+      cc3_abc_timer  = timings('CC3 left TDM abc batching', pl='v')
       cc3_timer      = timings('Total CC3 contribution left TDM', pl='n')
       ccsd_timer     = timings('Total CCSD contribution left TDM', pl='n')
 !
@@ -305,13 +305,11 @@ contains
       type(timings) :: cc3_ijk_timer, cc3_abc_timer, cc3_int_timer
 !
       R_TDM_timer    = timings('Right transition density', pl='m')
-      cc3_ijk_timer  = timings('CC3 right TDM ijk batching', pl='n')
-      cc3_abc_timer  = timings('CC3 right TDM abc batching', pl='n')
-      cc3_int_timer  = timings('CC3 right TDM contributions from intermediates', pl='n')
+      cc3_ijk_timer  = timings('CC3 right TDM ijk batching', pl='v')
+      cc3_abc_timer  = timings('CC3 right TDM abc batching', pl='v')
+      cc3_int_timer  = timings('CC3 right TDM contributions from intermediates', pl='v')
       cc3_timer      = timings('Total CC3 contribution right TDM', pl='n')
       ccsd_timer     = timings('Total CCSD contribution right TDM', pl='n')
-!
-      call R_TDM_timer%turn_on()
 !
       call R_TDM_timer%turn_on()
 !
@@ -396,7 +394,7 @@ contains
 !
       call wf%density_cc3_mu_nu_oo_ov_vv(density_oo, density_ov, &
                                          density_vv, R_ai, R_aibj)
-      call cc3_int_timer%turn_off()
+      call cc3_int_timer%freeze()
 !
 !     :: CC3 contribution in batches of i,j,k ::
 !
@@ -499,7 +497,9 @@ contains
 !
 !        Z_bcjk = tbar^abc_ijk R^a_i
 !
+      call cc3_int_timer%turn_on()
       call wf%density_cc3_mu_nu_ov_Z_term(density_ov)
+      call cc3_int_timer%turn_off()
 !
 !$omp parallel do private(a, i)
       do a = 1, wf%n_v
