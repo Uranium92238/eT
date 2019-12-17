@@ -201,7 +201,8 @@ contains
 !
       memory%name_    = 'memory'
       memory%required = .false.
-      memory%keywords = [character(len=30) :: 'available']
+      memory%keywords = [character(len=30) :: 'available', &
+                                              'unit']
 !
       hf_zop%name_    = 'hf zop'
       hf_zop%required = .false.
