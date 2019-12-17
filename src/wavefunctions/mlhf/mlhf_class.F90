@@ -965,7 +965,7 @@ contains
 !
       call wf%get_orbital_overlap(C_pao_copy, n_active_aos, S_pao)
 !
-      call wf%lovdin_orthonormalization(C_pao_copy, S_pao, n_active_aos, wf%n_v)
+      call wf%lowdin_orthonormalization(C_pao_copy, S_pao, n_active_aos, wf%n_v)
 !
       call mem%dealloc(S_pao, n_active_aos, n_active_aos)
 !
