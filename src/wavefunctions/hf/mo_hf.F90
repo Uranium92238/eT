@@ -375,4 +375,99 @@ contains
    end subroutine read_for_scf_restart_mo_hf
 !
 !
+   module subroutine construct_mo_fock_hf(wf)
+!!
+!!    Construct MO Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the MO Fock matrix F_pq using the current AO
+!!    Fock and the orbital coefficients.
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: X
+!
+      call mem%alloc(X, wf%n_ao, wf%n_mo)
+!
+      call dgemm('N', 'N',                   &
+                  wf%n_ao,                   &
+                  wf%n_mo,                   &
+                  wf%n_ao,                   &
+                  one,                       &
+                  wf%ao_fock,                &
+                  wf%n_ao,                   &
+                  wf%orbital_coefficients,   &
+                  wf%n_ao,                   &
+                  zero,                      &
+                  X,                         & ! X = F^ao C
+                  wf%n_ao)
+!
+      call dgemm('T', 'N',                   &
+                  wf%n_mo,                   &
+                  wf%n_mo,                   &
+                  wf%n_ao,                   &
+                  one,                       &
+                  wf%orbital_coefficients,   &
+                  wf%n_ao,                   &
+                  X,                         &
+                  wf%n_ao,                   &
+                  zero,                      &
+                  wf%mo_fock,                & ! F = C^T F^ao C
+                  wf%n_mo)
+!
+      call mem%dealloc(X, wf%n_ao, wf%n_mo)
+!
+   end subroutine construct_mo_fock_hf
+!
+!
+   module subroutine get_fock_ov_hf(wf, F)
+!!
+!!    Get HF equations
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the occupied-virtual block of the Fock MO matrix,
+!!    and returns the result in the array F.
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_o, wf%n_v)   :: F ! F_ia
+      real(dp), dimension(:,:), allocatable :: X
+!
+      call mem%alloc(X, wf%n_ao, wf%n_v)
+!
+      call dgemm('N', 'N',                                  &
+                  wf%n_ao,                                  &
+                  wf%n_v,                                   &
+                  wf%n_ao,                                  &
+                  one,                                      &
+                  wf%ao_fock,                               &
+                  wf%n_ao,                                  &
+                  wf%orbital_coefficients(1, wf%n_o + 1),   &
+                  wf%n_ao,                                  &
+                  zero,                                     &
+                  X,                                        &
+                  wf%n_ao)
+!
+      call dgemm('T', 'N',                   &
+                  wf%n_o,                    &
+                  wf%n_v,                    &
+                  wf%n_ao,                   &
+                  one,                       &
+                  wf%orbital_coefficients,   &
+                  wf%n_ao,                   &
+                  X,                         &
+                  wf%n_ao,                   &
+                  zero,                      &
+                  F,                         &
+                  wf%n_o)
+!
+      call mem%dealloc(X, wf%n_ao, wf%n_v)
+!
+   end subroutine get_fock_ov_hf
+!
+!
 end submodule mo_hf

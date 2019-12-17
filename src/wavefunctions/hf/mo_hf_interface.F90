@@ -215,3 +215,34 @@
       class(hf) :: wf
 !
    end subroutine read_for_scf_restart_mo_hf
+!
+!
+   module subroutine construct_mo_fock_hf(wf)
+!!
+!!    Construct MO Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the MO Fock matrix F_pq using the current AO
+!!    Fock and the orbital coefficients.
+!!
+      implicit none
+!
+      class(hf), intent(inout) :: wf
+!
+   end subroutine construct_mo_fock_hf
+!
+!
+   module subroutine get_fock_ov_hf(wf, F)
+!!
+!!    Get HF equations
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the occupied-virtual block of the Fock MO matrix,
+!!    and returns the result in the array F.
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+      real(dp), dimension(wf%n_o, wf%n_v)   :: F ! F_ia
+!
+   end subroutine get_fock_ov_hf

@@ -122,14 +122,23 @@ set(eT_fortran_sources
    src/various/continuous_output_coefficients.F90
    src/various/kinds.F90
    src/various/parameters.F90
-   
 #
    src/wavefunctions/wavefunction/wavefunction_class.F90
 
    src/wavefunctions/hf/frozen_orbital_hf.F90
    src/wavefunctions/hf/hf_class.F90  
    src/wavefunctions/hf/mo_hf.F90
+   src/wavefunctions/hf/set_get_hf.F90
+   src/wavefunctions/hf/initialize_destruct_hf.F90
+   src/wavefunctions/hf/ao_fock_hf.F90
+   src/wavefunctions/hf/file_handling_hf.F90
+#
    src/wavefunctions/uhf/uhf_class.F90
+   src/wavefunctions/uhf/initialize_destruct_uhf.F90
+   src/wavefunctions/uhf/set_get_uhf.F90
+   src/wavefunctions/uhf/file_handling_uhf.F90
+   src/wavefunctions/uhf/ao_fock_uhf.F90
+#
    src/wavefunctions/mlhf/mlhf_class.F90
 #
    src/wavefunctions/mp2/mp2_class.F90
