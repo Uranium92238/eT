@@ -54,10 +54,6 @@ def input_parser():
     parser.add_argument('-CC', '--C-compiler',
                          help='C compiler')
 
-    parser.add_argument('--profiling',
-                         help="Add profiling flag to compilation",
-                         action='store_true',
-                         default=False)
     parser.add_argument('-rcheck', '--runtime-checks',
                          help="Add runtime checks flag to Fortran compiler",
                          action='store_true',
@@ -144,7 +140,6 @@ def construct_command(args):
     command += " -DENABLE_64BIT_INTEGERS=" + cmake_translator(args.int64)
     command += " -DENABLE_OMP=" + cmake_translator(args.omp)
     command += " -DENABLE_THREADED_MKL=" + cmake_translator(args.omp)
-    command += " -DENABLE_PROFILING=" + cmake_translator(args.profiling)
     command += " -DENABLE_RUNTIME_CHECKS=" + cmake_translator(args.runtime_checks)
     command += " -DENABLE_FORCED_BATCHING=" + cmake_translator(args.forced_batching)
 

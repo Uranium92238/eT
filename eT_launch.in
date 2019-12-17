@@ -29,8 +29,7 @@ import subprocess
 import fnmatch
 
 if sys.version < '3.5':
-    print('requires python version >= 3.5')
-    sys.exit(1)
+    sys.exit('requires python version >= 3.5')
 
 # Kill if given negative number of OMP threads
 class OMPaction(argparse.Action):
@@ -50,12 +49,15 @@ parser.add_argument('-nt', "--no-timing", help="Do not copy timing.out from scra
 parser.add_argument('-v', "--verbose", help="Run some print statements", action='store_true')
 parser.add_argument('-bd', "--binary-dir", help="Specify location of eT executable", type=str)
 parser.add_argument('-basis', "--basis-path-dir", help="Specify location of the basis directory", type=str)
-parser.add_argument('--profile', help="Copy gmon.out from scratch", action='store_true')
 parser.add_argument('-pcm', "--pcm-input-file", help="Specify PCMSolver Input File", type=str)
 parser.add_argument('-i-err', '--ignore-errors', help="Continue with default behaviour if errors detected", action='store_true')
 args = parser.parse_args()
 
 something_wrong = False
+
+#Check if any input files were found
+if (not args.input_file):
+    sys.exit('Could not find any input files')
 
 #Check that output file makes sense and set default
 if (args.output_file[0]):
@@ -74,14 +76,19 @@ else:
     eT_dir = '${CMAKE_BINARY_DIR}' # Default binary directory set by CMake
 eT_dir = os.path.abspath(eT_dir) # Use absolute path
 
+if (args.verbose):
+    print("Will use executable from", eT_dir)
 
 #Set the Libint basis directory
 if (args.basis_path_dir):
     ldd_dir = os.path.abspath(args.basis_path_dir)
     os.environ['LIBINT_DATA_PATH'] = ldd_dir
 elif not 'LIBINT_DATA_PATH' in os.environ:
-    ldd_dir = os.path.join('${CMAKE_SOURCE_DIR}/ao_basis')
+    ldd_dir = os.path.join('${CMAKE_SOURCE_DIR}','ao_basis')
     os.environ['LIBINT_DATA_PATH'] = ldd_dir
+
+if (args.verbose):
+    print("LIBINT_DATA_PATH (basis set folder) set to", ldd_dir)
 
 #Set the PCMSolver input location
 #([file].pcm specified in input continuum section) 
@@ -90,14 +97,15 @@ if (args.pcm_input_file):
     PCMSolver_GOPCM = '${PCMSolver_INCLUDE_DIR}'[:-7]+'bin/'
     os.environ['PCMSOLVER_GO_PCM'] = PCMSolver_GOPCM
 
+    if (args.verbose):
+        print("PCM inputfile:", pcm_input_file)
+        print("Go PCM", PCMSolver_GOPCM)
+
 executable = os.path.join(eT_dir,'eT')
 
 if (not os.path.isfile(executable)):
     print(executable, 'is not a file')
     raise FileNotFoundError
-
-if (args.verbose):
-    print("Will use executable from", eT_dir)
 
 # Make a scratch dir. Either specified by user or wherever os dumps temporary file
 if args.scratch:
@@ -124,14 +132,10 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
         output_file = outf
         out_name = os.path.splitext(outf)[0]
         time_file = '{0}{1}{2}'.format(out_name,'.timing','.out')
-        if(args.profile):
-            profile_file = '{0}{1}{2}'.format(out_name,'.profile','.out')
     else:
         inp_name = os.path.splitext(inpf)[0]
         output_file = '{0}{1}'.format(inp_name,'.out')
         time_file = '{0}{1}{2}'.format(inp_name,'.timing','.out')
-        if(args.profile):
-            profile_file = '{0}{1}{2}'.format(inp_name,'.profile','.out')
 
     if (args.verbose):
         print()
@@ -147,9 +151,6 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
     if (args.pcm_input_file):
        pcm_src = os.path.abspath(pcm_input_file)
        pcm_dest = os.path.join(scratch,'pcmsolver.inp')
-    if(args.profile):
-        profile_src = os.path.join(scratch,'gmon.out')
-        profile_dest = os.path.join(cwd,profile_file)
 
     # Copy files
     shutil.copyfile(inp_src,inp_dest)
@@ -187,8 +188,6 @@ for (inpf,outf) in zip (args.input_file,args.output_file):
     shutil.copyfile(out_src,out_dest)
     if not args.no_timing:
         shutil.copyfile(time_src,time_dest)
-    if(args.profile):
-        shutil.copyfile(profile_src,profile_dest)
     
     #Check if there are any .plt files    
     pltfiles = [pltfile for pltfile in fnmatch.filter(os.listdir(scratch), '*.plt')]
