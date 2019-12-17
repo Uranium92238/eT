@@ -77,6 +77,10 @@ module memory_manager_class
 !
       integer(i15) :: available
 !
+!     Unit for memory, default is GB
+!
+      character(len=2) :: unit
+!
    contains
 !
 !     Check if there are memory leaks - on exit of program
@@ -207,13 +211,36 @@ contains
 !
 !     Set standard and read settings 
 !
-      mem%total = 8 ! GB
+!     Default is 8 GB
+!
+      mem%total = 8 
+      mem%unit = 'gb'
 !
       call mem%read_settings()
 !
-!     Convert from GB to B
+!     Convert from current unit to B
 !
-      mem%total = mem%total*1000000000
+      if (mem%unit == 'gb') then
+!
+        mem%total =  mem%total*1000000000
+!
+      elseif (mem%unit == 'mb') then
+!
+        mem%total =  mem%total*1000000
+!
+      elseif (mem%unit == 'kb') then
+!
+        mem%total =  mem%total*1000
+!
+      elseif (trim(mem%unit) == 'b') then
+!
+!       Do nothing
+!
+      else
+!
+        call output%error_msg('did not recognize the memory unit specified in input')
+!
+      endif
 !
       mem%available = mem%total
 !
@@ -1906,6 +1933,29 @@ contains
       implicit none
 !
       class(memory_manager) :: mem
+!
+      character(len=200) :: unit_string
+!
+!     Read unit
+!
+      if (input%requested_keyword_in_section('unit', 'memory')) then
+!
+         call input%get_keyword_in_section('unit', 'memory', unit_string)
+!
+         unit_string = adjustl(unit_string)
+         mem%unit(1 : 2) = unit_string(1 : 2)
+!
+!        Sanity check: 
+!     
+!        If unit is specified, available must also be specified
+!
+         if (.not. input%requested_keyword_in_section('available', 'memory')) then
+!
+            call output%error_msg('memory unit can not be specified without &
+               &specifying available memory')
+!
+         endif
+      endif
 !
       call input%get_keyword_in_section('available', 'memory', mem%total)
 !
