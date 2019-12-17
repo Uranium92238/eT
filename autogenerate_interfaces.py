@@ -42,6 +42,8 @@ wavefunction_directory = join(source_directory, 'wavefunctions')
 #  file as value
 #
 wavefunction_classes = {
+   'hf': ['hf_class.F90'],
+   'uhf': ['uhf_class.F90'],
    'cc2': ['cc2_class.F90'],
    'cc3': ['cc3_class.F90'],
    'ccs': ['ccs_class.F90'],
