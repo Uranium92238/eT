@@ -335,6 +335,7 @@ contains
                                                              'density diag output',   &
                                                              'amplitudes output',     &
                                                              'multipliers output',    &
+                                                             'density matrix output', &
                                                              'integrator']
 !
       solver_fft_dipole_moment%name_    = 'solver fft dipole moment'

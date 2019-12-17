@@ -182,7 +182,7 @@ contains
 !
          endif
 !
-         n_complex_fft_lines = 1
+         n_complex_fft_lines = n_complex_fft_lines + 1
 !
       enddo
 !
