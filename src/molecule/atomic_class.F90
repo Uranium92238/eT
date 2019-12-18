@@ -146,6 +146,14 @@ contains
 !
       class(atomic) :: atom
 !
+      integer :: sh
+!
+      do sh = 1, atom%n_shells
+!
+         call atom%shells(sh)%cleanup()
+!
+      enddo
+!
       if (allocated(atom%shells)) deallocate(atom%shells)
 !
    end subroutine destruct_shells_atomic

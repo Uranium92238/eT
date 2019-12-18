@@ -381,10 +381,9 @@ contains
          endif
 !
       enddo
-!
-      call molecule%set_basis_info                          
+      call molecule%set_basis_info                   
       call molecule%check_convert_pure_to_cartesian_basis    
-      call molecule%normalize_raw_primitives                 
+      call molecule%normalize_raw_primitives                
 !
       call molecule%print_system()
 !
@@ -1153,6 +1152,7 @@ contains
 !
          call mem%dealloc(radius, size(methods))
          call mem%dealloc(counter, size(methods))
+         call mem%dealloc(radius, size(methods))
 !
       endif
 !
@@ -2207,9 +2207,10 @@ contains
       implicit none
 !
       class(molecular_system) :: molecule
-      integer :: atom_index, shell
-      character(len=100) :: basis
-      character(len=100) :: libint_path
+!
+      integer                 :: atom_index, shell
+      character(len=100)      :: basis
+      character(len=100)      :: libint_path
 !
       type(sequential_file), allocatable :: basis_set_file
 !
@@ -2229,6 +2230,7 @@ contains
 !
          call convert_to_lowercase(basis)
          call get_environment_variable("LIBINT_DATA_PATH",libint_path)
+!
          basis_set_file = sequential_file(trim(libint_path) // '/' // trim(basis) // '.g94', 'formatted')
 !
          call basis_set_file%open_('read', 'rewind')  
@@ -2238,6 +2240,7 @@ contains
          call basis_set_file%close_
 !
 !        Get the augmented part
+!
          if (molecule%atoms(atom_index)%basis(1:3) .eq. 'aug') then
 !
             basis = 'augmentation-'//trim(basis)
@@ -2280,13 +2283,9 @@ contains
       type(sequential_file), intent(in)                 :: basis_set_file
 !
       character(len=200)   :: line
-!
-      integer         :: n_primitive, primitive
-!
+      integer              :: n_primitive, primitive
       character(len=2)     :: ang_mom
-!
       logical              :: elm_found
-!
       real(dp)             :: coefficient, coefficient_2, exponent_
 !
 !     Find position of element in file
